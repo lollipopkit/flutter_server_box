@@ -31,102 +31,23 @@
 /// minute is.
 ///
 /// So [virtScheduleIssue] is a local shape check with PVE's own bounds where
-/// they are cheap to state (a field's parts at most 59, an interval's step
-/// 1..59), and the form's own Validate asks the host
-/// (`GET /cluster/jobs/schedule-analyze`) for the rest. A schedule both
-/// accept is written; one the host refuses is shown in its words.
-///
-/// The 32 values `test/unit/virt/virt_backup_job_test.dart` checks were each
-/// put to that endpoint on PVE 9.2.2, and the local check's answer matches
-/// the host's on every one of them. The documentation's own examples it also
-/// checks were not put to a host.
+/// they are cheap to state (`sbm_virt::backup::schedule_issue`), and the
+/// form's own Validate asks the host (`GET /cluster/jobs/schedule-analyze`)
+/// for the rest. A schedule both accept is written; one the host refuses is
+/// shown in its words.
 library;
 
-/// The shorthands systemd and PVE both take as a whole schedule.
-const virtScheduleShorthands = {
-  'minutely',
-  'hourly',
-  'daily',
-  'weekly',
-  'monthly',
-  'quarterly',
-  'semiannually',
-  'yearly',
-  'annually',
-};
-
-final _dayPart = RegExp(r'^([a-z]{3})(\.\.([a-z]{3}))?$');
-const _dayNames = {'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'};
-
-/// A `HH[:MM[:SS]]` field: one to three plain numbers. What each of them may
-/// reach is checked in [_isTime], which is where PVE's own bounds live.
-final _time = RegExp(r'^\d{1,3}(?::\d{1,3}(?::\d{1,3})?)?$');
-
-/// The same field, but with an interval, a list or a range in any of its
-/// parts: `*:0/15`, `0/15`, `0,30:0`, `8..17,22:0/15`.
-final _timeInterval = RegExp(
-  r'^(?:[\d,/.\-]+|\*)(?::(?:[\d,/.\-]+|\*)(?::(?:[\d,/.\-]+|\*))?)?$',
-);
-
-/// A date part (`*-*-*`, `2026-10-01`, `*-1..7`). It always holds a `-`: a
-/// bare `*` is a weekday list, and a weekday list is never `*` (`invalid
-/// calendar event at '*'`, verified).
-final _datePart = RegExp(r'^[*0-9,./]*-[*0-9,./\-]+$');
-
-/// The interval a list or a range carries: `*/5`, `0/15`, `1-5/2`, or none.
-final _intervalAt = RegExp(r'/(\d+)');
-
-/// A whole schedule as one field: `*/5` — every five minutes, which is what
-/// PVE's own examples use.
-final _bareStep = RegExp(r'^\*/\d+$');
+import 'package:server_box/src/rust/api/backup.dart' as ffi;
 
 /// Why [schedule] cannot be a backup job's schedule, or null when it has the
 /// shape of one PVE would take. A value this accepts can still be refused by
 /// the host, so the form asks [`VirtBackend.checkSchedule`] for the answer.
-VirtBackupScheduleIssue? virtScheduleIssue(String schedule) {
-  final s = schedule.trim();
-  if (s.isEmpty) return VirtBackupScheduleIssue.empty;
-  if (virtScheduleShorthands.contains(s)) return null;
-  // A `;` would be PVE's own refusal; a newline only makes the message
-  // unreadable.
-  if (RegExp(r'[;\n\r]').hasMatch(s)) return VirtBackupScheduleIssue.invalid;
-  final parts = s.split(RegExp(r'\s+'));
-  // `[WEEKDAY] [DATE] [TIME]`: each in its place, none twice.
-  var i = 0;
-  if (i < parts.length && _isDayList(parts[i])) i++;
-  if (i < parts.length && _datePart.hasMatch(parts[i])) i++;
-  if (i < parts.length && _isTime(parts[i])) i++;
-  return i == parts.length ? null : VirtBackupScheduleIssue.invalid;
-}
-
-/// A time field: `02:30`, `02:30:15`, `*:0/15`, `0/15`, `0,30`, `1-5`.
-bool _isTime(String text) {
-  if (_time.hasMatch(text)) {
-    // Each part's own ceiling: PVE refuses 60 and above in all three
-    // (`mon 59:59` is taken, `mon 60:00` and `mon 59:60` are not). The hour
-    // is looser than that — `mon 25:00` is accepted — so the form's own
-    // Validate is what settles anything subtler.
-    return text.split(':').every((p) => int.parse(p) <= 59);
-  }
-  if (!_timeInterval.hasMatch(text) && !_bareStep.hasMatch(text)) return false;
-  // An interval's step is the one number PVE checks in a field it otherwise
-  // reads loosely (`*:0/0` and `*/60` are both refused).
-  for (final step in _intervalAt.allMatches(text)) {
-    // tryParse: a step too long for an int is invalid, not a throw in the
-    // editor's build.
-    final n = int.tryParse(step.group(1)!);
-    if (n == null || n < 1 || n > 59) return false;
-  }
-  return true;
-}
-
-/// `mon`, `mon,wed`, `mon..fri` — a weekday list or one range of them.
-bool _isDayList(String text) => text.split(',').every((part) {
-  final m = _dayPart.firstMatch(part);
-  if (m == null) return false;
-  return _dayNames.contains(m.group(1)) &&
-      (m.group(3) == null || _dayNames.contains(m.group(3)));
-});
+VirtBackupScheduleIssue? virtScheduleIssue(String schedule) =>
+    switch (ffi.virtScheduleIssue(schedule: schedule)) {
+      null => null,
+      'schedule_empty' => VirtBackupScheduleIssue.empty,
+      _ => VirtBackupScheduleIssue.invalid,
+    };
 
 /// Why a schedule cannot be sent. See [virtScheduleIssue].
 enum VirtBackupScheduleIssue {

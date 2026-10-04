@@ -3626,9 +3626,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'More than the storage has free';
 
   @override
-  String get virtHwIssueSwap => 'Not negative';
-
-  @override
   String get virtHwLater => 'Applies at restart';
 
   @override
@@ -4179,6 +4176,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Enter a name';
+
+  @override
+  String get virtResNotFound => 'It is no longer on this host';
+
+  @override
+  String get virtResUnsupported => 'This host does not do that';
 
   @override
   String get virtResNameInvalid =>
@@ -5389,4 +5392,44 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'The monitor agent already holds as many backups as it allows. Delete one first.';
+
+  @override
+  String get virtCreateVmidInvalid => 'A VMID from 100 to 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'That node is not online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'That install media is not on this host.';
+
+  @override
+  String get virtCreateNetworkMissing => 'A new guest cannot use that network.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'This host does not offer that for a new VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot needs UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Shut it down first.';
+
+  @override
+  String get virtGuestIsTemplate => 'It is a template already.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'The image is bigger than the disk: make the disk at least as big.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'That storage does not hold backups on this node.';
+
+  @override
+  String get virtBackupIssueOption => 'Not a mode or compression PVE takes.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'The job\'s node is not online.';
 }

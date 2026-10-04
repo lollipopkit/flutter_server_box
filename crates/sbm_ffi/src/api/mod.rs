@@ -1,7 +1,12 @@
+pub mod backup;
 pub mod bmc;
+pub mod create;
 pub mod desktop;
 pub mod file;
+pub mod hardware;
 pub mod parser;
+pub mod pve;
+pub mod resource;
 pub mod remote_desktop;
 pub mod script;
 pub mod snippet;

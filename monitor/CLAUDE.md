@@ -283,6 +283,67 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   answers `intents`, the actions `ResetRequest::build` finds for that system,
   so the panel has no copy of that mapping. `tests/bmc_api.rs` runs against a
   fake Redfish service.
+  `/virt` (`api/virt.rs`): the Virtualization page — this machine's guests,
+  PVE or libvirt, in `sbm_virt::model` terms (the app's FFI reaches the same
+  crate). `POST /virt` loads (a POST: a libvirt refusing the agent's account
+  takes the operator's sudo password, which a body carries and a URL must
+  not; used for that request, never stored), `POST /virt/power` acts on a
+  guest re-read for the request. PVE is reached by the one stored
+  configuration (migration 017, `virt_pve`, one row; `password` and
+  `token_secret` write-only, `null` keeps): **one `sbm_virt::pve::Client` per
+  agent, kept in `AppState.virt`** so a ticket lives its two hours and a TOTP
+  account is not asked on every refresh; `POST /virt/pve/tfa` answers a
+  waiting login. A certificate no CA vouches for is shown (`cert_unconfirmed`
+  with the certificate) and nothing is sent until `POST /virt/pve/cert` pins
+  it. Without a configuration the probe decides: PVE not set up yet, libvirt
+  (through sudo once it refused the account, as the app does), or nothing.
+  A host's failure is answered 200 with `error` (`sbm_virt::error::Error`),
+  never as this agent's status. `virt` to see and act; admin to configure and
+  pin. `POST /virt/detail` and `/virt/history` (PVE's stored `rrddata`; null
+  on libvirt) read one guest. **A console is resolved before its socket
+  opens**: `POST /virt/console` asks PVE for the `vncproxy`/`termproxy`
+  ticket (or reads a libvirt display's port and password) and mints a
+  `Purpose::Virt` ticket bound to it, kept in `AppState.virt` for 30 s —
+  `/ws-ticket` refuses that purpose, so a client cannot name a target.
+  `/virt/console/ws` (`api/ws/virt_console.rs`) speaks `/stream/ws`'s
+  framing (`ready`/`error`/`exit`, binary bytes) so the panel's
+  `RelayChannel` drives noVNC on it; it dials the libvirt display, or opens
+  PVE's `vncwebsocket` with the session (`sbm_virt::pve::Client::open_console`)
+  and does termproxy's ticket, `OK`, input framing, resize and keep-alive
+  itself, so the console ticket never reaches the browser. A libvirt serial
+  console answers the `virsh console` command to run in the panel terminal
+  (it needs a PTY). `POST /virt/snapshots` lists a guest's snapshots with
+  what a new one may be (`refusal`, `memory`, libvirt's `chain` and the pools
+  an overlay can go in); `POST /virt/snapshot` (`op`: create, revert,
+  delete) and `/virt/snapshot/diff` act through `sbm_virt` — the libvirt
+  flows (the chain read for an external one, the AppArmor checks before a
+  revert or a delete, the leftover overlays deleted with it) are the app's,
+  moved into the agent's handler. Storage and networks
+  (`api/virt_resources.rs`): `POST /virt/storage` (the pools, with `rules`:
+  the formats a new volume may have, whether one grows on its own),
+  `/virt/volumes`, `/virt/networks` (PVE: with each node's pending
+  configuration) and `/virt/manage` (one `sbm_virt::resource::Change`, named
+  by id and checked against what the host lists at that moment — refused as
+  `Detail::Refused` with the issue). On PVE the node is asked which
+  interfaces it is using (`sbm_virt::pve::net::LIVE_NET_SCRIPT`, run here as
+  the agent's account), so the interface the operator is connected through
+  is never edited or applied over. Guests made, copied and deleted
+  (`api/virt_guests.rs`): `POST /virt/create/form` (what a new guest of a
+  kind can be given, per PVE node), `/virt/create` (one
+  `sbm_virt::create::CreateSpec`), `/virt/delete`, `/virt/clone/form`,
+  `/virt/clone` and `/virt/template` — checked against what the host lists
+  then and refused as `Detail::CreateRefused`; audited before they run, a
+  password in a spec never in the record. A guest's hardware and settings
+  (`api/virt_hardware.rs`): `POST /virt/hardware`, `/virt/hardware/change`
+  (one `sbm_virt::hardware::Change`, made from the read whose `revision` it
+  carries), `/virt/hardware/revert`, `/virt/cloud-init`,
+  `/virt/cloud-init/set`, `/virt/host-devices`; refused as
+  `Detail::HardwareRefused`, a stale read as `conflict`. Backups
+  (`api/virt_backups.rs`, PVE only): `POST /virt/backups`, `/virt/backup`,
+  `/virt/backup/{restore,edit,delete}`, `/virt/backup-jobs`,
+  `/virt/backup-jobs/{edit,run,schedule}`; refused as
+  `Detail::BackupRefused`. `tests/virt_api.rs` runs against a
+  fake PVE API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
   page, as rows (migration 015) so they share the database's protection from

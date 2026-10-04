@@ -8,11 +8,16 @@ import 'dart:convert';
 import 'dart:ffi' as ffi;
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
+import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/file.dart';
+import 'package:server_box/src/rust/api/hardware.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
+import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
@@ -34,8 +39,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClientPtr;
 
   CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_LibvirtRatesPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr;
+
+  CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_PowerWatchPtr => wire
       ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatchPtr;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_PveSessionPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSessionPtr;
 
   CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_RemoteDesktopSessionHandlePtr => wire
@@ -56,8 +69,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  LibvirtRates
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    dynamic raw,
+  );
+
+  @protected
   PowerWatch
   dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
+    dynamic raw,
+  );
+
+  @protected
+  PveSession
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
     dynamic raw,
   );
 
@@ -80,6 +105,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  LibvirtRates
+  dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    dynamic raw,
+  );
+
+  @protected
   PowerWatch
   dco_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     dynamic raw,
@@ -94,6 +125,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   BmcClient
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(
+    dynamic raw,
+  );
+
+  @protected
+  PveSession
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
     dynamic raw,
   );
 
@@ -125,8 +162,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  LibvirtRates
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    dynamic raw,
+  );
+
+  @protected
   PowerWatch
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
+    dynamic raw,
+  );
+
+  @protected
+  PveSession
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
     dynamic raw,
   );
 
@@ -170,10 +219,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw);
+
+  @protected
   CertInfo dco_decode_box_autoadd_cert_info(dynamic raw);
 
   @protected
   double dco_decode_box_autoadd_f_64(dynamic raw);
+
+  @protected
+  LibvirtPoolRef dco_decode_box_autoadd_libvirt_pool_ref(dynamic raw);
+
+  @protected
+  PveGuestRef dco_decode_box_autoadd_pve_guest_ref(dynamic raw);
+
+  @protected
+  PveLogin dco_decode_box_autoadd_pve_login(dynamic raw);
+
+  @protected
+  PveTiming dco_decode_box_autoadd_pve_timing(dynamic raw);
 
   @protected
   RdpSessionParams dco_decode_box_autoadd_rdp_session_params(dynamic raw);
@@ -194,10 +258,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ResetRequest dco_decode_box_autoadd_reset_request(dynamic raw);
 
   @protected
+  SnapshotNameIssue dco_decode_box_autoadd_snapshot_name_issue(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_u_16(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  BigInt dco_decode_box_autoadd_u_64(dynamic raw);
+
+  @protected
   VncSessionParams dco_decode_box_autoadd_vnc_session_params(dynamic raw);
+
+  @protected
+  CertInfo dco_decode_box_cert_info(dynamic raw);
 
   @protected
   CertInfo dco_decode_cert_info(dynamic raw);
@@ -224,6 +300,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 dco_decode_i_64(dynamic raw);
 
   @protected
+  LibvirtPoolRef dco_decode_libvirt_pool_ref(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
@@ -236,10 +315,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
+  List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<PveHeader> dco_decode_list_pve_header(dynamic raw);
 
   @protected
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
@@ -248,7 +333,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ScriptSegment> dco_decode_list_script_segment(dynamic raw);
 
   @protected
+  List<VirtActionKind> dco_decode_list_virt_action_kind(dynamic raw);
+
+  @protected
+  List<VirtOverlay> dco_decode_list_virt_overlay(dynamic raw);
+
+  @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
 
   @protected
   CertInfo? dco_decode_opt_box_autoadd_cert_info(dynamic raw);
@@ -274,7 +368,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ResetRequest? dco_decode_opt_box_autoadd_reset_request(dynamic raw);
 
   @protected
+  SnapshotNameIssue? dco_decode_opt_box_autoadd_snapshot_name_issue(
+    dynamic raw,
+  );
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_16(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  BigInt? dco_decode_opt_box_autoadd_u_64(dynamic raw);
+
+  @protected
+  CertInfo? dco_decode_opt_box_cert_info(dynamic raw);
 
   @protected
   List<String>? dco_decode_opt_list_String(dynamic raw);
@@ -286,10 +394,37 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<VirtActionKind>? dco_decode_opt_list_virt_action_kind(dynamic raw);
+
+  @protected
   PowerIntent dco_decode_power_intent(dynamic raw);
 
   @protected
   PowerState dco_decode_power_state(dynamic raw);
+
+  @protected
+  PveConsoleKind dco_decode_pve_console_kind(dynamic raw);
+
+  @protected
+  PveConsoleTicket dco_decode_pve_console_ticket(dynamic raw);
+
+  @protected
+  PveError dco_decode_pve_error(dynamic raw);
+
+  @protected
+  PveGuestRef dco_decode_pve_guest_ref(dynamic raw);
+
+  @protected
+  PveHeader dco_decode_pve_header(dynamic raw);
+
+  @protected
+  PveHistoryWindow dco_decode_pve_history_window(dynamic raw);
+
+  @protected
+  PveLogin dco_decode_pve_login(dynamic raw);
+
+  @protected
+  PveTiming dco_decode_pve_timing(dynamic raw);
 
   @protected
   RdpSessionParams dco_decode_rdp_session_params(dynamic raw);
@@ -333,6 +468,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
 
   @protected
+  SnapshotMemoryKind dco_decode_snapshot_memory_kind(dynamic raw);
+
+  @protected
+  SnapshotNameIssue dco_decode_snapshot_name_issue(dynamic raw);
+
+  @protected
   SnippetFfiError dco_decode_snippet_ffi_error(dynamic raw);
 
   @protected
@@ -360,10 +501,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   VirtActionKind dco_decode_virt_action_kind(dynamic raw);
 
   @protected
+  VirtDeletePlan dco_decode_virt_delete_plan(dynamic raw);
+
+  @protected
   VirtErrorKind dco_decode_virt_error_kind(dynamic raw);
 
   @protected
+  VirtFailure dco_decode_virt_failure(dynamic raw);
+
+  @protected
   VirtFfiError dco_decode_virt_ffi_error(dynamic raw);
+
+  @protected
+  VirtOverlay dco_decode_virt_overlay(dynamic raw);
+
+  @protected
+  VirtResourceScript dco_decode_virt_resource_script(dynamic raw);
 
   @protected
   VirtUploadEntryKind dco_decode_virt_upload_entry_kind(dynamic raw);
@@ -381,8 +534,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  LibvirtRates
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PowerWatch
   sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PveSession
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
     SseDeserializer deserializer,
   );
 
@@ -405,6 +570,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  LibvirtRates
+  sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PowerWatch
   sse_decode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     SseDeserializer deserializer,
@@ -419,6 +590,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   BmcClient
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PveSession
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
     SseDeserializer deserializer,
   );
 
@@ -452,8 +629,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  LibvirtRates
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PowerWatch
   sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PveSession
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
     SseDeserializer deserializer,
   );
 
@@ -497,10 +686,29 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
   CertInfo sse_decode_box_autoadd_cert_info(SseDeserializer deserializer);
 
   @protected
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
+  LibvirtPoolRef sse_decode_box_autoadd_libvirt_pool_ref(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PveGuestRef sse_decode_box_autoadd_pve_guest_ref(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PveLogin sse_decode_box_autoadd_pve_login(SseDeserializer deserializer);
+
+  @protected
+  PveTiming sse_decode_box_autoadd_pve_timing(SseDeserializer deserializer);
 
   @protected
   RdpSessionParams sse_decode_box_autoadd_rdp_session_params(
@@ -533,12 +741,26 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SnapshotNameIssue sse_decode_box_autoadd_snapshot_name_issue(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int sse_decode_box_autoadd_u_16(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
   VncSessionParams sse_decode_box_autoadd_vnc_session_params(
     SseDeserializer deserializer,
   );
+
+  @protected
+  CertInfo sse_decode_box_cert_info(SseDeserializer deserializer);
 
   @protected
   CertInfo sse_decode_cert_info(SseDeserializer deserializer);
@@ -565,6 +787,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
 
   @protected
+  LibvirtPoolRef sse_decode_libvirt_pool_ref(SseDeserializer deserializer);
+
+  @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
@@ -577,10 +802,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  List<LibvirtPoolRef> sse_decode_list_libvirt_pool_ref(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<PveHeader> sse_decode_list_pve_header(SseDeserializer deserializer);
 
   @protected
   List<(String, String)> sse_decode_list_record_string_string(
@@ -593,7 +826,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<VirtActionKind> sse_decode_list_virt_action_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<VirtOverlay> sse_decode_list_virt_overlay(SseDeserializer deserializer);
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
 
   @protected
   CertInfo? sse_decode_opt_box_autoadd_cert_info(SseDeserializer deserializer);
@@ -627,7 +871,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  SnapshotNameIssue? sse_decode_opt_box_autoadd_snapshot_name_issue(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_16(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt? sse_decode_opt_box_autoadd_u_64(SseDeserializer deserializer);
+
+  @protected
+  CertInfo? sse_decode_opt_box_cert_info(SseDeserializer deserializer);
 
   @protected
   List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
@@ -639,10 +897,39 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<VirtActionKind>? sse_decode_opt_list_virt_action_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PowerIntent sse_decode_power_intent(SseDeserializer deserializer);
 
   @protected
   PowerState sse_decode_power_state(SseDeserializer deserializer);
+
+  @protected
+  PveConsoleKind sse_decode_pve_console_kind(SseDeserializer deserializer);
+
+  @protected
+  PveConsoleTicket sse_decode_pve_console_ticket(SseDeserializer deserializer);
+
+  @protected
+  PveError sse_decode_pve_error(SseDeserializer deserializer);
+
+  @protected
+  PveGuestRef sse_decode_pve_guest_ref(SseDeserializer deserializer);
+
+  @protected
+  PveHeader sse_decode_pve_header(SseDeserializer deserializer);
+
+  @protected
+  PveHistoryWindow sse_decode_pve_history_window(SseDeserializer deserializer);
+
+  @protected
+  PveLogin sse_decode_pve_login(SseDeserializer deserializer);
+
+  @protected
+  PveTiming sse_decode_pve_timing(SseDeserializer deserializer);
 
   @protected
   RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer);
@@ -692,6 +979,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
 
   @protected
+  SnapshotMemoryKind sse_decode_snapshot_memory_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SnapshotNameIssue sse_decode_snapshot_name_issue(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SnippetFfiError sse_decode_snippet_ffi_error(SseDeserializer deserializer);
 
   @protected
@@ -719,10 +1016,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer);
 
   @protected
+  VirtDeletePlan sse_decode_virt_delete_plan(SseDeserializer deserializer);
+
+  @protected
   VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer);
 
   @protected
+  VirtFailure sse_decode_virt_failure(SseDeserializer deserializer);
+
+  @protected
   VirtFfiError sse_decode_virt_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  VirtOverlay sse_decode_virt_overlay(SseDeserializer deserializer);
+
+  @protected
+  VirtResourceScript sse_decode_virt_resource_script(
+    SseDeserializer deserializer,
+  );
 
   @protected
   VirtUploadEntryKind sse_decode_virt_upload_entry_kind(
@@ -744,8 +1055,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    LibvirtRates self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     PowerWatch self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+    PveSession self,
     SseSerializer serializer,
   );
 
@@ -772,6 +1097,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    LibvirtRates self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     PowerWatch self,
     SseSerializer serializer,
@@ -788,6 +1120,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
   sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerBmcClient(
     BmcClient self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+    PveSession self,
     SseSerializer serializer,
   );
 
@@ -827,8 +1166,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    LibvirtRates self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     PowerWatch self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+    PveSession self,
     SseSerializer serializer,
   );
 
@@ -875,6 +1228,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_cert_info(
     CertInfo self,
     SseSerializer serializer,
@@ -882,6 +1238,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_libvirt_pool_ref(
+    LibvirtPoolRef self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_pve_guest_ref(
+    PveGuestRef self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_pve_login(
+    PveLogin self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_pve_timing(
+    PveTiming self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_rdp_session_params(
@@ -920,13 +1300,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_snapshot_name_issue(
+    SnapshotNameIssue self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_u_16(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_vnc_session_params(
     VncSessionParams self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_cert_info(CertInfo self, SseSerializer serializer);
 
   @protected
   void sse_encode_cert_info(CertInfo self, SseSerializer serializer);
@@ -956,6 +1351,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
 
   @protected
+  void sse_encode_libvirt_pool_ref(
+    LibvirtPoolRef self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
@@ -977,11 +1378,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_libvirt_pool_ref(
+    List<LibvirtPoolRef> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_pve_header(
+    List<PveHeader> self,
     SseSerializer serializer,
   );
 
@@ -998,7 +1411,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_virt_action_kind(
+    List<VirtActionKind> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_virt_overlay(
+    List<VirtOverlay> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_cert_info(
@@ -1040,7 +1468,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_snapshot_name_issue(
+    SnapshotNameIssue? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_16(int? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_64(BigInt? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_cert_info(CertInfo? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
@@ -1058,10 +1501,49 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_list_virt_action_kind(
+    List<VirtActionKind>? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_power_intent(PowerIntent self, SseSerializer serializer);
 
   @protected
   void sse_encode_power_state(PowerState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pve_console_kind(
+    PveConsoleKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pve_console_ticket(
+    PveConsoleTicket self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pve_error(PveError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pve_guest_ref(PveGuestRef self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pve_header(PveHeader self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pve_history_window(
+    PveHistoryWindow self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_pve_login(PveLogin self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_pve_timing(PveTiming self, SseSerializer serializer);
 
   @protected
   void sse_encode_rdp_session_params(
@@ -1127,6 +1609,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_snapshot_memory_kind(
+    SnapshotMemoryKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_snapshot_name_issue(
+    SnapshotNameIssue self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_snippet_ffi_error(
     SnippetFfiError self,
     SseSerializer serializer,
@@ -1160,10 +1654,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_virt_delete_plan(
+    VirtDeletePlan self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_virt_error_kind(VirtErrorKind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_virt_failure(VirtFailure self, SseSerializer serializer);
+
+  @protected
   void sse_encode_virt_ffi_error(VirtFfiError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_overlay(VirtOverlay self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_virt_resource_script(
+    VirtResourceScript self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_virt_upload_entry_kind(
@@ -1233,6 +1745,40 @@ class RustLibWire implements BaseWire {
           .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates',
+      );
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_server_box_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates',
+      );
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRates =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLibvirtRatesPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
   rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch(
     ffi.Pointer<ffi.Void> ptr,
   ) {
@@ -1264,6 +1810,40 @@ class RustLibWire implements BaseWire {
       );
   late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatch =
       _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPowerWatchPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSessionPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession',
+      );
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSessionPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSessionPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+        'frbgen_server_box_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession',
+      );
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSession =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerPveSessionPtr
           .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
 
   void

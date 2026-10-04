@@ -3459,9 +3459,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtHwIssueStorageSpace => '스토리지 여유 공간보다 큼';
 
   @override
-  String get virtHwIssueSwap => '음수 불가';
-
-  @override
   String get virtHwLater => '재시작 후 적용';
 
   @override
@@ -3979,6 +3976,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => '이름을 입력하세요';
+
+  @override
+  String get virtResNotFound => '이 호스트에 더 이상 없습니다';
+
+  @override
+  String get virtResUnsupported => '이 호스트에서는 할 수 없습니다';
 
   @override
   String get virtResNameInvalid => '이 호스트가 받지 않는 이름입니다(문자, 숫자, . _ -)';
@@ -5136,4 +5139,40 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Monitor 에이전트에 저장된 백업 수가 한도에 도달했습니다. 먼저 하나를 삭제하세요.';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID는 100부터 999999999까지입니다.';
+
+  @override
+  String get virtCreateNodeOffline => '해당 노드가 온라인이 아닙니다.';
+
+  @override
+  String get virtCreateMediaMissing => '해당 설치 미디어가 이 호스트에 없습니다.';
+
+  @override
+  String get virtCreateNetworkMissing => '새 게스트는 해당 네트워크를 사용할 수 없습니다.';
+
+  @override
+  String get virtCreateNotOffered => '이 호스트는 새 VM에 그것을 제공하지 않습니다.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot에는 UEFI가 필요합니다.';
+
+  @override
+  String get virtGuestNotStopped => '먼저 종료하세요.';
+
+  @override
+  String get virtGuestIsTemplate => '이미 템플릿입니다.';
+
+  @override
+  String get virtCreateImageBigger => '이미지가 디스크보다 큽니다. 디스크를 최소한 그만큼 크게 하세요.';
+
+  @override
+  String get virtBackupIssueStorage => '해당 스토리지는 이 노드에서 백업을 보관하지 않습니다.';
+
+  @override
+  String get virtBackupIssueOption => 'PVE가 받는 모드나 압축이 아닙니다.';
+
+  @override
+  String get virtBackupIssueNodeOffline => '작업의 노드가 온라인이 아닙니다.';
 }

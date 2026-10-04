@@ -154,8 +154,8 @@ certificate is an error with the old and new fingerprints.
 - `qemu:///system` needs root or the `libvirt` group. A permission error runs
   the command again through `runWithSudo` (password on stdin); a user outside
   the group without sudo sees the error text and what to change.
-- Command strings and output parsers live in `crates/sbm_parser` (new module
-  `virt`), per the repo's "test as spec" rule, so the monitor web panel can
+- Command strings and output parsers live in `crates/sbm_virt` (module
+  `libvirt`), per the repo's "test as spec" rule, so the monitor web panel can
   reuse them later. Fixtures are captured `virsh` output.
 
 ### Host detection
@@ -169,7 +169,7 @@ A server is a virtualization host when:
   every other server only through "Check this server" / "Check all". Cached
   per server for the session. A server that has both is shown as PVE.
 
-The probe (`sbm_parser::virt::probe_script`, one round trip) asks, in order:
+The probe (`sbm_virt::libvirt::probe_script`, one round trip) asks, in order:
 
 1. `pveversion`. Present: the server runs PVE, nothing else is asked
    (`VirtProbeStatus.pve`). Without a `server_pve` row it is not a host yet —
@@ -290,9 +290,9 @@ config below, so no store changes beyond the PVE columns.
   dialog says so in red for an active guest and offers to start it again
   (`--running` / `start=1`). A snapshot operation is one per guest and blocks
   power actions on it (`VirtHostState.snapshotOps`), and the reverse.
-- Scripts, parsers and fixtures: `sbm_parser::virt` (`snapshots_script`,
+- Scripts, parsers and fixtures: `sbm_virt::libvirt` (`snapshots_script`,
   `storage_script`, `volumes_script`, `networks_script`, the three snapshot
-  actions), `tests/fixtures/virt/script_*.txt` captured from the libvirt host.
+  actions), `crates/sbm_virt/tests/fixtures/libvirt/script_*.txt` captured from the libvirt host.
   PVE payloads: `test/fixtures/pve/`, captured from PVE 9.2.2.
 - The providers (`virtSnapshotsProvider`, `virtStoragePoolsProvider`,
   `virtVolumesProvider`, `virtNetworksProvider`) do not retry by themselves:
@@ -601,12 +601,14 @@ the Hardware view (groups under a rule, an index beside them from 860 pt —
 and networks as forms in the detail pane (a page with one column), from the
 list bar's add button. Views: `lib/view/page/virt/storage.dart`,
 `network.dart`; changes: `VirtResourceChange` (`virt_manage.dart`), checked
-with `virtResourceIssue` before they are sent, made by `VirtBackend.manage`.
+with `virtResourceIssue` (`sbm_virt::resource::issue`) as the form is
+filled, and again against what the host lists when `VirtBackend.manage`
+makes them (`pve::Client::manage`, `libvirt::host::resource_script`).
 What each host offers is capabilities: `storageEdit`, `poolTypes`,
 `poolAutostart`, `poolDeleteStorage`, `volumeResize`, `volumeClone`,
 `upload`, `networkEdit`, `networkModes`, `networkStart`, `networkApply`.
 
-| | libvirt (`sbm_parser::virt_manage`, one `virsh` round trip each) | PVE (HTTP API) |
+| | libvirt (`sbm_virt::libvirt::manage`, one `virsh` round trip each) | PVE (HTTP API) |
 | --- | --- | --- |
 | New pool | `pool-define` (XML through a `mktemp` file) → `pool-build` (`dir`, `netfs`; never `logical`: its build formats devices, an existing volume group is used as it is) → `pool-start` → `pool-autostart`; a failed build or start undefines it again | `POST /storage` (`dir` `path`; `nfs` `server`/`export`; `lvmthin` `vgname`/`thinpool`; `zfspool` `pool`), `nodes=<node>`, content `images,rootdir` (`backup,iso` for NFS, as the design) |
 | Stop / start | `pool-destroy` / `pool-start` | `PUT /storage/{id}` `disable=1/0` |
@@ -721,7 +723,7 @@ system comes from install media or, where the host can (`VirtCreateOptions`,
 bus, the NIC model, UEFI or BIOS, and a TPM. The Hardware view's "CD-ROM and
 passthrough" group adds and removes a CD-ROM drive.
 
-| | libvirt (`sbm_parser::virt`, `virt_cloud_init`) | PVE (HTTP API) |
+| | libvirt (`sbm_virt::libvirt`, its `cloud_init`) | PVE (HTTP API) |
 | --- | --- | --- |
 | Options | `create_host_script`: `domcapabilities` for the machine a new domain gets (its disk buses — q35 has no IDE —, OVMF, swtpm) and which ISO tool the host has (`genisoimage`, `xorriso`, `mkisofs`, `cloud-localds`, first found) | Fixed: SCSI/virtio/SATA/IDE, UEFI, TPM, cloud-init; cloud images from 8.2 (`import` content) |
 | Cloud images offered | qcow2 or raw volumes of any active pool no guest uses (a disk in use would be copied mid-write), not an ISO | Volumes with `import` content in a format QEMU reads (qcow2, raw, vmdk; not an OVA) on the node |
@@ -753,7 +755,7 @@ The seed:
   string (JSON is YAML), so nothing typed becomes a key of its own; Rust
   checks each again (`VirtCloudInit::check`).
 - **The password never leaves the app.** It is hashed in-process with
-  SHA-512 crypt (`virt_cloud_init::sha512_crypt`, checked against the
+  SHA-512 crypt (`sbm_virt::libvirt::cloud_init::sha512_crypt`, checked against the
   specification's examples and glibc's `crypt(3)` on the PVE host; a
   16-character salt from `Random.secure`), and only the hash is in the seed,
   the script and the host. The files are written by `printf` (a shell
@@ -928,9 +930,9 @@ The phase-2 snapshot machinery extended: a **disk-only snapshot while the
 guest runs** (libvirt external snapshots), the **disk chain** the guest is
 left on, the **configuration diff** between a snapshot and the guest now, and
 PVE's **per-storage support** said before a task is started rather than after
-it fails. Scripts: `sbm_parser::virt_snapshot` (`snap_chain_script`,
+it fails. Scripts: `sbm_virt::libvirt::snapshot` (`snap_chain_script`,
 `snapshot_external_script`, `snap_diff_script`); the snapshot listing gained a
-per-snapshot `layers` field (`sbm_parser::virt::VirtSnapshotInfo`), read from
+per-snapshot `layers` field (`sbm_virt::libvirt::VirtSnapshotInfo`), read from
 the same `snapshot-dumpxml` the phase-2 script already collects.
 
 | | libvirt (`virsh`, through `ensureExec()`) | PVE (HTTP API) |
@@ -1112,10 +1114,179 @@ snapshot refused on LVM, and an internal revert after an external one were
 run later ("Second pass", phase 10).
 
 
+## One implementation: `sbm_virt` (issue #1623 item 5)
+
+The model, both backends' mapping onto it and the PVE session live in
+`crates/sbm_virt`, shared by the app (FFI) and the monitor agent's `/virt`
+(the web panel's Virtualization page):
+
+- `sbm_virt::model` (host, guest, state, actions, capabilities, usage),
+  `rates` (counters into usage), `error` (the failure kinds, and a `Detail`
+  code for what a client phrases itself).
+- `libvirt` — the `virsh` scripts and parsers (moved out of `sbm_parser`)
+  and `libvirt::host`: the overview read into the model, the power plan (a
+  crashed domain is destroyed before it starts). The app's `LibvirtBackend`
+  keeps running the scripts and the sudo flow; `LibvirtRates` (FFI) maps
+  each load.
+- `pve::Client` — login (password + TOTP, or a token), ticket renewal, one
+  new login for a refused ticket, the certificate decision (CA-valid against
+  the Mozilla roots, or the pinned leaf, decided in the handshake), the host
+  view with the state read after an action laid over the lagging listing,
+  power and its task. It reaches the API over a byte stream the caller opens:
+  the agent dials TCP itself; the app gives it an authenticated loopback
+  tunnel of its `ServerTcpDialer` (`PveSession`, FFI), so SSH, the agent's
+  relay and a local socket all work as before.
+
+Since 5.2 also `sbm_virt`'s: a guest's detail (`pve::resources::parse_config`,
+`libvirt::host::detail_of`), PVE's stored history (`parse_rrd`), console
+tickets (`Client::console`, the serial port termproxy takes, the
+`generate-password` fallback) and opening a console's `vncwebsocket` with
+termproxy's framing (`Client::open_console`, `pve::termproxy`; the agent's
+`/virt/console/ws`). The app still opens its console websocket itself
+(`PveBackend.openConsoleSocket`, Dart's TLS path) with the session's headers.
+
+Since 5.3, snapshots: `sbm_virt::snapshot` (the model, the chain, a diff and
+its groups, the rules a form checks: `name_issue`, `memory`), PVE's listing,
+storage support, diff, create, revert (with the start task waited for) and
+delete on `pve::Client`, and libvirt's mapping (`host::snapshot_of`,
+`chain_of`, `overlays`, `pool_of_file`). The app's `virtSnapshotNameIssue`,
+`virtSnapshotMemory`, `virtPoolHoldsFiles` and `virtPoolOfFile` call them.
+
+Since 5.4, storage and networks: `sbm_virt::resource` (pool, volume,
+network, the `Change` a client asks for by id, and `issue`, the rules it is
+checked by — names, sources, subnets, DHCP ranges, static hosts, in use, the
+management interface), `pve::net` (the live probe, which interfaces carry
+the node's management traffic, which a pending diff touches), PVE's
+listings and changes on `pve::Client` (`storage_pools`, `volumes` with the
+owner kept only while that guest exists, `networks` with each bridge's
+guests, `network_changes`, `manage` — a node's network changes one at a
+time, an apply refused when it touches the management interface), and
+libvirt's mapping (`host::pool_of`, `volume_of`, `with_backs`, `network_of`,
+`resource_script`). A change is resolved and checked against the host's
+listings read for it, so a page's stale copy cannot get one past the rules.
+The agent serves them as `/virt/storage`, `/virt/volumes`, `/virt/networks`
+and `/virt/manage`; the app's `virt_manage.dart` functions are FFI
+wrappers. The app's PVE upload stays its own streamed connection, and the
+panel has no upload yet. Verified 2026-10-04 against PVE 9.2.2 and libvirt
+11.3.0 through the agent and the app's `virt_real_test.dart`: a bridge made,
+applied, edited (its address kept), deleted and reverted; an apply touching
+`vmbr0` refused; storages, volumes, pools and networks made and removed; an
+orphan volume (its VMID gone) deletable.
+
+Since 5.5, making, copying and deleting guests: `sbm_virt::create` (the
+`CreateSpec` and `CloneRequest` a client asks for — pools, volumes and
+networks by id, a volume with its pool — `CreateOptions`, and the rules:
+`create_issue` with cloud-init's `cloud_init_issue`, `clone_issue`,
+`delete_issue`, `template_issue`; and what a form offers: `disk_storages`,
+`media_storages`, `image_storages`, `create_networks`, `create_form`),
+`pve::create` (a VM's and a container's parameters) and PVE's calls on
+`pve::Client` (`create_options`, `next_vmid`, `create_form`, `create` — a
+cloud image grown before the start, a start error kept apart from a failed
+create — `delete`, `make_template`, `clone_guest`, each re-reading the guest
+from the host first), and `libvirt::create` (`options_of`, `spec_of` with
+the cloud-init seed's `cloud_init_of` — the password hashed with a salt from
+the system's secure source, a new instance ID, the NIC's MAC —
+`created_of`, `delete_plan`, which decides what goes with a deleted domain
+from what was read, and `clone_spec_of`). The agent serves them as
+`/virt/create/form`, `/virt/create`, `/virt/delete`, `/virt/clone/form`,
+`/virt/clone` and `/virt/template`; the app's `virt_create.dart` rules are
+FFI wrappers, and its `LibvirtBackend` keeps only the round trips. A
+guest's name, state and template flag are read from each node's own listing
+(`/nodes/{node}/qemu`, `/lxc`), not `/cluster/resources` alone: for a few
+seconds after a clone the cluster's cache lists the copy as `VM <vmid>`, and
+after a stop still as running (PVE 9.2.2), so a name check there let a
+second copy of one name through. A disk asked smaller than a cloud image
+whose size the listing knows is refused (`image_size`); one whose size it
+cannot know is kept at the image's (`disk_kept_bytes`). Verified 2026-10-04
+against PVE 9.2.2 and libvirt 11.3.0 through the agent and the app's
+`virt_real_test.dart`: VMs (UEFI with Secure Boot, a TPM, an ISO, a SATA
+disk, a cloud image grown and set up by cloud-init) and a container made,
+cloned (full, linked from a template), made a template and deleted; the
+refusals (a name or VMID taken, too many cores, a running guest deleted, a
+linked clone naming a storage, an unknown node) said before any request; a
+missing privilege named with the `pveum` line that grants it.
+
+Since 5.6, a guest's hardware, settings, cloud-init and host devices:
+`sbm_virt::hardware` (the `Hardware` a view edits — the definition the
+next start gets, with what the running guest has instead as `pending` — the
+`Change` a client asks for, by id, and `issue`, the rules it is checked by;
+`CloudInitState` and `CloudInitEdit`; `HostDevices`), `pve::hardware` (the
+configuration and `pending` read, the option strings a change writes,
+cloud-init's fields, the devices a login may give), PVE's calls on
+`pve::Client` (`hardware`, `change_hardware`, `revert_pending`,
+`cloud_init`, `set_cloud_init`, `host_devices`), and `libvirt::hardware`
+(`hardware_of`, `pending_of`, `support_of`, `change_of`, `revert_of`,
+`cloud_init_state_of`, `cloud_init_update`, `host_devices_of`). A change is
+made from the read whose `revision` it carries: PVE's `digest`; on libvirt
+the SHA-256 of the persistent definition and of the running domain's id
+(new at every start), compared with what is read again for the change — the
+definition itself carries the display passwords and so stays on the host's
+side, and a revert to the running definition shown for one run is refused
+once the guest started again. The agent serves them as `/virt/hardware`,
+`/virt/hardware/change`, `/virt/hardware/revert`, `/virt/cloud-init`,
+`/virt/cloud-init/set` and `/virt/host-devices`; the app's
+`virt_hardware.dart` rules are FFI wrappers, and its backends keep only the
+round trips.
+Verified 2026-10-04 against PVE 9.2.2 and libvirt 11.3.0 through the agent
+and the app's `virt_real_test.dart`: CPU (with a CPU type), memory and the
+balloon, a disk grown, added, moved to another bus with its cache mode and
+its boot entry, removed with its volume (kept while a running domain holds
+it), a CD-ROM added and ejected, NICs added, changed (model, MAC, link,
+firewall) and removed, the boot order, UEFI with Secure Boot and back, a TPM
+added and removed, the display, name, note, autostart and protection;
+changes the running guest takes later shown as pending and reverted; a
+stale read refused as a conflict; cloud-init read and rewritten (a key, a
+static address, the password removed or kept); the host's devices.
+
+Since 5.7, backups and backup jobs: `sbm_virt::backup` (a backup, a job,
+a backup taken now, the edit of a job or of a backup's notes and
+protection, and the rules — the schedule's shape with PVE's own bounds
+(`schedule_issue`), a job's storage and guests, a request's storage, mode
+and compression), `pve::backup` (the listings read, a job's form with what
+it clears, a job's "Run now" as PVE's own web UI sends it) and PVE's calls
+on `pve::Client` (`backups`, `backup_storages`, `all_backup_storages`,
+`backup_jobs`, `all_backup_jobs`, `edit_backup_job`, `check_schedule`,
+`backup`, `run_backup_job`, `restore_backup` — over a stopped guest, or as
+a new VMID — `edit_backup`, `delete_backup`). The agent serves them as
+`/virt/backups`, `/virt/backup`, `/virt/backup/{restore,edit,delete}`,
+`/virt/backup-jobs` and `/virt/backup-jobs/{edit,run,schedule}`; libvirt
+keeps no backups, and is answered `unsupported`.
+Verified 2026-10-04 against PVE 9.2.2 through the agent: a backup taken
+now, one to a storage that holds none refused, notes and protection
+edited, a protected one's delete refused, a restore as a VMID in use
+refused, a restore over the stopped guest and as a new VMID; a job made,
+edited (what the form leaves out cleared), run now and removed, a job no
+longer on the host refused as `not_found` on run, edit and remove; the
+schedule check (next runs, PVE's refusal, a shape refused before it is
+sent); libvirt answered `unsupported`. Editing a job needs
+`Datastore.Allocate` on its storage as well as `Sys.Modify` on `/`
+(PVE's `assert_param_permission_*`), both named with their command.
+The whole of `virt_real_test.dart` passed again on 2026-10-04 against both
+hosts with the review fixes in (84 passed, 2 skipped: PVE password logins
+and PCI passthrough not configured), the token given `Sys.Modify`,
+`PVEDatastoreAdmin` and `PVESDNUser` for the storage and network group.
+
+With it, every PVE call the app makes is a typed `PveSession` call: the
+Dio that handed the app's own requests to the session (`PveSession.raw`)
+is gone, with `PveResources`. Two connections stay the app's own,
+authenticated with the session's headers: a console's websocket and an
+upload, which streams a file; an upload's refusal is said by the session
+(`PveSession.refusal`, the same `manage_err` a change's goes through).
+Still in Dart (marked `TODO(migration)`): the console's websocket, which
+`sbm_virt::pve::Client::open_console` already opens for the agent.
+
+Not verified on a real host since the move: the session in Rust (renewal,
+TOTP, a refused ticket replaced) against PVE, and libvirt through the agent's
+`/virt`. The Dart client these replace was (below); the Rust port is
+locked by `crates/sbm_virt/tests/pve_client.rs` and `pve_tls.rs`, ported
+from the Dart tests, and the app's remaining PVE tests now run through the
+FFI session against a TLS fake. The clock-driven real-host tests (a renewal
+an hour on, a challenge past its lifetime) went with the Dart session.
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
-`crates/sbm_parser/tests/ssh_e2e.rs` (`ssh_e2e_virt`), run 2026-09-25 against
+`crates/sbm_virt/tests/ssh_e2e.rs` (`ssh_e2e_virt`), run 2026-09-25 against
 PVE 9.2.2 (proxmox-termproxy 2.1.0, pve-xtermjs 6.0.0; API token auth, and
 password auth with and without TOTP for throwaway `@pam` accounts) over an
 SSH channel and directly, and against libvirt 11.3.0 / QEMU 10.0.13 on
@@ -1463,7 +1634,7 @@ Follows the repo's tab conventions (`CLAUDE.md` → Tabs):
    - Migration regression test fed by a database written by the release before
      this step (per `CLAUDE.md`), covering `ignore_cert` and the `homeTabs`
      change.
-   - `sbm_parser` virt fixtures for `virsh` output (`dart_compat`-style lock).
+   - `sbm_virt` libvirt fixtures for `virsh` output (`dart_compat`-style lock).
 
 ## IntroPage
 
@@ -1631,7 +1802,7 @@ and static hosts; PVE's bridge ports, address, VLAN awareness and autostart.
 The rows are a draft until Save. What each backend does with it differs, and
 the rows say which:
 
-| | libvirt (`sbm_parser::virt_net`, one `virsh` round trip) | PVE (HTTP API) |
+| | libvirt (`sbm_virt::libvirt::net`, one `virsh` round trip) | PVE (HTTP API) |
 | --- | --- | --- |
 | Which fields go where | mode, host bridge, address, prefix and DHCP range through `net-define`; the static hosts through `net-update add/delete ip-dhcp-host` | `PUT /nodes/{n}/network/{iface}` — ports, `cidr`, `gateway`, `bridge_vlan_aware`, `autostart`, and the interface's current `cidr`/`cidr6` sent back with every edit (below) |
 | When it applies | `net-define` writes the definition; the **running** network keeps its address, its bridge and its dnsmasq until it is restarted. A restart is offered as a switch of its own beside Save, and the rows say what it does to the guests on it | Pending, like every other PVE network change: the node's `interfaces.new`, applied with the card above the list |
@@ -1676,7 +1847,7 @@ Decisions:
   mode — where it would otherwise be dropped with nothing said.
 - **PVE allows a bridge, and nothing carrying the node's management
   traffic.** Decided from what the node itself says, read over the same
-  server connection (`virtPveLiveNetScript`, no root needed): the devices
+  server connection (`sbm_virt::pve::net::LIVE_NET_SCRIPT`, no root needed): the devices
   its default routes go through (IPv4 and IPv6), the ones carrying the local
   address of an established TCP connection — this app's among them,
   whatever it came through (SSH, the agent, a NAT or VPN in front of the
@@ -1687,7 +1858,7 @@ Decisions:
   protects the bridge under it, where turning VLAN awareness off would cut
   it. A node that does not answer (another cluster node, a failed read) has
   every interface with an address protected. An **apply** is checked
-  against the pending diff (`virtPveDiffIfaces`: the stanza each changed
+  against the pending diff (`pve::net::diff_ifaces`: the stanza each changed
   line is under — a `#` line too, which is how PVE writes an interface's
   `comments`; a hunk that starts inside a stanza is placed by its line
   number in the node's current `/etc/network/interfaces`, read with the
@@ -1799,7 +1970,7 @@ token, its ACLs and its role deleted.
 | A pending change discarded | a memory change with the guest running, seen in the inactive XML, reverted: the inactive XML matched the live one again, the guest still running, the NVRAM file's sha256 unchanged | – |
 
 Scripts and parsers run under real `sh` with hostile values in
-`sbm_parser::virt_net`'s tests; fixtures captured from the libvirt host
+`sbm_virt::libvirt::net`'s tests; fixtures captured from the libvirt host
 (`script_hardware.txt`, and `dumpxml_revert_live.xml` /
 `dumpxml_revert_definition.xml` for the revert transform, the latter defined
 on that host and accepted).
@@ -1923,4 +2094,4 @@ What the pass found, fixed and pinned by Rust and Dart tests:
   `notification-mode`; a backup's verification run; `prune-backups` as its
   own steppers rather than one property string.
 - Monitor agent: native virt endpoints and web panel parity, reusing
-  `sbm_parser::virt`.
+  `sbm_virt::libvirt`.

@@ -15,6 +15,7 @@
   import Desktop from './pages/Desktop.svelte'
   import Backup from './pages/Backup.svelte'
   import Bmc from './pages/Bmc.svelte'
+  import Virt from './pages/Virt.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
   import Terminal from './pages/Terminal.svelte'
@@ -59,6 +60,8 @@
             <Snippets onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'desktop'}
             <Desktop onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'virt'}
+            <Virt onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'bmc'}
             <Bmc onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'backup'}

@@ -125,6 +125,7 @@ export type MachineFeature =
   | 'desktop'
   | 'backup'
   | 'bmc'
+  | 'virt'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -1426,3 +1427,935 @@ export interface BmcCertInfo {
   not_before: number
   not_after: number
 }
+
+// --- Virtualization (`/virt`, `sbm_virt::model`) ---
+
+export type VirtHostKind = 'pve' | 'libvirt'
+export type VirtGuestKind = 'qemu' | 'lxc'
+export type VirtGuestState =
+  | 'running'
+  | 'paused'
+  | 'stopped'
+  | 'starting'
+  | 'stopping'
+  | 'rebooting'
+  | 'migrating'
+  | 'backup'
+  | 'unknown'
+export type VirtPowerAction = 'start' | 'shutdown' | 'reboot' | 'force_stop' | 'suspend' | 'resume'
+
+export interface VirtNode {
+  name: string
+  online: boolean
+  /// Fraction of `max_cpu` in use, 0..1.
+  cpu: number | null
+  max_cpu: number | null
+  mem_used: number | null
+  mem_total: number | null
+  /// Seconds.
+  uptime: number | null
+}
+
+export interface VirtHost {
+  kind: VirtHostKind
+  version: string | null
+  hypervisor: string | null
+  nodes: VirtNode[]
+}
+
+export interface VirtGuest {
+  /// PVE `qemu/100`, libvirt the domain's UUID.
+  id: string
+  name: string
+  kind: VirtGuestKind
+  state: VirtGuestState
+  /// PVE's lock or QEMU status, libvirt's reason.
+  state_reason: string | null
+  vmid: number | null
+  node: string | null
+  vcpu: number | null
+  /// Bytes.
+  mem_bytes: number | null
+  /// Seconds.
+  uptime: number | null
+  tags: string[]
+  template: boolean
+  autostart: boolean | null
+  actions: VirtPowerAction[]
+}
+
+/// One reading; null is "not measured", never zero.
+export interface VirtStats {
+  /// Unix ms.
+  at: number
+  /// Percent of the guest's own vCPUs.
+  cpu: number | null
+  mem_used: number | null
+  mem_total: number | null
+  disk_used: number | null
+  disk_total: number | null
+  /// Bytes per second.
+  disk_read: number | null
+  disk_write: number | null
+  net_in: number | null
+  net_out: number | null
+}
+
+/// What a view shows or hides by. Only the fields this panel reads.
+export interface VirtCapabilities {
+  lxc: boolean
+  pause: boolean
+  cluster: boolean
+  [key: string]: boolean | string[]
+}
+
+export interface VirtHostView {
+  host: VirtHost
+  guests: VirtGuest[]
+  stats: Record<string, VirtStats>
+  capabilities: VirtCapabilities
+}
+
+export type VirtErrorKind =
+  | 'unreachable'
+  | 'not_configured'
+  | 'auth_failed'
+  | 'need_tfa'
+  | 'cert_unconfirmed'
+  | 'cert_changed'
+  | 'permission_denied'
+  | 'invalid_response'
+  | 'action_failed'
+  | 'unsupported'
+  | 'exists'
+  | 'conflict'
+  | 'not_installed'
+  | 'sudo_password_required'
+  | 'sudo_password_rejected'
+  | 'closed'
+  | 'unknown'
+
+/// `sbm_virt::error::Detail`: what the panel phrases itself.
+export type VirtErrorDetail =
+  | { code: 'no_user' | 'password_required' | 'token_incomplete' }
+  | { code: 'otp_required' | 'otp_empty' | 'otp_rejected' }
+  | { code: 'invalid_body' | 'invalid_data' | 'missing_ticket' | 'not_offered' | 'cert_not_presented' }
+  | { code: 'no_privileges'; token: boolean; account: string; command: string }
+  | { code: 'task_still_running'; node: string; upid: string; minutes: number }
+  | { code: 'needs_privilege'; account: string; privilege: string; path: string; command: string }
+  | { code: 'refused'; issue: VirtIssue }
+  | { code: 'create_refused'; issue: VirtCreateIssue }
+  | { code: 'hardware_refused'; issue: VirtHwIssue }
+  | { code: 'backup_refused'; issue: VirtBackupIssue }
+  | { code: 'apply_touches_management'; ifaces: string[] }
+  | { code: 'apply_unreadable' }
+
+export interface VirtError {
+  kind: VirtErrorKind
+  /// The host's own words.
+  message: string | null
+  detail: VirtErrorDetail | null
+  cert: BmcCertInfo | null
+  previous_fingerprint: string | null
+}
+
+/// `POST /virt`.
+export interface VirtLoad {
+  host: VirtHostKind | null
+  supported: boolean
+  pve_configured: boolean
+  view: VirtHostView | null
+  error: VirtError | null
+}
+
+export type PveAuthKind = 'password' | 'token'
+
+/// `GET /virt/pve`: never a secret.
+export interface PveConfigView {
+  configured: boolean
+  addr: string | null
+  auth: PveAuthKind | null
+  username: string | null
+  has_password: boolean
+  token_id: string | null
+  has_token_secret: boolean
+  cert_sha256: string | null
+  editable: boolean
+}
+
+/// `PUT /virt/pve`. A secret of `null` keeps the stored one.
+export interface PveConfigInput {
+  addr: string
+  auth: PveAuthKind
+  username: string | null
+  password: string | null
+  token_id: string | null
+  token_secret: string | null
+  cert_sha256: string | null
+}
+
+export type VirtConsoleKind = 'text' | 'vnc'
+export type VirtHistoryWindow = 'hour' | 'day' | 'week'
+
+export interface VirtDisk {
+  device: string
+  source_type: string | null
+  source: string | null
+  target: string | null
+  bus: string | null
+  format: string | null
+  readonly: boolean
+  /// Bytes.
+  size: number | null
+}
+
+export interface VirtNic {
+  kind: string
+  mac: string | null
+  source: string | null
+  model: string | null
+  target: string | null
+}
+
+export interface VirtGraphics {
+  kind: string
+  port: number | null
+  tls_port: number | null
+  autoport: boolean
+  listen: string | null
+  socket: string | null
+}
+
+export interface VirtGuestDetail {
+  disks: VirtDisk[]
+  nics: VirtNic[]
+  graphics: VirtGraphics[]
+  display: { uri: string; protocol: string; host: string | null; port: number | null } | null
+  consoles: VirtConsoleKind[]
+  description: string | null
+  arch: string | null
+  machine: string | null
+}
+
+/// `POST /virt/console`.
+export interface VirtConsoleAnswer {
+  /// Opens `/virt/console/ws` once, within 30 s.
+  ticket: string | null
+  /// VNC: the display's password for this connection, for the VNC client only.
+  vnc_password: string | null
+  password_known: boolean
+  /// A libvirt text console: what to run in a terminal on the machine.
+  command: string | null
+  error: VirtError | null
+}
+
+export interface VirtSnapshot {
+  name: string
+  parent: string | null
+  description: string | null
+  /// Unix seconds.
+  created_at: number | null
+  current: boolean
+  with_memory: boolean
+  external: boolean
+  layers: { target: string; file: string | null; external: boolean }[]
+}
+
+export interface VirtChainFile {
+  path: string
+  format: string | null
+  allocation: number | null
+  backing: string | null
+  snap: string | null
+  active: boolean
+}
+
+export interface VirtChain {
+  disks: { target: string; files: VirtChainFile[]; pool: string | null; error: string | null }[]
+  refusal: string | null
+  external_refusal: string | null
+  pools: string[]
+}
+
+export type VirtSnapshotMemory = 'none' | 'optional' | 'always'
+
+/// `POST /virt/snapshots`.
+export interface VirtSnapshots {
+  snapshots?: VirtSnapshot[]
+  memory?: VirtSnapshotMemory
+  refusal?: string | null
+  /// libvirt: the chain an external snapshot sits on.
+  chain?: VirtChain | null
+  error: VirtError | null
+}
+
+export type VirtSnapshotOp =
+  | { op: 'create'; name: string; description: string | null; memory: boolean; external: boolean; pool: string | null }
+  | { op: 'revert'; name: string; start: boolean }
+  | { op: 'delete'; name: string }
+
+export interface VirtSnapDiff {
+  group: 'cpu' | 'memory' | 'disks' | 'nics' | 'firmware' | 'boot' | 'other'
+  key: string
+  before: string | null
+  after: string | null
+}
+
+// --- Storage and networks (`sbm_virt::resource`) ---
+
+export interface VirtGuestRef {
+  guest_id: string | null
+  vmid: number | null
+  device: string | null
+  mac: string | null
+  ip: string | null
+}
+
+export interface VirtPool {
+  id: string
+  name: string
+  node: string | null
+  type: string
+  path: string | null
+  source: string | null
+  capacity: number | null
+  used: number | null
+  available: number | null
+  active: boolean
+  autostart: boolean | null
+  enabled: boolean | null
+  shared: boolean | null
+  content: string[]
+  volume_count: number | null
+}
+
+/// What a form offers for one pool, the agent's answer.
+export interface VirtPoolRule {
+  formats: string[]
+  resizable: boolean
+}
+
+export interface VirtVolume {
+  id: string
+  name: string
+  path: string | null
+  format: string | null
+  content: string | null
+  capacity: number | null
+  allocation: number | null
+  backing: string | null
+  created_at: number | null
+  users: VirtGuestRef[]
+  backs: string[]
+}
+
+export interface VirtNetHost {
+  mac: string
+  ip: string
+  name: string | null
+}
+
+export interface VirtNetwork {
+  id: string
+  name: string
+  node: string | null
+  mode: string
+  bridge: string | null
+  cidrs: string[]
+  gateway: string | null
+  dhcp_ranges: string[]
+  ports: string[]
+  vlan_aware: boolean | null
+  vlan_id: number | null
+  vlan_device: string | null
+  bond_mode: string | null
+  active: boolean
+  autostart: boolean | null
+  comment: string | null
+  hosts: VirtNetHost[]
+  xml: string
+  pending_restart: boolean
+  management_editable: boolean
+  users: VirtGuestRef[]
+}
+
+export interface VirtNetworkChanges {
+  node: string
+  diff: string
+}
+
+/// `sbm_virt::resource::Issue`: why the agent refused a change.
+export type VirtIssue =
+  | 'name_empty'
+  | 'name_invalid'
+  | 'name_taken'
+  | 'source_invalid'
+  | 'target_invalid'
+  | 'cidr_invalid'
+  | 'dhcp_invalid'
+  | 'subnet_taken'
+  | 'bridge_invalid'
+  | 'size'
+  | 'space'
+  | 'format'
+  | 'in_use'
+  | 'shrink'
+  | 'host_invalid'
+  | 'management_iface'
+  | 'not_found'
+  | 'unsupported'
+
+/// `sbm_virt::resource::Change`.
+export type VirtChange =
+  | {
+      op: 'pool_create'
+      name: string
+      type: string
+      source: string
+      target?: string | null
+      node?: string | null
+      content?: string[]
+      autostart?: boolean
+    }
+  | { op: 'pool_set_active'; pool: string; active: boolean }
+  | { op: 'pool_set_autostart'; pool: string; on: boolean }
+  | { op: 'pool_refresh'; pool: string }
+  | { op: 'pool_delete'; pool: string; delete_storage?: boolean }
+  | { op: 'volume_create'; pool: string; name: string; gib: number; format: string }
+  | { op: 'volume_delete'; pool: string; volume: string }
+  | { op: 'volume_resize'; pool: string; volume: string; bytes: number }
+  | { op: 'volume_clone'; pool: string; volume: string; name: string }
+  | {
+      op: 'network_create'
+      name: string
+      mode: string
+      node?: string | null
+      bridge?: string | null
+      cidr?: string | null
+      dhcp_start?: string | null
+      dhcp_end?: string | null
+      vlan_aware?: boolean
+      autostart?: boolean
+    }
+  | {
+      op: 'network_edit'
+      network: string
+      mode: string
+      bridge?: string | null
+      address?: string | null
+      prefix?: number | null
+      dhcp_start?: string | null
+      dhcp_end?: string | null
+      hosts?: VirtNetHost[]
+      restart?: boolean
+      base_xml?: string | null
+    }
+  | {
+      op: 'network_edit_bridge'
+      network: string
+      ports?: string | null
+      cidr?: string | null
+      gateway?: string | null
+      vlan_aware?: boolean | null
+      autostart?: boolean | null
+    }
+  | { op: 'network_restart'; network: string; base_xml?: string | null }
+  | { op: 'network_set_active'; network: string; active: boolean }
+  | { op: 'network_set_autostart'; network: string; on: boolean }
+  | { op: 'network_delete'; network: string }
+  | { op: 'network_apply'; node: string }
+  | { op: 'network_revert'; node: string }
+
+// --- Creating, copying and deleting guests (`sbm_virt::create`) ---
+
+/// `sbm_virt::create::Issue`: why the agent refused to create, copy, delete
+/// or make a template of a guest.
+export type VirtCreateIssue =
+  | 'name_empty'
+  | 'name_invalid'
+  | 'name_taken'
+  | 'vmid_invalid'
+  | 'vmid_taken'
+  | 'node'
+  | 'cores'
+  | 'memory'
+  | 'storage'
+  | 'disk_size'
+  | 'template'
+  | 'media'
+  | 'credentials'
+  | 'password'
+  | 'ssh_keys'
+  | 'image'
+  | 'image_size'
+  | 'network'
+  | 'secure_boot'
+  | 'not_offered'
+  | 'ci_user'
+  | 'ci_credentials'
+  | 'ci_hostname'
+  | 'ci_address'
+  | 'ci_gateway'
+  | 'ci_dns'
+  | 'ci_search'
+  | 'clone_linked_target'
+  | 'clone_storage'
+  | 'clone_storage_content'
+  | 'clone_storage_shared'
+  | 'clone_node_unknown'
+  | 'not_stopped'
+  | 'is_template'
+  | 'not_found'
+  | 'unsupported'
+
+/// What the host offers a new VM. Lists put the default first.
+export interface VirtCreateOptions {
+  buses: string[]
+  nic_models: string[]
+  uefi: boolean
+  tpm: boolean
+  secure_boot: boolean
+  cloud_images: boolean
+  cloud_init: boolean
+  /// Why cloud-init is not offered, the host's words.
+  cloud_init_missing: string | null
+}
+
+/// A volume a form offers, with the id of the pool it is in.
+export interface VirtOffer {
+  pool: string
+  volume: VirtVolume
+}
+
+/// `POST /virt/create/form`.
+export interface VirtCreateForm {
+  options: VirtCreateOptions
+  /// PVE: the cluster's next free VMID.
+  next_vmid: number | null
+  storages: VirtPool[]
+  networks: VirtNetwork[]
+  /// A VM's install media, or a container's templates.
+  media: VirtOffer[]
+  /// Cloud images.
+  images: VirtOffer[]
+}
+
+/// A pool's id and a volume's id in it.
+export interface VirtVolumeRef {
+  pool: string
+  volume: string
+}
+
+export interface VirtCloudInit {
+  user: string
+  password?: string
+  ssh_keys: string[]
+  /// libvirt; the guest's name when omitted.
+  hostname?: string
+  /// `a.b.c.d/prefix`; omitted is DHCP.
+  address?: string
+  gateway?: string
+  dns: string[]
+  search_domains: string[]
+}
+
+/// `sbm_virt::create::CreateSpec`. Optional fields are omitted when unset.
+export interface VirtCreateSpec {
+  kind: VirtGuestKind
+  name: string
+  /// PVE.
+  node?: string
+  /// PVE; omitted takes the next free one.
+  vmid?: number
+  cores: number
+  memory_mib: number
+  /// Pool id.
+  storage: string
+  disk_gib: number
+  /// A VM's ISO or a container's template.
+  media?: VirtVolumeRef
+  /// A cloud image; never with `media`.
+  image?: VirtVolumeRef
+  /// Network id.
+  network?: string
+  /// A container's root password.
+  password?: string
+  /// A container's root keys.
+  ssh_keys: string[]
+  unprivileged: boolean
+  bus?: string
+  nic_model?: string
+  uefi: boolean
+  secure_boot: boolean
+  tpm: boolean
+  cloud_init?: VirtCloudInit
+  start: boolean
+}
+
+export interface VirtCreated {
+  id: string
+  /// Created, but it did not start: the host's words.
+  start_error: string | null
+  /// The disk is a cloud image's size, bigger than asked.
+  disk_kept_bytes: number | null
+}
+
+/// `sbm_virt::create::CloneRequest`.
+export interface VirtCloneRequest {
+  name: string
+  /// PVE: full or linked (templates only). libvirt: contents copied or
+  /// empty disks.
+  full: boolean
+  /// PVE.
+  vmid?: number
+  /// PVE: a storage name.
+  storage?: string
+  /// PVE.
+  target_node?: string
+  /// libvirt: a pool name.
+  target_pool?: string
+}
+
+// --- A guest's hardware and settings (`sbm_virt::hardware`) ---
+
+export type VirtHwDiskKind = 'disk' | 'cdrom' | 'rootfs' | 'mount'
+
+export interface VirtHwDisk {
+  /// PVE option (`scsi0`, `rootfs`, `mp0`), libvirt target (`vda`).
+  key: string
+  kind: VirtHwDiskKind
+  /// PVE volume id, libvirt path; null for an empty drive.
+  source: string | null
+  /// Bytes.
+  size: number | null
+  storage: string | null
+  /// A container mount point's path.
+  mount_point: string | null
+  bus: string | null
+  format: string | null
+  readonly: boolean
+  /// null for the host's default.
+  cache: string | null
+  /// A CD-ROM holding the guest's cloud-init data, not install media.
+  cloud_init: boolean
+  resizable: boolean
+}
+
+export interface VirtHwNic {
+  /// PVE option (`net0`), libvirt MAC.
+  key: string
+  mac: string | null
+  /// libvirt's interface type; null on PVE.
+  type: string | null
+  /// Bridge or network name.
+  source: string | null
+  model: string | null
+  link_up: boolean
+  /// PVE; null where there is none.
+  firewall: boolean | null
+  /// A container's interface name.
+  name: string | null
+}
+
+/// One setting the running guest has differently from its next start.
+export interface VirtPendingField {
+  key: string
+  current: string | null
+  pending: string | null
+  /// Goes at the next start.
+  delete: boolean
+}
+
+export type VirtDeviceKind = 'usb' | 'pci' | 'tpm'
+
+export interface VirtHwDevice {
+  key: string
+  kind: VirtDeviceKind
+  detail: string | null
+  /// Given through a PVE resource mapping.
+  mapping: boolean
+}
+
+/// What this guest can be changed to, on its host.
+export interface VirtHwSupport {
+  buses: string[]
+  caches: string[]
+  nic_models: string[]
+  mac: boolean
+  protocols: string[]
+  listen: boolean
+  gpus: string[]
+  uefi: boolean
+  secure_boot: boolean
+  tpm: boolean
+  usb: boolean
+  pci: boolean
+}
+
+/// `POST /virt/hardware`: the definition the next start gets.
+export interface VirtHardware {
+  kind: VirtGuestKind
+  running: boolean
+  cpu: { sockets: number; cores: number; threads: number; online: number | null; type: string | null }
+  memory: { mib: number; min_mib: number | null; balloon: boolean; swap_mib: number | null }
+  disks: VirtHwDisk[]
+  nics: VirtHwNic[]
+  /// Boot devices in order, by disk or NIC key; null where there is none.
+  boot: string[] | null
+  autostart: boolean
+  name: string | null
+  description: string | null
+  /// PVE; null where the host has no such setting.
+  protection: boolean | null
+  rename_running: boolean
+  pending: VirtPendingField[]
+  /// Sent back with an edit.
+  revision: string | null
+  limits: { host_cpus: number | null; host_memory_bytes: number | null }
+  cpu_types: string[]
+  config_text: string | null
+  firmware: { uefi: boolean; secure_boot: boolean; vars_storage: string | null } | null
+  display: { protocol: string | null; listen: string | null; gpu: string | null; port: number | null } | null
+  devices: VirtHwDevice[]
+  support: VirtHwSupport
+}
+
+/// A host device a guest can be given.
+export interface VirtHostDevice {
+  id: string
+  label: string
+  detail: string | null
+  mapping: boolean
+  usb_bus: number | null
+  usb_port: string | null
+  usb_device: number | null
+  iommu_group: number | null
+  /// Devices sharing its IOMMU group, itself included.
+  group_size: number
+}
+
+/// `POST /virt/host-devices`.
+export interface VirtHostDevices {
+  usb: VirtHostDevice[]
+  pci: VirtHostDevice[]
+  /// false: a PCI device given to a guest keeps it from starting.
+  iommu: boolean
+  /// PVE: this login may only use resource mappings.
+  mappings_only: boolean
+}
+
+export type VirtUsbNaming = 'vendor_product' | 'address'
+
+/// `sbm_virt::hardware::Change`. null keeps (or, where noted, clears).
+export type VirtHwChange =
+  | { op: 'set_cpu'; sockets: number; cores: number; online: number | null; type: string | null }
+  | { op: 'set_memory'; mib: number; min_mib: number | null; swap_mib: number | null }
+  | { op: 'grow_disk'; key: string; bytes: number }
+  | { op: 'add_disk'; pool: string; gib: number; mount_point: string | null }
+  | { op: 'attach_volume'; volume: VirtVolumeRef; mount_point: string | null }
+  | { op: 'remove_disk'; key: string; delete_volume: boolean }
+  | { op: 'add_cdrom'; media: VirtVolumeRef | null }
+  /// null ejects.
+  | { op: 'set_media'; key: string; media: VirtVolumeRef | null }
+  | { op: 'add_nic'; network: string; model: string | null }
+  | { op: 'remove_nic'; key: string }
+  | { op: 'update_nic'; key: string; network: string | null; link_up: boolean; firewall: boolean | null }
+  | { op: 'set_boot'; order: string[] }
+  | { op: 'set_autostart'; on: boolean }
+  | { op: 'set_name'; name: string }
+  | { op: 'set_description'; text: string }
+  | { op: 'set_protection'; on: boolean }
+  | { op: 'update_disk'; key: string; bus: string | null; cache: string | null }
+  | { op: 'set_nic_hardware'; key: string; model: string | null; mac: string | null }
+  | { op: 'set_firmware'; uefi: boolean; secure_boot: boolean; storage: string | null }
+  | { op: 'set_display'; protocol: string | null; listen: string | null; gpu: string | null }
+  | { op: 'add_device'; kind: VirtDeviceKind; host: VirtHostDevice | null; storage: string | null; usb_naming: VirtUsbNaming }
+  | { op: 'remove_device'; key: string }
+  | { op: 'revert'; keys: string[] }
+
+/// What a change came to, beyond succeeding.
+export interface VirtHwOutcome {
+  /// The running guest refused its half: the next start gets the change.
+  live_error: string | null
+  /// A disk's volume was to be deleted, but the running guest still has it.
+  volume_kept: boolean
+}
+
+/// `sbm_virt::hardware::Issue`: why the agent refused a change.
+export type VirtHwIssue =
+  | 'cpu_count'
+  | 'cpu_online'
+  | 'memory'
+  | 'memory_min'
+  | 'disk_shrink'
+  | 'disk_size'
+  | 'storage_space'
+  | 'mount_point'
+  | 'boot_empty'
+  | 'name_invalid'
+  | 'name_running'
+  | 'description'
+  | 'mac'
+  | 'stop_first'
+  | 'storage_missing'
+  | 'device'
+  | 'volume_in_use'
+  | 'media'
+  | 'not_offered'
+  | 'not_found'
+  | 'unsupported'
+
+/// `POST /virt/cloud-init`: never the password.
+export interface VirtCloudInitState {
+  user: string
+  ssh_keys: string[]
+  /// libvirt; null on PVE, whose cloud-init uses the VM's name.
+  hostname: string | null
+  /// null for DHCP.
+  address: string | null
+  gateway: string | null
+  dns: string[]
+  search_domains: string[]
+  /// How many NICs the settings configure; the first is the one edited.
+  nics: number
+  password_set: boolean
+  /// libvirt: the password expires at the first login.
+  password_expires: boolean
+  /// The guest has the NIC the address settings apply to.
+  network: boolean
+  /// libvirt: the seed says more than this app writes.
+  foreign: boolean
+  revision: string
+}
+
+/// `sbm_virt::hardware::CloudInitEdit`: `values.password` is a new one,
+/// omitted to keep the one set.
+export interface VirtCloudInitEdit {
+  values: VirtCloudInit
+  remove_password: boolean
+  password_expires: boolean
+  revision: string
+}
+
+// --- Backups and backup jobs (`sbm_virt::backup`, PVE only) ---
+
+export type VirtBackupMode = 'snapshot' | 'suspend' | 'stop'
+/// `0` is none.
+export type VirtBackupCompress = '0' | 'zstd' | 'lzo' | 'gzip'
+
+/// One backup of a guest, as a backup storage lists it.
+export interface VirtBackup {
+  /// PVE's volid: `local:backup/vzdump-qemu-100-….vma.zst`.
+  id: string
+  storage: string
+  node: string
+  vmid: number | null
+  /// Unix seconds.
+  created_at: number | null
+  size: number | null
+  /// `vma.zst`, `tar.zst`, …
+  format: string | null
+  notes: string | null
+  protected: boolean
+  /// `ok` or `failed`, where a verification job has run on it.
+  verification: string | null
+  kind: VirtGuestKind | null
+}
+
+/// A scheduled backup job (`/cluster/backup`).
+export interface VirtBackupJob {
+  id: string
+  schedule: string | null
+  storage: string | null
+  mode: string | null
+  compress: string | null
+  enabled: boolean
+  /// Every guest (less `exclude`), the `vmids`, or the guests of `pool`.
+  all: boolean
+  vmids: number[]
+  exclude: number[]
+  pool: string | null
+  /// null: every node.
+  node: string | null
+  comment: string | null
+  notes_template: string | null
+  /// `always` or `failure`.
+  mail_notification: string | null
+  /// PVE's `prune-backups`: `keep-last=7,keep-daily=4`.
+  prune: string | null
+}
+
+/// `sbm_virt::backup::BackupJobEdit`: the whole job, an absent optional
+/// field cleared.
+export interface VirtBackupJobEdit {
+  id?: string
+  is_new: boolean
+  node?: string
+  storage: string
+  schedule: string
+  mode: VirtBackupMode
+  compress: VirtBackupCompress
+  enabled: boolean
+  all: boolean
+  vmids: number[]
+  exclude: number[]
+  pool?: string
+  comment?: string
+  notes_template?: string
+  mail_notification?: string
+  prune?: string
+}
+
+/// `sbm_virt::backup::BackupRequest`: one backup taken now.
+export interface VirtBackupRequest {
+  storage: string
+  mode: VirtBackupMode
+  compress: VirtBackupCompress
+  notes?: string
+  protected: boolean
+  prune?: string
+}
+
+/// `sbm_virt::backup::BackupEdit`.
+export interface VirtBackupEdit {
+  notes: string
+  protected: boolean
+}
+
+/// What the host makes of a schedule: its refusal, or the next runs (Unix
+/// seconds, oldest first).
+export interface VirtScheduleCheck {
+  error: string | null
+  next: number[]
+}
+
+/// `POST /virt/backups`.
+export interface VirtBackups {
+  backups: VirtBackup[] | null
+  /// The jobs that take this guest.
+  jobs: VirtBackupJob[] | null
+  /// Its node's storages that hold backups.
+  storages: VirtPool[] | null
+  error: VirtError | null
+}
+
+/// `POST /virt/backup-jobs`.
+export interface VirtBackupJobs {
+  jobs: VirtBackupJob[] | null
+  /// Every node's storages that hold backups.
+  storages: VirtPool[] | null
+  error: VirtError | null
+}
+
+/// `sbm_virt::backup::Issue`: why the agent refused a backup request.
+export type VirtBackupIssue =
+  | 'schedule_empty'
+  | 'schedule_invalid'
+  | 'storage'
+  | 'mode'
+  | 'compress'
+  | 'guests'
+  | 'node_offline'
+  | 'not_stopped'
+  | 'not_found'
+  | 'unsupported'

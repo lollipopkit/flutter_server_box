@@ -3650,9 +3650,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Больше, чем свободно в хранилище';
 
   @override
-  String get virtHwIssueSwap => 'Не отрицательное';
-
-  @override
   String get virtHwLater => 'Вступит в силу после перезапуска';
 
   @override
@@ -4207,6 +4204,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Введите имя';
+
+  @override
+  String get virtResNotFound => 'Больше нет на этом хосте';
+
+  @override
+  String get virtResUnsupported => 'Этот хост этого не поддерживает';
 
   @override
   String get virtResNameInvalid =>
@@ -5422,4 +5425,46 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Агент monitor уже хранит максимально допустимое число резервных копий. Сначала удалите одну.';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID от 100 до 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Этот узел не в сети.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Этого установочного образа нет на хосте.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Новая машина не может использовать эту сеть.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Этот хост не предлагает этого для новой ВМ.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Для Secure Boot нужен UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Сначала выключите её.';
+
+  @override
+  String get virtGuestIsTemplate => 'Это уже шаблон.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Образ больше диска: сделайте диск не меньше образа.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Это хранилище не содержит резервных копий на этом узле.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE не принимает такой режим или сжатие.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'Узел задания не в сети.';
 }

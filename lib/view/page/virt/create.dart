@@ -82,7 +82,12 @@ enum _Source { iso, image }
 /// A volume as the form offers it: with the storage it was listed in, which
 /// is what tells it apart. libvirt names a volume by itself in its pool, so
 /// two pools can each hold a `debian.iso`; PVE's storages are per node.
-typedef _PoolVolume = ({String key, VirtVolume volume, String pool});
+typedef _PoolVolume = ({String key, VirtVolume volume, VirtStoragePool pool});
+
+VirtPoolVolume? _picked(_PoolVolume? v) => switch (v) {
+  final v? => (pool: v.pool, volume: v.volume),
+  null => null,
+};
 
 class _VirtCreateViewState extends ConsumerState<VirtCreateView>
     with _PaneRows<VirtCreateView> {
@@ -275,9 +280,6 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
         : nets.firstWhereOrNull((n) => n.id == _network?.id) ??
               nets.firstWhereOrNull((n) => n.name == 'default') ??
               nets.firstOrNull;
-    final maxCores = pve
-        ? nodes.firstWhereOrNull((n) => n.name == node)?.maxCpu
-        : null;
     final bus = options.buses.contains(_bus) ? _bus : options.buses.firstOrNull;
     final nicModel = options.nicModels.contains(_nicModel)
         ? _nicModel
@@ -303,7 +305,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
           if (loaded)
             for (final p in pools)
               for (final v in byPool[p.id]!)
-                if (keep(v)) (key: '${p.id}/${v.id}', volume: v, pool: p.name),
+                if (keep(v)) (key: '${p.id}/${v.id}', volume: v, pool: p),
         ]..sort((a, b) => a.volume.name.compareTo(b.volume.name));
         final media = of(mediaPools, (v) => virtIsMedia(v, _kind));
         final images = of(imagePools, (v) => virtIsCloudImage(v, host));
@@ -323,10 +325,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 memoryMiB: _memorySteps[_memory],
                 storage: storage,
                 diskGiB: _diskSteps[_disk],
-                media: lxc
-                    ? (chosenMedia ?? media.firstOrNull)?.volume
-                    : (fromImage ? null : chosenMedia?.volume),
-                image: fromImage ? image?.volume : null,
+                media: _picked(
+                  lxc ? (chosenMedia ?? media.firstOrNull) : (fromImage ? null : chosenMedia),
+                ),
+                image: _picked(fromImage ? image : null),
                 network: network,
                 password: lxc ? _password.text : null,
                 sshKeys: lxc ? _keys.text : null,
@@ -349,7 +351,10 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 spec,
                 host: host,
                 guests: data?.guests ?? const [],
-                maxCores: maxCores,
+                nodes: nodes,
+                pools: pools,
+                networks: networks,
+                options: options,
               );
         // Where the pane's index turns a group orange: what is missing
         // there.
@@ -659,7 +664,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                 key: 'create:media:$key',
                 icon: Icons.album_outlined,
                 label: v.name,
-                sub: sub(v, pool),
+                sub: sub(v, pool.name),
                 selected: chosenMedia?.key == key,
                 onTap: () => setState(() => _media = key),
               ),
@@ -677,7 +682,7 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
                   key: 'create:image:$key',
                   icon: Icons.cloud_outlined,
                   label: v.name,
-                  sub: [sub(v, pool), ?v.format].where((s) => s.isNotEmpty).join(' · '),
+                  sub: [sub(v, pool.name), ?v.format].where((s) => s.isNotEmpty).join(' · '),
                   selected: image?.key == key,
                   onTap: () => setState(() {
                     _image = key;

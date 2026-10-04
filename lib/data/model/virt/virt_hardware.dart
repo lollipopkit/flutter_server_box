@@ -1,9 +1,13 @@
 import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/hardware.dart' as ffi;
+import 'package:server_box/src/rust/api/pve.dart' show PveError;
 
 part 'virt_hardware.freezed.dart';
 
@@ -472,7 +476,7 @@ final class VirtHwRemoveDisk extends VirtHwChange {
 final class VirtHwAddCdrom extends VirtHwChange {
   const VirtHwAddCdrom({this.media});
 
-  final VirtVolume? media;
+  final VirtPoolVolume? media;
 }
 
 final class VirtHwSetMedia extends VirtHwChange {
@@ -481,7 +485,7 @@ final class VirtHwSetMedia extends VirtHwChange {
   final String key;
 
   /// Null ejects.
-  final VirtVolume? media;
+  final VirtPoolVolume? media;
 }
 
 final class VirtHwAddNic extends VirtHwChange {
@@ -582,9 +586,9 @@ final class VirtHwSetFirmware extends VirtHwChange {
   final bool uefi;
   final bool secureBoot;
 
-  /// PVE: the storage's name (`local-lvm`) a new EFI variables disk goes
-  /// on.
-  final String? storage;
+  /// PVE: the storage a new EFI variables disk goes on; null for the one
+  /// the old disk is on.
+  final VirtStoragePool? storage;
 }
 
 /// The console's protocol and listen address, and the video card; null
@@ -612,8 +616,8 @@ final class VirtHwAddDevice extends VirtHwChange {
   /// `0bda:b023` or `bus:device`, by [usbNaming].
   final VirtHostDevice? host;
 
-  /// PVE: the storage's name (`local-lvm`) the TPM's state goes on.
-  final String? storage;
+  /// PVE: the storage the TPM's state goes on.
+  final VirtStoragePool? storage;
 
   /// How a USB device is named. PVE's `usb0: host=1-1.2` is its own form,
   /// which the backend writes from the same id.
@@ -670,7 +674,6 @@ enum VirtHwIssue {
 
   /// A balloon floor above the memory.
   memoryMin,
-  swap,
 
   /// Smaller than the disk is: disks only grow.
   diskShrink,
@@ -681,8 +684,7 @@ enum VirtHwIssue {
   mountPoint,
   bootEmpty,
 
-  /// Not a name the host takes: see [virtPveNamePattern] and
-  /// [virtLibvirtNamePattern].
+  /// Not a name the host takes (`sbm_virt::create::name_ok`).
   nameInvalid,
 
   /// libvirt renames only a guest that is not running.
@@ -706,160 +708,120 @@ enum VirtHwIssue {
 
   /// The volume is another guest's disk already.
   volumeInUse,
+
+  /// Not install media.
+  media,
+
+  /// Not something the host offers this guest.
+  notOffered,
+
+  /// The disk, NIC, pool, volume or network is not (or no longer) there.
+  notFound,
+  unsupported;
+
+  /// The issue `sbm_virt` names (`disk_shrink`).
+  static VirtHwIssue? ofRust(String? name) => switch (name) {
+    null => null,
+    _ => values.firstWhere(
+      (i) => i.name == name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase()),
+      orElse: () => unsupported,
+    ),
+  };
 }
 
-/// Whether [disk] can be grown from here: not a host block device (an LV of
-/// a libvirt `logical` pool, a disk passed through by its `/dev` path),
-/// which libvirt cannot resize (its `logical` backend has no resize, and
-/// QEMU cannot grow a block device) and PVE's resize does not take.
+/// Whether [disk] can be grown from here (`sbm_virt::hardware::disk_growable`).
 bool virtHwDiskGrowable(VirtHwDisk disk) =>
-    disk.resizable && !(disk.source?.startsWith('/dev/') ?? false);
+    ffi.virtHwDiskGrowable(diskJson: jsonEncode(VirtRust.hwDiskJson(disk)));
 
 /// Whether [device] can be given by its address: the host said where it
 /// sits.
 bool virtUsbHasAddress(VirtHostDevice device) =>
     device.usbBus != null && (device.usbPort != null || device.usbDevice != null);
 
-/// The address [device] is given by, as its backend writes it: libvirt's
-/// `<address bus='1' device='4'/>` (a bus and the device number on it —
-/// `usbaddress` takes exactly those two), PVE's `host=1-1.2` (the bus and
-/// the port chain, which is what its web UI writes and what a mapping
-/// stores).
-String virtUsbAddress(VirtHostDevice device, VirtHostKind host) =>
-    host == VirtHostKind.pve
-    ? '${device.usbBus}-${device.usbPort}'
-    : '${device.usbBus}:${device.usbDevice}';
+/// The address [device] is given by, as its backend writes it.
+String? virtUsbAddress(VirtHostDevice device, VirtHostKind host) => ffi.virtUsbAddress(
+  deviceJson: jsonEncode(VirtRust.hostDeviceJson(device)),
+  pve: host == VirtHostKind.pve,
+);
 
 /// A unicast MAC: six octets, the first even, not all zero.
-bool virtIsUnicastMac(String mac) {
-  if (!RegExp(r'^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$').hasMatch(mac)) {
-    return false;
-  }
-  if (int.parse(mac.substring(0, 2), radix: 16).isOdd) return false;
-  return mac.replaceAll(':', '').replaceAll('0', '').isNotEmpty;
-}
+bool virtIsUnicastMac(String mac) => ffi.virtIsUnicastMac(mac: mac);
 
-/// The longest note kept with a guest here: PVE's `description` is capped at
-/// 8 KiB, and libvirt's is held to the same. In UTF-8 bytes.
-const virtHwDescriptionMax = 8192;
-
-/// The least memory a guest is given here.
+/// The least memory a guest is given here
+/// (`sbm_virt::hardware::MIN_MEMORY_MIB`), for the view's stepper.
 const virtHwMinMemoryMib = 16;
 
-/// A container mount point: absolute, and nothing PVE's option syntax would
-/// read as the next option.
-final virtMountPointPattern = RegExp(r'^/[^,=\s]*[^,=\s/]$');
+/// The longest note kept with a guest here, in UTF-8 bytes
+/// (`sbm_virt::hardware::DESCRIPTION_MAX`), for the view's counter.
+const virtHwDescriptionMax = 8192;
 
-/// Why [change] cannot be made to [hw]; null when it can. [host] decides
-/// which names are taken; without it a name is checked against both.
+/// Why [change] cannot be made to [hw]; null when it can
+/// (`sbm_virt::hardware::issue`). What the change names — a storage, a
+/// volume, a network — is checked as the change carries it; the host checks
+/// it again against what it lists. [host] decides which names are taken;
+/// without it a name is checked against both.
 VirtHwIssue? virtHwIssue(
   VirtHardware hw,
   VirtHwChange change, {
   VirtHostKind? host,
 }) {
-  final limits = hw.limits;
-  switch (change) {
-    case VirtHwSetCpu(:final sockets, :final cores, :final online):
-      final total = sockets * cores * hw.cpu.threads;
-      if (sockets < 1 || cores < 1) return VirtHwIssue.cpuCount;
-      final hostCpus = limits.hostCpus;
-      if (total > (hostCpus ?? 4096)) return VirtHwIssue.cpuCount;
-      if (online != null && (online < 1 || online > total)) {
-        return VirtHwIssue.cpuOnline;
-      }
-    case VirtHwSetMemory(:final mib, :final minMib, :final swapMib):
-      final host = limits.hostMemoryBytes;
-      if (mib < virtHwMinMemoryMib ||
-          (host != null && mib * (1 << 20) > host)) {
-        return VirtHwIssue.memory;
-      }
-      if (minMib != null && (minMib < 0 || minMib > mib)) {
-        return VirtHwIssue.memoryMin;
-      }
-      if (swapMib != null && swapMib < 0) return VirtHwIssue.swap;
-    case VirtHwGrowDisk(:final key, :final bytes):
-      // A disk this guest does not have would be grown at no path.
-      final disk = hw.disk(key);
-      if (disk == null || !virtHwDiskGrowable(disk)) {
-        return VirtHwIssue.diskSize;
-      }
-      final size = disk.size;
-      if (size != null && bytes <= size) return VirtHwIssue.diskShrink;
-      if (bytes > 1 << 50) return VirtHwIssue.diskSize;
-    case VirtHwAddDisk(:final storage, :final gib, :final mountPoint):
-      if (gib < 1 || gib > 65536) return VirtHwIssue.diskSize;
-      final available = storage.available;
-      if (available != null && gib * (1 << 30) > available) {
-        return VirtHwIssue.storageSpace;
-      }
-      if (hw.kind == VirtGuestKind.lxc &&
-          !virtMountPointPattern.hasMatch(mountPoint ?? '')) {
-        return VirtHwIssue.mountPoint;
-      }
-    case VirtHwAttachVolume(:final volume, :final mountPoint):
-      // A base image too: a guest writing to it corrupts what is made on it.
-      if (volume.inUse) return VirtHwIssue.volumeInUse;
-      if (hw.kind == VirtGuestKind.lxc &&
-          !virtMountPointPattern.hasMatch(mountPoint ?? '')) {
-        return VirtHwIssue.mountPoint;
-      }
-    case VirtHwSetBoot(:final order):
-      if (order.isEmpty) return VirtHwIssue.bootEmpty;
-    case VirtHwSetName(:final name):
-      final ok = switch (host) {
-        VirtHostKind.pve => virtPveNamePattern.hasMatch(name),
-        VirtHostKind.libvirt => virtLibvirtNamePattern.hasMatch(name),
-        null =>
-          virtPveNamePattern.hasMatch(name) &&
-              virtLibvirtNamePattern.hasMatch(name),
-      };
-      if (!ok) return VirtHwIssue.nameInvalid;
-      if (hw.running && !hw.renameRunning) return VirtHwIssue.nameRunning;
-    case VirtHwSetDescription(:final text):
-      // As `sbm_parser` checks it: UTF-8 bytes, and Unicode's control
-      // characters (C0, DEL, C1) but a newline and a tab.
-      if (utf8.encode(text).length > virtHwDescriptionMax ||
-          text.runes.any(
-            (r) =>
-                (r < 0x20 && r != 0x0a && r != 0x09) ||
-                (r >= 0x7f && r <= 0x9f),
-          )) {
-        return VirtHwIssue.description;
-      }
-    case VirtHwUpdateDisk(:final bus):
-      if (bus != null && hw.running) return VirtHwIssue.stopFirst;
-    case VirtHwSetNicHardware(:final mac):
-      if (mac != null && !virtIsUnicastMac(mac)) return VirtHwIssue.mac;
-    case VirtHwSetFirmware(:final uefi, :final storage):
-      if (hw.running) return VirtHwIssue.stopFirst;
-      if (host == VirtHostKind.pve && uefi && storage == null) {
-        return VirtHwIssue.storageMissing;
-      }
-    case VirtHwAddDevice(:final kind, host: final device, :final storage):
-      switch (kind) {
-        case VirtHwDeviceKind.tpm:
-          if (hw.hasTpm) return VirtHwIssue.device;
-          if (host == VirtHostKind.pve && storage == null) {
-            return VirtHwIssue.storageMissing;
-          }
-        case VirtHwDeviceKind.usb || VirtHwDeviceKind.pci:
-          if (device == null) return VirtHwIssue.device;
-      }
-    case VirtHwRemoveDisk() ||
-        VirtHwAddCdrom() ||
-        VirtHwSetDisplay() ||
-        VirtHwRemoveDevice() ||
-        VirtHwSetMedia() ||
-        VirtHwAddNic() ||
-        VirtHwRemoveNic() ||
-        VirtHwUpdateNic() ||
-        VirtHwSetAutostart() ||
-        VirtHwSetProtection() ||
-        VirtHwRevert() ||
-        // Made through its own call, not as a change
-        // (`VirtBackend.revertPending`).
-        VirtHwRevertPending():
-      break;
+  String? on(bool pve) {
+    final (pools, networks, volumes) = VirtRust.hwListing(change);
+    try {
+      return ffi.virtHwIssue(
+        hardwareJson: jsonEncode(VirtRust.hardwareJson(hw)),
+        changeJson: jsonEncode(VirtRust.hwChangeJson(change)),
+        pve: pve,
+        poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
+        networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
+        volumesJson: jsonEncode([for (final v in volumes) VirtRust.volumeJson(v)]),
+      );
+    } on PveError {
+      return 'unsupported';
+    }
   }
-  return null;
+
+  return VirtHwIssue.ofRust(switch (host) {
+    VirtHostKind.pve => on(true),
+    VirtHostKind.libvirt => on(false),
+    null => on(true) ?? on(false),
+  });
+}
+
+/// What a [VirtHwIssue] says: a field's error line, a toast, a refusal's
+/// message. [limits] are the host's, for the bounds it names; [pve] picks
+/// the host's name rule.
+String? virtHwIssueText(
+  VirtHwIssue? issue, {
+  VirtHwLimits limits = const VirtHwLimits(),
+  bool pve = false,
+}) {
+  final hostMib = switch (limits.hostMemoryBytes) {
+    final b? => b >> 20,
+    null => null,
+  };
+  return switch (issue) {
+    null => null,
+    VirtHwIssue.cpuCount => l10n.virtHwIssueCpuCount(limits.hostCpus ?? 4096),
+    VirtHwIssue.cpuOnline => l10n.virtHwIssueCpuOnline,
+    VirtHwIssue.memory => l10n.virtHwIssueMemory(virtHwMinMemoryMib, hostMib ?? 1 << 30),
+    VirtHwIssue.memoryMin => l10n.virtHwIssueMemoryMin,
+    VirtHwIssue.diskShrink => l10n.virtHwIssueDiskShrink,
+    VirtHwIssue.diskSize => l10n.virtHwIssueDiskSize,
+    VirtHwIssue.storageSpace => l10n.virtHwIssueStorageSpace,
+    VirtHwIssue.mountPoint => l10n.virtHwIssueMountPoint,
+    VirtHwIssue.bootEmpty => l10n.virtHwIssueBootEmpty,
+    VirtHwIssue.nameInvalid => pve ? l10n.virtCreateNameInvalidPve : l10n.virtCreateNameInvalidLibvirt,
+    VirtHwIssue.nameRunning => l10n.virtSetRenameStopped,
+    VirtHwIssue.description => l10n.virtSetIssueDescription(virtHwDescriptionMax),
+    VirtHwIssue.mac => l10n.virtHwIssueMac,
+    VirtHwIssue.stopFirst => l10n.virtHwIssueStopFirst,
+    VirtHwIssue.storageMissing => l10n.virtHwIssueStorageMissing,
+    VirtHwIssue.device => l10n.virtHwIssueDevice,
+    VirtHwIssue.volumeInUse => l10n.virtVolInUse,
+    VirtHwIssue.media => l10n.virtCreateMediaMissing,
+    VirtHwIssue.notOffered => l10n.virtCreateNotOffered,
+    VirtHwIssue.notFound => l10n.virtResNotFound,
+    VirtHwIssue.unsupported => l10n.virtResUnsupported,
+  };
 }

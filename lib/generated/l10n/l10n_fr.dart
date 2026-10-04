@@ -3693,9 +3693,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Plus que l\'espace libre du stockage';
 
   @override
-  String get virtHwIssueSwap => 'Pas négatif';
-
-  @override
   String get virtHwLater => 'Effectif au redémarrage';
 
   @override
@@ -4251,6 +4248,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Saisissez un nom';
+
+  @override
+  String get virtResNotFound => 'N’est plus sur cet hôte';
+
+  @override
+  String get virtResUnsupported => 'Cet hôte ne le permet pas';
 
   @override
   String get virtResNameInvalid =>
@@ -5476,4 +5479,47 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'L\'agent monitor contient déjà le nombre maximal de sauvegardes. Supprimez-en une d\'abord.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Un VMID de 100 à 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Ce nœud n\'est pas en ligne.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Ce support d\'installation n\'est pas sur cet hôte.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Un nouvel invité ne peut pas utiliser ce réseau.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Cet hôte ne propose pas cela pour une nouvelle VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot nécessite UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Éteignez-le d\'abord.';
+
+  @override
+  String get virtGuestIsTemplate => 'C\'est déjà un modèle.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'L\'image est plus grande que le disque : faites le disque au moins aussi grand.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Ce stockage ne contient pas de sauvegardes sur ce nœud.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Ce n\'est pas un mode ou une compression que PVE accepte.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'Le nœud de la tâche n\'est pas en ligne.';
 }

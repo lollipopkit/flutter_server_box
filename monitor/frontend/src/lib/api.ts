@@ -55,6 +55,42 @@ import type {
   BmcList,
   BmcStatus,
   BmcTargetInput,
+  PveConfigInput,
+  PveConfigView,
+  VirtBackupEdit,
+  VirtBackupJobEdit,
+  VirtBackupJobs,
+  VirtBackupRequest,
+  VirtBackups,
+  VirtScheduleCheck,
+  VirtCloneRequest,
+  VirtCloudInitEdit,
+  VirtCloudInitState,
+  VirtHardware,
+  VirtHostDevices,
+  VirtHwChange,
+  VirtHwOutcome,
+  VirtConsoleAnswer,
+  VirtCreated,
+  VirtCreateForm,
+  VirtCreateSpec,
+  VirtGuestKind,
+  VirtConsoleKind,
+  VirtError,
+  VirtGuestDetail,
+  VirtHistoryWindow,
+  VirtLoad,
+  VirtSnapDiff,
+  VirtChange,
+  VirtNetwork,
+  VirtNetworkChanges,
+  VirtPool,
+  VirtPoolRule,
+  VirtVolume,
+  VirtSnapshotOp,
+  VirtSnapshots,
+  VirtStats,
+  VirtPowerAction,
   DesktopsView,
 } from '../types'
 import { isSecureAgentUrl } from './agentUrl'
@@ -66,6 +102,11 @@ const TIMEOUT_MS = 10_000
 /// it ends: the agent bounds that itself (`[remote_access.exec] timeout`,
 /// a minute by default), so this only has to outlast it.
 const MACHINE_TIMEOUT_MS = 120_000
+
+/// For a PVE task the agent waits for that can run long (a backup, a
+/// restore): `sbm_virt`'s client waits ten minutes for one, so this only has
+/// to outlast that.
+const TASK_TIMEOUT_MS = 660_000
 
 export class ApiError extends Error {
   /// HTTP status, when the request got far enough to have one. Absent for a
@@ -479,6 +520,319 @@ export const api = {
       `/bmc/${encodeURIComponent(id)}/power`,
       { method: 'POST', body: JSON.stringify({ intent }) },
       'Failed to reach the BMC',
+    ),
+  /// The host and its guests. `password` is the operator's sudo password
+  /// for a libvirt that refuses the agent's account: sent for this request,
+  /// never stored. A host's failure is `error` in a 200, not an `ApiError`.
+  loadVirt: (password?: string) =>
+    request<VirtLoad>(
+      '/virt',
+      { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
+      'Failed to read the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Returns once the host has finished it (a PVE task stopped).
+  virtPower: (guest: string, action: VirtPowerAction, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/power',
+      { method: 'POST', body: JSON.stringify({ guest, action, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtDetail: (guest: string, password?: string) =>
+    request<{ detail: VirtGuestDetail | null; error: VirtError | null }>(
+      '/virt/detail',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the guest',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// `history: null` where the host keeps none (libvirt).
+  virtHistory: (guest: string, window: VirtHistoryWindow) =>
+    request<{ history: VirtStats[] | null; error: VirtError | null }>(
+      '/virt/history',
+      { method: 'POST', body: JSON.stringify({ guest, window }) },
+      'Failed to read the guest\'s history',
+    ),
+  /// Resolves the console and mints the ticket its websocket opens with.
+  virtConsole: (guest: string, kind: VirtConsoleKind, password?: string) =>
+    request<VirtConsoleAnswer>(
+      '/virt/console',
+      { method: 'POST', body: JSON.stringify({ guest, kind, password: password ?? null }) },
+      'Failed to open the console',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtSnapshots: (guest: string, password?: string) =>
+    request<VirtSnapshots>(
+      '/virt/snapshots',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the snapshots',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Returns once the host has finished it.
+  virtSnapshot: (guest: string, op: VirtSnapshotOp, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/snapshot',
+      { method: 'POST', body: JSON.stringify({ guest, ...op, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtSnapshotDiff: (guest: string, name: string, password?: string) =>
+    request<{ diff: VirtSnapDiff[] | null; error: VirtError | null }>(
+      '/virt/snapshot/diff',
+      { method: 'POST', body: JSON.stringify({ guest, name, password: password ?? null }) },
+      'Failed to compare the snapshot',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtStorage: (password?: string) =>
+    request<{ pools: VirtPool[] | null; rules: Record<string, VirtPoolRule> | null; error: VirtError | null }>(
+      '/virt/storage',
+      { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
+      'Failed to read the storage',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtVolumes: (pool: string, password?: string) =>
+    request<{ volumes: VirtVolume[] | null; error: VirtError | null }>(
+      '/virt/volumes',
+      { method: 'POST', body: JSON.stringify({ pool, password: password ?? null }) },
+      'Failed to read the volumes',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtNetworks: (password?: string) =>
+    request<{ networks: VirtNetwork[] | null; changes: VirtNetworkChanges[] | null; error: VirtError | null }>(
+      '/virt/networks',
+      { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
+      'Failed to read the networks',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Checked against what the host lists now, then made; returns once the
+  /// host has.
+  virtManage: (change: VirtChange, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/manage',
+      { method: 'POST', body: JSON.stringify({ change, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// What a new guest of `kind` can be made of; PVE needs the `node`.
+  createForm: (kind: VirtGuestKind, node?: string, password?: string) =>
+    request<{ form: VirtCreateForm | null; error: VirtError | null }>(
+      '/virt/create/form',
+      { method: 'POST', body: JSON.stringify({ kind, node: node ?? null, password: password ?? null }) },
+      'Failed to read what a new guest can be made of',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Checked against what the host lists now, then made; returns once the
+  /// host has.
+  createGuest: (spec: VirtCreateSpec, password?: string) =>
+    request<{ created: VirtCreated | null; error: VirtError | null }>(
+      '/virt/create',
+      { method: 'POST', body: JSON.stringify({ spec, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// `removeDisks` is libvirt's choice; PVE deletes a guest's disks with it.
+  deleteGuest: (guest: string, removeDisks: boolean, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/delete',
+      { method: 'POST', body: JSON.stringify({ guest, remove_disks: removeDisks, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Where a copy's disks can go.
+  cloneForm: (guest: string, password?: string) =>
+    request<{ storages: VirtPool[] | null; error: VirtError | null }>(
+      '/virt/clone/form',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read where a copy can go',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The copy's id once the host has made it.
+  cloneGuest: (guest: string, cloneRequest: VirtCloneRequest, password?: string) =>
+    request<{ id: string | null; error: VirtError | null }>(
+      '/virt/clone',
+      { method: 'POST', body: JSON.stringify({ guest, request: cloneRequest, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The guest's hardware as its next start gets it, with the `revision` an
+  /// edit is sent back with.
+  virtHardware: (guest: string, password?: string) =>
+    request<{ hardware: VirtHardware | null; error: VirtError | null }>(
+      '/virt/hardware',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the hardware',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// One change, made from the read whose `revision` it carries; an older
+  /// one is answered `conflict`.
+  virtHardwareChange: (guest: string, revision: string | null, change: VirtHwChange, password?: string) =>
+    request<{ outcome: VirtHwOutcome | null; error: VirtError | null }>(
+      '/virt/hardware/change',
+      { method: 'POST', body: JSON.stringify({ guest, revision, change, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Every pending change dropped.
+  virtHardwareRevert: (guest: string, revision: string | null, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/hardware/revert',
+      { method: 'POST', body: JSON.stringify({ guest, revision, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtCloudInit: (guest: string, password?: string) =>
+    request<{ cloud_init: VirtCloudInitState | null; error: VirtError | null }>(
+      '/virt/cloud-init',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the cloud-init settings',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// A typed password goes to the host only.
+  virtSetCloudInit: (guest: string, edit: VirtCloudInitEdit, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/cloud-init/set',
+      { method: 'POST', body: JSON.stringify({ guest, edit, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The host's USB and PCI devices the guest can be given.
+  virtHostDevices: (guest: string, password?: string) =>
+    request<{ devices: VirtHostDevices | null; error: VirtError | null }>(
+      '/virt/host-devices',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the host devices',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// PVE only.
+  makeTemplate: (guest: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/template',
+      { method: 'POST', body: JSON.stringify({ guest }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// A guest's backups, the jobs that take it and its node's backup
+  /// storages. PVE only; libvirt answers `backup_refused`.
+  virtBackups: (guest: string) =>
+    request<VirtBackups>(
+      '/virt/backups',
+      { method: 'POST', body: JSON.stringify({ guest }) },
+      'Failed to read the backups',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Returns once the host has finished it.
+  virtBackup: (guest: string, backupRequest: VirtBackupRequest) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup',
+      { method: 'POST', body: JSON.stringify({ guest, request: backupRequest }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      TASK_TIMEOUT_MS,
+    ),
+  /// Over the guest itself (stopped) without `vmid`, else as a new guest.
+  /// Returns once the host has finished it.
+  virtRestoreBackup: (guest: string, backup: string, target: { vmid?: number; storage?: string } = {}) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup/restore',
+      { method: 'POST', body: JSON.stringify({ guest, backup, ...target }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      TASK_TIMEOUT_MS,
+    ),
+  virtEditBackup: (guest: string, backup: string, edit: VirtBackupEdit) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup/edit',
+      { method: 'POST', body: JSON.stringify({ guest, backup, edit }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtDeleteBackup: (guest: string, backup: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup/delete',
+      { method: 'POST', body: JSON.stringify({ guest, backup }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The datacenter's backup jobs and every node's backup storages.
+  backupJobs: () =>
+    request<VirtBackupJobs>(
+      '/virt/backup-jobs',
+      { method: 'POST', body: '{}' },
+      'Failed to read the backup jobs',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Made (`is_new`), edited, or with `remove` deleted.
+  editBackupJob: (edit: VirtBackupJobEdit, remove = false) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup-jobs/edit',
+      { method: 'POST', body: JSON.stringify({ edit, remove }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// "Run now": returns once every node's backup has finished.
+  runBackupJob: (id: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup-jobs/run',
+      { method: 'POST', body: JSON.stringify({ id }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      TASK_TIMEOUT_MS,
+    ),
+  /// What the host makes of a schedule: its next runs or its refusal.
+  checkBackupSchedule: (schedule: string) =>
+    request<{ check: VirtScheduleCheck | null; error: VirtError | null }>(
+      '/virt/backup-jobs/schedule',
+      { method: 'POST', body: JSON.stringify({ schedule }) },
+      'Failed to check the schedule',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  getPve: () => request<PveConfigView>('/virt/pve', {}, 'Failed to read the Proxmox VE settings'),
+  /// A refusal arrives with its code as `ApiError.message`.
+  setPve: (config: PveConfigInput) =>
+    request<PveConfigView>('/virt/pve', { method: 'PUT', body: JSON.stringify(config) }, 'Failed to save the Proxmox VE settings'),
+  removePve: () => request<PveConfigView>('/virt/pve', { method: 'DELETE' }, 'Failed to remove the Proxmox VE settings'),
+  pinPve: (fingerprint: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/pve/cert',
+      { method: 'POST', body: JSON.stringify({ fingerprint }) },
+      'Failed to trust the certificate',
+    ),
+  pveTfa: (code: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/pve/tfa',
+      { method: 'POST', body: JSON.stringify({ code }) },
+      'Failed to send the code',
+      undefined,
+      MACHINE_TIMEOUT_MS,
     ),
   getBackups: () => request<BackupView>('/backup', {}, 'Failed to list the backups'),
   /// The blob's bytes, as stored. The panel has no key for what is in them.

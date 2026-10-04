@@ -615,7 +615,7 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
       host: pve ? VirtHostKind.pve : VirtHostKind.libvirt,
       networks: all,
     );
-    return (issue, issue == null ? null : virtResIssueText(issue, pve: pve));
+    return (issue, issue == null ? null : virtResIssueText(issue));
   }
 
   /// Save and Revert, with why Save is held back; nothing without a draft.
@@ -1245,7 +1245,7 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
       networks: nets ?? const [],
     );
     String? on(Set<VirtResIssue> which) => which.contains(issue)
-        ? virtResIssueText(issue, pve: pve)
+        ? virtResIssueText(issue)
         : null;
     final ready = nets != null && issue == null && !_creating;
     return Scaffold(

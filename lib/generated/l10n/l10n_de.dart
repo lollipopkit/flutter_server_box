@@ -3674,9 +3674,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Mehr als der Speicher frei hat';
 
   @override
-  String get virtHwIssueSwap => 'Nicht negativ';
-
-  @override
   String get virtHwLater => 'Wirksam nach Neustart';
 
   @override
@@ -4230,6 +4227,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Namen eingeben';
+
+  @override
+  String get virtResNotFound => 'Nicht mehr auf diesem Host';
+
+  @override
+  String get virtResUnsupported => 'Dieser Host unterstützt das nicht';
 
   @override
   String get virtResNameInvalid =>
@@ -5456,4 +5459,47 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Der Monitor-Agent hält bereits so viele Backups, wie er erlaubt. Lösche zuerst eines.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Eine VMID von 100 bis 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Dieser Knoten ist nicht online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Dieses Installationsmedium ist nicht auf diesem Host.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Ein neuer Gast kann dieses Netzwerk nicht nutzen.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Dieser Host bietet das für eine neue VM nicht an.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot benötigt UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Zuerst herunterfahren.';
+
+  @override
+  String get virtGuestIsTemplate => 'Es ist bereits eine Vorlage.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Das Image ist größer als die Festplatte: Machen Sie die Festplatte mindestens so groß.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Dieser Speicher nimmt auf diesem Knoten keine Backups auf.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Kein Modus und keine Kompression, die PVE annimmt.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'Der Knoten des Jobs ist nicht online.';
 }

@@ -122,6 +122,9 @@ pub struct AppState {
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
+    /// The PVE session and the libvirt rate history kept between the
+    /// Virtualization page's requests — see `api::virt`.
+    pub virt: Arc<crate::api::virt::VirtState>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -206,6 +209,7 @@ impl AppState {
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
+            virt: Arc::new(crate::api::virt::VirtState::default()),
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -322,6 +326,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/stream/ws", web::get().to(crate::api::ws::stream::stream_ws))
             .route("/rdp/ws", web::get().to(crate::api::ws::rdcleanpath::rdp_ws))
             .route("/listen/ws", web::get().to(ws::listen::listen_ws))
+            .route("/virt/console/ws", web::get().to(ws::virt_console::virt_console_ws))
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
@@ -385,6 +390,47 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::bmc::replace)),
             )
             .service(web::resource("/bmc/probe").route(web::post().to(crate::api::bmc::probe)))
+            .service(web::resource("/virt").route(web::post().to(crate::api::virt::load)))
+            .service(web::resource("/virt/power").route(web::post().to(crate::api::virt::power)))
+            .service(web::resource("/virt/detail").route(web::post().to(crate::api::virt::detail)))
+            .service(web::resource("/virt/history").route(web::post().to(crate::api::virt::history)))
+            .service(web::resource("/virt/console").route(web::post().to(crate::api::virt::console)))
+            .service(web::resource("/virt/snapshots").route(web::post().to(crate::api::virt::snapshots)))
+            .service(web::resource("/virt/snapshot").route(web::post().to(crate::api::virt::snapshot)))
+            .service(web::resource("/virt/snapshot/diff").route(web::post().to(crate::api::virt::snapshot_diff)))
+            .service(web::resource("/virt/storage").route(web::post().to(crate::api::virt_resources::storage)))
+            .service(web::resource("/virt/volumes").route(web::post().to(crate::api::virt_resources::volumes)))
+            .service(web::resource("/virt/networks").route(web::post().to(crate::api::virt_resources::networks)))
+            .service(web::resource("/virt/manage").route(web::post().to(crate::api::virt_resources::manage)))
+            .service(web::resource("/virt/create/form").route(web::post().to(crate::api::virt_guests::create_form)))
+            .service(web::resource("/virt/create").route(web::post().to(crate::api::virt_guests::create)))
+            .service(web::resource("/virt/delete").route(web::post().to(crate::api::virt_guests::delete)))
+            .service(web::resource("/virt/clone/form").route(web::post().to(crate::api::virt_guests::clone_form)))
+            .service(web::resource("/virt/clone").route(web::post().to(crate::api::virt_guests::clone)))
+            .service(web::resource("/virt/template").route(web::post().to(crate::api::virt_guests::template)))
+            .service(web::resource("/virt/hardware").route(web::post().to(crate::api::virt_hardware::hardware)))
+            .service(web::resource("/virt/hardware/change").route(web::post().to(crate::api::virt_hardware::change)))
+            .service(web::resource("/virt/hardware/revert").route(web::post().to(crate::api::virt_hardware::revert)))
+            .service(web::resource("/virt/cloud-init").route(web::post().to(crate::api::virt_hardware::cloud_init)))
+            .service(web::resource("/virt/cloud-init/set").route(web::post().to(crate::api::virt_hardware::set_cloud_init)))
+            .service(web::resource("/virt/host-devices").route(web::post().to(crate::api::virt_hardware::host_devices)))
+            .service(web::resource("/virt/backups").route(web::post().to(crate::api::virt_backups::backups)))
+            .service(web::resource("/virt/backup").route(web::post().to(crate::api::virt_backups::backup)))
+            .service(web::resource("/virt/backup/restore").route(web::post().to(crate::api::virt_backups::restore)))
+            .service(web::resource("/virt/backup/edit").route(web::post().to(crate::api::virt_backups::edit)))
+            .service(web::resource("/virt/backup/delete").route(web::post().to(crate::api::virt_backups::delete)))
+            .service(web::resource("/virt/backup-jobs").route(web::post().to(crate::api::virt_backups::jobs)))
+            .service(web::resource("/virt/backup-jobs/edit").route(web::post().to(crate::api::virt_backups::edit_job)))
+            .service(web::resource("/virt/backup-jobs/run").route(web::post().to(crate::api::virt_backups::run_job)))
+            .service(web::resource("/virt/backup-jobs/schedule").route(web::post().to(crate::api::virt_backups::schedule)))
+            .service(
+                web::resource("/virt/pve")
+                    .route(web::get().to(crate::api::virt::pve_get))
+                    .route(web::put().to(crate::api::virt::pve_put))
+                    .route(web::delete().to(crate::api::virt::pve_delete)),
+            )
+            .service(web::resource("/virt/pve/cert").route(web::post().to(crate::api::virt::pve_cert)))
+            .service(web::resource("/virt/pve/tfa").route(web::post().to(crate::api::virt::pve_tfa)))
             .service(web::resource("/bmc/{id}").route(web::get().to(crate::api::bmc::status)))
             .service(
                 web::resource("/bmc/{id}/power").route(web::post().to(crate::api::bmc::power)),
@@ -1047,6 +1093,9 @@ async fn issue_ws_ticket(
         ),
         Purpose::Listen => (ok(Grant::Listen), "listen not available"),
         Purpose::Rdp => (ok(Grant::Connect), "rdp not available"),
+        // Bound to the console it opens, so only `POST /virt/console` mints
+        // one.
+        Purpose::Virt => (false, "virt consoles are opened through /virt/console"),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
@@ -1070,6 +1119,7 @@ async fn issue_ws_ticket(
                     Purpose::Stream => "stream",
                     Purpose::Listen => "listen",
                     Purpose::Rdp => "rdp",
+                    Purpose::Virt => "virt",
                 })
                 .record(&app_state.db)
                 .await;

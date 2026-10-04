@@ -2725,6 +2725,2384 @@ type RootTranslation = {
 	 * T​h​e​ ​B​M​C​ ​l​i​s​t​s​ ​m​o​r​e​ ​s​e​n​s​o​r​s​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​;​ ​t​h​e​ ​f​i​r​s​t​ ​6​4​ ​a​r​e​ ​s​h​o​w​n​.
 	 */
 	bmcSensorsTruncated: string
+	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
+	 */
+	virt: string
+	/**
+	 * V​i​r​t​u​a​l​ ​m​a​c​h​i​n​e
+	 */
+	virtVm: string
+	/**
+	 * L​X​C​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtLxc: string
+	/**
+	 * T​e​m​p​l​a​t​e
+	 */
+	virtTemplate: string
+	/**
+	 * A​ ​t​e​m​p​l​a​t​e​ ​i​s​ ​n​o​t​ ​s​t​a​r​t​e​d​.​ ​N​e​w​ ​g​u​e​s​t​s​ ​a​r​e​ ​c​l​o​n​e​d​ ​f​r​o​m​ ​i​t​.
+	 */
+	virtTemplateNote: string
+	/**
+	 * U​s​a​g​e​ ​s​h​o​w​s​ ​h​e​r​e​ ​o​n​c​e​ ​i​t​ ​r​u​n​s​.
+	 */
+	virtStoppedNote: string
+	/**
+	 * N​e​i​t​h​e​r​ ​P​r​o​x​m​o​x​ ​V​E​ ​n​o​r​ ​l​i​b​v​i​r​t​ ​w​a​s​ ​f​o​u​n​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	virtNone: string
+	/**
+	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n​ ​i​s​ ​n​o​t​ ​m​a​n​a​g​e​d​ ​o​n​ ​t​h​i​s​ ​p​l​a​t​f​o​r​m​.
+	 */
+	virtUnsupported: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​g​u​e​s​t​s​.
+	 */
+	virtNoGuests: string
+	/**
+	 * P​i​c​k​ ​a​ ​g​u​e​s​t​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
+	 */
+	virtPick: string
+	/**
+	 * A​l​l​o​c​a​t​e​d
+	 */
+	virtAllocated: string
+	/**
+	 * {​r​u​n​n​i​n​g​}​ ​r​u​n​n​i​n​g​ ​·​ ​{​t​o​t​a​l​}​ ​t​o​t​a​l
+	 * @param {unknown} running
+	 * @param {unknown} total
+	 */
+	virtRunningOf: RequiredParams<'running' | 'total'>
+	/**
+	 * M​e​m​o​r​y
+	 */
+	virtMemory: string
+	/**
+	 * D​i​s​k
+	 */
+	virtDisk: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	virtNetwork: string
+	/**
+	 * T​y​p​e
+	 */
+	virtKind: string
+	/**
+	 * N​o​d​e
+	 */
+	virtNode: string
+	/**
+	 * U​p​t​i​m​e
+	 */
+	virtUptime: string
+	/**
+	 * S​t​a​r​t​s​ ​w​i​t​h​ ​t​h​e​ ​h​o​s​t
+	 */
+	virtAutostart: string
+	/**
+	 * T​a​g​s
+	 */
+	virtTags: string
+	/**
+	 * T​h​e​ ​c​h​a​r​t​ ​f​i​l​l​s​ ​i​n​ ​a​s​ ​r​e​a​d​i​n​g​s​ ​a​r​r​i​v​e​.
+	 */
+	virtChartWaiting: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	virtStateRunning: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	virtStatePaused: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	virtStateStopped: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	virtStateStarting: string
+	/**
+	 * S​t​o​p​p​i​n​g
+	 */
+	virtStateStopping: string
+	/**
+	 * R​e​b​o​o​t​i​n​g
+	 */
+	virtStateRebooting: string
+	/**
+	 * M​i​g​r​a​t​i​n​g
+	 */
+	virtStateMigrating: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p
+	 */
+	virtStateBackup: string
+	/**
+	 * U​n​k​n​o​w​n
+	 */
+	virtStateUnknown: string
+	/**
+	 * S​t​a​r​t
+	 */
+	virtActStart: string
+	/**
+	 * S​h​u​t​ ​d​o​w​n
+	 */
+	virtActShutdown: string
+	/**
+	 * R​e​b​o​o​t
+	 */
+	virtActReboot: string
+	/**
+	 * F​o​r​c​e​ ​s​t​o​p
+	 */
+	virtActForceStop: string
+	/**
+	 * P​a​u​s​e
+	 */
+	virtActSuspend: string
+	/**
+	 * R​e​s​u​m​e
+	 */
+	virtActResume: string
+	/**
+	 * {​a​c​t​i​o​n​}​:​ ​d​o​n​e​ ​f​o​r​ ​{​n​a​m​e​}​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	virtActDone: RequiredParams<'action' | 'name'>
+	/**
+	 * {​a​c​t​i​o​n​}​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​'​s​ ​s​y​s​t​e​m​ ​i​s​ ​a​s​k​e​d​ ​t​o​ ​d​o​ ​i​t​ ​a​n​d​ ​m​a​y​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	virtConfirm: RequiredParams<'action' | 'name'>
+	/**
+	 * F​o​r​c​e​ ​s​t​o​p​ ​{​n​a​m​e​}​?​ ​I​t​ ​s​t​o​p​s​ ​a​t​ ​o​n​c​e​,​ ​l​i​k​e​ ​p​u​l​l​i​n​g​ ​t​h​e​ ​p​l​u​g​,​ ​a​n​d​ ​a​n​y​t​h​i​n​g​ ​u​n​s​a​v​e​d​ ​i​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtConfirmForce: RequiredParams<'name'>
+	/**
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d
+	 */
+	virtSudoPassword: string
+	/**
+	 * U​s​e
+	 */
+	virtSudoSend: string
+	/**
+	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​e​n​t​ ​w​i​t​h​ ​e​a​c​h​ ​r​e​q​u​e​s​t​ ​w​h​i​l​e​ ​t​h​i​s​ ​p​a​g​e​ ​i​s​ ​o​p​e​n​ ​a​n​d​ ​i​s​ ​n​o​t​ ​s​t​o​r​e​d​.
+	 */
+	virtSudoHint: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​h​o​s​t​.
+	 */
+	virtErrUnreachable: string
+	/**
+	 * H​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​t​o​ ​t​h​e​ ​h​o​s​t​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​.
+	 */
+	virtErrNotConfigured: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​s​i​g​n​-​i​n​.
+	 */
+	virtErrAuthFailed: string
+	/**
+	 * E​n​t​e​r​ ​t​h​e​ ​c​o​d​e​ ​f​r​o​m​ ​t​h​e​ ​a​c​c​o​u​n​t​'​s​ ​a​u​t​h​e​n​t​i​c​a​t​o​r​.
+	 */
+	virtErrOtpRequired: string
+	/**
+	 * E​n​t​e​r​ ​a​ ​c​o​d​e​.
+	 */
+	virtErrOtpEmpty: string
+	/**
+	 * T​h​e​ ​c​o​d​e​ ​w​a​s​ ​n​o​t​ ​a​c​c​e​p​t​e​d​.​ ​W​a​i​t​ ​f​o​r​ ​t​h​e​ ​n​e​x​t​ ​o​n​e​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+	 */
+	virtErrOtpRejected: string
+	/**
+	 * T​h​e​ ​P​r​o​x​m​o​x​ ​V​E​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​s​i​g​n​e​d​ ​b​y​ ​a​ ​k​n​o​w​n​ ​a​u​t​h​o​r​i​t​y​.​ ​T​r​u​s​t​ ​i​t​ ​o​n​c​e​ ​i​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​.
+	 */
+	virtErrCertUnconfirmed: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​p​r​e​s​e​n​t​e​d​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​c​e​r​t​i​f​i​c​a​t​e​ ​f​r​o​m​ ​t​h​e​ ​t​r​u​s​t​e​d​ ​o​n​e​.​ ​N​o​t​h​i​n​g​ ​w​a​s​ ​s​e​n​t​.
+	 */
+	virtErrCertChanged: string
+	/**
+	 * T​h​a​t​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​p​r​e​s​e​n​t​e​d​.
+	 */
+	virtErrCertNotPresented: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​c​c​o​u​n​t​.
+	 */
+	virtErrPermissionDenied: string
+	/**
+	 * {​a​c​c​o​u​n​t​}​ ​m​a​y​ ​n​o​t​ ​s​e​e​ ​a​n​y​ ​g​u​e​s​t​.​ ​G​r​a​n​t​ ​i​t​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+​{​c​o​m​m​a​n​d​}
+	 * @param {unknown} account
+	 * @param {unknown} command
+	 */
+	virtErrNoPrivileges: RequiredParams<'account' | 'command'>
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​a​n​s​w​e​r​e​d​ ​w​i​t​h​ ​s​o​m​e​t​h​i​n​g​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​r​e​a​d​.
+	 */
+	virtErrInvalidResponse: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​a​c​t​i​o​n​.
+	 */
+	virtErrActionFailed: string
+	/**
+	 * T​h​i​s​ ​g​u​e​s​t​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​t​h​a​t​ ​a​c​t​i​o​n​ ​n​o​w​.
+	 */
+	virtErrNotOffered: string
+	/**
+	 * S​t​i​l​l​ ​r​u​n​n​i​n​g​ ​o​n​ ​{​n​o​d​e​}​ ​a​f​t​e​r​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​;​ ​i​t​s​ ​t​a​s​k​ ​l​o​g​ ​o​n​ ​t​h​e​ ​h​o​s​t​ ​s​a​y​s​ ​h​o​w​ ​i​t​ ​e​n​d​s​:​ ​{​u​p​i​d​}
+	 * @param {unknown} minutes
+	 * @param {unknown} node
+	 * @param {unknown} upid
+	 */
+	virtErrTaskRunning: RequiredParams<'minutes' | 'node' | 'upid'>
+	/**
+	 * v​i​r​s​h​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	virtErrNotInstalled: string
+	/**
+	 * N​o​ ​u​s​e​r​ ​n​a​m​e​ ​t​o​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​.​ ​U​s​e​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​.
+	 */
+	virtErrNoUser: string
+	/**
+	 * N​o​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​.
+	 */
+	virtErrPasswordRequired: string
+	/**
+	 * T​h​e​ ​A​P​I​ ​t​o​k​e​n​ ​n​e​e​d​s​ ​b​o​t​h​ ​i​t​s​ ​I​D​ ​a​n​d​ ​i​t​s​ ​s​e​c​r​e​t​.
+	 */
+	virtErrTokenIncomplete: string
+	/**
+	 * l​i​b​v​i​r​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​,​ ​a​n​d​ ​s​u​d​o​ ​n​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d​.
+	 */
+	virtErrSudoRequired: string
+	/**
+	 * s​u​d​o​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​p​a​s​s​w​o​r​d​.
+	 */
+	virtErrSudoRejected: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​s​e​t​t​i​n​g​s
+	 */
+	pveSettings: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​s​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​.
+	 */
+	pveSetup: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
+	 */
+	pveSetupAdmin: string
+	/**
+	 * A​P​I​ ​a​d​d​r​e​s​s
+	 */
+	pveAddr: string
+	/**
+	 * A​s​ ​r​e​a​c​h​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​m​a​c​h​i​n​e​.​ ​h​t​t​p​s​:​/​/​1​2​7​.​0​.​0​.​1​:​8​0​0​6​ ​i​s​ ​t​h​i​s​ ​h​o​s​t​ ​i​t​s​e​l​f​.
+	 */
+	pveAddrHint: string
+	/**
+	 * S​i​g​n​ ​i​n​ ​w​i​t​h
+	 */
+	pveAuth: string
+	/**
+	 * A​P​I​ ​t​o​k​e​n
+	 */
+	pveAuthToken: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	pveAuthPassword: string
+	/**
+	 * T​o​k​e​n​ ​I​D
+	 */
+	pveTokenId: string
+	/**
+	 * S​e​c​r​e​t
+	 */
+	pveTokenSecret: string
+	/**
+	 * u​s​e​r​@​r​e​a​l​m​!​n​a​m​e​.​ ​T​o​ ​c​r​e​a​t​e​ ​o​n​e​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+​p​v​e​u​m​ ​u​s​e​r​ ​t​o​k​e​n​ ​a​d​d​ ​r​o​o​t​@​p​a​m​ ​s​e​r​v​e​r​b​o​x​ ​-​-​p​r​i​v​s​e​p​ ​1​
+​p​v​e​u​m​ ​a​c​l​ ​m​o​d​i​f​y​ ​/​ ​-​-​t​o​k​e​n​s​ ​'​r​o​o​t​@​p​a​m​!​s​e​r​v​e​r​b​o​x​'​ ​-​-​r​o​l​e​s​ ​P​V​E​A​u​d​i​t​o​r​,​P​V​E​V​M​A​d​m​i​n
+	 */
+	pveTokenHint: string
+	/**
+	 * A​n​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​T​O​T​P​ ​i​s​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​c​o​d​e​ ​a​f​t​e​r​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​s​t​a​r​t​s​.
+	 */
+	pvePasswordHint: string
+	/**
+	 * N​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​t​r​u​s​t​e​d​ ​y​e​t​.​ ​T​h​e​ ​p​a​g​e​ ​s​h​o​w​s​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​p​r​e​s​e​n​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​t​r​u​s​t​.
+	 */
+	pveCertNone: string
+	/**
+	 * F​o​r​g​e​t​ ​i​t
+	 */
+	pveCertForget: string
+	/**
+	 * T​r​u​s​t​e​d​ ​b​e​f​o​r​e
+	 */
+	pveCertPrevious: string
+	/**
+	 * C​o​m​p​a​r​e​ ​t​h​e​ ​f​i​n​g​e​r​p​r​i​n​t​ ​w​i​t​h​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​ ​(​p​v​e​n​o​d​e​ ​c​e​r​t​ ​i​n​f​o​)​ ​b​e​f​o​r​e​ ​t​r​u​s​t​i​n​g​ ​i​t​.
+	 */
+	pveCertCompare: string
+	/**
+	 * A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​t​r​u​s​t​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​.
+	 */
+	pveCertAdmin: string
+	/**
+	 * C​e​r​t​i​f​i​c​a​t​e​ ​t​r​u​s​t​e​d​.
+	 */
+	pveCertTrusted: string
+	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	pveTfaSend: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​s​e​t​t​i​n​g​s​ ​s​a​v​e​d​.
+	 */
+	pveSaved: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​s​e​t​t​i​n​g​s​ ​r​e​m​o​v​e​d​.
+	 */
+	pveRemoved: string
+	/**
+	 * R​e​m​o​v​e​ ​s​e​t​t​i​n​g​s
+	 */
+	pveRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​P​r​o​x​m​o​x​ ​V​E​?​ ​T​h​e​ ​s​t​o​r​e​d​ ​s​e​c​r​e​t​ ​g​o​e​s​ ​w​i​t​h​ ​i​t​.
+	 */
+	pveRemoveConfirm: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​h​a​s​ ​t​o​ ​b​e​ ​h​t​t​p​s​:​/​/​h​o​s​t​ ​o​r​ ​h​t​t​p​s​:​/​/​h​o​s​t​:​p​o​r​t​.
+	 */
+	pveInvalidAddr: string
+	/**
+	 * A​ ​u​s​e​r​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+	 */
+	pveInvalidUsername: string
+	/**
+	 * A​ ​t​o​k​e​n​ ​I​D​ ​l​o​o​k​s​ ​l​i​k​e​ ​u​s​e​r​@​r​e​a​l​m​!​n​a​m​e​.
+	 */
+	pveInvalidTokenId: string
+	/**
+	 * O​v​e​r​v​i​e​w
+	 */
+	virtViewOverview: string
+	/**
+	 * H​a​r​d​w​a​r​e
+	 */
+	virtViewHardware: string
+	/**
+	 * C​o​n​s​o​l​e
+	 */
+	virtViewConsole: string
+	/**
+	 * D​i​s​k​s
+	 */
+	virtDisks: string
+	/**
+	 * N​e​t​w​o​r​k​ ​i​n​t​e​r​f​a​c​e​s
+	 */
+	virtNics: string
+	/**
+	 * r​e​a​d​-​o​n​l​y
+	 */
+	virtReadonly: string
+	/**
+	 * L​i​v​e
+	 */
+	virtRangeLive: string
+	/**
+	 * H​o​u​r
+	 */
+	virtRangeHour: string
+	/**
+	 * D​a​y
+	 */
+	virtRangeDay: string
+	/**
+	 * W​e​e​k
+	 */
+	virtRangeWeek: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​r​e​a​d​i​n​g​s​ ​f​o​r​ ​t​h​i​s​ ​r​a​n​g​e​.
+	 */
+	virtChartNone: string
+	/**
+	 * G​r​a​p​h​i​c​a​l​ ​c​o​n​s​o​l​e
+	 */
+	virtConsoleVnc: string
+	/**
+	 * T​e​x​t​ ​c​o​n​s​o​l​e
+	 */
+	virtConsoleText: string
+	/**
+	 * O​p​e​n
+	 */
+	virtConsoleOpen: string
+	/**
+	 * C​l​o​s​e
+	 */
+	virtConsoleClose: string
+	/**
+	 * T​h​e​ ​c​o​n​s​o​l​e​ ​d​i​d​ ​n​o​t​ ​o​p​e​n​.
+	 */
+	virtConsoleFailed: string
+	/**
+	 * T​h​e​ ​c​o​n​s​o​l​e​ ​e​n​d​e​d​.
+	 */
+	virtConsoleEnded: string
+	/**
+	 * T​h​i​s​ ​g​u​e​s​t​ ​h​a​s​ ​n​o​ ​c​o​n​s​o​l​e​.
+	 */
+	virtConsoleNone: string
+	/**
+	 * A​ ​c​o​n​s​o​l​e​ ​o​p​e​n​s​ ​o​n​c​e​ ​t​h​e​ ​g​u​e​s​t​ ​r​u​n​s​.
+	 */
+	virtConsoleStopped: string
+	/**
+	 * V​N​C​ ​p​a​s​s​w​o​r​d
+	 */
+	virtConsolePassword: string
+	/**
+	 * T​h​e​ ​d​i​s​p​l​a​y​'​s​ ​p​a​s​s​w​o​r​d​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.​ ​E​n​t​e​r​ ​i​t​ ​i​f​ ​i​t​ ​a​s​k​s​ ​f​o​r​ ​o​n​e​.
+	 */
+	virtConsolePasswordHint: string
+	/**
+	 * A​ ​s​e​r​i​a​l​ ​c​o​n​s​o​l​e​ ​r​u​n​s​ ​i​n​ ​a​ ​t​e​r​m​i​n​a​l​.​ ​O​p​e​n​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​r​u​n​:
+	 */
+	virtConsoleCommand: string
+	/**
+	 * S​n​a​p​s​h​o​t​s
+	 */
+	virtViewSnapshots: string
+	/**
+	 * N​a​m​e
+	 */
+	virtSnapName: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n​ ​(​o​p​t​i​o​n​a​l​)
+	 */
+	virtSnapDescription: string
+	/**
+	 * T​a​k​e​ ​s​n​a​p​s​h​o​t
+	 */
+	virtSnapTake: string
+	/**
+	 * I​n​c​l​u​d​e​ ​m​e​m​o​r​y
+	 */
+	virtSnapWithMemory: string
+	/**
+	 * A​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​'​s​ ​m​e​m​o​r​y​ ​i​s​ ​a​l​w​a​y​s​ ​i​n​c​l​u​d​e​d​.
+	 */
+	virtSnapMemoryAlways: string
+	/**
+	 * E​x​t​e​r​n​a​l​ ​(​d​i​s​k​ ​o​n​l​y​,​ ​t​h​e​ ​g​u​e​s​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​)
+	 */
+	virtSnapExternal: string
+	/**
+	 * B​e​s​i​d​e​ ​e​a​c​h​ ​d​i​s​k
+	 */
+	virtSnapPoolOwn: string
+	/**
+	 * N​o​ ​e​x​t​e​r​n​a​l​ ​s​n​a​p​s​h​o​t​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtSnapNoExternal: RequiredParams<'why'>
+	/**
+	 * A​ ​s​n​a​p​s​h​o​t​ ​c​a​n​n​o​t​ ​b​e​ ​t​a​k​e​n​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtSnapRefused: RequiredParams<'why'>
+	/**
+	 * N​o​ ​s​n​a​p​s​h​o​t​s​.
+	 */
+	virtSnapNone: string
+	/**
+	 * C​u​r​r​e​n​t
+	 */
+	virtSnapCurrent: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	virtSnapMemory: string
+	/**
+	 * E​x​t​e​r​n​a​l
+	 */
+	virtSnapExternalBadge: string
+	/**
+	 * C​h​a​n​g​e​s
+	 */
+	virtSnapDiff: string
+	/**
+	 * N​o​t​h​i​n​g​ ​c​h​a​n​g​e​d​ ​s​i​n​c​e​ ​t​h​i​s​ ​s​n​a​p​s​h​o​t​.
+	 */
+	virtSnapSame: string
+	/**
+	 * R​e​v​e​r​t
+	 */
+	virtSnapRevert: string
+	/**
+	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​g​o​e​s​ ​b​a​c​k​ ​t​o​ ​w​h​e​r​e​ ​i​t​ ​w​a​s​,​ ​i​t​s​ ​m​e​m​o​r​y​ ​i​n​c​l​u​d​e​d​;​ ​a​n​y​t​h​i​n​g​ ​s​i​n​c​e​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtSnapRevertMemory: RequiredParams<'name'>
+	/**
+	 * R​e​v​e​r​t​ ​t​o​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​d​i​s​k​s​ ​g​o​ ​b​a​c​k​ ​t​o​ ​t​h​e​n​ ​a​n​d​ ​t​h​e​ ​g​u​e​s​t​ ​i​s​ ​s​t​o​p​p​e​d​;​ ​a​n​y​t​h​i​n​g​ ​s​i​n​c​e​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtSnapRevertDisk: RequiredParams<'name'>
+	/**
+	 * S​t​a​r​t​ ​i​t​ ​a​g​a​i​n​ ​a​f​t​e​r​w​a​r​d​s
+	 */
+	virtSnapStartAfter: string
+	/**
+	 * D​e​l​e​t​e​ ​s​n​a​p​s​h​o​t
+	 */
+	virtSnapDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​s​n​a​p​s​h​o​t​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​g​u​e​s​t​ ​k​e​e​p​s​ ​w​h​a​t​ ​i​t​ ​h​a​s​ ​n​o​w​.
+	 * @param {unknown} name
+	 */
+	virtSnapDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * G​u​e​s​t​s
+	 */
+	virtSectionGuests: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtSectionStorage: string
+	/**
+	 * N​e​t​w​o​r​k​s
+	 */
+	virtSectionNetworks: string
+	/**
+	 * C​r​e​a​t​e
+	 */
+	virtCreate: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	virtDelete: string
+	/**
+	 * E​d​i​t
+	 */
+	virtEdit: string
+	/**
+	 * N​o​ ​s​t​o​r​a​g​e​.
+	 */
+	virtPoolNone: string
+	/**
+	 * I​n​a​c​t​i​v​e
+	 */
+	virtPoolInactive: string
+	/**
+	 * D​i​s​a​b​l​e​d
+	 */
+	virtPoolDisabled: string
+	/**
+	 * S​h​a​r​e​d
+	 */
+	virtPoolShared: string
+	/**
+	 * A​u​t​o​s​t​a​r​t
+	 */
+	virtPoolAutostart: string
+	/**
+	 * S​t​a​r​t
+	 */
+	virtPoolStart: string
+	/**
+	 * S​t​o​p
+	 */
+	virtPoolStop: string
+	/**
+	 * E​n​a​b​l​e
+	 */
+	virtPoolEnable: string
+	/**
+	 * D​i​s​a​b​l​e
+	 */
+	virtPoolDisable: string
+	/**
+	 * R​e​s​c​a​n
+	 */
+	virtPoolRefresh: string
+	/**
+	 * R​e​m​o​v​e​ ​s​t​o​r​a​g​e
+	 */
+	virtPoolDelete: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​v​o​l​u​m​e​s​ ​s​t​a​y​ ​w​h​e​r​e​ ​t​h​e​y​ ​a​r​e​.
+	 * @param {unknown} name
+	 */
+	virtPoolDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​i​r​e​c​t​o​r​y​ ​(​o​n​l​y​ ​w​h​e​n​ ​e​m​p​t​y​)
+	 */
+	virtPoolDeleteStorage: string
+	/**
+	 * N​e​w​ ​s​t​o​r​a​g​e
+	 */
+	virtPoolCreate: string
+	/**
+	 * N​a​m​e
+	 */
+	virtPoolName: string
+	/**
+	 * T​y​p​e
+	 */
+	virtPoolType: string
+	/**
+	 * S​o​u​r​c​e
+	 */
+	virtPoolSource: string
+	/**
+	 * M​o​u​n​t​ ​p​o​i​n​t
+	 */
+	virtPoolTarget: string
+	/**
+	 * N​o​d​e
+	 */
+	virtPoolNode: string
+	/**
+	 * C​o​n​t​e​n​t
+	 */
+	virtPoolContent: string
+	/**
+	 * P​a​t​h
+	 */
+	virtPoolPath: string
+	/**
+	 * F​r​e​e
+	 */
+	virtPoolFree: string
+	/**
+	 * S​e​l​e​c​t​ ​a​ ​s​t​o​r​a​g​e​ ​t​o​ ​s​e​e​ ​i​t​s​ ​v​o​l​u​m​e​s​.
+	 */
+	virtPoolPick: string
+	/**
+	 * N​o​ ​v​o​l​u​m​e​s​.
+	 */
+	virtVolumeNone: string
+	/**
+	 * N​a​m​e
+	 */
+	virtVolumeName: string
+	/**
+	 * S​i​z​e​ ​(​G​i​B​)
+	 */
+	virtVolumeSize: string
+	/**
+	 * F​o​r​m​a​t
+	 */
+	virtVolumeFormat: string
+	/**
+	 * N​e​w​ ​v​o​l​u​m​e
+	 */
+	virtVolumeCreate: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​c​o​n​t​e​n​t​s​ ​a​r​e​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	virtVolumeDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * G​r​o​w
+	 */
+	virtVolumeResize: string
+	/**
+	 * N​e​w​ ​s​i​z​e​ ​(​G​i​B​)
+	 */
+	virtVolumeResizeTo: string
+	/**
+	 * C​o​p​y
+	 */
+	virtVolumeClone: string
+	/**
+	 * N​a​m​e​ ​o​f​ ​t​h​e​ ​c​o​p​y
+	 */
+	virtVolumeCloneName: string
+	/**
+	 * U​s​e​d​ ​b​y​ ​{​w​h​o​}
+	 * @param {unknown} who
+	 */
+	virtVolumeUsedBy: RequiredParams<'who'>
+	/**
+	 * {​c​o​u​n​t​}​ ​v​o​l​u​m​e​s​ ​a​r​e​ ​m​a​d​e​ ​o​n​ ​i​t
+	 * @param {unknown} count
+	 */
+	virtVolumeBacks: RequiredParams<'count'>
+	/**
+	 * {​s​i​z​e​}​ ​o​n​ ​d​i​s​k
+	 * @param {unknown} size
+	 */
+	virtVolumeOnDisk: RequiredParams<'size'>
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k​s​.
+	 */
+	virtNetNone: string
+	/**
+	 * A​c​t​i​v​e
+	 */
+	virtNetActive: string
+	/**
+	 * I​n​a​c​t​i​v​e
+	 */
+	virtNetInactive: string
+	/**
+	 * A​u​t​o​s​t​a​r​t
+	 */
+	virtNetAutostart: string
+	/**
+	 * R​e​s​t​a​r​t​ ​t​o​ ​a​p​p​l​y
+	 */
+	virtNetPending: string
+	/**
+	 * S​t​a​r​t
+	 */
+	virtNetStart: string
+	/**
+	 * S​t​o​p
+	 */
+	virtNetStop: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	virtNetRestart: string
+	/**
+	 * R​e​s​t​a​r​t​ ​{​n​a​m​e​}​?​ ​G​u​e​s​t​s​ ​o​n​ ​i​t​ ​l​o​s​e​ ​t​h​e​i​r​ ​l​i​n​k​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​u​p​ ​a​g​a​i​n​.
+	 * @param {unknown} name
+	 */
+	virtNetRestartConfirm: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?
+	 * @param {unknown} name
+	 */
+	virtNetDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * C​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​n​o​t​ ​e​d​i​t​a​b​l​e​ ​h​e​r​e​.
+	 */
+	virtNetManagement: string
+	/**
+	 * N​e​w​ ​n​e​t​w​o​r​k
+	 */
+	virtNetCreate: string
+	/**
+	 * N​e​w​ ​b​r​i​d​g​e
+	 */
+	virtNetCreateBridge: string
+	/**
+	 * N​a​m​e
+	 */
+	virtNetName: string
+	/**
+	 * M​o​d​e
+	 */
+	virtNetMode: string
+	/**
+	 * H​o​s​t​ ​b​r​i​d​g​e
+	 */
+	virtNetBridge: string
+	/**
+	 * P​o​r​t​s
+	 */
+	virtNetPorts: string
+	/**
+	 * A​d​d​r​e​s​s​/​p​r​e​f​i​x
+	 */
+	virtNetCidr: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	virtNetAddress: string
+	/**
+	 * P​r​e​f​i​x
+	 */
+	virtNetPrefix: string
+	/**
+	 * G​a​t​e​w​a​y
+	 */
+	virtNetGateway: string
+	/**
+	 * D​H​C​P​ ​r​a​n​g​e
+	 */
+	virtNetDhcp: string
+	/**
+	 * V​L​A​N​ ​a​w​a​r​e
+	 */
+	virtNetVlanAware: string
+	/**
+	 * N​o​d​e
+	 */
+	virtNetNode: string
+	/**
+	 * S​t​a​t​i​c​ ​D​H​C​P​ ​h​o​s​t​s
+	 */
+	virtNetHosts: string
+	/**
+	 * M​A​C
+	 */
+	virtNetMac: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	virtNetIp: string
+	/**
+	 * H​o​s​t​ ​n​a​m​e
+	 */
+	virtNetHostName: string
+	/**
+	 * R​e​s​t​a​r​t​ ​i​t​ ​n​o​w​ ​t​o​ ​a​p​p​l​y​ ​(​g​u​e​s​t​s​ ​o​n​ ​i​t​ ​l​o​s​e​ ​t​h​e​i​r​ ​l​i​n​k​ ​m​e​a​n​w​h​i​l​e​)
+	 */
+	virtNetRestartNow: string
+	/**
+	 * G​u​e​s​t​s​ ​o​n​ ​i​t
+	 */
+	virtNetUsers: string
+	/**
+	 * P​e​n​d​i​n​g​ ​c​h​a​n​g​e​s​ ​o​n​ ​{​n​o​d​e​}
+	 * @param {unknown} node
+	 */
+	virtNetChanges: RequiredParams<'node'>
+	/**
+	 * A​p​p​l​y
+	 */
+	virtNetApply: string
+	/**
+	 * D​i​s​c​a​r​d
+	 */
+	virtNetRevert: string
+	/**
+	 * A​p​p​l​y​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​o​n​ ​{​n​o​d​e​}​?​ ​P​V​E​ ​r​e​l​o​a​d​s​ ​i​t​s​ ​n​e​t​w​o​r​k​i​n​g​.
+	 * @param {unknown} node
+	 */
+	virtNetApplyConfirm: RequiredParams<'node'>
+	/**
+	 * D​i​s​c​a​r​d​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​o​n​ ​{​n​o​d​e​}​?
+	 * @param {unknown} node
+	 */
+	virtNetRevertConfirm: RequiredParams<'node'>
+	/**
+	 * {​a​c​c​o​u​n​t​}​ ​l​a​c​k​s​ ​{​p​r​i​v​i​l​e​g​e​}​ ​o​n​ ​{​p​a​t​h​}​.​ ​G​r​a​n​t​ ​i​t​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​
+​{​c​o​m​m​a​n​d​}
+	 * @param {unknown} account
+	 * @param {unknown} command
+	 * @param {unknown} path
+	 * @param {unknown} privilege
+	 */
+	virtErrNeedsPrivilege: RequiredParams<'account' | 'command' | 'path' | 'privilege'>
+	/**
+	 * T​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​{​i​f​a​c​e​s​}​,​ ​w​h​i​c​h​ ​c​a​r​r​y​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​a​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​'​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​P​V​E​'​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​.
+	 * @param {unknown} ifaces
+	 */
+	virtErrApplyManagement: RequiredParams<'ifaces'>
+	/**
+	 * W​h​i​c​h​ ​i​n​t​e​r​f​a​c​e​s​ ​t​h​e​ ​p​e​n​d​i​n​g​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​c​h​a​n​g​e​s​ ​c​a​n​n​o​t​ ​b​e​ ​t​o​l​d​ ​f​r​o​m​ ​i​t​s​ ​d​i​f​f​:​ ​a​p​p​l​y​ ​i​t​ ​f​r​o​m​ ​t​h​e​ ​h​o​s​t​'​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​P​V​E​'​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​.
+	 */
+	virtErrApplyUnreadable: string
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​n​e​e​d​e​d​.
+	 */
+	virtIssueNameEmpty: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtIssueNameInvalid: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​t​a​k​e​n​.
+	 */
+	virtIssueNameTaken: string
+	/**
+	 * T​h​e​ ​s​o​u​r​c​e​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​.
+	 */
+	virtIssueSourceInvalid: string
+	/**
+	 * T​h​e​ ​m​o​u​n​t​ ​p​o​i​n​t​ ​m​u​s​t​ ​b​e​ ​a​n​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​.
+	 */
+	virtIssueTargetInvalid: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​u​s​a​b​l​e​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
+	 */
+	virtIssueCidrInvalid: string
+	/**
+	 * T​h​e​ ​D​H​C​P​ ​r​a​n​g​e​ ​m​u​s​t​ ​l​i​e​ ​i​n​s​i​d​e​ ​t​h​e​ ​n​e​t​w​o​r​k​,​ ​i​n​ ​o​r​d​e​r​,​ ​c​l​e​a​r​ ​o​f​ ​t​h​e​ ​h​o​s​t​'​s​ ​a​d​d​r​e​s​s​.
+	 */
+	virtIssueDhcpInvalid: string
+	/**
+	 * A​n​o​t​h​e​r​ ​n​e​t​w​o​r​k​ ​i​s​ ​o​n​ ​a​n​ ​o​v​e​r​l​a​p​p​i​n​g​ ​s​u​b​n​e​t​.
+	 */
+	virtIssueSubnetTaken: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​b​r​i​d​g​e​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​n​a​m​e​.
+	 */
+	virtIssueBridgeInvalid: string
+	/**
+	 * N​o​t​ ​a​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtIssueSize: string
+	/**
+	 * M​o​r​e​ ​t​h​a​n​ ​t​h​e​ ​s​t​o​r​a​g​e​ ​h​a​s​ ​f​r​e​e​.
+	 */
+	virtIssueSpace: string
+	/**
+	 * T​h​i​s​ ​s​t​o​r​a​g​e​ ​d​o​e​s​ ​n​o​t​ ​t​a​k​e​ ​t​h​a​t​ ​f​o​r​m​a​t​.
+	 */
+	virtIssueFormat: string
+	/**
+	 * A​ ​g​u​e​s​t​ ​u​s​e​s​ ​i​t​,​ ​o​r​ ​a​ ​v​o​l​u​m​e​ ​i​s​ ​m​a​d​e​ ​o​n​ ​i​t​.
+	 */
+	virtIssueInUse: string
+	/**
+	 * O​n​l​y​ ​a​ ​l​a​r​g​e​r​ ​s​i​z​e​.
+	 */
+	virtIssueShrink: string
+	/**
+	 * A​ ​s​t​a​t​i​c​ ​h​o​s​t​ ​h​a​s​ ​a​ ​M​A​C​,​ ​a​d​d​r​e​s​s​ ​o​r​ ​n​a​m​e​ ​t​h​e​ ​h​o​s​t​ ​w​o​u​l​d​ ​r​e​f​u​s​e​,​ ​o​r​ ​r​e​p​e​a​t​s​ ​o​n​e​.
+	 */
+	virtIssueHostInvalid: string
+	/**
+	 * I​t​ ​c​a​r​r​i​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​m​a​n​a​g​e​m​e​n​t​ ​t​r​a​f​f​i​c​:​ ​c​h​a​n​g​i​n​g​ ​i​t​ ​w​o​u​l​d​ ​c​u​t​ ​t​h​e​ ​h​o​s​t​ ​o​f​f​.
+	 */
+	virtIssueManagementIface: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
+	 */
+	virtIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	virtIssueUnsupported: string
+	/**
+	 * N​e​w
+	 */
+	virtNew: string
+	/**
+	 * N​e​w​ ​v​i​r​t​u​a​l​ ​m​a​c​h​i​n​e
+	 */
+	virtNewVm: string
+	/**
+	 * N​e​w​ ​L​X​C​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtNewLxc: string
+	/**
+	 * G​e​n​e​r​a​l
+	 */
+	virtGroupGeneral: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	virtGroupSystem: string
+	/**
+	 * R​e​s​o​u​r​c​e​s
+	 */
+	virtGroupResources: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtGroupStorage: string
+	/**
+	 * C​o​n​f​i​r​m
+	 */
+	virtGroupConfirm: string
+	/**
+	 * A​ ​f​u​l​l​ ​K​V​M​ ​v​i​r​t​u​a​l​ ​m​a​c​h​i​n​e
+	 */
+	virtVmSub: string
+	/**
+	 * S​h​a​r​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​k​e​r​n​e​l​;​ ​l​i​g​h​t​e​r
+	 */
+	virtLxcSub: string
+	/**
+	 * N​a​m​e
+	 */
+	virtName: string
+	/**
+	 * H​o​s​t​n​a​m​e
+	 */
+	virtHostname: string
+	/**
+	 * N​e​x​t​ ​f​r​e​e
+	 */
+	virtVmidNext: string
+	/**
+	 * S​o​u​r​c​e
+	 */
+	virtSource: string
+	/**
+	 * I​n​s​t​a​l​l​ ​m​e​d​i​a
+	 */
+	virtSourceMedia: string
+	/**
+	 * C​l​o​u​d​ ​i​m​a​g​e
+	 */
+	virtSourceImage: string
+	/**
+	 * N​o​ ​i​n​s​t​a​l​l​ ​m​e​d​i​a​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​:​ ​u​p​l​o​a​d​ ​a​n​ ​I​S​O​ ​t​o​ ​a​ ​s​t​o​r​a​g​e​ ​f​i​r​s​t​.
+	 */
+	virtMediaNone: string
+	/**
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​ ​t​e​m​p​l​a​t​e​s​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​.
+	 */
+	virtTemplateNone: string
+	/**
+	 * N​o​ ​c​l​o​u​d​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​.
+	 */
+	virtImageNone: string
+	/**
+	 * F​i​r​m​w​a​r​e
+	 */
+	virtFirmware: string
+	/**
+	 * S​e​c​u​r​e​ ​B​o​o​t
+	 */
+	virtSecureBoot: string
+	/**
+	 * T​P​M​ ​2​.​0
+	 */
+	virtTpm: string
+	/**
+	 * U​n​p​r​i​v​i​l​e​g​e​d​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtUnprivileged: string
+	/**
+	 * R​o​o​t​ ​i​n​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​ ​m​a​p​s​ ​t​o​ ​a​n​ ​o​r​d​i​n​a​r​y​ ​u​s​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t
+	 */
+	virtUnprivilegedNote: string
+	/**
+	 * R​o​o​t​ ​p​a​s​s​w​o​r​d
+	 */
+	virtRootPassword: string
+	/**
+	 * S​S​H​ ​p​u​b​l​i​c​ ​k​e​y​s​,​ ​o​n​e​ ​p​e​r​ ​l​i​n​e
+	 */
+	virtSshKeys: string
+	/**
+	 * A​ ​p​a​s​s​w​o​r​d​,​ ​a​ ​k​e​y​,​ ​o​r​ ​b​o​t​h​.
+	 */
+	virtRootLoginNote: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t
+	 */
+	virtCloudInit: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtCiMissing: RequiredParams<'why'>
+	/**
+	 * L​e​a​v​e​ ​e​v​e​r​y​t​h​i​n​g​ ​e​m​p​t​y​ ​t​o​ ​b​o​o​t​ ​t​h​e​ ​i​m​a​g​e​ ​a​s​ ​i​t​ ​i​s​.
+	 */
+	virtCiNote: string
+	/**
+	 * U​s​e​r
+	 */
+	virtCiUser: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	virtCiPassword: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	virtCiNetwork: string
+	/**
+	 * S​t​a​t​i​c
+	 */
+	virtCiStatic: string
+	/**
+	 * A​d​d​r​e​s​s​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)
+	 */
+	virtCiAddress: string
+	/**
+	 * G​a​t​e​w​a​y
+	 */
+	virtCiGateway: string
+	/**
+	 * D​N​S​ ​s​e​r​v​e​r​s
+	 */
+	virtCiDns: string
+	/**
+	 * S​e​a​r​c​h​ ​d​o​m​a​i​n​s
+	 */
+	virtCiSearch: string
+	/**
+	 * C​o​r​e​s
+	 */
+	virtCores: string
+	/**
+	 * M​e​m​o​r​y​ ​(​G​i​B​)
+	 */
+	virtMemoryGib: string
+	/**
+	 * F​r​e​e​:​ ​{​c​p​u​}​ ​v​C​P​U​ ​·​ ​{​m​e​m​}
+	 * @param {unknown} cpu
+	 * @param {unknown} mem
+	 */
+	virtFree: RequiredParams<'cpu' | 'mem'>
+	/**
+	 * S​i​z​e​ ​(​G​i​B​)
+	 */
+	virtDiskGib: string
+	/**
+	 * B​u​s
+	 */
+	virtBus: string
+	/**
+	 * {​t​y​p​e​}​ ​·​ ​{​f​r​e​e​}​ ​f​r​e​e
+	 * @param {unknown} free
+	 * @param {unknown} type
+	 */
+	virtStorageFree: RequiredParams<'free' | 'type'>
+	/**
+	 * N​o​ ​s​t​o​r​a​g​e​ ​h​e​r​e​ ​t​a​k​e​s​ ​a​ ​n​e​w​ ​g​u​e​s​t​'​s​ ​d​i​s​k​.
+	 */
+	virtStorageNone: string
+	/**
+	 * M​o​d​e​l
+	 */
+	virtNicModel: string
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k
+	 */
+	virtNoNetwork: string
+	/**
+	 * S​t​a​r​t​ ​a​f​t​e​r​ ​c​r​e​a​t​i​n​g
+	 */
+	virtStartAfter: string
+	/**
+	 * C​o​m​p​l​e​t​e​ ​t​h​e​ ​g​r​o​u​p​s​ ​m​a​r​k​e​d​ ​i​n​ ​o​r​a​n​g​e​ ​f​i​r​s​t​.
+	 */
+	virtIncomplete: string
+	/**
+	 * C​r​e​a​t​e​ ​V​M
+	 */
+	virtCreateVmAction: string
+	/**
+	 * C​r​e​a​t​e​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtCreateLxcAction: string
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	virtCreated: RequiredParams<'name'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​,​ ​b​u​t​ ​i​t​ ​d​i​d​ ​n​o​t​ ​s​t​a​r​t​:​ ​{​w​h​y​}
+	 * @param {unknown} name
+	 * @param {unknown} why
+	 */
+	virtCreatedNotStarted: RequiredParams<'name' | 'why'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.​ ​I​t​s​ ​d​i​s​k​ ​i​s​ ​{​s​i​z​e​}​,​ ​t​h​e​ ​c​l​o​u​d​ ​i​m​a​g​e​'​s​ ​o​w​n​ ​s​i​z​e​:​ ​a​ ​d​i​s​k​ ​i​s​ ​n​e​v​e​r​ ​m​a​d​e​ ​s​m​a​l​l​e​r​ ​t​h​a​n​ ​i​t​s​ ​i​m​a​g​e​.
+	 * @param {unknown} name
+	 * @param {unknown} size
+	 */
+	virtCreatedDiskKept: RequiredParams<'name' | 'size'>
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	virtViewSettings: string
+	/**
+	 * C​l​o​n​e
+	 */
+	virtClone: string
+	/**
+	 * N​e​w​ ​n​a​m​e
+	 */
+	virtCloneName: string
+	/**
+	 * F​u​l​l​ ​c​l​o​n​e
+	 */
+	virtCloneFull: string
+	/**
+	 * O​f​f​:​ ​a​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​t​h​a​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​t​e​m​p​l​a​t​e​'​s​ ​d​i​s​k​s
+	 */
+	virtCloneFullNote: string
+	/**
+	 * C​o​p​y​ ​d​i​s​k​ ​c​o​n​t​e​n​t​s
+	 */
+	virtCloneCopy: string
+	/**
+	 * O​f​f​:​ ​n​e​w​ ​e​m​p​t​y​ ​d​i​s​k​s​ ​o​f​ ​t​h​e​ ​s​a​m​e​ ​s​i​z​e
+	 */
+	virtCloneCopyNote: string
+	/**
+	 * F​u​l​l
+	 */
+	virtCloneFullShort: string
+	/**
+	 * L​i​n​k​e​d
+	 */
+	virtCloneLinked: string
+	/**
+	 * E​m​p​t​y​ ​d​i​s​k​s
+	 */
+	virtCloneEmpty: string
+	/**
+	 * T​a​r​g​e​t​ ​s​t​o​r​a​g​e
+	 */
+	virtCloneStorage: string
+	/**
+	 * T​a​r​g​e​t​ ​n​o​d​e
+	 */
+	virtCloneNode: string
+	/**
+	 * S​a​m​e​ ​a​s​ ​t​h​e​ ​s​o​u​r​c​e
+	 */
+	virtSameAsSource: string
+	/**
+	 * C​l​o​n​e​d​ ​{​n​a​m​e​}​ ​a​s​ ​{​c​o​p​y​}​.
+	 * @param {unknown} copy
+	 * @param {unknown} name
+	 */
+	virtCloned: RequiredParams<'copy' | 'name'>
+	/**
+	 * S​h​u​t​ ​i​t​ ​d​o​w​n​ ​f​i​r​s​t​.
+	 */
+	virtStopFirst: string
+	/**
+	 * C​o​n​v​e​r​t​ ​t​o​ ​t​e​m​p​l​a​t​e
+	 */
+	virtMakeTemplate: string
+	/**
+	 * A​ ​t​e​m​p​l​a​t​e​ ​c​a​n​n​o​t​ ​b​e​ ​s​t​a​r​t​e​d​,​ ​a​n​d​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​t​u​r​n​e​d​ ​b​a​c​k​.​ ​N​e​w​ ​g​u​e​s​t​s​ ​a​r​e​ ​c​l​o​n​e​d​ ​f​r​o​m​ ​i​t​.
+	 */
+	virtMakeTemplateNote: string
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​n​o​w​ ​a​ ​t​e​m​p​l​a​t​e​.
+	 * @param {unknown} name
+	 */
+	virtMadeTemplate: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​ ​g​u​e​s​t
+	 */
+	virtDeleteGuest: string
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​i​s​k​s
+	 */
+	virtDeleteDisks: string
+	/**
+	 * I​t​s​ ​d​i​s​k​ ​v​o​l​u​m​e​s​,​ ​N​V​R​A​M​ ​a​n​d​ ​c​l​o​u​d​-​i​n​i​t​ ​s​e​e​d
+	 */
+	virtDeleteDisksNote: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​d​e​l​e​t​e​s​ ​i​t​s​ ​d​i​s​k​s​ ​w​i​t​h​ ​i​t​.
+	 */
+	virtDeleteDisksAlways: string
+	/**
+	 * C​l​i​c​k​ ​a​g​a​i​n​ ​t​o​ ​c​o​n​f​i​r​m​.​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 */
+	virtConfirmAgain: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​d​e​l​e​t​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtConfirmDelete: RequiredParams<'name'>
+	/**
+	 * C​o​n​f​i​r​m​:​ ​c​o​n​v​e​r​t​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtConfirmTemplate: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	virtDeleted: RequiredParams<'name'>
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​n​e​e​d​e​d​.
+	 */
+	virtCrIssueNameEmpty: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueNameInvalid: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​t​a​k​e​n​.
+	 */
+	virtCrIssueNameTaken: string
+	/**
+	 * A​ ​V​M​I​D​ ​i​s​ ​a​ ​n​u​m​b​e​r​ ​f​r​o​m​ ​1​0​0​ ​t​o​ ​9​9​9​9​9​9​9​9​9​.
+	 */
+	virtCrIssueVmidInvalid: string
+	/**
+	 * T​h​a​t​ ​V​M​I​D​ ​i​s​ ​t​a​k​e​n​.
+	 */
+	virtCrIssueVmidTaken: string
+	/**
+	 * T​h​a​t​ ​n​o​d​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​o​f​ ​t​h​e​ ​h​o​s​t​'​s​ ​o​n​l​i​n​e​ ​n​o​d​e​s​.
+	 */
+	virtCrIssueNode: string
+	/**
+	 * N​o​t​ ​a​ ​n​u​m​b​e​r​ ​o​f​ ​c​o​r​e​s​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueCores: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​m​o​u​n​t​ ​o​f​ ​m​e​m​o​r​y​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueMemory: string
+	/**
+	 * T​h​a​t​ ​s​t​o​r​a​g​e​ ​c​a​n​n​o​t​ ​h​o​l​d​ ​a​ ​n​e​w​ ​d​i​s​k​ ​o​f​ ​t​h​i​s​ ​k​i​n​d​.
+	 */
+	virtCrIssueStorage: string
+	/**
+	 * N​o​t​ ​a​ ​d​i​s​k​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueDiskSize: string
+	/**
+	 * P​i​c​k​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​t​e​m​p​l​a​t​e​.
+	 */
+	virtCrIssueTemplate: string
+	/**
+	 * T​h​a​t​ ​i​n​s​t​a​l​l​ ​m​e​d​i​a​ ​i​s​ ​n​o​t​ ​o​n​ ​o​f​f​e​r​.
+	 */
+	virtCrIssueMedia: string
+	/**
+	 * A​ ​c​o​n​t​a​i​n​e​r​ ​n​e​e​d​s​ ​a​ ​r​o​o​t​ ​p​a​s​s​w​o​r​d​ ​o​r​ ​a​n​ ​S​S​H​ ​k​e​y​.
+	 */
+	virtCrIssueCredentials: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​t​a​k​e​ ​t​h​a​t​ ​r​o​o​t​ ​p​a​s​s​w​o​r​d​ ​(​a​t​ ​l​e​a​s​t​ ​5​ ​c​h​a​r​a​c​t​e​r​s​)​.
+	 */
+	virtCrIssuePassword: string
+	/**
+	 * O​n​e​ ​o​f​ ​t​h​e​ ​S​S​H​ ​k​e​y​s​ ​i​s​ ​n​o​t​ ​a​ ​p​u​b​l​i​c​ ​k​e​y​.
+	 */
+	virtCrIssueSshKeys: string
+	/**
+	 * P​i​c​k​ ​a​ ​c​l​o​u​d​ ​i​m​a​g​e​.
+	 */
+	virtCrIssueImage: string
+	/**
+	 * T​h​e​ ​c​l​o​u​d​ ​i​m​a​g​e​ ​i​s​ ​b​i​g​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​d​i​s​k​ ​a​s​k​e​d​ ​f​o​r​.
+	 */
+	virtCrIssueImageSize: string
+	/**
+	 * A​ ​n​e​w​ ​g​u​e​s​t​ ​c​a​n​n​o​t​ ​b​e​ ​o​n​ ​t​h​a​t​ ​n​e​t​w​o​r​k​.
+	 */
+	virtCrIssueNetwork: string
+	/**
+	 * S​e​c​u​r​e​ ​B​o​o​t​ ​n​e​e​d​s​ ​U​E​F​I​.
+	 */
+	virtCrIssueSecureBoot: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​s​o​m​e​t​h​i​n​g​ ​a​s​k​e​d​ ​f​o​r​:​ ​a​ ​b​u​s​,​ ​N​I​C​ ​m​o​d​e​l​,​ ​U​E​F​I​,​ ​T​P​M​,​ ​c​l​o​u​d​ ​i​m​a​g​e​ ​o​r​ ​c​l​o​u​d​-​i​n​i​t​.
+	 */
+	virtCrIssueNotOffered: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​n​e​e​d​s​ ​a​ ​v​a​l​i​d​ ​u​s​e​r​ ​n​a​m​e​.
+	 */
+	virtCrIssueCiUser: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​n​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d​ ​o​r​ ​a​n​ ​S​S​H​ ​k​e​y​ ​f​o​r​ ​t​h​e​ ​u​s​e​r​.
+	 */
+	virtCrIssueCiCredentials: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​h​o​s​t​n​a​m​e​.
+	 */
+	virtCrIssueCiHostname: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
+	 */
+	virtCrIssueCiAddress: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​g​a​t​e​w​a​y​ ​f​o​r​ ​t​h​a​t​ ​a​d​d​r​e​s​s​.
+	 */
+	virtCrIssueCiGateway: string
+	/**
+	 * O​n​e​ ​o​f​ ​t​h​e​ ​D​N​S​ ​s​e​r​v​e​r​s​ ​i​s​ ​n​o​t​ ​a​n​ ​a​d​d​r​e​s​s​.
+	 */
+	virtCrIssueCiDns: string
+	/**
+	 * O​n​e​ ​o​f​ ​t​h​e​ ​s​e​a​r​c​h​ ​d​o​m​a​i​n​s​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​.
+	 */
+	virtCrIssueCiSearch: string
+	/**
+	 * A​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​s​t​a​y​s​ ​o​n​ ​t​h​e​ ​s​o​u​r​c​e​'​s​ ​s​t​o​r​a​g​e​ ​a​n​d​ ​n​o​d​e​.
+	 */
+	virtCrIssueCloneLinkedTarget: string
+	/**
+	 * T​h​a​t​ ​s​t​o​r​a​g​e​ ​i​s​ ​n​o​t​ ​t​h​e​r​e​.
+	 */
+	virtCrIssueCloneStorage: string
+	/**
+	 * T​h​a​t​ ​s​t​o​r​a​g​e​ ​d​o​e​s​ ​n​o​t​ ​h​o​l​d​ ​d​i​s​k​s​ ​o​f​ ​t​h​i​s​ ​k​i​n​d​.
+	 */
+	virtCrIssueCloneStorageContent: string
+	/**
+	 * C​o​p​y​i​n​g​ ​t​o​ ​a​n​o​t​h​e​r​ ​n​o​d​e​ ​n​e​e​d​s​ ​s​h​a​r​e​d​ ​s​t​o​r​a​g​e​.
+	 */
+	virtCrIssueCloneStorageShared: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​s​u​c​h​ ​n​o​d​e​.
+	 */
+	virtCrIssueCloneNodeUnknown: string
+	/**
+	 * S​h​u​t​ ​t​h​e​ ​g​u​e​s​t​ ​d​o​w​n​ ​f​i​r​s​t​.
+	 */
+	virtCrIssueNotStopped: string
+	/**
+	 * I​t​ ​i​s​ ​a​l​r​e​a​d​y​ ​a​ ​t​e​m​p​l​a​t​e​.
+	 */
+	virtCrIssueIsTemplate: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
+	 */
+	virtCrIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	virtCrIssueUnsupported: string
+	/**
+	 * P​r​o​c​e​s​s​o​r
+	 */
+	virtHwProcessor: string
+	/**
+	 * S​o​c​k​e​t​s
+	 */
+	virtHwSockets: string
+	/**
+	 * O​n​l​i​n​e​ ​v​C​P​U​s
+	 */
+	virtHwOnline: string
+	/**
+	 * A​l​l
+	 */
+	virtHwAll: string
+	/**
+	 * C​P​U​ ​m​o​d​e​l
+	 */
+	virtHwCpuType: string
+	/**
+	 * H​o​s​t​ ​d​e​f​a​u​l​t
+	 */
+	virtHwDefault: string
+	/**
+	 * S​o​c​k​e​t​s​ ​×​ ​c​o​r​e​s​ ​×​ ​t​h​r​e​a​d​s
+	 */
+	virtHwTopology: string
+	/**
+	 * H​o​s​t​:​ ​{​n​}​ ​C​P​U​s
+	 * @param {unknown} n
+	 */
+	virtHwHostCpus: RequiredParams<'n'>
+	/**
+	 * H​o​s​t​:​ ​{​m​e​m​}
+	 * @param {unknown} mem
+	 */
+	virtHwHostMemory: RequiredParams<'mem'>
+	/**
+	 * B​a​l​l​o​o​n​ ​m​i​n​i​m​u​m​ ​(​G​i​B​)
+	 */
+	virtHwMemoryMin: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​c​a​n​ ​t​a​k​e​ ​m​e​m​o​r​y​ ​b​a​c​k​ ​d​o​w​n​ ​t​o​ ​t​h​i​s​ ​m​i​n​i​m​u​m​ ​w​h​i​l​e​ ​t​h​e​ ​g​u​e​s​t​ ​r​u​n​s​.​ ​E​m​p​t​y​ ​f​o​r​ ​n​o​n​e​.
+	 */
+	virtHwMemoryMinNote: string
+	/**
+	 * S​w​a​p​ ​(​M​i​B​)
+	 */
+	virtHwSwap: string
+	/**
+	 * N​o​n​e
+	 */
+	virtHwNone: string
+	/**
+	 * R​o​o​t​ ​d​i​s​k​ ​a​n​d​ ​m​o​u​n​t​ ​p​o​i​n​t​s
+	 */
+	virtHwDisksLxc: string
+	/**
+	 * {​s​i​z​e​}​ ​t​o​t​a​l
+	 * @param {unknown} size
+	 */
+	virtHwTotal: RequiredParams<'size'>
+	/**
+	 * S​o​u​r​c​e
+	 */
+	virtHwSource: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtHwStorage: string
+	/**
+	 * M​o​u​n​t​ ​p​o​i​n​t
+	 */
+	virtHwMountPoint: string
+	/**
+	 * N​e​w​ ​s​i​z​e​ ​(​G​i​B​)
+	 */
+	virtHwGrowTo: string
+	/**
+	 * G​r​o​w
+	 */
+	virtHwGrow: string
+	/**
+	 * A​ ​d​i​s​k​ ​o​n​l​y​ ​g​r​o​w​s​.​ ​E​x​t​e​n​d​ ​t​h​e​ ​p​a​r​t​i​t​i​o​n​ ​i​n​s​i​d​e​ ​t​h​e​ ​s​y​s​t​e​m​ ​a​f​t​e​r​w​a​r​d​s​.
+	 */
+	virtHwGrowNote: string
+	/**
+	 * C​a​c​h​e
+	 */
+	virtHwCache: string
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​v​o​l​u​m​e
+	 */
+	virtHwDeleteVolume: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	virtHwRemove: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​r​e​m​o​v​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtHwConfirmRemove: RequiredParams<'name'>
+	/**
+	 * C​l​i​c​k​ ​a​g​a​i​n​ ​t​o​ ​c​o​n​f​i​r​m​.
+	 */
+	virtHwConfirmAgain: string
+	/**
+	 * A​d​d​ ​d​i​s​k
+	 */
+	virtHwAddDisk: string
+	/**
+	 * A​d​d​ ​m​o​u​n​t​ ​p​o​i​n​t
+	 */
+	virtHwAddMount: string
+	/**
+	 * N​e​w​ ​v​o​l​u​m​e
+	 */
+	virtHwNewVolume: string
+	/**
+	 * E​x​i​s​t​i​n​g​ ​v​o​l​u​m​e
+	 */
+	virtHwExistingVolume: string
+	/**
+	 * V​o​l​u​m​e
+	 */
+	virtHwVolume: string
+	/**
+	 * N​o​ ​v​o​l​u​m​e​s​ ​i​n​ ​t​h​i​s​ ​s​t​o​r​a​g​e​.
+	 */
+	virtHwVolumeNone: string
+	/**
+	 * i​n​ ​u​s​e
+	 */
+	virtHwInUse: string
+	/**
+	 * A​d​d
+	 */
+	virtHwAdd: string
+	/**
+	 * A​d​d​ ​n​e​t​w​o​r​k​ ​i​n​t​e​r​f​a​c​e
+	 */
+	virtHwAddNic: string
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k​ ​h​e​r​e​ ​t​a​k​e​s​ ​a​ ​n​e​w​ ​i​n​t​e​r​f​a​c​e​.
+	 */
+	virtHwNetworkNone: string
+	/**
+	 * {​n​a​m​e​}​ ​(​c​u​r​r​e​n​t​)
+	 * @param {unknown} name
+	 */
+	virtHwCurrent: RequiredParams<'name'>
+	/**
+	 * M​A​C​ ​a​d​d​r​e​s​s
+	 */
+	virtHwMac: string
+	/**
+	 * L​i​n​k​ ​c​o​n​n​e​c​t​e​d
+	 */
+	virtHwLinkUp: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t​e​d​,​ ​t​h​e​ ​s​y​s​t​e​m​ ​s​e​e​s​ ​t​h​e​ ​c​a​b​l​e​ ​u​n​p​l​u​g​g​e​d​.​ ​N​o​ ​r​e​s​t​a​r​t​ ​n​e​e​d​e​d​.
+	 */
+	virtHwLinkNote: string
+	/**
+	 * d​i​s​c​o​n​n​e​c​t​e​d
+	 */
+	virtHwLinkDown: string
+	/**
+	 * F​i​r​e​w​a​l​l
+	 */
+	virtHwFirewall: string
+	/**
+	 * C​D​-​R​O​M​ ​a​n​d​ ​p​a​s​s​t​h​r​o​u​g​h
+	 */
+	virtHwDevices: string
+	/**
+	 * C​D​-​R​O​M
+	 */
+	virtHwCdrom: string
+	/**
+	 * M​e​d​i​a
+	 */
+	virtHwMedia: string
+	/**
+	 * N​o​ ​m​e​d​i​a
+	 */
+	virtHwNoMedia: string
+	/**
+	 * I​n​s​e​r​t
+	 */
+	virtHwInsert: string
+	/**
+	 * E​j​e​c​t
+	 */
+	virtHwEject: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​d​r​i​v​e
+	 */
+	virtHwCiDrive: string
+	/**
+	 * H​o​l​d​s​ ​t​h​e​ ​c​l​o​u​d​-​i​n​i​t​ ​s​e​t​t​i​n​g​s​,​ ​w​h​i​c​h​ ​t​h​e​ ​S​e​t​t​i​n​g​s​ ​v​i​e​w​ ​e​d​i​t​s​.
+	 */
+	virtHwCiDriveNote: string
+	/**
+	 * A​d​d​ ​d​e​v​i​c​e
+	 */
+	virtHwAddDevice: string
+	/**
+	 * m​a​p​p​i​n​g
+	 */
+	virtHwMapping: string
+	/**
+	 * G​i​v​e​n​ ​b​y
+	 */
+	virtHwUsbNaming: string
+	/**
+	 * V​e​n​d​o​r​ ​a​n​d​ ​p​r​o​d​u​c​t
+	 */
+	virtHwUsbById: string
+	/**
+	 * P​o​r​t
+	 */
+	virtHwUsbByPort: string
+	/**
+	 * B​y​ ​p​o​r​t​:​ ​w​h​a​t​e​v​e​r​ ​i​s​ ​p​l​u​g​g​e​d​ ​i​n​ ​t​h​e​r​e​ ​g​o​e​s​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​.
+	 */
+	virtHwUsbByPortNote: string
+	/**
+	 * I​O​M​M​U​ ​g​r​o​u​p​ ​{​g​r​o​u​p​}​ ​·​ ​{​n​}​ ​d​e​v​i​c​e​s
+	 * @param {unknown} group
+	 * @param {unknown} n
+	 */
+	virtHwIommuGroup: RequiredParams<'group' | 'n'>
+	/**
+	 * E​v​e​r​y​ ​d​e​v​i​c​e​ ​i​n​ ​i​t​s​ ​I​O​M​M​U​ ​g​r​o​u​p​ ​g​o​e​s​ ​t​o​ ​t​h​e​ ​g​u​e​s​t​ ​w​i​t​h​ ​i​t​.
+	 */
+	virtHwIommuGroupNote: string
+	/**
+	 * I​O​M​M​U​ ​i​s​ ​o​f​f​ ​o​n​ ​t​h​e​ ​h​o​s​t​:​ ​a​ ​g​u​e​s​t​ ​w​i​t​h​ ​a​ ​P​C​I​ ​d​e​v​i​c​e​ ​w​i​l​l​ ​n​o​t​ ​s​t​a​r​t​.
+	 */
+	virtHwNoIommu: string
+	/**
+	 * T​h​i​s​ ​l​o​g​i​n​ ​c​a​n​ ​o​n​l​y​ ​g​i​v​e​ ​r​e​s​o​u​r​c​e​ ​m​a​p​p​i​n​g​s​;​ ​a​ ​r​a​w​ ​d​e​v​i​c​e​ ​n​e​e​d​s​ ​r​o​o​t​@​p​a​m​.
+	 */
+	virtHwMappingsOnly: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​t​h​e​ ​d​e​v​i​c​e​ ​w​h​i​l​e​ ​t​h​e​ ​g​u​e​s​t​ ​h​a​s​ ​i​t​,​ ​a​n​d​ ​t​h​e​ ​g​u​e​s​t​ ​c​a​n​n​o​t​ ​m​i​g​r​a​t​e​ ​w​h​i​l​e​ ​r​u​n​n​i​n​g​.
+	 */
+	virtHwPciNote: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​l​i​s​t​s​ ​n​o​ ​s​u​c​h​ ​d​e​v​i​c​e​.
+	 */
+	virtHwNoHostDevices: string
+	/**
+	 * S​t​o​r​a​g​e​ ​f​o​r​ ​t​h​e​ ​T​P​M​ ​s​t​a​t​e
+	 */
+	virtHwTpmStorage: string
+	/**
+	 * D​i​s​p​l​a​y
+	 */
+	virtHwDisplay: string
+	/**
+	 * P​r​o​t​o​c​o​l
+	 */
+	virtHwProtocol: string
+	/**
+	 * L​i​s​t​e​n
+	 */
+	virtHwListen: string
+	/**
+	 * G​r​a​p​h​i​c​s​ ​c​a​r​d
+	 */
+	virtHwGpu: string
+	/**
+	 * P​o​r​t
+	 */
+	virtHwPort: string
+	/**
+	 * L​i​s​t​e​n​i​n​g​ ​o​n​ ​e​v​e​r​y​ ​a​d​d​r​e​s​s​ ​l​e​t​s​ ​a​n​y​o​n​e​ ​w​h​o​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​h​o​s​t​ ​c​o​n​n​e​c​t​ ​t​o​ ​t​h​e​ ​c​o​n​s​o​l​e​.​ ​K​e​e​p​ ​1​2​7​.​0​.​0​.​1​ ​a​n​d​ ​c​o​n​n​e​c​t​ ​t​h​r​o​u​g​h​ ​a​n​ ​S​S​H​ ​t​u​n​n​e​l​.
+	 */
+	virtHwListenWarn: string
+	/**
+	 * B​o​o​t
+	 */
+	virtHwBoot: string
+	/**
+	 * O​V​M​F​ ​·​ ​s​u​p​p​o​r​t​s​ ​S​e​c​u​r​e​ ​B​o​o​t​;​ ​W​i​n​d​o​w​s​ ​1​1​ ​n​e​e​d​s​ ​i​t
+	 */
+	virtHwUefiNote: string
+	/**
+	 * S​e​a​B​I​O​S​ ​·​ ​o​l​d​e​r​ ​s​y​s​t​e​m​s​ ​a​n​d​ ​M​B​R​ ​d​i​s​k​s
+	 */
+	virtHwBiosNote: string
+	/**
+	 * B​o​o​t​s​ ​o​n​l​y​ ​s​i​g​n​e​d​ ​k​e​r​n​e​l​s​ ​a​n​d​ ​b​o​o​t​ ​l​o​a​d​e​r​s
+	 */
+	virtHwSecureBootNote: string
+	/**
+	 * S​t​o​r​a​g​e​ ​f​o​r​ ​t​h​e​ ​E​F​I​ ​d​i​s​k
+	 */
+	virtHwEfiStorage: string
+	/**
+	 * S​w​i​t​c​h​i​n​g​ ​a​n​ ​i​n​s​t​a​l​l​e​d​ ​s​y​s​t​e​m​ ​b​e​t​w​e​e​n​ ​U​E​F​I​ ​a​n​d​ ​B​I​O​S​ ​c​a​n​ ​l​e​a​v​e​ ​i​t​ ​u​n​a​b​l​e​ ​t​o​ ​b​o​o​t​.
+	 */
+	virtHwFirmwareWarn: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​c​h​a​n​g​e​ ​t​h​e​ ​f​i​r​m​w​a​r​e
+	 */
+	virtHwConfirmFirmware: string
+	/**
+	 * B​o​o​t​ ​o​r​d​e​r
+	 */
+	virtHwBootOrder: string
+	/**
+	 * B​o​o​t​ ​f​r​o​m​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtHwBootOn: RequiredParams<'name'>
+	/**
+	 * N​e​t​w​o​r​k​ ​(​P​X​E​)
+	 */
+	virtHwPxe: string
+	/**
+	 * M​o​v​e​ ​u​p
+	 */
+	virtHwUp: string
+	/**
+	 * M​o​v​e​ ​d​o​w​n
+	 */
+	virtHwDown: string
+	/**
+	 * C​o​n​f​i​g​u​r​a​t​i​o​n​ ​f​i​l​e
+	 */
+	virtHwConfig: string
+	/**
+	 * P​e​n​d​i​n​g​ ​c​h​a​n​g​e​s
+	 */
+	virtHwPending: string
+	/**
+	 * T​a​k​e​s​ ​e​f​f​e​c​t​ ​a​t​ ​t​h​e​ ​n​e​x​t​ ​s​t​a​r​t
+	 */
+	virtHwNextStart: string
+	/**
+	 * r​e​m​o​v​e​d
+	 */
+	virtHwPendingRemoved: string
+	/**
+	 * R​e​v​e​r​t
+	 */
+	virtHwRevert: string
+	/**
+	 * R​e​v​e​r​t​ ​a​l​l
+	 */
+	virtHwRevertAll: string
+	/**
+	 * E​v​e​r​y​ ​p​e​n​d​i​n​g​ ​c​h​a​n​g​e​ ​i​s​ ​d​r​o​p​p​e​d​;​ ​t​h​e​ ​n​e​x​t​ ​s​t​a​r​t​ ​k​e​e​p​s​ ​w​h​a​t​ ​r​u​n​s​ ​n​o​w​.
+	 */
+	virtHwRevertAllNote: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​r​e​v​e​r​t​ ​a​l​l
+	 */
+	virtHwConfirmRevertAll: string
+	/**
+	 * S​a​v​e​d​.
+	 */
+	virtHwSaved: string
+	/**
+	 * S​a​v​e​d​.​ ​T​h​e​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​d​i​d​ ​n​o​t​ ​t​a​k​e​ ​i​t​,​ ​s​o​ ​i​t​ ​t​a​k​e​s​ ​e​f​f​e​c​t​ ​a​t​ ​t​h​e​ ​n​e​x​t​ ​s​t​a​r​t​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtHwLiveError: RequiredParams<'why'>
+	/**
+	 * R​e​m​o​v​e​d​.​ ​I​t​s​ ​v​o​l​u​m​e​ ​w​a​s​ ​k​e​p​t​:​ ​t​h​e​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​s​t​i​l​l​ ​u​s​e​s​ ​i​t​.
+	 */
+	virtHwVolumeKept: string
+	/**
+	 * T​h​e​ ​g​u​e​s​t​ ​c​h​a​n​g​e​d​ ​s​i​n​c​e​ ​i​t​ ​w​a​s​ ​r​e​a​d​.​ ​I​t​ ​w​a​s​ ​r​e​a​d​ ​a​g​a​i​n​;​ ​c​h​e​c​k​ ​a​n​d​ ​s​a​v​e​ ​o​n​c​e​ ​m​o​r​e​.
+	 */
+	virtHwConflict: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n
+	 */
+	virtHwDescription: string
+	/**
+	 * S​t​a​r​t​s​ ​w​i​t​h​ ​t​h​e​ ​h​o​s​t
+	 */
+	virtHwAutostartOn: string
+	/**
+	 * S​t​a​r​t​e​d​ ​b​y​ ​h​a​n​d
+	 */
+	virtHwAutostartOff: string
+	/**
+	 * P​r​o​t​e​c​t​i​o​n
+	 */
+	virtHwProtection: string
+	/**
+	 * B​l​o​c​k​s​ ​d​e​l​e​t​i​n​g​ ​t​h​e​ ​g​u​e​s​t​ ​a​n​d​ ​c​h​a​n​g​i​n​g​ ​i​t​s​ ​d​i​s​k​s
+	 */
+	virtHwProtectionNote: string
+	/**
+	 * l​i​b​v​i​r​t​ ​r​e​n​a​m​e​s​ ​a​ ​g​u​e​s​t​ ​o​n​l​y​ ​w​h​i​l​e​ ​i​t​ ​i​s​ ​s​h​u​t​ ​d​o​w​n​.
+	 */
+	virtHwRenameStopped: string
+	/**
+	 * N​o​t​ ​a​ ​n​u​m​b​e​r​ ​o​f​ ​v​C​P​U​s​ ​t​h​e​ ​h​o​s​t​ ​h​a​s​:​ ​a​t​ ​l​e​a​s​t​ ​1​,​ ​a​t​ ​m​o​s​t​ ​t​h​e​ ​h​o​s​t​'​s​.
+	 */
+	virtHwIssueCpuCount: string
+	/**
+	 * O​n​l​i​n​e​ ​v​C​P​U​s​ ​a​r​e​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​t​h​e​ ​t​o​t​a​l​.
+	 */
+	virtHwIssueCpuOnline: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​m​o​u​n​t​ ​o​f​ ​m​e​m​o​r​y​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​:​ ​a​t​ ​l​e​a​s​t​ ​1​6​ ​M​i​B​,​ ​a​t​ ​m​o​s​t​ ​t​h​e​ ​h​o​s​t​'​s​.
+	 */
+	virtHwIssueMemory: string
+	/**
+	 * T​h​e​ ​b​a​l​l​o​o​n​ ​m​i​n​i​m​u​m​ ​i​s​ ​a​b​o​v​e​ ​t​h​e​ ​m​e​m​o​r​y​.
+	 */
+	virtHwIssueMemoryMin: string
+	/**
+	 * A​ ​d​i​s​k​ ​o​n​l​y​ ​g​r​o​w​s​:​ ​t​h​e​ ​n​e​w​ ​s​i​z​e​ ​h​a​s​ ​t​o​ ​b​e​ ​l​a​r​g​e​r​.
+	 */
+	virtHwIssueDiskShrink: string
+	/**
+	 * N​o​t​ ​a​ ​d​i​s​k​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​,​ ​o​r​ ​t​h​i​s​ ​d​i​s​k​ ​c​a​n​n​o​t​ ​g​r​o​w​.
+	 */
+	virtHwIssueDiskSize: string
+	/**
+	 * T​h​e​ ​s​t​o​r​a​g​e​ ​d​o​e​s​ ​n​o​t​ ​h​a​v​e​ ​t​h​a​t​ ​m​u​c​h​ ​f​r​e​e​.
+	 */
+	virtHwIssueStorageSpace: string
+	/**
+	 * A​ ​m​o​u​n​t​ ​p​o​i​n​t​ ​i​s​ ​a​n​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​,​ ​s​u​c​h​ ​a​s​ ​/​d​a​t​a​.
+	 */
+	virtHwIssueMountPoint: string
+	/**
+	 * K​e​e​p​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​d​e​v​i​c​e​ ​i​n​ ​t​h​e​ ​b​o​o​t​ ​o​r​d​e​r​.
+	 */
+	virtHwIssueBootEmpty: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtHwIssueNameInvalid: string
+	/**
+	 * l​i​b​v​i​r​t​ ​r​e​n​a​m​e​s​ ​a​ ​g​u​e​s​t​ ​o​n​l​y​ ​w​h​i​l​e​ ​i​t​ ​i​s​ ​s​h​u​t​ ​d​o​w​n​.
+	 */
+	virtHwIssueNameRunning: string
+	/**
+	 * T​h​e​ ​d​e​s​c​r​i​p​t​i​o​n​ ​i​s​ ​t​o​o​ ​l​o​n​g​ ​o​r​ ​h​a​s​ ​c​o​n​t​r​o​l​ ​c​h​a​r​a​c​t​e​r​s​ ​i​n​ ​i​t​.
+	 */
+	virtHwIssueDescription: string
+	/**
+	 * N​o​t​ ​a​ ​u​n​i​c​a​s​t​ ​M​A​C​ ​a​d​d​r​e​s​s​ ​(​a​a​:​b​b​:​c​c​:​d​d​:​e​e​:​f​f​,​ ​f​i​r​s​t​ ​o​c​t​e​t​ ​e​v​e​n​)​.
+	 */
+	virtHwIssueMac: string
+	/**
+	 * S​h​u​t​ ​t​h​e​ ​g​u​e​s​t​ ​d​o​w​n​ ​f​i​r​s​t​:​ ​a​ ​n​e​w​ ​b​u​s​ ​o​r​ ​f​i​r​m​w​a​r​e​ ​n​e​e​d​s​ ​i​t​ ​s​t​o​p​p​e​d​.
+	 */
+	virtHwIssueStopFirst: string
+	/**
+	 * P​i​c​k​ ​a​ ​s​t​o​r​a​g​e​ ​f​o​r​ ​i​t​.
+	 */
+	virtHwIssueStorageMissing: string
+	/**
+	 * P​i​c​k​ ​a​ ​d​e​v​i​c​e​.​ ​A​ ​g​u​e​s​t​ ​h​a​s​ ​a​t​ ​m​o​s​t​ ​o​n​e​ ​T​P​M​.
+	 */
+	virtHwIssueDevice: string
+	/**
+	 * T​h​a​t​ ​v​o​l​u​m​e​ ​i​s​ ​i​n​ ​u​s​e​ ​a​l​r​e​a​d​y​.
+	 */
+	virtHwIssueVolumeInUse: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​ ​m​e​d​i​a​.
+	 */
+	virtHwIssueMedia: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​t​h​a​t​ ​f​o​r​ ​t​h​i​s​ ​g​u​e​s​t​.
+	 */
+	virtHwIssueNotOffered: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​h​a​r​d​w​a​r​e​ ​a​g​a​i​n​.
+	 */
+	virtHwIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	virtHwIssueUnsupported: string
+	/**
+	 * T​h​i​s​ ​V​M​ ​h​a​s​ ​n​o​ ​c​l​o​u​d​-​i​n​i​t​ ​d​r​i​v​e​.
+	 */
+	virtCiNoDrive: string
+	/**
+	 * T​h​i​s​ ​g​u​e​s​t​ ​h​a​s​ ​n​o​ ​c​l​o​u​d​-​i​n​i​t​ ​s​e​e​d​ ​m​a​d​e​ ​b​y​ ​t​h​i​s​ ​a​p​p​.
+	 */
+	virtCiNoSeed: string
+	/**
+	 * N​e​w​ ​p​a​s​s​w​o​r​d
+	 */
+	virtCiNewPassword: string
+	/**
+	 * L​e​a​v​e​ ​e​m​p​t​y​ ​t​o​ ​k​e​e​p
+	 */
+	virtCiKeepPassword: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d
+	 */
+	virtCiRemovePassword: string
+	/**
+	 * P​a​s​s​w​o​r​d​ ​e​x​p​i​r​e​s​ ​a​t​ ​t​h​e​ ​f​i​r​s​t​ ​l​o​g​i​n
+	 */
+	virtCiPasswordExpires: string
+	/**
+	 * T​h​e​ ​s​e​e​d​ ​h​o​l​d​s​ ​s​e​t​t​i​n​g​s​ ​t​h​i​s​ ​a​p​p​ ​d​i​d​ ​n​o​t​ ​w​r​i​t​e​.​ ​S​a​v​i​n​g​ ​r​e​p​l​a​c​e​s​ ​t​h​e​m​ ​w​i​t​h​ ​t​h​e​s​e​.
+	 */
+	virtCiForeign: string
+	/**
+	 * T​h​e​ ​s​e​t​t​i​n​g​s​ ​c​o​n​f​i​g​u​r​e​ ​{​n​}​ ​n​e​t​w​o​r​k​ ​i​n​t​e​r​f​a​c​e​s​;​ ​o​n​l​y​ ​t​h​e​ ​f​i​r​s​t​ ​i​s​ ​e​d​i​t​e​d​ ​h​e​r​e​.
+	 * @param {unknown} n
+	 */
+	virtCiNics: RequiredParams<'n'>
+	/**
+	 * T​h​e​ ​g​u​e​s​t​ ​h​a​s​ ​n​o​ ​n​e​t​w​o​r​k​ ​i​n​t​e​r​f​a​c​e​ ​f​o​r​ ​a​d​d​r​e​s​s​ ​s​e​t​t​i​n​g​s​.
+	 */
+	virtCiNoNetwork: string
+	/**
+	 * T​h​e​ ​s​y​s​t​e​m​ ​r​e​a​d​s​ ​t​h​e​s​e​ ​t​h​e​ ​n​e​x​t​ ​t​i​m​e​ ​i​t​ ​b​o​o​t​s​.
+	 */
+	virtCiApplies: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​s​e​t​t​i​n​g​s​ ​s​a​v​e​d​.
+	 */
+	virtCiSaved: string
+	/**
+	 * B​a​c​k​u​p
+	 */
+	virtViewBackup: string
+	/**
+	 * B​a​c​k​u​p​ ​j​o​b​s
+	 */
+	virtSectionBackupJobs: string
+	/**
+	 * P​l​a​n
+	 */
+	virtBakPlan: string
+	/**
+	 * D​a​t​a​c​e​n​t​e​r​ ​→​ ​B​a​c​k​u​p​ ​j​o​b​s
+	 */
+	virtBakDatacenter: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​ ​t​a​k​e​s​ ​t​h​i​s​ ​g​u​e​s​t​.
+	 */
+	virtBakNoPlan: string
+	/**
+	 * T​h​i​s​ ​j​o​b​ ​a​l​s​o​ ​t​a​k​e​s​ ​o​t​h​e​r​ ​g​u​e​s​t​s​.​ ​E​d​i​t​ ​i​t​ ​u​n​d​e​r​ ​B​a​c​k​u​p​ ​j​o​b​s​.
+	 */
+	virtBakSharedJob: string
+	/**
+	 * A​d​d​ ​a​ ​s​c​h​e​d​u​l​e
+	 */
+	virtBakAddPlan: string
+	/**
+	 * E​d​i​t
+	 */
+	virtBakEditPlan: string
+	/**
+	 * R​e​m​o​v​e​ ​s​c​h​e​d​u​l​e
+	 */
+	virtBakRemovePlan: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​r​e​m​o​v​e​ ​j​o​b​ ​{​i​d​}
+	 * @param {unknown} id
+	 */
+	virtBakConfirmRemovePlan: RequiredParams<'id'>
+	/**
+	 * B​a​c​k​u​p​ ​j​o​b​ ​s​a​v​e​d​.
+	 */
+	virtBakPlanSaved: string
+	/**
+	 * B​a​c​k​u​p​ ​j​o​b​ ​r​e​m​o​v​e​d​.
+	 */
+	virtBakPlanRemoved: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	virtBakSchedule: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtBakStorage: string
+	/**
+	 * P​i​c​k​ ​a​ ​s​t​o​r​a​g​e
+	 */
+	virtBakPickStorage: string
+	/**
+	 * R​e​t​e​n​t​i​o​n
+	 */
+	virtBakRetention: string
+	/**
+	 * T​h​e​ ​s​t​o​r​a​g​e​'​s​ ​o​w​n
+	 */
+	virtBakRetentionDefault: string
+	/**
+	 * H​o​w​ ​m​a​n​y​ ​b​a​c​k​u​p​s​ ​e​a​c​h​ ​r​u​l​e​ ​k​e​e​p​s​.​ ​A​l​l​ ​e​m​p​t​y​:​ ​t​h​e​ ​s​t​o​r​a​g​e​'​s​ ​o​w​n​ ​r​e​t​e​n​t​i​o​n​.
+	 */
+	virtBakRetentionNote: string
+	/**
+	 * L​a​s​t
+	 */
+	virtBakKeepLast: string
+	/**
+	 * H​o​u​r​l​y
+	 */
+	virtBakKeepHourly: string
+	/**
+	 * D​a​i​l​y
+	 */
+	virtBakKeepDaily: string
+	/**
+	 * W​e​e​k​l​y
+	 */
+	virtBakKeepWeekly: string
+	/**
+	 * M​o​n​t​h​l​y
+	 */
+	virtBakKeepMonthly: string
+	/**
+	 * Y​e​a​r​l​y
+	 */
+	virtBakKeepYearly: string
+	/**
+	 * M​o​d​e
+	 */
+	virtBakMode: string
+	/**
+	 * C​o​m​p​r​e​s​s​i​o​n
+	 */
+	virtBakCompress: string
+	/**
+	 * n​o​n​e
+	 */
+	virtBakCompressNone: string
+	/**
+	 * E​n​a​b​l​e​d
+	 */
+	virtBakEnabled: string
+	/**
+	 * D​i​s​a​b​l​e​d
+	 */
+	virtBakDisabled: string
+	/**
+	 * V​a​l​i​d​a​t​e
+	 */
+	virtBakValidate: string
+	/**
+	 * A​ ​P​V​E​ ​c​a​l​e​n​d​a​r​ ​e​v​e​n​t​:​ ​0​2​:​0​0​,​ ​s​a​t​ ​0​3​:​0​0​,​ ​m​o​n​.​.​f​r​i​ ​2​2​:​3​0​,​ ​d​a​i​l​y​.
+	 */
+	virtBakScheduleHint: string
+	/**
+	 * P​V​E​ ​d​o​e​s​ ​n​o​t​ ​t​a​k​e​ ​t​h​i​s​ ​s​c​h​e​d​u​l​e​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtBakScheduleRefused: RequiredParams<'why'>
+	/**
+	 * N​e​x​t​ ​r​u​n​s
+	 */
+	virtBakNextRuns: string
+	/**
+	 * P​V​E​ ​l​i​s​t​s​ ​n​o​ ​u​p​c​o​m​i​n​g​ ​r​u​n​ ​f​o​r​ ​t​h​i​s​ ​s​c​h​e​d​u​l​e​.
+	 */
+	virtBakNoNextRuns: string
+	/**
+	 * G​u​e​s​t​s
+	 */
+	virtBakSelection: string
+	/**
+	 * A​l​l​ ​g​u​e​s​t​s
+	 */
+	virtBakSelAll: string
+	/**
+	 * A​l​l​ ​g​u​e​s​t​s​ ​e​x​c​e​p​t​ ​{​v​m​i​d​s​}
+	 * @param {unknown} vmids
+	 */
+	virtBakSelAllExcept: RequiredParams<'vmids'>
+	/**
+	 * V​M​I​D​ ​{​v​m​i​d​s​}
+	 * @param {unknown} vmids
+	 */
+	virtBakSelVmids: RequiredParams<'vmids'>
+	/**
+	 * P​o​o​l​ ​{​p​o​o​l​}
+	 * @param {unknown} pool
+	 */
+	virtBakSelPool: RequiredParams<'pool'>
+	/**
+	 * P​o​o​l
+	 */
+	virtBakPool: string
+	/**
+	 * E​x​c​e​p​t​ ​V​M​I​D​s
+	 */
+	virtBakExclude: string
+	/**
+	 * A​n​y​ ​n​o​d​e
+	 */
+	virtBakAnyNode: string
+	/**
+	 * N​a​m​e​d​ ​b​y​ ​P​V​E
+	 */
+	virtBakJobIdAuto: string
+	/**
+	 * N​o​t​e​s​ ​t​e​m​p​l​a​t​e
+	 */
+	virtBakNotesTemplate: string
+	/**
+	 * C​o​m​m​e​n​t
+	 */
+	virtBakComment: string
+	/**
+	 * M​a​i​l​ ​n​o​t​i​f​i​c​a​t​i​o​n
+	 */
+	virtBakMail: string
+	/**
+	 * A​l​w​a​y​s
+	 */
+	virtBakMailAlways: string
+	/**
+	 * O​n​ ​f​a​i​l​u​r​e
+	 */
+	virtBakMailFailure: string
+	/**
+	 * N​e​w​ ​j​o​b
+	 */
+	virtBakNewJob: string
+	/**
+	 * E​d​i​t​ ​j​o​b​ ​{​i​d​}
+	 * @param {unknown} id
+	 */
+	virtBakEditJob: RequiredParams<'id'>
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​s​.
+	 */
+	virtBakNoJobs: string
+	/**
+	 * R​u​n​ ​n​o​w
+	 */
+	virtBakRunNow: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​r​u​n​ ​{​i​d​}​ ​n​o​w
+	 * @param {unknown} id
+	 */
+	virtBakConfirmRun: RequiredParams<'id'>
+	/**
+	 * T​h​i​s​ ​b​a​c​k​s​ ​u​p​ ​e​v​e​r​y​ ​g​u​e​s​t​ ​t​h​e​ ​j​o​b​ ​t​a​k​e​s​ ​n​o​w​,​ ​w​h​i​c​h​ ​c​a​n​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
+	 */
+	virtBakRunNote: string
+	/**
+	 * R​u​n​n​i​n​g​ ​j​o​b​ ​{​i​d​}​…
+	 * @param {unknown} id
+	 */
+	virtBakJobRunning: RequiredParams<'id'>
+	/**
+	 * J​o​b​ ​{​i​d​}​ ​f​i​n​i​s​h​e​d​.
+	 * @param {unknown} id
+	 */
+	virtBakJobRan: RequiredParams<'id'>
+	/**
+	 * B​a​c​k​u​p​s
+	 */
+	virtBakList: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakNone: string
+	/**
+	 * B​a​c​k​ ​u​p​ ​n​o​w
+	 */
+	virtBakNow: string
+	/**
+	 * S​n​a​p​s​h​o​t​ ​m​o​d​e​ ​b​a​c​k​s​ ​u​p​ ​a​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​w​i​t​h​ ​n​o​ ​d​o​w​n​t​i​m​e​.
+	 */
+	virtBakNowNote: string
+	/**
+	 * T​h​i​s​ ​n​o​d​e​ ​h​a​s​ ​n​o​ ​s​t​o​r​a​g​e​ ​t​h​a​t​ ​h​o​l​d​s​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakNoStorage: string
+	/**
+	 * S​t​a​r​t​ ​b​a​c​k​u​p
+	 */
+	virtBakStart: string
+	/**
+	 * N​o​t​e​s
+	 */
+	virtBakNotes: string
+	/**
+	 * O​p​t​i​o​n​a​l
+	 */
+	virtBakOptional: string
+	/**
+	 * P​r​o​t​e​c​t​e​d
+	 */
+	virtBakProtected: string
+	/**
+	 * K​e​p​t​ ​f​r​o​m​ ​p​r​u​n​i​n​g​ ​a​n​d​ ​d​e​l​e​t​i​o​n​ ​u​n​t​i​l​ ​u​n​p​r​o​t​e​c​t​e​d​.
+	 */
+	virtBakProtectedNote: string
+	/**
+	 * A​ ​p​r​o​t​e​c​t​e​d​ ​b​a​c​k​u​p​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​l​e​t​e​d​.​ ​U​n​p​r​o​t​e​c​t​ ​i​t​ ​f​i​r​s​t​.
+	 */
+	virtBakProtectedNoDelete: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p​…​ ​T​h​i​s​ ​c​a​n​ ​t​a​k​e​ ​s​e​v​e​r​a​l​ ​m​i​n​u​t​e​s​.
+	 */
+	virtBakRunning: string
+	/**
+	 * R​e​s​t​o​r​i​n​g​…​ ​T​h​i​s​ ​c​a​n​ ​t​a​k​e​ ​s​e​v​e​r​a​l​ ​m​i​n​u​t​e​s​.
+	 */
+	virtBakRestoring: string
+	/**
+	 * B​a​c​k​e​d​ ​u​p​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	virtBakTaken: RequiredParams<'name'>
+	/**
+	 * B​a​c​k​u​p​ ​s​a​v​e​d​.
+	 */
+	virtBakEdited: string
+	/**
+	 * B​a​c​k​u​p​ ​d​e​l​e​t​e​d​.
+	 */
+	virtBakDeleted: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	virtBakDelete: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​d​e​l​e​t​e​ ​b​a​c​k​u​p
+	 */
+	virtBakConfirmDelete: string
+	/**
+	 * F​i​l​e
+	 */
+	virtBakFile: string
+	/**
+	 * V​e​r​i​f​i​e​d
+	 */
+	virtBakVerified: string
+	/**
+	 * V​e​r​i​f​i​c​a​t​i​o​n​ ​f​a​i​l​e​d
+	 */
+	virtBakVerifyFailed: string
+	/**
+	 * O​v​e​r​ ​t​h​i​s​ ​g​u​e​s​t
+	 */
+	virtBakOverGuest: string
+	/**
+	 * A​s​ ​a​ ​n​e​w​ ​g​u​e​s​t
+	 */
+	virtBakAsNew: string
+	/**
+	 * D​i​s​k​ ​s​t​o​r​a​g​e
+	 */
+	virtBakRestoreStorage: string
+	/**
+	 * A​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​u​p
+	 */
+	virtBakRestoreStorageOwn: string
+	/**
+	 * R​e​s​t​o​r​i​n​g​ ​o​v​e​r​w​r​i​t​e​s​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​d​i​s​k​s​ ​a​n​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 */
+	virtBakOverwrites: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	virtBakRestore: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​o​v​e​r​w​r​i​t​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtBakConfirmRestore: RequiredParams<'name'>
+	/**
+	 * R​e​s​t​o​r​e​d​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​e​ ​b​a​c​k​u​p​.
+	 * @param {unknown} name
+	 */
+	virtBakRestored: RequiredParams<'name'>
+	/**
+	 * R​e​s​t​o​r​e​d​ ​t​h​e​ ​b​a​c​k​u​p​ ​a​s​ ​a​ ​n​e​w​ ​g​u​e​s​t​.
+	 */
+	virtBakRestoredNew: string
+	/**
+	 * E​n​t​e​r​ ​a​ ​s​c​h​e​d​u​l​e​.
+	 */
+	virtBakIssueScheduleEmpty: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​s​c​h​e​d​u​l​e​ ​P​V​E​ ​t​a​k​e​s​.
+	 */
+	virtBakIssueScheduleInvalid: string
+	/**
+	 * P​i​c​k​ ​a​ ​s​t​o​r​a​g​e​ ​o​f​ ​t​h​e​ ​n​o​d​e​ ​t​h​a​t​ ​h​o​l​d​s​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakIssueStorage: string
+	/**
+	 * P​i​c​k​ ​s​n​a​p​s​h​o​t​,​ ​s​u​s​p​e​n​d​ ​o​r​ ​s​t​o​p​.
+	 */
+	virtBakIssueMode: string
+	/**
+	 * P​i​c​k​ ​a​ ​c​o​m​p​r​e​s​s​i​o​n​ ​P​V​E​ ​k​n​o​w​s​.
+	 */
+	virtBakIssueCompress: string
+	/**
+	 * P​i​c​k​ ​t​h​e​ ​g​u​e​s​t​s​:​ ​a​l​l​ ​o​f​ ​t​h​e​m​,​ ​a​ ​p​o​o​l​,​ ​o​r​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​V​M​I​D​.
+	 */
+	virtBakIssueGuests: string
+	/**
+	 * T​h​e​ ​n​o​d​e​ ​i​s​ ​n​o​t​ ​o​n​l​i​n​e​.
+	 */
+	virtBakIssueNodeOffline: string
+	/**
+	 * S​h​u​t​ ​t​h​e​ ​g​u​e​s​t​ ​d​o​w​n​ ​b​e​f​o​r​e​ ​r​e​s​t​o​r​i​n​g​ ​o​v​e​r​ ​i​t​.
+	 */
+	virtBakIssueNotStopped: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​b​a​c​k​u​p​s​ ​a​g​a​i​n​.
+	 */
+	virtBakIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​k​e​e​p​s​ ​n​o​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakIssueUnsupported: string
+	/**
+	 * Y​e​s
+	 */
+	yes: string
+	/**
+	 * N​o
+	 */
+	no: string
 }
 
 export type TranslationFunctions = {
@@ -5356,6 +7734,2314 @@ export type TranslationFunctions = {
 	 * The BMC lists more sensors than this agent reads; the first 64 are shown.
 	 */
 	bmcSensorsTruncated: () => LocalizedString
+	/**
+	 * Virtualization
+	 */
+	virt: () => LocalizedString
+	/**
+	 * Virtual machine
+	 */
+	virtVm: () => LocalizedString
+	/**
+	 * LXC container
+	 */
+	virtLxc: () => LocalizedString
+	/**
+	 * Template
+	 */
+	virtTemplate: () => LocalizedString
+	/**
+	 * A template is not started. New guests are cloned from it.
+	 */
+	virtTemplateNote: () => LocalizedString
+	/**
+	 * Usage shows here once it runs.
+	 */
+	virtStoppedNote: () => LocalizedString
+	/**
+	 * Neither Proxmox VE nor libvirt was found on this machine.
+	 */
+	virtNone: () => LocalizedString
+	/**
+	 * Virtualization is not managed on this platform.
+	 */
+	virtUnsupported: () => LocalizedString
+	/**
+	 * This host has no guests.
+	 */
+	virtNoGuests: () => LocalizedString
+	/**
+	 * Pick a guest from the list.
+	 */
+	virtPick: () => LocalizedString
+	/**
+	 * Allocated
+	 */
+	virtAllocated: () => LocalizedString
+	/**
+	 * {running} running · {total} total
+	 */
+	virtRunningOf: (arg: { running: unknown, total: unknown }) => LocalizedString
+	/**
+	 * Memory
+	 */
+	virtMemory: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	virtDisk: () => LocalizedString
+	/**
+	 * Network
+	 */
+	virtNetwork: () => LocalizedString
+	/**
+	 * Type
+	 */
+	virtKind: () => LocalizedString
+	/**
+	 * Node
+	 */
+	virtNode: () => LocalizedString
+	/**
+	 * Uptime
+	 */
+	virtUptime: () => LocalizedString
+	/**
+	 * Starts with the host
+	 */
+	virtAutostart: () => LocalizedString
+	/**
+	 * Tags
+	 */
+	virtTags: () => LocalizedString
+	/**
+	 * The chart fills in as readings arrive.
+	 */
+	virtChartWaiting: () => LocalizedString
+	/**
+	 * Running
+	 */
+	virtStateRunning: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	virtStatePaused: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	virtStateStopped: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	virtStateStarting: () => LocalizedString
+	/**
+	 * Stopping
+	 */
+	virtStateStopping: () => LocalizedString
+	/**
+	 * Rebooting
+	 */
+	virtStateRebooting: () => LocalizedString
+	/**
+	 * Migrating
+	 */
+	virtStateMigrating: () => LocalizedString
+	/**
+	 * Backing up
+	 */
+	virtStateBackup: () => LocalizedString
+	/**
+	 * Unknown
+	 */
+	virtStateUnknown: () => LocalizedString
+	/**
+	 * Start
+	 */
+	virtActStart: () => LocalizedString
+	/**
+	 * Shut down
+	 */
+	virtActShutdown: () => LocalizedString
+	/**
+	 * Reboot
+	 */
+	virtActReboot: () => LocalizedString
+	/**
+	 * Force stop
+	 */
+	virtActForceStop: () => LocalizedString
+	/**
+	 * Pause
+	 */
+	virtActSuspend: () => LocalizedString
+	/**
+	 * Resume
+	 */
+	virtActResume: () => LocalizedString
+	/**
+	 * {action}: done for {name}.
+	 */
+	virtActDone: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * {action} {name}? The guest's system is asked to do it and may take a while.
+	 */
+	virtConfirm: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Force stop {name}? It stops at once, like pulling the plug, and anything unsaved in it is lost.
+	 */
+	virtConfirmForce: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * sudo password
+	 */
+	virtSudoPassword: () => LocalizedString
+	/**
+	 * Use
+	 */
+	virtSudoSend: () => LocalizedString
+	/**
+	 * libvirt refused this agent's account. The password is sent with each request while this page is open and is not stored.
+	 */
+	virtSudoHint: () => LocalizedString
+	/**
+	 * This agent could not reach the host.
+	 */
+	virtErrUnreachable: () => LocalizedString
+	/**
+	 * How to sign in to the host is not set up.
+	 */
+	virtErrNotConfigured: () => LocalizedString
+	/**
+	 * The host refused the sign-in.
+	 */
+	virtErrAuthFailed: () => LocalizedString
+	/**
+	 * Enter the code from the account's authenticator.
+	 */
+	virtErrOtpRequired: () => LocalizedString
+	/**
+	 * Enter a code.
+	 */
+	virtErrOtpEmpty: () => LocalizedString
+	/**
+	 * The code was not accepted. Wait for the next one and try again.
+	 */
+	virtErrOtpRejected: () => LocalizedString
+	/**
+	 * The Proxmox VE certificate is not signed by a known authority. Trust it once it matches the one the host shows.
+	 */
+	virtErrCertUnconfirmed: () => LocalizedString
+	/**
+	 * Proxmox VE presented a different certificate from the trusted one. Nothing was sent.
+	 */
+	virtErrCertChanged: () => LocalizedString
+	/**
+	 * That certificate is not the one the host presented.
+	 */
+	virtErrCertNotPresented: () => LocalizedString
+	/**
+	 * The host refused this account.
+	 */
+	virtErrPermissionDenied: () => LocalizedString
+	/**
+	 * {account} may not see any guest. Grant it on the host:
+{command}
+	 */
+	virtErrNoPrivileges: (arg: { account: unknown, command: unknown }) => LocalizedString
+	/**
+	 * The host answered with something this agent cannot read.
+	 */
+	virtErrInvalidResponse: () => LocalizedString
+	/**
+	 * The host refused the action.
+	 */
+	virtErrActionFailed: () => LocalizedString
+	/**
+	 * This guest does not offer that action now.
+	 */
+	virtErrNotOffered: () => LocalizedString
+	/**
+	 * Still running on {node} after {minutes} min; its task log on the host says how it ends: {upid}
+	 */
+	virtErrTaskRunning: (arg: { minutes: unknown, node: unknown, upid: unknown }) => LocalizedString
+	/**
+	 * virsh is not installed.
+	 */
+	virtErrNotInstalled: () => LocalizedString
+	/**
+	 * No user name to sign in with. Use an API token.
+	 */
+	virtErrNoUser: () => LocalizedString
+	/**
+	 * No password to sign in with.
+	 */
+	virtErrPasswordRequired: () => LocalizedString
+	/**
+	 * The API token needs both its ID and its secret.
+	 */
+	virtErrTokenIncomplete: () => LocalizedString
+	/**
+	 * libvirt refused this agent's account, and sudo needs a password.
+	 */
+	virtErrSudoRequired: () => LocalizedString
+	/**
+	 * sudo rejected the password.
+	 */
+	virtErrSudoRejected: () => LocalizedString
+	/**
+	 * Proxmox VE settings
+	 */
+	pveSettings: () => LocalizedString
+	/**
+	 * This machine runs Proxmox VE. An admin has to set up how this agent signs in to its API.
+	 */
+	pveSetup: () => LocalizedString
+	/**
+	 * This machine runs Proxmox VE. Set up how this agent signs in to its API; an API token is recommended.
+	 */
+	pveSetupAdmin: () => LocalizedString
+	/**
+	 * API address
+	 */
+	pveAddr: () => LocalizedString
+	/**
+	 * As reached from this agent's machine. https://127.0.0.1:8006 is this host itself.
+	 */
+	pveAddrHint: () => LocalizedString
+	/**
+	 * Sign in with
+	 */
+	pveAuth: () => LocalizedString
+	/**
+	 * API token
+	 */
+	pveAuthToken: () => LocalizedString
+	/**
+	 * Password
+	 */
+	pveAuthPassword: () => LocalizedString
+	/**
+	 * Token ID
+	 */
+	pveTokenId: () => LocalizedString
+	/**
+	 * Secret
+	 */
+	pveTokenSecret: () => LocalizedString
+	/**
+	 * user@realm!name. To create one on the host:
+pveum user token add root@pam serverbox --privsep 1
+pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
+	 */
+	pveTokenHint: () => LocalizedString
+	/**
+	 * An account with TOTP is asked for a code after the agent restarts.
+	 */
+	pvePasswordHint: () => LocalizedString
+	/**
+	 * No certificate is trusted yet. The page shows the one the host presents for you to trust.
+	 */
+	pveCertNone: () => LocalizedString
+	/**
+	 * Forget it
+	 */
+	pveCertForget: () => LocalizedString
+	/**
+	 * Trusted before
+	 */
+	pveCertPrevious: () => LocalizedString
+	/**
+	 * Compare the fingerprint with the one the host shows (pvenode cert info) before trusting it.
+	 */
+	pveCertCompare: () => LocalizedString
+	/**
+	 * An admin has to trust the certificate.
+	 */
+	pveCertAdmin: () => LocalizedString
+	/**
+	 * Certificate trusted.
+	 */
+	pveCertTrusted: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	pveTfaSend: () => LocalizedString
+	/**
+	 * Proxmox VE settings saved.
+	 */
+	pveSaved: () => LocalizedString
+	/**
+	 * Proxmox VE settings removed.
+	 */
+	pveRemoved: () => LocalizedString
+	/**
+	 * Remove settings
+	 */
+	pveRemove: () => LocalizedString
+	/**
+	 * Remove how this agent signs in to Proxmox VE? The stored secret goes with it.
+	 */
+	pveRemoveConfirm: () => LocalizedString
+	/**
+	 * The address has to be https://host or https://host:port.
+	 */
+	pveInvalidAddr: () => LocalizedString
+	/**
+	 * A user name is required.
+	 */
+	pveInvalidUsername: () => LocalizedString
+	/**
+	 * A token ID looks like user@realm!name.
+	 */
+	pveInvalidTokenId: () => LocalizedString
+	/**
+	 * Overview
+	 */
+	virtViewOverview: () => LocalizedString
+	/**
+	 * Hardware
+	 */
+	virtViewHardware: () => LocalizedString
+	/**
+	 * Console
+	 */
+	virtViewConsole: () => LocalizedString
+	/**
+	 * Disks
+	 */
+	virtDisks: () => LocalizedString
+	/**
+	 * Network interfaces
+	 */
+	virtNics: () => LocalizedString
+	/**
+	 * read-only
+	 */
+	virtReadonly: () => LocalizedString
+	/**
+	 * Live
+	 */
+	virtRangeLive: () => LocalizedString
+	/**
+	 * Hour
+	 */
+	virtRangeHour: () => LocalizedString
+	/**
+	 * Day
+	 */
+	virtRangeDay: () => LocalizedString
+	/**
+	 * Week
+	 */
+	virtRangeWeek: () => LocalizedString
+	/**
+	 * The host has no readings for this range.
+	 */
+	virtChartNone: () => LocalizedString
+	/**
+	 * Graphical console
+	 */
+	virtConsoleVnc: () => LocalizedString
+	/**
+	 * Text console
+	 */
+	virtConsoleText: () => LocalizedString
+	/**
+	 * Open
+	 */
+	virtConsoleOpen: () => LocalizedString
+	/**
+	 * Close
+	 */
+	virtConsoleClose: () => LocalizedString
+	/**
+	 * The console did not open.
+	 */
+	virtConsoleFailed: () => LocalizedString
+	/**
+	 * The console ended.
+	 */
+	virtConsoleEnded: () => LocalizedString
+	/**
+	 * This guest has no console.
+	 */
+	virtConsoleNone: () => LocalizedString
+	/**
+	 * A console opens once the guest runs.
+	 */
+	virtConsoleStopped: () => LocalizedString
+	/**
+	 * VNC password
+	 */
+	virtConsolePassword: () => LocalizedString
+	/**
+	 * The display's password could not be read. Enter it if it asks for one.
+	 */
+	virtConsolePasswordHint: () => LocalizedString
+	/**
+	 * A serial console runs in a terminal. Open the terminal and run:
+	 */
+	virtConsoleCommand: () => LocalizedString
+	/**
+	 * Snapshots
+	 */
+	virtViewSnapshots: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtSnapName: () => LocalizedString
+	/**
+	 * Description (optional)
+	 */
+	virtSnapDescription: () => LocalizedString
+	/**
+	 * Take snapshot
+	 */
+	virtSnapTake: () => LocalizedString
+	/**
+	 * Include memory
+	 */
+	virtSnapWithMemory: () => LocalizedString
+	/**
+	 * A running guest's memory is always included.
+	 */
+	virtSnapMemoryAlways: () => LocalizedString
+	/**
+	 * External (disk only, the guest keeps running)
+	 */
+	virtSnapExternal: () => LocalizedString
+	/**
+	 * Beside each disk
+	 */
+	virtSnapPoolOwn: () => LocalizedString
+	/**
+	 * No external snapshot: {why}
+	 */
+	virtSnapNoExternal: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * A snapshot cannot be taken: {why}
+	 */
+	virtSnapRefused: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * No snapshots.
+	 */
+	virtSnapNone: () => LocalizedString
+	/**
+	 * Current
+	 */
+	virtSnapCurrent: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	virtSnapMemory: () => LocalizedString
+	/**
+	 * External
+	 */
+	virtSnapExternalBadge: () => LocalizedString
+	/**
+	 * Changes
+	 */
+	virtSnapDiff: () => LocalizedString
+	/**
+	 * Nothing changed since this snapshot.
+	 */
+	virtSnapSame: () => LocalizedString
+	/**
+	 * Revert
+	 */
+	virtSnapRevert: () => LocalizedString
+	/**
+	 * Revert to {name}? The guest goes back to where it was, its memory included; anything since is lost.
+	 */
+	virtSnapRevertMemory: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Revert to {name}? Its disks go back to then and the guest is stopped; anything since is lost.
+	 */
+	virtSnapRevertDisk: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Start it again afterwards
+	 */
+	virtSnapStartAfter: () => LocalizedString
+	/**
+	 * Delete snapshot
+	 */
+	virtSnapDelete: () => LocalizedString
+	/**
+	 * Delete snapshot {name}? The guest keeps what it has now.
+	 */
+	virtSnapDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Guests
+	 */
+	virtSectionGuests: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtSectionStorage: () => LocalizedString
+	/**
+	 * Networks
+	 */
+	virtSectionNetworks: () => LocalizedString
+	/**
+	 * Create
+	 */
+	virtCreate: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	virtDelete: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	virtEdit: () => LocalizedString
+	/**
+	 * No storage.
+	 */
+	virtPoolNone: () => LocalizedString
+	/**
+	 * Inactive
+	 */
+	virtPoolInactive: () => LocalizedString
+	/**
+	 * Disabled
+	 */
+	virtPoolDisabled: () => LocalizedString
+	/**
+	 * Shared
+	 */
+	virtPoolShared: () => LocalizedString
+	/**
+	 * Autostart
+	 */
+	virtPoolAutostart: () => LocalizedString
+	/**
+	 * Start
+	 */
+	virtPoolStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	virtPoolStop: () => LocalizedString
+	/**
+	 * Enable
+	 */
+	virtPoolEnable: () => LocalizedString
+	/**
+	 * Disable
+	 */
+	virtPoolDisable: () => LocalizedString
+	/**
+	 * Rescan
+	 */
+	virtPoolRefresh: () => LocalizedString
+	/**
+	 * Remove storage
+	 */
+	virtPoolDelete: () => LocalizedString
+	/**
+	 * Remove {name}? Its volumes stay where they are.
+	 */
+	virtPoolDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Also delete its directory (only when empty)
+	 */
+	virtPoolDeleteStorage: () => LocalizedString
+	/**
+	 * New storage
+	 */
+	virtPoolCreate: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtPoolName: () => LocalizedString
+	/**
+	 * Type
+	 */
+	virtPoolType: () => LocalizedString
+	/**
+	 * Source
+	 */
+	virtPoolSource: () => LocalizedString
+	/**
+	 * Mount point
+	 */
+	virtPoolTarget: () => LocalizedString
+	/**
+	 * Node
+	 */
+	virtPoolNode: () => LocalizedString
+	/**
+	 * Content
+	 */
+	virtPoolContent: () => LocalizedString
+	/**
+	 * Path
+	 */
+	virtPoolPath: () => LocalizedString
+	/**
+	 * Free
+	 */
+	virtPoolFree: () => LocalizedString
+	/**
+	 * Select a storage to see its volumes.
+	 */
+	virtPoolPick: () => LocalizedString
+	/**
+	 * No volumes.
+	 */
+	virtVolumeNone: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtVolumeName: () => LocalizedString
+	/**
+	 * Size (GiB)
+	 */
+	virtVolumeSize: () => LocalizedString
+	/**
+	 * Format
+	 */
+	virtVolumeFormat: () => LocalizedString
+	/**
+	 * New volume
+	 */
+	virtVolumeCreate: () => LocalizedString
+	/**
+	 * Delete {name}? Its contents are lost.
+	 */
+	virtVolumeDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Grow
+	 */
+	virtVolumeResize: () => LocalizedString
+	/**
+	 * New size (GiB)
+	 */
+	virtVolumeResizeTo: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	virtVolumeClone: () => LocalizedString
+	/**
+	 * Name of the copy
+	 */
+	virtVolumeCloneName: () => LocalizedString
+	/**
+	 * Used by {who}
+	 */
+	virtVolumeUsedBy: (arg: { who: unknown }) => LocalizedString
+	/**
+	 * {count} volumes are made on it
+	 */
+	virtVolumeBacks: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {size} on disk
+	 */
+	virtVolumeOnDisk: (arg: { size: unknown }) => LocalizedString
+	/**
+	 * No networks.
+	 */
+	virtNetNone: () => LocalizedString
+	/**
+	 * Active
+	 */
+	virtNetActive: () => LocalizedString
+	/**
+	 * Inactive
+	 */
+	virtNetInactive: () => LocalizedString
+	/**
+	 * Autostart
+	 */
+	virtNetAutostart: () => LocalizedString
+	/**
+	 * Restart to apply
+	 */
+	virtNetPending: () => LocalizedString
+	/**
+	 * Start
+	 */
+	virtNetStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	virtNetStop: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	virtNetRestart: () => LocalizedString
+	/**
+	 * Restart {name}? Guests on it lose their link until it is up again.
+	 */
+	virtNetRestartConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Delete {name}?
+	 */
+	virtNetDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Carries the host's management traffic: not editable here.
+	 */
+	virtNetManagement: () => LocalizedString
+	/**
+	 * New network
+	 */
+	virtNetCreate: () => LocalizedString
+	/**
+	 * New bridge
+	 */
+	virtNetCreateBridge: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtNetName: () => LocalizedString
+	/**
+	 * Mode
+	 */
+	virtNetMode: () => LocalizedString
+	/**
+	 * Host bridge
+	 */
+	virtNetBridge: () => LocalizedString
+	/**
+	 * Ports
+	 */
+	virtNetPorts: () => LocalizedString
+	/**
+	 * Address/prefix
+	 */
+	virtNetCidr: () => LocalizedString
+	/**
+	 * Address
+	 */
+	virtNetAddress: () => LocalizedString
+	/**
+	 * Prefix
+	 */
+	virtNetPrefix: () => LocalizedString
+	/**
+	 * Gateway
+	 */
+	virtNetGateway: () => LocalizedString
+	/**
+	 * DHCP range
+	 */
+	virtNetDhcp: () => LocalizedString
+	/**
+	 * VLAN aware
+	 */
+	virtNetVlanAware: () => LocalizedString
+	/**
+	 * Node
+	 */
+	virtNetNode: () => LocalizedString
+	/**
+	 * Static DHCP hosts
+	 */
+	virtNetHosts: () => LocalizedString
+	/**
+	 * MAC
+	 */
+	virtNetMac: () => LocalizedString
+	/**
+	 * Address
+	 */
+	virtNetIp: () => LocalizedString
+	/**
+	 * Host name
+	 */
+	virtNetHostName: () => LocalizedString
+	/**
+	 * Restart it now to apply (guests on it lose their link meanwhile)
+	 */
+	virtNetRestartNow: () => LocalizedString
+	/**
+	 * Guests on it
+	 */
+	virtNetUsers: () => LocalizedString
+	/**
+	 * Pending changes on {node}
+	 */
+	virtNetChanges: (arg: { node: unknown }) => LocalizedString
+	/**
+	 * Apply
+	 */
+	virtNetApply: () => LocalizedString
+	/**
+	 * Discard
+	 */
+	virtNetRevert: () => LocalizedString
+	/**
+	 * Apply the pending configuration on {node}? PVE reloads its networking.
+	 */
+	virtNetApplyConfirm: (arg: { node: unknown }) => LocalizedString
+	/**
+	 * Discard the pending configuration on {node}?
+	 */
+	virtNetRevertConfirm: (arg: { node: unknown }) => LocalizedString
+	/**
+	 * {account} lacks {privilege} on {path}. Grant it on the host:
+{command}
+	 */
+	virtErrNeedsPrivilege: (arg: { account: unknown, command: unknown, path: unknown, privilege: unknown }) => LocalizedString
+	/**
+	 * The pending configuration changes {ifaces}, which carry the host's management traffic: apply it from the host's console or PVE's own interface.
+	 */
+	virtErrApplyManagement: (arg: { ifaces: unknown }) => LocalizedString
+	/**
+	 * Which interfaces the pending configuration changes cannot be told from its diff: apply it from the host's console or PVE's own interface.
+	 */
+	virtErrApplyUnreadable: () => LocalizedString
+	/**
+	 * A name is needed.
+	 */
+	virtIssueNameEmpty: () => LocalizedString
+	/**
+	 * That name is not one the host takes.
+	 */
+	virtIssueNameInvalid: () => LocalizedString
+	/**
+	 * That name is taken.
+	 */
+	virtIssueNameTaken: () => LocalizedString
+	/**
+	 * The source is not valid for this type.
+	 */
+	virtIssueSourceInvalid: () => LocalizedString
+	/**
+	 * The mount point must be an absolute path.
+	 */
+	virtIssueTargetInvalid: () => LocalizedString
+	/**
+	 * Not an address with a usable prefix (a.b.c.d/prefix).
+	 */
+	virtIssueCidrInvalid: () => LocalizedString
+	/**
+	 * The DHCP range must lie inside the network, in order, clear of the host's address.
+	 */
+	virtIssueDhcpInvalid: () => LocalizedString
+	/**
+	 * Another network is on an overlapping subnet.
+	 */
+	virtIssueSubnetTaken: () => LocalizedString
+	/**
+	 * Not a valid bridge or interface name.
+	 */
+	virtIssueBridgeInvalid: () => LocalizedString
+	/**
+	 * Not a size the host takes.
+	 */
+	virtIssueSize: () => LocalizedString
+	/**
+	 * More than the storage has free.
+	 */
+	virtIssueSpace: () => LocalizedString
+	/**
+	 * This storage does not take that format.
+	 */
+	virtIssueFormat: () => LocalizedString
+	/**
+	 * A guest uses it, or a volume is made on it.
+	 */
+	virtIssueInUse: () => LocalizedString
+	/**
+	 * Only a larger size.
+	 */
+	virtIssueShrink: () => LocalizedString
+	/**
+	 * A static host has a MAC, address or name the host would refuse, or repeats one.
+	 */
+	virtIssueHostInvalid: () => LocalizedString
+	/**
+	 * It carries the host's management traffic: changing it would cut the host off.
+	 */
+	virtIssueManagementIface: () => LocalizedString
+	/**
+	 * It is no longer on the host.
+	 */
+	virtIssueNotFound: () => LocalizedString
+	/**
+	 * This host does not do that.
+	 */
+	virtIssueUnsupported: () => LocalizedString
+	/**
+	 * New
+	 */
+	virtNew: () => LocalizedString
+	/**
+	 * New virtual machine
+	 */
+	virtNewVm: () => LocalizedString
+	/**
+	 * New LXC container
+	 */
+	virtNewLxc: () => LocalizedString
+	/**
+	 * General
+	 */
+	virtGroupGeneral: () => LocalizedString
+	/**
+	 * System
+	 */
+	virtGroupSystem: () => LocalizedString
+	/**
+	 * Resources
+	 */
+	virtGroupResources: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtGroupStorage: () => LocalizedString
+	/**
+	 * Confirm
+	 */
+	virtGroupConfirm: () => LocalizedString
+	/**
+	 * A full KVM virtual machine
+	 */
+	virtVmSub: () => LocalizedString
+	/**
+	 * Shares the host's kernel; lighter
+	 */
+	virtLxcSub: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtName: () => LocalizedString
+	/**
+	 * Hostname
+	 */
+	virtHostname: () => LocalizedString
+	/**
+	 * Next free
+	 */
+	virtVmidNext: () => LocalizedString
+	/**
+	 * Source
+	 */
+	virtSource: () => LocalizedString
+	/**
+	 * Install media
+	 */
+	virtSourceMedia: () => LocalizedString
+	/**
+	 * Cloud image
+	 */
+	virtSourceImage: () => LocalizedString
+	/**
+	 * No install media on this host: upload an ISO to a storage first.
+	 */
+	virtMediaNone: () => LocalizedString
+	/**
+	 * No container templates on this host.
+	 */
+	virtTemplateNone: () => LocalizedString
+	/**
+	 * No cloud images on this host.
+	 */
+	virtImageNone: () => LocalizedString
+	/**
+	 * Firmware
+	 */
+	virtFirmware: () => LocalizedString
+	/**
+	 * Secure Boot
+	 */
+	virtSecureBoot: () => LocalizedString
+	/**
+	 * TPM 2.0
+	 */
+	virtTpm: () => LocalizedString
+	/**
+	 * Unprivileged container
+	 */
+	virtUnprivileged: () => LocalizedString
+	/**
+	 * Root in the container maps to an ordinary user on the host
+	 */
+	virtUnprivilegedNote: () => LocalizedString
+	/**
+	 * Root password
+	 */
+	virtRootPassword: () => LocalizedString
+	/**
+	 * SSH public keys, one per line
+	 */
+	virtSshKeys: () => LocalizedString
+	/**
+	 * A password, a key, or both.
+	 */
+	virtRootLoginNote: () => LocalizedString
+	/**
+	 * cloud-init
+	 */
+	virtCloudInit: () => LocalizedString
+	/**
+	 * cloud-init is not available: {why}
+	 */
+	virtCiMissing: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * Leave everything empty to boot the image as it is.
+	 */
+	virtCiNote: () => LocalizedString
+	/**
+	 * User
+	 */
+	virtCiUser: () => LocalizedString
+	/**
+	 * Password
+	 */
+	virtCiPassword: () => LocalizedString
+	/**
+	 * Address
+	 */
+	virtCiNetwork: () => LocalizedString
+	/**
+	 * Static
+	 */
+	virtCiStatic: () => LocalizedString
+	/**
+	 * Address (a.b.c.d/prefix)
+	 */
+	virtCiAddress: () => LocalizedString
+	/**
+	 * Gateway
+	 */
+	virtCiGateway: () => LocalizedString
+	/**
+	 * DNS servers
+	 */
+	virtCiDns: () => LocalizedString
+	/**
+	 * Search domains
+	 */
+	virtCiSearch: () => LocalizedString
+	/**
+	 * Cores
+	 */
+	virtCores: () => LocalizedString
+	/**
+	 * Memory (GiB)
+	 */
+	virtMemoryGib: () => LocalizedString
+	/**
+	 * Free: {cpu} vCPU · {mem}
+	 */
+	virtFree: (arg: { cpu: unknown, mem: unknown }) => LocalizedString
+	/**
+	 * Size (GiB)
+	 */
+	virtDiskGib: () => LocalizedString
+	/**
+	 * Bus
+	 */
+	virtBus: () => LocalizedString
+	/**
+	 * {type} · {free} free
+	 */
+	virtStorageFree: (arg: { free: unknown, type: unknown }) => LocalizedString
+	/**
+	 * No storage here takes a new guest's disk.
+	 */
+	virtStorageNone: () => LocalizedString
+	/**
+	 * Model
+	 */
+	virtNicModel: () => LocalizedString
+	/**
+	 * No network
+	 */
+	virtNoNetwork: () => LocalizedString
+	/**
+	 * Start after creating
+	 */
+	virtStartAfter: () => LocalizedString
+	/**
+	 * Complete the groups marked in orange first.
+	 */
+	virtIncomplete: () => LocalizedString
+	/**
+	 * Create VM
+	 */
+	virtCreateVmAction: () => LocalizedString
+	/**
+	 * Create container
+	 */
+	virtCreateLxcAction: () => LocalizedString
+	/**
+	 * Created {name}.
+	 */
+	virtCreated: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Created {name}, but it did not start: {why}
+	 */
+	virtCreatedNotStarted: (arg: { name: unknown, why: unknown }) => LocalizedString
+	/**
+	 * Created {name}. Its disk is {size}, the cloud image's own size: a disk is never made smaller than its image.
+	 */
+	virtCreatedDiskKept: (arg: { name: unknown, size: unknown }) => LocalizedString
+	/**
+	 * Settings
+	 */
+	virtViewSettings: () => LocalizedString
+	/**
+	 * Clone
+	 */
+	virtClone: () => LocalizedString
+	/**
+	 * New name
+	 */
+	virtCloneName: () => LocalizedString
+	/**
+	 * Full clone
+	 */
+	virtCloneFull: () => LocalizedString
+	/**
+	 * Off: a linked clone that depends on the template's disks
+	 */
+	virtCloneFullNote: () => LocalizedString
+	/**
+	 * Copy disk contents
+	 */
+	virtCloneCopy: () => LocalizedString
+	/**
+	 * Off: new empty disks of the same size
+	 */
+	virtCloneCopyNote: () => LocalizedString
+	/**
+	 * Full
+	 */
+	virtCloneFullShort: () => LocalizedString
+	/**
+	 * Linked
+	 */
+	virtCloneLinked: () => LocalizedString
+	/**
+	 * Empty disks
+	 */
+	virtCloneEmpty: () => LocalizedString
+	/**
+	 * Target storage
+	 */
+	virtCloneStorage: () => LocalizedString
+	/**
+	 * Target node
+	 */
+	virtCloneNode: () => LocalizedString
+	/**
+	 * Same as the source
+	 */
+	virtSameAsSource: () => LocalizedString
+	/**
+	 * Cloned {name} as {copy}.
+	 */
+	virtCloned: (arg: { copy: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Shut it down first.
+	 */
+	virtStopFirst: () => LocalizedString
+	/**
+	 * Convert to template
+	 */
+	virtMakeTemplate: () => LocalizedString
+	/**
+	 * A template cannot be started, and it cannot be turned back. New guests are cloned from it.
+	 */
+	virtMakeTemplateNote: () => LocalizedString
+	/**
+	 * {name} is now a template.
+	 */
+	virtMadeTemplate: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Delete guest
+	 */
+	virtDeleteGuest: () => LocalizedString
+	/**
+	 * Also delete its disks
+	 */
+	virtDeleteDisks: () => LocalizedString
+	/**
+	 * Its disk volumes, NVRAM and cloud-init seed
+	 */
+	virtDeleteDisksNote: () => LocalizedString
+	/**
+	 * Proxmox VE deletes its disks with it.
+	 */
+	virtDeleteDisksAlways: () => LocalizedString
+	/**
+	 * Click again to confirm. This cannot be undone.
+	 */
+	virtConfirmAgain: () => LocalizedString
+	/**
+	 * Confirm: delete {name}
+	 */
+	virtConfirmDelete: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Confirm: convert {name}
+	 */
+	virtConfirmTemplate: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Deleted {name}.
+	 */
+	virtDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * A name is needed.
+	 */
+	virtCrIssueNameEmpty: () => LocalizedString
+	/**
+	 * That name is not one the host takes.
+	 */
+	virtCrIssueNameInvalid: () => LocalizedString
+	/**
+	 * That name is taken.
+	 */
+	virtCrIssueNameTaken: () => LocalizedString
+	/**
+	 * A VMID is a number from 100 to 999999999.
+	 */
+	virtCrIssueVmidInvalid: () => LocalizedString
+	/**
+	 * That VMID is taken.
+	 */
+	virtCrIssueVmidTaken: () => LocalizedString
+	/**
+	 * That node is not one of the host's online nodes.
+	 */
+	virtCrIssueNode: () => LocalizedString
+	/**
+	 * Not a number of cores the host takes.
+	 */
+	virtCrIssueCores: () => LocalizedString
+	/**
+	 * Not an amount of memory the host takes.
+	 */
+	virtCrIssueMemory: () => LocalizedString
+	/**
+	 * That storage cannot hold a new disk of this kind.
+	 */
+	virtCrIssueStorage: () => LocalizedString
+	/**
+	 * Not a disk size the host takes.
+	 */
+	virtCrIssueDiskSize: () => LocalizedString
+	/**
+	 * Pick a container template.
+	 */
+	virtCrIssueTemplate: () => LocalizedString
+	/**
+	 * That install media is not on offer.
+	 */
+	virtCrIssueMedia: () => LocalizedString
+	/**
+	 * A container needs a root password or an SSH key.
+	 */
+	virtCrIssueCredentials: () => LocalizedString
+	/**
+	 * The host does not take that root password (at least 5 characters).
+	 */
+	virtCrIssuePassword: () => LocalizedString
+	/**
+	 * One of the SSH keys is not a public key.
+	 */
+	virtCrIssueSshKeys: () => LocalizedString
+	/**
+	 * Pick a cloud image.
+	 */
+	virtCrIssueImage: () => LocalizedString
+	/**
+	 * The cloud image is bigger than the disk asked for.
+	 */
+	virtCrIssueImageSize: () => LocalizedString
+	/**
+	 * A new guest cannot be on that network.
+	 */
+	virtCrIssueNetwork: () => LocalizedString
+	/**
+	 * Secure Boot needs UEFI.
+	 */
+	virtCrIssueSecureBoot: () => LocalizedString
+	/**
+	 * The host does not offer something asked for: a bus, NIC model, UEFI, TPM, cloud image or cloud-init.
+	 */
+	virtCrIssueNotOffered: () => LocalizedString
+	/**
+	 * cloud-init needs a valid user name.
+	 */
+	virtCrIssueCiUser: () => LocalizedString
+	/**
+	 * cloud-init needs a password or an SSH key for the user.
+	 */
+	virtCrIssueCiCredentials: () => LocalizedString
+	/**
+	 * Not a valid hostname.
+	 */
+	virtCrIssueCiHostname: () => LocalizedString
+	/**
+	 * Not an address with a prefix (a.b.c.d/prefix).
+	 */
+	virtCrIssueCiAddress: () => LocalizedString
+	/**
+	 * Not a valid gateway for that address.
+	 */
+	virtCrIssueCiGateway: () => LocalizedString
+	/**
+	 * One of the DNS servers is not an address.
+	 */
+	virtCrIssueCiDns: () => LocalizedString
+	/**
+	 * One of the search domains is not valid.
+	 */
+	virtCrIssueCiSearch: () => LocalizedString
+	/**
+	 * A linked clone stays on the source's storage and node.
+	 */
+	virtCrIssueCloneLinkedTarget: () => LocalizedString
+	/**
+	 * That storage is not there.
+	 */
+	virtCrIssueCloneStorage: () => LocalizedString
+	/**
+	 * That storage does not hold disks of this kind.
+	 */
+	virtCrIssueCloneStorageContent: () => LocalizedString
+	/**
+	 * Copying to another node needs shared storage.
+	 */
+	virtCrIssueCloneStorageShared: () => LocalizedString
+	/**
+	 * The host has no such node.
+	 */
+	virtCrIssueCloneNodeUnknown: () => LocalizedString
+	/**
+	 * Shut the guest down first.
+	 */
+	virtCrIssueNotStopped: () => LocalizedString
+	/**
+	 * It is already a template.
+	 */
+	virtCrIssueIsTemplate: () => LocalizedString
+	/**
+	 * It is no longer on the host.
+	 */
+	virtCrIssueNotFound: () => LocalizedString
+	/**
+	 * This host does not do that.
+	 */
+	virtCrIssueUnsupported: () => LocalizedString
+	/**
+	 * Processor
+	 */
+	virtHwProcessor: () => LocalizedString
+	/**
+	 * Sockets
+	 */
+	virtHwSockets: () => LocalizedString
+	/**
+	 * Online vCPUs
+	 */
+	virtHwOnline: () => LocalizedString
+	/**
+	 * All
+	 */
+	virtHwAll: () => LocalizedString
+	/**
+	 * CPU model
+	 */
+	virtHwCpuType: () => LocalizedString
+	/**
+	 * Host default
+	 */
+	virtHwDefault: () => LocalizedString
+	/**
+	 * Sockets × cores × threads
+	 */
+	virtHwTopology: () => LocalizedString
+	/**
+	 * Host: {n} CPUs
+	 */
+	virtHwHostCpus: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Host: {mem}
+	 */
+	virtHwHostMemory: (arg: { mem: unknown }) => LocalizedString
+	/**
+	 * Balloon minimum (GiB)
+	 */
+	virtHwMemoryMin: () => LocalizedString
+	/**
+	 * The host can take memory back down to this minimum while the guest runs. Empty for none.
+	 */
+	virtHwMemoryMinNote: () => LocalizedString
+	/**
+	 * Swap (MiB)
+	 */
+	virtHwSwap: () => LocalizedString
+	/**
+	 * None
+	 */
+	virtHwNone: () => LocalizedString
+	/**
+	 * Root disk and mount points
+	 */
+	virtHwDisksLxc: () => LocalizedString
+	/**
+	 * {size} total
+	 */
+	virtHwTotal: (arg: { size: unknown }) => LocalizedString
+	/**
+	 * Source
+	 */
+	virtHwSource: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtHwStorage: () => LocalizedString
+	/**
+	 * Mount point
+	 */
+	virtHwMountPoint: () => LocalizedString
+	/**
+	 * New size (GiB)
+	 */
+	virtHwGrowTo: () => LocalizedString
+	/**
+	 * Grow
+	 */
+	virtHwGrow: () => LocalizedString
+	/**
+	 * A disk only grows. Extend the partition inside the system afterwards.
+	 */
+	virtHwGrowNote: () => LocalizedString
+	/**
+	 * Cache
+	 */
+	virtHwCache: () => LocalizedString
+	/**
+	 * Also delete its volume
+	 */
+	virtHwDeleteVolume: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	virtHwRemove: () => LocalizedString
+	/**
+	 * Confirm: remove {name}
+	 */
+	virtHwConfirmRemove: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Click again to confirm.
+	 */
+	virtHwConfirmAgain: () => LocalizedString
+	/**
+	 * Add disk
+	 */
+	virtHwAddDisk: () => LocalizedString
+	/**
+	 * Add mount point
+	 */
+	virtHwAddMount: () => LocalizedString
+	/**
+	 * New volume
+	 */
+	virtHwNewVolume: () => LocalizedString
+	/**
+	 * Existing volume
+	 */
+	virtHwExistingVolume: () => LocalizedString
+	/**
+	 * Volume
+	 */
+	virtHwVolume: () => LocalizedString
+	/**
+	 * No volumes in this storage.
+	 */
+	virtHwVolumeNone: () => LocalizedString
+	/**
+	 * in use
+	 */
+	virtHwInUse: () => LocalizedString
+	/**
+	 * Add
+	 */
+	virtHwAdd: () => LocalizedString
+	/**
+	 * Add network interface
+	 */
+	virtHwAddNic: () => LocalizedString
+	/**
+	 * No network here takes a new interface.
+	 */
+	virtHwNetworkNone: () => LocalizedString
+	/**
+	 * {name} (current)
+	 */
+	virtHwCurrent: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * MAC address
+	 */
+	virtHwMac: () => LocalizedString
+	/**
+	 * Link connected
+	 */
+	virtHwLinkUp: () => LocalizedString
+	/**
+	 * Disconnected, the system sees the cable unplugged. No restart needed.
+	 */
+	virtHwLinkNote: () => LocalizedString
+	/**
+	 * disconnected
+	 */
+	virtHwLinkDown: () => LocalizedString
+	/**
+	 * Firewall
+	 */
+	virtHwFirewall: () => LocalizedString
+	/**
+	 * CD-ROM and passthrough
+	 */
+	virtHwDevices: () => LocalizedString
+	/**
+	 * CD-ROM
+	 */
+	virtHwCdrom: () => LocalizedString
+	/**
+	 * Media
+	 */
+	virtHwMedia: () => LocalizedString
+	/**
+	 * No media
+	 */
+	virtHwNoMedia: () => LocalizedString
+	/**
+	 * Insert
+	 */
+	virtHwInsert: () => LocalizedString
+	/**
+	 * Eject
+	 */
+	virtHwEject: () => LocalizedString
+	/**
+	 * cloud-init drive
+	 */
+	virtHwCiDrive: () => LocalizedString
+	/**
+	 * Holds the cloud-init settings, which the Settings view edits.
+	 */
+	virtHwCiDriveNote: () => LocalizedString
+	/**
+	 * Add device
+	 */
+	virtHwAddDevice: () => LocalizedString
+	/**
+	 * mapping
+	 */
+	virtHwMapping: () => LocalizedString
+	/**
+	 * Given by
+	 */
+	virtHwUsbNaming: () => LocalizedString
+	/**
+	 * Vendor and product
+	 */
+	virtHwUsbById: () => LocalizedString
+	/**
+	 * Port
+	 */
+	virtHwUsbByPort: () => LocalizedString
+	/**
+	 * By port: whatever is plugged in there goes to the guest.
+	 */
+	virtHwUsbByPortNote: () => LocalizedString
+	/**
+	 * IOMMU group {group} · {n} devices
+	 */
+	virtHwIommuGroup: (arg: { group: unknown, n: unknown }) => LocalizedString
+	/**
+	 * Every device in its IOMMU group goes to the guest with it.
+	 */
+	virtHwIommuGroupNote: () => LocalizedString
+	/**
+	 * IOMMU is off on the host: a guest with a PCI device will not start.
+	 */
+	virtHwNoIommu: () => LocalizedString
+	/**
+	 * This login can only give resource mappings; a raw device needs root@pam.
+	 */
+	virtHwMappingsOnly: () => LocalizedString
+	/**
+	 * The host cannot use the device while the guest has it, and the guest cannot migrate while running.
+	 */
+	virtHwPciNote: () => LocalizedString
+	/**
+	 * The host lists no such device.
+	 */
+	virtHwNoHostDevices: () => LocalizedString
+	/**
+	 * Storage for the TPM state
+	 */
+	virtHwTpmStorage: () => LocalizedString
+	/**
+	 * Display
+	 */
+	virtHwDisplay: () => LocalizedString
+	/**
+	 * Protocol
+	 */
+	virtHwProtocol: () => LocalizedString
+	/**
+	 * Listen
+	 */
+	virtHwListen: () => LocalizedString
+	/**
+	 * Graphics card
+	 */
+	virtHwGpu: () => LocalizedString
+	/**
+	 * Port
+	 */
+	virtHwPort: () => LocalizedString
+	/**
+	 * Listening on every address lets anyone who reaches the host connect to the console. Keep 127.0.0.1 and connect through an SSH tunnel.
+	 */
+	virtHwListenWarn: () => LocalizedString
+	/**
+	 * Boot
+	 */
+	virtHwBoot: () => LocalizedString
+	/**
+	 * OVMF · supports Secure Boot; Windows 11 needs it
+	 */
+	virtHwUefiNote: () => LocalizedString
+	/**
+	 * SeaBIOS · older systems and MBR disks
+	 */
+	virtHwBiosNote: () => LocalizedString
+	/**
+	 * Boots only signed kernels and boot loaders
+	 */
+	virtHwSecureBootNote: () => LocalizedString
+	/**
+	 * Storage for the EFI disk
+	 */
+	virtHwEfiStorage: () => LocalizedString
+	/**
+	 * Switching an installed system between UEFI and BIOS can leave it unable to boot.
+	 */
+	virtHwFirmwareWarn: () => LocalizedString
+	/**
+	 * Confirm: change the firmware
+	 */
+	virtHwConfirmFirmware: () => LocalizedString
+	/**
+	 * Boot order
+	 */
+	virtHwBootOrder: () => LocalizedString
+	/**
+	 * Boot from {name}
+	 */
+	virtHwBootOn: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Network (PXE)
+	 */
+	virtHwPxe: () => LocalizedString
+	/**
+	 * Move up
+	 */
+	virtHwUp: () => LocalizedString
+	/**
+	 * Move down
+	 */
+	virtHwDown: () => LocalizedString
+	/**
+	 * Configuration file
+	 */
+	virtHwConfig: () => LocalizedString
+	/**
+	 * Pending changes
+	 */
+	virtHwPending: () => LocalizedString
+	/**
+	 * Takes effect at the next start
+	 */
+	virtHwNextStart: () => LocalizedString
+	/**
+	 * removed
+	 */
+	virtHwPendingRemoved: () => LocalizedString
+	/**
+	 * Revert
+	 */
+	virtHwRevert: () => LocalizedString
+	/**
+	 * Revert all
+	 */
+	virtHwRevertAll: () => LocalizedString
+	/**
+	 * Every pending change is dropped; the next start keeps what runs now.
+	 */
+	virtHwRevertAllNote: () => LocalizedString
+	/**
+	 * Confirm: revert all
+	 */
+	virtHwConfirmRevertAll: () => LocalizedString
+	/**
+	 * Saved.
+	 */
+	virtHwSaved: () => LocalizedString
+	/**
+	 * Saved. The running guest did not take it, so it takes effect at the next start: {why}
+	 */
+	virtHwLiveError: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * Removed. Its volume was kept: the running guest still uses it.
+	 */
+	virtHwVolumeKept: () => LocalizedString
+	/**
+	 * The guest changed since it was read. It was read again; check and save once more.
+	 */
+	virtHwConflict: () => LocalizedString
+	/**
+	 * Description
+	 */
+	virtHwDescription: () => LocalizedString
+	/**
+	 * Starts with the host
+	 */
+	virtHwAutostartOn: () => LocalizedString
+	/**
+	 * Started by hand
+	 */
+	virtHwAutostartOff: () => LocalizedString
+	/**
+	 * Protection
+	 */
+	virtHwProtection: () => LocalizedString
+	/**
+	 * Blocks deleting the guest and changing its disks
+	 */
+	virtHwProtectionNote: () => LocalizedString
+	/**
+	 * libvirt renames a guest only while it is shut down.
+	 */
+	virtHwRenameStopped: () => LocalizedString
+	/**
+	 * Not a number of vCPUs the host has: at least 1, at most the host's.
+	 */
+	virtHwIssueCpuCount: () => LocalizedString
+	/**
+	 * Online vCPUs are between 1 and the total.
+	 */
+	virtHwIssueCpuOnline: () => LocalizedString
+	/**
+	 * Not an amount of memory the host takes: at least 16 MiB, at most the host's.
+	 */
+	virtHwIssueMemory: () => LocalizedString
+	/**
+	 * The balloon minimum is above the memory.
+	 */
+	virtHwIssueMemoryMin: () => LocalizedString
+	/**
+	 * A disk only grows: the new size has to be larger.
+	 */
+	virtHwIssueDiskShrink: () => LocalizedString
+	/**
+	 * Not a disk size the host takes, or this disk cannot grow.
+	 */
+	virtHwIssueDiskSize: () => LocalizedString
+	/**
+	 * The storage does not have that much free.
+	 */
+	virtHwIssueStorageSpace: () => LocalizedString
+	/**
+	 * A mount point is an absolute path, such as /data.
+	 */
+	virtHwIssueMountPoint: () => LocalizedString
+	/**
+	 * Keep at least one device in the boot order.
+	 */
+	virtHwIssueBootEmpty: () => LocalizedString
+	/**
+	 * That name is not one the host takes.
+	 */
+	virtHwIssueNameInvalid: () => LocalizedString
+	/**
+	 * libvirt renames a guest only while it is shut down.
+	 */
+	virtHwIssueNameRunning: () => LocalizedString
+	/**
+	 * The description is too long or has control characters in it.
+	 */
+	virtHwIssueDescription: () => LocalizedString
+	/**
+	 * Not a unicast MAC address (aa:bb:cc:dd:ee:ff, first octet even).
+	 */
+	virtHwIssueMac: () => LocalizedString
+	/**
+	 * Shut the guest down first: a new bus or firmware needs it stopped.
+	 */
+	virtHwIssueStopFirst: () => LocalizedString
+	/**
+	 * Pick a storage for it.
+	 */
+	virtHwIssueStorageMissing: () => LocalizedString
+	/**
+	 * Pick a device. A guest has at most one TPM.
+	 */
+	virtHwIssueDevice: () => LocalizedString
+	/**
+	 * That volume is in use already.
+	 */
+	virtHwIssueVolumeInUse: () => LocalizedString
+	/**
+	 * That is not install media.
+	 */
+	virtHwIssueMedia: () => LocalizedString
+	/**
+	 * The host does not offer that for this guest.
+	 */
+	virtHwIssueNotOffered: () => LocalizedString
+	/**
+	 * It is no longer there. Read the hardware again.
+	 */
+	virtHwIssueNotFound: () => LocalizedString
+	/**
+	 * This host does not do that.
+	 */
+	virtHwIssueUnsupported: () => LocalizedString
+	/**
+	 * This VM has no cloud-init drive.
+	 */
+	virtCiNoDrive: () => LocalizedString
+	/**
+	 * This guest has no cloud-init seed made by this app.
+	 */
+	virtCiNoSeed: () => LocalizedString
+	/**
+	 * New password
+	 */
+	virtCiNewPassword: () => LocalizedString
+	/**
+	 * Leave empty to keep
+	 */
+	virtCiKeepPassword: () => LocalizedString
+	/**
+	 * Remove the password
+	 */
+	virtCiRemovePassword: () => LocalizedString
+	/**
+	 * Password expires at the first login
+	 */
+	virtCiPasswordExpires: () => LocalizedString
+	/**
+	 * The seed holds settings this app did not write. Saving replaces them with these.
+	 */
+	virtCiForeign: () => LocalizedString
+	/**
+	 * The settings configure {n} network interfaces; only the first is edited here.
+	 */
+	virtCiNics: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * The guest has no network interface for address settings.
+	 */
+	virtCiNoNetwork: () => LocalizedString
+	/**
+	 * The system reads these the next time it boots.
+	 */
+	virtCiApplies: () => LocalizedString
+	/**
+	 * cloud-init settings saved.
+	 */
+	virtCiSaved: () => LocalizedString
+	/**
+	 * Backup
+	 */
+	virtViewBackup: () => LocalizedString
+	/**
+	 * Backup jobs
+	 */
+	virtSectionBackupJobs: () => LocalizedString
+	/**
+	 * Plan
+	 */
+	virtBakPlan: () => LocalizedString
+	/**
+	 * Datacenter → Backup jobs
+	 */
+	virtBakDatacenter: () => LocalizedString
+	/**
+	 * No backup job takes this guest.
+	 */
+	virtBakNoPlan: () => LocalizedString
+	/**
+	 * This job also takes other guests. Edit it under Backup jobs.
+	 */
+	virtBakSharedJob: () => LocalizedString
+	/**
+	 * Add a schedule
+	 */
+	virtBakAddPlan: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	virtBakEditPlan: () => LocalizedString
+	/**
+	 * Remove schedule
+	 */
+	virtBakRemovePlan: () => LocalizedString
+	/**
+	 * Confirm: remove job {id}
+	 */
+	virtBakConfirmRemovePlan: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Backup job saved.
+	 */
+	virtBakPlanSaved: () => LocalizedString
+	/**
+	 * Backup job removed.
+	 */
+	virtBakPlanRemoved: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	virtBakSchedule: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtBakStorage: () => LocalizedString
+	/**
+	 * Pick a storage
+	 */
+	virtBakPickStorage: () => LocalizedString
+	/**
+	 * Retention
+	 */
+	virtBakRetention: () => LocalizedString
+	/**
+	 * The storage's own
+	 */
+	virtBakRetentionDefault: () => LocalizedString
+	/**
+	 * How many backups each rule keeps. All empty: the storage's own retention.
+	 */
+	virtBakRetentionNote: () => LocalizedString
+	/**
+	 * Last
+	 */
+	virtBakKeepLast: () => LocalizedString
+	/**
+	 * Hourly
+	 */
+	virtBakKeepHourly: () => LocalizedString
+	/**
+	 * Daily
+	 */
+	virtBakKeepDaily: () => LocalizedString
+	/**
+	 * Weekly
+	 */
+	virtBakKeepWeekly: () => LocalizedString
+	/**
+	 * Monthly
+	 */
+	virtBakKeepMonthly: () => LocalizedString
+	/**
+	 * Yearly
+	 */
+	virtBakKeepYearly: () => LocalizedString
+	/**
+	 * Mode
+	 */
+	virtBakMode: () => LocalizedString
+	/**
+	 * Compression
+	 */
+	virtBakCompress: () => LocalizedString
+	/**
+	 * none
+	 */
+	virtBakCompressNone: () => LocalizedString
+	/**
+	 * Enabled
+	 */
+	virtBakEnabled: () => LocalizedString
+	/**
+	 * Disabled
+	 */
+	virtBakDisabled: () => LocalizedString
+	/**
+	 * Validate
+	 */
+	virtBakValidate: () => LocalizedString
+	/**
+	 * A PVE calendar event: 02:00, sat 03:00, mon..fri 22:30, daily.
+	 */
+	virtBakScheduleHint: () => LocalizedString
+	/**
+	 * PVE does not take this schedule: {why}
+	 */
+	virtBakScheduleRefused: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * Next runs
+	 */
+	virtBakNextRuns: () => LocalizedString
+	/**
+	 * PVE lists no upcoming run for this schedule.
+	 */
+	virtBakNoNextRuns: () => LocalizedString
+	/**
+	 * Guests
+	 */
+	virtBakSelection: () => LocalizedString
+	/**
+	 * All guests
+	 */
+	virtBakSelAll: () => LocalizedString
+	/**
+	 * All guests except {vmids}
+	 */
+	virtBakSelAllExcept: (arg: { vmids: unknown }) => LocalizedString
+	/**
+	 * VMID {vmids}
+	 */
+	virtBakSelVmids: (arg: { vmids: unknown }) => LocalizedString
+	/**
+	 * Pool {pool}
+	 */
+	virtBakSelPool: (arg: { pool: unknown }) => LocalizedString
+	/**
+	 * Pool
+	 */
+	virtBakPool: () => LocalizedString
+	/**
+	 * Except VMIDs
+	 */
+	virtBakExclude: () => LocalizedString
+	/**
+	 * Any node
+	 */
+	virtBakAnyNode: () => LocalizedString
+	/**
+	 * Named by PVE
+	 */
+	virtBakJobIdAuto: () => LocalizedString
+	/**
+	 * Notes template
+	 */
+	virtBakNotesTemplate: () => LocalizedString
+	/**
+	 * Comment
+	 */
+	virtBakComment: () => LocalizedString
+	/**
+	 * Mail notification
+	 */
+	virtBakMail: () => LocalizedString
+	/**
+	 * Always
+	 */
+	virtBakMailAlways: () => LocalizedString
+	/**
+	 * On failure
+	 */
+	virtBakMailFailure: () => LocalizedString
+	/**
+	 * New job
+	 */
+	virtBakNewJob: () => LocalizedString
+	/**
+	 * Edit job {id}
+	 */
+	virtBakEditJob: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * No backup jobs.
+	 */
+	virtBakNoJobs: () => LocalizedString
+	/**
+	 * Run now
+	 */
+	virtBakRunNow: () => LocalizedString
+	/**
+	 * Confirm: run {id} now
+	 */
+	virtBakConfirmRun: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * This backs up every guest the job takes now, which can take a while.
+	 */
+	virtBakRunNote: () => LocalizedString
+	/**
+	 * Running job {id}…
+	 */
+	virtBakJobRunning: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Job {id} finished.
+	 */
+	virtBakJobRan: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Backups
+	 */
+	virtBakList: () => LocalizedString
+	/**
+	 * No backups.
+	 */
+	virtBakNone: () => LocalizedString
+	/**
+	 * Back up now
+	 */
+	virtBakNow: () => LocalizedString
+	/**
+	 * Snapshot mode backs up a running guest with no downtime.
+	 */
+	virtBakNowNote: () => LocalizedString
+	/**
+	 * This node has no storage that holds backups.
+	 */
+	virtBakNoStorage: () => LocalizedString
+	/**
+	 * Start backup
+	 */
+	virtBakStart: () => LocalizedString
+	/**
+	 * Notes
+	 */
+	virtBakNotes: () => LocalizedString
+	/**
+	 * Optional
+	 */
+	virtBakOptional: () => LocalizedString
+	/**
+	 * Protected
+	 */
+	virtBakProtected: () => LocalizedString
+	/**
+	 * Kept from pruning and deletion until unprotected.
+	 */
+	virtBakProtectedNote: () => LocalizedString
+	/**
+	 * A protected backup cannot be deleted. Unprotect it first.
+	 */
+	virtBakProtectedNoDelete: () => LocalizedString
+	/**
+	 * Backing up… This can take several minutes.
+	 */
+	virtBakRunning: () => LocalizedString
+	/**
+	 * Restoring… This can take several minutes.
+	 */
+	virtBakRestoring: () => LocalizedString
+	/**
+	 * Backed up {name}.
+	 */
+	virtBakTaken: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Backup saved.
+	 */
+	virtBakEdited: () => LocalizedString
+	/**
+	 * Backup deleted.
+	 */
+	virtBakDeleted: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	virtBakDelete: () => LocalizedString
+	/**
+	 * Confirm: delete backup
+	 */
+	virtBakConfirmDelete: () => LocalizedString
+	/**
+	 * File
+	 */
+	virtBakFile: () => LocalizedString
+	/**
+	 * Verified
+	 */
+	virtBakVerified: () => LocalizedString
+	/**
+	 * Verification failed
+	 */
+	virtBakVerifyFailed: () => LocalizedString
+	/**
+	 * Over this guest
+	 */
+	virtBakOverGuest: () => LocalizedString
+	/**
+	 * As a new guest
+	 */
+	virtBakAsNew: () => LocalizedString
+	/**
+	 * Disk storage
+	 */
+	virtBakRestoreStorage: () => LocalizedString
+	/**
+	 * As in the backup
+	 */
+	virtBakRestoreStorageOwn: () => LocalizedString
+	/**
+	 * Restoring overwrites the guest's disks and configuration.
+	 */
+	virtBakOverwrites: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	virtBakRestore: () => LocalizedString
+	/**
+	 * Confirm: overwrite {name}
+	 */
+	virtBakConfirmRestore: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Restored {name} from the backup.
+	 */
+	virtBakRestored: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Restored the backup as a new guest.
+	 */
+	virtBakRestoredNew: () => LocalizedString
+	/**
+	 * Enter a schedule.
+	 */
+	virtBakIssueScheduleEmpty: () => LocalizedString
+	/**
+	 * That is not a schedule PVE takes.
+	 */
+	virtBakIssueScheduleInvalid: () => LocalizedString
+	/**
+	 * Pick a storage of the node that holds backups.
+	 */
+	virtBakIssueStorage: () => LocalizedString
+	/**
+	 * Pick snapshot, suspend or stop.
+	 */
+	virtBakIssueMode: () => LocalizedString
+	/**
+	 * Pick a compression PVE knows.
+	 */
+	virtBakIssueCompress: () => LocalizedString
+	/**
+	 * Pick the guests: all of them, a pool, or at least one VMID.
+	 */
+	virtBakIssueGuests: () => LocalizedString
+	/**
+	 * The node is not online.
+	 */
+	virtBakIssueNodeOffline: () => LocalizedString
+	/**
+	 * Shut the guest down before restoring over it.
+	 */
+	virtBakIssueNotStopped: () => LocalizedString
+	/**
+	 * It is no longer there. Read the backups again.
+	 */
+	virtBakIssueNotFound: () => LocalizedString
+	/**
+	 * This host keeps no backups.
+	 */
+	virtBakIssueUnsupported: () => LocalizedString
+	/**
+	 * Yes
+	 */
+	yes: () => LocalizedString
+	/**
+	 * No
+	 */
+	no: () => LocalizedString
 }
 
 export type Formatters = {}

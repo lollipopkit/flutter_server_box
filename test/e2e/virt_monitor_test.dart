@@ -785,7 +785,7 @@ void _libvirtCreate(_Agent agent) {
         memoryMiB: 256,
         storage: pool,
         diskGiB: 1,
-        media: media.firstOrNull,
+        media: _inPool(media.firstOrNull, await w.host.storagePools()),
         network: nets.firstWhereOrNull((n) => n.name == 'default'),
         start: true,
       );
@@ -1597,7 +1597,7 @@ void _libvirtCloudInit(_Agent agent) {
         storage: pool,
         // The image's own size or more: the form refuses to cut one.
         diskGiB: max(2, ((image!.capacity ?? 0) + (1 << 30) - 1) >> 30),
-        image: image,
+        image: _inPool(image, await w.host.storagePools()),
         network: net,
         uefi: false,
         cloudInit: VirtCloudInit(user: 'sbxe', password: 'pw-${DateTime.now().microsecond}', sshKeys: key, hostname: name),
@@ -2208,7 +2208,7 @@ void _pveHardware(_Agent agent) {
       await w.host.changeHardware(
         vm.id,
         h,
-        VirtHwSetMedia(key: 'ide2', media: isos.first),
+        VirtHwSetMedia(key: 'ide2', media: _inPool(isos.first, await w.host.storagePools(), node: vm.node)),
       );
       h = await hw(vm);
       expect(h.disk('ide2')!.source, isos.first.id);
@@ -2579,7 +2579,7 @@ void _pveHardwareDevices(_Agent agent) {
       await w.host.changeHardware(
         g.id,
         h,
-        VirtHwSetFirmware(uefi: true, secureBoot: true, storage: storage.name),
+        VirtHwSetFirmware(uefi: true, secureBoot: true, storage: storage),
       );
       h = await hw();
       expect(h.firmware!.uefi, isTrue);
@@ -2590,7 +2590,7 @@ void _pveHardwareDevices(_Agent agent) {
       await w.host.changeHardware(
         g.id,
         h,
-        VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: storage.name),
+        VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: storage),
       );
       h = await hw();
       expect(h.hasTpm, isTrue);
@@ -2709,7 +2709,7 @@ void _pveCreate(_Agent agent) {
         memoryMiB: 512,
         storage: storage,
         diskGiB: 1,
-        media: isos.firstOrNull,
+        media: _inPool(isos.firstOrNull, await w.host.storagePools(), node: node),
         network: bridge,
         start: true,
       );
@@ -2794,7 +2794,7 @@ void _pveCreate(_Agent agent) {
         memoryMiB: 256,
         storage: storage,
         diskGiB: 1,
-        media: templates.first,
+        media: _inPool(templates.first, await w.host.storagePools(), node: node),
         network: bridge,
         password: password,
         start: true,
@@ -3219,7 +3219,7 @@ void _pveCloneBackup(_Agent agent) {
       expect((job.mode, job.compress), ('snapshot', 'zstd'));
       expect(job.enabled, isFalse);
       expect(job.vmids, [src.vmid]);
-      expect(job.takes(src.vmid), isTrue);
+      expect(job.takesOnly(src.vmid), isTrue);
       expect(job.notesTemplate, 'sb e2e {{guestname}}');
       expect(job.mailNotification, 'failure');
       expect(job.prune, 'keep-last=2');
@@ -4526,7 +4526,7 @@ void _pveUnverified(_Agent agent) {
         memoryMiB: 1024,
         storage: storage,
         diskGiB: 4,
-        image: await imageVolume(imageId),
+        image: _inPool(await imageVolume(imageId), await w.host.storagePools(), node: node),
         network: bridge,
         bus: 'sata',
         uefi: true,
@@ -4684,7 +4684,7 @@ void _pveUnverified(_Agent agent) {
           memoryMiB: 1024,
           storage: storage,
           diskGiB: 4,
-          image: image,
+          image: _inPool(image, await w.host.storagePools(), node: node),
           network: bridge,
           cloudInit: VirtCloudInit(
             user: 'sbxe',
@@ -4729,7 +4729,7 @@ void _pveUnverified(_Agent agent) {
           memoryMiB: 256,
           storage: storage,
           diskGiB: 1,
-          image: imageId == null ? null : await imageVolume(imageId),
+          image: _inPool(imageId == null ? null : await imageVolume(imageId), await w.host.storagePools(), node: node),
           network: bridge,
           bus: 'ide',
           cloudInit: VirtCloudInit(user: 'sbxe', sshKeys: login.publicKey),
@@ -4774,6 +4774,7 @@ void _pveUnverified(_Agent agent) {
         user: 'root@pam',
         // What a server logged in to with a password lends PVE.
         sshPassword: ticket,
+        tunnel: dialer.loopback,
         connect: dialer.startConnect,
         taskPoll: const Duration(milliseconds: 500),
       );
@@ -4914,4 +4915,14 @@ void _pveUnverified(_Agent agent) {
       await remove(vmid);
     }, timeout: const Timeout(Duration(minutes: 10)));
   });
+}
+
+/// [v] with the pool it is listed in: a PVE volid names its storage on
+/// [node], a libvirt volume's path its pool's directory.
+VirtPoolVolume? _inPool(VirtVolume? v, List<VirtStoragePool> pools, {String? node}) {
+  if (v == null) return null;
+  final pool = node != null
+      ? pools.firstWhere((p) => p.node == node && p.name == v.id.split(':').first)
+      : pools.firstWhere((p) => p.path != null && (v.path ?? '').startsWith('${p.path}/'));
+  return (pool: pool, volume: v);
 }

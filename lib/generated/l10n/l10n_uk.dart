@@ -3653,9 +3653,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Більше, ніж вільно у сховищі';
 
   @override
-  String get virtHwIssueSwap => 'Не від\'ємне';
-
-  @override
   String get virtHwLater => 'Набуде чинності після перезапуску';
 
   @override
@@ -4209,6 +4206,12 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Введіть назву';
+
+  @override
+  String get virtResNotFound => 'Більше немає на цьому хості';
+
+  @override
+  String get virtResUnsupported => 'Цей хост цього не підтримує';
 
   @override
   String get virtResNameInvalid =>
@@ -5424,4 +5427,45 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Агент monitor уже зберігає максимально дозволену кількість резервних копій. Спершу видаліть одну.';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID від 100 до 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Цей вузол не в мережі.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Цього інсталяційного образу немає на хості.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Нова машина не може використовувати цю мережу.';
+
+  @override
+  String get virtCreateNotOffered => 'Цей хост не пропонує цього для нової ВМ.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Для Secure Boot потрібен UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Спершу вимкніть її.';
+
+  @override
+  String get virtGuestIsTemplate => 'Це вже шаблон.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Образ більший за диск: зробіть диск не меншим за образ.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Це сховище не містить резервних копій на цьому вузлі.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE не приймає такий режим або стиснення.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'Вузол завдання не в мережі.';
 }

@@ -22,7 +22,7 @@ abstract interface class VirtBackend {
 
   /// Host, guests and their current usage. Connects and logs in first when
   /// needed. Rates come from the difference to the previous [load] — see
-  /// `VirtRateTracker` — so the first load has none.
+  /// `sbm_virt::rates` — so the first load has none.
   Future<VirtSnapshot> load();
 
   /// Runs [action] on [guest] and returns once the host has finished it (PVE:

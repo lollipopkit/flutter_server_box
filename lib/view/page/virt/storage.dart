@@ -701,7 +701,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
     );
   }
 
-  String? _issueText(VirtResIssue? issue) => virtResIssueText(issue, pve: _pve);
+  String? _issueText(VirtResIssue? issue) => virtResIssueText(issue);
 
   // --- Actions ---
 
@@ -792,9 +792,12 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
           Toast.warn(l10n.virtVolNoCdrom(guest.name));
           return;
         }
-        change = VirtHwSetMedia(key: drive.key, media: v);
+        change = VirtHwSetMedia(key: drive.key, media: (pool: pool, volume: v));
       } else {
-        change = VirtHwAttachVolume(storage: pool, volume: v);
+        // PVE names a volume's owner by its VMID: the guest's own detached
+        // volume is its to attach, not one in use (`sbm_virt` says the same).
+        final own = v.copyWith(users: [for (final u in v.users) if (u.guestId != guest.id) u]);
+        change = VirtHwAttachVolume(storage: pool, volume: own);
       }
       final issue = virtHwIssue(hw, change, host: ref.read(virtHostProvider(_serverId)).kind);
       if (issue == VirtHwIssue.volumeInUse) {
@@ -921,7 +924,6 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         builder: (context, setDialog) {
           final issue = virtResIssueText(
             virtUploadIssue(pool, ctrl.text.trim(), size, volumes: vols),
-            pve: _pve,
           );
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -1006,28 +1008,6 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
   }
 }
 
-/// What a [VirtResIssue] says, for a field's error line or a toast.
-String? virtResIssueText(VirtResIssue? issue, {required bool pve}) =>
-    switch (issue) {
-      null => null,
-      VirtResIssue.nameEmpty => l10n.virtResNameEmpty,
-      VirtResIssue.nameInvalid => l10n.virtResNameInvalid,
-      VirtResIssue.nameTaken => l10n.virtCreateNameTaken,
-      VirtResIssue.sourceInvalid => l10n.virtResSourceInvalid,
-      VirtResIssue.targetInvalid => l10n.virtResTargetInvalid,
-      VirtResIssue.cidrInvalid => l10n.virtResCidrInvalid,
-      VirtResIssue.dhcpInvalid => l10n.virtResDhcpInvalid,
-      VirtResIssue.subnetTaken => l10n.virtResSubnetTaken,
-      VirtResIssue.bridgeInvalid => l10n.virtResBridgeInvalid,
-      VirtResIssue.size => l10n.virtHwIssueDiskSize,
-      VirtResIssue.space => l10n.virtHwIssueStorageSpace,
-      VirtResIssue.format => l10n.virtResFormat,
-      VirtResIssue.inUse => l10n.virtVolInUse,
-      VirtResIssue.shrink => l10n.virtHwIssueDiskShrink,
-      VirtResIssue.hostInvalid => l10n.virtNetHostInvalid,
-      VirtResIssue.managementIface => l10n.virtNetManagementIface,
-    };
-
 /// A new pool (libvirt) or storage (PVE) — the design's form in the detail
 /// pane: a name, what it is, where it comes from.
 class VirtPoolCreateView extends ConsumerStatefulWidget {
@@ -1103,11 +1083,11 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
           );
     final nameIssue = switch (issue) {
       VirtResIssue.nameEmpty || VirtResIssue.nameInvalid || VirtResIssue.nameTaken =>
-        virtResIssueText(issue, pve: pve),
+        virtResIssueText(issue),
       _ => null,
     };
     final sourceIssue = _source.text.isEmpty ? null : switch (issue) {
-      VirtResIssue.sourceInvalid => virtResIssueText(issue, pve: pve),
+      VirtResIssue.sourceInvalid => virtResIssueText(issue),
       _ => null,
     };
     final (sourceLabel, sourceHint) = switch (type) {
@@ -1196,7 +1176,7 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
                         noWrap: true,
                         suggestion: false,
                         errorText: issue == VirtResIssue.targetInvalid
-                            ? virtResIssueText(issue, pve: pve)
+                            ? virtResIssueText(issue)
                             : null,
                         onChanged: (_) => setState(() {}),
                       )]),

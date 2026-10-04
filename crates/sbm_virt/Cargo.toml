@@ -1,0 +1,51 @@
+[package]
+name = "sbm_virt"
+version = "0.1.0"
+edition = "2024"
+description = "ServerBox virtualization: one model for libvirt and Proxmox VE, the libvirt command layer and the PVE client, shared by the monitor agent and the app"
+
+[dependencies]
+# The script helpers (shell quoting, the sudo marker) every command layer shares.
+sbm_parser = { path = "../sbm_parser" }
+# Certificate fingerprints, pins and the review form of a certificate: one
+# trust model for the BMC and the PVE API.
+sbm_redfish = { path = "../sbm_redfish" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+roxmltree = "0.21"
+# Scripts that carry another script (an upload's writer) base64-encoded
+base64 = "0.23"
+# SHA-512 crypt of a cloud-init password (libvirt::cloud_init)
+sha2 = "0.11"
+# A new NIC's MAC, a crypt salt and a cloud-init instance id (libvirt::host)
+getrandom = "0.4"
+
+# The PVE client. hyper rather than reqwest: the byte stream is the caller's
+# (a loopback port for the app's SSH or relay tunnel), and the TLS decision
+# (CA-valid, or the pinned leaf) is made in the handshake, before a request
+# that carries a password is written.
+tokio = { version = "1.53", default-features = false, features = ["time", "sync", "net", "io-util", "rt"] }
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["client-legacy", "http1", "tokio"] }
+http-body-util = "0.1"
+bytes = "1"
+tower-service = "0.3"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+webpki-roots = "1"
+# A console's `vncwebsocket`, over the connection the client opened itself.
+tokio-tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+
+[dev-dependencies]
+# .env loading for the opt-in SSH e2e test (tests/ssh_e2e.rs)
+dotenvy = "0.15"
+tokio = { version = "1.53", features = ["full"] }
+hyper = { version = "1", features = ["server", "http1"] }
+tokio-tungstenite = { version = "0.29", default-features = false, features = ["handshake"] }
+rustls-pemfile = "2"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+hyper-util = { version = "0.1", features = ["server", "tokio"] }
+http-body-util = "0.1"
+bytes = "1"

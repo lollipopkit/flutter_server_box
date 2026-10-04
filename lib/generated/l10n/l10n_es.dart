@@ -3683,9 +3683,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Más de lo que el almacenamiento tiene libre';
 
   @override
-  String get virtHwIssueSwap => 'No negativo';
-
-  @override
   String get virtHwLater => 'Se aplica al reiniciar';
 
   @override
@@ -4241,6 +4238,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Introduzca un nombre';
+
+  @override
+  String get virtResNotFound => 'Ya no está en este host';
+
+  @override
+  String get virtResUnsupported => 'Este host no lo admite';
 
   @override
   String get virtResNameInvalid =>
@@ -5461,4 +5464,47 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'El agente monitor ya guarda tantas copias de seguridad como permite. Elimina una primero.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Un VMID entre 100 y 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Ese nodo no está en línea.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Ese medio de instalación no está en este host.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Un invitado nuevo no puede usar esa red.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Este host no ofrece eso para una VM nueva.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot necesita UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Apágalo primero.';
+
+  @override
+  String get virtGuestIsTemplate => 'Ya es una plantilla.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'La imagen es más grande que el disco: haz el disco al menos igual de grande.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Ese almacenamiento no guarda copias de seguridad en este nodo.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'No es un modo o compresión que admita PVE.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'El nodo de la tarea no está en línea.';
 }

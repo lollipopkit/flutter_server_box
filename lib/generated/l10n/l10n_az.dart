@@ -3635,9 +3635,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Yaddaşdakı boş yerdən çoxdur';
 
   @override
-  String get virtHwIssueSwap => 'Mənfi olmamalıdır';
-
-  @override
   String get virtHwLater => 'Yenidən başladıqda qüvvəyə minir';
 
   @override
@@ -4176,6 +4173,12 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Ad daxil edin';
+
+  @override
+  String get virtResNotFound => 'Artıq bu hostda deyil';
+
+  @override
+  String get virtResUnsupported => 'Bu host bunu etmir';
 
   @override
   String get virtResNameInvalid =>
@@ -5384,4 +5387,45 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Monitor agenti icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
+
+  @override
+  String get virtCreateVmidInvalid => '100 ilə 999999999 arasında VMID.';
+
+  @override
+  String get virtCreateNodeOffline => 'Bu node onlayn deyil.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Bu quraşdırma mediası bu hostda yoxdur.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Yeni qonaq bu şəbəkədən istifadə edə bilməz.';
+
+  @override
+  String get virtCreateNotOffered => 'Bu host yeni VM üçün bunu təklif etmir.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot UEFI tələb edir.';
+
+  @override
+  String get virtGuestNotStopped => 'Əvvəlcə onu söndürün.';
+
+  @override
+  String get virtGuestIsTemplate => 'Artıq şablondur.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Şəkil diskdən böyükdür: diski ən azı onun qədər edin.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Bu yaddaş bu node-da ehtiyat nüsxələri saxlamır.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE-nin qəbul etdiyi rejim və ya sıxışdırma deyil.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'İşin node-u onlayn deyil.';
 }

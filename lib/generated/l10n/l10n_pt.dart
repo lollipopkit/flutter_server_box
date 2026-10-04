@@ -3661,9 +3661,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Mais do que o armazenamento tem livre';
 
   @override
-  String get virtHwIssueSwap => 'Não negativo';
-
-  @override
   String get virtHwLater => 'Vale após reiniciar';
 
   @override
@@ -4217,6 +4214,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Introduza um nome';
+
+  @override
+  String get virtResNotFound => 'Já não está neste host';
+
+  @override
+  String get virtResUnsupported => 'Este host não o permite';
 
   @override
   String get virtResNameInvalid =>
@@ -5434,4 +5437,46 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'O agente monitor já guarda o número máximo de backups permitido. Exclua um primeiro.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Um VMID de 100 a 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Esse nó não está online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Essa mídia de instalação não está neste host.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Um novo convidado não pode usar essa rede.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Este host não oferece isso para uma nova VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot requer UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Desligue-o primeiro.';
+
+  @override
+  String get virtGuestIsTemplate => 'Já é um modelo.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'A imagem é maior que o disco: faça o disco pelo menos do mesmo tamanho.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Esse armazenamento não guarda backups neste nó.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Não é um modo ou compressão que o PVE aceite.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'O nó da tarefa não está online.';
 }

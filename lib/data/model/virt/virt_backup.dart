@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/backup.dart' as ffi;
 
 part 'virt_backup.freezed.dart';
 
@@ -104,27 +109,13 @@ abstract class VirtBackupJob with _$VirtBackupJob {
       ? '—'
       : vmids.join(',');
 
-  /// Whether this job takes [vmid], a guest on [node]. A job restricted to
-  /// a node backs up only the guests there: on any other its selection,
-  /// `all` included, takes nothing.
-  bool takes(int? vmid, {String? node}) {
-    if (vmid == null) return false;
-    if (this.node != null && node != null && this.node != node) return false;
-    if (pool != null) return false;
-    if (all) return !exclude.contains(vmid);
-    return vmids.contains(vmid);
-  }
-
   /// Whether this job takes [vmid] and no other guest: a list of exactly
   /// that VMID, not `all`, not a pool. Such a job is the guest's own plan,
   /// which its Plan group edits; any other job is the datacenter's.
-  bool takesOnly(int? vmid) =>
-      vmid != null &&
-      !all &&
-      pool == null &&
-      exclude.isEmpty &&
-      vmids.length == 1 &&
-      vmids.single == vmid;
+  bool takesOnly(int? vmid) => ffi.virtBackupJobTakesOnly(
+    jobJson: jsonEncode(VirtRust.backupJobJson(this)),
+    vmid: vmid,
+  );
 }
 
 /// What the datacenter's Backup view edits: one scheduled job, sent as PVE's
@@ -215,3 +206,16 @@ final class VirtBackupEdit {
   final String notes;
   final bool protected;
 }
+
+/// What a refused backup request says (`sbm_virt::backup::Issue`, by name).
+String? virtBackupIssueText(String? issue) => switch (issue) {
+  null => null,
+  'schedule_empty' || 'schedule_invalid' => l10n.virtBackupScheduleInvalid,
+  'storage' => l10n.virtBackupIssueStorage,
+  'mode' || 'compress' => l10n.virtBackupIssueOption,
+  'guests' => l10n.virtBackupSelectionNone,
+  'node_offline' => l10n.virtBackupIssueNodeOffline,
+  'not_stopped' => l10n.virtBackupStopFirst,
+  'not_found' => l10n.virtResNotFound,
+  _ => l10n.virtResUnsupported,
+};

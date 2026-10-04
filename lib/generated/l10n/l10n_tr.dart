@@ -3622,9 +3622,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Depolamanın boş alanından fazla';
 
   @override
-  String get virtHwIssueSwap => 'Negatif olamaz';
-
-  @override
   String get virtHwLater => 'Yeniden başlatınca geçerli';
 
   @override
@@ -4163,6 +4160,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Bir ad girin';
+
+  @override
+  String get virtResNotFound => 'Artık bu sunucuda değil';
+
+  @override
+  String get virtResUnsupported => 'Bu sunucu bunu desteklemiyor';
 
   @override
   String get virtResNameInvalid =>
@@ -5377,4 +5380,43 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Monitor aracısı izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.';
+
+  @override
+  String get virtCreateVmidInvalid => '100 ile 999999999 arasında bir VMID.';
+
+  @override
+  String get virtCreateNodeOffline => 'Bu düğüm çevrimiçi değil.';
+
+  @override
+  String get virtCreateMediaMissing => 'Bu kurulum ortamı bu ana makinede yok.';
+
+  @override
+  String get virtCreateNetworkMissing => 'Yeni bir konuk bu ağı kullanamaz.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Bu ana makine yeni bir VM için bunu sunmuyor.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot için UEFI gerekir.';
+
+  @override
+  String get virtGuestNotStopped => 'Önce kapatın.';
+
+  @override
+  String get virtGuestIsTemplate => 'Zaten bir şablon.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'İmaj diskten büyük: diski en az onun kadar büyük yapın.';
+
+  @override
+  String get virtBackupIssueStorage => 'Bu depolama bu düğümde yedek tutmuyor.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE\'nin kabul ettiği bir mod veya sıkıştırma değil.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'İşin düğümü çevrimiçi değil.';
 }

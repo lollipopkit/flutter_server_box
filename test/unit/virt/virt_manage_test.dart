@@ -1,9 +1,10 @@
-/// Managing storage and networks: the rules a change is checked with before
-/// it is sent (both backends), and `LibvirtBackend`'s side of it — the
-/// `VirtResourceOp` JSON each change becomes, how the host's answers read,
-/// and the streamed upload over a scripted byte channel: the sudo password
-/// ahead of the file, the go line, a retry when sudo did not ask, a
-/// cancelled or refused upload deleting its volume.
+/// Managing storage and networks: what crosses to the rules a change is
+/// checked with (`sbm_virt::resource`, tested in Rust), and
+/// `LibvirtBackend`'s side of it — a change checked against the host's lists
+/// read for it, how the host's answers read, and the streamed upload over a
+/// scripted byte channel: the sudo password ahead of the file, the go line,
+/// a retry when sudo did not ask, a cancelled or refused upload deleting its
+/// volume.
 ///
 /// Scripts and parsers go through the real FFI: `cargo build -p sbm_ffi`
 /// first.
@@ -14,6 +15,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -41,6 +43,10 @@ const _pveDir = VirtStoragePool(
   content: ['iso', 'vztmpl', 'images'],
 );
 
+const _fixtures = 'crates/sbm_virt/tests/fixtures/libvirt';
+
+String _fixture(String name) => File('$_fixtures/$name').readAsStringSync();
+
 String _marker(String key) =>
     script.scriptSegmentMarker(key: key, custom: false);
 
@@ -51,782 +57,153 @@ void main() {
   setUpAll(initRustLibForTest);
 
   group('rules', () {
-    test('addresses: a usable host address, and a default DHCP range', () {
-      expect(virtParseCidr('192.168.150.1/24'), isNotNull);
-      for (final bad in [
-        '192.168.150.0/24',
-        '192.168.150.255/24',
-        '192.168.150.1',
-        '192.168.150.1/31',
-        '192.168.150.1/7',
-        '300.1.1.1/24',
-        '1.2.3/24',
-        '01.2.3.4.5/24',
-      ]) {
-        expect(virtParseCidr(bad), isNull, reason: bad);
-      }
-      expect(virtDefaultDhcpRange('192.168.150.1/24'), (
-        '192.168.150.100',
-        '192.168.150.200',
-      ));
-      // The host's own address is left out of it.
-      expect(virtDefaultDhcpRange('10.0.0.150/24'), ('10.0.0.100', '10.0.0.149'));
-      expect(virtDefaultDhcpRange('10.8.0.1/16'), ('10.8.100.0', '10.8.200.0'));
-      expect(virtDefaultDhcpRange('bad'), isNull);
-    });
-
-    test('networks: names, modes, subnets taken, DHCP ranges', () {
-      const existing = [
-        VirtNetwork(
-          id: 'default',
-          name: 'default',
-          mode: 'nat',
-          cidrs: ['192.168.122.1/24'],
-        ),
-      ];
-      VirtResIssue? issue(VirtResourceChange c) => virtResourceIssue(
-        c,
-        host: VirtHostKind.libvirt,
-        networks: existing,
-      );
-      expect(
-        issue(
-          const VirtNetworkCreate(
-            name: 'lab',
-            mode: 'nat',
-            cidr: '192.168.150.1/24',
-            dhcpStart: '192.168.150.100',
-            dhcpEnd: '192.168.150.200',
-          ),
-        ),
-        isNull,
-      );
-      expect(issue(const VirtNetworkCreate(name: '', mode: 'nat')), VirtResIssue.nameEmpty);
-      expect(
-        issue(const VirtNetworkCreate(name: 'a b', mode: 'isolated')),
-        VirtResIssue.nameInvalid,
-      );
-      expect(
-        issue(const VirtNetworkCreate(name: 'default', mode: 'isolated')),
-        VirtResIssue.nameTaken,
-      );
-      // NAT and routed need an address; isolated does not.
-      expect(issue(const VirtNetworkCreate(name: 'n', mode: 'nat')), VirtResIssue.cidrInvalid);
-      expect(issue(const VirtNetworkCreate(name: 'n', mode: 'isolated')), isNull);
-      // ... but a DHCP range needs a subnet to be served on, on a new
-      // network and an edited one alike.
-      expect(
-        issue(
-          const VirtNetworkCreate(
-            name: 'n',
-            mode: 'isolated',
-            dhcpStart: '10.0.0.2',
-            dhcpEnd: '10.0.0.9',
-          ),
-        ),
-        VirtResIssue.dhcpInvalid,
-      );
-      expect(
-        issue(
-          const VirtNetworkEdit(
-            VirtNetwork(id: 'iso', name: 'iso', mode: 'isolated'),
-            mode: 'isolated',
-            dhcpStart: '10.0.0.2',
-            dhcpEnd: '10.0.0.9',
-          ),
-        ),
-        VirtResIssue.dhcpInvalid,
-      );
-      expect(
-        issue(
-          const VirtNetworkEdit(
-            VirtNetwork(id: 'iso', name: 'iso', mode: 'isolated'),
-            mode: 'isolated',
-          ),
-        ),
-        isNull,
-      );
-      expect(
-        issue(const VirtNetworkCreate(name: 'n', mode: 'route', cidr: '192.168.122.9/25')),
-        VirtResIssue.subnetTaken,
-      );
-      expect(
-        issue(
-          const VirtNetworkCreate(
-            name: 'n',
-            mode: 'nat',
-            cidr: '192.168.150.1/24',
-            dhcpStart: '192.168.150.1',
-            dhcpEnd: '192.168.150.9',
-          ),
-        ),
-        VirtResIssue.dhcpInvalid,
-      );
-      expect(
-        issue(
-          const VirtNetworkCreate(
-            name: 'n',
-            mode: 'nat',
-            cidr: '192.168.150.1/24',
-            dhcpStart: '192.168.151.2',
-            dhcpEnd: '192.168.151.9',
-          ),
-        ),
-        VirtResIssue.dhcpInvalid,
-      );
-      // Bridge mode names a host bridge and takes no address.
-      expect(issue(const VirtNetworkCreate(name: 'n', mode: 'bridge', bridge: 'br0')), isNull);
-      expect(
-        issue(const VirtNetworkCreate(name: 'n', mode: 'bridge', bridge: 'br0; id')),
-        VirtResIssue.bridgeInvalid,
-      );
-      // PVE: a Linux bridge name, ports that are interfaces, per node.
-      VirtResIssue? pve(VirtNetworkCreate c) => virtResourceIssue(
-        c,
-        host: VirtHostKind.pve,
-        networks: const [
-          VirtNetwork(id: 'pve/vmbr0', name: 'vmbr0', node: 'pve', mode: 'bridge'),
-        ],
-      );
-      expect(pve(const VirtNetworkCreate(name: 'vmbr1', mode: 'bridge', node: 'pve')), isNull);
-      expect(
-        pve(const VirtNetworkCreate(name: 'vmbr0', mode: 'bridge', node: 'pve')),
-        VirtResIssue.nameTaken,
-      );
-      expect(
-        pve(const VirtNetworkCreate(name: 'vmbr0', mode: 'bridge', node: 'pve2')),
-        isNull,
-      );
-      expect(
-        pve(const VirtNetworkCreate(name: 'vm-br', mode: 'bridge', node: 'pve')),
-        VirtResIssue.nameInvalid,
-      );
-      expect(
-        pve(
-          const VirtNetworkCreate(
-            name: 'vmbr1',
-            mode: 'bridge',
-            node: 'pve',
-            bridge: 'eno1 eno2',
-          ),
-        ),
-        isNull,
-      );
-      expect(
-        pve(
-          const VirtNetworkCreate(
-            name: 'vmbr1',
-            mode: 'bridge',
-            node: 'pve',
-            bridge: r'eno1 $(id)',
-          ),
-        ),
-        VirtResIssue.bridgeInvalid,
-      );
-    });
-
-    test('pools: names per host, sources per type', () {
-      VirtResIssue? lv(VirtPoolCreate c) => virtResourceIssue(
-        c,
-        host: VirtHostKind.libvirt,
-        pools: const [_dir],
-      );
-      expect(lv(const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/p')), isNull);
-      expect(
-        lv(const VirtPoolCreate(name: 'images', type: 'dir', source: '/srv/p')),
-        VirtResIssue.nameTaken,
-      );
-      expect(
-        lv(const VirtPoolCreate(name: 'p', type: 'dir', source: 'srv/p')),
-        VirtResIssue.sourceInvalid,
-      );
-      expect(
-        lv(const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/../etc')),
-        VirtResIssue.sourceInvalid,
-      );
-      expect(
-        lv(
-          const VirtPoolCreate(
-            name: 'p',
-            type: 'netfs',
-            source: 'nas.lan:/export/vm',
-            target: '/mnt/p',
-          ),
-        ),
-        isNull,
-      );
-      expect(
-        lv(const VirtPoolCreate(name: 'p', type: 'netfs', source: 'nas.lan:/export/vm')),
-        VirtResIssue.targetInvalid,
-      );
-      expect(
-        lv(const VirtPoolCreate(name: 'p', type: 'netfs', source: 'nas.lan/export')),
-        VirtResIssue.sourceInvalid,
-      );
-      expect(lv(const VirtPoolCreate(name: 'p', type: 'logical', source: 'vg_data')), isNull);
-      // PVE storage ids: lowercase, no trailing dash.
-      VirtResIssue? pve(VirtPoolCreate c) =>
-          virtResourceIssue(c, host: VirtHostKind.pve);
-      expect(pve(const VirtPoolCreate(name: 'nfs-2', type: 'nfs', source: '10.0.0.5:/e')), isNull);
-      expect(
-        pve(const VirtPoolCreate(name: 'Nfs', type: 'nfs', source: '10.0.0.5:/e')),
-        VirtResIssue.nameInvalid,
-      );
-      expect(pve(const VirtPoolCreate(name: 'thin', type: 'lvmthin', source: 'pve/data')), isNull);
-      expect(
-        pve(const VirtPoolCreate(name: 'thin', type: 'lvmthin', source: 'pve')),
-        VirtResIssue.sourceInvalid,
-      );
-      expect(pve(const VirtPoolCreate(name: 'zp', type: 'zfspool', source: 'rpool/data')), isNull);
-      expect(
-        pve(const VirtPoolCreate(name: 'z', type: 'zfspool', source: 'rpool/data')),
-        VirtResIssue.nameInvalid,
-      );
-    });
-
-    test('volumes: names, formats, space, and what a guest uses', () {
-      VirtResIssue? lv(VirtResourceChange c, {List<VirtVolume> volumes = const []}) =>
-          virtResourceIssue(c, host: VirtHostKind.libvirt, volumes: volumes);
-      expect(
-        lv(const VirtVolumeCreate(_dir, name: 'data.qcow2', gib: 20, format: 'qcow2')),
-        isNull,
-      );
-      expect(
-        lv(const VirtVolumeCreate(_lvm, name: 'data', gib: 20, format: 'qcow2')),
-        VirtResIssue.format,
-      );
-      // A raw volume takes its size now; qcow2 grows into it.
-      expect(
-        lv(const VirtVolumeCreate(_dir, name: 'big.img', gib: 20, format: 'raw')),
-        VirtResIssue.space,
-      );
-      // So does anything in an LVM thin pool, raw as it is.
-      const thin = VirtStoragePool(
-        id: 'pve/local-lvm',
-        name: 'local-lvm',
-        node: 'pve',
-        type: 'lvmthin',
-        available: 10 << 30,
-      );
-      expect(
-        virtResourceIssue(
-          const VirtVolumeCreate(thin, name: 'vm-100-disk-5', gib: 20, format: 'raw'),
-          host: VirtHostKind.pve,
-        ),
-        isNull,
-      );
-      expect(
-        lv(
-          const VirtVolumeCreate(_dir, name: 'a.qcow2', gib: 1, format: 'qcow2'),
-          volumes: const [VirtVolume(id: 'a.qcow2', name: 'a.qcow2')],
-        ),
-        VirtResIssue.nameTaken,
-      );
-      expect(
-        lv(const VirtVolumeCreate(_dir, name: '../x', gib: 1, format: 'qcow2')),
-        VirtResIssue.nameInvalid,
-      );
+    // The rules themselves are `sbm_virt::resource`'s, tested there
+    // (`crates/sbm_virt/tests/resource.rs`); this is what crosses.
+    test('a change counts what it names among the host\'s lists', () {
       const used = VirtVolume(
         id: 'a',
         name: 'a',
         capacity: 1 << 30,
         users: [VirtGuestRef(guestId: 'u', device: 'vda')],
       );
-      expect(lv(const VirtVolumeDelete(_dir, used)), VirtResIssue.inUse);
-      expect(lv(const VirtVolumeResize(_dir, used, bytes: 2 << 30)), VirtResIssue.inUse);
-      const free = VirtVolume(id: 'b', name: 'b', capacity: 1 << 30);
-      expect(lv(const VirtVolumeResize(_dir, free, bytes: 1 << 30)), VirtResIssue.shrink);
-      expect(lv(const VirtVolumeResize(_dir, free, bytes: 2 << 30)), isNull);
-      expect(lv(const VirtPoolDelete(_dir), volumes: const [used]), VirtResIssue.inUse);
-      expect(lv(const VirtPoolSetActive(_dir, active: false), volumes: const [used]), VirtResIssue.inUse);
-      expect(lv(const VirtPoolSetActive(_dir, active: true), volumes: const [used]), isNull);
-
-      // PVE: vm-<VMID>-…, with the format as the extension on a directory.
-      VirtResIssue? pve(VirtResourceChange c) =>
-          virtResourceIssue(c, host: VirtHostKind.pve);
       expect(
-        pve(const VirtVolumeCreate(_pveDir, name: 'vm-105-disk-0', gib: 4, format: 'qcow2')),
-        isNull,
+        virtResourceIssue(const VirtVolumeDelete(_dir, used), host: VirtHostKind.libvirt),
+        VirtResIssue.inUse,
       );
       expect(
-        pve(const VirtVolumeCreate(_pveDir, name: 'data', gib: 4, format: 'qcow2')),
-        VirtResIssue.nameInvalid,
-      );
-      expect(virtVolumeFileName(_pveDir, 'vm-105-disk-0', 'qcow2'), 'vm-105-disk-0.qcow2');
-      expect(virtVolumeFileName(_pveDir, 'vm-105-disk-0.raw', 'raw'), 'vm-105-disk-0.raw');
-      expect(
-        virtVolumeFileName(
-          const VirtStoragePool(id: 'pve/l', name: 'l', node: 'pve', type: 'lvmthin'),
-          'vm-105-disk-0',
-          'raw',
-        ),
-        'vm-105-disk-0',
-      );
-      expect(virtPveVolumeVmid('vm-105-disk-0.qcow2'), 105);
-      expect(virtPveVolumeVmid('debian.iso'), isNull);
-    });
-
-    test('uploads: a file name, room for it, and pools that take one', () {
-      expect(virtUploadIssue(_dir, 'debian-13.1.0-amd64-netinst.iso', 1 << 20), isNull);
-      expect(virtUploadIssue(_dir, 'a b.iso', 1), VirtResIssue.nameInvalid);
-      expect(virtUploadIssue(_dir, '.hidden.iso', 1), VirtResIssue.nameInvalid);
-      expect(virtUploadIssue(_dir, 'x.iso', 20 << 30), VirtResIssue.space);
-      expect(
-        virtUploadIssue(
-          _dir,
-          'x.iso',
-          1,
-          volumes: const [VirtVolume(id: 'x.iso', name: 'x.iso')],
+        virtResourceIssue(
+          const VirtNetworkCreate(name: 'default', mode: 'isolated'),
+          host: VirtHostKind.libvirt,
+          networks: const [VirtNetwork(id: 'default', name: 'default', mode: 'nat')],
         ),
         VirtResIssue.nameTaken,
       );
-      expect(virtPoolTakesMedia(_dir), isTrue);
-      expect(virtPoolTakesMedia(_lvm), isTrue);
       expect(
-        virtPoolTakesMedia(const VirtStoragePool(id: 'd', name: 'd', type: 'disk')),
-        isFalse,
+        virtResourceIssue(const VirtNetworkApply('pve'), host: VirtHostKind.libvirt),
+        VirtResIssue.unsupported,
       );
-      expect(virtPoolTakesMedia(_pveDir), isTrue);
       expect(
-        virtPoolTakesMedia(
-          const VirtStoragePool(
-            id: 'pve/lvm',
-            name: 'lvm',
-            node: 'pve',
-            type: 'lvmthin',
-            content: ['images'],
+        virtResourceIssue(
+          const VirtNetworkEditBridge(
+            VirtNetwork(
+              id: 'pve/vmbr0',
+              name: 'vmbr0',
+              node: 'pve',
+              mode: 'bridge',
+              managementEditable: false,
+            ),
+            ports: 'nic1',
           ),
+          host: VirtHostKind.pve,
         ),
-        isFalse,
+        VirtResIssue.managementIface,
       );
-    });
-  });
-
-  group('a PVE interface', () {
-    // The listing of the real PVE 9.2.2 host this was written against.
-    const nets = [
-      VirtNetwork(id: 'pve/nic0', name: 'nic0', node: 'pve', mode: 'eth', active: true),
-      VirtNetwork(id: 'pve/wlp5s0', name: 'wlp5s0', node: 'pve', mode: 'eth'),
-      VirtNetwork(
-        id: 'pve/sbxe2e0',
-        name: 'sbxe2e0',
-        node: 'pve',
-        mode: 'bridge',
-        cidrs: ['10.77.0.1/24'],
-      ),
-      VirtNetwork(
-        id: 'pve/vmbr0',
-        name: 'vmbr0',
-        node: 'pve',
-        mode: 'bridge',
-        cidrs: ['192.168.31.20/24'],
-        gateway: '192.168.31.1',
-        active: true,
-        ports: ['nic0'],
-      ),
-    ];
-
-    // What the node itself printed (captured on PVE 9.2.2, 2026-09-27),
-    // with a second connection over a VPN bridge and a VLAN on vmbr0.
-    const probe = '''
-@host pve
-@addr
-1: lo    inet 127.0.0.1/8 scope host lo\\       valid_lft forever preferred_lft forever
-4: vmbr0    inet 192.168.31.20/24 scope global vmbr0\\       valid_lft forever preferred_lft forever
-4: vmbr0    inet6 fe80::8286:f2ff:fec9:5882/64 scope link proto kernel_ll \\       valid_lft forever preferred_lft forever
-7: sbxe2e0    inet 10.77.0.1/24 scope global sbxe2e0\\       valid_lft forever preferred_lft forever
-9: vmbr1    inet 10.8.0.5/24 scope global vmbr1\\       valid_lft forever preferred_lft forever
-@route
-default via 192.168.31.1 dev vmbr0 proto kernel onlink 
-@conn
-0      0      192.168.31.20:22 192.168.31.183:62036
-0      0      [::ffff:10.8.0.5]:22 [::ffff:10.8.0.9]:50110
-0      0      127.0.0.1:8006 127.0.0.1:41234
-@lower
-vmbr0 nic0
-vmbr0 tap100i0
-@end
-''';
-
-    test('the live probe: routes, connections and what sits under them', () {
-      final live = virtPveParseLiveNet(probe)!;
-      expect(live.host, 'pve');
-      expect(live.routed, {'vmbr0'});
-      // The loopback relay the app's API calls come through is not one.
-      expect(live.connected, {'vmbr0', 'vmbr1'});
-      expect(live.lower['vmbr0'], {'nic0', 'tap100i0'});
-      // Cut short: nothing is concluded from it.
-      expect(virtPveParseLiveNet(probe.replaceFirst('@end', '')), isNull);
-      // `@end` is the last line or nothing: one inside the interfaces file
-      // is not the probe's.
-      expect(
-        virtPveParseLiveNet('@host pve\n@route\n@file\n@end\niface x inet manual\n'),
-        isNull,
-      );
+      expect(VirtResIssue.ofRust('management_iface'), VirtResIssue.managementIface);
+      expect(VirtResIssue.ofRust(null), isNull);
     });
 
-    test('the live probe says nothing when a command it needs failed',
-        () async {
-      // The script as the node runs it, with the commands it calls stubbed.
-      final dir = await Directory.systemTemp.createTemp('sbm-livenet');
-      addTearDown(() => dir.delete(recursive: true));
-      Future<String> run({bool ssFails = false, bool ip6Fails = false}) async {
-        final stubs = {
-          'hostname': 'echo pve',
-          'cat': 'echo "iface vmbr0 inet static"',
-          'ss': ssFails ? 'exit 1' : 'echo "0 0 10.0.0.2:22 10.0.0.9:5000"',
-          'ip': '''
-case "\$*" in
-  *-6*) ${ip6Fails ? 'exit 1' : 'exit 0'} ;;
-  *addr*) echo "4: vmbr0 inet 10.0.0.2/24 scope global vmbr0" ;;
-  *) echo "default via 10.0.0.1 dev vmbr0" ;;
-esac''',
-        };
-        for (final MapEntry(:key, :value) in stubs.entries) {
-          final f = File('${dir.path}/$key')..writeAsStringSync('#!/bin/sh\n$value\n');
-          await Process.run('chmod', ['+x', f.path]);
-        }
-        final r = await Process.run(
-          'sh',
-          ['-c', virtPveLiveNetScript],
-          environment: {'PATH': '${dir.path}:/usr/bin:/bin'},
-        );
-        return r.stdout as String;
-      }
-
-      final ok = virtPveParseLiveNet(await run())!;
-      expect(ok.connected, {'vmbr0'});
-      expect(ok.routed, {'vmbr0'});
-      // A kernel without IPv6 is not a failure.
-      expect(virtPveParseLiveNet(await run(ip6Fails: true)), isNotNull);
-      // No connection list: not "no connections".
-      expect(virtPveParseLiveNet(await run(ssFails: true)), isNull);
-    }, skip: Platform.isWindows);
-
-    test('pending diffs: every interface a stanza line names, file-wide '
-        'directives, and what the old side carried', () {
-      // `auto vmbr9 vmbr0` removed touches both.
-      final both = virtPveDiffIfaces(
-        '@@ -1,2 +1,1 @@\n-auto vmbr9 vmbr0\n+auto vmbr9\n',
-      );
-      expect(both.ifaces, {'vmbr9', 'vmbr0'});
-      expect(both.unknown, isFalse);
-      // A `source` line is no interface's, even under one's stanza.
-      final source = virtPveDiffIfaces(
-        '@@ -1,3 +1,4 @@\n iface vmbr9 inet manual\n \tbridge-ports none\n+source /etc/network/more\n',
-      );
-      expect(source.unknown, isTrue);
-      final afterSource = virtPveDiffIfaces(
-        '@@ -1,3 +1,4 @@\n iface vmbr9 inet manual\n source /etc/x\n+\tmtu 9000\n',
-      );
-      expect(afterSource.unknown, isTrue);
-      // The old side: the address and gateway the pending file drops.
-      final stripped = virtPveDiffIfaces(
-        '@@ -1,4 +1,2 @@\n'
-        '-iface vmbr0 inet static\n'
-        '-\taddress 192.168.31.20/24\n'
-        '-\tgateway 192.168.31.1\n'
-        '+iface vmbr0 inet manual\n'
-        ' \tbridge-ports nic0\n'
-        '@@ -9,2 +7,1 @@\n'
-        ' iface vmbr1 inet dhcp\n'
-        '-\tmtu 9000\n',
-      );
-      expect(stripped.ifaces, {'vmbr0', 'vmbr1'});
-      expect(stripped.oldAddressed, {'vmbr0'});
-      expect(stripped.oldGateways, {'vmbr0'});
-      final dhcp = virtPveDiffIfaces('@@ -1,1 +1,1 @@\n-iface vmbr1 inet dhcp\n+iface vmbr1 inet manual\n');
-      expect(dhcp.oldAddressed, {'vmbr1'});
-    });
-
-    test('the one carrying the host address is not editable', () {
-      final live = virtPveParseLiveNet(probe)!;
-      final withVpn = [
-        ...nets,
-        const VirtNetwork(
-          id: 'pve/vmbr1',
-          name: 'vmbr1',
-          node: 'pve',
-          mode: 'bridge',
-          cidrs: ['10.8.0.5/24'],
-        ),
-      ];
-      final m = virtPveManagementIfaces(withVpn, live: live);
-      // The default route's, and the VPN bridge this app may be connected
-      // through (it has no gateway), with the port under vmbr0.
-      expect(m, containsAll(['vmbr0', 'vmbr1', 'nic0']));
-      expect(m, isNot(contains('sbxe2e0')));
-      // A bridge of the app's own is editable; a physical interface never is.
-      for (final n in withVpn) {
-        expect(
-          virtPveManagedIface(n, management: m),
-          n.name == 'sbxe2e0',
-          reason: n.name,
-        );
-      }
-      // The node did not answer: every interface with an address is kept.
-      expect(
-        virtPveManagementIfaces(withVpn),
-        containsAll(['vmbr0', 'vmbr1', 'sbxe2e0']),
-      );
-      // A VLAN interface carrying the address protects the bridge it is on:
-      // turning VLAN awareness off there would cut it.
-      const vlan = [
-        VirtNetwork(
-          id: 'pve/vmbr0',
-          name: 'vmbr0',
-          node: 'pve',
-          mode: 'bridge',
-          vlanAware: true,
-          ports: ['nic0'],
-        ),
-        VirtNetwork(
-          id: 'pve/vmbr0.10',
-          name: 'vmbr0.10',
-          node: 'pve',
-          mode: 'vlan',
-          cidrs: ['10.10.0.2/24'],
-          gateway: '10.10.0.1',
-        ),
-      ];
-      expect(virtPveManagementIfaces(vlan), containsAll(['vmbr0.10', 'vmbr0', 'nic0']));
-      // An IPv6-only node: its `gateway6` counts.
-      expect(
-        virtPveManagementIfaces(const [
-          VirtNetwork(id: 'pve/vmbr2', name: 'vmbr2', node: 'pve', mode: 'bridge'),
-        ], live: live, gateways6: {'vmbr2'}),
-        contains('vmbr2'),
-      );
-    });
-
-    test('which interfaces a pending diff touches', () {
-      const diff = '''
---- /etc/network/interfaces\t2026-09-27
-+++ /etc/network/interfaces.new\t2026-09-27
-@@ -10,6 +10,7 @@
- auto vmbr0
- iface vmbr0 inet static
- \taddress 192.168.31.20/24
-+\tbridge-vlan-aware yes
- \tgateway 192.168.31.1
-@@ -20,3 +21,8 @@
-+
-+auto vmbr9
-+iface vmbr9 inet manual
-+\tbridge-ports none
-''';
-      final t = virtPveDiffIfaces(diff);
-      expect(t.ifaces, {'vmbr0', 'vmbr9'});
-      expect(t.unknown, isFalse);
-      // A hunk whose change comes before any stanza line: not known.
-      const midDiff = '@@ -5,3 +5,4 @@\n \tbridge-ports nic0\n \tbridge-stp off\n \tbridge-fd 0\n+\tbridge-vlan-aware yes\n';
-      final mid = virtPveDiffIfaces(midDiff);
-      expect(mid.unknown, isTrue);
-      // ... unless the file as it is says which stanza line 5 is under.
-      const file = 'auto lo\niface lo inet loopback\n\niface vmbr0 inet static\n\tbridge-ports nic0\n'
-          '\tbridge-stp off\n\tbridge-fd 0\n';
-      final placed = virtPveDiffIfaces(midDiff, interfaces: file);
-      expect(placed.ifaces, {'vmbr0'});
-      expect(placed.unknown, isFalse);
-      // Placed after `lo`'s stanza, a hunk starting on line 3 is still lo's.
-      final early = virtPveDiffIfaces('@@ -3,1 +3,2 @@\n \n+# note\n+\tmtu 9000\n', interfaces: file);
-      expect(early.ifaces, {'lo'});
-      // A comment is its stanza's: PVE writes `comments` there.
-      final comment = virtPveDiffIfaces(
-        '@@ -5,3 +5,4 @@\n \tbridge-ports nic0\n \tbridge-stp off\n \tbridge-fd 0\n+#note\n',
-        interfaces: file,
-      );
-      expect(comment.ifaces, {'vmbr0'});
-      // The probe carries the file.
-      expect(
-        virtPveParseLiveNet('@host pve\n@route\n@file\n$file@end\n')!.interfaces,
-        contains('iface vmbr0 inet static'),
-      );
+    test('what a form offers', () {
+      expect(virtDefaultDhcpRange('192.168.150.1/24'), ('192.168.150.100', '192.168.150.200'));
+      expect(virtDefaultDhcpRange('bad'), isNull);
+      expect(virtVolumeFormats(_dir), ['qcow2', 'raw']);
+      expect(virtVolumeFormats(_lvm), ['raw']);
+      expect(virtVolumeFileName(_pveDir, 'vm-105-disk-0', 'qcow2'), 'vm-105-disk-0.qcow2');
+      expect(virtPveVolumeVmid('vm-105-disk-0.qcow2'), 105);
+      expect(virtPveVolumeVmid('debian.iso'), isNull);
+      expect(virtUploadIssue(_dir, 'x.iso', 20 << 30), VirtResIssue.space);
+      expect(virtUploadIssue(_dir, 'a b.iso', 1), VirtResIssue.nameInvalid);
+      expect(virtPoolTakesMedia(_pveDir), isTrue);
+      expect(virtVolumeResizable(_lvm, VirtHostKind.libvirt), isFalse);
+      expect(virtVolumeResizable(_dir, VirtHostKind.libvirt), isTrue);
     });
   });
 
   group('libvirt', () {
-    test('each change as the parser takes it', () {
-      Map<String, Object?> op(VirtResourceChange c) => LibvirtBackend.opJson(c);
-      expect(
-        op(const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/p')),
-        {
-          'op': 'pool_create',
-          'name': 'p',
-          'pool_type': 'dir',
-          'target': '/srv/p',
-          'source': null,
-          'autostart': true,
-        },
-      );
-      expect(
-        op(
-          const VirtPoolCreate(
-            name: 'n',
-            type: 'netfs',
-            source: 'nas:/e',
-            target: '/mnt/n',
-          ),
-        ),
-        containsPair('source', 'nas:/e'),
-      );
-      expect(
-        op(const VirtVolumeCreate(_dir, name: 'a.qcow2', gib: 2, format: 'qcow2')),
-        containsPair('bytes', 2 << 30),
-      );
-      expect(
-        op(
-          const VirtNetworkCreate(
-            name: 'lab',
-            mode: 'nat',
-            cidr: '192.168.150.1/24',
-            dhcpStart: '192.168.150.100',
-            dhcpEnd: '192.168.150.200',
-          ),
-        )['ipv4'],
-        {
-          'address': '192.168.150.1',
-          'prefix': 24,
-          'dhcp_start': '192.168.150.100',
-          'dhcp_end': '192.168.150.200',
-        },
-      );
-      expect(
-        op(const VirtNetworkCreate(name: 'b', mode: 'bridge', bridge: 'br0', cidr: '1.2.3.4/24')),
-        allOf(containsPair('bridge', 'br0'), containsPair('ipv4', null)),
-      );
-      const net = VirtNetwork(id: 'lab', name: 'lab', mode: 'nat', active: false);
-      expect(op(const VirtNetworkDelete(net)), {'op': 'net_delete', 'name': 'lab'});
-      expect(
-        op(const VirtPoolDelete(_dir, deleteStorage: true)),
-        {'op': 'pool_delete', 'name': 'images', 'active': true, 'delete_storage': true},
-      );
-      // Every op JSON is one the parser writes a script for.
-      for (final c in <VirtResourceChange>[
-        const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/p'),
-        const VirtPoolSetActive(_dir, active: false),
-        const VirtPoolSetAutostart(_dir, on: true),
-        const VirtPoolRefresh(_dir),
-        const VirtPoolDelete(_dir),
-        const VirtVolumeCreate(_dir, name: 'a.qcow2', gib: 2, format: 'qcow2'),
-        const VirtVolumeResize(_dir, VirtVolume(id: 'a', name: 'a'), bytes: 1 << 30),
-        const VirtVolumeClone(_dir, VirtVolume(id: 'a', name: 'a'), name: 'b'),
-        const VirtNetworkCreate(name: 'i', mode: 'isolated'),
-        const VirtNetworkSetActive(net, active: true),
-        const VirtNetworkSetAutostart(net, on: false),
-      ]) {
-        expect(
-          ffi.virtResourceScript(opJson: jsonEncode(op(c))),
-          contains('virsh'),
-          reason: '$c',
-        );
+    /// A host whose listings are the captured ones, answering every change
+    /// with [change].
+    _Exec host(ExecResult Function(_Call call) change) => _Exec((call) {
+      final s = call.script;
+      if (s.contains('pool-list')) return _ok(_fixture('script_storage.txt'));
+      if (s.contains("vol-dumpxml --pool 'images'")) {
+        return _ok(_fixture('script_volumes_images.txt'));
       }
-      expect(() => op(const VirtNetworkApply('pve')), throwsA(isA<VirtErr>()));
+      if (s.contains("vol-dumpxml --pool 'sbx-iso'")) {
+        return _ok(_fixture('script_volumes_sbx_iso.txt'));
+      }
+      if (s.contains('net-list')) return _ok(_fixture('script_networks.txt'));
+      return change(call);
     });
 
-    test('an existing network\'s edit as the parser takes it', () async {
-      const net = VirtNetwork(
-        id: 'lab',
-        name: 'lab',
-        mode: 'nat',
-        active: true,
-        cidrs: ['192.168.150.1/24'],
-        dhcpRanges: ['192.168.150.100-192.168.150.200'],
-        bridge: 'virbr1',
-        xml: '<network>\n'
-            '  <name>lab</name>\n'
-            "  <forward mode='nat'/>\n"
-            "  <bridge name='virbr1'/>\n"
-            "  <ip address='192.168.150.1' prefix='24'>\n"
-            '    <dhcp>\n'
-            "      <range start='192.168.150.100' end='192.168.150.200'/>\n"
-            '    </dhcp>\n'
-            '  </ip>\n'
-            '</network>\n',
+    String changeScript(_Exec exec) => exec.calls
+        .map((c) => c.script)
+        .lastWhere((s) => !s.contains('pool-list') && !s.contains('vol-dumpxml') && !s.contains('net-list'));
+
+    test('a change is checked against the host\'s lists, then its script runs', () async {
+      final exec = host((_) => _ok(_section('virt.res.step', '')));
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      await virt.manage(const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/p'));
+      expect(changeScript(exec), contains('pool-define'));
+      await virt.manage(const VirtVolumeCreate(_dir, name: 'a.qcow2', gib: 2, format: 'qcow2'));
+      expect(changeScript(exec), contains('--capacity ${2 << 30}B'));
+      // `cirros.img` is what the guests' disks are made on: refused before
+      // anything is sent.
+      final calls = exec.calls.length;
+      final e = await _err(
+        virt.manage(const VirtVolumeDelete(_dir, VirtVolume(id: 'cirros.img', name: 'cirros.img'))),
       );
-      final edit = VirtNetworkEdit(
-        net,
-        mode: 'nat',
-        address: '192.168.151.1',
-        prefix: 24,
-        dhcpStart: '192.168.151.100',
-        dhcpEnd: '192.168.151.200',
-        hosts: const [
-          VirtNetHost(mac: '52:54:00:AA:BB:01', ip: '192.168.151.10', name: 'h1'),
-        ],
-      );
-      final json = LibvirtBackend.opJson(edit);
-      expect(json['op'], 'edit');
-      expect(json['name'], 'lab');
-      expect(json['active'], isTrue);
-      expect(json['restart'], isFalse);
-      expect(json['base_xml'], contains('<name>lab</name>'));
-      expect(json['edit'], {
-        'mode': 'nat',
-        'bridge': null,
-        'address': '192.168.151.1',
-        'prefix': 24,
-        'dhcp_start': '192.168.151.100',
-        'dhcp_end': '192.168.151.200',
-        'hosts': [
-          {'mac': '52:54:00:aa:bb:01', 'ip': '192.168.151.10', 'name': 'h1'},
-        ],
-      });
-      // The script is the network module's, not the resource one.
-      final script = ffi.virtNetChangeScript(opJson: jsonEncode(json));
-      expect(script, contains('net-define'));
-      // The address moves, so the static hosts go into the definition with
-      // it: `net-update` would check them against the old subnet.
-      expect(script, isNot(contains('net-update')));
-      // A static host alone takes the live path.
-      final hostsOnly = LibvirtBackend.opJson(
-        VirtNetworkEdit(
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, l10n.virtVolInUse);
+      expect(exec.calls.skip(calls).map((c) => c.script).where((s) => s.contains('vol-delete')), isEmpty);
+      // A network the host lists by that name.
+      final taken = await _err(virt.manage(const VirtNetworkCreate(name: 'default', mode: 'isolated')));
+      expect(taken.type, VirtErrType.exists);
+      expect(() => virt.manage(const VirtNetworkApply('pve')), throwsA(isA<VirtErr>()));
+    });
+
+    test('an existing network\'s edit is the network module\'s script', () async {
+      const xml =
+          '<network>\n'
+          '  <name>default</name>\n'
+          "  <forward mode='nat'/>\n"
+          "  <bridge name='virbr0'/>\n"
+          "  <ip address='192.168.122.1' prefix='24'>\n"
+          '    <dhcp>\n'
+          "      <range start='192.168.122.2' end='192.168.122.254'/>\n"
+          '    </dhcp>\n'
+          '  </ip>\n'
+          '</network>\n';
+      const net = VirtNetwork(id: 'default', name: 'default', mode: 'nat', active: true, xml: xml);
+      final exec = host((_) => _ok(_section('virt.net.step', '')));
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      await virt.manage(
+        const VirtNetworkEdit(
           net,
           mode: 'nat',
-          address: '192.168.150.1',
+          address: '192.168.151.1',
           prefix: 24,
-          dhcpStart: '192.168.150.100',
-          dhcpEnd: '192.168.150.200',
-          hosts: const [
-            VirtNetHost(mac: '52:54:00:aa:bb:01', ip: '192.168.150.10'),
-          ],
+          dhcpStart: '192.168.151.100',
+          dhcpEnd: '192.168.151.200',
+          hosts: [VirtNetHost(mac: '52:54:00:AA:BB:01', ip: '192.168.151.10', name: 'h1')],
         ),
       );
-      final live = ffi.virtNetChangeScript(opJson: jsonEncode(hostsOnly));
-      expect(live, contains('net-update'));
-      expect(live, isNot(contains('net-define')));
-      await expectLater(
-        ffi.parseVirtNetChange(raw: _section('virt.net.step', '')),
-        completes,
-      );
-      // A restart is its own op: `net-destroy` and `net-start`, no
-      // definition written either way.
-      final restart = LibvirtBackend.opJson(const VirtNetworkRestart(net));
-      expect(restart['op'], 'restart');
-      expect(restart['name'], 'lab');
-      expect(restart['base_xml'], contains('<name>lab</name>'));
-      final restarted = ffi.virtNetChangeScript(opJson: jsonEncode(restart));
-      expect(restarted, contains('net-destroy'));
-      expect(restarted, contains('net-start'));
-      expect(restarted, isNot(contains('net-define')));
-      expect(
-        () => LibvirtBackend.opJson(
-          const VirtNetworkEditBridge(net, cidr: '10.0.0.1/24'),
-        ),
-        throwsA(isA<VirtErr>()),
-      );
+      // The address moves, so the static hosts go into the definition with
+      // it: `net-update` would check them against the old subnet.
+      expect(changeScript(exec), contains('net-define'));
+      expect(changeScript(exec), isNot(contains('net-update')));
+      await virt.manage(const VirtNetworkRestart(net));
+      expect(changeScript(exec), allOf(contains('net-destroy'), contains('net-start')));
     });
 
     test('a network change the host refuses reaches the caller', () async {
       // The start refused, and the network started again as it ran: an
       // error, never a success.
-      final exec = _Exec(
+      final exec = host(
         (_) => _ok(
           [
             _section('virt.net.step', ''),
             _section(
               'virt.net.step',
-              'error: Failed to start network lab\nerror: internal error: Network is already in use by interface eth0',
+              'error: Failed to start network default\nerror: internal error: Network is already in use by interface eth0',
               1,
             ),
             '${_marker('virt.net.rollback')}\n${_marker('virt.net.restored')}\n',
@@ -835,39 +212,33 @@ esac''',
       );
       final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
       const net = VirtNetwork(
-        id: 'lab',
-        name: 'lab',
+        id: 'default',
+        name: 'default',
         mode: 'nat',
         active: true,
-        xml: '<network>\n  <name>lab</name>\n</network>\n',
+        xml: '<network>\n  <name>default</name>\n</network>\n',
       );
       final e = await _err(virt.manage(const VirtNetworkRestart(net)));
       expect(e.message, contains('started again as it ran before'));
     });
 
-    test('a name taken is exists; a refusal is the host\'s words', () async {
-      final exec = _Exec(
-        (_) => _ok(
-          _section('virt.res.step', "error: operation failed: pool 'p' already exists with uuid 1", 1),
-        ),
+    test('a name taken on the host is exists; a refusal is the host\'s words', () async {
+      final exec = host(
+        (_) => _ok(_section('virt.res.step', "error: operation failed: pool 'p' already exists with uuid 1", 1)),
       );
       final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
-      final e = await _err(
-        virt.manage(const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/p')),
-      );
+      final e = await _err(virt.manage(const VirtPoolCreate(name: 'p', type: 'dir', source: '/srv/p')));
       expect(e.type, VirtErrType.exists);
-      expect(exec.calls.single.entry, 'sh');
-      expect(exec.calls.single.script, contains('pool-define'));
+      expect(exec.calls.last.entry, 'sh');
 
       final refused = LibvirtBackend(
         serverId: 's',
-        exec: () async => _Exec(
-          (_) => _ok(
-            _section('virt.res.step', 'error: Requested operation is not valid: storage pool is not empty', 1),
-          ),
+        exec: () async => host(
+          (_) => _ok(_section('virt.res.step', 'error: Requested operation is not valid: storage pool is not empty', 1)),
         ),
       );
-      final e2 = await _err(refused.manage(const VirtPoolDelete(_dir, deleteStorage: true)));
+      const off = VirtStoragePool(id: 'sbx-off', name: 'sbx-off', type: 'dir', active: false);
+      final e2 = await _err(refused.manage(const VirtPoolDelete(off, deleteStorage: true)));
       expect(e2.type, VirtErrType.actionFailed);
       expect(e2.message, contains('not empty'));
     });

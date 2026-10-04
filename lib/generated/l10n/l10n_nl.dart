@@ -3663,9 +3663,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Meer dan de opslag vrij heeft';
 
   @override
-  String get virtHwIssueSwap => 'Niet negatief';
-
-  @override
   String get virtHwLater => 'Van kracht na herstart';
 
   @override
@@ -4220,6 +4217,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Voer een naam in';
+
+  @override
+  String get virtResNotFound => 'Staat niet meer op deze host';
+
+  @override
+  String get virtResUnsupported => 'Deze host ondersteunt dat niet';
 
   @override
   String get virtResNameInvalid =>
@@ -5434,4 +5437,47 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Een VMID van 100 tot 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Die node is niet online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Dat installatiemedium staat niet op deze host.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Een nieuwe gast kan dat netwerk niet gebruiken.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Deze host biedt dat niet aan voor een nieuwe VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot vereist UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Sluit het eerst af.';
+
+  @override
+  String get virtGuestIsTemplate => 'Het is al een sjabloon.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'De image is groter dan de schijf: maak de schijf minstens even groot.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Die opslag bevat op deze node geen back-ups.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Geen modus of compressie die PVE accepteert.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'De node van de taak is niet online.';
 }

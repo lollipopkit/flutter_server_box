@@ -2047,6 +2047,7 @@ dependencies = [
  "http",
  "http-body",
  "httparse",
+ "httpdate",
  "itoa",
  "pin-project-lite",
  "smallvec",
@@ -4620,6 +4621,8 @@ dependencies = [
  "p521",
  "sbm_parser",
  "sbm_redfish",
+ "sbm_virt",
+ "serde",
  "serde_json",
  "sha1 0.11.0",
  "sha2 0.11.0",
@@ -4650,7 +4653,6 @@ dependencies = [
  "roxmltree",
  "serde",
  "serde_json",
- "sha2 0.11.0",
 ]
 
 [[package]]
@@ -4667,6 +4669,33 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "x509-cert 0.3.0",
+]
+
+[[package]]
+name = "sbm_virt"
+version = "0.1.0"
+dependencies = [
+ "base64 0.23.1",
+ "bytes",
+ "dotenvy",
+ "futures-util",
+ "getrandom 0.4.3",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "roxmltree",
+ "rustls",
+ "rustls-pemfile",
+ "sbm_parser",
+ "sbm_redfish",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "tokio",
+ "tokio-rustls",
+ "tokio-tungstenite",
+ "tower-service",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -4901,6 +4930,7 @@ dependencies = [
  "sbm_native",
  "sbm_parser",
  "sbm_redfish",
+ "sbm_virt",
  "serde",
  "serde_json",
  "sha2 0.11.0",

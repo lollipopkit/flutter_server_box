@@ -1,0 +1,12 @@
+[
+    {
+        "content": "backup",
+        "ctime": 1790363505,
+        "format": "vma.zst",
+        "notes": "sb e2e 9941",
+        "size": 37103,
+        "subtype": "qemu",
+        "vmid": 9941,
+        "volid": "local:backup/vzdump-qemu-9941-2026_09_26-03_11_45.vma.zst"
+    }
+]

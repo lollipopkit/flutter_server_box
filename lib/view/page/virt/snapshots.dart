@@ -373,7 +373,7 @@ class _VirtSnapshotsViewState extends ConsumerState<VirtSnapshotsView>
     final stops = !snap.withMemory && widget.state.isActive;
     // On a chain, only a leaf can be reverted to: libvirt's revert flattens
     // the chain and leaves every later snapshot pointing at a file that is
-    // gone (see `sbm_parser::virt_snapshot`).
+    // gone (see `sbm_virt::libvirt::snapshot`).
     final revertRefused = snap.external && snap.hasChildren(all);
     // Depth by indent, capped so a long chain still has room for its name;
     // the rows it opens sit under it at the same depth.

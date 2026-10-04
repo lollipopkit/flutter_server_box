@@ -1,7 +1,10 @@
-/// `PveBackend`'s certificate policy against a real TLS server on loopback:
-/// a CA-signed certificate is trusted as it is, an unpinned one is shown
+/// `PveBackend`'s certificate policy against a real TLS server on loopback,
+/// through the session (`sbm_virt::pve` over FFI) and the authenticated
+/// loopback tunnel it is given: an unpinned certificate is shown
 /// (`certUnconfirmed`) and pinned by `confirmCert`, a different pin is
-/// `certChanged`.
+/// `certChanged`. The policy itself — a CA-signed certificate needing no pin,
+/// idle connections let go before pveproxy closes them — is
+/// `crates/sbm_virt/tests/pve_tls.rs`.
 ///
 /// `test/fixtures/virt_tls/` holds a test CA and a `localhost` leaf it signed,
 /// valid to 2126. Both are dated from 2019: macOS refuses a TLS leaf issued
@@ -34,6 +37,7 @@ import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
+import '../../helpers/pve_tunnel.dart';
 import '../../helpers/rust_lib_helper.dart';
 
 const _dir = 'test/fixtures/virt_tls';
@@ -103,6 +107,7 @@ void main() {
     ),
     // Whatever the configured address, the far end is this test's server —
     // the dialer's job, done here without one.
+    tunnel: (_, _) => loopbackTo(server.port),
     connect: (_, _) => ConnectionTask.fromSocket(
       Socket.connect(InternetAddress.loopbackIPv4, server.port),
       () {},
@@ -120,16 +125,6 @@ void main() {
     }
     fail('expected a VirtErr');
   }
-
-  test('a CA-signed certificate needs no pin', () async {
-    final trust = SecurityContext(withTrustedRoots: false)
-      ..setTrustedCertificates('$_dir/ca.pem');
-    final pve = backend(trust: trust);
-    addTearDown(pve.close);
-    final snap = await pve.load();
-    expect(snap.host.version, '8.2.4');
-    expect(authHeaders, everyElement('PVEAPIToken=root@pam!sb=secret'));
-  });
 
   test('unpinned: refused before any request, shown, then pinned', () async {
     final confirmed = <String>[];
@@ -172,13 +167,9 @@ void main() {
     expect(authHeaders, isEmpty);
   });
 
-  // Found over the monitor transport: an agent whose relay grant was already
-  // read refuses before anything is dialled, so the socket future fails
-  // before `HttpClient` listens to the TLS future built on it — and a future
-  // that fails with no listener is an uncaught error, which failed this test
-  // rather than the load.
-  test('a connection refused before dialling is the load\'s error, and '
-      'nothing is uncaught', () async {
+  // An agent whose relay grant was already read refuses the tunnel before
+  // anything is dialled.
+  test('a tunnel refused before dialling is the load\'s error', () async {
     final pve = PveBackend(
       serverId: 'srv',
       config: const PveConfig(
@@ -187,55 +178,16 @@ void main() {
         tokenId: 'root@pam!sb',
         tokenSecret: 'secret',
       ),
-      connect: (_, _) => ConnectionTask.fromSocket(
-        Future<Socket>.error(
-          const ServerTcpErr(
-            type: ServerTcpErrType.relayNotGranted,
-            transport: ServerTransport.monitorHttp,
-          ),
+      tunnel: (_, _) => Future.error(
+        const ServerTcpErr(
+          type: ServerTcpErrType.relayNotGranted,
+          transport: ServerTransport.monitorHttp,
         ),
-        () {},
       ),
+      connect: (_, _) => throw StateError('not dialled'),
     );
     addTearDown(pve.close);
     final e = await err(pve.load());
     expect(e.type, VirtErrType.relayNotGranted);
-  });
-
-  test('an idle connection is let go before pveproxy closes it', () async {
-    // pveproxy closes an idle keep-alive connection after 5 s; a request
-    // sent on it just then fails ("Connection closed before full header was
-    // received"). So a connection idle for longer than
-    // `PveBackend.idleTimeout` is not reused.
-    expect(PveBackend.idleTimeout, lessThan(const Duration(seconds: 5)));
-    var dials = 0;
-    final pve = PveBackend(
-      serverId: 'srv',
-      config: PveConfig(
-        addr: 'https://localhost:8006',
-        auth: PveAuth.token,
-        tokenId: 'root@pam!sb',
-        tokenSecret: 'secret',
-        certSha256: _leafFingerprint(),
-      ),
-      connect: (_, _) {
-        dials++;
-        return ConnectionTask.fromSocket(
-          Socket.connect(InternetAddress.loopbackIPv4, server.port),
-          () {},
-        );
-      },
-      securityContext: SecurityContext(withTrustedRoots: false),
-    );
-    addTearDown(pve.close);
-    await pve.load();
-    final afterFirst = dials;
-    await pve.load();
-    expect(dials, afterFirst, reason: 'reused while fresh');
-    await Future<void>.delayed(
-      PveBackend.idleTimeout + const Duration(milliseconds: 500),
-    );
-    await pve.load();
-    expect(dials, afterFirst + 1);
   });
 }

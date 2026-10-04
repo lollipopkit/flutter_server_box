@@ -3627,9 +3627,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Lebih dari ruang kosong penyimpanan';
 
   @override
-  String get virtHwIssueSwap => 'Tidak negatif';
-
-  @override
   String get virtHwLater => 'Berlaku setelah mulai ulang';
 
   @override
@@ -4170,6 +4167,12 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Masukkan nama';
+
+  @override
+  String get virtResNotFound => 'Sudah tidak ada di host ini';
+
+  @override
+  String get virtResUnsupported => 'Host ini tidak mendukungnya';
 
   @override
   String get virtResNameInvalid =>
@@ -5384,4 +5387,46 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Agen monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu.';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID dari 100 sampai 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Node itu tidak online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Media instalasi itu tidak ada di host ini.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Guest baru tidak dapat memakai jaringan itu.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Host ini tidak menyediakan itu untuk VM baru.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot memerlukan UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Matikan terlebih dahulu.';
+
+  @override
+  String get virtGuestIsTemplate => 'Sudah menjadi templat.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Image lebih besar dari disk: buat disk setidaknya sebesar itu.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Penyimpanan itu tidak menyimpan cadangan di node ini.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Bukan mode atau kompresi yang diterima PVE.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'Node tugas ini tidak online.';
 }

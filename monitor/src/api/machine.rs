@@ -37,6 +37,7 @@ pub const FEATURES: &[&str] = &[
     "desktop",
     "backup",
     "bmc",
+    "virt",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

@@ -3673,9 +3673,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Più dello spazio libero dello storage';
 
   @override
-  String get virtHwIssueSwap => 'Non negativo';
-
-  @override
   String get virtHwLater => 'Effettivo al riavvio';
 
   @override
@@ -4228,6 +4225,12 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => 'Inserisci un nome';
+
+  @override
+  String get virtResNotFound => 'Non è più su questo host';
+
+  @override
+  String get virtResUnsupported => 'Questo host non lo supporta';
 
   @override
   String get virtResNameInvalid =>
@@ -5448,4 +5451,46 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'L\'agente monitor contiene già il numero massimo di backup consentito. Eliminane prima uno.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Un VMID da 100 a 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Quel nodo non è online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Quel supporto di installazione non è su questo host.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Un nuovo guest non può usare quella rete.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Questo host non lo offre per una nuova VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot richiede UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Spegnilo prima.';
+
+  @override
+  String get virtGuestIsTemplate => 'È già un modello.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'L\'immagine è più grande del disco: rendi il disco almeno altrettanto grande.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Quello storage non contiene backup su questo nodo.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Non è una modalità o compressione accettata da PVE.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'Il nodo del job non è online.';
 }

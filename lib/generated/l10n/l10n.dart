@@ -6268,12 +6268,6 @@ abstract class AppLocalizations {
   /// **'More than the storage has free'**
   String get virtHwIssueStorageSpace;
 
-  /// Form error.
-  ///
-  /// In en, this message translates to:
-  /// **'Not negative'**
-  String get virtHwIssueSwap;
-
   /// Group note: changes here take effect at the next restart.
   ///
   /// In en, this message translates to:
@@ -7208,6 +7202,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a name'**
   String get virtResNameEmpty;
+
+  /// Form error: the pool, volume or network was removed since it was listed.
+  ///
+  /// In en, this message translates to:
+  /// **'It is no longer on this host'**
+  String get virtResNotFound;
+
+  /// Form error: a change this kind of host (PVE or libvirt) does not make.
+  ///
+  /// In en, this message translates to:
+  /// **'This host does not do that'**
+  String get virtResUnsupported;
 
   /// Form error: a pool, volume or network name the host does not take.
   ///
@@ -9224,6 +9230,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The monitor agent already holds as many backups as it allows. Delete one first.'**
   String get monitorBackupTooMany;
+
+  /// Create form: the VMID is outside the range PVE accepts.
+  ///
+  /// In en, this message translates to:
+  /// **'A VMID from 100 to 999999999.'**
+  String get virtCreateVmidInvalid;
+
+  /// Create form: the PVE node picked is not one of the host's online nodes.
+  ///
+  /// In en, this message translates to:
+  /// **'That node is not online.'**
+  String get virtCreateNodeOffline;
+
+  /// Create form: the ISO picked is no longer listed by the host.
+  ///
+  /// In en, this message translates to:
+  /// **'That install media is not on this host.'**
+  String get virtCreateMediaMissing;
+
+  /// Create form: the network picked is not one a new NIC can be on.
+  ///
+  /// In en, this message translates to:
+  /// **'A new guest cannot use that network.'**
+  String get virtCreateNetworkMissing;
+
+  /// Create form: a bus, NIC model, UEFI, TPM, cloud image or cloud-init the host does not have.
+  ///
+  /// In en, this message translates to:
+  /// **'This host does not offer that for a new VM.'**
+  String get virtCreateNotOffered;
+
+  /// Create form: Secure Boot was asked for on a BIOS VM.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure Boot needs UEFI.'**
+  String get virtCreateSecureBootNeedsUefi;
+
+  /// A guest has to be stopped for this: deleting it, making it a template, a libvirt copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down first.'**
+  String get virtGuestNotStopped;
+
+  /// Making a template of a guest that is one already.
+  ///
+  /// In en, this message translates to:
+  /// **'It is a template already.'**
+  String get virtGuestIsTemplate;
+
+  /// A refused create: the cloud image is bigger than the disk asked for.
+  ///
+  /// In en, this message translates to:
+  /// **'The image is bigger than the disk: make the disk at least as big.'**
+  String get virtCreateImageBigger;
+
+  /// A backup or a job names a storage the node does not keep backups on.
+  ///
+  /// In en, this message translates to:
+  /// **'That storage does not hold backups on this node.'**
+  String get virtBackupIssueStorage;
+
+  /// A backup or a job asks for a mode or compression PVE does not have.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a mode or compression PVE takes.'**
+  String get virtBackupIssueOption;
+
+  /// Run now: the job's node is not online, or no node is.
+  ///
+  /// In en, this message translates to:
+  /// **'The job\'s node is not online.'**
+  String get virtBackupIssueNodeOffline;
 }
 
 class _AppLocalizationsDelegate

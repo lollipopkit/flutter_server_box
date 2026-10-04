@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:collection/collection.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/resource.dart' as res;
+import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 part 'virt_resources.freezed.dart';
 
@@ -40,7 +45,7 @@ abstract class VirtGuestSnapshot with _$VirtGuestSnapshot {
   /// Whether a later snapshot sits on this one. Reverting to a snapshot that
   /// has one is refused: on libvirt 11.3 such a revert of an external
   /// snapshot failed, leaving the guest shut off on a new file and its
-  /// running overlay deleted (see `sbm_parser::virt_snapshot`).
+  /// running overlay deleted (see `sbm_virt::libvirt::snapshot`).
   bool hasChildren(Iterable<VirtGuestSnapshot> all) =>
       all.any((s) => s.parent == name);
 }
@@ -132,47 +137,38 @@ enum VirtSnapshotMemory {
 }
 
 /// Whether a snapshot of [guest], [state] now, can hold its memory on a host
-/// with [caps].
-///
-/// Only an active VM's: a container has nothing to save it with (PVE), and a
-/// stopped guest has none. Paused counts: QEMU saves a paused guest's memory
-/// as well.
+/// with [caps] (`sbm_virt::snapshot::memory`).
 VirtSnapshotMemory virtSnapshotMemory(
   VirtCapabilities caps,
   VirtGuest guest,
   VirtGuestState state,
-) {
-  if (guest.kind == VirtGuestKind.lxc) return VirtSnapshotMemory.none;
-  if (state != VirtGuestState.running && state != VirtGuestState.paused) {
-    return VirtSnapshotMemory.none;
-  }
-  return caps.snapshotMemoryRequired
-      ? VirtSnapshotMemory.always
-      : VirtSnapshotMemory.optional;
-}
+) => switch (ffi.virtSnapshotMemory(
+  lxc: guest.kind == VirtGuestKind.lxc,
+  active: state == VirtGuestState.running || state == VirtGuestState.paused,
+  memoryRequired: caps.snapshotMemoryRequired,
+)) {
+  ffi.SnapshotMemoryKind.none => VirtSnapshotMemory.none,
+  ffi.SnapshotMemoryKind.optional => VirtSnapshotMemory.optional,
+  ffi.SnapshotMemoryKind.always => VirtSnapshotMemory.always,
+};
 
 /// Why a name cannot be a new snapshot's, or null when it can.
 enum VirtSnapshotNameIssue { empty, invalid, taken }
 
-/// What a new snapshot's name may be: PVE's own rule (`pve-configid`: a
-/// letter, then up to 39 letters, digits, `-` and `_`), used for libvirt as
-/// well so a name never needs quoting to be read back.
-final virtSnapshotNamePattern = RegExp(r'^[A-Za-z][A-Za-z0-9_-]{1,39}$');
-
+/// PVE's own rule (`pve-configid`), used for libvirt as well
+/// (`sbm_virt::snapshot::name_issue`).
 VirtSnapshotNameIssue? virtSnapshotNameIssue(
   String name,
   Iterable<VirtGuestSnapshot> existing,
-) {
-  if (name.isEmpty) return VirtSnapshotNameIssue.empty;
-  if (!virtSnapshotNamePattern.hasMatch(name)) {
-    return VirtSnapshotNameIssue.invalid;
-  }
-  // PVE reserves `current` for the "you are here" entry of its listing.
-  if (name == 'current' || existing.any((s) => s.name == name)) {
-    return VirtSnapshotNameIssue.taken;
-  }
-  return null;
-}
+) => switch (ffi.virtSnapshotNameIssue(
+  name: name,
+  existing: [for (final s in existing) s.name],
+)) {
+  ffi.SnapshotNameIssue.empty => VirtSnapshotNameIssue.empty,
+  ffi.SnapshotNameIssue.invalid => VirtSnapshotNameIssue.invalid,
+  ffi.SnapshotNameIssue.taken => VirtSnapshotNameIssue.taken,
+  null => null,
+};
 
 /// A guest something on a host belongs to: the owner of a volume, a guest on
 /// a network. By [guestId] (libvirt's UUID) or [vmid] (PVE), whichever the
@@ -507,54 +503,35 @@ enum VirtExternalIssue {
   unknown,
 }
 
-/// The file libvirt would give an overlay it makes itself, for a disk at
-/// [diskPath]: `<disk>.<snapshot>`, beside the disk it backs (captured on
-/// libvirt 11.3.0). The app names its own overlays the same way, so a chain
-/// reads alike whichever made it.
-String virtSnapshotOverlayName(String diskPath, String snapshot) =>
-    '${diskPath.split('/').last}.$snapshot';
-
-/// [`virtSnapshotOverlayName`] placed in [dir].
-String virtSnapshotOverlayPath(String diskPath, String snapshot, [String? dir]) {
-  final name = virtSnapshotOverlayName(diskPath, snapshot);
-  final at = diskPath.lastIndexOf('/');
-  final base = dir ?? (at < 0 ? '' : diskPath.substring(0, at));
-  return base.isEmpty ? name : '$base/$name';
-}
-
-/// libvirt pool types whose volumes are files in the pool's target directory.
-/// The rest (`logical`, `disk`, `zfs`, `rbd`, ...) hold block devices or
-/// objects: their target path, where there is one, is `/dev/...`, and a file
-/// written there is not a volume of the pool.
-const _libvirtFilePoolTypes = {'dir', 'fs', 'netfs'};
-
-bool _isFilePool(VirtStoragePool pool) =>
-    _libvirtFilePoolTypes.contains(pool.type) &&
-    (pool.path?.startsWith('/') ?? false);
-
-/// Whether a volume of [pool] can be resized on its host. libvirt resizes
-/// only a pool of files (its `logical` backend, among others, has no resize
-/// at all: "storage pool does not support changing of volume capacity",
-/// libvirt 11.3); PVE resizes a disk on any storage.
+/// Whether a volume of [pool] can be resized on its host
+/// (`sbm_virt::resource::volume_resizable`).
 bool virtVolumeResizable(VirtStoragePool pool, VirtHostKind host) =>
-    host == VirtHostKind.pve || _libvirtFilePoolTypes.contains(pool.type);
+    res.virtVolumeResizable(
+      poolJson: jsonEncode(VirtRust.poolJson(pool)),
+      pve: host == VirtHostKind.pve,
+    );
 
-/// Whether an external snapshot's overlay can be written into [pool] by path:
-/// an active libvirt pool of files.
+/// An active pool of files: where an overlay can go
+/// (`sbm_virt::libvirt::host::pool_holds_files`).
 bool virtPoolHoldsFiles(VirtStoragePool pool) =>
-    pool.active && _isFilePool(pool);
+    ffi.virtLibvirtPoolHoldsFiles(pool: virtPoolRef(pool));
 
 /// The libvirt pool of files whose directory holds [file] itself, or null.
 VirtStoragePool? virtPoolOfFile(Iterable<VirtStoragePool> pools, String file) {
-  final at = file.lastIndexOf('/');
-  if (at <= 0) return null;
-  final dir = file.substring(0, at);
-  String trim(String p) => p.length > 1 && p.endsWith('/') ? trim(p.substring(0, p.length - 1)) : p;
-  for (final p in pools) {
-    if (_isFilePool(p) && trim(p.path!) == dir) return p;
-  }
-  return null;
+  final name = ffi.virtLibvirtPoolOfFile(
+    pools: [for (final p in pools) virtPoolRef(p)],
+    file: file,
+  );
+  return pools.firstWhereOrNull((p) => p.name == name);
 }
+
+/// [pool] as `sbm_virt` reads a libvirt pool.
+ffi.LibvirtPoolRef virtPoolRef(VirtStoragePool pool) => ffi.LibvirtPoolRef(
+  name: pool.name,
+  poolType: pool.type,
+  active: pool.active,
+  target: pool.path,
+);
 
 /// Why a snapshot cannot be taken, from what the host answered about its
 /// storage, in the host's own words; null when one can.
@@ -593,38 +570,7 @@ enum VirtSnapDiffGroup {
   nics,
   firmware,
   boot,
-  other;
-
-  /// The group a backend's own key belongs to, where the backend does not
-  /// name one: PVE's configuration keys are `cores`, `memory`, `scsi0`,
-  /// `net0`, ... rather than libvirt's element names.
-  static VirtSnapDiffGroup of(String key) {
-    if (key == 'cores' ||
-        key == 'sockets' ||
-        key == 'vcpus' ||
-        key == 'cpu' ||
-        key == 'cpuunits' ||
-        key == 'cpulimit') {
-      return VirtSnapDiffGroup.cpu;
-    }
-    if (key == 'memory' || key == 'balloon' || key == 'swap' || key == 'shares') {
-      return VirtSnapDiffGroup.memory;
-    }
-    if (key == 'boot' || key == 'bootdisk' || key == 'startup') {
-      return VirtSnapDiffGroup.boot;
-    }
-    if (key == 'bios' || key == 'efidisk0' || key == 'tpmstate0' || key == 'machine') {
-      return VirtSnapDiffGroup.firmware;
-    }
-    if (_diskKeys.any(key.startsWith) || key == 'rootfs') {
-      return VirtSnapDiffGroup.disks;
-    }
-    if (_nicKeys.any(key.startsWith)) return VirtSnapDiffGroup.nics;
-    return VirtSnapDiffGroup.other;
-  }
-
-  static const _diskKeys = ['scsi', 'virtio', 'ide', 'sata', 'mp', 'unused'];
-  static const _nicKeys = ['net', 'ipconfig', 'nameserver', 'searchdomain'];
+  other,
 }
 
 /// One difference between a snapshot's configuration and the guest's current

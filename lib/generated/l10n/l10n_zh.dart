@@ -3396,9 +3396,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwIssueStorageSpace => '超出了存储的可用空间';
 
   @override
-  String get virtHwIssueSwap => '不能为负数';
-
-  @override
   String get virtHwLater => '重启后生效';
 
   @override
@@ -3912,6 +3909,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtResNameEmpty => '请输入名称';
+
+  @override
+  String get virtResNotFound => '主机上已不存在';
+
+  @override
+  String get virtResUnsupported => '此主机不支持该操作';
 
   @override
   String get virtResNameInvalid => '主机不接受此名称（字母、数字、. _ -）';
@@ -5043,6 +5046,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorBackupTooMany => 'Monitor 代理存放的备份数量已达上限，请先删除一个。';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID 须在 100 到 999999999 之间。';
+
+  @override
+  String get virtCreateNodeOffline => '该节点不在线。';
+
+  @override
+  String get virtCreateMediaMissing => '该安装介质不在此主机上。';
+
+  @override
+  String get virtCreateNetworkMissing => '新的虚拟机不能使用该网络。';
+
+  @override
+  String get virtCreateNotOffered => '此主机不为新虚拟机提供该选项。';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot 需要 UEFI。';
+
+  @override
+  String get virtGuestNotStopped => '请先关机。';
+
+  @override
+  String get virtGuestIsTemplate => '它已经是模板。';
+
+  @override
+  String get virtCreateImageBigger => '镜像比磁盘大：磁盘至少要和镜像一样大。';
+
+  @override
+  String get virtBackupIssueStorage => '该存储在此节点上不存放备份。';
+
+  @override
+  String get virtBackupIssueOption => '不是 PVE 接受的模式或压缩方式。';
+
+  @override
+  String get virtBackupIssueNodeOffline => '此任务的节点不在线。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8434,9 +8473,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get virtHwIssueStorageSpace => '超出了儲存的可用空間';
 
   @override
-  String get virtHwIssueSwap => '不能為負數';
-
-  @override
   String get virtHwLater => '重新啟動後生效';
 
   @override
@@ -8951,6 +8987,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtResNameEmpty => '請輸入名稱';
+
+  @override
+  String get virtResNotFound => '主機上已不存在';
+
+  @override
+  String get virtResUnsupported => '此主機不支援該操作';
 
   @override
   String get virtResNameInvalid => '主機不接受此名稱（字母、數字、. _ -）';
@@ -10083,4 +10125,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorBackupTooMany => 'Monitor 代理存放的備份數量已達上限，請先刪除一個。';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID 須介於 100 到 999999999。';
+
+  @override
+  String get virtCreateNodeOffline => '該節點不在線上。';
+
+  @override
+  String get virtCreateMediaMissing => '此主機上沒有該安裝媒體。';
+
+  @override
+  String get virtCreateNetworkMissing => '新的虛擬機無法使用該網路。';
+
+  @override
+  String get virtCreateNotOffered => '此主機不為新 VM 提供該選項。';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot 需要 UEFI。';
+
+  @override
+  String get virtGuestNotStopped => '請先關機。';
+
+  @override
+  String get virtGuestIsTemplate => '它已經是範本。';
+
+  @override
+  String get virtCreateImageBigger => '映像比磁碟大：磁碟至少要和映像一樣大。';
+
+  @override
+  String get virtBackupIssueStorage => '該儲存在此節點上不存放備份。';
+
+  @override
+  String get virtBackupIssueOption => '不是 PVE 接受的模式或壓縮方式。';
+
+  @override
+  String get virtBackupIssueNodeOffline => '此工作的節點不在線上。';
 }
