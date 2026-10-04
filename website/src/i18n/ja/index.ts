@@ -135,7 +135,7 @@ const ja: Translation = {
   cta: {
     title: 'ServerBox は AGPLv3 の無料オープンソースです。',
     subtitle:
-      'App Store、GitHub Releases、F-Droid、OpenAPK、またはプロジェクト CDN からインストールできます。',
+      'App Store、GitHub Releases、F-Droid、または OpenAPK からインストールできます。',
     appStoreAction: 'App Store を開く',
     githubAction: 'GitHub Releases からダウンロード',
   },

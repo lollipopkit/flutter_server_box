@@ -100,7 +100,6 @@
       label: 'Android',
       sources: [
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'CDN', href: 'https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid' },
         { label: 'F-Droid', href: 'https://f-droid.org/packages/tech.lolli.toolbox' },
         { label: 'OpenAPK', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/' },
       ],
@@ -110,7 +109,6 @@
       label: 'Linux',
       sources: [
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'CDN', href: 'https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid' },
       ],
     },
     {
@@ -118,7 +116,6 @@
       label: 'Windows',
       sources: [
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { label: 'CDN', href: 'https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid' },
       ],
     },
   ]
