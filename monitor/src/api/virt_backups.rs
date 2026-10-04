@@ -204,7 +204,14 @@ pub async fn delete(
     .await
 }
 
-pub async fn jobs(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+/// Takes no fields, but reads the body the POST carries: a handler that
+/// leaves it unread has ntex close the connection after its answer, which a
+/// client still sending the body sees as a disconnect.
+pub async fn jobs(
+    req: HttpRequest,
+    _body: Option<web::types::Json<serde_json::Value>>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
     if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backup jobs").await {
         return Ok(refused);
     }
