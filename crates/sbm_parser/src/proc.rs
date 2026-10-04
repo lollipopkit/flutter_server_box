@@ -70,7 +70,7 @@ const MAX_ELAPSED_SECONDS: i64 = 100 * 365 * 24 * 3600;
 /// Any field can be `None`: the set of columns differs per platform and per
 /// `ps`, and a row can omit a value it cannot read (`-`) without omitting the
 /// row. `None` means the platform did not say, which is not the same as zero.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Proc {
     pub user: Option<String>,
     pub pid: i64,
@@ -183,7 +183,7 @@ impl Proc {
 }
 
 /// The 1, 5 and 15 minute load averages, as the machine reported them.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct ProcLoad {
     pub one: f64,
     pub five: f64,
@@ -191,7 +191,7 @@ pub struct ProcLoad {
 }
 
 /// What a process table could not be read as.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PsParseFailure {
     /// The header named no `PID`, or no command column.
@@ -208,7 +208,7 @@ pub enum PsParseFailure {
 ///
 /// The rows that *did* parse are still in [`PsResult::procs`]: a table with
 /// one bad row is a table with one bad row, not an empty page.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PsParseIssue {
     pub failure: PsParseFailure,
     /// One line per dropped row, naming the row. Shown verbatim.
@@ -244,7 +244,7 @@ impl ProcSortMode {
 }
 
 /// One reading of the process table.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PsResult {
     pub procs: Vec<Proc>,
     pub issue: Option<PsParseIssue>,
@@ -1268,6 +1268,154 @@ fn windows_kill_command(pid: i64, start_id: &str) -> String {
         "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}",
         base64::engine::general_purpose::STANDARD.encode(utf16)
     )
+}
+
+// ---------------------------------------------------------------------------
+// What a client draws
+// ---------------------------------------------------------------------------
+
+/// One row as a client draws it: the process, and what is derived from it.
+///
+/// Sent rather than derived by each client: "the last path component of the
+/// executable, minus the colon a process that rewrites its title leaves
+/// behind" is a rule, and a second implementation of it would be the one
+/// that drifts. The agent's panel and the app read the same row.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct ProcRow {
+    #[serde(flatten)]
+    pub proc: Proc,
+    /// [`Proc::name`].
+    pub name: String,
+    /// [`Proc::rss_kb`].
+    pub rss_kb: Option<i64>,
+    /// `kthreadd` or one of its children ([`Proc::is_kernel_thread`]).
+    pub is_kernel_thread: bool,
+    /// Whether this row may be signalled at all: a PID whose start identity
+    /// the machine did not report cannot be checked before the signal, and
+    /// signalling the wrong process is worse than not being able to signal
+    /// this one.
+    pub killable: bool,
+}
+
+impl ProcRow {
+    pub fn of(proc: &Proc, system: SystemType) -> Self {
+        Self {
+            name: proc.name(),
+            rss_kb: proc.rss_kb(),
+            is_kernel_thread: proc.is_kernel_thread(),
+            killable: kill_supported(proc.pid, proc.start_id.as_deref(), system),
+            proc: proc.clone(),
+        }
+    }
+}
+
+/// Which of the machine's columns carried a value in any row.
+///
+/// Answered over the table rather than derived from the platform: a `ps` that
+/// prints no `%CPU` and a machine whose processes all report none look the
+/// same in the rows, and a client has one thing to ask either way. `read` and
+/// `write` are the cumulative counters; their speeds are what a sort can use,
+/// and the two are not the same question — a first reading has the counters
+/// and no speeds.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct ProcColumns {
+    pub user: bool,
+    pub cpu: bool,
+    pub mem: bool,
+    pub rss: bool,
+    pub read: bool,
+    pub write: bool,
+    pub read_speed: bool,
+    pub write_speed: bool,
+}
+
+impl ProcColumns {
+    pub fn of(procs: &[Proc]) -> Self {
+        let mut columns = Self::default();
+        for proc in procs {
+            columns.user |= proc.user.as_ref().is_some_and(|user| !user.is_empty());
+            columns.cpu |= proc.cpu.is_some();
+            columns.mem |= proc.mem.is_some();
+            columns.rss |= proc.rss_kb().is_some();
+            columns.read |= proc.read_bytes.is_some();
+            columns.write |= proc.write_bytes.is_some();
+            columns.read_speed |= proc.read_speed.is_some();
+            columns.write_speed |= proc.write_speed.is_some();
+        }
+        columns
+    }
+
+    /// The orders this table can answer, in the order a client draws them.
+    pub fn sorts(&self) -> Vec<ProcSortMode> {
+        let offered = [
+            (ProcSortMode::Cpu, self.cpu),
+            (ProcSortMode::Mem, self.mem),
+            (ProcSortMode::Rss, self.rss),
+            // A PID is always there and always sortable.
+            (ProcSortMode::Pid, true),
+            (ProcSortMode::User, self.user),
+            (ProcSortMode::Name, true),
+            (ProcSortMode::Read, self.read_speed),
+            (ProcSortMode::Write, self.write_speed),
+        ];
+        offered.into_iter().filter_map(|(mode, supported)| supported.then_some(mode)).collect()
+    }
+
+    /// The order a table falls back to: the first resource column it has,
+    /// else the PID.
+    pub fn default_sort(&self) -> ProcSortMode {
+        [ProcSortMode::Cpu, ProcSortMode::Mem, ProcSortMode::Rss, ProcSortMode::Read, ProcSortMode::Write]
+            .into_iter()
+            .find(|mode| self.sorts().contains(mode))
+            .unwrap_or(ProcSortMode::Pid)
+    }
+
+    /// `sort` where this table can answer it, else [`Self::default_sort`];
+    /// `ascending` where given, else that order's own default.
+    pub fn resolve(&self, sort: Option<ProcSortMode>, ascending: Option<bool>) -> (ProcSortMode, bool) {
+        let mode = sort.filter(|mode| self.sorts().contains(mode)).unwrap_or_else(|| self.default_sort());
+        let ascending = if sort == Some(mode) { ascending } else { None };
+        (mode, ascending.unwrap_or_else(|| mode.default_ascending()))
+    }
+}
+
+/// One reading as a client draws it: its rows in the order asked for (or
+/// the one it fell back to), the columns it has, the orders it can answer
+/// and the signals the platform offers.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct PsView {
+    pub procs: Vec<ProcRow>,
+    /// Rows the parser had to drop. The rest of the table is still here.
+    pub issue: Option<PsParseIssue>,
+    pub load: Option<ProcLoad>,
+    pub sampled_at_millis: i64,
+    pub columns: ProcColumns,
+    pub sorts: Vec<ProcSortMode>,
+    pub sort: ProcSortMode,
+    pub ascending: bool,
+    /// Empty where the platform has none implemented: no stop at all.
+    pub signals: Vec<ProcSignal>,
+}
+
+impl PsView {
+    /// `result` ordered by `sort`, or the order it falls back to
+    /// ([`ProcColumns::resolve`]).
+    pub fn of(result: &PsResult, system: SystemType, sort: Option<ProcSortMode>, ascending: Option<bool>) -> Self {
+        let columns = ProcColumns::of(&result.procs);
+        let (sort, ascending) = columns.resolve(sort, ascending);
+        let sorted = result.sorted_by(sort, Some(ascending));
+        Self {
+            procs: sorted.procs.iter().map(|proc| ProcRow::of(proc, system)).collect(),
+            issue: sorted.issue,
+            load: sorted.load,
+            sampled_at_millis: sorted.sampled_at_millis,
+            sorts: columns.sorts(),
+            columns,
+            sort,
+            ascending,
+            signals: signals_for(system).to_vec(),
+        }
+    }
 }
 
 #[cfg(test)]

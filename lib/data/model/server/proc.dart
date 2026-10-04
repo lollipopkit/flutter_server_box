@@ -1,72 +1,19 @@
-// TODO(migration): ported to `sbm_parser::proc` (locked by
-// `crates/sbm_parser/tests/proc_compat.rs` against `test/fixtures/process/`)
-// for the monitor agent's panel. Delete this and read it through the FFI
-// boundary once the FFI result is asserted identical against those fixtures.
-
 import 'dart:convert';
 
-final _whitespaceRegExp = RegExp(r'\s+');
-final _nonWhitespaceRegExp = RegExp(r'\S+');
+import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/src/rust/api/proc.dart' as ffi;
 
-class _ProcValIdxMap {
-  final int pid;
-  final int? ppid;
-  final int? user;
-  final int? cpu;
-  final int? mem;
-  final int? vsz;
-  final int? rss;
-  final int? tty;
-  final int? stat;
-  final int? nice;
-  final int? threads;
-  final int? start;
-  final int? startId;
-  final int? time;
-  final int? elapsed;
-  final int? readBytes;
-  final int? writeBytes;
-  final int command;
-
-  const _ProcValIdxMap({
-    required this.pid,
-    this.ppid,
-    this.user,
-    this.cpu,
-    this.mem,
-    this.vsz,
-    this.rss,
-    this.tty,
-    this.stat,
-    this.nice,
-    this.threads,
-    this.start,
-    this.startId,
-    this.time,
-    this.elapsed,
-    this.readBytes,
-    this.writeBytes,
-    required this.command,
-  });
-}
-
-/// The first line of the process function's output when the machine has a
-/// load average. Mirrors `script::PROCESS_LOAD_MARKER` in `sbm_parser`, whose
-/// output the fixtures under `test/fixtures/process/` were captured from.
-const kProcessLoadMarker = 'SrvBoxProc.Load';
-
-/// Beyond this an elapsed time is not a measurement. A container whose boot
-/// time disagrees with its host's makes procps print a start date thousands
-/// of years back, and "running for 1.2 million years" says nothing true.
-const _kMaxElapsedSeconds = 100 * 365 * 24 * 3600;
-
-/// Some field can be null due to incompatible format on `BSD` and `Alpine`
+/// One row of a process table, as `sbm_parser::proc::ProcRow` sends it: the
+/// process, and what is derived from it there (its [name], [rssKb], whether
+/// it is a kernel thread, whether it may be signalled). The table is read on
+/// the Rust side — the rules the monitor agent's panel reads it by too; this
+/// only carries the row.
+///
+/// Any field can be null: the columns differ per platform and per `ps`, and
+/// null means the platform did not say, which is not the same as zero.
 class Proc {
   final String? user;
   final int pid;
-
-  /// Null where the platform did not say, which is not the same as 0: PID 0
-  /// is the parent a Linux kernel reports for `init` and `kthreadd`.
   final int? ppid;
   final double? cpu;
   final double? mem;
@@ -77,43 +24,35 @@ class Proc {
   final int? nice;
   final int? threads;
   final String? start;
+
+  /// What a stop checks the PID against: the process's start identity.
   final String? startId;
   final String? time;
-
-  /// Seconds since the process started, as the server counted them.
   final int? elapsedSeconds;
   final int? readBytes;
   final int? writeBytes;
+
+  /// Bytes per second since the previous reading; null on the first one.
   final double? readSpeed;
   final double? writeSpeed;
   final String command;
 
-  /// The image name Windows reports (`nginx.exe`). A Windows command line
-  /// starts with a path that may hold spaces and quotes, so splitting it on
-  /// whitespace would name the process `"C:\Program`.
-  final String? processName;
+  /// What to call the process where its whole command line does not fit.
+  final String name;
 
-  late final binary = _parseBinary();
-  late final args = _parseArgs();
-  late final rssKb = _parseRssKb();
+  /// `RSS` in KiB as a number; null where `ps` printed none.
+  final int? rssKb;
 
-  /// What to call the process where its whole command line does not fit: the
-  /// last path component of the executable, without the colon a process that
-  /// rewrites its title leaves after its own name (`nginx: worker process`).
-  late final name = _parseName();
+  /// `kthreadd` or one of its children.
+  final bool isKernelThread;
 
-  /// A Linux kernel thread: `kthreadd` itself, or one of its children.
-  ///
-  /// The command is checked too, because PPID 2 only means `kthreadd` in the
-  /// root PID namespace. Inside a container PID 2 is whatever started second,
-  /// and its children are ordinary processes — whose command lines, unlike a
-  /// kernel thread's, are not a name in brackets.
-  bool get isKernelThread =>
-      (pid == 2 || ppid == 2) && command.trimLeft().startsWith('[');
+  /// Whether this row may be signalled at all.
+  final bool killable;
 
-  Proc({
-    this.user,
+  const Proc({
     required this.pid,
+    required this.command,
+    this.user,
     this.ppid,
     this.cpu,
     this.mem,
@@ -131,222 +70,53 @@ class Proc {
     this.writeBytes,
     this.readSpeed,
     this.writeSpeed,
-    required this.command,
-    this.processName,
-  });
+    String? name,
+    this.rssKb,
+    this.isKernelThread = false,
+    this.killable = false,
+  }) : name = name ?? command;
 
-  // Value equality based on all parsed fields lets ListView skip rebuilding
-  // rows whose underlying process data is unchanged between refreshes, which
-  // is the common case for idle processes. `binary` is derived from `command`
-  // so it is intentionally excluded to avoid forcing its lazy initialization
-  // during comparisons.
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Proc &&
-          runtimeType == other.runtimeType &&
-          user == other.user &&
-          pid == other.pid &&
-          ppid == other.ppid &&
-          cpu == other.cpu &&
-          mem == other.mem &&
-          vsz == other.vsz &&
-          rss == other.rss &&
-          tty == other.tty &&
-          stat == other.stat &&
-          nice == other.nice &&
-          threads == other.threads &&
-          start == other.start &&
-          startId == other.startId &&
-          time == other.time &&
-          elapsedSeconds == other.elapsedSeconds &&
-          readBytes == other.readBytes &&
-          writeBytes == other.writeBytes &&
-          readSpeed == other.readSpeed &&
-          writeSpeed == other.writeSpeed &&
-          command == other.command &&
-          processName == other.processName;
-
-  @override
-  int get hashCode => Object.hashAll([
-    user,
-    pid,
-    ppid,
-    cpu,
-    mem,
-    vsz,
-    rss,
-    tty,
-    stat,
-    nice,
-    threads,
-    start,
-    startId,
-    time,
-    elapsedSeconds,
-    readBytes,
-    writeBytes,
-    readSpeed,
-    writeSpeed,
-    command,
-    processName,
-  ]);
-
-  factory Proc._parse(
-    String raw,
-    _ProcValIdxMap map, {
-    Proc? previous,
-    double? elapsedSeconds,
-  }) {
-    final matches = _nonWhitespaceRegExp.allMatches(raw).toList();
-    final parts = [for (final match in matches) match.group(0)!];
-    final pid = _parsePositivePid(parts[map.pid]);
-    final start = map.start == null ? null : parts[map.start!];
-    final startId = map.startId == null
-        ? null
-        : _parseProcessIdentity(parts[map.startId!]);
-    final command = raw.substring(matches[map.command].start);
-    final matchingPrevious = _matchingPrevious(
-      previous,
-      start: start,
-      startId: startId,
-    );
-    final readBytes = _parseNullableInt(
-      parts,
-      map.readBytes,
-      nonNegative: true,
-    );
-    final writeBytes = _parseNullableInt(
-      parts,
-      map.writeBytes,
-      nonNegative: true,
-    );
-    final (readSpeed, writeSpeed) = _calculateSpeeds(
-      readBytes: readBytes,
-      writeBytes: writeBytes,
-      previous: matchingPrevious,
-      elapsedSeconds: elapsedSeconds,
-    );
-    return Proc(
-      user: map.user == null ? null : parts[map.user!],
-      pid: pid,
-      ppid: _parseNullableInt(parts, map.ppid, nonNegative: true),
-      cpu: _parseNullableDouble(parts, map.cpu),
-      mem: _parseNullableDouble(parts, map.mem),
-      vsz: map.vsz == null ? null : parts[map.vsz!],
-      rss: map.rss == null ? null : parts[map.rss!],
-      tty: map.tty == null ? null : parts[map.tty!],
-      stat: map.stat == null ? null : parts[map.stat!],
-      nice: _parseNullableInt(parts, map.nice),
-      threads: _parseNullableInt(parts, map.threads, nonNegative: true),
-      start: start,
-      startId: startId,
-      time: map.time == null ? null : parts[map.time!],
-      elapsedSeconds: map.elapsed == null
-          ? null
-          : _parseElapsed(parts[map.elapsed!]),
-      readBytes: readBytes,
-      writeBytes: writeBytes,
-      readSpeed: readSpeed,
-      writeSpeed: writeSpeed,
-      command: command,
-    );
-  }
-
-  factory Proc._parseWindowsJson(
-    Map<String, dynamic> raw, {
-    required int pid,
-    Proc? previous,
-    double? elapsedSeconds,
-  }) {
-    final name = _firstNonEmptyString([raw['ProcessName'], raw['Name']]);
-    final command =
-        _firstNonEmptyString([raw['CommandLine'], raw['Path'], name]) ?? '';
-    final startId = _parseProcessIdentity(raw['StartId']);
-    final matchingPrevious = _matchingPrevious(previous, startId: startId);
-    final readBytes = _firstParsedInt([
-      raw['IOReadBytes'],
-      raw['ReadTransferCount'],
-    ], nonNegative: true);
-    final writeBytes = _firstParsedInt([
-      raw['IOWriteBytes'],
-      raw['WriteTransferCount'],
-    ], nonNegative: true);
-    final (readSpeed, writeSpeed) = _calculateSpeeds(
-      readBytes: readBytes,
-      writeBytes: writeBytes,
-      previous: matchingPrevious,
-      elapsedSeconds: elapsedSeconds,
-    );
-    final workingSetBytes = _firstParsedInt([
-      raw['WorkingSet'],
-      raw['WorkingSetSize'],
-    ], nonNegative: true);
-    final elapsed = _parseDynamicInt(raw['ElapsedSeconds']);
-    return Proc(
-      pid: pid,
-      ppid: _firstParsedInt([raw['ParentId']], nonNegative: true),
-      threads: _firstParsedInt([raw['Threads']], nonNegative: true),
-      elapsedSeconds:
-          elapsed != null && elapsed >= 0 && elapsed <= _kMaxElapsedSeconds
-          ? elapsed
-          : null,
-      cpu: _firstParsedDouble([raw['CPUPercent'], raw['PercentProcessorTime']]),
-      // Unix `ps` reports RSS in KiB. Normalize the Windows byte count to the
-      // same unit so sorting and display stay consistent across platforms.
-      rss: workingSetBytes == null
-          ? null
-          : ((workingSetBytes + 1023) ~/ 1024).toString(),
-      readBytes: readBytes,
-      writeBytes: writeBytes,
-      readSpeed: readSpeed,
-      writeSpeed: writeSpeed,
-      startId: startId,
-      command: command,
-      processName: name,
-    );
-  }
-
-  String _parseBinary() {
-    return _nonWhitespaceRegExp.firstMatch(command)?.group(0) ?? '';
-  }
-
-  String _parseName() {
-    if (processName case final name? when name.trim().isNotEmpty) {
-      return name.trim();
-    }
-    final bin = binary;
-    if (bin.startsWith('[')) return command.trim();
-    final slash = bin.lastIndexOf('/');
-    var base = slash >= 0 && slash < bin.length - 1
-        ? bin.substring(slash + 1)
-        : bin;
-    if (base.length > 1 && base.endsWith(':')) {
-      base = base.substring(0, base.length - 1);
-    }
-    return base.isEmpty ? command.trim() : base;
-  }
-
-  String _parseArgs() {
-    final match = _nonWhitespaceRegExp.firstMatch(command);
-    if (match == null) return '';
-    return command.substring(match.end).trimLeft();
-  }
-
-  int? _parseRssKb() {
-    final raw = rss;
-    if (raw == null || raw.isEmpty || raw == '-') return null;
-    final parsed = int.tryParse(raw);
-    return parsed != null && parsed >= 0 ? parsed : null;
-  }
+  factory Proc.fromJson(Map<String, Object?> j) => Proc(
+    pid: (j['pid'] as num).toInt(),
+    command: j['command'] as String,
+    user: j['user'] as String?,
+    ppid: (j['ppid'] as num?)?.toInt(),
+    cpu: (j['cpu'] as num?)?.toDouble(),
+    mem: (j['mem'] as num?)?.toDouble(),
+    vsz: j['vsz'] as String?,
+    rss: j['rss'] as String?,
+    tty: j['tty'] as String?,
+    stat: j['stat'] as String?,
+    nice: (j['nice'] as num?)?.toInt(),
+    threads: (j['threads'] as num?)?.toInt(),
+    start: j['start'] as String?,
+    startId: j['start_id'] as String?,
+    time: j['time'] as String?,
+    elapsedSeconds: (j['elapsed_seconds'] as num?)?.toInt(),
+    readBytes: (j['read_bytes'] as num?)?.toInt(),
+    writeBytes: (j['write_bytes'] as num?)?.toInt(),
+    readSpeed: (j['read_speed'] as num?)?.toDouble(),
+    writeSpeed: (j['write_speed'] as num?)?.toDouble(),
+    name: j['name'] as String,
+    rssKb: (j['rss_kb'] as num?)?.toInt(),
+    isKernelThread: j['is_kernel_thread'] as bool? ?? false,
+    killable: j['killable'] as bool? ?? false,
+  );
 }
 
-// `ps -aux` result
 enum PsParseFailure {
   unsupportedOutput,
   invalidRows,
   invalidWindowsJson,
-  invalidWindowsRows,
+  invalidWindowsRows;
+
+  static PsParseFailure? fromWire(String? name) => switch (name) {
+    'unsupported_output' => unsupportedOutput,
+    'invalid_rows' => invalidRows,
+    'invalid_windows_json' => invalidWindowsJson,
+    'invalid_windows_rows' => invalidWindowsRows,
+    _ => null,
+  };
 }
 
 class PsParseIssue {
@@ -359,308 +129,8 @@ class PsParseIssue {
 /// The 1, 5 and 15 minute load averages.
 typedef ProcLoad = ({double one, double five, double fifteen});
 
-class PsResult {
-  final List<Proc> procs;
-  final PsParseIssue? issue;
-  final int sampledAtMillis;
-
-  /// Null where the machine has none to report — Windows — or ran a script
-  /// older than the line that carries it.
-  final ProcLoad? load;
-
-  const PsResult({
-    required this.procs,
-    this.issue,
-    this.sampledAtMillis = 0,
-    this.load,
-  });
-
-  factory PsResult.parse(
-    String raw, {
-    ProcSortMode sort = ProcSortMode.cpu,
-    bool? ascending,
-    PsResult? previous,
-    int? sampledAtMillis,
-  }) {
-    final currentSampledAtMillis =
-        sampledAtMillis ?? DateTime.now().millisecondsSinceEpoch;
-    final previousByPid = {
-      for (final proc in previous?.procs ?? const <Proc>[]) proc.pid: proc,
-    };
-    final elapsedSeconds = previous == null || previous.sampledAtMillis <= 0
-        ? null
-        : (currentSampledAtMillis - previous.sampledAtMillis) / 1000.0;
-    final jsonResult = _parseWindowsJsonResult(
-      raw,
-      previousByPid: previousByPid,
-      elapsedSeconds: elapsedSeconds,
-      sampledAtMillis: currentSampledAtMillis,
-      sort: sort,
-      ascending: ascending,
-    );
-    if (jsonResult != null) return jsonResult;
-
-    final lines = raw
-        .split('\n')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-    final load = _takeLoad(lines);
-    if (lines.isEmpty) {
-      return PsResult(
-        procs: const [],
-        sampledAtMillis: currentSampledAtMillis,
-        load: load,
-      );
-    }
-
-    final header = lines[0];
-    final parts = header.split(_whitespaceRegExp);
-    parts.removeWhere((element) => element.isEmpty);
-    final pidIdx = parts.indexOfOrNull('PID');
-    final commandIdx =
-        parts.indexOfOrNull('COMMAND') ?? parts.indexOfOrNull('CMD');
-    if (pidIdx == null || commandIdx == null) {
-      return PsResult(
-        procs: const [],
-        issue: PsParseIssue(
-          failure: PsParseFailure.unsupportedOutput,
-          diagnostics: 'Unsupported process output header: $header',
-        ),
-        sampledAtMillis: currentSampledAtMillis,
-        load: load,
-      );
-    }
-    final map = _ProcValIdxMap(
-      pid: pidIdx,
-      ppid: parts.indexOfOrNull('PPID'),
-      user: parts.indexOfOrNull('USER'),
-      cpu: parts.indexOfOrNull('%CPU'),
-      mem: parts.indexOfOrNull('%MEM'),
-      vsz: parts.indexOfOrNull('VSZ'),
-      rss: parts.indexOfOrNull('RSS'),
-      tty: parts.indexOfOrNull('TTY'),
-      stat: parts.indexOfOrNull('STAT'),
-      nice: parts.indexOfOrNull('NI'),
-      threads: parts.indexOfOrNull('NLWP'),
-      start: parts.indexOfOrNull('START'),
-      startId: parts.indexOfOrNull('START_ID'),
-      time: parts.indexOfOrNull('TIME'),
-      elapsed: parts.indexOfOrNull('ELAPSED'),
-      readBytes: parts.indexOfOrNull('READ_BYTES'),
-      writeBytes: parts.indexOfOrNull('WRITE_BYTES'),
-      command: commandIdx,
-    );
-
-    final procs = <Proc>[];
-    final errs = <String>[];
-    final seenPids = <int>{};
-    for (var i = 1; i < lines.length; i++) {
-      final line = lines[i];
-      if (line.isEmpty) continue;
-      try {
-        final pid = _parsePid(line, map.pid);
-        if (!seenPids.add(pid)) {
-          throw FormatException('Duplicate process ID: $pid');
-        }
-        procs.add(
-          Proc._parse(
-            line,
-            map,
-            previous: previousByPid[pid],
-            elapsedSeconds: elapsedSeconds,
-          ),
-        );
-      } catch (e) {
-        errs.add('$line: $e');
-      }
-    }
-
-    _sort(procs, sort, ascending: ascending);
-    return PsResult(
-      procs: procs,
-      issue: errs.isEmpty
-          ? null
-          : PsParseIssue(
-              failure: PsParseFailure.invalidRows,
-              diagnostics: errs.join('\n'),
-            ),
-      sampledAtMillis: currentSampledAtMillis,
-      load: load,
-    );
-  }
-
-  /// Removes the load line from [lines] and answers what it said.
-  ///
-  /// Taken out before the header is looked for, because the table's header is
-  /// whatever line comes first.
-  static ProcLoad? _takeLoad(List<String> lines) {
-    final index = lines.indexWhere(
-      (line) => line.startsWith('$kProcessLoadMarker '),
-    );
-    if (index < 0) return null;
-    final values = lines
-        .removeAt(index)
-        .substring(kProcessLoadMarker.length)
-        .trim()
-        .split(_whitespaceRegExp)
-        .map(double.tryParse)
-        .toList();
-    if (values.length != 3 || values.any((v) => v == null || v < 0)) {
-      return null;
-    }
-    return (one: values[0]!, five: values[1]!, fifteen: values[2]!);
-  }
-
-  static PsResult? _parseWindowsJsonResult(
-    String raw, {
-    required Map<int, Proc> previousByPid,
-    required double? elapsedSeconds,
-    required int sampledAtMillis,
-    required ProcSortMode sort,
-    required bool? ascending,
-  }) {
-    final trimmed = raw.trim();
-    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-      try {
-        json.decode(trimmed);
-      } catch (_) {
-        return null;
-      }
-    }
-    try {
-      final decoded = json.decode(trimmed);
-      final items = switch (decoded) {
-        final List<Object?> values => values,
-        final Map<Object?, Object?> value => <Object?>[value],
-        _ => null,
-      };
-      if (items == null) {
-        return PsResult(
-          procs: const [],
-          issue: const PsParseIssue(
-            failure: PsParseFailure.invalidWindowsJson,
-            diagnostics:
-                'Invalid Windows process JSON: expected an object or array',
-          ),
-          sampledAtMillis: sampledAtMillis,
-        );
-      }
-      final procs = <Proc>[];
-      final errs = <String>[];
-      final seenPids = <int>{};
-      for (final (index, item) in items.indexed) {
-        if (item is! Map) {
-          errs.add('Invalid Windows process row $index: expected an object');
-          continue;
-        }
-        try {
-          final map = Map<String, dynamic>.from(item);
-          final pid = _parseProcessId(map['Id'] ?? map['ProcessId']);
-          if (pid == null) {
-            errs.add(
-              'Invalid Windows process row $index: missing or invalid PID',
-            );
-            continue;
-          }
-          if (!seenPids.add(pid)) {
-            errs.add('Invalid Windows process row $index: duplicate PID $pid');
-            continue;
-          }
-          procs.add(
-            Proc._parseWindowsJson(
-              map,
-              pid: pid,
-              previous: previousByPid[pid],
-              elapsedSeconds: elapsedSeconds,
-            ),
-          );
-        } catch (e) {
-          errs.add('$item: $e');
-        }
-      }
-      _sort(procs, sort, ascending: ascending);
-      return PsResult(
-        procs: procs,
-        issue: errs.isEmpty
-            ? null
-            : PsParseIssue(
-                failure: PsParseFailure.invalidWindowsRows,
-                diagnostics: errs.join('\n'),
-              ),
-        sampledAtMillis: sampledAtMillis,
-      );
-    } catch (e) {
-      return PsResult(
-        procs: const [],
-        issue: PsParseIssue(
-          failure: PsParseFailure.invalidWindowsJson,
-          diagnostics: 'Invalid Windows process JSON: $e',
-        ),
-        sampledAtMillis: sampledAtMillis,
-      );
-    }
-  }
-
-  PsResult sortedBy(ProcSortMode sort, {bool? ascending}) {
-    final sorted = List<Proc>.of(procs);
-    _sort(sorted, sort, ascending: ascending);
-    return PsResult(
-      procs: sorted,
-      issue: issue,
-      sampledAtMillis: sampledAtMillis,
-      load: load,
-    );
-  }
-
-  static void _sort(List<Proc> procs, ProcSortMode sort, {bool? ascending}) {
-    final isAscending = ascending ?? sort.defaultAscending;
-    procs.sort((a, b) {
-      final compared = switch (sort) {
-        ProcSortMode.cpu => _compareNullable(
-          a.cpu,
-          b.cpu,
-          ascending: isAscending,
-        ),
-        ProcSortMode.mem => _compareNullable(
-          a.mem,
-          b.mem,
-          ascending: isAscending,
-        ),
-        ProcSortMode.rss => _compareNullable(
-          a.rssKb,
-          b.rssKb,
-          ascending: isAscending,
-        ),
-        ProcSortMode.read => _compareNullable(
-          a.readSpeed,
-          b.readSpeed,
-          ascending: isAscending,
-        ),
-        ProcSortMode.write => _compareNullable(
-          a.writeSpeed,
-          b.writeSpeed,
-          ascending: isAscending,
-        ),
-        ProcSortMode.pid => _applyDirection(
-          a.pid.compareTo(b.pid),
-          ascending: isAscending,
-        ),
-        ProcSortMode.user => _compareNullable(
-          a.user?.toLowerCase(),
-          b.user?.toLowerCase(),
-          ascending: isAscending,
-        ),
-        ProcSortMode.name => _applyDirection(
-          a.command.toLowerCase().compareTo(b.command.toLowerCase()),
-          ascending: isAscending,
-        ),
-      };
-      return compared == 0 ? a.pid.compareTo(b.pid) : compared;
-    });
-  }
-}
-
+/// The orders a table can be read in. Which of them one table can answer is
+/// [PsResult.sorts].
 enum ProcSortMode {
   cpu,
   mem,
@@ -671,186 +141,164 @@ enum ProcSortMode {
   user,
   name;
 
-  bool get defaultAscending => switch (this) {
-    ProcSortMode.pid || ProcSortMode.user || ProcSortMode.name => true,
-    ProcSortMode.cpu ||
-    ProcSortMode.mem ||
-    ProcSortMode.rss ||
-    ProcSortMode.read ||
-    ProcSortMode.write => false,
-  };
+  static ProcSortMode? fromWire(String? name) =>
+      values.where((m) => m.name == name).firstOrNull;
 }
 
-extension _StrIndex on List<String> {
-  int? indexOfOrNull(String val) {
-    final idx = indexOf(val);
-    return idx == -1 ? null : idx;
-  }
+enum ProcSignal {
+  /// Asks the process to end.
+  term,
+
+  /// Ends it.
+  kill;
+
+  static ProcSignal? fromWire(String? name) =>
+      values.where((s) => s.name == name).firstOrNull;
 }
 
-int _parsePid(String raw, int pidIndex) {
-  final parts = [
-    for (final match in _nonWhitespaceRegExp.allMatches(raw)) match.group(0)!,
-  ];
-  return _parsePositivePid(parts[pidIndex]);
-}
+/// Which of the machine's columns carried a value in any row.
+class ProcColumns {
+  final bool user;
+  final bool cpu;
+  final bool mem;
+  final bool rss;
+  final bool read;
+  final bool write;
+  final bool readSpeed;
+  final bool writeSpeed;
 
-int _parsePositivePid(String value) {
-  final pid = int.parse(value);
-  if (pid <= 0) throw FormatException('Invalid process ID: $value');
-  return pid;
-}
+  const ProcColumns({
+    this.user = false,
+    this.cpu = false,
+    this.mem = false,
+    this.rss = false,
+    this.read = false,
+    this.write = false,
+    this.readSpeed = false,
+    this.writeSpeed = false,
+  });
 
-int? _parseNullableInt(
-  List<String> parts,
-  int? idx, {
-  bool nonNegative = false,
-}) {
-  if (idx == null || idx >= parts.length) return null;
-  final parsed = _parseDynamicInt(parts[idx]);
-  return parsed != null && (!nonNegative || parsed >= 0) ? parsed : null;
-}
-
-double? _parseNullableDouble(List<String> parts, int? idx) {
-  if (idx == null || idx >= parts.length) return null;
-  return _parseDynamicDouble(parts[idx]);
-}
-
-int? _parseDynamicInt(Object? val) {
-  if (val == null) return null;
-  if (val is int) return val;
-  if (val is num) {
-    if (!val.isFinite || val != val.truncateToDouble()) return null;
-    return val.toInt();
-  }
-  final str = val.toString();
-  if (str.isEmpty || str == '-') return null;
-  return int.tryParse(str);
-}
-
-int? _firstParsedInt(List<Object?> values, {bool nonNegative = false}) {
-  for (final value in values) {
-    final parsed = _parseDynamicInt(value);
-    if (parsed != null && (!nonNegative || parsed >= 0)) return parsed;
-  }
-  return null;
-}
-
-int? _parseProcessId(Object? value) {
-  final parsed = switch (value) {
-    final int value => value,
-    final num value when value.isFinite && value == value.truncateToDouble() =>
-      value.toInt(),
-    _ => int.tryParse(value?.toString() ?? ''),
-  };
-  return parsed != null && parsed > 0 ? parsed : null;
-}
-
-double? _parseDynamicDouble(Object? val) {
-  if (val == null) return null;
-  if (val is num) {
-    final parsed = val.toDouble();
-    return parsed.isFinite ? parsed : null;
-  }
-  final str = val.toString();
-  if (str.isEmpty || str == '-') return null;
-  final parsed = double.tryParse(str);
-  return parsed != null && parsed.isFinite ? parsed : null;
-}
-
-double? _firstParsedDouble(List<Object?> values) {
-  for (final value in values) {
-    final parsed = _parseDynamicDouble(value);
-    if (parsed != null) return parsed;
-  }
-  return null;
-}
-
-String? _firstNonEmptyString(List<Object?> values) {
-  for (final value in values) {
-    final string = value?.toString();
-    if (string != null && string.trim().isNotEmpty) return string;
-  }
-  return null;
-}
-
-/// `etime`: `[[dd-]hh:]mm:ss`.
-int? _parseElapsed(String raw) {
-  if (raw.isEmpty || raw == '-') return null;
-  var days = 0;
-  var rest = raw;
-  final dash = raw.indexOf('-');
-  if (dash >= 0) {
-    final parsed = int.tryParse(raw.substring(0, dash));
-    if (parsed == null || parsed < 0) return null;
-    days = parsed;
-    rest = raw.substring(dash + 1);
-  }
-  final fields = rest.split(':');
-  if (fields.length < 2 || fields.length > 3) return null;
-  var seconds = 0;
-  for (final field in fields) {
-    final value = int.tryParse(field);
-    if (value == null || value < 0) return null;
-    seconds = seconds * 60 + value;
-  }
-  final total = days * 86400 + seconds;
-  return total <= _kMaxElapsedSeconds ? total : null;
-}
-
-String? _parseProcessIdentity(Object? value) {
-  final identity = value?.toString().trim();
-  if (identity == null || identity.isEmpty || identity == '-') return null;
-  return identity;
-}
-
-Proc? _matchingPrevious(Proc? previous, {String? start, String? startId}) {
-  if (previous == null) return null;
-  if (startId != null || previous.startId != null) {
-    if (startId == null || previous.startId == null) return null;
-    return startId == previous.startId ? previous : null;
-  }
-  if (start != null || previous.start != null) {
-    if (start == null || previous.start == null || start != previous.start) {
-      return null;
-    }
-    return previous;
-  }
-  return null;
-}
-
-(double?, double?) _calculateSpeeds({
-  required int? readBytes,
-  required int? writeBytes,
-  required Proc? previous,
-  required double? elapsedSeconds,
-}) {
-  if (previous == null || elapsedSeconds == null || elapsedSeconds <= 0) {
-    return (null, null);
-  }
-  return (
-    _calculateSpeed(readBytes, previous.readBytes, elapsedSeconds),
-    _calculateSpeed(writeBytes, previous.writeBytes, elapsedSeconds),
+  factory ProcColumns.fromJson(Map<String, Object?> j) => ProcColumns(
+    user: j['user'] == true,
+    cpu: j['cpu'] == true,
+    mem: j['mem'] == true,
+    rss: j['rss'] == true,
+    read: j['read'] == true,
+    write: j['write'] == true,
+    readSpeed: j['read_speed'] == true,
+    writeSpeed: j['write_speed'] == true,
   );
 }
 
-double? _calculateSpeed(int? current, int? previous, double elapsedSeconds) {
-  if (current == null || previous == null) return null;
-  final diff = current - previous;
-  if (diff < 0) return null;
-  return diff / elapsedSeconds;
-}
+/// One reading of the process table as `sbm_parser::proc::PsView` gives it:
+/// its rows in [sort] order, the columns it has, the orders it can answer
+/// and the signals the platform offers.
+class PsResult {
+  final List<Proc> procs;
+  final PsParseIssue? issue;
+  final int sampledAtMillis;
 
-int _compareNullable<T extends Comparable<T>>(
-  T? a,
-  T? b, {
-  required bool ascending,
-}) {
-  if (a == null && b == null) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  return _applyDirection(a.compareTo(b), ascending: ascending);
-}
+  /// Null where the machine has none to report — Windows — or ran a script
+  /// older than the line that carries it.
+  final ProcLoad? load;
+  final ProcColumns columns;
+  final List<ProcSortMode> sorts;
+  final ProcSortMode sort;
+  final bool ascending;
 
-int _applyDirection(int value, {required bool ascending}) =>
-    ascending ? value : -value;
+  /// Empty where the platform has none implemented: no stop at all.
+  final List<ProcSignal> signals;
+
+  /// The reading as it came, handed back to order it again or to difference
+  /// the next one's speeds against.
+  final String? _json;
+
+  const PsResult({
+    required this.procs,
+    this.issue,
+    this.sampledAtMillis = 0,
+    this.load,
+    this.columns = const ProcColumns(),
+    this.sorts = const [],
+    this.sort = ProcSortMode.cpu,
+    this.ascending = false,
+    this.signals = const [],
+  }) : _json = null;
+
+  PsResult._fromJson(Map<String, Object?> j, String json)
+    : procs = [
+        for (final row in j['procs'] as List) Proc.fromJson(row as Map<String, Object?>),
+      ],
+      issue = switch (j['issue']) {
+        final Map<String, Object?> i => PsParseIssue(
+          failure:
+              PsParseFailure.fromWire(i['failure'] as String?) ?? PsParseFailure.unsupportedOutput,
+          diagnostics: i['diagnostics'] as String? ?? '',
+        ),
+        _ => null,
+      },
+      sampledAtMillis = (j['sampled_at_millis'] as num?)?.toInt() ?? 0,
+      load = switch (j['load']) {
+        final Map<String, Object?> l => (
+          one: (l['one'] as num).toDouble(),
+          five: (l['five'] as num).toDouble(),
+          fifteen: (l['fifteen'] as num).toDouble(),
+        ),
+        _ => null,
+      },
+      columns = ProcColumns.fromJson(j['columns'] as Map<String, Object?>? ?? const {}),
+      sorts = [
+        for (final s in j['sorts'] as List? ?? const []) ?ProcSortMode.fromWire(s as String?),
+      ],
+      sort = ProcSortMode.fromWire(j['sort'] as String?) ?? ProcSortMode.pid,
+      ascending = j['ascending'] as bool? ?? true,
+      signals = [
+        for (final s in j['signals'] as List? ?? const []) ?ProcSignal.fromWire(s as String?),
+      ],
+      _json = json;
+
+  static PsResult _read(String json) =>
+      PsResult._fromJson(jsonDecode(json) as Map<String, Object?>, json);
+
+  /// Reads what the process function printed ([raw]) on [system], ordered
+  /// by [sort] where the table can answer it (null: its default) and
+  /// [ascending] (null: that order's own default). [previous] is the last
+  /// reading that parsed cleanly, which read/write speeds are differenced
+  /// against; [sampledAtMillis] is when [raw] was produced.
+  static Future<PsResult> parse(
+    String raw,
+    SystemType system, {
+    ProcSortMode? sort,
+    bool? ascending,
+    PsResult? previous,
+    int? sampledAtMillis,
+  }) async => _read(
+    await ffi.procViewJson(
+      raw: raw,
+      system: system.name,
+      sort: sort?.name,
+      ascending: ascending,
+      previousJson: previous?._json,
+      sampledAtMillis: sampledAtMillis ?? DateTime.now().millisecondsSinceEpoch,
+    ),
+  );
+
+  /// This reading ordered by [sort] (null: its default), [ascending] (null:
+  /// that order's own default).
+  Future<PsResult> sortedBy(
+    SystemType system,
+    ProcSortMode? sort, {
+    bool? ascending,
+  }) async {
+    final json = _json;
+    if (json == null) return this;
+    return _read(
+      await ffi.procSortedJson(
+        viewJsonIn: json,
+        system: system.name,
+        sort: sort?.name,
+        ascending: ascending,
+      ),
+    );
+  }
+}

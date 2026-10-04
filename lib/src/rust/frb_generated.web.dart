@@ -17,6 +17,7 @@ import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/hardware.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/proc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';

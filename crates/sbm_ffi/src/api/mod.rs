@@ -5,6 +5,7 @@ pub mod desktop;
 pub mod file;
 pub mod hardware;
 pub mod parser;
+pub mod proc;
 pub mod pve;
 pub mod resource;
 pub mod remote_desktop;
