@@ -67,7 +67,8 @@ impl Client {
     /// for a few seconds after a clone it lists the copy as `VM <vmid>`,
     /// which a name check made then would let a second copy of one name
     /// through. Each online node's own listing (`/nodes/{node}/qemu`,
-    /// `/lxc`) reads the configurations.
+    /// `/lxc`) reads the configurations; one that fails fails the read,
+    /// rather than leaving the cache to be checked against.
     async fn guests_and_nodes(&self) -> Result<(Vec<Guest>, Vec<Node>)> {
         let Value::Array(list) = self.call(Method::Get, "/cluster/resources", None, false).await? else {
             return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData));
@@ -77,7 +78,7 @@ impl Client {
         for node in parsed.nodes.iter().filter(|n| n.online) {
             for kind in [GuestKind::Qemu, GuestKind::Lxc] {
                 let path = format!("/nodes/{}/{}", seg(&node.name), kind.as_str());
-                let Ok(Value::Array(own)) = self.call(Method::Get, &path, None, false).await else { continue };
+                let Value::Array(own) = self.call(Method::Get, &path, None, false).await? else { continue };
                 for e in own.iter().filter_map(Value::as_object) {
                     let Some(vmid) = resources::uint(e.get("vmid")).and_then(|v| u32::try_from(v).ok()) else { continue };
                     let Some(g) = guests.iter_mut().find(|g| g.vmid == Some(vmid) && g.kind == kind) else { continue };

@@ -738,10 +738,18 @@ async fn a_volume_written_as_file_and_a_tpm_state_are_deleted_with_the_digest_th
     assert_eq!(bodies(&fake, VM_CONFIG).last(), Some(&form(&[("delete", "unused0"), ("digest", "after")])));
 
     detached.store(false, Ordering::SeqCst);
-    client.change_hardware(&vm(), Some(VM_DIGEST), &Change::RemoveDevice { key: "tpmstate0".into() }).await.unwrap();
+    let out = client.change_hardware(&vm(), Some(VM_DIGEST), &Change::RemoveDevice { key: "tpmstate0".into() }).await.unwrap();
+    assert!(!out.volume_kept);
     let all = bodies(&fake, VM_CONFIG);
     assert_eq!(all[all.len() - 2], form(&[("delete", "tpmstate0"), ("digest", VM_DIGEST)]));
     assert_eq!(all[all.len() - 1], form(&[("delete", "unused1"), ("digest", "after")]));
+
+    // Still attached (pending until the guest stops): kept, and said so.
+    let fake = hw_api();
+    fake.route("GET /nodes/pve/qemu/9901/config", move |_| ok(Value::Object(before.clone())));
+    let out = fake.client().change_hardware(&vm(), Some(VM_DIGEST), &Change::RemoveDevice { key: "tpmstate0".into() }).await.unwrap();
+    assert!(out.volume_kept);
+    assert_eq!(bodies(&fake, VM_CONFIG), vec![form(&[("delete", "tpmstate0"), ("digest", VM_DIGEST)])]);
 }
 
 #[tokio::test]
@@ -1077,4 +1085,19 @@ fn a_mapping_described_by_this_nodes_entry() {
     assert_eq!(d.pci[0].iommu_group, Some(3));
     let d = host_devices("third", &[], &maps, &[], &[], false);
     assert_eq!(d.pci[0].detail.as_deref(), Some("0000:09:00.0 · 1:2"));
+    // A node's name is matched whole: `pve` is not `pve2`.
+    let maps = vec![json!({"id": "gpu", "map": ["node=pve2,path=0000:09:00.0,id=1:2", "node=pve,path=0000:01:00.0,id=10de:1b80"]})];
+    let d = host_devices("pve", &[], &maps, &[], &[], false);
+    assert_eq!(d.pci[0].detail.as_deref(), Some("0000:01:00.0 · 10de:1b80"));
+}
+
+#[test]
+fn counts_past_what_a_u32_holds_do_not_panic() {
+    let mut config = Map::new();
+    config.insert("sockets".into(), json!(2147483648u64));
+    config.insert("cores".into(), json!(2));
+    config.insert("vcpus".into(), json!(4));
+    let hw = parse_hardware(&config, &[], GuestKind::Qemu, false, Limits::default(), Vec::new());
+    assert_eq!(hw.cpu.sockets, 2147483648);
+    assert_eq!(hw.cpu.online, Some(4));
 }

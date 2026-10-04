@@ -256,6 +256,13 @@ fn what_the_host_offers_and_where_a_nic_goes() {
     let host = Host { media: Some(vol("disk.qcow2", "disk.qcow2")), ..Host::libvirt() };
     let with = CreateSpec { media: Some(VolumeRef { pool: "images".into(), volume: "disk.qcow2".into() }), ..spec() };
     assert_eq!(host.issue(&with, HostKind::Libvirt), Some(Issue::Media));
+    // The volume listed is the one named, or nothing is made from it.
+    let iso = Host { media: Some(vol("other.iso", "other.iso")), ..Host::libvirt() };
+    let named = CreateSpec { media: Some(VolumeRef { pool: "images".into(), volume: "a.iso".into() }), ..spec() };
+    assert_eq!(iso.issue(&named, HostKind::Libvirt), Some(Issue::Media));
+    let image = Host { image: Some(vol("other.img", "other.img")), ..Host::libvirt() };
+    let named = CreateSpec { image: Some(VolumeRef { pool: "images".into(), volume: "noble.img".into() }), ..spec() };
+    assert_eq!(image.issue(&named, HostKind::Libvirt), Some(Issue::Image));
 }
 
 #[test]

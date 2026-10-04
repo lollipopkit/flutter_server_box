@@ -117,6 +117,13 @@ impl Client {
     /// changed at all. `live` is what the node this client is reached
     /// through says it is using; it describes that node only.
     pub async fn networks(&self, live: Option<&LiveNet>) -> Result<Vec<Network>> {
+        self.networks_read(live, false).await
+    }
+
+    /// `strict`: a guest whose configuration this account may not read is
+    /// the refusal itself, not a guest left out — a bridge deleted on the
+    /// strength of the list would be taken from under it.
+    async fn networks_read(&self, live: Option<&LiveNet>, strict: bool) -> Result<Vec<Network>> {
         let guests = match self.call(Method::Get, "/cluster/resources?type=vm", None, false).await? {
             Value::Array(list) => resources::parse(&list, self.now()).guests,
             _ => Vec::new(),
@@ -127,14 +134,14 @@ impl Client {
                 continue;
             };
             let on_node: Vec<_> = guests.iter().filter(|g| g.node.as_deref() == Some(&node)).collect();
-            let users = self.bridge_users(&on_node).await?;
+            let users = self.bridge_users(&on_node, strict).await?;
             let management = management(&node, &raw, live, &BTreeSet::new());
             out.extend(resources::parse_networks(&node, &raw, &users, &management));
         }
         Ok(out)
     }
 
-    async fn bridge_users(&self, guests: &[&crate::model::Guest]) -> Result<BTreeMap<String, Vec<GuestRef>>> {
+    async fn bridge_users(&self, guests: &[&crate::model::Guest], strict: bool) -> Result<BTreeMap<String, Vec<GuestRef>>> {
         // Owned: a stream of futures borrowing a `&Guest` each is not `Send`
         // (rust-lang/rust#102211), and the caller's future must be.
         let owned: Vec<crate::model::Guest> = guests.iter().map(|g| (*g).clone()).collect();
@@ -148,6 +155,7 @@ impl Client {
                     // One guest this account may not read, or one deleted
                     // since it was listed ("Configuration file ... does not
                     // exist"), leaves only that guest out.
+                    Err(e) if e.kind == ErrorKind::AuthFailed && e.status == Some(403) && strict => Err(e),
                     Err(e) if matches!(e.kind, ErrorKind::AuthFailed | ErrorKind::InvalidResponse) && e.status != Some(401) => {
                         Ok(BTreeMap::new())
                     }
@@ -216,9 +224,8 @@ impl Client {
             _ => Vec::new(),
         };
         let networks = match change {
-            Change::NetworkCreate { .. } | Change::NetworkEditBridge { .. } | Change::NetworkDelete { .. } => {
-                self.networks(live).await?
-            }
+            Change::NetworkCreate { .. } | Change::NetworkEditBridge { .. } => self.networks(live).await?,
+            Change::NetworkDelete { .. } => self.networks_read(live, true).await?,
             _ => Vec::new(),
         };
         if let Some(issue) = resource::issue(change, HostKind::Pve, Listing { pools: &pools, networks: &networks, volumes: &volumes }) {
@@ -460,13 +467,14 @@ impl Client {
         }
         let Some((path, privilege)) = permission_check(&message) else { return e };
         let (token, account) = self.config().account();
-        let who = format!("--{} '{account}'", if token { "tokens" } else { "users" });
+        let who = super::acl_who(token, &account);
+        let at = super::acl_path_arg(&path);
         let command = match privilege_role(&privilege) {
-            Some(role) => format!("pveum acl modify {path} {who} --roles {role}"),
+            Some(role) => format!("pveum acl modify {at} {who} --roles {role}"),
             // No built-in role holds it without far more: a role of its own.
             None => {
                 let role = format!("ServerBox-{}", privilege.replace('.', ""));
-                format!("pveum role add {role} --privs {privilege}\npveum acl modify {path} {who} --roles {role}")
+                format!("pveum role add {role} --privs {privilege}\npveum acl modify {at} {who} --roles {role}")
             }
         };
         let mut out = Error::detail(ErrorKind::PermissionDenied, Detail::NeedsPrivilege { account, privilege, path, command });

@@ -25,6 +25,11 @@ fn num(v: Option<&Value>) -> Option<u64> {
     int(v).and_then(|i| u64::try_from(i).ok())
 }
 
+/// A count from a configuration, held to what a `u32` takes rather than cut.
+fn count(n: u64) -> u32 {
+    u32::try_from(n).unwrap_or(u32::MAX)
+}
+
 fn owned(l: &[&str]) -> Vec<String> {
     l.iter().map(|s| (*s).to_owned()).collect()
 }
@@ -301,15 +306,15 @@ pub fn parse_hardware(
 
     let (cpu, memory) = if lxc {
         // No `cores`: every core of the host.
-        let cores = num(config.get("cores")).map(|c| c as u32).or(limits.host_cpus).unwrap_or(1);
+        let cores = num(config.get("cores")).map(count).or(limits.host_cpus).unwrap_or(1);
         (
             Cpu { sockets: 1, cores, threads: 1, online: None, cpu_type: None },
             Memory { mib: num(config.get("memory")).unwrap_or(512), min_mib: None, balloon: false, swap_mib: Some(num(config.get("swap")).unwrap_or(512)) },
         )
     } else {
-        let sockets = num(config.get("sockets")).unwrap_or(1) as u32;
-        let cores = num(config.get("cores")).unwrap_or(1) as u32;
-        let vcpus = num(config.get("vcpus")).map(|v| v as u32);
+        let sockets = num(config.get("sockets")).map_or(1, count);
+        let cores = num(config.get("cores")).map_or(1, count);
+        let vcpus = num(config.get("vcpus")).map(count);
         // `memory` is a property string since PVE 8.1 (`current=2048`), and
         // a number before.
         let mib = match config.get("memory") {
@@ -323,7 +328,7 @@ pub fn parse_hardware(
                 sockets,
                 cores,
                 threads: 1,
-                online: vcpus.filter(|v| *v < sockets * cores),
+                online: vcpus.filter(|v| *v < sockets.saturating_mul(cores)),
                 cpu_type: text(config.get("cpu")).as_deref().and_then(cpu_type),
             },
             Memory { mib: mib.unwrap_or(512), min_mib: num(config.get("balloon")), balloon: true, swap_mib: None },
@@ -507,7 +512,8 @@ pub fn host_devices(node: &str, usb_maps: &[Value], pci_maps: &[Value], pci: &[V
             .and_then(Value::as_array)
             .map(|map| {
                 let all: Vec<&str> = map.iter().filter_map(Value::as_str).collect();
-                all.iter().find(|e| e.contains(&format!("node={node}"))).or(all.first()).map(|s| (*s).to_owned()).unwrap_or_default()
+                let here = |e: &&&str| options(e).iter().any(|(k, v)| *k == "node" && *v == node);
+                all.iter().find(here).or(all.first()).map(|s| (*s).to_owned()).unwrap_or_default()
             })
             .unwrap_or_default();
         let opts = options(&here);

@@ -182,6 +182,8 @@ fn cpus_at_least_one_no_more_than_the_host_has() {
     let unknown = Hardware { limits: Limits::default(), ..vm() };
     assert_eq!(check(&unknown, cpu(4, 16, None)), None);
     assert_eq!(check(&unknown, cpu(64, 64, None)), Some(Issue::CpuCount));
+    // Past what a u32 holds: refused, not wrapped round to a small count.
+    assert_eq!(check(&unknown, cpu(65536, 65536, None)), Some(Issue::CpuCount));
 }
 
 #[test]

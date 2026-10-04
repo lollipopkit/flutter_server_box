@@ -44,6 +44,10 @@ impl Fake {
         let fake = Fake::default();
         fake.route("GET /nodes", |_| ok(json!([{"node": "pve", "status": "online"}])));
         fake.route("GET /cluster/resources", |_| ok(json!([])));
+        // The node's own listings, which a check reads names and states
+        // from: nothing more than the cluster's unless a test says so.
+        fake.route("GET /nodes/pve/qemu", |_| ok(json!([])));
+        fake.route("GET /nodes/pve/lxc", |_| ok(json!([])));
         fake
     }
 

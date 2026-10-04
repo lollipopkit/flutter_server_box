@@ -327,7 +327,10 @@ impl Client {
             Change::RemoveDevice { key } => {
                 if key.starts_with("tpmstate") {
                     // The state is the TPM: removing it removes what it held.
-                    self.drop_volume(guest, key, digest).await?;
+                    // A running VM keeps it until it stops, its volume with it.
+                    if self.drop_volume(guest, key, digest).await? {
+                        return Ok(Outcome { volume_kept: true, ..Outcome::default() });
+                    }
                 } else {
                     set(Vec::new(), vec![key.clone()]).await?;
                 }

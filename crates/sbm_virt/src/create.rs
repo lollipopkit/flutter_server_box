@@ -494,7 +494,8 @@ pub fn create_networks<'a>(networks: &'a [Network], host: HostKind, node: Option
 
 /// What a new guest is checked against: the host's guests, nodes, pools and
 /// networks, the volumes the spec's `media` and `image` name (None where
-/// the pool does not list them), and what the host offers a new VM.
+/// the pool does not list them; one of another id is refused as not found),
+/// and what the host offers a new VM.
 #[derive(Debug, Clone, Copy)]
 pub struct CreateListing<'a> {
     pub guests: &'a [Guest],
@@ -571,7 +572,7 @@ pub fn create_issue(spec: &CreateSpec, host: HostKind, list: CreateListing<'_>) 
         if let Some(r) = &spec.image {
             let node = spec.node.as_deref();
             let image = match list.image {
-                Some(v) if image_storages(list.pools, host, node).iter().any(|p| p.id == r.pool) && is_cloud_image(v, host) => v,
+                Some(v) if v.id == r.volume && image_storages(list.pools, host, node).iter().any(|p| p.id == r.pool) && is_cloud_image(v, host) => v,
                 _ => return Some(Issue::Image),
             };
             // A copy is grown, never cut.
@@ -600,7 +601,7 @@ pub fn create_issue(spec: &CreateSpec, host: HostKind, list: CreateListing<'_>) 
     }
     let media_ok = |r: &VolumeRef| {
         media_storages(list.pools, host, spec.kind, node).iter().any(|p| p.id == r.pool)
-            && list.media.is_some_and(|v| is_media(v, spec.kind))
+            && list.media.is_some_and(|v| v.id == r.volume && is_media(v, spec.kind))
     };
     if qemu {
         if spec.media.as_ref().is_some_and(|r| !media_ok(r)) {

@@ -172,6 +172,8 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
             respond(200, json!([{"time": 1700000060, "cpu": 0.5}, {"time": 1700000000, "cpu": 0.25}]))
         }
         ("GET", "/nodes") => respond(200, json!([{"node": "pve", "status": "online"}])),
+        // The node's own listings: nothing more than the cluster's.
+        ("GET", "/nodes/pve/qemu") | ("GET", "/nodes/pve/lxc") => respond(200, json!([])),
         ("GET", "/storage") => respond(200, json!([{"storage": "local", "type": "dir", "path": "/var/lib/vz"}])),
         ("GET", "/nodes/pve/storage") => respond(
             200,

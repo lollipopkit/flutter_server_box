@@ -392,8 +392,9 @@ pub fn pool_holds_files(p: &crate::libvirt::VirtPool) -> bool {
 
 /// The pool of files whose directory holds `file` itself.
 pub fn pool_of_file<'a>(pools: &'a [crate::libvirt::VirtPool], file: &str) -> Option<&'a crate::libvirt::VirtPool> {
-    let at = file.rfind('/').filter(|at| *at > 0)?;
-    let dir = &file[..at];
+    let at = file.rfind('/')?;
+    // A file right under the root is in the pool whose target is `/`.
+    let dir = if at == 0 { "/" } else { &file[..at] };
     pools.iter().find(|p| {
         is_file_pool(p) && {
             let t = p.target.as_deref().unwrap_or_default();

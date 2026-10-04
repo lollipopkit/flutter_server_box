@@ -3691,6 +3691,24 @@ mod host {
     }
 
     #[test]
+    fn a_file_is_in_the_pool_whose_directory_holds_it() {
+        use sbm_virt::libvirt::host::pool_of_file;
+        let pool = |name: &str, target: &str| virt::VirtPool {
+            name: name.into(),
+            pool_type: Some("dir".into()),
+            active: true,
+            target: Some(target.into()),
+            ..Default::default()
+        };
+        let pools = [pool("root", "/"), pool("images", "/var/lib/libvirt/images/")];
+        let of = |f: &str| pool_of_file(&pools, f).map(|p| p.name.as_str());
+        assert_eq!(of("/disk.qcow2"), Some("root"));
+        assert_eq!(of("/var/lib/libvirt/images/a.qcow2"), Some("images"));
+        assert_eq!(of("/var/lib/libvirt/images/sub/a.qcow2"), None);
+        assert_eq!(of("disk.qcow2"), None);
+    }
+
+    #[test]
     fn a_chain_names_its_layers_snapshots_and_its_pools() {
         use sbm_virt::libvirt::host::{chain_of, overlays, snapshot_of};
         let snaps: Vec<_> = virt::parse_snapshots(&fixture("script_snapshots_external.txt"))

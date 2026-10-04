@@ -140,12 +140,13 @@ impl Session {
     }
 }
 
-/// A password login waiting for its TOTP code.
+/// A password login waiting for its TOTP code, and the account it is for.
 struct Challenge {
     generation: u64,
     http: Arc<dyn Http>,
     ticket: String,
     issued_at: i64,
+    user: Vec<(&'static str, String)>,
 }
 
 /// A guest's state read from `status/current` right after an action.
@@ -655,10 +656,10 @@ impl Client {
         let usable = {
             let st = self.state.lock().unwrap();
             st.tfa.as_ref().filter(|c| self.challenge_usable(&st, c)).map(|c| {
-                (c.generation, c.http.clone(), c.ticket.clone())
+                (c.generation, c.http.clone(), c.ticket.clone(), c.user.clone())
             })
         };
-        let (generation, http, challenge) = match usable {
+        let (generation, http, challenge, user) = match usable {
             Some(c) => c,
             None => match self.new_challenge().await? {
                 Some(c) => c,
@@ -666,7 +667,12 @@ impl Client {
                 None => return Ok(()),
             },
         };
-        let user = self.user_fields();
+        // The account the challenge was issued to, never the configuration's
+        // now: a change since moved to a new generation, and the code is
+        // not sent for it.
+        if !self.is_current_challenge(generation, &challenge) {
+            return Ok(());
+        }
         let mut fields: Vec<(&str, &str)> = user.iter().map(|(k, v)| (*k, v.as_str())).collect();
         let password = format!("totp:{otp}");
         fields.extend([("password", password.as_str()), ("tfa-challenge", challenge.as_str()), ("new-format", "1")]);
@@ -706,14 +712,14 @@ impl Client {
 
     /// Logs in again for a challenge to answer. None when the login needed
     /// no second factor after all: the session is there.
-    async fn new_challenge(&self) -> Result<Option<(u64, Arc<dyn Http>, String)>> {
+    async fn new_challenge(&self) -> Result<Option<(u64, Arc<dyn Http>, String, Vec<(&'static str, String)>)>> {
         self.state.lock().unwrap().tfa = None;
         match self.ensure_session().await {
             Ok(_) => Ok(None),
             Err(e) if e.kind == ErrorKind::NeedTfa => {
                 let st = self.state.lock().unwrap();
                 match &st.tfa {
-                    Some(c) => Ok(Some((c.generation, c.http.clone(), c.ticket.clone()))),
+                    Some(c) => Ok(Some((c.generation, c.http.clone(), c.ticket.clone(), c.user.clone()))),
                     None => Err(e),
                 }
             }
@@ -819,7 +825,7 @@ impl Client {
         let auth = match &config.auth {
             Auth::Token { id, secret } => SessionAuth::Token(format!("PVEAPIToken={id}={secret}")),
             Auth::Password { password, .. } => {
-                let user = self.user_fields();
+                let user = user_fields(config);
                 let mut fields: Vec<(&str, &str)> = user.iter().map(|(k, v)| (*k, v.as_str())).collect();
                 // Sent as stored, spaces included: PAM compares it byte for
                 // byte, and the SSH login this may be borrowed from sends it
@@ -841,7 +847,7 @@ impl Client {
                         .ok_or_else(|| Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData))?;
                     let mut st = self.state.lock().unwrap();
                     if st.generation == generation {
-                        st.tfa = Some(Challenge { generation, http: http.clone(), ticket, issued_at: self.now() });
+                        st.tfa = Some(Challenge { generation, http: http.clone(), ticket, issued_at: self.now(), user });
                     }
                     return Err(Error::detail(ErrorKind::NeedTfa, Detail::OtpRequired));
                 }
@@ -868,17 +874,7 @@ impl Client {
     }
 
     fn user_fields(&self) -> Vec<(&'static str, String)> {
-        let st = self.state.lock().unwrap();
-        let user = match &st.config.auth {
-            Auth::Password { user, .. } => user.trim().to_owned(),
-            Auth::Token { .. } => String::new(),
-        };
-        // `root@pam` already names its realm.
-        if user.contains('@') {
-            vec![("username", user)]
-        } else {
-            vec![("username", user), ("realm", "pam".to_owned())]
-        }
+        user_fields(&self.state.lock().unwrap().config)
     }
 
     async fn post_ticket(&self, http: &Arc<dyn Http>, fields: &[(&str, &str)]) -> Result<Response> {
@@ -1045,10 +1041,7 @@ impl Client {
             return Ok(());
         }
         let (token, account) = self.config().account();
-        let command = format!(
-            "pveum acl modify / --{} '{account}' --roles PVEAuditor,PVEVMAdmin",
-            if token { "tokens" } else { "users" }
-        );
+        let command = format!("pveum acl modify / {} --roles PVEAuditor,PVEVMAdmin", acl_who(token, &account));
         Err(Error::detail(ErrorKind::PermissionDenied, Detail::NoPrivileges { token, account, command }))
     }
 
@@ -1252,6 +1245,36 @@ pub fn capabilities(cluster: bool) -> Capabilities {
         // into the pending configuration.
         network_edit_existing: true,
         ..Capabilities::default()
+    }
+}
+
+/// The account fields of an `/access/ticket` request for `config`.
+fn user_fields(config: &Config) -> Vec<(&'static str, String)> {
+    let user = match &config.auth {
+        Auth::Password { user, .. } => user.trim().to_owned(),
+        Auth::Token { .. } => String::new(),
+    };
+    // `root@pam` already names its realm.
+    if user.contains('@') {
+        vec![("username", user)]
+    } else {
+        vec![("username", user), ("realm", "pam".to_owned())]
+    }
+}
+
+/// `--tokens '<account>'` or `--users '<account>'`, quoted for the shell the
+/// command is pasted into: an account name may hold a quote.
+fn acl_who(token: bool, account: &str) -> String {
+    format!("--{} {}", if token { "tokens" } else { "users" }, sbm_parser::script::shell_quote_unix(account))
+}
+
+/// An ACL path as one shell word: bare where it is only what PVE's paths are
+/// made of, quoted otherwise — it comes from the host's answer.
+fn acl_path_arg(path: &str) -> String {
+    if path.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'.' | b'_' | b'-' | b':')) {
+        path.to_owned()
+    } else {
+        sbm_parser::script::shell_quote_unix(path)
     }
 }
 

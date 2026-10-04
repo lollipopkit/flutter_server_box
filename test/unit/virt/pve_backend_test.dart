@@ -1339,6 +1339,11 @@ class _Api {
         'upid': upid,
       });
     }
+    // A node's own guest listings, which a check reads names and states
+    // from: nothing more than the cluster's unless a test routes them.
+    if (o.method == 'GET' && RegExp(r'^/nodes/[^/]+/(qemu|lxc)$').hasMatch(path)) {
+      return _json(const []);
+    }
     return _status(404);
   }
 

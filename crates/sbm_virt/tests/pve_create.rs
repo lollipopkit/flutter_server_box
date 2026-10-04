@@ -325,6 +325,18 @@ async fn refused_before_it_is_sent_a_vmid_taken_a_name_taken_a_storage_for_no_di
 }
 
 #[tokio::test]
+async fn a_node_listing_that_failed_is_the_failure_not_the_clusters_cache() {
+    // The cluster's cache may still call a new guest `VM <vmid>`: a name
+    // check made on it alone would let a second guest of a name through.
+    let fake = host();
+    fake.route("GET /nodes/pve/qemu", |_| status(500, "got timeout"));
+    let e = fake.client().create(&vm("x", 105)).await.unwrap_err();
+    assert_ne!(refused(&e), Some(Issue::NameTaken));
+    assert_eq!(e.message.as_deref(), Some("got timeout"));
+    assert!(!fake.paths().iter().any(|p| p.starts_with("POST")), "{:?}", fake.paths());
+}
+
+#[tokio::test]
 async fn a_vmid_taken_by_then_is_exists_a_bad_parameter_the_hosts_words() {
     let fake = host();
     fake.route("POST /nodes/pve/qemu", |_| status(500, "unable to create VM 105 - VM 105 already exists on node 'pve'\n"));

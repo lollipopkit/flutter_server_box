@@ -244,6 +244,25 @@ async fn networks_each_guests_configuration_says_which_bridge() {
     assert!(!vmbr0.management_editable);
 }
 
+#[tokio::test]
+async fn a_bridge_is_not_deleted_while_a_guest_on_its_node_cannot_be_read() {
+    let fake = Fake::new();
+    fake.route("GET /cluster/resources", |_| ok(resources_fixture()));
+    fake.route("GET /nodes/pve/network", |_| {
+        let mut list = fixture("network.json");
+        list.as_array_mut().unwrap().push(json!({"iface": "vmbr7", "type": "bridge", "active": 1}));
+        ok(list)
+    });
+    fake.route("GET /nodes/pve/lxc/100/config", |_| ok(json!({})));
+    fake.route("GET /nodes/pve/qemu/101/config", |_| ok(json!({})));
+    // Whether 104 has a NIC on vmbr7 is what this account may not read.
+    fake.route("GET /nodes/pve/qemu/104/config", |_| status(403, "Permission check failed (/vms/104, VM.Audit)"));
+    fake.route("DELETE /nodes/pve/network/vmbr7", |_| ok(Value::Null));
+    let e = fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap_err();
+    assert_eq!(e.kind, ErrorKind::PermissionDenied, "{e:?}");
+    assert!(!fake.paths().iter().any(|p| p.starts_with("DELETE ")));
+}
+
 // ---------------------------------------------------------------------------
 // Changes
 // ---------------------------------------------------------------------------
@@ -386,6 +405,10 @@ async fn a_privilege_missing_which_where_and_the_command_that_grants_it() {
     // of its own.
     assert!(command.starts_with("pveum role add ServerBox-SysModify --privs Sys.Modify\n"));
     assert!(command.contains("/nodes/pve"));
+    // A path is the host's answer: one word to the shell it is pasted in.
+    let odd = pve.refusal("Permission check failed (/storage/x'; touch y; echo ', Datastore.Allocate)", Some(403));
+    let Some(Detail::NeedsPrivilege { command, .. }) = odd.detail.as_deref() else { panic!("{odd:?}") };
+    assert_eq!(command, r#"pveum acl modify '/storage/x'\''; touch y; echo '\''' --tokens 'root@pam!sb' --roles PVEDatastoreAdmin"#);
 }
 
 #[tokio::test]

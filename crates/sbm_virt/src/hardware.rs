@@ -144,7 +144,7 @@ fn one() -> u32 {
 
 impl Cpu {
     pub fn total(&self) -> u32 {
-        self.sockets * self.cores * self.threads
+        self.sockets.saturating_mul(self.cores).saturating_mul(self.threads)
     }
 }
 
@@ -573,7 +573,8 @@ pub struct Outcome {
     /// start gets the change.
     #[serde(default)]
     pub live_error: Option<String>,
-    /// A disk was to be deleted, but the running guest still has it: kept.
+    /// A disk (or a TPM's state) was to be deleted, but the running guest
+    /// still has it: kept.
     #[serde(default)]
     pub volume_kept: bool,
 }
@@ -709,10 +710,10 @@ pub fn issue(hw: &Hardware, change: &Change, host: HostKind, list: Listing<'_>) 
             if *sockets < 1 || *cores < 1 {
                 return Some(Issue::CpuCount);
             }
-            let total = sockets * cores * hw.cpu.threads;
-            if total > limits.host_cpus.unwrap_or(4096) {
+            let total = sockets.checked_mul(*cores).and_then(|n| n.checked_mul(hw.cpu.threads));
+            let Some(total) = total.filter(|t| *t <= limits.host_cpus.unwrap_or(4096)) else {
                 return Some(Issue::CpuCount);
-            }
+            };
             if online.is_some_and(|o| o < 1 || o > total) {
                 return Some(Issue::CpuOnline);
             }
