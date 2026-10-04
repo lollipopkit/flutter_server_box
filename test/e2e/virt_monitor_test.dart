@@ -2208,7 +2208,7 @@ void _pveHardware(_Agent agent) {
       await w.host.changeHardware(
         vm.id,
         h,
-        VirtHwSetMedia(key: 'ide2', media: isos.first),
+        VirtHwSetMedia(key: 'ide2', media: _inPool(isos.first, await w.host.storagePools(), node: vm.node)),
       );
       h = await hw(vm);
       expect(h.disk('ide2')!.source, isos.first.id);
@@ -2579,7 +2579,7 @@ void _pveHardwareDevices(_Agent agent) {
       await w.host.changeHardware(
         g.id,
         h,
-        VirtHwSetFirmware(uefi: true, secureBoot: true, storage: storage.name),
+        VirtHwSetFirmware(uefi: true, secureBoot: true, storage: storage),
       );
       h = await hw();
       expect(h.firmware!.uefi, isTrue);
@@ -2590,7 +2590,7 @@ void _pveHardwareDevices(_Agent agent) {
       await w.host.changeHardware(
         g.id,
         h,
-        VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: storage.name),
+        VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: storage),
       );
       h = await hw();
       expect(h.hasTpm, isTrue);

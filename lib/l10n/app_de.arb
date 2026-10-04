@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Nicht mehr als der Speicher",
   "virtHwIssueMountPoint": "Ein absoluter Pfad, z. B. /data",
   "virtHwIssueStorageSpace": "Mehr als der Speicher frei hat",
-  "virtHwIssueSwap": "Nicht negativ",
   "virtHwLater": "Wirksam nach Neustart",
   "virtHwLess": "Weniger",
   "virtHwLinkDown": "Getrennt",

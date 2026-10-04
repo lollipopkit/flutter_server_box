@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Niet meer dan het geheugen",
   "virtHwIssueMountPoint": "Een absoluut pad, zoals /data",
   "virtHwIssueStorageSpace": "Meer dan de opslag vrij heeft",
-  "virtHwIssueSwap": "Niet negatief",
   "virtHwLater": "Van kracht na herstart",
   "virtHwLess": "Minder",
   "virtHwLinkDown": "Verbroken",

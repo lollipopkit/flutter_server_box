@@ -3661,9 +3661,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Mais do que o armazenamento tem livre';
 
   @override
-  String get virtHwIssueSwap => 'Não negativo';
-
-  @override
   String get virtHwLater => 'Vale após reiniciar';
 
   @override

@@ -7,6 +7,7 @@
 
 pub mod client;
 pub mod create;
+pub mod hardware;
 pub mod http;
 pub mod net;
 pub mod resources;

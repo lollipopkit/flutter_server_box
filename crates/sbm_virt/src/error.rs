@@ -91,6 +91,9 @@ pub enum Detail {
     /// A guest to create, copy, delete or make a template of, checked
     /// before it was sent ([`crate::create::create_issue`] and the others).
     CreateRefused { issue: crate::create::Issue },
+    /// A change to a guest's hardware or settings, checked before it was
+    /// sent ([`crate::hardware::issue`]).
+    HardwareRefused { issue: crate::hardware::Issue },
     /// The pending network configuration changes `ifaces`, which carry the
     /// node's management traffic.
     ApplyTouchesManagement { ifaces: Vec<String> },

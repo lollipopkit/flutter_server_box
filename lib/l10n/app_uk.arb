@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Не більше за пам'ять",
   "virtHwIssueMountPoint": "Абсолютний шлях, наприклад /data",
   "virtHwIssueStorageSpace": "Більше, ніж вільно у сховищі",
-  "virtHwIssueSwap": "Не від'ємне",
   "virtHwLater": "Набуде чинності після перезапуску",
   "virtHwLess": "Менше",
   "virtHwLinkDown": "Від'єднано",

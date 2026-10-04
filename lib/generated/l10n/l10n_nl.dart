@@ -3663,9 +3663,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Meer dan de opslag vrij heeft';
 
   @override
-  String get virtHwIssueSwap => 'Niet negatief';
-
-  @override
   String get virtHwLater => 'Van kracht na herstart';
 
   @override

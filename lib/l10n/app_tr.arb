@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Bellekten fazla olamaz",
   "virtHwIssueMountPoint": "/data gibi mutlak bir yol",
   "virtHwIssueStorageSpace": "Depolamanın boş alanından fazla",
-  "virtHwIssueSwap": "Negatif olamaz",
   "virtHwLater": "Yeniden başlatınca geçerli",
   "virtHwLess": "Azalt",
   "virtHwLinkDown": "Bağlı değil",

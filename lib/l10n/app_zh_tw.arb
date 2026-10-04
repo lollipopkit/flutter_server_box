@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "不能超過記憶體",
   "virtHwIssueMountPoint": "須為絕對路徑，如 /data",
   "virtHwIssueStorageSpace": "超出了儲存的可用空間",
-  "virtHwIssueSwap": "不能為負數",
   "virtHwLater": "重新啟動後生效",
   "virtHwLess": "減少",
   "virtHwLinkDown": "已中斷",

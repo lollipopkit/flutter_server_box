@@ -4696,10 +4696,6 @@
   "@virtHwIssueStorageSpace": {
     "description": "Form error."
   },
-  "virtHwIssueSwap": "Not negative",
-  "@virtHwIssueSwap": {
-    "description": "Form error."
-  },
   "virtHwLater": "Applies at restart",
   "@virtHwLater": {
     "description": "Group note: changes here take effect at the next restart."

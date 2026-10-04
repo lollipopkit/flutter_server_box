@@ -380,18 +380,18 @@ pub fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
     ha.cmp(&hb).then(na.cmp(&nb))
 }
 
-fn is_numbered(key: &str, prefix: &str) -> bool {
+pub(crate) fn is_numbered(key: &str, prefix: &str) -> bool {
     key.strip_prefix(prefix).is_some_and(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// The bus of a QEMU disk key (`scsi0` → `scsi`), or None.
-fn qemu_disk_bus(key: &str) -> Option<&str> {
+pub(crate) fn qemu_disk_bus(key: &str) -> Option<&str> {
     ["ide", "sata", "scsi", "virtio", "efidisk", "tpmstate", "unused"]
         .into_iter()
         .find(|bus| is_numbered(key, bus))
 }
 
-fn lxc_disk(key: &str) -> bool {
+pub(crate) fn lxc_disk(key: &str) -> bool {
     key == "rootfs" || is_numbered(key, "mp") || is_numbered(key, "unused")
 }
 

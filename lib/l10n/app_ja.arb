@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "メモリ以下",
   "virtHwIssueMountPoint": "/data のような絶対パス",
   "virtHwIssueStorageSpace": "ストレージの空き容量を超えています",
-  "virtHwIssueSwap": "負の値は不可",
   "virtHwLater": "再起動後に反映",
   "virtHwLess": "減らす",
   "virtHwLinkDown": "切断",

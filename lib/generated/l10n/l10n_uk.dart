@@ -3653,9 +3653,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Більше, ніж вільно у сховищі';
 
   @override
-  String get virtHwIssueSwap => 'Не від\'ємне';
-
-  @override
   String get virtHwLater => 'Набуде чинності після перезапуску';
 
   @override

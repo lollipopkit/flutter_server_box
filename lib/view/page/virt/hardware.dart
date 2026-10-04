@@ -79,7 +79,7 @@ enum _NewDevice {
 
 /// The host's install media, and the storages whose media could not be
 /// listed, each with why.
-typedef _Isos = ({List<VirtVolume> isos, List<String> failed});
+typedef _Isos = ({List<VirtPoolVolume> isos, List<String> failed});
 
 class _CpuDraft {
   const _CpuDraft(this.sockets, this.cores, this.online);
@@ -141,7 +141,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
   VirtHostDevice? _devPick;
 
   /// A new CD-ROM's media; null for an empty drive.
-  VirtVolume? _cdMedia;
+  VirtPoolVolume? _cdMedia;
 
   /// How a USB device is named, where both are on offer (libvirt): by what
   /// it is, or by where it is plugged in.
@@ -1050,18 +1050,18 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                         ? null
                         : () => _apply(hw, VirtHwSetMedia(key: d.key)),
                   ),
-                  for (final v in isos)
+                  for (final m in isos)
                     _Choice(
-                      key: 'hw:media:${v.id}',
+                      key: 'hw:media:${m.volume.id}',
                       icon: Icons.album_outlined,
-                      label: v.name,
-                      sub: v.capacity?.bytes2Str,
-                      selected: inDrive(v),
-                      onTap: busy || inDrive(v)
+                      label: m.volume.name,
+                      sub: m.volume.capacity?.bytes2Str,
+                      selected: inDrive(m.volume),
+                      onTap: busy || inDrive(m.volume)
                           ? null
                           : () => _apply(
                               hw,
-                              VirtHwSetMedia(key: d.key, media: v),
+                              VirtHwSetMedia(key: d.key, media: m),
                             ),
                     ),
                 ], indent: true);
@@ -1214,7 +1214,7 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
       _NewDevice.tpm => VirtHwAddDevice(
         kind: kind.hw!,
         host: pick,
-        storage: _addPool?.name,
+        storage: _addPool,
         usbNaming: _usbByAddress
             ? VirtUsbNaming.address
             : VirtUsbNaming.vendorProduct,
@@ -1249,14 +1249,14 @@ class _VirtHardwareViewState extends ConsumerState<VirtHardwareView>
                 selected: _cdMedia == null,
                 onTap: () => setState(() => _cdMedia = null),
               ),
-              for (final v in isos)
+              for (final m in isos)
                 _Choice(
-                  key: 'hw:cdrom:new:${v.id}',
+                  key: 'hw:cdrom:new:${m.volume.id}',
                   icon: Icons.album_outlined,
-                  label: v.name,
-                  sub: v.capacity?.bytes2Str,
-                  selected: _cdMedia?.id == v.id,
-                  onTap: () => setState(() => _cdMedia = v),
+                  label: m.volume.name,
+                  sub: m.volume.capacity?.bytes2Str,
+                  selected: _cdMedia?.volume.id == m.volume.id,
+                  onTap: () => setState(() => _cdMedia = m),
                 ),
             ], indent: true);
           },
@@ -1766,7 +1766,7 @@ extension _Actions on _VirtHardwareViewState {
   /// cannot be listed leaves the others on offer, and is said.
   Future<_Isos> _readIsos() async {
     final host = ref.read(virtHostProvider(widget.serverId)).kind;
-    if (host == null) return (isos: const <VirtVolume>[], failed: const <String>[]);
+    if (host == null) return (isos: const <VirtPoolVolume>[], failed: const <String>[]);
     final pools = virtMediaStorages(
       await ref.read(virtStoragePoolsProvider(widget.serverId).future),
       host: host,
@@ -1783,17 +1783,17 @@ extension _Actions on _VirtHardwareViewState {
     ]);
     return (
       isos: [
-        for (final list in lists)
-          for (final v in list)
-            if (virtIsMedia(v, VirtGuestKind.qemu)) v,
-      ]..sort((a, b) => a.name.compareTo(b.name)),
+        for (var i = 0; i < pools.length; i++)
+          for (final v in lists[i])
+            if (virtIsMedia(v, VirtGuestKind.qemu)) (pool: pools[i], volume: v),
+      ]..sort((a, b) => a.volume.name.compareTo(b.volume.name)),
       failed: failed,
     );
   }
 
   /// A picker over [_isos]: loading, a read that failed with its retry, or
   /// [choices] of the media with the storages that could not be listed.
-  Widget _isoPicker(Widget Function(List<VirtVolume> isos) choices) {
+  Widget _isoPicker(Widget Function(List<VirtPoolVolume> isos) choices) {
     return FutureBuilder<_Isos>(
       future: _isos,
       builder: (_, snap) {
@@ -2059,8 +2059,9 @@ extension _Actions on _VirtHardwareViewState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
-    String? storage = hw.firmware?.varsStorage;
-    if (_pve && uefi && storage == null) {
+    // Null keeps the storage the old EFI disk is on.
+    VirtStoragePool? storage;
+    if (_pve && uefi && hw.firmware?.varsStorage == null) {
       await _loadDiskPools();
       if (!mounted) return;
       final pools = _addPools ?? const [];
@@ -2070,7 +2071,7 @@ extension _Actions on _VirtHardwareViewState {
         display: (p) => '${p.name} · ${p.type}',
       );
       if (picked == null || !mounted) return;
-      storage = picked.name;
+      storage = picked;
     }
     await _apply(
       hw,

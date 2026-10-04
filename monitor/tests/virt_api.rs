@@ -141,7 +141,15 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
         ("POST", "/nodes/pve/qemu/100/vncproxy") => {
             respond(200, json!({"port": "5900", "ticket": "PVEVNC:x", "user": "root@pam!panel", "password": "abcdefghij"}))
         }
-        ("GET", "/nodes/pve/qemu/100/config") => respond(200, json!({"scsi0": "local-lvm:vm-100-disk-0,size=8G", "net0": "virtio=BC:24:11:00:00:01,bridge=vmbr0", "ostype": "l26"})),
+        ("GET", "/nodes/pve/qemu/100/config") => respond(
+            200,
+            json!({"scsi0": "local-lvm:vm-100-disk-0,size=8G", "net0": "virtio=BC:24:11:00:00:01,bridge=vmbr0", "ostype": "l26",
+                   "cores": 2, "sockets": 1, "memory": "2048", "ciuser": "debian", "cipassword": "**********",
+                   "ipconfig0": "ip=dhcp", "digest": "d1g35t"}),
+        ),
+        ("GET", "/nodes/pve/qemu/100/pending") => respond(200, json!([{"key": "cores", "value": 2, "pending": 4}])),
+        ("POST", "/nodes/pve/qemu/100/config") => respond(200, json!(UPID)),
+        ("PUT", "/nodes/pve/qemu/100/cloudinit") => respond(200, Value::Null),
         ("GET", "/nodes/pve/qemu/100/snapshot") => respond(
             200,
             json!([
@@ -569,6 +577,57 @@ async fn a_guest_is_made_copied_and_checked_first_and_each_is_recorded() {
     // `virt` is what it takes.
     for path in ["/api/v1/virt/create", "/api/v1/virt/delete", "/api/v1/virt/clone", "/api/v1/virt/template"] {
         let (status, _) = call(&srv, Some("viewer"), Method::POST, path, Some(json!({"guest": "qemu/100", "spec": spec("x"), "request": {"name": "x"}}))).await;
+        assert_eq!(status, 403, "{path}");
+    }
+}
+
+#[ntex::test]
+async fn hardware_is_read_changed_from_its_revision_and_recorded() {
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, Some("admin"), Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/hardware", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    let hw = &body["hardware"];
+    assert_eq!(hw["cpu"]["cores"], 2);
+    assert_eq!(hw["memory"]["mib"], 2048);
+    assert_eq!(hw["revision"], "d1g35t");
+    assert_eq!(hw["pending"][0]["key"], "cores");
+    assert_eq!(hw["disks"][0]["key"], "scsi0");
+
+    let change = |c: Value| {
+        call(&srv, Some("admin"), Method::POST, "/api/v1/virt/hardware/change", Some(json!({"guest": "qemu/100", "revision": "d1g35t", "change": c})))
+    };
+    let (_, body) = change(json!({"op": "set_cpu", "sockets": 1, "cores": 4})).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    // Refused before anything is sent: a disk shrunk, a MAC that is not one.
+    let (_, body) = change(json!({"op": "grow_disk", "key": "scsi0", "bytes": 1024})).await;
+    assert_eq!(body["error"]["detail"], json!({"code": "hardware_refused", "issue": "disk_shrink"}), "{body}");
+    let (_, body) = change(json!({"op": "set_nic_hardware", "key": "net0", "mac": "01:00:00:00:00:01"})).await;
+    assert_eq!(body["error"]["detail"]["issue"], "mac", "{body}");
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/cloud-init", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["cloud_init"]["user"], "debian", "{body}");
+    assert_eq!(body["cloud_init"]["password_set"], true);
+    let edit = json!({"guest": "qemu/100", "edit": {"values": {"user": "debian", "password": "n3w-secret"}, "revision": "d1g35t"}});
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/cloud-init/set", Some(edit)).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+
+    let paths = pve.seen.lock().unwrap().paths.clone();
+    assert_eq!(paths.iter().filter(|p| *p == "POST /api2/json/nodes/pve/qemu/100/config").count(), 2, "{paths:?}");
+    assert!(paths.contains(&"PUT /api2/json/nodes/pve/qemu/100/cloudinit".to_owned()), "{paths:?}");
+
+    let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
+    assert!(details.contains(&"virt hardware qemu/100 set_cpu".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt hardware qemu/100 grow_disk scsi0: Unsupported".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt cloud-init qemu/100".to_owned()), "{details:?}");
+    assert!(!details.iter().any(|d| d.contains("n3w-secret")), "{details:?}");
+
+    for path in ["/api/v1/virt/hardware/change", "/api/v1/virt/hardware/revert", "/api/v1/virt/cloud-init/set"] {
+        let body = json!({"guest": "qemu/100", "change": {"op": "set_autostart", "on": true}, "edit": {"values": {"user": "x"}, "revision": ""}});
+        let (status, _) = call(&srv, Some("viewer"), Method::POST, path, Some(body)).await;
         assert_eq!(status, 403, "{path}");
     }
 }

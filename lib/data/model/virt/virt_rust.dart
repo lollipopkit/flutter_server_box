@@ -5,6 +5,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/src/rust/api/pve.dart';
@@ -195,6 +196,407 @@ abstract final class VirtRust {
       diskKeptBytes: c['disk_kept_bytes'] as int?,
     );
   }
+
+  // --- Hardware (sbm_virt::hardware) ---
+
+  static List<Map> _list(Object? v) => [...(v as List? ?? const []).whereType<Map>()];
+
+  static T? _enumOf<T extends Enum>(List<T> values, Object? name) {
+    if (name is! String) return null;
+    final camel = name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase());
+    for (final v in values) {
+      if (v.name == camel) return v;
+    }
+    return null;
+  }
+
+  static String _snake(Enum e) =>
+      e.name.replaceAllMapped(RegExp('[A-Z]'), (m) => '_${m[0]!.toLowerCase()}');
+
+  /// `sbm_virt::hardware::Hardware`.
+  static VirtHardware hardware(Object? json) {
+    final h = json is Map ? json : throw _invalid('hardware');
+    final cpu = h['cpu'] as Map;
+    final mem = h['memory'] as Map;
+    final fw = h['firmware'] as Map?;
+    final display = h['display'] as Map?;
+    final support = h['support'] as Map? ?? const {};
+    final limits = h['limits'] as Map? ?? const {};
+    return VirtHardware(
+      kind: h['kind'] == 'lxc' ? VirtGuestKind.lxc : VirtGuestKind.qemu,
+      running: h['running'] as bool? ?? false,
+      cpu: VirtHwCpu(
+        sockets: cpu['sockets'] as int,
+        cores: cpu['cores'] as int,
+        threads: cpu['threads'] as int? ?? 1,
+        online: cpu['online'] as int?,
+        type: cpu['type'] as String?,
+      ),
+      memory: VirtHwMemory(
+        mib: mem['mib'] as int,
+        minMib: mem['min_mib'] as int?,
+        balloon: mem['balloon'] as bool? ?? false,
+        swapMib: mem['swap_mib'] as int?,
+      ),
+      disks: [for (final d in _list(h['disks'])) hwDisk(d)],
+      nics: [
+        for (final n in _list(h['nics']))
+          VirtHwNic(
+            key: n['key'] as String,
+            mac: n['mac'] as String?,
+            type: n['type'] as String?,
+            source: n['source'] as String?,
+            model: n['model'] as String?,
+            linkUp: n['link_up'] as bool? ?? true,
+            firewall: n['firewall'] as bool?,
+            name: n['name'] as String?,
+          ),
+      ],
+      boot: switch (h['boot']) {
+        final List b => [...b.whereType<String>()],
+        _ => null,
+      },
+      autostart: h['autostart'] as bool? ?? false,
+      name: h['name'] as String?,
+      description: h['description'] as String?,
+      protection: h['protection'] as bool?,
+      renameRunning: h['rename_running'] as bool? ?? true,
+      pending: [
+        for (final p in _list(h['pending']))
+          VirtPendingField(
+            key: p['key'] as String,
+            current: p['current'] as String?,
+            pending: p['pending'] as String?,
+            delete: p['delete'] as bool? ?? false,
+          ),
+      ],
+      revision: h['revision'] as String?,
+      limits: VirtHwLimits(
+        hostCpus: limits['host_cpus'] as int?,
+        hostMemoryBytes: limits['host_memory_bytes'] as int?,
+      ),
+      cpuTypes: _strings(h['cpu_types']),
+      configText: h['config_text'] as String?,
+      firmware: fw == null
+          ? null
+          : VirtHwFirmware(
+              uefi: fw['uefi'] as bool? ?? false,
+              secureBoot: fw['secure_boot'] as bool? ?? false,
+              varsStorage: fw['vars_storage'] as String?,
+            ),
+      display: display == null
+          ? null
+          : VirtHwDisplay(
+              protocol: display['protocol'] as String?,
+              listen: display['listen'] as String?,
+              gpu: display['gpu'] as String?,
+              port: display['port'] as int?,
+            ),
+      devices: [
+        for (final d in _list(h['devices']))
+          VirtHwDevice(
+            key: d['key'] as String,
+            kind: _enumOf(VirtHwDeviceKind.values, d['kind']) ?? VirtHwDeviceKind.usb,
+            detail: d['detail'] as String?,
+            mapping: d['mapping'] as bool? ?? false,
+          ),
+      ],
+      support: VirtHwSupport(
+        buses: _strings(support['buses']),
+        caches: _strings(support['caches']),
+        nicModels: _strings(support['nic_models']),
+        mac: support['mac'] as bool? ?? false,
+        protocols: _strings(support['protocols']),
+        listen: support['listen'] as bool? ?? false,
+        gpus: _strings(support['gpus']),
+        uefi: support['uefi'] as bool? ?? false,
+        secureBoot: support['secure_boot'] as bool? ?? false,
+        tpm: support['tpm'] as bool? ?? false,
+        usb: support['usb'] as bool? ?? false,
+        pci: support['pci'] as bool? ?? false,
+      ),
+    );
+  }
+
+  static VirtHwDisk hwDisk(Map d) => VirtHwDisk(
+    key: d['key'] as String,
+    kind: _enumOf(VirtHwDiskKind.values, d['kind']) ?? VirtHwDiskKind.disk,
+    source: d['source'] as String?,
+    size: d['size'] as int?,
+    storage: d['storage'] as String?,
+    mountPoint: d['mount_point'] as String?,
+    bus: d['bus'] as String?,
+    format: d['format'] as String?,
+    readonly: d['readonly'] as bool? ?? false,
+    cache: d['cache'] as String?,
+    cloudInit: d['cloud_init'] as bool? ?? false,
+    resizable: d['resizable'] as bool? ?? true,
+  );
+
+  static Map<String, Object?> hwDiskJson(VirtHwDisk d) => {
+    'key': d.key,
+    'kind': _snake(d.kind),
+    'source': d.source,
+    'size': d.size,
+    'storage': d.storage,
+    'mount_point': d.mountPoint,
+    'bus': d.bus,
+    'format': d.format,
+    'readonly': d.readonly,
+    'cache': d.cache,
+    'cloud_init': d.cloudInit,
+    'resizable': d.resizable,
+  };
+
+  /// [hw] as `sbm_virt::hardware::Hardware`, what the rules are given.
+  static Map<String, Object?> hardwareJson(VirtHardware hw) => {
+    'kind': hw.kind.name,
+    'running': hw.running,
+    'cpu': {
+      'sockets': hw.cpu.sockets,
+      'cores': hw.cpu.cores,
+      'threads': hw.cpu.threads,
+      'online': hw.cpu.online,
+      'type': hw.cpu.type,
+    },
+    'memory': {
+      'mib': hw.memory.mib,
+      'min_mib': hw.memory.minMib,
+      'balloon': hw.memory.balloon,
+      'swap_mib': hw.memory.swapMib,
+    },
+    'disks': [for (final d in hw.disks) hwDiskJson(d)],
+    'nics': [
+      for (final n in hw.nics)
+        {
+          'key': n.key,
+          'mac': n.mac,
+          'type': n.type,
+          'source': n.source,
+          'model': n.model,
+          'link_up': n.linkUp,
+          'firewall': n.firewall,
+          'name': n.name,
+        },
+    ],
+    'boot': hw.boot,
+    'autostart': hw.autostart,
+    'name': hw.name,
+    'description': hw.description,
+    'protection': hw.protection,
+    'rename_running': hw.renameRunning,
+    'pending': [
+      for (final p in hw.pending)
+        {'key': p.key, 'current': p.current, 'pending': p.pending, 'delete': p.delete},
+    ],
+    'revision': hw.revision,
+    'limits': {'host_cpus': hw.limits.hostCpus, 'host_memory_bytes': hw.limits.hostMemoryBytes},
+    'cpu_types': hw.cpuTypes,
+    'firmware': switch (hw.firmware) {
+      final f? => {'uefi': f.uefi, 'secure_boot': f.secureBoot, 'vars_storage': f.varsStorage},
+      null => null,
+    },
+    'display': switch (hw.display) {
+      final d? => {'protocol': d.protocol, 'listen': d.listen, 'gpu': d.gpu, 'port': d.port},
+      null => null,
+    },
+    'devices': [
+      for (final d in hw.devices)
+        {'key': d.key, 'kind': d.kind.name, 'detail': d.detail, 'mapping': d.mapping},
+    ],
+    'support': {
+      'buses': hw.support.buses,
+      'caches': hw.support.caches,
+      'nic_models': hw.support.nicModels,
+      'mac': hw.support.mac,
+      'protocols': hw.support.protocols,
+      'listen': hw.support.listen,
+      'gpus': hw.support.gpus,
+      'uefi': hw.support.uefi,
+      'secure_boot': hw.support.secureBoot,
+      'tpm': hw.support.tpm,
+      'usb': hw.support.usb,
+      'pci': hw.support.pci,
+    },
+  };
+
+  static VirtHostDevice hostDevice(Map d) => VirtHostDevice(
+    id: d['id'] as String,
+    label: d['label'] as String? ?? '',
+    detail: d['detail'] as String?,
+    mapping: d['mapping'] as bool? ?? false,
+    usbBus: d['usb_bus'] as int?,
+    usbPort: d['usb_port'] as String?,
+    usbDevice: d['usb_device'] as int?,
+    iommuGroup: d['iommu_group'] as int?,
+    groupSize: d['group_size'] as int? ?? 0,
+  );
+
+  static Map<String, Object?> hostDeviceJson(VirtHostDevice d) => {
+    'id': d.id,
+    'label': d.label,
+    'detail': d.detail,
+    'mapping': d.mapping,
+    'usb_bus': d.usbBus,
+    'usb_port': d.usbPort,
+    'usb_device': d.usbDevice,
+    'iommu_group': d.iommuGroup,
+    'group_size': d.groupSize,
+  };
+
+  /// `sbm_virt::hardware::HostDevices`.
+  static VirtHostDevices hostDevices(Object? json) {
+    final d = json is Map ? json : throw _invalid('host devices');
+    return VirtHostDevices(
+      usb: [for (final u in _list(d['usb'])) hostDevice(u)],
+      pci: [for (final p in _list(d['pci'])) hostDevice(p)],
+      iommu: d['iommu'] as bool? ?? true,
+      mappingsOnly: d['mappings_only'] as bool? ?? false,
+    );
+  }
+
+  static Map<String, Object?>? _poolVolume(VirtPoolVolume? v) => switch (v) {
+    final v? => {'pool': v.pool.id, 'volume': v.volume.id},
+    null => null,
+  };
+
+  /// [change] as `sbm_virt::hardware::Change`: what it names, by id.
+  static Map<String, Object?> hwChangeJson(VirtHwChange change) => switch (change) {
+    VirtHwSetCpu(:final sockets, :final cores, :final online, :final type) => {
+      'op': 'set_cpu',
+      'sockets': sockets,
+      'cores': cores,
+      'online': online,
+      'type': type,
+    },
+    VirtHwSetMemory(:final mib, :final minMib, :final swapMib) => {
+      'op': 'set_memory',
+      'mib': mib,
+      'min_mib': minMib,
+      'swap_mib': swapMib,
+    },
+    VirtHwGrowDisk(:final key, :final bytes) => {'op': 'grow_disk', 'key': key, 'bytes': bytes},
+    VirtHwAddDisk(:final storage, :final gib, :final mountPoint) => {
+      'op': 'add_disk',
+      'pool': storage.id,
+      'gib': gib,
+      'mount_point': mountPoint,
+    },
+    VirtHwAttachVolume(:final storage, :final volume, :final mountPoint) => {
+      'op': 'attach_volume',
+      'volume': {'pool': storage.id, 'volume': volume.id},
+      'mount_point': mountPoint,
+    },
+    VirtHwRemoveDisk(:final key, :final deleteVolume) => {
+      'op': 'remove_disk',
+      'key': key,
+      'delete_volume': deleteVolume,
+    },
+    VirtHwAddCdrom(:final media) => {'op': 'add_cdrom', 'media': _poolVolume(media)},
+    VirtHwSetMedia(:final key, :final media) => {'op': 'set_media', 'key': key, 'media': _poolVolume(media)},
+    VirtHwAddNic(:final network, :final model) => {'op': 'add_nic', 'network': network.id, 'model': model},
+    VirtHwRemoveNic(:final key) => {'op': 'remove_nic', 'key': key},
+    VirtHwUpdateNic(:final key, :final network, :final linkUp, :final firewall) => {
+      'op': 'update_nic',
+      'key': key,
+      'network': network?.id,
+      'link_up': linkUp,
+      'firewall': firewall,
+    },
+    VirtHwSetBoot(:final order) => {'op': 'set_boot', 'order': order},
+    VirtHwSetAutostart(:final on) => {'op': 'set_autostart', 'on': on},
+    VirtHwSetName(:final name) => {'op': 'set_name', 'name': name},
+    VirtHwSetDescription(:final text) => {'op': 'set_description', 'text': text},
+    VirtHwSetProtection(:final on) => {'op': 'set_protection', 'on': on},
+    VirtHwUpdateDisk(:final key, :final bus, :final cache) => {
+      'op': 'update_disk',
+      'key': key,
+      'bus': bus,
+      'cache': cache,
+    },
+    VirtHwSetNicHardware(:final key, :final model, :final mac) => {
+      'op': 'set_nic_hardware',
+      'key': key,
+      'model': model,
+      'mac': mac,
+    },
+    VirtHwSetFirmware(:final uefi, :final secureBoot, :final storage) => {
+      'op': 'set_firmware',
+      'uefi': uefi,
+      'secure_boot': secureBoot,
+      'storage': storage?.id,
+    },
+    VirtHwSetDisplay(:final protocol, :final listen, :final gpu) => {
+      'op': 'set_display',
+      'protocol': protocol,
+      'listen': listen,
+      'gpu': gpu,
+    },
+    VirtHwAddDevice(:final kind, :final host, :final storage, :final usbNaming) => {
+      'op': 'add_device',
+      'kind': kind.name,
+      'host': switch (host) {
+        final h? => hostDeviceJson(h),
+        null => null,
+      },
+      'storage': storage?.id,
+      'usb_naming': _snake(usbNaming),
+    },
+    VirtHwRemoveDevice(:final key) => {'op': 'remove_device', 'key': key},
+    VirtHwRevert(:final keys) => {'op': 'revert', 'keys': keys},
+    // Its own call (`VirtBackend.revertPending`), never a change.
+    VirtHwRevertPending() => {'op': 'revert', 'keys': const <String>[]},
+  };
+
+  /// What [change] names, as it carries them: the pools, networks and
+  /// volumes a check of it is made against.
+  static (List<VirtStoragePool>, List<VirtNetwork>, List<VirtVolume>) hwListing(VirtHwChange change) =>
+      switch (change) {
+        VirtHwAddDisk(:final storage) => ([storage], const [], const []),
+        VirtHwAttachVolume(:final storage, :final volume) => ([storage], const [], [volume]),
+        VirtHwAddCdrom(media: final m?) || VirtHwSetMedia(media: final m?) => ([m.pool], const [], [m.volume]),
+        VirtHwAddNic(:final network) => (const [], [network], const []),
+        VirtHwUpdateNic(network: final n?) => (const [], [n], const []),
+        VirtHwSetFirmware(storage: final s?) || VirtHwAddDevice(storage: final s?) => ([s], const [], const []),
+        _ => (const [], const [], const []),
+      };
+
+  /// `sbm_virt::hardware::Outcome`.
+  static VirtHwOutcome hwOutcome(Object? json) {
+    final o = json is Map ? json : const {};
+    return VirtHwOutcome(
+      liveError: o['live_error'] as String?,
+      volumeKept: o['volume_kept'] as bool? ?? false,
+    );
+  }
+
+  /// `sbm_virt::hardware::CloudInitState`.
+  static VirtCloudInitState cloudInitState(Object? json) {
+    final c = json is Map ? json : throw _invalid('cloud-init');
+    return VirtCloudInitState(
+      user: c['user'] as String? ?? '',
+      sshKeys: _strings(c['ssh_keys']),
+      hostname: c['hostname'] as String?,
+      address: c['address'] as String?,
+      gateway: c['gateway'] as String?,
+      dns: _strings(c['dns']),
+      searchDomains: _strings(c['search_domains']),
+      nics: c['nics'] as int? ?? 0,
+      passwordSet: c['password_set'] as bool? ?? false,
+      passwordExpires: c['password_expires'] as bool? ?? false,
+      network: c['network'] as bool? ?? false,
+      foreign: c['foreign'] as bool? ?? false,
+      revision: c['revision'] as String? ?? '',
+    );
+  }
+
+  /// [edit] made from [base] as `sbm_virt::hardware::CloudInitEdit`.
+  static Map<String, Object?> cloudInitEditJson(VirtCloudInitState base, VirtCloudInitEdit edit) => {
+    'values': cloudInitJson(edit.values),
+    'remove_password': edit.removePassword,
+    'password_expires': edit.passwordExpires,
+    'revision': base.revision,
+  };
 
   /// `sbm_virt::model::GuestDetail`.
   static VirtGuestDetail detail(Object? json) {
@@ -754,6 +1156,8 @@ abstract final class VirtRust {
         virtResIssueText(VirtResIssue.ofRust(issue)),
       {'code': 'create_refused', 'issue': final String issue} =>
         virtCreateIssueText(VirtCreateIssue.ofRust(issue)),
+      {'code': 'hardware_refused', 'issue': final String issue} =>
+        virtHwIssueText(VirtHwIssue.ofRust(issue)),
       {'code': 'apply_touches_management', 'ifaces': final List ifaces} =>
         'The pending configuration changes ${ifaces.join(', ')}, which '
             "carries the host's management traffic: apply it from the "

@@ -3683,9 +3683,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Más de lo que el almacenamiento tiene libre';
 
   @override
-  String get virtHwIssueSwap => 'No negativo';
-
-  @override
   String get virtHwLater => 'Se aplica al reiniciar';
 
   @override

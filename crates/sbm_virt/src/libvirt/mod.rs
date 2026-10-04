@@ -39,6 +39,7 @@
 
 pub mod cloud_init;
 pub mod create;
+pub mod hardware;
 pub mod manage;
 pub mod net;
 pub mod snapshot;
@@ -4335,11 +4336,13 @@ pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
         .collect();
     let config_xml = take(&secs, KEY_HW_CONFIG, raw)?.ok()?;
     let config = parse_hw_xml(config_xml, &capacity)?;
-    let live_xml = take(&secs, KEY_HW_LIVE, raw)?.ok()?.trim_end().to_string();
-    let live = if active {
-        Some(parse_hw_xml(&live_xml, &capacity)?)
+    // A shut-off domain's `dumpxml` is its definition again: not a running
+    // one, so none is kept.
+    let read_live = take(&secs, KEY_HW_LIVE, raw)?.ok()?.trim_end();
+    let (live, live_xml) = if active {
+        (Some(parse_hw_xml(read_live, &capacity)?), read_live.to_string())
     } else {
-        None
+        (None, String::new())
     };
     let description = parse_xml_doc(config_xml, "domain", "dumpxml")
         .ok()

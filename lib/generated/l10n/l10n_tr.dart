@@ -3622,9 +3622,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Depolamanın boş alanından fazla';
 
   @override
-  String get virtHwIssueSwap => 'Negatif olamaz';
-
-  @override
   String get virtHwLater => 'Yeniden başlatınca geçerli';
 
   @override

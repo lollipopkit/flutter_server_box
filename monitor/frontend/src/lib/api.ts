@@ -58,6 +58,12 @@ import type {
   PveConfigInput,
   PveConfigView,
   VirtCloneRequest,
+  VirtCloudInitEdit,
+  VirtCloudInitState,
+  VirtHardware,
+  VirtHostDevices,
+  VirtHwChange,
+  VirtHwOutcome,
   VirtConsoleAnswer,
   VirtCreated,
   VirtCreateForm,
@@ -650,6 +656,61 @@ export const api = {
       '/virt/clone',
       { method: 'POST', body: JSON.stringify({ guest, request: cloneRequest, password: password ?? null }) },
       'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The guest's hardware as its next start gets it, with the `revision` an
+  /// edit is sent back with.
+  virtHardware: (guest: string, password?: string) =>
+    request<{ hardware: VirtHardware | null; error: VirtError | null }>(
+      '/virt/hardware',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the hardware',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// One change, made from the read whose `revision` it carries; an older
+  /// one is answered `conflict`.
+  virtHardwareChange: (guest: string, revision: string | null, change: VirtHwChange, password?: string) =>
+    request<{ outcome: VirtHwOutcome | null; error: VirtError | null }>(
+      '/virt/hardware/change',
+      { method: 'POST', body: JSON.stringify({ guest, revision, change, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Every pending change dropped.
+  virtHardwareRevert: (guest: string, revision: string | null, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/hardware/revert',
+      { method: 'POST', body: JSON.stringify({ guest, revision, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtCloudInit: (guest: string, password?: string) =>
+    request<{ cloud_init: VirtCloudInitState | null; error: VirtError | null }>(
+      '/virt/cloud-init',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the cloud-init settings',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// A typed password goes to the host only.
+  virtSetCloudInit: (guest: string, edit: VirtCloudInitEdit, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/cloud-init/set',
+      { method: 'POST', body: JSON.stringify({ guest, edit, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The host's USB and PCI devices the guest can be given.
+  virtHostDevices: (guest: string, password?: string) =>
+    request<{ devices: VirtHostDevices | null; error: VirtError | null }>(
+      '/virt/host-devices',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read the host devices',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

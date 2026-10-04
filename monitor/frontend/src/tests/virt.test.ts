@@ -35,6 +35,12 @@ vi.mock('../lib/api', async (importOriginal) => ({
     cloneForm: vi.fn(),
     cloneGuest: vi.fn(),
     makeTemplate: vi.fn(),
+    virtHardware: vi.fn(),
+    virtHardwareChange: vi.fn(),
+    virtHardwareRevert: vi.fn(),
+    virtCloudInit: vi.fn(),
+    virtSetCloudInit: vi.fn(),
+    virtHostDevices: vi.fn(),
   },
 }))
 const loadVirt = vi.mocked(api.loadVirt)
@@ -57,6 +63,7 @@ const deleteGuest = vi.mocked(api.deleteGuest)
 const cloneForm = vi.mocked(api.cloneForm)
 const cloneGuest = vi.mocked(api.cloneGuest)
 const makeTemplate = vi.mocked(api.makeTemplate)
+const virtHardware = vi.mocked(api.virtHardware)
 
 function guest(over: Partial<VirtGuest>): VirtGuest {
   return {
@@ -307,24 +314,39 @@ describe('the virtualization page', () => {
 
   it('reads a guest\'s hardware when its view opens', async () => {
     loadVirt.mockResolvedValue(loaded([guest({})]))
-    virtDetail.mockResolvedValue({
-      detail: {
-        disks: [{ device: 'disk', source_type: null, source: 'local-lvm:vm-100-disk-0', target: 'scsi0', bus: 'scsi', format: null, readonly: false, size: 8 * 1024 ** 3 }],
-        nics: [{ kind: 'net0', mac: 'BC:24:11:00:00:01', source: 'vmbr0', model: 'virtio', target: null }],
-        graphics: [],
-        display: null,
-        consoles: ['vnc'],
+    createForm.mockResolvedValue({ form: null, error: null })
+    virtHardware.mockResolvedValue({
+      hardware: {
+        kind: 'qemu',
+        running: true,
+        cpu: { sockets: 1, cores: 2, threads: 1, online: null, type: null },
+        memory: { mib: 2048, min_mib: null, balloon: false, swap_mib: null },
+        disks: [{ key: 'scsi0', kind: 'disk', source: 'local-lvm:vm-100-disk-0', size: 8 * 1024 ** 3, storage: 'local-lvm', mount_point: null, bus: 'scsi', format: 'raw', readonly: false, cache: null, cloud_init: false, resizable: true }],
+        nics: [{ key: 'net0', mac: 'BC:24:11:00:00:01', type: null, source: 'vmbr0', model: 'virtio', link_up: true, firewall: true, name: null }],
+        boot: ['scsi0'],
+        autostart: false,
+        name: 'web',
         description: null,
-        arch: null,
-        machine: 'l26',
+        protection: false,
+        rename_running: true,
+        pending: [],
+        revision: 'd1',
+        limits: { host_cpus: 8, host_memory_bytes: null },
+        cpu_types: [],
+        config_text: null,
+        firmware: null,
+        display: null,
+        devices: [],
+        support: { buses: [], caches: [], nic_models: [], mac: false, protocols: [], listen: false, gpus: [], uefi: false, secure_boot: false, tpm: false, usb: false, pci: false },
       },
       error: null,
     })
     render(Virt, { onback: () => {} })
     await fireEvent.click(await screen.findByRole('button', { name: /^hardware$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^scsi0/ }))
     expect(await screen.findByText(/local-lvm:vm-100-disk-0/)).toBeInTheDocument()
-    expect(screen.getByText(/vmbr0/)).toBeInTheDocument()
-    expect(virtDetail).toHaveBeenCalledWith('qemu/100', undefined)
+    expect(screen.getAllByText(/vmbr0/).length).toBeGreaterThan(0)
+    expect(virtHardware).toHaveBeenCalledWith('qemu/100', undefined)
   })
 
   it('shows what to run for a libvirt serial console', async () => {
@@ -707,6 +729,7 @@ describe('the virtualization page: creating, copying and deleting', () => {
     asAdmin(false)
     createForm.mockResolvedValue({ form: form(), error: null })
     cloneForm.mockResolvedValue({ storages: [], error: null })
+    virtHardware.mockResolvedValue({ hardware: null, error: null })
   })
 
   it('creates a VM from the form, says why the host refused, then selects the new guest', async () => {

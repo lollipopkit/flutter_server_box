@@ -22,10 +22,8 @@ apart from the whitespace `python3 -m json.tool` adds.
 | `backup_jobs_all.json` | `GET /cluster/backup` | the same job plus one with `all: 1` and `exclude`, and one that is `enabled: 0` — the two shapes `VirtBackupJob.takes` distinguishes |
 | `snapshots_qemu.json`, `snapshots_none.json` | `GET .../qemu/{vmid}/snapshot` | one snapshot with `vmstate: 1`, and a guest with none |
 | `snapshot_config.json`, `snapshot_current_config.json` | `GET .../snapshot/{name}/config` | the configuration a snapshot recorded, for the diff |
-| `hw_vm_config.json`, `hw_vm_devices_config.json` | `GET .../qemu/{vmid}/config` | a VM's configuration, with and without passthrough devices |
-| `hw_vm_pending.json`, `hw_ct_pending.json` | `GET .../pending` | PVE's `{key, value, pending}` list, and a `delete: 1` entry |
-| `hw_ct_config.json`, `hw_ct_config_mp_delete.json` | `GET .../lxc/{vmid}/config` | a container's configuration, and one with a mount point to remove |
-| `hw_ct_pending_mp_delete.json` | `GET .../lxc/{vmid}/pending` | a pending `delete` of a mount point |
+| `hw_vm_config.json` | `GET .../qemu/{vmid}/config` | a VM's configuration |
+| `hw_vm_pending.json` | `GET .../pending` | PVE's `{key, value, pending}` list |
 | `hardware_usb.json`, `hardware_pci.json` | `GET /nodes/{node}/hardware/{usb,pci}` | the node's own devices (root only) |
 | `mapping_usb.json`, `mapping_pci.json` | `GET /cluster/mapping/{usb,pci}` | resource mappings |
 
@@ -33,3 +31,6 @@ apart from the whitespace `python3 -m json.tool` adds.
 table in `test/unit/virt/virt_backup_job_test.dart`, one line per value the
 host was asked about, since what matters there is which values it takes, not
 the timestamps it prints.
+
+The containers' hardware fixtures and the VM with passthrough devices moved to
+`crates/sbm_virt/tests/fixtures/pve/`, with the tests that read them.

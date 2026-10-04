@@ -369,6 +369,20 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         (Method::POST, "/api/v1/virt/clone/form", Some(json!({ "guest": "absent" }))),
         (Method::POST, "/api/v1/virt/clone", Some(json!({ "guest": "absent", "request": { "name": "x" } }))),
         (Method::POST, "/api/v1/virt/template", Some(json!({ "guest": "absent" }))),
+        (Method::POST, "/api/v1/virt/hardware", Some(json!({ "guest": "absent" }))),
+        (
+            Method::POST,
+            "/api/v1/virt/hardware/change",
+            Some(json!({ "guest": "absent", "change": { "op": "set_autostart", "on": true } })),
+        ),
+        (Method::POST, "/api/v1/virt/hardware/revert", Some(json!({ "guest": "absent" }))),
+        (Method::POST, "/api/v1/virt/cloud-init", Some(json!({ "guest": "absent" }))),
+        (
+            Method::POST,
+            "/api/v1/virt/cloud-init/set",
+            Some(json!({ "guest": "absent", "edit": { "values": { "user": "x" }, "revision": "" } })),
+        ),
+        (Method::POST, "/api/v1/virt/host-devices", Some(json!({ "guest": "absent" }))),
     ]
 }
 

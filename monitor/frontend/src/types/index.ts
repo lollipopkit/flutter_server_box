@@ -1545,6 +1545,7 @@ export type VirtErrorDetail =
   | { code: 'needs_privilege'; account: string; privilege: string; path: string; command: string }
   | { code: 'refused'; issue: VirtIssue }
   | { code: 'create_refused'; issue: VirtCreateIssue }
+  | { code: 'hardware_refused'; issue: VirtHwIssue }
   | { code: 'apply_touches_management'; ifaces: string[] }
   | { code: 'apply_unreadable' }
 
@@ -2012,4 +2013,225 @@ export interface VirtCloneRequest {
   target_node?: string
   /// libvirt: a pool name.
   target_pool?: string
+}
+
+// --- A guest's hardware and settings (`sbm_virt::hardware`) ---
+
+export type VirtHwDiskKind = 'disk' | 'cdrom' | 'rootfs' | 'mount'
+
+export interface VirtHwDisk {
+  /// PVE option (`scsi0`, `rootfs`, `mp0`), libvirt target (`vda`).
+  key: string
+  kind: VirtHwDiskKind
+  /// PVE volume id, libvirt path; null for an empty drive.
+  source: string | null
+  /// Bytes.
+  size: number | null
+  storage: string | null
+  /// A container mount point's path.
+  mount_point: string | null
+  bus: string | null
+  format: string | null
+  readonly: boolean
+  /// null for the host's default.
+  cache: string | null
+  /// A CD-ROM holding the guest's cloud-init data, not install media.
+  cloud_init: boolean
+  resizable: boolean
+}
+
+export interface VirtHwNic {
+  /// PVE option (`net0`), libvirt MAC.
+  key: string
+  mac: string | null
+  /// libvirt's interface type; null on PVE.
+  type: string | null
+  /// Bridge or network name.
+  source: string | null
+  model: string | null
+  link_up: boolean
+  /// PVE; null where there is none.
+  firewall: boolean | null
+  /// A container's interface name.
+  name: string | null
+}
+
+/// One setting the running guest has differently from its next start.
+export interface VirtPendingField {
+  key: string
+  current: string | null
+  pending: string | null
+  /// Goes at the next start.
+  delete: boolean
+}
+
+export type VirtDeviceKind = 'usb' | 'pci' | 'tpm'
+
+export interface VirtHwDevice {
+  key: string
+  kind: VirtDeviceKind
+  detail: string | null
+  /// Given through a PVE resource mapping.
+  mapping: boolean
+}
+
+/// What this guest can be changed to, on its host.
+export interface VirtHwSupport {
+  buses: string[]
+  caches: string[]
+  nic_models: string[]
+  mac: boolean
+  protocols: string[]
+  listen: boolean
+  gpus: string[]
+  uefi: boolean
+  secure_boot: boolean
+  tpm: boolean
+  usb: boolean
+  pci: boolean
+}
+
+/// `POST /virt/hardware`: the definition the next start gets.
+export interface VirtHardware {
+  kind: VirtGuestKind
+  running: boolean
+  cpu: { sockets: number; cores: number; threads: number; online: number | null; type: string | null }
+  memory: { mib: number; min_mib: number | null; balloon: boolean; swap_mib: number | null }
+  disks: VirtHwDisk[]
+  nics: VirtHwNic[]
+  /// Boot devices in order, by disk or NIC key; null where there is none.
+  boot: string[] | null
+  autostart: boolean
+  name: string | null
+  description: string | null
+  /// PVE; null where the host has no such setting.
+  protection: boolean | null
+  rename_running: boolean
+  pending: VirtPendingField[]
+  /// Sent back with an edit.
+  revision: string | null
+  limits: { host_cpus: number | null; host_memory_bytes: number | null }
+  cpu_types: string[]
+  config_text: string | null
+  firmware: { uefi: boolean; secure_boot: boolean; vars_storage: string | null } | null
+  display: { protocol: string | null; listen: string | null; gpu: string | null; port: number | null } | null
+  devices: VirtHwDevice[]
+  support: VirtHwSupport
+}
+
+/// A host device a guest can be given.
+export interface VirtHostDevice {
+  id: string
+  label: string
+  detail: string | null
+  mapping: boolean
+  usb_bus: number | null
+  usb_port: string | null
+  usb_device: number | null
+  iommu_group: number | null
+  /// Devices sharing its IOMMU group, itself included.
+  group_size: number
+}
+
+/// `POST /virt/host-devices`.
+export interface VirtHostDevices {
+  usb: VirtHostDevice[]
+  pci: VirtHostDevice[]
+  /// false: a PCI device given to a guest keeps it from starting.
+  iommu: boolean
+  /// PVE: this login may only use resource mappings.
+  mappings_only: boolean
+}
+
+export type VirtUsbNaming = 'vendor_product' | 'address'
+
+/// `sbm_virt::hardware::Change`. null keeps (or, where noted, clears).
+export type VirtHwChange =
+  | { op: 'set_cpu'; sockets: number; cores: number; online: number | null; type: string | null }
+  | { op: 'set_memory'; mib: number; min_mib: number | null; swap_mib: number | null }
+  | { op: 'grow_disk'; key: string; bytes: number }
+  | { op: 'add_disk'; pool: string; gib: number; mount_point: string | null }
+  | { op: 'attach_volume'; volume: VirtVolumeRef; mount_point: string | null }
+  | { op: 'remove_disk'; key: string; delete_volume: boolean }
+  | { op: 'add_cdrom'; media: VirtVolumeRef | null }
+  /// null ejects.
+  | { op: 'set_media'; key: string; media: VirtVolumeRef | null }
+  | { op: 'add_nic'; network: string; model: string | null }
+  | { op: 'remove_nic'; key: string }
+  | { op: 'update_nic'; key: string; network: string | null; link_up: boolean; firewall: boolean | null }
+  | { op: 'set_boot'; order: string[] }
+  | { op: 'set_autostart'; on: boolean }
+  | { op: 'set_name'; name: string }
+  | { op: 'set_description'; text: string }
+  | { op: 'set_protection'; on: boolean }
+  | { op: 'update_disk'; key: string; bus: string | null; cache: string | null }
+  | { op: 'set_nic_hardware'; key: string; model: string | null; mac: string | null }
+  | { op: 'set_firmware'; uefi: boolean; secure_boot: boolean; storage: string | null }
+  | { op: 'set_display'; protocol: string | null; listen: string | null; gpu: string | null }
+  | { op: 'add_device'; kind: VirtDeviceKind; host: VirtHostDevice | null; storage: string | null; usb_naming: VirtUsbNaming }
+  | { op: 'remove_device'; key: string }
+  | { op: 'revert'; keys: string[] }
+
+/// What a change came to, beyond succeeding.
+export interface VirtHwOutcome {
+  /// The running guest refused its half: the next start gets the change.
+  live_error: string | null
+  /// A disk's volume was to be deleted, but the running guest still has it.
+  volume_kept: boolean
+}
+
+/// `sbm_virt::hardware::Issue`: why the agent refused a change.
+export type VirtHwIssue =
+  | 'cpu_count'
+  | 'cpu_online'
+  | 'memory'
+  | 'memory_min'
+  | 'disk_shrink'
+  | 'disk_size'
+  | 'storage_space'
+  | 'mount_point'
+  | 'boot_empty'
+  | 'name_invalid'
+  | 'name_running'
+  | 'description'
+  | 'mac'
+  | 'stop_first'
+  | 'storage_missing'
+  | 'device'
+  | 'volume_in_use'
+  | 'media'
+  | 'not_offered'
+  | 'not_found'
+  | 'unsupported'
+
+/// `POST /virt/cloud-init`: never the password.
+export interface VirtCloudInitState {
+  user: string
+  ssh_keys: string[]
+  /// libvirt; null on PVE, whose cloud-init uses the VM's name.
+  hostname: string | null
+  /// null for DHCP.
+  address: string | null
+  gateway: string | null
+  dns: string[]
+  search_domains: string[]
+  /// How many NICs the settings configure; the first is the one edited.
+  nics: number
+  password_set: boolean
+  /// libvirt: the password expires at the first login.
+  password_expires: boolean
+  /// The guest has the NIC the address settings apply to.
+  network: boolean
+  /// libvirt: the seed says more than this app writes.
+  foreign: boolean
+  revision: string
+}
+
+/// `sbm_virt::hardware::CloudInitEdit`: `values.password` is a new one,
+/// omitted to keep the one set.
+export interface VirtCloudInitEdit {
+  values: VirtCloudInit
+  remove_password: boolean
+  password_expires: boolean
+  revision: string
 }

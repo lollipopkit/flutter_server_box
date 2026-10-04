@@ -3693,9 +3693,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Plus que l\'espace libre du stockage';
 
   @override
-  String get virtHwIssueSwap => 'Pas négatif';
-
-  @override
   String get virtHwLater => 'Effectif au redémarrage';
 
   @override

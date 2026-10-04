@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Yaddaşdan çox olmamalıdır",
   "virtHwIssueMountPoint": "/data kimi mütləq yol",
   "virtHwIssueStorageSpace": "Yaddaşdakı boş yerdən çoxdur",
-  "virtHwIssueSwap": "Mənfi olmamalıdır",
   "virtHwLater": "Yenidən başladıqda qüvvəyə minir",
   "virtHwLess": "Azalt",
   "virtHwLinkDown": "Ayrılıb",

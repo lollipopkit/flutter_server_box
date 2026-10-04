@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Не больше памяти",
   "virtHwIssueMountPoint": "Абсолютный путь, например /data",
   "virtHwIssueStorageSpace": "Больше, чем свободно в хранилище",
-  "virtHwIssueSwap": "Не отрицательное",
   "virtHwLater": "Вступит в силу после перезапуска",
   "virtHwLess": "Меньше",
   "virtHwLinkDown": "Отключён",

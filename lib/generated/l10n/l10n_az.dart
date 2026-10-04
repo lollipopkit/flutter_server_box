@@ -3635,9 +3635,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Yaddaşdakı boş yerdən çoxdur';
 
   @override
-  String get virtHwIssueSwap => 'Mənfi olmamalıdır';
-
-  @override
   String get virtHwLater => 'Yenidən başladıqda qüvvəyə minir';
 
   @override

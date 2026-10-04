@@ -792,7 +792,7 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
           Toast.warn(l10n.virtVolNoCdrom(guest.name));
           return;
         }
-        change = VirtHwSetMedia(key: drive.key, media: v);
+        change = VirtHwSetMedia(key: drive.key, media: (pool: pool, volume: v));
       } else {
         change = VirtHwAttachVolume(storage: pool, volume: v);
       }

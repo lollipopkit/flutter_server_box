@@ -93,14 +93,14 @@ fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
 
 /// A change to the machine's guests, gated by `virt` and recorded before
 /// it runs, as power is; a failure is recorded again with its kind.
-struct Audit<'a> {
+pub(crate) struct Audit<'a> {
     state: &'a AppState,
     gated: machine::Gated,
     what: String,
 }
 
 impl<'a> Audit<'a> {
-    async fn start(req: &HttpRequest, state: &'a AppState, what: String) -> Result<Self, HttpResponse> {
+    pub(crate) async fn start(req: &HttpRequest, state: &'a AppState, what: String) -> Result<Self, HttpResponse> {
         let gated = machine::gate(req, state, Grant::Virt, &what).await?;
         let audit = Audit { state, gated, what };
         audit.event(Action::Open, Outcome::Ok, None).record(&state.db).await;
@@ -117,7 +117,7 @@ impl<'a> Audit<'a> {
             })
     }
 
-    async fn end<T>(&self, result: &Result<T, VirtError>) {
+    pub(crate) async fn end<T>(&self, result: &Result<T, VirtError>) {
         if let Err(e) = result {
             self.event(Action::Close, Outcome::Error, Some(&format!("{:?}", e.kind))).record(&self.state.db).await;
         }

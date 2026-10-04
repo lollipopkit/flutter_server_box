@@ -6268,12 +6268,6 @@ abstract class AppLocalizations {
   /// **'More than the storage has free'**
   String get virtHwIssueStorageSpace;
 
-  /// Form error.
-  ///
-  /// In en, this message translates to:
-  /// **'Not negative'**
-  String get virtHwIssueSwap;
-
   /// Group note: changes here take effect at the next restart.
   ///
   /// In en, this message translates to:

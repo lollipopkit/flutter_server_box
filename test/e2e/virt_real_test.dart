@@ -360,7 +360,7 @@ Future<void> _libvirt() async {
       expect(run.boot, isNotEmpty);
       expect(run.autostart, isTrue);
       expect(run.limits.hostCpus, greaterThan(0));
-      expect(run.revision, startsWith('<domain'));
+      expect(run.revision, matches(RegExp(r'^[0-9a-f]{64}$')));
 
       final stopped = await virt.hardware(await guest(stoppedName));
       expect(stopped.running, isFalse);
@@ -1583,24 +1583,25 @@ Future<void> _libvirtCreate() async {
       ));
       var g = (await virt.load()).guests.firstWhere((g) => g.name == hwName);
 
-      // A topology the form does not make: 1 socket, 2 dies, 2 clusters,
-      // 1 core, 1 thread — 4 vCPUs. Written by hand, as virsh edit would.
+      // A topology the form does not make: 1 socket, 2 dies, 1 cluster,
+      // 1 core, 1 thread — 2 vCPUs, so two sockets stay within the host's
+      // (4). Written by hand, as virsh edit would.
       final xml = await inactive(g);
       final edited = xml
-          .replaceFirst(RegExp(r'<vcpu[^>]*>\d+</vcpu>'), "<vcpu placement='static'>4</vcpu>")
+          .replaceFirst(RegExp(r'<vcpu[^>]*>\d+</vcpu>'), "<vcpu placement='static'>2</vcpu>")
           .replaceFirst(RegExp(r'<cpu\b[^>]*/>|<cpu\b[\s\S]*?</cpu>'), '')
-          .replaceFirst('</features>', "</features><cpu mode='host-passthrough'><topology sockets='1' dies='2' clusters='2' cores='1' threads='1'/></cpu>");
+          .replaceFirst('</features>', "</features><cpu mode='host-passthrough'><topology sockets='1' dies='2' clusters='1' cores='1' threads='1'/></cpu>");
       await execSshE2e(
         client!,
         r'f=$(mktemp) && cat > "$f" && virsh --connect qemu:///system -q define "$f" >/dev/null; r=$?; rm -f "$f"; exit $r',
         Uint8List.fromList(utf8.encode(edited)),
       );
       var hw = await virt.hardware(g);
-      // Dies and clusters count as threads: 1 × 1 × 4.
-      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.threads), (1, 1, 4));
+      // Dies and clusters count as threads: 1 × 1 × 2.
+      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.threads), (1, 1, 2));
       // A memory change keeps the topology as it is.
       await virt.changeHardware(g, hw, VirtHwSetMemory(mib: 384));
-      expect(await inactive(g), contains("dies='2' clusters='2'"));
+      expect(await inactive(g), contains("dies='2' clusters='1'"));
       // Two sockets: the host takes the definition (libvirt checks the
       // vCPU count against the topology), dies and clusters kept.
       hw = await virt.hardware(g);
@@ -3206,7 +3207,7 @@ Future<void> _libvirtManage() async {
       await virt.changeHardware(g, hw, VirtHwSetMedia(key: cd.key));
       hw = await virt.hardware(g);
       expect(hw.disk(cd.key)?.source, isNull);
-      await virt.changeHardware(g, hw, VirtHwSetMedia(key: cd.key, media: media));
+      await virt.changeHardware(g, hw, VirtHwSetMedia(key: cd.key, media: _inPool(media, await virt.storagePools())));
       hw = await virt.hardware(g);
       expect(hw.disk(cd.key)?.source, media.path);
 

@@ -3627,9 +3627,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Lebih dari ruang kosong penyimpanan';
 
   @override
-  String get virtHwIssueSwap => 'Tidak negatif';
-
-  @override
   String get virtHwLater => 'Berlaku setelah mulai ulang';
 
   @override

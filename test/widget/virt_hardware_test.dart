@@ -17,7 +17,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
-import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
@@ -163,7 +162,18 @@ const _vm = VirtHardware(
     VirtHwDevice(key: 'usb0', kind: VirtHwDeviceKind.usb, detail: '0bda:b023'),
     VirtHwDevice(key: 'tpmstate0', kind: VirtHwDeviceKind.tpm, detail: 'TPM v2.0'),
   ],
-  support: PveResources.pveQemuSupport,
+  support: VirtHwSupport(
+    buses: ['scsi', 'virtio', 'sata', 'ide'],
+    caches: ['default', 'none', 'writeback', 'writethrough', 'directsync', 'unsafe'],
+    nicModels: ['virtio', 'e1000', 'e1000e', 'rtl8139', 'vmxnet3'],
+    mac: true,
+    gpus: ['std', 'virtio', 'qxl', 'vmware', 'cirrus', 'none'],
+    uefi: true,
+    secureBoot: true,
+    tpm: true,
+    usb: true,
+    pci: true,
+  ),
   pending: [
     VirtPendingField(key: 'cores', current: '1', pending: '2'),
     VirtPendingField(key: 'boot', current: 'order=scsi0', pending: 'order=scsi0;ide2;net0'),
@@ -1400,7 +1410,7 @@ void main() {
     await tap(tester, _key('hw:cdrom:new:local:iso/debian-13.iso'));
     await tap(tester, _key('hw:dev:add'));
     final add = _changes.single.$2 as VirtHwAddCdrom;
-    expect(add.media?.id, 'local:iso/debian-13.iso');
+    expect(add.media?.volume.id, 'local:iso/debian-13.iso');
   });
 
   testWidgets('devices: a cloud-init drive is not install media', (
@@ -1456,7 +1466,8 @@ void main() {
     await tester.tap(find.text(libL10n.ok));
     await _settle(tester);
     final fw = _changes.single.$2 as VirtHwSetFirmware;
-    expect((fw.uefi, fw.secureBoot, fw.storage), (true, false, 'local-lvm'));
+    // Null: the new variables disk goes where the old one is.
+    expect((fw.uefi, fw.secureBoot, fw.storage), (true, false, null));
   });
 
   group('backups: what the view reads again', () {

@@ -970,40 +970,8 @@ mixin _EditPane<W extends ConsumerStatefulWidget>
     );
   }
 
-  String? _issueText(VirtHardware hw, VirtHwIssue? issue) {
-    final hostCpus = hw.limits.hostCpus;
-    final hostMib = switch (hw.limits.hostMemoryBytes) {
-      final b? => b >> 20,
-      null => null,
-    };
-    return switch (issue) {
-      null => null,
-      VirtHwIssue.cpuCount => l10n.virtHwIssueCpuCount(hostCpus ?? 4096),
-      VirtHwIssue.cpuOnline => l10n.virtHwIssueCpuOnline,
-      VirtHwIssue.memory => l10n.virtHwIssueMemory(
-        virtHwMinMemoryMib,
-        hostMib ?? 1 << 30,
-      ),
-      VirtHwIssue.memoryMin => l10n.virtHwIssueMemoryMin,
-      VirtHwIssue.swap => l10n.virtHwIssueSwap,
-      VirtHwIssue.diskShrink => l10n.virtHwIssueDiskShrink,
-      VirtHwIssue.diskSize => l10n.virtHwIssueDiskSize,
-      VirtHwIssue.storageSpace => l10n.virtHwIssueStorageSpace,
-      VirtHwIssue.mountPoint => l10n.virtHwIssueMountPoint,
-      VirtHwIssue.bootEmpty => l10n.virtHwIssueBootEmpty,
-      VirtHwIssue.nameInvalid =>
-        _pve ? l10n.virtCreateNameInvalidPve : l10n.virtCreateNameInvalidLibvirt,
-      VirtHwIssue.nameRunning => l10n.virtSetRenameStopped,
-      VirtHwIssue.description => l10n.virtSetIssueDescription(
-        virtHwDescriptionMax,
-      ),
-      VirtHwIssue.mac => l10n.virtHwIssueMac,
-      VirtHwIssue.stopFirst => l10n.virtHwIssueStopFirst,
-      VirtHwIssue.storageMissing => l10n.virtHwIssueStorageMissing,
-      VirtHwIssue.device => l10n.virtHwIssueDevice,
-      VirtHwIssue.volumeInUse => l10n.virtVolInUse,
-    };
-  }
+  String? _issueText(VirtHardware hw, VirtHwIssue? issue) =>
+      virtHwIssueText(issue, limits: hw.limits, pve: _pve);
 
   /// Makes [change] and, when the host took it, drops the draft with
   /// [clear].

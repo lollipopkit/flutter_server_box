@@ -151,55 +151,6 @@ final _resources = <Map<String, Object?>>[
 void main() {
   setUpAll(initRustLibForTest);
 
-  group('PveResources', () {
-    test('config: disks, NICs, consoles', () {
-      final qemu = PveResources.parseConfig({
-        'scsi0': 'local-lvm:vm-100-disk-0,iothread=1,size=32G',
-        'scsi10': 'local-lvm:vm-100-disk-2,size=512M',
-        'scsi2': 'local-lvm:vm-100-disk-1,size=1T',
-        'ide2': 'local:iso/debian.iso,media=cdrom,size=600M',
-        'net0': 'virtio=BC:24:11:AA:BB:CC,bridge=vmbr0,firewall=1',
-        'serial0': 'socket',
-        'vga': 'qxl,memory=32',
-        'ostype': 'l26',
-      }, VirtGuestKind.qemu);
-      expect(qemu.disks.map((d) => d.target), [
-        'ide2',
-        'scsi0',
-        'scsi2',
-        'scsi10',
-      ]);
-      expect(qemu.disks.first.device, 'cdrom');
-      expect(qemu.disks[1].size, 32 << 30);
-      expect(qemu.disks[1].source, 'local-lvm:vm-100-disk-0');
-      expect(qemu.disks[3].size, 512 << 20);
-      expect(qemu.nics.single.model, 'virtio');
-      expect(qemu.nics.single.mac, 'BC:24:11:AA:BB:CC');
-      expect(qemu.nics.single.source, 'vmbr0');
-      expect(qemu.graphics.single.kind, 'qxl');
-      expect(qemu.consoles, {VirtConsoleKind.vnc, VirtConsoleKind.text});
-      expect(qemu.machine, 'l26');
-
-      final serialOnly = PveResources.parseConfig({
-        'vga': 'serial0',
-        'serial0': 'socket',
-      }, VirtGuestKind.qemu);
-      expect(serialOnly.consoles, {VirtConsoleKind.text});
-
-      final lxc = PveResources.parseConfig({
-        'rootfs': 'local-lvm:vm-100-disk-0,size=8G',
-        'mp0': '/srv/data,mp=/data,ro=1',
-        'net0':
-            'name=eth0,bridge=vmbr0,hwaddr=BC:24:11:00:00:01,ip=dhcp,type=veth',
-      }, VirtGuestKind.lxc);
-      expect(lxc.disks.map((d) => d.device), ['mp', 'rootfs']);
-      expect(lxc.disks.first.readonly, isTrue);
-      expect(lxc.nics.single.target, 'eth0');
-      expect(lxc.nics.single.mac, 'BC:24:11:00:00:01');
-      expect(lxc.consoles, {VirtConsoleKind.text});
-    });
-  });
-
   test('consoles: termproxy and vncproxy tickets', () async {
     final api = _Api()..resources = _resources;
     final pve = api.backend(const PveConfig(addr: 'https://pve.lan:8006'));
@@ -402,8 +353,6 @@ void main() {
       expect((ci.passwordSet, ci.network, ci.hostname), (true, true, null));
       expect(ci.revision, 'd1');
       expect('$ci', isNot(contains('**')));
-      final dhcp = PveResources.parseCloudInit({'ipconfig0': 'ip=dhcp', 'digest': 'x'});
-      expect((dhcp.address, dhcp.passwordSet, dhcp.network, dhcp.user), (null, false, false, ''));
     });
 
     test('write: the options with the digest, ip6 kept, emptied ones '
@@ -795,11 +744,9 @@ void main() {
     });
   });
 
-  group('hardware', () {
+  group('hardware through the session', () {
     Object? fixture(String name) =>
         jsonDecode(File('test/fixtures/pve/$name').readAsStringSync());
-    Map<String, Object?> config(String name) =>
-        (fixture(name)! as Map).cast<String, Object?>();
 
     const token = PveConfig(
       addr: 'https://pve.lan:8006',
@@ -815,98 +762,15 @@ void main() {
       vmid: 9901,
       node: 'pve',
     );
-    const ct = VirtGuest(
-      id: 'lxc/9902',
-      name: 'sbhw-e2e-ct',
-      kind: VirtGuestKind.lxc,
-      state: VirtGuestState.running,
-      vmid: 9902,
-      node: 'pve',
-    );
 
-    /// Captured from PVE 9.2 with cores, memory and the boot order pending,
-    /// a hot-plugged NIC disconnected behind the firewall, and a CPU model
-    /// with a flag.
-    VirtHardware vmHardware() => PveResources.parseHardware(
-      config: config('hw_vm_config.json'),
-      pending: fixture('hw_vm_pending.json')! as List,
-      kind: VirtGuestKind.qemu,
-      running: true,
-      limits: const VirtHwLimits(hostCpus: 12, hostMemoryBytes: 16 << 30),
-    );
-
-    test('a VM: the next start\'s values, and what is pending', () {
-      final hw = vmHardware();
-      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.type), (1, 2, 'host'));
-      expect((hw.memory.mib, hw.memory.minMib, hw.memory.balloon), (768, 256, true));
-      expect(hw.disk('scsi0')!.size, 1 << 30);
-      expect(hw.disk('scsi0')!.storage, 'local-lvm');
-      expect(hw.disk('ide2')!.kind, VirtHwDiskKind.cdrom);
-      expect(hw.disk('ide2')!.source, isNull);
-      final net1 = hw.nic('net1')!;
-      expect((net1.linkUp, net1.firewall, net1.mac), (false, true, 'BC:24:11:DE:00:BF'));
-      expect(hw.nic('net0')!.firewall, isFalse);
-      expect(hw.boot, ['scsi0', 'ide2', 'net0']);
-      expect(hw.autostart, isFalse);
-      final pending = {for (final p in hw.pending) p.key: p};
-      expect(pending['cores']?.current, '1');
-      expect(pending['cores']?.pending, '2');
-      expect(pending.keys, containsAll(['memory', 'boot']));
-      // Not pending: applied at once (the NIC was hot-plugged).
-      expect(pending.keys, isNot(contains('net1')));
-      expect(pending.keys, isNot(contains('digest')));
-      expect(hw.revision, '698abb29c27485d3497f5b7a8ca4b6b2789c1cd1');
-      expect(hw.configText, contains('cpu: host,flags=+aes'));
-      expect(hw.configText, isNot(contains('digest')));
-    });
-
-    test('a container: resources, mount points, a removal pending', () {
-      var hw = PveResources.parseHardware(
-        config: config('hw_ct_config.json'),
-        pending: fixture('hw_ct_pending.json')! as List,
-        kind: VirtGuestKind.lxc,
-        running: true,
-      );
-      expect((hw.cpu.cores, hw.memory.mib, hw.memory.swapMib), (2, 384, 128));
-      expect(hw.boot, isNull);
-      expect(hw.disk('rootfs')!.kind, VirtHwDiskKind.rootfs);
-      expect(hw.disk('mp0')!.mountPoint, '/mnt/e2e');
-      expect(hw.nic('net0')!.name, 'eth0');
-      expect(hw.pending, isEmpty);
-
-      // `delete=mp0` on a running container: gone from what the next start
-      // gets, pending until then.
-      hw = PveResources.parseHardware(
-        config: config('hw_ct_config_mp_delete.json'),
-        pending: fixture('hw_ct_pending_mp_delete.json')! as List,
-        kind: VirtGuestKind.lxc,
-        running: true,
-      );
-      expect(hw.disk('mp0'), isNull);
-      final p = hw.pending.single;
-      expect((p.key, p.delete), ('mp0', true));
-      expect(p.current, contains('vm-9902-disk-1'));
-    });
-
-    test('option strings: what is not set stays, in its place', () {
-      const net = 'virtio=BC:24:11:DE:00:BF,bridge=vmbr0,firewall=1,link_down=1';
-      expect(
-        PveResources.withOptions(net, {'bridge': 'vmbr1', 'link_down': null}),
-        'virtio=BC:24:11:DE:00:BF,bridge=vmbr1,firewall=1',
-      );
-      expect(
-        PveResources.withOptions('virtio=AA,bridge=vmbr0', {'link_down': '1'}),
-        'virtio=AA,bridge=vmbr0,link_down=1',
-      );
-      expect(PveResources.withCpuType('host,flags=+aes', 'x86-64-v3'), 'x86-64-v3,flags=+aes');
-      expect(PveResources.withCpuType('cputype=kvm64,hidden=1', 'host'), 'host,hidden=1');
-      expect(PveResources.withCpuType(null, 'host'), 'host');
-      expect(PveResources.sizeArg(2 << 30), '2G');
-      expect(PveResources.sizeArg((1 << 30) + 1), '1048577K');
-    });
-
-    /// An API answering the hardware reads with the captures.
+    /// The guest listed (each call reads it again), its configuration and
+    /// pending list as captured from PVE 9.2, the node's figures, and the
+    /// node's storage and bridge a change can name.
     _Api hwApi() => _Api()
+      ..resources = [
+        {'id': 'node/pve', 'type': 'node', 'node': 'pve', 'status': 'online', 'maxcpu': 12},
+        {'id': 'qemu/9901', 'type': 'qemu', 'vmid': 9901, 'node': 'pve', 'status': 'running', 'name': 'sbhw-e2e-vm'},
+      ]
       ..routes['GET /nodes/pve/qemu/9901/config'] = ((_) => fixture('hw_vm_config.json'))
       ..routes['GET /nodes/pve/qemu/9901/pending'] = ((_) => fixture('hw_vm_pending.json'))
       ..routes['GET /nodes/pve/status'] = ((_) => {
@@ -917,9 +781,22 @@ void main() {
         {'name': 'x86-64-v3', 'custom': 0},
         {'name': 'host', 'custom': 0},
       ])
+      ..routes['GET /nodes'] = ((_) => [
+        {'node': 'pve', 'status': 'online'},
+      ])
+      ..routes['GET /storage'] = ((_) => const [])
+      ..routes['GET /nodes/pve/storage'] = ((_) => [
+        {'storage': 'local-lvm', 'type': 'lvmthin', 'active': 1, 'enabled': 1, 'content': 'images,rootdir'},
+      ])
+      ..routes['GET /nodes/pve/network'] = ((_) => [
+        {'iface': 'vmbr0', 'type': 'bridge', 'active': 1},
+      ])
       ..routes['POST /nodes/pve/qemu/9901/config'] = ((_) => _Api.upid)
-      ..routes['PUT /nodes/pve/lxc/9902/config'] = ((_) => null)
-      ..routes['PUT /nodes/pve/qemu/9901/resize'] = ((_) => _Api.upid);
+      ..routes['PUT /nodes/pve/qemu/9901/resize'] = ((_) => _Api.upid)
+      ..routes['GET /nodes/pve/hardware/pci'] = ((_) => fixture('hardware_pci.json'))
+      ..routes['GET /nodes/pve/hardware/usb'] = ((_) => fixture('hardware_usb.json'))
+      ..routes['GET /cluster/mapping/usb'] = ((_) => fixture('mapping_usb.json'))
+      ..routes['GET /cluster/mapping/pci'] = ((_) => fixture('mapping_pci.json'));
 
     Map<String, String> sent(_Api api, String key) {
       final i = api.paths.lastIndexOf(key);
@@ -927,25 +804,23 @@ void main() {
       return Uri.splitQueryString(api.bodies[i]);
     }
 
-    test('read: the node\'s limits and CPU models, sorted', () async {
+    test('read: the guest, its pending changes, the node\'s limits and CPU models', () async {
       final hw = await hwApi().backend(token).hardware(vm);
+      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.type), (1, 2, 'host'));
+      expect(hw.pending, isNotEmpty);
+      expect(hw.revision, '698abb29c27485d3497f5b7a8ca4b6b2789c1cd1');
       expect(hw.limits.hostCpus, 12);
-      expect(hw.limits.hostMemoryBytes, 16627777536);
       expect(hw.cpuTypes, ['host', 'x86-64-v3']);
-    });
-
-    test('read: a token without Sys.Audit on the node still reads the guest',
-        () async {
+      // Without Sys.Audit on the node the guest still reads.
       final api = hwApi()
         ..routes['GET /nodes/pve/status'] = ((_) => _Api._status(403))
         ..routes['GET /nodes/pve/capabilities/qemu/cpu'] = ((_) => _Api._status(403));
-      final hw = await api.backend(token).hardware(vm);
-      expect(hw.limits.hostCpus, isNull);
-      expect(hw.cpuTypes, isEmpty);
-      expect(hw.cpu.cores, 2);
+      final bare = await api.backend(token).hardware(vm);
+      expect(bare.limits.hostCpus, isNull);
+      expect(bare.cpuTypes, isEmpty);
     });
 
-    test('every change carries the digest it was made from', () async {
+    test('a change crosses, carrying the digest its read had', () async {
       final api = hwApi();
       final pve = api.backend(token);
       final hw = await pve.hardware(vm);
@@ -953,220 +828,31 @@ void main() {
       expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
         'sockets': '2',
         'cores': '2',
-        // The model changes, its flag stays.
         'cpu': 'x86-64-v3,flags=+aes',
         'digest': hw.revision,
       });
-      await pve.changeHardware(vm, hw, const VirtHwSetMemory(mib: 1024));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
-        'memory': '1024',
-        // No floor any more: the default, the whole memory.
-        'delete': 'balloon',
-        'digest': hw.revision,
-      });
-      await pve.changeHardware(vm, hw, VirtHwUpdateNic(key: 'net1', linkUp: true, network: _bridge('vmbr1')));
-      expect(
-        sent(api, 'POST /nodes/pve/qemu/9901/config')['net1'],
-        'virtio=BC:24:11:DE:00:BF,bridge=vmbr1,firewall=1',
-      );
-      await pve.changeHardware(vm, hw, const VirtHwSetBoot(['ide2', 'scsi0']));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['boot'], 'order=ide2;scsi0');
-      await pve.changeHardware(vm, hw, const VirtHwRevert(['cores', 'memory']));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['revert'], 'cores,memory');
+      // What it names, by the node's own listing.
+      await pve.changeHardware(vm, hw, VirtHwAddDisk(storage: _pool('local-lvm'), gib: 4));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['scsi1'], 'local-lvm:4');
       await pve.changeHardware(vm, hw, const VirtHwGrowDisk(key: 'scsi0', bytes: 3 << 30));
       expect(sent(api, 'PUT /nodes/pve/qemu/9901/resize'), {
         'disk': 'scsi0',
         'size': '3G',
         'digest': hw.revision,
       });
-      // A task each, waited for.
-      expect(api.paths.last, contains('/tasks/'));
     });
 
-    test('a new disk and NIC go in the first free slot', () async {
+    test('refused before anything is sent, in the rule\'s words', () async {
       final api = hwApi();
       final pve = api.backend(token);
       final hw = await pve.hardware(vm);
-      await pve.changeHardware(
-        vm,
-        hw,
-        VirtHwAddDisk(storage: _pool('local-lvm'), gib: 4),
-      );
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['scsi1'], 'local-lvm:4');
-      await pve.changeHardware(vm, hw, VirtHwAddNic(network: _bridge('vmbr0')));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['net2'], 'virtio,bridge=vmbr0');
-      await pve.changeHardware(
-        vm,
-        hw,
-        VirtHwSetMedia(key: 'ide2', media: _iso('local:iso/a.iso')),
-      );
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide2'], 'local:iso/a.iso,media=cdrom');
-      // A new drive: the first free IDE slot (ide2 is taken), empty or not.
-      await pve.changeHardware(vm, hw, const VirtHwAddCdrom());
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide0'], 'none,media=cdrom');
-      await pve.changeHardware(vm, hw, VirtHwAddCdrom(media: _iso('local:iso/a.iso')));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide0'], 'local:iso/a.iso,media=cdrom');
+      final e = await _err(pve.changeHardware(vm, hw, const VirtHwGrowDisk(key: 'scsi0', bytes: 1)));
+      expect(e.type, VirtErrType.unsupported);
+      expect(e.message, virtHwIssueText(VirtHwIssue.diskShrink));
+      expect(api.paths.where((p) => p.startsWith('POST') || p.startsWith('PUT')), isEmpty);
     });
 
-    test('a cloud-init drive is told apart from install media', () {
-      final hw = PveResources.parseHardware(
-        config: {
-          ...config('hw_vm_config.json'),
-          'ide2': 'local-lvm:vm-9901-cloudinit,media=cdrom',
-          'ide0': 'local:9901/vm-9901-cloudinit.qcow2,media=cdrom',
-          'ide3': 'local:iso/vm-1-cloudinit.iso,media=cdrom',
-        },
-        pending: const [],
-        kind: VirtGuestKind.qemu,
-        running: false,
-      );
-      expect(hw.disk('ide2')!.cloudInit, isTrue);
-      expect(hw.disk('ide0')!.cloudInit, isTrue);
-      // An ISO that happens to be named so is media.
-      expect(hw.disk('ide3')!.cloudInit, isFalse);
-    });
-
-    test('a removed disk\'s volume: deleted as unused, or kept while in use',
-        () async {
-      final api = hwApi();
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      // Detached: PVE lists the volume as unused, and deleting that deletes
-      // it.
-      final detached = Map.of(config('hw_vm_config.json'))
-        ..remove('scsi0')
-        ..['unused0'] = 'local-lvm:vm-9901-disk-0'
-        ..['digest'] = 'after';
-      var reads = 0;
-      api.routes['GET /nodes/pve/qemu/9901/config'] = (_) =>
-          reads++ == 0 ? config('hw_vm_config.json') : detached;
-      var out = await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
-      );
-      expect(out.volumeKept, isFalse);
-      final bodies = [
-        for (final (i, p) in api.paths.indexed)
-          if (p == 'POST /nodes/pve/qemu/9901/config')
-            Uri.splitQueryString(api.bodies[i]),
-      ];
-      expect(bodies[0]['delete'], 'scsi0');
-      expect(bodies[1], {'delete': 'unused0', 'digest': 'after'});
-
-      // Still attached (pending until the guest stops): kept.
-      reads = 0;
-      api.routes['GET /nodes/pve/qemu/9901/config'] = (_) => config('hw_vm_config.json');
-      out = await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
-      );
-      expect(out.volumeKept, isTrue);
-    });
-
-    test('a volume written as `file=`, and a TPM state, are deleted with the '
-        'digest of the configuration they were found in', () async {
-      final api = hwApi();
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      final before = {
-        ...config('hw_vm_config.json'),
-        'scsi0': 'file=local-lvm:vm-9901-disk-0,size=1G',
-        'tpmstate0': 'local-lvm:vm-9901-disk-7,size=4M,version=v2.0',
-      };
-      final detached = Map.of(before)
-        ..remove('scsi0')
-        ..remove('tpmstate0')
-        ..['unused0'] = 'local-lvm:vm-9901-disk-0'
-        ..['unused1'] = 'local-lvm:vm-9901-disk-7'
-        ..['digest'] = 'after';
-      var reads = 0;
-      api.routes['GET /nodes/pve/qemu/9901/config'] = (_) =>
-          (reads++).isEven ? before : detached;
-      List<Map<String, String>> bodies() => [
-        for (final (i, p) in api.paths.indexed)
-          if (p == 'POST /nodes/pve/qemu/9901/config')
-            Uri.splitQueryString(api.bodies[i]),
-      ];
-
-      final out = await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
-      );
-      expect(out.volumeKept, isFalse);
-      expect(bodies().last, {'delete': 'unused0', 'digest': 'after'});
-
-      await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwRemoveDevice(key: 'tpmstate0'),
-      );
-      expect(bodies()[bodies().length - 2]['delete'], 'tpmstate0');
-      expect(bodies().last, {'delete': 'unused1', 'digest': 'after'});
-    });
-
-    test('a container: PUT, a mount point and an interface named for it',
-        () async {
-      final api = hwApi()
-        ..routes['GET /nodes/pve/lxc/9902/config'] = ((_) => fixture('hw_ct_config.json'))
-        ..routes['GET /nodes/pve/lxc/9902/pending'] = ((_) => fixture('hw_ct_pending.json'));
-      final pve = api.backend(token);
-      final hw = await pve.hardware(ct);
-      expect(api.paths, isNot(contains('GET /nodes/pve/capabilities/qemu/cpu')));
-      await pve.changeHardware(ct, hw, const VirtHwSetMemory(mib: 512, swapMib: 0));
-      expect(sent(api, 'PUT /nodes/pve/lxc/9902/config'), {
-        'memory': '512',
-        'swap': '0',
-        'digest': hw.revision,
-      });
-      await pve.changeHardware(
-        ct,
-        hw,
-        VirtHwAddDisk(storage: _pool('local-lvm'), gib: 2, mountPoint: '/srv'),
-      );
-      expect(sent(api, 'PUT /nodes/pve/lxc/9902/config')['mp1'], 'local-lvm:2,mp=/srv');
-      await pve.changeHardware(ct, hw, VirtHwAddNic(network: _bridge('vmbr0')));
-      expect(
-        sent(api, 'PUT /nodes/pve/lxc/9902/config')['net1'],
-        'name=eth1,bridge=vmbr0,ip=dhcp',
-      );
-    });
-
-    test('settings: name, note (cleared by deleting it), protection',
-        () async {
-      final api = hwApi();
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      await pve.changeHardware(vm, hw, const VirtHwSetName('web-03'));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
-        'name': 'web-03',
-        'digest': hw.revision,
-      });
-      await pve.changeHardware(vm, hw, const VirtHwSetDescription('a & b'));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['description'], 'a & b');
-      await pve.changeHardware(vm, hw, const VirtHwSetDescription(''));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
-        'delete': 'description',
-        'digest': hw.revision,
-      });
-      await pve.changeHardware(vm, hw, const VirtHwSetProtection(true));
-      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['protection'], '1');
-
-      // A container's name is its hostname.
-      final ctApi = hwApi()
-        ..routes['GET /nodes/pve/lxc/9902/config'] = ((_) => config('hw_ct_config.json'))
-        ..routes['GET /nodes/pve/lxc/9902/pending'] = ((_) => const <Object?>[]);
-      final ctPve = ctApi.backend(token);
-      final ctHw = await ctPve.hardware(ct);
-      expect(ctHw.name, isNotNull);
-      await ctPve.changeHardware(ct, ctHw, const VirtHwSetName('dns-02'));
-      expect(sent(ctApi, 'PUT /nodes/pve/lxc/9902/config')['hostname'], 'dns-02');
-    });
-
-    test('a stale digest is a conflict; a bad value the host\'s words',
-        () async {
+    test('a stale digest is a conflict; a bad value the host\'s words', () async {
       final api = hwApi();
       final pve = api.backend(token);
       final hw = await pve.hardware(vm);
@@ -1185,12 +871,24 @@ void main() {
       expect(bad.type, VirtErrType.actionFailed);
       expect(bad.message, contains('minimum value of 1'));
     });
+
+    test('host devices: a token gets mappings; root@pam the node\'s too', () async {
+      final tokenDevs = await hwApi().backend(token).hostDevices(vm);
+      expect(tokenDevs.mappingsOnly, isTrue);
+      expect(tokenDevs.usb.map((d) => (d.id, d.mapping)), [('sbhwb-bt', true)]);
+      expect(tokenDevs.pci.map((d) => (d.id, d.mapping)), [('sbhwb-xhci', true)]);
+      expect(tokenDevs.iommu, isFalse);
+
+      const password = PveConfig(addr: 'https://pve.lan:8006', auth: PveAuth.password);
+      final root = await hwApi().backend(password, user: 'root').hostDevices(vm);
+      expect(root.mappingsOnly, isFalse);
+      // Hubs left out; the Bluetooth radio offered by id.
+      expect(root.usb.map((d) => d.id), ['sbhwb-bt', '0bda:b023']);
+      expect(root.pci.length, 1 + (fixture('hardware_pci.json')! as List).length);
+    });
   });
 
   group('snapshots, storage, networks', () {
-    List<Object?> fixture(String name) =>
-        jsonDecode(File('test/fixtures/pve/$name').readAsStringSync())
-            as List<Object?>;
 
     const token = PveConfig(
       addr: 'https://pve.lan:8006',
@@ -1335,27 +1033,6 @@ void main() {
       expect(virtPveStorageMaySnapshot('zfspool'), isTrue);
     });
 
-    test('snapshot listing: the "current" entry marks, and is not one', () {
-      final list = PveResources.parseSnapshots(fixture('snapshots_qemu.json'));
-      expect(list.map((s) => s.name), ['sbx-disk', 'sbx-mem']);
-      final disk = list.first;
-      expect(disk.description, 'disk only');
-      expect(disk.withMemory, isFalse);
-      // After a rollback to it: `current`'s parent.
-      expect(disk.current, isTrue);
-      expect(
-        disk.createdAt,
-        DateTime.fromMillisecondsSinceEpoch(1790335982 * 1000),
-      );
-      final mem = list.last;
-      expect(mem.withMemory, isTrue);
-      expect(mem.parent, 'sbx-disk');
-      expect(mem.current, isFalse);
-      // An empty description is none.
-      expect(mem.description, isNull);
-      expect(PveResources.parseSnapshots(fixture('snapshots_none.json')), isEmpty);
-    });
-
     test('snapshot requests: create, rollback and delete wait for their task',
         () async {
       final api = _Api()..resources = _resources;
@@ -1453,194 +1130,6 @@ void main() {
       expect(vols, hasLength(6));
     });
 
-  });
-
-  group('hardware: devices, firmware, display', () {
-    Object? fixture(String name) =>
-        jsonDecode(File('test/fixtures/pve/$name').readAsStringSync());
-
-    const token = PveConfig(
-      addr: 'https://pve.lan:8006',
-      auth: PveAuth.token,
-      tokenId: 'root@pam!sb',
-      tokenSecret: 's',
-    );
-    const vm = VirtGuest(
-      id: 'qemu/9921',
-      name: 'sbhwb-probe',
-      kind: VirtGuestKind.qemu,
-      state: VirtGuestState.stopped,
-      vmid: 9921,
-      node: 'pve',
-    );
-
-    /// Captured from PVE 9.2: UEFI with Secure Boot, a TPM, a USB device by
-    /// mapping and one by id, a PCI device by mapping, a virtio card, and
-    /// disks with cache modes.
-    _Api devApi() => _Api()
-      ..routes['GET /nodes/pve/qemu/9921/config'] = ((_) => fixture('hw_vm_devices_config.json'))
-      ..routes['GET /nodes/pve/qemu/9921/pending'] = ((_) => const [])
-      ..routes['GET /nodes/pve/status'] = ((_) => const {})
-      ..routes['GET /nodes/pve/capabilities/qemu/cpu'] = ((_) => const [])
-      ..routes['POST /nodes/pve/qemu/9921/config'] = ((_) => _Api.upid)
-      ..routes['GET /nodes/pve/hardware/pci'] = ((_) => fixture('hardware_pci.json'))
-      ..routes['GET /nodes/pve/hardware/usb'] = ((_) => fixture('hardware_usb.json'))
-      ..routes['GET /cluster/mapping/usb'] = ((_) => fixture('mapping_usb.json'))
-      ..routes['GET /cluster/mapping/pci'] = ((_) => fixture('mapping_pci.json'));
-
-    Map<String, String> sent(_Api api) {
-      final i = api.paths.lastIndexOf('POST /nodes/pve/qemu/9921/config');
-      expect(i, isNot(-1), reason: '${api.paths}');
-      return Uri.splitQueryString(api.bodies[i]);
-    }
-
-    test('read: devices, firmware, card and cache modes', () async {
-      final hw = await devApi().backend(token).hardware(vm);
-      expect(
-        hw.devices.map((d) => (d.key, d.kind, d.detail, d.mapping)),
-        [
-          ('hostpci0', VirtHwDeviceKind.pci, 'sbhwb-xhci', true),
-          ('tpmstate0', VirtHwDeviceKind.tpm, 'TPM v2.0', false),
-          ('usb0', VirtHwDeviceKind.usb, 'sbhwb-bt', true),
-          ('usb1', VirtHwDeviceKind.usb, '0bda:b023', false),
-        ],
-      );
-      expect(hw.firmware, const VirtHwFirmware(uefi: true, secureBoot: true, varsStorage: 'local-lvm'));
-      expect(hw.display?.gpu, 'virtio');
-      expect({for (final d in hw.disks) d.key: d.cache}, {'scsi1': 'writethrough', 'virtio0': 'writeback'});
-      // The EFI and TPM volumes are not disks to edit.
-      expect(hw.disks.map((d) => d.key), isNot(contains('efidisk0')));
-      expect(hw.support, PveResources.pveQemuSupport);
-    });
-
-    test('disk cache, and a bus change with the boot order kept', () async {
-      final api = devApi();
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      await pve.changeHardware(vm, hw, const VirtHwUpdateDisk(key: 'virtio0', cache: 'default'));
-      expect(sent(api)['virtio0'], 'local-lvm:vm-9921-disk-0,size=1G');
-      // The boot order names the disk: it moves with it, in its place.
-      final booted = hw.copyWith(boot: ['scsi1', 'net0']);
-      await pve.changeHardware(vm, booted, const VirtHwUpdateDisk(key: 'scsi1', bus: 'sata'));
-      expect(sent(api), {
-        'sata0': 'local-lvm:vm-9921-disk-4,cache=writethrough,size=1G',
-        'boot': 'order=sata0;net0',
-        'delete': 'scsi1',
-        'digest': hw.revision!,
-      });
-    });
-
-    test('a bus change drops what the new bus does not take', () async {
-      // `virtio0` as `qemuCreateBody` makes it, with `iothread=1`, which
-      // SATA and IDE refuse.
-      final config = (fixture('hw_vm_devices_config.json')! as Map)
-          .cast<String, Object?>();
-      config['virtio0'] = 'local-lvm:vm-9921-disk-0,iothread=1,ro=1,size=1G';
-      final api = devApi()
-        ..routes['GET /nodes/pve/qemu/9921/config'] = ((_) => config);
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      await pve.changeHardware(vm, hw, const VirtHwUpdateDisk(key: 'virtio0', bus: 'sata'));
-      expect(sent(api)['sata0'], 'local-lvm:vm-9921-disk-0,size=1G');
-      await pve.changeHardware(vm, hw, const VirtHwUpdateDisk(key: 'virtio0', bus: 'scsi'));
-      expect(sent(api)['scsi0'], 'local-lvm:vm-9921-disk-0,iothread=1,ro=1,size=1G');
-    });
-
-    test('NIC model and MAC, devices, card', () async {
-      final api = devApi();
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwSetNicHardware(key: 'net0', model: 'virtio', mac: 'bc:24:11:00:00:09'),
-      );
-      expect(sent(api)['net0'], 'virtio=BC:24:11:00:00:09,bridge=vmbr0');
-      await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwAddDevice(
-          kind: VirtHwDeviceKind.usb,
-          host: VirtHostDevice(id: 'bt', label: 'bt', mapping: true),
-        ),
-      );
-      expect(sent(api)['usb2'], 'mapping=bt');
-      // A device by vendor and product (the default), or by where it sits.
-      const dongle = VirtHostDevice(id: '0bda:b023', label: 'bt', usbBus: 1, usbPort: '1.2');
-      await pve.changeHardware(vm, hw, const VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dongle));
-      expect(sent(api)['usb2'], 'host=0bda:b023');
-      await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwAddDevice(kind: VirtHwDeviceKind.usb, host: dongle, usbNaming: VirtUsbNaming.address),
-      );
-      expect(sent(api)['usb2'], 'host=1-1.2');
-      // No port from the host: no address to give it by.
-      final e = await _err(
-        pve.changeHardware(
-          vm,
-          hw,
-          const VirtHwAddDevice(
-            kind: VirtHwDeviceKind.usb,
-            host: VirtHostDevice(id: '0bda:b023', label: 'bt', usbBus: 1),
-            usbNaming: VirtUsbNaming.address,
-          ),
-        ),
-      );
-      expect(e.type, VirtErrType.unsupported);
-      await pve.changeHardware(
-        vm,
-        hw,
-        const VirtHwAddDevice(
-          kind: VirtHwDeviceKind.pci,
-          host: VirtHostDevice(id: '0000:00:14.0', label: 'xHCI'),
-        ),
-      );
-      expect(sent(api)['hostpci1'], '0000:00:14.0');
-      await pve.changeHardware(vm, hw, const VirtHwAddDevice(kind: VirtHwDeviceKind.tpm, storage: 'local-lvm'));
-      expect(sent(api)['tpmstate0'], 'local-lvm:1,version=v2.0');
-      await pve.changeHardware(vm, hw, const VirtHwRemoveDevice(key: 'usb1'));
-      expect(sent(api)['delete'], 'usb1');
-      await pve.changeHardware(vm, hw, const VirtHwSetDisplay(gpu: 'qxl'));
-      expect(sent(api)['vga'], 'qxl');
-    });
-
-    test('firmware: Secure Boot is a new variables disk, BIOS keeps it', () async {
-      final api = devApi();
-      final pve = api.backend(token);
-      final hw = await pve.hardware(vm);
-      await pve.changeHardware(vm, hw, const VirtHwSetFirmware(uefi: true, secureBoot: true));
-      expect(sent(api), {'bios': 'ovmf', 'digest': hw.revision!});
-      await pve.changeHardware(vm, hw, const VirtHwSetFirmware(uefi: true));
-      final bodies = [
-        for (final (i, p) in api.paths.indexed)
-          if (p == 'POST /nodes/pve/qemu/9921/config') Uri.splitQueryString(api.bodies[i]),
-      ];
-      expect(bodies.reversed.take(2).toList().reversed, [
-        {'delete': 'efidisk0', 'digest': hw.revision!},
-        {'bios': 'ovmf', 'efidisk0': 'local-lvm:1,efitype=4m,pre-enrolled-keys=0'},
-      ]);
-      await pve.changeHardware(vm, hw, const VirtHwSetFirmware(uefi: false));
-      expect(sent(api), {'bios': 'seabios', 'digest': hw.revision!});
-    });
-
-    test('host devices: a token gets mappings; root@pam the node\'s too', () async {
-      final tokenDevs = await devApi().backend(token).hostDevices(vm);
-      expect(tokenDevs.mappingsOnly, isTrue);
-      expect(tokenDevs.usb.map((d) => (d.id, d.mapping)), [('sbhwb-bt', true)]);
-      expect(tokenDevs.pci.map((d) => (d.id, d.mapping)), [('sbhwb-xhci', true)]);
-      // No IOMMU group on any device: the host has none on.
-      expect(tokenDevs.iommu, isFalse);
-
-      final api = devApi();
-      const password = PveConfig(addr: 'https://pve.lan:8006', auth: PveAuth.password);
-      final root = await api.backend(password, user: 'root').hostDevices(vm);
-      expect(root.mappingsOnly, isFalse);
-      // Hubs left out; the Bluetooth radio offered by id.
-      expect(root.usb.map((d) => d.id), ['sbhwb-bt', '0bda:b023']);
-      expect(root.pci.length, 1 + (fixture('hardware_pci.json')! as List).length);
-      expect(root.pci.last.iommuGroup, isNull);
-    });
   });
 
   group('storage and network management', () {
@@ -2019,12 +1508,6 @@ VirtStoragePool _pool(String name) => VirtStoragePool(
   type: 'lvmthin',
   content: const ['images', 'rootdir'],
 );
-
-VirtNetwork _bridge(String name) =>
-    VirtNetwork(id: 'pve/$name', name: name, node: 'pve', mode: 'bridge');
-
-VirtVolume _iso(String id) =>
-    VirtVolume(id: id, name: id.split('/').last, content: 'iso');
 
 /// What the node's live network probe printed.
 class _Probe implements ServerExec {

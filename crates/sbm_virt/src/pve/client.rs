@@ -36,6 +36,7 @@ use crate::model::{Capabilities, ConsoleKind, Guest, GuestDetail, GuestKind, His
 use crate::rates::RateTracker;
 
 mod create;
+mod hardware;
 mod storage;
 
 pub use create::IMPORT_CONTENT_SINCE;

@@ -3396,9 +3396,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtHwIssueStorageSpace => '超出了存储的可用空间';
 
   @override
-  String get virtHwIssueSwap => '不能为负数';
-
-  @override
   String get virtHwLater => '重启后生效';
 
   @override
@@ -8465,9 +8462,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtHwIssueStorageSpace => '超出了儲存的可用空間';
-
-  @override
-  String get virtHwIssueSwap => '不能為負數';
 
   @override
   String get virtHwLater => '重新啟動後生效';

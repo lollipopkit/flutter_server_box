@@ -7,6 +7,7 @@
   import PveForm from '../components/PveForm.svelte'
   import VirtConsole from '../components/VirtConsole.svelte'
   import VirtCreate from '../components/VirtCreate.svelte'
+  import VirtHardware from '../components/VirtHardware.svelte'
   import VirtManage from '../components/VirtManage.svelte'
   import VirtNetworks from '../components/VirtNetworks.svelte'
   import VirtSnapshots from '../components/VirtSnapshots.svelte'
@@ -312,7 +313,7 @@
 
   $effect(() => {
     const g = current
-    if (g && (pane === 'hardware' || pane === 'console') && detailFor !== g.id) untrack(() => void loadDetail(g))
+    if (g && pane === 'console' && detailFor !== g.id) untrack(() => void loadDetail(g))
   })
 
   /// A guest the host has just made: selected, the host read again.
@@ -634,49 +635,12 @@
                 selected = null
                 void refresh()
               }}
+              onchanged={() => void refresh()}
             />
           {:else if pane === 'snapshots'}
             <VirtSnapshots guest={g} {sudoPassword} onchanged={() => void refresh()} />
           {:else if pane === 'hardware'}
-            <Card class="space-y-3">
-              {#if detailError}
-                <p class="text-sm text-danger whitespace-pre-wrap break-all">{detailError}</p>
-              {:else if !detail}
-                <Spinner class="w-5 h-5" />
-              {:else}
-                {@const d = detail}
-                <div class="space-y-1">
-                  <p class="text-xs text-faint-fg">{$LL.virtDisks()}</p>
-                  {#each d.disks as disk (disk.target ?? disk.source)}
-                    <p class="flex flex-wrap justify-between gap-2 text-xs">
-                      <span class="font-mono text-fg">{disk.target ?? '—'}{disk.bus ? ` · ${disk.bus}` : ''}</span>
-                      <span class="break-all text-muted-fg">{[disk.device, disk.source, disk.format, disk.size !== null ? fmtBytes(disk.size) : null, disk.readonly ? $LL.virtReadonly() : null].filter(Boolean).join(' · ')}</span>
-                    </p>
-                  {:else}
-                    <p class="text-xs text-muted-fg">—</p>
-                  {/each}
-                </div>
-                <div class="space-y-1">
-                  <p class="text-xs text-faint-fg">{$LL.virtNics()}</p>
-                  {#each d.nics as nic (nic.kind + (nic.mac ?? ''))}
-                    <p class="flex flex-wrap justify-between gap-2 text-xs">
-                      <span class="font-mono text-fg">{nic.target ?? nic.kind}</span>
-                      <span class="break-all text-muted-fg">{[nic.model, nic.source, nic.mac].filter(Boolean).join(' · ')}</span>
-                    </p>
-                  {:else}
-                    <p class="text-xs text-muted-fg">—</p>
-                  {/each}
-                </div>
-                {#if d.graphics.length > 0 || d.machine || d.arch}
-                  <p class="text-xs text-muted-fg">
-                    {[d.graphics.map((x) => x.kind).join(', '), d.machine, d.arch].filter(Boolean).join(' · ')}
-                  </p>
-                {/if}
-                {#if d.description}
-                  <p class="whitespace-pre-wrap text-xs text-muted-fg">{d.description}</p>
-                {/if}
-              {/if}
-            </Card>
+            <VirtHardware {view} guest={g} {sudoPassword} onchanged={() => void refresh()} />
           {:else if pane === 'console'}
             {#if detailError}
               <Card><p class="text-sm text-danger whitespace-pre-wrap break-all">{detailError}</p></Card>

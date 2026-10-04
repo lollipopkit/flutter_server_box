@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Pas plus que la mémoire",
   "virtHwIssueMountPoint": "Un chemin absolu, comme /data",
   "virtHwIssueStorageSpace": "Plus que l'espace libre du stockage",
-  "virtHwIssueSwap": "Pas négatif",
   "virtHwLater": "Effectif au redémarrage",
   "virtHwLess": "Moins",
   "virtHwLinkDown": "Déconnectée",

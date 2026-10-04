@@ -408,6 +408,12 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/virt/clone/form").route(web::post().to(crate::api::virt_guests::clone_form)))
             .service(web::resource("/virt/clone").route(web::post().to(crate::api::virt_guests::clone)))
             .service(web::resource("/virt/template").route(web::post().to(crate::api::virt_guests::template)))
+            .service(web::resource("/virt/hardware").route(web::post().to(crate::api::virt_hardware::hardware)))
+            .service(web::resource("/virt/hardware/change").route(web::post().to(crate::api::virt_hardware::change)))
+            .service(web::resource("/virt/hardware/revert").route(web::post().to(crate::api::virt_hardware::revert)))
+            .service(web::resource("/virt/cloud-init").route(web::post().to(crate::api::virt_hardware::cloud_init)))
+            .service(web::resource("/virt/cloud-init/set").route(web::post().to(crate::api::virt_hardware::set_cloud_init)))
+            .service(web::resource("/virt/host-devices").route(web::post().to(crate::api::virt_hardware::host_devices)))
             .service(
                 web::resource("/virt/pve")
                     .route(web::get().to(crate::api::virt::pve_get))

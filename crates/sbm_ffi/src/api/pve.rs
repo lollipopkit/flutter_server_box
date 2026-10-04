@@ -197,17 +197,6 @@ pub struct PveConsoleTicket {
     pub websocket_path: String,
 }
 
-/// A guest's configuration (`/nodes/../config` JSON) read into
-/// `sbm_virt::model::GuestDetail` JSON.
-#[flutter_rust_bridge::frb(sync)]
-pub fn pve_guest_detail(config_json: String, lxc: bool) -> Result<String, PveError> {
-    let config: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&config_json)
-        .map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()))?;
-    let kind = if lxc { sbm_virt::model::GuestKind::Lxc } else { sbm_virt::model::GuestKind::Qemu };
-    let detail = sbm_virt::pve::resources::parse_config(&config, kind);
-    serde_json::to_string(&detail).map_err(|e| Error::msg(ErrorKind::InvalidResponse, e.to_string()).into())
-}
-
 /// A guest as the app holds it, from the last load (mirrors the fields of
 /// sbm_virt::model::Guest that a call on one guest reads).
 pub struct PveGuestRef {
@@ -538,6 +527,42 @@ impl PveSession {
     pub async fn clone_guest(&self, guest: PveGuestRef, request_json: String) -> Result<String, PveError> {
         let request: sbm_virt::create::CloneRequest = from_json(&request_json)?;
         Ok(self.client.clone_guest(&guest.into(), &request).await?)
+    }
+
+    // --- Hardware, settings, cloud-init (sbm_virt::hardware) ---
+
+    /// `guest`'s hardware as it stands, `Hardware` JSON.
+    pub async fn hardware(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        to_json(&self.client.hardware(&guest.into()).await?)
+    }
+
+    /// Makes `change_json` (a `Change`) from the read whose digest is
+    /// `revision`, checked first against the guest as it is now; `Outcome`
+    /// JSON.
+    pub async fn change_hardware(&self, guest: PveGuestRef, revision: Option<String>, change_json: String) -> Result<String, PveError> {
+        let change: sbm_virt::hardware::Change = from_json(&change_json)?;
+        to_json(&self.client.change_hardware(&guest.into(), revision.as_deref(), &change).await?)
+    }
+
+    /// Drops every pending change.
+    pub async fn revert_pending(&self, guest: PveGuestRef, revision: Option<String>) -> Result<(), PveError> {
+        Ok(self.client.revert_pending(&guest.into(), revision.as_deref()).await?)
+    }
+
+    /// A VM's cloud-init settings, `CloudInitState` JSON.
+    pub async fn cloud_init(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        to_json(&self.client.cloud_init(&guest.into()).await?)
+    }
+
+    /// Writes `edit_json` (a `CloudInitEdit`), and the drive at once.
+    pub async fn set_cloud_init(&self, guest: PveGuestRef, edit_json: String) -> Result<(), PveError> {
+        let edit: sbm_virt::hardware::CloudInitEdit = from_json(&edit_json)?;
+        Ok(self.client.set_cloud_init(&guest.into(), &edit).await?)
+    }
+
+    /// The devices `guest` can be given, `HostDevices` JSON.
+    pub async fn host_devices(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        to_json(&self.client.host_devices(&guest.into()).await?)
     }
 
     /// The headers that authenticate a connection made outside the session

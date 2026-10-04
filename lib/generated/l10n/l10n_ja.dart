@@ -3454,9 +3454,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'ストレージの空き容量を超えています';
 
   @override
-  String get virtHwIssueSwap => '負の値は不可';
-
-  @override
   String get virtHwLater => '再起動後に反映';
 
   @override

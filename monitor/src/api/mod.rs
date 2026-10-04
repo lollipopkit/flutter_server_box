@@ -3,6 +3,7 @@ pub mod backup;
 pub mod bmc;
 pub mod virt;
 pub mod virt_guests;
+pub mod virt_hardware;
 pub mod virt_resources;
 pub mod desktops;
 pub mod custom_cmds;

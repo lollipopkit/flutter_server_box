@@ -1206,6 +1206,38 @@ refusals (a name or VMID taken, too many cores, a running guest deleted, a
 linked clone naming a storage, an unknown node) said before any request; a
 missing privilege named with the `pveum` line that grants it.
 
+Since 5.6, a guest's hardware, settings, cloud-init and host devices:
+`sbm_virt::hardware` (the `Hardware` a view edits — the definition the
+next start gets, with what the running guest has instead as `pending` — the
+`Change` a client asks for, by id, and `issue`, the rules it is checked by;
+`CloudInitState` and `CloudInitEdit`; `HostDevices`), `pve::hardware` (the
+configuration and `pending` read, the option strings a change writes,
+cloud-init's fields, the devices a login may give), PVE's calls on
+`pve::Client` (`hardware`, `change_hardware`, `revert_pending`,
+`cloud_init`, `set_cloud_init`, `host_devices`), and `libvirt::hardware`
+(`hardware_of`, `pending_of`, `support_of`, `change_of`, `revert_of`,
+`cloud_init_state_of`, `cloud_init_update`, `host_devices_of`). A change is
+made from the read whose `revision` it carries: PVE's `digest`; on libvirt
+the SHA-256 of the persistent definition and of the running domain's id
+(new at every start), compared with what is read again for the change — the
+definition itself carries the display passwords and so stays on the host's
+side, and a revert to the running definition shown for one run is refused
+once the guest started again. The agent serves them as `/virt/hardware`,
+`/virt/hardware/change`, `/virt/hardware/revert`, `/virt/cloud-init`,
+`/virt/cloud-init/set` and `/virt/host-devices`; the app's
+`virt_hardware.dart` rules are FFI wrappers, and its backends keep only the
+round trips.
+Verified 2026-10-04 against PVE 9.2.2 and libvirt 11.3.0 through the agent
+and the app's `virt_real_test.dart`: CPU (with a CPU type), memory and the
+balloon, a disk grown, added, moved to another bus with its cache mode and
+its boot entry, removed with its volume (kept while a running domain holds
+it), a CD-ROM added and ejected, NICs added, changed (model, MAC, link,
+firewall) and removed, the boot order, UEFI with Secure Boot and back, a TPM
+added and removed, the display, name, note, autostart and protection;
+changes the running guest takes later shown as pending and reverted; a
+stale read refused as a conflict; cloud-init read and rewritten (a key, a
+static address, the password removed or kept); the host's devices.
+
 Still in Dart until their part of item 5 moves them (each marked
 `TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
 whose adapter hands the request to `PveSession.raw` (the session's rules

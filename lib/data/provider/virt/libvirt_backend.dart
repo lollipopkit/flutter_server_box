@@ -24,6 +24,7 @@ import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
 import 'package:server_box/src/rust/api/create.dart' as cr;
+import 'package:server_box/src/rust/api/hardware.dart' as hw;
 import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
@@ -715,8 +716,7 @@ class LibvirtBackend implements VirtBackend {
         message: virtCreateIssueText(VirtCreateIssue.notStopped),
       );
     }
-    final info = await _hardwareInfo(guest);
-    final hardware = _hardwareJson[guest.id]!;
+    final hardware = await _hardwareRead(guest);
     final guests = (await load()).guests;
     await storagePools();
     final spec = _rule(
@@ -747,7 +747,7 @@ class LibvirtBackend implements VirtBackend {
       await _run(
         _script(
           () => ffi.virtCloneDefineScript(
-            baseXml: info.configXml,
+            baseXml: _decode(hardware)['config_xml'] as String,
             name: request.name,
             disksJson: _rule(() => cr.virtLibvirtCloneDisks(specJson: spec, paths: paths)),
           ),
@@ -1291,187 +1291,109 @@ class LibvirtBackend implements VirtBackend {
   // Hardware
   // ---------------------------------------------------------------------------
 
-  /// The last hardware read per guest: which disks and NICs each definition
-  /// has, which a change needs to know to address the right one.
-  final _hardware = <String, LibvirtHardwareInfo>{};
+  /// Both definitions, autostart, the host's CPUs and memory, and each
+  /// disk's size, in one round trip, as `sbm_virt` gave them
+  /// (`VirtHardwareInfo` JSON, which carries the display passwords and so
+  /// stays here). See `sbm_virt::libvirt::hardware_script`.
+  Future<String> _hardwareRead(VirtGuest guest) => _run(
+    ffi.virtHardwareScript(domain: guest.id),
+    ffi.parseVirtHardwareJson,
+  );
 
-  /// The same reads, as `sbm_virt` gave them: what a clone is decided from.
-  final _hardwareJson = <String, String>{};
-
-  /// One round trip: both definitions, autostart, the host's CPUs and
-  /// memory, and each disk's size. See `sbm_virt::libvirt::hardware_script`.
+  /// The persistent definition with what the running one has instead as
+  /// pending (`sbm_virt::libvirt::hardware::hardware_of`); its revision is
+  /// the definition's SHA-256.
   @override
   Future<VirtHardware> hardware(VirtGuest guest) async {
-    final info = await _hardwareInfo(guest);
-    _lastHwRevision[guest.id] = info.configXml;
-    _lastLiveXml[guest.id] = info.liveXml;
-    return hardwareOf(info, name: guest.name);
-  }
-
-  Future<LibvirtHardwareInfo> _hardwareInfo(VirtGuest guest) async {
-    final json = await _run(
-      ffi.virtHardwareScript(domain: guest.id),
-      ffi.parseVirtHardwareJson,
+    final info = await _hardwareRead(guest);
+    return VirtRust.hardware(
+      jsonDecode(_rule(() => hw.virtLibvirtHardware(infoJson: info, name: guest.name))),
     );
-    _hardwareJson[guest.id] = json;
-    return _hardware[guest.id] = LibvirtHardwareInfo.fromJson(_decode(json));
   }
 
-  /// [info] as the Hardware view edits it: the persistent definition, with
-  /// what the running one has instead as pending.
-  @visibleForTesting
-  static VirtHardware hardwareOf(LibvirtHardwareInfo info, {String? name}) {
-    final c = info.config;
-    final hostMem = info.hostMemoryKib;
-    return VirtHardware(
-      kind: VirtGuestKind.qemu,
-      running: info.live != null,
-      cpu: _cpuOf(c.cpu),
-      memory: VirtHwMemory(
-        mib: c.memoryKib ~/ 1024,
-        minMib: c.balloon ? c.currentMemoryKib ~/ 1024 : null,
-        balloon: c.balloon,
+  /// What [change] is checked against and made with: the host's pools, its
+  /// networks where a NIC is named, and the volume it names as its pool
+  /// lists it now.
+  Future<(List<VirtStoragePool>, List<VirtNetwork>, List<VirtVolume>)> _hwListing(
+    VirtHwChange change,
+  ) async {
+    final pools = await storagePools();
+    final networks = switch (change) {
+      VirtHwAddNic() || VirtHwUpdateNic() => await this.networks(),
+      _ => const <VirtNetwork>[],
+    };
+    final (VirtStoragePool?, VirtVolume?) named = switch (change) {
+      VirtHwAttachVolume(:final storage, :final volume) => (storage, volume),
+      VirtHwAddCdrom(media: final m?) || VirtHwSetMedia(media: final m?) => (m.pool, m.volume),
+      _ => (null, null),
+    };
+    final volumes = <VirtVolume>[];
+    if (named case (final p?, final v?)) {
+      final pool = pools.firstWhereOrNull((x) => x.id == p.id);
+      if (pool != null) {
+        volumes.addAll((await _volumes(pool)).$1.where((x) => x.id == v.id));
+      }
+    }
+    return (pools, networks, volumes);
+  }
+
+  /// One `virsh` round trip per change, each made to the persistent
+  /// definition and, where the domain runs, to the running one: the running
+  /// half failing leaves it for the next start ([VirtHwOutcome.liveError]).
+  /// The definitions are read again first, and the change refused when they
+  /// are not the ones [base] was read from
+  /// (`sbm_virt::libvirt::hardware::change_of`).
+  @override
+  Future<VirtHwOutcome> changeHardware(
+    VirtGuest guest,
+    VirtHardware base,
+    VirtHwChange change,
+  ) async {
+    final info = await _hardwareRead(guest);
+    final (pools, networks, volumes) = await _hwListing(change);
+    final made = _rule(
+      () => hw.virtLibvirtHwChange(
+        infoJson: info,
+        name: guest.name,
+        revision: base.revision,
+        changeJson: jsonEncode(VirtRust.hwChangeJson(change)),
+        poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
+        networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
+        volumesJson: jsonEncode([for (final v in volumes) VirtRust.volumeJson(v)]),
       ),
-      disks: [
-        for (final d in c.disks)
-          if (d.device == 'disk' || d.device == 'cdrom')
-            VirtHwDisk(
-              key: d.target,
-              kind: d.device == 'cdrom'
-                  ? VirtHwDiskKind.cdrom
-                  : VirtHwDiskKind.disk,
-              source: d.source,
-              size: d.capacity,
-              bus: d.bus,
-              format: d.format,
-              readonly: d.readonly,
-              cache: d.cache,
-              cloudInit:
-                  d.device == 'cdrom' && c.seed != null && d.source == c.seed,
-              // `vol-resize` takes the file; nothing else has a path to grow
-              // at while the domain is stopped (see [changeJson]).
-              resizable: d.sourceType == 'file',
+    );
+    final read = _decode(info);
+    return VirtRust.hwOutcome(
+      jsonDecode(
+        await _run(
+          _script(
+            () => ffi.virtHardwareChangeScript(
+              domain: guest.id,
+              running: read['live'] != null,
+              baseXml: read['config_xml'] as String?,
+              changeJson: made,
             ),
-      ],
-      nics: [
-        for (final n in c.nics)
-          VirtHwNic(
-            key: n.mac,
-            mac: n.mac,
-            type: n.kind,
-            source: n.source,
-            model: n.model,
-            linkUp: n.linkUp,
           ),
-      ],
-      boot: c.boot,
-      autostart: info.autostart,
-      firmware: VirtHwFirmware(uefi: c.efi, secureBoot: c.secureBoot),
-      display: VirtHwDisplay(
-        protocol: c.graphics?.kind,
-        listen: c.graphics?.listen,
-        gpu: c.video,
-        port: c.graphics?.port,
+          ffi.parseVirtHardwareChangeJson,
+          action: true,
+        ),
       ),
-      devices: [
-        if (c.tpm case final t?)
-          VirtHwDevice(
-            key: 'tpm',
-            kind: VirtHwDeviceKind.tpm,
-            detail: [t.model, t.version].nonNulls.join(' · '),
-          ),
-        for (final h in c.hostdevs)
-          VirtHwDevice(
-            key: h.key,
-            kind: h.kind == 'pci' ? VirtHwDeviceKind.pci : VirtHwDeviceKind.usb,
-            detail:
-                h.address ??
-                (h.vendor != null ? '${h.vendor}:${h.product}' : h.key.substring(4)),
-          ),
-      ],
-      support: supportOf(
-        info.caps,
-        firmware: info.firmware,
-        secureBootOn: c.secureBoot,
-      ),
-      name: name,
-      description: info.description,
-      renameRunning: false,
-      pending: pendingOf(c, info.live),
-      revision: info.configXml,
-      // Redacted: [configXml] carries the display passwords.
-      configText: info.configText.trimRight(),
-      limits: VirtHwLimits(
-        hostCpus: info.hostCpus,
-        hostMemoryBytes: hostMem == null ? null : hostMem * 1024,
-      ),
-    );
-  }
-
-  /// What the host's `domcapabilities` allows this domain, as the view's
-  /// choices. Without them (an older libvirt, a refusal), the common ground
-  /// every QEMU has.
-  ///
-  /// Secure Boot as [createOptions] decides it: a secure loader in
-  /// `domcapabilities` and a [firmware] descriptor carrying the enrolled
-  /// keys — or the domain already has it on, so it can be turned off.
-  @visibleForTesting
-  static VirtHwSupport supportOf(
-    LibvirtHwCaps? caps, {
-    List<LibvirtFirmware> firmware = const [],
-    bool secureBootOn = false,
-  }) {
-    List<String> pick(List<String>? have, List<String> wanted) => have == null
-        ? wanted
-        : [for (final w in wanted) if (have.contains(w)) w];
-    return VirtHwSupport(
-      buses: pick(caps?.diskBuses, const ['virtio', 'scsi', 'sata', 'ide']),
-      caches: const ['default', 'none', 'writeback', 'writethrough', 'directsync', 'unsafe'],
-      nicModels: const ['virtio', 'e1000e', 'e1000', 'rtl8139'],
-      mac: true,
-      protocols: pick(caps?.graphics, const ['vnc', 'spice']),
-      listen: true,
-      gpus: pick(caps?.video, const ['virtio', 'qxl', 'vga', 'cirrus', 'bochs', 'none']),
-      uefi: caps?.efi ?? false,
-      secureBoot:
-          secureBootOn ||
-          ((caps?.secureBoot ?? false) &&
-              firmware.any((f) => f.secureBoot && f.enrolledKeys)),
-      tpm: caps?.tpmEmulator ?? false,
-      usb: caps?.hostdev ?? false,
-      pci: caps?.hostdev ?? false,
     );
   }
 
   /// Discards every pending change: the definition is written again from
-  /// the running XML (see [VirtHwRevertPending]). The read is the store;
-  /// [base] must be the one [hardware] last returned.
+  /// the running XML (see [VirtHwRevertPending]), made from [base]'s read.
   @override
   Future<void> revertPending(VirtGuest guest, VirtHardware base) async {
-    if (base.revision != _lastHwRevision[guest.id]) {
-      throw const VirtErr(
-        type: VirtErrType.conflict,
-        message: 'Read the hardware again',
-      );
-    }
-    final live = _lastLiveXml[guest.id];
-    if (live == null || live.isEmpty) {
-      throw const VirtErr(
-        type: VirtErrType.unsupported,
-        message: 'The guest is not running: there is nothing to revert to',
-      );
-    }
-    final json = <String, Object?>{
-      'op': 'revert_live',
-      'live_xml': live,
-    };
+    final info = await _hardwareRead(guest);
+    final made = _rule(() => hw.virtLibvirtHwRevert(infoJson: info, revision: base.revision));
     await _run(
       _script(
         () => ffi.virtHardwareChangeScript(
           domain: guest.id,
           running: true,
-          baseXml: base.revision,
-          changeJson: jsonEncode(json),
+          baseXml: _decode(info)['config_xml'] as String?,
+          changeJson: made,
         ),
       ),
       ({required String raw}) async {
@@ -1482,266 +1404,56 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
-  /// Dies and clusters count as threads here: the form sets sockets and
-  /// cores, and keeps the rest of the topology as it is.
-  static VirtHwCpu _cpuOf(LibvirtHwCpu cpu) => VirtHwCpu(
-    sockets: cpu.sockets,
-    cores: cpu.cores,
-    threads: cpu.threads * cpu.dies * cpu.clusters,
-    online: cpu.current < cpu.max ? cpu.current : null,
-  );
-
-  /// What the running definition ([live]) has differently from the
-  /// persistent one ([config]): the changes the next start makes. libvirt
-  /// keeps no list of its own; this is the difference.
-  ///
-  /// The balloon's current size is not one: it moves while the guest runs,
-  /// and is not a change anybody made.
-  @visibleForTesting
-  static List<VirtPendingField> pendingOf(
-    LibvirtHwConfig config,
-    LibvirtHwConfig? live,
-  ) {
-    if (live == null) return const [];
-    String cpu(LibvirtHwCpu c) {
-      final v = _cpuOf(c);
-      final shape = '${v.sockets}×${v.cores}×${v.threads}';
-      return c.current < c.max ? '${c.current}/${c.max} ($shape)' : '${c.max} ($shape)';
-    }
-
-    String mem(int kib) => '${kib ~/ 1024} MiB';
-    String nic(LibvirtHwNic n) =>
-        [n.kind, n.source, n.model, if (!n.linkUp) 'link down'].nonNulls.join(' ');
-    final out = <VirtPendingField>[];
-    if (cpu(config.cpu) != cpu(live.cpu)) {
-      out.add(VirtPendingField(key: 'cpu', current: cpu(live.cpu), pending: cpu(config.cpu)));
-    }
-    if (config.memoryKib != live.memoryKib) {
-      out.add(
-        VirtPendingField(
-          key: 'memory',
-          current: mem(live.memoryKib),
-          pending: mem(config.memoryKib),
-        ),
-      );
-    }
-    final liveDisks = {for (final d in live.disks) d.target: d};
-    final configDisks = {for (final d in config.disks) d.target: d};
-    for (final d in config.disks) {
-      final l = liveDisks[d.target];
-      if (l == null) {
-        out.add(VirtPendingField(key: d.target, pending: d.source ?? d.device));
-      } else if (l.source != d.source) {
-        out.add(VirtPendingField(key: d.target, current: l.source, pending: d.source));
-      }
-    }
-    for (final l in live.disks) {
-      if (!configDisks.containsKey(l.target)) {
-        out.add(VirtPendingField(key: l.target, current: l.source ?? l.device, delete: true));
-      }
-    }
-    final liveNics = {for (final n in live.nics) n.mac: n};
-    final configNics = {for (final n in config.nics) n.mac: n};
-    for (final n in config.nics) {
-      final l = liveNics[n.mac];
-      if (l == null) {
-        out.add(VirtPendingField(key: n.mac, pending: nic(n)));
-      } else if (nic(l) != nic(n)) {
-        out.add(VirtPendingField(key: n.mac, current: nic(l), pending: nic(n)));
-      }
-    }
-    for (final l in live.nics) {
-      if (!configNics.containsKey(l.mac)) {
-        out.add(VirtPendingField(key: l.mac, current: nic(l), delete: true));
-      }
-    }
-    String fw(LibvirtHwConfig c) =>
-        c.efi ? (c.secureBoot ? 'UEFI · Secure Boot' : 'UEFI') : 'BIOS';
-    if (fw(config) != fw(live)) {
-      out.add(VirtPendingField(key: 'firmware', current: fw(live), pending: fw(config)));
-    }
-    String display(LibvirtHwConfig c) => [
-      c.graphics?.kind,
-      c.graphics?.listen,
-      c.video,
-    ].nonNulls.join(' · ');
-    if (display(config) != display(live)) {
-      out.add(
-        VirtPendingField(key: 'display', current: display(live), pending: display(config)),
-      );
-    }
-    final liveDevs = {for (final h in live.hostdevs) h.key, if (live.tpm != null) 'tpm'};
-    final configDevs = {for (final h in config.hostdevs) h.key, if (config.tpm != null) 'tpm'};
-    for (final k in configDevs.difference(liveDevs)) {
-      out.add(VirtPendingField(key: k, pending: k));
-    }
-    for (final k in liveDevs.difference(configDevs)) {
-      out.add(VirtPendingField(key: k, current: k, delete: true));
-    }
-    String diskHw(LibvirtHwDisk d) => '${d.bus ?? ''} ${d.cache ?? 'default'}';
-    for (final d in config.disks) {
-      final l = liveDisks[d.target];
-      if (l != null && l.source == d.source && diskHw(l) != diskHw(d)) {
-        out.add(VirtPendingField(key: d.target, current: diskHw(l), pending: diskHw(d)));
-      }
-    }
-    if (config.boot.join(',') != live.boot.join(',')) {
-      out.add(
-        VirtPendingField(
-          key: 'boot',
-          current: live.boot.join(', '),
-          pending: config.boot.join(', '),
-        ),
-      );
-    }
-    return out;
-  }
-
-  /// One `virsh` round trip per change, each made to the persistent
-  /// definition and, where the domain runs, to the running one: the running
-  /// half failing leaves it for the next start ([VirtHwOutcome.liveError]).
-  /// A change that rewrites the definition (CPU, boot order) is made from
-  /// [base]'s copy and refused when the host's has changed since.
-  @override
-  Future<VirtHwOutcome> changeHardware(
-    VirtGuest guest,
-    VirtHardware base,
-    VirtHwChange change,
-  ) async {
-    final info = _hardware[guest.id];
-    if (info == null || info.configXml != base.revision) {
-      // Not what this backend read last: the definitions it would address
-      // disks and NICs by may be someone else's.
-      throw const VirtErr(
-        type: VirtErrType.conflict,
-        message: 'Read the hardware again',
-      );
-    }
-    final running = info.live != null;
-    final json = changeJson(info, base, change, guestName: guest.name, mac: _newMac);
-    final outcome = _decode(
-      await _run(
-        _script(
-          () => ffi.virtHardwareChangeScript(
-            domain: guest.id,
-            running: running,
-            baseXml: info.configXml,
-            changeJson: jsonEncode(json),
-          ),
-        ),
-        ffi.parseVirtHardwareChangeJson,
-        action: true,
-      ),
-    );
-    return VirtHwOutcome(
-      liveError: outcome['live_error'] as String?,
-      volumeKept: outcome['volume_kept'] as bool? ?? false,
-    );
-  }
-
-  /// The hardware read last returned per guest: its revision (the
-  /// definition) and the running XML, which a revert is made from.
-  final _lastHwRevision = <String, String>{};
-  final _lastLiveXml = <String, String>{};
-
-  /// The last seed read per guest, with the password's hash in it: what an
-  /// edit keeps when no new password is typed. The hash stays here; the
-  /// view is told only that there is one.
-  final _seeds = <String, ({String path, Map<String, dynamic> read})>{};
-
-  /// The domain's seed, read back from its volume (`vol-download`, in one
-  /// round trip) and parsed in Rust: the seed is what the system reads, so
-  /// it is the source of what is shown — nothing is kept beside it. The NIC
-  /// is the one its network config names while the domain still has it,
-  /// the domain's first otherwise.
-  @override
-  Future<VirtCloudInitState> cloudInit(VirtGuest guest) async {
-    final info = _hardware[guest.id] ?? await _hardwareInfo(guest);
-    final path = info.config.seed;
+  /// The domain's own seed, read back from its volume (`vol-download`, in
+  /// one round trip), with the domain's NICs: the seed is what the system
+  /// reads, so it is the source of what is shown.
+  Future<({String path, String read, List<String> macs})> _seedRead(VirtGuest guest) async {
+    final info = _decode(await _hardwareRead(guest));
+    final config = (info['config'] as Map).cast<String, dynamic>();
+    final path = config['seed'] as String?;
     if (path == null) {
       throw VirtErr(
         type: VirtErrType.unsupported,
         message: '${guest.name} has no cloud-init seed of this app',
       );
     }
-    final read = _decode(
-      await _run(
-        _script(() => ffi.virtSeedReadScript(seed: path)),
-        ffi.parseVirtSeedReadJson,
-      ),
+    final read = await _run(
+      _script(() => ffi.virtSeedReadScript(seed: path)),
+      ffi.parseVirtSeedReadJson,
     );
-    _seeds[guest.id] = (path: path, read: read);
-    return cloudInitStateOf(read, nicMacs: [for (final n in info.config.nics) n.mac]);
+    final macs = [
+      for (final n in (config['nics'] as List? ?? const []).whereType<Map>()) '${n['mac']}',
+    ];
+    return (path: path, read: read, macs: macs);
   }
 
-  /// A seed's read ([read], `sbm_virt::libvirt::cloud_init::VirtSeedRead`
-  /// JSON) as the view shows it: never the hash, only that there is one.
-  @visibleForTesting
-  static VirtCloudInitState cloudInitStateOf(
-    Map<String, dynamic> read, {
-    required List<String> nicMacs,
-  }) {
-    final ci = (read['cloud_init'] as Map).cast<String, dynamic>();
-    final net = (ci['network'] as Map?)?.cast<String, dynamic>();
-    final ipv4 = (net?['ipv4'] as Map?)?.cast<String, dynamic>();
-    List<String> strs(Object? v) => [for (final x in (v as List?) ?? const []) '$x'];
-    final hostname = ci['hostname'] as String? ?? '';
-    final search = strs(net?['search']);
-    return VirtCloudInitState(
-      user: ci['user'] as String? ?? '',
-      sshKeys: strs(ci['ssh_keys']),
-      hostname: hostname,
-      address: ipv4?['address'] as String?,
-      gateway: ipv4?['gateway'] as String?,
-      dns: strs(net?['dns']),
-      searchDomains: search,
-      nics: [
-        ?net,
-        ...?(ci['extra_networks'] as List?),
-      ].length,
-      passwordSet: ci['password_hash'] != null,
-      passwordExpires: ci['password_expire'] as bool? ?? false,
-      network: nicMacs.isNotEmpty,
-      foreign: read['foreign'] as bool? ?? false,
-      revision: read['revision'] as String? ?? '',
+  /// The seed as the view shows it: never the hash, only that there is one.
+  @override
+  Future<VirtCloudInitState> cloudInit(VirtGuest guest) async {
+    final seed = await _seedRead(guest);
+    return VirtRust.cloudInitState(
+      jsonDecode(_rule(() => hw.virtLibvirtCloudInitState(readJson: seed.read, macs: seed.macs))),
     );
   }
 
   /// A new seed in place of the old, on the same volume (so the domain and
-  /// its metadata stay as they are), made from [base]'s read — refused as
-  /// [VirtErrType.conflict] once the seed changed since. A new password is
-  /// hashed here; none keeps the hash the seed has. A new instance ID, so
-  /// cloud-init takes it at the next boot.
+  /// its metadata stay as they are), made from the seed as read now — and
+  /// refused as [VirtErrType.conflict] once it changed since [base]'s read.
+  /// A new password is hashed in Rust; none keeps the hash the seed has. A
+  /// new instance ID, so cloud-init takes it at the next boot.
   @override
   Future<void> setCloudInit(
     VirtGuest guest,
     VirtCloudInitState base,
     VirtCloudInitEdit edit,
   ) async {
-    final seed = _seeds[guest.id];
-    final info = _hardware[guest.id];
-    if (seed == null || info == null || seed.read['revision'] != base.revision) {
-      throw const VirtErr(
-        type: VirtErrType.conflict,
-        message: 'Read the cloud-init settings again',
-      );
-    }
-    final ci = (seed.read['cloud_init'] as Map).cast<String, dynamic>();
-    final seedMac = ((ci['network'] as Map?)?['mac'] as String?)?.toLowerCase();
-    final macs = [for (final n in info.config.nics) n.mac.toLowerCase()];
-    final mac = macs.contains(seedMac) ? seedMac : macs.firstOrNull;
-    // A new instance, the password as its hash or the seed's own kept
-    // (`sbm_virt::libvirt::create::cloud_init_of`).
-    final json = _rule(
-      () => cr.virtLibvirtCloudInit(
-        ciJson: jsonEncode(VirtRust.cloudInitJson(edit.values)),
+    final seed = await _seedRead(guest);
+    final ci = _rule(
+      () => hw.virtLibvirtCloudInitUpdate(
+        readJson: seed.read,
         name: guest.name,
-        mac: base.network ? mac : null,
-        keepHash: edit.removePassword ? null : ci['password_hash'] as String?,
-        // The NICs after the first are kept as they are: the form edits the
-        // first, and saving must not drop the rest.
-        extraNetworksJson: jsonEncode(ci['extra_networks'] ?? const []),
-        passwordExpire: edit.passwordExpires,
+        macs: seed.macs,
+        editJson: jsonEncode(VirtRust.cloudInitEditJson(base, edit)),
       ),
     );
     await _run(
@@ -1749,7 +1461,7 @@ class LibvirtBackend implements VirtBackend {
         () => ffi.virtSeedUpdateScript(
           seed: seed.path,
           revision: base.revision,
-          cloudInitJson: json,
+          cloudInitJson: ci,
           tools: seedTools,
         ),
       ),
@@ -1759,308 +1471,14 @@ class LibvirtBackend implements VirtBackend {
       },
       action: true,
     );
-    _seeds.remove(guest.id);
   }
-
-  /// A MAC in QEMU's locally administered range, `52:54:00`.
-  static String _newMac() => _rule(cr.virtNewMac);
-
-  /// [change] as `sbm_virt::libvirt::VirtHwChange` JSON, addressed by what
-  /// [info]'s two definitions have.
-  @visibleForTesting
-  static Map<String, Object?> changeJson(
-    LibvirtHardwareInfo info,
-    VirtHardware base,
-    VirtHwChange change, {
-    required String guestName,
-    required String Function() mac,
-  }) {
-    final config = info.config;
-    final live = info.live;
-    LibvirtHwDisk? diskIn(LibvirtHwConfig? c, String target) =>
-        c?.disks.where((d) => d.target == target).firstOrNull;
-    LibvirtHwNic? nicIn(LibvirtHwConfig? c, String mac) =>
-        c?.nics.where((n) => n.mac == mac).firstOrNull;
-    switch (change) {
-      case VirtHwSetCpu(:final sockets, :final cores, :final online):
-        return {'op': 'cpu', 'sockets': sockets, 'cores': cores, 'current': online};
-      case VirtHwSetMemory(:final mib, :final minMib):
-        return {'op': 'memory', 'memory_mib': mib, 'current_mib': minMib};
-      case VirtHwGrowDisk(:final key, :final bytes):
-        final disk = diskIn(config, key);
-        final running = diskIn(live, key);
-        return {
-          'op': 'grow_disk',
-          'target': key,
-          'bytes': bytes,
-          'path': disk?.sourceType == 'file' ? disk?.source : null,
-          // `blockresize` grows what the running domain has at the target:
-          // only the disk the editor shows when the definition has not put
-          // another source there. Otherwise the configured file, offline.
-          'live':
-              running != null &&
-              disk != null &&
-              running.source == disk.source &&
-              running.sourceType == disk.sourceType,
-        };
-      case VirtHwAddDisk(:final storage, :final gib):
-        final taken = {
-          for (final d in [...config.disks, ...?live?.disks]) d.target,
-        };
-        final bus = config.disks
-                .where((d) => d.device == 'disk')
-                .firstOrNull
-                ?.bus ??
-            'virtio';
-        final target = _freeTarget(_busPrefix(bus), taken);
-        final format = virtLibvirtDiskFormat(storage.type);
-        return {
-          'op': 'add_disk',
-          'pool': storage.id,
-          'volume': '$guestName-$target.${format == 'qcow2' ? 'qcow2' : 'img'}',
-          'gib': gib,
-          'format': format,
-          'target': target,
-          'bus': bus,
-        };
-      case VirtHwAttachVolume(:final volume):
-        final path = volume.path;
-        if (path == null) {
-          throw VirtErr(
-            type: VirtErrType.unsupported,
-            message: 'No path for ${volume.name}',
-          );
-        }
-        final taken = {
-          for (final d in [...config.disks, ...?live?.disks]) d.target,
-        };
-        final bus = config.disks
-                .where((d) => d.device == 'disk')
-                .firstOrNull
-                ?.bus ??
-            'virtio';
-        return {
-          'op': 'attach_volume',
-          'path': path,
-          // What the image is, as the pool read it; an ISO's bytes are raw.
-          'format': switch (volume.format) {
-            final f? when f != 'iso' && f != 'unknown' => f,
-            _ => 'raw',
-          },
-          'target': _freeTarget(_busPrefix(bus), taken),
-          'bus': bus,
-        };
-      case VirtHwRemoveDisk(:final key, :final deleteVolume):
-        final disk = diskIn(config, key) ?? diskIn(live, key);
-        // A CD-ROM's image, or a read-only disk, is somebody's media: not
-        // deleted here whatever was asked.
-        final deletable =
-            deleteVolume &&
-            disk != null &&
-            disk.device == 'disk' &&
-            !disk.readonly &&
-            disk.sourceType == 'file';
-        return {
-          'op': 'remove_disk',
-          'target': key,
-          'delete_path': deletable ? disk.source : null,
-          'config': diskIn(config, key) != null,
-          'live': diskIn(live, key) != null,
-        };
-      case VirtHwAddCdrom(:final media):
-        final taken = {
-          for (final d in [...config.disks, ...?live?.disks]) d.target,
-        };
-        // Where the machine has a controller for one: SATA on q35, IDE on
-        // `pc`.
-        final bus = (config.machine ?? '').contains('q35') ? 'sata' : 'ide';
-        final path = media?.path;
-        if (media != null && path == null) {
-          throw VirtErr(
-            type: VirtErrType.unsupported,
-            message: 'No path for ${media.name}',
-          );
-        }
-        return {
-          'op': 'add_cdrom',
-          'target': _freeTarget(_busPrefix(bus), taken),
-          'bus': bus,
-          'source': path,
-        };
-      case VirtHwSetMedia(:final key, :final media):
-        final path = media?.path;
-        bool touches(LibvirtHwConfig? c) {
-          final d = diskIn(c, key);
-          // Ejecting an empty drive is refused; there is nothing to do.
-          return d != null && (path != null || d.source != null);
-        }
-        return {
-          'op': 'set_media',
-          'target': key,
-          'source': path,
-          'config': touches(config),
-          'live': touches(live),
-        };
-      case VirtHwAddNic(:final network, :final model):
-        return {
-          'op': 'add_nic',
-          'kind': 'network',
-          'source': network.name,
-          'model': model ?? 'virtio',
-          'mac': mac(),
-        };
-      case VirtHwRemoveNic(:final key):
-        return {
-          'op': 'remove_nic',
-          'mac': key,
-          'kind': nicIn(config, key)?.kind,
-          'live_kind': nicIn(live, key)?.kind,
-        };
-      case VirtHwUpdateNic(:final key, :final network, :final linkUp):
-        final c = nicIn(config, key);
-        final l = nicIn(live, key);
-        final current = c ?? l;
-        return {
-          'op': 'update_nic',
-          'mac': key,
-          'kind': network != null ? 'network' : current?.kind,
-          'source': network?.name ?? current?.source,
-          'model': current?.model,
-          'link_up': linkUp,
-          'boot_order': c?.bootOrder,
-          'live_boot_order': l?.bootOrder,
-          'config': c != null,
-          'live': l != null,
-        };
-      case VirtHwSetBoot(:final order):
-        return {'op': 'boot', 'order': order};
-      case VirtHwSetAutostart(:final on):
-        return {'op': 'autostart', 'on': on};
-      case VirtHwSetDescription(:final text):
-        return {'op': 'description', 'text': text};
-      case VirtHwSetName(:final name):
-        return {'op': 'rename', 'name': name};
-      case VirtHwUpdateDisk(:final key, :final bus, :final cache):
-        String? to;
-        if (bus != null && bus != diskIn(config, key)?.bus) {
-          final taken = {
-            for (final d in [...config.disks, ...?live?.disks]) d.target,
-          };
-          to = _freeTarget(_busPrefix(bus), taken);
-        }
-        return {
-          'op': 'update_disk',
-          'target': key,
-          'new_target': to,
-          'bus': to == null ? null : bus,
-          'cache': cache,
-        };
-      case VirtHwSetNicHardware(:final key, :final model, :final mac):
-        return {
-          'op': 'update_nic_hardware',
-          'mac': key,
-          'new_mac': mac?.toLowerCase(),
-          'model': model,
-        };
-      case VirtHwSetFirmware(:final uefi, :final secureBoot):
-        return {'op': 'firmware', 'efi': uefi, 'secure_boot': uefi && secureBoot};
-      case VirtHwSetDisplay(:final protocol, :final listen, :final gpu):
-        return {'op': 'display', 'graphics': protocol, 'listen': listen, 'video': gpu};
-      case VirtHwAddDevice(:final kind, :final host, :final usbNaming):
-        return {
-          'op': 'add_device',
-          'device': switch (kind) {
-            VirtHwDeviceKind.tpm => {'kind': 'tpm', 'model': 'tpm-crb'},
-            // `usb:0bda:b023`, or `1:4` for the bus and device number the
-            // device sits at.
-            VirtHwDeviceKind.usb => {
-              'kind': 'usb',
-              if (usbNaming == VirtUsbNaming.address) ...{
-                'bus': host!.usbBus,
-                'device': host.usbDevice,
-              } else ...{
-                'vendor': host!.id.split(':').first,
-                'product': host.id.split(':').last,
-              },
-            },
-            VirtHwDeviceKind.pci => {'kind': 'pci', 'address': host!.id},
-          },
-        };
-      case VirtHwRemoveDevice(:final key):
-        return {'op': 'remove_device', 'key': key};
-      case VirtHwSetProtection() ||
-          VirtHwRevert() ||
-          // A revert to the running definition is its own call
-          // (`LibvirtBackend.revertPending`), not a change.
-          VirtHwRevertPending():
-        throw const VirtErr(type: VirtErrType.unsupported);
-    }
-  }
-
-  /// Where a bus's disks are named: `vd` for virtio, `hd` for IDE, `sd`
-  /// for the rest.
-  static String _busPrefix(String bus) => switch (bus) {
-    'virtio' => 'vd',
-    'ide' => 'hd',
-    _ => 'sd',
-  };
 
   /// The host's USB and PCI devices (`nodedev-list`), for giving one to a
   /// guest. See `sbm_virt::libvirt::host_devices_script`.
   @override
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async {
-    final d = LibvirtHostDevices.fromJson(
-      _decode(
-        await _run(ffi.virtHostDevicesScript(), ffi.parseVirtHostDevicesJson),
-      ),
-    );
-    String name(String? vendor, String? product, String fallback) {
-      final n = [vendor, product].nonNulls.join(' ').trim();
-      return n.isEmpty ? fallback : n;
-    }
-
-    return VirtHostDevices(
-      iommu: d.iommu,
-      usb: [
-        for (final u in d.usb)
-          // Root hubs are the host's own, never anyone's to pass through.
-          if (u.vendor != '1d6b')
-            VirtHostDevice(
-              id: '${u.vendor}:${u.product}',
-              label: name(u.vendorName, u.productName, '${u.vendor}:${u.product}'),
-              detail: '${u.vendor}:${u.product}',
-              // Where it sits: what passing it through by address takes.
-              usbBus: u.bus,
-              usbDevice: u.device,
-              usbPort: u.port,
-            ),
-      ],
-      pci: [
-        for (final p in d.pci)
-          VirtHostDevice(
-            id: p.address,
-            label: name(p.vendorName, p.productName, p.address),
-            detail: p.address,
-            iommuGroup: p.iommuGroup,
-            groupSize: p.groupSize,
-          ),
-      ],
-    );
-  }
-
-  /// `vda`, `vdb`, … `vdz`, then `vdaa`, as libvirt names disks.
-  static String _freeTarget(String prefix, Set<String> taken) {
-    String name(int i) {
-      const a = 97;
-      return i < 26
-          ? '$prefix${String.fromCharCode(a + i)}'
-          : '$prefix${String.fromCharCode(a + i ~/ 26 - 1)}${String.fromCharCode(a + i % 26)}';
-    }
-
-    for (var i = 0; i < 26 * 27; i++) {
-      if (!taken.contains(name(i))) return name(i);
-    }
-    throw const VirtErr(type: VirtErrType.unsupported, message: 'No free disk target');
+    final json = await _run(ffi.virtHostDevicesScript(), ffi.parseVirtHostDevicesJson);
+    return VirtRust.hostDevices(jsonDecode(_rule(() => hw.virtLibvirtHostDevices(devicesJson: json))));
   }
 
   // ---------------------------------------------------------------------------

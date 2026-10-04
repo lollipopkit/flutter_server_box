@@ -12,19 +12,20 @@ import 'package:server_box/src/rust/frb_generated.dart';
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`
 
-/// A guest's configuration (`/nodes/../config` JSON) read into
-/// `sbm_virt::model::GuestDetail` JSON.
-String pveGuestDetail({required String configJson, required bool lxc}) =>
-    RustLib.instance.api.crateApiPvePveGuestDetail(
-      configJson: configJson,
-      lxc: lxc,
-    );
-
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PveSession>>
 abstract class PveSession implements RustOpaqueInterface {
   /// The headers that authenticate a connection made outside the session
   /// (a console's websocket, an upload), logging in first if needed.
   Future<List<PveHeader>> authHeaders();
+
+  /// Makes `change_json` (a `Change`) from the read whose digest is
+  /// `revision`, checked first against the guest as it is now; `Outcome`
+  /// JSON.
+  Future<String> changeHardware({
+    required PveGuestRef guest,
+    String? revision,
+    required String changeJson,
+  });
 
   /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
   /// the copy's id.
@@ -34,6 +35,9 @@ abstract class PveSession implements RustOpaqueInterface {
   });
 
   void close();
+
+  /// A VM's cloud-init settings, `CloudInitState` JSON.
+  Future<String> cloudInit({required PveGuestRef guest});
 
   /// Pins the certificate the last refused connection presented; answers
   /// the pin as stored.
@@ -70,11 +74,17 @@ abstract class PveSession implements RustOpaqueInterface {
   /// `sbm_virt::model::GuestDetail` JSON.
   Future<String> detail({required PveGuestRef guest});
 
+  /// `guest`'s hardware as it stands, `Hardware` JSON.
+  Future<String> hardware({required PveGuestRef guest});
+
   /// `sbm_virt::model::Stats` JSON list, oldest first.
   Future<String> history({
     required PveGuestRef guest,
     required PveHistoryWindow window,
   });
+
+  /// The devices `guest` can be given, `HostDevices` JSON.
+  Future<String> hostDevices({required PveGuestRef guest});
 
   /// `sbm_virt::model::HostView` JSON.
   Future<String> load();
@@ -151,10 +161,19 @@ abstract class PveSession implements RustOpaqueInterface {
   /// Drops the session; the next call logs in again.
   void reset();
 
+  /// Drops every pending change.
+  Future<void> revertPending({required PveGuestRef guest, String? revision});
+
   Future<void> revertSnapshot({
     required PveGuestRef guest,
     required String name,
     required bool start,
+  });
+
+  /// Writes `edit_json` (a `CloudInitEdit`), and the drive at once.
+  Future<void> setCloudInit({
+    required PveGuestRef guest,
+    required String editJson,
   });
 
   /// A new tunnel to the same address. Connections still open on the old

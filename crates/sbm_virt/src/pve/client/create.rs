@@ -56,7 +56,7 @@ impl Client {
 
     /// `guest` as the host lists it now: what a delete, a template or a
     /// clone is checked against, rather than the caller's copy of it.
-    async fn fresh(&self, guest: &Guest) -> Result<(Guest, Vec<Guest>, Vec<Node>)> {
+    pub(super) async fn fresh(&self, guest: &Guest) -> Result<(Guest, Vec<Guest>, Vec<Node>)> {
         let (guests, nodes) = self.guests_and_nodes().await?;
         let now = guests.iter().find(|g| g.id == guest.id).cloned().ok_or_else(|| create::refusal(Issue::NotFound))?;
         Ok((now, guests, nodes))
@@ -96,7 +96,7 @@ impl Client {
 
     /// `node`'s interfaces, without who uses them: what a new NIC is checked
     /// against.
-    async fn node_networks(&self, node: &str) -> Result<Vec<Network>> {
+    pub(super) async fn node_networks(&self, node: &str) -> Result<Vec<Network>> {
         match self.call(Method::Get, &format!("/nodes/{}/network", seg(node)), None, false).await? {
             Value::Array(raw) => Ok(resources::parse_networks(node, &raw, &BTreeMap::new(), &BTreeSet::new())),
             _ => Ok(Vec::new()),
@@ -105,7 +105,7 @@ impl Client {
 
     /// The volume `r` names, from its pool's listing; None where either is
     /// gone.
-    async fn volume_at(&self, pools: &[Pool], r: &create::VolumeRef) -> Result<Option<Volume>> {
+    pub(super) async fn volume_at(&self, pools: &[Pool], r: &create::VolumeRef) -> Result<Option<Volume>> {
         let Some(pool) = pools.iter().find(|p| p.id == r.pool) else { return Ok(None) };
         Ok(self.volumes(pool).await?.into_iter().find(|v| v.id == r.volume))
     }

@@ -1023,7 +1023,6 @@
   "virtHwIssueMemoryMin": "Tidak lebih dari memori",
   "virtHwIssueMountPoint": "Jalur absolut, seperti /data",
   "virtHwIssueStorageSpace": "Lebih dari ruang kosong penyimpanan",
-  "virtHwIssueSwap": "Tidak negatif",
   "virtHwLater": "Berlaku setelah mulai ulang",
   "virtHwLess": "Kurangi",
   "virtHwLinkDown": "Terputus",

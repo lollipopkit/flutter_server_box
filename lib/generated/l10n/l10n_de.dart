@@ -3674,9 +3674,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get virtHwIssueStorageSpace => 'Mehr als der Speicher frei hat';
 
   @override
-  String get virtHwIssueSwap => 'Nicht negativ';
-
-  @override
   String get virtHwLater => 'Wirksam nach Neustart';
 
   @override

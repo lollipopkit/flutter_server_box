@@ -25,7 +25,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/api/virt.dart'
-    show parseVirtHardwareJson, virtUploadGoLine, virtUploadReadyMarker;
+    show virtUploadGoLine, virtUploadReadyMarker;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -1255,17 +1255,17 @@ void main() {
       kind: VirtGuestKind.qemu,
       state: VirtGuestState.running,
     );
-    const pool = VirtStoragePool(id: 'images', name: 'images', type: 'dir');
-    const net = VirtNetwork(id: 'isolated', name: 'isolated', mode: 'isolated');
 
     ({LibvirtBackend virt, _Exec exec}) backend(
       ExecResult Function(_Call call) change,
     ) {
-      var reads = 0;
+      // Every hardware read (each change reads the definitions again) is
+      // the capture; the pools are what a change naming one lists.
       final exec = _Exec((call) {
-        if (call.script.contains('dumpxml --inactive') && reads++ == 0) {
+        if (call.script.contains('nodeinfo')) {
           return _ok(_fixture('script_hardware_running.txt'));
         }
+        if (_storageAnswer(call) case final r?) return r;
         return change(call);
       });
       return (
@@ -1291,7 +1291,8 @@ void main() {
       expect((nic.key, nic.type, nic.source, nic.linkUp), ('52:54:00:b9:34:c3', 'network', 'default', true));
       expect(hw.boot, ['vda']);
       expect(hw.limits.hostCpus, 4);
-      expect(hw.revision, startsWith("<domain type='kvm'>"));
+      // The definition's SHA-256: the XML itself, with its secrets, stays.
+      expect(hw.revision, matches(RegExp(r'^[0-9a-f]{64}$')));
       // Online vCPUs differ; the balloon's current size moves by itself and
       // is not a change.
       final p = hw.pending.single;
@@ -1340,162 +1341,17 @@ void main() {
       expect(hw.pending, isEmpty);
     });
 
-    test('changes are addressed by what each definition has', () async {
-      final info = LibvirtHardwareInfo.fromJson(
-        jsonDecode(
-              await parseVirtHardwareJson(
-                raw: _fixture('script_hardware_running.txt'),
-              ),
-            )
-            as Map<String, dynamic>,
-      );
-      final hw = LibvirtBackend.hardwareOf(info);
-      Map<String, Object?> json(VirtHwChange c) => LibvirtBackend.changeJson(
-        info,
-        hw,
-        c,
-        guestName: 'sbhw-test',
-        mac: () => '52:54:00:00:00:01',
-      );
-      // A CD-ROM drive: IDE on `pc`, beside the one there is.
-      expect(json(const VirtHwAddCdrom()), {
-        'op': 'add_cdrom',
-        'target': 'hda',
-        'bus': 'ide',
-        'source': null,
-      });
-      expect(
-        json(const VirtHwAddCdrom(media: VirtVolume(id: 'a.iso', name: 'a.iso', path: '/iso/a.iso')))['source'],
-        '/iso/a.iso',
-      );
-      expect(
-        () => json(const VirtHwAddCdrom(media: VirtVolume(id: 'a.iso', name: 'a.iso'))),
-        throwsA(isA<VirtErr>()),
-      );
-      expect(json(const VirtHwAddDisk(storage: pool, gib: 2)), {
-        'op': 'add_disk',
-        'pool': 'images',
-        // `hdc` is the CD-ROM's; a new disk takes the first disk's bus.
-        'volume': 'sbhw-test-vdb.qcow2',
-        'gib': 2,
-        'format': 'qcow2',
-        'target': 'vdb',
-        'bus': 'virtio',
-      });
-      expect(json(const VirtHwRemoveDisk(key: 'vda', deleteVolume: true)), {
-        'op': 'remove_disk',
-        'target': 'vda',
-        'delete_path': '/var/lib/libvirt/images/sbhw-root.qcow2',
-        'config': true,
-        'live': true,
-      });
-      // A CD-ROM's image is never deleted with it.
-      expect(json(const VirtHwRemoveDisk(key: 'hdc', deleteVolume: true))['delete_path'], isNull);
-      // Ejecting an empty drive: nothing to do in either definition.
-      expect(json(const VirtHwSetMedia(key: 'hdc')), containsPair('config', false));
-      expect(json(const VirtHwSetMedia(key: 'hdc')), containsPair('live', false));
-      expect(
-        json(const VirtHwSetMedia(key: 'hdc', media: VirtVolume(id: 'a.iso', name: 'a.iso', path: '/isos/a.iso'))),
-        {'op': 'set_media', 'target': 'hdc', 'source': '/isos/a.iso', 'config': true, 'live': true},
-      );
-      expect(json(const VirtHwUpdateNic(key: '52:54:00:b9:34:c3', linkUp: false, network: net)), {
-        'op': 'update_nic',
-        'mac': '52:54:00:b9:34:c3',
-        'kind': 'network',
-        'source': 'isolated',
-        'model': 'virtio',
-        'link_up': false,
-        'boot_order': null,
-        'live_boot_order': null,
-        'config': true,
-        'live': true,
-      });
-      expect(json(const VirtHwAddNic(network: net)), {
-        'op': 'add_nic',
-        'kind': 'network',
-        'source': 'isolated',
-        'model': 'virtio',
-        'mac': '52:54:00:00:00:01',
-      });
-      expect(json(const VirtHwGrowDisk(key: 'vda', bytes: 1 << 30)), {
-        'op': 'grow_disk',
-        'target': 'vda',
-        'bytes': 1 << 30,
-        'path': '/var/lib/libvirt/images/sbhw-root.qcow2',
-        'live': true,
-      });
-      // The definition put another file at vda while it runs: `blockresize`
-      // would grow the running, old one. The configured file, offline.
-      final swapped = info.copyWith(
-        config: info.config.copyWith(
-          disks: [
-            for (final d in info.config.disks)
-              d.target == 'vda' ? d.copyWith(source: '/var/lib/libvirt/images/new.qcow2') : d,
-          ],
-        ),
-      );
-      final grown = LibvirtBackend.changeJson(
-        swapped,
-        LibvirtBackend.hardwareOf(swapped),
-        const VirtHwGrowDisk(key: 'vda', bytes: 1 << 30),
-        guestName: 'sbhw-test',
-        mac: () => '52:54:00:00:00:01',
-      );
-      expect((grown['path'], grown['live']), ('/var/lib/libvirt/images/new.qcow2', false));
-      // A disk with no file to `vol-resize` is not offered for growing.
-      final byRef = info.copyWith(
-        config: info.config.copyWith(
-          disks: [
-            for (final d in info.config.disks)
-              d.target == 'vda' ? d.copyWith(sourceType: 'volume', source: 'images/root') : d,
-          ],
-        ),
-      );
-      final refHw = LibvirtBackend.hardwareOf(byRef);
-      expect(virtHwDiskGrowable(refHw.disk('vda')!), isFalse);
-      expect(
-        virtHwIssue(refHw, const VirtHwGrowDisk(key: 'vda', bytes: 1 << 40)),
-        VirtHwIssue.diskSize,
-      );
-      expect(virtHwDiskGrowable(hw.disk('vda')!), isTrue);
-      expect(
-        () => json(const VirtHwRevert(['cpu'])),
-        throwsA(isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported)),
-      );
-      // Settings: the note and a new name; libvirt has no protection.
-      expect(json(const VirtHwSetDescription('a & b')), {
-        'op': 'description',
-        'text': 'a & b',
-      });
-      expect(json(const VirtHwSetName('sbhw-2')), {'op': 'rename', 'name': 'sbhw-2'});
-      expect(
-        () => json(const VirtHwSetProtection(true)),
-        throwsA(isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported)),
-      );
-    });
-
-    test('settings as read: the domain\'s name, its note, no protection, and '
-        'a rename that waits for it to stop', () async {
-      final info = LibvirtHardwareInfo.fromJson(
-        jsonDecode(
-              await parseVirtHardwareJson(
-                raw: _fixture('script_hardware_running.txt'),
-              ),
-            )
-            as Map<String, dynamic>,
-      ).copyWith(description: 'the web tier');
-      final hw = LibvirtBackend.hardwareOf(info, name: 'sbhw-test');
-      expect((hw.name, hw.description, hw.protection), ('sbhw-test', 'the web tier', null));
-      expect(hw.renameRunning, isFalse);
-    });
-
     test('the running half refused: saved for the next start, in the host\'s words',
         () async {
       final (:virt, :exec) = backend(
         (_) => _ok(_fixture('script_hw_add_disk_ide_live_refused.txt')),
       );
       final hw = await virt.hardware(guest);
-      final out = await virt.changeHardware(guest, hw, const VirtHwAddDisk(storage: pool, gib: 1));
+      final out = await virt.changeHardware(
+        guest,
+        hw,
+        const VirtHwAddDisk(storage: VirtStoragePool(id: 'images', name: 'images', type: 'dir'), gib: 1),
+      );
       expect(out.liveError, contains("disk bus 'ide' cannot be hotplugged"));
       expect(out.volumeKept, isFalse);
       final change = exec.calls.last;
@@ -1536,116 +1392,17 @@ void main() {
       // Made from the definition read, compared on the host before `define`.
       expect(exec.calls.last.script, contains('<boot order='));
 
-      // Not from this backend's last read: refused before reaching the host.
+      // Made from another read than the definition now: refused before any
+      // change reaches the host.
       final calls = exec.calls.length;
-      final stale = hw.copyWith(revision: '<domain/>');
+      final stale = hw.copyWith(revision: '0' * 64);
       final err2 = await _err(virt.changeHardware(guest, stale, const VirtHwSetAutostart(true)));
       expect(err2.type, VirtErrType.conflict);
-      expect(exec.calls, hasLength(calls));
-    });
-
-    Future<LibvirtHardwareInfo> info(String fixture) async => LibvirtHardwareInfo.fromJson(
-      jsonDecode(await parseVirtHardwareJson(raw: _fixture(fixture))) as Map<String, dynamic>,
-    );
-
-    test('what the host offers comes from its domcapabilities', () async {
-      // A q35 domain on a host with OVMF but no swtpm, a QEMU without SPICE.
-      final hw = LibvirtBackend.hardwareOf(await info('script_hardware_caps_stopped.txt'));
-      final s = hw.support;
-      expect(s.buses, ['virtio', 'scsi', 'sata']);
-      expect(s.protocols, ['vnc']);
-      expect(s.gpus, ['virtio', 'vga', 'cirrus', 'bochs', 'none']);
-      // A secure loader but no descriptor with enrolled keys: a domain
-      // with Secure Boot on would not start, so it is not offered.
-      expect((s.uefi, s.secureBoot, s.tpm, s.usb, s.pci, s.listen, s.mac), (true, false, false, true, true, true, true));
-      expect(hw.firmware, const VirtHwFirmware(uefi: false));
-      final enrolled = LibvirtBackend.hardwareOf(
-        (await info('script_hardware_caps_stopped.txt')).copyWith(
-          firmware: const [
-            LibvirtFirmware(name: '60-edk2-x86_64-secure.json', secureBoot: true),
-            LibvirtFirmware(name: '40-edk2-x86_64-secure-enrolled.json', secureBoot: true, enrolledKeys: true),
-          ],
-        ),
-      );
-      expect(enrolled.support.secureBoot, isTrue);
-      expect(hw.display, const VirtHwDisplay(protocol: 'vnc', listen: '127.0.0.1', gpu: 'virtio'));
-      // Without them: the common ground, and nothing the host may lack.
-      final bare = LibvirtBackend.supportOf(null);
-      expect((bare.uefi, bare.tpm, bare.pci), (false, false, false));
-      expect(bare.buses, contains('virtio'));
-    });
-
-    test('the definition shown carries no display password', () async {
-      // `dumpxml --security-info`, as the read makes it: the password is in
-      // the definition a change is made from, never in what is shown.
-      final raw = _fixture('script_hardware_running.txt').replaceAll(
-        "<graphics type='vnc' port='-1'",
-        "<graphics type='vnc' passwd='s3cret' port='-1'",
-      );
-      final i = LibvirtHardwareInfo.fromJson(
-        jsonDecode(await parseVirtHardwareJson(raw: raw)) as Map<String, dynamic>,
-      );
-      expect(i.configXml, contains("passwd='s3cret'"));
-      final hw = LibvirtBackend.hardwareOf(i);
-      expect(hw.configText, isNot(contains('passwd=')));
-      expect(hw.configText, isNot(contains('s3cret')));
-      expect(hw.configText, contains("<graphics type='vnc' port='-1'"));
-    });
-
-    test('a cache mode changed while running is pending', () async {
-      final hw = LibvirtBackend.hardwareOf(await info('script_hardware_caps_running.txt'));
-      expect(hw.firmware, const VirtHwFirmware(uefi: true, secureBoot: true));
-      final p = hw.pending.singleWhere((p) => p.key == 'sda');
-      expect((p.current, p.pending), ('sata writeback', 'sata none'));
-    });
-
-    test('the second part of the changes, as JSON', () async {
-      final i = await info('script_hardware_caps_stopped.txt');
-      final hw = LibvirtBackend.hardwareOf(i);
-      Map<String, Object?> json(VirtHwChange c) =>
-          LibvirtBackend.changeJson(i, hw, c, guestName: 'sbhwb-test', mac: () => '52:54:00:00:00:01');
-      // q35: a new CD-ROM drive on SATA.
-      expect(json(const VirtHwAddCdrom()), {
-        'op': 'add_cdrom',
-        'target': 'sda',
-        'bus': 'sata',
-        'source': null,
-      });
-      // Another bus is another name on it.
-      expect(json(const VirtHwUpdateDisk(key: 'vda', bus: 'sata')), {
-        'op': 'update_disk',
-        'target': 'vda',
-        'new_target': 'sda',
-        'bus': 'sata',
-        'cache': null,
-      });
-      // The same bus is no bus change.
-      expect(json(const VirtHwUpdateDisk(key: 'vda', bus: 'virtio', cache: 'none'))['new_target'], isNull);
-      expect(json(const VirtHwSetNicHardware(key: '52:54:00:5b:00:01', mac: 'BC:24:11:00:00:09')), {
-        'op': 'update_nic_hardware',
-        'mac': '52:54:00:5b:00:01',
-        'new_mac': 'bc:24:11:00:00:09',
-        'model': null,
-      });
-      expect(json(const VirtHwSetFirmware(uefi: false, secureBoot: true)), {
-        'op': 'firmware',
-        'efi': false,
-        'secure_boot': false,
-      });
+      // Only reads: the definitions, the pools.
       expect(
-        json(
-          const VirtHwAddDevice(
-            kind: VirtHwDeviceKind.usb,
-            host: VirtHostDevice(id: '0bda:b023', label: 'bt'),
-          ),
-        )['device'],
-        {'kind': 'usb', 'vendor': '0bda', 'product': 'b023'},
+        exec.calls.skip(calls).where((c) => !c.script.contains('nodeinfo') && !c.script.contains('pool-list')),
+        isEmpty,
       );
-      expect(json(const VirtHwAddDevice(kind: VirtHwDeviceKind.tpm))['device'], {'kind': 'tpm', 'model': 'tpm-crb'});
-      expect(json(const VirtHwRemoveDevice(key: 'pci:0000:00:01.2')), {
-        'op': 'remove_device',
-        'key': 'pci:0000:00:01.2',
-      });
     });
 
     test('cloud-init: read back from the seed, written anew in place', () async {
@@ -1740,12 +1497,18 @@ void main() {
         virt.setCloudInit(off, ci, const VirtCloudInitEdit(VirtCloudInit(user: 'debian', hostname: 'x'))),
       );
       expect(e.type, VirtErrType.conflict);
-      // Not read by this backend at all: refused before the host.
+      // Made from another read than the seed now: refused before the host.
+      updateOut = _section('virt.seed.upload', '');
       final calls = exec.calls.length;
-      final other = LibvirtBackend(serverId: 's', exec: () async => exec);
-      final e2 = await _err(other.setCloudInit(off, ci, const VirtCloudInitEdit(VirtCloudInit(user: 'debian'))));
+      final e2 = await _err(
+        virt.setCloudInit(
+          off,
+          const VirtCloudInitState(user: 'debian', revision: '1 1'),
+          const VirtCloudInitEdit(VirtCloudInit(user: 'debian', password: 'x', hostname: 'x')),
+        ),
+      );
       expect(e2.type, VirtErrType.conflict);
-      expect(exec.calls, hasLength(calls));
+      expect(exec.calls.skip(calls).where((c) => c.script.contains('vol-upload')), isEmpty);
     });
 
     test('host devices: root hubs left out, no IOMMU said', () async {

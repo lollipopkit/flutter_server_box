@@ -3459,9 +3459,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtHwIssueStorageSpace => '스토리지 여유 공간보다 큼';
 
   @override
-  String get virtHwIssueSwap => '음수 불가';
-
-  @override
   String get virtHwLater => '재시작 후 적용';
 
   @override
