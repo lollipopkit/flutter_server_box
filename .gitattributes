@@ -7,13 +7,20 @@
 # no match, and unwraps the None. Pin the endings; the files hold no CR today,
 # so nothing in history is rewritten.
 #
-# The binaries among them (`*.hive`, `*.bin`) carry CR bytes that belong to the
-# data the storage-migration tests restore, and those fixtures cannot be
-# regenerated. `text` would normalise them at checkout, so each extension is
+# The libvirt fixtures moved with the command layer to `sbm_virt`, and the
+# rule has to follow them: without it the two tests above failed again on
+# `Rust tests (windows-latest)`, with `live_xml_as_a_definition`.
+#
+# The binaries among them are not text: `*.hive` and `*.bin` carry CR bytes
+# that belong to the data the storage-migration tests restore, and those
+# fixtures cannot be regenerated; `*.iso` are the cloud-init seeds the
+# libvirt tests read. `text` would normalise them at checkout, so each extension is
 # excluded — a later line wins, and the exclusions below come after. The
 # rules that follow this block (`rootfs_manifest/*.sig`) are narrower still
 # and override it for their own files.
 crates/sbm_parser/tests/fixtures/** text eol=lf
+crates/sbm_virt/tests/fixtures/** text eol=lf
+crates/sbm_virt/tests/fixtures/**/*.iso -text
 test/fixtures/** text eol=lf
 test/fixtures/**/*.hive -text
 test/fixtures/**/*.bin -text
