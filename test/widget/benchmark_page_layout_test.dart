@@ -26,10 +26,13 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const sid = 'srv-bench-1';

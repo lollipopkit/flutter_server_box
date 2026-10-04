@@ -1,5 +1,6 @@
 //! The benchmark commands, run against a real `/bin/sh`, ported from the app's
-//! `test/unit/benchmark/yabs_script_test.dart` per the "tests as spec" rule.
+//! Dart suite (deleted with the Dart copy once the FFI result was asserted
+//! identical) per the "tests as spec" rule.
 //!
 //! Everything here is a string assembled by [`sbm_parser::bench`] and executed
 //! by a shell on someone else's machine, with one user-typed value — a working
@@ -9,9 +10,9 @@
 //! run the actual fragments, with a stand-in for yabs, and check what ends up on
 //! disk.
 //!
-//! The install half of the app's suite is deliberately absent. Over SSH the
-//! script has to be uploaded, which is why `probe_command` and `install_entry`
-//! exist; an agent writes the file itself, and never runs either.
+//! The install half is the app's: over a connection the script has to be
+//! uploaded, which is why `probe_command` and `install_entry` exist; an agent
+//! writes the file itself, and never runs either.
 
 #![cfg(unix)]
 
@@ -173,6 +174,33 @@ fn install_fake_script(home: &Path, exit_code: i32, json: &str, body: &str) {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
     }
+}
+
+// ---------- the script is installed where the commands look for it ----------
+
+#[test]
+fn probe_says_missing_then_present_and_home_is_expanded() {
+    let home = home();
+    let (out, _, _) = sh(&home, &bench::probe_command(), None);
+    assert!(out.contains(bench::SCRIPT_MISSING), "{out}");
+
+    let (out, err, code) = sh(&home, &bench::install_entry(), Some("#!/bin/sh\nexit 0\n"));
+    assert_eq!(code, 0, "{err}");
+    assert!(out.contains(bench::SCRIPT_INSTALLED), "{out}");
+
+    let (out, _, _) = sh(&home, &bench::probe_command(), None);
+    assert!(out.contains(bench::SCRIPT_PRESENT), "{out}");
+    // The whole point of `quote_path`: single quotes would have sent a literal
+    // `$HOME` and made a directory of that name.
+    let installed = home.join(bench::BASE_DIR_RELATIVE).join(bench::script_file_name());
+    assert!(installed.is_file());
+    assert!(!home.join("$HOME").exists());
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_ne!(std::fs::metadata(&installed).unwrap().permissions().mode() & 0o111, 0, "installed executable");
+    }
+    let _ = std::fs::remove_dir_all(&home);
 }
 
 // ---------- a run ----------

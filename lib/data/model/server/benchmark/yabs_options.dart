@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'yabs_options.freezed.dart';
@@ -104,23 +106,16 @@ abstract class YabsOptions with _$YabsOptions {
   /// something the sheet says out loud before the run starts.
   bool get isSystemInfoOnly => !disk && !network && !cpu;
 
-  /// The yabs flags, in the order its `getopts` loop reads them.
-  ///
-  /// `-w` is not here: the output path belongs to the runner, which owns the
-  /// directory it writes into.
-  List<String> get flags {
-    return [
-      if (preferPrecompiledBinaries) '-b',
-      if (!disk) '-f',
-      if (!network) '-i',
-      // Only meaningful with the network phase on, and yabs reads a stray one
-      // harmlessly — but a flag list that says something the run will not do is
-      // a flag list nobody can check against the log.
-      if (network && reducedNetwork) '-r',
-      if (!ipInfo) '-n',
-      // Never both: `-g` sets the skip and any digit clears the default, so
-      // sending the pair would ask for a version of a phase that is skipped.
-      if (!cpu) '-g' else '-${geekbenchVersion.flagDigit}',
-    ];
-  }
+  /// The options as `sbm_parser::bench::BenchOptions`, which builds every
+  /// command a run is driven by (`src/rust/api/bench.dart`).
+  String get rustJson => jsonEncode({
+    'disk': disk,
+    'network': network,
+    'reduced_network': reducedNetwork,
+    'cpu': cpu,
+    'geekbench_version': geekbenchVersion.name,
+    'ip_info': ipInfo,
+    'prefer_precompiled_binaries': preferPrecompiledBinaries,
+    'work_dir': workDir,
+  });
 }

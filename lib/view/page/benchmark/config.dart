@@ -4,7 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
-import 'package:server_box/data/model/server/benchmark/yabs_script.dart';
+import 'package:server_box/src/rust/api/bench.dart' as ffi;
 import 'package:server_box/view/page/benchmark/estimate.dart';
 
 /// What a run will do, chosen before it starts.
@@ -94,7 +94,7 @@ class _BenchmarkConfigState extends State<BenchmarkConfig> {
         UIs.height13,
         Center(
           child: Text(
-            l10n.benchmarkUpstream(YabsScript.upstreamVersion),
+            l10n.benchmarkUpstream(ffi.benchUpstreamVersion()),
             style: UIs.text12Grey,
           ),
         ),

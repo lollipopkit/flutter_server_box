@@ -8,10 +8,9 @@
 //! makes the digest a contract between the two rather than a note about one of
 //! them.
 //!
-//! The mirror of this test is `test/unit/benchmark/yabs_script_test.dart`
-//! ("the vendored asset"), and the two run against the same file. Refresh the
-//! asset with `scripts/update-yabs.sh`, which prints the three constants; both
-//! suites fail until they match.
+//! The app's `test/unit/benchmark/yabs_asset_test.dart` reads the same file
+//! as the app bundles it. Refresh the asset with `scripts/update-yabs.sh`,
+//! which prints the three constants; this fails until they match.
 
 use server_box_monitor::api::benchmark::SCRIPT_ASSET_B64;
 use sbm_parser::bench;
