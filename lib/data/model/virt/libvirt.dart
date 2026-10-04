@@ -41,129 +41,6 @@ abstract class VirtHostProbeResult with _$VirtHostProbeResult {
       _$VirtHostProbeResultFromJson(json);
 }
 
-@freezed
-abstract class LibvirtBlockStats with _$LibvirtBlockStats {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtBlockStats({
-    @Default('') String name,
-    String? path,
-    int? rdBytes,
-    int? wrBytes,
-    int? capacity,
-    int? allocation,
-  }) = _LibvirtBlockStats;
-
-  factory LibvirtBlockStats.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtBlockStatsFromJson(json);
-}
-
-@freezed
-abstract class LibvirtNetStats with _$LibvirtNetStats {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtNetStats({
-    @Default('') String name,
-    int? rxBytes,
-    int? txBytes,
-  }) = _LibvirtNetStats;
-
-  factory LibvirtNetStats.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtNetStatsFromJson(json);
-}
-
-/// Cumulative counters from `domstats`; absent for an inactive domain.
-@freezed
-abstract class LibvirtCounters with _$LibvirtCounters {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtCounters({
-    /// Nanoseconds.
-    int? cpuTimeNs,
-
-    /// KiB.
-    int? balloonRssKib,
-    int? balloonAvailableKib,
-    int? balloonUnusedKib,
-    @Default(<LibvirtBlockStats>[]) List<LibvirtBlockStats> blocks,
-    @Default(<LibvirtNetStats>[]) List<LibvirtNetStats> nets,
-  }) = _LibvirtCounters;
-
-  factory LibvirtCounters.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtCountersFromJson(json);
-}
-
-/// One domain of the overview.
-@freezed
-abstract class LibvirtDomain with _$LibvirtDomain {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtDomain({
-    required String uuid,
-    required String name,
-
-    /// `sbm_virt::libvirt::VirtState`: `running`, `paused`, `stopped`,
-    /// `starting`, `stopping`, `unknown`.
-    required String state,
-
-    /// Raw `virDomainState`; -1 when `domstats` did not report the domain.
-    @Default(-1) int stateCode,
-    @Default(0) int reasonCode,
-    @Default('unknown') String reason,
-    @Default(false) bool autostart,
-    @Default(false) bool persistent,
-    int? vcpuCurrent,
-    int? vcpuMax,
-    int? memCurrentKib,
-    int? memMaxKib,
-    @Default(LibvirtCounters()) LibvirtCounters counters,
-  }) = _LibvirtDomain;
-
-  factory LibvirtDomain.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtDomainFromJson(json);
-}
-
-@freezed
-abstract class LibvirtOverview with _$LibvirtOverview {
-  const factory LibvirtOverview({
-    LibvirtVersion? version,
-    @Default(<LibvirtDomain>[]) List<LibvirtDomain> domains,
-  }) = _LibvirtOverview;
-
-  factory LibvirtOverview.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtOverviewFromJson(json);
-}
-
-/// The part of `dumpxml` the app reads.
-@freezed
-abstract class LibvirtDomainXml with _$LibvirtDomainXml {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtDomainXml({
-    String? name,
-    String? uuid,
-    String? description,
-    String? arch,
-    String? machine,
-    @Default(<VirtDisk>[]) List<VirtDisk> disks,
-    @Default(<VirtNic>[]) List<VirtNic> nics,
-    @Default(<VirtGraphics>[]) List<VirtGraphics> graphics,
-    @Default(false) bool hasSerialConsole,
-
-    /// The domain's own cloud-init seed volume: deleted with it.
-    String? seed,
-  }) = _LibvirtDomainXml;
-
-  factory LibvirtDomainXml.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtDomainXmlFromJson(json);
-}
-
-@freezed
-abstract class LibvirtDomainDetail with _$LibvirtDomainDetail {
-  const factory LibvirtDomainDetail({
-    VirtDisplay? display,
-    @Default(LibvirtDomainXml()) LibvirtDomainXml xml,
-  }) = _LibvirtDomainDetail;
-
-  factory LibvirtDomainDetail.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtDomainDetailFromJson(json);
-}
-
 /// `sbm_virt::libvirt::VirtVncConsoleInfo`: a display and its VNC password.
 ///
 /// Not freezed: a generated `toString` would print the password.
@@ -199,49 +76,6 @@ final class LibvirtVncConsoleInfo {
       '${password == null ? 'none' : '[redacted]'}, known: $passwordKnown)';
 }
 
-/// `sbm_virt::libvirt::VirtSnapshotInfo`.
-@freezed
-abstract class LibvirtSnapshot with _$LibvirtSnapshot {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtSnapshot({
-    required String name,
-    String? description,
-    String? parent,
-
-    /// `running`, `paused`, `shutoff`, `disk-snapshot`.
-    String? state,
-
-    /// Seconds since the epoch.
-    int? creationTime,
-    @Default(false) bool memory,
-    @Default(false) bool external,
-    @Default(false) bool current,
-
-    /// Which file each disk was left on (`<disks>`, or `<revertDisks>` for
-    /// one already reverted to once).
-    @Default(<LibvirtSnapLayer>[]) List<LibvirtSnapLayer> layers,
-  }) = _LibvirtSnapshot;
-
-  factory LibvirtSnapshot.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtSnapshotFromJson(json);
-}
-
-/// `sbm_virt::libvirt::snapshot::VirtSnapLayer`.
-@freezed
-abstract class LibvirtSnapLayer with _$LibvirtSnapLayer {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtSnapLayer({
-    @Default('') String target,
-    String? file,
-
-    /// `external`, `internal`, `no`.
-    String? snapshot,
-  }) = _LibvirtSnapLayer;
-
-  factory LibvirtSnapLayer.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtSnapLayerFromJson(json);
-}
-
 /// `sbm_virt::libvirt::snapshot::VirtSnapDiff`.
 @freezed
 abstract class LibvirtSnapDiff with _$LibvirtSnapDiff {
@@ -257,53 +91,6 @@ abstract class LibvirtSnapDiff with _$LibvirtSnapDiff {
 
   factory LibvirtSnapDiff.fromJson(Map<String, dynamic> json) =>
       _$LibvirtSnapDiffFromJson(json);
-}
-
-/// `sbm_virt::libvirt::snapshot::VirtSnapChain`.
-@freezed
-abstract class LibvirtSnapChain with _$LibvirtSnapChain {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtSnapChain({
-    @Default(<LibvirtSnapChainDisk>[]) List<LibvirtSnapChainDisk> disks,
-  }) = _LibvirtSnapChain;
-
-  factory LibvirtSnapChain.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtSnapChainFromJson(json);
-}
-
-/// `sbm_virt::libvirt::snapshot::VirtSnapChainDisk`.
-@freezed
-abstract class LibvirtSnapChainDisk with _$LibvirtSnapChainDisk {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtSnapChainDisk({
-    @Default('') String target,
-
-    /// Topmost first: the file the guest writes to now, then its backing
-    /// store, down to the base image.
-    @Default(<LibvirtSnapChainFile>[]) List<LibvirtSnapChainFile> files,
-
-    /// Why `qemu-img` could not read the disk, in its words.
-    String? error,
-  }) = _LibvirtSnapChainDisk;
-
-  factory LibvirtSnapChainDisk.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtSnapChainDiskFromJson(json);
-}
-
-/// `sbm_virt::libvirt::snapshot::VirtSnapChainFile`.
-@freezed
-abstract class LibvirtSnapChainFile with _$LibvirtSnapChainFile {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtSnapChainFile({
-    required String path,
-    String? format,
-    String? backing,
-    int? allocation,
-    int? capacity,
-  }) = _LibvirtSnapChainFile;
-
-  factory LibvirtSnapChainFile.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtSnapChainFileFromJson(json);
 }
 
 @freezed
@@ -508,26 +295,6 @@ abstract class LibvirtHwCaps with _$LibvirtHwCaps {
 
   factory LibvirtHwCaps.fromJson(Map<String, dynamic> json) =>
       _$LibvirtHwCapsFromJson(json);
-}
-
-/// `sbm_virt::libvirt::VirtCreateHost`: what a new domain runs as, and what
-/// its machine offers.
-@freezed
-abstract class LibvirtCreateHost with _$LibvirtCreateHost {
-  @JsonSerializable(fieldRename: FieldRename.snake)
-  const factory LibvirtCreateHost({
-    @Default('') String domainType,
-    @Default('') String machine,
-    @Default('') String arch,
-    int? maxVcpus,
-    LibvirtHwCaps? caps,
-
-    /// The ISO tool a cloud-init seed is made with; null: none there.
-    String? seedTool,
-  }) = _LibvirtCreateHost;
-
-  factory LibvirtCreateHost.fromJson(Map<String, dynamic> json) =>
-      _$LibvirtCreateHostFromJson(json);
 }
 
 /// One of QEMU's firmware descriptors (`/usr/share/qemu/firmware/*.json`):

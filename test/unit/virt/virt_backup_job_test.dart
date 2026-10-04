@@ -8,6 +8,8 @@ import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 /// The payloads `test/fixtures/pve/` holds, as PVE 9.2.2 answered them.
 Object? fixture(String name) => jsonDecode(
   File('test/fixtures/pve/$name').readAsStringSync(),
@@ -37,6 +39,8 @@ const _backupOnly = VirtStoragePool(
 );
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('backup jobs as PVE lists them', () {
     test('a job that names its guests: every field read', () {
       final raw = fixture('backup_job_fields.json')! as List;

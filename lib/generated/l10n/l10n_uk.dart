@@ -5430,4 +5430,34 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Агент monitor уже зберігає максимально дозволену кількість резервних копій. Спершу видаліть одну.';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID від 100 до 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Цей вузол не в мережі.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Цього інсталяційного образу немає на хості.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Нова машина не може використовувати цю мережу.';
+
+  @override
+  String get virtCreateNotOffered => 'Цей хост не пропонує цього для нової ВМ.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Для Secure Boot потрібен UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Спершу вимкніть її.';
+
+  @override
+  String get virtGuestIsTemplate => 'Це вже шаблон.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Образ більший за диск: зробіть диск не меншим за образ.';
 }

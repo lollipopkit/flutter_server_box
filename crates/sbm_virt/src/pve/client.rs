@@ -35,7 +35,10 @@ use crate::error::{Detail, Error, ErrorKind, Result};
 use crate::model::{Capabilities, ConsoleKind, Guest, GuestDetail, GuestKind, HistoryWindow, Host, HostKind, HostView, PowerAction, Stats};
 use crate::rates::RateTracker;
 
+mod create;
 mod storage;
+
+pub use create::IMPORT_CONTENT_SINCE;
 
 /// How long PVE accepts a ticket or a TFA challenge (`$ticket_lifetime` in
 /// `PVE::AccessControl`, 2 hours on PVE 9.2).

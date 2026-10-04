@@ -9,6 +9,7 @@ import 'dart:ffi' as ffi;
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/parser.dart';
@@ -502,6 +503,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtActionKind dco_decode_virt_action_kind(dynamic raw);
+
+  @protected
+  VirtDeletePlan dco_decode_virt_delete_plan(dynamic raw);
 
   @protected
   VirtErrorKind dco_decode_virt_error_kind(dynamic raw);
@@ -1020,6 +1024,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   VirtActionKind sse_decode_virt_action_kind(SseDeserializer deserializer);
+
+  @protected
+  VirtDeletePlan sse_decode_virt_delete_plan(SseDeserializer deserializer);
 
   @protected
   VirtErrorKind sse_decode_virt_error_kind(SseDeserializer deserializer);
@@ -1662,6 +1669,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_virt_action_kind(
     VirtActionKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_virt_delete_plan(
+    VirtDeletePlan self,
     SseSerializer serializer,
   );
 

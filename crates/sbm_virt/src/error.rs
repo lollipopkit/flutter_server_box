@@ -88,6 +88,9 @@ pub enum Detail {
     NeedsPrivilege { account: String, privilege: String, path: String, command: String },
     /// A change checked before it was sent ([`crate::resource::issue`]).
     Refused { issue: crate::resource::Issue },
+    /// A guest to create, copy, delete or make a template of, checked
+    /// before it was sent ([`crate::create::create_issue`] and the others).
+    CreateRefused { issue: crate::create::Issue },
     /// The pending network configuration changes `ifaces`, which carry the
     /// node's management traffic.
     ApplyTouchesManagement { ifaces: Vec<String> },

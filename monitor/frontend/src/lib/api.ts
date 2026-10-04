@@ -57,7 +57,12 @@ import type {
   BmcTargetInput,
   PveConfigInput,
   PveConfigView,
+  VirtCloneRequest,
   VirtConsoleAnswer,
+  VirtCreated,
+  VirtCreateForm,
+  VirtCreateSpec,
+  VirtGuestKind,
   VirtConsoleKind,
   VirtError,
   VirtGuestDetail,
@@ -598,6 +603,61 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/manage',
       { method: 'POST', body: JSON.stringify({ change, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// What a new guest of `kind` can be made of; PVE needs the `node`.
+  createForm: (kind: VirtGuestKind, node?: string, password?: string) =>
+    request<{ form: VirtCreateForm | null; error: VirtError | null }>(
+      '/virt/create/form',
+      { method: 'POST', body: JSON.stringify({ kind, node: node ?? null, password: password ?? null }) },
+      'Failed to read what a new guest can be made of',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Checked against what the host lists now, then made; returns once the
+  /// host has.
+  createGuest: (spec: VirtCreateSpec, password?: string) =>
+    request<{ created: VirtCreated | null; error: VirtError | null }>(
+      '/virt/create',
+      { method: 'POST', body: JSON.stringify({ spec, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// `removeDisks` is libvirt's choice; PVE deletes a guest's disks with it.
+  deleteGuest: (guest: string, removeDisks: boolean, password?: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/delete',
+      { method: 'POST', body: JSON.stringify({ guest, remove_disks: removeDisks, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Where a copy's disks can go.
+  cloneForm: (guest: string, password?: string) =>
+    request<{ storages: VirtPool[] | null; error: VirtError | null }>(
+      '/virt/clone/form',
+      { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
+      'Failed to read where a copy can go',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The copy's id once the host has made it.
+  cloneGuest: (guest: string, cloneRequest: VirtCloneRequest, password?: string) =>
+    request<{ id: string | null; error: VirtError | null }>(
+      '/virt/clone',
+      { method: 'POST', body: JSON.stringify({ guest, request: cloneRequest, password: password ?? null }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// PVE only.
+  makeTemplate: (guest: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/template',
+      { method: 'POST', body: JSON.stringify({ guest }) },
       'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,

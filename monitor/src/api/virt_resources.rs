@@ -59,7 +59,7 @@ pub struct ManageRequest {
     password: Option<String>,
 }
 
-fn password(p: &Option<String>) -> Option<&str> {
+pub(crate) fn password(p: &Option<String>) -> Option<&str> {
     p.as_deref().filter(|p| !p.is_empty())
 }
 
@@ -225,13 +225,13 @@ async fn live_net(state: &AppState) -> Option<LiveNet> {
 // libvirt
 // ---------------------------------------------------------------------------
 
-async fn libvirt_storage(state: &AppState, password: Option<&str>) -> Result<libvirt::VirtStorage, VirtError> {
+pub(crate) async fn libvirt_storage(state: &AppState, password: Option<&str>) -> Result<libvirt::VirtStorage, VirtError> {
     run_libvirt(state, &libvirt::storage_script(), password, false, libvirt::parse_storage).await
 }
 
 /// `pool`'s volumes as `storage` lists them, and whether one of them did not
 /// read.
-async fn read_volumes(
+pub(crate) async fn read_volumes(
     state: &AppState,
     password: Option<&str>,
     storage: &libvirt::VirtStorage,
@@ -258,7 +258,7 @@ async fn read_volumes(
 /// says "Storage volume not found") means the pool's list is stale: the pool
 /// is refreshed (`pool-refresh`, what libvirt does at its own start) and read
 /// again, once.
-async fn libvirt_volumes(state: &AppState, password: Option<&str>, pool: &str) -> Result<Vec<Volume>, VirtError> {
+pub(crate) async fn libvirt_volumes(state: &AppState, password: Option<&str>, pool: &str) -> Result<Vec<Volume>, VirtError> {
     let mut storage = libvirt_storage(state, password).await?;
     let Some(active) = storage.pools.iter().find(|p| p.name == pool).map(|p| p.active) else {
         return Err(not_found(pool));
@@ -278,7 +278,7 @@ async fn libvirt_volumes(state: &AppState, password: Option<&str>, pool: &str) -
     Ok(lv::with_backs(read, &every))
 }
 
-async fn libvirt_networks(state: &AppState, password: Option<&str>) -> Result<Vec<Network>, VirtError> {
+pub(crate) async fn libvirt_networks(state: &AppState, password: Option<&str>) -> Result<Vec<Network>, VirtError> {
     let all = run_libvirt(state, &libvirt::networks_script(), password, false, libvirt::parse_networks).await?;
     Ok(all.networks.iter().map(|n| lv::network_of(n, &all)).collect())
 }

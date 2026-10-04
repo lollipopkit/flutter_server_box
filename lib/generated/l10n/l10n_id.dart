@@ -5390,4 +5390,35 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Agen monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu.';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID dari 100 sampai 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Node itu tidak online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Media instalasi itu tidak ada di host ini.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Guest baru tidak dapat memakai jaringan itu.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Host ini tidak menyediakan itu untuk VM baru.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot memerlukan UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Matikan terlebih dahulu.';
+
+  @override
+  String get virtGuestIsTemplate => 'Sudah menjadi templat.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Image lebih besar dari disk: buat disk setidaknya sebesar itu.';
 }

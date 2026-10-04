@@ -1,11 +1,13 @@
 <script lang="ts">
   import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
-  import { Box, Cpu, HardDrive, MemoryStick, Network, Pause, Play, Power, RefreshCw, RotateCcw, Settings, Square, Trash2 } from '@lucide/svelte'
+  import { Box, Cpu, HardDrive, MemoryStick, Network, Pause, Play, Plus, Power, RefreshCw, RotateCcw, Settings, Square, Trash2 } from '@lucide/svelte'
   import FeatureTabs from '../components/FeatureTabs.svelte'
   import LineChart from '../components/LineChart.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import PveForm from '../components/PveForm.svelte'
   import VirtConsole from '../components/VirtConsole.svelte'
+  import VirtCreate from '../components/VirtCreate.svelte'
+  import VirtManage from '../components/VirtManage.svelte'
   import VirtNetworks from '../components/VirtNetworks.svelte'
   import VirtSnapshots from '../components/VirtSnapshots.svelte'
   import VirtStorage from '../components/VirtStorage.svelte'
@@ -31,7 +33,7 @@
   } from '../lib/virt'
   import { onDestroy, untrack } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
-  import type { PveConfigInput, PveConfigView, VirtError, VirtGuest, VirtGuestDetail, VirtHistoryWindow, VirtLoad, VirtPowerAction, VirtStats } from '../types'
+  import type { PveConfigInput, PveConfigView, VirtCreated, VirtError, VirtGuest, VirtGuestDetail, VirtHistoryWindow, VirtLoad, VirtPowerAction, VirtStats } from '../types'
 
   /// This machine's guests, PVE or libvirt: the list on one side, the one
   /// selected on the other — its usage, its power. Everything is read and
@@ -77,7 +79,12 @@
   let timer: ReturnType<typeof setTimeout> | null = null
   let generation = 0
   /// The selected guest's view, the design's tabs.
-  let pane = $state<'overview' | 'hardware' | 'console' | 'snapshots'>('overview')
+  let pane = $state<'overview' | 'hardware' | 'console' | 'snapshots' | 'settings'>('overview')
+  /// The right side shows the create form instead of a guest.
+  let creating = $state(false)
+  /// A guest just made or copied: selected before the host lists it, kept
+  /// selected until it does.
+  let awaiting = $state<string | null>(null)
   /// What of the host the page shows: its guests, its storage, its networks.
   let section = $state<'guests' | 'storage' | 'networks'>('guests')
   let detail = $state<VirtGuestDetail | null>(null)
@@ -111,6 +118,8 @@
       load = null
       history = {}
       selected = null
+      creating = false
+      awaiting = null
       sudoPassword = null
       pve = null
       void refresh(serverId)
@@ -135,7 +144,8 @@
           kept[g.id] = s ? pushSample(history[g.id] ?? [], s) : (history[g.id] ?? [])
         }
         history = kept
-        if (!next.view.guests.some((g) => g.id === selected)) {
+        if (awaiting !== null && next.view.guests.some((g) => g.id === awaiting)) awaiting = null
+        if (!next.view.guests.some((g) => g.id === selected) && (selected === null || selected !== awaiting)) {
           selected = next.view.guests.find((g) => !g.template)?.id ?? next.view.guests[0]?.id ?? null
         }
       }
@@ -304,6 +314,27 @@
     const g = current
     if (g && (pane === 'hardware' || pane === 'console') && detailFor !== g.id) untrack(() => void loadDetail(g))
   })
+
+  /// A guest the host has just made: selected, the host read again.
+  function adopt(id: string) {
+    creating = false
+    awaiting = id
+    selected = id
+    void refresh()
+  }
+
+  function created(c: VirtCreated, name: string) {
+    requestError = ''
+    if (c.start_error) notice = $LL.virtCreatedNotStarted({ name, why: c.start_error })
+    else if (c.disk_kept_bytes !== null) notice = $LL.virtCreatedDiskKept({ name, size: fmtBytes(c.disk_kept_bytes) })
+    else notice = $LL.virtCreated({ name })
+    adopt(c.id)
+  }
+
+  function pick(id: string) {
+    creating = false
+    selected = id
+  }
 
   function chart(samples: VirtStats[]) {
     return {
@@ -475,6 +506,14 @@
     <div class="grid gap-4 lg:grid-cols-[minmax(16rem,20rem)_1fr]">
       <!-- The list: what the host holds, then every guest. -->
       <section class="space-y-3">
+        {#if view.capabilities.create}
+          <div class="flex items-center gap-2">
+            <Button size="sm" variant={creating ? 'primary' : 'secondary'} onclick={() => (creating = true)}>
+              <Plus class="h-4 w-4" />
+              {$LL.virtNew()}
+            </Button>
+          </div>
+        {/if}
         <Card class="space-y-2">
           <div class="flex items-baseline justify-between gap-2">
             <span class="text-xs text-faint-fg">{$LL.virtAllocated()}</span>
@@ -503,11 +542,11 @@
               {#each guests as g (g.id)}
                 <li>
                   <button
-                    class="w-full rounded-lg px-3 py-2 text-left transition-colors {g.id === selected
+                    class="w-full rounded-lg px-3 py-2 text-left transition-colors {g.id === selected && !creating
                       ? 'bg-primary/10'
                       : 'hover:bg-muted'}"
-                    aria-current={g.id === selected ? 'true' : undefined}
-                    onclick={() => (selected = g.id)}
+                    aria-current={g.id === selected && !creating ? 'true' : undefined}
+                    onclick={() => pick(g.id)}
                   >
                     <div class="flex items-center gap-2">
                       <span class="h-2 w-2 shrink-0 rounded-full {stateDot(g.state)}"></span>
@@ -527,7 +566,9 @@
 
       <!-- The guest. -->
       <section class="min-w-0 space-y-4">
-        {#if current}
+        {#if creating}
+          <VirtCreate {view} {sudoPassword} oncreated={created} oncancel={() => (creating = false)} />
+        {:else if current}
           {@const g = current}
           {@const stats = view.stats[g.id] ?? null}
           {@const samples = history[g.id] ?? []}
@@ -564,7 +605,7 @@
           </Card>
 
           <nav class="flex items-center gap-1 overflow-x-auto">
-            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()], ...(view.capabilities.snapshots && !g.template ? [['snapshots', $LL.virtViewSnapshots()]] : [])] as [id, label] (id)}
+            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()], ...(view.capabilities.snapshots && !g.template ? [['snapshots', $LL.virtViewSnapshots()]] : []), ['settings', $LL.virtViewSettings()]] as [id, label] (id)}
               <button
                 class="shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors {pane === id ? 'bg-primary/10 text-fg-strong' : 'text-muted-fg hover:bg-muted'}"
                 aria-current={pane === id ? 'page' : undefined}
@@ -575,7 +616,26 @@
             {/each}
           </nav>
 
-          {#if pane === 'snapshots'}
+          {#if pane === 'settings'}
+            <VirtManage
+              {view}
+              guest={g}
+              {sudoPassword}
+              oncloned={(id, name) => {
+                notice = $LL.virtCloned({ name: g.name, copy: name })
+                adopt(id)
+              }}
+              ontemplated={(name) => {
+                notice = $LL.virtMadeTemplate({ name })
+                void refresh()
+              }}
+              ondeleted={(name) => {
+                notice = $LL.virtDeleted({ name })
+                selected = null
+                void refresh()
+              }}
+            />
+          {:else if pane === 'snapshots'}
             <VirtSnapshots guest={g} {sudoPassword} onchanged={() => void refresh()} />
           {:else if pane === 'hardware'}
             <Card class="space-y-3">

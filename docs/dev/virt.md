@@ -1173,6 +1173,39 @@ applied, edited (its address kept), deleted and reverted; an apply touching
 `vmbr0` refused; storages, volumes, pools and networks made and removed; an
 orphan volume (its VMID gone) deletable.
 
+Since 5.5, making, copying and deleting guests: `sbm_virt::create` (the
+`CreateSpec` and `CloneRequest` a client asks for — pools, volumes and
+networks by id, a volume with its pool — `CreateOptions`, and the rules:
+`create_issue` with cloud-init's `cloud_init_issue`, `clone_issue`,
+`delete_issue`, `template_issue`; and what a form offers: `disk_storages`,
+`media_storages`, `image_storages`, `create_networks`, `create_form`),
+`pve::create` (a VM's and a container's parameters) and PVE's calls on
+`pve::Client` (`create_options`, `next_vmid`, `create_form`, `create` — a
+cloud image grown before the start, a start error kept apart from a failed
+create — `delete`, `make_template`, `clone_guest`, each re-reading the guest
+from the host first), and `libvirt::create` (`options_of`, `spec_of` with
+the cloud-init seed's `cloud_init_of` — the password hashed with a salt from
+the system's secure source, a new instance ID, the NIC's MAC —
+`created_of`, `delete_plan`, which decides what goes with a deleted domain
+from what was read, and `clone_spec_of`). The agent serves them as
+`/virt/create/form`, `/virt/create`, `/virt/delete`, `/virt/clone/form`,
+`/virt/clone` and `/virt/template`; the app's `virt_create.dart` rules are
+FFI wrappers, and its `LibvirtBackend` keeps only the round trips. A
+guest's name, state and template flag are read from each node's own listing
+(`/nodes/{node}/qemu`, `/lxc`), not `/cluster/resources` alone: for a few
+seconds after a clone the cluster's cache lists the copy as `VM <vmid>`, and
+after a stop still as running (PVE 9.2.2), so a name check there let a
+second copy of one name through. A disk asked smaller than a cloud image
+whose size the listing knows is refused (`image_size`); one whose size it
+cannot know is kept at the image's (`disk_kept_bytes`). Verified 2026-10-04
+against PVE 9.2.2 and libvirt 11.3.0 through the agent and the app's
+`virt_real_test.dart`: VMs (UEFI with Secure Boot, a TPM, an ISO, a SATA
+disk, a cloud image grown and set up by cloud-init) and a container made,
+cloned (full, linked from a template), made a template and deleted; the
+refusals (a name or VMID taken, too many cores, a running guest deleted, a
+linked clone naming a storage, an unknown node) said before any request; a
+missing privilege named with the `pveum` line that grants it.
+
 Still in Dart until their part of item 5 moves them (each marked
 `TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
 whose adapter hands the request to `PveSession.raw` (the session's rules

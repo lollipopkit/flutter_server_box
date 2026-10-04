@@ -391,7 +391,7 @@ pub(crate) async fn backend(state: &AppState) -> Result<Backend, HttpResponse> {
 }
 
 /// The guest `id` as the host has it now.
-async fn guest_of(state: &AppState, backend: &Backend, id: &str, password: Option<&str>) -> Result<Guest, VirtError> {
+pub(crate) async fn guest_of(state: &AppState, backend: &Backend, id: &str, password: Option<&str>) -> Result<Guest, VirtError> {
     let missing = || VirtError::msg(ErrorKind::ActionFailed, format!("no guest {id}"));
     match backend {
         Backend::Pve(client) => client.load().await?.guests.into_iter().find(|g| g.id == id).ok_or_else(missing),
@@ -640,7 +640,7 @@ pub async fn snapshots(
     Ok(HttpResponse::Ok().json(&answer))
 }
 
-async fn libvirt_snapshots(
+pub(crate) async fn libvirt_snapshots(
     state: &AppState,
     guest: &Guest,
     password: Option<&str>,
@@ -661,7 +661,7 @@ async fn libvirt_snapshots(
     Ok((list, chain))
 }
 
-async fn libvirt_chain(
+pub(crate) async fn libvirt_chain(
     state: &AppState,
     guest: &Guest,
     password: Option<&str>,

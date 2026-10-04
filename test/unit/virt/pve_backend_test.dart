@@ -242,318 +242,88 @@ void main() {
     );
     Map<String, String> form(String body) => Uri.splitQueryString(body);
 
-    test('nextid', () async {
-      final api = _Api()..routes['GET /cluster/nextid'] = (_) => '105';
-      expect(await api.backend(token).nextVmid(), 105);
+    /// A node `pve` with VM 100, `local-lvm` and `vmbr0`.
+    _Api host() => _Api()
+      ..resources = [
+        {'id': 'node/pve', 'type': 'node', 'node': 'pve', 'status': 'online', 'maxcpu': 8},
+        {'id': 'qemu/100', 'type': 'qemu', 'vmid': 100, 'node': 'pve', 'status': 'running', 'name': 'web'},
+        {'id': 'qemu/101', 'type': 'qemu', 'vmid': 101, 'node': 'pve', 'status': 'stopped', 'name': 'off'},
+      ]
+      ..routes['GET /nodes'] = ((_) => [
+        {'node': 'pve', 'status': 'online'},
+      ])
+      ..routes['GET /storage'] = ((_) => const [])
+      ..routes['GET /nodes/pve/storage'] = ((_) => [
+        {'storage': 'local-lvm', 'type': 'lvmthin', 'active': 1, 'enabled': 1, 'content': 'images,rootdir'},
+      ])
+      ..routes['GET /nodes/pve/network'] = ((_) => [
+        {'iface': 'vmbr0', 'type': 'bridge', 'active': 1},
+      ]);
+
+    VirtCreateSpec vm(String name, {int vmid = 105}) => VirtCreateSpec(
+      kind: VirtGuestKind.qemu,
+      name: name,
+      node: 'pve',
+      vmid: vmid,
+      cores: 2,
+      memoryMiB: 2048,
+      storage: lvm,
+      diskGiB: 32,
+      network: bridge,
+    );
+
+    // What the session sends is `sbm_virt`'s (crates/sbm_virt/tests/
+    // pve_create.rs); this is how the app reaches it and says it.
+    test('nextid, options', () async {
+      final api = host()..routes['GET /cluster/nextid'] = (_) => '105';
+      final pve = api.backend(token);
+      expect(await pve.nextVmid(), 105);
+      final o = await pve.createOptions();
+      expect(o.buses.first, 'scsi');
+      expect((o.uefi, o.secureBoot, o.tpm, o.cloudInit), (true, true, true, true));
     });
 
-    test('a VM: its configuration, the task, then start on its own', () async {
-      final api = _Api();
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/qemu/105/status/start'] = (_) => _Api.upid;
-      final created = await api.backend(token).create(
-        const VirtCreateSpec(
-          kind: VirtGuestKind.qemu,
-          name: 'web-02',
-          node: 'pve',
-          vmid: 105,
-          cores: 2,
-          memoryMiB: 2048,
-          storage: lvm,
-          diskGiB: 32,
-          media: VirtVolume(
-            id: 'local:iso/debian-13.iso',
-            name: 'debian-13.iso',
-            content: 'iso',
-          ),
-          network: bridge,
-          start: true,
-        ),
-      );
+    test('a VM: the spec crosses by id, the id comes back', () async {
+      final api = host()..routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
+      final created = await api.backend(token).create(vm('web-02'));
       expect(created.id, 'qemu/105');
       expect(created.startError, isNull);
-      final i = api.paths.indexOf('POST /nodes/pve/qemu');
-      expect(form(api.bodies[i]), {
-        'vmid': '105',
-        'name': 'web-02',
-        'cores': '2',
-        'memory': '2048',
-        'ostype': 'l26',
-        'scsihw': 'virtio-scsi-single',
-        'scsi0': 'local-lvm:32,iothread=1',
-        'ide2': 'local:iso/debian-13.iso,media=cdrom',
-        'net0': 'virtio,bridge=vmbr0',
-        'serial0': 'socket',
-        'boot': 'order=scsi0;ide2',
-      });
-      // Created (its task waited for) before it is started.
-      final start = api.paths.indexOf('POST /nodes/pve/qemu/105/status/start');
-      expect(
-        api.paths.indexWhere((p) => p.contains('/tasks/')),
-        allOf(greaterThan(i), lessThan(start)),
-      );
-    });
-
-    test('a cloud image with cloud-init: import-from, PVE\'s drive, grown '
-        'before the start', () async {
-      final api = _Api();
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
-      // Imported at the image's own size.
-      api.routes['GET /nodes/pve/qemu/107/config'] =
-          (_) => {'scsi0': 'local-lvm:vm-107-disk-1,iothread=1,size=3G'};
-      api.routes['PUT /nodes/pve/qemu/107/resize'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/qemu/107/status/start'] = (_) => _Api.upid;
-      const key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5 me@x';
-      final created = await api.backend(token).create(
-        const VirtCreateSpec(
-          kind: VirtGuestKind.qemu,
-          name: 'ci-01',
-          node: 'pve',
-          vmid: 107,
-          cores: 1,
-          memoryMiB: 1024,
-          storage: lvm,
-          diskGiB: 16,
-          image: VirtVolume(
-            id: 'local:import/debian-13.qcow2',
-            name: 'debian-13.qcow2',
-            content: 'import',
-            format: 'qcow2',
-            capacity: 3 << 30,
-          ),
-          network: bridge,
-          nicModel: 'e1000e',
-          uefi: true,
-          tpm: true,
-          cloudInit: VirtCloudInit(
-            user: 'admin',
-            password: 'p a&ss=word',
-            sshKeys: '$key\n',
-            address: '10.0.0.5/24',
-            gateway: '10.0.0.1',
-            dns: ['1.1.1.1', '9.9.9.9'],
-            searchDomains: ['lab.example'],
-          ),
-          start: true,
-        ),
-      );
-      expect(created.startError, isNull);
-      expect(created.diskKeptBytes, isNull);
-      final i = api.paths.indexOf('POST /nodes/pve/qemu');
-      final body = form(api.bodies[i]);
-      expect(body, {
-        'vmid': '107',
-        'name': 'ci-01',
-        'cores': '1',
-        'memory': '1024',
-        'ostype': 'l26',
-        'scsihw': 'virtio-scsi-single',
-        'scsi0': 'local-lvm:0,import-from=local:import/debian-13.qcow2,iothread=1',
-        // Where a cloud kernel reads it: not IDE.
-        'scsi1': 'local-lvm:cloudinit',
-        'net0': 'e1000e,bridge=vmbr0',
-        'serial0': 'socket',
-        'boot': 'order=scsi0',
-        'bios': 'ovmf',
-        'efidisk0': 'local-lvm:1,efitype=4m,pre-enrolled-keys=0',
-        'tpmstate0': 'local-lvm:1,version=v2.0',
-        'ciuser': 'admin',
-        'cipassword': 'p a&ss=word',
-        // Encoded once more inside the form, as PVE wants it.
-        'sshkeys': Uri.encodeComponent('$key\n'),
-        'ipconfig0': 'ip=10.0.0.5/24,gw=10.0.0.1',
-        'nameserver': '1.1.1.1 9.9.9.9',
-        'searchdomain': 'lab.example',
-      });
-      expect(body['sshkeys'], 'ssh-ed25519%20AAAAC3NzaC1lZDI1NTE5%20me%40x%0A');
-      // Secure Boot is offered, and is the EFI disk with the keys enrolled.
-      expect((await api.backend(token).createOptions()).secureBoot, isTrue);
-      // Grown to the size asked for, then started.
-      final resize = api.paths.indexOf('PUT /nodes/pve/qemu/107/resize');
-      expect(form(api.bodies[resize]), {'disk': 'scsi0', 'size': '16G'});
-      final start = api.paths.indexOf('POST /nodes/pve/qemu/107/status/start');
-      expect(i < resize && resize < start, isTrue);
-    });
-
-    test('an image bigger than the disk asked for keeps its size, not grown '
-        'and not failed', () async {
-      final api = _Api();
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
-      api.routes['GET /nodes/pve/qemu/109/config'] =
-          (_) => {'scsi0': 'local-lvm:vm-109-disk-0,iothread=1,size=3584M'};
-      api.routes['POST /nodes/pve/qemu/109/status/start'] = (_) => _Api.upid;
-      final created = await api.backend(token).create(
-        const VirtCreateSpec(
-          kind: VirtGuestKind.qemu,
-          name: 'ci-03',
-          node: 'pve',
-          vmid: 109,
-          cores: 1,
-          memoryMiB: 1024,
-          storage: lvm,
-          diskGiB: 2,
-          // The listing's size was the file's: unknown.
-          image: VirtVolume(id: 'local:import/noble.qcow2', name: 'noble.qcow2', content: 'import', format: 'qcow2'),
-          cloudInit: VirtCloudInit(user: 'u', password: 'pw'),
-          start: true,
-        ),
-      );
-      expect(created.diskKeptBytes, 3584 << 20);
-      expect(created.startError, isNull);
-      expect(api.paths.where((p) => p.endsWith('/resize')), isEmpty);
-      expect(api.paths, contains('POST /nodes/pve/qemu/109/status/start'));
-    });
-
-    test('a disk on SATA has no I/O thread; a failed growth is not started',
-        () async {
-      final api = _Api();
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
-      api.routes['PUT /nodes/pve/qemu/108/resize'] = (_) =>
-          _Api._status(500, message: 'resize failed');
-      final created = await api.backend(token).create(
-        const VirtCreateSpec(
-          kind: VirtGuestKind.qemu,
-          name: 'ci-02',
-          node: 'pve',
-          vmid: 108,
-          cores: 1,
-          memoryMiB: 1024,
-          storage: lvm,
-          diskGiB: 8,
-          image: VirtVolume(id: 'local:import/x.raw', name: 'x.raw', format: 'raw'),
-          bus: 'sata',
-          cloudInit: VirtCloudInit(user: 'u', password: 'pw'),
-          start: true,
-        ),
-      );
       final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve/qemu')]);
-      expect(body['sata0'], 'local-lvm:0,import-from=local:import/x.raw');
-      expect(body['boot'], 'order=sata0');
-      expect(body['sata1'], 'local-lvm:cloudinit');
-      // No NIC: DHCP all the same (PVE writes it for none), no key.
-      expect(body['ipconfig0'], 'ip=dhcp');
-      expect(body.containsKey('sshkeys'), isFalse);
-      expect(created.startError, contains('resize failed'));
-      expect(api.paths.where((p) => p.contains('status/start')), isEmpty);
+      expect(body['scsi0'], 'local-lvm:32,iothread=1');
+      expect(body['net0'], 'virtio,bridge=vmbr0');
     });
 
-    test('a container: template, rootfs, DHCP, and its login', () async {
-      final api = _Api()..routes['POST /nodes/pve/lxc'] = (_) => _Api.upid;
-      final created = await api.backend(token).create(
-        const VirtCreateSpec(
-          kind: VirtGuestKind.lxc,
-          name: 'ct-01',
-          node: 'pve',
-          vmid: 201,
-          cores: 1,
-          memoryMiB: 512,
-          storage: lvm,
-          diskGiB: 8,
-          media: VirtVolume(
-            id: 'local:vztmpl/alpine-3.22.tar.xz',
-            name: 'alpine-3.22.tar.xz',
-            content: 'vztmpl',
-          ),
-          network: bridge,
-          password: 'p4ss word&=',
-          sshKeys: 'ssh-ed25519 AAAAC3Nza me@host\n',
-        ),
-      );
-      expect(created.id, 'lxc/201');
-      expect(api.paths, isNot(contains(startsWith('POST /nodes/pve/lxc/201/status'))));
-      final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve/lxc')]);
-      expect(body, {
-        'vmid': '201',
-        'hostname': 'ct-01',
-        'ostemplate': 'local:vztmpl/alpine-3.22.tar.xz',
-        'cores': '1',
-        'memory': '512',
-        'rootfs': 'local-lvm:8',
-        'unprivileged': '1',
-        'net0': 'name=eth0,bridge=vmbr0,ip=dhcp',
-        // In the body, encoded, as typed.
-        'password': 'p4ss word&=',
-        'ssh-public-keys': 'ssh-ed25519 AAAAC3Nza me@host',
-      });
-      // Nowhere else: not in a path, not in a query.
-      expect(api.queries.join(), isNot(contains('p4ss')));
+    test('a refusal before anything is sent: a name taken is exists, said', () async {
+      final api = host();
+      final e = await _err(api.backend(token).create(vm('web')));
+      expect(e.type, VirtErrType.exists);
+      expect(e.message, l10n.virtCreateNameTaken);
+      final v = await _err(api.backend(token).create(vm('x', vmid: 100)));
+      expect(v.message, l10n.virtCreateVmidTaken);
+      expect(api.paths, isNot(contains('POST /nodes/pve/qemu')));
     });
 
-    test('a VMID taken is exists; a bad parameter, the host\'s words', () async {
-      final api = _Api()
+    test("a VMID taken by then: exists, in the host's words", () async {
+      final api = host()
         ..routes['POST /nodes/pve/qemu'] = ((_) => _Api._status(
           500,
-          message: "unable to create VM 100 - VM 100 already exists on node 'pve'\n",
+          message: "unable to create VM 105 - VM 105 already exists on node 'pve'\n",
         ));
-      const spec = VirtCreateSpec(
-        kind: VirtGuestKind.qemu,
-        name: 'x',
-        node: 'pve',
-        vmid: 100,
-        cores: 1,
-        memoryMiB: 512,
-        storage: lvm,
-        diskGiB: 1,
-      );
-      final pve = api.backend(token);
-      final taken = await _err(pve.create(spec));
-      expect(taken.type, VirtErrType.exists);
-      expect(taken.message, contains('already exists'));
-
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api._status(
-        400,
-        message: 'Parameter verification failed.\n',
-        errors: {'memory': 'value must have a minimum value of 16\n'},
-      );
-      final bad = await _err(pve.create(spec));
-      expect(bad.type, VirtErrType.actionFailed);
-      expect(
-        bad.message,
-        'Parameter verification failed.\nmemory: value must have a minimum value of 16',
-      );
+      final e = await _err(api.backend(token).create(vm('x')));
+      expect(e.type, VirtErrType.exists);
+      expect(e.message, contains('already exists'));
     });
 
-    test('created, then not started: a start error, not a failure', () async {
-      final api = _Api()..actionStatus = 500;
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
-      final created = await api.backend(token).create(
-        const VirtCreateSpec(
-          kind: VirtGuestKind.qemu,
-          name: 'x',
-          node: 'pve',
-          vmid: 106,
-          cores: 1,
-          memoryMiB: 512,
-          storage: lvm,
-          diskGiB: 1,
-          start: true,
-        ),
-      );
-      expect(created.id, 'qemu/106');
-      expect(created.startError, isNotNull);
-    });
-
-    test('delete: stopped only, purged, unreferenced disks too', () async {
-      final api = _Api()..routes['DELETE /nodes/pve/qemu/101'] = (_) => _Api.upid;
+    test('delete: as the host has it now, purged', () async {
+      final api = host()..routes['DELETE /nodes/pve/qemu/101'] = (_) => _Api.upid;
       final pve = api.backend(token);
-      const off = VirtGuest(
-        id: 'qemu/101',
-        name: 'off',
-        kind: VirtGuestKind.qemu,
-        state: VirtGuestState.stopped,
-        vmid: 101,
-        node: 'pve',
-      );
-      await pve.delete(off);
+      final guests = (await pve.load()).guests;
+      await pve.delete(guests.firstWhere((g) => g.id == 'qemu/101'));
       final i = api.paths.indexOf('DELETE /nodes/pve/qemu/101');
-      expect(
-        Uri.splitQueryString(api.queries[i]),
-        {'purge': '1', 'destroy-unreferenced-disks': '1'},
-      );
-      expect(api.paths.last, contains('/tasks/'));
-
-      final running = off.copyWith(state: VirtGuestState.running);
-      expect((await _err(pve.delete(running))).type, VirtErrType.unsupported);
+      expect(Uri.splitQueryString(api.queries[i]), {'purge': '1', 'destroy-unreferenced-disks': '1'});
+      final running = await _err(pve.delete(guests.firstWhere((g) => g.id == 'qemu/100')));
+      expect(running.type, VirtErrType.unsupported);
+      expect(running.message, l10n.virtGuestNotStopped);
     });
   });
 
@@ -779,38 +549,38 @@ void main() {
       );
     });
 
-    test('clone: full unless a template asks for linked; a VMID taken', () async {
-      final api = _Api();
-      api.routes['GET /cluster/nextid'] = (_) => '120';
-      api.routes['POST /nodes/pve/qemu/9941/clone'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/lxc/200/clone'] = (_) => _Api.upid;
+    test('clone: the request crosses, the copy\'s id comes back', () async {
+      final api = _Api()
+        ..resources = [
+          {'id': 'node/pve', 'type': 'node', 'node': 'pve', 'status': 'online'},
+          {'id': 'qemu/9941', 'type': 'qemu', 'vmid': 9941, 'node': 'pve', 'status': 'stopped', 'name': 'sbbk-src', 'template': 1},
+          {'id': 'lxc/200', 'type': 'lxc', 'vmid': 200, 'node': 'pve', 'status': 'stopped', 'name': 'alpine'},
+        ]
+        ..routes['GET /nodes'] = ((_) => [
+          {'node': 'pve', 'status': 'online'},
+        ])
+        ..routes['GET /storage'] = ((_) => const [])
+        ..routes['GET /nodes/pve/storage'] = ((_) => const [])
+        ..routes['GET /cluster/nextid'] = ((_) => '120')
+        ..routes['POST /nodes/pve/qemu/9941/clone'] = ((_) => _Api.upid)
+        ..routes['POST /nodes/pve/lxc/200/clone'] = ((_) => _Api.upid);
       final pve = api.backend(token);
+      final guests = (await pve.load()).guests;
+      final template = guests.firstWhere((g) => g.id == 'qemu/9941');
       expect(
-        await pve.clone(vm, const VirtCloneRequest(name: 'copy', full: false)),
+        await pve.clone(template, const VirtCloneRequest(name: 'l', full: false)),
         'qemu/120',
       );
       var i = api.paths.indexOf('POST /nodes/pve/qemu/9941/clone');
-      expect(form(api.bodies[i]), {'newid': '120', 'name': 'copy', 'full': '1'});
-      expect(api.paths.last, contains('/tasks/'), reason: 'waited for');
-
-      final template = vm.copyWith(template: true);
-      await pve.clone(template, const VirtCloneRequest(name: 'l', full: false, vmid: 121));
-      i = api.paths.lastIndexOf('POST /nodes/pve/qemu/9941/clone');
-      expect(form(api.bodies[i]), {'newid': '121', 'name': 'l', 'full': '0'});
-
-      expect(
-        await pve.clone(ct, const VirtCloneRequest(name: 'ct2', vmid: 202)),
-        'lxc/202',
-      );
+      expect(form(api.bodies[i]), {'newid': '120', 'name': 'l', 'full': '0'});
+      final ct = guests.firstWhere((g) => g.id == 'lxc/200');
+      expect(await pve.clone(ct, const VirtCloneRequest(name: 'ct2', vmid: 202)), 'lxc/202');
       i = api.paths.indexOf('POST /nodes/pve/lxc/200/clone');
       expect(form(api.bodies[i]), {'newid': '202', 'hostname': 'ct2', 'full': '1'});
-
-      api.routes['POST /nodes/pve/qemu/9941/clone'] = (_) => _Api._status(
-        500,
-        message: "unable to create VM 120 - VM 120 already exists on node 'pve'",
-      );
-      final taken = await _err(pve.clone(vm, const VirtCloneRequest(name: 'x', vmid: 120)));
+      // A name the host has: refused before the request, said.
+      final taken = await _err(pve.clone(ct, const VirtCloneRequest(name: 'alpine')));
       expect(taken.type, VirtErrType.exists);
+      expect(taken.message, l10n.virtCreateNameTaken);
     });
 
     test('a job keeps the one selection it has: pool, all or a list', () async {

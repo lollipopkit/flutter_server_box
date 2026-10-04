@@ -11,7 +11,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
-import 'package:server_box/core/utils/version.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -374,345 +373,43 @@ class PveBackend implements VirtBackend {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<int?> nextVmid() async {
-    final data = await _call((dio) => dio.get(_url('/cluster/nextid')));
-    return switch (data) {
-      final int id => id,
-      final String id => int.tryParse(id),
-      _ => null,
-    };
-  }
+  Future<int?> nextVmid() => _rust((s) => s.nextVmid());
 
-  /// The first release with the `import` content type, where a cloud image
-  /// is kept for `import-from`.
-  static const importContentSince = [8, 2];
-
-  /// PVE's fixed set: OVMF and swtpm ship with it, cloud-init is its own
-  /// drive. Cloud images wait for a release with `import` content (an
-  /// unknown release is given the benefit of the doubt: its storages say
-  /// whether they hold any).
+  /// PVE's fixed set (`sbm_virt::pve::Client::create_options`): cloud images
+  /// wait for a release with `import` content.
   @override
-  Future<VirtCreateOptions> createOptions() async {
-    final release = _session?.release();
-    return VirtCreateOptions(
-      buses: virtPveCreateBuses,
-      nicModels: virtCreateNicModels,
-      uefi: true,
-      // Every 4m EFI disk runs PVE's `OVMF_CODE_4M.secboot.fd`; what turns
-      // Secure Boot on is the variables template with the keys enrolled
-      // (`pre-enrolled-keys=1`, `PVE::QemuServer::OVMF`, 9.2.2).
-      secureBoot: true,
-      tpm: true,
-      cloudImages:
-          release == null || !isVersionLessThan(release, importContentSince),
-      cloudInit: true,
-    );
-  }
+  Future<VirtCreateOptions> createOptions() async =>
+      VirtRust.createOptions(jsonDecode(await _rust((s) async => s.createOptions())));
 
-  /// `POST /nodes/{node}/qemu` or `/lxc`, waited for; then `start` as a
-  /// request of its own rather than the create's `start=1`, so a guest that
-  /// was created and did not start is told apart from one that was not
-  /// created.
-  ///
-  /// A VM gets a serial port (`serial0: socket`), so its text console works
-  /// before it has a network, and the install media first in the boot order
-  /// after its disk. A cloud image is its disk's `import-from` (PVE 8.2+
-  /// takes one from `import` or `images` content), grown afterwards to the
-  /// size asked for, with PVE's own cloud-init drive; the password goes in
-  /// the request body and PVE stores its hash. A container is unprivileged
-  /// unless asked otherwise, with DHCP on its NIC.
+  /// `sbm_virt::pve::Client::create`: checked against what the host lists
+  /// now, made, a cloud image's disk grown to the size asked for, then
+  /// started as a request of its own.
   @override
-  Future<VirtCreated> create(VirtCreateSpec spec) async {
-    final node = spec.node;
-    final vmid = spec.vmid;
-    if (node == null || vmid == null) {
-      throw const VirtErr(
-        type: VirtErrType.unsupported,
-        message: 'A PVE guest needs a node and a VMID',
-      );
-    }
-    final lxc = spec.kind == VirtGuestKind.lxc;
-    final storage = spec.storage.name;
-    final bridge = spec.network?.name;
-    final Map<String, Object> body;
-    if (lxc) {
-      final template = spec.media;
-      if (template == null) {
-        throw const VirtErr(
-          type: VirtErrType.unsupported,
-          message: 'A container needs a template',
-        );
-      }
-      final password = spec.password ?? '';
-      final keys = (spec.sshKeys ?? '').trim();
-      body = {
-        'vmid': vmid,
-        'hostname': spec.name,
-        'ostemplate': template.id,
-        'cores': spec.cores,
-        'memory': spec.memoryMiB,
-        'rootfs': '$storage:${spec.diskGiB}',
-        'unprivileged': spec.unprivileged ? 1 : 0,
-        'net0': ?bridge == null ? null : 'name=eth0,bridge=$bridge,ip=dhcp',
-        'password': ?password.isEmpty ? null : password,
-        'ssh-public-keys': ?keys.isEmpty ? null : keys,
-      };
-    } else {
-      body = qemuCreateBody(spec, vmid: vmid);
-    }
-    final kind = lxc ? 'lxc' : 'qemu';
-    try {
-      final upid = await _call(
-        (dio) => dio.post(
-          _url('/nodes/${_seg(node)}/$kind'),
-          data: body,
-          options: Options(contentType: Headers.formUrlEncodedContentType),
-        ),
-        action: true,
-      );
-      if (upid is String && upid.startsWith('UPID:')) {
-        await _waitTask(node, upid);
-      }
-    } on VirtErr catch (e) {
-      throw _createErr(e);
-    }
-    final id = '$kind/$vmid';
-    String? startError;
-    int? kept;
-    if (!lxc && spec.image != null) {
-      // Imported at the image's own size, which the configuration says
-      // (`size=`). Grown now, before a first boot lays its filesystem out —
-      // and only grown: a request below the image keeps the image's size,
-      // as PVE cannot shrink a disk and cutting one would cut its system.
-      final want = spec.diskGiB * (1 << 30);
-      final disk = '${_createBus(spec)}0';
-      int? size;
-      try {
-        final config = await _configOf('/nodes/${_seg(node)}/qemu/$vmid');
-        if (config[disk] case final String raw) {
-          size = PveResources.optionSize(raw);
-        }
-      } on VirtErr catch (e) {
-        Loggers.app.info('PVE config of $vmid after import: ${e.message}');
-      }
-      if (size != null && size > want) kept = size;
-      if (size == null || size < want) {
-        try {
-          final upid = await _call(
-            (dio) => dio.put(
-              _url('/nodes/${_seg(node)}/qemu/$vmid/resize'),
-              data: {'disk': disk, 'size': '${spec.diskGiB}G'},
-              options: Options(contentType: Headers.formUrlEncodedContentType),
-            ),
-            action: true,
-          );
-          if (upid is String && upid.startsWith('UPID:')) {
-            await _waitTask(node, upid);
-          }
-        } on VirtErr catch (e) {
-          // Created all the same; not started on a disk of the wrong size.
-          return VirtCreated(id: id, startError: e.message ?? e.type.name);
-        }
-      }
-    }
-    if (spec.start) {
-      try {
-        final upid = await _call(
-          (dio) => dio.post(_url('/nodes/${_seg(node)}/$kind/$vmid/status/start')),
-          action: true,
-        );
-        if (upid is String && upid.startsWith('UPID:')) {
-          await _waitTask(node, upid);
-        }
-      } on VirtErr catch (e) {
-        startError = e.message ?? e.type.name;
-      }
-    }
-    return VirtCreated(id: id, startError: startError, diskKeptBytes: kept);
-  }
+  Future<VirtCreated> create(VirtCreateSpec spec) async => VirtRust.created(
+    jsonDecode(await _rust((s) => s.create(specJson: jsonEncode(VirtRust.specJson(spec))))),
+  );
 
-  static String _createBus(VirtCreateSpec spec) => spec.bus ?? 'scsi';
-
-  /// A VM's `POST /nodes/{node}/qemu` parameters for [spec].
-  @visibleForTesting
-  static Map<String, Object> qemuCreateBody(VirtCreateSpec spec, {required int vmid}) {
-    final storage = spec.storage.name;
-    final bridge = spec.network?.name;
-    final bus = _createBus(spec);
-    final disk = '${bus}0';
-    final iso = spec.media?.id;
-    final image = spec.image?.id;
-    final ci = spec.cloudInit;
-    // An I/O thread is for virtio-blk and virtio-scsi-single only; PVE
-    // refuses it on SATA and IDE.
-    final iothread = bus == 'scsi' || bus == 'virtio' ? ',iothread=1' : '';
-    final address = ci?.address;
-    // The cloud-init drive where the image's kernel can read it: Debian's
-    // cloud kernel has no IDE driver at all (PVE 9.2: cloud-init never ran
-    // from `ide2`, and did from `scsi1`). SCSI beside a SCSI or virtio disk
-    // (the virtio-scsi controller is there anyway), SATA beside SATA, IDE
-    // only beside IDE.
-    final ciDrive = switch (bus) {
-      'ide' => 'ide2',
-      'sata' => 'sata1',
-      _ => 'scsi1',
-    };
-    return {
-      'vmid': vmid,
-      'name': spec.name,
-      'cores': spec.cores,
-      'memory': spec.memoryMiB,
-      'ostype': 'l26',
-      'scsihw': 'virtio-scsi-single',
-      disk: image == null
-          ? '$storage:${spec.diskGiB}$iothread'
-          : '$storage:0,import-from=$image$iothread',
-      // The install media, or the cloud-init drive: never both.
-      if (iso != null) 'ide2': '$iso,media=cdrom',
-      if (ci != null && iso == null) ciDrive: '$storage:cloudinit',
-      'net0': ?bridge == null ? null : '${spec.nicModel ?? 'virtio'},bridge=$bridge',
-      'serial0': 'socket',
-      'boot': 'order=${[disk, if (iso != null) 'ide2'].join(';')}',
-      if (spec.uefi) ...{
-        'bios': 'ovmf',
-        // Keys are enrolled when the EFI disk is made: Secure Boot is the
-        // disk with `pre-enrolled-keys=1`, which is what PVE's own UEFI
-        // default writes.
-        'efidisk0':
-            '$storage:1,efitype=4m,pre-enrolled-keys=${spec.secureBoot ? 1 : 0}',
-      },
-      if (spec.tpm) 'tpmstate0': '$storage:1,version=v2.0',
-      if (ci != null) ...{
-        'ciuser': ci.user,
-        if (ci.password case final p? when p.isNotEmpty) 'cipassword': p,
-        // PVE wants the keys URL-encoded, as its web UI sends them
-        // (`encodeURIComponent`), inside the form's own encoding.
-        if (ci.keys.isNotEmpty) 'sshkeys': Uri.encodeComponent('${ci.keys.join('\n')}\n'),
-        'ipconfig0': address == null
-            ? 'ip=dhcp'
-            : ['ip=$address', if (ci.gateway case final gw?) 'gw=$gw'].join(','),
-        if (ci.dns.isNotEmpty) 'nameserver': ci.dns.join(' '),
-        'searchdomain': ?(ci.searchDomains.isEmpty ? null : ci.searchDomains.join(' ')),
-      },
-    };
-  }
-
-  /// A refused create, in the host's words: PVE answers a bad parameter with
-  /// 400 and a taken VMID with 500, before any task.
-  static VirtErr _createErr(VirtErr e) {
-    // `unable to create VM 105 - VM 105 already exists on node 'pve'`.
-    if (e.message?.contains('already exists') ?? false) {
-      return VirtErr(type: VirtErrType.exists, message: e.message, cause: e);
-    }
-    final cause = e.cause;
-    if (e.type == VirtErrType.invalidResponse &&
-        cause is DioException &&
-        cause.response != null) {
-      return VirtErr(
-        type: VirtErrType.actionFailed,
-        message: e.message,
-        cause: cause,
-      );
-    }
-    return e;
-  }
-
-  /// `DELETE` with `purge=1` (out of backup jobs, replication and HA) and
-  /// `destroy-unreferenced-disks=1` (volumes of its VMID no configuration
-  /// names). PVE deletes a guest's own disks whatever is asked:
-  /// [removeDisks] cannot keep them here.
+  /// Purged, with the disks of its VMID no configuration names. PVE deletes
+  /// a guest's own disks whatever is asked: [removeDisks] cannot keep them.
   @override
-  Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async {
-    if (guest.state != VirtGuestState.stopped) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is not stopped',
-      );
-    }
-    await _task(
-      guest,
-      (dio) => dio.delete(
-        _url(_guestPath(guest)),
-        queryParameters: {'purge': 1, 'destroy-unreferenced-disks': 1},
-      ),
-    );
-  }
+  Future<void> delete(VirtGuest guest, {bool removeDisks = true}) =>
+      _rust((s) => s.delete(guest: _ref(guest)));
 
-  // ---------------------------------------------------------------------------
-  // Templates, cloning and backups
-  // ---------------------------------------------------------------------------
-
-  /// `POST .../template` on the guest's node, waited for (`VM.Allocate` on
-  /// `/vms/{vmid}`, checked by PVE before the task). A guest with snapshots
-  /// cannot become one, and a template cannot become a guest again: PVE
-  /// writes `template: 1` and turns every disk into a base image
-  /// (`vdisk_create_base`: `vm-910-disk-0` → `base-910-disk-0` on LVM-thin),
-  /// which is what a linked clone then shares.
+  /// A stopped guest that is not one already; a guest with snapshots PVE
+  /// refuses in its own words.
   @override
-  Future<void> makeTemplate(VirtGuest guest) async {
-    if (guest.template) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is already a template',
-      );
-    }
-    if (guest.state != VirtGuestState.stopped) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is not stopped',
-      );
-    }
-    await _task(
-      guest,
-      (dio) => dio.post(
-        _url('${_guestPath(guest)}/template'),
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      ),
-    );
-  }
+  Future<void> makeTemplate(VirtGuest guest) =>
+      _rust((s) => s.makeTemplate(guest: _ref(guest)));
 
-  /// `POST .../clone` on the guest's node, waited for. A full clone copies
-  /// the disks to the storages they are on, or to [VirtCloneRequest.storage]
-  /// where one was picked; a linked one (a template only — PVE refuses it for
-  /// anything else) shares them.
-  ///
-  /// A clone that moves to another node needs a cluster and shared storage:
-  /// on a single node PVE answers `no such cluster node '<name>'` — or, once
-  /// the node exists, `can't clone VM to node '<n>' (VM uses local storage)`.
-  /// [`virtCloneTargetIssue`] refuses both before the request is sent.
+  /// Full unless a template asks for a linked one; checked against the
+  /// host's storages and nodes first (`sbm_virt::create::clone_issue`).
   @override
-  Future<String> clone(VirtGuest guest, VirtCloneRequest request) async {
-    final lxc = guest.kind == VirtGuestKind.lxc;
-    final vmid = request.vmid ?? await nextVmid();
-    if (vmid == null) {
-      throw const VirtErr(
-        type: VirtErrType.invalidResponse,
-        message: 'No VMID for the clone',
-      );
-    }
-    final full = request.full || !guest.template;
-    try {
-      await _task(
-        guest,
-        (dio) => dio.post(
-          _url('${_guestPath(guest)}/clone'),
-          data: {
-            'newid': vmid,
-            lxc ? 'hostname' : 'name': request.name,
-            'full': full ? 1 : 0,
-            // PVE refuses either on a linked clone: `parameter 'storage' not
-            // allowed for linked clones`.
-            'storage': ?full ? request.storage : null,
-            'target': ?request.targetNode,
-          },
-          options: Options(contentType: Headers.formUrlEncodedContentType),
-        ),
-      );
-    } on VirtErr catch (e) {
-      throw _createErr(e);
-    }
-    return '${lxc ? 'lxc' : 'qemu'}/$vmid';
-  }
+  Future<String> clone(VirtGuest guest, VirtCloneRequest request) => _rust(
+    (s) => s.cloneGuest(
+      guest: _ref(guest),
+      requestJson: jsonEncode(VirtRust.cloneRequestJson(request)),
+    ),
+  );
 
   /// Every storage on the guest's node that holds backups, listed for the
   /// guest's VMID.
@@ -1038,6 +735,28 @@ class PveBackend implements VirtBackend {
     } on VirtErr catch (e) {
       throw _createErr(e);
     }
+  }
+
+  /// A refused restore, in the host's words: PVE answers a bad parameter with
+  /// 400 and a taken VMID with 500, before any task.
+  // TODO(migration): goes with the restore's move to sbm_virt (#1623 item 5,
+  // backups), whose client maps it as `manage_err` does.
+  static VirtErr _createErr(VirtErr e) {
+    // `unable to create VM 105 - VM 105 already exists on node 'pve'`.
+    if (e.message?.contains('already exists') ?? false) {
+      return VirtErr(type: VirtErrType.exists, message: e.message, cause: e);
+    }
+    final cause = e.cause;
+    if (e.type == VirtErrType.invalidResponse &&
+        cause is DioException &&
+        cause.response != null) {
+      return VirtErr(
+        type: VirtErrType.actionFailed,
+        message: e.message,
+        cause: cause,
+      );
+    }
+    return e;
   }
 
   /// `PUT /nodes/{node}/storage/{id}/content/{volid}`: a backup's own notes

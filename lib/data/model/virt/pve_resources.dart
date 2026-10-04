@@ -661,15 +661,6 @@ abstract final class PveResources {
       if (!buses.contains(bus)) k: null,
   });
 
-  /// The `size=` of a disk option (`local-lvm:vm-100-disk-0,size=3G`), in
-  /// bytes; null where it has none.
-  static int? optionSize(String raw) {
-    for (final (k, v) in _options(raw)) {
-      if (k == 'size') return _size(v);
-    }
-    return null;
-  }
-
   /// A VM's cloud-init options as the Settings view edits them: `ciuser`,
   /// whether `cipassword` is set (PVE answers it masked, never the value or
   /// its hash), `sshkeys` (stored URL-encoded, as PVE's web UI sends them),
@@ -742,18 +733,6 @@ abstract final class PveResources {
       }
     }
     return out.isEmpty ? [('', '')] : out;
-  }
-
-  /// PVE sizes: `32G`, `512M`, `1T`, `4096` (bytes).
-  static int? _size(String? s) {
-    if (s == null || s.isEmpty) return null;
-    const units = {'K': 1 << 10, 'M': 1 << 20, 'G': 1 << 30, 'T': 1 << 40};
-    final unit = units[s[s.length - 1].toUpperCase()];
-    final number = double.tryParse(
-      unit == null ? s : s.substring(0, s.length - 1),
-    );
-    if (number == null) return null;
-    return (number * (unit ?? 1)).round();
   }
 
   /// `scsi2` before `scsi10`.

@@ -1516,5 +1516,14 @@
   "monitorBackupUnsupported": "Este agente monitor não pode armazenar backups. Atualize o agente.",
   "monitorBackupAdminOnly": "Apenas uma conta de administrador do agente monitor pode armazenar backups nele.",
   "monitorBackupTooLarge": "O backup é maior do que o agente monitor aceita ({max}).",
-  "monitorBackupTooMany": "O agente monitor já guarda o número máximo de backups permitido. Exclua um primeiro."
+  "monitorBackupTooMany": "O agente monitor já guarda o número máximo de backups permitido. Exclua um primeiro.",
+  "virtCreateVmidInvalid": "Um VMID de 100 a 999999999.",
+  "virtCreateNodeOffline": "Esse nó não está online.",
+  "virtCreateMediaMissing": "Essa mídia de instalação não está neste host.",
+  "virtCreateNetworkMissing": "Um novo convidado não pode usar essa rede.",
+  "virtCreateNotOffered": "Este host não oferece isso para uma nova VM.",
+  "virtCreateSecureBootNeedsUefi": "Secure Boot requer UEFI.",
+  "virtGuestNotStopped": "Desligue-o primeiro.",
+  "virtGuestIsTemplate": "Já é um modelo.",
+  "virtCreateImageBigger": "A imagem é maior que o disco: faça o disco pelo menos do mesmo tamanho."
 }

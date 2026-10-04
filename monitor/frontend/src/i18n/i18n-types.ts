@@ -3686,6 +3686,486 @@ type RootTranslation = {
 	 */
 	virtIssueUnsupported: string
 	/**
+	 * N​e​w
+	 */
+	virtNew: string
+	/**
+	 * N​e​w​ ​v​i​r​t​u​a​l​ ​m​a​c​h​i​n​e
+	 */
+	virtNewVm: string
+	/**
+	 * N​e​w​ ​L​X​C​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtNewLxc: string
+	/**
+	 * G​e​n​e​r​a​l
+	 */
+	virtGroupGeneral: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	virtGroupSystem: string
+	/**
+	 * R​e​s​o​u​r​c​e​s
+	 */
+	virtGroupResources: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtGroupStorage: string
+	/**
+	 * C​o​n​f​i​r​m
+	 */
+	virtGroupConfirm: string
+	/**
+	 * A​ ​f​u​l​l​ ​K​V​M​ ​v​i​r​t​u​a​l​ ​m​a​c​h​i​n​e
+	 */
+	virtVmSub: string
+	/**
+	 * S​h​a​r​e​s​ ​t​h​e​ ​h​o​s​t​'​s​ ​k​e​r​n​e​l​;​ ​l​i​g​h​t​e​r
+	 */
+	virtLxcSub: string
+	/**
+	 * N​a​m​e
+	 */
+	virtName: string
+	/**
+	 * H​o​s​t​n​a​m​e
+	 */
+	virtHostname: string
+	/**
+	 * N​e​x​t​ ​f​r​e​e
+	 */
+	virtVmidNext: string
+	/**
+	 * S​o​u​r​c​e
+	 */
+	virtSource: string
+	/**
+	 * I​n​s​t​a​l​l​ ​m​e​d​i​a
+	 */
+	virtSourceMedia: string
+	/**
+	 * C​l​o​u​d​ ​i​m​a​g​e
+	 */
+	virtSourceImage: string
+	/**
+	 * N​o​ ​i​n​s​t​a​l​l​ ​m​e​d​i​a​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​:​ ​u​p​l​o​a​d​ ​a​n​ ​I​S​O​ ​t​o​ ​a​ ​s​t​o​r​a​g​e​ ​f​i​r​s​t​.
+	 */
+	virtMediaNone: string
+	/**
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​ ​t​e​m​p​l​a​t​e​s​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​.
+	 */
+	virtTemplateNone: string
+	/**
+	 * N​o​ ​c​l​o​u​d​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​h​o​s​t​.
+	 */
+	virtImageNone: string
+	/**
+	 * F​i​r​m​w​a​r​e
+	 */
+	virtFirmware: string
+	/**
+	 * S​e​c​u​r​e​ ​B​o​o​t
+	 */
+	virtSecureBoot: string
+	/**
+	 * T​P​M​ ​2​.​0
+	 */
+	virtTpm: string
+	/**
+	 * U​n​p​r​i​v​i​l​e​g​e​d​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtUnprivileged: string
+	/**
+	 * R​o​o​t​ ​i​n​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​ ​m​a​p​s​ ​t​o​ ​a​n​ ​o​r​d​i​n​a​r​y​ ​u​s​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t
+	 */
+	virtUnprivilegedNote: string
+	/**
+	 * R​o​o​t​ ​p​a​s​s​w​o​r​d
+	 */
+	virtRootPassword: string
+	/**
+	 * S​S​H​ ​p​u​b​l​i​c​ ​k​e​y​s​,​ ​o​n​e​ ​p​e​r​ ​l​i​n​e
+	 */
+	virtSshKeys: string
+	/**
+	 * A​ ​p​a​s​s​w​o​r​d​,​ ​a​ ​k​e​y​,​ ​o​r​ ​b​o​t​h​.
+	 */
+	virtRootLoginNote: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t
+	 */
+	virtCloudInit: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtCiMissing: RequiredParams<'why'>
+	/**
+	 * L​e​a​v​e​ ​e​v​e​r​y​t​h​i​n​g​ ​e​m​p​t​y​ ​t​o​ ​b​o​o​t​ ​t​h​e​ ​i​m​a​g​e​ ​a​s​ ​i​t​ ​i​s​.
+	 */
+	virtCiNote: string
+	/**
+	 * U​s​e​r
+	 */
+	virtCiUser: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	virtCiPassword: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	virtCiNetwork: string
+	/**
+	 * S​t​a​t​i​c
+	 */
+	virtCiStatic: string
+	/**
+	 * A​d​d​r​e​s​s​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)
+	 */
+	virtCiAddress: string
+	/**
+	 * G​a​t​e​w​a​y
+	 */
+	virtCiGateway: string
+	/**
+	 * D​N​S​ ​s​e​r​v​e​r​s
+	 */
+	virtCiDns: string
+	/**
+	 * S​e​a​r​c​h​ ​d​o​m​a​i​n​s
+	 */
+	virtCiSearch: string
+	/**
+	 * C​o​r​e​s
+	 */
+	virtCores: string
+	/**
+	 * M​e​m​o​r​y​ ​(​G​i​B​)
+	 */
+	virtMemoryGib: string
+	/**
+	 * F​r​e​e​:​ ​{​c​p​u​}​ ​v​C​P​U​ ​·​ ​{​m​e​m​}
+	 * @param {unknown} cpu
+	 * @param {unknown} mem
+	 */
+	virtFree: RequiredParams<'cpu' | 'mem'>
+	/**
+	 * S​i​z​e​ ​(​G​i​B​)
+	 */
+	virtDiskGib: string
+	/**
+	 * B​u​s
+	 */
+	virtBus: string
+	/**
+	 * {​t​y​p​e​}​ ​·​ ​{​f​r​e​e​}​ ​f​r​e​e
+	 * @param {unknown} free
+	 * @param {unknown} type
+	 */
+	virtStorageFree: RequiredParams<'free' | 'type'>
+	/**
+	 * N​o​ ​s​t​o​r​a​g​e​ ​h​e​r​e​ ​t​a​k​e​s​ ​a​ ​n​e​w​ ​g​u​e​s​t​'​s​ ​d​i​s​k​.
+	 */
+	virtStorageNone: string
+	/**
+	 * M​o​d​e​l
+	 */
+	virtNicModel: string
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k
+	 */
+	virtNoNetwork: string
+	/**
+	 * S​t​a​r​t​ ​a​f​t​e​r​ ​c​r​e​a​t​i​n​g
+	 */
+	virtStartAfter: string
+	/**
+	 * C​o​m​p​l​e​t​e​ ​t​h​e​ ​g​r​o​u​p​s​ ​m​a​r​k​e​d​ ​i​n​ ​o​r​a​n​g​e​ ​f​i​r​s​t​.
+	 */
+	virtIncomplete: string
+	/**
+	 * C​r​e​a​t​e​ ​V​M
+	 */
+	virtCreateVmAction: string
+	/**
+	 * C​r​e​a​t​e​ ​c​o​n​t​a​i​n​e​r
+	 */
+	virtCreateLxcAction: string
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	virtCreated: RequiredParams<'name'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​,​ ​b​u​t​ ​i​t​ ​d​i​d​ ​n​o​t​ ​s​t​a​r​t​:​ ​{​w​h​y​}
+	 * @param {unknown} name
+	 * @param {unknown} why
+	 */
+	virtCreatedNotStarted: RequiredParams<'name' | 'why'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.​ ​I​t​s​ ​d​i​s​k​ ​i​s​ ​{​s​i​z​e​}​,​ ​t​h​e​ ​c​l​o​u​d​ ​i​m​a​g​e​'​s​ ​o​w​n​ ​s​i​z​e​:​ ​a​ ​d​i​s​k​ ​i​s​ ​n​e​v​e​r​ ​m​a​d​e​ ​s​m​a​l​l​e​r​ ​t​h​a​n​ ​i​t​s​ ​i​m​a​g​e​.
+	 * @param {unknown} name
+	 * @param {unknown} size
+	 */
+	virtCreatedDiskKept: RequiredParams<'name' | 'size'>
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	virtViewSettings: string
+	/**
+	 * C​l​o​n​e
+	 */
+	virtClone: string
+	/**
+	 * N​e​w​ ​n​a​m​e
+	 */
+	virtCloneName: string
+	/**
+	 * F​u​l​l​ ​c​l​o​n​e
+	 */
+	virtCloneFull: string
+	/**
+	 * O​f​f​:​ ​a​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​t​h​a​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​t​e​m​p​l​a​t​e​'​s​ ​d​i​s​k​s
+	 */
+	virtCloneFullNote: string
+	/**
+	 * C​o​p​y​ ​d​i​s​k​ ​c​o​n​t​e​n​t​s
+	 */
+	virtCloneCopy: string
+	/**
+	 * O​f​f​:​ ​n​e​w​ ​e​m​p​t​y​ ​d​i​s​k​s​ ​o​f​ ​t​h​e​ ​s​a​m​e​ ​s​i​z​e
+	 */
+	virtCloneCopyNote: string
+	/**
+	 * F​u​l​l
+	 */
+	virtCloneFullShort: string
+	/**
+	 * L​i​n​k​e​d
+	 */
+	virtCloneLinked: string
+	/**
+	 * E​m​p​t​y​ ​d​i​s​k​s
+	 */
+	virtCloneEmpty: string
+	/**
+	 * T​a​r​g​e​t​ ​s​t​o​r​a​g​e
+	 */
+	virtCloneStorage: string
+	/**
+	 * T​a​r​g​e​t​ ​n​o​d​e
+	 */
+	virtCloneNode: string
+	/**
+	 * S​a​m​e​ ​a​s​ ​t​h​e​ ​s​o​u​r​c​e
+	 */
+	virtSameAsSource: string
+	/**
+	 * C​l​o​n​e​d​ ​{​n​a​m​e​}​ ​a​s​ ​{​c​o​p​y​}​.
+	 * @param {unknown} copy
+	 * @param {unknown} name
+	 */
+	virtCloned: RequiredParams<'copy' | 'name'>
+	/**
+	 * S​h​u​t​ ​i​t​ ​d​o​w​n​ ​f​i​r​s​t​.
+	 */
+	virtStopFirst: string
+	/**
+	 * C​o​n​v​e​r​t​ ​t​o​ ​t​e​m​p​l​a​t​e
+	 */
+	virtMakeTemplate: string
+	/**
+	 * A​ ​t​e​m​p​l​a​t​e​ ​c​a​n​n​o​t​ ​b​e​ ​s​t​a​r​t​e​d​,​ ​a​n​d​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​t​u​r​n​e​d​ ​b​a​c​k​.​ ​N​e​w​ ​g​u​e​s​t​s​ ​a​r​e​ ​c​l​o​n​e​d​ ​f​r​o​m​ ​i​t​.
+	 */
+	virtMakeTemplateNote: string
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​n​o​w​ ​a​ ​t​e​m​p​l​a​t​e​.
+	 * @param {unknown} name
+	 */
+	virtMadeTemplate: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​ ​g​u​e​s​t
+	 */
+	virtDeleteGuest: string
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​i​s​k​s
+	 */
+	virtDeleteDisks: string
+	/**
+	 * I​t​s​ ​d​i​s​k​ ​v​o​l​u​m​e​s​,​ ​N​V​R​A​M​ ​a​n​d​ ​c​l​o​u​d​-​i​n​i​t​ ​s​e​e​d
+	 */
+	virtDeleteDisksNote: string
+	/**
+	 * P​r​o​x​m​o​x​ ​V​E​ ​d​e​l​e​t​e​s​ ​i​t​s​ ​d​i​s​k​s​ ​w​i​t​h​ ​i​t​.
+	 */
+	virtDeleteDisksAlways: string
+	/**
+	 * C​l​i​c​k​ ​a​g​a​i​n​ ​t​o​ ​c​o​n​f​i​r​m​.​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 */
+	virtConfirmAgain: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​d​e​l​e​t​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtConfirmDelete: RequiredParams<'name'>
+	/**
+	 * C​o​n​f​i​r​m​:​ ​c​o​n​v​e​r​t​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtConfirmTemplate: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	virtDeleted: RequiredParams<'name'>
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​n​e​e​d​e​d​.
+	 */
+	virtCrIssueNameEmpty: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueNameInvalid: string
+	/**
+	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​t​a​k​e​n​.
+	 */
+	virtCrIssueNameTaken: string
+	/**
+	 * A​ ​V​M​I​D​ ​i​s​ ​a​ ​n​u​m​b​e​r​ ​f​r​o​m​ ​1​0​0​ ​t​o​ ​9​9​9​9​9​9​9​9​9​.
+	 */
+	virtCrIssueVmidInvalid: string
+	/**
+	 * T​h​a​t​ ​V​M​I​D​ ​i​s​ ​t​a​k​e​n​.
+	 */
+	virtCrIssueVmidTaken: string
+	/**
+	 * T​h​a​t​ ​n​o​d​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​o​f​ ​t​h​e​ ​h​o​s​t​'​s​ ​o​n​l​i​n​e​ ​n​o​d​e​s​.
+	 */
+	virtCrIssueNode: string
+	/**
+	 * N​o​t​ ​a​ ​n​u​m​b​e​r​ ​o​f​ ​c​o​r​e​s​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueCores: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​m​o​u​n​t​ ​o​f​ ​m​e​m​o​r​y​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueMemory: string
+	/**
+	 * T​h​a​t​ ​s​t​o​r​a​g​e​ ​c​a​n​n​o​t​ ​h​o​l​d​ ​a​ ​n​e​w​ ​d​i​s​k​ ​o​f​ ​t​h​i​s​ ​k​i​n​d​.
+	 */
+	virtCrIssueStorage: string
+	/**
+	 * N​o​t​ ​a​ ​d​i​s​k​ ​s​i​z​e​ ​t​h​e​ ​h​o​s​t​ ​t​a​k​e​s​.
+	 */
+	virtCrIssueDiskSize: string
+	/**
+	 * P​i​c​k​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​t​e​m​p​l​a​t​e​.
+	 */
+	virtCrIssueTemplate: string
+	/**
+	 * T​h​a​t​ ​i​n​s​t​a​l​l​ ​m​e​d​i​a​ ​i​s​ ​n​o​t​ ​o​n​ ​o​f​f​e​r​.
+	 */
+	virtCrIssueMedia: string
+	/**
+	 * A​ ​c​o​n​t​a​i​n​e​r​ ​n​e​e​d​s​ ​a​ ​r​o​o​t​ ​p​a​s​s​w​o​r​d​ ​o​r​ ​a​n​ ​S​S​H​ ​k​e​y​.
+	 */
+	virtCrIssueCredentials: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​t​a​k​e​ ​t​h​a​t​ ​r​o​o​t​ ​p​a​s​s​w​o​r​d​ ​(​a​t​ ​l​e​a​s​t​ ​5​ ​c​h​a​r​a​c​t​e​r​s​)​.
+	 */
+	virtCrIssuePassword: string
+	/**
+	 * O​n​e​ ​o​f​ ​t​h​e​ ​S​S​H​ ​k​e​y​s​ ​i​s​ ​n​o​t​ ​a​ ​p​u​b​l​i​c​ ​k​e​y​.
+	 */
+	virtCrIssueSshKeys: string
+	/**
+	 * P​i​c​k​ ​a​ ​c​l​o​u​d​ ​i​m​a​g​e​.
+	 */
+	virtCrIssueImage: string
+	/**
+	 * T​h​e​ ​c​l​o​u​d​ ​i​m​a​g​e​ ​i​s​ ​b​i​g​g​e​r​ ​t​h​a​n​ ​t​h​e​ ​d​i​s​k​ ​a​s​k​e​d​ ​f​o​r​.
+	 */
+	virtCrIssueImageSize: string
+	/**
+	 * A​ ​n​e​w​ ​g​u​e​s​t​ ​c​a​n​n​o​t​ ​b​e​ ​o​n​ ​t​h​a​t​ ​n​e​t​w​o​r​k​.
+	 */
+	virtCrIssueNetwork: string
+	/**
+	 * S​e​c​u​r​e​ ​B​o​o​t​ ​n​e​e​d​s​ ​U​E​F​I​.
+	 */
+	virtCrIssueSecureBoot: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​o​f​f​e​r​ ​s​o​m​e​t​h​i​n​g​ ​a​s​k​e​d​ ​f​o​r​:​ ​a​ ​b​u​s​,​ ​N​I​C​ ​m​o​d​e​l​,​ ​U​E​F​I​,​ ​T​P​M​,​ ​c​l​o​u​d​ ​i​m​a​g​e​ ​o​r​ ​c​l​o​u​d​-​i​n​i​t​.
+	 */
+	virtCrIssueNotOffered: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​n​e​e​d​s​ ​a​ ​v​a​l​i​d​ ​u​s​e​r​ ​n​a​m​e​.
+	 */
+	virtCrIssueCiUser: string
+	/**
+	 * c​l​o​u​d​-​i​n​i​t​ ​n​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d​ ​o​r​ ​a​n​ ​S​S​H​ ​k​e​y​ ​f​o​r​ ​t​h​e​ ​u​s​e​r​.
+	 */
+	virtCrIssueCiCredentials: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​h​o​s​t​n​a​m​e​.
+	 */
+	virtCrIssueCiHostname: string
+	/**
+	 * N​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​w​i​t​h​ ​a​ ​p​r​e​f​i​x​ ​(​a​.​b​.​c​.​d​/​p​r​e​f​i​x​)​.
+	 */
+	virtCrIssueCiAddress: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​g​a​t​e​w​a​y​ ​f​o​r​ ​t​h​a​t​ ​a​d​d​r​e​s​s​.
+	 */
+	virtCrIssueCiGateway: string
+	/**
+	 * O​n​e​ ​o​f​ ​t​h​e​ ​D​N​S​ ​s​e​r​v​e​r​s​ ​i​s​ ​n​o​t​ ​a​n​ ​a​d​d​r​e​s​s​.
+	 */
+	virtCrIssueCiDns: string
+	/**
+	 * O​n​e​ ​o​f​ ​t​h​e​ ​s​e​a​r​c​h​ ​d​o​m​a​i​n​s​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​.
+	 */
+	virtCrIssueCiSearch: string
+	/**
+	 * A​ ​l​i​n​k​e​d​ ​c​l​o​n​e​ ​s​t​a​y​s​ ​o​n​ ​t​h​e​ ​s​o​u​r​c​e​'​s​ ​s​t​o​r​a​g​e​ ​a​n​d​ ​n​o​d​e​.
+	 */
+	virtCrIssueCloneLinkedTarget: string
+	/**
+	 * T​h​a​t​ ​s​t​o​r​a​g​e​ ​i​s​ ​n​o​t​ ​t​h​e​r​e​.
+	 */
+	virtCrIssueCloneStorage: string
+	/**
+	 * T​h​a​t​ ​s​t​o​r​a​g​e​ ​d​o​e​s​ ​n​o​t​ ​h​o​l​d​ ​d​i​s​k​s​ ​o​f​ ​t​h​i​s​ ​k​i​n​d​.
+	 */
+	virtCrIssueCloneStorageContent: string
+	/**
+	 * C​o​p​y​i​n​g​ ​t​o​ ​a​n​o​t​h​e​r​ ​n​o​d​e​ ​n​e​e​d​s​ ​s​h​a​r​e​d​ ​s​t​o​r​a​g​e​.
+	 */
+	virtCrIssueCloneStorageShared: string
+	/**
+	 * T​h​e​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​s​u​c​h​ ​n​o​d​e​.
+	 */
+	virtCrIssueCloneNodeUnknown: string
+	/**
+	 * S​h​u​t​ ​t​h​e​ ​g​u​e​s​t​ ​d​o​w​n​ ​f​i​r​s​t​.
+	 */
+	virtCrIssueNotStopped: string
+	/**
+	 * I​t​ ​i​s​ ​a​l​r​e​a​d​y​ ​a​ ​t​e​m​p​l​a​t​e​.
+	 */
+	virtCrIssueIsTemplate: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​o​n​ ​t​h​e​ ​h​o​s​t​.
+	 */
+	virtCrIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​d​o​e​s​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	virtCrIssueUnsupported: string
+	/**
 	 * Y​e​s
 	 */
 	yes: string
@@ -7252,6 +7732,470 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * This host does not do that.
 	 */
 	virtIssueUnsupported: () => LocalizedString
+	/**
+	 * New
+	 */
+	virtNew: () => LocalizedString
+	/**
+	 * New virtual machine
+	 */
+	virtNewVm: () => LocalizedString
+	/**
+	 * New LXC container
+	 */
+	virtNewLxc: () => LocalizedString
+	/**
+	 * General
+	 */
+	virtGroupGeneral: () => LocalizedString
+	/**
+	 * System
+	 */
+	virtGroupSystem: () => LocalizedString
+	/**
+	 * Resources
+	 */
+	virtGroupResources: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtGroupStorage: () => LocalizedString
+	/**
+	 * Confirm
+	 */
+	virtGroupConfirm: () => LocalizedString
+	/**
+	 * A full KVM virtual machine
+	 */
+	virtVmSub: () => LocalizedString
+	/**
+	 * Shares the host's kernel; lighter
+	 */
+	virtLxcSub: () => LocalizedString
+	/**
+	 * Name
+	 */
+	virtName: () => LocalizedString
+	/**
+	 * Hostname
+	 */
+	virtHostname: () => LocalizedString
+	/**
+	 * Next free
+	 */
+	virtVmidNext: () => LocalizedString
+	/**
+	 * Source
+	 */
+	virtSource: () => LocalizedString
+	/**
+	 * Install media
+	 */
+	virtSourceMedia: () => LocalizedString
+	/**
+	 * Cloud image
+	 */
+	virtSourceImage: () => LocalizedString
+	/**
+	 * No install media on this host: upload an ISO to a storage first.
+	 */
+	virtMediaNone: () => LocalizedString
+	/**
+	 * No container templates on this host.
+	 */
+	virtTemplateNone: () => LocalizedString
+	/**
+	 * No cloud images on this host.
+	 */
+	virtImageNone: () => LocalizedString
+	/**
+	 * Firmware
+	 */
+	virtFirmware: () => LocalizedString
+	/**
+	 * Secure Boot
+	 */
+	virtSecureBoot: () => LocalizedString
+	/**
+	 * TPM 2.0
+	 */
+	virtTpm: () => LocalizedString
+	/**
+	 * Unprivileged container
+	 */
+	virtUnprivileged: () => LocalizedString
+	/**
+	 * Root in the container maps to an ordinary user on the host
+	 */
+	virtUnprivilegedNote: () => LocalizedString
+	/**
+	 * Root password
+	 */
+	virtRootPassword: () => LocalizedString
+	/**
+	 * SSH public keys, one per line
+	 */
+	virtSshKeys: () => LocalizedString
+	/**
+	 * A password, a key, or both.
+	 */
+	virtRootLoginNote: () => LocalizedString
+	/**
+	 * cloud-init
+	 */
+	virtCloudInit: () => LocalizedString
+	/**
+	 * cloud-init is not available: {why}
+	 */
+	virtCiMissing: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * Leave everything empty to boot the image as it is.
+	 */
+	virtCiNote: () => LocalizedString
+	/**
+	 * User
+	 */
+	virtCiUser: () => LocalizedString
+	/**
+	 * Password
+	 */
+	virtCiPassword: () => LocalizedString
+	/**
+	 * Address
+	 */
+	virtCiNetwork: () => LocalizedString
+	/**
+	 * Static
+	 */
+	virtCiStatic: () => LocalizedString
+	/**
+	 * Address (a.b.c.d/prefix)
+	 */
+	virtCiAddress: () => LocalizedString
+	/**
+	 * Gateway
+	 */
+	virtCiGateway: () => LocalizedString
+	/**
+	 * DNS servers
+	 */
+	virtCiDns: () => LocalizedString
+	/**
+	 * Search domains
+	 */
+	virtCiSearch: () => LocalizedString
+	/**
+	 * Cores
+	 */
+	virtCores: () => LocalizedString
+	/**
+	 * Memory (GiB)
+	 */
+	virtMemoryGib: () => LocalizedString
+	/**
+	 * Free: {cpu} vCPU · {mem}
+	 */
+	virtFree: (arg: { cpu: unknown, mem: unknown }) => LocalizedString
+	/**
+	 * Size (GiB)
+	 */
+	virtDiskGib: () => LocalizedString
+	/**
+	 * Bus
+	 */
+	virtBus: () => LocalizedString
+	/**
+	 * {type} · {free} free
+	 */
+	virtStorageFree: (arg: { free: unknown, type: unknown }) => LocalizedString
+	/**
+	 * No storage here takes a new guest's disk.
+	 */
+	virtStorageNone: () => LocalizedString
+	/**
+	 * Model
+	 */
+	virtNicModel: () => LocalizedString
+	/**
+	 * No network
+	 */
+	virtNoNetwork: () => LocalizedString
+	/**
+	 * Start after creating
+	 */
+	virtStartAfter: () => LocalizedString
+	/**
+	 * Complete the groups marked in orange first.
+	 */
+	virtIncomplete: () => LocalizedString
+	/**
+	 * Create VM
+	 */
+	virtCreateVmAction: () => LocalizedString
+	/**
+	 * Create container
+	 */
+	virtCreateLxcAction: () => LocalizedString
+	/**
+	 * Created {name}.
+	 */
+	virtCreated: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Created {name}, but it did not start: {why}
+	 */
+	virtCreatedNotStarted: (arg: { name: unknown, why: unknown }) => LocalizedString
+	/**
+	 * Created {name}. Its disk is {size}, the cloud image's own size: a disk is never made smaller than its image.
+	 */
+	virtCreatedDiskKept: (arg: { name: unknown, size: unknown }) => LocalizedString
+	/**
+	 * Settings
+	 */
+	virtViewSettings: () => LocalizedString
+	/**
+	 * Clone
+	 */
+	virtClone: () => LocalizedString
+	/**
+	 * New name
+	 */
+	virtCloneName: () => LocalizedString
+	/**
+	 * Full clone
+	 */
+	virtCloneFull: () => LocalizedString
+	/**
+	 * Off: a linked clone that depends on the template's disks
+	 */
+	virtCloneFullNote: () => LocalizedString
+	/**
+	 * Copy disk contents
+	 */
+	virtCloneCopy: () => LocalizedString
+	/**
+	 * Off: new empty disks of the same size
+	 */
+	virtCloneCopyNote: () => LocalizedString
+	/**
+	 * Full
+	 */
+	virtCloneFullShort: () => LocalizedString
+	/**
+	 * Linked
+	 */
+	virtCloneLinked: () => LocalizedString
+	/**
+	 * Empty disks
+	 */
+	virtCloneEmpty: () => LocalizedString
+	/**
+	 * Target storage
+	 */
+	virtCloneStorage: () => LocalizedString
+	/**
+	 * Target node
+	 */
+	virtCloneNode: () => LocalizedString
+	/**
+	 * Same as the source
+	 */
+	virtSameAsSource: () => LocalizedString
+	/**
+	 * Cloned {name} as {copy}.
+	 */
+	virtCloned: (arg: { copy: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Shut it down first.
+	 */
+	virtStopFirst: () => LocalizedString
+	/**
+	 * Convert to template
+	 */
+	virtMakeTemplate: () => LocalizedString
+	/**
+	 * A template cannot be started, and it cannot be turned back. New guests are cloned from it.
+	 */
+	virtMakeTemplateNote: () => LocalizedString
+	/**
+	 * {name} is now a template.
+	 */
+	virtMadeTemplate: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Delete guest
+	 */
+	virtDeleteGuest: () => LocalizedString
+	/**
+	 * Also delete its disks
+	 */
+	virtDeleteDisks: () => LocalizedString
+	/**
+	 * Its disk volumes, NVRAM and cloud-init seed
+	 */
+	virtDeleteDisksNote: () => LocalizedString
+	/**
+	 * Proxmox VE deletes its disks with it.
+	 */
+	virtDeleteDisksAlways: () => LocalizedString
+	/**
+	 * Click again to confirm. This cannot be undone.
+	 */
+	virtConfirmAgain: () => LocalizedString
+	/**
+	 * Confirm: delete {name}
+	 */
+	virtConfirmDelete: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Confirm: convert {name}
+	 */
+	virtConfirmTemplate: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Deleted {name}.
+	 */
+	virtDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * A name is needed.
+	 */
+	virtCrIssueNameEmpty: () => LocalizedString
+	/**
+	 * That name is not one the host takes.
+	 */
+	virtCrIssueNameInvalid: () => LocalizedString
+	/**
+	 * That name is taken.
+	 */
+	virtCrIssueNameTaken: () => LocalizedString
+	/**
+	 * A VMID is a number from 100 to 999999999.
+	 */
+	virtCrIssueVmidInvalid: () => LocalizedString
+	/**
+	 * That VMID is taken.
+	 */
+	virtCrIssueVmidTaken: () => LocalizedString
+	/**
+	 * That node is not one of the host's online nodes.
+	 */
+	virtCrIssueNode: () => LocalizedString
+	/**
+	 * Not a number of cores the host takes.
+	 */
+	virtCrIssueCores: () => LocalizedString
+	/**
+	 * Not an amount of memory the host takes.
+	 */
+	virtCrIssueMemory: () => LocalizedString
+	/**
+	 * That storage cannot hold a new disk of this kind.
+	 */
+	virtCrIssueStorage: () => LocalizedString
+	/**
+	 * Not a disk size the host takes.
+	 */
+	virtCrIssueDiskSize: () => LocalizedString
+	/**
+	 * Pick a container template.
+	 */
+	virtCrIssueTemplate: () => LocalizedString
+	/**
+	 * That install media is not on offer.
+	 */
+	virtCrIssueMedia: () => LocalizedString
+	/**
+	 * A container needs a root password or an SSH key.
+	 */
+	virtCrIssueCredentials: () => LocalizedString
+	/**
+	 * The host does not take that root password (at least 5 characters).
+	 */
+	virtCrIssuePassword: () => LocalizedString
+	/**
+	 * One of the SSH keys is not a public key.
+	 */
+	virtCrIssueSshKeys: () => LocalizedString
+	/**
+	 * Pick a cloud image.
+	 */
+	virtCrIssueImage: () => LocalizedString
+	/**
+	 * The cloud image is bigger than the disk asked for.
+	 */
+	virtCrIssueImageSize: () => LocalizedString
+	/**
+	 * A new guest cannot be on that network.
+	 */
+	virtCrIssueNetwork: () => LocalizedString
+	/**
+	 * Secure Boot needs UEFI.
+	 */
+	virtCrIssueSecureBoot: () => LocalizedString
+	/**
+	 * The host does not offer something asked for: a bus, NIC model, UEFI, TPM, cloud image or cloud-init.
+	 */
+	virtCrIssueNotOffered: () => LocalizedString
+	/**
+	 * cloud-init needs a valid user name.
+	 */
+	virtCrIssueCiUser: () => LocalizedString
+	/**
+	 * cloud-init needs a password or an SSH key for the user.
+	 */
+	virtCrIssueCiCredentials: () => LocalizedString
+	/**
+	 * Not a valid hostname.
+	 */
+	virtCrIssueCiHostname: () => LocalizedString
+	/**
+	 * Not an address with a prefix (a.b.c.d/prefix).
+	 */
+	virtCrIssueCiAddress: () => LocalizedString
+	/**
+	 * Not a valid gateway for that address.
+	 */
+	virtCrIssueCiGateway: () => LocalizedString
+	/**
+	 * One of the DNS servers is not an address.
+	 */
+	virtCrIssueCiDns: () => LocalizedString
+	/**
+	 * One of the search domains is not valid.
+	 */
+	virtCrIssueCiSearch: () => LocalizedString
+	/**
+	 * A linked clone stays on the source's storage and node.
+	 */
+	virtCrIssueCloneLinkedTarget: () => LocalizedString
+	/**
+	 * That storage is not there.
+	 */
+	virtCrIssueCloneStorage: () => LocalizedString
+	/**
+	 * That storage does not hold disks of this kind.
+	 */
+	virtCrIssueCloneStorageContent: () => LocalizedString
+	/**
+	 * Copying to another node needs shared storage.
+	 */
+	virtCrIssueCloneStorageShared: () => LocalizedString
+	/**
+	 * The host has no such node.
+	 */
+	virtCrIssueCloneNodeUnknown: () => LocalizedString
+	/**
+	 * Shut the guest down first.
+	 */
+	virtCrIssueNotStopped: () => LocalizedString
+	/**
+	 * It is already a template.
+	 */
+	virtCrIssueIsTemplate: () => LocalizedString
+	/**
+	 * It is no longer on the host.
+	 */
+	virtCrIssueNotFound: () => LocalizedString
+	/**
+	 * This host does not do that.
+	 */
+	virtCrIssueUnsupported: () => LocalizedString
 	/**
 	 * Yes
 	 */

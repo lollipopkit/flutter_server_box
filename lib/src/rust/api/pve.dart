@@ -26,6 +26,13 @@ abstract class PveSession implements RustOpaqueInterface {
   /// (a console's websocket, an upload), logging in first if needed.
   Future<List<PveHeader>> authHeaders();
 
+  /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
+  /// the copy's id.
+  Future<String> cloneGuest({
+    required PveGuestRef guest,
+    required String requestJson,
+  });
+
   void close();
 
   /// Pins the certificate the last refused connection presented; answers
@@ -38,12 +45,22 @@ abstract class PveSession implements RustOpaqueInterface {
     required PveConsoleKind kind,
   });
 
+  /// Creates `spec_json` (a `CreateSpec`), checked first against what the
+  /// host lists now; `Created` JSON.
+  Future<String> create({required String specJson});
+
+  /// What a new VM can be given, `CreateOptions` JSON.
+  String createOptions();
+
   Future<void> createSnapshot({
     required PveGuestRef guest,
     required String name,
     String? description,
     required bool memory,
   });
+
+  /// Deletes a stopped guest with its disks, waited for.
+  Future<void> delete({required PveGuestRef guest});
 
   Future<void> deleteSnapshot({
     required PveGuestRef guest,
@@ -61,6 +78,9 @@ abstract class PveSession implements RustOpaqueInterface {
 
   /// `sbm_virt::model::HostView` JSON.
   Future<String> load();
+
+  /// Turns a stopped guest into a template, waited for.
+  Future<void> makeTemplate({required PveGuestRef guest});
 
   /// Makes `change_json` (a `Change`), checked first against what the host
   /// lists now; `live` as for [`PveSession::networks`].
@@ -89,6 +109,9 @@ abstract class PveSession implements RustOpaqueInterface {
     token: token,
     timing: timing,
   );
+
+  /// The cluster's next free VMID.
+  Future<int> nextVmid();
 
   /// Runs `action` on `guest` and returns once PVE has finished it.
   Future<void> power({

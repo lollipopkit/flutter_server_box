@@ -327,8 +327,14 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   `Detail::Refused` with the issue). On PVE the node is asked which
   interfaces it is using (`sbm_virt::pve::net::LIVE_NET_SCRIPT`, run here as
   the agent's account), so the interface the operator is connected through
-  is never edited or applied over. `tests/virt_api.rs` runs against a fake PVE
-  API over TLS.
+  is never edited or applied over. Guests made, copied and deleted
+  (`api/virt_guests.rs`): `POST /virt/create/form` (what a new guest of a
+  kind can be given, per PVE node), `/virt/create` (one
+  `sbm_virt::create::CreateSpec`), `/virt/delete`, `/virt/clone/form`,
+  `/virt/clone` and `/virt/template` — checked against what the host lists
+  then and refused as `Detail::CreateRefused`; audited before they run, a
+  password in a spec never in the record. `tests/virt_api.rs` runs against a
+  fake PVE API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
   page, as rows (migration 015) so they share the database's protection from

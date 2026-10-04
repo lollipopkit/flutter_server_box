@@ -5140,4 +5140,32 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Monitor エージェントのバックアップ数が上限に達しています。先に 1 つ削除してください。';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID は 100 から 999999999 までです。';
+
+  @override
+  String get virtCreateNodeOffline => 'そのノードはオンラインではありません。';
+
+  @override
+  String get virtCreateMediaMissing => 'そのインストールメディアはこのホストにありません。';
+
+  @override
+  String get virtCreateNetworkMissing => '新しい仮想マシンはそのネットワークを使えません。';
+
+  @override
+  String get virtCreateNotOffered => 'このホストは新しい VM にそれを提供していません。';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot には UEFI が必要です。';
+
+  @override
+  String get virtGuestNotStopped => '先にシャットダウンしてください。';
+
+  @override
+  String get virtGuestIsTemplate => 'すでにテンプレートです。';
+
+  @override
+  String get virtCreateImageBigger =>
+      'イメージがディスクより大きいです。ディスクを少なくとも同じ大きさにしてください。';
 }

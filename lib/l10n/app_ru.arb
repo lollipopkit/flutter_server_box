@@ -1516,5 +1516,14 @@
   "monitorBackupUnsupported": "Этот агент monitor не может хранить резервные копии. Обновите агент.",
   "monitorBackupAdminOnly": "Хранить резервные копии на агенте monitor может только учётная запись администратора.",
   "monitorBackupTooLarge": "Резервная копия больше, чем принимает агент monitor ({max}).",
-  "monitorBackupTooMany": "Агент monitor уже хранит максимально допустимое число резервных копий. Сначала удалите одну."
+  "monitorBackupTooMany": "Агент monitor уже хранит максимально допустимое число резервных копий. Сначала удалите одну.",
+  "virtCreateVmidInvalid": "VMID от 100 до 999999999.",
+  "virtCreateNodeOffline": "Этот узел не в сети.",
+  "virtCreateMediaMissing": "Этого установочного образа нет на хосте.",
+  "virtCreateNetworkMissing": "Новая машина не может использовать эту сеть.",
+  "virtCreateNotOffered": "Этот хост не предлагает этого для новой ВМ.",
+  "virtCreateSecureBootNeedsUefi": "Для Secure Boot нужен UEFI.",
+  "virtGuestNotStopped": "Сначала выключите её.",
+  "virtGuestIsTemplate": "Это уже шаблон.",
+  "virtCreateImageBigger": "Образ больше диска: сделайте диск не меньше образа."
 }

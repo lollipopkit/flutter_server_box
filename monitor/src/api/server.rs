@@ -402,6 +402,12 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/virt/volumes").route(web::post().to(crate::api::virt_resources::volumes)))
             .service(web::resource("/virt/networks").route(web::post().to(crate::api::virt_resources::networks)))
             .service(web::resource("/virt/manage").route(web::post().to(crate::api::virt_resources::manage)))
+            .service(web::resource("/virt/create/form").route(web::post().to(crate::api::virt_guests::create_form)))
+            .service(web::resource("/virt/create").route(web::post().to(crate::api::virt_guests::create)))
+            .service(web::resource("/virt/delete").route(web::post().to(crate::api::virt_guests::delete)))
+            .service(web::resource("/virt/clone/form").route(web::post().to(crate::api::virt_guests::clone_form)))
+            .service(web::resource("/virt/clone").route(web::post().to(crate::api::virt_guests::clone)))
+            .service(web::resource("/virt/template").route(web::post().to(crate::api::virt_guests::template)))
             .service(
                 web::resource("/virt/pve")
                     .route(web::get().to(crate::api::virt::pve_get))

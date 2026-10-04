@@ -1516,5 +1516,14 @@
   "monitorBackupUnsupported": "Bu monitor aracısı yedek saklayamaz. Aracıyı güncelleyin.",
   "monitorBackupAdminOnly": "Monitor aracısında yalnızca yönetici hesabı yedek saklayabilir.",
   "monitorBackupTooLarge": "Yedek, monitor aracısının kabul ettiği boyuttan ({max}) büyük.",
-  "monitorBackupTooMany": "Monitor aracısı izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin."
+  "monitorBackupTooMany": "Monitor aracısı izin verdiği sayıda yedeği zaten saklıyor. Önce birini silin.",
+  "virtCreateVmidInvalid": "100 ile 999999999 arasında bir VMID.",
+  "virtCreateNodeOffline": "Bu düğüm çevrimiçi değil.",
+  "virtCreateMediaMissing": "Bu kurulum ortamı bu ana makinede yok.",
+  "virtCreateNetworkMissing": "Yeni bir konuk bu ağı kullanamaz.",
+  "virtCreateNotOffered": "Bu ana makine yeni bir VM için bunu sunmuyor.",
+  "virtCreateSecureBootNeedsUefi": "Secure Boot için UEFI gerekir.",
+  "virtGuestNotStopped": "Önce kapatın.",
+  "virtGuestIsTemplate": "Zaten bir şablon.",
+  "virtCreateImageBigger": "İmaj diskten büyük: diski en az onun kadar büyük yapın."
 }

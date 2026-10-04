@@ -10,14 +10,21 @@ import { ApiError } from './api'
 import type {
   PveConfigInput,
   PveConfigView,
+  VirtCreateIssue,
+  VirtCreateOptions,
+  VirtCreateSpec,
   VirtError,
   VirtGuest,
+  VirtGuestKind,
   VirtGuestRef,
   VirtGuestState,
+  VirtHostKind,
   VirtIssue,
+  VirtOffer,
   VirtPowerAction,
   VirtSnapshot,
   VirtStats,
+  VirtVolumeRef,
 } from '../types'
 
 /// A host's failure (`sbm_virt::error::Error`) as a sentence. The host's own
@@ -61,6 +68,8 @@ export function virtErrorText(e: VirtError): string {
         })
       case 'refused':
         return issueText(detail.issue)
+      case 'create_refused':
+        return createIssueText(detail.issue)
       case 'apply_touches_management':
         return ll.virtErrApplyManagement({ ifaces: detail.ifaces.join(', ') })
       case 'apply_unreadable':
@@ -339,4 +348,210 @@ export function refText(ref: VirtGuestRef, guests: VirtGuest[]): string {
   const g = guests.find((g) => (ref.guest_id && g.id === ref.guest_id) || (ref.vmid !== null && g.vmid === ref.vmid))
   const who = g?.name ?? (ref.vmid !== null ? String(ref.vmid) : (ref.guest_id ?? '?'))
   return ref.device ? `${who} (${ref.device})` : who
+}
+
+/// Why the agent refused to create, copy, delete or make a template of a
+/// guest (`sbm_virt::create::Issue`).
+export function createIssueText(issue: VirtCreateIssue): string {
+  const ll = get(LL)
+  switch (issue) {
+    case 'name_empty':
+      return ll.virtCrIssueNameEmpty()
+    case 'name_invalid':
+      return ll.virtCrIssueNameInvalid()
+    case 'name_taken':
+      return ll.virtCrIssueNameTaken()
+    case 'vmid_invalid':
+      return ll.virtCrIssueVmidInvalid()
+    case 'vmid_taken':
+      return ll.virtCrIssueVmidTaken()
+    case 'node':
+      return ll.virtCrIssueNode()
+    case 'cores':
+      return ll.virtCrIssueCores()
+    case 'memory':
+      return ll.virtCrIssueMemory()
+    case 'storage':
+      return ll.virtCrIssueStorage()
+    case 'disk_size':
+      return ll.virtCrIssueDiskSize()
+    case 'template':
+      return ll.virtCrIssueTemplate()
+    case 'media':
+      return ll.virtCrIssueMedia()
+    case 'credentials':
+      return ll.virtCrIssueCredentials()
+    case 'password':
+      return ll.virtCrIssuePassword()
+    case 'ssh_keys':
+      return ll.virtCrIssueSshKeys()
+    case 'image':
+      return ll.virtCrIssueImage()
+    case 'image_size':
+      return ll.virtCrIssueImageSize()
+    case 'network':
+      return ll.virtCrIssueNetwork()
+    case 'secure_boot':
+      return ll.virtCrIssueSecureBoot()
+    case 'not_offered':
+      return ll.virtCrIssueNotOffered()
+    case 'ci_user':
+      return ll.virtCrIssueCiUser()
+    case 'ci_credentials':
+      return ll.virtCrIssueCiCredentials()
+    case 'ci_hostname':
+      return ll.virtCrIssueCiHostname()
+    case 'ci_address':
+      return ll.virtCrIssueCiAddress()
+    case 'ci_gateway':
+      return ll.virtCrIssueCiGateway()
+    case 'ci_dns':
+      return ll.virtCrIssueCiDns()
+    case 'ci_search':
+      return ll.virtCrIssueCiSearch()
+    case 'clone_linked_target':
+      return ll.virtCrIssueCloneLinkedTarget()
+    case 'clone_storage':
+      return ll.virtCrIssueCloneStorage()
+    case 'clone_storage_content':
+      return ll.virtCrIssueCloneStorageContent()
+    case 'clone_storage_shared':
+      return ll.virtCrIssueCloneStorageShared()
+    case 'clone_node_unknown':
+      return ll.virtCrIssueCloneNodeUnknown()
+    case 'not_stopped':
+      return ll.virtCrIssueNotStopped()
+    case 'is_template':
+      return ll.virtCrIssueIsTemplate()
+    case 'not_found':
+      return ll.virtCrIssueNotFound()
+    case 'unsupported':
+      return ll.virtCrIssueUnsupported()
+  }
+}
+
+/// The create form as typed: numbers as the inputs hold them (a number
+/// input hands back a number despite the type), offers by [offerKey], lists
+/// as text. [createSpec] turns it into the request.
+export interface CreateDraft {
+  kind: VirtGuestKind
+  name: string
+  /// PVE.
+  node: string
+  /// PVE; empty takes the next free one.
+  vmid: string
+  cores: string
+  memoryGib: string
+  /// Pool id.
+  storage: string
+  diskGib: string
+  /// A VM's: install media or a cloud image.
+  source: 'media' | 'image'
+  media: string
+  image: string
+  /// Network id; empty for none.
+  network: string
+  /// A container's root login.
+  password: string
+  sshKeys: string
+  unprivileged: boolean
+  bus: string
+  nicModel: string
+  uefi: boolean
+  secureBoot: boolean
+  tpm: boolean
+  ci: {
+    user: string
+    password: string
+    sshKeys: string
+    hostname: string
+    /// A static address; otherwise DHCP.
+    static: boolean
+    address: string
+    gateway: string
+    dns: string
+    search: string
+  }
+  start: boolean
+}
+
+/// An offer as a select's value.
+export function offerKey(o: VirtOffer): string {
+  return `${o.pool}\n${o.volume.id}`
+}
+
+function offerRef(key: string): VirtVolumeRef | undefined {
+  const at = key.indexOf('\n')
+  return at < 0 ? undefined : { pool: key.slice(0, at), volume: key.slice(at + 1) }
+}
+
+/// One entry per non-blank line (SSH keys).
+export function lines(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+}
+
+/// Entries separated by spaces or commas (DNS servers, search domains).
+export function words(text: string): string[] {
+  return text.split(/[\s,]+/).filter(Boolean)
+}
+
+function whole(value: string): number {
+  const n = Math.floor(Number(value))
+  return Number.isFinite(n) ? n : 0
+}
+
+/// Whether a VM is made from a cloud image rather than install media.
+export function usesImage(d: CreateDraft, options: VirtCreateOptions): boolean {
+  return d.kind === 'qemu' && d.source === 'image' && options.cloud_images
+}
+
+/// The request for `d`: trimmed, optional fields omitted when empty, only
+/// what applies to its kind and host. Whether the host takes it is the
+/// agent's answer.
+export function createSpec(d: CreateDraft, host: VirtHostKind, options: VirtCreateOptions): VirtCreateSpec {
+  const pve = host === 'pve'
+  const lxc = d.kind === 'lxc'
+  const image = usesImage(d, options)
+  const spec: VirtCreateSpec = {
+    kind: d.kind,
+    name: d.name.trim(),
+    cores: whole(d.cores),
+    memory_mib: Math.round((Number(d.memoryGib) || 0) * 1024),
+    storage: d.storage,
+    disk_gib: whole(d.diskGib),
+    ssh_keys: lxc ? lines(d.sshKeys) : [],
+    unprivileged: lxc ? d.unprivileged : true,
+    uefi: !lxc && d.uefi,
+    secure_boot: !lxc && d.uefi && d.secureBoot,
+    tpm: !lxc && d.tpm,
+    start: d.start,
+  }
+  if (pve && d.node) spec.node = d.node
+  const vmid = String(d.vmid ?? '').trim()
+  if (pve && vmid !== '') spec.vmid = whole(vmid)
+  const media = offerRef(image ? '' : d.media)
+  if (media) spec.media = media
+  const img = image ? offerRef(d.image) : undefined
+  if (img) spec.image = img
+  if (d.network) spec.network = d.network
+  if (lxc && d.password !== '') spec.password = d.password
+  if (!lxc) {
+    if (d.bus) spec.bus = d.bus
+    if (d.nicModel) spec.nic_model = d.nicModel
+  }
+  const ci = d.ci
+  const ciTyped = [ci.user, ci.password, ci.sshKeys, ci.hostname, ci.dns, ci.search].some((x) => x.trim() !== '') || ci.static
+  if (image && options.cloud_init && ciTyped) {
+    spec.cloud_init = { user: ci.user.trim(), ssh_keys: lines(ci.sshKeys), dns: words(ci.dns), search_domains: words(ci.search) }
+    if (ci.password !== '') spec.cloud_init.password = ci.password
+    if (!pve && ci.hostname.trim()) spec.cloud_init.hostname = ci.hostname.trim()
+    if (ci.static) {
+      if (ci.address.trim()) spec.cloud_init.address = ci.address.trim()
+      if (ci.gateway.trim()) spec.cloud_init.gateway = ci.gateway.trim()
+    }
+  }
+  return spec
 }

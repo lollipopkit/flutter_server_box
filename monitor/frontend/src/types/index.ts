@@ -1544,6 +1544,7 @@ export type VirtErrorDetail =
   | { code: 'task_still_running'; node: string; upid: string; minutes: number }
   | { code: 'needs_privilege'; account: string; privilege: string; path: string; command: string }
   | { code: 'refused'; issue: VirtIssue }
+  | { code: 'create_refused'; issue: VirtCreateIssue }
   | { code: 'apply_touches_management'; ifaces: string[] }
   | { code: 'apply_unreadable' }
 
@@ -1862,3 +1863,153 @@ export type VirtChange =
   | { op: 'network_delete'; network: string }
   | { op: 'network_apply'; node: string }
   | { op: 'network_revert'; node: string }
+
+// --- Creating, copying and deleting guests (`sbm_virt::create`) ---
+
+/// `sbm_virt::create::Issue`: why the agent refused to create, copy, delete
+/// or make a template of a guest.
+export type VirtCreateIssue =
+  | 'name_empty'
+  | 'name_invalid'
+  | 'name_taken'
+  | 'vmid_invalid'
+  | 'vmid_taken'
+  | 'node'
+  | 'cores'
+  | 'memory'
+  | 'storage'
+  | 'disk_size'
+  | 'template'
+  | 'media'
+  | 'credentials'
+  | 'password'
+  | 'ssh_keys'
+  | 'image'
+  | 'image_size'
+  | 'network'
+  | 'secure_boot'
+  | 'not_offered'
+  | 'ci_user'
+  | 'ci_credentials'
+  | 'ci_hostname'
+  | 'ci_address'
+  | 'ci_gateway'
+  | 'ci_dns'
+  | 'ci_search'
+  | 'clone_linked_target'
+  | 'clone_storage'
+  | 'clone_storage_content'
+  | 'clone_storage_shared'
+  | 'clone_node_unknown'
+  | 'not_stopped'
+  | 'is_template'
+  | 'not_found'
+  | 'unsupported'
+
+/// What the host offers a new VM. Lists put the default first.
+export interface VirtCreateOptions {
+  buses: string[]
+  nic_models: string[]
+  uefi: boolean
+  tpm: boolean
+  secure_boot: boolean
+  cloud_images: boolean
+  cloud_init: boolean
+  /// Why cloud-init is not offered, the host's words.
+  cloud_init_missing: string | null
+}
+
+/// A volume a form offers, with the id of the pool it is in.
+export interface VirtOffer {
+  pool: string
+  volume: VirtVolume
+}
+
+/// `POST /virt/create/form`.
+export interface VirtCreateForm {
+  options: VirtCreateOptions
+  /// PVE: the cluster's next free VMID.
+  next_vmid: number | null
+  storages: VirtPool[]
+  networks: VirtNetwork[]
+  /// A VM's install media, or a container's templates.
+  media: VirtOffer[]
+  /// Cloud images.
+  images: VirtOffer[]
+}
+
+/// A pool's id and a volume's id in it.
+export interface VirtVolumeRef {
+  pool: string
+  volume: string
+}
+
+export interface VirtCloudInit {
+  user: string
+  password?: string
+  ssh_keys: string[]
+  /// libvirt; the guest's name when omitted.
+  hostname?: string
+  /// `a.b.c.d/prefix`; omitted is DHCP.
+  address?: string
+  gateway?: string
+  dns: string[]
+  search_domains: string[]
+}
+
+/// `sbm_virt::create::CreateSpec`. Optional fields are omitted when unset.
+export interface VirtCreateSpec {
+  kind: VirtGuestKind
+  name: string
+  /// PVE.
+  node?: string
+  /// PVE; omitted takes the next free one.
+  vmid?: number
+  cores: number
+  memory_mib: number
+  /// Pool id.
+  storage: string
+  disk_gib: number
+  /// A VM's ISO or a container's template.
+  media?: VirtVolumeRef
+  /// A cloud image; never with `media`.
+  image?: VirtVolumeRef
+  /// Network id.
+  network?: string
+  /// A container's root password.
+  password?: string
+  /// A container's root keys.
+  ssh_keys: string[]
+  unprivileged: boolean
+  bus?: string
+  nic_model?: string
+  uefi: boolean
+  secure_boot: boolean
+  tpm: boolean
+  cloud_init?: VirtCloudInit
+  start: boolean
+}
+
+export interface VirtCreated {
+  id: string
+  /// Created, but it did not start: the host's words.
+  start_error: string | null
+  /// The disk is a cloud image's size, bigger than asked.
+  disk_kept_bytes: number | null
+}
+
+/// `sbm_virt::create::CloneRequest`.
+export interface VirtCloneRequest {
+  name: string
+  /// PVE: full or linked (templates only). libvirt: contents copied or
+  /// empty disks.
+  full: boolean
+  /// PVE.
+  vmid?: number
+  /// PVE: a storage name.
+  storage?: string
+  /// PVE.
+  target_node?: string
+  /// libvirt: a pool name.
+  target_pool?: string
+}

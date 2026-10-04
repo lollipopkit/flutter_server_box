@@ -22,6 +22,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/test_db.dart';
 
 const _host = 'srv-virt';
@@ -177,6 +178,8 @@ class _FakeHost extends VirtHostNotifier {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
@@ -256,8 +259,8 @@ void main() {
 
   testWidgets('a VM: filled from the host, sent as chosen', (tester) async {
     _options = const VirtCreateOptions(
-      buses: virtPveCreateBuses,
-      nicModels: virtCreateNicModels,
+      buses: ['scsi', 'virtio', 'sata', 'ide'],
+      nicModels: ['virtio', 'e1000e', 'e1000', 'rtl8139'],
       uefi: true,
       tpm: true,
       cloudImages: true,
@@ -298,7 +301,7 @@ void main() {
     expect(spec.memoryMiB, 2048);
     expect(spec.storage.id, 'pve/local-lvm');
     expect(spec.diskGiB, 32);
-    expect(spec.media?.id, 'local:iso/debian-13.iso');
+    expect(spec.media?.volume.id, 'local:iso/debian-13.iso');
     expect(spec.image, isNull);
     expect(spec.cloudInit, isNull);
     expect(spec.network?.name, 'vmbr0');
@@ -339,7 +342,7 @@ void main() {
     await type(tester, 'create:password', 'correct horse');
     final spec = await submit(tester);
     expect(spec.kind, VirtGuestKind.lxc);
-    expect(spec.media?.id, 'local:vztmpl/alpine-3.22.tar.xz');
+    expect(spec.media?.volume.id, 'local:vztmpl/alpine-3.22.tar.xz');
     expect(spec.password, 'correct horse');
     expect(spec.unprivileged, isTrue);
     // A container has no bus, NIC model or firmware of its own.
@@ -348,8 +351,8 @@ void main() {
 
   testWidgets('PVE: a cloud image with cloud-init', (tester) async {
     _options = const VirtCreateOptions(
-      buses: virtPveCreateBuses,
-      nicModels: virtCreateNicModels,
+      buses: ['scsi', 'virtio', 'sata', 'ide'],
+      nicModels: ['virtio', 'e1000e', 'e1000', 'rtl8139'],
       uefi: true,
       tpm: true,
       cloudImages: true,
@@ -383,7 +386,7 @@ void main() {
     await type(tester, 'create:ci:dns', '1.1.1.1, 9.9.9.9');
 
     final spec = await submit(tester);
-    expect(spec.image?.id, 'local:import/debian-13-genericcloud.qcow2');
+    expect(spec.image?.volume.id, 'local:import/debian-13-genericcloud.qcow2');
     expect(spec.media, isNull);
     final ci = spec.cloudInit!;
     expect(ci.user, 'admin');
@@ -399,7 +402,7 @@ void main() {
   ) async {
     _options = const VirtCreateOptions(
       buses: ['virtio', 'scsi', 'sata'],
-      nicModels: virtCreateNicModels,
+      nicModels: ['virtio', 'e1000e', 'e1000', 'rtl8139'],
       uefi: true,
       cloudImages: true,
       cloudInit: true,
@@ -435,7 +438,7 @@ void main() {
     expect(text(l10n().virtCreateImageSize(3758096384.bytes2Str)), findsNothing);
     final spec = await submit(tester);
     expect(spec.diskGiB, 4);
-    expect(spec.image?.path, '/i/noble.img');
+    expect(spec.image?.volume.path, '/i/noble.img');
     expect(spec.cloudInit?.hostname, 'ci-vm-1');
     expect(spec.cloudInit?.password, 'hunter22');
     expect(spec.cloudInit?.address, isNull);
@@ -463,7 +466,7 @@ void main() {
     expect(key('hw:seg:create:firmware'), findsNothing);
     expect(key('hw:seg:create:bus'), findsNothing);
     final spec = await submit(tester);
-    expect(spec.image?.id, 'noble.img');
+    expect(spec.image?.volume.id, 'noble.img');
     expect(spec.cloudInit, isNull);
     expect(spec.uefi, isFalse);
   });
@@ -492,7 +495,7 @@ void main() {
     expect(sub('create:media:${_libvirtPool.id}/debian.iso'), contains(_libvirtPool.name));
     await tap(tester, key('create:media:isos/debian.iso'));
     final spec = await submit(tester);
-    expect(spec.media?.path, '/isos/debian.iso');
+    expect(spec.media?.volume.path, '/isos/debian.iso');
   });
 
   testWidgets('PVE: another node\'s volumes are not offered while its own load',
@@ -554,7 +557,7 @@ void main() {
     await settle(tester);
     final spec = await submit(tester);
     expect(spec.node, 'pve2');
-    expect(spec.media?.id, 'local:vztmpl/debian-13_amd64.tar.zst');
+    expect(spec.media?.volume.id, 'local:vztmpl/debian-13_amd64.tar.zst');
   });
 }
 

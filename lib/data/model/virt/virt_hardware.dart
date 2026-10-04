@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/virt/virt.dart';
-import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/src/rust/api/create.dart' as ffi;
 
 part 'virt_hardware.freezed.dart';
 
@@ -681,8 +681,7 @@ enum VirtHwIssue {
   mountPoint,
   bootEmpty,
 
-  /// Not a name the host takes: see [virtPveNamePattern] and
-  /// [virtLibvirtNamePattern].
+  /// Not a name the host takes (`sbm_virt::create::name_ok`).
   nameInvalid,
 
   /// libvirt renames only a guest that is not running.
@@ -807,11 +806,11 @@ VirtHwIssue? virtHwIssue(
       if (order.isEmpty) return VirtHwIssue.bootEmpty;
     case VirtHwSetName(:final name):
       final ok = switch (host) {
-        VirtHostKind.pve => virtPveNamePattern.hasMatch(name),
-        VirtHostKind.libvirt => virtLibvirtNamePattern.hasMatch(name),
+        VirtHostKind.pve => ffi.virtGuestNameOk(name: name, pve: true),
+        VirtHostKind.libvirt => ffi.virtGuestNameOk(name: name, pve: false),
         null =>
-          virtPveNamePattern.hasMatch(name) &&
-              virtLibvirtNamePattern.hasMatch(name),
+          ffi.virtGuestNameOk(name: name, pve: true) &&
+              ffi.virtGuestNameOk(name: name, pve: false),
       };
       if (!ok) return VirtHwIssue.nameInvalid;
       if (hw.running && !hw.renameRunning) return VirtHwIssue.nameRunning;

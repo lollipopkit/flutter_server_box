@@ -5049,6 +5049,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorBackupTooMany => 'Monitor 代理存放的备份数量已达上限，请先删除一个。';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID 须在 100 到 999999999 之间。';
+
+  @override
+  String get virtCreateNodeOffline => '该节点不在线。';
+
+  @override
+  String get virtCreateMediaMissing => '该安装介质不在此主机上。';
+
+  @override
+  String get virtCreateNetworkMissing => '新的虚拟机不能使用该网络。';
+
+  @override
+  String get virtCreateNotOffered => '此主机不为新虚拟机提供该选项。';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot 需要 UEFI。';
+
+  @override
+  String get virtGuestNotStopped => '请先关机。';
+
+  @override
+  String get virtGuestIsTemplate => '它已经是模板。';
+
+  @override
+  String get virtCreateImageBigger => '镜像比磁盘大：磁盘至少要和镜像一样大。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10095,4 +10122,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorBackupTooMany => 'Monitor 代理存放的備份數量已達上限，請先刪除一個。';
+
+  @override
+  String get virtCreateVmidInvalid => 'VMID 須介於 100 到 999999999。';
+
+  @override
+  String get virtCreateNodeOffline => '該節點不在線上。';
+
+  @override
+  String get virtCreateMediaMissing => '此主機上沒有該安裝媒體。';
+
+  @override
+  String get virtCreateNetworkMissing => '新的虛擬機無法使用該網路。';
+
+  @override
+  String get virtCreateNotOffered => '此主機不為新 VM 提供該選項。';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot 需要 UEFI。';
+
+  @override
+  String get virtGuestNotStopped => '請先關機。';
+
+  @override
+  String get virtGuestIsTemplate => '它已經是範本。';
+
+  @override
+  String get virtCreateImageBigger => '映像比磁碟大：磁碟至少要和映像一樣大。';
 }

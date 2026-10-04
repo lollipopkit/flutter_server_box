@@ -1516,5 +1516,14 @@
   "monitorBackupUnsupported": "Deze monitor-agent kan geen back-ups opslaan. Werk de agent bij.",
   "monitorBackupAdminOnly": "Alleen een beheerdersaccount van de monitor-agent kan er back-ups op opslaan.",
   "monitorBackupTooLarge": "De back-up is groter dan de monitor-agent accepteert ({max}).",
-  "monitorBackupTooMany": "De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een."
+  "monitorBackupTooMany": "De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een.",
+  "virtCreateVmidInvalid": "Een VMID van 100 tot 999999999.",
+  "virtCreateNodeOffline": "Die node is niet online.",
+  "virtCreateMediaMissing": "Dat installatiemedium staat niet op deze host.",
+  "virtCreateNetworkMissing": "Een nieuwe gast kan dat netwerk niet gebruiken.",
+  "virtCreateNotOffered": "Deze host biedt dat niet aan voor een nieuwe VM.",
+  "virtCreateSecureBootNeedsUefi": "Secure Boot vereist UEFI.",
+  "virtGuestNotStopped": "Sluit het eerst af.",
+  "virtGuestIsTemplate": "Het is al een sjabloon.",
+  "virtCreateImageBigger": "De image is groter dan de schijf: maak de schijf minstens even groot."
 }

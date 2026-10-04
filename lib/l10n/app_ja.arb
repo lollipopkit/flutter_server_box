@@ -1516,5 +1516,14 @@
   "monitorBackupUnsupported": "この Monitor エージェントはバックアップを保存できません。エージェントを更新してください。",
   "monitorBackupAdminOnly": "Monitor エージェントにバックアップを保存できるのは管理者アカウントのみです。",
   "monitorBackupTooLarge": "バックアップが Monitor エージェントの上限サイズ（{max}）を超えています。",
-  "monitorBackupTooMany": "Monitor エージェントのバックアップ数が上限に達しています。先に 1 つ削除してください。"
+  "monitorBackupTooMany": "Monitor エージェントのバックアップ数が上限に達しています。先に 1 つ削除してください。",
+  "virtCreateVmidInvalid": "VMID は 100 から 999999999 までです。",
+  "virtCreateNodeOffline": "そのノードはオンラインではありません。",
+  "virtCreateMediaMissing": "そのインストールメディアはこのホストにありません。",
+  "virtCreateNetworkMissing": "新しい仮想マシンはそのネットワークを使えません。",
+  "virtCreateNotOffered": "このホストは新しい VM にそれを提供していません。",
+  "virtCreateSecureBootNeedsUefi": "Secure Boot には UEFI が必要です。",
+  "virtGuestNotStopped": "先にシャットダウンしてください。",
+  "virtGuestIsTemplate": "すでにテンプレートです。",
+  "virtCreateImageBigger": "イメージがディスクより大きいです。ディスクを少なくとも同じ大きさにしてください。"
 }

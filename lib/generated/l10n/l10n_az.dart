@@ -5390,4 +5390,34 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'Monitor agenti icazə verdiyi qədər ehtiyat nüsxə saxlayır. Əvvəlcə birini silin.';
+
+  @override
+  String get virtCreateVmidInvalid => '100 ilə 999999999 arasında VMID.';
+
+  @override
+  String get virtCreateNodeOffline => 'Bu node onlayn deyil.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Bu quraşdırma mediası bu hostda yoxdur.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Yeni qonaq bu şəbəkədən istifadə edə bilməz.';
+
+  @override
+  String get virtCreateNotOffered => 'Bu host yeni VM üçün bunu təklif etmir.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot UEFI tələb edir.';
+
+  @override
+  String get virtGuestNotStopped => 'Əvvəlcə onu söndürün.';
+
+  @override
+  String get virtGuestIsTemplate => 'Artıq şablondur.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'Şəkil diskdən böyükdür: diski ən azı onun qədər edin.';
 }

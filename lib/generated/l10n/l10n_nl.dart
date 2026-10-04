@@ -5440,4 +5440,35 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'De monitor-agent bewaart al het maximale aantal back-ups. Verwijder er eerst een.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Een VMID van 100 tot 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Die node is niet online.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Dat installatiemedium staat niet op deze host.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Een nieuwe gast kan dat netwerk niet gebruiken.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Deze host biedt dat niet aan voor een nieuwe VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot vereist UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Sluit het eerst af.';
+
+  @override
+  String get virtGuestIsTemplate => 'Het is al een sjabloon.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'De image is groter dan de schijf: maak de schijf minstens even groot.';
 }

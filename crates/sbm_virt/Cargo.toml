@@ -17,6 +17,8 @@ roxmltree = "0.21"
 base64 = "0.23"
 # SHA-512 crypt of a cloud-init password (libvirt::cloud_init)
 sha2 = "0.11"
+# A new NIC's MAC, a crypt salt and a cloud-init instance id (libvirt::host)
+getrandom = "0.4"
 
 # The PVE client. hyper rather than reqwest: the byte stream is the caller's
 # (a loopback port for the app's SSH or relay tunnel), and the TLS decision

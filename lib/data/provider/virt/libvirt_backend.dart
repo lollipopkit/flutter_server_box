@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
@@ -24,6 +23,7 @@ import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
+import 'package:server_box/src/rust/api/create.dart' as cr;
 import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as res;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
@@ -244,16 +244,6 @@ class LibvirtBackend implements VirtBackend {
       ),
     ),
   );
-
-  Future<LibvirtDomainDetail> _domainDetail(VirtGuest guest) async =>
-      LibvirtDomainDetail.fromJson(
-        _decode(
-          await _run(
-            ffi.virtDomainDetailScript(domain: guest.id),
-            ffi.parseVirtDomainDetailJson,
-          ),
-        ),
-      );
 
   @override
   Future<VirtConsole> console(VirtGuest guest, VirtConsoleKind kind) async {
@@ -552,282 +542,151 @@ class LibvirtBackend implements VirtBackend {
   @override
   Future<int?> nextVmid() async => null;
 
-  /// From `domcapabilities` for the machine a new domain gets (KVM and q35
-  /// where the host has them): the buses it has (q35: no IDE), UEFI where
-  /// OVMF is installed, a TPM where swtpm is; and whether the host has a
-  /// tool to make a cloud-init seed with. A cloud image is a
-  /// `vol-create-from` away on any host.
+  /// What a new domain can be given (`sbm_virt::libvirt::create::options_of`):
+  /// `domcapabilities` for the machine it gets and QEMU's firmware
+  /// descriptors, read per call — two round trips, and a host's firmware
+  /// does not change under a running app.
   @override
   Future<VirtCreateOptions> createOptions() async {
-    final host = LibvirtCreateHost.fromJson(
-      _decode(await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson)),
-    );
-    final caps = host.caps;
-    // Secure Boot is not `domcapabilities`' answer alone: libvirt's
-    // firmware autoselection needs a descriptor carrying the enrolled keys.
-    // A host with `secure='yes'` in its loader but no `enrolled-keys`
-    // descriptor cannot start a domain with the feature on.
-    final secureBoot = (caps?.secureBoot ?? false) &&
-        await _secureBootFirmware();
-    final buses = [
-      for (final b in virtCreateBuses)
-        if (caps == null
-            ? b == 'virtio' || b == 'sata'
-            : caps.diskBuses.contains(b) &&
-                  !(b == 'ide' && host.machine.contains('q35')))
-          b,
-    ];
-    return VirtCreateOptions(
-      buses: buses,
-      nicModels: virtCreateNicModels,
-      uefi: caps?.efi ?? false,
-      secureBoot: secureBoot,
-      tpm: caps?.tpmEmulator ?? false,
-      cloudImages: true,
-      cloudInit: host.seedTool != null,
-      cloudInitMissing: host.seedTool == null
-          ? 'genisoimage, xorriso, mkisofs, cloud-localds'
-          : null,
+    final (host, firmware) = await _createHost();
+    return VirtRust.createOptions(
+      jsonDecode(_rule(() => cr.virtLibvirtCreateOptions(hostJson: host, firmwareJson: firmware))),
     );
   }
 
-  /// Whether the host has a firmware that carries Secure Boot's enrolled
-  /// keys, from the descriptors QEMU ships. Read per call — it is one round
-  /// trip, and a host's firmware does not change under a running app.
-  Future<bool> _secureBootFirmware() async {
+  /// `domcapabilities` (`VirtCreateHost` JSON) and the firmware descriptors
+  /// (best effort: without them, Secure Boot is not offered).
+  Future<(String, String)> _createHost() async {
+    final host = await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson);
+    var firmware = '[]';
     try {
-      final json = await _run(
-        ffi.virtFirmwareScript(),
-        ffi.parseVirtFirmwareJson,
-      );
-      return _decodeList(json).any(
-        (f) => (f['secure_boot'] as bool? ?? false) &&
-            (f['enrolled_keys'] as bool? ?? false),
-      );
+      firmware = await _run(ffi.virtFirmwareScript(), ffi.parseVirtFirmwareJson);
     } catch (e, s) {
       Loggers.app.info('Virtualization firmware descriptors: $e', e, s);
-      return false;
+    }
+    return (host, firmware);
+  }
+
+  /// A rule or a mapping of `sbm_virt`'s, its refusal as a [VirtErr].
+  static T _rule<T>(T Function() f) {
+    try {
+      return f();
+    } on PveError catch (e) {
+      throw VirtRust.error(e);
     }
   }
 
-  /// Three round trips: what the host runs a domain as (`domcapabilities`:
-  /// KVM and q35 where it can), the disk — empty, or a copy of a cloud image
-  /// — and a cloud-init seed, with their paths, then the domain on them —
-  /// defined, and started when asked. A define the host refuses deletes the
-  /// volumes again. See `sbm_virt::libvirt::create_volume_script`.
-  ///
-  /// A cloud-init password is hashed here (SHA-512 crypt, a salt from
-  /// `Random.secure`): only the hash reaches the host.
+  /// Three steps: what the host runs a domain as, the disk — empty, or a
+  /// copy of a cloud image — and a cloud-init seed with their paths, then
+  /// the domain on them, defined and started when asked. `sbm_virt` checks
+  /// the spec against what the host lists now and writes each step
+  /// (`sbm_virt::libvirt::create::spec_of`); a cloud-init password reaches
+  /// the host as its hash only. A define the host refuses deletes the
+  /// volumes again.
   @override
   Future<VirtCreated> create(VirtCreateSpec spec) async {
-    if (spec.kind != VirtGuestKind.qemu) {
-      throw const VirtErr(type: VirtErrType.unsupported);
+    final (host, firmware) = await _createHost();
+    final guests = (await load()).guests;
+    final pools = await storagePools();
+    final networks = await this.networks();
+    // The volumes the spec names, as their pools list them now.
+    Future<String?> volume(VirtPoolVolume? v) async {
+      if (v == null) return null;
+      final pool = pools.firstWhereOrNull((p) => p.id == v.pool.id);
+      if (pool == null) return null;
+      final now = (await _volumes(pool)).$1.firstWhereOrNull((x) => x.id == v.volume.id);
+      return now == null ? null : jsonEncode(VirtRust.volumeJson(now));
     }
-    String pathOf(VirtVolume v) =>
-        v.path ??
-        (throw VirtErr(
-          type: VirtErrType.invalidResponse,
-          message: 'No path for ${v.name}',
-        ));
-    final mediaPath = switch (spec.media) {
-      final m? => pathOf(m),
-      null => null,
-    };
-    final imagePath = switch (spec.image) {
-      final i? => pathOf(i),
-      null => null,
-    };
-    final host = _decode(
-      await _run(ffi.virtCreateHostScript(), ffi.parseVirtCreateHostJson),
+    final mediaJson = await volume(spec.media);
+    final imageJson = await volume(spec.image);
+    final lvSpec = _rule(
+      () => cr.virtLibvirtCreateSpec(
+        specJson: jsonEncode(VirtRust.specJson(spec)),
+        hostJson: host,
+        firmwareJson: firmware,
+        guestsJson: jsonEncode([for (final g in guests) VirtRust.guestJson(g)]),
+        poolsJson: jsonEncode([for (final p in pools) VirtRust.poolJson(p)]),
+        networksJson: jsonEncode([for (final n in networks) VirtRust.networkJson(n)]),
+        mediaJson: mediaJson,
+        imageJson: imageJson,
+        seedTools: seedTools,
+      ),
     );
-    final ci = spec.cloudInit;
-    // The NIC's MAC is chosen here when cloud-init finds the NIC by it.
-    final mac = ci != null && spec.network != null ? _newMac() : null;
-    final json = <String, Object?>{
-      'name': spec.name,
-      'vcpus': spec.cores,
-      'memory_mib': spec.memoryMiB,
-      'host': host,
-      'disk_pool': spec.storage.id,
-      'disk_gib': spec.diskGiB,
-      'disk_format': virtLibvirtDiskFormat(spec.storage.type),
-      'disk_path': null,
-      'base_image': imagePath,
-      'disk_bus': spec.bus,
-      'cdrom': mediaPath,
-      'network': spec.network?.name,
-      'nic_model': spec.nicModel,
-      'mac': mac,
-      'efi': spec.uefi,
-      'secure_boot': spec.uefi && spec.secureBoot,
-      'tpm': spec.tpm,
-      'cloud_init': ci == null
-          ? null
-          : cloudInitJson(ci, name: spec.name, mac: mac),
-      'seed_path': null,
-      'seed_tools': seedTools,
-      'start': spec.start,
-    };
-    final Map<String, dynamic> made;
+    final String made;
     try {
-      made = _decode(
-        await _run(
-          _script(() => ffi.virtCreateVolumeScript(specJson: jsonEncode(json))),
-          ffi.parseVirtCreateVolumesJson,
-          action: true,
-        ),
+      made = await _run(
+        _script(() => ffi.virtCreateVolumeScript(specJson: lvSpec)),
+        ffi.parseVirtCreateVolumesJson,
+        action: true,
       );
     } on VirtErr catch (e) {
       throw _existsOr(e);
     }
-    json['disk_path'] = made['disk_path'];
-    json['seed_path'] = made['seed_path'];
-    final created = _decode(
-      await _run(
-        _script(() => ffi.virtDefineScript(specJson: jsonEncode(json))),
-        ffi.parseVirtCreateJson,
-        action: true,
-      ),
+    final defined = _rule(() => cr.virtLibvirtWithVolumes(specJson: lvSpec, madeJson: made));
+    final created = await _run(
+      _script(() => ffi.virtDefineScript(specJson: defined)),
+      ffi.parseVirtCreateJson,
+      action: true,
     );
-    // A copy of a cloud image bigger than asked for keeps its own size.
-    final copied = made['copied_bytes'] as int?;
-    return VirtCreated(
-      // By name when `domuuid` did not answer: virsh takes either.
-      id: created['uuid'] as String? ?? spec.name,
-      startError: created['start_error'] as String?,
-      diskKeptBytes: copied != null && copied > spec.diskGiB * (1 << 30)
-          ? copied
-          : null,
+    return VirtRust.created(
+      jsonDecode(_rule(() => cr.virtLibvirtCreated(specJson: defined, madeJson: made, createdJson: created))),
     );
-  }
-
-  /// [ci] as `sbm_virt::libvirt::cloud_init::VirtCloudInit` JSON for the
-  /// domain [name]: the password as its SHA-512 crypt hash — or, where none
-  /// was typed, [keepHash] (the seed's own, when it is edited) — the
-  /// hostname [name] where none was given, a new instance ID, and the NIC
-  /// by [mac].
-  ///
-  /// The instance ID is new every time: cloud-init runs most of its
-  /// modules once per instance, so a seed with the old one would be read
-  /// and ignored.
-  @visibleForTesting
-  static Map<String, Object?> cloudInitJson(
-    VirtCloudInit ci, {
-    required String name,
-    required String? mac,
-    String? keepHash,
-    Random? random,
-    /// The seed's own extra NICs, written back as they are: the form edits
-    /// the first, and a save must not drop the rest.
-    List<Map<String, Object?>> extraNetworks = const [],
-    bool passwordExpire = false,
-  }) {
-    final r = random ?? Random.secure();
-    const alphabet =
-        './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    final salt = String.fromCharCodes([
-      for (var i = 0; i < 16; i++) alphabet.codeUnitAt(r.nextInt(64)),
-    ]);
-    final password = ci.password ?? '';
-    final hex = [
-      for (var i = 0; i < 4; i++) r.nextInt(256).toRadixString(16).padLeft(2, '0'),
-    ].join();
-    final address = ci.address;
-    return {
-      'user': ci.user,
-      'password_hash': password.isEmpty
-          ? keepHash
-          : _script(() => ffi.virtHashPassword(password: password, salt: salt)),
-      'ssh_keys': ci.keys,
-      'hostname': ci.hostname ?? name,
-      'instance_id': 'iid-${name.replaceAll(RegExp('[^A-Za-z0-9._-]'), '-')}-$hex',
-      'network': mac == null
-          ? null
-          : {
-              'mac': mac,
-              'ipv4': address == null
-                  ? null
-                  : {'address': address, 'gateway': ci.gateway},
-              'dns': ci.dns,
-              'search': ci.searchDomains,
-            },
-      'extra_networks': mac == null ? const [] : extraNetworks,
-      'password_expire': passwordExpire,
-    };
   }
 
   /// Snapshots' metadata and a managed save go with it; with [removeDisks]
-  /// the volumes of its writable disks, its NVRAM and its own cloud-init
-  /// seed too — not a CD-ROM's image or a read-only disk, which are install
-  /// media or shared — and the files its external snapshots left under
-  /// those disks ([_snapshotFiles]). Refused while it runs: `undefine` would
-  /// leave it running, transient.
+  /// what `sbm_virt::libvirt::create::delete_plan` decides from what is read
+  /// here first: the volumes of its writable disks no other domain has and
+  /// nothing is made on, its NVRAM, its own cloud-init seed, and the files
+  /// its external snapshots left under those disks. Refused while it runs:
+  /// `undefine` would leave it running, transient.
   @override
   Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async {
     if (guest.state != VirtGuestState.stopped) {
       throw VirtErr(
         type: VirtErrType.unsupported,
-        message: '${guest.name} is not stopped',
+        message: virtCreateIssueText(VirtCreateIssue.notStopped),
       );
     }
-    final targets = <String>[];
-    String? seed;
-    var chain = (pools: const <String>[], files: const <String>[]);
+    var plan = const cr.VirtDeletePlan(targets: [], pools: [], files: [], kept: []);
     if (removeDisks) {
-      final xml = (await _domainDetail(guest)).xml;
-      for (final d in xml.disks) {
-        final target = d.target;
-        if (d.device == 'disk' && !d.readonly && target != null) {
-          targets.add(target);
-        }
-      }
-      seed = xml.seed;
-      if (targets.isNotEmpty) {
-        final deps = await _dependents(guest);
-        final tops = deps.tops;
-        bool othersNeed(String path) =>
-            deps.backers[path]?.any((b) => !tops.values.contains(b)) ?? false;
-        targets.removeWhere((t) {
-          final use = deps.ours[t];
-          final top = tops[t];
-          final shared =
-              (use != null &&
-                  deps.others.any(
-                    (o) => o.kind == use.kind && o.source == use.source,
-                  )) ||
-              (top != null && othersNeed(top));
-          if (shared) {
-            Loggers.app.warning(
-              'Deleting ${guest.name}: ${use?.source ?? t} is another '
-              "disk's too, it stays",
-            );
-          }
-          return shared;
-        });
-        chain = await _snapshotFiles(guest, targets);
-        final ours = {...tops.values, ...chain.files};
-        final needed = chain.files.where(
-          (f) => deps.backers[f]?.any((b) => !ours.contains(b)) ?? false,
-        );
-        if (needed.isNotEmpty) {
-          // A layer something else is made on: the chain stays whole, since
-          // what that layer is made on would go from under it too.
-          Loggers.app.warning(
-            'Deleting ${guest.name}: ${needed.first} backs another volume, '
-            'its snapshot files stay',
-          );
-          chain = (pools: const <String>[], files: const <String>[]);
-        }
+      final detail = await _run(
+        ffi.virtDomainDetailScript(domain: guest.id),
+        ffi.parseVirtDomainDetailJson,
+      );
+      final pools = await storagePools();
+      final storage = _storageJson!;
+      final volumes = [
+        for (final p in pools)
+          if (p.active)
+            [p.id, [for (final v in (await _volumes(p)).$1) VirtRust.volumeJson(v)]],
+      ];
+      final snapshots = await _snapshotsJson(guest);
+      final chain = _rule(() => cr.virtLibvirtDeleteNeedsChain(snapshotsJson: snapshots))
+          ? await _chainRaw(guest)
+          : null;
+      plan = _rule(
+        () => cr.virtLibvirtDeletePlan(
+          id: guest.id,
+          name: guest.name,
+          detailJson: detail,
+          storageJson: storage,
+          volumesJson: jsonEncode(volumes),
+          snapshotsJson: snapshots,
+          chainRaw: chain,
+        ),
+      );
+      for (final kept in plan.kept) {
+        Loggers.app.warning('Deleting ${guest.name}: $kept');
       }
     }
     await _run(
       _script(
         () => ffi.virtUndefineScript(
           domain: guest.id,
-          storage: targets,
-          seed: seed,
-          pools: chain.pools,
-          chain: chain.files,
+          storage: plan.targets,
+          seed: plan.seed,
+          pools: plan.pools,
+          chain: plan.files,
         ),
       ),
       ({required String raw}) async {
@@ -838,181 +697,49 @@ class LibvirtBackend implements VirtBackend {
     );
   }
 
-  /// What else on the host depends on [guest]'s disks, read before they are
-  /// deleted: `undefine --storage` deletes a volume however many domains
-  /// have it, and a volume made on another as its backing file breaks with
-  /// it.
-  ///
-  /// [ours] and [others] are the disks of this domain and of every other
-  /// one (`domblklist`); [tops] each of this domain's disks as a path (a
-  /// `type='volume'` disk resolved through its pool); [backers] each
-  /// backing file of a volume in an active pool, with the volumes made on
-  /// it.
-  Future<
-    ({
-      Map<String, LibvirtDiskUse> ours,
-      List<LibvirtDiskUse> others,
-      Map<String, String> tops,
-      Map<String, Set<String>> backers,
-    })
-  >
-  _dependents(VirtGuest guest) async {
-    final pools = await storagePools();
-    final storage = _storage!;
-    final ours = <String, LibvirtDiskUse>{};
-    final others = <LibvirtDiskUse>[];
-    for (final d in storage.disks) {
-      if (d.source == null) continue;
-      if (d.domain == guest.id || d.domain == guest.name) {
-        ours[d.target] = d;
-      } else {
-        others.add(d);
-      }
-    }
-    final byRef = <String, String>{};
-    final backers = <String, Set<String>>{};
-    for (final pool in pools) {
-      if (!pool.active) continue;
-      final (volumes, _) = await _volumes(pool);
-      for (final v in volumes) {
-        final path = v.path;
-        if (path == null) continue;
-        byRef['${pool.id}/${v.name}'] = path;
-        final backing = v.backing;
-        if (backing != null) backers.putIfAbsent(backing, () => {}).add(path);
-      }
-    }
-    final tops = <String, String>{
-      for (final MapEntry(key: target, value: d) in ours.entries)
-        target: ?(d.kind == 'volume' ? byRef[d.source] : d.source),
-    };
-    return (ours: ours, others: others, tops: tops, backers: backers);
-  }
-
-  /// The files under [targets]' disks that the guest's external snapshots
-  /// made, and the pools of every file of those chains: `undefine --storage`
-  /// deletes only the file each disk is on now, and skips even that when its
-  /// pool was not refreshed since a snapshot or a revert made it.
-  ///
-  /// Per disk, the chain down to the file the deepest snapshot layer on it
-  /// backs: that file is the disk the first snapshot was taken of. Anything
-  /// further down was there before any snapshot (an image the disk was made
-  /// on, which other guests may share) and stays. And every layer on those
-  /// disks that is off the chain: a branch the guest left by reverting to
-  /// an internal snapshot taken before it.
-  Future<({List<String> pools, List<String> files})> _snapshotFiles(
-    VirtGuest guest,
-    List<String> targets,
-  ) async {
-    const none = (pools: <String>[], files: <String>[]);
-    final byTarget = [
-      for (final s in await snapshots(guest))
-        if (s.external)
-          for (final l in s.layers)
-            if (l.file case final f?) (target: l.target, file: f),
-    ];
-    final layers = {for (final l in byTarget) l.file};
-    if (layers.isEmpty) return none;
-    final chain = LibvirtSnapChain.fromJson(
-      _decode(
-        await _run(
-          ffi.virtSnapChainScript(domain: guest.id),
-          ffi.parseVirtSnapChainJson,
-        ),
-      ),
-    );
-    final files = <String>[];
-    final tops = <String>[];
-    for (final d in chain.disks) {
-      if (!targets.contains(d.target)) continue;
-      if (d.error != null) {
-        Loggers.app.warning(
-          'Deleting ${guest.name}: the chain of ${d.target} is unreadable, '
-          'its snapshot files stay: ${d.error}',
-        );
-        continue;
-      }
-      final onChain = {
-        for (final f in d.files) ...[f.path, ?f.backing],
-      };
-      for (final l in byTarget) {
-        if (l.target == d.target && !onChain.contains(l.file) && !files.contains(l.file)) {
-          files.add(l.file);
-        }
-      }
-      final deepest = d.files.lastIndexWhere((f) => layers.contains(f.path));
-      if (deepest < 0) continue;
-      tops.add(d.files.first.path);
-      for (var i = 1; i <= deepest + 1 && i < d.files.length; i++) {
-        files.add(d.files[i].path);
-      }
-    }
-    if (files.isEmpty) return none;
-    final all = await storagePools();
-    final pools = {
-      for (final f in [...tops, ...files]) ?virtPoolOfFile(all, f)?.name,
-    };
-    return (pools: pools.toList(), files: files);
-  }
-
   // ---------------------------------------------------------------------------
   // Cloning (libvirt has no backups of its own)
   // ---------------------------------------------------------------------------
 
   /// Two steps, as creating is: each writable disk copied (or made empty)
-  /// in the pool its source is in — or in [VirtCloneRequest.targetPool],
-  /// which `vol-create-from` copies across pools — then the copy defined on
-  /// those volumes: a new UUID and MACs, its own UEFI variables file. Either
-  /// step failing deletes the volumes it made. A CD-ROM stays on the image it
-  /// has.
+  /// in the pool its source is in — or in [VirtCloneRequest.targetPool] —
+  /// then the copy defined on those volumes: a new UUID and MACs, its own
+  /// UEFI variables file. Either step failing deletes the volumes it made.
+  /// `sbm_virt::libvirt::create::clone_spec_of` checks the request and
+  /// reads the disks from the definition read here.
   @override
   Future<String> clone(VirtGuest guest, VirtCloneRequest request) async {
     if (guest.state != VirtGuestState.stopped) {
       throw VirtErr(
         type: VirtErrType.unsupported,
-        message: '${guest.name} is not stopped',
+        message: virtCreateIssueText(VirtCreateIssue.notStopped),
       );
     }
-    final hw = await hardware(guest);
-    final base = _hardware[guest.id]!.configXml;
-    final disks = <Map<String, Object?>>[];
-    for (final d in hw.disks) {
-      if (d.kind != VirtHwDiskKind.disk || d.readonly) continue;
-      final source = d.source;
-      if (source == null || !source.startsWith('/')) {
-        throw VirtErr(
-          type: VirtErrType.unsupported,
-          message: 'Disk ${d.key} has no file to copy',
-        );
-      }
-      disks.add({
-        'target': d.key,
-        'source': source,
-        'format': d.format == 'qcow2' || d.format == 'raw' ? d.format : null,
-      });
-    }
-    final target = switch (request.targetPool) {
-      final name? => (await storagePools()).firstWhereOrNull((p) => p.name == name),
-      null => null,
-    };
-    final spec = {
-      'source': guest.id,
-      'name': request.name,
-      'full': request.full,
-      'disks': disks,
-      'target_pool': ?request.targetPool,
-      'target_block': target != null && !virtPoolHoldsFiles(target),
-    };
-    final List<Object?> paths;
+    final info = await _hardwareInfo(guest);
+    final hardware = _hardwareJson[guest.id]!;
+    final guests = (await load()).guests;
+    await storagePools();
+    final spec = _rule(
+      () => cr.virtLibvirtCloneSpec(
+        guestJson: jsonEncode(VirtRust.guestJson(guest)),
+        hardwareJson: hardware,
+        requestJson: jsonEncode(VirtRust.cloneRequestJson(request)),
+        guestsJson: jsonEncode([for (final g in guests) VirtRust.guestJson(g)]),
+        storageJson: _storageJson!,
+      ),
+    );
+    final List<String> paths;
     try {
-      paths = jsonDecode(
-        await _run(
-          _script(() => ffi.virtCloneVolumesScript(specJson: jsonEncode(spec))),
-          ({required String raw}) async =>
-              jsonEncode(await ffi.parseVirtCloneVolumes(raw: raw)),
-          action: true,
-        ),
-      ) as List<Object?>;
+      paths = [
+        for (final p in jsonDecode(
+          await _run(
+            _script(() => ffi.virtCloneVolumesScript(specJson: spec)),
+            ({required String raw}) async => jsonEncode(await ffi.parseVirtCloneVolumes(raw: raw)),
+            action: true,
+          ),
+        ) as List)
+          p as String,
+      ];
     } on VirtErr catch (e) {
       throw _existsOr(e);
     }
@@ -1020,11 +747,9 @@ class LibvirtBackend implements VirtBackend {
       await _run(
         _script(
           () => ffi.virtCloneDefineScript(
-            baseXml: base,
+            baseXml: info.configXml,
             name: request.name,
-            disksJson: jsonEncode([
-              for (var i = 0; i < disks.length; i++) [disks[i]['target'], paths[i]],
-            ]),
+            disksJson: _rule(() => cr.virtLibvirtCloneDisks(specJson: spec, paths: paths)),
           ),
         ),
         ffi.parseVirtCreateJson,
@@ -1570,6 +1295,9 @@ class LibvirtBackend implements VirtBackend {
   /// has, which a change needs to know to address the right one.
   final _hardware = <String, LibvirtHardwareInfo>{};
 
+  /// The same reads, as `sbm_virt` gave them: what a clone is decided from.
+  final _hardwareJson = <String, String>{};
+
   /// One round trip: both definitions, autostart, the host's CPUs and
   /// memory, and each disk's size. See `sbm_virt::libvirt::hardware_script`.
   @override
@@ -1581,15 +1309,12 @@ class LibvirtBackend implements VirtBackend {
   }
 
   Future<LibvirtHardwareInfo> _hardwareInfo(VirtGuest guest) async {
-    final info = LibvirtHardwareInfo.fromJson(
-      _decode(
-        await _run(
-          ffi.virtHardwareScript(domain: guest.id),
-          ffi.parseVirtHardwareJson,
-        ),
-      ),
+    final json = await _run(
+      ffi.virtHardwareScript(domain: guest.id),
+      ffi.parseVirtHardwareJson,
     );
-    return _hardware[guest.id] = info;
+    _hardwareJson[guest.id] = json;
+    return _hardware[guest.id] = LibvirtHardwareInfo.fromJson(_decode(json));
   }
 
   /// [info] as the Hardware view edits it: the persistent definition, with
@@ -2005,25 +1730,26 @@ class LibvirtBackend implements VirtBackend {
     final seedMac = ((ci['network'] as Map?)?['mac'] as String?)?.toLowerCase();
     final macs = [for (final n in info.config.nics) n.mac.toLowerCase()];
     final mac = macs.contains(seedMac) ? seedMac : macs.firstOrNull;
-    final json = cloudInitJson(
-      edit.values,
-      name: guest.name,
-      mac: base.network ? mac : null,
-      keepHash: edit.removePassword ? null : ci['password_hash'] as String?,
-      // The NICs after the first are kept as they are: the form edits the
-      // first, and saving must not drop the rest.
-      extraNetworks: [
-        for (final x in (ci['extra_networks'] as List?) ?? const [])
-          (x as Map).cast<String, Object?>(),
-      ],
-      passwordExpire: edit.passwordExpires,
+    // A new instance, the password as its hash or the seed's own kept
+    // (`sbm_virt::libvirt::create::cloud_init_of`).
+    final json = _rule(
+      () => cr.virtLibvirtCloudInit(
+        ciJson: jsonEncode(VirtRust.cloudInitJson(edit.values)),
+        name: guest.name,
+        mac: base.network ? mac : null,
+        keepHash: edit.removePassword ? null : ci['password_hash'] as String?,
+        // The NICs after the first are kept as they are: the form edits the
+        // first, and saving must not drop the rest.
+        extraNetworksJson: jsonEncode(ci['extra_networks'] ?? const []),
+        passwordExpire: edit.passwordExpires,
+      ),
     );
     await _run(
       _script(
         () => ffi.virtSeedUpdateScript(
           seed: seed.path,
           revision: base.revision,
-          cloudInitJson: jsonEncode(json),
+          cloudInitJson: json,
           tools: seedTools,
         ),
       ),
@@ -2037,11 +1763,7 @@ class LibvirtBackend implements VirtBackend {
   }
 
   /// A MAC in QEMU's locally administered range, `52:54:00`.
-  static String _newMac() {
-    final r = Random.secure();
-    String b() => r.nextInt(256).toRadixString(16).padLeft(2, '0');
-    return '52:54:00:${b()}:${b()}:${b()}';
-  }
+  static String _newMac() => _rule(cr.virtNewMac);
 
   /// [change] as `sbm_virt::libvirt::VirtHwChange` JSON, addressed by what
   /// [info]'s two definitions have.

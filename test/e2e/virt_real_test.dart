@@ -177,8 +177,10 @@ import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
+import 'package:server_box/src/rust/api/create.dart' as cr;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 import '../helpers/rust_lib_helper.dart';
@@ -1528,7 +1530,7 @@ Future<void> _libvirtCreate() async {
         memoryMiB: 256,
         storage: pool,
         diskGiB: 1,
-        media: media.firstOrNull,
+        media: _inPool(media.firstOrNull, await virt.storagePools()),
         network: nets.where((n) => n.name == 'default').firstOrNull,
         start: true,
       );
@@ -1973,7 +1975,7 @@ Future<void> _pveCreate() async {
           memoryMiB: kind == VirtGuestKind.lxc ? 256 : 512,
           storage: storage,
           diskGiB: 1,
-          media: media.firstOrNull,
+          media: _inPool(media.firstOrNull, await pve.storagePools(), node: node),
           network: bridge,
           password: kind == VirtGuestKind.lxc
               ? List.generate(
@@ -2778,7 +2780,7 @@ Future<void> _libvirtBlockPools() async {
         memoryMiB: 1024,
         storage: pool,
         diskGiB: 4,
-        image: image!,
+        image: _inPool(image!, await virt.storagePools()),
         network: net,
         bus: 'virtio',
         uefi: true,
@@ -3172,7 +3174,7 @@ Future<void> _libvirtManage() async {
         memoryMiB: 256,
         storage: p,
         diskGiB: 1,
-        media: media,
+        media: _inPool(media, await virt.storagePools()),
       );
       final created = await virt.create(spec);
       final g = (await virt.load()).guests.firstWhere((g) => g.id == created.id);
@@ -4114,7 +4116,7 @@ Future<void> _libvirtCloudInit() async {
         memoryMiB: 1024,
         storage: pool,
         diskGiB: 4,
-        image: image,
+        image: _inPool(image, await virt.storagePools()),
         network: net,
         bus: 'virtio',
         nicModel: 'virtio',
@@ -4306,7 +4308,7 @@ Future<void> _libvirtCloudImages() async {
           memoryMiB: 1024,
           storage: pool,
           diskGiB: gib,
-          image: image,
+          image: _inPool(image, await backend.storagePools()),
           network: net,
           bus: 'virtio',
           uefi: !bios,
@@ -4415,7 +4417,7 @@ Future<void> _libvirtCloudImages() async {
       }, timeout: const Timeout(Duration(minutes: 15)));
     }
 
-    test('an image bigger than the disk asked for: kept at its size, started', () async {
+    test('an image bigger than the disk asked for: refused before anything is made', () async {
       // The biggest image there is.
       final sizes = [for (final p in images) ((await imageAt(p)).capacity ?? 0, p)]..sort((a, b) => b.$1.compareTo(a.$1));
       final (bytes, path) = sizes.first;
@@ -4425,11 +4427,12 @@ Future<void> _libvirtCloudImages() async {
       final gib = ((bytes - 1) >> 30).clamp(1, 1 << 20);
       expect(gib << 30, lessThan(bytes));
       final login = await _guestLogin();
-      final (g, created, pool) = await make('kept', path, login, gib: gib);
-      expect(created.diskKeptBytes, bytes);
-      expect(await sh("LC_ALL=C virsh -q vol-info --bytes --pool '${pool.name}' --vol '${g.name}.qcow2' | grep Capacity"), contains('$bytes bytes'));
-      expect(g.state, VirtGuestState.running);
-      await remove(g, pool);
+      // The listing knows the image's size, so `sbm_virt` refuses it: a
+      // disk is grown, never cut (a size it cannot know keeps the image's,
+      // `diskKeptBytes`).
+      final e = await _virtErr(make('kept', path, login, gib: gib));
+      expect(e.message, virtCreateIssueText(VirtCreateIssue.imageSize));
+      expect((await sh("virsh -q list --all --name | grep -c 'sbxe2e-ci-kept' || true")).trim(), '0');
     }, timeout: const Timeout(Duration(minutes: 10)));
 
     for (final tool in tools) {
@@ -4496,18 +4499,23 @@ Future<void> _libvirtCloudImages() async {
       final seed = hw.disks.singleWhere((d) => d.cloudInit).source!;
       final one = await virt.cloudInit(g);
       expect(one.nics, 1);
-      final json = LibvirtBackend.cloudInitJson(
-        VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name),
+      final json = cr.virtLibvirtCloudInit(
+        ciJson: jsonEncode(
+          VirtRust.cloudInitJson(
+            VirtCloudInit(user: 'sbxe', password: login.password, sshKeys: login.publicKey, hostname: g.name),
+          ),
+        ),
         name: g.name,
         mac: mac1,
-        extraNetworks: [
+        extraNetworksJson: jsonEncode([
           {
             'mac': mac2,
             'ipv4': {'address': '10.231.79.10/24', 'gateway': null},
             'dns': <String>[],
             'search': <String>[],
           },
-        ],
+        ]),
+        passwordExpire: false,
       );
       final out = (await execSshE2e(
         client!,
@@ -4515,7 +4523,7 @@ Future<void> _libvirtCloudImages() async {
         Uint8List.fromList(utf8.encode(ffi.virtSeedUpdateScript(
           seed: seed,
           revision: one.revision,
-          cloudInitJson: jsonEncode(json),
+          cloudInitJson: json,
         ))),
       )).stdout;
       ffi.parseVirtSeedUpdate(raw: out);
@@ -4727,7 +4735,7 @@ Future<void> _pveCloudInit() async {
         memoryMiB: 1024,
         storage: storage,
         diskGiB: 8,
-        image: image,
+        image: _inPool(image, await pve.storagePools(), node: node),
         network: bridge,
         bus: 'scsi',
         uefi: true,
@@ -4793,8 +4801,8 @@ Future<void> _pveCloudInit() async {
       expect(await sh("pvesm list ${imageId!.split(':').first} --content import | grep -c '$imageId' || true"), contains('1'));
     }, timeout: const Timeout(Duration(minutes: 10)));
 
-    test('an image bigger than the disk asked for: its size kept; cloud-init '
-        'edited, and taken at a reboot from inside', () async {
+    test('an image bigger than the disk asked for: refused; at its size, '
+        'cloud-init edited, and taken at a reboot from inside', () async {
       final snap = await pve.load();
       final node = snap.host.nodes.first.name;
       int? id;
@@ -4823,8 +4831,11 @@ Future<void> _pveCloudInit() async {
       final bridge = virtCreateNetworks(await pve.networks(), host: VirtHostKind.pve, node: node)
           .firstWhere((n) => n.name == 'vmbr0');
       final login = await _guestLogin();
-      final created = await pve.create(
-        VirtCreateSpec(
+      // A disk is grown, never cut: asked smaller than the image's size,
+      // which the listing knows, the create is refused before any request.
+      final pooled = _inPool(image, await pve.storagePools(), node: node);
+      if (gw == null) fail('SBM_E2E_PVE_CLOUD_GW is not set');
+      VirtCreateSpec spec(int gib) => VirtCreateSpec(
           kind: VirtGuestKind.qemu,
           name: name2,
           node: node,
@@ -4832,8 +4843,8 @@ Future<void> _pveCloudInit() async {
           cores: 1,
           memoryMiB: 1024,
           storage: storage,
-          diskGiB: 2,
-          image: image,
+          diskGiB: gib,
+          image: pooled,
           network: bridge,
           bus: 'scsi',
           cloudInit: VirtCloudInit(
@@ -4842,18 +4853,20 @@ Future<void> _pveCloudInit() async {
             sshKeys: login.publicKey,
             address: addr,
             gateway: gw,
-            dns: [gw!],
+            dns: [gw],
           ),
           // Started below, with PVE's first-boot package upgrade off (see
           // the test above).
           start: false,
-        ),
-      );
-      // Kept at the image's size: not cut, not failed, started.
+        );
+      final refused = await _virtErr(pve.create(spec(2)));
+      expect(refused.message, virtCreateIssueText(VirtCreateIssue.imageSize));
+      expect(await sh('qm status $id 2>/dev/null'), isEmpty);
+      final created = await pve.create(spec((bytes + (1 << 30) - 1) >> 30));
       expect(created.startError, isNull);
       await sh('qm set $id --ciupgrade 0');
       await pve.power(await _pveStartable(pve, id, name2), VirtPowerAction.start);
-      expect(created.diskKeptBytes, bytes);
+      expect(created.diskKeptBytes, isNull);
       // PVE prints a whole GiB as `G` and anything else as `M`.
       final written = RegExp(r'size=(\d+)([MG])').firstMatch(await sh('qm config $id | grep "^scsi0:"'))!;
       expect(int.parse(written[1]!) << (written[2] == 'G' ? 30 : 20), bytes);
@@ -5572,4 +5585,14 @@ Future<void> _p8Pve() async {
       expect(e.type, VirtErrType.unsupported);
     });
   });
+}
+
+/// [v] with the pool it is listed in: a PVE volid names its storage on
+/// [node], a libvirt volume's path its pool's directory.
+VirtPoolVolume? _inPool(VirtVolume? v, List<VirtStoragePool> pools, {String? node}) {
+  if (v == null) return null;
+  final pool = node != null
+      ? pools.firstWhere((p) => p.node == node && p.name == v.id.split(':').first)
+      : pools.firstWhere((p) => p.path != null && (v.path ?? '').startsWith('${p.path}/'));
+  return (pool: pool, volume: v);
 }

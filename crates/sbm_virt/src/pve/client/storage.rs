@@ -429,7 +429,7 @@ impl Client {
 
     /// `request` on `node`, which answers a UPID or, for a change PVE makes
     /// at once, nothing; the task waited for.
-    async fn node_task(&self, node: &str, method: Method, path: &str, body: Option<Body>) -> Result<()> {
+    pub(super) async fn node_task(&self, node: &str, method: Method, path: &str, body: Option<Body>) -> Result<()> {
         let upid = self.call(method, path, body, true).await?;
         if let Some(upid) = upid.as_str().filter(|u| u.starts_with("UPID:")) {
             self.wait_task(node, upid).await?;
@@ -442,7 +442,7 @@ impl Client {
     /// [`ErrorKind::PermissionDenied`] naming the privilege, where, and the
     /// `pveum` line that grants it — the refusal alone says which, not what
     /// to type.
-    fn manage_err(&self, e: Error) -> Error {
+    pub(super) fn manage_err(&self, e: Error) -> Error {
         let message = e.message.clone().unwrap_or_default();
         if message.contains("already exists") || message.contains("already defined") {
             return Error { kind: ErrorKind::Exists, ..e };

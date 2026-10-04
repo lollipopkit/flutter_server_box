@@ -503,6 +503,43 @@ impl PveSession {
         Ok(self.client.manage(&change, live.as_ref()).await?)
     }
 
+    // --- Making, copying and deleting (sbm_virt::create) ---
+
+    /// The cluster's next free VMID.
+    pub async fn next_vmid(&self) -> Result<u32, PveError> {
+        Ok(self.client.next_vmid().await?)
+    }
+
+    /// What a new VM can be given, `CreateOptions` JSON.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn create_options(&self) -> Result<String, PveError> {
+        to_json(&self.client.create_options())
+    }
+
+    /// Creates `spec_json` (a `CreateSpec`), checked first against what the
+    /// host lists now; `Created` JSON.
+    pub async fn create(&self, spec_json: String) -> Result<String, PveError> {
+        let spec: sbm_virt::create::CreateSpec = from_json(&spec_json)?;
+        to_json(&self.client.create(&spec).await?)
+    }
+
+    /// Deletes a stopped guest with its disks, waited for.
+    pub async fn delete(&self, guest: PveGuestRef) -> Result<(), PveError> {
+        Ok(self.client.delete(&guest.into()).await?)
+    }
+
+    /// Turns a stopped guest into a template, waited for.
+    pub async fn make_template(&self, guest: PveGuestRef) -> Result<(), PveError> {
+        Ok(self.client.make_template(&guest.into()).await?)
+    }
+
+    /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
+    /// the copy's id.
+    pub async fn clone_guest(&self, guest: PveGuestRef, request_json: String) -> Result<String, PveError> {
+        let request: sbm_virt::create::CloneRequest = from_json(&request_json)?;
+        Ok(self.client.clone_guest(&guest.into(), &request).await?)
+    }
+
     /// The headers that authenticate a connection made outside the session
     /// (a console's websocket, an upload), logging in first if needed.
     pub async fn auth_headers(&self) -> Result<Vec<PveHeader>, PveError> {

@@ -9236,6 +9236,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The monitor agent already holds as many backups as it allows. Delete one first.'**
   String get monitorBackupTooMany;
+
+  /// Create form: the VMID is outside the range PVE accepts.
+  ///
+  /// In en, this message translates to:
+  /// **'A VMID from 100 to 999999999.'**
+  String get virtCreateVmidInvalid;
+
+  /// Create form: the PVE node picked is not one of the host's online nodes.
+  ///
+  /// In en, this message translates to:
+  /// **'That node is not online.'**
+  String get virtCreateNodeOffline;
+
+  /// Create form: the ISO picked is no longer listed by the host.
+  ///
+  /// In en, this message translates to:
+  /// **'That install media is not on this host.'**
+  String get virtCreateMediaMissing;
+
+  /// Create form: the network picked is not one a new NIC can be on.
+  ///
+  /// In en, this message translates to:
+  /// **'A new guest cannot use that network.'**
+  String get virtCreateNetworkMissing;
+
+  /// Create form: a bus, NIC model, UEFI, TPM, cloud image or cloud-init the host does not have.
+  ///
+  /// In en, this message translates to:
+  /// **'This host does not offer that for a new VM.'**
+  String get virtCreateNotOffered;
+
+  /// Create form: Secure Boot was asked for on a BIOS VM.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure Boot needs UEFI.'**
+  String get virtCreateSecureBootNeedsUefi;
+
+  /// A guest has to be stopped for this: deleting it, making it a template, a libvirt copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut it down first.'**
+  String get virtGuestNotStopped;
+
+  /// Making a template of a guest that is one already.
+  ///
+  /// In en, this message translates to:
+  /// **'It is a template already.'**
+  String get virtGuestIsTemplate;
+
+  /// A refused create: the cloud image is bigger than the disk asked for.
+  ///
+  /// In en, this message translates to:
+  /// **'The image is bigger than the disk: make the disk at least as big.'**
+  String get virtCreateImageBigger;
 }
 
 class _AppLocalizationsDelegate

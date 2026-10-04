@@ -1,12 +1,22 @@
+import 'dart:convert';
+
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
+import 'package:server_box/data/model/virt/virt_rust.dart';
+import 'package:server_box/src/rust/api/create.dart' as ffi;
+import 'package:server_box/src/rust/api/pve.dart' show PveError;
 
-/// A guest to create. Checked with [virtCreateIssue] before it is sent.
+/// A volume, with the pool it is listed in: a PVE volid is the same on every
+/// node that sees its storage, a libvirt volume name on every pool.
+typedef VirtPoolVolume = ({VirtStoragePool pool, VirtVolume volume});
+
+/// A guest to create. Checked with [virtCreateIssue] before it is sent, and
+/// by `sbm_virt` again against what the host lists then.
 ///
 /// [storage], [media], [image] and [network] are what the host listed
 /// ([virtDiskStorages], [virtMediaStorages], [virtImageStorages],
-/// [virtCreateNetworks]), so the backend can name them as the host does:
-/// PVE's storage and volid, libvirt's pool and the volume's path.
+/// [virtCreateNetworks]); they cross by id (`sbm_virt::create::CreateSpec`).
 final class VirtCreateSpec {
   const VirtCreateSpec({
     required this.kind,
@@ -48,12 +58,12 @@ final class VirtCreateSpec {
   final int diskGiB;
 
   /// A VM's install media (an ISO), a container's template.
-  final VirtVolume? media;
+  final VirtPoolVolume? media;
 
   /// A cloud image the VM's disk is a copy of, grown to [diskGiB]: a disk
   /// with a system on it already, set up at its first boot by [cloudInit].
   /// Never with [media].
-  final VirtVolume? image;
+  final VirtPoolVolume? image;
 
   /// The one NIC's network or bridge; null for none.
   final VirtNetwork? network;
@@ -144,6 +154,18 @@ final class VirtCreateOptions {
     this.cloudInit = false,
     this.cloudInitMissing,
   });
+
+  /// What [spec] asks for, as if offered: for a check made before the
+  /// host's own options are read, which `sbm_virt` checks again.
+  factory VirtCreateOptions.asked(VirtCreateSpec spec) => VirtCreateOptions(
+    buses: [?spec.bus],
+    nicModels: [?spec.nicModel],
+    uefi: spec.uefi,
+    secureBoot: spec.secureBoot,
+    tpm: spec.tpm,
+    cloudImages: true,
+    cloudInit: true,
+  );
 
   /// Disk buses, the default first.
   final List<String> buses;
@@ -272,28 +294,42 @@ final class VirtCloudInitEdit {
   final bool passwordExpires;
 }
 
-/// Why a [VirtCreateSpec] cannot be sent. First wins; see [virtCreateIssue].
+/// Why a [VirtCreateSpec] cannot be sent, as `sbm_virt::create::Issue`
+/// names it. First wins; see [virtCreateIssue].
 enum VirtCreateIssue {
   nameEmpty,
   nameInvalid,
   nameTaken,
   vmidInvalid,
   vmidTaken,
+
+  /// PVE: the node is not one of the host's online nodes.
+  node,
   cores,
   memory,
   storage,
   diskSize,
   template,
+
+  /// A VM's install media that is not on offer.
+  media,
   credentials,
   password,
   sshKeys,
 
-  /// A cloud image not picked, or bigger than the disk asked for.
+  /// A cloud image not picked, not one, or bigger than the disk asked for.
   image,
   imageSize,
 
+  /// The network is not one a new NIC can be on.
+  network,
+
   /// Secure Boot asked for without UEFI.
   secureBoot,
+
+  /// A bus, a NIC model, UEFI, a TPM, a cloud image or cloud-init the host
+  /// does not offer.
+  notOffered,
 
   /// cloud-init: the account's name, its way in, the hostname, the address.
   ciUser,
@@ -312,25 +348,64 @@ enum VirtCreateIssue {
   cloneStorageContent,
   cloneStorageShared,
   cloneNodeUnknown,
+
+  /// Only a stopped guest is deleted, made a template, or (libvirt) copied.
+  notStopped,
+  isTemplate,
+  notFound,
+  unsupported;
+
+  /// The issue `sbm_virt` names (`name_taken`).
+  static VirtCreateIssue? ofRust(String? name) => switch (name) {
+    null => null,
+    _ => values.firstWhere(
+      (i) => i.name == name.replaceAllMapped(RegExp('_([a-z])'), (m) => m[1]!.toUpperCase()),
+      orElse: () => unsupported,
+    ),
+  };
 }
 
-/// libvirt: what AppArmor's `virt-aa-helper` accepts (a `"` in a domain name
-/// makes it refuse to start the domain), what `vol-create-as` puts in its XML
-/// unescaped (`&`, `<`), and what makes a file name: letters, digits, `.`,
-/// `_`, `-`, not first a dot or dash.
-final virtLibvirtNamePattern = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$');
-
-/// PVE: a DNS name (`pve-configid` `dns-name`), which is what a VM's name and
-/// a container's hostname must be.
-final virtPveNamePattern = RegExp(
-  r'^(?=.{1,63}$)[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?'
-  r'(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$',
-);
-
-/// An OpenSSH public key line.
-final _sshKeyPattern = RegExp(
-  r'^(ssh-(rsa|ed25519|dss)|ecdsa-sha2-nistp\d+|sk-(ssh-ed25519|ecdsa-sha2-nistp256)@openssh\.com) [A-Za-z0-9+/=]+( .*)?$',
-);
+/// What a [VirtCreateIssue] says where no field says it: a refusal's
+/// message, a toast. [pve] picks the host's name rule.
+String? virtCreateIssueText(VirtCreateIssue? issue, {bool pve = false}) => switch (issue) {
+  null => null,
+  VirtCreateIssue.nameEmpty => l10n.virtResNameEmpty,
+  VirtCreateIssue.nameInvalid ||
+  VirtCreateIssue.ciHostname ||
+  VirtCreateIssue.ciSearch => pve ? l10n.virtCreateNameInvalidPve : l10n.virtCreateNameInvalidLibvirt,
+  VirtCreateIssue.nameTaken => l10n.virtCreateNameTaken,
+  VirtCreateIssue.vmidInvalid => l10n.virtCreateVmidInvalid,
+  VirtCreateIssue.vmidTaken => l10n.virtCreateVmidTaken,
+  VirtCreateIssue.node => l10n.virtCreateNodeOffline,
+  VirtCreateIssue.cores => l10n.virtCreateCoresInvalid,
+  VirtCreateIssue.memory => l10n.virtCreateMemoryInvalid,
+  VirtCreateIssue.storage => l10n.virtCreateStorageMissing,
+  VirtCreateIssue.diskSize => l10n.virtCreateDiskInvalid,
+  VirtCreateIssue.template => l10n.virtCreateTemplateMissing,
+  VirtCreateIssue.media => l10n.virtCreateMediaMissing,
+  VirtCreateIssue.credentials => l10n.virtCreateCredentialsMissing,
+  VirtCreateIssue.password => l10n.virtCreatePasswordShort(virtLxcPasswordMin),
+  VirtCreateIssue.sshKeys => l10n.virtCreateSshKeysInvalid,
+  VirtCreateIssue.image => l10n.virtCreateImageMissing,
+  VirtCreateIssue.imageSize => l10n.virtCreateImageBigger,
+  VirtCreateIssue.network => l10n.virtCreateNetworkMissing,
+  VirtCreateIssue.secureBoot => l10n.virtCreateSecureBootNeedsUefi,
+  VirtCreateIssue.notOffered => l10n.virtCreateNotOffered,
+  VirtCreateIssue.ciUser => l10n.virtCiUserInvalid,
+  VirtCreateIssue.ciCredentials => l10n.virtCiCredentialsMissing,
+  VirtCreateIssue.ciAddress => l10n.virtCiAddressInvalid,
+  VirtCreateIssue.ciGateway => l10n.virtCiGatewayInvalid,
+  VirtCreateIssue.ciDns => l10n.virtCiDnsInvalid,
+  VirtCreateIssue.cloneLinkedTarget => l10n.virtCloneLinkedTarget,
+  VirtCreateIssue.cloneStorage => l10n.virtCloneStorageMissing,
+  VirtCreateIssue.cloneStorageContent => l10n.virtCloneStorageContent,
+  VirtCreateIssue.cloneStorageShared => l10n.virtCloneStorageShared,
+  VirtCreateIssue.cloneNodeUnknown => l10n.virtCloneNodeUnknown,
+  VirtCreateIssue.notStopped => l10n.virtGuestNotStopped,
+  VirtCreateIssue.isTemplate => l10n.virtGuestIsTemplate,
+  VirtCreateIssue.notFound => l10n.virtResNotFound,
+  VirtCreateIssue.unsupported => l10n.virtResUnsupported,
+};
 
 /// PVE's own floor for a container's root password.
 const virtLxcPasswordMin = 5;
@@ -339,81 +414,52 @@ const virtLxcPasswordMin = 5;
 const virtVmidMin = 100;
 const virtVmidMax = 999999999;
 
+String _json(Object? v) => jsonEncode(v);
+
 /// Why [spec] cannot be created on [host], whose guests are [guests]; null
-/// when it can. [maxCores] is the host's limit where it says one.
+/// when it can. [nodes], [pools] and [networks] are the host's; [options]
+/// what it offers a new VM (null: everything, for a check that has not
+/// read them). The volumes [spec] names are its own.
 VirtCreateIssue? virtCreateIssue(
   VirtCreateSpec spec, {
   required VirtHostKind host,
   required List<VirtGuest> guests,
-  int? maxCores,
+  List<VirtNode> nodes = const [],
+  List<VirtStoragePool>? pools,
+  List<VirtNetwork>? networks,
+  VirtCreateOptions? options,
 }) {
-  final name = spec.name;
-  if (name.isEmpty) return VirtCreateIssue.nameEmpty;
-  final pattern = host == VirtHostKind.pve
-      ? virtPveNamePattern
-      : virtLibvirtNamePattern;
-  if (!pattern.hasMatch(name)) return VirtCreateIssue.nameInvalid;
-  // PVE lets two guests share a name; one list with two of a name is a
-  // question nobody wants to answer later.
-  if (guests.any((g) => g.name == name)) return VirtCreateIssue.nameTaken;
-  if (host == VirtHostKind.pve) {
-    final vmid = spec.vmid;
-    if (vmid == null || vmid < virtVmidMin || vmid > virtVmidMax) {
-      return VirtCreateIssue.vmidInvalid;
-    }
-    if (guests.any((g) => g.vmid == vmid)) return VirtCreateIssue.vmidTaken;
+  try {
+    return VirtCreateIssue.ofRust(
+      ffi.virtCreateIssue(
+        specJson: _json(VirtRust.specJson(spec)),
+        pve: host == VirtHostKind.pve,
+        guestsJson: _json([for (final g in guests) VirtRust.guestJson(g)]),
+        nodesJson: _json([
+          for (final n in nodes.isEmpty && spec.node != null ? [VirtNode(name: spec.node!)] : nodes)
+            VirtRust.nodeJson(n),
+        ]),
+        poolsJson: _json([
+          for (final p in pools ?? {spec.storage, ?spec.media?.pool, ?spec.image?.pool}) VirtRust.poolJson(p),
+        ]),
+        networksJson: _json([
+          for (final n in networks ?? [?spec.network]) VirtRust.networkJson(n),
+        ]),
+        mediaJson: switch (spec.media) {
+          final m? => _json(VirtRust.volumeJson(m.volume)),
+          null => null,
+        },
+        imageJson: switch (spec.image) {
+          final i? => _json(VirtRust.volumeJson(i.volume)),
+          null => null,
+        },
+        optionsJson: _json(VirtRust.createOptionsJson(options ?? VirtCreateOptions.asked(spec))),
+      ),
+    );
+  } on PveError {
+    return VirtCreateIssue.unsupported;
   }
-  if (spec.cores < 1 || spec.cores > (maxCores ?? 512)) {
-    return VirtCreateIssue.cores;
-  }
-  if (spec.kind == VirtGuestKind.qemu) {
-    // Secure Boot is UEFI's: a BIOS guest has nothing to enable it on.
-    if (spec.secureBoot && !spec.uefi) return VirtCreateIssue.secureBoot;
-    final image = spec.image;
-    if (spec.cloudInit != null && image == null) return VirtCreateIssue.image;
-    // A copy is grown, never cut.
-    final bytes = image?.capacity;
-    if (bytes != null && bytes > spec.diskGiB * (1 << 30)) {
-      return VirtCreateIssue.imageSize;
-    }
-    if (spec.cloudInit case final ci?) {
-      if (virtCloudInitIssue(ci, host: host) case final i?) return i;
-    }
-  }
-  final minMem = spec.kind == VirtGuestKind.lxc ? 64 : 128;
-  if (spec.memoryMiB < minMem || spec.memoryMiB > 16 << 20) {
-    return VirtCreateIssue.memory;
-  }
-  if (!spec.storage.active) return VirtCreateIssue.storage;
-  if (spec.diskGiB < 1 || spec.diskGiB > 65536) return VirtCreateIssue.diskSize;
-  if (spec.kind == VirtGuestKind.lxc) {
-    if (spec.media == null) return VirtCreateIssue.template;
-    final password = spec.password ?? '';
-    final keys = (spec.sshKeys ?? '').trim();
-    if (password.isEmpty && keys.isEmpty) return VirtCreateIssue.credentials;
-    if (password.isNotEmpty && password.length < virtLxcPasswordMin) {
-      return VirtCreateIssue.password;
-    }
-    if (keys.isNotEmpty &&
-        !keys
-            .split('\n')
-            .map((l) => l.trim())
-            .where((l) => l.isNotEmpty)
-            .every(_sshKeyPattern.hasMatch)) {
-      return VirtCreateIssue.sshKeys;
-    }
-  }
-  return null;
 }
-
-/// A Linux account name as `useradd` takes it by default.
-final virtUserNamePattern = RegExp(r'^[a-z_][a-z0-9_-]{0,31}$');
-
-final _ipv4 = RegExp(
-  r'^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$',
-);
-
-bool _isIp(String s) => _ipv4.hasMatch(s) || (s.contains(':') && Uri.tryParse('http://[$s]/') != null);
 
 /// Why [ci] cannot be sent; null when it can. Checked where a cloud image
 /// is created ([virtCreateIssue]) and edited ([virtCloudInitEditIssue]);
@@ -423,35 +469,13 @@ VirtCreateIssue? virtCloudInitIssue(
   VirtCloudInit ci, {
   required VirtHostKind host,
   bool keepsPassword = false,
-}) {
-  if (!virtUserNamePattern.hasMatch(ci.user)) return VirtCreateIssue.ciUser;
-  final password = ci.password ?? '';
-  if (password.isEmpty && !keepsPassword && ci.keys.isEmpty) {
-    return VirtCreateIssue.ciCredentials;
-  }
-  if (!ci.keys.every(_sshKeyPattern.hasMatch)) return VirtCreateIssue.sshKeys;
-  if (host == VirtHostKind.libvirt &&
-      !virtPveNamePattern.hasMatch(ci.hostname ?? '')) {
-    return VirtCreateIssue.ciHostname;
-  }
-  final address = ci.address;
-  if (address != null) {
-    final (ip, prefix) = switch (address.split('/')) {
-      [final a, final p] => (a, int.tryParse(p)),
-      _ => ('', null),
-    };
-    if (!_ipv4.hasMatch(ip) || prefix == null || prefix < 1 || prefix > 32) {
-      return VirtCreateIssue.ciAddress;
-    }
-    final gw = ci.gateway;
-    if (gw != null && !_ipv4.hasMatch(gw)) return VirtCreateIssue.ciGateway;
-  }
-  if (!ci.dns.every(_isIp)) return VirtCreateIssue.ciDns;
-  if (!ci.searchDomains.every(virtPveNamePattern.hasMatch)) {
-    return VirtCreateIssue.ciSearch;
-  }
-  return null;
-}
+}) => VirtCreateIssue.ofRust(
+  ffi.virtCloudInitIssue(
+    ciJson: _json(VirtRust.cloudInitJson(ci)),
+    pve: host == VirtHostKind.pve,
+    keepsPassword: keepsPassword,
+  ),
+);
 
 /// Why [edit] cannot be made to [state]; null when it can. An account needs
 /// a way in: a password (a new one, or the one set, kept) or a key.
@@ -465,6 +489,13 @@ VirtCreateIssue? virtCloudInitEditIssue(
   keepsPassword: state.passwordSet && !edit.removePassword,
 );
 
+List<VirtStoragePool> _byIds(List<VirtStoragePool> pools, List<String> ids) => [
+  for (final p in pools)
+    if (ids.contains(p.id)) p,
+];
+
+String _poolsJson(List<VirtStoragePool> pools) => _json([for (final p in pools) VirtRust.poolJson(p)]);
+
 /// Where cloud images are found on [host] ([node] for PVE): a PVE storage
 /// with `import` content (what `import-from` takes, PVE 8.2+); every active
 /// libvirt pool.
@@ -472,47 +503,16 @@ List<VirtStoragePool> virtImageStorages(
   List<VirtStoragePool> pools, {
   required VirtHostKind host,
   String? node,
-}) => [
-  for (final p in pools)
-    if (p.active &&
-        switch (host) {
-          VirtHostKind.pve =>
-            p.node == node && p.enabled != false && p.content.contains('import'),
-          VirtHostKind.libvirt => true,
-        })
-      p,
-];
+}) => _byIds(
+  pools,
+  ffi.virtImageStorages(poolsJson: _poolsJson(pools), pve: host == VirtHostKind.pve, node: node),
+);
 
-/// Whether [volume] is a disk image a new VM can be a copy of: PVE's
-/// `import` content in a format QEMU reads (not an OVA, which carries a
-/// machine of its own); on libvirt a qcow2 or raw volume no guest uses — a
-/// disk in use would be copied mid-write — and not an ISO.
-bool virtIsCloudImage(VirtVolume volume, VirtHostKind host) {
-  final format = volume.format;
-  return switch (host) {
-    VirtHostKind.pve =>
-      volume.content == 'import' &&
-          (format == 'qcow2' || format == 'raw' || format == 'vmdk'),
-    VirtHostKind.libvirt =>
-      (format == 'qcow2' || format == 'raw') &&
-          volume.users.isEmpty &&
-          !volume.name.toLowerCase().endsWith('.iso'),
-  };
-}
-
-/// Disk buses and NIC models a new VM can have, the default first. libvirt
-/// narrows the buses to what the machine type has (q35: no IDE).
-const virtCreateBuses = ['virtio', 'scsi', 'sata', 'ide'];
-const virtPveCreateBuses = ['scsi', 'virtio', 'sata', 'ide'];
-const virtCreateNicModels = ['virtio', 'e1000e', 'e1000', 'rtl8139'];
-
-/// libvirt pool types no disk image is created in: a whole device, iSCSI
-/// LUNs, multipath and SCSI adapters hold volumes the host made, not ones
-/// `vol-create-as` can.
-const _libvirtNoCreate = {'disk', 'iscsi', 'iscsi-direct', 'scsi', 'mpath'};
-
-/// libvirt pool types whose volumes are raw: block devices and datasets.
-const _libvirtRawOnly = {'logical', 'zfs', 'rbd', 'vstorage'};
+/// Whether [volume] is a disk image a new VM can be a copy of.
+bool virtIsCloudImage(VirtVolume volume, VirtHostKind host) => ffi.virtIsCloudImage(
+  volumeJson: _json(VirtRust.volumeJson(volume)),
+  pve: host == VirtHostKind.pve,
+);
 
 /// Where a new [kind] guest's disk can go on [host] ([node] for PVE).
 List<VirtStoragePool> virtDiskStorages(
@@ -520,51 +520,38 @@ List<VirtStoragePool> virtDiskStorages(
   required VirtHostKind host,
   required VirtGuestKind kind,
   String? node,
-}) => [
-  for (final p in pools)
-    if (p.active &&
-        switch (host) {
-          VirtHostKind.pve =>
-            p.node == node &&
-                p.enabled != false &&
-                p.content.contains(
-                  kind == VirtGuestKind.lxc ? 'rootdir' : 'images',
-                ),
-          VirtHostKind.libvirt => !_libvirtNoCreate.contains(p.type),
-        })
-      p,
-];
+}) => _byIds(
+  pools,
+  ffi.virtDiskStorages(
+    poolsJson: _poolsJson(pools),
+    pve: host == VirtHostKind.pve,
+    lxc: kind == VirtGuestKind.lxc,
+    node: node,
+  ),
+);
 
 /// Where install media ([kind] VM: ISOs) or templates (container) can be
-/// found on [host] ([node] for PVE). libvirt keeps no content kinds: every
-/// active pool is looked in, and [virtIsMedia] picks the ISOs.
+/// found on [host] ([node] for PVE).
 List<VirtStoragePool> virtMediaStorages(
   List<VirtStoragePool> pools, {
   required VirtHostKind host,
   required VirtGuestKind kind,
   String? node,
-}) => [
-  for (final p in pools)
-    if (p.active &&
-        switch (host) {
-          VirtHostKind.pve =>
-            p.node == node &&
-                p.enabled != false &&
-                p.content.contains(kind == VirtGuestKind.lxc ? 'vztmpl' : 'iso'),
-          VirtHostKind.libvirt => true,
-        })
-      p,
-];
+}) => _byIds(
+  pools,
+  ffi.virtMediaStorages(
+    poolsJson: _poolsJson(pools),
+    pve: host == VirtHostKind.pve,
+    lxc: kind == VirtGuestKind.lxc,
+    node: node,
+  ),
+);
 
 /// Whether [volume] is install media ([kind] VM) or a template (container).
-bool virtIsMedia(VirtVolume volume, VirtGuestKind kind) {
-  final content = volume.content;
-  if (content != null) {
-    return content == (kind == VirtGuestKind.lxc ? 'vztmpl' : 'iso');
-  }
-  if (kind == VirtGuestKind.lxc) return false;
-  return volume.format == 'iso' || volume.name.toLowerCase().endsWith('.iso');
-}
+bool virtIsMedia(VirtVolume volume, VirtGuestKind kind) => ffi.virtIsMedia(
+  volumeJson: _json(VirtRust.volumeJson(volume)),
+  lxc: kind == VirtGuestKind.lxc,
+);
 
 /// The networks a new guest's NIC can be on: libvirt's active networks, a
 /// PVE node's bridges.
@@ -572,21 +559,21 @@ List<VirtNetwork> virtCreateNetworks(
   List<VirtNetwork> networks, {
   required VirtHostKind host,
   String? node,
-}) => [
-  for (final n in networks)
-    if (n.active &&
-        switch (host) {
-          VirtHostKind.pve =>
-            n.node == node && (n.mode == 'bridge' || n.mode == 'OVSBridge'),
-          VirtHostKind.libvirt => n.mode != 'hostdev',
-        })
-      n,
-];
+}) {
+  final ids = ffi.virtCreateNetworks(
+    networksJson: _json([for (final n in networks) VirtRust.networkJson(n)]),
+    pve: host == VirtHostKind.pve,
+    node: node,
+  );
+  return [
+    for (final n in networks)
+      if (ids.contains(n.id)) n,
+  ];
+}
 
 /// The image format a libvirt pool of [type] takes: qcow2 (thin, snapshots)
 /// where it can.
-String virtLibvirtDiskFormat(String type) =>
-    _libvirtRawOnly.contains(type) ? 'raw' : 'qcow2';
+String virtLibvirtDiskFormat(String type) => ffi.virtLibvirtDiskFormat(poolType: type);
 
 /// A copy of a guest (the Settings view's Clone group).
 final class VirtCloneRequest {
@@ -622,63 +609,43 @@ final class VirtCloneRequest {
   final String? targetPool;
 }
 
-/// Why a clone cannot go to [storage] on [targetNode], or null. The checks
-/// are the ones PVE makes before it starts the clone task, so its refusals
-/// are said in the form rather than after the task: a linked clone cannot
-/// name a storage (`parameter 'storage' not allowed for linked clones`), a
-/// storage that holds no disks of [kind]'s (`does not support vm images`;
-/// a container's are `rootdir`), and a copy moving to another node needs a
-/// storage both see. The last one is PVE's
-/// `can't clone VM to node '<n>' (VM uses local storage)`.
+/// Why a clone cannot go to [storage] on [targetNode], or null: the checks
+/// PVE makes before it starts the clone task (`sbm_virt::create`).
+/// [storages] are the source node's.
 VirtCreateIssue? virtCloneStorageIssue({
   required Iterable<VirtStoragePool> storages,
   required String? storage,
   required bool full,
   VirtGuestKind kind = VirtGuestKind.qemu,
   String? targetNode,
-}) {
-  if (!full && storage != null) return VirtCreateIssue.cloneLinkedTarget;
-  if (storage == null) return null;
-  VirtStoragePool? pool;
-  for (final p in storages) {
-    if (p.name == storage) {
-      pool = p;
-      break;
-    }
-  }
-  if (pool == null) return VirtCreateIssue.cloneStorage;
-  // The content [virtDiskStorages] picks the storages by.
-  if (!pool.content.contains(kind == VirtGuestKind.lxc ? 'rootdir' : 'images')) {
-    return VirtCreateIssue.cloneStorageContent;
-  }
-  if (targetNode != null && !(pool.shared ?? false)) {
-    return VirtCreateIssue.cloneStorageShared;
-  }
-  return null;
-}
+}) => VirtCreateIssue.ofRust(
+  ffi.virtCloneStorageIssue(
+    storagesJson: _poolsJson(storages.toList()),
+    storage: storage,
+    full: full,
+    lxc: kind == VirtGuestKind.lxc,
+    targetNode: targetNode,
+  ),
+);
 
-/// Why [targetNode] cannot be a clone's node, or null: the host has to have
-/// it, and a copy that moves there takes shared storage with it. PVE answers
-/// `no such cluster node '<name>'` — on a single node, for any other name.
+/// Why [targetNode] cannot be a clone's node, or null.
 VirtCreateIssue? virtCloneNodeIssue({
   required Iterable<VirtNode> nodes,
   required String? targetNode,
   required String? sourceNode,
-}) {
-  if (targetNode == null || targetNode == sourceNode) return null;
-  if (nodes.isEmpty) return null;
-  for (final n in nodes) {
-    if (n.name == targetNode) return null;
-  }
-  return VirtCreateIssue.cloneNodeUnknown;
-}
+}) => VirtCreateIssue.ofRust(
+  ffi.virtCloneNodeIssue(
+    nodesJson: _json([for (final n in nodes) VirtRust.nodeJson(n)]),
+    targetNode: targetNode,
+    sourceNode: sourceNode,
+  ),
+);
 
 /// Why [name] cannot be a clone's name on a host of [kind], or null. Taken
 /// names are the caller's to check: it has the host's guests.
 VirtCreateIssue? virtCloneNameIssue(String name, VirtHostKind? kind) {
   if (name.isEmpty) return VirtCreateIssue.nameEmpty;
-  final pattern = kind == VirtHostKind.pve
-      ? virtPveNamePattern
-      : virtLibvirtNamePattern;
-  return pattern.hasMatch(name) ? null : VirtCreateIssue.nameInvalid;
+  return ffi.virtGuestNameOk(name: name, pve: kind == VirtHostKind.pve)
+      ? null
+      : VirtCreateIssue.nameInvalid;
 }

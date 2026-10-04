@@ -38,6 +38,7 @@
 //! so a name that itself ends in spaces is only ambiguous on libvirt < 7.0.
 
 pub mod cloud_init;
+pub mod create;
 pub mod manage;
 pub mod net;
 pub mod snapshot;

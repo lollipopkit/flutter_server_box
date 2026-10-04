@@ -6,6 +6,7 @@
 //! ([`http::LoopbackDial`]). Ported from the app's `PveBackend`.
 
 pub mod client;
+pub mod create;
 pub mod http;
 pub mod net;
 pub mod resources;

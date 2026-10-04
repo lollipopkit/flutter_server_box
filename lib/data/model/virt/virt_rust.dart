@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_manage.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
@@ -68,6 +69,132 @@ abstract final class VirtRust {
         ?_action(a),
     },
   );
+
+  /// [g] as `sbm_virt::model::Guest`.
+  static Map<String, Object?> guestJson(VirtGuest g) => {
+    'id': g.id,
+    'name': g.name,
+    'kind': g.kind.name,
+    'state': g.state.name,
+    'state_reason': g.stateReason,
+    'vmid': g.vmid,
+    'node': g.node,
+    'vcpu': g.vcpu,
+    'mem_bytes': g.memBytes,
+    'uptime': g.uptime?.inSeconds,
+    'tags': g.tags,
+    'template': g.template,
+    'autostart': g.autostart,
+    'actions': [for (final a in g.actions) actionName(a)],
+  };
+
+  /// [n] as `sbm_virt::model::Node`.
+  static Map<String, Object?> nodeJson(VirtNode n) => {
+    'name': n.name,
+    'online': n.online,
+    'cpu': n.cpu,
+    'max_cpu': n.maxCpu,
+    'mem_used': n.memUsed,
+    'mem_total': n.memTotal,
+    'uptime': n.uptime?.inSeconds,
+  };
+
+  /// [spec] as `sbm_virt::create::CreateSpec`: what it names, by id. Its
+  /// passwords go in it as typed; it is sent to the host, never logged.
+  static Map<String, Object?> specJson(VirtCreateSpec spec) => {
+    'kind': spec.kind.name,
+    'name': spec.name,
+    'node': spec.node,
+    'vmid': spec.vmid,
+    'cores': spec.cores,
+    'memory_mib': spec.memoryMiB,
+    'storage': spec.storage.id,
+    'disk_gib': spec.diskGiB,
+    'media': _volumeRef(spec.media),
+    'image': _volumeRef(spec.image),
+    'network': spec.network?.id,
+    'password': spec.password,
+    'ssh_keys': _lines(spec.sshKeys),
+    'unprivileged': spec.unprivileged,
+    'bus': spec.bus,
+    'nic_model': spec.nicModel,
+    'uefi': spec.uefi,
+    'secure_boot': spec.secureBoot,
+    'tpm': spec.tpm,
+    'cloud_init': switch (spec.cloudInit) {
+      final ci? => cloudInitJson(ci),
+      null => null,
+    },
+    'start': spec.start,
+  };
+
+  static Map<String, Object?>? _volumeRef(VirtPoolVolume? v) => switch (v) {
+    final v? => {'pool': v.pool.id, 'volume': v.volume.id},
+    null => null,
+  };
+
+  static List<String> _lines(String? text) => [
+    for (final l in (text ?? '').split('\n'))
+      if (l.trim().isNotEmpty) l.trim(),
+  ];
+
+  /// [ci] as `sbm_virt::create::CloudInit`.
+  static Map<String, Object?> cloudInitJson(VirtCloudInit ci) => {
+    'user': ci.user,
+    'password': ci.password,
+    'ssh_keys': ci.keys,
+    'hostname': ci.hostname,
+    'address': ci.address,
+    'gateway': ci.gateway,
+    'dns': ci.dns,
+    'search_domains': ci.searchDomains,
+  };
+
+  /// [r] as `sbm_virt::create::CloneRequest`.
+  static Map<String, Object?> cloneRequestJson(VirtCloneRequest r) => {
+    'name': r.name,
+    'full': r.full,
+    'vmid': r.vmid,
+    'storage': r.storage,
+    'target_node': r.targetNode,
+    'target_pool': r.targetPool,
+  };
+
+  /// `sbm_virt::create::CreateOptions`.
+  static VirtCreateOptions createOptions(Object? json) {
+    final o = json is Map ? json : throw _invalid('create options');
+    return VirtCreateOptions(
+      buses: _strings(o['buses']),
+      nicModels: _strings(o['nic_models']),
+      uefi: o['uefi'] as bool? ?? false,
+      secureBoot: o['secure_boot'] as bool? ?? false,
+      tpm: o['tpm'] as bool? ?? false,
+      cloudImages: o['cloud_images'] as bool? ?? false,
+      cloudInit: o['cloud_init'] as bool? ?? false,
+      cloudInitMissing: o['cloud_init_missing'] as String?,
+    );
+  }
+
+  static Map<String, Object?> createOptionsJson(VirtCreateOptions o) => {
+    'buses': o.buses,
+    'nic_models': o.nicModels,
+    'uefi': o.uefi,
+    'secure_boot': o.secureBoot,
+    'tpm': o.tpm,
+    'cloud_images': o.cloudImages,
+    'cloud_init': o.cloudInit,
+    'cloud_init_missing': o.cloudInitMissing,
+  };
+
+  /// `sbm_virt::create::Created`.
+  static VirtCreated created(Object? json) {
+    final c = json is Map ? json : throw _invalid('created');
+    return VirtCreated(
+      id: c['id'] as String,
+      startError: c['start_error'] as String?,
+      diskKeptBytes: c['disk_kept_bytes'] as int?,
+    );
+  }
 
   /// `sbm_virt::model::GuestDetail`.
   static VirtGuestDetail detail(Object? json) {
@@ -625,6 +752,8 @@ abstract final class VirtRust {
         l10n.pveNeedsPrivilege(account, privilege, path, command),
       {'code': 'refused', 'issue': final String issue} =>
         virtResIssueText(VirtResIssue.ofRust(issue)),
+      {'code': 'create_refused', 'issue': final String issue} =>
+        virtCreateIssueText(VirtCreateIssue.ofRust(issue)),
       {'code': 'apply_touches_management', 'ifaces': final List ifaces} =>
         'The pending configuration changes ${ifaces.join(', ')}, which '
             "carries the host's management traffic: apply it from the "

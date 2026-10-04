@@ -184,6 +184,8 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
             .into_bytes()
         }
         ("POST", "/nodes/pve/network") => respond(200, Value::Null),
+        ("GET", "/cluster/nextid") => respond(200, json!("101")),
+        ("POST", "/nodes/pve/qemu") | ("POST", "/nodes/pve/qemu/100/clone") => respond(200, json!(UPID)),
         _ => respond(404, Value::Null),
     }
 }
@@ -506,4 +508,67 @@ async fn storage_and_networks_are_listed_and_a_change_is_checked_first() {
     // `virt` is what it takes.
     let (status, _) = call(&srv, Some("viewer"), Method::POST, "/api/v1/virt/manage", Some(json!({"change": {"op": "network_revert", "node": "pve"}}))).await;
     assert_eq!(status, 403);
+}
+
+#[ntex::test]
+async fn a_guest_is_made_copied_and_checked_first_and_each_is_recorded() {
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, Some("admin"), Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+
+    let (_, body) =
+        call(&srv, Some("admin"), Method::POST, "/api/v1/virt/create/form", Some(json!({"kind": "qemu", "node": "pve"}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    assert_eq!(body["form"]["next_vmid"], 101);
+    assert_eq!(body["form"]["storages"][0]["id"], "pve/local");
+    assert_eq!(body["form"]["networks"][0]["id"], "pve/vmbr0");
+    assert_eq!(body["form"]["options"]["buses"][0], "scsi");
+
+    let spec = |name: &str| {
+        json!({"kind": "qemu", "name": name, "node": "pve", "cores": 1, "memory_mib": 512, "storage": "pve/local",
+               "disk_gib": 4, "network": "pve/vmbr0"})
+    };
+    let create = |spec: Value| call(&srv, Some("admin"), Method::POST, "/api/v1/virt/create", Some(json!({ "spec": spec })));
+    let (_, body) = create(spec("new-vm")).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    assert_eq!(body["created"]["id"], "qemu/101");
+    // A name the host has: refused here, said by which rule.
+    let (_, body) = create(spec("web")).await;
+    assert_eq!(body["error"]["kind"], "exists", "{body}");
+    assert_eq!(body["error"]["detail"], json!({"code": "create_refused", "issue": "name_taken"}));
+
+    // A running guest is neither deleted nor made a template.
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/delete", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["error"]["detail"]["issue"], "not_stopped", "{body}");
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/template", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["error"]["detail"]["issue"], "not_stopped", "{body}");
+    // PVE clones a running one.
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/clone/form", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["storages"][0]["id"], "pve/local", "{body}");
+    let (_, body) = call(
+        &srv,
+        Some("admin"),
+        Method::POST,
+        "/api/v1/virt/clone",
+        Some(json!({"guest": "qemu/100", "request": {"name": "web-copy"}})),
+    )
+    .await;
+    assert_eq!(body["id"], "qemu/101", "{body}");
+
+    let paths = pve.seen.lock().unwrap().paths.clone();
+    assert_eq!(paths.iter().filter(|p| *p == "POST /api2/json/nodes/pve/qemu").count(), 1, "{paths:?}");
+    assert!(!paths.iter().any(|p| p.starts_with("DELETE") || p.ends_with("/template")), "{paths:?}");
+
+    let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
+    assert!(details.contains(&"virt create vm new-vm".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt create vm web: Exists".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt delete qemu/100: Unsupported".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt clone qemu/100 as web-copy".to_owned()), "{details:?}");
+
+    // `virt` is what it takes.
+    for path in ["/api/v1/virt/create", "/api/v1/virt/delete", "/api/v1/virt/clone", "/api/v1/virt/template"] {
+        let (status, _) = call(&srv, Some("viewer"), Method::POST, path, Some(json!({"guest": "qemu/100", "spec": spec("x"), "request": {"name": "x"}}))).await;
+        assert_eq!(status, 403, "{path}");
+    }
 }

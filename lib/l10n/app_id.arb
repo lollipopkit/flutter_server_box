@@ -1516,5 +1516,14 @@
   "monitorBackupUnsupported": "Agen monitor ini tidak dapat menyimpan cadangan. Perbarui agen.",
   "monitorBackupAdminOnly": "Hanya akun admin agen monitor yang dapat menyimpan cadangan di dalamnya.",
   "monitorBackupTooLarge": "Cadangan lebih besar dari yang diterima agen monitor ({max}).",
-  "monitorBackupTooMany": "Agen monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu."
+  "monitorBackupTooMany": "Agen monitor sudah menyimpan cadangan sebanyak yang diizinkan. Hapus satu terlebih dahulu.",
+  "virtCreateVmidInvalid": "VMID dari 100 sampai 999999999.",
+  "virtCreateNodeOffline": "Node itu tidak online.",
+  "virtCreateMediaMissing": "Media instalasi itu tidak ada di host ini.",
+  "virtCreateNetworkMissing": "Guest baru tidak dapat memakai jaringan itu.",
+  "virtCreateNotOffered": "Host ini tidak menyediakan itu untuk VM baru.",
+  "virtCreateSecureBootNeedsUefi": "Secure Boot memerlukan UEFI.",
+  "virtGuestNotStopped": "Matikan terlebih dahulu.",
+  "virtGuestIsTemplate": "Sudah menjadi templat.",
+  "virtCreateImageBigger": "Image lebih besar dari disk: buat disk setidaknya sebesar itu."
 }

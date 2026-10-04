@@ -346,6 +346,11 @@ pub fn volume_of(raw: &str) -> Option<String> {
     opts.iter().find(|(k, _)| *k == "file").map(|(_, v)| (*v).to_owned())
 }
 
+/// A disk value's `size=`, in bytes.
+pub fn option_size(raw: &str) -> Option<u64> {
+    options(raw).iter().find(|(k, _)| *k == "size").and_then(|(_, v)| size_of(v))
+}
+
 /// PVE sizes: `32G`, `512M`, `1T`, `4096` (bytes).
 pub fn size_of(s: &str) -> Option<u64> {
     let last = s.chars().last()?;

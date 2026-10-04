@@ -7,7 +7,11 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('toString', _printed);
 
   const vm = VirtHardware(

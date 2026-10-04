@@ -7002,5 +7002,41 @@
   "monitorBackupTooMany": "The monitor agent already holds as many backups as it allows. Delete one first.",
   "@monitorBackupTooMany": {
     "description": "Backup sync to a monitor agent: the agent's blob count limit is reached."
+  },
+  "virtCreateVmidInvalid": "A VMID from 100 to 999999999.",
+  "@virtCreateVmidInvalid": {
+    "description": "Create form: the VMID is outside the range PVE accepts."
+  },
+  "virtCreateNodeOffline": "That node is not online.",
+  "@virtCreateNodeOffline": {
+    "description": "Create form: the PVE node picked is not one of the host's online nodes."
+  },
+  "virtCreateMediaMissing": "That install media is not on this host.",
+  "@virtCreateMediaMissing": {
+    "description": "Create form: the ISO picked is no longer listed by the host."
+  },
+  "virtCreateNetworkMissing": "A new guest cannot use that network.",
+  "@virtCreateNetworkMissing": {
+    "description": "Create form: the network picked is not one a new NIC can be on."
+  },
+  "virtCreateNotOffered": "This host does not offer that for a new VM.",
+  "@virtCreateNotOffered": {
+    "description": "Create form: a bus, NIC model, UEFI, TPM, cloud image or cloud-init the host does not have."
+  },
+  "virtCreateSecureBootNeedsUefi": "Secure Boot needs UEFI.",
+  "@virtCreateSecureBootNeedsUefi": {
+    "description": "Create form: Secure Boot was asked for on a BIOS VM."
+  },
+  "virtGuestNotStopped": "Shut it down first.",
+  "@virtGuestNotStopped": {
+    "description": "A guest has to be stopped for this: deleting it, making it a template, a libvirt copy."
+  },
+  "virtGuestIsTemplate": "It is a template already.",
+  "@virtGuestIsTemplate": {
+    "description": "Making a template of a guest that is one already."
+  },
+  "virtCreateImageBigger": "The image is bigger than the disk: make the disk at least as big.",
+  "@virtCreateImageBigger": {
+    "description": "A refused create: the cloud image is bigger than the disk asked for."
   }
 }

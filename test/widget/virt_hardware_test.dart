@@ -36,6 +36,7 @@ import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/tab.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/segment.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
@@ -463,6 +464,8 @@ class _FakeHost extends VirtHostNotifier {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {

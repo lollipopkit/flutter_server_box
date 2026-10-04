@@ -5482,4 +5482,35 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get monitorBackupTooMany =>
       'L\'agent monitor contient déjà le nombre maximal de sauvegardes. Supprimez-en une d\'abord.';
+
+  @override
+  String get virtCreateVmidInvalid => 'Un VMID de 100 à 999999999.';
+
+  @override
+  String get virtCreateNodeOffline => 'Ce nœud n\'est pas en ligne.';
+
+  @override
+  String get virtCreateMediaMissing =>
+      'Ce support d\'installation n\'est pas sur cet hôte.';
+
+  @override
+  String get virtCreateNetworkMissing =>
+      'Un nouvel invité ne peut pas utiliser ce réseau.';
+
+  @override
+  String get virtCreateNotOffered =>
+      'Cet hôte ne propose pas cela pour une nouvelle VM.';
+
+  @override
+  String get virtCreateSecureBootNeedsUefi => 'Secure Boot nécessite UEFI.';
+
+  @override
+  String get virtGuestNotStopped => 'Éteignez-le d\'abord.';
+
+  @override
+  String get virtGuestIsTemplate => 'C\'est déjà un modèle.';
+
+  @override
+  String get virtCreateImageBigger =>
+      'L\'image est plus grande que le disque : faites le disque au moins aussi grand.';
 }

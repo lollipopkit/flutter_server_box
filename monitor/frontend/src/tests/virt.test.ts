@@ -6,8 +6,8 @@ import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
 import { enabledFeatures } from '../lib/features'
-import { allocation, issueText, orderedActions, pushSample, pveDraft, refText, snapshotTree, virtErrorText, HISTORY_LEN } from '../lib/virt'
-import type { Capabilities, VirtGuest, VirtLoad, VirtNetwork, VirtPool, VirtSnapshot, VirtStats } from '../types'
+import { allocation, createIssueText, createSpec, issueText, lines, orderedActions, pushSample, pveDraft, refText, snapshotTree, virtErrorText, words, HISTORY_LEN, type CreateDraft } from '../lib/virt'
+import type { Capabilities, VirtCreateForm, VirtCreateIssue, VirtCreateOptions, VirtGuest, VirtLoad, VirtNetwork, VirtPool, VirtSnapshot, VirtStats } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -29,6 +29,12 @@ vi.mock('../lib/api', async (importOriginal) => ({
     virtVolumes: vi.fn(),
     virtNetworks: vi.fn(),
     virtManage: vi.fn(),
+    createForm: vi.fn(),
+    createGuest: vi.fn(),
+    deleteGuest: vi.fn(),
+    cloneForm: vi.fn(),
+    cloneGuest: vi.fn(),
+    makeTemplate: vi.fn(),
   },
 }))
 const loadVirt = vi.mocked(api.loadVirt)
@@ -45,6 +51,12 @@ const virtStorage = vi.mocked(api.virtStorage)
 const virtVolumes = vi.mocked(api.virtVolumes)
 const virtNetworks = vi.mocked(api.virtNetworks)
 const virtManage = vi.mocked(api.virtManage)
+const createForm = vi.mocked(api.createForm)
+const createGuest = vi.mocked(api.createGuest)
+const deleteGuest = vi.mocked(api.deleteGuest)
+const cloneForm = vi.mocked(api.cloneForm)
+const cloneGuest = vi.mocked(api.cloneGuest)
+const makeTemplate = vi.mocked(api.makeTemplate)
 
 function guest(over: Partial<VirtGuest>): VirtGuest {
   return {
@@ -518,5 +530,241 @@ describe('the virtualization page: storage and networks', () => {
     const applies = screen.getAllByRole('button', { name: /^apply$/i })
     await fireEvent.click(applies[applies.length - 1])
     await waitFor(() => expect(virtManage).toHaveBeenCalledWith({ op: 'network_apply', node: 'pve' }, undefined))
+  })
+})
+
+const CREATE_ISSUES: VirtCreateIssue[] = [
+  'name_empty', 'name_invalid', 'name_taken', 'vmid_invalid', 'vmid_taken', 'node', 'cores', 'memory', 'storage',
+  'disk_size', 'template', 'media', 'credentials', 'password', 'ssh_keys', 'image', 'image_size', 'network',
+  'secure_boot', 'not_offered', 'ci_user', 'ci_credentials', 'ci_hostname', 'ci_address', 'ci_gateway', 'ci_dns',
+  'ci_search', 'clone_linked_target', 'clone_storage', 'clone_storage_content', 'clone_storage_shared',
+  'clone_node_unknown', 'not_stopped', 'is_template', 'not_found', 'unsupported',
+]
+
+const OPTIONS: VirtCreateOptions = {
+  buses: ['virtio', 'scsi'],
+  nic_models: ['virtio', 'e1000e'],
+  uefi: true,
+  tpm: true,
+  secure_boot: true,
+  cloud_images: true,
+  cloud_init: true,
+  cloud_init_missing: null,
+}
+
+function draft(over: Partial<CreateDraft>): CreateDraft {
+  return {
+    kind: 'qemu',
+    name: ' web ',
+    node: 'pve',
+    vmid: '105',
+    cores: '2',
+    memoryGib: '1.5',
+    storage: 'pve/local-lvm',
+    diskGib: '32',
+    source: 'media',
+    media: 'pve/local\nlocal:iso/debian.iso',
+    image: 'pve/local\nlocal:import/noble.qcow2',
+    network: 'pve/vmbr0',
+    password: '',
+    sshKeys: '',
+    unprivileged: true,
+    bus: 'scsi',
+    nicModel: 'virtio',
+    uefi: true,
+    secureBoot: true,
+    tpm: false,
+    ci: { user: '', password: '', sshKeys: '', hostname: '', static: false, address: '', gateway: '', dns: '', search: '' },
+    start: true,
+    ...over,
+  }
+}
+
+describe('creating, copying and deleting guests: the helpers', () => {
+  it('phrases every refusal of a create, clone, delete or template', () => {
+    const texts = CREATE_ISSUES.map((issue) => createIssueText(issue))
+    for (const t of texts) expect(t).toMatch(/\S/)
+    expect(new Set(texts).size).toBeGreaterThan(CREATE_ISSUES.length - 3)
+    for (const issue of CREATE_ISSUES) {
+      const kind = issue === 'name_taken' || issue === 'vmid_taken' ? 'exists' : 'unsupported'
+      expect(virtErrorText({ kind, message: null, detail: { code: 'create_refused', issue }, cert: null, previous_fingerprint: null })).toBe(
+        createIssueText(issue),
+      )
+    }
+    expect(createIssueText('secure_boot')).toMatch(/UEFI/)
+  })
+
+  it('splits keys by line and lists by spaces or commas', () => {
+    expect(lines(' ssh-ed25519 A a@b \r\n\n  ssh-rsa B  \n')).toEqual(['ssh-ed25519 A a@b', 'ssh-rsa B'])
+    expect(words(' 1.1.1.1, 9.9.9.9  lan ')).toEqual(['1.1.1.1', '9.9.9.9', 'lan'])
+  })
+
+  it('builds a PVE VM from install media: trimmed, its media by pool and volume, MiB from GiB', () => {
+    const spec = createSpec(draft({}), 'pve', OPTIONS)
+    expect(spec).toEqual({
+      kind: 'qemu',
+      name: 'web',
+      node: 'pve',
+      vmid: 105,
+      cores: 2,
+      memory_mib: 1536,
+      storage: 'pve/local-lvm',
+      disk_gib: 32,
+      media: { pool: 'pve/local', volume: 'local:iso/debian.iso' },
+      network: 'pve/vmbr0',
+      ssh_keys: [],
+      unprivileged: true,
+      bus: 'scsi',
+      nic_model: 'virtio',
+      uefi: true,
+      secure_boot: true,
+      tpm: false,
+      start: true,
+    })
+    // An empty VMID takes the next free one; no network, no Secure Boot without UEFI.
+    const bare = createSpec(draft({ vmid: '', network: '', uefi: false }), 'pve', OPTIONS)
+    expect(bare).not.toHaveProperty('vmid')
+    expect(bare).not.toHaveProperty('network')
+    expect(bare.secure_boot).toBe(false)
+  })
+
+  it('builds a VM from a cloud image without its media, cloud-init only when something is typed', () => {
+    const plain = createSpec(draft({ source: 'image' }), 'libvirt', OPTIONS)
+    expect(plain.image).toEqual({ pool: 'pve/local', volume: 'local:import/noble.qcow2' })
+    expect(plain).not.toHaveProperty('media')
+    expect(plain).not.toHaveProperty('cloud_init')
+    // libvirt has no node or VMID.
+    expect(plain).not.toHaveProperty('node')
+    expect(plain).not.toHaveProperty('vmid')
+
+    const ci = { user: ' ubuntu ', password: '', sshKeys: 'ssh-ed25519 A\n', hostname: ' box ', static: true, address: '10.0.0.5/24 ', gateway: '', dns: '1.1.1.1 9.9.9.9', search: '' }
+    expect(createSpec(draft({ source: 'image', ci }), 'libvirt', OPTIONS).cloud_init).toEqual({
+      user: 'ubuntu',
+      ssh_keys: ['ssh-ed25519 A'],
+      hostname: 'box',
+      address: '10.0.0.5/24',
+      dns: ['1.1.1.1', '9.9.9.9'],
+      search_domains: [],
+    })
+    // PVE names the guest itself; DHCP sends no address.
+    const pve = createSpec(draft({ source: 'image', ci: { ...ci, static: false } }), 'pve', OPTIONS).cloud_init
+    expect(pve).not.toHaveProperty('hostname')
+    expect(pve).not.toHaveProperty('address')
+    // Not offered: install media, no cloud-init.
+    const off = createSpec(draft({ source: 'image', ci }), 'pve', { ...OPTIONS, cloud_images: false })
+    expect(off.media).toBeDefined()
+    expect(off).not.toHaveProperty('image')
+    expect(off).not.toHaveProperty('cloud_init')
+  })
+
+  it('builds a container: its template, root login, no VM hardware', () => {
+    const spec = createSpec(
+      draft({ kind: 'lxc', media: 'pve/local\nlocal:vztmpl/debian-12.tar.zst', password: 'secret1', sshKeys: 'ssh-ed25519 A\n\nssh-rsa B', unprivileged: false }),
+      'pve',
+      OPTIONS,
+    )
+    expect(spec).toMatchObject({
+      kind: 'lxc',
+      media: { pool: 'pve/local', volume: 'local:vztmpl/debian-12.tar.zst' },
+      password: 'secret1',
+      ssh_keys: ['ssh-ed25519 A', 'ssh-rsa B'],
+      unprivileged: false,
+      uefi: false,
+      secure_boot: false,
+      tpm: false,
+    })
+    expect(spec).not.toHaveProperty('bus')
+    expect(spec).not.toHaveProperty('nic_model')
+    expect(createSpec(draft({ kind: 'lxc' }), 'pve', OPTIONS)).not.toHaveProperty('password')
+  })
+})
+
+describe('the virtualization page: creating, copying and deleting', () => {
+  const form = (): VirtCreateForm => ({
+    options: OPTIONS,
+    next_vmid: 105,
+    storages: [
+      { id: 'pve/local-lvm', name: 'local-lvm', node: 'pve', type: 'lvmthin', path: null, source: null, capacity: null, used: null, available: 100 * 1024 ** 3, active: true, autostart: null, enabled: true, shared: false, content: ['images'], volume_count: null },
+    ],
+    networks: [],
+    media: [
+      {
+        pool: 'pve/local',
+        volume: { id: 'local:iso/debian.iso', name: 'debian.iso', path: null, format: 'iso', content: 'iso', capacity: null, allocation: null, backing: null, created_at: null, users: [], backs: [] },
+      },
+    ],
+    images: [],
+  })
+
+  function withCreate(guests: VirtGuest[]): VirtLoad {
+    const view = loaded(guests)
+    Object.assign(view.view!.capabilities, { create: true, clone: true, template: true, linked_clone: true, clone_target: true })
+    return view
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    asAdmin(false)
+    createForm.mockResolvedValue({ form: form(), error: null })
+    cloneForm.mockResolvedValue({ storages: [], error: null })
+  })
+
+  it('creates a VM from the form, says why the host refused, then selects the new guest', async () => {
+    loadVirt.mockResolvedValue(withCreate([guest({})]))
+    createGuest.mockResolvedValueOnce({
+      created: null,
+      error: { kind: 'exists', message: null, detail: { code: 'create_refused', issue: 'vmid_taken' }, cert: null, previous_fingerprint: null },
+    })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^new$/i }))
+    expect(await screen.findByText('debian.iso')).toBeInTheDocument()
+    expect(createForm).toHaveBeenCalledWith('qemu', 'pve', undefined)
+    const submit = screen.getByRole('button', { name: /^create vm$/i })
+    await fireEvent.click(submit)
+    await waitFor(() => expect(createGuest).toHaveBeenCalledTimes(1))
+    const [spec] = createGuest.mock.calls[0]
+    expect(spec).toMatchObject({
+      kind: 'qemu',
+      name: 'vm-105',
+      node: 'pve',
+      vmid: 105,
+      storage: 'pve/local-lvm',
+      media: { pool: 'pve/local', volume: 'local:iso/debian.iso' },
+      bus: 'virtio',
+      start: true,
+    })
+    expect(await screen.findByText(createIssueText('vmid_taken'))).toBeInTheDocument()
+
+    createGuest.mockResolvedValueOnce({ created: { id: 'qemu/105', start_error: 'kvm: no space', disk_kept_bytes: null }, error: null })
+    loadVirt.mockResolvedValue(withCreate([guest({}), guest({ id: 'qemu/105', name: 'vm-105', vmid: 105, state: 'stopped' })]))
+    await fireEvent.click(screen.getByRole('button', { name: /^create vm$/i }))
+    expect(await screen.findByText(/did not start: kvm: no space/)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('button', { current: true })).toHaveTextContent('vm-105'))
+  })
+
+  it('deletes a stopped guest only on the second click, and clones with the name it was given', async () => {
+    loadVirt.mockResolvedValue(withCreate([guest({ state: 'stopped', actions: ['start'] })]))
+    deleteGuest.mockResolvedValue({ error: null })
+    cloneGuest.mockResolvedValue({ id: 'qemu/106', error: null })
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^settings$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^delete guest$/i }))
+    expect(deleteGuest).not.toHaveBeenCalled()
+    await fireEvent.click(screen.getByRole('button', { name: /^confirm: delete web$/i }))
+    await waitFor(() => expect(deleteGuest).toHaveBeenCalledWith('qemu/100', true, undefined))
+    expect(await screen.findByText('Deleted web.')).toBeInTheDocument()
+
+    await fireEvent.click(screen.getByRole('button', { name: /^settings$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^clone$/i }))
+    await waitFor(() => expect(cloneGuest).toHaveBeenCalledWith('qemu/100', { name: 'web-clone', full: true }, undefined))
+    expect(makeTemplate).not.toHaveBeenCalled()
+  })
+
+  it('keeps delete closed while the guest runs', async () => {
+    loadVirt.mockResolvedValue(withCreate([guest({})]))
+    render(Virt, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^settings$/i }))
+    expect(await screen.findByRole('button', { name: /^delete guest$/i })).toBeDisabled()
+    expect(screen.getAllByText('Shut it down first.').length).toBeGreaterThan(0)
   })
 })

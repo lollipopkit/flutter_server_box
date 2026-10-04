@@ -34,8 +34,12 @@
   let diffFor = $state<string | null>(null)
   let diff = $state<VirtSnapDiff[] | null>(null)
 
+  /// The guest by its id: every poll hands a new object for the same guest,
+  /// which is not a reason to read its snapshots again.
+  const guestId = $derived(guest.id)
+
   $effect(() => {
-    void guest.id
+    void guestId
     untrack(() => void load())
   })
 
