@@ -563,7 +563,7 @@ impl Client {
     pub async fn open_console(&self, console: &PveConsole) -> Result<ConsoleSocket> {
         use futures_util::{SinkExt, StreamExt};
         use tokio_tungstenite::tungstenite::Message;
-        let session = self.ensure_session().await?;
+        let session = self.session_now().await?;
         let req = Request { method: Method::Get, path: console.websocket_path(), headers: session.headers(), body: None };
         let stream = match session.http.upgrade(req).await {
             Ok(Upgrade::Switched(stream)) => stream,
@@ -638,7 +638,7 @@ impl Client {
     /// logging in first if needed: for a connection made outside this client
     /// (a console's websocket). They carry the ticket or the token.
     pub async fn auth_headers(&self) -> Result<Vec<(String, String)>> {
-        Ok(self.ensure_session().await?.headers())
+        Ok(self.session_now().await?.headers())
     }
 
     // -----------------------------------------------------------------------
@@ -781,6 +781,20 @@ impl Client {
                 // again and log in for the current generation.
                 Err(e) if self.state.lock().unwrap().generation == generation => return Err(e),
                 Err(_) => continue,
+            }
+        }
+    }
+
+    /// The session a request goes out in: current when it is handed back,
+    /// with no await between that and the request's headers being taken. A
+    /// reset while [`Client::ensure_session`] was renewing or logging in
+    /// leaves the session it returns behind, and its credentials are not
+    /// sent again.
+    async fn session_now(&self) -> Result<Arc<Session>> {
+        loop {
+            let session = self.ensure_session().await?;
+            if self.is_current(&session) {
+                return Ok(session);
             }
         }
     }
@@ -932,7 +946,7 @@ impl Client {
             let st = self.state.lock().unwrap();
             st.session.clone().filter(|s| s.generation == st.generation)
         };
-        let session = self.ensure_session().await?;
+        let session = self.session_now().await?;
         let req = Request { method, path: format!("{API}{path}"), headers: Vec::new(), body };
         match self.send(&session, req.clone(), action, whole).await {
             Err(e)
@@ -941,7 +955,7 @@ impl Client {
                     && session.ticket().is_some()
                     && before.as_ref().is_some_and(|b| Arc::ptr_eq(b, &session)) =>
             {
-                let session = self.ensure_session().await?;
+                let session = self.session_now().await?;
                 self.send(&session, req, action, whole).await
             }
             result => result,

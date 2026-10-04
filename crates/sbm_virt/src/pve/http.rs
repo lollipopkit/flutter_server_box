@@ -322,16 +322,24 @@ impl Http for HyperHttp {
             let request = builder
                 .body(Full::new(Bytes::new()))
                 .map_err(|e| TransportError::Unreachable(e.to_string()))?;
-            let resp = match tokio::time::timeout(REQUEST_TIMEOUT, self.client.request(request)).await {
-                Ok(Ok(resp)) => resp,
+            // One deadline for the answer and, when it refuses, the body it
+            // says why in: a refusal whose body never ends is no answer.
+            let answer = tokio::time::timeout(REQUEST_TIMEOUT, async {
+                let resp = self.client.request(request).await?;
+                if resp.status() == hyper::StatusCode::SWITCHING_PROTOCOLS {
+                    return Ok::<_, hyper_util::client::legacy::Error>(Ok(resp));
+                }
+                let status = resp.status().as_u16();
+                let body = Limited::new(resp.into_body(), MAX_BODY).collect().await.map(|b| b.to_bytes().to_vec()).unwrap_or_default();
+                Ok(Err(Response { status, reason: None, body }))
+            })
+            .await;
+            let resp = match answer {
+                Ok(Ok(Ok(resp))) => resp,
+                Ok(Ok(Err(refused))) => return Ok(Upgrade::Refused(refused)),
                 Ok(Err(e)) => return Err(self.transport_error(&e)),
                 Err(_) => return Err(TransportError::Unreachable("no answer to the upgrade".into())),
             };
-            if resp.status() != hyper::StatusCode::SWITCHING_PROTOCOLS {
-                let status = resp.status().as_u16();
-                let body = Limited::new(resp.into_body(), MAX_BODY).collect().await.map(|b| b.to_bytes().to_vec()).unwrap_or_default();
-                return Ok(Upgrade::Refused(Response { status, reason: None, body }));
-            }
             let upgraded = hyper::upgrade::on(resp).await.map_err(|e| TransportError::Unreachable(e.to_string()))?;
             Ok(Upgrade::Switched(Box::new(TokioIo::new(upgraded)) as Box<dyn Stream>))
         })

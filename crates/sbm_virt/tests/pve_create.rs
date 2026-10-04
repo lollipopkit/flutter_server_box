@@ -333,6 +333,11 @@ async fn a_node_listing_that_failed_is_the_failure_not_the_clusters_cache() {
     let e = fake.client().create(&vm("x", 105)).await.unwrap_err();
     assert_ne!(refused(&e), Some(Issue::NameTaken));
     assert_eq!(e.message.as_deref(), Some("got timeout"));
+    // A guest its node lists and the cache not yet: its name is taken all
+    // the same.
+    fake.route("GET /nodes/pve/qemu", |_| ok(json!([{"vmid": 777, "name": "fresh-copy", "status": "stopped"}])));
+    let e = fake.client().create(&vm("fresh-copy", 105)).await.unwrap_err();
+    assert_eq!(refused(&e), Some(Issue::NameTaken));
     // Nor one answered as something other than a list.
     fake.route("GET /nodes/pve/qemu", |_| ok(json!({})));
     assert_eq!(fake.client().create(&vm("x", 105)).await.unwrap_err().kind, ErrorKind::InvalidResponse);

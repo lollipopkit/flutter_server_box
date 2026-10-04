@@ -176,6 +176,11 @@ async fn a_volume_whose_guest_is_gone_is_used_by_nothing() {
     let delete = |v: &str| Change::VolumeDelete { pool: "pve/local".into(), volume: v.into() };
     assert_eq!(refused(&err(pve.manage(&delete("local:101/vm-101-disk-0.qcow2"), None)).await), Some(Issue::InUse));
     pve.manage(&delete("local:9999/vm-9999-disk-0.qcow2"), None).await.unwrap();
+    // The guests answered as something other than a list: not "none", which
+    // would let the one in use go.
+    fake.route("GET /cluster/resources", |_| ok(json!({})));
+    assert_eq!(err(pve.volumes(&pool)).await.kind, ErrorKind::InvalidResponse);
+    assert_eq!(err(pve.manage(&delete("local:101/vm-101-disk-0.qcow2"), None)).await.kind, ErrorKind::InvalidResponse);
 }
 
 #[tokio::test]
@@ -265,6 +270,13 @@ async fn a_bridge_is_not_deleted_while_a_guest_on_its_node_cannot_be_read() {
     fake.route("GET /nodes/pve/qemu/104/config", |_| ok(json!([])));
     let e = fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap_err();
     assert_eq!(e.kind, ErrorKind::InvalidResponse, "{e:?}");
+    // Nor while the guests themselves are answered as something other than
+    // a list.
+    fake.route("GET /nodes/pve/qemu/104/config", |_| ok(json!({})));
+    fake.route("GET /cluster/resources", |_| ok(json!({})));
+    let e = fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap_err();
+    assert_eq!(e.kind, ErrorKind::InvalidResponse, "{e:?}");
+    fake.route("GET /cluster/resources", |_| ok(resources_fixture()));
     // One deleted since it was listed has no NIC on it.
     fake.route("GET /nodes/pve/qemu/104/config", |_| status(500, "Configuration file 'nodes/pve/qemu-server/104.conf' does not exist"));
     fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap();

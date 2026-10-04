@@ -73,8 +73,11 @@ impl Client {
         let Value::Array(list) = self.call(Method::Get, "/cluster/resources", None, false).await? else {
             return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData));
         };
-        let parsed = resources::parse(&list, self.now());
+        let now = self.now();
+        let parsed = resources::parse(&list, now);
         let mut guests = parsed.guests;
+        // On its node and not yet in the cache: listed as the cache would.
+        let mut unlisted = Vec::new();
         for node in parsed.nodes.iter().filter(|n| n.online) {
             for kind in [GuestKind::Qemu, GuestKind::Lxc] {
                 let path = format!("/nodes/{}/{}", seg(&node.name), kind.as_str());
@@ -83,7 +86,14 @@ impl Client {
                 };
                 for e in own.iter().filter_map(Value::as_object) {
                     let Some(vmid) = resources::uint(e.get("vmid")).and_then(|v| u32::try_from(v).ok()) else { continue };
-                    let Some(g) = guests.iter_mut().find(|g| g.vmid == Some(vmid) && g.kind == kind) else { continue };
+                    let Some(g) = guests.iter_mut().find(|g| g.vmid == Some(vmid) && g.kind == kind) else {
+                        let mut entry = e.clone();
+                        entry.insert("type".into(), kind.as_str().into());
+                        entry.insert("node".into(), node.name.clone().into());
+                        entry.insert("id".into(), format!("{}/{vmid}", kind.as_str()).into());
+                        unlisted.push(Value::Object(entry));
+                        continue;
+                    };
                     if let Some(name) = resources::str_of(e.get("name")) {
                         g.name = name;
                     }
@@ -94,6 +104,7 @@ impl Client {
                 }
             }
         }
+        guests.extend(resources::parse(&unlisted, now).guests);
         Ok((guests, parsed.nodes))
     }
 

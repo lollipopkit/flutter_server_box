@@ -81,11 +81,11 @@ impl Client {
         // The listing names each volume's owner by VMID, whether or not that
         // guest still exists: one that does not is an orphan, used by
         // nothing, and deleting it is how it goes.
-        let guests = match self.call(Method::Get, "/cluster/resources?type=vm", None, false).await? {
-            Value::Array(list) => resources::parse(&list, self.now()).guests,
-            _ => Vec::new(),
+        // Not a list is not "no guests": every volume would read as unused.
+        let Value::Array(list) = self.call(Method::Get, "/cluster/resources?type=vm", None, false).await? else {
+            return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData));
         };
-        resources::owned_by(&mut volumes, &guests);
+        resources::owned_by(&mut volumes, &resources::parse(&list, self.now()).guests);
         let node = pool.node.clone().unwrap_or_default();
         let todo: Vec<usize> = (0..volumes.len())
             .filter(|&i| resources::image_size_unknown(volumes[i].content.as_deref(), volumes[i].format.as_deref()))
@@ -127,6 +127,7 @@ impl Client {
     async fn networks_read(&self, live: Option<&LiveNet>, strict: bool) -> Result<Vec<Network>> {
         let guests = match self.call(Method::Get, "/cluster/resources?type=vm", None, false).await? {
             Value::Array(list) => resources::parse(&list, self.now()).guests,
+            _ if strict => return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData)),
             _ => Vec::new(),
         };
         let mut out = Vec::new();

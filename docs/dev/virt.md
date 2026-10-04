@@ -1261,6 +1261,10 @@ schedule check (next runs, PVE's refusal, a shape refused before it is
 sent); libvirt answered `unsupported`. Editing a job needs
 `Datastore.Allocate` on its storage as well as `Sys.Modify` on `/`
 (PVE's `assert_param_permission_*`), both named with their command.
+The whole of `virt_real_test.dart` passed again on 2026-10-04 against both
+hosts with the review fixes in (84 passed, 2 skipped: PVE password logins
+and PCI passthrough not configured), the token given `Sys.Modify`,
+`PVEDatastoreAdmin` and `PVESDNUser` for the storage and network group.
 
 With it, every PVE call the app makes is a typed `PveSession` call: the
 Dio that handed the app's own requests to the session (`PveSession.raw`)
