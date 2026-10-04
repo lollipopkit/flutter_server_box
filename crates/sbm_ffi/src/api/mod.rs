@@ -8,6 +8,7 @@ pub mod parser;
 pub mod proc;
 pub mod pve;
 pub mod resource;
+pub mod service;
 pub mod remote_desktop;
 pub mod script;
 pub mod snippet;

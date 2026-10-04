@@ -20,6 +20,7 @@ import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
+import 'package:server_box/src/rust/api/service.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
@@ -334,6 +335,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ScriptSegment> dco_decode_list_script_segment(dynamic raw);
 
   @protected
+  List<ServiceCommand> dco_decode_list_service_command(dynamic raw);
+
+  @protected
+  List<ServiceCommandOutput> dco_decode_list_service_command_output(
+    dynamic raw,
+  );
+
+  @protected
   List<VirtActionKind> dco_decode_list_virt_action_kind(dynamic raw);
 
   @protected
@@ -464,6 +473,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScriptSegment dco_decode_script_segment(dynamic raw);
+
+  @protected
+  ServiceCommand dco_decode_service_command(dynamic raw);
+
+  @protected
+  ServiceCommandOutput dco_decode_service_command_output(dynamic raw);
+
+  @protected
+  ServiceProbe dco_decode_service_probe(dynamic raw);
 
   @protected
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
@@ -827,6 +845,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<ServiceCommand> sse_decode_list_service_command(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ServiceCommandOutput> sse_decode_list_service_command_output(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<VirtActionKind> sse_decode_list_virt_action_kind(
     SseDeserializer deserializer,
   );
@@ -975,6 +1003,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScriptSegment sse_decode_script_segment(SseDeserializer deserializer);
+
+  @protected
+  ServiceCommand sse_decode_service_command(SseDeserializer deserializer);
+
+  @protected
+  ServiceCommandOutput sse_decode_service_command_output(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceProbe sse_decode_service_probe(SseDeserializer deserializer);
 
   @protected
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
@@ -1412,6 +1451,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_service_command(
+    List<ServiceCommand> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_service_command_output(
+    List<ServiceCommandOutput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_virt_action_kind(
     List<VirtActionKind> self,
     SseSerializer serializer,
@@ -1605,6 +1656,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_script_segment(ScriptSegment self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_command(
+    ServiceCommand self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_command_output(
+    ServiceCommandOutput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_probe(ServiceProbe self, SseSerializer serializer);
 
   @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
