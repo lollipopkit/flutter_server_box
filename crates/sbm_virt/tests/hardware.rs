@@ -283,6 +283,10 @@ fn an_attached_volume_is_one_nothing_else_uses() {
     let mut host = Host::new();
     host.volumes[1].backs.push("/var/lib/libvirt/images/overlay.qcow2".into());
     assert_eq!(issue(&hw, &attach("data.qcow2"), HostKind::Libvirt, host.list()), Some(Issue::VolumeInUse));
+    // One the guest has already: a second disk on the same volume.
+    let mut host = Host::new();
+    host.volumes[1].path = hw.disks[0].source.clone();
+    assert_eq!(issue(&hw, &attach("data.qcow2"), HostKind::Libvirt, host.list()), Some(Issue::VolumeInUse));
     // A container's needs a mount point.
     let ct_attach = Change::AttachVolume { volume: r("images", "data.qcow2"), mount_point: None };
     assert_eq!(check(&ct(), ct_attach), Some(Issue::MountPoint));

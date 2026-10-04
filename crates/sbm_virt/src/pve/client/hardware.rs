@@ -81,10 +81,16 @@ impl Client {
             Change::AddCdrom { media } | Change::SetMedia { media, .. } => media.as_ref(),
             _ => None,
         };
-        let volumes = match named {
+        let mut volumes: Vec<Volume> = match named {
             Some(r) => self.volume_at(&pools, r).await?.into_iter().collect(),
             None => Vec::new(),
         };
+        // PVE names a volume's owner by its VMID (`vm-<vmid>-disk-N`), which
+        // is not a disk attached: this guest's own detached volume is its to
+        // attach. One it has attached already is told by its hardware.
+        for v in &mut volumes {
+            v.users.retain(|r| r.guest_id.as_deref() != Some(guest.id.as_str()));
+        }
         Ok((pools, networks, volumes))
     }
 

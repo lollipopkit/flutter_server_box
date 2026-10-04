@@ -794,7 +794,10 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
         }
         change = VirtHwSetMedia(key: drive.key, media: (pool: pool, volume: v));
       } else {
-        change = VirtHwAttachVolume(storage: pool, volume: v);
+        // PVE names a volume's owner by its VMID: the guest's own detached
+        // volume is its to attach, not one in use (`sbm_virt` says the same).
+        final own = v.copyWith(users: [for (final u in v.users) if (u.guestId != guest.id) u]);
+        change = VirtHwAttachVolume(storage: pool, volume: own);
       }
       final issue = virtHwIssue(hw, change, host: ref.read(virtHostProvider(_serverId)).kind);
       if (issue == VirtHwIssue.volumeInUse) {

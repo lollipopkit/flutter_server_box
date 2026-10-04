@@ -641,7 +641,7 @@
               <Select class="w-full" bind:value={newDisk.volume}>
                 <option value="">—</option>
                 {#each volumes as v (v.id)}
-                  <option value={v.id}>{[v.name, v.format, v.capacity !== null ? fmtBytes(v.capacity) : null, v.users.length > 0 ? $LL.virtHwInUse() : null].filter(Boolean).join(' · ')}</option>
+                  <option value={v.id}>{[v.name, v.format, v.capacity !== null ? fmtBytes(v.capacity) : null, v.users.some((u) => u.guest_id !== guestId) ? $LL.virtHwInUse() : null].filter(Boolean).join(' · ')}</option>
                 {/each}
               </Select>
             </label>

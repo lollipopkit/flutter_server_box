@@ -761,8 +761,9 @@ pub fn issue(hw: &Hardware, change: &Change, host: HostKind, list: Listing<'_>) 
         Change::AttachVolume { volume, mount_point } => {
             let Some(v) = list.volume(volume) else { return Some(Issue::NotFound) };
             // A base image too: a guest writing to it corrupts what is made
-            // on it.
-            if v.in_use() {
+            // on it. One this guest has already is a second disk on it.
+            let attached = hw.disks.iter().any(|d| d.source.as_deref().is_some_and(|s| s == v.id || v.path.as_deref() == Some(s)));
+            if v.in_use() || attached {
                 return Some(Issue::VolumeInUse);
             }
             if lxc && !mount_point.as_deref().is_some_and(mount_point_ok) {

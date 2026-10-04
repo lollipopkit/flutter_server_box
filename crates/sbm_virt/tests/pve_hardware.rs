@@ -665,6 +665,25 @@ async fn a_new_disk_and_nic_go_in_the_first_free_slot() {
     assert_eq!(fake.form(VM_CONFIG), form(&[("delete", "scsi0"), ("digest", VM_DIGEST)]));
 }
 
+#[tokio::test]
+async fn a_guests_own_detached_volume_is_its_to_attach_anothers_is_not() {
+    let fake = hw_api();
+    fake.route("GET /nodes/pve/storage/local-lvm/content", |_| {
+        ok(json!([
+            {"volid": "local-lvm:vm-9901-disk-5", "content": "images", "format": "raw", "size": 1u64 << 30, "vmid": 9901},
+            {"volid": "local-lvm:vm-9921-disk-0", "content": "images", "format": "raw", "size": 1u64 << 30, "vmid": 9921},
+        ]))
+    });
+    let client = fake.client();
+    let attach = |volume: &str| Change::AttachVolume { volume: VolumeRef { pool: "pve/local-lvm".into(), volume: volume.into() }, mount_point: None };
+    // Named for it by PVE (`vm-9901-…`): its own, not one in use.
+    client.change_hardware(&vm(), Some(VM_DIGEST), &attach("local-lvm:vm-9901-disk-5")).await.unwrap();
+    assert_eq!(fake.form(VM_CONFIG)["scsi1"], "local-lvm:vm-9901-disk-5");
+    // Another guest's.
+    let e = err(client.change_hardware(&vm(), Some(VM_DIGEST), &attach("local-lvm:vm-9921-disk-0"))).await;
+    assert_eq!(refused(&e), Some(Issue::VolumeInUse));
+}
+
 /// The guest's configuration as the fake keeps it: a POST deleting one of
 /// `detach` detaches it, as PVE does with a disk of a stopped guest.
 fn detaching(fake: &Fake, path: &str, before: Map<String, Value>, after: Map<String, Value>, detach: &'static [&'static str]) -> Arc<AtomicBool> {
