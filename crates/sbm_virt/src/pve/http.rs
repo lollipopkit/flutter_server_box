@@ -219,7 +219,6 @@ impl Connector for TlsConnector {
     fn http(&self, config: &Config) -> Result<Arc<dyn Http>, Error> {
         let base = config.base_uri()?;
         let provider = Arc::new(rustls::crypto::ring::default_provider());
-        let presented = Arc::new(Mutex::new(None));
         // No roots, no CA check: only the pin decides.
         let webpki = if self.roots.is_empty() {
             None
@@ -230,33 +229,77 @@ impl Connector for TlsConnector {
                     .map_err(|e| Error::msg(ErrorKind::Unreachable, e.to_string()))?,
             )
         };
-        let verifier = PveVerifier {
-            webpki,
-            pin: PinnedCert::new(config.cert_sha256.as_deref()),
-            presented: presented.clone(),
-            algorithms: provider.signature_verification_algorithms,
-        };
-        let tls = rustls::ClientConfig::builder_with_provider(provider)
-            .with_safe_default_protocol_versions()
-            .map_err(|e| Error::msg(ErrorKind::Unreachable, e.to_string()))?
-            .dangerous()
-            .with_custom_certificate_verifier(Arc::new(verifier))
-            .with_no_client_auth();
+        let tls = TlsPolicy { provider, webpki, pin: PinnedCert::new(config.cert_sha256.as_deref()) };
+        // Checked once here, so a connection's own build cannot fail on it.
+        tls.client_config(Arc::new(Mutex::new(None))).map_err(|e| Error::msg(ErrorKind::Unreachable, e.to_string()))?;
         let connect = PveConnect { dial: self.dial.clone(), tls: Arc::new(tls) };
         let client = HyperClient::builder(TokioExecutor::new())
             .pool_idle_timeout(IDLE_TIMEOUT)
             .pool_timer(TokioTimer::new())
             .pool_max_idle_per_host(4)
             .build(connect);
-        Ok(Arc::new(HyperHttp { client, base, presented, pin: config.cert_sha256.clone() }))
+        Ok(Arc::new(HyperHttp { client, base, pin: config.cert_sha256.clone() }))
     }
+}
+
+/// The certificate decision, made into a TLS configuration per connection:
+/// each handshake keeps the leaf it refused in a slot of its own, so a
+/// failed request reports the certificate its own connection was shown,
+/// never one a connection beside it was.
+struct TlsPolicy {
+    provider: Arc<rustls::crypto::CryptoProvider>,
+    webpki: Option<Arc<WebPkiServerVerifier>>,
+    pin: PinnedCert,
+}
+
+impl TlsPolicy {
+    fn client_config(&self, presented: Arc<Mutex<Option<Vec<u8>>>>) -> Result<rustls::ClientConfig, rustls::Error> {
+        let verifier = PveVerifier {
+            webpki: self.webpki.clone(),
+            pin: self.pin.clone(),
+            presented,
+            algorithms: self.provider.signature_verification_algorithms,
+        };
+        Ok(rustls::ClientConfig::builder_with_provider(self.provider.clone())
+            .with_safe_default_protocol_versions()?
+            .dangerous()
+            .with_custom_certificate_verifier(Arc::new(verifier))
+            .with_no_client_auth())
+    }
+}
+
+/// A handshake refused for its certificate: the leaf it presented, carried
+/// up through hyper's error to the request whose connection it was.
+#[derive(Debug)]
+struct CertRefused(Vec<u8>);
+
+impl std::fmt::Display for CertRefused {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("certificate refused")
+    }
+}
+
+impl std::error::Error for CertRefused {}
+
+/// The refused leaf somewhere in `e`'s chain. An `io::Error` hides its inner
+/// error from `source()`, so each one is looked into.
+fn refused_cert(e: &(dyn std::error::Error + 'static)) -> Option<Vec<u8>> {
+    let mut at = Some(e);
+    while let Some(err) = at {
+        if let Some(c) = err.downcast_ref::<CertRefused>() {
+            return Some(c.0.clone());
+        }
+        if let Some(c) = err.downcast_ref::<io::Error>().and_then(|io| io.get_ref()).and_then(|i| i.downcast_ref::<CertRefused>()) {
+            return Some(c.0.clone());
+        }
+        at = err.source();
+    }
+    None
 }
 
 struct HyperHttp {
     client: HyperClient<PveConnect, Full<Bytes>>,
     base: Uri,
-    /// The leaf the verifier last refused, read to report it.
-    presented: Arc<Mutex<Option<Vec<u8>>>>,
     pin: Option<String>,
 }
 
@@ -341,8 +384,7 @@ impl Http for HyperHttp {
 
 impl HyperHttp {
     fn transport_error(&self, e: &(dyn std::error::Error + 'static)) -> TransportError {
-        let refused = self.presented.lock().unwrap().take();
-        match refused.and_then(|der| CertInfo::from_der(&der).or_else(|| bare_info(&der))) {
+        match refused_cert(e).and_then(|der| CertInfo::from_der(&der).or_else(|| bare_info(&der))) {
             Some(cert) => TransportError::Cert { cert, pinned: self.pin.clone() },
             None => TransportError::Unreachable(error_chain(e)),
         }
@@ -431,7 +473,7 @@ impl ServerCertVerifier for PveVerifier {
 #[derive(Clone)]
 struct PveConnect {
     dial: Arc<dyn Dial>,
-    tls: Arc<rustls::ClientConfig>,
+    tls: Arc<TlsPolicy>,
 }
 
 impl tower_service::Service<Uri> for PveConnect {
@@ -455,8 +497,15 @@ impl tower_service::Service<Uri> for PveConnect {
                     return Ok(stream);
                 }
                 let name = ServerName::try_from(host).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
-                let secured = tokio_rustls::TlsConnector::from(tls).connect(name, stream).await?;
-                Ok::<_, io::Error>(Box::new(secured) as Box<dyn Stream>)
+                let presented = Arc::new(Mutex::new(None));
+                let config = tls.client_config(presented.clone()).map_err(io::Error::other)?;
+                match tokio_rustls::TlsConnector::from(Arc::new(config)).connect(name, stream).await {
+                    Ok(secured) => Ok::<_, io::Error>(Box::new(secured) as Box<dyn Stream>),
+                    Err(e) => Err(match presented.lock().unwrap().take() {
+                        Some(der) => io::Error::other(CertRefused(der)),
+                        None => e,
+                    }),
+                }
             })
             .await
             .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "connect timed out"))??;

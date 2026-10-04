@@ -120,9 +120,10 @@ impl Client {
         self.networks_read(live, false).await
     }
 
-    /// `strict`: a guest whose configuration this account may not read is
-    /// the refusal itself, not a guest left out — a bridge deleted on the
-    /// strength of the list would be taken from under it.
+    /// `strict`: a guest whose configuration this account may not read, or
+    /// that PVE answers oddly, is the refusal itself, not a guest left out —
+    /// a bridge deleted on the strength of the list would be taken from
+    /// under it. Only a guest deleted since it was listed is passed over.
     async fn networks_read(&self, live: Option<&LiveNet>, strict: bool) -> Result<Vec<Network>> {
         let guests = match self.call(Method::Get, "/cluster/resources?type=vm", None, false).await? {
             Value::Array(list) => resources::parse(&list, self.now()).guests,
@@ -151,12 +152,16 @@ impl Client {
                 let path = guest_path(guest)?;
                 match self.call(Method::Get, &format!("{path}/config"), None, false).await {
                     Ok(Value::Object(config)) => Ok(resources::bridge_users(guest, &config)),
+                    Ok(_) if strict => Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData)),
                     Ok(_) => Ok(BTreeMap::new()),
-                    // One guest this account may not read, or one deleted
-                    // since it was listed ("Configuration file ... does not
-                    // exist"), leaves only that guest out.
-                    Err(e) if e.kind == ErrorKind::AuthFailed && e.status == Some(403) && strict => Err(e),
-                    Err(e) if matches!(e.kind, ErrorKind::AuthFailed | ErrorKind::InvalidResponse) && e.status != Some(401) => {
+                    // One deleted since it was listed ("Configuration file
+                    // ... does not exist") has no NIC on anything.
+                    Err(e) if e.kind == ErrorKind::InvalidResponse && e.message.as_deref().is_some_and(|m| m.contains("does not exist")) => {
+                        Ok(BTreeMap::new())
+                    }
+                    // One this account may not read, or one PVE answered
+                    // oddly, is left out of a listing — not out of a check.
+                    Err(e) if !strict && matches!(e.kind, ErrorKind::AuthFailed | ErrorKind::InvalidResponse) && e.status != Some(401) => {
                         Ok(BTreeMap::new())
                     }
                     Err(e) => Err(e),

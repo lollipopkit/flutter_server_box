@@ -333,6 +333,9 @@ async fn a_node_listing_that_failed_is_the_failure_not_the_clusters_cache() {
     let e = fake.client().create(&vm("x", 105)).await.unwrap_err();
     assert_ne!(refused(&e), Some(Issue::NameTaken));
     assert_eq!(e.message.as_deref(), Some("got timeout"));
+    // Nor one answered as something other than a list.
+    fake.route("GET /nodes/pve/qemu", |_| ok(json!({})));
+    assert_eq!(fake.client().create(&vm("x", 105)).await.unwrap_err().kind, ErrorKind::InvalidResponse);
     assert!(!fake.paths().iter().any(|p| p.starts_with("POST")), "{:?}", fake.paths());
 }
 

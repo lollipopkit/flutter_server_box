@@ -667,9 +667,15 @@ class PveBackend implements VirtBackend {
         );
       final body = resp.data;
       final upid = body is Map ? body['data'] : null;
-      if (upid is String && upid.startsWith('UPID:')) {
-        await _waitTask(pool.node!, upid);
+      // The file is moved into place by that task: without it, nothing says
+      // the upload is there.
+      if (upid is! String || !upid.startsWith('UPID:')) {
+        throw VirtErr(
+          type: VirtErrType.invalidResponse,
+          message: 'No task for the upload: ${jsonEncode(body)}',
+        );
       }
+      await _waitTask(pool.node!, upid);
       return true;
     } on DioException catch (e) {
       if (cancelled) return false;
@@ -798,6 +804,12 @@ class PveBackend implements VirtBackend {
     if (_closed) {
       await tunnel.close();
       throw StateError('PveBackend used after close');
+    }
+    // The address changed while the tunnel opened: it reaches the old host,
+    // which the new configuration's credentials must never be sent to.
+    if ('$_base' != '$base') {
+      await tunnel.close();
+      return _open();
     }
     final stale = _tunnel;
     _tunnel = tunnel;

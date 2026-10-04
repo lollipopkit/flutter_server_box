@@ -170,6 +170,31 @@ void main() {
     );
   });
 
+  test('an address changed while the tunnel opens: the new host is dialled', () async {
+    final api = _Api()..resources = _resources;
+    addTearDown(api.close);
+    final hosts = <String>[];
+    late final PveBackend pve;
+    pve = PveBackend(
+      serverId: 'srv',
+      config: PveConfig(addr: 'https://old.lan:8006', certSha256: _leafFingerprint()),
+      user: 'root',
+      sshPassword: 'sshpw',
+      tunnel: (host, _) async {
+        hosts.add(host);
+        if (hosts.length == 1) {
+          pve.updateConfig(pve.config.copyWith(addr: 'https://new.lan:8006'));
+        }
+        return loopbackTo(await api._serve());
+      },
+      connect: (_, _) => throw UnimplementedError(),
+      taskPoll: const Duration(milliseconds: 1),
+    );
+    addTearDown(pve.close);
+    await pve.load();
+    expect(hosts, ['old.lan', 'new.lan']);
+  });
+
   group('create and delete', () {
     const token = PveConfig(
       addr: 'https://pve.lan:8006',
@@ -1107,6 +1132,15 @@ void main() {
       expect(body, contains('iso bytes iso bytes'));
       expect(sent, isNotEmpty);
       expect(api.paths.last, startsWith('GET /nodes/pve/tasks/'));
+
+      // An answer without the task that moves the file in says nothing of it.
+      api.routes['POST /nodes/pve/storage/local/upload'] = (_) => null;
+      final e = await _err(
+        pve.upload(
+          VirtUpload(pool: local, name: 'debian.iso', size: data.length, open: () => Stream.value(data)),
+        ),
+      );
+      expect(e.type, VirtErrType.invalidResponse);
     });
   });
 }

@@ -78,7 +78,9 @@ impl Client {
         for node in parsed.nodes.iter().filter(|n| n.online) {
             for kind in [GuestKind::Qemu, GuestKind::Lxc] {
                 let path = format!("/nodes/{}/{}", seg(&node.name), kind.as_str());
-                let Value::Array(own) = self.call(Method::Get, &path, None, false).await? else { continue };
+                let Value::Array(own) = self.call(Method::Get, &path, None, false).await? else {
+                    return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData));
+                };
                 for e in own.iter().filter_map(Value::as_object) {
                     let Some(vmid) = resources::uint(e.get("vmid")).and_then(|v| u32::try_from(v).ok()) else { continue };
                     let Some(g) = guests.iter_mut().find(|g| g.vmid == Some(vmid) && g.kind == kind) else { continue };

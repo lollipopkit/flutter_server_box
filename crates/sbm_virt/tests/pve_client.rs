@@ -1395,6 +1395,9 @@ async fn snapshot_requests_create_rollback_and_delete_wait_for_their_task() {
     assert_eq!(body(&api, "POST /nodes/pve/qemu/102/snapshot/pre-up/rollback"), "start=1");
     assert!(api.api().paths.iter().any(|p| p.starts_with("GET /nodes/pve/tasks/UPID%3Apve%3A9")), "{:?}", api.api().paths);
     assert_eq!(api.api().paths.last().unwrap(), "GET /nodes/pve/qemu/102/status/current");
+    // A start listed without the UPID it is waited for by: not said done.
+    api.api().routes.insert("GET /nodes/pve/tasks".into(), Box::new(|_| json!([{"type": "qmstart"}])));
+    assert_eq!(pve.revert_snapshot(&vm, "pre-up", true).await.unwrap_err().kind, ErrorKind::InvalidResponse);
 
     pve.delete_snapshot(&vm, "pre-up").await.unwrap();
     assert!(api.api().paths.contains(&"DELETE /nodes/pve/qemu/102/snapshot/pre-up".to_owned()));

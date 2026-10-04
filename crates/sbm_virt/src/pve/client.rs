@@ -113,6 +113,8 @@ enum SessionAuth {
 struct Session {
     generation: u64,
     http: Arc<dyn Http>,
+    /// The account it was opened for, which a renewal names.
+    user: Vec<(&'static str, String)>,
     auth: Mutex<SessionAuth>,
     /// Held by the one renewal in flight, which every caller waits for.
     renewing: tokio::sync::Mutex<()>,
@@ -535,14 +537,16 @@ impl Client {
         let path = format!("/nodes/{}/tasks?vmid={}&source=active", seg(&node), guest.vmid.unwrap_or_default());
         loop {
             let data = self.call(Method::Get, &path, None, true).await?;
-            let upid = data.as_array().and_then(|tasks| {
-                tasks.iter().find_map(|t| {
-                    let kind = t.get("type").and_then(Value::as_str)?;
-                    (kind == "qmstart" || kind == "vzstart").then(|| t.get("upid")?.as_str().map(str::to_owned))?
-                })
-            });
-            if let Some(upid) = upid {
-                return self.wait_task(&node, &upid).await;
+            let Value::Array(tasks) = data else {
+                return Err(Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData));
+            };
+            let start = tasks.iter().find(|t| matches!(t.get("type").and_then(Value::as_str), Some("qmstart" | "vzstart")));
+            if let Some(task) = start {
+                // A start running that cannot be waited for is not one that
+                // is over.
+                let upid = task.get("upid").and_then(Value::as_str)
+                    .ok_or_else(|| Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData))?;
+                return self.wait_task(&node, upid).await;
             }
             if self.now() > deadline {
                 return Ok(());
@@ -684,7 +688,7 @@ impl Client {
         }
         let (ticket, csrf) = ticket_of(&resp)?;
         let auth = SessionAuth::Ticket { ticket, csrf, issued_at: self.now() };
-        let session = Arc::new(Session { generation, http: http.clone(), auth: Mutex::new(auth), renewing: Default::default() });
+        let session = Arc::new(Session { generation, http: http.clone(), user, auth: Mutex::new(auth), renewing: Default::default() });
         if !self.is_current_challenge(generation, &challenge) {
             return Ok(());
         }
@@ -803,8 +807,12 @@ impl Client {
             self.drop_session(session);
             return;
         }
-        let user = self.user_fields();
-        let mut fields: Vec<(&str, &str)> = user.iter().map(|(k, v)| (*k, v.as_str())).collect();
+        // A session a reset has dropped is not renewed: its ticket goes to
+        // nobody, under nobody else's name.
+        if !self.is_current(session) {
+            return;
+        }
+        let mut fields: Vec<(&str, &str)> = session.user.iter().map(|(k, v)| (*k, v.as_str())).collect();
         fields.extend([("password", ticket.as_str()), ("new-format", "1")]);
         let Ok(resp) = self.post_ticket(&session.http, &fields).await else { return };
         if resp.status == 401 {
@@ -822,10 +830,10 @@ impl Client {
     /// on is discarded, never installed.
     async fn open(&self, generation: u64, config: &Config, http: Arc<dyn Http>) -> Result<()> {
         config.check()?;
+        let user = user_fields(config);
         let auth = match &config.auth {
             Auth::Token { id, secret } => SessionAuth::Token(format!("PVEAPIToken={id}={secret}")),
             Auth::Password { password, .. } => {
-                let user = user_fields(config);
                 let mut fields: Vec<(&str, &str)> = user.iter().map(|(k, v)| (*k, v.as_str())).collect();
                 // Sent as stored, spaces included: PAM compares it byte for
                 // byte, and the SSH login this may be borrowed from sends it
@@ -847,7 +855,7 @@ impl Client {
                         .ok_or_else(|| Error::detail(ErrorKind::InvalidResponse, Detail::InvalidData))?;
                     let mut st = self.state.lock().unwrap();
                     if st.generation == generation {
-                        st.tfa = Some(Challenge { generation, http: http.clone(), ticket, issued_at: self.now(), user });
+                        st.tfa = Some(Challenge { generation, http: http.clone(), ticket, issued_at: self.now(), user: user.clone() });
                     }
                     return Err(Error::detail(ErrorKind::NeedTfa, Detail::OtpRequired));
                 }
@@ -855,7 +863,7 @@ impl Client {
                 SessionAuth::Ticket { ticket, csrf, issued_at: self.now() }
             }
         };
-        let session = Arc::new(Session { generation, http, auth: Mutex::new(auth), renewing: Default::default() });
+        let session = Arc::new(Session { generation, http, user, auth: Mutex::new(auth), renewing: Default::default() });
         // Stale (the configuration changed during the login): nothing more
         // is sent with its credentials.
         if self.state.lock().unwrap().generation != generation {
@@ -871,10 +879,6 @@ impl Client {
         }
         st.session = Some(session);
         Ok(())
-    }
-
-    fn user_fields(&self) -> Vec<(&'static str, String)> {
-        user_fields(&self.state.lock().unwrap().config)
     }
 
     async fn post_ticket(&self, http: &Arc<dyn Http>, fields: &[(&str, &str)]) -> Result<Response> {

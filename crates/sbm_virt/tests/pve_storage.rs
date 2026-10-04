@@ -261,6 +261,14 @@ async fn a_bridge_is_not_deleted_while_a_guest_on_its_node_cannot_be_read() {
     let e = fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap_err();
     assert_eq!(e.kind, ErrorKind::PermissionDenied, "{e:?}");
     assert!(!fake.paths().iter().any(|p| p.starts_with("DELETE ")));
+    // Nor while one is answered as something other than a configuration.
+    fake.route("GET /nodes/pve/qemu/104/config", |_| ok(json!([])));
+    let e = fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap_err();
+    assert_eq!(e.kind, ErrorKind::InvalidResponse, "{e:?}");
+    // One deleted since it was listed has no NIC on it.
+    fake.route("GET /nodes/pve/qemu/104/config", |_| status(500, "Configuration file 'nodes/pve/qemu-server/104.conf' does not exist"));
+    fake.client().manage(&Change::NetworkDelete { network: "pve/vmbr7".into() }, None).await.unwrap();
+    assert!(fake.paths().contains(&"DELETE /nodes/pve/network/vmbr7".to_owned()));
 }
 
 // ---------------------------------------------------------------------------
