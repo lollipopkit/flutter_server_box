@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot nécessite UEFI.",
   "virtGuestNotStopped": "Éteignez-le d'abord.",
   "virtGuestIsTemplate": "C'est déjà un modèle.",
-  "virtCreateImageBigger": "L'image est plus grande que le disque : faites le disque au moins aussi grand."
+  "virtCreateImageBigger": "L'image est plus grande que le disque : faites le disque au moins aussi grand.",
+  "virtBackupIssueStorage": "Ce stockage ne contient pas de sauvegardes sur ce nœud.",
+  "virtBackupIssueOption": "Ce n'est pas un mode ou une compression que PVE accepte.",
+  "virtBackupIssueNodeOffline": "Le nœud de la tâche n'est pas en ligne."
 }

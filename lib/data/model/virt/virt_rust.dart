@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/virt/virt.dart';
+import 'package:server_box/data/model/virt/virt_backup.dart';
+import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
 import 'package:server_box/data/model/virt/virt_hardware.dart';
@@ -194,6 +196,139 @@ abstract final class VirtRust {
       id: c['id'] as String,
       startError: c['start_error'] as String?,
       diskKeptBytes: c['disk_kept_bytes'] as int?,
+    );
+  }
+
+  // --- Backups (sbm_virt::backup) ---
+
+  static DateTime? _unix(Object? v) => switch (v) {
+    final int t => DateTime.fromMillisecondsSinceEpoch(t * 1000),
+    _ => null,
+  };
+
+  static List<int> _ints(Object? v) => [...(v as List? ?? const []).whereType<int>()];
+
+  /// A list of `sbm_virt::backup::Backup`.
+  static List<VirtBackup> backups(Object? json) => [
+    for (final b in _maps(json, 'backups'))
+      VirtBackup(
+        id: b['id'] as String,
+        storage: b['storage'] as String,
+        node: b['node'] as String,
+        vmid: b['vmid'] as int?,
+        createdAt: _unix(b['created_at']),
+        size: b['size'] as int?,
+        format: b['format'] as String?,
+        notes: b['notes'] as String?,
+        protected: b['protected'] as bool? ?? false,
+        verification: b['verification'] as String?,
+        kind: switch (b['kind']) {
+          'qemu' => VirtGuestKind.qemu,
+          'lxc' => VirtGuestKind.lxc,
+          _ => null,
+        },
+      ),
+  ];
+
+  static Map<String, Object?> backupJson(VirtBackup b) => {
+    'id': b.id,
+    'storage': b.storage,
+    'node': b.node,
+    'vmid': b.vmid,
+    'created_at': switch (b.createdAt) {
+      final t? => t.millisecondsSinceEpoch ~/ 1000,
+      null => null,
+    },
+    'size': b.size,
+    'format': b.format,
+    'notes': b.notes,
+    'protected': b.protected,
+    'verification': b.verification,
+    'kind': b.kind?.name,
+  };
+
+  /// A list of `sbm_virt::backup::BackupJob`.
+  static List<VirtBackupJob> backupJobs(Object? json) => [
+    for (final j in _maps(json, 'backup jobs'))
+      VirtBackupJob(
+        id: j['id'] as String,
+        schedule: j['schedule'] as String?,
+        storage: j['storage'] as String?,
+        mode: j['mode'] as String?,
+        compress: j['compress'] as String?,
+        keep: j['prune'] as String?,
+        enabled: j['enabled'] as bool? ?? true,
+        all: j['all'] as bool? ?? false,
+        vmids: _ints(j['vmids']),
+        exclude: _ints(j['exclude']),
+        pool: j['pool'] as String?,
+        node: j['node'] as String?,
+        comment: j['comment'] as String?,
+        notesTemplate: j['notes_template'] as String?,
+        mailNotification: j['mail_notification'] as String?,
+        prune: j['prune'] as String?,
+      ),
+  ];
+
+  static Map<String, Object?> backupJobJson(VirtBackupJob j) => {
+    'id': j.id,
+    'schedule': j.schedule,
+    'storage': j.storage,
+    'mode': j.mode,
+    'compress': j.compress,
+    'enabled': j.enabled,
+    'all': j.all,
+    'vmids': j.vmids,
+    'exclude': j.exclude,
+    'pool': j.pool,
+    'node': j.node,
+    'comment': j.comment,
+    'notes_template': j.notesTemplate,
+    'mail_notification': j.mailNotification,
+    'prune': j.prune ?? j.keep,
+  };
+
+  static Map<String, Object?> backupJobEditJson(VirtBackupJobEdit e) => {
+    'id': e.id,
+    'is_new': e.isNew,
+    'node': e.node,
+    'storage': e.storage,
+    'schedule': e.schedule,
+    'mode': e.mode,
+    'compress': e.compress,
+    'enabled': e.enabled,
+    'all': e.all,
+    'vmids': e.vmids,
+    'exclude': e.exclude,
+    'pool': e.pool,
+    'comment': e.comment,
+    'notes_template': e.notesTemplate,
+    'mail_notification': e.mailNotification,
+    'prune': e.prune,
+  };
+
+  static Map<String, Object?> backupRequestJson(VirtBackupRequest r) => {
+    'storage': r.storage,
+    'mode': r.mode,
+    'compress': r.compress,
+    'notes': r.notes,
+    'protected': r.protected,
+    'prune': r.prune,
+  };
+
+  static Map<String, Object?> backupEditJson(VirtBackupEdit e) => {
+    'notes': e.notes,
+    'protected': e.protected,
+  };
+
+  /// `sbm_virt::backup::ScheduleCheck`: the next runs in UTC.
+  static VirtScheduleCheck scheduleCheck(Object? json) {
+    final c = json is Map ? json : const {};
+    return VirtScheduleCheck(
+      error: c['error'] as String?,
+      next: [
+        for (final t in _ints(c['next'])) DateTime.fromMillisecondsSinceEpoch(t * 1000, isUtc: true),
+      ],
     );
   }
 
@@ -1158,6 +1293,8 @@ abstract final class VirtRust {
         virtCreateIssueText(VirtCreateIssue.ofRust(issue)),
       {'code': 'hardware_refused', 'issue': final String issue} =>
         virtHwIssueText(VirtHwIssue.ofRust(issue)),
+      {'code': 'backup_refused', 'issue': final String issue} =>
+        virtBackupIssueText(issue),
       {'code': 'apply_touches_management', 'ifaces': final List ifaces} =>
         'The pending configuration changes ${ifaces.join(', ')}, which '
             "carries the host's management traffic: apply it from the "

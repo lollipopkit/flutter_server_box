@@ -5418,4 +5418,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'Image lebih besar dari disk: buat disk setidaknya sebesar itu.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Penyimpanan itu tidak menyimpan cadangan di node ini.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Bukan mode atau kompresi yang diterima PVE.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'Node tugas ini tidak online.';
 }

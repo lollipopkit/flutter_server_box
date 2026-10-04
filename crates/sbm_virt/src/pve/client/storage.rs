@@ -30,7 +30,7 @@ const CONCURRENCY: usize = 4;
 
 impl Client {
     /// The online nodes, by name.
-    async fn online_nodes(&self) -> Result<Vec<String>> {
+    pub(super) async fn online_nodes(&self) -> Result<Vec<String>> {
         let data = self.call(Method::Get, "/nodes", None, false).await?;
         let mut nodes: Vec<String> = data
             .as_array()
@@ -442,6 +442,14 @@ impl Client {
     /// [`ErrorKind::PermissionDenied`] naming the privilege, where, and the
     /// `pveum` line that grants it — the refusal alone says which, not what
     /// to type.
+    /// A refusal the caller met on a connection of its own (an upload), in
+    /// PVE's words: said as a change's refusal is ([`Client::manage`]).
+    pub fn refusal(&self, message: &str, status: Option<u16>) -> Error {
+        let mut e = Error::msg(ErrorKind::ActionFailed, message);
+        e.status = status;
+        self.manage_err(e)
+    }
+
     pub(super) fn manage_err(&self, e: Error) -> Error {
         let message = e.message.clone().unwrap_or_default();
         if message.contains("already exists") || message.contains("already defined") {

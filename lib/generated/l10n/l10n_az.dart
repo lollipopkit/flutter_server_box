@@ -5417,4 +5417,15 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'Şəkil diskdən böyükdür: diski ən azı onun qədər edin.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Bu yaddaş bu node-da ehtiyat nüsxələri saxlamır.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE-nin qəbul etdiyi rejim və ya sıxışdırma deyil.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'İşin node-u onlayn deyil.';
 }

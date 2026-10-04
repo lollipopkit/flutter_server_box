@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot memerlukan UEFI.",
   "virtGuestNotStopped": "Matikan terlebih dahulu.",
   "virtGuestIsTemplate": "Sudah menjadi templat.",
-  "virtCreateImageBigger": "Image lebih besar dari disk: buat disk setidaknya sebesar itu."
+  "virtCreateImageBigger": "Image lebih besar dari disk: buat disk setidaknya sebesar itu.",
+  "virtBackupIssueStorage": "Penyimpanan itu tidak menyimpan cadangan di node ini.",
+  "virtBackupIssueOption": "Bukan mode atau kompresi yang diterima PVE.",
+  "virtBackupIssueNodeOffline": "Node tugas ini tidak online."
 }

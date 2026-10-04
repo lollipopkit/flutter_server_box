@@ -17,7 +17,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
@@ -435,69 +434,6 @@ void main() {
       vmid: 9941,
       node: 'pve',
     );
-    const ct = VirtGuest(
-      id: 'lxc/200',
-      name: 'alpine',
-      kind: VirtGuestKind.lxc,
-      state: VirtGuestState.stopped,
-      vmid: 200,
-      node: 'pve',
-    );
-
-    test('backups and jobs, as PVE 9.2 lists them', () {
-      final backups = PveResources.parseBackups(
-        'pve',
-        'local',
-        fixture('backup_content.json')! as List,
-      );
-      final b = backups.single;
-      expect(b.id, 'local:backup/vzdump-qemu-9941-2026_09_26-03_11_45.vma.zst');
-      expect(b.fileName, 'vzdump-qemu-9941-2026_09_26-03_11_45.vma.zst');
-      expect((b.storage, b.node, b.vmid), ('local', 'pve', 9941));
-      expect((b.size, b.format, b.notes), (37103, 'vma.zst', 'sb e2e 9941'));
-      expect(b.kind, VirtGuestKind.qemu);
-      expect(b.createdAt, DateTime.fromMillisecondsSinceEpoch(1790363505000));
-      expect(b.protected, isFalse);
-
-      final raw = fixture('backup_jobs.json')! as List;
-      final job = PveResources.parseBackupJobs(raw, vmid: 9941).single;
-      expect(
-        (job.id, job.schedule, job.storage, job.mode, job.compress, job.keep),
-        ('sbbk-job', '02:00', 'local', 'snapshot', 'zstd', 'keep-last=7'),
-      );
-      expect(job.enabled, isFalse);
-      expect(PveResources.parseBackupJobs(raw, vmid: 100), isEmpty);
-      // Every guest, less the excluded ones.
-      final all = [
-        {'id': 'all', 'type': 'vzdump', 'all': 1, 'exclude': '101'},
-      ];
-      expect(PveResources.parseBackupJobs(all, vmid: 100), hasLength(1));
-      expect(PveResources.parseBackupJobs(all, vmid: 101), isEmpty);
-    });
-
-    test('a guest\'s plan leaves out the jobs restricted to another node',
-        () async {
-      final api = _Api()
-        ..routes['GET /cluster/backup'] = ((_) => [
-          {'id': 'on-a', 'type': 'vzdump', 'all': 1, 'node': 'a'},
-          {'id': 'on-b', 'type': 'vzdump', 'all': 1, 'node': 'pve'},
-          {'id': 'any', 'type': 'vzdump', 'vmid': '9941'},
-          {'id': 'listed-on-a', 'type': 'vzdump', 'vmid': '9941', 'node': 'a'},
-        ]);
-      final jobs = await api.backend(token).backupJobs(vm);
-      expect(jobs.map((j) => j.id), ['on-b', 'any']);
-      expect(
-        PveResources.parseBackupJobs(
-          [
-            {'id': 'on-a', 'type': 'vzdump', 'all': 1, 'node': 'a'},
-          ],
-          vmid: 9941,
-          node: 'pve',
-        ),
-        isEmpty,
-      );
-    });
-
     test('clone: the request crosses, the copy\'s id comes back', () async {
       final api = _Api()
         ..resources = [
@@ -532,47 +468,6 @@ void main() {
       expect(taken.message, l10n.virtCreateNameTaken);
     });
 
-    test('a job keeps the one selection it has: pool, all or a list', () async {
-      final api = _Api();
-      api.routes['PUT /cluster/backup/j1'] = (_) => null;
-      final pve = api.backend(token);
-      VirtBackupJobEdit edit({String? pool, bool all = false, List<int> vmids = const [], List<int> exclude = const []}) =>
-          VirtBackupJobEdit(
-            id: 'j1',
-            node: null,
-            storage: 'local',
-            schedule: 'sat 03:00',
-            pool: pool,
-            all: all,
-            vmids: vmids,
-            exclude: exclude,
-          );
-      Map<String, String> sent() =>
-          form(api.bodies[api.paths.lastIndexOf('PUT /cluster/backup/j1')]);
-      Set<String> deleted() => sent()['delete']!.split(',').toSet();
-
-      // A pool job saved with only its schedule changed stays a pool job.
-      await pve.editBackupJob(edit(pool: 'prod', all: true, vmids: [1]));
-      expect(sent()['pool'], 'prod');
-      expect(sent()['all'], '0');
-      expect(sent().containsKey('vmid'), isFalse);
-      expect(deleted(), containsAll(['vmid', 'exclude']));
-      expect(deleted(), isNot(contains('pool')));
-
-      await pve.editBackupJob(edit(all: true, exclude: [101, 102]));
-      expect(sent()['all'], '1');
-      expect(sent()['exclude'], '101,102');
-      expect(deleted(), containsAll(['vmid', 'pool']));
-      expect(deleted(), isNot(contains('exclude')));
-
-      // A list is sent and not deleted in the same request.
-      await pve.editBackupJob(edit(vmids: [100, 200]));
-      expect(sent()['vmid'], '100,200');
-      expect(sent()['all'], '0');
-      expect(deleted(), containsAll(['exclude', 'pool']));
-      expect(deleted(), isNot(contains('vmid')));
-    });
-
     test("a template PVE refuses itself: the action refused, in PVE's words", () async {
       final api = _Api();
       api.resources = [
@@ -591,85 +486,28 @@ void main() {
       expect(e.message, 'unable to create template, because VM contains snapshots');
     });
 
-    test("run now: the job's node, or every online node", () async {
-      final api = _Api();
-      api.resources = [
+    // What each request carries is `sbm_virt`'s
+    // (crates/sbm_virt/tests/pve_backup.rs); here, that each call reaches
+    // the host through the session and a refusal crosses said.
+    _Api backupHost({String vmState = 'stopped'}) => _Api()
+      ..resources = [
         {'id': 'node/pve', 'type': 'node', 'node': 'pve', 'status': 'online'},
         {'id': 'node/pve2', 'type': 'node', 'node': 'pve2', 'status': 'online'},
-        {'id': 'node/pve3', 'type': 'node', 'node': 'pve3', 'status': 'offline'},
-        {'id': 'qemu/9', 'type': 'qemu', 'vmid': 9, 'node': 'pve2', 'status': 'stopped'},
-      ];
-      for (final n in ['pve', 'pve2', 'pve3']) {
-        api.routes['POST /nodes/$n/vzdump'] = (_) => _Api.upid;
-      }
-      final pve = api.backend(token);
-      await pve.load();
-      Iterable<String> runs() =>
-          api.paths.where((p) => p.endsWith('/vzdump'));
-
-      // No node: vzdump takes only the guests on the node it runs on, so
-      // each online node is asked — the offline one is not.
-      // The job as PVE has it, read again: what the model does not carry
-      // (`bwlimit`, `performance`, ...) runs with it, as PVE's own "Run
-      // now" sends it; what describes the schedule does not.
-      var job = <String, Object?>{
-        'id': 'j',
-        'type': 'vzdump',
-        'schedule': 'sat 03:00',
-        'enabled': 0,
-        'next-run': 1790967600,
-        'comment': 'nightly',
-        'storage': 'nfs',
-        'all': 1,
-        'exclude': '9',
-        'bwlimit': 4096,
-        'ionice': 5,
-        'performance': {'max-workers': '2'},
-        'prune-backups': {'keep-last': '2', 'keep-daily': '4'},
-        'fleecing': {'enabled': 0},
-      };
-      api.routes['GET /cluster/backup/j'] = (_) => job;
-      await pve.runBackupJob(const VirtBackupJob(id: 'j', all: true));
-      expect(runs(), ['POST /nodes/pve/vzdump', 'POST /nodes/pve2/vzdump']);
-      final body = form(api.bodies[api.paths.indexOf('POST /nodes/pve2/vzdump')]);
-      expect(body, {
-        'storage': 'nfs',
-        'all': '1',
-        'exclude': '9',
-        'bwlimit': '4096',
-        'ionice': '5',
-        'performance': 'max-workers=2',
-        'prune-backups': 'keep-last=2,keep-daily=4',
-        'fleecing': 'enabled=0',
-      });
-
-      // A node of its own: there only, and refused when it is offline.
-      api.paths.clear();
-      api.bodies.clear();
-      job = {'id': 'j', 'type': 'vzdump', 'storage': 'nfs', 'node': 'pve2', 'pool': 'prod'};
-      await pve.runBackupJob(const VirtBackupJob(id: 'j'));
-      expect(runs(), ['POST /nodes/pve2/vzdump']);
-      expect(
-        form(api.bodies[api.paths.lastIndexOf('POST /nodes/pve2/vzdump')]),
-        containsPair('pool', 'prod'),
-      );
-      api.paths.clear();
-      api.bodies.clear();
-      job = {'id': 'j', 'type': 'vzdump', 'node': 'pve3', 'all': 1};
-      final e = await _err(pve.runBackupJob(const VirtBackupJob(id: 'j')));
-      expect(e.type, VirtErrType.unsupported);
-      expect(runs(), isEmpty);
-    });
-
-    test('back up now, list, restore over and as new, delete', () async {
-      final api = _Api();
-      api.routes['GET /nodes/pve/storage'] = (_) => [
+        {'id': 'qemu/9941', 'type': 'qemu', 'vmid': 9941, 'node': 'pve', 'status': vmState, 'name': 'sbbk-src'},
+      ]
+      ..routes['GET /nodes'] = ((_) => [
+        {'node': 'pve', 'status': 'online'},
+        {'node': 'pve2', 'status': 'online'},
+      ])
+      ..routes['GET /nodes/pve/storage'] = ((_) => [
         {'storage': 'local', 'type': 'dir', 'active': 1, 'enabled': 1, 'content': 'iso,backup'},
-        {'storage': 'nfs', 'type': 'nfs', 'active': 1, 'enabled': 1, 'content': 'backup'},
-      ];
-      api.routes['GET /nodes/pve/storage/local/content'] =
-          (_) => fixture('backup_content.json');
-      api.routes['GET /nodes/pve/storage/nfs/content'] = (_) => [
+        {'storage': 'nfs', 'type': 'nfs', 'active': 1, 'enabled': 1, 'content': 'backup', 'shared': 1},
+      ])
+      ..routes['GET /nodes/pve2/storage'] = ((_) => [
+        {'storage': 'nfs', 'type': 'nfs', 'active': 1, 'enabled': 1, 'content': 'backup', 'shared': 1},
+      ])
+      ..routes['GET /nodes/pve/storage/local/content'] = ((_) => fixture('backup_content.json'))
+      ..routes['GET /nodes/pve/storage/nfs/content'] = ((_) => [
         {
           'volid': 'nfs:backup/vzdump-qemu-9941-2026_09_27-02_00_00.vma.zst',
           'content': 'backup',
@@ -679,68 +517,105 @@ void main() {
           'subtype': 'qemu',
           'vmid': 9941,
         },
-      ];
-      api.routes['POST /nodes/pve/vzdump'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/qemu'] = (_) => _Api.upid;
-      api.routes['POST /nodes/pve/lxc'] = (_) => _Api.upid;
-      final pve = api.backend(token);
+      ])
+      ..routes['GET /cluster/backup'] = ((_) => [
+        {'id': 'on-a', 'type': 'vzdump', 'all': 1, 'node': 'a'},
+        {'id': 'on-b', 'type': 'vzdump', 'all': 1, 'node': 'pve'},
+        {'id': 'any', 'type': 'vzdump', 'vmid': '9941', 'prune-backups': {'keep-last': '7'}},
+      ])
+      ..routes['POST /nodes/pve/vzdump'] = ((_) => _Api.upid)
+      ..routes['POST /nodes/pve2/vzdump'] = ((_) => _Api.upid)
+      ..routes['POST /nodes/pve/qemu'] = ((_) => _Api.upid);
 
-      final storages = await pve.backupStorages(vm);
-      expect(storages.map((s) => s.name), ['local', 'nfs']);
+    test('backups, storages and plan through the session', () async {
+      final api = backupHost();
+      final pve = api.backend(token);
+      expect((await pve.backupStorages(vm)).map((s) => s.name), ['local', 'nfs']);
       final i0 = api.paths.indexOf('GET /nodes/pve/storage');
       expect(Uri.splitQueryString(api.queries[i0]), {'content': 'backup', 'enabled': '1'});
-
       final backups = await pve.backups(vm);
       expect(backups.map((b) => b.storage), ['nfs', 'local'], reason: 'newest first');
-      expect(backups.first.protected, isTrue);
-      expect(backups.first.verification, 'ok');
-      final ic = api.paths.indexOf('GET /nodes/pve/storage/local/content');
-      expect(Uri.splitQueryString(api.queries[ic]), {'content': 'backup', 'vmid': '9941'});
-
-      await pve.backup(
-        vm,
-        const VirtBackupRequest(storage: 'local', mode: 'stop', notes: ' n ', protected: true),
-      );
-      var i = api.paths.indexOf('POST /nodes/pve/vzdump');
-      expect(form(api.bodies[i]), {
-        'vmid': '9941',
-        'storage': 'local',
-        'mode': 'stop',
-        'compress': 'zstd',
-        'notes-template': 'n',
-        'protected': '1',
-      });
-      expect(api.paths.last, contains('/tasks/'));
-
-      final local = backups.last;
-      await pve.restoreBackup(vm, local);
-      i = api.paths.indexOf('POST /nodes/pve/qemu');
-      expect(form(api.bodies[i]), {'vmid': '9941', 'archive': local.id, 'force': '1'});
-      await pve.restoreBackup(vm, local, vmid: 130);
-      i = api.paths.lastIndexOf('POST /nodes/pve/qemu');
-      expect(form(api.bodies[i]), {'vmid': '130', 'archive': local.id});
-      // Over a running guest: refused here, not forced.
-      final running = vm.copyWith(state: VirtGuestState.running);
+      expect((backups.first.protected, backups.first.verification), (true, 'ok'));
+      expect(backups.last.fileName, 'vzdump-qemu-9941-2026_09_26-03_11_45.vma.zst');
+      expect(backups.last.createdAt, DateTime.fromMillisecondsSinceEpoch(1790363505000));
+      // The jobs that take it: not one restricted to another node.
+      final plan = await pve.backupJobs(vm);
+      expect(plan.map((j) => j.id), ['on-b', 'any']);
+      expect(plan.last.keep, 'keep-last=7');
+      // The datacenter's: every job, every node's storages once.
+      expect((await pve.allBackupJobs()).map((j) => j.id), ['on-a', 'on-b', 'any']);
       expect(
-        (await _err(pve.restoreBackup(running, local))).type,
-        VirtErrType.unsupported,
+        [for (final p in await pve.allBackupStorages()) p.id],
+        ['pve/local', 'pve/nfs', 'pve2/nfs'],
       );
-      // A container's archive is its template, restored.
-      final ctBackup = local.copyWith(id: 'local:backup/vzdump-lxc-200-x.tar.zst', kind: VirtGuestKind.lxc);
-      await pve.restoreBackup(ct, ctBackup);
-      i = api.paths.indexOf('POST /nodes/pve/lxc');
-      expect(form(api.bodies[i]), {
-        'vmid': '200',
-        'ostemplate': ctBackup.id,
-        'restore': '1',
+    });
+
+    test('back up, restore, edit and delete reach the host; refusals are said', () async {
+      final api = backupHost();
+      final pve = api.backend(token);
+      await pve.backup(vm, const VirtBackupRequest(storage: 'local', mode: 'stop'));
+      expect(form(api.bodies[api.paths.indexOf('POST /nodes/pve/vzdump')]), containsPair('mode', 'stop'));
+      final notHere = await _err(pve.backup(vm, const VirtBackupRequest(storage: 'nas')));
+      expect(notHere.type, VirtErrType.unsupported);
+      expect(notHere.message, virtBackupIssueText('storage'));
+
+      final local = (await pve.backups(vm)).last;
+      await pve.restoreBackup(vm, local);
+      expect(form(api.bodies[api.paths.indexOf('POST /nodes/pve/qemu')]), {
+        'vmid': '9941',
+        'archive': local.id,
         'force': '1',
       });
-
-      final del =
-          'DELETE /nodes/pve/storage/local/content/${Uri.encodeComponent(local.id)}';
-      api.routes[del] = (_) => _Api.upid;
+      final content = '/nodes/pve/storage/local/content/${Uri.encodeComponent(local.id)}';
+      api.routes['PUT $content'] = (_) => null;
+      await pve.editBackup(local, const VirtBackupEdit(notes: '', protected: true));
+      expect(form(api.bodies[api.paths.indexOf('PUT $content')]), {'notes': '', 'protected': '1'});
+      api.routes['DELETE $content'] = (_) => _Api.upid;
       await pve.deleteBackup(vm, local);
-      expect(api.paths, contains(del));
+      expect(api.paths, contains('DELETE $content'));
+
+      // Over a running guest: refused before any request.
+      final running = backupHost(vmState: 'running');
+      final e = await _err(running.backend(token).restoreBackup(vm, local));
+      expect(e.message, virtBackupIssueText('not_stopped'));
+      expect(running.paths, isNot(contains('POST /nodes/pve/qemu')));
+    });
+
+    test('jobs: edited, a schedule refused first, checked, run on its nodes', () async {
+      final api = backupHost()
+        ..routes['PUT /cluster/backup/any'] = ((_) => null)
+        ..routes['GET /cluster/jobs/schedule-analyze'] = ((_) => [
+          {'timestamp': 1790000000},
+        ]);
+      final pve = api.backend(token);
+      VirtBackupJobEdit edit(String schedule) => VirtBackupJobEdit(
+        id: 'any',
+        node: null,
+        storage: 'nfs',
+        schedule: schedule,
+        vmids: const [9941],
+      );
+      await pve.editBackupJob(edit('sat 03:00'));
+      expect(form(api.bodies[api.paths.indexOf('PUT /cluster/backup/any')]), containsPair('schedule', 'sat 03:00'));
+      final bad = await _err(pve.editBackupJob(edit('02:30 mon')));
+      expect(bad.message, virtBackupIssueText('schedule_invalid'));
+      expect(api.paths.where((p) => p == 'PUT /cluster/backup/any'), hasLength(1));
+
+      final check = await pve.checkSchedule('02:00');
+      expect(check.ok, isTrue);
+      expect(check.next.single, DateTime.fromMillisecondsSinceEpoch(1790000000000, isUtc: true));
+      // A value of the wrong shape is answered here, not asked.
+      expect((await pve.checkSchedule('nope')).ok, isFalse);
+      expect(api.paths.where((p) => p.contains('schedule-analyze')), hasLength(1));
+
+      // No node of its own: every online node; one of its own that is not
+      // online: refused.
+      api.routes['GET /cluster/backup/j'] = (_) => {'id': 'j', 'type': 'vzdump', 'storage': 'nfs', 'all': 1};
+      await pve.runBackupJob(const VirtBackupJob(id: 'j', all: true));
+      expect(api.paths.where((p) => p.endsWith('/vzdump')), ['POST /nodes/pve/vzdump', 'POST /nodes/pve2/vzdump']);
+      api.routes['GET /cluster/backup/j'] = (_) => {'id': 'j', 'type': 'vzdump', 'node': 'pve3', 'all': 1};
+      final off = await _err(pve.runBackupJob(const VirtBackupJob(id: 'j')));
+      expect(off.message, virtBackupIssueText('node_offline'));
     });
   });
 
@@ -1014,11 +889,10 @@ void main() {
       final storages = jsonDecode(
         File('test/fixtures/pve/node_storage_p8.json').readAsStringSync(),
       ) as List<Object?>;
-      final parsed = PveResources.parseStorages('pve', storages);
-      expect(parsed.map((p) => p.type), containsAll(['dir', 'lvmthin']));
-      for (final p in parsed) {
-        expect(p.content, isNot(contains('snapshot')));
-      }
+      expect(
+        storages.whereType<Map>().map((e) => e['type']),
+        containsAll(['dir', 'lvmthin']),
+      );
       expect(
         storages.whereType<Map>().map((e) => e['content']).join(),
         isNot(contains('snapshot')),

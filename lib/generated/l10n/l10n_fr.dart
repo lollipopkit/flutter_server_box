@@ -5510,4 +5510,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'L\'image est plus grande que le disque : faites le disque au moins aussi grand.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Ce stockage ne contient pas de sauvegardes sur ce nœud.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Ce n\'est pas un mode ou une compression que PVE accepte.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'Le nœud de la tâche n\'est pas en ligne.';
 }

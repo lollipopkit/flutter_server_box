@@ -35,6 +35,7 @@ use crate::error::{Detail, Error, ErrorKind, Result};
 use crate::model::{Capabilities, ConsoleKind, Guest, GuestDetail, GuestKind, HistoryWindow, Host, HostKind, HostView, PowerAction, Stats};
 use crate::rates::RateTracker;
 
+mod backup;
 mod create;
 mod hardware;
 mod storage;
@@ -626,45 +627,6 @@ impl Client {
             }
             tokio::time::sleep(self.opts.task_poll).await;
         }
-    }
-
-    /// Any API call in this session, `path` under `/api2/json` (query
-    /// included), answering the body's `data` — or, with `whole`, the body
-    /// itself, for what PVE puts beside `data`. `action` marks a call on one
-    /// guest, whose refusal is [`ErrorKind::ActionFailed`].
-    pub async fn request(&self, method: Method, path: &str, body: Option<Body>, action: bool, whole: bool) -> Result<Value> {
-        self.call_with(method, path, body, action, whole).await
-    }
-
-    /// Reads `guest`'s state again after an action the caller made itself
-    /// (a snapshot revert), so the next [`Client::load`] shows it before the
-    /// listing catches up.
-    pub async fn refresh_status(&self, guest: &Guest) {
-        if let Ok(path) = guest_path(guest) {
-            self.read_status(guest, &path).await;
-        }
-    }
-
-    /// A request in this session answered as the host answered it, status
-    /// and body uninterpreted, for a caller that reads PVE's answers itself.
-    /// `path` is the whole path, API root and query included. The session's
-    /// own rules still apply: a 401 drops it, and on a password session this
-    /// call did not log in, it is sent again once after a new login.
-    // TODO(migration): for the app's PVE calls not yet moved here; remove
-    // once every one has a typed call of its own.
-    pub async fn raw(&self, method: Method, path: &str, body: Option<Body>) -> Result<Response> {
-        let before = {
-            let st = self.state.lock().unwrap();
-            st.session.clone().filter(|s| s.generation == st.generation)
-        };
-        let session = self.ensure_session().await?;
-        let req = Request { method, path: path.to_owned(), headers: Vec::new(), body };
-        let resp = self.send_raw(&session, req.clone()).await?;
-        if resp.status == 401 && session.ticket().is_some() && before.as_ref().is_some_and(|b| Arc::ptr_eq(b, &session)) {
-            let session = self.ensure_session().await?;
-            return self.send_raw(&session, req).await;
-        }
-        Ok(resp)
     }
 
     /// The headers that authenticate a request in the current session,

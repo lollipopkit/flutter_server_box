@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot UEFI tələb edir.",
   "virtGuestNotStopped": "Əvvəlcə onu söndürün.",
   "virtGuestIsTemplate": "Artıq şablondur.",
-  "virtCreateImageBigger": "Şəkil diskdən böyükdür: diski ən azı onun qədər edin."
+  "virtCreateImageBigger": "Şəkil diskdən böyükdür: diski ən azı onun qədər edin.",
+  "virtBackupIssueStorage": "Bu yaddaş bu node-da ehtiyat nüsxələri saxlamır.",
+  "virtBackupIssueOption": "PVE-nin qəbul etdiyi rejim və ya sıxışdırma deyil.",
+  "virtBackupIssueNodeOffline": "İşin node-u onlayn deyil."
 }

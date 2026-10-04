@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot için UEFI gerekir.",
   "virtGuestNotStopped": "Önce kapatın.",
   "virtGuestIsTemplate": "Zaten bir şablon.",
-  "virtCreateImageBigger": "İmaj diskten büyük: diski en az onun kadar büyük yapın."
+  "virtCreateImageBigger": "İmaj diskten büyük: diski en az onun kadar büyük yapın.",
+  "virtBackupIssueStorage": "Bu depolama bu düğümde yedek tutmuyor.",
+  "virtBackupIssueOption": "PVE'nin kabul ettiği bir mod veya sıkıştırma değil.",
+  "virtBackupIssueNodeOffline": "İşin düğümü çevrimiçi değil."
 }

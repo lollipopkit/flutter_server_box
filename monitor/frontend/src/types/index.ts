@@ -1546,6 +1546,7 @@ export type VirtErrorDetail =
   | { code: 'refused'; issue: VirtIssue }
   | { code: 'create_refused'; issue: VirtCreateIssue }
   | { code: 'hardware_refused'; issue: VirtHwIssue }
+  | { code: 'backup_refused'; issue: VirtBackupIssue }
   | { code: 'apply_touches_management'; ifaces: string[] }
   | { code: 'apply_unreadable' }
 
@@ -2235,3 +2236,126 @@ export interface VirtCloudInitEdit {
   password_expires: boolean
   revision: string
 }
+
+// --- Backups and backup jobs (`sbm_virt::backup`, PVE only) ---
+
+export type VirtBackupMode = 'snapshot' | 'suspend' | 'stop'
+/// `0` is none.
+export type VirtBackupCompress = '0' | 'zstd' | 'lzo' | 'gzip'
+
+/// One backup of a guest, as a backup storage lists it.
+export interface VirtBackup {
+  /// PVE's volid: `local:backup/vzdump-qemu-100-….vma.zst`.
+  id: string
+  storage: string
+  node: string
+  vmid: number | null
+  /// Unix seconds.
+  created_at: number | null
+  size: number | null
+  /// `vma.zst`, `tar.zst`, …
+  format: string | null
+  notes: string | null
+  protected: boolean
+  /// `ok` or `failed`, where a verification job has run on it.
+  verification: string | null
+  kind: VirtGuestKind | null
+}
+
+/// A scheduled backup job (`/cluster/backup`).
+export interface VirtBackupJob {
+  id: string
+  schedule: string | null
+  storage: string | null
+  mode: string | null
+  compress: string | null
+  enabled: boolean
+  /// Every guest (less `exclude`), the `vmids`, or the guests of `pool`.
+  all: boolean
+  vmids: number[]
+  exclude: number[]
+  pool: string | null
+  /// null: every node.
+  node: string | null
+  comment: string | null
+  notes_template: string | null
+  /// `always` or `failure`.
+  mail_notification: string | null
+  /// PVE's `prune-backups`: `keep-last=7,keep-daily=4`.
+  prune: string | null
+}
+
+/// `sbm_virt::backup::BackupJobEdit`: the whole job, an absent optional
+/// field cleared.
+export interface VirtBackupJobEdit {
+  id?: string
+  is_new: boolean
+  node?: string
+  storage: string
+  schedule: string
+  mode: VirtBackupMode
+  compress: VirtBackupCompress
+  enabled: boolean
+  all: boolean
+  vmids: number[]
+  exclude: number[]
+  pool?: string
+  comment?: string
+  notes_template?: string
+  mail_notification?: string
+  prune?: string
+}
+
+/// `sbm_virt::backup::BackupRequest`: one backup taken now.
+export interface VirtBackupRequest {
+  storage: string
+  mode: VirtBackupMode
+  compress: VirtBackupCompress
+  notes?: string
+  protected: boolean
+  prune?: string
+}
+
+/// `sbm_virt::backup::BackupEdit`.
+export interface VirtBackupEdit {
+  notes: string
+  protected: boolean
+}
+
+/// What the host makes of a schedule: its refusal, or the next runs (Unix
+/// seconds, oldest first).
+export interface VirtScheduleCheck {
+  error: string | null
+  next: number[]
+}
+
+/// `POST /virt/backups`.
+export interface VirtBackups {
+  backups: VirtBackup[] | null
+  /// The jobs that take this guest.
+  jobs: VirtBackupJob[] | null
+  /// Its node's storages that hold backups.
+  storages: VirtPool[] | null
+  error: VirtError | null
+}
+
+/// `POST /virt/backup-jobs`.
+export interface VirtBackupJobs {
+  jobs: VirtBackupJob[] | null
+  /// Every node's storages that hold backups.
+  storages: VirtPool[] | null
+  error: VirtError | null
+}
+
+/// `sbm_virt::backup::Issue`: why the agent refused a backup request.
+export type VirtBackupIssue =
+  | 'schedule_empty'
+  | 'schedule_invalid'
+  | 'storage'
+  | 'mode'
+  | 'compress'
+  | 'guests'
+  | 'node_offline'
+  | 'not_stopped'
+  | 'not_found'
+  | 'unsupported'

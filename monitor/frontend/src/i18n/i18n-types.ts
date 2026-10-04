@@ -4700,6 +4700,402 @@ type RootTranslation = {
 	 */
 	virtCiSaved: string
 	/**
+	 * B​a​c​k​u​p
+	 */
+	virtViewBackup: string
+	/**
+	 * B​a​c​k​u​p​ ​j​o​b​s
+	 */
+	virtSectionBackupJobs: string
+	/**
+	 * P​l​a​n
+	 */
+	virtBakPlan: string
+	/**
+	 * D​a​t​a​c​e​n​t​e​r​ ​→​ ​B​a​c​k​u​p​ ​j​o​b​s
+	 */
+	virtBakDatacenter: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​ ​t​a​k​e​s​ ​t​h​i​s​ ​g​u​e​s​t​.
+	 */
+	virtBakNoPlan: string
+	/**
+	 * T​h​i​s​ ​j​o​b​ ​a​l​s​o​ ​t​a​k​e​s​ ​o​t​h​e​r​ ​g​u​e​s​t​s​.​ ​E​d​i​t​ ​i​t​ ​u​n​d​e​r​ ​B​a​c​k​u​p​ ​j​o​b​s​.
+	 */
+	virtBakSharedJob: string
+	/**
+	 * A​d​d​ ​a​ ​s​c​h​e​d​u​l​e
+	 */
+	virtBakAddPlan: string
+	/**
+	 * E​d​i​t
+	 */
+	virtBakEditPlan: string
+	/**
+	 * R​e​m​o​v​e​ ​s​c​h​e​d​u​l​e
+	 */
+	virtBakRemovePlan: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​r​e​m​o​v​e​ ​j​o​b​ ​{​i​d​}
+	 * @param {unknown} id
+	 */
+	virtBakConfirmRemovePlan: RequiredParams<'id'>
+	/**
+	 * B​a​c​k​u​p​ ​j​o​b​ ​s​a​v​e​d​.
+	 */
+	virtBakPlanSaved: string
+	/**
+	 * B​a​c​k​u​p​ ​j​o​b​ ​r​e​m​o​v​e​d​.
+	 */
+	virtBakPlanRemoved: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	virtBakSchedule: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	virtBakStorage: string
+	/**
+	 * P​i​c​k​ ​a​ ​s​t​o​r​a​g​e
+	 */
+	virtBakPickStorage: string
+	/**
+	 * R​e​t​e​n​t​i​o​n
+	 */
+	virtBakRetention: string
+	/**
+	 * T​h​e​ ​s​t​o​r​a​g​e​'​s​ ​o​w​n
+	 */
+	virtBakRetentionDefault: string
+	/**
+	 * H​o​w​ ​m​a​n​y​ ​b​a​c​k​u​p​s​ ​e​a​c​h​ ​r​u​l​e​ ​k​e​e​p​s​.​ ​A​l​l​ ​e​m​p​t​y​:​ ​t​h​e​ ​s​t​o​r​a​g​e​'​s​ ​o​w​n​ ​r​e​t​e​n​t​i​o​n​.
+	 */
+	virtBakRetentionNote: string
+	/**
+	 * L​a​s​t
+	 */
+	virtBakKeepLast: string
+	/**
+	 * H​o​u​r​l​y
+	 */
+	virtBakKeepHourly: string
+	/**
+	 * D​a​i​l​y
+	 */
+	virtBakKeepDaily: string
+	/**
+	 * W​e​e​k​l​y
+	 */
+	virtBakKeepWeekly: string
+	/**
+	 * M​o​n​t​h​l​y
+	 */
+	virtBakKeepMonthly: string
+	/**
+	 * Y​e​a​r​l​y
+	 */
+	virtBakKeepYearly: string
+	/**
+	 * M​o​d​e
+	 */
+	virtBakMode: string
+	/**
+	 * C​o​m​p​r​e​s​s​i​o​n
+	 */
+	virtBakCompress: string
+	/**
+	 * n​o​n​e
+	 */
+	virtBakCompressNone: string
+	/**
+	 * E​n​a​b​l​e​d
+	 */
+	virtBakEnabled: string
+	/**
+	 * D​i​s​a​b​l​e​d
+	 */
+	virtBakDisabled: string
+	/**
+	 * V​a​l​i​d​a​t​e
+	 */
+	virtBakValidate: string
+	/**
+	 * A​ ​P​V​E​ ​c​a​l​e​n​d​a​r​ ​e​v​e​n​t​:​ ​0​2​:​0​0​,​ ​s​a​t​ ​0​3​:​0​0​,​ ​m​o​n​.​.​f​r​i​ ​2​2​:​3​0​,​ ​d​a​i​l​y​.
+	 */
+	virtBakScheduleHint: string
+	/**
+	 * P​V​E​ ​d​o​e​s​ ​n​o​t​ ​t​a​k​e​ ​t​h​i​s​ ​s​c​h​e​d​u​l​e​:​ ​{​w​h​y​}
+	 * @param {unknown} why
+	 */
+	virtBakScheduleRefused: RequiredParams<'why'>
+	/**
+	 * N​e​x​t​ ​r​u​n​s
+	 */
+	virtBakNextRuns: string
+	/**
+	 * P​V​E​ ​l​i​s​t​s​ ​n​o​ ​u​p​c​o​m​i​n​g​ ​r​u​n​ ​f​o​r​ ​t​h​i​s​ ​s​c​h​e​d​u​l​e​.
+	 */
+	virtBakNoNextRuns: string
+	/**
+	 * G​u​e​s​t​s
+	 */
+	virtBakSelection: string
+	/**
+	 * A​l​l​ ​g​u​e​s​t​s
+	 */
+	virtBakSelAll: string
+	/**
+	 * A​l​l​ ​g​u​e​s​t​s​ ​e​x​c​e​p​t​ ​{​v​m​i​d​s​}
+	 * @param {unknown} vmids
+	 */
+	virtBakSelAllExcept: RequiredParams<'vmids'>
+	/**
+	 * V​M​I​D​ ​{​v​m​i​d​s​}
+	 * @param {unknown} vmids
+	 */
+	virtBakSelVmids: RequiredParams<'vmids'>
+	/**
+	 * P​o​o​l​ ​{​p​o​o​l​}
+	 * @param {unknown} pool
+	 */
+	virtBakSelPool: RequiredParams<'pool'>
+	/**
+	 * P​o​o​l
+	 */
+	virtBakPool: string
+	/**
+	 * E​x​c​e​p​t​ ​V​M​I​D​s
+	 */
+	virtBakExclude: string
+	/**
+	 * A​n​y​ ​n​o​d​e
+	 */
+	virtBakAnyNode: string
+	/**
+	 * N​a​m​e​d​ ​b​y​ ​P​V​E
+	 */
+	virtBakJobIdAuto: string
+	/**
+	 * N​o​t​e​s​ ​t​e​m​p​l​a​t​e
+	 */
+	virtBakNotesTemplate: string
+	/**
+	 * C​o​m​m​e​n​t
+	 */
+	virtBakComment: string
+	/**
+	 * M​a​i​l​ ​n​o​t​i​f​i​c​a​t​i​o​n
+	 */
+	virtBakMail: string
+	/**
+	 * A​l​w​a​y​s
+	 */
+	virtBakMailAlways: string
+	/**
+	 * O​n​ ​f​a​i​l​u​r​e
+	 */
+	virtBakMailFailure: string
+	/**
+	 * N​e​w​ ​j​o​b
+	 */
+	virtBakNewJob: string
+	/**
+	 * E​d​i​t​ ​j​o​b​ ​{​i​d​}
+	 * @param {unknown} id
+	 */
+	virtBakEditJob: RequiredParams<'id'>
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​s​.
+	 */
+	virtBakNoJobs: string
+	/**
+	 * R​u​n​ ​n​o​w
+	 */
+	virtBakRunNow: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​r​u​n​ ​{​i​d​}​ ​n​o​w
+	 * @param {unknown} id
+	 */
+	virtBakConfirmRun: RequiredParams<'id'>
+	/**
+	 * T​h​i​s​ ​b​a​c​k​s​ ​u​p​ ​e​v​e​r​y​ ​g​u​e​s​t​ ​t​h​e​ ​j​o​b​ ​t​a​k​e​s​ ​n​o​w​,​ ​w​h​i​c​h​ ​c​a​n​ ​t​a​k​e​ ​a​ ​w​h​i​l​e​.
+	 */
+	virtBakRunNote: string
+	/**
+	 * R​u​n​n​i​n​g​ ​j​o​b​ ​{​i​d​}​…
+	 * @param {unknown} id
+	 */
+	virtBakJobRunning: RequiredParams<'id'>
+	/**
+	 * J​o​b​ ​{​i​d​}​ ​f​i​n​i​s​h​e​d​.
+	 * @param {unknown} id
+	 */
+	virtBakJobRan: RequiredParams<'id'>
+	/**
+	 * B​a​c​k​u​p​s
+	 */
+	virtBakList: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakNone: string
+	/**
+	 * B​a​c​k​ ​u​p​ ​n​o​w
+	 */
+	virtBakNow: string
+	/**
+	 * S​n​a​p​s​h​o​t​ ​m​o​d​e​ ​b​a​c​k​s​ ​u​p​ ​a​ ​r​u​n​n​i​n​g​ ​g​u​e​s​t​ ​w​i​t​h​ ​n​o​ ​d​o​w​n​t​i​m​e​.
+	 */
+	virtBakNowNote: string
+	/**
+	 * T​h​i​s​ ​n​o​d​e​ ​h​a​s​ ​n​o​ ​s​t​o​r​a​g​e​ ​t​h​a​t​ ​h​o​l​d​s​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakNoStorage: string
+	/**
+	 * S​t​a​r​t​ ​b​a​c​k​u​p
+	 */
+	virtBakStart: string
+	/**
+	 * N​o​t​e​s
+	 */
+	virtBakNotes: string
+	/**
+	 * O​p​t​i​o​n​a​l
+	 */
+	virtBakOptional: string
+	/**
+	 * P​r​o​t​e​c​t​e​d
+	 */
+	virtBakProtected: string
+	/**
+	 * K​e​p​t​ ​f​r​o​m​ ​p​r​u​n​i​n​g​ ​a​n​d​ ​d​e​l​e​t​i​o​n​ ​u​n​t​i​l​ ​u​n​p​r​o​t​e​c​t​e​d​.
+	 */
+	virtBakProtectedNote: string
+	/**
+	 * A​ ​p​r​o​t​e​c​t​e​d​ ​b​a​c​k​u​p​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​l​e​t​e​d​.​ ​U​n​p​r​o​t​e​c​t​ ​i​t​ ​f​i​r​s​t​.
+	 */
+	virtBakProtectedNoDelete: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p​…​ ​T​h​i​s​ ​c​a​n​ ​t​a​k​e​ ​s​e​v​e​r​a​l​ ​m​i​n​u​t​e​s​.
+	 */
+	virtBakRunning: string
+	/**
+	 * R​e​s​t​o​r​i​n​g​…​ ​T​h​i​s​ ​c​a​n​ ​t​a​k​e​ ​s​e​v​e​r​a​l​ ​m​i​n​u​t​e​s​.
+	 */
+	virtBakRestoring: string
+	/**
+	 * B​a​c​k​e​d​ ​u​p​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	virtBakTaken: RequiredParams<'name'>
+	/**
+	 * B​a​c​k​u​p​ ​s​a​v​e​d​.
+	 */
+	virtBakEdited: string
+	/**
+	 * B​a​c​k​u​p​ ​d​e​l​e​t​e​d​.
+	 */
+	virtBakDeleted: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	virtBakDelete: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​d​e​l​e​t​e​ ​b​a​c​k​u​p
+	 */
+	virtBakConfirmDelete: string
+	/**
+	 * F​i​l​e
+	 */
+	virtBakFile: string
+	/**
+	 * V​e​r​i​f​i​e​d
+	 */
+	virtBakVerified: string
+	/**
+	 * V​e​r​i​f​i​c​a​t​i​o​n​ ​f​a​i​l​e​d
+	 */
+	virtBakVerifyFailed: string
+	/**
+	 * O​v​e​r​ ​t​h​i​s​ ​g​u​e​s​t
+	 */
+	virtBakOverGuest: string
+	/**
+	 * A​s​ ​a​ ​n​e​w​ ​g​u​e​s​t
+	 */
+	virtBakAsNew: string
+	/**
+	 * D​i​s​k​ ​s​t​o​r​a​g​e
+	 */
+	virtBakRestoreStorage: string
+	/**
+	 * A​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​u​p
+	 */
+	virtBakRestoreStorageOwn: string
+	/**
+	 * R​e​s​t​o​r​i​n​g​ ​o​v​e​r​w​r​i​t​e​s​ ​t​h​e​ ​g​u​e​s​t​'​s​ ​d​i​s​k​s​ ​a​n​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 */
+	virtBakOverwrites: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	virtBakRestore: string
+	/**
+	 * C​o​n​f​i​r​m​:​ ​o​v​e​r​w​r​i​t​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	virtBakConfirmRestore: RequiredParams<'name'>
+	/**
+	 * R​e​s​t​o​r​e​d​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​e​ ​b​a​c​k​u​p​.
+	 * @param {unknown} name
+	 */
+	virtBakRestored: RequiredParams<'name'>
+	/**
+	 * R​e​s​t​o​r​e​d​ ​t​h​e​ ​b​a​c​k​u​p​ ​a​s​ ​a​ ​n​e​w​ ​g​u​e​s​t​.
+	 */
+	virtBakRestoredNew: string
+	/**
+	 * E​n​t​e​r​ ​a​ ​s​c​h​e​d​u​l​e​.
+	 */
+	virtBakIssueScheduleEmpty: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​s​c​h​e​d​u​l​e​ ​P​V​E​ ​t​a​k​e​s​.
+	 */
+	virtBakIssueScheduleInvalid: string
+	/**
+	 * P​i​c​k​ ​a​ ​s​t​o​r​a​g​e​ ​o​f​ ​t​h​e​ ​n​o​d​e​ ​t​h​a​t​ ​h​o​l​d​s​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakIssueStorage: string
+	/**
+	 * P​i​c​k​ ​s​n​a​p​s​h​o​t​,​ ​s​u​s​p​e​n​d​ ​o​r​ ​s​t​o​p​.
+	 */
+	virtBakIssueMode: string
+	/**
+	 * P​i​c​k​ ​a​ ​c​o​m​p​r​e​s​s​i​o​n​ ​P​V​E​ ​k​n​o​w​s​.
+	 */
+	virtBakIssueCompress: string
+	/**
+	 * P​i​c​k​ ​t​h​e​ ​g​u​e​s​t​s​:​ ​a​l​l​ ​o​f​ ​t​h​e​m​,​ ​a​ ​p​o​o​l​,​ ​o​r​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​ ​V​M​I​D​.
+	 */
+	virtBakIssueGuests: string
+	/**
+	 * T​h​e​ ​n​o​d​e​ ​i​s​ ​n​o​t​ ​o​n​l​i​n​e​.
+	 */
+	virtBakIssueNodeOffline: string
+	/**
+	 * S​h​u​t​ ​t​h​e​ ​g​u​e​s​t​ ​d​o​w​n​ ​b​e​f​o​r​e​ ​r​e​s​t​o​r​i​n​g​ ​o​v​e​r​ ​i​t​.
+	 */
+	virtBakIssueNotStopped: string
+	/**
+	 * I​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​b​a​c​k​u​p​s​ ​a​g​a​i​n​.
+	 */
+	virtBakIssueNotFound: string
+	/**
+	 * T​h​i​s​ ​h​o​s​t​ ​k​e​e​p​s​ ​n​o​ ​b​a​c​k​u​p​s​.
+	 */
+	virtBakIssueUnsupported: string
+	/**
 	 * Y​e​s
 	 */
 	yes: string
@@ -9254,6 +9650,390 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * cloud-init settings saved.
 	 */
 	virtCiSaved: () => LocalizedString
+	/**
+	 * Backup
+	 */
+	virtViewBackup: () => LocalizedString
+	/**
+	 * Backup jobs
+	 */
+	virtSectionBackupJobs: () => LocalizedString
+	/**
+	 * Plan
+	 */
+	virtBakPlan: () => LocalizedString
+	/**
+	 * Datacenter → Backup jobs
+	 */
+	virtBakDatacenter: () => LocalizedString
+	/**
+	 * No backup job takes this guest.
+	 */
+	virtBakNoPlan: () => LocalizedString
+	/**
+	 * This job also takes other guests. Edit it under Backup jobs.
+	 */
+	virtBakSharedJob: () => LocalizedString
+	/**
+	 * Add a schedule
+	 */
+	virtBakAddPlan: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	virtBakEditPlan: () => LocalizedString
+	/**
+	 * Remove schedule
+	 */
+	virtBakRemovePlan: () => LocalizedString
+	/**
+	 * Confirm: remove job {id}
+	 */
+	virtBakConfirmRemovePlan: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Backup job saved.
+	 */
+	virtBakPlanSaved: () => LocalizedString
+	/**
+	 * Backup job removed.
+	 */
+	virtBakPlanRemoved: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	virtBakSchedule: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	virtBakStorage: () => LocalizedString
+	/**
+	 * Pick a storage
+	 */
+	virtBakPickStorage: () => LocalizedString
+	/**
+	 * Retention
+	 */
+	virtBakRetention: () => LocalizedString
+	/**
+	 * The storage's own
+	 */
+	virtBakRetentionDefault: () => LocalizedString
+	/**
+	 * How many backups each rule keeps. All empty: the storage's own retention.
+	 */
+	virtBakRetentionNote: () => LocalizedString
+	/**
+	 * Last
+	 */
+	virtBakKeepLast: () => LocalizedString
+	/**
+	 * Hourly
+	 */
+	virtBakKeepHourly: () => LocalizedString
+	/**
+	 * Daily
+	 */
+	virtBakKeepDaily: () => LocalizedString
+	/**
+	 * Weekly
+	 */
+	virtBakKeepWeekly: () => LocalizedString
+	/**
+	 * Monthly
+	 */
+	virtBakKeepMonthly: () => LocalizedString
+	/**
+	 * Yearly
+	 */
+	virtBakKeepYearly: () => LocalizedString
+	/**
+	 * Mode
+	 */
+	virtBakMode: () => LocalizedString
+	/**
+	 * Compression
+	 */
+	virtBakCompress: () => LocalizedString
+	/**
+	 * none
+	 */
+	virtBakCompressNone: () => LocalizedString
+	/**
+	 * Enabled
+	 */
+	virtBakEnabled: () => LocalizedString
+	/**
+	 * Disabled
+	 */
+	virtBakDisabled: () => LocalizedString
+	/**
+	 * Validate
+	 */
+	virtBakValidate: () => LocalizedString
+	/**
+	 * A PVE calendar event: 02:00, sat 03:00, mon..fri 22:30, daily.
+	 */
+	virtBakScheduleHint: () => LocalizedString
+	/**
+	 * PVE does not take this schedule: {why}
+	 */
+	virtBakScheduleRefused: (arg: { why: unknown }) => LocalizedString
+	/**
+	 * Next runs
+	 */
+	virtBakNextRuns: () => LocalizedString
+	/**
+	 * PVE lists no upcoming run for this schedule.
+	 */
+	virtBakNoNextRuns: () => LocalizedString
+	/**
+	 * Guests
+	 */
+	virtBakSelection: () => LocalizedString
+	/**
+	 * All guests
+	 */
+	virtBakSelAll: () => LocalizedString
+	/**
+	 * All guests except {vmids}
+	 */
+	virtBakSelAllExcept: (arg: { vmids: unknown }) => LocalizedString
+	/**
+	 * VMID {vmids}
+	 */
+	virtBakSelVmids: (arg: { vmids: unknown }) => LocalizedString
+	/**
+	 * Pool {pool}
+	 */
+	virtBakSelPool: (arg: { pool: unknown }) => LocalizedString
+	/**
+	 * Pool
+	 */
+	virtBakPool: () => LocalizedString
+	/**
+	 * Except VMIDs
+	 */
+	virtBakExclude: () => LocalizedString
+	/**
+	 * Any node
+	 */
+	virtBakAnyNode: () => LocalizedString
+	/**
+	 * Named by PVE
+	 */
+	virtBakJobIdAuto: () => LocalizedString
+	/**
+	 * Notes template
+	 */
+	virtBakNotesTemplate: () => LocalizedString
+	/**
+	 * Comment
+	 */
+	virtBakComment: () => LocalizedString
+	/**
+	 * Mail notification
+	 */
+	virtBakMail: () => LocalizedString
+	/**
+	 * Always
+	 */
+	virtBakMailAlways: () => LocalizedString
+	/**
+	 * On failure
+	 */
+	virtBakMailFailure: () => LocalizedString
+	/**
+	 * New job
+	 */
+	virtBakNewJob: () => LocalizedString
+	/**
+	 * Edit job {id}
+	 */
+	virtBakEditJob: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * No backup jobs.
+	 */
+	virtBakNoJobs: () => LocalizedString
+	/**
+	 * Run now
+	 */
+	virtBakRunNow: () => LocalizedString
+	/**
+	 * Confirm: run {id} now
+	 */
+	virtBakConfirmRun: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * This backs up every guest the job takes now, which can take a while.
+	 */
+	virtBakRunNote: () => LocalizedString
+	/**
+	 * Running job {id}…
+	 */
+	virtBakJobRunning: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Job {id} finished.
+	 */
+	virtBakJobRan: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Backups
+	 */
+	virtBakList: () => LocalizedString
+	/**
+	 * No backups.
+	 */
+	virtBakNone: () => LocalizedString
+	/**
+	 * Back up now
+	 */
+	virtBakNow: () => LocalizedString
+	/**
+	 * Snapshot mode backs up a running guest with no downtime.
+	 */
+	virtBakNowNote: () => LocalizedString
+	/**
+	 * This node has no storage that holds backups.
+	 */
+	virtBakNoStorage: () => LocalizedString
+	/**
+	 * Start backup
+	 */
+	virtBakStart: () => LocalizedString
+	/**
+	 * Notes
+	 */
+	virtBakNotes: () => LocalizedString
+	/**
+	 * Optional
+	 */
+	virtBakOptional: () => LocalizedString
+	/**
+	 * Protected
+	 */
+	virtBakProtected: () => LocalizedString
+	/**
+	 * Kept from pruning and deletion until unprotected.
+	 */
+	virtBakProtectedNote: () => LocalizedString
+	/**
+	 * A protected backup cannot be deleted. Unprotect it first.
+	 */
+	virtBakProtectedNoDelete: () => LocalizedString
+	/**
+	 * Backing up… This can take several minutes.
+	 */
+	virtBakRunning: () => LocalizedString
+	/**
+	 * Restoring… This can take several minutes.
+	 */
+	virtBakRestoring: () => LocalizedString
+	/**
+	 * Backed up {name}.
+	 */
+	virtBakTaken: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Backup saved.
+	 */
+	virtBakEdited: () => LocalizedString
+	/**
+	 * Backup deleted.
+	 */
+	virtBakDeleted: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	virtBakDelete: () => LocalizedString
+	/**
+	 * Confirm: delete backup
+	 */
+	virtBakConfirmDelete: () => LocalizedString
+	/**
+	 * File
+	 */
+	virtBakFile: () => LocalizedString
+	/**
+	 * Verified
+	 */
+	virtBakVerified: () => LocalizedString
+	/**
+	 * Verification failed
+	 */
+	virtBakVerifyFailed: () => LocalizedString
+	/**
+	 * Over this guest
+	 */
+	virtBakOverGuest: () => LocalizedString
+	/**
+	 * As a new guest
+	 */
+	virtBakAsNew: () => LocalizedString
+	/**
+	 * Disk storage
+	 */
+	virtBakRestoreStorage: () => LocalizedString
+	/**
+	 * As in the backup
+	 */
+	virtBakRestoreStorageOwn: () => LocalizedString
+	/**
+	 * Restoring overwrites the guest's disks and configuration.
+	 */
+	virtBakOverwrites: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	virtBakRestore: () => LocalizedString
+	/**
+	 * Confirm: overwrite {name}
+	 */
+	virtBakConfirmRestore: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Restored {name} from the backup.
+	 */
+	virtBakRestored: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Restored the backup as a new guest.
+	 */
+	virtBakRestoredNew: () => LocalizedString
+	/**
+	 * Enter a schedule.
+	 */
+	virtBakIssueScheduleEmpty: () => LocalizedString
+	/**
+	 * That is not a schedule PVE takes.
+	 */
+	virtBakIssueScheduleInvalid: () => LocalizedString
+	/**
+	 * Pick a storage of the node that holds backups.
+	 */
+	virtBakIssueStorage: () => LocalizedString
+	/**
+	 * Pick snapshot, suspend or stop.
+	 */
+	virtBakIssueMode: () => LocalizedString
+	/**
+	 * Pick a compression PVE knows.
+	 */
+	virtBakIssueCompress: () => LocalizedString
+	/**
+	 * Pick the guests: all of them, a pool, or at least one VMID.
+	 */
+	virtBakIssueGuests: () => LocalizedString
+	/**
+	 * The node is not online.
+	 */
+	virtBakIssueNodeOffline: () => LocalizedString
+	/**
+	 * Shut the guest down before restoring over it.
+	 */
+	virtBakIssueNotStopped: () => LocalizedString
+	/**
+	 * It is no longer there. Read the backups again.
+	 */
+	virtBakIssueNotFound: () => LocalizedString
+	/**
+	 * This host keeps no backups.
+	 */
+	virtBakIssueUnsupported: () => LocalizedString
 	/**
 	 * Yes
 	 */

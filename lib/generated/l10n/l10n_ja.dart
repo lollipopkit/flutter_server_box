@@ -5165,4 +5165,13 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'イメージがディスクより大きいです。ディスクを少なくとも同じ大きさにしてください。';
+
+  @override
+  String get virtBackupIssueStorage => 'そのストレージはこのノードでバックアップを保持しません。';
+
+  @override
+  String get virtBackupIssueOption => 'PVE が受け付けるモードや圧縮ではありません。';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'ジョブのノードはオンラインではありません。';
 }

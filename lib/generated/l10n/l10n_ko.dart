@@ -5166,4 +5166,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtCreateImageBigger => '이미지가 디스크보다 큽니다. 디스크를 최소한 그만큼 크게 하세요.';
+
+  @override
+  String get virtBackupIssueStorage => '해당 스토리지는 이 노드에서 백업을 보관하지 않습니다.';
+
+  @override
+  String get virtBackupIssueOption => 'PVE가 받는 모드나 압축이 아닙니다.';
+
+  @override
+  String get virtBackupIssueNodeOffline => '작업의 노드가 온라인이 아닙니다.';
 }

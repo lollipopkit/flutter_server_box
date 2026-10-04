@@ -7034,5 +7034,17 @@
   "virtCreateImageBigger": "The image is bigger than the disk: make the disk at least as big.",
   "@virtCreateImageBigger": {
     "description": "A refused create: the cloud image is bigger than the disk asked for."
+  },
+  "virtBackupIssueStorage": "That storage does not hold backups on this node.",
+  "@virtBackupIssueStorage": {
+    "description": "A backup or a job names a storage the node does not keep backups on."
+  },
+  "virtBackupIssueOption": "Not a mode or compression PVE takes.",
+  "@virtBackupIssueOption": {
+    "description": "A backup or a job asks for a mode or compression PVE does not have."
+  },
+  "virtBackupIssueNodeOffline": "The job's node is not online.",
+  "@virtBackupIssueNodeOffline": {
+    "description": "Run now: the job's node is not online, or no node is."
   }
 }

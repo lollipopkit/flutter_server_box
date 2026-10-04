@@ -16,7 +16,7 @@ use std::sync::{Arc, RwLock};
 
 use sbm_virt::error::{Error, ErrorKind};
 use sbm_virt::model::{Guest, PowerAction};
-use sbm_virt::pve::http::{Body, BoxFuture, Dial, LoopbackDial, Method, Stream, TlsConnector};
+use sbm_virt::pve::http::{BoxFuture, Dial, LoopbackDial, Stream, TlsConnector};
 use sbm_virt::pve::{self, Auth, Client};
 
 use super::bmc::CertInfo;
@@ -131,33 +131,9 @@ impl From<PveLogin> for pve::Config {
     }
 }
 
-pub enum PveMethod {
-    Get,
-    Post,
-    Put,
-    Delete,
-}
-
-impl From<PveMethod> for Method {
-    fn from(m: PveMethod) -> Self {
-        match m {
-            PveMethod::Get => Method::Get,
-            PveMethod::Post => Method::Post,
-            PveMethod::Put => Method::Put,
-            PveMethod::Delete => Method::Delete,
-        }
-    }
-}
-
 pub struct PveHeader {
     pub name: String,
     pub value: String,
-}
-
-/// What [`PveSession::raw`] answered: the host's status and body as sent.
-pub struct PveRawResponse {
-    pub status: u16,
-    pub body: Vec<u8>,
 }
 
 /// How long a task is waited for, and how often it is asked about; `None`
@@ -404,52 +380,6 @@ impl PveSession {
         Ok(self.client.delete_snapshot(&guest.into(), &name).await?)
     }
 
-    /// Reads the guest's state again after an action made through
-    /// [`PveSession::raw`] (a snapshot revert), so the next load shows it.
-    pub async fn refresh_status(&self, guest: PveGuestRef) {
-        self.client.refresh_status(&guest.into()).await;
-    }
-
-
-    /// Any API call in this session, `path` under `/api2/json` with its
-    /// query: the body's `data` as JSON, or the whole body with `whole`.
-    pub async fn request(
-        &self,
-        method: PveMethod,
-        path: String,
-        content_type: Option<String>,
-        body: Option<Vec<u8>>,
-        action: bool,
-        whole: bool,
-    ) -> Result<String, PveError> {
-        let body = body.map(|bytes| Body {
-            content_type: content_type.unwrap_or_else(|| "application/x-www-form-urlencoded".into()),
-            bytes,
-        });
-        let value = self.client.request(method.into(), &path, body, action, whole).await?;
-        Ok(value.to_string())
-    }
-
-    /// A request answered as the host answered it, for the app's calls that
-    /// read PVE's answers themselves. `path` is the whole path, API root and
-    /// query included. The session still logs in, renews, and replaces a
-    /// refused ticket once.
-    // TODO(migration): remove with the last of the app's own PVE calls.
-    pub async fn raw(
-        &self,
-        method: PveMethod,
-        path: String,
-        content_type: Option<String>,
-        body: Option<Vec<u8>>,
-    ) -> Result<PveRawResponse, PveError> {
-        let body = body.map(|bytes| Body {
-            content_type: content_type.unwrap_or_else(|| "application/x-www-form-urlencoded".into()),
-            bytes,
-        });
-        let resp = self.client.raw(method.into(), &path, body).await?;
-        Ok(PveRawResponse { status: resp.status, body: resp.body })
-    }
-
     /// Waits for the task `upid` on `node` to stop; its error is
     /// `actionFailed` with PVE's text.
     pub async fn wait_task(&self, node: String, upid: String) -> Result<(), PveError> {
@@ -563,6 +493,84 @@ impl PveSession {
     /// The devices `guest` can be given, `HostDevices` JSON.
     pub async fn host_devices(&self, guest: PveGuestRef) -> Result<String, PveError> {
         to_json(&self.client.host_devices(&guest.into()).await?)
+    }
+
+    /// A refusal met on a connection of the app's own (an upload, which
+    /// streams), in PVE's words, said as a change's is: a name taken, a
+    /// stale digest, a missing privilege and how to grant it.
+    #[flutter_rust_bridge::frb(sync)]
+    pub fn refusal(&self, message: String, status: Option<u16>) -> PveError {
+        self.client.refusal(&message, status).into()
+    }
+
+    // --- Backups and backup jobs (sbm_virt::backup) ---
+
+    /// `guest`'s backups on its node's backup storages, `Backup` JSON.
+    pub async fn backups(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        to_json(&self.client.backups(&guest.into()).await?)
+    }
+
+    /// `node`'s storages that hold backups, `Pool` JSON.
+    pub async fn backup_storages(&self, node: String) -> Result<String, PveError> {
+        to_json(&self.client.backup_storages(&node).await?)
+    }
+
+    /// Every online node's backup storages, `Pool` JSON.
+    pub async fn all_backup_storages(&self) -> Result<String, PveError> {
+        to_json(&self.client.all_backup_storages().await?)
+    }
+
+    /// The jobs that take `guest`, `BackupJob` JSON.
+    pub async fn backup_jobs(&self, guest: PveGuestRef) -> Result<String, PveError> {
+        to_json(&self.client.backup_jobs(&guest.into()).await?)
+    }
+
+    /// The datacenter's jobs, `BackupJob` JSON.
+    pub async fn all_backup_jobs(&self) -> Result<String, PveError> {
+        to_json(&self.client.all_backup_jobs().await?)
+    }
+
+    /// Makes, edits or (`remove`) removes `edit_json` (a `BackupJobEdit`),
+    /// checked first.
+    pub async fn edit_backup_job(&self, edit_json: String, remove: bool) -> Result<(), PveError> {
+        let edit: sbm_virt::backup::BackupJobEdit = from_json(&edit_json)?;
+        Ok(self.client.edit_backup_job(&edit, remove).await?)
+    }
+
+    /// What the host makes of `schedule`, `ScheduleCheck` JSON.
+    pub async fn check_schedule(&self, schedule: String) -> Result<String, PveError> {
+        to_json(&self.client.check_schedule(&schedule).await?)
+    }
+
+    /// A backup of `guest` now, as `request_json` (a `BackupRequest`) asks,
+    /// waited for.
+    pub async fn backup(&self, guest: PveGuestRef, request_json: String) -> Result<(), PveError> {
+        let request: sbm_virt::backup::BackupRequest = from_json(&request_json)?;
+        Ok(self.client.backup(&guest.into(), &request).await?)
+    }
+
+    /// A job's "Run now", on its node or every online one, waited for.
+    pub async fn run_backup_job(&self, id: String) -> Result<(), PveError> {
+        Ok(self.client.run_backup_job(&id).await?)
+    }
+
+    /// `backup_id` restored over `guest` (stopped) or as `vmid`; `storage`
+    /// where its disks land.
+    pub async fn restore_backup(&self, guest: PveGuestRef, backup_id: String, vmid: Option<u32>, storage: Option<String>) -> Result<(), PveError> {
+        Ok(self.client.restore_backup(&guest.into(), &backup_id, vmid, storage.as_deref()).await?)
+    }
+
+    /// `backup_json`'s notes and protection, as `edit_json` sets them.
+    pub async fn edit_backup(&self, backup_json: String, edit_json: String) -> Result<(), PveError> {
+        let backup: sbm_virt::backup::Backup = from_json(&backup_json)?;
+        let edit: sbm_virt::backup::BackupEdit = from_json(&edit_json)?;
+        Ok(self.client.edit_backup(&backup, &edit).await?)
+    }
+
+    /// Deletes `backup_json`, waited for.
+    pub async fn delete_backup(&self, backup_json: String) -> Result<(), PveError> {
+        let backup: sbm_virt::backup::Backup = from_json(&backup_json)?;
+        Ok(self.client.delete_backup(&backup).await?)
     }
 
     /// The headers that authenticate a connection made outside the session

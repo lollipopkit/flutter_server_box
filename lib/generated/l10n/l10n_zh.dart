@@ -5073,6 +5073,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtCreateImageBigger => '镜像比磁盘大：磁盘至少要和镜像一样大。';
+
+  @override
+  String get virtBackupIssueStorage => '该存储在此节点上不存放备份。';
+
+  @override
+  String get virtBackupIssueOption => '不是 PVE 接受的模式或压缩方式。';
+
+  @override
+  String get virtBackupIssueNodeOffline => '此任务的节点不在线。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10143,4 +10152,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtCreateImageBigger => '映像比磁碟大：磁碟至少要和映像一樣大。';
+
+  @override
+  String get virtBackupIssueStorage => '該儲存在此節點上不存放備份。';
+
+  @override
+  String get virtBackupIssueOption => '不是 PVE 接受的模式或壓縮方式。';
+
+  @override
+  String get virtBackupIssueNodeOffline => '此工作的節點不在線上。';
 }

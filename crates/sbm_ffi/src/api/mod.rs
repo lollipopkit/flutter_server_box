@@ -1,3 +1,4 @@
+pub mod backup;
 pub mod bmc;
 pub mod create;
 pub mod desktop;

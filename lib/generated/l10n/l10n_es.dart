@@ -5495,4 +5495,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'La imagen es más grande que el disco: haz el disco al menos igual de grande.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Ese almacenamiento no guarda copias de seguridad en este nodo.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'No es un modo o compresión que admita PVE.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'El nodo de la tarea no está en línea.';
 }

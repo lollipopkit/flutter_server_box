@@ -5490,4 +5490,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'Das Image ist größer als die Festplatte: Machen Sie die Festplatte mindestens so groß.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Dieser Speicher nimmt auf diesem Knoten keine Backups auf.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Kein Modus und keine Kompression, die PVE annimmt.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'Der Knoten des Jobs ist nicht online.';
 }

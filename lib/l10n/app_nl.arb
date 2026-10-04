@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot vereist UEFI.",
   "virtGuestNotStopped": "Sluit het eerst af.",
   "virtGuestIsTemplate": "Het is al een sjabloon.",
-  "virtCreateImageBigger": "De image is groter dan de schijf: maak de schijf minstens even groot."
+  "virtCreateImageBigger": "De image is groter dan de schijf: maak de schijf minstens even groot.",
+  "virtBackupIssueStorage": "Die opslag bevat op deze node geen back-ups.",
+  "virtBackupIssueOption": "Geen modus of compressie die PVE accepteert.",
+  "virtBackupIssueNodeOffline": "De node van de taak is niet online."
 }

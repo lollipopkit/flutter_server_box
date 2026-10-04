@@ -5468,4 +5468,16 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'De image is groter dan de schijf: maak de schijf minstens even groot.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Die opslag bevat op deze node geen back-ups.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'Geen modus of compressie die PVE accepteert.';
+
+  @override
+  String get virtBackupIssueNodeOffline =>
+      'De node van de taak is niet online.';
 }

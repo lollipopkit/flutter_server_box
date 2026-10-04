@@ -1238,12 +1238,38 @@ changes the running guest takes later shown as pending and reverted; a
 stale read refused as a conflict; cloud-init read and rewritten (a key, a
 static address, the password removed or kept); the host's devices.
 
-Still in Dart until their part of item 5 moves them (each marked
-`TODO(migration)`): every other PVE call `PveBackend` makes, built by a Dio
-whose adapter hands the request to `PveSession.raw` (the session's rules
-apply; the status and body come back as PVE sent them), and a console's
-websocket and an upload, which are connections of their own authenticated
-with the session's headers.
+Since 5.7, backups and backup jobs: `sbm_virt::backup` (a backup, a job,
+a backup taken now, the edit of a job or of a backup's notes and
+protection, and the rules — the schedule's shape with PVE's own bounds
+(`schedule_issue`), a job's storage and guests, a request's storage, mode
+and compression), `pve::backup` (the listings read, a job's form with what
+it clears, a job's "Run now" as PVE's own web UI sends it) and PVE's calls
+on `pve::Client` (`backups`, `backup_storages`, `all_backup_storages`,
+`backup_jobs`, `all_backup_jobs`, `edit_backup_job`, `check_schedule`,
+`backup`, `run_backup_job`, `restore_backup` — over a stopped guest, or as
+a new VMID — `edit_backup`, `delete_backup`). The agent serves them as
+`/virt/backups`, `/virt/backup`, `/virt/backup/{restore,edit,delete}`,
+`/virt/backup-jobs` and `/virt/backup-jobs/{edit,run,schedule}`; libvirt
+keeps no backups, and is answered `unsupported`.
+Verified 2026-10-04 against PVE 9.2.2 through the agent: a backup taken
+now, one to a storage that holds none refused, notes and protection
+edited, a protected one's delete refused, a restore as a VMID in use
+refused, a restore over the stopped guest and as a new VMID; a job made,
+edited (what the form leaves out cleared), run now and removed, a job no
+longer on the host refused as `not_found` on run, edit and remove; the
+schedule check (next runs, PVE's refusal, a shape refused before it is
+sent); libvirt answered `unsupported`. Editing a job needs
+`Datastore.Allocate` on its storage as well as `Sys.Modify` on `/`
+(PVE's `assert_param_permission_*`), both named with their command.
+
+With it, every PVE call the app makes is a typed `PveSession` call: the
+Dio that handed the app's own requests to the session (`PveSession.raw`)
+is gone, with `PveResources`. Two connections stay the app's own,
+authenticated with the session's headers: a console's websocket and an
+upload, which streams a file; an upload's refusal is said by the session
+(`PveSession.refusal`, the same `manage_err` a change's goes through).
+Still in Dart (marked `TODO(migration)`): the console's websocket, which
+`sbm_virt::pve::Client::open_console` already opens for the agent.
 
 Not verified on a real host since the move: the session in Rust (renewal,
 TOTP, a refused ticket replaced) against PVE, and libvirt through the agent's

@@ -338,7 +338,11 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   (one `sbm_virt::hardware::Change`, made from the read whose `revision` it
   carries), `/virt/hardware/revert`, `/virt/cloud-init`,
   `/virt/cloud-init/set`, `/virt/host-devices`; refused as
-  `Detail::HardwareRefused`, a stale read as `conflict`. `tests/virt_api.rs` runs against a
+  `Detail::HardwareRefused`, a stale read as `conflict`. Backups
+  (`api/virt_backups.rs`, PVE only): `POST /virt/backups`, `/virt/backup`,
+  `/virt/backup/{restore,edit,delete}`, `/virt/backup-jobs`,
+  `/virt/backup-jobs/{edit,run,schedule}`; refused as
+  `Detail::BackupRefused`. `tests/virt_api.rs` runs against a
   fake PVE API over TLS.
   `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
   (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup

@@ -3219,7 +3219,7 @@ void _pveCloneBackup(_Agent agent) {
       expect((job.mode, job.compress), ('snapshot', 'zstd'));
       expect(job.enabled, isFalse);
       expect(job.vmids, [src.vmid]);
-      expect(job.takes(src.vmid), isTrue);
+      expect(job.takesOnly(src.vmid), isTrue);
       expect(job.notesTemplate, 'sb e2e {{guestname}}');
       expect(job.mailNotification, 'failure');
       expect(job.prune, 'keep-last=2');

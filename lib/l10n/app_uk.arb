@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Для Secure Boot потрібен UEFI.",
   "virtGuestNotStopped": "Спершу вимкніть її.",
   "virtGuestIsTemplate": "Це вже шаблон.",
-  "virtCreateImageBigger": "Образ більший за диск: зробіть диск не меншим за образ."
+  "virtCreateImageBigger": "Образ більший за диск: зробіть диск не меншим за образ.",
+  "virtBackupIssueStorage": "Це сховище не містить резервних копій на цьому вузлі.",
+  "virtBackupIssueOption": "PVE не приймає такий режим або стиснення.",
+  "virtBackupIssueNodeOffline": "Вузол завдання не в мережі."
 }

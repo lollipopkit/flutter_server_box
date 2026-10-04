@@ -150,6 +150,14 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
         ("GET", "/nodes/pve/qemu/100/pending") => respond(200, json!([{"key": "cores", "value": 2, "pending": 4}])),
         ("POST", "/nodes/pve/qemu/100/config") => respond(200, json!(UPID)),
         ("PUT", "/nodes/pve/qemu/100/cloudinit") => respond(200, Value::Null),
+        ("GET", "/cluster/backup") => respond(
+            200,
+            json!([{"id": "nightly", "type": "vzdump", "schedule": "02:00", "storage": "local", "vmid": "100", "enabled": 1,
+                    "prune-backups": {"keep-last": "7"}}]),
+        ),
+        ("POST", "/cluster/backup") | ("PUT", "/cluster/backup/nightly") => respond(200, Value::Null),
+        ("POST", "/nodes/pve/vzdump") => respond(200, json!(UPID)),
+        ("GET", "/cluster/jobs/schedule-analyze") => respond(200, json!([{"timestamp": 1790000000}, {"timestamp": 1790086400}])),
         ("GET", "/nodes/pve/qemu/100/snapshot") => respond(
             200,
             json!([
@@ -167,12 +175,14 @@ fn handle(seen: &Mutex<Seen>, method: &str, path: &str, auth: Option<String>) ->
         ("GET", "/storage") => respond(200, json!([{"storage": "local", "type": "dir", "path": "/var/lib/vz"}])),
         ("GET", "/nodes/pve/storage") => respond(
             200,
-            json!([{"storage": "local", "type": "dir", "active": 1, "enabled": 1, "content": "images,iso",
+            json!([{"storage": "local", "type": "dir", "active": 1, "enabled": 1, "content": "images,iso,backup",
                     "total": 1000, "used": 400, "avail": 600}]),
         ),
         ("GET", "/nodes/pve/storage/local/content") => respond(
             200,
-            json!([{"volid": "local:100/vm-100-disk-0.qcow2", "content": "images", "format": "qcow2", "size": 8, "vmid": 100}]),
+            json!([{"volid": "local:100/vm-100-disk-0.qcow2", "content": "images", "format": "qcow2", "size": 8, "vmid": 100},
+                   {"volid": "local:backup/vzdump-qemu-100-2026_10_01-02_00_00.vma.zst", "content": "backup", "format": "vma.zst",
+                    "size": 1000, "vmid": 100, "ctime": 1790000000, "subtype": "qemu", "notes": "nightly"}]),
         ),
         ("GET", "/nodes/pve/network") => {
             let body = json!({
@@ -627,6 +637,57 @@ async fn hardware_is_read_changed_from_its_revision_and_recorded() {
 
     for path in ["/api/v1/virt/hardware/change", "/api/v1/virt/hardware/revert", "/api/v1/virt/cloud-init/set"] {
         let body = json!({"guest": "qemu/100", "change": {"op": "set_autostart", "on": true}, "edit": {"values": {"user": "x"}, "revision": ""}});
+        let (status, _) = call(&srv, Some("viewer"), Method::POST, path, Some(body)).await;
+        assert_eq!(status, 403, "{path}");
+    }
+}
+
+#[ntex::test]
+async fn backups_and_jobs_are_listed_checked_first_and_recorded() {
+    let pve = FakePve::start().await;
+    let (srv, db) = server().await;
+    let pin = pinned(&pve).await;
+    call(&srv, Some("admin"), Method::PUT, "/api/v1/virt/pve", Some(token_config(&pve.url(), Some(&pin)))).await;
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backups", Some(json!({"guest": "qemu/100"}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    assert_eq!(body["backups"].as_array().unwrap().len(), 1, "{body}");
+    assert_eq!(body["backups"][0]["notes"], "nightly");
+    assert_eq!(body["jobs"][0]["id"], "nightly");
+    assert_eq!(body["jobs"][0]["prune"], "keep-last=7");
+    assert_eq!(body["storages"][0]["name"], "local");
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup", Some(json!({"guest": "qemu/100", "request": {"storage": "local"}}))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup", Some(json!({"guest": "qemu/100", "request": {"storage": "nas"}}))).await;
+    assert_eq!(body["error"]["detail"], json!({"code": "backup_refused", "issue": "storage"}), "{body}");
+    // Over a running guest: refused before anything is sent.
+    let restore = json!({"guest": "qemu/100", "backup": "local:backup/vzdump-qemu-100-2026_10_01-02_00_00.vma.zst"});
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup/restore", Some(restore)).await;
+    assert_eq!(body["error"]["detail"]["issue"], "not_stopped", "{body}");
+
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup-jobs", Some(json!({}))).await;
+    assert_eq!(body["jobs"][0]["schedule"], "02:00", "{body}");
+    let job = |schedule: &str| json!({"edit": {"id": "nightly", "storage": "local", "schedule": schedule, "vmids": [100]}});
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup-jobs/edit", Some(job("sat 03:00"))).await;
+    assert_eq!(body["error"], Value::Null, "{body}");
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup-jobs/edit", Some(job("02:30 mon"))).await;
+    assert_eq!(body["error"]["detail"]["issue"], "schedule_invalid", "{body}");
+    let (_, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/virt/backup-jobs/schedule", Some(json!({"schedule": "02:00"}))).await;
+    assert_eq!(body["check"]["next"], json!([1790000000, 1790086400]), "{body}");
+
+    let paths = pve.seen.lock().unwrap().paths.clone();
+    assert_eq!(paths.iter().filter(|p| *p == "POST /api2/json/nodes/pve/vzdump").count(), 1, "{paths:?}");
+    assert_eq!(paths.iter().filter(|p| *p == "PUT /api2/json/cluster/backup/nightly").count(), 1, "{paths:?}");
+    assert!(!paths.iter().any(|p| p == "POST /api2/json/nodes/pve/qemu"), "{paths:?}");
+
+    let details: Vec<_> = audit(&db).await.into_iter().filter_map(|r| r.3).collect();
+    assert!(details.contains(&"virt backup qemu/100 to local".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt backup job edit nightly".to_owned()), "{details:?}");
+    assert!(details.contains(&"virt backup job edit nightly: Unsupported".to_owned()), "{details:?}");
+
+    for path in ["/api/v1/virt/backup", "/api/v1/virt/backup-jobs/edit", "/api/v1/virt/backup-jobs/run", "/api/v1/virt/backup/delete"] {
+        let body = json!({"guest": "qemu/100", "backup": "x", "request": {"storage": "local"}, "edit": {"storage": "local", "schedule": "02:00"}, "id": "x"});
         let (status, _) = call(&srv, Some("viewer"), Method::POST, path, Some(body)).await;
         assert_eq!(status, 403, "{path}");
     }

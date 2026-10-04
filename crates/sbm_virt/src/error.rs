@@ -94,6 +94,9 @@ pub enum Detail {
     /// A change to a guest's hardware or settings, checked before it was
     /// sent ([`crate::hardware::issue`]).
     HardwareRefused { issue: crate::hardware::Issue },
+    /// A backup, a job or a restore, checked before it was sent
+    /// ([`crate::backup`]).
+    BackupRefused { issue: crate::backup::Issue },
     /// The pending network configuration changes `ifaces`, which carry the
     /// node's management traffic.
     ApplyTouchesManagement { ifaces: Vec<String> },

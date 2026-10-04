@@ -57,6 +57,12 @@ import type {
   BmcTargetInput,
   PveConfigInput,
   PveConfigView,
+  VirtBackupEdit,
+  VirtBackupJobEdit,
+  VirtBackupJobs,
+  VirtBackupRequest,
+  VirtBackups,
+  VirtScheduleCheck,
   VirtCloneRequest,
   VirtCloudInitEdit,
   VirtCloudInitState,
@@ -96,6 +102,11 @@ const TIMEOUT_MS = 10_000
 /// it ends: the agent bounds that itself (`[remote_access.exec] timeout`,
 /// a minute by default), so this only has to outlast it.
 const MACHINE_TIMEOUT_MS = 120_000
+
+/// For a PVE task the agent waits for that can run long (a backup, a
+/// restore): `sbm_virt`'s client waits ten minutes for one, so this only has
+/// to outlast that.
+const TASK_TIMEOUT_MS = 660_000
 
 export class ApiError extends Error {
   /// HTTP status, when the request got far enough to have one. Absent for a
@@ -720,6 +731,87 @@ export const api = {
       '/virt/template',
       { method: 'POST', body: JSON.stringify({ guest }) },
       'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// A guest's backups, the jobs that take it and its node's backup
+  /// storages. PVE only; libvirt answers `backup_refused`.
+  virtBackups: (guest: string) =>
+    request<VirtBackups>(
+      '/virt/backups',
+      { method: 'POST', body: JSON.stringify({ guest }) },
+      'Failed to read the backups',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Returns once the host has finished it.
+  virtBackup: (guest: string, backupRequest: VirtBackupRequest) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup',
+      { method: 'POST', body: JSON.stringify({ guest, request: backupRequest }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      TASK_TIMEOUT_MS,
+    ),
+  /// Over the guest itself (stopped) without `vmid`, else as a new guest.
+  /// Returns once the host has finished it.
+  virtRestoreBackup: (guest: string, backup: string, target: { vmid?: number; storage?: string } = {}) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup/restore',
+      { method: 'POST', body: JSON.stringify({ guest, backup, ...target }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      TASK_TIMEOUT_MS,
+    ),
+  virtEditBackup: (guest: string, backup: string, edit: VirtBackupEdit) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup/edit',
+      { method: 'POST', body: JSON.stringify({ guest, backup, edit }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  virtDeleteBackup: (guest: string, backup: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup/delete',
+      { method: 'POST', body: JSON.stringify({ guest, backup }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The datacenter's backup jobs and every node's backup storages.
+  backupJobs: () =>
+    request<VirtBackupJobs>(
+      '/virt/backup-jobs',
+      { method: 'POST', body: '{}' },
+      'Failed to read the backup jobs',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Made (`is_new`), edited, or with `remove` deleted.
+  editBackupJob: (edit: VirtBackupJobEdit, remove = false) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup-jobs/edit',
+      { method: 'POST', body: JSON.stringify({ edit, remove }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// "Run now": returns once every node's backup has finished.
+  runBackupJob: (id: string) =>
+    request<{ error: VirtError | null }>(
+      '/virt/backup-jobs/run',
+      { method: 'POST', body: JSON.stringify({ id }) },
+      'Failed to reach the virtualization host',
+      undefined,
+      TASK_TIMEOUT_MS,
+    ),
+  /// What the host makes of a schedule: its next runs or its refusal.
+  checkBackupSchedule: (schedule: string) =>
+    request<{ check: VirtScheduleCheck | null; error: VirtError | null }>(
+      '/virt/backup-jobs/schedule',
+      { method: 'POST', body: JSON.stringify({ schedule }) },
+      'Failed to check the schedule',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),

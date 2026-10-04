@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'dart:ffi' as ffi;
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
+import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
@@ -421,12 +422,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PveLogin dco_decode_pve_login(dynamic raw);
-
-  @protected
-  PveMethod dco_decode_pve_method(dynamic raw);
-
-  @protected
-  PveRawResponse dco_decode_pve_raw_response(dynamic raw);
 
   @protected
   PveTiming dco_decode_pve_timing(dynamic raw);
@@ -932,12 +927,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PveLogin sse_decode_pve_login(SseDeserializer deserializer);
-
-  @protected
-  PveMethod sse_decode_pve_method(SseDeserializer deserializer);
-
-  @protected
-  PveRawResponse sse_decode_pve_raw_response(SseDeserializer deserializer);
 
   @protected
   PveTiming sse_decode_pve_timing(SseDeserializer deserializer);
@@ -1552,15 +1541,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_pve_login(PveLogin self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_pve_method(PveMethod self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_pve_raw_response(
-    PveRawResponse self,
-    SseSerializer serializer,
-  );
 
   @protected
   void sse_encode_pve_timing(PveTiming self, SseSerializer serializer);

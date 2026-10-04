@@ -1,21 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/virt/pve_resources.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_backup.dart';
 import 'package:server_box/data/model/virt/virt_backup_schedule.dart';
@@ -44,22 +40,23 @@ typedef PveTunnel = Future<SshLocalTunnel> Function(String host, int port);
 
 /// Proxmox VE through its HTTP API.
 ///
-/// **The session is `sbm_virt::pve`'s** ([PveSession], FFI), the one the
+/// **Every call is `sbm_virt::pve`'s** ([PveSession], FFI), the client the
 /// monitor agent keeps too: login (password + TOTP, or an API token), ticket
-/// renewal, one new login for a refused ticket, the certificate decision, the
-/// host's guests and their power. It reaches the API through an
-/// authenticated loopback tunnel of the server's `ServerTcpDialer` ([tunnel]:
-/// an SSH channel, the monitor agent's relay, or a direct socket for this
-/// device), opened on first use and again once it has ended.
+/// renewal, one new login for a refused ticket, the certificate decision,
+/// and each typed call with the rules it is checked by. It reaches the API
+/// through an authenticated loopback tunnel of the server's
+/// `ServerTcpDialer` ([tunnel]: an SSH channel, the monitor agent's relay,
+/// or a direct socket for this device), opened on first use and again once
+/// it has ended.
 ///
-/// **The rest of the API calls are still made here** and read here: a Dio
-/// whose adapter hands each request to [PveSession.raw], which answers the
-/// status and body PVE sent. Each moves into `sbm_virt` with its part of
-/// issue #1623 item 5. A console's websocket and an upload are connections
-/// of their own ([connect], [_httpClient]), authenticated with the session's
-/// headers.
-// TODO(migration): move every remaining call onto a typed `sbm_virt` call
-// (#1623 items 5.2–5.7), then drop the Dio, [connect] and the Dart TLS path.
+/// Two connections are this class's own, authenticated with the session's
+/// headers ([connect], [_httpClient]): a console's websocket, which the
+/// console view reads frame by frame, and an upload, which streams a file
+/// the session would hold in memory. An upload's refusal is said by the
+/// session all the same ([PveSession.refusal]).
+// TODO(migration): the console's websocket through the session
+// (`sbm_virt::pve::Client::open_console`, which the agent uses), then drop
+// the Dart TLS path for it.
 class PveBackend implements VirtBackend {
   PveBackend({
     required this.serverId,
@@ -145,7 +142,6 @@ class PveBackend implements VirtBackend {
   PveSession? _session;
   SshLocalTunnel? _tunnel;
   Future<PveSession>? _opening;
-  Dio? _dio;
   bool _closed = false;
 
   /// The certificate a console's or an upload's own connection was last
@@ -185,9 +181,7 @@ class PveBackend implements VirtBackend {
   @override
   Future<VirtSnapshot> load() async {
     final json = await _rust((s) => s.load());
-    final snap = VirtRust.snapshot(jsonDecode(json), serverId: serverId);
-    _nodes = snap.host.nodes;
-    return snap;
+    return VirtRust.snapshot(jsonDecode(json), serverId: serverId);
   }
 
   @override
@@ -290,9 +284,6 @@ class PveBackend implements VirtBackend {
   // Snapshots
   // ---------------------------------------------------------------------------
 
-  /// The nodes of the last [load]: which nodes to list backups for.
-  List<VirtNode> _nodes = const [];
-
   @override
   Future<List<VirtGuestSnapshot>> snapshots(VirtGuest guest) async =>
       VirtRust.snapshots(jsonDecode(await _rust((s) => s.snapshots(guest: _ref(guest)))));
@@ -355,19 +346,6 @@ class PveBackend implements VirtBackend {
   Future<void> deleteSnapshot(VirtGuest guest, String name) =>
       _rust((s) => s.deleteSnapshot(guest: _ref(guest), name: name));
 
-  /// Runs [request], which answers a UPID, and waits for its task. PVE
-  /// answers a snapshot request that is bound to fail (a name taken, one that
-  /// is gone) with a task all the same, and the task's exit status says why.
-  Future<void> _task(
-    VirtGuest guest,
-    Future<Response<dynamic>> Function(Dio dio) request,
-  ) async {
-    final upid = await _call(request, action: true);
-    if (upid is String && upid.startsWith('UPID:')) {
-      await _waitTask(guest.node!, upid);
-    }
-  }
-
   // ---------------------------------------------------------------------------
   // Creating and deleting
   // ---------------------------------------------------------------------------
@@ -411,381 +389,77 @@ class PveBackend implements VirtBackend {
     ),
   );
 
-  /// Every storage on the guest's node that holds backups, listed for the
-  /// guest's VMID.
+  /// Every backup of the guest on its node's backup storages, newest first
+  /// (`sbm_virt::pve::Client::backups`).
   @override
-  Future<List<VirtBackup>> backups(VirtGuest guest) async {
-    final node = guest.node!;
-    final out = <VirtBackup>[];
-    for (final storage in await backupStorages(guest)) {
-      final data = await _call(
-        (dio) => dio.get(
-          _url('/nodes/${_seg(node)}/storage/${_seg(storage.name)}/content'),
-          queryParameters: {'content': 'backup', 'vmid': guest.vmid},
-        ),
-      );
-      if (data is List) {
-        out.addAll(PveResources.parseBackups(node, storage.name, data));
-      }
-    }
-    out.sort(
-      (a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)),
-    );
-    return out;
-  }
+  Future<List<VirtBackup>> backups(VirtGuest guest) async =>
+      VirtRust.backups(jsonDecode(await _rust((s) => s.backups(guest: _ref(guest)))));
 
   @override
-  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) =>
-      _backupStorages(guest.node!);
+  Future<List<VirtStoragePool>> backupStorages(VirtGuest guest) async =>
+      VirtRust.pools(jsonDecode(await _rust((s) => s.backupStorages(node: guest.node!))));
 
-  /// Every online node's storages, deduplicated by `node/storage`: a shared
-  /// storage is listed by each node that sees it, and a job names one by its
-  /// own id.
+  /// Every online node's backup storages, one per `node/storage`.
   @override
-  Future<List<VirtStoragePool>> allBackupStorages() async {
-    final out = <String, VirtStoragePool>{};
-    for (final node in await _onlineNodes()) {
-      for (final pool in await _backupStorages(node)) {
-        out.putIfAbsent('${pool.node}/${pool.name}', () => pool);
-      }
-    }
-    final list = out.values.toList()
-      ..sort((a, b) {
-        final byName = a.name.compareTo(b.name);
-        return byName != 0 ? byName : (a.node ?? '').compareTo(b.node ?? '');
-      });
-    return list;
-  }
+  Future<List<VirtStoragePool>> allBackupStorages() async =>
+      VirtRust.pools(jsonDecode(await _rust((s) => s.allBackupStorages())));
 
-  Future<List<VirtStoragePool>> _backupStorages(String node) async {
-    final data = await _call(
-      (dio) => dio.get(
-        _url('/nodes/${_seg(node)}/storage'),
-        queryParameters: {'content': 'backup', 'enabled': 1},
-      ),
-    );
-    if (data is! List) return const [];
-    return PveResources.parseStorages(node, data)
-        .where((s) => s.active && s.content.contains('backup'))
-        .toList();
-  }
-
-  /// `/cluster/backup` needs `Sys.Audit`: an account without it sees no plan,
-  /// which is not a failure of the view.
+  /// The jobs that take the guest. `/cluster/backup` needs `Sys.Audit`: an
+  /// account without it sees no plan, which is not a failure of the view.
   @override
-  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async {
-    final jobs = await allBackupJobs();
-    return [
-      for (final j in jobs)
-        if (j.takes(guest.vmid, node: guest.node)) j,
-    ];
-  }
+  Future<List<VirtBackupJob>> backupJobs(VirtGuest guest) async =>
+      VirtRust.backupJobs(jsonDecode(await _rust((s) => s.backupJobs(guest: _ref(guest)))));
 
-  /// `/cluster/backup` for the datacenter's Backup view. The same
-  /// `Sys.Audit`: an account without it sees no jobs rather than an error.
   @override
-  Future<List<VirtBackupJob>> allBackupJobs() async {
-    final Object? data;
-    try {
-      data = await _call((dio) => dio.get(_url('/cluster/backup')));
-    } on VirtErr catch (e) {
-      if (e.type == VirtErrType.authFailed) return const [];
-      rethrow;
-    }
-    if (data is! List) return const [];
-    return PveResources.parseBackupJobs(data);
-  }
+  Future<List<VirtBackupJob>> allBackupJobs() async =>
+      VirtRust.backupJobs(jsonDecode(await _rust((s) => s.allBackupJobs())));
 
-  /// `POST /cluster/backup` (a new job), `PUT /cluster/backup/{id}` (the
-  /// job with that id) or `DELETE` with [remove] — `Sys.Modify` on `/`, which
-  /// is PVE's own rule for the datacenter's job list. PVE validates the
-  /// schedule itself (`pve-calendar-event`); [`virtScheduleIssue`] refuses
-  /// what it would before it is asked.
+  /// Made, edited or removed — `Sys.Modify` on `/`; checked first
+  /// (`sbm_virt::backup::job_issue`).
   @override
-  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false}) async {
-    final id = edit.id;
-    if (remove) {
-      if (id == null) {
-        throw const VirtErr(type: VirtErrType.unsupported);
-      }
-      final removeId = id;
-      await _call(
-        (dio) => dio.delete(_url('/cluster/backup/${_seg(removeId)}')),
-      );
-      return;
-    }
-    final which = _jobGuests(
-      pool: edit.pool,
-      all: edit.all,
-      vmids: edit.vmids,
-      exclude: edit.exclude,
-    );
-    // PVE's own `PUT` keeps what it is not sent, so a field this edit does
-    // not set is named in `delete` — what its web UI's `deleteEmpty` does per
-    // field. Deleting one that was not set is a no-op, and a create takes
-    // none (there is nothing to clear).
-    final deletes = <String>[
-      for (final k in const ['vmid', 'exclude', 'pool'])
-        if (!which.containsKey(k)) k,
-      if (edit.node == null) 'node',
-      if (edit.comment == null) 'comment',
-      if (edit.notesTemplate == null) 'notes-template',
-      if (edit.prune == null) 'prune-backups',
-    ];
-    final body = {
-      'storage': edit.storage,
-      'schedule': edit.schedule,
-      'mode': edit.mode,
-      'compress': edit.compress,
-      'enabled': edit.enabled ? 1 : 0,
-      // Cleared unless [which] takes all guests, which sets it to 1.
-      'all': 0,
-      ...which,
-      'node': ?edit.node,
-      'comment': ?edit.comment,
-      'notes-template': ?edit.notesTemplate,
-      'mailnotification': ?edit.mailNotification,
-      'prune-backups': ?edit.prune,
-      if (!edit.isNew && deletes.isNotEmpty) 'delete': deletes.join(','),
-    };
-    // A new job may be named by the form; PVE generates an id when it is
-    // not, and answers with the one it made.
-    final data = await _call(
-      (dio) => edit.isNew
-          ? dio.post(
-              _url('/cluster/backup'),
-              data: {'id': ?id, ...body},
-              options: Options(contentType: Headers.formUrlEncodedContentType),
-            )
-          : dio.put(
-              _url('/cluster/backup/${_seg(id ?? '')}'),
-              data: body,
-              options: Options(contentType: Headers.formUrlEncodedContentType),
-            ),
-    );
-    // A `POST` answers the new job's id (`"sbbk-job"`); this app names every
-    // job it makes, so there is nothing to keep.
-    if (data is String && data.isEmpty) {
-      throw const VirtErr(type: VirtErrType.invalidResponse);
-    }
-  }
+  Future<void> editBackupJob(VirtBackupJobEdit edit, {bool remove = false}) => _rust(
+    (s) => s.editBackupJob(editJson: jsonEncode(VirtRust.backupJobEditJson(edit)), remove: remove),
+  );
 
-  /// `GET /cluster/jobs/schedule-analyze`, the call PVE's job editor's
-  /// "Simulate" button makes. Its permission is `user => 'all'`: any account
-  /// that may log in can ask it, and it is what the form's Validate runs
-  /// rather than a calendar parser written here.
+  /// What PVE makes of [schedule] (`GET /cluster/jobs/schedule-analyze`).
   @override
-  Future<VirtScheduleCheck> checkSchedule(String schedule) async {
-    try {
-      final data = await _call(
-        (dio) => dio.get(
-          _url('/cluster/jobs/schedule-analyze'),
-          queryParameters: {'schedule': schedule, 'iterations': 3},
-        ),
-      );
-      if (data is! List) return const VirtScheduleCheck();
-      return VirtScheduleCheck(
-        next: [
-          for (final item in data)
-            if (item is Map && item['timestamp'] is int)
-              DateTime.fromMillisecondsSinceEpoch(
-                (item['timestamp'] as int) * 1000,
-                isUtc: true,
-              ),
-        ],
-      );
-    } on VirtErr catch (e) {
-      // A refused schedule is a 400 with PVE's parse error; the form shows
-      // it under the field rather than as a failed request.
-      if (e.type == VirtErrType.actionFailed ||
-          e.type == VirtErrType.invalidResponse) {
-        return VirtScheduleCheck(error: e.message ?? 'HTTP 400');
-      }
-      rethrow;
-    }
-  }
+  Future<VirtScheduleCheck> checkSchedule(String schedule) async =>
+      VirtRust.scheduleCheck(jsonDecode(await _rust((s) => s.checkSchedule(schedule: schedule))));
 
-  /// `POST /nodes/{node}/vzdump` for the one guest, waited for.
+  /// `vzdump` for the one guest, waited for.
   @override
-  Future<void> backup(VirtGuest guest, VirtBackupRequest request) async {
-    final notes = request.notes?.trim();
-    await _runVzdump(guest.node!, {
-      'vmid': guest.vmid,
-      'storage': request.storage,
-      'mode': request.mode,
-      'compress': request.compress,
-      'notes-template': ?(notes == null || notes.isEmpty) ? null : notes,
-      'protected': ?request.protected ? 1 : null,
-      'prune-backups': ?request.prune,
-    });
-  }
+  Future<void> backup(VirtGuest guest, VirtBackupRequest request) => _rust(
+    (s) => s.backup(guest: _ref(guest), requestJson: jsonEncode(VirtRust.backupRequestJson(request))),
+  );
 
-  /// Which guests a job takes, as `vzdump` and `/cluster/backup` name
-  /// them: a pool, all of them (less `exclude`), or a list — one of the
-  /// three, the pool first. PVE's own editor offers the same three.
-  static Map<String, Object> _jobGuests({
-    required String? pool,
-    required bool all,
-    required List<int> vmids,
-    required List<int> exclude,
-  }) => switch (pool) {
-    final pool? => {'pool': pool},
-    null when all => {
-      'all': 1,
-      if (exclude.isNotEmpty) 'exclude': exclude.join(','),
-    },
-    null => {if (vmids.isNotEmpty) 'vmid': vmids.join(',')},
-  };
-
-  /// A job's "Run now", as PVE's own web UI does it (`run_backup_now` in
-  /// `dc/Backup.js`): the job's fields without the ones that describe the
-  /// schedule, posted to `vzdump` on the job's node — refused when it is not
-  /// online — or, for a job with no node, on every online node. `vzdump`
-  /// takes only the guests on the node it runs on, so one request per node
-  /// is what covers a cluster. (`/cluster/backup/{id}/included_volumes` is
-  /// what its detail view *lists*, not what runs it.)
-  ///
-  /// The job is read again for it: [VirtBackupJob] models what the form
-  /// edits, and a job also carries what only PVE's editor sets (`bwlimit`,
-  /// `ionice`, `performance`, `fleecing`, ...), which a run must keep.
+  /// A job's "Run now", on its node or every online one.
   @override
-  Future<void> runBackupJob(VirtBackupJob job) async {
-    final raw = await _call(
-      (dio) => dio.get(_url('/cluster/backup/${_seg(job.id)}')),
-    );
-    if (raw is! Map) {
-      throw const VirtErr(type: VirtErrType.invalidResponse);
-    }
-    final online = [
-      for (final n in _nodes)
-        if (n.online) n.name,
-    ];
-    final nodes = switch (raw['node']) {
-      '' => online,
-      final node? when online.contains(node) => [node],
-      final node? => throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: "Node '$node' of backup job ${job.id} is not online",
-      ),
-      null => online,
-    };
-    if (nodes.isEmpty) {
-      throw const VirtErr(
-        type: VirtErrType.unsupported,
-        message: 'No online node to run the job on',
-      );
-    }
-    final body = PveResources.vzdumpOfJob(raw.cast<String, Object?>());
-    await Future.wait([for (final n in nodes) _runVzdump(n, body)]);
-  }
+  Future<void> runBackupJob(VirtBackupJob job) => _rust((s) => s.runBackupJob(id: job.id));
 
-  /// One `vzdump` request, waited for. It is the node's task rather than a
-  /// guest's, so `_task` — which names the guest — does not fit.
-  Future<void> _runVzdump(String node, Map<String, Object?> body) async {
-    final upid = await _call(
-      (dio) => dio.post(
-        _url('/nodes/${_seg(node)}/vzdump'),
-        data: body,
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      ),
-      action: true,
-    );
-    if (upid is String && upid.startsWith('UPID:')) {
-      await _waitTask(node, upid);
-    }
-  }
-
-  /// `POST /nodes/{node}/qemu` with `archive`, or `/lxc` with `ostemplate`
-  /// and `restore=1`. Over the guest itself with `force=1`, which PVE
-  /// refuses while it runs; as a new guest with [vmid] otherwise.
-  ///
-  /// [storage] is where the restored disks land (`--storage`, PVE's `Default
-  /// storage`), which is how a backup taken on one storage is restored onto
-  /// another; null leaves each volume where the archive says.
+  /// Over the guest itself (stopped) or as a new guest [vmid]; [storage]
+  /// is where the restored disks land.
   @override
   Future<void> restoreBackup(
     VirtGuest guest,
     VirtBackup backup, {
     int? vmid,
     String? storage,
-  }) async {
-    final node = guest.node!;
-    final lxc = (backup.kind ?? guest.kind) == VirtGuestKind.lxc;
-    final over = vmid == null;
-    if (over && guest.state != VirtGuestState.stopped) {
-      throw VirtErr(
-        type: VirtErrType.unsupported,
-        message: '${guest.name} is not stopped',
-      );
-    }
-    try {
-      await _task(
-        guest,
-        (dio) => dio.post(
-          _url('/nodes/${_seg(node)}/${lxc ? 'lxc' : 'qemu'}'),
-          data: {
-            'vmid': vmid ?? guest.vmid,
-            if (lxc) ...{'ostemplate': backup.id, 'restore': 1} else 'archive': backup.id,
-            'force': ?over ? 1 : null,
-            'storage': ?storage,
-          },
-          options: Options(contentType: Headers.formUrlEncodedContentType),
-        ),
-      );
-    } on VirtErr catch (e) {
-      throw _createErr(e);
-    }
-  }
+  }) => _rust(
+    (s) => s.restoreBackup(guest: _ref(guest), backupId: backup.id, vmid: vmid, storage: storage),
+  );
 
-  /// A refused restore, in the host's words: PVE answers a bad parameter with
-  /// 400 and a taken VMID with 500, before any task.
-  // TODO(migration): goes with the restore's move to sbm_virt (#1623 item 5,
-  // backups), whose client maps it as `manage_err` does.
-  static VirtErr _createErr(VirtErr e) {
-    // `unable to create VM 105 - VM 105 already exists on node 'pve'`.
-    if (e.message?.contains('already exists') ?? false) {
-      return VirtErr(type: VirtErrType.exists, message: e.message, cause: e);
-    }
-    final cause = e.cause;
-    if (e.type == VirtErrType.invalidResponse &&
-        cause is DioException &&
-        cause.response != null) {
-      return VirtErr(
-        type: VirtErrType.actionFailed,
-        message: e.message,
-        cause: cause,
-      );
-    }
-    return e;
-  }
-
-  /// `PUT /nodes/{node}/storage/{id}/content/{volid}`: a backup's own notes
-  /// and protection. Both fields are sent every time — PVE keeps what is not
-  /// sent, so an empty note has to be written as one.
+  /// A backup's own notes and protection.
   @override
-  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) async {
-    await _call(
-      (dio) => dio.put(
-        _url(
-          '/nodes/${_seg(backup.node)}/storage/${_seg(backup.storage)}'
-          '/content/${_seg(backup.id)}',
-        ),
-        data: {'notes': edit.notes, 'protected': edit.protected ? 1 : 0},
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      ),
-    );
-  }
-
-  @override
-  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) => _task(
-    guest,
-    (dio) => dio.delete(
-      _url(
-        '/nodes/${_seg(backup.node)}/storage/${_seg(backup.storage)}'
-        '/content/${_seg(backup.id)}',
-      ),
+  Future<void> editBackup(VirtBackup backup, VirtBackupEdit edit) => _rust(
+    (s) => s.editBackup(
+      backupJson: jsonEncode(VirtRust.backupJson(backup)),
+      editJson: jsonEncode(VirtRust.backupEditJson(edit)),
     ),
   );
+
+  @override
+  Future<void> deleteBackup(VirtGuest guest, VirtBackup backup) =>
+      _rust((s) => s.deleteBackup(backupJson: jsonEncode(VirtRust.backupJson(backup))));
 
   // ---------------------------------------------------------------------------
   // Hardware
@@ -848,48 +522,9 @@ class PveBackend implements VirtBackend {
   Future<VirtHostDevices> hostDevices(VirtGuest guest) async =>
       VirtRust.hostDevices(jsonDecode(await _rust((s) => s.hostDevices(guest: _ref(guest)))));
 
-  /// PVE's refusal of a stale digest as [VirtErrType.conflict]; a rejected
-  /// parameter as the action refused, in PVE's words.
-  static VirtErr _changeErr(VirtErr e) {
-    final message = e.message ?? '';
-    if (message.contains('checksum mismatch') ||
-        message.contains('file change by other user')) {
-      return VirtErr(type: VirtErrType.conflict, message: message, cause: e);
-    }
-    final cause = e.cause;
-    if (e.type == VirtErrType.invalidResponse &&
-        cause is DioException &&
-        cause.response != null) {
-      return VirtErr(
-        type: VirtErrType.actionFailed,
-        message: e.message,
-        cause: cause,
-      );
-    }
-    return e;
-  }
-
   // ---------------------------------------------------------------------------
   // Storage and networks
   // ---------------------------------------------------------------------------
-
-  /// The nodes to ask: the online ones of the last [load], or every node
-  /// `/nodes` lists when there has been none.
-  Future<List<String>> _onlineNodes() async {
-    if (_nodes.isNotEmpty) {
-      return [
-        for (final n in _nodes)
-          if (n.online) n.name,
-      ];
-    }
-    final data = await _call((dio) => dio.get(_url('/nodes')));
-    if (data is! List) return const [];
-    return [
-      for (final n in data)
-        if (n is Map && n['status'] == 'online' && n['node'] is String)
-          n['node'] as String,
-    ]..sort();
-  }
 
   @override
   Future<List<VirtStoragePool>> storagePools() async =>
@@ -960,70 +595,6 @@ class PveBackend implements VirtBackend {
     return '/nodes/${_seg(node)}/storage/${_seg(pool.name)}';
   }
 
-  /// [request] on [node], which answers a UPID or, for a change PVE makes at
-  /// once, nothing; the task waited for.
-  Future<void> _nodeTask(
-    String node,
-    Future<Response<dynamic>> Function(Dio dio) request, {
-    Dio? via,
-  }) async {
-    final upid = await _call(request, action: true, via: via);
-    if (upid is String && upid.startsWith('UPID:')) {
-      await _waitTask(node, upid);
-    }
-  }
-
-  static final _permissionCheck = RegExp(
-    r'Permission check failed \(([^,()]+), ([A-Za-z.]+)\)',
-  );
-
-  /// An upload's refusal: a name taken as [VirtErrType.exists]; PVE's
-  /// permission refusal naming the privilege, where, and how to grant it.
-  // TODO(migration): what `sbm_virt::pve::Client::manage` says of a refusal
-  // (`Detail::NeedsPrivilege`); here only for the upload, which streams over
-  // a connection of its own.
-  VirtErr _manageErr(VirtErr e) {
-    final message = e.message ?? '';
-    if (message.contains('already exists') ||
-        message.contains('already defined')) {
-      return VirtErr(type: VirtErrType.exists, message: message, cause: e.cause);
-    }
-    final m = _permissionCheck.firstMatch(message);
-    if (m == null) return _changeErr(e);
-    final path = m[1]!.trim();
-    final privilege = m[2]!;
-    final token = _config.auth == PveAuth.token;
-    final account = token ? _config.tokenId ?? '' : _userFields()['username']!;
-    final qualified = token || account.contains('@') ? account : '$account@pam';
-    final who = "--${token ? 'tokens' : 'users'} '$qualified'";
-    final command = switch (pvePrivilegeRole(privilege)) {
-      final role? => 'pveum acl modify $path $who --roles $role',
-      null =>
-        "pveum role add ServerBox-${privilege.replaceAll('.', '')} "
-            '--privs $privilege\n'
-            'pveum acl modify $path $who '
-            '--roles ServerBox-${privilege.replaceAll('.', '')}',
-    };
-    return VirtErr(
-      type: VirtErrType.permissionDenied,
-      message: l10n.pveNeedsPrivilege(qualified, privilege, path, command),
-      cause: e.cause,
-    );
-  }
-
-  /// The narrowest built-in PVE role holding [privilege]; null where only
-  /// `Administrator` does (`Sys.Modify`).
-  // TODO(migration): `sbm_virt::pve::client` has the same table; remove with
-  // [_manageErr].
-  @visibleForTesting
-  static String? pvePrivilegeRole(String privilege) => switch (privilege) {
-    'Datastore.AllocateSpace' || 'Datastore.Audit' => 'PVEDatastoreUser',
-    'Datastore.Allocate' || 'Datastore.AllocateTemplate' => 'PVEDatastoreAdmin',
-    'Sys.Audit' => 'PVEAuditor',
-    'SDN.Use' => 'PVESDNUser',
-    final p when p.startsWith('VM.') => 'PVEVMAdmin',
-    _ => null,
-  };
 
   /// Each online node's pending network configuration.
   @override
@@ -1068,10 +639,7 @@ class PveBackend implements VirtBackend {
         createHttpClient: () => _httpClient(_config.certSha256),
       );
     try {
-      await _nodeTask(
-        pool.node!,
-        via: dio,
-        (dio) => dio.post(
+      final resp = await dio.post<Object?>(
           _url('${_storagePath(pool)}/upload'),
           // Made per attempt: a repeated request reads the file again.
           // `Content-Disposition` capitalised: pveproxy finds the parts with
@@ -1096,12 +664,25 @@ class PveBackend implements VirtBackend {
             sendTimeout: Duration.zero,
             receiveTimeout: uploadReplyTimeout,
           ),
-        ),
-      );
+        );
+      final body = resp.data;
+      final upid = body is Map ? body['data'] : null;
+      if (upid is String && upid.startsWith('UPID:')) {
+        await _waitTask(pool.node!, upid);
+      }
       return true;
-    } on VirtErr catch (e) {
+    } on DioException catch (e) {
       if (cancelled) return false;
-      throw _manageErr(e);
+      final status = e.response?.statusCode;
+      final message = _pveMessage(e);
+      // PVE's refusal said as a change's is (`sbm_virt`): a name taken, a
+      // missing privilege and the command that grants it.
+      if (status != null && message != null && status != 401) {
+        throw _fromRust(
+          await _rust((s) async => s.refusal(message: message, status: status)),
+        );
+      }
+      throw _toErr(e);
     } catch (_) {
       if (cancelled) return false;
       rethrow;
@@ -1178,14 +759,6 @@ class PveBackend implements VirtBackend {
     VirtPowerAction.suspend => VirtActionKind.suspend,
     VirtPowerAction.resume => VirtActionKind.resume,
   };
-
-  /// Who a password login is for: `root@pam` already names its realm.
-  Map<String, String> _userFields() {
-    final name = user?.trim() ?? '';
-    return name.contains('@')
-        ? {'username': name}
-        : {'username': name, 'realm': 'pam'};
-  }
 
   PveLogin _login() {
     final token = _config.auth == PveAuth.token;
@@ -1271,8 +844,6 @@ class PveBackend implements VirtBackend {
     final tunnel = _tunnel;
     _tunnel = null;
     unawaited(tunnel?.close());
-    _dio?.close(force: true);
-    _dio = null;
   }
 
   /// A failure of the session as this app phrases it ([VirtRust.error]);
@@ -1281,78 +852,6 @@ class PveBackend implements VirtBackend {
     final cert = e.cert;
     if (cert != null) _presented = cert;
     return VirtRust.error(e);
-  }
-
-  /// The client the calls not yet in `sbm_virt` build their requests with;
-  /// every request goes through the session ([_PveSessionAdapter]).
-  Dio _api() => _dio ??= Dio(
-    BaseOptions(
-      baseUrl: '$_base',
-      connectTimeout: connectTimeout,
-      sendTimeout: requestTimeout,
-      receiveTimeout: requestTimeout,
-    ),
-  )..httpClientAdapter = _PveSessionAdapter(this);
-
-  /// Runs [request] in the session and answers the body's `data`.
-  ///
-  /// **A 403 never ends the session.** PVE answers 403 only after it has
-  /// accepted the ticket or token, from its permission check ("Permission
-  /// check failed (/vms/101, VM.PowerMgmt)") — the account lacks a privilege
-  /// on that path. [action] marks a call on one guest (a power action, its
-  /// task, a console ticket), whose 403 is [VirtErrType.actionFailed] with
-  /// PVE's text; elsewhere it is [VirtErrType.authFailed].
-  ///
-  /// A 401, a refused ticket's new login and the request sent again are the
-  /// session's ([PveSession.raw]); a 401 that reaches here is the account's.
-  ///
-  /// [whole]: the response body itself, for what PVE puts beside `data`
-  /// (the network listing's `changes`). [via]: a client of the caller's own
-  /// rather than the session's (an upload).
-  Future<Object?> _call(
-    Future<Response<dynamic>> Function(Dio dio) request, {
-    bool action = false,
-    bool whole = false,
-    Dio? via,
-  }) async {
-    try {
-      final resp = await request(via ?? _api());
-      final body = resp.data;
-      if (body is! Map) {
-        throw VirtErr(
-          type: VirtErrType.invalidResponse,
-          message: l10n.pveInvalidResponseBody,
-        );
-      }
-      return whole ? body : body['data'];
-    } catch (e) {
-      final status = e is DioException ? e.response?.statusCode : null;
-      if (status == 403) {
-        final err = _toErr(e);
-        if (!action) throw err;
-        throw VirtErr(
-          type: VirtErrType.actionFailed,
-          message: _pveMessage(e as DioException) ?? err.message,
-          cause: e,
-        );
-      }
-      final err = _toErr(e);
-      // An action PVE answered with a refusal of its own (`unable to create
-      // template, because VM contains snapshots`, a 500 before any task) is
-      // the action refused, in PVE's words, not a response this app
-      // cannot read.
-      if (action &&
-          err.type == VirtErrType.invalidResponse &&
-          e is DioException &&
-          e.response != null) {
-        throw VirtErr(
-          type: VirtErrType.actionFailed,
-          message: err.message,
-          cause: e,
-        );
-      }
-      throw err;
-    }
   }
 
   Future<void> _waitTask(String node, String upid) =>
@@ -1521,52 +1020,4 @@ class PveBackend implements VirtBackend {
     }
     return VirtErr(type: VirtErrType.unknown, message: '$e', cause: e);
   }
-}
-
-/// Hands each request a [PveBackend]'s Dio builds to its session
-/// ([PveSession.raw]) and answers what PVE did, status and body as sent.
-// TODO(migration): goes with the last call not yet in `sbm_virt`.
-class _PveSessionAdapter implements HttpClientAdapter {
-  _PveSessionAdapter(this.backend);
-
-  final PveBackend backend;
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    final bytes = BytesBuilder(copy: false);
-    if (requestStream != null) {
-      await for (final chunk in requestStream) {
-        bytes.add(chunk);
-      }
-    }
-    final uri = options.uri;
-    final method = switch (options.method.toUpperCase()) {
-      'POST' => PveMethod.post,
-      'PUT' => PveMethod.put,
-      'DELETE' => PveMethod.delete,
-      _ => PveMethod.get_,
-    };
-    final resp = await backend._rust(
-      (s) => s.raw(
-        method: method,
-        path: uri.hasQuery ? '${uri.path}?${uri.query}' : uri.path,
-        contentType: options.contentType,
-        body: requestStream == null ? null : bytes.takeBytes(),
-      ),
-    );
-    return ResponseBody.fromBytes(
-      resp.body,
-      resp.status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    );
-  }
-
-  @override
-  void close({bool force = false}) {}
 }

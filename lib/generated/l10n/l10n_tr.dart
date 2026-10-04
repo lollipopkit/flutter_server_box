@@ -5409,4 +5409,14 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'İmaj diskten büyük: diski en az onun kadar büyük yapın.';
+
+  @override
+  String get virtBackupIssueStorage => 'Bu depolama bu düğümde yedek tutmuyor.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE\'nin kabul ettiği bir mod veya sıkıştırma değil.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'İşin düğümü çevrimiçi değil.';
 }

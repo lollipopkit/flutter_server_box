@@ -5,6 +5,7 @@
 //! uses it directly; the app through FFI, over a byte stream of its own
 //! ([`http::LoopbackDial`]). Ported from the app's `PveBackend`.
 
+pub mod backup;
 pub mod client;
 pub mod create;
 pub mod hardware;

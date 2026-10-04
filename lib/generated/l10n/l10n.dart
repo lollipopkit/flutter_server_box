@@ -9284,6 +9284,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The image is bigger than the disk: make the disk at least as big.'**
   String get virtCreateImageBigger;
+
+  /// A backup or a job names a storage the node does not keep backups on.
+  ///
+  /// In en, this message translates to:
+  /// **'That storage does not hold backups on this node.'**
+  String get virtBackupIssueStorage;
+
+  /// A backup or a job asks for a mode or compression PVE does not have.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a mode or compression PVE takes.'**
+  String get virtBackupIssueOption;
+
+  /// Run now: the job's node is not online, or no node is.
+  ///
+  /// In en, this message translates to:
+  /// **'The job\'s node is not online.'**
+  String get virtBackupIssueNodeOffline;
 }
 
 class _AppLocalizationsDelegate

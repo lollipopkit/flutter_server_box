@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot benötigt UEFI.",
   "virtGuestNotStopped": "Zuerst herunterfahren.",
   "virtGuestIsTemplate": "Es ist bereits eine Vorlage.",
-  "virtCreateImageBigger": "Das Image ist größer als die Festplatte: Machen Sie die Festplatte mindestens so groß."
+  "virtCreateImageBigger": "Das Image ist größer als die Festplatte: Machen Sie die Festplatte mindestens so groß.",
+  "virtBackupIssueStorage": "Dieser Speicher nimmt auf diesem Knoten keine Backups auf.",
+  "virtBackupIssueOption": "Kein Modus und keine Kompression, die PVE annimmt.",
+  "virtBackupIssueNodeOffline": "Der Knoten des Jobs ist nicht online."
 }

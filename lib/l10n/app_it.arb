@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot richiede UEFI.",
   "virtGuestNotStopped": "Spegnilo prima.",
   "virtGuestIsTemplate": "È già un modello.",
-  "virtCreateImageBigger": "L'immagine è più grande del disco: rendi il disco almeno altrettanto grande."
+  "virtCreateImageBigger": "L'immagine è più grande del disco: rendi il disco almeno altrettanto grande.",
+  "virtBackupIssueStorage": "Quello storage non contiene backup su questo nodo.",
+  "virtBackupIssueOption": "Non è una modalità o compressione accettata da PVE.",
+  "virtBackupIssueNodeOffline": "Il nodo del job non è online."
 }

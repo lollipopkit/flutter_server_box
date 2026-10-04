@@ -5456,4 +5456,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get virtCreateImageBigger =>
       'Образ больше диска: сделайте диск не меньше образа.';
+
+  @override
+  String get virtBackupIssueStorage =>
+      'Это хранилище не содержит резервных копий на этом узле.';
+
+  @override
+  String get virtBackupIssueOption =>
+      'PVE не принимает такой режим или сжатие.';
+
+  @override
+  String get virtBackupIssueNodeOffline => 'Узел задания не в сети.';
 }

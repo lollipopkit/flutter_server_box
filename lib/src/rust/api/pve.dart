@@ -10,13 +10,35 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `from_json`, `power_action`, `to_json`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PveSession>>
 abstract class PveSession implements RustOpaqueInterface {
+  /// The datacenter's jobs, `BackupJob` JSON.
+  Future<String> allBackupJobs();
+
+  /// Every online node's backup storages, `Pool` JSON.
+  Future<String> allBackupStorages();
+
   /// The headers that authenticate a connection made outside the session
   /// (a console's websocket, an upload), logging in first if needed.
   Future<List<PveHeader>> authHeaders();
+
+  /// A backup of `guest` now, as `request_json` (a `BackupRequest`) asks,
+  /// waited for.
+  Future<void> backup({
+    required PveGuestRef guest,
+    required String requestJson,
+  });
+
+  /// The jobs that take `guest`, `BackupJob` JSON.
+  Future<String> backupJobs({required PveGuestRef guest});
+
+  /// `node`'s storages that hold backups, `Pool` JSON.
+  Future<String> backupStorages({required String node});
+
+  /// `guest`'s backups on its node's backup storages, `Backup` JSON.
+  Future<String> backups({required PveGuestRef guest});
 
   /// Makes `change_json` (a `Change`) from the read whose digest is
   /// `revision`, checked first against the guest as it is now; `Outcome`
@@ -26,6 +48,9 @@ abstract class PveSession implements RustOpaqueInterface {
     String? revision,
     required String changeJson,
   });
+
+  /// What the host makes of `schedule`, `ScheduleCheck` JSON.
+  Future<String> checkSchedule({required String schedule});
 
   /// Copies `guest` as `request_json` (a `CloneRequest`) asks, waited for;
   /// the copy's id.
@@ -66,6 +91,9 @@ abstract class PveSession implements RustOpaqueInterface {
   /// Deletes a stopped guest with its disks, waited for.
   Future<void> delete({required PveGuestRef guest});
 
+  /// Deletes `backup_json`, waited for.
+  Future<void> deleteBackup({required String backupJson});
+
   Future<void> deleteSnapshot({
     required PveGuestRef guest,
     required String name,
@@ -73,6 +101,16 @@ abstract class PveSession implements RustOpaqueInterface {
 
   /// `sbm_virt::model::GuestDetail` JSON.
   Future<String> detail({required PveGuestRef guest});
+
+  /// `backup_json`'s notes and protection, as `edit_json` sets them.
+  Future<void> editBackup({
+    required String backupJson,
+    required String editJson,
+  });
+
+  /// Makes, edits or (`remove`) removes `edit_json` (a `BackupJobEdit`),
+  /// checked first.
+  Future<void> editBackupJob({required String editJson, required bool remove});
 
   /// `guest`'s hardware as it stands, `Hardware` JSON.
   Future<String> hardware({required PveGuestRef guest});
@@ -129,37 +167,25 @@ abstract class PveSession implements RustOpaqueInterface {
     required VirtActionKind action,
   });
 
-  /// A request answered as the host answered it, for the app's calls that
-  /// read PVE's answers themselves. `path` is the whole path, API root and
-  /// query included. The session still logs in, renews, and replaces a
-  /// refused ticket once.
-  Future<PveRawResponse> raw({
-    required PveMethod method,
-    required String path,
-    String? contentType,
-    Uint8List? body,
-  });
-
-  /// Reads the guest's state again after an action made through
-  /// [`PveSession::raw`] (a snapshot revert), so the next load shows it.
-  Future<void> refreshStatus({required PveGuestRef guest});
+  /// A refusal met on a connection of the app's own (an upload, which
+  /// streams), in PVE's words, said as a change's is: a name taken, a
+  /// stale digest, a missing privilege and how to grant it.
+  PveError refusal({required String message, int? status});
 
   /// PVE's release, once a session has read it.
   String? release();
 
-  /// Any API call in this session, `path` under `/api2/json` with its
-  /// query: the body's `data` as JSON, or the whole body with `whole`.
-  Future<String> request({
-    required PveMethod method,
-    required String path,
-    String? contentType,
-    Uint8List? body,
-    required bool action,
-    required bool whole,
-  });
-
   /// Drops the session; the next call logs in again.
   void reset();
+
+  /// `backup_id` restored over `guest` (stopped) or as `vmid`; `storage`
+  /// where its disks land.
+  Future<void> restoreBackup({
+    required PveGuestRef guest,
+    required String backupId,
+    int? vmid,
+    String? storage,
+  });
 
   /// Drops every pending change.
   Future<void> revertPending({required PveGuestRef guest, String? revision});
@@ -169,6 +195,9 @@ abstract class PveSession implements RustOpaqueInterface {
     required String name,
     required bool start,
   });
+
+  /// A job's "Run now", on its node or every online one, waited for.
+  Future<void> runBackupJob({required String id});
 
   /// Writes `edit_json` (a `CloudInitEdit`), and the drive at once.
   Future<void> setCloudInit({
@@ -427,27 +456,6 @@ class PveLogin {
           tokenId == other.tokenId &&
           tokenSecret == other.tokenSecret &&
           certSha256 == other.certSha256;
-}
-
-enum PveMethod { get_, post, put, delete }
-
-/// What [`PveSession::raw`] answered: the host's status and body as sent.
-class PveRawResponse {
-  final int status;
-  final Uint8List body;
-
-  const PveRawResponse({required this.status, required this.body});
-
-  @override
-  int get hashCode => status.hashCode ^ body.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PveRawResponse &&
-          runtimeType == other.runtimeType &&
-          status == other.status &&
-          body == other.body;
 }
 
 /// How long a task is waited for, and how often it is asked about; `None`

@@ -383,6 +383,23 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             Some(json!({ "guest": "absent", "edit": { "values": { "user": "x" }, "revision": "" } })),
         ),
         (Method::POST, "/api/v1/virt/host-devices", Some(json!({ "guest": "absent" }))),
+        (Method::POST, "/api/v1/virt/backups", Some(json!({ "guest": "absent" }))),
+        (Method::POST, "/api/v1/virt/backup", Some(json!({ "guest": "absent", "request": { "storage": "x" } }))),
+        (Method::POST, "/api/v1/virt/backup/restore", Some(json!({ "guest": "absent", "backup": "x" }))),
+        (
+            Method::POST,
+            "/api/v1/virt/backup/edit",
+            Some(json!({ "guest": "absent", "backup": "x", "edit": { "notes": "", "protected": false } })),
+        ),
+        (Method::POST, "/api/v1/virt/backup/delete", Some(json!({ "guest": "absent", "backup": "x" }))),
+        (Method::POST, "/api/v1/virt/backup-jobs", Some(json!({}))),
+        (
+            Method::POST,
+            "/api/v1/virt/backup-jobs/edit",
+            Some(json!({ "edit": { "storage": "x", "schedule": "02:00" } })),
+        ),
+        (Method::POST, "/api/v1/virt/backup-jobs/run", Some(json!({ "id": "x" }))),
+        (Method::POST, "/api/v1/virt/backup-jobs/schedule", Some(json!({ "schedule": "02:00" }))),
     ]
 }
 

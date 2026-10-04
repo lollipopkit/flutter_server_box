@@ -5,12 +5,14 @@
 //!   [`snapshot`] is what a snapshot is, and the rules for taking one;
 //!   [`resource`] is storage and networks, and the rules a change is checked by;
 //!   [`create`] is making, copying and deleting guests, and its rules;
-//!   [`hardware`] a guest's hardware, settings and cloud-init, and theirs.
+//!   [`hardware`] a guest's hardware, settings and cloud-init, and theirs;
+//!   [`backup`] backups and backup jobs, and the schedule's rules.
 //! - [`libvirt`]: `virsh` scripts and the parsers for what they print — pure,
 //!   no IO; the caller runs each script through its own transport.
 //! - [`pve`]: the Proxmox VE API client, over a byte stream the caller opens.
 
 pub mod create;
+pub mod backup;
 pub mod error;
 pub mod hardware;
 pub mod libvirt;

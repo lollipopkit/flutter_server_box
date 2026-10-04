@@ -5,6 +5,8 @@
   import LineChart from '../components/LineChart.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import PveForm from '../components/PveForm.svelte'
+  import VirtBackupJobs from '../components/VirtBackupJobs.svelte'
+  import VirtBackups from '../components/VirtBackups.svelte'
   import VirtConsole from '../components/VirtConsole.svelte'
   import VirtCreate from '../components/VirtCreate.svelte'
   import VirtHardware from '../components/VirtHardware.svelte'
@@ -80,14 +82,15 @@
   let timer: ReturnType<typeof setTimeout> | null = null
   let generation = 0
   /// The selected guest's view, the design's tabs.
-  let pane = $state<'overview' | 'hardware' | 'console' | 'snapshots' | 'settings'>('overview')
+  let pane = $state<'overview' | 'hardware' | 'console' | 'snapshots' | 'backup' | 'settings'>('overview')
   /// The right side shows the create form instead of a guest.
   let creating = $state(false)
   /// A guest just made or copied: selected before the host lists it, kept
   /// selected until it does.
   let awaiting = $state<string | null>(null)
-  /// What of the host the page shows: its guests, its storage, its networks.
-  let section = $state<'guests' | 'storage' | 'networks'>('guests')
+  /// What of the host the page shows: its guests, its storage, its networks,
+  /// its backup jobs (PVE).
+  let section = $state<'guests' | 'storage' | 'networks' | 'backup_jobs'>('guests')
   let detail = $state<VirtGuestDetail | null>(null)
   let detailFor = $state<string | null>(null)
   let detailError = $state('')
@@ -121,6 +124,7 @@
       selected = null
       creating = false
       awaiting = null
+      section = 'guests'
       sudoPassword = null
       pve = null
       void refresh(serverId)
@@ -482,9 +486,9 @@
     </Card>
   {/if}
 
-  {#if view && (view.capabilities.storage || view.capabilities.network)}
+  {#if view && (view.capabilities.storage || view.capabilities.network || view.capabilities.backup_jobs === true)}
     <nav class="flex gap-1 overflow-x-auto">
-      {#each [['guests', $LL.virtSectionGuests()], ...(view.capabilities.storage ? [['storage', $LL.virtSectionStorage()]] : []), ...(view.capabilities.network ? [['networks', $LL.virtSectionNetworks()]] : [])] as [id, label] (id)}
+      {#each [['guests', $LL.virtSectionGuests()], ...(view.capabilities.storage ? [['storage', $LL.virtSectionStorage()]] : []), ...(view.capabilities.network ? [['networks', $LL.virtSectionNetworks()]] : []), ...(view.capabilities.backup_jobs === true ? [['backup_jobs', $LL.virtSectionBackupJobs()]] : [])] as [id, label] (id)}
         <button
           class="shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors {section === id ? 'bg-primary/10 text-fg-strong' : 'text-muted-fg hover:bg-muted'}"
           aria-current={section === id ? 'page' : undefined}
@@ -500,6 +504,8 @@
     <VirtStorage {view} {sudoPassword} />
   {:else if view && section === 'networks'}
     <VirtNetworks {view} {sudoPassword} />
+  {:else if view && section === 'backup_jobs'}
+    <VirtBackupJobs {view} />
   {:else if view}
     {@const alloc = allocation(guests)}
     {@const cpuCap = view.host.nodes.reduce((n, node) => n + (node.max_cpu ?? 0), 0)}
@@ -606,7 +612,7 @@
           </Card>
 
           <nav class="flex items-center gap-1 overflow-x-auto">
-            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()], ...(view.capabilities.snapshots && !g.template ? [['snapshots', $LL.virtViewSnapshots()]] : []), ['settings', $LL.virtViewSettings()]] as [id, label] (id)}
+            {#each [['overview', $LL.virtViewOverview()], ['hardware', $LL.virtViewHardware()], ['console', $LL.virtViewConsole()], ...(view.capabilities.snapshots && !g.template ? [['snapshots', $LL.virtViewSnapshots()]] : []), ...(view.capabilities.backup === true ? [['backup', $LL.virtViewBackup()]] : []), ['settings', $LL.virtViewSettings()]] as [id, label] (id)}
               <button
                 class="shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors {pane === id ? 'bg-primary/10 text-fg-strong' : 'text-muted-fg hover:bg-muted'}"
                 aria-current={pane === id ? 'page' : undefined}
@@ -636,6 +642,13 @@
                 void refresh()
               }}
               onchanged={() => void refresh()}
+            />
+          {:else if pane === 'backup'}
+            <VirtBackups
+              {view}
+              guest={g}
+              onchanged={() => void refresh()}
+              onjobs={() => (section = 'backup_jobs')}
             />
           {:else if pane === 'snapshots'}
             <VirtSnapshots guest={g} {sudoPassword} onchanged={() => void refresh()} />

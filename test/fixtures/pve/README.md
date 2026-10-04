@@ -1,8 +1,7 @@
 # PVE fixtures
 
-API answers `PveResources` (`lib/data/model/virt/pve_resources.dart`) reads,
-asserted by `test/unit/virt/pve_backend_test.dart` and
-`test/unit/virt/virt_backup_job_test.dart`. Captured from **PVE 9.2.2**
+API answers `sbm_virt::pve` reads, which `test/unit/virt/pve_backend_test.dart`
+serves to the app's session and `crates/sbm_virt/tests/` assert. Captured from **PVE 9.2.2**
 (`pve-manager/9.2.2/b9984c6d90a4bd80`) through its API, one file per endpoint
 or per shape an endpoint answers in. The host's guests are VM 100, VM 101 and
 CT 200; anything named `sb*` was made for the capture and removed again.
@@ -18,8 +17,6 @@ apart from the whitespace `python3 -m json.tool` adds.
 | --- | --- | --- |
 | `node_storage_p8.json` | `GET /nodes/{node}/storage` | an older capture with `lvmthin` and a `dir` |
 | `backup_content.json` | `GET .../storage/local/content?content=backup&vmid=` | one `vzdump` archive, with `notes`, `size`, `subtype`, `vmid` |
-| `backup_job_fields.json` | `GET /cluster/backup` | one job that names its guests: `vmid` a comma list, `prune-backups` an object of strings, `notes-template` with PVE's `{{guestname}}` variables, `mailnotification` |
-| `backup_jobs_all.json` | `GET /cluster/backup` | the same job plus one with `all: 1` and `exclude`, and one that is `enabled: 0` — the two shapes `VirtBackupJob.takes` distinguishes |
 | `snapshots_qemu.json`, `snapshots_none.json` | `GET .../qemu/{vmid}/snapshot` | one snapshot with `vmstate: 1`, and a guest with none |
 | `snapshot_config.json`, `snapshot_current_config.json` | `GET .../snapshot/{name}/config` | the configuration a snapshot recorded, for the diff |
 | `hw_vm_config.json` | `GET .../qemu/{vmid}/config` | a VM's configuration |
@@ -28,9 +25,10 @@ apart from the whitespace `python3 -m json.tool` adds.
 | `mapping_usb.json`, `mapping_pci.json` | `GET /cluster/mapping/{usb,pci}` | resource mappings |
 
 `GET /cluster/jobs/schedule-analyze` is not a fixture: its answers are the
-table in `test/unit/virt/virt_backup_job_test.dart`, one line per value the
+table in `crates/sbm_virt/tests/backup.rs`, one line per value the
 host was asked about, since what matters there is which values it takes, not
 the timestamps it prints.
 
-The containers' hardware fixtures and the VM with passthrough devices moved to
+The backup jobs' fixtures, the containers' hardware fixtures and the VM with
+passthrough devices moved to
 `crates/sbm_virt/tests/fixtures/pve/`, with the tests that read them.

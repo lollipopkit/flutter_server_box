@@ -1524,5 +1524,8 @@
   "virtCreateSecureBootNeedsUefi": "Secure Boot には UEFI が必要です。",
   "virtGuestNotStopped": "先にシャットダウンしてください。",
   "virtGuestIsTemplate": "すでにテンプレートです。",
-  "virtCreateImageBigger": "イメージがディスクより大きいです。ディスクを少なくとも同じ大きさにしてください。"
+  "virtCreateImageBigger": "イメージがディスクより大きいです。ディスクを少なくとも同じ大きさにしてください。",
+  "virtBackupIssueStorage": "そのストレージはこのノードでバックアップを保持しません。",
+  "virtBackupIssueOption": "PVE が受け付けるモードや圧縮ではありません。",
+  "virtBackupIssueNodeOffline": "ジョブのノードはオンラインではありません。"
 }
