@@ -73,15 +73,26 @@ enum FirewallReach {
   bool worseThan(FirewallReach before) => index > before.index;
 }
 
+/// One item of a port specification: a port, or one range in either
+/// separator (`6000:6010` is ufw's, `6000-6010` is firewalld's).
+final _portItem = RegExp(r'^(\d{1,5})(?:[:-](\d{1,5}))?$');
+
 /// Whether [spec] — `22`, `80,443`, `6000:6010`, or firewalld's `6000-6010`
 /// — names [port]. A null [spec] is any port.
+///
+/// An item that is neither a port nor exactly one range covers nothing. What
+/// this answers decides whether a rule is read as letting a way in through, so
+/// a spec the host could not have meant must not be read as naming a port it
+/// does not describe: `22:23:24` is not the range 22–24, and treating it as
+/// one would have a rule that says nothing about 23 — an `allow` among them —
+/// classified as admitting it.
 bool portSpecCovers(String? spec, int port) {
   if (spec == null) return true;
   for (final part in spec.split(',')) {
-    final range = part.trim().split(RegExp('[:-]'));
-    final start = int.tryParse(range.first);
-    final end = int.tryParse(range.last);
-    if (start == null || end == null) continue;
+    final match = _portItem.firstMatch(part.trim());
+    if (match == null) continue;
+    final start = int.parse(match.group(1)!);
+    final end = int.tryParse(match.group(2) ?? '') ?? start;
     if (port >= start && port <= end) return true;
   }
   return false;

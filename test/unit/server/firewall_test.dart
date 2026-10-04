@@ -67,6 +67,28 @@ void main() {
     expect(portSpecCovers('6000:6010', 6005), isTrue);
     expect(portSpecCovers('6000-6010', 6010), isTrue);
     expect(portSpecCovers('6000-6010', 6011), isFalse);
+    // An item that names nothing does not hide the ones beside it.
+    expect(portSpecCovers('22:23,443', 443), isTrue);
+    expect(portSpecCovers('22:23,443', 23), isTrue);
+  });
+
+  test('portSpecCovers names no port a malformed spec does not describe', () {
+    // More than one separator is not a range. Reading `22:23:24` as 22-24
+    // would have a rule that says nothing about 23 classified as admitting it.
+    expect(portSpecCovers('22:23:24', 23), isFalse);
+    expect(portSpecCovers('22-23:24', 23), isFalse);
+    expect(portSpecCovers('22:23-24', 23), isFalse);
+    expect(portSpecCovers('1:2:3:4', 2), isFalse);
+    expect(portSpecCovers('22:23:24', 22), isFalse);
+    expect(portSpecCovers('22:23:24', 24), isFalse);
+    // Nor does half a range, which names no end.
+    expect(portSpecCovers('22:', 22), isFalse);
+    expect(portSpecCovers(':22', 22), isFalse);
+    expect(portSpecCovers('22-', 22), isFalse);
+    expect(portSpecCovers('-22', 22), isFalse);
+    expect(portSpecCovers('22:abc', 22), isFalse);
+    expect(portSpecCovers('abc', 22), isFalse);
+    expect(portSpecCovers('', 22), isFalse);
   });
 
   group('FirewallReach', () {
