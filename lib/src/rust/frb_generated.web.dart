@@ -11,16 +11,19 @@ import 'dart:convert';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'package:server_box/src/rust/api/backup.dart';
+import 'package:server_box/src/rust/api/bench.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
 import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/hardware.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/proc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
+import 'package:server_box/src/rust/api/service.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
@@ -203,6 +206,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  BenchPoll dco_decode_bench_poll(dynamic raw);
+
+  @protected
   BmcError dco_decode_bmc_error(dynamic raw);
 
   @protected
@@ -228,6 +234,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double dco_decode_box_autoadd_f_64(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_i_32(dynamic raw);
 
   @protected
   LibvirtPoolRef dco_decode_box_autoadd_libvirt_pool_ref(dynamic raw);
@@ -335,6 +344,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ScriptSegment> dco_decode_list_script_segment(dynamic raw);
 
   @protected
+  List<ServiceCommand> dco_decode_list_service_command(dynamic raw);
+
+  @protected
+  List<ServiceCommandOutput> dco_decode_list_service_command_output(
+    dynamic raw,
+  );
+
+  @protected
   List<VirtActionKind> dco_decode_list_virt_action_kind(dynamic raw);
 
   @protected
@@ -351,6 +368,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
+
+  @protected
+  int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
 
   @protected
   RedfishChassis? dco_decode_opt_box_autoadd_redfish_chassis(dynamic raw);
@@ -465,6 +485,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScriptSegment dco_decode_script_segment(dynamic raw);
+
+  @protected
+  ServiceCommand dco_decode_service_command(dynamic raw);
+
+  @protected
+  ServiceCommandOutput dco_decode_service_command_output(dynamic raw);
+
+  @protected
+  ServiceProbe dco_decode_service_probe(dynamic raw);
 
   @protected
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
@@ -670,6 +699,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
+  BenchPoll sse_decode_bench_poll(SseDeserializer deserializer);
+
+  @protected
   BmcError sse_decode_bmc_error(SseDeserializer deserializer);
 
   @protected
@@ -695,6 +727,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
   LibvirtPoolRef sse_decode_box_autoadd_libvirt_pool_ref(
@@ -828,6 +863,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<ServiceCommand> sse_decode_list_service_command(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ServiceCommandOutput> sse_decode_list_service_command_output(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<VirtActionKind> sse_decode_list_virt_action_kind(
     SseDeserializer deserializer,
   );
@@ -846,6 +891,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
+  int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
   RedfishChassis? sse_decode_opt_box_autoadd_redfish_chassis(
@@ -976,6 +1024,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScriptSegment sse_decode_script_segment(SseDeserializer deserializer);
+
+  @protected
+  ServiceCommand sse_decode_service_command(SseDeserializer deserializer);
+
+  @protected
+  ServiceCommandOutput sse_decode_service_command_output(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ServiceProbe sse_decode_service_probe(SseDeserializer deserializer);
 
   @protected
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
@@ -1212,6 +1271,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
+  void sse_encode_bench_poll(BenchPoll self, SseSerializer serializer);
+
+  @protected
   void sse_encode_bmc_error(BmcError self, SseSerializer serializer);
 
   @protected
@@ -1240,6 +1302,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_libvirt_pool_ref(
@@ -1413,6 +1478,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_service_command(
+    List<ServiceCommand> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_service_command_output(
+    List<ServiceCommandOutput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_virt_action_kind(
     List<VirtActionKind> self,
     SseSerializer serializer,
@@ -1438,6 +1515,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_redfish_chassis(
@@ -1606,6 +1686,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_script_segment(ScriptSegment self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_service_command(
+    ServiceCommand self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_command_output(
+    ServiceCommandOutput self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_service_probe(ServiceProbe self, SseSerializer serializer);
 
   @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);

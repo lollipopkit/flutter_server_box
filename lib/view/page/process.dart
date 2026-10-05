@@ -62,12 +62,11 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   String? _loadErrorMessage;
   bool _hasLoaded = false;
   bool _isRefreshing = false;
-  _ProcessCapabilities _capabilities = _ProcessCapabilities.empty;
 
   // Issue #64: CPU sorting keeps high-churn lists visibly fresh and surfaces
   // the processes that normally need attention first.
   ProcSortMode _procSortMode = ProcSortMode.cpu;
-  bool _sortAscending = ProcSortMode.cpu.defaultAscending;
+  bool _sortAscending = false;
 
   String _query = '';
 
@@ -133,6 +132,10 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     _refreshCompleter = refreshCompleter;
     _isRefreshing = true;
     if (_hasLoaded) setState(() {});
+    // Taken for this sample only: a refresh that ends without a valid table
+    // leaves no baseline, so the next rate never averages over the gap.
+    final previous = _lastValidResult;
+    _lastValidResult = null;
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
@@ -166,22 +169,24 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       }
 
       final requestedSort = _procSortMode;
-      var parsed = PsResult.parse(
+      final parsed = await PsResult.parse(
         result,
+        systemType,
         sort: requestedSort,
         ascending: _sortAscending,
-        previous: _lastValidResult,
+        previous: previous,
       );
+      if (!mounted) return;
       if (parsed.issue != null) {
         _result = PsResult(procs: const [], issue: parsed.issue);
         _loadErrorMessage = null;
         _hasLoaded = true;
         return;
       }
-      final sortChanged = _updateCapabilities(parsed);
-      if (sortChanged) {
-        parsed = parsed.sortedBy(_procSortMode, ascending: _sortAscending);
-      }
+      // The order the table could answer: the one asked for, or the one
+      // it fell back to.
+      _procSortMode = parsed.sort;
+      _sortAscending = parsed.ascending;
       _result = parsed;
       _lastValidResult = parsed;
       _loadErrorMessage = null;
@@ -212,26 +217,19 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     }
   }
 
-  bool _updateCapabilities(PsResult result) {
-    _capabilities = _ProcessCapabilities.from(result.procs);
-    if (!_capabilities.supportsSort(_procSortMode)) {
-      _procSortMode = _capabilities.preferredSort;
-      _sortAscending = _procSortMode.defaultAscending;
-      return true;
-    }
-    return false;
-  }
-
-  void _selectSort(ProcSortMode mode) {
-    if (!_capabilities.supportsSort(mode)) return;
+  Future<void> _selectSort(ProcSortMode mode) async {
+    if (!_result.sorts.contains(mode)) return;
+    final system = ref.read(_provider).status.system;
+    // The same order again turns it round; another starts at its own default.
+    final ascending = _procSortMode == mode ? !_sortAscending : null;
+    final source = _result;
+    final sorted = await source.sortedBy(system, mode, ascending: ascending);
+    // A refresh that landed meanwhile already holds the newer table.
+    if (!mounted || !identical(_result, source)) return;
     setState(() {
-      if (_procSortMode == mode) {
-        _sortAscending = !_sortAscending;
-      } else {
-        _procSortMode = mode;
-        _sortAscending = mode.defaultAscending;
-      }
-      _result = _result.sortedBy(mode, ascending: _sortAscending);
+      _result = sorted;
+      _procSortMode = sorted.sort;
+      _sortAscending = sorted.ascending;
     });
   }
 
@@ -251,7 +249,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         builder: (context, constraints) {
           final layout = _ProcessLayout.fromWidth(
             constraints.maxWidth,
-            _capabilities,
+            _result.columns,
           );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -489,10 +487,10 @@ extension _ProcessPageWidgets on _ProcessPageState {
       ProcSortMode.rss,
       ProcSortMode.pid,
     ];
-    final chips = primary.where(_capabilities.supportsSort).toList();
+    final chips = primary.where(_result.sorts.contains).toList();
     final more = ProcSortMode.values
         .where((mode) => !primary.contains(mode))
-        .where(_capabilities.supportsSort)
+        .where(_result.sorts.contains)
         .toList();
     return Row(
       children: [
@@ -595,7 +593,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
           active: _procSortMode == mode,
           ascending: _sortAscending,
           alignEnd: end,
-          onTap: _capabilities.supportsSort(mode)
+          onTap: _result.sorts.contains(mode)
               ? () => _selectSort(mode)
               : null,
         );
@@ -654,7 +652,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
   Widget _buildWideRow(Proc proc, _ProcessLayout layout, SystemType system) {
     final scheme = Theme.of(context).colorScheme;
     final expanded = _isExpanded(proc);
-    final canStop = ProcKill.supports(proc, system);
+    final canStop = proc.killable && _result.signals.isNotEmpty;
     final dim = TextStyle(color: scheme.onSurfaceVariant);
     Widget end(String text, {TextStyle? style}) => Text(
       text,
@@ -889,9 +887,7 @@ extension _ProcessPageWidgets on _ProcessPageState {
       if (!wide && proc.writeSpeed != null)
         ('W/s', _formatNullableSpeed(proc.writeSpeed)),
     ];
-    final signals = ProcKill.supports(proc, system)
-        ? ProcKill.signalsFor(system)
-        : const <ProcSignal>[];
+    final signals = proc.killable ? _result.signals : const <ProcSignal>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1043,8 +1039,7 @@ extension _ProcessPageUtils on _ProcessPageState {
     ProcSortMode.name => libL10n.name,
   };
 
-  ProcSignal _defaultSignal(SystemType system) =>
-      ProcKill.signalsFor(system).first;
+  ProcSignal _defaultSignal(SystemType system) => _result.signals.first;
 
   /// `Stop (SIGTERM)` and `Force kill (SIGKILL)` where there is room, without
   /// the signal where there is not. On Windows the one stop there is is a
@@ -1214,89 +1209,6 @@ extension _ProcessPageActions on _ProcessPageState {
   }
 }
 
-class _ProcessCapabilities {
-  const _ProcessCapabilities({
-    required this.hasUser,
-    required this.hasCpu,
-    required this.hasMem,
-    required this.hasRss,
-    required this.hasRead,
-    required this.hasWrite,
-    required this.hasReadSpeed,
-    required this.hasWriteSpeed,
-  });
-
-  static const empty = _ProcessCapabilities(
-    hasUser: false,
-    hasCpu: false,
-    hasMem: false,
-    hasRss: false,
-    hasRead: false,
-    hasWrite: false,
-    hasReadSpeed: false,
-    hasWriteSpeed: false,
-  );
-
-  factory _ProcessCapabilities.from(List<Proc> procs) {
-    var hasUser = false;
-    var hasCpu = false;
-    var hasMem = false;
-    var hasRss = false;
-    var hasRead = false;
-    var hasWrite = false;
-    var hasReadSpeed = false;
-    var hasWriteSpeed = false;
-    for (final proc in procs) {
-      hasUser |= proc.user?.isNotEmpty == true;
-      hasCpu |= proc.cpu != null;
-      hasMem |= proc.mem != null;
-      hasRss |= proc.rssKb != null;
-      hasRead |= proc.readBytes != null;
-      hasWrite |= proc.writeBytes != null;
-      hasReadSpeed |= proc.readSpeed != null;
-      hasWriteSpeed |= proc.writeSpeed != null;
-    }
-    return _ProcessCapabilities(
-      hasUser: hasUser,
-      hasCpu: hasCpu,
-      hasMem: hasMem,
-      hasRss: hasRss,
-      hasRead: hasRead,
-      hasWrite: hasWrite,
-      hasReadSpeed: hasReadSpeed,
-      hasWriteSpeed: hasWriteSpeed,
-    );
-  }
-
-  final bool hasUser;
-  final bool hasCpu;
-  final bool hasMem;
-  final bool hasRss;
-  final bool hasRead;
-  final bool hasWrite;
-  final bool hasReadSpeed;
-  final bool hasWriteSpeed;
-
-  bool supportsSort(ProcSortMode mode) => switch (mode) {
-    ProcSortMode.cpu => hasCpu,
-    ProcSortMode.mem => hasMem,
-    ProcSortMode.rss => hasRss,
-    ProcSortMode.read => hasReadSpeed,
-    ProcSortMode.write => hasWriteSpeed,
-    ProcSortMode.user => hasUser,
-    ProcSortMode.pid || ProcSortMode.name => true,
-  };
-
-  ProcSortMode get preferredSort {
-    if (hasCpu) return ProcSortMode.cpu;
-    if (hasMem) return ProcSortMode.mem;
-    if (hasRss) return ProcSortMode.rss;
-    if (hasReadSpeed) return ProcSortMode.read;
-    if (hasWriteSpeed) return ProcSortMode.write;
-    return ProcSortMode.pid;
-  }
-}
-
 class _ProcessLayout {
   const _ProcessLayout({
     required this.wide,
@@ -1310,21 +1222,21 @@ class _ProcessLayout {
 
   factory _ProcessLayout.fromWidth(
     double width,
-    _ProcessCapabilities capabilities,
+    ProcColumns columns,
   ) {
     final wide = width >= _kWideWidth;
     return _ProcessLayout(
       wide: wide,
-      showUser: wide && capabilities.hasUser,
-      showCpu: wide && capabilities.hasCpu,
-      showMem: wide && capabilities.hasMem,
+      showUser: wide && columns.user,
+      showCpu: wide && columns.cpu,
+      showMem: wide && columns.mem,
       showRss:
           wide &&
-          capabilities.hasRss &&
+          columns.rss &&
           (width >= _kRssWidth ||
-              (!capabilities.hasUser && !capabilities.hasMem)),
-      showRead: wide && width >= _kIoWidth && capabilities.hasRead,
-      showWrite: wide && width >= _kIoWidth && capabilities.hasWrite,
+              (!columns.user && !columns.mem)),
+      showRead: wide && width >= _kIoWidth && columns.read,
+      showWrite: wide && width >= _kIoWidth && columns.write,
     );
   }
 

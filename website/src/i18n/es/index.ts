@@ -137,7 +137,7 @@ const es: Translation = {
   cta: {
     title: 'ServerBox es gratis y open source bajo AGPLv3.',
     subtitle:
-      'Instala desde App Store, GitHub Releases, F-Droid, OpenAPK o el CDN del proyecto.',
+      'Instala desde App Store, GitHub Releases, F-Droid u OpenAPK.',
     appStoreAction: 'Abrir App Store',
     githubAction: 'Descargar desde GitHub Releases',
   },

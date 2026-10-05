@@ -9,7 +9,9 @@
 //! to benchmark.
 //!
 //! The bytes are *not* here. The script is an asset (`assets/yabs.b64`,
-//! base64, for the reason `YabsScript` in the app gives) and whoever ships it
+//! base64: App Store validation refuses a bundled file that reads as an
+//! unsigned script — see `lib/data/model/server/benchmark/CLAUDE.md`) and
+//! whoever ships it
 //! loads it: the app through `rootBundle`, the agent through `include_str!`.
 //! This module is the command layer, and [`decode_asset`] the one decoder each
 //! caller hands those bytes to, so the two cannot disagree about which file
@@ -20,14 +22,8 @@
 //! The run itself is detached (`setsid`) and everything it reports is written
 //! into its run directory, which is what makes closing the page, losing the
 //! network or locking a phone cost nothing. See `start_entry` and
-//! `poll_command`.
-//!
-// TODO(migration): `lib/data/model/server/benchmark/yabs_script.dart` is the
-// same protocol against the same markers, and it is still what the app runs
-// over SSH. Collapse onto this one — the app through FFI — and delete it, the
-// way `script.rs` replaced its Dart counterpart. Until then an edit here has to
-// be made there too, which is the whole reason the rules above are stated
-// twice.
+//! `poll_command`. The app runs these over its own connection through FFI
+//! (`sbm_ffi::api::bench`), the agent locally.
 
 use serde::{Deserialize, Serialize};
 
@@ -365,6 +361,37 @@ pub fn start_entry(options: &BenchOptions, run_id: &str) -> String {
     ))
 }
 
+// ---------------------------------------------------------------------------
+// Installing the script over a connection
+// ---------------------------------------------------------------------------
+
+/// Whether the server already has this version. Its own round trip rather
+/// than uploading unconditionally: the script is 50 KB, and over a monitor
+/// agent that is 50 KB of request body on every run. Only a caller that
+/// reaches the machine over a connection needs it; the agent writes the file
+/// itself.
+pub fn probe_command() -> String {
+    posix(&format!(
+        "[ -s {path} ] && echo {SCRIPT_PRESENT} || echo {SCRIPT_MISSING}",
+        path = quote_path(&script_path())
+    ))
+}
+
+pub const SCRIPT_PRESENT: &str = "SBM_BENCH_SCRIPT_OK";
+pub const SCRIPT_MISSING: &str = "SBM_BENCH_SCRIPT_MISSING";
+
+/// Reads the script on stdin and writes it — the `entry` shape, so the 50 KB
+/// of shell never has to survive a round of quoting into a command line.
+pub fn install_entry() -> String {
+    let path = quote_path(&script_path());
+    posix(&format!(
+        "mkdir -p {dir} && cat > {path} && chmod +x {path} && echo {SCRIPT_INSTALLED}",
+        dir = quote_path(BASE_DIR)
+    ))
+}
+
+pub const SCRIPT_INSTALLED: &str = "SBM_BENCH_SCRIPT_INSTALLED";
+
 /// The marker [`start_entry`] answers with.
 pub const STARTED: &str = "SBM_BENCH_STARTED";
 
@@ -478,7 +505,10 @@ pub const CANCELLED: &str = "SBM_BENCH_CANCELLED";
 /// deserves a check that it is still the directory this module names — even
 /// though the only way to reach it is through [`run_dir`].
 pub fn cleanup_command(run_dir: &str, run_id: &str) -> Option<String> {
-    let leaf_ok = run_dir.ends_with(&format!("/{RUN_DIR_NAME}")) || run_dir.ends_with("/run");
+    // The fallback is one fixed path, so it is matched whole: a bare `/run`
+    // suffix would let a stale or corrupt record name any directory called
+    // `run`.
+    let leaf_ok = run_dir.ends_with(&format!("/{RUN_DIR_NAME}")) || run_dir == self::run_dir("");
     if !leaf_ok {
         return None;
     }
@@ -869,6 +899,9 @@ mod tests {
     fn cleanup_refuses_a_path_it_could_not_have_produced() {
         assert!(cleanup_command("/home/me", "bench_1").is_none());
         assert!(cleanup_command("/", "bench_1").is_none());
+        // Only the fallback itself, not any directory that shares its leaf.
+        assert!(cleanup_command("/important/run", "bench_1").is_none());
+        assert!(cleanup_command(&run_dir(""), "bench_1").is_some());
         let command = cleanup_command(&run_dir("/"), "bench_1").unwrap();
         assert!(command.contains(".server_box_bench"));
         assert!(command.contains("bench_1"));

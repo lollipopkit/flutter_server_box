@@ -7,11 +7,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/service/detector.dart';
-import 'package:server_box/data/service/openrc.dart';
-import 'package:server_box/data/service/procd.dart';
 import 'package:server_box/data/service/service_manager.dart';
-import 'package:server_box/data/service/systemd.dart';
 
 part 'services.freezed.dart';
 part 'services.g.dart';
@@ -61,7 +57,7 @@ abstract class ServicesState with _$ServicesState {
 @riverpod
 class ServicesNotifier extends _$ServicesNotifier {
   late final Spi _spi;
-  ServiceManagerBackend? _manager;
+  ServiceManager? _manager;
 
   /// Whether the account commands run as is root, asked of the server once.
   /// [Spi.isRoot] only knows the SSH user, and a server reached through its
@@ -228,7 +224,7 @@ class ServicesNotifier extends _$ServicesNotifier {
     if (!ref.mounted) return;
 
     try {
-      final probe = await ServiceManagerDetector.probe(exec);
+      final probe = await ServiceManager.probe(exec);
       final type = probe.type;
       // Which init system, or that there was none to find. This is the half
       // worth having: systemd is assumed far more often than it is true, and
@@ -254,7 +250,7 @@ class ServicesNotifier extends _$ServicesNotifier {
         return;
       }
 
-      final manager = _managerFor(type);
+      final manager = ServiceManager(type);
       final listing = await manager.list(exec);
       if (!ref.mounted) return;
       _manager = manager;
@@ -283,11 +279,4 @@ class ServicesNotifier extends _$ServicesNotifier {
     }
   }
 
-  ServiceManagerBackend _managerFor(ServiceManagerType type) {
-    return switch (type) {
-      ServiceManagerType.systemd => const SystemdServiceManager(),
-      ServiceManagerType.procd => const ProcdServiceManager(),
-      ServiceManagerType.openrc => const OpenRcServiceManager(),
-    };
-  }
 }

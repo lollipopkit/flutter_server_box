@@ -1,15 +1,16 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
-import 'package:server_box/data/model/server/benchmark/yabs_script.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/benchmark.dart';
+import 'package:server_box/src/rust/api/bench.dart' as ffi;
 
 part 'benchmark.freezed.dart';
 part 'benchmark.g.dart';
@@ -132,14 +133,14 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
         startedAt: DateTime.now(),
         status: BenchmarkStatus.running,
         options: options,
-        runDir: YabsScript.runDir(options),
+        runDir: ffi.benchRunDir(optionsJson: options.rustJson),
       );
 
       final res = await exec.run(
-        YabsScript.launcher(options),
-        entry: YabsScript.startEntry(options, run.id),
+        ffi.benchLauncher(optionsJson: options.rustJson),
+        entry: ffi.benchStartEntry(optionsJson: options.rustJson, runId: run.id),
       );
-      if (!res.combined.contains(YabsScript.started)) {
+      if (!ffi.benchStarted(output: res.combined)) {
         throw StateError(
           'The server did not confirm the run started: '
           '${res.exitCode} ${res.combined.trim()}',
@@ -174,15 +175,26 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   /// over a monitor agent that is 50 KB of request body every time somebody
   /// runs a benchmark. The filename carries the version, so "present" means
   /// "the right one".
+  static String? _scriptCache;
+
+  /// The vendored yabs (`assets/yabs.b64`, shipped rather than fetched — see
+  /// `sbm_parser::bench`), decoded once per process.
+  static Future<String> _script() async {
+    if (_scriptCache case final cached?) return cached;
+    final decoded = await ffi.benchDecodeAsset(encoded: await rootBundle.loadString('assets/yabs.b64'));
+    if (decoded == null) throw StateError('The bundled benchmark script does not decode');
+    return _scriptCache = decoded;
+  }
+
   Future<void> _ensureScript(ServerExec exec) async {
-    final probe = await exec.run(YabsScript.probeCommand());
-    if (probe.combined.contains(YabsScript.scriptPresent)) return;
+    final probe = await exec.run(ffi.benchProbeCommand());
+    if (ffi.benchScriptPresent(output: probe.combined)) return;
 
     final res = await exec.run(
-      await YabsScript.load(),
-      entry: YabsScript.installEntry(),
+      await _script(),
+      entry: ffi.benchInstallEntry(),
     );
-    if (!res.combined.contains(YabsScript.scriptInstalled)) {
+    if (!ffi.benchScriptInstalled(output: res.combined)) {
       throw StateError(
         'Could not install the benchmark script: '
         '${res.exitCode} ${res.combined.trim()}',
@@ -197,11 +209,11 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     final active = state.active;
     if (active == null) return;
 
-    final YabsPollState poll;
+    final ffi.BenchPoll poll;
     try {
       final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
-      final res = await exec.run(YabsScript.pollCommand(active.runDir));
-      poll = YabsPollState.parse(res.combined);
+      final res = await exec.run(ffi.benchPollCommand(runDir: active.runDir));
+      poll = ffi.benchParsePoll(output: res.combined);
     } catch (e) {
       // Not a failure of the run. The benchmark is in its own session on the
       // far side and does not care that this device briefly could not reach it,
@@ -309,7 +321,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       finishedAt: DateTime.now(),
       status: switch (code) {
         0 => BenchmarkStatus.completed,
-        YabsScript.cancelledExitCode => BenchmarkStatus.cancelled,
+        _ when code == ffi.benchCancelledExitCode() => BenchmarkStatus.cancelled,
         _ => BenchmarkStatus.failed,
       },
     );
@@ -344,7 +356,9 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     if (!ref.mounted) return;
     try {
       final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
-      await exec.run(YabsScript.cleanupCommand(run.runDir, run.id));
+      // None for a directory this could not have made: nothing to remove.
+      final command = ffi.benchCleanupCommand(runDir: run.runDir, runId: run.id);
+      if (command != null) await exec.run(command);
     } catch (e) {
       // Worth a line: what is left behind is a 2 GB fio file when the run was
       // cancelled mid-disk-test, and the user has no other way to learn it is
@@ -362,7 +376,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
 
     try {
       final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
-      await exec.run(YabsScript.cancelCommand(active.runDir));
+      await exec.run(ffi.benchCancelCommand(runDir: active.runDir));
     } catch (e, s) {
       Loggers.app.warning('Benchmark cancel failed', e, s);
       if (!ref.mounted) return;

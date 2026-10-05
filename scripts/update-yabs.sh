@@ -4,7 +4,7 @@
 # The script is shipped as an asset rather than fetched by the server at run
 # time, so updating it is a commit here. This fetches one pinned revision,
 # writes it to assets/, and prints the three constants that have to move with
-# it — `test/unit/benchmark/yabs_script_test.dart` fails until they agree with the file.
+# it — `monitor/tests/benchmark_asset.rs` fails until they agree with the file.
 #
 # Usage:
 #   scripts/update-yabs.sh              # latest revision touching yabs.sh
@@ -50,7 +50,7 @@ fi
 
 # Encoded rather than copied. App Store validation reads a bundled `.sh` as a
 # nested code object and refuses the upload for it being unsigned — see
-# `YabsScript.assetPath`. `openssl` rather than `base64`, whose wrapping flag
+# `assets/yabs.b64`. `openssl` rather than `base64`, whose wrapping flag
 # is `-w` on GNU and `-b` on BSD.
 openssl base64 -in "$tmp" -out "$tmp.enc"
 mv "$tmp.enc" "$dest"
@@ -61,11 +61,11 @@ cat <<EOF
 
 Wrote $dest
 
-Update lib/data/model/server/benchmark/yabs_script.dart:
+Update crates/sbm_parser/src/bench.rs:
 
-  static const upstreamCommit = '$commit';
-  static const upstreamVersion = '$version';
-  static const sha256Hex = '$digest';
+pub const UPSTREAM_COMMIT: &str = "$commit";
+pub const UPSTREAM_VERSION: &str = "$version";
+pub const SHA256_HEX: &str = "$digest";
 
-Then run: flutter test test/unit/benchmark/yabs_script_test.dart
+Then run: cargo test -p server_box_monitor --test benchmark_asset && flutter test test/unit/benchmark/yabs_asset_test.dart
 EOF

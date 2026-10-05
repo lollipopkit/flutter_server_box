@@ -6,6 +6,8 @@ import 'package:server_box/data/model/server/proc_kill.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:test/test.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 /// The stop command is a string assembled here and run by a shell on someone
 /// else's machine, against a PID read a refresh ago. What matters is that it
 /// refuses the wrong process and cannot be made to run anything else.
@@ -18,6 +20,8 @@ import 'package:test/test.dart';
 /// check: that the text parses, and that it answers rather than signals when
 /// there is no `/proc` to prove the target by.
 void main() {
+  setUpAll(initRustLibForTest);
+
   Proc proc({String? startId = '4242'}) =>
       Proc(pid: 12345, startId: startId, command: 'sleep 100');
 
@@ -36,21 +40,16 @@ void main() {
       for (final signal in ProcSignal.values) {
         expect(ProcKill.command(proc(startId: null), system, signal), isNull);
       }
-      expect(ProcKill.supports(proc(startId: null), system), isFalse);
     }
   });
 
-  test('which signals each platform offers', () {
-    expect(ProcKill.signalsFor(SystemType.linux), ProcSignal.values);
+  test('which signals each platform has a command for', () {
     // TerminateProcess is the only stop Windows has, and it is not a request.
-    expect(ProcKill.signalsFor(SystemType.windows), [ProcSignal.kill]);
     expect(ProcKill.command(proc(), SystemType.windows, ProcSignal.term), isNull);
     expect(ProcKill.command(proc(), SystemType.windows, ProcSignal.kill), isNotNull);
-    // Offered for the one signal it has.
-    expect(ProcKill.supports(proc(), SystemType.windows), isTrue);
-
-    expect(ProcKill.signalsFor(SystemType.bsd), isEmpty);
-    expect(ProcKill.supports(proc(), SystemType.bsd), isFalse);
+    for (final signal in ProcSignal.values) {
+      expect(ProcKill.command(proc(), SystemType.bsd, signal), isNull);
+    }
   });
 
   test('outcome reads the marker, and anything else is a failure', () {

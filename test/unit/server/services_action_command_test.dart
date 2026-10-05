@@ -17,17 +17,18 @@ import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/services.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/service/detector.dart';
-import 'package:server_box/data/service/systemd.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/src/rust/api/service.dart' as ffi;
 
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(initRustLibForTest);
 
   const sid = 'srv-services-command';
   // Not named root, so `Spi.isRoot` is false whatever the server says.
@@ -60,6 +61,9 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    // Listened to, as the page does: the listing waits on the Rust side, and
+    // an unlistened provider is disposed in the meantime.
+    container.listen(servicesProvider(spi), (_, _) {});
     final notifier = container.read(servicesProvider(spi).notifier);
     await notifier.getServices();
     final unit = container
@@ -107,6 +111,10 @@ class _FakeServerNotifier extends ServerNotifier {
 }
 
 /// A systemd host whose account has [uid], recording what it was asked to run.
+Map<String, String?> get _commands => {
+  for (final c in ffi.serviceListingCommands(managerName: 'systemd')) c.name: c.command,
+};
+
 class _SystemdExec implements ServerExec {
   _SystemdExec({required this.uid});
 
@@ -127,18 +135,16 @@ class _SystemdExec implements ServerExec {
     ExecResult ok(String stdout) =>
         ExecResult(exitCode: 0, stdout: stdout, stderr: '');
 
-    if (script == ServiceManagerDetector.script) {
+    if (script == ffi.serviceDetectScript()) {
       return ok('systemd\tDebian GNU/Linux');
     }
-    if (script == SystemdServiceManager.listCommand(ServiceScope.system)) {
-      return ok(File('test/fixtures/systemd/list_units.txt').readAsStringSync());
+    if (script == _commands['system_list']) {
+      return ok(File('crates/sbm_parser/tests/fixtures/systemd/list_units.txt').readAsStringSync());
     }
     if (script == 'id -u') return ok('$uid\n');
     // Details are optional to a listing, and not what this is about.
-    for (final scope in ServiceScope.values) {
-      if (script == SystemdServiceManager.detailsCommand(scope)) {
-        return const ExecResult(exitCode: 1, stdout: '', stderr: 'no');
-      }
+    if (script == _commands['system_details'] || script == _commands['user_details']) {
+      return const ExecResult(exitCode: 1, stdout: '', stderr: 'no');
     }
     return ok('');
   }

@@ -1,23 +1,17 @@
-//! The service module against the app's own fixtures.
+//! The service module against what `systemctl` and `journalctl` printed on a
+//! real machine (`tests/fixtures/systemd/`). Ported from the app's Dart
+//! tests (`test/unit/server/service_manager_test.dart`, deleted with the Dart
+//! managers once the FFI result was asserted identical on every input they
+//! used).
 //!
-//! `test/fixtures/systemd/` holds what `systemctl` and `journalctl` printed on
-//! a real machine, and `test/unit/server/service_manager_test.dart` asserts the
-//! Dart implementation against them. This asserts the Rust port against the
-//! same bytes, so the two agree before the Dart half is deleted.
-//!
-//! Read at runtime rather than `include_str!`: `monitor/Dockerfile` builds this
-//! crate with `crates/` copied into the image and `monitor/` as the workspace
-//! root, where `../../test/` is not there.
-//!
-//! TODO(migration): move `test/fixtures/systemd/` into this crate when the Dart
-//! test is deleted, and read it with `include_str!`.
+//! Read at runtime, not `include_str!`, like the other fixture suites here.
 
 use std::collections::HashMap;
 
 use sbm_parser::output::CommandOutput;
 use sbm_parser::service::*;
 
-const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../test/fixtures/systemd/");
+const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/systemd/");
 
 fn fixture(name: &str) -> String {
     let path = format!("{FIXTURES}{name}");
@@ -56,6 +50,8 @@ fn the_systemd_fixture_reads_as_one_listing() {
     assert!(listing.notice.is_none(), "{:?}", listing.notice);
     assert_eq!(listing.detail, None);
     assert_eq!(listing.units.len(), 11);
+    // The machine's clock comes along, for the consumer to shift by.
+    assert_eq!(listing.sampled_at_millis, Some(1_789_578_763_000));
 
     // Running first, then by name; the two scopes are the same here.
     let names: Vec<&str> = listing.units.iter().map(|unit| unit.name.as_str()).collect();

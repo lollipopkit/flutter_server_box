@@ -1,21 +1,12 @@
-//! The Dart process-table suite, run against the Rust parser.
+//! The process-table suite, ported from the app's Dart parser tests
+//! (`test/unit/server/proc_test.dart`, deleted with the Dart parser once the
+//! FFI result was asserted identical on every input those tests used).
 //!
-//! `test/unit/server/proc_test.dart` is the specification: this file is the
-//! same assertions, so that the two implementations can be compared before the
-//! Dart one is deleted. The three `script output` tests read the fixtures
-//! `test/fixtures/process/*.txt` — the verbatim output of the process
-//! function, captured on the platform each is named after — out of the Dart
-//! repository rather than a copy kept here, so both suites assert the same
-//! bytes and neither can drift by editing its own.
+//! The three `script output` tests read `tests/fixtures/process/*.txt`: the
+//! verbatim output of the process function, captured on the platform each is
+//! named after.
 //!
-//! TODO: move the fixtures into this crate (and this file's paths with them)
-//! when `lib/data/model/server/proc.dart` and its test are deleted. They stay
-//! where they are while the Dart parser is still shipped, because a copy is
-//! the thing that drifts.
-//!
-//! Read at runtime, not `include_str!`: `monitor/Dockerfile` builds `sbm_parser`
-//! with `crates/` copied in and `monitor/` as the workspace root, so a path
-//! pointing outside the crate does not exist in that image.
+//! Read at runtime, not `include_str!`, like the other fixture suites here.
 
 use std::fs;
 
@@ -25,9 +16,8 @@ use sbm_parser::proc::{
     kill_outcome, kill_supported, signals_for,
 };
 
-/// Where the process function was run. Beside `../../.env`, which
-/// `tests/ssh_e2e.rs` already reads from the same place.
-const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../test/fixtures/process/");
+/// What the process function printed, one file per platform.
+const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/process/");
 
 fn fixture(name: &str) -> String {
     let path = format!("{FIXTURES}{name}");

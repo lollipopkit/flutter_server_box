@@ -17,7 +17,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
-import 'package:server_box/data/model/server/benchmark/yabs_script.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -27,10 +26,13 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const sid = 'srv-bench-dispose';
@@ -70,11 +72,11 @@ void main() {
 
   /// What the far side prints for a run that has just exited cleanly.
   const finished =
-      '${YabsScript.stateMarker} exit=0 alive=0 started=1 pid=4321\n'
-      '${YabsScript.jsonMarker}\n'
+      'SBM_BENCH_STATE exit=0 alive=0 started=1 pid=4321\n'
+      'SBM_BENCH_JSON\n'
       '{"version":"v1"}\n'
-      '${YabsScript.psMarker}\n'
-      '${YabsScript.logMarker}\n'
+      'SBM_BENCH_PS\n'
+      'SBM_BENCH_LOG\n'
       'YABS completed';
 
   /// Opens the provider, which finds the seeded run and polls it at once.
@@ -132,8 +134,8 @@ void main() {
     final container = pollWith(
       _GatedExec(
         gate.future,
-        '${YabsScript.stateMarker} exit= alive=1 started=1 pid=4321\n'
-        '${YabsScript.logMarker}\n'
+        'SBM_BENCH_STATE exit= alive=1 started=1 pid=4321\n'
+        'SBM_BENCH_LOG\n'
         'fio Disk Speed Tests',
       ),
     );

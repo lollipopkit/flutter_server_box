@@ -133,7 +133,7 @@ const zhCN: Translation = {
   cta: {
     title: 'ServerBox 是基于 AGPLv3 的免费开源软件。',
     subtitle:
-      '可从 App Store、GitHub Releases、F-Droid、OpenAPK 或项目 CDN 安装。',
+      '可从 App Store、GitHub Releases、F-Droid 或 OpenAPK 安装。',
     appStoreAction: '打开 App Store',
     githubAction: '从 GitHub Releases 下载',
   },

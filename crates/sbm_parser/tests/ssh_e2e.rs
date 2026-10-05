@@ -20,6 +20,8 @@
 //! against real hosts — they are covered by text assertions in script_compat.
 
 use sbm_parser::commands;
+use sbm_parser::output::CommandOutput;
+use sbm_parser::{bench, service};
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
 use std::io::{Read, Write};
@@ -617,6 +619,89 @@ fn ssh_e2e_unix_process_function() {
         "first line should be the process table's header, got: {:?}",
         lines[0]
     );
+}
+
+/// The services page on a real machine, run the way the app runs it: the
+/// detector through `sh`, then every command a listing is read from handed
+/// to the account's login shell as it is (fish on some test machines), read
+/// by `parse_listing`. Read-only: no unit is acted on.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_service_listing() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    let probe = service::parse_probe(&ssh(&host, service::DETECT_SCRIPT, None).expect("run the detector"));
+    let manager = probe
+        .manager_type
+        .unwrap_or_else(|| panic!("no manager this build lists: {:?}", probe.description()));
+
+    let outputs: std::collections::HashMap<String, CommandOutput> = service::listing_commands(manager)
+        .into_iter()
+        .map(|(name, command)| {
+            let output = match command {
+                Some(command) => match run_ssh(&host, &command, None) {
+                    Ok(out) => CommandOutput {
+                        stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
+                        stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
+                        succeeded: out.status.success(),
+                    },
+                    Err(e) => CommandOutput::failed(e),
+                },
+                None => CommandOutput::failed("no such command"),
+            };
+            (name.to_string(), output)
+        })
+        .collect();
+    let listing = service::parse_listing(manager, &outputs).unwrap_or_else(|e| panic!("listing: {}", e.detail));
+    assert!(!listing.units.is_empty(), "a machine with no units: {:?}", listing.notice);
+    if manager == service::ServiceManagerType::Systemd {
+        assert!(listing.sampled_at_millis.is_some(), "the machine's clock comes with the timestamps");
+        assert!(
+            listing.units.iter().any(|u| u.state == service::ServiceState::Running),
+            "a systemd machine runs something"
+        );
+    }
+    // The commands for a unit are built from it, and its log reads.
+    let unit = &listing.units[0];
+    if let Some(command) = manager.recent_log_command(unit, 3) {
+        let out = run_ssh(&host, &command, None).expect("read a log");
+        let output = CommandOutput {
+            stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
+            succeeded: out.status.success(),
+        };
+        let _ = service::parse_recent_log(manager, &output);
+    }
+}
+
+/// The benchmark's install and poll on a real machine, as the app runs them
+/// (each command is its own `sh -c`, handed to the login shell), under a
+/// throwaway `HOME` so the account's own copy is not touched. Nothing is
+/// benchmarked.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_bench_install_and_poll() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    const HOME: &str = "/tmp/server_box_e2e_bench";
+    let at_home = |command: &str| format!("env HOME={HOME} {command}");
+    let run = |command: &str, stdin: Option<&str>| {
+        let out = run_ssh(&host, &at_home(command), stdin).expect("ssh");
+        String::from_utf8_lossy(&out.stdout).into_owned()
+    };
+    let _ = ssh(&host, &format!("rm -rf {HOME} && mkdir -p {HOME}"), None);
+
+    assert!(run(&bench::probe_command(), None).contains(bench::SCRIPT_MISSING));
+    let installed = run(&bench::install_entry(), Some("#!/bin/sh\nexit 0\n"));
+    assert!(installed.contains(bench::SCRIPT_INSTALLED), "{installed}");
+    assert!(run(&bench::probe_command(), None).contains(bench::SCRIPT_PRESENT));
+
+    // No run there: answered, and absent.
+    let poll = bench::BenchPollState::parse(&run(&bench::poll_command(&bench::run_dir("")), None));
+    assert!(poll.answered, "{poll:?}");
+    assert!(!poll.dir_exists, "{poll:?}");
+
+    let _ = ssh(&host, &format!("rm -rf {HOME}"), None);
 }
 
 /// Windows full chain: EncodedCommand install (works from cmd.exe default

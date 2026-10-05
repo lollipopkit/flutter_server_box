@@ -45,9 +45,8 @@ use crate::monitoring::system_type;
 use sbm_parser::SystemType;
 use sbm_parser::output::CommandOutput;
 use sbm_parser::service::{
-    OpenRcOutputs, ProcdOutputs, ServiceAction, ServiceListing, ServiceListingNotice, ServiceLog,
-    ServiceManagerProbe, ServiceManagerType, ServiceScope, ServiceUnit, SystemdOutputs,
-    parse_openrc_listing, parse_probe, parse_procd_listing, parse_systemd_listing,
+    ServiceAction, ServiceListing, ServiceListingNotice, ServiceLog, ServiceManagerProbe, ServiceManagerType,
+    ServiceUnit, parse_probe,
 };
 
 /// The details sweep describes every unit at once, so its output is the whole
@@ -423,47 +422,12 @@ async fn read_listing(
     manager: ServiceManagerType,
     exec: &Limits,
 ) -> Result<ServiceListing, String> {
-    match manager {
-        ServiceManagerType::Systemd => {
-            let (system_list, system_details, user_list, user_details) = tokio::join!(
-                run(exec, manager.list_command(ServiceScope::System)),
-                run(exec, manager.details_command(ServiceScope::System)),
-                run(exec, manager.list_command(ServiceScope::User)),
-                run(exec, manager.details_command(ServiceScope::User)),
-            );
-            parse_systemd_listing(&SystemdOutputs {
-                system_list: &system_list,
-                system_details: &system_details,
-                user_list: &user_list,
-                user_details: &user_details,
-            })
-            .map_err(|error| error.detail)
-        }
-        ServiceManagerType::Procd => {
-            let (catalog, status) = tokio::join!(
-                run(exec, Some(sbm_parser::service::PROCD_CATALOG_SCRIPT.to_string())),
-                run(exec, Some(sbm_parser::service::PROCD_STATUS_COMMAND.to_string())),
-            );
-            parse_procd_listing(&ProcdOutputs {
-                catalog: &catalog,
-                status: &status,
-            })
-            .map_err(|error| error.detail)
-        }
-        ServiceManagerType::Openrc => {
-            let (catalog, status, startup) = tokio::join!(
-                run(exec, Some(sbm_parser::service::OPENRC_CATALOG_SCRIPT.to_string())),
-                run(exec, Some(sbm_parser::service::OPENRC_STATUS_COMMAND.to_string())),
-                run(exec, Some(sbm_parser::service::OPENRC_STARTUP_COMMAND.to_string())),
-            );
-            parse_openrc_listing(&OpenRcOutputs {
-                catalog: &catalog,
-                status: &status,
-                startup: &startup,
-            })
-            .map_err(|error| error.detail)
-        }
-    }
+    let commands = sbm_parser::service::listing_commands(manager);
+    let outputs = futures::future::join_all(
+        commands.into_iter().map(|(name, command)| async move { (name.to_string(), run(exec, command).await) }),
+    )
+    .await;
+    sbm_parser::service::parse_listing(manager, &outputs.into_iter().collect()).map_err(|error| error.detail)
 }
 
 /// Runs one of the listing's commands as this account. `None` is a command
@@ -528,6 +492,7 @@ fn base_response(
                 units: Vec::new(),
                 notice: None,
                 detail: None,
+                sampled_at_millis: None,
             },
             Some(detail),
         ),
@@ -542,7 +507,7 @@ fn base_response(
         units: listing.units.iter().map(ServiceRow::of).collect(),
         notice: listing.notice,
         detail: listing.detail,
-        sampled_at_millis: None,
+        sampled_at_millis: listing.sampled_at_millis,
         log: None,
         text: None,
     }
@@ -573,31 +538,14 @@ async fn fill_log(
         return;
     }
     let output = machine::command_output(raw);
-
-    match manager {
-        ServiceManagerType::Systemd => {
-            response.log = Some(sbm_parser::service::parse_journal(
-                &output.stdout,
-                &output.stderr,
-            ));
+    match sbm_parser::service::parse_recent_log(manager, &output) {
+        Some(log) => response.log = Some(log),
+        // `logread` absent is a machine with no log to read, which is the
+        // same answer as OpenRC's and not an empty log.
+        None => {
+            response.available = false;
+            response.reason_kind = Some(ServiceReason::NoLog);
+            response.reason = output.detail();
         }
-        ServiceManagerType::Procd => {
-            // `logread` absent is a machine with no log to read, which is the
-            // same answer as OpenRC's and not an empty log: a unit that has
-            // written nothing is a different thing from one whose log the
-            // machine cannot be asked for.
-            if !output.succeeded && output.stdout.trim().is_empty() {
-                response.available = false;
-                response.reason_kind = Some(ServiceReason::NoLog);
-                response.reason = output.detail();
-            } else {
-                response.log = Some(ServiceLog {
-                    lines: sbm_parser::service::parse_logread(&output.stdout),
-                    unreadable: false,
-                });
-            }
-        }
-        // Answered by the `NoLog` above; OpenRC keeps no log by service name.
-        ServiceManagerType::Openrc => {}
     }
 }

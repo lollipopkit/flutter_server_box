@@ -7,11 +7,12 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/services.dart';
-import 'package:server_box/data/service/service_manager.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/src/rust/api/service.dart' as ffi;
 import 'package:server_box/view/page/service_detail.dart';
 import 'package:server_box/view/page/services.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 
 final class _Fixed extends ServicesNotifier {
@@ -49,7 +50,10 @@ ServiceUnit _unit(
     exitStatus: exitStatus,
     memoryBytes: memory,
     since: since == null ? null : DateTime.now().subtract(since),
-    actions: serviceActions(state, enabled: unitFileState == 'enabled'),
+    actions: [
+      for (final a in ffi.serviceActions(state: state.name, enabled: unitFileState == 'enabled'))
+        ServiceAction.values.byName(a),
+    ],
   );
 }
 
@@ -80,6 +84,8 @@ final _units = [
 ];
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   final spi = spiFixture(name: 'hk', id: 'hk', ip: '10.0.0.1');
 
   Future<void> pump(

@@ -252,7 +252,7 @@ pub fn service_actions(state: ServiceState, enabled: Option<bool>) -> Vec<Servic
 }
 
 /// One unit, as both clients draw it.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ServiceUnit {
     /// Without the type suffix: `sshd`, not `sshd.service`.
     pub name: String,
@@ -415,6 +415,10 @@ pub struct ServiceListing {
     pub notice: Option<ServiceListingNotice>,
     /// What the machine said about the notice, verbatim.
     pub detail: Option<String>,
+    /// The machine's own clock when it was read, in Unix milliseconds — the
+    /// instant its timestamps are against (see the module note on the clock
+    /// shift). `None` where the manager reports no times: procd, OpenRC.
+    pub sampled_at_millis: Option<i64>,
 }
 
 // ---------------------------------------------------------------------------
@@ -741,6 +745,7 @@ pub fn parse_systemd_listing(
     };
 
     let mut details_failed = false;
+    let mut sampled_at_millis = None;
     let mut by_key: HashMap<String, SystemdUnitDetails> = HashMap::new();
     for (scope, output) in [
         (ServiceScope::System, outputs.system_details),
@@ -754,7 +759,9 @@ pub fn parse_systemd_listing(
             }
             continue;
         }
-        for (id, detail) in parse_details(&output.stdout).units {
+        let details = parse_details(&output.stdout);
+        sampled_at_millis = sampled_at_millis.or(details.sampled_at_millis);
+        for (id, detail) in details.units {
             by_key.insert(format!("{}:{id}", scope.as_str()), detail);
         }
     }
@@ -780,6 +787,7 @@ pub fn parse_systemd_listing(
         } else {
             None
         },
+        sampled_at_millis,
     })
 }
 
@@ -1120,6 +1128,7 @@ pub fn parse_procd_listing(outputs: &ProcdOutputs<'_>) -> Result<ServiceListing,
             .as_ref()
             .map(|_| ServiceListingNotice::DetailsUnavailable),
         detail,
+        sampled_at_millis: None,
     })
 }
 
@@ -1290,6 +1299,7 @@ pub fn parse_openrc_listing(outputs: &OpenRcOutputs<'_>) -> Result<ServiceListin
         units,
         notice: (!complete).then_some(ServiceListingNotice::DetailsUnavailable),
         detail: (!detail.is_empty()).then_some(detail),
+        sampled_at_millis: None,
     })
 }
 
@@ -1368,6 +1378,71 @@ pub struct ServiceLog {
     /// empty log, which a unit that has never run has.
     pub unreadable: bool,
 }
+
+// ---------------------------------------------------------------------------
+// One listing, whichever the manager
+// ---------------------------------------------------------------------------
+
+/// What one listing of `manager` is read from: each command, by the name
+/// [`parse_listing`] reads its output under. They are independent of each
+/// other, so a caller runs them at once. `None` is a command this manager
+/// does not have.
+pub fn listing_commands(manager: ServiceManagerType) -> Vec<(&'static str, Option<String>)> {
+    match manager {
+        ServiceManagerType::Systemd => vec![
+            ("system_list", manager.list_command(ServiceScope::System)),
+            ("system_details", manager.details_command(ServiceScope::System)),
+            ("user_list", manager.list_command(ServiceScope::User)),
+            ("user_details", manager.details_command(ServiceScope::User)),
+        ],
+        ServiceManagerType::Procd => vec![
+            ("catalog", Some(PROCD_CATALOG_SCRIPT.to_string())),
+            ("status", Some(PROCD_STATUS_COMMAND.to_string())),
+        ],
+        ServiceManagerType::Openrc => vec![
+            ("catalog", Some(OPENRC_CATALOG_SCRIPT.to_string())),
+            ("status", Some(OPENRC_STATUS_COMMAND.to_string())),
+            ("startup", Some(OPENRC_STARTUP_COMMAND.to_string())),
+        ],
+    }
+}
+
+/// The listing [`listing_commands`]' outputs make, by their names. One not
+/// given — not run, or a command the manager does not have — counts as a
+/// command that failed.
+pub fn parse_listing(
+    manager: ServiceManagerType,
+    outputs: &HashMap<String, CommandOutput>,
+) -> Result<ServiceListing, ServiceLoadError> {
+    let not_run = CommandOutput::failed("not run");
+    let out = |name: &str| outputs.get(name).unwrap_or(&not_run);
+    match manager {
+        ServiceManagerType::Systemd => parse_systemd_listing(&SystemdOutputs {
+            system_list: out("system_list"),
+            system_details: out("system_details"),
+            user_list: out("user_list"),
+            user_details: out("user_details"),
+        }),
+        ServiceManagerType::Procd => parse_procd_listing(&ProcdOutputs { catalog: out("catalog"), status: out("status") }),
+        ServiceManagerType::Openrc => {
+            parse_openrc_listing(&OpenRcOutputs { catalog: out("catalog"), status: out("status"), startup: out("startup") })
+        }
+    }
+}
+
+/// A unit's last lines, from what [`ServiceManagerType::recent_log_command`]
+/// printed. `None` where the machine keeps no log to ask for by unit:
+/// OpenRC, and a procd machine without `logread` — which is not the same
+/// answer as a unit that has written nothing.
+pub fn parse_recent_log(manager: ServiceManagerType, output: &CommandOutput) -> Option<ServiceLog> {
+    match manager {
+        ServiceManagerType::Systemd => Some(parse_journal(&output.stdout, &output.stderr)),
+        ServiceManagerType::Procd if !output.succeeded && output.stdout.trim().is_empty() => None,
+        ServiceManagerType::Procd => Some(ServiceLog { lines: parse_logread(&output.stdout), unreadable: false }),
+        ServiceManagerType::Openrc => None,
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

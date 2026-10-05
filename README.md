@@ -113,8 +113,8 @@ Thanks to <a href="https://openai.com">OpenAI</a> for providing six months of Ch
 | --- | --- |
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`_NoSign.ipa`, unsigned, you need to sign it yourself) |
 | macOS | [App Store](https://apps.apple.com/app/id1586449703) (Apple silicon only) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (architecture-specific `.dmg`) / `brew install --cask server-box` |
-| Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) |
+| Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
+| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) |
 
 Download packages only from sources you trust.
 

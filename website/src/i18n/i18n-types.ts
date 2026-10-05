@@ -393,7 +393,7 @@ type RootTranslation = {
 		 */
 		title: string
 		/**
-		 * I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​,​ ​F​-​D​r​o​i​d​,​ ​O​p​e​n​A​P​K​,​ ​o​r​ ​t​h​e​ ​p​r​o​j​e​c​t​ ​C​D​N​.​ ​O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​s​o​u​r​c​e​s​ ​y​o​u​ ​t​r​u​s​t​.
+		 * I​n​s​t​a​l​l​ ​f​r​o​m​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​,​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​,​ ​F​-​D​r​o​i​d​ ​o​r​ ​O​p​e​n​A​P​K​.​ ​O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​s​o​u​r​c​e​s​ ​y​o​u​ ​t​r​u​s​t​.
 		 */
 		subtitle: string
 		/**
@@ -794,7 +794,7 @@ export type TranslationFunctions = {
 		 */
 		title: () => LocalizedString
 		/**
-		 * Install from the App Store, GitHub Releases, F-Droid, OpenAPK, or the project CDN. Only download packages from sources you trust.
+		 * Install from the App Store, GitHub Releases, F-Droid or OpenAPK. Only download packages from sources you trust.
 		 */
 		subtitle: () => LocalizedString
 		/**

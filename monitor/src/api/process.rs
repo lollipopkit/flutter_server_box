@@ -50,7 +50,7 @@ use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 use sbm_parser::SystemType;
 use sbm_parser::proc::{
-    Proc, ProcKillOutcome, ProcLoad, ProcSignal, ProcSortMode, PsParseIssue, PsResult,
+    ProcColumns, ProcKillOutcome, ProcLoad, ProcRow, ProcSignal, ProcSortMode, PsParseIssue, PsResult,
 };
 
 /// One row per process, and a busy host has thousands: at least this much of
@@ -126,7 +126,7 @@ struct ProcessResponse {
     /// the request when the reading was reused — see [`REUSE_WINDOW`].
     sampled_at_millis: i64,
     /// Which columns the machine reported, which is what the page draws.
-    columns: ProcessColumns,
+    columns: ProcColumns,
     /// The orders this table can answer, in the order the page draws them.
     sorts: Vec<ProcSortMode>,
     /// What this answer is ordered by, after the fallbacks above.
@@ -135,74 +135,6 @@ struct ProcessResponse {
     /// The signals this platform offers, empty where it has none implemented.
     /// The page offers no stop button at all when it is empty.
     signals: Vec<ProcSignal>,
-}
-
-/// Which of the machine's columns carried a value.
-///
-/// Answered over the table rather than derived from the platform: a `ps` that
-/// prints no `%CPU` and a machine whose processes all report none look the
-/// same in the rows, and the page has one thing to ask either way. `read` and
-/// `write` are the cumulative counters; their speeds are what a sort can use,
-/// and the two are not the same question — a first reading has the counters
-/// and no speeds.
-#[derive(Serialize, Default)]
-struct ProcessColumns {
-    user: bool,
-    cpu: bool,
-    mem: bool,
-    rss: bool,
-    read: bool,
-    write: bool,
-    read_speed: bool,
-    write_speed: bool,
-}
-
-impl ProcessColumns {
-    fn of(procs: &[Proc]) -> Self {
-        let mut columns = Self::default();
-        for proc in procs {
-            columns.user |= proc.user.as_ref().is_some_and(|user| !user.is_empty());
-            columns.cpu |= proc.cpu.is_some();
-            columns.mem |= proc.mem.is_some();
-            columns.rss |= proc.rss_kb().is_some();
-            columns.read |= proc.read_bytes.is_some();
-            columns.write |= proc.write_bytes.is_some();
-            columns.read_speed |= proc.read_speed.is_some();
-            columns.write_speed |= proc.write_speed.is_some();
-        }
-        columns
-    }
-
-    /// The orders this table can answer, in the order the app draws its chips:
-    /// the four worth one tap first, then the rest.
-    fn sorts(&self) -> Vec<ProcSortMode> {
-        let offered = [
-            (ProcSortMode::Cpu, self.cpu),
-            (ProcSortMode::Mem, self.mem),
-            (ProcSortMode::Rss, self.rss),
-            // A PID is always there and always sortable.
-            (ProcSortMode::Pid, true),
-            (ProcSortMode::User, self.user),
-            (ProcSortMode::Name, true),
-            (ProcSortMode::Read, self.read_speed),
-            (ProcSortMode::Write, self.write_speed),
-        ];
-        offered
-            .into_iter()
-            .filter_map(|(mode, supported)| supported.then_some(mode))
-            .collect()
-    }
-
-    /// The order to open on: the first resource column the machine reported,
-    /// and the PID where it reported none. A process list is read to find what
-    /// is using the machine, so an alphabetical one would be the one order
-    /// that answers nothing.
-    fn default_sort(&self) -> ProcSortMode {
-        [ProcSortMode::Cpu, ProcSortMode::Mem, ProcSortMode::Rss, ProcSortMode::Read, ProcSortMode::Write]
-            .into_iter()
-            .find(|mode| self.sorts().contains(mode))
-            .unwrap_or(ProcSortMode::Pid)
-    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -217,44 +149,6 @@ enum ProcessReason {
     TooLarge,
     /// It ran and printed nothing.
     Empty,
-}
-
-/// One process as the page draws it: the row's own fields plus what the row's
-/// *strings* mean.
-#[derive(Serialize)]
-struct ProcRow {
-    #[serde(flatten)]
-    proc: Proc,
-    /// What to call the process where its whole command line does not fit.
-    ///
-    /// Sent rather than derived by the client: "the last path component of the
-    /// executable, minus the colon a process that rewrites its title leaves
-    /// behind, and a kernel thread's bracketed name as it stands" is a rule,
-    /// and a second implementation of it would be the one that drifts.
-    name: String,
-    /// `RSS` in KiB as a number. The column is a string because the two `ps`
-    /// dialects print different things into it, and `-` is not a measurement
-    /// of zero.
-    rss_kb: Option<i64>,
-    /// `kthreadd` or one of its children. Hidden by default — see the page.
-    is_kernel_thread: bool,
-    /// Whether this row may be signalled at all: a PID whose start identity
-    /// the machine did not report cannot be checked before the signal, and
-    /// signalling the wrong process is worse than not being able to signal
-    /// this one.
-    killable: bool,
-}
-
-impl ProcRow {
-    fn of(proc: &Proc, system: SystemType) -> Self {
-        Self {
-            name: proc.name(),
-            rss_kb: proc.rss_kb(),
-            is_kernel_thread: proc.is_kernel_thread(),
-            killable: sbm_parser::proc::kill_supported(proc.pid, proc.start_id.as_deref(), system),
-            proc: proc.clone(),
-        }
-    }
 }
 
 /// Reads the process table.
@@ -357,11 +251,7 @@ fn resolve_sort(
     sort: Option<ProcSortMode>,
     ascending: Option<bool>,
 ) -> (ProcSortMode, bool) {
-    let columns = ProcessColumns::of(&result.procs);
-    let mode = sort
-        .filter(|mode| columns.sorts().contains(mode))
-        .unwrap_or_else(|| columns.default_sort());
-    (mode, ascending.unwrap_or_else(|| mode.default_ascending()))
+    ProcColumns::of(&result.procs).resolve(sort, ascending)
 }
 
 /// The body for a machine that gave no table, or none this build could read.
@@ -378,7 +268,7 @@ fn unavailable(
         issue: None,
         load: None,
         sampled_at_millis: now_millis(),
-        columns: ProcessColumns::default(),
+        columns: ProcColumns::default(),
         sorts: Vec::new(),
         sort: None,
         ascending: None,
@@ -393,7 +283,7 @@ fn respond(
     sort: Option<ProcSortMode>,
     ascending: Option<bool>,
 ) -> ProcessResponse {
-    let columns = ProcessColumns::of(&result.procs);
+    let columns = ProcColumns::of(&result.procs);
     ProcessResponse {
         available: true,
         reason_kind: None,

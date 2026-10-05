@@ -13,7 +13,7 @@
 /// because a failure's detail is `stderr` and a success's payload is `stdout`:
 /// the Dart port reads a listing out of `stdout` and reports `combined`, and
 /// one field could not do both.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CommandOutput {
     pub stdout: String,
     pub stderr: String,

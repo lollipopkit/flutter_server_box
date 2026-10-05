@@ -202,15 +202,15 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   -n` without one: the script never shares the password's stream, since a
   sudo that does not ask — root, `NOPASSWD` — would leave the password line
   for the script to run as a command). `/process` (`sbm_parser::proc`,
-  a port of the app's `proc.dart`/`proc_kill.dart`, locked by
-  `tests/proc_compat.rs`): the table is the status script's `SbProcess` read
+  which the app reaches over FFI too, locked by `tests/proc_compat.rs`; the
+  rows, columns, orders and fallback order are its `PsView`): the table is the status script's `SbProcess` read
   with at least 8 MiB of output, kept in `AppState.process_sample` so read and
   write speeds have a baseline (reused within 2 s, a baseline for 30 s); a stop
   checks the PID's start identity first and retries as root on `denied`.
-  TODO(migration): the app still parses with its Dart copy; move it to
-  `sbm_parser::proc` over FFI. `/services` (`sbm_parser::service`, ported from
-  the app's `service_manager.dart`, locked by `tests/service_compat.rs`):
-  systemd, procd and OpenRC; an action names a unit by the key its listing
+  `/services` (`sbm_parser::service`, which the app reaches over FFI too,
+  locked by `tests/service_compat.rs`): systemd, procd and OpenRC, one
+  listing being `listing_commands` run at once and `parse_listing`, with the
+  machine's clock beside its timestamps (`sampled_at_millis`); an action names a unit by the key its listing
   gave it and is resolved against a listing read for that request, so whether
   it needs root is the listing's answer, not the caller's. Outputs reach the
   parsers as `CommandOutput` through `machine::command_output`, where a

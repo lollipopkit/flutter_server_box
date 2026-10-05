@@ -167,6 +167,67 @@ final class ServiceUnit {
 
   String get fullName => '$name.${type.name}';
 
+  /// `sbm_parser::service::ServiceUnit`, which reads and acts on it.
+  factory ServiceUnit.fromJson(Map<String, Object?> j) {
+    DateTime? at(Object? millis) => switch (millis) {
+      final num m => DateTime.fromMillisecondsSinceEpoch(m.toInt()),
+      _ => null,
+    };
+    return ServiceUnit(
+      name: j['name'] as String,
+      type: ServiceUnitType.fromString(j['type'] as String?) ?? ServiceUnitType.service,
+      scope: ServiceScope.values.byName(j['scope'] as String),
+      state: ServiceState.values.byName(j['state'] as String),
+      actions: [
+        for (final a in j['actions'] as List? ?? const []) ServiceAction.values.byName(a as String),
+      ],
+      description: j['description'] as String?,
+      enabled: j['enabled'] as bool?,
+      unitFileState: j['unit_file_state'] as String?,
+      subState: j['sub_state'] as String?,
+      result: j['result'] as String?,
+      exitStatus: (j['exit_status'] as num?)?.toInt(),
+      memoryBytes: (j['memory_bytes'] as num?)?.toInt(),
+      since: at(j['since_millis']),
+      nextElapse: at(j['next_elapse_millis']),
+    );
+  }
+
+  ServiceUnit copyWithTimes({DateTime? since, DateTime? nextElapse}) => ServiceUnit(
+    name: name,
+    type: type,
+    scope: scope,
+    state: state,
+    actions: actions,
+    description: description,
+    enabled: enabled,
+    unitFileState: unitFileState,
+    subState: subState,
+    result: result,
+    exitStatus: exitStatus,
+    memoryBytes: memoryBytes,
+    since: since,
+    nextElapse: nextElapse,
+  );
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'full_name': fullName,
+    'type': type.name,
+    'scope': scope.name,
+    'state': state.name,
+    'description': description,
+    'enabled': enabled,
+    'unit_file_state': unitFileState,
+    'sub_state': subState,
+    'result': result,
+    'exit_status': exitStatus,
+    'memory_bytes': memoryBytes,
+    'since_millis': since?.millisecondsSinceEpoch,
+    'next_elapse_millis': nextElapse?.millisecondsSinceEpoch,
+    'actions': [for (final a in actions) a.name],
+  };
+
   /// Tells apart a system and a user unit of the same name.
   String get key => '${scope.name}:$fullName';
 
@@ -185,6 +246,9 @@ final class ServiceUnit {
 final class ServiceLogLine {
   const ServiceLogLine({this.time, required this.text});
 
+  factory ServiceLogLine.fromJson(Map<String, Object?> j) =>
+      ServiceLogLine(time: j['time'] as String?, text: j['text'] as String? ?? '');
+
   /// `HH:MM:SS` as the server printed it, in the server's time zone.
   final String? time;
   final String text;
@@ -192,6 +256,13 @@ final class ServiceLogLine {
 
 final class ServiceLog {
   const ServiceLog({required this.lines, this.unreadable = false});
+
+  factory ServiceLog.fromJson(Map<String, Object?> j) => ServiceLog(
+    lines: [
+      for (final l in j['lines'] as List? ?? const []) ServiceLogLine.fromJson(l as Map<String, Object?>),
+    ],
+    unreadable: j['unreadable'] as bool? ?? false,
+  );
 
   final List<ServiceLogLine> lines;
 
@@ -210,7 +281,44 @@ final class ServiceListing {
     required this.units,
     this.notice,
     this.detail,
+    this.sampledAt,
   });
+
+  /// The machine's own clock when it was read: what [ServiceUnit.since] and
+  /// [ServiceUnit.nextElapse] are against. Null where the manager reports no
+  /// times.
+  final DateTime? sampledAt;
+
+  /// This listing with every timestamp moved onto this device's clock by the
+  /// difference between [now] and [sampledAt], so a duration the page computes
+  /// later is right however far the two clocks disagree.
+  ServiceListing onDeviceClock(DateTime now) {
+    final at = sampledAt;
+    if (at == null) return this;
+    final skew = now.difference(at);
+    DateTime? shift(DateTime? t) => t?.add(skew);
+    return ServiceListing(
+      units: [for (final u in units) u.copyWithTimes(since: shift(u.since), nextElapse: shift(u.nextElapse))],
+      notice: notice,
+      detail: detail,
+    );
+  }
+
+  factory ServiceListing.fromJson(Map<String, Object?> j) => ServiceListing(
+    units: [
+      for (final u in j['units'] as List? ?? const []) ServiceUnit.fromJson(u as Map<String, Object?>),
+    ],
+    notice: switch (j['notice']) {
+      'user_scope_unavailable' => ServiceListingNotice.userScopeUnavailable,
+      'details_unavailable' => ServiceListingNotice.detailsUnavailable,
+      _ => null,
+    },
+    detail: j['detail'] as String?,
+    sampledAt: switch (j['sampled_at_millis']) {
+      final num m => DateTime.fromMillisecondsSinceEpoch(m.toInt()),
+      _ => null,
+    },
+  );
 
   final List<ServiceUnit> units;
   final ServiceListingNotice? notice;

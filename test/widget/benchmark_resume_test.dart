@@ -34,10 +34,13 @@ import 'package:server_box/view/page/benchmark/result.dart';
 import 'package:server_box/view/page/benchmark/run.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const sid = 'srv-resume-1';

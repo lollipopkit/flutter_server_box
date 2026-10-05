@@ -1,12 +1,15 @@
 pub mod backup;
+pub mod bench;
 pub mod bmc;
 pub mod create;
 pub mod desktop;
 pub mod file;
 pub mod hardware;
 pub mod parser;
+pub mod proc;
 pub mod pve;
 pub mod resource;
+pub mod service;
 pub mod remote_desktop;
 pub mod script;
 pub mod snippet;
