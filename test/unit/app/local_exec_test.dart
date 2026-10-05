@@ -7,9 +7,13 @@ import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 /// Unlike the terminal's backend, this one is `dart:io` and nothing else, so
 /// it can be exercised here rather than only inside a real app.
 void main() {
+  setUpAll(initRustLibForTest);
+
   const exec = ProcessExec();
 
   // Nothing below has a Windows spelling, and the ones that matter are checked

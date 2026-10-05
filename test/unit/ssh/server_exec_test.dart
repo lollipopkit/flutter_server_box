@@ -36,6 +36,8 @@ class _RecordingExec implements ServerExec {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('collectSshExecOutput', () {
     test(
       'accepts streams that close before the command exit arrives',
@@ -204,8 +206,6 @@ void main() {
   });
 
   group('container runtime command', () {
-    setUpAll(initRustLibForTest);
-
     test('sudo carries no credential of its own', () {
       // `sudo -S` reads the password from stdin, which is why there is nowhere
       // in this string for one to be — not the agent's audit log, not the

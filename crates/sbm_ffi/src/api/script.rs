@@ -207,3 +207,10 @@ pub fn custom_result_key(name: String) -> String {
 pub fn custom_result_name(key: String) -> Option<String> {
     sbm_parser::script::custom_result_name(&key).map(str::to_string)
 }
+
+/// Whether `stderr` says sudo would not take the password it was given, or
+/// was given none: what tells a wrong password apart from the command failing.
+#[flutter_rust_bridge::frb(sync)]
+pub fn sudo_password_rejected(stderr: String) -> bool {
+    sbm_parser::script::sudo_password_rejected(&stderr)
+}

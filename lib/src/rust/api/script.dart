@@ -118,6 +118,11 @@ String customResultKey({required String name}) =>
 String? customResultName({required String key}) =>
     RustLib.instance.api.crateApiScriptCustomResultName(key: key);
 
+/// Whether `stderr` says sudo would not take the password it was given, or
+/// was given none: what tells a wrong password apart from the command failing.
+bool sudoPasswordRejected({required String stderr}) =>
+    RustLib.instance.api.crateApiScriptSudoPasswordRejected(stderr: stderr);
+
 /// Custom status command; a Vec preserves the Dart map's insertion order,
 /// which affects script bytes
 class CustomCmd {
