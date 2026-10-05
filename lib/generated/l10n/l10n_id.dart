@@ -30,13 +30,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Hanya informasi kerusakan yang disertakan; log dan data performa tidak disertakan. **Ini membantu kami menyempurnakan aplikasi dan memperbaiki bug.**';
 
   @override
-  String get crashCollectFull => 'Informasi lengkap';
-
-  @override
-  String get crashCollectFullTip =>
-      'Selain log kerusakan, data performa dan penggunaan fitur juga disertakan: **Berguna untuk menemukan apa yang lambat dan fitur mana yang benar-benar dipakai.**';
-
-  @override
   String get crashCollectFooter =>
       'Pada tingkat apa pun, nama server yang dikenal beserta alamat dan nama penggunanya diganti dengan placeholder saat dicatat. Tingkat pengumpulan dapat diubah nanti di Pengaturan.';
 

@@ -6,8 +6,6 @@
   "crashCollectNoneTip": "Los informes se conservan en este dispositivo; después de un fallo, puedes enviar uno manualmente.",
   "crashCollectBasic": "Información básica",
   "crashCollectBasicTip": "Solo se incluye información sobre el fallo; no se incluyen registros ni datos de rendimiento. **Esto nos ayuda a mejorar la aplicación y corregir errores.**",
-  "crashCollectFull": "Información completa",
-  "crashCollectFullTip": "Además del registro del fallo, se incluyen datos de rendimiento y el uso de funciones: **Sirven para localizar qué va lento y qué funciones se usan realmente.**",
   "crashCollectFooter": "En todos los niveles, los nombres de servidores conocidos, sus direcciones y nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.",
   "privacy": "Privacidad",
   "privacyPolicy": "Política de privacidad",

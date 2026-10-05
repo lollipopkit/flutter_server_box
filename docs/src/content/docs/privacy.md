@@ -3,7 +3,7 @@ title: Privacy Policy
 description: What Server Box stores, what it sends, and how to control those choices
 ---
 
-Last updated: 2026-09-04.
+Last updated: 2026-10-05.
 
 Server Box is a client for the servers you configure. It has no user account and
 no developer-operated relay for SSH, SFTP, or Monitor traffic. Connections to
@@ -55,7 +55,6 @@ be changed at any time in **Settings → App → Privacy**.
 |---|---|
 | **Nothing** | Nothing. Local logs remain on this device, and you can still prepare a manual report. |
 | **Basic information** | Captured crashes and errors, with build and platform information and deliberately recorded diagnostic breadcrumbs attached when relevant. Nothing is sent continuously while the app is operating normally. |
-| **Full information** | Everything in Basic, plus performance traces when available and coarse feature-use events while the app runs. |
 
 The Android default is **Nothing**. The iOS, macOS, Linux and Windows defaults
 are **Basic information**. On builds where automatic diagnostics is available,
@@ -63,6 +62,12 @@ the intro page is shown before the first automatic upload.
 
 Changing the level to **Nothing** stops automatic delivery immediately; it does
 not wait for the next launch.
+
+Earlier versions also offered a **Full information** level, which added
+performance traces and feature-use analytics. It has been removed. An install
+that had chosen it is moved to **Basic information** when it updates, and the
+per-install analytics identifier that level stored on the device is deleted.
+No performance traces or feature-use events are sent at any level.
 
 ### What automatic reports contain
 
@@ -95,45 +100,6 @@ next launch. If automatic diagnostics is enabled, the record can then be sent as
 an error report; otherwise it remains available locally and can appear in a
 manual report.
 
-### What Full information adds
-
-Full information sends performance traces such as how long connecting to a
-server or listing a directory took, not the contents of those operations. It
-also turns the same structured breadcrumbs into coarse feature-use events, for
-example that a terminal was opened or that SFTP was used instead of SCP. These
-events do not include prompts, terminal output, file contents, keystrokes or
-screen recordings.
-
-The OpenPanel analytics destination used by this project is written into the
-source, as is the error-reporting destination. A build made from unmodified
-source by someone else — an F-Droid rebuild, a fork or your own checkout — uses
-the same destinations unless its builder changes them. Full information remains
-off by default and must be enabled manually; an untouched build sends no
-feature-use events until you choose Full information.
-
-Two analytics integrations are implemented, with different identifier behavior:
-
-- The OpenPanel integration used by this project accepts a **per-install
-  identifier**. It stores a random 128-bit value on the device — created when
-  Full information is enabled, deleted when you leave Full, kept outside the
-  backup file, and derived from no device identifier, account or hardware value.
-  Its purpose is to link events from the same installation across launches and
-  count distinct installations, not to identify a person or a device.
-- An Aptabase integration is also implemented, but published builds do not
-  configure it. It does not use a persistent installation identifier. Its events
-  carry a session ID that rotates after one hour of inactivity, so sessions from
-  separate launches cannot be linked.
-
-Depending on the destination, events carry the operating system and version,
-the device type and model where available, the app version and build number, and
-the locale. They contain no advertising identifier or account identifier.
-
-The analytics service may also derive an approximate location from the IP
-address used to connect: a country and city, with representative coordinates
-for that city rather than your exact location. For the OpenPanel data used by
-this project, that location is stored with the per-install identifier; the IP
-address itself is not an event field.
-
 ## Redaction and manual crash reports
 
 Structured diagnostic breadcrumbs are made safe when they are created, before
@@ -153,8 +119,8 @@ copy it, copy it and open a GitHub issue page, or delete it. Nothing is posted
 automatically. This manual path is available at every diagnostic level,
 including **Nothing**.
 
-**The app log is never uploaded automatically, at any level.** Basic and Full
-may send the error and stack trace that ended a run, together with the build and
+**The app log is never uploaded automatically, at any level.** Basic may send
+the error and stack trace that ended a run, together with the build and
 platform information described above, but they do not send log lines. If the
 error happened before the reporting sink started, it may be sent as an error on
 the next launch. The saved manual report remains on the device until you delete
@@ -243,11 +209,9 @@ reported-address result. Use **Delete** on the dataset row to remove the data
 files. There is no separate manual-clear action for reported-address records;
 deleting a server removes its record.
 
-At the Full-information level, the globe can report coarse feature-use events
-like any other feature—for example, that the view was opened and how many
-servers each source placed. Relevant redacted breadcrumbs may also accompany an
-error at the Basic level. No coordinate, address, server name or country is
-included.
+Relevant redacted breadcrumbs may accompany an error at the Basic level, for
+example that the view was opened and how many servers each source placed. No
+coordinate, address, server name or country is included.
 
 ## Other network requests
 
@@ -272,15 +236,12 @@ developer's infrastructure.
 
 ## Where diagnostic data goes
 
-Error reports and performance traces go to the Sentry-compatible server operated
-by the developer at `sentry.lollipopkit.com`. In the published/default build,
-Full-information feature-use events go to the OpenPanel analytics server at
-`diag.lollipopkit.com`. The Aptabase integration is inactive unless a build
-supplies its own Aptabase endpoint and app key.
+Error reports go to the Sentry-compatible server operated by the developer at
+`sentry.lollipopkit.com`. No analytics service receives data from the app.
 
-The Sentry and OpenPanel destinations are written into the source, so a build
-made from unmodified source reports to them too unless its builder changes them.
-Full information is still off by default and requires an explicit choice.
+The Sentry destination is written into the source, so a build made from
+unmodified source reports to it too unless its builder changes it. On Android
+automatic diagnostics are still off by default and require an explicit choice.
 
 Diagnostic data is not used for advertising, shared with other companies, or
 used to track you across apps or websites. The services may retain reports for as

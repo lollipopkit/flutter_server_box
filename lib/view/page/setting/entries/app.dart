@@ -326,7 +326,7 @@ extension _App on _AppSettingsPageState {
   ///
   /// The same widget the intro puts the question with, so the answer reads the
   /// same in both places. It replaced a row whose trailing text named the
-  /// current level and whose tap opened a picker of three bare labels: the
+  /// current level and whose tap opened a picker of bare labels: the
   /// sentence saying what a level actually sends existed only on the intro,
   /// which is the one screen a user sees once and cannot go back to.
   SettingsRow _buildDiagnosticsUpload() {
@@ -370,7 +370,7 @@ extension _App on _AppSettingsPageState {
 
   /// Beside the level, not inside the picker.
   ///
-  /// The dialog that picks a level is a list of three options and has nowhere
+  /// The dialog that picks a level is a list of options and has nowhere
   /// to put a link; and the policy is worth reaching without first opening the
   /// control that changes a setting.
   SettingsRow _buildPrivacyPolicy() {

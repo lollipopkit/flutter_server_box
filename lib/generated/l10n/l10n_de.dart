@@ -30,13 +30,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Es werden nur Absturzinformationen erfasst; Protokoll- und Leistungsdaten sind nicht enthalten. **Damit helfen Sie uns, die App zu verbessern und Fehler zu beheben.**';
 
   @override
-  String get crashCollectFull => 'Vollständige Informationen';
-
-  @override
-  String get crashCollectFullTip =>
-      'Neben dem Absturzprotokoll werden Leistungsdaten und die Nutzung von Funktionen erfasst: **Damit lässt sich finden, was langsam ist und welche Funktionen tatsächlich genutzt werden.**';
-
-  @override
   String get crashCollectFooter =>
       'Unabhängig von der Stufe werden bekannte Servernamen, -adressen und Benutzernamen bereits beim Aufzeichnen durch Platzhalter ersetzt. Die Erfassungsstufe kann später in den Einstellungen geändert werden.';
 

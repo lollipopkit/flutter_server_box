@@ -5,17 +5,16 @@ import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 
-/// The three levels laid out, one sentence each.
+/// The levels laid out, one sentence each.
 ///
 /// Shared by the intro page and by **Settings → Privacy**, which is the point:
 /// the two put the same question, and a level's sentence is the only place the
 /// difference between them is written down. Kept apart they drifted — the
-/// settings page had a picker dialog whose three rows were bare labels, so the
+/// settings page had a picker dialog whose rows were bare labels, so the
 /// answer a user gave on the intro was one they could not re-read later.
 ///
-/// A radio list rather than a switch, because three levels do not read as one,
-/// and the middle level is the whole reason to offer a choice instead of an
-/// on/off.
+/// A radio list rather than a switch, so each level carries the sentence that
+/// says what it sends.
 final class DiagnosticsLevelPicker extends StatelessWidget {
   /// Run after the new level is stored, for a caller that has to act on it.
   ///
@@ -42,11 +41,10 @@ final class DiagnosticsLevelPicker extends StatelessWidget {
           onPicked?.call();
         },
         child: Column(
-          // Reversed, so the list runs from most sent to least and the
-          // recommended answer sits between the two it is a middle ground
-          // between. The default is the quiet end — `none` on Android, which
-          // is the only platform F-Droid distributes — so the case for
-          // collecting has to be made here rather than by pre-selecting it.
+          // Reversed, so the recommended level comes first. The default is the
+          // quiet end — `none` on Android, which is the only platform F-Droid
+          // distributes — so the case for collecting has to be made here
+          // rather than by pre-selecting it.
           children: DiagnosticsLevel.values.reversed
               .map((e) => _tile(context, e))
               .toList(),
@@ -83,12 +81,9 @@ final class DiagnosticsLevelPicker extends StatelessWidget {
 
   /// Which level this argues for.
   ///
-  /// `basic`, not `full`. It is what answers a crash report — the failure, the
-  /// build it happened in and the crumbs leading to it — and it sends nothing
-  /// at all while the app is behaving. `full` adds timings, which are worth
-  /// having when a problem is that something is slow rather than that it
-  /// broke; that is a real case and a narrow one, so it is offered rather
-  /// than recommended.
+  /// `basic`: it is what answers a crash report — the failure, the build it
+  /// happened in and the crumbs leading to it — and it sends nothing at all
+  /// while the app is behaving.
   static const kRecommendedLevel = DiagnosticsLevel.basic;
 
   /// A level's label and the sentence under it.
@@ -102,7 +97,6 @@ final class DiagnosticsLevelPicker extends StatelessWidget {
         l10n.crashCollectBasic,
         l10n.crashCollectBasicTip,
       ),
-      DiagnosticsLevel.full => (l10n.crashCollectFull, l10n.crashCollectFullTip),
     };
   }
 }

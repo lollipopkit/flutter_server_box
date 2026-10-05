@@ -353,8 +353,8 @@ Future<void> _doPlatformRelated() async {
   //
   // The crash report is split around it, because only half of it needs a sink.
   // Both orderings matter. `CrashReport.keep` writes the file the settings page
-  // offers and waits for nothing — behind the sink it waited on `Sentry.init`
-  // and two analytics clients, so on a slow endpoint the row was missing from a
+  // offers and waits for nothing — behind the sink it waited on `Sentry.init`,
+  // so on a slow endpoint the row was missing from a
   // page opened straight after launch. `CrashReport.report` files the error and
   // has nowhere to send it until the sink is in. Both are after
   // `NativeExitReport.shared.collect` above, which is what may decide the previous run
@@ -366,6 +366,7 @@ Future<void> _doPlatformRelated() async {
     // and, being unawaited, would reach the zone handler and mark *this* run
     // as having ended badly too.
     try {
+      await DiagnosticsUpload.retireFullLevel();
       await DiagnosticsUpload.sync();
     } catch (e, s) {
       Loggers.app.warning('Crash upload sync failed', e, s);

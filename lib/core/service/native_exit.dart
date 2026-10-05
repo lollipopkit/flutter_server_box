@@ -75,9 +75,9 @@ final class NativeExitReport {
   /// it.** `apply` writes `lastExitInfoTs` before this is set, so the record
   /// counts as handled from that moment on; a launch that then died before
   /// reaching a sink dropped the crash *and* left nothing for the next launch
-  /// to find. In [PrefStore] rather than a setting, for the same reason as
-  /// the analytics identity: the backup file carries every setting, and a
-  /// restored backup replaying someone else's crash is nonsense.
+  /// to find. In [PrefStore] rather than a setting: the backup file carries
+  /// every setting, and a restored backup replaying someone else's crash is
+  /// nonsense.
   static const _pendingKey = 'native_exit_pending';
 
   /// This run's copy, so the common case never touches storage: a crash held

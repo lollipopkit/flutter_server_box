@@ -6,8 +6,6 @@
   "crashCollectNoneTip": "Rapporten blijven op dit apparaat; na een crash kun je er handmatig een versturen.",
   "crashCollectBasic": "Basisgegevens",
   "crashCollectBasicTip": "Bevat alleen informatie over de crash; logboeken en prestatiegegevens worden niet opgenomen. **Zo help je ons de app te verbeteren en bugs op te lossen.**",
-  "crashCollectFull": "Volledige gegevens",
-  "crashCollectFullTip": "Naast het crashlogboek bevat dit ook prestatiegegevens en het gebruik van functies: daarmee is te vinden wat traag is en welke functies echt worden gebruikt.",
   "crashCollectFooter": "Op elk niveau worden bekende servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.",
   "privacy": "Privacy",
   "privacyPolicy": "Privacybeleid",

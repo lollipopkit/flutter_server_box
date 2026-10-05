@@ -107,7 +107,6 @@ dependencies:
   protobuf: ^6.1.0
   fixnum: ^1.1.1
   device_info_plus: ^13.2.0
-  aptabase_flutter: ^0.5.0
   material_ui: ^1.5.0
   # The LLM layer, shared with GPT Box: pi's agent loop and providers in
   # QuickJS, built by its own hook like `sbm_ffi` (`fl_pi_llm`), and the

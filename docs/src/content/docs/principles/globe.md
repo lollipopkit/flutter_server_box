@@ -242,7 +242,6 @@ actions and counts—for example opening or closing the view, dataset outcomes,
 placement counts by source, and whether a card or marker opened a server. It
 does not include coordinates, addresses, server names, or countries.
 
-At the **Full information** diagnostic level, these breadcrumbs can also be
-sent as feature-use events. At **Basic information**, relevant breadcrumbs may
-accompany an error report, but they are not streamed as analytics events. See
+At **Basic information**, relevant breadcrumbs may accompany an error report;
+they are never sent as analytics events. See
 the [privacy policy](/docs/privacy/) for the complete diagnostic behavior.
