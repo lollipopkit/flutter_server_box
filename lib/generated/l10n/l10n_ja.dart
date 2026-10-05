@@ -29,13 +29,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'クラッシュ情報のみを含み、ログやパフォーマンスデータは含みません。**アプリの改善やバグの修正に役立ちます。**';
 
   @override
-  String get crashCollectFull => '完全な情報';
-
-  @override
-  String get crashCollectFullTip =>
-      'クラッシュログに加え、パフォーマンスデータと機能の利用状況も含みます。**動作が遅い箇所の特定と、どの機能が実際に使われているかの把握に役立ちます。**';
-
-  @override
   String get crashCollectFooter =>
       'どのレベルでも、既知のサーバー名・アドレス・ユーザー名は記録時にプレースホルダーへ置き換えられます。設定であとから収集レベルを変更できます。';
 

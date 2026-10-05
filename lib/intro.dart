@@ -271,9 +271,8 @@ final class _IntroPage extends StatelessWidget {
   /// desktop default is `basic`, so without being asked first a user would be
   /// sending before they had been told. [_onDone] is what releases it.
   ///
-  /// A radio list rather than a switch, because three levels do not read as
-  /// one — and the middle level is the whole reason to offer a choice instead
-  /// of an on/off.
+  /// A radio list rather than a switch, so each level carries the sentence
+  /// that says what it sends.
   static Widget _buildDiagnostics(BuildContext ctx, double padTop) {
     final l10n = ctx.l10n;
 

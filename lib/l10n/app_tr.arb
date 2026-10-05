@@ -6,8 +6,6 @@
   "crashCollectNoneTip": "Raporlar bu cihazda tutulur; çökmenin ardından bir raporu elle gönderebilirsiniz.",
   "crashCollectBasic": "Temel bilgiler",
   "crashCollectBasicTip": "Yalnızca çökme bilgileri dahil edilir; günlükler ve performans verileri dahil edilmez. **Bu, uygulamayı geliştirmemize ve hataları düzeltmemize yardımcı olur.**",
-  "crashCollectFull": "Tüm bilgiler",
-  "crashCollectFullTip": "Çökme günlüğüne ek olarak performans verileri ve hangi özelliklerin kullanıldığı da dahil edilir: **Neyin yavaş olduğunu ve hangi özelliklerin gerçekten kullanıldığını bulmaya yarar.**",
   "crashCollectFooter": "Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar'dan değiştirebilirsiniz.",
   "privacy": "Gizlilik",
   "privacyPolicy": "Gizlilik politikası",

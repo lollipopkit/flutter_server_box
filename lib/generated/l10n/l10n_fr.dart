@@ -30,13 +30,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Seules les informations sur le plantage sont incluses ; les journaux et données de performance ne le sont pas. **Cela nous aide à améliorer l\'application et à corriger les bugs.**';
 
   @override
-  String get crashCollectFull => 'Informations complètes';
-
-  @override
-  String get crashCollectFullTip =>
-      'En plus du journal du plantage, des données de performance et l\'usage des fonctionnalités sont inclus : **Cela permet de repérer ce qui est lent et quelles fonctionnalités servent vraiment.**';
-
-  @override
   String get crashCollectFooter =>
       'Quel que soit le niveau, les noms de serveurs connus, leurs adresses et noms d\'utilisateur sont remplacés par des espaces réservés dès l\'enregistrement. Vous pouvez modifier le niveau de collecte plus tard dans les réglages.';
 

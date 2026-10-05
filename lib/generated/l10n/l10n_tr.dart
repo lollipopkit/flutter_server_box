@@ -30,13 +30,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Yalnızca çökme bilgileri dahil edilir; günlükler ve performans verileri dahil edilmez. **Bu, uygulamayı geliştirmemize ve hataları düzeltmemize yardımcı olur.**';
 
   @override
-  String get crashCollectFull => 'Tüm bilgiler';
-
-  @override
-  String get crashCollectFullTip =>
-      'Çökme günlüğüne ek olarak performans verileri ve hangi özelliklerin kullanıldığı da dahil edilir: **Neyin yavaş olduğunu ve hangi özelliklerin gerçekten kullanıldığını bulmaya yarar.**';
-
-  @override
   String get crashCollectFooter =>
       'Her düzeyde bilinen sunucu adları, adresler ve kullanıcı adları kaydedilirken yer tutucularla değiştirilir. Toplama düzeyini daha sonra Ayarlar\'dan değiştirebilirsiniz.';
 

@@ -4,10 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 /// for every app on fl_lib (`lifecycle`, `nav`, `store`, `network`).
 ///
 /// These are the things this app does that a crash report has to be read
-/// against. At `full` the same crumbs are also what says which features are
-/// used, so a category with no call sites is a feature nothing can be said
-/// about — see `OpenPanelSink`. That is the second reason to add one, and the
-/// reason the list is not only about crashes.
+/// against.
 ///
 /// Never recorded, at any level: what a prompt asked, where a tool was pointed,
 /// where a server is, what a snippet contains. A category names the kind of

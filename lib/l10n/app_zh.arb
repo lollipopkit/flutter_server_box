@@ -6,8 +6,6 @@
   "crashCollectNoneTip": "报告会保留在本机；发生崩溃后，你可手动发送。",
   "crashCollectBasic": "基本信息",
   "crashCollectBasicTip": "只包含崩溃信息，不包含日志或性能数据。**这些信息可帮助我们改进 App 并修复问题。**",
-  "crashCollectFull": "完整信息",
-  "crashCollectFullTip": "包含崩溃日志、性能数据和功能使用情况。**这些信息可帮助我们定位性能问题，并了解哪些功能真正有人使用。**",
   "crashCollectFooter": "无论选择哪个级别，记录时都会将已知服务器名称、地址和用户名替换为占位符。之后可在设置中更改收集级别。",
   "privacy": "隐私",
   "privacyPolicy": "隐私政策",

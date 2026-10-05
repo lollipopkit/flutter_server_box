@@ -120,8 +120,8 @@ abstract final class CrashReport {
   ///
   /// **Separate from [report] because only one of the two needs the upload
   /// sink.** Chained behind `DiagnosticsUpload.sync`, this waited on
-  /// `Sentry.init` and two analytics clients — network-capable work the line
-  /// starting them says must not hold up startup. Somebody on `full` with a
+  /// `Sentry.init` — network-capable work the line starting it says must
+  /// not hold up startup. Somebody uploading to a
   /// slow endpoint who went straight to Settings → Privacy found no row: the
   /// file was not written yet, and `saved()` is a future that page's build
   /// captured rather than a listenable, so it did not appear until they left

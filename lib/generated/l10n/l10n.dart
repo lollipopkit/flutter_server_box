@@ -161,18 +161,6 @@ abstract class AppLocalizations {
   /// **'Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**'**
   String get crashCollectBasicTip;
 
-  /// User-facing label or message for crash collect full.
-  ///
-  /// In en, this message translates to:
-  /// **'Full information'**
-  String get crashCollectFull;
-
-  /// Help text for the crash collect full setting or action.
-  ///
-  /// In en, this message translates to:
-  /// **'Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**'**
-  String get crashCollectFullTip;
-
   /// User-facing label or message for crash collect footer.
   ///
   /// In en, this message translates to:

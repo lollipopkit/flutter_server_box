@@ -190,7 +190,7 @@ void main() {
     });
 
     test('never the log, at any level', () async {
-      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.full.name);
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
       // One run writes both the line and the marker, and the next reads them:
       // a third launch in between would rotate the log this is looking for.
       await launch();

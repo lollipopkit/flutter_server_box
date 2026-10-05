@@ -30,13 +30,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Include solo le informazioni sull\'arresto anomalo; non include log o dati sulle prestazioni. **Questo ci aiuta a migliorare l\'app e a correggere i bug.**';
 
   @override
-  String get crashCollectFull => 'Informazioni complete';
-
-  @override
-  String get crashCollectFullTip =>
-      'Oltre al registro dell\'arresto anomalo, include dati sulle prestazioni e l\'uso delle funzioni: **Servono a individuare cosa è lento e quali funzioni vengono davvero usate.**';
-
-  @override
   String get crashCollectFooter =>
       'A ogni livello, i nomi dei server noti, i relativi indirizzi e nomi utente vengono sostituiti da segnaposto al momento della registrazione. Puoi modificare il livello di raccolta in seguito nelle impostazioni.';
 

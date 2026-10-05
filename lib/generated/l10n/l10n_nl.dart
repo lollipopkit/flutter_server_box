@@ -30,13 +30,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Bevat alleen informatie over de crash; logboeken en prestatiegegevens worden niet opgenomen. **Zo help je ons de app te verbeteren en bugs op te lossen.**';
 
   @override
-  String get crashCollectFull => 'Volledige gegevens';
-
-  @override
-  String get crashCollectFullTip =>
-      'Naast het crashlogboek bevat dit ook prestatiegegevens en het gebruik van functies: daarmee is te vinden wat traag is en welke functies echt worden gebruikt.';
-
-  @override
   String get crashCollectFooter =>
       'Op elk niveau worden bekende servernamen, adressen en gebruikersnamen al bij het vastleggen vervangen door plaatsaanduidingen. Je kunt het verzamelingsniveau later wijzigen in de instellingen.';
 

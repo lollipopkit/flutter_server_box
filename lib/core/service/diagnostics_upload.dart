@@ -3,11 +3,9 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sentry/sentry.dart' as sentry;
-import 'package:server_box/core/service/aptabase.dart';
 import 'package:server_box/core/service/diagnostics_platform.dart';
 import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/core/service/native_exit.dart';
-import 'package:server_box/core/service/openpanel.dart';
 import 'package:server_box/core/service/report_filter.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -102,19 +100,23 @@ abstract final class DiagnosticsUpload {
     if (wanted == _started) return;
     if (wanted == null) {
       await _stop();
-    } else if (_started == null) {
-      await _start(wanted);
-    } else if (_started!.tracesPerformance != wanted.tracesPerformance ||
-        _started!.sendsAnalytics != wanted.sendsAnalytics) {
-      // `tracesSampleRate` is read when the SDK is built, so moving between
-      // basic and full has to rebuild it. Breadcrumb filtering is read per
-      // call and would not have needed this; analytics is here because
-      // dropping to `basic` has to stop it and take the queue with it.
-      await _stop();
-      await _start(wanted);
     } else {
-      _started = wanted;
+      await _start(wanted);
     }
+  }
+
+  // TODO: remove once no install can still be at the removed `full` level.
+  /// Moves an install that chose the removed `full` level to `basic`, and
+  /// deletes the profile id `full` created for its analytics destination: an
+  /// identifier with no remaining purpose does not stay on the device.
+  ///
+  /// `basic` rather than `none`, because `full` included everything `basic`
+  /// sends: the user agreed to that much.
+  static Future<void> retireFullLevel() async {
+    if (Stores.setting.diagnosticsLevel.fetch() == 'full') {
+      Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
+    }
+    await PrefStore.shared.remove('openpanel_profile_id');
   }
 
   static Future<void> _start(DiagnosticsLevel wanted) async {
@@ -123,11 +125,10 @@ abstract final class DiagnosticsUpload {
         options.dsn = dsn;
         options.release = 'server_box@1.0.${BuildData.build}';
 
-        // What `full` adds: traced operations arrive as they happen rather
-        // than being held until something breaks. It is also the only setting
-        // here whose cost scales with *use* rather than with failures, which
-        // is why it is the level's defining feature and not a default.
-        options.tracesSampleRate = wanted.tracesPerformance ? 1.0 : 0.0;
+        // Nothing is traced: a report is sent when something breaks, never
+        // while the app is behaving. Set rather than left to the default, so
+        // a later SDK changing it cannot start sending on its own.
+        options.tracesSampleRate = 0.0;
         // Never, at any level — see [SentrySink.log]. Set rather than left to
         // the default, because the default flipping in a later SDK would
         // silently start streaming the app's log lines off the device.
@@ -170,28 +171,8 @@ abstract final class DiagnosticsUpload {
       // itself — see [DiagnosticsPlatform], which is also where the line
       // between "what hardware" and "whose hardware" is drawn.
       await DiagnosticsPlatform.describe();
-      // `full` only, and started before the sink so the first crumb through it
-      // is already counted. `AptabaseSink` captures nothing until this has
-      // run, so a failure to reach the instance costs events rather than the
-      // launch.
-      if (wanted.sendsAnalytics) {
-        // Two destinations, started independently, and each is a no-op in a
-        // build with no endpoint for it. Published builds carry OpenPanel's
-        // and not Aptabase's -- see [OpenPanelAnalytics] on why the heavier of
-        // the two is the one that is configured, and [AptabaseAnalytics.stop]
-        // for the reason the other one must stay unconfigured: it cannot be
-        // fully stopped once started, so leaving `full` would not reliably
-        // stop delivery of what it had already recorded.
-        await AptabaseAnalytics.start();
-        await OpenPanelAnalytics.start();
-      }
       Diag.install(
-        FanOutSink([
-          LocalDiagnosticsSink(),
-          const SentrySink(),
-          const AptabaseSink(),
-          const OpenPanelSink(),
-        ]),
+        FanOutSink([LocalDiagnosticsSink(), const SentrySink()]),
       );
       // **Only now.** [uploading] answers from this, and `CrashLog.uploadsNow`
       // reads that to decide whether the marker keeps the error — so between
@@ -220,10 +201,6 @@ abstract final class DiagnosticsUpload {
     // asking the SDK to be quiet.
     Diag.install(LocalDiagnosticsSink());
     _started = null;
-    // Dropped rather than flushed -- see [AptabaseAnalytics.stop]. Withdrawing consent
-    // must not be the thing that sends the last batch.
-    await AptabaseAnalytics.stop();
-    await OpenPanelAnalytics.stop();
     try {
       await sentry.Sentry.close();
     } catch (e, s) {

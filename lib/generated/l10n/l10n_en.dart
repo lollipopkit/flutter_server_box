@@ -30,13 +30,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**';
 
   @override
-  String get crashCollectFull => 'Full information';
-
-  @override
-  String get crashCollectFullTip =>
-      'Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**';
-
-  @override
   String get crashCollectFooter =>
       'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.';
 

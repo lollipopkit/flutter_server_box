@@ -20,8 +20,6 @@ void main() {
       defaultDiagnosticsLevel,
       Platform.isAndroid ? DiagnosticsLevel.none : DiagnosticsLevel.basic,
     );
-    // Whatever the platform, the default never traces.
-    expect(defaultDiagnosticsLevel.tracesPerformance, isFalse);
   });
 
   test('an unreadable stored value sends nothing', () {
@@ -44,26 +42,19 @@ void main() {
     const none = DiagnosticsLevel.none;
     expect(none.uploads, isFalse);
     expect(none.sendsBreadcrumbs, isFalse);
-    expect(none.tracesPerformance, isFalse);
   });
 
   test('basic reports failures but is silent in between', () {
     const basic = DiagnosticsLevel.basic;
     expect(basic.uploads, isTrue);
     expect(basic.sendsBreadcrumbs, isTrue, reason: 'context for a failure');
-    // The distinction that defines the level: nothing is sent while the app is
-    // behaving, so its cost scales with failures rather than with use.
-    expect(basic.tracesPerformance, isFalse);
   });
 
-  test('full adds timings, and nothing else', () {
-    const full = DiagnosticsLevel.full;
-    expect(full.uploads, isTrue);
-    expect(full.sendsBreadcrumbs, isTrue);
-    // The whole of what `full` is: `basic` plus traced operations. It used to
-    // stream the app's log lines too, which is the one thing no level does now
-    // -- a log line is written for a developer reading the file on the device,
-    // not to be published, and `SentrySink.log` drops it at every level.
-    expect(full.tracesPerformance, isTrue);
+  // TODO: remove with `DiagnosticsUpload.retireFullLevel`.
+  test('the removed full level reads as basic', () {
+    // It sent everything `basic` does, so that much was agreed to; reading it
+    // as `none` would stop crash reports nobody asked to stop.
+    expect(DiagnosticsLevel.fromName('full'), DiagnosticsLevel.basic);
+    expect(DiagnosticsLevel.values.map((l) => l.name), isNot(contains('full')));
   });
 }

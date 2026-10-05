@@ -24,14 +24,6 @@
   "@crashCollectBasicTip": {
     "description": "Help text for the crash collect basic setting or action."
   },
-  "crashCollectFull": "Full information",
-  "@crashCollectFull": {
-    "description": "User-facing label or message for crash collect full."
-  },
-  "crashCollectFullTip": "Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**",
-  "@crashCollectFullTip": {
-    "description": "Help text for the crash collect full setting or action."
-  },
   "crashCollectFooter": "At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.",
   "@crashCollectFooter": {
     "description": "User-facing label or message for crash collect footer."

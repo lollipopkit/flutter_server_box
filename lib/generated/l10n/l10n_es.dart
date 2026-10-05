@@ -30,13 +30,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Solo se incluye información sobre el fallo; no se incluyen registros ni datos de rendimiento. **Esto nos ayuda a mejorar la aplicación y corregir errores.**';
 
   @override
-  String get crashCollectFull => 'Información completa';
-
-  @override
-  String get crashCollectFullTip =>
-      'Además del registro del fallo, se incluyen datos de rendimiento y el uso de funciones: **Sirven para localizar qué va lento y qué funciones se usan realmente.**';
-
-  @override
   String get crashCollectFooter =>
       'En todos los niveles, los nombres de servidores conocidos, sus direcciones y nombres de usuario se sustituyen por marcadores al registrarlos. Puedes cambiar el nivel de recopilación más adelante en Ajustes.';
 

@@ -11,7 +11,7 @@ import 'dart:io';
 /// here is the difference between identifying and not — the difference is how
 /// much is sent, and how often.
 ///
-/// The local log is unaffected by all three. It never leaves the device on its
+/// The local log is unaffected by both. It never leaves the device on its
 /// own: it is what the Logs page shows and what a user pastes into an issue by
 /// hand. This setting only decides what is *uploaded*.
 enum DiagnosticsLevel {
@@ -25,41 +25,13 @@ enum DiagnosticsLevel {
   ///
   /// A crash or a caught error, with the build it happened in and the tags
   /// describing this install. Nothing is sent while the app is behaving.
-  basic,
-
-  /// Continuously, while the app runs.
-  ///
-  /// Everything [basic] sends, plus performance traces as they happen rather
-  /// than held back until something breaks — which is what makes a problem
-  /// visible that never crashes.
-  ///
-  /// The log stream is not part of this, at any level. It was, and it was the
-  /// one channel that carried the app's own log lines off the device
-  /// continuously — the thing most likely to hold a string nobody audited. The
-  /// log stays on the device, where the Logs page shows it and a crash report
-  /// quotes it with the user reading first.
-  ///
-  /// It is still the level that costs something real: every traced operation
-  /// is a request to the server, so a self-hosted instance pays storage and
-  /// CPU that scale with how much the app is used rather than how often it
-  /// fails.
-  full;
+  basic;
 
   /// Whether anything is sent at all.
   bool get uploads => this != DiagnosticsLevel.none;
 
   /// Whether breadcrumbs accompany an error.
   bool get sendsBreadcrumbs => this != DiagnosticsLevel.none;
-
-  /// Whether what the app is used for is counted, as it happens.
-  ///
-  /// Its instrumentation is the breadcrumbs every level already records — see
-  /// `AptabaseSink` — so the levels differ in whether the count leaves the
-  /// device while nothing is wrong, not in what is recorded.
-  bool get sendsAnalytics => this == DiagnosticsLevel.full;
-
-  /// Whether operations are traced for performance.
-  bool get tracesPerformance => this == DiagnosticsLevel.full;
 
   /// Reads a stored name.
   ///
@@ -71,6 +43,9 @@ enum DiagnosticsLevel {
   /// value that cannot be read is not a record of what the user agreed to, and
   /// the safe reading of "unknown" is to send nothing.
   static DiagnosticsLevel fromName(String? name) {
+    // TODO: remove with `DiagnosticsUpload.retireFullLevel`. The removed
+    // `full` level sent everything `basic` does, so that is what it becomes.
+    if (name == 'full') return DiagnosticsLevel.basic;
     for (final level in DiagnosticsLevel.values) {
       if (level.name == name) return level;
     }
