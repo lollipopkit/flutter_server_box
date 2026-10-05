@@ -637,7 +637,11 @@ void main() {
       // online: refused.
       api.routes['GET /cluster/backup/j'] = (_) => {'id': 'j', 'type': 'vzdump', 'storage': 'nfs', 'all': 1};
       await pve.runBackupJob(const VirtBackupJob(id: 'j', all: true));
-      expect(api.paths.where((p) => p.endsWith('/vzdump')), ['POST /nodes/pve/vzdump', 'POST /nodes/pve2/vzdump']);
+      // Started on every node at once, so in no particular order.
+      expect(
+        api.paths.where((p) => p.endsWith('/vzdump')),
+        unorderedEquals(['POST /nodes/pve/vzdump', 'POST /nodes/pve2/vzdump']),
+      );
       api.routes['GET /cluster/backup/j'] = (_) => {'id': 'j', 'type': 'vzdump', 'node': 'pve3', 'all': 1};
       final off = await _err(pve.runBackupJob(const VirtBackupJob(id: 'j')));
       expect(off.message, virtBackupIssueText('node_offline'));

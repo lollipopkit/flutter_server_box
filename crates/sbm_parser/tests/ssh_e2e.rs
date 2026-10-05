@@ -812,8 +812,6 @@ fn ssh_e2e_unix_file_listing() {
 
     let out = run_ssh(&host, &files::stat_command("/etc/hosts"), None).expect("ssh");
     assert_eq!(files::parse_records(&String::from_utf8_lossy(&out.stdout)).unwrap()[0].name, "hosts");
-    let out = run_ssh(&host, &files::stat_command("/etc/server_box_e2e_missing"), None).expect("ssh");
-    assert_eq!(out.status.code(), Some(files::STAT_ABSENT_EXIT));
 
     // The commands with shell syntax of their own, through the login shell
     // (fish on some test machines), in a throwaway directory.
@@ -829,6 +827,9 @@ fn ssh_e2e_unix_file_listing() {
     }
     let _cleanup = Cleanup(&host, dir.clone());
     let dir = dir.as_str();
+    // Absent for certain: the directory was empty when made.
+    let out = run_ssh(&host, &files::stat_command(&format!("{dir}/missing")), None).expect("ssh");
+    assert_eq!(out.status.code(), Some(files::STAT_ABSENT_EXIT));
     ssh(&host, &format!("mkdir {dir}/d && echo x > {dir}/f"), None).expect("set up");
     let rename = run_ssh(&host, &files::rename_command(&format!("{dir}/f"), &format!("{dir}/d")), None).expect("ssh");
     assert!(!rename.status.success(), "a rename onto a directory is refused");
