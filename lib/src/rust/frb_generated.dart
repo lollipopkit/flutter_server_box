@@ -788,10 +788,7 @@ abstract class RustLibApi extends BaseApi {
     required ShellFuncKind func,
   });
 
-  String crateApiFilesFilesAtomicWriteCommand({
-    required String path,
-    required String suffix,
-  });
+  String crateApiFilesFilesAtomicWriteCommand({required String path});
 
   String crateApiFilesFilesCappedReadCommand({
     required String path,
@@ -6768,16 +6765,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  String crateApiFilesFilesAtomicWriteCommand({
-    required String path,
-    required String suffix,
-  }) {
+  String crateApiFilesFilesAtomicWriteCommand({required String path}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(path, serializer);
-          sse_encode_String(suffix, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -6789,7 +6782,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiFilesFilesAtomicWriteCommandConstMeta,
-        argValues: [path, suffix],
+        argValues: [path],
         apiImpl: this,
       ),
     );
@@ -6798,7 +6791,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiFilesFilesAtomicWriteCommandConstMeta =>
       const TaskConstMeta(
         debugName: 'files_atomic_write_command',
-        argNames: ['path', 'suffix'],
+        argNames: ['path'],
       );
 
   @override

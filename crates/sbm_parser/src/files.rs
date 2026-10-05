@@ -24,9 +24,12 @@ use crate::script::shell_quote_unix as quote;
 /// One directory level. `-exec … {} +` hands the whole batch to one shell
 /// rather than starting one per file.
 pub fn list_command(path: &str) -> String {
+    // `find` has no `--`: a starting point that begins with `-` would be read
+    // as an option, so a relative one is spelled `./-…`.
+    let start = if path.starts_with('-') { format!("./{path}") } else { path.to_owned() };
     format!(
         "find {} -mindepth 1 -maxdepth 1 -exec sh -c 'for path do {}done' sh {{}} +",
-        quote(path),
+        quote(&start),
         // A file gone by the time its metadata is read is not reported: `find`
         // names what was there a moment ago, and /proc and /tmp churn.
         emit_record("path", "continue")
@@ -387,17 +390,18 @@ pub fn parse_capped_read(output: &str, max_bytes: u64) -> Result<(u64, Vec<u8>),
     Ok((size, data))
 }
 
-/// Replaces `path` with the base64 on stdin, atomically: written beside it
-/// under `suffix` and moved onto it, so a write that fails halfway leaves the
-/// original. A directory is refused rather than having the copy filed inside
-/// it, and an existing file keeps its mode rather than taking the staged
-/// copy's umask (best effort: the bytes are written either way).
+/// Replaces `path` with the base64 on stdin, atomically: written beside it and
+/// moved onto it, so a write that fails halfway leaves the original. A
+/// directory is refused rather than having the copy filed inside it.
 ///
-/// `suffix` is quoted like the path: it is a filename component, never shell.
-pub fn atomic_write_command(path: &str, suffix: &str) -> String {
+/// The staged copy is `mktemp`'s: created exclusively under a name nobody can
+/// predict, so nothing planted beside the target — a symlink to another file —
+/// is opened in its place. It starts `0600`, so it then takes the existing
+/// file's mode, or for a new file the one the umask gives (best effort: the
+/// bytes are written either way).
+pub fn atomic_write_command(path: &str) -> String {
     format!(
-        "set -e\np={}\nif [ -d \"$p\" ]; then printf '%s: is a directory\\n' \"$p\" >&2; exit 1; fi\ntmp=\"$p\"{}\ntrap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM\nbase64 -d > \"$tmp\"\nif [ -f \"$p\" ]; then\n  mode=$(stat -c %a \"$p\" 2>/dev/null) || mode=\n  if [ -n \"$mode\" ]; then chmod \"$mode\" \"$tmp\" || :; fi\nfi\nmv -f -- \"$tmp\" \"$p\"\ntrap - EXIT HUP INT TERM",
-        quote(path),
-        quote(&format!(".{suffix}.tmp"))
+        "set -e\np={}\nif [ -d \"$p\" ]; then printf '%s: is a directory\\n' \"$p\" >&2; exit 1; fi\ntmp=$(mktemp \"$p.XXXXXX\")\ntrap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM\nbase64 -d > \"$tmp\"\nif [ -f \"$p\" ]; then\n  mode=$(stat -c %a \"$p\" 2>/dev/null) || mode=\nelse\n  mode=$(printf '%o' $(( 0666 & ~0$(umask) ))) || mode=\nfi\nif [ -n \"$mode\" ]; then chmod \"$mode\" \"$tmp\" || :; fi\nmv -f -- \"$tmp\" \"$p\"\ntrap - EXIT HUP INT TERM",
+        quote(path)
     )
 }

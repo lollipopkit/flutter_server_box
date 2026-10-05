@@ -85,6 +85,15 @@ fn discovery_reads_a_real_tmux() {
             .env("LC_ALL", "C")
             .env("LC_CTYPE", "C");
     };
+    // Killed however the test ends: an isolated server left running outlives
+    // the temp directory its socket is in.
+    struct KillServer<'a>(&'a std::path::Path);
+    impl Drop for KillServer<'_> {
+        fn drop(&mut self) {
+            let _ = Command::new("tmux").env("TMUX_TMPDIR", self.0).env("TMUX", "").arg("kill-server").status();
+        }
+    }
+    let _kill = KillServer(dir.path());
     let mut new = Command::new("tmux");
     env(&mut new);
     assert!(new.args(["new-session", "-d", "-s", "dis|covery", "-n", "a|b"]).status().unwrap().success());
@@ -96,10 +105,6 @@ fn discovery_reads_a_real_tmux() {
     };
     let listing = parse_sessions(&run(&list_sessions_command("tmux")));
     let windows = parse_windows(&run(&list_windows_command("tmux", "dis|covery")));
-
-    let mut kill = Command::new("tmux");
-    env(&mut kill);
-    let _ = kill.arg("kill-server").status();
 
     assert_eq!(listing.unreadable, 0);
     assert!(listing.sessions.iter().any(|s| s.name == "dis|covery"), "{listing:?}");

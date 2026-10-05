@@ -1365,7 +1365,7 @@ class GlobalAgentToolService {
     // rather than having the copy filed inside it, and an existing file keeps
     // its mode instead of taking the staged copy's umask.
     final result = await exec.run(
-      files.filesAtomicWriteCommand(path: path, suffix: ShortId.generate()),
+      files.filesAtomicWriteCommand(path: path),
       stdin: base64.encode(bytes),
     );
     if (result.outputIncomplete || result.exitCode != 0) {

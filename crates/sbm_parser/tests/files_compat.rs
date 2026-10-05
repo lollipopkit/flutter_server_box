@@ -221,7 +221,7 @@ mod shell {
 
         let mut child = Command::new("/bin/sh")
             .arg("-c")
-            .arg(atomic_write_command(path, "e2e"))
+            .arg(atomic_write_command(path))
             .stdin(std::process::Stdio::piped())
             .spawn()
             .unwrap();
@@ -240,7 +240,7 @@ mod shell {
         // A directory at the path is refused, not written into.
         let mut child = Command::new("/bin/sh")
             .arg("-c")
-            .arg(atomic_write_command(dir.path().to_str().unwrap(), "e2e"))
+            .arg(atomic_write_command(dir.path().to_str().unwrap()))
             .stdin(std::process::Stdio::piped())
             .spawn()
             .unwrap();
@@ -267,7 +267,13 @@ fn a_size_or_mode_the_command_cannot_print_is_refused() {
 }
 
 #[test]
-fn the_staging_suffix_is_never_shell() {
-    let command = atomic_write_command("/a", "x\"; touch /tmp/pwned; : \"");
-    assert!(command.contains("tmp=\"$p\"'.x\"; touch /tmp/pwned; : \".tmp'"), "{command}");
+fn the_staging_file_is_made_exclusively() {
+    let command = atomic_write_command("/a");
+    assert!(command.contains("tmp=$(mktemp \"$p.XXXXXX\")"), "{command}");
+}
+
+#[test]
+fn a_dash_led_relative_path_is_not_an_option_to_find() {
+    assert!(list_command("-P").starts_with("find './-P' "));
+    assert!(list_command("/-P").starts_with("find '/-P' "));
 }

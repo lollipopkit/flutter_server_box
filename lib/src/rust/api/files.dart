@@ -123,14 +123,9 @@ CappedRead filesParseCappedRead({
   maxBytes: maxBytes,
 );
 
-/// Replaces `path` with the base64 on stdin, staged under `suffix`.
-String filesAtomicWriteCommand({
-  required String path,
-  required String suffix,
-}) => RustLib.instance.api.crateApiFilesFilesAtomicWriteCommand(
-  path: path,
-  suffix: suffix,
-);
+/// Replaces `path` with the base64 on stdin, staged in an exclusive temp file.
+String filesAtomicWriteCommand({required String path}) =>
+    RustLib.instance.api.crateApiFilesFilesAtomicWriteCommand(path: path);
 
 /// What [`files_capped_read_command`] answered.
 class CappedRead {

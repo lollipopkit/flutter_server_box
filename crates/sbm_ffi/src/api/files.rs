@@ -183,8 +183,8 @@ pub fn files_parse_capped_read(output: String, max_bytes: u32) -> Result<CappedR
     Ok(CappedRead { size: i64::try_from(size).map_err(|_| "an invalid file size")?, data })
 }
 
-/// Replaces `path` with the base64 on stdin, staged under `suffix`.
+/// Replaces `path` with the base64 on stdin, staged in an exclusive temp file.
 #[flutter_rust_bridge::frb(sync)]
-pub fn files_atomic_write_command(path: String, suffix: String) -> String {
-    files::atomic_write_command(&path, &suffix)
+pub fn files_atomic_write_command(path: String) -> String {
+    files::atomic_write_command(&path)
 }

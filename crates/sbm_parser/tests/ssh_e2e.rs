@@ -846,8 +846,13 @@ fn ssh_e2e_unix_file_listing() {
     // them: an atomic write that keeps the mode, and a capped read.
     let target = format!("{dir}/run.sh");
     let _ = ssh(&host, &format!("printf old > {target} && chmod 755 {target}"), None);
-    ssh(&host, &files::atomic_write_command(&target, "e2e"), Some("aGVsbG8gd29ybGQ=")).expect("write");
+    ssh(&host, &files::atomic_write_command(&target), Some("aGVsbG8gd29ybGQ=")).expect("write");
     assert_eq!(ssh_stdout(&host, &format!("stat -c %a {target}")).trim(), "755");
+    // A new file takes the umask's mode, not mktemp's 0600.
+    let fresh = format!("{dir}/new.txt");
+    ssh(&host, &format!("umask 022; {}", files::atomic_write_command(&fresh)), Some("aGk=")).expect("write new");
+    assert_eq!(ssh_stdout(&host, &format!("stat -c %a {fresh}")).trim(), "644");
+    assert_eq!(ssh_stdout(&host, &format!("ls {dir}")).lines().filter(|l| l.starts_with("new.txt.")).count(), 0, "no staged copy left behind");
     let read = ssh(&host, &files::capped_read_command(&target, 5), None).expect("read");
     assert_eq!(files::parse_capped_read(&read, 5).unwrap(), (11, b"hello".to_vec()));
     let root = ssh(&host, &files::stat_command("/"), None).expect("stat /");
