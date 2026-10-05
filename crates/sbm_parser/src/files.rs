@@ -64,7 +64,8 @@ pub fn stat_command(path: &str) -> String {
 }
 
 /// `${path##*/}` expands to nothing for `/dir/`, so a trailing separator
-/// would leave the entry without a name. The root keeps its one slash.
+/// would leave the entry without a name. The root keeps its one slash, and is
+/// named `/` by [`emit_record`].
 fn without_trailing_slash(path: &str) -> &str {
     let mut end = path.len();
     while end > 1 && path.as_bytes()[end - 1] == b'/' {
@@ -83,7 +84,7 @@ fn without_trailing_slash(path: &str) -> &str {
 fn emit_record(variable: &str, on_vanished: &str) -> String {
     let r = format!("\"${variable}\"");
     format!(
-        "name=${{{variable}##*/}}; \
+        "name=${{{variable}##*/}}; [ -n \"$name\" ] || name=/; \
          if meta=$(stat -c \"%a %s %Y\" {r}); then \
          perm=${{meta%% *}}; rest=${{meta#* }}; \
          size=${{rest%% *}}; mtime=${{rest##* }}; \
@@ -121,7 +122,8 @@ pub struct FileRecord {
 ///
 /// Fails closed. A record cut short means the listing was, and a short listing
 /// that reads as complete is what a caller reports as empty or deletes into; a
-/// field that is not what the command prints means the output is not its.
+/// field that is not what the command prints means the output is not its. The
+/// commands never print an empty name (the root is `/`), so one is refused.
 pub fn parse_records(output: &str) -> Result<Vec<FileRecord>, String> {
     let mut parts: Vec<&str> = output.split('\0').collect();
     // The command's own trailing NUL leaves one empty string. Split rather than
@@ -135,6 +137,9 @@ pub fn parse_records(output: &str) -> Result<Vec<FileRecord>, String> {
     parts
         .chunks(5)
         .map(|f| {
+            if f[0].is_empty() {
+                return Err("an entry with no name".to_owned());
+            }
             let kind = match f[2] {
                 "d" => FileKind::Dir,
                 "l" => FileKind::Link,
@@ -142,13 +147,10 @@ pub fn parse_records(output: &str) -> Result<Vec<FileRecord>, String> {
                 "u" => FileKind::Other,
                 other => return Err(format!("unknown entry type \"{other}\"")),
             };
-            let size = number(f[3], 10, "size")?;
-            if size.is_some_and(|s| s < 0) {
-                return Err(format!("unreadable size \"{}\"", f[3]));
-            }
+            let size = number(f[3], 10, false, "size")?;
             // `stat -c %a` prints the permission bits and nothing wider: a
             // value past them is not its output, and would not survive a cast.
-            let mode = number(f[1], 8, "mode")?;
+            let mode = number(f[1], 8, false, "mode")?;
             if mode.is_some_and(|m| !(0..=0o7777).contains(&m)) {
                 return Err(format!("unreadable mode \"{}\"", f[1]));
             }
@@ -156,22 +158,27 @@ pub fn parse_records(output: &str) -> Result<Vec<FileRecord>, String> {
                 name: f[0].to_owned(),
                 kind,
                 size: if kind == FileKind::File { size } else { None },
-                mtime: number(f[4], 10, "mtime")?,
+                // Before 1970 is a time `stat` can print; nothing else here is.
+                mtime: number(f[4], 10, true, "mtime")?,
                 mode: mode.map(|m| m as u32),
             })
         })
         .collect()
 }
 
-/// Empty is a field the far side left blank; anything else that is not a
-/// number is not this command's output.
-fn number(field: &str, radix: u32, what: &str) -> Result<Option<i64>, String> {
+/// Empty is a field the far side left blank; anything else that is not the
+/// digits `stat` prints — a sign, a space, a letter — is not this command's
+/// output. A `-` only where `negative` allows one.
+fn number(field: &str, radix: u32, negative: bool, what: &str) -> Result<Option<i64>, String> {
     if field.is_empty() {
         return Ok(None);
     }
-    i64::from_str_radix(field, radix)
-        .map(Some)
-        .map_err(|_| format!("unreadable {what} \"{field}\""))
+    let digits = if negative { field.strip_prefix('-').unwrap_or(field) } else { field };
+    let unreadable = || format!("unreadable {what} \"{field}\"");
+    if digits.is_empty() || !digits.chars().all(|c| c.is_digit(radix)) {
+        return Err(unreadable());
+    }
+    i64::from_str_radix(field, radix).map(Some).map_err(|_| unreadable())
 }
 
 /// `mv`, refusing a destination that is a directory: `mv a b` moves `a` into
@@ -360,8 +367,10 @@ pub fn capped_read_command(path: &str, max_bytes: u64) -> String {
     )
 }
 
-/// The file's whole size and the bytes [`capped_read_command`] sent.
-pub fn parse_capped_read(output: &str) -> Result<(u64, Vec<u8>), String> {
+/// The file's whole size and the bytes [`capped_read_command`] sent with the
+/// same `max_bytes`. Fewer bytes than the size and the cap allow is a reply cut
+/// short, even where what arrived still decodes, and is refused.
+pub fn parse_capped_read(output: &str, max_bytes: u64) -> Result<(u64, Vec<u8>), String> {
     use base64::Engine;
     let (size, encoded) = output
         .split_once('\n')
@@ -372,6 +381,9 @@ pub fn parse_capped_read(output: &str) -> Result<(u64, Vec<u8>), String> {
     let data = base64::engine::general_purpose::STANDARD
         .decode(encoded)
         .map_err(|_| "malformed file data")?;
+    if data.len() as u64 != size.min(max_bytes) {
+        return Err("truncated file data".to_owned());
+    }
     Ok((size, data))
 }
 

@@ -34,8 +34,9 @@ fn client(bin: &str) -> String {
 
 /// The path [`FIND_COMMAND`] printed, or `None` when it found none.
 ///
-/// The last absolute path on its own line: an interactive bash runs `.bashrc`,
-/// whose banner or greeting lands on the same stdout ahead of the answer.
+/// The last line that is an absolute path to a `tmux`: an interactive bash
+/// runs `.bashrc`, whose banner or greeting lands on the same stdout, and only
+/// the answer to `command -v tmux` names an executable called that.
 pub fn parse_find(output: &str, succeeded: bool) -> Option<String> {
     if !succeeded {
         return None;
@@ -43,7 +44,7 @@ pub fn parse_find(output: &str, succeeded: bool) -> Option<String> {
     output
         .lines()
         .map(str::trim)
-        .rfind(|line| line.starts_with('/'))
+        .rfind(|line| line.starts_with('/') && line.ends_with("/tmux"))
         .map(str::to_owned)
 }
 

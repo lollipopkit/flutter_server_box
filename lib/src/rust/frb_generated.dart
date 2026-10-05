@@ -829,7 +829,10 @@ abstract class RustLibApi extends BaseApi {
     required bool parents,
   });
 
-  CappedRead crateApiFilesFilesParseCappedRead({required String output});
+  CappedRead crateApiFilesFilesParseCappedRead({
+    required String output,
+    required int maxBytes,
+  });
 
   List<ShellFileRecord> crateApiFilesFilesParseRecords({
     required String output,
@@ -7111,12 +7114,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  CappedRead crateApiFilesFilesParseCappedRead({required String output}) {
+  CappedRead crateApiFilesFilesParseCappedRead({
+    required String output,
+    required int maxBytes,
+  }) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(output, serializer);
+          sse_encode_u_32(maxBytes, serializer);
           return pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -7128,7 +7135,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiFilesFilesParseCappedReadConstMeta,
-        argValues: [output],
+        argValues: [output, maxBytes],
         apiImpl: this,
       ),
     );
@@ -7137,7 +7144,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiFilesFilesParseCappedReadConstMeta =>
       const TaskConstMeta(
         debugName: 'files_parse_capped_read',
-        argNames: ['output'],
+        argNames: ['output', 'maxBytes'],
       );
 
   @override

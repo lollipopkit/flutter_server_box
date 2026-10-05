@@ -113,4 +113,6 @@ fn a_bashrc_banner_is_not_the_path() {
         Some("/home/linuxbrew/.linuxbrew/bin/tmux")
     );
     assert_eq!(parse_find("only a banner\n", true), None);
+    // An absolute path in the banner is not an executable called tmux.
+    assert_eq!(parse_find("/usr/bin/tmux\n/tmp/banner\n", true).as_deref(), Some("/usr/bin/tmux"));
 }

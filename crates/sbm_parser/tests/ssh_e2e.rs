@@ -849,7 +849,9 @@ fn ssh_e2e_unix_file_listing() {
     ssh(&host, &files::atomic_write_command(&target, "e2e"), Some("aGVsbG8gd29ybGQ=")).expect("write");
     assert_eq!(ssh_stdout(&host, &format!("stat -c %a {target}")).trim(), "755");
     let read = ssh(&host, &files::capped_read_command(&target, 5), None).expect("read");
-    assert_eq!(files::parse_capped_read(&read).unwrap(), (11, b"hello".to_vec()));
+    assert_eq!(files::parse_capped_read(&read, 5).unwrap(), (11, b"hello".to_vec()));
+    let root = ssh(&host, &files::stat_command("/"), None).expect("stat /");
+    assert_eq!(files::parse_records(&root).unwrap()[0].name, "/");
 
     let home = files::parse_home(&ssh_stdout(&host, &files::home_command(ssh_stdout(&host, "id -un").trim())));
     assert!(home.is_some_and(|h| h.starts_with('/')));

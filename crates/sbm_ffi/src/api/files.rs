@@ -178,8 +178,8 @@ pub fn files_capped_read_command(path: String, max_bytes: u32) -> String {
 
 /// `Err` is output that is not this command's.
 #[flutter_rust_bridge::frb(sync)]
-pub fn files_parse_capped_read(output: String) -> Result<CappedRead, String> {
-    let (size, data) = files::parse_capped_read(&output)?;
+pub fn files_parse_capped_read(output: String, max_bytes: u32) -> Result<CappedRead, String> {
+    let (size, data) = files::parse_capped_read(&output, u64::from(max_bytes))?;
     Ok(CappedRead { size: i64::try_from(size).map_err(|_| "an invalid file size")?, data })
 }
 

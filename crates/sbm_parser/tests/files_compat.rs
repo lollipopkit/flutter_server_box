@@ -127,12 +127,16 @@ fn small_commands() {
 
 #[test]
 fn a_capped_read_parses_and_refuses_what_it_did_not_print() {
-    assert_eq!(parse_capped_read("5\naGVsbG8=").unwrap(), (5, b"hello".to_vec()));
-    assert_eq!(parse_capped_read("0\n").unwrap(), (0, Vec::new()));
-    assert!(parse_capped_read("").is_err());
-    assert!(parse_capped_read("\naGk=").is_err());
-    assert!(parse_capped_read("-1\naGk=").is_err());
-    assert!(parse_capped_read("2\n!!").is_err());
+    assert_eq!(parse_capped_read("5\naGVsbG8=", 128).unwrap(), (5, b"hello".to_vec()));
+    // Capped: the size is the whole file, the bytes only what the cap allows.
+    assert_eq!(parse_capped_read("11\naGVsbG8=", 5).unwrap(), (11, b"hello".to_vec()));
+    // A quartet short still decodes, and is still a reply cut short.
+    assert!(parse_capped_read("11\naGVs", 5).is_err());
+    assert_eq!(parse_capped_read("0\n", 128).unwrap(), (0, Vec::new()));
+    assert!(parse_capped_read("", 128).is_err());
+    assert!(parse_capped_read("\naGk=", 128).is_err());
+    assert!(parse_capped_read("-1\naGk=", 128).is_err());
+    assert!(parse_capped_read("2\n!!", 128).is_err());
 }
 
 // --- Against a real shell ---------------------------------------------------
@@ -181,6 +185,10 @@ mod shell {
         assert_eq!(code, Some(0));
         assert_eq!(parse_records(&out).unwrap()[0].name, "sub");
 
+        let (code, out) = sh(&stat_command("/"));
+        assert_eq!(code, Some(0));
+        assert_eq!(parse_records(&out).unwrap()[0].name, "/");
+
         let (code, out) = sh(&stat_command(&format!("{root}/missing")));
         assert_eq!((code, out.as_str()), (Some(STAT_ABSENT_EXIT), STAT_ABSENT_MARK));
     }
@@ -225,7 +233,7 @@ mod shell {
 
         let (code, out) = sh(&capped_read_command(path, 5));
         assert_eq!(code, Some(0));
-        assert_eq!(parse_capped_read(&out).unwrap(), (11, b"hello".to_vec()));
+        assert_eq!(parse_capped_read(&out, 5).unwrap(), (11, b"hello".to_vec()));
         assert_eq!(sh(&capped_read_command(dir.path().to_str().unwrap(), 5)).0, Some(READ_IS_DIR_EXIT));
         assert_eq!(sh(&capped_read_command(&format!("{path}.missing"), 5)).0, Some(READ_MISSING_EXIT));
 
@@ -246,6 +254,15 @@ fn a_size_or_mode_the_command_cannot_print_is_refused() {
     assert!(parse_records(&record("x", "644", "f", "-1", "0")).is_err());
     assert!(parse_records(&record("x", "40000000000", "f", "1", "0")).is_err());
     assert!(parse_records(&record("x", "17777", "f", "1", "0")).is_err());
+    for forged in [
+        record("x", "+644", "f", "1", "0"),
+        record("x", "644", "f", "+1", "0"),
+        record("x", "644", "f", "1", " 0"),
+        record("", "644", "f", "1", "0"),
+    ] {
+        assert!(parse_records(&forged).is_err(), "{forged:?}");
+    }
+    assert_eq!(parse_records(&record("old", "644", "f", "1", "-86400")).unwrap()[0].mtime, Some(-86400));
     assert_eq!(parse_records(&record("x", "4755", "f", "1", "0")).unwrap()[0].mode, Some(0o4755));
 }
 

@@ -1275,7 +1275,10 @@ class GlobalAgentToolService {
 
     final files.CappedRead read;
     try {
-      read = files.filesParseCappedRead(output: result.stdout);
+      read = files.filesParseCappedRead(
+        output: result.stdout,
+        maxBytes: _maxReadBytes,
+      );
     } on String catch (e) {
       throw StateError('The Linux userland returned $e.');
     }

@@ -115,8 +115,13 @@ String filesCappedReadCommand({required String path, required int maxBytes}) =>
     );
 
 /// `Err` is output that is not this command's.
-CappedRead filesParseCappedRead({required String output}) =>
-    RustLib.instance.api.crateApiFilesFilesParseCappedRead(output: output);
+CappedRead filesParseCappedRead({
+  required String output,
+  required int maxBytes,
+}) => RustLib.instance.api.crateApiFilesFilesParseCappedRead(
+  output: output,
+  maxBytes: maxBytes,
+);
 
 /// Replaces `path` with the base64 on stdin, staged under `suffix`.
 String filesAtomicWriteCommand({
