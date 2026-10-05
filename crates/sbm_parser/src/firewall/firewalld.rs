@@ -520,7 +520,8 @@ pub fn read_script() -> String {
 
 /// What [`read_script`] printed; an error when it has no zones, or a listing
 /// of them or of the policies failed — what it left out would be judged as
-/// not there.
+/// not there. firewalld always has its built-in zones, so a listing with none
+/// is one that was cut short.
 pub fn parse(output: &str) -> Result<FirewalldSnapshot, String> {
     let markers = [RUNTIME_MARKER, PERMANENT_MARKER, POLICIES_MARKER, SERVICES_MARKER, SERVICE_NAMES_MARKER];
     let mut running = false;
@@ -561,13 +562,18 @@ pub fn parse(output: &str) -> Result<FirewalldSnapshot, String> {
         .into_iter()
         .collect();
     names.sort();
+    let permanent = parse_zones(permanent);
+    let runtime = running.then(|| parse_zones(sections.get(RUNTIME_MARKER).unwrap_or(&empty)));
+    if permanent.is_empty() || runtime.as_ref().is_some_and(Vec::is_empty) {
+        return Err("Unable to read firewalld zones".to_owned());
+    }
     Ok(FirewalldSnapshot {
         running,
         version: version.filter(|v| !v.is_empty()),
         default_zone: default_zone.filter(|z| !z.is_empty()),
         panic,
-        runtime: running.then(|| parse_zones(sections.get(RUNTIME_MARKER).unwrap_or(&empty))),
-        permanent: parse_zones(permanent),
+        runtime,
+        permanent,
         policies: parse_policies(sections.get(POLICIES_MARKER).unwrap_or(&empty)),
         services: parse_services(sections.get(SERVICES_MARKER).unwrap_or(&empty)),
         service_names: names,

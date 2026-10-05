@@ -80,6 +80,35 @@ void main() {
     );
   });
 
+  test('input queued behind a send goes out together, in order', () async {
+    final backend = PveTermShellBackend(console);
+    addTearDown(backend.close);
+    final shell = await backend.openShell(width: 80, height: 24);
+    for (final c in 'abcdef'.split('')) {
+      shell.write(utf8.encode(c));
+    }
+    shell.resizeTerminal(90, 30);
+    shell.write(utf8.encode('g'));
+    await console.next((c) => c == 'send:g');
+    final sends = console.calls.where((c) => c.startsWith('send:')).toList();
+    expect(sends.join().replaceAll('send:', ''), 'abcdefg');
+    expect(sends.length, lessThan(7), reason: 'merged while one was in flight');
+    expect(console.calls.indexOf('resize:90x30'), lessThan(console.calls.indexOf('send:g')));
+  });
+
+  test('a console that takes no input is ended, not buffered for', () async {
+    final backend = PveTermShellBackend(console);
+    final shell = await backend.openShell(width: 80, height: 24);
+    console.stall = Completer<void>();
+    final chunk = List<int>.filled(64 * 1024, 0x61);
+    for (var i = 0; i < 20; i++) {
+      shell.write(chunk);
+    }
+    await shell.done.timeout(const Duration(seconds: 5));
+    expect(backend.isClosed, isTrue);
+    console.stall!.complete();
+  });
+
   test('a failed write is the console gone', () async {
     final backend = PveTermShellBackend(console);
     final shell = await backend.openShell(width: 80, height: 24);

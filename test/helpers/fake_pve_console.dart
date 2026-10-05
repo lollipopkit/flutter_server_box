@@ -22,6 +22,10 @@ class FakePveConsole implements PveConsoleLink {
   /// Makes `send` fail, as a console that has gone does.
   bool failSends = false;
 
+  /// While set, a `send` waits for it: a console that has stopped taking
+  /// input.
+  Completer<void>? stall;
+
   /// The console says [bytes].
   void output(List<int> bytes) => _push(Uint8List.fromList(bytes));
 
@@ -61,6 +65,7 @@ class FakePveConsole implements PveConsoleLink {
   Future<void> send(List<int> data) async {
     // A hop, as an FFI call is: what comes after it must not overtake it.
     await Future<void>.delayed(Duration.zero);
+    await stall?.future;
     if (failSends) throw StateError('closed');
     _call('send:${String.fromCharCodes(data)}');
   }

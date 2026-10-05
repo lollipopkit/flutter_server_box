@@ -684,6 +684,11 @@ pub fn parse_tuple(tuples: &[&str], ip_version: UfwIpVersion) -> Option<UfwRule>
         None => (head, None),
     };
     let action = UfwAction::from_name(action)?;
+    // A logging suffix this does not know is a rule this does not know.
+    let log = match log {
+        Some(token) => Some(UfwLog::from_token(token)?),
+        None => None,
+    };
 
     let mut direction = None;
     let mut interface_in = None;
@@ -709,7 +714,7 @@ pub fn parse_tuple(tuples: &[&str], ip_version: UfwIpVersion) -> Option<UfwRule>
     let app = |v: &str| (v != "-").then(|| v.replace("%20", " "));
     Some(UfwRule {
         action,
-        log: log.and_then(UfwLog::from_token),
+        log,
         routed,
         direction: direction?,
         protocol: or_none(fields[1]),

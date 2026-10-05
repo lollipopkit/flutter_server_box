@@ -296,6 +296,8 @@ mod ufw_tests {
         let none: [&str; 0] = [];
         assert!(merge_rules(&["### tuple ### allow tcp 22 in"], &none).is_empty());
         assert!(merge_rules(&["### tuple ### frobnicate tcp 22 0.0.0.0/0 any 0.0.0.0/0 in"], &none).is_empty());
+        // Nor one whose logging is not `log` or `log-all`.
+        assert!(merge_rules(&["### tuple ### allow_log-custom tcp 22 0.0.0.0/0 any 0.0.0.0/0 in"], &none).is_empty());
     }
 
     #[test]
@@ -758,6 +760,9 @@ mod firewalld_tests {
     fn a_listing_that_failed_is_an_error_not_an_empty_one() {
         let out = fixture("firewalld/running.txt").replace("SrvBoxFwd.Policies\n", "SrvBoxFwd.Policies\nSrvBoxFwd.Incomplete\n");
         assert!(firewalld::parse(&out).is_err());
+        // Listings that exited 0 and named no zone were cut short.
+        assert!(firewalld::parse("SrvBoxFwd.Permanent\n").is_err());
+        assert!(firewalld::parse("SrvBoxFwd.Running\nSrvBoxFwd.Runtime\nSrvBoxFwd.Permanent\npublic\n  target: default\n").is_err());
         assert!(firewalld::read_script().contains("firewall-cmd --list-all-policies 2>/dev/null || echo SrvBoxFwd.Incomplete\n"));
     }
 
