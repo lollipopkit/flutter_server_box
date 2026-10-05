@@ -731,6 +731,17 @@ mod firewalld_tests {
         assert!(!stopped.running);
         assert_eq!(stopped.runtime, None);
         assert!(!stopped.drifted());
+        // A zone written down and not loaded yet is drift too.
+        let mut r = running();
+        let runtime = r.zone("public", true).cloned().map(|z| vec![z]).unwrap();
+        r.permanent = runtime.clone();
+        r.runtime = Some(runtime);
+        r.runtime.as_mut().unwrap()[0].ports = r.permanent[0].ports.clone();
+        assert!(!r.drifted());
+        let mut extra = r.permanent[0].clone();
+        extra.name = "added".into();
+        r.permanent.push(extra);
+        assert!(r.drifted());
         assert!(ports(stopped.zone("public", false).unwrap()).contains(&"5555/tcp".into()));
         assert_eq!(stopped.reach(&ssh(Some("203.0.113.5"), 22), None, None, None, None, None), Open);
     }

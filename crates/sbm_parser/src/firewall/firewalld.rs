@@ -354,11 +354,14 @@ impl FirewalldSnapshot {
     }
 
     /// The runtime differs from what is written down: a reload or a boot will
-    /// change what the firewall does.
+    /// change what the firewall does. A zone only one of them has is a
+    /// difference too — one written down and not loaded yet.
     pub fn drifted(&self) -> bool {
         let Some(runtime) = &self.runtime else { return false };
         let saved: HashMap<&str, String> = self.permanent.iter().map(|z| (z.name.as_str(), z.digest())).collect();
+        let loaded: HashSet<&str> = runtime.iter().map(|z| z.name.as_str()).collect();
         runtime.iter().any(|z| saved.get(z.name.as_str()) != Some(&z.digest()))
+            || self.permanent.iter().any(|z| !loaded.contains(z.name.as_str()))
     }
 
     /// The zones a connection like `access` may be handled by: the one whose
