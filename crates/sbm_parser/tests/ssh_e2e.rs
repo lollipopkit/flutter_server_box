@@ -734,8 +734,8 @@ fn ssh_e2e_unix_cron_listing() {
     assert_eq!(catalog.document.render(), expected);
 }
 
-/// Docker or Podman, whichever the host has, listed the way the app refreshes
-/// it: one batch, split on its marker, each part parsed. Read only, and
+/// Docker and Podman, each the host has, listed the way the app refreshes
+/// them: one batch, split on its marker, each part parsed. Read only, and
 /// skipped where neither runtime answers this account.
 #[test]
 #[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
@@ -745,6 +745,7 @@ fn ssh_e2e_unix_container_listing() {
     use container::{ContainerCmd, ContainerType};
     let separator = format!("{}_e2e_0", container::SEPARATOR_PREFIX);
     let cmds = [ContainerCmd::Version, ContainerCmd::Ps, ContainerCmd::Stats];
+    let mut exercised = 0;
     for ty in [ContainerType::Docker, ContainerType::Podman] {
         let batch = ContainerCmd::exec_selected(&cmds, ty, &separator);
         let command = container::build_runtime_command(&batch, ty, None, false);
@@ -779,9 +780,11 @@ fn ssh_e2e_unix_container_listing() {
         // Docker answers a line per image, Podman one array.
         assert_eq!(parsed.is_empty(), raw.trim().is_empty() || raw.trim() == "[]", "{raw}");
         eprintln!("{}: {} containers, {} images", ty.name(), listed.len(), parsed.len());
-        return;
+        exercised += 1;
     }
-    eprintln!("skipped: no container runtime answers on {host}");
+    if exercised == 0 {
+        eprintln!("skipped: no container runtime answers on {host}");
+    }
 }
 
 /// Windows full chain: EncodedCommand install (works from cmd.exe default
