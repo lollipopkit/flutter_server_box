@@ -21,7 +21,7 @@
 
 use sbm_parser::commands;
 use sbm_parser::output::CommandOutput;
-use sbm_parser::{bench, container, cron, service};
+use sbm_parser::{bench, container, cron, files, service, tmux};
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
 use std::io::{Read, Write};
@@ -794,6 +794,66 @@ fn ssh_e2e_unix_container_listing() {
     }
     if exercised == 0 {
         eprintln!("skipped: no container runtime answers on {host}");
+    }
+}
+
+/// The file browser's shell listing and stat on a real machine, as SCP runs
+/// them: the command handed to the login shell as it is. Read only.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_file_listing() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    let out = run_ssh(&host, &files::list_command("/etc"), None).expect("ssh");
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let entries = files::parse_records(&String::from_utf8_lossy(&out.stdout)).expect("a listing");
+    let hosts = entries.iter().find(|e| e.name == "hosts").expect("/etc/hosts listed");
+    assert_eq!(hosts.kind, files::FileKind::File);
+    assert!(hosts.size.is_some() && hosts.mode.is_some() && hosts.mtime.is_some());
+
+    let out = run_ssh(&host, &files::stat_command("/etc/hosts"), None).expect("ssh");
+    assert_eq!(files::parse_records(&String::from_utf8_lossy(&out.stdout)).unwrap()[0].name, "hosts");
+    let out = run_ssh(&host, &files::stat_command("/etc/server_box_e2e_missing"), None).expect("ssh");
+    assert_eq!(out.status.code(), Some(files::STAT_ABSENT_EXIT));
+
+    // The commands with shell syntax of their own, through the login shell
+    // (fish on some test machines), in a throwaway directory.
+    const DIR: &str = "/tmp/server_box_e2e_files";
+    let _ = ssh(&host, &format!("rm -rf {DIR} && mkdir -p {DIR}/d && echo x > {DIR}/f"), None);
+    let rename = run_ssh(&host, &files::rename_command(&format!("{DIR}/f"), &format!("{DIR}/d")), None).expect("ssh");
+    assert!(!rename.status.success(), "a rename onto a directory is refused");
+    assert!(has_file(&host, &format!("{DIR}/f")));
+    let renamed = run_ssh(&host, &files::rename_command(&format!("{DIR}/f"), &format!("{DIR}/g")), None).expect("ssh");
+    assert!(renamed.status.success(), "{}", String::from_utf8_lossy(&renamed.stderr));
+    for path in [format!("{DIR}/g"), format!("{DIR}/d")] {
+        let out = run_ssh(&host, &files::remove_command(&path, None, false, false), None).expect("ssh");
+        assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+        assert!(!has_file(&host, &path));
+    }
+    let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
+
+    let home = files::parse_home(&ssh_stdout(&host, &files::home_command(ssh_stdout(&host, "id -un").trim())));
+    assert!(home.is_some_and(|h| h.starts_with('/')));
+}
+
+/// tmux discovery on a real machine; skipped where tmux is not installed.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_tmux_discovery() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    let out = run_ssh(&host, tmux::FIND_COMMAND, None).expect("ssh");
+    let Some(bin) = tmux::parse_find(&String::from_utf8_lossy(&out.stdout), out.status.success()) else {
+        eprintln!("skipped: no tmux on {host}");
+        return;
+    };
+    let out = run_ssh(&host, &tmux::list_sessions_command(&bin), None).expect("ssh");
+    let listing = tmux::parse_sessions(&String::from_utf8_lossy(&out.stdout));
+    assert_eq!(listing.unreadable, 0, "{}", String::from_utf8_lossy(&out.stdout));
+    eprintln!("tmux at {bin}: {} sessions", listing.sessions.len());
+    if let Some(session) = listing.sessions.first() {
+        let out = run_ssh(&host, &tmux::list_windows_command(&bin, &session.id), None).expect("ssh");
+        assert!(!tmux::parse_windows(&String::from_utf8_lossy(&out.stdout)).is_empty());
     }
 }
 
