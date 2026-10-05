@@ -8,8 +8,11 @@ import 'package:server_box/data/ssh/tmux/tmux_session_scanner.dart';
 import 'package:test/test.dart';
 
 import '../../helpers/fake_stream_sink.dart';
+import '../../helpers/rust_lib_helper.dart';
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('TmuxSessionScanner', () {
     test('listSessions resolves tmux binary before listing', () async {
       final session = _FakePersistentShellSession(
@@ -35,7 +38,7 @@ void main() {
 
     test('tryListWindows resolves tmux binary before listing', () async {
       final session = _FakePersistentShellSession(
-        responses: ['/opt/bin/tmux\n', '0|shell|1|1|activity\n'],
+        responses: ['/opt/bin/tmux\n', '0\tshell\t1\t1\tactivity\n'],
       );
       final scanner = TmuxSessionScanner(
         PersistentShell(null, sessionFactory: () async => session),

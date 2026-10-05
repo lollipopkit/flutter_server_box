@@ -11,7 +11,6 @@ import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
@@ -24,6 +23,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
@@ -348,18 +348,14 @@ extension _Open on _SftpPageState {
   /// home even though the connection was the new user's.
   Future<String> _homeDir(Spi spi) async {
     final user = spi.ssh?.user ?? '';
-    final fallback = user == 'root' ? '/root' : '/home/$user';
+    String? passwd;
     try {
-      final result = await _client.run(
-        'getent passwd -- ${shellSingleQuote(user)}',
-      );
-      final home = result.string.trim().split(':').elementAtOrNull(5)?.trim();
-      if (home != null && home.isNotEmpty && home.startsWith('/')) return home;
+      passwd = (await _client.run(files.filesHomeCommand(user: user))).string;
     } catch (_) {
       // A server without `getent`, or one that refused to run anything. The
       // guess is still better than refusing to open.
     }
-    return fallback;
+    return files.filesHomeFrom(output: passwd, user: user);
   }
 
   /// Where this server was left, if it is still listable — a remembered path
@@ -535,7 +531,7 @@ extension _Actions on _SftpPageState {
 
   Future<bool> _canWrite(String dir) async {
     final (code, _) = await _client.execWithPwd(
-      'test -w ${shellSingleQuote(dir)}',
+      files.filesWritableCommand(dir: dir),
       context: context,
       id: '${_spi.id}_sftp_write_probe',
     );
@@ -629,7 +625,10 @@ extension _Actions on _SftpPageState {
     // about overwriting, and can fail in ways only its own output explains.
     await SSHPage.route.go(
       context,
-      SshPageArgs(source: ServerSource(_spi), initCmd: 'cd ${shellSingleQuote(handle.path)} && $cmd'),
+      SshPageArgs(
+        source: ServerSource(_spi),
+        initCmd: files.filesInDirCommand(dir: handle.path, command: cmd),
+      ),
     );
     await handle.refresh();
   }
@@ -651,8 +650,11 @@ extension _Edit on _SftpPageState {
 
     final editor = Stores.setting.sftpEditor.fetch();
     if (editor.isNotEmpty) {
-      final cmd =
-          '${useSudo ? 'sudo ' : ''}$editor ${shellSingleQuote(remotePath)}';
+      final cmd = files.filesEditorCommand(
+        editor: editor,
+        path: remotePath,
+        sudo: useSudo,
+      );
       await SSHPage.route.go(
         context,
         SshPageArgs(source: ServerSource(_spi), initCmd: cmd),

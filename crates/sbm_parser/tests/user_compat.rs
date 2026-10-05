@@ -12,9 +12,8 @@
 //! refusals a rename and a line break in a field earn, and the quoting of the
 //! path the detail script reads.
 //!
-//! TODO(migration): delete `lib/data/service/user_manager.dart`,
-//! `lib/data/model/server/system_user.dart` and their test once this file is
-//! the only implementation.
+//! This is the only implementation: the app's `UserManager` runs these through
+//! `sbm_ffi::api::users` and `system_user.dart` only carries the JSON.
 
 use sbm_parser::users::*;
 

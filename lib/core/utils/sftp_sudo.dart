@@ -7,10 +7,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
 
 final class SftpSudoHelper {
   final SSHClient client;
@@ -82,10 +82,10 @@ final class SftpSudoHelper {
 
   Future<int> getFileSize(String remotePath, {String? password}) async {
     final output = await _runAndRead(
-      'wc -c < ${shellSingleQuote(remotePath)}',
+      files.filesSizeCommand(path: remotePath),
       password: password,
     );
-    return int.tryParse(output.trim()) ?? 0;
+    return files.filesParseSize(output: output) ?? 0;
   }
 
   Future<void> downloadTextFile(
@@ -94,7 +94,7 @@ final class SftpSudoHelper {
     String? password,
   }) async {
     final text = await _runAndRead(
-      'cat ${shellSingleQuote(remotePath)}',
+      files.filesReadCommand(path: remotePath),
       password: password,
     );
     final file = File(localPath);
@@ -111,7 +111,7 @@ final class SftpSudoHelper {
     final bytes = await file.readAsBytes();
     final data = base64Encode(bytes);
     await _runAndRead(
-      "printf '%s' '$data' | base64 -d | tee ${shellSingleQuote(remotePath)} > /dev/null",
+      files.filesWriteBase64Command(data: data, path: remotePath),
       password: password,
     );
   }
@@ -121,8 +121,10 @@ final class SftpSudoHelper {
     String newPath, {
     String? password,
   }) async {
+    // Refusing a destination that is a directory, as every other rename in
+    // the browser does: a plain `mv` filed the source away inside it.
     await _runAndRead(
-      'mv ${shellSingleQuote(oldPath)} ${shellSingleQuote(newPath)}',
+      files.filesRenameCommand(from: oldPath, to: newPath),
       password: password,
     );
   }
@@ -133,12 +135,15 @@ final class SftpSudoHelper {
     required bool recursive,
     String? password,
   }) async {
-    final cmd = switch ((isDir, recursive)) {
-      (true, true) => 'rm -r ${shellSingleQuote(remotePath)}',
-      (true, false) => 'rmdir ${shellSingleQuote(remotePath)}',
-      (false, _) => 'rm ${shellSingleQuote(remotePath)}',
-    };
-    await _runAndRead(cmd, password: password);
+    await _runAndRead(
+      files.filesRemoveCommand(
+        path: remotePath,
+        isDir: isDir,
+        recursive: recursive,
+        force: false,
+      ),
+      password: password,
+    );
   }
 
   Future<String> _runAndRead(String innerCommand, {String? password}) async {
@@ -187,19 +192,8 @@ final class SftpSudoHelper {
     return output;
   }
 
-  static String _buildSudoCommand(String command, String password) {
-    final wrapped = '($command) 2>&1';
-    // Use shellSingleQuote for consistent escaping (see shell_quote.dart).
-    final quotedWrapped = shellSingleQuote(wrapped);
-    final quotedPwd = shellSingleQuote(password);
-    // Use shell builtin printf to pipe password to sudo -S.
-    // printf is a shell builtin so the password does not appear in
-    // the process argument list (unlike external `echo`).
-    // shellSingleQuote wraps in single quotes, so strip the outer quotes
-    // for the printf %s argument and re-add with \n handling.
-    // Simpler: use the quoted forms directly.
-    return "printf '%s\\n' $quotedPwd | sudo -S -- sh -c $quotedWrapped";
-  }
+  static String _buildSudoCommand(String command, String password) =>
+      files.filesSudoCommand(inner: command, password: password);
 }
 
 /// The user was asked for a password and did not give one.
