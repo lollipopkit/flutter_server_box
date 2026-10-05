@@ -187,6 +187,10 @@ pub fn mkdir_command(path: &str, parents: bool) -> String {
 /// be asked, in which case the shell decides — keeping the caller's choice of
 /// recursion, since a stat this account was refused is not consent for `rm -r`.
 /// A link to a directory is unlinked, never handed to `rmdir`.
+///
+/// `force` is `rm -f` wherever the path may be a file. A directory a stat has
+/// already confirmed is removed without it, so a failure inside the tree is
+/// reported rather than silenced.
 pub fn remove_command(path: &str, is_dir: Option<bool>, recursive: bool, force: bool) -> String {
     let q = quote(path);
     let rm = if force { "rm -f" } else { "rm" };
