@@ -143,12 +143,21 @@ pub fn parse_records(output: &str) -> Result<Vec<FileRecord>, String> {
                 other => return Err(format!("unknown entry type \"{other}\"")),
             };
             let size = number(f[3], 10, "size")?;
+            if size.is_some_and(|s| s < 0) {
+                return Err(format!("unreadable size \"{}\"", f[3]));
+            }
+            // `stat -c %a` prints the permission bits and nothing wider: a
+            // value past them is not its output, and would not survive a cast.
+            let mode = number(f[1], 8, "mode")?;
+            if mode.is_some_and(|m| !(0..=0o7777).contains(&m)) {
+                return Err(format!("unreadable mode \"{}\"", f[1]));
+            }
             Ok(FileRecord {
                 name: f[0].to_owned(),
                 kind,
                 size: if kind == FileKind::File { size } else { None },
                 mtime: number(f[4], 10, "mtime")?,
-                mode: number(f[1], 8, "mode")?.map(|m| m as u32),
+                mode: mode.map(|m| m as u32),
             })
         })
         .collect()
@@ -371,9 +380,12 @@ pub fn parse_capped_read(output: &str) -> Result<(u64, Vec<u8>), String> {
 /// original. A directory is refused rather than having the copy filed inside
 /// it, and an existing file keeps its mode rather than taking the staged
 /// copy's umask (best effort: the bytes are written either way).
+///
+/// `suffix` is quoted like the path: it is a filename component, never shell.
 pub fn atomic_write_command(path: &str, suffix: &str) -> String {
     format!(
-        "set -e\np={}\nif [ -d \"$p\" ]; then printf '%s: is a directory\\n' \"$p\" >&2; exit 1; fi\ntmp=\"$p.{suffix}.tmp\"\ntrap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM\nbase64 -d > \"$tmp\"\nif [ -f \"$p\" ]; then\n  mode=$(stat -c %a \"$p\" 2>/dev/null) || mode=\n  if [ -n \"$mode\" ]; then chmod \"$mode\" \"$tmp\" || :; fi\nfi\nmv -f -- \"$tmp\" \"$p\"\ntrap - EXIT HUP INT TERM",
-        quote(path)
+        "set -e\np={}\nif [ -d \"$p\" ]; then printf '%s: is a directory\\n' \"$p\" >&2; exit 1; fi\ntmp=\"$p\"{}\ntrap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM\nbase64 -d > \"$tmp\"\nif [ -f \"$p\" ]; then\n  mode=$(stat -c %a \"$p\" 2>/dev/null) || mode=\n  if [ -n \"$mode\" ]; then chmod \"$mode\" \"$tmp\" || :; fi\nfi\nmv -f -- \"$tmp\" \"$p\"\ntrap - EXIT HUP INT TERM",
+        quote(path),
+        quote(&format!(".{suffix}.tmp"))
     )
 }

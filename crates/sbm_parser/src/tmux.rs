@@ -32,13 +32,19 @@ fn client(bin: &str) -> String {
     format!("{} -u -CC", quote(bin))
 }
 
-/// The first path [`FIND_COMMAND`] printed, or `None` when it found none.
+/// The path [`FIND_COMMAND`] printed, or `None` when it found none.
+///
+/// The last absolute path on its own line: an interactive bash runs `.bashrc`,
+/// whose banner or greeting lands on the same stdout ahead of the answer.
 pub fn parse_find(output: &str, succeeded: bool) -> Option<String> {
     if !succeeded {
         return None;
     }
-    let path = output.trim();
-    (!path.is_empty()).then(|| path.to_owned())
+    output
+        .lines()
+        .map(str::trim)
+        .rfind(|line| line.starts_with('/'))
+        .map(str::to_owned)
 }
 
 /// Every session: id, `q:`-escaped name, window count, attached clients and

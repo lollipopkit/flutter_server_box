@@ -82,6 +82,13 @@ class ScpFileBackend implements FileBackend {
   /// after it had been told the transfer failed.
   final _sessions = <SSHSession>{};
 
+  /// How to stop the unsized writes spooling their input right now.
+  ///
+  /// Spooling runs before any channel exists, so neither set above holds it,
+  /// and a producer that stalls would otherwise keep its subscription and the
+  /// spool directory alive past [close].
+  final _spooling = <void Function()>{};
+
   /// The channel [open] makes, registered so [close] can end it.
   ///
   /// [open] is a closure rather than a future already in flight, so that a
@@ -332,7 +339,36 @@ class ScpFileBackend implements FileBackend {
           (chunk) => chunk is Uint8List ? chunk : Uint8List.fromList(chunk),
         );
         final bound = _streamTimeout;
-        await sink.addStream(bound == null ? source : source.timeout(bound));
+        final bounded = bound == null ? source : source.timeout(bound);
+        // Forwarded rather than handed to `addStream` whole, so [close] can
+        // end it: cancelling the source and failing the copy is what lets the
+        // `finally` below remove the spool.
+        final forward = StreamController<Uint8List>();
+        final sub = bounded.listen(
+          forward.add,
+          onError: forward.addError,
+          onDone: forward.close,
+        );
+        forward
+          ..onPause = sub.pause
+          ..onResume = sub.resume;
+        void cancel() {
+          unawaited(sub.cancel());
+          if (!forward.isClosed) {
+            forward.addError(
+              const ScpShellException('The connection was closed'),
+            );
+            unawaited(forward.close());
+          }
+        }
+
+        if (_closed) cancel();
+        _spooling.add(cancel);
+        try {
+          await sink.addStream(forward.stream);
+        } finally {
+          _spooling.remove(cancel);
+        }
         await sink.close();
       } catch (_) {
         // Closing a sink whose stream failed throws "File closed", which would
@@ -372,6 +408,10 @@ class ScpFileBackend implements FileBackend {
   @override
   Future<void> close() async {
     _closed = true;
+    for (final cancel in _spooling.toList()) {
+      cancel();
+    }
+    _spooling.clear();
     for (final channel in _open.toList()) {
       try {
         channel.close();

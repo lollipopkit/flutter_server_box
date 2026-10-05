@@ -519,3 +519,18 @@ fn a_row_about_another_account_is_not_this_ones() {
 fn the_login_shell_quotes_the_name() {
     assert_eq!(login_shell_command("it's"), "su - 'it'\\''s'");
 }
+
+#[test]
+fn root_is_refused_by_name_as_well_as_uid() {
+    let forged = SystemUser {
+        name: "root".into(),
+        uid: 1,
+        gid: 1,
+        comment: String::new(),
+        home: "/root".into(),
+        shell: "/bin/sh".into(),
+        primary_group: None,
+        supplementary_groups: Vec::new(),
+    };
+    assert_eq!(delete_command(&forged, false), Err(UserError::RootNotDeletable));
+}

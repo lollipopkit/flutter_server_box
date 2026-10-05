@@ -768,8 +768,12 @@ pub fn edit_command(original: &SystemUser, draft: &UserDraft) -> Result<String, 
 }
 
 /// The command that removes an account.
+///
+/// Refused for uid 0 *or* the name `root`: the account arrives from a caller,
+/// and a record carrying root's name with another uid would otherwise reach
+/// `userdel 'root'`.
 pub fn delete_command(user: &SystemUser, remove_home: bool) -> Result<String, UserError> {
-    if user.is_root() {
+    if user.is_root() || user.name == "root" {
         return Err(UserError::RootNotDeletable);
     }
     if !valid_name(&user.name) {

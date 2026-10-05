@@ -240,3 +240,17 @@ mod shell {
         assert!(!child.wait().unwrap().success());
     }
 }
+
+#[test]
+fn a_size_or_mode_the_command_cannot_print_is_refused() {
+    assert!(parse_records(&record("x", "644", "f", "-1", "0")).is_err());
+    assert!(parse_records(&record("x", "40000000000", "f", "1", "0")).is_err());
+    assert!(parse_records(&record("x", "17777", "f", "1", "0")).is_err());
+    assert_eq!(parse_records(&record("x", "4755", "f", "1", "0")).unwrap()[0].mode, Some(0o4755));
+}
+
+#[test]
+fn the_staging_suffix_is_never_shell() {
+    let command = atomic_write_command("/a", "x\"; touch /tmp/pwned; : \"");
+    assert!(command.contains("tmp=\"$p\"'.x\"; touch /tmp/pwned; : \".tmp'"), "{command}");
+}

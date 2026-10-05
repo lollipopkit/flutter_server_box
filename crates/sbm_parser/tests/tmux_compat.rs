@@ -105,3 +105,12 @@ fn discovery_reads_a_real_tmux() {
     assert!(listing.sessions.iter().any(|s| s.name == "dis|covery"), "{listing:?}");
     assert_eq!(windows.first().map(|w| w.name.as_str()), Some("a|b"));
 }
+
+#[test]
+fn a_bashrc_banner_is_not_the_path() {
+    assert_eq!(
+        parse_find("Welcome to the box!\nload: 0.1\n/home/linuxbrew/.linuxbrew/bin/tmux\n", true).as_deref(),
+        Some("/home/linuxbrew/.linuxbrew/bin/tmux")
+    );
+    assert_eq!(parse_find("only a banner\n", true), None);
+}
