@@ -818,14 +818,25 @@ fn ssh_e2e_unix_file_listing() {
 
     // The commands with shell syntax of their own, through the login shell
     // (fish on some test machines), in a throwaway directory.
-    const DIR: &str = "/tmp/server_box_e2e_files";
-    let _ = ssh(&host, &format!("rm -rf {DIR} && mkdir -p {DIR}/d && echo x > {DIR}/f"), None);
-    let rename = run_ssh(&host, &files::rename_command(&format!("{DIR}/f"), &format!("{DIR}/d")), None).expect("ssh");
+    // A directory of its own, made by `mktemp` so nothing already on the host
+    // is touched, and removed by the guard on every way out of the test.
+    let dir = ssh(&host, "mktemp -d /tmp/server_box_e2e.XXXXXX", None).expect("mktemp").trim().to_owned();
+    assert!(dir.starts_with("/tmp/server_box_e2e."), "{dir}");
+    struct Cleanup<'a>(&'a str, String);
+    impl Drop for Cleanup<'_> {
+        fn drop(&mut self) {
+            let _ = ssh(self.0, &format!("rm -rf -- '{}'", self.1), None);
+        }
+    }
+    let _cleanup = Cleanup(&host, dir.clone());
+    let dir = dir.as_str();
+    ssh(&host, &format!("mkdir {dir}/d && echo x > {dir}/f"), None).expect("set up");
+    let rename = run_ssh(&host, &files::rename_command(&format!("{dir}/f"), &format!("{dir}/d")), None).expect("ssh");
     assert!(!rename.status.success(), "a rename onto a directory is refused");
-    assert!(has_file(&host, &format!("{DIR}/f")));
-    let renamed = run_ssh(&host, &files::rename_command(&format!("{DIR}/f"), &format!("{DIR}/g")), None).expect("ssh");
+    assert!(has_file(&host, &format!("{dir}/f")));
+    let renamed = run_ssh(&host, &files::rename_command(&format!("{dir}/f"), &format!("{dir}/g")), None).expect("ssh");
     assert!(renamed.status.success(), "{}", String::from_utf8_lossy(&renamed.stderr));
-    for path in [format!("{DIR}/g"), format!("{DIR}/d")] {
+    for path in [format!("{dir}/g"), format!("{dir}/d")] {
         let out = run_ssh(&host, &files::remove_command(&path, None, false, false), None).expect("ssh");
         assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
         assert!(!has_file(&host, &path));
@@ -833,13 +844,12 @@ fn ssh_e2e_unix_file_listing() {
 
     // The Agent's guest file tools, handed to `sh` as the local userland runs
     // them: an atomic write that keeps the mode, and a capped read.
-    let target = format!("{DIR}/run.sh");
+    let target = format!("{dir}/run.sh");
     let _ = ssh(&host, &format!("printf old > {target} && chmod 755 {target}"), None);
     ssh(&host, &files::atomic_write_command(&target, "e2e"), Some("aGVsbG8gd29ybGQ=")).expect("write");
     assert_eq!(ssh_stdout(&host, &format!("stat -c %a {target}")).trim(), "755");
     let read = ssh(&host, &files::capped_read_command(&target, 5), None).expect("read");
     assert_eq!(files::parse_capped_read(&read).unwrap(), (11, b"hello".to_vec()));
-    let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
 
     let home = files::parse_home(&ssh_stdout(&host, &files::home_command(ssh_stdout(&host, "id -un").trim())));
     assert!(home.is_some_and(|h| h.starts_with('/')));

@@ -3,7 +3,6 @@
 //! run for real against a local `sh` where the Dart suite only read the text.
 
 use sbm_parser::files::*;
-use std::process::Command;
 
 fn record(name: &str, perm: &str, kind: &str, size: &str, at: &str) -> String {
     format!("{name}\0{perm}\0{kind}\0{size}\0{at}\0")
@@ -126,62 +125,6 @@ fn small_commands() {
     assert_eq!(scp_sink_command("/a b"), "scp -t '/a b'");
 }
 
-// --- Against a real shell ---------------------------------------------------
-
-fn sh(command: &str) -> (Option<i32>, String) {
-    let out = Command::new("/bin/sh").arg("-c").arg(command).output().expect("sh");
-    (out.status.code(), String::from_utf8_lossy(&out.stdout).into_owned())
-}
-
-fn has_stat_c() -> bool {
-    Command::new("/bin/sh")
-        .args(["-c", "stat -c %a / >/dev/null 2>&1"])
-        .status()
-        .is_ok_and(|s| s.success())
-}
-
-#[test]
-fn listing_and_stat_run_and_read_back() {
-    if !has_stat_c() {
-        eprintln!("skipped: this host's stat has no -c (BSD)");
-        return;
-    }
-    let dir = tempfile::tempdir().unwrap();
-    std::fs::write(dir.path().join("a file"), b"hello").unwrap();
-    std::fs::create_dir(dir.path().join("sub")).unwrap();
-    std::os::unix::fs::symlink("sub", dir.path().join("link")).unwrap();
-    let root = dir.path().to_str().unwrap();
-
-    let (code, out) = sh(&list_command(root));
-    assert_eq!(code, Some(0));
-    let mut entries = parse_records(&out).unwrap();
-    entries.sort_by(|a, b| a.name.cmp(&b.name));
-    let shape: Vec<_> = entries.iter().map(|e| (e.name.as_str(), e.kind, e.size)).collect();
-    assert_eq!(
-        shape,
-        vec![("a file", FileKind::File, Some(5)), ("link", FileKind::Link, None), ("sub", FileKind::Dir, None)]
-    );
-
-    let (code, out) = sh(&stat_command(&format!("{root}/sub/")));
-    assert_eq!(code, Some(0));
-    assert_eq!(parse_records(&out).unwrap()[0].name, "sub");
-
-    let (code, out) = sh(&stat_command(&format!("{root}/missing")));
-    assert_eq!((code, out.as_str()), (Some(STAT_ABSENT_EXIT), STAT_ABSENT_MARK));
-}
-
-#[test]
-fn rename_refuses_a_directory_destination() {
-    let dir = tempfile::tempdir().unwrap();
-    let from = dir.path().join("f");
-    let to = dir.path().join("d");
-    std::fs::write(&from, b"x").unwrap();
-    std::fs::create_dir(&to).unwrap();
-    let (code, _) = sh(&rename_command(from.to_str().unwrap(), to.to_str().unwrap()));
-    assert_ne!(code, Some(0));
-    assert!(from.exists(), "the file was filed away inside the directory");
-}
-
 #[test]
 fn a_capped_read_parses_and_refuses_what_it_did_not_print() {
     assert_eq!(parse_capped_read("5\naGVsbG8=").unwrap(), (5, b"hello".to_vec()));
@@ -192,45 +135,108 @@ fn a_capped_read_parses_and_refuses_what_it_did_not_print() {
     assert!(parse_capped_read("2\n!!").is_err());
 }
 
-#[test]
-fn capped_read_and_atomic_write_run() {
-    if !has_stat_c() {
-        eprintln!("skipped: this host's stat has no -c (BSD)");
-        return;
+// --- Against a real shell ---------------------------------------------------
+
+/// `/bin/sh` and Unix modes; the Windows CI runner has neither.
+#[cfg(unix)]
+mod shell {
+    use super::*;
+    use std::process::Command;
+
+    fn sh(command: &str) -> (Option<i32>, String) {
+        let out = Command::new("/bin/sh").arg("-c").arg(command).output().expect("sh");
+        (out.status.code(), String::from_utf8_lossy(&out.stdout).into_owned())
     }
-    use std::io::Write;
-    use std::os::unix::fs::PermissionsExt;
-    let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("run me.sh");
-    std::fs::write(&file, b"old").unwrap();
-    std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let path = file.to_str().unwrap();
 
-    let mut child = Command::new("/bin/sh")
-        .arg("-c")
-        .arg(atomic_write_command(path, "e2e"))
-        .stdin(std::process::Stdio::piped())
-        .spawn()
-        .unwrap();
-    child.stdin.take().unwrap().write_all(b"aGVsbG8gd29ybGQ=").unwrap();
-    assert!(child.wait().unwrap().success());
-    assert_eq!(std::fs::read(&file).unwrap(), b"hello world");
-    // The existing file's mode survives the staged copy's umask.
-    assert_eq!(std::fs::metadata(&file).unwrap().permissions().mode() & 0o777, 0o755);
+    fn has_stat_c() -> bool {
+        Command::new("/bin/sh")
+            .args(["-c", "stat -c %a / >/dev/null 2>&1"])
+            .status()
+            .is_ok_and(|s| s.success())
+    }
 
-    let (code, out) = sh(&capped_read_command(path, 5));
-    assert_eq!(code, Some(0));
-    assert_eq!(parse_capped_read(&out).unwrap(), (11, b"hello".to_vec()));
-    assert_eq!(sh(&capped_read_command(dir.path().to_str().unwrap(), 5)).0, Some(READ_IS_DIR_EXIT));
-    assert_eq!(sh(&capped_read_command(&format!("{path}.missing"), 5)).0, Some(READ_MISSING_EXIT));
+    #[test]
+    fn listing_and_stat_run_and_read_back() {
+        if !has_stat_c() {
+            eprintln!("skipped: this host's stat has no -c (BSD)");
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("a file"), b"hello").unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
+        std::os::unix::fs::symlink("sub", dir.path().join("link")).unwrap();
+        let root = dir.path().to_str().unwrap();
 
-    // A directory at the path is refused, not written into.
-    let mut child = Command::new("/bin/sh")
-        .arg("-c")
-        .arg(atomic_write_command(dir.path().to_str().unwrap(), "e2e"))
-        .stdin(std::process::Stdio::piped())
-        .spawn()
-        .unwrap();
-    drop(child.stdin.take());
-    assert!(!child.wait().unwrap().success());
+        let (code, out) = sh(&list_command(root));
+        assert_eq!(code, Some(0));
+        let mut entries = parse_records(&out).unwrap();
+        entries.sort_by(|a, b| a.name.cmp(&b.name));
+        let shape: Vec<_> = entries.iter().map(|e| (e.name.as_str(), e.kind, e.size)).collect();
+        assert_eq!(
+            shape,
+            vec![("a file", FileKind::File, Some(5)), ("link", FileKind::Link, None), ("sub", FileKind::Dir, None)]
+        );
+
+        let (code, out) = sh(&stat_command(&format!("{root}/sub/")));
+        assert_eq!(code, Some(0));
+        assert_eq!(parse_records(&out).unwrap()[0].name, "sub");
+
+        let (code, out) = sh(&stat_command(&format!("{root}/missing")));
+        assert_eq!((code, out.as_str()), (Some(STAT_ABSENT_EXIT), STAT_ABSENT_MARK));
+    }
+
+    #[test]
+    fn rename_refuses_a_directory_destination() {
+        let dir = tempfile::tempdir().unwrap();
+        let from = dir.path().join("f");
+        let to = dir.path().join("d");
+        std::fs::write(&from, b"x").unwrap();
+        std::fs::create_dir(&to).unwrap();
+        let (code, _) = sh(&rename_command(from.to_str().unwrap(), to.to_str().unwrap()));
+        assert_ne!(code, Some(0));
+        assert!(from.exists(), "the file was filed away inside the directory");
+    }
+
+    #[test]
+    fn capped_read_and_atomic_write_run() {
+        if !has_stat_c() {
+            eprintln!("skipped: this host's stat has no -c (BSD)");
+            return;
+        }
+        use std::io::Write;
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("run me.sh");
+        std::fs::write(&file, b"old").unwrap();
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let path = file.to_str().unwrap();
+
+        let mut child = Command::new("/bin/sh")
+            .arg("-c")
+            .arg(atomic_write_command(path, "e2e"))
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(b"aGVsbG8gd29ybGQ=").unwrap();
+        assert!(child.wait().unwrap().success());
+        assert_eq!(std::fs::read(&file).unwrap(), b"hello world");
+        // The existing file's mode survives the staged copy's umask.
+        assert_eq!(std::fs::metadata(&file).unwrap().permissions().mode() & 0o777, 0o755);
+
+        let (code, out) = sh(&capped_read_command(path, 5));
+        assert_eq!(code, Some(0));
+        assert_eq!(parse_capped_read(&out).unwrap(), (11, b"hello".to_vec()));
+        assert_eq!(sh(&capped_read_command(dir.path().to_str().unwrap(), 5)).0, Some(READ_IS_DIR_EXIT));
+        assert_eq!(sh(&capped_read_command(&format!("{path}.missing"), 5)).0, Some(READ_MISSING_EXIT));
+
+        // A directory at the path is refused, not written into.
+        let mut child = Command::new("/bin/sh")
+            .arg("-c")
+            .arg(atomic_write_command(dir.path().to_str().unwrap(), "e2e"))
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        drop(child.stdin.take());
+        assert!(!child.wait().unwrap().success());
+    }
 }
