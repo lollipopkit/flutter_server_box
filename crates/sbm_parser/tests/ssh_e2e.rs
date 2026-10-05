@@ -830,6 +830,15 @@ fn ssh_e2e_unix_file_listing() {
         assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
         assert!(!has_file(&host, &path));
     }
+
+    // The Agent's guest file tools, handed to `sh` as the local userland runs
+    // them: an atomic write that keeps the mode, and a capped read.
+    let target = format!("{DIR}/run.sh");
+    let _ = ssh(&host, &format!("printf old > {target} && chmod 755 {target}"), None);
+    ssh(&host, &files::atomic_write_command(&target, "e2e"), Some("aGVsbG8gd29ybGQ=")).expect("write");
+    assert_eq!(ssh_stdout(&host, &format!("stat -c %a {target}")).trim(), "755");
+    let read = ssh(&host, &files::capped_read_command(&target, 5), None).expect("read");
+    assert_eq!(files::parse_capped_read(&read).unwrap(), (11, b"hello".to_vec()));
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
 
     let home = files::parse_home(&ssh_stdout(&host, &files::home_command(ssh_stdout(&host, "id -un").trim())));
