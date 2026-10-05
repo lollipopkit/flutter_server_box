@@ -1,3 +1,5 @@
+import 'package:server_box/src/rust/api/tmux.dart' as ffi;
+
 /// Represents a tmux window within a session.
 final class TmuxWindowInfo {
   final int index;
@@ -14,20 +16,14 @@ final class TmuxWindowInfo {
     this.activity,
   });
 
-  /// Parse a line from `tmux list-windows -t <session> -F "#{window_index}|#{window_name}|#{window_active}|#{window_panes}|#{window_activity_string}"`
-  static TmuxWindowInfo? tryParse(String line) {
-    final parts = line.split('|');
-    if (parts.isEmpty) return null;
-    final index = int.tryParse(parts[0]);
-    if (index == null) return null;
-    return TmuxWindowInfo(
-      index: index,
-      name: parts.length > 1 ? parts[1] : '',
-      active: parts.length > 2 && parts[2] == '1',
-      panes: parts.length > 3 ? (int.tryParse(parts[3]) ?? 1) : 1,
-      activity: parts.length > 4 ? parts[4] : null,
-    );
-  }
+  /// One window `sbm_parser::tmux` read off `list-windows`.
+  factory TmuxWindowInfo.fromFfi(ffi.TmuxWindowItem item) => TmuxWindowInfo(
+    index: item.index,
+    name: item.name,
+    active: item.active,
+    panes: item.panes,
+    activity: item.activity,
+  );
 
   @override
   String toString() => 'TmuxWindow($index: $name, active=$active, panes=$panes)';

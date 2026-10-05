@@ -57,6 +57,10 @@ String usersDeleteCommand({
   removeHome: removeHome,
 );
 
+/// A login shell as `user`, for a terminal opened from the account's page
+String usersLoginShellCommand({required String user}) =>
+    RustLib.instance.api.crateApiUsersUsersLoginShellCommand(user: user);
+
 /// A refused account or draft. `code` is `sbm_parser::users::UserError`'s
 /// (`invalidName`, `lineBreak`, `invalidPrimaryGroup`,
 /// `invalidSupplementaryGroup`, `passwordLineBreak`, `renaming`,

@@ -9,8 +9,8 @@ import 'package:server_box/core/utils/file_transfer_timeout.dart';
 import 'package:server_box/core/utils/scp_protocol.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/shell_file_ops.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
 
 /// [FileBackend] over `scp` and a shell.
 ///
@@ -81,6 +81,13 @@ class ScpFileBackend implements FileBackend {
   /// `write` left an `mv` running that went on to replace the destination
   /// after it had been told the transfer failed.
   final _sessions = <SSHSession>{};
+
+  /// How to stop the unsized writes spooling their input right now.
+  ///
+  /// Spooling runs before any channel exists, so neither set above holds it,
+  /// and a producer that stalls would otherwise keep its subscription and the
+  /// spool directory alive past [close].
+  final _spooling = <void Function()>{};
 
   /// The channel [open] makes, registered so [close] can end it.
   ///
@@ -186,26 +193,26 @@ class ScpFileBackend implements FileBackend {
     // No `-p`: the other two backends refuse to create a directory that is
     // already there, and a browser that silently succeeded would leave the
     // user thinking the name was free.
-    normal: () => _run('mkdir', 'mkdir -- ${shellSingleQuote(path)}'),
+    normal: () => _run('mkdir', files.filesMkdirCommand(path: path, parents: false)),
     // `-p` here, unchanged from what the SFTP backend escalates: this arrives
     // through `sudo`, where a second attempt after a partial failure is worth
     // more than the distinction above.
-    sudoCommand: () => 'mkdir -p -- ${shellSingleQuote(path)}',
+    sudoCommand: () => files.filesMkdirCommand(path: path, parents: true),
   );
 
   @override
   Future<void> remove(String path, {bool recursive = false}) {
-    final quoted = shellSingleQuote(path);
     // One command whichever it turns out to be, rather than a stat and then a
     // decision: two round trips over a link this backend exists because it is
     // slow, to answer a question the shell can answer where the file is.
     //
     // `-L` before `-d`, so a symlink to a directory is unlinked rather than
     // handed to `rmdir`, which every system refuses.
-    final command = recursive
-        ? 'rm -r -- $quoted'
-        : 'if [ -d $quoted ] && [ ! -L $quoted ]; '
-              'then rmdir -- $quoted; else rm -- $quoted; fi';
+    final command = files.filesRemoveCommand(
+      path: path,
+      recursive: recursive,
+      force: false,
+    );
     return runWithEscalation(
       escalation: escalation,
       normal: () => _run('remove', command),
@@ -225,8 +232,7 @@ class ScpFileBackend implements FileBackend {
 
   @override
   Future<void> chmod(String path, int mode) {
-    final command =
-        'chmod ${mode.toRadixString(8)} -- ${shellSingleQuote(path)}';
+    final command = files.filesChmodCommand(path: path, mode: mode);
     return runWithEscalation(
       escalation: escalation,
       normal: () => _run('chmod', command),
@@ -299,7 +305,15 @@ class ScpFileBackend implements FileBackend {
       try {
         // `-f`, because the failure may well be that the staged copy was never
         // created. The write's own error is the one worth reporting.
-        await _run('remove', 'rm -f -- ${shellSingleQuote(staging)}');
+        await _run(
+          'remove',
+          files.filesRemoveCommand(
+            path: staging,
+            isDir: false,
+            recursive: false,
+            force: true,
+          ),
+        );
       } catch (_) {}
       rethrow;
     }
@@ -325,7 +339,36 @@ class ScpFileBackend implements FileBackend {
           (chunk) => chunk is Uint8List ? chunk : Uint8List.fromList(chunk),
         );
         final bound = _streamTimeout;
-        await sink.addStream(bound == null ? source : source.timeout(bound));
+        final bounded = bound == null ? source : source.timeout(bound);
+        // Forwarded rather than handed to `addStream` whole, so [close] can
+        // end it: cancelling the source and failing the copy is what lets the
+        // `finally` below remove the spool.
+        final forward = StreamController<Uint8List>();
+        final sub = bounded.listen(
+          forward.add,
+          onError: forward.addError,
+          onDone: forward.close,
+        );
+        forward
+          ..onPause = sub.pause
+          ..onResume = sub.resume;
+        void cancel() {
+          unawaited(sub.cancel());
+          if (!forward.isClosed) {
+            forward.addError(
+              const ScpShellException('The connection was closed'),
+            );
+            unawaited(forward.close());
+          }
+        }
+
+        if (_closed) cancel();
+        _spooling.add(cancel);
+        try {
+          await sink.addStream(forward.stream);
+        } finally {
+          _spooling.remove(cancel);
+        }
         await sink.close();
       } catch (_) {
         // Closing a sink whose stream failed throws "File closed", which would
@@ -365,6 +408,10 @@ class ScpFileBackend implements FileBackend {
   @override
   Future<void> close() async {
     _closed = true;
+    for (final cancel in _spooling.toList()) {
+      cancel();
+    }
+    _spooling.clear();
     for (final channel in _open.toList()) {
       try {
         channel.close();

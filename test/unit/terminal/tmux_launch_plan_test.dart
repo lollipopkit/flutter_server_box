@@ -5,8 +5,11 @@ import 'package:server_box/data/ssh/tmux/tmux_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 import 'package:test/test.dart';
+import '../../helpers/rust_lib_helper.dart';
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('buildRestoredTmuxLaunchPlan', () {
     test('builds attach command for existing restored session', () {
       final plan = buildRestoredTmuxLaunchPlan(

@@ -1,19 +1,15 @@
 import 'dart:io';
 
 import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
-import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
+import 'package:server_box/src/rust/api/tmux.dart' as ffi;
 import 'package:test/test.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('TmuxCommandBuilder', () {
-    test('escapeArg wraps in single quotes', () {
-      expect(TmuxCommandBuilder.escapeArg('main'), "'main'");
-    });
-
-    test('escapeArg escapes single quotes', () {
-      expect(TmuxCommandBuilder.escapeArg("it's"), "'it'\\''s'");
-    });
-
     test('attachSession builds correct command', () {
       expect(
         TmuxCommandBuilder.attachSession('main'),
@@ -109,12 +105,9 @@ void main() {
         ], environment: environment);
         expect(result.exitCode, 0);
 
-        final sessions = (result.stdout as String)
-            .split('\n')
-            .where((line) => line.trim().isNotEmpty)
-            .map(TmuxSessionInfo.tryParse)
-            .whereType<TmuxSessionInfo>()
-            .toList();
+        final sessions = ffi
+            .tmuxParseSessions(output: result.stdout as String)
+            .sessions;
         expect(sessions, isNotEmpty);
         expect(sessions.map((session) => session.name), contains('dis|covery'));
       } finally {

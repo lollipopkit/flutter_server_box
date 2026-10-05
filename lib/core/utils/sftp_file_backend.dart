@@ -6,8 +6,8 @@ import 'package:server_box/core/utils/file_transfer_timeout.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_file_ops.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
 
 /// [FileBackend] over SFTP.
 ///
@@ -125,7 +125,7 @@ class SftpFileBackend implements FileBackend {
   Future<void> mkdir(String path) => runWithEscalation(
     escalation: escalation,
     normal: () => _bounded('mkdir', _sftp.mkdir(path)),
-    sudoCommand: () => 'mkdir -p -- ${shellSingleQuote(path)}',
+    sudoCommand: () => files.filesMkdirCommand(path: path, parents: true),
   );
 
   @override
@@ -163,27 +163,16 @@ class SftpFileBackend implements FileBackend {
       },
       // One command instead of walking the tree over a channel that is
       // refusing every step of it.
-      sudoCommand: () => switch ((isDir, recursive)) {
-        (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
-        (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
-        (false, _) => 'rm -f -- ${shellSingleQuote(path)}',
-        // Never stat'd, because this user could not, so the shell decides
-        // where the file is — while keeping the caller's recursion choice
-        // intact. `rm -rf` was here for both cases and turned a delete the
-        // user asked to be non-recursive into one that took a whole tree: a
-        // stat this account was refused is not consent for that.
-        //
-        // Asked rather than tried in order, so a refusal is reported as what
-        // it refused: `rm -f || rmdir` reaches the second command whatever the
-        // first failed for, and the error the user reads is then about the
-        // wrong one.
-        (null, true) => 'rm -rf -- ${shellSingleQuote(path)}',
-        (null, false) =>
-          'if [ -d ${shellSingleQuote(path)} ] && '
-              '[ ! -L ${shellSingleQuote(path)} ]; '
-              'then rmdir -- ${shellSingleQuote(path)}; '
-              'else rm -f -- ${shellSingleQuote(path)}; fi',
-      },
+      //
+      // Where the stat was refused, the shell decides what the path is while
+      // keeping the caller's choice of recursion: a stat this account was
+      // refused is not consent for `rm -r`.
+      sudoCommand: () => files.filesRemoveCommand(
+        path: path,
+        isDir: isDir,
+        recursive: recursive,
+        force: true,
+      ),
     );
   }
 
@@ -220,8 +209,7 @@ class SftpFileBackend implements FileBackend {
       // changing a mode is something the protocol itself does.
       _sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode))),
     ),
-    sudoCommand: () =>
-        'chmod ${mode.toRadixString(8)} -- ${shellSingleQuote(path)}',
+    sudoCommand: () => files.filesChmodCommand(path: path, mode: mode),
   );
 
   @override

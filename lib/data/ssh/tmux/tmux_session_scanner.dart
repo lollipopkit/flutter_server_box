@@ -5,6 +5,7 @@ import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
+import 'package:server_box/src/rust/api/tmux.dart' as ffi;
 
 /// Discovers tmux before the foreground control-mode client is attached.
 final class TmuxSessionScanner {
@@ -19,11 +20,10 @@ final class TmuxSessionScanner {
       TmuxCommandBuilder.findTmux,
       timeout: const Duration(seconds: 5),
     );
-    if (result.exitCode != 0) return null;
-
-    final tmuxBin = result.output.trim();
-    if (tmuxBin.isEmpty) return null;
-    return tmuxBin;
+    return ffi.tmuxParseFind(
+      output: result.output,
+      succeeded: result.exitCode == 0,
+    );
   }
 
   Future<bool> _ensureTmuxResolved() async {
@@ -52,24 +52,19 @@ final class TmuxSessionScanner {
         timeout: const Duration(seconds: 5),
       );
       if (result.exitCode != 0) return [];
-      final lines = result.output
-          .split('\n')
-          .where((line) => line.trim().isNotEmpty)
-          .toList(growable: false);
-      final sessions = lines
-          .map(TmuxSessionInfo.tryParse)
-          .whereType<TmuxSessionInfo>()
-          .toList(growable: false);
-      if (lines.isNotEmpty && sessions.isEmpty) {
+      final listing = ffi.tmuxParseSessions(output: result.output);
+      if (listing.unreadable > 0 && listing.sessions.isEmpty) {
         // A successful command whose every line fails to parse is not "no
         // sessions"; it is a broken discovery contract, and returning silently
         // would hide that from both the user and the logs.
         Loggers.app.warning(
-          'tmux list-sessions returned ${lines.length} unparseable line(s)',
-          lines.take(3).join('\n'),
+          'tmux list-sessions returned ${listing.unreadable} unparseable line(s)',
+          result.output.split('\n').take(3).join('\n'),
         );
       }
-      return sessions;
+      return listing.sessions
+          .map(TmuxSessionInfo.fromFfi)
+          .toList(growable: false);
     } catch (e, st) {
       Loggers.app.warning('Failed to list tmux sessions', e, st);
       return [];
@@ -88,11 +83,9 @@ final class TmuxSessionScanner {
         timeout: const Duration(seconds: 5),
       );
       if (result.exitCode != 0) return null;
-      return result.output
-          .split('\n')
-          .where((line) => line.trim().isNotEmpty)
-          .map(TmuxWindowInfo.tryParse)
-          .whereType<TmuxWindowInfo>()
+      return ffi
+          .tmuxParseWindows(output: result.output)
+          .map(TmuxWindowInfo.fromFfi)
           .toList();
     } catch (e, st) {
       Loggers.app.warning('Failed to list tmux windows', e, st);

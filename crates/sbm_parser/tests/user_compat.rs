@@ -12,9 +12,8 @@
 //! refusals a rename and a line break in a field earn, and the quoting of the
 //! path the detail script reads.
 //!
-//! TODO(migration): delete `lib/data/service/user_manager.dart`,
-//! `lib/data/model/server/system_user.dart` and their test once this file is
-//! the only implementation.
+//! This is the only implementation: the app's `UserManager` runs these through
+//! `sbm_ffi::api::users` and `system_user.dart` only carries the JSON.
 
 use sbm_parser::users::*;
 
@@ -514,4 +513,24 @@ fn a_row_about_another_account_is_not_this_ones() {
     let other = detail_of("lk", &detail_out("root:$y$roothash:20000:0:99999:7:::", "root P 09/28/2026 0 99999 7 -1", "", "", true));
     assert_eq!(other.password_state, None);
     assert_eq!(other.password_changed_millis, None);
+}
+
+#[test]
+fn the_login_shell_quotes_the_name() {
+    assert_eq!(login_shell_command("it's"), "su - 'it'\\''s'");
+}
+
+#[test]
+fn root_is_refused_by_name_as_well_as_uid() {
+    let forged = SystemUser {
+        name: "root".into(),
+        uid: 1,
+        gid: 1,
+        comment: String::new(),
+        home: "/root".into(),
+        shell: "/bin/sh".into(),
+        primary_group: None,
+        supplementary_groups: Vec::new(),
+    };
+    assert_eq!(delete_command(&forged, false), Err(UserError::RootNotDeletable));
 }

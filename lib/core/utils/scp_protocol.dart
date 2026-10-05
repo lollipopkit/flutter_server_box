@@ -23,7 +23,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
 
 /// One remote process's two byte streams and its exit status.
 ///
@@ -69,11 +69,15 @@ final class SshScpChannel implements ScpChannel {
 
   /// The remote `scp -f`: it reads [path] and sends it here.
   static Future<ScpChannel> source(SSHClient client, String path) async =>
-      SshScpChannel(await client.execute('scp -f ${shellSingleQuote(path)}'));
+      SshScpChannel(
+        await client.execute(files.filesScpSourceCommand(path: path)),
+      );
 
   /// The remote `scp -t`: it takes what is sent and writes it to [path].
   static Future<ScpChannel> sink(SSHClient client, String path) async =>
-      SshScpChannel(await client.execute('scp -t ${shellSingleQuote(path)}'));
+      SshScpChannel(
+        await client.execute(files.filesScpSinkCommand(path: path)),
+      );
 
   final SSHSession _session;
 

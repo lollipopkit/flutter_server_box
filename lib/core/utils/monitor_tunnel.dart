@@ -47,6 +47,12 @@ class MonitorTunnelChannel implements SshTunnelChannel {
   /// What [_DirectSink.addStream] is reading: paused while [_out] is.
   StreamSubscription<List<int>>? _source;
 
+  /// The future [_addStream] handed out for [_source], completed by [_finish]
+  /// when it cancels the read: a cancelled subscription reports neither done
+  /// nor an error, and the pipe waiting on it — `SshTunnelBridge` — would wait
+  /// forever, holding up the tunnel's close.
+  Completer<void>? _sourceDone;
+
   /// The socket's close, started once and awaited by [close].
   ///
   /// Held rather than called twice: `_finish` reaches the close from paths that
@@ -143,6 +149,9 @@ class MonitorTunnelChannel implements SshTunnelChannel {
     // at most a frame or two queued behind it.
     unawaited(_source?.cancel());
     _source = null;
+    final sourceDone = _sourceDone;
+    _sourceDone = null;
+    if (sourceDone != null && !sourceDone.isCompleted) sourceDone.complete();
     final out = _out;
     if (out != null && !out.isClosed) unawaited(out.close());
     // A WebSocket cannot close while bound, and dart:io has no way to abort
@@ -260,12 +269,14 @@ class MonitorTunnelChannel implements SshTunnelChannel {
       cancelOnError: true,
     );
     _source = sub;
+    _sourceDone = done;
     // Held back from the start only by a connection that is: a controller
     // with no listener yet also reads as paused, and the socket's listening
     // is `onListen`, which would never resume it.
     if (out.hasListener && out.isPaused) sub.pause();
     return done.future.whenComplete(() {
       if (identical(_source, sub)) _source = null;
+      if (identical(_sourceDone, done)) _sourceDone = null;
     });
   }
 }

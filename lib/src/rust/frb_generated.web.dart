@@ -18,6 +18,7 @@ import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/cron.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/file.dart';
+import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/src/rust/api/hardware.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/proc.dart';
@@ -29,6 +30,7 @@ import 'package:server_box/src/rust/api/service.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/tmux.dart';
 import 'package:server_box/src/rust/api/users.dart';
 import 'package:server_box/src/rust/api/virt.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
@@ -309,6 +311,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo dco_decode_box_cert_info(dynamic raw);
 
   @protected
+  CappedRead dco_decode_capped_read(dynamic raw);
+
+  @protected
   CertInfo dco_decode_cert_info(dynamic raw);
 
   @protected
@@ -360,6 +365,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_f_64(dynamic raw);
 
   @protected
+  FilesStatMarkers dco_decode_files_stat_markers(dynamic raw);
+
+  @protected
   int dco_decode_i_16(dynamic raw);
 
   @protected
@@ -396,6 +404,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
 
   @protected
+  Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
+
+  @protected
   Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
 
   @protected
@@ -420,6 +431,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ServiceCommandOutput> dco_decode_list_service_command_output(
     dynamic raw,
   );
+
+  @protected
+  List<ShellFileRecord> dco_decode_list_shell_file_record(dynamic raw);
+
+  @protected
+  List<TmuxSessionItem> dco_decode_list_tmux_session_item(dynamic raw);
+
+  @protected
+  List<TmuxWindowItem> dco_decode_list_tmux_window_item(dynamic raw);
 
   @protected
   List<VirtActionKind> dco_decode_list_virt_action_kind(dynamic raw);
@@ -590,6 +610,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceProbe dco_decode_service_probe(dynamic raw);
 
   @protected
+  ShellFileRecord dco_decode_shell_file_record(dynamic raw);
+
+  @protected
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
 
   @protected
@@ -600,6 +623,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SnippetFfiError dco_decode_snippet_ffi_error(dynamic raw);
+
+  @protected
+  TmuxSessionItem dco_decode_tmux_session_item(dynamic raw);
+
+  @protected
+  TmuxSessionListingItem dco_decode_tmux_session_listing_item(dynamic raw);
+
+  @protected
+  TmuxWindowItem dco_decode_tmux_window_item(dynamic raw);
 
   @protected
   int dco_decode_u_16(dynamic raw);
@@ -920,6 +952,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo sse_decode_box_cert_info(SseDeserializer deserializer);
 
   @protected
+  CappedRead sse_decode_capped_read(SseDeserializer deserializer);
+
+  @protected
   CertInfo sse_decode_cert_info(SseDeserializer deserializer);
 
   @protected
@@ -979,6 +1014,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
+  FilesStatMarkers sse_decode_files_stat_markers(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_16(SseDeserializer deserializer);
 
   @protected
@@ -1021,6 +1059,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
+
+  @protected
   Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
 
   @protected
@@ -1049,6 +1090,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ServiceCommandOutput> sse_decode_list_service_command_output(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ShellFileRecord> sse_decode_list_shell_file_record(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<TmuxSessionItem> sse_decode_list_tmux_session_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<TmuxWindowItem> sse_decode_list_tmux_window_item(
     SseDeserializer deserializer,
   );
 
@@ -1243,6 +1299,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceProbe sse_decode_service_probe(SseDeserializer deserializer);
 
   @protected
+  ShellFileRecord sse_decode_shell_file_record(SseDeserializer deserializer);
+
+  @protected
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
 
   @protected
@@ -1257,6 +1316,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SnippetFfiError sse_decode_snippet_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  TmuxSessionItem sse_decode_tmux_session_item(SseDeserializer deserializer);
+
+  @protected
+  TmuxSessionListingItem sse_decode_tmux_session_listing_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TmuxWindowItem sse_decode_tmux_window_item(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_16(SseDeserializer deserializer);
@@ -1633,6 +1703,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_cert_info(CertInfo self, SseSerializer serializer);
 
   @protected
+  void sse_encode_capped_read(CappedRead self, SseSerializer serializer);
+
+  @protected
   void sse_encode_cert_info(CertInfo self, SseSerializer serializer);
 
   @protected
@@ -1705,6 +1778,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_files_stat_markers(
+    FilesStatMarkers self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_i_16(int self, SseSerializer serializer);
 
   @protected
@@ -1765,6 +1844,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_prim_i_32_strict(
+    Int32List self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_32_strict(
     Uint32List self,
     SseSerializer serializer,
@@ -1806,6 +1891,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_service_command_output(
     List<ServiceCommandOutput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_shell_file_record(
+    List<ShellFileRecord> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_tmux_session_item(
+    List<TmuxSessionItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_tmux_window_item(
+    List<TmuxWindowItem> self,
     SseSerializer serializer,
   );
 
@@ -2059,6 +2162,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_service_probe(ServiceProbe self, SseSerializer serializer);
 
   @protected
+  void sse_encode_shell_file_record(
+    ShellFileRecord self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
 
   @protected
@@ -2076,6 +2185,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_snippet_ffi_error(
     SnippetFfiError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tmux_session_item(
+    TmuxSessionItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tmux_session_listing_item(
+    TmuxSessionListingItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_tmux_window_item(
+    TmuxWindowItem self,
     SseSerializer serializer,
   );
 

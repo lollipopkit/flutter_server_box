@@ -21,7 +21,7 @@
 
 use sbm_parser::commands;
 use sbm_parser::output::CommandOutput;
-use sbm_parser::{bench, container, cron, service};
+use sbm_parser::{bench, container, cron, files, service, tmux};
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
 use std::io::{Read, Write};
@@ -130,17 +130,24 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     // the process is gone is a pid the OS may have given to something else.
     let deadline = Instant::now() + SSH_TIMEOUT;
     let status = loop {
-        match child
-            .try_wait()
-            .map_err(|e| format!("ssh wait failed: {e}"))?
-        {
-            Some(status) => break Some(status),
-            None if Instant::now() >= deadline => {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(50)),
+            waited => {
+                // Timed out, or the wait itself failed: either way the child
+                // is killed and reaped, which closes its pipes and so ends the
+                // reader and writer threads, before anything is returned.
                 let _ = child.kill();
                 let _ = child.wait();
-                break None;
+                let _ = (stdout.join(), stderr.join());
+                if let Some(writer) = writer {
+                    let _ = writer.join();
+                }
+                return Err(match waited {
+                    Err(e) => format!("ssh wait failed: {e}"),
+                    _ => format!("ssh command {arg:?} killed after {}s", SSH_TIMEOUT.as_secs()),
+                });
             }
-            None => std::thread::sleep(Duration::from_millis(50)),
         }
     };
 
@@ -153,14 +160,6 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     let stdout = collect(stdout, "stdout")?;
     let stderr = collect(stderr, "stderr")?;
 
-    // Before joining the writer: the kill is what unblocks it, and its broken
-    // pipe is a consequence of the timeout rather than something to report
-    let Some(status) = status else {
-        return Err(format!(
-            "ssh command {arg:?} killed after {}s",
-            SSH_TIMEOUT.as_secs()
-        ));
-    };
     if let Some(writer) = writer {
         writer
             .join()
@@ -794,6 +793,93 @@ fn ssh_e2e_unix_container_listing() {
     }
     if exercised == 0 {
         eprintln!("skipped: no container runtime answers on {host}");
+    }
+}
+
+/// The file browser's shell listing and stat on a real machine, as SCP runs
+/// them: the command handed to the login shell as it is. Read only.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_file_listing() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    let out = run_ssh(&host, &files::list_command("/etc"), None).expect("ssh");
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let entries = files::parse_records(&String::from_utf8_lossy(&out.stdout)).expect("a listing");
+    let hosts = entries.iter().find(|e| e.name == "hosts").expect("/etc/hosts listed");
+    assert_eq!(hosts.kind, files::FileKind::File);
+    assert!(hosts.size.is_some() && hosts.mode.is_some() && hosts.mtime.is_some());
+
+    let out = run_ssh(&host, &files::stat_command("/etc/hosts"), None).expect("ssh");
+    assert_eq!(files::parse_records(&String::from_utf8_lossy(&out.stdout)).unwrap()[0].name, "hosts");
+
+    // The commands with shell syntax of their own, through the login shell
+    // (fish on some test machines), in a throwaway directory.
+    // A directory of its own, made by `mktemp` so nothing already on the host
+    // is touched, and removed by the guard on every way out of the test.
+    let dir = ssh(&host, "mktemp -d /tmp/server_box_e2e.XXXXXX", None).expect("mktemp").trim().to_owned();
+    assert!(dir.starts_with("/tmp/server_box_e2e."), "{dir}");
+    struct Cleanup<'a>(&'a str, String);
+    impl Drop for Cleanup<'_> {
+        fn drop(&mut self) {
+            let _ = ssh(self.0, &format!("rm -rf -- '{}'", self.1), None);
+        }
+    }
+    let _cleanup = Cleanup(&host, dir.clone());
+    let dir = dir.as_str();
+    // Absent for certain: the directory was empty when made.
+    let out = run_ssh(&host, &files::stat_command(&format!("{dir}/missing")), None).expect("ssh");
+    assert_eq!(out.status.code(), Some(files::STAT_ABSENT_EXIT));
+    ssh(&host, &format!("mkdir {dir}/d && echo x > {dir}/f"), None).expect("set up");
+    let rename = run_ssh(&host, &files::rename_command(&format!("{dir}/f"), &format!("{dir}/d")), None).expect("ssh");
+    assert!(!rename.status.success(), "a rename onto a directory is refused");
+    assert!(has_file(&host, &format!("{dir}/f")));
+    let renamed = run_ssh(&host, &files::rename_command(&format!("{dir}/f"), &format!("{dir}/g")), None).expect("ssh");
+    assert!(renamed.status.success(), "{}", String::from_utf8_lossy(&renamed.stderr));
+    for path in [format!("{dir}/g"), format!("{dir}/d")] {
+        let out = run_ssh(&host, &files::remove_command(&path, None, false, false), None).expect("ssh");
+        assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+        assert!(!has_file(&host, &path));
+    }
+
+    // The Agent's guest file tools, handed to `sh` as the local userland runs
+    // them: an atomic write that keeps the mode, and a capped read.
+    let target = format!("{dir}/run.sh");
+    let _ = ssh(&host, &format!("printf old > {target} && chmod 755 {target}"), None);
+    ssh(&host, &files::atomic_write_command(&target), Some("aGVsbG8gd29ybGQ=")).expect("write");
+    assert_eq!(ssh_stdout(&host, &format!("stat -c %a {target}")).trim(), "755");
+    // A new file takes the umask's mode, not mktemp's 0600.
+    let fresh = format!("{dir}/new.txt");
+    ssh(&host, &format!("umask 022; {}", files::atomic_write_command(&fresh)), Some("aGk=")).expect("write new");
+    assert_eq!(ssh_stdout(&host, &format!("stat -c %a {fresh}")).trim(), "644");
+    assert_eq!(ssh_stdout(&host, &format!("ls {dir}")).lines().filter(|l| l.starts_with("new.txt.")).count(), 0, "no staged copy left behind");
+    let read = ssh(&host, &files::capped_read_command(&target, 5), None).expect("read");
+    assert_eq!(files::parse_capped_read(&read, 5).unwrap(), (11, b"hello".to_vec()));
+    let root = ssh(&host, &files::stat_command("/"), None).expect("stat /");
+    assert_eq!(files::parse_records(&root).unwrap()[0].name, "/");
+
+    let home = files::parse_home(&ssh_stdout(&host, &files::home_command(ssh_stdout(&host, "id -un").trim())));
+    assert!(home.is_some_and(|h| h.starts_with('/')));
+}
+
+/// tmux discovery on a real machine; skipped where tmux is not installed.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_tmux_discovery() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    let out = run_ssh(&host, tmux::FIND_COMMAND, None).expect("ssh");
+    let Some(bin) = tmux::parse_find(&String::from_utf8_lossy(&out.stdout), out.status.success()) else {
+        eprintln!("skipped: no tmux on {host}");
+        return;
+    };
+    let out = run_ssh(&host, &tmux::list_sessions_command(&bin), None).expect("ssh");
+    let listing = tmux::parse_sessions(&String::from_utf8_lossy(&out.stdout));
+    assert_eq!(listing.unreadable, 0, "{}", String::from_utf8_lossy(&out.stdout));
+    eprintln!("tmux at {bin}: {} sessions", listing.sessions.len());
+    if let Some(session) = listing.sessions.first() {
+        let out = run_ssh(&host, &tmux::list_windows_command(&bin, &session.id), None).expect("ssh");
+        assert!(!tmux::parse_windows(&String::from_utf8_lossy(&out.stdout)).is_empty());
     }
 }
 
