@@ -43,7 +43,6 @@ dotenvy = "0.15"
 tokio = { version = "1.53", features = ["full"] }
 hyper = { version = "1", features = ["server", "http1"] }
 tokio-tungstenite = { version = "0.30", default-features = false, features = ["handshake"] }
-rustls-pemfile = "2"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
 hyper-util = { version = "0.1", features = ["server", "tokio"] }

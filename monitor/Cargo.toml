@@ -22,7 +22,6 @@ ntex-files = "3.2"
 
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
-rustls-pemfile = "2"
 # The panel's RDP sessions (`api::ws::rdcleanpath`): the RDCleanPath PDU the
 # browser's IronRDP client opens with, and the TLS client the agent uses to
 # reach the RDP server on its behalf (the browser cannot do RDP's TLS). Pinned

@@ -604,12 +604,13 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
 /// Builds the rustls server config from a PEM certificate and key using the
 /// ring provider.
 fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
-    use std::{fs::File, io::BufReader};
+    use rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 
-    let certs = rustls_pemfile::certs(&mut BufReader::new(File::open(&tls.cert_path)?))
-        .collect::<std::io::Result<Vec<_>>>()?;
-    let key = rustls_pemfile::private_key(&mut BufReader::new(File::open(&tls.key_path)?))?
-        .ok_or_else(|| anyhow::anyhow!("No private key found in {}", tls.key_path))?;
+    let certs = CertificateDer::pem_file_iter(&tls.cert_path)
+        .and_then(|certs| certs.collect::<std::result::Result<Vec<_>, _>>())
+        .map_err(|e| anyhow::anyhow!("TLS certificate {}: {e}", tls.cert_path))?;
+    let key = PrivateKeyDer::from_pem_file(&tls.key_path)
+        .map_err(|e| anyhow::anyhow!("TLS private key {}: {e}", tls.key_path))?;
 
     let config = rustls::ServerConfig::builder_with_provider(Arc::new(
         rustls::crypto::ring::default_provider(),
@@ -1855,5 +1856,42 @@ mod agent_state_tests {
         assert!(protected.covers(&cwd.join(".env")));
         assert!(protected.covers(&cwd.join(".env.bak-1789489640")));
         assert!(!protected.covers(&cwd.join("notes.env")));
+    }
+}
+
+#[cfg(test)]
+mod tls_tests {
+    use super::load_rustls_config;
+    use crate::core::config::TlsConfig;
+
+    fn write(dir: &tempfile::TempDir, name: &str, body: &str) -> String {
+        let path = dir.path().join(name);
+        std::fs::write(&path, body).unwrap();
+        path.to_string_lossy().into_owned()
+    }
+
+    #[test]
+    fn a_pem_certificate_and_key_load() {
+        let rcgen::CertifiedKey { cert, signing_key } =
+            rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let tls = TlsConfig {
+            cert_path: write(&dir, "cert.pem", &cert.pem()),
+            key_path: write(&dir, "key.pem", &signing_key.serialize_pem()),
+        };
+        load_rustls_config(&tls).expect("load");
+    }
+
+    #[test]
+    fn a_key_file_without_a_key_is_refused_by_name() {
+        let rcgen::CertifiedKey { cert, .. } =
+            rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let tls = TlsConfig {
+            cert_path: write(&dir, "cert.pem", &cert.pem()),
+            key_path: write(&dir, "key.pem", &cert.pem()),
+        };
+        let error = load_rustls_config(&tls).unwrap_err().to_string();
+        assert!(error.contains("key.pem"), "{error}");
     }
 }
