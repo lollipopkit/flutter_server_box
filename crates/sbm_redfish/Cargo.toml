@@ -22,7 +22,7 @@ tokio-rustls = { version = "0.26", default-features = false, features = ["ring",
 x509-cert = { version = "0.3", default-features = false, features = ["std"] }
 sha2 = "0.11"
 # Basic auth for a service that offers no sessions.
-base64 = "0.22"
+base64 = "0.23"
 
 [dev-dependencies]
 # The opt-in hardware test reads the workspace-root `.env`.
