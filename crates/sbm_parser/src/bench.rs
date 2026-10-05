@@ -505,7 +505,10 @@ pub const CANCELLED: &str = "SBM_BENCH_CANCELLED";
 /// deserves a check that it is still the directory this module names — even
 /// though the only way to reach it is through [`run_dir`].
 pub fn cleanup_command(run_dir: &str, run_id: &str) -> Option<String> {
-    let leaf_ok = run_dir.ends_with(&format!("/{RUN_DIR_NAME}")) || run_dir.ends_with("/run");
+    // The fallback is one fixed path, so it is matched whole: a bare `/run`
+    // suffix would let a stale or corrupt record name any directory called
+    // `run`.
+    let leaf_ok = run_dir.ends_with(&format!("/{RUN_DIR_NAME}")) || run_dir == self::run_dir("");
     if !leaf_ok {
         return None;
     }
@@ -896,6 +899,9 @@ mod tests {
     fn cleanup_refuses_a_path_it_could_not_have_produced() {
         assert!(cleanup_command("/home/me", "bench_1").is_none());
         assert!(cleanup_command("/", "bench_1").is_none());
+        // Only the fallback itself, not any directory that shares its leaf.
+        assert!(cleanup_command("/important/run", "bench_1").is_none());
+        assert!(cleanup_command(&run_dir(""), "bench_1").is_some());
         let command = cleanup_command(&run_dir("/"), "bench_1").unwrap();
         assert!(command.contains(".server_box_bench"));
         assert!(command.contains("bench_1"));

@@ -132,6 +132,10 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     _refreshCompleter = refreshCompleter;
     _isRefreshing = true;
     if (_hasLoaded) setState(() {});
+    // Taken for this sample only: a refresh that ends without a valid table
+    // leaves no baseline, so the next rate never averages over the gap.
+    final previous = _lastValidResult;
+    _lastValidResult = null;
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
@@ -170,7 +174,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         systemType,
         sort: requestedSort,
         ascending: _sortAscending,
-        previous: _lastValidResult,
+        previous: previous,
       );
       if (!mounted) return;
       if (parsed.issue != null) {
@@ -218,8 +222,10 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     final system = ref.read(_provider).status.system;
     // The same order again turns it round; another starts at its own default.
     final ascending = _procSortMode == mode ? !_sortAscending : null;
-    final sorted = await _result.sortedBy(system, mode, ascending: ascending);
-    if (!mounted) return;
+    final source = _result;
+    final sorted = await source.sortedBy(system, mode, ascending: ascending);
+    // A refresh that landed meanwhile already holds the newer table.
+    if (!mounted || !identical(_result, source)) return;
     setState(() {
       _result = sorted;
       _procSortMode = sorted.sort;
