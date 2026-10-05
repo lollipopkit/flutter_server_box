@@ -15,10 +15,11 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/service/cron_manager.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/src/rust/api/cron.dart' as ffi;
 import 'package:server_box/view/page/scheduled_tasks.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 
 const _sid = 'cron-1';
@@ -48,7 +49,7 @@ final class _FakeExec implements ServerExec {
     OnExecOutput? onStderr,
     Future<void>? cancel,
   }) async {
-    if (script == CronManager.listScript) {
+    if (script == ffi.cronListScript()) {
       return ExecResult(
         exitCode: 0,
         stdout:
@@ -72,6 +73,8 @@ final class _FakeServerNotifier extends ServerNotifier {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   final page = ScheduledTasksPage(
     args: SpiRequiredArgs(spiFixture(id: _sid, name: 'hk')),
   );

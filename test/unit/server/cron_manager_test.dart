@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/cron.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/service/cron_manager.dart';
+import 'package:server_box/src/rust/api/cron.dart' as ffi;
+
+import '../../helpers/rust_lib_helper.dart';
 
 final class _QueueExec implements ServerExec {
   _QueueExec(List<ExecResult> results) : results = Queue.of(results);
@@ -30,7 +33,21 @@ final class _QueueExec implements ServerExec {
   }
 }
 
+/// A document as a listing hands it out.
+CronDocument _parse(String raw) => CronDocument.fromFfi(
+  ffi
+      .cronReadListing(
+        stdout: 'SrvBoxCron.User\tadmin\nSrvBoxCron.Body\n$raw',
+        stderr: '',
+        exitCode: 0,
+        succeeded: true,
+      )
+      .document,
+);
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   const source = '''# Keep this comment
 MAILTO=ops@example.com
 0 2 * * * /usr/local/bin/backup --quiet
@@ -40,7 +57,7 @@ MAILTO=ops@example.com
 ''';
 
   test('parses jobs while preserving comments and environment lines', () {
-    final document = CronDocument.parse(source);
+    final document = _parse(source);
 
     expect(document.jobs, hasLength(3));
     expect(document.jobs[0].schedule, '0 2 * * *');
@@ -52,7 +69,7 @@ MAILTO=ops@example.com
   });
 
   test('edits, disables, adds, and removes jobs without losing other lines', () {
-    final original = CronDocument.parse(source);
+    final original = _parse(source);
     final edited = original.upsert(
       original: original.jobs.first,
       schedule: '30 3 * * *',
@@ -78,7 +95,7 @@ MAILTO=ops@example.com
   });
 
   test('keeps every line it does not manage as a preserved one', () {
-    final document = CronDocument.parse(source);
+    final document = _parse(source);
 
     expect(document.preserved, [
       '# Keep this comment',
@@ -177,7 +194,7 @@ MAILTO=ops@example.com
     );
     await CronManager.save(exec, document);
 
-    expect(exec.scripts, [CronManager.listScript, 'crontab -']);
+    expect(exec.scripts, [ffi.cronListScript(), 'crontab -']);
     // The listing is a POSIX script and must reach `sh`: run as the command
     // it is parsed by the login shell, and fish refused `LC_ALL=C`. The save
     // is one command whose stdin is the document, so it has no entry.
@@ -198,38 +215,6 @@ MAILTO=ops@example.com
 
     expect(catalog.user, 'admin');
     expect(catalog.document.lines, isEmpty);
-  });
-
-  // Every crontab exits 1 for an account with no crontab, the same as for a
-  // real failure, and each says it differently. Reading any of them as an
-  // error leaves the page unable to add the first job.
-  test('reads each implementation\'s "no crontab" message as empty', () {
-    // vixie, cronie
-    expect(CronManager.isNoCrontab('no crontab for admin'), isTrue);
-    // BSD, macOS
-    expect(CronManager.isNoCrontab('crontab: no crontab for admin'), isTrue);
-    // busybox: `-l` is a cat of the spool file
-    expect(
-      CronManager.isNoCrontab(
-        "crontab: can't open 'admin': No such file or directory",
-      ),
-      isTrue,
-    );
-
-    // A spool directory that is not there, or one this account may not read,
-    // is a failure to show.
-    expect(
-      CronManager.isNoCrontab(
-        "crontab: can't change directory to '/etc/crontabs': "
-        'No such file or directory',
-      ),
-      isFalse,
-    );
-    expect(
-      CronManager.isNoCrontab("crontab: can't open 'admin': Permission denied"),
-      isFalse,
-    );
-    expect(CronManager.isNoCrontab(''), isFalse);
   });
 
   test('treats busybox\'s missing spool file as an empty document', () async {
@@ -280,6 +265,49 @@ MAILTO=ops@example.com
           isTrue,
         ),
       ),
+    );
+  });
+
+  test('reports a refused save in the machine\'s words', () async {
+    final exec = _QueueExec([
+      const ExecResult(exitCode: 1, stdout: '', stderr: 'crontab: bad minute\n'),
+      const ExecResult(exitCode: 1, stdout: '', stderr: ''),
+    ]);
+    final document = _parse('0 * * * * echo ok\n');
+
+    await expectLater(
+      CronManager.save(exec, document),
+      throwsA(
+        isA<CronManagerException>()
+            .having((e) => e.message, 'message', 'crontab: bad minute')
+            .having((e) => e.unavailable, 'unavailable', isFalse),
+      ),
+    );
+    await expectLater(
+      CronManager.save(exec, document),
+      throwsA(
+        isA<CronManagerException>().having(
+          (e) => e.message,
+          'message',
+          'Unable to save scheduled tasks',
+        ),
+      ),
+    );
+  });
+
+  test('refuses an edit naming a line that is no longer a job', () {
+    final document = _parse(source);
+    final stale = CronJob(
+      lineIndex: 0,
+      schedule: '0 0 * * *',
+      command: 'x',
+      enabled: true,
+    );
+
+    expect(() => document.remove(stale), throwsArgumentError);
+    expect(
+      CronDocument.validate(schedule: '@', command: 'x'),
+      CronValidation.macro,
     );
   });
 }

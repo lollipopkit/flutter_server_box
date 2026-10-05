@@ -1,8 +1,6 @@
-// TODO(migration): parsed by `sbm_parser::cron` too — see the TODO at the top
-// of `lib/data/service/cron_manager.dart`. Deleted with it.
-
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
+import 'package:server_box/src/rust/api/cron.dart' as ffi;
 
 /// Why a line was refused, in the words the editor shows.
 enum CronValidation {
@@ -38,151 +36,82 @@ final class CronJob {
   CronSchedule? get parsed => CronSchedule.tryParse(schedule);
 }
 
+/// A crontab as `sbm_parser::cron` reads it: every line, and the jobs read out
+/// of them. Lines are authoritative — [render] writes back every one, so a
+/// comment, an environment assignment or a syntax this app does not read
+/// survives a save untouched. Each edit is made on the Rust side and answers
+/// the whole new document.
 final class CronDocument {
-  CronDocument._(this.lines, this.jobs);
+  CronDocument.fromFfi(this._data)
+    : jobs = [
+        for (final job in _data.jobs)
+          CronJob(
+            lineIndex: job.lineIndex,
+            schedule: job.schedule,
+            command: job.command,
+            enabled: job.enabled,
+          ),
+      ];
 
-  static const disabledPrefix = '# ServerBox disabled: ';
-
-  final List<String> lines;
+  final ffi.CronDocumentData _data;
   final List<CronJob> jobs;
 
-  /// Every line that is not a task: comments, environment assignments, and
-  /// anything this app could not read as one.
-  ///
-  /// They are what [render] writes back untouched, and the page shows them so
-  /// that a crontab another tool manages does not look like it lost them.
-  late final List<String> preserved = () {
-    final taskLines = jobs.map((job) => job.lineIndex).toSet();
-    return [
-      for (var index = 0; index < lines.length; index++)
-        if (!taskLines.contains(index) && lines[index].trim().isNotEmpty)
-          lines[index],
-    ];
-  }();
+  List<String> get lines => _data.lines;
 
-  factory CronDocument.parse(String raw) {
-    final normalized = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-    final lines = normalized.isEmpty ? <String>[] : normalized.split('\n');
-    if (lines.isNotEmpty && lines.last.isEmpty) lines.removeLast();
-    return CronDocument._(lines, _parseJobs(lines));
-  }
+  /// Every line that is not a task: comments, environment assignments, and
+  /// anything this app could not read as one. The page shows them so that a
+  /// crontab another tool manages does not look like it lost them.
+  List<String> get preserved => _data.preserved;
+
+  String render() => _data.text;
 
   CronDocument upsert({
     CronJob? original,
     required String schedule,
     required String command,
     required bool enabled,
-  }) {
-    final error = validate(schedule: schedule, command: command);
-    if (error != null) throw ArgumentError(error.name);
-    final next = List<String>.from(lines);
-    final line = _renderJob(schedule.trim(), command.trim(), enabled);
-    if (original == null) {
-      next.add(line);
-    } else {
-      _checkIndex(original.lineIndex);
-      next[original.lineIndex] = line;
-    }
-    return CronDocument._(next, _parseJobs(next));
-  }
-
-  CronDocument remove(CronJob job) {
-    _checkIndex(job.lineIndex);
-    final next = List<String>.from(lines)..removeAt(job.lineIndex);
-    return CronDocument._(next, _parseJobs(next));
-  }
-
-  CronDocument setEnabled(CronJob job, bool enabled) {
-    return upsert(
-      original: job,
-      schedule: job.schedule,
-      command: job.command,
+  }) => _edit(
+    () => ffi.cronUpsert(
+      lines: lines,
+      lineIndex: original?.lineIndex,
+      schedule: schedule,
+      command: command,
       enabled: enabled,
-    );
-  }
+    ),
+  );
 
-  String render() => lines.isEmpty ? '' : '${lines.join('\n')}\n';
+  CronDocument remove(CronJob job) =>
+      _edit(() => ffi.cronRemove(lines: lines, lineIndex: job.lineIndex));
+
+  CronDocument setEnabled(CronJob job, bool enabled) => _edit(
+    () => ffi.cronSetEnabled(
+      lines: lines,
+      lineIndex: job.lineIndex,
+      enabled: enabled,
+    ),
+  );
 
   /// What is wrong with the line these two would make, or `null`.
   ///
-  /// It says nothing about whether the schedule will ever fire: `0 0 31 2 *`
-  /// is a valid line that runs never, and so is anything a crond understands
-  /// that this app does not. What it refuses is what would damage the file —
-  /// a line break splits one task into two — and what no crond accepts.
+  /// It says nothing about whether the schedule will ever fire: what it
+  /// refuses is what would damage the file — a line break splits one task
+  /// into two — and what no crond accepts.
   static CronValidation? validate({
     required String schedule,
     required String command,
-  }) {
-    final cleanSchedule = schedule.trim();
-    final cleanCommand = command.trim();
-    if (cleanSchedule.isEmpty) return CronValidation.scheduleEmpty;
-    if (cleanCommand.isEmpty) return CronValidation.commandEmpty;
-    if (_hasLineBreak(cleanSchedule) || _hasLineBreak(cleanCommand)) {
-      return CronValidation.lineBreak;
+  }) => switch (ffi.cronValidate(schedule: schedule, command: command)) {
+    null => null,
+    final code => CronValidation.values.byName(code),
+  };
+
+  /// An edit the editor did not validate first, or one naming a line that is
+  /// no longer a job, is a bug in the caller: thrown, as before.
+  static CronDocument _edit(ffi.CronDocumentData Function() edit) {
+    try {
+      return CronDocument.fromFfi(edit());
+    } on ffi.CronEditError catch (e) {
+      throw ArgumentError(e.code);
     }
-    if (cleanSchedule.startsWith('@')) {
-      if (!RegExp(r'^@\S+$').hasMatch(cleanSchedule)) {
-        return CronValidation.macro;
-      }
-      return null;
-    }
-    if (cleanSchedule.split(RegExp(r'\s+')).length != 5) {
-      return CronValidation.fieldCount;
-    }
-    return null;
-  }
-
-  static List<CronJob> _parseJobs(List<String> lines) {
-    final jobs = <CronJob>[];
-    for (var index = 0; index < lines.length; index++) {
-      var candidate = lines[index].trimLeft();
-      var enabled = true;
-      if (candidate.startsWith(disabledPrefix)) {
-        candidate = candidate.substring(disabledPrefix.length).trimLeft();
-        enabled = false;
-      } else if (candidate.isEmpty || candidate.startsWith('#')) {
-        continue;
-      }
-
-      final parsed = _parseJobLine(candidate);
-      if (parsed == null) continue;
-      jobs.add(CronJob(
-        lineIndex: index,
-        schedule: parsed.$1,
-        command: parsed.$2,
-        enabled: enabled,
-      ));
-    }
-    return jobs;
-  }
-
-  static (String, String)? _parseJobLine(String line) {
-    final macro = RegExp(r'^(@\S+)\s+(.+)$').firstMatch(line);
-    if (macro != null) return (macro.group(1)!, macro.group(2)!.trim());
-
-    final standard = RegExp(
-      r'^(\S+\s+\S+\s+\S+\s+\S+\s+\S+)\s+(.+)$',
-    ).firstMatch(line);
-    if (standard == null) return null;
-    final schedule = standard.group(1)!.replaceAll(RegExp(r'\s+'), ' ');
-    return (schedule, standard.group(2)!.trim());
-  }
-
-  static String _renderJob(String schedule, String command, bool enabled) {
-    final line = '$schedule $command';
-    return enabled ? line : '$disabledPrefix$line';
-  }
-
-  void _checkIndex(int index) {
-    if (index < 0 || index >= lines.length) {
-      throw RangeError.index(index, lines, 'lineIndex');
-    }
-  }
-
-  static bool _hasLineBreak(String value) {
-    return value.contains('\n') ||
-        value.contains('\r') ||
-        value.contains('\u0000');
   }
 }
 

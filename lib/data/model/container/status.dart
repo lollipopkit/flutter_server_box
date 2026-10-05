@@ -1,9 +1,7 @@
-// TODO(migration): parsed by `sbm_parser::container` too — see the TODO at
-// the top of `lib/data/provider/container.dart`. Deleted with it.
-
 import 'package:fl_lib/fl_lib.dart';
 
-/// A normalized Docker or Podman container state.
+/// A normalized Docker or Podman container state, as
+/// `sbm_parser::container::ContainerStatus` names it.
 enum ContainerStatus {
   running,
   exited,
@@ -17,42 +15,8 @@ enum ContainerStatus {
   /// Whether the container is actively running.
   bool get isRunning => this == ContainerStatus.running;
 
-  /// Parses a Docker-style status string.
-  static ContainerStatus fromDockerState(String? state) {
-    if (state == null || state.isEmpty) return ContainerStatus.unknown;
-
-    final lowerState = state.toLowerCase();
-
-    if (lowerState.contains('exited')) return ContainerStatus.exited;
-    if (lowerState.contains('created')) return ContainerStatus.created;
-    if (lowerState.contains('paused')) return ContainerStatus.paused;
-    if (lowerState.contains('restarting')) return ContainerStatus.restarting;
-    if (lowerState.contains('removing') ||
-        lowerState.contains('removal in progress')) {
-      return ContainerStatus.removing;
-    }
-    if (lowerState.contains('dead')) return ContainerStatus.dead;
-    if (lowerState == 'running' || lowerState.startsWith('up')) {
-      return ContainerStatus.running;
-    }
-
-    return ContainerStatus.unknown;
-  }
-
-  /// Maps Podman's legacy `exited` flag to a container state.
-  static ContainerStatus fromPodmanExited(bool? exited) {
-    if (exited == true) return ContainerStatus.exited;
-    if (exited == false) return ContainerStatus.running;
-    return ContainerStatus.unknown;
-  }
-
-  /// Parse Podman status text first, with the legacy exited flag as fallback.
-  static ContainerStatus fromPodman(bool? exited, String? rawStatus) {
-    final parsed = fromDockerState(rawStatus);
-    if (parsed != ContainerStatus.unknown) return parsed;
-    return fromPodmanExited(exited);
-  }
-
+  /// Nothing happens until someone starts it again. `unknown` is not
+  /// stopped: an unrecognised state is not evidence the container is down.
   bool get isStopped => switch (this) {
     ContainerStatus.exited ||
     ContainerStatus.created ||

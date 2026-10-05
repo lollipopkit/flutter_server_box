@@ -1507,7 +1507,7 @@ class _ContainerImageRow extends StatelessWidget {
     final unused = image.isUnused;
 
     final sizeText = Text(
-      image.sizeMB ?? '—',
+      image.size ?? '—',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.end,
@@ -1719,11 +1719,9 @@ String? _extractMetricValue(String raw) {
 }
 
 String _imageReference(ContainerImg image) {
-  final repository = image.repository?.trim();
+  final repository = image.repository.trim();
   final tag = image.tag?.trim();
-  final noRepository = repository == null ||
-      repository.isEmpty ||
-      repository == '<none>';
+  final noRepository = repository.isEmpty || repository == '<none>';
   final noTag = tag == null || tag.isEmpty || tag == '<none>';
   if (noRepository) return _shortId(image.id) ?? '<none>';
   if (noTag) return repository;
@@ -1737,11 +1735,9 @@ String? _shortId(String? id) {
   return normalized.substring(0, 12);
 }
 
-String? _imageCreatedLabel(ContainerImg image, Locale locale) => switch (image) {
-  final DockerImg img => img.createdAt.trim().isEmpty ? null : img.createdAt,
-  final PodmanImg img => _formatUnixDate(img.created, locale),
-  _ => null,
-};
+/// Docker's own creation text when it printed one, else Podman's time.
+String? _imageCreatedLabel(ContainerImg image, Locale locale) =>
+    image.createdAt ?? _formatUnixDate(image.created, locale);
 
 String? _formatUnixDate(int? seconds, Locale locale) {
   if (seconds == null || seconds <= 0) return null;

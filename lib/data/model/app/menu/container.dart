@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/container/status.dart';
+import 'package:server_box/src/rust/api/container.dart' as ffi;
 
 enum ContainerMenu {
   start,
@@ -10,21 +11,13 @@ enum ContainerMenu {
   logs,
   terminal;
 
-  static List<ContainerMenu> items(ContainerStatus status) {
-    if (status.isRunning) {
-      return [
-        stop,
-        restart,
-        rm,
-        logs,
-        terminal,
-      ];
-    }
-    if (status.isStopped || status == ContainerStatus.unknown) {
-      return [start, rm, logs];
-    }
-    return [rm, logs];
-  }
+  /// What a container in [status] is offered, by `sbm_parser::container`'s
+  /// rule: an unrecognised state is grouped with a stopped one, and logs are
+  /// offered in every state.
+  static List<ContainerMenu> items(ContainerStatus status) => [
+    for (final kind in ffi.containerMenuItems(statusName: status.name))
+      kind == 'remove' ? rm : values.byName(kind),
+  ];
 
   IconData get icon => switch (this) {
     ContainerMenu.start => Icons.play_arrow,

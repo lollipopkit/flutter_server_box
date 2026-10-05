@@ -71,7 +71,7 @@ extension on _ContainerPageState {
             final extraArgs = parseContainerRunArgs(argsCtrl.text.trim());
             context.popDialog();
             await _showAddCmdPreview(
-              buildContainerRunCmd(
+              _containerNotifier.runCommand(
                 image: imageCtrl.text.trim(),
                 name: nameCtrl.text.trim(),
                 extraArgs: extraArgs,
@@ -120,8 +120,8 @@ extension on _ContainerPageState {
               allUnused: allUnused,
               onAllUnusedChanged: (value) =>
                   setState(() => allUnused = value),
-              commandPreview: _runtimePruneCommand(
-                buildContainerImagePruneCmd(allUnused: allUnused),
+              commandPreview: _containerNotifier.imagePruneCommand(
+                allUnused: allUnused,
               ),
             ),
           );
@@ -151,11 +151,9 @@ extension on _ContainerPageState {
                   setState(() => allUnusedImages = value),
               onIncludeVolumesChanged: (value) =>
                   setState(() => includeVolumes = value),
-              commandPreview: _runtimePruneCommand(
-                buildContainerSystemPruneCmd(
-                  allUnusedImages: allUnusedImages,
-                  includeVolumes: includeVolumes,
-                ),
+              commandPreview: _containerNotifier.systemPruneCommand(
+                allUnusedImages: allUnusedImages,
+                includeVolumes: includeVolumes,
               ),
             ),
           );
@@ -171,10 +169,6 @@ extension on _ContainerPageState {
         ),
       );
     }
-  }
-
-  String _runtimePruneCommand(String command) {
-    return '${_containerState.type.name} $command';
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {
@@ -241,10 +235,7 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.popDialog();
-          final result = await _containerNotifier.run(
-            'rmi ${shellSingleQuote(id)} -f',
-            refreshTarget: ContainerRefreshTarget.images,
-          );
+          final result = await _containerNotifier.removeImage(id);
           if (result != null) {
             if (mounted) Toast.error(_errorMessage(result.message));
           }
@@ -257,19 +248,13 @@ extension on _ContainerPageState {
   void _onTapImageMenu(ImageMenu item, ContainerImg e) {
     switch (item) {
       case ImageMenu.pull:
-        final repo = e.repository;
+        // Dangling covers a missing or `<none>` repository or tag.
         final tag = e.tag;
-        if (e.isDangling ||
-            repo == null ||
-            repo.trim().isEmpty ||
-            repo == '<none>' ||
-            tag == null ||
-            tag.trim().isEmpty ||
-            tag == '<none>') {
+        if (e.isDangling || tag == null) {
           Toast.show(libL10n.empty);
           return;
         }
-        final imageRef = '$repo:$tag';
+        final imageRef = '${e.repository.trim()}:${tag.trim()}';
         context.showRoundDialog(
           title: libL10n.attention,
           child: Text(
@@ -279,10 +264,7 @@ extension on _ContainerPageState {
             onTap: () async {
               context.popDialog();
               await _execContainerAction(
-                () => _containerNotifier.run(
-                  'pull ${shellSingleQuote(imageRef)}',
-                  refreshTarget: ContainerRefreshTarget.images,
-                ),
+                () => _containerNotifier.pullImage(imageRef),
               );
             },
           ).toList,
@@ -350,9 +332,9 @@ extension on _ContainerPageState {
         await _execContainerAction(() => _containerNotifier.restart(id));
         break;
       case ContainerMenu.logs:
-        final cmd =
-            '${_containerState.type.name} logs -f --tail 100 ${shellSingleQuote(id)}';
-        final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
+        final initCmd = await _containerNotifier.prepareInteractiveCommand(
+          _containerNotifier.logsCommand(id),
+        );
         if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
           source: ServerSource(widget.args.spi),
@@ -361,9 +343,9 @@ extension on _ContainerPageState {
         unawaited(SSHPage.route.go(context, args));
         break;
       case ContainerMenu.terminal:
-        final cmd =
-            '${_containerState.type.name} exec -it ${shellSingleQuote(id)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"';
-        final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
+        final initCmd = await _containerNotifier.prepareInteractiveCommand(
+          _containerNotifier.shellCommand(id),
+        );
         if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
           source: ServerSource(widget.args.spi),
