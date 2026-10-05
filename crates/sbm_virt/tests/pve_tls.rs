@@ -17,6 +17,7 @@ use bytes::Bytes;
 use http_body_util::Full;
 use hyper::service::service_fn;
 use rustls::RootCertStore;
+use rustls::pki_types::pem::PemObject;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use sbm_redfish::cert::fingerprint;
 use sbm_virt::error::{Detail, ErrorKind};
@@ -30,7 +31,7 @@ fn dir() -> PathBuf {
 
 fn certs(name: &str) -> Vec<CertificateDer<'static>> {
     let pem = std::fs::read(dir().join(name)).unwrap();
-    rustls_pemfile::certs(&mut pem.as_slice()).collect::<Result<_, _>>().unwrap()
+    CertificateDer::pem_slice_iter(&pem).collect::<Result<_, _>>().unwrap()
 }
 
 fn leaf_fingerprint() -> String {
@@ -46,7 +47,7 @@ struct Server {
 
 async fn server() -> Server {
     let key_pem = std::fs::read(dir().join("leaf.key")).unwrap();
-    let key: PrivateKeyDer<'static> = rustls_pemfile::private_key(&mut key_pem.as_slice()).unwrap().unwrap();
+    let key: PrivateKeyDer<'static> = PrivateKeyDer::from_pem_slice(&key_pem).unwrap();
     let tls = rustls::ServerConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
         .with_safe_default_protocol_versions()
         .unwrap()
