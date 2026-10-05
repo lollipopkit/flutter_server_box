@@ -5243,6 +5243,9 @@ class AppLocalizationsAz extends AppLocalizations {
   String get firewallInvalidComment => 'Şərhdə \' və ya sətir sonu ola bilməz.';
 
   @override
+  String get firewallInvalidProtocol => 'Dəstəklənməyən protokol.';
+
+  @override
   String get firewallInterfaceIn => 'Daxil olan interfeys';
 
   @override

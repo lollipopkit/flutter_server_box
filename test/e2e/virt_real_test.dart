@@ -161,10 +161,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart'
     show DESedeEngine, HMac, KeyParameter, SHA1Digest;
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/pve_console.dart';
 import 'package:server_box/core/utils/pve_termproxy.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
-import 'package:server_box/core/utils/websocket_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -842,14 +842,7 @@ Future<void> _pve() async {
         expect(console, isA<PveTermConsole>());
         // Token sessions: the ticket is issued to the token itself.
         expect(console.user, tokenId);
-        final socket = await pve.openConsoleSocket(console);
-        expect(socket.protocol, 'binary');
-        final term = await PveTermShellBackend.start(
-          socket,
-          user: console.user,
-          ticket: console.ticket,
-          keepAlive: const Duration(seconds: 1),
-        );
+        final term = PveTermShellBackend(await pve.openConsole(console));
         final shell = await term.openShell(width: 80, height: 24);
         final out = _Collector(shell.stdout!);
         try {
@@ -857,8 +850,9 @@ Future<void> _pve() async {
           shell.write(utf8.encode('\r'));
           await out.waitFor('login:');
           shell.resizeTerminal(100, 30);
-          // Keep-alives go out every second; the session outlives several.
-          await Future<void>.delayed(const Duration(seconds: 4));
+          // Idle past the first keep-alive (every 30 s), which termproxy
+          // takes without ending the session.
+          await Future<void>.delayed(const Duration(seconds: 35));
           expect(term.isClosed, isFalse);
           final marker = 'sbm-e2e-${Random().nextInt(1 << 30)}';
           // Typed as a login name: getty echoes it and asks for a password,
@@ -877,16 +871,21 @@ Future<void> _pve() async {
 
       test('termproxy refuses a wrong ticket in the handshake', () async {
         final ct = guestOf(await pve.load(), VirtGuestKind.lxc, lxcId);
-        final console = await pve.console(ct, VirtConsoleKind.text);
-        final socket = await pve.openConsoleSocket(console);
-        final e = await _virtErr(
-          PveTermShellBackend.start(
-            socket,
-            user: console.user,
-            ticket: 'PVEVNC:00000000::bogus',
-          ),
+        final console =
+            await pve.console(ct, VirtConsoleKind.text) as PveTermConsole;
+        // The port is the real proxy's; only the ticket is wrong.
+        final wrong = PveTermConsole(
+          node: console.node,
+          guestKind: console.guestKind,
+          vmid: console.vmid,
+          port: console.port,
+          ticket: 'PVEVNC:00000000::bogus',
+          user: console.user,
         );
-        expect(e.type, anyOf(VirtErrType.authFailed, VirtErrType.unreachable));
+        final e = await _virtErr(pve.openConsole(wrong));
+        // pveproxy checks the vncticket at the upgrade and answers 401; one
+        // it lets through, termproxy refuses by closing before `OK`.
+        expect(e.type, anyOf(VirtErrType.authFailed, VirtErrType.actionFailed));
       });
 
       test('termproxy on the VM serial port connects (no input)', () async {
@@ -894,12 +893,7 @@ Future<void> _pve() async {
         final detail = await pve.detail(vm);
         expect(detail.consoles, contains(VirtConsoleKind.text));
         final console = await pve.console(vm, VirtConsoleKind.text);
-        final socket = await pve.openConsoleSocket(console);
-        final term = await PveTermShellBackend.start(
-          socket,
-          user: console.user,
-          ticket: console.ticket,
-        );
+        final term = PveTermShellBackend(await pve.openConsole(console));
         expect(term.isClosed, isFalse);
         term.close();
       });
@@ -1094,11 +1088,7 @@ Future<void> _pveTestVm() async {
         final console = await pve.console(await vm(), VirtConsoleKind.text);
         expect(console, isA<PveTermConsole>());
         expect(console.user, tokenId);
-        final term = await PveTermShellBackend.start(
-          await pve.openConsoleSocket(console),
-          user: console.user,
-          ticket: console.ticket,
-        );
+        final term = PveTermShellBackend(await pve.openConsole(console));
         final shell = await term.openShell(width: 80, height: 24);
         final out = _Collector(shell.stdout!);
         try {
@@ -2230,12 +2220,7 @@ Future<void> _pvePassword() async {
           // authenticated by the cookie rather than a token header.
           final console = await pve.console(ct, VirtConsoleKind.text);
           expect(console.user, '$pwdUser@pam');
-          final socket = await pve.openConsoleSocket(console);
-          final term = await PveTermShellBackend.start(
-            socket,
-            user: console.user,
-            ticket: console.ticket,
-          );
+          final term = PveTermShellBackend(await pve.openConsole(console));
           expect(term.isClosed, isFalse);
           term.close();
 
@@ -2421,9 +2406,8 @@ Future<({int result, List<int> types})> _pveVncHandshake(
   // `generate-password`'s: 8 characters, not the ticket.
   expect(console.password, isNot(console.ticket));
   expect(console.password.length, 8);
-  final socket = await pve.openConsoleSocket(console);
-  final tunnel = await WebSocketTunnelChannel.loopbackOnce(
-    WebSocketTunnelChannel(socket),
+  final tunnel = await PveConsoleTunnelChannel.loopbackOnce(
+    PveConsoleTunnelChannel(await pve.openConsole(console)),
   );
   final rfb = _RfbReader(
     await connectTunnel(tunnel),

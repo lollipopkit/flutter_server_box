@@ -49,7 +49,10 @@ final class _UfwViewState extends ConsumerState<_UfwView>
 
   @override
   Future<void> refresh() async {
-    final snapshot = await read(UfwManager.readScript, UfwManager.parse);
+    final snapshot = await read(
+      ufwReadScript(),
+      (output) => ufwParse(output: output),
+    );
     if (snapshot != null && mounted) setState(() => _snapshot = snapshot);
   }
 
@@ -93,7 +96,7 @@ extension on _UfwViewState {
           ContextMenuAction(
             text: l10n.firewallReload,
             icon: Icons.sync,
-            onTap: () => run([UfwManager.reloadCommand]),
+            onTap: () => run([ufwReloadCommand()]),
           ),
         ],
       ),
@@ -214,7 +217,7 @@ extension on _UfwViewState {
                   ContextMenuAction(
                     text: level.name,
                     checked: snapshot.logLevel == level,
-                    onTap: () => run([UfwManager.loggingCommand(level)]),
+                    onTap: () => run([ufwLoggingCommand(level: level)]),
                   ),
               ],
               child: ContextMenuButton.value(
@@ -373,7 +376,7 @@ extension on _UfwViewState {
   String _endpointText(UfwEndpoint endpoint, String? protocol) {
     final parts = [
       ?endpoint.address,
-      ?(endpoint.app ?? UfwRule.portSpec(endpoint.port, protocol)),
+      ?(endpoint.app ?? _portSpec(endpoint.port, protocol)),
     ];
     return parts.isEmpty ? l10n.firewallAnywhere : parts.join(' ');
   }
@@ -387,13 +390,20 @@ extension on _UfwViewState {
     UfwDraftIssue.mixedIpVersions => l10n.firewallMixedIpVersions,
     UfwDraftIssue.invalidInterface => l10n.firewallInvalidInterface,
     UfwDraftIssue.invalidComment => l10n.firewallInvalidComment,
+    UfwDraftIssue.invalidProtocol => l10n.firewallInvalidProtocol,
   };
 
   /// Rules that let each of [accesses] in, put before every other rule.
   List<String> _keepOpen(List<FirewallAccess> accesses) => [
     for (final port in {for (final a in accesses) a.port})
-      UfwManager.allowTcpCommand(port),
+      ufwAllowTcpCommand(port: port),
   ];
+
+  /// A port as `ufw status` prints it: `22/tcp`, `25`.
+  String? _portSpec(String? port, String? protocol) {
+    if (port == null) return null;
+    return protocol == null ? port : '$port/$protocol';
+  }
 }
 
 // --- Actions ---
@@ -401,7 +411,7 @@ extension on _UfwViewState {
 extension on _UfwViewState {
   Future<void> _setEnabled(UfwSnapshot snapshot, bool on) async {
     final commands = await confirm(
-      commands: [on ? UfwManager.enableCommand : UfwManager.disableCommand],
+      commands: [on ? ufwEnableCommand() : ufwDisableCommand()],
       // Turned off, the server takes everything; turned on, it may stop
       // taking this app.
       destructive: true,
@@ -423,7 +433,7 @@ extension on _UfwViewState {
   ) async {
     if (snapshot.policies[chain] == policy) return;
     final commands = await confirm(
-      commands: [UfwManager.policyCommand(chain, policy)],
+      commands: [ufwPolicyCommand(chain: chain, policy: policy)],
       destructive: policy != UfwPolicy.allow,
       effects: chain == UfwChain.incoming
           ? effects(snapshot.reach, (a) => snapshot.reach(a, incoming: policy))
@@ -439,7 +449,7 @@ extension on _UfwViewState {
         l10n.firewallRule,
         '${rule.action.name} ${_endpointText(rule.to, rule.protocol)}',
       ),
-      commands: UfwManager.deleteCommands(rule),
+      commands: ufwDeleteCommands(rule: rule),
       destructive: true,
       effects: effects(
         snapshot.reach,
@@ -455,7 +465,7 @@ extension on _UfwViewState {
   Future<void> _addRule(UfwSnapshot snapshot) async {
     final draft = await _showEditor(snapshot);
     if (draft == null || !mounted) return;
-    final command = UfwManager.addCommand(draft);
+    final command = ufwAddCommand(draft: draft);
     final changes = effects(
       snapshot.reach,
       (a) => snapshot.reach(
@@ -753,7 +763,7 @@ extension on _UfwViewState {
         comment: comment,
         prepend: prepend,
       );
-      if (UfwManager.validateDraft(draft) case final issue?) {
+      if (ufwValidateDraft(draft: draft) case final issue?) {
         Toast.error(_issueText(issue));
         continue;
       }

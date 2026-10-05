@@ -5314,6 +5314,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Kommentar darf kein \' und keine Zeilenumbrüche enthalten.';
 
   @override
+  String get firewallInvalidProtocol => 'Nicht unterstütztes Protokoll.';
+
+  @override
   String get firewallInterfaceIn => 'Eingehende Schnittstelle';
 
   @override

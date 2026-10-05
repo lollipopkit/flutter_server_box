@@ -5242,6 +5242,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Komentar tidak boleh berisi \' atau baris baru.';
 
   @override
+  String get firewallInvalidProtocol => 'Protokol tidak didukung.';
+
+  @override
   String get firewallInterfaceIn => 'Antarmuka masuk';
 
   @override

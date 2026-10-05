@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/utils/pve_console.dart';
 import 'package:server_box/core/utils/pve_termproxy.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
-import 'package:server_box/core/utils/websocket_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -25,7 +25,7 @@ import 'package:server_box/view/page/virt/common.dart';
 /// | Host    | Console | Carried by                                          |
 /// | ------- | ------- | --------------------------------------------------- |
 /// | PVE     | text    | `termproxy` → `vncwebsocket` → [PveTermShellBackend] in the terminal page |
-/// | PVE     | VNC     | `vncproxy` → `vncwebsocket` → [WebSocketTunnelChannel] on a loopback port → the remote desktop engine |
+/// | PVE     | VNC     | `vncproxy` → `vncwebsocket` → [PveConsoleTunnelChannel] on a loopback port → the remote desktop engine |
 /// | libvirt | text    | `virsh console` typed into a shell on the host, by the terminal page |
 /// | libvirt | VNC     | `ServerTcpDialer.loopback` to the display's port → the remote desktop engine |
 ///
@@ -153,12 +153,7 @@ abstract final class VirtConsoleConnect {
         if (console is! PveTermConsole) {
           throw const VirtErr(type: VirtErrType.unsupported);
         }
-        final socket = await host.openPveConsoleSocket(console);
-        return PveTermShellBackend.start(
-          socket,
-          user: console.user,
-          ticket: console.ticket,
-        );
+        return PveTermShellBackend(await host.openPveConsole(console));
       });
     } catch (e) {
       throw TerminalConsoleErr(
@@ -187,9 +182,8 @@ abstract final class VirtConsoleConnect {
         final console = await host.console(guestId, VirtConsoleKind.vnc);
         switch (console) {
           case PveVncConsole():
-            final socket = await host.openPveConsoleSocket(console);
-            final tunnel = await WebSocketTunnelChannel.loopbackOnce(
-              WebSocketTunnelChannel(socket),
+            final tunnel = await PveConsoleTunnelChannel.loopbackOnce(
+              PveConsoleTunnelChannel(await host.openPveConsole(console)),
             );
             return (tunnel: tunnel, password: console.rfbPassword);
           case LibvirtVncConsole(host: final at, :final port):

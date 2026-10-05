@@ -1,91 +1,41 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:server_box/core/utils/pve_console.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
-/// Proxmox VE's `termproxy` protocol, spoken over a node's `vncwebsocket`.
+/// A PVE `termproxy` console as a [ShellBackend], so the terminal page shows
+/// it the way it shows any shell.
 ///
-/// Written against PVE's own client, `pve-xtermjs` (`xterm.js/src/main.js`,
-/// `startConnection`), and the server it talks to, `proxmox-termproxy`:
-///
-/// - The websocket is opened with the `binary` subprotocol; the proxy relays
-///   frame payloads to termproxy's TCP socket byte for byte.
-/// - First, the client sends `<user>:<ticket>\n` — the `user` and `ticket`
-///   `POST .../termproxy` answered. For an API token that user is the token
-///   itself (`root@pam!name`); the bare `root@pam` is refused. termproxy
-///   checks the ticket against the API and answers `OK`, or closes the
-///   connection.
-/// - Then, client to server: `0:<length>:<data>` for input, where `<length>`
-///   is the byte length of the UTF-8 `<data>`; `1:<cols>:<rows>:` to resize;
-///   `2` as a keep-alive, which `main.js` sends every 30 seconds.
-/// - Server to client: raw terminal output in binary frames.
-///
-/// `main.js` sends its messages as text frames; binary frames are sent here,
-/// which carry input that is not valid UTF-8 unharmed.
-///
-/// Verified on PVE 9.2.2 (proxmox-termproxy 2.1.0, pve-xtermjs 6.0.0) by
-/// `test/e2e/virt_real_test.dart`, over an SSH channel and directly:
-/// - `OK` arrives as a binary frame of exactly those two bytes, the output
-///   (a container's getty, `ESC[H ESC[J` first) in the frames after it.
-/// - Input is accepted in binary frames and in text frames alike; resize and
-///   keep-alive leave the session running.
-/// - A refused ticket, or the wrong user beside a good one, gets no answer at
-///   all: the websocket ends without a close frame (1006). So a refusal
-///   reads as the connection closing before `OK`, not as a reply.
-abstract final class PveTermProxy {
-  /// The first message: who the ticket was issued to, and the ticket.
-  static Uint8List auth(String user, String ticket) =>
-      _bytes('$user:$ticket\n');
-
-  /// [data], framed as input.
-  static Uint8List input(List<int> data) {
-    final head = ascii.encode('0:${data.length}:');
-    return Uint8List(head.length + data.length)
-      ..setRange(0, head.length, head)
-      ..setRange(head.length, head.length + data.length, data);
-  }
-
-  /// A new terminal size.
-  static Uint8List resize(int cols, int rows) => _bytes('1:$cols:$rows:');
-
-  /// Keeps an idle connection from being timed out by the proxy.
-  static final keepAlive = _bytes('2');
-
-  /// termproxy's answer to an accepted ticket, before any output.
-  static const accepted = [0x4f, 0x4b]; // "OK"
-
-  /// How often [keepAlive] is sent: `main.js`'s interval.
-  static const keepAliveInterval = Duration(seconds: 30);
-
-  static Uint8List _bytes(String s) => Uint8List.fromList(utf8.encode(s));
-}
-
-/// A termproxy console as a [ShellBackend], so the terminal page shows it the
-/// way it shows any shell.
+/// termproxy itself — the ticket login, the input and resize framing, the
+/// keep-alive — is `sbm_virt::pve::console::Console`'s, behind [PveConsoleLink];
+/// this only carries terminal bytes and sizes.
 ///
 /// One shell per backend: a termproxy ticket and its port are good for one
-/// connection, so a reconnect is a new ticket, a new socket and a new backend.
-/// [isClosed] is true once the socket has ended under the shell, which the
-/// terminal page reads as a lost connection and answers by connecting again;
-/// the shell being closed from this side — a disconnect from the
-/// notification — ends it without that, as closing an SSH channel does.
+/// connection, so a reconnect is a new ticket, a new console and a new
+/// backend. [isClosed] is true once the console has ended under the shell,
+/// which the terminal page reads as a lost connection and answers by
+/// connecting again; the shell being closed from this side — a disconnect
+/// from the notification — ends it without that, as closing an SSH channel
+/// does.
 class PveTermShellBackend implements ShellBackend {
-  PveTermShellBackend._(this._socket);
+  PveTermShellBackend(this._link) {
+    _writer = PveConsoleWriter(_link, onError: (_) => _finish());
+    _output = StreamController<Uint8List>(
+      onResume: () => _resumed?.complete(),
+    );
+    unawaited(_pump());
+  }
 
-  final WebSocket _socket;
+  final PveConsoleLink _link;
+  late final PveConsoleWriter _writer;
 
-  /// Output after `OK`, held until the shell is bound.
-  final _output = StreamController<Uint8List>();
+  /// The console's output, held until the shell is bound.
+  late final StreamController<Uint8List> _output;
+  Completer<void>? _resumed;
   final _done = Completer<void>();
-  final _handshake = Completer<void>();
-  final _pending = BytesBuilder(copy: false);
-  late final StreamSubscription<dynamic> _sub;
-  Timer? _keepAliveTimer;
   PveTermShellSession? _session;
-  bool _accepted = false;
 
   /// [close] was called: the backend is spent.
   bool _closed = false;
@@ -93,114 +43,29 @@ class PveTermShellBackend implements ShellBackend {
   /// The shell was closed from this side, which is an ending, not a loss.
   bool _shellClosed = false;
 
-  static const handshakeTimeout = Duration(seconds: 15);
-
-  /// Authenticates on [socket] — an open `vncwebsocket` for a `termproxy`
-  /// ticket — and answers once termproxy has accepted it.
-  ///
-  /// Throws [VirtErr] with [VirtErrType.unreachable] when the socket ends or
-  /// stays silent before `OK` — which is also how termproxy refuses a ticket
-  /// — and [VirtErrType.authFailed] should it ever answer something else.
-  /// The socket is closed on any failure.
-  static Future<PveTermShellBackend> start(
-    WebSocket socket, {
-    required String user,
-    required String ticket,
-    Duration timeout = handshakeTimeout,
-    Duration keepAlive = PveTermProxy.keepAliveInterval,
-  }) async {
-    final backend = PveTermShellBackend._(socket);
-    backend._listen();
+  /// Reads the console until it ends, no faster than the shell takes it.
+  Future<void> _pump() async {
     try {
-      socket.add(PveTermProxy.auth(user, ticket));
-      await backend._handshake.future.timeout(timeout);
-    } catch (e) {
-      backend.close();
-      if (e is VirtErr) rethrow;
-      throw VirtErr(
-        type: VirtErrType.unreachable,
-        message: e is TimeoutException
-            ? 'termproxy did not answer'
-            : e.toString(),
-        cause: e,
-      );
+      while (!_done.isCompleted) {
+        if (_output.isPaused && _output.hasListener) {
+          await (_resumed = Completer<void>()).future;
+          _resumed = null;
+          continue;
+        }
+        final bytes = await _link.recv();
+        if (bytes == null || _done.isCompleted) break;
+        if (bytes.isNotEmpty) _output.add(bytes);
+      }
+    } catch (_) {
+      // Failed reading: the same ending as the console closing.
     }
-    backend._keepAliveTimer = Timer.periodic(keepAlive, (_) {
-      backend._send(PveTermProxy.keepAlive);
-    });
-    return backend;
-  }
-
-  void _listen() {
-    _sub = _socket.listen(
-      (frame) {
-        final bytes = switch (frame) {
-          final List<int> b => b,
-          final String s => utf8.encode(s),
-          _ => const <int>[],
-        };
-        if (_accepted) {
-          if (bytes.isNotEmpty) _output.add(Uint8List.fromList(bytes));
-          return;
-        }
-        _pending.add(bytes);
-        if (_pending.length < PveTermProxy.accepted.length) return;
-        final head = _pending.takeBytes();
-        if (head[0] != PveTermProxy.accepted[0] ||
-            head[1] != PveTermProxy.accepted[1]) {
-          if (!_handshake.isCompleted) {
-            _handshake.completeError(
-              const VirtErr(
-                type: VirtErrType.authFailed,
-                message: 'termproxy refused the console ticket',
-              ),
-            );
-          }
-          return;
-        }
-        _accepted = true;
-        if (head.length > PveTermProxy.accepted.length) {
-          _output.add(
-            Uint8List.sublistView(head, PveTermProxy.accepted.length),
-          );
-        }
-        if (!_handshake.isCompleted) _handshake.complete();
-      },
-      onError: (Object e, StackTrace s) {
-        if (!_handshake.isCompleted) _handshake.completeError(e, s);
-        _finish();
-      },
-      onDone: () {
-        if (!_handshake.isCompleted) {
-          _handshake.completeError(
-            VirtErr(
-              type: VirtErrType.unreachable,
-              message:
-                  'termproxy closed the connection'
-                  '${_socket.closeReason?.isNotEmpty == true ? ': ${_socket.closeReason}' : ''}',
-            ),
-          );
-        }
-        _finish();
-      },
-      cancelOnError: true,
-    );
+    _finish();
   }
 
   void _finish() {
-    _keepAliveTimer?.cancel();
-    _keepAliveTimer = null;
+    _resumed?.complete();
     if (!_output.isClosed) unawaited(_output.close());
     if (!_done.isCompleted) _done.complete();
-  }
-
-  void _send(List<int> bytes) {
-    if (_done.isCompleted) return;
-    try {
-      _socket.add(bytes);
-    } catch (_) {
-      // Closed under us; `onDone` reports it.
-    }
   }
 
   @override
@@ -256,12 +121,9 @@ class PveTermShellBackend implements ShellBackend {
   }
 
   void _hangUp() {
-    _keepAliveTimer?.cancel();
-    _keepAliveTimer = null;
-    unawaited(_socket.close(WebSocketStatus.normalClosure).catchError((_) {}));
     // Not waiting for the close handshake: a peer that never answers it must
     // not keep the session open.
-    unawaited(_sub.cancel());
+    unawaited(_link.close().catchError((_) {}));
     _finish();
   }
 }
@@ -281,14 +143,14 @@ class PveTermShellSession implements ShellSession {
 
   @override
   void write(List<int> data) {
-    if (data.isEmpty) return;
-    _backend._send(PveTermProxy.input(data));
+    if (data.isEmpty || _backend._done.isCompleted) return;
+    unawaited(_backend._writer.send(data));
   }
 
   @override
   void resizeTerminal(int width, int height) {
-    if (width <= 0 || height <= 0) return;
-    _backend._send(PveTermProxy.resize(width, height));
+    if (width <= 0 || height <= 0 || _backend._done.isCompleted) return;
+    unawaited(_backend._writer.resize(width, height));
   }
 
   @override

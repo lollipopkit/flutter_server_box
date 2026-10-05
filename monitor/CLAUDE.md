@@ -308,9 +308,10 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   `/virt/console/ws` (`api/ws/virt_console.rs`) speaks `/stream/ws`'s
   framing (`ready`/`error`/`exit`, binary bytes) so the panel's
   `RelayChannel` drives noVNC on it; it dials the libvirt display, or opens
-  PVE's `vncwebsocket` with the session (`sbm_virt::pve::Client::open_console`)
-  and does termproxy's ticket, `OK`, input framing, resize and keep-alive
-  itself, so the console ticket never reaches the browser. A libvirt serial
+  PVE's `vncwebsocket` with the session (`sbm_virt::pve::Client::open_console`,
+  whose `pve::console::Console` does termproxy's ticket, `OK`, input framing,
+  resize and keep-alive — the app's console carries the same one), so the
+  console ticket never reaches the browser. A libvirt serial
   console answers the `virsh console` command to run in the panel terminal
   (it needs a PTY). `POST /virt/snapshots` lists a guest's snapshots with
   what a new one may be (`refusal`, `memory`, libvirt's `chain` and the pools

@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Звідки і Куди мають бути обидва IPv4 або обидва IPv6.",
   "firewallInvalidInterface": "Неприпустима назва інтерфейсу.",
   "firewallInvalidComment": "Коментар не може містити ' або переноси рядків.",
+  "firewallInvalidProtocol": "Непідтримуваний протокол.",
   "firewallInterfaceIn": "Вхідний інтерфейс",
   "firewallInterfaceOut": "Вихідний інтерфейс",
   "firewallSourcePort": "Порт джерела",

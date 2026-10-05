@@ -558,9 +558,9 @@ impl Client {
     /// Opens `console`'s `vncwebsocket` with the session's credentials, over
     /// the same connection rules and certificate decision as the API calls.
     /// A text console has been logged in to termproxy (its ticket sent, `OK`
-    /// read) when this returns; the caller frames what it sends
-    /// ([`super::termproxy`]).
-    pub async fn open_console(&self, console: &PveConsole) -> Result<ConsoleSocket> {
+    /// read) when this returns; [`Console`](super::console::Console) frames
+    /// what is sent on it.
+    pub async fn open_console(&self, console: &PveConsole) -> Result<super::console::Console> {
         use futures_util::{SinkExt, StreamExt};
         use tokio_tungstenite::tungstenite::Message;
         let session = self.session_now().await?;
@@ -576,6 +576,7 @@ impl Client {
             None,
         )
         .await;
+        let mut first = Vec::new();
         if console.kind == ConsoleKind::Text {
             let refused = || Error::msg(ErrorKind::ActionFailed, "termproxy did not accept the ticket");
             socket
@@ -583,16 +584,26 @@ impl Client {
                 .await
                 .map_err(|e| Error::msg(ErrorKind::Unreachable, e.to_string()))?;
             // A refused ticket gets no answer: the socket ends before `OK`.
-            loop {
-                match tokio::time::timeout(Duration::from_secs(15), socket.next()).await {
-                    Ok(Some(Ok(Message::Binary(b)))) if b.as_ref() == super::termproxy::ACCEPTED => break,
-                    Ok(Some(Ok(Message::Text(t)))) if t.as_bytes() == super::termproxy::ACCEPTED => break,
+            // `OK` may come split, or with the first output in its frame. One
+            // deadline for the whole handshake: frames that say nothing do
+            // not extend it.
+            let mut handshake = super::console::Handshake::default();
+            let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+            first = loop {
+                let bytes = match tokio::time::timeout_at(deadline, socket.next()).await {
+                    Ok(Some(Ok(Message::Binary(b)))) => b.to_vec(),
+                    Ok(Some(Ok(Message::Text(t)))) => t.as_bytes().to_vec(),
                     Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => continue,
                     _ => return Err(refused()),
+                };
+                match handshake.feed(&bytes) {
+                    None => continue,
+                    Some(Ok(rest)) => break rest,
+                    Some(Err(())) => return Err(refused()),
                 }
-            }
+            };
         }
-        Ok(socket)
+        Ok(super::console::Console::new(socket, console.kind, first))
     }
 
     /// Waits for the task `upid` on `node` to stop. Its exit status other

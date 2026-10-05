@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "출발지와 목적지는 모두 IPv4이거나 모두 IPv6이어야 합니다.",
   "firewallInvalidInterface": "잘못된 인터페이스 이름입니다.",
   "firewallInvalidComment": "설명에는 ' 또는 줄바꿈을 넣을 수 없습니다.",
+  "firewallInvalidProtocol": "지원하지 않는 프로토콜입니다.",
   "firewallInterfaceIn": "수신 인터페이스",
   "firewallInterfaceOut": "발신 인터페이스",
   "firewallSourcePort": "출발지 포트",

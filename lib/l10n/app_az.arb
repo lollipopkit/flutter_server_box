@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Mənbə və Təyinat ya hər ikisi IPv4, ya da hər ikisi IPv6 olmalıdır.",
   "firewallInvalidInterface": "Yanlış interfeys adı.",
   "firewallInvalidComment": "Şərhdə ' və ya sətir sonu ola bilməz.",
+  "firewallInvalidProtocol": "Dəstəklənməyən protokol.",
   "firewallInterfaceIn": "Daxil olan interfeys",
   "firewallInterfaceOut": "Çıxan interfeys",
   "firewallSourcePort": "Mənbə portu",

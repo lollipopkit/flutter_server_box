@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Van en Naar moeten beide IPv4 of beide IPv6 zijn.",
   "firewallInvalidInterface": "Ongeldige interfacenaam.",
   "firewallInvalidComment": "De opmerking mag geen ' of regeleinden bevatten.",
+  "firewallInvalidProtocol": "Protocol niet ondersteund.",
   "firewallInterfaceIn": "Inkomende interface",
   "firewallInterfaceOut": "Uitgaande interface",
   "firewallSourcePort": "Bronpoort",

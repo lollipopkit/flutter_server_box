@@ -5248,6 +5248,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'The comment cannot contain \' or line breaks.';
 
   @override
+  String get firewallInvalidProtocol => 'Unsupported protocol.';
+
+  @override
   String get firewallInterfaceIn => 'Incoming interface';
 
   @override

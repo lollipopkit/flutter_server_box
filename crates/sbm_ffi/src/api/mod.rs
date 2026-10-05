@@ -7,6 +7,7 @@ pub mod cron;
 pub mod desktop;
 pub mod file;
 pub mod files;
+pub mod firewall;
 pub mod hardware;
 pub mod parser;
 pub mod proc;

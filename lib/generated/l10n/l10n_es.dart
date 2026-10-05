@@ -5318,6 +5318,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'El comentario no puede contener \' ni saltos de línea.';
 
   @override
+  String get firewallInvalidProtocol => 'Protocolo no admitido.';
+
+  @override
   String get firewallInterfaceIn => 'Interfaz de entrada';
 
   @override

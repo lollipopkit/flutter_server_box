@@ -8985,6 +8985,12 @@ abstract class AppLocalizations {
   /// **'The comment cannot contain \' or line breaks.'**
   String get firewallInvalidComment;
 
+  /// Validation error for a firewall rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported protocol.'**
+  String get firewallInvalidProtocol;
+
   /// Field label: the interface a packet arrives on.
   ///
   /// In en, this message translates to:

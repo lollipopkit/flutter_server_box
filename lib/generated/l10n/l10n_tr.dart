@@ -5236,6 +5236,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get firewallInvalidComment => 'Açıklama \' veya satır sonu içeremez.';
 
   @override
+  String get firewallInvalidProtocol => 'Desteklenmeyen protokol.';
+
+  @override
   String get firewallInterfaceIn => 'Gelen arayüzü';
 
   @override

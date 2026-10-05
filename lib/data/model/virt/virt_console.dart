@@ -12,7 +12,7 @@ sealed class VirtConsole {
 }
 
 /// A PVE console: `termproxy` or `vncproxy`, reached through the node's
-/// `vncwebsocket`, which `PveBackend.openConsoleSocket` opens over the same
+/// `vncwebsocket`, which `PveBackend.openConsole` opens over the same
 /// transport and login as the API calls.
 sealed class PveConsole extends VirtConsole {
   const PveConsole({
@@ -37,21 +37,13 @@ sealed class PveConsole extends VirtConsole {
   /// The PVE user the ticket was issued to.
   final String user;
 
-  /// `vncwebsocket`'s path and query, relative to the API's origin.
-  String get websocketPath =>
-      '/api2/json/nodes/${Uri.encodeComponent(node)}/${guestKind.name}/$vmid'
-      '/vncwebsocket?port=$port&vncticket=${Uri.encodeQueryComponent(ticket)}';
-
   @override
   String toString() =>
       '$runtimeType(node: $node, ${guestKind.name}/$vmid, port: $port)';
 }
 
-/// PVE `termproxy`: an xterm.js-protocol text console.
-///
-/// After the websocket opens, the client sends `<user>:<ticket>\n` first;
-/// then `0:<len>:<data>` for input, `1:<cols>:<rows>:` to resize, `2` as a
-/// keep-alive. Output arrives as raw terminal bytes.
+/// PVE `termproxy`: an xterm.js-protocol text console, spoken by
+/// `sbm_virt::pve::console::Console`.
 final class PveTermConsole extends PveConsole {
   const PveTermConsole({
     required super.node,
