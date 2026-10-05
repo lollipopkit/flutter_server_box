@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:server_box/data/model/server/cron_schedule.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 /// A wall clock reads the same whatever timezone the device is in, which is
 /// why every time here is UTC-flagged and none of them is an instant.
 DateTime _wall(
@@ -14,6 +16,7 @@ DateTime _wall(
 
 void main() {
   setUpAll(() async {
+    await initRustLibForTest();
     // [CronSchedule.weekdayName] formats through intl, which the app has
     // loaded by the time a page is on screen and a test does not.
     await initializeDateFormatting('en');
@@ -115,7 +118,7 @@ void main() {
     });
 
     test('has none for @reboot', () {
-      expect(CronSchedule.reboot.nextRun(_wall(2026, 3, 1)), isNull);
+      expect(CronSchedule.tryParse('@reboot')!.nextRun(_wall(2026, 3, 1)), isNull);
     });
   });
 
@@ -159,10 +162,11 @@ void main() {
 
   group('clock', () {
     test('reads what date printed', () {
-      final clock = CronClock.tryParse(
-        '1772000000 +0800',
+      final clock = CronClock.fromServer(
+        epochSeconds: 1772000000,
+        offsetMinutes: 480,
         now: DateTime.fromMillisecondsSinceEpoch(1772000000 * 1000, isUtc: true),
-      )!;
+      );
 
       expect(clock.offset, const Duration(hours: 8));
       expect(clock.skew, Duration.zero);
@@ -170,10 +174,11 @@ void main() {
     });
 
     test('carries a negative offset and a clock that disagrees', () {
-      final clock = CronClock.tryParse(
-        '1772000060 -0330',
+      final clock = CronClock.fromServer(
+        epochSeconds: 1772000060,
+        offsetMinutes: -210,
         now: DateTime.fromMillisecondsSinceEpoch(1772000000 * 1000, isUtc: true),
-      )!;
+      );
 
       expect(clock.offset, const Duration(hours: -3, minutes: -30));
       expect(clock.skew, const Duration(minutes: 1));
@@ -185,12 +190,6 @@ void main() {
 
       expect(clock.toInstant(wall), DateTime.utc(2026, 2, 28, 18, 0));
       expect(clock.toWall(clock.toInstant(wall)), wall);
-    });
-
-    test('says nothing for a date without %z', () {
-      expect(CronClock.tryParse('1772000000 %z'), isNull);
-      expect(CronClock.tryParse(''), isNull);
-      expect(CronClock.tryParse('1772000000'), isNull);
     });
   });
 }

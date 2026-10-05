@@ -1,12 +1,4 @@
-// TODO(migration): ported to `sbm_parser::container` (commands, model and
-// parsers), which the monitor agent's panel already reads. The app still runs
-// this copy. Port this file's fixture tests to Rust first (there is no
-// `container_compat.rs` yet), expose the parsers over FFI, then delete the
-// Dart parsing here and in `lib/data/model/container/` once the FFI result is
-// asserted identical. Every container fix lands twice until then.
-
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -14,7 +6,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/container/disk_usage.dart';
@@ -24,216 +15,23 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/src/rust/api/container.dart' as ffi;
 
 part 'container.freezed.dart';
 part 'container.g.dart';
 
-final _dockerNotFound = RegExp(
-  r"command not found|Unknown command|Command '\w+' not found",
-);
-final _podmanEmulationMsg = 'Emulate Docker CLI using podman';
-const _containerSeparatorPrefix = 'SrvBoxContainerSep';
-
-// Forwarder to the canonical quoter so part files can reference it inside
-// extension method bodies (imported top-level names are not visible there).
-String shellSingleQuote(String value) => sh.shellSingleQuote(value);
-
-String buildContainerRunCmd({
-  required String image,
-  required String name,
-  required Iterable<String> extraArgs,
-}) {
-  final imageArg = shellSingleQuote(image);
-  final args = extraArgs.map(shellSingleQuote).join(' ');
-  final suffix = args.isEmpty ? imageArg : '$args $imageArg';
-  final nameArg = name.isEmpty ? '' : ' --name ${shellSingleQuote(name)}';
-  return 'run -itd$nameArg $suffix';
-}
-
-List<String> parseContainerRunArgs(String raw) {
-  final args = <String>[];
-  final current = StringBuffer();
-  String? quote;
-  var escaping = false;
-  var escapingInDoubleQuotes = false;
-  var tokenStarted = false;
-
-  void finishToken() {
-    if (!tokenStarted) return;
-    args.add(current.toString());
-    current.clear();
-    tokenStarted = false;
-  }
-
-  for (final rune in raw.runes) {
-    final char = String.fromCharCode(rune);
-    if (escaping) {
-      if (escapingInDoubleQuotes &&
-          char != r'$' &&
-          char != '`' &&
-          char != '"' &&
-          char != r'\' &&
-          char != '\n') {
-        current.write(r'\');
-      }
-      if (char != '\n' || !escapingInDoubleQuotes) current.write(char);
-      tokenStarted = true;
-      escaping = false;
-      escapingInDoubleQuotes = false;
-      continue;
-    }
-    if (quote != null) {
-      if (char == quote) {
-        quote = null;
-      } else if (char == r'\' && quote == '"') {
-        escaping = true;
-        escapingInDoubleQuotes = true;
-      } else {
-        current.write(char);
-      }
-      tokenStarted = true;
-      continue;
-    }
-    if (char == "'" || char == '"') {
-      quote = char;
-      tokenStarted = true;
-    } else if (char == r'\') {
-      escaping = true;
-      tokenStarted = true;
-    } else if (RegExp(r'\s').hasMatch(char)) {
-      finishToken();
-    } else {
-      current.write(char);
-      tokenStarted = true;
-    }
-  }
-  if (quote != null || escaping) {
-    throw const FormatException('Unterminated quoted container argument');
-  }
-  finishToken();
-  return args.toList(growable: false);
-}
-
-List<ContainerImg> parseContainerImagesOutput(String raw, ContainerType type) {
-  final trimmed = raw.trim();
-  final images = <ContainerImg>[];
-  for (final row in _containerImageRows(trimmed)) {
-    if (row.trim().isEmpty) continue;
-    try {
-      images.add(ContainerImg.fromRawJson(row, type));
-    } catch (e, trace) {
-      Loggers.app.warning('Skip malformed container image row', e, trace);
-    }
-  }
-  return images.toList(growable: false);
-}
-
-Iterable<String> _containerImageRows(String raw) sync* {
-  if (!raw.startsWith('[')) {
-    yield* raw.split('\n');
-    return;
-  }
-  try {
-    final decoded = json.decode(raw);
-    if (decoded is List) {
-      for (final row in decoded) {
-        yield json.encode(row);
-      }
-      return;
-    }
-  } catch (e, trace) {
-    Loggers.app.warning('Recover malformed container image array', e, trace);
-  }
-  yield* _completeJsonObjects(raw);
-}
-
-Iterable<String> _completeJsonObjects(String raw) sync* {
-  var start = -1;
-  var depth = 0;
-  var inString = false;
-  var escaping = false;
-  for (var index = 0; index < raw.length; index++) {
-    final char = raw[index];
-    if (inString) {
-      if (escaping) {
-        escaping = false;
-      } else if (char == r'\') {
-        escaping = true;
-      } else if (char == '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (char == '"') {
-      inString = true;
-    } else if (char == '{') {
-      if (depth == 0) start = index;
-      depth++;
-    } else if (char == '}' && depth > 0) {
-      depth--;
-      if (depth == 0 && start >= 0) {
-        yield raw.substring(start, index + 1);
-        start = -1;
-      }
-    }
-  }
-}
-
-List<({String id, String raw})> parseContainerStatsRows(Iterable<String> rows) {
-  final parsed = <({String id, String raw})>[];
-  for (final row in rows) {
-    if (row.trim().isEmpty) continue;
-    try {
-      final data = json.decode(row) as Map<String, dynamic>;
-      final statsId = (data['ID'] ?? data['Id'] ?? data['ContainerID'])
-          ?.toString()
-          .trim();
-      if (statsId == null || statsId.isEmpty) continue;
-      parsed.add((id: statsId, raw: row));
-    } catch (e, trace) {
-      Loggers.app.warning('Skip malformed container stats row', e, trace);
-    }
-  }
-  return parsed.toList(growable: false);
-}
-
-String? findContainerStatsRow(
-  Iterable<({String id, String raw})> rows,
-  String? containerId,
-) {
-  final id = containerId?.trim();
-  if (id == null || id.isEmpty) return null;
-  for (final row in rows) {
-    final prefixMatch =
-        id.length >= 12 &&
-        row.id.length >= 12 &&
-        (id.startsWith(row.id) || row.id.startsWith(id));
-    if (id == row.id || prefixMatch) return row.raw;
-  }
-  return null;
-}
-
-/// Build a non-interactive image prune command.
+/// What a user typed as `docker run` arguments, split the way a shell would
+/// without evaluating anything (`sbm_parser::container::parse_run_args`).
 ///
-/// Without [allUnused], only dangling images are removed. `-f` is always
-/// included because an interactive confirmation cannot be answered reliably
-/// through the remote execution flow.
-String buildContainerImagePruneCmd({bool allUnused = false}) {
-  final flags = [if (allUnused) '-a', '-f'].join(' ');
-  return 'image prune $flags';
-}
-
-/// Build a non-interactive system prune command with an explicit scope.
-String buildContainerSystemPruneCmd({
-  bool allUnusedImages = false,
-  bool includeVolumes = false,
-}) {
-  final flags = [
-    if (allUnusedImages) '-a',
-    if (includeVolumes) '--volumes',
-    '-f',
-  ].join(' ');
-  return 'system prune $flags';
+/// Throws a [FormatException] for an unterminated quote.
+List<String> parseContainerRunArgs(String raw) {
+  try {
+    return ffi.containerParseRunArgs(raw: raw);
+  } on FormatException {
+    rethrow;
+  } catch (e) {
+    throw FormatException('$e', raw);
+  }
 }
 
 enum ContainerRefreshTarget { containers, images }
@@ -357,12 +155,16 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     try {
       final probe = switch (target) {
-        ContainerRefreshTarget.containers => ContainerCmdType.ps,
-        ContainerRefreshTarget.images => ContainerCmdType.images,
+        ContainerRefreshTarget.containers => 'ps',
+        ContainerRefreshTarget.images => 'images',
       };
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
       final res = await exec.run(
-        _wrap(probe.exec(type), type: type, containerHost: containerHost),
+        _wrap(
+          ffi.containerCommand(runtimeName: type.name, kind: probe),
+          type: type,
+          containerHost: containerHost,
+        ),
       );
       if (completer.isCompleted) return;
       if (res.combined.toLowerCase().contains('permission denied')) {
@@ -407,15 +209,17 @@ class ContainerNotifier extends _$ContainerNotifier {
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
       final result = await exec.runWithSudo(
         _wrap(
-          ContainerCmdType.df.exec(type),
+          ffi.containerCommand(runtimeName: type.name, kind: 'df'),
           sudo: needSudo,
           type: type,
           containerHost: containerHost,
         ),
         password: password,
       );
-      final usage = ContainerDiskUsage.parse(result.stdout);
-      if (usage != null) state = state.copyWith(diskUsage: usage);
+      final usage = ffi.containerParseDiskUsage(raw: result.stdout);
+      if (usage != null) {
+        state = state.copyWith(diskUsage: ContainerDiskUsage.fromFfi(usage));
+      }
     } catch (e, trace) {
       Loggers.app.warning('Container disk usage failed', e, trace);
     }
@@ -488,21 +292,27 @@ class ContainerNotifier extends _$ContainerNotifier {
     final includeStats = Stores.setting.containerParseStat.fetch();
     final commands = switch (target) {
       ContainerRefreshTarget.containers => [
-        if (state.version == null) ContainerCmdType.version,
-        ContainerCmdType.ps,
-        if (includeStats) ContainerCmdType.stats,
+        if (state.version == null) 'version',
+        'ps',
+        if (includeStats) 'stats',
       ],
       ContainerRefreshTarget.images => [
-        if (state.version == null) ContainerCmdType.version,
-        ContainerCmdType.images,
+        if (state.version == null) 'version',
+        'images',
       ],
     };
 
+    // Fresh per refresh, so an answer to the previous one cannot be read as
+    // an answer to this one.
     final separator =
-        '${_containerSeparatorPrefix}_'
+        '${ffi.containerSeparatorPrefix()}_'
         '${DateTime.now().microsecondsSinceEpoch}_$refreshGeneration';
     final cmd = _wrap(
-      ContainerCmdType.execSelected(commands, type, separator: separator),
+      ffi.containerBatchCommand(
+        runtimeName: type.name,
+        kinds: commands,
+        separator: separator,
+      ),
       sudo: needSudo,
       type: type,
       containerHost: containerHost,
@@ -514,8 +324,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     // on stderr, and dropping it left the page quoting the separators the
     // script echoes between commands.
     String errOut = '';
-    var isPodmanEmulation = false;
-    final podmanBuffer = StringBuffer();
     try {
       // Asked for rather than held: a server reached over its monitor agent
       // has no connection sitting there until something needs one, and a
@@ -525,16 +333,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         await _restartAfterServerChange(target, isAuto);
         return;
       }
-      result = await exec.runWithSudo(
-        cmd,
-        password: password,
-        onStderr: (data) {
-          podmanBuffer.write(data);
-          if (podmanBuffer.toString().contains(_podmanEmulationMsg)) {
-            isPodmanEmulation = true;
-          }
-        },
-      );
+      result = await exec.runWithSudo(cmd, password: password);
       if (serverChanged() || !serverNotifier.isExecCurrent(exec, spi)) {
         await _restartAfterServerChange(target, isAuto);
         return;
@@ -585,10 +384,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    /// Code 127 means command not found
-    if (result.exitCode == 127 ||
-        errOut.contains(_dockerNotFound) ||
-        raw.contains(_dockerNotFound)) {
+    // Exit 127, a shell's "command not found", or Podman's own "not found".
+    if (ffi.containerIsNotInstalled(
+      runtimeName: type.name,
+      stdout: raw,
+      stderr: errOut,
+      exitCode: result.exitCode ?? -1,
+    )) {
       _setRefreshError(
         target,
         // Carries what the shell said: "not installed" is a reading of that
@@ -632,28 +434,14 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    /// Pre-parse Podman detection
-    if (isPodmanEmulation) {
+    // Before parsing: a `podman` answering as `docker` answers every command
+    // successfully, so nothing downstream would notice.
+    if (ffi.containerIsPodmanEmulation(stderr: errOut)) {
       _setRefreshError(
         target,
         ContainerErr(
           type: ContainerErrType.podmanDetected,
           message: l10n.podmanDockerEmulationDetected,
-        ),
-      );
-      await _finishRefresh(refreshGeneration);
-      return;
-    }
-
-    // Report a missing Podman executable as an installation error.
-    if (type == ContainerType.podman &&
-        (errOut.contains('podman: not found') ||
-            raw.contains('podman: not found'))) {
-      _setRefreshError(
-        target,
-        ContainerErr(
-          type: ContainerErrType.notInstalled,
-          message: containerExecErrorDetail(result),
         ),
       );
       await _finishRefresh(refreshGeneration);
@@ -675,7 +463,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       await _finishRefresh(refreshGeneration);
       return;
     }
-    final output = <ContainerCmdType, String>{
+    final output = <String, String>{
       for (var index = 0; index < commands.length; index++)
         commands[index]: segments[index],
     };
@@ -688,48 +476,37 @@ class ContainerNotifier extends _$ContainerNotifier {
     _clearRefreshError(target);
 
     // Parse version only until it has been cached for the selected runtime.
-    final verRaw = output[ContainerCmdType.version];
+    final verRaw = output['version'];
     if (verRaw != null) {
-      try {
-        final version = json.decode(verRaw)['Client']['Version'];
+      final version = ffi.containerParseVersion(raw: verRaw);
+      if (version != null) {
         state = state.copyWith(version: version);
-      } catch (e, trace) {
+      } else {
         if (_refreshError(target) == null) {
           _setRefreshError(
             target,
-            ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
+            ContainerErr(
+              type: ContainerErrType.invalidVersion,
+              message: verRaw.trim().isEmpty ? libL10n.empty : verRaw.trim(),
+            ),
             clearData: false,
           );
         }
-        Loggers.app.warning('Container version failed', e, trace);
+        Loggers.app.warning('Container version unreadable: $verRaw');
       }
     }
 
     if (target == ContainerRefreshTarget.containers) {
-      // Parse ps
-      final psRaw = output[ContainerCmdType.ps]!;
+      // ps, with each container's stats row when they were asked for. Rows
+      // either cannot read are skipped rather than emptying the list.
       try {
-        if (type == ContainerType.docker) {
-          final lines = psRaw.split('\n');
-
-          /// Due to the fetched data is not in json format, skip table header
-          final headerIdx = lines.indexWhere((element) {
-            return element.trimLeft().startsWith('CONTAINER ID');
-          });
-          if (headerIdx != -1) lines.removeAt(headerIdx);
-          lines.removeWhere((element) => element.isEmpty);
-          final items = <ContainerPs>[];
-          for (final line in lines) {
-            try {
-              items.add(ContainerPs.fromRaw(line, type));
-            } on FormatException catch (e, trace) {
-              Loggers.app.warning('Skip malformed container ps row', e, trace);
-            }
-          }
-          state = state.copyWith(items: items);
-        } else {
-          state = state.copyWith(items: parsePodmanPsOutput(psRaw));
-        }
+        final items = await ffi.containerParsePs(
+          runtimeName: type.name,
+          ps: output['ps']!,
+          stats: output['stats'],
+          version: state.version,
+        );
+        state = state.copyWith(items: items.map(ContainerPs.fromFfi).toList());
       } catch (e, trace) {
         if (_refreshError(target) == null) {
           _setRefreshError(
@@ -739,44 +516,16 @@ class ContainerNotifier extends _$ContainerNotifier {
         }
         Loggers.app.warning('Container ps failed', e, trace);
       }
-
-      // Parse stats
-      final statsRaw = output[ContainerCmdType.stats];
-      if (statsRaw != null) {
-        try {
-          final statsRows = parseContainerStatsRows(statsRaw.split('\n'));
-          final items = state.items;
-          if (items == null) {
-            await _finishRefresh(refreshGeneration);
-            return;
-          }
-
-          for (var item in items) {
-            final statsLine = findContainerStatsRow(statsRows, item.id);
-            if (statsLine == null) continue;
-            try {
-              item.parseStats(statsLine, state.version);
-            } catch (e, trace) {
-              Loggers.app.warning('Skip malformed container stats', e, trace);
-            }
-          }
-        } catch (e, trace) {
-          if (_refreshError(target) == null) {
-            _setRefreshError(
-              target,
-              ContainerErr(type: ContainerErrType.parseStats, message: '$e'),
-              clearData: false,
-            );
-          }
-          Loggers.app.warning('Parse container stats: $statsRaw', e, trace);
-        }
-      }
     } else {
       // Parse images
-      final imageRaw = output[ContainerCmdType.images]!;
       try {
-        final images = parseContainerImagesOutput(imageRaw, type);
-        state = state.copyWith(images: images);
+        final images = await ffi.containerParseImages(
+          runtimeName: type.name,
+          raw: output['images']!,
+        );
+        state = state.copyWith(
+          images: images.map(ContainerImg.fromFfi).toList(),
+        );
       } catch (e, trace) {
         if (_refreshError(target) == null) {
           _setRefreshError(
@@ -847,57 +596,93 @@ class ContainerNotifier extends _$ContainerNotifier {
     );
   }
 
-  Future<ContainerErr?> stop(String id) async => await run(
-    'stop ${shellSingleQuote(id)}',
-    refreshTarget: ContainerRefreshTarget.containers,
+  String get _runtime => state.type.name;
+
+  Future<ContainerErr?> _action(
+    String action, {
+    String? id,
+    bool force = false,
+    ContainerRefreshTarget? refreshTarget = ContainerRefreshTarget.containers,
+  }) => run(
+    ffi.containerActionCommand(
+      runtimeName: _runtime,
+      action: action,
+      id: id,
+      force: force,
+    ),
+    refreshTarget: refreshTarget,
   );
 
-  Future<ContainerErr?> start(String id) async => await run(
-    'start ${shellSingleQuote(id)}',
-    refreshTarget: ContainerRefreshTarget.containers,
+  Future<ContainerErr?> stop(String id) => _action('stop', id: id);
+
+  Future<ContainerErr?> start(String id) => _action('start', id: id);
+
+  Future<ContainerErr?> delete(String id, bool force) =>
+      _action('remove', id: id, force: force);
+
+  Future<ContainerErr?> restart(String id) => _action('restart', id: id);
+
+  Future<ContainerErr?> pruneContainers() => _action('prune_containers');
+
+  Future<ContainerErr?> pruneVolumes() =>
+      _action('prune_volumes', refreshTarget: null);
+
+  Future<ContainerErr?> removeImage(String id) => run(
+    ffi.containerImageRemoveCommand(runtimeName: _runtime, id: id),
+    refreshTarget: ContainerRefreshTarget.images,
   );
 
-  Future<ContainerErr?> delete(String id, bool force) async {
-    if (force) {
-      return await run(
-        'rm -f ${shellSingleQuote(id)}',
-        refreshTarget: ContainerRefreshTarget.containers,
+  Future<ContainerErr?> pullImage(String reference) => run(
+    ffi.containerImagePullCommand(runtimeName: _runtime, reference: reference),
+    refreshTarget: ContainerRefreshTarget.images,
+  );
+
+  /// The command [pruneImages] runs, for the dialog that asks first.
+  String imagePruneCommand({bool allUnused = false}) =>
+      ffi.containerImagePruneCommand(
+        runtimeName: _runtime,
+        allUnused: allUnused,
       );
-    }
-    return await run(
-      'rm ${shellSingleQuote(id)}',
-      refreshTarget: ContainerRefreshTarget.containers,
-    );
-  }
 
-  Future<ContainerErr?> restart(String id) async => await run(
-    'restart ${shellSingleQuote(id)}',
-    refreshTarget: ContainerRefreshTarget.containers,
+  /// The command [pruneSystem] runs, for the dialog that asks first.
+  String systemPruneCommand({
+    bool allUnusedImages = false,
+    bool includeVolumes = false,
+  }) => ffi.containerSystemPruneCommand(
+    runtimeName: _runtime,
+    allUnusedImages: allUnusedImages,
+    includeVolumes: includeVolumes,
   );
 
-  Future<ContainerErr?> pruneImages({bool allUnused = false}) async =>
-      await run(
-        buildContainerImagePruneCmd(allUnused: allUnused),
-        refreshTarget: ContainerRefreshTarget.images,
-      );
+  /// `run -itd`, every part quoted; [extraArgs] from [parseContainerRunArgs].
+  String runCommand({
+    required String image,
+    required String name,
+    required List<String> extraArgs,
+  }) => ffi.containerRunCommand(
+    runtimeName: _runtime,
+    image: image,
+    name: name,
+    extraArgs: extraArgs,
+  );
 
-  Future<ContainerErr?> pruneContainers() async {
-    return await run(
-      'container prune -f',
-      refreshTarget: ContainerRefreshTarget.containers,
-    );
-  }
+  String logsCommand(String id) =>
+      ffi.containerLogsCommand(runtimeName: _runtime, id: id);
 
-  Future<ContainerErr?> pruneVolumes() async {
-    return await run('volume prune -f', refreshTarget: null);
-  }
+  String shellCommand(String id) =>
+      ffi.containerShellCommand(runtimeName: _runtime, id: id);
+
+  Future<ContainerErr?> pruneImages({bool allUnused = false}) => run(
+    imagePruneCommand(allUnused: allUnused),
+    refreshTarget: ContainerRefreshTarget.images,
+  );
 
   Future<ContainerErr?> pruneSystem({
     bool allUnusedImages = false,
     bool includeVolumes = false,
   }) async {
     final result = await run(
-      buildContainerSystemPruneCmd(
+      systemPruneCommand(
         allUnusedImages: allUnusedImages,
         includeVolumes: includeVolumes,
       ),
@@ -922,12 +707,15 @@ class ContainerNotifier extends _$ContainerNotifier {
     String cmd, {
     ContainerRefreshTarget? refreshTarget = ContainerRefreshTarget.containers,
   }) async {
-    // Read before the engine prefix is prepended, so the verb is what it says
-    // rather than something sliced back off by the length of `type.name`.
-    // `Redact.command` keeps the verb and drops the argument, which is a
-    // container the user named.
+    // The runtime's name is cut off first, so the verb is what
+    // `Redact.command` keeps; it drops the argument, which is a container the
+    // user named.
     final engine = state.type.name;
-    final verb = Diag.enabled ? Redact.command(cmd) : '';
+    final verb = Diag.enabled
+        ? Redact.command(
+            cmd.startsWith('$engine ') ? cmd.substring(engine.length + 1) : cmd,
+          )
+        : '';
     if (Diag.enabled) {
       Diag.crumb(
         SbDiag.container,
@@ -970,11 +758,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     final generation = _refreshGeneration;
     final type = state.type;
     final containerHost = Stores.container.fetch(hostId, type);
-
-    cmd = switch (type) {
-      ContainerType.docker => 'docker $cmd',
-      ContainerType.podman => 'podman $cmd',
-    };
 
     final target = refreshTarget ?? ContainerRefreshTarget.containers;
     final sudo = _sudoCompleters[target]!;
@@ -1035,7 +818,12 @@ class ContainerNotifier extends _$ContainerNotifier {
       return ContainerErr(type: ContainerErrType.unknown, message: detail);
     }
     if (!result.succeeded) {
-      if (result.exitCode == 127 || detail.contains(_dockerNotFound)) {
+      if (ffi.containerIsNotInstalled(
+        runtimeName: type.name,
+        stdout: '',
+        stderr: detail,
+        exitCode: result.exitCode ?? -1,
+      )) {
         await _finishRun();
         return ContainerErr(
           type: ContainerErrType.notInstalled,
@@ -1084,122 +872,25 @@ class ContainerNotifier extends _$ContainerNotifier {
     bool sudo = false,
     required ContainerType type,
     required String? containerHost,
-  }) => buildContainerRuntimeCommand(
+  }) => ffi.containerRuntimeCommand(
     command: cmd,
-    type: type,
+    runtimeName: type.name,
     containerHost: containerHost,
     sudo: sudo,
   );
 }
 
-const _jsonFmt = '--format "{{json .}}"';
-
-/// What the machine said, for a user reading why a page is empty.
-///
-/// stderr first, since that is where a shell puts the reason. The separators
-/// the script echoes between its commands are dropped: they are this app's own
-/// scaffolding, and a page whose entire explanation was
-/// `SrvBoxContainerSep_1786614816321254_0` twice over told the user nothing.
-String? userFacingOutput(String stderr, String stdout) {
-  for (final stream in [stderr, stdout]) {
-    final lines = <String>[];
-    // Deduplicated through a set rather than by scanning the list: several
-    // commands are batched into one call, so a missing runtime says
-    // `sh: docker: not found` once per command — three identical lines are
-    // three attempts at the same thing, not three problems — and the stream
-    // this walks can be a megabyte of distinct lines.
-    final seen = <String>{};
-    for (final line in stream.split('\n')) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) continue;
-      if (trimmed.startsWith(_containerSeparatorPrefix)) continue;
-      if (!seen.add(trimmed)) continue;
-      lines.add(trimmed);
-    }
-    if (lines.isNotEmpty) return lines.join('\n');
-  }
-  return null;
-}
-
-/// An execution failure ready to show in the container page.
+/// An execution failure ready to show in the container page: what the machine
+/// said, stderr first, without the batch's markers.
 ///
 /// Incomplete output or a stream error means stdout may end in the middle of
 /// an otherwise valid response, so it must not be presented as the reason for
 /// the failure.
 String containerExecErrorDetail(ExecResult result) =>
-    userFacingOutput(
-      result.stderr,
-      !result.outputIncomplete && result.streamError == null
+    ffi.containerUserFacingOutput(
+      stderr: result.stderr,
+      stdout: !result.outputIncomplete && result.streamError == null
           ? result.stdout
           : '',
     ) ??
     '${result.streamError ?? libL10n.fail}';
-
-/// The command line for one container-runtime call.
-///
-/// Carries no password: `sudo -S` reads one from stdin, and `ServerExec`'s
-/// `runWithSudo` puts it there. Written into the command instead it would end
-/// up in the agent's audit log and the machine's process list.
-String buildContainerRuntimeCommand({
-  required String command,
-  required ContainerType type,
-  String? containerHost,
-  bool sudo = false,
-}) {
-  final environment = <String>['LANG=en_US.UTF-8'];
-  if (containerHost?.isNotEmpty ?? false) {
-    final hostVariable = type == ContainerType.podman
-        ? 'CONTAINER_HOST'
-        : 'DOCKER_HOST';
-    environment.add('$hostVariable=${shellSingleQuote(containerHost!)}');
-  }
-  if (sudo) {
-    return 'sudo -S env ${environment.join(' ')} $command';
-  }
-  final exports = environment.map((value) => 'export $value').join(' && ');
-  return '$exports && $command';
-}
-
-enum ContainerCmdType {
-  version,
-  ps,
-  stats,
-  images,
-  df;
-
-  String exec(ContainerType type) {
-    final baseCmd = switch (this) {
-      ContainerCmdType.version => '${type.name} version $_jsonFmt',
-      ContainerCmdType.ps => switch (type) {
-        ContainerType.docker =>
-          '${type.name} ps -a --format '
-              '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
-              '{{.Label \\"com.docker.compose.project\\"}}\\t'
-              '{{.Label \\"com.docker.compose.project.working_dir\\"}}\\t'
-              '{{.Ports}}"',
-        ContainerType.podman =>
-          '${type.name} ps -a --format '
-              '"{{json .}}\\t{{.Status}}"',
-      },
-      ContainerCmdType.stats => '${type.name} stats --no-stream $_jsonFmt',
-      ContainerCmdType.images => '${type.name} image ls --digests $_jsonFmt',
-      ContainerCmdType.df => '${type.name} system df $_jsonFmt',
-    };
-
-    return baseCmd;
-  }
-
-  /// Several commands as one, their outputs told apart by [separator].
-  ///
-  /// Privilege is not this function's business: the caller wraps the result
-  /// with `_wrap(sudo: ...)`, and the password reaches `sudo -S` on stdin.
-  static String execSelected(
-    Iterable<ContainerCmdType> types,
-    ContainerType type, {
-    String separator = _containerSeparatorPrefix,
-  }) {
-    final commands = types.map((e) => e.exec(type)).join('\necho $separator\n');
-
-    return 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-  }
-}

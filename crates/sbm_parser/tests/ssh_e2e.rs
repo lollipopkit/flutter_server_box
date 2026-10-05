@@ -21,7 +21,7 @@
 
 use sbm_parser::commands;
 use sbm_parser::output::CommandOutput;
-use sbm_parser::{bench, service};
+use sbm_parser::{bench, container, cron, service};
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
 use std::io::{Read, Write};
@@ -702,6 +702,99 @@ fn ssh_e2e_unix_bench_install_and_poll() {
     assert!(!poll.dir_exists, "{poll:?}");
 
     let _ = ssh(&host, &format!("rm -rf {HOME}"), None);
+}
+
+/// The account's crontab, read as the app reads it, and written back by
+/// nobody: the check is that the document renders back to exactly what
+/// `crontab -l` printed, which is what a save would send.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_cron_listing() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    let quoted = format!("sh -c '{}'", cron::LIST_SCRIPT.replace('\'', r"'\''"));
+    let out = run_ssh(&host, &quoted, None).expect("ssh");
+    let (stdout, stderr) = (
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+        String::from_utf8_lossy(&out.stderr).into_owned(),
+    );
+    let catalog = match cron::read_listing(&stdout, &stderr, out.status.code(), out.status.success()) {
+        Ok(catalog) => catalog,
+        Err(failure) if failure.not_installed => {
+            eprintln!("skipped: crontab is not installed on {host}");
+            return;
+        }
+        Err(failure) => panic!("listing: {failure:?}"),
+    };
+    assert!(!catalog.user.is_empty());
+    assert!(catalog.clock.is_some(), "a date that knows %z: {stdout}");
+
+    let raw = ssh_stdout(&host, "crontab -l 2>/dev/null").replace("\r\n", "\n");
+    let expected = if raw.is_empty() || raw.ends_with('\n') { raw } else { format!("{raw}\n") };
+    assert_eq!(catalog.document.render(), expected);
+}
+
+/// Docker and Podman, each the host has, listed the way the app refreshes
+/// them: one batch, split on its marker, each part parsed. Read only, and
+/// skipped where neither runtime answers this account.
+#[test]
+#[ignore = "requires SBM_E2E_SSH_HOST and a reachable SSH server"]
+fn ssh_e2e_unix_container_listing() {
+    let host =
+        ssh_host().expect("SBM_E2E_SSH_HOST must be set in the environment or workspace-root .env");
+    use container::{ContainerCmd, ContainerType};
+    let separator = format!("{}_e2e_0", container::SEPARATOR_PREFIX);
+    let cmds = [ContainerCmd::Version, ContainerCmd::Ps, ContainerCmd::Stats];
+    let mut exercised = 0;
+    for ty in [ContainerType::Docker, ContainerType::Podman] {
+        let batch = ContainerCmd::exec_selected(&cmds, ty, &separator);
+        let command = container::build_runtime_command(&batch, ty, None, false);
+        let out = run_ssh(&host, &command, None).expect("ssh");
+        let (stdout, stderr) = (
+            String::from_utf8_lossy(&out.stdout).into_owned(),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        );
+        let code = out.status.code().unwrap_or(-1);
+        // Skipped only where the runtime is absent, or refuses this account
+        // (the app's sudo path, which this test does not take). Any other
+        // failure is the runtime misbehaving, and fails the test.
+        let refused = stderr.to_lowercase().contains("permission denied");
+        if container::is_not_installed(ty, &stdout, &stderr, code) || refused {
+            eprintln!("{}: not usable here: {:?}", ty.name(), container::user_facing_output(&stderr, &stdout));
+            continue;
+        }
+        assert!(
+            out.status.success(),
+            "{} failed (exit {code}): {:?}",
+            ty.name(),
+            container::user_facing_output(&stderr, &stdout)
+        );
+        if ty == ContainerType::Docker && container::is_podman_emulation(&stderr) {
+            continue;
+        }
+        let segments = container::split_segments(&stdout, &separator);
+        assert_eq!(segments.len(), cmds.len(), "{stdout}");
+        assert!(container::parse_version(&segments[0]).is_some(), "{}", segments[0]);
+        let listed = match ty {
+            ContainerType::Docker => container::parse_docker_ps(&segments[1]),
+            ContainerType::Podman => container::parse_podman_ps(&segments[1]),
+        };
+        let rows = segments[1].lines().filter(|l| !l.trim().is_empty()).count();
+        assert_eq!(listed.len(), rows, "every row read: {}", segments[1]);
+
+        let images = ContainerCmd::Images.exec(ty);
+        let out = run_ssh(&host, &container::build_runtime_command(&images, ty, None, false), None).expect("ssh");
+        assert!(out.status.success());
+        let raw = String::from_utf8_lossy(&out.stdout).into_owned();
+        let parsed = container::parse_images(&raw, ty);
+        // Docker answers a line per image, Podman one array.
+        assert_eq!(parsed.is_empty(), raw.trim().is_empty() || raw.trim() == "[]", "{raw}");
+        eprintln!("{}: {} containers, {} images", ty.name(), listed.len(), parsed.len());
+        exercised += 1;
+    }
+    if exercised == 0 {
+        eprintln!("skipped: no container runtime answers on {host}");
+    }
 }
 
 /// Windows full chain: EncodedCommand install (works from cmd.exe default

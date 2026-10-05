@@ -1,324 +1,73 @@
-// TODO(migration): parsed by `sbm_parser::container` too — see the TODO at
-// the top of `lib/data/provider/container.dart`. Deleted with it.
-
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/container/status.dart';
-import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/src/rust/api/container.dart' as ffi;
 
-sealed class ContainerPs {
-  String? get id;
-  String? get image;
-  String? get name;
-  String? get project;
-  String? get workingDir;
-
-  /// Published ports condensed to `host→container`, or null when the runtime
-  /// reported none. See [formatDockerPorts].
-  String? get ports;
-
-  /// Human-readable lifecycle text reported by the runtime's STATUS field.
-  String? get rawStatus;
-  ContainerStatus get status;
-
-  String? cpu;
-  String? mem;
-  String? net;
-  String? disk;
-
-  factory ContainerPs.fromRaw(String s, ContainerType typ) => typ.ps(s);
-
-  void parseStats(String s, [String? version]);
-}
-
-final class PodmanPs implements ContainerPs {
-  final bool? exited;
-  @override
-  final String? id;
-  @override
-  final String? image;
-  final List<String>? names;
-  @override
-  final String? rawStatus;
-  @override
-  final String? project;
-  @override
-  final String? workingDir;
-  @override
-  final String? ports;
-
-  @override
-  String? cpu;
-  @override
-  String? mem;
-  @override
-  String? net;
-  @override
-  String? disk;
-
-  PodmanPs({
-    this.exited,
+/// One container, as `sbm_parser::container` read it from either runtime.
+///
+/// The stats are the runtime's own renderings, split into their parts on the
+/// Rust side; the sentences they are drawn in are this app's, so they are put
+/// together here, in its language.
+final class ContainerPs {
+  const ContainerPs({
     this.id,
+    this.name,
     this.image,
-    this.names,
+    this.project,
+    this.workingDir,
+    this.ports,
     this.rawStatus,
-    this.project,
-    this.workingDir,
-    this.ports,
+    this.status = ContainerStatus.unknown,
+    this.cpu,
+    this.mem,
+    this.net,
+    this.disk,
   });
 
-  @override
-  String? get name => names?.firstOrNull;
-
-  @override
-  ContainerStatus get status => ContainerStatus.fromPodman(exited, rawStatus);
-
-  @override
-  void parseStats(String s, [String? version]) {
-    final stats = json.decode(s);
-    final cpuD = _asDouble(stats['CPU']).toStringAsFixed(1);
-    final cpuAvgD = _asDouble(stats['AvgCPU']).toStringAsFixed(1);
-    cpu = '$cpuD% / ${libL10n.pingAvg} $cpuAvgD%';
-    final memLimit = _asInt(stats['MemLimit']).bytes2Str;
-    final memUsage = _asInt(stats['MemUsage']).bytes2Str;
-    mem = '$memUsage / $memLimit';
-
-    int netIn = 0;
-    int netOut = 0;
-    final majorVersion = version?.split('.').firstOrNull;
-    final majorVersionNum = majorVersion != null
-        ? int.tryParse(majorVersion)
-        : null;
-
-    // Podman 4.x and earlier use top-level NetInput/NetOutput fields.
-    // Podman 5.x changed network backend (Netavark) and uses nested
-    // Network.{iface}.RxBytes/TxBytes structure instead.
-    if (majorVersionNum == null || majorVersionNum <= 4) {
-      netIn = _asInt(stats['NetInput']);
-      netOut = _asInt(stats['NetOutput']);
-    } else if (majorVersionNum >= 5) {
-      final network = stats['Network'];
-      var hasNestedNetworkCounters = false;
-      if (network is Map) {
-        for (final entry in network.entries) {
-          final interface = entry.value;
-          if (interface is! Map) continue;
-          hasNestedNetworkCounters |= interface.containsKey('RxBytes') ||
-              interface.containsKey('TxBytes');
-          netIn += _asInt(interface['RxBytes']);
-          netOut += _asInt(interface['TxBytes']);
-        }
-      }
-      if (!hasNestedNetworkCounters) {
-        netIn = _asInt(stats['NetInput']);
-        netOut = _asInt(stats['NetOutput']);
-      }
-    }
-    net = '↓ ${netIn.bytes2Str} / ↑ ${netOut.bytes2Str}';
-
-    final diskIn = _asInt(stats['BlockInput']).bytes2Str;
-    final diskOut = _asInt(stats['BlockOutput']).bytes2Str;
-    disk = '${l10n.read} $diskIn / ${l10n.write} $diskOut';
-  }
-
-  factory PodmanPs.fromRawJson(String str) =>
-      PodmanPs.fromJson(json.decode(str));
-
-  factory PodmanPs.fromJson(Map<String, dynamic> json) => PodmanPs(
-    exited: json['Exited'],
-    id: json['Id'],
-    image: json['Image'],
-    names: json['Names'] == null
-        ? []
-        : List<String>.from(json['Names']!.map((x) => x)),
-    rawStatus: _nonEmpty(json['ServerBoxStatus']?.toString()) ??
-        _nonEmpty(json['Status']?.toString()) ??
-        _nonEmpty(json['State']?.toString()),
-    project: _labelFromLabels(json['Labels'], 'com.docker.compose.project'),
-    workingDir: _labelFromLabels(
-      json['Labels'],
-      'com.docker.compose.project.working_dir',
-    ),
-    ports: formatPodmanPorts(json['Ports']),
-  );
-}
-
-/// Parses Podman's JSON listing with the human-readable `.Status` template
-/// appended to each row. Older JSON-only output remains supported.
-List<PodmanPs> parsePodmanPsOutput(String raw) {
-  final items = <PodmanPs>[];
-  for (final line in raw.split('\n')) {
-    if (line.trim().isEmpty) continue;
-    try {
-        final separator = line.lastIndexOf('\t');
-        final jsonPart = separator < 0 ? line : line.substring(0, separator);
-        final data = json.decode(jsonPart) as Map<String, dynamic>;
-        if (separator >= 0) {
-          final detailedStatus = line.substring(separator + 1).trim();
-          if (detailedStatus.isNotEmpty) {
-            data['ServerBoxStatus'] = detailedStatus;
-          }
-        }
-      items.add(PodmanPs.fromJson(data));
-    } on FormatException {
-      continue;
-    } on TypeError {
-      continue;
-    }
-  }
-  return items.toList(growable: false);
-}
-
-final class DockerPs implements ContainerPs {
-  @override
-  final String? id;
-  @override
-  final String? image;
-  final String? names;
-  final String? state;
-  @override
-  String? get rawStatus => state;
-  @override
-  final String? project;
-  @override
-  final String? workingDir;
-  @override
-  final String? ports;
-
-  @override
-  String? cpu;
-  @override
-  String? mem;
-  @override
-  String? net;
-  @override
-  String? disk;
-
-  DockerPs({
-    this.id,
-    this.image,
-    this.names,
-    this.state,
-    this.project,
-    this.workingDir,
-    this.ports,
-  });
-
-  @override
-  String? get name => names;
-
-  @override
-  ContainerStatus get status => ContainerStatus.fromDockerState(state);
-
-  @override
-  void parseStats(String s, [String? version]) {
-    final stats = json.decode(s);
-    cpu = stats['CPUPerc'];
-    mem = stats['MemUsage'];
-
-    final netIO = stats['NetIO'] as String? ?? '0B / 0B';
-    final netParts = netIO.split(' / ');
-    net =
-        '↓ ${netParts.firstOrNull ?? '0B'} / ↑ ${netParts.length > 1 ? netParts[1] : '0B'}';
-
-    final blockIO = stats['BlockIO'] as String? ?? '0B / 0B';
-    final blockParts = blockIO.split(' / ');
-    disk =
-        '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
-  }
-
-  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tWORKING_DIR\tPORTS
-  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent\t/opt/torrent\t0.0.0.0:6800->6800/tcp
-  ///
-  /// Fields are read by position and every one past the fourth is optional, so
-  /// a row written by a build whose format string was shorter still parses.
-  factory DockerPs.parse(String raw) {
-    final parts = raw.split('\t');
-    if (parts.length < 4) {
-      throw FormatException(
-        'Docker ps row has ${parts.length} fields, expected at least 4',
-        raw,
-      );
-    }
-    return DockerPs(
-      id: parts[0],
-      state: parts[1],
-      names: parts[2],
-      image: parts[3],
-      project: parts.length > 4 ? _nonEmpty(parts[4]) : null,
-      workingDir: parts.length > 5 ? _nonEmpty(parts[5]) : null,
-      ports: parts.length > 6 ? formatDockerPorts(parts[6]) : null,
+  factory ContainerPs.fromFfi(ffi.ContainerItem item) {
+    final stats = item.stats;
+    return ContainerPs(
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      project: item.project,
+      workingDir: item.workingDir,
+      ports: item.ports,
+      rawStatus: item.rawStatus,
+      status: ContainerStatus.values.byName(item.status),
+      cpu: switch (stats) {
+        null => null,
+        ffi.ContainerStatsItem(:final cpu, cpuAvg: null) => cpu,
+        ffi.ContainerStatsItem(:final cpu, :final cpuAvg) =>
+          '$cpu / ${libL10n.pingAvg} $cpuAvg',
+      },
+      mem: stats?.mem,
+      net: stats == null ? null : '↓ ${stats.netDown} / ↑ ${stats.netUp}',
+      disk: stats == null
+          ? null
+          : '${l10n.read} ${stats.diskRead} / ${l10n.write} ${stats.diskWrite}',
     );
   }
-}
 
-/// `0.0.0.0:8080->80/tcp, :::8080->80/tcp` becomes `8080→80`.
-///
-/// Docker prints one entry per address family, so a single published port
-/// arrives twice and a container with four of them overruns any row it is put
-/// in. The bind address is dropped with them: it is almost always the
-/// wildcard, and where it is not, the page that can act on it is the port
-/// forward editor rather than this list.
-///
-/// An entry Docker wrote in a shape this does not recognise is kept verbatim
-/// rather than dropped — being unable to condense it is not a reason to claim
-/// the container publishes nothing.
-String? formatDockerPorts(String? raw) {
-  final value = raw?.trim();
-  if (value == null || value.isEmpty) return null;
+  final String? id;
+  final String? name;
+  final String? image;
 
-  final published = RegExp(r'^(?:.*:)?(\d+)->(\d+)(?:/\w+)?$');
-  final exposed = RegExp(r'^(\d+)(?:/\w+)?$');
-  final condensed = <String>{};
-  for (final entry in value.split(',')) {
-    final part = entry.trim();
-    if (part.isEmpty) continue;
-    if (published.firstMatch(part) case final match?) {
-      condensed.add('${match.group(1)}→${match.group(2)}');
-      continue;
-    }
-    if (exposed.firstMatch(part) case final match?) {
-      condensed.add(match.group(1)!);
-      continue;
-    }
-    condensed.add(part);
-  }
-  return condensed.isEmpty ? null : condensed.join(', ');
-}
+  /// The compose project this container belongs to, when it was started by
+  /// one; what the list is grouped by.
+  final String? project;
+  final String? workingDir;
 
-/// Podman answers `Ports` as structured entries rather than Docker's string.
-String? formatPodmanPorts(dynamic raw) {
-  if (raw is! List) return null;
-  final condensed = <String>{};
-  for (final entry in raw) {
-    if (entry is! Map) continue;
-    final containerPort = _asInt(entry['container_port']);
-    if (containerPort == 0) continue;
-    final hostPort = _asInt(entry['host_port']);
-    condensed.add(hostPort == 0 ? '$containerPort' : '$hostPort→$containerPort');
-  }
-  return condensed.isEmpty ? null : condensed.join(', ');
-}
+  /// Published ports condensed to `host→container`.
+  final String? ports;
 
-String? _nonEmpty(String? value) =>
-    value == null || value.trim().isEmpty ? null : value.trim();
+  /// The runtime's own lifecycle text, verbatim.
+  final String? rawStatus;
+  final ContainerStatus status;
 
-double _asDouble(dynamic val) {
-  if (val is num) return val.toDouble();
-  return double.tryParse(val?.toString() ?? '') ?? 0;
-}
-
-int _asInt(dynamic val) {
-  if (val is int) return val;
-  if (val is num) return val.toInt();
-  return int.tryParse(val?.toString() ?? '') ?? 0;
-}
-
-String? _labelFromLabels(dynamic labels, String key) {
-  if (labels is! Map) return null;
-  final value = labels[key];
-  if (value is! String) return null;
-  return _nonEmpty(value);
+  /// `1.5%`, with Podman's average over the sample window beside it.
+  final String? cpu;
+  final String? mem;
+  final String? net;
+  final String? disk;
 }

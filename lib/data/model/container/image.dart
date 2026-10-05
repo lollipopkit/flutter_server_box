@@ -1,376 +1,68 @@
-// TODO(migration): parsed by `sbm_parser::container` too — see the TODO at
-// the top of `lib/data/provider/container.dart`. Deleted with it.
+import 'package:server_box/src/rust/api/container.dart' as ffi;
 
-import 'dart:convert';
+/// One image, as `sbm_parser::container` read it from either runtime.
+final class ContainerImg {
+  ContainerImg.fromFfi(this._item);
 
-import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/data/model/container/type.dart';
+  ContainerImg({
+    String repository = '<none>',
+    String? tag,
+    String? id,
+    String? digest,
+    String? size,
+    int? containers,
+    String? createdAt,
+    int? created,
+    bool dangling = false,
+    bool unused = false,
+  }) : _item = ffi.ContainerImageItem(
+         repository: repository,
+         tag: tag,
+         id: id,
+         digest: digest,
+         size: size,
+         containers: containers,
+         createdAt: createdAt,
+         created: created,
+         dangling: dangling,
+         unused: unused,
+       );
 
-abstract final class ContainerImg {
-  final String? repository = null;
-  final String? tag = null;
-  final String? id = null;
-  final String? digest = null;
-  String? get sizeMB;
-  int? get containersCount;
+  final ffi.ContainerImageItem _item;
 
-  /// Whether the image has no repository/tag (e.g. `<none>:<none>`).
-  bool get isDangling;
+  /// `<none>` when the runtime named no repository.
+  String get repository => _item.repository;
+  String? get tag => _item.tag;
+  String? get id => _item.id;
+  String? get digest => _item.digest;
 
-  /// Whether this image is known to have no container references.
-  ///
-  /// Some Docker versions report `N/A` instead of a reference count. That is
-  /// treated as unknown rather than unused to avoid a misleading cleanup badge.
-  bool get isUnused;
+  /// The runtime's own size text, or one rendered from Podman's byte count.
+  String? get size => _item.size;
 
-  factory ContainerImg.fromRawJson(String s, ContainerType typ) => typ.img(s);
+  /// How many containers use it; `null` is unknown, never zero.
+  int? get containersCount => _item.containers;
+
+  /// Docker's creation text, passed through as it printed it.
+  String? get createdAt => _item.createdAt;
+
+  /// Podman's creation time, in Unix seconds.
+  int? get created => _item.created;
+
+  /// `<none>:<none>`: nothing to lose by removing it.
+  bool get isDangling => _item.dangling;
+
+  /// Dangling, or known to have no container referencing it.
+  bool get isUnused => _item.unused;
 }
 
-/// Counts tagged images that are known to be unused.
-///
-/// Returns `null` when at least one tagged image has an unknown container
-/// reference count and cannot be matched to the current container list. This
-/// prevents an unknown Docker `N/A` count from being presented as zero.
+/// The tagged images known to have nothing referencing them, or `null` when
+/// one's use could not be confirmed against [containerImageReferences].
 int? countUnusedTaggedImages(
   Iterable<ContainerImg> images,
   Iterable<String?> containerImageReferences,
-) {
-  final usedMarkers = _containerImageMarkers(containerImageReferences);
-  var unused = 0;
-  var hasUnknown = false;
-
-  for (final image in images) {
-    if (image.isDangling) continue;
-    final count = image.containersCount;
-    if (count != null) {
-      if (count == 0) unused++;
-      continue;
-    }
-    if (!_imageMarkers(image).any(usedMarkers.contains)) {
-      hasUnknown = true;
-    }
-  }
-  return hasUnknown ? null : unused;
-}
-
-Set<String> _containerImageMarkers(Iterable<String?> references) {
-  final markers = <String>{};
-  for (final reference in references) {
-    _addRuntimeImageReference(markers, reference);
-  }
-  return markers;
-}
-
-Set<String> _imageMarkers(ContainerImg image) {
-  final markers = <String>{};
-  _addImageId(markers, image.id);
-
-  final repository = image.repository?.trim();
-  if (repository == null || repository.isEmpty || repository == '<none>') {
-    return markers;
-  }
-  final tag = image.tag?.trim();
-  final hasTag = tag != null && tag.isNotEmpty && tag != '<none>';
-  _addRepositoryMarkers(markers, repository, hasTag ? tag : null);
-  _addDigestMarkers(markers, repository, image.digest);
-  return markers;
-}
-
-void _addRuntimeImageReference(Set<String> markers, String? raw) {
-  final value = raw?.trim();
-  if (value == null || value.isEmpty) return;
-  final digestSeparator = value.lastIndexOf('@');
-  if (digestSeparator > 0) {
-    final repository = value.substring(0, digestSeparator).trim();
-    final digest = value.substring(digestSeparator + 1).trim();
-    _addDigestMarkers(markers, repository, digest);
-    _addImageId(markers, digest);
-    return;
-  }
-  if (value.startsWith('sha256:')) {
-    _addImageId(markers, value);
-    return;
-  }
-  final reference = _splitImageReference(value);
-  _addRepositoryMarkers(markers, reference.repository, reference.tag);
-}
-
-void _addDigestMarkers(
-  Set<String> markers,
-  String repository,
-  String? rawDigest,
-) {
-  final digest = rawDigest?.trim();
-  if (digest == null || digest.isEmpty || digest == '<none>') return;
-  final aliases = <String>{repository};
-  const dockerLibrary = 'docker.io/library/';
-  if (repository.startsWith(dockerLibrary)) {
-    aliases.add(repository.substring(dockerLibrary.length));
-  }
-  for (final alias in aliases) {
-    markers.add('digest:$alias@$digest');
-  }
-}
-
-bool _addImageId(Set<String> markers, String? raw) {
-  final value = raw?.trim();
-  if (value == null || value.isEmpty) return false;
-  final bare = value.startsWith('sha256:') ? value.substring(7) : value;
-  if (!RegExp(r'^[a-fA-F0-9]{12,64}$').hasMatch(bare)) return false;
-  markers.add('id:$bare');
-  if (bare.length >= 12) markers.add('id:${bare.substring(0, 12)}');
-  return true;
-}
-
-void _addRepositoryMarkers(
-  Set<String> markers,
-  String repository,
-  String? tag,
-) {
-  final aliases = <String>{repository};
-  const dockerLibrary = 'docker.io/library/';
-  if (repository.startsWith(dockerLibrary)) {
-    aliases.add(repository.substring(dockerLibrary.length));
-  }
-  final effectiveTag = tag == null || tag.isEmpty ? 'latest' : tag;
-  for (final alias in aliases) {
-    markers.add('ref:$alias:$effectiveTag');
-    if (effectiveTag == 'latest') markers.add('ref:$alias');
-  }
-}
-
-({String repository, String? tag}) _splitImageReference(String raw) {
-  final lastSlash = raw.lastIndexOf('/');
-  final lastColon = raw.lastIndexOf(':');
-  if (lastColon > lastSlash) {
-    return (
-      repository: raw.substring(0, lastColon),
-      tag: raw.substring(lastColon + 1),
-    );
-  }
-  return (repository: raw, tag: null);
-}
-
-final class PodmanImg implements ContainerImg {
-  @override
-  final String? repository;
-  @override
-  final String? tag;
-  @override
-  final String? id;
-  @override
-  final String? digest;
-  final int? created;
-  final int? size;
-  final int? containers;
-
-  PodmanImg({
-    this.repository,
-    this.tag,
-    this.id,
-    this.digest,
-    this.created,
-    this.size,
-    this.containers,
-  });
-
-  @override
-  String? get sizeMB => size?.bytes2Str;
-
-  @override
-  int? get containersCount => containers;
-
-  @override
-  bool get isDangling {
-    final repo = repository?.trim() ?? '';
-    final t = tag?.trim() ?? '';
-    return repo.isEmpty ||
-        repo == '<none>' ||
-        t.isEmpty ||
-        t == '<none>';
-  }
-
-  @override
-  bool get isUnused {
-    if (isDangling) return true;
-    final count = containersCount;
-    return count != null && count == 0;
-  }
-
-  factory PodmanImg.fromRawJson(String str) =>
-      PodmanImg.fromJson(json.decode(str));
-
-  String toRawJson() => json.encode(toJson());
-
-  factory PodmanImg.fromJson(Map<String, dynamic> json) {
-    final namedReference = switch (json['Names']) {
-      final List value => _firstNonEmptyFromList(value),
-      final Object? value => _nonEmptyOrNull(value?.toString()),
-    };
-    final parsedReference = namedReference == null
-        ? null
-        : _splitImageReference(namedReference);
-    return PodmanImg(
-      repository: _firstNonEmptyOrNull([
-        _asString(json['repository']),
-        _asString(json['Repository']),
-        parsedReference?.repository,
-      ]),
-      tag: _firstNonEmptyOrNull([
-        _asString(json['tag']),
-        _asString(json['Tag']),
-        parsedReference?.tag,
-      ]),
-      id: _asString(json['Id'] ?? json['ID']),
-      digest: _asString(json['Digest'] ?? json['digest']),
-      created: _asInt(json['Created']),
-      size: _asInt(json['Size']),
-      containers: _asInt(json['Containers']),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'repository': repository,
-    'tag': tag,
-    'Id': id,
-    'Digest': digest,
-    'Created': created,
-    'Size': size,
-    'Containers': containers,
-  };
-}
-
-final class DockerImg implements ContainerImg {
-  final String containers;
-  final String createdAt;
-  @override
-  final String id;
-  @override
-  final String? digest;
-  @override
-  final String repository;
-  final String size;
-  @override
-  final String? tag;
-
-  DockerImg({
-    required this.containers,
-    required this.createdAt,
-    required this.id,
-    this.digest,
-    required this.repository,
-    required this.size,
-    required this.tag,
-  });
-
-  @override
-  String? get sizeMB => size;
-
-  @override
-  int? get containersCount =>
-      containers == 'N/A' ? null : int.tryParse(containers);
-
-  @override
-  bool get isDangling {
-    final repo = repository.trim();
-    final t = (tag ?? '').trim();
-    return repo.isEmpty ||
-        repo == '<none>' ||
-        t.isEmpty ||
-        t == '<none>';
-  }
-
-  @override
-  bool get isUnused {
-    if (isDangling) return true;
-    final count = containersCount;
-    return count != null && count == 0;
-  }
-
-  factory DockerImg.fromRawJson(String str) =>
-      DockerImg.fromJson(json.decode(str));
-
-  String toRawJson() => json.encode(toJson());
-
-  factory DockerImg.fromJson(Map<String, dynamic> json) {
-    final containers = switch (json['Containers']) {
-      final String a => a,
-      final Object? a => a.toString(),
-    };
-    final repo = _firstNonEmpty([
-      switch (json['Repository']) {
-        final String a => _nonEmptyOrNull(a),
-        final Object? a => _nonEmptyOrNull(a?.toString()),
-      },
-      switch (json['Names']) {
-        final List a => _firstNonEmptyFromList(a),
-        final Object? a => _nonEmptyOrNull(a?.toString()),
-      },
-    ]);
-    final size = switch (json['Size']) {
-      final String a => a,
-      final int a => a.bytes2Str,
-      final Object? a => a.toString(),
-    };
-    return DockerImg(
-      containers: containers,
-      createdAt: json['CreatedAt'],
-      id: json['ID'] ?? json['Id'] ?? '',
-      digest: _asString(json['Digest']),
-      repository: repo,
-      size: size,
-      tag: json['Tag'],
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'Containers': containers,
-    'CreatedAt': createdAt,
-    'ID': id,
-    'Digest': digest,
-    'Repository': repository,
-    'Size': size,
-    'Tag': tag,
-  };
-}
-
-String? _asString(dynamic val) {
-  if (val == null) return null;
-  if (val is String) return val;
-  return val.toString();
-}
-
-String? _nonEmptyOrNull(String? val) {
-  if (val == null || val.trim().isEmpty) return null;
-  return val.trim();
-}
-
-String? _firstNonEmptyFromList(List list) {
-  for (final e in list) {
-    final val = _nonEmptyOrNull(e?.toString());
-    if (val != null) return val;
-  }
-  return null;
-}
-
-String _firstNonEmpty(List<String?> candidates) {
-  for (final c in candidates) {
-    if (c != null && c.isNotEmpty) return c;
-  }
-  return '<none>';
-}
-
-String? _firstNonEmptyOrNull(List<String?> candidates) {
-  for (final candidate in candidates) {
-    final value = _nonEmptyOrNull(candidate);
-    if (value != null) return value;
-  }
-  return null;
-}
-
-int? _asInt(dynamic val) {
-  if (val == null) return null;
-  if (val is int) return val;
-  if (val is double) return val.toInt();
-  return int.tryParse(val.toString());
-}
+) => ffi.containerCountUnusedTaggedImages(
+  images: [for (final image in images) image._item],
+  containerImages: [
+    for (final reference in containerImageReferences) ?reference,
+  ],
+);

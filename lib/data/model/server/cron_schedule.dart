@@ -1,11 +1,10 @@
-// TODO(migration): parsed by `sbm_parser::cron` too — see the TODO at the top
-// of `lib/data/service/cron_manager.dart`. Deleted with it.
-
 import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/src/rust/api/cron.dart' as ffi;
 
-/// A cron expression, expanded far enough to say when it next runs and what it
-/// means in words.
+/// A cron expression, expanded by `sbm_parser::cron` far enough to say when it
+/// next runs, and said in words here: the wording is the one part each client
+/// keeps.
 ///
 /// This is for reading only. What a server runs is decided by its own crond,
 /// so anything this cannot parse is shown as it was written rather than
@@ -13,49 +12,17 @@ import 'package:server_box/core/extension/context/locale.dart';
 /// fields), and a line the page will not describe is still a line the page
 /// must not lose.
 final class CronSchedule {
-  const CronSchedule._({
-    required this.minutes,
-    required this.hours,
-    required this.daysOfMonth,
-    required this.months,
-    required this.daysOfWeek,
-    required this.dayOfMonthRestricted,
-    required this.dayOfWeekRestricted,
-  }) : isReboot = false;
+  CronSchedule._(this.expression, ffi.CronScheduleFields fields)
+    : minutes = fields.minutes.toSet(),
+      hours = fields.hours.toSet(),
+      daysOfMonth = fields.daysOfMonth.toSet(),
+      months = fields.months.toSet(),
+      daysOfWeek = fields.daysOfWeek.toSet(),
+      dayOfMonthRestricted = fields.dayOfMonthRestricted,
+      dayOfWeekRestricted = fields.dayOfWeekRestricted,
+      isReboot = fields.isReboot;
 
-  const CronSchedule._reboot()
-    : minutes = const {},
-      hours = const {},
-      daysOfMonth = const {},
-      months = const {},
-      daysOfWeek = const {},
-      dayOfMonthRestricted = false,
-      dayOfWeekRestricted = false,
-      isReboot = true;
-
-  /// `@reboot` runs once when the machine starts, so it has no next time and
-  /// no schedule to expand.
-  static const reboot = CronSchedule._reboot();
-
-  /// The macros crond accepts in place of the five fields, and what each one
-  /// stands for. `@reboot` is [reboot] and is not here.
-  static const macros = <String, String>{
-    '@yearly': '0 0 1 1 *',
-    '@annually': '0 0 1 1 *',
-    '@monthly': '0 0 1 * *',
-    '@weekly': '0 0 * * 0',
-    '@daily': '0 0 * * *',
-    '@midnight': '0 0 * * *',
-    '@hourly': '0 * * * *',
-  };
-
-  /// How far ahead [nextRun] looks before answering that there is no next run.
-  ///
-  /// `0 0 29 2 *` is the reason it is years rather than days: February 29th
-  /// comes round every four, and a century that is not a leap year pushes it
-  /// to eight.
-  static const _searchDays = 366 * 8;
-
+  final String expression;
   final Set<int> minutes;
   final Set<int> hours;
   final Set<int> daysOfMonth;
@@ -74,43 +41,12 @@ final class CronSchedule {
   /// Whether the day of week field was something other than `*`.
   final bool dayOfWeekRestricted;
 
+  /// `@reboot` runs once when the machine starts, so it has no next time.
   final bool isReboot;
 
   static CronSchedule? tryParse(String expression) {
-    var expr = expression.trim();
-    if (expr.isEmpty) return null;
-    if (expr.startsWith('@')) {
-      final macro = expr.toLowerCase();
-      if (macro == '@reboot') return reboot;
-      final expanded = macros[macro];
-      if (expanded == null) return null;
-      expr = expanded;
-    }
-
-    final fields = expr.split(RegExp(r'\s+'));
-    if (fields.length != 5) return null;
-    final minutes = _parseField(fields[0], 0, 59);
-    final hours = _parseField(fields[1], 0, 23);
-    final daysOfMonth = _parseField(fields[2], 1, 31);
-    final months = _parseField(fields[3], 1, 12, names: _monthNames);
-    final daysOfWeek = _parseField(fields[4], 0, 7, names: _dayNames);
-    if (minutes == null ||
-        hours == null ||
-        daysOfMonth == null ||
-        months == null ||
-        daysOfWeek == null) {
-      return null;
-    }
-
-    return CronSchedule._(
-      minutes: minutes,
-      hours: hours,
-      daysOfMonth: daysOfMonth,
-      months: months,
-      daysOfWeek: daysOfWeek.map((day) => day % 7).toSet(),
-      dayOfMonthRestricted: fields[2] != '*',
-      dayOfWeekRestricted: fields[4] != '*',
-    );
+    final fields = ffi.cronScheduleParse(expression: expression);
+    return fields == null ? null : CronSchedule._(expression, fields);
   }
 
   /// The next minute this matches, strictly after [from].
@@ -119,45 +55,18 @@ final class CronSchedule {
   /// UTC-flagged [DateTime]s so that neither the device's timezone nor a DST
   /// change of its own moves them — see [CronClock].
   DateTime? nextRun(DateTime from) {
-    if (isReboot || minutes.isEmpty || hours.isEmpty) return null;
-    // Strictly after the minute [from] is in: a job whose minute is the
-    // current one has already run this minute.
-    final start = DateTime.utc(
-      from.year,
-      from.month,
-      from.day,
-      from.hour,
-      from.minute,
-    ).add(const Duration(minutes: 1));
-    final sortedHours = hours.toList()..sort();
-    final sortedMinutes = minutes.toList()..sort();
-
-    for (var offset = 0; offset < _searchDays; offset++) {
-      final day = DateTime.utc(start.year, start.month, start.day + offset);
-      if (!matchesDate(day)) continue;
-      for (final hour in sortedHours) {
-        for (final minute in sortedMinutes) {
-          final at = DateTime.utc(day.year, day.month, day.day, hour, minute);
-          if (at.isBefore(start)) continue;
-          return at;
-        }
-      }
-    }
-    return null;
-  }
-
-  /// Whether this schedule runs at all on [day].
-  bool matchesDate(DateTime day) {
-    if (!months.contains(day.month)) return false;
-    final byDayOfMonth = daysOfMonth.contains(day.day);
-    // Dart counts Monday as 1 and Sunday as 7; cron counts Sunday as 0.
-    final byDayOfWeek = daysOfWeek.contains(day.weekday % 7);
-    if (dayOfMonthRestricted && dayOfWeekRestricted) {
-      return byDayOfMonth || byDayOfWeek;
-    }
-    if (dayOfMonthRestricted) return byDayOfMonth;
-    if (dayOfWeekRestricted) return byDayOfWeek;
-    return true;
+    final at = ffi.cronNextRun(
+      expression: expression,
+      from: ffi.CronWall(
+        year: from.year,
+        month: from.month,
+        day: from.day,
+        hour: from.hour,
+        minute: from.minute,
+      ),
+    );
+    if (at == null) return null;
+    return DateTime.utc(at.year, at.month, at.day, at.hour, at.minute);
   }
 
   /// This schedule in words, or `null` when it cannot be said in one line.
@@ -222,101 +131,6 @@ final class CronSchedule {
     return DateFormat.EEEE(l10n.localeName).format(date);
   }
 
-  static const _monthNames = <String, int>{
-    'jan': 1,
-    'feb': 2,
-    'mar': 3,
-    'apr': 4,
-    'may': 5,
-    'jun': 6,
-    'jul': 7,
-    'aug': 8,
-    'sep': 9,
-    'oct': 10,
-    'nov': 11,
-    'dec': 12,
-  };
-
-  static const _dayNames = <String, int>{
-    'sun': 0,
-    'mon': 1,
-    'tue': 2,
-    'wed': 3,
-    'thu': 4,
-    'fri': 5,
-    'sat': 6,
-  };
-
-  static Set<int>? _parseField(
-    String field,
-    int min,
-    int max, {
-    Map<String, int>? names,
-  }) {
-    final values = <int>{};
-    for (final token in field.split(',')) {
-      final parsed = _parseToken(token.trim(), min, max, names);
-      if (parsed == null) return null;
-      values.addAll(parsed);
-    }
-    return values.isEmpty ? null : values;
-  }
-
-  static Iterable<int>? _parseToken(
-    String token,
-    int min,
-    int max,
-    Map<String, int>? names,
-  ) {
-    if (token.isEmpty) return null;
-    var body = token;
-    var step = 1;
-    final slash = token.indexOf('/');
-    if (slash >= 0) {
-      body = token.substring(0, slash);
-      step = int.tryParse(token.substring(slash + 1)) ?? 0;
-      if (step < 1) return null;
-    }
-
-    final int from;
-    final int to;
-    if (body == '*') {
-      from = min;
-      to = max;
-    } else {
-      final parts = body.split('-');
-      if (parts.length > 2) return null;
-      final start = _value(parts.first, names, min, max);
-      if (start == null) return null;
-      from = start;
-      if (parts.length == 2) {
-        final end = _value(parts[1], names, min, max);
-        if (end == null) return null;
-        to = end;
-      } else {
-        // `5/10` is the rest of the field from 5 on; a bare `5` is itself.
-        to = slash >= 0 ? max : start;
-      }
-    }
-
-    // A descending range — `22-2`, `fri-mon` — is answered by nobody in
-    // particular: vixie and cronie refuse the file, busybox sets no bits and
-    // the line never fires, and some others wrap it round. Reading it as a
-    // wrap would put a next run on the page for a line the server may never
-    // run, which is worse than saying nothing: the page falls back to showing
-    // the expression as written, and the line is still saved untouched.
-    if (to < from) return null;
-    return [for (var v = from; v <= to; v += step) v];
-  }
-
-  static int? _value(String raw, Map<String, int>? names, int min, int max) {
-    final token = raw.trim();
-    if (token.isEmpty) return null;
-    final value = int.tryParse(token) ?? names?[token.toLowerCase()];
-    if (value == null || value < min || value > max) return null;
-    return value;
-  }
-
   /// The step of a `*/n` field, or `null` when [values] is not one.
   ///
   /// It has to start at [min] and reach the end of the field, because that is
@@ -364,22 +178,18 @@ final class CronClock {
   /// The server's clock minus this device's, when the listing was read.
   final Duration skew;
 
-  /// `<epoch seconds> <±hhmm>`, as `date +'%s %z'` prints it.
-  static CronClock? tryParse(String value, {DateTime? now}) {
-    final parts = value.trim().split(RegExp(r'\s+'));
-    if (parts.length != 2) return null;
-    final epoch = int.tryParse(parts[0]);
-    final zone = RegExp(r'^([+-])(\d{2})(\d{2})$').firstMatch(parts[1]);
-    if (epoch == null || zone == null) return null;
-    final magnitude = Duration(
-      hours: int.parse(zone.group(2)!),
-      minutes: int.parse(zone.group(3)!),
-    );
+  /// What the server's `date +'%s %z'` said, read against this device's
+  /// clock at [now].
+  factory CronClock.fromServer({
+    required int epochSeconds,
+    required int offsetMinutes,
+    DateTime? now,
+  }) {
     final at = (now ?? DateTime.now()).toUtc();
     return CronClock(
-      offset: zone.group(1) == '-' ? -magnitude : magnitude,
+      offset: Duration(minutes: offsetMinutes),
       skew: DateTime.fromMillisecondsSinceEpoch(
-        epoch * 1000,
+        epochSeconds * 1000,
         isUtc: true,
       ).difference(at),
     );

@@ -6,12 +6,8 @@
 //! Nothing here runs anything, so the same functions serve a caller that
 //! reaches the machine over SSH and one that runs a local shell.
 //!
-//! Only the agent uses them so far.
-// TODO(migration): the app still parses containers with its Dart copy
-// (`lib/data/provider/container.dart`, `lib/data/model/container/`). Port its
-// fixture tests here first (there is no `container_compat.rs` yet), expose
-// this over FFI, and delete the Dart side once the result is asserted
-// identical.
+//! The agent uses them directly and the app through FFI
+//! (`sbm_ffi::api::container`).
 //!
 //! The two runtimes are one feature with two dialects rather than two features:
 //! they share the verbs (`ps`, `stats`, `image ls`, `system df`, `stop`,
@@ -450,6 +446,17 @@ pub enum ContainerActionKind {
     Remove,
     Logs,
     Terminal,
+}
+
+/// Remove an image, forced: an image a stopped container still references is
+/// refused otherwise, and that container is what the user is clearing up.
+pub fn image_remove_command(ty: ContainerType, id: &str) -> String {
+    format!("{} rmi {} -f", ty.name(), single_quote(id))
+}
+
+/// Pull an image by reference (`repository:tag`).
+pub fn image_pull_command(ty: ContainerType, reference: &str) -> String {
+    format!("{} pull {}", ty.name(), single_quote(reference))
 }
 
 /// Follow a container's output in a terminal.
@@ -1519,12 +1526,12 @@ impl std::error::Error for ContainerParseError {}
 
 #[cfg(test)]
 mod tests {
-    //! Ported from `test/unit/server/container_test.dart`.
+    //! Ported from the app's Dart suite (`test/unit/server/container_test.dart`
+    //! before the Dart copy was deleted), whose fixtures were also run through
+    //! both implementations and the FFI before it went.
     //!
     //! Every fixture here is the Dart suite's, byte for byte where it could be
-    //! — a parse that agrees with itself proves nothing, and this module's
-    //! whole claim is that it reads what the Dart one reads while the two
-    //! implementations exist side by side.
+    //! — a parse that agrees with itself proves nothing.
     //!
     //! Two things are asserted differently, both deliberately:
     //!

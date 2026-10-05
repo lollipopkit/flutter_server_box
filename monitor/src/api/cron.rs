@@ -280,30 +280,23 @@ async fn read_document(exec: &Limits) -> Result<sbm_parser::cron::CronCatalog, U
         ..
     } = output;
 
-    if exit_code != Some(0) {
-        // A crontab that does not exist yet is the state of every server before
-        // its first job, and it has to be an empty document the user can add
-        // to, not an error — every implementation exits 1 for it, the same as
-        // for a real failure.
-        let no_crontab =
-            exit_code == Some(1) && sbm_parser::cron::is_no_crontab(&stderr);
-        if !no_crontab {
-            if exit_code == Some(sbm_parser::cron::NOT_INSTALLED_EXIT) {
-                return Err(Unavailable {
-                    kind: CronReason::NotInstalled,
-                    text: None,
-                });
-            }
-            let detail = if stderr.trim().is_empty() {
-                stdout.trim()
-            } else {
-                stderr.trim()
-            };
-            return Err(unreadable((!detail.is_empty()).then(|| detail.to_owned())));
-        }
-    }
+    sbm_parser::cron::read_listing(&stdout, &stderr, exit_code, exit_code == Some(0)).map_err(unavailable_from)
+}
 
-    sbm_parser::cron::parse_list(&stdout).map_err(|e| unreadable(Some(e.to_string())))
+/// A listing or a save the machine refused, as the reason the panel shows.
+/// `crontab` missing altogether is its own case and carries no text: there
+/// is nothing in it the panel does not already say.
+fn unavailable_from(failure: sbm_parser::cron::CronFailure) -> Unavailable {
+    if failure.not_installed {
+        return Unavailable {
+            kind: CronReason::NotInstalled,
+            text: None,
+        };
+    }
+    Unavailable {
+        kind: CronReason::Unreadable,
+        text: failure.detail,
+    }
 }
 
 /// The same read, as the response body both endpoints answer with.
@@ -358,16 +351,6 @@ async fn write_document(document: &str, exec: &Limits) -> Result<(), Unavailable
             });
         }
     };
-    if output.exit_code == Some(0) {
-        return Ok(());
-    }
-    let detail = if output.stderr.trim().is_empty() {
-        output.stdout.trim()
-    } else {
-        output.stderr.trim()
-    };
-    Err(Unavailable {
-        kind: CronReason::Unreadable,
-        text: (!detail.is_empty()).then(|| detail.to_owned()),
-    })
+    sbm_parser::cron::check_save(&output.stdout, &output.stderr, output.exit_code, output.exit_code == Some(0))
+        .map_err(unavailable_from)
 }

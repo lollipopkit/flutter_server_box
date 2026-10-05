@@ -4,12 +4,17 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
+import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
-import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/src/rust/api/container.dart' as ffi;
 import 'package:server_box/view/page/container/resource_views.dart';
 
+import '../helpers/rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   Widget containerView(
     List<ContainerPs> items, {
     ContainerQuickActionHandler? onQuickAction,
@@ -51,9 +56,10 @@ void main() {
           unusedTaggedCount: unusedTaggedCount,
           allUnused: allUnused,
           onAllUnusedChanged: (value) => setState(() => allUnused = value),
-          commandPreview:
-              '${type.name} '
-              '${buildContainerImagePruneCmd(allUnused: allUnused)}',
+          commandPreview: ffi.containerImagePruneCommand(
+            runtimeName: type.name,
+            allUnused: allUnused,
+          ),
         );
       },
     );
@@ -73,12 +79,11 @@ void main() {
               setState(() => allUnusedImages = value),
           onIncludeVolumesChanged: (value) =>
               setState(() => includeVolumes = value),
-          commandPreview:
-              '${type.name} '
-              '${buildContainerSystemPruneCmd(
-                allUnusedImages: allUnusedImages,
-                includeVolumes: includeVolumes,
-              )}',
+          commandPreview: ffi.containerSystemPruneCommand(
+            runtimeName: type.name,
+            allUnusedImages: allUnusedImages,
+            includeVolumes: includeVolumes,
+          ),
         );
       },
     );
@@ -91,16 +96,17 @@ void main() {
         'production-container-with-a-name-that-is-deliberately-long-for-mobile';
     const longImage =
         'registry.example.com/organization/team/an-extremely-long-image-name:latest';
-    final item = DockerPs(
+    final item = ContainerPs(
       id: 'mobile-container',
-      names: longName,
+      name: longName,
       image: longImage,
-      state: 'Up 3 hours',
-    )
-      ..cpu = '13.7%'
-      ..mem = '640 MiB / 2 GiB'
-      ..net = '12.4 MB / 8.1 MB'
-      ..disk = '1.2 GB / 780 MB';
+      rawStatus: 'Up 3 hours',
+      status: ContainerStatus.running,
+      cpu: '13.7%',
+      mem: '640 MiB / 2 GiB',
+      net: '12.4 MB / 8.1 MB',
+      disk: '1.2 GB / 780 MB',
+    );
 
     await _pumpAt(tester, width: 390, child: containerView([item]));
 
@@ -154,11 +160,12 @@ void main() {
   testWidgets('stopped container shows the original status at 390px', (
     tester,
   ) async {
-    final item = DockerPs(
+    final item = ContainerPs(
       id: 'stopped-container',
-      names: 'alpine-test',
+      name: 'alpine-test',
       image: 'docker.io/library/alpine:latest',
-      state: 'Exited (0) 7 seconds ago',
+      rawStatus: 'Exited (0) 7 seconds ago',
+      status: ContainerStatus.exited,
     );
 
     await _pumpAt(tester, width: 390, child: containerView([item]));
@@ -187,17 +194,19 @@ void main() {
     // Counted in the group header: the runtime-wide summary is built by the
     // page now, so this view only totals a compose project.
     final items = [
-      PodmanPs(
+      ContainerPs(
         id: 'unknown-container',
-        names: ['worker'],
+        name: 'worker',
         rawStatus: 'Unexpected state',
+        status: ContainerStatus.unknown,
         project: 'stack',
       ),
-      DockerPs(
+      ContainerPs(
         id: 'running-container',
-        names: 'api',
+        name: 'api',
         image: 'example/api:latest',
-        state: 'Up 2 minutes',
+        rawStatus: 'Up 2 minutes',
+        status: ContainerStatus.running,
         project: 'stack',
       ),
     ];
@@ -212,16 +221,17 @@ void main() {
   testWidgets('1280px renders the wide container resource card', (
     tester,
   ) async {
-    final item = DockerPs(
+    final item = ContainerPs(
       id: 'desktop-container',
-      names: 'api',
+      name: 'api',
       image: 'example/api:stable',
-      state: 'Up 12 minutes',
-    )
-      ..cpu = '2.5%'
-      ..mem = '128 MiB / 1 GiB'
-      ..net = '4 MB / 2 MB'
-      ..disk = '20 MB / 5 MB';
+      rawStatus: 'Up 12 minutes',
+      status: ContainerStatus.running,
+      cpu: '2.5%',
+      mem: '128 MiB / 1 GiB',
+      net: '4 MB / 2 MB',
+      disk: '20 MB / 5 MB',
+    );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -245,16 +255,17 @@ void main() {
   testWidgets('missing or unparseable container stats are omitted', (
     tester,
   ) async {
-    final item = DockerPs(
+    final item = ContainerPs(
       id: 'partial-stats',
-      names: 'worker',
+      name: 'worker',
       image: 'example/worker:latest',
-      state: 'Up 4 minutes',
-    )
-      ..cpu = '4.2%'
-      ..mem = 'not available'
-      ..net = 'not available / garbage'
-      ..disk = 'garbage / not available';
+      rawStatus: 'Up 4 minutes',
+      status: ContainerStatus.running,
+      cpu: '4.2%',
+      mem: 'not available',
+      net: 'not available / garbage',
+      disk: 'garbage / not available',
+    );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -287,16 +298,17 @@ void main() {
   testWidgets('partial or trailing-garbage metrics are omitted', (
     tester,
   ) async {
-    final item = DockerPs(
+    final item = ContainerPs(
       id: 'malformed-stats',
-      names: 'worker',
+      name: 'worker',
       image: 'example/worker:latest',
-      state: 'Up 4 minutes',
-    )
-      ..cpu = '12.5% garbage'
-      ..mem = '640 MiB junk / 2 GiB'
-      ..net = '12 MB / garbage'
-      ..disk = '1 GB / -2 MB';
+      rawStatus: 'Up 4 minutes',
+      status: ContainerStatus.running,
+      cpu: '12.5% garbage',
+      mem: '640 MiB junk / 2 GiB',
+      net: '12 MB / garbage',
+      disk: '1 GB / -2 MB',
+    );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -313,11 +325,13 @@ void main() {
   testWidgets('provider-valid averaged CPU metrics remain visible', (
     tester,
   ) async {
-    final item = PodmanPs(
+    final item = ContainerPs(
       id: 'averaged-cpu',
-      names: ['worker'],
+      name: 'worker',
       rawStatus: 'Up 4 minutes',
-    )..cpu = '12.5% / Avg 3.0%';
+      status: ContainerStatus.running,
+      cpu: '12.5% / Avg 3.0%',
+    );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -368,16 +382,17 @@ void main() {
     ];
 
     for (final data in cases) {
-      final item = DockerPs(
+      final item = ContainerPs(
         id: data.id,
-        names: 'worker',
+        name: 'worker',
         image: 'example/worker:latest',
-        state: 'Up 4 minutes',
-      )
-        ..cpu = data.cpu
-        ..mem = data.mem
-        ..net = data.net
-        ..disk = data.disk;
+        rawStatus: 'Up 4 minutes',
+        status: ContainerStatus.running,
+        cpu: data.cpu,
+        mem: data.mem,
+        net: data.net,
+        disk: data.disk,
+      );
 
       await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -404,14 +419,15 @@ void main() {
   testWidgets('resource percentages above 100 are clamped consistently', (
     tester,
   ) async {
-    final item = DockerPs(
+    final item = ContainerPs(
       id: 'clamped-stats',
-      names: 'worker',
+      name: 'worker',
       image: 'example/worker:latest',
-      state: 'Up 4 minutes',
-    )
-      ..cpu = '150%'
-      ..mem = '3 GiB / 2 GiB';
+      rawStatus: 'Up 4 minutes',
+      status: ContainerStatus.running,
+      cpu: '150%',
+      mem: '3 GiB / 2 GiB',
+    );
 
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
@@ -424,8 +440,8 @@ void main() {
   testWidgets('image rows switch from compact at 390px to wide at 900px', (
     tester,
   ) async {
-    final image = DockerImg(
-      containers: '1',
+    final image = ContainerImg(
+      containers: 1,
       createdAt: '2026-08-08 09:30:00 +0800 CST',
       id: 'sha256:image-switch',
       repository: 'example/web',
@@ -446,7 +462,7 @@ void main() {
     );
     expect(find.byKey(const ValueKey('image-table-header')), findsNothing);
     // Narrow has no column for the age, so it folds onto the id's line.
-    expect(find.textContaining(image.createdAt), findsOneWidget);
+    expect(find.textContaining(image.createdAt!), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await _pumpAt(tester, width: 900, child: imageView([image]));
@@ -462,7 +478,7 @@ void main() {
     );
     // Wide gives it a column of its own, under a header.
     expect(find.byKey(const ValueKey('image-table-header')), findsOneWidget);
-    expect(find.text(image.createdAt), findsOneWidget);
+    expect(find.text(image.createdAt!), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -471,8 +487,8 @@ void main() {
   ) async {
     const repository =
         'registry.example.com/a-very-long-organization/a-very-long-project/image';
-    final image = DockerImg(
-      containers: '1',
+    final image = ContainerImg(
+      containers: 1,
       createdAt: '2026-08-08 09:30:00 +0800 CST',
       id: 'sha256:long-image',
       repository: repository,
@@ -497,8 +513,14 @@ void main() {
       tester,
       width: 390,
       child: imageView([
-        PodmanImg(),
-        PodmanImg(),
+        ContainerImg(
+  dangling: true,
+  unused: true,
+),
+        ContainerImg(
+  dangling: true,
+  unused: true,
+),
       ]),
     );
 
@@ -516,8 +538,8 @@ void main() {
   testWidgets('large image lists build only visible rows', (tester) async {
     final images = List.generate(
       200,
-      (index) => DockerImg(
-        containers: '1',
+      (index) => ContainerImg(
+        containers: 1,
         createdAt: 'today',
         id: 'image-$index',
         repository: 'example/image-$index',
@@ -536,18 +558,20 @@ void main() {
     tester,
   ) async {
     final items = [
-      DockerPs(
+      ContainerPs(
         id: 'compose-web',
-        names: 'web',
+        name: 'web',
         image: 'example/web:latest',
-        state: 'Up 8 minutes',
+        rawStatus: 'Up 8 minutes',
+        status: ContainerStatus.running,
         project: 'production-stack',
       ),
-      DockerPs(
+      ContainerPs(
         id: 'compose-db',
-        names: 'db',
+        name: 'db',
         image: 'postgres:17',
-        state: 'Exited (0) 2 minutes ago',
+        rawStatus: 'Exited (0) 2 minutes ago',
+        status: ContainerStatus.exited,
         project: 'production-stack',
       ),
     ];
@@ -587,18 +611,20 @@ void main() {
     tester,
   ) async {
     final items = [
-      DockerPs(
+      ContainerPs(
         id: 'compose-web',
-        names: 'web',
+        name: 'web',
         image: 'example/web:latest',
-        state: 'Up 8 minutes',
+        rawStatus: 'Up 8 minutes',
+        status: ContainerStatus.running,
         project: 'production-stack',
       ),
-      DockerPs(
+      ContainerPs(
         id: 'standalone-worker',
-        names: 'worker',
+        name: 'worker',
         image: 'example/worker:latest',
-        state: 'Up 3 minutes',
+        rawStatus: 'Up 3 minutes',
+        status: ContainerStatus.running,
       ),
     ];
 
@@ -616,17 +642,19 @@ void main() {
   testWidgets('containers keep deterministic ordering after input reordering', (
     tester,
   ) async {
-    final alpha = DockerPs(
+    final alpha = ContainerPs(
       id: 'container-alpha',
-      names: 'Alpha',
+      name: 'Alpha',
       image: 'example/alpha:latest',
-      state: 'Up 3 minutes',
+      rawStatus: 'Up 3 minutes',
+      status: ContainerStatus.running,
     );
-    final zeta = DockerPs(
+    final zeta = ContainerPs(
       id: 'container-zeta',
-      names: 'zeta',
+      name: 'zeta',
       image: 'example/zeta:latest',
-      state: 'Up 3 minutes',
+      rawStatus: 'Up 3 minutes',
+      status: ContainerStatus.running,
     );
 
     for (final items in [
@@ -653,21 +681,24 @@ void main() {
     tester,
   ) async {
     final images = [
-      DockerImg(
-        containers: '0',
+      ContainerImg(
+        containers: 0,
         createdAt: '2026-08-01',
         id: 'sha256:dangling',
         repository: '<none>',
         size: '12 MB',
         tag: '<none>',
+        dangling: true,
+        unused: true,
       ),
-      DockerImg(
-        containers: '0',
+      ContainerImg(
+        containers: 0,
         createdAt: '2026-08-02',
         id: 'sha256:unused',
         repository: 'example/worker',
         size: '64 MB',
         tag: 'old',
+        unused: true,
       ),
     ];
 

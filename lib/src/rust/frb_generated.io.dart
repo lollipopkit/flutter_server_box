@@ -11,7 +11,9 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bench.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/src/rust/api/container.dart';
 import 'package:server_box/src/rust/api/create.dart';
+import 'package:server_box/src/rust/api/cron.dart';
 import 'package:server_box/src/rust/api/desktop.dart';
 import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/hardware.dart';
@@ -231,10 +233,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo dco_decode_box_autoadd_cert_info(dynamic raw);
 
   @protected
+  ContainerDiskUsageItem dco_decode_box_autoadd_container_disk_usage_item(
+    dynamic raw,
+  );
+
+  @protected
+  ContainerStatsItem dco_decode_box_autoadd_container_stats_item(dynamic raw);
+
+  @protected
+  CronScheduleFields dco_decode_box_autoadd_cron_schedule_fields(dynamic raw);
+
+  @protected
+  CronServerClock dco_decode_box_autoadd_cron_server_clock(dynamic raw);
+
+  @protected
+  CronWall dco_decode_box_autoadd_cron_wall(dynamic raw);
+
+  @protected
   double dco_decode_box_autoadd_f_64(dynamic raw);
 
   @protected
   int dco_decode_box_autoadd_i_32(dynamic raw);
+
+  @protected
+  PlatformInt64 dco_decode_box_autoadd_i_64(dynamic raw);
 
   @protected
   LibvirtPoolRef dco_decode_box_autoadd_libvirt_pool_ref(dynamic raw);
@@ -291,6 +313,42 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommandSpec dco_decode_command_spec(dynamic raw);
 
   @protected
+  ContainerDiskUsageItem dco_decode_container_disk_usage_item(dynamic raw);
+
+  @protected
+  ContainerImageItem dco_decode_container_image_item(dynamic raw);
+
+  @protected
+  ContainerItem dco_decode_container_item(dynamic raw);
+
+  @protected
+  ContainerStatsItem dco_decode_container_stats_item(dynamic raw);
+
+  @protected
+  CronDocumentData dco_decode_cron_document_data(dynamic raw);
+
+  @protected
+  CronEditError dco_decode_cron_edit_error(dynamic raw);
+
+  @protected
+  CronFfiError dco_decode_cron_ffi_error(dynamic raw);
+
+  @protected
+  CronJobLine dco_decode_cron_job_line(dynamic raw);
+
+  @protected
+  CronListing dco_decode_cron_listing(dynamic raw);
+
+  @protected
+  CronScheduleFields dco_decode_cron_schedule_fields(dynamic raw);
+
+  @protected
+  CronServerClock dco_decode_cron_server_clock(dynamic raw);
+
+  @protected
+  CronWall dco_decode_cron_wall(dynamic raw);
+
+  @protected
   CustomCmd dco_decode_custom_cmd(dynamic raw);
 
   @protected
@@ -321,10 +379,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CommandSpec> dco_decode_list_command_spec(dynamic raw);
 
   @protected
+  List<ContainerImageItem> dco_decode_list_container_image_item(dynamic raw);
+
+  @protected
+  List<ContainerItem> dco_decode_list_container_item(dynamic raw);
+
+  @protected
+  List<CronJobLine> dco_decode_list_cron_job_line(dynamic raw);
+
+  @protected
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
+
+  @protected
+  Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
 
   @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
@@ -365,10 +435,34 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo? dco_decode_opt_box_autoadd_cert_info(dynamic raw);
 
   @protected
+  ContainerDiskUsageItem? dco_decode_opt_box_autoadd_container_disk_usage_item(
+    dynamic raw,
+  );
+
+  @protected
+  ContainerStatsItem? dco_decode_opt_box_autoadd_container_stats_item(
+    dynamic raw,
+  );
+
+  @protected
+  CronScheduleFields? dco_decode_opt_box_autoadd_cron_schedule_fields(
+    dynamic raw,
+  );
+
+  @protected
+  CronServerClock? dco_decode_opt_box_autoadd_cron_server_clock(dynamic raw);
+
+  @protected
+  CronWall? dco_decode_opt_box_autoadd_cron_wall(dynamic raw);
+
+  @protected
   double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
 
   @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
+
+  @protected
+  PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw);
 
   @protected
   RedfishChassis? dco_decode_opt_box_autoadd_redfish_chassis(dynamic raw);
@@ -724,10 +818,36 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo sse_decode_box_autoadd_cert_info(SseDeserializer deserializer);
 
   @protected
+  ContainerDiskUsageItem sse_decode_box_autoadd_container_disk_usage_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ContainerStatsItem sse_decode_box_autoadd_container_stats_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronScheduleFields sse_decode_box_autoadd_cron_schedule_fields(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronServerClock sse_decode_box_autoadd_cron_server_clock(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronWall sse_decode_box_autoadd_cron_wall(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
+
+  @protected
+  PlatformInt64 sse_decode_box_autoadd_i_64(SseDeserializer deserializer);
 
   @protected
   LibvirtPoolRef sse_decode_box_autoadd_libvirt_pool_ref(
@@ -804,6 +924,50 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
 
   @protected
+  ContainerDiskUsageItem sse_decode_container_disk_usage_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ContainerImageItem sse_decode_container_image_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ContainerItem sse_decode_container_item(SseDeserializer deserializer);
+
+  @protected
+  ContainerStatsItem sse_decode_container_stats_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronDocumentData sse_decode_cron_document_data(SseDeserializer deserializer);
+
+  @protected
+  CronEditError sse_decode_cron_edit_error(SseDeserializer deserializer);
+
+  @protected
+  CronFfiError sse_decode_cron_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  CronJobLine sse_decode_cron_job_line(SseDeserializer deserializer);
+
+  @protected
+  CronListing sse_decode_cron_listing(SseDeserializer deserializer);
+
+  @protected
+  CronScheduleFields sse_decode_cron_schedule_fields(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronServerClock sse_decode_cron_server_clock(SseDeserializer deserializer);
+
+  @protected
+  CronWall sse_decode_cron_wall(SseDeserializer deserializer);
+
+  @protected
   CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
 
   @protected
@@ -834,12 +998,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CommandSpec> sse_decode_list_command_spec(SseDeserializer deserializer);
 
   @protected
+  List<ContainerImageItem> sse_decode_list_container_image_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ContainerItem> sse_decode_list_container_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<CronJobLine> sse_decode_list_cron_job_line(SseDeserializer deserializer);
+
+  @protected
   List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
   List<LibvirtPoolRef> sse_decode_list_libvirt_pool_ref(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
 
   @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
@@ -888,10 +1068,36 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo? sse_decode_opt_box_autoadd_cert_info(SseDeserializer deserializer);
 
   @protected
+  ContainerDiskUsageItem? sse_decode_opt_box_autoadd_container_disk_usage_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ContainerStatsItem? sse_decode_opt_box_autoadd_container_stats_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronScheduleFields? sse_decode_opt_box_autoadd_cron_schedule_fields(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronServerClock? sse_decode_opt_box_autoadd_cron_server_clock(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CronWall? sse_decode_opt_box_autoadd_cron_wall(SseDeserializer deserializer);
+
+  @protected
   double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
   int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
+
+  @protected
+  PlatformInt64? sse_decode_opt_box_autoadd_i_64(SseDeserializer deserializer);
 
   @protected
   RedfishChassis? sse_decode_opt_box_autoadd_redfish_chassis(
@@ -1299,10 +1505,46 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_container_disk_usage_item(
+    ContainerDiskUsageItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_container_stats_item(
+    ContainerStatsItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_cron_schedule_fields(
+    CronScheduleFields self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_cron_server_clock(
+    CronServerClock self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_cron_wall(
+    CronWall self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_i_64(
+    PlatformInt64 self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_libvirt_pool_ref(
@@ -1395,6 +1637,60 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
 
   @protected
+  void sse_encode_container_disk_usage_item(
+    ContainerDiskUsageItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_container_image_item(
+    ContainerImageItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_container_item(ContainerItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_container_stats_item(
+    ContainerStatsItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_cron_document_data(
+    CronDocumentData self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_cron_edit_error(CronEditError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_cron_ffi_error(CronFfiError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_cron_job_line(CronJobLine self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_cron_listing(CronListing self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_cron_schedule_fields(
+    CronScheduleFields self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_cron_server_clock(
+    CronServerClock self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_cron_wall(CronWall self, SseSerializer serializer);
+
+  @protected
   void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
 
   @protected
@@ -1437,6 +1733,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_container_image_item(
+    List<ContainerImageItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_container_item(
+    List<ContainerItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_cron_job_line(
+    List<CronJobLine> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_custom_cmd(
     List<CustomCmd> self,
     SseSerializer serializer,
@@ -1445,6 +1759,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_libvirt_pool_ref(
     List<LibvirtPoolRef> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_u_32_strict(
+    Uint32List self,
     SseSerializer serializer,
   );
 
@@ -1512,10 +1832,46 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_container_disk_usage_item(
+    ContainerDiskUsageItem? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_container_stats_item(
+    ContainerStatsItem? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_cron_schedule_fields(
+    CronScheduleFields? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_cron_server_clock(
+    CronServerClock? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_cron_wall(
+    CronWall? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_i_64(
+    PlatformInt64? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_redfish_chassis(

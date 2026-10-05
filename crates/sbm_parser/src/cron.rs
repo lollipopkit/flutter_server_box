@@ -1,12 +1,9 @@
 //! The logged-in account's crontab: the listing script, the document model and
 //! the cron expression expansion.
 //!
-//! Ported from the app's `lib/data/service/cron_manager.dart` and
-//! `lib/data/model/server/cron*.dart`; the Dart implementation stays until this
-//! one is asserted identical against the same fixtures.
-// TODO(migration): no `cron_compat.rs` yet. Port the Dart fixture tests here,
-// expose this over FFI, and delete the Dart side once the result is asserted
-// identical.
+//! The monitor agent serves it to its panel and the app calls it through FFI
+//! (`sbm_ffi::api::cron`). Ported from the app's Dart copy, whose fixture tests
+//! are `tests/cron_compat.rs`.
 //!
 //! The feature is one account's own crontab, as `crontab` itself is: no `-u`,
 //! no `/etc/cron.d`, no systemd timers. Running as another user needs sudo,
@@ -705,7 +702,9 @@ impl CronDocument {
             .ok_or(CronValidation::UnknownLine)
     }
 
-    fn from_lines(lines: Vec<String>) -> Self {
+    /// A document from the lines a client was given, as [`Self::lines`]
+    /// holds them: what an edit made over FFI starts from.
+    pub fn from_lines(lines: Vec<String>) -> Self {
         let jobs = parse_jobs(&lines);
         Self { lines, jobs }
     }
@@ -732,7 +731,8 @@ pub fn validate(schedule: &str, command: &str) -> Option<CronValidation> {
     if clean_schedule.starts_with('@') {
         // One token, no whitespace: `@reboot`, `@daily`. Anything longer is a
         // macro this app does not know, and `@daily 0 3 * * *` is not a line.
-        if clean_schedule.split_whitespace().count() != 1 {
+        // A bare `@` names no macro at all.
+        if clean_schedule.len() == 1 || clean_schedule.split_whitespace().count() != 1 {
             return Some(CronValidation::Macro);
         }
         return None;
@@ -831,6 +831,61 @@ pub fn is_no_crontab(stderr: &str) -> bool {
         return true;
     }
     line.starts_with("crontab: can't open '") && line.ends_with("no such file or directory")
+}
+
+/// Why [`LIST_SCRIPT`] or [`SAVE_COMMAND`] gave no usable answer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CronFailure {
+    /// `crontab` is not installed at all ([`NOT_INSTALLED_EXIT`]): nothing to
+    /// retry, and a client says so rather than showing an error.
+    pub not_installed: bool,
+    /// What the machine said, stderr before stdout, or why the output was not
+    /// read. `None` when it said nothing.
+    pub detail: Option<String>,
+}
+
+impl CronFailure {
+    fn from_output(stdout: &str, stderr: &str, exit_code: Option<i32>) -> Self {
+        let detail = if stderr.trim().is_empty() {
+            stdout.trim()
+        } else {
+            stderr.trim()
+        };
+        Self {
+            not_installed: exit_code == Some(NOT_INSTALLED_EXIT),
+            detail: (!detail.is_empty()).then(|| detail.to_owned()),
+        }
+    }
+}
+
+/// Reads what [`LIST_SCRIPT`] produced, the exit status included.
+///
+/// `succeeded` is the caller's own verdict on the run (an exit of 0, and
+/// whatever else its transport knows), since only it can tell a stream that
+/// broke. An exit of 1 that [`is_no_crontab`] recognises is not a failure: it
+/// is an empty document.
+pub fn read_listing(
+    stdout: &str,
+    stderr: &str,
+    exit_code: Option<i32>,
+    succeeded: bool,
+) -> Result<CronCatalog, CronFailure> {
+    let no_crontab = exit_code == Some(1) && is_no_crontab(stderr);
+    if !succeeded && !no_crontab {
+        return Err(CronFailure::from_output(stdout, stderr, exit_code));
+    }
+    parse_list(stdout).map_err(|e| CronFailure {
+        not_installed: false,
+        detail: Some(e.to_string()),
+    })
+}
+
+/// Whether [`SAVE_COMMAND`] took the document, read like [`read_listing`].
+pub fn check_save(stdout: &str, stderr: &str, exit_code: Option<i32>, succeeded: bool) -> Result<(), CronFailure> {
+    if succeeded {
+        return Ok(());
+    }
+    Err(CronFailure::from_output(stdout, stderr, exit_code))
 }
 
 /// A crontab and what the server said about itself when it was read.

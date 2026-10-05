@@ -1,7 +1,9 @@
 pub mod backup;
 pub mod bench;
 pub mod bmc;
+pub mod container;
 pub mod create;
+pub mod cron;
 pub mod desktop;
 pub mod file;
 pub mod hardware;

@@ -3,9 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
-import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/provider/container.dart';
+import 'package:server_box/src/rust/api/container.dart' as ffi;
+
+import '../../helpers/rust_lib_helper.dart';
 
 /// Records what it was asked to run instead of running it.
 class _RecordingExec implements ServerExec {
@@ -202,14 +203,16 @@ void main() {
     });
   });
 
-  group('buildContainerRuntimeCommand', () {
+  group('container runtime command', () {
+    setUpAll(initRustLibForTest);
+
     test('sudo carries no credential of its own', () {
       // `sudo -S` reads the password from stdin, which is why there is nowhere
       // in this string for one to be — not the agent's audit log, not the
       // machine's process list.
-      final command = buildContainerRuntimeCommand(
+      final command = ffi.containerRuntimeCommand(
         command: 'docker ps',
-        type: ContainerType.docker,
+        runtimeName: 'docker',
         sudo: true,
       );
       expect(command, startsWith('sudo -S env '));
