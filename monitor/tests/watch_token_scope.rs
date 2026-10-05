@@ -341,6 +341,18 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/system-users",
             Some(json!({ "action": "delete", "name": "sbm-scope-test-nonexistent" })),
         ),
+        (Method::POST, "/api/v1/firewall", Some(json!({}))),
+        // A zone no machine has: refused before anything would run.
+        (
+            Method::POST,
+            "/api/v1/firewall/plan",
+            Some(json!({ "kind": "firewalld", "change": { "type": "remove_interface", "zone": "sbm-scope-test-nonexistent", "iface": "sbm0" } })),
+        ),
+        (
+            Method::POST,
+            "/api/v1/firewall/act",
+            Some(json!({ "kind": "firewalld", "change": { "type": "remove_interface", "zone": "sbm-scope-test-nonexistent", "iface": "sbm0" } })),
+        ),
         (Method::GET, "/api/v1/snippets", None),
         (Method::PUT, "/api/v1/snippets", Some(json!({ "snippets": [] }))),
         (Method::POST, "/api/v1/snippets/plan", Some(json!({ "script": "ls" }))),

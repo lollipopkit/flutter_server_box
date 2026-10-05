@@ -42,6 +42,11 @@ import type {
   WsTicketPurpose,
   WsTicketResponse,
   UserActRequest,
+  FirewallActResult,
+  FirewallChange,
+  FirewallKind,
+  FirewallPlanResult,
+  FirewallView,
   UserActResult,
   UserPart,
   UserView,
@@ -477,6 +482,42 @@ export const api = {
     request<UserActResult>(
       '/system-users',
       { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// The machine's firewall, the one `kind` names or the one the agent
+  /// prefers (the `shell` grant). A POST: the `sudo` password a read may need
+  /// travels in the body.
+  getFirewall: (kind?: FirewallKind, password?: string) =>
+    request<FirewallView>(
+      '/firewall',
+      { method: 'POST', body: JSON.stringify({ ...(kind ? { kind } : {}), ...(password ? { password } : {}) }) },
+      'Failed to read the firewall',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// What a change would run and do. Runs nothing; a change that cannot be
+  /// made arrives as `ApiError.message` holding its code, a draft's or an
+  /// input's issue as `body.issue`.
+  planFirewall: (change: FirewallChange, password?: string) =>
+    request<FirewallPlanResult>(
+      '/firewall/plan',
+      { method: 'POST', body: JSON.stringify({ ...change, ...(password ? { password } : {}) }) },
+      'Failed to reach the machine',
+      undefined,
+      MACHINE_TIMEOUT_MS,
+    ),
+  /// Makes a change. The agent reads the firewall again and plans it anew, so
+  /// what runs is never the client's copy; `keep_open` runs the plan's
+  /// keep-open rules first.
+  actFirewall: (change: FirewallChange, keepOpen: boolean, password?: string) =>
+    request<FirewallActResult>(
+      '/firewall/act',
+      {
+        method: 'POST',
+        body: JSON.stringify({ ...change, keep_open: keepOpen, ...(password ? { password } : {}) }),
+      },
       'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,

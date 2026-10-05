@@ -20,8 +20,9 @@ pub use sbm_parser::firewall::ufw::{
     UfwAction, UfwApp, UfwAppPort, UfwChain, UfwDirection, UfwDraftIssue, UfwEndpoint, UfwIpVersion, UfwLog, UfwLogLevel, UfwPolicy, UfwRule,
     UfwRuleDraft, UfwSnapshot,
 };
+pub use sbm_parser::firewall::change::{ChangeError, Effect, FirewalldChange, Plan, PlanNote, UfwChange};
 pub use sbm_parser::firewall::{FirewallAccess, FirewallAccessVia, FirewallKind, FirewallProbeResult, FirewallReach};
-use sbm_parser::firewall::{self, firewalld, ufw};
+use sbm_parser::firewall::{self, change, firewalld, ufw};
 
 // --- Mirrors -----------------------------------------------------------------
 
@@ -43,6 +44,7 @@ pub struct _FirewallAccess {
     pub port: u16,
     pub client: Option<String>,
     pub server: Option<String>,
+    pub iface: Option<String>,
 }
 
 #[frb(mirror(FirewallReach))]
@@ -59,7 +61,6 @@ pub struct _FirewallProbeResult {
     pub firewalld: Option<bool>,
     pub root: bool,
     pub ssh: Option<FirewallAccess>,
-    pub ssh_interface: Option<String>,
 }
 
 #[frb(mirror(UfwAction))]
@@ -268,6 +269,70 @@ pub enum _FirewalldInputIssue {
     InvalidForwardPort,
 }
 
+#[frb(mirror(UfwChange))]
+pub enum _UfwChange {
+    Enable,
+    Disable,
+    Reload,
+    Policy { chain: UfwChain, policy: UfwPolicy },
+    Logging { level: UfwLogLevel },
+    AddRule { draft: UfwRuleDraft },
+    DeleteRule { tuples: Vec<String> },
+}
+
+#[frb(mirror(FirewalldChange))]
+pub enum _FirewalldChange {
+    Start,
+    Stop,
+    Reload,
+    RuntimeToPermanent,
+    PanicOff,
+    DefaultZone { zone: String },
+    Target { zone: String, target: FirewalldTarget },
+    Masquerade { zone: String, enabled: bool },
+    Add { zone: String, item: FirewalldItem, value: String },
+    Remove { zone: String, item: FirewalldItem, value: String },
+    ChangeInterface { zone: String, iface: String },
+    RemoveInterface { zone: String, iface: String },
+}
+
+#[frb(mirror(Effect))]
+pub struct _Effect {
+    pub access: FirewallAccess,
+    pub before: FirewallReach,
+    pub after: FirewallReach,
+    pub later: bool,
+    pub worse: bool,
+}
+
+#[frb(mirror(PlanNote))]
+pub enum _PlanNote {
+    ReloadLoses,
+}
+
+#[frb(mirror(Plan))]
+pub struct _Plan {
+    pub commands: Vec<String>,
+    pub effects: Vec<Effect>,
+    pub notes: Vec<PlanNote>,
+    pub destructive: bool,
+    pub confirm: bool,
+    pub keep_open: Vec<String>,
+    pub keep_open_default: bool,
+    pub countdown: bool,
+}
+
+/// Why a change cannot be planned. Thrown by [`ufw_plan`] and
+/// [`firewalld_plan`].
+#[frb(mirror(ChangeError))]
+pub enum _ChangeError {
+    Unchanged,
+    Draft(UfwDraftIssue),
+    Input(FirewalldInputIssue),
+    NoSuchRule,
+    NoSuchZone,
+}
+
 #[frb(mirror(FirewalldItem))]
 pub enum _FirewalldItem {
     Service,
@@ -304,17 +369,6 @@ pub fn firewall_script(commands: Vec<String>) -> String {
     firewall::script(&commands)
 }
 
-#[frb(sync)]
-pub fn firewall_reach_admits(reach: FirewallReach) -> bool {
-    reach.admits()
-}
-
-/// Whether `after` is a change for the worse from `before`.
-#[frb(sync)]
-pub fn firewall_reach_worse_than(after: FirewallReach, before: FirewallReach) -> bool {
-    after.worse_than(before)
-}
-
 // --- ufw ---------------------------------------------------------------------
 
 #[frb(sync)]
@@ -327,71 +381,9 @@ pub fn ufw_parse(output: String) -> Result<UfwSnapshot, String> {
     ufw::parse(&output)
 }
 
-/// Whether a new connection like `access` gets through; `active`, `rules`
-/// and `incoming` stand in for the snapshot's own.
-#[frb(sync)]
-pub fn ufw_reach(snapshot: UfwSnapshot, access: FirewallAccess, active: Option<bool>, rules: Option<Vec<UfwRule>>, incoming: Option<UfwPolicy>) -> FirewallReach {
-    snapshot.reach(&access, active, rules.as_deref(), incoming)
-}
-
-/// The snapshot's rules with `added` first, or last.
-#[frb(sync)]
-pub fn ufw_with_rules(snapshot: UfwSnapshot, added: Vec<UfwRule>, prepend: bool) -> Vec<UfwRule> {
-    snapshot.with_rules(&added, prepend)
-}
-
-/// The rules ufw would add for `draft`, with `apps` resolving a profile.
-#[frb(sync)]
-pub fn ufw_draft_rules(draft: UfwRuleDraft, apps: Vec<UfwApp>) -> Vec<UfwRule> {
-    draft.as_rules(&apps)
-}
-
 #[frb(sync)]
 pub fn ufw_validate_draft(draft: UfwRuleDraft) -> Option<UfwDraftIssue> {
     ufw::validate_draft(&draft)
-}
-
-/// The command adding `draft`; an error names the issue
-/// [`ufw_validate_draft`] would have.
-#[frb(sync)]
-pub fn ufw_add_command(draft: UfwRuleDraft) -> Result<String, String> {
-    ufw::add_command(&draft).map_err(|issue| format!("{issue:?}"))
-}
-
-#[frb(sync)]
-pub fn ufw_delete_commands(rule: UfwRule) -> Vec<String> {
-    ufw::delete_commands(&rule)
-}
-
-#[frb(sync)]
-pub fn ufw_enable_command() -> String {
-    ufw::ENABLE_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn ufw_disable_command() -> String {
-    ufw::DISABLE_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn ufw_reload_command() -> String {
-    ufw::RELOAD_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn ufw_policy_command(chain: UfwChain, policy: UfwPolicy) -> String {
-    ufw::policy_command(chain, policy)
-}
-
-#[frb(sync)]
-pub fn ufw_logging_command(level: UfwLogLevel) -> String {
-    ufw::logging_command(level)
-}
-
-/// Lets TCP in to `port`, before every other rule.
-#[frb(sync)]
-pub fn ufw_allow_tcp_command(port: u16) -> String {
-    ufw::allow_tcp_command(port)
 }
 
 /// `in`, `out`: the word ufw writes.
@@ -418,48 +410,43 @@ pub fn firewalld_parse(output: String) -> Result<FirewalldSnapshot, String> {
     firewalld::parse(&output)
 }
 
-/// What is in force: the runtime while running, else the permanent.
-#[frb(sync)]
-pub fn firewalld_zones(snapshot: FirewalldSnapshot) -> Vec<FirewalldZone> {
-    snapshot.zones().to_vec()
-}
-
 #[frb(sync)]
 pub fn firewalld_drifted(snapshot: FirewalldSnapshot) -> bool {
     snapshot.drifted()
 }
 
+/// `access` gets in now and will not once the saved configuration is in
+/// force.
+#[frb(sync)]
+pub fn firewalld_shut_by_reload(snapshot: FirewalldSnapshot, access: FirewallAccess) -> bool {
+    snapshot.shut_by_reload(&access)
+}
+
 /// The zones a connection like `access` may be handled by; `zones` and
 /// `default_zone` stand in for the snapshot's own.
 #[frb(sync)]
-pub fn firewalld_zones_for(
-    snapshot: FirewalldSnapshot,
-    access: FirewallAccess,
-    iface: Option<String>,
-    zones: Option<Vec<FirewalldZone>>,
-    default_zone: Option<String>,
-) -> Vec<FirewalldZone> {
-    snapshot.zones_for(&access, iface.as_deref(), zones.as_deref(), default_zone.as_deref())
+pub fn firewalld_zones_for(snapshot: FirewalldSnapshot, access: FirewallAccess, zones: Option<Vec<FirewalldZone>>, default_zone: Option<String>) -> Vec<FirewalldZone> {
+    snapshot.zones_for(&access, zones.as_deref(), default_zone.as_deref())
 }
 
-/// Whether a new connection like `access` gets through; `running`, `panic`,
-/// `zones` and `default_zone` stand in for the snapshot's own.
+// --- Changes -----------------------------------------------------------------
+
+/// What `change` to ufw would run and do to each of `accesses`.
 #[frb(sync)]
-pub fn firewalld_reach(
-    snapshot: FirewalldSnapshot,
-    access: FirewallAccess,
-    iface: Option<String>,
-    running: Option<bool>,
-    panic: Option<bool>,
-    zones: Option<Vec<FirewalldZone>>,
-    default_zone: Option<String>,
-) -> FirewallReach {
-    snapshot.reach(&access, iface.as_deref(), running, panic, zones.as_deref(), default_zone.as_deref())
+pub fn ufw_plan(snapshot: UfwSnapshot, change: UfwChange, accesses: Vec<FirewallAccess>) -> Result<Plan, ChangeError> {
+    change::ufw_plan(&snapshot, &change, &accesses)
 }
 
+/// What `change` to firewalld would run and do to each of `accesses`.
 #[frb(sync)]
-pub fn firewalld_parse_rich_rule(raw: String) -> FirewalldRichRule {
-    FirewalldRichRule::parse(&raw)
+pub fn firewalld_plan(snapshot: FirewalldSnapshot, change: FirewalldChange, accesses: Vec<FirewallAccess>) -> Result<Plan, ChangeError> {
+    change::firewalld_plan(&snapshot, &change, &accesses)
+}
+
+/// What runs when `plan` is confirmed, its keep-open rules first or not.
+#[frb(sync)]
+pub fn firewall_plan_commands(plan: Plan, keep_open: bool) -> Vec<String> {
+    plan.script_commands(keep_open)
 }
 
 /// `8080/tcp`, as firewalld writes a port and takes it back.
@@ -474,96 +461,3 @@ pub fn firewalld_target_token(target: FirewalldTarget) -> String {
     target.token().to_owned()
 }
 
-/// Adds `value` to `zone`, or removes it; both configurations while
-/// `running`.
-#[frb(sync)]
-pub fn firewalld_item_commands(running: bool, zone: String, item: FirewalldItem, value: String, add: bool) -> Vec<String> {
-    firewalld::item_commands(running, &zone, item, &value, add)
-}
-
-#[frb(sync)]
-pub fn firewalld_port_commands(running: bool, zone: String, port: FirewalldPort, add: bool) -> Vec<String> {
-    firewalld::item_commands(running, &zone, FirewalldItem::Port, &port.to_string(), add)
-}
-
-/// A rich rule letting TCP in to `port` before anything in its zone.
-#[frb(sync)]
-pub fn firewalld_keep_open_rule(port: u16) -> String {
-    firewalld::keep_open_rule(port)
-}
-
-#[frb(sync)]
-pub fn firewalld_change_interface(running: bool, zone: String, iface: String) -> Vec<String> {
-    firewalld::change_interface(running, &zone, &iface)
-}
-
-#[frb(sync)]
-pub fn firewalld_remove_interface(running: bool, zone: String, iface: String) -> Vec<String> {
-    firewalld::remove_interface(running, &zone, &iface)
-}
-
-#[frb(sync)]
-pub fn firewalld_masquerade(running: bool, zone: String, add: bool) -> Vec<String> {
-    firewalld::masquerade(running, &zone, add)
-}
-
-#[frb(sync)]
-pub fn firewalld_target(running: bool, zone: String, target: FirewalldTarget) -> Vec<String> {
-    firewalld::target(running, &zone, target)
-}
-
-#[frb(sync)]
-pub fn firewalld_default_zone(running: bool, zone: String) -> String {
-    firewalld::default_zone(running, &zone)
-}
-
-#[frb(sync)]
-pub fn firewalld_reload_command() -> String {
-    firewalld::RELOAD_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn firewalld_runtime_to_permanent_command() -> String {
-    firewalld::RUNTIME_TO_PERMANENT_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn firewalld_panic_off_command() -> String {
-    firewalld::PANIC_OFF_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn firewalld_start_command() -> String {
-    firewalld::START_COMMAND.to_owned()
-}
-
-#[frb(sync)]
-pub fn firewalld_stop_command() -> String {
-    firewalld::STOP_COMMAND.to_owned()
-}
-
-/// A typed port as firewalld writes it, or None.
-#[frb(sync)]
-pub fn firewalld_parse_port(value: String) -> Option<FirewalldPort> {
-    firewalld::parse_port(&value)
-}
-
-#[frb(sync)]
-pub fn firewalld_check_source(value: String) -> Option<FirewalldInputIssue> {
-    firewalld::check_source(&value)
-}
-
-#[frb(sync)]
-pub fn firewalld_check_interface(value: String) -> Option<FirewalldInputIssue> {
-    firewalld::check_interface(&value)
-}
-
-#[frb(sync)]
-pub fn firewalld_check_rich_rule(value: String) -> Option<FirewalldInputIssue> {
-    firewalld::check_rich_rule(&value)
-}
-
-#[frb(sync)]
-pub fn firewalld_check_forward_port(value: String) -> Option<FirewalldInputIssue> {
-    firewalld::check_forward_port(&value)
-}

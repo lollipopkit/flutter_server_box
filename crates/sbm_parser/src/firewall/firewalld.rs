@@ -16,7 +16,8 @@ use crate::script::shell_quote_unix as quote;
 /// What a zone does with a packet nothing in it matched.
 ///
 /// `default` rejects, and is what a zone has unless it says otherwise.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FirewalldTarget {
     DefaultTarget,
     Accept,
@@ -47,7 +48,7 @@ impl FirewalldTarget {
 }
 
 /// One port spec: `8080/tcp`, `6000-6010/udp`.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct FirewalldPort {
     pub port: String,
     pub protocol: String,
@@ -76,7 +77,7 @@ impl std::fmt::Display for FirewalldPort {
 /// A rich rule, read as far as it decides what reaches this host.
 ///
 /// `raw` is what firewalld printed, and what removing it names.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct FirewalldRichRule {
     pub raw: String,
     pub priority: i32,
@@ -224,7 +225,7 @@ impl FirewalldRichRule {
 }
 
 /// One zone, as one configuration — runtime or permanent — has it.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct FirewalldZone {
     pub name: String,
     pub target: FirewalldTarget,
@@ -311,7 +312,7 @@ impl FirewalldZone {
 }
 
 /// A policy, as far as it can decide what reaches this host.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct FirewalldPolicy {
     pub name: String,
     pub target: String,
@@ -323,7 +324,7 @@ pub struct FirewalldPolicy {
 }
 
 /// What a server's firewalld is doing, as one read found it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FirewalldSnapshot {
     /// The daemon is up, and `runtime` is what it enforces.
     pub running: bool,
@@ -364,13 +365,22 @@ impl FirewalldSnapshot {
             || self.permanent.iter().any(|z| !loaded.contains(z.name.as_str()))
     }
 
+    /// `access` gets in now and will not once the saved configuration is in
+    /// force: at a reload, a restart or a boot.
+    pub fn shut_by_reload(&self, access: &FirewallAccess) -> bool {
+        self.drifted()
+            && self.reach(access, None, None, None, None).admits()
+            && !self.reach(access, Some(true), None, Some(&self.permanent), None).admits()
+    }
+
     /// The zones a connection like `access` may be handled by: the one whose
-    /// sources hold its address, else the one its interface (`interface`,
-    /// where known) is in, else the default zone. Where something is not
-    /// known, every zone it could be.
+    /// sources hold its address, else the one its interface
+    /// ([`FirewallAccess::iface`], where known) is in, else the default zone.
+    /// Where something is not known, every zone it could be.
     ///
     /// `zones` and `default_zone` stand in for this snapshot's own.
-    pub fn zones_for(&self, access: &FirewallAccess, interface: Option<&str>, zones: Option<&[FirewalldZone]>, default_zone: Option<&str>) -> Vec<FirewalldZone> {
+    pub fn zones_for(&self, access: &FirewallAccess, zones: Option<&[FirewalldZone]>, default_zone: Option<&str>) -> Vec<FirewalldZone> {
+        let interface = access.iface.as_deref();
         let list = zones.unwrap_or_else(|| self.zones());
         let default_zone = default_zone.or(self.default_zone.as_deref());
         let fallback = list.iter().position(|z| Some(z.name.as_str()) == default_zone);
@@ -418,15 +428,13 @@ impl FirewalldSnapshot {
         candidates.into_iter().map(|i| list[i].clone()).collect()
     }
 
-    /// Whether a new connection like `access` gets through. `interface` is
-    /// the one it arrives on, where the server said.
+    /// Whether a new connection like `access` gets through.
     ///
     /// `running`, `panic`, `zones` and `default_zone` stand in for this
     /// snapshot's own, to ask about a change before it is made.
     pub fn reach(
         &self,
         access: &FirewallAccess,
-        interface: Option<&str>,
         running: Option<bool>,
         panic: Option<bool>,
         zones: Option<&[FirewalldZone]>,
@@ -438,7 +446,7 @@ impl FirewalldSnapshot {
         if panic.unwrap_or(self.panic) {
             return FirewallReach::Blocked;
         }
-        let candidates = self.zones_for(access, interface, zones, default_zone);
+        let candidates = self.zones_for(access, zones, default_zone);
         if candidates.is_empty() {
             return FirewallReach::Unknown;
         }
@@ -459,7 +467,8 @@ impl FirewalldSnapshot {
 }
 
 /// Why a value typed for firewalld cannot be used, said before it is asked.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FirewalldInputIssue {
     InvalidPort,
     InvalidSource,
@@ -768,7 +777,8 @@ fn item(zone: &str, add: bool, kind: &str, value: &str) -> String {
 }
 
 /// What can be added to a zone and removed from it, one value each.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FirewalldItem {
     Service,
     Port,
@@ -833,9 +843,11 @@ pub const RELOAD_COMMAND: &str = "firewall-cmd --reload";
 pub const RUNTIME_TO_PERMANENT_COMMAND: &str = "firewall-cmd --runtime-to-permanent";
 pub const PANIC_OFF_COMMAND: &str = "firewall-cmd --panic-off";
 /// Started now and at boot; stopped now and at boot — the way ufw's enable
-/// and disable are.
-pub const START_COMMAND: &str = "systemctl enable --now firewalld";
-pub const STOP_COMMAND: &str = "systemctl disable --now firewalld";
+/// and disable are. systemd's where it is the init, OpenRC's otherwise
+/// (Alpine, Gentoo), which has no `systemctl`; `rc-update del` fails on a
+/// service that was never added, which is no reason not to stop it.
+pub const START_COMMAND: &str = "if [ -d /run/systemd/system ]; then systemctl enable --now firewalld; else rc-update add firewalld default && rc-service firewalld start; fi";
+pub const STOP_COMMAND: &str = "if [ -d /run/systemd/system ]; then systemctl disable --now firewalld; else rc-update del firewalld default >/dev/null 2>&1 || true; rc-service firewalld stop; fi";
 
 /// A typed port, written as firewalld writes it; None for anything else.
 pub fn parse_port(value: &str) -> Option<FirewalldPort> {

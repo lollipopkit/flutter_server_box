@@ -6,14 +6,6 @@ export 'package:server_box/src/rust/api/firewall.dart';
 /// that read it, what they print, the commands that change it, and whether a
 /// change would shut a way the app reaches the server. These carry calls to
 /// it; nothing here decides anything.
-extension FirewallReachX on FirewallReach {
-  bool get admits => firewallReachAdmits(reach: this);
-
-  /// Whether a change from [before] to this is one to stop and ask about.
-  bool worseThan(FirewallReach before) =>
-      firewallReachWorseThan(after: this, before: before);
-}
-
 extension FirewallProbeResultX on FirewallProbeResult {
   /// Each firewall found, and whether it is on.
   Map<FirewallKind, bool> get installed => {

@@ -5096,6 +5096,375 @@ type RootTranslation = {
 	 */
 	virtBakIssueUnsupported: string
 	/**
+	 * F​i​r​e​w​a​l​l
+	 */
+	fwTitle: string
+	/**
+	 * F​i​r​e​w​a​l​l​ ​m​a​n​a​g​e​m​e​n​t​ ​s​u​p​p​o​r​t​s​ ​L​i​n​u​x​ ​s​e​r​v​e​r​s​ ​w​i​t​h​ ​u​f​w​ ​o​r​ ​f​i​r​e​w​a​l​l​d​.
+	 */
+	fwLinuxOnly: string
+	/**
+	 * R​e​a​d​i​n​g​ ​t​h​e​ ​f​i​r​e​w​a​l​l​'​s​ ​r​u​l​e​s​ ​n​e​e​d​s​ ​r​o​o​t​.​ ​E​n​t​e​r​ ​t​h​e​ ​s​u​d​o​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+	 */
+	fwNeedsRoot: string
+	/**
+	 * I​n​c​o​m​i​n​g
+	 */
+	fwIncoming: string
+	/**
+	 * O​u​t​g​o​i​n​g
+	 */
+	fwOutgoing: string
+	/**
+	 * R​o​u​t​e​d
+	 */
+	fwRouted: string
+	/**
+	 * D​e​f​a​u​l​t​ ​p​o​l​i​c​y
+	 */
+	fwDefaultPolicy: string
+	/**
+	 * L​o​g​g​i​n​g
+	 */
+	fwLogging: string
+	/**
+	 * R​u​l​e​s
+	 */
+	fwRules: string
+	/**
+	 * A​d​d​ ​r​u​l​e
+	 */
+	fwAddRule: string
+	/**
+	 * A​n​y​w​h​e​r​e
+	 */
+	fwAnywhere: string
+	/**
+	 * F​r​o​m
+	 */
+	fwFrom: string
+	/**
+	 * T​o
+	 */
+	fwTo: string
+	/**
+	 * P​r​o​t​o​c​o​l
+	 */
+	fwProtocol: string
+	/**
+	 * I​n​t​e​r​f​a​c​e
+	 */
+	fwInterface: string
+	/**
+	 * C​o​m​m​e​n​t
+	 */
+	fwComment: string
+	/**
+	 * A​p​p​ ​p​r​o​f​i​l​e
+	 */
+	fwAppProfile: string
+	/**
+	 * P​u​t​ ​b​e​f​o​r​e​ ​a​l​l​ ​o​t​h​e​r​ ​r​u​l​e​s
+	 */
+	fwPrepend: string
+	/**
+	 * R​e​l​o​a​d
+	 */
+	fwReload: string
+	/**
+	 * E​n​t​e​r​ ​a​ ​p​o​r​t​,​ ​a​n​ ​a​p​p​ ​p​r​o​f​i​l​e​,​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​n​ ​i​n​t​e​r​f​a​c​e​.
+	 */
+	fwNothingMatched: string
+	/**
+	 * I​n​v​a​l​i​d​ ​p​o​r​t​.​ ​U​s​e​ ​2​2​,​ ​8​0​,​4​4​3​ ​o​r​ ​6​0​0​0​:​6​0​1​0​.
+	 */
+	fwInvalidPort: string
+	/**
+	 * A​t​ ​m​o​s​t​ ​1​5​ ​p​o​r​t​s​;​ ​a​ ​r​a​n​g​e​ ​c​o​u​n​t​s​ ​a​s​ ​t​w​o​.
+	 */
+	fwTooManyPorts: string
+	/**
+	 * A​ ​p​o​r​t​ ​l​i​s​t​ ​o​r​ ​r​a​n​g​e​ ​n​e​e​d​s​ ​t​c​p​ ​o​r​ ​u​d​p​.
+	 */
+	fwPortsNeedProtocol: string
+	/**
+	 * I​n​v​a​l​i​d​ ​a​d​d​r​e​s​s​.​ ​U​s​e​ ​a​n​ ​I​P​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​ ​n​e​t​w​o​r​k​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​.
+	 */
+	fwInvalidAddress: string
+	/**
+	 * F​r​o​m​ ​a​n​d​ ​T​o​ ​m​u​s​t​ ​b​o​t​h​ ​b​e​ ​I​P​v​4​ ​o​r​ ​b​o​t​h​ ​b​e​ ​I​P​v​6​.
+	 */
+	fwMixedIpVersions: string
+	/**
+	 * I​n​v​a​l​i​d​ ​i​n​t​e​r​f​a​c​e​ ​n​a​m​e​.
+	 */
+	fwInvalidInterface: string
+	/**
+	 * T​h​e​ ​c​o​m​m​e​n​t​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​'​ ​o​r​ ​l​i​n​e​ ​b​r​e​a​k​s​.
+	 */
+	fwInvalidComment: string
+	/**
+	 * U​n​s​u​p​p​o​r​t​e​d​ ​p​r​o​t​o​c​o​l​.
+	 */
+	fwInvalidProtocol: string
+	/**
+	 * I​n​c​o​m​i​n​g​ ​i​n​t​e​r​f​a​c​e
+	 */
+	fwInterfaceIn: string
+	/**
+	 * O​u​t​g​o​i​n​g​ ​i​n​t​e​r​f​a​c​e
+	 */
+	fwInterfaceOut: string
+	/**
+	 * S​o​u​r​c​e​ ​p​o​r​t
+	 */
+	fwSourcePort: string
+	/**
+	 * M​o​r​e​ ​o​p​t​i​o​n​s
+	 */
+	fwMoreOptions: string
+	/**
+	 * N​e​i​t​h​e​r​ ​u​f​w​ ​n​o​r​ ​f​i​r​e​w​a​l​l​d​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.​ ​I​n​s​t​a​l​l​ ​o​n​e​ ​w​i​t​h​ ​t​h​e​ ​s​y​s​t​e​m​'​s​ ​p​a​c​k​a​g​e​ ​m​a​n​a​g​e​r​,​ ​f​o​r​ ​e​x​a​m​p​l​e​ ​`​a​p​t​ ​i​n​s​t​a​l​l​ ​u​f​w​`​ ​o​r​ ​`​d​n​f​ ​i​n​s​t​a​l​l​ ​f​i​r​e​w​a​l​l​d​`​.
+	 */
+	fwNoneInstalled: string
+	/**
+	 * B​o​t​h​ ​u​f​w​ ​a​n​d​ ​f​i​r​e​w​a​l​l​d​ ​a​r​e​ ​o​n​.​ ​E​a​c​h​ ​w​r​i​t​e​s​ ​t​h​e​ ​k​e​r​n​e​l​'​s​ ​r​u​l​e​s​,​ ​a​n​d​ ​w​h​i​c​h​e​v​e​r​ ​l​o​a​d​e​d​ ​l​a​s​t​ ​d​e​c​i​d​e​s​ ​w​h​a​t​ ​g​e​t​s​ ​t​h​r​o​u​g​h​.
+	 */
+	fwConflict: string
+	/**
+	 * D​e​f​a​u​l​t​ ​z​o​n​e
+	 */
+	fwDefaultZone: string
+	/**
+	 * Z​o​n​e
+	 */
+	fwZone: string
+	/**
+	 * T​a​r​g​e​t
+	 */
+	fwTarget: string
+	/**
+	 * M​a​s​q​u​e​r​a​d​e
+	 */
+	fwMasquerade: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	fwServices: string
+	/**
+	 * P​o​r​t​s
+	 */
+	fwPorts: string
+	/**
+	 * S​o​u​r​c​e​s
+	 */
+	fwSources: string
+	/**
+	 * I​n​t​e​r​f​a​c​e​s
+	 */
+	fwInterfaces: string
+	/**
+	 * R​i​c​h​ ​r​u​l​e​s
+	 */
+	fwRichRules: string
+	/**
+	 * F​o​r​w​a​r​d​e​d​ ​p​o​r​t​s
+	 */
+	fwForwardPorts: string
+	/**
+	 * r​u​n​t​i​m​e​ ​o​n​l​y
+	 */
+	fwRuntimeOnly: string
+	/**
+	 * p​e​r​m​a​n​e​n​t​ ​o​n​l​y
+	 */
+	fwPermanentOnly: string
+	/**
+	 * t​h​i​s​ ​c​o​n​n​e​c​t​i​o​n
+	 */
+	fwThisConnection: string
+	/**
+	 * d​e​f​a​u​l​t
+	 */
+	fwDefaultTag: string
+	/**
+	 * W​h​a​t​ ​i​s​ ​i​n​ ​f​o​r​c​e​ ​d​i​f​f​e​r​s​ ​f​r​o​m​ ​w​h​a​t​ ​i​s​ ​s​a​v​e​d​.​ ​A​ ​r​e​l​o​a​d​ ​o​r​ ​a​ ​r​e​b​o​o​t​ ​r​e​p​l​a​c​e​s​ ​i​t​ ​w​i​t​h​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 */
+	fwDrift: string
+	/**
+	 * A​f​t​e​r​ ​a​ ​r​e​l​o​a​d​ ​o​r​ ​a​ ​r​e​b​o​o​t​,​ ​{​a​c​c​e​s​s​}​ ​w​i​l​l​ ​b​e​ ​r​e​f​u​s​e​d​:​ ​t​h​e​ ​s​a​v​e​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​d​o​e​s​ ​n​o​t​ ​l​e​t​ ​i​t​ ​i​n​.
+	 * @param {unknown} access
+	 */
+	fwDriftLockout: RequiredParams<'access'>
+	/**
+	 * S​a​v​e​ ​a​s​ ​p​e​r​m​a​n​e​n​t
+	 */
+	fwSaveRuntime: string
+	/**
+	 * C​h​a​n​g​e​s​ ​n​o​t​ ​s​a​v​e​d​ ​a​s​ ​p​e​r​m​a​n​e​n​t​ ​w​i​l​l​ ​b​e​ ​l​o​s​t​.
+	 */
+	fwReloadLoses: string
+	/**
+	 * P​a​n​i​c​ ​m​o​d​e​ ​i​s​ ​o​n​:​ ​e​v​e​r​y​ ​p​a​c​k​e​t​ ​i​s​ ​d​r​o​p​p​e​d​.
+	 */
+	fwPanic: string
+	/**
+	 * T​u​r​n​ ​o​f​f​ ​p​a​n​i​c​ ​m​o​d​e
+	 */
+	fwPanicOff: string
+	/**
+	 * f​i​r​e​w​a​l​l​d​ ​i​s​ ​s​t​o​p​p​e​d​.​ ​C​h​a​n​g​e​s​ ​a​r​e​ ​s​a​v​e​d​,​ ​a​n​d​ ​t​a​k​e​ ​e​f​f​e​c​t​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.
+	 */
+	fwStoppedNote: string
+	/**
+	 * I​n​v​a​l​i​d​ ​s​o​u​r​c​e​.​ ​U​s​e​ ​a​n​ ​a​d​d​r​e​s​s​,​ ​a​ ​n​e​t​w​o​r​k​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​,​ ​i​p​s​e​t​:​N​A​M​E​ ​o​r​ ​a​ ​M​A​C​ ​a​d​d​r​e​s​s​.
+	 */
+	fwInvalidSource: string
+	/**
+	 * A​ ​r​i​c​h​ ​r​u​l​e​ ​s​t​a​r​t​s​ ​w​i​t​h​ ​"​r​u​l​e​"​ ​a​n​d​ ​f​i​t​s​ ​o​n​ ​o​n​e​ ​l​i​n​e​.
+	 */
+	fwInvalidRichRule: string
+	/**
+	 * U​s​e​ ​p​o​r​t​=​8​0​:​p​r​o​t​o​=​t​c​p​:​t​o​p​o​r​t​=​8​0​8​0​,​ ​w​i​t​h​ ​t​o​p​o​r​t​,​ ​t​o​a​d​d​r​ ​o​r​ ​b​o​t​h​.
+	 */
+	fwInvalidForwardPort: string
+	/**
+	 * I​n​a​c​t​i​v​e
+	 */
+	fwInactive: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	fwRunning: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	fwStopped: string
+	/**
+	 * T​u​r​n​ ​o​n
+	 */
+	fwTurnOn: string
+	/**
+	 * T​u​r​n​ ​o​f​f
+	 */
+	fwTurnOff: string
+	/**
+	 * W​a​y​s​ ​i​n
+	 */
+	fwAccesses: string
+	/**
+	 * T​h​i​s​ ​p​a​n​e​l​ ​(​p​o​r​t​ ​{​p​o​r​t​}​)
+	 * @param {unknown} port
+	 */
+	fwAccessPanel: RequiredParams<'port'>
+	/**
+	 * S​S​H​ ​(​p​o​r​t​ ​{​p​o​r​t​}​)
+	 * @param {unknown} port
+	 */
+	fwAccessSsh: RequiredParams<'port'>
+	/**
+	 * T​h​e​ ​p​a​n​e​l​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​a​g​e​n​t​ ​t​h​r​o​u​g​h​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​n​o​ ​r​u​l​e​ ​h​e​r​e​ ​d​e​c​i​d​e​s​ ​i​t​s​ ​c​o​n​n​e​c​t​i​o​n​.​ ​O​n​l​y​ ​S​S​H​ ​i​s​ ​c​h​e​c​k​e​d​.
+	 */
+	fwProxied: string
+	/**
+	 * O​p​e​n
+	 */
+	fwReachOpen: string
+	/**
+	 * R​a​t​e​-​l​i​m​i​t​e​d
+	 */
+	fwReachLimited: string
+	/**
+	 * D​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​s​o​u​r​c​e
+	 */
+	fwReachUnknown: string
+	/**
+	 * R​e​f​u​s​e​d
+	 */
+	fwReachBlocked: string
+	/**
+	 * {​a​c​c​e​s​s​}​:​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​s​ ​w​i​l​l​ ​b​e​ ​r​e​f​u​s​e​d​.​ ​C​o​n​n​e​c​t​i​o​n​s​ ​a​l​r​e​a​d​y​ ​o​p​e​n​ ​s​t​a​y​ ​u​p​ ​u​n​t​i​l​ ​t​h​e​y​ ​d​r​o​p​.
+	 * @param {unknown} access
+	 */
+	fwWillRefuse: RequiredParams<'access'>
+	/**
+	 * {​a​c​c​e​s​s​}​:​ ​n​e​w​ ​c​o​n​n​e​c​t​i​o​n​s​ ​m​a​y​ ​b​e​ ​r​e​f​u​s​e​d​.​ ​I​t​ ​d​e​p​e​n​d​s​ ​o​n​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​r​ ​i​n​t​e​r​f​a​c​e​ ​t​h​e​y​ ​a​r​r​i​v​e​ ​b​y​,​ ​w​h​i​c​h​ ​t​h​e​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​t​e​l​l​.
+	 * @param {unknown} access
+	 */
+	fwMayRefuse: RequiredParams<'access'>
+	/**
+	 * {​a​c​c​e​s​s​}​:​ ​c​o​n​n​e​c​t​i​o​n​s​ ​w​i​l​l​ ​b​e​ ​r​a​t​e​-​l​i​m​i​t​e​d​.​ ​A​n​ ​a​d​d​r​e​s​s​ ​t​h​a​t​ ​o​p​e​n​s​ ​6​ ​o​r​ ​m​o​r​e​ ​w​i​t​h​i​n​ ​3​0​ ​s​e​c​o​n​d​s​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 * @param {unknown} access
+	 */
+	fwRateLimited: RequiredParams<'access'>
+	/**
+	 * K​e​e​p​ ​t​h​e​s​e​ ​p​o​r​t​s​ ​o​p​e​n​ ​f​i​r​s​t
+	 */
+	fwKeepOpen: string
+	/**
+	 * C​o​m​m​a​n​d​s
+	 */
+	fwCommands: string
+	/**
+	 * N​o​ ​r​u​l​e​s​.
+	 */
+	fwNoRules: string
+	/**
+	 * N​o​n​e
+	 */
+	fwNone: string
+	/**
+	 * D​e​l​e​t​e​ ​r​u​l​e​:​ ​{​r​u​l​e​}
+	 * @param {unknown} rule
+	 */
+	fwDeleteRule: RequiredParams<'rule'>
+	/**
+	 * R​e​m​o​v​e​ ​{​v​a​l​u​e​}​ ​f​r​o​m​ ​{​z​o​n​e​}
+	 * @param {unknown} value
+	 * @param {unknown} zone
+	 */
+	fwRemoveFrom: RequiredParams<'value' | 'zone'>
+	/**
+	 * T​h​a​t​ ​r​u​l​e​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​a​g​a​i​n​.
+	 */
+	fwNoSuchRule: string
+	/**
+	 * T​h​a​t​ ​z​o​n​e​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​.​ ​R​e​a​d​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​a​g​a​i​n​.
+	 */
+	fwNoSuchZone: string
+	/**
+	 * T​h​a​t​ ​f​i​r​e​w​a​l​l​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	fwNotInstalled: string
+	/**
+	 * T​h​e​ ​f​i​r​e​w​a​l​l​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	fwUnreadable: string
+	/**
+	 * T​h​e​ ​c​h​a​n​g​e​ ​f​a​i​l​e​d​.
+	 */
+	fwFailed: string
+	/**
+	 * A​p​p​l​i​e​d​.
+	 */
+	fwApplied: string
+	/**
+	 * A​c​t​i​o​n
+	 */
+	fwAction: string
+	/**
+	 * D​i​r​e​c​t​i​o​n
+	 */
+	fwDirection: string
+	/**
+	 * P​o​r​t
+	 */
+	fwPort: string
+	/**
+	 * L​o​g
+	 */
+	fwLog: string
+	/**
 	 * Y​e​s
 	 */
 	yes: string
@@ -10034,6 +10403,366 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * This host keeps no backups.
 	 */
 	virtBakIssueUnsupported: () => LocalizedString
+	/**
+	 * Firewall
+	 */
+	fwTitle: () => LocalizedString
+	/**
+	 * Firewall management supports Linux servers with ufw or firewalld.
+	 */
+	fwLinuxOnly: () => LocalizedString
+	/**
+	 * Reading the firewall's rules needs root. Enter the sudo password to continue.
+	 */
+	fwNeedsRoot: () => LocalizedString
+	/**
+	 * Incoming
+	 */
+	fwIncoming: () => LocalizedString
+	/**
+	 * Outgoing
+	 */
+	fwOutgoing: () => LocalizedString
+	/**
+	 * Routed
+	 */
+	fwRouted: () => LocalizedString
+	/**
+	 * Default policy
+	 */
+	fwDefaultPolicy: () => LocalizedString
+	/**
+	 * Logging
+	 */
+	fwLogging: () => LocalizedString
+	/**
+	 * Rules
+	 */
+	fwRules: () => LocalizedString
+	/**
+	 * Add rule
+	 */
+	fwAddRule: () => LocalizedString
+	/**
+	 * Anywhere
+	 */
+	fwAnywhere: () => LocalizedString
+	/**
+	 * From
+	 */
+	fwFrom: () => LocalizedString
+	/**
+	 * To
+	 */
+	fwTo: () => LocalizedString
+	/**
+	 * Protocol
+	 */
+	fwProtocol: () => LocalizedString
+	/**
+	 * Interface
+	 */
+	fwInterface: () => LocalizedString
+	/**
+	 * Comment
+	 */
+	fwComment: () => LocalizedString
+	/**
+	 * App profile
+	 */
+	fwAppProfile: () => LocalizedString
+	/**
+	 * Put before all other rules
+	 */
+	fwPrepend: () => LocalizedString
+	/**
+	 * Reload
+	 */
+	fwReload: () => LocalizedString
+	/**
+	 * Enter a port, an app profile, an address or an interface.
+	 */
+	fwNothingMatched: () => LocalizedString
+	/**
+	 * Invalid port. Use 22, 80,443 or 6000:6010.
+	 */
+	fwInvalidPort: () => LocalizedString
+	/**
+	 * At most 15 ports; a range counts as two.
+	 */
+	fwTooManyPorts: () => LocalizedString
+	/**
+	 * A port list or range needs tcp or udp.
+	 */
+	fwPortsNeedProtocol: () => LocalizedString
+	/**
+	 * Invalid address. Use an IP address or a network such as 192.168.1.0/24.
+	 */
+	fwInvalidAddress: () => LocalizedString
+	/**
+	 * From and To must both be IPv4 or both be IPv6.
+	 */
+	fwMixedIpVersions: () => LocalizedString
+	/**
+	 * Invalid interface name.
+	 */
+	fwInvalidInterface: () => LocalizedString
+	/**
+	 * The comment cannot contain ' or line breaks.
+	 */
+	fwInvalidComment: () => LocalizedString
+	/**
+	 * Unsupported protocol.
+	 */
+	fwInvalidProtocol: () => LocalizedString
+	/**
+	 * Incoming interface
+	 */
+	fwInterfaceIn: () => LocalizedString
+	/**
+	 * Outgoing interface
+	 */
+	fwInterfaceOut: () => LocalizedString
+	/**
+	 * Source port
+	 */
+	fwSourcePort: () => LocalizedString
+	/**
+	 * More options
+	 */
+	fwMoreOptions: () => LocalizedString
+	/**
+	 * Neither ufw nor firewalld is installed on this server. Install one with the system's package manager, for example `apt install ufw` or `dnf install firewalld`.
+	 */
+	fwNoneInstalled: () => LocalizedString
+	/**
+	 * Both ufw and firewalld are on. Each writes the kernel's rules, and whichever loaded last decides what gets through.
+	 */
+	fwConflict: () => LocalizedString
+	/**
+	 * Default zone
+	 */
+	fwDefaultZone: () => LocalizedString
+	/**
+	 * Zone
+	 */
+	fwZone: () => LocalizedString
+	/**
+	 * Target
+	 */
+	fwTarget: () => LocalizedString
+	/**
+	 * Masquerade
+	 */
+	fwMasquerade: () => LocalizedString
+	/**
+	 * Services
+	 */
+	fwServices: () => LocalizedString
+	/**
+	 * Ports
+	 */
+	fwPorts: () => LocalizedString
+	/**
+	 * Sources
+	 */
+	fwSources: () => LocalizedString
+	/**
+	 * Interfaces
+	 */
+	fwInterfaces: () => LocalizedString
+	/**
+	 * Rich rules
+	 */
+	fwRichRules: () => LocalizedString
+	/**
+	 * Forwarded ports
+	 */
+	fwForwardPorts: () => LocalizedString
+	/**
+	 * runtime only
+	 */
+	fwRuntimeOnly: () => LocalizedString
+	/**
+	 * permanent only
+	 */
+	fwPermanentOnly: () => LocalizedString
+	/**
+	 * this connection
+	 */
+	fwThisConnection: () => LocalizedString
+	/**
+	 * default
+	 */
+	fwDefaultTag: () => LocalizedString
+	/**
+	 * What is in force differs from what is saved. A reload or a reboot replaces it with the saved configuration.
+	 */
+	fwDrift: () => LocalizedString
+	/**
+	 * After a reload or a reboot, {access} will be refused: the saved configuration does not let it in.
+	 */
+	fwDriftLockout: (arg: { access: unknown }) => LocalizedString
+	/**
+	 * Save as permanent
+	 */
+	fwSaveRuntime: () => LocalizedString
+	/**
+	 * Changes not saved as permanent will be lost.
+	 */
+	fwReloadLoses: () => LocalizedString
+	/**
+	 * Panic mode is on: every packet is dropped.
+	 */
+	fwPanic: () => LocalizedString
+	/**
+	 * Turn off panic mode
+	 */
+	fwPanicOff: () => LocalizedString
+	/**
+	 * firewalld is stopped. Changes are saved, and take effect when it starts.
+	 */
+	fwStoppedNote: () => LocalizedString
+	/**
+	 * Invalid source. Use an address, a network such as 192.168.1.0/24, ipset:NAME or a MAC address.
+	 */
+	fwInvalidSource: () => LocalizedString
+	/**
+	 * A rich rule starts with "rule" and fits on one line.
+	 */
+	fwInvalidRichRule: () => LocalizedString
+	/**
+	 * Use port=80:proto=tcp:toport=8080, with toport, toaddr or both.
+	 */
+	fwInvalidForwardPort: () => LocalizedString
+	/**
+	 * Inactive
+	 */
+	fwInactive: () => LocalizedString
+	/**
+	 * Running
+	 */
+	fwRunning: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	fwStopped: () => LocalizedString
+	/**
+	 * Turn on
+	 */
+	fwTurnOn: () => LocalizedString
+	/**
+	 * Turn off
+	 */
+	fwTurnOff: () => LocalizedString
+	/**
+	 * Ways in
+	 */
+	fwAccesses: () => LocalizedString
+	/**
+	 * This panel (port {port})
+	 */
+	fwAccessPanel: (arg: { port: unknown }) => LocalizedString
+	/**
+	 * SSH (port {port})
+	 */
+	fwAccessSsh: (arg: { port: unknown }) => LocalizedString
+	/**
+	 * The panel reaches the agent through a proxy on this machine, so no rule here decides its connection. Only SSH is checked.
+	 */
+	fwProxied: () => LocalizedString
+	/**
+	 * Open
+	 */
+	fwReachOpen: () => LocalizedString
+	/**
+	 * Rate-limited
+	 */
+	fwReachLimited: () => LocalizedString
+	/**
+	 * Depends on the source
+	 */
+	fwReachUnknown: () => LocalizedString
+	/**
+	 * Refused
+	 */
+	fwReachBlocked: () => LocalizedString
+	/**
+	 * {access}: new connections will be refused. Connections already open stay up until they drop.
+	 */
+	fwWillRefuse: (arg: { access: unknown }) => LocalizedString
+	/**
+	 * {access}: new connections may be refused. It depends on the address or interface they arrive by, which the agent cannot tell.
+	 */
+	fwMayRefuse: (arg: { access: unknown }) => LocalizedString
+	/**
+	 * {access}: connections will be rate-limited. An address that opens 6 or more within 30 seconds is refused.
+	 */
+	fwRateLimited: (arg: { access: unknown }) => LocalizedString
+	/**
+	 * Keep these ports open first
+	 */
+	fwKeepOpen: () => LocalizedString
+	/**
+	 * Commands
+	 */
+	fwCommands: () => LocalizedString
+	/**
+	 * No rules.
+	 */
+	fwNoRules: () => LocalizedString
+	/**
+	 * None
+	 */
+	fwNone: () => LocalizedString
+	/**
+	 * Delete rule: {rule}
+	 */
+	fwDeleteRule: (arg: { rule: unknown }) => LocalizedString
+	/**
+	 * Remove {value} from {zone}
+	 */
+	fwRemoveFrom: (arg: { value: unknown, zone: unknown }) => LocalizedString
+	/**
+	 * That rule is no longer there. Read the firewall again.
+	 */
+	fwNoSuchRule: () => LocalizedString
+	/**
+	 * That zone is no longer there. Read the firewall again.
+	 */
+	fwNoSuchZone: () => LocalizedString
+	/**
+	 * That firewall is not installed on this machine.
+	 */
+	fwNotInstalled: () => LocalizedString
+	/**
+	 * The firewall could not be read.
+	 */
+	fwUnreadable: () => LocalizedString
+	/**
+	 * The change failed.
+	 */
+	fwFailed: () => LocalizedString
+	/**
+	 * Applied.
+	 */
+	fwApplied: () => LocalizedString
+	/**
+	 * Action
+	 */
+	fwAction: () => LocalizedString
+	/**
+	 * Direction
+	 */
+	fwDirection: () => LocalizedString
+	/**
+	 * Port
+	 */
+	fwPort: () => LocalizedString
+	/**
+	 * Log
+	 */
+	fwLog: () => LocalizedString
 	/**
 	 * Yes
 	 */

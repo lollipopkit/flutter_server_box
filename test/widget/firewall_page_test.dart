@@ -191,10 +191,10 @@ void main() {
 
       await tester.tap(find.byType(Switch));
       await frames(tester);
-      expect(find.textContaining(ufwDisableCommand()), findsOneWidget);
+      expect(find.textContaining('ufw disable'), findsOneWidget);
       await tapOk(tester);
 
-      expect(exec.ran.single, contains('\n${ufwDisableCommand()}\n'));
+      expect(exec.ran.single, contains('\n${'ufw disable'}\n'));
     });
 
     testWidgets('turning it on lets the SSH port in first, at the top', (
@@ -216,9 +216,9 @@ void main() {
       await waitAndTapOk(tester);
 
       final script = exec.ran.single;
-      final allow = script.indexOf(ufwAllowTcpCommand(port: 22));
+      final allow = script.indexOf('ufw prepend allow in proto tcp from any to any port 22');
       expect(allow, greaterThan(0));
-      expect(script.indexOf(ufwEnableCommand()), greaterThan(allow));
+      expect(script.indexOf('ufw --force enable'), greaterThan(allow));
     });
 
     testWidgets('deleting a rule that is not the way in asks nothing more', (
@@ -262,7 +262,7 @@ void main() {
       await waitAndTapOk(tester);
 
       final script = exec.ran.single;
-      expect(script, isNot(contains(ufwAllowTcpCommand(port: 22))));
+      expect(script, isNot(contains('ufw prepend allow in proto tcp from any to any port 22')));
       expect(script, contains(' 22 0.0.0.0/0 '));
       expect(script, contains(' 22 ::/0 '));
     });

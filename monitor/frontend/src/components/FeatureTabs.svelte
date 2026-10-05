@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, ArchiveRestore, Boxes, CalendarClock, Container, Cpu, Gauge, MonitorPlay, ScrollText, ServerCog, Users, type LucideIcon } from '@lucide/svelte'
+  import { Activity, ArchiveRestore, Boxes, BrickWall, CalendarClock, Container, Cpu, Gauge, MonitorPlay, ScrollText, ServerCog, Users, type LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -21,6 +21,7 @@
     services: { label: () => $LL.services(), icon: ServerCog },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
     system_users: { label: () => $LL.systemUsers(), icon: Users },
+    firewall: { label: () => $LL.fwTitle(), icon: BrickWall },
     snippets: { label: () => $LL.snippets(), icon: ScrollText },
     desktop: { label: () => $LL.desktop(), icon: MonitorPlay },
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },

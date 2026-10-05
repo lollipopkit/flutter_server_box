@@ -96,7 +96,7 @@ extension on _UfwViewState {
           ContextMenuAction(
             text: l10n.firewallReload,
             icon: Icons.sync,
-            onTap: () => run([ufwReloadCommand()]),
+            onTap: () => _make(snapshot!, const UfwChange.reload()),
           ),
         ],
       ),
@@ -217,7 +217,8 @@ extension on _UfwViewState {
                   ContextMenuAction(
                     text: level.name,
                     checked: snapshot.logLevel == level,
-                    onTap: () => run([ufwLoggingCommand(level: level)]),
+                    onTap: () =>
+                        _make(snapshot, UfwChange.logging(level: level)),
                   ),
               ],
               child: ContextMenuButton.value(
@@ -381,24 +382,6 @@ extension on _UfwViewState {
     return parts.isEmpty ? l10n.firewallAnywhere : parts.join(' ');
   }
 
-  String _issueText(UfwDraftIssue issue) => switch (issue) {
-    UfwDraftIssue.nothingMatched => l10n.firewallNothingMatched,
-    UfwDraftIssue.invalidPort => l10n.firewallInvalidPort,
-    UfwDraftIssue.tooManyPorts => l10n.firewallTooManyPorts,
-    UfwDraftIssue.portsNeedProtocol => l10n.firewallPortsNeedProtocol,
-    UfwDraftIssue.invalidAddress => l10n.firewallInvalidAddress,
-    UfwDraftIssue.mixedIpVersions => l10n.firewallMixedIpVersions,
-    UfwDraftIssue.invalidInterface => l10n.firewallInvalidInterface,
-    UfwDraftIssue.invalidComment => l10n.firewallInvalidComment,
-    UfwDraftIssue.invalidProtocol => l10n.firewallInvalidProtocol,
-  };
-
-  /// Rules that let each of [accesses] in, put before every other rule.
-  List<String> _keepOpen(List<FirewallAccess> accesses) => [
-    for (final port in {for (final a in accesses) a.port})
-      ufwAllowTcpCommand(port: port),
-  ];
-
   /// A port as `ufw status` prints it: `22/tcp`, `25`.
   String? _portSpec(String? port, String? protocol) {
     if (port == null) return null;
@@ -409,84 +392,44 @@ extension on _UfwViewState {
 // --- Actions ---
 
 extension on _UfwViewState {
-  Future<void> _setEnabled(UfwSnapshot snapshot, bool on) async {
-    final commands = await confirm(
-      commands: [on ? ufwEnableCommand() : ufwDisableCommand()],
-      // Turned off, the server takes everything; turned on, it may stop
-      // taking this app.
-      destructive: true,
-      effects: on
-          ? effects(
-              (a) => snapshot.reach(a, active: false),
-              (a) => snapshot.reach(a, active: true),
-            )
-          : const [],
-      keepOpen: _keepOpen,
+  /// Plans [change] against what is on screen, then makes it.
+  Future<void> _make(
+    UfwSnapshot snapshot,
+    UfwChange change, {
+    String? message,
+  }) async {
+    final plan = planOf(
+      () => ufwPlan(
+        snapshot: snapshot,
+        change: change,
+        accesses: host.accesses,
+      ),
     );
-    if (commands != null) await run(commands);
+    if (plan != null) await apply(plan, message: message);
   }
+
+  Future<void> _setEnabled(UfwSnapshot snapshot, bool on) =>
+      _make(snapshot, on ? const UfwChange.enable() : const UfwChange.disable());
 
   Future<void> _setPolicy(
     UfwSnapshot snapshot,
     UfwChain chain,
     UfwPolicy policy,
-  ) async {
-    if (snapshot.policies[chain] == policy) return;
-    final commands = await confirm(
-      commands: [ufwPolicyCommand(chain: chain, policy: policy)],
-      destructive: policy != UfwPolicy.allow,
-      effects: chain == UfwChain.incoming
-          ? effects(snapshot.reach, (a) => snapshot.reach(a, incoming: policy))
-          : const [],
-      keepOpen: _keepOpen,
-    );
-    if (commands != null) await run(commands);
-  }
+  ) => _make(snapshot, UfwChange.policy(chain: chain, policy: policy));
 
-  Future<void> _deleteRule(UfwSnapshot snapshot, UfwRule rule) async {
-    final commands = await confirm(
-      message: libL10n.delFmt(
-        l10n.firewallRule,
-        '${rule.action.name} ${_endpointText(rule.to, rule.protocol)}',
-      ),
-      commands: ufwDeleteCommands(rule: rule),
-      destructive: true,
-      effects: effects(
-        snapshot.reach,
-        (a) => snapshot.reach(a, rules: [...snapshot.rules]..remove(rule)),
-      ),
-      keepOpen: _keepOpen,
-    );
-    if (commands != null) await run(commands);
-  }
+  Future<void> _deleteRule(UfwSnapshot snapshot, UfwRule rule) => _make(
+    snapshot,
+    UfwChange.deleteRule(tuples: rule.tuples),
+    message: libL10n.delFmt(
+      l10n.firewallRule,
+      '${rule.action.name} ${_endpointText(rule.to, rule.protocol)}',
+    ),
+  );
 
-  /// Asks only where the rule would shut or narrow a way in: adding one
-  /// that only lets something in needs no second look.
   Future<void> _addRule(UfwSnapshot snapshot) async {
     final draft = await _showEditor(snapshot);
     if (draft == null || !mounted) return;
-    final command = ufwAddCommand(draft: draft);
-    final changes = effects(
-      snapshot.reach,
-      (a) => snapshot.reach(
-        a,
-        rules: snapshot.withRules(
-          draft.asRules(snapshot.apps),
-          prepend: draft.prepend,
-        ),
-      ),
-    );
-    if (!changes.any((e) => e.after.worseThan(e.before))) {
-      await run([command]);
-      return;
-    }
-    final commands = await confirm(
-      commands: [command],
-      destructive: true,
-      effects: changes,
-      keepOpen: _keepOpen,
-    );
-    if (commands != null) await run(commands);
+    await _make(snapshot, UfwChange.addRule(draft: draft));
   }
 }
 
@@ -764,7 +707,7 @@ extension on _UfwViewState {
         prepend: prepend,
       );
       if (ufwValidateDraft(draft: draft) case final issue?) {
-        Toast.error(_issueText(issue));
+        Toast.error(draftIssueText(issue));
         continue;
       }
       return draft;

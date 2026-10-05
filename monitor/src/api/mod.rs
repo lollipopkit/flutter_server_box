@@ -9,6 +9,7 @@ pub mod virt_resources;
 pub mod desktops;
 pub mod custom_cmds;
 pub mod exec;
+pub mod firewall;
 pub mod fs;
 pub mod machine;
 pub mod power;

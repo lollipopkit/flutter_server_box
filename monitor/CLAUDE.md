@@ -243,6 +243,21 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   0600 file under a random name and only its path reaches the root shell's
   command line, which `ps` shows every account. `tests/system_users_api.rs`
   never changes an account.
+  `/firewall` (`api/firewall.rs`, `sbm_parser::firewall`, which the app
+  reaches over FFI too): ufw or firewalld, Linux only. `POST /firewall` reads
+  (a POST: the sudo password a read needs travels in the body), answering the
+  ways in — the panel's connection to this agent unless it arrives over
+  loopback through a proxy (`proxied`), and the machine's SSH port — with what
+  reaches each. A change is one `sbm_parser::firewall::change::{UfwChange,
+  FirewalldChange}`: `POST /firewall/plan` answers the `Plan` (commands, what
+  it does to each way in, whether to ask, the keep-open rules) and runs
+  nothing; `POST /firewall/act` reads the firewall again, plans the same
+  change from what it finds and runs that, the keep-open rules first when
+  asked — no command comes from the client, and the plan it was shown does
+  not decide what runs. The app's firewall page asks the same `ufw_plan` /
+  `firewalld_plan`. The audit detail is the change's kind, never a value.
+  `tests/firewall_api.rs` never changes a firewall — it would rewrite the
+  network access of whatever machine runs the suite.
   `/snippets` (`sbm_parser::snippet`, which the app reaches over FFI too):
   the agent's snippet library (migration 013; a PUT replaces it whole, in
   order, refused per row as `{error, index}`), and `POST /snippets/plan`,

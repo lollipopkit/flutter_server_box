@@ -19,6 +19,7 @@ export type FeatureId =
   | 'services'
   | 'cron'
   | 'system_users'
+  | 'firewall'
   | 'snippets'
   | 'desktop'
   | 'benchmark'
@@ -39,6 +40,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'services', grant: 'shell' },
   { id: 'cron', grant: 'shell' },
   { id: 'system_users', grant: 'shell' },
+  { id: 'firewall', grant: 'shell' },
   { id: 'snippets', grant: 'shell' },
   { id: 'desktop', grant: 'connect' },
   { id: 'benchmark', grant: 'shell' },
