@@ -201,6 +201,35 @@ mod firewalld_plans {
         assert!(plan.confirm && plan.destructive);
     }
 
+    /// Runtime puts eth0 in `public`, the saved configuration in `work`:
+    /// taking ssh out of `work` shuts SSH at the next reload, and the rule
+    /// that keeps it open has to be written into `work`, not only `public`.
+    #[test]
+    fn keep_open_follows_each_configuration_to_its_own_zone() {
+        let mut s = running();
+        let place = |zones: &mut Vec<firewalld::FirewalldZone>, home: &str| {
+            for z in zones.iter_mut() {
+                z.interfaces.retain(|i| i != "eth0");
+                z.sources.clear();
+                z.target = FirewalldTarget::DefaultTarget;
+                z.rich_rules.clear();
+                z.ports.clear();
+                if z.name == home {
+                    z.interfaces.push("eth0".into());
+                    z.services = vec!["ssh".into()];
+                }
+            }
+        };
+        let mut runtime = s.runtime.clone().unwrap();
+        place(&mut runtime, "public");
+        s.runtime = Some(runtime);
+        place(&mut s.permanent, "work");
+        let plan = firewalld_plan(&s, &remove("work", FirewalldItem::Service, "ssh"), &ssh()).unwrap();
+        assert!(plan.effects.iter().any(|e| e.worse && e.later && e.after == FirewallReach::Blocked), "{plan:?}");
+        assert!(plan.keep_open.iter().any(|c| c.starts_with("firewall-cmd --permanent --zone='work' --add-rich-rule=")), "{:?}", plan.keep_open);
+        assert!(plan.keep_open_default);
+    }
+
     #[test]
     fn a_saved_configuration_without_ssh_shuts_it_at_the_next_reload() {
         let mut s = running();

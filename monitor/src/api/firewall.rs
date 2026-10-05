@@ -12,6 +12,11 @@
 //! first where the caller ticked them. Nothing the client sends is a command,
 //! and no plan it was shown decides what runs.
 //!
+//! A plan carries an id, a digest of the plan itself. A fresh plan that asks
+//! for confirmation runs only when the request names its id — the one the
+//! user confirmed — so a firewall that changed between the two requests is
+//! answered with the new plan to show instead of running what nobody saw.
+//!
 //! # Privilege
 //!
 //! `shell`: reading a firewall needs root (ufw keeps its rule files `0640`,
@@ -29,6 +34,7 @@ use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 use sbm_parser::SystemType;
 use sbm_parser::firewall::change::{ChangeError, FirewalldChange, Plan, UfwChange, firewalld_plan, ufw_plan};
@@ -230,6 +236,9 @@ pub struct ActRequest {
     /// Run the plan's keep-open rules first.
     #[serde(default)]
     keep_open: bool,
+    /// The id of the plan the user confirmed; needed when the fresh plan asks.
+    #[serde(default)]
+    plan_id: Option<String>,
     #[serde(default)]
     password: Option<String>,
 }
@@ -238,6 +247,14 @@ pub struct ActRequest {
 struct PlanResponse {
     sudo_required: bool,
     plan: Option<Plan>,
+    plan_id: Option<String>,
+}
+
+/// What names `plan`: a digest of all of it, so any difference in what would
+/// run or what it would do is a different id, and nothing is kept here.
+fn plan_id(plan: &Plan) -> String {
+    let json = serde_json::to_vec(plan).unwrap_or_default();
+    hex::encode(Sha256::digest(&json))
 }
 
 /// What a change would run and do.
@@ -253,18 +270,26 @@ pub async fn plan(
     }
     let (accesses, _) = accesses(&req, &state);
     match planned(&state.remote_access.exec, &request.change, request.password.as_deref(), &accesses).await {
-        Ok((plan, _)) => Ok(HttpResponse::Ok().json(&PlanResponse { sudo_required: false, plan: Some(plan) })),
-        Err(Planned::SudoRequired) => Ok(HttpResponse::Ok().json(&PlanResponse { sudo_required: true, plan: None })),
+        Ok((plan, _)) => {
+            let id = plan_id(&plan);
+            Ok(HttpResponse::Ok().json(&PlanResponse { sudo_required: false, plan: Some(plan), plan_id: Some(id) }))
+        }
+        Err(Planned::SudoRequired) => Ok(HttpResponse::Ok().json(&PlanResponse { sudo_required: true, plan: None, plan_id: None })),
         Err(refused) => Ok(refused.http()),
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 struct ActResponse {
     succeeded: bool,
     sudo_rejected: bool,
     exit_code: Option<i32>,
     stderr: String,
+    /// Nothing ran: the fresh plan asks, and is not the one confirmed. Show
+    /// `plan` and send its `plan_id` back once the user agrees.
+    confirm_required: bool,
+    plan: Option<Plan>,
+    plan_id: Option<String>,
 }
 
 /// Makes a change: planned again from a fresh read, then run.
@@ -294,13 +319,19 @@ pub async fn act(
     let (plan, root) = match planned(exec, &request.change, password, &accesses).await {
         Ok(planned) => planned,
         Err(Planned::SudoRequired) => {
-            return Ok(HttpResponse::Ok().json(&ActResponse { succeeded: false, sudo_rejected: true, exit_code: None, stderr: String::new() }));
+            return Ok(HttpResponse::Ok().json(&ActResponse { sudo_rejected: true, ..Default::default() }));
         }
         Err(refused) => {
             record(Action::Denied, Outcome::Denied, Some(refused.code())).record(&state.db).await;
             return Ok(refused.http());
         }
     };
+    if plan.confirm {
+        let id = plan_id(&plan);
+        if request.plan_id.as_deref() != Some(id.as_str()) {
+            return Ok(HttpResponse::Ok().json(&ActResponse { confirm_required: true, plan: Some(plan), plan_id: Some(id), ..Default::default() }));
+        }
+    }
     let script = firewall::script(&plan.script_commands(request.keep_open));
     // Recorded before it runs: what was asked of the machine is on file
     // whatever happens next.
@@ -316,7 +347,7 @@ pub async fn act(
         Ok(out) => (out.stderr, out.exit_code),
         Err(e) => (e.to_string(), None),
     };
-    Ok(HttpResponse::Ok().json(&ActResponse { succeeded, sudo_rejected, exit_code, stderr }))
+    Ok(HttpResponse::Ok().json(&ActResponse { succeeded, sudo_rejected, exit_code, stderr, ..Default::default() }))
 }
 
 // ---------------------------------------------------------------------------
@@ -484,6 +515,21 @@ mod tests {
         .unwrap();
         assert!(c.keep_open);
         assert!(matches!(c.change, Change::Firewalld(FirewalldChange::Add { .. })));
+    }
+
+    /// The same plan is the same id; any difference in it is another.
+    #[test]
+    fn a_plan_id_names_exactly_one_plan() {
+        let s = ufw::parse(include_str!("../../../crates/sbm_parser/tests/fixtures/ufw/active.txt")).unwrap();
+        let ssh = [FirewallAccess { via: FirewallAccessVia::Ssh, port: 22, client: None, server: None, iface: None }];
+        let a = ufw_plan(&s, &UfwChange::Enable, &ssh).unwrap();
+        assert_eq!(plan_id(&a), plan_id(&a.clone()));
+        let b = ufw_plan(&s, &UfwChange::Disable, &ssh).unwrap();
+        assert_ne!(plan_id(&a), plan_id(&b));
+        let mut c = a.clone();
+        c.effects[0].after = FirewallReach::Blocked;
+        c.effects[0].before = FirewallReach::Open;
+        assert_ne!(plan_id(&a), plan_id(&c));
     }
 
     /// The audit row names the change, never what was typed into it.

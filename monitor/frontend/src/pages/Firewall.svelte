@@ -51,8 +51,12 @@
   let password = $state('')
   let passwordDraft = $state('')
   let needsPassword = $state(false)
-  /// A change the agent planned and the user is asked about.
-  let pending = $state<{ change: FirewallChange; plan: FirewallPlan; message?: string } | null>(null)
+  /// A change the agent planned and the user is asked about, with the id the
+  /// agent gave that plan: confirming sends it back, and it runs only if it
+  /// is still the plan.
+  let pending = $state<{ change: FirewallChange; plan: FirewallPlan; planId: string; message?: string } | null>(
+    null,
+  )
   let keepOpen = $state(false)
   let countdown = $state(0)
   /// Bumped to draw the selects again from the state, after a change that was
@@ -123,22 +127,24 @@
   /// Asks the agent what `change` does, then makes it — at once where nothing
   /// gets worse, after the user agrees otherwise.
   async function propose(change: FirewallChange, message?: string) {
+    // Every request reads the server selected at the moment it is sent: a plan
+    // answered for one server must not lead to a change sent to another.
+    const serverId = servers.currentId
     busy = true
     notice = ''
     actionError = ''
     try {
       const result = await api.planFirewall(change, password || undefined)
+      if (stale(serverId)) return
       if (result.sudo_required || !result.plan) {
         needsPassword = true
         return
       }
       if (result.plan.confirm) {
-        pending = { change, plan: result.plan, message }
-        keepOpen = result.plan.keep_open_default
-        countdown = result.plan.countdown ? 3 : 0
+        ask(change, result.plan, result.plan_id ?? '', message)
         return
       }
-      await make(change, false)
+      await make(change, false, serverId)
     } catch (e) {
       const text = refused(e)
       if (text !== null) {
@@ -161,8 +167,22 @@
     return e instanceof Error ? e.message : String(e)
   }
 
-  async function make(change: FirewallChange, keep: boolean) {
-    const result = await api.actFirewall(change, keep, password || undefined)
+  function ask(change: FirewallChange, plan: FirewallPlan, planId: string, message?: string) {
+    pending = { change, plan, planId, message }
+    keepOpen = plan.keep_open_default
+    countdown = plan.countdown ? 3 : 0
+  }
+
+  async function make(change: FirewallChange, keep: boolean, serverId: string | null, planId?: string) {
+    if (stale(serverId)) return
+    const result = await api.actFirewall(change, keep, password || undefined, planId)
+    if (stale(serverId)) return
+    if (result.confirm_required && result.plan) {
+      // The firewall changed since the plan was made: nothing ran, and this is
+      // what the change would do now.
+      ask(change, result.plan, result.plan_id ?? '')
+      return
+    }
     if (result.sudo_rejected) {
       password = ''
       needsPassword = true
@@ -184,10 +204,11 @@
   async function confirmPending() {
     const p = pending
     if (!p) return
+    const serverId = servers.currentId
     pending = null
     busy = true
     try {
-      await make(p.change, keepOpen)
+      await make(p.change, keepOpen, serverId, p.planId)
     } catch (e) {
       actionError = refused(e) ?? ''
     } finally {

@@ -242,19 +242,26 @@ impl Fwd<'_> {
         out
     }
 
-    /// Rules letting each of `shut` in to every zone it may land in among
-    /// `zones`, before anything there can refuse it — into both
-    /// configurations while running, so a reload keeps them.
-    fn keep_open(&self, shut: &[FirewallAccess], zones: Option<&[FirewalldZone]>, default_zone: Option<&str>, running: Option<bool>) -> Vec<String> {
+    /// Rules letting each of `shut` in, before anything there can refuse it:
+    /// into every zone it may land in among `runtime` now, and among
+    /// `permanent` once that is in force — each configuration its own, since
+    /// the two can put one connection in different zones. No `runtime` where
+    /// a reload comes before the rules would matter, which drops them.
+    fn keep_open(&self, shut: &[FirewallAccess], runtime: Option<&[FirewalldZone]>, permanent: &[FirewalldZone], default_zone: Option<&str>, running: bool) -> Vec<String> {
         let mut commands: Vec<String> = Vec::new();
-        for a in shut {
-            for zone in self.s.zones_for(a, zones, default_zone) {
-                for c in firewalld::item_commands(running.unwrap_or(self.s.running), &zone.name, FirewalldItem::RichRule, &firewalld::keep_open_rule(a.port), true) {
-                    if !commands.contains(&c) {
-                        commands.push(c);
-                    }
+        let mut add = |zones: Vec<FirewalldZone>, saved: bool, port: u16| {
+            for zone in zones {
+                let c = firewalld::item_command_in(running, saved, &zone.name, FirewalldItem::RichRule, &firewalld::keep_open_rule(port));
+                if !commands.contains(&c) {
+                    commands.push(c);
                 }
             }
+        };
+        for a in shut {
+            if running && let Some(runtime) = runtime {
+                add(self.s.zones_for(a, Some(runtime), default_zone), false, a.port);
+            }
+            add(self.s.zones_for(a, Some(permanent), default_zone), true, a.port);
         }
         commands
     }
@@ -283,8 +290,7 @@ impl Fwd<'_> {
         let permanent = change(&self.s.permanent);
         let runtime = self.s.runtime.as_deref().map(&change);
         let e = self.zone_effects(runtime.as_deref(), &permanent, None);
-        let zones = runtime.as_deref().unwrap_or(&permanent);
-        plan(commands, e, vec![], always, always, |shut| self.keep_open(shut, Some(zones), None, None))
+        plan(commands, e, vec![], always, always, |shut| self.keep_open(shut, runtime.as_deref(), &permanent, None, self.s.running))
     }
 }
 
@@ -299,13 +305,13 @@ pub fn firewalld_plan(s: &FirewalldSnapshot, change: &FirewalldChange, accesses:
         FirewalldChange::Start => {
             // Started, the saved configuration is what is in force.
             let e = effects(accesses, |_| FirewallReach::Open, |a| f.now(a, Some(&s.permanent), None, Some(true)), false);
-            plan(vec![firewalld::START_COMMAND.into()], e, vec![], true, true, |shut| f.keep_open(shut, Some(&s.permanent), None, Some(false)))
+            plan(vec![firewalld::START_COMMAND.into()], e, vec![], true, true, |shut| f.keep_open(shut, None, &s.permanent, None, false))
         }
         FirewalldChange::Stop => plan(vec![firewalld::STOP_COMMAND.into()], vec![], vec![], true, true, |_| Vec::new()),
         FirewalldChange::PanicOff => quiet(vec![firewalld::PANIC_OFF_COMMAND.into()]),
         FirewalldChange::Reload => {
             let e = f.zone_effects(Some(&s.permanent), &s.permanent, None);
-            plan(vec![firewalld::RELOAD_COMMAND.into()], e, f.reload_notes(), s.drifted(), true, |shut| f.keep_open(shut, Some(&s.permanent), None, None))
+            plan(vec![firewalld::RELOAD_COMMAND.into()], e, f.reload_notes(), s.drifted(), true, |shut| f.keep_open(shut, None, &s.permanent, None, running))
         }
         FirewalldChange::RuntimeToPermanent => {
             let Some(runtime) = &s.runtime else { return Err(ChangeError::Unchanged) };
@@ -318,7 +324,7 @@ pub fn firewalld_plan(s: &FirewalldSnapshot, change: &FirewalldChange, accesses:
                 return Err(ChangeError::Unchanged);
             }
             let e = f.zone_effects(s.runtime.as_deref(), &s.permanent, Some(zone));
-            plan(vec![firewalld::default_zone(running, zone)], e, vec![], false, true, |shut| f.keep_open(shut, None, Some(zone), None))
+            plan(vec![firewalld::default_zone(running, zone)], e, vec![], false, true, |shut| f.keep_open(shut, s.runtime.as_deref(), &s.permanent, Some(zone), running))
         }
         FirewalldChange::Target { zone, target } => {
             zone_known(zone)?;
@@ -332,7 +338,7 @@ pub fn firewalld_plan(s: &FirewalldSnapshot, change: &FirewalldChange, accesses:
                 f.reload_notes(),
                 *target != FirewalldTarget::Accept,
                 true,
-                |shut| f.keep_open(shut, Some(&permanent), None, None),
+                |shut| f.keep_open(shut, None, &permanent, None, running),
             )
         }
         FirewalldChange::Masquerade { zone, enabled } => {

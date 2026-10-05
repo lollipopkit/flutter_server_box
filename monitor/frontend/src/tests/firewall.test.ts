@@ -4,6 +4,7 @@ import '@testing-library/jest-dom/vitest'
 import Firewall from '../pages/Firewall.svelte'
 import { ApiError, api } from '../lib/api'
 import { refusalText } from '../lib/firewall'
+import { servers } from '../lib/servers.svelte'
 import type { FirewallPlan, FirewallView, FirewalldZone, UfwRule } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -108,7 +109,15 @@ const plan = (extra: Partial<FirewallPlan> = {}): FirewallPlan => ({
 const submitAdd = () =>
   screen.getAllByRole('button', { name: /^add$/i }).find((b) => b.getAttribute('type') === 'submit')!
 
-const done = { succeeded: true, sudo_rejected: false, exit_code: 0, stderr: '' }
+const done = {
+  succeeded: true,
+  sudo_rejected: false,
+  exit_code: 0,
+  stderr: '',
+  confirm_required: false,
+  plan: null,
+  plan_id: null,
+}
 
 describe('Firewall page', () => {
   beforeEach(() => {
@@ -145,6 +154,7 @@ describe('Firewall page', () => {
         keep_open_default: true,
         countdown: true,
       }),
+      plan_id: 'p1',
     })
     render(Firewall, { onback: () => {} })
     await fireEvent.click(await screen.findByRole('button', { name: /delete rule/i }))
@@ -161,20 +171,60 @@ describe('Firewall page', () => {
       timeout: 4000,
     })
     await fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }))
-    await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, true, undefined))
+    await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, true, undefined, 'p1'))
   })
 
   it('a change that makes nothing worse runs without asking', async () => {
     getFirewall.mockResolvedValue(firewalldView())
-    planFirewall.mockResolvedValue({ sudo_required: false, plan: plan({ confirm: false, destructive: false }) })
+    planFirewall.mockResolvedValue({
+      sudo_required: false,
+      plan: plan({ confirm: false, destructive: false }),
+      plan_id: 'p0',
+    })
     render(Firewall, { onback: () => {} })
     const add = await screen.findAllByRole('button', { name: /^add$/i })
     // Services is the third list.
     await fireEvent.click(add[2])
     await fireEvent.click(submitAdd())
     const change = { kind: 'firewalld', change: { type: 'add', zone: 'public', item: 'service', value: 'http' } }
-    await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, false, undefined))
+    await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, false, undefined, undefined))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('a plan the firewall outgrew is shown again, and only its own id runs it', async () => {
+    getFirewall.mockResolvedValue(ufwView())
+    planFirewall.mockResolvedValue({ sudo_required: false, plan: plan({ commands: ['ufw reload'] }), plan_id: 'old' })
+    actFirewall.mockResolvedValueOnce({
+      ...done,
+      succeeded: false,
+      confirm_required: true,
+      plan: plan({
+        commands: ['ufw reload'],
+        effects: [{ access: ssh, before: 'open', after: 'blocked', later: false, worse: true }],
+      }),
+      plan_id: 'new',
+    })
+    render(Firewall, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^reload$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^confirm$/i }))
+    const change = { kind: 'ufw', change: { type: 'reload' } }
+    await waitFor(() => expect(actFirewall).toHaveBeenCalledWith(change, false, undefined, 'old'))
+    // Nothing ran; the plan as it is now is asked about instead.
+    expect(await screen.findByText(/SSH \(port 22\): new connections will be refused/)).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: /^confirm$/i }))
+    await waitFor(() => expect(actFirewall).toHaveBeenLastCalledWith(change, false, undefined, 'new'))
+  })
+
+  it('a plan answered after the server changed leads to nothing', async () => {
+    getFirewall.mockResolvedValue(ufwView())
+    let answer: (v: Awaited<ReturnType<typeof api.planFirewall>>) => void = () => {}
+    planFirewall.mockReturnValue(new Promise((resolve) => (answer = resolve)))
+    render(Firewall, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^reload$/i }))
+    servers.add('https://another.example')
+    answer({ sudo_required: false, plan: plan({ confirm: false }), plan_id: 'p' })
+    await new Promise((r) => setTimeout(r, 50))
+    expect(actFirewall).not.toHaveBeenCalled()
   })
 
   it('a value the agent refuses is said in the viewer language', async () => {

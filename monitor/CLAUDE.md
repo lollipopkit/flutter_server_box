@@ -254,7 +254,9 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   nothing; `POST /firewall/act` reads the firewall again, plans the same
   change from what it finds and runs that, the keep-open rules first when
   asked — no command comes from the client, and the plan it was shown does
-  not decide what runs. The app's firewall page asks the same `ufw_plan` /
+  not decide what runs. A plan carries `plan_id` (a digest of it); a fresh
+  plan that asks runs only under the id the user confirmed, and is otherwise
+  answered `confirm_required` with the new plan, nothing run. The app's firewall page asks the same `ufw_plan` /
   `firewalld_plan`. The audit detail is the change's kind, never a value.
   `tests/firewall_api.rs` never changes a firewall — it would rewrite the
   network access of whatever machine runs the suite.

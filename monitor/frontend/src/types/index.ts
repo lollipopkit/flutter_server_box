@@ -1332,6 +1332,8 @@ export interface FirewallPlan {
 export interface FirewallPlanResult {
   sudo_required: boolean
   plan: FirewallPlan | null
+  /// What names this plan; sent back with the change once the user confirms.
+  plan_id: string | null
 }
 
 export interface FirewallActResult {
@@ -1339,6 +1341,11 @@ export interface FirewallActResult {
   sudo_rejected: boolean
   exit_code: number | null
   stderr: string
+  /// Nothing ran: the firewall as it is now makes a plan that asks, and it is
+  /// not the one confirmed. Show `plan` and confirm `plan_id` instead.
+  confirm_required: boolean
+  plan: FirewallPlan | null
+  plan_id: string | null
 }
 
 // --- System users (`/api/v1/system-users`) ---

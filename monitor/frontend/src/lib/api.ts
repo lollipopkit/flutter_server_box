@@ -510,13 +510,20 @@ export const api = {
     ),
   /// Makes a change. The agent reads the firewall again and plans it anew, so
   /// what runs is never the client's copy; `keep_open` runs the plan's
-  /// keep-open rules first.
-  actFirewall: (change: FirewallChange, keepOpen: boolean, password?: string) =>
+  /// keep-open rules first. A plan that asks runs only under the `planId` the
+  /// user confirmed; otherwise the answer is `confirm_required` with the new
+  /// plan, and nothing has run.
+  actFirewall: (change: FirewallChange, keepOpen: boolean, password?: string, planId?: string) =>
     request<FirewallActResult>(
       '/firewall/act',
       {
         method: 'POST',
-        body: JSON.stringify({ ...change, keep_open: keepOpen, ...(password ? { password } : {}) }),
+        body: JSON.stringify({
+          ...change,
+          keep_open: keepOpen,
+          ...(password ? { password } : {}),
+          ...(planId ? { plan_id: planId } : {}),
+        }),
       },
       'Failed to reach the machine',
       undefined,

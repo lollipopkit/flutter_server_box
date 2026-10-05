@@ -804,6 +804,18 @@ pub fn item_commands(running: bool, zone: &str, item_kind: FirewalldItem, value:
     both(running, &item(zone, add, item_kind.kind(), value))
 }
 
+/// Adds `value` to one configuration only: the runtime (`firewall-cmd`), or
+/// what is written down (`--permanent`; `firewall-offline-cmd` while
+/// stopped, when there is no runtime).
+pub fn item_command_in(running: bool, permanent: bool, zone: &str, item_kind: FirewalldItem, value: &str) -> String {
+    let args = item(zone, true, item_kind.kind(), value);
+    match (running, permanent) {
+        (false, _) => format!("firewall-offline-cmd {args}"),
+        (true, false) => format!("firewall-cmd {args}"),
+        (true, true) => format!("firewall-cmd --permanent {args}"),
+    }
+}
+
 /// A rich rule letting TCP in to `port` before anything in its zone can
 /// refuse it: the lowest priority there is, below every other rich rule.
 pub fn keep_open_rule(port: u16) -> String {
