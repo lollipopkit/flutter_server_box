@@ -181,3 +181,56 @@ fn rename_refuses_a_directory_destination() {
     assert_ne!(code, Some(0));
     assert!(from.exists(), "the file was filed away inside the directory");
 }
+
+#[test]
+fn a_capped_read_parses_and_refuses_what_it_did_not_print() {
+    assert_eq!(parse_capped_read("5\naGVsbG8=").unwrap(), (5, b"hello".to_vec()));
+    assert_eq!(parse_capped_read("0\n").unwrap(), (0, Vec::new()));
+    assert!(parse_capped_read("").is_err());
+    assert!(parse_capped_read("\naGk=").is_err());
+    assert!(parse_capped_read("-1\naGk=").is_err());
+    assert!(parse_capped_read("2\n!!").is_err());
+}
+
+#[test]
+fn capped_read_and_atomic_write_run() {
+    if !has_stat_c() {
+        eprintln!("skipped: this host's stat has no -c (BSD)");
+        return;
+    }
+    use std::io::Write;
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("run me.sh");
+    std::fs::write(&file, b"old").unwrap();
+    std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let path = file.to_str().unwrap();
+
+    let mut child = Command::new("/bin/sh")
+        .arg("-c")
+        .arg(atomic_write_command(path, "e2e"))
+        .stdin(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    child.stdin.take().unwrap().write_all(b"aGVsbG8gd29ybGQ=").unwrap();
+    assert!(child.wait().unwrap().success());
+    assert_eq!(std::fs::read(&file).unwrap(), b"hello world");
+    // The existing file's mode survives the staged copy's umask.
+    assert_eq!(std::fs::metadata(&file).unwrap().permissions().mode() & 0o777, 0o755);
+
+    let (code, out) = sh(&capped_read_command(path, 5));
+    assert_eq!(code, Some(0));
+    assert_eq!(parse_capped_read(&out).unwrap(), (11, b"hello".to_vec()));
+    assert_eq!(sh(&capped_read_command(dir.path().to_str().unwrap(), 5)).0, Some(READ_IS_DIR_EXIT));
+    assert_eq!(sh(&capped_read_command(&format!("{path}.missing"), 5)).0, Some(READ_MISSING_EXIT));
+
+    // A directory at the path is refused, not written into.
+    let mut child = Command::new("/bin/sh")
+        .arg("-c")
+        .arg(atomic_write_command(dir.path().to_str().unwrap(), "e2e"))
+        .stdin(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    drop(child.stdin.take());
+    assert!(!child.wait().unwrap().success());
+}

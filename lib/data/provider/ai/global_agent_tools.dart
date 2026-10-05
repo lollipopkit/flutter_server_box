@@ -12,7 +12,6 @@ import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
@@ -29,6 +28,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/src/rust/api/files.dart' as files;
 
 const globalAgentConversationScope = '__global_agent__';
 const _maxGlobalAgentShellOutputCharacters = 32000;
@@ -1249,31 +1249,20 @@ class GlobalAgentToolService {
     String path,
     LocalExec exec,
   ) async {
-    final quoted = shellSingleQuote(path);
+    // A directory and a missing path have exit codes of their own: reading a
+    // directory reported as "no such file" told the model to create a path
+    // that already exists. The SSH side tells the two apart too.
     final result = await exec.run(
-      'set -e\n'
-      'p=$quoted\n'
-      // Asked before `-f`, which answers no for a directory as readily as for
-      // something that is not there — so reading one was reported as "no such
-      // file", and the model was told to create a path that already exists.
-      // The SSH side tells the two apart; this now says the same thing.
-      r'if [ -d "$p" ]; then exit 45; fi'
-      '\n'
-      r'if [ ! -f "$p" ]; then exit 44; fi'
-      '\n'
-      r'size=$(wc -c < "$p") || exit'
-      '\n'
-      r'''printf '%s\n' "$size"'''
-      '\n'
-      'head -c $_maxReadBytes "\$p" | base64 | tr -d "\\n"',
+      files.filesCappedReadCommand(path: path, maxBytes: _maxReadBytes),
     );
     if (result.outputIncomplete) {
       throw StateError('The Linux userland returned incomplete file data.');
     }
-    if (result.exitCode == 45) {
+    final [isDirExit, missingExit] = files.filesCappedReadExits();
+    if (result.exitCode == isDirExit) {
       throw StateError('$path is a directory, not a file.');
     }
-    if (result.exitCode == 44) {
+    if (result.exitCode == missingExit) {
       throw StateError('No such file on this device: $path');
     }
     if (result.exitCode != 0) {
@@ -1284,18 +1273,14 @@ class GlobalAgentToolService {
       );
     }
 
-    final separator = result.stdout.indexOf('\n');
-    if (separator <= 0) {
-      throw StateError('The Linux userland returned malformed file data.');
+    final files.CappedRead read;
+    try {
+      read = files.filesParseCappedRead(output: result.stdout);
+    } on String catch (e) {
+      throw StateError('The Linux userland returned $e.');
     }
-    final size = int.tryParse(result.stdout.substring(0, separator).trim());
-    if (size == null || size < 0) {
-      throw StateError('The Linux userland returned an invalid file size.');
-    }
-    final encoded = result.stdout.substring(separator + 1).trim();
-    final data = encoded.isEmpty
-        ? Uint8List(0)
-        : Uint8List.fromList(base64.decode(encoded));
+    final size = read.size;
+    final data = read.data;
     final truncated = size > _maxReadBytes;
     return AgentToolExecutionResult(
       toolName: proposal.toolName,
@@ -1373,38 +1358,11 @@ class GlobalAgentToolService {
     Uint8List bytes,
     LocalExec exec,
   ) async {
-    final quoted = shellSingleQuote(path);
-    final suffix = ShortId.generate();
+    // Staged beside the target and moved onto it: a directory is refused
+    // rather than having the copy filed inside it, and an existing file keeps
+    // its mode instead of taking the staged copy's umask.
     final result = await exec.run(
-      'set -e\n'
-      'p=$quoted\n'
-      // `mv file dir` files the one *inside* the other, so replacing a path
-      // that turned out to be a directory would quietly leave the staged copy
-      // sitting in it under a name nobody asked for.
-      r'''if [ -d "$p" ]; then printf '%s: is a directory\n' "$p" >&2; exit 1; fi'''
-      '\n'
-      'tmp="\$p.$suffix.tmp"\n'
-      r'''trap 'rm -f -- "$tmp"' EXIT HUP INT TERM'''
-      '\n'
-      r'''base64 -d > "$tmp"'''
-      '\n'
-      // The staged copy is created with the guest's umask, and the `mv` below
-      // carries *that* mode onto the destination — so saving an edit to a 0755
-      // script left it 0644 and unrunnable. Whatever was there keeps its
-      // permissions instead, as `carryModeToStaging` arranges for every other
-      // backend. Best effort, like that one: the bytes are already written,
-      // and a mode that cannot be read or set must not mean the file can never
-      // be saved.
-      r'''if [ -f "$p" ]; then'''
-      '\n'
-      r'''  mode=$(stat -c %a "$p" 2>/dev/null) || mode='''
-      '\n'
-      r'''  if [ -n "$mode" ]; then chmod "$mode" "$tmp" || :; fi'''
-      '\n'
-      'fi\n'
-      r'''mv -f -- "$tmp" "$p"'''
-      '\n'
-      'trap - EXIT HUP INT TERM',
+      files.filesAtomicWriteCommand(path: path, suffix: ShortId.generate()),
       stdin: base64.encode(bytes),
     );
     if (result.outputIncomplete || result.exitCode != 0) {

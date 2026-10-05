@@ -2,12 +2,12 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/service/user_manager.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/src/rust/api/users.dart' as users_ffi;
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 /// Everything the detail page needs, including the two flows the list already
@@ -352,7 +352,7 @@ extension on _UserDetailPageState {
         source: ServerSource(widget.args.spi),
         initCmd: isCurrent
             ? null
-            : 'su - ${shellSingleQuote(_user.name)}',
+            : users_ffi.usersLoginShellCommand(user: _user.name),
         notFromTab: true,
       ),
     );

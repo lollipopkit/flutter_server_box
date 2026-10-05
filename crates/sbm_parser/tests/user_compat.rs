@@ -514,3 +514,8 @@ fn a_row_about_another_account_is_not_this_ones() {
     assert_eq!(other.password_state, None);
     assert_eq!(other.password_changed_millis, None);
 }
+
+#[test]
+fn the_login_shell_quotes_the_name() {
+    assert_eq!(login_shell_command("it's"), "su - 'it'\\''s'");
+}

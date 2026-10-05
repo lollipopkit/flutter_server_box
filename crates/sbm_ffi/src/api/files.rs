@@ -157,3 +157,34 @@ pub fn files_scp_source_command(path: String) -> String {
 pub fn files_scp_sink_command(path: String) -> String {
     files::scp_sink_command(&path)
 }
+
+/// What [`files_capped_read_command`] answered.
+pub struct CappedRead {
+    /// The whole file's size, which may exceed `data`.
+    pub size: i64,
+    pub data: Vec<u8>,
+}
+
+/// `(is a directory, nothing there)` exit codes of [`files_capped_read_command`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_capped_read_exits() -> Vec<i32> {
+    vec![files::READ_IS_DIR_EXIT, files::READ_MISSING_EXIT]
+}
+
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_capped_read_command(path: String, max_bytes: u32) -> String {
+    files::capped_read_command(&path, u64::from(max_bytes))
+}
+
+/// `Err` is output that is not this command's.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_parse_capped_read(output: String) -> Result<CappedRead, String> {
+    let (size, data) = files::parse_capped_read(&output)?;
+    Ok(CappedRead { size: i64::try_from(size).map_err(|_| "an invalid file size")?, data })
+}
+
+/// Replaces `path` with the base64 on stdin, staged under `suffix`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn files_atomic_write_command(path: String, suffix: String) -> String {
+    files::atomic_write_command(&path, &suffix)
+}

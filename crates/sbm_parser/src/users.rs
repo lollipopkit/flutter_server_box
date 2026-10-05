@@ -783,6 +783,12 @@ pub fn delete_command(user: &SystemUser, remove_home: bool) -> Result<String, Us
     Ok(args.join(" "))
 }
 
+/// A login shell as `user`, for a terminal opened from the account's page.
+/// The user's password is asked for there, by `su`, and nowhere else.
+pub fn login_shell_command(user: &str) -> String {
+    format!("su - {}", single_quote(user))
+}
+
 /// [`command`], with the account's password set after it.
 ///
 /// `chpasswd` reads `name:password` lines, so the value travels inside the

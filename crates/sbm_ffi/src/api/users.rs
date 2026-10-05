@@ -92,3 +92,9 @@ pub fn users_edit_command(original_json: String, draft_json: String) -> Result<S
 pub fn users_delete_command(user_json: String, remove_home: bool) -> Result<String, UserFfiError> {
     Ok(users::delete_command(&account(&user_json)?, remove_home)?)
 }
+
+/// A login shell as `user`, for a terminal opened from the account's page
+#[flutter_rust_bridge::frb(sync)]
+pub fn users_login_shell_command(user: String) -> String {
+    users::login_shell_command(&user)
+}

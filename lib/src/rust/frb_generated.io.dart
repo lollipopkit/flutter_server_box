@@ -309,6 +309,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo dco_decode_box_cert_info(dynamic raw);
 
   @protected
+  CappedRead dco_decode_capped_read(dynamic raw);
+
+  @protected
   CertInfo dco_decode_cert_info(dynamic raw);
 
   @protected
@@ -397,6 +400,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
+
+  @protected
+  Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
 
   @protected
   Uint32List dco_decode_list_prim_u_32_strict(dynamic raw);
@@ -944,6 +950,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CertInfo sse_decode_box_cert_info(SseDeserializer deserializer);
 
   @protected
+  CappedRead sse_decode_capped_read(SseDeserializer deserializer);
+
+  @protected
   CertInfo sse_decode_cert_info(SseDeserializer deserializer);
 
   @protected
@@ -1046,6 +1055,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LibvirtPoolRef> sse_decode_list_libvirt_pool_ref(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
 
   @protected
   Uint32List sse_decode_list_prim_u_32_strict(SseDeserializer deserializer);
@@ -1689,6 +1701,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_cert_info(CertInfo self, SseSerializer serializer);
 
   @protected
+  void sse_encode_capped_read(CappedRead self, SseSerializer serializer);
+
+  @protected
   void sse_encode_cert_info(CertInfo self, SseSerializer serializer);
 
   @protected
@@ -1823,6 +1838,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_libvirt_pool_ref(
     List<LibvirtPoolRef> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_i_32_strict(
+    Int32List self,
     SseSerializer serializer,
   );
 

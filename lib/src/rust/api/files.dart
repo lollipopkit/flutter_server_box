@@ -104,6 +104,49 @@ String filesScpSourceCommand({required String path}) =>
 String filesScpSinkCommand({required String path}) =>
     RustLib.instance.api.crateApiFilesFilesScpSinkCommand(path: path);
 
+/// `(is a directory, nothing there)` exit codes of [`files_capped_read_command`].
+Int32List filesCappedReadExits() =>
+    RustLib.instance.api.crateApiFilesFilesCappedReadExits();
+
+String filesCappedReadCommand({required String path, required int maxBytes}) =>
+    RustLib.instance.api.crateApiFilesFilesCappedReadCommand(
+      path: path,
+      maxBytes: maxBytes,
+    );
+
+/// `Err` is output that is not this command's.
+CappedRead filesParseCappedRead({required String output}) =>
+    RustLib.instance.api.crateApiFilesFilesParseCappedRead(output: output);
+
+/// Replaces `path` with the base64 on stdin, staged under `suffix`.
+String filesAtomicWriteCommand({
+  required String path,
+  required String suffix,
+}) => RustLib.instance.api.crateApiFilesFilesAtomicWriteCommand(
+  path: path,
+  suffix: suffix,
+);
+
+/// What [`files_capped_read_command`] answered.
+class CappedRead {
+  /// The whole file's size, which may exceed `data`.
+  final PlatformInt64 size;
+  final Uint8List data;
+
+  const CappedRead({required this.size, required this.data});
+
+  @override
+  int get hashCode => size.hashCode ^ data.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CappedRead &&
+          runtimeType == other.runtimeType &&
+          size == other.size &&
+          data == other.data;
+}
+
 class FilesStatMarkers {
   final String absentMark;
   final int absentExit;

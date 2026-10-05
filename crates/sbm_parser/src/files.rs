@@ -330,3 +330,46 @@ pub fn scp_source_command(path: &str) -> String {
 pub fn scp_sink_command(path: &str) -> String {
     format!("scp -t {}", quote(path))
 }
+
+/// [`capped_read_command`]'s exit code for a path that is a directory.
+pub const READ_IS_DIR_EXIT: i32 = 45;
+/// [`capped_read_command`]'s exit code for nothing at the path.
+pub const READ_MISSING_EXIT: i32 = 44;
+
+/// The size of `path` on one line, then its first `max_bytes` bytes as
+/// base64, read by [`parse_capped_read`]. A directory and a missing path have
+/// exit codes of their own: a directory is not "no such file", and telling a
+/// caller so would invite it to create a path that already exists.
+pub fn capped_read_command(path: &str, max_bytes: u64) -> String {
+    format!(
+        "set -e\np={}\nif [ -d \"$p\" ]; then exit {READ_IS_DIR_EXIT}; fi\nif [ ! -f \"$p\" ]; then exit {READ_MISSING_EXIT}; fi\nsize=$(wc -c < \"$p\") || exit\nprintf '%s\\n' \"$size\"\nhead -c {max_bytes} \"$p\" | base64 | tr -d \"\\n\"",
+        quote(path)
+    )
+}
+
+/// The file's whole size and the bytes [`capped_read_command`] sent.
+pub fn parse_capped_read(output: &str) -> Result<(u64, Vec<u8>), String> {
+    use base64::Engine;
+    let (size, encoded) = output
+        .split_once('\n')
+        .filter(|(size, _)| !size.is_empty())
+        .ok_or("malformed file data")?;
+    let size: u64 = size.trim().parse().map_err(|_| "an invalid file size")?;
+    let encoded: String = encoded.chars().filter(|c| !c.is_whitespace()).collect();
+    let data = base64::engine::general_purpose::STANDARD
+        .decode(encoded)
+        .map_err(|_| "malformed file data")?;
+    Ok((size, data))
+}
+
+/// Replaces `path` with the base64 on stdin, atomically: written beside it
+/// under `suffix` and moved onto it, so a write that fails halfway leaves the
+/// original. A directory is refused rather than having the copy filed inside
+/// it, and an existing file keeps its mode rather than taking the staged
+/// copy's umask (best effort: the bytes are written either way).
+pub fn atomic_write_command(path: &str, suffix: &str) -> String {
+    format!(
+        "set -e\np={}\nif [ -d \"$p\" ]; then printf '%s: is a directory\\n' \"$p\" >&2; exit 1; fi\ntmp=\"$p.{suffix}.tmp\"\ntrap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM\nbase64 -d > \"$tmp\"\nif [ -f \"$p\" ]; then\n  mode=$(stat -c %a \"$p\" 2>/dev/null) || mode=\n  if [ -n \"$mode\" ]; then chmod \"$mode\" \"$tmp\" || :; fi\nfi\nmv -f -- \"$tmp\" \"$p\"\ntrap - EXIT HUP INT TERM",
+        quote(path)
+    )
+}
