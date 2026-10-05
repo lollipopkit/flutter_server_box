@@ -755,10 +755,20 @@ fn ssh_e2e_unix_container_listing() {
             String::from_utf8_lossy(&out.stderr).into_owned(),
         );
         let code = out.status.code().unwrap_or(-1);
-        if container::is_not_installed(ty, &stdout, &stderr, code) || !out.status.success() {
+        // Skipped only where the runtime is absent, or refuses this account
+        // (the app's sudo path, which this test does not take). Any other
+        // failure is the runtime misbehaving, and fails the test.
+        let refused = stderr.to_lowercase().contains("permission denied");
+        if container::is_not_installed(ty, &stdout, &stderr, code) || refused {
             eprintln!("{}: not usable here: {:?}", ty.name(), container::user_facing_output(&stderr, &stdout));
             continue;
         }
+        assert!(
+            out.status.success(),
+            "{} failed (exit {code}): {:?}",
+            ty.name(),
+            container::user_facing_output(&stderr, &stdout)
+        );
         if ty == ContainerType::Docker && container::is_podman_emulation(&stderr) {
             continue;
         }
