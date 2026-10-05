@@ -1,6 +1,6 @@
-# firewalld state as `FirewalldManager.readScript` printed it
+# firewalld state as `firewall::firewalld::read_script` printed it
 
-Input for `test/unit/server/firewalld_manager_test.dart`. Captured from
+Input for `tests/firewall_compat.rs`. Captured from
 firewalld 1.3.4 on Rocky Linux 9 (a privileged container, the daemon started
 by hand on a system bus), configured for the purpose:
 

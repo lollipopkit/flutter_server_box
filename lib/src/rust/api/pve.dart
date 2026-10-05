@@ -10,7 +10,20 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `from_json`, `power_action`, `to_json`
 // These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `Loopback`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `clone`, `clone`, `dial`, `eq`, `fmt`, `fmt`, `fmt`, `from`, `from`, `from`, `from`, `from`
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PveConsoleChannel>>
+abstract class PveConsoleChannel implements RustOpaqueInterface {
+  Future<void> close();
+
+  /// The next bytes, or `None` once the console has ended.
+  Future<Uint8List?> recv();
+
+  /// A text console's new size; nothing for a graphical one.
+  Future<void> resize({required int cols, required int rows});
+
+  Future<void> send({required List<int> data});
+}
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<PveSession>>
 abstract class PveSession implements RustOpaqueInterface {
@@ -21,7 +34,7 @@ abstract class PveSession implements RustOpaqueInterface {
   Future<String> allBackupStorages();
 
   /// The headers that authenticate a connection made outside the session
-  /// (a console's websocket, an upload), logging in first if needed.
+  /// (an upload), logging in first if needed.
   Future<List<PveHeader>> authHeaders();
 
   /// A backup of `guest` now, as `request_json` (a `BackupRequest`) asks,
@@ -161,6 +174,10 @@ abstract class PveSession implements RustOpaqueInterface {
   /// The cluster's next free VMID.
   Future<int> nextVmid();
 
+  /// Opens `console`'s websocket over the session's transport, login and
+  /// certificate decision; a text console is logged in to termproxy.
+  Future<PveConsoleChannel> openConsole({required PveConsoleTicket console});
+
   /// Runs `action` on `guest` and returns once PVE has finished it.
   Future<void> power({
     required PveGuestRef guest,
@@ -260,9 +277,6 @@ class PveConsoleTicket {
   /// VNC: the password QEMU was given for this connection. Never logged.
   final String? password;
 
-  /// `vncwebsocket`'s path and query, under the API's origin.
-  final String websocketPath;
-
   const PveConsoleTicket({
     required this.node,
     required this.lxc,
@@ -272,7 +286,6 @@ class PveConsoleTicket {
     required this.ticket,
     required this.user,
     this.password,
-    required this.websocketPath,
   });
 
   @override
@@ -284,8 +297,7 @@ class PveConsoleTicket {
       port.hashCode ^
       ticket.hashCode ^
       user.hashCode ^
-      password.hashCode ^
-      websocketPath.hashCode;
+      password.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -299,8 +311,7 @@ class PveConsoleTicket {
           port == other.port &&
           ticket == other.ticket &&
           user == other.user &&
-          password == other.password &&
-          websocketPath == other.websocketPath;
+          password == other.password;
 }
 
 /// A PVE failure (mirrors sbm_virt::error::Error). `message` is the host's or

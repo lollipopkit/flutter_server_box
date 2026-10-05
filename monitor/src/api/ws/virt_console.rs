@@ -29,7 +29,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use futures::{SinkExt, StreamExt};
 use ntex::rt::spawn;
 use ntex::service::{Service, ServiceCtx, fn_factory_with_config};
 use ntex::util::{ByteString, Bytes};
@@ -49,7 +48,6 @@ use crate::api::server::AppState;
 use crate::api::virt::ConsoleTarget;
 use crate::core::permissions::Grant;
 use sbm_virt::model::ConsoleKind;
-use sbm_virt::pve::termproxy;
 
 const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
 const QUEUE: usize = 256;
@@ -216,7 +214,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
     // otherwise read before it knows the console is up.
     enum Opened {
         Tcp(tokio::net::TcpStream),
-        Pve(Box<sbm_virt::pve::client::ConsoleSocket>, bool),
+        Pve(Box<sbm_virt::pve::console::Console>),
     }
     let opened = match target {
         ConsoleTarget::Tcp { host, port } => match tokio::net::TcpStream::connect((host.as_str(), port)).await {
@@ -233,7 +231,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
             }
         },
         ConsoleTarget::Pve(client, console) => match client.open_console(&console).await {
-            Ok(socket) => Opened::Pve(Box::new(socket), console.kind == ConsoleKind::Text),
+            Ok(console) => Opened::Pve(Box::new(console)),
             Err(e) => {
                 *phase.borrow_mut() = Phase::Done;
                 ctx.audit(Action::Connect, Outcome::Error, Some(&format!("{:?}", e.kind))).await;
@@ -254,7 +252,7 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
     }
     let pump = match opened {
         Opened::Tcp(stream) => spawn_tcp(stream, rx, sink.clone()),
-        Opened::Pve(socket, text) => spawn_pve(*socket, text, rx, sink.clone()),
+        Opened::Pve(console) => spawn_pve(*console, rx, sink.clone()),
     };
     watch(ctx, sink, changes, pump);
 }
@@ -317,45 +315,27 @@ fn spawn_tcp(stream: tokio::net::TcpStream, mut rx: mpsc::Receiver<Input>, sink:
     done_rx
 }
 
-fn spawn_pve(
-    socket: sbm_virt::pve::client::ConsoleSocket,
-    text: bool,
-    mut rx: mpsc::Receiver<Input>,
-    sink: WsSink,
-) -> tokio::sync::oneshot::Receiver<()> {
-    use sbm_virt::pve::tungstenite::Message as Up;
+fn spawn_pve(console: sbm_virt::pve::console::Console, mut rx: mpsc::Receiver<Input>, sink: WsSink) -> tokio::sync::oneshot::Receiver<()> {
     let (done_tx, done_rx) = tokio::sync::oneshot::channel();
-    let (mut up_tx, mut up_rx) = socket.split();
+    let console = Rc::new(console);
     spawn(async move {
+        // The console frames input, sizes and keep-alives itself.
+        let up = console.clone();
         let writing = async move {
-            let mut keep_alive = tokio::time::interval(termproxy::KEEP_ALIVE_INTERVAL);
-            keep_alive.tick().await;
-            loop {
-                let frame = tokio::select! {
-                    input = rx.recv() => match input {
-                        None => break,
-                        Some(Input::Bytes(data)) if text => termproxy::input(&data),
-                        Some(Input::Bytes(data)) => data,
-                        Some(Input::Resize(cols, rows)) if text => termproxy::resize(cols, rows),
-                        Some(Input::Resize(..)) => continue,
-                    },
-                    _ = keep_alive.tick(), if text => termproxy::KEEP_ALIVE.to_vec(),
+            while let Some(input) = rx.recv().await {
+                let sent = match input {
+                    Input::Bytes(data) => up.send(&data).await,
+                    Input::Resize(cols, rows) => up.resize(cols, rows).await,
                 };
-                if up_tx.send(Up::Binary(frame.into())).await.is_err() {
+                if sent.is_err() {
                     break;
                 }
             }
-            let _ = up_tx.close().await;
         };
+        let down = console.clone();
         let reading_sink = sink.clone();
         let reading = async move {
-            while let Some(Ok(frame)) = up_rx.next().await {
-                let data = match frame {
-                    Up::Binary(b) => b.to_vec(),
-                    Up::Text(t) => t.as_bytes().to_vec(),
-                    Up::Close(_) => break,
-                    _ => continue,
-                };
+            while let Some(data) = down.recv().await {
                 if reading_sink.send(Message::Binary(Bytes::from(data))).await.is_err() {
                     break;
                 }
@@ -365,6 +345,7 @@ fn spawn_pve(
             _ = writing => {},
             _ = reading => {},
         }
+        console.close().await;
         end(&sink).await;
         let _ = done_tx.send(());
     });

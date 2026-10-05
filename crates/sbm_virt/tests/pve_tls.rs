@@ -95,8 +95,9 @@ async fn server() -> Server {
     Server { addr, auth }
 }
 
-/// A termproxy behind `vncwebsocket`: takes `root@pam!sb:T\n`, answers `OK`,
-/// then echoes each input frame's data back as output.
+/// A termproxy behind `vncwebsocket`: takes `root@pam!sb:T\n`, answers `OK`
+/// with a prompt in the same frame, then echoes each input frame's data back
+/// as output, and a resize as `size <cols>x<rows>`.
 fn termproxy(req: &mut hyper::Request<hyper::body::Incoming>) -> hyper::Response<Full<Bytes>> {
     use futures_util::{SinkExt, StreamExt};
     use tokio_tungstenite::tungstenite::{Message, handshake::derive_accept_key, protocol::Role};
@@ -109,12 +110,18 @@ fn termproxy(req: &mut hyper::Request<hyper::body::Incoming>) -> hyper::Response
             Some(Ok(Message::Binary(b))) if b.as_ref() == b"root@pam!sb:T\n" => {}
             _ => return,
         }
-        ws.send(Message::Binary(b"OK".to_vec().into())).await.unwrap();
+        ws.send(Message::Binary(b"OK$ ".to_vec().into())).await.unwrap();
         while let Some(Ok(Message::Binary(frame))) = ws.next().await {
             let text = String::from_utf8_lossy(&frame).into_owned();
-            if let Some(data) = text.strip_prefix("0:").and_then(|r| r.split_once(':')).map(|(_, d)| d.to_owned()) {
-                ws.send(Message::Binary(data.into_bytes().into())).await.unwrap();
-            }
+            let reply = if let Some(size) = text.strip_prefix("1:") {
+                let mut parts = size.split(':');
+                format!("size {}x{}", parts.next().unwrap(), parts.next().unwrap())
+            } else if let Some((_, data)) = text.strip_prefix("0:").and_then(|r| r.split_once(':')) {
+                data.to_owned()
+            } else {
+                continue;
+            };
+            ws.send(Message::Binary(reply.into_bytes().into())).await.unwrap();
         }
     });
     hyper::Response::builder()
@@ -237,10 +244,8 @@ async fn an_idle_connection_is_let_go_before_pveproxy_closes_it() {
 
 #[tokio::test]
 async fn a_text_console_logs_in_to_termproxy_and_carries_framed_input() {
-    use futures_util::{SinkExt, StreamExt};
     use sbm_virt::model::{ConsoleKind, GuestKind};
     use sbm_virt::pve::client::PveConsole;
-    use tokio_tungstenite::tungstenite::Message;
     let srv = server().await;
     let (pve, _) = client(&srv, Some(leaf_fingerprint()), RootCertStore::empty());
     let console = PveConsole {
@@ -253,12 +258,14 @@ async fn a_text_console_logs_in_to_termproxy_and_carries_framed_input() {
         user: "root@pam!sb".into(),
         password: None,
     };
-    let mut ws = pve.open_console(&console).await.unwrap();
-    ws.send(Message::Binary(sbm_virt::pve::termproxy::input(b"ls\r").into())).await.unwrap();
-    match ws.next().await {
-        Some(Ok(Message::Binary(b))) => assert_eq!(b.as_ref(), b"ls\r"),
-        other => panic!("{other:?}"),
-    }
+    let ws = pve.open_console(&console).await.unwrap();
+    // The prompt that came in `OK`'s frame is the first output.
+    assert_eq!(ws.recv().await.as_deref(), Some(&b"$ "[..]));
+    ws.resize(80, 24).await.unwrap();
+    assert_eq!(ws.recv().await.as_deref(), Some(&b"size 80x24"[..]));
+    ws.send(b"ls\r").await.unwrap();
+    assert_eq!(ws.recv().await.as_deref(), Some(&b"ls\r"[..]));
+    ws.close().await;
     // A refused ticket ends the socket before `OK`.
     let wrong = PveConsole { ticket: "nope".into(), ..console };
     let refused = pve.open_console(&wrong).await.err().map(|e| e.kind);

@@ -93,7 +93,7 @@ one shared place (proposed `lib/core/utils/server_tcp.dart`):
 - **The loopback is authenticated.** A loopback port is open to every process
   on the device, and the first to connect used to get the remote end — a
   guest's console. `ServerTcpDialer.loopback` and
-  `WebSocketTunnelChannel.loopbackOnce` now bind with `authenticated: true`:
+  `PveConsoleTunnelChannel.loopbackOnce` now bind with `authenticated: true`:
   the tunnel draws a 32-byte token from `Random.secure()`, the remote desktop
   engine gets it in-process with the port (`RdpSessionParams`/
   `VncSessionParams.access_token`) and writes it first on the connection (VNC:
@@ -217,14 +217,15 @@ config below, so no store changes beyond the PVE columns.
 
 | Backend | Guest | Console | How |
 | --- | --- | --- | --- |
-| PVE | LXC, QEMU with `serialN` | text | `POST .../termproxy` (QEMU: the first `serialN` in its config) → `vncwebsocket` → `PveTermShellBackend` (`lib/core/utils/pve_termproxy.dart`) behind a `ConsoleSource` → the terminal page |
-| PVE | QEMU | graphical | `POST .../vncproxy` (`websocket=1`, `generate-password=1`, retried without it before PVE 7.2; PVE 9.2 generates a password for `websocket=1` anyway) → `vncwebsocket` → `WebSocketTunnelChannel.loopbackOnce` (`lib/core/utils/websocket_tunnel.dart`) → the remote desktop engine |
+| PVE | LXC, QEMU with `serialN` | text | `POST .../termproxy` (QEMU: the first `serialN` in its config) → `vncwebsocket` opened and logged in by `sbm_virt::pve::console::Console` → `PveTermShellBackend` (`lib/core/utils/pve_termproxy.dart`) behind a `ConsoleSource` → the terminal page |
+| PVE | QEMU | graphical | `POST .../vncproxy` (`websocket=1`, `generate-password=1`, retried without it before PVE 7.2; PVE 9.2 generates a password for `websocket=1` anyway) → `vncwebsocket` (`sbm_virt::pve::console::Console`) → `PveConsoleTunnelChannel.loopbackOnce` (`lib/core/utils/pve_console.dart`) → the remote desktop engine |
 | libvirt | QEMU | serial | `virsh console --force` (`sudo` in front when libvirt needs it) typed into a shell on the host by the terminal page (`SshPageArgs.initCmd`), over whatever the terminal tab uses for that server: SSH, the agent's PTY, or this device; "Disconnect" sends Ctrl+] |
 | libvirt | QEMU | graphical | `virsh domdisplay` → VNC port → `ServerTcpDialer.loopback` → the remote desktop engine |
 
-- Both websocket consoles go through the same dialer, login and certificate
-  pin as the API calls (`PveBackend.openConsoleSocket`, subprotocol
-  `binary`).
+- Both websocket consoles are the Rust session's, through the same tunnel,
+  login and certificate pin as the API calls (`PveBackend.openConsole`,
+  subprotocol `binary`); termproxy's login, framing and keep-alive are
+  `Console`'s, the agent's `/virt/console/ws` included.
 - A console ticket opens one connection, so every connection attempt fetches
   a new one: `ConsoleSource.connect` for the terminal page's reconnect,
   `RemoteDesktopTargetOpener` for the viewer's.
@@ -1142,8 +1143,11 @@ Since 5.2 also `sbm_virt`'s: a guest's detail (`pve::resources::parse_config`,
 tickets (`Client::console`, the serial port termproxy takes, the
 `generate-password` fallback) and opening a console's `vncwebsocket` with
 termproxy's framing (`Client::open_console`, `pve::termproxy`; the agent's
-`/virt/console/ws`). The app still opens its console websocket itself
-(`PveBackend.openConsoleSocket`, Dart's TLS path) with the session's headers.
+`/virt/console/ws`). Since the migration PR the app opens its consoles through
+the session too: `Client::open_console` answers a `pve::console::Console`
+(termproxy's login, input and resize framing, keep-alive, and an `OK` that
+arrives split or with the first output in its frame), which the agent's relay
+and the app's `PveConsoleChannel` (FFI) both carry.
 
 Since 5.3, snapshots: `sbm_virt::snapshot` (the model, the chain, a diff and
 its groups, the rules a form checks: `name_issue`, `memory`), PVE's listing,

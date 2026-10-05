@@ -108,7 +108,7 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     try {
       final exec = await server.ensureExec();
       if (!mounted) return false;
-      final result = await privileged(exec, firewallScript(commands));
+      final result = await privileged(exec, firewallScript(commands: commands));
       if (result == null) return false;
       if (!result.succeeded) {
         if (mounted) {

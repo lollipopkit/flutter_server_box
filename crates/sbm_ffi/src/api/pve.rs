@@ -169,8 +169,51 @@ pub struct PveConsoleTicket {
     pub user: String,
     /// VNC: the password QEMU was given for this connection. Never logged.
     pub password: Option<String>,
-    /// `vncwebsocket`'s path and query, under the API's origin.
-    pub websocket_path: String,
+}
+
+impl From<PveConsoleTicket> for pve::client::PveConsole {
+    fn from(t: PveConsoleTicket) -> Self {
+        use sbm_virt::model::{ConsoleKind, GuestKind};
+        Self {
+            node: t.node,
+            guest_kind: if t.lxc { GuestKind::Lxc } else { GuestKind::Qemu },
+            vmid: t.vmid,
+            kind: if t.vnc { ConsoleKind::Vnc } else { ConsoleKind::Text },
+            port: t.port,
+            ticket: t.ticket,
+            user: t.user,
+            password: t.password,
+        }
+    }
+}
+
+/// An open console (sbm_virt::pve::console::Console): terminal bytes and a
+/// size for a text console, the RFB stream for a graphical one. termproxy's
+/// login, framing and keep-alive are its own.
+///
+/// One `recv` at a time; the app calls `send` and `resize` in order, one
+/// after the other.
+#[flutter_rust_bridge::frb(opaque)]
+pub struct PveConsoleChannel(pve::console::Console);
+
+impl PveConsoleChannel {
+    /// The next bytes, or `None` once the console has ended.
+    pub async fn recv(&self) -> Option<Vec<u8>> {
+        self.0.recv().await
+    }
+
+    pub async fn send(&self, data: Vec<u8>) -> Result<(), PveError> {
+        Ok(self.0.send(&data).await?)
+    }
+
+    /// A text console's new size; nothing for a graphical one.
+    pub async fn resize(&self, cols: u16, rows: u16) -> Result<(), PveError> {
+        Ok(self.0.resize(cols, rows).await?)
+    }
+
+    pub async fn close(&self) {
+        self.0.close().await
+    }
 }
 
 /// A guest as the app holds it, from the last load (mirrors the fields of
@@ -328,7 +371,6 @@ impl PveSession {
         };
         let c = self.client.console(&guest, kind).await?;
         Ok(PveConsoleTicket {
-            websocket_path: c.websocket_path(),
             node: c.node,
             lxc: c.guest_kind == sbm_virt::model::GuestKind::Lxc,
             vmid: c.vmid,
@@ -340,6 +382,12 @@ impl PveSession {
         })
     }
 
+
+    /// Opens `console`'s websocket over the session's transport, login and
+    /// certificate decision; a text console is logged in to termproxy.
+    pub async fn open_console(&self, console: PveConsoleTicket) -> Result<PveConsoleChannel, PveError> {
+        Ok(PveConsoleChannel(self.client.open_console(&console.into()).await?))
+    }
 
     /// `sbm_virt::snapshot::Snapshot` JSON list.
     pub async fn snapshots(&self, guest: PveGuestRef) -> Result<String, PveError> {
@@ -574,7 +622,7 @@ impl PveSession {
     }
 
     /// The headers that authenticate a connection made outside the session
-    /// (a console's websocket, an upload), logging in first if needed.
+    /// (an upload), logging in first if needed.
     pub async fn auth_headers(&self) -> Result<Vec<PveHeader>, PveError> {
         Ok(self
             .client

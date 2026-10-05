@@ -5,7 +5,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
-import 'package:server_box/data/model/server/firewall.dart';
 import 'package:server_box/data/model/server/firewalld.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -13,8 +12,6 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/ufw.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/service/firewall.dart';
-import 'package:server_box/data/service/firewalld_manager.dart';
-import 'package:server_box/data/service/ufw_manager.dart';
 
 part 'common.dart';
 part 'firewalld.dart';

@@ -1,5 +1,5 @@
 /// The firewall page, drawn from what a real ufw and a real firewalld
-/// printed (`test/fixtures/ufw/`, `test/fixtures/firewalld/`) rather than
+/// printed (`crates/sbm_parser/tests/fixtures/{ufw,firewalld}/`) rather than
 /// from a server, and what each control asks the server to run.
 ///
 /// The connection is SSH from 192.0.2.1 to port 22, arriving on eth0, as
@@ -14,28 +14,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/firewall.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
-import 'package:server_box/data/service/firewall.dart';
-import 'package:server_box/data/service/firewalld_manager.dart';
-import 'package:server_box/data/service/ufw_manager.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/firewall/firewall.dart';
 
+import '../helpers/rust_lib_helper.dart';
 import '../helpers/spi_fixture.dart';
 
 const _sid = 'fw-1';
 
 String _fixture(String path) =>
-    File('test/fixtures/$path').readAsStringSync();
+    File('crates/sbm_parser/tests/fixtures/$path').readAsStringSync();
 
+/// What `sbm_parser::firewall::PROBE_SCRIPT` prints.
 String _probe({String? ufw, String? firewalld}) => [
-  if (ufw != null) '${FirewallProbe.ufwMarker}$ufw',
-  if (firewalld != null) '${FirewallProbe.firewalldMarker}$firewalld',
-  '${FirewallProbe.uidMarker}0',
-  '${FirewallProbe.sshMarker}192.0.2.1 51000 198.51.100.2 22',
-  '${FirewallProbe.ifaceMarker}eth0',
+  if (ufw != null) 'SrvBoxFw.Ufw\t$ufw',
+  if (firewalld != null) 'SrvBoxFw.Firewalld\t$firewalld',
+  'SrvBoxFw.Uid\t0',
+  'SrvBoxFw.Ssh\t192.0.2.1 51000 198.51.100.2 22',
+  'SrvBoxFw.Iface\teth0',
   '',
 ].join('\n');
 
@@ -61,9 +61,9 @@ final class _FakeExec implements ServerExec {
   }) async {
     ExecResult ok(String stdout) =>
         ExecResult(exitCode: 0, stdout: stdout, stderr: '');
-    if (script == FirewallProbe.script) return ok(probe);
-    if (script == UfwManager.readScript) return ok(ufw);
-    if (script == FirewalldManager.readScript) return ok(firewalld);
+    if (script == firewallProbeScript()) return ok(probe);
+    if (script == ufwReadScript()) return ok(ufw);
+    if (script == firewalldReadScript()) return ok(firewalld);
     ran.add(script);
     return ok('');
   }
@@ -85,6 +85,8 @@ final class _FakeServerNotifier extends ServerNotifier {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   final page = FirewallPage(
     args: SpiRequiredArgs(spiFixture(id: _sid, name: 'gw', ip: '10.0.0.2')),
   );
@@ -189,10 +191,10 @@ void main() {
 
       await tester.tap(find.byType(Switch));
       await frames(tester);
-      expect(find.textContaining(UfwManager.disableCommand), findsOneWidget);
+      expect(find.textContaining(ufwDisableCommand()), findsOneWidget);
       await tapOk(tester);
 
-      expect(exec.ran.single, contains('\n${UfwManager.disableCommand}\n'));
+      expect(exec.ran.single, contains('\n${ufwDisableCommand()}\n'));
     });
 
     testWidgets('turning it on lets the SSH port in first, at the top', (
@@ -214,9 +216,9 @@ void main() {
       await waitAndTapOk(tester);
 
       final script = exec.ran.single;
-      final allow = script.indexOf(UfwManager.allowTcpCommand(22));
+      final allow = script.indexOf(ufwAllowTcpCommand(port: 22));
       expect(allow, greaterThan(0));
-      expect(script.indexOf(UfwManager.enableCommand), greaterThan(allow));
+      expect(script.indexOf(ufwEnableCommand()), greaterThan(allow));
     });
 
     testWidgets('deleting a rule that is not the way in asks nothing more', (
@@ -260,7 +262,7 @@ void main() {
       await waitAndTapOk(tester);
 
       final script = exec.ran.single;
-      expect(script, isNot(contains(UfwManager.allowTcpCommand(22))));
+      expect(script, isNot(contains(ufwAllowTcpCommand(port: 22))));
       expect(script, contains(' 22 0.0.0.0/0 '));
       expect(script, contains(' 22 ::/0 '));
     });

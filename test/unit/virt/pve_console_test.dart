@@ -1,8 +1,9 @@
 /// Both PVE consoles end to end against a fake PVE over real TLS on loopback:
-/// the ticket request, then `vncwebsocket` through the same connection
-/// factory and certificate pin as the API calls, then what runs on it —
-/// termproxy's protocol for the text console, the RFB stream through the
-/// loopback adapter for the graphical one.
+/// the ticket request, then `vncwebsocket` opened by the Rust session
+/// (`sbm_virt::pve::console`) through the same tunnel and certificate pin as
+/// the API calls, then what runs on it — termproxy's protocol for the text
+/// console, the RFB stream through the loopback adapter for the graphical
+/// one.
 ///
 /// Certificates are `pve_tls_test.dart`'s fixtures.
 library;
@@ -14,8 +15,8 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/pve_console.dart';
 import 'package:server_box/core/utils/pve_termproxy.dart';
-import 'package:server_box/core/utils/websocket_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/virt/virt.dart';
@@ -188,12 +189,7 @@ void main() {
     expect(console, isA<PveTermConsole>());
     console as PveTermConsole;
     final seen = fromClient.stream.toList();
-    final ws = await pve.openConsoleSocket(console);
-    final term = await PveTermShellBackend.start(
-      ws,
-      user: console.user,
-      ticket: console.ticket,
-    );
+    final term = PveTermShellBackend(await pve.openConsole(console));
     addTearDown(term.close);
 
     expect(upgrades.single, {
@@ -237,7 +233,7 @@ void main() {
       user: 'root@pam',
     );
     await expectLater(
-      pve.openConsoleSocket(console),
+      pve.openConsole(console),
       throwsA(
         isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.certChanged),
       ),
@@ -251,13 +247,15 @@ void main() {
       final gotClientBytes = Completer<void>();
       onSocket = (ws, _) {
         ws.add(Uint8List.fromList(ascii.encode('RFB 003.008\n')));
+        // Not part of the RFB stream.
+        ws.add('ignored');
         ws.listen((frame) {
           fromClient.add(frame as List<int>);
           if (!gotClientBytes.isCompleted) gotClientBytes.complete();
         });
       };
-      final tunnel = await WebSocketTunnelChannel.loopbackOnce(
-        WebSocketTunnelChannel(await pve.openConsoleSocket(console)),
+      final tunnel = await PveConsoleTunnelChannel.loopbackOnce(
+        PveConsoleTunnelChannel(await pve.openConsole(console)),
       );
       addTearDown(tunnel.close);
       final vnc = await connectTunnel(tunnel);

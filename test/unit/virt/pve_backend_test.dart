@@ -156,11 +156,9 @@ void main() {
     final guests = (await pve.load()).guests;
     final term = await pve.console(guests.first, VirtConsoleKind.text);
     expect(term, isA<PveTermConsole>());
-    expect(
-      term.websocketPath,
-      '/api2/json/nodes/pve/lxc/100/vncwebsocket?port=5900'
-      '&vncticket=PVEVNC%3Aabc%2F%3D',
-    );
+    // Its `vncwebsocket` path is the Rust session's (`pve_client.rs`).
+    term as PveTermConsole;
+    expect((term.node, term.vmid, term.port, term.ticket), ('pve', 100, 5900, 'PVEVNC:abc/='));
     final vnc = await pve.console(guests[2], VirtConsoleKind.vnc);
     expect(vnc, isA<PveVncConsole>());
     expect(api.bodies.last, contains('websocket=1'));

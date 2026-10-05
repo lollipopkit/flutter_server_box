@@ -36,8 +36,8 @@ final class _FirewalldViewState extends ConsumerState<_FirewalldView>
   @override
   Future<void> refresh() async {
     final snapshot = await read(
-      FirewalldManager.readScript,
-      FirewalldManager.parse,
+      firewalldReadScript(),
+      (output) => firewalldParse(output: output),
     );
     if (snapshot == null || !mounted) return;
     setState(() {
@@ -116,7 +116,7 @@ extension on _FirewalldViewState {
               TextButton(
                 onPressed: busy
                     ? null
-                    : () => run([FirewalldManager.panicOffCommand]),
+                    : () => run([firewalldPanicOffCommand()]),
                 child: Text(l10n.firewallPanicOff),
               ),
             ],
@@ -291,9 +291,9 @@ extension on _FirewalldViewState {
                     ? null
                     : (on) => _change(
                         snapshot,
-                        FirewalldManager.masquerade(
-                          snapshot.running,
-                          zone.name,
+                        firewalldMasquerade(
+                          running: snapshot.running,
+                          zone: zone.name,
                           add: on,
                         ),
                       ),
@@ -312,7 +312,11 @@ extension on _FirewalldViewState {
           snapshot,
           zone.name,
           v,
-          FirewalldManager.removeInterface(snapshot.running, zone.name, v),
+          firewalldRemoveInterface(
+            running: snapshot.running,
+            zone: zone.name,
+            iface: v,
+          ),
           (z) => z.copyWith(interfaces: [...z.interfaces]..remove(v)),
         ),
       ),
@@ -325,7 +329,7 @@ extension on _FirewalldViewState {
           snapshot,
           zone.name,
           v,
-          FirewalldManager.source(snapshot.running, zone.name, v, add: false),
+          _item(snapshot, zone.name, FirewalldItem.source, v, add: false),
           (z) => z.copyWith(sources: [...z.sources]..remove(v)),
         ),
       ),
@@ -333,26 +337,31 @@ extension on _FirewalldViewState {
         title: l10n.firewallServices,
         items: _held(runtime?.services, saved?.services ?? const []),
         text: (v) => v,
-        detail: (v) => snapshot.services[v]?.join(' '),
+        detail: (v) => snapshot.services[v]?.map((p) => p.spec).join(' '),
         onAdd: () => _addService(snapshot, zone),
         onRemove: (v) => _remove(
           snapshot,
           zone.name,
           v,
-          FirewalldManager.service(snapshot.running, zone.name, v, add: false),
+          _item(snapshot, zone.name, FirewalldItem.service, v, add: false),
           (z) => z.copyWith(services: [...z.services]..remove(v)),
         ),
       ),
       _section<FirewalldPort>(
         title: l10n.firewallPorts,
         items: _held(runtime?.ports, saved?.ports ?? const []),
-        text: (v) => '$v',
+        text: (v) => v.spec,
         onAdd: () => _addPort(snapshot, zone.name),
         onRemove: (v) => _remove(
           snapshot,
           zone.name,
-          '$v',
-          FirewalldManager.port(snapshot.running, zone.name, v, add: false),
+          v.spec,
+          firewalldPortCommands(
+            running: snapshot.running,
+            zone: zone.name,
+            port: v,
+            add: false,
+          ),
           (z) => z.copyWith(ports: [...z.ports]..remove(v)),
         ),
       ),
@@ -369,7 +378,7 @@ extension on _FirewalldViewState {
           snapshot,
           zone.name,
           v,
-          FirewalldManager.richRule(snapshot.running, zone.name, v, add: false),
+          _item(snapshot, zone.name, FirewalldItem.richRule, v, add: false),
           (z) => z.copyWith(
             richRules: [...z.richRules]..removeWhere((r) => r.raw == v),
           ),
@@ -385,12 +394,7 @@ extension on _FirewalldViewState {
           snapshot,
           zone.name,
           v,
-          FirewalldManager.forwardPort(
-            snapshot.running,
-            zone.name,
-            v,
-            add: false,
-          ),
+          _item(snapshot, zone.name, FirewalldItem.forwardPort, v, add: false),
           (z) => z.copyWith(forwardPorts: [...z.forwardPorts]..remove(v)),
         ),
       ),
@@ -590,10 +594,11 @@ extension on _FirewalldViewState {
         defaultZone: defaultZone,
       )) {
         commands.addAll(
-          FirewalldManager.richRule(
-            running ?? s.running,
-            zone.name,
-            FirewalldManager.keepOpenRule(access.port),
+          firewalldItemCommands(
+            running: running ?? s.running,
+            zone: zone.name,
+            item: FirewalldItem.richRule,
+            value: firewalldKeepOpenRule(port: access.port),
             add: true,
           ),
         );
@@ -601,6 +606,22 @@ extension on _FirewalldViewState {
     }
     return commands.toList();
   };
+
+  /// Adds [value] to [zone], or removes it: both configurations while
+  /// running.
+  List<String> _item(
+    FirewalldSnapshot s,
+    String zone,
+    FirewalldItem item,
+    String value, {
+    required bool add,
+  }) => firewalldItemCommands(
+    running: s.running,
+    zone: zone,
+    item: item,
+    value: value,
+    add: add,
+  );
 
   String _inputIssueText(FirewalldInputIssue issue) => switch (issue) {
     FirewalldInputIssue.invalidPort => l10n.firewallInvalidPort,
@@ -637,7 +658,7 @@ extension on _FirewalldViewState {
   Future<void> _setRunning(FirewalldSnapshot s, bool on) async {
     final commands = await confirm(
       commands: [
-        on ? FirewalldManager.startCommand : FirewalldManager.stopCommand,
+        on ? firewalldStartCommand() : firewalldStopCommand(),
       ],
       destructive: true,
       // Started, the saved configuration is what is in force.
@@ -655,7 +676,7 @@ extension on _FirewalldViewState {
   Future<void> _setDefaultZone(FirewalldSnapshot s, String zone) async {
     if (zone == s.defaultZone) return;
     final commands = await confirm(
-      commands: [FirewalldManager.defaultZone(s.running, zone)],
+      commands: [firewalldDefaultZone(running: s.running, zone: zone)],
       effects: _zoneEffects(
         s,
         runtime: s.runtime,
@@ -680,7 +701,11 @@ extension on _FirewalldViewState {
       (z) => z.copyWith(target: target),
     );
     final commands = await confirm(
-      commands: FirewalldManager.target(s.running, zone, target),
+      commands: firewalldTarget(
+        running: s.running,
+        zone: zone,
+        target: target,
+      ),
       notes: [if (s.drifted) l10n.firewallReloadLoses],
       destructive: target != FirewalldTarget.accept,
       effects: _zoneEffects(s, runtime: permanent, permanent: permanent),
@@ -691,7 +716,7 @@ extension on _FirewalldViewState {
 
   Future<void> _reload(FirewalldSnapshot s) async {
     final commands = await confirm(
-      commands: [FirewalldManager.reloadCommand],
+      commands: [firewalldReloadCommand()],
       notes: [if (s.drifted) l10n.firewallReloadLoses],
       destructive: s.drifted,
       effects: _zoneEffects(s, runtime: s.permanent, permanent: s.permanent),
@@ -704,7 +729,7 @@ extension on _FirewalldViewState {
     final runtime = s.runtime;
     if (runtime == null) return;
     final commands = await confirm(
-      commands: [FirewalldManager.runtimeToPermanentCommand],
+      commands: [firewalldRuntimeToPermanentCommand()],
       effects: _zoneEffects(s, runtime: runtime, permanent: runtime),
     );
     if (commands != null) await run(commands);
@@ -754,7 +779,7 @@ extension on _FirewalldViewState {
   Future<void> _addService(FirewalldSnapshot s, FirewalldZone zone) async {
     final name = await _pickService(s, zone);
     if (name == null || !mounted) return;
-    await run(FirewalldManager.service(s.running, zone.name, name, add: true));
+    await run(_item(s, zone.name, FirewalldItem.service, name, add: true));
   }
 
   Future<void> _addPort(FirewalldSnapshot s, String zone) async {
@@ -765,12 +790,19 @@ extension on _FirewalldViewState {
       icon: Icons.numbers,
     );
     if (text == null || !mounted) return;
-    final port = FirewalldManager.parsePort(text);
+    final port = firewalldParsePort(value: text);
     if (port == null) {
       Toast.error(l10n.firewallInvalidPort);
       return;
     }
-    await run(FirewalldManager.port(s.running, zone, port, add: true));
+    await run(
+      firewalldPortCommands(
+        running: s.running,
+        zone: zone,
+        port: port,
+        add: true,
+      ),
+    );
   }
 
   Future<void> _addSource(FirewalldSnapshot s, String zone) async {
@@ -781,14 +813,14 @@ extension on _FirewalldViewState {
       icon: Icons.login,
     );
     if (text == null || !mounted) return;
-    if (FirewalldManager.checkSource(text) case final issue?) {
+    if (firewalldCheckSource(value: text) case final issue?) {
       Toast.error(_inputIssueText(issue));
       return;
     }
     await _add(
       s,
       zone,
-      FirewalldManager.source(s.running, zone, text, add: true),
+      _item(s, zone, FirewalldItem.source, text, add: true),
       (zones) => _applied(
         zones,
         zone,
@@ -805,7 +837,7 @@ extension on _FirewalldViewState {
       icon: Icons.settings_ethernet,
     );
     if (text == null || !mounted) return;
-    if (FirewalldManager.checkInterface(text) case final issue?) {
+    if (firewalldCheckInterface(value: text) case final issue?) {
       Toast.error(_inputIssueText(issue));
       return;
     }
@@ -813,7 +845,7 @@ extension on _FirewalldViewState {
     await _add(
       s,
       zone,
-      FirewalldManager.changeInterface(s.running, zone, text),
+      firewalldChangeInterface(running: s.running, zone: zone, iface: text),
       (zones) => [
         for (final z in zones)
           z.copyWith(
@@ -836,19 +868,19 @@ extension on _FirewalldViewState {
       icon: Icons.rule,
     );
     if (text == null || !mounted) return;
-    if (FirewalldManager.checkRichRule(text) case final issue?) {
+    if (firewalldCheckRichRule(value: text) case final issue?) {
       Toast.error(_inputIssueText(issue));
       return;
     }
     await _add(
       s,
       zone,
-      FirewalldManager.richRule(s.running, zone, text, add: true),
+      _item(s, zone, FirewalldItem.richRule, text, add: true),
       (zones) => _applied(
         zones,
         zone,
         (z) => z.copyWith(
-          richRules: [...z.richRules, FirewalldRichRule.parse(text)],
+          richRules: [...z.richRules, firewalldParseRichRule(raw: text)],
         ),
       ),
     );
@@ -862,14 +894,14 @@ extension on _FirewalldViewState {
       icon: Icons.alt_route,
     );
     if (text == null || !mounted) return;
-    if (FirewalldManager.checkForwardPort(text) case final issue?) {
+    if (firewalldCheckForwardPort(value: text) case final issue?) {
       Toast.error(_inputIssueText(issue));
       return;
     }
     await _add(
       s,
       zone,
-      FirewalldManager.forwardPort(s.running, zone, text, add: true),
+      _item(s, zone, FirewalldItem.forwardPort, text, add: true),
       (zones) => _applied(
         zones,
         zone,
@@ -916,7 +948,7 @@ extension on _FirewalldViewState {
                       itemCount: shown.length,
                       itemBuilder: (_, index) {
                         final name = shown[index];
-                        final ports = s.services[name]?.join(' ') ?? '';
+                        final ports = s.services[name]?.map((p) => p.spec).join(' ') ?? '';
                         return ListTile(
                           dense: true,
                           title: Text(name),

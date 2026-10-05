@@ -1,6 +1,6 @@
-# ufw state as `UfwManager.readScript` printed it
+# ufw state as `firewall::ufw::read_script` printed it
 
-Input for `test/unit/server/ufw_manager_test.dart`. Captured from ufw 0.36.2
+Input for `tests/firewall_compat.rs`. Captured from ufw 0.36.2
 on Ubuntu 24.04 (a privileged container), with rules added for the purpose:
 both families and one, a comment in UTF-8, logging, an interface with an `_`
 in its name, a routed rule, an application profile (`My App`, ports

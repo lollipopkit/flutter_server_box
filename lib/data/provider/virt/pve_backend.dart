@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/utils/pve_console.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -49,14 +50,11 @@ typedef PveTunnel = Future<SshLocalTunnel> Function(String host, int port);
 /// or a direct socket for this device), opened on first use and again once
 /// it has ended.
 ///
-/// Two connections are this class's own, authenticated with the session's
-/// headers ([connect], [_httpClient]): a console's websocket, which the
-/// console view reads frame by frame, and an upload, which streams a file
-/// the session would hold in memory. An upload's refusal is said by the
-/// session all the same ([PveSession.refusal]).
-// TODO(migration): the console's websocket through the session
-// (`sbm_virt::pve::Client::open_console`, which the agent uses), then drop
-// the Dart TLS path for it.
+/// One connection is this class's own, authenticated with the session's
+/// headers ([connect], [_httpClient]): an upload, which streams a file the
+/// session would hold in memory. Its refusal is said by the session all the
+/// same ([PveSession.refusal]). A console is the session's too
+/// ([openConsole]).
 class PveBackend implements VirtBackend {
   PveBackend({
     required this.serverId,
@@ -231,34 +229,28 @@ class PveBackend implements VirtBackend {
     );
   }
 
-  /// A websocket to [console]'s `vncwebsocket`, over the same transport,
-  /// certificate policy and login as the API calls.
-  Future<WebSocket> openConsoleSocket(PveConsole console) async {
-    final auth = await _authHeaders();
-    final base = _base;
-    final url = base
-        .replace(scheme: base.isScheme('https') ? 'wss' : 'ws')
-        .resolve(console.websocketPath);
-    final headers = <String, Object>{
-      for (final key in const ['Authorization', 'Cookie'])
-        if (auth[key] case final String v) key: v,
-    };
-    final client = _httpClient(_config.certSha256);
-    try {
-      return await WebSocket.connect(
-        url.toString(),
-        // What PVE's own clients ask for: frames relayed byte for byte.
-        protocols: const ['binary'],
-        headers: headers,
-        customClient: client,
-      ).timeout(connectTimeout);
-    } catch (e) {
-      throw _toErr(e);
-    } finally {
-      // The upgraded socket is detached from the client; closing it only
-      // stops it from pooling anything else.
-      client.close();
-    }
+  /// Opens [console] over the same transport, certificate policy and login
+  /// as the API calls (`sbm_virt::pve::Client::open_console`); a text
+  /// console is logged in to termproxy by then.
+  Future<PveConsoleLink> openConsole(PveConsole console) async {
+    final channel = await _rust(
+      (s) => s.openConsole(
+        console: PveConsoleTicket(
+          node: console.node,
+          lxc: console.guestKind == VirtGuestKind.lxc,
+          vmid: console.vmid,
+          vnc: console is PveVncConsole,
+          port: console.port,
+          ticket: console.ticket,
+          user: console.user,
+          password: switch (console) {
+            PveVncConsole(:final password) => password,
+            PveTermConsole() => null,
+          },
+        ),
+      ),
+    );
+    return PveConsoleChannelLink(channel);
   }
 
   @override

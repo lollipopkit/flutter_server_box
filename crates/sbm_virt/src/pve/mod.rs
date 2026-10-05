@@ -7,6 +7,7 @@
 
 pub mod backup;
 pub mod client;
+pub mod console;
 pub mod create;
 pub mod hardware;
 pub mod http;

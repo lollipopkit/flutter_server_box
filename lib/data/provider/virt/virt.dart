@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:collection/collection.dart' show MapEquality;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/utils/pve_console.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -1224,13 +1224,13 @@ class VirtHostNotifier extends _$VirtHostNotifier {
   Future<VirtConsole> console(String guestId, VirtConsoleKind kind) =>
       _backend.console(_guest(guestId), kind);
 
-  /// For a [PveConsole]: its websocket, over the host's transport and login.
-  Future<WebSocket> openPveConsoleSocket(PveConsole console) {
+  /// Opens a [PveConsole] over the host's transport and login.
+  Future<PveConsoleLink> openPveConsole(PveConsole console) {
     final backend = _backend;
     if (backend is! PveBackend) {
       throw const VirtErr(type: VirtErrType.unsupported);
     }
-    return backend.openConsoleSocket(console);
+    return backend.openConsole(console);
   }
 
   /// Usage over [window]: the host's stored history where it keeps one,
