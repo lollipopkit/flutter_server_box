@@ -130,17 +130,24 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     // the process is gone is a pid the OS may have given to something else.
     let deadline = Instant::now() + SSH_TIMEOUT;
     let status = loop {
-        match child
-            .try_wait()
-            .map_err(|e| format!("ssh wait failed: {e}"))?
-        {
-            Some(status) => break Some(status),
-            None if Instant::now() >= deadline => {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(50)),
+            waited => {
+                // Timed out, or the wait itself failed: either way the child
+                // is killed and reaped, which closes its pipes and so ends the
+                // reader and writer threads, before anything is returned.
                 let _ = child.kill();
                 let _ = child.wait();
-                break None;
+                let _ = (stdout.join(), stderr.join());
+                if let Some(writer) = writer {
+                    let _ = writer.join();
+                }
+                return Err(match waited {
+                    Err(e) => format!("ssh wait failed: {e}"),
+                    _ => format!("ssh command {arg:?} killed after {}s", SSH_TIMEOUT.as_secs()),
+                });
             }
-            None => std::thread::sleep(Duration::from_millis(50)),
         }
     };
 
@@ -153,14 +160,6 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
     let stdout = collect(stdout, "stdout")?;
     let stderr = collect(stderr, "stderr")?;
 
-    // Before joining the writer: the kill is what unblocks it, and its broken
-    // pipe is a consequence of the timeout rather than something to report
-    let Some(status) = status else {
-        return Err(format!(
-            "ssh command {arg:?} killed after {}s",
-            SSH_TIMEOUT.as_secs()
-        ));
-    };
     if let Some(writer) = writer {
         writer
             .join()

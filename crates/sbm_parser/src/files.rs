@@ -21,15 +21,19 @@
 use crate::bench::posix;
 use crate::script::shell_quote_unix as quote;
 
+/// `path` as an operand no command reads as an option: a relative path that
+/// begins with `-` is spelled `./-…`. For the commands here that take no `--`
+/// (`find`, `mktemp`, `scp`) or are not given one.
+fn operand(path: &str) -> String {
+    if path.starts_with('-') { format!("./{path}") } else { path.to_owned() }
+}
+
 /// One directory level. `-exec … {} +` hands the whole batch to one shell
 /// rather than starting one per file.
 pub fn list_command(path: &str) -> String {
-    // `find` has no `--`: a starting point that begins with `-` would be read
-    // as an option, so a relative one is spelled `./-…`.
-    let start = if path.starts_with('-') { format!("./{path}") } else { path.to_owned() };
     format!(
         "find {} -mindepth 1 -maxdepth 1 -exec sh -c 'for path do {}done' sh {{}} +",
-        quote(&start),
+        quote(&operand(path)),
         // A file gone by the time its metadata is read is not reported: `find`
         // names what was there a moment ago, and /proc and /tmp churn.
         emit_record("path", "continue")
@@ -53,7 +57,7 @@ pub const STAT_DENIED_EXIT: i32 = 13;
 /// said on stdout and as an exit code, since a host that closes the channel
 /// without an exit status leaves the code unsaid.
 pub fn stat_command(path: &str) -> String {
-    let quoted = quote(without_trailing_slash(path));
+    let quoted = quote(&operand(without_trailing_slash(path)));
     let vanished = format!("printf \"%s\" {STAT_ABSENT_MARK}; exit {STAT_ABSENT_EXIT}");
     posix(&format!(
         "path={quoted}; \
@@ -236,7 +240,7 @@ pub fn parse_size(output: &str) -> Option<i64> {
 }
 
 pub fn read_command(path: &str) -> String {
-    format!("cat {}", quote(path))
+    format!("cat {}", quote(&operand(path)))
 }
 
 /// Writes base64 `data` to `path` through `tee`, so it works under `sudo`
@@ -289,7 +293,7 @@ pub fn in_dir_command(dir: &str, command: &str) -> String {
 /// user wrote, so it goes in as written.
 pub fn editor_command(editor: &str, path: &str, sudo: bool) -> String {
     let sudo = if sudo { "sudo " } else { "" };
-    format!("{sudo}{editor} {}", quote(path))
+    format!("{sudo}{editor} {}", quote(&operand(path)))
 }
 
 /// From oh-my-zsh's `extract` plugin. Order matters: the first suffix that
@@ -341,17 +345,17 @@ pub fn extract_command(path: &str) -> Option<String> {
     EXTRACT
         .iter()
         .find(|(ext, _)| path.ends_with(&format!(".{ext}")))
-        .map(|(_, command)| command.replace("FILE", &quote(path)))
+        .map(|(_, command)| command.replace("FILE", &quote(&operand(path))))
 }
 
 /// The far side of an SCP download: `scp -f` sends `path` over the channel.
 pub fn scp_source_command(path: &str) -> String {
-    format!("scp -f {}", quote(path))
+    format!("scp -f {}", quote(&operand(path)))
 }
 
 /// The far side of an SCP upload: `scp -t` receives into `path`.
 pub fn scp_sink_command(path: &str) -> String {
-    format!("scp -t {}", quote(path))
+    format!("scp -t {}", quote(&operand(path)))
 }
 
 /// [`capped_read_command`]'s exit code for a path that is a directory.
@@ -366,7 +370,7 @@ pub const READ_MISSING_EXIT: i32 = 44;
 pub fn capped_read_command(path: &str, max_bytes: u64) -> String {
     format!(
         "set -e\np={}\nif [ -d \"$p\" ]; then exit {READ_IS_DIR_EXIT}; fi\nif [ ! -f \"$p\" ]; then exit {READ_MISSING_EXIT}; fi\nsize=$(wc -c < \"$p\") || exit\nprintf '%s\\n' \"$size\"\nhead -c {max_bytes} \"$p\" | base64 | tr -d \"\\n\"",
-        quote(path)
+        quote(&operand(path))
     )
 }
 
@@ -402,6 +406,8 @@ pub fn parse_capped_read(output: &str, max_bytes: u64) -> Result<(u64, Vec<u8>),
 pub fn atomic_write_command(path: &str) -> String {
     format!(
         "set -e\np={}\nif [ -d \"$p\" ]; then printf '%s: is a directory\\n' \"$p\" >&2; exit 1; fi\ntmp=$(mktemp \"$p.XXXXXX\")\ntrap 'rm -f -- \"$tmp\"' EXIT HUP INT TERM\nbase64 -d > \"$tmp\"\nif [ -f \"$p\" ]; then\n  mode=$(stat -c %a \"$p\" 2>/dev/null) || mode=\nelse\n  mode=$(printf '%o' $(( 0666 & ~0$(umask) ))) || mode=\nfi\nif [ -n \"$mode\" ]; then chmod \"$mode\" \"$tmp\" || :; fi\nmv -f -- \"$tmp\" \"$p\"\ntrap - EXIT HUP INT TERM",
-        quote(path)
+        // `mktemp`'s template and `stat`'s and `chmod`'s operands begin as
+        // the path does.
+        quote(&operand(path))
     )
 }

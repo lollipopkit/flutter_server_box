@@ -247,6 +247,45 @@ mod shell {
         drop(child.stdin.take());
         assert!(!child.wait().unwrap().success());
     }
+
+    /// Relative names that begin with `-`, run where they are relative to.
+    #[test]
+    fn dash_led_relative_paths_run() {
+        if !has_stat_c() {
+            eprintln!("skipped: this host's stat has no -c (BSD)");
+            return;
+        }
+        use std::io::Write;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("-d")).unwrap();
+        std::fs::write(dir.path().join("-d/x"), b"").unwrap();
+        let in_dir = |command: &str| {
+            let out = Command::new("/bin/sh").current_dir(dir.path()).arg("-c").arg(command).output().unwrap();
+            (out.status.code(), String::from_utf8_lossy(&out.stdout).into_owned())
+        };
+
+        let mut child = Command::new("/bin/sh")
+            .current_dir(dir.path())
+            .arg("-c")
+            .arg(atomic_write_command("-n"))
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        child.stdin.take().unwrap().write_all(b"aGk=").unwrap();
+        assert!(child.wait().unwrap().success());
+        assert_eq!(std::fs::read(dir.path().join("-n")).unwrap(), b"hi");
+
+        let (code, out) = in_dir(&capped_read_command("-n", 5));
+        assert_eq!(code, Some(0));
+        assert_eq!(parse_capped_read(&out, 5).unwrap(), (2, b"hi".to_vec()));
+        let (code, out) = in_dir(&stat_command("-n"));
+        assert_eq!(code, Some(0));
+        assert_eq!(parse_records(&out).unwrap()[0].name, "-n");
+        let (code, out) = in_dir(&list_command("-d"));
+        assert_eq!(code, Some(0));
+        assert_eq!(parse_records(&out).unwrap()[0].name, "x");
+        assert_eq!(in_dir(&read_command("-n")), (Some(0), "hi".to_owned()));
+    }
 }
 
 #[test]
@@ -273,7 +312,14 @@ fn the_staging_file_is_made_exclusively() {
 }
 
 #[test]
-fn a_dash_led_relative_path_is_not_an_option_to_find() {
+fn a_dash_led_relative_path_is_never_an_option() {
     assert!(list_command("-P").starts_with("find './-P' "));
     assert!(list_command("/-P").starts_with("find '/-P' "));
+    assert!(atomic_write_command("-n").contains("p='./-n'"));
+    assert!(capped_read_command("-n", 1).contains("p='./-n'"));
+    assert!(stat_command("-n").contains("path='\\''./-n'\\''"), "{}", stat_command("-n"));
+    assert_eq!(read_command("-n"), "cat './-n'");
+    assert_eq!(scp_source_command("-n"), "scp -f './-n'");
+    assert_eq!(scp_sink_command("-n"), "scp -t './-n'");
+    assert_eq!(extract_command("-n.zip").as_deref(), Some("unzip './-n.zip'"));
 }

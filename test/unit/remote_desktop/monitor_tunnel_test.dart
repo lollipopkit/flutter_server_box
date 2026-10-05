@@ -311,6 +311,33 @@ void main() {
     });
   });
 
+  // Found as a flaky `server_tcp_test`: a tunnel closed before its client's
+  // EOF arrived waited on the bridge's `addStream` forever, because closing
+  // cancelled the read and a cancelled subscription reports neither done nor
+  // an error.
+  test('a write closed under it ends, rather than waiting on a source that '
+      'will never say so', () async {
+    final agent = await _FakeAgent.start(target: '127.0.0.1:3389');
+    addTearDown(agent.close);
+
+    await realHttp(() async {
+      final channel = await MonitorTunnelChannel.dial(
+        client: _clientFor(agent),
+        remoteHost: '127.0.0.1',
+        remotePort: 3389,
+      );
+      // A client still connected: it never ends on its own.
+      final source = StreamController<List<int>>();
+      addTearDown(source.close);
+      final writing = channel.sink.addStream(source.stream);
+      source.add([1, 2, 3]);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      await channel.close();
+      await writing.timeout(const Duration(seconds: 2));
+    });
+  });
+
   test('closing the channel closes what it was carrying', () async {
     final agent = await _FakeAgent.start(target: '127.0.0.1:3389');
     addTearDown(agent.close);
