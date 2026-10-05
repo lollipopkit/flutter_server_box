@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "送信元と宛先は、両方とも IPv4 か両方とも IPv6 にしてください。",
   "firewallInvalidInterface": "無効なインターフェース名です。",
   "firewallInvalidComment": "コメントに ' や改行は使用できません。",
+  "firewallInvalidProtocol": "サポートされていないプロトコルです。",
   "firewallInterfaceIn": "受信インターフェース",
   "firewallInterfaceOut": "送信インターフェース",
   "firewallSourcePort": "送信元ポート",

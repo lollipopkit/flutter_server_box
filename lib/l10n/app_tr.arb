@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Kaynak ve Hedef ya ikisi de IPv4 ya da ikisi de IPv6 olmalıdır.",
   "firewallInvalidInterface": "Geçersiz arayüz adı.",
   "firewallInvalidComment": "Açıklama ' veya satır sonu içeremez.",
+  "firewallInvalidProtocol": "Desteklenmeyen protokol.",
   "firewallInterfaceIn": "Gelen arayüzü",
   "firewallInterfaceOut": "Giden arayüzü",
   "firewallSourcePort": "Kaynak port",

@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Desde y Hacia deben ser ambos IPv4 o ambos IPv6.",
   "firewallInvalidInterface": "Nombre de interfaz no válido.",
   "firewallInvalidComment": "El comentario no puede contener ' ni saltos de línea.",
+  "firewallInvalidProtocol": "Protocolo no admitido.",
   "firewallInterfaceIn": "Interfaz de entrada",
   "firewallInterfaceOut": "Interfaz de salida",
   "firewallSourcePort": "Puerto de origen",

@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Dari dan Ke harus sama-sama IPv4 atau sama-sama IPv6.",
   "firewallInvalidInterface": "Nama antarmuka tidak valid.",
   "firewallInvalidComment": "Komentar tidak boleh berisi ' atau baris baru.",
+  "firewallInvalidProtocol": "Protokol tidak didukung.",
   "firewallInterfaceIn": "Antarmuka masuk",
   "firewallInterfaceOut": "Antarmuka keluar",
   "firewallSourcePort": "Port sumber",

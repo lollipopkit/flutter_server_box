@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Откуда и Куда должны быть оба IPv4 или оба IPv6.",
   "firewallInvalidInterface": "Недопустимое имя интерфейса.",
   "firewallInvalidComment": "Комментарий не может содержать ' или переносы строк.",
+  "firewallInvalidProtocol": "Неподдерживаемый протокол.",
   "firewallInterfaceIn": "Входящий интерфейс",
   "firewallInterfaceOut": "Исходящий интерфейс",
   "firewallSourcePort": "Порт источника",

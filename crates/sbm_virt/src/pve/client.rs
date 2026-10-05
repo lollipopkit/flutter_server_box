@@ -584,10 +584,13 @@ impl Client {
                 .await
                 .map_err(|e| Error::msg(ErrorKind::Unreachable, e.to_string()))?;
             // A refused ticket gets no answer: the socket ends before `OK`.
-            // `OK` may come split, or with the first output in its frame.
+            // `OK` may come split, or with the first output in its frame. One
+            // deadline for the whole handshake: frames that say nothing do
+            // not extend it.
             let mut handshake = super::console::Handshake::default();
+            let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
             first = loop {
-                let bytes = match tokio::time::timeout(Duration::from_secs(15), socket.next()).await {
+                let bytes = match tokio::time::timeout_at(deadline, socket.next()).await {
                     Ok(Some(Ok(Message::Binary(b)))) => b.to_vec(),
                     Ok(Some(Ok(Message::Text(t)))) => t.as_bytes().to_vec(),
                     Ok(Some(Ok(Message::Ping(_) | Message::Pong(_)))) => continue,

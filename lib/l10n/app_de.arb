@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "Von und An müssen beide IPv4 oder beide IPv6 sein.",
   "firewallInvalidInterface": "Ungültiger Schnittstellenname.",
   "firewallInvalidComment": "Der Kommentar darf kein ' und keine Zeilenumbrüche enthalten.",
+  "firewallInvalidProtocol": "Nicht unterstütztes Protokoll.",
   "firewallInterfaceIn": "Eingehende Schnittstelle",
   "firewallInterfaceOut": "Ausgehende Schnittstelle",
   "firewallSourcePort": "Quellport",

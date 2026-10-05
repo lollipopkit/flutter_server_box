@@ -119,13 +119,16 @@ impl Console {
             .map_err(|e| Error::msg(ErrorKind::Closed, e.to_string()))
     }
 
-    /// Ends the session: a close frame, waited for no longer than the send.
+    /// Ends the session: a close frame, given three seconds — waiting for a
+    /// send in progress included, which a stalled link holds.
     pub async fn close(&self) {
         if let Some(keep_alive) = &self.keep_alive {
             keep_alive.abort();
         }
-        let mut sink = self.sink.lock().await;
-        let _ = tokio::time::timeout(std::time::Duration::from_secs(3), sink.close()).await;
+        let closing = async {
+            let _ = self.sink.lock().await.close().await;
+        };
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(3), closing).await;
     }
 }
 

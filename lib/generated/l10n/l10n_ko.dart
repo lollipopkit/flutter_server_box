@@ -4999,6 +4999,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get firewallInvalidComment => '설명에는 \' 또는 줄바꿈을 넣을 수 없습니다.';
 
   @override
+  String get firewallInvalidProtocol => '지원하지 않는 프로토콜입니다.';
+
+  @override
   String get firewallInterfaceIn => '수신 인터페이스';
 
   @override

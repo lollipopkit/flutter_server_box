@@ -4910,6 +4910,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get firewallInvalidComment => '备注不能包含 \' 或换行。';
 
   @override
+  String get firewallInvalidProtocol => '不支持的协议。';
+
+  @override
   String get firewallInterfaceIn => '入站网络接口';
 
   @override
@@ -9980,6 +9983,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get firewallInvalidComment => '備註不能包含 \' 或換行。';
+
+  @override
+  String get firewallInvalidProtocol => '不支援的協定。';
 
   @override
   String get firewallInterfaceIn => '入站網路介面';

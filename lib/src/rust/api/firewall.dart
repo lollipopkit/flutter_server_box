@@ -653,6 +653,7 @@ enum UfwDraftIssue {
   mixedIpVersions,
   invalidInterface,
   invalidComment,
+  invalidProtocol,
 }
 
 class UfwEndpoint {

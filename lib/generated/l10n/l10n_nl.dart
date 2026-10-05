@@ -5292,6 +5292,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'De opmerking mag geen \' of regeleinden bevatten.';
 
   @override
+  String get firewallInvalidProtocol => 'Protocol niet ondersteund.';
+
+  @override
   String get firewallInterfaceIn => 'Inkomende interface';
 
   @override

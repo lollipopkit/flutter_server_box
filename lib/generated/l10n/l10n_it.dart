@@ -5305,6 +5305,9 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il commento non può contenere \' o interruzioni di riga.';
 
   @override
+  String get firewallInvalidProtocol => 'Protocollo non supportato.';
+
+  @override
   String get firewallInterfaceIn => 'Interfaccia in entrata';
 
   @override

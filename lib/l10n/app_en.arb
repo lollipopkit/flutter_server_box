@@ -6810,6 +6810,10 @@
   "@firewallInvalidComment": {
     "description": "Validation error for a firewall rule."
   },
+  "firewallInvalidProtocol": "Unsupported protocol.",
+  "@firewallInvalidProtocol": {
+    "description": "Validation error for a firewall rule."
+  },
   "firewallInterfaceIn": "Incoming interface",
   "@firewallInterfaceIn": {
     "description": "Field label: the interface a packet arrives on."

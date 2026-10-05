@@ -309,7 +309,9 @@ impl UfwSnapshot {
     /// [`FirewallReach::Unknown`] where it would decide otherwise than the
     /// rule that surely matches after it.
     pub fn reach(&self, access: &FirewallAccess, active: Option<bool>, rules: Option<&[UfwRule]>, incoming: Option<UfwPolicy>) -> FirewallReach {
-        if !active.or(self.active).unwrap_or(false) {
+        // Only a ufw known to be off lets everything in; one whose status
+        // could not be read is judged by its rules.
+        if active.or(self.active) == Some(false) {
             return FirewallReach::Open;
         }
         // With IPv6 off ufw leaves ip6tables alone, whatever the rules say.
@@ -319,8 +321,9 @@ impl UfwSnapshot {
         let rules = rules.unwrap_or(&self.rules);
         let fallback = match incoming.or_else(|| self.policies.get(&UfwChain::Incoming).copied()) {
             Some(UfwPolicy::Allow) => FirewallReach::Open,
-            // Not knowing it is not knowing ufw lets anything in.
-            Some(UfwPolicy::Deny | UfwPolicy::Reject) | None => FirewallReach::Blocked,
+            Some(UfwPolicy::Deny | UfwPolicy::Reject) => FirewallReach::Blocked,
+            // A policy that could not be read decides nothing either way.
+            None => FirewallReach::Unknown,
         };
         decide(rules.iter().filter_map(|r| r.judge(access)), fallback)
     }
@@ -446,7 +449,11 @@ pub enum UfwDraftIssue {
     MixedIpVersions,
     InvalidInterface,
     InvalidComment,
+    InvalidProtocol,
 }
+
+/// The protocols `ufw ... proto` takes.
+const PROTOCOLS: [&str; 8] = ["tcp", "udp", "ah", "esp", "gre", "ipv6", "igmp", "vrrp"];
 
 pub const VERSION_MARKER: &str = "SrvBoxUfw.Version\t";
 pub const STATUS_MARKER: &str = "SrvBoxUfw.Status\t";
@@ -455,6 +462,8 @@ const CONF_MARKER: &str = "SrvBoxUfw.Conf";
 const V4_MARKER: &str = "SrvBoxUfw.V4";
 const V6_MARKER: &str = "SrvBoxUfw.V6";
 const APPS_MARKER: &str = "SrvBoxUfw.Apps";
+/// `grep` could not read the v6 file (exit 2), rather than found no rule.
+const V6_UNREADABLE: &str = "SrvBoxUfw.V6Unreadable";
 
 const RULES4: &str = "/etc/ufw/user.rules";
 const RULES6: &str = "/etc/ufw/user6.rules";
@@ -471,7 +480,7 @@ pub fn read_script() -> String {
         "{ENV}\n\
          [ -r {RULES4} ] || {{ echo 'Cannot read {RULES4}' >&2; exit 1; }}\n\
          v=$(ufw version 2>/dev/null | head -n 1)\n\
-         s=$(ufw status 2>&1 | head -n 1)\n\
+         s=$(ufw status 2>&1 | grep -v '^WARN' | head -n 1)\n\
          printf '{VERSION_MARKER}%s\\n' \"$v\"\n\
          printf '{STATUS_MARKER}%s\\n' \"$s\"\n\
          echo {DEFAULTS_MARKER}\n\
@@ -481,20 +490,23 @@ pub fn read_script() -> String {
          echo {V4_MARKER}\n\
          grep '^{TUPLE_PREFIX}' {RULES4} 2>/dev/null\n\
          echo {V6_MARKER}\n\
-         grep '^{TUPLE_PREFIX}' {RULES6} 2>/dev/null\n\
+         grep '^{TUPLE_PREFIX}' {RULES6} 2>/dev/null; [ $? -le 1 ] || echo {V6_UNREADABLE}\n\
          echo {APPS_MARKER}\n\
          ufw app info all 2>/dev/null\n\
          exit 0\n"
     )
 }
 
-/// What [`read_script`] printed; an error when it has no status line.
+/// What [`read_script`] printed; an error when it has no status line, or the
+/// v6 rules could not be read while IPv6 is on — a list missing them would
+/// be judged as complete.
 pub fn parse(output: &str) -> Result<UfwSnapshot, String> {
     let markers = [DEFAULTS_MARKER, CONF_MARKER, V4_MARKER, V6_MARKER, APPS_MARKER];
     let mut version = None;
     let mut status = None;
     let mut sections: HashMap<&str, Vec<String>> = HashMap::new();
     let mut section: Option<&str> = None;
+    let mut v6_unreadable = false;
     let normalized = output.replace("\r\n", "\n");
     for raw in normalized.split('\n') {
         let line = raw.trim_end();
@@ -504,6 +516,10 @@ pub fn parse(output: &str) -> Result<UfwSnapshot, String> {
         }
         if let Some(s) = line.strip_prefix(STATUS_MARKER) {
             status = Some(s.trim().to_owned());
+            continue;
+        }
+        if line == V6_UNREADABLE {
+            v6_unreadable = true;
             continue;
         }
         if let Some(marker) = markers.iter().find(|m| **m == line) {
@@ -522,6 +538,9 @@ pub fn parse(output: &str) -> Result<UfwSnapshot, String> {
     let defaults = key_values(sections.get(DEFAULTS_MARKER).unwrap_or(&empty));
     let conf = key_values(sections.get(CONF_MARKER).unwrap_or(&empty));
     let ipv6 = defaults.get("IPV6").is_none_or(|v| !v.eq_ignore_ascii_case("no"));
+    if ipv6 && v6_unreadable {
+        return Err(format!("Cannot read {RULES6}"));
+    }
     let policies = UfwChain::ALL
         .into_iter()
         .filter_map(|chain| {
@@ -803,9 +822,8 @@ pub fn add_command(draft: &UfwRuleDraft) -> Result<String, UfwDraftIssue> {
         words.push(log.token().into());
     }
     if let (None, Some(protocol)) = (&draft.app, &draft.protocol) {
-        // A name ufw knows (`tcp`, `udp`) as it is; anything else quoted.
-        let plain = !protocol.is_empty() && protocol.bytes().all(|b| b.is_ascii_alphanumeric());
-        words.extend(["proto".into(), if plain { protocol.clone() } else { quote(protocol) }]);
+        // One of [`PROTOCOLS`], as validation checked.
+        words.extend(["proto".into(), protocol.clone()]);
     }
     words.push("from".into());
     words.push(if from.is_empty() { "any".into() } else { quote(from) });
@@ -846,6 +864,9 @@ pub fn validate_draft(draft: &UfwRuleDraft) -> Option<UfwDraftIssue> {
     // A rule naming a profile takes its protocol from it, and ufw refuses
     // `proto` beside `app`: none is written.
     let protocol = if draft.app.is_none() { draft.protocol.as_deref() } else { None };
+    if protocol.is_some_and(|p| !PROTOCOLS.contains(&p)) {
+        return Some(UfwDraftIssue::InvalidProtocol);
+    }
     for spec in [port, source_port] {
         if spec.is_empty() {
             continue;

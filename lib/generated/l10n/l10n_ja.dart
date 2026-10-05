@@ -4995,6 +4995,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get firewallInvalidComment => 'コメントに \' や改行は使用できません。';
 
   @override
+  String get firewallInvalidProtocol => 'サポートされていないプロトコルです。';
+
+  @override
   String get firewallInterfaceIn => '受信インターフェース';
 
   @override

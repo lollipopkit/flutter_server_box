@@ -27,11 +27,11 @@
 
 // Section: imports
 
-use crate::api::bmc::*;
-use crate::api::ssh_crypto::*;
 use crate::api::virt::*;
+use crate::api::remote_desktop::*;
 use crate::api::pve::*;
-use crate::api::remote_desktop::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::bmc::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -6192,6 +6192,7 @@ return crate::api::firewall::UfwAppPort{port: var_port, protocol: var_protocol};
 5 => crate::api::firewall::UfwDraftIssue::MixedIpVersions,
 6 => crate::api::firewall::UfwDraftIssue::InvalidInterface,
 7 => crate::api::firewall::UfwDraftIssue::InvalidComment,
+8 => crate::api::firewall::UfwDraftIssue::InvalidProtocol,
             _ => unreachable!("Invalid variant for UfwDraftIssue: {}", inner),
         };}
                 }
@@ -8363,6 +8364,7 @@ crate::api::firewall::UfwDraftIssue::InvalidAddress => 4.into_dart(),
 crate::api::firewall::UfwDraftIssue::MixedIpVersions => 5.into_dart(),
 crate::api::firewall::UfwDraftIssue::InvalidInterface => 6.into_dart(),
 crate::api::firewall::UfwDraftIssue::InvalidComment => 7.into_dart(),
+crate::api::firewall::UfwDraftIssue::InvalidProtocol => 8.into_dart(),
                     _ => unreachable!(),
                 }
                 }
@@ -10082,6 +10084,7 @@ crate::api::firewall::UfwDraftIssue::InvalidAddress => { 4 }
 crate::api::firewall::UfwDraftIssue::MixedIpVersions => { 5 }
 crate::api::firewall::UfwDraftIssue::InvalidInterface => { 6 }
 crate::api::firewall::UfwDraftIssue::InvalidComment => { 7 }
+crate::api::firewall::UfwDraftIssue::InvalidProtocol => { 8 }
  _ => { unimplemented!(""); }}, serializer);}
                 }
                 
@@ -10296,11 +10299,11 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
-use crate::api::bmc::*;
-use crate::api::ssh_crypto::*;
 use crate::api::virt::*;
+use crate::api::remote_desktop::*;
 use crate::api::pve::*;
-use crate::api::remote_desktop::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::bmc::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -10419,11 +10422,11 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::bmc::*;
-use crate::api::ssh_crypto::*;
 use crate::api::virt::*;
+use crate::api::remote_desktop::*;
 use crate::api::pve::*;
-use crate::api::remote_desktop::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::bmc::*;
+use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

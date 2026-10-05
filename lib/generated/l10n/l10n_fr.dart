@@ -5333,6 +5333,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le commentaire ne peut pas contenir \' ni de saut de ligne.';
 
   @override
+  String get firewallInvalidProtocol => 'Protocole non pris en charge.';
+
+  @override
   String get firewallInterfaceIn => 'Interface d\'entrée';
 
   @override

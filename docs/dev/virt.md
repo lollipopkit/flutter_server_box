@@ -1272,12 +1272,11 @@ and PCI passthrough not configured), the token given `Sys.Modify`,
 
 With it, every PVE call the app makes is a typed `PveSession` call: the
 Dio that handed the app's own requests to the session (`PveSession.raw`)
-is gone, with `PveResources`. Two connections stay the app's own,
-authenticated with the session's headers: a console's websocket and an
-upload, which streams a file; an upload's refusal is said by the session
-(`PveSession.refusal`, the same `manage_err` a change's goes through).
-Still in Dart (marked `TODO(migration)`): the console's websocket, which
-`sbm_virt::pve::Client::open_console` already opens for the agent.
+is gone, with `PveResources`. One connection stays the app's own,
+authenticated with the session's headers: an upload, which streams a file;
+its refusal is said by the session (`PveSession.refusal`, the same
+`manage_err` a change's goes through). A console's websocket is the
+session's since (`PveSession.openConsole`, `pve::console::Console`).
 
 Not verified on a real host since the move: the session in Rust (renewal,
 TOTP, a refused ticket replaced) against PVE, and libvirt through the agent's

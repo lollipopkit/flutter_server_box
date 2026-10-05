@@ -5282,6 +5282,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'Коментар не може містити \' або переноси рядків.';
 
   @override
+  String get firewallInvalidProtocol => 'Непідтримуваний протокол.';
+
+  @override
   String get firewallInterfaceIn => 'Вхідний інтерфейс';
 
   @override

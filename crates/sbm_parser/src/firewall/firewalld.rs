@@ -474,6 +474,9 @@ const PERMANENT_MARKER: &str = "SrvBoxFwd.Permanent";
 const POLICIES_MARKER: &str = "SrvBoxFwd.Policies";
 const SERVICES_MARKER: &str = "SrvBoxFwd.Services";
 const SERVICE_NAMES_MARKER: &str = "SrvBoxFwd.ServiceNames";
+/// A listing failed: what was read of the zones or policies is not all of
+/// them.
+const INCOMPLETE_MARKER: &str = "SrvBoxFwd.Incomplete";
 const SERVICE_DIRS: &str = "/usr/lib/firewalld/services /etc/firewalld/services";
 
 /// Both configurations while the daemon runs; the written one through
@@ -496,16 +499,16 @@ pub fn read_script() -> String {
          \x20 printf '{DEFAULT_MARKER}%s\\n' \"$(firewall-cmd --get-default-zone 2>/dev/null)\"\n\
          \x20 printf '{PANIC_MARKER}%s\\n' \"$(firewall-cmd --query-panic 2>/dev/null)\"\n\
          \x20 echo {RUNTIME_MARKER}\n\
-         \x20 firewall-cmd --list-all-zones 2>/dev/null\n\
+         \x20 firewall-cmd --list-all-zones 2>/dev/null || echo {INCOMPLETE_MARKER}\n\
          \x20 echo {PERMANENT_MARKER}\n\
-         \x20 firewall-cmd --permanent --list-all-zones 2>/dev/null\n\
+         \x20 firewall-cmd --permanent --list-all-zones 2>/dev/null || echo {INCOMPLETE_MARKER}\n\
          \x20 echo {POLICIES_MARKER}\n\
-         \x20 firewall-cmd --list-all-policies 2>/dev/null\n\
+         \x20 firewall-cmd --list-all-policies 2>/dev/null || echo {INCOMPLETE_MARKER}\n\
          else\n\
          \x20 printf '{VERSION_MARKER}%s\\n' \"$(firewall-offline-cmd --version 2>/dev/null)\"\n\
          \x20 printf '{DEFAULT_MARKER}%s\\n' \"$(firewall-offline-cmd --get-default-zone 2>/dev/null)\"\n\
          \x20 echo {PERMANENT_MARKER}\n\
-         \x20 firewall-offline-cmd --list-all-zones 2>/dev/null\n\
+         \x20 firewall-offline-cmd --list-all-zones 2>/dev/null || echo {INCOMPLETE_MARKER}\n\
          fi\n\
          echo {SERVICES_MARKER}\n\
          grep -H -o -E '<(port|include) [^>]*>' $(for d in {SERVICE_DIRS}; do ls -d \"$d\"/*.xml 2>/dev/null; done) 2>/dev/null\n\
@@ -515,7 +518,9 @@ pub fn read_script() -> String {
     )
 }
 
-/// What [`read_script`] printed; an error when it has no zones.
+/// What [`read_script`] printed; an error when it has no zones, or a listing
+/// of them or of the policies failed — what it left out would be judged as
+/// not there.
 pub fn parse(output: &str) -> Result<FirewalldSnapshot, String> {
     let markers = [RUNTIME_MARKER, PERMANENT_MARKER, POLICIES_MARKER, SERVICES_MARKER, SERVICE_NAMES_MARKER];
     let mut running = false;
@@ -527,6 +532,9 @@ pub fn parse(output: &str) -> Result<FirewalldSnapshot, String> {
     let normalized = output.replace("\r\n", "\n");
     for raw in normalized.split('\n') {
         let line = raw.trim_end();
+        if line == INCOMPLETE_MARKER {
+            return Err("firewalld did not list its zones and policies".to_owned());
+        }
         if line == RUNNING_MARKER {
             running = true;
         } else if let Some(v) = line.strip_prefix(VERSION_MARKER) {

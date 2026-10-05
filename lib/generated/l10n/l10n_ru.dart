@@ -5280,6 +5280,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Комментарий не может содержать \' или переносы строк.';
 
   @override
+  String get firewallInvalidProtocol => 'Неподдерживаемый протокол.';
+
+  @override
   String get firewallInterfaceIn => 'Входящий интерфейс';
 
   @override

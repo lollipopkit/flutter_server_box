@@ -390,6 +390,7 @@ extension on _UfwViewState {
     UfwDraftIssue.mixedIpVersions => l10n.firewallMixedIpVersions,
     UfwDraftIssue.invalidInterface => l10n.firewallInvalidInterface,
     UfwDraftIssue.invalidComment => l10n.firewallInvalidComment,
+    UfwDraftIssue.invalidProtocol => l10n.firewallInvalidProtocol,
   };
 
   /// Rules that let each of [accesses] in, put before every other rule.

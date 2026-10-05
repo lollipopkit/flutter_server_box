@@ -1475,6 +1475,7 @@
   "firewallMixedIpVersions": "來源與目標必須同為 IPv4 或同為 IPv6。",
   "firewallInvalidInterface": "網路介面名稱無效。",
   "firewallInvalidComment": "備註不能包含 ' 或換行。",
+  "firewallInvalidProtocol": "不支援的協定。",
   "firewallInterfaceIn": "入站網路介面",
   "firewallInterfaceOut": "出站網路介面",
   "firewallSourcePort": "來源連接埠",

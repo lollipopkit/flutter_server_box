@@ -187,6 +187,7 @@ pub enum _UfwDraftIssue {
     MixedIpVersions,
     InvalidInterface,
     InvalidComment,
+    InvalidProtocol,
 }
 
 #[frb(mirror(FirewalldTarget))]

@@ -12,9 +12,8 @@
 //!
 //! - **Binary** — the console's bytes, both directions: RFB for VNC; for a
 //!   text console, terminal output one way and keystrokes the other, which
-//!   this framing turns into termproxy's (`sbm_virt::pve::termproxy`) — its
-//!   ticket and `OK` are done before `ready`, and its keep-alive is sent from
-//!   here.
+//!   `sbm_virt::pve::console::Console` turns into termproxy's — its ticket
+//!   and `OK` are done before `ready`, and it sends the keep-alive.
 //! - **Text**, server to client — `{"type":"ready"}` once bytes may flow,
 //!   `{"type":"error","code","message"}`, `{"type":"exit"}`.
 //! - **Text**, client to server — `{"type":"resize","cols","rows"}` (a text
@@ -242,6 +241,20 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
         },
     };
     if matches!(*phase.borrow(), Phase::Done) {
+        if let Opened::Pve(console) = &opened {
+            console.close().await;
+        }
+        return;
+    }
+    // Asked again: the grant may have gone while the console was opening,
+    // which no change notice reaches before `watch` listens.
+    if !ctx.still().await {
+        *phase.borrow_mut() = Phase::Done;
+        if let Opened::Pve(console) = &opened {
+            console.close().await;
+        }
+        ctx.audit(Action::Denied, Outcome::Denied, Some("virt not granted")).await;
+        let _ = sink.send(error_frame("forbidden", "This account may not open consoles")).await;
         return;
     }
     let (tx, rx) = mpsc::channel::<Input>(QUEUE);
@@ -250,15 +263,23 @@ async fn connect(ctx: Rc<ConnCtx>, sink: WsSink, phase: Rc<RefCell<Phase>>, targ
     if sink.send(ServerMsg::Ready.frame()).await.is_err() {
         return;
     }
+    let (stop_tx, stop_rx) = tokio::sync::oneshot::channel();
     let pump = match opened {
-        Opened::Tcp(stream) => spawn_tcp(stream, rx, sink.clone()),
-        Opened::Pve(console) => spawn_pve(*console, rx, sink.clone()),
+        Opened::Tcp(stream) => spawn_tcp(stream, rx, sink.clone(), stop_rx),
+        Opened::Pve(console) => spawn_pve(*console, rx, sink.clone(), stop_rx),
     };
-    watch(ctx, sink, changes, pump);
+    watch(ctx, sink, changes, pump, stop_tx);
 }
 
-/// Ends the console when the account loses `virt` or the pump stops.
-fn watch(ctx: Rc<ConnCtx>, sink: WsSink, mut changes: broadcast::Receiver<&'static str>, pump: tokio::sync::oneshot::Receiver<()>) {
+/// Ends the console when the account loses `virt` or the pump stops. A lost
+/// grant stops the pump too, which closes the console behind the socket.
+fn watch(
+    ctx: Rc<ConnCtx>,
+    sink: WsSink,
+    mut changes: broadcast::Receiver<&'static str>,
+    pump: tokio::sync::oneshot::Receiver<()>,
+    stop: tokio::sync::oneshot::Sender<()>,
+) {
     spawn(async move {
         tokio::pin!(pump);
         loop {
@@ -268,6 +289,7 @@ fn watch(ctx: Rc<ConnCtx>, sink: WsSink, mut changes: broadcast::Receiver<&'stat
                     if ctx.still().await {
                         continue;
                     }
+                    let _ = stop.send(());
                     let _ = sink.send(ServerMsg::Error { code, message: "This account may no longer use this console" }.frame()).await;
                     let _ = sink.send(Message::Close(Some(CloseCode::Normal.into()))).await;
                     break;
@@ -277,7 +299,12 @@ fn watch(ctx: Rc<ConnCtx>, sink: WsSink, mut changes: broadcast::Receiver<&'stat
     });
 }
 
-fn spawn_tcp(stream: tokio::net::TcpStream, mut rx: mpsc::Receiver<Input>, sink: WsSink) -> tokio::sync::oneshot::Receiver<()> {
+fn spawn_tcp(
+    stream: tokio::net::TcpStream,
+    mut rx: mpsc::Receiver<Input>,
+    sink: WsSink,
+    stop: tokio::sync::oneshot::Receiver<()>,
+) -> tokio::sync::oneshot::Receiver<()> {
     let (done_tx, done_rx) = tokio::sync::oneshot::channel();
     let (mut reader, mut writer) = stream.into_split();
     spawn(async move {
@@ -308,6 +335,7 @@ fn spawn_tcp(stream: tokio::net::TcpStream, mut rx: mpsc::Receiver<Input>, sink:
         tokio::select! {
             _ = writing => {},
             _ = reading => {},
+            _ = stop => {},
         }
         end(&sink).await;
         let _ = done_tx.send(());
@@ -315,7 +343,12 @@ fn spawn_tcp(stream: tokio::net::TcpStream, mut rx: mpsc::Receiver<Input>, sink:
     done_rx
 }
 
-fn spawn_pve(console: sbm_virt::pve::console::Console, mut rx: mpsc::Receiver<Input>, sink: WsSink) -> tokio::sync::oneshot::Receiver<()> {
+fn spawn_pve(
+    console: sbm_virt::pve::console::Console,
+    mut rx: mpsc::Receiver<Input>,
+    sink: WsSink,
+    stop: tokio::sync::oneshot::Receiver<()>,
+) -> tokio::sync::oneshot::Receiver<()> {
     let (done_tx, done_rx) = tokio::sync::oneshot::channel();
     let console = Rc::new(console);
     spawn(async move {
@@ -344,6 +377,7 @@ fn spawn_pve(console: sbm_virt::pve::console::Console, mut rx: mpsc::Receiver<In
         tokio::select! {
             _ = writing => {},
             _ = reading => {},
+            _ = stop => {},
         }
         console.close().await;
         end(&sink).await;

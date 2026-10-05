@@ -273,6 +273,25 @@ mod ufw_tests {
     }
 
     #[test]
+    fn an_unreadable_v6_file_is_an_error_while_ipv6_is_on() {
+        let on = fixture("ufw/active.txt").replace("SrvBoxUfw.V6\n", "SrvBoxUfw.V6\nSrvBoxUfw.V6Unreadable\n");
+        assert_eq!(ufw::parse(&on).unwrap_err(), "Cannot read /etc/ufw/user6.rules");
+        // With IPv6 off ufw does not load the file, so it is not needed.
+        let off = fixture("ufw/inactive_no_ipv6.txt").replace("SrvBoxUfw.V6\n", "SrvBoxUfw.V6\nSrvBoxUfw.V6Unreadable\n");
+        assert_eq!(ufw::parse(&off).unwrap().rules.len(), 11);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_status_line_skips_warnings() {
+        // `ufw status` prints `WARN:` lines before the status on some hosts.
+        let script = ufw::read_script().replace("ufw status 2>&1", "printf 'WARN: x\\nStatus: active\\n'");
+        let out = std::process::Command::new("sh").arg("-c").arg(script.replace("[ -r /etc/ufw/user.rules ] || { echo 'Cannot read /etc/ufw/user.rules' >&2; exit 1; }", "")).output().unwrap();
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(stdout.contains("SrvBoxUfw.Status\tStatus: active\n"), "{stdout}");
+    }
+
+    #[test]
     fn skips_a_tuple_it_cannot_read() {
         let none: [&str; 0] = [];
         assert!(merge_rules(&["### tuple ### allow tcp 22 in"], &none).is_empty());
@@ -360,6 +379,18 @@ mod ufw_tests {
         }
 
         #[test]
+        fn what_could_not_be_read_is_not_taken_as_open() {
+            let mut s = snapshot("active.txt");
+            let a = at(3770, Some("192.0.2.1"));
+            // A status other than active or inactive: the rules still decide.
+            s.active = None;
+            assert_eq!(s.reach(&a, None, None, None), Blocked);
+            // No incoming policy read: neither way.
+            s.policies.clear();
+            assert_eq!(s.reach(&a, None, None, None), Unknown);
+        }
+
+        #[test]
         fn ufw_leaves_ipv6_alone_with_it_off() {
             let off = snapshot("inactive_no_ipv6.txt");
             assert_eq!(off.reach(&at(3770, Some("2001:db8::9")), Some(true), None, None), Open);
@@ -410,10 +441,12 @@ mod ufw_tests {
         }
 
         #[test]
-        fn add_refuses_what_validation_refuses_and_quotes_an_odd_protocol() {
+        fn add_refuses_what_validation_refuses_a_protocol_ufw_does_not_take_included() {
             assert_eq!(add_command(&draft(UfwAction::Allow, UfwDirection::Incoming)), Err(UfwDraftIssue::NothingMatched));
             let d = UfwRuleDraft { protocol: Some("tcp; reboot".into()), port: "22".into(), ..draft(UfwAction::Allow, UfwDirection::Incoming) };
-            assert_eq!(add_command(&d).unwrap(), "ufw allow in proto 'tcp; reboot' from any to any port 22");
+            assert_eq!(add_command(&d), Err(UfwDraftIssue::InvalidProtocol));
+            let gre = UfwRuleDraft { protocol: Some("gre".into()), from: "10.0.0.0/8".into(), ..draft(UfwAction::Allow, UfwDirection::Incoming) };
+            assert_eq!(add_command(&gre).unwrap(), "ufw allow in proto gre from '10.0.0.0/8' to any");
         }
 
         #[test]
@@ -719,6 +752,13 @@ mod firewalld_tests {
     #[test]
     fn refuses_output_with_no_zones_section() {
         assert!(firewalld::parse("SrvBoxFwd.Version\t1\n").is_err());
+    }
+
+    #[test]
+    fn a_listing_that_failed_is_an_error_not_an_empty_one() {
+        let out = fixture("firewalld/running.txt").replace("SrvBoxFwd.Policies\n", "SrvBoxFwd.Policies\nSrvBoxFwd.Incomplete\n");
+        assert!(firewalld::parse(&out).is_err());
+        assert!(firewalld::read_script().contains("firewall-cmd --list-all-policies 2>/dev/null || echo SrvBoxFwd.Incomplete\n"));
     }
 
     #[test]
