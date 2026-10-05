@@ -583,10 +583,7 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
 /// `incorrect password attempt`, and `a password is required` when none was
 /// given.
 ///
-/// TODO(migration): the app keeps its own copies, in
-/// `lib/core/extension/ssh_client.dart` and (without the third phrase)
-/// `lib/data/provider/virt/libvirt_backend.dart`; both should read this one
-/// through the FFI boundary instead.
+/// The app reads it through `sbm_ffi::api::script::sudo_password_rejected`.
 pub fn sudo_password_rejected(stderr: &str) -> bool {
     const REJECTED: [&str; 3] = [
         "Sorry, try again.",

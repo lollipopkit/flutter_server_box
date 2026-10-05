@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
+
 /// What a command left behind.
 class ExecResult {
   const ExecResult({
@@ -103,17 +105,6 @@ abstract interface class ServerExec {
 /// does not care about sudo can treat it as any other non-zero exit.
 const kSudoPasswordRejected = 2;
 
-/// A sudo password the server rejected, told apart from any other failure.
-///
-/// `sudo` says so on stderr and then exits non-zero like everything else, so
-/// without reading what it said a wrong password is indistinguishable from the
-/// command itself failing — and the caller has no reason to ask for a new one.
-const _sudoRejected = [
-  'Sorry, try again.',
-  'incorrect password attempt',
-  'a password is required',
-];
-
 extension ServerExecSudo on ServerExec {
   /// Runs [script] with [password] on its stdin, reporting a rejected sudo
   /// password as [kSudoPasswordRejected].
@@ -133,7 +124,6 @@ extension ServerExecSudo on ServerExec {
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
   }) async {
-    var rejected = false;
     final result = await run(
       script,
       entry: entry,
@@ -141,12 +131,13 @@ extension ServerExecSudo on ServerExec {
       // password the user did not end with Enter would otherwise hang it.
       stdin: password == null ? null : '$password\n',
       onStdout: onStdout,
-      onStderr: (chunk) {
-        onStderr?.call(chunk);
-        if (_sudoRejected.any(chunk.contains)) rejected = true;
-      },
+      onStderr: onStderr,
     );
-    if (!rejected) return result;
+    // `sudo` says so on stderr and then exits non-zero like everything else,
+    // so without reading what it said a wrong password is indistinguishable
+    // from the command itself failing. Read off the whole stream: a phrase
+    // can arrive split across two chunks.
+    if (!script_ffi.sudoPasswordRejected(stderr: result.stderr)) return result;
     return ExecResult(
       exitCode: kSudoPasswordRejected,
       stdout: result.stdout,

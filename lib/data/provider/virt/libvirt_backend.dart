@@ -27,6 +27,7 @@ import 'package:server_box/src/rust/api/create.dart' as cr;
 import 'package:server_box/src/rust/api/hardware.dart' as hw;
 import 'package:server_box/src/rust/api/pve.dart' show PveError;
 import 'package:server_box/src/rust/api/resource.dart' as res;
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 import 'package:server_box/src/rust/api/virt.dart' as ffi;
 
 /// libvirt through `virsh`, run by `ServerNotifier.ensureExec()` — so over
@@ -1138,7 +1139,7 @@ class LibvirtBackend implements VirtBackend {
         // line would be its next guess. Nothing more is sent.
         if (entry == ffi.VirtUploadEntryKind.sudoPassword &&
             !rejected &&
-            _sudoRejected.any(err.toString().contains)) {
+            script_ffi.sudoPasswordRejected(stderr: err.toString())) {
           rejected = true;
           if (!ready.isCompleted) ready.complete(false);
           session.kill();
@@ -1257,14 +1258,6 @@ class LibvirtBackend implements VirtBackend {
       throw _toErr(e, action: true);
     }
   }
-
-
-  /// What sudo prints when it will not take the password, as
-  /// `ServerExecSudo.runWithSudo` watches for.
-  static const _sudoRejected = [
-    'Sorry, try again.',
-    'incorrect password attempt',
-  ];
 
   @override
   Future<List<VirtStats>?> history(

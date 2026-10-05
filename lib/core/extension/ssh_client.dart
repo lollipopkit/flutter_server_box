@@ -5,7 +5,9 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/helper/ssh_decoder.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 typedef OnStdout = void Function(String data, SSHSession session);
 typedef OnStderr = void Function(String data, SSHSession session);
@@ -127,7 +129,7 @@ extension SSHClientX on SSHClient {
     OnStderr? onStderr,
     required String id,
   }) async {
-    var hasPasswordError = false;
+    final stderr = StringBuffer();
 
     final (session, output) = await exec(
       (sess) {
@@ -136,19 +138,16 @@ extension SSHClientX on SSHClient {
       },
       onStderr: (data, sess) {
         onStderr?.call(data, sess);
-        if (data.contains('Sorry, try again.') ||
-            data.contains('incorrect password attempt') ||
-            data.contains('a password is required')) {
-          hasPasswordError = true;
-        }
+        stderr.write(data);
       },
       onStdout: onStdout,
       entry: entry,
       stderr: false,
     );
 
-    if (hasPasswordError) {
-      return (2, output);
+    // Read off the whole stream: a phrase can arrive split across two chunks.
+    if (script_ffi.sudoPasswordRejected(stderr: stderr.toString())) {
+      return (kSudoPasswordRejected, output);
     }
     return (session.exitCode, output);
   }

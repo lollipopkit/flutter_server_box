@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 final class _Call {
   const _Call(this.script, this.entry, this.stdin);
 
@@ -37,6 +39,8 @@ final class _QueueExec implements ServerExec {
 }
 
 void main() {
+  setUpAll(initRustLibForTest);
+
   test('root sends only the script to sh', () async {
     final exec = _QueueExec([
       const ExecResult(exitCode: 0, stdout: '', stderr: ''),
