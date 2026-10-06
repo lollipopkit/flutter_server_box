@@ -242,3 +242,57 @@ async fn two_saves_of_one_version_land_once() {
         assert_eq!(statuses, [200, 409], "round {round}: {a:?} {b:?}");
     }
 }
+
+/// A client that goes away halfway through an upload leaves nothing behind:
+/// the handler is dropped mid-stream, and the staged copy goes with it.
+#[ntex::test]
+async fn an_abandoned_upload_leaves_no_staged_file() {
+    use std::io::Write;
+
+    let dir = tempfile::tempdir().unwrap();
+    let root = std::fs::canonicalize(dir.path()).unwrap();
+    let srv = server(&root.to_string_lossy()).await;
+    let target = root.join("big.bin");
+
+    let mut socket = std::net::TcpStream::connect(srv.addr()).unwrap();
+    let token = generate_token("admin", SECRET).unwrap();
+    write!(
+        socket,
+        "PUT /api/v1/fs/write?path={} HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {token}\r\nContent-Length: 1000000\r\n\r\n",
+        urlencode(target.to_str().unwrap())
+    )
+    .unwrap();
+    socket.write_all(&[b'x'; 4096]).unwrap();
+    socket.flush().unwrap();
+
+    // The staged copy exists while the upload is in flight...
+    let staged = || {
+        std::fs::read_dir(&root)
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|e| e.file_name().to_string_lossy().contains(".sbm-part-"))
+            .count()
+    };
+    let mut seen = false;
+    for _ in 0..50 {
+        if staged() > 0 {
+            seen = true;
+            break;
+        }
+        ntex::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    assert!(seen, "the upload should have started staging");
+
+    // ...and is gone once the client hangs up.
+    drop(socket);
+    let mut gone = false;
+    for _ in 0..100 {
+        if staged() == 0 {
+            gone = true;
+            break;
+        }
+        ntex::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    assert!(gone, "an abandoned upload left its staged file");
+    assert!(!target.exists());
+}

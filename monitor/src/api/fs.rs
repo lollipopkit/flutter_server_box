@@ -240,6 +240,9 @@ pub async fn list(
             // The agent's own state is left out rather than shown and refused:
             // a name that can be listed is a name somebody will try.
             Ok(Some(entry)) if roots.hides(&entry.path()) => {}
+            // A write in progress, not a file anyone made: it becomes the real
+            // name on rename, or is removed.
+            Ok(Some(entry)) if is_staging_name(&entry.file_name().to_string_lossy()) => {}
             Ok(Some(entry)) => entries.push(view_of(&entry.path()).await),
             Ok(None) => break,
             Err(e) => return Ok(failed(e)),
@@ -349,6 +352,10 @@ pub async fn write(
         Ok(file) => file,
         Err(e) => return Ok(failed(e)),
     };
+    // Removes the staged file on every way out but a successful rename,
+    // including the one no branch here sees: the client going away mid-upload
+    // drops this future, and the half-file must not stay in the directory.
+    let mut staged = Staged::new(staging.clone());
 
     let limit = state.remote_access.fs.max_write_bytes;
     let mut written: u64 = 0;
@@ -382,7 +389,6 @@ pub async fn write(
     drop(file);
 
     if let Some(res) = failure {
-        let _ = tokio::fs::remove_file(&staging).await;
         return Ok(res);
     }
 
@@ -408,22 +414,24 @@ pub async fn write(
     if let Some(expected) = query.if_version.as_deref()
         && version_at(&path).await.as_deref() != Some(expected)
     {
-        let _ = tokio::fs::remove_file(&staging).await;
         return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "modified" })));
     }
 
     // The staged file was created with the process umask, and the rename
     // carries that mode onto the destination — so overwriting a 0600 file
-    // would quietly leave it 0644. Whatever was there keeps its permissions.
+    // would quietly leave it 0644. Whatever was there keeps its permissions,
+    // and a mode that cannot be carried over fails the write rather than
+    // replacing a restricted file with an open one.
     if let Ok(existing) = tokio::fs::metadata(&path).await
         && let Err(e) = tokio::fs::set_permissions(&staging, existing.permissions()).await
     {
         tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
-    }
-    if let Err(e) = tokio::fs::rename(&staging, &path).await {
-        let _ = tokio::fs::remove_file(&staging).await;
         return Ok(failed(e));
     }
+    if let Err(e) = tokio::fs::rename(&staging, &path).await {
+        return Ok(failed(e));
+    }
+    staged.keep();
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "bytes": written })))
 }
 
@@ -702,6 +710,43 @@ fn mode_of(_meta: &std::fs::Metadata) -> Option<u32> {
     None
 }
 
+/// The marker [`staging_path`] puts in a name.
+const STAGING_MARK: &str = ".sbm-part-";
+
+/// Whether a name is a write's staged copy.
+fn is_staging_name(name: &str) -> bool {
+    name.contains(STAGING_MARK)
+}
+
+/// A staged file that is removed when this is dropped, unless [`Self::keep`]
+/// was called after it was renamed into place. A drop runs whichever way the
+/// write ends, cancellation included, which no explicit cleanup branch can
+/// promise.
+struct Staged {
+    path: PathBuf,
+    keep: bool,
+}
+
+impl Staged {
+    fn new(path: PathBuf) -> Self {
+        Self { path, keep: false }
+    }
+
+    fn keep(&mut self) {
+        self.keep = true;
+    }
+}
+
+impl Drop for Staged {
+    fn drop(&mut self) {
+        if !self.keep {
+            // Synchronous on purpose: a drop cannot await, and this is one
+            // unlink. After a successful rename the name is already gone.
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+}
+
 /// Where a write parks its bytes until it can be renamed into place.
 ///
 /// The process id and a counter, so two writes to one path from two requests
@@ -711,7 +756,7 @@ fn staging_path(path: &Path) -> PathBuf {
     static SEQ: AtomicU64 = AtomicU64::new(0);
     let n = SEQ.fetch_add(1, Ordering::Relaxed);
     let mut name = path.as_os_str().to_os_string();
-    name.push(format!(".sbm-part-{}-{n}", std::process::id()));
+    name.push(format!("{STAGING_MARK}{}-{n}", std::process::id()));
     PathBuf::from(name)
 }
 
@@ -728,5 +773,28 @@ mod tests {
         assert_eq!(before, "-5-3");
         assert_ne!(after, before);
         assert_eq!(version_token(UNIX_EPOCH, 0), "0-0");
+    }
+
+    #[test]
+    fn a_staged_file_goes_unless_it_was_kept() {
+        let dir = tempfile::tempdir().unwrap();
+        let dropped = dir.path().join("a.sbm-part-1-1");
+        std::fs::write(&dropped, "half").unwrap();
+        drop(Staged::new(dropped.clone()));
+        assert!(!dropped.exists(), "a dropped write leaves no staged file");
+
+        let kept = dir.path().join("b.sbm-part-1-2");
+        std::fs::write(&kept, "whole").unwrap();
+        let mut staged = Staged::new(kept.clone());
+        staged.keep();
+        drop(staged);
+        assert!(kept.exists(), "a kept one is the renamed file's business");
+    }
+
+    #[test]
+    fn a_staging_name_is_recognised() {
+        let staged = staging_path(Path::new("/srv/note.txt"));
+        assert!(is_staging_name(&staged.file_name().unwrap().to_string_lossy()));
+        assert!(!is_staging_name("note.txt"));
     }
 }
