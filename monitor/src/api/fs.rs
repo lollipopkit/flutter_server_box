@@ -56,6 +56,11 @@ struct EntryView {
     mode: Option<u32>,
     /// Where a link points, unresolved. Null for anything else.
     link_target: Option<String>,
+    /// An opaque token for this exact state of the file, for a write's
+    /// `if_version`: the modification time in nanoseconds plus the size. A
+    /// whole second is coarse enough that two writes inside one get past a
+    /// guard built on it. Null where the platform does not say.
+    version: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -69,11 +74,11 @@ pub struct PathQuery {
 #[derive(Deserialize)]
 pub struct WriteQuery {
     path: String,
-    /// The `modified` time the caller last saw for this path, in seconds since
-    /// the epoch as the listing reports it. Present only for an edit that read
-    /// the file first: a plain upload states nothing and overwrites.
+    /// The `version` the caller last saw for this path, as the listing or
+    /// `stat` reported it. Present only for an edit that read the file first: a
+    /// plain upload states nothing and overwrites.
     #[serde(default)]
-    if_modified: Option<i64>,
+    if_version: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -325,18 +330,21 @@ pub async fn write(
     };
 
     // Optimistic concurrency for the panel's editor: a caller that read the
-    // file states the `modified` it saw, and one whose time has moved on is
+    // file states the `version` it saw, and one whose file has moved on is
     // answered 409 with nothing written. A file that is no longer there is the
     // same answer — it was deleted after it was opened, and recreating it here
     // would be the lost update this is meant to prevent.
     //
     // After root resolution and the grant check, so a caller that may not write
-    // here cannot use the answer to learn a file's time. `if_modified` is
-    // compared against the target *before* the staged write below; a write that
-    // lands between this stat and the rename is still overwritten, which
-    // closing would take a lock the roots do not have.
-    if let Some(expected) = query.if_modified
-        && modified_secs(&path).await != Some(expected)
+    // here cannot use the answer to learn a file's state. The comparison is
+    // against the resolved target, the same file a listing resolves to (a
+    // listing uses `symlink_metadata`, so a link is described rather than
+    // followed; for the regular files an editor opens the two agree). It runs
+    // *before* the staged write below; a write that lands between this stat and
+    // the rename is still overwritten, which closing would take a lock the
+    // roots do not have.
+    if let Some(expected) = query.if_version.as_deref()
+        && version_at(&path).await.as_deref() != Some(expected)
     {
         return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "modified" })));
     }
@@ -575,6 +583,7 @@ async fn view_of(path: &Path) -> EntryView {
             modified: None,
             mode: None,
             link_target: None,
+            version: None,
         };
     };
 
@@ -608,21 +617,33 @@ async fn view_of(path: &Path) -> EntryView {
             .map(|d| d.as_secs() as i64),
         mode: mode_of(&meta),
         link_target,
+        version: version_of(&meta),
     }
 }
 
-/// A path's `modified` time in seconds since the epoch, as a listing reports
-/// it; `None` when it is not there (or the platform does not say), which a
-/// write's `if_modified` check reads as "not what the caller saw".
-async fn modified_secs(path: &Path) -> Option<i64> {
-    tokio::fs::metadata(path)
-        .await
-        .ok()?
+/// This exact state of a file, as an opaque token: modification time in
+/// nanoseconds since the epoch and the size. `None` where the platform does not
+/// report a time — the caller then has no guard rather than a wrong one.
+///
+/// Nanoseconds because a second is coarse enough for two writes to share one;
+/// the size is there so a change is visible even where the clock has no
+/// sub-second resolution.
+fn version_of(meta: &std::fs::Metadata) -> Option<String> {
+    let nanos = meta
         .modified()
         .ok()?
         .duration_since(std::time::UNIX_EPOCH)
-        .ok()
-        .map(|d| d.as_secs() as i64)
+        .ok()?
+        .as_nanos();
+    Some(format!("{nanos}-{}", meta.len()))
+}
+
+/// [`version_of`] for a path, resolved. `None` when it cannot be stated — the
+/// file is not there, or the platform does not say — which the write's
+/// `if_version` check reads as "not what the caller saw".
+async fn version_at(path: &Path) -> Option<String> {
+    let meta = tokio::fs::metadata(path).await.ok()?;
+    version_of(&meta)
 }
 
 /// Paths crossing the HTTP boundary use `/` on every platform, matching the

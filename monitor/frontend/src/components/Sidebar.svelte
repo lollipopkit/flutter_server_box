@@ -52,7 +52,15 @@
 
   /// The rows the query keeps. Filtering only hides rows — `servers.currentId`
   /// is left alone, so the selected server stays selected while it is hidden.
-  const filtered = $derived(servers.list.filter((s) => serverMatches(query, label(s), s.url)))
+  ///
+  /// Below two servers the field is not shown, so the query is ignored: a
+  /// query left over from when there were two would otherwise hide the only
+  /// one with no way to clear it.
+  const filtered = $derived(
+    servers.list.length < 2
+      ? servers.list
+      : servers.list.filter((s) => serverMatches(query, label(s), s.url)),
+  )
 
   /// Only on the mobile drawer and the expanded desktop rail: a rail has no
   /// width for a field, and one server needs no search. `lg:hidden` rather

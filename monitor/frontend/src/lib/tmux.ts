@@ -7,9 +7,10 @@
 import { get } from 'svelte/store'
 import { LL } from '../i18n/i18n-svelte'
 
-/// A refused tmux value, from the issue code. An unknown code is shown as sent:
-/// it is a refusal added since.
-export function tmuxIssueText(issue: string): string {
+/// A refused tmux value, from the issue code; null for a code this build does
+/// not know, which is a refusal added since — the caller then shows the
+/// agent's own message rather than the bare code.
+export function tmuxIssueText(issue: string): string | null {
   const ll = get(LL)
   switch (issue) {
     case 'invalid_session_id':
@@ -25,6 +26,6 @@ export function tmuxIssueText(issue: string): string {
     case 'name_leading_dash':
       return ll.terminalTmuxErrNameLeadingDash()
     default:
-      return issue
+      return null
   }
 }

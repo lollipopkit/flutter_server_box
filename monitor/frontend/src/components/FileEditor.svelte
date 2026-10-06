@@ -3,7 +3,7 @@
   ///
   /// The caller reads and decodes the file, and refuses anything that is not
   /// UTF-8 text before mounting this; what arrives here is text. Saving sends
-  /// the bytes back through `/fs/write` with the `modified` the file had when
+  /// the bytes back through `/fs/write` with the `version` the file had when
   /// it was opened, so a file someone else wrote to since is answered 409
   /// rather than overwritten — the user is asked instead of losing the change.
   import { untrack } from 'svelte'
@@ -16,7 +16,7 @@
   interface Props {
     /// The resolved path, as the listing gave it.
     path: string
-    /// The entry as listed, for its `modified` — the first save's guard.
+    /// The entry as listed, for its `version` — the first save's guard.
     entry: FsEntry
     /// The file's text, already decoded by the caller.
     text: string
@@ -46,9 +46,9 @@
   /// What the file holds as far as this editor knows: the value at the last
   /// successful save, or at open. The dirty marker is a difference from it.
   let saved = $state(untrack(() => value))
-  /// The `modified` the next save states. Re-read after each save so a long
+  /// The `version` the next save states. Re-read after each save so a long
   /// editing session does not conflict with its own earlier write.
-  let modified = $state<number | null>(untrack(() => entry.modified))
+  let version = $state<string | null>(untrack(() => entry.version))
   let wrap = $state(false)
   let saving = $state(false)
   let error = $state('')
@@ -82,13 +82,15 @@
     // them saved would make the dirty marker lie.
     const sent = value
     try {
-      await api.fsWrite(path, new Blob([encoded(sent)]), undefined, force ? undefined : modified)
-      // The next save's guard. A re-stat that fails would leave a value the
-      // file no longer has, so the guard is dropped rather than kept stale.
-      modified = await api
-        .fsStat(path)
-        .then((fresh) => fresh.modified)
-        .catch(() => null)
+      await api.fsWrite(path, new Blob([encoded(sent)]), undefined, force ? undefined : version)
+      try {
+        // The next save's guard.
+        version = (await api.fsStat(path)).version
+      } catch {
+        // Kept as it was. Clearing it would drop the guard and let the next
+        // save overwrite silently; a stale one makes that save a 409 the user
+        // is asked about, which is the direction to fail in.
+      }
       saved = sent
       conflict = false
       onsaved()

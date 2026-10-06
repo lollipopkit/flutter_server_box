@@ -149,7 +149,8 @@ pub enum TmuxError {
     EmptyName,
     /// Longer than 64 characters.
     NameTooLong,
-    /// A control character, which a terminal would act on rather than show.
+    /// A control or invisible formatting character, which a terminal would act
+    /// on — or hide, leaving a name that reads as something else.
     NameControlChar,
     /// A `:` or `.`, which tmux reads as a session/window separator.
     NameSeparator,
@@ -177,7 +178,9 @@ impl std::fmt::Display for TmuxError {
             Self::InvalidSessionId => "the session id is not a tmux id",
             Self::EmptyName => "the session name is empty",
             Self::NameTooLong => "the session name is longer than 64 characters",
-            Self::NameControlChar => "the session name contains a control character",
+            Self::NameControlChar => {
+                "the session name contains a control or invisible formatting character"
+            }
             Self::NameSeparator => "the session name contains ':' or '.'",
             Self::NameLeadingDash => "the session name starts with '-'",
         })
@@ -213,13 +216,36 @@ pub fn normalize_session_name(raw: &str) -> Result<String, TmuxError> {
     if name.chars().count() > MAX_NAME_LEN {
         return Err(TmuxError::NameTooLong);
     }
-    if name.chars().any(|c| c.is_control()) {
+    if name.chars().any(|c| c.is_control() || is_format_char(c)) {
         return Err(TmuxError::NameControlChar);
     }
     if name.contains(':') || name.contains('.') {
         return Err(TmuxError::NameSeparator);
     }
     Ok(name.to_owned())
+}
+
+/// Unicode format characters (general category Cf), which the same rule keeps
+/// out of a name.
+///
+/// They are invisible or reorder what surrounds them, so a name carrying one
+/// is not the name it appears to be: a bidi override turns it into something
+/// else on screen, a zero-width character makes two names look identical, and
+/// a directory of such names is `ls` output nobody can tell apart. Rust's std
+/// has no general-category API — `char::is_control` is Cc only — so the Cf
+/// ranges this rejects are listed.
+fn is_format_char(c: char) -> bool {
+    matches!(
+        c,
+        '\u{00AD}' // soft hyphen
+        | '\u{061C}' // Arabic letter mark
+        | '\u{180E}' // Mongolian vowel separator
+        | '\u{200B}'..='\u{200F}' // zero-width space..right-to-left mark
+        | '\u{202A}'..='\u{202E}' // bidi embedding/override
+        | '\u{2060}'..='\u{2064}' // word joiner..invisible plus
+        | '\u{2066}'..='\u{2069}' // bidi isolates
+        | '\u{FEFF}' // zero-width no-break space
+    )
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -443,6 +469,41 @@ mod tests {
         assert_eq!(normalize_session_name("a:b"), Err(TmuxError::NameSeparator));
         assert_eq!(normalize_session_name("a.b"), Err(TmuxError::NameSeparator));
         assert_eq!(normalize_session_name("-x"), Err(TmuxError::NameLeadingDash));
+    }
+
+    /// Invisible formatting characters are refused with the control ones: a
+    /// name carrying a bidi override or a zero-width character does not read
+    /// as what it is.
+    #[test]
+    fn a_name_with_an_invisible_character_is_refused() {
+        for name in [
+            "a\u{00AD}b", // soft hyphen
+            "a\u{061C}b", // Arabic letter mark
+            "a\u{180E}b", // Mongolian vowel separator
+            "a\u{200B}b", // zero-width space
+            "a\u{200C}b", // zero-width non-joiner
+            "a\u{200D}b", // zero-width joiner
+            "a\u{200E}b", // left-to-right mark
+            "a\u{200F}b", // right-to-left mark
+            "a\u{202A}b", // bidi embedding
+            "a\u{202E}b", // bidi override
+            "a\u{2060}b", // word joiner
+            "a\u{2064}b", // invisible plus
+            "a\u{2066}b", // bidi isolate
+            "a\u{2069}b", // bidi pop isolate
+            "a\u{FEFF}b", // zero-width no-break space
+        ] {
+            assert_eq!(
+                normalize_session_name(name),
+                Err(TmuxError::NameControlChar),
+                "{name:?}"
+            );
+        }
+        // Ordinary text is not caught by any of those ranges.
+        assert_eq!(
+            normalize_session_name("lab-1_wörk ✓"),
+            Ok("lab-1_wörk ✓".to_owned())
+        );
     }
 
     /// A name is quoted, so a shell metacharacter is an ordinary character;

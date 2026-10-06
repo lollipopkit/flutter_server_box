@@ -253,11 +253,13 @@
   }
 
   /// What to show for the last failure. A tmux refusal is phrased from the
-  /// issue the agent sent; `no_tmux` likewise, since the machine's own message
-  /// names a remedy the operator has, not the reader.
+  /// issue the agent sent — an issue code this build does not know falls back
+  /// to the agent's own message, which is better than showing the code —
+  /// and `no_tmux` likewise, since the machine's own message names a remedy
+  /// the operator has, not the reader.
   const errorText = $derived(
     session.errorCode === 'invalid_input' && session.issueCode
-      ? tmuxIssueText(session.issueCode)
+      ? (tmuxIssueText(session.issueCode) ?? session.error)
       : session.errorCode === 'no_tmux'
         ? $LL.terminalTmuxNoTmux()
         : session.error,
@@ -437,6 +439,12 @@
         {#if tmux?.available}
           <div class="space-y-2 border-t border-line pt-3">
             <p class="text-sm text-muted-fg">{$LL.terminalTmuxSessions()}</p>
+            {#if tmux.error}
+              <!-- The listing failed: said, because an empty list would read
+                   as this machine having no sessions. -->
+              <p class="text-sm text-danger">{$LL.terminalTmuxListFailed()}</p>
+              <p class="text-xs text-muted-fg break-all">{tmux.error}</p>
+            {/if}
             {#each tmux.sessions as s (s.id)}
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span class="text-sm text-fg-strong">{s.name}</span>

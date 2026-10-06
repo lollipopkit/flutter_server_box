@@ -7,23 +7,16 @@ import '@testing-library/jest-dom/vitest'
 import { serverMatches } from '../lib/serverSearch'
 
 const mocks = vi.hoisted(() => ({
-  select: vi.fn(),
   navigate: vi.fn(),
   back: vi.fn(),
 }))
 
-vi.mock('../lib/servers.svelte', () => ({
-  servers: {
-    list: [] as unknown[],
-    currentId: 'a',
-    servedByAgent: false,
-    select: mocks.select,
-    logout: vi.fn(),
-    add: vi.fn(),
-    confirmSameOrigin: vi.fn(async () => {}),
-  },
-  displayName: (e: { url: string; id: string }) => e.url || e.id,
-}))
+/// The store stand-in is a `.svelte.ts` module so its list is `$state`: the
+/// test that removes a server does it after a render.
+vi.mock('../lib/servers.svelte', async () => {
+  const helper = await import('./helpers/fakeServers.svelte')
+  return { servers: helper.fakeServers, displayName: helper.displayName }
+})
 
 vi.mock('../lib/layout.svelte', () => ({
   layout: {
@@ -54,20 +47,21 @@ import { serverNames } from '../lib/serverNames.svelte'
 import { servers } from '../lib/servers.svelte'
 
 const SEARCH = 'Search'
+const ALPHA = { id: 'a', url: 'https://alpha.example', token: 't', username: 'admin' }
+const BETA = { id: 'b', url: 'https://beta.example', token: 't', username: 'admin' }
 
 beforeEach(() => {
   // Two servers, each with the agent's live name, so a query can match the
   // name or the URL separately.
-  servers.list = [
-    { id: 'a', url: 'https://alpha.example', token: 't', username: 'admin' },
-    { id: 'b', url: 'https://beta.example', token: 't', username: 'admin' },
-  ]
-  ;(servers as unknown as { currentId: string }).currentId = 'a'
+  servers.list = [ALPHA, BETA]
+  servers.currentId = 'a'
   ;(serverNames as unknown as { byServer: Record<string, string> }).byServer = {
     a: 'Alpha',
     b: 'Beta',
   }
-  mocks.select.mockClear()
+  // Typed from the real store, which the `.svelte.ts` stand-in replaces at
+  // runtime; the spy is what these tests assert on.
+  vi.mocked(servers.select).mockClear()
 })
 
 afterEach(cleanup)
@@ -110,7 +104,7 @@ describe('the sidebar search field', () => {
     expect(screen.queryByText('Alpha')).toBeNull()
     expect(screen.getByText('Beta')).toBeInTheDocument()
     // Filtering hides rows; it never changes what is selected.
-    expect(mocks.select).not.toHaveBeenCalled()
+    expect(servers.select).not.toHaveBeenCalled()
   })
 
   it('says so when nothing matches', async () => {
@@ -125,7 +119,7 @@ describe('the sidebar search field', () => {
     await fireEvent.input(search(), { target: { value: 'Beta' } })
     await fireEvent.keyDown(search(), { key: 'Enter' })
 
-    expect(mocks.select).toHaveBeenCalledWith('b')
+    expect(servers.select).toHaveBeenCalledWith('b')
   })
 
   it('does not select on Enter while several rows match', async () => {
@@ -133,7 +127,25 @@ describe('the sidebar search field', () => {
     await fireEvent.input(search(), { target: { value: 'e' } })
     await fireEvent.keyDown(search(), { key: 'Enter' })
 
-    expect(mocks.select).not.toHaveBeenCalled()
+    expect(servers.select).not.toHaveBeenCalled()
+  })
+
+  it('ignores a leftover query once there is only one server', async () => {
+    render(Sidebar)
+    // A query the server that is about to go away matches, so the one that
+    // stays is hidden by it.
+    await fireEvent.input(search(), { target: { value: 'Alpha' } })
+    expect(screen.getByText('Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Beta')).toBeNull()
+
+    // Alpha goes away. The field goes with it, so a query that no longer
+    // matches anything would leave the only server invisible with no way to
+    // clear it.
+    servers.list = [BETA]
+    servers.currentId = 'b'
+
+    expect(await screen.findByText('Beta')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText(SEARCH)).toBeNull()
   })
 
   it('clears the field on Escape', async () => {

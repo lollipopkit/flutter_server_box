@@ -1727,7 +1727,7 @@ type RootTranslation = {
 	 */
 	terminalTmuxErrNameTooLong: string
 	/**
-	 * T​h​e​ ​n​a​m​e​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​c​o​n​t​r​o​l​ ​c​h​a​r​a​c​t​e​r​s​.
+	 * T​h​e​ ​n​a​m​e​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​c​o​n​t​r​o​l​ ​o​r​ ​i​n​v​i​s​i​b​l​e​ ​f​o​r​m​a​t​t​i​n​g​ ​c​h​a​r​a​c​t​e​r​s​.
 	 */
 	terminalTmuxErrNameControl: string
 	/**
@@ -1738,6 +1738,10 @@ type RootTranslation = {
 	 * T​h​e​ ​n​a​m​e​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​w​i​t​h​ ​'​-​'​.
 	 */
 	terminalTmuxErrNameLeadingDash: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​l​i​s​t​ ​t​m​u​x​ ​s​e​s​s​i​o​n​s
+	 */
+	terminalTmuxListFailed: string
 	/**
 	 * F​i​l​e​s
 	 */
@@ -7408,7 +7412,7 @@ export type TranslationFunctions = {
 	 */
 	terminalTmuxErrNameTooLong: () => LocalizedString
 	/**
-	 * The name cannot contain control characters.
+	 * The name cannot contain control or invisible formatting characters.
 	 */
 	terminalTmuxErrNameControl: () => LocalizedString
 	/**
@@ -7419,6 +7423,10 @@ export type TranslationFunctions = {
 	 * The name cannot start with '-'.
 	 */
 	terminalTmuxErrNameLeadingDash: () => LocalizedString
+	/**
+	 * Could not list tmux sessions
+	 */
+	terminalTmuxListFailed: () => LocalizedString
 	/**
 	 * Files
 	 */

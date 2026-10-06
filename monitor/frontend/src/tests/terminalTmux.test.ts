@@ -144,7 +144,7 @@ beforeEach(() => {
   FakeSocket.instances = []
   mocks.getTmux.mockReset()
   mocks.issueWsTicket.mockClear()
-  mocks.getTmux.mockResolvedValue({ available: true, sessions: [SESSION] })
+  mocks.getTmux.mockResolvedValue({ available: true, sessions: [SESSION], error: null })
   window.localStorage.clear()
   window.sessionStorage.clear()
   vi.stubGlobal('WebSocket', FakeSocket)
@@ -200,7 +200,7 @@ describe('the terminal page tmux block', () => {
   })
 
   it('shows nothing extra where tmux is not installed', async () => {
-    mocks.getTmux.mockResolvedValue({ available: false, sessions: [] })
+    mocks.getTmux.mockResolvedValue({ available: false, sessions: [], error: null })
     render(Terminal)
 
     await screen.findByRole('button', { name: 'Open a terminal' })
@@ -224,6 +224,41 @@ describe('the terminal page tmux block', () => {
     })
 
     expect(await screen.findByText(/cannot contain/i)).toBeInTheDocument()
+  })
+
+  it('falls back to the agent message for an issue this build does not know', async () => {
+    render(Terminal)
+
+    await fireEvent.input(await screen.findByPlaceholderText('Session name'), {
+      target: { value: 'lab' },
+    })
+    await fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    const socket = await started()
+    // A refusal added since this panel was built: the code means nothing here,
+    // the agent's sentence does.
+    socket.control({
+      type: 'error',
+      code: 'invalid_input',
+      issue: 'a_rule_added_later',
+      message: 'the session name is not acceptable here',
+    })
+
+    expect(await screen.findByText('the session name is not acceptable here')).toBeInTheDocument()
+    expect(screen.queryByText('a_rule_added_later')).toBeNull()
+  })
+
+  it('says when the listing itself failed', async () => {
+    mocks.getTmux.mockResolvedValue({
+      available: true,
+      sessions: [],
+      error: 'error connecting to /tmp/tmux-1000/default (Permission denied)',
+    })
+    render(Terminal)
+
+    expect(await screen.findByText('Could not list tmux sessions')).toBeInTheDocument()
+    expect(
+      screen.getByText('error connecting to /tmp/tmux-1000/default (Permission denied)'),
+    ).toBeInTheDocument()
   })
 
   it('phrases a machine with no tmux', async () => {

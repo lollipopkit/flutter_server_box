@@ -1,7 +1,7 @@
 /// The panel's file editor: what the Files page refuses before it opens the
 /// editor, and what the editor itself does on save.
 ///
-/// The agent's side of the guard — `if_modified` on `PUT /fs/write` — is
+/// The agent's side of the guard — `if_version` on `PUT /fs/write` — is
 /// tested in Rust (`monitor/tests/fs_write.rs`); here the question is only
 /// whether the panel sends it and what it does with a 409.
 
@@ -78,6 +78,7 @@ function entry(over: Partial<FsEntry> = {}): FsEntry {
     modified: 111,
     mode: null,
     link_target: null,
+    version: '111-3',
     ...over,
   }
 }
@@ -106,7 +107,7 @@ beforeEach(() => {
   mocks.fsRoots.mockResolvedValue({ roots: [ROOT] })
   mocks.fsList.mockResolvedValue([])
   mocks.fsWrite.mockResolvedValue(undefined)
-  mocks.fsStat.mockResolvedValue(entry({ modified: 222 }))
+  mocks.fsStat.mockResolvedValue(entry({ modified: 222, version: '222-4' }))
 })
 
 afterEach(cleanup)
@@ -166,7 +167,7 @@ describe('the Files page opening the editor', () => {
 describe('FileEditor saving', () => {
   const props = { path: `${ROOT}/note.txt`, entry: entry(), serverId: 'local', canWrite: true }
 
-  it('sends the modified time it opened the file with', async () => {
+  it('sends the version it opened the file with', async () => {
     const onsaved = vi.fn()
     render(FileEditor, { props: { ...props, text: 'one', onsaved, onclose: () => {} } })
 
@@ -174,11 +175,29 @@ describe('FileEditor saving', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
-    const [path, body, , ifModified] = mocks.fsWrite.mock.calls[0]
+    const [path, body, , ifVersion] = mocks.fsWrite.mock.calls[0]
     expect(path).toBe(`${ROOT}/note.txt`)
-    expect(ifModified).toBe(111)
+    expect(ifVersion).toBe('111-3')
     expect(await (body as Blob).text()).toBe('one!')
     expect(onsaved).toHaveBeenCalled()
+  })
+
+  it('keeps the guard when the re-stat after a save fails', async () => {
+    // The write landed but the new version could not be read. Dropping the
+    // guard would let the *next* save overwrite whatever changed meanwhile
+    // without asking; keeping it makes that save a 409 the user answers.
+    mocks.fsStat.mockRejectedValue(new ApiError('unreachable'))
+    render(FileEditor, { props: { ...props, text: 'one', onsaved: () => {}, onclose: () => {} } })
+
+    await fireEvent.input(textbox(), { target: { value: 'first' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
+
+    await fireEvent.input(textbox(), { target: { value: 'second' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(2))
+    expect(mocks.fsWrite.mock.calls[1][3]).toBe('111-3')
   })
 
   it('stays dirty for text typed while a save is in flight', async () => {

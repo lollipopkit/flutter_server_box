@@ -14,7 +14,7 @@ use std::sync::Arc;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde_json::json;
 
-use super::exec::run;
+use super::exec::{ExecResponse, run};
 use super::machine;
 use super::server::AppState;
 use crate::core::permissions::Grant;
@@ -24,7 +24,9 @@ use crate::core::permissions::Grant;
 ///
 /// "No server running" — what tmux prints on a machine with tmux installed but
 /// no session started — is `available: true` with an empty list, not an error:
-/// there is nothing to attach to, which is an answer rather than a failure.
+/// there is nothing to attach to, which is an answer rather than a failure. A
+/// listing that failed for any other reason says so in `error`, since an empty
+/// list would otherwise read as "this machine has no sessions".
 pub async fn list(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
@@ -45,28 +47,53 @@ pub async fn list(
         }
     };
     let Some(bin) = bin else {
-        return Ok(HttpResponse::Ok().json(&json!({ "available": false, "sessions": [] })));
+        return Ok(HttpResponse::Ok().json(&json!({
+            "available": false,
+            "sessions": [],
+            "error": null,
+        })));
     };
 
-    let listed = run(&sbm_parser::tmux::list_sessions_command(&bin), None, None, exec).await;
-    let sessions = match listed {
-        Ok(out) if out.exit_code == Some(0) => {
-            sbm_parser::tmux::parse_sessions(&out.stdout).sessions
-        }
-        Ok(out) => {
-            if !out.stderr.contains("no server running") {
-                tracing::warn!(
-                    "tmux list-sessions exited {:?}: {}",
-                    out.exit_code,
-                    out.stderr.trim()
-                );
+    let (sessions, error) =
+        match run(&sbm_parser::tmux::list_sessions_command(&bin), None, None, exec).await {
+            Ok(out) if out.exit_code == Some(0) => {
+                (sbm_parser::tmux::parse_sessions(&out.stdout).sessions, None)
             }
-            Vec::new()
-        }
-        Err(e) => {
-            tracing::warn!("tmux: could not list the sessions: {e}");
-            Vec::new()
-        }
-    };
-    Ok(HttpResponse::Ok().json(&json!({ "available": true, "sessions": sessions })))
+            // The machine has tmux and nothing running, which is not a failure.
+            Ok(out) if out.stderr.contains("no server running") => (Vec::new(), None),
+            Ok(out) => {
+                let reason = failure_reason(&out);
+                tracing::warn!("tmux list-sessions: {reason}");
+                (Vec::new(), Some(reason))
+            }
+            Err(e) => {
+                tracing::warn!("tmux: could not list the sessions: {e}");
+                (Vec::new(), Some(e.to_string()))
+            }
+        };
+    Ok(HttpResponse::Ok().json(&json!({
+        "available": true,
+        "sessions": sessions,
+        "error": error,
+    })))
 }
+
+/// A one-line reason a listing failed, for the panel to show under its own
+/// sentence: the command's own words where it had any, and what the agent saw
+/// otherwise. Never the whole output.
+fn failure_reason(out: &ExecResponse) -> String {
+    if out.timed_out {
+        return "did not finish in time".to_owned();
+    }
+    if out.truncated {
+        return "printed more than this agent reads".to_owned();
+    }
+    if let Some(line) = out.stderr.lines().map(str::trim).find(|l| !l.is_empty()) {
+        return line.to_owned();
+    }
+    match out.exit_code {
+        Some(code) => format!("exited {code}"),
+        None => "did not finish".to_owned(),
+    }
+}
+

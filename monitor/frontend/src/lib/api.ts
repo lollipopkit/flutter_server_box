@@ -998,19 +998,20 @@ export const api = {
     )
     return res.blob()
   },
-  /// Writes a file. [ifModified] is the `modified` time the caller last saw:
-  /// the agent answers 409 and writes nothing when the file has moved on, so
-  /// an editor can offer to overwrite rather than silently losing a change
-  /// someone else made. A plain upload states nothing and overwrites.
+  /// Writes a file. [ifVersion] is the `version` token the caller read with
+  /// `fsStat`/`fsList`: the agent answers 409 and writes nothing when the file
+  /// has moved on, so an editor can offer to overwrite rather than silently
+  /// losing a change someone else made. A plain upload states nothing and
+  /// overwrites.
   fsWrite: async (
     path: string,
     body: Blob,
     signal?: AbortSignal,
-    ifModified?: number | null,
+    ifVersion?: string | null,
   ): Promise<void> => {
     const query = new URLSearchParams({ path })
-    if (ifModified !== undefined && ifModified !== null) {
-      query.set('if_modified', String(ifModified))
+    if (ifVersion !== undefined && ifVersion !== null) {
+      query.set('if_version', ifVersion)
     }
     try {
       await fsBytes(

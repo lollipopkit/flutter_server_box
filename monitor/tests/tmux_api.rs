@@ -47,6 +47,10 @@ async fn the_answer_is_the_shape_the_panel_reads() {
         common::machine::call(&srv, Some("admin"), Method::GET, "/api/v1/tmux", None).await;
     assert_eq!(status, 200, "{body}");
     assert!(body["available"].is_boolean(), "{body}");
+    // Always present, so a listing that failed is not read as an empty one:
+    // null means the listing was fine (or tmux is not installed).
+    assert!(body.as_object().unwrap().contains_key("error"), "{body}");
+    assert!(body["error"].is_null() || body["error"].is_string(), "{body}");
     let sessions = body["sessions"].as_array().expect("sessions is an array");
     for session in sessions {
         assert!(session["id"].is_string(), "{session}");

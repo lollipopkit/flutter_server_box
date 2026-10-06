@@ -492,6 +492,10 @@ export interface FsEntry {
   mode: number | null;
   /// Where a link points, unresolved. Null for anything else.
   link_target: string | null;
+  /// Opaque token for this exact file state, stated back as `if_version` when
+  /// saving so a file that moved on is refused rather than overwritten. Null
+  /// where the agent had none to give.
+  version: string | null;
 }
 
 /// The directories the operator opened up. Everything outside them is denied,
@@ -1029,10 +1033,12 @@ export interface TmuxSession {
 
 /// What `/tmux` answered. `available: false` means tmux is not installed on
 /// the machine; a machine with tmux and no sessions answers `available: true`
-/// with an empty list.
+/// with an empty list. `error` is set when the listing itself failed, which
+/// would otherwise read as "this machine has no sessions".
 export interface TmuxView {
   available: boolean
   sessions: TmuxSession[]
+  error: string | null
 }
 
 /// What a change answered: the listing as it now stands, plus how the command
