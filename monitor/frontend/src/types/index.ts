@@ -114,8 +114,9 @@ export interface Capabilities {
 
 /// A machine-management page the agent may serve (`api::machine::FEATURES`).
 ///
-/// Not every entry is a page: `container_exec` is the terminal's `target`, an
-/// action the panel offers only where the agent lists it.
+/// Not every entry is a page: `container_exec`, `iperf` and `tmux` are the
+/// terminal's `target`, an action the panel offers only where the agent lists
+/// it (`tmux` also covers the `/tmux` listing).
 export type MachineFeature =
   | 'power'
   | 'process'
@@ -124,6 +125,7 @@ export type MachineFeature =
   | 'containers'
   | 'container_exec'
   | 'iperf'
+  | 'tmux'
   | 'benchmark'
   | 'system_users'
   | 'firewall'
@@ -490,6 +492,10 @@ export interface FsEntry {
   mode: number | null;
   /// Where a link points, unresolved. Null for anything else.
   link_target: string | null;
+  /// Opaque token for this exact file state, stated back as `if_version` when
+  /// saving so a file that moved on is refused rather than overwritten. Null
+  /// where the agent had none to give.
+  version: string | null;
 }
 
 /// The directories the operator opened up. Everything outside them is denied,
@@ -1008,6 +1014,32 @@ export type ContainerAction =
   | { action: 'prune_images'; all_unused: boolean }
   | { action: 'prune_system'; all_unused_images: boolean; include_volumes: boolean }
   | { action: 'run'; image: string; name: string; args: string }
+
+/// One tmux session, as `/tmux` lists it — `sbm_parser::tmux::TmuxSession`.
+export interface TmuxSession {
+  /// `$` and digits, the stable target. A name may contain `:`, which tmux
+  /// reads as a session/window separator, so the id is what is attached.
+  id: string
+  name: string
+  windows: number
+  attached: boolean
+  /// Seconds since the epoch, as tmux prints them; null where tmux had no value
+  /// (a session nobody has attached to, one that never saw output), which the
+  /// page shows as nothing rather than as 1970.
+  created: number | null
+  last_attached: number | null
+  activity: number | null
+}
+
+/// What `/tmux` answered. `available: false` means tmux is not installed on
+/// the machine; a machine with tmux and no sessions answers `available: true`
+/// with an empty list. `error` is set when the listing itself failed, which
+/// would otherwise read as "this machine has no sessions".
+export interface TmuxView {
+  available: boolean
+  sessions: TmuxSession[]
+  error: string | null
+}
 
 /// What a change answered: the listing as it now stands, plus how the command
 /// went.

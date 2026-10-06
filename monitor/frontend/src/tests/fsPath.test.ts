@@ -3,7 +3,7 @@ import { joinPath, modeText, parentOf, parseMode, sortEntries } from '../lib/fsP
 import type { FsEntry } from '../types'
 
 function entry(name: string, kind: FsEntry['kind'] = 'file'): FsEntry {
-  return { name, kind, size: null, modified: null, mode: null, link_target: null }
+  return { name, kind, size: null, modified: null, mode: null, link_target: null, version: null }
 }
 
 describe('joinPath', () => {

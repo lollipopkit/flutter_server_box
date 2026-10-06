@@ -1,733 +1,147 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+ServerBox Monitor: the agent (Rust, ntex, SQLite) that samples a machine, raises alerts, and serves the API and the Svelte panel. Part of the ServerBox monorepo (root `../CLAUDE.md`).
 
-## Project Overview
+## Commands
 
-ServerBox Monitor is a Rust-based server monitoring application rewritten from Go, featuring a modern Svelte frontend. It monitors server status (CPU, memory, disk, network, temperature) and sends notifications via configurable push mechanisms (webhooks, iOS notifications) when thresholds are exceeded. This is part of the [ServerBox](https://github.com/lollipopkit/flutter_server_box) project ecosystem.
-
-## Development Commands
-
-### Building
 ```bash
-# Build backend
-cargo build
-
-# Build for release
-cargo build --release
-
-# Build frontend
-cd frontend && npm install && npm run build
+cargo run                                   # serve on 0.0.0.0:3770; cp .env.example .env first
+cargo test                                  # all backend tests (--test <name> for one)
+cd frontend && npm run dev                  # panel on :3000, proxies /api (and the ws) to :3770
+cd frontend && npm run build                # typesafe-i18n + svelte-check + vite build
+cd frontend && npx vitest run               # run vitest from frontend/: from the repo root it picks up third_party/ironrdp and fails
+cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in .sqlx/
 ```
 
-### Running
-```bash
-# Run backend (listens on 0.0.0.0:3770 by default)
-cargo run
+## Layout
+
+- `../crates/sbm_parser/`: commands, scripts and parsers shared with the app over FFI. Pure, no IO. `capabilities::capabilities(system)` says per `ServerStatus` field whether a platform collects it; check it before calling an empty field a bug.
+- `../crates/sbm_native/`: monitor-only native sampler (`sample(state, system)`): cpu/mem/swap/disks/diskio/net/uptime/host/sys via `sysinfo` or procfs, feeding `sbm_parser::linux::parse_*` unchanged. NVIDIA (`nvidia-smi`) and Linux AMD/Intel (shared DRM command) run every cycle; sensors, batteries, SMART and legacy Windows AMD on the extended cycle via the script. `monitoring.rs::collect_metrics` merges them.
+- `src/`: `cli/` (`serve`, `config`, `cleanup`), `core/` (config, `remote_access.rs`, `fs_roots.rs`, `config_file.rs`), `api/` (handlers, `authz.rs`, `ratelimit.rs`, `ws/`), `ssh/` (`client.rs` russh, `known_hosts.rs` TOFU pin of the local sshd, `local_pty.rs` the SSH-less PTY), `monitoring/` (sampling, `rules.rs`, `push.rs`, `custom_cmds`), `db/` (migrations, retention cleanup).
+- `frontend/src/`: Svelte 5 runes, Tailwind 4 (class-driven dark), no router (`layout.svelte.ts`). `pages/`, `components/`, `lib/` (API client, rune stores, `terminal.svelte.ts`), `types/`, `i18n/` (15 locales). Tests: vitest + testing-library; svelte-check is the type gate.
 
-# Run frontend dev server (separate terminal)
-cd frontend && npm run dev
+### Cross-platform semantics left as is (changing them would change stored history)
 
-# Set up environment
-cp .env.example .env
-```
+- `cpu`: Linux cumulative ticks; BSD an instantaneous percentage in the tick fields; Windows a percentage accumulated into a synthetic counter. `monitoring::adapt_cpu` branches on `SystemType`; any new consumer must too. The native sampler has consistent semantics; the script path keeps the split.
+- `sys`: a real distro parser on Linux (`PRETTY_NAME`); BSD/Windows reuse `parse_hostname` on `uname -or`/`OsName`. `os_id`/`os_id_like` are Linux-only (`/etc/os-release`).
+- `uptime`: Linux/BSD normalised by `parse_uptime`; Windows passes PowerShell's string through.
+- `diskio` is cumulative 512-byte counters on both paths.
+
+## Panel
 
-### Testing
-```bash
-# Run all backend tests
-cargo test
-
-# Run integration tests
-cargo test --test integration_tests
-
-# Run frontend tests
-cd frontend && npm run test
-
-# Run with coverage
-cd frontend && npm run test:coverage
-```
-
-### Dependencies
-```bash
-# Backend dependencies
-cargo update
-
-# Frontend dependencies
-cd frontend && npm install
-```
-
-### Database
-```bash
-# Run migrations (requires DATABASE_URL)
-cargo sqlx migrate run
-
-# Prepare SQL queries for offline compilation
-cargo sqlx prepare
-```
-
-## Architecture
-
-### Shared Parser (`../crates/sbm_parser/`, monorepo root)
-
-Pure parsing library shared with the Flutter app via FFI (see the "Monorepo Layout" section of the root `../CLAUDE.md`). Owns the command manifest (`commands.rs`) and per-platform parsers (`linux.rs`, `bsd.rs`, `windows.rs`). Behavior is locked to the Dart implementation by `tests/dart_compat.rs`. No IO, no async — parsers take raw command output and return structured status.
-
-`sbm_parser::capabilities::capabilities(system)` reports, per `ServerStatus` field, whether a platform `Supported`/`NotImplemented`/`HardwareDependent`-ly collects it — mechanically derived from `commands::commands(system)` wherever a field maps 1:1 to a command key, so it can't silently drift out of sync the way an empty field used to (no signal for "platform doesn't support this" vs "no hardware" vs "not refreshed yet"). Check this before assuming a `None`/empty field is a bug.
-
-#### 已知的跨平台语义差异 (documented, not fixed — see `crates/sbm_parser/src/types.rs` and `lib.rs` doc comments for the authoritative version)
-
-Several `ServerStatus` fields share one struct shape across `SystemType::{Linux,Bsd,Windows}` but carry different semantics per platform. Fixing these would change how already-deployed instances' historical data reads, so each is deliberately left as-is and only documented:
-
-- **`cpu` (`CpuCore.user`/`idle`/...)**: Linux = real cumulative `/proc/stat` ticks (delta-over-time is correct); Bsd = an instantaneous percentage stored directly into the tick fields (never delta — the raw value already is the percentage); Windows = an instantaneous percentage *accumulated* onto the previous sample into a synthetic monotonic counter (`windows::parse_cpu`'s `prev` param). Three incompatible interpretations of the same fields — `monitor::monitoring::adapt_cpu` already branches on `SystemType` correctly; any new consumer must too.
-- **`sys`**: Linux uses a real distro-description parser (`common::parse_sys_version`, extracts `PRETTY_NAME`); Bsd/Windows repurpose the generic hostname-trimming helper (`common::parse_hostname`) against `uname -or`/`OsName` output — happens to work because those are single clean lines, but isn't a "system version" parser on those platforms. The `os_id`/`os_id_like` fields beside it come out of the same command and are Linux-only for the same reason: they are `/etc/os-release`'s `ID=`/`ID_LIKE=`, which Bsd/Windows have no equivalent of. `capabilities::Capabilities` has no entry for them — they share `sys`'s by construction.
-- **`uptime`**: Linux/Bsd normalize the `uptime` command's varied output via `common::parse_uptime`; Windows pre-formats the duration string in PowerShell itself and the field just passes it through — presentation shape isn't guaranteed identical across platforms.
-
-The shell-script collection path has been replaced with native per-platform sampling for the fields it can cover (`crates/sbm_native` — see below); this resolved the `cpu` mismatch for monitor itself because `sysinfo`'s CPU percentage has consistent semantics across platforms. The shared script path still carries the documented CPU distinction, while `diskio` now uses genuinely cumulative 512-byte counters on both the native and script paths. `sys`/`uptime` still differ in string shape between native and script sources (unchanged — see their doc comments).
-
-### Native Sampler (`../crates/sbm_native/`, monorepo root)
-
-Monitor-only crate (the app never depends on it — it always collects over SSH and has no way to run native syscalls on a remote host). `sample(state, system) -> sbm_parser::ServerStatus` covers cpu/cpu_brand/mem/swap/disks/diskio/net/uptime/host/sys directly via syscalls (`sysinfo`, on Bsd/Windows) or direct procfs/sysfs reads feeding `sbm_parser::linux::parse_*` unmodified (on Linux, zero extra dependencies). Per-platform backends are `#[cfg(target_os)]` submodules within this one crate, not separate crates — multi-platform support is this crate's internal concern. GPU collection stays outside this crate: NVIDIA gets a dedicated `nvidia-smi` subprocess every cycle, while Linux AMD/Intel use the shared targeted DRM command every cycle (`monitoring.rs::sample_linux_gpus`). Sensors, batteries, SMART and legacy Windows AMD refresh on the slower extended cycle via the shared script. See `monitoring.rs::collect_metrics` for how the sources merge into one `ServerStatus`.
-
-### Backend (Rust - `src/`)
-
-- **`main.rs`**: Application entry point, coordinates monitoring loop and web server
-- **`cli/`**: clap-based CLI (`serve`, `config`, `cleanup` subcommands)
-- **`core/`**: Configuration loading (`config.rs`) with .env support and TOML/legacy JSON config files
-- **`api/`**: ntex-based web server (`server.rs`), JWT auth (`auth.rs`), login throttling (`ratelimit.rs`), and the WebSocket endpoints under `api/ws/` (see below)
-- **`ssh/`**: shells for the browser terminal — `client.rs` (russh: connect/authenticate/PTY), `known_hosts.rs` (trust-on-first-use pinning of the local sshd), and `local_pty.rs` (the SSH-less path, a local PTY interface-compatible with the SSH one so both drive the same session machinery)
-- **`monitoring/`**: Metrics collection (`monitoring.rs`: `sbm_native::sample()` covers cpu/mem/swap/disk/diskio/net/uptime/host/sys every cycle via direct syscalls/procfs reads — see `../crates/sbm_native`; `nvidia-smi` and the shared Linux AMD/Intel DRM command run as targeted subprocesses every cycle; the generated script's extended cycle remains for sensors/SMART/battery and legacy Windows AMD), rule evaluation (`rules.rs`), push notifications with rate limiting (`push.rs`), velocity/timeseries analysis
-- **`db/`**: SQLite initialization/migrations (`database.rs`) and data retention cleanup (`cleanup.rs`)
-- **`utils/`**: Centralized error types (`error.rs`)
-
-### Frontend (Svelte - `frontend/src/`)
-
-- **State and UI only.** The panel never composes a shell command or parses one's output: it calls an agent endpoint, which builds and parses through `sbm_parser` — the same functions the app reaches over FFI (root `CLAUDE.md`, Architecture). Sending text to `/exec` and parsing the answer in TypeScript is the shape this rules out.
-- **Svelte 5 (runes)** with TypeScript and Tailwind 4 (class-driven dark mode)
-- **`pages/`**: Login.svelte, Dashboard.svelte (App.svelte gates them by auth state; no router)
-- **`components/`**: Spinner, StatCard, ThemeToggle
-- **`pages/Terminal.svelte`** + **`lib/terminal.svelte.ts`**: the in-browser terminal. The store owns the protocol and reconnect policy and knows nothing about xterm.js, which keeps the part worth testing free of a DOM; xterm is loaded by dynamic `import()` so it stays out of the main bundle
-- **`lib/`**: fetch-based API client, module-level rune stores (auth/theme), Poller
-- **`types/`**: TypeScript type definitions
-- Tests: vitest + @testing-library/svelte; type gate via svelte-check (part of `npm run build`)
-- Multi-server: the panel keeps a server list (per-server URL + session) in localStorage; it can be served by an agent itself (same-origin) or hosted statically (e.g. Cloudflare Pages) talking to several agents
-  - **The panel an agent serves holds the one server it is served by** — `ServersStore.servedByAgent`. One `dist` is served both by an agent and by Pages, so it is asked of the origin at startup rather than read off the build: `confirmSameOrigin()`'s probe, and assumed until it answers. `add()` is refused there and both add affordances (`Sidebar`, the empty state) are absent; nothing changes for a panel the origin does not answer for. `unreachable` counts as the agent's own, since the page was loaded *from* it.
-  - The vite dev server is the one deployment the question cannot be asked of: it proxies `/api` to the agent `make monitor-dev` starts, so the probe reaches that agent and answers as though the panel were its own. `import.meta.env.DEV` is what exempts it, and no shipped build has it — an agent's panel and a Pages panel are both production builds, so it cannot be what tells those two apart.
-
-### Hosting the panel on Cloudflare Pages
-
-- Pages project settings (the live project's **root directory is `monitor/frontend`**, confirmed from a build log — not the repo root): build command `npm run build`, output directory `dist` (relative to the root directory, so this resolves to `monitor/frontend/dist`)
-  - `@serverbox/webui` is a `file:../../packages/webui` dependency, so an install here only symlinks it — *webui's own* devDependencies (svelte, clsx, tailwind-variants, ...) are never fetched, and `svelte-check` reads its source. Without them it reports `Cannot find module` for every file under `packages/webui/src` and fails with 8 errors.
-  - **`frontend/package.json` handles that in `prebuild`**, so a bare `npm run build` is enough and every builder gets it the same way. It used to be asked of each one instead — the Pages build command, `RUN npm install --prefix /app/packages/webui` in the Dockerfile — and Pages was found running a bare `npm run build`, failing on exactly this. A setting in a dashboard is not somewhere this repo can keep a build step.
-  - If the root directory setting is ever changed to the repo root instead, use `cd monitor/frontend && npm ci && npm run build` with output directory `monitor/frontend/dist`.
-  - `frontend/.node-version` pins Node for Pages, which reads it from the **root directory** — hence `monitor/frontend/`, not the repo root. 24 (Krypton) is the active LTS; a build log had it on 22.22.0, which node-build itself warns is "in LTS Maintenance mode and nearing its end of life". The Dockerfile (`node:24-alpine`) and `monitor-release.yml` (`node-version: 24`) are the same line. Whatever it says has to satisfy `vite` 8, which declares `^20.19.0 || >=22.12.0`.
-- Each agent must allow the panel origin: `cors_allowed_origins` in config.toml or `SBM_CORS_ORIGINS` env (comma-separated)
-- Agents must be reachable over HTTPS (browser mixed-content policy): use the built-in TLS (`--cert/--key` / `SBM_TLS_*`) or a reverse proxy / Cloudflare Tunnel
-- An agent without the panel: just don't ship `frontend/dist`; the API works standalone
-
-### Remote access (`api/ws/`, `ssh/`, `core/remote_access.rs`)
-
-**Who may use any of this is the caller's role** (issue #1610,
-`docs/dev/monitor-permissions.md` is the contract). Every account has one role
-(`users.role`), a role is a set of grants — `shell`, `ssh_terminal`, `files`
-(read/write), `connect` (an `allow` list), `listen` (`public`, `ports`),
-`virt` (Proxmox VE / libvirt / BMC pages, migration 011) — and
-`admin` roles also manage accounts, roles and the agent's configuration.
-`api/authz.rs` is the one place a request becomes a `Caller` (JWT → account →
-role) and `Caller::check(grant, state, secure)` the one question handlers ask;
-nothing reads a switch out of `config.toml` for this any more. A JWT for an
-account that no longer exists is a 401. What stays in `config.toml` is the
-machine side: `ssh_addr`, `fs.roots`, limits, and one `allow_insecure` for
-every grant (TLS or a loopback peer otherwise; the legacy
-`terminal.allow_insecure` / `fs.allow_insecure` still count, each only for
-the grants it used to cover). A password change ends what the old one paid
-for: `users.password_changed_ms` moves on, panel tokens issued before it are
-refused, the account's watch tokens are deleted, and `authz::end_account`
-closes its sessions, tickets, relays and listeners (each socket remembers the
-value it was admitted under). The last-admin rule is part of the delete /
-role-change statement itself (`accounts::Guarded`). `api/admin.rs` is
-`/me`, `/me/password`, `/users*`, `/roles*`: admin-only except `/me`, every
-change re-asks the calling admin's password through the login throttle, the
-last admin cannot be deleted or demoted, built-in roles (`admin`, `viewer`)
-keep their name and `admin` flag. A change that takes a grant away ends what
-ran under it: `authz::revoke_lost` sweeps terminal sessions and broadcasts
-`AppState.grants_changed`, on which every relay and listener re-checks its
-own account (`permission_revoked`). Roles live in the database (migration
-010; 011 adds `virt` to roles holding `shell`). `PUT /roles/{name}` keeps a
-grant the body does not mention, so a client older than `virt` saving a role
-does not take it away; clients send `virt` only to an agent that listed it,
-since an older agent's `Grants` refuses unknown fields; `db::bootstrap::ensure_roles` decides the built-ins once — a fresh
-install from `--init-permissions full|read` / `SBM_INIT_PERMISSIONS`, an
-upgrade from what the old `full_access`/`listen_public`/`terminal.enabled`/
-`fs.enabled` *effectively* granted (`Grants::from_legacy`), after which those
-keys are not read again (TODO remove). `tests/permissions_api.rs` holds the
-route × role matrix; tests seed accounts through `tests/common`. Shared
-WebSocket admission checks live in `api/ws/mod.rs`.
-- **`POST /api/v1/exec`** — one command, its output, its exit code, for the
-  pages that parse what a command printed (processes, units, containers,
-  power). A request rather than a stream because none of those
-  callers streams or types. Deliberately not the terminal endpoint with an
-  `exec` frame: a PTY is one stream shared with what the user is typing, so a
-  command written into it lands in their shell — which is why `terminal.rs`
-  rejects such a frame, locked by a test. `{cmd, stdin?, env?}` in, `{exit_code,
-  stdout, stderr, truncated, timed_out}` out: `stdin` is how a sudo password
-  gets in with no terminal to type it into, and `env` is a field rather than
-  `export` lines the caller prepends so a value never has to survive shell
-  quoting. Output is capped per stream and the command is killed on a timeout,
-  both reported rather than silently applied. **Both bounds, plus the request
-  body limit, are `[remote_access.exec]`** — they were constants sized for
-  process/unit/container listings, which is not a size anything taking minutes
-  fits inside. They are the agent's decision and a request cannot raise them;
-  the payload limit arrives as an argument to `configure_api` because ntex
-  applies it while extracting the body, before any handler sees state.
-  A caller that must outlive any configured timeout should start the work
-  detached and poll it in short requests instead of asking for a longer one.
-  `tests/exec_api.rs`.
-- **The machine-management endpoints (`api/machine.rs`, issue #1623)** — the
-  panel's power, process, service, cron and container pages. Each builds its
-  command in Rust (`sbm_parser`, the app's own text where one exists — power
-  runs the status script's `SbShutdown`/`SbReboot`/`SbSuspend` via
-  `monitoring::local_script_command`) and runs it through `api::exec::run`, so
-  `[remote_access.exec]` bounds it as it bounds `/exec`. `machine::gate` is the
-  one place they ask the grant (`shell` unless stated) and record a refusal;
-  audit rows are `Kind::Machine`, subject the account, detail the feature and
-  verb (`power reboot`) — never a password or output. A sudo password is a
-  request field written to stdin, and a refused one is answered as
-  `sudo_rejected` (`sbm_parser::script::sudo_password_rejected`), not a status.
-  `machine::FEATURES` is `features` in `/capabilities`: a panel offers a page
-  only when its name is there, since an older agent 404s the route.
-  `tests/power_api.rs` asserts refusals and records only — the actions take
-  the test machine down; `tests/common::machine` is the shared setup.
-  Shell text built by `sbm_parser` runs through `machine::as_self` (`sh` with
-  the text on stdin, never a command line) and `machine::as_root` (`sudo -S
-  -p '' sh -c "$SBM_ROOT_SCRIPT"` with only the password on stdin, or `sudo
-  -n` without one: the script never shares the password's stream, since a
-  sudo that does not ask — root, `NOPASSWD` — would leave the password line
-  for the script to run as a command). `/process` (`sbm_parser::proc`,
-  which the app reaches over FFI too, locked by `tests/proc_compat.rs`; the
-  rows, columns, orders and fallback order are its `PsView`): the table is the status script's `SbProcess` read
-  with at least 8 MiB of output, kept in `AppState.process_sample` so read and
-  write speeds have a baseline (reused within 2 s, a baseline for 30 s); a stop
-  checks the PID's start identity first and retries as root on `denied`.
-  `/services` (`sbm_parser::service`, which the app reaches over FFI too,
-  locked by `tests/service_compat.rs`): systemd, procd and OpenRC, one
-  listing being `listing_commands` run at once and `parse_listing`, with the
-  machine's clock beside its timestamps (`sampled_at_millis`); an action names a unit by the key its listing
-  gave it and is resolved against a listing read for that request, so whether
-  it needs root is the listing's answer, not the caller's. Outputs reach the
-  parsers as `CommandOutput` through `machine::command_output`, where a
-  timeout or the output cap is a failure carrying why. `/cron`
-  (`sbm_parser::cron`): the account's own crontab only. An edit is one
-  operation on one line by the index its listing gave, applied to the file
-  re-read at the moment of the write and written with `crontab -` on stdin;
-  an index that no longer names a job is refused (`unknownLine`). The audit
-  detail carries the schedule, never the command. `tests/cron_api.rs` never
-  saves — it would write the crontab of whoever runs the suite.
-  `/containers` (`sbm_parser::container`): Docker, then Podman, with a
-  `docker` that is Podman read as Podman; each part (containers, images,
-  usage, logs) is one batch split by a fresh separator, and an action answers
-  with the refreshed listing — the images for an image action, the containers
-  otherwise. `ContainerAction` covers the container lifecycle, `remove_image`
-  / `pull_image` / `prune_images` / `prune_system` and `run`; `run`'s extra
-  arguments are the one free-form text and are split by `parse_run_args`, never
-  by the caller. A value the runtime would read as an option, or a reference it
-  cannot take, is refused `400 {"error":"invalid_input","issue":<code>}` before
-  the runtime is probed. The images part also reads `ps`, so its
-  `unused_tagged` count (`count_unused_tagged_images`) is the agent's rather
-  than the page's. A runtime the agent's account may not reach is
-  `permission_denied`, not a failure. TODO: `DOCKER_HOST` and a sudo path.
-  A shell inside a container is the terminal's `target` (below), not an action
-  here; `container_exec` in `FEATURES` is how a panel knows the agent takes it.
-  `/benchmark` (`sbm_parser::bench`, the app's yabs command layer): the agent
-  owns the run, not the browser — the `benchmark_run` row (migration 012) is
-  written before the detached launcher starts, and `start_poller` (started in
-  `cli::serve`) carries it to a terminal state whether or not a page is open.
-  One run at a time is a partial unique index, not a check. The script is
-  `assets/yabs.b64`, embedded (`SCRIPT_ASSET_B64`, `tests/benchmark_asset.rs`).
-  Linux only (`supported` in the listing). `tests/benchmark_api.rs` never
-  starts a run.
-  `/system-users` (`sbm_parser::users`, which the app reaches over FFI too):
-  the machine's accounts — not `/users`, which is the agent's own. Linux only.
-  A write names an account resolved against a listing read for that request,
-  never the client's copy, and refuses root and the agent's own account. The
-  account's new password is inside the script (`chpasswd` heredoc), so a write
-  carrying one runs through `machine::as_root_private`: the script goes into a
-  0600 file under a random name and only its path reaches the root shell's
-  command line, which `ps` shows every account. `tests/system_users_api.rs`
-  never changes an account.
-  `/firewall` (`api/firewall.rs`, `sbm_parser::firewall`, which the app
-  reaches over FFI too): ufw or firewalld, Linux only. `POST /firewall` reads
-  (a POST: the sudo password a read needs travels in the body), answering the
-  ways in — the panel's connection to this agent unless it arrives over
-  loopback through a proxy (`proxied`), and the machine's SSH port — with what
-  reaches each. A change is one `sbm_parser::firewall::change::{UfwChange,
-  FirewalldChange}`: `POST /firewall/plan` answers the `Plan` (commands, what
-  it does to each way in, whether to ask, the keep-open rules) and runs
-  nothing; `POST /firewall/act` reads the firewall again, plans the same
-  change from what it finds and runs that, the keep-open rules first when
-  asked — no command comes from the client, and the plan it was shown does
-  not decide what runs. A plan carries `plan_id` (a digest of it); a fresh
-  plan that asks runs only under the id the user confirmed, and is otherwise
-  answered `confirm_required` with the new plan, nothing run. The app's firewall page asks the same `ufw_plan` /
-  `firewalld_plan`. The audit detail is the change's kind, never a value.
-  `tests/firewall_api.rs` never changes a firewall — it would rewrite the
-  network access of whatever machine runs the suite.
-  `/snippets` (`sbm_parser::snippet`, which the app reaches over FFI too):
-  the agent's snippet library (migration 013; a PUT replaces it whole, in
-  order, refused per row as `{error, index}`), and `POST /snippets/plan`,
-  which expands one script into the steps a terminal is fed and runs
-  nothing — the panel types them into its own terminal. The panel sends an
-  empty context, so a script naming a server value (`${host}`, `${pwd}`) is
-  refused as `{error: "unanswerable", key}`. All three need `shell`; the
-  audit names snippets, never a script.
-  `/desktops`: the panel's remote desktop routes (migration 014; a PUT
-  replaces the set, refused per row as `{error, index}`), under `connect`
-  rather than `shell`. What a route may hold is `sbm_parser::desktop`, the
-  rules the app's profile editor applies through FFI too. A route stores no password: the panel asks for it
-  when a session opens and hands it to noVNC only. A session is the
-  existing `/stream/ws` relay; the panel's `RelayChannel`
-  (`frontend/src/lib/desktop.svelte.ts`) gives noVNC the binary frames,
-  keeps the bytes a VNC server sends before noVNC attaches, and turns the
-  relay's `error`/`exit` frames into the reason the session ended. RDP goes
-  through `/rdp/ws` (`api/ws/rdcleanpath.rs`) instead: the browser's IronRDP
-  client cannot do RDP's TLS, so the agent is its RDCleanPath proxy — it reads
-  the request PDU (ticket in `proxy_auth`, purpose `rdp`), checks `connect`
-  and the `allow` list on the resolved addresses exactly as `/stream/ws` does,
-  forwards the X.224 request, does the TLS handshake with the RDP server
-  (certificate captured, not verified), answers with the chain, then relays.
-  **The session, NLA credential included, is plaintext in the agent**; the
-  panel says so beside it. A role change that takes `connect` to that address
-  away closes the session. `tests/rdp_ws.rs` runs it against a fake RDP server.
-  `/bmc` (`api/bmc.rs`): the BMCs (Redfish) the panel reaches through this
-  agent, a set of targets (migration 016) so an agent can reach its
-  neighbours' BMCs, since a machine that is off has no agent to ask. The
-  client is `sbm_redfish`, which the app reaches over FFI too. Seeing and
-  controlling (`GET /bmc`, `GET /bmc/{id}`, `POST /bmc/{id}/power`) need
-  `virt`; changing the targets and `POST /bmc/probe` (the certificate an
-  address presents, for review) are admin. A password is write-only
-  (`has_password`; `null` keeps it, by id). **A target with no pinned
-  certificate is never dialled** (`require_pin`), one login per request with
-  the session deleted after, and an upstream failure is `502 {error:"bmc",
-  failure}` — never a 401, which would log the panel out. `GET /bmc/{id}`
-  answers `intents`, the actions `ResetRequest::build` finds for that system,
-  so the panel has no copy of that mapping. `tests/bmc_api.rs` runs against a
-  fake Redfish service.
-  `/virt` (`api/virt.rs`): the Virtualization page — this machine's guests,
-  PVE or libvirt, in `sbm_virt::model` terms (the app's FFI reaches the same
-  crate). `POST /virt` loads (a POST: a libvirt refusing the agent's account
-  takes the operator's sudo password, which a body carries and a URL must
-  not; used for that request, never stored), `POST /virt/power` acts on a
-  guest re-read for the request. PVE is reached by the one stored
-  configuration (migration 017, `virt_pve`, one row; `password` and
-  `token_secret` write-only, `null` keeps): **one `sbm_virt::pve::Client` per
-  agent, kept in `AppState.virt`** so a ticket lives its two hours and a TOTP
-  account is not asked on every refresh; `POST /virt/pve/tfa` answers a
-  waiting login. A certificate no CA vouches for is shown (`cert_unconfirmed`
-  with the certificate) and nothing is sent until `POST /virt/pve/cert` pins
-  it. Without a configuration the probe decides: PVE not set up yet, libvirt
-  (through sudo once it refused the account, as the app does), or nothing.
-  A host's failure is answered 200 with `error` (`sbm_virt::error::Error`),
-  never as this agent's status. `virt` to see and act; admin to configure and
-  pin. `POST /virt/detail` and `/virt/history` (PVE's stored `rrddata`; null
-  on libvirt) read one guest. **A console is resolved before its socket
-  opens**: `POST /virt/console` asks PVE for the `vncproxy`/`termproxy`
-  ticket (or reads a libvirt display's port and password) and mints a
-  `Purpose::Virt` ticket bound to it, kept in `AppState.virt` for 30 s —
-  `/ws-ticket` refuses that purpose, so a client cannot name a target.
-  `/virt/console/ws` (`api/ws/virt_console.rs`) speaks `/stream/ws`'s
-  framing (`ready`/`error`/`exit`, binary bytes) so the panel's
-  `RelayChannel` drives noVNC on it; it dials the libvirt display, or opens
-  PVE's `vncwebsocket` with the session (`sbm_virt::pve::Client::open_console`,
-  whose `pve::console::Console` does termproxy's ticket, `OK`, input framing,
-  resize and keep-alive — the app's console carries the same one), so the
-  console ticket never reaches the browser. A libvirt serial
-  console answers the `virsh console` command to run in the panel terminal
-  (it needs a PTY). `POST /virt/snapshots` lists a guest's snapshots with
-  what a new one may be (`refusal`, `memory`, libvirt's `chain` and the pools
-  an overlay can go in); `POST /virt/snapshot` (`op`: create, revert,
-  delete) and `/virt/snapshot/diff` act through `sbm_virt` — the libvirt
-  flows (the chain read for an external one, the AppArmor checks before a
-  revert or a delete, the leftover overlays deleted with it) are the app's,
-  moved into the agent's handler. Storage and networks
-  (`api/virt_resources.rs`): `POST /virt/storage` (the pools, with `rules`:
-  the formats a new volume may have, whether one grows on its own),
-  `/virt/volumes`, `/virt/networks` (PVE: with each node's pending
-  configuration) and `/virt/manage` (one `sbm_virt::resource::Change`, named
-  by id and checked against what the host lists at that moment — refused as
-  `Detail::Refused` with the issue). On PVE the node is asked which
-  interfaces it is using (`sbm_virt::pve::net::LIVE_NET_SCRIPT`, run here as
-  the agent's account), so the interface the operator is connected through
-  is never edited or applied over. Guests made, copied and deleted
-  (`api/virt_guests.rs`): `POST /virt/create/form` (what a new guest of a
-  kind can be given, per PVE node), `/virt/create` (one
-  `sbm_virt::create::CreateSpec`), `/virt/delete`, `/virt/clone/form`,
-  `/virt/clone` and `/virt/template` — checked against what the host lists
-  then and refused as `Detail::CreateRefused`; audited before they run, a
-  password in a spec never in the record. A guest's hardware and settings
-  (`api/virt_hardware.rs`): `POST /virt/hardware`, `/virt/hardware/change`
-  (one `sbm_virt::hardware::Change`, made from the read whose `revision` it
-  carries), `/virt/hardware/revert`, `/virt/cloud-init`,
-  `/virt/cloud-init/set`, `/virt/host-devices`; refused as
-  `Detail::HardwareRefused`, a stale read as `conflict`. Backups
-  (`api/virt_backups.rs`, PVE only): `POST /virt/backups`, `/virt/backup`,
-  `/virt/backup/{restore,edit,delete}`, `/virt/backup-jobs`,
-  `/virt/backup-jobs/{edit,run,schedule}`; refused as
-  `Detail::BackupRefused`. `tests/virt_api.rs` runs against a
-  fake PVE API over TLS.
-  `/backup` (`api/backup.rs`): blobs the agent hosts for the app's backup sync
-  (`MonitorBackupStorage`, a fourth `RemoteStorage`) and the panel's backup
-  page, as rows (migration 015) so they share the database's protection from
-  `/fs`. Admin only, both ways. Opaque: the app encrypts before sending and
-  nothing here reads one. Bounded by `MAX_BYTES` per blob and `MAX_BLOBS`;
-  names are `[A-Za-z0-9._-]`, no leading dot. `tests/backup_api.rs`.
-  `tests/watch_token_scope.rs` lists these routes with requests that are
-  harmless under the panel login; `/power` is left out, since every body it
-  accepts takes the machine down.
-- **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
-  are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
-  than anything in this agent's config. The same directory the app writes over
-  SSH and the generated status script reads, so the panel and the app edit one
-  set; the extended cycle picks up a change with nothing having to be told.
-  A PUT replaces the whole set in order — the order is what is stored (the
-  files' name prefixes), so a move has no smaller expression. **Writing needs
-  an admin who also holds `shell`**: the set is the agent's configuration, and
-  a file in that directory is run on every extended cycle, so adding one is
-  arranging for code to run as the agent's user — an admin without `shell`
-  must not get it by the side door. Reading needs any account, and the
-  response says `editable` so the editor can go read-only instead of failing on
-  save. The store is `monitoring::custom_cmds` (write-aside-and-rename, stray
-  files skipped, names never logged — only the audit `subject`). Their latest
-  output rides along in `/metrics` (`custom_cmds`), refreshed on the extended
-  cycle; the panel's server page draws it (`Dashboard.svelte`) as one row per
-  command — the first line, with a multi-line output opening in a dialog — and
-  offers no card when there are none.
-- **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
-  for the app's file browser. Its own grant (`files`, `mode` read or write —
-  `fs::writes` decides which an action needs), not folded into `shell`: that
-  grant means "a shell as the agent's user", this one means "these
-  directories", and folding them would make the narrower thing cost the wider
-  one.
-  **`[remote_access.fs] roots` is the boundary and there is no default.** Every request is
-  resolved to a canonical path — symlinks followed, `..` refused outright —
-  and then checked component-wise against the roots (`core/fs_roots.rs`), so a
-  link inside a root pointing at `/etc` is a refusal rather than a way out.
-  Resolving *before* checking is the whole point; checking the string the
-  client sent would pass `/srv/data/link/passwd`. Every refusal answers 403
-  with the same body, and a path outside the roots is reported as absent, so
-  the endpoint can't be used to map the filesystem one status code at a time.
-  Writes stream to `<path>.sbm-part-<pid>-<n>` and rename, so an interrupted
-  one leaves no half-file under the name something else is about to open.
-  `GET /fs/roots` hands the roots themselves to an authenticated caller — the
-  one endpoint here that answers about the confinement rather than about a path
-  inside it. Not a hole in it: they are the operator's decision, every other
-  handler re-resolves per request, and a client can discover them one 403 at a
-  time anyway. It exists because without it a client can only start at `/`, be
-  refused, and have nothing to show for it; the app's file browser turns this
-  into the chips it offers on a refusal. It answers 403 without the grant or
-  with no roots (`not_configured`), so "no roots" can never be read as "no
-  limit".
-  `roots = ["/"]` makes this equivalent to a shell (anyone who can write
-  `~/.ssh/authorized_keys` has one) and is warned about at startup.
-  **The agent's own state is outside every root** (`fs_roots::Protected`,
-  filled from the config in `api::server::agent_state`): the database and its
-  journal files, `jwt.secret`, the first-start credentials, `config.toml` and
-  its backups, `.env` (the working directory's and the one `dotenvy` loaded),
-  the TLS key, the custom-commands directory — each a way past
-  the roles. Per file, not per directory (the working directory can be a
-  home); hidden from listings; their directories cannot be renamed, removed or
-  chmod-ed. `tests/fs_protected.rs`.
-  Known limitation, stated rather than papered over: resolution and use are two
-  steps, so a symlink swapped in between them would be followed. Closing that
-  needs `openat`+`O_NOFOLLOW` per component, which is not portable across the
-  platforms monitor runs on — the roots are the real boundary.
-  `tests/fs_roots.rs` locks every escape route.
-- **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
-  rather than a shell spawner, so a session carries the privileges of the SSH
-  account the browser authenticated as; the panel password alone grants no
-  shell. Frame type is the channel selector: Binary = PTY bytes, Text = control
-  JSON (`api/ws/terminal.rs` documents the messages). `auth: {"kind":"local"}`
-  is the SSH-less path — a shell as the agent's own user, needing `shell`. Its
-  optional `target` narrows that shell: `{"kind":"container","id":…}` runs
-  `sbm_parser::container::shell_command`, `{"kind":"iperf","host":…,"port":…}`
-  runs `sbm_parser::iperf::client_command` (`host` and `port` validated there,
-  so a refusal carries an `issue` the panel phrases). Both go through
-  `/bin/sh -c` on the PTY; an SSH credential with a target, an invalid value
-  and (for a container) a machine with no runtime are refused, the last as
-  `no_container_runtime`. No frame carries a command. An older agent ignores
-  the field, so the panel sends a target only where `/capabilities` lists
-  `container_exec` or `iperf`.
-- **`/api/v1/stream/ws`** — a raw TCP connection to an address the app names,
-  under the `connect` grant: networking without a shell, which is the point of
-  it being its own grant (remote desktop for someone who should not have a
-  prompt). `connect.allow` is checked against *resolved addresses* — every
-  address a host name resolves to must be allowed, and those addresses are what
-  is dialled, so a name cannot resolve one way for the check and another for
-  the connection. `accept` needs `listen` instead. This is what the app's remote
-  desktop and local/dynamic port forwards use on a monitor-only server; the
-  agent understands neither RDP nor VNC, which is what makes it one
-  endpoint for both. Text frames are the request and control JSON
-  (`{"type":"open","host":..,"port":..}` or `{"type":"accept","id":..}` first,
-  then `ready`/`error`/`exit`),
-  Binary frames are the bytes. **One socket is one connection and there is no
-  session store and no replay** — RDP and VNC reconnect above this, and a
-  resumed byte stream would be a corrupted one rather than a shorter one. The
-  address travels in the frame, not the URL, so it stays out of access logs.
-  `tests/stream_ws.rs`.
-- **`/api/v1/listen/ws`** — the other direction, for remote forwards: the agent
-  binds a port (`{"type":"listen",..}` → `ready`) and announces each accepted
-  connection (`incoming` with an id); the app takes it by opening a stream and
-  sending `accept`, so every connection keeps the stream relay's own
-  backpressure and nothing is multiplexed on the control socket. Waiting
-  connections live in `AppState.pending` (`listen::PendingStore`): claimable
-  only by the panel account that listened, closed after `PENDING_TTL`, and
-  dropped with their listener. The `listen` grant; loopback only unless it says
-  `public` (sshd's `GatewayPorts`), and only on its `ports` when it names a
-  range. `tests/listen_ws.rs`.
-
-Things that are easy to get wrong here, and are locked by tests:
-
-- **Both endpoints upgrade through `api/ws/upgrade.rs`, not
-  `ntex::web::ws::start`.** ntex's builds its codec with a 64 KiB limit on an
-  incoming frame and no way to change it; a bigger frame dropped the
-  connection — every relayed upload, every large paste. The copy takes
-  4 MiB (`MAX_FRAME`) and has its own `WsSink`, since ntex keeps that
-  constructor private. TODO: back to ntex's once it lets the caller set the
-  limit. `a_frame_bigger_than_64_kib_goes_through`,
-  `a_paste_bigger_than_64_kib_reaches_the_shell`.
-- **Auth for the upgrade is a single-use ticket** (`api/ws/ticket.rs`), not the
-  JWT: browsers can't set headers on a WebSocket handshake, and a token in the
-  query string lands in ntex's access log. Purpose-bound, ~30s, burned even on
-  a wrong secret.
-- **`is_secure_transport` treats loopback as secure** even without TLS. That is
-  the same-host reverse proxy / `cloudflared` case, which really is encrypted;
-  refusing it would push people to `allow_insecure` and switch the check off for
-  genuinely plaintext setups too. It never consults `X-Forwarded-Proto`, which
-  the client controls.
-- **Terminal sessions outlive their WebSocket** (`api/ws/session.rs`) so a
-  reconnect rejoins the same shell. The handle is a bearer capability for an
-  *already authenticated* shell: 256 bits, bound to the panel account, constant-
-  time compared, memory-only. An `attach` takes over from the previous
-  connection rather than being refused — after a network drop the old socket
-  often isn't known to be dead yet.
-- **Replay is incremental.** The client reports how many bytes it has rendered;
-  if that point is still in the ring buffer only the gap is sent, so the screen
-  is never cleared for a short outage. `ready.since` is *the absolute position
-  the following byte stream starts at* — echoing back `next_seq` instead would
-  make the client double-count the replay. `ready` must also precede any output.
-- **`shell` is a deliberate reversal of the model above.**
-  A role holding it reaches the machine directly — a local PTY as the agent's
-  own user, a command run as that user — with no sshd and no SSH credentials,
-  so none of sshd's authentication, logging or second factor applies. `install.sh` therefore runs the agent as an **ordinary account** by
-  default, whichever init system it finds: a `systemctl --user` service under
-  systemd, and under OpenRC — which has no user services — a script in
-  `/etc/init.d` with `command_user` set to the account that invoked `sudo`.
-  The point is not where the service file lives; it is that "the agent's own
-  user" is not root. The grant is checked at the moment of use
-  (`Caller::check`, with the role read again), not only in the UI, since the UI
-  is not a boundary. `DELETE /api/v1/remote-access/full-access` (admin) is the
-  panel's legacy "turn it off": it takes `shell`, `connect` and `listen` from
-  every role and closes what ran under them with `full_access_disabled`.
-  A shell can run anything and connect anywhere, so a role granting `shell`
-  without `connect`/`listen` only hides the UI — granting those *without*
-  `shell` is the direction that means something.
-- **Capacities are derived from physical memory** (`core/remote_access.rs`), not
-  constants: monitor runs on everything from a 512 MiB VPS to a 256 GiB server.
-  Explicit config always wins; the resolved values are logged at startup.
-
-`tests/fake_sshd/` is an in-process SSH server, so `tests/terminal_ws.rs`
-exercises the real connect → authenticate → PTY → data path without needing an
-sshd on the machine running the tests. `a_real_sshd_produces_a_working_shell`
-additionally targets a real one when `SBM_E2E_TERMINAL_*` is set, and is
-silently skipped otherwise.
-
-### Key Design Patterns
-
-1. **Async-first architecture**: Uses tokio for async runtime with concurrent tasks
-2. **Type-safe database**: sqlx with compile-time query verification
-3. **JWT authentication**: Secure token-based API access
-4. **Configuration-driven monitoring**: Rules and push configs in TOML/env files
-5. **Rate limiting**: Hand-rolled sliding window for push notifications (`monitoring/push.rs`); failure-backoff throttling for `/login`, keyed by both source address and username (`api/ratelimit.rs`)
-6. **Separation of concerns**: Clean module boundaries between monitoring, API, and notifications
-
-### Configuration
-
-Uses environment variables (.env file) and TOML config files:
-- **Environment**: Database URL, JWT secret, server host/port, TLS settings
-- **TOML Config**: Monitoring rules, push notification settings, thresholds
-- **Configuration file**: Defaults to `config.toml` (with JSON fallback support for `config.json`)
-
-Settings are grouped into subsections by **what they act on**, not by a shared
-name prefix — `[remote_access.terminal]`, `[remote_access.fs]`,
-`[monitoring.extended]`,
-`[monitoring.extended.idle_pause]`. Two consequences worth knowing before
-adding a key:
-
-- Where a key lives is a claim about its scope, and the code is arranged to
-  match: `idle_pause` sits under `extended` because that is the only cycle it
-  can pause. What stays at a section's own level is what more than one
-  subsection reads (`ssh_addr`, `allow_insecure`). Adding a key to the wrong
-  level makes the file lie about what it does.
-- The resolved runtime structs (`RemoteAccess`, with `Terminal`/`Fs`)
-  mirror the file's shape, so `fs.configured()` is a method on the part it
-  answers for.
-
-The **flat pre-Aug-2026 layout is not read at all** (`fs_enabled`,
-`terminal_enabled`, `idle_pause_enabled`, ...). serde
-ignores unknown keys, so an old file parses and every switch in it silently
-reverts to off — a deliberate hard cut, since the safe direction is "feature
-disabled". `[server] name` and `[monitoring] push_rate` were also top-level Go
-keys and moved into sections; `Config::legacy` still reads the Go agent's flat
-`config.json` keys once, at the `config.json` → `config.toml` migration, and
-`normalize()` clears them so they are never written back.
-
-#### Editing it over the API
-
-Both the panel and the app edit `config.toml` through three endpoints, all
-admin-only (`require_admin!`) and all reading the file fresh off disk rather than
-`AppState.config` (a startup snapshot, so a GET right after a save would show
-stale values). **A `PUT` replaces the whole of what it names**, so a client
-that omits a field clears it — `PUT /settings` and `PUT /push` each take
-their entire payload at once. The reads do not: `GET /settings`, `GET /push`
-and `POST /push/test` write nothing.
-
-- **`GET/PUT /api/v1/settings`** — the whitelist: intervals, idle pause, rules,
-  data retention, CORS origins. `jwt_secret`, `database_url` and
-  `remote_access` are deliberately not in it; who may do what is the roles. GET adds `live_fields`
-  (which of them the running process picks up; everything else waits for a
-  restart) and `data_retention_defaults` — absent retention means *no cleanup
-  runs at all* rather than "the defaults apply", so an editor offering to
-  switch it on needs values to put in, and copying `DataRetentionConfig::default`
-  into each editor is how the two would drift.
-- **`GET/PUT /api/v1/push`** and **`POST /api/v1/push/test`** (`api/push.rs`) —
-  the notification channels and `[monitoring] push_rate`. Split out of
-  `/settings` for the reason `/card-order` is, plus one of its own: **a
-  credential here is write-only.** A GET answers `null` at every credential key
-  (`sc_key`, a Bark `key`, an iOS `token`, every `headers` value), a PUT sending
-  that `null` back keeps what is on disk, and a `null` anywhere else is refused
-  — so the merge cannot be used to read a stored value out through a field that
-  gets transmitted. What "on disk" refers to is `from_index`, the position the
-  entry was loaded from: matching by name loses the credential of a renamed
-  channel, matching by submitted position loses it on a reorder. A webhook's
-  `url` is deliberately *not* treated as a credential even though a Slack one
-  is — it is the channel's identity in an editor, and hiding it would mean
-  retyping the endpoint to change one header.
-  - The other half of the same rule: an unknown `push_type` has its whole
-    config withheld (the agent cannot know which of its keys are credentials)
-    and cannot be saved at all, since nothing would ever deliver through it.
-  - Saved channels reach `rules.rs` on the next start, like the rules
-    themselves — `applies_on_restart` says so rather than leaving both editors
-    to assume it. TODO: make both live, the way `LiveSettings` already is for
-    the intervals.
-  - `tests/push_api.rs` asserts the credential is not in the response *bytes*
-    and survives a rename plus a reorder; the unit tests in `api::push` cover
-    the merge rules on their own.
-
-### Database Schema
-
-SQLite database with migrations in `migrations/`:
-- System metrics history
-- User authentication: `users` (each with a `role`), `roles` (migration 010),
-  `watch_tokens` (each with a `scope`, only ever `read`)
-- Configuration storage
-- `access_log` — who opened a terminal, from where, and whether it
-  worked. Never records a credential; cleaned up by the existing
-  `retention_policies` mechanism (`DataCleanupService::POLICY_TABLES`)
-- `ssh_known_hosts` — the pinned host key of the sshd the terminal connects to
-
-`core/config_file.rs` owns runtime writes to `config.toml`: atomic replace via
-`rename`, bounded backups, and a diagnosable read error. Callers hold
-`AppState.config_write` across the whole read-modify-write, since atomicity
-alone doesn't stop two handlers clobbering each other's fields.
-
-## Release and Deployment
-
-### Build profile and binary size
-
-The shipped agent is built with `--profile release-monitor` (workspace
-`Cargo.toml`), which is `release` plus `lto = "fat"` and `codegen-units = 1`.
-Both are profile-wide — `[profile.release.package.*]` accepts neither — so
-they cannot be asked for on the shared profile without putting a fat-LTO link
-in front of every app build too.
-
-- **`monitor/Dockerfile` sees none of that.** It rewrites the `sbm_parser`
-  path so `monitor/Cargo.toml` becomes the root, which puts the build outside
-  the workspace and outside every `[profile]` in it, `strip` included. It
-  passes the same three settings as `CARGO_PROFILE_RELEASE_*`. Anything added
-  to a workspace profile has to be repeated there or it silently does not
-  apply to the image people build themselves.
-- **`nix/package.nix` builds inside the workspace** (`buildAndTestSubdir =
-  "monitor"`, source is the repository), so it does get `[profile.release]`
-  and its `strip`, but not `release-monitor`. Moving it there means
-  `cargoBuildType`, whose handling differs between nixpkgs releases and is
-  not verified here.
-- **`opt-level` stays at 3.** `"s"` takes the binary from 15.2 MB to 11.2 MB,
-  measured, and this process samples the machine and terminates every TLS
-  connection to it — worth having the number, not worth taking silently.
-- **One crypto implementation, `ring`.** `cargo tree -i aws-lc-sys` must find
-  nothing: aws-lc-sys is a second complete implementation and a cmake build
-  script in front of the musl targets. reqwest is the one that brings it in
-  by default (its `rustls` feature *is* `__rustls-aws-lc-rs`), so it uses
-  `rustls-no-provider` and `monitoring::push::http_client` installs the ring
-  provider before building the client. Without that install, building the
-  client panics inside reqwest rather than failing as a push error — held by
-  the four webhook tests in `monitoring::push`, which is also the only signal
-  that a newly added TLS dependency has brought its own provider back.
-
-Measured on macOS arm64, all with `strip`: 22.0 MB stock → 20.1 MB without
-aws-lc → 15.2 MB with the profile.
-
-### Docker
-```bash
-# Build with Docker
-docker build -t server-box-monitor .
-
-# Run with Docker
-docker run -p 3770:3770 -v $(pwd)/data:/app/data server-box-monitor
-```
-
-### Installation
-```bash
-# systemd: as yourself, a `systemctl --user` service
-./install.sh install
-
-# OpenRC (Alpine): needs root to write /etc/init.d, but still runs the agent
-# as the account you sudo'd from
-sudo ./install.sh install
-
-# Either one, as root: `--system`
-sudo ./install.sh install --system
-
-# A fresh install whose admin starts read-only (default: full), widened later
-# from the app or the panel
-./install.sh install --permissions read
-
-# Without a release to fetch — offline, or an unreleased build
-SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
-
-# Manual production deployment
-cargo build --release
-cd frontend && npm run build
-./target/release/server_box_monitor
-```
-
-### Environment Variables
-
-- `SBM_HOST`: Server host (default: 0.0.0.0)
-- `SBM_PORT`: Server port (default: 3770)
-- `SBM_TLS_CERT`: TLS certificate path
-- `SBM_TLS_KEY`: TLS private key path
-- `DATABASE_URL`: SQLite database URL
-- `JWT_SECRET`: JWT signing secret
-- `RUST_LOG`: Logging level
-
-## Common Development Tasks
-
-### Adding New API Endpoints
-Add routes in `src/api/server.rs` following the existing ntex pattern with JWT middleware.
-
-### Adding New Monitoring Metrics
-Extend `src/monitoring/monitoring.rs` and update the database schema with new migrations.
-
-### Updating Frontend Components
-Use existing patterns in `frontend/src/components/` with TypeScript and TailwindCSS.
-
-### Fixing Database Issues
-Ensure `DATABASE_URL` is set or run `cargo sqlx prepare` to update query cache for offline compilation.
+- **State and UI only.** The panel never composes a shell command or parses output: it calls an agent endpoint, which builds and parses through `sbm_parser` (the app reaches the same functions over FFI). Sending text to `/exec` and parsing it in TypeScript is ruled out.
+- The terminal store (`lib/terminal.svelte.ts`) owns protocol and reconnect and knows nothing about xterm.js; xterm is a dynamic import (`lib/xterm.ts`). Dialog terminals (`TargetTerminal`) use `persist: false` and `close()` on destroy, never the page's stored handle. An explicit open forgets the stored handle; only Resume rejoins it.
+- An answer that arrives after the sidebar switched servers is dropped (`stale(serverId)` pattern); anything that writes binds to the server it was opened on.
+- Multi-server: a server list (URL + session) in localStorage. Served by an agent (same origin) or hosted statically talking to several agents.
+  - **A panel an agent serves holds only that server** (`ServersStore.servedByAgent`): decided at startup by `confirmSameOrigin()`'s probe (assumed until it answers; `unreachable` counts as the agent's own). `add()` is refused and both add affordances are absent there.
+  - The vite dev server proxies to an agent, so the probe would answer "own"; `import.meta.env.DEV` exempts it (no shipped build has it).
+
+### Cloudflare Pages
+
+- Root directory `monitor/frontend`, build `npm run build`, output `dist`. `@serverbox/webui` is a `file:` dependency whose own devDependencies are never installed, so `prebuild` runs `npm ci --prefix ../../packages/webui`; keep build steps in `package.json`, not in a dashboard. Repo-root variant: `cd monitor/frontend && npm ci && npm run build`, output `monitor/frontend/dist`.
+- `frontend/.node-version` pins Node 24 (Pages reads it from the root directory); the Dockerfile (`node:24-alpine`) and `monitor-release.yml` match. vite 8 needs `^20.19.0 || >=22.12.0`.
+- Each agent must allow the origin (`cors_allowed_origins` / `SBM_CORS_ORIGINS`) and be reachable over HTTPS (built-in TLS or a proxy/tunnel). Without `frontend/dist` the API runs alone.
+
+## Permissions (`docs/dev/monitor-permissions.md` is the contract)
+
+- Every account has one role (`users.role`); a role is a set of grants: `shell`, `ssh_terminal`, `files` (read/write), `connect` (`allow` list), `listen` (`public`, `ports`), `virt`. `admin` roles also manage accounts, roles and configuration. `config.toml` keeps only the machine side: `ssh_addr`, `fs.roots`, limits, and one `allow_insecure` (TLS or a loopback peer otherwise; legacy `terminal.allow_insecure` / `fs.allow_insecure` still count for their old grants).
+- `api/authz.rs` is the one place a request becomes a `Caller` (JWT → account → role); `Caller::check(grant, state, secure)` is the one question. A JWT for a deleted account is 401. Grants are re-checked at the moment of use, never trusted from the UI.
+- Password change: `users.password_changed_ms` moves, older panel tokens are refused, watch tokens deleted, `authz::end_account` closes sessions, tickets, relays and listeners.
+- `api/admin.rs` (`/me`, `/me/password`, `/users*`, `/roles*`): admin-only except `/me`; every change re-asks the admin's password through the login throttle; the last admin cannot be deleted or demoted (`accounts::Guarded`, in the statement itself); built-in roles keep their name and `admin` flag. Losing a grant ends what ran under it (`authz::revoke_lost`, `AppState.grants_changed` → `permission_revoked`).
+- Roles are in the DB (migration 010; 011 adds `virt` to roles with `shell`). `PUT /roles/{name}` keeps grants the body omits; clients send `virt` only to agents that list it (older `Grants` refuse unknown fields).
+- `db::bootstrap::ensure_roles` decides the built-ins once: a fresh install from `--init-permissions full|read` / `SBM_INIT_PERMISSIONS`; an upgrade from what the legacy keys (`full_access`, `listen_public`, `terminal.enabled`, `fs.enabled`) effectively granted (`Grants::from_legacy`, TODO remove). **Trap:** any legacy key in a fresh config (e.g. `[remote_access.fs] enabled = true`) makes it an upgrade and ignores `SBM_INIT_PERMISSIONS`; give a test agent `roots` only.
+- `tests/permissions_api.rs` holds the route × role matrix; tests seed accounts via `tests/common`. `tests/watch_token_scope.rs` lists routes with requests harmless under the panel login (`/power` excluded).
+
+## Endpoints
+
+### `POST /api/v1/exec`
+
+One command → `{exit_code, stdout, stderr, truncated, timed_out}`; in: `{cmd, stdin?, env?}` (`stdin` carries a sudo password, `env` avoids quoting). Not a terminal frame: a PTY is shared with the user's typing (`terminal.rs` rejects an `exec` frame, tested). **Timeout, output cap and request-body limit are `[remote_access.exec]`**: the operator's trade, never raised per request or per action; the body limit is passed to `configure_api` because ntex applies it before handlers. Work that must outlive it starts detached and is polled. `tests/exec_api.rs`.
+
+### Machine endpoints (`api/machine.rs`, issue #1623)
+
+Shared rules:
+- The command is built in Rust (`sbm_parser`, the app's text where one exists) and run through `api::exec::run`, so `[remote_access.exec]` bounds it.
+- `machine::gate` is the one place a grant is asked (`shell` unless stated) and a refusal recorded. Audit rows are `Kind::Machine`, subject the account, detail the feature and verb, never a password, value or output.
+- Script text runs via `machine::as_self` (`sh`, text on stdin) or `machine::as_root` (`sudo -S -p '' sh -c "$SBM_ROOT_SCRIPT"` with only the password on stdin, or `sudo -n`): the script never shares the password's stream. A rejected password is `sudo_rejected` (`sbm_parser::script::sudo_password_rejected`), not a status. A script carrying a secret uses `machine::as_root_private` (0600 file, only its path on the command line).
+- Outputs reach parsers as `CommandOutput` via `machine::command_output` (timeout and cap are failures with a reason).
+- `machine::FEATURES` is `features` in `/capabilities`; a panel offers a page or a terminal target only when listed (older agents 404 or ignore unknown fields).
+- Tests never perform the real action on the machine running them (`power`, `cron` save, firewall changes, user changes, benchmark runs).
+
+Per endpoint:
+- `/power`: the status script's `SbShutdown`/`SbReboot`/`SbSuspend` via `monitoring::local_script_command`. `tests/power_api.rs` checks refusals and records only.
+- `/process` (`sbm_parser::proc`, `PsView`): the script's `SbProcess` with ≥ 8 MiB output, kept in `AppState.process_sample` (reused within 2 s, baseline 30 s); a stop checks the PID's start identity, retries as root on `denied`.
+- `/services` (`sbm_parser::service`): systemd, procd, OpenRC; an action names a unit by its listing key, resolved against a listing read for that request, which also decides whether root is needed.
+- `/cron` (`sbm_parser::cron`): the agent account's crontab; an edit is one operation on one line by listing index, applied to the file re-read at write time via `crontab -`; a stale index is `unknownLine`. Audit has the schedule, never the command.
+- `/containers` (`sbm_parser::container`): Docker then Podman (a `docker` that is Podman is read as Podman); each part (containers, images, usage, logs) is one batch split by a fresh separator; an action answers with the refreshed listing (images for image actions). `ContainerAction` covers lifecycle, `remove_image`, `pull_image`, `prune_images`, `prune_system`, `run` (`run`'s args split by `parse_run_args`). Values are validated and used trimmed; a bad one is `400 {"error":"invalid_input","issue":<code>}` before the runtime is probed. `unused_tagged` is computed by the agent. No runtime access is `permission_denied`. A shell inside a container is the terminal `target` (`container_exec`). TODO: `DOCKER_HOST`, sudo path.
+- `/tmux` (`api/tmux.rs`, `sbm_parser::tmux`): sessions (`created`/`last_attached`/`activity` are epoch seconds or null; tmux ≥ 3.6 dropped the `*_string` variables), `available: false` when not installed (found by the agent's `FIND_COMMAND`, never named by the client), "no server running" is an empty list, a failed listing carries `error`. Attaching is the terminal `target` (`tmux`). Limitation: a tmux server first started from the panel lives in the agent's cgroup, so with systemd's default `KillMode=control-group` an agent restart ends it.
+- `/benchmark` (`sbm_parser::bench`): the agent owns the run: the `benchmark_run` row (migration 012) is written before the detached launcher starts and `start_poller` (from `cli::serve`) finishes it with or without a page. One run at a time is a partial unique index. Script `assets/yabs.b64` embedded (`tests/benchmark_asset.rs`). Linux only.
+- `/system-users` (`sbm_parser::users`): the machine's accounts (`/users` is the agent's). Linux only; a write is resolved against a fresh listing; root and the agent's own account are refused; a password write uses `as_root_private`.
+- `/firewall` (`sbm_parser::firewall`): ufw or firewalld, Linux only. `POST /firewall` reads (sudo password in the body) and reports what reaches each way in (the panel's connection unless `proxied`, and SSH). A change is one `UfwChange`/`FirewalldChange`: `/firewall/plan` returns the `Plan` and runs nothing; `/firewall/act` re-reads, re-plans and runs that (keep-open rules first when asked). A plan carries `plan_id` (a digest); a plan that asks runs only under the confirmed id, otherwise `confirm_required` with the new plan. The app uses the same `ufw_plan`/`firewalld_plan`.
+- `/snippets` (`sbm_parser::snippet`, migration 013): PUT replaces the library (refused per row `{error, index}`); `POST /snippets/plan` expands a script into steps and runs nothing; the panel sends an empty context, so `${host}`-style keys are `{error:"unanswerable", key}`. `shell`; audit names snippets only.
+- `/desktops` (migration 014, `connect`): routes validated by `sbm_parser::desktop`; no password stored (asked per session, given to noVNC only). VNC over `/stream/ws` (`RelayChannel` in `lib/desktop.svelte.ts`). RDP over `/rdp/ws` (`api/ws/rdcleanpath.rs`): the agent is the RDCleanPath proxy (ticket in `proxy_auth`, purpose `rdp`; `connect` + `allow` checked on resolved addresses; server certificate captured, not verified). **The RDP session, NLA credential included, is plaintext in the agent**; the panel says so. `tests/rdp_ws.rs`.
+- `/bmc` (`sbm_redfish`, migration 016): targets so an agent reaches neighbours' BMCs. See and power: `virt`; edit targets and `POST /bmc/probe`: admin. Password write-only (`has_password`; `null` keeps, by id). **No pinned certificate, no dial** (`require_pin`); one login per request; upstream failure is `502 {error:"bmc", failure}`, never 401. `GET /bmc/{id}` returns `intents` (`ResetRequest::build`). `tests/bmc_api.rs` (fake Redfish).
+- `/virt` (`sbm_virt`, `api/virt*.rs`): guests on PVE or libvirt in `sbm_virt::model` terms. `virt` to see and act, admin to configure and pin. Loads are POSTs (a libvirt sudo password goes in the body, never stored). PVE: one stored config (migration 017; `password`, `token_secret` write-only) and **one `sbm_virt::pve::Client` in `AppState.virt`** (tickets live 2 h; `POST /virt/pve/tfa` answers a waiting login); an unvouched certificate is `cert_unconfirmed` until `POST /virt/pve/cert` pins it. A host failure is 200 with `error`. Consoles are resolved before the socket opens: `POST /virt/console` mints a `Purpose::Virt` ticket (30 s, refused by `/ws-ticket`) and `/virt/console/ws` relays in `/stream/ws` framing; PVE tickets never reach the browser; a libvirt serial console answers the `virsh console` command for the panel terminal. Snapshots, storage/networks (`virt_resources.rs`; PVE asks the node which interfaces are live via `LIVE_NET_SCRIPT` so the operator's link is never edited), guests (`virt_guests.rs`), hardware and cloud-init (`virt_hardware.rs`, `revision` per read, stale = `conflict`), backups (`virt_backups.rs`, PVE only): each refused as its `Detail::*Refused`. `tests/virt_api.rs` (fake PVE over TLS).
+- `/backup` (migration 015, admin both ways): opaque blobs for the app's `MonitorBackupStorage` and the panel; the app encrypts first. `MAX_BYTES`, `MAX_BLOBS`; names `[A-Za-z0-9._-]`, no leading dot.
+
+### `GET/PUT /api/v1/custom-cmds`
+
+Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set the app writes over SSH and the status script runs. PUT replaces the whole ordered set (order is the file prefixes). **Writing needs admin and `shell`** (a file there runs on every extended cycle); reading is any account, with `editable`. Store: `monitoring::custom_cmds` (write-aside-and-rename, names never logged). Outputs ride in `/metrics` (`custom_cmds`, trailing newline kept); the dashboard card shows each command's first line, dropping one trailing line ending for display only.
+
+### `/api/v1/fs/*` (`files` grant, `mode` read or write; `fs::writes` decides)
+
+- **`[remote_access.fs] roots` is the boundary; no default.** Every path is canonicalised (symlinks followed, `..` refused) and then checked component-wise (`core/fs_roots.rs`), so a link out of a root is a refusal. Every refusal is the same 403, and a path outside is reported as absent. `roots = ["/"]` equals a shell and is warned about.
+- `GET /fs/roots` returns the roots (403 without the grant or with none, `not_configured`).
+- **The agent's own state is outside every root** (`fs_roots::Protected`, filled in `api::server::agent_state`): DB and journals, `jwt.secret`, first-start credentials, `config.toml` and backups, `.env` files, the TLS key, the custom-commands dir. Per file; hidden from listings; their directories cannot be renamed, removed or chmod-ed. `tests/fs_protected.rs`.
+- Writes stream to `<path>.sbm-part-<pid>-<n>` (hidden from listings) and rename, keeping the target's mode; a mode that cannot be carried over fails the write, and the staged copy is removed on every other way out, a dropped request included (`Staged`). `PUT /fs/write?if_version=<version>` (the editor) answers `409 {"error":"modified"}` when the file's `version` (signed nanosecond mtime + size, from `EntryView.version`; a listed link has none, since a write compares the file it resolves to, which `/fs/stat` describes) differs or the file is gone; uploads send none. The check runs after the upload under one lock (`REPLACE`) held through the rename and by `remove`/`rename`, so the agent's own writers cannot interleave; another process can still write in that window (POSIX has no rename-if-unchanged). `modified` stays seconds for the app.
+- Known limitation: resolve-then-use is two steps (a symlink swapped between them is followed); closing it needs per-component `openat`+`O_NOFOLLOW`, not portable. `tests/fs_roots.rs`, `tests/fs_write.rs`.
+
+### `/api/v1/terminal/ws`
+
+- The agent is an SSH **client** to the local sshd: a session has the SSH account's privileges; the panel password grants none. Binary frames are PTY bytes, text frames control JSON (`api/ws/terminal.rs`).
+- `auth: {"kind":"local"}` is the SSH-less path (a shell as the agent's user, needs `shell`). An optional `target` narrows it, built in Rust and run via `LocalShell::spawn_command` (`/bin/sh -c`, `cmd.exe /C` on Windows): `container` (`shell_command`), `iperf` (`sbm_parser::iperf`), `tmux` / `tmux_new` (tmux's plain client; xterm.js cannot decode control mode). Refused: a target with an SSH credential, unknown fields (`deny_unknown_fields`), invalid values (`invalid_input` + `issue`), no runtime / no tmux (`no_container_runtime`, `no_tmux`). No frame carries a command. Panels send a target only where `features` lists `container_exec`, `iperf` or `tmux`.
+- ConPTY sends `ESC[6n` and holds output until answered; Windows PTY tests use `answer_cursor_position_query`.
+
+### `/api/v1/stream/ws` and `/api/v1/listen/ws`
+
+- `stream`: a raw TCP connection under `connect` (networking without a shell). `connect.allow` is checked against every **resolved address**, and those addresses are dialled. Text frames: `{"type":"open","host","port"}` or `{"type":"accept","id"}`, then `ready`/`error`/`exit`; binary frames are bytes. One socket is one connection, no session store, no replay. The address stays out of the URL (access logs). `tests/stream_ws.rs`.
+- `listen` (`listen` grant): the agent binds (`listen` → `ready`), announces `incoming` with an id; the app claims it with a stream `accept`. Pending connections (`AppState.pending`) are claimable only by the listening account, expire after `PENDING_TTL`. Loopback only unless `public`; only `ports` when named. `tests/listen_ws.rs`.
+
+### WebSocket traps (locked by tests)
+
+- **Upgrades go through `api/ws/upgrade.rs`, not `ntex::web::ws::start`**: ntex caps incoming frames at 64 KiB with no setting; the copy takes 4 MiB (`MAX_FRAME`) with its own `WsSink`. TODO: back to ntex when configurable.
+- **Upgrade auth is a single-use ticket** (`api/ws/ticket.rs`): purpose-bound, ~30 s, burned even on a wrong secret (no headers on a browser handshake; no token in URLs).
+- **`is_secure_transport` treats loopback as secure** (same-host proxy / `cloudflared`); it never reads `X-Forwarded-Proto`.
+- **Terminal sessions outlive the socket** (`api/ws/session.rs`): the handle is a 256-bit bearer capability bound to the panel account, constant-time compared, memory-only; an `attach` takes over; detached sessions end after `detached_timeout_secs` (300). Capacity (`max_sessions`) is derived from memory.
+- **Replay is incremental**: the client reports bytes rendered; `ready.since` is the absolute position the following stream starts at, and `ready` precedes output.
+- **`shell` deliberately bypasses sshd** (no SSH auth, logging or 2FA), so `install.sh` runs the agent as an ordinary account (`systemctl --user`, or OpenRC `command_user`). `DELETE /api/v1/remote-access/full-access` (admin) takes `shell`, `connect`, `listen` from every role (`full_access_disabled`). `connect`/`listen` without `shell` is the meaningful restriction.
+- `tests/fake_sshd/` is an in-process SSH server for `tests/terminal_ws.rs`; `a_real_sshd_produces_a_working_shell` runs only with `SBM_E2E_TERMINAL_*`.
+
+## Configuration
+
+- `.env` (DB URL, JWT secret, host/port, TLS) and `config.toml` (`config.json` is migrated once by `Config::legacy`; `normalize()` drops the Go keys).
+- Sections are grouped by **what they act on** (`[remote_access.terminal]`, `[remote_access.fs]`, `[remote_access.exec]`, `[monitoring.extended.idle_pause]`); a key's level is a claim about its scope, and the resolved structs (`RemoteAccess` with `Terminal`/`Fs`/`Exec`) mirror it. Shared keys stay at the section level (`ssh_addr`, `allow_insecure`).
+- The flat pre-Aug-2026 layout is not read (serde ignores it, so old switches revert to off — a deliberate hard cut).
+- Capacities (sessions, output caps, body limits) derive from physical memory unless set; resolved values are logged at startup.
+- `core/config_file.rs` writes `config.toml` atomically with bounded backups; callers hold `AppState.config_write` across read-modify-write.
+
+### Editing it over the API (admin, `require_admin!`)
+
+Reads go to the file on disk, not `AppState.config` (a startup snapshot). **A PUT replaces all it names**; GETs and `POST /push/test` write nothing.
+- `GET/PUT /settings`: intervals, idle pause, rules, retention, CORS (no `jwt_secret`, `database_url`, `remote_access`). GET adds `live_fields` and `data_retention_defaults` (absent retention means no cleanup at all).
+- `GET/PUT /push`, `POST /push/test` (`api/push.rs`): channels and `push_rate`. **Credentials are write-only**: GET answers `null` at credential keys (`sc_key`, Bark `key`, iOS `token`, every header value); a PUT `null` keeps the stored value, matched by `from_index`; `null` elsewhere is refused. A webhook `url` is not a credential. An unknown `push_type` is withheld and unsavable. Channels and rules apply on restart (`applies_on_restart`; TODO live, like `LiveSettings`). `tests/push_api.rs` checks the response bytes.
+
+## Database
+
+Migrations in `migrations/`: metrics history, `users` (with `role`), `roles` (010), `watch_tokens` (`scope` = `read`), config storage, `access_log` (audit: `kind, action, result, detail`; never a credential; retained via `DataCleanupService::POLICY_TABLES`), `ssh_known_hosts` (the pinned local sshd key), and the feature tables named above.
+
+## Release
+
+- Shipped with `--profile release-monitor` (`release` + `lto = "fat"` + `codegen-units = 1`, profile-wide, so not on the shared `release`).
+  - **`monitor/Dockerfile` builds outside the workspace** (it rewrites the `sbm_parser` path), so it sees no workspace profile and passes the settings as `CARGO_PROFILE_RELEASE_*`; anything added to a workspace profile must be repeated there.
+  - `nix/package.nix` builds inside the workspace (`release` + `strip`, not `release-monitor`).
+  - `opt-level` stays 3 (`"s"` is 15.2 → 11.2 MB; not worth it for a process terminating TLS).
+- **One crypto implementation, `ring`**: `cargo tree -i aws-lc-sys` must be empty. reqwest uses `rustls-no-provider`; `monitoring::push::http_client` installs ring first (otherwise reqwest panics), held by the webhook tests in `monitoring::push`. Sizes (macOS arm64, stripped): 22.0 → 20.1 (no aws-lc) → 15.2 MB (profile).
+- Docker: `docker build -t server-box-monitor . && docker run -p 3770:3770 -v $(pwd)/data:/app/data server-box-monitor`.
+- `install.sh install` (systemd user service; `sudo` for OpenRC, still running as the invoking account; `--system` for root; `--permissions read`; `SBM_INSTALL_PKG=<path>` for an unreleased build).
+- Env: `SBM_HOST`, `SBM_PORT`, `SBM_TLS_CERT`, `SBM_TLS_KEY`, `SBM_CORS_ORIGINS`, `SBM_INIT_PERMISSIONS`, `DATABASE_URL`, `JWT_SECRET`, `RUST_LOG`.

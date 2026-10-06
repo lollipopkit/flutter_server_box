@@ -7,9 +7,11 @@ final class TmuxSessionInfo {
   final String name;
   final int windows;
   final bool attached;
-  final String? createdAt;
-  final String? lastAttached;
-  final String? activity;
+  /// Seconds since the epoch, as tmux printed them; null where tmux had no
+  /// value (a session nobody has attached to, one that never saw output).
+  final int? createdAt;
+  final int? lastAttached;
+  final int? activity;
 
   const TmuxSessionInfo({
     required this.id,

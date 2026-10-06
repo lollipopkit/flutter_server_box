@@ -6,7 +6,8 @@ final class TmuxWindowInfo {
   final String name;
   final bool active;
   final int panes;
-  final String? activity;
+  /// Seconds since the epoch; null for a window that never saw output.
+  final int? activity;
 
   const TmuxWindowInfo({
     required this.index,

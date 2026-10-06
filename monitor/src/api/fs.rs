@@ -40,6 +40,12 @@ use crate::core::permissions::Grant;
 /// small enough that a slow reader does not park megabytes in a buffer.
 const CHUNK: usize = 32 * 1024;
 
+/// Held from a write's version check to its rename, and by `remove` and
+/// `rename`: the steps in this agent that replace or take away a file. One
+/// lock for all paths because it is held for a stat and a rename, never for an
+/// upload, so contention is not worth a lock per path.
+static REPLACE: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 #[derive(Serialize)]
 struct EntryView {
     name: String,
@@ -56,6 +62,11 @@ struct EntryView {
     mode: Option<u32>,
     /// Where a link points, unresolved. Null for anything else.
     link_target: Option<String>,
+    /// An opaque token for this exact state of the file, for a write's
+    /// `if_version`: the modification time in nanoseconds plus the size. A
+    /// whole second is coarse enough that two writes inside one get past a
+    /// guard built on it. Null where the platform does not say.
+    version: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -64,6 +75,16 @@ pub struct PathQuery {
     /// Byte to start reading at, so an interrupted read can be resumed.
     #[serde(default)]
     offset: Option<u64>,
+}
+
+#[derive(Deserialize)]
+pub struct WriteQuery {
+    path: String,
+    /// The `version` the caller last saw for this path, as the listing or
+    /// `stat` reported it. Present only for an edit that read the file first: a
+    /// plain upload states nothing and overwrites.
+    #[serde(default)]
+    if_version: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -219,6 +240,9 @@ pub async fn list(
             // The agent's own state is left out rather than shown and refused:
             // a name that can be listed is a name somebody will try.
             Ok(Some(entry)) if roots.hides(&entry.path()) => {}
+            // A write in progress, not a file anyone made: it becomes the real
+            // name on rename, or is removed.
+            Ok(Some(entry)) if is_staging_name(&entry.file_name().to_string_lossy()) => {}
             Ok(Some(entry)) => entries.push(view_of(&entry.path()).await),
             Ok(None) => break,
             Err(e) => return Ok(failed(e)),
@@ -302,7 +326,7 @@ pub async fn read(
 
 pub async fn write(
     req: HttpRequest,
-    query: web::types::Query<PathQuery>,
+    query: web::types::Query<WriteQuery>,
     mut body: web::types::Payload,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
@@ -328,6 +352,10 @@ pub async fn write(
         Ok(file) => file,
         Err(e) => return Ok(failed(e)),
     };
+    // Removes the staged file on every way out but a successful rename,
+    // including the one no branch here sees: the client going away mid-upload
+    // drops this future, and the half-file must not stay in the directory.
+    let mut staged = Staged::new(staging.clone());
 
     let limit = state.remote_access.fs.max_write_bytes;
     let mut written: u64 = 0;
@@ -361,21 +389,49 @@ pub async fn write(
     drop(file);
 
     if let Some(res) = failure {
-        let _ = tokio::fs::remove_file(&staging).await;
         return Ok(res);
     }
+
+    // From here to the rename is one step for every writer in this agent, so
+    // two saves of one file cannot both pass the check below and then replace
+    // each other. A process outside the agent can still write between the
+    // check and the rename: POSIX has no rename-if-unchanged, so that is
+    // narrowed to this short window rather than closed.
+    let _replacing = REPLACE.lock().await;
+
+    // Optimistic concurrency for the panel's editor: a caller that read the
+    // file states the `version` it saw, and one whose file has moved on is
+    // answered 409 with nothing written. A file that is no longer there is the
+    // same answer — it was deleted after it was opened, and recreating it here
+    // would be the lost update this is meant to prevent.
+    //
+    // After root resolution and the grant check, so a caller that may not write
+    // here cannot use the answer to learn a file's state; after the upload, so
+    // the check is the last thing before the rename. The comparison is against
+    // the resolved target, the same file a listing resolves to (a listing uses
+    // `symlink_metadata`, so a link is described rather than followed; for the
+    // regular files an editor opens the two agree).
+    if let Some(expected) = query.if_version.as_deref()
+        && version_at(&path).await.as_deref() != Some(expected)
+    {
+        return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "modified" })));
+    }
+
     // The staged file was created with the process umask, and the rename
     // carries that mode onto the destination — so overwriting a 0600 file
-    // would quietly leave it 0644. Whatever was there keeps its permissions.
+    // would quietly leave it 0644. Whatever was there keeps its permissions,
+    // and a mode that cannot be carried over fails the write rather than
+    // replacing a restricted file with an open one.
     if let Ok(existing) = tokio::fs::metadata(&path).await
         && let Err(e) = tokio::fs::set_permissions(&staging, existing.permissions()).await
     {
         tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
-    }
-    if let Err(e) = tokio::fs::rename(&staging, &path).await {
-        let _ = tokio::fs::remove_file(&staging).await;
         return Ok(failed(e));
     }
+    if let Err(e) = tokio::fs::rename(&staging, &path).await {
+        return Ok(failed(e));
+    }
+    staged.keep();
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "bytes": written })))
 }
 
@@ -428,6 +484,9 @@ pub async fn remove(
         return Ok(denied(FsDenied::OutsideRoots));
     }
 
+    // Under the writers' lock, so a guarded write never checks a file this is
+    // halfway through removing.
+    let _replacing = REPLACE.lock().await;
     let meta = match tokio::fs::symlink_metadata(&path).await {
         Ok(meta) => meta,
         Err(e) => return Ok(failed(e)),
@@ -482,6 +541,8 @@ pub async fn rename(
     if roots.as_slice().iter().any(|root| root == &from) {
         return Ok(denied(FsDenied::OutsideRoots));
     }
+    // Under the writers' lock, like a write's own rename.
+    let _replacing = REPLACE.lock().await;
     match tokio::fs::rename(&from, &to).await {
         Ok(()) => Ok(HttpResponse::Ok().finish()),
         Err(e) => Ok(failed(e)),
@@ -548,6 +609,7 @@ async fn view_of(path: &Path) -> EntryView {
             modified: None,
             mode: None,
             link_target: None,
+            version: None,
         };
     };
 
@@ -581,7 +643,42 @@ async fn view_of(path: &Path) -> EntryView {
             .map(|d| d.as_secs() as i64),
         mode: mode_of(&meta),
         link_target,
+        // A link's own time and size are not what a write compares (it
+        // resolves the path and checks the file it lands on), so a token for
+        // the link could never match; and following it here could describe a
+        // file outside the roots. A client editing through a link asks
+        // `/fs/stat`, which resolves inside the roots first.
+        version: if meta.is_symlink() { None } else { version_of(&meta) },
     }
+}
+
+/// This exact state of a file, as an opaque token: modification time in
+/// nanoseconds since the epoch and the size. `None` where the platform does not
+/// report a time — the caller then has no guard rather than a wrong one.
+///
+/// Nanoseconds because a second is coarse enough for two writes to share one;
+/// the size is there so a change is visible even where the clock has no
+/// sub-second resolution.
+fn version_of(meta: &std::fs::Metadata) -> Option<String> {
+    Some(version_token(meta.modified().ok()?, meta.len()))
+}
+
+/// [`version_of`]'s token from its parts. A time before the epoch is a valid
+/// time (`touch -d 1960-01-01`) and gets a `-`, rather than no token and so no
+/// guard at all.
+fn version_token(modified: std::time::SystemTime, size: u64) -> String {
+    match modified.duration_since(std::time::UNIX_EPOCH) {
+        Ok(after) => format!("{}-{size}", after.as_nanos()),
+        Err(before) => format!("-{}-{size}", before.duration().as_nanos()),
+    }
+}
+
+/// [`version_of`] for a path, resolved. `None` when it cannot be stated — the
+/// file is not there, or the platform does not say — which the write's
+/// `if_version` check reads as "not what the caller saw".
+async fn version_at(path: &Path) -> Option<String> {
+    let meta = tokio::fs::metadata(path).await.ok()?;
+    version_of(&meta)
 }
 
 /// Paths crossing the HTTP boundary use `/` on every platform, matching the
@@ -618,6 +715,43 @@ fn mode_of(_meta: &std::fs::Metadata) -> Option<u32> {
     None
 }
 
+/// The marker [`staging_path`] puts in a name.
+const STAGING_MARK: &str = ".sbm-part-";
+
+/// Whether a name is a write's staged copy.
+fn is_staging_name(name: &str) -> bool {
+    name.contains(STAGING_MARK)
+}
+
+/// A staged file that is removed when this is dropped, unless [`Self::keep`]
+/// was called after it was renamed into place. A drop runs whichever way the
+/// write ends, cancellation included, which no explicit cleanup branch can
+/// promise.
+struct Staged {
+    path: PathBuf,
+    keep: bool,
+}
+
+impl Staged {
+    fn new(path: PathBuf) -> Self {
+        Self { path, keep: false }
+    }
+
+    fn keep(&mut self) {
+        self.keep = true;
+    }
+}
+
+impl Drop for Staged {
+    fn drop(&mut self) {
+        if !self.keep {
+            // Synchronous on purpose: a drop cannot await, and this is one
+            // unlink. After a successful rename the name is already gone.
+            let _ = std::fs::remove_file(&self.path);
+        }
+    }
+}
+
 /// Where a write parks its bytes until it can be renamed into place.
 ///
 /// The process id and a counter, so two writes to one path from two requests
@@ -627,6 +761,68 @@ fn staging_path(path: &Path) -> PathBuf {
     static SEQ: AtomicU64 = AtomicU64::new(0);
     let n = SEQ.fetch_add(1, Ordering::Relaxed);
     let mut name = path.as_os_str().to_os_string();
-    name.push(format!(".sbm-part-{}-{n}", std::process::id()));
+    name.push(format!("{STAGING_MARK}{}-{n}", std::process::id()));
     PathBuf::from(name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, UNIX_EPOCH};
+
+    #[test]
+    fn a_version_tells_both_sides_of_the_epoch_apart() {
+        // Microseconds, not nanoseconds: Windows keeps `SystemTime` in 100 ns
+        // ticks, so a few nanoseconds round to the epoch itself.
+        let after = version_token(UNIX_EPOCH + Duration::from_micros(5), 3);
+        let before = version_token(UNIX_EPOCH - Duration::from_micros(5), 3);
+        assert_eq!(after, "5000-3");
+        assert_eq!(before, "-5000-3");
+        assert_ne!(after, before);
+        assert_eq!(version_token(UNIX_EPOCH, 0), "0-0");
+    }
+
+    #[test]
+    fn a_staged_file_goes_unless_it_was_kept() {
+        let dir = tempfile::tempdir().unwrap();
+        let dropped = dir.path().join("a.sbm-part-1-1");
+        std::fs::write(&dropped, "half").unwrap();
+        drop(Staged::new(dropped.clone()));
+        assert!(!dropped.exists(), "a dropped write leaves no staged file");
+
+        let kept = dir.path().join("b.sbm-part-1-2");
+        std::fs::write(&kept, "whole").unwrap();
+        let mut staged = Staged::new(kept.clone());
+        staged.keep();
+        drop(staged);
+        assert!(kept.exists(), "a kept one is the renamed file's business");
+    }
+
+    /// A listed link carries no version: a write resolves the path and
+    /// compares the file it lands on, which the link's own metadata is not.
+    /// Its target, read through `/fs/stat`'s resolved path, has one.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_listed_link_has_no_version_and_its_target_does() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("note.txt");
+        std::fs::write(&target, "text").unwrap();
+        let link = dir.path().join("link.txt");
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+
+        let listed = view_of(&link).await;
+        assert_eq!(listed.kind, "link");
+        assert_eq!(listed.version, None);
+
+        let resolved = view_of(&std::fs::canonicalize(&link).unwrap()).await;
+        assert_eq!(resolved.version, version_at(&link).await);
+        assert!(resolved.version.is_some());
+    }
+
+    #[test]
+    fn a_staging_name_is_recognised() {
+        let staged = staging_path(Path::new("/srv/note.txt"));
+        assert!(is_staging_name(&staged.file_name().unwrap().to_string_lossy()));
+        assert!(!is_staging_name("note.txt"));
+    }
 }

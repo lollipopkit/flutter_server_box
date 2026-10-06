@@ -3,6 +3,7 @@
     ArrowUp,
     Download,
     File as FileIcon,
+    FilePenLine,
     Folder,
     FolderPlus,
     Link2,
@@ -12,6 +13,7 @@
     Upload,
   } from '@lucide/svelte'
   import { Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
+  import FileEditor from '../components/FileEditor.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { filesAccess, whyText } from '../lib/access'
@@ -34,6 +36,11 @@
   /// rather than offered and refused.
   const write = $derived(access.write)
 
+  /// 1 MiB, mirroring `Miscs.editorMaxSize` in the app
+  /// (`lib/data/res/misc.dart`). Nothing in Rust holds it: the agent does not
+  /// edit, so the limit is the panel's to keep.
+  const EDITOR_MAX_BYTES = 1024 * 1024
+
   let roots = $state<string[]>([])
   /// Null until the roots have been read, which is what decides where the page
   /// opens: there is no `/` to fall back on, because anything outside a root is
@@ -43,6 +50,17 @@
   let loading = $state(false)
   let error = $state('')
   let busy = $state('')
+
+  /// The file open in the editor, with its decoded text. Set only once the
+  /// read and the decode have succeeded, so the editor is never mounted over
+  /// a file it could not show.
+  let editing = $state<{
+    entry: FsEntry
+    path: string
+    text: string
+    /// Which machine opened it, so a save cannot land on another one.
+    serverId: string
+  } | null>(null)
 
   /// Which agent the answer being awaited belongs to.
   ///
@@ -118,6 +136,53 @@
     await act(entry.name, async () => {
       saveBlob(await api.fsRead(joinPath(cwd!, entry.name)), entry.name)
     })
+  }
+
+  /// Opens a file in the editor. The size the listing already carries decides
+  /// whether it is worth reading at all, and the text is read and decoded here
+  /// so a refusal never leaves an editor mounted over a file it cannot show.
+  async function edit(entry: FsEntry) {
+    if (!cwd) return
+    error = ''
+    if (entry.size !== null && entry.size > EDITOR_MAX_BYTES) {
+      error = $LL.filesEditorTooLarge({
+        file: entry.name,
+        size: fmtBytes(entry.size),
+        sizeMax: fmtBytes(EDITOR_MAX_BYTES),
+      })
+      return
+    }
+    const path = joinPath(cwd!, entry.name)
+    const serverId = servers.currentId
+    busy = entry.name
+    try {
+      const blob = await api.fsRead(path)
+      if (stale(serverId)) return
+      // The listing's size may be absent, and a file can grow between the
+      // listing and this read; the limit is the panel's, so it is checked
+      // against what was actually read too.
+      if (blob.size > EDITOR_MAX_BYTES) {
+        error = $LL.filesEditorTooLarge({
+          file: entry.name,
+          size: fmtBytes(blob.size),
+          sizeMax: fmtBytes(EDITOR_MAX_BYTES),
+        })
+        return
+      }
+      let text: string
+      try {
+        text = new TextDecoder('utf-8', { fatal: true }).decode(await blob.arrayBuffer())
+      } catch {
+        error = $LL.filesEditorNotText()
+        return
+      }
+      editing = { entry, path, text, serverId }
+    } catch (e) {
+      if (stale(serverId)) return
+      error = e instanceof Error ? e.message : String(e)
+    } finally {
+      busy = ''
+    }
   }
 
   let uploadInput = $state<HTMLInputElement | undefined>(undefined)
@@ -287,6 +352,11 @@
                   <Download class="w-4 h-4" />
                 </IconButton>
               {/if}
+              {#if entry.kind === 'file'}
+                <IconButton label={$LL.filesEdit()} onclick={() => edit(entry)}>
+                  <FilePenLine class="w-4 h-4" />
+                </IconButton>
+              {/if}
               {#if write}
                 <IconButton
                   label={$LL.filesRename()}
@@ -355,4 +425,18 @@
       </div>
     </div>
   </Modal>
+{/if}
+
+{#if editing}
+  <FileEditor
+    path={editing.path}
+    entry={editing.entry}
+    text={editing.text}
+    serverId={editing.serverId}
+    canWrite={write}
+    onclose={() => (editing = null)}
+    onsaved={() => {
+      if (cwd) void load(cwd)
+    }}
+  />
 {/if}

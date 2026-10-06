@@ -61,9 +61,12 @@ class TmuxSessionItem {
   final String name;
   final PlatformInt64 windows;
   final bool attached;
-  final String? created;
-  final String? lastAttached;
-  final String? activity;
+
+  /// Seconds since the epoch, as tmux prints them; `None` where tmux had no
+  /// value (never attached, never any output).
+  final PlatformInt64? created;
+  final PlatformInt64? lastAttached;
+  final PlatformInt64? activity;
 
   const TmuxSessionItem({
     required this.id,
@@ -127,7 +130,9 @@ class TmuxWindowItem {
   final String name;
   final bool active;
   final PlatformInt64 panes;
-  final String? activity;
+
+  /// Seconds since the epoch; `None` for a window that never saw output.
+  final PlatformInt64? activity;
 
   const TmuxWindowItem({
     required this.index,

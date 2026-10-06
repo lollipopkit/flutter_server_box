@@ -1032,6 +1032,75 @@ async fn an_iperf_target_with_an_ssh_credential_is_refused() {
     assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
 }
 
+/// A tmux session id that is not `$` and digits is refused before tmux is even
+/// looked for, with the issue the panel phrases.
+#[ntex::test]
+async fn an_invalid_tmux_session_id_is_refused_before_anything_spawns() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux","session":"$3;rm"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    let frame = next_control(&io, &codec).await;
+    assert_eq!(frame["code"], "invalid_input", "{frame}");
+    assert_eq!(frame["issue"], "invalid_session_id", "{frame}");
+    assert!(state.sessions.is_empty(), "nothing should have been registered");
+}
+
+/// A new session's name is checked too, and the refusal names which rule it
+/// broke: `:` is tmux's own session/window separator.
+#[ntex::test]
+async fn an_invalid_tmux_new_name_is_refused_before_anything_spawns() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux_new","name":"a:b"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    let frame = next_control(&io, &codec).await;
+    assert_eq!(frame["code"], "invalid_input", "{frame}");
+    assert_eq!(frame["issue"], "name_separator", "{frame}");
+    assert!(state.sessions.is_empty(), "nothing should have been registered");
+}
+
+/// A target runs as the agent's own user, so an SSH credential is refused for
+/// a tmux target exactly as for the other two.
+#[ntex::test]
+async fn a_tmux_target_with_an_ssh_credential_is_refused() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"tmux","session":"$1"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
+}
+
 /// Takes `shell` away from the admin role, as an admin editing it would.
 async fn take_shell(state: &AppState) {
     let mut grants = common::grants_of(&state.db, "admin").await;

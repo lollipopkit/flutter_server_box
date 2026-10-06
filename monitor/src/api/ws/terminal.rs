@@ -17,14 +17,16 @@
 //!
 //! `auth: {"kind":"local"}` starts one as the agent's own user, with no sshd.
 //! An optional `target` narrows it: a shell inside a container
-//! (`sbm_parser::container`), by the id its listing gave it, or an iperf
-//! client (`sbm_parser::iperf`), by the host and port a user typed. Both build
-//! their command here, and no frame can carry one. A target with an SSH
-//! credential is refused — that shell would run as the signed-in account, not
-//! as the agent's user these targets run as. Whether an agent understands a
-//! target is `container_exec` or `iperf` in `/capabilities`; an older agent
-//! would ignore the field and open a host shell, so the panel sends one only
-//! where it is listed.
+//! (`sbm_parser::container`), by the id its listing gave it; an iperf client
+//! (`sbm_parser::iperf`), by the host and port a user typed; or a tmux session
+//! (`sbm_parser::tmux`), by its `$` id or by a new session's name, attached
+//! with tmux's own UI since the panel's xterm.js cannot decode control mode the
+//! way the app's client does. All build their command here, and no frame can
+//! carry one. A target with an SSH credential is refused — that shell would run
+//! as the signed-in account, not as the agent's user these targets run as.
+//! Whether an agent understands a target is `container_exec`, `iperf` or `tmux`
+//! in `/capabilities`; an older agent would ignore the field and open a host
+//! shell, so the panel sends one only where it is listed.
 //!
 //! # Reconnecting
 //!
@@ -124,11 +126,12 @@ enum ClientMsg {
 
 /// Where a local shell runs, when it is not the agent's own login shell.
 ///
-/// One variant, and no variant carries a command: the command is built here
-/// from the id, so a client can name a container but never a command line. An
-/// unknown `kind` fails to parse and is refused — an agent that silently fell
-/// back to a host shell would leave the user believing they are inside a
-/// container. `deny_unknown_fields` closes the same hole for an extra field.
+/// No variant carries a command: the command is built here from the id, the
+/// host and port, or the session, so a client can name what to open but never a
+/// command line. An unknown `kind` fails to parse and is refused — an agent that
+/// silently fell back to a host shell would leave the user believing they are
+/// inside a container. `deny_unknown_fields` closes the same hole for an extra
+/// field.
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum TerminalTarget {
@@ -140,6 +143,13 @@ enum TerminalTarget {
     /// out of range is refused by `sbm_parser::iperf` — with a code the panel
     /// phrases — instead of failing to deserialize into a generic bad request.
     Iperf { host: String, port: u32 },
+    /// A tmux session, by its `$` id, attached with tmux's own UI.
+    ///
+    /// The panel's xterm.js cannot decode control mode, so this is the plain
+    /// client where the app's attach commands use `-CC`.
+    Tmux { session: String },
+    /// A tmux session attached, created when the name does not exist yet.
+    TmuxNew { name: String },
 }
 
 #[derive(Deserialize)]
@@ -623,6 +633,8 @@ async fn open_local(
         None => "shell".to_owned(),
         Some(TerminalTarget::Container { id }) => format!("container {id}"),
         Some(TerminalTarget::Iperf { host, port }) => format!("iperf {host}:{port}"),
+        Some(TerminalTarget::Tmux { session }) => format!("tmux {session}"),
+        Some(TerminalTarget::TmuxNew { name }) => format!("tmux new {name}"),
     };
 
     let started = match target {
@@ -684,6 +696,39 @@ async fn open_local(
                         issue.code(),
                     ));
                 }
+            }
+        }
+        Some(TerminalTarget::Tmux { session }) => {
+            // The id is checked before tmux is looked for, so a malformed one
+            // is refused as itself rather than as "tmux is not installed".
+            if let Err(issue) = sbm_parser::tmux::validate_session_id(&session) {
+                return tmux_refused(ctx, phase, "tmux", issue).await;
+            }
+            match find_tmux(&ctx.state.remote_access.exec).await {
+                Some(bin) => LocalShell::spawn_command(
+                    &term,
+                    cols,
+                    rows,
+                    &sbm_parser::tmux::attach_session_plain_command(&bin, &session),
+                ),
+                None => return no_tmux(ctx, phase).await,
+            }
+        }
+        Some(TerminalTarget::TmuxNew { name }) => {
+            // The trimmed value is what reaches the command, so the check and
+            // the command cannot disagree about what the name is.
+            let name = match sbm_parser::tmux::normalize_session_name(&name) {
+                Ok(name) => name,
+                Err(issue) => return tmux_refused(ctx, phase, "tmux new", issue).await,
+            };
+            match find_tmux(&ctx.state.remote_access.exec).await {
+                Some(bin) => LocalShell::spawn_command(
+                    &term,
+                    cols,
+                    rows,
+                    &sbm_parser::tmux::new_session_plain_command(&bin, &name),
+                ),
+                None => return no_tmux(ctx, phase).await,
             }
         }
     };
@@ -791,6 +836,54 @@ async fn open_local(
         .await;
 
     None
+}
+
+/// Locates tmux as `/api/v1/tmux` does, through the agent's own command. Never
+/// from the client: a binary path in a frame would be a way to run something
+/// else.
+async fn find_tmux(exec: &crate::api::exec::Limits) -> Option<String> {
+    let out = crate::api::exec::run(sbm_parser::tmux::FIND_COMMAND, None, None, exec)
+        .await
+        .ok()?;
+    sbm_parser::tmux::parse_find(&out.stdout, out.exit_code == Some(0))
+}
+
+/// Records a refused tmux value and answers with the code the panel phrases.
+/// Runs nothing.
+async fn tmux_refused(
+    ctx: &Rc<ConnCtx>,
+    phase: &Rc<RefCell<Phase>>,
+    what: &str,
+    issue: sbm_parser::tmux::TmuxError,
+) -> Option<Message> {
+    Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
+        .subject(&ctx.subject)
+        .remote_ip(ctx.remote_ip.clone())
+        .detail(format!("{what}: {}", issue.code()))
+        .record(&ctx.state.db)
+        .await;
+    reset_opening(phase);
+    Some(error_frame_issue(
+        "invalid_input",
+        &issue.to_string(),
+        issue.code(),
+    ))
+}
+
+/// tmux is not installed on the machine, which is its own code rather than a
+/// generic failure: the remedy is on the machine, not in the panel.
+async fn no_tmux(ctx: &Rc<ConnCtx>, phase: &Rc<RefCell<Phase>>) -> Option<Message> {
+    Event::new(Kind::Terminal, Action::Open, Outcome::Error)
+        .subject(&ctx.subject)
+        .remote_ip(ctx.remote_ip.clone())
+        .detail("tmux: not installed")
+        .record(&ctx.state.db)
+        .await;
+    reset_opening(phase);
+    Some(error_frame(
+        "no_tmux",
+        "This machine has no tmux to attach to",
+    ))
 }
 
 /// The account an SSH-less shell runs as, for the audit log.
@@ -1553,6 +1646,31 @@ mod tests {
         // command builder.
         assert!(serde_json::from_str::<ClientMsg>(
             r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":-1}}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn an_open_target_can_name_a_tmux_session() {
+        let ClientMsg::Open { target, .. } = parse(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux","session":"$3"}}"#,
+        ) else {
+            panic!("expected open");
+        };
+        assert!(matches!(target, Some(TerminalTarget::Tmux { session }) if session == "$3"));
+
+        // A new session is its own kind, since `-A` attaches to an existing
+        // one rather than failing.
+        let ClientMsg::Open { target, .. } = parse(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux_new","name":"work"}}"#,
+        ) else {
+            panic!("expected open");
+        };
+        assert!(matches!(target, Some(TerminalTarget::TmuxNew { name }) if name == "work"));
+
+        // The same rule as the other targets: no free-form command.
+        assert!(serde_json::from_str::<ClientMsg>(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux","session":"$3","cmd":"rm -rf /"}}"#
         )
         .is_err());
     }

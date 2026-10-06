@@ -34,14 +34,16 @@ fn discovery_commands_force_utf8_and_shell_generated_tabs() {
 
 #[test]
 fn sessions_parse_the_escaped_format() {
-    let listing = parse_sessions("$0\tmain\\|with:colon\t3\t1\t2024-01-01\t2024-01-02\tactivity\n$1\tunicode\\344\\275\\240\t1\t0\n");
+    let listing = parse_sessions("$0\tmain\\|with:colon\t3\t1\t1717200000\t1717286400\t1717372800\n$1\tunicode\\344\\275\\240\t1\t0\n");
     assert_eq!(listing.unreadable, 0);
     let s = &listing.sessions[0];
     assert_eq!((s.id.as_str(), s.name.as_str(), s.windows, s.attached), ("$0", "main|with:colon", 3, true));
-    assert_eq!(s.created.as_deref(), Some("2024-01-01"));
-    assert_eq!(s.activity.as_deref(), Some("activity"));
+    assert_eq!(s.created, Some(1717200000));
+    assert_eq!(s.activity, Some(1717372800));
     assert_eq!(listing.sessions[1].name, "unicode你");
     assert!(!listing.sessions[1].attached);
+    // No time fields at all in that line.
+    assert_eq!(listing.sessions[1].created, None);
 }
 
 #[test]
@@ -56,9 +58,11 @@ fn malformed_sessions_are_counted_not_read() {
 
 #[test]
 fn a_window_name_may_contain_the_old_separator() {
-    let windows = parse_windows("2\tvim\\|logs\t1\t3\tnow\n0\tsh\t0\t\t\n");
+    let windows = parse_windows("2\tvim\\|logs\t1\t3\t1717372800\n0\tsh\t0\t\t\n");
     assert_eq!((windows[0].index, windows[0].name.as_str(), windows[0].active, windows[0].panes), (2, "vim|logs", true, 3));
+    assert_eq!(windows[0].activity, Some(1717372800));
     assert_eq!(windows[1].panes, 1);
+    assert_eq!(windows[1].activity, None);
     assert!(parse_windows("x\tname").is_empty());
 }
 

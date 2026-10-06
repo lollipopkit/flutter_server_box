@@ -12,9 +12,11 @@ pub struct TmuxSessionItem {
     pub name: String,
     pub windows: i64,
     pub attached: bool,
-    pub created: Option<String>,
-    pub last_attached: Option<String>,
-    pub activity: Option<String>,
+    /// Seconds since the epoch, as tmux prints them; `None` where tmux had no
+    /// value (never attached, never any output).
+    pub created: Option<i64>,
+    pub last_attached: Option<i64>,
+    pub activity: Option<i64>,
 }
 
 pub struct TmuxWindowItem {
@@ -22,7 +24,8 @@ pub struct TmuxWindowItem {
     pub name: String,
     pub active: bool,
     pub panes: i64,
-    pub activity: Option<String>,
+    /// Seconds since the epoch; `None` for a window that never saw output.
+    pub activity: Option<i64>,
 }
 
 pub struct TmuxSessionListingItem {

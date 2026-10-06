@@ -516,6 +516,54 @@ describe('TerminalSession', () => {
     }
   })
 
+  it('an explicit open forgets a stored session instead of rejoining it', async () => {
+    // A dropped session leaves a handle behind — that is what Resume is for.
+    // Attaching to it here would show the old shell rather than the tmux
+    // session that was asked for.
+    window.sessionStorage.setItem(
+      'terminal.session',
+      JSON.stringify({ handle: 'old.handle', rendered: 7 }),
+    )
+    const session = new TerminalSession()
+    expect(session.resumable).toBe(true)
+
+    await session.start(renderer, '', { kind: 'local' }, { kind: 'tmux', session: '$1' })
+    const socket = FakeSocket.latest()
+    socket.onopen?.()
+
+    expect(socket.sent[0]).toMatchObject({
+      type: 'open',
+      auth: { kind: 'local' },
+      target: { kind: 'tmux', session: '$1' },
+    })
+    expect(socket.sent[0]).not.toHaveProperty('session')
+
+    // And the new session's handle takes the old one's place once the agent
+    // answers, so a reload rejoins this one.
+    socket.control({ type: 'ready', session: 'tmux.handle', since: 0 })
+    session.flush()
+    const stored = JSON.parse(window.sessionStorage.getItem('terminal.session')!)
+    expect(stored.handle).toBe('tmux.handle')
+  })
+
+  it('resume still attaches to the stored session', async () => {
+    window.sessionStorage.setItem(
+      'terminal.session',
+      JSON.stringify({ handle: 'abc.def', rendered: 5 }),
+    )
+    const session = new TerminalSession()
+
+    // No credential: this is Resume, the way back to the dropped shell.
+    await session.start(renderer, '', null)
+    FakeSocket.latest().onopen?.()
+
+    expect(FakeSocket.latest().sent[0]).toMatchObject({
+      type: 'attach',
+      session: 'abc.def',
+      since: 5,
+    })
+  })
+
   it('never writes the handle to localStorage', async () => {
     const { session } = await connected(renderer)
     session.flush()
