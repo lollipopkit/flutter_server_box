@@ -40,6 +40,12 @@ use crate::core::permissions::Grant;
 /// small enough that a slow reader does not park megabytes in a buffer.
 const CHUNK: usize = 32 * 1024;
 
+/// Held from a write's version check to its rename, and by `remove` and
+/// `rename`: the steps in this agent that replace or take away a file. One
+/// lock for all paths because it is held for a stat and a rename, never for an
+/// upload, so contention is not worth a lock per path.
+static REPLACE: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 #[derive(Serialize)]
 struct EntryView {
     name: String,
@@ -329,26 +335,6 @@ pub async fn write(
         Err(e) => return Ok(denied(e)),
     };
 
-    // Optimistic concurrency for the panel's editor: a caller that read the
-    // file states the `version` it saw, and one whose file has moved on is
-    // answered 409 with nothing written. A file that is no longer there is the
-    // same answer — it was deleted after it was opened, and recreating it here
-    // would be the lost update this is meant to prevent.
-    //
-    // After root resolution and the grant check, so a caller that may not write
-    // here cannot use the answer to learn a file's state. The comparison is
-    // against the resolved target, the same file a listing resolves to (a
-    // listing uses `symlink_metadata`, so a link is described rather than
-    // followed; for the regular files an editor opens the two agree). It runs
-    // *before* the staged write below; a write that lands between this stat and
-    // the rename is still overwritten, which closing would take a lock the
-    // roots do not have.
-    if let Some(expected) = query.if_version.as_deref()
-        && version_at(&path).await.as_deref() != Some(expected)
-    {
-        return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "modified" })));
-    }
-
     // Beside the destination, then renamed: the same contract the app's own
     // backends keep, so a write that dies halfway leaves no half-file under
     // the name something else is about to open. A rename within one directory
@@ -399,6 +385,33 @@ pub async fn write(
         let _ = tokio::fs::remove_file(&staging).await;
         return Ok(res);
     }
+
+    // From here to the rename is one step for every writer in this agent, so
+    // two saves of one file cannot both pass the check below and then replace
+    // each other. A process outside the agent can still write between the
+    // check and the rename: POSIX has no rename-if-unchanged, so that is
+    // narrowed to this short window rather than closed.
+    let _replacing = REPLACE.lock().await;
+
+    // Optimistic concurrency for the panel's editor: a caller that read the
+    // file states the `version` it saw, and one whose file has moved on is
+    // answered 409 with nothing written. A file that is no longer there is the
+    // same answer — it was deleted after it was opened, and recreating it here
+    // would be the lost update this is meant to prevent.
+    //
+    // After root resolution and the grant check, so a caller that may not write
+    // here cannot use the answer to learn a file's state; after the upload, so
+    // the check is the last thing before the rename. The comparison is against
+    // the resolved target, the same file a listing resolves to (a listing uses
+    // `symlink_metadata`, so a link is described rather than followed; for the
+    // regular files an editor opens the two agree).
+    if let Some(expected) = query.if_version.as_deref()
+        && version_at(&path).await.as_deref() != Some(expected)
+    {
+        let _ = tokio::fs::remove_file(&staging).await;
+        return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "modified" })));
+    }
+
     // The staged file was created with the process umask, and the rename
     // carries that mode onto the destination — so overwriting a 0600 file
     // would quietly leave it 0644. Whatever was there keeps its permissions.
@@ -463,6 +476,9 @@ pub async fn remove(
         return Ok(denied(FsDenied::OutsideRoots));
     }
 
+    // Under the writers' lock, so a guarded write never checks a file this is
+    // halfway through removing.
+    let _replacing = REPLACE.lock().await;
     let meta = match tokio::fs::symlink_metadata(&path).await {
         Ok(meta) => meta,
         Err(e) => return Ok(failed(e)),
@@ -517,6 +533,8 @@ pub async fn rename(
     if roots.as_slice().iter().any(|root| root == &from) {
         return Ok(denied(FsDenied::OutsideRoots));
     }
+    // Under the writers' lock, like a write's own rename.
+    let _replacing = REPLACE.lock().await;
     match tokio::fs::rename(&from, &to).await {
         Ok(()) => Ok(HttpResponse::Ok().finish()),
         Err(e) => Ok(failed(e)),
@@ -629,13 +647,17 @@ async fn view_of(path: &Path) -> EntryView {
 /// the size is there so a change is visible even where the clock has no
 /// sub-second resolution.
 fn version_of(meta: &std::fs::Metadata) -> Option<String> {
-    let nanos = meta
-        .modified()
-        .ok()?
-        .duration_since(std::time::UNIX_EPOCH)
-        .ok()?
-        .as_nanos();
-    Some(format!("{nanos}-{}", meta.len()))
+    Some(version_token(meta.modified().ok()?, meta.len()))
+}
+
+/// [`version_of`]'s token from its parts. A time before the epoch is a valid
+/// time (`touch -d 1960-01-01`) and gets a `-`, rather than no token and so no
+/// guard at all.
+fn version_token(modified: std::time::SystemTime, size: u64) -> String {
+    match modified.duration_since(std::time::UNIX_EPOCH) {
+        Ok(after) => format!("{}-{size}", after.as_nanos()),
+        Err(before) => format!("-{}-{size}", before.duration().as_nanos()),
+    }
 }
 
 /// [`version_of`] for a path, resolved. `None` when it cannot be stated — the
@@ -691,4 +713,20 @@ fn staging_path(path: &Path) -> PathBuf {
     let mut name = path.as_os_str().to_os_string();
     name.push(format!(".sbm-part-{}-{n}", std::process::id()));
     PathBuf::from(name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, UNIX_EPOCH};
+
+    #[test]
+    fn a_version_tells_both_sides_of_the_epoch_apart() {
+        let after = version_token(UNIX_EPOCH + Duration::from_nanos(5), 3);
+        let before = version_token(UNIX_EPOCH - Duration::from_nanos(5), 3);
+        assert_eq!(after, "5-3");
+        assert_eq!(before, "-5-3");
+        assert_ne!(after, before);
+        assert_eq!(version_token(UNIX_EPOCH, 0), "0-0");
+    }
 }

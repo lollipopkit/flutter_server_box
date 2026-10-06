@@ -216,3 +216,29 @@ async fn the_version_changes_when_the_file_does() {
     let (status, _) = write(&srv, path.to_str().unwrap(), Some(&second), "one!!").await;
     assert_eq!(status, 200);
 }
+
+/// Two saves of one file carrying the same version: exactly one lands. The
+/// check and the rename are one step for the agent's writers, so the second
+/// sees the first's file and is refused instead of replacing it. Repeated,
+/// since without that step the two interleave only some of the time.
+#[ntex::test]
+async fn two_saves_of_one_version_land_once() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("note.txt");
+    std::fs::write(&path, "start").unwrap();
+    let root = std::fs::canonicalize(dir.path()).unwrap();
+    let srv = server(&root.to_string_lossy()).await;
+    let p = path.to_str().unwrap();
+
+    for round in 0..20 {
+        let version = version_of(&srv, p).await;
+        let (first, second) = (format!("first {round}"), format!("second write {round}"));
+        let (a, b) = futures::join!(
+            write(&srv, p, Some(&version), &first),
+            write(&srv, p, Some(&version), &second),
+        );
+        let mut statuses = [a.0, b.0];
+        statuses.sort_unstable();
+        assert_eq!(statuses, [200, 409], "round {round}: {a:?} {b:?}");
+    }
+}
