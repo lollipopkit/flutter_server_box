@@ -1476,6 +1476,7 @@ const pt = {
 	settingsAccentNote: 'A primeira cor é a cor de destaque padrão.',
 	settingsWallpaperTooLarge: 'Essa imagem tem mais de 8 MiB.',
 	settingsWallpaperNotImage: 'O arquivo não é uma imagem PNG, JPEG ou WebP.',
+	snippetNoTerminal: 'Todas as janelas de terminal estão em uso: feche uma para executar um trecho.',
 } satisfies Translation
 
 export default pt

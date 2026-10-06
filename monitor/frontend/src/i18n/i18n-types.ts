@@ -6089,6 +6089,10 @@ type RootTranslation = {
 	 * T​h​a​t​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​a​ ​P​N​G​,​ ​J​P​E​G​ ​o​r​ ​W​e​b​P​ ​i​m​a​g​e​.
 	 */
 	settingsWallpaperNotImage: string
+	/**
+	 * E​v​e​r​y​ ​t​e​r​m​i​n​a​l​ ​w​i​n​d​o​w​ ​i​s​ ​i​n​ ​u​s​e​:​ ​c​l​o​s​e​ ​o​n​e​ ​t​o​ ​r​u​n​ ​a​ ​s​n​i​p​p​e​t​.
+	 */
+	snippetNoTerminal: string
 }
 
 export type TranslationFunctions = {
@@ -11996,6 +12000,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * That file is not a PNG, JPEG or WebP image.
 	 */
 	settingsWallpaperNotImage: () => LocalizedString
+	/**
+	 * Every terminal window is in use: close one to run a snippet.
+	 */
+	snippetNoTerminal: () => LocalizedString
 }
 
 export type Formatters = {}

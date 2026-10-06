@@ -26,7 +26,8 @@ const login: Snippet = { id: 'b', name: 'Login', script: 'ssh ${user}@${host}', 
 describe('Snippets page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    snippetRun.clear()
+    snippetRun.waiting = null
+    open.mockReturnValue('term-1')
     getSnippets.mockResolvedValue({ snippets: [disk, login] })
   })
 
@@ -38,9 +39,23 @@ describe('Snippets page', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
 
-    await waitFor(() => expect(open).toHaveBeenCalledWith('terminal'))
+    await waitFor(() => expect(open).toHaveBeenCalledWith('terminal', { newWindow: true }))
     expect(planSnippet).toHaveBeenCalledWith('df -h')
-    expect(snippetRun.waiting).toEqual({ name: 'Disk', steps })
+    // For the window that Run opened, and no other terminal.
+    expect(snippetRun.waiting).toEqual({ name: 'Disk', steps, window: 'term-1' })
+    expect(snippetRun.for('another')).toBeNull()
+  })
+
+  it('queues nothing when no terminal window can be opened', async () => {
+    planSnippet.mockResolvedValue({ steps: [{ type: 'text' as const, text: 'df -h' }] })
+    open.mockReturnValue(null)
+    render(Snippets)
+
+    await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
+    await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
+
+    expect(await screen.findByText(/close one to run a snippet/)).toBeInTheDocument()
+    expect(snippetRun.waiting).toBeNull()
   })
 
   it('drops a plan that answers after the server was switched', async () => {

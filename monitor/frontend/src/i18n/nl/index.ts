@@ -1476,6 +1476,7 @@ const nl = {
 	settingsAccentNote: 'De eerste kleur is de standaard accentkleur.',
 	settingsWallpaperTooLarge: 'Die afbeelding is groter dan 8 MiB.',
 	settingsWallpaperNotImage: 'Dit bestand is geen PNG-, JPEG- of WebP-afbeelding.',
+	snippetNoTerminal: 'Alle terminalvensters zijn in gebruik: sluit er een om een snippet uit te voeren.',
 } satisfies Translation
 
 export default nl

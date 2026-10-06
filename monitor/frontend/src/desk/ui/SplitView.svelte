@@ -16,29 +16,51 @@
 
   const { sidebar, children, width = 14 }: Props = $props()
   let open = $state(false)
+  /// The container's width, which decides whether the sidebar folds (`@3xl`
+  /// is 48rem); folded and closed, it is `inert` so the keyboard does not
+  /// reach rows nobody can see.
+  let folded = $state(false)
+  let root = $state<HTMLDivElement | null>(null)
+  $effect(() => {
+    // Absent outside a browser (tests), where nothing folds.
+    if (!root || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([e]) => (folded = e.contentRect.width < 768))
+    observer.observe(root)
+    return () => observer.disconnect()
+  })
 </script>
 
-<div class="relative flex h-full min-h-0">
+<div class="relative flex h-full min-h-0" bind:this={root}>
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
   <aside
     class="desk-app-sidebar absolute inset-y-0 left-0 z-20 overflow-y-auto p-2 transition-transform @3xl:static @3xl:translate-x-0"
     class:-translate-x-full={!open}
     style:width="{width}rem"
     aria-label={$LL.deskSidebar()}
+    inert={folded && !open}
+    onclick={(e) => {
+      // A choice made in the folded sidebar is a reason to fold it again.
+      if (folded && (e.target as HTMLElement).closest('button')) open = false
+    }}
   >
     {@render sidebar()}
   </aside>
   {#if open}
     <button class="absolute inset-0 z-10 bg-black/10 @3xl:hidden" aria-label={$LL.deskSidebar()} onclick={() => (open = false)}></button>
   {/if}
-  <div class="min-w-0 flex-1 overflow-auto">
+  <!-- A column: the fold button keeps its line, the content scrolls on its
+       own below it, so a full-height content never scrolls twice. -->
+  <div class="flex min-w-0 flex-1 flex-col">
     <button
-      class="m-2 mb-0 grid h-7 w-7 place-items-center rounded-md text-muted-fg hover:bg-soft @3xl:hidden"
+      class="m-2 mb-0 grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-fg hover:bg-soft @3xl:hidden"
       aria-label={$LL.deskSidebar()}
       aria-expanded={open}
       onclick={() => (open = !open)}
     >
       <PanelLeft class="h-4 w-4" />
     </button>
-    {@render children()}
+    <div class="min-h-0 flex-1 overflow-auto">
+      {@render children()}
+    </div>
   </div>
 </div>

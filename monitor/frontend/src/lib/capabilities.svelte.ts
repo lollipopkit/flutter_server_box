@@ -23,6 +23,18 @@ class CapabilitiesStore {
     }
   }
 
+  /// Reads them again, keeping the cached answer until the new one arrives —
+  /// what is drawn from them (the dock, an app's actions) does not blink.
+  async refresh(id: string) {
+    const entry = servers.list.find((s) => s.id === id)
+    if (!entry?.token) return
+    try {
+      this.byServer[id] = await getCapabilitiesFor(entry)
+    } catch {
+      // The cached answer stands.
+    }
+  }
+
   /// Drops a cached entry, e.g. after logout/URL change invalidates it
   clear(id: string) {
     delete this.byServer[id]

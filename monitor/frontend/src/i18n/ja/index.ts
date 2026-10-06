@@ -1476,6 +1476,7 @@ const ja = {
 	settingsWallpaperTooLarge: '画像が 8 MiB を超えています。',
 	systemUsersGroupRegular: '通常アカウント',
 	systemUsersGroupSystem: 'システムアカウント',
+	snippetNoTerminal: 'ターミナルウィンドウが上限に達しています。1つ閉じてからスニペットを実行してください。',
 } satisfies Translation
 
 export default ja

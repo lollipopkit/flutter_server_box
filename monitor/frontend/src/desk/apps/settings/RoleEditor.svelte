@@ -55,7 +55,7 @@
 {/snippet}
 
 <Modal {open} title={existing ? $LL.editRole() : $LL.addRole()} {onclose} class="max-w-lg">
-  <form class="space-y-4 max-h-[70vh] overflow-y-auto" onsubmit={save}>
+  <form class="space-y-4" onsubmit={save}>
     <div class="space-y-1">
       <span class="text-sm text-muted-fg">{$LL.roleName()}</span>
       <Input bind:value={d.name} disabled={existing} placeholder="desktop" />

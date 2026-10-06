@@ -1476,6 +1476,7 @@ const ko = {
 	settingsWallpaperTooLarge: '이미지가 8 MiB보다 큽니다.',
 	systemUsersGroupRegular: '일반 계정',
 	systemUsersGroupSystem: '시스템 계정',
+	snippetNoTerminal: '터미널 창이 최대 개수입니다. 하나를 닫은 뒤 스니펫을 실행하세요.',
 } satisfies Translation
 
 export default ko

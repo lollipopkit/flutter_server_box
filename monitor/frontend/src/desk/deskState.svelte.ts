@@ -182,8 +182,9 @@ export interface WindowHandle {
   /// Replaces the app's title in the title bar, the dock menu and Spotlight.
   setTitle(title: string | null): void
   close(): void
-  /// Opens another app (or another window of one) on this desk.
-  open(appId: string, options?: OpenOptions): void
+  /// Opens another app (or another window of one) on this desk. Answers the
+  /// window's id, or null when the app is not available or at its limit.
+  open(appId: string, options?: OpenOptions): string | null
   /// Puts an icon on the desk that opens [path] with this window's app.
   addPathIcon(path: string, label: string): void
   readonly active: boolean
@@ -198,7 +199,7 @@ export function provideWindow(desk: Desk, id: string) {
     setAppState: (state) => desk.windows.setAppState(id, state),
     setTitle: (title) => desk.windows.setTitle(id, title),
     close: () => desk.windows.close(id),
-    open: (appId, options) => void desk.open(appId, options),
+    open: (appId, options) => desk.open(appId, options),
     addPathIcon: (path, label) => {
       const appId = desk.windows.get(id)?.appId
       if (!appId) return
@@ -221,7 +222,7 @@ export function useWindow(): WindowHandle {
       setAppState() {},
       setTitle() {},
       close() {},
-      open() {},
+      open: () => null,
       addPathIcon() {},
       active: true,
     }

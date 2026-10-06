@@ -147,4 +147,14 @@ describe('settings app', () => {
     // showing a panel with nothing in it.
     expect(screen.getByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
   })
+
+  it('offers no Access section where the agent does not say who is asking', () => {
+    const { me: _me, ...withoutMe } = caps(true) as unknown as Record<string, unknown>
+    void _me
+    capabilitiesStore.byServer = { local: withoutMe as unknown as Capabilities }
+    const { desk, id } = deskWith(null)
+    render(SettingsWindowHarness, { desk, id })
+
+    expect(screen.queryByRole('button', { name: /^access$/i })).toBeNull()
+  })
 })

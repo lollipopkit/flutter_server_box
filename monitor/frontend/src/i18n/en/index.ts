@@ -1477,6 +1477,7 @@ const en = {
 	settingsAccentNote: 'The first colour is the default accent.',
 	settingsWallpaperTooLarge: 'That image is larger than 8 MiB.',
 	settingsWallpaperNotImage: 'That file is not a PNG, JPEG or WebP image.',
+	snippetNoTerminal: 'Every terminal window is in use: close one to run a snippet.',
 } satisfies BaseTranslation
 
 export default en

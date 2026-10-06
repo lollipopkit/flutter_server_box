@@ -151,9 +151,15 @@
     try {
       const plan = await api.planSnippet(snippet.script)
       if (stale(serverId)) return
-      snippetRun.queue(snippet.name, plan.steps)
+      // A terminal of its own: the script goes to the shell this opens and
+      // to no other terminal already on the desk.
+      const terminal = win.open('terminal', { newWindow: true })
+      if (!terminal) {
+        runError = $LL.snippetNoTerminal()
+        return
+      }
+      snippetRun.queue(snippet.name, plan.steps, terminal)
       opened = null
-      win.open('terminal')
     } catch (e) {
       if (stale(serverId)) return
       runError = snippetPlanRefusalText(e)

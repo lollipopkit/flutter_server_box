@@ -190,12 +190,13 @@
 
   let detail = $state<DetailKind | null>(null)
 
-  /// Reads everything again now rather than at the next poll.
+  /// Reads everything again now rather than at the next poll, the figures on
+  /// screen staying until the new ones arrive; the capabilities too, which a
+  /// reload of the old page fetched again.
   function refresh() {
-    metrics.reset()
     metrics.start()
-    historyPoller.reset()
     historyPoller.start()
+    void capabilitiesStore.refresh(servers.currentId)
   }
 
   // Cards derive from numeric metrics (uniform layout: one big figure plus a

@@ -1476,6 +1476,7 @@ const zh_TW = {
 	settingsWallpaperTooLarge: '圖片大於 8 MiB。',
 	systemUsersGroupRegular: '一般帳號',
 	systemUsersGroupSystem: '系統帳號',
+	snippetNoTerminal: '終端視窗已達上限:關閉一個後再執行片段。',
 } satisfies Translation
 
 export default zh_TW

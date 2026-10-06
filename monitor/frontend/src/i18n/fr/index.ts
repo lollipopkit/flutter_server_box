@@ -1476,6 +1476,7 @@ const fr = {
 	settingsAccentNote: 'La première couleur est celle d’accentuation par défaut.',
 	settingsWallpaperTooLarge: 'Cette image dépasse 8 Mio.',
 	settingsWallpaperNotImage: 'Ce fichier n’est pas une image PNG, JPEG ou WebP.',
+	snippetNoTerminal: 'Toutes les fenêtres de terminal sont utilisées : fermez-en une pour exécuter un extrait.',
 } satisfies Translation
 
 export default fr

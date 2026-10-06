@@ -1476,6 +1476,7 @@ const uk = {
 	settingsWallpaperTooLarge: 'Зображення більше за 8 МіБ.',
 	systemUsersGroupRegular: 'Звичайні облікові записи',
 	systemUsersGroupSystem: 'Системні облікові записи',
+	snippetNoTerminal: 'Усі вікна термінала зайняті: закрийте одне, щоб запустити сніпет.',
 } satisfies Translation
 
 export default uk

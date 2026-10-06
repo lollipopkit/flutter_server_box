@@ -1476,6 +1476,7 @@ const id = {
 	settingsAccentNote: 'Warna pertama adalah warna aksen default.',
 	settingsWallpaperTooLarge: 'Gambar tersebut lebih besar dari 8 MiB.',
 	settingsWallpaperNotImage: 'File tersebut bukan gambar PNG, JPEG, atau WebP.',
+	snippetNoTerminal: 'Semua jendela terminal sedang dipakai: tutup satu untuk menjalankan cuplikan.',
 } satisfies Translation
 
 export default id

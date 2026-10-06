@@ -59,7 +59,7 @@ vi.mock('../lib/capabilities.svelte', () => ({
 
 
 vi.mock('../lib/snippetRun.svelte', () => ({
-  snippetRun: { waiting: null, take: vi.fn(), clear: vi.fn() },
+  snippetRun: { waiting: null, for: () => null, take: vi.fn(), clear: vi.fn() },
 }))
 
 vi.mock('../lib/theme.svelte', () => ({ theme: { current: 'light' } }))

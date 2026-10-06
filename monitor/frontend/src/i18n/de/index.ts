@@ -1476,6 +1476,7 @@ const de = {
 	settingsAccentNote: 'Die erste Farbe ist die Standard-Akzentfarbe.',
 	settingsWallpaperTooLarge: 'Dieses Bild ist größer als 8 MiB.',
 	settingsWallpaperNotImage: 'Diese Datei ist kein PNG-, JPEG- oder WebP-Bild.',
+	snippetNoTerminal: 'Alle Terminalfenster sind belegt: Schließe eines, um ein Snippet auszuführen.',
 } satisfies Translation
 
 export default de

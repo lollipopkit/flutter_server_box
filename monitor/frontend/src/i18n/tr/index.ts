@@ -1476,6 +1476,7 @@ const tr = {
 	settingsAccentNote: 'İlk renk varsayılan vurgu rengidir.',
 	settingsWallpaperTooLarge: 'Bu görsel 8 MiB boyutundan büyük.',
 	settingsWallpaperNotImage: 'Bu dosya PNG, JPEG veya WebP görseli değil.',
+	snippetNoTerminal: 'Tüm terminal pencereleri kullanımda: kesit çalıştırmak için birini kapatın.',
 } satisfies Translation
 
 export default tr

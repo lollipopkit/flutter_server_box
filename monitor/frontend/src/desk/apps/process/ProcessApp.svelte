@@ -355,7 +355,7 @@
         <table class="w-full border-collapse text-left text-xs whitespace-nowrap">
           <thead class="sticky top-0 z-10 bg-soft/95 text-[0.65rem] uppercase tracking-wide text-faint-fg backdrop-blur">
             <tr>
-              <th class="w-full max-w-0 px-3 py-2 font-medium">{$LL.processSortName()}</th>
+              <th class="w-full min-w-48 px-3 py-2 font-medium">{$LL.processSortName()}</th>
               <th class="px-3 py-2 font-medium">{$LL.processSortPid()}</th>
               {#if columns?.user}
                 <th class="px-3 py-2 font-medium">{$LL.processSortUser()}</th>
@@ -384,10 +384,15 @@
           <tbody>
             {#each visible as row (row.pid)}
               <tr class="border-t border-line transition-colors hover:bg-soft/50">
-                <td class="w-full max-w-0 px-3 py-1.5">
-                  <!-- The command is the row's tooltip rather than a second
-                       line: a table is one line per process. -->
-                  <span class="block truncate font-medium text-fg-strong" title={row.command}>{row.name}</span>
+                <!-- Never narrower than a name can be read in (the table scrolls
+                     sideways first), and the command line under it: several
+                     `python` or `node` rows are told apart by it, which is what
+                     a stop needs. -->
+                <!-- The width cap is on the lines, not the cell: a table cell's
+                     own max-width does not hold a long command line back. -->
+                <td class="w-full min-w-48 px-3 py-1.5">
+                  <span class="block max-w-md truncate font-medium text-fg-strong">{row.name}</span>
+                  <span class="block max-w-md truncate font-mono text-[0.65rem] text-faint-fg" title={row.command}>{row.command}</span>
                 </td>
                 <td class="px-3 py-1.5 font-mono text-muted-fg">{row.pid}</td>
                 {#if columns?.user}

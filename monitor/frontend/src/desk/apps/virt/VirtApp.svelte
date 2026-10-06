@@ -389,7 +389,15 @@
 >
   {#snippet actions()}
     {#if view?.capabilities.create}
-      <IconButton label={$LL.virtNew()} onclick={() => (creating = true)}>
+      <!-- The form lives in the guests view: taking the button from any other
+           section goes there first, or it would open out of sight. -->
+      <IconButton
+        label={$LL.virtNew()}
+        onclick={() => {
+          section = 'guests'
+          creating = true
+        }}
+      >
         <Plus class="w-4 h-4" />
       </IconButton>
     {/if}

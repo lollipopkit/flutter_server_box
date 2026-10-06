@@ -214,7 +214,7 @@
     destroyed = true
     // Leaving the terminal abandons a snippet not yet typed: the Run press
     // opened this page for it, so closing the page is the answer.
-    snippetRun.clear()
+    snippetRun.clear(win.id)
     session.dispose()
     terminal?.dispose()
   })
@@ -350,11 +350,11 @@
   /// a stop belongs to the run in flight.
   let typing = $state<{ name: string; stopped: boolean } | null>(null)
   /// A snippet whose Run press landed here before there was a shell.
-  const queuedName = $derived(snippetRun.waiting?.name ?? '')
+  const queuedName = $derived(snippetRun.for(win.id)?.name ?? '')
 
   $effect(() => {
     // `waiting` is the trigger too, so a Run while a shell is up types at once.
-    const queued = snippetRun.waiting
+    const queued = snippetRun.for(win.id)
     if (session.phase !== 'running' || !queued || typing) return
     untrack(() => void typeQueued())
   })
@@ -363,7 +363,7 @@
   /// types it twice. The steps are the agent's (`/snippets/plan`); this sends
   /// bytes and decides nothing about what they mean.
   async function typeQueued() {
-    const taken = snippetRun.take()
+    const taken = snippetRun.take(win.id)
     if (!taken) return
     typing = { name: taken.name, stopped: false }
     const run = typing
@@ -386,7 +386,7 @@
   /// a keystroke in flight lands and the next does not.
   function stopTyping() {
     if (typing) typing.stopped = true
-    else snippetRun.clear()
+    else snippetRun.clear(win.id)
   }
 
   /// Whether there is a card to show above the terminal. One flag, so the
@@ -399,7 +399,6 @@
 
 <AppToolbar>
   {#snippet actions()}
-    {#if showSurface && !formShown}<span class="terminal-session-toolbar"></span>{/if}
     <!-- Unplug rather than a power symbol: next to a server's terminal,
          "power off" reads as an offer to shut the machine down -->
     {#if session.phase === 'running'}
@@ -409,30 +408,6 @@
     {/if}
   {/snippet}
 </AppToolbar>
-
-<style>
-  :global(header:has(.terminal-session-toolbar)) {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 20;
-    width: fit-content;
-    border: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
-    border-radius: 0.75rem;
-    background: color-mix(in srgb, var(--color-bg) 76%, transparent);
-    box-shadow: none;
-    backdrop-filter: blur(10px);
-  }
-
-  :global(header:has(.terminal-session-toolbar) > div) {
-    min-height: 2.25rem;
-    padding: 0.125rem 0.25rem;
-  }
-
-  .terminal-session-toolbar {
-    display: none;
-  }
-</style>
 
 <!-- One choice of the authentication segmented control. -->
 {#snippet authTab(kind: 'password' | 'key' | 'interactive', label: string)}
@@ -454,13 +429,13 @@
      edge to edge. Positioned rather than `h-full`: the toolbar is a sibling in
      flow, so a full-height main would run past the window's bottom edge. -->
 <main
-  class="absolute inset-x-0 bottom-0 flex min-h-0 flex-col bg-bg text-fg {showSurface && !formShown ? 'top-0' : 'top-[calc(3rem+1px)]'}"
+  class="absolute inset-x-0 bottom-0 top-[calc(3rem+1px)] flex min-h-0 flex-col bg-bg text-fg"
   style:background-color={showSurface && !formShown ? terminalSurface.current : undefined}
 >
   <!-- Said, because keystrokes that arrive unasked would otherwise look like a
        fault. Above the terminal rather than over it: a banner that covered
        output would hide what it is telling you about. -->
-  {#if showSurface && alerting}
+  {#if alerting}
     <div class="shrink-0 space-y-2 p-3 pb-0 @3xl:p-4 @3xl:pb-0">
       {#if typing || queuedName}
         <Card class="flex flex-wrap items-center justify-between gap-3">

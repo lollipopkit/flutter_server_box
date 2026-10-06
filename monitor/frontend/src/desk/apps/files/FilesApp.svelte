@@ -105,9 +105,11 @@
     return servers.currentId !== serverId
   }
 
-  /// [record] is false for a refresh (a write landed, back/forward moved): the
-  /// history keeps the step that brought the window here rather than a copy.
-  async function load(path: string, serverId = servers.currentId, record = true) {
+  /// [step] is what the history does once the listing has arrived: `push` a
+  /// new step, `stay` for a refresh (a write landed), or move to an index
+  /// (back/forward). Only on success, so a listing that fails leaves the
+  /// history where the window still is.
+  async function load(path: string, serverId = servers.currentId, step: 'push' | 'stay' | number = 'push') {
     loading = true
     error = ''
     try {
@@ -116,9 +118,11 @@
       entries = listed
       cwd = path
       selected = null
-      if (record) {
+      if (step === 'push') {
         hist = [...hist.slice(0, histAt + 1), path]
         histAt = hist.length - 1
+      } else if (step !== 'stay') {
+        histAt = step
       }
       win.setAppState({ path, view })
       win.setTitle(path.split('/').filter(Boolean).at(-1) ?? path)
@@ -132,14 +136,12 @@
 
   function back() {
     if (!canBack) return
-    histAt -= 1
-    void load(hist[histAt], servers.currentId, false)
+    void load(hist[histAt - 1], servers.currentId, histAt - 1)
   }
 
   function forward() {
     if (!canForward) return
-    histAt += 1
-    void load(hist[histAt], servers.currentId, false)
+    void load(hist[histAt + 1], servers.currentId, histAt + 1)
   }
 
   function setView(next: 'list' | 'grid') {
@@ -214,7 +216,7 @@
     error = ''
     try {
       await fn()
-      if (cwd) await load(cwd, servers.currentId, false)
+      if (cwd) await load(cwd, servers.currentId, 'stay')
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)
     } finally {
@@ -224,6 +226,15 @@
 
   /// What a double-click does: a folder is entered, a text file opens in the
   /// editor. Links and anything else have neither, as before.
+  ///
+  /// A touch screen has no double tap to speak of: there a tap is the open.
+  let touched = false
+
+  function tap(entry: FsEntry) {
+    selected = entry.name
+    if (touched) openEntry(entry)
+  }
+
   function openEntry(entry: FsEntry) {
     if (!cwd) return
     if (entry.kind === 'dir') void load(joinPath(cwd, entry.name))
@@ -409,6 +420,13 @@
     if (entry) fn(entry)
   }
 
+  /// Focus goes into a menu as it opens, so the keyboard reaches its actions
+  /// at once rather than after every row below the one it is about.
+  $effect(() => {
+    if (!menuEl) return
+    menuEl.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+  })
+
   /// Pulled back inside the pane once its size is known, as the desk's menus are.
   $effect(() => {
     if (!menu || !menuEl || !pane) return
@@ -576,7 +594,8 @@
                       type="button"
                       class="flex w-full items-center gap-3 py-2 pl-3 pr-9 text-left transition-colors hover:bg-soft"
                       style:background={selected === entry.name ? TINT : undefined}
-                      onclick={() => (selected = entry.name)}
+                      onpointerdown={(e) => (touched = e.pointerType === 'touch')}
+                      onclick={() => tap(entry)}
                       ondblclick={() => openEntry(entry)}
                       onkeydown={(e) => e.key === 'Enter' && openEntry(entry)}
                       oncontextmenu={(e) => openMenu(e, entry)}
@@ -614,7 +633,8 @@
                       type="button"
                       class="flex w-full flex-col items-center gap-2 rounded-xl border border-line bg-surface px-2 py-3 text-center transition-colors hover:bg-soft"
                       style:background={selected === entry.name ? TINT : undefined}
-                      onclick={() => (selected = entry.name)}
+                      onpointerdown={(e) => (touched = e.pointerType === 'touch')}
+                      onclick={() => tap(entry)}
                       ondblclick={() => openEntry(entry)}
                       onkeydown={(e) => e.key === 'Enter' && openEntry(entry)}
                       oncontextmenu={(e) => openMenu(e, entry)}
@@ -780,7 +800,7 @@
     canWrite={write}
     onclose={() => (editing = null)}
     onsaved={() => {
-      if (cwd) void load(cwd, servers.currentId, false)
+      if (cwd) void load(cwd, servers.currentId, 'stay')
     }}
   />
 {/if}

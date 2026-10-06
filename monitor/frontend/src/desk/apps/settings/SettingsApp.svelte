@@ -5,7 +5,6 @@
 
   import { CircleUserRound, Image, ServerCog, ShieldCheck, SlidersHorizontal } from '@lucide/svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { isAdmin } from '../../../lib/access'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { useWindow } from '../../deskState.svelte'
@@ -25,10 +24,10 @@
     if (servers.authenticated) void capabilitiesStore.ensure(servers.currentId)
   })
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
-  /// An agent without roles reports no `me` (so the panel manages accounts on
-  /// its own) and one that says `admin: false` is refused: as before, the
-  /// Access section is offered only where administering is allowed.
-  const admin = $derived(isAdmin(caps) === true)
+  /// Accounts and roles exist only on an agent that reports who is asking:
+  /// without `me` (a watch token, an agent from before roles) there is
+  /// nothing to manage here, as before; `admin: false` is refused.
+  const admin = $derived(caps?.me?.admin === true)
 
   /// Which section is showing, read from the window's own state: a reload
   /// restores it, another app can open Settings straight at one, and a second

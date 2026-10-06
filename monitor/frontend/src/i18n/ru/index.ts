@@ -1476,6 +1476,7 @@ const ru = {
 	settingsWallpaperTooLarge: 'Изображение больше 8 МиБ.',
 	systemUsersGroupRegular: 'Обычные учётные записи',
 	systemUsersGroupSystem: 'Системные учётные записи',
+	snippetNoTerminal: 'Все окна терминала заняты: закройте одно, чтобы запустить сниппет.',
 } satisfies Translation
 
 export default ru

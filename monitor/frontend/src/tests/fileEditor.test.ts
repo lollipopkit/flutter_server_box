@@ -215,6 +215,50 @@ describe('the Files page moving around', () => {
     expect(await screen.findByText('sub')).toBeInTheDocument()
   })
 
+  it('a tap on a touch screen enters a folder; a mouse click only selects it', async () => {
+    mocks.fsList.mockImplementation(async (path: string) =>
+      path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
+    )
+    render(Files)
+    const row = (await screen.findByText('sub')).closest('button')!
+
+    await fireEvent.pointerDown(row, { pointerType: 'mouse' })
+    await fireEvent.click(row)
+    expect(mocks.fsList).toHaveBeenLastCalledWith(ROOT)
+
+    await fireEvent.pointerDown(row, { pointerType: 'touch' })
+    await fireEvent.click(row)
+    await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`))
+  })
+
+  it('Enter enters a folder', async () => {
+    mocks.fsList.mockImplementation(async (path: string) =>
+      path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
+    )
+    render(Files)
+    const row = (await screen.findByText('sub')).closest('button')!
+    await fireEvent.keyDown(row, { key: 'Enter' })
+    await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`))
+  })
+
+  it('a step back that fails to list leaves the history where the window is', async () => {
+    let fail = false
+    mocks.fsList.mockImplementation(async (path: string) => {
+      if (fail) throw new Error('gone')
+      return path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : []
+    })
+    render(Files)
+    await fireEvent.dblClick(await screen.findByText('sub'))
+    await screen.findByText('Nothing here')
+
+    fail = true
+    await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(await screen.findByText('gone')).toBeInTheDocument()
+    // Still able to go back: the failed step did not move the history.
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Forward' })).toBeDisabled()
+  })
+
   it('switches between the list and the grid', async () => {
     mocks.fsList.mockResolvedValue([entry({ mode: 0o644 })])
     render(Files)

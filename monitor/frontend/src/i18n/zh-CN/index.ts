@@ -1476,6 +1476,7 @@ const zh_CN = {
 	settingsAccentNote: '第一个颜色为默认强调色。',
 	settingsWallpaperTooLarge: '该图片大于 8 MiB。',
 	settingsWallpaperNotImage: '该文件不是 PNG、JPEG 或 WebP 图片。',
+	snippetNoTerminal: '终端窗口已达上限:关闭一个后再运行片段。',
 } satisfies Translation
 
 export default zh_CN
