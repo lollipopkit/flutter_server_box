@@ -405,55 +405,31 @@ mod tests {
     }
 
     #[tokio::test]
-    #[cfg(unix)]
     async fn a_command_runs_on_the_pty_and_exits() {
-        // The container path: one fixed command through `/bin/sh -c`, not a
-        // login shell. `sh` writes the marker and the PTY reports the exit.
+        // One fixed command, not a login shell: `/bin/sh -c` (the container
+        // and iperf targets), `cmd.exe /C` on Windows (iperf). `echo` is the
+        // same in both. ConPTY holds the output back until its cursor
+        // position query is answered, as the panel's xterm.js does. The
+        // marker is matched with its line ending: ConPTY also puts the command
+        // line in the window title, which ends in BEL rather than CR.
         let (shell, mut rx) =
-            LocalShell::spawn_command("xterm-256color", 80, 24, "echo container-pty-marker")
-                .unwrap();
+            LocalShell::spawn_command("xterm-256color", 80, 24, "echo command-pty-marker").unwrap();
 
-        let mut seen = String::new();
-        let found = tokio::time::timeout(std::time::Duration::from_secs(15), async {
-            while let Some(event) = rx.recv().await {
-                if let ShellEvent::Data(data) = event {
-                    seen.push_str(&String::from_utf8_lossy(&data));
-                    if seen.contains("container-pty-marker") {
-                        return true;
+        let mut seen = answer_cursor_position_query(&shell, &mut rx).await;
+        let found = seen.contains("command-pty-marker\r")
+            || tokio::time::timeout(std::time::Duration::from_secs(15), async {
+                while let Some(event) = rx.recv().await {
+                    if let ShellEvent::Data(data) = event {
+                        seen.push_str(&String::from_utf8_lossy(&data));
+                        if seen.contains("command-pty-marker\r") {
+                            return true;
+                        }
                     }
                 }
-            }
-            false
-        })
-        .await
-        .unwrap_or(false);
-
-        assert!(found, "the command should run on the PTY; saw {seen:?}");
-        shell.kill();
-    }
-
-    #[tokio::test]
-    #[cfg(windows)]
-    async fn a_command_runs_on_the_pty_and_exits() {
-        // The iperf path on Windows: one fixed command through `cmd.exe /C`,
-        // not a login shell. `cmd` writes the marker and the PTY reports it.
-        let (shell, mut rx) =
-            LocalShell::spawn_command("xterm-256color", 80, 24, "echo cmd-pty-marker").unwrap();
-
-        let mut seen = String::new();
-        let found = tokio::time::timeout(std::time::Duration::from_secs(15), async {
-            while let Some(event) = rx.recv().await {
-                if let ShellEvent::Data(data) = event {
-                    seen.push_str(&String::from_utf8_lossy(&data));
-                    if seen.contains("cmd-pty-marker") {
-                        return true;
-                    }
-                }
-            }
-            false
-        })
-        .await
-        .unwrap_or(false);
+                false
+            })
+            .await
+            .unwrap_or(false);
 
         assert!(found, "the command should run on the PTY; saw {seen:?}");
         shell.kill();
