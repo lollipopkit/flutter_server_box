@@ -772,10 +772,12 @@ mod tests {
 
     #[test]
     fn a_version_tells_both_sides_of_the_epoch_apart() {
-        let after = version_token(UNIX_EPOCH + Duration::from_nanos(5), 3);
-        let before = version_token(UNIX_EPOCH - Duration::from_nanos(5), 3);
-        assert_eq!(after, "5-3");
-        assert_eq!(before, "-5-3");
+        // Microseconds, not nanoseconds: Windows keeps `SystemTime` in 100 ns
+        // ticks, so a few nanoseconds round to the epoch itself.
+        let after = version_token(UNIX_EPOCH + Duration::from_micros(5), 3);
+        let before = version_token(UNIX_EPOCH - Duration::from_micros(5), 3);
+        assert_eq!(after, "5000-3");
+        assert_eq!(before, "-5000-3");
         assert_ne!(after, before);
         assert_eq!(version_token(UNIX_EPOCH, 0), "0-0");
     }
