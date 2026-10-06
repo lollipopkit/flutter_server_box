@@ -57,9 +57,6 @@ vi.mock('../lib/capabilities.svelte', () => ({
   capabilitiesStore: { byServer: {}, clear: vi.fn() },
 }))
 
-vi.mock('../lib/layout.svelte', () => ({
-  layout: { view: 'terminal', navigate: vi.fn(), back: vi.fn(), mobileOpen: false },
-}))
 
 vi.mock('../lib/snippetRun.svelte', () => ({
   snippetRun: { waiting: null, take: vi.fn(), clear: vi.fn() },
@@ -68,7 +65,7 @@ vi.mock('../lib/snippetRun.svelte', () => ({
 vi.mock('../lib/theme.svelte', () => ({ theme: { current: 'light' } }))
 vi.mock('../lib/terminalSurface.svelte', () => ({ terminalSurface: { current: '#ffffff' } }))
 
-import Terminal from '../pages/Terminal.svelte'
+import Terminal from '../desk/apps/terminal/TerminalApp.svelte'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { fmtEpochSeconds } from '../lib/format'
 

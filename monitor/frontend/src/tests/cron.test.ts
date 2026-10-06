@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Cron from '../pages/Cron.svelte'
+import Cron from '../desk/apps/cron/CronApp.svelte'
 import { api, ApiError } from '../lib/api'
 import type { CronView } from '../types'
 
@@ -40,14 +40,14 @@ describe('Cron page', () => {
 
   it('removes a job by the line its listing gave it', async () => {
     editCron.mockResolvedValue({ ...view(), jobs: [] })
-    render(Cron, { onback: () => {} })
+    render(Cron)
     await fireEvent.click(await screen.findByRole('button', { name: /delete job/i }))
     await waitFor(() => expect(editCron).toHaveBeenCalledWith({ op: 'remove', line_index: 3 }))
   })
 
   it('reads the schedule again when the line moved under the page', async () => {
     editCron.mockRejectedValue(new ApiError('unknownLine', 400))
-    render(Cron, { onback: () => {} })
+    render(Cron)
     await fireEvent.click(await screen.findByRole('button', { name: /delete job/i }))
     expect(await screen.findByText(/no longer at that position/i)).toBeInTheDocument()
     await waitFor(() => expect(getCron).toHaveBeenCalledTimes(2))

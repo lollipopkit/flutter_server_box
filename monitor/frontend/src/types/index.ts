@@ -134,6 +134,8 @@ export type MachineFeature =
   | 'backup'
   | 'bmc'
   | 'virt'
+  /// The agent keeps the panel's desk (`/desk*`).
+  | 'desk'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 

@@ -171,7 +171,21 @@ async function request<T>(
   signal?: AbortSignal,
   timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
-  const server = servers.current ? { ...servers.current } : undefined
+  return requestFor<T>(servers.current, path, init, fallback, signal, timeoutMs)
+}
+
+/// [request] to an explicit entry: for what must reach the server it was
+/// started for even if another is selected meanwhile (the desk saving its
+/// session as the server switches).
+export async function requestFor<T>(
+  entry: ServerEntry | undefined,
+  path: string,
+  init: RequestInit = {},
+  fallback = 'Request failed',
+  signal?: AbortSignal,
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const server = entry ? { ...entry } : undefined
   requireSecureUrl(server?.url ?? '')
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
@@ -232,7 +246,7 @@ async function fsBytes(
 }
 
 /// Fetches capabilities for an explicit server entry (rather than
-/// `servers.current`) — used by the sidebar to show every authenticated
+/// `servers.current`) — used by the lock screen to show every authenticated
 /// entry's OS icon, not just the currently selected one.
 export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSignal): Promise<Capabilities> {
   if (!entry.token) throw new ApiError('Not authenticated')
@@ -246,7 +260,7 @@ export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSigna
 }
 
 /// Fetches status, including the agent-reported `name`, for an explicit server
-/// entry — used by the sidebar/settings header so the displayed name always
+/// entry — used by the menubar and the lock screen so the displayed name always
 /// reflects `config.toml`, never a locally cached copy.
 export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Promise<StatusResponse> {
   if (!entry.token) throw new ApiError('Not authenticated')

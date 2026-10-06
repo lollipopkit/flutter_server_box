@@ -1,0 +1,246 @@
+/* The desk's look: frosted glass over a wallpaper, in two variables per mode.
+   `--glass` is the light surface every bar and panel is made of, `--ink` the
+   dark one its borders and hover states use; dark mode swaps their roles.
+   Components use the `desk-*` classes below and these variables, never raw
+   colours, so the two modes stay one design. */
+
+.desk-root {
+  --glass: 240 24% 100%;
+  --ink: 240 3% 11%;
+  --desk-accent: #2563eb;
+  --desk-accent-fg: #ffffff;
+  /* `primary` utilities inside the desk follow the account's accent. */
+  --sb-primary: var(--desk-accent);
+
+  --menubar-h: 2rem;
+  --menubar-gap: 0.5rem;
+  --dock-tile: 3rem;
+  --dock-reserve: 5.25rem;
+
+  --radius-window: 0.9rem;
+  --radius-panel: 1.1rem;
+  --radius-bar: 0.85rem;
+
+  --blur-bar: blur(24px) saturate(1.4);
+  --blur-window: blur(28px) saturate(1.1);
+  --blur-dock: blur(14px) saturate(1.3);
+
+  --shadow-window: 0 24px 52px -24px hsl(0 0% 0% / 0.32), inset 0 0 0 0.7px hsl(var(--glass) / 0.36);
+  --shadow-window-active: 0 30px 64px -22px hsl(0 0% 0% / 0.42), inset 0 0 0 0.7px hsl(var(--glass) / 0.42);
+  --shadow-float: 0 10px 30px -8px hsl(0 0% 0% / 0.3), inset 0 0 0 0.5px hsl(var(--glass) / 0.6),
+    0 0 0 0.5px hsl(var(--ink) / 0.2);
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: light;
+}
+
+.dark .desk-root,
+.desk-root.desk-dark {
+  --glass: 0 0% 0%;
+  --ink: 240 24% 100%;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .desk-root {
+    --glass: 0 0% 0%;
+    --ink: 240 24% 100%;
+    color-scheme: dark;
+  }
+}
+
+/* A wallpaper's two versions; the mode picks one (an explicit theme class
+   first, the system's otherwise), as the glass does. */
+.desk-wall-dark {
+  display: none;
+}
+.dark .desk-root .desk-wall-dark {
+  display: block;
+}
+.dark .desk-root .desk-wall-light {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .desk-root .desk-wall-dark {
+    display: block;
+  }
+  :root:not(.light) .desk-root .desk-wall-light {
+    display: none;
+  }
+}
+
+/* The menubar, dock and panels. */
+.desk-glass {
+  background: hsl(var(--glass) / 0.42);
+  backdrop-filter: var(--blur-bar);
+  -webkit-backdrop-filter: var(--blur-bar);
+  box-shadow: var(--shadow-float);
+  color: hsl(var(--ink) / 0.92);
+}
+
+.desk-glass-strong {
+  background: hsl(var(--glass) / 0.72);
+  backdrop-filter: var(--blur-bar);
+  -webkit-backdrop-filter: var(--blur-bar);
+  box-shadow: var(--shadow-float);
+  color: hsl(var(--ink) / 0.92);
+}
+
+/* A row or button inside glass: no fill until hovered. */
+.desk-hover {
+  border-radius: 0.45rem;
+  transition: background-color 120ms;
+}
+.desk-hover:hover,
+.desk-hover[aria-expanded='true'],
+.desk-hover[aria-pressed='true'] {
+  background: hsl(var(--ink) / 0.1);
+}
+.desk-hover:focus-visible {
+  outline: 2px solid var(--desk-accent);
+  outline-offset: 1px;
+}
+
+.desk-selected {
+  background: var(--desk-accent);
+  color: var(--desk-accent-fg);
+}
+
+.desk-separator {
+  height: 1px;
+  background: hsl(var(--ink) / 0.12);
+}
+
+.desk-muted {
+  color: hsl(var(--ink) / 0.55);
+}
+
+/* A window: glass chrome, the app's own surface inside. */
+.desk-window {
+  border-radius: var(--radius-window);
+  box-shadow: var(--shadow-window);
+  background: hsl(var(--glass) / 0.6);
+  backdrop-filter: var(--blur-window);
+  -webkit-backdrop-filter: var(--blur-window);
+  transition:
+    box-shadow 160ms,
+    opacity 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+.desk-window[data-active='true'] {
+  box-shadow: var(--shadow-window-active);
+}
+.desk-window[data-snapped='true'] {
+  border-radius: 0.6rem;
+}
+.desk-window[data-compact='true'] {
+  border-radius: 0;
+}
+/* Minimised: hidden, never unmounted (an app keeps its state and sockets). */
+.desk-window[data-minimized='true'] {
+  opacity: 0;
+  transform: translateY(28px) scale(0.9);
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 220ms var(--ease-out),
+    visibility 0s 220ms;
+}
+/* Geometry animates only on maximise/snap, never while dragging. */
+.desk-window[data-animate='true'] {
+  transition:
+    left 240ms var(--ease-out),
+    top 240ms var(--ease-out),
+    width 240ms var(--ease-out),
+    height 240ms var(--ease-out),
+    box-shadow 160ms;
+}
+
+.desk-window-body {
+  background: var(--color-bg);
+}
+
+.desk-traffic {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 0.5px hsl(0 0% 0% / 0.18);
+}
+.desk-traffic svg {
+  opacity: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  color: hsl(0 0% 0% / 0.6);
+}
+.desk-traffic-group:hover .desk-traffic svg {
+  opacity: 1;
+}
+.desk-window[data-active='false'] .desk-traffic-group:not(:hover) .desk-traffic {
+  background: hsl(var(--ink) / 0.18) !important;
+}
+
+/* App icon tile: a rounded square with a gradient, the glyph on it. */
+.desk-tile {
+  border-radius: 22%;
+  display: grid;
+  place-items: center;
+  color: white;
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.35),
+    0 4px 10px -4px hsl(0 0% 0% / 0.45);
+}
+
+@keyframes desk-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+}
+.desk-pop {
+  animation: desk-pop 140ms var(--ease-out);
+}
+
+@keyframes desk-open {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+.desk-opening {
+  animation: desk-open 200ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-window,
+  .desk-window[data-animate='true'],
+  .desk-pop,
+  .desk-opening {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Inside an app: the sidebar of a split view (`ui/SplitView.svelte`) and its
+   rows, after Finder's and Settings' source lists. */
+.desk-app-sidebar {
+  background: color-mix(in srgb, var(--color-soft) 70%, transparent);
+  border-right: 1px solid var(--color-line);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.desk-app-source {
+  color: var(--color-fg);
+  transition: background-color 120ms;
+}
+.desk-app-source:hover {
+  background: color-mix(in srgb, var(--color-fg) 8%, transparent);
+}
+.desk-app-source[aria-current='true'] {
+  background: color-mix(in srgb, var(--desk-accent) 16%, transparent);
+  color: var(--color-fg-strong);
+  font-weight: 600;
+}

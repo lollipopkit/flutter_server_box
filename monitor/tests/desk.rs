@@ -100,7 +100,7 @@ fn prefs() -> serde_json::Value {
         "wallpaper_fit": "cover",
         "dock": ["status", "files", "terminal"],
         "icons": [
-            { "id": "a", "kind": "app", "app_id": "settings", "label": "Settings" },
+            { "id": "a", "kind": "app", "app_id": "settings", "label": "" },
             { "id": "b", "kind": "path", "app_id": "files", "server_id": "local", "path": "/etc", "label": "etc", "col": 0, "row": 1 }
         ]
     })

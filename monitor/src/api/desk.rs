@@ -204,6 +204,7 @@ pub struct Icon {
     pub id: String,
     /// `app` | `path`.
     pub kind: String,
+    /// Empty for an `app` icon shown with the app's title.
     pub app_id: String,
     #[serde(default)]
     pub server_id: Option<String>,
@@ -387,7 +388,9 @@ pub fn check_preferences(mut p: Preferences) -> Result<Preferences, Refusal> {
         if !valid_app_id(&icon.app_id) {
             return Err(refused("invalidAppId", at));
         }
-        if !valid_label(&icon.label) {
+        // An app's icon may go unnamed: the panel shows the app's title.
+        let unnamed_app = icon.kind == "app" && icon.label.is_empty();
+        if !unnamed_app && !valid_label(&icon.label) {
             return Err(refused("invalidLabel", at));
         }
         match icon.kind.as_str() {

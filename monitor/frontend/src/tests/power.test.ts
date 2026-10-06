@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import PowerModal from '../components/PowerModal.svelte'
+import PowerModal from '../desk/apps/status/PowerModal.svelte'
 import { api, ApiError } from '../lib/api'
 import { machineAccess } from '../lib/access'
 import type { Capabilities, PowerResult } from '../types'

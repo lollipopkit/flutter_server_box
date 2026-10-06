@@ -1,0 +1,138 @@
+/// Where one server's desk is kept: on its agent (`desk` feature), or in this
+/// browser for an agent without it. The desk's stores talk to this and never
+/// to `deskApi` directly, so the fallback is one class and not a branch in
+/// each of them.
+
+import type { ServerEntry } from '../lib/servers.svelte'
+import { deskApi, readEvents, type DeskNotification, type DeskPreferences, type SessionSave, type StoredSession } from './deskApi'
+
+export interface DeskStorage {
+  /// Whether this is the agent's (shared by every browser) or this browser's.
+  readonly remote: boolean
+  load(): Promise<{ preferences: DeskPreferences | null; wallpaperSha: string | null }>
+  savePreferences(p: DeskPreferences): Promise<void>
+  loadSession(device: string): Promise<StoredSession>
+  saveSession(device: string, expected: number, session: Omit<StoredSession, 'revision'>): Promise<SessionSave>
+  wallpaperUrl(): Promise<string | null>
+  putWallpaper(file: Blob): Promise<void>
+  deleteWallpaper(): Promise<void>
+  notifications(): Promise<{ notifications: DeskNotification[]; unread: number }>
+  markRead(read: { ids: number[] } | { all: true }): Promise<void>
+  /// Resolves when the stream ends; null where there is none.
+  events: ((signal: AbortSignal, onEvent: (e: Record<string, unknown>) => void) => Promise<void>) | null
+}
+
+export class AgentStorage implements DeskStorage {
+  readonly remote = true
+  #entry: ServerEntry
+
+  constructor(entry: ServerEntry) {
+    // A copy: the session token it was made with is the one it keeps using.
+    this.#entry = { ...entry }
+  }
+
+  async load() {
+    const view = await deskApi.get(this.#entry)
+    return { preferences: view.preferences, wallpaperSha: view.wallpaper_sha256 }
+  }
+  async savePreferences(p: DeskPreferences) {
+    await deskApi.putPreferences(this.#entry, p)
+  }
+  loadSession(device: string) {
+    return deskApi.getSession(this.#entry, device)
+  }
+  saveSession(device: string, expected: number, session: Omit<StoredSession, 'revision'>) {
+    return deskApi.putSession(this.#entry, device, expected, session)
+  }
+  wallpaperUrl() {
+    return deskApi.wallpaperUrl(this.#entry)
+  }
+  async putWallpaper(file: Blob) {
+    await deskApi.putWallpaper(this.#entry, file)
+  }
+  deleteWallpaper() {
+    return deskApi.deleteWallpaper(this.#entry)
+  }
+  notifications() {
+    return deskApi.notifications(this.#entry)
+  }
+  markRead(read: { ids: number[] } | { all: true }) {
+    return deskApi.markRead(this.#entry, read)
+  }
+  events = (signal: AbortSignal, onEvent: (e: Record<string, unknown>) => void) =>
+    readEvents(this.#entry, signal, onEvent)
+}
+
+/// This browser's copy, for an agent that keeps no desk. No custom wallpaper
+/// (an image does not belong in `localStorage`) and nothing to be told.
+export class BrowserStorage implements DeskStorage {
+  readonly remote = false
+  #key: string
+
+  constructor(serverId: string) {
+    this.#key = `desk.v1:${serverId}`
+  }
+
+  #read<T>(part: string): T | null {
+    try {
+      const raw = window.localStorage.getItem(`${this.#key}:${part}`)
+      return raw ? (JSON.parse(raw) as T) : null
+    } catch {
+      return null
+    }
+  }
+
+  #write(part: string, value: unknown) {
+    try {
+      window.localStorage.setItem(`${this.#key}:${part}`, JSON.stringify(value))
+    } catch {
+      // Full or refused: the desk keeps working, unsaved.
+    }
+  }
+
+  async load() {
+    return { preferences: this.#read<DeskPreferences>('preferences'), wallpaperSha: null }
+  }
+  async savePreferences(p: DeskPreferences) {
+    this.#write('preferences', p)
+  }
+  async loadSession(device: string) {
+    return (
+      this.#read<StoredSession>(`session:${device}`) ?? { revision: 0, active_window_id: null, windows: [] }
+    )
+  }
+  async saveSession(device: string, expected: number, session: Omit<StoredSession, 'revision'>): Promise<SessionSave> {
+    const current = await this.loadSession(device)
+    if (current.revision !== expected) return { ok: false, current }
+    const revision = expected + 1
+    this.#write(`session:${device}`, { ...session, revision })
+    return { ok: true, revision }
+  }
+  async wallpaperUrl() {
+    return null
+  }
+  async putWallpaper() {
+    throw new Error('unsupported')
+  }
+  async deleteWallpaper() {}
+  async notifications() {
+    return { notifications: [], unread: 0 }
+  }
+  async markRead() {}
+  events = null
+}
+
+/// This browser's id, so a phone and a desktop keep their own windows. Not a
+/// secret: it only names which arrangement is whose.
+export function deviceId(): string {
+  const KEY = 'desk.device'
+  try {
+    const known = window.localStorage.getItem(KEY)
+    if (known && /^[A-Za-z0-9_-]{1,64}$/.test(known)) return known
+    const id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `d${Date.now().toString(36)}`
+    window.localStorage.setItem(KEY, id)
+    return id
+  } catch {
+    return 'default'
+  }
+}

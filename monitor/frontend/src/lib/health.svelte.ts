@@ -1,4 +1,4 @@
-/// Per-server reachability, shown as dots in the sidebar. Uses the
+/// Per-server reachability, shown as the Status app's connection badge. Uses the
 /// unauthenticated /health endpoint; cross-origin agents must allow the
 /// panel origin (same CORS requirement as the rest of the panel).
 

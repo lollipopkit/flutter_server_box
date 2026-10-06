@@ -1,7 +1,7 @@
 /// Per-server capabilities cache — platform-only, doesn't change between
 /// samples, so this fetches once per authenticated server (not polled) and
-/// is shared between the sidebar (every entry's OS icon) and the dashboard
-/// header/card-visibility gating for the current entry.
+/// is shared between the lock screen (every entry's OS icon), the desk's app
+/// availability and the Status app's card gating.
 
 import { getCapabilitiesFor } from './api'
 import { servers } from './servers.svelte'

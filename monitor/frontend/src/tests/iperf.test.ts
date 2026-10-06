@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import IperfModal from '../components/IperfModal.svelte'
+import IperfModal from '../desk/apps/status/IperfModal.svelte'
 import { servers } from '../lib/servers.svelte'
 
 /// The dialog mounts the shared terminal once Start is pressed; xterm is

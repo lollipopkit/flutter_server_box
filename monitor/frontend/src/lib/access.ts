@@ -96,7 +96,7 @@ export function filesAccess(caps: Capabilities | undefined): FilesAccess {
   }
 }
 
-/// The dashboard's question: which entries go in its header, and whether it
+/// The Status app's question: which entries go in its toolbar, and whether it
 /// says this account can only watch.
 ///
 /// Truthy rather than `!== false` for an agent before roles, which is what the

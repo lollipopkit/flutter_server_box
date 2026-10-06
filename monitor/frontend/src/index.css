@@ -5,11 +5,11 @@
 @source "../../../packages/webui/src";
 
 @layer base {
-  html {
-    /* Reserve the scrollbar gutter permanently so content between the home
-       grid and shorter detail pages doesn't cause a width jump when the
-       vertical scrollbar toggles on/off */
-    scrollbar-gutter: stable;
+  html,
+  body {
+    /* The desk is the whole screen; nothing scrolls under it. */
+    overflow: hidden;
+    overscroll-behavior: none;
   }
   body {
     @apply bg-bg text-fg font-body;

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import VirtHardware from '../components/VirtHardware.svelte'
-import VirtManage from '../components/VirtManage.svelte'
+import VirtHardware from '../desk/apps/virt/VirtHardware.svelte'
+import VirtManage from '../desk/apps/virt/VirtManage.svelte'
 import { api } from '../lib/api'
 import {
   bootDraft,

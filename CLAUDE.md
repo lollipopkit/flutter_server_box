@@ -89,4 +89,4 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 
 ## Feature notes
 
-`crates/sbm_ffi/CLAUDE.md` (SSH crypto) · `ios/CLAUDE.md` · `macos/CLAUDE.md` · `android/CLAUDE.md` · `lib/data/store/CLAUDE.md` · `lib/data/model/file/CLAUDE.md` (SFTP/SCP) · `lib/data/model/server/benchmark/CLAUDE.md` · `lib/core/service/CLAUDE.md` (watch, home widgets) · `lib/view/page/server/monitor_settings/CLAUDE.md` · `docs/dev/virt.md` · `monitor/CLAUDE.md`.
+`crates/sbm_ffi/CLAUDE.md` (SSH crypto) · `ios/CLAUDE.md` · `macos/CLAUDE.md` · `android/CLAUDE.md` · `lib/data/store/CLAUDE.md` · `lib/data/model/file/CLAUDE.md` (SFTP/SCP) · `lib/data/model/server/benchmark/CLAUDE.md` · `lib/core/service/CLAUDE.md` (watch, home widgets) · `lib/view/page/server/monitor_settings/CLAUDE.md` · `docs/dev/virt.md` · `monitor/CLAUDE.md` · `monitor/frontend/src/desk/CLAUDE.md` (the panel's desk).

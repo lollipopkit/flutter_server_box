@@ -1092,6 +1092,10 @@ type RootTranslation = {
 	 */
 	serviceEmpty: string
 	/**
+	 * A​l​l
+	 */
+	servicesFilterAll: string
+	/**
 	 * T​h​i​s​ ​u​n​i​t​ ​h​a​s​ ​l​o​g​g​e​d​ ​n​o​t​h​i​n​g​.
 	 */
 	serviceLogEmpty: string
@@ -1198,6 +1202,14 @@ type RootTranslation = {
 	 * S​e​r​v​i​c​e​s
 	 */
 	services: string
+	/**
+	 * T​h​r​e​a​d​s
+	 */
+	processColumnThreads: string
+	/**
+	 * T​i​m​e
+	 */
+	processColumnTime: string
 	/**
 	 * C​P​U
 	 */
@@ -1866,6 +1878,26 @@ type RootTranslation = {
 	 */
 	filesEditorServerChanged: string
 	/**
+	 * L​i​s​t
+	 */
+	filesViewList: string
+	/**
+	 * G​r​i​d
+	 */
+	filesViewGrid: string
+	/**
+	 * F​o​r​w​a​r​d
+	 */
+	filesForward: string
+	/**
+	 * U​p
+	 */
+	filesUp: string
+	/**
+	 * M​o​r​e​ ​a​c​t​i​o​n​s
+	 */
+	filesMoreActions: string
+	/**
 	 * N​o​t​i​f​i​c​a​t​i​o​n​ ​c​h​a​n​n​e​l​s
 	 */
 	pushChannels: string
@@ -2413,6 +2445,14 @@ type RootTranslation = {
 	 */
 	systemUsers: string
 	/**
+	 * R​e​g​u​l​a​r​ ​a​c​c​o​u​n​t​s
+	 */
+	systemUsersGroupRegular: string
+	/**
+	 * S​y​s​t​e​m​ ​a​c​c​o​u​n​t​s
+	 */
+	systemUsersGroupSystem: string
+	/**
 	 * S​n​i​p​p​e​t​s
 	 */
 	snippets: string
@@ -2540,6 +2580,10 @@ type RootTranslation = {
 	 * @param {unknown} count
 	 */
 	desktopSubtitle: RequiredParams<'count'>
+	/**
+	 * S​a​v​e​d​ ​r​o​u​t​e​s
+	 */
+	desktopRoutes: string
 	/**
 	 * N​o​ ​d​e​s​k​t​o​p​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
 	 */
@@ -2709,6 +2753,22 @@ type RootTranslation = {
 	 * @param {unknown} max
 	 */
 	backupSubtitle: RequiredParams<'count' | 'max'>
+	/**
+	 * T​o​t​a​l​ ​s​i​z​e​ ​s​t​o​r​e​d
+	 */
+	backupTotalSize: string
+	/**
+	 * M​a​x​i​m​u​m​ ​p​e​r​ ​f​i​l​e
+	 */
+	backupPerFileLimit: string
+	/**
+	 * S​t​o​r​e​d​ ​f​i​l​e​s
+	 */
+	backupStoredFiles: string
+	/**
+	 * H​o​w​ ​t​h​i​s​ ​w​o​r​k​s
+	 */
+	backupHowItWorks: string
 	/**
 	 * T​h​e​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​t​h​e​s​e​ ​f​i​l​e​s​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​b​a​c​k​u​p​ ​s​y​n​c​ ​a​n​d​ ​f​o​r​ ​u​p​l​o​a​d​s​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​a​p​p​ ​e​n​c​r​y​p​t​s​ ​i​t​s​ ​b​a​c​k​u​p​ ​w​i​t​h​ ​y​o​u​r​ ​b​a​c​k​u​p​ ​p​a​s​s​w​o​r​d​ ​b​e​f​o​r​e​ ​s​e​n​d​i​n​g​ ​i​t​;​ ​t​h​e​ ​p​a​n​e​l​ ​m​o​v​e​s​ ​t​h​e​ ​f​i​l​e​s​ ​w​i​t​h​o​u​t​ ​o​p​e​n​i​n​g​ ​t​h​e​m​.
 	 */
@@ -5752,6 +5812,283 @@ type RootTranslation = {
 	 * N​o
 	 */
 	no: string
+	/**
+	 * D​e​s​k
+	 */
+	deskTitle: string
+	/**
+	 * M​e​n​u​ ​b​a​r
+	 */
+	deskMenubar: string
+	/**
+	 * D​o​c​k
+	 */
+	deskDock: string
+	/**
+	 * L​a​u​n​c​h​p​a​d
+	 */
+	deskLaunchpad: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	deskAppStatus: string
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	deskAppSettings: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
+	 */
+	deskAppFailed: string
+	/**
+	 * A​p​p​s
+	 */
+	deskApps: string
+	/**
+	 * W​i​n​d​o​w​s
+	 */
+	deskWindows: string
+	/**
+	 * S​e​r​v​e​r​s
+	 */
+	deskServers: string
+	/**
+	 * C​l​o​s​e
+	 */
+	deskClose: string
+	/**
+	 * C​l​o​s​e​ ​a​l​l​ ​w​i​n​d​o​w​s
+	 */
+	deskCloseAll: string
+	/**
+	 * M​i​n​i​m​i​z​e
+	 */
+	deskMinimize: string
+	/**
+	 * Z​o​o​m
+	 */
+	deskZoom: string
+	/**
+	 * N​e​w​ ​w​i​n​d​o​w
+	 */
+	deskNewWindow: string
+	/**
+	 * Q​u​i​t
+	 */
+	deskQuit: string
+	/**
+	 * K​e​e​p​ ​i​n​ ​D​o​c​k
+	 */
+	deskPin: string
+	/**
+	 * R​e​m​o​v​e​ ​f​r​o​m​ ​D​o​c​k
+	 */
+	deskUnpin: string
+	/**
+	 * A​b​o​u​t​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	deskAboutServer: string
+	/**
+	 * L​o​c​k
+	 */
+	deskLock: string
+	/**
+	 * C​o​n​n​e​c​t​e​d​:​ ​c​h​a​n​g​e​s​ ​a​r​r​i​v​e​ ​a​s​ ​t​h​e​y​ ​h​a​p​p​e​n
+	 */
+	deskLive: string
+	/**
+	 * N​o​t​ ​c​o​n​n​e​c​t​e​d​:​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​ ​m​a​y​ ​b​e​ ​l​a​t​e
+	 */
+	deskOffline: string
+	/**
+	 * S​e​a​r​c​h
+	 */
+	deskSearch: string
+	/**
+	 * S​e​a​r​c​h​ ​a​p​p​s​,​ ​w​i​n​d​o​w​s​,​ ​s​e​r​v​e​r​s​,​ ​o​r​ ​t​y​p​e​ ​a​ ​p​a​t​h
+	 */
+	deskSpotlightHint: string
+	/**
+	 * O​p​e​n​ ​i​n​ ​F​i​l​e​s
+	 */
+	deskOpenInFiles: string
+	/**
+	 * C​o​n​t​r​o​l​ ​C​e​n​t​e​r
+	 */
+	deskControlCenter: string
+	/**
+	 * N​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	deskNotifications: string
+	/**
+	 * N​o​ ​n​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	deskNoNotifications: string
+	/**
+	 * M​a​r​k​ ​a​l​l​ ​r​e​a​d
+	 */
+	deskMarkAllRead: string
+	/**
+	 * D​o​ ​N​o​t​ ​D​i​s​t​u​r​b
+	 */
+	deskDnd: string
+	/**
+	 * A​p​p​e​a​r​a​n​c​e
+	 */
+	deskAppearance: string
+	/**
+	 * L​i​g​h​t
+	 */
+	deskThemeLight: string
+	/**
+	 * D​a​r​k
+	 */
+	deskThemeDark: string
+	/**
+	 * A​u​t​o
+	 */
+	deskThemeSystem: string
+	/**
+	 * W​a​l​l​p​a​p​e​r
+	 */
+	deskWallpaper: string
+	/**
+	 * M​o​r​e​ ​s​e​t​t​i​n​g​s​…
+	 */
+	deskMoreSettings: string
+	/**
+	 * P​r​e​v​i​o​u​s
+	 */
+	deskPrevious: string
+	/**
+	 * N​e​x​t
+	 */
+	deskNext: string
+	/**
+	 * O​p​e​n
+	 */
+	deskOpen: string
+	/**
+	 * R​e​n​a​m​e
+	 */
+	deskRename: string
+	/**
+	 * R​e​m​o​v​e​ ​f​r​o​m​ ​d​e​s​k
+	 */
+	deskRemoveFromDesk: string
+	/**
+	 * N​e​w​ ​t​e​r​m​i​n​a​l
+	 */
+	deskNewTerminal: string
+	/**
+	 * C​h​a​n​g​e​ ​w​a​l​l​p​a​p​e​r​…
+	 */
+	deskChangeWallpaper: string
+	/**
+	 * C​l​e​a​n​ ​u​p​ ​i​c​o​n​s
+	 */
+	deskCleanUpIcons: string
+	/**
+	 * C​o​n​n​e​c​t​…
+	 */
+	deskConnectServer: string
+	/**
+	 * C​o​n​n​e​c​t
+	 */
+	deskConnect: string
+	/**
+	 * U​n​l​o​c​k
+	 */
+	deskUnlock: string
+	/**
+	 * S​i​g​n​e​d​ ​i​n​ ​a​s​ ​{​u​s​e​r​}
+	 * @param {unknown} user
+	 */
+	deskSignedInAs: RequiredParams<'user'>
+	/**
+	 * S​i​g​n​-​i​n​ ​f​a​i​l​e​d
+	 */
+	deskSignInFailed: string
+	/**
+	 * N​o​t​ ​a​ ​v​a​l​i​d​ ​s​e​r​v​e​r​ ​a​d​d​r​e​s​s
+	 */
+	deskBadUrl: string
+	/**
+	 * N​o​ ​s​e​r​v​e​r​ ​a​n​s​w​e​r​e​d​ ​a​t​ ​t​h​a​t​ ​a​d​d​r​e​s​s
+	 */
+	deskUnreachable: string
+	/**
+	 * A​d​d​ ​t​o​ ​d​e​s​k
+	 */
+	deskAddToDesk: string
+	/**
+	 * S​i​d​e​b​a​r
+	 */
+	deskSidebar: string
+	/**
+	 * G​e​n​e​r​a​l
+	 */
+	settingsGeneral: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	settingsAccount: string
+	/**
+	 * A​c​c​e​s​s
+	 */
+	settingsAccess: string
+	/**
+	 * T​h​i​s​ ​b​r​o​w​s​e​r
+	 */
+	settingsThisBrowser: string
+	/**
+	 * T​h​i​s​ ​s​e​r​v​e​r
+	 */
+	settingsThisServer: string
+	/**
+	 * C​u​s​t​o​m​ ​i​m​a​g​e​…
+	 */
+	settingsWallpaperCustom: string
+	/**
+	 * R​e​m​o​v​e​ ​i​m​a​g​e
+	 */
+	settingsWallpaperRemove: string
+	/**
+	 * F​i​t
+	 */
+	settingsWallpaperFit: string
+	/**
+	 * C​o​v​e​r
+	 */
+	settingsFitCover: string
+	/**
+	 * C​o​n​t​a​i​n
+	 */
+	settingsFitContain: string
+	/**
+	 * F​i​l​l
+	 */
+	settingsFitFill: string
+	/**
+	 * A​c​c​e​n​t
+	 */
+	settingsAccent: string
+	/**
+	 * D​e​f​a​u​l​t
+	 */
+	settingsAccentDefault: string
+	/**
+	 * T​h​e​ ​f​i​r​s​t​ ​c​o​l​o​u​r​ ​i​s​ ​t​h​e​ ​d​e​f​a​u​l​t​ ​a​c​c​e​n​t​.
+	 */
+	settingsAccentNote: string
+	/**
+	 * T​h​a​t​ ​i​m​a​g​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​8​ ​M​i​B​.
+	 */
+	settingsWallpaperTooLarge: string
+	/**
+	 * T​h​a​t​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​a​ ​P​N​G​,​ ​J​P​E​G​ ​o​r​ ​W​e​b​P​ ​i​m​a​g​e​.
+	 */
+	settingsWallpaperNotImage: string
 }
 
 export type TranslationFunctions = {
@@ -6792,6 +7129,10 @@ export type TranslationFunctions = {
 	 */
 	serviceEmpty: () => LocalizedString
 	/**
+	 * All
+	 */
+	servicesFilterAll: () => LocalizedString
+	/**
 	 * This unit has logged nothing.
 	 */
 	serviceLogEmpty: () => LocalizedString
@@ -6895,6 +7236,14 @@ export type TranslationFunctions = {
 	 * Services
 	 */
 	services: () => LocalizedString
+	/**
+	 * Threads
+	 */
+	processColumnThreads: () => LocalizedString
+	/**
+	 * Time
+	 */
+	processColumnTime: () => LocalizedString
 	/**
 	 * CPU
 	 */
@@ -7548,6 +7897,26 @@ export type TranslationFunctions = {
 	 */
 	filesEditorServerChanged: () => LocalizedString
 	/**
+	 * List
+	 */
+	filesViewList: () => LocalizedString
+	/**
+	 * Grid
+	 */
+	filesViewGrid: () => LocalizedString
+	/**
+	 * Forward
+	 */
+	filesForward: () => LocalizedString
+	/**
+	 * Up
+	 */
+	filesUp: () => LocalizedString
+	/**
+	 * More actions
+	 */
+	filesMoreActions: () => LocalizedString
+	/**
 	 * Notification channels
 	 */
 	pushChannels: () => LocalizedString
@@ -8088,6 +8457,14 @@ export type TranslationFunctions = {
 	 */
 	systemUsers: () => LocalizedString
 	/**
+	 * Regular accounts
+	 */
+	systemUsersGroupRegular: () => LocalizedString
+	/**
+	 * System accounts
+	 */
+	systemUsersGroupSystem: () => LocalizedString
+	/**
 	 * Snippets
 	 */
 	snippets: () => LocalizedString
@@ -8207,6 +8584,10 @@ export type TranslationFunctions = {
 	 * {count} saved routes
 	 */
 	desktopSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Saved routes
+	 */
+	desktopRoutes: () => LocalizedString
 	/**
 	 * No desktops saved on this agent yet.
 	 */
@@ -8371,6 +8752,22 @@ export type TranslationFunctions = {
 	 * {count} stored · up to {max} each
 	 */
 	backupSubtitle: (arg: { count: unknown, max: unknown }) => LocalizedString
+	/**
+	 * Total size stored
+	 */
+	backupTotalSize: () => LocalizedString
+	/**
+	 * Maximum per file
+	 */
+	backupPerFileLimit: () => LocalizedString
+	/**
+	 * Stored files
+	 */
+	backupStoredFiles: () => LocalizedString
+	/**
+	 * How this works
+	 */
+	backupHowItWorks: () => LocalizedString
 	/**
 	 * The agent keeps these files for the app's backup sync and for uploads from here. The app encrypts its backup with your backup password before sending it; the panel moves the files without opening them.
 	 */
@@ -11323,6 +11720,282 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * No
 	 */
 	no: () => LocalizedString
+	/**
+	 * Desk
+	 */
+	deskTitle: () => LocalizedString
+	/**
+	 * Menu bar
+	 */
+	deskMenubar: () => LocalizedString
+	/**
+	 * Dock
+	 */
+	deskDock: () => LocalizedString
+	/**
+	 * Launchpad
+	 */
+	deskLaunchpad: () => LocalizedString
+	/**
+	 * Status
+	 */
+	deskAppStatus: () => LocalizedString
+	/**
+	 * Settings
+	 */
+	deskAppSettings: () => LocalizedString
+	/**
+	 * This app could not be loaded.
+	 */
+	deskAppFailed: () => LocalizedString
+	/**
+	 * Apps
+	 */
+	deskApps: () => LocalizedString
+	/**
+	 * Windows
+	 */
+	deskWindows: () => LocalizedString
+	/**
+	 * Servers
+	 */
+	deskServers: () => LocalizedString
+	/**
+	 * Close
+	 */
+	deskClose: () => LocalizedString
+	/**
+	 * Close all windows
+	 */
+	deskCloseAll: () => LocalizedString
+	/**
+	 * Minimize
+	 */
+	deskMinimize: () => LocalizedString
+	/**
+	 * Zoom
+	 */
+	deskZoom: () => LocalizedString
+	/**
+	 * New window
+	 */
+	deskNewWindow: () => LocalizedString
+	/**
+	 * Quit
+	 */
+	deskQuit: () => LocalizedString
+	/**
+	 * Keep in Dock
+	 */
+	deskPin: () => LocalizedString
+	/**
+	 * Remove from Dock
+	 */
+	deskUnpin: () => LocalizedString
+	/**
+	 * About this server
+	 */
+	deskAboutServer: () => LocalizedString
+	/**
+	 * Lock
+	 */
+	deskLock: () => LocalizedString
+	/**
+	 * Connected: changes arrive as they happen
+	 */
+	deskLive: () => LocalizedString
+	/**
+	 * Not connected: notifications may be late
+	 */
+	deskOffline: () => LocalizedString
+	/**
+	 * Search
+	 */
+	deskSearch: () => LocalizedString
+	/**
+	 * Search apps, windows, servers, or type a path
+	 */
+	deskSpotlightHint: () => LocalizedString
+	/**
+	 * Open in Files
+	 */
+	deskOpenInFiles: () => LocalizedString
+	/**
+	 * Control Center
+	 */
+	deskControlCenter: () => LocalizedString
+	/**
+	 * Notifications
+	 */
+	deskNotifications: () => LocalizedString
+	/**
+	 * No notifications
+	 */
+	deskNoNotifications: () => LocalizedString
+	/**
+	 * Mark all read
+	 */
+	deskMarkAllRead: () => LocalizedString
+	/**
+	 * Do Not Disturb
+	 */
+	deskDnd: () => LocalizedString
+	/**
+	 * Appearance
+	 */
+	deskAppearance: () => LocalizedString
+	/**
+	 * Light
+	 */
+	deskThemeLight: () => LocalizedString
+	/**
+	 * Dark
+	 */
+	deskThemeDark: () => LocalizedString
+	/**
+	 * Auto
+	 */
+	deskThemeSystem: () => LocalizedString
+	/**
+	 * Wallpaper
+	 */
+	deskWallpaper: () => LocalizedString
+	/**
+	 * More settings…
+	 */
+	deskMoreSettings: () => LocalizedString
+	/**
+	 * Previous
+	 */
+	deskPrevious: () => LocalizedString
+	/**
+	 * Next
+	 */
+	deskNext: () => LocalizedString
+	/**
+	 * Open
+	 */
+	deskOpen: () => LocalizedString
+	/**
+	 * Rename
+	 */
+	deskRename: () => LocalizedString
+	/**
+	 * Remove from desk
+	 */
+	deskRemoveFromDesk: () => LocalizedString
+	/**
+	 * New terminal
+	 */
+	deskNewTerminal: () => LocalizedString
+	/**
+	 * Change wallpaper…
+	 */
+	deskChangeWallpaper: () => LocalizedString
+	/**
+	 * Clean up icons
+	 */
+	deskCleanUpIcons: () => LocalizedString
+	/**
+	 * Connect…
+	 */
+	deskConnectServer: () => LocalizedString
+	/**
+	 * Connect
+	 */
+	deskConnect: () => LocalizedString
+	/**
+	 * Unlock
+	 */
+	deskUnlock: () => LocalizedString
+	/**
+	 * Signed in as {user}
+	 */
+	deskSignedInAs: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * Sign-in failed
+	 */
+	deskSignInFailed: () => LocalizedString
+	/**
+	 * Not a valid server address
+	 */
+	deskBadUrl: () => LocalizedString
+	/**
+	 * No server answered at that address
+	 */
+	deskUnreachable: () => LocalizedString
+	/**
+	 * Add to desk
+	 */
+	deskAddToDesk: () => LocalizedString
+	/**
+	 * Sidebar
+	 */
+	deskSidebar: () => LocalizedString
+	/**
+	 * General
+	 */
+	settingsGeneral: () => LocalizedString
+	/**
+	 * Account
+	 */
+	settingsAccount: () => LocalizedString
+	/**
+	 * Access
+	 */
+	settingsAccess: () => LocalizedString
+	/**
+	 * This browser
+	 */
+	settingsThisBrowser: () => LocalizedString
+	/**
+	 * This server
+	 */
+	settingsThisServer: () => LocalizedString
+	/**
+	 * Custom image…
+	 */
+	settingsWallpaperCustom: () => LocalizedString
+	/**
+	 * Remove image
+	 */
+	settingsWallpaperRemove: () => LocalizedString
+	/**
+	 * Fit
+	 */
+	settingsWallpaperFit: () => LocalizedString
+	/**
+	 * Cover
+	 */
+	settingsFitCover: () => LocalizedString
+	/**
+	 * Contain
+	 */
+	settingsFitContain: () => LocalizedString
+	/**
+	 * Fill
+	 */
+	settingsFitFill: () => LocalizedString
+	/**
+	 * Accent
+	 */
+	settingsAccent: () => LocalizedString
+	/**
+	 * Default
+	 */
+	settingsAccentDefault: () => LocalizedString
+	/**
+	 * The first colour is the default accent.
+	 */
+	settingsAccentNote: () => LocalizedString
+	/**
+	 * That image is larger than 8 MiB.
+	 */
+	settingsWallpaperTooLarge: () => LocalizedString
+	/**
+	 * That file is not a PNG, JPEG or WebP image.
+	 */
+	settingsWallpaperNotImage: () => LocalizedString
 }
 
 export type Formatters = {}

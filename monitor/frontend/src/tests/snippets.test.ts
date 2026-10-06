@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Snippets from '../pages/Snippets.svelte'
+import Snippets from '../desk/apps/snippets/SnippetsApp.svelte'
 import { api, ApiError } from '../lib/api'
-import { layout } from '../lib/layout.svelte'
 import { servers } from '../lib/servers.svelte'
 import { snippetRun } from '../lib/snippetRun.svelte'
 import type { Snippet } from '../types'
@@ -12,6 +11,11 @@ vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
   api: { getSnippets: vi.fn(), updateSnippets: vi.fn(), planSnippet: vi.fn() },
 }))
+
+// Run opens the terminal app; the window is what a rendered app alone has no
+// context for, so the handle is a spy here.
+const { open } = vi.hoisted(() => ({ open: vi.fn() }))
+vi.mock('../desk/deskState.svelte', () => ({ useWindow: () => ({ open }) }))
 const getSnippets = vi.mocked(api.getSnippets)
 const updateSnippets = vi.mocked(api.updateSnippets)
 const planSnippet = vi.mocked(api.planSnippet)
@@ -29,13 +33,12 @@ describe('Snippets page', () => {
   it('runs a snippet by handing the agent’s steps to the terminal', async () => {
     const steps = [{ type: 'text' as const, text: 'df -h' }]
     planSnippet.mockResolvedValue({ steps })
-    const navigate = vi.spyOn(layout, 'navigate')
-    render(Snippets, { onback: () => {} })
+    render(Snippets)
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('terminal'))
+    await waitFor(() => expect(open).toHaveBeenCalledWith('terminal'))
     expect(planSnippet).toHaveBeenCalledWith('df -h')
     expect(snippetRun.waiting).toEqual({ name: 'Disk', steps })
   })
@@ -43,9 +46,8 @@ describe('Snippets page', () => {
   it('drops a plan that answers after the server was switched', async () => {
     let answer!: (plan: { steps: [] }) => void
     planSnippet.mockReturnValue(new Promise((resolve) => (answer = resolve)))
-    const navigate = vi.spyOn(layout, 'navigate')
     const current = vi.spyOn(servers, 'currentId', 'get').mockReturnValue('a')
-    render(Snippets, { onback: () => {} })
+    render(Snippets)
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
@@ -54,7 +56,7 @@ describe('Snippets page', () => {
 
     await waitFor(() => expect(screen.getByRole('button', { name: /^run$/i })).toBeEnabled())
     expect(snippetRun.waiting).toBeNull()
-    expect(navigate).not.toHaveBeenCalled()
+    expect(open).not.toHaveBeenCalled()
     current.mockRestore()
   })
 
@@ -62,7 +64,7 @@ describe('Snippets page', () => {
     planSnippet.mockRejectedValue(
       new ApiError('unanswerable', 400, undefined, { error: 'unanswerable', key: 'user' }),
     )
-    render(Snippets, { onback: () => {} })
+    render(Snippets)
 
     await fireEvent.click(await screen.findByRole('button', { name: /Login/ }))
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
@@ -73,7 +75,7 @@ describe('Snippets page', () => {
 
   it('removes a snippet by sending the library without it', async () => {
     updateSnippets.mockResolvedValue({ snippets: [login] })
-    render(Snippets, { onback: () => {} })
+    render(Snippets)
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
     await fireEvent.click(screen.getByRole('button', { name: /delete snippet/i }))
@@ -87,7 +89,7 @@ describe('Snippets page', () => {
     updateSnippets.mockRejectedValue(
       new ApiError('duplicateName', 400, undefined, { error: 'duplicateName', index: 1 }),
     )
-    render(Snippets, { onback: () => {} })
+    render(Snippets)
 
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
     await fireEvent.click(screen.getByRole('button', { name: /delete snippet/i }))

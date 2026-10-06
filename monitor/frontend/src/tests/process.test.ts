@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Process from '../pages/Process.svelte'
+import Process from '../desk/apps/process/ProcessApp.svelte'
 import { api } from '../lib/api'
 import { enabledFeatures } from '../lib/features'
 import type { Capabilities, ProcessSignalResult, ProcessView } from '../types'
@@ -53,7 +53,7 @@ describe('Process page', () => {
   })
 
   it('asks for a password when root needed one, and sends it on the retry', async () => {
-    render(Process, { onback: () => {} })
+    render(Process)
     await fireEvent.click(await screen.findByRole('button', { name: /stop/i }))
 
     // The agent already tried `sudo -n`; that it wanted a password is a

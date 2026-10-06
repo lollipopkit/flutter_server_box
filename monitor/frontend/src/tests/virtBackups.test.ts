@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import VirtBackups from '../components/VirtBackups.svelte'
-import VirtBackupJobs from '../components/VirtBackupJobs.svelte'
-import Virt from '../pages/Virt.svelte'
+import VirtBackups from '../desk/apps/virt/VirtBackups.svelte'
+import VirtBackupJobs from '../desk/apps/virt/VirtBackupJobs.svelte'
+import Virt from '../desk/apps/virt/VirtApp.svelte'
 import { api } from '../lib/api'
 import {
   backupIssueText,
@@ -436,13 +436,13 @@ describe('the virtualization page: backups', () => {
     const view = hostView()
     view.guests = [guest({ template: true, state: 'stopped', actions: [] })]
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: true, view, error: null })
-    render(Virt, { onback: () => {} })
+    render(Virt)
     await fireEvent.click(await screen.findByRole('button', { name: /^backup$/i }))
     expect(await screen.findByRole('button', { name: /^back up now$/i })).toBeInTheDocument()
     expect(virtBackups).toHaveBeenCalledWith('qemu/100')
     await fireEvent.click(screen.getByRole('button', { name: /datacenter/i }))
     expect(await screen.findByText('No backup jobs.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^backup jobs$/i })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: /^backup jobs$/i })).toHaveAttribute('aria-current', 'true')
   })
 
   it('offers neither where it does not (libvirt)', async () => {
@@ -450,7 +450,7 @@ describe('the virtualization page: backups', () => {
     view.host.kind = 'libvirt'
     view.capabilities = { lxc: false, pause: true, cluster: false, backup: false, backup_jobs: false }
     loadVirt.mockResolvedValue({ host: 'libvirt', supported: true, pve_configured: false, view, error: null })
-    render(Virt, { onback: () => {} })
+    render(Virt)
     expect(await screen.findByRole('button', { name: /^overview$/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^backup$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^backup jobs$/i })).not.toBeInTheDocument()

@@ -107,9 +107,9 @@ export interface Renderer {
 /// `sessionStorage`, never `localStorage`: the handle is a bearer capability
 /// for an authenticated shell, so it must not outlive the tab or be readable
 /// by another one.
-function loadSession(): { handle: string; rendered: number } | null {
+function loadSession(key: string): { handle: string; rendered: number } | null {
   try {
-    const raw = window.sessionStorage.getItem(SESSION_KEY)
+    const raw = window.sessionStorage.getItem(key)
     if (!raw) return null
     const parsed = JSON.parse(raw) as { handle?: string; rendered?: number }
     if (typeof parsed.handle !== 'string') return null
@@ -125,17 +125,17 @@ function loadSession(): { handle: string; rendered: number } | null {
   }
 }
 
-function saveSession(handle: string, rendered: number) {
+function saveSession(key: string, handle: string, rendered: number) {
   try {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({ handle, rendered }))
+    window.sessionStorage.setItem(key, JSON.stringify({ handle, rendered }))
   } catch {
     // Private-browsing quota errors only cost the resume-after-reload path
   }
 }
 
-function clearSession() {
+function clearSession(key: string) {
   try {
-    window.sessionStorage.removeItem(SESSION_KEY)
+    window.sessionStorage.removeItem(key)
   } catch {
     // Nothing to recover from; the handle simply expires on the agent
   }
@@ -155,6 +155,9 @@ export interface TerminalSessionOptions {
   /// it never reads, writes or clears the key the terminal page uses. It still
   /// reconnects from the in-memory handle while the dialog is open.
   persist?: boolean
+  /// Which stored handle is this session's: one per terminal window, so each
+  /// window rejoins its own shell after a reload. Unset: the one key.
+  key?: string
 }
 
 export class TerminalSession {
@@ -195,11 +198,13 @@ export class TerminalSession {
   /// Whether `sessionStorage` is this session's to use — see
   /// [`TerminalSessionOptions`].
   private readonly persistent: boolean
+  private readonly storageKey: string
 
   constructor(options: TerminalSessionOptions = {}) {
     this.persistent = options.persist !== false
+    this.storageKey = options.key ? `${SESSION_KEY}:${options.key}` : SESSION_KEY
     if (!this.persistent) return
-    const saved = loadSession()
+    const saved = loadSession(this.storageKey)
     if (saved) {
       this.handle = saved.handle
       this.rendered = saved.rendered
@@ -208,12 +213,12 @@ export class TerminalSession {
 
   /// Writes the handle out, unless this session must not touch the key.
   private saveStored() {
-    if (this.persistent && this.handle) saveSession(this.handle, this.rendered)
+    if (this.persistent && this.handle) saveSession(this.storageKey, this.handle, this.rendered)
   }
 
   /// Drops the stored handle, unless this session must not touch the key.
   private clearStored() {
-    if (this.persistent) clearSession()
+    if (this.persistent) clearSession(this.storageKey)
   }
 
   /// Whether a previous connection left a session worth rejoining.
@@ -469,7 +474,7 @@ export class TerminalSession {
     const now = Date.now()
     if (now - this.persistedAt < PERSIST_INTERVAL_MS) return
     this.persistedAt = now
-    saveSession(this.handle, this.rendered)
+    saveSession(this.storageKey, this.handle, this.rendered)
   }
 
   /// Writes the exact resume point out, ignoring the throttle. For `pagehide`,

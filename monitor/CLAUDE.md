@@ -29,6 +29,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 ## Panel
 
+- **The panel is a desk** (a macOS-style web desktop, every feature an app in a window): `frontend/src/desk/CLAUDE.md`.
 - **State and UI only.** The panel never composes a shell command or parses output: it calls an agent endpoint, which builds and parses through `sbm_parser` (the app reaches the same functions over FFI). Sending text to `/exec` and parsing it in TypeScript is ruled out.
 - The terminal store (`lib/terminal.svelte.ts`) owns protocol and reconnect and knows nothing about xterm.js; xterm is a dynamic import (`lib/xterm.ts`). Dialog terminals (`TargetTerminal`) use `persist: false` and `close()` on destroy, never the page's stored handle. An explicit open forgets the stored handle; only Resume rejoins it.
 - An answer that arrives after the sidebar switched servers is dropped (`stale(serverId)` pattern); anything that writes binds to the server it was opened on.

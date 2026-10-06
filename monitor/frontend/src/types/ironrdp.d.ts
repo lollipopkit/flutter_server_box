@@ -6,7 +6,7 @@
 /// `@devolutions/iron-remote-desktop-rdp` is the backend it is handed. Both
 /// ship types for everything that is not the element, and those are imported
 /// here rather than restated: what this file adds is the element and the event
-/// it answers with, which is the whole of what `components/RdpViewer.svelte`
+/// it answers with, which is the whole of what `desk/apps/remote_desktop/RdpViewer.svelte`
 /// leans on.
 ///
 /// The element is created in script rather than written into the page, because
