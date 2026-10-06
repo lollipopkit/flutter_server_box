@@ -20,7 +20,7 @@ fn ip(s: &str) -> IpAddr {
 }
 
 fn access(port: u16, client: Option<&str>) -> FirewallAccess {
-    FirewallAccess { via: FirewallAccessVia::Ssh, port, client: client.map(str::to_owned), server: None }
+    FirewallAccess { via: FirewallAccessVia::Ssh, port, client: client.map(str::to_owned), server: None, iface: None }
 }
 
 mod common {
@@ -98,8 +98,8 @@ mod common {
         let r = parse_probe(&format!("{PROBE_UFW}yes\n{PROBE_FIREWALLD}inactive\n{PROBE_UID}1000\n{PROBE_SSH}10.9.9.9 51000 192.168.215.3 22\n{PROBE_IFACE}eth0\n"));
         assert_eq!((r.ufw, r.firewalld), (Some(true), Some(false)));
         assert!(!r.root);
-        assert_eq!(r.ssh.unwrap().port, 22);
-        assert_eq!(r.ssh_interface.as_deref(), Some("eth0"));
+        assert_eq!(r.ssh.as_ref().unwrap().port, 22);
+        assert_eq!(r.ssh.as_ref().unwrap().iface.as_deref(), Some("eth0"));
         assert_eq!(parse_probe(&format!("{PROBE_UFW}yes\n{PROBE_FIREWALLD}inactive\n")).preferred(), Some(FirewallKind::Ufw));
     }
 
@@ -626,6 +626,11 @@ mod firewalld_tests {
         access(p, client)
     }
 
+    /// `access` arriving on `iface`.
+    fn on(access: FirewallAccess, iface: Option<&str>) -> FirewallAccess {
+        FirewallAccess { iface: iface.map(str::to_owned), ..access }
+    }
+
     #[test]
     fn reads_the_daemon_both_configurations_and_the_policies() {
         let r = running();
@@ -743,7 +748,7 @@ mod firewalld_tests {
         r.permanent.push(extra);
         assert!(r.drifted());
         assert!(ports(stopped.zone("public", false).unwrap()).contains(&"5555/tcp".into()));
-        assert_eq!(stopped.reach(&ssh(Some("203.0.113.5"), 22), None, None, None, None, None), Open);
+        assert_eq!(stopped.reach(&on(ssh(Some("203.0.113.5"), 22), None), None, None, None, None), Open);
     }
 
     #[test]
@@ -780,15 +785,15 @@ mod firewalld_tests {
     #[test]
     fn a_source_zone_wins_over_the_interface() {
         // trusted (ACCEPT) holds 10.8.0.0/24.
-        assert_eq!(running().reach(&ssh(Some("10.8.0.5"), 3770), Some("eth0"), None, None, None, None), Open);
+        assert_eq!(running().reach(&on(ssh(Some("10.8.0.5"), 3770), Some("eth0")), None, None, None, None), Open);
     }
 
     #[test]
     fn the_interfaces_zone_and_its_services() {
         // internal has eth0 and ssh.
         let r = running();
-        assert_eq!(r.reach(&ssh(Some("192.0.2.1"), 22), Some("eth0"), None, None, None, None), Open);
-        assert_eq!(r.reach(&ssh(Some("192.0.2.1"), 3770), Some("eth0"), None, None, None, None), Blocked);
+        assert_eq!(r.reach(&on(ssh(Some("192.0.2.1"), 22), Some("eth0")), None, None, None, None), Open);
+        assert_eq!(r.reach(&on(ssh(Some("192.0.2.1"), 3770), Some("eth0")), None, None, None, None), Blocked);
     }
 
     #[test]
@@ -796,7 +801,7 @@ mod firewalld_tests {
         // public: priority -10 drops 198.51.100.7; 203.0.113.0/24 is refused
         // ssh at 0, before the ssh service lets anyone else in.
         let r = running();
-        let reach = |c, p| r.reach(&ssh(Some(c), p), Some("eth9"), None, None, None, None);
+        let reach = |c, p| r.reach(&on(ssh(Some(c), p), Some("eth9")), None, None, None, None);
         assert_eq!(reach("192.0.2.1", 22), Open);
         assert_eq!(reach("203.0.113.5", 22), Blocked);
         assert_eq!(reach("198.51.100.7", 8080), Blocked);
@@ -806,7 +811,7 @@ mod firewalld_tests {
     #[test]
     fn what_cannot_be_known_is_said_to_be_unknown() {
         // No address, no interface: public's address-bound refusals may apply.
-        assert_eq!(running().reach(&ssh(None, 22), None, None, None, None, None), Unknown);
+        assert_eq!(running().reach(&on(ssh(None, 22), None), None, None, None, None), Unknown);
     }
 
     #[test]
@@ -824,9 +829,9 @@ mod firewalld_tests {
                 z
             })
             .collect();
-        assert_eq!(r.reach(&a, Some("eth0"), None, None, Some(&zones), None), Blocked);
-        assert_eq!(r.reach(&a, Some("eth0"), None, Some(true), None, None), Blocked);
-        assert_eq!(r.reach(&a, Some("eth0"), Some(false), None, None, None), Open);
+        assert_eq!(r.reach(&on(a.clone(), Some("eth0")), None, None, Some(&zones), None), Blocked);
+        assert_eq!(r.reach(&on(a.clone(), Some("eth0")), None, Some(true), None, None), Blocked);
+        assert_eq!(r.reach(&on(a.clone(), Some("eth0")), Some(false), None, None, None), Open);
     }
 
     #[test]
@@ -841,13 +846,13 @@ mod firewalld_tests {
     fn a_policy_for_the_host_may_decide_what_a_zone_let_in() {
         let mut r = running();
         r.policies = vec![FirewalldPolicy { name: "p".into(), target: "REJECT".into(), egress_host: true, decides: true }];
-        assert_eq!(r.reach(&ssh(Some("192.0.2.1"), 22), Some("eth0"), None, None, None, None), Unknown);
+        assert_eq!(r.reach(&on(ssh(Some("192.0.2.1"), 22), Some("eth0")), None, None, None, None), Unknown);
     }
 
     #[test]
     fn the_zones_a_connection_may_be_in() {
         let r = running();
-        let names = |a: &FirewallAccess, i: Option<&str>| r.zones_for(a, i, None, None).into_iter().map(|z| z.name).collect::<Vec<_>>();
+        let names = |a: &FirewallAccess, i: Option<&str>| r.zones_for(&on(a.clone(), i), None, None).into_iter().map(|z| z.name).collect::<Vec<_>>();
         assert_eq!(names(&ssh(Some("10.8.0.5"), 22), Some("eth0")), ["trusted"]);
         assert_eq!(names(&ssh(Some("192.0.2.1"), 22), Some("eth0")), ["internal"]);
         assert_eq!(names(&ssh(Some("192.0.2.1"), 22), Some("eth9")), ["public"]);

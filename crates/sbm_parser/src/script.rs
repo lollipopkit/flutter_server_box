@@ -579,16 +579,24 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
 /// without reading what it said a wrong password is indistinguishable from the
 /// command itself failing — and the caller has no reason to ask for a new one.
 ///
-/// Three phrasings: util-linux's `Sorry, try again.`, a PAM stack's
-/// `incorrect password attempt`, and `a password is required` when none was
-/// given.
+/// sudo's phrasings — `Sorry, try again.`, a PAM stack's `incorrect password
+/// attempt`, and `a password is required` when none was given — and
+/// sudo-rs's, which Ubuntu ships as `sudo` since 25.10: `Authentication
+/// failed, try again.`, `Authentication required but not attempted` (`-S`
+/// with nothing on stdin), `interactive authentication is required` (`-n`)
+/// and `incorrect authentication attempts`.
 ///
 /// The app reads it through `sbm_ffi::api::script::sudo_password_rejected`.
 pub fn sudo_password_rejected(stderr: &str) -> bool {
-    const REJECTED: [&str; 3] = [
+    const REJECTED: [&str; 7] = [
         "Sorry, try again.",
         "incorrect password attempt",
         "a password is required",
+        // sudo-rs.
+        "Authentication failed, try again.",
+        "Authentication required but not attempted",
+        "interactive authentication is required",
+        "incorrect authentication attempts",
     ];
     REJECTED.iter().any(|phrase| stderr.contains(phrase))
 }

@@ -27,11 +27,11 @@
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::remote_desktop::*;
-use crate::api::pve::*;
 use crate::api::bmc::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::virt::*;
+use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -43,7 +43,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 986458282;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 280072371;
             
 
 // Section: executor
@@ -2458,6 +2458,15 @@ let api_path = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewall_parse_probe(api_output))?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__firewall__firewall_plan_commands_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewall_plan_commands", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_plan = <crate::api::firewall::Plan>::sse_decode(&mut deserializer);
+let api_keep_open = <bool>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewall_plan_commands(api_plan, api_keep_open))?;   std::result::Result::Ok(output_ok)
+                })()) })
             }fn wire__crate__api__firewall__firewall_preferred_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewall_preferred", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -2474,23 +2483,6 @@ let api_path = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewall_probe_script())?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__firewall_reach_admits_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewall_reach_admits", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_reach = <crate::api::firewall::FirewallReach>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewall_reach_admits(api_reach))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewall_reach_worse_than_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewall_reach_worse_than", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_after = <crate::api::firewall::FirewallReach>::sse_decode(&mut deserializer);
-let api_before = <crate::api::firewall::FirewallReach>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewall_reach_worse_than(api_after, api_before))?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__firewall_script_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewall_script", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -2498,57 +2490,6 @@ let api_before = <crate::api::firewall::FirewallReach>::sse_decode(&mut deserial
             let api_commands = <Vec<String>>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewall_script(api_commands))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_change_interface_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_change_interface", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);
-let api_iface = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_change_interface(api_running, api_zone, api_iface))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_check_forward_port_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_check_forward_port", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_value = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_check_forward_port(api_value))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_check_interface_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_check_interface", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_value = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_check_interface(api_value))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_check_rich_rule_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_check_rich_rule", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_value = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_check_rich_rule(api_value))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_check_source_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_check_source", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_value = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_check_source(api_value))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_default_zone_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_default_zone", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_default_zone(api_running, api_zone))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__firewall__firewalld_drifted_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_drifted", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -2558,44 +2499,6 @@ let api_zone = <String>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_drifted(api_snapshot))?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__firewalld_item_commands_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_item_commands", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);
-let api_item = <crate::api::firewall::FirewalldItem>::sse_decode(&mut deserializer);
-let api_value = <String>::sse_decode(&mut deserializer);
-let api_add = <bool>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_item_commands(api_running, api_zone, api_item, api_value, api_add))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_keep_open_rule_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_keep_open_rule", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_port = <u16>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_keep_open_rule(api_port))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_masquerade_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_masquerade", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);
-let api_add = <bool>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_masquerade(api_running, api_zone, api_add))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_panic_off_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_panic_off_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_panic_off_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__firewalld_parse_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_parse", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -2604,32 +2507,15 @@ let api_add = <bool>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::firewall::firewalld_parse(api_output)?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__firewalld_parse_port_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_parse_port", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            }fn wire__crate__api__firewall__firewalld_plan_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_plan", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_value = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_parse_port(api_value))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_parse_rich_rule_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_parse_rich_rule", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_raw = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_parse_rich_rule(api_raw))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_port_commands_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_port_commands", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);
-let api_port = <crate::api::firewall::FirewalldPort>::sse_decode(&mut deserializer);
-let api_add = <bool>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_port_commands(api_running, api_zone, api_port, api_add))?;   std::result::Result::Ok(output_ok)
+            let api_snapshot = <crate::api::firewall::FirewalldSnapshot>::sse_decode(&mut deserializer);
+let api_change = <crate::api::firewall::FirewalldChange>::sse_decode(&mut deserializer);
+let api_accesses = <Vec<crate::api::firewall::FirewallAccess>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, crate::api::firewall::ChangeError>((move || {
+                     let output_ok = crate::api::firewall::firewalld_plan(api_snapshot, api_change, api_accesses)?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__firewall__firewalld_port_spec_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_port_spec", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -2639,20 +2525,6 @@ let api_add = <bool>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_port_spec(api_port))?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__firewalld_reach_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_reach", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_snapshot = <crate::api::firewall::FirewalldSnapshot>::sse_decode(&mut deserializer);
-let api_access = <crate::api::firewall::FirewallAccess>::sse_decode(&mut deserializer);
-let api_iface = <Option<String>>::sse_decode(&mut deserializer);
-let api_running = <Option<bool>>::sse_decode(&mut deserializer);
-let api_panic = <Option<bool>>::sse_decode(&mut deserializer);
-let api_zones = <Option<Vec<crate::api::firewall::FirewalldZone>>>::sse_decode(&mut deserializer);
-let api_default_zone = <Option<String>>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_reach(api_snapshot, api_access, api_iface, api_running, api_panic, api_zones, api_default_zone))?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__firewalld_read_script_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_read_script", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -2661,57 +2533,14 @@ let api_default_zone = <Option<String>>::sse_decode(&mut deserializer);deseriali
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_read_script())?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__firewalld_reload_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_reload_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            }fn wire__crate__api__firewall__firewalld_shut_by_reload_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_shut_by_reload", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
+            let api_snapshot = <crate::api::firewall::FirewalldSnapshot>::sse_decode(&mut deserializer);
+let api_access = <crate::api::firewall::FirewallAccess>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_reload_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_remove_interface_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_remove_interface", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);
-let api_iface = <String>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_remove_interface(api_running, api_zone, api_iface))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_runtime_to_permanent_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_runtime_to_permanent_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_runtime_to_permanent_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_start_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_start_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_start_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_stop_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_stop_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_stop_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__firewalld_target_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_target", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_running = <bool>::sse_decode(&mut deserializer);
-let api_zone = <String>::sse_decode(&mut deserializer);
-let api_target = <crate::api::firewall::FirewalldTarget>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_target(api_running, api_zone, api_target))?;   std::result::Result::Ok(output_ok)
+                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_shut_by_reload(api_snapshot, api_access))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__firewall__firewalld_target_token_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_target_token", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -2721,25 +2550,16 @@ let api_target = <crate::api::firewall::FirewalldTarget>::sse_decode(&mut deseri
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_target_token(api_target))?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__firewalld_zones_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_zones", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_snapshot = <crate::api::firewall::FirewalldSnapshot>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_zones(api_snapshot))?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__firewalld_zones_for_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "firewalld_zones_for", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_snapshot = <crate::api::firewall::FirewalldSnapshot>::sse_decode(&mut deserializer);
 let api_access = <crate::api::firewall::FirewallAccess>::sse_decode(&mut deserializer);
-let api_iface = <Option<String>>::sse_decode(&mut deserializer);
 let api_zones = <Option<Vec<crate::api::firewall::FirewalldZone>>>::sse_decode(&mut deserializer);
 let api_default_zone = <Option<String>>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_zones_for(api_snapshot, api_access, api_iface, api_zones, api_default_zone))?;   std::result::Result::Ok(output_ok)
+                     let output_ok = Ok::<_, ()>(crate::api::firewall::firewalld_zones_for(api_snapshot, api_access, api_zones, api_default_zone))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__parser__init_app_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "init_app", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
@@ -3389,30 +3209,6 @@ let api_succeeded = <bool>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::tmux::tmux_parse_windows(api_output))?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__ufw_add_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_add_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_draft = <crate::api::firewall::UfwRuleDraft>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, String>((move || {
-                     let output_ok = crate::api::firewall::ufw_add_command(api_draft)?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_allow_tcp_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_allow_tcp_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_port = <u16>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_allow_tcp_command(api_port))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_delete_commands_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_delete_commands", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_rule = <crate::api::firewall::UfwRule>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_delete_commands(api_rule))?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__ufw_direction_token_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_direction_token", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -3420,31 +3216,6 @@ let api_succeeded = <bool>::sse_decode(&mut deserializer);deserializer.end();
             let api_direction = <crate::api::firewall::UfwDirection>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_direction_token(api_direction))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_disable_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_disable_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_disable_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_draft_rules_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_draft_rules", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_draft = <crate::api::firewall::UfwRuleDraft>::sse_decode(&mut deserializer);
-let api_apps = <Vec<crate::api::firewall::UfwApp>>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_draft_rules(api_draft, api_apps))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_enable_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_enable_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_enable_command())?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__firewall__ufw_log_token_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_log_token", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -3454,14 +3225,6 @@ let api_apps = <Vec<crate::api::firewall::UfwApp>>::sse_decode(&mut deserializer
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_log_token(api_log))?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__ufw_logging_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_logging_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_level = <crate::api::firewall::UfwLogLevel>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_logging_command(api_level))?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__ufw_parse_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_parse", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -3470,26 +3233,15 @@ let api_apps = <Vec<crate::api::firewall::UfwApp>>::sse_decode(&mut deserializer
                 transform_result_sse::<_, String>((move || {
                      let output_ok = crate::api::firewall::ufw_parse(api_output)?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__ufw_policy_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_policy_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_chain = <crate::api::firewall::UfwChain>::sse_decode(&mut deserializer);
-let api_policy = <crate::api::firewall::UfwPolicy>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_policy_command(api_chain, api_policy))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_reach_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_reach", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            }fn wire__crate__api__firewall__ufw_plan_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_plan", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_snapshot = <crate::api::firewall::UfwSnapshot>::sse_decode(&mut deserializer);
-let api_access = <crate::api::firewall::FirewallAccess>::sse_decode(&mut deserializer);
-let api_active = <Option<bool>>::sse_decode(&mut deserializer);
-let api_rules = <Option<Vec<crate::api::firewall::UfwRule>>>::sse_decode(&mut deserializer);
-let api_incoming = <Option<crate::api::firewall::UfwPolicy>>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_reach(api_snapshot, api_access, api_active, api_rules, api_incoming))?;   std::result::Result::Ok(output_ok)
+let api_change = <crate::api::firewall::UfwChange>::sse_decode(&mut deserializer);
+let api_accesses = <Vec<crate::api::firewall::FirewallAccess>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, crate::api::firewall::ChangeError>((move || {
+                     let output_ok = crate::api::firewall::ufw_plan(api_snapshot, api_change, api_accesses)?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__firewall__ufw_read_script_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_read_script", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -3499,14 +3251,6 @@ let api_incoming = <Option<crate::api::firewall::UfwPolicy>>::sse_decode(&mut de
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_read_script())?;   std::result::Result::Ok(output_ok)
                 })()) })
-            }fn wire__crate__api__firewall__ufw_reload_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_reload_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_reload_command())?;   std::result::Result::Ok(output_ok)
-                })()) })
             }fn wire__crate__api__firewall__ufw_validate_draft_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_validate_draft", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -3514,16 +3258,6 @@ let api_incoming = <Option<crate::api::firewall::UfwPolicy>>::sse_decode(&mut de
             let api_draft = <crate::api::firewall::UfwRuleDraft>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_validate_draft(api_draft))?;   std::result::Result::Ok(output_ok)
-                })()) })
-            }fn wire__crate__api__firewall__ufw_with_rules_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "ufw_with_rules", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
-            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_snapshot = <crate::api::firewall::UfwSnapshot>::sse_decode(&mut deserializer);
-let api_added = <Vec<crate::api::firewall::UfwRule>>::sse_decode(&mut deserializer);
-let api_prepend = <bool>::sse_decode(&mut deserializer);deserializer.end();
-                transform_result_sse::<_, ()>((move || {
-                     let output_ok = Ok::<_, ()>(crate::api::firewall::ufw_with_rules(api_snapshot, api_added, api_prepend))?;   std::result::Result::Ok(output_ok)
                 })()) })
             }fn wire__crate__api__users__users_create_command_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "users_create_command", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
@@ -4505,17 +4239,42 @@ let api_peer_public_key = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.
 
 #[allow(clippy::unnecessary_literal_unwrap)]
 const _: fn() = || {
+match None::<crate::api::firewall::ChangeError>.unwrap() { crate::api::firewall::ChangeError::Unchanged => {},crate::api::firewall::ChangeError::Draft(field0) => { let _: crate::api::firewall::UfwDraftIssue = field0;
+ },crate::api::firewall::ChangeError::Input(field0) => { let _: crate::api::firewall::FirewalldInputIssue = field0;
+ },crate::api::firewall::ChangeError::NoSuchRule => {},crate::api::firewall::ChangeError::NoSuchZone => {} }
+{ let Effect = None::<crate::api::firewall::Effect>.unwrap(); let _: crate::api::firewall::FirewallAccess = Effect.access;
+let _: crate::api::firewall::FirewallReach = Effect.before;
+let _: crate::api::firewall::FirewallReach = Effect.after;
+let _: bool = Effect.later;
+let _: bool = Effect.worse;
+ } 
 { let FirewallAccess = None::<crate::api::firewall::FirewallAccess>.unwrap(); let _: crate::api::firewall::FirewallAccessVia = FirewallAccess.via;
 let _: u16 = FirewallAccess.port;
 let _: Option<String> = FirewallAccess.client;
 let _: Option<String> = FirewallAccess.server;
+let _: Option<String> = FirewallAccess.iface;
  } 
 { let FirewallProbeResult = None::<crate::api::firewall::FirewallProbeResult>.unwrap(); let _: Option<bool> = FirewallProbeResult.ufw;
 let _: Option<bool> = FirewallProbeResult.firewalld;
 let _: bool = FirewallProbeResult.root;
 let _: Option<crate::api::firewall::FirewallAccess> = FirewallProbeResult.ssh;
-let _: Option<String> = FirewallProbeResult.ssh_interface;
  } 
+match None::<crate::api::firewall::FirewalldChange>.unwrap() { crate::api::firewall::FirewalldChange::Start => {},crate::api::firewall::FirewalldChange::Stop => {},crate::api::firewall::FirewalldChange::Reload => {},crate::api::firewall::FirewalldChange::RuntimeToPermanent => {},crate::api::firewall::FirewalldChange::PanicOff => {},crate::api::firewall::FirewalldChange::DefaultZone { zone } => { let _: String = zone;
+ },crate::api::firewall::FirewalldChange::Target { zone,target } => { let _: String = zone;
+let _: crate::api::firewall::FirewalldTarget = target;
+ },crate::api::firewall::FirewalldChange::Masquerade { zone,enabled } => { let _: String = zone;
+let _: bool = enabled;
+ },crate::api::firewall::FirewalldChange::Add { zone,item,value } => { let _: String = zone;
+let _: crate::api::firewall::FirewalldItem = item;
+let _: String = value;
+ },crate::api::firewall::FirewalldChange::Remove { zone,item,value } => { let _: String = zone;
+let _: crate::api::firewall::FirewalldItem = item;
+let _: String = value;
+ },crate::api::firewall::FirewalldChange::ChangeInterface { zone,iface } => { let _: String = zone;
+let _: String = iface;
+ },crate::api::firewall::FirewalldChange::RemoveInterface { zone,iface } => { let _: String = zone;
+let _: String = iface;
+ } }
 { let FirewalldPolicy = None::<crate::api::firewall::FirewalldPolicy>.unwrap(); let _: String = FirewalldPolicy.name;
 let _: String = FirewalldPolicy.target;
 let _: bool = FirewalldPolicy.egress_host;
@@ -4562,12 +4321,27 @@ let _: Vec<String> = FirewalldZone.forward_ports;
 let _: Vec<crate::api::firewall::FirewalldRichRule> = FirewalldZone.rich_rules;
 let _: bool = FirewalldZone.masquerade;
  } 
+{ let Plan = None::<crate::api::firewall::Plan>.unwrap(); let _: Vec<String> = Plan.commands;
+let _: Vec<crate::api::firewall::Effect> = Plan.effects;
+let _: Vec<crate::api::firewall::PlanNote> = Plan.notes;
+let _: bool = Plan.destructive;
+let _: bool = Plan.confirm;
+let _: Vec<String> = Plan.keep_open;
+let _: bool = Plan.keep_open_default;
+let _: bool = Plan.countdown;
+ } 
 { let UfwApp = None::<crate::api::firewall::UfwApp>.unwrap(); let _: String = UfwApp.name;
 let _: Vec<crate::api::firewall::UfwAppPort> = UfwApp.ports;
  } 
 { let UfwAppPort = None::<crate::api::firewall::UfwAppPort>.unwrap(); let _: String = UfwAppPort.port;
 let _: Option<String> = UfwAppPort.protocol;
  } 
+match None::<crate::api::firewall::UfwChange>.unwrap() { crate::api::firewall::UfwChange::Enable => {},crate::api::firewall::UfwChange::Disable => {},crate::api::firewall::UfwChange::Reload => {},crate::api::firewall::UfwChange::Policy { chain,policy } => { let _: crate::api::firewall::UfwChain = chain;
+let _: crate::api::firewall::UfwPolicy = policy;
+ },crate::api::firewall::UfwChange::Logging { level } => { let _: crate::api::firewall::UfwLogLevel = level;
+ },crate::api::firewall::UfwChange::AddRule { draft } => { let _: crate::api::firewall::UfwRuleDraft = draft;
+ },crate::api::firewall::UfwChange::DeleteRule { tuples } => { let _: Vec<String> = tuples;
+ } }
 { let UfwEndpoint = None::<crate::api::firewall::UfwEndpoint>.unwrap(); let _: Option<String> = UfwEndpoint.address;
 let _: Option<String> = UfwEndpoint.port;
 let _: Option<String> = UfwEndpoint.app;
@@ -4825,6 +4599,19 @@ let mut var_notAfter = <i64>::sse_decode(deserializer);
 return crate::api::bmc::CertInfo{fingerprint: var_fingerprint, subject: var_subject, issuer: var_issuer, not_before: var_notBefore, not_after: var_notAfter};}
                 }
                 
+                impl SseDecode for crate::api::firewall::ChangeError {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut tag_ = <i32>::sse_decode(deserializer);
+            match tag_ {0 => { return crate::api::firewall::ChangeError::Unchanged; }
+1 => { let mut var_field0 = <crate::api::firewall::UfwDraftIssue>::sse_decode(deserializer);
+return crate::api::firewall::ChangeError::Draft(var_field0); }
+2 => { let mut var_field0 = <crate::api::firewall::FirewalldInputIssue>::sse_decode(deserializer);
+return crate::api::firewall::ChangeError::Input(var_field0); }
+3 => { return crate::api::firewall::ChangeError::NoSuchRule; }
+4 => { return crate::api::firewall::ChangeError::NoSuchZone; }
+ _ => { unimplemented!(""); }}}
+                }
+                
                 impl SseDecode for crate::api::parser::CommandSpec {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_key = <String>::sse_decode(deserializer);
@@ -4963,6 +4750,16 @@ let mut var_s = <Vec<u8>>::sse_decode(deserializer);
 return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
                 }
                 
+                impl SseDecode for crate::api::firewall::Effect {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_access = <crate::api::firewall::FirewallAccess>::sse_decode(deserializer);
+let mut var_before = <crate::api::firewall::FirewallReach>::sse_decode(deserializer);
+let mut var_after = <crate::api::firewall::FirewallReach>::sse_decode(deserializer);
+let mut var_later = <bool>::sse_decode(deserializer);
+let mut var_worse = <bool>::sse_decode(deserializer);
+return crate::api::firewall::Effect{access: var_access, before: var_before, after: var_after, later: var_later, worse: var_worse};}
+                }
+                
                 impl SseDecode for f64 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_f64::<NativeEndian>().unwrap()}
@@ -4983,7 +4780,8 @@ return crate::api::files::FilesStatMarkers{absent_mark: var_absentMark, absent_e
 let mut var_port = <u16>::sse_decode(deserializer);
 let mut var_client = <Option<String>>::sse_decode(deserializer);
 let mut var_server = <Option<String>>::sse_decode(deserializer);
-return crate::api::firewall::FirewallAccess{via: var_via, port: var_port, client: var_client, server: var_server};}
+let mut var_iface = <Option<String>>::sse_decode(deserializer);
+return crate::api::firewall::FirewallAccess{via: var_via, port: var_port, client: var_client, server: var_server, iface: var_iface};}
                 }
                 
                 impl SseDecode for crate::api::firewall::FirewallAccessVia {
@@ -5012,8 +4810,7 @@ return crate::api::firewall::FirewallAccess{via: var_via, port: var_port, client
 let mut var_firewalld = <Option<bool>>::sse_decode(deserializer);
 let mut var_root = <bool>::sse_decode(deserializer);
 let mut var_ssh = <Option<crate::api::firewall::FirewallAccess>>::sse_decode(deserializer);
-let mut var_sshInterface = <Option<String>>::sse_decode(deserializer);
-return crate::api::firewall::FirewallProbeResult{ufw: var_ufw, firewalld: var_firewalld, root: var_root, ssh: var_ssh, ssh_interface: var_sshInterface};}
+return crate::api::firewall::FirewallProbeResult{ufw: var_ufw, firewalld: var_firewalld, root: var_root, ssh: var_ssh};}
                 }
                 
                 impl SseDecode for crate::api::firewall::FirewallReach {
@@ -5026,6 +4823,39 @@ return crate::api::firewall::FirewallProbeResult{ufw: var_ufw, firewalld: var_fi
 3 => crate::api::firewall::FirewallReach::Blocked,
             _ => unreachable!("Invalid variant for FirewallReach: {}", inner),
         };}
+                }
+                
+                impl SseDecode for crate::api::firewall::FirewalldChange {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut tag_ = <i32>::sse_decode(deserializer);
+            match tag_ {0 => { return crate::api::firewall::FirewalldChange::Start; }
+1 => { return crate::api::firewall::FirewalldChange::Stop; }
+2 => { return crate::api::firewall::FirewalldChange::Reload; }
+3 => { return crate::api::firewall::FirewalldChange::RuntimeToPermanent; }
+4 => { return crate::api::firewall::FirewalldChange::PanicOff; }
+5 => { let mut var_zone = <String>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::DefaultZone{zone: var_zone}; }
+6 => { let mut var_zone = <String>::sse_decode(deserializer);
+let mut var_target = <crate::api::firewall::FirewalldTarget>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::Target{zone: var_zone, target: var_target}; }
+7 => { let mut var_zone = <String>::sse_decode(deserializer);
+let mut var_enabled = <bool>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::Masquerade{zone: var_zone, enabled: var_enabled}; }
+8 => { let mut var_zone = <String>::sse_decode(deserializer);
+let mut var_item = <crate::api::firewall::FirewalldItem>::sse_decode(deserializer);
+let mut var_value = <String>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::Add{zone: var_zone, item: var_item, value: var_value}; }
+9 => { let mut var_zone = <String>::sse_decode(deserializer);
+let mut var_item = <crate::api::firewall::FirewalldItem>::sse_decode(deserializer);
+let mut var_value = <String>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::Remove{zone: var_zone, item: var_item, value: var_value}; }
+10 => { let mut var_zone = <String>::sse_decode(deserializer);
+let mut var_iface = <String>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::ChangeInterface{zone: var_zone, iface: var_iface}; }
+11 => { let mut var_zone = <String>::sse_decode(deserializer);
+let mut var_iface = <String>::sse_decode(deserializer);
+return crate::api::firewall::FirewalldChange::RemoveInterface{zone: var_zone, iface: var_iface}; }
+ _ => { unimplemented!(""); }}}
                 }
                 
                 impl SseDecode for crate::api::firewall::FirewalldInputIssue {
@@ -5212,6 +5042,22 @@ return crate::api::virt::LibvirtPoolRef{name: var_name, pool_type: var_poolType,
         return ans_;}
                 }
                 
+                impl SseDecode for Vec<crate::api::firewall::Effect> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::firewall::Effect>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
+                impl SseDecode for Vec<crate::api::firewall::FirewallAccess> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::firewall::FirewallAccess>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
                 impl SseDecode for Vec<crate::api::firewall::FirewalldPolicy> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
@@ -5249,6 +5095,14 @@ return crate::api::virt::LibvirtPoolRef{name: var_name, pool_type: var_poolType,
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ { ans_.push(<crate::api::virt::LibvirtPoolRef>::sse_decode(deserializer)); }
+        return ans_;}
+                }
+                
+                impl SseDecode for Vec<crate::api::firewall::PlanNote> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ { ans_.push(<crate::api::firewall::PlanNote>::sse_decode(deserializer)); }
         return ans_;}
                 }
                 
@@ -5495,24 +5349,6 @@ return crate::api::virt::LibvirtPoolRef{name: var_name, pool_type: var_poolType,
             }}
                 }
                 
-                impl SseDecode for Option<crate::api::firewall::FirewalldInputIssue> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
-                return Some(<crate::api::firewall::FirewalldInputIssue>::sse_decode(deserializer));
-            } else {
-                return None;
-            }}
-                }
-                
-                impl SseDecode for Option<crate::api::firewall::FirewalldPort> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
-                return Some(<crate::api::firewall::FirewalldPort>::sse_decode(deserializer));
-            } else {
-                return None;
-            }}
-                }
-                
                 impl SseDecode for Option<i32> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -5639,15 +5475,6 @@ return crate::api::virt::LibvirtPoolRef{name: var_name, pool_type: var_poolType,
             }}
                 }
                 
-                impl SseDecode for Option<crate::api::firewall::UfwPolicy> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
-                return Some(<crate::api::firewall::UfwPolicy>::sse_decode(deserializer));
-            } else {
-                return None;
-            }}
-                }
-                
                 impl SseDecode for Option<Box<crate::api::bmc::CertInfo>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -5693,15 +5520,6 @@ return crate::api::virt::LibvirtPoolRef{name: var_name, pool_type: var_poolType,
             }}
                 }
                 
-                impl SseDecode for Option<Vec<crate::api::firewall::UfwRule>> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
-                return Some(<Vec<crate::api::firewall::UfwRule>>::sse_decode(deserializer));
-            } else {
-                return None;
-            }}
-                }
-                
                 impl SseDecode for Option<Vec<crate::api::virt::VirtActionKind>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -5709,6 +5527,28 @@ return crate::api::virt::LibvirtPoolRef{name: var_name, pool_type: var_poolType,
             } else {
                 return None;
             }}
+                }
+                
+                impl SseDecode for crate::api::firewall::Plan {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_commands = <Vec<String>>::sse_decode(deserializer);
+let mut var_effects = <Vec<crate::api::firewall::Effect>>::sse_decode(deserializer);
+let mut var_notes = <Vec<crate::api::firewall::PlanNote>>::sse_decode(deserializer);
+let mut var_destructive = <bool>::sse_decode(deserializer);
+let mut var_confirm = <bool>::sse_decode(deserializer);
+let mut var_keepOpen = <Vec<String>>::sse_decode(deserializer);
+let mut var_keepOpenDefault = <bool>::sse_decode(deserializer);
+let mut var_countdown = <bool>::sse_decode(deserializer);
+return crate::api::firewall::Plan{commands: var_commands, effects: var_effects, notes: var_notes, destructive: var_destructive, confirm: var_confirm, keep_open: var_keepOpen, keep_open_default: var_keepOpenDefault, countdown: var_countdown};}
+                }
+                
+                impl SseDecode for crate::api::firewall::PlanNote {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::firewall::PlanNote::ReloadLoses,
+            _ => unreachable!("Invalid variant for PlanNote: {}", inner),
+        };}
                 }
                 
                 impl SseDecode for crate::api::bmc::PowerIntent {
@@ -6170,6 +6010,24 @@ return crate::api::firewall::UfwAppPort{port: var_port, protocol: var_protocol};
         };}
                 }
                 
+                impl SseDecode for crate::api::firewall::UfwChange {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut tag_ = <i32>::sse_decode(deserializer);
+            match tag_ {0 => { return crate::api::firewall::UfwChange::Enable; }
+1 => { return crate::api::firewall::UfwChange::Disable; }
+2 => { return crate::api::firewall::UfwChange::Reload; }
+3 => { let mut var_chain = <crate::api::firewall::UfwChain>::sse_decode(deserializer);
+let mut var_policy = <crate::api::firewall::UfwPolicy>::sse_decode(deserializer);
+return crate::api::firewall::UfwChange::Policy{chain: var_chain, policy: var_policy}; }
+4 => { let mut var_level = <crate::api::firewall::UfwLogLevel>::sse_decode(deserializer);
+return crate::api::firewall::UfwChange::Logging{level: var_level}; }
+5 => { let mut var_draft = <crate::api::firewall::UfwRuleDraft>::sse_decode(deserializer);
+return crate::api::firewall::UfwChange::AddRule{draft: var_draft}; }
+6 => { let mut var_tuples = <Vec<String>>::sse_decode(deserializer);
+return crate::api::firewall::UfwChange::DeleteRule{tuples: var_tuples}; }
+ _ => { unimplemented!(""); }}}
+                }
+                
                 impl SseDecode for crate::api::firewall::UfwDirection {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
@@ -6497,36 +6355,36 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 125 => wire__crate__api__container__container_parse_images_impl(port, ptr, rust_vec_len, data_len),
 126 => wire__crate__api__container__container_parse_ps_impl(port, ptr, rust_vec_len, data_len),
 137 => wire__crate__api__file__copy_file_exclusive_impl(port, ptr, rust_vec_len, data_len),
-215 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-220 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
-221 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
-222 => wire__crate__api__users__parse_user_detail_json_impl(port, ptr, rust_vec_len, data_len),
-223 => wire__crate__api__users__parse_users_list_json_impl(port, ptr, rust_vec_len, data_len),
-225 => wire__crate__api__virt__parse_virt_clone_volumes_impl(port, ptr, rust_vec_len, data_len),
-226 => wire__crate__api__virt__parse_virt_create_host_json_impl(port, ptr, rust_vec_len, data_len),
-227 => wire__crate__api__virt__parse_virt_create_json_impl(port, ptr, rust_vec_len, data_len),
-228 => wire__crate__api__virt__parse_virt_create_volumes_json_impl(port, ptr, rust_vec_len, data_len),
-229 => wire__crate__api__virt__parse_virt_domain_detail_json_impl(port, ptr, rust_vec_len, data_len),
-230 => wire__crate__api__virt__parse_virt_firmware_json_impl(port, ptr, rust_vec_len, data_len),
-231 => wire__crate__api__virt__parse_virt_hardware_change_json_impl(port, ptr, rust_vec_len, data_len),
-232 => wire__crate__api__virt__parse_virt_hardware_json_impl(port, ptr, rust_vec_len, data_len),
-233 => wire__crate__api__virt__parse_virt_host_devices_json_impl(port, ptr, rust_vec_len, data_len),
-234 => wire__crate__api__virt__parse_virt_net_change_impl(port, ptr, rust_vec_len, data_len),
-235 => wire__crate__api__virt__parse_virt_overview_json_impl(port, ptr, rust_vec_len, data_len),
-237 => wire__crate__api__virt__parse_virt_probe_json_impl(port, ptr, rust_vec_len, data_len),
-239 => wire__crate__api__virt__parse_virt_seed_read_json_impl(port, ptr, rust_vec_len, data_len),
-241 => wire__crate__api__virt__parse_virt_snap_chain_json_impl(port, ptr, rust_vec_len, data_len),
-242 => wire__crate__api__virt__parse_virt_snap_delete_leftovers_impl(port, ptr, rust_vec_len, data_len),
-243 => wire__crate__api__virt__parse_virt_snap_delete_refusal_impl(port, ptr, rust_vec_len, data_len),
-244 => wire__crate__api__virt__parse_virt_snap_diff_json_impl(port, ptr, rust_vec_len, data_len),
-245 => wire__crate__api__virt__parse_virt_snap_revert_refusal_impl(port, ptr, rust_vec_len, data_len),
-246 => wire__crate__api__virt__parse_virt_snapshot_delete_impl(port, ptr, rust_vec_len, data_len),
-247 => wire__crate__api__virt__parse_virt_snapshots_json_impl(port, ptr, rust_vec_len, data_len),
-248 => wire__crate__api__virt__parse_virt_storage_json_impl(port, ptr, rust_vec_len, data_len),
-250 => wire__crate__api__virt__parse_virt_vnc_console_json_impl(port, ptr, rust_vec_len, data_len),
-255 => wire__crate__api__proc__proc_sorted_json_impl(port, ptr, rust_vec_len, data_len),
-256 => wire__crate__api__proc__proc_view_json_impl(port, ptr, rust_vec_len, data_len),
-266 => wire__crate__api__service__service_parse_listing_json_impl(port, ptr, rust_vec_len, data_len),
+195 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+200 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
+201 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+202 => wire__crate__api__users__parse_user_detail_json_impl(port, ptr, rust_vec_len, data_len),
+203 => wire__crate__api__users__parse_users_list_json_impl(port, ptr, rust_vec_len, data_len),
+205 => wire__crate__api__virt__parse_virt_clone_volumes_impl(port, ptr, rust_vec_len, data_len),
+206 => wire__crate__api__virt__parse_virt_create_host_json_impl(port, ptr, rust_vec_len, data_len),
+207 => wire__crate__api__virt__parse_virt_create_json_impl(port, ptr, rust_vec_len, data_len),
+208 => wire__crate__api__virt__parse_virt_create_volumes_json_impl(port, ptr, rust_vec_len, data_len),
+209 => wire__crate__api__virt__parse_virt_domain_detail_json_impl(port, ptr, rust_vec_len, data_len),
+210 => wire__crate__api__virt__parse_virt_firmware_json_impl(port, ptr, rust_vec_len, data_len),
+211 => wire__crate__api__virt__parse_virt_hardware_change_json_impl(port, ptr, rust_vec_len, data_len),
+212 => wire__crate__api__virt__parse_virt_hardware_json_impl(port, ptr, rust_vec_len, data_len),
+213 => wire__crate__api__virt__parse_virt_host_devices_json_impl(port, ptr, rust_vec_len, data_len),
+214 => wire__crate__api__virt__parse_virt_net_change_impl(port, ptr, rust_vec_len, data_len),
+215 => wire__crate__api__virt__parse_virt_overview_json_impl(port, ptr, rust_vec_len, data_len),
+217 => wire__crate__api__virt__parse_virt_probe_json_impl(port, ptr, rust_vec_len, data_len),
+219 => wire__crate__api__virt__parse_virt_seed_read_json_impl(port, ptr, rust_vec_len, data_len),
+221 => wire__crate__api__virt__parse_virt_snap_chain_json_impl(port, ptr, rust_vec_len, data_len),
+222 => wire__crate__api__virt__parse_virt_snap_delete_leftovers_impl(port, ptr, rust_vec_len, data_len),
+223 => wire__crate__api__virt__parse_virt_snap_delete_refusal_impl(port, ptr, rust_vec_len, data_len),
+224 => wire__crate__api__virt__parse_virt_snap_diff_json_impl(port, ptr, rust_vec_len, data_len),
+225 => wire__crate__api__virt__parse_virt_snap_revert_refusal_impl(port, ptr, rust_vec_len, data_len),
+226 => wire__crate__api__virt__parse_virt_snapshot_delete_impl(port, ptr, rust_vec_len, data_len),
+227 => wire__crate__api__virt__parse_virt_snapshots_json_impl(port, ptr, rust_vec_len, data_len),
+228 => wire__crate__api__virt__parse_virt_storage_json_impl(port, ptr, rust_vec_len, data_len),
+230 => wire__crate__api__virt__parse_virt_vnc_console_json_impl(port, ptr, rust_vec_len, data_len),
+235 => wire__crate__api__proc__proc_sorted_json_impl(port, ptr, rust_vec_len, data_len),
+236 => wire__crate__api__proc__proc_view_json_impl(port, ptr, rust_vec_len, data_len),
+246 => wire__crate__api__service__service_parse_listing_json_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -6662,201 +6520,171 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 180 => wire__crate__api__files__files_writable_command_impl(ptr, rust_vec_len, data_len),
 181 => wire__crate__api__files__files_write_base64_command_impl(ptr, rust_vec_len, data_len),
 182 => wire__crate__api__firewall__firewall_parse_probe_impl(ptr, rust_vec_len, data_len),
-183 => wire__crate__api__firewall__firewall_preferred_impl(ptr, rust_vec_len, data_len),
-184 => wire__crate__api__firewall__firewall_probe_script_impl(ptr, rust_vec_len, data_len),
-185 => wire__crate__api__firewall__firewall_reach_admits_impl(ptr, rust_vec_len, data_len),
-186 => wire__crate__api__firewall__firewall_reach_worse_than_impl(ptr, rust_vec_len, data_len),
-187 => wire__crate__api__firewall__firewall_script_impl(ptr, rust_vec_len, data_len),
-188 => wire__crate__api__firewall__firewalld_change_interface_impl(ptr, rust_vec_len, data_len),
-189 => wire__crate__api__firewall__firewalld_check_forward_port_impl(ptr, rust_vec_len, data_len),
-190 => wire__crate__api__firewall__firewalld_check_interface_impl(ptr, rust_vec_len, data_len),
-191 => wire__crate__api__firewall__firewalld_check_rich_rule_impl(ptr, rust_vec_len, data_len),
-192 => wire__crate__api__firewall__firewalld_check_source_impl(ptr, rust_vec_len, data_len),
-193 => wire__crate__api__firewall__firewalld_default_zone_impl(ptr, rust_vec_len, data_len),
-194 => wire__crate__api__firewall__firewalld_drifted_impl(ptr, rust_vec_len, data_len),
-195 => wire__crate__api__firewall__firewalld_item_commands_impl(ptr, rust_vec_len, data_len),
-196 => wire__crate__api__firewall__firewalld_keep_open_rule_impl(ptr, rust_vec_len, data_len),
-197 => wire__crate__api__firewall__firewalld_masquerade_impl(ptr, rust_vec_len, data_len),
-198 => wire__crate__api__firewall__firewalld_panic_off_command_impl(ptr, rust_vec_len, data_len),
-199 => wire__crate__api__firewall__firewalld_parse_impl(ptr, rust_vec_len, data_len),
-200 => wire__crate__api__firewall__firewalld_parse_port_impl(ptr, rust_vec_len, data_len),
-201 => wire__crate__api__firewall__firewalld_parse_rich_rule_impl(ptr, rust_vec_len, data_len),
-202 => wire__crate__api__firewall__firewalld_port_commands_impl(ptr, rust_vec_len, data_len),
-203 => wire__crate__api__firewall__firewalld_port_spec_impl(ptr, rust_vec_len, data_len),
-204 => wire__crate__api__firewall__firewalld_reach_impl(ptr, rust_vec_len, data_len),
-205 => wire__crate__api__firewall__firewalld_read_script_impl(ptr, rust_vec_len, data_len),
-206 => wire__crate__api__firewall__firewalld_reload_command_impl(ptr, rust_vec_len, data_len),
-207 => wire__crate__api__firewall__firewalld_remove_interface_impl(ptr, rust_vec_len, data_len),
-208 => wire__crate__api__firewall__firewalld_runtime_to_permanent_command_impl(ptr, rust_vec_len, data_len),
-209 => wire__crate__api__firewall__firewalld_start_command_impl(ptr, rust_vec_len, data_len),
-210 => wire__crate__api__firewall__firewalld_stop_command_impl(ptr, rust_vec_len, data_len),
-211 => wire__crate__api__firewall__firewalld_target_impl(ptr, rust_vec_len, data_len),
-212 => wire__crate__api__firewall__firewalld_target_token_impl(ptr, rust_vec_len, data_len),
-213 => wire__crate__api__firewall__firewalld_zones_impl(ptr, rust_vec_len, data_len),
-214 => wire__crate__api__firewall__firewalld_zones_for_impl(ptr, rust_vec_len, data_len),
-216 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
-217 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-218 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
-219 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-224 => wire__crate__api__virt__parse_virt_action_impl(ptr, rust_vec_len, data_len),
-236 => wire__crate__api__virt__parse_virt_pool_types_impl(ptr, rust_vec_len, data_len),
-238 => wire__crate__api__virt__parse_virt_resource_impl(ptr, rust_vec_len, data_len),
-240 => wire__crate__api__virt__parse_virt_seed_update_impl(ptr, rust_vec_len, data_len),
-249 => wire__crate__api__virt__parse_virt_undefine_impl(ptr, rust_vec_len, data_len),
-251 => wire__crate__api__virt__parse_virt_vol_upload_impl(ptr, rust_vec_len, data_len),
-252 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
-253 => wire__crate__api__proc__proc_kill_command_impl(ptr, rust_vec_len, data_len),
-254 => wire__crate__api__proc__proc_kill_outcome_impl(ptr, rust_vec_len, data_len),
-257 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-258 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
-259 => wire__crate__api__service__service_actions_impl(ptr, rust_vec_len, data_len),
-260 => wire__crate__api__service__service_command_impl(ptr, rust_vec_len, data_len),
-261 => wire__crate__api__service__service_definition_command_impl(ptr, rust_vec_len, data_len),
-262 => wire__crate__api__service__service_detect_script_impl(ptr, rust_vec_len, data_len),
-263 => wire__crate__api__service__service_listing_commands_impl(ptr, rust_vec_len, data_len),
-264 => wire__crate__api__service__service_log_command_impl(ptr, rust_vec_len, data_len),
-265 => wire__crate__api__service__service_needs_root_impl(ptr, rust_vec_len, data_len),
-267 => wire__crate__api__service__service_parse_probe_impl(ptr, rust_vec_len, data_len),
-268 => wire__crate__api__service__service_parse_recent_log_json_impl(ptr, rust_vec_len, data_len),
-269 => wire__crate__api__service__service_recent_log_command_impl(ptr, rust_vec_len, data_len),
-270 => wire__crate__api__service__service_terminal_command_impl(ptr, rust_vec_len, data_len),
-271 => wire__crate__api__service__service_unit_status_command_impl(ptr, rust_vec_len, data_len),
-272 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
-273 => wire__crate__api__snippet__snippet_expand_impl(ptr, rust_vec_len, data_len),
-274 => wire__crate__api__snippet__snippet_plan_impl(ptr, rust_vec_len, data_len),
-275 => wire__crate__api__snippet__snippet_server_keys_impl(ptr, rust_vec_len, data_len),
-276 => wire__crate__api__snippet__snippet_uses_server_context_impl(ptr, rust_vec_len, data_len),
-277 => wire__crate__api__script__sudo_password_rejected_impl(ptr, rust_vec_len, data_len),
-278 => wire__crate__api__tmux__tmux_attach_session_command_impl(ptr, rust_vec_len, data_len),
-279 => wire__crate__api__tmux__tmux_attach_window_command_impl(ptr, rust_vec_len, data_len),
-280 => wire__crate__api__tmux__tmux_find_command_impl(ptr, rust_vec_len, data_len),
-281 => wire__crate__api__tmux__tmux_list_sessions_command_impl(ptr, rust_vec_len, data_len),
-282 => wire__crate__api__tmux__tmux_list_windows_command_impl(ptr, rust_vec_len, data_len),
-283 => wire__crate__api__tmux__tmux_new_session_or_attach_command_impl(ptr, rust_vec_len, data_len),
-284 => wire__crate__api__tmux__tmux_parse_find_impl(ptr, rust_vec_len, data_len),
-285 => wire__crate__api__tmux__tmux_parse_sessions_impl(ptr, rust_vec_len, data_len),
-286 => wire__crate__api__tmux__tmux_parse_windows_impl(ptr, rust_vec_len, data_len),
-287 => wire__crate__api__firewall__ufw_add_command_impl(ptr, rust_vec_len, data_len),
-288 => wire__crate__api__firewall__ufw_allow_tcp_command_impl(ptr, rust_vec_len, data_len),
-289 => wire__crate__api__firewall__ufw_delete_commands_impl(ptr, rust_vec_len, data_len),
-290 => wire__crate__api__firewall__ufw_direction_token_impl(ptr, rust_vec_len, data_len),
-291 => wire__crate__api__firewall__ufw_disable_command_impl(ptr, rust_vec_len, data_len),
-292 => wire__crate__api__firewall__ufw_draft_rules_impl(ptr, rust_vec_len, data_len),
-293 => wire__crate__api__firewall__ufw_enable_command_impl(ptr, rust_vec_len, data_len),
-294 => wire__crate__api__firewall__ufw_log_token_impl(ptr, rust_vec_len, data_len),
-295 => wire__crate__api__firewall__ufw_logging_command_impl(ptr, rust_vec_len, data_len),
-296 => wire__crate__api__firewall__ufw_parse_impl(ptr, rust_vec_len, data_len),
-297 => wire__crate__api__firewall__ufw_policy_command_impl(ptr, rust_vec_len, data_len),
-298 => wire__crate__api__firewall__ufw_reach_impl(ptr, rust_vec_len, data_len),
-299 => wire__crate__api__firewall__ufw_read_script_impl(ptr, rust_vec_len, data_len),
-300 => wire__crate__api__firewall__ufw_reload_command_impl(ptr, rust_vec_len, data_len),
-301 => wire__crate__api__firewall__ufw_validate_draft_impl(ptr, rust_vec_len, data_len),
-302 => wire__crate__api__firewall__ufw_with_rules_impl(ptr, rust_vec_len, data_len),
-303 => wire__crate__api__users__users_create_command_impl(ptr, rust_vec_len, data_len),
-304 => wire__crate__api__users__users_delete_command_impl(ptr, rust_vec_len, data_len),
-305 => wire__crate__api__users__users_detail_script_impl(ptr, rust_vec_len, data_len),
-306 => wire__crate__api__users__users_edit_command_impl(ptr, rust_vec_len, data_len),
-307 => wire__crate__api__users__users_list_script_impl(ptr, rust_vec_len, data_len),
-308 => wire__crate__api__users__users_login_shell_command_impl(ptr, rust_vec_len, data_len),
-309 => wire__crate__api__users__users_valid_name_impl(ptr, rust_vec_len, data_len),
-310 => wire__crate__api__users__users_validate_draft_impl(ptr, rust_vec_len, data_len),
-311 => wire__crate__api__virt__virt_action_script_impl(ptr, rust_vec_len, data_len),
-312 => wire__crate__api__backup__virt_backup_job_takes_only_impl(ptr, rust_vec_len, data_len),
-313 => wire__crate__api__virt__virt_clone_define_script_impl(ptr, rust_vec_len, data_len),
-314 => wire__crate__api__create__virt_clone_node_issue_impl(ptr, rust_vec_len, data_len),
-315 => wire__crate__api__create__virt_clone_storage_issue_impl(ptr, rust_vec_len, data_len),
-316 => wire__crate__api__virt__virt_clone_volumes_script_impl(ptr, rust_vec_len, data_len),
-317 => wire__crate__api__create__virt_cloud_init_issue_impl(ptr, rust_vec_len, data_len),
-318 => wire__crate__api__virt__virt_console_command_impl(ptr, rust_vec_len, data_len),
-319 => wire__crate__api__virt__virt_create_host_script_impl(ptr, rust_vec_len, data_len),
-320 => wire__crate__api__create__virt_create_issue_impl(ptr, rust_vec_len, data_len),
-321 => wire__crate__api__create__virt_create_networks_impl(ptr, rust_vec_len, data_len),
-322 => wire__crate__api__virt__virt_create_volume_script_impl(ptr, rust_vec_len, data_len),
-323 => wire__crate__api__resource__virt_default_dhcp_range_impl(ptr, rust_vec_len, data_len),
-324 => wire__crate__api__virt__virt_define_script_impl(ptr, rust_vec_len, data_len),
-325 => wire__crate__api__create__virt_disk_storages_impl(ptr, rust_vec_len, data_len),
-326 => wire__crate__api__virt__virt_domain_detail_script_impl(ptr, rust_vec_len, data_len),
-327 => wire__crate__api__virt__virt_external_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
-328 => wire__crate__api__virt__virt_firmware_script_impl(ptr, rust_vec_len, data_len),
-329 => wire__crate__api__create__virt_guest_name_ok_impl(ptr, rust_vec_len, data_len),
-330 => wire__crate__api__virt__virt_hardware_change_script_impl(ptr, rust_vec_len, data_len),
-331 => wire__crate__api__virt__virt_hardware_script_impl(ptr, rust_vec_len, data_len),
-332 => wire__crate__api__virt__virt_hash_password_impl(ptr, rust_vec_len, data_len),
-333 => wire__crate__api__virt__virt_host_devices_script_impl(ptr, rust_vec_len, data_len),
-334 => wire__crate__api__hardware__virt_hw_disk_growable_impl(ptr, rust_vec_len, data_len),
-335 => wire__crate__api__hardware__virt_hw_issue_impl(ptr, rust_vec_len, data_len),
-336 => wire__crate__api__create__virt_image_storages_impl(ptr, rust_vec_len, data_len),
-337 => wire__crate__api__create__virt_is_cloud_image_impl(ptr, rust_vec_len, data_len),
-338 => wire__crate__api__create__virt_is_media_impl(ptr, rust_vec_len, data_len),
-339 => wire__crate__api__hardware__virt_is_unicast_mac_impl(ptr, rust_vec_len, data_len),
-340 => wire__crate__api__virt__virt_libvirt_chain_impl(ptr, rust_vec_len, data_len),
-341 => wire__crate__api__create__virt_libvirt_clone_disks_impl(ptr, rust_vec_len, data_len),
-342 => wire__crate__api__create__virt_libvirt_clone_spec_impl(ptr, rust_vec_len, data_len),
-343 => wire__crate__api__create__virt_libvirt_cloud_init_impl(ptr, rust_vec_len, data_len),
-344 => wire__crate__api__hardware__virt_libvirt_cloud_init_state_impl(ptr, rust_vec_len, data_len),
-345 => wire__crate__api__hardware__virt_libvirt_cloud_init_update_impl(ptr, rust_vec_len, data_len),
-346 => wire__crate__api__create__virt_libvirt_create_options_impl(ptr, rust_vec_len, data_len),
-347 => wire__crate__api__create__virt_libvirt_create_spec_impl(ptr, rust_vec_len, data_len),
-348 => wire__crate__api__create__virt_libvirt_created_impl(ptr, rust_vec_len, data_len),
-349 => wire__crate__api__create__virt_libvirt_delete_needs_chain_impl(ptr, rust_vec_len, data_len),
-350 => wire__crate__api__create__virt_libvirt_delete_plan_impl(ptr, rust_vec_len, data_len),
-351 => wire__crate__api__create__virt_libvirt_disk_format_impl(ptr, rust_vec_len, data_len),
-352 => wire__crate__api__virt__virt_libvirt_guest_detail_impl(ptr, rust_vec_len, data_len),
-353 => wire__crate__api__hardware__virt_libvirt_hardware_impl(ptr, rust_vec_len, data_len),
-354 => wire__crate__api__hardware__virt_libvirt_host_devices_impl(ptr, rust_vec_len, data_len),
-355 => wire__crate__api__hardware__virt_libvirt_hw_change_impl(ptr, rust_vec_len, data_len),
-356 => wire__crate__api__hardware__virt_libvirt_hw_revert_impl(ptr, rust_vec_len, data_len),
-357 => wire__crate__api__resource__virt_libvirt_networks_impl(ptr, rust_vec_len, data_len),
-358 => wire__crate__api__virt__virt_libvirt_overlays_impl(ptr, rust_vec_len, data_len),
-359 => wire__crate__api__virt__virt_libvirt_pool_holds_files_impl(ptr, rust_vec_len, data_len),
-360 => wire__crate__api__virt__virt_libvirt_pool_of_file_impl(ptr, rust_vec_len, data_len),
-361 => wire__crate__api__resource__virt_libvirt_pools_impl(ptr, rust_vec_len, data_len),
-362 => wire__crate__api__virt__virt_libvirt_power_plan_impl(ptr, rust_vec_len, data_len),
-363 => wire__crate__api__resource__virt_libvirt_resource_script_impl(ptr, rust_vec_len, data_len),
-364 => wire__crate__api__virt__virt_libvirt_snapshots_impl(ptr, rust_vec_len, data_len),
-365 => wire__crate__api__resource__virt_libvirt_volumes_impl(ptr, rust_vec_len, data_len),
-366 => wire__crate__api__resource__virt_libvirt_with_backs_impl(ptr, rust_vec_len, data_len),
-367 => wire__crate__api__create__virt_libvirt_with_volumes_impl(ptr, rust_vec_len, data_len),
-368 => wire__crate__api__create__virt_media_storages_impl(ptr, rust_vec_len, data_len),
-369 => wire__crate__api__hardware__virt_mount_point_ok_impl(ptr, rust_vec_len, data_len),
-370 => wire__crate__api__virt__virt_networks_script_impl(ptr, rust_vec_len, data_len),
-371 => wire__crate__api__create__virt_new_mac_impl(ptr, rust_vec_len, data_len),
-372 => wire__crate__api__virt__virt_overview_script_impl(ptr, rust_vec_len, data_len),
-373 => wire__crate__api__resource__virt_pool_takes_media_impl(ptr, rust_vec_len, data_len),
-374 => wire__crate__api__virt__virt_pool_types_script_impl(ptr, rust_vec_len, data_len),
-375 => wire__crate__api__virt__virt_probe_script_impl(ptr, rust_vec_len, data_len),
-376 => wire__crate__api__resource__virt_pve_live_net_script_impl(ptr, rust_vec_len, data_len),
-377 => wire__crate__api__resource__virt_pve_volume_vmid_impl(ptr, rust_vec_len, data_len),
-378 => wire__crate__api__resource__virt_resource_issue_impl(ptr, rust_vec_len, data_len),
-379 => wire__crate__api__virt__virt_resource_script_impl(ptr, rust_vec_len, data_len),
-380 => wire__crate__api__backup__virt_schedule_issue_impl(ptr, rust_vec_len, data_len),
-381 => wire__crate__api__virt__virt_seed_read_script_impl(ptr, rust_vec_len, data_len),
-382 => wire__crate__api__virt__virt_seed_update_script_impl(ptr, rust_vec_len, data_len),
-383 => wire__crate__api__virt__virt_snap_chain_script_impl(ptr, rust_vec_len, data_len),
-384 => wire__crate__api__virt__virt_snap_check_script_impl(ptr, rust_vec_len, data_len),
-385 => wire__crate__api__virt__virt_snap_diff_script_impl(ptr, rust_vec_len, data_len),
-386 => wire__crate__api__virt__virt_snapshot_create_script_impl(ptr, rust_vec_len, data_len),
-387 => wire__crate__api__virt__virt_snapshot_delete_script_impl(ptr, rust_vec_len, data_len),
-388 => wire__crate__api__virt__virt_snapshot_external_script_impl(ptr, rust_vec_len, data_len),
-389 => wire__crate__api__virt__virt_snapshot_memory_impl(ptr, rust_vec_len, data_len),
-390 => wire__crate__api__virt__virt_snapshot_name_issue_impl(ptr, rust_vec_len, data_len),
-391 => wire__crate__api__virt__virt_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
-392 => wire__crate__api__virt__virt_snapshot_revert_script_impl(ptr, rust_vec_len, data_len),
-393 => wire__crate__api__virt__virt_snapshots_script_impl(ptr, rust_vec_len, data_len),
-394 => wire__crate__api__virt__virt_storage_script_impl(ptr, rust_vec_len, data_len),
-395 => wire__crate__api__virt__virt_undefine_script_impl(ptr, rust_vec_len, data_len),
-396 => wire__crate__api__virt__virt_upload_go_line_impl(ptr, rust_vec_len, data_len),
-397 => wire__crate__api__resource__virt_upload_issue_impl(ptr, rust_vec_len, data_len),
-398 => wire__crate__api__virt__virt_upload_ready_marker_impl(ptr, rust_vec_len, data_len),
-399 => wire__crate__api__hardware__virt_usb_address_impl(ptr, rust_vec_len, data_len),
-400 => wire__crate__api__virt__virt_vnc_console_script_impl(ptr, rust_vec_len, data_len),
-401 => wire__crate__api__virt__virt_vol_upload_command_impl(ptr, rust_vec_len, data_len),
-402 => wire__crate__api__resource__virt_volume_file_name_impl(ptr, rust_vec_len, data_len),
-403 => wire__crate__api__resource__virt_volume_formats_impl(ptr, rust_vec_len, data_len),
-404 => wire__crate__api__resource__virt_volume_resizable_impl(ptr, rust_vec_len, data_len),
-405 => wire__crate__api__virt__virt_volumes_script_impl(ptr, rust_vec_len, data_len),
-406 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
-407 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
+183 => wire__crate__api__firewall__firewall_plan_commands_impl(ptr, rust_vec_len, data_len),
+184 => wire__crate__api__firewall__firewall_preferred_impl(ptr, rust_vec_len, data_len),
+185 => wire__crate__api__firewall__firewall_probe_script_impl(ptr, rust_vec_len, data_len),
+186 => wire__crate__api__firewall__firewall_script_impl(ptr, rust_vec_len, data_len),
+187 => wire__crate__api__firewall__firewalld_drifted_impl(ptr, rust_vec_len, data_len),
+188 => wire__crate__api__firewall__firewalld_parse_impl(ptr, rust_vec_len, data_len),
+189 => wire__crate__api__firewall__firewalld_plan_impl(ptr, rust_vec_len, data_len),
+190 => wire__crate__api__firewall__firewalld_port_spec_impl(ptr, rust_vec_len, data_len),
+191 => wire__crate__api__firewall__firewalld_read_script_impl(ptr, rust_vec_len, data_len),
+192 => wire__crate__api__firewall__firewalld_shut_by_reload_impl(ptr, rust_vec_len, data_len),
+193 => wire__crate__api__firewall__firewalld_target_token_impl(ptr, rust_vec_len, data_len),
+194 => wire__crate__api__firewall__firewalld_zones_for_impl(ptr, rust_vec_len, data_len),
+196 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
+197 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+198 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+199 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+204 => wire__crate__api__virt__parse_virt_action_impl(ptr, rust_vec_len, data_len),
+216 => wire__crate__api__virt__parse_virt_pool_types_impl(ptr, rust_vec_len, data_len),
+218 => wire__crate__api__virt__parse_virt_resource_impl(ptr, rust_vec_len, data_len),
+220 => wire__crate__api__virt__parse_virt_seed_update_impl(ptr, rust_vec_len, data_len),
+229 => wire__crate__api__virt__parse_virt_undefine_impl(ptr, rust_vec_len, data_len),
+231 => wire__crate__api__virt__parse_virt_vol_upload_impl(ptr, rust_vec_len, data_len),
+232 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
+233 => wire__crate__api__proc__proc_kill_command_impl(ptr, rust_vec_len, data_len),
+234 => wire__crate__api__proc__proc_kill_outcome_impl(ptr, rust_vec_len, data_len),
+237 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+238 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
+239 => wire__crate__api__service__service_actions_impl(ptr, rust_vec_len, data_len),
+240 => wire__crate__api__service__service_command_impl(ptr, rust_vec_len, data_len),
+241 => wire__crate__api__service__service_definition_command_impl(ptr, rust_vec_len, data_len),
+242 => wire__crate__api__service__service_detect_script_impl(ptr, rust_vec_len, data_len),
+243 => wire__crate__api__service__service_listing_commands_impl(ptr, rust_vec_len, data_len),
+244 => wire__crate__api__service__service_log_command_impl(ptr, rust_vec_len, data_len),
+245 => wire__crate__api__service__service_needs_root_impl(ptr, rust_vec_len, data_len),
+247 => wire__crate__api__service__service_parse_probe_impl(ptr, rust_vec_len, data_len),
+248 => wire__crate__api__service__service_parse_recent_log_json_impl(ptr, rust_vec_len, data_len),
+249 => wire__crate__api__service__service_recent_log_command_impl(ptr, rust_vec_len, data_len),
+250 => wire__crate__api__service__service_terminal_command_impl(ptr, rust_vec_len, data_len),
+251 => wire__crate__api__service__service_unit_status_command_impl(ptr, rust_vec_len, data_len),
+252 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+253 => wire__crate__api__snippet__snippet_expand_impl(ptr, rust_vec_len, data_len),
+254 => wire__crate__api__snippet__snippet_plan_impl(ptr, rust_vec_len, data_len),
+255 => wire__crate__api__snippet__snippet_server_keys_impl(ptr, rust_vec_len, data_len),
+256 => wire__crate__api__snippet__snippet_uses_server_context_impl(ptr, rust_vec_len, data_len),
+257 => wire__crate__api__script__sudo_password_rejected_impl(ptr, rust_vec_len, data_len),
+258 => wire__crate__api__tmux__tmux_attach_session_command_impl(ptr, rust_vec_len, data_len),
+259 => wire__crate__api__tmux__tmux_attach_window_command_impl(ptr, rust_vec_len, data_len),
+260 => wire__crate__api__tmux__tmux_find_command_impl(ptr, rust_vec_len, data_len),
+261 => wire__crate__api__tmux__tmux_list_sessions_command_impl(ptr, rust_vec_len, data_len),
+262 => wire__crate__api__tmux__tmux_list_windows_command_impl(ptr, rust_vec_len, data_len),
+263 => wire__crate__api__tmux__tmux_new_session_or_attach_command_impl(ptr, rust_vec_len, data_len),
+264 => wire__crate__api__tmux__tmux_parse_find_impl(ptr, rust_vec_len, data_len),
+265 => wire__crate__api__tmux__tmux_parse_sessions_impl(ptr, rust_vec_len, data_len),
+266 => wire__crate__api__tmux__tmux_parse_windows_impl(ptr, rust_vec_len, data_len),
+267 => wire__crate__api__firewall__ufw_direction_token_impl(ptr, rust_vec_len, data_len),
+268 => wire__crate__api__firewall__ufw_log_token_impl(ptr, rust_vec_len, data_len),
+269 => wire__crate__api__firewall__ufw_parse_impl(ptr, rust_vec_len, data_len),
+270 => wire__crate__api__firewall__ufw_plan_impl(ptr, rust_vec_len, data_len),
+271 => wire__crate__api__firewall__ufw_read_script_impl(ptr, rust_vec_len, data_len),
+272 => wire__crate__api__firewall__ufw_validate_draft_impl(ptr, rust_vec_len, data_len),
+273 => wire__crate__api__users__users_create_command_impl(ptr, rust_vec_len, data_len),
+274 => wire__crate__api__users__users_delete_command_impl(ptr, rust_vec_len, data_len),
+275 => wire__crate__api__users__users_detail_script_impl(ptr, rust_vec_len, data_len),
+276 => wire__crate__api__users__users_edit_command_impl(ptr, rust_vec_len, data_len),
+277 => wire__crate__api__users__users_list_script_impl(ptr, rust_vec_len, data_len),
+278 => wire__crate__api__users__users_login_shell_command_impl(ptr, rust_vec_len, data_len),
+279 => wire__crate__api__users__users_valid_name_impl(ptr, rust_vec_len, data_len),
+280 => wire__crate__api__users__users_validate_draft_impl(ptr, rust_vec_len, data_len),
+281 => wire__crate__api__virt__virt_action_script_impl(ptr, rust_vec_len, data_len),
+282 => wire__crate__api__backup__virt_backup_job_takes_only_impl(ptr, rust_vec_len, data_len),
+283 => wire__crate__api__virt__virt_clone_define_script_impl(ptr, rust_vec_len, data_len),
+284 => wire__crate__api__create__virt_clone_node_issue_impl(ptr, rust_vec_len, data_len),
+285 => wire__crate__api__create__virt_clone_storage_issue_impl(ptr, rust_vec_len, data_len),
+286 => wire__crate__api__virt__virt_clone_volumes_script_impl(ptr, rust_vec_len, data_len),
+287 => wire__crate__api__create__virt_cloud_init_issue_impl(ptr, rust_vec_len, data_len),
+288 => wire__crate__api__virt__virt_console_command_impl(ptr, rust_vec_len, data_len),
+289 => wire__crate__api__virt__virt_create_host_script_impl(ptr, rust_vec_len, data_len),
+290 => wire__crate__api__create__virt_create_issue_impl(ptr, rust_vec_len, data_len),
+291 => wire__crate__api__create__virt_create_networks_impl(ptr, rust_vec_len, data_len),
+292 => wire__crate__api__virt__virt_create_volume_script_impl(ptr, rust_vec_len, data_len),
+293 => wire__crate__api__resource__virt_default_dhcp_range_impl(ptr, rust_vec_len, data_len),
+294 => wire__crate__api__virt__virt_define_script_impl(ptr, rust_vec_len, data_len),
+295 => wire__crate__api__create__virt_disk_storages_impl(ptr, rust_vec_len, data_len),
+296 => wire__crate__api__virt__virt_domain_detail_script_impl(ptr, rust_vec_len, data_len),
+297 => wire__crate__api__virt__virt_external_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
+298 => wire__crate__api__virt__virt_firmware_script_impl(ptr, rust_vec_len, data_len),
+299 => wire__crate__api__create__virt_guest_name_ok_impl(ptr, rust_vec_len, data_len),
+300 => wire__crate__api__virt__virt_hardware_change_script_impl(ptr, rust_vec_len, data_len),
+301 => wire__crate__api__virt__virt_hardware_script_impl(ptr, rust_vec_len, data_len),
+302 => wire__crate__api__virt__virt_hash_password_impl(ptr, rust_vec_len, data_len),
+303 => wire__crate__api__virt__virt_host_devices_script_impl(ptr, rust_vec_len, data_len),
+304 => wire__crate__api__hardware__virt_hw_disk_growable_impl(ptr, rust_vec_len, data_len),
+305 => wire__crate__api__hardware__virt_hw_issue_impl(ptr, rust_vec_len, data_len),
+306 => wire__crate__api__create__virt_image_storages_impl(ptr, rust_vec_len, data_len),
+307 => wire__crate__api__create__virt_is_cloud_image_impl(ptr, rust_vec_len, data_len),
+308 => wire__crate__api__create__virt_is_media_impl(ptr, rust_vec_len, data_len),
+309 => wire__crate__api__hardware__virt_is_unicast_mac_impl(ptr, rust_vec_len, data_len),
+310 => wire__crate__api__virt__virt_libvirt_chain_impl(ptr, rust_vec_len, data_len),
+311 => wire__crate__api__create__virt_libvirt_clone_disks_impl(ptr, rust_vec_len, data_len),
+312 => wire__crate__api__create__virt_libvirt_clone_spec_impl(ptr, rust_vec_len, data_len),
+313 => wire__crate__api__create__virt_libvirt_cloud_init_impl(ptr, rust_vec_len, data_len),
+314 => wire__crate__api__hardware__virt_libvirt_cloud_init_state_impl(ptr, rust_vec_len, data_len),
+315 => wire__crate__api__hardware__virt_libvirt_cloud_init_update_impl(ptr, rust_vec_len, data_len),
+316 => wire__crate__api__create__virt_libvirt_create_options_impl(ptr, rust_vec_len, data_len),
+317 => wire__crate__api__create__virt_libvirt_create_spec_impl(ptr, rust_vec_len, data_len),
+318 => wire__crate__api__create__virt_libvirt_created_impl(ptr, rust_vec_len, data_len),
+319 => wire__crate__api__create__virt_libvirt_delete_needs_chain_impl(ptr, rust_vec_len, data_len),
+320 => wire__crate__api__create__virt_libvirt_delete_plan_impl(ptr, rust_vec_len, data_len),
+321 => wire__crate__api__create__virt_libvirt_disk_format_impl(ptr, rust_vec_len, data_len),
+322 => wire__crate__api__virt__virt_libvirt_guest_detail_impl(ptr, rust_vec_len, data_len),
+323 => wire__crate__api__hardware__virt_libvirt_hardware_impl(ptr, rust_vec_len, data_len),
+324 => wire__crate__api__hardware__virt_libvirt_host_devices_impl(ptr, rust_vec_len, data_len),
+325 => wire__crate__api__hardware__virt_libvirt_hw_change_impl(ptr, rust_vec_len, data_len),
+326 => wire__crate__api__hardware__virt_libvirt_hw_revert_impl(ptr, rust_vec_len, data_len),
+327 => wire__crate__api__resource__virt_libvirt_networks_impl(ptr, rust_vec_len, data_len),
+328 => wire__crate__api__virt__virt_libvirt_overlays_impl(ptr, rust_vec_len, data_len),
+329 => wire__crate__api__virt__virt_libvirt_pool_holds_files_impl(ptr, rust_vec_len, data_len),
+330 => wire__crate__api__virt__virt_libvirt_pool_of_file_impl(ptr, rust_vec_len, data_len),
+331 => wire__crate__api__resource__virt_libvirt_pools_impl(ptr, rust_vec_len, data_len),
+332 => wire__crate__api__virt__virt_libvirt_power_plan_impl(ptr, rust_vec_len, data_len),
+333 => wire__crate__api__resource__virt_libvirt_resource_script_impl(ptr, rust_vec_len, data_len),
+334 => wire__crate__api__virt__virt_libvirt_snapshots_impl(ptr, rust_vec_len, data_len),
+335 => wire__crate__api__resource__virt_libvirt_volumes_impl(ptr, rust_vec_len, data_len),
+336 => wire__crate__api__resource__virt_libvirt_with_backs_impl(ptr, rust_vec_len, data_len),
+337 => wire__crate__api__create__virt_libvirt_with_volumes_impl(ptr, rust_vec_len, data_len),
+338 => wire__crate__api__create__virt_media_storages_impl(ptr, rust_vec_len, data_len),
+339 => wire__crate__api__hardware__virt_mount_point_ok_impl(ptr, rust_vec_len, data_len),
+340 => wire__crate__api__virt__virt_networks_script_impl(ptr, rust_vec_len, data_len),
+341 => wire__crate__api__create__virt_new_mac_impl(ptr, rust_vec_len, data_len),
+342 => wire__crate__api__virt__virt_overview_script_impl(ptr, rust_vec_len, data_len),
+343 => wire__crate__api__resource__virt_pool_takes_media_impl(ptr, rust_vec_len, data_len),
+344 => wire__crate__api__virt__virt_pool_types_script_impl(ptr, rust_vec_len, data_len),
+345 => wire__crate__api__virt__virt_probe_script_impl(ptr, rust_vec_len, data_len),
+346 => wire__crate__api__resource__virt_pve_live_net_script_impl(ptr, rust_vec_len, data_len),
+347 => wire__crate__api__resource__virt_pve_volume_vmid_impl(ptr, rust_vec_len, data_len),
+348 => wire__crate__api__resource__virt_resource_issue_impl(ptr, rust_vec_len, data_len),
+349 => wire__crate__api__virt__virt_resource_script_impl(ptr, rust_vec_len, data_len),
+350 => wire__crate__api__backup__virt_schedule_issue_impl(ptr, rust_vec_len, data_len),
+351 => wire__crate__api__virt__virt_seed_read_script_impl(ptr, rust_vec_len, data_len),
+352 => wire__crate__api__virt__virt_seed_update_script_impl(ptr, rust_vec_len, data_len),
+353 => wire__crate__api__virt__virt_snap_chain_script_impl(ptr, rust_vec_len, data_len),
+354 => wire__crate__api__virt__virt_snap_check_script_impl(ptr, rust_vec_len, data_len),
+355 => wire__crate__api__virt__virt_snap_diff_script_impl(ptr, rust_vec_len, data_len),
+356 => wire__crate__api__virt__virt_snapshot_create_script_impl(ptr, rust_vec_len, data_len),
+357 => wire__crate__api__virt__virt_snapshot_delete_script_impl(ptr, rust_vec_len, data_len),
+358 => wire__crate__api__virt__virt_snapshot_external_script_impl(ptr, rust_vec_len, data_len),
+359 => wire__crate__api__virt__virt_snapshot_memory_impl(ptr, rust_vec_len, data_len),
+360 => wire__crate__api__virt__virt_snapshot_name_issue_impl(ptr, rust_vec_len, data_len),
+361 => wire__crate__api__virt__virt_snapshot_refusal_impl(ptr, rust_vec_len, data_len),
+362 => wire__crate__api__virt__virt_snapshot_revert_script_impl(ptr, rust_vec_len, data_len),
+363 => wire__crate__api__virt__virt_snapshots_script_impl(ptr, rust_vec_len, data_len),
+364 => wire__crate__api__virt__virt_storage_script_impl(ptr, rust_vec_len, data_len),
+365 => wire__crate__api__virt__virt_undefine_script_impl(ptr, rust_vec_len, data_len),
+366 => wire__crate__api__virt__virt_upload_go_line_impl(ptr, rust_vec_len, data_len),
+367 => wire__crate__api__resource__virt_upload_issue_impl(ptr, rust_vec_len, data_len),
+368 => wire__crate__api__virt__virt_upload_ready_marker_impl(ptr, rust_vec_len, data_len),
+369 => wire__crate__api__hardware__virt_usb_address_impl(ptr, rust_vec_len, data_len),
+370 => wire__crate__api__virt__virt_vnc_console_script_impl(ptr, rust_vec_len, data_len),
+371 => wire__crate__api__virt__virt_vol_upload_command_impl(ptr, rust_vec_len, data_len),
+372 => wire__crate__api__resource__virt_volume_file_name_impl(ptr, rust_vec_len, data_len),
+373 => wire__crate__api__resource__virt_volume_formats_impl(ptr, rust_vec_len, data_len),
+374 => wire__crate__api__resource__virt_volume_resizable_impl(ptr, rust_vec_len, data_len),
+375 => wire__crate__api__virt__virt_volumes_script_impl(ptr, rust_vec_len, data_len),
+376 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+377 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -7118,6 +6946,25 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::bmc::CertInfo> for crate::api
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::ChangeError> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self.0 {crate::api::firewall::ChangeError::Unchanged => { [0.into_dart()].into_dart() }
+crate::api::firewall::ChangeError::Draft(field0) => { [1.into_dart(),
+field0.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::ChangeError::Input(field0) => { [2.into_dart(),
+field0.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::ChangeError::NoSuchRule => { [3.into_dart()].into_dart() }
+crate::api::firewall::ChangeError::NoSuchZone => { [4.into_dart()].into_dart() }
+ _ => { unimplemented!(""); }}
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::ChangeError> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::ChangeError>> for crate::api::firewall::ChangeError {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::ChangeError> {
+                self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::parser::CommandSpec {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -7376,6 +7223,24 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::EcdsaSignature> for
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::Effect> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.0.access.into_into_dart().into_dart(),
+self.0.before.into_into_dart().into_dart(),
+self.0.after.into_into_dart().into_dart(),
+self.0.later.into_into_dart().into_dart(),
+self.0.worse.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::Effect> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::Effect>> for crate::api::firewall::Effect {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::Effect> {
+                self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::files::FilesStatMarkers {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -7399,7 +7264,8 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::files::FilesStatMarkers> for 
                     self.0.via.into_into_dart().into_dart(),
 self.0.port.into_into_dart().into_dart(),
 self.0.client.into_into_dart().into_dart(),
-self.0.server.into_into_dart().into_dart()
+self.0.server.into_into_dart().into_dart(),
+self.0.iface.into_into_dart().into_dart()
                 ].into_dart()
                 }
             }
@@ -7448,8 +7314,7 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::Firewall
                     self.0.ufw.into_into_dart().into_dart(),
 self.0.firewalld.into_into_dart().into_dart(),
 self.0.root.into_into_dart().into_dart(),
-self.0.ssh.into_into_dart().into_dart(),
-self.0.ssh_interface.into_into_dart().into_dart()
+self.0.ssh.into_into_dart().into_dart()
                 ].into_dart()
                 }
             }
@@ -7474,6 +7339,45 @@ crate::api::firewall::FirewallReach::Blocked => 3.into_dart(),
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::FirewallReach> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::FirewallReach>> for crate::api::firewall::FirewallReach {
             fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::FirewallReach> {
+                self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::FirewalldChange> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self.0 {crate::api::firewall::FirewalldChange::Start => { [0.into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::Stop => { [1.into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::Reload => { [2.into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::RuntimeToPermanent => { [3.into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::PanicOff => { [4.into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::DefaultZone{zone} => { [5.into_dart(),
+zone.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::Target{zone,target} => { [6.into_dart(),
+zone.into_into_dart().into_dart(),
+target.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::Masquerade{zone,enabled} => { [7.into_dart(),
+zone.into_into_dart().into_dart(),
+enabled.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::Add{zone,item,value} => { [8.into_dart(),
+zone.into_into_dart().into_dart(),
+item.into_into_dart().into_dart(),
+value.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::Remove{zone,item,value} => { [9.into_dart(),
+zone.into_into_dart().into_dart(),
+item.into_into_dart().into_dart(),
+value.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::ChangeInterface{zone,iface} => { [10.into_dart(),
+zone.into_into_dart().into_dart(),
+iface.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::FirewalldChange::RemoveInterface{zone,iface} => { [11.into_dart(),
+zone.into_into_dart().into_dart(),
+iface.into_into_dart().into_dart()].into_dart() }
+ _ => { unimplemented!(""); }}
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::FirewalldChange> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::FirewalldChange>> for crate::api::firewall::FirewalldChange {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::FirewalldChange> {
                 self.into()
             }
         }
@@ -7654,6 +7558,42 @@ self.target.into_into_dart().into_dart()
 impl flutter_rust_bridge::IntoIntoDart<crate::api::virt::LibvirtPoolRef> for crate::api::virt::LibvirtPoolRef {
             fn into_into_dart(self) -> crate::api::virt::LibvirtPoolRef {
                 self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::Plan> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.0.commands.into_into_dart().into_dart(),
+self.0.effects.into_into_dart().into_dart(),
+self.0.notes.into_into_dart().into_dart(),
+self.0.destructive.into_into_dart().into_dart(),
+self.0.confirm.into_into_dart().into_dart(),
+self.0.keep_open.into_into_dart().into_dart(),
+self.0.keep_open_default.into_into_dart().into_dart(),
+self.0.countdown.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::Plan> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::Plan>> for crate::api::firewall::Plan {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::Plan> {
+                self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::PlanNote> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self.0 {
+                    crate::api::firewall::PlanNote::ReloadLoses => 0.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::PlanNote> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::PlanNote>> for crate::api::firewall::PlanNote {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::PlanNote> {
+                self.into()
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -8337,6 +8277,30 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::UfwChain
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::UfwChange> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self.0 {crate::api::firewall::UfwChange::Enable => { [0.into_dart()].into_dart() }
+crate::api::firewall::UfwChange::Disable => { [1.into_dart()].into_dart() }
+crate::api::firewall::UfwChange::Reload => { [2.into_dart()].into_dart() }
+crate::api::firewall::UfwChange::Policy{chain,policy} => { [3.into_dart(),
+chain.into_into_dart().into_dart(),
+policy.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::UfwChange::Logging{level} => { [4.into_dart(),
+level.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::UfwChange::AddRule{draft} => { [5.into_dart(),
+draft.into_into_dart().into_dart()].into_dart() }
+crate::api::firewall::UfwChange::DeleteRule{tuples} => { [6.into_dart(),
+tuples.into_into_dart().into_dart()].into_dart() }
+ _ => { unimplemented!(""); }}
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::firewall::UfwChange> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::firewall::UfwChange>> for crate::api::firewall::UfwChange {
+            fn into_into_dart(self) -> FrbWrapper<crate::api::firewall::UfwChange> {
+                self.into()
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::firewall::UfwDirection> {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     match self.0 {
@@ -8922,6 +8886,18 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <i64>::sse_encode(self.not_after, serializer);}
                 }
                 
+                impl SseEncode for crate::api::firewall::ChangeError {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {match self {crate::api::firewall::ChangeError::Unchanged => { <i32>::sse_encode(0, serializer);  }
+crate::api::firewall::ChangeError::Draft(field0) => { <i32>::sse_encode(1, serializer); <crate::api::firewall::UfwDraftIssue>::sse_encode(field0, serializer);
+ }
+crate::api::firewall::ChangeError::Input(field0) => { <i32>::sse_encode(2, serializer); <crate::api::firewall::FirewalldInputIssue>::sse_encode(field0, serializer);
+ }
+crate::api::firewall::ChangeError::NoSuchRule => { <i32>::sse_encode(3, serializer);  }
+crate::api::firewall::ChangeError::NoSuchZone => { <i32>::sse_encode(4, serializer);  }
+ _ => { unimplemented!(""); }}}
+                }
+                
                 impl SseEncode for crate::api::parser::CommandSpec {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.key, serializer);
@@ -9045,6 +9021,15 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <Vec<u8>>::sse_encode(self.s, serializer);}
                 }
                 
+                impl SseEncode for crate::api::firewall::Effect {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<crate::api::firewall::FirewallAccess>::sse_encode(self.access, serializer);
+<crate::api::firewall::FirewallReach>::sse_encode(self.before, serializer);
+<crate::api::firewall::FirewallReach>::sse_encode(self.after, serializer);
+<bool>::sse_encode(self.later, serializer);
+<bool>::sse_encode(self.worse, serializer);}
+                }
+                
                 impl SseEncode for f64 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_f64::<NativeEndian>(self).unwrap();}
@@ -9063,7 +9048,8 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<crate::api::firewall::FirewallAccessVia>::sse_encode(self.via, serializer);
 <u16>::sse_encode(self.port, serializer);
 <Option<String>>::sse_encode(self.client, serializer);
-<Option<String>>::sse_encode(self.server, serializer);}
+<Option<String>>::sse_encode(self.server, serializer);
+<Option<String>>::sse_encode(self.iface, serializer);}
                 }
                 
                 impl SseEncode for crate::api::firewall::FirewallAccessVia {
@@ -9085,8 +9071,7 @@ crate::api::firewall::FirewallKind::Firewalld => { 1 }
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Option<bool>>::sse_encode(self.ufw, serializer);
 <Option<bool>>::sse_encode(self.firewalld, serializer);
 <bool>::sse_encode(self.root, serializer);
-<Option<crate::api::firewall::FirewallAccess>>::sse_encode(self.ssh, serializer);
-<Option<String>>::sse_encode(self.ssh_interface, serializer);}
+<Option<crate::api::firewall::FirewallAccess>>::sse_encode(self.ssh, serializer);}
                 }
                 
                 impl SseEncode for crate::api::firewall::FirewallReach {
@@ -9096,6 +9081,38 @@ crate::api::firewall::FirewallReach::Limited => { 1 }
 crate::api::firewall::FirewallReach::Unknown => { 2 }
 crate::api::firewall::FirewallReach::Blocked => { 3 }
  _ => { unimplemented!(""); }}, serializer);}
+                }
+                
+                impl SseEncode for crate::api::firewall::FirewalldChange {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {match self {crate::api::firewall::FirewalldChange::Start => { <i32>::sse_encode(0, serializer);  }
+crate::api::firewall::FirewalldChange::Stop => { <i32>::sse_encode(1, serializer);  }
+crate::api::firewall::FirewalldChange::Reload => { <i32>::sse_encode(2, serializer);  }
+crate::api::firewall::FirewalldChange::RuntimeToPermanent => { <i32>::sse_encode(3, serializer);  }
+crate::api::firewall::FirewalldChange::PanicOff => { <i32>::sse_encode(4, serializer);  }
+crate::api::firewall::FirewalldChange::DefaultZone{zone} => { <i32>::sse_encode(5, serializer); <String>::sse_encode(zone, serializer);
+ }
+crate::api::firewall::FirewalldChange::Target{zone,target} => { <i32>::sse_encode(6, serializer); <String>::sse_encode(zone, serializer);
+<crate::api::firewall::FirewalldTarget>::sse_encode(target, serializer);
+ }
+crate::api::firewall::FirewalldChange::Masquerade{zone,enabled} => { <i32>::sse_encode(7, serializer); <String>::sse_encode(zone, serializer);
+<bool>::sse_encode(enabled, serializer);
+ }
+crate::api::firewall::FirewalldChange::Add{zone,item,value} => { <i32>::sse_encode(8, serializer); <String>::sse_encode(zone, serializer);
+<crate::api::firewall::FirewalldItem>::sse_encode(item, serializer);
+<String>::sse_encode(value, serializer);
+ }
+crate::api::firewall::FirewalldChange::Remove{zone,item,value} => { <i32>::sse_encode(9, serializer); <String>::sse_encode(zone, serializer);
+<crate::api::firewall::FirewalldItem>::sse_encode(item, serializer);
+<String>::sse_encode(value, serializer);
+ }
+crate::api::firewall::FirewalldChange::ChangeInterface{zone,iface} => { <i32>::sse_encode(10, serializer); <String>::sse_encode(zone, serializer);
+<String>::sse_encode(iface, serializer);
+ }
+crate::api::firewall::FirewalldChange::RemoveInterface{zone,iface} => { <i32>::sse_encode(11, serializer); <String>::sse_encode(zone, serializer);
+<String>::sse_encode(iface, serializer);
+ }
+ _ => { unimplemented!(""); }}}
                 }
                 
                 impl SseEncode for crate::api::firewall::FirewalldInputIssue {
@@ -9253,6 +9270,18 @@ crate::api::firewall::FirewalldTarget::Reject => { 3 }
         for item in self { <crate::api::script::CustomCmd>::sse_encode(item, serializer); }}
                 }
                 
+                impl SseEncode for Vec<crate::api::firewall::Effect> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::firewall::Effect>::sse_encode(item, serializer); }}
+                }
+                
+                impl SseEncode for Vec<crate::api::firewall::FirewallAccess> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::firewall::FirewallAccess>::sse_encode(item, serializer); }}
+                }
+                
                 impl SseEncode for Vec<crate::api::firewall::FirewalldPolicy> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
@@ -9281,6 +9310,12 @@ crate::api::firewall::FirewalldTarget::Reject => { 3 }
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
         for item in self { <crate::api::virt::LibvirtPoolRef>::sse_encode(item, serializer); }}
+                }
+                
+                impl SseEncode for Vec<crate::api::firewall::PlanNote> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(self.len() as _, serializer);
+        for item in self { <crate::api::firewall::PlanNote>::sse_encode(item, serializer); }}
                 }
                 
                 impl SseEncode for Vec<i32> {
@@ -9479,22 +9514,6 @@ crate::api::firewall::FirewalldTarget::Reject => { 3 }
                 }}
                 }
                 
-                impl SseEncode for Option<crate::api::firewall::FirewalldInputIssue> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
-                if let Some(value) = self {
-                    <crate::api::firewall::FirewalldInputIssue>::sse_encode(value, serializer);
-                }}
-                }
-                
-                impl SseEncode for Option<crate::api::firewall::FirewalldPort> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
-                if let Some(value) = self {
-                    <crate::api::firewall::FirewalldPort>::sse_encode(value, serializer);
-                }}
-                }
-                
                 impl SseEncode for Option<i32> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
@@ -9607,14 +9626,6 @@ crate::api::firewall::FirewalldTarget::Reject => { 3 }
                 }}
                 }
                 
-                impl SseEncode for Option<crate::api::firewall::UfwPolicy> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
-                if let Some(value) = self {
-                    <crate::api::firewall::UfwPolicy>::sse_encode(value, serializer);
-                }}
-                }
-                
                 impl SseEncode for Option<Box<crate::api::bmc::CertInfo>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
@@ -9655,20 +9666,30 @@ crate::api::firewall::FirewalldTarget::Reject => { 3 }
                 }}
                 }
                 
-                impl SseEncode for Option<Vec<crate::api::firewall::UfwRule>> {
-                    // Codec=Sse (Serialization based), see doc to use other codecs
-                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
-                if let Some(value) = self {
-                    <Vec<crate::api::firewall::UfwRule>>::sse_encode(value, serializer);
-                }}
-                }
-                
                 impl SseEncode for Option<Vec<crate::api::virt::VirtActionKind>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
                 if let Some(value) = self {
                     <Vec<crate::api::virt::VirtActionKind>>::sse_encode(value, serializer);
                 }}
+                }
+                
+                impl SseEncode for crate::api::firewall::Plan {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<String>>::sse_encode(self.commands, serializer);
+<Vec<crate::api::firewall::Effect>>::sse_encode(self.effects, serializer);
+<Vec<crate::api::firewall::PlanNote>>::sse_encode(self.notes, serializer);
+<bool>::sse_encode(self.destructive, serializer);
+<bool>::sse_encode(self.confirm, serializer);
+<Vec<String>>::sse_encode(self.keep_open, serializer);
+<bool>::sse_encode(self.keep_open_default, serializer);
+<bool>::sse_encode(self.countdown, serializer);}
+                }
+                
+                impl SseEncode for crate::api::firewall::PlanNote {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::firewall::PlanNote::ReloadLoses => { 0 }
+ _ => { unimplemented!(""); }}, serializer);}
                 }
                 
                 impl SseEncode for crate::api::bmc::PowerIntent {
@@ -10067,6 +10088,23 @@ crate::api::firewall::UfwChain::Routed => { 2 }
  _ => { unimplemented!(""); }}, serializer);}
                 }
                 
+                impl SseEncode for crate::api::firewall::UfwChange {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {match self {crate::api::firewall::UfwChange::Enable => { <i32>::sse_encode(0, serializer);  }
+crate::api::firewall::UfwChange::Disable => { <i32>::sse_encode(1, serializer);  }
+crate::api::firewall::UfwChange::Reload => { <i32>::sse_encode(2, serializer);  }
+crate::api::firewall::UfwChange::Policy{chain,policy} => { <i32>::sse_encode(3, serializer); <crate::api::firewall::UfwChain>::sse_encode(chain, serializer);
+<crate::api::firewall::UfwPolicy>::sse_encode(policy, serializer);
+ }
+crate::api::firewall::UfwChange::Logging{level} => { <i32>::sse_encode(4, serializer); <crate::api::firewall::UfwLogLevel>::sse_encode(level, serializer);
+ }
+crate::api::firewall::UfwChange::AddRule{draft} => { <i32>::sse_encode(5, serializer); <crate::api::firewall::UfwRuleDraft>::sse_encode(draft, serializer);
+ }
+crate::api::firewall::UfwChange::DeleteRule{tuples} => { <i32>::sse_encode(6, serializer); <Vec<String>>::sse_encode(tuples, serializer);
+ }
+ _ => { unimplemented!(""); }}}
+                }
+                
                 impl SseEncode for crate::api::firewall::UfwDirection {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::firewall::UfwDirection::Incoming => { 0 }
@@ -10299,11 +10337,11 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::remote_desktop::*;
-use crate::api::pve::*;
 use crate::api::bmc::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::virt::*;
+use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -10422,11 +10460,11 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::virt::*;
 use crate::api::remote_desktop::*;
-use crate::api::pve::*;
 use crate::api::bmc::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::virt::*;
+use crate::api::pve::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

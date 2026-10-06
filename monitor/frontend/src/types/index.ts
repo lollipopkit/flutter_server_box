@@ -121,6 +121,7 @@ export type MachineFeature =
   | 'containers'
   | 'benchmark'
   | 'system_users'
+  | 'firewall'
   | 'snippets'
   | 'desktop'
   | 'backup'
@@ -1120,6 +1121,232 @@ export type BenchRefusalCode =
 /// that is in the history rather than a request this page just made, and every
 /// one of them is drawn beside a row rather than as an error over the page.
 export type BenchRunErrorCode = 'launcher_failed' | 'nonzero_exit' | 'no_exit_code'
+
+// --- Firewall (`/api/v1/firewall`) ---
+//
+// `sbm_parser::firewall`'s types as serde writes them. The panel draws them
+// and names a change; what a change runs and does is the agent's answer
+// (`FirewallPlan`), never worked out here.
+
+export type FirewallKind = 'ufw' | 'firewalld'
+
+/// Whether a new connection gets through: `unknown` where it depends on
+/// something the agent cannot tell (the address or interface it arrives by).
+export type FirewallReach = 'open' | 'limited' | 'unknown' | 'blocked'
+
+/// A way into the machine a change is checked against: the panel's connection
+/// to this agent (`monitor`), or the machine's SSH port.
+export interface FirewallAccess {
+  via: 'ssh' | 'monitor'
+  port: number
+  client: string | null
+  server: string | null
+  iface: string | null
+}
+
+export interface FirewallAccessNow extends FirewallAccess {
+  reach: FirewallReach
+  /// firewalld: it gets in now and will not after a reload or a boot.
+  shut_by_reload: boolean
+}
+
+export type UfwAction = 'allow' | 'deny' | 'reject' | 'limit'
+export type UfwDirection = 'incoming' | 'outgoing'
+export type UfwPolicy = 'allow' | 'deny' | 'reject'
+export type UfwChain = 'incoming' | 'outgoing' | 'routed'
+export type UfwLogLevel = 'off' | 'low' | 'medium' | 'high' | 'full'
+export type UfwLog = 'log' | 'log_all'
+
+export interface UfwEndpoint {
+  address: string | null
+  port: string | null
+  app: string | null
+}
+
+export interface UfwRule {
+  action: UfwAction
+  direction: UfwDirection
+  routed: boolean
+  log: UfwLog | null
+  protocol: string | null
+  to: UfwEndpoint
+  from: UfwEndpoint
+  interface_in: string | null
+  interface_out: string | null
+  comment: string | null
+  ip_version: string
+  /// The rule's lines in ufw's own files: what names it in a deletion.
+  tuples: string[]
+}
+
+export interface UfwApp {
+  name: string
+}
+
+export interface UfwSnapshot {
+  active: boolean | null
+  status_line: string | null
+  version: string | null
+  log_level: UfwLogLevel | null
+  policies: Partial<Record<UfwChain, UfwPolicy>>
+  rules: UfwRule[]
+  apps: UfwApp[]
+}
+
+/// A rule as the form fills it in; the agent checks it.
+export interface UfwRuleDraft {
+  action: UfwAction
+  direction: UfwDirection
+  routed: boolean
+  protocol: string | null
+  port: string
+  source_port: string
+  app: string | null
+  from: string
+  to: string
+  interface_in: string
+  interface_out: string
+  log: UfwLog | null
+  comment: string
+  prepend: boolean
+}
+
+export type UfwDraftIssue =
+  | 'nothing_matched'
+  | 'invalid_port'
+  | 'too_many_ports'
+  | 'ports_need_protocol'
+  | 'invalid_address'
+  | 'mixed_ip_versions'
+  | 'invalid_interface'
+  | 'invalid_comment'
+  | 'invalid_protocol'
+
+export type FirewalldTarget = 'default_target' | 'accept' | 'drop' | 'reject'
+export type FirewalldItem = 'service' | 'port' | 'rich_rule' | 'source' | 'forward_port'
+export type FirewalldInputIssue =
+  | 'invalid_port'
+  | 'invalid_source'
+  | 'invalid_interface'
+  | 'invalid_rich_rule'
+  | 'invalid_forward_port'
+
+export interface FirewalldPort {
+  port: string
+  protocol: string
+}
+
+export interface FirewalldZone {
+  name: string
+  target: FirewalldTarget
+  active: boolean
+  interfaces: string[]
+  sources: string[]
+  services: string[]
+  ports: FirewalldPort[]
+  forward_ports: string[]
+  rich_rules: { raw: string }[]
+  masquerade: boolean
+}
+
+export interface FirewalldView {
+  running: boolean
+  version: string | null
+  default_zone: string | null
+  panic: boolean
+  /// What is in force; null while stopped.
+  runtime: FirewalldZone[] | null
+  /// What is written down.
+  permanent: FirewalldZone[]
+  services: Record<string, FirewalldPort[]>
+  service_names: string[]
+  /// A reload or a boot would change what is in force.
+  drifted: boolean
+  /// The zone each of `FirewallView.accesses` surely lands in, where it is one.
+  access_zones: (string | null)[]
+}
+
+export interface FirewallView {
+  available: boolean
+  reason_kind: 'unsupported_platform' | 'none_installed' | 'unreadable' | null
+  reason: string | null
+  /// `sudo` wants a password, or refused the one sent.
+  sudo_required: boolean
+  /// Each firewall found, and whether it is on.
+  ufw_installed: boolean | null
+  firewalld_installed: boolean | null
+  kind: FirewallKind | null
+  accesses: FirewallAccessNow[]
+  /// The panel reaches the agent through a proxy on the machine: its own
+  /// connection is not one a rule here decides.
+  proxied: boolean
+  ufw?: UfwSnapshot
+  firewalld?: FirewalldView
+}
+
+export type UfwChange =
+  | { type: 'enable' | 'disable' | 'reload' }
+  | { type: 'policy'; chain: UfwChain; policy: UfwPolicy }
+  | { type: 'logging'; level: UfwLogLevel }
+  | { type: 'add_rule'; draft: UfwRuleDraft }
+  | { type: 'delete_rule'; tuples: string[] }
+
+export type FirewalldChange =
+  | { type: 'start' | 'stop' | 'reload' | 'runtime_to_permanent' | 'panic_off' }
+  | { type: 'default_zone'; zone: string }
+  | { type: 'target'; zone: string; target: FirewalldTarget }
+  | { type: 'masquerade'; zone: string; enabled: boolean }
+  | { type: 'add' | 'remove'; zone: string; item: FirewalldItem; value: string }
+  | { type: 'change_interface' | 'remove_interface'; zone: string; iface: string }
+
+export type FirewallChange =
+  | { kind: 'ufw'; change: UfwChange }
+  | { kind: 'firewalld'; change: FirewalldChange }
+
+/// What one way in is now (`before`) and after the change; `later` is about
+/// the saved configuration, in force from the next reload or boot.
+export interface FirewallEffect {
+  access: FirewallAccess
+  before: FirewallReach
+  after: FirewallReach
+  later: boolean
+  /// `after` shuts or narrows the way in: what the confirmation warns of.
+  worse: boolean
+}
+
+/// What a change runs and does, as the agent planned it.
+export interface FirewallPlan {
+  commands: string[]
+  effects: FirewallEffect[]
+  notes: 'reload_loses'[]
+  destructive: boolean
+  /// Ask before running; otherwise nothing gets worse and it runs at once.
+  confirm: boolean
+  /// Rules that keep the ways in this change shuts open, run first if ticked.
+  keep_open: string[]
+  keep_open_default: boolean
+  /// Something is surely shut: the confirmation waits a few seconds.
+  countdown: boolean
+}
+
+export interface FirewallPlanResult {
+  sudo_required: boolean
+  plan: FirewallPlan | null
+  /// What names this plan; sent back with the change once the user confirms.
+  plan_id: string | null
+}
+
+export interface FirewallActResult {
+  succeeded: boolean
+  sudo_rejected: boolean
+  exit_code: number | null
+  stderr: string
+  /// Nothing ran: the firewall as it is now makes a plan that asks, and it is
+  /// not the one confirmed. Show `plan` and confirm `plan_id` instead.
+  confirm_required: boolean
+  plan: FirewallPlan | null
+  plan_id: string | null
+}
 
 // --- System users (`/api/v1/system-users`) ---
 

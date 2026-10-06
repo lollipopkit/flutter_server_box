@@ -11,6 +11,7 @@
   import Containers from './pages/Containers.svelte'
   import Benchmark from './pages/Benchmark.svelte'
   import SystemUsers from './pages/SystemUsers.svelte'
+  import Firewall from './pages/Firewall.svelte'
   import Snippets from './pages/Snippets.svelte'
   import Desktop from './pages/Desktop.svelte'
   import Backup from './pages/Backup.svelte'
@@ -56,6 +57,8 @@
             <Benchmark onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'system_users'}
             <SystemUsers onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'firewall'}
+            <Firewall onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'snippets'}
             <Snippets onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'desktop'}

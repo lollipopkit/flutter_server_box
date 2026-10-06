@@ -1295,6 +1295,12 @@ fn a_rejected_sudo_password_is_told_apart_from_a_failing_command() {
         "sudo: a password is required",
         // Not the first line: `sudo -S` writes its prompt to stderr first.
         "Password: \nsudo: a password is required\n",
+        // sudo-rs (Ubuntu 25.10+), as captured from 0.2.13: a wrong password
+        // under `-S`, nothing on stdin, `-n`, and three wrong ones.
+        "\nsudo: Authentication failed, try again.\n\nsudo: Authentication required but not attempted\n",
+        "\nsudo: Authentication required but not attempted\n",
+        "sudo: interactive authentication is required\n",
+        "\nsudo: Authentication failed, try again.\n\nsudo: maximum 3 incorrect authentication attempts\n",
     ] {
         assert!(script::sudo_password_rejected(stderr), "{stderr:?}");
     }

@@ -19,18 +19,6 @@ final class _FirewallHost {
   final ValueChanged<FirewallKind> onSwitch;
 }
 
-/// What a change does to one way in: as it is, and as it would be.
-///
-/// [later] is about what is written down rather than what is in force:
-/// firewalld's permanent configuration, which takes over at a reload or a
-/// boot.
-typedef _Effect = ({
-  FirewallAccess access,
-  FirewallReach before,
-  FirewallReach after,
-  bool later,
-});
-
 /// What both firewalls' pages share: running as root, asking before a
 /// change, and the pieces they are drawn with.
 mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
@@ -131,50 +119,67 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     return ok;
   }
 
-  /// [host]'s ways in, each with what [before] and [after] say of it.
-  List<_Effect> effects(
-    FirewallReach Function(FirewallAccess) before,
-    FirewallReach Function(FirewallAccess) after, {
-    bool later = false,
-  }) => [
-    for (final access in host.accesses)
-      (
-        access: access,
-        before: before(access),
-        after: after(access),
-        later: later,
-      ),
-  ];
+  /// Runs what [plan] says, asking first where it says to: showing its
+  /// commands unless there is a [message] to say instead, and which way in
+  /// the change would shut or narrow.
+  ///
+  /// Its keep-open rules are offered, ticked where it says, when there are
+  /// any. A change that still shuts a way in asks with a countdown, not a
+  /// tap.
+  Future<void> apply(Plan plan, {String? message}) async {
+    final commands = plan.confirm
+        ? await _confirm(plan, message: message)
+        : plan.commands;
+    if (commands != null) await run(commands);
+  }
 
-  /// Asks before [commands] run, showing them unless there is a [message]
-  /// to say instead, and saying which way in a change would shut or narrow.
-  ///
-  /// [keepOpen] makes the commands that keep given ways in open; offered,
-  /// and ticked where the way would surely be shut, when there is one. A
-  /// change that still shuts one asks with a countdown, not a tap.
-  ///
-  /// Answers what to run — [keepOpen]'s commands first where ticked — or
-  /// null.
-  Future<List<String>?> confirm({
-    required List<String> commands,
-    String? message,
-    List<String> notes = const [],
-    bool destructive = false,
-    List<_Effect> effects = const [],
-    List<String> Function(List<FirewallAccess> accesses)? keepOpen,
-  }) async {
+  /// [plan], or the change it is for refused where it cannot be made.
+  Plan? planOf(Plan Function() plan) {
+    try {
+      return plan();
+    } on ChangeError catch (e) {
+      // Nothing to do: the list was already as asked.
+      if (e is! ChangeError_Unchanged) Toast.error(changeErrorText(e));
+      return null;
+    }
+  }
+
+  String changeErrorText(ChangeError e) => switch (e) {
+    ChangeError_Unchanged() => libL10n.empty,
+    ChangeError_Draft(:final field0) => draftIssueText(field0),
+    ChangeError_Input(:final field0) => inputIssueText(field0),
+    ChangeError_NoSuchRule() => libL10n.notExistFmt(l10n.firewallRule),
+    ChangeError_NoSuchZone() => libL10n.notExistFmt(l10n.firewallZone),
+  };
+
+  String draftIssueText(UfwDraftIssue issue) => switch (issue) {
+    UfwDraftIssue.nothingMatched => l10n.firewallNothingMatched,
+    UfwDraftIssue.invalidPort => l10n.firewallInvalidPort,
+    UfwDraftIssue.tooManyPorts => l10n.firewallTooManyPorts,
+    UfwDraftIssue.portsNeedProtocol => l10n.firewallPortsNeedProtocol,
+    UfwDraftIssue.invalidAddress => l10n.firewallInvalidAddress,
+    UfwDraftIssue.mixedIpVersions => l10n.firewallMixedIpVersions,
+    UfwDraftIssue.invalidInterface => l10n.firewallInvalidInterface,
+    UfwDraftIssue.invalidComment => l10n.firewallInvalidComment,
+    UfwDraftIssue.invalidProtocol => l10n.firewallInvalidProtocol,
+  };
+
+  String inputIssueText(FirewalldInputIssue issue) => switch (issue) {
+    FirewalldInputIssue.invalidPort => l10n.firewallInvalidPort,
+    FirewalldInputIssue.invalidSource => l10n.firewallInvalidSource,
+    FirewalldInputIssue.invalidInterface => l10n.firewallInvalidInterface,
+    FirewalldInputIssue.invalidRichRule => l10n.firewallInvalidRichRule,
+    FirewalldInputIssue.invalidForwardPort => l10n.firewallInvalidForwardPort,
+  };
+
+  /// What to run once the user has agreed to [plan], or null.
+  Future<List<String>?> _confirm(Plan plan, {String? message}) async {
     final worse = [
-      for (final e in effects)
-        if (e.after.worseThan(e.before)) e,
+      for (final e in plan.effects)
+        if (e.worse) e,
     ];
-    final shut = [
-      for (final e in worse)
-        if (!e.after.admits) e.access,
-    ];
-    final rescue = keepOpen == null || shut.isEmpty ? null : keepOpen(shut);
-    var keep =
-        rescue != null && worse.any((e) => e.after == FirewallReach.blocked);
-    final blocked = worse.any((e) => e.after == FirewallReach.blocked);
+    final rescue = plan.keepOpen.isEmpty ? null : plan.keepOpen;
+    var keep = plan.keepOpenDefault;
     final sure = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
@@ -186,10 +191,14 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
               if (message != null)
                 Text(message)
               else
-                SimpleMarkdown(data: '```shell\n${commands.join('\n')}\n```'),
-              for (final note in notes) ...[
+                SimpleMarkdown(
+                  data: '```shell\n${plan.commands.join('\n')}\n```',
+                ),
+              for (final note in plan.notes) ...[
                 UIs.height7,
-                Text(note, style: UIs.text12Grey),
+                Text(switch (note) {
+                  PlanNote.reloadLoses => l10n.firewallReloadLoses,
+                }, style: UIs.text12Grey),
               ],
               for (final e in worse) ...[
                 UIs.height13,
@@ -224,20 +233,20 @@ mixin _FirewallView<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       ),
       actions: [
         Btn.cancel(),
-        if (blocked)
+        if (plan.countdown)
           CountDownBtn(
             onTap: () => context.popDialog(true),
             text: libL10n.ok,
             afterColor: Colors.red,
           )
-        else if (destructive)
+        else if (plan.destructive)
           Btnx.okRed
         else
           Btn.ok(onTap: () => context.popDialog(true)),
       ],
     );
     if (sure != true || !mounted) return null;
-    return [if (keep && rescue != null) ...rescue, ...commands];
+    return firewallPlanCommands(plan: plan, keepOpen: keep);
   }
 
   String _reachWarning(

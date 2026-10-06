@@ -138,7 +138,8 @@ final class _FirewallPageState extends ConsumerState<FirewallPage> {
 /// The ways this app reaches [spi], each a port a firewall change could shut.
 ///
 /// SSH's as the server saw the probe arrive, where it arrived over SSH: the
-/// port behind any NAT, and the address it came from. The agent's from its
+/// port behind any NAT, the address it came from and the interface it came
+/// in on. The agent's from its
 /// address; what is in front of it — a reverse proxy, a NAT — is not known.
 /// None for this device.
 List<FirewallAccess> _accessesFor(Spi spi, FirewallProbeResult probe) => [

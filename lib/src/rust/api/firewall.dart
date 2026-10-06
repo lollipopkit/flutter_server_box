@@ -4,7 +4,10 @@
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
+import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 import 'package:server_box/src/rust/frb_generated.dart';
+
+part 'firewall.freezed.dart';
 
 /// Which firewalls the server has, and how the app reaches it; for `sh`,
 /// never as root.
@@ -23,91 +26,13 @@ FirewallKind? firewallPreferred({required FirewallProbeResult probe}) =>
 String firewallScript({required List<String> commands}) =>
     RustLib.instance.api.crateApiFirewallFirewallScript(commands: commands);
 
-bool firewallReachAdmits({required FirewallReach reach}) =>
-    RustLib.instance.api.crateApiFirewallFirewallReachAdmits(reach: reach);
-
-/// Whether `after` is a change for the worse from `before`.
-bool firewallReachWorseThan({
-  required FirewallReach after,
-  required FirewallReach before,
-}) => RustLib.instance.api.crateApiFirewallFirewallReachWorseThan(
-  after: after,
-  before: before,
-);
-
 String ufwReadScript() => RustLib.instance.api.crateApiFirewallUfwReadScript();
 
 UfwSnapshot ufwParse({required String output}) =>
     RustLib.instance.api.crateApiFirewallUfwParse(output: output);
 
-/// Whether a new connection like `access` gets through; `active`, `rules`
-/// and `incoming` stand in for the snapshot's own.
-FirewallReach ufwReach({
-  required UfwSnapshot snapshot,
-  required FirewallAccess access,
-  bool? active,
-  List<UfwRule>? rules,
-  UfwPolicy? incoming,
-}) => RustLib.instance.api.crateApiFirewallUfwReach(
-  snapshot: snapshot,
-  access: access,
-  active: active,
-  rules: rules,
-  incoming: incoming,
-);
-
-/// The snapshot's rules with `added` first, or last.
-List<UfwRule> ufwWithRules({
-  required UfwSnapshot snapshot,
-  required List<UfwRule> added,
-  required bool prepend,
-}) => RustLib.instance.api.crateApiFirewallUfwWithRules(
-  snapshot: snapshot,
-  added: added,
-  prepend: prepend,
-);
-
-/// The rules ufw would add for `draft`, with `apps` resolving a profile.
-List<UfwRule> ufwDraftRules({
-  required UfwRuleDraft draft,
-  required List<UfwApp> apps,
-}) => RustLib.instance.api.crateApiFirewallUfwDraftRules(
-  draft: draft,
-  apps: apps,
-);
-
 UfwDraftIssue? ufwValidateDraft({required UfwRuleDraft draft}) =>
     RustLib.instance.api.crateApiFirewallUfwValidateDraft(draft: draft);
-
-/// The command adding `draft`; an error names the issue
-/// [`ufw_validate_draft`] would have.
-String ufwAddCommand({required UfwRuleDraft draft}) =>
-    RustLib.instance.api.crateApiFirewallUfwAddCommand(draft: draft);
-
-List<String> ufwDeleteCommands({required UfwRule rule}) =>
-    RustLib.instance.api.crateApiFirewallUfwDeleteCommands(rule: rule);
-
-String ufwEnableCommand() =>
-    RustLib.instance.api.crateApiFirewallUfwEnableCommand();
-
-String ufwDisableCommand() =>
-    RustLib.instance.api.crateApiFirewallUfwDisableCommand();
-
-String ufwReloadCommand() =>
-    RustLib.instance.api.crateApiFirewallUfwReloadCommand();
-
-String ufwPolicyCommand({required UfwChain chain, required UfwPolicy policy}) =>
-    RustLib.instance.api.crateApiFirewallUfwPolicyCommand(
-      chain: chain,
-      policy: policy,
-    );
-
-String ufwLoggingCommand({required UfwLogLevel level}) =>
-    RustLib.instance.api.crateApiFirewallUfwLoggingCommand(level: level);
-
-/// Lets TCP in to `port`, before every other rule.
-String ufwAllowTcpCommand({required int port}) =>
-    RustLib.instance.api.crateApiFirewallUfwAllowTcpCommand(port: port);
 
 /// `in`, `out`: the word ufw writes.
 String ufwDirectionToken({required UfwDirection direction}) => RustLib
@@ -125,51 +50,63 @@ String firewalldReadScript() =>
 FirewalldSnapshot firewalldParse({required String output}) =>
     RustLib.instance.api.crateApiFirewallFirewalldParse(output: output);
 
-/// What is in force: the runtime while running, else the permanent.
-List<FirewalldZone> firewalldZones({required FirewalldSnapshot snapshot}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldZones(snapshot: snapshot);
-
 bool firewalldDrifted({required FirewalldSnapshot snapshot}) =>
     RustLib.instance.api.crateApiFirewallFirewalldDrifted(snapshot: snapshot);
+
+/// `access` gets in now and will not once the saved configuration is in
+/// force.
+bool firewalldShutByReload({
+  required FirewalldSnapshot snapshot,
+  required FirewallAccess access,
+}) => RustLib.instance.api.crateApiFirewallFirewalldShutByReload(
+  snapshot: snapshot,
+  access: access,
+);
 
 /// The zones a connection like `access` may be handled by; `zones` and
 /// `default_zone` stand in for the snapshot's own.
 List<FirewalldZone> firewalldZonesFor({
   required FirewalldSnapshot snapshot,
   required FirewallAccess access,
-  String? iface,
   List<FirewalldZone>? zones,
   String? defaultZone,
 }) => RustLib.instance.api.crateApiFirewallFirewalldZonesFor(
   snapshot: snapshot,
   access: access,
-  iface: iface,
   zones: zones,
   defaultZone: defaultZone,
 );
 
-/// Whether a new connection like `access` gets through; `running`, `panic`,
-/// `zones` and `default_zone` stand in for the snapshot's own.
-FirewallReach firewalldReach({
-  required FirewalldSnapshot snapshot,
-  required FirewallAccess access,
-  String? iface,
-  bool? running,
-  bool? panic,
-  List<FirewalldZone>? zones,
-  String? defaultZone,
-}) => RustLib.instance.api.crateApiFirewallFirewalldReach(
+/// What `change` to ufw would run and do to each of `accesses`.
+Plan ufwPlan({
+  required UfwSnapshot snapshot,
+  required UfwChange change,
+  required List<FirewallAccess> accesses,
+}) => RustLib.instance.api.crateApiFirewallUfwPlan(
   snapshot: snapshot,
-  access: access,
-  iface: iface,
-  running: running,
-  panic: panic,
-  zones: zones,
-  defaultZone: defaultZone,
+  change: change,
+  accesses: accesses,
 );
 
-FirewalldRichRule firewalldParseRichRule({required String raw}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldParseRichRule(raw: raw);
+/// What `change` to firewalld would run and do to each of `accesses`.
+Plan firewalldPlan({
+  required FirewalldSnapshot snapshot,
+  required FirewalldChange change,
+  required List<FirewallAccess> accesses,
+}) => RustLib.instance.api.crateApiFirewallFirewalldPlan(
+  snapshot: snapshot,
+  change: change,
+  accesses: accesses,
+);
+
+/// What runs when `plan` is confirmed, its keep-open rules first or not.
+List<String> firewallPlanCommands({
+  required Plan plan,
+  required bool keepOpen,
+}) => RustLib.instance.api.crateApiFirewallFirewallPlanCommands(
+  plan: plan,
+  keepOpen: keepOpen,
+);
 
 /// `8080/tcp`, as firewalld writes a port and takes it back.
 String firewalldPortSpec({required FirewalldPort port}) =>
@@ -179,133 +116,75 @@ String firewalldPortSpec({required FirewalldPort port}) =>
 String firewalldTargetToken({required FirewalldTarget target}) =>
     RustLib.instance.api.crateApiFirewallFirewalldTargetToken(target: target);
 
-/// Adds `value` to `zone`, or removes it; both configurations while
-/// `running`.
-List<String> firewalldItemCommands({
-  required bool running,
-  required String zone,
-  required FirewalldItem item,
-  required String value,
-  required bool add,
-}) => RustLib.instance.api.crateApiFirewallFirewalldItemCommands(
-  running: running,
-  zone: zone,
-  item: item,
-  value: value,
-  add: add,
-);
+@freezed
+sealed class ChangeError with _$ChangeError implements FrbException {
+  const ChangeError._();
 
-List<String> firewalldPortCommands({
-  required bool running,
-  required String zone,
-  required FirewalldPort port,
-  required bool add,
-}) => RustLib.instance.api.crateApiFirewallFirewalldPortCommands(
-  running: running,
-  zone: zone,
-  port: port,
-  add: add,
-);
+  const factory ChangeError.unchanged() = ChangeError_Unchanged;
+  const factory ChangeError.draft(UfwDraftIssue field0) = ChangeError_Draft;
+  const factory ChangeError.input(FirewalldInputIssue field0) =
+      ChangeError_Input;
+  const factory ChangeError.noSuchRule() = ChangeError_NoSuchRule;
+  const factory ChangeError.noSuchZone() = ChangeError_NoSuchZone;
+}
 
-/// A rich rule letting TCP in to `port` before anything in its zone.
-String firewalldKeepOpenRule({required int port}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldKeepOpenRule(port: port);
+class Effect {
+  final FirewallAccess access;
+  final FirewallReach before;
+  final FirewallReach after;
+  final bool later;
+  final bool worse;
 
-List<String> firewalldChangeInterface({
-  required bool running,
-  required String zone,
-  required String iface,
-}) => RustLib.instance.api.crateApiFirewallFirewalldChangeInterface(
-  running: running,
-  zone: zone,
-  iface: iface,
-);
+  const Effect({
+    required this.access,
+    required this.before,
+    required this.after,
+    required this.later,
+    required this.worse,
+  });
 
-List<String> firewalldRemoveInterface({
-  required bool running,
-  required String zone,
-  required String iface,
-}) => RustLib.instance.api.crateApiFirewallFirewalldRemoveInterface(
-  running: running,
-  zone: zone,
-  iface: iface,
-);
+  @override
+  int get hashCode =>
+      access.hashCode ^
+      before.hashCode ^
+      after.hashCode ^
+      later.hashCode ^
+      worse.hashCode;
 
-List<String> firewalldMasquerade({
-  required bool running,
-  required String zone,
-  required bool add,
-}) => RustLib.instance.api.crateApiFirewallFirewalldMasquerade(
-  running: running,
-  zone: zone,
-  add: add,
-);
-
-List<String> firewalldTarget({
-  required bool running,
-  required String zone,
-  required FirewalldTarget target,
-}) => RustLib.instance.api.crateApiFirewallFirewalldTarget(
-  running: running,
-  zone: zone,
-  target: target,
-);
-
-String firewalldDefaultZone({required bool running, required String zone}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldDefaultZone(
-      running: running,
-      zone: zone,
-    );
-
-String firewalldReloadCommand() =>
-    RustLib.instance.api.crateApiFirewallFirewalldReloadCommand();
-
-String firewalldRuntimeToPermanentCommand() =>
-    RustLib.instance.api.crateApiFirewallFirewalldRuntimeToPermanentCommand();
-
-String firewalldPanicOffCommand() =>
-    RustLib.instance.api.crateApiFirewallFirewalldPanicOffCommand();
-
-String firewalldStartCommand() =>
-    RustLib.instance.api.crateApiFirewallFirewalldStartCommand();
-
-String firewalldStopCommand() =>
-    RustLib.instance.api.crateApiFirewallFirewalldStopCommand();
-
-/// A typed port as firewalld writes it, or None.
-FirewalldPort? firewalldParsePort({required String value}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldParsePort(value: value);
-
-FirewalldInputIssue? firewalldCheckSource({required String value}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldCheckSource(value: value);
-
-FirewalldInputIssue? firewalldCheckInterface({required String value}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldCheckInterface(value: value);
-
-FirewalldInputIssue? firewalldCheckRichRule({required String value}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldCheckRichRule(value: value);
-
-FirewalldInputIssue? firewalldCheckForwardPort({required String value}) =>
-    RustLib.instance.api.crateApiFirewallFirewalldCheckForwardPort(
-      value: value,
-    );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Effect &&
+          runtimeType == other.runtimeType &&
+          access == other.access &&
+          before == other.before &&
+          after == other.after &&
+          later == other.later &&
+          worse == other.worse;
+}
 
 class FirewallAccess {
   final FirewallAccessVia via;
   final int port;
   final String? client;
   final String? server;
+  final String? iface;
 
   const FirewallAccess({
     required this.via,
     required this.port,
     this.client,
     this.server,
+    this.iface,
   });
 
   @override
   int get hashCode =>
-      via.hashCode ^ port.hashCode ^ client.hashCode ^ server.hashCode;
+      via.hashCode ^
+      port.hashCode ^
+      client.hashCode ^
+      server.hashCode ^
+      iface.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -315,7 +194,8 @@ class FirewallAccess {
           via == other.via &&
           port == other.port &&
           client == other.client &&
-          server == other.server;
+          server == other.server &&
+          iface == other.iface;
 }
 
 enum FirewallAccessVia { ssh, monitor }
@@ -327,23 +207,17 @@ class FirewallProbeResult {
   final bool? firewalld;
   final bool root;
   final FirewallAccess? ssh;
-  final String? sshInterface;
 
   const FirewallProbeResult({
     this.ufw,
     this.firewalld,
     required this.root,
     this.ssh,
-    this.sshInterface,
   });
 
   @override
   int get hashCode =>
-      ufw.hashCode ^
-      firewalld.hashCode ^
-      root.hashCode ^
-      ssh.hashCode ^
-      sshInterface.hashCode;
+      ufw.hashCode ^ firewalld.hashCode ^ root.hashCode ^ ssh.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -353,11 +227,50 @@ class FirewallProbeResult {
           ufw == other.ufw &&
           firewalld == other.firewalld &&
           root == other.root &&
-          ssh == other.ssh &&
-          sshInterface == other.sshInterface;
+          ssh == other.ssh;
 }
 
 enum FirewallReach { open, limited, unknown, blocked }
+
+@freezed
+sealed class FirewalldChange with _$FirewalldChange {
+  const FirewalldChange._();
+
+  const factory FirewalldChange.start() = FirewalldChange_Start;
+  const factory FirewalldChange.stop() = FirewalldChange_Stop;
+  const factory FirewalldChange.reload() = FirewalldChange_Reload;
+  const factory FirewalldChange.runtimeToPermanent() =
+      FirewalldChange_RuntimeToPermanent;
+  const factory FirewalldChange.panicOff() = FirewalldChange_PanicOff;
+  const factory FirewalldChange.defaultZone({required String zone}) =
+      FirewalldChange_DefaultZone;
+  const factory FirewalldChange.target({
+    required String zone,
+    required FirewalldTarget target,
+  }) = FirewalldChange_Target;
+  const factory FirewalldChange.masquerade({
+    required String zone,
+    required bool enabled,
+  }) = FirewalldChange_Masquerade;
+  const factory FirewalldChange.add({
+    required String zone,
+    required FirewalldItem item,
+    required String value,
+  }) = FirewalldChange_Add;
+  const factory FirewalldChange.remove({
+    required String zone,
+    required FirewalldItem item,
+    required String value,
+  }) = FirewalldChange_Remove;
+  const factory FirewalldChange.changeInterface({
+    required String zone,
+    required String iface,
+  }) = FirewalldChange_ChangeInterface;
+  const factory FirewalldChange.removeInterface({
+    required String zone,
+    required String iface,
+  }) = FirewalldChange_RemoveInterface;
+}
 
 enum FirewalldInputIssue {
   invalidPort,
@@ -602,6 +515,55 @@ class FirewalldZone {
           masquerade == other.masquerade;
 }
 
+class Plan {
+  final List<String> commands;
+  final List<Effect> effects;
+  final List<PlanNote> notes;
+  final bool destructive;
+  final bool confirm;
+  final List<String> keepOpen;
+  final bool keepOpenDefault;
+  final bool countdown;
+
+  const Plan({
+    required this.commands,
+    required this.effects,
+    required this.notes,
+    required this.destructive,
+    required this.confirm,
+    required this.keepOpen,
+    required this.keepOpenDefault,
+    required this.countdown,
+  });
+
+  @override
+  int get hashCode =>
+      commands.hashCode ^
+      effects.hashCode ^
+      notes.hashCode ^
+      destructive.hashCode ^
+      confirm.hashCode ^
+      keepOpen.hashCode ^
+      keepOpenDefault.hashCode ^
+      countdown.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Plan &&
+          runtimeType == other.runtimeType &&
+          commands == other.commands &&
+          effects == other.effects &&
+          notes == other.notes &&
+          destructive == other.destructive &&
+          confirm == other.confirm &&
+          keepOpen == other.keepOpen &&
+          keepOpenDefault == other.keepOpenDefault &&
+          countdown == other.countdown;
+}
+
+enum PlanNote { reloadLoses }
+
 enum UfwAction { allow, deny, reject, limit }
 
 class UfwApp {
@@ -641,6 +603,25 @@ class UfwAppPort {
 }
 
 enum UfwChain { incoming, outgoing, routed }
+
+@freezed
+sealed class UfwChange with _$UfwChange {
+  const UfwChange._();
+
+  const factory UfwChange.enable() = UfwChange_Enable;
+  const factory UfwChange.disable() = UfwChange_Disable;
+  const factory UfwChange.reload() = UfwChange_Reload;
+  const factory UfwChange.policy({
+    required UfwChain chain,
+    required UfwPolicy policy,
+  }) = UfwChange_Policy;
+  const factory UfwChange.logging({required UfwLogLevel level}) =
+      UfwChange_Logging;
+  const factory UfwChange.addRule({required UfwRuleDraft draft}) =
+      UfwChange_AddRule;
+  const factory UfwChange.deleteRule({required List<String> tuples}) =
+      UfwChange_DeleteRule;
+}
 
 enum UfwDirection { incoming, outgoing }
 

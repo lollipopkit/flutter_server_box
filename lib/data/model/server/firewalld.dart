@@ -58,39 +58,21 @@ extension FirewalldSnapshotX on FirewalldSnapshot {
   /// change what the firewall does.
   bool get drifted => firewalldDrifted(snapshot: this);
 
-  /// The zones a connection like [access] may be handled by. [iface] is the
-  /// interface it arrives on, where known; [zones] and [defaultZone] stand
-  /// in for this snapshot's own.
+  /// The zones a connection like [access] may be handled by; [zones] and
+  /// [defaultZone] stand in for this snapshot's own.
   List<FirewalldZone> zonesFor(
-    FirewallAccess access,
-    String? iface, {
+    FirewallAccess access, {
     List<FirewalldZone>? zones,
     String? defaultZone,
   }) => firewalldZonesFor(
     snapshot: this,
     access: access,
-    iface: iface,
     zones: zones,
     defaultZone: defaultZone,
   );
 
-  /// Whether a new connection like [access] gets through; [running],
-  /// [panic], [zones] and [defaultZone] stand in for this snapshot's own, to
-  /// ask about a change before it is made.
-  FirewallReach reach(
-    FirewallAccess access,
-    String? iface, {
-    bool? running,
-    bool? panic,
-    List<FirewalldZone>? zones,
-    String? defaultZone,
-  }) => firewalldReach(
-    snapshot: this,
-    access: access,
-    iface: iface,
-    running: running,
-    panic: panic,
-    zones: zones,
-    defaultZone: defaultZone,
-  );
+  /// [access] gets in now and will not once the saved configuration is in
+  /// force.
+  bool shutByReload(FirewallAccess access) =>
+      firewalldShutByReload(snapshot: this, access: access);
 }

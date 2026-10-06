@@ -11,6 +11,7 @@
 //! leaves the server unreachable once it drops, and that connection is
 //! usually the only way to undo it.
 
+pub mod change;
 pub mod firewalld;
 pub mod ufw;
 
@@ -34,14 +35,16 @@ pub fn script<S: AsRef<str>>(commands: &[S]) -> String {
 }
 
 /// The firewalls a server has.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FirewallKind {
     Ufw,
     Firewalld,
 }
 
 /// Which way of reaching the server an access is.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FirewallAccessVia {
     Ssh,
     Monitor,
@@ -51,7 +54,7 @@ pub enum FirewallAccessVia {
 /// the addresses of the connection as the server sees them.
 ///
 /// What every firewall change is checked against.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct FirewallAccess {
     pub via: FirewallAccessVia,
     /// The port on the server. From `SSH_CONNECTION` where the server said,
@@ -62,6 +65,9 @@ pub struct FirewallAccess {
     pub client: Option<String>,
     /// The server's own address the connection arrived on.
     pub server: Option<String>,
+    /// The interface it arrives on, which decides its firewalld zone; None
+    /// where the server did not say.
+    pub iface: Option<String>,
 }
 
 impl FirewallAccess {
@@ -78,6 +84,7 @@ impl FirewallAccess {
             port,
             client: Some(client.to_string()),
             server: Some(server.to_string()),
+            iface: None,
         })
     }
 
@@ -103,7 +110,8 @@ fn address(value: &str) -> Option<IpAddr> {
 ///
 /// Ordered from best to worst, which is what [`FirewallReach::worse_than`]
 /// compares.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum FirewallReach {
     Open,
     /// Let through, at a rate: ufw's `limit` refuses an address after six
@@ -206,7 +214,7 @@ fn holds(network: &str, client: Option<IpAddr>) -> Option<bool> {
 }
 
 /// What [`PROBE_SCRIPT`] found, asked without root.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub struct FirewallProbeResult {
     /// ufw, where installed: whether it is on, from its config (`ENABLED=yes`,
     /// readable by anyone).
@@ -216,11 +224,10 @@ pub struct FirewallProbeResult {
     pub firewalld: Option<bool>,
     /// Whether commands run as root.
     pub root: bool,
-    /// The SSH connection the probe ran over, as the server saw it. None when
-    /// it ran over anything else.
+    /// The SSH connection the probe ran over, as the server saw it, with the
+    /// interface it arrived on where `ip` could tell. None when it ran over
+    /// anything else.
     pub ssh: Option<FirewallAccess>,
-    /// The interface `ssh` arrived on, which decides its firewalld zone.
-    pub ssh_interface: Option<String>,
 }
 
 impl FirewallProbeResult {
@@ -270,6 +277,7 @@ fi
 
 pub fn parse_probe(output: &str) -> FirewallProbeResult {
     let mut result = FirewallProbeResult::default();
+    let mut iface = None;
     for raw in output.replace("\r\n", "\n").split('\n') {
         let line = raw.trim_end();
         let value = |marker: &str| line.strip_prefix(marker).map(str::trim);
@@ -282,8 +290,11 @@ pub fn parse_probe(output: &str) -> FirewallProbeResult {
         } else if let Some(v) = value(PROBE_SSH) {
             result.ssh = FirewallAccess::from_ssh_connection(v);
         } else if let Some(v) = value(PROBE_IFACE).filter(|v| !v.is_empty()) {
-            result.ssh_interface = Some(v.to_owned());
+            iface = Some(v.to_owned());
         }
+    }
+    if let Some(ssh) = &mut result.ssh {
+        ssh.iface = iface;
     }
     result
 }

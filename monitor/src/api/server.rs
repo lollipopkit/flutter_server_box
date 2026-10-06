@@ -367,6 +367,9 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::benchmark::act))
                     .route(web::delete().to(crate::api::benchmark::remove)),
             )
+            .service(web::resource("/firewall").route(web::post().to(crate::api::firewall::read)))
+            .service(web::resource("/firewall/plan").route(web::post().to(crate::api::firewall::plan)))
+            .service(web::resource("/firewall/act").route(web::post().to(crate::api::firewall::act)))
             .service(
                 // Not `/users`, which is this agent's own accounts.
                 web::resource("/system-users")

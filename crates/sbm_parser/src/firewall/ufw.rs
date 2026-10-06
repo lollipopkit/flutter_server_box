@@ -12,7 +12,8 @@ use crate::script::shell_quote_unix as quote;
 
 /// What a rule does with a packet it matches. Named as ufw names them, which
 /// is also the word the rule is added with.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwAction {
     Allow,
     Deny,
@@ -37,7 +38,8 @@ impl UfwAction {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwDirection {
     Incoming,
     Outgoing,
@@ -61,7 +63,8 @@ impl UfwDirection {
 ///
 /// Stored in `/etc/default/ufw` under iptables' names (`ACCEPT`, `DROP`,
 /// `REJECT`); set with ufw's (`ufw default deny incoming`).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwPolicy {
     Allow,
     Deny,
@@ -88,7 +91,8 @@ impl UfwPolicy {
 }
 
 /// The three chains a default policy is set for.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwChain {
     Incoming,
     Outgoing,
@@ -116,7 +120,8 @@ impl UfwChain {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwLogLevel {
     Off,
     Low,
@@ -139,7 +144,8 @@ impl UfwLogLevel {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwIpVersion {
     V4,
     V6,
@@ -147,7 +153,8 @@ pub enum UfwIpVersion {
 }
 
 /// What a rule logs of its own, beyond ufw's logging level.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwLog {
     /// New connections the rule matches.
     Log,
@@ -170,7 +177,7 @@ impl UfwLog {
 }
 
 /// One end of a rule: an address, and a port or an application profile.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 pub struct UfwEndpoint {
     /// None for any address.
     pub address: Option<String>,
@@ -187,7 +194,7 @@ pub struct UfwEndpoint {
 /// to a width a long rule overflows, its words are translated with the
 /// server's locale, and an inactive firewall prints no rules at all. The
 /// tuples are what ufw itself reloads its rules from.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct UfwRule {
     pub action: UfwAction,
     pub direction: UfwDirection,
@@ -253,7 +260,7 @@ impl UfwRule {
 }
 
 /// One port spec of an application profile: `80,443/tcp`, `53`.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct UfwAppPort {
     pub port: String,
     /// None for both.
@@ -274,14 +281,14 @@ impl UfwAppPort {
 }
 
 /// An application profile: a name a rule can use for its ports.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct UfwApp {
     pub name: String,
     pub ports: Vec<UfwAppPort>,
 }
 
 /// What a server's ufw is doing, as one read found it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct UfwSnapshot {
     /// Whether ufw's rules are loaded now; None when `ufw status` answered
     /// something other than a status, which `status_line` then holds.
@@ -339,7 +346,7 @@ impl UfwSnapshot {
 }
 
 /// A rule as the add form describes it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct UfwRuleDraft {
     pub action: UfwAction,
     /// Which side of this host the rule is on. Not asked of a `routed` rule,
@@ -439,7 +446,8 @@ impl UfwRuleDraft {
 }
 
 /// Why a [`UfwRuleDraft`] cannot be added, said before ufw is asked.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum UfwDraftIssue {
     NothingMatched,
     InvalidPort,

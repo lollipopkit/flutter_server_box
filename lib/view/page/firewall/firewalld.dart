@@ -116,7 +116,7 @@ extension on _FirewalldViewState {
               TextButton(
                 onPressed: busy
                     ? null
-                    : () => run([firewalldPanicOffCommand()]),
+                    : () => _make(snapshot, const FirewalldChange.panicOff()),
                 child: Text(l10n.firewallPanicOff),
               ),
             ],
@@ -137,7 +137,7 @@ extension on _FirewalldViewState {
     if (!snapshot.drifted) return null;
     final shut = [
       for (final access in host.accesses)
-        if (!_saved(snapshot, access).admits && _now(snapshot, access).admits)
+        if (snapshot.shutByReload(access))
           access,
     ];
     return banner(
@@ -289,13 +289,9 @@ extension on _FirewalldViewState {
                 value: zone.masquerade,
                 onChanged: busy
                     ? null
-                    : (on) => _change(
+                    : (on) => _make(
                         snapshot,
-                        firewalldMasquerade(
-                          running: snapshot.running,
-                          zone: zone.name,
-                          add: on,
-                        ),
+                        FirewalldChange.masquerade(zone: zone.name, enabled: on),
                       ),
               ),
               last: true,
@@ -308,16 +304,10 @@ extension on _FirewalldViewState {
         items: _held(runtime?.interfaces, saved?.interfaces ?? const []),
         text: (v) => v,
         onAdd: () => _addInterface(snapshot, zone.name),
-        onRemove: (v) => _remove(
+        onRemove: (v) => _make(
           snapshot,
-          zone.name,
-          v,
-          firewalldRemoveInterface(
-            running: snapshot.running,
-            zone: zone.name,
-            iface: v,
-          ),
-          (z) => z.copyWith(interfaces: [...z.interfaces]..remove(v)),
+          FirewalldChange.removeInterface(zone: zone.name, iface: v),
+          message: libL10n.delFmt(zone.name, v),
         ),
       ),
       _section<String>(
@@ -325,12 +315,14 @@ extension on _FirewalldViewState {
         items: _held(runtime?.sources, saved?.sources ?? const []),
         text: (v) => v,
         onAdd: () => _addSource(snapshot, zone.name),
-        onRemove: (v) => _remove(
+        onRemove: (v) => _make(
           snapshot,
-          zone.name,
-          v,
-          _item(snapshot, zone.name, FirewalldItem.source, v, add: false),
-          (z) => z.copyWith(sources: [...z.sources]..remove(v)),
+          FirewalldChange.remove(
+            zone: zone.name,
+            item: FirewalldItem.source,
+            value: v,
+          ),
+          message: libL10n.delFmt(zone.name, v),
         ),
       ),
       _section<String>(
@@ -339,12 +331,14 @@ extension on _FirewalldViewState {
         text: (v) => v,
         detail: (v) => snapshot.services[v]?.map((p) => p.spec).join(' '),
         onAdd: () => _addService(snapshot, zone),
-        onRemove: (v) => _remove(
+        onRemove: (v) => _make(
           snapshot,
-          zone.name,
-          v,
-          _item(snapshot, zone.name, FirewalldItem.service, v, add: false),
-          (z) => z.copyWith(services: [...z.services]..remove(v)),
+          FirewalldChange.remove(
+            zone: zone.name,
+            item: FirewalldItem.service,
+            value: v,
+          ),
+          message: libL10n.delFmt(zone.name, v),
         ),
       ),
       _section<FirewalldPort>(
@@ -352,17 +346,14 @@ extension on _FirewalldViewState {
         items: _held(runtime?.ports, saved?.ports ?? const []),
         text: (v) => v.spec,
         onAdd: () => _addPort(snapshot, zone.name),
-        onRemove: (v) => _remove(
+        onRemove: (v) => _make(
           snapshot,
-          zone.name,
-          v.spec,
-          firewalldPortCommands(
-            running: snapshot.running,
+          FirewalldChange.remove(
             zone: zone.name,
-            port: v,
-            add: false,
+            item: FirewalldItem.port,
+            value: v.spec,
           ),
-          (z) => z.copyWith(ports: [...z.ports]..remove(v)),
+          message: libL10n.delFmt(zone.name, v.spec),
         ),
       ),
       _section<String>(
@@ -374,14 +365,14 @@ extension on _FirewalldViewState {
         text: (v) => v,
         mono: true,
         onAdd: () => _addRichRule(snapshot, zone.name),
-        onRemove: (v) => _remove(
+        onRemove: (v) => _make(
           snapshot,
-          zone.name,
-          v,
-          _item(snapshot, zone.name, FirewalldItem.richRule, v, add: false),
-          (z) => z.copyWith(
-            richRules: [...z.richRules]..removeWhere((r) => r.raw == v),
+          FirewalldChange.remove(
+            zone: zone.name,
+            item: FirewalldItem.richRule,
+            value: v,
           ),
+          message: libL10n.delFmt(zone.name, v),
         ),
       ),
       _section<String>(
@@ -390,12 +381,14 @@ extension on _FirewalldViewState {
         text: (v) => v,
         mono: true,
         onAdd: () => _addForwardPort(snapshot, zone.name),
-        onRemove: (v) => _remove(
+        onRemove: (v) => _make(
           snapshot,
-          zone.name,
-          v,
-          _item(snapshot, zone.name, FirewalldItem.forwardPort, v, add: false),
-          (z) => z.copyWith(forwardPorts: [...z.forwardPorts]..remove(v)),
+          FirewalldChange.remove(
+            zone: zone.name,
+            item: FirewalldItem.forwardPort,
+            value: v,
+          ),
+          message: libL10n.delFmt(zone.name, v),
         ),
       ),
     ];
@@ -483,44 +476,11 @@ extension on _FirewalldViewState {
 // --- Utils ---
 
 extension on _FirewalldViewState {
-  /// The interface [access] arrives on, where the probe could tell.
-  String? _interfaceOf(FirewallAccess access) =>
-      access.via == FirewallAccessVia.ssh ? host.probe.sshInterface : null;
-
-  /// What reaches [access] now.
-  FirewallReach _now(
-    FirewalldSnapshot s,
-    FirewallAccess access, {
-    List<FirewalldZone>? zones,
-    String? defaultZone,
-    bool? running,
-  }) => s.reach(
-    access,
-    _interfaceOf(access),
-    zones: zones,
-    defaultZone: defaultZone,
-    running: running,
-  );
-
-  /// What will reach [access] once the saved configuration is in force.
-  FirewallReach _saved(
-    FirewalldSnapshot s,
-    FirewallAccess access, {
-    List<FirewalldZone>? zones,
-    String? defaultZone,
-  }) => s.reach(
-    access,
-    _interfaceOf(access),
-    running: true,
-    zones: zones ?? s.permanent,
-    defaultZone: defaultZone,
-  );
-
   /// The zone this app's connection is in, where that is known; else the
   /// default zone.
   String? _firstZone(FirewalldSnapshot s) {
     for (final access in host.accesses) {
-      final zones = s.zonesFor(access, _interfaceOf(access));
+      final zones = s.zonesFor(access);
       if (zones.length == 1) return zones.single.name;
     }
     return s.defaultZone ?? s.zones.firstOrNull?.name;
@@ -530,7 +490,7 @@ extension on _FirewalldViewState {
     if (zone.name == s.defaultZone) l10n.firewallDefaultTag,
     if (zone.active) libL10n.active,
     if (host.accesses.any((a) {
-      final zones = s.zonesFor(a, _interfaceOf(a));
+      final zones = s.zonesFor(a);
       return zones.length == 1 && zones.single.name == zone.name;
     }))
       l10n.firewallThisConnection,
@@ -548,287 +508,97 @@ extension on _FirewalldViewState {
         if (!runtime.contains(v)) (value: v, runtime: false, permanent: true),
     ],
   ];
-
-  /// [zones] with [change] made to the one named [name].
-  List<FirewalldZone> _applied(
-    List<FirewalldZone> zones,
-    String name,
-    FirewalldZone Function(FirewalldZone) change,
-  ) => [for (final z in zones) z.name == name ? change(z) : z];
-
-  /// What a change to the zones does to every way in, now and once saved.
-  /// [runtime] and [permanent] are the zones after it.
-  List<_Effect> _zoneEffects(
-    FirewalldSnapshot s, {
-    List<FirewalldZone>? runtime,
-    required List<FirewalldZone> permanent,
-    String? defaultZone,
-  }) => [
-    if (s.running)
-      ...effects(
-        (a) => _now(s, a),
-        (a) => _now(s, a, zones: runtime, defaultZone: defaultZone),
-      ),
-    ...effects(
-      (a) => _saved(s, a),
-      (a) => _saved(s, a, zones: permanent, defaultZone: defaultZone),
-      later: true,
-    ),
-  ];
-
-  /// Commands that let each of [accesses] in to every zone it may land in
-  /// among [zones], before anything there can refuse it — into both
-  /// configurations while running, so a reload keeps them.
-  List<String> Function(List<FirewallAccess>) _keepOpen(
-    FirewalldSnapshot s, {
-    List<FirewalldZone>? zones,
-    String? defaultZone,
-    bool? running,
-  }) => (accesses) {
-    final commands = <String>{};
-    for (final access in accesses) {
-      for (final zone in s.zonesFor(
-        access,
-        _interfaceOf(access),
-        zones: zones,
-        defaultZone: defaultZone,
-      )) {
-        commands.addAll(
-          firewalldItemCommands(
-            running: running ?? s.running,
-            zone: zone.name,
-            item: FirewalldItem.richRule,
-            value: firewalldKeepOpenRule(port: access.port),
-            add: true,
-          ),
-        );
-      }
-    }
-    return commands.toList();
-  };
-
-  /// Adds [value] to [zone], or removes it: both configurations while
-  /// running.
-  List<String> _item(
-    FirewalldSnapshot s,
-    String zone,
-    FirewalldItem item,
-    String value, {
-    required bool add,
-  }) => firewalldItemCommands(
-    running: s.running,
-    zone: zone,
-    item: item,
-    value: value,
-    add: add,
-  );
-
-  String _inputIssueText(FirewalldInputIssue issue) => switch (issue) {
-    FirewalldInputIssue.invalidPort => l10n.firewallInvalidPort,
-    FirewalldInputIssue.invalidSource => l10n.firewallInvalidSource,
-    FirewalldInputIssue.invalidInterface => l10n.firewallInvalidInterface,
-    FirewalldInputIssue.invalidRichRule => l10n.firewallInvalidRichRule,
-    FirewalldInputIssue.invalidForwardPort => l10n.firewallInvalidForwardPort,
-  };
 }
 
 // --- Actions ---
 
 extension on _FirewalldViewState {
-  /// Runs [commands], asking first only where a way in gets worse.
-  Future<void> _change(
+  /// Plans [change] against what is on screen, then makes it.
+  Future<void> _make(
     FirewalldSnapshot s,
-    List<String> commands, {
-    List<_Effect> changes = const [],
-    List<String> Function(List<FirewallAccess>)? keepOpen,
+    FirewalldChange change, {
+    String? message,
   }) async {
-    if (!changes.any((e) => e.after.worseThan(e.before))) {
-      await run(commands);
-      return;
-    }
-    final confirmed = await confirm(
-      commands: commands,
-      destructive: true,
-      effects: changes,
-      keepOpen: keepOpen ?? _keepOpen(s),
+    final plan = planOf(
+      () => firewalldPlan(snapshot: s, change: change, accesses: host.accesses),
     );
-    if (confirmed != null) await run(confirmed);
+    if (plan != null) await apply(plan, message: message);
   }
 
-  Future<void> _setRunning(FirewalldSnapshot s, bool on) async {
-    final commands = await confirm(
-      commands: [
-        on ? firewalldStartCommand() : firewalldStopCommand(),
-      ],
-      destructive: true,
-      // Started, the saved configuration is what is in force.
-      effects: on
-          ? effects(
-              (_) => FirewallReach.open,
-              (a) => _now(s, a, running: true, zones: s.permanent),
-            )
-          : const [],
-      keepOpen: _keepOpen(s, zones: s.permanent, running: false),
-    );
-    if (commands != null) await run(commands);
-  }
+  Future<void> _setRunning(FirewalldSnapshot s, bool on) => _make(
+    s,
+    on ? const FirewalldChange.start() : const FirewalldChange.stop(),
+  );
 
-  Future<void> _setDefaultZone(FirewalldSnapshot s, String zone) async {
-    if (zone == s.defaultZone) return;
-    final commands = await confirm(
-      commands: [firewalldDefaultZone(running: s.running, zone: zone)],
-      effects: _zoneEffects(
-        s,
-        runtime: s.runtime,
-        permanent: s.permanent,
-        defaultZone: zone,
-      ),
-      keepOpen: _keepOpen(s, defaultZone: zone),
-    );
-    if (commands != null) await run(commands);
-  }
+  Future<void> _setDefaultZone(FirewalldSnapshot s, String zone) =>
+      _make(s, FirewalldChange.defaultZone(zone: zone));
 
-  /// Written down, then reloaded: the runtime becomes the saved
-  /// configuration, target and all.
   Future<void> _setTarget(
     FirewalldSnapshot s,
     String zone,
     FirewalldTarget target,
-  ) async {
-    final permanent = _applied(
-      s.permanent,
-      zone,
-      (z) => z.copyWith(target: target),
-    );
-    final commands = await confirm(
-      commands: firewalldTarget(
-        running: s.running,
-        zone: zone,
-        target: target,
-      ),
-      notes: [if (s.drifted) l10n.firewallReloadLoses],
-      destructive: target != FirewalldTarget.accept,
-      effects: _zoneEffects(s, runtime: permanent, permanent: permanent),
-      keepOpen: _keepOpen(s, zones: permanent),
-    );
-    if (commands != null) await run(commands);
-  }
+  ) => _make(s, FirewalldChange.target(zone: zone, target: target));
 
-  Future<void> _reload(FirewalldSnapshot s) async {
-    final commands = await confirm(
-      commands: [firewalldReloadCommand()],
-      notes: [if (s.drifted) l10n.firewallReloadLoses],
-      destructive: s.drifted,
-      effects: _zoneEffects(s, runtime: s.permanent, permanent: s.permanent),
-      keepOpen: _keepOpen(s, zones: s.permanent),
-    );
-    if (commands != null) await run(commands);
-  }
+  Future<void> _reload(FirewalldSnapshot s) =>
+      _make(s, const FirewalldChange.reload());
 
-  Future<void> _saveRuntime(FirewalldSnapshot s) async {
-    final runtime = s.runtime;
-    if (runtime == null) return;
-    final commands = await confirm(
-      commands: [firewalldRuntimeToPermanentCommand()],
-      effects: _zoneEffects(s, runtime: runtime, permanent: runtime),
-    );
-    if (commands != null) await run(commands);
-  }
+  Future<void> _saveRuntime(FirewalldSnapshot s) =>
+      _make(s, const FirewalldChange.runtimeToPermanent());
 
-  /// Removes one item of a zone, after saying what that does.
-  Future<void> _remove(
+  /// Adds what the user types to one of [zone]'s lists.
+  Future<void> _addTyped(
     FirewalldSnapshot s,
     String zone,
-    String label,
-    List<String> commands,
-    FirewalldZone Function(FirewalldZone) change,
-  ) async {
-    final runtime = s.runtime;
-    final permanent = _applied(s.permanent, zone, change);
-    final after = runtime == null ? null : _applied(runtime, zone, change);
-    final confirmed = await confirm(
-      message: libL10n.delFmt(zone, label),
-      commands: commands,
-      destructive: true,
-      effects: _zoneEffects(s, runtime: after, permanent: permanent),
-      keepOpen: _keepOpen(s, zones: after ?? permanent),
+    FirewalldItem item, {
+    required String title,
+    required String label,
+    required String hint,
+    required IconData icon,
+  }) async {
+    final text = await askText(
+      title: title,
+      label: label,
+      hint: hint,
+      icon: icon,
     );
-    if (confirmed != null) await run(confirmed);
-  }
-
-  /// Adds to one zone, asking first only where that shuts or narrows a way
-  /// in — a source or an interface can move this app's connection into
-  /// another zone, a rich rule can refuse it, a forwarded port divert it.
-  Future<void> _add(
-    FirewalldSnapshot s,
-    String zone,
-    List<String> commands,
-    List<FirewalldZone> Function(List<FirewalldZone>) change,
-  ) {
-    final runtime = s.runtime;
-    final permanent = change(s.permanent);
-    final after = runtime == null ? null : change(runtime);
-    return _change(
-      s,
-      commands,
-      changes: _zoneEffects(s, runtime: after, permanent: permanent),
-      keepOpen: _keepOpen(s, zones: after ?? permanent),
-    );
+    if (text == null || !mounted) return;
+    await _make(s, FirewalldChange.add(zone: zone, item: item, value: text));
   }
 
   Future<void> _addService(FirewalldSnapshot s, FirewalldZone zone) async {
     final name = await _pickService(s, zone);
     if (name == null || !mounted) return;
-    await run(_item(s, zone.name, FirewalldItem.service, name, add: true));
-  }
-
-  Future<void> _addPort(FirewalldSnapshot s, String zone) async {
-    final text = await askText(
-      title: l10n.firewallPorts,
-      label: libL10n.port,
-      hint: '8080/tcp, 6000-6010/udp',
-      icon: Icons.numbers,
-    );
-    if (text == null || !mounted) return;
-    final port = firewalldParsePort(value: text);
-    if (port == null) {
-      Toast.error(l10n.firewallInvalidPort);
-      return;
-    }
-    await run(
-      firewalldPortCommands(
-        running: s.running,
-        zone: zone,
-        port: port,
-        add: true,
-      ),
-    );
-  }
-
-  Future<void> _addSource(FirewalldSnapshot s, String zone) async {
-    final text = await askText(
-      title: l10n.firewallSources,
-      label: l10n.firewallFrom,
-      hint: '192.168.1.0/24',
-      icon: Icons.login,
-    );
-    if (text == null || !mounted) return;
-    if (firewalldCheckSource(value: text) case final issue?) {
-      Toast.error(_inputIssueText(issue));
-      return;
-    }
-    await _add(
+    await _make(
       s,
-      zone,
-      _item(s, zone, FirewalldItem.source, text, add: true),
-      (zones) => _applied(
-        zones,
-        zone,
-        (z) => z.copyWith(sources: [...z.sources, text]),
+      FirewalldChange.add(
+        zone: zone.name,
+        item: FirewalldItem.service,
+        value: name,
       ),
     );
   }
 
+  Future<void> _addPort(FirewalldSnapshot s, String zone) => _addTyped(
+    s,
+    zone,
+    FirewalldItem.port,
+    title: l10n.firewallPorts,
+    label: libL10n.port,
+    hint: '8080/tcp, 6000-6010/udp',
+    icon: Icons.numbers,
+  );
+
+  Future<void> _addSource(FirewalldSnapshot s, String zone) => _addTyped(
+    s,
+    zone,
+    FirewalldItem.source,
+    title: l10n.firewallSources,
+    label: l10n.firewallFrom,
+    hint: '192.168.1.0/24',
+    icon: Icons.login,
+  );
+
+  /// Into this zone, and out of whichever had it.
   Future<void> _addInterface(FirewalldSnapshot s, String zone) async {
     final text = await askText(
       title: l10n.firewallInterfaces,
@@ -837,78 +607,29 @@ extension on _FirewalldViewState {
       icon: Icons.settings_ethernet,
     );
     if (text == null || !mounted) return;
-    if (firewalldCheckInterface(value: text) case final issue?) {
-      Toast.error(_inputIssueText(issue));
-      return;
-    }
-    // Into this zone, and out of whichever had it.
-    await _add(
-      s,
-      zone,
-      firewalldChangeInterface(running: s.running, zone: zone, iface: text),
-      (zones) => [
-        for (final z in zones)
-          z.copyWith(
-            interfaces: [
-              for (final i in z.interfaces)
-                if (i != text) i,
-              if (z.name == zone) text,
-            ],
-          ),
-      ],
-    );
+    await _make(s, FirewalldChange.changeInterface(zone: zone, iface: text));
   }
 
-  Future<void> _addRichRule(FirewalldSnapshot s, String zone) async {
-    final text = await askText(
-      title: l10n.firewallRichRules,
-      label: l10n.firewallRichRules,
-      hint: 'rule family="ipv4" source address="192.0.2.0/24" '
-          'service name="ssh" accept',
-      icon: Icons.rule,
-    );
-    if (text == null || !mounted) return;
-    if (firewalldCheckRichRule(value: text) case final issue?) {
-      Toast.error(_inputIssueText(issue));
-      return;
-    }
-    await _add(
-      s,
-      zone,
-      _item(s, zone, FirewalldItem.richRule, text, add: true),
-      (zones) => _applied(
-        zones,
-        zone,
-        (z) => z.copyWith(
-          richRules: [...z.richRules, firewalldParseRichRule(raw: text)],
-        ),
-      ),
-    );
-  }
+  Future<void> _addRichRule(FirewalldSnapshot s, String zone) => _addTyped(
+    s,
+    zone,
+    FirewalldItem.richRule,
+    title: l10n.firewallRichRules,
+    label: l10n.firewallRichRules,
+    hint: 'rule family="ipv4" source address="192.0.2.0/24" '
+        'service name="ssh" accept',
+    icon: Icons.rule,
+  );
 
-  Future<void> _addForwardPort(FirewalldSnapshot s, String zone) async {
-    final text = await askText(
-      title: l10n.firewallForwardPorts,
-      label: l10n.firewallForwardPorts,
-      hint: 'port=80:proto=tcp:toport=8080',
-      icon: Icons.alt_route,
-    );
-    if (text == null || !mounted) return;
-    if (firewalldCheckForwardPort(value: text) case final issue?) {
-      Toast.error(_inputIssueText(issue));
-      return;
-    }
-    await _add(
-      s,
-      zone,
-      _item(s, zone, FirewalldItem.forwardPort, text, add: true),
-      (zones) => _applied(
-        zones,
-        zone,
-        (z) => z.copyWith(forwardPorts: [...z.forwardPorts, text]),
-      ),
-    );
-  }
+  Future<void> _addForwardPort(FirewalldSnapshot s, String zone) => _addTyped(
+    s,
+    zone,
+    FirewalldItem.forwardPort,
+    title: l10n.firewallForwardPorts,
+    label: l10n.firewallForwardPorts,
+    hint: 'port=80:proto=tcp:toport=8080',
+    icon: Icons.alt_route,
+  );
 
   /// A service not yet in [zone], chosen from every one firewalld has,
   /// with a filter: there are two hundred of them.

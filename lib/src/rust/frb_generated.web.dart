@@ -298,7 +298,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewallProbeResult dco_decode_box_autoadd_firewall_probe_result(dynamic raw);
 
   @protected
-  FirewalldInputIssue dco_decode_box_autoadd_firewalld_input_issue(dynamic raw);
+  FirewalldChange dco_decode_box_autoadd_firewalld_change(dynamic raw);
 
   @protected
   FirewalldPort dco_decode_box_autoadd_firewalld_port(dynamic raw);
@@ -314,6 +314,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   LibvirtPoolRef dco_decode_box_autoadd_libvirt_pool_ref(dynamic raw);
+
+  @protected
+  Plan dco_decode_box_autoadd_plan(dynamic raw);
 
   @protected
   PveConsoleTicket dco_decode_box_autoadd_pve_console_ticket(dynamic raw);
@@ -358,6 +361,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt dco_decode_box_autoadd_u_64(dynamic raw);
 
   @protected
+  UfwChange dco_decode_box_autoadd_ufw_change(dynamic raw);
+
+  @protected
   UfwDraftIssue dco_decode_box_autoadd_ufw_draft_issue(dynamic raw);
 
   @protected
@@ -365,12 +371,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   UfwLogLevel dco_decode_box_autoadd_ufw_log_level(dynamic raw);
-
-  @protected
-  UfwPolicy dco_decode_box_autoadd_ufw_policy(dynamic raw);
-
-  @protected
-  UfwRule dco_decode_box_autoadd_ufw_rule(dynamic raw);
 
   @protected
   UfwRuleDraft dco_decode_box_autoadd_ufw_rule_draft(dynamic raw);
@@ -389,6 +389,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo dco_decode_cert_info(dynamic raw);
+
+  @protected
+  ChangeError dco_decode_change_error(dynamic raw);
 
   @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
@@ -436,6 +439,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EcdsaSignature dco_decode_ecdsa_signature(dynamic raw);
 
   @protected
+  Effect dco_decode_effect(dynamic raw);
+
+  @protected
   double dco_decode_f_64(dynamic raw);
 
   @protected
@@ -455,6 +461,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FirewallReach dco_decode_firewall_reach(dynamic raw);
+
+  @protected
+  FirewalldChange dco_decode_firewalld_change(dynamic raw);
 
   @protected
   FirewalldInputIssue dco_decode_firewalld_input_issue(dynamic raw);
@@ -514,6 +523,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
+  List<Effect> dco_decode_list_effect(dynamic raw);
+
+  @protected
+  List<FirewallAccess> dco_decode_list_firewall_access(dynamic raw);
+
+  @protected
   List<FirewalldPolicy> dco_decode_list_firewalld_policy(dynamic raw);
 
   @protected
@@ -527,6 +542,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<LibvirtPoolRef> dco_decode_list_libvirt_pool_ref(dynamic raw);
+
+  @protected
+  List<PlanNote> dco_decode_list_plan_note(dynamic raw);
 
   @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
@@ -630,14 +648,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   FirewallKind? dco_decode_opt_box_autoadd_firewall_kind(dynamic raw);
 
   @protected
-  FirewalldInputIssue? dco_decode_opt_box_autoadd_firewalld_input_issue(
-    dynamic raw,
-  );
-
-  @protected
-  FirewalldPort? dco_decode_opt_box_autoadd_firewalld_port(dynamic raw);
-
-  @protected
   int? dco_decode_opt_box_autoadd_i_32(dynamic raw);
 
   @protected
@@ -684,9 +694,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   UfwLogLevel? dco_decode_opt_box_autoadd_ufw_log_level(dynamic raw);
 
   @protected
-  UfwPolicy? dco_decode_opt_box_autoadd_ufw_policy(dynamic raw);
-
-  @protected
   CertInfo? dco_decode_opt_box_cert_info(dynamic raw);
 
   @protected
@@ -702,10 +709,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
 
   @protected
-  List<UfwRule>? dco_decode_opt_list_ufw_rule(dynamic raw);
+  List<VirtActionKind>? dco_decode_opt_list_virt_action_kind(dynamic raw);
 
   @protected
-  List<VirtActionKind>? dco_decode_opt_list_virt_action_kind(dynamic raw);
+  Plan dco_decode_plan(dynamic raw);
+
+  @protected
+  PlanNote dco_decode_plan_note(dynamic raw);
 
   @protected
   PowerIntent dco_decode_power_intent(dynamic raw);
@@ -839,6 +849,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   UfwChain dco_decode_ufw_chain(dynamic raw);
+
+  @protected
+  UfwChange dco_decode_ufw_change(dynamic raw);
 
   @protected
   UfwDirection dco_decode_ufw_direction(dynamic raw);
@@ -1145,7 +1158,7 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  FirewalldInputIssue sse_decode_box_autoadd_firewalld_input_issue(
+  FirewalldChange sse_decode_box_autoadd_firewalld_change(
     SseDeserializer deserializer,
   );
 
@@ -1169,6 +1182,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LibvirtPoolRef sse_decode_box_autoadd_libvirt_pool_ref(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Plan sse_decode_box_autoadd_plan(SseDeserializer deserializer);
 
   @protected
   PveConsoleTicket sse_decode_box_autoadd_pve_console_ticket(
@@ -1231,6 +1247,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt sse_decode_box_autoadd_u_64(SseDeserializer deserializer);
 
   @protected
+  UfwChange sse_decode_box_autoadd_ufw_change(SseDeserializer deserializer);
+
+  @protected
   UfwDraftIssue sse_decode_box_autoadd_ufw_draft_issue(
     SseDeserializer deserializer,
   );
@@ -1242,12 +1261,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   UfwLogLevel sse_decode_box_autoadd_ufw_log_level(
     SseDeserializer deserializer,
   );
-
-  @protected
-  UfwPolicy sse_decode_box_autoadd_ufw_policy(SseDeserializer deserializer);
-
-  @protected
-  UfwRule sse_decode_box_autoadd_ufw_rule(SseDeserializer deserializer);
 
   @protected
   UfwRuleDraft sse_decode_box_autoadd_ufw_rule_draft(
@@ -1270,6 +1283,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CertInfo sse_decode_cert_info(SseDeserializer deserializer);
+
+  @protected
+  ChangeError sse_decode_change_error(SseDeserializer deserializer);
 
   @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
@@ -1325,6 +1341,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EcdsaSignature sse_decode_ecdsa_signature(SseDeserializer deserializer);
 
   @protected
+  Effect sse_decode_effect(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
@@ -1348,6 +1367,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   FirewallReach sse_decode_firewall_reach(SseDeserializer deserializer);
+
+  @protected
+  FirewalldChange sse_decode_firewalld_change(SseDeserializer deserializer);
 
   @protected
   FirewalldInputIssue sse_decode_firewalld_input_issue(
@@ -1415,6 +1437,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  List<Effect> sse_decode_list_effect(SseDeserializer deserializer);
+
+  @protected
+  List<FirewallAccess> sse_decode_list_firewall_access(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<FirewalldPolicy> sse_decode_list_firewalld_policy(
     SseDeserializer deserializer,
   );
@@ -1438,6 +1468,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LibvirtPoolRef> sse_decode_list_libvirt_pool_ref(
     SseDeserializer deserializer,
   );
+
+  @protected
+  List<PlanNote> sse_decode_list_plan_note(SseDeserializer deserializer);
 
   @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
@@ -1563,16 +1596,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  FirewalldInputIssue? sse_decode_opt_box_autoadd_firewalld_input_issue(
-    SseDeserializer deserializer,
-  );
-
-  @protected
-  FirewalldPort? sse_decode_opt_box_autoadd_firewalld_port(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   int? sse_decode_opt_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
@@ -1631,11 +1654,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  UfwPolicy? sse_decode_opt_box_autoadd_ufw_policy(
-    SseDeserializer deserializer,
-  );
-
-  @protected
   CertInfo? sse_decode_opt_box_cert_info(SseDeserializer deserializer);
 
   @protected
@@ -1653,12 +1671,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
-  List<UfwRule>? sse_decode_opt_list_ufw_rule(SseDeserializer deserializer);
-
-  @protected
   List<VirtActionKind>? sse_decode_opt_list_virt_action_kind(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Plan sse_decode_plan(SseDeserializer deserializer);
+
+  @protected
+  PlanNote sse_decode_plan_note(SseDeserializer deserializer);
 
   @protected
   PowerIntent sse_decode_power_intent(SseDeserializer deserializer);
@@ -1808,6 +1829,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   UfwChain sse_decode_ufw_chain(SseDeserializer deserializer);
+
+  @protected
+  UfwChange sse_decode_ufw_change(SseDeserializer deserializer);
 
   @protected
   UfwDirection sse_decode_ufw_direction(SseDeserializer deserializer);
@@ -2160,8 +2184,8 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_box_autoadd_firewalld_input_issue(
-    FirewalldInputIssue self,
+  void sse_encode_box_autoadd_firewalld_change(
+    FirewalldChange self,
     SseSerializer serializer,
   );
 
@@ -2191,6 +2215,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     LibvirtPoolRef self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_plan(Plan self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_pve_console_ticket(
@@ -2268,6 +2295,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_u_64(BigInt self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_ufw_change(
+    UfwChange self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_ufw_draft_issue(
     UfwDraftIssue self,
     SseSerializer serializer,
@@ -2281,15 +2314,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     UfwLogLevel self,
     SseSerializer serializer,
   );
-
-  @protected
-  void sse_encode_box_autoadd_ufw_policy(
-    UfwPolicy self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_box_autoadd_ufw_rule(UfwRule self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_ufw_rule_draft(
@@ -2317,6 +2341,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_cert_info(CertInfo self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_change_error(ChangeError self, SseSerializer serializer);
 
   @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
@@ -2385,6 +2412,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_effect(Effect self, SseSerializer serializer);
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
@@ -2416,6 +2446,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_firewall_reach(FirewallReach self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_firewalld_change(
+    FirewalldChange self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_firewalld_input_issue(
@@ -2511,6 +2547,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_effect(List<Effect> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_firewall_access(
+    List<FirewallAccess> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_firewalld_policy(
     List<FirewalldPolicy> self,
     SseSerializer serializer,
@@ -2539,6 +2584,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<LibvirtPoolRef> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_plan_note(List<PlanNote> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_i_32_strict(
@@ -2703,18 +2751,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_opt_box_autoadd_firewalld_input_issue(
-    FirewalldInputIssue? self,
-    SseSerializer serializer,
-  );
-
-  @protected
-  void sse_encode_opt_box_autoadd_firewalld_port(
-    FirewalldPort? self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_opt_box_autoadd_i_32(int? self, SseSerializer serializer);
 
   @protected
@@ -2787,12 +2823,6 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_opt_box_autoadd_ufw_policy(
-    UfwPolicy? self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_opt_box_cert_info(CertInfo? self, SseSerializer serializer);
 
   @protected
@@ -2817,16 +2847,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
-  void sse_encode_opt_list_ufw_rule(
-    List<UfwRule>? self,
-    SseSerializer serializer,
-  );
-
-  @protected
   void sse_encode_opt_list_virt_action_kind(
     List<VirtActionKind>? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_plan(Plan self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_plan_note(PlanNote self, SseSerializer serializer);
 
   @protected
   void sse_encode_power_intent(PowerIntent self, SseSerializer serializer);
@@ -3022,6 +3052,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_ufw_chain(UfwChain self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_ufw_change(UfwChange self, SseSerializer serializer);
 
   @protected
   void sse_encode_ufw_direction(UfwDirection self, SseSerializer serializer);
