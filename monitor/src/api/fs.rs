@@ -67,6 +67,16 @@ pub struct PathQuery {
 }
 
 #[derive(Deserialize)]
+pub struct WriteQuery {
+    path: String,
+    /// The `modified` time the caller last saw for this path, in seconds since
+    /// the epoch as the listing reports it. Present only for an edit that read
+    /// the file first: a plain upload states nothing and overwrites.
+    #[serde(default)]
+    if_modified: Option<i64>,
+}
+
+#[derive(Deserialize)]
 pub struct PathBody {
     path: String,
 }
@@ -302,7 +312,7 @@ pub async fn read(
 
 pub async fn write(
     req: HttpRequest,
-    query: web::types::Query<PathQuery>,
+    query: web::types::Query<WriteQuery>,
     mut body: web::types::Payload,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
@@ -313,6 +323,23 @@ pub async fn write(
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
+
+    // Optimistic concurrency for the panel's editor: a caller that read the
+    // file states the `modified` it saw, and one whose time has moved on is
+    // answered 409 with nothing written. A file that is no longer there is the
+    // same answer — it was deleted after it was opened, and recreating it here
+    // would be the lost update this is meant to prevent.
+    //
+    // After root resolution and the grant check, so a caller that may not write
+    // here cannot use the answer to learn a file's time. `if_modified` is
+    // compared against the target *before* the staged write below; a write that
+    // lands between this stat and the rename is still overwritten, which
+    // closing would take a lock the roots do not have.
+    if let Some(expected) = query.if_modified
+        && modified_secs(&path).await != Some(expected)
+    {
+        return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "modified" })));
+    }
 
     // Beside the destination, then renamed: the same contract the app's own
     // backends keep, so a write that dies halfway leaves no half-file under
@@ -582,6 +609,20 @@ async fn view_of(path: &Path) -> EntryView {
         mode: mode_of(&meta),
         link_target,
     }
+}
+
+/// A path's `modified` time in seconds since the epoch, as a listing reports
+/// it; `None` when it is not there (or the platform does not say), which a
+/// write's `if_modified` check reads as "not what the caller saw".
+async fn modified_secs(path: &Path) -> Option<i64> {
+    tokio::fs::metadata(path)
+        .await
+        .ok()?
+        .modified()
+        .ok()?
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()
+        .map(|d| d.as_secs() as i64)
 }
 
 /// Paths crossing the HTTP boundary use `/` on every platform, matching the

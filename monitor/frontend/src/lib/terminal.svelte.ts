@@ -64,13 +64,18 @@ export type Credential =
 
 /// Where a local shell runs, when it is not the agent's own login shell.
 ///
-/// Carries no command: the agent builds one from the id, or from the host and
-/// port. Only sent to an agent that lists the matching feature
-/// (`container_exec`, `iperf`) — an older agent ignores the field and would
-/// open a host shell instead.
+/// Carries no command: the agent builds one from the id, the host and port, or
+/// the session. Only sent to an agent that lists the matching feature
+/// (`container_exec`, `iperf`, `tmux`) — an older agent ignores the field and
+/// would open a host shell instead.
 export type TerminalTarget =
   | { kind: 'container'; id: string }
   | { kind: 'iperf'; host: string; port: number }
+  /// A tmux session, by its `$` id, attached with tmux's own UI — the app's
+  /// control-mode client is not what a browser can render.
+  | { kind: 'tmux'; session: string }
+  /// A tmux session attached, created when the name does not exist yet.
+  | { kind: 'tmux_new'; name: string }
 
 interface ServerMessage {
   type: 'ready' | 'prompt' | 'error' | 'exit' | 'hb'
@@ -218,7 +223,15 @@ export class TerminalSession {
 
   /// Starts a new session, or rejoins the stored one when there is no
   /// credential to open with. [target] narrows a local shell to something on
-  /// the machine — a container — and is sent in the open frame only.
+  /// the machine — a container, iperf, a tmux session — and is sent in the open
+  /// frame only.
+  ///
+  /// A credential is an explicit open, so whatever this tab was attached to is
+  /// forgotten: `connect` sends `attach` whenever a handle is stored, and
+  /// reusing a dropped shell for a container or a tmux session would show
+  /// something other than what was asked for. Passing `null` — Resume — keeps
+  /// attaching, and that is the way back to the old session. The agent is not
+  /// told to close it: it is not this tab's to end, and it times out.
   async start(
     renderer: Renderer,
     user: string,
@@ -230,6 +243,11 @@ export class TerminalSession {
     this.credential = credential
     this.target = target
     this.finished = false
+    if (credential) {
+      this.clearStored()
+      this.handle = null
+      this.rendered = 0
+    }
     await this.connect()
   }
 

@@ -196,6 +196,14 @@ type RootTranslation = {
 	 */
 	servers: string
 	/**
+	 * S​e​a​r​c​h
+	 */
+	serversSearch: string
+	/**
+	 * N​o​ ​m​a​t​c​h​i​n​g​ ​s​e​r​v​e​r​s
+	 */
+	serversNoMatch: string
+	/**
 	 * M​e​n​u
 	 */
 	menu: string
@@ -1670,6 +1678,67 @@ type RootTranslation = {
 	 */
 	terminalPasswordlessDisable: string
 	/**
+	 * t​m​u​x​ ​s​e​s​s​i​o​n​s
+	 */
+	terminalTmuxSessions: string
+	/**
+	 * A​t​t​a​c​h
+	 */
+	terminalTmuxAttach: string
+	/**
+	 * N​e​w​ ​s​e​s​s​i​o​n
+	 */
+	terminalTmuxNewSession: string
+	/**
+	 * S​e​s​s​i​o​n​ ​n​a​m​e
+	 */
+	terminalTmuxNewName: string
+	/**
+	 * C​r​e​a​t​e
+	 */
+	terminalTmuxCreate: string
+	/**
+	 * w​i​n​d​o​w​s​:​ ​{​c​o​u​n​t​}
+	 * @param {unknown} count
+	 */
+	terminalTmuxWindows: RequiredParams<'count'>
+	/**
+	 * A​t​t​a​c​h​e​d
+	 */
+	terminalTmuxAttached: string
+	/**
+	 * D​e​t​a​c​h​e​d
+	 */
+	terminalTmuxDetached: string
+	/**
+	 * t​m​u​x​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	terminalTmuxNoTmux: string
+	/**
+	 * T​h​a​t​ ​t​m​u​x​ ​s​e​s​s​i​o​n​ ​i​d​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​.
+	 */
+	terminalTmuxErrInvalidSession: string
+	/**
+	 * G​i​v​e​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​a​ ​n​a​m​e​.
+	 */
+	terminalTmuxErrEmptyName: string
+	/**
+	 * T​h​e​ ​n​a​m​e​ ​i​s​ ​t​o​o​ ​l​o​n​g​ ​(​6​4​ ​c​h​a​r​a​c​t​e​r​s​ ​a​t​ ​m​o​s​t​)​.
+	 */
+	terminalTmuxErrNameTooLong: string
+	/**
+	 * T​h​e​ ​n​a​m​e​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​c​o​n​t​r​o​l​ ​c​h​a​r​a​c​t​e​r​s​.
+	 */
+	terminalTmuxErrNameControl: string
+	/**
+	 * T​h​e​ ​n​a​m​e​ ​c​a​n​n​o​t​ ​c​o​n​t​a​i​n​ ​'​:​'​ ​o​r​ ​'​.​'​.
+	 */
+	terminalTmuxErrNameSeparator: string
+	/**
+	 * T​h​e​ ​n​a​m​e​ ​c​a​n​n​o​t​ ​s​t​a​r​t​ ​w​i​t​h​ ​'​-​'​.
+	 */
+	terminalTmuxErrNameLeadingDash: string
+	/**
 	 * F​i​l​e​s
 	 */
 	files: string
@@ -1741,6 +1810,57 @@ type RootTranslation = {
 	 * N​a​m​e
 	 */
 	filesName: string
+	/**
+	 * E​d​i​t
+	 */
+	filesEdit: string
+	/**
+	 * F​i​l​e​ ​'​{​f​i​l​e​}​'​ ​t​o​o​ ​l​a​r​g​e​ ​{​s​i​z​e​}​,​ ​m​a​x​ ​{​s​i​z​e​M​a​x​}
+	 * @param {unknown} file
+	 * @param {unknown} size
+	 * @param {unknown} sizeMax
+	 */
+	filesEditorTooLarge: RequiredParams<'file' | 'size' | 'sizeMax'>
+	/**
+	 * T​h​i​s​ ​f​i​l​e​ ​i​s​ ​n​o​t​ ​U​T​F​-​8​ ​t​e​x​t​,​ ​s​o​ ​i​t​ ​c​a​n​n​o​t​ ​b​e​ ​e​d​i​t​e​d​ ​h​e​r​e​.
+	 */
+	filesEditorNotText: string
+	/**
+	 * S​o​f​t​ ​w​r​a​p
+	 */
+	filesEditorWrap: string
+	/**
+	 * U​n​s​a​v​e​d​ ​c​h​a​n​g​e​s
+	 */
+	filesEditorUnsaved: string
+	/**
+	 * T​h​i​s​ ​f​i​l​e​ ​c​h​a​n​g​e​d​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r
+	 */
+	filesEditorConflictTitle: string
+	/**
+	 * S​o​m​e​t​h​i​n​g​ ​w​r​o​t​e​ ​t​o​ ​t​h​i​s​ ​f​i​l​e​ ​a​f​t​e​r​ ​y​o​u​ ​o​p​e​n​e​d​ ​i​t​.​ ​O​v​e​r​w​r​i​t​i​n​g​ ​w​i​l​l​ ​r​e​p​l​a​c​e​ ​t​h​a​t​ ​c​h​a​n​g​e​ ​w​i​t​h​ ​y​o​u​r​s​.
+	 */
+	filesEditorConflictBody: string
+	/**
+	 * O​v​e​r​w​r​i​t​e
+	 */
+	filesEditorOverwrite: string
+	/**
+	 * D​i​s​c​a​r​d​ ​y​o​u​r​ ​c​h​a​n​g​e​s​?
+	 */
+	filesEditorDiscardTitle: string
+	/**
+	 * T​h​i​s​ ​f​i​l​e​ ​h​a​s​ ​c​h​a​n​g​e​s​ ​y​o​u​ ​h​a​v​e​ ​n​o​t​ ​s​a​v​e​d​.​ ​C​l​o​s​i​n​g​ ​n​o​w​ ​l​o​s​e​s​ ​t​h​e​m​.
+	 */
+	filesEditorDiscardBody: string
+	/**
+	 * D​i​s​c​a​r​d
+	 */
+	filesEditorDiscard: string
+	/**
+	 * T​h​i​s​ ​f​i​l​e​ ​w​a​s​ ​o​p​e​n​e​d​ ​o​n​ ​a​n​o​t​h​e​r​ ​s​e​r​v​e​r​.​ ​N​o​t​h​i​n​g​ ​w​a​s​ ​s​a​v​e​d​ ​—​ ​r​e​o​p​e​n​ ​i​t​ ​t​h​e​r​e​.
+	 */
+	filesEditorServerChanged: string
 	/**
 	 * N​o​t​i​f​i​c​a​t​i​o​n​ ​c​h​a​n​n​e​l​s
 	 */
@@ -5800,6 +5920,14 @@ export type TranslationFunctions = {
 	 */
 	servers: () => LocalizedString
 	/**
+	 * Search
+	 */
+	serversSearch: () => LocalizedString
+	/**
+	 * No matching servers
+	 */
+	serversNoMatch: () => LocalizedString
+	/**
 	 * Menu
 	 */
 	menu: () => LocalizedString
@@ -7232,6 +7360,66 @@ export type TranslationFunctions = {
 	 */
 	terminalPasswordlessDisable: () => LocalizedString
 	/**
+	 * tmux sessions
+	 */
+	terminalTmuxSessions: () => LocalizedString
+	/**
+	 * Attach
+	 */
+	terminalTmuxAttach: () => LocalizedString
+	/**
+	 * New session
+	 */
+	terminalTmuxNewSession: () => LocalizedString
+	/**
+	 * Session name
+	 */
+	terminalTmuxNewName: () => LocalizedString
+	/**
+	 * Create
+	 */
+	terminalTmuxCreate: () => LocalizedString
+	/**
+	 * windows: {count}
+	 */
+	terminalTmuxWindows: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Attached
+	 */
+	terminalTmuxAttached: () => LocalizedString
+	/**
+	 * Detached
+	 */
+	terminalTmuxDetached: () => LocalizedString
+	/**
+	 * tmux is not installed on this machine.
+	 */
+	terminalTmuxNoTmux: () => LocalizedString
+	/**
+	 * That tmux session id is not valid.
+	 */
+	terminalTmuxErrInvalidSession: () => LocalizedString
+	/**
+	 * Give the session a name.
+	 */
+	terminalTmuxErrEmptyName: () => LocalizedString
+	/**
+	 * The name is too long (64 characters at most).
+	 */
+	terminalTmuxErrNameTooLong: () => LocalizedString
+	/**
+	 * The name cannot contain control characters.
+	 */
+	terminalTmuxErrNameControl: () => LocalizedString
+	/**
+	 * The name cannot contain ':' or '.'.
+	 */
+	terminalTmuxErrNameSeparator: () => LocalizedString
+	/**
+	 * The name cannot start with '-'.
+	 */
+	terminalTmuxErrNameLeadingDash: () => LocalizedString
+	/**
 	 * Files
 	 */
 	files: () => LocalizedString
@@ -7303,6 +7491,54 @@ export type TranslationFunctions = {
 	 * Name
 	 */
 	filesName: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	filesEdit: () => LocalizedString
+	/**
+	 * File '{file}' too large {size}, max {sizeMax}
+	 */
+	filesEditorTooLarge: (arg: { file: unknown, size: unknown, sizeMax: unknown }) => LocalizedString
+	/**
+	 * This file is not UTF-8 text, so it cannot be edited here.
+	 */
+	filesEditorNotText: () => LocalizedString
+	/**
+	 * Soft wrap
+	 */
+	filesEditorWrap: () => LocalizedString
+	/**
+	 * Unsaved changes
+	 */
+	filesEditorUnsaved: () => LocalizedString
+	/**
+	 * This file changed on the server
+	 */
+	filesEditorConflictTitle: () => LocalizedString
+	/**
+	 * Something wrote to this file after you opened it. Overwriting will replace that change with yours.
+	 */
+	filesEditorConflictBody: () => LocalizedString
+	/**
+	 * Overwrite
+	 */
+	filesEditorOverwrite: () => LocalizedString
+	/**
+	 * Discard your changes?
+	 */
+	filesEditorDiscardTitle: () => LocalizedString
+	/**
+	 * This file has changes you have not saved. Closing now loses them.
+	 */
+	filesEditorDiscardBody: () => LocalizedString
+	/**
+	 * Discard
+	 */
+	filesEditorDiscard: () => LocalizedString
+	/**
+	 * This file was opened on another server. Nothing was saved — reopen it there.
+	 */
+	filesEditorServerChanged: () => LocalizedString
 	/**
 	 * Notification channels
 	 */

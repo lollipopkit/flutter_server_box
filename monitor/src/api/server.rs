@@ -361,6 +361,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::containers::list))
                     .route(web::post().to(crate::api::containers::act)),
             )
+            .service(web::resource("/tmux").route(web::get().to(crate::api::tmux::list)))
             .service(
                 web::resource("/benchmark")
                     .route(web::get().to(crate::api::benchmark::get))

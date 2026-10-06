@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Pencil, Plus, Server, Settings } from '@lucide/svelte'
-  import { IconButton, cn } from '@serverbox/webui'
+  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Pencil, Plus, Search, Server, Settings } from '@lucide/svelte'
+  import { IconButton, Input, cn } from '@serverbox/webui'
   import OsIcon from './OsIcon.svelte'
   import ServerFormModal from './ServerFormModal.svelte'
   import { onDestroy, onMount } from 'svelte'
@@ -9,6 +9,7 @@
   import { health } from '../lib/health.svelte'
   import { layout } from '../lib/layout.svelte'
   import { serverNames } from '../lib/serverNames.svelte'
+  import { serverMatches } from '../lib/serverSearch'
   import { displayName, servers, type ServerEntry } from '../lib/servers.svelte'
 
   // Fetch each authenticated server's capabilities once for its OS icon.
@@ -44,6 +45,29 @@
   }
 
   let editingEntry = $state<ServerEntry | undefined>(undefined)
+
+  /// The search field's text. Not persisted: it narrows the list for the
+  /// moment, and a saved view is not what this is for.
+  let query = $state('')
+
+  /// The rows the query keeps. Filtering only hides rows — `servers.currentId`
+  /// is left alone, so the selected server stays selected while it is hidden.
+  const filtered = $derived(servers.list.filter((s) => serverMatches(query, label(s), s.url)))
+
+  /// Only on the mobile drawer and the expanded desktop rail: a rail has no
+  /// width for a field, and one server needs no search. `lg:hidden` rather
+  /// than not rendering, since `layout.collapsed` is the desktop rail alone.
+  const searchCls = $derived(cn(layout.collapsed && 'lg:hidden'))
+
+  function onSearchKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      query = ''
+      return
+    }
+    // Enter is "take the one that is left", not a submit: with several rows
+    // there is no one answer, and with none there is nothing to take.
+    if (e.key === 'Enter' && filtered.length === 1) selectServer(filtered[0].id)
+  }
 
   function openAdd() {
     editingEntry = undefined
@@ -138,7 +162,21 @@
         </IconButton>
       {/if}
     </div>
-    {#each servers.list as s (s.id)}
+    {#if servers.list.length >= 2}
+      <div class={cn('relative px-1 pb-2', searchCls)}>
+        <Search class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-faint-fg" />
+        <Input
+          bind:value={query}
+          placeholder={$LL.serversSearch()}
+          class="pl-8"
+          onkeydown={onSearchKeydown}
+        />
+      </div>
+      {#if filtered.length === 0}
+        <p class={cn('px-2.5 pb-2 text-sm text-muted-fg', searchCls)}>{$LL.serversNoMatch()}</p>
+      {/if}
+    {/if}
+    {#each filtered as s (s.id)}
       {@const active = s.id === servers.currentId}
       <div
         class={cn(

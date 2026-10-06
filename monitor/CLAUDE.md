@@ -236,6 +236,14 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   `permission_denied`, not a failure. TODO: `DOCKER_HOST` and a sudo path.
   A shell inside a container is the terminal's `target` (below), not an action
   here; `container_exec` in `FEATURES` is how a panel knows the agent takes it.
+  `/tmux` (`api/tmux.rs`, `sbm_parser::tmux`, `shell`): the machine's tmux
+  sessions, or `{"available": false, "sessions": []}` when tmux is not
+  installed (found through the agent's own `FIND_COMMAND`, never named by the
+  client). "No server running" is `available: true` with no sessions, not an
+  error. A session is attached through the terminal's `target` — `{"kind":
+  "tmux","session":"$3"}` or `{"kind":"tmux_new","name":"work"}` — with tmux's
+  plain client, since the panel's xterm.js cannot decode the control mode the
+  app speaks; `tmux` in `FEATURES` is how a panel knows the agent takes it.
   `/benchmark` (`sbm_parser::bench`, the app's yabs command layer): the agent
   owns the run, not the browser — the `benchmark_run` row (migration 012) is
   written before the detached launcher starts, and `start_poller` (started in
@@ -448,12 +456,16 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   optional `target` narrows that shell: `{"kind":"container","id":…}` runs
   `sbm_parser::container::shell_command`, `{"kind":"iperf","host":…,"port":…}`
   runs `sbm_parser::iperf::client_command` (`host` and `port` validated there,
-  so a refusal carries an `issue` the panel phrases). Both go through
-  `/bin/sh -c` on the PTY; an SSH credential with a target, an invalid value
-  and (for a container) a machine with no runtime are refused, the last as
-  `no_container_runtime`. No frame carries a command. An older agent ignores
-  the field, so the panel sends a target only where `/capabilities` lists
-  `container_exec` or `iperf`.
+  so a refusal carries an `issue` the panel phrases), and
+  `{"kind":"tmux","session":"$3"}` / `{"kind":"tmux_new","name":…}` runs
+  `sbm_parser::tmux`'s plain client — tmux's own UI, since xterm.js cannot
+  decode the control mode the app speaks (`session` and `name` validated there
+  the same way). All go through `/bin/sh -c` on the PTY; an SSH credential with
+  a target, an invalid value and (for a container, tmux) a machine with no
+  runtime or no tmux are refused, the last as `no_container_runtime` /
+  `no_tmux`. No frame carries a command. An older agent ignores the field, so
+  the panel sends a target only where `/capabilities` lists `container_exec`,
+  `iperf` or `tmux`.
 - **`/api/v1/stream/ws`** — a raw TCP connection to an address the app names,
   under the `connect` grant: networking without a shell, which is the point of
   it being its own grant (remote desktop for someone who should not have a

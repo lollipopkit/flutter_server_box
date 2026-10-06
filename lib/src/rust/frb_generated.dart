@@ -16493,9 +16493,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       name: dco_decode_String(arr[1]),
       windows: dco_decode_i_64(arr[2]),
       attached: dco_decode_bool(arr[3]),
-      created: dco_decode_opt_String(arr[4]),
-      lastAttached: dco_decode_opt_String(arr[5]),
-      activity: dco_decode_opt_String(arr[6]),
+      created: dco_decode_opt_box_autoadd_i_64(arr[4]),
+      lastAttached: dco_decode_opt_box_autoadd_i_64(arr[5]),
+      activity: dco_decode_opt_box_autoadd_i_64(arr[6]),
     );
   }
 
@@ -16522,7 +16522,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       name: dco_decode_String(arr[1]),
       active: dco_decode_bool(arr[2]),
       panes: dco_decode_i_64(arr[3]),
-      activity: dco_decode_opt_String(arr[4]),
+      activity: dco_decode_opt_box_autoadd_i_64(arr[4]),
     );
   }
 
@@ -19498,9 +19498,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_name = sse_decode_String(deserializer);
     final var_windows = sse_decode_i_64(deserializer);
     final var_attached = sse_decode_bool(deserializer);
-    final var_created = sse_decode_opt_String(deserializer);
-    final var_lastAttached = sse_decode_opt_String(deserializer);
-    final var_activity = sse_decode_opt_String(deserializer);
+    final var_created = sse_decode_opt_box_autoadd_i_64(deserializer);
+    final var_lastAttached = sse_decode_opt_box_autoadd_i_64(deserializer);
+    final var_activity = sse_decode_opt_box_autoadd_i_64(deserializer);
     return TmuxSessionItem(
       id: var_id,
       name: var_name,
@@ -19532,7 +19532,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_name = sse_decode_String(deserializer);
     final var_active = sse_decode_bool(deserializer);
     final var_panes = sse_decode_i_64(deserializer);
-    final var_activity = sse_decode_opt_String(deserializer);
+    final var_activity = sse_decode_opt_box_autoadd_i_64(deserializer);
     return TmuxWindowItem(
       index: var_index,
       name: var_name,
@@ -22308,9 +22308,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.name, serializer);
     sse_encode_i_64(self.windows, serializer);
     sse_encode_bool(self.attached, serializer);
-    sse_encode_opt_String(self.created, serializer);
-    sse_encode_opt_String(self.lastAttached, serializer);
-    sse_encode_opt_String(self.activity, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.created, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.lastAttached, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.activity, serializer);
   }
 
   @protected
@@ -22333,7 +22333,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.name, serializer);
     sse_encode_bool(self.active, serializer);
     sse_encode_i_64(self.panes, serializer);
-    sse_encode_opt_String(self.activity, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.activity, serializer);
   }
 
   @protected

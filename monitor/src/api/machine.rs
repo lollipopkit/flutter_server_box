@@ -39,6 +39,11 @@ pub const FEATURES: &[&str] = &[
     // An iperf client, opened through the terminal's `target` the same way and
     // listed for the same reason.
     "iperf",
+    // A tmux session and the sessions themselves: the terminal's `target` and
+    // the `/tmux` listing the page draws. Listed for the same reason as
+    // `iperf` — an older agent ignores the unknown `target` field and would
+    // open a plain host shell.
+    "tmux",
     "benchmark",
     "system_users",
     "snippets",

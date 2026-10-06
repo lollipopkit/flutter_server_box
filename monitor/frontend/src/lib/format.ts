@@ -59,6 +59,18 @@ export function fmtTime(ts: string, opts: { withDate?: boolean } = {}): string {
     : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+/// Seconds since the epoch, as tmux and the file listing report them, in the
+/// viewer's locale and with the date shown, since these are not from today
+/// (a session may be weeks old). Date and time rather than time alone.
+export function fmtEpochSeconds(seconds: number): string {
+  return new Date(seconds * 1000).toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 /// GPU power comes preformatted as "<draw> / <limit>" from the agent, with the
 /// literal string "null" for whichever side the driver didn't report (e.g.
 /// older nvidia-smi output, or GPUs that don't expose live power draw) —

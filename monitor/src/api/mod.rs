@@ -17,6 +17,7 @@ pub mod process;
 pub mod service;
 pub mod snippets;
 pub mod system_users;
+pub mod tmux;
 pub mod push;
 pub mod cors;
 pub mod admin;

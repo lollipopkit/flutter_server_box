@@ -27,11 +27,11 @@
 
 // Section: imports
 
-use crate::api::bmc::*;
 use crate::api::pve::*;
-use crate::api::virt::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::virt::*;
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
 
@@ -5955,9 +5955,9 @@ return crate::api::snippet::SnippetFfiError{code: var_code, key: var_key};}
 let mut var_name = <String>::sse_decode(deserializer);
 let mut var_windows = <i64>::sse_decode(deserializer);
 let mut var_attached = <bool>::sse_decode(deserializer);
-let mut var_created = <Option<String>>::sse_decode(deserializer);
-let mut var_lastAttached = <Option<String>>::sse_decode(deserializer);
-let mut var_activity = <Option<String>>::sse_decode(deserializer);
+let mut var_created = <Option<i64>>::sse_decode(deserializer);
+let mut var_lastAttached = <Option<i64>>::sse_decode(deserializer);
+let mut var_activity = <Option<i64>>::sse_decode(deserializer);
 return crate::api::tmux::TmuxSessionItem{id: var_id, name: var_name, windows: var_windows, attached: var_attached, created: var_created, last_attached: var_lastAttached, activity: var_activity};}
                 }
                 
@@ -5974,7 +5974,7 @@ return crate::api::tmux::TmuxSessionListingItem{sessions: var_sessions, unreadab
 let mut var_name = <String>::sse_decode(deserializer);
 let mut var_active = <bool>::sse_decode(deserializer);
 let mut var_panes = <i64>::sse_decode(deserializer);
-let mut var_activity = <Option<String>>::sse_decode(deserializer);
+let mut var_activity = <Option<i64>>::sse_decode(deserializer);
 return crate::api::tmux::TmuxWindowItem{index: var_index, name: var_name, active: var_active, panes: var_panes, activity: var_activity};}
                 }
                 
@@ -10047,9 +10047,9 @@ crate::api::virt::SnapshotNameIssue::Taken => { 2 }
 <String>::sse_encode(self.name, serializer);
 <i64>::sse_encode(self.windows, serializer);
 <bool>::sse_encode(self.attached, serializer);
-<Option<String>>::sse_encode(self.created, serializer);
-<Option<String>>::sse_encode(self.last_attached, serializer);
-<Option<String>>::sse_encode(self.activity, serializer);}
+<Option<i64>>::sse_encode(self.created, serializer);
+<Option<i64>>::sse_encode(self.last_attached, serializer);
+<Option<i64>>::sse_encode(self.activity, serializer);}
                 }
                 
                 impl SseEncode for crate::api::tmux::TmuxSessionListingItem {
@@ -10064,7 +10064,7 @@ crate::api::virt::SnapshotNameIssue::Taken => { 2 }
 <String>::sse_encode(self.name, serializer);
 <bool>::sse_encode(self.active, serializer);
 <i64>::sse_encode(self.panes, serializer);
-<Option<String>>::sse_encode(self.activity, serializer);}
+<Option<i64>>::sse_encode(self.activity, serializer);}
                 }
                 
                 impl SseEncode for u16 {
@@ -10365,11 +10365,11 @@ crate::api::virt::VirtUploadEntryKind::SudoPassword => { 2 }
 
 // Section: imports
 
-use crate::api::bmc::*;
 use crate::api::pve::*;
-use crate::api::virt::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::virt::*;
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
 
@@ -10488,11 +10488,11 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
-use crate::api::bmc::*;
 use crate::api::pve::*;
-use crate::api::virt::*;
 use crate::api::remote_desktop::*;
-use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
+use crate::api::ssh_crypto::*;
+use crate::api::virt::*;
+use crate::api::bmc::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
                 use flutter_rust_bridge::for_generated::wasm_bindgen;

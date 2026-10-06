@@ -18,6 +18,7 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  TmuxView,
   BenchDetail,
   BenchEstimate,
   BenchOptions,
@@ -410,6 +411,12 @@ export const api = {
         ? TASK_TIMEOUT_MS
         : MACHINE_TIMEOUT_MS,
     ),
+  /// The machine's tmux sessions (the `shell` grant). `available: false` when
+  /// tmux is not installed; a machine with tmux and nothing running answers
+  /// `available: true` with an empty list. Attaching is the terminal's
+  /// `target`, not a request here.
+  getTmux: () =>
+    request<TmuxView>('/tmux', {}, 'Failed to fetch the tmux sessions', undefined, MACHINE_TIMEOUT_MS),
   /// The benchmark runs this agent has started, and the live state of the one
   /// going (the `shell` grant). `live.answered === false` means the machine
   /// did not answer in time: ask again, and read nothing into `dir_exists`
@@ -991,13 +998,36 @@ export const api = {
     )
     return res.blob()
   },
-  fsWrite: async (path: string, body: Blob, signal?: AbortSignal): Promise<void> => {
-    await fsBytes(
-      `/fs/write?path=${encodeURIComponent(path)}`,
-      { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
-      'Failed to write the file',
-      signal,
-    )
+  /// Writes a file. [ifModified] is the `modified` time the caller last saw:
+  /// the agent answers 409 and writes nothing when the file has moved on, so
+  /// an editor can offer to overwrite rather than silently losing a change
+  /// someone else made. A plain upload states nothing and overwrites.
+  fsWrite: async (
+    path: string,
+    body: Blob,
+    signal?: AbortSignal,
+    ifModified?: number | null,
+  ): Promise<void> => {
+    const query = new URLSearchParams({ path })
+    if (ifModified !== undefined && ifModified !== null) {
+      query.set('if_modified', String(ifModified))
+    }
+    try {
+      await fsBytes(
+        `/fs/write?${query}`,
+        { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
+        'Failed to write the file',
+        signal,
+      )
+    } catch (e) {
+      // `modified` as a code, so a caller can tell this conflict from any other
+      // failure. The endpoint's older error shape carries it in `error`, which
+      // `errorFrom` reads as the message rather than as a code.
+      if (e instanceof ApiError && e.status === 409) {
+        throw new ApiError('modified', 409, 'modified')
+      }
+      throw e
+    }
   },
   fsMkdir: (path: string) =>
     request<unknown>(

@@ -13,9 +13,10 @@
   import { Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
   import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
-  import { isAdmin, terminalAccess, whyText } from '../lib/access'
+  import { isAdmin, machineAccess, terminalAccess, whyText } from '../lib/access'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
+  import { fmtEpochSeconds } from '../lib/format'
   import { layout } from '../lib/layout.svelte'
   import { servers } from '../lib/servers.svelte'
   import { snippetRun } from '../lib/snippetRun.svelte'
@@ -23,7 +24,9 @@
   import { theme } from '../lib/theme.svelte'
   import { TerminalSession, type Credential, type Renderer } from '../lib/terminal.svelte'
   import { terminalSurface } from '../lib/terminalSurface.svelte'
+  import { tmuxIssueText } from '../lib/tmux'
   import { mountTerminal, type TerminalHandle } from '../lib/xterm'
+  import type { TmuxSession, TmuxView } from '../types'
 
   const session = new TerminalSession()
 
@@ -200,6 +203,66 @@
   /// here — better to explain why than to present a form that can't connect.
   const available = $derived(access.available)
 
+  /// Whether this agent takes a tmux target: it lists the feature and the
+  /// account holds `shell`. The rail's "Open directly" card is where that is
+  /// offered, and the sessions join it.
+  const tmuxOffered = $derived(machineAccess(caps, 'tmux', 'shell'))
+  /// The sessions, once read. Null where the agent does not offer them, or
+  /// where the listing could not be read — an empty block says less than none.
+  let tmux = $state<TmuxView | null>(null)
+  /// The name a new session is created with.
+  let tmuxName = $state('')
+
+  $effect(() => {
+    if (!tmuxOffered) {
+      tmux = null
+      return
+    }
+    const serverId = servers.currentId
+    // Cleared rather than left showing the previous machine's sessions while
+    // this one's are read.
+    tmux = null
+    void api.getTmux().then(
+      (view) => {
+        if (servers.currentId === serverId) tmux = view
+      },
+      () => {
+        if (servers.currentId === serverId) tmux = null
+      },
+    )
+  })
+
+  /// Attaches to a session that already exists. It is the page's own session
+  /// store, so a reconnect rejoins the same tmux client.
+  async function attachTmux(s: TmuxSession) {
+    const renderer = await ensureTerminal()
+    if (!renderer) return
+    await session.start(renderer, '', { kind: 'local' }, { kind: 'tmux', session: s.id })
+  }
+
+  /// Attaches to `tmuxName`, creating it when it does not exist. Sent rather
+  /// than checked here: the rules are `sbm_parser::tmux`'s, and a refusal comes
+  /// back as an issue this page phrases.
+  async function newTmuxSession() {
+    const name = tmuxName.trim()
+    if (name === '') return
+    const renderer = await ensureTerminal()
+    if (!renderer) return
+    await session.start(renderer, '', { kind: 'local' }, { kind: 'tmux_new', name })
+    tmuxName = ''
+  }
+
+  /// What to show for the last failure. A tmux refusal is phrased from the
+  /// issue the agent sent; `no_tmux` likewise, since the machine's own message
+  /// names a remedy the operator has, not the reader.
+  const errorText = $derived(
+    session.errorCode === 'invalid_input' && session.issueCode
+      ? tmuxIssueText(session.issueCode)
+      : session.errorCode === 'no_tmux'
+        ? $LL.terminalTmuxNoTmux()
+        : session.error,
+  )
+
   /// Set once this session has turned it off, so the UI updates before the
   /// capabilities cache is refetched. The agent's answer stays the source of
   /// truth — the panel can narrow it, never widen it.
@@ -370,6 +433,40 @@
           {#if busy}<Spinner class="w-4 h-4" />{/if}
           {$LL.terminalOpenDirectly()}
         </Button>
+
+        {#if tmux?.available}
+          <div class="space-y-2 border-t border-line pt-3">
+            <p class="text-sm text-muted-fg">{$LL.terminalTmuxSessions()}</p>
+            {#each tmux.sessions as s (s.id)}
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span class="text-sm text-fg-strong">{s.name}</span>
+                <span class="text-xs text-muted-fg">
+                  {$LL.terminalTmuxWindows({ count: s.windows })}
+                </span>
+                <span class="text-xs text-muted-fg">
+                  {s.attached ? $LL.terminalTmuxAttached() : $LL.terminalTmuxDetached()}
+                </span>
+                <!-- Epoch seconds from tmux, in the viewer's locale; nothing
+                     when tmux had no value for it. -->
+                {#if s.activity !== null}
+                  <span class="text-xs text-faint-fg">{fmtEpochSeconds(s.activity)}</span>
+                {/if}
+                <Button size="sm" variant="secondary" onclick={() => attachTmux(s)}>
+                  {$LL.terminalTmuxAttach()}
+                </Button>
+              </div>
+            {/each}
+
+            <div class="flex items-center gap-2">
+              <div class="flex-1">
+                <Input bind:value={tmuxName} placeholder={$LL.terminalTmuxNewName()} />
+              </div>
+              <Button onclick={newTmuxSession} disabled={busy || tmuxName.trim() === ''}>
+                {$LL.terminalTmuxCreate()}
+              </Button>
+            </div>
+          </div>
+        {/if}
       </Card>
     {/if}
 
@@ -459,9 +556,9 @@
     </Card>
   {/if}
 
-  {#if session.error}
+  {#if errorText}
     <Card class="border-danger/40 bg-danger/5">
-      <p class="text-sm text-danger">{session.error}</p>
+      <p class="text-sm text-danger">{errorText}</p>
     </Card>
   {/if}
 
