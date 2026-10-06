@@ -73,9 +73,9 @@
 /// `_GW` (as in `virt_real_test.dart`) it boots VMs `sbxe2e-l-*` (VMIDs
 /// 970-979) from that image — one on SATA with Secure Boot, one from a
 /// `vmdk` made of it next to it in the `import` directory — and logs in to
-/// them through the agent's relay; with `SBM_E2E_PVE_USB` it adds that
-/// device to a **stopped** VM by vendor/product and by address and takes it
-/// off again, never starting it. A backup job `sbxe2e-l-*` is made, run and
+/// them through the agent's relay; with `SBM_E2E_PVE_USB` as well it adds
+/// that device to a **stopped** VM (the IDE one, made from the image) by
+/// vendor/product and by address and takes it off again, never starting it. A backup job `sbxe2e-l-*` is made, run and
 /// deleted with its backup. Everything it makes is removed.
 ///
 /// Every agent is expected to serve TLS with a certificate this device does
@@ -675,9 +675,14 @@ void _libvirtVncPassword(_Agent agent) {
           target.tunnel.address,
           target.tunnel.port,
         );
+        // Dropped with bytes it never read, the tunnel's end resets: the
+        // write's error lands on `done`, after the read has ended.
+        unawaited(stranger.done.catchError((_) {}));
         stranger.add(List.filled(32, 0x41));
-        final leaked = await stranger
-            .fold<int>(0, (n, b) => n + b.length)
+        var leaked = 0;
+        await stranger
+            .forEach((b) => leaked += b.length)
+            .catchError((_) {}, test: (e) => e is SocketException)
             .timeout(const Duration(seconds: 10));
         expect(leaked, 0);
 
@@ -1744,7 +1749,8 @@ void _libvirtHardware(_Agent agent) {
       expect(h.pending, isEmpty);
       expect(h.limits.hostCpus, greaterThan(0));
       expect(h.limits.hostMemoryBytes, greaterThan(0));
-      expect(h.revision, startsWith('<domain'));
+      // The SHA-256 of the persistent definition as read (`sbm_virt`).
+      expect(h.revision, matches(RegExp(r'^[0-9a-f]{64}$')));
     });
 
     test('CPU and memory: kept for the next start, shown as pending',
@@ -3062,8 +3068,7 @@ void _pveCloneBackup(_Agent agent) {
       );
       // A storage and a node cannot be named on a linked clone (PVE refuses
       // both: `parameter 'storage' not allowed for linked clones`), so the
-      // form refuses it — and the backend sends neither even if one is
-      // passed, which is what makes this clone land at all.
+      // form refuses it, and so does the backend before PVE is asked.
       expect(
         virtCloneStorageIssue(
           storages: await w.host.storagePools(),
@@ -3077,22 +3082,21 @@ void _pveCloneBackup(_Agent agent) {
         isTrue,
         reason: 'the schedule call works on the same account',
       );
-      final linkedTargetId = await w.host.clone(
-        tpl.id,
-        VirtCloneRequest(
-          name: '$name-linked-target',
-          full: false,
-          storage: storage.name,
+      final linkedTarget = await _virtErr(
+        w.host.clone(
+          tpl.id,
+          VirtCloneRequest(
+            name: '$name-linked-target',
+            full: false,
+            storage: storage.name,
+          ),
         ),
       );
-      made.add(linkedTargetId);
-      final linkedTarget = await w.settle(
-        (g) => g.id == linkedTargetId,
-        '$name-linked-target',
-        (g) => g.name == '$name-linked-target',
+      expect(linkedTarget.type, VirtErrType.unsupported);
+      expect(
+        w.state.data!.guests.where((g) => g.name == '$name-linked-target'),
+        isEmpty,
       );
-      // It shares the template's disk: the storage named was not used.
-      expect(linkedTarget.template, isFalse);
 
       // A full clone of the template, onto the storage it is already on.
       final fullId = await w.host.clone(
@@ -3119,7 +3123,7 @@ void _pveCloneBackup(_Agent agent) {
         (g) => g.state == VirtGuestState.running,
       );
 
-      for (final id in [linkedTarget.id, linked.id, full.id, tpl.id]) {
+      for (final id in [linked.id, full.id, tpl.id]) {
         await w.host.refresh();
         final fresh = w.state.guest(id);
         if (fresh == null) continue;
@@ -3601,15 +3605,17 @@ void _pveTestVm(_Agent agent) {
     });
 
     test('reboot: running again with the uptime reset', () async {
-      final before = (await settle(
-        (g) => (g.uptime?.inSeconds ?? 0) > 5,
-      )).uptime!;
+      await settle((g) => (g.uptime?.inSeconds ?? 0) > 5);
+      // Up for less than the time since the request: started again. Against
+      // the uptime before, a fresh boot outgrows it while the listing still
+      // lags by pvestatd's cycle.
+      final since = Stopwatch()..start();
       await w.host.power(vm().id, VirtPowerAction.reboot);
       final after = await settle(
         (g) =>
             g.state == VirtGuestState.running &&
             g.uptime != null &&
-            g.uptime! < before,
+            g.uptime! < since.elapsed,
       );
       expect(w.state.actionsOf(after), contains(VirtPowerAction.reboot));
     });
@@ -4036,10 +4042,11 @@ void _p8Pve(_Agent agent) {
     tearDownAll(() async {
       await w.host.refresh();
       for (final id in made) {
-        // The listing names a guest a moment after its task: asked again
-        // before it is given up on, or its disk outlives the storage.
+        // The listing names a guest a moment after its task, and its state
+        // (so its actions) a moment after that: asked again before it is
+        // given up on, or its disk outlives the storage.
         var g = w.state.guest(id);
-        for (var i = 0; g == null && i < 10; i++) {
+        for (var i = 0; (g == null || g.actions.isEmpty) && i < 10; i++) {
           await Future<void>.delayed(const Duration(seconds: 1));
           await w.host.refresh();
           g = w.state.guest(id);
@@ -4430,7 +4437,9 @@ void _pveUnverified(_Agent agent) {
     Future<void> remove(int vmid) async {
       var g = await guestOf(vmid, (g) => g.actions.isNotEmpty || g.template);
       if (g.state != VirtGuestState.stopped) {
-        await w.host.power(g.id, VirtPowerAction.forceStop);
+        // A start right after a stop: qmeventd's cleanup of the old process
+        // holds the lock until it sees the new one.
+        await _pveWhileLocked(() => w.host.power(g.id, VirtPowerAction.forceStop));
         g = await guestOf(vmid, (g) => g.state == VirtGuestState.stopped);
       }
       await _pveWhileLocked(() => w.host.delete(g.id));
@@ -4715,10 +4724,16 @@ void _pveUnverified(_Agent agent) {
     }, timeout: const Timeout(Duration(minutes: 15)));
 
     test('IDE: the disk and the cloud-init drive on it, and the cloud-init edit', () async {
+      // A cloud-init drive comes only with a cloud image.
+      if (imageId == null) {
+        markTestSkipped('SBM_E2E_PVE_CLOUD_IMAGE unset');
+        return;
+      }
       final vmid = await freeVmid();
       final name = 'sbxe2e-l-ide-$run';
       made.add((vmid, name));
       final login = await _ciLogin();
+      final image = await imageVolume(imageId);
       await w.host.create(
         VirtCreateSpec(
           kind: VirtGuestKind.qemu,
@@ -4728,8 +4743,9 @@ void _pveUnverified(_Agent agent) {
           cores: 1,
           memoryMiB: 256,
           storage: storage,
-          diskGiB: 1,
-          image: _inPool(imageId == null ? null : await imageVolume(imageId), await w.host.storagePools(), node: node),
+          // The copy is grown, never cut: at least the image's own size.
+          diskGiB: ((image.capacity ?? 0) / (1 << 30)).ceil().clamp(1, 1 << 20),
+          image: _inPool(image, await w.host.storagePools(), node: node),
           network: bridge,
           bus: 'ide',
           cloudInit: VirtCloudInit(user: 'sbxe', sshKeys: login.publicKey),
@@ -4761,7 +4777,12 @@ void _pveUnverified(_Agent agent) {
         markTestSkipped('SBM_E2E_PVE_USB unset');
         return;
       }
-      final vmid = made.lastWhere((m) => m.$2.startsWith('sbxe2e-l-ide-'), orElse: () => fail('no IDE VM')).$1;
+      final ide = made.where((m) => m.$2.startsWith('sbxe2e-l-ide-')).lastOrNull;
+      if (ide == null) {
+        markTestSkipped('no IDE VM: SBM_E2E_PVE_CLOUD_IMAGE unset');
+        return;
+      }
+      final vmid = ide.$1;
       // PVE lets only root@pam logged in with a password give a guest a raw
       // USB device. A ticket the node itself issues for root@pam is what
       // stands in for the password: PVE takes a valid ticket as the
@@ -4818,7 +4839,12 @@ void _pveUnverified(_Agent agent) {
     });
 
     test('a VM with a snapshot made a template: PVE\'s own refusal, in its words', () async {
-      final vmid = made.lastWhere((m) => m.$2.startsWith('sbxe2e-l-ide-'), orElse: () => fail('no IDE VM')).$1;
+      final ide = made.where((m) => m.$2.startsWith('sbxe2e-l-ide-')).lastOrNull;
+      if (ide == null) {
+        markTestSkipped('no IDE VM: SBM_E2E_PVE_CLOUD_IMAGE unset');
+        return;
+      }
+      final vmid = ide.$1;
       var g = await guestOf(vmid, (g) => g.state == VirtGuestState.stopped);
       await w.host.createSnapshot(g.id, name: 'sbxe2e_t');
       // A second app instance, which has never read the snapshot listing:
