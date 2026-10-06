@@ -230,21 +230,34 @@ pub fn normalize_session_name(raw: &str) -> Result<String, TmuxError> {
 ///
 /// They are invisible or reorder what surrounds them, so a name carrying one
 /// is not the name it appears to be: a bidi override turns it into something
-/// else on screen, a zero-width character makes two names look identical, and
-/// a directory of such names is `ls` output nobody can tell apart. Rust's std
-/// has no general-category API — `char::is_control` is Cc only — so the Cf
-/// ranges this rejects are listed.
+/// else on screen, a zero-width or tag character makes two names look
+/// identical, and a directory of such names is `ls` output nobody can tell
+/// apart. Rust's std has no general-category API — `char::is_control` is Cc
+/// only — so this is the whole of Cf as of Unicode 16.0, listed.
 fn is_format_char(c: char) -> bool {
     matches!(
         c,
         '\u{00AD}' // soft hyphen
+        | '\u{0600}'..='\u{0605}' // Arabic number signs
         | '\u{061C}' // Arabic letter mark
+        | '\u{06DD}' // Arabic end of ayah
+        | '\u{070F}' // Syriac abbreviation mark
+        | '\u{0890}'..='\u{0891}' // Arabic pound / piastre mark above
+        | '\u{08E2}' // Arabic disputed end of ayah
         | '\u{180E}' // Mongolian vowel separator
         | '\u{200B}'..='\u{200F}' // zero-width space..right-to-left mark
         | '\u{202A}'..='\u{202E}' // bidi embedding/override
         | '\u{2060}'..='\u{2064}' // word joiner..invisible plus
-        | '\u{2066}'..='\u{2069}' // bidi isolates
+        | '\u{2066}'..='\u{206F}' // bidi isolates, deprecated format controls
         | '\u{FEFF}' // zero-width no-break space
+        | '\u{FFF9}'..='\u{FFFB}' // interlinear annotation
+        | '\u{110BD}' // Kaithi number sign
+        | '\u{110CD}' // Kaithi number sign above
+        | '\u{13430}'..='\u{1343F}' // Egyptian hieroglyph format controls
+        | '\u{1BCA0}'..='\u{1BCA3}' // shorthand format controls
+        | '\u{1D173}'..='\u{1D17A}' // musical symbol format controls
+        | '\u{E0001}' // language tag
+        | '\u{E0020}'..='\u{E007F}' // tag characters
     )
 }
 
@@ -492,6 +505,13 @@ mod tests {
             "a\u{2066}b", // bidi isolate
             "a\u{2069}b", // bidi pop isolate
             "a\u{FEFF}b", // zero-width no-break space
+            "a\u{0600}b", // Arabic number sign
+            "a\u{206F}b", // nominal digit shapes
+            "a\u{FFF9}b", // interlinear annotation anchor
+            "a\u{1D173}b", // musical format control
+            "a\u{E0001}b", // language tag
+            "a\u{E0041}b", // tag latin capital A
+            "a\u{E007F}b", // cancel tag
         ] {
             assert_eq!(
                 normalize_session_name(name),

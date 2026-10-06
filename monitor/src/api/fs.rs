@@ -643,7 +643,12 @@ async fn view_of(path: &Path) -> EntryView {
             .map(|d| d.as_secs() as i64),
         mode: mode_of(&meta),
         link_target,
-        version: version_of(&meta),
+        // A link's own time and size are not what a write compares (it
+        // resolves the path and checks the file it lands on), so a token for
+        // the link could never match; and following it here could describe a
+        // file outside the roots. A client editing through a link asks
+        // `/fs/stat`, which resolves inside the roots first.
+        version: if meta.is_symlink() { None } else { version_of(&meta) },
     }
 }
 
@@ -789,6 +794,27 @@ mod tests {
         staged.keep();
         drop(staged);
         assert!(kept.exists(), "a kept one is the renamed file's business");
+    }
+
+    /// A listed link carries no version: a write resolves the path and
+    /// compares the file it lands on, which the link's own metadata is not.
+    /// Its target, read through `/fs/stat`'s resolved path, has one.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_listed_link_has_no_version_and_its_target_does() {
+        let dir = tempfile::tempdir().unwrap();
+        let target = dir.path().join("note.txt");
+        std::fs::write(&target, "text").unwrap();
+        let link = dir.path().join("link.txt");
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+
+        let listed = view_of(&link).await;
+        assert_eq!(listed.kind, "link");
+        assert_eq!(listed.version, None);
+
+        let resolved = view_of(&std::fs::canonicalize(&link).unwrap()).await;
+        assert_eq!(resolved.version, version_at(&link).await);
+        assert!(resolved.version.is_some());
     }
 
     #[test]
