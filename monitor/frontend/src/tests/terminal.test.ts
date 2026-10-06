@@ -457,6 +457,44 @@ describe('TerminalSession', () => {
     }
   })
 
+  it('a non-persisting session ignores a stored handle and opens with its target', async () => {
+    // What the terminal page left behind must not turn the container dialog's
+    // `open` into an `attach` — that would show the host login shell.
+    window.sessionStorage.setItem(
+      'terminal.session',
+      JSON.stringify({ handle: 'host.handle', rendered: 3 }),
+    )
+    const session = new TerminalSession({ persist: false })
+    expect(session.resumable).toBe(false)
+
+    await session.start(renderer, '', { kind: 'local' }, { kind: 'container', id: 'abc' })
+    const socket = FakeSocket.latest()
+    socket.onopen?.()
+
+    expect(socket.sent[0]).toMatchObject({
+      type: 'open',
+      target: { kind: 'container', id: 'abc' },
+    })
+    expect(socket.sent[0]).not.toHaveProperty('session')
+  })
+
+  it('a non-persisting session leaves the stored handle alone', async () => {
+    const stored = JSON.stringify({ handle: 'host.handle', rendered: 3 })
+    window.sessionStorage.setItem('terminal.session', stored)
+
+    const session = new TerminalSession({ persist: false })
+    await session.start(renderer, '', { kind: 'local' }, { kind: 'container', id: 'abc' })
+    const socket = FakeSocket.latest()
+    socket.onopen?.()
+    socket.control({ type: 'ready', session: 'container.handle', since: 0 })
+    socket.output('hello')
+    renderer.flush()
+    session.flush()
+    session.close()
+
+    expect(window.sessionStorage.getItem('terminal.session')).toBe(stored)
+  })
+
   it('restores the handle a previous tab load left behind', () => {
     window.sessionStorage.setItem(
       'terminal.session',
@@ -496,6 +534,29 @@ describe('TerminalSession', () => {
     expect(open.auth).toEqual({ kind: 'local' })
     // No password, key or passphrase may ride along on this path
     expect(JSON.stringify(open)).not.toMatch(/password|pem|passphrase/)
+  })
+
+  it('carries a container target in the open frame', async () => {
+    const session = new TerminalSession()
+    await session.start(renderer, '', { kind: 'local' }, { kind: 'container', id: 'abc' })
+    const socket = FakeSocket.latest()
+    socket.onopen?.()
+
+    // The target rides on the local open only; the agent builds the command.
+    expect(socket.sent[0]).toMatchObject({
+      type: 'open',
+      auth: { kind: 'local' },
+      target: { kind: 'container', id: 'abc' },
+    })
+  })
+
+  it('sends no target for an ordinary open', async () => {
+    const session = new TerminalSession()
+    await session.start(renderer, '', { kind: 'local' })
+    const socket = FakeSocket.latest()
+    socket.onopen?.()
+
+    expect(socket.sent[0]).not.toHaveProperty('target')
   })
 
   it('reports a refusal when the agent has full access turned off', async () => {

@@ -565,7 +565,9 @@ extension on _ServerDetailPageState {
   Widget _buildCustomCmdItem(MapEntry<String, String> cmd) {
     // A command that printed several lines has only its first on the row; the
     // rest is what tapping opens, because a row is one line by construction.
-    final lines = cmd.value.split('\n');
+    // The output keeps the newline it was printed with, so [readoutCommandLines]
+    // drops the one at the very end rather than reading it as a second line.
+    final lines = readoutCommandLines(cmd.value);
     return ServerDetailReadoutRow(
       k: cmd.key,
       v: lines.first,

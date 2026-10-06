@@ -182,7 +182,7 @@ pub fn container_action_command(runtime_name: String, action: String, id: Option
         "prune_volumes" => ContainerAction::PruneVolumes,
         other => return Err(format!("unknown action: {other}")),
     };
-    Ok(action.exec(ty))
+    action.exec(ty).map_err(|e| e.to_string())
 }
 
 #[flutter_rust_bridge::frb(sync)]

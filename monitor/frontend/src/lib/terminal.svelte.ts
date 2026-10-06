@@ -62,6 +62,16 @@ export type Credential =
   /// when the agent reports `remote_access.full_access`.
   | { kind: 'local' }
 
+/// Where a local shell runs, when it is not the agent's own login shell.
+///
+/// Carries no command: the agent builds one from the id, or from the host and
+/// port. Only sent to an agent that lists the matching feature
+/// (`container_exec`, `iperf`) — an older agent ignores the field and would
+/// open a host shell instead.
+export type TerminalTarget =
+  | { kind: 'container'; id: string }
+  | { kind: 'iperf'; host: string; port: number }
+
 interface ServerMessage {
   type: 'ready' | 'prompt' | 'error' | 'exit' | 'hb'
   session?: string
@@ -70,6 +80,9 @@ interface ServerMessage {
   prompts?: Prompt[]
   code?: string
   message?: string
+  /// A stable issue code, for a refusal the client is meant to phrase itself
+  /// (`invalid_input` names the code, this names the issue).
+  issue?: string
   status?: number | null
 }
 
@@ -130,19 +143,37 @@ export function terminalWsUrl(base: string): string {
 
 export const terminalWsProtocol = wsTicketProtocol
 
+export interface TerminalSessionOptions {
+  /// Whether the resume handle is kept in `sessionStorage`. Default `true`:
+  /// the terminal page survives a tab reload. A session embedded in a page
+  /// that owns its own handle — the container shell dialog — passes `false` so
+  /// it never reads, writes or clears the key the terminal page uses. It still
+  /// reconnects from the in-memory handle while the dialog is open.
+  persist?: boolean
+}
+
 export class TerminalSession {
   phase = $state<Phase>('idle')
   /// User-facing failure, cleared on the next successful connection.
   error = $state<string | null>(null)
+  /// The agent's stable code for the last error, where it sent one — a page
+  /// that knows the code can say something better than the agent's sentence.
+  errorCode = $state<string | null>(null)
+  /// The issue behind [`errorCode`], for a refusal the client phrases itself.
+  issueCode = $state<string | null>(null)
   /// Set while the agent is waiting on keyboard-interactive answers.
   prompts = $state<Prompt[]>([])
   instructions = $state('')
   /// Whether output was lost because the outage outlasted the agent's buffer.
   truncated = $state(false)
+  /// The status the shell exited with, once it has. `null` while running, and
+  /// for a shell killed by a signal (the agent reports no code).
+  exitStatus = $state<number | null>(null)
 
   private socket: WebSocket | null = null
   private renderer: Renderer | null = null
   private credential: Credential | null = null
+  private target: TerminalTarget | null = null
   private user = ''
   private handle: string | null = null
   /// Absolute position of the next byte to be rendered. Only ever advanced by
@@ -156,13 +187,28 @@ export class TerminalSession {
   private connectionGeneration = 0
   /// Set by close()/exit so the disconnect handler doesn't try to reconnect.
   private finished = false
+  /// Whether `sessionStorage` is this session's to use — see
+  /// [`TerminalSessionOptions`].
+  private readonly persistent: boolean
 
-  constructor() {
+  constructor(options: TerminalSessionOptions = {}) {
+    this.persistent = options.persist !== false
+    if (!this.persistent) return
     const saved = loadSession()
     if (saved) {
       this.handle = saved.handle
       this.rendered = saved.rendered
     }
+  }
+
+  /// Writes the handle out, unless this session must not touch the key.
+  private saveStored() {
+    if (this.persistent && this.handle) saveSession(this.handle, this.rendered)
+  }
+
+  /// Drops the stored handle, unless this session must not touch the key.
+  private clearStored() {
+    if (this.persistent) clearSession()
   }
 
   /// Whether a previous connection left a session worth rejoining.
@@ -171,11 +217,18 @@ export class TerminalSession {
   }
 
   /// Starts a new session, or rejoins the stored one when there is no
-  /// credential to open with.
-  async start(renderer: Renderer, user: string, credential: Credential | null) {
+  /// credential to open with. [target] narrows a local shell to something on
+  /// the machine — a container — and is sent in the open frame only.
+  async start(
+    renderer: Renderer,
+    user: string,
+    credential: Credential | null,
+    target: TerminalTarget | null = null,
+  ) {
     this.renderer = renderer
     this.user = user
     this.credential = credential
+    this.target = target
     this.finished = false
     await this.connect()
   }
@@ -185,7 +238,7 @@ export class TerminalSession {
     this.finished = true
     this.send({ type: 'close' })
     this.teardown()
-    clearSession()
+    this.clearStored()
     this.handle = null
     this.rendered = 0
     this.phase = 'closed'
@@ -278,6 +331,7 @@ export class TerminalSession {
           type: 'open',
           user: this.user,
           auth: this.credential,
+          ...(this.target ? { target: this.target } : {}),
           cols: this.renderer?.cols ?? 80,
           rows: this.renderer?.rows ?? 24,
         })
@@ -315,9 +369,12 @@ export class TerminalSession {
         // so the counter is set from it rather than added to — on a truncated
         // replay it moves forward past output nobody will ever see.
         this.rendered = msg.since ?? 0
-        if (this.handle) saveSession(this.handle, this.rendered)
+        this.saveStored()
         this.prompts = []
         this.error = null
+        this.errorCode = null
+        this.issueCode = null
+        this.exitStatus = null
         this.phase = 'running'
         break
       case 'prompt':
@@ -330,7 +387,8 @@ export class TerminalSession {
         break
       case 'exit':
         this.finished = true
-        clearSession()
+        this.exitStatus = msg.status ?? null
+        this.clearStored()
         this.handle = null
         this.phase = 'closed'
         break
@@ -340,6 +398,8 @@ export class TerminalSession {
   }
 
   private onError(msg: ServerMessage) {
+    this.errorCode = msg.code ?? null
+    this.issueCode = msg.issue ?? null
     if (msg.code === 'gap_truncated') {
       // Not a failure: the session is fine, only the scrollback fell behind
       this.truncated = true
@@ -359,7 +419,7 @@ export class TerminalSession {
     if (msg.code === 'session_gone') {
       // Nothing left to rejoin. Keep whatever is on screen — it is still the
       // last thing the user saw, and may be worth copying out of.
-      clearSession()
+      this.clearStored()
       this.handle = null
       this.rendered = 0
       this.finished = true
@@ -387,7 +447,7 @@ export class TerminalSession {
   /// Throttled so a chatty shell doesn't turn into a storage write per frame.
   /// Lagging is safe; leading is not — see the module comment.
   private persist() {
-    if (!this.handle) return
+    if (!this.persistent || !this.handle) return
     const now = Date.now()
     if (now - this.persistedAt < PERSIST_INTERVAL_MS) return
     this.persistedAt = now
@@ -397,7 +457,7 @@ export class TerminalSession {
   /// Writes the exact resume point out, ignoring the throttle. For `pagehide`,
   /// where there is no later chance.
   flush() {
-    if (this.handle) saveSession(this.handle, this.rendered)
+    if (this.handle) this.saveStored()
   }
 
   private onDisconnect(generation: number, socket: WebSocket) {

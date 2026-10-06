@@ -1,23 +1,36 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Modal, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
   import {
     CircleAlert,
+    Download,
     Eraser,
     Play,
+    Plus,
     RefreshCw,
     RotateCw,
     ScrollText,
     Square,
+    Terminal,
     Trash2,
     type LucideIcon,
   } from '@lucide/svelte'
+  import TargetTerminal from '../components/TargetTerminal.svelte'
   import FeatureTabs from '../components/FeatureTabs.svelte'
   import PageHeader from '../components/PageHeader.svelte'
+  import { machineAccess } from '../lib/access'
   import { api } from '../lib/api'
+  import { capabilitiesStore } from '../lib/capabilities.svelte'
+  import { imageReference, refusalText } from '../lib/container'
   import { fmtBytes } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
   import { servers } from '../lib/servers.svelte'
-  import type { ContainerAction, ContainerActionKind, ContainerRow, ContainerView } from '../types'
+  import type {
+    ContainerAction,
+    ContainerActionKind,
+    ContainerImage,
+    ContainerRow,
+    ContainerView,
+  } from '../types'
 
   interface Props {
     onback: () => void
@@ -42,6 +55,12 @@
   let usage = $state<ContainerView | null>(null)
   let loading = $state(true)
   let error = $state('')
+  /// What the runtime printed for the last action, when it said anything, and
+  /// its exit code. A command that failed answers `exit_code`/`output` in a
+  /// 200, so this is where a pull that could not find the tag says so.
+  /// `undefined` exit: the agent ran out of time before the command ended.
+  let actionOutput = $state('')
+  let actionExit = $state<number | null | undefined>(0)
   let busy = $state(false)
   /// The container whose removal is being confirmed, or `undefined` for none.
   /// Removal is the only action asked about: it is the only one that loses
@@ -54,6 +73,27 @@
   let logsFor = $state<ContainerRow | undefined>(undefined)
   let logs = $state('')
   let logsError = $state('')
+
+  /// The image whose removal is being confirmed.
+  let imageConfirm = $state<ContainerImage | undefined>(undefined)
+  /// The pull dialog's reference field. A row's Pull prefills it; the header
+  /// action opens it empty.
+  let pullRef = $state('')
+  let pullOpen = $state(false)
+  /// The image prune dialog and its scope.
+  let imagePrune = $state(false)
+  let pruneAllUnused = $state(false)
+  /// The system prune dialog and its scopes.
+  let systemPrune = $state(false)
+  let systemAllImages = $state(false)
+  let systemVolumes = $state(false)
+  /// The run dialog's fields.
+  let runOpen = $state(false)
+  let runImage = $state('')
+  let runName = $state('')
+  let runArgs = $state('')
+  /// The container whose shell is open in the dialog, if any.
+  let shellFor = $state<ContainerRow | undefined>(undefined)
 
   /// The page follows the sidebar, so a reply that arrives after the user has
   /// switched servers belongs to neither.
@@ -103,23 +143,57 @@
     await loadUsage()
   }
 
-  /// Every change answers with the container listing as it now stands, so on
-  /// that tab one request both writes and refreshes. It is only ever that
-  /// listing: on the images tab it would replace the images with nothing, so
-  /// that tab is read again instead.
+  /// Bumped per action, so a reply that arrives after the page has moved on
+  /// cannot clear a newer action's spinner.
+  let actGeneration = 0
+
+  /// Every change answers with the listing it was about — the images for an
+  /// image action, the containers otherwise. When that is the tab on screen it
+  /// replaces it; otherwise the tab is read again, since the answer is a
+  /// listing this tab does not show.
+  ///
+  /// A pull may take minutes, so the answer is dropped if the sidebar has
+  /// moved on: drawing it would show one server's images on another's page.
   async function act(action: ContainerAction) {
+    const generation = ++actGeneration
+    const serverId = servers.currentId
     busy = true
     error = ''
+    actionOutput = ''
+    actionExit = 0
     try {
       const answer = await api.actContainer(action)
-      if (tab === 'containers') view = answer
+      if (stale(serverId)) return
+      actionOutput = answer.output ?? ''
+      actionExit = answer.exit_code
+      if (answer.part === tab) view = answer
       else void load(tab)
       void loadUsage()
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      if (stale(serverId)) return
+      // A refused value is `400 invalid_input` with its issue in the body.
+      error = refusalText(e)
     } finally {
-      busy = false
+      if (generation === actGeneration) busy = false
     }
+  }
+
+  /// Opens the pull dialog, prefilled when a row's Pull asked for it.
+  function openPull(image?: ContainerImage) {
+    pullRef = image ? imageReference(image) : ''
+    pullOpen = true
+  }
+
+  function openImagePrune() {
+    pruneAllUnused = false
+    imagePrune = true
+  }
+
+  function openRun() {
+    runImage = ''
+    runName = ''
+    runArgs = ''
+    runOpen = true
   }
 
   async function openLogs(row: ContainerRow) {
@@ -139,22 +213,21 @@
   const rows = $derived(view?.containers ?? [])
   const images = $derived(view?.images ?? [])
 
-  /// Images no container uses and that would be reclaimed by a prune. A count
-  /// this agent could not confirm is *not* counted: `containers === null` means
-  /// unknown, and treating it as zero is how an image still in use gets
-  /// removed.
-  const unusedImages = $derived(
-    images.filter((image) => image.containers === 0 || image.repository === '<none>').length,
-  )
+  /// Images with no name to lose, for the prune dialog's count — the agent's
+  /// `dangling` flag, counted. The unused *tagged* count beside it is the
+  /// agent's too (`unused_tagged`): whether a tagged image is in use is a
+  /// rule, and a second implementation of it would drift.
+  const danglingCount = $derived(images.filter((image) => image.dangling).length)
+
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// A shell inside a container: the agent must understand the terminal
+  /// `target` (`container_exec`) and the account must hold `shell`. An older
+  /// agent ignores the target and would open a host shell instead.
+  const canExec = $derived(machineAccess(caps, 'container_exec', 'shell'))
 
   /// How each action is drawn. A `Record` over every kind, so a kind added to
   /// the model without a button here is a type error rather than a container
   /// whose menu is silently short.
-  ///
-  /// `terminal` is deliberately `null` — the panel's terminal is an SSH shell
-  /// with no way to be handed a command to start with, so a shell *inside* a
-  /// container cannot be opened from here. TODO: give the terminal an initial
-  /// command and the app's `docker exec -it` comes with it.
   const BUTTONS: Record<
     ContainerActionKind,
     { label: () => string; icon: LucideIcon } | null
@@ -164,14 +237,16 @@
     restart: { label: () => $LL.containerRestart(), icon: RotateCw },
     remove: { label: () => $LL.containerRemove(), icon: Trash2 },
     logs: { label: () => $LL.containerLogs(), icon: ScrollText },
-    terminal: null,
+    terminal: { label: () => $LL.containerOpenShell(), icon: Terminal },
   }
 
-  /// The lifecycle buttons for one row: the model's own list, minus the two
+  /// The lifecycle buttons for one row: the model's own list, minus the ones
   /// that are not a change. A log is a view and is offered as a link below the
-  /// row; a terminal is not drawn at all.
+  /// row; a shell is drawn only where the agent and the account allow it.
   function lifecycle(row: ContainerRow): ContainerActionKind[] {
-    return row.actions.filter((kind) => kind !== 'logs' && kind !== 'terminal')
+    return row.actions.filter(
+      (kind) => kind !== 'logs' && (kind !== 'terminal' || canExec),
+    )
   }
 
   function click(kind: ContainerActionKind, row: ContainerRow) {
@@ -190,6 +265,9 @@
       case 'remove':
         force = false
         confirming = row
+        return
+      case 'terminal':
+        shellFor = row
         return
       default:
         return
@@ -267,11 +345,24 @@
   {/snippet}
 
   {#snippet actions()}
-    {#if view?.available}
+    {#if view?.available && tab === 'containers'}
+      <IconButton label={$LL.containerRun()} disabled={busy} onclick={openRun}>
+        <Plus class="w-4 h-4" />
+      </IconButton>
       <IconButton label={$LL.containerPruneContainers()} disabled={busy} onclick={() => (pruning = 'prune_containers')}>
         <Eraser class="w-4 h-4" />
       </IconButton>
       <IconButton label={$LL.containerPruneVolumes()} disabled={busy} onclick={() => (pruning = 'prune_volumes')}>
+        <Eraser class="w-4 h-4" />
+      </IconButton>
+    {:else if view?.available && tab === 'images'}
+      <IconButton label={$LL.containerPullImage()} disabled={busy} onclick={() => openPull()}>
+        <Download class="w-4 h-4" />
+      </IconButton>
+      <IconButton label={$LL.containerPruneImages()} disabled={busy} onclick={openImagePrune}>
+        <Eraser class="w-4 h-4" />
+      </IconButton>
+      <IconButton label={$LL.containerPruneSystem()} disabled={busy} onclick={() => (systemPrune = true)}>
         <Eraser class="w-4 h-4" />
       </IconButton>
     {/if}
@@ -285,6 +376,29 @@
   {#if error}
     <Card class="border-danger/40 bg-danger/5">
       <p class="text-sm text-danger">{error}</p>
+    </Card>
+  {/if}
+
+  {#if actionExit === 0}
+    <!-- What a successful action printed — a pull's digest, a run's id. Not a
+         failure, so not in the danger tone. -->
+    {#if actionOutput}
+      <Card>
+        <pre class="text-xs font-mono text-muted-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
+      </Card>
+    {/if}
+  {:else}
+    <!-- A failure is said even when the runtime printed nothing: the refreshed
+         listing alone would look like the action went through. -->
+    <Card class="border-danger/40 bg-danger/5 space-y-2">
+      {#if actionExit === undefined}
+        <p class="text-sm text-danger">{$LL.containerActionUnfinished()}</p>
+      {:else}
+        <p class="text-sm text-danger">{$LL.containerActionFailed({ code: actionExit ?? '?' })}</p>
+      {/if}
+      {#if actionOutput}
+        <pre class="text-xs font-mono text-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
+      {/if}
     </Card>
   {/if}
 
@@ -391,30 +505,50 @@
     {:else}
       <Card class="divide-y divide-line p-0">
         {#each images as image (image.id ?? image.repository)}
-          <div class="px-4 py-3 space-y-1">
-            <p class="text-sm text-fg-strong truncate">
-              {image.repository}{#if image.tag}:<span class="font-mono">{image.tag}</span>{/if}
-            </p>
-            <p class="text-xs text-muted-fg truncate">
-              {#if image.id}<span class="font-mono">{image.id.slice(0, 12)}</span> · {/if}
-              {image.size ?? $LL.containerUnknown()}
-              ·
-              {#if image.containers === null}
-                <!-- Unknown, never zero: a count this agent could not confirm
-                     is not a count of none. -->
-                {$LL.containerUsageUnknown()}
-              {:else if image.containers === 0}
-                {$LL.containerUnused()}
-              {:else}
-                {$LL.containerInUse({ count: image.containers })}
-              {/if}
-              {#if image.created_at}· {image.created_at}{/if}
-            </p>
+          <div class="flex items-start gap-3 px-4 py-3">
+            <div class="min-w-0 flex-1 space-y-1">
+              <p class="text-sm text-fg-strong truncate">
+                {image.repository}{#if image.tag}:<span class="font-mono">{image.tag}</span>{/if}
+              </p>
+              <p class="text-xs text-muted-fg truncate">
+                {#if image.id}<span class="font-mono">{image.id.slice(0, 12)}</span> · {/if}
+                {image.size ?? $LL.containerUnknown()}
+                ·
+                {#if image.containers === null}
+                  <!-- Unknown, never zero: a count this agent could not confirm
+                       is not a count of none. -->
+                  {$LL.containerUsageUnknown()}
+                {:else if image.containers === 0}
+                  {$LL.containerUnused()}
+                {:else}
+                  {$LL.containerInUse({ count: image.containers })}
+                {/if}
+                {#if image.created_at}· {image.created_at}{/if}
+              </p>
+            </div>
+            {#if !busy}
+              <div class="flex shrink-0">
+                <!-- A dangling image has no reference to pull: `docker pull
+                     <none>` would be a name that is not one. -->
+                <IconButton
+                  label={$LL.containerPullImage()}
+                  disabled={image.dangling}
+                  onclick={() => openPull(image)}
+                >
+                  <Download class="w-4 h-4" />
+                </IconButton>
+                <IconButton label={$LL.containerRemove()} onclick={() => (imageConfirm = image)}>
+                  <Trash2 class="w-4 h-4" />
+                </IconButton>
+              </div>
+            {/if}
           </div>
         {/each}
       </Card>
-      {#if unusedImages > 0}
-        <p class="text-xs text-muted-fg">{$LL.containerUnusedImages({ count: unusedImages })}</p>
+      {#if view.unused_tagged !== null && view.unused_tagged > 0}
+        <p class="text-xs text-muted-fg">
+          {$LL.containerUnusedImages({ count: view.unused_tagged })}
+        </p>
       {/if}
     {/if}
 
@@ -512,6 +646,187 @@
       <div class="flex justify-end">
         <Button variant="secondary" onclick={() => (logsFor = undefined)}>{$LL.close()}</Button>
       </div>
+    </div>
+  </Modal>
+{/if}
+
+<!-- Removing an image is asked about like removing a container: it is the one
+     image action whose result is not already on the screen behind the dialog. -->
+{#if imageConfirm !== undefined}
+  <Modal open title={$LL.containerRemove()} onclose={() => (imageConfirm = undefined)}>
+    <div class="space-y-4">
+      <p class="text-sm text-fg">
+        {$LL.containerRemoveImageConfirm({ name: imageReference(imageConfirm) })}
+      </p>
+      <div class="flex justify-end gap-2">
+        <Button variant="secondary" onclick={() => (imageConfirm = undefined)}>{$LL.cancel()}</Button>
+        <Button
+          variant="danger"
+          disabled={busy}
+          onclick={() => {
+            const image = imageConfirm
+            imageConfirm = undefined
+            // The tag on the row, not the id: `rmi -f <id>` removes every tag
+            // the image has, and the user picked one. Only an image with no
+            // name is removed by its id.
+            const id = image?.dangling ? image.id : image && imageReference(image)
+            if (id) void act({ action: 'remove_image', id })
+          }}
+        >
+          {$LL.containerRemove()}
+        </Button>
+      </div>
+    </div>
+  </Modal>
+{/if}
+
+<!-- Pull: one field, prefilled when a row's Pull asked for it, so the header
+     action and the row action are the same dialog. -->
+{#if pullOpen}
+  <Modal open title={$LL.containerPullImage()} onclose={() => (pullOpen = false)}>
+    <div class="space-y-4">
+      <div class="space-y-1">
+        <span class="text-sm text-muted-fg">{$LL.containerRunImage()}</span>
+        <Input bind:value={pullRef} placeholder="nginx:alpine" autocomplete="off" />
+      </div>
+      <p class="text-xs text-muted-fg">{$LL.containerPullImageHint()}</p>
+      <div class="flex justify-end gap-2">
+        <Button variant="secondary" onclick={() => (pullOpen = false)}>{$LL.cancel()}</Button>
+        <Button
+          disabled={busy || pullRef.trim() === ''}
+          onclick={() => {
+            const reference = pullRef.trim()
+            pullOpen = false
+            if (reference) void act({ action: 'pull_image', reference })
+          }}
+        >
+          {$LL.containerPullImage()}
+        </Button>
+      </div>
+    </div>
+  </Modal>
+{/if}
+
+<!-- Image prune: the counts come from the agent, and the checkbox widens the
+     scope from dangling to every unused image. -->
+{#if imagePrune}
+  <Modal open title={$LL.containerPruneImages()} onclose={() => (imagePrune = false)}>
+    <div class="space-y-4">
+      <p class="text-sm text-fg">{$LL.containerPruneImagesConfirm()}</p>
+      <p class="text-xs text-muted-fg">
+        {$LL.containerPruneDangling()}: {danglingCount} ·
+        {$LL.containerUnusedTagged()}:
+        {view?.unused_tagged ?? $LL.containerUnknown()}
+      </p>
+      <label class="flex items-center gap-2 text-sm text-fg">
+        <input type="checkbox" bind:checked={pruneAllUnused} />
+        {$LL.containerPruneAllUnused()}
+      </label>
+      <div class="flex justify-end gap-2">
+        <Button variant="secondary" onclick={() => (imagePrune = false)}>{$LL.cancel()}</Button>
+        <Button
+          variant="danger"
+          disabled={busy}
+          onclick={() => {
+            const allUnused = pruneAllUnused
+            imagePrune = false
+            void act({ action: 'prune_images', all_unused: allUnused })
+          }}
+        >
+          {$LL.containerPruneImages()}
+        </Button>
+      </div>
+    </div>
+  </Modal>
+{/if}
+
+{#if systemPrune}
+  <Modal open title={$LL.containerPruneSystem()} onclose={() => (systemPrune = false)}>
+    <div class="space-y-4">
+      <p class="text-sm text-fg">{$LL.containerPruneSystemConfirm()}</p>
+      <label class="flex items-center gap-2 text-sm text-fg">
+        <input type="checkbox" bind:checked={systemAllImages} />
+        {$LL.containerPruneAllUnusedImages()}
+      </label>
+      <label class="flex items-center gap-2 text-sm text-fg">
+        <input type="checkbox" bind:checked={systemVolumes} />
+        {$LL.containerPruneVolumesOption()}
+      </label>
+      <div class="flex justify-end gap-2">
+        <Button variant="secondary" onclick={() => (systemPrune = false)}>{$LL.cancel()}</Button>
+        <Button
+          variant="danger"
+          disabled={busy}
+          onclick={() => {
+            const allUnusedImages = systemAllImages
+            const includeVolumes = systemVolumes
+            systemPrune = false
+            void act({
+              action: 'prune_system',
+              all_unused_images: allUnusedImages,
+              include_volumes: includeVolumes,
+            })
+          }}
+        >
+          {$LL.containerPruneSystem()}
+        </Button>
+      </div>
+    </div>
+  </Modal>
+{/if}
+
+<!-- Run: image, name and the extra arguments, as the app's dialog asks for
+     them. The arguments are sent as typed; the agent splits them. -->
+{#if runOpen}
+  <Modal open title={$LL.containerRun()} onclose={() => (runOpen = false)}>
+    <div class="space-y-4">
+      <div class="space-y-1">
+        <span class="text-sm text-muted-fg">{$LL.containerRunImage()}</span>
+        <Input bind:value={runImage} placeholder="xxx:1.1" autocomplete="off" />
+      </div>
+      <div class="space-y-1">
+        <span class="text-sm text-muted-fg">{$LL.containerRunName()}</span>
+        <Input bind:value={runName} placeholder="xxx" autocomplete="off" />
+      </div>
+      <div class="space-y-1">
+        <span class="text-sm text-muted-fg">{$LL.containerRunArgs()}</span>
+        <Input bind:value={runArgs} placeholder="-p 2222:22 -v ~/.xxx/:/xxx" autocomplete="off" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <Button variant="secondary" onclick={() => (runOpen = false)}>{$LL.cancel()}</Button>
+        <Button
+          disabled={busy || runImage.trim() === ''}
+          onclick={() => {
+            const image = runImage.trim()
+            const name = runName.trim()
+            const args = runArgs
+            runOpen = false
+            void act({ action: 'run', image, name, args })
+          }}
+        >
+          {$LL.containerRun()}
+        </Button>
+      </div>
+    </div>
+  </Modal>
+{/if}
+
+<!-- A shell inside a container. Its own component: the terminal setup is the
+     terminal page's, shared through `mountTerminal`. -->
+{#if shellFor !== undefined}
+  <Modal
+    open
+    title={$LL.containerOpenShell()}
+    class="max-w-3xl"
+    onclose={() => (shellFor = undefined)}
+  >
+    <div class="space-y-3">
+      <p class="text-xs text-muted-fg">
+        {shellFor.name ?? shellFor.id ?? $LL.containerUnknown()}
+      </p>
+      {#if shellFor.id}
+        <TargetTerminal target={{ kind: 'container', id: shellFor.id }} />
+      {/if}
     </div>
   </Modal>
 {/if}

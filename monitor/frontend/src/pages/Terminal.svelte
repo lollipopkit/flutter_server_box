@@ -22,6 +22,8 @@
   import { runSteps } from '../lib/snippetSteps'
   import { theme } from '../lib/theme.svelte'
   import { TerminalSession, type Credential, type Renderer } from '../lib/terminal.svelte'
+  import { terminalSurface } from '../lib/terminalSurface.svelte'
+  import { mountTerminal, type TerminalHandle } from '../lib/xterm'
 
   const session = new TerminalSession()
 
@@ -34,19 +36,11 @@
   let remember = $state(false)
   let answers = $state<string[]>([])
 
-  /// The xterm instance and its fit addon, once loaded.
-  let term: import('@xterm/xterm').Terminal | null = null
-  let fit: import('@xterm/addon-fit').FitAddon | null = null
-  let decoder: TextDecoder | null = null
-  let resizeObserver: ResizeObserver | null = null
+  /// The mounted xterm, once loaded. Its renderer is what the session writes
+  /// through; see `mountTerminal`.
+  let terminal: TerminalHandle | null = null
 
   const CREDENTIAL_KEY = 'terminal.credential'
-
-  /// Waits for the browser to have laid out. `requestAnimationFrame` runs
-  /// after style and layout for the coming frame, which is the earliest point
-  /// a flex-derived height can be measured.
-  const nextFrame = () =>
-    new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
   /// Credentials live in memory by default. "Remember" upgrades that to
   /// `sessionStorage` — gone when the tab closes — and never to
@@ -80,85 +74,51 @@
     }
   }
 
-  async function ensureTerminal(): Promise<Renderer> {
-    if (!term) {
-      // The stylesheet comes along in the same dynamic chunk, so it is
-      // fetched with the terminal rather than on every panel load
-      const [{ Terminal }, { FitAddon }] = await Promise.all([
-        import('@xterm/xterm'),
-        import('@xterm/addon-fit'),
-        import('@xterm/xterm/css/xterm.css'),
-      ])
-      term = new Terminal({
-        convertEol: false,
-        cursorBlink: true,
-        fontSize: 13,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-        theme: terminalTheme(),
-      })
-      fit = new FitAddon()
-      term.loadAddon(fit)
-      if (host) term.open(host)
-      decoder = new TextDecoder()
+  /// The one mount in flight. Shared, so a second press while xterm loads
+  /// waits for the same terminal rather than opening another into the host.
+  let mounting: Promise<TerminalHandle | null> | null = null
+  /// Set when the page goes away, so a mount that finishes after it is
+  /// disposed rather than kept by a page nothing shows.
+  let destroyed = false
 
-      term.onData((data) => session.input(data))
-      term.onResize(({ cols, rows }) => session.resize(cols, rows))
-
-      if (host && typeof ResizeObserver !== 'undefined') {
-        resizeObserver = new ResizeObserver(() => fit?.fit())
-        resizeObserver.observe(host)
-      }
-
-      // Fitted a frame later, not inline with open(): the host's height comes
-      // from flex sizing, which the browser has not resolved yet in this tick.
-      // Measuring now would see zero and leave the terminal at its default 24
-      // rows — the size then sent to the shell as well, so it would not just
-      // look wrong, it would wrap wrong.
-      await nextFrame()
-      fit.fit()
+  /// The renderer, or `null` once the page has gone: the caller then has no
+  /// session to start.
+  async function ensureTerminal(): Promise<Renderer | null> {
+    if (!terminal) {
+      if (!host) throw new Error('the terminal host is not mounted')
+      mounting ??= mountTerminal(host, session).then(
+        (mounted) => {
+          if (destroyed) {
+            mounted.dispose()
+            return null
+          }
+          terminal = mounted
+          return mounted
+        },
+        (e: unknown) => {
+          // A failed load may be retried by the next press.
+          mounting = null
+          throw e
+        },
+      )
+      return (await mounting)?.renderer ?? null
     }
-
-    const instance = term
-    const streamDecoder = decoder
-    return {
-      write(data, done) {
-        // Decoded with `stream: true` so a multi-byte character split across
-        // two frames isn't rendered as replacement characters
-        instance.write(streamDecoder?.decode(data, { stream: true }) ?? '', done)
-      },
-      reset() {
-        instance.reset()
-      },
-      get cols() {
-        return instance.cols
-      },
-      get rows() {
-        return instance.rows
-      },
-    }
-  }
-
-  /// Resolved from the document, not from `theme.current`: the store's
-  /// 'system' setting is decided by a media query at paint time, so the class
-  /// on <html> is the only place the answer actually exists.
-  function isDark(): boolean {
-    const cls = document.documentElement.classList
-    if (cls.contains('dark')) return true
-    if (cls.contains('light')) return false
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
-  }
-
-  function terminalTheme() {
-    return isDark()
-      ? { background: '#0b0f14', foreground: '#d7dce2', cursor: '#d7dce2' }
-      : { background: '#ffffff', foreground: '#1f2933', cursor: '#1f2933' }
+    return terminal.renderer
   }
 
   $effect(() => {
     // Re-read on every theme change; `theme.current` is the trigger even
     // though the value comes from the document
     void theme.current
-    if (term) term.options.theme = terminalTheme()
+    terminal?.setTheme()
+  })
+
+  /// Typing belongs in the shell, not in the credentials form above it.
+  /// `session.phase` is the only thing this reads, so it fires on the
+  /// transition into `running` — a fresh open and a reattach both go through
+  /// it — and never takes focus back from a field the user is in.
+  $effect(() => {
+    if (session.phase === 'running') terminal?.focus()
   })
 
   function credential(): Credential {
@@ -174,6 +134,7 @@
 
   async function connect() {
     const renderer = await ensureTerminal()
+    if (!renderer) return
     rememberCredential()
     await session.start(renderer, user, credential())
     // Held only as long as the form needed it
@@ -186,6 +147,7 @@
   /// credentials again — the agent still has an authenticated shell.
   async function resume() {
     const renderer = await ensureTerminal()
+    if (!renderer) return
     await session.start(renderer, user, null)
   }
 
@@ -216,12 +178,12 @@
   })
 
   onDestroy(() => {
-    resizeObserver?.disconnect()
+    destroyed = true
     // Leaving the terminal abandons a snippet not yet typed: the Run press
     // opened this page for it, so closing the page is the answer.
     snippetRun.clear()
     session.dispose()
-    term?.dispose()
+    terminal?.dispose()
   })
 
   const busy = $derived(
@@ -281,6 +243,7 @@
   /// Opens a shell with no credentials at all.
   async function openPasswordless() {
     const renderer = await ensureTerminal()
+    if (!renderer) return
     await session.start(renderer, '', { kind: 'local' })
   }
 
@@ -517,7 +480,14 @@
          positioned parent is unambiguous.
          Kept mounted across reconnects: what is on screen is still the last
          thing the user saw, and may be worth copying out of -->
-    <div bind:this={host} class="absolute inset-0 rounded-md overflow-hidden bg-black/90"></div>
+    <!-- The terminal's own background: the rows are whole cells, so the strip
+         left below the last one is filled with this rather than with a colour
+         of its own, like the target dialogs'. -->
+    <div
+      bind:this={host}
+      class="absolute inset-0 rounded-md overflow-hidden"
+      style="background-color: {terminalSurface.current}"
+    ></div>
 
     {#if session.phase === 'reconnecting'}
       <div

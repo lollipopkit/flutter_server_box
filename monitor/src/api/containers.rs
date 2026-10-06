@@ -10,10 +10,19 @@
 //! a model, not a command. It lives in [`sbm_parser::container`], so the app,
 //! this endpoint and the panel read one machine the same way.
 //!
-//! The panel also never composes a command line. A start, a stop, a removal is
-//! a [`ContainerAction`] on the wire, serialized as a tagged object, and an
-//! action this build does not implement is refused while deserializing rather
-//! than reaching a shell.
+//! The panel also never composes a command line. A start, a stop, a removal, an
+//! image pull or prune, a `run` is a [`ContainerAction`] on the wire,
+//! serialized as a tagged object, and an action this build does not implement
+//! is refused while deserializing rather than reaching a shell. A `run`'s extra
+//! arguments are the one free-form text here, and they are split by
+//! [`sbm_parser::container::parse_run_args`] — never by the caller — so a `;` in
+//! them is an ordinary character. A value the runtime would read as an option,
+//! or a reference it cannot take, is refused as `400 invalid_input` with the
+//! issue in `issue`, before anything is probed or run.
+//!
+//! A shell *inside* a container is not here: it needs a PTY, so it is the
+//! terminal endpoint's `target` (`api::ws::terminal`), which builds the same
+//! [`sbm_parser::container::shell_command`] this module would.
 //!
 //! # Runtime detection
 //!
@@ -46,6 +55,7 @@ use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use super::exec::{ExecResponse, Limits, run};
 use super::machine;
@@ -54,8 +64,8 @@ use super::ws::audit::{Action, Event, Kind, Outcome};
 use crate::core::permissions::Grant;
 use crate::monitoring::system_type;
 use sbm_parser::container::{
-    Container, ContainerAction, ContainerCmd, ContainerImage, ContainerStats, ContainerType,
-    DiskUsage, SEPARATOR_PREFIX,
+    Container, ContainerAction, ContainerActionError, ContainerCmd, ContainerImage, ContainerStats,
+    ContainerType, DiskUsage, SEPARATOR_PREFIX,
 };
 
 /// A container listing plus one stats sample, on a host with many containers,
@@ -129,7 +139,14 @@ struct ContainerListResponse {
     /// Which runtime answered, once one did.
     runtime: Option<RuntimeView>,
     containers: Vec<ContainerRow>,
-    images: Vec<ContainerImage>,
+    images: Vec<ImageRow>,
+    /// Tagged images nothing uses, for the image prune dialog. `None` when the
+    /// count could not be confirmed (see
+    /// [`sbm_parser::container::count_unused_tagged_images`]) and for every
+    /// part but [`ContainerPart::Images`]: a count that is wrong by however
+    /// many images are in use is worse than no count, because the number is
+    /// what the dialog decides on.
+    unused_tagged: Option<i64>,
     usage: Option<DiskUsage>,
     /// The container's log, for [`ContainerPart::Logs`]. `None` elsewhere, and
     /// `None` for a log the runtime refused to print — the reason says which.
@@ -183,6 +200,19 @@ struct ContainerRow {
     actions: Vec<sbm_parser::container::ContainerActionKind>,
 }
 
+/// One image as the panel draws it: the parsed image plus the one flag a page
+/// would otherwise re-derive.
+///
+/// `dangling` is [`ContainerImage::is_dangling`] — whether the image has no
+/// name to lose. Sent rather than derived by the panel, which decides nothing
+/// about a runtime.
+#[derive(Serialize)]
+struct ImageRow {
+    #[serde(flatten)]
+    image: ContainerImage,
+    dangling: bool,
+}
+
 /// Reads one part of the machine's container state.
 pub async fn list(
     req: HttpRequest,
@@ -224,9 +254,22 @@ pub async fn act(
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
+    // Refused before the runtime is probed, let alone run: a value that could
+    // never be answered — an empty reference, one the runtime would read as an
+    // option, arguments that do not parse — costs the machine nothing.
+    if let Err(issue) = action.validate() {
+        return Ok(refuse(&state, &gated, &what, issue).await);
+    }
     let exec = &state.remote_access.exec;
     let Some(runtime) = detect_runtime(exec).await else {
-        return Ok(HttpResponse::Ok().json(&read(ContainerPart::Containers, None, exec).await));
+        let part = refresh_part(&action);
+        return Ok(HttpResponse::Ok().json(&read(part, None, exec).await));
+    };
+    let command = match action.exec(runtime) {
+        Ok(command) => command,
+        // Unreachable after `validate`, kept so a command is never built from a
+        // value this build refused.
+        Err(issue) => return Ok(refuse(&state, &gated, &what, issue).await),
     };
 
     // Recorded before it runs; the subject is the account, the detail the
@@ -237,7 +280,13 @@ pub async fn act(
         .detail(&what)
         .record(&state.db)
         .await;
-    let result = run_local(&action.exec(runtime), exec).await;
+    // A pull or a run fetches image layers and is bounded like every other
+    // command here, by `[remote_access.exec]`: the limit is the operator's
+    // trade against the agent's workers, not this endpoint's to raise. One that
+    // runs past it answers with no `exit_code`, which the panel reports.
+    // TODO: start a pull detached and poll it, as `/benchmark` does a run, so a
+    // large image does not need the operator to raise the limit.
+    let result = run_local(&command, exec).await;
     let failed = match &result {
         Some(output) if output.exit_code == Some(0) => None,
         Some(output) => Some(format!("exit {:?}", output.exit_code)),
@@ -254,9 +303,11 @@ pub async fn act(
 
     // The refreshed listing comes back with the answer, in one round trip: a
     // caller that had to ask again would be asking about a machine that has
-    // since moved, and the page has one object to update either way.
-    let mut response =
-        serde_json::to_value(read(ContainerPart::Containers, None, exec).await).unwrap_or_default();
+    // since moved, and the page has one object to update either way. Which
+    // listing is the part the change was about — an image action answers the
+    // images, a container one the containers.
+    let part = refresh_part(&action);
+    let mut response = serde_json::to_value(read(part, None, exec).await).unwrap_or_default();
     if let Some(output) = result
         && let Some(object) = response.as_object_mut()
     {
@@ -267,6 +318,38 @@ pub async fn act(
         );
     }
     Ok(HttpResponse::Ok().json(&response))
+}
+
+/// Refuses a value before anything runs, and records the refusal like any
+/// other denied machine request.
+async fn refuse(
+    state: &AppState,
+    gated: &machine::Gated,
+    what: &str,
+    issue: ContainerActionError,
+) -> HttpResponse {
+    Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
+        .subject(&gated.caller.username)
+        .remote_ip(gated.remote_ip.clone())
+        .detail(format!("{what}: {}", issue.code()))
+        .record(&state.db)
+        .await;
+    HttpResponse::BadRequest().json(&json!({ "error": "invalid_input", "issue": issue }))
+}
+
+/// Which listing a change leaves stale, so the answer carries the part the
+/// change was about rather than one the page would then have to refresh.
+fn refresh_part(action: &ContainerAction) -> ContainerPart {
+    match action {
+        ContainerAction::RemoveImage { .. }
+        | ContainerAction::PullImage { .. }
+        | ContainerAction::PruneImages { .. } => ContainerPart::Images,
+        // `system prune` and `run` are about containers: the first removes
+        // stopped ones and the second makes one, so the container listing is
+        // what changed. An image may have been pulled with the run, and the
+        // page's own refresh is what catches that.
+        _ => ContainerPart::Containers,
+    }
 }
 
 /// What the audit row says. The action and the container, never a command
@@ -282,6 +365,19 @@ fn action_subject(action: &ContainerAction) -> String {
         }
         ContainerAction::PruneContainers => "prune containers".to_owned(),
         ContainerAction::PruneVolumes => "prune volumes".to_owned(),
+        ContainerAction::RemoveImage { id } => format!("remove image {id}"),
+        ContainerAction::PullImage { reference } => format!("pull {reference}"),
+        ContainerAction::PruneImages { all_unused } => {
+            format!("prune images{}", if *all_unused { " -a" } else { "" })
+        }
+        ContainerAction::PruneSystem { .. } => "prune system".to_owned(),
+        ContainerAction::Run { image, name, .. } => {
+            if name.is_empty() {
+                format!("run {image}")
+            } else {
+                format!("run {name} from {image}")
+            }
+        }
     }
 }
 
@@ -295,6 +391,7 @@ async fn read(part: ContainerPart, id: Option<&str>, exec: &Limits) -> Container
         runtime: None,
         containers: Vec::new(),
         images: Vec::new(),
+        unused_tagged: None,
         usage: None,
         logs: None,
     };
@@ -364,7 +461,10 @@ async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>, exec: &
         ContainerPart::Containers => [ContainerCmd::Ps, ContainerCmd::Stats]
             .map(|cmd| cmd.exec(ty))
             .to_vec(),
-        ContainerPart::Images => vec![ContainerCmd::Images.exec(ty)],
+        // `ps` rides along for one number the image prune dialog shows: whether
+        // a tagged image is in use, when the runtime did not say. It is a
+        // listing, not a `system df`, so it is cheap beside the image store.
+        ContainerPart::Images => vec![ContainerCmd::Images.exec(ty), ContainerCmd::Ps.exec(ty)],
         ContainerPart::Usage => vec![ContainerCmd::Df.exec(ty)],
         // `read` refuses this part without an id, so an empty one here is the
         // path that never runs rather than a container named "".
@@ -485,6 +585,7 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
             }),
             containers: Vec::new(),
             images: Vec::new(),
+            unused_tagged: None,
             usage: None,
             logs: None,
         }
@@ -509,12 +610,13 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
 
     let mut containers = Vec::new();
     let mut images = Vec::new();
+    let mut unused_tagged = None;
     let mut usage = None;
     let mut logs = None;
 
     match part {
         ContainerPart::Containers => {
-            let listed = sbm_parser::container::parse_docker_ps(&segments[1]);
+            let listed = parse_ps(ty, &segments[1]);
             let stats_rows = sbm_parser::container::parse_stats_rows(&segments[2]);
             containers = listed
                 .into_iter()
@@ -527,7 +629,23 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
                 .collect();
         }
         ContainerPart::Images => {
-            images = sbm_parser::container::parse_images(&segments[1], ty);
+            let parsed = sbm_parser::container::parse_images(&segments[1], ty);
+            // The containers' image references, to confirm the use of a tagged
+            // image the runtime reported no count for. `None` when one could
+            // not be confirmed, which the dialog draws as unknown.
+            let references: Vec<String> = parse_ps(ty, &segments[2])
+                .into_iter()
+                .filter_map(|container| container.image)
+                .collect();
+            unused_tagged =
+                sbm_parser::container::count_unused_tagged_images(&parsed, &references);
+            images = parsed
+                .into_iter()
+                .map(|image| ImageRow {
+                    dangling: image.is_dangling(),
+                    image,
+                })
+                .collect();
         }
         ContainerPart::Usage => {
             usage = sbm_parser::container::parse_disk_usage(&segments[1]);
@@ -549,8 +667,22 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
         }),
         containers,
         images,
+        unused_tagged,
         usage,
         logs,
+    }
+}
+
+/// `ps` in the dialect of the runtime that answered.
+///
+/// The two print different rows — Docker a tab-separated table, Podman one JSON
+/// object per line — so the parser follows the runtime, not this build's
+/// default. Reading a Podman listing as Docker's skips every row, which is how
+/// a Podman host came to show no containers at all.
+fn parse_ps(ty: ContainerType, raw: &str) -> Vec<Container> {
+    match ty {
+        ContainerType::Docker => sbm_parser::container::parse_docker_ps(raw),
+        ContainerType::Podman => sbm_parser::container::parse_podman_ps(raw),
     }
 }
 
@@ -562,7 +694,7 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
 /// *not* a reason to try the other runtime — the runtime is there, and the
 /// command the user asked for should fail with the machine's own words about
 /// why rather than with the other runtime's absence.
-async fn detect_runtime(exec: &Limits) -> Option<ContainerType> {
+pub(crate) async fn detect_runtime(exec: &Limits) -> Option<ContainerType> {
     if system_type() == sbm_parser::SystemType::Windows {
         return None;
     }

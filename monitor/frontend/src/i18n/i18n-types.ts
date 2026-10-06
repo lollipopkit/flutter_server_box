@@ -731,6 +731,158 @@ type RootTranslation = {
 	 */
 	containerUsageUnknown: string
 	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​f​a​i​l​e​d​ ​(​e​x​i​t​ ​{​c​o​d​e​}​)​.
+	 * @param {unknown} code
+	 */
+	containerActionFailed: RequiredParams<'code'>
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​w​i​t​h​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​t​i​m​e​ ​l​i​m​i​t​.
+	 */
+	containerActionUnfinished: string
+	/**
+	 * A​ ​v​a​l​u​e​ ​c​o​n​t​a​i​n​s​ ​a​ ​c​o​n​t​r​o​l​ ​c​h​a​r​a​c​t​e​r​ ​(​a​ ​n​e​w​l​i​n​e​ ​o​r​ ​a​ ​N​U​L​)​.
+	 */
+	containerErrControlCharacter: string
+	/**
+	 * A​ ​r​e​q​u​i​r​e​d​ ​v​a​l​u​e​ ​i​s​ ​e​m​p​t​y​.
+	 */
+	containerErrEmpty: string
+	/**
+	 * T​h​e​ ​e​x​t​r​a​ ​a​r​g​u​m​e​n​t​s​ ​a​r​e​ ​n​o​t​ ​q​u​o​t​e​d​ ​c​o​r​r​e​c​t​l​y​.
+	 */
+	containerErrInvalidArgs: string
+	/**
+	 * T​h​e​ ​c​o​n​t​a​i​n​e​r​ ​n​a​m​e​ ​i​s​ ​n​o​t​ ​o​n​e​ ​a​ ​r​u​n​t​i​m​e​ ​a​c​c​e​p​t​s​.
+	 */
+	containerErrInvalidName: string
+	/**
+	 * T​h​e​ ​i​m​a​g​e​ ​r​e​f​e​r​e​n​c​e​ ​c​o​n​t​a​i​n​s​ ​a​ ​c​h​a​r​a​c​t​e​r​ ​i​t​ ​c​a​n​n​o​t​.
+	 */
+	containerErrInvalidReference: string
+	/**
+	 * A​ ​v​a​l​u​e​ ​b​e​g​i​n​s​ ​w​i​t​h​ ​a​ ​d​a​s​h​,​ ​w​h​i​c​h​ ​t​h​e​ ​r​u​n​t​i​m​e​ ​w​o​u​l​d​ ​r​e​a​d​ ​a​s​ ​a​n​ ​o​p​t​i​o​n​.
+	 */
+	containerErrLeadingDash: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​t​o​ ​r​u​n​ ​a​ ​s​h​e​l​l​ ​i​n​.
+	 */
+	containerErrNoRuntime: string
+	/**
+	 * A​ ​v​a​l​u​e​ ​i​s​ ​t​o​o​ ​l​o​n​g​.
+	 */
+	containerErrTooLong: string
+	/**
+	 * O​p​e​n​ ​s​h​e​l​l
+	 */
+	containerOpenShell: string
+	/**
+	 * A​l​l​ ​u​n​u​s​e​d​ ​i​m​a​g​e​s​,​ ​n​o​t​ ​o​n​l​y​ ​d​a​n​g​l​i​n​g
+	 */
+	containerPruneAllUnused: string
+	/**
+	 * A​l​l​ ​u​n​u​s​e​d​ ​i​m​a​g​e​s​ ​(​-​a​)
+	 */
+	containerPruneAllUnusedImages: string
+	/**
+	 * D​a​n​g​l​i​n​g
+	 */
+	containerPruneDangling: string
+	/**
+	 * P​r​u​n​e​ ​i​m​a​g​e​s
+	 */
+	containerPruneImages: string
+	/**
+	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​i​m​a​g​e​s​?​ ​D​a​n​g​l​i​n​g​ ​i​m​a​g​e​s​ ​a​l​w​a​y​s​ ​g​o​;​ ​t​h​e​ ​b​o​x​ ​b​e​l​o​w​ ​w​i​d​e​n​s​ ​i​t​ ​t​o​ ​e​v​e​r​y​ ​u​n​u​s​e​d​ ​i​m​a​g​e​.
+	 */
+	containerPruneImagesConfirm: string
+	/**
+	 * P​r​u​n​e​ ​s​y​s​t​e​m
+	 */
+	containerPruneSystem: string
+	/**
+	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​c​o​n​t​a​i​n​e​r​s​,​ ​n​e​t​w​o​r​k​s​ ​a​n​d​ ​i​m​a​g​e​s​?​ ​V​o​l​u​m​e​s​ ​a​r​e​ ​k​e​p​t​ ​u​n​l​e​s​s​ ​t​i​c​k​e​d​ ​b​e​l​o​w​.
+	 */
+	containerPruneSystemConfirm: string
+	/**
+	 * I​n​c​l​u​d​e​ ​v​o​l​u​m​e​s​ ​(​-​-​v​o​l​u​m​e​s​)
+	 */
+	containerPruneVolumesOption: string
+	/**
+	 * P​u​l​l​ ​i​m​a​g​e
+	 */
+	containerPullImage: string
+	/**
+	 * F​e​t​c​h​e​d​ ​f​r​o​m​ ​t​h​e​ ​r​e​g​i​s​t​r​y​ ​a​n​d​ ​r​e​p​l​a​c​e​s​ ​t​h​e​ ​l​o​c​a​l​ ​o​n​e​.
+	 */
+	containerPullImageHint: string
+	/**
+	 * R​e​m​o​v​e​ ​i​m​a​g​e​ ​{​n​a​m​e​}​?
+	 * @param {unknown} name
+	 */
+	containerRemoveImageConfirm: RequiredParams<'name'>
+	/**
+	 * R​u​n​ ​c​o​n​t​a​i​n​e​r
+	 */
+	containerRun: string
+	/**
+	 * E​x​t​r​a​ ​a​r​g​u​m​e​n​t​s
+	 */
+	containerRunArgs: string
+	/**
+	 * I​m​a​g​e
+	 */
+	containerRunImage: string
+	/**
+	 * N​a​m​e
+	 */
+	containerRunName: string
+	/**
+	 * U​n​u​s​e​d​ ​t​a​g​g​e​d
+	 */
+	containerUnusedTagged: string
+	/**
+	 * i​p​e​r​f
+	 */
+	iperf: string
+	/**
+	 * H​o​s​t
+	 */
+	iperfHost: string
+	/**
+	 * P​o​r​t
+	 */
+	iperfPort: string
+	/**
+	 * S​t​a​r​t
+	 */
+	iperfStart: string
+	/**
+	 * E​n​t​e​r​ ​a​ ​h​o​s​t​.
+	 */
+	iperfErrEmptyHost: string
+	/**
+	 * I​n​v​a​l​i​d​ ​h​o​s​t​ ​f​o​r​m​a​t​.​ ​O​n​l​y​ ​I​P​v​4​,​ ​I​P​v​6​,​ ​a​n​d​ ​d​o​m​a​i​n​ ​c​h​a​r​a​c​t​e​r​s​ ​a​r​e​ ​a​l​l​o​w​e​d​.
+	 */
+	iperfErrInvalidHost: string
+	/**
+	 * I​n​v​a​l​i​d​:​ ​P​o​r​t
+	 */
+	iperfErrInvalidPort: string
+	/**
+	 * E​x​i​t​ ​s​t​a​t​u​s​:​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	targetExitStatus: RequiredParams<'code'>
+	/**
+	 * C​u​s​t​o​m​ ​c​o​m​m​a​n​d​s
+	 */
+	customCmd: string
+	/**
+	 * {​c​o​u​n​t​}​ ​c​o​m​m​a​n​d​s
+	 * @param {unknown} count
+	 */
+	customCmdCount: RequiredParams<'count'>
+	/**
 	 * C​o​n​t​a​i​n​e​r​s
 	 */
 	containers: string
@@ -1485,6 +1637,10 @@ type RootTranslation = {
 	 * S​o​m​e​ ​o​u​t​p​u​t​ ​w​a​s​ ​l​o​s​t​ ​w​h​i​l​e​ ​d​i​s​c​o​n​n​e​c​t​e​d​.
 	 */
 	terminalOutputLost: string
+	/**
+	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
+	 */
+	terminalLoadFailed: string
 	/**
 	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
@@ -6164,6 +6320,154 @@ export type TranslationFunctions = {
 	 */
 	containerUsageUnknown: () => LocalizedString
 	/**
+	 * The command failed (exit {code}).
+	 */
+	containerActionFailed: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * The command did not finish within the agent's time limit.
+	 */
+	containerActionUnfinished: () => LocalizedString
+	/**
+	 * A value contains a control character (a newline or a NUL).
+	 */
+	containerErrControlCharacter: () => LocalizedString
+	/**
+	 * A required value is empty.
+	 */
+	containerErrEmpty: () => LocalizedString
+	/**
+	 * The extra arguments are not quoted correctly.
+	 */
+	containerErrInvalidArgs: () => LocalizedString
+	/**
+	 * The container name is not one a runtime accepts.
+	 */
+	containerErrInvalidName: () => LocalizedString
+	/**
+	 * The image reference contains a character it cannot.
+	 */
+	containerErrInvalidReference: () => LocalizedString
+	/**
+	 * A value begins with a dash, which the runtime would read as an option.
+	 */
+	containerErrLeadingDash: () => LocalizedString
+	/**
+	 * This machine has no container runtime to run a shell in.
+	 */
+	containerErrNoRuntime: () => LocalizedString
+	/**
+	 * A value is too long.
+	 */
+	containerErrTooLong: () => LocalizedString
+	/**
+	 * Open shell
+	 */
+	containerOpenShell: () => LocalizedString
+	/**
+	 * All unused images, not only dangling
+	 */
+	containerPruneAllUnused: () => LocalizedString
+	/**
+	 * All unused images (-a)
+	 */
+	containerPruneAllUnusedImages: () => LocalizedString
+	/**
+	 * Dangling
+	 */
+	containerPruneDangling: () => LocalizedString
+	/**
+	 * Prune images
+	 */
+	containerPruneImages: () => LocalizedString
+	/**
+	 * Remove unused images? Dangling images always go; the box below widens it to every unused image.
+	 */
+	containerPruneImagesConfirm: () => LocalizedString
+	/**
+	 * Prune system
+	 */
+	containerPruneSystem: () => LocalizedString
+	/**
+	 * Remove unused containers, networks and images? Volumes are kept unless ticked below.
+	 */
+	containerPruneSystemConfirm: () => LocalizedString
+	/**
+	 * Include volumes (--volumes)
+	 */
+	containerPruneVolumesOption: () => LocalizedString
+	/**
+	 * Pull image
+	 */
+	containerPullImage: () => LocalizedString
+	/**
+	 * Fetched from the registry and replaces the local one.
+	 */
+	containerPullImageHint: () => LocalizedString
+	/**
+	 * Remove image {name}?
+	 */
+	containerRemoveImageConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Run container
+	 */
+	containerRun: () => LocalizedString
+	/**
+	 * Extra arguments
+	 */
+	containerRunArgs: () => LocalizedString
+	/**
+	 * Image
+	 */
+	containerRunImage: () => LocalizedString
+	/**
+	 * Name
+	 */
+	containerRunName: () => LocalizedString
+	/**
+	 * Unused tagged
+	 */
+	containerUnusedTagged: () => LocalizedString
+	/**
+	 * iperf
+	 */
+	iperf: () => LocalizedString
+	/**
+	 * Host
+	 */
+	iperfHost: () => LocalizedString
+	/**
+	 * Port
+	 */
+	iperfPort: () => LocalizedString
+	/**
+	 * Start
+	 */
+	iperfStart: () => LocalizedString
+	/**
+	 * Enter a host.
+	 */
+	iperfErrEmptyHost: () => LocalizedString
+	/**
+	 * Invalid host format. Only IPv4, IPv6, and domain characters are allowed.
+	 */
+	iperfErrInvalidHost: () => LocalizedString
+	/**
+	 * Invalid: Port
+	 */
+	iperfErrInvalidPort: () => LocalizedString
+	/**
+	 * Exit status: {code}
+	 */
+	targetExitStatus: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Custom commands
+	 */
+	customCmd: () => LocalizedString
+	/**
+	 * {count} commands
+	 */
+	customCmdCount: (arg: { count: unknown }) => LocalizedString
+	/**
 	 * Containers
 	 */
 	containers: () => LocalizedString
@@ -6895,6 +7199,10 @@ export type TranslationFunctions = {
 	 * Some output was lost while disconnected.
 	 */
 	terminalOutputLost: () => LocalizedString
+	/**
+	 * The terminal could not be loaded.
+	 */
+	terminalLoadFailed: () => LocalizedString
 	/**
 	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
 	 */

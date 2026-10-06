@@ -16,9 +16,11 @@
     RefreshCw,
     Power,
     ServerCog,
+    Zap,
   } from '@lucide/svelte'
-  import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Card, IconButton, Modal, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
+  import IperfModal from '../components/IperfModal.svelte'
   import LineChart from '../components/LineChart.svelte'
   import LoginForm from '../components/LoginForm.svelte'
   import OsIcon from '../components/OsIcon.svelte'
@@ -36,7 +38,7 @@
   import { LL } from '../i18n/i18n-svelte'
   import { Poller } from '../lib/poller.svelte'
   import { fly } from 'svelte/transition'
-  import type { HistoryPoint } from '../types'
+  import type { CustomCmdOutput, HistoryPoint } from '../types'
 
   const metrics = new Poller(api.getMetrics, 5000)
 
@@ -54,14 +56,37 @@
   /// for one from before them.
   const access = $derived(dashboardAccess(capabilities))
   const canPower = $derived(machineAccess(capabilities, 'power'))
+  /// An iperf run opens a terminal on the machine, so it needs the agent to
+  /// understand the `iperf` target and the account to hold `shell`.
+  const canIperf = $derived(machineAccess(capabilities, 'iperf', 'shell'))
   /// The machine-management pages; the entry opens the first, and their tab
   /// bar reaches the rest.
   const features = $derived(enabledFeatures(capabilities))
   let powerOpen = $state(false)
+  let iperfOpen = $state(false)
+  /// The custom command whose full output is open in the dialog, if any.
+  let cmdDetail = $state<CustomCmdOutput | null>(null)
   /// Whether the cards can be rearranged: the order is the agent's, shared by
   /// everyone who views it, so changing it is an administrator's call.
   /// Unknown is allowed — the agent refuses for itself.
   const canArrange = $derived(isAdmin(capabilities) !== false)
+
+  /// A custom command's output as a card row shows it: one trailing line
+  /// ending is dropped.
+  ///
+  /// The agent serves the output exactly as the command printed it, so an
+  /// `echo` normally ends in a newline; counting that as a second line would
+  /// make every such row open a dialog holding the line the row already
+  /// shows. Leading and inner blank lines stay, and the full output is what
+  /// the dialog draws.
+  function displayOutput(output: string): string {
+    return output.replace(/\r?\n$/, '')
+  }
+
+  /// The first line of a custom command's output, for a one-line card row.
+  function firstLine(output: string): string {
+    return displayOutput(output).split('\n')[0]
+  }
 
   // Home-grid card order, synced server-side (not localStorage) so every
   // client viewing this agent sees the same arrangement — see card-order.ts
@@ -264,6 +289,11 @@
         {#if access.files}
           <IconButton label={$LL.files()} onclick={() => layout.navigate('files')}>
             <FolderOpen class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if canIperf}
+          <IconButton label={$LL.iperf()} onclick={() => (iperfOpen = true)}>
+            <Zap class="w-4 h-4" />
           </IconButton>
         {/if}
         {#if features.length > 0}
@@ -540,6 +570,44 @@
         </div>
       </Card>
     {/if}
+
+    <!-- The user's custom commands and their latest output, from the extended
+         cycle. Absent when there are none, like the app's card; each row is
+         one line, and a longer output opens in the dialog below. -->
+    {#if m?.custom_cmds?.length}
+      <Card class="mt-8">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="text-lg font-semibold font-display text-fg-strong">{$LL.customCmd()}</h3>
+          <button
+            type="button"
+            class="text-sm text-primary hover:underline cursor-pointer"
+            onclick={() => layout.navigate('server-settings')}
+          >
+            {$LL.serverSettings()}
+          </button>
+        </div>
+        <div class="divide-y divide-line">
+          {#each m.custom_cmds as cmd (cmd.name)}
+            {@const multi = displayOutput(cmd.output).includes('\n')}
+            <!-- A row is one line; a multi-line output is what the dialog is
+                 for. The text is the machine's own output, so it is drawn as
+                 text and never as markup. -->
+            <button
+              type="button"
+              class="flex w-full items-center justify-between gap-4 py-2 text-left {multi
+                ? 'cursor-pointer hover:bg-soft'
+                : 'cursor-default'}"
+              disabled={!multi}
+              onclick={() => (cmdDetail = multi ? cmd : null)}
+            >
+              <span class="text-sm text-muted-fg truncate shrink-0">{cmd.name}</span>
+              <span class="text-sm font-medium text-fg truncate">{firstLine(cmd.output)}</span>
+            </button>
+          {/each}
+        </div>
+        <p class="text-xs text-faint-fg mt-3">{$LL.customCmdCount({ count: m.custom_cmds.length })}</p>
+      </Card>
+    {/if}
     {/if}
       </div>
     {/key}
@@ -548,3 +616,21 @@
 {/if}
 
 <PowerModal open={powerOpen} onclose={() => (powerOpen = false)} />
+
+{#if iperfOpen}
+  <IperfModal onclose={() => (iperfOpen = false)} />
+{/if}
+
+<!-- A custom command's full output. It is the machine's own text, so it is
+     drawn as text in a `pre` — never as HTML or Markdown. -->
+{#if cmdDetail}
+  <Modal open title={cmdDetail.name} onclose={() => (cmdDetail = null)}>
+    <div class="space-y-4">
+      <pre
+        class="max-h-96 overflow-auto rounded border border-line bg-surface p-3 text-xs font-mono text-fg whitespace-pre-wrap break-all">{cmdDetail.output}</pre>
+      <div class="flex justify-end">
+        <Button variant="secondary" onclick={() => (cmdDetail = null)}>{$LL.close()}</Button>
+      </div>
+    </div>
+  </Modal>
+{/if}

@@ -92,22 +92,13 @@ fn login_shell() -> String {
 }
 
 impl LocalShell {
-    /// Starts a shell on a PTY of the given size.
+    /// Starts a login shell on a PTY of the given size.
     ///
     /// Runs as the agent's own user, in its home directory. No privilege
     /// change is attempted: dropping privileges here would only matter if the
     /// agent were root, and the answer to that is to not run it as root — see
     /// the module comment.
     pub fn spawn(term: &str, cols: u16, rows: u16) -> Result<(Self, mpsc::Receiver<ShellEvent>), SpawnError> {
-        let pty = native_pty_system()
-            .openpty(PtySize {
-                rows,
-                cols,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .map_err(|e| SpawnError(e.to_string()))?;
-
         let shell = login_shell();
         let mut cmd = CommandBuilder::new(&shell);
         // A login shell, so the user's profile is sourced and the session
@@ -120,6 +111,70 @@ impl LocalShell {
         // name a different shell entirely, and anything inside the session
         // that consults it would then disagree with the shell it is running in
         cmd.env("SHELL", &shell);
+        Self::spawn_with(cmd, cols, rows)
+    }
+
+    /// Starts one command on a PTY.
+    ///
+    /// The command comes from `sbm_parser` (`container::shell_command` or
+    /// `iperf::client_command`), so it is a fixed string this agent built
+    /// rather than anything a caller typed. No `SHELL` is exported: the shell
+    /// that runs inside the container is the container's own, and the agent's
+    /// would be a lie about it.
+    ///
+    /// Unix runs it through `/bin/sh -c`. Windows runs it through
+    /// `cmd.exe /C`, which is the shell `iperf::client_command` was written
+    /// for (its line is unquoted, since a Unix shell and `cmd` quote
+    /// differently). A container shell cannot reach this on Windows:
+    /// `api::containers::detect_runtime` answers `None` there, so no container
+    /// target is ever opened. The command is passed as a **single argument**:
+    /// portable_pty builds the Windows command line by quoting each argument
+    /// on its own and handing the whole line to `CreateProcessW`, and it is
+    /// `cmd.exe`, not that argv quoting, that decides where the command after
+    /// `/C` ends — so one argument keeps the command whole.
+    pub fn spawn_command(
+        term: &str,
+        cols: u16,
+        rows: u16,
+        command: &str,
+    ) -> Result<(Self, mpsc::Receiver<ShellEvent>), SpawnError> {
+        #[cfg(windows)]
+        let mut cmd = {
+            let mut cmd = CommandBuilder::new("cmd.exe");
+            cmd.arg("/C");
+            cmd.arg(command);
+            cmd
+        };
+        #[cfg(not(windows))]
+        let mut cmd = {
+            let mut cmd = CommandBuilder::new("/bin/sh");
+            cmd.arg("-c");
+            cmd.arg(command);
+            cmd
+        };
+        cmd.env("TERM", term);
+        Self::spawn_with(cmd, cols, rows)
+    }
+
+    /// Opens the PTY, starts [cmd] on it, and wires the reader and reaper.
+    ///
+    /// The shared half of the two constructors: what differs between a login
+    /// shell and one command is only how the child is described.
+    fn spawn_with(
+        cmd: CommandBuilder,
+        cols: u16,
+        rows: u16,
+    ) -> Result<(Self, mpsc::Receiver<ShellEvent>), SpawnError> {
+        let pty = native_pty_system()
+            .openpty(PtySize {
+                rows,
+                cols,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .map_err(|e| SpawnError(e.to_string()))?;
+
+        let mut cmd = cmd;
         if let Some(home) = dirs_home() {
             cmd.cwd(home);
         }
@@ -347,6 +402,37 @@ mod tests {
             Some(Some(7)),
             "the terminal must retain the shell's requested exit status"
         );
+    }
+
+    #[tokio::test]
+    async fn a_command_runs_on_the_pty_and_exits() {
+        // One fixed command, not a login shell: `/bin/sh -c` (the container
+        // and iperf targets), `cmd.exe /C` on Windows (iperf). `echo` is the
+        // same in both. ConPTY holds the output back until its cursor
+        // position query is answered, as the panel's xterm.js does. The
+        // marker is matched with its line ending: ConPTY also puts the command
+        // line in the window title, which ends in BEL rather than CR.
+        let (shell, mut rx) =
+            LocalShell::spawn_command("xterm-256color", 80, 24, "echo command-pty-marker").unwrap();
+
+        let mut seen = answer_cursor_position_query(&shell, &mut rx).await;
+        let found = seen.contains("command-pty-marker\r")
+            || tokio::time::timeout(std::time::Duration::from_secs(15), async {
+                while let Some(event) = rx.recv().await {
+                    if let ShellEvent::Data(data) = event {
+                        seen.push_str(&String::from_utf8_lossy(&data));
+                        if seen.contains("command-pty-marker\r") {
+                            return true;
+                        }
+                    }
+                }
+                false
+            })
+            .await
+            .unwrap_or(false);
+
+        assert!(found, "the command should run on the PTY; saw {seen:?}");
+        shell.kill();
     }
 
     #[test]

@@ -430,3 +430,20 @@ String readoutCountNote(int total, String what) => total <= kReadoutCardRows
 /// The footer line: the parts a card has, in the order it has them.
 String readoutFooter(List<String> parts) =>
     parts.where((e) => e.isNotEmpty).join(' · ');
+
+/// A command's output split into the lines a card row draws.
+///
+/// **One trailing line ending is dropped first.** The output is served exactly
+/// as the command printed it, so an `echo` ends in `\n`; counting that as a
+/// second line would make every such row tappable and open a dialog holding
+/// the one line the row already shows. Only the ending at the very end goes —
+/// leading and inner blank lines stay, and a `\r\n` ending goes as a whole.
+List<String> readoutCommandLines(String output) {
+  var text = output;
+  if (text.endsWith('\r\n')) {
+    text = text.substring(0, text.length - 2);
+  } else if (text.endsWith('\n')) {
+    text = text.substring(0, text.length - 1);
+  }
+  return text.split('\n');
+}

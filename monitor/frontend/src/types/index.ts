@@ -113,12 +113,17 @@ export interface Capabilities {
 }
 
 /// A machine-management page the agent may serve (`api::machine::FEATURES`).
+///
+/// Not every entry is a page: `container_exec` is the terminal's `target`, an
+/// action the panel offers only where the agent lists it.
 export type MachineFeature =
   | 'power'
   | 'process'
   | 'services'
   | 'cron'
   | 'containers'
+  | 'container_exec'
+  | 'iperf'
   | 'benchmark'
   | 'system_users'
   | 'firewall'
@@ -916,6 +921,10 @@ export interface ContainerImage {
   created_at: string | null
   /// Podman's creation time in Unix seconds.
   created: number | null
+  /// `ContainerImage::is_dangling` — no name to lose (`<none>:<none>`). Sent
+  /// by the agent rather than derived here: the panel decides nothing about a
+  /// runtime.
+  dangling: boolean
 }
 
 export interface ContainerDiskUsage {
@@ -959,16 +968,34 @@ export interface ContainerView {
   runtime: ContainerRuntime | null
   containers: ContainerRow[]
   images: ContainerImage[]
+  /// Tagged images nothing uses, from `count_unused_tagged_images`. `null`
+  /// when the count could not be confirmed — an unknown shown as a number is a
+  /// count wrong by however many images are in use — and for every part but
+  /// `'images'`.
+  unused_tagged: number | null
   usage: ContainerDiskUsage | null
   /// The container's log, for `part: 'logs'`.
   logs: string | null
 }
 
+/// Why an action's values were refused before anything ran
+/// (`sbm_parser::container::ContainerActionError`), as a code the page
+/// phrases. The agent answers `400 {error:"invalid_input", issue:<code>}`.
+export type ContainerIssue =
+  | 'empty'
+  | 'control_character'
+  | 'leading_dash'
+  | 'too_long'
+  | 'invalid_reference'
+  | 'invalid_name'
+  | 'invalid_args'
+
 /// One change to one container.
 ///
 /// An action rather than a command line: the agent composes the command, so a
 /// build that does not implement an action refuses it while deserializing
-/// instead of reaching a shell.
+/// instead of reaching a shell. A `run`'s `args` is the raw text the user
+/// typed; the agent splits it, never this side.
 export type ContainerAction =
   | { action: 'start'; id: string }
   | { action: 'stop'; id: string }
@@ -976,14 +1003,21 @@ export type ContainerAction =
   | { action: 'remove'; id: string; force: boolean }
   | { action: 'prune_containers' }
   | { action: 'prune_volumes' }
+  | { action: 'remove_image'; id: string }
+  | { action: 'pull_image'; reference: string }
+  | { action: 'prune_images'; all_unused: boolean }
+  | { action: 'prune_system'; all_unused_images: boolean; include_volumes: boolean }
+  | { action: 'run'; image: string; name: string; args: string }
 
 /// What a change answered: the listing as it now stands, plus how the command
 /// went.
 export interface ContainerActionResult extends ContainerView {
-  exit_code: number | null
+  /// Absent when the command did not end within the agent's
+  /// `[remote_access.exec]` limit; `null` when it ended without one (killed).
+  exit_code?: number | null
   /// What the runtime printed, with the agent's own scaffolding dropped out of
-  /// it. Empty when the action succeeded quietly.
-  output: string
+  /// it. Absent or `null` when it printed nothing, or did not end.
+  output?: string | null
 }
 
 /// One yabs run's options.

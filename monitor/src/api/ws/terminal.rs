@@ -13,6 +13,19 @@
 //! - **Binary** — PTY bytes, both directions.
 //! - **Text** — control JSON, see [`ClientMsg`] and [`ServerMsg`].
 //!
+//! # Where the shell runs
+//!
+//! `auth: {"kind":"local"}` starts one as the agent's own user, with no sshd.
+//! An optional `target` narrows it: a shell inside a container
+//! (`sbm_parser::container`), by the id its listing gave it, or an iperf
+//! client (`sbm_parser::iperf`), by the host and port a user typed. Both build
+//! their command here, and no frame can carry one. A target with an SSH
+//! credential is refused — that shell would run as the signed-in account, not
+//! as the agent's user these targets run as. Whether an agent understands a
+//! target is `container_exec` or `iperf` in `/capabilities`; an older agent
+//! would ignore the field and open a host shell, so the panel sends one only
+//! where it is listed.
+//!
 //! # Reconnecting
 //!
 //! Sessions survive the WebSocket (`super::session`), and a client reports how
@@ -75,6 +88,10 @@ enum ClientMsg {
     Open {
         user: String,
         auth: AuthPayload,
+        /// Where the shell runs. Absent is the login shell this endpoint has
+        /// always started.
+        #[serde(default)]
+        target: Option<TerminalTarget>,
         #[serde(default = "default_cols")]
         cols: u16,
         #[serde(default = "default_rows")]
@@ -103,6 +120,26 @@ enum ClientMsg {
     },
     /// End the session now, as opposed to just dropping the connection.
     Close,
+}
+
+/// Where a local shell runs, when it is not the agent's own login shell.
+///
+/// One variant, and no variant carries a command: the command is built here
+/// from the id, so a client can name a container but never a command line. An
+/// unknown `kind` fails to parse and is refused — an agent that silently fell
+/// back to a host shell would leave the user believing they are inside a
+/// container. `deny_unknown_fields` closes the same hole for an extra field.
+#[derive(Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum TerminalTarget {
+    /// A shell inside a container, by the id its listing gave it.
+    Container { id: String },
+    /// An iperf client run on this machine, against `host:port`.
+    ///
+    /// The port is a `u32` rather than the `u16` the command takes, so a value
+    /// out of range is refused by `sbm_parser::iperf` — with a code the panel
+    /// phrases — instead of failing to deserialize into a generic bad request.
+    Iperf { host: String, port: u32 },
 }
 
 #[derive(Deserialize)]
@@ -162,6 +199,11 @@ enum ServerMsg<'a> {
     Error {
         code: &'a str,
         message: &'a str,
+        /// A stable issue code, where the panel phrases the refusal in the
+        /// viewer's language rather than showing the message. Absent for
+        /// every other error.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        issue: Option<&'a str>,
     },
     Exit {
         status: Option<u32>,
@@ -475,6 +517,7 @@ async fn on_control(
         ClientMsg::Open {
             user,
             auth,
+            target,
             cols,
             rows,
             term,
@@ -482,11 +525,22 @@ async fn on_control(
             if !claim_idle(phase) {
                 return Some(error_frame("bad_request", "Session already started"));
             }
-            match auth.into_credential() {
+            let credential = auth.into_credential();
+            // A target is a shell as the agent's own user. With an SSH
+            // credential the shell would run as the signed-in account instead,
+            // which is a different thing than the one asked for.
+            if target.is_some() && credential.is_some() {
+                reset_opening(phase);
+                return Some(error_frame(
+                    "bad_request",
+                    "A target runs as the agent's own user, so it cannot be opened with SSH credentials",
+                ));
+            }
+            match credential {
                 Some(credential) => {
                     open(ctx, sink, phase, user, credential, term, cols, rows).await
                 }
-                None => open_local(ctx, sink, phase, term, cols, rows).await,
+                None => open_local(ctx, sink, phase, target, term, cols, rows).await,
             }
         }
         ClientMsg::Attach {
@@ -535,10 +589,17 @@ async fn on_control(
 /// Refused unless the account holds `shell`. The check is
 /// here rather than only in the UI because the UI is not a security boundary:
 /// a client can send this frame whether or not a button was rendered for it.
+///
+/// A [target] narrows what that shell runs: a container's id, from which the
+/// command is built here (`sbm_parser::container::shell_command`). The id is
+/// validated with the same rules the container page's actions use, and the
+/// runtime is detected with the same probe the page runs, so a machine with no
+/// runtime answers `no_container_runtime` rather than starting a host shell.
 async fn open_local(
     ctx: &Rc<ConnCtx>,
     sink: &WsSink,
     phase: &Rc<RefCell<Phase>>,
+    target: Option<TerminalTarget>,
     term: String,
     cols: u16,
     rows: u16,
@@ -556,13 +617,84 @@ async fn open_local(
         return Some(not_permitted(Grant::Shell, why));
     }
 
-    let (shell, events) = match LocalShell::spawn(&term, cols, rows) {
+    // What the audit row calls this session, and what the target contributes
+    // to it. Never the command line.
+    let detail = match &target {
+        None => "shell".to_owned(),
+        Some(TerminalTarget::Container { id }) => format!("container {id}"),
+        Some(TerminalTarget::Iperf { host, port }) => format!("iperf {host}:{port}"),
+    };
+
+    let started = match target {
+        None => LocalShell::spawn(&term, cols, rows),
+        Some(TerminalTarget::Container { id }) => {
+            if let Err(issue) = sbm_parser::container::validate_identifier(&id) {
+                Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
+                    .subject(&ctx.subject)
+                    .remote_ip(ctx.remote_ip.clone())
+                    .detail(format!("container: {}", issue.code()))
+                    .record(&ctx.state.db)
+                    .await;
+                reset_opening(phase);
+                return Some(error_frame("bad_request", &issue.to_string()));
+            }
+            match crate::api::containers::detect_runtime(&ctx.state.remote_access.exec).await {
+                Some(runtime) => LocalShell::spawn_command(
+                    &term,
+                    cols,
+                    rows,
+                    &sbm_parser::container::shell_command(runtime, &id),
+                ),
+                None => {
+                    Event::new(Kind::Terminal, Action::Open, Outcome::Error)
+                        .subject(&ctx.subject)
+                        .remote_ip(ctx.remote_ip.clone())
+                        .detail("container: no runtime")
+                        .record(&ctx.state.db)
+                        .await;
+                    reset_opening(phase);
+                    return Some(error_frame(
+                        "no_container_runtime",
+                        "This machine has no container runtime to run a shell in",
+                    ));
+                }
+            }
+        }
+        Some(TerminalTarget::Iperf { host, port }) => {
+            // The port first, then the host: `client_command` takes the `u16`
+            // `valid_port` answers with, and validates the host again itself.
+            let command = sbm_parser::iperf::valid_port(&port.to_string())
+                .ok_or(sbm_parser::iperf::IperfError::InvalidPort)
+                .and_then(|port| sbm_parser::iperf::client_command(&host, port));
+            match command {
+                Ok(command) => LocalShell::spawn_command(&term, cols, rows, &command),
+                Err(issue) => {
+                    Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
+                        .subject(&ctx.subject)
+                        .remote_ip(ctx.remote_ip.clone())
+                        .detail(format!("iperf: {}", issue.code()))
+                        .record(&ctx.state.db)
+                        .await;
+                    reset_opening(phase);
+                    // The panel phrases the issue itself; `invalid_input` is
+                    // the code that tells it to.
+                    return Some(error_frame_issue(
+                        "invalid_input",
+                        &issue.to_string(),
+                        issue.code(),
+                    ));
+                }
+            }
+        }
+    };
+
+    let (shell, events) = match started {
         Ok(started) => started,
         Err(e) => {
             Event::new(Kind::Terminal, Action::Open, Outcome::Error)
                 .subject(&ctx.subject)
                 .remote_ip(ctx.remote_ip.clone())
-                .detail("spawn failed")
+                .detail(format!("{detail}: spawn failed"))
                 .record(&ctx.state.db)
                 .await;
             reset_opening(phase);
@@ -654,7 +786,7 @@ async fn open_local(
         .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .ssh_user(&user)
-        .detail("shell")
+        .detail(&detail)
         .record(&ctx.state.db)
         .await;
 
@@ -1066,13 +1198,10 @@ async fn attach(
         .await;
     if truncated {
         let _ = sink
-            .send(
-                ServerMsg::Error {
-                    code: "gap_truncated",
-                    message: "Some output was lost while disconnected",
-                }
-                .frame(),
-            )
+            .send(error_frame(
+                "gap_truncated",
+                "Some output was lost while disconnected",
+            ))
             .await;
     }
     if !payload.is_empty() {
@@ -1164,14 +1293,7 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
             let sent = match output {
                 SessionOutput::Data(data) => sink.send(Message::Binary(Bytes::from(data))).await,
                 SessionOutput::Error(message) => {
-                    sink.send(
-                        ServerMsg::Error {
-                            code: "ssh_error",
-                            message: &message,
-                        }
-                        .frame(),
-                    )
-                    .await
+                    sink.send(error_frame("ssh_error", &message)).await
                 }
                 SessionOutput::Exit(status) => {
                     let _ = sink.send(ServerMsg::Exit { status }.frame()).await;
@@ -1183,13 +1305,10 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
                 }
                 SessionOutput::Revoked(code) => {
                     let _ = sink
-                        .send(
-                            ServerMsg::Error {
-                                code,
-                                message: "This account may no longer use this terminal",
-                            }
-                            .frame(),
-                        )
+                        .send(error_frame(
+                            code,
+                            "This account may no longer use this terminal",
+                        ))
                         .await;
                     let _ = sink
                         .send(Message::Close(Some(CloseCode::Normal.into())))
@@ -1199,13 +1318,10 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
                 }
                 SessionOutput::ReplayRequired => {
                     let _ = sink
-                        .send(
-                            ServerMsg::Error {
-                                code: "output_lagged",
-                                message: "Terminal output fell behind; reconnecting to replay it",
-                            }
-                            .frame(),
-                        )
+                        .send(error_frame(
+                            "output_lagged",
+                            "Terminal output fell behind; reconnecting to replay it",
+                        ))
                         .await;
                     let _ = sink
                         .send(Message::Close(Some(CloseCode::Normal.into())))
@@ -1229,13 +1345,10 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
             // tabs (which share sessionStorage, handle included) would trade
             // it back and forth forever.
             let _ = sink
-                .send(
-                    ServerMsg::Error {
-                        code: "superseded",
-                        message: "This terminal was taken over by another connection",
-                    }
-                    .frame(),
-                )
+                .send(error_frame(
+                    "superseded",
+                    "This terminal was taken over by another connection",
+                ))
                 .await;
             let _ = sink
                 .send(Message::Close(Some(CloseCode::Normal.into())))
@@ -1270,7 +1383,23 @@ async fn fail(ctx: &Rc<ConnCtx>, user: &str, error: &SshError) -> Message {
 }
 
 fn error_frame(code: &str, message: &str) -> Message {
-    ServerMsg::Error { code, message }.frame()
+    ServerMsg::Error {
+        code,
+        message,
+        issue: None,
+    }
+    .frame()
+}
+
+/// A refusal a client is expected to phrase itself: the message is a fallback,
+/// the issue is the code the panel translates.
+fn error_frame_issue(code: &str, message: &str, issue: &str) -> Message {
+    ServerMsg::Error {
+        code,
+        message,
+        issue: Some(issue),
+    }
+    .frame()
 }
 
 /// Drops sessions nobody came back for.
@@ -1371,6 +1500,64 @@ mod tests {
     }
 
     #[test]
+    fn an_open_target_names_a_container_and_nothing_else() {
+        let ClientMsg::Open { target, .. } = parse(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"abc"}}"#,
+        ) else {
+            panic!("expected open");
+        };
+        assert!(matches!(
+            target,
+            Some(TerminalTarget::Container { id }) if id == "abc"
+        ));
+
+        // An open with no target is the login shell, unchanged.
+        let ClientMsg::Open { target, .. } =
+            parse(r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"}}"#)
+        else {
+            panic!("expected open");
+        };
+        assert!(target.is_none());
+
+        // An unknown kind is refused rather than ignored: falling back to a
+        // host shell would leave the user thinking they are in a container.
+        assert!(serde_json::from_str::<ClientMsg>(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"vm","id":"abc"}}"#
+        )
+        .is_err());
+        // And a target carries no command: an extra field is refused too.
+        assert!(serde_json::from_str::<ClientMsg>(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"abc","cmd":"rm -rf /"}}"#
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn an_open_target_can_name_an_iperf_host() {
+        let ClientMsg::Open { target, .. } = parse(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":5201}}"#,
+        ) else {
+            panic!("expected open");
+        };
+        assert!(matches!(
+            target,
+            Some(TerminalTarget::Iperf { host, port }) if host == "example.com" && port == 5201
+        ));
+
+        // The same rule as the container variant: no free-form command.
+        assert!(serde_json::from_str::<ClientMsg>(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":5201,"cmd":"rm -rf /"}}"#
+        )
+        .is_err());
+        // A port the `u32` cannot hold fails to parse rather than reaching the
+        // command builder.
+        assert!(serde_json::from_str::<ClientMsg>(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":-1}}"#
+        )
+        .is_err());
+    }
+
+    #[test]
     fn server_messages_carry_the_codes_the_panel_branches_on() {
         let ready = ServerMsg::Ready {
             session: "a.b",
@@ -1383,6 +1570,7 @@ mod tests {
         let error = ServerMsg::Error {
             code: "host_key_mismatch",
             message: "changed",
+            issue: None,
         };
         assert!(
             serde_json::to_string(&error)
