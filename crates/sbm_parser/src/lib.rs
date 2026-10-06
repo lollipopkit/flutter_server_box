@@ -22,6 +22,7 @@ pub mod files;
 pub mod firewall;
 pub mod cron;
 pub mod gpu;
+pub mod iperf;
 pub mod linux;
 pub mod output;
 pub mod proc;

@@ -31,6 +31,14 @@ pub const FEATURES: &[&str] = &[
     "services",
     "cron",
     "containers",
+    // A shell inside a container, opened through the terminal's `target`. Not
+    // a page: a panel offers the action only where an agent lists it, since an
+    // older agent ignores the unknown `target` field and would open a host
+    // shell instead.
+    "container_exec",
+    // An iperf client, opened through the terminal's `target` the same way and
+    // listed for the same reason.
+    "iperf",
     "benchmark",
     "system_users",
     "snippets",

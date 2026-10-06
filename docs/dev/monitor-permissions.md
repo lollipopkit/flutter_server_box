@@ -96,7 +96,7 @@ Every mutation is audited (`Kind::Admin`; detail names the account/role and what
 
 `why` (only when `ok` is false): `not_granted`, `insecure_transport`, `not_configured`. For a watch token `me` is absent and every grant is `not_granted`.
 
-`features` lists the machine-management endpoints the agent serves (`["power", ...]`, `api::machine::FEATURES`), for any caller; absent on an agent that serves none. A client offers a page when its name is there and the grant it needs is `ok`.
+`features` lists the machine-management endpoints the agent serves (`["power", ...]`, `api::machine::FEATURES`), for any caller; absent on an agent that serves none. A client offers a page when its name is there and the grant it needs is `ok`. Not every entry is a page: `container_exec` (a shell inside a container) and `iperf` (an iperf client) are the terminal's `target`s, both needing the same `shell` grant, and each offered only where it is listed — an older agent ignores the field and would open a host shell.
 
 The old `remote_access` object stays, derived for the caller (TODO remove): `terminal` = `ssh_terminal.ok || shell.ok`, `full_access` = `shell.ok`, `files` = `files.ok`, `stream` = `connect.ok`, `listen` = `listen.ok`.
 

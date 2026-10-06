@@ -56,6 +56,12 @@ async fn every_part_answers_with_its_own_shape() {
         assert_eq!(body["part"], part, "{body}");
         assert!(body["available"].is_boolean(), "{body}");
         assert!(body["containers"].is_array() && body["images"].is_array(), "{body}");
+        // The dangling flag the panel would otherwise re-derive, and the
+        // unused count it shows — either may be absent, but the shape is fixed.
+        for image in body["images"].as_array().unwrap() {
+            assert!(image["dangling"].is_boolean(), "{body}");
+        }
+        assert!(body["unused_tagged"].is_null() || body["unused_tagged"].is_number(), "{body}");
         if body["available"] == false {
             assert!(body["reason_kind"].is_string(), "an unavailable answer says why: {body}");
         }
@@ -91,4 +97,64 @@ async fn capabilities_list_the_containers_page() {
     let (srv, _) = server().await;
     let (_, caps) = call(&srv, Some("viewer"), Method::GET, "/api/v1/capabilities", None).await;
     assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "containers"), "{caps}");
+    // A panel offers the container shell only where an agent lists this, since
+    // an older agent would ignore the target and open a host shell.
+    assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "container_exec"), "{caps}");
+}
+
+/// A value the runtime would read as an option, or one it cannot take, is
+/// refused before the runtime is probed or anything runs.
+#[ntex::test]
+async fn an_invalid_value_is_refused_before_anything_runs() {
+    let (srv, db) = server().await;
+    let cases = [
+        (json!({ "action": "pull_image", "reference": "-rm" }), "leading_dash"),
+        (json!({ "action": "pull_image", "reference": "a;b" }), "invalid_reference"),
+        (json!({ "action": "remove_image", "id": "  " }), "empty"),
+        // A trailing newline is what `trim` would hide; it reaches the command.
+        (json!({ "action": "remove_image", "id": "$(id)\n" }), "control_character"),
+        (
+            json!({ "action": "run", "image": "alpine", "name": "w", "args": "\"unfinished" }),
+            "invalid_args",
+        ),
+        (
+            json!({ "action": "run", "image": "alpine", "name": "bad name", "args": "" }),
+            "invalid_name",
+        ),
+        (
+            json!({ "action": "run", "image": "alpine\nlatest", "name": "", "args": "" }),
+            "control_character",
+        ),
+    ];
+    for (body, code) in &cases {
+        let (status, answer) = post(&srv, "admin", body.clone()).await;
+        assert_eq!(status, 400, "{body}: {answer}");
+        assert_eq!(answer["error"], "invalid_input", "{body}: {answer}");
+        assert_eq!(answer["issue"], *code, "{body}: {answer}");
+    }
+    // Each one recorded as a refusal, and nothing else ran.
+    let rows = audit(&db).await;
+    assert_eq!(rows.len(), cases.len(), "{rows:?}");
+    assert!(
+        rows.iter().all(|(action, result, subject, _)| action == "denied"
+            && result == "denied"
+            && subject.as_deref() == Some("admin")),
+        "{rows:?}"
+    );
+}
+
+/// The image and run actions need `shell` exactly as the container ones do.
+#[ntex::test]
+async fn every_new_action_needs_the_shell_grant() {
+    let (srv, _) = server().await;
+    for action in [
+        json!({ "action": "remove_image", "id": "abc" }),
+        json!({ "action": "pull_image", "reference": "alpine" }),
+        json!({ "action": "prune_images", "all_unused": true }),
+        json!({ "action": "prune_system", "all_unused_images": false, "include_volumes": false }),
+        json!({ "action": "run", "image": "alpine", "name": "", "args": "" }),
+    ] {
+        let (status, body) = post(&srv, "viewer", action.clone()).await;
+        assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")), "{action}");
+    }
 }

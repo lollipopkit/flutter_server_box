@@ -392,14 +392,21 @@ export const api = {
       MACHINE_TIMEOUT_MS,
     ),
   /// One change, answered in one round trip with the refreshed listing and
-  /// `exit_code`/`output`, what the runtime said about the change.
+  /// `exit_code`/`output`, what the runtime said about the change. A refusal
+  /// arrives as `ApiError.message` holding `invalid_input`, with the issue in
+  /// `body.issue`.
+  ///
+  /// A pull and a run fetch image layers, which the agent allows ten minutes
+  /// for; the other actions are bounded like every other machine page.
   actContainer: (action: ContainerAction) =>
     request<ContainerActionResult>(
       '/containers',
       { method: 'POST', body: JSON.stringify(action) },
       'Failed to change the container',
       undefined,
-      MACHINE_TIMEOUT_MS,
+      action.action === 'pull_image' || action.action === 'run'
+        ? TASK_TIMEOUT_MS
+        : MACHINE_TIMEOUT_MS,
     ),
   /// The benchmark runs this agent has started, and the live state of the one
   /// going (the `shell` grant). `live.answered === false` means the machine

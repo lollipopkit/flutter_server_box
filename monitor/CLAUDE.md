@@ -224,8 +224,18 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   `/containers` (`sbm_parser::container`): Docker, then Podman, with a
   `docker` that is Podman read as Podman; each part (containers, images,
   usage, logs) is one batch split by a fresh separator, and an action answers
-  with the refreshed listing. A runtime the agent's account may not reach is
+  with the refreshed listing — the images for an image action, the containers
+  otherwise. `ContainerAction` covers the container lifecycle, `remove_image`
+  / `pull_image` / `prune_images` / `prune_system` and `run`; `run`'s extra
+  arguments are the one free-form text and are split by `parse_run_args`, never
+  by the caller. A value the runtime would read as an option, or a reference it
+  cannot take, is refused `400 {"error":"invalid_input","issue":<code>}` before
+  the runtime is probed. The images part also reads `ps`, so its
+  `unused_tagged` count (`count_unused_tagged_images`) is the agent's rather
+  than the page's. A runtime the agent's account may not reach is
   `permission_denied`, not a failure. TODO: `DOCKER_HOST` and a sudo path.
+  A shell inside a container is the terminal's `target` (below), not an action
+  here; `container_exec` in `FEATURES` is how a panel knows the agent takes it.
   `/benchmark` (`sbm_parser::bench`, the app's yabs command layer): the agent
   owns the run, not the browser — the `benchmark_run` row (migration 012) is
   written before the detached launcher starts, and `start_poller` (started in
@@ -384,7 +394,11 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   must not get it by the side door. Reading needs any account, and the
   response says `editable` so the editor can go read-only instead of failing on
   save. The store is `monitoring::custom_cmds` (write-aside-and-rename, stray
-  files skipped, names never logged — only the audit `subject`).
+  files skipped, names never logged — only the audit `subject`). Their latest
+  output rides along in `/metrics` (`custom_cmds`), refreshed on the extended
+  cycle; the panel's server page draws it (`Dashboard.svelte`) as one row per
+  command — the first line, with a multi-line output opening in a dialog — and
+  offers no card when there are none.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own grant (`files`, `mode` read or write —
   `fs::writes` decides which an action needs), not folded into `shell`: that
@@ -429,7 +443,17 @@ WebSocket admission checks live in `api/ws/mod.rs`.
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no
   shell. Frame type is the channel selector: Binary = PTY bytes, Text = control
-  JSON (`api/ws/terminal.rs` documents the messages).
+  JSON (`api/ws/terminal.rs` documents the messages). `auth: {"kind":"local"}`
+  is the SSH-less path — a shell as the agent's own user, needing `shell`. Its
+  optional `target` narrows that shell: `{"kind":"container","id":…}` runs
+  `sbm_parser::container::shell_command`, `{"kind":"iperf","host":…,"port":…}`
+  runs `sbm_parser::iperf::client_command` (`host` and `port` validated there,
+  so a refusal carries an `issue` the panel phrases). Both go through
+  `/bin/sh -c` on the PTY; an SSH credential with a target, an invalid value
+  and (for a container) a machine with no runtime are refused, the last as
+  `no_container_runtime`. No frame carries a command. An older agent ignores
+  the field, so the panel sends a target only where `/capabilities` lists
+  `container_exec` or `iperf`.
 - **`/api/v1/stream/ws`** — a raw TCP connection to an address the app names,
   under the `connect` grant: networking without a shell, which is the point of
   it being its own grant (remote desktop for someone who should not have a

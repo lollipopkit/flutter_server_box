@@ -876,6 +876,162 @@ async fn a_full_access_open_is_refused_when_the_feature_is_off() {
     assert_eq!(next_control(&io, &codec).await["code"], "forbidden");
 }
 
+/// A target runs as the agent's own user; an SSH credential would run it as
+/// the signed-in account instead, which is a different thing.
+#[ntex::test]
+async fn a_target_with_an_ssh_credential_is_refused() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"container","id":"abc"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
+}
+
+/// The same grant the container page needs, re-checked at the frame.
+#[ntex::test]
+async fn a_container_target_needs_the_shell_grant() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    take_shell(&state).await;
+
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"abc"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(next_control(&io, &codec).await["code"], "forbidden");
+}
+
+/// An id the runtime would read as an option is refused before the runtime is
+/// even probed, let alone a shell spawned.
+#[ntex::test]
+async fn an_invalid_container_id_is_refused_before_anything_spawns() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"-x"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    let frame = next_control(&io, &codec).await;
+    assert_eq!(frame["code"], "bad_request", "{frame}");
+    assert!(state.sessions.is_empty(), "nothing should have been registered");
+}
+
+/// A trailing newline in an id is refused too: `trim` would have hidden it,
+/// and it is the untrimmed value that reaches the command.
+#[ntex::test]
+async fn a_container_id_with_a_control_character_is_refused() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"abc\n"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    let frame = next_control(&io, &codec).await;
+    assert_eq!(frame["code"], "bad_request", "{frame}");
+    assert!(state.sessions.is_empty(), "nothing should have been registered");
+}
+
+/// An iperf host with a shell metacharacter is refused before the runtime is
+/// reached, with the issue the panel phrases.
+#[ntex::test]
+async fn an_invalid_iperf_host_is_refused_before_anything_spawns() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"host;echo","port":5201}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    let frame = next_control(&io, &codec).await;
+    assert_eq!(frame["code"], "invalid_input", "{frame}");
+    assert_eq!(frame["issue"], "invalid_host", "{frame}");
+    assert!(state.sessions.is_empty(), "nothing should have been registered");
+}
+
+/// A port out of `1..=65535` is refused too.
+#[ntex::test]
+async fn an_iperf_port_out_of_range_is_refused_before_anything_spawns() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":0}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    let frame = next_control(&io, &codec).await;
+    assert_eq!(frame["code"], "invalid_input", "{frame}");
+    assert_eq!(frame["issue"], "invalid_port", "{frame}");
+    assert!(state.sessions.is_empty(), "nothing should have been registered");
+}
+
+/// A target runs as the agent's own user, so an SSH credential is refused for
+/// an iperf target exactly as for a container one.
+#[ntex::test]
+async fn an_iperf_target_with_an_ssh_credential_is_refused() {
+    let state = full_access_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let srv = test_server(state).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"iperf","host":"example.com","port":5201}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
+}
+
 /// Takes `shell` away from the admin role, as an admin editing it would.
 async fn take_shell(state: &AppState) {
     let mut grants = common::grants_of(&state.db, "admin").await;

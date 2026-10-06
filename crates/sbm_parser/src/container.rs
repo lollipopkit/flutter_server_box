@@ -368,6 +368,136 @@ pub fn build_system_prune_cmd(all_unused_images: bool, include_volumes: bool) ->
     format!("system prune {}", flags.join(" "))
 }
 
+/// Why an action's values could not be used.
+///
+/// A value reaches a runtime as an argument, so what is refused is what could
+/// stop being one: a control character that ends the line, a leading `-` the
+/// runtime reads as an option, an unbounded length, a reference with a
+/// character no reference contains. Serialized as a snake_case code, the shape
+/// `firewall::UfwDraftIssue` has, so the agent can hand it to the panel and the
+/// panel phrases it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ContainerActionError {
+    /// A value that must be there was empty after trimming.
+    Empty,
+    /// A value carrying a control character — a newline the runtime would read
+    /// as the end of the line, or a NUL.
+    ControlCharacter,
+    /// A value beginning with `-`, which the runtime would take for an option.
+    LeadingDash,
+    /// A value longer than any identifier a runtime has.
+    TooLong,
+    /// An image reference with a character a reference cannot contain.
+    InvalidReference,
+    /// A container name outside `[a-zA-Z0-9][a-zA-Z0-9_.-]*`.
+    InvalidName,
+    /// The extra arguments could not be split — an unterminated quote.
+    InvalidArgs,
+}
+
+impl ContainerActionError {
+    /// The wire code, also what a refusal is recorded under.
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::Empty => "empty",
+            Self::ControlCharacter => "control_character",
+            Self::LeadingDash => "leading_dash",
+            Self::TooLong => "too_long",
+            Self::InvalidReference => "invalid_reference",
+            Self::InvalidName => "invalid_name",
+            Self::InvalidArgs => "invalid_args",
+        }
+    }
+}
+
+impl std::fmt::Display for ContainerActionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Empty => "the value is empty",
+            Self::ControlCharacter => "the value contains a control character",
+            Self::LeadingDash => "the value begins with a dash",
+            Self::TooLong => "the value is too long",
+            Self::InvalidReference => "the image reference contains a character it cannot",
+            Self::InvalidName => "the container name is not one a runtime accepts",
+            Self::InvalidArgs => "the extra arguments are not quoted correctly",
+        })
+    }
+}
+
+impl std::error::Error for ContainerActionError {}
+
+/// The longest an id, a reference or a name may be. Docker's own limit on a
+/// name is 255 and a reference may be longer; 512 is past both and still
+/// refuses a value that is really a document.
+const MAX_VALUE_LEN: usize = 512;
+
+/// Whether [value] may be handed to a runtime as a container or image id.
+///
+/// Not a character whitelist: an id comes from a listing, and a listing can
+/// print a name this build has no vocabulary for. What is refused is what could
+/// stop being a value — a control character, a leading `-` the runtime would
+/// read as an option, an unbounded length.
+pub fn validate_identifier(value: &str) -> Result<(), ContainerActionError> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return Err(ContainerActionError::Empty);
+    }
+    // The whole value, not the trimmed one: a trailing newline is exactly what
+    // `trim` would hide, and it is the untrimmed value that reaches the
+    // command line.
+    if value.chars().any(char::is_control) {
+        return Err(ContainerActionError::ControlCharacter);
+    }
+    if trimmed.len() > MAX_VALUE_LEN {
+        return Err(ContainerActionError::TooLong);
+    }
+    if trimmed.starts_with('-') {
+        return Err(ContainerActionError::LeadingDash);
+    }
+    Ok(())
+}
+
+/// Whether [value] may be handed to a runtime as an image reference.
+///
+/// The character set is Docker's own: a reference is a registry host, a
+/// repository, a tag and a digest, and none of them carries anything else.
+pub fn validate_reference(value: &str) -> Result<(), ContainerActionError> {
+    validate_identifier(value)?;
+    if !value
+        .trim()
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '/' | ':' | '@' | '-'))
+    {
+        return Err(ContainerActionError::InvalidReference);
+    }
+    Ok(())
+}
+
+/// Whether [value] may be a container name. Empty is allowed and means the
+/// runtime names the container.
+pub fn validate_container_name(value: &str) -> Result<(), ContainerActionError> {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return Ok(());
+    }
+    // The whole value, for the reason [`validate_identifier`] gives.
+    if value.chars().any(char::is_control) {
+        return Err(ContainerActionError::ControlCharacter);
+    }
+    if trimmed.len() > MAX_VALUE_LEN {
+        return Err(ContainerActionError::TooLong);
+    }
+    let mut chars = trimmed.chars();
+    let first = chars.next().unwrap_or_default();
+    if !first.is_ascii_alphanumeric()
+        || !chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-'))
+    {
+        return Err(ContainerActionError::InvalidName);
+    }
+    Ok(())
+}
+
 /// Something to *do* to a container, as opposed to read off one.
 ///
 /// The container is carried in the variant rather than passed beside it,
@@ -389,18 +519,68 @@ pub enum ContainerAction {
     Remove { id: String, force: bool },
     PruneContainers,
     PruneVolumes,
+    /// Remove one image by id or reference. Forced, as [`image_remove_command`]
+    /// is: an image a stopped container still references is refused otherwise,
+    /// and that container is what the user is clearing up.
+    RemoveImage { id: String },
+    /// Pull an image by reference (`repository:tag`).
+    PullImage { reference: String },
+    /// Remove dangling images, or every image nothing uses.
+    PruneImages { all_unused: bool },
+    /// `system prune`, with the optional scopes.
+    PruneSystem {
+        all_unused_images: bool,
+        include_volumes: bool,
+    },
+    /// Start a container from an image.
+    ///
+    /// `args` is the raw text a user typed for the extra arguments; it is split
+    /// here, never by the caller, so a `;` in it is an ordinary character and
+    /// never reaches the remote shell as syntax.
+    Run {
+        image: String,
+        name: String,
+        args: String,
+    },
 }
 
 impl ContainerAction {
+    /// Whether this action's values may be used, without building a command.
+    ///
+    /// Separate from [`exec`](Self::exec) so a caller can refuse a value before
+    /// running anything: the runtime probe is a command too, and a request that
+    /// can never be answered should not reach the machine at all.
+    pub fn validate(&self) -> Result<(), ContainerActionError> {
+        match self {
+            Self::Start { id }
+            | Self::Stop { id }
+            | Self::Restart { id }
+            | Self::Remove { id, .. }
+            | Self::RemoveImage { id } => validate_identifier(id),
+            Self::PullImage { reference } => validate_reference(reference),
+            Self::Run { image, name, args } => {
+                validate_reference(image)?;
+                validate_container_name(name)?;
+                parse_run_args(args).map_err(|_| ContainerActionError::InvalidArgs)?;
+                Ok(())
+            }
+            Self::PruneContainers
+            | Self::PruneVolumes
+            | Self::PruneImages { .. }
+            | Self::PruneSystem { .. } => Ok(()),
+        }
+    }
+
     /// The command line that performs it, with the runtime named.
     ///
-    /// The id is quoted here rather than by the caller: it reaches this
-    /// function from a container listing, which is to say from whatever a
-    /// container's name happens to be, and a name is a string that can be
-    /// made to contain a shell.
-    pub fn exec(&self, ty: ContainerType) -> String {
+    /// Every value is quoted here rather than by the caller: it reaches this
+    /// function from a listing or a form, and a name is a string that can be
+    /// made to contain a shell. Validated first, so a value the runtime would
+    /// read as an option never becomes a command at all.
+    pub fn exec(&self, ty: ContainerType) -> Result<String, ContainerActionError> {
+        self.validate()?;
         let name = ty.name();
-        match self {
+        Ok(match self {
             Self::Start { id } => format!("{name} start {}", single_quote(id)),
             Self::Stop { id } => format!("{name} stop {}", single_quote(id)),
             Self::Restart { id } => format!("{name} restart {}", single_quote(id)),
@@ -410,7 +590,27 @@ impl ContainerAction {
             }
             Self::PruneContainers => format!("{name} container prune -f"),
             Self::PruneVolumes => format!("{name} volume prune -f"),
-        }
+            Self::RemoveImage { id } => image_remove_command(ty, id),
+            Self::PullImage { reference } => image_pull_command(ty, reference),
+            Self::PruneImages { all_unused } => {
+                format!("{name} {}", build_image_prune_cmd(*all_unused))
+            }
+            Self::PruneSystem {
+                all_unused_images,
+                include_volumes,
+            } => format!(
+                "{name} {}",
+                build_system_prune_cmd(*all_unused_images, *include_volumes)
+            ),
+            Self::Run {
+                image,
+                name: container_name,
+                args,
+            } => {
+                let extra = parse_run_args(args).map_err(|_| ContainerActionError::InvalidArgs)?;
+                format!("{name} {}", build_run_cmd(image, container_name, &extra))
+            }
+        })
     }
 }
 
@@ -500,8 +700,11 @@ pub const LOG_TAIL: u32 = 100;
 /// else usually has no ash, so the command tries them in order and falls back
 /// to `sh`, which POSIX requires.
 pub fn shell_command(ty: ContainerType, id: &str) -> String {
+    // `command -v` prints the path it found, so its output is discarded: a
+    // container shell that opened with a stray `/bin/ash` line on it was
+    // reporting the lookup, not the shell.
     format!(
-        "{} exec -it {} sh -c \"command -v bash && exec bash || command -v ash && exec ash || exec sh\"",
+        "{} exec -it {} sh -c \"command -v bash >/dev/null && exec bash || command -v ash >/dev/null && exec ash || exec sh\"",
         ty.name(),
         single_quote(id)
     )
@@ -1971,10 +2174,12 @@ mod tests {
             (ContainerAction::PruneVolumes, "docker volume prune -f"),
         ];
         for (action, expected) in cases {
-            assert_eq!(action.exec(ContainerType::Docker), expected);
+            assert_eq!(action.exec(ContainerType::Docker).unwrap(), expected);
         }
         assert_eq!(
-            ContainerAction::Stop { id: "abc".into() }.exec(ContainerType::Podman),
+            ContainerAction::Stop { id: "abc".into() }
+                .exec(ContainerType::Podman)
+                .unwrap(),
             "podman stop 'abc'"
         );
     }
@@ -1986,8 +2191,223 @@ mod tests {
             id: "abc'; touch /tmp/pwned; echo '".into(),
         };
         assert_eq!(
-            action.exec(ContainerType::Docker),
+            action.exec(ContainerType::Docker).unwrap(),
             r#"docker stop 'abc'\''; touch /tmp/pwned; echo '\'''"#
+        );
+    }
+
+    #[test]
+    fn image_actions_name_the_runtime_and_quote_their_subject() {
+        let cases = [
+            (
+                ContainerAction::RemoveImage {
+                    id: "sha256:abc".into(),
+                },
+                "docker rmi 'sha256:abc' -f",
+            ),
+            (
+                ContainerAction::PullImage {
+                    reference: "nginx:alpine".into(),
+                },
+                "docker pull 'nginx:alpine'",
+            ),
+            (
+                ContainerAction::PruneImages { all_unused: false },
+                "docker image prune -f",
+            ),
+            (
+                ContainerAction::PruneImages { all_unused: true },
+                "docker image prune -a -f",
+            ),
+            (
+                ContainerAction::PruneSystem {
+                    all_unused_images: false,
+                    include_volumes: false,
+                },
+                "docker system prune -f",
+            ),
+            (
+                ContainerAction::PruneSystem {
+                    all_unused_images: true,
+                    include_volumes: true,
+                },
+                "docker system prune -a --volumes -f",
+            ),
+            (
+                ContainerAction::Run {
+                    image: "alpine".into(),
+                    name: "worker".into(),
+                    args: "-p 8080:80".into(),
+                },
+                "docker run -itd --name 'worker' '-p' '8080:80' 'alpine'",
+            ),
+            (
+                ContainerAction::Run {
+                    image: "alpine".into(),
+                    name: String::new(),
+                    args: String::new(),
+                },
+                "docker run -itd 'alpine'",
+            ),
+        ];
+        for (action, expected) in cases {
+            assert_eq!(action.exec(ContainerType::Docker).unwrap(), expected);
+        }
+        assert_eq!(
+            ContainerAction::PullImage {
+                reference: "nginx:alpine".into()
+            }
+            .exec(ContainerType::Podman)
+            .unwrap(),
+            "podman pull 'nginx:alpine'"
+        );
+    }
+
+    #[test]
+    fn a_run_splits_its_arguments_and_quotes_each_one() {
+        // The `;` is an ordinary character: it comes back as its own argument
+        // and is quoted, so the remote shell never reads it as syntax.
+        let action = ContainerAction::Run {
+            image: "alpine".into(),
+            name: "worker".into(),
+            args: r#"-e "GREETING=hello world" ; rm -rf /"#.into(),
+        };
+        let command = action.exec(ContainerType::Docker).unwrap();
+        assert_eq!(
+            command,
+            r"docker run -itd --name 'worker' '-e' 'GREETING=hello world' ';' 'rm' '-rf' '/' 'alpine'"
+        );
+        assert!(!command.contains(" ; "));
+    }
+
+    #[test]
+    fn a_metacharacter_in_a_new_actions_value_is_refused_or_quoted() {
+        // Quoted: an id reaches a listing, so anything that is not a control
+        // character is a value the runtime can name.
+        let quoted = ContainerAction::RemoveImage {
+            id: "a'; rm -rf /; echo '".into(),
+        }
+        .exec(ContainerType::Docker)
+        .unwrap();
+        assert_eq!(quoted, r#"docker rmi 'a'\''; rm -rf /; echo '\''' -f"#);
+
+        // Refused: a reference cannot contain a metacharacter at all.
+        for reference in ["a;b", "$(id)", "`id`", "a b", "a|b"] {
+            let action = ContainerAction::PullImage {
+                reference: reference.into(),
+            };
+            assert_eq!(
+                action.validate(),
+                Err(ContainerActionError::InvalidReference),
+                "{reference}"
+            );
+            assert!(action.exec(ContainerType::Docker).is_err(), "{reference}");
+        }
+
+        // Refused: a name has Docker's own rule.
+        for name in ["a;b", "$(id)", "-leading", "a b", "a\nb"] {
+            let action = ContainerAction::Run {
+                image: "alpine".into(),
+                name: name.into(),
+                args: String::new(),
+            };
+            assert!(action.validate().is_err(), "{name:?}");
+        }
+    }
+
+    #[test]
+    fn a_value_that_would_stop_being_a_value_is_refused() {
+        let cases = [
+            (String::new(), ContainerActionError::Empty),
+            ("   ".to_string(), ContainerActionError::Empty),
+            ("-x".to_string(), ContainerActionError::LeadingDash),
+            ("a\nb".to_string(), ContainerActionError::ControlCharacter),
+            ("a\0b".to_string(), ContainerActionError::ControlCharacter),
+            ("x".repeat(MAX_VALUE_LEN + 1), ContainerActionError::TooLong),
+        ];
+        for (id, expected) in cases {
+            let action = ContainerAction::Stop { id: id.clone() };
+            assert_eq!(action.validate(), Err(expected), "{id:?}");
+            assert!(action.exec(ContainerType::Docker).is_err(), "{id:?}");
+        }
+
+        let action = ContainerAction::PullImage {
+            reference: "a\nb".into(),
+        };
+        assert_eq!(action.validate(), Err(ContainerActionError::ControlCharacter));
+    }
+
+    #[test]
+    fn a_control_character_at_the_edge_is_not_hidden_by_trimming() {
+        // A trailing newline is exactly what `trim` removes, and it is the
+        // untrimmed value that reaches the command line.
+        for id in ["abc\n", "\tabc", "abc\r", "abc\0"] {
+            let action = ContainerAction::Stop { id: id.into() };
+            assert_eq!(
+                action.validate(),
+                Err(ContainerActionError::ControlCharacter),
+                "id {id:?}"
+            );
+        }
+        for reference in ["abc\n", "\tabc", "abc\r", "abc\0"] {
+            let action = ContainerAction::PullImage {
+                reference: reference.into(),
+            };
+            assert_eq!(
+                action.validate(),
+                Err(ContainerActionError::ControlCharacter),
+                "reference {reference:?}"
+            );
+        }
+        for name in ["abc\n", "\tabc", "abc\r", "abc\0"] {
+            let action = ContainerAction::Run {
+                image: "alpine".into(),
+                name: name.into(),
+                args: String::new(),
+            };
+            assert_eq!(
+                action.validate(),
+                Err(ContainerActionError::ControlCharacter),
+                "name {name:?}"
+            );
+        }
+        // Whitespace alone is empty, not a control-character refusal.
+        assert_eq!(
+            ContainerAction::Stop { id: "\n".into() }.validate(),
+            Err(ContainerActionError::Empty)
+        );
+        assert_eq!(
+            ContainerAction::PullImage {
+                reference: " \t".into()
+            }
+            .validate(),
+            Err(ContainerActionError::Empty)
+        );
+    }
+
+    #[test]
+    fn run_args_that_do_not_parse_are_refused_not_built() {
+        let action = ContainerAction::Run {
+            image: "alpine".into(),
+            name: String::new(),
+            args: r#"-e "unfinished"#.into(),
+        };
+        assert_eq!(action.validate(), Err(ContainerActionError::InvalidArgs));
+        assert_eq!(
+            action.exec(ContainerType::Docker),
+            Err(ContainerActionError::InvalidArgs)
+        );
+    }
+
+    #[test]
+    fn the_error_serializes_as_the_code_the_panel_phrases() {
+        assert_eq!(
+            serde_json::to_string(&ContainerActionError::LeadingDash).unwrap(),
+            r#""leading_dash""#
+        );
+        assert_eq!(
+            ContainerActionError::InvalidReference.code(),
+            "invalid_reference"
         );
     }
 
@@ -2008,6 +2428,39 @@ mod tests {
             serde_json::to_string(&ContainerAction::PruneVolumes).unwrap(),
             r#"{"action":"prune_volumes"}"#
         );
+        // The image and run actions carry their own field names.
+        assert_eq!(
+            serde_json::from_str::<ContainerAction>(r#"{"action":"remove_image","id":"abc"}"#).unwrap(),
+            ContainerAction::RemoveImage { id: "abc".into() }
+        );
+        assert_eq!(
+            serde_json::from_str::<ContainerAction>(
+                r#"{"action":"prune_images","all_unused":true}"#
+            )
+            .unwrap(),
+            ContainerAction::PruneImages { all_unused: true }
+        );
+        assert_eq!(
+            serde_json::from_str::<ContainerAction>(
+                r#"{"action":"prune_system","all_unused_images":true,"include_volumes":false}"#
+            )
+            .unwrap(),
+            ContainerAction::PruneSystem {
+                all_unused_images: true,
+                include_volumes: false
+            }
+        );
+        assert_eq!(
+            serde_json::from_str::<ContainerAction>(
+                r#"{"action":"run","image":"alpine","name":"w","args":"-p 80:80"}"#
+            )
+            .unwrap(),
+            ContainerAction::Run {
+                image: "alpine".into(),
+                name: "w".into(),
+                args: "-p 80:80".into()
+            }
+        );
         // A variant this build does not implement is refused here rather than
         // reaching `exec`, which has no arm for it.
         assert!(serde_json::from_str::<ContainerAction>(r#"{"action":"pause","id":"abc"}"#).is_err());
@@ -2021,7 +2474,7 @@ mod tests {
         );
         assert_eq!(
             shell_command(ContainerType::Podman, "abc"),
-            "podman exec -it 'abc' sh -c \"command -v bash && exec bash || command -v ash && exec ash || exec sh\""
+            "podman exec -it 'abc' sh -c \"command -v bash >/dev/null && exec bash || command -v ash >/dev/null && exec ash || exec sh\""
         );
     }
 

@@ -9,6 +9,7 @@ pub mod file;
 pub mod files;
 pub mod firewall;
 pub mod hardware;
+pub mod iperf;
 pub mod parser;
 pub mod proc;
 pub mod pve;

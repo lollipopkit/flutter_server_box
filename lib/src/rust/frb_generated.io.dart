@@ -19,6 +19,7 @@ import 'package:server_box/src/rust/api/file.dart';
 import 'package:server_box/src/rust/api/files.dart';
 import 'package:server_box/src/rust/api/firewall.dart';
 import 'package:server_box/src/rust/api/hardware.dart';
+import 'package:server_box/src/rust/api/iperf.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/proc.dart';
 import 'package:server_box/src/rust/api/pve.dart';
