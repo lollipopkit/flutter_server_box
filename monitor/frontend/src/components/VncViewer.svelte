@@ -80,7 +80,7 @@
   })
 </script>
 
-<div class="relative h-[70vh] min-h-96 w-full overflow-hidden rounded-lg border border-line bg-black">
+<div class="relative h-full min-h-72 w-full overflow-hidden rounded-lg border border-line bg-black">
   <div bind:this={container} class="h-full w-full"></div>
   {#if connecting}
     <div class="absolute inset-0 flex items-center justify-center bg-black/40">

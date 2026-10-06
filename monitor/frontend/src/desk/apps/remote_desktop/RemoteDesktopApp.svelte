@@ -202,7 +202,9 @@
     {/snippet}
   </AppToolbar>
 
-  <main class="mx-auto max-w-5xl space-y-4 px-4 py-4 @3xl:px-6">
+  <!-- The session fills what the toolbar leaves of the window; the viewer
+       takes its parent's height. -->
+  <main class="flex h-[calc(100%-3rem)] min-h-72 flex-col p-2">
     {#key live}
       {#if live.kind === 'vnc'}
         <VncViewer
