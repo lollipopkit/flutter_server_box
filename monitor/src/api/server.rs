@@ -119,6 +119,9 @@ pub struct AppState {
     /// and re-checks its own account when it fires; terminal sessions, which
     /// outlive their sockets, are swept by `authz::revoke_lost` instead.
     pub grants_changed: broadcast::Sender<&'static str>,
+    /// The desk's events and which monitoring rules are firing — see
+    /// `api::desk`.
+    pub desk: Arc<crate::api::desk::DeskHub>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -208,6 +211,7 @@ impl AppState {
             pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
+            desk: Arc::new(crate::api::desk::DeskHub::default()),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
             config,
@@ -453,6 +457,28 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::desktops::list))
                     .route(web::put().to(crate::api::desktops::replace)),
             )
+            .service(web::resource("/desk").route(web::get().to(crate::api::desk::get)))
+            .service(
+                web::resource("/desk/preferences")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
+                    .route(web::put().to(crate::api::desk::put_preferences)),
+            )
+            .service(
+                // A streamed body, read whole and bounded in the handler.
+                web::resource("/desk/wallpaper")
+                    .route(web::get().to(crate::api::desk::get_wallpaper))
+                    .route(web::put().to(crate::api::desk::put_wallpaper))
+                    .route(web::delete().to(crate::api::desk::delete_wallpaper)),
+            )
+            .service(
+                web::resource("/desk/session")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
+                    .route(web::get().to(crate::api::desk::get_session))
+                    .route(web::put().to(crate::api::desk::put_session)),
+            )
+            .service(web::resource("/desk/notifications").route(web::get().to(crate::api::desk::notifications)))
+            .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
+            .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
             .service(
                 web::resource("/snippets/plan")
                     .state(

@@ -96,6 +96,14 @@ Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set
 - Writes stream to `<path>.sbm-part-<pid>-<n>` (hidden from listings) and rename, keeping the target's mode; a mode that cannot be carried over fails the write, and the staged copy is removed on every other way out, a dropped request included (`Staged`). `PUT /fs/write?if_version=<version>` (the editor) answers `409 {"error":"modified"}` when the file's `version` (signed nanosecond mtime + size, from `EntryView.version`; a listed link has none, since a write compares the file it resolves to, which `/fs/stat` describes) differs or the file is gone; uploads send none. The check runs after the upload under one lock (`REPLACE`) held through the rename and by `remove`/`rename`, so the agent's own writers cannot interleave; another process can still write in that window (POSIX has no rename-if-unchanged). `modified` stays seconds for the app.
 - Known limitation: resolve-then-use is two steps (a symlink swapped between them is followed); closing it needs per-component `openat`+`O_NOFOLLOW`, not portable. `tests/fs_roots.rs`, `tests/fs_write.rs`.
 
+### `/api/v1/desk*` (`api/desk.rs`, any signed-in account)
+
+- The panel's desk: preferences (accent, wallpaper `preset:<id>`|`custom`, fit, dock, icons as child tables), one custom wallpaper (PNG/JPEG/WebP sniffed from the bytes, ≤8 MiB, ETag = SHA-256), the window session per account + device, notifications. All keyed by `users.id`, `ON DELETE CASCADE` (migration 018).
+- **Session writes are compare-and-swap on `revision`**: the transaction's first statement is the `UPDATE … WHERE revision = expected` (or `INSERT OR IGNORE` from 0), so SQLite's write lock is taken there; a loser gets 409 `{error: conflict, current}`. Never read-then-write. `app_state` is opaque JSON ≤16 KiB.
+- `/desk/events`: `text/event-stream` over `fetch` + bearer (not `EventSource`), `data:` JSON lines, `: ping` every 25 s, `{type: resync}` on lag. A hint to refetch, never the only copy. Session/preferences events go only to their own account; it ends when the account's password changes or it is deleted.
+- Notifications: `DeskHub::rules_checked` gets the firing rules each cycle and stores one per rule that *starts* firing; the newest 500 are kept; read state per account.
+- Feature flag `desk` in `machine::FEATURES`; a panel without it keeps the desk in the browser.
+
 ### `/api/v1/terminal/ws`
 
 - The agent is an SSH **client** to the local sshd: a session has the SSH account's privileges; the panel password grants none. Binary frames are PTY bytes, text frames control JSON (`api/ws/terminal.rs`).

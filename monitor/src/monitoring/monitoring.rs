@@ -363,14 +363,15 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                     .await;
 
                 // Check rules and send alerts with velocity data
-                if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(
+                match crate::monitoring::rules::check_rules_with_velocity(
                     &metrics,
                     &app_state.config,
                     &*app_state.velocity_manager.read().await,
                 )
                 .await
                 {
-                    error!("Failed to check enhanced rules: {}", e);
+                    Ok(firing) => app_state.desk.rules_checked(&app_state.db, firing).await,
+                    Err(e) => error!("Failed to check enhanced rules: {}", e),
                 }
 
                 // Update current metrics in app state

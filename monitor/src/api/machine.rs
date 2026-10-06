@@ -52,6 +52,9 @@ pub const FEATURES: &[&str] = &[
     "bmc",
     "virt",
     "firewall",
+    // The panel's desk keeps its arrangement here (`api::desk`); without it
+    // the panel keeps it in the browser.
+    "desk",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.
