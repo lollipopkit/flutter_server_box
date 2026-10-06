@@ -204,7 +204,7 @@
 
   <!-- The session fills what the toolbar leaves of the window; the viewer
        takes its parent's height. -->
-  <main class="flex h-[calc(100%-3rem)] min-h-72 flex-col p-2">
+  <main class="flex min-h-72 flex-1 flex-col p-2">
     {#key live}
       {#if live.kind === 'vnc'}
         <VncViewer

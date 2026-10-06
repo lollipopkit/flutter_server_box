@@ -426,10 +426,11 @@
 
 <!-- The window's body. The connect form is a centred card until there is a
      session; from there the terminal takes everything the toolbar leaves,
-     edge to edge. Positioned rather than `h-full`: the toolbar is a sibling in
-     flow, so a full-height main would run past the window's bottom edge. -->
+     edge to edge. `flex-1` in the window body's column: the toolbar is a
+     sibling in flow, so a full-height main would run past the window's
+     bottom edge. -->
 <main
-  class="absolute inset-x-0 bottom-0 top-[calc(3rem+1px)] flex min-h-0 flex-col bg-bg text-fg"
+  class="relative flex min-h-0 flex-1 flex-col bg-bg text-fg"
   style:background-color={showSurface && !formShown ? terminalSurface.current : undefined}
 >
   <!-- Said, because keystrokes that arrive unasked would otherwise look like a

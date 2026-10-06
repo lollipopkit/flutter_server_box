@@ -543,10 +543,9 @@
     </Card>
   </main>
 {:else}
-  <!-- The window body is `relative` and the toolbar above it is 3rem plus its
-       hairline: the split view is pinned below that, so the sidebar reaches the
-       bottom and the body itself never scrolls. -->
-  <div class="absolute inset-x-0 bottom-0 top-[calc(3rem+1px)] min-h-0">
+  <!-- The split view takes what the toolbar leaves of the window (the body is
+       a column), so the sidebar reaches the bottom and the body never scrolls. -->
+  <div class="relative min-h-0 flex-1">
     <SplitView width={13}>
       {#snippet sidebar()}
         <SourceGroup title={$LL.filesRoots()}>

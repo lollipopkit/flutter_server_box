@@ -208,8 +208,10 @@
   </header>
 
   <!-- A size container: an app lays itself out by its window's width
-       (`@md:`, `@3xl:`), never the screen's (`md:`). -->
-  <div class="desk-window-body @container relative min-h-0 flex-1 overflow-auto">
+       (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app whose
+       content fills the window under its toolbar takes `min-h-0 flex-1`,
+       never a height worked out from the toolbar's. -->
+  <div class="desk-window-body @container relative flex min-h-0 flex-1 flex-col overflow-auto">
     {#if spec}
       {#await spec.load()}
         <div class="flex h-full items-center justify-center"><Spinner /></div>

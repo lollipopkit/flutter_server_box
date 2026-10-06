@@ -161,6 +161,14 @@
 .desk-window-body {
   background: var(--color-bg);
 }
+/* The body is a column (an app fills it with `flex-1`); its children still
+   take the full width a block would, so `mx-auto max-w-*` centres rather
+   than shrinks to the content. In the base layer, under any utility. */
+@layer base {
+  .desk-window-body > * {
+    width: 100%;
+  }
+}
 
 .desk-traffic {
   width: 0.75rem;

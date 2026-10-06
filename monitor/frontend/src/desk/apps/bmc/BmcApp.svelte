@@ -178,7 +178,7 @@
   {/snippet}
 </AppToolbar>
 
-<div class="absolute inset-x-0 bottom-0 top-[calc(3rem+1px)] min-h-0">
+<div class="relative min-h-0 flex-1">
   <SplitView width={14}>
     {#snippet sidebar()}
       <SourceGroup title={$LL.bmc()}>
