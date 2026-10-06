@@ -396,8 +396,10 @@ export const api = {
   /// arrives as `ApiError.message` holding `invalid_input`, with the issue in
   /// `body.issue`.
   ///
-  /// A pull and a run fetch image layers, which the agent allows ten minutes
-  /// for; the other actions are bounded like every other machine page.
+  /// The agent bounds every action by `[remote_access.exec]`, which this side
+  /// cannot read. A pull and a run fetch image layers, so they are the ones an
+  /// operator raises that limit for: the longer deadline lets such a pull
+  /// answer instead of being abandoned here while it still runs there.
   actContainer: (action: ContainerAction) =>
     request<ContainerActionResult>(
       '/containers',

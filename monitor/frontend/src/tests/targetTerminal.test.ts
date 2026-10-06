@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, cleanup } from '@testing-library/svelte'
+import { render, cleanup, screen, fireEvent } from '@testing-library/svelte'
+import '@testing-library/jest-dom/vitest'
 import TargetTerminal from '../components/TargetTerminal.svelte'
 import { servers } from '../lib/servers.svelte'
 import { mountTerminal } from '../lib/xterm'
@@ -120,5 +121,46 @@ describe('TargetTerminal', () => {
 
     socket.control({ type: 'ready', session: 'abc.def', since: 0 })
     await vi.waitFor(() => expect(handle.focus).toHaveBeenCalled())
+  })
+
+  it('offers the way back to the form when the agent refuses a value', async () => {
+    const onedit = vi.fn()
+    render(TargetTerminal, {
+      props: {
+        target: { kind: 'iperf', host: 'a;b', port: 5201 },
+        issueText: (issue: string) => `phrased ${issue}`,
+        onedit,
+      },
+    })
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(1))
+    const socket = FakeSocket.instances[0]
+    socket.onopen?.()
+    socket.control({ type: 'error', code: 'invalid_input', issue: 'invalid_host', message: 'bad host' })
+    socket.close()
+
+    expect(await screen.findByText('phrased invalid_host')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: /back/i }))
+    expect(onedit).toHaveBeenCalled()
+  })
+
+  it('says the terminal could not load instead of spinning', async () => {
+    vi.mocked(mountTerminal).mockRejectedValueOnce(new Error('chunk failed'))
+    render(TargetTerminal, {
+      props: { target: { kind: 'container', id: 'abc' } },
+    })
+    expect(await screen.findByText(/could not be loaded/i)).toBeInTheDocument()
+    expect(FakeSocket.instances.length).toBe(0)
+  })
+
+  it('says when output was lost while disconnected', async () => {
+    render(TargetTerminal, {
+      props: { target: { kind: 'container', id: 'abc' } },
+    })
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(1))
+    const socket = FakeSocket.instances[0]
+    socket.onopen?.()
+    socket.control({ type: 'ready', session: 'abc.def', since: 0 })
+    socket.control({ type: 'error', code: 'gap_truncated', message: 'lost' })
+    expect(await screen.findByText(/output was lost/i)).toBeInTheDocument()
   })
 })

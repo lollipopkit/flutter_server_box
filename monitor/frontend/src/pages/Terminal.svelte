@@ -74,10 +74,34 @@
     }
   }
 
-  async function ensureTerminal(): Promise<Renderer> {
+  /// The one mount in flight. Shared, so a second press while xterm loads
+  /// waits for the same terminal rather than opening another into the host.
+  let mounting: Promise<TerminalHandle | null> | null = null
+  /// Set when the page goes away, so a mount that finishes after it is
+  /// disposed rather than kept by a page nothing shows.
+  let destroyed = false
+
+  /// The renderer, or `null` once the page has gone: the caller then has no
+  /// session to start.
+  async function ensureTerminal(): Promise<Renderer | null> {
     if (!terminal) {
       if (!host) throw new Error('the terminal host is not mounted')
-      terminal = await mountTerminal(host, session)
+      mounting ??= mountTerminal(host, session).then(
+        (mounted) => {
+          if (destroyed) {
+            mounted.dispose()
+            return null
+          }
+          terminal = mounted
+          return mounted
+        },
+        (e: unknown) => {
+          // A failed load may be retried by the next press.
+          mounting = null
+          throw e
+        },
+      )
+      return (await mounting)?.renderer ?? null
     }
     return terminal.renderer
   }
@@ -110,6 +134,7 @@
 
   async function connect() {
     const renderer = await ensureTerminal()
+    if (!renderer) return
     rememberCredential()
     await session.start(renderer, user, credential())
     // Held only as long as the form needed it
@@ -122,6 +147,7 @@
   /// credentials again — the agent still has an authenticated shell.
   async function resume() {
     const renderer = await ensureTerminal()
+    if (!renderer) return
     await session.start(renderer, user, null)
   }
 
@@ -152,6 +178,7 @@
   })
 
   onDestroy(() => {
+    destroyed = true
     // Leaving the terminal abandons a snippet not yet typed: the Run press
     // opened this page for it, so closing the page is the answer.
     snippetRun.clear()
@@ -216,6 +243,7 @@
   /// Opens a shell with no credentials at all.
   async function openPasswordless() {
     const renderer = await ensureTerminal()
+    if (!renderer) return
     await session.start(renderer, '', { kind: 'local' })
   }
 

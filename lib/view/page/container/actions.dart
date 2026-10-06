@@ -222,7 +222,13 @@ extension on _ContainerPageState {
   }
 
   void _showImageRmDialog(ContainerImg e) {
-    final id = e.id;
+    // The tag on the row, not the id: `rmi -f <id>` removes every tag the
+    // image has, and the user picked one. Only an image with no name is
+    // removed by its id.
+    final tag = e.tag;
+    final id = e.isDangling || tag == null
+        ? e.id
+        : '${e.repository.trim()}:${tag.trim()}';
     if (id == null || id.isEmpty) {
       Toast.show(libL10n.empty);
       return;
@@ -230,7 +236,7 @@ extension on _ContainerPageState {
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text(
-        libL10n.askContinue('${libL10n.delete} Image(${e.repository})'),
+        libL10n.askContinue('${libL10n.delete} Image($id)'),
       ),
       actions: Btn.ok(
         onTap: () async {

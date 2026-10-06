@@ -731,6 +731,15 @@ type RootTranslation = {
 	 */
 	containerUsageUnknown: string
 	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​f​a​i​l​e​d​ ​(​e​x​i​t​ ​{​c​o​d​e​}​)​.
+	 * @param {unknown} code
+	 */
+	containerActionFailed: RequiredParams<'code'>
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​w​i​t​h​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​t​i​m​e​ ​l​i​m​i​t​.
+	 */
+	containerActionUnfinished: string
+	/**
 	 * A​ ​v​a​l​u​e​ ​c​o​n​t​a​i​n​s​ ​a​ ​c​o​n​t​r​o​l​ ​c​h​a​r​a​c​t​e​r​ ​(​a​ ​n​e​w​l​i​n​e​ ​o​r​ ​a​ ​N​U​L​)​.
 	 */
 	containerErrControlCharacter: string
@@ -1628,6 +1637,10 @@ type RootTranslation = {
 	 * S​o​m​e​ ​o​u​t​p​u​t​ ​w​a​s​ ​l​o​s​t​ ​w​h​i​l​e​ ​d​i​s​c​o​n​n​e​c​t​e​d​.
 	 */
 	terminalOutputLost: string
+	/**
+	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​l​o​a​d​e​d​.
+	 */
+	terminalLoadFailed: string
 	/**
 	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
@@ -6307,6 +6320,14 @@ export type TranslationFunctions = {
 	 */
 	containerUsageUnknown: () => LocalizedString
 	/**
+	 * The command failed (exit {code}).
+	 */
+	containerActionFailed: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * The command did not finish within the agent's time limit.
+	 */
+	containerActionUnfinished: () => LocalizedString
+	/**
 	 * A value contains a control character (a newline or a NUL).
 	 */
 	containerErrControlCharacter: () => LocalizedString
@@ -7178,6 +7199,10 @@ export type TranslationFunctions = {
 	 * Some output was lost while disconnected.
 	 */
 	terminalOutputLost: () => LocalizedString
+	/**
+	 * The terminal could not be loaded.
+	 */
+	terminalLoadFailed: () => LocalizedString
 	/**
 	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
 	 */

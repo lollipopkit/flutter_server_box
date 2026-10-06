@@ -576,22 +576,24 @@ impl ContainerAction {
     /// Every value is quoted here rather than by the caller: it reaches this
     /// function from a listing or a form, and a name is a string that can be
     /// made to contain a shell. Validated first, so a value the runtime would
-    /// read as an option never becomes a command at all.
+    /// read as an option never becomes a command at all. Every value is used
+    /// trimmed, as it was validated: a name of only spaces is the omitted name
+    /// it was accepted as, never `--name '  '`.
     pub fn exec(&self, ty: ContainerType) -> Result<String, ContainerActionError> {
         self.validate()?;
         let name = ty.name();
         Ok(match self {
-            Self::Start { id } => format!("{name} start {}", single_quote(id)),
-            Self::Stop { id } => format!("{name} stop {}", single_quote(id)),
-            Self::Restart { id } => format!("{name} restart {}", single_quote(id)),
+            Self::Start { id } => format!("{name} start {}", single_quote(id.trim())),
+            Self::Stop { id } => format!("{name} stop {}", single_quote(id.trim())),
+            Self::Restart { id } => format!("{name} restart {}", single_quote(id.trim())),
             Self::Remove { id, force } => {
                 let flag = if *force { " -f" } else { "" };
-                format!("{name} rm{flag} {}", single_quote(id))
+                format!("{name} rm{flag} {}", single_quote(id.trim()))
             }
             Self::PruneContainers => format!("{name} container prune -f"),
             Self::PruneVolumes => format!("{name} volume prune -f"),
-            Self::RemoveImage { id } => image_remove_command(ty, id),
-            Self::PullImage { reference } => image_pull_command(ty, reference),
+            Self::RemoveImage { id } => image_remove_command(ty, id.trim()),
+            Self::PullImage { reference } => image_pull_command(ty, reference.trim()),
             Self::PruneImages { all_unused } => {
                 format!("{name} {}", build_image_prune_cmd(*all_unused))
             }
@@ -608,7 +610,10 @@ impl ContainerAction {
                 args,
             } => {
                 let extra = parse_run_args(args).map_err(|_| ContainerActionError::InvalidArgs)?;
-                format!("{name} {}", build_run_cmd(image, container_name, &extra))
+                format!(
+                    "{name} {}",
+                    build_run_cmd(image.trim(), container_name.trim(), &extra)
+                )
             }
         })
     }
@@ -2396,6 +2401,37 @@ mod tests {
         assert_eq!(
             action.exec(ContainerType::Docker),
             Err(ContainerActionError::InvalidArgs)
+        );
+    }
+
+    #[test]
+    fn a_value_is_used_as_it_was_validated_trimmed() {
+        // Whitespace around a value passes validation trimmed, so the command
+        // takes it trimmed too: a blank name is the omitted one, not `--name '  '`.
+        let blank = ContainerAction::Run {
+            image: " alpine ".into(),
+            name: "   ".into(),
+            args: String::new(),
+        };
+        assert_eq!(blank.exec(ContainerType::Docker).unwrap(), "docker run -itd 'alpine'");
+        let padded = ContainerAction::Run {
+            image: "alpine".into(),
+            name: " worker ".into(),
+            args: String::new(),
+        };
+        assert_eq!(
+            padded.exec(ContainerType::Docker).unwrap(),
+            "docker run -itd --name 'worker' 'alpine'"
+        );
+        assert_eq!(
+            ContainerAction::PullImage { reference: " nginx:alpine ".into() }
+                .exec(ContainerType::Docker)
+                .unwrap(),
+            "docker pull 'nginx:alpine'"
+        );
+        assert_eq!(
+            ContainerAction::Stop { id: " abc ".into() }.exec(ContainerType::Docker).unwrap(),
+            "docker stop 'abc'"
         );
     }
 

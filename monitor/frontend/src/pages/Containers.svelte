@@ -58,8 +58,9 @@
   /// What the runtime printed for the last action, when it said anything, and
   /// its exit code. A command that failed answers `exit_code`/`output` in a
   /// 200, so this is where a pull that could not find the tag says so.
+  /// `undefined` exit: the agent ran out of time before the command ended.
   let actionOutput = $state('')
-  let actionExit = $state<number | null>(null)
+  let actionExit = $state<number | null | undefined>(0)
   let busy = $state(false)
   /// The container whose removal is being confirmed, or `undefined` for none.
   /// Removal is the only action asked about: it is the only one that loses
@@ -159,7 +160,7 @@
     busy = true
     error = ''
     actionOutput = ''
-    actionExit = null
+    actionExit = 0
     try {
       const answer = await api.actContainer(action)
       if (stale(serverId)) return
@@ -378,15 +379,26 @@
     </Card>
   {/if}
 
-  {#if actionOutput && actionExit === 0}
+  {#if actionExit === 0}
     <!-- What a successful action printed — a pull's digest, a run's id. Not a
          failure, so not in the danger tone. -->
-    <Card>
-      <pre class="text-xs font-mono text-muted-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
-    </Card>
-  {:else if actionOutput}
-    <Card class="border-danger/40 bg-danger/5">
-      <pre class="text-xs font-mono text-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
+    {#if actionOutput}
+      <Card>
+        <pre class="text-xs font-mono text-muted-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
+      </Card>
+    {/if}
+  {:else}
+    <!-- A failure is said even when the runtime printed nothing: the refreshed
+         listing alone would look like the action went through. -->
+    <Card class="border-danger/40 bg-danger/5 space-y-2">
+      {#if actionExit === undefined}
+        <p class="text-sm text-danger">{$LL.containerActionUnfinished()}</p>
+      {:else}
+        <p class="text-sm text-danger">{$LL.containerActionFailed({ code: actionExit ?? '?' })}</p>
+      {/if}
+      {#if actionOutput}
+        <pre class="text-xs font-mono text-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
+      {/if}
     </Card>
   {/if}
 
@@ -654,7 +666,11 @@
           onclick={() => {
             const image = imageConfirm
             imageConfirm = undefined
-            if (image?.id) void act({ action: 'remove_image', id: image.id })
+            // The tag on the row, not the id: `rmi -f <id>` removes every tag
+            // the image has, and the user picked one. Only an image with no
+            // name is removed by its id.
+            const id = image?.dangling ? image.id : image && imageReference(image)
+            if (id) void act({ action: 'remove_image', id })
           }}
         >
           {$LL.containerRemove()}

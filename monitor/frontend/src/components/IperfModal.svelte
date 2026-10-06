@@ -56,6 +56,8 @@
       </div>
     </div>
   {:else}
-    <TargetTerminal {target} issueText={iperfIssueText} />
+    <!-- A refused host or port comes back to the form with what was typed;
+         the refused session ends as the terminal leaves. -->
+    <TargetTerminal {target} issueText={iperfIssueText} onedit={() => (target = null)} />
   {/if}
 </Modal>

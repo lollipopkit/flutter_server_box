@@ -7,7 +7,7 @@
   /// it, so nothing here composes one. Offered only where the agent lists the
   /// matching feature.
   import { onMount } from 'svelte'
-  import { Spinner } from '@serverbox/webui'
+  import { Button, Spinner } from '@serverbox/webui'
   import { LL } from '../i18n/i18n-svelte'
   import { TerminalSession, type TerminalTarget } from '../lib/terminal.svelte'
   import { terminalSurface } from '../lib/terminalSurface.svelte'
@@ -19,9 +19,13 @@
     /// sent. The dialog that knows the target's vocabulary passes this; a
     /// caller that does not gets the agent's own message.
     issueText?: (issue: string) => string
+    /// Back to the form that named the target, offered after the agent refused
+    /// one of its values: nothing ran, so there is nothing on screen to keep.
+    /// Leaving this component closes the refused session.
+    onedit?: () => void
   }
 
-  const { target, issueText }: Props = $props()
+  const { target, issueText, onedit }: Props = $props()
 
   // `persist: false`: the dialog owns its own handle, and must never read or
   // write the `terminal.session` key the terminal page uses — that key is one
@@ -31,6 +35,9 @@
   let host = $state<HTMLDivElement | null>(null)
   let terminal: TerminalHandle | null = null
   let mounting = $state(true)
+  /// The terminal failed to load (its chunk did not arrive): said instead of
+  /// a spinner that never ends.
+  let mountFailed = $state(false)
 
   /// Typing belongs in the shell, not in whichever button opened the dialog.
   /// Focused once the session is up: before that there is nothing to type at.
@@ -42,7 +49,16 @@
     let cancelled = false
     void (async () => {
       if (!host) return
-      const mounted = await mountTerminal(host, session)
+      let mounted: TerminalHandle
+      try {
+        mounted = await mountTerminal(host, session)
+      } catch {
+        if (!cancelled) {
+          mounting = false
+          mountFailed = true
+        }
+        return
+      }
       if (cancelled) {
         mounted.dispose()
         return
@@ -89,6 +105,14 @@
     {/if}
   </div>
 
+  {#if mountFailed}
+    <p class="text-sm text-danger">{$LL.terminalLoadFailed()}</p>
+  {/if}
+  <!-- The outage outlasted the agent's buffer, so what is on screen has a
+       hole in it — the terminal page says the same. -->
+  {#if session.truncated}
+    <p class="text-xs text-muted-fg">{$LL.terminalOutputLost()}</p>
+  {/if}
   {#if session.error}
     <p class="text-sm text-danger">
       {session.errorCode === 'invalid_input' && session.issueCode && issueText
@@ -97,6 +121,9 @@
           ? $LL.containerErrNoRuntime()
           : session.error}
     </p>
+    {#if onedit && session.errorCode === 'invalid_input'}
+      <Button variant="secondary" onclick={onedit}>{$LL.back()}</Button>
+    {/if}
   {/if}
   <!-- The command has ended; its output is still on screen above. -->
   {#if session.phase === 'closed' && session.exitStatus !== null}

@@ -52,7 +52,6 @@
 //! only root may reach.
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
@@ -74,12 +73,6 @@ use sbm_parser::container::{
 /// that prints without end cannot make the agent buffer without bound; going
 /// over is reported like any other unreadable answer rather than as a crash.
 const MAX_OUTPUT_BYTES: usize = 8 * 1024 * 1024;
-
-/// How long a `pull` or a `run` may take. Both fetch image layers, which on a
-/// slow link is minutes and not the minute `[remote_access.exec]` allows by
-/// default; a timeout here would kill a pull that was going perfectly well.
-/// The output cap is unchanged — a pull prints progress, not a document.
-const PULL_RUN_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Which of the four things the panel is asking for.
 ///
@@ -287,7 +280,13 @@ pub async fn act(
         .detail(&what)
         .record(&state.db)
         .await;
-    let result = run_local(&command, exec, is_slow(&action)).await;
+    // A pull or a run fetches image layers and is bounded like every other
+    // command here, by `[remote_access.exec]`: the limit is the operator's
+    // trade against the agent's workers, not this endpoint's to raise. One that
+    // runs past it answers with no `exit_code`, which the panel reports.
+    // TODO: start a pull detached and poll it, as `/benchmark` does a run, so a
+    // large image does not need the operator to raise the limit.
+    let result = run_local(&command, exec).await;
     let failed = match &result {
         Some(output) if output.exit_code == Some(0) => None,
         Some(output) => Some(format!("exit {:?}", output.exit_code)),
@@ -336,14 +335,6 @@ async fn refuse(
         .record(&state.db)
         .await;
     HttpResponse::BadRequest().json(&json!({ "error": "invalid_input", "issue": issue }))
-}
-
-/// Whether a change may take minutes: a pull and a run fetch image layers.
-fn is_slow(action: &ContainerAction) -> bool {
-    matches!(
-        action,
-        ContainerAction::PullImage { .. } | ContainerAction::Run { .. }
-    )
 }
 
 /// Which listing a change leaves stale, so the answer carries the part the
@@ -504,7 +495,7 @@ async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>, exec: &
     let command_text = sbm_parser::container::join_commands(&cmds, &separator);
     let command_text = sbm_parser::container::build_runtime_command(&command_text, ty, None, false);
 
-    let Some(output) = run_local(&command_text, exec, false).await else {
+    let Some(output) = run_local(&command_text, exec).await else {
         return Probe::Unreadable {
             ty,
             reason: Some("the command did not finish".to_owned()),
@@ -711,7 +702,7 @@ pub(crate) async fn detect_runtime(exec: &Limits) -> Option<ContainerType> {
         let command_text = ContainerCmd::Version.exec(ty);
         let command_text =
             sbm_parser::container::build_runtime_command(&command_text, ty, None, false);
-        let Some(output) = run_local(&command_text, exec, false).await else {
+        let Some(output) = run_local(&command_text, exec).await else {
             continue;
         };
         let (stdout, stderr) = (&output.stdout, &output.stderr);
@@ -733,20 +724,9 @@ pub(crate) async fn detect_runtime(exec: &Limits) -> Option<ContainerType> {
 ///
 /// `None` for a timeout, an output past the cap or a spawn that failed:
 /// either way there is nothing to parse, and the caller reports it as "could
-/// not read" rather than as a crash. [slow] raises the timeout to at least
-/// [`PULL_RUN_TIMEOUT`] for the two actions that fetch layers — the larger of
-/// the two, so an operator who configured a longer limit does not get less.
-async fn run_local(command_text: &str, exec: &Limits, slow: bool) -> Option<ExecResponse> {
-    let limits = machine::at_least(exec, MAX_OUTPUT_BYTES);
-    let limits = if slow {
-        Limits {
-            timeout: limits.timeout.max(PULL_RUN_TIMEOUT),
-            ..limits
-        }
-    } else {
-        limits
-    };
-    match run(command_text, None, None, &limits).await {
+/// not read" rather than as a crash.
+async fn run_local(command_text: &str, exec: &Limits) -> Option<ExecResponse> {
+    match run(command_text, None, None, &machine::at_least(exec, MAX_OUTPUT_BYTES)).await {
         Ok(output) if !output.timed_out && !output.truncated => Some(output),
         Ok(_) => None,
         Err(e) => {

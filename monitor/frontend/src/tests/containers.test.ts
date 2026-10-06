@@ -75,6 +75,32 @@ describe('Containers page', () => {
     await fireEvent.click(buttons.at(-1)!)
     await waitFor(() => expect(actContainer).toHaveBeenCalledWith({ action: 'prune_volumes' }))
   })
+
+  /// Confirms a volume prune, the simplest action to drive from the page.
+  async function pruneVolumes() {
+    render(Containers, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /remove unused volumes/i }))
+    const buttons = await screen.findAllByRole('button', { name: /remove unused volumes/i })
+    await fireEvent.click(buttons.at(-1)!)
+  }
+
+  it('says an action failed even when the runtime printed nothing', async () => {
+    actContainer.mockResolvedValue({ ...view(), exit_code: 1, output: null } as never)
+    await pruneVolumes()
+    expect(await screen.findByText(/failed \(exit 1\)/i)).toBeInTheDocument()
+  })
+
+  it('says an action did not finish when the answer has no exit code', async () => {
+    actContainer.mockResolvedValue(view() as never)
+    await pruneVolumes()
+    expect(await screen.findByText(/did not finish/i)).toBeInTheDocument()
+  })
+
+  it('says nothing about a quiet success', async () => {
+    await pruneVolumes()
+    await waitFor(() => expect(actContainer).toHaveBeenCalled())
+    expect(screen.queryByText(/failed \(exit|did not finish/i)).not.toBeInTheDocument()
+  })
 })
 
 describe('Containers page on the images tab', () => {
@@ -115,7 +141,7 @@ describe('Containers page on the images tab', () => {
     expect(await screen.findByText(/alpine/)).toBeInTheDocument()
   })
 
-  it('asks before removing an image, and sends its id', async () => {
+  it('asks before removing an image, and sends the tag on the row', async () => {
     render(Containers, { onback: () => {} })
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
     await screen.findByText(/alpine/)
@@ -124,6 +150,27 @@ describe('Containers page on the images tab', () => {
     expect(actContainer).not.toHaveBeenCalled()
     expect(await screen.findByText(/remove image alpine:latest/i)).toBeInTheDocument()
 
+    const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
+    await fireEvent.click(buttons.at(-1)!)
+    await waitFor(() =>
+      expect(actContainer).toHaveBeenCalledWith({ action: 'remove_image', id: 'alpine:latest' }),
+    )
+  })
+
+  it('removes an image with no name by its id', async () => {
+    getContainers.mockImplementation(async (part) =>
+      part === 'images'
+        ? ({
+            ...view(),
+            part: 'images',
+            images: [{ ...IMAGE, repository: '<none>', tag: '<none>', dangling: true }],
+          } as unknown as ContainerView)
+        : view(),
+    )
+    render(Containers, { onback: () => {} })
+    await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
+    await screen.findAllByText(/<none>/)
+    await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
     await fireEvent.click(buttons.at(-1)!)
     await waitFor(() =>

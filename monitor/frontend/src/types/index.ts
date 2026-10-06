@@ -1012,10 +1012,12 @@ export type ContainerAction =
 /// What a change answered: the listing as it now stands, plus how the command
 /// went.
 export interface ContainerActionResult extends ContainerView {
-  exit_code: number | null
+  /// Absent when the command did not end within the agent's
+  /// `[remote_access.exec]` limit; `null` when it ended without one (killed).
+  exit_code?: number | null
   /// What the runtime printed, with the agent's own scaffolding dropped out of
-  /// it. Empty when the action succeeded quietly.
-  output: string
+  /// it. Absent or `null` when it printed nothing, or did not end.
+  output?: string | null
 }
 
 /// One yabs run's options.
