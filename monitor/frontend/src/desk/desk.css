@@ -291,3 +291,7 @@
 .desk-window[data-merging='true'] {
   opacity: 0.72;
 }
+/* A settings card whose rows open pages: their hover keeps the card's corners. */
+.lk-setgroup__card:has(> .lk-setrow--link) {
+  overflow: hidden;
+}

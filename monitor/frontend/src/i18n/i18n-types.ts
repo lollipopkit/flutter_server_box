@@ -6320,6 +6320,50 @@ type RootTranslation = {
 	 */
 	settingsAppsDesc: string
 	/**
+	 * A​l​l​ ​a​p​p​s
+	 */
+	settingsAppList: string
+	/**
+	 * S​h​o​w​ ​i​n​ ​t​h​e​ ​d​o​c​k
+	 */
+	settingsAppShowInDock: string
+	/**
+	 * K​e​e​p​ ​r​u​n​n​i​n​g​ ​w​h​e​n​ ​h​i​d​d​e​n
+	 */
+	settingsAppRunHidden: string
+	/**
+	 * I​t​s​ ​w​i​n​d​o​w​s​ ​k​e​e​p​ ​w​o​r​k​i​n​g​ ​w​h​i​l​e​ ​m​i​n​i​m​i​s​e​d​ ​o​r​ ​b​e​h​i​n​d​ ​t​h​e​ ​l​o​c​k​ ​s​c​r​e​e​n
+	 */
+	settingsAppRunHiddenSub: string
+	/**
+	 * O​f​f​ ​f​o​r​ ​e​v​e​r​y​ ​a​p​p​:​ ​t​u​r​n​ ​i​t​ ​o​n​ ​u​n​d​e​r​ ​A​p​p​s
+	 */
+	settingsAppRunHiddenOff: string
+	/**
+	 * B​u​i​l​t​ ​i​n
+	 */
+	settingsAppBuiltIn: string
+	/**
+	 * I​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	settingsAppInstalled: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​s
+	 */
+	settingsAppPermissions: string
+	/**
+	 * P​r​e​f​e​r​e​n​c​e​s
+	 */
+	settingsAppOwnSettings: string
+	/**
+	 * I​n​ ​t​h​e​ ​d​o​c​k
+	 */
+	settingsAppInDock: string
+	/**
+	 * R​u​n​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsAppInBackground: string
+	/**
 	 * R​e​f​r​e​s​h​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
 	 */
 	settingsAutoRefresh: string
@@ -12849,6 +12893,50 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Kept on the server: they apply in every browser you sign in from.
 	 */
 	settingsAppsDesc: () => LocalizedString
+	/**
+	 * All apps
+	 */
+	settingsAppList: () => LocalizedString
+	/**
+	 * Show in the dock
+	 */
+	settingsAppShowInDock: () => LocalizedString
+	/**
+	 * Keep running when hidden
+	 */
+	settingsAppRunHidden: () => LocalizedString
+	/**
+	 * Its windows keep working while minimised or behind the lock screen
+	 */
+	settingsAppRunHiddenSub: () => LocalizedString
+	/**
+	 * Off for every app: turn it on under Apps
+	 */
+	settingsAppRunHiddenOff: () => LocalizedString
+	/**
+	 * Built in
+	 */
+	settingsAppBuiltIn: () => LocalizedString
+	/**
+	 * Installed on this server
+	 */
+	settingsAppInstalled: () => LocalizedString
+	/**
+	 * Permissions
+	 */
+	settingsAppPermissions: () => LocalizedString
+	/**
+	 * Preferences
+	 */
+	settingsAppOwnSettings: () => LocalizedString
+	/**
+	 * In the dock
+	 */
+	settingsAppInDock: () => LocalizedString
+	/**
+	 * Runs in the background
+	 */
+	settingsAppInBackground: () => LocalizedString
 	/**
 	 * Refresh automatically
 	 */

@@ -11,7 +11,9 @@
   import AccessSection from './AccessSection.svelte'
   import AccountSection from './AccountSection.svelte'
   import AppearanceSection from './AppearanceSection.svelte'
+  import AppPage from './AppPage.svelte'
   import AppsSection from './AppsSection.svelte'
+  import { useDeskPrefs } from '../../deskState.svelte'
   import GeneralSection from './GeneralSection.svelte'
   import ServerSection from './ServerSection.svelte'
   import { resolveSection, type SettingsSection } from './sections'
@@ -38,6 +40,15 @@
   function show(next: SettingsSection) {
     win.setAppState({ section: next })
   }
+
+  /// The app whose page is open under Apps (`{ section: 'apps', app }`), so a
+  /// reload or another app can open Settings straight at it.
+  const deskPrefs = useDeskPrefs()
+  const appPage = $derived.by(() => {
+    if (current !== 'apps') return null
+    const id = (win.appState as { app?: unknown } | null)?.app
+    return typeof id === 'string' ? (deskPrefs.apps.find((a) => a.id === id) ?? null) : null
+  })
 </script>
 
 <SplitView>
@@ -90,8 +101,10 @@
     <GeneralSection />
   {:else if current === 'appearance'}
     <AppearanceSection />
+  {:else if current === 'apps' && appPage}
+    {#key appPage.id}<AppPage spec={appPage} onback={() => show('apps')} />{/key}
   {:else if current === 'apps'}
-    <AppsSection />
+    <AppsSection onopen={(app) => win.setAppState({ section: 'apps', app })} />
   {:else if current === 'account'}
     <AccountSection />
   {:else if current === 'server'}

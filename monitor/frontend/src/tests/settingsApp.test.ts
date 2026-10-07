@@ -161,7 +161,7 @@ describe('settings app', () => {
 })
 
 describe('settings pages of other apps', () => {
-  it('shows them under Apps, each run as its app', async () => {
+  it('lists every app under Apps, each opening a page of its own run as that app', async () => {
     const { registerApp } = await import('../desk/sys')
     const { BrowserStorage } = await import('../desk/storage')
     const { DeskPrefs } = await import('../desk/prefs.svelte')
@@ -180,13 +180,21 @@ describe('settings pages of other apps', () => {
     desk.appData = new AppData(storage)
     render(SettingsWindowHarness, { desk, id })
 
-    // Inline, in the app's own group.
+    // A row in the list opens the app's page, kept in the window's state.
+    await fireEvent.click(await screen.findByRole('button', { name: /^Greeter/ }))
+    expect(desk.windows.get(id)?.appState).toEqual({ section: 'apps', app: 'acme_greeter' })
     expect(await screen.findByRole('heading', { name: 'Greeter' })).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Show in the dock' })).toBeInTheDocument()
+    // Its own preferences, in that page.
     await fireEvent.click(await screen.findByRole('button', { name: 'Save greeting' }))
     expect(await screen.findByText('saved: hi')).toBeInTheDocument()
     // Kept as the app's, not Settings'.
     expect(await desk.appData.for('acme_greeter').get('greeting')).toBe('hi')
     expect(await desk.appData.for('settings').keys()).toEqual([])
+
+    // Without an app, the list again.
+    desk.windows.setAppState(id, { section: 'apps' })
+    expect(await screen.findByText('All apps')).toBeInTheDocument()
     off()
   })
 })
