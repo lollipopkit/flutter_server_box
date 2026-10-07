@@ -203,7 +203,28 @@
   function openAsked() {
     const path = intentPath
     intentPath = null
-    if (path && insideRoots(path)) void load(path)
+    if (path && insideRoots(path)) void goTo(path)
+  }
+
+  /// A path typed or handed over (Spotlight, another app): a folder is shown;
+  /// a file is shown in its folder, picked and opened as a double-click would.
+  async function goTo(path: string, serverId = servers.currentId) {
+    const clean = path.length > 1 ? path.replace(/\/+$/, '') : path
+    let kind: FsEntry['kind'] = 'dir'
+    try {
+      kind = (await api.fsStat(clean)).kind
+    } catch {
+      // Listing it says why.
+    }
+    if (stale(serverId)) return
+    const folder = kind === 'file' ? parentOf(clean, roots) : null
+    if (!folder) return load(clean, serverId)
+    await load(folder, serverId)
+    if (stale(serverId) || cwd !== folder) return
+    const entry = entries.find((e) => e.name === clean.slice(clean.lastIndexOf('/') + 1))
+    if (!entry) return
+    selected = entry.name
+    openEntry(entry)
   }
 
   async function start(serverId: string) {
@@ -225,7 +246,7 @@
       }
       const first = intentPath ?? asked
       intentPath = null
-      await load(typeof first === 'string' && insideRoots(first) ? first : roots[0], serverId)
+      await (typeof first === 'string' && insideRoots(first) ? goTo(first, serverId) : load(roots[0], serverId))
       // A folder another app asked for while the first one was read.
       if (intentPath && !stale(serverId)) openAsked()
     } catch (e) {

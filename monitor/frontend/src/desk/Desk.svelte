@@ -198,14 +198,17 @@
       <NotificationCenter />
     </div>
   {:else if desk.panel}
-    <!-- Under the menubar's right end, as macOS opens them. -->
-    <div class="desk-panel" role="dialog" tabindex="-1" onpointerdown={(e) => e.stopPropagation()}>
-      {#if desk.panel === 'control'}
-        <ControlCenter {onlock} />
-      {:else if desk.panel === 'calendar'}
-        <CalendarPanel />
-      {/if}
-    </div>
+    <!-- Under the menubar's right end, as macOS opens them. Keyed, so going
+         from one panel to another opens the next one as a panel opens. -->
+    {#key desk.panel}
+      <div class="desk-panel" role="dialog" tabindex="-1" onpointerdown={(e) => e.stopPropagation()}>
+        {#if desk.panel === 'control'}
+          <ControlCenter {onlock} />
+        {:else if desk.panel === 'calendar'}
+          <CalendarPanel />
+        {/if}
+      </div>
+    {/key}
   {/if}
 
   {#if desk.spotlight}

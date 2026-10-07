@@ -180,6 +180,11 @@ fn failed(e: std::io::Error) -> HttpResponse {
         std::io::ErrorKind::PermissionDenied => {
             HttpResponse::Forbidden().json(&serde_json::json!({ "error": "permission denied" }))
         }
+        // A file asked to be listed (a path typed by hand): the caller's
+        // mistake, said as such so it can open the file instead.
+        std::io::ErrorKind::NotADirectory => {
+            HttpResponse::BadRequest().json(&serde_json::json!({ "error": "not_a_directory" }))
+        }
         _ => {
             HttpResponse::InternalServerError().json(&serde_json::json!({ "error": e.to_string() }))
         }

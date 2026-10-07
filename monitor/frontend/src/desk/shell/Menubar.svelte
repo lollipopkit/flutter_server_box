@@ -56,8 +56,15 @@
     e.stopPropagation()
     desk.panel = null
     desk.spotlight = false
-    desk.menu = desk.menu?.owner === owner && e.type === 'click' ? null : { x: end ? r.right : r.left, y: r.bottom + 3, items, owner, end }
+    // A click on the title of the menu that was open closes it (the press
+    // already took it down, so ask what was open then).
+    const open = e.type === 'click' ? openAtPress : desk.menu?.owner
+    openAtPress = null
+    desk.menu = open === owner ? null : { x: end ? r.right : r.left, y: r.bottom + 3, items, owner, end }
   }
+
+  /// The bar menu open when the pointer went down on the bar.
+  let openAtPress: string | null = null
 
   /// With one of the bar's menus open, pointing at another title opens it.
   function hover(e: MouseEvent, owner: string, items: () => MenuItem[], end = false) {
@@ -202,8 +209,10 @@
   aria-label={$LL.deskMenubar()}
   onpointerdown={(e) => {
     // Its buttons toggle what they open; the desk's own dismissal would
-    // close it first and the click open it again.
+    // close it first and the click open it again, so what was open is kept
+    // for the click to compare with.
     e.stopPropagation()
+    openAtPress = desk.menu?.owner ?? null
     desk.menu = null
   }}
 >
