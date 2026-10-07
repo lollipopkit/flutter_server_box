@@ -45,15 +45,16 @@ impl std::fmt::Display for SpawnError {
 #[cfg(unix)]
 const NON_SHELLS: &[&str] = &["nologin", "false"];
 
-/// The user's login shell from the passwd database.
-///
-/// **Not `$SHELL`.** That variable reports whatever shell launched the
-/// process, which for a service is an artifact of how it was started —
-/// systemd, a login session, or in the worst case the shell of whoever ran
-/// `sudo`. The passwd entry is what the user actually configured, and is the
-/// same thing `sshd` and `login` consult.
+/// This process's account as the passwd database has it.
 #[cfg(unix)]
-fn passwd_shell() -> Option<String> {
+struct Account {
+    name: String,
+    home: String,
+    shell: String,
+}
+
+#[cfg(unix)]
+fn passwd_account() -> Option<Account> {
     use std::ffi::CStr;
 
     // SAFETY: `getpwuid` returns a pointer into a static buffer owned by libc,
@@ -63,11 +64,27 @@ fn passwd_shell() -> Option<String> {
     if entry.is_null() {
         return None;
     }
-    let shell = unsafe { CStr::from_ptr((*entry).pw_shell) }
-        .to_str()
-        .ok()?
-        .to_string();
+    let field = |ptr: *const libc::c_char| -> String {
+        if ptr.is_null() {
+            return String::new();
+        }
+        unsafe { CStr::from_ptr(ptr) }.to_string_lossy().into_owned()
+    };
+    // SAFETY: as above; each field is a NUL-terminated string or null.
+    let (name, home, shell) = unsafe { (field((*entry).pw_name), field((*entry).pw_dir), field((*entry).pw_shell)) };
+    Some(Account { name, home, shell })
+}
 
+/// The user's login shell from the passwd database.
+///
+/// **Not `$SHELL`.** That variable reports whatever shell launched the
+/// process, which for a service is an artifact of how it was started —
+/// systemd, a login session, or in the worst case the shell of whoever ran
+/// `sudo`. The passwd entry is what the user actually configured, and is the
+/// same thing `sshd` and `login` consult.
+#[cfg(unix)]
+fn passwd_shell() -> Option<String> {
+    let shell = passwd_account()?.shell;
     if shell.is_empty() {
         return None;
     }
@@ -178,6 +195,7 @@ impl LocalShell {
             .map_err(|e| SpawnError(e.to_string()))?;
 
         let mut cmd = cmd;
+        fill_login_env(&mut cmd);
         if let Some(home) = dirs_home() {
             cmd.cwd(home);
         }
@@ -312,12 +330,33 @@ impl LocalShell {
     }
 }
 
-/// The agent user's home directory, for the shell's working directory.
+/// The agent user's home directory: `HOME`, or the passwd entry's when the
+/// agent was started without one (a bare systemd unit, `systemd-run`).
 fn dirs_home() -> Option<String> {
-    std::env::var("HOME")
+    let env = std::env::var("HOME")
         .or_else(|_| std::env::var("USERPROFILE"))
         .ok()
-        .filter(|h| !h.is_empty())
+        .filter(|h| !h.is_empty());
+    #[cfg(unix)]
+    let env = env.or_else(|| passwd_account().map(|a| a.home).filter(|h| !h.is_empty()));
+    env
+}
+
+/// What `login` gives a session and a service may not have: `HOME`, `USER`
+/// and `LOGNAME`, from the passwd entry, where the agent's own environment
+/// lacks them. Without `HOME` a shell's `cd` and `~` fail ("HOME not set").
+fn fill_login_env(cmd: &mut CommandBuilder) {
+    if let Some(home) = dirs_home() {
+        cmd.env("HOME", home);
+    }
+    #[cfg(unix)]
+    if let Some(account) = passwd_account().filter(|a| !a.name.is_empty()) {
+        for key in ["USER", "LOGNAME"] {
+            if std::env::var(key).map_or(true, |v| v.is_empty()) {
+                cmd.env(key, &account.name);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -436,6 +475,20 @@ mod tests {
 
         assert!(found, "the command should run on the PTY; saw {seen:?}");
         shell.kill();
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn a_shell_gets_home_and_user_even_when_the_agent_has_none() {
+        // What `login` would give the session; a service started bare (a
+        // transient systemd unit) has no `HOME`, and `cd` then fails.
+        let mut cmd = CommandBuilder::new("sh");
+        fill_login_env(&mut cmd);
+        let home = cmd.get_env("HOME").and_then(|v| v.to_str()).unwrap_or("");
+        assert!(!home.is_empty());
+        assert_eq!(Some(home.to_string()), dirs_home());
+        let account = passwd_account().expect("this process has a passwd entry");
+        assert!(!account.home.is_empty() && !account.name.is_empty());
     }
 
     #[test]
