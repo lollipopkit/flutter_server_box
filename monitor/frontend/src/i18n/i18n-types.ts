@@ -6277,6 +6277,112 @@ type RootTranslation = {
 	 */
 	deskSizeLarge: string
 	/**
+	 * {​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
+	 * @param {unknown} count
+	 */
+	processCount: RequiredParams<'count'>
+	/**
+	 * {​c​o​u​n​t​}​ ​m​a​t​c​h​i​n​g
+	 * @param {unknown} count
+	 */
+	processMatching: RequiredParams<'count'>
+	/**
+	 * S​h​o​w​ ​k​e​r​n​e​l​ ​t​h​r​e​a​d​s
+	 */
+	processShowKernelThreads: string
+	/**
+	 * K​e​r​n​e​l​ ​t​h​r​e​a​d​s
+	 */
+	processKernelThreadsShort: string
+	/**
+	 * S​t​o​p​ ​{​n​a​m​e​}​ ​(​{​p​i​d​}​)​?​ ​U​n​s​a​v​e​d​ ​w​o​r​k​ ​i​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 * @param {unknown} pid
+	 */
+	processStopAsk: RequiredParams<'name' | 'pid'>
+	/**
+	 * P​a​u​s​e​d
+	 */
+	deskPaused: string
+	/**
+	 * E​v​e​r​y​ ​{​n​}​ ​s
+	 * @param {unknown} n
+	 */
+	deskEverySeconds: RequiredParams<'n'>
+	/**
+	 * P​a​u​s​e​ ​r​e​f​r​e​s​h
+	 */
+	deskPauseRefresh: string
+	/**
+	 * R​e​s​u​m​e​ ​r​e​f​r​e​s​h
+	 */
+	deskResumeRefresh: string
+	/**
+	 * E​d​i​t
+	 */
+	deskMenuEdit: string
+	/**
+	 * V​i​e​w
+	 */
+	deskMenuView: string
+	/**
+	 * F​i​n​d​…
+	 */
+	deskFind: string
+	/**
+	 * A​l​l​ ​t​y​p​e​s
+	 */
+	serviceTypeAll: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	serviceTypeService: string
+	/**
+	 * T​i​m​e​r​s
+	 */
+	serviceTypeTimer: string
+	/**
+	 * S​o​c​k​e​t​s
+	 */
+	serviceTypeSocket: string
+	/**
+	 * M​o​u​n​t​s
+	 */
+	serviceTypeMount: string
+	/**
+	 * S​t​a​t​e
+	 */
+	serviceSectionState: string
+	/**
+	 * T​y​p​e
+	 */
+	serviceSectionType: string
+	/**
+	 * N​o​ ​f​a​i​l​e​d​ ​u​n​i​t​s
+	 */
+	serviceNoFailed: string
+	/**
+	 * {​c​o​u​n​t​}​ ​u​n​i​t​s
+	 * @param {unknown} count
+	 */
+	serviceUnits: RequiredParams<'count'>
+	/**
+	 * U​n​i​t
+	 */
+	serviceUnit: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n
+	 */
+	serviceDescription: string
+	/**
+	 * S​t​a​r​t​u​p
+	 */
+	serviceStartup: string
+	/**
+	 * L​a​s​t​ ​r​e​s​u​l​t
+	 */
+	serviceResult: string
+	/**
 	 * I​n​s​t​a​l​l​e​d
 	 */
 	settingsInstalledApps: string
@@ -12428,6 +12534,106 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Large
 	 */
 	deskSizeLarge: () => LocalizedString
+	/**
+	 * {count} processes
+	 */
+	processCount: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {count} matching
+	 */
+	processMatching: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Show kernel threads
+	 */
+	processShowKernelThreads: () => LocalizedString
+	/**
+	 * Kernel threads
+	 */
+	processKernelThreadsShort: () => LocalizedString
+	/**
+	 * Stop {name} ({pid})? Unsaved work in it is lost.
+	 */
+	processStopAsk: (arg: { name: unknown, pid: unknown }) => LocalizedString
+	/**
+	 * Paused
+	 */
+	deskPaused: () => LocalizedString
+	/**
+	 * Every {n} s
+	 */
+	deskEverySeconds: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Pause refresh
+	 */
+	deskPauseRefresh: () => LocalizedString
+	/**
+	 * Resume refresh
+	 */
+	deskResumeRefresh: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	deskMenuEdit: () => LocalizedString
+	/**
+	 * View
+	 */
+	deskMenuView: () => LocalizedString
+	/**
+	 * Find…
+	 */
+	deskFind: () => LocalizedString
+	/**
+	 * All types
+	 */
+	serviceTypeAll: () => LocalizedString
+	/**
+	 * Services
+	 */
+	serviceTypeService: () => LocalizedString
+	/**
+	 * Timers
+	 */
+	serviceTypeTimer: () => LocalizedString
+	/**
+	 * Sockets
+	 */
+	serviceTypeSocket: () => LocalizedString
+	/**
+	 * Mounts
+	 */
+	serviceTypeMount: () => LocalizedString
+	/**
+	 * State
+	 */
+	serviceSectionState: () => LocalizedString
+	/**
+	 * Type
+	 */
+	serviceSectionType: () => LocalizedString
+	/**
+	 * No failed units
+	 */
+	serviceNoFailed: () => LocalizedString
+	/**
+	 * {count} units
+	 */
+	serviceUnits: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Unit
+	 */
+	serviceUnit: () => LocalizedString
+	/**
+	 * Description
+	 */
+	serviceDescription: () => LocalizedString
+	/**
+	 * Startup
+	 */
+	serviceStartup: () => LocalizedString
+	/**
+	 * Last result
+	 */
+	serviceResult: () => LocalizedString
 	/**
 	 * Installed
 	 */

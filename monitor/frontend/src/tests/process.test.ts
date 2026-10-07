@@ -54,13 +54,15 @@ describe('Process page', () => {
 
   it('asks for a password when root needed one, and sends it on the retry', async () => {
     render(Process)
-    await fireEvent.click(await screen.findByRole('button', { name: /stop/i }))
+    // Select the row, then stop it from the status bar, which asks first.
+    await fireEvent.click(await screen.findByText('nginx'))
+    await fireEvent.click(await screen.findByRole('button', { name: /^stop$/i }))
+    expect(screen.getByText(/Stop nginx \(4242\)\?/)).toBeInTheDocument()
 
     // The agent already tried `sudo -n`; that it wanted a password is a
     // question for the user, not a refused password.
     signalProcess.mockResolvedValueOnce(answer({ outcome: 'failed', sudo_rejected: true }))
-    const signalButtons = screen.getAllByRole('button').filter((b) => /term|stop/i.test(b.textContent ?? ''))
-    await fireEvent.click(signalButtons.at(-1)!)
+    await fireEvent.click(screen.getByRole('button', { name: /SIGTERM/ }))
     const password = await screen.findByLabelText('Sudo password')
     expect(screen.queryByText(/refused that password/)).not.toBeInTheDocument()
     // Nothing to retry with until a password is typed.

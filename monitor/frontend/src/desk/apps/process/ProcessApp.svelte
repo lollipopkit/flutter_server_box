@@ -1,14 +1,29 @@
 <script lang="ts">
-  import Spinner from '../../lk/Spinner.svelte'
-  import { AppToolbar } from '../../sys'
-  import { Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl } from '../../lk'
+  import { AppToolbar, useLifecycle, useMenus, WindowFooter } from '../../sys'
+  import {
+    Button,
+    Card,
+    DataTable,
+    Dialog,
+    Icon,
+    Input,
+    SearchField,
+    Spinner,
+    StatusBar,
+    ToolbarGroup,
+    type Column,
+    type TableSort,
+  } from '../../lk'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { untrack } from 'svelte'
-  import type { ProcRow, ProcessSignal, ProcessSortMode, ProcessView } from '../../../types'
+  import type { ProcessSignal, ProcessSortMode, ProcessView } from '../../../types'
+
+  /// How often the table is read again while it is in sight and not paused.
+  const REFRESH_MS = 5000
 
   let view = $state<ProcessView | null>(null)
   let loading = $state(true)
@@ -17,22 +32,30 @@
   /// Set after a signal lands, cleared by the next one. A success is worth
   /// saying because the row it reports is usually gone from the next reading.
   let notice = $state('')
-  /// The filter and the kernel-thread toggle are the page's own: neither is a
-  /// question for the machine, and both are undone by leaving the page.
+  /// The filter and the kernel-thread toggle are the window's own: neither is
+  /// a question for the machine.
   let query = $state('')
+  let search = $state<HTMLInputElement | null>(null)
   let showKernel = $state(false)
-  /// The order the page is asking for. Adopted from each answer, so a mode this
-  /// machine cannot answer (it printed no `read` column) leaves the chips and
-  /// the ordering agreeing with each other rather than with the click.
+  let paused = $state(false)
+  /// The order the window is asking for. Adopted from each answer, so a mode
+  /// this machine cannot answer (it printed no `read` column) leaves the
+  /// header and the ordering agreeing with each other rather than with the
+  /// click.
   let sort = $state<ProcessSortMode | undefined>(undefined)
   let ascending = $state<boolean | undefined>(undefined)
 
-  /// The process whose stop is being confirmed, and the signal that was
-  /// refused for want of a different account.
-  let target = $state<ProcRow | undefined>(undefined)
+  /// The selected row's PID.
+  let selected = $state<number | null>(null)
+  /// The status bar asks before a signal is sent.
+  let asking = $state(false)
+  /// The signal that was refused for want of a different account: the
+  /// password dialog is open for it.
   let pending = $state<ProcessSignal | undefined>(undefined)
   let password = $state('')
   let stopError = $state('')
+
+  const life = useLifecycle()
 
   /// A reply that arrives after the desk has switched servers belongs to
   /// neither.
@@ -40,11 +63,7 @@
     return serverId !== servers.currentId
   }
 
-  async function load(
-    requestedSort?: ProcessSortMode,
-    requestedAscending?: boolean,
-    serverId = servers.currentId,
-  ) {
+  async function load(requestedSort?: ProcessSortMode, requestedAscending?: boolean, serverId = servers.currentId) {
     loading = true
     error = ''
     try {
@@ -69,16 +88,27 @@
     untrack(() => void load(sort, ascending, serverId))
   })
 
+  /// Read again while the window is in sight, not paused, and no stop is
+  /// being asked about (the row would move under the question).
+  $effect(() => {
+    if (paused || life.state === 'background' || life.state === 'suspended' || asking || pending !== undefined) return
+    const t = setInterval(() => {
+      if (!loading) void refresh()
+    }, REFRESH_MS)
+    return () => clearInterval(t)
+  })
+
   /// The order on screen, which is what a refresh should ask for again — not
   /// the order last clicked, which a fallback may have changed.
   function refresh() {
     return load(view?.sort ?? undefined, view?.ascending ?? undefined)
   }
 
-  /// A tap on a chip asks for that order; a tap on the chip already chosen
-  /// turns it around. The direction is left to the agent on a change of column,
-  /// since each mode has its own default.
-  function order(mode: ProcessSortMode) {
+  /// A click on a column asks the machine for that order; the direction is
+  /// the header's (the agent's own default for a new column, turned around
+  /// on the same one).
+  function order(next: TableSort) {
+    const mode = next.key as ProcessSortMode
     if (mode === sort) void load(mode, !ascending)
     else void load(mode, undefined)
   }
@@ -109,7 +139,8 @@
       switch (result.outcome) {
         case 'succeeded':
           notice = $LL.processKillSucceeded({ signal: signalName(sig), name: row.name })
-          target = undefined
+          closeStop()
+          selected = null
           void refresh()
           return
         case 'target_changed':
@@ -139,8 +170,8 @@
     }
   }
 
-  function openStop(row: ProcRow) {
-    target = row
+  function closeStop() {
+    asking = false
     pending = undefined
     password = ''
     stopError = ''
@@ -153,10 +184,11 @@
   const signals = $derived(view?.signals ?? [])
   const kernelThreads = $derived(rows.filter((row) => row.is_kernel_thread).length)
   const columns = $derived(view?.columns ?? null)
+  /// The row a stop is about: the selection, while it is still in the table.
+  const target = $derived(selected === null ? undefined : rows.find((r) => r.pid === selected))
 
-  /// The machine's table, filtered by what the page is asking to see. Never
-  /// reordered here: which order a table can answer is the agent's answer, and
-  /// a second one computed here would disagree with the chips.
+  /// The machine's table, filtered by what the window is asking to see. Never
+  /// reordered here: which order a table can answer is the agent's answer.
   const visible = $derived.by(() => {
     const needle = query.trim().toLowerCase()
     return rows.filter((row) => {
@@ -164,24 +196,76 @@
       if (!needle) return true
       return (
         row.name.toLowerCase().includes(needle) ||
+        row.command.toLowerCase().includes(needle) ||
         (row.user ?? '').toLowerCase().includes(needle) ||
         String(row.pid).includes(needle)
       )
     })
   })
 
-  /// How each order is drawn. A `Record` over every mode, so one added to the
-  /// agent without a label here is a type error rather than a blank chip.
-  const SORTS: Record<ProcessSortMode, () => string> = {
-    cpu: () => $LL.processSortCpu(),
-    mem: () => $LL.processSortMem(),
-    rss: () => $LL.processSortRss(),
-    read: () => $LL.processSortRead(),
-    write: () => $LL.processSortWrite(),
-    pid: () => $LL.processSortPid(),
-    user: () => $LL.processSortUser(),
-    name: () => $LL.processSortName(),
+  type Row = {
+    pid: number
+    name: string
+    command: string
+    user: string
+    cpu: string
+    mem: string
+    rss: string
+    read: string
+    write: string
+    threads: string
+    hot: boolean
+    big: boolean
   }
+
+  const table = $derived(
+    visible.map(
+      (row): Row => ({
+        pid: row.pid,
+        name: row.name,
+        command: row.command,
+        user: row.user ?? '—',
+        cpu: row.cpu === null ? '—' : fmtPercent(row.cpu),
+        mem: row.mem === null ? '—' : fmtPercent(row.mem),
+        rss: row.rss_kb === null ? '—' : fmtBytes(row.rss_kb * 1024),
+        // A first reading has no speed to difference: the machine's own
+        // counters are what there is to show.
+        read: columns?.read_speed || columns?.write_speed ? speedText(row.read_speed) : bytesText(row.read_bytes),
+        write: columns?.read_speed || columns?.write_speed ? speedText(row.write_speed) : bytesText(row.write_bytes),
+        threads: row.threads === null ? '—' : String(row.threads),
+        hot: (row.cpu ?? 0) >= 1,
+        big: (row.mem ?? 0) >= 5,
+      }),
+    ),
+  )
+
+  /// The columns the machine printed and no others; a column sorts when the
+  /// machine can answer that order.
+  const tableColumns = $derived.by((): Column<Row>[] => {
+    const can = (mode: ProcessSortMode) => view?.sorts?.includes(mode) ?? false
+    const out: Column<Row>[] = [
+      { key: 'name', label: $LL.processSortName(), width: 'minmax(200px,1fr)', strong: true, subKey: 'command', sortable: can('name') },
+      { key: 'pid', label: $LL.processSortPid(), width: '64px', align: 'end', dim: true, sortable: can('pid'), defaultDir: -1 },
+    ]
+    if (columns?.user) out.push({ key: 'user', label: $LL.processSortUser(), width: '92px', dim: true, sortable: can('user') })
+    if (columns?.cpu) {
+      out.push({ key: 'cpu', label: $LL.processCpu(), width: '58px', align: 'end', dim: true, dimZero: true, sortable: can('cpu'), defaultDir: -1, emphasize: (r) => r.hot })
+    }
+    if (columns?.mem) {
+      out.push({ key: 'mem', label: $LL.processMemory(), width: '64px', align: 'end', dim: true, dimZero: true, sortable: can('mem'), defaultDir: -1, emphasize: (r) => r.big })
+    }
+    if (columns?.rss) out.push({ key: 'rss', label: $LL.processRss(), width: '74px', align: 'end', dim: true, sortable: can('rss'), defaultDir: -1 })
+    if (columns?.read_speed || columns?.write_speed || columns?.read || columns?.write) {
+      out.push(
+        { key: 'read', label: $LL.processSortRead(), width: '76px', align: 'end', dim: true, dimZero: true, sortable: can('read'), defaultDir: -1 },
+        { key: 'write', label: $LL.processSortWrite(), width: '76px', align: 'end', dim: true, dimZero: true, sortable: can('write'), defaultDir: -1 },
+      )
+    }
+    out.push({ key: 'threads', label: $LL.processColumnThreads(), width: '48px', align: 'end', dim: true, sortable: false })
+    return out
+  })
+
+  const minWidth = $derived(tableColumns.reduce((sum, c) => sum + (parseInt(c.width ?? '0', 10) || 200), 0) + 40)
 
   function signalLabel(sig: ProcessSignal): string {
     const text = sig === 'kill' ? $LL.processForceKill() : $LL.processStop()
@@ -190,16 +274,6 @@
 
   function signalName(sig: ProcessSignal): string {
     return sig === 'kill' ? 'SIGKILL' : 'SIGTERM'
-  }
-
-  function reading(): string {
-    if (!view) return ''
-    const at = new Date(view.sampled_at_millis).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-    return $LL.processSampledAt({ time: at, count: rows.length })
   }
 
   function reasonText(reason: ProcessView): string {
@@ -217,18 +291,6 @@
     }
   }
 
-  function cpuText(row: ProcRow): string {
-    return row.cpu === null ? '—' : fmtPercent(row.cpu)
-  }
-
-  function memText(row: ProcRow): string {
-    return row.mem === null ? '—' : fmtPercent(row.mem)
-  }
-
-  function rssText(row: ProcRow): string {
-    return row.rss_kb === null ? '—' : fmtBytes(row.rss_kb * 1024)
-  }
-
   function speedText(value: number | null): string {
     return value === null ? '—' : fmtBytesPerSec(value)
   }
@@ -237,199 +299,144 @@
     return value === null ? '—' : fmtBytes(value)
   }
 
-  /// How long the process has been running, at the machine's own count of it.
-  /// Two units at most: a table row is not the place for a third.
-  function durationText(seconds: number): string {
-    const days = Math.floor(seconds / 86_400)
-    const hours = Math.floor((seconds % 86_400) / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    if (days > 0) return `${days}d ${hours}h`
-    if (hours > 0) return `${hours}h ${minutes}m`
-    if (minutes > 0) return `${minutes}m`
-    return `${seconds}s`
-  }
+  const count = $derived(rows.filter((r) => showKernel || !r.is_kernel_thread).length)
+  const footText = $derived.by(() => {
+    const parts = [query.trim() ? $LL.processMatching({ count: visible.length }) : $LL.processCount({ count })]
+    if (view?.load) {
+      parts.push($LL.processLoad({ one: view.load.one.toFixed(2), five: view.load.five.toFixed(2), fifteen: view.load.fifteen.toFixed(2) }))
+    }
+    parts.push(paused ? $LL.deskPaused() : $LL.deskEverySeconds({ n: REFRESH_MS / 1000 }))
+    return parts.join(' · ')
+  })
+
+  useMenus(() => [
+    {
+      label: $LL.deskMenuEdit(),
+      items: [{ label: $LL.deskFind(), icon: 'search', shortcut: '⌘F', action: () => search?.focus() }],
+    },
+    {
+      label: $LL.deskMenuView(),
+      items: [
+        ...(kernelThreads > 0 ? [{ label: $LL.processShowKernelThreads(), checked: showKernel, action: () => (showKernel = !showKernel) }] : []),
+        { label: paused ? $LL.deskResumeRefresh() : $LL.deskPauseRefresh(), icon: paused ? 'play_arrow' : 'pause', action: () => (paused = !paused) },
+        { label: $LL.refresh(), icon: 'refresh', shortcut: '⌘R', action: () => void refresh() },
+      ],
+    },
+  ])
 </script>
 
-<!-- The app fills the window rather than growing past it: the table card is
-     the one thing that scrolls, so its header can stay in place while the
-     columns scroll sideways on a narrow window. -->
-<div class="flex h-full min-h-0 flex-col">
-<AppToolbar subtitle={reading()}>
+<AppToolbar subtitle={view?.available ? $LL.processCount({ count }) : undefined} flush={!!view?.available}>
   {#snippet actions()}
-    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void refresh()} disabled={loading} />
-  {/snippet}
-
-  {#snippet tabs()}
-    <div class="flex flex-wrap items-center gap-[9px] pb-[5px]">
-      <Input class="min-w-[180px] flex-1" bind:value={query} icon="search" placeholder={$LL.processSearchHint()} />
-      {#if kernelThreads > 0}
-        <label class="flex items-center gap-[7px] text-[12px] text-(--text-secondary)">
-          <input class="accent-(--color-accent)" type="checkbox" bind:checked={showKernel} />
-          {$LL.processKernelThreads({ count: kernelThreads })}
-        </label>
-      {/if}
-      {#if view?.load}
-        <span class="lk-num text-[12px] text-(--text-tertiary)">
-          {$LL.processLoad({
-            one: view.load.one.toFixed(2),
-            five: view.load.five.toFixed(2),
-            fifteen: view.load.fifteen.toFixed(2),
-          })}
-        </span>
-      {/if}
-    </div>
-
-    <!-- The orders this machine can answer, in the agent's own order. Which
-         ones those are depends on the columns it printed, so the list is not
-         written here. -->
-    {#if view?.sorts?.length && sort}
-      <SegmentedControl
-        size="sm"
-        label={$LL.processSortName()}
-        value={sort}
-        options={view.sorts.map((mode) => ({ value: mode, label: `${SORTS[mode]()}${mode === sort ? (ascending ? ' ↑' : ' ↓') : ''}` }))}
-        onchange={order}
-      />
-    {/if}
+    <SearchField bind:value={query} bind:input={search} placeholder={$LL.processSearchHint()} width={220} class="min-w-[90px]" />
+    <ToolbarGroup
+      items={[
+        ...(kernelThreads > 0
+          ? [
+              {
+                label: $LL.processShowKernelThreads(),
+                icon: 'account_tree',
+                text: $LL.processKernelThreadsShort(),
+                active: showKernel,
+                onclick: () => (showKernel = !showKernel),
+              },
+            ]
+          : []),
+        {
+          label: paused ? $LL.deskResumeRefresh() : $LL.deskPauseRefresh(),
+          icon: paused ? 'play_arrow' : 'pause',
+          onclick: () => (paused = !paused),
+        },
+      ]}
+    />
   {/snippet}
 </AppToolbar>
 
-<main class="flex min-h-0 flex-1 flex-col gap-[9px] px-[17px] pb-[17px] pt-[4px]">
-  {#if error}
-    <Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>
-  {/if}
+{#if error}
+  <div class="px-[17px] pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>
+{/if}
 
-  {#if notice}
-    <Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>
-  {/if}
-
-  {#if loading && !view}
-    <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
-  {:else if view && !view.available}
+{#if loading && !view}
+  <div class="grid flex-1 place-items-center"><Spinner /></div>
+{:else if view && !view.available}
+  <div class="px-[17px] pb-[17px]">
     <Card>
       <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason}
         <pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>
       {/if}
     </Card>
-  {:else if view}
-    {#if view.issue}
+  </div>
+{:else if view}
+  {#if view.issue}
+    <div class="px-[17px] pb-[9px]">
       <Card>
         <p class="text-[13px] text-(--text-secondary)">{$LL.processIssue()}</p>
         <pre class="lk-mono mt-[7px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.issue.diagnostics}</pre>
       </Card>
-    {/if}
-
-    {#if visible.length === 0}
-      <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
-        <Icon name="speed" size={48} weight={300} />
-        <span class="text-[13px]">{query ? $LL.processNoMatch() : $LL.processEmptyState()}</span>
-      </div>
-    {:else}
-      <!-- A dense table: one line per process, the columns the machine printed
-           and no others. One row is one line, so nothing in it wraps; a window
-           too narrow for every column scrolls sideways inside this card rather
-           than breaking the numbers across lines. The header is in the scroll
-           box with the rows, which is what keeps it in place while they move. -->
-      <div class="min-h-0 flex-1 overflow-auto rounded-[13px] bg-(--surface-card)">
-        <table class="w-full border-collapse text-left text-[12px] whitespace-nowrap">
-          <thead class="sticky top-0 z-10 bg-(--surface-window) lk-caps">
-            <tr>
-              <th class="w-full min-w-48 px-[13px] py-[7px] text-left">{$LL.processSortName()}</th>
-              <th class="px-[13px] py-[7px] text-left">{$LL.processSortPid()}</th>
-              {#if columns?.user}<th class="px-[13px] py-[7px] text-left">{$LL.processSortUser()}</th>{/if}
-              {#if columns?.cpu}<th class="px-[13px] py-[7px] text-right">{$LL.processCpu()}</th>{/if}
-              {#if columns?.mem}<th class="px-[13px] py-[7px] text-right">{$LL.processMemory()}</th>{/if}
-              {#if columns?.rss}<th class="px-[13px] py-[7px] text-right">{$LL.processRss()}</th>{/if}
-              {#if columns?.read_speed || columns?.write_speed}
-                <th class="px-[13px] py-[7px] text-right">{$LL.processSortRead()}</th>
-                <th class="px-[13px] py-[7px] text-right">{$LL.processSortWrite()}</th>
-              {:else if columns?.read || columns?.write}
-                <th class="px-[13px] py-[7px] text-right">{$LL.processSortRead()}</th>
-                <th class="px-[13px] py-[7px] text-right">{$LL.processSortWrite()}</th>
-              {/if}
-              <th class="px-[13px] py-[7px] text-right">{$LL.processColumnThreads()}</th>
-              <th class="px-[13px] py-[7px] text-right">{$LL.processColumnTime()}</th>
-              <th class="px-[5px] py-[7px]"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each visible as row, index (row.pid)}
-              <tr class="h-7 {index % 2 === 1 ? 'bg-(--fill-hover)' : ''}">
-                <!-- The command line differentiates rows with identical names,
-                     which is what a stop needs. -->
-                <td class="w-full min-w-48 px-[13px] py-[5px]">
-                  <span class="block max-w-md truncate font-semibold">{row.name}</span>
-                  <span class="lk-mono block max-w-md truncate text-[11px] text-(--text-tertiary)" title={row.command}>{row.command}</span>
-                </td>
-                <td class="lk-mono px-[13px] py-[5px] text-(--text-tertiary)">{row.pid}</td>
-                {#if columns?.user}<td class="px-[13px] py-[5px] text-(--text-tertiary)">{row.user ?? '—'}</td>{/if}
-                {#if columns?.cpu}<td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{cpuText(row)}</td>{/if}
-                {#if columns?.mem}<td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{memText(row)}</td>{/if}
-                {#if columns?.rss}<td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{rssText(row)}</td>{/if}
-                {#if columns?.read_speed || columns?.write_speed}
-                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{speedText(row.read_speed)}</td>
-                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{speedText(row.write_speed)}</td>
-                {:else if columns?.read || columns?.write}
-                  <!-- The first reading has nothing to difference against, so the
-                       machine's own counters are what there is to show. -->
-                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{bytesText(row.read_bytes)}</td>
-                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{bytesText(row.write_bytes)}</td>
-                {/if}
-                <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{row.threads ?? '—'}</td>
-                <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{row.elapsed_seconds === null ? '—' : durationText(row.elapsed_seconds)}</td>
-                <td class="px-[3px] py-[2px] text-right">
-                  {#if row.killable && signals.length > 0}
-                    <IconButton icon="stop" label={$LL.processStop()} disabled={busy} onclick={() => openStop(row)} />
-                  {/if}
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-      <div class="flex h-7 items-center border-t border-(--border-hairline) px-[7px] text-[12px] text-(--text-tertiary)">
-        {$LL.processVisibleCount({ count: visible.length })}
-      </div>
-    {/if}
-
-    {#if busy}
-      <div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)">
-        <Spinner size="sm" />
-      </div>
-    {/if}
+    </div>
   {/if}
-</main>
-</div>
+  <!-- One line per process, the columns the machine printed; the header
+       sticks under the title bar, a narrow window scrolls sideways. -->
+  <DataTable
+    label={$LL.processes()}
+    columns={tableColumns}
+    rows={table}
+    rowKey="pid"
+    sort={sort ? { key: sort, dir: ascending ? 1 : -1 } : undefined}
+    onsort={order}
+    {selected}
+    onselect={(key) => {
+      selected = key as number | null
+      asking = false
+    }}
+    {minWidth}
+    empty={query ? $LL.processNoMatch() : $LL.processEmptyState()}
+  />
+{/if}
 
-<!-- Stopping a process is the one thing here that cannot be undone, so it is
-     asked about — and the answer says which signal, because the difference
-     between a graceful stop and a force kill is the whole of what the choice
-     means. -->
-{#if target !== undefined}
-  <Dialog open wide title={$LL.processStop()} message={$LL.processStopConfirm({ name: target.name, pid: target.pid })} onclose={() => (target = undefined)}>
-    {#snippet actions()}
-      {#if pending !== undefined}
-        <!-- Without a password the retry is the `sudo -n` the agent
-             already tried, so there is nothing to send until one is typed. -->
-        <Button variant="primary" disabled={busy || !password} onclick={() => void signal(pending!, true)}>{$LL.processRetryAsRoot()}</Button>
-      {:else}
-        {#each signals as sig (sig)}
-          <Button variant={sig === 'kill' ? 'destructive' : 'primary'} disabled={busy} onclick={() => void signal(sig)}>{signalLabel(sig)}</Button>
-        {/each}
+<WindowFooter>
+  <StatusBar>
+    {#if asking && target}
+      <Icon name="warning" size={16} color="var(--color-danger)" />
+      <span class="min-w-0 truncate text-(--text-primary)">
+        {$LL.processStopAsk({ name: target.name, pid: target.pid })}
+        {#if stopError}<span class="text-(--color-danger)"> {stopError}</span>{/if}
+      </span>
+      <span class="flex-1"></span>
+      <Button variant="ghost" size="sm" onclick={closeStop}>{$LL.cancel()}</Button>
+      {#each signals as sig (sig)}
+        <Button variant="destructive" size="sm" disabled={busy} onclick={() => void signal(sig)}>{signalLabel(sig)}</Button>
+      {/each}
+    {:else}
+      <span class="truncate">{notice || footText}</span>
+      <span class="flex-1"></span>
+      {#if busy}<Spinner size="sm" />{/if}
+      {#if target}
+        <span class="truncate font-semibold text-(--text-primary)">{target.name}</span>
+        {#if target.killable && signals.length > 0}
+          <Button variant="ghost" size="sm" class="!text-(--color-danger)" onclick={() => (asking = true)}>{$LL.processStop()}</Button>
+        {/if}
       {/if}
-      <Button variant="secondary" onclick={() => (target = undefined)}>{$LL.cancel()}</Button>
+    {/if}
+  </StatusBar>
+</WindowFooter>
+
+<!-- The signal was refused for want of the account that owns the process:
+     the password is the second attempt's, sent as its own field so it never
+     lands in a command line. -->
+{#if pending !== undefined && target}
+  <Dialog open wide title={$LL.processStop()} message={$LL.processStopConfirm({ name: target.name, pid: target.pid })} onclose={closeStop}>
+    {#snippet actions()}
+      <!-- Without a password the retry is the `sudo -n` the agent already
+           tried, so there is nothing to send until one is typed. -->
+      <Button variant="primary" disabled={busy || !password} onclick={() => void signal(pending!, true)}>{$LL.processRetryAsRoot()}</Button>
+      <Button variant="secondary" onclick={closeStop}>{$LL.cancel()}</Button>
     {/snippet}
     <p class="lk-mono break-all text-[12px] text-(--text-tertiary)">{target.command}</p>
     {#if stopError}<p class="mt-[9px] text-[13px] text-(--color-danger)">{stopError}</p>{/if}
-    {#if pending !== undefined}
-      <!-- The signal was refused for want of the account that owns the
-           process. The password is the second attempt's, sent as its own
-           field so it never lands in a command line. -->
-      <div class="mt-[13px]">
-        <Input id="process-password" label={$LL.powerPassword()} type="password" bind:value={password} />
-        <p class="mt-[5px] text-[12px] text-(--text-secondary)">{$LL.powerPasswordHint()}</p>
-      </div>
-    {/if}
+    <div class="mt-[13px]">
+      <Input id="process-password" label={$LL.powerPassword()} type="password" bind:value={password} />
+      <p class="mt-[5px] text-[12px] text-(--text-secondary)">{$LL.powerPasswordHint()}</p>
+    </div>
   </Dialog>
 {/if}
