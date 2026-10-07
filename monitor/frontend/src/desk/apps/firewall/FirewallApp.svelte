@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Select, Spinner } from '@serverbox/webui'
-  import { Plus, RefreshCw, Trash2 } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Button, Card, Checkbox, Dialog, IconButton, Input, SegmentedControl, Select } from '../../lk'
   import AppToolbar from '../../ui/AppToolbar.svelte'
   import { ApiError, api } from '../../../lib/api'
   import {
@@ -349,194 +349,115 @@
 <AppToolbar subtitle={view?.kind ?? undefined}>
   {#snippet actions()}
     {#if view?.kind === 'ufw' && view.ufw?.active}
-      <IconButton label={$LL.fwAddRule()} onclick={openDraft} disabled={busy}>
-        <Plus class="w-4 h-4" />
-      </IconButton>
+      <Button size="sm" variant="tinted" icon="add" onclick={openDraft} disabled={busy}>{$LL.fwAddRule()}</Button>
     {/if}
-    <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
   {/snippet}
 </AppToolbar>
 
-<main class="mx-auto max-w-5xl space-y-3 px-4 py-4 @3xl:px-6">
-  {#if error}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <p class="text-sm text-danger">{error}</p>
-    </Card>
-  {/if}
-  {#if notice}
-    <Card class="p-3"><p class="text-sm text-muted-fg">{notice}</p></Card>
-  {/if}
-  {#if actionError}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <pre class="text-sm text-danger whitespace-pre-wrap break-all">{actionError}</pre>
-    </Card>
-  {/if}
+<main class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+  {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
+  {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
+  {#if actionError}<Card><pre class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{actionError}</pre></Card>{/if}
 
   {#if needsPassword}
-    <!-- The password travels as a field of each request, so it never lands in
-         the machine's process list nor in the audit row. -->
-    <Card class="space-y-2 p-4">
-      <p class="text-sm text-fg">{$LL.fwNeedsRoot()}</p>
-      <form class="flex flex-wrap items-center gap-2" onsubmit={(e) => (e.preventDefault(), submitPassword())}>
-        <Input
-          class="min-w-0 flex-1"
-          type="password"
-          aria-label={$LL.powerPassword()}
-          placeholder={$LL.powerPassword()}
-          bind:value={passwordDraft}
-        />
-        <Button type="submit" disabled={loading}>{$LL.confirm()}</Button>
+    <!-- The password travels as a field of each request, never in a command
+         line or audit row. -->
+    <Card>
+      <p class="mb-[9px] text-[13px]">{$LL.fwNeedsRoot()}</p>
+      <form class="flex flex-wrap items-end gap-[9px]" onsubmit={(e) => (e.preventDefault(), submitPassword())}>
+        <Input class="min-w-0 flex-1" type="password" label={$LL.powerPassword()} bind:value={passwordDraft} />
+        <Button type="submit" variant="primary" disabled={loading}>{$LL.confirm()}</Button>
       </form>
     </Card>
   {/if}
 
   {#if loading && !view}
-    <Card class="grid place-items-center p-8"><Spinner class="h-5 w-5" /></Card>
+    <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
   {:else if view && !view.available && !needsPassword}
-    <Card class="space-y-2 p-4">
-      <p class="text-sm text-muted-fg">{reasonText(view)}</p>
-      {#if view.reason}
-        <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
-      {/if}
+    <Card>
+      <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
+      {#if view.reason}<pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>{/if}
     </Card>
   {:else if view?.available}
     {#if both}
-      <!-- Which of the two is on screen, as one control rather than two
-           buttons: the machine has one or the other, and the picked one is
-           what every change below is about. -->
-      <div class="flex w-fit gap-0.5 rounded-lg border border-line p-0.5">
-        {#each ['ufw', 'firewalld'] as const as k (k)}
-          <button
-            class="rounded-md px-3 py-1 text-xs transition-colors {k === view.kind
-              ? 'bg-soft text-fg-strong'
-              : 'text-muted-fg hover:bg-soft/60 hover:text-fg'}"
-            aria-pressed={k === view.kind}
-            onclick={() => switchTo(k)}
-          >
-            {k}
-          </button>
-        {/each}
-      </div>
+      <!-- The machine has one of the two firewalls; all changes below target
+           the selected one. -->
+      <SegmentedControl size="sm" label={$LL.fwFirewallType()} value={view.kind === 'firewalld' ? 'firewalld' : 'ufw'} options={[{ value: 'ufw', label: 'ufw' }, { value: 'firewalld', label: 'firewalld' }]} onchange={(value) => switchTo(value)} />
     {/if}
-    {#if conflict}
-      <Card class="border-warning/40 bg-warning/5 p-4">
-        <p class="text-sm text-warning">{$LL.fwConflict()}</p>
-      </Card>
-    {/if}
+    {#if conflict}<Card><p class="text-[13px] text-(--color-warning)">{$LL.fwConflict()}</p></Card>{/if}
 
     <!-- What every change is checked against. -->
-    <Card class="space-y-2 p-4">
-      <h2 class="text-sm font-medium text-fg-strong">{$LL.fwAccesses()}</h2>
+    <Card title={$LL.fwAccesses()}>
       {#each view.accesses as access (access.via)}
-        <div class="flex items-center justify-between gap-2 rounded-lg px-1 py-1 text-sm">
-          <span class="text-fg">{accessName(access)}</span>
+        <div class="flex items-center justify-between gap-[9px] border-t border-(--border-hairline) py-[7px]">
+          <span class="text-[13px]">{accessName(access)}</span>
           <Badge tone={reachTone(access.reach)}>{reachText(access.reach)}</Badge>
         </div>
       {/each}
-      {#if view.proxied}
-        <p class="text-xs text-muted-fg">{$LL.fwProxied()}</p>
-      {/if}
+      {#if view.proxied}<p class="mt-[7px] text-[12px] text-(--text-secondary)">{$LL.fwProxied()}</p>{/if}
     </Card>
 
     {#key rev}
       {#if view.kind === 'ufw' && view.ufw}
         {@const s = view.ufw}
-        <Card class="space-y-3 p-4">
-          <div class="flex flex-wrap items-center gap-2">
-            <Badge tone={s.active ? 'success' : 'neutral'}>{s.active ? $LL.active() : $LL.fwInactive()}</Badge>
-            {#if s.version}<span class="text-xs text-faint-fg">{s.version}</span>{/if}
+        <Card>
+          <div class="flex flex-wrap items-center gap-[7px]">
+            <Badge tone={s.active ? 'success' : 'neutral'} dot>{s.active ? $LL.active() : $LL.fwInactive()}</Badge>
+            {#if s.version}<span class="lk-mono text-[12px] text-(--text-tertiary)">{s.version}</span>{/if}
             <span class="flex-1"></span>
-            {#if s.active}
-              <Button size="sm" variant="secondary" disabled={busy} onclick={() => void ufw({ type: 'reload' })}>
-                {$LL.fwReload()}
-              </Button>
-            {/if}
-            <Button
-              size="sm"
-              variant={s.active ? 'danger' : 'primary'}
-              disabled={busy}
-              onclick={() => void ufw({ type: s.active ? 'disable' : 'enable' })}
-            >
-              {s.active ? $LL.fwTurnOff() : $LL.fwTurnOn()}
-            </Button>
+            {#if s.active}<Button size="sm" variant="secondary" disabled={busy} onclick={() => void ufw({ type: 'reload' })}>{$LL.fwReload()}</Button>{/if}
+            <Button size="sm" variant={s.active ? 'destructive' : 'primary'} disabled={busy} onclick={() => void ufw({ type: s.active ? 'disable' : 'enable' })}>{s.active ? $LL.fwTurnOff() : $LL.fwTurnOn()}</Button>
           </div>
-          <div class="grid grid-cols-1 gap-3 @2xl:grid-cols-4">
+          <div class="mt-[13px] grid grid-cols-1 gap-[13px] @2xl:grid-cols-4">
             {#each CHAINS as { chain, label } (chain)}
-              <label class="space-y-1 text-xs text-muted-fg">
+              <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
                 <span>{$LL.fwDefaultPolicy()} · {label()}</span>
-                <Select
-                  class="w-full"
-                  value={s.policies[chain] ?? ''}
-                  disabled={busy}
-                  onchange={(e) => void ufw({ type: 'policy', chain, policy: e.currentTarget.value as UfwPolicy })}
-                >
-                  {#each POLICIES as p (p)}<option value={p}>{p}</option>{/each}
-                </Select>
+                <Select value={s.policies[chain] ?? ''} options={POLICIES.map((value) => ({ value, label: value }))} disabled={busy} onchange={(e) => void ufw({ type: 'policy', chain, policy: e.currentTarget.value as UfwPolicy })} />
               </label>
             {/each}
-            <label class="space-y-1 text-xs text-muted-fg">
+            <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
               <span>{$LL.fwLogging()}</span>
-              <Select
-                class="w-full"
-                value={s.log_level ?? ''}
-                disabled={busy}
-                onchange={(e) => void ufw({ type: 'logging', level: e.currentTarget.value as UfwLogLevel })}
-              >
-                {#each LOG_LEVELS as l (l)}<option value={l}>{l}</option>{/each}
-              </Select>
+              <Select value={s.log_level ?? ''} options={LOG_LEVELS.map((value) => ({ value, label: value }))} disabled={busy} onchange={(e) => void ufw({ type: 'logging', level: e.currentTarget.value as UfwLogLevel })} />
             </label>
           </div>
         </Card>
 
-        <Card class="divide-y divide-line overflow-clip p-0">
-          <h2 class="px-4 py-3 text-sm font-medium text-fg-strong">{$LL.fwRules()}</h2>
-          {#each s.rules as rule (rule.tuples.join('\n'))}
-            <div class="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-soft/40">
-              <span class="min-w-0 flex-1 text-sm">
-                <span class="flex flex-wrap items-baseline gap-2">
-                  <Badge tone={rule.action === 'allow' ? 'success' : rule.action === 'limit' ? 'warning' : 'danger'}>
-                    {rule.action}
-                  </Badge>
-                  <span class="font-mono text-fg">{endpointText(rule.to, rule.protocol)}</span>
-                  <span class="text-xs text-muted-fg">
-                    {rule.direction === 'incoming' ? $LL.fwIncoming() : $LL.fwOutgoing()} · {$LL.fwFrom()}
-                    {endpointText(rule.from, rule.protocol)}{rule.ip_version === 'v6' ? ' (v6)' : ''}
-                  </span>
+        <Card padding="0">
+          <h2 class="px-[15px] py-[11px] text-[15px] font-semibold">{$LL.fwRules()}</h2>
+          {#each s.rules as rule, index (rule.tuples.join('\n'))}
+            <div class="flex min-h-7 items-center gap-[13px] px-[13px] py-[5px] {index % 2 === 1 ? 'bg-(--fill-hover)' : ''}">
+              <span class="min-w-0 flex-1 text-[13px]">
+                <span class="flex flex-wrap items-baseline gap-[7px]">
+                  <Badge tone={rule.action === 'allow' ? 'success' : rule.action === 'limit' ? 'warning' : 'danger'}>{rule.action}</Badge>
+                  <span class="lk-mono">{endpointText(rule.to, rule.protocol)}</span>
+                  <span class="text-[12px] text-(--text-tertiary)">{rule.direction === 'incoming' ? $LL.fwIncoming() : $LL.fwOutgoing()} · {$LL.fwFrom()}{endpointText(rule.from, rule.protocol)}{rule.ip_version === 'v6' ? ' (v6)' : ''}</span>
                 </span>
-                {#if rule.comment}<span class="block text-xs text-faint-fg">{rule.comment}</span>{/if}
+                {#if rule.comment}<span class="block text-[12px] text-(--text-tertiary)">{rule.comment}</span>{/if}
               </span>
-              <IconButton
-                label={$LL.fwDeleteRule({ rule: ruleText(rule) })}
-                disabled={busy}
-                onclick={() =>
-                  void ufw({ type: 'delete_rule', tuples: rule.tuples }, $LL.fwDeleteRule({ rule: ruleText(rule) }))}
-              >
-                <Trash2 class="w-4 h-4" />
-              </IconButton>
+              <IconButton icon="delete" label={$LL.fwDeleteRule({ rule: ruleText(rule) })} disabled={busy} onclick={() => void ufw({ type: 'delete_rule', tuples: rule.tuples }, $LL.fwDeleteRule({ rule: ruleText(rule) }))} />
             </div>
           {:else}
-            <p class="px-4 py-3 text-sm text-muted-fg">{$LL.fwNoRules()}</p>
+            <p class="px-[15px] py-[11px] text-[13px] text-(--text-secondary)">{$LL.fwNoRules()}</p>
           {/each}
         </Card>
       {:else if view.kind === 'firewalld' && fw}
         {#if fw.panic}
-          <Card class="flex flex-wrap items-center gap-2 border-danger/40 bg-danger/5 p-4">
-            <p class="flex-1 text-sm text-danger">{$LL.fwPanic()}</p>
-            <Button size="sm" variant="danger" disabled={busy} onclick={() => void fwd({ type: 'panic_off' })}>
+          <Card class="flex flex-wrap items-center gap-[9px]">
+            <p class="flex-1 text-[13px] text-(--color-danger)">{$LL.fwPanic()}</p>
+            <Button size="sm" variant="destructive" disabled={busy} onclick={() => void fwd({ type: 'panic_off' })}>
               {$LL.fwPanicOff()}
             </Button>
           </Card>
         {/if}
         {#if !fw.running}
-          <Card class="p-4"><p class="text-sm text-muted-fg">{$LL.fwStoppedNote()}</p></Card>
+          <Card><p class="text-[13px] text-(--text-secondary)">{$LL.fwStoppedNote()}</p></Card>
         {/if}
         {#if fw.drifted}
-          <Card class="space-y-2 p-4 {shutByReload.length ? 'border-danger/40 bg-danger/5' : ''}">
-            <p class="text-sm text-fg">{$LL.fwDrift()}</p>
+          <Card>
+            <p class="text-[13px]">{$LL.fwDrift()}</p>
             {#each shutByReload as access (access.via)}
-              <p class="text-sm text-danger">{$LL.fwDriftLockout({ access: accessName(access) })}</p>
+              <p class="mt-[7px] text-[13px] text-(--color-danger)">{$LL.fwDriftLockout({ access: accessName(access) })}</p>
             {/each}
             <div class="flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" disabled={busy} onclick={() => void fwd({ type: 'runtime_to_permanent' })}>
@@ -549,123 +470,64 @@
           </Card>
         {/if}
 
-        <Card class="space-y-3 p-4">
-          <div class="flex flex-wrap items-center gap-2">
-            <Badge tone={fw.running ? 'success' : 'neutral'}>{fw.running ? $LL.fwRunning() : $LL.fwStopped()}</Badge>
-            {#if fw.version}<span class="text-xs text-faint-fg">{fw.version}</span>{/if}
+        <Card>
+          <div class="flex flex-wrap items-center gap-[7px]">
+            <Badge tone={fw.running ? 'success' : 'neutral'} dot>{fw.running ? $LL.fwRunning() : $LL.fwStopped()}</Badge>
+            {#if fw.version}<span class="lk-mono text-[12px] text-(--text-tertiary)">{fw.version}</span>{/if}
             <span class="flex-1"></span>
-            {#if fw.running && !fw.drifted}
-              <Button size="sm" variant="secondary" disabled={busy} onclick={() => void fwd({ type: 'reload' })}>
-                {$LL.fwReload()}
-              </Button>
-            {/if}
-            <Button
-              size="sm"
-              variant={fw.running ? 'danger' : 'primary'}
-              disabled={busy}
-              onclick={() => void fwd({ type: fw.running ? 'stop' : 'start' })}
-            >
-              {fw.running ? $LL.fwTurnOff() : $LL.fwTurnOn()}
-            </Button>
+            {#if fw.running && !fw.drifted}<Button size="sm" variant="secondary" disabled={busy} onclick={() => void fwd({ type: 'reload' })}>{$LL.fwReload()}</Button>{/if}
+            <Button size="sm" variant={fw.running ? 'destructive' : 'primary'} disabled={busy} onclick={() => void fwd({ type: fw.running ? 'stop' : 'start' })}>{fw.running ? $LL.fwTurnOff() : $LL.fwTurnOn()}</Button>
           </div>
-          <div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
-            <label class="space-y-1 text-xs text-muted-fg">
+          <div class="mt-[13px] grid grid-cols-1 gap-[13px] @2xl:grid-cols-2">
+            <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
               <span>{$LL.fwDefaultZone()}</span>
-              <Select
-                class="w-full"
-                value={fw.default_zone ?? ''}
-                disabled={busy}
-                onchange={(e) => void fwd({ type: 'default_zone', zone: e.currentTarget.value })}
-              >
-                {#each zones as z (z.name)}<option value={z.name}>{z.name}</option>{/each}
-              </Select>
+              <Select value={fw.default_zone ?? ''} options={zones.map((z) => ({ value: z.name, label: z.name }))} disabled={busy} onchange={(e) => void fwd({ type: 'default_zone', zone: e.currentTarget.value })} />
             </label>
-            <label class="space-y-1 text-xs text-muted-fg">
+            <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
               <span>{$LL.fwZone()}</span>
-              <Select
-                class="w-full"
-                value={zone?.name ?? ''}
-                onchange={(e) => {
-                  zoneName = e.currentTarget.value
-                  adding = null
-                }}
-              >
-                {#each zones as z (z.name)}
-                  {@const tags = zoneTags(z)}
-                  <option value={z.name}>{z.name}{tags.length ? ` (${tags.join(', ')})` : ''}</option>
-                {/each}
-              </Select>
+              <Select value={zone?.name ?? ''} options={zones.map((z) => { const tags = zoneTags(z); return { value: z.name, label: `${z.name}${tags.length ? ` (${tags.join(', ')})` : ''}` } })} onchange={(e) => { zoneName = e.currentTarget.value; adding = null }} />
             </label>
           </div>
         </Card>
 
         {#if zone}
-          <Card class="space-y-3 p-4">
-            <div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
-              <label class="space-y-1 text-xs text-muted-fg">
+          <Card>
+            <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-2">
+              <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
                 <span>{$LL.fwTarget()}</span>
-                <Select
-                  class="w-full"
-                  value={(saved ?? zone).target}
-                  disabled={busy}
-                  onchange={(e) =>
-                    void fwd({ type: 'target', zone: zone.name, target: e.currentTarget.value as FirewalldTarget })}
-                >
-                  {#each TARGETS as t (t)}<option value={t}>{targetText(t)}</option>{/each}
-                </Select>
+                <Select value={(saved ?? zone).target} options={TARGETS.map((value) => ({ value, label: targetText(value) }))} disabled={busy} onchange={(e) => void fwd({ type: 'target', zone: zone.name, target: e.currentTarget.value as FirewalldTarget })} />
               </label>
-              <label class="flex items-center gap-2 self-end text-sm text-fg">
-                <input
-                  type="checkbox"
-                  checked={zone.masquerade}
-                  disabled={busy}
-                  onchange={(e) =>
-                    void fwd({ type: 'masquerade', zone: zone.name, enabled: e.currentTarget.checked })}
-                />
+              <label class="flex items-center gap-[7px] self-end text-[13px]">
+                <input class="accent-(--color-accent)" type="checkbox" checked={zone.masquerade} disabled={busy} onchange={(e) => void fwd({ type: 'masquerade', zone: zone.name, enabled: e.currentTarget.checked })} />
                 {$LL.fwMasquerade()}
               </label>
             </div>
           </Card>
 
           {#each sections(zone, runtimeZone, saved) as section (section.item)}
-            <Card class="space-y-2 p-4">
-              <div class="flex items-center justify-between">
-                <h2 class="text-sm font-medium text-fg-strong">{section.title}</h2>
-                <IconButton label={$LL.add()} disabled={busy} onclick={() => startAdding(section.item)}>
-                  <Plus class="w-4 h-4" />
-                </IconButton>
+            <Card>
+              <div class="mb-[9px] flex items-center gap-[9px]">
+                <h2 class="min-w-0 flex-1 text-[15px] font-semibold">{section.title}</h2>
+                <IconButton icon="add" label={$LL.add()} disabled={busy} onclick={() => startAdding(section.item)} />
               </div>
               {#each section.items as it (it.value)}
-                <div class="flex items-center gap-2 rounded-lg px-1 py-1 transition-colors hover:bg-soft/40">
-                  <span class="min-w-0 flex-1 break-all font-mono text-sm text-fg">{it.value}</span>
+                <div class="flex min-h-7 items-center gap-[7px] border-t border-(--border-hairline) py-[5px]">
+                  <span class="lk-mono min-w-0 flex-1 break-all text-[13px]">{it.value}</span>
                   {#if !it.permanent}<Badge tone="warning">{$LL.fwRuntimeOnly()}</Badge>{/if}
                   {#if !it.runtime && fw.running}<Badge tone="neutral">{$LL.fwPermanentOnly()}</Badge>{/if}
-                  <IconButton
-                    label={$LL.fwRemoveFrom({ value: it.value, zone: zone.name })}
-                    disabled={busy}
-                    onclick={() => removeItem(section.item, it.value)}
-                  >
-                    <Trash2 class="w-4 h-4" />
-                  </IconButton>
+                  <IconButton icon="delete" label={$LL.fwRemoveFrom({ value: it.value, zone: zone.name })} disabled={busy} onclick={() => removeItem(section.item, it.value)} />
                 </div>
               {:else}
-                <p class="text-sm text-muted-fg">{$LL.fwNone()}</p>
+                <p class="border-t border-(--border-hairline) py-[7px] text-[13px] text-(--text-secondary)">{$LL.fwNone()}</p>
               {/each}
               {#if adding?.item === section.item}
-                <form class="flex flex-wrap items-center gap-2" onsubmit={(e) => (e.preventDefault(), addItem())}>
+                <form class="mt-[9px] flex flex-wrap items-end gap-[7px]" onsubmit={(e) => (e.preventDefault(), addItem())}>
                   {#if section.item === 'service'}
-                    <Select class="min-w-0 flex-1" bind:value={addValue} aria-label={section.title}>
-                      {#each services as name (name)}<option value={name}>{name}</option>{/each}
-                    </Select>
+                    <Select class="min-w-0 flex-1" bind:value={addValue} options={services.map((value) => ({ value, label: value }))} label={section.title} />
                   {:else}
-                    <Input
-                      class="min-w-0 flex-1 font-mono"
-                      aria-label={section.title}
-                      placeholder={section.hint}
-                      bind:value={addValue}
-                    />
+                    <Input class="min-w-0 flex-1" mono label={section.title} placeholder={section.hint} bind:value={addValue} />
                   {/if}
-                  <Button type="submit" size="sm" disabled={busy || !addValue.trim()}>{$LL.add()}</Button>
+                  <Button type="submit" size="sm" variant="primary" disabled={busy || !addValue.trim()}>{$LL.add()}</Button>
                   <Button size="sm" variant="secondary" onclick={() => (adding = null)}>{$LL.cancel()}</Button>
                 </form>
               {/if}
@@ -676,7 +538,7 @@
     {/key}
 
     {#if busy}
-      <div class="flex items-center gap-2 text-xs text-muted-fg"><Spinner size="sm" /></div>
+      <div class="flex items-center gap-2 text-xs text-(--text-secondary)"><Spinner size="sm" /></div>
     {/if}
   {/if}
 </main>
@@ -685,148 +547,72 @@
      about anyway. It is planned again when confirmed, from a fresh read. -->
 {#if pending}
   {@const plan = pending.plan}
-  <Modal open title={$LL.confirm()} onclose={() => (pending = null)}>
-    <div class="space-y-3">
-      {#if pending.message}
-        <p class="text-sm text-fg">{pending.message}</p>
-      {:else}
-        <div class="space-y-1">
-          <p class="text-xs text-muted-fg">{$LL.fwCommands()}</p>
-          <pre class="overflow-x-auto rounded-lg bg-soft p-2 font-mono text-xs text-fg">{plan.commands.join('\n')}</pre>
-        </div>
-      {/if}
-      {#each plan.notes as note (note)}
-        {#if note === 'reload_loses'}<p class="text-xs text-muted-fg">{$LL.fwReloadLoses()}</p>{/if}
-      {/each}
-      {#each plan.effects.filter((e) => e.worse) as e, i (i)}
-        <p class="text-sm {e.after === 'blocked' ? 'text-danger' : 'text-warning'}">
-          {warningText(e.access, e.after, e.later)}
-        </p>
-      {/each}
-      {#if plan.keep_open.length}
-        <label class="flex items-start gap-2 text-sm text-fg">
-          <input type="checkbox" class="mt-1" bind:checked={keepOpen} />
-          <span>
-            {$LL.fwKeepOpen()}
-            <pre class="mt-1 whitespace-pre-wrap break-all font-mono text-xs text-muted-fg">{plan.keep_open.join('\n')}</pre>
-          </span>
-        </label>
-      {/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (pending = null)}>{$LL.cancel()}</Button>
-        <Button
-          variant={plan.countdown || plan.destructive ? 'danger' : 'primary'}
-          disabled={busy || countdown > 0}
-          onclick={() => void confirmPending()}
-        >
-          {countdown > 0 ? `${$LL.confirm()} (${countdown})` : $LL.confirm()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open wide title={$LL.confirm()} message={pending.message} onclose={() => (pending = null)}>
+    {#snippet actions()}
+      <Button variant={plan.countdown || plan.destructive ? 'destructive' : 'primary'} disabled={busy || countdown > 0} onclick={() => void confirmPending()}>
+        {countdown > 0 ? `${$LL.confirm()} (${countdown})` : $LL.confirm()}
+      </Button>
+      <Button variant="secondary" onclick={() => (pending = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+    {#if !pending.message}
+      <p class="text-[12px] text-(--text-secondary)">{$LL.fwCommands()}</p>
+      <pre class="mt-[7px] overflow-x-auto rounded-[9px] bg-(--surface-terminal) p-[11px_15px] lk-mono text-[13px]">{plan.commands.join('\\n')}</pre>
+    {/if}
+    {#each plan.notes as note (note)}
+      {#if note === 'reload_loses'}<p class="mt-[9px] text-[12px] text-(--text-secondary)">{$LL.fwReloadLoses()}</p>{/if}
+    {/each}
+    {#each plan.effects.filter((e) => e.worse) as e, i (i)}
+      <p class="mt-[9px] text-[13px] {e.after === 'blocked' ? 'text-(--color-danger)' : 'text-(--color-warning)'}">{warningText(e.access, e.after, e.later)}</p>
+    {/each}
+    {#if plan.keep_open.length}
+      <Checkbox class="mt-[9px]" bind:checked={keepOpen} label={$LL.fwKeepOpen()} />
+      <pre class="mt-[5px] whitespace-pre-wrap break-all lk-mono text-[12px] text-(--text-secondary)">{plan.keep_open.join('\\n')}</pre>
+    {/if}
+  </Dialog>
 {/if}
 
 {#if drafting && !pending}
-  <Modal open title={$LL.fwAddRule()} onclose={() => (drafting = false)}>
-    <form class="space-y-3" onsubmit={(e) => (e.preventDefault(), submitDraft())}>
-      <div class="grid grid-cols-1 gap-3 @2xl:grid-cols-3">
-        <label class="space-y-1 text-xs text-muted-fg">
+  <Dialog open wide title={$LL.fwAddRule()} onclose={() => (drafting = false)}>
+    {#snippet actions()}
+      <Button variant="primary" type="submit" form="firewall-rule-form" disabled={busy}>{$LL.fwAddRule()}</Button>
+      <Button variant="secondary" onclick={() => (drafting = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <form id="firewall-rule-form" class="grid gap-[13px]" onsubmit={(e) => (e.preventDefault(), submitDraft())}>
+      <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-3">
+        <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
           <span>{$LL.fwAction()}</span>
-          <Select class="w-full" bind:value={draft.action}>
-            {#each ['allow', 'deny', 'reject', 'limit'] as a (a)}<option value={a}>{a}</option>{/each}
-          </Select>
+          <Select class="w-full" bind:value={draft.action} options={['allow', 'deny', 'reject', 'limit'].map((value) => ({ value, label: value }))} />
         </label>
-        <label class="space-y-1 text-xs text-muted-fg">
+        <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
           <span>{$LL.fwDirection()}</span>
-          <Select class="w-full" bind:value={draft.direction}>
-            <option value="incoming">{$LL.fwIncoming()}</option>
-            <option value="outgoing">{$LL.fwOutgoing()}</option>
-          </Select>
+          <Select class="w-full" bind:value={draft.direction} options={[{ value: 'incoming', label: $LL.fwIncoming() }, { value: 'outgoing', label: $LL.fwOutgoing() }]} />
         </label>
-        <label class="space-y-1 text-xs text-muted-fg">
+        <label class="grid gap-[5px] text-[12px] text-(--text-secondary)">
           <span>{$LL.fwProtocol()}</span>
-          <Select
-            class="w-full"
-            value={draft.protocol ?? ''}
-            onchange={(e) => (draft.protocol = e.currentTarget.value || null)}
-          >
-            <option value="">any</option>
-            <option value="tcp">tcp</option>
-            <option value="udp">udp</option>
-          </Select>
+          <Select class="w-full" value={draft.protocol ?? ''} options={[{ value: '', label: 'any' }, { value: 'tcp', label: 'tcp' }, { value: 'udp', label: 'udp' }]} onchange={(e) => (draft.protocol = e.currentTarget.value || null)} />
         </label>
       </div>
-      <div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
-        <label class="space-y-1 text-xs text-muted-fg">
-          <span>{$LL.fwPort()}</span>
-          <Input class="w-full font-mono" placeholder="22, 80,443, 6000:6010" bind:value={draft.port} />
-        </label>
+      <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-2">
+        <Input mono label={$LL.fwPort()} placeholder="22, 80,443, 6000:6010" bind:value={draft.port} />
         {#if view?.ufw?.apps.length}
-          <label class="space-y-1 text-xs text-muted-fg">
-            <span>{$LL.fwAppProfile()}</span>
-            <Select
-              class="w-full"
-              value={draft.app ?? ''}
-              onchange={(e) => (draft.app = e.currentTarget.value || null)}
-            >
-              <option value="">—</option>
-              {#each view.ufw.apps as app (app.name)}<option value={app.name}>{app.name}</option>{/each}
-            </Select>
-          </label>
+          <Select class="w-full" label={$LL.fwAppProfile()} value={draft.app ?? ''} options={[{ value: '', label: '—' }, ...view.ufw.apps.map((app) => ({ value: app.name, label: app.name }))]} onchange={(e) => (draft.app = e.currentTarget.value || null)} />
         {/if}
-        <label class="space-y-1 text-xs text-muted-fg">
-          <span>{$LL.fwFrom()}</span>
-          <Input class="w-full font-mono" placeholder={$LL.fwAnywhere()} bind:value={draft.from} />
-        </label>
-        <label class="space-y-1 text-xs text-muted-fg">
-          <span>{$LL.fwTo()}</span>
-          <Input class="w-full font-mono" placeholder={$LL.fwAnywhere()} bind:value={draft.to} />
-        </label>
-        <label class="space-y-1 text-xs text-muted-fg @2xl:col-span-2">
-          <span>{$LL.fwComment()}</span>
-          <Input class="w-full" bind:value={draft.comment} />
-        </label>
+        <Input mono label={$LL.fwFrom()} placeholder={$LL.fwAnywhere()} bind:value={draft.from} />
+        <Input mono label={$LL.fwTo()} placeholder={$LL.fwAnywhere()} bind:value={draft.to} />
+        <Input class="@2xl:col-span-2" label={$LL.fwComment()} bind:value={draft.comment} />
       </div>
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={draft.prepend} />
-        {$LL.fwPrepend()}
-      </label>
-      <button type="button" class="text-xs text-muted-fg underline" onclick={() => (moreOptions = !moreOptions)}>
-        {$LL.fwMoreOptions()}
-      </button>
+      <Checkbox bind:checked={draft.prepend} label={$LL.fwPrepend()} />
+      <Button variant="ghost" class="w-fit" icon="tune" onclick={() => (moreOptions = !moreOptions)}>{$LL.fwMoreOptions()}</Button>
       {#if moreOptions}
-        <div class="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
-          <label class="space-y-1 text-xs text-muted-fg">
-            <span>{$LL.fwSourcePort()}</span>
-            <Input class="w-full font-mono" bind:value={draft.source_port} />
-          </label>
-          <label class="space-y-1 text-xs text-muted-fg">
-            <span>{$LL.fwLog()}</span>
-            <Select class="w-full" value={draft.log ?? ''} onchange={(e) => (draft.log = (e.currentTarget.value || null) as UfwRuleDraft['log'])}>
-              <option value="">—</option>
-              <option value="log">log</option>
-              <option value="log_all">log-all</option>
-            </Select>
-          </label>
-          <label class="space-y-1 text-xs text-muted-fg">
-            <span>{$LL.fwInterfaceIn()}</span>
-            <Input class="w-full font-mono" bind:value={draft.interface_in} />
-          </label>
-          <label class="space-y-1 text-xs text-muted-fg">
-            <span>{$LL.fwInterfaceOut()}</span>
-            <Input class="w-full font-mono" bind:value={draft.interface_out} />
-          </label>
-          <label class="flex items-center gap-2 text-sm text-fg">
-            <input type="checkbox" bind:checked={draft.routed} />
-            {$LL.fwRouted()}
-          </label>
+        <div class="grid grid-cols-1 gap-[13px] @2xl:grid-cols-2">
+          <Input mono label={$LL.fwSourcePort()} bind:value={draft.source_port} />
+          <Select class="w-full" label={$LL.fwLog()} value={draft.log ?? ''} options={[{ value: '', label: '—' }, { value: 'log', label: 'log' }, { value: 'log_all', label: 'log-all' }]} onchange={(e) => (draft.log = (e.currentTarget.value || null) as UfwRuleDraft['log'])} />
+          <Input mono label={$LL.fwInterfaceIn()} bind:value={draft.interface_in} />
+          <Input mono label={$LL.fwInterfaceOut()} bind:value={draft.interface_out} />
+          <Checkbox bind:checked={draft.routed} label={$LL.fwRouted()} />
         </div>
       {/if}
-      {#if draftError}<p class="text-sm text-danger">{draftError}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (drafting = false)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy}>{$LL.fwAddRule()}</Button>
-      </div>
+      {#if draftError}<p class="text-[13px] text-(--color-danger)">{draftError}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}

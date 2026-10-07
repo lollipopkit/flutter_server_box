@@ -19,8 +19,12 @@
   )
 </script>
 
+<!-- The glyph name is drawn by CSS (`::before`, where the font's ligature
+     turns it into the symbol), so it never becomes part of the text of the
+     button or label around it. -->
 <span
   class="lk-icon {className}"
+  data-icon={name}
   aria-hidden={title ? undefined : true}
   role={title ? 'img' : undefined}
   aria-label={title}
@@ -29,5 +33,11 @@
   style:width="{size}px"
   style:height="{size}px"
   style:color
-  style:font-variation-settings={settings}>{name}</span
->
+  style:font-variation-settings={settings}
+></span>
+
+<style>
+  .lk-icon::before {
+    content: attr(data-icon);
+  }
+</style>

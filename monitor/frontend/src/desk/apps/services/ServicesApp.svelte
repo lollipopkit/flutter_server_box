@@ -1,21 +1,8 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Spinner, type BadgeTone } from '@serverbox/webui'
-  import {
-    CircleAlert,
-    List,
-    Play,
-    RefreshCw,
-    RotateCw,
-    Search,
-    Square,
-    ToggleLeft,
-    ToggleRight,
-    type LucideIcon,
-  } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, Input, SidebarItem, SidebarSection, type BadgeTone } from '../../lk'
   import ServiceDetail from './ServiceDetail.svelte'
   import AppToolbar from '../../ui/AppToolbar.svelte'
-  import SourceGroup from '../../ui/SourceGroup.svelte'
-  import SourceItem from '../../ui/SourceItem.svelte'
   import SplitView from '../../ui/SplitView.svelte'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
@@ -140,11 +127,11 @@
   let filter = $state<'all' | ServiceState>('all')
 
   /// The sidebar's groups, with the manager's own states behind them.
-  const GROUPS: { id: 'all' | ServiceState; label: () => string; icon: LucideIcon }[] = [
-    { id: 'all', label: () => $LL.servicesFilterAll(), icon: List },
-    { id: 'running', label: () => $LL.serviceStateRunning(), icon: Play },
-    { id: 'failed', label: () => $LL.serviceStateFailed(), icon: CircleAlert },
-    { id: 'stopped', label: () => $LL.serviceStateStopped(), icon: Square },
+  const GROUPS: { id: 'all' | ServiceState; label: () => string; icon: string }[] = [
+    { id: 'all', label: () => $LL.servicesFilterAll(), icon: 'list' },
+    { id: 'running', label: () => $LL.serviceStateRunning(), icon: 'play_arrow' },
+    { id: 'failed', label: () => $LL.serviceStateFailed(), icon: 'error' },
+    { id: 'stopped', label: () => $LL.serviceStateStopped(), icon: 'stop' },
   ]
 
   function countIn(id: 'all' | ServiceState): number {
@@ -180,31 +167,16 @@
   /// How each action is drawn, in the agent's own order. The set a unit
   /// carries is the agent's; this is only the label and the icon. A `Record`
   /// over every action for the same reason as `STATES`.
-  const ACTIONS: Record<ServiceAction, { label: () => string; icon: LucideIcon }> = {
-    start: { label: () => $LL.serviceActionStart(), icon: Play },
-    stop: { label: () => $LL.serviceActionStop(), icon: Square },
-    restart: { label: () => $LL.serviceActionRestart(), icon: RotateCw },
-    enable: { label: () => $LL.serviceActionEnable(), icon: ToggleRight },
-    disable: { label: () => $LL.serviceActionDisable(), icon: ToggleLeft },
+  const ACTIONS: Record<ServiceAction, { label: () => string; icon: string }> = {
+    start: { label: () => $LL.serviceActionStart(), icon: 'play_arrow' },
+    stop: { label: () => $LL.serviceActionStop(), icon: 'stop' },
+    restart: { label: () => $LL.serviceActionRestart(), icon: 'restart_alt' },
+    enable: { label: () => $LL.serviceActionEnable(), icon: 'toggle_on' },
+    disable: { label: () => $LL.serviceActionDisable(), icon: 'toggle_off' },
   }
 
   function actionLabel(action: ServiceAction): string {
     return ACTIONS[action].label()
-  }
-
-  /// The row's state dot, in the badge's own tone. The badge spells the state
-  /// out; the dot is what lets a long list be read down a column.
-  function stateDot(state: ServiceState): string {
-    switch (STATES[state].tone) {
-      case 'success':
-        return 'bg-success'
-      case 'danger':
-        return 'bg-danger'
-      case 'warning':
-        return 'bg-warning'
-      default:
-        return 'bg-faint-fg'
-    }
   }
 
   function subtitle(): string {
@@ -254,209 +226,135 @@
 
 <AppToolbar subtitle={subtitle()}>
   {#snippet actions()}
-    <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
   {/snippet}
 </AppToolbar>
 
-<!-- The split view takes what the toolbar leaves of the window (the body is
-     a column), so the sidebar reaches the bottom and the body never scrolls. -->
-<div class="relative min-h-0 flex-1">
-  <SplitView width={12}>
-    {#snippet sidebar()}
-      <SourceGroup>
-        {#each GROUPS as group (group.id)}
-          <SourceItem
-            label={group.label()}
-            icon={group.icon}
-            selected={filter === group.id}
-            onclick={() => (filter = group.id)}
-          >
-            {#snippet trailing()}
-              <span class="text-xs text-faint-fg">{countIn(group.id)}</span>
-            {/snippet}
-          </SourceItem>
-        {/each}
-      </SourceGroup>
-    {/snippet}
+<SplitView width={12}>
+  {#snippet sidebar()}
+    <SidebarSection>
+      {#each GROUPS as group (group.id)}
+        <SidebarItem
+          label={group.label()}
+          icon={group.icon}
+          active={filter === group.id}
+          trailing={countIn(group.id)}
+          onclick={() => (filter = group.id)}
+        />
+      {/each}
+    </SidebarSection>
+  {/snippet}
 
-    <div class="space-y-3 p-3">
-      {#if error}
-        <Card class="border-danger/40 bg-danger/5 p-3">
-          <p class="text-sm text-danger">{error}</p>
-        </Card>
-      {/if}
+  <div class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+    {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
+    {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
 
-      {#if notice}
-        <Card class="p-3">
-          <p class="text-sm text-muted-fg">{notice}</p>
-        </Card>
-      {/if}
-
-      {#if loading && !view}
-        <Card class="grid place-items-center p-8"><Spinner class="h-5 w-5" /></Card>
-      {:else if view && !view.available}
-        <Card class="space-y-2 p-4">
-          <p class="text-sm text-muted-fg">{reasonText(view)}</p>
-          {#if view.reason && view.reason_kind !== 'unsupported_manager'}
-            <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
-          {/if}
-        </Card>
-      {:else if view}
-        {#if view.notice}
-          <Card class="p-3">
-            <p class="text-sm text-muted-fg">{noticeText(view)}</p>
-          </Card>
+    {#if loading && !view}
+      <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
+    {:else if view && !view.available}
+      <Card>
+        <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
+        {#if view.reason && view.reason_kind !== 'unsupported_manager'}
+          <pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>
         {/if}
+      </Card>
+    {:else if view}
+      {#if view.notice}<Card><p class="text-[13px] text-(--text-secondary)">{noticeText(view)}</p></Card>{/if}
 
-        <div class="relative">
-          <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint-fg" />
-          <Input class="pl-8" bind:value={query} placeholder={$LL.serviceSearchHint()} />
+      <Input bind:value={query} icon="search" placeholder={$LL.serviceSearchHint()} />
+
+      {#if visible.length === 0}
+        <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+          <Icon name="dns" size={48} weight={300} />
+          <span class="text-[13px]">{query || filter !== 'all' ? $LL.serviceNoMatch() : $LL.servicesEmptyState()}</span>
+          {#if !query && filter === 'all'}<p class="max-w-md text-center text-[12px]">{$LL.serviceEmpty()}</p>{/if}
         </div>
-
-        {#if visible.length === 0}
-          <Card class="p-4">
-            <p class="text-sm text-muted-fg">
-              {query || filter !== 'all' ? $LL.serviceNoMatch() : $LL.serviceEmpty()}
-            </p>
-          </Card>
-        {:else}
-          <!-- One unit per card: the state dot and its badge, what the manager
-               calls it, and the one action a row offers (opening it). -->
-          <ul class="space-y-2">
-            {#each visible as unit (unit.key)}
-              {@const state = STATES[unit.state]}
-              <li>
-                <button
-                  class="flex w-full items-center gap-2.5 rounded-xl border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:bg-soft/40"
-                  onclick={() => open(unit)}
-                >
-                  <span class="h-2 w-2 shrink-0 rounded-full {stateDot(unit.state)}"></span>
-                  <span class="min-w-0 flex-1">
-                    <span class="flex items-baseline gap-2">
-                      <span class="truncate text-[0.85rem] font-medium text-fg-strong">{unit.full_name}</span>
-                      <!-- The manager's own word for startup registration, drawn
-                           verbatim: `static` and `masked` are things `enabled` cannot
-                           say, and there is nothing here to translate. -->
-                      {#if unit.startup}
-                        <span class="shrink-0 text-[0.7rem] text-faint-fg">{unit.startup}</span>
-                      {/if}
-                    </span>
-                    {#if unit.description}
-                      <span class="mt-0.5 block truncate text-xs text-muted-fg">{unit.description}</span>
-                    {/if}
+      {:else}
+        <!-- One unit per card: manager name, startup registration and state. -->
+        <ul class="space-y-[7px]">
+          {#each visible as unit (unit.key)}
+            {@const state = STATES[unit.state]}
+            <li>
+              <Card padding="11px 13px" onclick={() => open(unit)}>
+                <div class="flex min-w-0 items-center gap-[13px]">
+                  <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)">
+                    <Icon name="dns" size={18} />
                   </span>
-                  {#if userScope && unit.scope === 'user'}
-                    <span class="shrink-0 text-[0.7rem] text-faint-fg">{$LL.serviceScopeUser()}</span>
-                  {/if}
-                  <Badge tone={state.tone}>{state.label()}</Badge>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-
-        {#if busy}
-          <div class="flex items-center gap-2 px-1 text-xs text-muted-fg">
-            <Spinner size="sm" />
-          </div>
-        {/if}
+                  <div class="min-w-0 flex-1">
+                    <div class="flex min-w-0 items-baseline gap-[7px]">
+                      <span class="truncate text-[13px] font-semibold">{unit.full_name}</span>
+                      <!-- The manager's own word for startup registration is shown
+                           verbatim: `static` and `masked` differ from `enabled`. -->
+                      {#if unit.startup}<span class="shrink-0 text-[12px] text-(--text-tertiary)">{unit.startup}</span>{/if}
+                    </div>
+                    {#if unit.description}<p class="truncate text-[12px] text-(--text-tertiary)">{unit.description}</p>{/if}
+                  </div>
+                  {#if userScope && unit.scope === 'user'}<span class="text-[12px] text-(--text-tertiary)">{$LL.serviceScopeUser()}</span>{/if}
+                  <Badge tone={state.tone} dot>{state.label()}</Badge>
+                </div>
+              </Card>
+            </li>
+          {/each}
+        </ul>
       {/if}
-    </div>
-  </SplitView>
-</div>
+
+      {#if busy}<div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)"><Spinner size="sm" /></div>{/if}
+    {/if}
+  </div>
+</SplitView>
 
 <!-- One unit: what it is, what may be done to it, and the three things the
      machine can be asked about it. The actions live here rather than on the row
-     so the list stays one line per unit and an action is always taken with the
-     unit's state on screen. -->
+     so an action is always taken with the unit's state on screen. -->
 {#if opened}
-  {@const state = STATES[opened.state]}
-  <Modal open title={opened.full_name} onclose={() => (opened = undefined)}>
-    <div class="space-y-4">
-      <div class="space-y-2">
-        <div class="flex flex-wrap items-center gap-2">
-          <Badge tone={state.tone}>{state.label()}</Badge>
-          <span class="text-xs text-muted-fg">
-            {opened.scope === 'user' ? $LL.serviceScopeUser() : $LL.serviceScopeSystem()}
-          </span>
-          {#if opened.startup}
-            <span class="text-xs text-faint-fg">{opened.startup}</span>
-          {/if}
-        </div>
-        {#if opened.description}
-          <p class="text-sm text-fg">{opened.description}</p>
-        {/if}
-        <!-- The manager's finer state and why the last run ended, verbatim:
-             `exit-code 3` and `signal` are the manager's vocabulary. -->
-        {#if opened.sub_state || opened.result}
-          <p class="text-xs font-mono text-muted-fg">
-            {opened.sub_state ?? ''}{#if opened.sub_state && opened.result} · {/if}{opened.result ??
-              ''}{#if opened.exit_status !== null} {opened.exit_status}{/if}
-          </p>
-        {/if}
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs @2xl:grid-cols-3">
-          {#if opened.memory_bytes !== null}
-            <div>
-              <dt class="text-faint-fg">{$LL.serviceMemory()}</dt>
-              <dd class="text-muted-fg">{fmtBytes(opened.memory_bytes)}</dd>
-            </div>
-          {/if}
-          {#if opened.since_millis !== null}
-            <div>
-              <dt class="text-faint-fg">{$LL.serviceSince()}</dt>
-              <dd class="text-muted-fg">{timeText(opened.since_millis)}</dd>
-            </div>
-          {/if}
-          {#if opened.next_elapse_millis !== null}
-            <div>
-              <dt class="text-faint-fg">{$LL.serviceNextRun()}</dt>
-              <dd class="text-muted-fg">{timeText(opened.next_elapse_millis)}</dd>
-            </div>
-          {/if}
-        </dl>
-      </div>
-
-      {#if actionError}
-        <pre class="text-sm text-danger whitespace-pre-wrap break-all">{actionError}</pre>
-      {/if}
-
-      {#if opened.actions.length > 0}
+  {@const unit = opened}
+  {@const state = STATES[unit.state]}
+  <Dialog open wide title={unit.full_name} onclose={() => (opened = undefined)}>
+    {#snippet actions()}
+      {#if unit.actions.length > 0}
         {#if pending !== undefined}
-          <!-- The action needs an account the agent does not have. The password
-               is the second attempt's, sent as its own field so it never lands
-               in a command line. -->
-          <div class="space-y-1">
-            <label class="text-sm text-muted-fg" for="service-password">{$LL.powerPassword()}</label>
-            <Input id="service-password" type="password" bind:value={password} />
-            <p class="text-xs text-muted-fg">{$LL.powerPasswordHint()}</p>
-            <div class="flex justify-end gap-2 pt-2">
-              <Button variant="secondary" onclick={() => (pending = undefined)}>{$LL.cancel()}</Button>
-              <!-- Without a password the retry is the `sudo -n` the agent
-                   already tried. -->
-              <Button disabled={busy || !password} onclick={() => void act(pending!, true)}>
-                {$LL.serviceRetryAsRoot()}
-              </Button>
-            </div>
-          </div>
+          <!-- Without a password the retry is the `sudo -n` the agent
+               already tried. -->
+          <Button variant="primary" disabled={busy || !password} onclick={() => void act(pending!, true)}>{$LL.serviceRetryAsRoot()}</Button>
         {:else}
-          <div class="flex flex-wrap gap-2">
-            {#each opened.actions as action (action)}
-              {@const { label, icon: Icon } = ACTIONS[action]}
-              <Button variant="secondary" disabled={busy} onclick={() => run(action)}>
-                <Icon class="w-4 h-4" />
-                {label()}
-              </Button>
-            {/each}
-          </div>
+          {#each unit.actions as action (action)}
+            {@const { label, icon } = ACTIONS[action]}
+            <Button variant="secondary" icon={icon} disabled={busy} onclick={() => run(action)}>{label()}</Button>
+          {/each}
         {/if}
       {/if}
-
-      <!-- The three parts that are about one unit. Fetched when one is opened
-           rather than with the listing: a log and a definition are the largest
-           things here, and most rows are never opened. -->
-      <ServiceDetail unitKey={opened.key} />
+      <Button variant="secondary" onclick={() => (opened = undefined)}>{$LL.close()}</Button>
+    {/snippet}
+    <div class="flex flex-wrap items-center gap-[9px]">
+      <Badge tone={state.tone} dot>{state.label()}</Badge>
+      <span class="text-[12px] text-(--text-secondary)">{unit.scope === 'user' ? $LL.serviceScopeUser() : $LL.serviceScopeSystem()}</span>
+      {#if unit.startup}<span class="text-[12px] text-(--text-tertiary)">{unit.startup}</span>{/if}
     </div>
-  </Modal>
+    {#if unit.description}<p class="mt-[7px] text-[13px]">{unit.description}</p>{/if}
+    <!-- The manager's finer state and why the last run ended, verbatim:
+         `exit-code 3` and `signal` are the manager's vocabulary. -->
+    {#if unit.sub_state || unit.result}
+      <p class="lk-mono mt-[7px] text-[12px] text-(--text-secondary)">
+        {unit.sub_state ?? ''}{#if unit.sub_state && unit.result} · {/if}{unit.result ?? ''}{#if unit.exit_status !== null} {unit.exit_status}{/if}
+      </p>
+    {/if}
+    <dl class="mt-[13px] grid grid-cols-2 gap-x-[13px] @2xl:grid-cols-3">
+      {#if unit.memory_bytes !== null}<div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.serviceMemory()}</dt><dd class="lk-num text-right text-[13px]">{fmtBytes(unit.memory_bytes)}</dd></div>{/if}
+      {#if unit.since_millis !== null}<div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.serviceSince()}</dt><dd class="lk-num text-right text-[13px]">{timeText(unit.since_millis)}</dd></div>{/if}
+      {#if unit.next_elapse_millis !== null}<div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.serviceNextRun()}</dt><dd class="lk-num text-right text-[13px]">{timeText(unit.next_elapse_millis)}</dd></div>{/if}
+    </dl>
+
+    {#if actionError}<pre class="mt-[9px] whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{actionError}</pre>{/if}
+    {#if pending !== undefined}
+      <!-- The action needs an account the agent does not have. The password
+           is sent as its own field so it never lands in a command line. -->
+      <div class="mt-[13px]">
+        <Input id="service-password" label={$LL.powerPassword()} type="password" bind:value={password} />
+        <p class="mt-[5px] text-[12px] text-(--text-secondary)">{$LL.powerPasswordHint()}</p>
+      </div>
+    {/if}
+
+    <!-- The three parts about one unit, fetched when it is opened. -->
+    <div class="mt-[13px]"><ServiceDetail unitKey={unit.key} /></div>
+  </Dialog>
 {/if}

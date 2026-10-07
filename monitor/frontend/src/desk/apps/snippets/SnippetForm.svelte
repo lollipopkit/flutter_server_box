@@ -63,7 +63,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Input } from '@serverbox/webui'
+  import { Button, Input, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
 
   interface Props {
@@ -91,48 +91,22 @@
   const macros = ['${sleep 2}', '${enter 2}', '${ctrl+c}', '${alt+x}']
 </script>
 
-<div class="space-y-4">
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="snippet-name">{$LL.snippetName()}</label>
-    <Input id="snippet-name" bind:value={fields.name} placeholder="Restart nginx" />
+<div class="grid gap-[13px]">
+  <Input id="snippet-name" bind:value={fields.name} label={$LL.snippetName()} placeholder="Restart nginx" />
+
+  <div class="grid gap-[9px]">
+    <!-- A script spans multiple lines. Preserve whitespace in a monospace field. -->
+    <Textarea id="snippet-script" bind:value={fields.script} label={$LL.snippetScript()} rows={8} spellcheck="false" mono placeholder="systemctl restart nginx" hint={$LL.snippetScriptHint()} />
+    <span class="flex flex-wrap gap-[5px]">
+      {#each macros as macro (macro)}<code class="rounded-[5px] bg-(--surface-control) px-[5px] py-[3px] lk-mono text-[11px] text-(--text-secondary)">{macro}</code>{/each}
+    </span>
   </div>
 
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="snippet-script">{$LL.snippetScript()}</label>
-    <!-- A raw textarea rather than an `Input`: a script is several lines, and
-         the terminal's own private-key field is the same control for the same
-         reason. Monospace, because the whitespace in a script is part of it. -->
-    <textarea
-      id="snippet-script"
-      bind:value={fields.script}
-      rows="8"
-      spellcheck="false"
-      placeholder="systemctl restart nginx"
-      class="w-full rounded-md border border-line bg-bg px-3 py-2 font-mono text-xs"
-    ></textarea>
-    <p class="text-xs text-muted-fg">{$LL.snippetScriptHint()}</p>
-    <div class="flex flex-wrap gap-1.5">
-      {#each macros as macro (macro)}
-        <code class="rounded bg-soft px-1.5 py-0.5 font-mono text-[11px] text-muted-fg">{macro}</code>
-      {/each}
-    </div>
-  </div>
+  <Input id="snippet-note" bind:value={fields.note} label={$LL.snippetNote()} />
+  <Input id="snippet-tags" bind:value={fields.tags} label={$LL.snippetTags()} hint={$LL.snippetTagsHint()} placeholder="ops, nginx" />
 
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="snippet-note">{$LL.snippetNote()}</label>
-    <Input id="snippet-note" bind:value={fields.note} />
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="snippet-tags">{$LL.snippetTags()}</label>
-    <Input id="snippet-tags" bind:value={fields.tags} placeholder="ops, nginx" />
-    <p class="text-xs text-muted-fg">{$LL.snippetTagsHint()}</p>
-  </div>
-
-  <div class="flex justify-end gap-2">
+  <div class="flex justify-end gap-[7px]">
     <Button variant="secondary" onclick={oncancel}>{$LL.cancel()}</Button>
-    <Button onclick={() => onsaved(snippetDraftOf(fields))}>
-      {editing ? $LL.save() : $LL.snippetAdd()}
-    </Button>
+    <Button variant="primary" onclick={() => onsaved(snippetDraftOf(fields))}>{editing ? $LL.save() : $LL.snippetAdd()}</Button>
   </div>
 </div>

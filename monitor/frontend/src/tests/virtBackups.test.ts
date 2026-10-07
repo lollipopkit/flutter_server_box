@@ -253,10 +253,10 @@ describe('a guest\'s backups', () => {
     virtBackups.mockResolvedValue(listing({ backups: [] }))
     virtBackup.mockResolvedValue({ error: null })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
-    expect(await screen.findByText('No backups.')).toBeInTheDocument()
+    expect(await screen.findByText('No backups')).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^back up now$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^stop$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^lzo$/i }))
+    await fireEvent.click(screen.getByRole('tab', { name: /^stop$/i }))
+    await fireEvent.click(screen.getByRole('tab', { name: /^lzo$/i }))
     await fireEvent.input(screen.getByPlaceholderText('Optional'), { target: { value: ' before upgrade ' } })
     await fireEvent.click(screen.getByRole('checkbox', { name: /protected/i }))
     await fireEvent.click(screen.getByRole('button', { name: /^start backup$/i }))
@@ -283,7 +283,7 @@ describe('a guest\'s backups', () => {
     const { rerender } = render(VirtBackups, { view: hostView(), guest: guest(), onchanged })
     await fireEvent.click(await screen.findByRole('button', { expanded: false }))
     // Running: as a new guest is what is offered first; over it is closed.
-    await fireEvent.click(screen.getByRole('button', { name: /^over this guest$/i }))
+    await fireEvent.click(screen.getByRole('tab', { name: /^over this guest$/i }))
     expect(screen.getByRole('button', { name: /^restore$/i })).toBeDisabled()
     expect(screen.getByText('Shut it down first.')).toBeInTheDocument()
 
@@ -437,11 +437,11 @@ describe('the virtualization page: backups', () => {
     view.guests = [guest({ template: true, state: 'stopped', actions: [] })]
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: true, view, error: null })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^backup$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^backup$/i }))
     expect(await screen.findByRole('button', { name: /^back up now$/i })).toBeInTheDocument()
     expect(virtBackups).toHaveBeenCalledWith('qemu/100')
     await fireEvent.click(screen.getByRole('button', { name: /datacenter/i }))
-    expect(await screen.findByText('No backup jobs.')).toBeInTheDocument()
+    expect(await screen.findByText('No backup jobs')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^backup jobs$/i })).toHaveAttribute('aria-current', 'true')
   })
 
@@ -451,7 +451,7 @@ describe('the virtualization page: backups', () => {
     view.capabilities = { lxc: false, pause: true, cluster: false, backup: false, backup_jobs: false }
     loadVirt.mockResolvedValue({ host: 'libvirt', supported: true, pve_configured: false, view, error: null })
     render(Virt)
-    expect(await screen.findByRole('button', { name: /^overview$/i })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: /^overview$/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^backup$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^backup jobs$/i })).not.toBeInTheDocument()
   })

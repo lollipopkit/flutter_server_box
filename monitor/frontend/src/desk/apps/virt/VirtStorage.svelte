@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Select, Spinner } from '@serverbox/webui'
-  import { Copy, Expand, Play, Plus, RefreshCw, Square, Trash2 } from '@lucide/svelte'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner, Switch } from '../../lk/index'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
   import { refText, virtErrorText, virtRequestText } from '../../../lib/virt'
@@ -163,156 +162,148 @@
 </script>
 
 {#if error}
-  <Card class="border-danger/40 bg-danger/5">
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
+  <Card>
+    <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p>
   </Card>
 {/if}
 
-<div class="grid gap-4 @5xl:grid-cols-[minmax(16rem,20rem)_1fr]">
-  <section class="space-y-3">
-    <div class="flex items-center gap-2">
+<div class="grid gap-[9px] @5xl:grid-cols-[minmax(16rem,20rem)_1fr]">
+  <section class="space-y-[9px]">
+    <div class="flex items-center gap-[9px]">
       {#if editable && poolTypes.length > 0}
-        <Button size="sm" onclick={openPoolForm}><Plus class="h-4 w-4" />{$LL.virtPoolCreate()}</Button>
+        <Button size="sm" icon="add" onclick={openPoolForm}>{$LL.virtPoolCreate()}</Button>
       {/if}
-      <IconButton class="ml-auto" label={$LL.refresh()} disabled={loading} onclick={() => void loadPools()}>
-        <RefreshCw class="h-4 w-4" />
-      </IconButton>
+      <IconButton class="ml-auto" icon="refresh" label={$LL.refresh()} disabled={loading} onclick={() => void loadPools()} />
     </div>
     {#if pools === null}
       <Card><Spinner class="h-5 w-5" /></Card>
     {:else if pools.length === 0}
-      <Card><p class="text-sm text-muted-fg">{$LL.virtPoolNone()}</p></Card>
+      <div class="flex flex-col items-center gap-[9px] py-[27px] text-(--text-tertiary)">
+        <Icon name="hard_drive" size={48} weight={300} />
+        <p class="text-[13px]">{$LL.virtEmptyStorage()}</p>
+      </div>
     {:else}
-      <Card class="p-1">
-        <ul>
-          {#each pools as p (p.id)}
-            {@const frac = usage(p)}
-            <li>
-              <button
-                class="w-full rounded-lg px-3 py-2 text-left transition-colors {p.id === selected ? 'bg-primary/10' : 'hover:bg-muted'}"
-                aria-current={p.id === selected ? 'true' : undefined}
-                onclick={() => (selected = p.id)}
-              >
-                <div class="flex items-center gap-2">
-                  <span class="h-2 w-2 shrink-0 rounded-full {p.active ? 'bg-success' : 'bg-faint-fg'}"></span>
-                  <span class="truncate text-sm text-fg-strong">{p.name}</span>
-                  <span class="ml-auto shrink-0 font-mono text-xs text-faint-fg">{p.type}{p.node && view.host.nodes.length > 1 ? ` · ${p.node}` : ''}</span>
-                </div>
-                {#if frac !== null}
-                  <div class="mt-1 h-0.5 overflow-hidden rounded bg-line">
-                    <div class="h-full {frac > 0.9 ? 'bg-danger' : 'bg-primary'}" style="width: {frac * 100}%"></div>
-                  </div>
-                  <p class="pl-0 text-xs text-muted-fg">{fmtBytes(p.used ?? 0)} / {fmtBytes(p.capacity ?? 0)}</p>
-                {/if}
-              </button>
-            </li>
-          {/each}
-        </ul>
-      </Card>
+      <ul class="flex flex-col gap-[7px]">
+        {#each pools as p (p.id)}
+          {@const frac = usage(p)}
+          <li>
+            <Card
+              onclick={() => (selected = p.id)}
+              selected={p.id === selected}
+              padding="11px 13px"
+              class="flex flex-col gap-[7px]"
+            >
+              <span class="flex min-w-0 items-center gap-[9px]">
+                <Icon name="inventory_2" size={17} fill={p.active} color="var(--color-accent-text)" />
+                <span class="truncate text-[13px] font-semibold">{p.name}</span>
+                <span class="lk-mono ml-auto shrink-0 text-[12px] text-(--text-tertiary)">{p.type}{p.node && view.host.nodes.length > 1 ? ` · ${p.node}` : ''}</span>
+              </span>
+              {#if frac !== null}
+                <span class="h-[3px] overflow-hidden rounded-full bg-(--surface-control)">
+                  <span class="block h-full {frac > 0.9 ? 'bg-(--color-danger)' : 'bg-(--color-accent)'}" style="width: {frac * 100}%"></span>
+                </span>
+                <span class="lk-num text-[12px] text-(--text-tertiary)">{fmtBytes(p.used ?? 0)} / {fmtBytes(p.capacity ?? 0)}</span>
+              {/if}
+            </Card>
+          </li>
+        {/each}
+      </ul>
     {/if}
   </section>
 
-  <section class="min-w-0 space-y-4">
+  <section class="min-w-0 space-y-[13px]">
     {#if pool}
       {@const p = pool}
-      <Card class="space-y-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <h3 class="text-base font-medium text-fg-strong">{p.name}</h3>
+      <Card class="space-y-[13px]">
+        <div class="flex flex-wrap items-center gap-[9px]">
+          <h3 class="text-[15px] font-semibold">{p.name}</h3>
           {#if !p.active}<Badge>{$LL.virtPoolInactive()}</Badge>{/if}
-          {#if p.enabled === false}<Badge tone="warning">{$LL.virtPoolDisabled()}</Badge>{/if}
+          {#if p.enabled === false}<Badge tone="warning" dot>{$LL.virtPoolDisabled()}</Badge>{/if}
           {#if p.shared}<Badge>{$LL.virtPoolShared()}</Badge>{/if}
           {#if p.autostart}<Badge>{$LL.virtPoolAutostart()}</Badge>{/if}
           {#if editable}
-            <span class="ml-auto flex flex-wrap gap-1">
+            <span class="ml-auto flex flex-wrap gap-[5px]">
               {#if pve}
                 <Button variant="secondary" size="sm" disabled={busy} onclick={() => void run({ op: 'pool_set_active', pool: p.id, active: p.enabled === false })}>
                   {p.enabled === false ? $LL.virtPoolEnable() : $LL.virtPoolDisable()}
                 </Button>
               {:else}
-                <Button variant="secondary" size="sm" disabled={busy} onclick={() => void run({ op: 'pool_set_active', pool: p.id, active: !p.active })}>
-                  {#if p.active}<Square class="h-4 w-4" />{$LL.virtPoolStop()}{:else}<Play class="h-4 w-4" />{$LL.virtPoolStart()}{/if}
+                <Button variant="secondary" size="sm" icon={p.active ? 'stop' : 'play_arrow'} disabled={busy} onclick={() => void run({ op: 'pool_set_active', pool: p.id, active: !p.active })}>
+                  {p.active ? $LL.virtPoolStop() : $LL.virtPoolStart()}
                 </Button>
                 {#if caps.pool_autostart}
-                  <label class="flex items-center gap-1.5 px-2 text-xs text-muted-fg">
-                    <input type="checkbox" checked={p.autostart === true} disabled={busy} onchange={(e) => void run({ op: 'pool_set_autostart', pool: p.id, on: e.currentTarget.checked })} />
-                    {$LL.virtPoolAutostart()}
-                  </label>
+                  <Switch label={$LL.virtPoolAutostart()} checked={p.autostart === true} disabled={busy} onchange={(on) => void run({ op: 'pool_set_autostart', pool: p.id, on })} />
                 {/if}
                 {#if p.active}
-                  <Button variant="secondary" size="sm" disabled={busy} onclick={() => void run({ op: 'pool_refresh', pool: p.id })}>
-                    <RefreshCw class="h-4 w-4" />{$LL.virtPoolRefresh()}
+                  <Button variant="secondary" size="sm" icon="refresh" disabled={busy} onclick={() => void run({ op: 'pool_refresh', pool: p.id })}>
+                    {$LL.virtPoolRefresh()}
                   </Button>
                 {/if}
               {/if}
-              <Button variant="secondary" size="sm" disabled={busy} onclick={() => { deletingPool = p; deleteStorage = false }}>
-                <Trash2 class="h-4 w-4" />
-              </Button>
+              <IconButton icon="delete" label={$LL.virtPoolDelete()} disabled={busy} onclick={() => { deletingPool = p; deleteStorage = false }} />
             </span>
           {/if}
         </div>
-        <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-          <dt class="text-faint-fg">{$LL.virtPoolType()}</dt>
-          <dd class="font-mono text-muted-fg">{p.type}</dd>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-[9px] gap-y-[5px] text-[12px]">
+          <dt class="text-(--text-tertiary)">{$LL.virtPoolType()}</dt>
+          <dd class="lk-mono text-(--text-secondary)">{p.type}</dd>
           {#if p.path}
-            <dt class="text-faint-fg">{$LL.virtPoolPath()}</dt>
-            <dd class="break-all font-mono text-muted-fg">{p.path}</dd>
+            <dt class="text-(--text-tertiary)">{$LL.virtPoolPath()}</dt>
+            <dd class="break-all lk-mono text-(--text-secondary)">{p.path}</dd>
           {/if}
           {#if p.source}
-            <dt class="text-faint-fg">{$LL.virtPoolSource()}</dt>
-            <dd class="break-all font-mono text-muted-fg">{p.source}</dd>
+            <dt class="text-(--text-tertiary)">{$LL.virtPoolSource()}</dt>
+            <dd class="break-all lk-mono text-(--text-secondary)">{p.source}</dd>
           {/if}
           {#if p.content.length > 0}
-            <dt class="text-faint-fg">{$LL.virtPoolContent()}</dt>
-            <dd class="text-muted-fg">{p.content.join(', ')}</dd>
+            <dt class="text-(--text-tertiary)">{$LL.virtPoolContent()}</dt>
+            <dd class="text-(--text-secondary)">{p.content.join(', ')}</dd>
           {/if}
           {#if p.available !== null}
-            <dt class="text-faint-fg">{$LL.virtPoolFree()}</dt>
-            <dd class="text-muted-fg">{fmtBytes(p.available)}</dd>
+            <dt class="text-(--text-tertiary)">{$LL.virtPoolFree()}</dt>
+            <dd class="lk-num text-(--text-secondary)">{fmtBytes(p.available)}</dd>
           {/if}
         </dl>
       </Card>
 
-      <Card class="space-y-2">
+      <Card class="space-y-[9px]">
         {#if editable && p.active}
-          <Button size="sm" disabled={busy} onclick={openVolumeForm}><Plus class="h-4 w-4" />{$LL.virtVolumeCreate()}</Button>
+          <Button size="sm" icon="add" disabled={busy} onclick={openVolumeForm}>{$LL.virtVolumeCreate()}</Button>
         {/if}
         {#if volumes === null}
           <Spinner class="h-5 w-5" />
         {:else if volumes.length === 0}
-          <p class="text-sm text-muted-fg">{$LL.virtVolumeNone()}</p>
+          <div class="flex flex-col items-center gap-[9px] py-[27px] text-(--text-tertiary)">
+            <Icon name="inventory_2" size={48} weight={300} />
+            <p class="text-[13px]">{$LL.virtEmptyVolumes()}</p>
+          </div>
         {:else}
-          <ul class="divide-y divide-line">
+          <ul>
             {#each volumes as v (v.id)}
-              <li class="flex flex-wrap items-center gap-2 py-2">
+              <li class="flex flex-wrap items-center gap-[9px] border-t border-(--border-hairline) py-[7px]">
                 <div class="min-w-0 flex-1">
-                  <p class="break-all text-sm text-fg-strong">{v.name}</p>
-                  <p class="text-xs text-muted-fg">
+                  <p class="break-all text-[13px] font-semibold">{v.name}</p>
+                  <p class="text-[12px] text-(--text-secondary)">
                     {[v.format, v.content, v.capacity !== null ? fmtBytes(v.capacity) : null, v.allocation !== null ? $LL.virtVolumeOnDisk({ size: fmtBytes(v.allocation) }) : null]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
                   {#if v.users.length > 0}
-                    <p class="text-xs text-faint-fg">{$LL.virtVolumeUsedBy({ who: v.users.map((u) => refText(u, view.guests)).join(', ') })}</p>
+                    <p class="text-[12px] text-(--text-tertiary)">{$LL.virtVolumeUsedBy({ who: v.users.map((u) => refText(u, view.guests)).join(', ') })}</p>
                   {/if}
                   {#if v.backs.length > 0}
-                    <p class="text-xs text-faint-fg" title={v.backs.join('\n')}>{$LL.virtVolumeBacks({ count: v.backs.length })}</p>
+                    <p class="text-[12px] text-(--text-tertiary)" title={v.backs.join('\n')}>{$LL.virtVolumeBacks({ count: v.backs.length })}</p>
                   {/if}
                 </div>
                 {#if editable}
-                  <span class="flex gap-1">
+                  <span class="flex gap-[5px]">
                     {#if rule?.resizable && caps.volume_resize}
-                      <Button variant="secondary" size="sm" disabled={busy} onclick={() => { resizing = v; resizeGib = String(Math.ceil((v.capacity ?? 0) / 2 ** 30) + 1) }}>
-                        <Expand class="h-4 w-4" />{$LL.virtVolumeResize()}
-                      </Button>
+                      <IconButton icon="open_in_full" label={$LL.virtVolumeResize()} size="sm" disabled={busy} onclick={() => { resizing = v; resizeGib = String(Math.ceil((v.capacity ?? 0) / 2 ** 30) + 1) }} />
                     {/if}
                     {#if caps.volume_clone}
-                      <Button variant="secondary" size="sm" disabled={busy} onclick={() => { cloning = v; cloneName = '' }}>
-                        <Copy class="h-4 w-4" />{$LL.virtVolumeClone()}
-                      </Button>
+                      <IconButton icon="content_copy" label={$LL.virtVolumeClone()} size="sm" disabled={busy} onclick={() => { cloning = v; cloneName = '' }} />
                     {/if}
-                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => (deletingVolume = v)}>
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
+                    <IconButton icon="delete" label={$LL.virtDelete()} size="sm" disabled={busy} onclick={() => (deletingVolume = v)} />
                   </span>
                 {/if}
               </li>
@@ -321,149 +312,103 @@
         {/if}
       </Card>
     {:else if pools && pools.length > 0}
-      <Card><p class="text-sm text-muted-fg">{$LL.virtPoolPick()}</p></Card>
+      <Card><p class="text-[13px] text-(--text-secondary)">{$LL.virtPoolPick()}</p></Card>
     {/if}
   </section>
 </div>
 
 {#if creatingPool}
-  <Modal open title={$LL.virtPoolCreate()} onclose={() => (creatingPool = false)}>
-    <form class="space-y-3" onsubmit={createPool}>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtPoolName()}</span>
-        <Input bind:value={poolForm.name} />
-      </label>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtPoolType()}</span>
-        <Select bind:value={poolForm.type}>
-          {#each poolTypes as t (t)}
-            <option value={t}>{t}</option>
-          {/each}
-        </Select>
-      </label>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtPoolSource()}</span>
-        <Input class="font-mono" bind:value={poolForm.source} placeholder={SOURCE_HINT[poolForm.type] ?? ''} />
-      </label>
+  <Dialog open wide title={$LL.virtPoolCreate()} onclose={() => (creatingPool = false)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (creatingPool = false)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-pool-create" disabled={busy || poolForm.name.trim() === ''}>{$LL.virtCreate()}</Button>
+    {/snippet}
+    <form id="virt-pool-create" class="space-y-[13px]" onsubmit={(e) => { e.preventDefault(); void createPool(e) }}>
+      <Input label={$LL.virtPoolName()} bind:value={poolForm.name} />
+      <Select label={$LL.virtPoolType()} bind:value={poolForm.type} options={poolTypes.map((t) => ({ value: t, label: t }))} />
+      <Input label={$LL.virtPoolSource()} class="lk-mono" bind:value={poolForm.source} placeholder={SOURCE_HINT[poolForm.type] ?? ''} />
       {#if poolForm.type === 'netfs'}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtPoolTarget()}</span>
-          <Input class="font-mono" bind:value={poolForm.target} placeholder="/mnt/vm" />
-        </label>
+        <Input label={$LL.virtPoolTarget()} class="lk-mono" bind:value={poolForm.target} placeholder="/mnt/vm" />
       {/if}
       {#if pve && view.host.nodes.length > 1}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtPoolNode()}</span>
-          <Select bind:value={poolForm.node}>
-            {#each view.host.nodes as n (n.name)}
-              <option value={n.name}>{n.name}</option>
-            {/each}
-          </Select>
-        </label>
+        <Select label={$LL.virtPoolNode()} bind:value={poolForm.node} options={view.host.nodes.map((n) => ({ value: n.name, label: n.name }))} />
       {/if}
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (creatingPool = false)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy || poolForm.name.trim() === ''}>{$LL.virtCreate()}</Button>
-      </div>
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if creatingVolume && pool}
-  <Modal open title={$LL.virtVolumeCreate()} onclose={() => (creatingVolume = false)}>
-    <form class="space-y-3" onsubmit={createVolume}>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtVolumeName()}</span>
-        <Input class="font-mono" bind:value={volumeForm.name} placeholder={pve ? 'vm-100-disk-1' : 'data.qcow2'} />
-      </label>
-      <div class="flex gap-3">
-        <label class="block flex-1 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtVolumeSize()}</span>
-          <Input type="number" min="1" bind:value={volumeForm.gib} />
-        </label>
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtVolumeFormat()}</span>
-          <Select bind:value={volumeForm.format}>
-            {#each rule?.formats ?? ['raw'] as f (f)}
-              <option value={f}>{f}</option>
-            {/each}
-          </Select>
-        </label>
+  <Dialog open wide title={$LL.virtVolumeCreate()} onclose={() => (creatingVolume = false)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (creatingVolume = false)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-volume-create" disabled={busy || volumeForm.name.trim() === ''}>{$LL.virtCreate()}</Button>
+    {/snippet}
+    <form id="virt-volume-create" class="space-y-[13px]" onsubmit={(e) => { e.preventDefault(); void createVolume(e) }}>
+      <Input label={$LL.virtVolumeName()} class="lk-mono" bind:value={volumeForm.name} placeholder={pve ? 'vm-100-disk-1' : 'data.qcow2'} />
+      <div class="flex gap-[13px]">
+        <Input class="flex-1" label={$LL.virtVolumeSize()} type="number" min="1" bind:value={volumeForm.gib} />
+        <Select label={$LL.virtVolumeFormat()} bind:value={volumeForm.format} options={(rule?.formats ?? ['raw']).map((f) => ({ value: f, label: f }))} />
       </div>
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (creatingVolume = false)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy || volumeForm.name.trim() === ''}>{$LL.virtCreate()}</Button>
-      </div>
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if deletingPool}
   {@const p = deletingPool}
-  <Modal open title={$LL.virtPoolDelete()} onclose={() => (deletingPool = null)}>
-    <div class="space-y-4">
-      <p class="text-sm text-muted-fg">{$LL.virtPoolDeleteConfirm({ name: p.name })}</p>
-      {#if caps.pool_delete_storage && !pve}
-        <label class="flex items-center gap-1.5 text-sm text-muted-fg"><input type="checkbox" bind:checked={deleteStorage} /> {$LL.virtPoolDeleteStorage()}</label>
-      {/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (deletingPool = null)}>{$LL.cancel()}</Button>
-        <Button variant="danger" disabled={busy} onclick={async () => { const change: VirtChange = { op: 'pool_delete', pool: p.id, delete_storage: deleteStorage }; deletingPool = null; await run(change) }}>{$LL.virtDelete()}</Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.virtPoolDelete()} message={$LL.virtPoolDeleteConfirm({ name: p.name })} onclose={() => (deletingPool = null)}>
+    {#snippet icon()}<Icon name="delete" size={52} weight={300} />{/snippet}
+    {#if caps.pool_delete_storage && !pve}
+      <Checkbox bind:checked={deleteStorage} label={$LL.virtPoolDeleteStorage()} />
+    {/if}
+    {#snippet actions()}
+      <Button block variant="destructive" disabled={busy} onclick={async () => { const change: VirtChange = { op: 'pool_delete', pool: p.id, delete_storage: deleteStorage }; deletingPool = null; await run(change) }}>{$LL.virtDelete()}</Button>
+      <Button block variant="secondary" onclick={() => (deletingPool = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}
 
 {#if deletingVolume && pool}
   {@const v = deletingVolume}
   {@const p = pool}
-  <Modal open title={$LL.virtDelete()} onclose={() => (deletingVolume = null)}>
-    <div class="space-y-4">
-      <p class="text-sm text-muted-fg">{$LL.virtVolumeDeleteConfirm({ name: v.name })}</p>
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (deletingVolume = null)}>{$LL.cancel()}</Button>
-        <Button variant="danger" disabled={busy} onclick={async () => { const change: VirtChange = { op: 'volume_delete', pool: p.id, volume: v.id }; deletingVolume = null; await run(change) }}>{$LL.virtDelete()}</Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.virtDelete()} message={$LL.virtVolumeDeleteConfirm({ name: v.name })} onclose={() => (deletingVolume = null)}>
+    {#snippet icon()}<Icon name="delete" size={52} weight={300} />{/snippet}
+    {#snippet actions()}
+      <Button block variant="destructive" disabled={busy} onclick={async () => { const change: VirtChange = { op: 'volume_delete', pool: p.id, volume: v.id }; deletingVolume = null; await run(change) }}>{$LL.virtDelete()}</Button>
+      <Button block variant="secondary" onclick={() => (deletingVolume = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}
 
 {#if resizing && pool}
   {@const v = resizing}
   {@const p = pool}
-  <Modal open title={$LL.virtVolumeResize()} onclose={() => (resizing = null)}>
-    <form class="space-y-3" onsubmit={async (e) => { e.preventDefault(); if (await run({ op: 'volume_resize', pool: p.id, volume: v.id, bytes: (Math.floor(Number(resizeGib)) || 0) * 2 ** 30 })) resizing = null }}>
-      <p class="text-sm text-muted-fg">{v.name} · {fmtBytes(v.capacity ?? 0)}</p>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtVolumeResizeTo()}</span>
-        <Input type="number" min="1" bind:value={resizeGib} />
-      </label>
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (resizing = null)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy}>{$LL.virtVolumeResize()}</Button>
-      </div>
+  <Dialog open wide title={$LL.virtVolumeResize()} onclose={() => (resizing = null)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (resizing = null)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-volume-resize" disabled={busy}>{$LL.virtVolumeResize()}</Button>
+    {/snippet}
+    <form id="virt-volume-resize" class="space-y-[13px]" onsubmit={async (e) => { e.preventDefault(); if (await run({ op: 'volume_resize', pool: p.id, volume: v.id, bytes: (Math.floor(Number(resizeGib)) || 0) * 2 ** 30 })) resizing = null }}>
+      <p class="text-[13px] text-(--text-secondary)">{v.name} · {fmtBytes(v.capacity ?? 0)}</p>
+      <Input label={$LL.virtVolumeResizeTo()} type="number" min="1" bind:value={resizeGib} />
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if cloning && pool}
   {@const v = cloning}
   {@const p = pool}
-  <Modal open title={$LL.virtVolumeClone()} onclose={() => (cloning = null)}>
-    <form class="space-y-3" onsubmit={async (e) => { e.preventDefault(); if (await run({ op: 'volume_clone', pool: p.id, volume: v.id, name: cloneName.trim() })) cloning = null }}>
-      <p class="text-sm text-muted-fg">{v.name}</p>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtVolumeCloneName()}</span>
-        <Input class="font-mono" bind:value={cloneName} />
-      </label>
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (cloning = null)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy || cloneName.trim() === ''}>{$LL.virtVolumeClone()}</Button>
-      </div>
+  <Dialog open wide title={$LL.virtVolumeClone()} onclose={() => (cloning = null)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (cloning = null)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-volume-clone" disabled={busy || cloneName.trim() === ''}>{$LL.virtVolumeClone()}</Button>
+    {/snippet}
+    <form id="virt-volume-clone" class="space-y-[13px]" onsubmit={async (e) => { e.preventDefault(); if (await run({ op: 'volume_clone', pool: p.id, volume: v.id, name: cloneName.trim() })) cloning = null }}>
+      <p class="text-[13px] text-(--text-secondary)">{v.name}</p>
+      <Input label={$LL.virtVolumeCloneName()} class="lk-mono" bind:value={cloneName} />
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}

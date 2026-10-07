@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { FileText, Info, ScrollText, type LucideIcon } from '@lucide/svelte'
-  import { Card, Spinner } from '@serverbox/webui'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Card, SegmentedControl } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { ServicePart, ServiceView } from '../../../types'
@@ -52,13 +52,14 @@
     void load()
   })
 
-  const PARTS: Record<Tab, { label: () => string; icon: LucideIcon }> = {
-    logs: { label: () => $LL.serviceLogs(), icon: ScrollText },
-    definition: { label: () => $LL.serviceDefinition(), icon: FileText },
-    status: { label: () => $LL.serviceStatus(), icon: Info },
+  const PARTS: Record<Tab, { label: () => string; icon: string }> = {
+    logs: { label: () => $LL.serviceLogs(), icon: 'article' },
+    definition: { label: () => $LL.serviceDefinition(), icon: 'description' },
+    status: { label: () => $LL.serviceStatus(), icon: 'info' },
   }
 
   const tabs: Tab[] = ['logs', 'definition', 'status']
+  const tabOptions = $derived(tabs.map((value) => ({ value, label: PARTS[value].label(), icon: PARTS[value].icon })))
 
   function reasonText(reason: ServiceView): string {
     switch (reason.reason_kind) {
@@ -72,23 +73,8 @@
   }
 </script>
 
-<div class="space-y-2">
-  <div class="flex flex-wrap items-center gap-1">
-    {#each tabs as tab (tab)}
-      {@const { label, icon: Icon } = PARTS[tab]}
-      {@const current = tab === part}
-      <button
-        class="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition-colors {current
-          ? 'border-primary text-fg-strong'
-          : 'border-line text-muted-fg hover:text-fg'}"
-        aria-current={current ? 'page' : undefined}
-        onclick={() => (part = tab)}
-      >
-        <Icon class="h-3.5 w-3.5" />
-        {label()}
-      </button>
-    {/each}
-  </div>
+<div class="space-y-[9px]">
+  <SegmentedControl size="sm" label={$LL.serviceLogs()} options={tabOptions} value={part} onchange={(value) => (part = value)} />
 
   {#if error}
     <p class="text-sm text-danger">{error}</p>
@@ -96,7 +82,7 @@
     <Spinner class="w-4 h-4" />
   {:else if view && !view.available}
     <div class="space-y-1">
-      <p class="text-sm text-muted-fg">{reasonText(view)}</p>
+      <p class="text-sm text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason && view.reason_kind !== 'no_log'}
         <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
       {/if}
@@ -111,7 +97,7 @@
                 {#if line.time}
                   <span class="mr-1 text-faint-fg">{line.time}</span>
                 {/if}
-                <span class="text-muted-fg">{line.text}</span>
+                <span class="text-(--text-secondary)">{line.text}</span>
               </p>
             {/each}
           </div>
@@ -119,7 +105,7 @@
       {:else}
         <!-- An empty log and one this account may not read are told apart by
              the agent, and they are not the same answer. -->
-        <p class="text-sm text-muted-fg">
+        <p class="text-sm text-(--text-secondary)">
           {view.log?.unreadable ? $LL.serviceLogUnreadable() : $LL.serviceLogEmpty()}
         </p>
       {/if}
@@ -129,10 +115,10 @@
            translate. -->
       {#if view.text}
         <Card class="max-h-72 overflow-auto p-0">
-          <pre class="px-3 py-2 text-xs font-mono text-muted-fg whitespace-pre-wrap break-all">{view.text}</pre>
+          <pre class="px-3 py-2 text-xs font-mono text-(--text-secondary) whitespace-pre-wrap break-all">{view.text}</pre>
         </Card>
       {:else}
-        <p class="text-sm text-muted-fg">{$LL.serviceUnreadable()}</p>
+        <p class="text-sm text-(--text-secondary)">{$LL.serviceUnreadable()}</p>
       {/if}
     {/if}
   {/if}

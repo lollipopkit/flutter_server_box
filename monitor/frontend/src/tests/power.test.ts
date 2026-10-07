@@ -26,7 +26,7 @@ async function pickAndRun(action: RegExp, password = '') {
   render(PowerModal, { open: true, onclose: () => {} })
   const buttons = screen.getAllByRole('button', { name: action })
   await fireEvent.click(buttons[0])
-  if (password) await fireEvent.input(screen.getByLabelText('Sudo password'), { target: { value: password } })
+  if (password) await fireEvent.input(screen.getByLabelText(/Sudo password/), { target: { value: password } })
   // The second button with the action's name is the one that runs it.
   await fireEvent.click(screen.getAllByRole('button', { name: action }).at(-1)!)
 }
@@ -45,7 +45,7 @@ describe('PowerModal', () => {
     mockedPower.mockResolvedValue(result({ exit_code: 1, sudo_rejected: true, stderr: 'Sorry, try again.' }))
     await pickAndRun(/shut down/i)
     expect(await screen.findByRole('alert')).toHaveTextContent('refused that password')
-    expect(screen.getByLabelText('Sudo password')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Sudo password/)).toBeInTheDocument()
   })
 
   it('reads a shutdown the agent did not live to answer as sent', async () => {

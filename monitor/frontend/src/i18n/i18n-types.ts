@@ -357,7 +357,11 @@ type RootTranslation = {
 	 */
 	benchmarkCancel: string
 	/**
-	 * S​t​o​p​ ​t​h​e​ ​r​u​n​?​ ​K​i​l​l​i​n​g​ ​t​h​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​t​h​i​n​g​ ​t​h​a​t​ ​e​n​d​s​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​—​ ​f​i​o​,​ ​i​p​e​r​f​3​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​a​r​e​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
+	 * S​t​o​p​ ​t​h​i​s​ ​r​u​n​?
+	 */
+	benchmarkCancelTitle: string
+	/**
+	 * S​t​o​p​p​i​n​g​ ​k​i​l​l​s​ ​t​h​e​ ​b​e​n​c​h​m​a​r​k​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​.​ ​f​i​o​,​ ​i​p​e​r​f​3​,​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​r​u​n​ ​a​s​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
 	 */
 	benchmarkCancelConfirm: string
 	/**
@@ -376,10 +380,6 @@ type RootTranslation = {
 	 * f​i​o​ ​a​t​ ​f​o​u​r​ ​b​l​o​c​k​ ​s​i​z​e​s​,​ ​~​3​0​ ​s​e​c​o​n​d​s​ ​e​a​c​h​.​ ​W​r​i​t​e​s​ ​a​ ​2​ ​G​B​ ​t​e​s​t​ ​f​i​l​e​ ​i​n​t​o​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​a​n​d​ ​n​e​e​d​s​ ​t​h​a​t​ ​m​u​c​h​ ​f​r​e​e​,​ ​o​r​ ​y​a​b​s​ ​s​k​i​p​s​ ​i​t​ ​a​n​d​ ​s​a​y​s​ ​s​o​ ​i​n​ ​t​h​e​ ​o​u​t​p​u​t​.
 	 */
 	benchmarkDiskHint: string
-	/**
-	 * N​o​ ​b​e​n​c​h​m​a​r​k​ ​h​a​s​ ​b​e​e​n​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​y​e​t​.
-	 */
-	benchmarkEmpty: string
 	/**
 	 * A​b​o​u​t​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​ ​·​ ​{​t​r​a​f​f​i​c​}​ ​o​f​ ​t​r​a​f​f​i​c
 	 * @param {unknown} minutes
@@ -489,7 +489,11 @@ type RootTranslation = {
 	 */
 	benchmarkRemove: string
 	/**
-	 * R​e​m​o​v​e​ ​t​h​i​s​ ​r​u​n​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​?
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​r​u​n​?
+	 */
+	benchmarkRemoveTitle: string
+	/**
+	 * T​h​i​s​ ​a​l​s​o​ ​r​e​m​o​v​e​s​ ​i​t​s​ ​f​i​l​e​s​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​.
 	 */
 	benchmarkRemoveConfirm: string
 	/**
@@ -597,10 +601,6 @@ type RootTranslation = {
 	 * D​i​s​k
 	 */
 	containerDisk: string
-	/**
-	 * N​o​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	containerEmpty: string
 	/**
 	 * E​x​i​t​e​d
 	 */
@@ -940,10 +940,6 @@ type RootTranslation = {
 	 */
 	cronEditJob: string
 	/**
-	 * N​o​ ​j​o​b​s​ ​y​e​t​.
-	 */
-	cronEmpty: string
-	/**
 	 * E​n​a​b​l​e
 	 */
 	cronEnable: string
@@ -1268,10 +1264,6 @@ type RootTranslation = {
 	 * N​o​ ​p​r​o​c​e​s​s​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
 	 */
 	processNoMatch: string
-	/**
-	 * N​o​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	processNone: string
 	/**
 	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
 	 */
@@ -1755,6 +1747,10 @@ type RootTranslation = {
 	 */
 	terminalTmuxListFailed: string
 	/**
+	 * E​m​p​t​y​ ​f​o​l​d​e​r
+	 */
+	filesEmptyState: string
+	/**
 	 * F​i​l​e​s
 	 */
 	files: string
@@ -1774,10 +1770,6 @@ type RootTranslation = {
 	 * R​o​o​t​s
 	 */
 	filesRoots: string
-	/**
-	 * N​o​t​h​i​n​g​ ​h​e​r​e
-	 */
-	filesEmpty: string
 	/**
 	 * S​i​z​e
 	 */
@@ -1885,6 +1877,10 @@ type RootTranslation = {
 	 * G​r​i​d
 	 */
 	filesViewGrid: string
+	/**
+	 * V​i​e​w
+	 */
+	filesView: string
 	/**
 	 * F​o​r​w​a​r​d
 	 */
@@ -2340,10 +2336,6 @@ type RootTranslation = {
 	 */
 	userNever: string
 	/**
-	 * N​o​ ​a​c​c​o​u​n​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
-	 */
-	userNoMatch: string
-	/**
 	 * T​h​a​t​ ​a​c​c​o​u​n​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​c​a​t​a​l​o​g​.​ ​T​h​e​ ​l​i​s​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
 	 */
 	userNoSuchUser: string
@@ -2461,10 +2453,6 @@ type RootTranslation = {
 	 * @param {unknown} count
 	 */
 	snippetSubtitle: RequiredParams<'count'>
-	/**
-	 * N​o​ ​s​n​i​p​p​e​t​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
-	 */
-	snippetEmpty: string
 	/**
 	 * N​e​w​ ​s​n​i​p​p​e​t
 	 */
@@ -2584,10 +2572,6 @@ type RootTranslation = {
 	 * S​a​v​e​d​ ​r​o​u​t​e​s
 	 */
 	desktopRoutes: string
-	/**
-	 * N​o​ ​d​e​s​k​t​o​p​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
-	 */
-	desktopEmpty: string
 	/**
 	 * N​e​w​ ​d​e​s​k​t​o​p
 	 */
@@ -2774,9 +2758,9 @@ type RootTranslation = {
 	 */
 	backupWhatItIs: string
 	/**
-	 * N​o​t​h​i​n​g​ ​i​s​ ​s​t​o​r​e​d​ ​y​e​t​.​ ​T​u​r​n​ ​o​n​ ​s​y​n​c​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​i​n​ ​t​h​e​ ​a​p​p​,​ ​o​r​ ​u​p​l​o​a​d​ ​a​ ​b​a​c​k​u​p​ ​f​i​l​e​.
+	 * N​o​ ​b​a​c​k​u​p​s
 	 */
-	backupEmpty: string
+	backupEmptyState: string
 	/**
 	 * U​p​l​o​a​d
 	 */
@@ -2858,10 +2842,6 @@ type RootTranslation = {
 	 * @param {unknown} name
 	 */
 	bmcRemoved: RequiredParams<'name'>
-	/**
-	 * N​o​ ​B​M​C​ ​h​a​s​ ​b​e​e​n​ ​a​d​d​e​d​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​A​n​ ​a​d​m​i​n​ ​c​a​n​ ​a​d​d​ ​o​n​e​.
-	 */
-	bmcEmpty: string
 	/**
 	 * N​o​ ​B​M​C​ ​y​e​t​.​ ​A​d​d​ ​o​n​e​ ​b​y​ ​i​t​s​ ​H​T​T​P​S​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​n​ ​a​c​c​o​u​n​t​ ​o​n​ ​i​t​;​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​f​o​r​ ​y​o​u​.
 	 */
@@ -3098,9 +3078,33 @@ type RootTranslation = {
 	 */
 	virtUnsupported: string
 	/**
-	 * T​h​i​s​ ​h​o​s​t​ ​h​a​s​ ​n​o​ ​g​u​e​s​t​s​.
+	 * N​o​ ​g​u​e​s​t​s
 	 */
-	virtNoGuests: string
+	virtEmptyGuests: string
+	/**
+	 * N​o​ ​s​t​o​r​a​g​e
+	 */
+	virtEmptyStorage: string
+	/**
+	 * N​o​ ​v​o​l​u​m​e​s
+	 */
+	virtEmptyVolumes: string
+	/**
+	 * N​o​ ​n​e​t​w​o​r​k​s
+	 */
+	virtEmptyNetworks: string
+	/**
+	 * N​o​ ​s​n​a​p​s​h​o​t​s
+	 */
+	virtEmptySnapshots: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s
+	 */
+	virtEmptyBackups: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​s
+	 */
+	virtEmptyBackupJobs: string
 	/**
 	 * P​i​c​k​ ​a​ ​g​u​e​s​t​ ​f​r​o​m​ ​t​h​e​ ​l​i​s​t​.
 	 */
@@ -3567,10 +3571,6 @@ type RootTranslation = {
 	 */
 	virtSnapRefused: RequiredParams<'why'>
 	/**
-	 * N​o​ ​s​n​a​p​s​h​o​t​s​.
-	 */
-	virtSnapNone: string
-	/**
 	 * C​u​r​r​e​n​t
 	 */
 	virtSnapCurrent: string
@@ -3641,10 +3641,6 @@ type RootTranslation = {
 	 * E​d​i​t
 	 */
 	virtEdit: string
-	/**
-	 * N​o​ ​s​t​o​r​a​g​e​.
-	 */
-	virtPoolNone: string
 	/**
 	 * I​n​a​c​t​i​v​e
 	 */
@@ -3735,10 +3731,6 @@ type RootTranslation = {
 	 */
 	virtPoolPick: string
 	/**
-	 * N​o​ ​v​o​l​u​m​e​s​.
-	 */
-	virtVolumeNone: string
-	/**
 	 * N​a​m​e
 	 */
 	virtVolumeName: string
@@ -3790,10 +3782,6 @@ type RootTranslation = {
 	 * @param {unknown} size
 	 */
 	virtVolumeOnDisk: RequiredParams<'size'>
-	/**
-	 * N​o​ ​n​e​t​w​o​r​k​s​.
-	 */
-	virtNetNone: string
 	/**
 	 * A​c​t​i​v​e
 	 */
@@ -5246,10 +5234,6 @@ type RootTranslation = {
 	 */
 	virtBakEditJob: RequiredParams<'id'>
 	/**
-	 * N​o​ ​b​a​c​k​u​p​ ​j​o​b​s​.
-	 */
-	virtBakNoJobs: string
-	/**
 	 * R​u​n​ ​n​o​w
 	 */
 	virtBakRunNow: string
@@ -5276,10 +5260,6 @@ type RootTranslation = {
 	 * B​a​c​k​u​p​s
 	 */
 	virtBakList: string
-	/**
-	 * N​o​ ​b​a​c​k​u​p​s​.
-	 */
-	virtBakNone: string
 	/**
 	 * B​a​c​k​ ​u​p​ ​n​o​w
 	 */
@@ -6070,18 +6050,6 @@ type RootTranslation = {
 	 */
 	settingsFitFill: string
 	/**
-	 * A​c​c​e​n​t
-	 */
-	settingsAccent: string
-	/**
-	 * D​e​f​a​u​l​t
-	 */
-	settingsAccentDefault: string
-	/**
-	 * T​h​e​ ​f​i​r​s​t​ ​c​o​l​o​u​r​ ​i​s​ ​t​h​e​ ​d​e​f​a​u​l​t​ ​a​c​c​e​n​t​.
-	 */
-	settingsAccentNote: string
-	/**
 	 * T​h​a​t​ ​i​m​a​g​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​8​ ​M​i​B​.
 	 */
 	settingsWallpaperTooLarge: string
@@ -6129,6 +6097,64 @@ type RootTranslation = {
 	 * U​s​e​ ​d​a​r​k​ ​a​p​p​e​a​r​a​n​c​e
 	 */
 	deskUseDark: string
+	/**
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​s
+	 */
+	containersEmpty: string
+	/**
+	 * N​o​ ​i​m​a​g​e​s
+	 */
+	containersNoImages: string
+	/**
+	 * N​o​ ​p​r​o​c​e​s​s​e​s
+	 */
+	processEmptyState: string
+	/**
+	 * {​c​o​u​n​t​}​ ​v​i​s​i​b​l​e
+	 * @param {unknown} count
+	 */
+	processVisibleCount: RequiredParams<'count'>
+	/**
+	 * N​o​ ​s​e​r​v​i​c​e​s
+	 */
+	servicesEmptyState: string
+	/**
+	 * N​o​ ​j​o​b​s
+	 */
+	cronEmptyState: string
+	/**
+	 * N​o​ ​a​c​c​o​u​n​t​s
+	 */
+	systemUsersEmptyState: string
+	/**
+	 * N​o​ ​m​a​t​c​h​e​s
+	 */
+	systemUsersNoMatch: string
+	/**
+	 * F​i​r​e​w​a​l​l
+	 */
+	fwFirewallType: string
+	/**
+	 * N​o​ ​s​n​i​p​p​e​t​s
+	 */
+	snippetsEmptyState: string
+	/**
+	 * N​o​ ​d​e​s​k​t​o​p​s
+	 */
+	desktopsEmptyState: string
+	/**
+	 * N​o​ ​r​u​n​s
+	 */
+	benchmarkEmptyState: string
+	/**
+	 * N​o​ ​t​a​r​g​e​t​s
+	 */
+	bmcEmptyState: string
+	/**
+	 * {​p​e​r​c​e​n​t​}​%​ ​o​f​ ​r​u​n​s
+	 * @param {unknown} percent
+	 */
+	benchmarkRunShare: RequiredParams<'percent'>
 }
 
 export type TranslationFunctions = {
@@ -6461,7 +6487,11 @@ export type TranslationFunctions = {
 	 */
 	benchmarkCancel: () => LocalizedString
 	/**
-	 * Stop the run? Killing the process group is the only thing that ends a benchmark — fio, iperf3 and Geekbench are separate processes.
+	 * Stop this run?
+	 */
+	benchmarkCancelTitle: () => LocalizedString
+	/**
+	 * Stopping kills the benchmark process group. fio, iperf3, and Geekbench run as separate processes.
 	 */
 	benchmarkCancelConfirm: () => LocalizedString
 	/**
@@ -6480,10 +6510,6 @@ export type TranslationFunctions = {
 	 * fio at four block sizes, ~30 seconds each. Writes a 2 GB test file into the working directory and needs that much free, or yabs skips it and says so in the output.
 	 */
 	benchmarkDiskHint: () => LocalizedString
-	/**
-	 * No benchmark has been run on this machine yet.
-	 */
-	benchmarkEmpty: () => LocalizedString
 	/**
 	 * About {minutes} min · {traffic} of traffic
 	 */
@@ -6589,7 +6615,11 @@ export type TranslationFunctions = {
 	 */
 	benchmarkRemove: () => LocalizedString
 	/**
-	 * Remove this run and its files from the machine?
+	 * Remove this run?
+	 */
+	benchmarkRemoveTitle: () => LocalizedString
+	/**
+	 * This also removes its files from the machine.
 	 */
 	benchmarkRemoveConfirm: () => LocalizedString
 	/**
@@ -6696,10 +6726,6 @@ export type TranslationFunctions = {
 	 * Disk
 	 */
 	containerDisk: () => LocalizedString
-	/**
-	 * No containers on this machine.
-	 */
-	containerEmpty: () => LocalizedString
 	/**
 	 * Exited
 	 */
@@ -7025,10 +7051,6 @@ export type TranslationFunctions = {
 	 */
 	cronEditJob: () => LocalizedString
 	/**
-	 * No jobs yet.
-	 */
-	cronEmpty: () => LocalizedString
-	/**
 	 * Enable
 	 */
 	cronEnable: () => LocalizedString
@@ -7336,10 +7358,6 @@ export type TranslationFunctions = {
 	 * No process matches the filter.
 	 */
 	processNoMatch: () => LocalizedString
-	/**
-	 * No processes on this machine.
-	 */
-	processNone: () => LocalizedString
 	/**
 	 * Retry as root
 	 */
@@ -7817,6 +7835,10 @@ export type TranslationFunctions = {
 	 */
 	terminalTmuxListFailed: () => LocalizedString
 	/**
+	 * Empty folder
+	 */
+	filesEmptyState: () => LocalizedString
+	/**
 	 * Files
 	 */
 	files: () => LocalizedString
@@ -7836,10 +7858,6 @@ export type TranslationFunctions = {
 	 * Roots
 	 */
 	filesRoots: () => LocalizedString
-	/**
-	 * Nothing here
-	 */
-	filesEmpty: () => LocalizedString
 	/**
 	 * Size
 	 */
@@ -7944,6 +7962,10 @@ export type TranslationFunctions = {
 	 * Grid
 	 */
 	filesViewGrid: () => LocalizedString
+	/**
+	 * View
+	 */
+	filesView: () => LocalizedString
 	/**
 	 * Forward
 	 */
@@ -8393,10 +8415,6 @@ export type TranslationFunctions = {
 	 */
 	userNever: () => LocalizedString
 	/**
-	 * No account matches the filter.
-	 */
-	userNoMatch: () => LocalizedString
-	/**
 	 * That account is no longer in the catalog. The list has been read again.
 	 */
 	userNoSuchUser: () => LocalizedString
@@ -8513,10 +8531,6 @@ export type TranslationFunctions = {
 	 */
 	snippetSubtitle: (arg: { count: unknown }) => LocalizedString
 	/**
-	 * No snippets saved on this agent yet.
-	 */
-	snippetEmpty: () => LocalizedString
-	/**
 	 * New snippet
 	 */
 	snippetAdd: () => LocalizedString
@@ -8628,10 +8642,6 @@ export type TranslationFunctions = {
 	 * Saved routes
 	 */
 	desktopRoutes: () => LocalizedString
-	/**
-	 * No desktops saved on this agent yet.
-	 */
-	desktopEmpty: () => LocalizedString
 	/**
 	 * New desktop
 	 */
@@ -8813,9 +8823,9 @@ export type TranslationFunctions = {
 	 */
 	backupWhatItIs: () => LocalizedString
 	/**
-	 * Nothing is stored yet. Turn on sync to this agent in the app, or upload a backup file.
+	 * No backups
 	 */
-	backupEmpty: () => LocalizedString
+	backupEmptyState: () => LocalizedString
 	/**
 	 * Upload
 	 */
@@ -8888,10 +8898,6 @@ export type TranslationFunctions = {
 	 * Removed {name}.
 	 */
 	bmcRemoved: (arg: { name: unknown }) => LocalizedString
-	/**
-	 * No BMC has been added to this agent. An admin can add one.
-	 */
-	bmcEmpty: () => LocalizedString
 	/**
 	 * No BMC yet. Add one by its HTTPS address and an account on it; this agent signs in for you.
 	 */
@@ -9125,9 +9131,33 @@ export type TranslationFunctions = {
 	 */
 	virtUnsupported: () => LocalizedString
 	/**
-	 * This host has no guests.
+	 * No guests
 	 */
-	virtNoGuests: () => LocalizedString
+	virtEmptyGuests: () => LocalizedString
+	/**
+	 * No storage
+	 */
+	virtEmptyStorage: () => LocalizedString
+	/**
+	 * No volumes
+	 */
+	virtEmptyVolumes: () => LocalizedString
+	/**
+	 * No networks
+	 */
+	virtEmptyNetworks: () => LocalizedString
+	/**
+	 * No snapshots
+	 */
+	virtEmptySnapshots: () => LocalizedString
+	/**
+	 * No backups
+	 */
+	virtEmptyBackups: () => LocalizedString
+	/**
+	 * No backup jobs
+	 */
+	virtEmptyBackupJobs: () => LocalizedString
 	/**
 	 * Pick a guest from the list.
 	 */
@@ -9580,10 +9610,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtSnapRefused: (arg: { why: unknown }) => LocalizedString
 	/**
-	 * No snapshots.
-	 */
-	virtSnapNone: () => LocalizedString
-	/**
 	 * Current
 	 */
 	virtSnapCurrent: () => LocalizedString
@@ -9651,10 +9677,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Edit
 	 */
 	virtEdit: () => LocalizedString
-	/**
-	 * No storage.
-	 */
-	virtPoolNone: () => LocalizedString
 	/**
 	 * Inactive
 	 */
@@ -9744,10 +9766,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtPoolPick: () => LocalizedString
 	/**
-	 * No volumes.
-	 */
-	virtVolumeNone: () => LocalizedString
-	/**
 	 * Name
 	 */
 	virtVolumeName: () => LocalizedString
@@ -9795,10 +9813,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * {size} on disk
 	 */
 	virtVolumeOnDisk: (arg: { size: unknown }) => LocalizedString
-	/**
-	 * No networks.
-	 */
-	virtNetNone: () => LocalizedString
 	/**
 	 * Active
 	 */
@@ -11209,10 +11223,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	virtBakEditJob: (arg: { id: unknown }) => LocalizedString
 	/**
-	 * No backup jobs.
-	 */
-	virtBakNoJobs: () => LocalizedString
-	/**
 	 * Run now
 	 */
 	virtBakRunNow: () => LocalizedString
@@ -11236,10 +11246,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Backups
 	 */
 	virtBakList: () => LocalizedString
-	/**
-	 * No backups.
-	 */
-	virtBakNone: () => LocalizedString
 	/**
 	 * Back up now
 	 */
@@ -12017,18 +12023,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsFitFill: () => LocalizedString
 	/**
-	 * Accent
-	 */
-	settingsAccent: () => LocalizedString
-	/**
-	 * Default
-	 */
-	settingsAccentDefault: () => LocalizedString
-	/**
-	 * The first colour is the default accent.
-	 */
-	settingsAccentNote: () => LocalizedString
-	/**
 	 * That image is larger than 8 MiB.
 	 */
 	settingsWallpaperTooLarge: () => LocalizedString
@@ -12076,6 +12070,62 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Use dark appearance
 	 */
 	deskUseDark: () => LocalizedString
+	/**
+	 * No containers
+	 */
+	containersEmpty: () => LocalizedString
+	/**
+	 * No images
+	 */
+	containersNoImages: () => LocalizedString
+	/**
+	 * No processes
+	 */
+	processEmptyState: () => LocalizedString
+	/**
+	 * {count} visible
+	 */
+	processVisibleCount: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No services
+	 */
+	servicesEmptyState: () => LocalizedString
+	/**
+	 * No jobs
+	 */
+	cronEmptyState: () => LocalizedString
+	/**
+	 * No accounts
+	 */
+	systemUsersEmptyState: () => LocalizedString
+	/**
+	 * No matches
+	 */
+	systemUsersNoMatch: () => LocalizedString
+	/**
+	 * Firewall
+	 */
+	fwFirewallType: () => LocalizedString
+	/**
+	 * No snippets
+	 */
+	snippetsEmptyState: () => LocalizedString
+	/**
+	 * No desktops
+	 */
+	desktopsEmptyState: () => LocalizedString
+	/**
+	 * No runs
+	 */
+	benchmarkEmptyState: () => LocalizedString
+	/**
+	 * No targets
+	 */
+	bmcEmptyState: () => LocalizedString
+	/**
+	 * {percent}% of runs
+	 */
+	benchmarkRunShare: (arg: { percent: unknown }) => LocalizedString
 }
 
 export type Formatters = {}

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { ChevronDown, ChevronUp, Plus, Send, Trash2 } from '@lucide/svelte'
-  import { Badge, Button, Card, IconButton, Input, Select, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Group, IconButton, Input, Row, Select, Spinner, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
   import { servers } from '../../../lib/servers.svelte'
@@ -307,177 +306,117 @@
   }
 </script>
 
-<Card class="space-y-4">
-  <div class="flex items-center justify-between gap-2">
-    <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.pushChannels()}</h2>
-    <div class="flex items-center gap-2">
-      {#if appliesOnRestart}
-        <Badge>{$LL.restartField()}</Badge>
-      {/if}
-      {#if !loading && !loadError}
-        <Button size="sm" variant="secondary" onclick={save} disabled={saving}>
-          {saving ? $LL.saving() : $LL.save()}
-        </Button>
-      {/if}
-    </div>
+<Group title={$LL.pushChannels()}>
+  <div class="flex items-center justify-between gap-[9px] border-b border-(--border-hairline) py-[7px]">
+    <Row label={$LL.pushChannels()}>
+      {#if appliesOnRestart}<Badge>{$LL.restartField()}</Badge>{/if}
+    </Row>
+    {#if !loading && !loadError}
+      <Button size="sm" variant="primary" disabled={saving} onclick={save}>{saving ? $LL.saving() : $LL.save()}</Button>
+    {/if}
   </div>
 
-  <Disclosure summary={$LL.moreDetails()}>
-    <Markdown text={$LL.pushNote()} class="text-xs text-faint-fg" />
-  </Disclosure>
+  <div class="border-b border-(--border-hairline) py-[9px]">
+    <Disclosure summary={$LL.moreDetails()}>
+      <Markdown text={$LL.pushNote()} class="text-[12px] text-(--text-tertiary)" />
+    </Disclosure>
+  </div>
 
   {#if loading}
-    <div class="flex justify-center py-8"><Spinner size="lg" /></div>
+    <div class="flex justify-center py-[13px]"><Spinner size={48} /></div>
   {:else if loadError}
-    <p class="text-sm text-danger">{loadError}</p>
+    <p class="py-[7px] text-[13px] text-(--color-danger)">{loadError}</p>
   {:else}
-    <div class="space-y-1">
-      <span class="text-sm text-muted-fg">{$LL.pushRate()}</span>
-      <Input placeholder={$LL.pushRatePlaceholder()} bind:value={pushRate} />
-    </div>
+    <Row label={$LL.pushRate()}>
+      <Input class="w-[170px]" placeholder={$LL.pushRatePlaceholder()} bind:value={pushRate} />
+    </Row>
 
-    <div class="divide-y divide-line">
-      {#each drafts as draft, i (i)}
-        <div class="py-4 first:pt-0 last:pb-0 space-y-2">
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-faint-fg tabular-nums">{i + 1}</span>
-            <span class="flex-1"></span>
-            {#if draft.editable}
-              <IconButton label={$LL.pushTest()} disabled={draft.testing} onclick={() => test(i)}>
-                <Send class="w-4 h-4" />
-              </IconButton>
-            {/if}
-            <IconButton label={$LL.moveUp()} disabled={i === 0} onclick={() => moveChannel(i, -1)}>
-              <ChevronUp class="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              label={$LL.moveDown()}
-              disabled={i === drafts.length - 1}
-              onclick={() => moveChannel(i, 1)}
-            >
-              <ChevronDown class="w-4 h-4" />
-            </IconButton>
-            <IconButton label={$LL.removePush()} class="hover:text-danger" onclick={() => removeChannel(i)}>
-              <Trash2 class="w-4 h-4" />
-            </IconButton>
-          </div>
+    {#each drafts as draft, i (i)}
+      <div class="space-y-[9px] border-b border-(--border-hairline) py-[9px] last:border-0">
+        <div class="flex items-center gap-[5px]">
+          <span class="lk-num text-[12px] text-(--text-tertiary)">{i + 1}</span>
+          <span class="flex-1"></span>
+          {#if draft.editable}<IconButton icon="send" label={$LL.pushTest()} disabled={draft.testing} onclick={() => test(i)} />{/if}
+          <IconButton icon="arrow_upward" label={$LL.moveUp()} disabled={i === 0} onclick={() => moveChannel(i, -1)} />
+          <IconButton icon="arrow_downward" label={$LL.moveDown()} disabled={i === drafts.length - 1} onclick={() => moveChannel(i, 1)} />
+          <IconButton icon="delete" label={$LL.removePush()} onclick={() => removeChannel(i)} />
+        </div>
 
-          <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-2">
-            <div class="space-y-1">
-              <span class="text-xs text-muted-fg">{$LL.ruleName()}</span>
-              <Input bind:value={draft.name} />
-            </div>
-            <div class="space-y-1">
-              <span class="text-xs text-muted-fg">{$LL.ruleType()}</span>
-              {#if draft.editable}
-                <Select
-                  class="w-full"
-                  value={draft.push_type}
-                  onchange={(e: Event) => changeType(i, (e.currentTarget as HTMLSelectElement).value)}
-                >
-                  {#each pushTypes as type (type)}
-                    <option value={type}>{type}</option>
-                  {/each}
-                  <!-- A spelling the agent still accepts but does not offer
-                       (the Go agent's `server_chan`) would otherwise vanish
-                       from the list and take the channel's type with it. -->
-                  {#if !pushTypes.includes(draft.push_type)}
-                    <option value={draft.push_type}>{draft.push_type}</option>
-                  {/if}
-                </Select>
-              {:else}
-                <p class="py-2 text-sm font-mono">{draft.push_type}</p>
-              {/if}
-            </div>
-          </div>
-
-          {#if !draft.editable}
-            <p class="text-xs text-faint-fg">{$LL.pushUnknownType()}</p>
+        <div class="grid grid-cols-1 gap-[9px] @2xl:grid-cols-2">
+          <Input label={$LL.ruleName()} bind:value={draft.name} />
+          {#if draft.editable}
+            <Select
+              label={$LL.ruleType()}
+              class="w-full"
+              value={draft.push_type}
+              options={[
+                ...pushTypes.map((type) => ({ value: type, label: type })),
+                ...(!pushTypes.includes(draft.push_type) ? [{ value: draft.push_type, label: draft.push_type }] : []),
+              ]}
+              onchange={(event: Event) => changeType(i, (event.currentTarget as HTMLSelectElement).value)}
+            />
           {:else}
-            <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-2">
-              {#each draft.fields as field (field.key)}
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs text-muted-fg font-mono">{field.key}</span>
-                    {#if field.withheld}
-                      <Badge tone="success">{$LL.pushSecretSet()}</Badge>
-                    {/if}
-                  </div>
-                  {#if field.kind === 'boolean'}
-                    <Select class="w-full" bind:value={field.value}>
-                      <option value="true">true</option>
-                      <option value="false">false</option>
-                    </Select>
-                  {:else}
-                    <Input
-                      type={field.kind === 'number' ? 'number' : 'text'}
-                      placeholder={field.withheld ? $LL.pushSecretKeep() : ''}
-                      bind:value={field.value}
-                    />
-                  {/if}
-                </div>
-              {/each}
-            </div>
-
-            {#if draft.headers}
-              <div class="space-y-2">
-                <span class="text-xs text-muted-fg font-mono">headers</span>
-                {#each draft.headers as header, h (h)}
-                  <div class="flex items-center gap-2">
-                    <Input class="flex-1" placeholder="Authorization" bind:value={header.key} />
-                    <Input
-                      class="flex-1"
-                      placeholder={header.withheld ? $LL.pushSecretKeep() : ''}
-                      bind:value={header.value}
-                    />
-                    <IconButton
-                      label={$LL.pushRemoveHeader()}
-                      class="hover:text-danger shrink-0"
-                      onclick={() => removeHeader(i, h)}
-                    >
-                      <Trash2 class="w-4 h-4" />
-                    </IconButton>
-                  </div>
-                {/each}
-                <Button variant="secondary" size="sm" onclick={() => addHeader(i)}>
-                  <Plus class="w-4 h-4 mr-1" />{$LL.pushAddHeader()}
-                </Button>
-              </div>
-            {/if}
-
-            {#each draft.json as row (row.key)}
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg font-mono">{row.key}</span>
-                <textarea
-                  class="w-full rounded-lg bg-soft/50 border border-line px-3 py-2 text-sm font-mono
-                         focus:outline-none focus:ring-2 focus:ring-accent/40"
-                  rows="3"
-                  bind:value={row.text}
-                ></textarea>
-              </div>
-            {/each}
-          {/if}
-
-          {#if draft.testResult}
-            {#if draft.testResult.ok}
-              <p class="text-sm text-success">{$LL.pushTestOk()}</p>
-            {:else}
-              <p class="text-sm text-danger">{draft.testResult.error ?? $LL.pushTestFailed()}</p>
-            {/if}
+            <div class="lk-field"><span class="lk-field__label">{$LL.ruleType()}</span><p class="lk-mono text-[13px]">{draft.push_type}</p></div>
           {/if}
         </div>
-      {/each}
+
+        {#if !draft.editable}
+          <p class="text-[12px] text-(--text-tertiary)">{$LL.pushUnknownType()}</p>
+        {:else}
+          <div class="grid grid-cols-1 gap-[9px] @2xl:grid-cols-2">
+            {#each draft.fields as field (field.key)}
+              {#if field.kind === 'boolean'}
+                <Row label={field.key}>
+                  {#if field.withheld}<Badge tone="success">{$LL.pushSecretSet()}</Badge>{/if}
+                  <Select class="w-[170px]" bind:value={field.value} options={[{ value: 'true', label: 'true' }, { value: 'false', label: 'false' }]} />
+                </Row>
+              {:else}
+                <Input
+                  label={field.key}
+                  class="font-mono"
+                  type={field.kind === 'number' ? 'number' : 'text'}
+                  placeholder={field.withheld ? $LL.pushSecretKeep() : ''}
+                  bind:value={field.value}
+                />
+                {#if field.withheld}<Badge tone="success">{$LL.pushSecretSet()}</Badge>{/if}
+              {/if}
+            {/each}
+          </div>
+
+          {#if draft.headers}
+            <div class="space-y-[7px]">
+              <span class="lk-caps">headers</span>
+              {#each draft.headers as header, h (h)}
+                <div class="flex items-center gap-[7px]">
+                  <Input class="flex-1" placeholder="Authorization" bind:value={header.key} />
+                  <Input class="flex-1" placeholder={header.withheld ? $LL.pushSecretKeep() : ''} bind:value={header.value} />
+                  <IconButton icon="delete" label={$LL.pushRemoveHeader()} onclick={() => removeHeader(i, h)} />
+                </div>
+              {/each}
+              <Button variant="tinted" size="sm" icon="add" onclick={() => addHeader(i)}>{$LL.pushAddHeader()}</Button>
+            </div>
+          {/if}
+
+          {#each draft.json as jsonRow (jsonRow.key)}
+            <Textarea label={jsonRow.key} rows={3} bind:value={jsonRow.text} mono />
+          {/each}
+        {/if}
+
+        {#if draft.testResult}
+          {#if draft.testResult.ok}
+            <p class="text-[13px] text-(--color-success)">{$LL.pushTestOk()}</p>
+          {:else}
+            <p class="text-[13px] text-(--color-danger)">{draft.testResult.error ?? $LL.pushTestFailed()}</p>
+          {/if}
+        {/if}
+      </div>
+    {/each}
+
+    <div class="flex flex-wrap items-center gap-[9px] py-[7px]">
+      <Button variant="tinted" size="sm" icon="add" onclick={addChannel}>{$LL.addPush()}</Button>
+      {#if saving}<Spinner size={16} />{/if}
     </div>
-
-    <Button variant="secondary" size="sm" onclick={addChannel}>
-      <Plus class="w-4 h-4 mr-1" />{$LL.addPush()}
-    </Button>
-
-    {#if saveError}
-      <p class="text-sm text-danger">{saveError}</p>
-    {/if}
-    {#if saveOk}
-      <p class="text-sm text-success">{$LL.settingsSaved()}</p>
-    {/if}
+    {#if saveError}<p class="py-[7px] text-[13px] text-(--color-danger)">{saveError}</p>{/if}
+    {#if saveOk}<p class="py-[7px] text-[13px] text-(--color-success)">{$LL.settingsSaved()}</p>{/if}
   {/if}
-</Card>
+</Group>

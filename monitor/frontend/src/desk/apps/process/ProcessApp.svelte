@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
-  import { RefreshCw, Search, Square } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl } from '../../lk'
   import AppToolbar from '../../ui/AppToolbar.svelte'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
@@ -256,25 +256,20 @@
 <div class="flex h-full min-h-0 flex-col">
 <AppToolbar subtitle={reading()}>
   {#snippet actions()}
-    <IconButton label={$LL.refresh()} onclick={() => void refresh()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void refresh()} disabled={loading} />
   {/snippet}
 
   {#snippet tabs()}
-    <div class="flex flex-wrap items-center gap-2 pb-1.5">
-      <div class="relative min-w-40 flex-1">
-        <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint-fg" />
-        <Input class="pl-8" bind:value={query} placeholder={$LL.processSearchHint()} />
-      </div>
+    <div class="flex flex-wrap items-center gap-[9px] pb-[5px]">
+      <Input class="min-w-[180px] flex-1" bind:value={query} icon="search" placeholder={$LL.processSearchHint()} />
       {#if kernelThreads > 0}
-        <label class="flex items-center gap-2 text-[0.75rem] text-muted-fg">
-          <input type="checkbox" bind:checked={showKernel} />
+        <label class="flex items-center gap-[7px] text-[12px] text-(--text-secondary)">
+          <input class="accent-(--color-accent)" type="checkbox" bind:checked={showKernel} />
           {$LL.processKernelThreads({ count: kernelThreads })}
         </label>
       {/if}
       {#if view?.load}
-        <span class="text-[0.7rem] text-faint-fg">
+        <span class="lk-num text-[12px] text-(--text-tertiary)">
           {$LL.processLoad({
             one: view.load.one.toFixed(2),
             five: view.load.five.toFixed(2),
@@ -287,146 +282,105 @@
     <!-- The orders this machine can answer, in the agent's own order. Which
          ones those are depends on the columns it printed, so the list is not
          written here. -->
-    {#if view?.sorts?.length}
-      <div class="flex flex-wrap items-center gap-0.5 pb-1.5">
-        {#each view.sorts as mode (mode)}
-          {@const chosen = mode === sort}
-          <button
-            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[0.7rem] transition-colors {chosen
-              ? 'bg-soft text-fg-strong'
-              : 'text-muted-fg hover:bg-soft/60 hover:text-fg'}"
-            aria-pressed={chosen}
-            onclick={() => order(mode)}
-          >
-            {SORTS[mode]()}
-            {#if chosen}
-              <span class="text-faint-fg">{ascending ? '↑' : '↓'}</span>
-            {/if}
-          </button>
-        {/each}
-      </div>
+    {#if view?.sorts?.length && sort}
+      <SegmentedControl
+        size="sm"
+        label={$LL.processSortName()}
+        value={sort}
+        options={view.sorts.map((mode) => ({ value: mode, label: `${SORTS[mode]()}${mode === sort ? (ascending ? ' ↑' : ' ↓') : ''}` }))}
+        onchange={order}
+      />
     {/if}
   {/snippet}
 </AppToolbar>
 
-<main class="flex min-h-0 flex-1 flex-col gap-3 p-3">
+<main class="flex min-h-0 flex-1 flex-col gap-[9px] px-[17px] pb-[17px] pt-[4px]">
   {#if error}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <p class="text-sm text-danger">{error}</p>
-    </Card>
+    <Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>
   {/if}
 
   {#if notice}
-    <Card class="p-3">
-      <p class="text-sm text-muted-fg">{notice}</p>
-    </Card>
+    <Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>
   {/if}
 
   {#if loading && !view}
-    <Card class="grid place-items-center p-8"><Spinner class="h-5 w-5" /></Card>
+    <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
   {:else if view && !view.available}
-    <Card class="space-y-2 p-4">
-      <p class="text-sm text-muted-fg">{reasonText(view)}</p>
+    <Card>
+      <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason}
-        <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
+        <pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>
       {/if}
     </Card>
   {:else if view}
     {#if view.issue}
-      <Card class="space-y-1 p-3">
-        <p class="text-sm text-muted-fg">{$LL.processIssue()}</p>
-        <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.issue.diagnostics}</pre>
+      <Card>
+        <p class="text-[13px] text-(--text-secondary)">{$LL.processIssue()}</p>
+        <pre class="lk-mono mt-[7px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.issue.diagnostics}</pre>
       </Card>
     {/if}
 
     {#if visible.length === 0}
-      <Card class="p-4">
-        <p class="text-sm text-muted-fg">
-          {query ? $LL.processNoMatch() : $LL.processNone()}
-        </p>
-      </Card>
+      <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+        <Icon name="speed" size={48} weight={300} />
+        <span class="text-[13px]">{query ? $LL.processNoMatch() : $LL.processEmptyState()}</span>
+      </div>
     {:else}
       <!-- A dense table: one line per process, the columns the machine printed
            and no others. One row is one line, so nothing in it wraps; a window
            too narrow for every column scrolls sideways inside this card rather
            than breaking the numbers across lines. The header is in the scroll
            box with the rows, which is what keeps it in place while they move. -->
-      <div class="min-h-0 flex-1 overflow-auto rounded-xl border border-line bg-surface">
-        <table class="w-full border-collapse text-left text-xs whitespace-nowrap">
-          <thead class="sticky top-0 z-10 bg-soft/95 text-[0.65rem] uppercase tracking-wide text-faint-fg backdrop-blur">
+      <div class="min-h-0 flex-1 overflow-auto rounded-[13px] bg-(--surface-card)">
+        <table class="w-full border-collapse text-left text-[12px] whitespace-nowrap">
+          <thead class="sticky top-0 z-10 bg-(--surface-window) lk-caps">
             <tr>
-              <th class="w-full min-w-48 px-3 py-2 font-medium">{$LL.processSortName()}</th>
-              <th class="px-3 py-2 font-medium">{$LL.processSortPid()}</th>
-              {#if columns?.user}
-                <th class="px-3 py-2 font-medium">{$LL.processSortUser()}</th>
-              {/if}
-              {#if columns?.cpu}
-                <th class="px-3 py-2 text-right font-medium">{$LL.processCpu()}</th>
-              {/if}
-              {#if columns?.mem}
-                <th class="px-3 py-2 text-right font-medium">{$LL.processMemory()}</th>
-              {/if}
-              {#if columns?.rss}
-                <th class="px-3 py-2 text-right font-medium">{$LL.processRss()}</th>
-              {/if}
+              <th class="w-full min-w-48 px-[13px] py-[7px] text-left">{$LL.processSortName()}</th>
+              <th class="px-[13px] py-[7px] text-left">{$LL.processSortPid()}</th>
+              {#if columns?.user}<th class="px-[13px] py-[7px] text-left">{$LL.processSortUser()}</th>{/if}
+              {#if columns?.cpu}<th class="px-[13px] py-[7px] text-right">{$LL.processCpu()}</th>{/if}
+              {#if columns?.mem}<th class="px-[13px] py-[7px] text-right">{$LL.processMemory()}</th>{/if}
+              {#if columns?.rss}<th class="px-[13px] py-[7px] text-right">{$LL.processRss()}</th>{/if}
               {#if columns?.read_speed || columns?.write_speed}
-                <th class="px-3 py-2 text-right font-medium">{$LL.processSortRead()}</th>
-                <th class="px-3 py-2 text-right font-medium">{$LL.processSortWrite()}</th>
+                <th class="px-[13px] py-[7px] text-right">{$LL.processSortRead()}</th>
+                <th class="px-[13px] py-[7px] text-right">{$LL.processSortWrite()}</th>
               {:else if columns?.read || columns?.write}
-                <th class="px-3 py-2 text-right font-medium">{$LL.processSortRead()}</th>
-                <th class="px-3 py-2 text-right font-medium">{$LL.processSortWrite()}</th>
+                <th class="px-[13px] py-[7px] text-right">{$LL.processSortRead()}</th>
+                <th class="px-[13px] py-[7px] text-right">{$LL.processSortWrite()}</th>
               {/if}
-              <th class="px-3 py-2 text-right font-medium">{$LL.processColumnThreads()}</th>
-              <th class="px-3 py-2 text-right font-medium">{$LL.processColumnTime()}</th>
-              <th class="px-1 py-2"></th>
+              <th class="px-[13px] py-[7px] text-right">{$LL.processColumnThreads()}</th>
+              <th class="px-[13px] py-[7px] text-right">{$LL.processColumnTime()}</th>
+              <th class="px-[5px] py-[7px]"></th>
             </tr>
           </thead>
           <tbody>
-            {#each visible as row (row.pid)}
-              <tr class="border-t border-line transition-colors hover:bg-soft/50">
-                <!-- Never narrower than a name can be read in (the table scrolls
-                     sideways first), and the command line under it: several
-                     `python` or `node` rows are told apart by it, which is what
-                     a stop needs. -->
-                <!-- The width cap is on the lines, not the cell: a table cell's
-                     own max-width does not hold a long command line back. -->
-                <td class="w-full min-w-48 px-3 py-1.5">
-                  <span class="block max-w-md truncate font-medium text-fg-strong">{row.name}</span>
-                  <span class="block max-w-md truncate font-mono text-[0.65rem] text-faint-fg" title={row.command}>{row.command}</span>
+            {#each visible as row, index (row.pid)}
+              <tr class="h-7 {index % 2 === 1 ? 'bg-(--fill-hover)' : ''}">
+                <!-- The command line differentiates rows with identical names,
+                     which is what a stop needs. -->
+                <td class="w-full min-w-48 px-[13px] py-[5px]">
+                  <span class="block max-w-md truncate font-semibold">{row.name}</span>
+                  <span class="lk-mono block max-w-md truncate text-[11px] text-(--text-tertiary)" title={row.command}>{row.command}</span>
                 </td>
-                <td class="px-3 py-1.5 font-mono text-muted-fg">{row.pid}</td>
-                {#if columns?.user}
-                  <td class="px-3 py-1.5 text-muted-fg">{row.user ?? '—'}</td>
-                {/if}
-                {#if columns?.cpu}
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{cpuText(row)}</td>
-                {/if}
-                {#if columns?.mem}
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{memText(row)}</td>
-                {/if}
-                {#if columns?.rss}
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{rssText(row)}</td>
-                {/if}
+                <td class="lk-mono px-[13px] py-[5px] text-(--text-tertiary)">{row.pid}</td>
+                {#if columns?.user}<td class="px-[13px] py-[5px] text-(--text-tertiary)">{row.user ?? '—'}</td>{/if}
+                {#if columns?.cpu}<td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{cpuText(row)}</td>{/if}
+                {#if columns?.mem}<td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{memText(row)}</td>{/if}
+                {#if columns?.rss}<td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{rssText(row)}</td>{/if}
                 {#if columns?.read_speed || columns?.write_speed}
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{speedText(row.read_speed)}</td>
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{speedText(row.write_speed)}</td>
+                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{speedText(row.read_speed)}</td>
+                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{speedText(row.write_speed)}</td>
                 {:else if columns?.read || columns?.write}
                   <!-- The first reading has nothing to difference against, so the
                        machine's own counters are what there is to show. -->
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{bytesText(row.read_bytes)}</td>
-                  <td class="px-3 py-1.5 text-right text-muted-fg">{bytesText(row.write_bytes)}</td>
+                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{bytesText(row.read_bytes)}</td>
+                  <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{bytesText(row.write_bytes)}</td>
                 {/if}
-                <td class="px-3 py-1.5 text-right text-muted-fg">
-                  {row.threads ?? '—'}
-                </td>
-                <td class="px-3 py-1.5 text-right text-muted-fg">
-                  {row.elapsed_seconds === null ? '—' : durationText(row.elapsed_seconds)}
-                </td>
-                <td class="px-1 py-1 text-right">
+                <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{row.threads ?? '—'}</td>
+                <td class="lk-num px-[13px] py-[5px] text-right text-(--text-tertiary)">{row.elapsed_seconds === null ? '—' : durationText(row.elapsed_seconds)}</td>
+                <td class="px-[3px] py-[2px] text-right">
                   {#if row.killable && signals.length > 0}
-                    <IconButton label={$LL.processStop()} disabled={busy} onclick={() => openStop(row)}>
-                      <Square class="h-4 w-4" />
-                    </IconButton>
+                    <IconButton icon="stop" label={$LL.processStop()} disabled={busy} onclick={() => openStop(row)} />
                   {/if}
                 </td>
               </tr>
@@ -434,10 +388,13 @@
           </tbody>
         </table>
       </div>
+      <div class="flex h-7 items-center border-t border-(--border-hairline) px-[7px] text-[12px] text-(--text-tertiary)">
+        {$LL.processVisibleCount({ count: visible.length })}
+      </div>
     {/if}
 
     {#if busy}
-      <div class="flex items-center gap-2 px-1 text-xs text-muted-fg">
+      <div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)">
         <Spinner size="sm" />
       </div>
     {/if}
@@ -450,44 +407,29 @@
      between a graceful stop and a force kill is the whole of what the choice
      means. -->
 {#if target !== undefined}
-  <Modal open title={$LL.processStop()} onclose={() => (target = undefined)}>
-    <div class="space-y-4">
-      <div class="space-y-1">
-        <p class="text-sm text-fg">
-          {$LL.processStopConfirm({ name: target.name, pid: target.pid })}
-        </p>
-        <p class="text-xs text-muted-fg font-mono break-all">{target.command}</p>
-      </div>
-
-      {#if stopError}
-        <p class="text-sm text-danger">{stopError}</p>
-      {/if}
-
+  <Dialog open wide title={$LL.processStop()} message={$LL.processStopConfirm({ name: target.name, pid: target.pid })} onclose={() => (target = undefined)}>
+    {#snippet actions()}
       {#if pending !== undefined}
-        <!-- The signal was refused for want of the account that owns the
-             process. The password is the second attempt's, sent as its own
-             field so it never lands in a command line. -->
-        <div class="space-y-1">
-          <label class="text-sm text-muted-fg" for="process-password">{$LL.powerPassword()}</label>
-          <Input id="process-password" type="password" bind:value={password} />
-          <p class="text-xs text-muted-fg">{$LL.powerPasswordHint()}</p>
-        </div>
-        <div class="flex justify-end gap-2">
-          <Button variant="secondary" onclick={() => (target = undefined)}>{$LL.cancel()}</Button>
-          <!-- Without a password the retry is the `sudo -n` the agent
-               already tried, so there is nothing to send until one is typed. -->
-          <Button disabled={busy || !password} onclick={() => void signal(pending!, true)}>
-            {$LL.processRetryAsRoot()}
-          </Button>
-        </div>
+        <!-- Without a password the retry is the `sudo -n` the agent
+             already tried, so there is nothing to send until one is typed. -->
+        <Button variant="primary" disabled={busy || !password} onclick={() => void signal(pending!, true)}>{$LL.processRetryAsRoot()}</Button>
       {:else}
-        <div class="flex flex-wrap justify-end gap-2 border-t border-line pt-3">
-          <Button variant="secondary" onclick={() => (target = undefined)}>{$LL.cancel()}</Button>
-          {#each signals as sig (sig)}
-            <Button disabled={busy} onclick={() => void signal(sig)}>{signalLabel(sig)}</Button>
-          {/each}
-        </div>
+        {#each signals as sig (sig)}
+          <Button variant={sig === 'kill' ? 'destructive' : 'primary'} disabled={busy} onclick={() => void signal(sig)}>{signalLabel(sig)}</Button>
+        {/each}
       {/if}
-    </div>
-  </Modal>
+      <Button variant="secondary" onclick={() => (target = undefined)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <p class="lk-mono break-all text-[12px] text-(--text-tertiary)">{target.command}</p>
+    {#if stopError}<p class="mt-[9px] text-[13px] text-(--color-danger)">{stopError}</p>{/if}
+    {#if pending !== undefined}
+      <!-- The signal was refused for want of the account that owns the
+           process. The password is the second attempt's, sent as its own
+           field so it never lands in a command line. -->
+      <div class="mt-[13px]">
+        <Input id="process-password" label={$LL.powerPassword()} type="password" bind:value={password} />
+        <p class="mt-[5px] text-[12px] text-(--text-secondary)">{$LL.powerPasswordHint()}</p>
+      </div>
+    {/if}
+  </Dialog>
 {/if}

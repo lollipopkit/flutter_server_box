@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Badge, Card, Spinner, type BadgeTone } from '@serverbox/webui'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Card, type BadgeTone } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { UserDetail, UserPasswordState, UserView } from '../../../types'
@@ -94,7 +95,7 @@
     <Spinner class="w-4 h-4" />
   {:else if view && !view.available}
     <div class="space-y-1">
-      <p class="text-sm text-muted-fg">{reasonText(view)}</p>
+      <p class="text-sm text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason && view.reason_kind !== 'no_such_user'}
         <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
       {/if}
@@ -102,37 +103,16 @@
   {:else if view?.detail}
     {@const detail = view.detail}
     <Card class="space-y-2">
-      <h3 class="text-sm font-semibold font-display text-fg-strong">{$LL.userDetailSecurity()}</h3>
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs @2xl:grid-cols-3">
-        <div>
-          <dt class="text-faint-fg">{$LL.password()}</dt>
-          <dd>
-            {#if detail.password_state === null}
-              <span class="text-muted-fg">{$LL.userUnreadableField()}</span>
-            {:else}
-              {@const state = STATES[detail.password_state]}
-              <Badge tone={state.tone}>{state.label()}</Badge>
-            {/if}
-          </dd>
+      <h3 class="text-[15px] font-semibold">{$LL.userDetailSecurity()}</h3>
+      <dl class="mt-[7px] grid grid-cols-2 gap-x-[13px] @2xl:grid-cols-3">
+        <div class="border-t border-(--border-hairline) py-[7px]">
+          <dt class="text-[12px] text-(--text-secondary)">{$LL.password()}</dt>
+          <dd>{#if detail.password_state === null}<span class="text-[12px] text-(--text-tertiary)">{$LL.userUnreadableField()}</span>{:else}{@const state = STATES[detail.password_state]}<Badge tone={state.tone}>{state.label()}</Badge>{/if}</dd>
         </div>
-        <div>
-          <dt class="text-faint-fg">{$LL.userPasswordChanged()}</dt>
-          <dd class="text-muted-fg">{instant(detail.password_changed_millis)}</dd>
-        </div>
-        <div>
-          <dt class="text-faint-fg">{$LL.userExpires()}</dt>
-          <dd class="text-muted-fg">{expires(detail)}</dd>
-        </div>
-        <div>
-          <dt class="text-faint-fg">{$LL.userSshKeys()}</dt>
-          <dd class="text-muted-fg break-all">{keys(detail)}</dd>
-        </div>
-        <div class="col-span-2">
-          <dt class="text-faint-fg">{$LL.userSudo()}</dt>
-          <!-- The rule's own right-hand side, verbatim: `NOPASSWD: ALL` is
-               sudoers' syntax and there is nothing here to translate. -->
-          <dd class="text-muted-fg break-all">{detail.sudo_rule ?? $LL.userUnreadableField()}</dd>
-        </div>
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.userPasswordChanged()}</dt><dd class="lk-num text-right text-[12px]">{instant(detail.password_changed_millis)}</dd></div>
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.userExpires()}</dt><dd class="lk-num text-right text-[12px]">{expires(detail)}</dd></div>
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.userSshKeys()}</dt><dd class="lk-mono break-all text-right text-[12px]">{keys(detail)}</dd></div>
+        <div class="col-span-2 border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.userSudo()}</dt><!-- The rule remains in the machine's own syntax. --><dd class="lk-mono break-all text-right text-[12px]">{detail.sudo_rule ?? $LL.userUnreadableField()}</dd></div>
       </dl>
     </Card>
   {/if}

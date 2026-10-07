@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Spinner } from '@serverbox/webui'
+  import Spinner from '../lk/Spinner.svelte'
   import OsIcon from '../../components/OsIcon.svelte'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { ApiError, loginTo, testConnection } from '../../lib/api'
@@ -114,7 +114,7 @@
           <button class="server" aria-pressed={chosenHere} onclick={() => choose(s.id)}>
             <span class="avatar">
               {#if caps?.platform}
-                <OsIcon platform={caps.platform} class="h-[30px] w-[30px]" />
+                <OsIcon platform={caps.platform} size={30} />
               {:else}
                 <Icon name="dns" size={30} fill />
               {/if}

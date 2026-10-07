@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Button, Card, Input, Select, Spinner } from '@serverbox/webui'
-  import { Copy, LayoutTemplate, Trash2, X } from '@lucide/svelte'
+  import { Badge, Button, Card, Checkbox, Icon, Input, SegmentedControl, Select, Spinner, Switch, Textarea } from '../../lk/index'
   import { api } from '../../../lib/api'
   import { ciDraft, cloudInitEdit, outcomeText, virtErrorText, virtRequestText, type CiDraft } from '../../../lib/virt'
   import { untrack } from 'svelte'
@@ -158,15 +157,6 @@
     }
   }
 
-  /// What a toggle asks for; the box shows what the host has until the read
-  /// after the change says otherwise.
-  function flip(e: Event): boolean {
-    const box = e.currentTarget as HTMLInputElement
-    const on = box.checked
-    box.checked = !on
-    return on
-  }
-
   async function saveCloudInit(e: SubmitEvent) {
     e.preventDefault()
     const id = guest.id
@@ -274,152 +264,114 @@
 </script>
 
 {#if error}
-  <Card class="border-danger/40 bg-danger/5">
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
-  </Card>
+  <Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p></Card>
 {/if}
 {#if notice}
-  <Card>
-    <p class="text-sm text-muted-fg whitespace-pre-wrap">{notice}</p>
-  </Card>
+  <Card><p class="whitespace-pre-wrap text-[13px] text-(--text-secondary)">{notice}</p></Card>
 {/if}
 
 <!-- General: name, description, autostart, protection. -->
-<Card class="space-y-3">
-  <div class="flex items-center gap-2">
-    <h3 class="text-sm font-medium text-fg-strong">{$LL.virtGroupGeneral()}</h3>
+<Card class="space-y-[13px]">
+  <div class="flex items-center gap-[9px]">
+    <h3 class="text-[15px] font-semibold">{$LL.virtGroupGeneral()}</h3>
     {#if hw}
-      <span class="ml-auto text-xs text-faint-fg">{hw.autostart ? $LL.virtHwAutostartOn() : $LL.virtHwAutostartOff()}</span>
+      <Badge class="ml-auto">{hw.autostart ? $LL.virtHwAutostartOn() : $LL.virtHwAutostartOff()}</Badge>
     {/if}
   </div>
   {#if hwError}
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{hwError}</p>
+    <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{hwError}</p>
   {:else if !hw}
     <Spinner size="sm" />
   {:else}
     {@const h = hw}
-    <div class="flex flex-wrap items-end gap-2">
-      <label class="block min-w-0 flex-1 space-y-1 text-sm">
-        <span class="text-muted-fg">{guest.kind === 'lxc' && pve ? $LL.virtHostname() : $LL.virtName()}</span>
-        <Input class="font-mono" bind:value={name} />
-      </label>
-      <Button size="sm" disabled={busy || name.trim() === '' || name.trim() === (h.name ?? '')} onclick={() => void change({ op: 'set_name', name: name.trim() })}>
-        {$LL.save()}
-      </Button>
+    <div class="flex flex-wrap items-end gap-[9px]">
+      <Input class="min-w-0 flex-1 lk-mono" label={guest.kind === 'lxc' && pve ? $LL.virtHostname() : $LL.virtName()} bind:value={name} />
+      <Button size="sm" disabled={busy || name.trim() === '' || name.trim() === (h.name ?? '')} onclick={() => void change({ op: 'set_name', name: name.trim() })}>{$LL.save()}</Button>
     </div>
     {#if h.running && !h.rename_running}
-      <p class="text-xs text-muted-fg">{$LL.virtHwRenameStopped()}</p>
+      <p class="text-[12px] text-(--text-secondary)">{$LL.virtHwRenameStopped()}</p>
     {/if}
-    <label class="block space-y-1 text-sm">
-      <span class="text-muted-fg">{$LL.virtHwDescription()}</span>
-      <textarea class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg" rows="3" bind:value={description}></textarea>
-    </label>
+    <Textarea label={$LL.virtHwDescription()} rows={3} bind:value={description} />
     <div class="flex justify-end">
-      <Button size="sm" disabled={busy || description === (h.description ?? '')} onclick={() => void change({ op: 'set_description', text: description })}>
-        {$LL.save()}
-      </Button>
+      <Button size="sm" disabled={busy || description === (h.description ?? '')} onclick={() => void change({ op: 'set_description', text: description })}>{$LL.save()}</Button>
     </div>
-    <label class="flex items-start gap-2 text-sm">
-      <input class="mt-1" type="checkbox" checked={h.autostart} disabled={busy} onchange={(e) => void change({ op: 'set_autostart', on: flip(e) })} />
-      <span>
-        <span class="text-fg">{$LL.virtAutostart()}</span>
-        <span class="block font-mono text-xs text-faint-fg">{pve ? 'onboot' : 'virsh autostart'}</span>
-      </span>
-    </label>
+    <div class="flex flex-wrap items-start justify-between gap-[13px]">
+      <div>
+        <p class="text-[13px]">{$LL.virtAutostart()}</p>
+        <p class="lk-mono text-[12px] text-(--text-tertiary)">{pve ? 'onboot' : 'virsh autostart'}</p>
+      </div>
+      <Switch label={$LL.virtAutostart()} checked={h.autostart} disabled={busy} onchange={(on) => void change({ op: 'set_autostart', on })} />
+    </div>
     {#if h.protection !== null}
-      <label class="flex items-start gap-2 text-sm">
-        <input class="mt-1" type="checkbox" checked={h.protection} disabled={busy} onchange={(e) => void change({ op: 'set_protection', on: flip(e) })} />
-        <span>
-          <span class="text-fg">{$LL.virtHwProtection()}</span>
-          <span class="block text-xs text-faint-fg">{$LL.virtHwProtectionNote()}</span>
-        </span>
-      </label>
+      <div class="flex flex-wrap items-start justify-between gap-[13px]">
+        <div>
+          <p class="text-[13px]">{$LL.virtHwProtection()}</p>
+          <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwProtectionNote()}</p>
+        </div>
+        <Switch label={$LL.virtHwProtection()} checked={h.protection} disabled={busy} onchange={(on) => void change({ op: 'set_protection', on })} />
+      </div>
     {/if}
   {/if}
 </Card>
 
 {#if guest.kind === 'qemu'}
   <!-- cloud-init: the account and address the system boots with. -->
-  <Card class="space-y-3">
-    <h3 class="text-sm font-medium text-fg-strong">{$LL.virtCloudInit()}</h3>
+  <Card class="space-y-[13px]">
+    <h3 class="text-[15px] font-semibold">{$LL.virtCloudInit()}</h3>
     {#if ciError}
-      <p class="text-sm text-danger whitespace-pre-wrap break-all">{ciError}</p>
+      <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{ciError}</p>
     {:else if ci === null}
       {#if !hwError}
         <Spinner size="sm" />
       {/if}
     {:else if ci === 'none'}
-      <p class="text-sm text-muted-fg">{pve ? $LL.virtCiNoDrive() : $LL.virtCiNoSeed()}</p>
+      <p class="text-[13px] text-(--text-secondary)">{pve ? $LL.virtCiNoDrive() : $LL.virtCiNoSeed()}</p>
     {:else if ciForm}
       {@const state = ci}
       {@const f = ciForm}
       {#if state.foreign}
-        <p class="text-xs text-warning">{$LL.virtCiForeign()}</p>
+        <p class="text-[12px] text-(--color-warning)">{$LL.virtCiForeign()}</p>
       {/if}
       {#if state.nics > 1}
-        <p class="text-xs text-muted-fg">{$LL.virtCiNics({ n: state.nics })}</p>
+        <p class="text-[12px] text-(--text-secondary)">{$LL.virtCiNics({ n: state.nics })}</p>
       {/if}
-      <form class="space-y-3" onsubmit={saveCloudInit}>
-        <div class="flex flex-wrap gap-3">
-          <label class="block min-w-40 flex-1 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtCiUser()}</span>
-            <Input class="font-mono" autocomplete="off" bind:value={f.user} />
-          </label>
-          <label class="block min-w-40 flex-1 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtCiNewPassword()}</span>
-            <Input type="password" autocomplete="new-password" bind:value={f.password} disabled={f.removePassword} placeholder={state.password_set ? $LL.virtCiKeepPassword() : ''} />
-          </label>
+      <form class="space-y-[13px]" onsubmit={saveCloudInit}>
+        <div class="flex flex-wrap gap-[13px]">
+          <Input class="min-w-40 flex-1 lk-mono" label={$LL.virtCiUser()} autocomplete="off" bind:value={f.user} />
+          <Input class="min-w-40 flex-1" label={$LL.virtCiNewPassword()} type="password" autocomplete="new-password" bind:value={f.password} disabled={f.removePassword} placeholder={state.password_set ? $LL.virtCiKeepPassword() : ''} />
         </div>
         {#if state.password_set}
-          <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={f.removePassword} /> {$LL.virtCiRemovePassword()}</label>
+          <Checkbox bind:checked={f.removePassword} label={$LL.virtCiRemovePassword()} />
         {/if}
         {#if !pve}
-          <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={f.passwordExpires} /> {$LL.virtCiPasswordExpires()}</label>
+          <Checkbox bind:checked={f.passwordExpires} label={$LL.virtCiPasswordExpires()} />
         {/if}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtSshKeys()}</span>
-          <textarea class="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-fg" rows="3" bind:value={f.sshKeys} placeholder="ssh-ed25519 AAAA…"></textarea>
-        </label>
+        <Textarea label={$LL.virtSshKeys()} mono rows={3} bind:value={f.sshKeys} placeholder="ssh-ed25519 AAAA…" />
         {#if !pve}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtHostname()}</span>
-            <Input class="font-mono" bind:value={f.hostname} placeholder={guest.name} />
-          </label>
+          <Input class="lk-mono" label={$LL.virtHostname()} bind:value={f.hostname} placeholder={guest.name} />
         {/if}
         {#if state.network}
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="w-24 shrink-0 text-sm text-muted-fg">{$LL.virtCiNetwork()}</span>
-            <div class="flex flex-wrap gap-1">
-              <Button type="button" size="sm" variant={f.static ? 'secondary' : 'primary'} aria-pressed={!f.static} onclick={() => (f.static = false)}>DHCP</Button>
-              <Button type="button" size="sm" variant={f.static ? 'primary' : 'secondary'} aria-pressed={f.static} onclick={() => (f.static = true)}>{$LL.virtCiStatic()}</Button>
-            </div>
-          </div>
+          <SegmentedControl
+            size="sm"
+            label={$LL.virtCiNetwork()}
+            value={f.static ? 'static' : 'dhcp'}
+            options={[{ value: 'dhcp', label: 'DHCP' }, { value: 'static', label: $LL.virtCiStatic() }]}
+            onchange={(value) => (f.static = value === 'static')}
+          />
           {#if f.static}
-            <div class="flex flex-wrap gap-3">
-              <label class="block min-w-40 flex-1 space-y-1 text-sm">
-                <span class="text-muted-fg">{$LL.virtCiAddress()}</span>
-                <Input class="font-mono" bind:value={f.address} placeholder="192.168.1.50/24" />
-              </label>
-              <label class="block min-w-40 flex-1 space-y-1 text-sm">
-                <span class="text-muted-fg">{$LL.virtCiGateway()}</span>
-                <Input class="font-mono" bind:value={f.gateway} placeholder="192.168.1.1" />
-              </label>
+            <div class="flex flex-wrap gap-[13px]">
+              <Input class="min-w-40 flex-1 lk-mono" label={$LL.virtCiAddress()} bind:value={f.address} placeholder="192.168.1.50/24" />
+              <Input class="min-w-40 flex-1 lk-mono" label={$LL.virtCiGateway()} bind:value={f.gateway} placeholder="192.168.1.1" />
             </div>
           {/if}
         {:else}
-          <p class="text-xs text-muted-fg">{$LL.virtCiNoNetwork()}</p>
+          <p class="text-[12px] text-(--text-secondary)">{$LL.virtCiNoNetwork()}</p>
         {/if}
-        <div class="flex flex-wrap gap-3">
-          <label class="block min-w-40 flex-1 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtCiDns()}</span>
-            <Input class="font-mono" bind:value={f.dns} placeholder="1.1.1.1 9.9.9.9" />
-          </label>
-          <label class="block min-w-40 flex-1 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtCiSearch()}</span>
-            <Input class="font-mono" bind:value={f.search} placeholder="lan" />
-          </label>
+        <div class="flex flex-wrap gap-[13px]">
+          <Input class="min-w-40 flex-1 lk-mono" label={$LL.virtCiDns()} bind:value={f.dns} placeholder="1.1.1.1 9.9.9.9" />
+          <Input class="min-w-40 flex-1 lk-mono" label={$LL.virtCiSearch()} bind:value={f.search} placeholder="lan" />
         </div>
-        <p class="text-xs text-faint-fg">{$LL.virtCiApplies()}</p>
+        <p class="text-[12px] text-(--text-tertiary)">{$LL.virtCiApplies()}</p>
         <div class="flex justify-end">
           <Button type="submit" size="sm" disabled={busy || f.user.trim() === ''}>{$LL.save()}</Button>
         </div>
@@ -430,65 +382,36 @@
 
 {#if caps.clone}
   <!-- Clone. -->
-  <Card class="space-y-3">
-    <div class="flex items-center gap-2">
-      <h3 class="text-sm font-medium text-fg-strong">{$LL.virtClone()}</h3>
-      <span class="ml-auto text-xs text-faint-fg">{fullChoice && !full ? (pve ? $LL.virtCloneLinked() : $LL.virtCloneEmpty()) : $LL.virtCloneFullShort()}</span>
+  <Card class="space-y-[13px]">
+    <div class="flex items-center gap-[9px]">
+      <h3 class="text-[15px] font-semibold">{$LL.virtClone()}</h3>
+      <span class="ml-auto text-[12px] text-(--text-tertiary)">{fullChoice && !full ? (pve ? $LL.virtCloneLinked() : $LL.virtCloneEmpty()) : $LL.virtCloneFullShort()}</span>
     </div>
-    <form class="space-y-3" onsubmit={clone}>
-      <div class="flex flex-wrap gap-3">
-        <label class="block min-w-0 flex-1 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtCloneName()}</span>
-          <Input class="font-mono" bind:value={cloneName} />
-        </label>
+    <form class="space-y-[13px]" onsubmit={clone}>
+      <div class="flex flex-wrap gap-[13px]">
+        <Input class="min-w-0 flex-1 lk-mono" label={$LL.virtCloneName()} bind:value={cloneName} />
         {#if pve}
-          <label class="block w-36 space-y-1 text-sm">
-            <span class="text-muted-fg">VMID</span>
-            <Input type="number" min="100" bind:value={vmid} placeholder={$LL.virtVmidNext()} />
-          </label>
+          <Input class="w-36" label="VMID" type="number" min="100" bind:value={vmid} placeholder={$LL.virtVmidNext()} />
         {/if}
       </div>
       {#if fullChoice}
-        <label class="flex items-start gap-2 text-sm">
-          <input class="mt-1" type="checkbox" bind:checked={full} />
-          <span>
-            <span class="text-fg">{pve ? $LL.virtCloneFull() : $LL.virtCloneCopy()}</span>
-            <span class="block text-xs text-faint-fg">{pve ? $LL.virtCloneFullNote() : $LL.virtCloneCopyNote()}</span>
-          </span>
-        </label>
+        <Checkbox bind:checked={full} label={pve ? $LL.virtCloneFull() : $LL.virtCloneCopy()}>
+          <span class="text-[12px] text-(--text-tertiary)">{pve ? $LL.virtCloneFullNote() : $LL.virtCloneCopyNote()}</span>
+        </Checkbox>
       {/if}
       {#if storages === null}
         <Spinner size="sm" />
       {:else if storages.length > 0 && (!pve || full || !fullChoice)}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtCloneStorage()}</span>
-          <Select class="w-full" bind:value={storage}>
-            <option value="">{$LL.virtSameAsSource()}</option>
-            {#each storages as p (p.id)}
-              <option value={p.name}>{p.name} · {p.type}</option>
-            {/each}
-          </Select>
-        </label>
+        <Select label={$LL.virtCloneStorage()} class="w-full" bind:value={storage} options={[{ value: '', label: $LL.virtSameAsSource() }, ...storages.map((p) => ({ value: p.name, label: `${p.name} · ${p.type}` }))]} />
       {/if}
       {#if pve && caps.clone_target && nodes.length > 1 && (full || !fullChoice)}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtCloneNode()}</span>
-          <Select class="w-full" bind:value={node}>
-            <option value="">{$LL.virtSameAsSource()}</option>
-            {#each nodes.filter((n) => n.name !== guest.node) as n (n.name)}
-              <option value={n.name}>{n.name}</option>
-            {/each}
-          </Select>
-        </label>
+        <Select label={$LL.virtCloneNode()} class="w-full" bind:value={node} options={[{ value: '', label: $LL.virtSameAsSource() }, ...nodes.filter((n) => n.name !== guest.node).map((n) => ({ value: n.name, label: n.name }))]} />
       {/if}
       {#if !pve && !stopped}
-        <p class="text-xs text-muted-fg">{$LL.virtStopFirst()}</p>
+        <p class="text-[12px] text-(--text-secondary)">{$LL.virtStopFirst()}</p>
       {/if}
       <div class="flex justify-end">
-        <Button type="submit" size="sm" disabled={busy || cloneName.trim() === '' || (!pve && !stopped)}>
-          <Copy class="h-4 w-4" />
-          {$LL.virtClone()}
-        </Button>
+        <Button type="submit" size="sm" icon="content_copy" disabled={busy || cloneName.trim() === '' || (!pve && !stopped)}>{$LL.virtClone()}</Button>
       </div>
     </form>
   </Card>
@@ -496,24 +419,20 @@
 
 {#if pve && caps.template && !guest.template}
   <!-- Template. -->
-  <Card class="space-y-3">
-    <h3 class="text-sm font-medium text-fg-strong">{$LL.virtTemplate()}</h3>
-    <p class="text-xs text-muted-fg">{$LL.virtMakeTemplateNote()}</p>
+  <Card class="space-y-[13px]">
+    <h3 class="text-[15px] font-semibold">{$LL.virtTemplate()}</h3>
+    <p class="text-[12px] text-(--text-secondary)">{$LL.virtMakeTemplateNote()}</p>
     {#if !stopped}
-      <p class="text-xs text-muted-fg">{$LL.virtStopFirst()}</p>
+      <p class="text-[12px] text-(--text-secondary)">{$LL.virtStopFirst()}</p>
     {/if}
     {#if confirmTemplate}
-      <p class="text-xs text-warning">{$LL.virtConfirmAgain()}</p>
+      <p class="text-[12px] text-(--color-warning)">{$LL.virtConfirmAgain()}</p>
     {/if}
-    <div class="flex justify-end gap-2">
+    <div class="flex justify-end gap-[9px]">
       {#if confirmTemplate}
-        <Button variant="secondary" size="sm" onclick={() => (confirmTemplate = false)}>
-          <X class="h-4 w-4" />
-          {$LL.cancel()}
-        </Button>
+        <Button variant="secondary" size="sm" onclick={() => (confirmTemplate = false)} icon="close">{$LL.cancel()}</Button>
       {/if}
-      <Button variant="secondary" size="sm" disabled={busy || !stopped} onclick={() => void template()}>
-        <LayoutTemplate class="h-4 w-4" />
+      <Button variant="secondary" size="sm" disabled={busy || !stopped} onclick={() => void template()} icon="inventory_2">
         {confirmTemplate ? $LL.virtConfirmTemplate({ name: guest.name }) : $LL.virtMakeTemplate()}
       </Button>
     </div>
@@ -521,37 +440,33 @@
 {/if}
 
 <!-- Delete. -->
-<Card class="space-y-3 border-danger/30">
-  <div class="flex items-center gap-2">
-    <span class="h-2 w-2 shrink-0 rounded-full bg-danger"></span>
-    <h3 class="text-sm font-medium text-fg-strong">{$LL.virtDelete()}</h3>
+<Card class="space-y-[13px]">
+  <div class="flex items-center gap-[9px]">
+    <Icon name="warning" size={18} color="var(--color-danger)" />
+    <h3 class="text-[15px] font-semibold">{$LL.virtDelete()}</h3>
   </div>
   {#if caps.delete_keeps_disks}
-    <label class="flex items-start gap-2 text-sm">
-      <input class="mt-1" type="checkbox" bind:checked={removeDisks} />
-      <span>
-        <span class="text-fg">{$LL.virtDeleteDisks()}</span>
-        <span class="block text-xs text-faint-fg">{$LL.virtDeleteDisksNote()}</span>
-      </span>
-    </label>
+    <div class="flex flex-wrap items-start justify-between gap-[13px]">
+      <div>
+        <p class="text-[13px]">{$LL.virtDeleteDisks()}</p>
+        <p class="text-[12px] text-(--text-tertiary)">{$LL.virtDeleteDisksNote()}</p>
+      </div>
+      <Checkbox bind:checked={removeDisks} label={$LL.virtDeleteDisks()} />
+    </div>
   {:else}
-    <p class="text-xs text-muted-fg">{$LL.virtDeleteDisksAlways()}</p>
+    <p class="text-[12px] text-(--text-secondary)">{$LL.virtDeleteDisksAlways()}</p>
   {/if}
   {#if !stopped}
-    <p class="text-xs text-muted-fg">{$LL.virtStopFirst()}</p>
+    <p class="text-[12px] text-(--text-secondary)">{$LL.virtStopFirst()}</p>
   {/if}
   {#if confirmDelete}
-    <p class="text-xs text-danger">{$LL.virtConfirmAgain()}</p>
+    <p class="text-[12px] text-(--color-danger)">{$LL.virtConfirmAgain()}</p>
   {/if}
-  <div class="flex justify-end gap-2">
+  <div class="flex justify-end gap-[9px]">
     {#if confirmDelete}
-      <Button variant="secondary" size="sm" onclick={() => (confirmDelete = false)}>
-        <X class="h-4 w-4" />
-        {$LL.cancel()}
-      </Button>
+      <Button variant="secondary" size="sm" onclick={() => (confirmDelete = false)} icon="close">{$LL.cancel()}</Button>
     {/if}
-    <Button variant="danger" size="sm" disabled={busy || !stopped} onclick={() => void remove()}>
-      <Trash2 class="h-4 w-4" />
+    <Button variant="destructive" size="sm" disabled={busy || !stopped} onclick={() => void remove()} icon="delete">
       {confirmDelete ? $LL.virtConfirmDelete({ name: guest.name }) : $LL.virtDeleteGuest()}
     </Button>
   </div>

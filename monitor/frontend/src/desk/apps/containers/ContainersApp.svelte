@@ -1,25 +1,8 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
-  import {
-    CircleAlert,
-    Container,
-    Download,
-    Eraser,
-    Layers,
-    Play,
-    Plus,
-    RefreshCw,
-    RotateCw,
-    ScrollText,
-    Square,
-    Terminal,
-    Trash2,
-    type LucideIcon,
-  } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, SidebarItem, SidebarSection } from '../../lk'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
   import AppToolbar from '../../ui/AppToolbar.svelte'
-  import SourceGroup from '../../ui/SourceGroup.svelte'
-  import SourceItem from '../../ui/SourceItem.svelte'
   import SplitView from '../../ui/SplitView.svelte'
   import { machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -225,16 +208,13 @@
   /// How each action is drawn. A `Record` over every kind, so a kind added to
   /// the model without a button here is a type error rather than a container
   /// whose menu is silently short.
-  const BUTTONS: Record<
-    ContainerActionKind,
-    { label: () => string; icon: LucideIcon } | null
-  > = {
-    start: { label: () => $LL.containerStart(), icon: Play },
-    stop: { label: () => $LL.containerStop(), icon: Square },
-    restart: { label: () => $LL.containerRestart(), icon: RotateCw },
-    remove: { label: () => $LL.containerRemove(), icon: Trash2 },
-    logs: { label: () => $LL.containerLogs(), icon: ScrollText },
-    terminal: { label: () => $LL.containerOpenShell(), icon: Terminal },
+  const BUTTONS: Record<ContainerActionKind, { label: () => string; icon: string } | null> = {
+    start: { label: () => $LL.containerStart(), icon: 'play_arrow' },
+    stop: { label: () => $LL.containerStop(), icon: 'stop' },
+    restart: { label: () => $LL.containerRestart(), icon: 'restart_alt' },
+    remove: { label: () => $LL.containerRemove(), icon: 'delete' },
+    logs: { label: () => $LL.containerLogs(), icon: 'article' },
+    terminal: { label: () => $LL.containerOpenShell(), icon: 'terminal' },
   }
 
   /// The lifecycle buttons for one row: the model's own list, minus the ones
@@ -287,21 +267,6 @@
     }
   }
 
-  /// The row's state dot. The badge beside it spells the same state out; the
-  /// dot is what lets a long list be read down a column.
-  function statusDot(row: ContainerRow): string {
-    switch (statusTone(row)) {
-      case 'success':
-        return 'bg-success'
-      case 'danger':
-        return 'bg-danger'
-      case 'warning':
-        return 'bg-warning'
-      default:
-        return 'bg-faint-fg'
-    }
-  }
-
   function statusText(row: ContainerRow): string {
     switch (row.status) {
       case 'running':
@@ -351,508 +316,373 @@
 >
   {#snippet actions()}
     {#if view?.available && tab === 'containers'}
-      <IconButton label={$LL.containerRun()} disabled={busy} onclick={openRun}>
-        <Plus class="w-4 h-4" />
-      </IconButton>
-      <IconButton label={$LL.containerPruneContainers()} disabled={busy} onclick={() => (pruning = 'prune_containers')}>
-        <Eraser class="w-4 h-4" />
-      </IconButton>
-      <IconButton label={$LL.containerPruneVolumes()} disabled={busy} onclick={() => (pruning = 'prune_volumes')}>
-        <Eraser class="w-4 h-4" />
-      </IconButton>
+      <Button size="sm" variant="tinted" icon="add" disabled={busy} onclick={openRun}>{$LL.containerRun()}</Button>
+      <IconButton icon="delete_sweep" label={$LL.containerPruneContainers()} disabled={busy} onclick={() => (pruning = 'prune_containers')} />
+      <IconButton icon="delete_sweep" label={$LL.containerPruneVolumes()} disabled={busy} onclick={() => (pruning = 'prune_volumes')} />
     {:else if view?.available && tab === 'images'}
-      <IconButton label={$LL.containerPullImage()} disabled={busy} onclick={() => openPull()}>
-        <Download class="w-4 h-4" />
-      </IconButton>
-      <IconButton label={$LL.containerPruneImages()} disabled={busy} onclick={openImagePrune}>
-        <Eraser class="w-4 h-4" />
-      </IconButton>
-      <IconButton label={$LL.containerPruneSystem()} disabled={busy} onclick={() => (systemPrune = true)}>
-        <Eraser class="w-4 h-4" />
-      </IconButton>
+      <IconButton icon="download" label={$LL.containerPullImage()} disabled={busy} onclick={() => openPull()} />
+      <IconButton icon="delete_sweep" label={$LL.containerPruneImages()} disabled={busy} onclick={openImagePrune} />
+      <IconButton icon="delete_sweep" label={$LL.containerPruneSystem()} disabled={busy} onclick={() => (systemPrune = true)} />
     {/if}
-    <IconButton label={$LL.refresh()} onclick={() => void refresh()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void refresh()} disabled={loading} />
   {/snippet}
 </AppToolbar>
 
-<!-- The split view takes what the toolbar leaves of the window (the body is
-     a column), so the sidebar reaches the bottom and the body never scrolls. -->
-<div class="relative min-h-0 flex-1">
-  <SplitView width={13}>
-    {#snippet sidebar()}
-      <SourceGroup>
-        <SourceItem
-          label={$LL.containers()}
-          icon={Container}
-          selected={tab === 'containers'}
-          onclick={() => (tab = 'containers')}
-        />
-        <SourceItem
-          label={$LL.containerImages()}
-          icon={Layers}
-          selected={tab === 'images'}
-          onclick={() => (tab = 'images')}
-        />
-      </SourceGroup>
-    {/snippet}
+<SplitView width={13}>
+  {#snippet sidebar()}
+    <SidebarSection>
+      <SidebarItem
+        label={$LL.containers()}
+        icon="deployed_code"
+        active={tab === 'containers'}
+        onclick={() => (tab = 'containers')}
+      />
+      <SidebarItem
+        label={$LL.containerImages()}
+        icon="inventory_2"
+        active={tab === 'images'}
+        onclick={() => (tab = 'images')}
+      />
+    </SidebarSection>
+  {/snippet}
 
-    <div class="space-y-3 p-3">
-      {#if error}
-        <Card class="border-danger/40 bg-danger/5 p-3">
-          <p class="text-sm text-danger">{error}</p>
+  <div class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+    {#if error}
+      <Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>
+    {/if}
+
+    {#if actionExit === 0}
+      <!-- What a successful action printed — a pull's digest, a run's id. Not a
+           failure, so not in the danger tone. -->
+      {#if actionOutput}
+        <Card padding="11px 15px">
+          <pre class="lk-mono whitespace-pre-wrap break-all text-[12px] text-(--text-secondary)">{actionOutput}</pre>
         </Card>
       {/if}
-
-      {#if actionExit === 0}
-        <!-- What a successful action printed — a pull's digest, a run's id. Not a
-             failure, so not in the danger tone. -->
+    {:else}
+      <!-- A failure is said even when the runtime printed nothing: the refreshed
+           listing alone would look like the action went through. -->
+      <Card padding="11px 15px">
+        {#if actionExit === undefined}
+          <p class="text-[13px] text-(--color-danger)">{$LL.containerActionUnfinished()}</p>
+        {:else}
+          <p class="text-[13px] text-(--color-danger)">{$LL.containerActionFailed({ code: actionExit ?? '?' })}</p>
+        {/if}
         {#if actionOutput}
-          <Card class="p-3">
-            <pre class="text-xs font-mono text-muted-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
-          </Card>
+          <pre class="lk-mono mt-[7px] whitespace-pre-wrap break-all text-[12px]">{actionOutput}</pre>
         {/if}
-      {:else}
-        <!-- A failure is said even when the runtime printed nothing: the refreshed
-             listing alone would look like the action went through. -->
-        <Card class="space-y-2 border-danger/40 bg-danger/5 p-3">
-          {#if actionExit === undefined}
-            <p class="text-sm text-danger">{$LL.containerActionUnfinished()}</p>
-          {:else}
-            <p class="text-sm text-danger">{$LL.containerActionFailed({ code: actionExit ?? '?' })}</p>
-          {/if}
-          {#if actionOutput}
-            <pre class="text-xs font-mono text-fg whitespace-pre-wrap break-all">{actionOutput}</pre>
-          {/if}
+      </Card>
+    {/if}
+
+    {#if loading && !view}
+      <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
+    {:else if view && !view.available}
+      <Card>
+        <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
+        {#if view.reason}
+          <pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>
+        {/if}
+      </Card>
+    {:else if view}
+      {#if usage?.usage}
+        <!-- `system df` walks the whole image store, so this is one line about
+             the store rather than a list of its own. -->
+        <Card padding="11px 15px">
+          <p class="text-[12px] text-(--text-secondary)">
+            {$LL.containerUsage({
+              images: usage.usage.image_count ?? 0,
+              reclaimable: fmtBytes(usage.usage.reclaimable_bytes ?? 0),
+            })}
+          </p>
         </Card>
       {/if}
 
-      {#if loading && !view}
-        <Card class="grid place-items-center p-8"><Spinner class="h-5 w-5" /></Card>
-      {:else if view && !view.available}
-        <Card class="space-y-2 p-4">
-          <p class="text-sm text-muted-fg">{reasonText(view)}</p>
-          {#if view.reason}
-            <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
-          {/if}
-        </Card>
-      {:else if view}
-        {#if usage?.usage}
-          <!-- `system df` walks the whole image store, so this is one line about
-               the store rather than a list of its own. -->
-          <Card class="p-3">
-            <p class="text-xs text-muted-fg">
-              {$LL.containerUsage({
-                images: usage.usage.image_count ?? 0,
-                reclaimable: fmtBytes(usage.usage.reclaimable_bytes ?? 0),
-              })}
-            </p>
-          </Card>
-        {/if}
-
-        {#if tab === 'containers'}
-          {#if rows.length === 0}
-            <Card class="p-4">
-              <p class="text-sm text-muted-fg">{$LL.containerEmpty()}</p>
-            </Card>
-          {:else}
-            <!-- One container per card: the state dot and badge on the top row,
-                 what it runs below, and the lifecycle actions along the right. -->
-            <ul class="space-y-2">
-              {#each rows as row (row.id ?? row.name)}
-                <li
-                  class="rounded-xl border border-line bg-surface px-3 py-2.5 transition-colors hover:bg-soft/40"
-                >
-                  <div class="flex items-center gap-2.5">
-                    <span class="h-2 w-2 shrink-0 rounded-full {statusDot(row)}"></span>
-                    <span class="min-w-0 flex-1 truncate text-[0.85rem] font-medium text-fg-strong">
-                      {row.name ?? row.id ?? $LL.containerUnknown()}
+      {#if tab === 'containers'}
+        {#if rows.length === 0}
+          <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+            <Icon name="deployed_code" size={48} weight={300} />
+            <span class="text-[13px]">{$LL.containersEmpty()}</span>
+          </div>
+        {:else}
+          <!-- One container per card: state and lifecycle actions are at the
+               right, with image, ports and usage beneath the name. -->
+          <ul class="space-y-[7px]">
+            {#each rows as row (row.id ?? row.name)}
+              <li>
+                <Card padding="11px 13px">
+                  <div class="flex min-w-0 items-center gap-[13px]">
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)">
+                      <Icon name="deployed_code" size={18} />
                     </span>
-                    <Badge tone={statusTone(row)}>{statusText(row)}</Badge>
-                    {#if row.project}
-                      <Badge tone="neutral">{row.project}</Badge>
-                    {/if}
+                    <div class="min-w-0 flex-1">
+                      <div class="flex min-w-0 items-center gap-[7px]">
+                        <span class="truncate text-[13px] font-semibold">{row.name ?? $LL.containerUnknown()}</span>
+                        {#if row.id}<span class="lk-mono shrink-0 text-[12px] text-(--text-tertiary)">#{row.id.slice(0, 12)}</span>{/if}
+                      </div>
+                      <p class="truncate text-[12px] text-(--text-tertiary)">
+                        {row.image ?? $LL.containerUnknown()}
+                        {#if row.ports} · <span class="lk-mono">{row.ports}</span>{/if}
+                        {#if row.raw_status} · {row.raw_status}{/if}
+                      </p>
+                    </div>
+                    <Badge tone={statusTone(row)} dot>{statusText(row)}</Badge>
+                    {#if row.project}<Badge tone="neutral">{row.project}</Badge>{/if}
                     {#if !busy}
-                      <div class="flex shrink-0 items-center gap-0.5">
+                      <div class="flex shrink-0 items-center gap-[3px]">
                         {#each lifecycle(row) as kind (kind)}
                           {@const button = BUTTONS[kind]}
                           {#if button}
-                            {@const ActionIcon = button.icon}
-                            <IconButton label={button.label()} onclick={() => click(kind, row)}>
-                              <ActionIcon class="h-4 w-4" />
-                            </IconButton>
+                            <IconButton icon={button.icon} label={button.label()} onclick={() => click(kind, row)} />
                           {/if}
                         {/each}
                       </div>
                     {/if}
                   </div>
-                  <p class="mt-1 truncate pl-[1.125rem] text-xs text-muted-fg">
-                    {row.image ?? $LL.containerUnknown()}
-                    {#if row.ports}
-                      · <span class="font-mono">{row.ports}</span>
-                    {/if}
-                    {#if row.raw_status}
-                      · {row.raw_status}
-                    {/if}
-                  </p>
                   {#if row.stats}
-                    <p class="mt-0.5 truncate pl-[1.125rem] text-[0.7rem] text-faint-fg">
+                    <p class="lk-num mt-[7px] truncate pl-[47px] text-[12px] text-(--text-tertiary)">
                       {$LL.containerCpu()}: {row.stats.cpu ?? '—'}
-                      {#if row.stats.cpu_avg}
-                        / {row.stats.cpu_avg}
-                      {/if}
+                      {#if row.stats.cpu_avg} / {row.stats.cpu_avg}{/if}
                       · {$LL.containerMemory()}: {row.stats.mem ?? '—'}
                       · {$LL.containerNetwork()}: ↓ {row.stats.net_down ?? '—'} ↑ {row.stats.net_up ?? '—'}
                       · {$LL.containerDisk()}: R {row.stats.disk_read ?? '—'} W {row.stats.disk_write ?? '—'}
                     </p>
                   {/if}
                   {#if row.actions.includes('logs') && row.id}
-                    <button
-                      class="mt-1 ml-[1.125rem] text-xs text-accent hover:underline"
-                      onclick={() => void openLogs(row)}
-                    >
+                    <button class="ml-[47px] mt-[7px] text-[12px] text-(--color-accent-text)" onclick={() => void openLogs(row)}>
                       {$LL.containerLogs()}
                     </button>
                   {/if}
-                </li>
-              {/each}
-            </ul>
-          {/if}
-        {:else if images.length === 0}
-          <Card class="p-4">
-            <p class="text-sm text-muted-fg">{$LL.containerNoImages()}</p>
-          </Card>
-        {:else}
-          <ul class="space-y-2">
-            {#each images as image (image.id ?? image.repository)}
-              <li
-                class="flex items-start gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 transition-colors hover:bg-soft/40"
-              >
-                <Layers class="mt-0.5 h-4 w-4 shrink-0 text-faint-fg" />
-                <div class="min-w-0 flex-1 space-y-0.5">
-                  <p class="truncate text-[0.85rem] text-fg-strong">
-                    {image.repository}{#if image.tag}:<span class="font-mono">{image.tag}</span>{/if}
-                  </p>
-                  <p class="truncate text-xs text-muted-fg">
-                    {#if image.id}<span class="font-mono">{image.id.slice(0, 12)}</span> · {/if}
-                    {image.size ?? $LL.containerUnknown()}
-                    ·
-                    {#if image.containers === null}
-                      <!-- Unknown, never zero: a count this agent could not confirm
-                           is not a count of none. -->
-                      {$LL.containerUsageUnknown()}
-                    {:else if image.containers === 0}
-                      {$LL.containerUnused()}
-                    {:else}
-                      {$LL.containerInUse({ count: image.containers })}
-                    {/if}
-                    {#if image.created_at}· {image.created_at}{/if}
-                  </p>
-                </div>
-                {#if !busy}
-                  <div class="flex shrink-0 items-center gap-0.5">
-                    <!-- A dangling image has no reference to pull: `docker pull
-                         <none>` would be a name that is not one. -->
-                    <IconButton
-                      label={$LL.containerPullImage()}
-                      disabled={image.dangling}
-                      onclick={() => openPull(image)}
-                    >
-                      <Download class="h-4 w-4" />
-                    </IconButton>
-                    <IconButton label={$LL.containerRemove()} onclick={() => (imageConfirm = image)}>
-                      <Trash2 class="h-4 w-4" />
-                    </IconButton>
-                  </div>
-                {/if}
+                </Card>
               </li>
             {/each}
           </ul>
-          {#if view.unused_tagged !== null && view.unused_tagged > 0}
-            <p class="px-1 text-xs text-muted-fg">
-              {$LL.containerUnusedImages({ count: view.unused_tagged })}
-            </p>
-          {/if}
         {/if}
-
-        {#if busy}
-          <div class="flex items-center gap-2 px-1 text-xs text-muted-fg">
-            <Spinner size="sm" />
-          </div>
+      {:else if images.length === 0}
+        <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+          <Icon name="inventory_2" size={48} weight={300} />
+          <span class="text-[13px]">{$LL.containersNoImages()}</span>
+          <p class="max-w-md text-center text-[12px]">{$LL.containerNoImages()}</p>
+        </div>
+      {:else}
+        <ul class="space-y-[7px]">
+          {#each images as image (image.id ?? image.repository)}
+            <li>
+              <Card padding="11px 13px">
+                <div class="flex min-w-0 items-center gap-[13px]">
+                  <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)">
+                    <Icon name="inventory_2" size={18} />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-[13px] font-semibold">
+                      {image.repository}{#if image.tag}:<span class="lk-mono">{image.tag}</span>{/if}
+                    </p>
+                    <p class="truncate text-[12px] text-(--text-tertiary)">
+                      {#if image.id}<span class="lk-mono">{image.id.slice(0, 12)}</span> · {/if}
+                      {image.size ?? $LL.containerUnknown()}
+                      ·
+                      {#if image.containers === null}
+                        <!-- Unknown, never zero: a count this agent could not confirm
+                             is not a count of none. -->
+                        {$LL.containerUsageUnknown()}
+                      {:else if image.containers === 0}
+                        {$LL.containerUnused()}
+                      {:else}
+                        {$LL.containerInUse({ count: image.containers })}
+                      {/if}
+                      {#if image.created_at} · {image.created_at}{/if}
+                    </p>
+                  </div>
+                  {#if !busy}
+                    <div class="flex shrink-0 items-center gap-[3px]">
+                      <!-- A dangling image has no reference to pull: `docker pull
+                           <none>` would be a name that is not one. -->
+                      <IconButton icon="download" label={$LL.containerPullImage()} disabled={image.dangling} onclick={() => openPull(image)} />
+                      <IconButton icon="delete" label={$LL.containerRemove()} onclick={() => (imageConfirm = image)} />
+                    </div>
+                  {/if}
+                </div>
+              </Card>
+            </li>
+          {/each}
+        </ul>
+        {#if view.unused_tagged !== null && view.unused_tagged > 0}
+          <p class="px-[3px] text-[12px] text-(--text-tertiary)">
+            {$LL.containerUnusedImages({ count: view.unused_tagged })}
+          </p>
         {/if}
       {/if}
-    </div>
-  </SplitView>
-</div>
+
+      {#if busy}
+        <div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)">
+          <Spinner size="sm" />
+        </div>
+      {/if}
+    {/if}
+  </div>
+</SplitView>
 
 <!-- Removal is the one action that is asked about: it is the only one whose
      result is not already on the screen behind the dialog, and `force` changes
      what it does to a container that is running. -->
 {#if confirming !== undefined}
-  <Modal open title={$LL.containerRemove()} onclose={() => (confirming = undefined)}>
-    <div class="space-y-4">
-      <p class="text-sm text-fg">
-        {$LL.containerRemoveConfirm({
-          name: confirming.name ?? confirming.id ?? $LL.containerUnknown(),
-        })}
-      </p>
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={force} />
-        {$LL.containerRemoveForce()}
-      </label>
-      {#if force}
-        <p class="text-xs text-muted-fg inline-flex items-center gap-1">
-          <CircleAlert class="w-3.5 h-3.5 shrink-0" />
-          {$LL.containerRemoveForceHint()}
-        </p>
-      {/if}
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (confirming = undefined)}>{$LL.cancel()}</Button>
-        <Button
-          disabled={busy}
-          onclick={() => {
-            const row = confirming
-            confirming = undefined
-            if (row?.id) void act({ action: 'remove', id: row.id, force })
-          }}
-        >
-          {$LL.containerRemove()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.containerRemove()} message={$LL.containerRemoveConfirm({ name: confirming.name ?? confirming.id ?? $LL.containerUnknown() })} onclose={() => (confirming = undefined)}>
+    {#snippet actions()}
+      <Button variant="destructive" block disabled={busy} onclick={() => {
+        const row = confirming
+        confirming = undefined
+        if (row?.id) void act({ action: 'remove', id: row.id, force })
+      }}>{$LL.containerRemove()}</Button>
+      <Button variant="secondary" block onclick={() => (confirming = undefined)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <Checkbox bind:checked={force} label={$LL.containerRemoveForce()} />
+    {#if force}<p class="mt-[7px] text-[12px] text-(--text-secondary)">{$LL.containerRemoveForceHint()}</p>{/if}
+  </Dialog>
 {/if}
 
 {#if pruning !== undefined}
-  <Modal
+  <Dialog
     open
     title={pruning === 'prune_volumes' ? $LL.containerPruneVolumes() : $LL.containerPruneContainers()}
+    message={pruning === 'prune_volumes' ? $LL.containerPruneVolumesConfirm() : $LL.containerPruneContainersConfirm()}
     onclose={() => (pruning = undefined)}
   >
-    <div class="space-y-4">
-      <p class="text-sm text-fg">
-        {pruning === 'prune_volumes' ? $LL.containerPruneVolumesConfirm() : $LL.containerPruneContainersConfirm()}
-      </p>
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (pruning = undefined)}>{$LL.cancel()}</Button>
-        <Button
-          variant="danger"
-          disabled={busy}
-          onclick={() => {
-            const action = pruning
-            pruning = undefined
-            if (action) void act({ action })
-          }}
-        >
-          {pruning === 'prune_volumes' ? $LL.containerPruneVolumes() : $LL.containerPruneContainers()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+    {#snippet actions()}
+      <Button variant="destructive" block disabled={busy} onclick={() => {
+        const action = pruning
+        pruning = undefined
+        if (action) void act({ action })
+      }}>{pruning === 'prune_volumes' ? $LL.containerPruneVolumes() : $LL.containerPruneContainers()}</Button>
+      <Button variant="secondary" block onclick={() => (pruning = undefined)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}
 
 {#if logsFor !== undefined}
-  <Modal open title={$LL.containerLogs()} onclose={() => (logsFor = undefined)}>
-    <div class="space-y-3">
-      <p class="text-xs text-muted-fg">
-        {$LL.containerLogsFor({
-          name: logsFor.name ?? logsFor.id ?? $LL.containerUnknown(),
-          lines: LOG_TAIL,
-        })}
-      </p>
-      {#if logsError}
-        <pre class="text-xs font-mono text-danger whitespace-pre-wrap break-all">{logsError}</pre>
-      {:else if logs}
-        <pre
-          class="max-h-96 overflow-auto rounded border border-line bg-surface p-3 text-xs font-mono text-fg whitespace-pre-wrap break-all">{logs}</pre>
-      {:else}
-        <p class="text-sm text-muted-fg">{$LL.containerLogsEmpty()}</p>
-      {/if}
-      <div class="flex justify-end">
-        <Button variant="secondary" onclick={() => (logsFor = undefined)}>{$LL.close()}</Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open wide title={$LL.containerLogs()} onclose={() => (logsFor = undefined)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (logsFor = undefined)}>{$LL.close()}</Button>
+    {/snippet}
+    <p class="text-[12px] text-(--text-tertiary)">
+      {$LL.containerLogsFor({
+        name: logsFor.name ?? logsFor.id ?? $LL.containerUnknown(),
+        lines: LOG_TAIL,
+      })}
+    </p>
+    {#if logsError}
+      <pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--color-danger)">{logsError}</pre>
+    {:else if logs}
+      <pre class="mt-[9px] max-h-96 overflow-auto rounded-[9px] bg-(--surface-terminal) p-[11px_15px] lk-mono whitespace-pre-wrap break-all text-[13px]">{logs}</pre>
+    {:else}
+      <p class="mt-[9px] text-[13px] text-(--text-secondary)">{$LL.containerLogsEmpty()}</p>
+    {/if}
+  </Dialog>
 {/if}
 
 <!-- Removing an image is asked about like removing a container: it is the one
      image action whose result is not already on the screen behind the dialog. -->
 {#if imageConfirm !== undefined}
-  <Modal open title={$LL.containerRemove()} onclose={() => (imageConfirm = undefined)}>
-    <div class="space-y-4">
-      <p class="text-sm text-fg">
-        {$LL.containerRemoveImageConfirm({ name: imageReference(imageConfirm) })}
-      </p>
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (imageConfirm = undefined)}>{$LL.cancel()}</Button>
-        <Button
-          variant="danger"
-          disabled={busy}
-          onclick={() => {
-            const image = imageConfirm
-            imageConfirm = undefined
-            // The tag on the row, not the id: `rmi -f <id>` removes every tag
-            // the image has, and the user picked one. Only an image with no
-            // name is removed by its id.
-            const id = image?.dangling ? image.id : image && imageReference(image)
-            if (id) void act({ action: 'remove_image', id })
-          }}
-        >
-          {$LL.containerRemove()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.containerRemove()} message={$LL.containerRemoveImageConfirm({ name: imageReference(imageConfirm) })} onclose={() => (imageConfirm = undefined)}>
+    {#snippet actions()}
+      <Button variant="destructive" block disabled={busy} onclick={() => {
+        const image = imageConfirm
+        imageConfirm = undefined
+        // The tag on the row, not the id: `rmi -f <id>` removes every tag
+        // the image has, and the user picked one. Only an image with no
+        // name is removed by its id.
+        const id = image?.dangling ? image.id : image && imageReference(image)
+        if (id) void act({ action: 'remove_image', id })
+      }}>{$LL.containerRemove()}</Button>
+      <Button variant="secondary" block onclick={() => (imageConfirm = undefined)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}
 
 <!-- Pull: one field, prefilled when a row's Pull asked for it, so the header
      action and the row action are the same dialog. -->
 {#if pullOpen}
-  <Modal open title={$LL.containerPullImage()} onclose={() => (pullOpen = false)}>
-    <div class="space-y-4">
-      <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.containerRunImage()}</span>
-        <Input bind:value={pullRef} placeholder="nginx:alpine" autocomplete="off" />
-      </div>
-      <p class="text-xs text-muted-fg">{$LL.containerPullImageHint()}</p>
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (pullOpen = false)}>{$LL.cancel()}</Button>
-        <Button
-          disabled={busy || pullRef.trim() === ''}
-          onclick={() => {
-            const reference = pullRef.trim()
-            pullOpen = false
-            if (reference) void act({ action: 'pull_image', reference })
-          }}
-        >
-          {$LL.containerPullImage()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open wide title={$LL.containerPullImage()} onclose={() => (pullOpen = false)}>
+    {#snippet actions()}
+      <Button variant="primary" disabled={busy || pullRef.trim() === ''} onclick={() => {
+        const reference = pullRef.trim()
+        pullOpen = false
+        if (reference) void act({ action: 'pull_image', reference })
+      }}>{$LL.containerPullImage()}</Button>
+      <Button variant="secondary" onclick={() => (pullOpen = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <Input bind:value={pullRef} label={$LL.containerRunImage()} placeholder="nginx:alpine" autocomplete="off" />
+    <p class="mt-[9px] text-[12px] text-(--text-secondary)">{$LL.containerPullImageHint()}</p>
+  </Dialog>
 {/if}
 
 <!-- Image prune: the counts come from the agent, and the checkbox widens the
      scope from dangling to every unused image. -->
 {#if imagePrune}
-  <Modal open title={$LL.containerPruneImages()} onclose={() => (imagePrune = false)}>
-    <div class="space-y-4">
-      <p class="text-sm text-fg">{$LL.containerPruneImagesConfirm()}</p>
-      <p class="text-xs text-muted-fg">
-        {$LL.containerPruneDangling()}: {danglingCount} ·
-        {$LL.containerUnusedTagged()}:
-        {view?.unused_tagged ?? $LL.containerUnknown()}
-      </p>
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={pruneAllUnused} />
-        {$LL.containerPruneAllUnused()}
-      </label>
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (imagePrune = false)}>{$LL.cancel()}</Button>
-        <Button
-          variant="danger"
-          disabled={busy}
-          onclick={() => {
-            const allUnused = pruneAllUnused
-            imagePrune = false
-            void act({ action: 'prune_images', all_unused: allUnused })
-          }}
-        >
-          {$LL.containerPruneImages()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.containerPruneImages()} message={$LL.containerPruneImagesConfirm()} onclose={() => (imagePrune = false)}>
+    {#snippet actions()}
+      <Button variant="destructive" block disabled={busy} onclick={() => {
+        const allUnused = pruneAllUnused
+        imagePrune = false
+        void act({ action: 'prune_images', all_unused: allUnused })
+      }}>{$LL.containerPruneImages()}</Button>
+      <Button variant="secondary" block onclick={() => (imagePrune = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <p class="text-[12px] text-(--text-secondary)">
+      {$LL.containerPruneDangling()}: <span class="lk-num">{danglingCount}</span> ·
+      {$LL.containerUnusedTagged()}: <span class="lk-num">{view?.unused_tagged ?? $LL.containerUnknown()}</span>
+    </p>
+    <Checkbox class="mt-[9px]" bind:checked={pruneAllUnused} label={$LL.containerPruneAllUnused()} />
+  </Dialog>
 {/if}
 
 {#if systemPrune}
-  <Modal open title={$LL.containerPruneSystem()} onclose={() => (systemPrune = false)}>
-    <div class="space-y-4">
-      <p class="text-sm text-fg">{$LL.containerPruneSystemConfirm()}</p>
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={systemAllImages} />
-        {$LL.containerPruneAllUnusedImages()}
-      </label>
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={systemVolumes} />
-        {$LL.containerPruneVolumesOption()}
-      </label>
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (systemPrune = false)}>{$LL.cancel()}</Button>
-        <Button
-          variant="danger"
-          disabled={busy}
-          onclick={() => {
-            const allUnusedImages = systemAllImages
-            const includeVolumes = systemVolumes
-            systemPrune = false
-            void act({
-              action: 'prune_system',
-              all_unused_images: allUnusedImages,
-              include_volumes: includeVolumes,
-            })
-          }}
-        >
-          {$LL.containerPruneSystem()}
-        </Button>
-      </div>
+  <Dialog open title={$LL.containerPruneSystem()} message={$LL.containerPruneSystemConfirm()} onclose={() => (systemPrune = false)}>
+    {#snippet actions()}
+      <Button variant="destructive" block disabled={busy} onclick={() => {
+        const allUnusedImages = systemAllImages
+        const includeVolumes = systemVolumes
+        systemPrune = false
+        void act({
+          action: 'prune_system',
+          all_unused_images: allUnusedImages,
+          include_volumes: includeVolumes,
+        })
+      }}>{$LL.containerPruneSystem()}</Button>
+      <Button variant="secondary" block onclick={() => (systemPrune = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <div class="grid gap-[9px]">
+      <Checkbox bind:checked={systemAllImages} label={$LL.containerPruneAllUnusedImages()} />
+      <Checkbox bind:checked={systemVolumes} label={$LL.containerPruneVolumesOption()} />
     </div>
-  </Modal>
+  </Dialog>
 {/if}
 
 <!-- Run: image, name and the extra arguments, as the app's dialog asks for
      them. The arguments are sent as typed; the agent splits them. -->
 {#if runOpen}
-  <Modal open title={$LL.containerRun()} onclose={() => (runOpen = false)}>
-    <div class="space-y-4">
-      <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.containerRunImage()}</span>
-        <Input bind:value={runImage} placeholder="xxx:1.1" autocomplete="off" />
-      </div>
-      <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.containerRunName()}</span>
-        <Input bind:value={runName} placeholder="xxx" autocomplete="off" />
-      </div>
-      <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.containerRunArgs()}</span>
-        <Input bind:value={runArgs} placeholder="-p 2222:22 -v ~/.xxx/:/xxx" autocomplete="off" />
-      </div>
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (runOpen = false)}>{$LL.cancel()}</Button>
-        <Button
-          disabled={busy || runImage.trim() === ''}
-          onclick={() => {
-            const image = runImage.trim()
-            const name = runName.trim()
-            const args = runArgs
-            runOpen = false
-            void act({ action: 'run', image, name, args })
-          }}
-        >
-          {$LL.containerRun()}
-        </Button>
-      </div>
+  <Dialog open wide title={$LL.containerRun()} onclose={() => (runOpen = false)}>
+    {#snippet actions()}
+      <Button variant="primary" disabled={busy || runImage.trim() === ''} onclick={() => {
+        const image = runImage.trim()
+        const name = runName.trim()
+        const args = runArgs
+        runOpen = false
+        void act({ action: 'run', image, name, args })
+      }}>{$LL.containerRun()}</Button>
+      <Button variant="secondary" onclick={() => (runOpen = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <div class="grid gap-[13px]">
+      <Input bind:value={runImage} label={$LL.containerRunImage()} placeholder="xxx:1.1" autocomplete="off" />
+      <Input bind:value={runName} label={$LL.containerRunName()} placeholder="xxx" autocomplete="off" />
+      <Input bind:value={runArgs} label={$LL.containerRunArgs()} placeholder="-p 2222:22 -v ~/.xxx/:/xxx" autocomplete="off" />
     </div>
-  </Modal>
+  </Dialog>
 {/if}
 
 <!-- A shell inside a container. Its own component: the terminal setup is the
      terminal page's, shared through `mountTerminal`. -->
 {#if shellFor !== undefined}
-  <Modal
-    open
-    title={$LL.containerOpenShell()}
-    class="max-w-3xl"
-    onclose={() => (shellFor = undefined)}
-  >
-    <div class="space-y-3">
-      <p class="text-xs text-muted-fg">
-        {shellFor.name ?? shellFor.id ?? $LL.containerUnknown()}
-      </p>
-      {#if shellFor.id}
-        <TargetTerminal target={{ kind: 'container', id: shellFor.id }} />
-      {/if}
-    </div>
-  </Modal>
+  <Dialog open wide title={$LL.containerOpenShell()} onclose={() => (shellFor = undefined)}>
+    <p class="text-[12px] text-(--text-tertiary)">{shellFor.name ?? shellFor.id ?? $LL.containerUnknown()}</p>
+    {#if shellFor.id}<div class="mt-[9px]"><TargetTerminal target={{ kind: 'container', id: shellFor.id }} /></div>{/if}
+  </Dialog>
 {/if}

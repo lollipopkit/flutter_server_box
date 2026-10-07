@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
-  import { CircleAlert, Pencil, Plus, Power, RefreshCw, Trash2 } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
   import AppToolbar from '../../ui/AppToolbar.svelte'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -193,142 +193,81 @@
 <AppToolbar subtitle={view?.user ? $LL.cronForUser({ user: view.user }) : undefined}>
   {#snippet actions()}
     {#if view?.available}
-      <IconButton label={$LL.cronAdd()} onclick={openNew}>
-        <Plus class="w-4 h-4" />
-      </IconButton>
+      <Button size="sm" variant="tinted" icon="add" onclick={openNew}>{$LL.cronAdd()}</Button>
     {/if}
-    <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
   {/snippet}
 </AppToolbar>
 
-<main class="mx-auto max-w-3xl space-y-3 px-4 py-4 @3xl:px-6">
-  {#if error}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <p class="text-sm text-danger">{error}</p>
-    </Card>
-  {/if}
+<main class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+  {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
 
   {#if loading && !view}
-    <Card class="grid place-items-center p-4"><Spinner class="h-5 w-5" /></Card>
+    <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
   {:else if view && !view.available}
-    <Card class="p-4">
-      <p class="text-sm text-muted-fg">{reasonText(view)}</p>
-    </Card>
+    <Card><p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p></Card>
   {:else if view}
     {#if jobs.length === 0}
-      <Card class="p-4">
-        <p class="text-sm text-muted-fg">{$LL.cronEmpty()}</p>
-      </Card>
+      <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+        <Icon name="schedule" size={48} weight={300} />
+        <span class="text-[13px]">{$LL.cronEmptyState()}</span>
+      </div>
     {:else}
-      <!-- One job per card: what it runs on top, how the schedule reads and
-           when it next runs below, and the three things that may be done to it
-           along the right. The dot carries the enabled state the badge on a
-           paused job spells out. -->
-      <ul class="space-y-2">
+      <!-- One job per card: schedule and command, with state and actions. -->
+      <ul class="space-y-[7px]">
         {#each jobs as job (job.line_index)}
-          <li
-            class="flex items-start gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 transition-colors hover:bg-soft/40"
-          >
-            <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {job.enabled ? 'bg-success' : 'bg-faint-fg'}"></span>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-mono text-[0.8rem] {job.enabled ? 'text-fg-strong' : 'text-muted-fg'}">
-                  {job.schedule}
-                </span>
-                {#if !job.enabled}
-                  <Badge tone="neutral">{$LL.cronDisabled()}</Badge>
-                {/if}
+          <li>
+            <Card padding="11px 13px">
+              <div class="flex min-w-0 items-center gap-[13px]">
+                <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)"><Icon name="schedule" size={18} /></span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-[7px]">
+                    <span class="lk-mono text-[13px]">{job.schedule}</span>
+                    <Badge tone={job.enabled ? 'success' : 'neutral'} dot>{job.enabled ? $LL.cronEnabled() : $LL.cronDisabled()}</Badge>
+                  </div>
+                  <p class="lk-mono truncate text-[12px] text-(--text-secondary)" class:line-through={!job.enabled} title={job.command}>{job.command}</p>
+                  {#if metaText(job)}<p class="text-[12px] text-(--text-tertiary)">{metaText(job)}</p>{/if}
+                </div>
+                <div class="flex shrink-0 items-center gap-[3px]">
+                  <IconButton icon={job.enabled ? 'toggle_on' : 'toggle_off'} label={job.enabled ? $LL.cronDisable() : $LL.cronEnable()} disabled={busy} onclick={() => void apply({ op: 'set_enabled', line_index: job.line_index, enabled: !job.enabled })} />
+                  <IconButton icon="edit" label={$LL.cronEditJob()} disabled={busy} onclick={() => openEdit(job)} />
+                  <IconButton icon="delete" label={$LL.cronRemove()} disabled={busy} onclick={() => void apply({ op: 'remove', line_index: job.line_index })} />
+                </div>
               </div>
-              <p
-                class="mt-0.5 truncate font-mono text-xs {job.enabled
-                  ? 'text-muted-fg'
-                  : 'text-faint-fg line-through'}"
-                title={job.command}
-              >
-                {job.command}
-              </p>
-              {#if metaText(job)}
-                <p class="mt-0.5 text-[0.7rem] text-faint-fg">{metaText(job)}</p>
-              {/if}
-            </div>
-            <div class="flex shrink-0 items-center gap-0.5">
-              <IconButton
-                label={job.enabled ? $LL.cronDisable() : $LL.cronEnable()}
-                disabled={busy}
-                onclick={() =>
-                  void apply({ op: 'set_enabled', line_index: job.line_index, enabled: !job.enabled })}
-              >
-                <Power class="h-4 w-4" />
-              </IconButton>
-              <IconButton label={$LL.cronEditJob()} disabled={busy} onclick={() => openEdit(job)}>
-                <Pencil class="h-4 w-4" />
-              </IconButton>
-              <IconButton
-                label={$LL.cronRemove()}
-                disabled={busy}
-                onclick={() => void apply({ op: 'remove', line_index: job.line_index })}
-              >
-                <Trash2 class="h-4 w-4" />
-              </IconButton>
-            </div>
+            </Card>
           </li>
         {/each}
       </ul>
     {/if}
 
     {#if view.preserved.length > 0}
-      <section class="space-y-2 pt-1">
-        <h2 class="px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-fg">
-          {$LL.cronPreserved()}
-        </h2>
-        <Card class="space-y-2 p-3">
-          <p class="text-xs text-muted-fg">{$LL.cronPreservedHint()}</p>
-          <pre
-            class="overflow-x-auto rounded-lg bg-soft/60 p-2 text-xs font-mono text-muted-fg whitespace-pre-wrap break-all">{view.preserved.join('\n')}</pre>
+      <section class="space-y-[7px] pt-[3px]">
+        <h2 class="lk-caps px-[3px]">{$LL.cronPreserved()}</h2>
+        <Card>
+          <p class="text-[12px] text-(--text-secondary)">{$LL.cronPreservedHint()}</p>
+          <pre class="mt-[9px] overflow-x-auto rounded-[9px] bg-(--surface-control) p-[9px] lk-mono whitespace-pre-wrap break-all text-[12px] text-(--text-secondary)">{view.preserved.join('\\n')}</pre>
         </Card>
       </section>
     {/if}
 
-    {#if busy}
-      <div class="flex items-center gap-2 px-1 text-xs text-muted-fg">
-        <Spinner size="sm" />
-      </div>
-    {/if}
+    {#if busy}<div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)"><Spinner size="sm" /></div>{/if}
   {/if}
 </main>
 
 {#if editing !== undefined}
-  <Modal open title={editing ? $LL.cronEditJob() : $LL.cronAdd()} onclose={() => (editing = undefined)}>
-    <div class="space-y-4">
-      {#if editError}
-        <p class="text-sm text-danger">{editError}</p>
-      {/if}
-      <div class="space-y-1">
-        <label class="text-[0.8rem] font-medium text-fg" for="cron-schedule">{$LL.cronSchedule()}</label>
-        <Input id="cron-schedule" class="font-mono" bind:value={draft.schedule} placeholder="0 3 * * *" />
-        <p class="text-[0.7rem] text-muted-fg">{$LL.cronScheduleHint()}</p>
-      </div>
-      <div class="space-y-1">
-        <label class="text-[0.8rem] font-medium text-fg" for="cron-command">{$LL.cronCommand()}</label>
-        <Input id="cron-command" class="font-mono" bind:value={draft.command} placeholder="/usr/local/bin/backup.sh" />
-        <p class="text-[0.7rem] text-muted-fg">{$LL.cronCommandHint()}</p>
-      </div>
-      <label class="flex items-center gap-2 text-[0.8rem] text-fg">
-        <input type="checkbox" bind:checked={draft.enabled} />
-        {$LL.cronEnabled()}
-      </label>
-      {#if !draft.enabled}
-        <p class="inline-flex items-center gap-1 text-[0.7rem] text-muted-fg">
-          <CircleAlert class="h-3.5 w-3.5 shrink-0" />
-          {$LL.cronDisabledHint()}
-        </p>
-      {/if}
-      <div class="flex justify-end gap-2 border-t border-line pt-3">
-        <Button variant="secondary" onclick={() => (editing = undefined)}>{$LL.cancel()}</Button>
-        <Button disabled={busy} onclick={() => void submit()}>{$LL.save()}</Button>
+  <Dialog open wide title={editing ? $LL.cronEditJob() : $LL.cronAdd()} onclose={() => (editing = undefined)}>
+    {#snippet actions()}
+      <Button variant="primary" disabled={busy} onclick={() => void submit()}>{$LL.save()}</Button>
+      <Button variant="secondary" onclick={() => (editing = undefined)}>{$LL.cancel()}</Button>
+    {/snippet}
+    {#if editError}<p class="mb-[9px] text-[13px] text-(--color-danger)">{editError}</p>{/if}
+    <div class="grid gap-[13px]">
+      <Input id="cron-schedule" bind:value={draft.schedule} label={$LL.cronSchedule()} hint={$LL.cronScheduleHint()} placeholder="0 3 * * *" mono />
+      <Input id="cron-command" bind:value={draft.command} label={$LL.cronCommand()} hint={$LL.cronCommandHint()} placeholder="/usr/local/bin/backup.sh" mono />
+      <div>
+        <Checkbox bind:checked={draft.enabled} label={$LL.cronEnabled()} />
+        {#if !draft.enabled}<p class="mt-[7px] text-[12px] text-(--text-secondary)">{$LL.cronDisabledHint()}</p>{/if}
       </div>
     </div>
-  </Modal>
+  </Dialog>
 {/if}

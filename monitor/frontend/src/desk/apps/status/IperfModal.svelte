@@ -5,7 +5,7 @@
   /// The agent validates both values (`sbm_parser::iperf`) and builds the
   /// command, so this is a form and nothing more. The dialog is rendered by
   /// its opener only while it is open, so closing it drops the session.
-  import { Button, Input, Modal } from '@serverbox/webui'
+  import { Button, Dialog, Input } from '../../lk'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { iperfIssueText } from '../../../lib/iperf'
@@ -39,25 +39,21 @@
 
 <!-- As wide as the container shell's dialog: iperf's output lines wrap
      mid-word at the default width. -->
-<Modal open title={$LL.iperf()} class="max-w-3xl" onclose={onclose}>
+<Dialog open wide title={$LL.iperf()} class="max-w-3xl" onclose={onclose}>
   {#if target === null}
-    <div class="space-y-4">
-      <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.iperfHost()}</span>
-        <Input bind:value={host} placeholder="example.com" autocomplete="off" />
-      </div>
-      <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.iperfPort()}</span>
-        <Input bind:value={port} placeholder="5201" autocomplete="off" />
-      </div>
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={onclose}>{$LL.cancel()}</Button>
-        <Button disabled={!ready} onclick={start}>{$LL.iperfStart()}</Button>
-      </div>
+    <div class="grid gap-[13px] @3xl:grid-cols-2">
+      <Input label={$LL.iperfHost()} bind:value={host} placeholder="example.com" autocomplete="off" />
+      <Input label={$LL.iperfPort()} bind:value={port} placeholder="5201" autocomplete="off" />
     </div>
   {:else}
     <!-- A refused host or port comes back to the form with what was typed;
          the refused session ends as the terminal leaves. -->
     <TargetTerminal {target} issueText={iperfIssueText} onedit={() => (target = null)} />
   {/if}
-</Modal>
+  {#snippet actions()}
+    {#if target === null}
+      <Button variant="ghost" onclick={onclose}>{$LL.cancel()}</Button>
+      <Button disabled={!ready} onclick={start}>{$LL.iperfStart()}</Button>
+    {/if}
+  {/snippet}
+</Dialog>

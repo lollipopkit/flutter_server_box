@@ -1,7 +1,7 @@
 <script lang="ts">
+  import Icon from './Icon.svelte'
   import type { Snippet } from 'svelte'
   import type { HTMLInputAttributes } from 'svelte/elements'
-  import Icon from './Icon.svelte'
 
   interface Props extends Omit<HTMLInputAttributes, 'class' | 'type' | 'checked'> {
     checked?: boolean
@@ -19,3 +19,4 @@
   <span class="lk-check__box"><Icon name="check" size={14} weight={700} class="lk-check__mark" /></span>
   {#if children}<span>{@render children()}</span>{:else if label}<span>{label}</span>{/if}
 </label>
+

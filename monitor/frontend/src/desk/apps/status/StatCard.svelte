@@ -1,48 +1,54 @@
 <script lang="ts">
-  import type { Component } from 'svelte'
-  import { ChevronRight } from '@lucide/svelte'
-  import { Card } from '@serverbox/webui'
+  import { Card, Icon } from '../../lk'
 
   interface Props {
-    icon: Component
-    iconClass: string
+    icon: string
+    iconColor: string
     label: string
     /// Primary figure, truncated to one line if needed.
     value: string
     /// Secondary line in a fixed-height row so cards remain aligned.
     detail?: string
-    valueClass?: string
+    compact?: boolean
     class?: string
     /// Makes the card clickable and displays its drill-down affordance.
     onclick?: (e: MouseEvent) => void
   }
 
   const {
-    icon: Icon,
-    iconClass,
+    icon,
+    iconColor,
     label,
     value,
     detail = '',
-    valueClass = 'text-2xl',
+    compact = false,
     class: className = '',
     onclick,
   }: Props = $props()
+
+  function metricWidth(value: string): string | null {
+    const match = value.match(/^(\d+(?:\.\d+)?)%$/)
+    return match ? `${Math.min(100, Math.max(0, Number(match[1])))}%` : null
+  }
 </script>
 
-<Card class="group rounded-2xl {className}" {onclick}>
-  <div class="flex min-w-0 items-start gap-2.5">
-    <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-soft">
-      <Icon class="h-4 w-4 {iconClass}" />
+<Card class={className} padding="11px 13px" {onclick}>
+  <div class="flex min-w-0 items-start gap-[13px]">
+    <span class="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-[9px] bg-(--surface-content) shadow-[inset_0_0_0_.5px_var(--border-hairline)]">
+      <Icon name={icon} size={17} color={iconColor} />
     </span>
     <div class="min-w-0 flex-1">
-      <div class="flex items-center justify-between gap-2">
-        <p class="truncate text-[0.78rem] font-medium text-muted-fg">{label}</p>
-        {#if onclick}
-          <ChevronRight class="h-3.5 w-3.5 shrink-0 text-faint-fg transition-transform group-hover:translate-x-0.5" />
-        {/if}
+      <div class="flex items-center justify-between gap-[9px]">
+        <p class="truncate text-[13px] text-(--text-secondary)">{label}</p>
+        {#if onclick}<Icon name="chevron_right" size={15} class="shrink-0 text-(--text-tertiary)" />{/if}
       </div>
-      <p class="{valueClass} mt-1 leading-tight font-semibold tracking-tight text-fg-strong truncate">{value}</p>
-      <p class="mt-1 truncate text-[0.7rem] text-muted-fg">{detail || ' '}</p>
+      <p class="lk-num mt-[5px] truncate font-[650] leading-none tracking-[-.02em] text-(--text-primary) {compact ? 'text-[18px]' : 'text-[27px]' }">{value}</p>
+      <p class="mt-[7px] min-h-[15px] truncate text-[12px] text-(--text-tertiary)">{detail}</p>
+      {#if metricWidth(value)}
+        <div class="mt-[9px] h-[3px] overflow-hidden rounded-full bg-(--surface-control)">
+          <div class="h-full rounded-full" style="width: {metricWidth(value)}; background: {iconColor}"></div>
+        </div>
+      {/if}
     </div>
   </div>
 </Card>

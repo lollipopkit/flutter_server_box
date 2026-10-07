@@ -64,7 +64,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Input, Select } from '@serverbox/webui'
+  import { Button, Checkbox, Input, Select } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
 
   interface Props {
@@ -87,75 +87,41 @@
   }
 </script>
 
-<div class="space-y-4">
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="desktop-name">{$LL.desktopName()}</label>
-    <Input id="desktop-name" bind:value={fields.name} placeholder="office" />
+<div class="grid gap-[13px]">
+  <Input id="desktop-name" bind:value={fields.name} label={$LL.desktopName()} placeholder="office" />
+
+  <div class="grid gap-[13px] @2xl:grid-cols-3">
+    <Select
+      id="desktop-protocol"
+      class="w-full"
+      label={$LL.desktopProtocol()}
+      value={fields.protocol}
+      options={protocols.map((protocol) => ({ value: protocol.id, label: protocol.id.toUpperCase() }))}
+      onchange={(e: Event) => changeProtocol((e.currentTarget as HTMLSelectElement).value)}
+    />
+    <div class="@2xl:col-span-2">
+      <Input id="desktop-host" bind:value={fields.host} label={$LL.desktopHost()} placeholder="127.0.0.1" hint={$LL.desktopHostHint()} />
+    </div>
   </div>
 
-  <div class="grid gap-4 @2xl:grid-cols-3">
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="desktop-protocol">{$LL.desktopProtocol()}</label>
-      <Select
-        id="desktop-protocol"
-        class="w-full"
-        value={fields.protocol}
-        onchange={(e: Event) => changeProtocol((e.currentTarget as HTMLSelectElement).value)}
-      >
-        {#each protocols as protocol (protocol.id)}
-          <option value={protocol.id}>{protocol.id.toUpperCase()}</option>
-        {/each}
-      </Select>
-    </div>
-    <div class="space-y-1 @2xl:col-span-2">
-      <label class="text-sm text-muted-fg" for="desktop-host">{$LL.desktopHost()}</label>
-      <Input id="desktop-host" bind:value={fields.host} placeholder="127.0.0.1" />
-    </div>
-  </div>
-  <p class="text-xs text-muted-fg">{$LL.desktopHostHint()}</p>
-
-  <div class="grid gap-4 @2xl:grid-cols-2">
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="desktop-port">{$LL.desktopPort()}</label>
-      <Input
-        id="desktop-port"
-        inputmode="numeric"
-        bind:value={fields.port}
-        oninput={() => (fields.portFollowsProtocol = false)}
-      />
-    </div>
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="desktop-username">{$LL.desktopUsername()}</label>
-      <Input id="desktop-username" bind:value={fields.username} />
-    </div>
+  <div class="grid gap-[13px] @2xl:grid-cols-2">
+    <Input id="desktop-port" label={$LL.desktopPort()} inputmode="numeric" bind:value={fields.port} oninput={() => (fields.portFollowsProtocol = false)} mono />
+    <Input id="desktop-username" bind:value={fields.username} label={$LL.desktopUsername()} />
   </div>
 
   <!-- A Windows account's domain; VNC has none. -->
-  {#if fields.protocol === 'rdp'}
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="desktop-domain">{$LL.desktopDomain()}</label>
-      <Input id="desktop-domain" bind:value={fields.domain} />
-    </div>
-  {/if}
+  {#if fields.protocol === 'rdp'}<Input id="desktop-domain" bind:value={fields.domain} label={$LL.desktopDomain()} />{/if}
 
-  <div class="space-y-2">
-    <label class="flex items-center gap-2 text-sm text-fg">
-      <input type="checkbox" bind:checked={fields.viewOnly} />
-      {$LL.desktopViewOnly()}
-    </label>
-    <label class="flex items-center gap-2 text-sm text-fg">
-      <input type="checkbox" bind:checked={fields.shared} />
-      {$LL.desktopShared()}
-    </label>
+  <div class="grid gap-[9px]">
+    <Checkbox bind:checked={fields.viewOnly} label={$LL.desktopViewOnly()} />
+    <Checkbox bind:checked={fields.shared} label={$LL.desktopShared()} />
   </div>
 
   <!-- No password field: a route stores none. -->
-  <p class="text-xs text-muted-fg">{$LL.desktopPasswordHint()}</p>
+  <p class="text-[12px] text-(--text-secondary)">{$LL.desktopPasswordHint()}</p>
 
-  <div class="flex justify-end gap-2">
+  <div class="flex justify-end gap-[7px]">
     <Button variant="secondary" onclick={oncancel}>{$LL.cancel()}</Button>
-    <Button onclick={() => onsaved(desktopDraftOf(fields))}>
-      {editing ? $LL.save() : $LL.desktopAdd()}
-    </Button>
+    <Button variant="primary" onclick={() => onsaved(desktopDraftOf(fields))}>{editing ? $LL.save() : $LL.desktopAdd()}</Button>
   </div>
 </div>

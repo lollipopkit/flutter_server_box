@@ -27,7 +27,7 @@
 {#if admin}
   <AppToolbar title={$LL.settingsAccess()} />
 
-  <main class="mx-auto max-w-3xl space-y-4 px-4 py-4 @3xl:px-6">
+  <main class="mx-auto max-w-[560px] space-y-[13px] px-[21px] pb-[21px] pt-[4px]">
     <AccessAdmin onchanged={refreshAccess} />
   </main>
 {/if}

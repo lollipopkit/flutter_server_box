@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Spinner } from '@serverbox/webui'
+  import { Spinner } from '../../lk'
   import { onMount } from 'svelte'
   import type { UserInteraction } from '@devolutions/iron-remote-desktop'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -179,13 +179,13 @@
   })
 </script>
 
-<div class="relative h-full min-h-72 w-full overflow-hidden rounded-lg border border-line bg-black">
+<div class="relative h-full min-h-72 w-full overflow-hidden rounded-[13px] bg-(--surface-terminal) shadow-[inset_0_0_0_0.5px_var(--border-hairline)]">
   <div bind:this={container} class="h-full w-full"></div>
   {#if connecting}
-    <div class="absolute inset-0 flex items-center justify-center bg-black/40">
-      <Spinner class="w-6 h-6" />
+    <div class="absolute inset-0 flex items-center justify-center bg-(--surface-window)/70">
+      <Spinner size={24} />
     </div>
   {/if}
 </div>
 
-<p class="text-xs text-muted-fg">{$LL.desktopRdpPlaintext()}</p>
+<p class="text-[12px] text-(--text-tertiary)">{$LL.desktopRdpPlaintext()}</p>

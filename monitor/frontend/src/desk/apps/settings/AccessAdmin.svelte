@@ -5,8 +5,7 @@
   /// who can do what on the machine, so each request carries the
   /// administrator's own password rather than riding on the session.
 
-  import { Pencil, Plus, Trash2, KeyRound } from '@lucide/svelte'
-  import { Badge, Button, Card, IconButton, Input, Modal, Select, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Dialog, Group, IconButton, Input, Row, Select, Spinner } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { accessMessage, draftFromRole, emptyDraft, type RoleDraft } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -150,105 +149,62 @@
 </script>
 
 {#if loading}
-  <div class="flex justify-center py-6"><Spinner /></div>
+  <div class="flex justify-center py-6"><Spinner size={32} /></div>
 {:else if loadError}
-  <p class="text-sm text-danger">{loadError}</p>
+  <p class="text-[13px] text-(--color-danger)">{loadError}</p>
 {:else}
-  <Card class="space-y-4">
-    <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.accounts()}</h2>
-    <div class="divide-y divide-line">
-      {#each users as user (user.username)}
-        <div class="flex flex-wrap items-center gap-3 py-2 first:pt-0 last:pb-0">
-          <span class="flex-1 min-w-0">
-            <span class="block text-sm font-mono truncate">{user.username}</span>
-            <span class="block text-xs text-faint-fg">{$LL.lastLogin()}: {when(user.last_login)}</span>
-          </span>
+  <Group title={$LL.accounts()}>
+    {#each users as user (user.username)}
+      <Row label={user.username} sub={`${$LL.lastLogin()}: ${when(user.last_login)}`}>
+        <div class="flex items-center gap-[5px]">
           <Select
+            class="w-[170px]"
             value={user.role}
-            onchange={(e) => changeRole(user, (e.currentTarget as HTMLSelectElement).value)}
+            options={roles.map((role) => ({ value: role.name, label: role.name }))}
+            onchange={(event: Event) => changeRole(user, (event.currentTarget as HTMLSelectElement).value)}
             aria-label={$LL.accountRole()}
-          >
-            {#each roles as role (role.name)}
-              <option value={role.name}>{role.name}</option>
-            {/each}
-          </Select>
-          <IconButton label={$LL.resetPassword()} onclick={() => ((resetFor = user.username), (resetPassword = ''))}>
-            <KeyRound class="w-4 h-4" />
-          </IconButton>
-          <IconButton label={$LL.deleteAccount()} class="hover:text-danger" onclick={() => removeUser(user)}>
-            <Trash2 class="w-4 h-4" />
-          </IconButton>
+          />
+          <IconButton icon="key" label={$LL.resetPassword()} onclick={() => ((resetFor = user.username), (resetPassword = ''))} />
+          <IconButton icon="delete" label={$LL.deleteAccount()} onclick={() => removeUser(user)} />
         </div>
-      {/each}
-    </div>
-    <form class="grid grid-cols-1 items-end gap-2 @2xl:grid-cols-[1fr_1fr_auto_auto]" onsubmit={addUser}>
-      <div class="space-y-1">
-        <span class="text-xs text-muted-fg">{$LL.username()}</span>
-        <Input bind:value={newUser} autocomplete="off" />
-      </div>
-      <div class="space-y-1">
-        <span class="text-xs text-muted-fg">{$LL.password()}</span>
-        <Input type="password" autocomplete="new-password" bind:value={newPassword} />
-      </div>
-      <Select bind:value={newRole} aria-label={$LL.accountRole()}>
-        {#each roles as role (role.name)}
-          <option value={role.name}>{role.name}</option>
-        {/each}
-      </Select>
-      <Button size="sm" variant="secondary" type="submit" disabled={!newUser.trim() || newPassword.length < 8}>
-        <Plus class="w-4 h-4 mr-1" />{$LL.addAccount()}
-      </Button>
+      </Row>
+    {/each}
+    <form class="grid gap-[9px] py-[7px] @2xl:grid-cols-[1fr_1fr_auto_auto]" onsubmit={addUser}>
+      <Input label={$LL.username()} bind:value={newUser} autocomplete="off" />
+      <Input label={$LL.password()} type="password" autocomplete="new-password" bind:value={newPassword} />
+      <Select class="w-[170px]" bind:value={newRole} aria-label={$LL.accountRole()} options={roles.map((role) => ({ value: role.name, label: role.name }))} />
+      <Button size="sm" variant="tinted" type="submit" icon="add" disabled={!newUser.trim() || newPassword.length < 8}>{$LL.addAccount()}</Button>
     </form>
-  </Card>
+  </Group>
 
-  <Card class="space-y-4">
-    <div class="flex items-center justify-between gap-2">
-      <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.roles()}</h2>
-      <Button size="sm" variant="secondary" onclick={() => openEditor(null)}>
-        <Plus class="w-4 h-4 mr-1" />{$LL.addRole()}
-      </Button>
+  <Group title={$LL.roles()}>
+    <div class="flex justify-end py-[7px]">
+      <Button size="sm" variant="tinted" icon="add" onclick={() => openEditor(null)}>{$LL.addRole()}</Button>
     </div>
-    <div class="divide-y divide-line">
-      {#each roles as role (role.name)}
-        <div class="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-          <span class="flex-1 min-w-0">
-            <span class="flex items-center gap-2 text-sm">
-              <span class="font-mono">{role.name}</span>
-              {#if role.admin}<Badge tone="success">{$LL.roleAdmin()}</Badge>{/if}
-              {#if role.builtin}<Badge>{$LL.roleBuiltin()}</Badge>{/if}
-            </span>
-            <span class="block text-xs text-faint-fg truncate">{summary(role.grants)}</span>
-          </span>
-          <IconButton label={$LL.editRole()} onclick={() => openEditor(role)}>
-            <Pencil class="w-4 h-4" />
-          </IconButton>
-          {#if !role.builtin}
-            <IconButton label={$LL.deleteRole()} class="hover:text-danger" onclick={() => removeRole(role)}>
-              <Trash2 class="w-4 h-4" />
-            </IconButton>
-          {/if}
+    {#each roles as role (role.name)}
+      <Row label={role.name} sub={summary(role.grants)}>
+        <div class="flex items-center gap-[5px]">
+          {#if role.admin}<Badge tone="success">{$LL.roleAdmin()}</Badge>{/if}
+          {#if role.builtin}<Badge>{$LL.roleBuiltin()}</Badge>{/if}
+          <IconButton icon="edit" label={$LL.editRole()} onclick={() => openEditor(role)} />
+          {#if !role.builtin}<IconButton icon="delete" label={$LL.deleteRole()} onclick={() => removeRole(role)} />{/if}
         </div>
-      {/each}
-    </div>
-  </Card>
+      </Row>
+    {/each}
+  </Group>
 {/if}
 
-<Modal open={resetFor !== null} title={$LL.resetPassword()} onclose={() => (resetFor = null)}>
-  <form class="space-y-4" onsubmit={submitReset}>
-    <p class="text-sm font-mono">{resetFor}</p>
-    <div class="space-y-1">
-      <span class="text-sm text-muted-fg">{$LL.newPassword()}</span>
-      <Input type="password" autocomplete="new-password" bind:value={resetPassword} />
-    </div>
-    {#if resetPassword && resetPassword.length < 8}
-      <p class="text-xs text-faint-fg">{$LL.passwordTooShort()}</p>
-    {/if}
-    <div class="flex justify-end gap-2">
-      <Button variant="ghost" type="button" onclick={() => (resetFor = null)}>{$LL.cancel()}</Button>
-      <Button type="submit" disabled={resetPassword.length < 8}>{$LL.confirm()}</Button>
-    </div>
+<Dialog open={resetFor !== null} wide title={$LL.resetPassword()} onclose={() => (resetFor = null)}>
+  <form id="reset-password-form" class="space-y-[13px]" onsubmit={submitReset}>
+    <p class="lk-mono text-[13px]">{resetFor}</p>
+    <Input label={$LL.newPassword()} type="password" autocomplete="new-password" bind:value={resetPassword} />
+    {#if resetPassword && resetPassword.length < 8}<p class="text-[12px] text-(--text-tertiary)">{$LL.passwordTooShort()}</p>{/if}
   </form>
-</Modal>
+  {#snippet actions()}
+    <Button variant="secondary" type="button" onclick={() => (resetFor = null)}>{$LL.cancel()}</Button>
+    <Button type="submit" form="reset-password-form" disabled={resetPassword.length < 8}>{$LL.confirm()}</Button>
+  {/snippet}
+</Dialog>
 
 <RoleEditor
   open={editorOpen}

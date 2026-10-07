@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Button, Card, IconButton, Input, Select, Spinner } from '@serverbox/webui'
-  import { Plus, X } from '@lucide/svelte'
+  import { Badge, Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Select, Spinner, Textarea } from '../../lk/index'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
   import { allocation, createSpec, offerKey, usesImage, virtErrorText, virtRequestText, type CreateDraft } from '../../../lib/virt'
@@ -127,7 +126,7 @@
   })
 
   function offers(list: VirtOffer[]) {
-    return list.map((o) => ({ v: offerKey(o), l: o.volume.name, sub: [o.pool, o.volume.capacity !== null ? fmtBytes(o.volume.capacity) : null].filter(Boolean).join(' · ') }))
+    return list.map((o) => ({ value: offerKey(o), label: o.volume.name, detail: [o.pool, o.volume.capacity !== null ? fmtBytes(o.volume.capacity) : null].filter(Boolean).join(' · ') }))
   }
 
   async function create(e: SubmitEvent) {
@@ -149,100 +148,87 @@
 </script>
 
 {#snippet head(title: string, done: boolean | null, right: string = '')}
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-[9px]">
     {#if done !== null}
-      <span class="h-2 w-2 shrink-0 rounded-full {done ? 'bg-success' : 'bg-warning'}"></span>
+      <Badge tone={done ? 'success' : 'warning'} dot>{done ? $LL.yes() : $LL.no()}</Badge>
     {/if}
-    <h3 class="text-sm font-medium text-fg-strong">{title}</h3>
+    <h3 class="text-[15px] font-semibold">{title}</h3>
     {#if right}
-      <span class="ml-auto truncate text-xs text-faint-fg">{right}</span>
+      <span class="ml-auto truncate text-[12px] text-(--text-tertiary)">{right}</span>
     {/if}
   </div>
 {/snippet}
 
-{#snippet choice(items: { v: string; l: string; sub?: string }[], value: string, pick: (v: string) => void)}
-  <ul class="max-h-64 overflow-y-auto rounded-lg border border-line p-1">
-    {#each items as it (it.v)}
+{#snippet choice(items: { value: string; label: string; detail?: string }[], value: string, pick: (value: string) => void)}
+  <ul class="flex max-h-64 flex-col gap-[7px] overflow-y-auto">
+    {#each items as item (item.value)}
       <li>
-        <button
-          type="button"
-          class="w-full rounded-lg px-3 py-2 text-left transition-colors {it.v === value ? 'bg-primary/10' : 'hover:bg-muted'}"
-          aria-pressed={it.v === value}
-          onclick={() => pick(it.v)}
+        <Card
+          onclick={() => pick(item.value)}
+          selected={item.value === value}
+          padding="11px 13px"
+          class="flex flex-col gap-[5px]"
         >
-          <p class="truncate text-sm text-fg-strong">{it.l}</p>
-          {#if it.sub}
-            <p class="truncate text-xs text-muted-fg">{it.sub}</p>
+          <span class="truncate text-[13px] font-semibold">{item.label}</span>
+          {#if item.detail}
+            <span class="truncate text-[12px] text-(--text-tertiary)">{item.detail}</span>
           {/if}
-        </button>
+        </Card>
       </li>
     {/each}
   </ul>
 {/snippet}
 
-{#snippet seg(label: string, items: { v: string; l: string }[], value: string, pick: (v: string) => void)}
-  <div class="flex flex-wrap items-center gap-2">
-    <span class="w-24 shrink-0 text-sm text-muted-fg">{label}</span>
-    <div class="flex flex-wrap gap-1">
-      {#each items as it (it.v)}
-        <Button type="button" size="sm" variant={it.v === value ? 'primary' : 'secondary'} aria-pressed={it.v === value} onclick={() => pick(it.v)}>{it.l}</Button>
-      {/each}
-    </div>
+{#snippet seg(label: string, items: { value: string; label: string }[], value: string, pick: (value: string) => void)}
+  <div class="flex flex-wrap items-center gap-[9px]">
+    <span class="text-[12px] text-(--text-secondary)">{label}</span>
+    <SegmentedControl size="sm" {value} options={items} label={label} onchange={pick} />
   </div>
 {/snippet}
 
-<form class="space-y-4" onsubmit={create}>
-  <Card class="flex items-center gap-2">
-    <Plus class="h-4 w-4 shrink-0 text-muted-fg" />
-    <p class="truncate text-base font-semibold text-fg-strong">{lxc ? $LL.virtNewLxc() : $LL.virtNewVm()}</p>
+<form class="space-y-[13px]" onsubmit={create}>
+  <Card class="flex items-center gap-[9px]">
+    <Icon name="add" size={18} color="var(--text-secondary)" />
+    <p class="truncate text-[15px] font-semibold">{lxc ? $LL.virtNewLxc() : $LL.virtNewVm()}</p>
     {#if loading}
       <Spinner size="sm" />
     {/if}
-    <IconButton class="ml-auto" label={$LL.cancel()} onclick={oncancel}>
-      <X class="h-4 w-4" />
-    </IconButton>
+    <IconButton class="ml-auto" icon="close" label={$LL.cancel()} onclick={oncancel} />
   </Card>
 
   <!-- General: the kind (PVE), its name, its VMID, the node. -->
-  <Card class="space-y-3">
+  <Card class="space-y-[13px]">
     {@render head($LL.virtGroupGeneral(), okGeneral, pve && draft.node ? `${$LL.virtNode()} ${draft.node}` : '')}
     {#if pve && view.capabilities.lxc}
       {@render choice(
         [
-          { v: 'qemu', l: $LL.virtVm(), sub: $LL.virtVmSub() },
-          { v: 'lxc', l: $LL.virtLxc(), sub: $LL.virtLxcSub() },
+          { value: 'qemu', label: $LL.virtVm(), detail: $LL.virtVmSub() },
+          { value: 'lxc', label: $LL.virtLxc(), detail: $LL.virtLxcSub() },
         ],
         draft.kind,
         (v) => (draft.kind = v as CreateDraft['kind']),
       )}
     {/if}
-    <div class="flex flex-wrap gap-3">
-      <label class="block min-w-0 flex-1 space-y-1 text-sm">
-        <span class="text-muted-fg">{lxc ? $LL.virtHostname() : $LL.virtName()}</span>
-        <Input class="font-mono" bind:value={draft.name} oninput={() => (nameTyped = true)} />
+    <div class="flex flex-wrap gap-[13px]">
+      <label class="block min-w-0 flex-1 space-y-[5px] text-[13px]">
+        <span class="text-(--text-secondary)">{lxc ? $LL.virtHostname() : $LL.virtName()}</span>
+        <Input class="lk-mono" bind:value={draft.name} oninput={() => (nameTyped = true)} />
       </label>
       {#if pve}
-        <label class="block w-36 space-y-1 text-sm">
-          <span class="text-muted-fg">VMID</span>
+        <label class="block w-36 space-y-[5px] text-[13px]">
+          <span class="text-(--text-secondary)">VMID</span>
           <Input type="number" min="100" bind:value={draft.vmid} placeholder={$LL.virtVmidNext()} oninput={() => (vmidTyped = true)} />
         </label>
       {/if}
     </div>
     {#if pve && online.length > 1}
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNode()}</span>
-        <Select class="w-full" bind:value={draft.node}>
-          {#each online as n (n.name)}
-            <option value={n.name}>{n.name}</option>
-          {/each}
-        </Select>
-      </label>
+      <Select class="w-full" label={$LL.virtNode()} bind:value={draft.node} options={online.map((n) => ({ value: n.name, label: n.name }))} />
     {/if}
   </Card>
 
   {#if formError}
-    <Card class="border-danger/40 bg-danger/5">
-      <p class="text-sm text-danger whitespace-pre-wrap break-all">{formError}</p>
+    <Card>
+      <p class="text-[13px] text-(--color-danger) whitespace-pre-wrap break-all">{formError}</p>
     </Card>
   {:else if !form}
     <Card><Spinner class="h-5 w-5" /></Card>
@@ -250,37 +236,31 @@
     {@const f = form}
     {@const o = f.options}
     <!-- System: what it boots from, its firmware; a container's template and login. -->
-    <Card class="space-y-3">
+    <Card class="space-y-[13px]">
       {@render head(lxc ? $LL.virtTemplate() : $LL.virtGroupSystem(), okSystem)}
       {#if lxc}
         {#if f.media.length === 0}
-          <p class="text-sm text-muted-fg">{$LL.virtTemplateNone()}</p>
+          <p class="text-[13px] text-(--text-secondary)">{$LL.virtTemplateNone()}</p>
         {:else}
           {@render choice(offers(f.media), draft.media, (v) => (draft.media = v))}
         {/if}
-        <label class="flex items-start gap-2 text-sm">
-          <input class="mt-1" type="checkbox" bind:checked={draft.unprivileged} />
-          <span>
-            <span class="text-fg">{$LL.virtUnprivileged()}</span>
-            <span class="block text-xs text-faint-fg">{$LL.virtUnprivilegedNote()}</span>
-          </span>
-        </label>
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtRootPassword()}</span>
+        <Checkbox bind:checked={draft.unprivileged}>
+          <span>{$LL.virtUnprivileged()}</span>
+          <span class="block text-[12px] text-(--text-tertiary)">{$LL.virtUnprivilegedNote()}</span>
+        </Checkbox>
+        <label class="block space-y-[5px] text-[13px]">
+          <span class="text-(--text-secondary)">{$LL.virtRootPassword()}</span>
           <Input type="password" autocomplete="new-password" bind:value={draft.password} />
         </label>
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtSshKeys()}</span>
-          <textarea class="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-fg" rows="3" bind:value={draft.sshKeys} placeholder="ssh-ed25519 AAAA…"></textarea>
-        </label>
-        <p class="text-xs text-faint-fg">{$LL.virtRootLoginNote()}</p>
+        <Textarea label={$LL.virtSshKeys()} mono rows={3} bind:value={draft.sshKeys} placeholder="ssh-ed25519 AAAA…" />
+        <p class="text-[12px] text-(--text-tertiary)">{$LL.virtRootLoginNote()}</p>
       {:else}
         {#if o.cloud_images}
           {@render seg(
             $LL.virtSource(),
             [
-              { v: 'media', l: $LL.virtSourceMedia() },
-              { v: 'image', l: $LL.virtSourceImage() },
+              { value: 'media', label: $LL.virtSourceMedia() },
+              { value: 'image', label: $LL.virtSourceImage() },
             ],
             draft.source,
             (v) => (draft.source = v as CreateDraft['source']),
@@ -288,12 +268,12 @@
         {/if}
         {#if image}
           {#if f.images.length === 0}
-            <p class="text-sm text-muted-fg">{$LL.virtImageNone()}</p>
+            <p class="text-[13px] text-(--text-secondary)">{$LL.virtImageNone()}</p>
           {:else}
             {@render choice(offers(f.images), draft.image, (v) => (draft.image = v))}
           {/if}
         {:else if f.media.length === 0}
-          <p class="text-sm text-muted-fg">{$LL.virtMediaNone()}</p>
+          <p class="text-[13px] text-(--text-secondary)">{$LL.virtMediaNone()}</p>
         {:else}
           {@render choice(offers(f.media), draft.media, (v) => (draft.media = v))}
         {/if}
@@ -301,20 +281,20 @@
           {@render seg(
             $LL.virtFirmware(),
             [
-              { v: 'uefi', l: 'UEFI' },
-              { v: 'bios', l: 'BIOS' },
+              { value: 'uefi', label: 'UEFI' },
+              { value: 'bios', label: 'BIOS' },
             ],
             draft.uefi ? 'uefi' : 'bios',
             (v) => (draft.uefi = v === 'uefi'),
           )}
         {/if}
         {#if (o.secure_boot && draft.uefi) || o.tpm}
-          <div class="flex flex-wrap gap-4 text-sm">
+          <div class="flex flex-wrap gap-[13px] text-[13px]">
             {#if o.secure_boot && draft.uefi}
-              <label class="flex items-center gap-1.5 text-fg"><input type="checkbox" bind:checked={draft.secureBoot} /> {$LL.virtSecureBoot()}</label>
+              <Checkbox bind:checked={draft.secureBoot} label={$LL.virtSecureBoot()} />
             {/if}
             {#if o.tpm}
-              <label class="flex items-center gap-1.5 text-fg"><input type="checkbox" bind:checked={draft.tpm} /> {$LL.virtTpm()}</label>
+              <Checkbox bind:checked={draft.tpm} label={$LL.virtTpm()} />
             {/if}
           </div>
         {/if}
@@ -323,61 +303,58 @@
 
     {#if image}
       <!-- cloud-init: the account and address the image boots with. -->
-      <Card class="space-y-3">
+      <Card class="space-y-[13px]">
         {@render head($LL.virtCloudInit(), null)}
         {#if !o.cloud_init}
-          <p class="text-sm text-muted-fg">{$LL.virtCiMissing({ why: o.cloud_init_missing ?? '' })}</p>
+          <p class="text-[13px] text-(--text-secondary)">{$LL.virtCiMissing({ why: o.cloud_init_missing ?? '' })}</p>
         {:else}
-          <p class="text-xs text-faint-fg">{$LL.virtCiNote()}</p>
-          <div class="flex flex-wrap gap-3">
-            <label class="block min-w-40 flex-1 space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtCiUser()}</span>
-              <Input class="font-mono" autocomplete="off" bind:value={draft.ci.user} />
+          <p class="text-[12px] text-(--text-tertiary)">{$LL.virtCiNote()}</p>
+          <div class="flex flex-wrap gap-[13px]">
+            <label class="block min-w-40 flex-1 space-y-[5px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.virtCiUser()}</span>
+              <Input class="lk-mono" autocomplete="off" bind:value={draft.ci.user} />
             </label>
-            <label class="block min-w-40 flex-1 space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtCiPassword()}</span>
+            <label class="block min-w-40 flex-1 space-y-[5px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.virtCiPassword()}</span>
               <Input type="password" autocomplete="new-password" bind:value={draft.ci.password} />
             </label>
           </div>
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtSshKeys()}</span>
-            <textarea class="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-fg" rows="3" bind:value={draft.ci.sshKeys} placeholder="ssh-ed25519 AAAA…"></textarea>
-          </label>
+          <Textarea label={$LL.virtSshKeys()} mono rows={3} bind:value={draft.ci.sshKeys} placeholder="ssh-ed25519 AAAA…" />
           {#if !pve}
-            <label class="block space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtHostname()}</span>
-              <Input class="font-mono" bind:value={draft.ci.hostname} placeholder={draft.name.trim()} />
+            <label class="block space-y-[5px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.virtHostname()}</span>
+              <Input class="lk-mono" bind:value={draft.ci.hostname} placeholder={draft.name.trim()} />
             </label>
           {/if}
           {@render seg(
             $LL.virtCiNetwork(),
             [
-              { v: 'dhcp', l: 'DHCP' },
-              { v: 'static', l: $LL.virtCiStatic() },
+              { value: 'dhcp', label: 'DHCP' },
+              { value: 'static', label: $LL.virtCiStatic() },
             ],
             draft.ci.static ? 'static' : 'dhcp',
             (v) => (draft.ci.static = v === 'static'),
           )}
           {#if draft.ci.static}
-            <div class="flex flex-wrap gap-3">
-              <label class="block min-w-40 flex-1 space-y-1 text-sm">
-                <span class="text-muted-fg">{$LL.virtCiAddress()}</span>
-                <Input class="font-mono" bind:value={draft.ci.address} placeholder="192.168.1.50/24" />
+            <div class="flex flex-wrap gap-[13px]">
+              <label class="block min-w-40 flex-1 space-y-[5px] text-[13px]">
+                <span class="text-(--text-secondary)">{$LL.virtCiAddress()}</span>
+                <Input class="lk-mono" bind:value={draft.ci.address} placeholder="192.168.1.50/24" />
               </label>
-              <label class="block min-w-40 flex-1 space-y-1 text-sm">
-                <span class="text-muted-fg">{$LL.virtCiGateway()}</span>
-                <Input class="font-mono" bind:value={draft.ci.gateway} placeholder="192.168.1.1" />
+              <label class="block min-w-40 flex-1 space-y-[5px] text-[13px]">
+                <span class="text-(--text-secondary)">{$LL.virtCiGateway()}</span>
+                <Input class="lk-mono" bind:value={draft.ci.gateway} placeholder="192.168.1.1" />
               </label>
             </div>
           {/if}
-          <div class="flex flex-wrap gap-3">
-            <label class="block min-w-40 flex-1 space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtCiDns()}</span>
-              <Input class="font-mono" bind:value={draft.ci.dns} placeholder="1.1.1.1 9.9.9.9" />
+          <div class="flex flex-wrap gap-[13px]">
+            <label class="block min-w-40 flex-1 space-y-[5px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.virtCiDns()}</span>
+              <Input class="lk-mono" bind:value={draft.ci.dns} placeholder="1.1.1.1 9.9.9.9" />
             </label>
-            <label class="block min-w-40 flex-1 space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtCiSearch()}</span>
-              <Input class="font-mono" bind:value={draft.ci.search} placeholder="lan" />
+            <label class="block min-w-40 flex-1 space-y-[5px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.virtCiSearch()}</span>
+              <Input class="lk-mono" bind:value={draft.ci.search} placeholder="lan" />
             </label>
           </div>
         {/if}
@@ -385,77 +362,77 @@
     {/if}
 
     <!-- Resources. -->
-    <Card class="space-y-3">
+    <Card class="space-y-[13px]">
       {@render head($LL.virtGroupResources(), null, free)}
-      <div class="flex flex-wrap gap-3">
-        <label class="block w-36 space-y-1 text-sm">
-          <span class="text-muted-fg">{lxc ? $LL.virtCores() : 'vCPU'}</span>
+      <div class="flex flex-wrap gap-[13px]">
+        <label class="block w-36 space-y-[5px] text-[13px]">
+          <span class="text-(--text-secondary)">{lxc ? $LL.virtCores() : 'vCPU'}</span>
           <Input type="number" min="1" bind:value={draft.cores} />
         </label>
-        <label class="block w-36 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtMemoryGib()}</span>
+        <label class="block w-36 space-y-[5px] text-[13px]">
+          <span class="text-(--text-secondary)">{$LL.virtMemoryGib()}</span>
           <Input type="number" min="0.5" step="0.5" bind:value={draft.memoryGib} />
         </label>
       </div>
     </Card>
 
     <!-- Storage: where the disk goes, its size, its bus. -->
-    <Card class="space-y-3">
+    <Card class="space-y-[13px]">
       {@render head($LL.virtGroupStorage(), okStorage)}
       {#if f.storages.length === 0}
-        <p class="text-sm text-muted-fg">{$LL.virtStorageNone()}</p>
+        <p class="text-[13px] text-(--text-secondary)">{$LL.virtStorageNone()}</p>
       {:else}
         {@render choice(
           f.storages.map((p) => ({
-            v: p.id,
-            l: p.name,
-            sub: p.available !== null ? $LL.virtStorageFree({ type: p.type, free: fmtBytes(p.available) }) : p.type,
+            value: p.id,
+            label: p.name,
+            detail: p.available !== null ? $LL.virtStorageFree({ type: p.type, free: fmtBytes(p.available) }) : p.type,
           })),
           draft.storage,
           (v) => (draft.storage = v),
         )}
       {/if}
-      <label class="block w-36 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtDiskGib()}</span>
+      <label class="block w-36 space-y-[5px] text-[13px]">
+        <span class="text-(--text-secondary)">{$LL.virtDiskGib()}</span>
         <Input type="number" min="1" bind:value={draft.diskGib} />
       </label>
       {#if !lxc && o.buses.length > 0}
-        {@render seg($LL.virtBus(), o.buses.map((b) => ({ v: b, l: b })), draft.bus, (v) => (draft.bus = v))}
+        {@render seg($LL.virtBus(), o.buses.map((b) => ({ value: b, label: b })), draft.bus, (v) => (draft.bus = v))}
       {/if}
     </Card>
 
     <!-- Network. -->
-    <Card class="space-y-3">
+    <Card class="space-y-[13px]">
       {@render head($LL.virtNetwork(), null)}
       {@render choice(
         [
           ...f.networks.map((n) => ({
-            v: n.id,
-            l: n.name,
-            sub: [n.mode, n.bridge, n.cidrs[0]].filter(Boolean).join(' · '),
+            value: n.id,
+            label: n.name,
+            detail: [n.mode, n.bridge, n.cidrs[0]].filter(Boolean).join(' · '),
           })),
-          { v: '', l: $LL.virtNoNetwork() },
+          { value: '', label: $LL.virtNoNetwork() },
         ],
         draft.network,
         (v) => (draft.network = v),
       )}
       {#if !lxc && o.nic_models.length > 0 && draft.network !== ''}
-        {@render seg($LL.virtNicModel(), o.nic_models.map((m) => ({ v: m, l: m })), draft.nicModel, (v) => (draft.nicModel = v))}
+        {@render seg($LL.virtNicModel(), o.nic_models.map((m) => ({ value: m, label: m })), draft.nicModel, (v) => (draft.nicModel = v))}
       {/if}
     </Card>
   {/if}
 
   <!-- Confirm. -->
-  <Card class="space-y-3">
+  <Card class="space-y-[13px]">
     {@render head($LL.virtGroupConfirm(), ok)}
-    <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={draft.start} /> {$LL.virtStartAfter()}</label>
+    <Checkbox bind:checked={draft.start} label={$LL.virtStartAfter()} />
     {#if form && !ok}
-      <p class="text-xs text-muted-fg">{$LL.virtIncomplete()}</p>
+      <p class="text-[12px] text-(--text-secondary)">{$LL.virtIncomplete()}</p>
     {/if}
     {#if error}
-      <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
+      <p class="text-[13px] text-(--color-danger) whitespace-pre-wrap break-all">{error}</p>
     {/if}
-    <div class="flex justify-end gap-2">
+    <div class="flex justify-end gap-[9px]">
       <Button type="button" variant="secondary" onclick={oncancel}>{$LL.cancel()}</Button>
       <Button type="submit" disabled={busy || !ok}>
         {#if busy}<Spinner size="sm" />{/if}

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Button, Input, Modal, Spinner } from '@serverbox/webui'
-  import { CirclePower, Moon, RotateCw } from '@lucide/svelte'
+  import { Button, Dialog, Input, Spinner } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { ApiError, api } from '../../../lib/api'
   import type { PowerAction } from '../../../types'
@@ -35,13 +34,13 @@
     }
   })
 
-  const actions: { action: PowerAction; label: () => string; icon: typeof CirclePower }[] = [
-    { action: 'shutdown', label: () => $LL.powerShutdown(), icon: CirclePower },
-    { action: 'reboot', label: () => $LL.powerReboot(), icon: RotateCw },
-    { action: 'suspend', label: () => $LL.powerSuspend(), icon: Moon },
+  const powerActions: { action: PowerAction; label: () => string; icon: string }[] = [
+    { action: 'shutdown', label: () => $LL.powerShutdown(), icon: 'power_settings_new' },
+    { action: 'reboot', label: () => $LL.powerReboot(), icon: 'restart_alt' },
+    { action: 'suspend', label: () => $LL.powerSuspend(), icon: 'bedtime' },
   ]
 
-  const labelOf = (action: PowerAction) => actions.find((a) => a.action === action)?.label() ?? action
+  const labelOf = (action: PowerAction) => powerActions.find((a) => a.action === action)?.label() ?? action
 
   async function run() {
     if (!pending) return
@@ -74,57 +73,41 @@
   }
 </script>
 
-<Modal {open} title={$LL.powerControl()} {onclose}>
+<Dialog open={open} wide title={$LL.powerControl()} onclose={onclose}>
   {#if sent}
-    <div class="space-y-4">
-      <p class="text-sm text-fg">{$LL.powerActionSent({ action: labelOf(sent) })}</p>
-      <div class="flex justify-end">
-        <Button size="sm" onclick={onclose}>{$LL.close()}</Button>
-      </div>
-    </div>
+    <p class="text-[13px] text-(--text-primary)">{$LL.powerActionSent({ action: labelOf(sent) })}</p>
   {:else}
-    <div class="space-y-4">
-      <p class="text-sm text-muted-fg">{$LL.powerNote()}</p>
-
-      <div class="flex flex-col gap-2">
-        {#each actions as { action, label, icon } (action)}
-          {@const Icon = icon}
-          <Button
-            variant={pending === action ? 'primary' : 'secondary'}
-            size="sm"
-            disabled={running}
-            onclick={() => (pending = action)}
-          >
-            <Icon class="w-4 h-4 mr-2" />
-            {label()}
-          </Button>
-        {/each}
-      </div>
-
-      <div class="space-y-1">
-        <label class="text-sm text-muted-fg" for="power-password">{$LL.powerPassword()}</label>
-        <Input id="power-password" type="password" autocomplete="off" bind:value={password} />
-        <p class="text-xs text-muted-fg">{$LL.powerPasswordHint()}</p>
-      </div>
-
-      {#if error}
-        <p class="text-sm text-danger" role="alert">{error}</p>
-      {/if}
-
-      <div class="flex items-center justify-end gap-2 pt-2">
-        <Button variant="ghost" size="sm" onclick={onclose}>{$LL.cancel()}</Button>
-        <Button
-          variant={pending === 'shutdown' ? 'danger' : 'primary'}
-          size="sm"
-          disabled={!pending || running}
-          onclick={run}
-        >
-          {#if running}
-            <Spinner size="sm" class="mr-2" />
-          {/if}
-          {pending ? labelOf(pending) : $LL.powerControl()}
-        </Button>
-      </div>
+    <div class="space-y-[13px]">
+        <p class="text-[13px] text-(--text-secondary)">{$LL.powerNote()}</p>
+        <div class="flex flex-wrap gap-[7px]">
+          {#each powerActions as { action, label, icon } (action)}
+            <Button
+              variant={pending === action ? 'tinted' : 'secondary'}
+              size="sm"
+              disabled={running}
+              icon={icon}
+              onclick={() => (pending = action)}
+            >{label()}</Button>
+          {/each}
+        </div>
+        <Input label={$LL.powerPassword()} id="power-password" type="password" autocomplete="off" bind:value={password} hint={$LL.powerPasswordHint()} />
+        {#if error}<p class="text-[13px] text-(--color-danger)" role="alert">{error}</p>{/if}
     </div>
   {/if}
-</Modal>
+  {#snippet actions()}
+    {#if sent}
+      <Button onclick={onclose}>{$LL.close()}</Button>
+    {:else}
+      <Button variant="ghost" onclick={onclose}>{$LL.cancel()}</Button>
+      <Button
+        variant={pending === 'shutdown' ? 'destructive' : 'primary'}
+        disabled={!pending || running}
+        icon={running ? undefined : pending === 'reboot' ? 'restart_alt' : pending === 'suspend' ? 'bedtime' : pending ? 'power_settings_new' : undefined}
+        onclick={run}
+      >
+        {#if running}<Spinner size={16} />{/if}
+        {pending ? labelOf(pending) : $LL.powerControl()}
+      </Button>
+    {/if}
+  {/snippet}
+</Dialog>

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Spinner } from '@serverbox/webui'
-  import { ChevronDown, Pencil, Play, Plus, Trash2, X } from '@lucide/svelte'
+  import { Badge, Button, Card, Icon, Spinner } from '../../lk/index'
   import VirtBackupJobForm from './VirtBackupJobForm.svelte'
   import { api } from '../../../lib/api'
   import { jobDraft, jobEdit, modeText, pruneText, selectionText, storageNames, virtErrorText, virtRequestText, type JobDraft } from '../../../lib/virt'
@@ -98,101 +97,94 @@
   }
 </script>
 
-{#snippet twice(key: string, label: string, confirmLabel: string, danger: boolean, act: () => void, Icon: typeof Play)}
+{#snippet twice(key: string, label: string, confirmLabel: string, danger: boolean, act: () => void, icon: string)}
   {#if confirm === key}
-    <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>
-      <X class="h-4 w-4" />
-      {$LL.cancel()}
-    </Button>
+    <Button variant="secondary" size="sm" onclick={() => (confirm = null)} icon="close">{$LL.cancel()}</Button>
   {/if}
-  <Button variant={danger ? 'danger' : 'secondary'} size="sm" disabled={busy !== null} onclick={act}>
-    <Icon class="h-4 w-4" />
+  <Button variant={danger ? 'destructive' : 'secondary'} size="sm" disabled={busy !== null} onclick={act} {icon}>
     {confirm === key ? confirmLabel : label}
   </Button>
 {/snippet}
 
 {#if error}
-  <Card class="border-danger/40 bg-danger/5">
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
-  </Card>
+  <Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p></Card>
 {/if}
 {#if notice}
-  <Card>
-    <p class="text-sm text-muted-fg whitespace-pre-wrap">{notice}</p>
-  </Card>
+  <Card><p class="whitespace-pre-wrap text-[13px] text-(--text-secondary)">{notice}</p></Card>
 {/if}
 
 {#if readError}
-  <Card><p class="text-sm text-danger whitespace-pre-wrap break-all">{readError}</p></Card>
+  <Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{readError}</p></Card>
 {:else if !data}
   <Card><Spinner class="h-5 w-5" /></Card>
 {:else}
   {#if editing}
     {@const d = editing}
-    <Card class="space-y-3">
-      <h3 class="text-sm font-medium text-fg-strong">{d.isNew ? $LL.virtBakNewJob() : $LL.virtBakEditJob({ id: d.id })}</h3>
+    <Card class="space-y-[13px]">
+      <h3 class="text-[15px] font-semibold">{d.isNew ? $LL.virtBakNewJob() : $LL.virtBakEditJob({ id: d.id })}</h3>
       {#key d}
         <VirtBackupJobForm draft={d} {storages} {nodes} full busy={busy !== null} onsave={(e) => void save(e)} oncancel={() => (editing = null)} />
       {/key}
     </Card>
   {/if}
 
-  <Card class="space-y-2">
-    <div class="flex items-center gap-2">
-      <h3 class="text-sm font-medium text-fg-strong">{$LL.virtSectionBackupJobs()}</h3>
-      <span class="text-xs text-faint-fg">{jobs.length || ''}</span>
-      <Button class="ml-auto" size="sm" variant="secondary" disabled={busy !== null} onclick={() => { confirm = null; editing = jobDraft(null, storageNames(storages, '')[0] ?? '') }}>
-        <Plus class="h-4 w-4" />
+  <Card class="space-y-[9px]">
+    <div class="flex items-center gap-[9px]">
+      <h3 class="text-[15px] font-semibold">{$LL.virtSectionBackupJobs()}</h3>
+      <Badge tone="neutral">{jobs.length}</Badge>
+      <Button class="ml-auto" size="sm" variant="tinted" icon="add" disabled={busy !== null} onclick={() => { confirm = null; editing = jobDraft(null, storageNames(storages, '')[0] ?? '') }}>
         {$LL.virtBakNewJob()}
       </Button>
     </div>
 
     {#if busy?.startsWith('run:')}
-      <div class="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-muted-fg">
+      <Card padding="11px 13px" class="flex items-center gap-[9px] text-[13px] text-(--text-secondary)">
         <Spinner size="sm" />
         {$LL.virtBakJobRunning({ id: busy.slice(4) })}
-      </div>
+      </Card>
     {/if}
 
     {#if jobs.length === 0}
-      <p class="text-sm text-muted-fg">{$LL.virtBakNoJobs()}</p>
+      <div class="flex flex-col items-center gap-[9px] py-[27px] text-(--text-tertiary)">
+        <Icon name="backup" size={48} weight={300} />
+        <p class="text-[13px]">{$LL.virtEmptyBackupJobs()}</p>
+      </div>
     {/if}
     {#each jobs as job (job.id)}
-      <div class="rounded-lg border border-line">
-        <button type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted" aria-expanded={!!open[job.id]} onclick={() => (open[job.id] = !open[job.id])}>
-          <span class="font-mono text-sm text-fg-strong">{job.schedule ?? '—'}</span>
-          <span class="min-w-0 flex-1 truncate text-xs text-muted-fg">{summary(job)}</span>
+      <Card variant="raised" padding="0">
+        <button type="button" class="flex w-full items-center gap-[9px] rounded-[13px] px-[13px] py-[9px] text-left" aria-expanded={!!open[job.id]} onclick={() => (open[job.id] = !open[job.id])}>
+          <span class="lk-mono text-[13px] font-semibold text-(--text-primary)">{job.schedule ?? '—'}</span>
+          <span class="min-w-0 flex-1 truncate text-[12px] text-(--text-secondary)">{summary(job)}</span>
           {#if !job.enabled}<Badge>{$LL.virtBakDisabled()}</Badge>{/if}
-          <ChevronDown class="h-4 w-4 shrink-0 text-faint-fg transition-transform {open[job.id] ? 'rotate-180' : ''}" />
+          <Icon name={open[job.id] ? 'expand_less' : 'expand_more'} size={18} />
         </button>
         {#if open[job.id]}
-          <div class="space-y-3 border-t border-line p-3">
-            <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs @2xl:grid-cols-3">
+          <div class="space-y-[13px] border-t border-(--border-hairline) p-[13px]">
+            <dl class="grid grid-cols-2 gap-x-[13px] gap-y-[9px] text-[12px] @2xl:grid-cols-3">
               {#each [['ID', job.id], [$LL.virtBakSelection(), selectionText(job)], [$LL.virtNode(), job.node ?? $LL.virtBakAnyNode()], [$LL.virtBakMode(), modeText(job.mode, job.compress)], [$LL.virtBakRetention(), pruneText(job.prune)], [$LL.virtBakNotesTemplate(), job.notes_template], [$LL.virtBakComment(), job.comment], [$LL.virtBakMail(), job.mail_notification === 'always' ? $LL.virtBakMailAlways() : job.mail_notification === 'failure' ? $LL.virtBakMailFailure() : null]] as [label, value] (label)}
                 {#if value}
                   <div class="min-w-0">
-                    <dt class="text-faint-fg">{label}</dt>
-                    <dd class="break-all text-muted-fg">{value}</dd>
+                    <dt class="text-(--text-tertiary)">{label}</dt>
+                    <dd class="break-all text-(--text-secondary)">{value}</dd>
                   </div>
                 {/if}
               {/each}
             </dl>
             {#if confirm === `run:${job.id}`}
-              <p class="text-xs text-warning">{$LL.virtBakRunNote()}</p>
+              <p class="text-[12px] text-(--color-warning)">{$LL.virtBakRunNote()}</p>
             {:else if confirm === `remove:${job.id}`}
-              <p class="text-xs text-danger">{$LL.virtConfirmAgain()}</p>
+              <p class="text-[12px] text-(--color-danger)">{$LL.virtConfirmAgain()}</p>
             {/if}
-            <div class="flex flex-wrap justify-end gap-2">
-              {@render twice(`remove:${job.id}`, $LL.virtHwRemove(), $LL.virtBakConfirmRemovePlan({ id: job.id }), true, () => void remove(job), Trash2)}
-              {@render twice(`run:${job.id}`, $LL.virtBakRunNow(), $LL.virtBakConfirmRun({ id: job.id }), false, () => void runNow(job), Play)}
-              <Button size="sm" disabled={busy !== null} onclick={() => { confirm = null; editing = jobDraft(job) }}>
-                <Pencil class="h-4 w-4" />
+            <div class="flex flex-wrap justify-end gap-[5px]">
+              {@render twice(`remove:${job.id}`, $LL.virtHwRemove(), $LL.virtBakConfirmRemovePlan({ id: job.id }), true, () => void remove(job), 'delete')}
+              {@render twice(`run:${job.id}`, $LL.virtBakRunNow(), $LL.virtBakConfirmRun({ id: job.id }), false, () => void runNow(job), 'play_arrow')}
+              <Button size="sm" disabled={busy !== null} onclick={() => { confirm = null; editing = jobDraft(job) }} icon="edit">
                 {$LL.virtBakEditPlan()}
               </Button>
             </div>
           </div>
         {/if}
-      </div>
+      </Card>
     {/each}
   </Card>
 {/if}

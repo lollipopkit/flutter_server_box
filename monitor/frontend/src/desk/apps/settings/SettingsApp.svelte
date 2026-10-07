@@ -3,13 +3,11 @@
   /// after the System Settings the desk imitates. The sections that belong to
   /// this browser come first; the agent's own configuration follows.
 
-  import { CircleUserRound, Image, Monitor, Server, ServerCog, ShieldCheck, SlidersHorizontal } from '@lucide/svelte'
+  import { SidebarItem, SidebarSection } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { useWindow } from '../../deskState.svelte'
-  import SourceGroup from '../../ui/SourceGroup.svelte'
-  import SourceItem from '../../ui/SourceItem.svelte'
   import SplitView from '../../ui/SplitView.svelte'
   import AccessSection from './AccessSection.svelte'
   import AccountSection from './AccountSection.svelte'
@@ -44,42 +42,42 @@
 
 <SplitView width={16}>
   {#snippet sidebar()}
-    <SourceGroup title={$LL.settingsThisBrowser()} icon={Monitor} boxed>
-      <SourceItem
+    <SidebarSection title={$LL.settingsThisBrowser()}>
+      <SidebarItem
         label={$LL.settingsGeneral()}
-        icon={SlidersHorizontal}
-        selected={current === 'general'}
+        icon="tune"
+        active={current === 'general'}
         onclick={() => show('general')}
       />
-      <SourceItem
+      <SidebarItem
         label={$LL.deskAppearance()}
-        icon={Image}
-        selected={current === 'appearance'}
+        icon="wallpaper"
+        active={current === 'appearance'}
         onclick={() => show('appearance')}
       />
-    </SourceGroup>
-    <SourceGroup title={$LL.settingsThisServer()} icon={Server} boxed>
-      <SourceItem
+    </SidebarSection>
+    <SidebarSection title={$LL.settingsThisServer()}>
+      <SidebarItem
         label={$LL.settingsAccount()}
-        icon={CircleUserRound}
-        selected={current === 'account'}
+        icon="person"
+        active={current === 'account'}
         onclick={() => show('account')}
       />
-      <SourceItem
+      <SidebarItem
         label={$LL.serverSettings()}
-        icon={ServerCog}
-        selected={current === 'server'}
+        icon="dns"
+        active={current === 'server'}
         onclick={() => show('server')}
       />
       {#if admin}
-        <SourceItem
+        <SidebarItem
           label={$LL.settingsAccess()}
-          icon={ShieldCheck}
-          selected={current === 'access'}
+          icon="shield_lock"
+          active={current === 'access'}
           onclick={() => show('access')}
         />
       {/if}
-    </SourceGroup>
+    </SidebarSection>
   {/snippet}
 
   {#if current === 'general'}

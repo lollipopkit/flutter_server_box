@@ -206,7 +206,7 @@ describe('the Files page moving around', () => {
     await fireEvent.dblClick(screen.getByText('sub'))
 
     // The folder is empty, so the listing says so rather than showing `sub`.
-    expect(await screen.findByText('Nothing here')).toBeInTheDocument()
+    expect(await screen.findByText('Empty folder')).toBeInTheDocument()
     expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`)
 
     await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
@@ -249,7 +249,7 @@ describe('the Files page moving around', () => {
     })
     render(Files)
     await fireEvent.dblClick(await screen.findByText('sub'))
-    await screen.findByText('Nothing here')
+    await screen.findByText('Empty folder')
 
     fail = true
     await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
@@ -266,12 +266,12 @@ describe('the Files page moving around', () => {
 
     // The list carries a permissions column; the grid shows tiles instead.
     expect(screen.getByText('644')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'true')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Grid' }))
+    await fireEvent.click(screen.getByRole('tab', { name: 'Grid' }))
 
-    expect(screen.getByRole('button', { name: 'Grid' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('tab', { name: 'Grid' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'false')
     expect(screen.queryByText('644')).toBeNull()
     // Still the same folder, just laid out the other way.
     expect(screen.getByText('note.txt')).toBeInTheDocument()

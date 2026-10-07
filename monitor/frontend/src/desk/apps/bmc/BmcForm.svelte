@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Input } from '@serverbox/webui'
+  import { Button, Input } from '../../lk'
   import { api } from '../../../lib/api'
   import { bmcErrorText, prettyFingerprint } from '../../../lib/bmc'
   import { newId } from '../../../lib/newId'
@@ -68,73 +68,44 @@
   }
 </script>
 
-<form class="space-y-4" onsubmit={submit}>
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="bmc-name">{$LL.bmcName()}</label>
-    <Input id="bmc-name" bind:value={name} placeholder="rack-1" />
-  </div>
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="bmc-url">{$LL.bmcUrl()}</label>
-    <Input
-      id="bmc-url"
-      value={url}
-      oninput={(e: Event) => changeUrl((e.currentTarget as HTMLInputElement).value)}
-      placeholder="https://10.0.0.9"
-    />
-    <p class="text-xs text-muted-fg">{$LL.bmcUrlHint()}</p>
-  </div>
-  <div class="grid gap-4 @2xl:grid-cols-2">
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="bmc-username">{$LL.bmcUsername()}</label>
-      <Input id="bmc-username" autocomplete="off" bind:value={username} />
-    </div>
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="bmc-password">{$LL.bmcPassword()}</label>
-      <Input
-        id="bmc-password"
-        type="password"
-        autocomplete="new-password"
-        bind:value={password}
-        placeholder={initial?.has_password ? $LL.bmcPasswordKept() : ''}
-      />
-    </div>
+<form id="bmc-form" class="grid gap-[13px]" onsubmit={submit}>
+  <Input id="bmc-name" bind:value={name} label={$LL.bmcName()} placeholder="rack-1" />
+  <Input
+    id="bmc-url"
+    value={url}
+    label={$LL.bmcUrl()}
+    hint={$LL.bmcUrlHint()}
+    oninput={(e: Event) => changeUrl((e.currentTarget as HTMLInputElement).value)}
+    placeholder="https://10.0.0.9"
+    mono
+  />
+  <div class="grid gap-[13px] @2xl:grid-cols-2">
+    <Input id="bmc-username" autocomplete="off" bind:value={username} label={$LL.bmcUsername()} />
+    <Input id="bmc-password" type="password" autocomplete="new-password" bind:value={password} label={$LL.bmcPassword()} placeholder={initial?.has_password ? $LL.bmcPasswordKept() : ''} />
   </div>
 
-  <div class="space-y-2 rounded-lg border border-line p-3">
-    <p class="text-sm text-fg-strong">{$LL.bmcCert()}</p>
-    {#if pin}
-      <p class="break-all font-mono text-xs text-muted-fg">{prettyFingerprint(pin)}</p>
-    {:else}
-      <p class="text-xs text-muted-fg">{$LL.bmcCertNone()}</p>
-    {/if}
-    <Button type="button" variant="secondary" size="sm" disabled={probing} onclick={() => void probe()}>
-      {$LL.bmcCertRead()}
-    </Button>
-    {#if probeError}
-      <p class="text-xs text-danger">{probeError}</p>
-    {/if}
+  <section class="rounded-[13px] bg-(--surface-card) p-[13px_15px]">
+    <h3 class="text-[15px] font-semibold">{$LL.bmcCert()}</h3>
+    {#if pin}<p class="lk-mono mt-[7px] break-all text-[12px] text-(--text-secondary)">{prettyFingerprint(pin)}</p>
+    {:else}<p class="mt-[7px] text-[12px] text-(--text-secondary)">{$LL.bmcCertNone()}</p>{/if}
+    <Button type="button" class="mt-[9px]" variant="secondary" size="sm" icon="refresh" disabled={probing} onclick={() => void probe()}>{$LL.bmcCertRead()}</Button>
+    {#if probeError}<p class="mt-[7px] text-[12px] text-(--color-danger)">{probeError}</p>{/if}
     {#if probed}
       {@const cert = probed}
-      <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-        <dt class="text-faint-fg">{$LL.bmcCertSubject()}</dt>
-        <dd class="break-all text-muted-fg">{cert.subject}</dd>
-        <dt class="text-faint-fg">{$LL.bmcCertIssuer()}</dt>
-        <dd class="break-all text-muted-fg">{cert.issuer}</dd>
-        <dt class="text-faint-fg">{$LL.bmcCertValid()}</dt>
-        <dd class="text-muted-fg">{date(cert.not_before)} – {date(cert.not_after)}</dd>
-        <dt class="text-faint-fg">SHA-256</dt>
-        <dd class="break-all font-mono text-muted-fg">{prettyFingerprint(cert.fingerprint)}</dd>
+      <dl class="mt-[9px] grid grid-cols-1 gap-x-[13px] @2xl:grid-cols-2">
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.bmcCertSubject()}</dt><dd class="break-all text-[12px]">{cert.subject}</dd></div>
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.bmcCertIssuer()}</dt><dd class="break-all text-[12px]">{cert.issuer}</dd></div>
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.bmcCertValid()}</dt><dd class="lk-num text-right text-[12px]">{date(cert.not_before)} – {date(cert.not_after)}</dd></div>
+        <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">SHA-256</dt><dd class="lk-mono break-all text-right text-[12px]">{prettyFingerprint(cert.fingerprint)}</dd></div>
       </dl>
-      {#if cert.not_after * 1000 < Date.now()}
-        <p class="text-xs text-warning">{$LL.bmcCertExpired()}</p>
-      {/if}
-      <p class="text-xs text-muted-fg">{$LL.bmcCertCompare()}</p>
-      <Button type="button" size="sm" onclick={() => (pin = cert.fingerprint)}>{$LL.bmcCertTrust()}</Button>
+      {#if cert.not_after * 1000 < Date.now()}<p class="mt-[7px] text-[12px] text-(--color-warning)">{$LL.bmcCertExpired()}</p>{/if}
+      <p class="mt-[7px] text-[12px] text-(--text-secondary)">{$LL.bmcCertCompare()}</p>
+      <Button type="button" class="mt-[9px]" size="sm" variant="primary" icon="lock" onclick={() => (pin = cert.fingerprint)}>{$LL.bmcCertTrust()}</Button>
     {/if}
-  </div>
+  </section>
 
-  <div class="flex justify-end gap-2">
+  <div class="flex justify-end gap-[7px]">
     <Button type="button" variant="secondary" onclick={oncancel}>{$LL.cancel()}</Button>
-    <Button type="submit" disabled={busy}>{$LL.save()}</Button>
+    <Button type="submit" variant="primary" disabled={busy}>{$LL.save()}</Button>
   </div>
 </form>

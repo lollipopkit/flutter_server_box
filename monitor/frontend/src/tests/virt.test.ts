@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Virt from '../desk/apps/virt/VirtApp.svelte'
 import { api } from '../lib/api'
@@ -342,7 +342,7 @@ describe('the virtualization page', () => {
       error: null,
     })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^hardware$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^hardware$/i }))
     await fireEvent.click(await screen.findByRole('button', { name: /^scsi0/ }))
     expect(await screen.findByText(/local-lvm:vm-100-disk-0/)).toBeInTheDocument()
     expect(screen.getAllByText(/vmbr0/).length).toBeGreaterThan(0)
@@ -357,7 +357,7 @@ describe('the virtualization page', () => {
     })
     virtConsole.mockResolvedValue({ ticket: null, vnc_password: null, password_known: true, command: "virsh --connect qemu:///system console --force --domain 'uuid-1'", error: null })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^console$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^console$/i }))
     await fireEvent.click(await screen.findByRole('button', { name: /^open$/i }))
     expect(await screen.findByText(/console --force --domain 'uuid-1'/)).toBeInTheDocument()
     expect(virtConsole).toHaveBeenCalledWith('uuid-1', 'text', undefined)
@@ -371,7 +371,7 @@ describe('the virtualization page', () => {
     // The chart sizes itself to its box; jsdom has no layout to observe.
     vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^day$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^day$/i }))
     await waitFor(() => expect(virtHistory).toHaveBeenCalledWith('qemu/100', 'day'))
     vi.unstubAllGlobals()
   })
@@ -389,7 +389,7 @@ describe('the virtualization page', () => {
     })
     virtSnapshot.mockResolvedValue({ error: null })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^snapshots$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^snapshots$/i }))
     expect(await screen.findByText('pre-up')).toBeInTheDocument()
     await fireEvent.input(screen.getByPlaceholderText('Name'), { target: { value: 'pre-down' } })
     await fireEvent.click(screen.getByRole('button', { name: /take snapshot/i }))
@@ -415,7 +415,7 @@ describe('the virtualization page', () => {
     loadVirt.mockResolvedValue(view)
     virtSnapshots.mockResolvedValue({ snapshots: [], memory: 'optional', refusal: 'snapshot feature is not available: local', chain: null, error: null })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^snapshots$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^snapshots$/i }))
     expect(await screen.findByText(/not available: local/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /take snapshot/i })).not.toBeInTheDocument()
   })
@@ -520,13 +520,14 @@ describe('the virtualization page: storage and networks', () => {
       error: { kind: 'unsupported', message: null, detail: { code: 'refused', issue: 'in_use' }, cert: null, previous_fingerprint: null },
     })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^storage$/i }))
+    await fireEvent.click(await screen.findByRole('button', { name: /^storage/i }))
     expect(await screen.findByText('vm-100-disk-0.qcow2')).toBeInTheDocument()
     expect(virtVolumes).toHaveBeenCalledWith('pve/local', undefined)
     expect(screen.getByText(/Used by web/)).toBeInTheDocument()
-    const deletes = screen.getAllByRole('button').filter((b) => b.querySelector('.lucide-trash-2'))
+    // The volume's own delete, then the confirmation's.
+    const deletes = screen.getAllByRole('button', { name: /^delete$/i })
     await fireEvent.click(deletes[deletes.length - 1])
-    await fireEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    await fireEvent.click(within(screen.getByRole('dialog', { name: /^delete$/i })).getByRole('button', { name: /^delete$/i }))
     await waitFor(() =>
       expect(virtManage).toHaveBeenCalledWith({ op: 'volume_delete', pool: 'pve/local', volume: 'local:100/vm-100-disk-0.qcow2' }, undefined),
     )
@@ -772,14 +773,14 @@ describe('the virtualization page: creating, copying and deleting', () => {
     deleteGuest.mockResolvedValue({ error: null })
     cloneGuest.mockResolvedValue({ id: 'qemu/106', error: null })
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^settings$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^settings$/i }))
     await fireEvent.click(await screen.findByRole('button', { name: /^delete guest$/i }))
     expect(deleteGuest).not.toHaveBeenCalled()
     await fireEvent.click(screen.getByRole('button', { name: /^confirm: delete web$/i }))
     await waitFor(() => expect(deleteGuest).toHaveBeenCalledWith('qemu/100', true, undefined))
     expect(await screen.findByText('Deleted web.')).toBeInTheDocument()
 
-    await fireEvent.click(screen.getByRole('button', { name: /^settings$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^settings$/i }))
     await fireEvent.click(await screen.findByRole('button', { name: /^clone$/i }))
     await waitFor(() => expect(cloneGuest).toHaveBeenCalledWith('qemu/100', { name: 'web-clone', full: true }, undefined))
     expect(makeTemplate).not.toHaveBeenCalled()
@@ -788,7 +789,7 @@ describe('the virtualization page: creating, copying and deleting', () => {
   it('keeps delete closed while the guest runs', async () => {
     loadVirt.mockResolvedValue(withCreate([guest({})]))
     render(Virt)
-    await fireEvent.click(await screen.findByRole('button', { name: /^settings$/i }))
+    await fireEvent.click(await screen.findByRole('tab', { name: /^settings$/i }))
     expect(await screen.findByRole('button', { name: /^delete guest$/i })).toBeDisabled()
     expect(screen.getAllByText('Shut it down first.').length).toBeGreaterThan(0)
   })

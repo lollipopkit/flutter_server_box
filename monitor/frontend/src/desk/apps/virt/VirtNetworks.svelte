@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Select, Spinner } from '@serverbox/webui'
-  import { Lock, Pencil, Play, Plus, RefreshCw, RotateCcw, Square, Trash2, X } from '@lucide/svelte'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner, Switch } from '../../lk/index'
   import { api } from '../../../lib/api'
   import { refText, virtErrorText, virtRequestText } from '../../../lib/virt'
   import { untrack } from 'svelte'
@@ -182,16 +181,16 @@
 </script>
 
 {#if error}
-  <Card class="border-danger/40 bg-danger/5">
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
+  <Card>
+    <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p>
   </Card>
 {/if}
 
 {#each changes as c (c.node)}
-  <Card class="space-y-2 border-warning/40 bg-warning/5">
-    <div class="flex flex-wrap items-center gap-2">
-      <span class="text-sm text-fg-strong">{$LL.virtNetChanges({ node: c.node })}</span>
-      <span class="ml-auto flex gap-1">
+  <Card class="space-y-[9px]">
+    <div class="flex flex-wrap items-center gap-[9px]">
+      <span class="text-[13px] font-semibold text-(--text-primary)">{$LL.virtNetChanges({ node: c.node })}</span>
+      <span class="ml-auto flex gap-[5px]">
         <Button size="sm" disabled={busy} onclick={() => (confirm = { text: $LL.virtNetApplyConfirm({ node: c.node }), label: $LL.virtNetApply(), change: { op: 'network_apply', node: c.node } })}>
           {$LL.virtNetApply()}
         </Button>
@@ -201,78 +200,72 @@
       </span>
     </div>
     <div class="overflow-x-auto">
-      <pre class="text-xs leading-5">{#each c.diff.split('\n') as line, i (i)}<span class={line.startsWith('+') && !line.startsWith('+++') ? 'text-success' : line.startsWith('-') && !line.startsWith('---') ? 'text-danger' : 'text-muted-fg'}>{line}</span>
+      <pre class="lk-mono whitespace-pre text-[12px] leading-5">{#each c.diff.split('\n') as line, i (i)}<span class={line.startsWith('+') && !line.startsWith('+++') ? 'text-(--color-success)' : line.startsWith('-') && !line.startsWith('---') ? 'text-(--color-danger)' : 'text-(--text-secondary)'}>{line}</span>
 {/each}</pre>
     </div>
   </Card>
 {/each}
 
-<Card class="space-y-2">
-  <div class="flex items-center gap-2">
+<Card class="space-y-[9px]">
+  <div class="flex items-center gap-[9px]">
     {#if caps.network_edit}
-      <Button size="sm" disabled={busy} onclick={openCreate}><Plus class="h-4 w-4" />{pve ? $LL.virtNetCreateBridge() : $LL.virtNetCreate()}</Button>
+      <Button size="sm" icon="add" disabled={busy} onclick={openCreate}>{pve ? $LL.virtNetCreateBridge() : $LL.virtNetCreate()}</Button>
     {/if}
-    <IconButton class="ml-auto" label={$LL.refresh()} disabled={loading} onclick={() => void load()}>
-      <RefreshCw class="h-4 w-4" />
-    </IconButton>
+    <IconButton class="ml-auto" icon="refresh" label={$LL.refresh()} disabled={loading} onclick={() => void load()} />
   </div>
   {#if networks === null}
     <Spinner class="h-5 w-5" />
   {:else if networks.length === 0}
-    <p class="text-sm text-muted-fg">{$LL.virtNetNone()}</p>
+    <div class="flex flex-col items-center gap-[9px] py-[27px] text-(--text-tertiary)">
+      <Icon name="lan" size={48} weight={300} />
+      <p class="text-[13px]">{$LL.virtEmptyNetworks()}</p>
+    </div>
   {:else}
-    <ul class="divide-y divide-line">
+    <ul>
       {#each networks as n (n.id)}
-        <li class="space-y-1 py-2">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="h-2 w-2 shrink-0 rounded-full {n.active ? 'bg-success' : 'bg-faint-fg'}"></span>
-            <span class="text-sm text-fg-strong">{n.name}</span>
-            <span class="font-mono text-xs text-faint-fg">{n.mode}{n.node && view.host.nodes.length > 1 ? ` · ${n.node}` : ''}</span>
+        <li class="border-t border-(--border-hairline) py-[7px]">
+          <div class="flex flex-wrap items-center gap-[9px]">
+            <Badge tone={n.active ? 'success' : 'neutral'} dot>{n.active ? $LL.virtStateRunning() : $LL.virtStateStopped()}</Badge>
+            <span class="text-[13px] font-semibold text-(--text-primary)">{n.name}</span>
+            <span class="lk-mono text-[12px] text-(--text-tertiary)">{n.mode}{n.node && view.host.nodes.length > 1 ? ` · ${n.node}` : ''}</span>
             {#if n.autostart}<Badge>{$LL.virtNetAutostart()}</Badge>{/if}
             {#if n.vlan_aware}<Badge>{$LL.virtNetVlanAware()}</Badge>{/if}
-            {#if n.pending_restart}<Badge tone="warning">{$LL.virtNetPending()}</Badge>{/if}
+            {#if n.pending_restart}<Badge tone="warning" dot>{$LL.virtNetPending()}</Badge>{/if}
             {#if pve && n.mode === 'bridge' && !n.management_editable}
-              <span class="text-faint-fg" title={$LL.virtNetManagement()}><Lock class="h-3.5 w-3.5" /></span>
+              <Icon name="lock" size={16} title={$LL.virtNetManagement()} />
             {/if}
             {#if caps.network_edit}
-              <span class="ml-auto flex flex-wrap gap-1">
+              <span class="ml-auto flex flex-wrap gap-[5px]">
                 {#if pve}
                   {#if n.management_editable}
-                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => openBridge(n)}><Pencil class="h-4 w-4" />{$LL.virtEdit()}</Button>
-                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => (confirm = { text: $LL.virtNetDeleteConfirm({ name: n.name }), label: $LL.virtDelete(), change: { op: 'network_delete', network: n.id } })}>
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
+                    <Button variant="secondary" size="sm" icon="edit" disabled={busy} onclick={() => openBridge(n)}>{$LL.virtEdit()}</Button>
+                    <IconButton icon="delete" label={$LL.virtDelete()} disabled={busy} onclick={() => (confirm = { text: $LL.virtNetDeleteConfirm({ name: n.name }), label: $LL.virtDelete(), change: { op: 'network_delete', network: n.id } })} />
                   {/if}
                 {:else}
                   {#if n.pending_restart && n.active}
-                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => (confirm = { text: $LL.virtNetRestartConfirm({ name: n.name }), label: $LL.virtNetRestart(), change: { op: 'network_restart', network: n.id, base_xml: n.xml || null } })}>
-                      <RotateCcw class="h-4 w-4" />{$LL.virtNetRestart()}
+                    <Button variant="secondary" size="sm" icon="restart_alt" disabled={busy} onclick={() => (confirm = { text: $LL.virtNetRestartConfirm({ name: n.name }), label: $LL.virtNetRestart(), change: { op: 'network_restart', network: n.id, base_xml: n.xml || null } })}>
+                      {$LL.virtNetRestart()}
                     </Button>
                   {/if}
-                  <Button variant="secondary" size="sm" disabled={busy} onclick={() => void run({ op: 'network_set_active', network: n.id, active: !n.active })}>
-                    {#if n.active}<Square class="h-4 w-4" />{$LL.virtNetStop()}{:else}<Play class="h-4 w-4" />{$LL.virtNetStart()}{/if}
+                  <Button variant="secondary" size="sm" icon={n.active ? 'stop' : 'play_arrow'} disabled={busy} onclick={() => void run({ op: 'network_set_active', network: n.id, active: !n.active })}>
+                    {n.active ? $LL.virtNetStop() : $LL.virtNetStart()}
                   </Button>
-                  <label class="flex items-center gap-1.5 px-2 text-xs text-muted-fg">
-                    <input type="checkbox" checked={n.autostart === true} disabled={busy} onchange={(e) => void run({ op: 'network_set_autostart', network: n.id, on: e.currentTarget.checked })} />
-                    {$LL.virtNetAutostart()}
-                  </label>
+                  <Switch label={$LL.virtNetAutostart()} checked={n.autostart === true} disabled={busy} onchange={(on) => void run({ op: 'network_set_autostart', network: n.id, on })} />
                   {#if caps.network_edit_existing}
-                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => openEdit(n)}><Pencil class="h-4 w-4" />{$LL.virtEdit()}</Button>
+                    <Button variant="secondary" size="sm" icon="edit" disabled={busy} onclick={() => openEdit(n)}>{$LL.virtEdit()}</Button>
                   {/if}
-                  <Button variant="secondary" size="sm" disabled={busy} onclick={() => (confirm = { text: $LL.virtNetDeleteConfirm({ name: n.name }), label: $LL.virtDelete(), change: { op: 'network_delete', network: n.id } })}>
-                    <Trash2 class="h-4 w-4" />
-                  </Button>
+                  <IconButton icon="delete" label={$LL.virtDelete()} disabled={busy} onclick={() => (confirm = { text: $LL.virtNetDeleteConfirm({ name: n.name }), label: $LL.virtDelete(), change: { op: 'network_delete', network: n.id } })} />
                 {/if}
               </span>
             {/if}
           </div>
-          <p class="pl-4 text-xs text-muted-fg">
+          <p class="pl-[27px] text-[12px] text-(--text-secondary)">
             {[n.bridge && n.bridge !== n.name ? n.bridge : null, ...n.cidrs, n.gateway ? `via ${n.gateway}` : null, n.dhcp_ranges.length ? `DHCP ${n.dhcp_ranges.join(', ')}` : null, n.ports.length ? n.ports.join(' ') : null, n.bond_mode, n.comment]
               .filter(Boolean)
               .join(' · ')}
           </p>
           {#if n.users.length > 0}
-            <p class="pl-4 text-xs text-faint-fg">{$LL.virtNetUsers()}: {n.users.map((u) => refText(u, view.guests) + (u.ip ? ` ${u.ip}` : '')).join(', ')}</p>
+            <p class="pl-[27px] text-[12px] text-(--text-tertiary)">{$LL.virtNetUsers()}: {n.users.map((u) => refText(u, view.guests) + (u.ip ? ` ${u.ip}` : '')).join(', ')}</p>
           {/if}
         </li>
       {/each}
@@ -281,177 +274,114 @@
 </Card>
 
 {#if creating}
-  <Modal open title={pve ? $LL.virtNetCreateBridge() : $LL.virtNetCreate()} onclose={() => (creating = false)}>
-    <form class="space-y-3" onsubmit={create}>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNetName()}</span>
-        <Input class="font-mono" bind:value={createForm.name} placeholder={pve ? 'vmbr1' : 'lab'} />
-      </label>
+  <Dialog open wide title={pve ? $LL.virtNetCreateBridge() : $LL.virtNetCreate()} onclose={() => (creating = false)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (creating = false)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-network-create" disabled={busy || createForm.name.trim() === ''}>{$LL.virtCreate()}</Button>
+    {/snippet}
+    <form id="virt-network-create" class="space-y-[13px]" onsubmit={(e) => { e.preventDefault(); void create(e) }}>
+      <Input label={$LL.virtNetName()} class="lk-mono" bind:value={createForm.name} placeholder={pve ? 'vmbr1' : 'lab'} />
       {#if pve}
         {#if view.host.nodes.length > 1}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtNetNode()}</span>
-            <Select bind:value={createForm.node}>
-              {#each view.host.nodes as node (node.name)}
-                <option value={node.name}>{node.name}</option>
-              {/each}
-            </Select>
-          </label>
+          <Select label={$LL.virtNetNode()} bind:value={createForm.node} options={view.host.nodes.map((node) => ({ value: node.name, label: node.name }))} />
         {/if}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtNetPorts()}</span>
-          <Input class="font-mono" bind:value={createForm.bridge} placeholder="eno2" />
-        </label>
+        <Input label={$LL.virtNetPorts()} class="lk-mono" bind:value={createForm.bridge} placeholder="eno2" />
       {:else}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtNetMode()}</span>
-          <Select bind:value={createForm.mode}>
-            {#each modes as m (m)}
-              <option value={m}>{m}</option>
-            {/each}
-          </Select>
-        </label>
+        <Select label={$LL.virtNetMode()} bind:value={createForm.mode} options={modes.map((m) => ({ value: m, label: m }))} />
         {#if createForm.mode === 'bridge'}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtNetBridge()}</span>
-            <Input class="font-mono" bind:value={createForm.bridge} placeholder="br0" />
-          </label>
+          <Input label={$LL.virtNetBridge()} class="lk-mono" bind:value={createForm.bridge} placeholder="br0" />
         {/if}
       {/if}
       {#if pve || createForm.mode !== 'bridge'}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtNetCidr()}</span>
-          <Input class="font-mono" bind:value={createForm.cidr} placeholder="192.168.150.1/24" />
-        </label>
+        <Input label={$LL.virtNetCidr()} class="lk-mono" bind:value={createForm.cidr} placeholder="192.168.150.1/24" />
       {/if}
       {#if !pve && createForm.mode !== 'bridge'}
-        <div class="space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtNetDhcp()}</span>
-          <div class="flex gap-2">
-            <Input class="font-mono" bind:value={createForm.dhcpStart} placeholder="192.168.150.100" />
-            <Input class="font-mono" bind:value={createForm.dhcpEnd} placeholder="192.168.150.200" />
-          </div>
+        <div class="flex gap-[9px]">
+          <Input class="lk-mono flex-1" label={$LL.virtNetDhcp()} bind:value={createForm.dhcpStart} placeholder="192.168.150.100" />
+          <Input class="lk-mono flex-1" label="" bind:value={createForm.dhcpEnd} placeholder="192.168.150.200" />
         </div>
       {/if}
-      <div class="flex flex-wrap gap-4 text-sm text-muted-fg">
+      <div class="flex flex-wrap gap-[13px]">
         {#if pve}
-          <label class="flex items-center gap-1.5"><input type="checkbox" bind:checked={createForm.vlanAware} /> {$LL.virtNetVlanAware()}</label>
+          <Checkbox bind:checked={createForm.vlanAware} label={$LL.virtNetVlanAware()} />
         {/if}
-        <label class="flex items-center gap-1.5"><input type="checkbox" bind:checked={createForm.autostart} /> {$LL.virtNetAutostart()}</label>
+        <Checkbox bind:checked={createForm.autostart} label={$LL.virtNetAutostart()} />
       </div>
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (creating = false)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy || createForm.name.trim() === ''}>{$LL.virtCreate()}</Button>
-      </div>
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if editing}
   {@const n = editing}
-  <Modal open title={`${$LL.virtEdit()} · ${n.name}`} onclose={() => (editing = null)}>
-    <form class="space-y-3" onsubmit={saveEdit}>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNetMode()}</span>
-        <Select bind:value={editForm.mode}>
-          {#each modes as m (m)}
-            <option value={m}>{m}</option>
-          {/each}
-        </Select>
-      </label>
+  <Dialog open wide title={`${$LL.virtEdit()} · ${n.name}`} onclose={() => (editing = null)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (editing = null)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-network-edit" disabled={busy}>{$LL.save()}</Button>
+    {/snippet}
+    <form id="virt-network-edit" class="space-y-[13px]" onsubmit={(e) => { e.preventDefault(); void saveEdit(e) }}>
+      <Select label={$LL.virtNetMode()} bind:value={editForm.mode} options={modes.map((m) => ({ value: m, label: m }))} />
       {#if editForm.mode === 'bridge'}
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtNetBridge()}</span>
-          <Input class="font-mono" bind:value={editForm.bridge} placeholder="br0" />
-        </label>
+        <Input label={$LL.virtNetBridge()} class="lk-mono" bind:value={editForm.bridge} placeholder="br0" />
       {:else}
-        <div class="flex gap-2">
-          <label class="block flex-1 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtNetAddress()}</span>
-            <Input class="font-mono" bind:value={editForm.address} placeholder="192.168.150.1" />
-          </label>
-          <label class="block w-24 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtNetPrefix()}</span>
-            <Input class="font-mono" inputmode="numeric" bind:value={editForm.prefix} placeholder="24" />
-          </label>
+        <div class="flex gap-[9px]">
+          <Input class="lk-mono flex-1" label={$LL.virtNetAddress()} bind:value={editForm.address} placeholder="192.168.150.1" />
+          <Input class="lk-mono w-24" label={$LL.virtNetPrefix()} inputmode="numeric" bind:value={editForm.prefix} placeholder="24" />
         </div>
-        <div class="space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtNetDhcp()}</span>
-          <div class="flex gap-2">
-            <Input class="font-mono" bind:value={editForm.dhcpStart} />
-            <Input class="font-mono" bind:value={editForm.dhcpEnd} />
-          </div>
+        <div class="flex gap-[9px]">
+          <Input class="lk-mono flex-1" label={$LL.virtNetDhcp()} bind:value={editForm.dhcpStart} />
+          <Input class="lk-mono flex-1" label="" bind:value={editForm.dhcpEnd} />
         </div>
-        <div class="space-y-1 text-sm">
-          <div class="flex items-center gap-2">
-            <span class="text-muted-fg">{$LL.virtNetHosts()}</span>
-            <IconButton label={$LL.add()} onclick={() => (editForm.hosts = [...editForm.hosts, { mac: '', ip: '', name: null }])}>
-              <Plus class="h-4 w-4" />
-            </IconButton>
+        <div class="space-y-[9px]">
+          <div class="flex items-center gap-[9px]">
+            <span class="text-[13px] text-(--text-secondary)">{$LL.virtNetHosts()}</span>
+            <IconButton icon="add" label={$LL.add()} onclick={() => (editForm.hosts = [...editForm.hosts, { mac: '', ip: '', name: null }])} />
           </div>
           {#each editForm.hosts as h, i (i)}
-            <div class="flex gap-2">
-              <Input class="font-mono" bind:value={h.mac} placeholder={$LL.virtNetMac()} />
-              <Input class="font-mono" bind:value={h.ip} placeholder={$LL.virtNetIp()} />
-              <Input bind:value={() => h.name ?? '', (v) => (h.name = v)} placeholder={$LL.virtNetHostName()} />
-              <IconButton label={$LL.virtDelete()} onclick={() => (editForm.hosts = editForm.hosts.filter((_, j) => j !== i))}>
-                <X class="h-4 w-4" />
-              </IconButton>
+            <div class="flex gap-[9px]">
+              <Input class="lk-mono flex-1" bind:value={h.mac} placeholder={$LL.virtNetMac()} aria-label={$LL.virtNetMac()} />
+              <Input class="lk-mono flex-1" bind:value={h.ip} placeholder={$LL.virtNetIp()} aria-label={$LL.virtNetIp()} />
+              <Input class="flex-1" bind:value={() => h.name ?? '', (v) => (h.name = v)} placeholder={$LL.virtNetHostName()} aria-label={$LL.virtNetHostName()} />
+              <IconButton icon="close" label={$LL.virtDelete()} onclick={() => (editForm.hosts = editForm.hosts.filter((_, j) => j !== i))} />
             </div>
           {/each}
         </div>
       {/if}
       {#if n.active}
-        <label class="flex items-center gap-1.5 text-sm text-muted-fg"><input type="checkbox" bind:checked={editForm.restart} /> {$LL.virtNetRestartNow()}</label>
+        <Checkbox bind:checked={editForm.restart} label={$LL.virtNetRestartNow()} />
       {/if}
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (editing = null)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy}>{$LL.save()}</Button>
-      </div>
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if editingBridge}
   {@const n = editingBridge}
-  <Modal open title={`${$LL.virtEdit()} · ${n.name}`} onclose={() => (editingBridge = null)}>
-    <form class="space-y-3" onsubmit={saveBridge}>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNetPorts()}</span>
-        <Input class="font-mono" bind:value={bridgeForm.ports} placeholder="eno2" />
-      </label>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNetCidr()}</span>
-        <Input class="font-mono" bind:value={bridgeForm.cidr} placeholder="10.20.0.1/24" />
-      </label>
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNetGateway()}</span>
-        <Input class="font-mono" bind:value={bridgeForm.gateway} />
-      </label>
-      <div class="flex flex-wrap gap-4 text-sm text-muted-fg">
-        <label class="flex items-center gap-1.5"><input type="checkbox" bind:checked={bridgeForm.vlanAware} /> {$LL.virtNetVlanAware()}</label>
-        <label class="flex items-center gap-1.5"><input type="checkbox" bind:checked={bridgeForm.autostart} /> {$LL.virtNetAutostart()}</label>
+  <Dialog open wide title={`${$LL.virtEdit()} · ${n.name}`} onclose={() => (editingBridge = null)}>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (editingBridge = null)}>{$LL.cancel()}</Button>
+      <Button variant="primary" type="submit" form="virt-network-bridge-edit" disabled={busy}>{$LL.save()}</Button>
+    {/snippet}
+    <form id="virt-network-bridge-edit" class="space-y-[13px]" onsubmit={(e) => { e.preventDefault(); void saveBridge(e) }}>
+      <Input label={$LL.virtNetPorts()} class="lk-mono" bind:value={bridgeForm.ports} placeholder="eno2" />
+      <Input label={$LL.virtNetCidr()} class="lk-mono" bind:value={bridgeForm.cidr} placeholder="10.20.0.1/24" />
+      <Input label={$LL.virtNetGateway()} class="lk-mono" bind:value={bridgeForm.gateway} />
+      <div class="flex flex-wrap gap-[13px]">
+        <Checkbox bind:checked={bridgeForm.vlanAware} label={$LL.virtNetVlanAware()} />
+        <Checkbox bind:checked={bridgeForm.autostart} label={$LL.virtNetAutostart()} />
       </div>
-      {#if error}<p class="text-xs text-danger whitespace-pre-wrap">{error}</p>{/if}
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (editingBridge = null)}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy}>{$LL.save()}</Button>
-      </div>
+      {#if error}<p class="text-[12px] text-(--color-danger) whitespace-pre-wrap">{error}</p>{/if}
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if confirm}
   {@const c = confirm}
-  <Modal open title={$LL.virtSectionNetworks()} onclose={() => (confirm = null)}>
-    <div class="space-y-4">
-      <p class="text-sm text-muted-fg">{c.text}</p>
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (confirm = null)}>{$LL.cancel()}</Button>
-        <Button variant="danger" disabled={busy} onclick={async () => { const change = c.change; confirm = null; await run(change) }}>{c.label}</Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.virtSectionNetworks()} message={c.text} onclose={() => (confirm = null)}>
+    {#snippet icon()}<Icon name="warning" size={52} weight={300} />{/snippet}
+    {#snippet actions()}
+      <Button block variant="destructive" disabled={busy} onclick={async () => { const change = c.change; confirm = null; await run(change) }}>{c.label}</Button>
+      <Button block variant="secondary" onclick={() => (confirm = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}

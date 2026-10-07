@@ -7,7 +7,7 @@
   /// password; a rejection keeps the dialog open with the reason, so a mistyped
   /// password is retyped rather than the change started over.
 
-  import { Button, Input, Modal, Spinner } from '@serverbox/webui'
+  import { Button, Dialog, Input, Spinner } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { accessMessage } from '../../../lib/access'
 
@@ -51,25 +51,17 @@
   }
 </script>
 
-<Modal {open} title={$LL.reauthTitle()} {onclose}>
-  <form class="space-y-4" onsubmit={submit}>
-    {#if message}
-      <p class="text-sm text-fg">{message}</p>
-    {/if}
-    <p class="text-sm text-muted-fg">{$LL.reauthBody()}</p>
-    <div class="space-y-1">
-      <span class="text-sm text-muted-fg">{$LL.currentPassword()}</span>
-      <Input type="password" autocomplete="current-password" bind:value={password} />
-    </div>
-    {#if error}
-      <p class="text-sm text-danger">{error}</p>
-    {/if}
-    <div class="flex justify-end gap-2">
-      <Button variant="ghost" type="button" onclick={onclose}>{$LL.cancel()}</Button>
-      <Button type="submit" disabled={!password || busy}>
-        {#if busy}<Spinner class="w-4 h-4" />{/if}
-        {$LL.confirm()}
-      </Button>
-    </div>
+<Dialog open={open} wide title={$LL.reauthTitle()} message={message} onclose={onclose}>
+  <form id="reauth-form" class="space-y-[13px]" onsubmit={submit}>
+    <p class="text-[13px] text-(--text-secondary)">{$LL.reauthBody()}</p>
+    <Input label={$LL.currentPassword()} type="password" autocomplete="current-password" bind:value={password} />
+    {#if error}<p class="text-[13px] text-(--color-danger)" role="alert">{error}</p>{/if}
   </form>
-</Modal>
+  {#snippet actions()}
+    <Button variant="secondary" type="button" onclick={onclose}>{$LL.cancel()}</Button>
+    <Button type="submit" form="reauth-form" disabled={!password || busy}>
+      {#if busy}<Spinner size={16} />{/if}
+      {$LL.confirm()}
+    </Button>
+  {/snippet}
+</Dialog>

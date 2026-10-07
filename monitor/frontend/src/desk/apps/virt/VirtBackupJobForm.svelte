@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Button, Input, Select, Spinner } from '@serverbox/webui'
-  import { CalendarCheck, X } from '@lucide/svelte'
+  import { Button, Checkbox, Input, SegmentedControl, Select, Spinner } from '../../lk/index'
   import { api } from '../../../lib/api'
   import {
     BACKUP_COMPRESSIONS,
@@ -85,80 +84,51 @@
 </script>
 
 {#snippet seg(label: string, items: { value: string; text: string }[], value: string, pick: (v: string) => void)}
-  <div class="flex flex-wrap items-center gap-2">
-    <span class="w-28 shrink-0 text-sm text-muted-fg">{label}</span>
-    <div class="flex flex-wrap gap-1">
-      {#each items as it (it.value)}
-        <Button type="button" size="sm" variant={it.value === value ? 'primary' : 'secondary'} aria-pressed={it.value === value} onclick={() => pick(it.value)}>{it.text}</Button>
-      {/each}
-    </div>
+  <div class="flex flex-wrap items-center gap-[9px]">
+    <span class="text-[12px] text-(--text-secondary)">{label}</span>
+    <SegmentedControl size="sm" {value} label={label} options={items.map((it) => ({ value: it.value, label: it.text }))} onchange={pick} />
   </div>
 {/snippet}
 
-<form class="space-y-3" onsubmit={submit}>
+<form class="space-y-[13px]" onsubmit={submit}>
   {#if full}
-    <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap gap-[13px]">
       {#if d.isNew}
-        <label class="block min-w-40 flex-1 space-y-1 text-sm">
-          <span class="text-muted-fg">ID</span>
-          <Input class="font-mono" bind:value={d.id} placeholder={$LL.virtBakJobIdAuto()} />
-        </label>
+        <Input class="min-w-40 flex-1 lk-mono" label="ID" bind:value={d.id} placeholder={$LL.virtBakJobIdAuto()} />
       {/if}
-      <label class="block min-w-40 flex-1 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtNode()}</span>
-        <Select class="w-full" bind:value={d.node}>
-          <option value="">{$LL.virtBakAnyNode()}</option>
-          {#each nodes as n (n)}
-            <option value={n}>{n}</option>
-          {/each}
-        </Select>
-      </label>
+      <Select class="min-w-40 flex-1" label={$LL.virtNode()} bind:value={d.node} options={[{ value: '', label: $LL.virtBakAnyNode() }, ...nodes.map((n) => ({ value: n, label: n }))]} />
     </div>
   {/if}
 
-  <div class="space-y-1">
-    <div class="flex flex-wrap items-end gap-2">
-      <label class="block min-w-0 flex-1 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtBakSchedule()}</span>
-        <Input class="font-mono" bind:value={d.schedule} placeholder="02:00" />
-      </label>
-      <Button type="button" variant="secondary" size="sm" disabled={checking || d.schedule.trim() === ''} onclick={() => void validate()}>
-        <CalendarCheck class="h-4 w-4" />
-        {$LL.virtBakValidate()}
-      </Button>
+  <div class="space-y-[9px]">
+    <div class="flex flex-wrap items-end gap-[9px]">
+      <Input class="min-w-0 flex-1 lk-mono" label={$LL.virtBakSchedule()} bind:value={d.schedule} placeholder="02:00" />
+      <Button type="button" variant="secondary" size="sm" icon="event_available" disabled={checking || d.schedule.trim() === ''} onclick={() => void validate()}>{$LL.virtBakValidate()}</Button>
     </div>
-    <p class="text-xs text-faint-fg">{$LL.virtBakScheduleHint()}</p>
+    <p class="text-[12px] text-(--text-tertiary)">{$LL.virtBakScheduleHint()}</p>
     {#if checking}
       <Spinner size="sm" />
     {:else if checkedFor !== null && checkedFor === d.schedule.trim()}
       {#if checkError}
-        <p class="text-xs text-danger whitespace-pre-wrap break-all">{checkError}</p>
+        <p class="whitespace-pre-wrap break-all text-[12px] text-(--color-danger)">{checkError}</p>
       {:else if check?.error}
-        <p class="text-xs text-danger whitespace-pre-wrap break-all">{$LL.virtBakScheduleRefused({ why: check.error })}</p>
+        <p class="whitespace-pre-wrap break-all text-[12px] text-(--color-danger)">{$LL.virtBakScheduleRefused({ why: check.error })}</p>
       {:else if check && check.next.length > 0}
-        <div class="text-xs">
-          <span class="text-faint-fg">{$LL.virtBakNextRuns()}</span>
-          <ul class="text-muted-fg">
+        <div class="text-[12px]">
+          <span class="text-(--text-tertiary)">{$LL.virtBakNextRuns()}</span>
+          <ul class="lk-mono text-(--text-secondary)">
             {#each check.next.slice(0, 3) as t (t)}
-              <li class="font-mono">{when(t)}</li>
+              <li>{when(t)}</li>
             {/each}
           </ul>
         </div>
       {:else if check}
-        <p class="text-xs text-muted-fg">{$LL.virtBakNoNextRuns()}</p>
+        <p class="text-[12px] text-(--text-secondary)">{$LL.virtBakNoNextRuns()}</p>
       {/if}
     {/if}
   </div>
 
-  <label class="block space-y-1 text-sm">
-    <span class="text-muted-fg">{$LL.virtBakStorage()}</span>
-    <Select class="w-full" bind:value={d.storage}>
-      <option value="" disabled>{$LL.virtBakPickStorage()}</option>
-      {#each names as n (n)}
-        <option value={n}>{n}</option>
-      {/each}
-    </Select>
-  </label>
+  <Select label={$LL.virtBakStorage()} class="w-full" bind:value={d.storage} options={[{ value: '', label: $LL.virtBakPickStorage() }, ...names.map((n) => ({ value: n, label: n }))]} />
 
   {#if full}
     {@render seg(
@@ -172,20 +142,11 @@
       (v) => (d.selection = v as JobDraft['selection']),
     )}
     {#if d.selection === 'all'}
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtBakExclude()}</span>
-        <Input class="font-mono" bind:value={d.exclude} placeholder="101, 102" />
-      </label>
+      <Input label={$LL.virtBakExclude()} mono bind:value={d.exclude} placeholder="101, 102" />
     {:else if d.selection === 'vmids'}
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">VMID</span>
-        <Input class="font-mono" bind:value={d.vmids} placeholder="100, 101" />
-      </label>
+      <Input label="VMID" mono bind:value={d.vmids} placeholder="100, 101" />
     {:else}
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtBakPool()}</span>
-        <Input class="font-mono" bind:value={d.pool} />
-      </label>
+      <Input label={$LL.virtBakPool()} mono bind:value={d.pool} />
     {/if}
   {/if}
 
@@ -202,47 +163,28 @@
     (v) => (d.compress = v as JobDraft['compress']),
   )}
 
-  <div class="space-y-1">
-    <span class="text-sm text-muted-fg">{$LL.virtBakRetention()}</span>
-    <div class="grid grid-cols-3 gap-2 @2xl:grid-cols-6">
+  <div class="space-y-[9px]">
+    <span class="text-[12px] text-(--text-secondary)">{$LL.virtBakRetention()}</span>
+    <div class="grid grid-cols-3 gap-[9px] @2xl:grid-cols-6">
       {#each KEEP_KEYS as k (k)}
-        <label class="block space-y-1 text-xs">
-          <span class="text-faint-fg">{KEEP_LABEL[k]}</span>
-          <Input type="number" min="0" bind:value={d.retention.keep[k]} />
-        </label>
+        <Input type="number" min="0" label={KEEP_LABEL[k]} bind:value={d.retention.keep[k]} />
       {/each}
     </div>
-    <p class="text-xs text-faint-fg">{$LL.virtBakRetentionNote()}</p>
+    <p class="text-[12px] text-(--text-tertiary)">{$LL.virtBakRetentionNote()}</p>
   </div>
 
   {#if full}
-    <label class="block space-y-1 text-sm">
-      <span class="text-muted-fg">{$LL.virtBakNotesTemplate()}</span>
-      <Input class="font-mono" bind:value={d.notesTemplate} />
-    </label>
-    <div class="flex flex-wrap gap-3">
-      <label class="block min-w-40 flex-1 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtBakComment()}</span>
-        <Input bind:value={d.comment} />
-      </label>
-      <label class="block min-w-40 flex-1 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtBakMail()}</span>
-        <Select class="w-full" bind:value={d.mail}>
-          <option value="">{$LL.virtHwDefault()}</option>
-          <option value="always">{$LL.virtBakMailAlways()}</option>
-          <option value="failure">{$LL.virtBakMailFailure()}</option>
-        </Select>
-      </label>
+    <Input label={$LL.virtBakNotesTemplate()} mono bind:value={d.notesTemplate} />
+    <div class="flex flex-wrap gap-[13px]">
+      <Input class="min-w-40 flex-1" label={$LL.virtBakComment()} bind:value={d.comment} />
+      <Select class="min-w-40 flex-1" label={$LL.virtBakMail()} bind:value={d.mail} options={[{ value: '', label: $LL.virtHwDefault() }, { value: 'always', label: $LL.virtBakMailAlways() }, { value: 'failure', label: $LL.virtBakMailFailure() }]} />
     </div>
   {/if}
 
-  <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={d.enabled} /> {$LL.virtBakEnabled()}</label>
+  <Checkbox bind:checked={d.enabled} label={$LL.virtBakEnabled()} />
 
-  <div class="flex justify-end gap-2">
-    <Button type="button" variant="secondary" size="sm" onclick={oncancel}>
-      <X class="h-4 w-4" />
-      {$LL.cancel()}
-    </Button>
+  <div class="flex justify-end gap-[9px]">
+    <Button type="button" variant="secondary" size="sm" icon="close" onclick={oncancel}>{$LL.cancel()}</Button>
     <Button type="submit" size="sm" disabled={busy}>{$LL.save()}</Button>
   </div>
 </form>

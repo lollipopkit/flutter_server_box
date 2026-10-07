@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Card, Input, Spinner } from '@serverbox/webui'
+  import { Button, Card, Input, Spinner } from '../../lk/index'
   import VncViewer from '../../../components/VncViewer.svelte'
   import { api } from '../../../lib/api'
   import { RelayChannel, parseControl } from '../../../lib/desktop.svelte'
@@ -136,10 +136,10 @@
   }
 </script>
 
-<Card class="space-y-3">
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <p class="text-sm text-fg-strong">{kind === 'vnc' ? $LL.virtConsoleVnc() : $LL.virtConsoleText()}</p>
-    <div class="flex items-center gap-2">
+<Card class="space-y-[13px]">
+  <div class="flex flex-wrap items-center justify-between gap-[9px]">
+    <p class="text-[13px] font-semibold">{kind === 'vnc' ? $LL.virtConsoleVnc() : $LL.virtConsoleText()}</p>
+    <div class="flex items-center gap-[9px]">
       {#if phase === 'opening'}
         <Spinner size="sm" />
       {/if}
@@ -152,23 +152,23 @@
   </div>
 
   {#if kind === 'vnc' && !passwordKnown && phase !== 'open'}
-    <div class="flex flex-wrap items-center gap-2">
-      <Input class="w-56" type="password" autocomplete="off" bind:value={typedPassword} placeholder={$LL.virtConsolePassword()} />
-      <p class="text-xs text-muted-fg">{$LL.virtConsolePasswordHint()}</p>
+    <div class="flex flex-wrap items-center gap-[9px]">
+      <Input class="w-56" label={$LL.virtConsolePassword()} type="password" autocomplete="off" bind:value={typedPassword} />
+      <p class="text-[12px] text-(--text-secondary)">{$LL.virtConsolePasswordHint()}</p>
     </div>
   {/if}
 
   {#if error}
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
+    <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p>
   {/if}
 
   {#if command}
-    <p class="text-xs text-muted-fg">{$LL.virtConsoleCommand()}</p>
-    <pre class="overflow-x-auto rounded-lg bg-muted p-2 font-mono text-xs text-fg">{sudoPassword ? `sudo ${command}` : command}</pre>
+    <p class="text-[12px] text-(--text-secondary)">{$LL.virtConsoleCommand()}</p>
+    <pre class="overflow-x-auto rounded-[9px] bg-(--surface-terminal) p-[11px_15px] lk-mono text-[13px]">{sudoPassword ? `sudo ${command}` : command}</pre>
   {/if}
 
   {#if kind === 'vnc' && channel}
-    <div class="aspect-video w-full overflow-hidden rounded-lg bg-black">
+    <div class="aspect-video w-full overflow-hidden rounded-[13px] bg-(--surface-terminal)">
       <VncViewer {channel} username={null} password={vncPassword} viewOnly={false} shared={true} onend={ended} />
     </div>
   {:else if kind === 'text'}

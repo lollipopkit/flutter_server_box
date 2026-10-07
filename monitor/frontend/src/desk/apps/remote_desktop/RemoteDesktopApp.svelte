@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
-  import { MonitorPlay, Pencil, Plus, RefreshCw, Trash2, Unplug } from '@lucide/svelte'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, Input, Spinner } from '../../lk'
   import DesktopForm, { desktopFormState, type DesktopFormState } from './DesktopForm.svelte'
   import RdpViewer from './RdpViewer.svelte'
   import VncViewer from '../../../components/VncViewer.svelte'
@@ -196,15 +195,13 @@
        since a relay left open is a connection nobody is looking at. -->
   <AppToolbar title={sessionDesktop.name} back={() => endSession(null)}>
     {#snippet actions()}
-      <IconButton label={$LL.desktopDisconnect()} onclick={() => endSession(null)}>
-        <Unplug class="w-4 h-4" />
-      </IconButton>
+      <IconButton icon="link_off" label={$LL.desktopDisconnect()} onclick={() => endSession(null)} />
     {/snippet}
   </AppToolbar>
 
   <!-- The session fills what the toolbar leaves of the window; the viewer
        takes its parent's height. -->
-  <main class="flex min-h-72 flex-1 flex-col p-2">
+  <main class="flex min-h-72 flex-1 flex-col px-[17px] pb-[17px] pt-[4px]">
     {#key live}
       {#if live.kind === 'vnc'}
         <VncViewer
@@ -228,176 +225,104 @@
 {:else}
   <AppToolbar subtitle={view ? $LL.desktopSubtitle({ count: desktops.length }) : undefined}>
     {#snippet actions()}
-      <IconButton label={$LL.desktopAdd()} onclick={() => openForm(null)}>
-        <Plus class="w-4 h-4" />
-      </IconButton>
-      <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
-        <RefreshCw class="w-4 h-4" />
-      </IconButton>
+      <Button size="sm" variant="tinted" icon="add" onclick={() => openForm(null)}>{$LL.desktopAdd()}</Button>
+      <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
     {/snippet}
   </AppToolbar>
 
-  <main class="mx-auto max-w-5xl space-y-4 px-4 py-4 @3xl:px-6">
-    {#if error}
-      <Card class="border-danger/40 bg-danger/5">
-        <p class="text-sm text-danger">{error}</p>
-      </Card>
-    {/if}
-
+  <main class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+    {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
     {#if actionError}
-      <Card class="border-danger/40 bg-danger/5">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm text-danger whitespace-pre-wrap break-all">{actionError}</p>
-          {#if retry}
-            <Button variant="secondary" onclick={() => (pending = retry)}>
-              {$LL.desktopReconnect()}
-            </Button>
-          {/if}
+      <Card>
+        <div class="flex flex-wrap items-center justify-between gap-[9px]">
+          <p class="text-[13px] text-(--color-danger) whitespace-pre-wrap break-all">{actionError}</p>
+          {#if retry}<Button variant="secondary" onclick={() => (pending = retry)}>{$LL.desktopReconnect()}</Button>{/if}
         </div>
       </Card>
     {/if}
-
-    {#if notice}
-      <Card>
-        <p class="text-sm text-muted-fg">{notice}</p>
-      </Card>
-    {/if}
+    {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
 
     {#if loading && !view}
-      <Card><Spinner class="w-5 h-5" /></Card>
+      <Card class="grid place-items-center" padding="21px"><Spinner size={20} /></Card>
     {:else if view}
       {#if desktops.length === 0}
-        <Card>
-          <p class="text-sm text-muted-fg">{$LL.desktopEmpty()}</p>
-        </Card>
+        <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+          <Icon name="desktop_windows" size={48} weight={300} />
+          <span class="text-[13px]">{$LL.desktopsEmptyState()}</span>
+        </div>
       {:else}
-        <ul class="space-y-2">
+        <ul class="space-y-[7px]">
           {#each desktops as desktop (desktop.id)}
             <li>
-              <button
-                class="flex w-full items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-left transition-colors hover:bg-soft/60"
-                onclick={() => open(desktop)}
-              >
-                <MonitorPlay class="h-4 w-4 shrink-0 text-muted-fg" />
-                <span class="min-w-0 flex-1">
-                  <span class="flex flex-wrap items-baseline gap-2">
-                    <span class="truncate text-sm font-medium text-fg-strong">{desktop.name}</span>
-                    <Badge tone="neutral">{desktop.protocol.toUpperCase()}</Badge>
-                    {#if desktop.view_only}
-                      <Badge tone="warning">{$LL.desktopViewOnly()}</Badge>
-                    {/if}
-                  </span>
-                  <span class="block truncate text-xs text-muted-fg">
-                    {desktop.host}:{desktop.port}{#if desktop.username}&nbsp;· {desktop.username}{/if}
-                  </span>
-                </span>
-              </button>
+              <Card padding="11px 13px" onclick={() => open(desktop)}>
+                <div class="flex min-w-0 items-center gap-[13px]">
+                  <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)"><Icon name="desktop_windows" size={18} /></span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-[7px]">
+                      <span class="truncate text-[13px] font-semibold">{desktop.name}</span>
+                      <Badge tone="neutral">{desktop.protocol.toUpperCase()}</Badge>
+                      {#if desktop.view_only}<Badge tone="warning">{$LL.desktopViewOnly()}</Badge>{/if}
+                    </div>
+                    <p class="lk-mono truncate text-[12px] text-(--text-tertiary)">{desktop.host}:{desktop.port}{#if desktop.username} · {desktop.username}{/if}</p>
+                  </div>
+                </div>
+              </Card>
             </li>
           {/each}
         </ul>
       {/if}
 
-      <p class="text-xs text-muted-fg">{$LL.desktopRouteNote()}</p>
-
-      {#if busy}
-        <div class="flex items-center gap-2 text-xs text-muted-fg">
-          <Spinner size="sm" />
-        </div>
-      {/if}
+      <p class="text-[12px] text-(--text-tertiary)">{$LL.desktopRouteNote()}</p>
+      {#if busy}<div class="flex items-center gap-[7px] text-[12px] text-(--text-tertiary)"><Spinner size="sm" /></div>{/if}
     {/if}
   </main>
 {/if}
 
 {#if opened && editing === undefined && !live}
-  <Modal open title={opened.name} onclose={() => (opened = null)}>
-    <div class="space-y-4">
-      <div class="flex flex-wrap items-center gap-2">
-        <Badge tone="neutral">{opened.protocol.toUpperCase()}</Badge>
-        {#if opened.view_only}
-          <Badge tone="warning">{$LL.desktopViewOnly()}</Badge>
-        {/if}
-      </div>
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-        <div>
-          <dt class="text-faint-fg">{$LL.desktopHost()}</dt>
-          <dd class="text-muted-fg break-all">{opened.host}:{opened.port}</dd>
-        </div>
-        <div>
-          <dt class="text-faint-fg">{$LL.desktopUsername()}</dt>
-          <dd class="text-muted-fg">{opened.username ?? '—'}</dd>
-        </div>
-        {#if opened.domain}
-          <div>
-            <dt class="text-faint-fg">{$LL.desktopDomain()}</dt>
-            <dd class="text-muted-fg">{opened.domain}</dd>
-          </div>
-        {/if}
-      </dl>
-
+  {@const desktop = opened}
+  <Dialog open wide title={desktop.name} onclose={() => (opened = null)}>
+    {#snippet actions()}
       {#if removing}
-        <Card class="space-y-2">
-          <p class="text-sm text-fg">{$LL.desktopDeleteConfirm({ name: opened.name })}</p>
-          <div class="flex justify-end gap-2">
-            <Button variant="secondary" onclick={() => (removing = false)}>{$LL.cancel()}</Button>
-            <Button disabled={busy} onclick={() => void remove()}>{$LL.desktopDelete()}</Button>
-          </div>
-        </Card>
+        <Button variant="destructive" disabled={busy} onclick={() => void remove()}>{$LL.desktopDelete()}</Button>
+        <Button variant="secondary" onclick={() => (removing = false)}>{$LL.cancel()}</Button>
       {:else}
-        <div class="flex flex-wrap items-center gap-2">
-          <Button
-            disabled={busy || blockOf(opened) !== null}
-            onclick={() => {
-              pending = opened
-              opened = null
-            }}
-          >
-            <MonitorPlay class="w-4 h-4" />
-            {$LL.desktopConnect()}
-          </Button>
-          <Button variant="secondary" onclick={() => openForm(opened)}>
-            <Pencil class="w-4 h-4" />
-            {$LL.desktopEdit()}
-          </Button>
-          <Button variant="secondary" onclick={() => (removing = true)}>
-            <Trash2 class="w-4 h-4" />
-            {$LL.desktopDelete()}
-          </Button>
-        </div>
-        {#if blockOf(opened)}
-          <p class="text-xs text-muted-fg">{blockOf(opened)}</p>
-        {/if}
+        <Button variant="primary" icon="desktop_windows" disabled={busy || blockOf(desktop) !== null} onclick={() => { pending = desktop; opened = null }}>{$LL.desktopConnect()}</Button>
+        <Button variant="secondary" icon="edit" onclick={() => openForm(desktop)}>{$LL.desktopEdit()}</Button>
+        <Button variant="destructive" icon="delete" onclick={() => (removing = true)}>{$LL.desktopDelete()}</Button>
+        <Button variant="secondary" onclick={() => (opened = null)}>{$LL.close()}</Button>
       {/if}
+    {/snippet}
+    <div class="flex flex-wrap gap-[7px]">
+      <Badge tone="neutral">{desktop.protocol.toUpperCase()}</Badge>
+      {#if desktop.view_only}<Badge tone="warning">{$LL.desktopViewOnly()}</Badge>{/if}
     </div>
-  </Modal>
+    {#if removing}<p class="mt-[13px] text-[13px] text-(--text-secondary)">{$LL.desktopDeleteConfirm({ name: desktop.name })}</p>{/if}
+    <dl class="mt-[13px] grid grid-cols-2 gap-x-[13px] @2xl:grid-cols-3">
+      <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.desktopHost()}</dt><dd class="lk-mono break-all text-right text-[12px]">{desktop.host}:{desktop.port}</dd></div>
+      <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.desktopUsername()}</dt><dd class="lk-mono break-all text-right text-[12px]">{desktop.username ?? '—'}</dd></div>
+      {#if desktop.domain}<div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.desktopDomain()}</dt><dd class="lk-mono text-right text-[12px]">{desktop.domain}</dd></div>{/if}
+    </dl>
+    {#if blockOf(opened)}<p class="mt-[9px] text-[12px] text-(--text-secondary)">{blockOf(opened)}</p>{/if}
+  </Dialog>
 {/if}
 
 <!-- The password exists only in this dialog and in the viewer it is handed to. -->
 {#if pending}
   {@const target = pending}
-  <Modal open title={$LL.desktopConnect()} onclose={dismissPassword}>
-    <form
-      class="space-y-4"
-      onsubmit={(e) => {
-        e.preventDefault()
-        void connect(target)
-      }}
-    >
-      <p class="text-sm text-muted-fg">{target.name} · {target.host}:{target.port}</p>
-      <div class="space-y-1">
-        <label class="text-sm text-muted-fg" for="desktop-password">{$LL.desktopPassword()}</label>
-        <Input id="desktop-password" type="password" autocomplete="off" bind:value={password} />
-        <p class="text-xs text-muted-fg">{$LL.desktopPasswordNone()}</p>
-      </div>
-      <div class="flex justify-end gap-2">
-        <Button type="button" variant="secondary" onclick={dismissPassword}>{$LL.cancel()}</Button>
-        <Button type="submit" disabled={busy}>{$LL.desktopConnect()}</Button>
-      </div>
+  <Dialog open wide title={$LL.desktopConnect()} onclose={dismissPassword}>
+    {#snippet actions()}
+      <Button variant="primary" type="submit" form="desktop-connect-form" disabled={busy}>{$LL.desktopConnect()}</Button>
+      <Button variant="secondary" onclick={dismissPassword}>{$LL.cancel()}</Button>
+    {/snippet}
+    <form id="desktop-connect-form" onsubmit={(e) => { e.preventDefault(); void connect(target) }}>
+      <p class="text-[12px] text-(--text-secondary)">{target.name} · <span class="lk-mono">{target.host}:{target.port}</span></p>
+      <Input class="mt-[13px]" id="desktop-password" label={$LL.desktopPassword()} type="password" autocomplete="off" bind:value={password} hint={$LL.desktopPasswordNone()} />
     </form>
-  </Modal>
+  </Dialog>
 {/if}
 
 {#if editing !== undefined}
-  <Modal open title={editing ? $LL.desktopEdit() : $LL.desktopAdd()} onclose={() => (editing = undefined)}>
+  <Dialog open wide title={editing ? $LL.desktopEdit() : $LL.desktopAdd()} onclose={() => (editing = undefined)}>
     <DesktopForm
       desktop={editing ?? undefined}
       protocols={view?.protocols ?? []}
@@ -405,5 +330,5 @@
       onsaved={(desktop) => void submit(desktop, editing ?? null)}
       oncancel={() => (editing = undefined)}
     />
-  </Modal>
+  </Dialog>
 {/if}

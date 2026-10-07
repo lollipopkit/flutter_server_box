@@ -6,7 +6,7 @@
   /// into the stored shape only on save, where an off grant is `null` whatever
   /// its fields say (`roleFromDraft`).
 
-  import { Button, Input, Modal, Select } from '@serverbox/webui'
+  import { Button, Checkbox, Dialog, Input, Select, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { emptyDraft, roleFromDraft, type RoleDraft } from '../../../lib/access'
   import type { Role } from '../../../types'
@@ -48,96 +48,60 @@
 </script>
 
 {#snippet grant(label: string, note: string)}
-  <span class="flex-1 min-w-0">
-    <span class="block text-sm text-fg">{label}</span>
-    <span class="block text-xs text-faint-fg">{note}</span>
+  <span class="min-w-0 flex-1">
+    <span class="block text-[13px] text-(--text-primary)">{label}</span>
+    <span class="block text-[12px] text-(--text-tertiary)">{note}</span>
   </span>
 {/snippet}
 
-<Modal {open} title={existing ? $LL.editRole() : $LL.addRole()} {onclose} class="max-w-lg">
-  <form class="space-y-4" onsubmit={save}>
-    <div class="space-y-1">
-      <span class="text-sm text-muted-fg">{$LL.roleName()}</span>
-      <Input bind:value={d.name} disabled={existing} placeholder="desktop" />
-    </div>
+<Dialog open={open} wide title={existing ? $LL.editRole() : $LL.addRole()} onclose={onclose}>
+  <form id="role-form" class="max-h-[min(65vh,560px)] space-y-[13px] overflow-y-auto" onsubmit={save}>
+    <Input label={$LL.roleName()} bind:value={d.name} disabled={existing} placeholder="desktop" />
+    {#if d.admin}<p class="text-[12px] text-(--text-tertiary)">{$LL.roleAdminNote()}</p>{/if}
 
-    {#if d.admin}
-      <p class="text-xs text-faint-fg">{$LL.roleAdminNote()}</p>
-    {/if}
-
-    <label class="flex items-start gap-3">
-      <input type="checkbox" class="w-4 h-4 mt-0.5" bind:checked={d.shell} />
+    <Checkbox bind:checked={d.shell}>
       {@render grant($LL.grantShell(), $LL.grantShellNote())}
-    </label>
-
-    <label class="flex items-start gap-3">
-      <input type="checkbox" class="w-4 h-4 mt-0.5" bind:checked={d.ssh_terminal} />
+    </Checkbox>
+    <Checkbox bind:checked={d.ssh_terminal}>
       {@render grant($LL.grantSshTerminal(), $LL.grantSshTerminalNote())}
-    </label>
+    </Checkbox>
 
     {#if d.virt !== undefined}
-      <label class="flex items-start gap-3">
-        <input type="checkbox" class="w-4 h-4 mt-0.5" bind:checked={d.virt} />
+      <Checkbox bind:checked={d.virt}>
         {@render grant($LL.grantVirt(), $LL.grantVirtNote())}
-      </label>
+      </Checkbox>
     {/if}
 
-    <div class="space-y-1">
-      <span class="text-sm text-fg">{$LL.grantFiles()}</span>
-      <Select bind:value={d.files} class="w-full">
-        <option value="none">{$LL.filesNone()}</option>
-        <option value="read">{$LL.filesRead()}</option>
-        <option value="write">{$LL.filesWrite()}</option>
-      </Select>
-    </div>
+    <Select
+      label={$LL.grantFiles()}
+      bind:value={d.files}
+      options={[
+        { value: 'none', label: $LL.filesNone() },
+        { value: 'read', label: $LL.filesRead() },
+        { value: 'write', label: $LL.filesWrite() },
+      ]}
+    />
 
-    <div class="space-y-2">
-      <label class="flex items-start gap-3">
-        <input type="checkbox" class="w-4 h-4 mt-0.5" bind:checked={d.connect} />
-        {@render grant($LL.grantConnect(), $LL.grantConnectNote())}
-      </label>
-      {#if d.connect}
-        <div class="space-y-1 pl-7">
-          <span class="text-xs text-muted-fg">{$LL.connectAllow()}</span>
-          <textarea
-            class="w-full rounded-lg bg-soft/50 border border-line px-3 py-2 text-sm font-mono
-                   focus:outline-none focus:ring-2 focus:ring-accent/40"
-            rows="3"
-            spellcheck="false"
-            placeholder="127.0.0.1:3389"
-            bind:value={d.connectAllow}
-          ></textarea>
-          <p class="text-xs text-faint-fg">{$LL.connectAllowHint()}</p>
-        </div>
-      {/if}
-    </div>
-
-    <div class="space-y-2">
-      <label class="flex items-start gap-3">
-        <input type="checkbox" class="w-4 h-4 mt-0.5" bind:checked={d.listen} />
-        {@render grant($LL.grantListen(), $LL.grantListenNote())}
-      </label>
-      {#if d.listen}
-        <div class="space-y-2 pl-7">
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" class="w-4 h-4" bind:checked={d.listenPublic} />
-            {$LL.listenPublic()}
-          </label>
-          <div class="space-y-1">
-            <span class="text-xs text-muted-fg">{$LL.listenPorts()}</span>
-            <Input bind:value={d.listenPorts} placeholder="1024-65535" />
-            <p class="text-xs text-faint-fg">{$LL.listenPortsHint()}</p>
-          </div>
-        </div>
-      {/if}
-    </div>
-
-    {#if error}
-      <p class="text-sm text-danger">{error}</p>
+    <Checkbox bind:checked={d.connect}>
+      {@render grant($LL.grantConnect(), $LL.grantConnectNote())}
+    </Checkbox>
+    {#if d.connect}
+      <Textarea label={$LL.connectAllow()} rows={3} spellcheck="false" placeholder="127.0.0.1:3389" bind:value={d.connectAllow} mono hint={$LL.connectAllowHint()} />
     {/if}
-    <div class="flex justify-end gap-2">
-      <Button variant="ghost" type="button" onclick={onclose}>{$LL.cancel()}</Button>
-      <Button type="submit">{$LL.save()}</Button>
-    </div>
+
+    <Checkbox bind:checked={d.listen}>
+      {@render grant($LL.grantListen(), $LL.grantListenNote())}
+    </Checkbox>
+    {#if d.listen}
+      <div class="space-y-[9px] pl-[21px]">
+        <Checkbox bind:checked={d.listenPublic} label={$LL.listenPublic()} />
+        <Input label={$LL.listenPorts()} bind:value={d.listenPorts} placeholder="1024-65535" hint={$LL.listenPortsHint()} />
+      </div>
+    {/if}
+    {#if error}<p class="text-[13px] text-(--color-danger)" role="alert">{error}</p>{/if}
   </form>
-</Modal>
+  {#snippet actions()}
+    <Button variant="secondary" type="button" onclick={onclose}>{$LL.cancel()}</Button>
+    <Button type="submit" form="role-form">{$LL.save()}</Button>
+  {/snippet}
+</Dialog>

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
-  import { Pencil, Plus, RefreshCw, Search, Trash2 } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
   import UserForm, { userFormState, type UserFormState } from './UserForm.svelte'
   import UserSecurity from './UserSecurity.svelte'
   import AppToolbar from '../../ui/AppToolbar.svelte'
@@ -179,96 +179,60 @@
 
 <AppToolbar subtitle={subtitle()}>
   {#snippet actions()}
-    {#if view?.available}
-      <IconButton label={$LL.userAdd()} onclick={() => openForm(null)}>
-        <Plus class="w-4 h-4" />
-      </IconButton>
-    {/if}
-    <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    {#if view?.available}<Button size="sm" variant="tinted" icon="add" onclick={() => openForm(null)}>{$LL.userAdd()}</Button>{/if}
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
   {/snippet}
 </AppToolbar>
 
-<main class="mx-auto max-w-3xl space-y-3 px-4 py-4 @3xl:px-6">
-  {#if error}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <p class="text-sm text-danger">{error}</p>
-    </Card>
-  {/if}
-
-  {#if notice}
-    <Card class="p-3">
-      <p class="text-sm text-muted-fg">{notice}</p>
-    </Card>
-  {/if}
+<main class="space-y-[13px] px-[17px] pb-[17px] pt-[4px]">
+  {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
+  {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
 
   {#if loading && !view}
-    <Card class="grid place-items-center p-8"><Spinner class="h-5 w-5" /></Card>
+    <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
   {:else if view && !view.available}
-    <Card class="space-y-2 p-4">
-      <p class="text-sm text-muted-fg">{reasonText(view)}</p>
-      {#if view.reason && view.reason_kind !== 'unsupported_platform'}
-        <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
-      {/if}
+    <Card>
+      <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
+      {#if view.reason && view.reason_kind !== 'unsupported_platform'}<pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>{/if}
     </Card>
   {:else if view}
-    <div class="relative">
-      <Search class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint-fg" />
-      <Input class="pl-8" bind:value={query} placeholder={$LL.userSearchHint()} />
-    </div>
+    <Input bind:value={query} icon="search" placeholder={$LL.userSearchHint()} />
 
     {#if visible.length === 0}
-      <Card class="p-4">
-        <p class="text-sm text-muted-fg">{query ? $LL.userNoMatch() : $LL.userEmpty()}</p>
-      </Card>
+      <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+        <Icon name="group" size={48} weight={300} />
+        <span class="text-[13px]">{query ? $LL.systemUsersNoMatch() : $LL.systemUsersEmptyState()}</span>
+        {#if !query}<p class="max-w-md text-center text-[12px]">{$LL.userEmpty()}</p>{/if}
+      </div>
     {:else}
       <!-- One account per card, under the group the machine's own flag puts it
-           in. The two things that may be done to an account are in the dialog
-           the card opens, so a write is always taken with the account on
-           screen. -->
+           in. The card opens details and account actions. -->
       {#each grouped as group (group.id)}
-        <section class="space-y-2">
-          <h2 class="px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-muted-fg">
-            {group.label()}
-          </h2>
-          <ul class="space-y-2">
+        <section class="space-y-[7px]">
+          <h2 class="lk-caps px-[3px]">{group.label()}</h2>
+          <ul class="space-y-[7px]">
             {#each group.users as user (user.name)}
               <li>
-                <button
-                  class="flex w-full items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:bg-soft/40"
-                  onclick={() => open(user)}
-                >
-                  <!-- The initial is the name's own letter, so it says nothing
-                       a screen reader has not already read out. -->
-                  <span
-                    class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-soft text-xs font-semibold text-muted-fg"
-                    aria-hidden="true"
-                  >
-                    {user.name.slice(0, 1).toUpperCase()}
-                  </span>
-                  <span class="min-w-0 flex-1">
-                    <span class="flex flex-wrap items-baseline gap-2">
-                      <span class="truncate text-[0.85rem] font-medium text-fg-strong">{user.name}</span>
-                      <!-- Every flag here is the agent's answer, not a rule derived
-                           from the row: which account it runs as and which ones it
-                           would refuse to remove are things only it knows. -->
-                      {#if user.is_root}
-                        <Badge tone="danger">{$LL.userSuperuser()}</Badge>
-                      {/if}
-                      {#if user.agent_account}
-                        <Badge tone="neutral">{$LL.userCurrent()}</Badge>
-                      {/if}
-                      {#if user.login_disabled}
-                        <Badge tone="warning">{$LL.userLoginDisabled()}</Badge>
-                      {/if}
+                <Card padding="11px 13px" onclick={() => open(user)}>
+                  <div class="flex min-w-0 items-center gap-[13px]">
+                    <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)">
+                      <Icon name={user.is_root ? 'key' : 'person'} size={18} />
                     </span>
-                    <span class="mt-0.5 block truncate text-xs text-muted-fg">
-                      {$LL.userUid()} {user.uid} · {user.home}
-                      {#if user.shell} · {user.shell}{/if}
-                    </span>
-                  </span>
-                </button>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-center gap-[7px]">
+                        <span class="truncate text-[13px] font-semibold">{user.name}</span>
+                        <!-- Flags come from the agent; the panel does not infer them. -->
+                        {#if user.is_root}<Badge tone="danger">{$LL.userSuperuser()}</Badge>{/if}
+                        {#if user.agent_account}<Badge tone="neutral">{$LL.userCurrent()}</Badge>{/if}
+                        {#if user.login_disabled}<Badge tone="warning">{$LL.userLoginDisabled()}</Badge>{/if}
+                      </div>
+                      <p class="lk-num truncate text-[12px] text-(--text-tertiary)">
+                        {$LL.userUid()} {user.uid} · <span class="lk-mono">{user.home}</span>
+                        {#if user.shell} · <span class="lk-mono">{user.shell}</span>{/if}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
               </li>
             {/each}
           </ul>
@@ -276,135 +240,64 @@
       {/each}
     {/if}
 
-    {#if busy}
-      <div class="flex items-center gap-2 px-1 text-xs text-muted-fg">
-        <Spinner size="sm" />
-      </div>
-    {/if}
+    {#if busy}<div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)"><Spinner size="sm" /></div>{/if}
   {/if}
 </main>
 
-<!-- One account: what the machine has, what its own records say, and the two
-     things that may be done to it. The actions live here rather than on the row
-     so the list stays one line per account and a write is always taken with the
-     account on screen. The form replaces this dialog rather than stacking on it;
-     `opened` stays set, so closing the form returns here with the account as the
-     write just left it. -->
+<!-- One account: the machine's state, security records and available actions.
+     The form replaces this dialog; `opened` stays set so closing it returns to
+     the account after the write. -->
 {#if opened && editing === undefined}
-  <Modal open title={opened.name} onclose={() => (opened = undefined)}>
-    <div class="space-y-4">
-      <div class="flex flex-wrap items-center gap-2">
-        {#if opened.is_root}
-          <Badge tone="danger">{$LL.userSuperuser()}</Badge>
-        {/if}
-        {#if opened.agent_account}
-          <Badge tone="neutral">{$LL.userCurrent()}</Badge>
-        {/if}
-        {#if opened.system}
-          <Badge tone="neutral">{$LL.userSystemAccount()}</Badge>
-        {/if}
-        {#if opened.login_disabled}
-          <Badge tone="warning">{$LL.userLoginDisabled()}</Badge>
+  {@const user = opened}
+  <Dialog open wide title={user.name} onclose={() => (opened = undefined)}>
+    {#snippet actions()}
+      {#if !removing}
+        <Button variant="secondary" icon="edit" onclick={() => openForm(user)}>{$LL.userEdit()}</Button>
+        <!-- Whether it may be removed comes from the agent. -->
+        <Button variant="destructive" icon="delete" disabled={!user.deletable} onclick={() => (removing = true)}>{$LL.userDelete()}</Button>
+        <Button variant="secondary" onclick={() => (opened = undefined)}>{$LL.close()}</Button>
+      {:else}
+        <Button variant="destructive" disabled={busy} onclick={() => void remove(needsSudo)}>{$LL.userDelete()}</Button>
+        <Button variant="secondary" onclick={() => (removing = false)}>{$LL.cancel()}</Button>
+      {/if}
+    {/snippet}
+    {#if removing}<p class="mb-[13px] text-[13px] text-(--text-secondary)">{$LL.userDeleteConfirm({ name: user.name })}</p>{/if}
+    <div class="flex flex-wrap gap-[7px]">
+      {#if user.is_root}<Badge tone="danger">{$LL.userSuperuser()}</Badge>{/if}
+      {#if user.agent_account}<Badge tone="neutral">{$LL.userCurrent()}</Badge>{/if}
+      {#if user.system}<Badge tone="neutral">{$LL.userSystemAccount()}</Badge>{/if}
+      {#if user.login_disabled}<Badge tone="warning">{$LL.userLoginDisabled()}</Badge>{/if}
+    </div>
+    <dl class="mt-[13px] grid grid-cols-2 gap-x-[13px] @2xl:grid-cols-3">
+      <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.userUid()}</dt><dd class="lk-num text-right">{user.uid} · {user.gid}</dd></div>
+      <div class="col-span-1 border-t border-(--border-hairline) py-[7px] @2xl:col-span-2"><dt class="text-[12px] text-(--text-secondary)">{$LL.userHome()}</dt><dd class="lk-mono break-all text-right text-[12px]">{user.home}{#if user.shell} · {user.shell}{/if}</dd></div>
+      <div class="border-t border-(--border-hairline) py-[7px]"><dt class="text-[12px] text-(--text-secondary)">{$LL.userPrimaryGroup()}</dt><dd class="text-right">{user.primary_group ?? '—'}</dd></div>
+      <div class="col-span-1 border-t border-(--border-hairline) py-[7px] @2xl:col-span-2"><dt class="text-[12px] text-(--text-secondary)">{$LL.userSupplementaryGroups()}</dt><dd class="break-all text-right text-[12px]">{user.supplementary_groups.join(', ') || $LL.userPasswordNone()}</dd></div>
+    </dl>
+    {#if removing}
+      <div class="mt-[13px] grid gap-[9px]">
+        <Checkbox bind:checked={removeHome} label={$LL.userRemoveHome()} />
+        {#if needsSudo}
+          <!-- The second attempt. The password travels separately, never in the
+               machine's process list or the agent's audit row. -->
+          <Input id="user-delete-sudo" label={$LL.powerPassword()} type="password" bind:value={sudoPassword} hint={$LL.powerPasswordHint()} />
         {/if}
       </div>
-
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs @2xl:grid-cols-3">
-        <div>
-          <dt class="text-faint-fg">{$LL.userUid()}</dt>
-          <dd class="text-muted-fg">{opened.uid} · {opened.gid}</dd>
-        </div>
-        <div class="col-span-1 @2xl:col-span-2">
-          <dt class="text-faint-fg">{$LL.userHome()}</dt>
-          <dd class="text-muted-fg break-all">
-            {opened.home}{#if opened.shell} · {opened.shell}{/if}
-          </dd>
-        </div>
-        <div>
-          <dt class="text-faint-fg">{$LL.userPrimaryGroup()}</dt>
-          <dd class="text-muted-fg">{opened.primary_group ?? '—'}</dd>
-        </div>
-        <div class="col-span-1 @2xl:col-span-2">
-          <dt class="text-faint-fg">{$LL.userSupplementaryGroups()}</dt>
-          <dd class="text-muted-fg break-all">
-            <!-- `userPasswordNone` is this panel's word for "none", the same one
-                 an empty key list is drawn with. -->
-            {opened.supplementary_groups.join(', ') || $LL.userPasswordNone()}
-          </dd>
-        </div>
-      </dl>
-
-      {#if actionError}
-        <pre class="text-sm text-danger whitespace-pre-wrap break-all">{actionError}</pre>
-      {/if}
-
-      {#if removing}
-        <Card class="space-y-2">
-          <p class="text-sm text-fg">{$LL.userDeleteConfirm({ name: opened.name })}</p>
-          <label class="flex items-center gap-2 text-sm text-fg">
-            <input type="checkbox" bind:checked={removeHome} />
-            {$LL.userRemoveHome()}
-          </label>
-          {#if needsSudo}
-            <!-- The second attempt. The password travels as its own field, so it
-                 never lands in the machine's process list nor in the audit row. -->
-            <div class="space-y-1">
-              <label class="text-sm text-muted-fg" for="user-delete-sudo"
-                >{$LL.powerPassword()}</label
-              >
-              <Input id="user-delete-sudo" type="password" bind:value={sudoPassword} />
-              <p class="text-xs text-muted-fg">{$LL.powerPasswordHint()}</p>
-            </div>
-          {/if}
-          <div class="flex justify-end gap-2">
-            <Button variant="secondary" onclick={() => (removing = false)}>{$LL.cancel()}</Button>
-            <Button disabled={busy} onclick={() => void remove(needsSudo)}>
-              {$LL.userDelete()}
-            </Button>
-          </div>
-        </Card>
-      {:else}
-        <div class="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onclick={() => openForm(opened!)}>
-            <Pencil class="w-4 h-4" />
-            {$LL.userEdit()}
-          </Button>
-          <!-- Whether it may be removed is the agent's answer on the row: root
-               and its own account are the machine's, and which of the two this
-               is is not something the panel can tell apart. -->
-          <Button variant="secondary" disabled={!opened.deletable} onclick={() => (removing = true)}>
-            <Trash2 class="w-4 h-4" />
-            {$LL.userDelete()}
-          </Button>
-          <!-- Why that button is not available, said where it is: root and the
-               account the agent runs as are the machine's own, and the agent
-               says which of the two this is rather than the panel guessing. -->
-          {#if !opened.deletable}
-            <span class="text-xs text-faint-fg">
-              {opened.is_root ? $LL.userRootNotDeletable() : $LL.userAgentAccount()}
-            </span>
-          {/if}
-        </div>
-      {/if}
-
-      <!-- What only the machine's own records say. Fetched when an account is
-           opened rather than with the listing: it is three files read as root,
-           and most rows are never opened. -->
-      <UserSecurity userName={opened.name} />
-    </div>
-  </Modal>
+    {/if}
+    {#if actionError}<pre class="mt-[9px] whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{actionError}</pre>{/if}
+    {#if !user.deletable && !removing}<p class="mt-[9px] text-[12px] text-(--text-tertiary)">{user.is_root ? $LL.userRootNotDeletable() : $LL.userAgentAccount()}</p>{/if}
+    <!-- These machine records are fetched when an account is opened. -->
+    <div class="mt-[13px]"><UserSecurity userName={user.name} /></div>
+  </Dialog>
 {/if}
 
 {#if editing !== undefined}
-  <Modal
-    open
-    title={editing ? $LL.userEdit() : $LL.userAdd()}
-    onclose={() => (editing = undefined)}
-  >
+  <Dialog open wide title={editing ? $LL.userEdit() : $LL.userAdd()} onclose={() => (editing = undefined)}>
     <UserForm
       user={editing ?? undefined}
       fields={formState}
       onsaved={onSaved}
       oncancel={() => (editing = undefined)}
     />
-  </Modal>
+  </Dialog>
 {/if}

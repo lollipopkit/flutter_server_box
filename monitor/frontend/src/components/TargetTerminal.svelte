@@ -7,7 +7,8 @@
   /// it, so nothing here composes one. Offered only where the agent lists the
   /// matching feature.
   import { onMount } from 'svelte'
-  import { Button, Spinner } from '@serverbox/webui'
+  import Button from '../desk/lk/Button.svelte'
+  import Spinner from '../desk/lk/Spinner.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { TerminalSession, type TerminalTarget } from '../lib/terminal.svelte'
   import { terminalSurface } from '../lib/terminalSurface.svelte'
@@ -79,11 +80,11 @@
   })
 </script>
 
-<div class="space-y-2">
+<div class="flex flex-col gap-[7px]">
   <!-- The container carries the terminal's own background, so the strip the
        last row does not fill is not a colour of its own. -->
   <div
-    class="relative h-96 rounded-md overflow-hidden"
+    class="relative h-96 overflow-hidden rounded-[var(--radius-card)] shadow-[inset_0_0_0_0.5px_var(--border-hairline)]"
     style="background-color: {terminalSurface.current}"
   >
     <!-- Positioned rather than sized: xterm measures what it is opened into,
@@ -91,30 +92,30 @@
     <div bind:this={host} class="absolute inset-0"></div>
 
     {#if mounting}
-      <div class="absolute inset-0 flex items-center justify-center bg-bg/70">
-        <Spinner class="w-5 h-5" />
+      <div class="absolute inset-0 flex items-center justify-center bg-(--surface-window)/70">
+        <Spinner size={20} />
       </div>
     {/if}
     {#if session.phase === 'reconnecting'}
       <div
-        class="absolute inset-0 flex items-center justify-center gap-2 bg-bg/70 backdrop-blur-[1px]"
+        class="absolute inset-0 flex items-center justify-center gap-[7px] bg-(--surface-window)/70 backdrop-blur-[1px]"
       >
-        <Spinner class="w-5 h-5" />
-        <span class="text-sm text-fg-strong">{$LL.terminalReconnecting()}</span>
+        <Spinner size={20} />
+        <span class="text-[13px] font-medium">{$LL.terminalReconnecting()}</span>
       </div>
     {/if}
   </div>
 
   {#if mountFailed}
-    <p class="text-sm text-danger">{$LL.terminalLoadFailed()}</p>
+    <p class="text-[12px] text-(--color-danger)">{$LL.terminalLoadFailed()}</p>
   {/if}
   <!-- The outage outlasted the agent's buffer, so what is on screen has a
        hole in it — the terminal page says the same. -->
   {#if session.truncated}
-    <p class="text-xs text-muted-fg">{$LL.terminalOutputLost()}</p>
+    <p class="text-[12px] text-(--text-tertiary)">{$LL.terminalOutputLost()}</p>
   {/if}
   {#if session.error}
-    <p class="text-sm text-danger">
+    <p class="text-[12px] text-(--color-danger)">
       {session.errorCode === 'invalid_input' && session.issueCode && issueText
         ? issueText(session.issueCode)
         : session.errorCode === 'no_container_runtime'
@@ -122,11 +123,11 @@
           : session.error}
     </p>
     {#if onedit && session.errorCode === 'invalid_input'}
-      <Button variant="secondary" onclick={onedit}>{$LL.back()}</Button>
+      <Button size="sm" icon="chevron_left" onclick={onedit}>{$LL.back()}</Button>
     {/if}
   {/if}
   <!-- The command has ended; its output is still on screen above. -->
   {#if session.phase === 'closed' && session.exitStatus !== null}
-    <p class="text-xs text-muted-fg">{$LL.targetExitStatus({ code: session.exitStatus })}</p>
+    <p class="text-[12px] text-(--text-tertiary)">{$LL.targetExitStatus({ code: session.exitStatus })}</p>
   {/if}
 </div>

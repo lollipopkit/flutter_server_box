@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Button, Card, Input, Select, Spinner } from '@serverbox/webui'
-  import { ArrowDown, ArrowUp, ChevronDown, Disc, Plus, RotateCcw, Trash2, X } from '@lucide/svelte'
+  import { Badge, Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Select, Spinner } from '../../lk/index'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
   import {
@@ -357,30 +356,26 @@
 </script>
 
 {#snippet head(title: string, right: string = '', warn: boolean = false)}
-  <div class="flex items-center gap-2">
-    <h3 class="text-sm font-medium text-fg-strong">{title}</h3>
+  <div class="flex items-center gap-[9px]">
+    <h3 class="text-[15px] font-semibold">{title}</h3>
     {#if right}
-      <span class="ml-auto truncate text-xs {warn ? 'text-warning' : 'text-faint-fg'}">{right}</span>
+      <span class="ml-auto truncate text-[12px] {warn ? 'text-(--color-warning)' : 'text-(--text-tertiary)'}">{right}</span>
     {/if}
   </div>
 {/snippet}
 
 {#snippet row(key: string, title: string, summary: string)}
-  <button type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted" aria-expanded={!!open[key]} onclick={() => toggle(key)}>
-    <span class="font-mono text-sm text-fg-strong">{title}</span>
-    <span class="min-w-0 flex-1 truncate text-xs text-muted-fg">{summary}</span>
-    <ChevronDown class="h-4 w-4 shrink-0 text-faint-fg transition-transform {open[key] ? 'rotate-180' : ''}" />
+  <button type="button" class="flex w-full items-center gap-[9px] rounded-[9px] px-[9px] py-[7px] text-left transition-colors hover:bg-(--fill-hover)" aria-expanded={!!open[key]} onclick={() => toggle(key)}>
+    <span class="lk-mono text-[13px] font-semibold text-(--text-primary)">{title}</span>
+    <span class="min-w-0 flex-1 truncate text-[12px] text-(--text-secondary)">{summary}</span>
+    <Icon name={open[key] ? 'expand_less' : 'expand_more'} size={18} />
   </button>
 {/snippet}
 
 {#snippet seg(label: string, items: string[], value: string, pick: (v: string) => void)}
-  <div class="flex flex-wrap items-center gap-2">
-    <span class="w-28 shrink-0 text-sm text-muted-fg">{label}</span>
-    <div class="flex flex-wrap gap-1">
-      {#each items as it (it)}
-        <Button type="button" size="sm" variant={it === value ? 'primary' : 'secondary'} aria-pressed={it === value} onclick={() => pick(it)}>{it}</Button>
-      {/each}
-    </div>
+  <div class="flex flex-wrap items-center gap-[9px]">
+    <span class="text-[12px] text-(--text-secondary)">{label}</span>
+    <SegmentedControl size="sm" {value} options={items.map((item) => ({ value: item, label: item }))} label={label} onchange={pick} />
   </div>
 {/snippet}
 
@@ -393,37 +388,29 @@
 {#snippet removeBar(key: string, name: string, change: () => VirtHwChange, withVolume: boolean = false)}
   {#if confirm === key}
     {#if withVolume}
-      <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={deleteVolume} /> {$LL.virtHwDeleteVolume()}</label>
+      <Checkbox bind:checked={deleteVolume} label={$LL.virtHwDeleteVolume()} />
     {/if}
-    <p class="text-xs text-danger">{$LL.virtHwConfirmAgain()}</p>
+    <p class="text-[12px] text-(--color-danger)">{$LL.virtHwConfirmAgain()}</p>
   {/if}
-  <div class="flex justify-end gap-2">
+  <div class="flex justify-end gap-[9px]">
     {#if confirm === key}
-      <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>
-        <X class="h-4 w-4" />
-        {$LL.cancel()}
-      </Button>
+      <Button variant="secondary" size="sm" onclick={() => (confirm = null)} icon="close">{$LL.cancel()}</Button>
     {/if}
-    <Button variant="danger" size="sm" disabled={busy} onclick={() => twice(key, change)}>
-      <Trash2 class="h-4 w-4" />
+    <Button variant="destructive" size="sm" disabled={busy} onclick={() => twice(key, change)} icon="delete">
       {confirm === key ? $LL.virtHwConfirmRemove({ name }) : $LL.virtHwRemove()}
     </Button>
   </div>
 {/snippet}
 
 {#if error}
-  <Card class="border-danger/40 bg-danger/5">
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
-  </Card>
+  <Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p></Card>
 {/if}
 {#if notice}
-  <Card>
-    <p class="text-sm text-muted-fg whitespace-pre-wrap">{notice}</p>
-  </Card>
+  <Card><p class="whitespace-pre-wrap text-[13px] text-(--text-secondary)">{notice}</p></Card>
 {/if}
 
 {#if readError}
-  <Card><p class="text-sm text-danger whitespace-pre-wrap break-all">{readError}</p></Card>
+  <Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{readError}</p></Card>
 {:else if !hw}
   <Card><Spinner class="h-5 w-5" /></Card>
 {/if}
@@ -434,33 +421,29 @@
 
   {#if h.pending.length > 0}
     <!-- What the running guest has differently from its next start. -->
-    <Card class="space-y-3 border-warning/40">
+    <Card class="space-y-[13px]">
       {@render head($LL.virtHwPending(), $LL.virtHwNextStart(), true)}
-      <ul class="divide-y divide-line">
+      <ul>
         {#each h.pending as p (p.key)}
-          <li class="flex flex-wrap items-center gap-2 py-1.5 text-xs">
-            <span class="font-mono text-fg-strong">{p.key}</span>
-            <span class="min-w-0 flex-1 break-all text-muted-fg">
+          <li class="flex flex-wrap items-center gap-[9px] border-t border-(--border-hairline) py-[7px] text-[12px]">
+            <span class="lk-mono text-(--text-primary)">{p.key}</span>
+            <span class="min-w-0 flex-1 break-all text-(--text-secondary)">
               {p.current ?? '—'} → {p.delete ? $LL.virtHwPendingRemoved() : (p.pending ?? '—')}
             </span>
             {#if pve}
-              <Button variant="ghost" size="sm" disabled={busy} onclick={() => void apply({ op: 'revert', keys: [p.key] })}>
-                <RotateCcw class="h-4 w-4" />
-                {$LL.virtHwRevert()}
-              </Button>
+              <Button variant="ghost" size="sm" disabled={busy} onclick={() => void apply({ op: 'revert', keys: [p.key] })} icon="restart_alt">{$LL.virtHwRevert()}</Button>
             {/if}
           </li>
         {/each}
       </ul>
       {#if confirm === 'revert'}
-        <p class="text-xs text-warning">{$LL.virtHwRevertAllNote()}</p>
+        <p class="text-[12px] text-(--color-warning)">{$LL.virtHwRevertAllNote()}</p>
       {/if}
-      <div class="flex justify-end gap-2">
+      <div class="flex justify-end gap-[9px]">
         {#if confirm === 'revert'}
           <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>{$LL.cancel()}</Button>
         {/if}
-        <Button variant="secondary" size="sm" disabled={busy} onclick={() => void revertAll()}>
-          <RotateCcw class="h-4 w-4" />
+        <Button variant="secondary" size="sm" disabled={busy} onclick={() => void revertAll()} icon="restart_alt">
           {confirm === 'revert' ? $LL.virtHwConfirmRevertAll() : $LL.virtHwRevertAll()}
         </Button>
       </div>
@@ -468,128 +451,77 @@
   {/if}
 
   <!-- CPU. -->
-  <Card class="space-y-3">
+  <Card class="space-y-[13px]">
     {@render head(lxc ? 'CPU' : $LL.virtHwProcessor(), h.limits.host_cpus !== null ? $LL.virtHwHostCpus({ n: h.limits.host_cpus }) : '')}
-    <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap gap-[13px]">
       {#if !lxc}
-        <label class="block w-28 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtHwSockets()}</span>
-          <Input type="number" min="1" bind:value={cpu.sockets} />
-        </label>
+        <Input class="w-28" label={$LL.virtHwSockets()} type="number" min="1" bind:value={cpu.sockets} />
       {/if}
-      <label class="block w-28 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtCores()}</span>
-        <Input type="number" min="1" bind:value={cpu.cores} />
-      </label>
+      <Input class="w-28" label={$LL.virtCores()} type="number" min="1" bind:value={cpu.cores} />
       {#if !lxc}
-        <label class="block w-36 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtHwOnline()}</span>
-          <Input type="number" min="1" bind:value={cpu.online} placeholder={$LL.virtHwAll()} />
-        </label>
+        <Input class="w-36" label={$LL.virtHwOnline()} type="number" min="1" bind:value={cpu.online} placeholder={$LL.virtHwAll()} />
       {/if}
     </div>
     {#if pve && !lxc && h.cpu_types.length > 0}
-      <label class="block space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtHwCpuType()}</span>
-        <Select class="w-full" bind:value={cpu.type}>
-          <option value="">{$LL.virtHwDefault()}</option>
-          {#each options(cpu.type, h.cpu_types) as t (t)}
-            <option value={t}>{t}</option>
-          {/each}
-        </Select>
-      </label>
+      <Select label={$LL.virtHwCpuType()} class="w-full" bind:value={cpu.type} options={[{ value: '', label: $LL.virtHwDefault() }, ...options(cpu.type, h.cpu_types).map((t) => ({ value: t, label: t }))]} />
     {/if}
     {#if !lxc}
-      <p class="text-xs text-faint-fg">{$LL.virtHwTopology()}: {num(cpu.sockets) ?? '?'} × {num(cpu.cores) ?? '?'} × {h.cpu.threads}</p>
+      <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwTopology()}: {num(cpu.sockets) ?? '?'} × {num(cpu.cores) ?? '?'} × {h.cpu.threads}</p>
     {/if}
     {@render saveBar(sameChange(cpuChange(cpu), cpuChange(cpuDraft(h))), () => void apply(cpuChange(cpu)))}
   </Card>
 
   <!-- Memory. -->
-  <Card class="space-y-3">
+  <Card class="space-y-[13px]">
     {@render head($LL.virtMemory(), h.limits.host_memory_bytes !== null ? $LL.virtHwHostMemory({ mem: fmtBytes(h.limits.host_memory_bytes) }) : '')}
-    <div class="flex flex-wrap gap-3">
-      <label class="block w-36 space-y-1 text-sm">
-        <span class="text-muted-fg">{$LL.virtMemoryGib()}</span>
-        <Input type="number" min="0.5" step="0.5" bind:value={mem.gib} />
-      </label>
+    <div class="flex flex-wrap gap-[13px]">
+      <Input class="w-36" label={$LL.virtMemoryGib()} type="number" min="0.5" step="0.5" bind:value={mem.gib} />
       {#if h.memory.balloon}
-        <label class="block w-48 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtHwMemoryMin()}</span>
-          <Input type="number" min="0" step="0.5" bind:value={mem.minGib} placeholder={$LL.virtHwNone()} />
-        </label>
+        <Input class="w-48" label={$LL.virtHwMemoryMin()} type="number" min="0" step="0.5" bind:value={mem.minGib} placeholder={$LL.virtHwNone()} />
       {/if}
       {#if lxc}
-        <label class="block w-36 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtHwSwap()}</span>
-          <Input type="number" min="0" step="128" bind:value={mem.swapMib} />
-        </label>
+        <Input class="w-36" label={$LL.virtHwSwap()} type="number" min="0" step="128" bind:value={mem.swapMib} />
       {/if}
     </div>
     {#if h.memory.balloon}
-      <p class="text-xs text-faint-fg">{$LL.virtHwMemoryMinNote()}</p>
+      <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwMemoryMinNote()}</p>
     {/if}
     {@render saveBar(sameChange(memoryChange(mem, h), memoryChange(memoryDraft(h), h)), () => void apply(memoryChange(mem, h)))}
   </Card>
 
   <!-- Disks: grow, bus, cache, remove; a new or an existing volume. -->
-  <Card class="space-y-2">
+  <Card class="space-y-[9px]">
     {@render head(lxc ? $LL.virtHwDisksLxc() : $LL.virtDisks(), $LL.virtHwTotal({ size: fmtBytes(blockDisks.reduce((n, d) => n + (d.size ?? 0), 0)) }))}
     {#each blockDisks as d (d.key)}
       {@const draft = disks[d.key]}
-      <div class="rounded-lg border border-line">
+      <Card variant="raised" padding="0">
         {@render row(`d-${d.key}`, d.key, diskSummary(d))}
         {#if open[`d-${d.key}`] && draft}
-          <div class="space-y-3 border-t border-line p-3">
-            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-              <dt class="text-faint-fg">{$LL.virtHwSource()}</dt>
-              <dd class="break-all font-mono text-muted-fg">{d.source ?? '—'}</dd>
+          <div class="space-y-[13px] border-t border-(--border-hairline) p-[13px]">
+            <dl class="grid grid-cols-[auto_1fr] gap-x-[9px] gap-y-[5px] text-[12px]">
+              <dt class="text-(--text-tertiary)">{$LL.virtHwSource()}</dt>
+              <dd class="break-all lk-mono text-(--text-secondary)">{d.source ?? '—'}</dd>
               {#if d.storage}
-                <dt class="text-faint-fg">{$LL.virtHwStorage()}</dt>
-                <dd class="text-muted-fg">{d.storage}</dd>
+                <dt class="text-(--text-tertiary)">{$LL.virtHwStorage()}</dt>
+                <dd class="text-(--text-secondary)">{d.storage}</dd>
               {/if}
             </dl>
             {#if d.resizable}
-              <div class="flex flex-wrap items-end gap-2">
-                <label class="block w-40 space-y-1 text-sm">
-                  <span class="text-muted-fg">{$LL.virtHwGrowTo()}</span>
-                  <Input type="number" min="1" bind:value={draft.grow} />
-                </label>
-                <Button
-                  size="sm"
-                  disabled={busy || gibBytes(draft.grow) === null || (d.size !== null && (gibBytes(draft.grow) ?? 0) <= d.size)}
-                  onclick={() => void apply({ op: 'grow_disk', key: d.key, bytes: gibBytes(draft.grow) ?? 0 })}
-                >
-                  {$LL.virtHwGrow()}
-                </Button>
+              <div class="flex flex-wrap items-end gap-[9px]">
+                <Input class="w-40" label={$LL.virtHwGrowTo()} type="number" min="1" bind:value={draft.grow} />
+                <Button size="sm" disabled={busy || gibBytes(draft.grow) === null || (d.size !== null && (gibBytes(draft.grow) ?? 0) <= d.size)} onclick={() => void apply({ op: 'grow_disk', key: d.key, bytes: gibBytes(draft.grow) ?? 0 })}>{$LL.virtHwGrow()}</Button>
               </div>
-              <p class="text-xs text-faint-fg">{$LL.virtHwGrowNote()}</p>
+              <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwGrowNote()}</p>
             {/if}
             {#if d.kind === 'disk' && (s.buses.length > 0 || s.caches.length > 0)}
-              <div class="flex flex-wrap items-end gap-3">
+              <div class="flex flex-wrap items-end gap-[13px]">
                 {#if s.buses.length > 0}
-                  <label class="block w-36 space-y-1 text-sm">
-                    <span class="text-muted-fg">{$LL.virtBus()}</span>
-                    <Select class="w-full" bind:value={draft.bus}>
-                      {#each options(d.bus ?? '', s.buses) as b (b)}
-                        <option value={b}>{b}</option>
-                      {/each}
-                    </Select>
-                  </label>
+                  <Select class="w-36" label={$LL.virtBus()} bind:value={draft.bus} options={options(d.bus ?? '', s.buses).map((b) => ({ value: b, label: b }))} />
                 {/if}
                 {#if s.caches.length > 0}
-                  <label class="block w-40 space-y-1 text-sm">
-                    <span class="text-muted-fg">{$LL.virtHwCache()}</span>
-                    <Select class="w-full" bind:value={draft.cache}>
-                      {#each options(d.cache ?? 'default', s.caches) as c (c)}
-                        <option value={c}>{c}</option>
-                      {/each}
-                    </Select>
-                  </label>
+                  <Select class="w-40" label={$LL.virtHwCache()} bind:value={draft.cache} options={options(d.cache ?? 'default', s.caches).map((c) => ({ value: c, label: c }))} />
                 {/if}
-                <Button size="sm" disabled={busy || diskUpdate(d, draft.bus, draft.cache) === null} onclick={() => void apply(diskUpdate(d, draft.bus, draft.cache)!)}>
-                  {$LL.save()}
-                </Button>
+                <Button size="sm" disabled={busy || diskUpdate(d, draft.bus, draft.cache) === null} onclick={() => void apply(diskUpdate(d, draft.bus, draft.cache)!)}>{$LL.save()}</Button>
               </div>
             {/if}
             {#if d.kind !== 'rootfs'}
@@ -597,63 +529,43 @@
             {/if}
           </div>
         {/if}
-      </div>
+      </Card>
     {/each}
 
     {#if adding === 'disk'}
-      <div class="space-y-3 rounded-lg border border-line p-3">
+      <Card variant="raised" class="space-y-[13px]">
         {@render head(lxc ? $LL.virtHwAddMount() : $LL.virtHwAddDisk())}
         {@render seg($LL.virtSource(), [$LL.virtHwNewVolume(), $LL.virtHwExistingVolume()], newDisk.existing ? $LL.virtHwExistingVolume() : $LL.virtHwNewVolume(), (v) => {
           newDisk.existing = v === $LL.virtHwExistingVolume()
           if (newDisk.existing && volumes === null) void pickVolPool(newDisk.volPool)
         })}
         {#if storages.length === 0}
-          <p class="text-sm text-muted-fg">{$LL.virtStorageNone()}</p>
+          <p class="text-[13px] text-(--text-secondary)">{$LL.virtStorageNone()}</p>
         {:else if !newDisk.existing}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtHwStorage()}</span>
-            <Select class="w-full" bind:value={newDisk.pool}>
-              {#each storages as p (p.id)}
-                <option value={p.id}>{p.name}{p.available !== null ? ` · ${$LL.virtStorageFree({ type: p.type, free: fmtBytes(p.available) })}` : ` · ${p.type}`}</option>
-              {/each}
-            </Select>
-          </label>
-          <label class="block w-36 space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtDiskGib()}</span>
-            <Input type="number" min="1" bind:value={newDisk.gib} />
-          </label>
+          <Select label={$LL.virtHwStorage()} class="w-full" bind:value={newDisk.pool} options={storages.map((p) => ({ value: p.id, label: `${p.name}${p.available !== null ? ` · ${$LL.virtStorageFree({ type: p.type, free: fmtBytes(p.available) })}` : ` · ${p.type}`}` }))} />
+          <Input class="w-36" label={$LL.virtDiskGib()} type="number" min="1" bind:value={newDisk.gib} />
         {:else}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtHwStorage()}</span>
-            <Select class="w-full" value={newDisk.volPool} onchange={(e) => void pickVolPool((e.currentTarget as HTMLSelectElement).value)}>
-              {#each storages as p (p.id)}
-                <option value={p.id}>{p.name}</option>
-              {/each}
-            </Select>
-          </label>
+          <Select label={$LL.virtHwStorage()} class="w-full" value={newDisk.volPool} options={storages.map((p) => ({ value: p.id, label: p.name }))} onchange={(e) => void pickVolPool(e.currentTarget.value)} />
           {#if volumes === null}
             <Spinner size="sm" />
           {:else if volumes.length === 0}
-            <p class="text-sm text-muted-fg">{$LL.virtHwVolumeNone()}</p>
+            <p class="text-[13px] text-(--text-secondary)">{$LL.virtHwVolumeNone()}</p>
           {:else}
-            <label class="block space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtHwVolume()}</span>
-              <Select class="w-full" bind:value={newDisk.volume}>
-                <option value="">—</option>
-                {#each volumes as v (v.id)}
-                  <option value={v.id}>{[v.name, v.format, v.capacity !== null ? fmtBytes(v.capacity) : null, v.users.some((u) => u.guest_id !== guestId) ? $LL.virtHwInUse() : null].filter(Boolean).join(' · ')}</option>
-                {/each}
-              </Select>
-            </label>
+            <Select
+              label={$LL.virtHwVolume()}
+              class="w-full"
+              bind:value={newDisk.volume}
+              options={[
+                { value: '', label: '—' },
+                ...volumes.map((v) => ({ value: v.id, label: [v.name, v.format, v.capacity !== null ? fmtBytes(v.capacity) : null, v.users.some((u) => u.guest_id !== guestId) ? $LL.virtHwInUse() : null].filter(Boolean).join(' · ') })),
+              ]}
+            />
           {/if}
         {/if}
         {#if lxc}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtHwMountPoint()}</span>
-            <Input class="font-mono" bind:value={newDisk.mountPoint} placeholder="/data" />
-          </label>
+          <Input class="lk-mono" label={$LL.virtHwMountPoint()} bind:value={newDisk.mountPoint} placeholder="/data" />
         {/if}
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-end gap-[9px]">
           <Button variant="secondary" size="sm" onclick={() => (adding = null)}>{$LL.cancel()}</Button>
           <Button
             size="sm"
@@ -663,62 +575,51 @@
             {$LL.virtHwAdd()}
           </Button>
         </div>
-      </div>
+      </Card>
     {:else}
-      <Button variant="ghost" size="sm" onclick={() => openAdd('disk')}>
-        <Plus class="h-4 w-4" />
+      <Button variant="ghost" size="sm" icon="add" onclick={() => openAdd('disk')}>
         {lxc ? $LL.virtHwAddMount() : $LL.virtHwAddDisk()}
       </Button>
     {/if}
   </Card>
 
   <!-- Network interfaces: network, link, firewall; model and MAC; remove. -->
-  <Card class="space-y-2">
+  <Card class="space-y-[9px]">
     {@render head($LL.virtNics(), String(h.nics.length))}
     {#each h.nics as n, i (n.key)}
       {@const draft = nics[n.key]}
       {@const current = nicNetwork(n)}
-      <div class="rounded-lg border border-line">
+      <Card variant="raised" padding="0">
         {@render row(`n-${n.key}`, nicLabel(n, i), [n.model, n.source, n.mac, n.link_up ? null : $LL.virtHwLinkDown()].filter(Boolean).join(' · '))}
         {#if open[`n-${n.key}`] && draft}
-          <div class="space-y-3 border-t border-line p-3">
-            <label class="block space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtNetwork()}</span>
-              <Select class="w-full" bind:value={draft.network}>
-                <option value="">{$LL.virtHwCurrent({ name: n.source ?? '—' })}</option>
-                {#each networks.filter((x) => x.id !== current?.id) as x (x.id)}
-                  <option value={x.id}>{[x.name, x.mode, x.bridge].filter(Boolean).join(' · ')}</option>
-                {/each}
-              </Select>
-            </label>
-            <label class="flex items-start gap-2 text-sm">
-              <input class="mt-1" type="checkbox" bind:checked={draft.linkUp} />
-              <span>
-                <span class="text-fg">{$LL.virtHwLinkUp()}</span>
-                <span class="block text-xs text-faint-fg">{$LL.virtHwLinkNote()}</span>
-              </span>
-            </label>
+          <div class="space-y-[13px] border-t border-(--border-hairline) p-[13px]">
+            <Select
+              label={$LL.virtNetwork()}
+              class="w-full"
+              bind:value={draft.network}
+              options={[
+                { value: '', label: $LL.virtHwCurrent({ name: n.source ?? '—' }) },
+                ...networks.filter((x) => x.id !== current?.id).map((x) => ({ value: x.id, label: [x.name, x.mode, x.bridge].filter(Boolean).join(' · ') })),
+              ]}
+            />
+            <div class="flex flex-wrap items-start justify-between gap-[13px]">
+              <div>
+                <p class="text-[13px]">{$LL.virtHwLinkUp()}</p>
+                <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwLinkNote()}</p>
+              </div>
+              <Checkbox label={$LL.virtHwLinkUp()} bind:checked={draft.linkUp} />
+            </div>
             {#if n.firewall !== null}
-              <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={draft.firewall} /> {$LL.virtHwFirewall()}</label>
+              <Checkbox label={$LL.virtHwFirewall()} bind:checked={draft.firewall} />
             {/if}
             {@render saveBar(nicUpdate(n, draft) === null, () => void apply(nicUpdate(n, draft)!))}
             {#if !lxc && (s.nic_models.length > 0 || s.mac)}
-              <div class="flex flex-wrap items-end gap-3 border-t border-line pt-3">
+              <div class="flex flex-wrap items-end gap-[13px] border-t border-(--border-hairline) pt-[13px]">
                 {#if s.nic_models.length > 0}
-                  <label class="block w-40 space-y-1 text-sm">
-                    <span class="text-muted-fg">{$LL.virtNicModel()}</span>
-                    <Select class="w-full" bind:value={draft.model}>
-                      {#each options(n.model ?? '', s.nic_models) as m (m)}
-                        <option value={m}>{m}</option>
-                      {/each}
-                    </Select>
-                  </label>
+                  <Select class="w-40" label={$LL.virtNicModel()} bind:value={draft.model} options={options(n.model ?? '', s.nic_models).map((m) => ({ value: m, label: m }))} />
                 {/if}
                 {#if s.mac}
-                  <label class="block min-w-48 flex-1 space-y-1 text-sm">
-                    <span class="text-muted-fg">{$LL.virtHwMac()}</span>
-                    <Input class="font-mono" bind:value={draft.mac} />
-                  </label>
+                  <Input class="min-w-48 flex-1 lk-mono" label={$LL.virtHwMac()} bind:value={draft.mac} />
                 {/if}
                 <Button size="sm" disabled={busy || nicHardware(n, draft) === null} onclick={() => void apply(nicHardware(n, draft)!)}>{$LL.save()}</Button>
               </div>
@@ -726,28 +627,24 @@
             {@render removeBar(`nic:${n.key}`, nicLabel(n, i), () => ({ op: 'remove_nic', key: n.key }))}
           </div>
         {/if}
-      </div>
+      </Card>
     {/each}
 
     {#if adding === 'nic'}
-      <div class="space-y-3 rounded-lg border border-line p-3">
+      <Card variant="raised" class="space-y-[13px]">
         {@render head($LL.virtHwAddNic())}
         {#if networks.length === 0}
-          <p class="text-sm text-muted-fg">{$LL.virtHwNetworkNone()}</p>
+          <p class="text-[13px] text-(--text-secondary)">{$LL.virtHwNetworkNone()}</p>
         {:else}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtNetwork()}</span>
-            <Select class="w-full" bind:value={newNic.network}>
-              {#each networks as x (x.id)}
-                <option value={x.id}>{[x.name, x.mode, x.bridge].filter(Boolean).join(' · ')}</option>
-              {/each}
-            </Select>
+          <label class="block space-y-[5px] text-[13px]">
+            <span class="text-(--text-secondary)">{$LL.virtNetwork()}</span>
+            <Select class="w-full" label={$LL.virtNetwork()} bind:value={newNic.network} options={networks.map((x) => ({ value: x.id, label: [x.name, x.mode, x.bridge].filter(Boolean).join(' · ') }))} />
           </label>
           {#if !lxc && s.nic_models.length > 0}
             {@render seg($LL.virtNicModel(), s.nic_models, newNic.model, (v) => (newNic.model = v))}
           {/if}
         {/if}
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-end gap-[9px]">
           <Button variant="secondary" size="sm" onclick={() => (adding = null)}>{$LL.cancel()}</Button>
           <Button
             size="sm"
@@ -757,140 +654,118 @@
             {$LL.virtHwAdd()}
           </Button>
         </div>
-      </div>
+      </Card>
     {:else}
-      <Button variant="ghost" size="sm" onclick={() => openAdd('nic')}>
-        <Plus class="h-4 w-4" />
-        {$LL.virtHwAddNic()}
-      </Button>
+      <Button variant="ghost" size="sm" icon="add" onclick={() => openAdd('nic')}>{$LL.virtHwAddNic()}</Button>
     {/if}
   </Card>
 
   {#if !lxc}
     <!-- CD-ROM drives and devices given to the guest. -->
-    <Card class="space-y-2">
+    <Card class="space-y-[9px]">
       {@render head($LL.virtHwDevices(), String(cdroms.length + h.devices.length))}
       {#each cdroms as d (d.key)}
         {@const draft = disks[d.key]}
-        <div class="rounded-lg border border-line">
+        <Card variant="raised" padding="0">
           {@render row(`c-${d.key}`, d.key, d.cloud_init ? $LL.virtHwCiDrive() : `${$LL.virtHwCdrom()} · ${mediaName(d.source)}`)}
           {#if open[`c-${d.key}`] && draft}
-            <div class="space-y-3 border-t border-line p-3">
+            <div class="space-y-[13px] border-t border-(--border-hairline) p-[13px]">
               {#if !d.cloud_init}
-                <div class="flex flex-wrap items-end gap-2">
-                  <label class="block min-w-48 flex-1 space-y-1 text-sm">
-                    <span class="text-muted-fg">{$LL.virtHwMedia()}</span>
-                    <Select class="w-full" bind:value={draft.media}>
-                      <option value="">—</option>
-                      {#each media as o (offerKey(o))}
-                        <option value={offerKey(o)}>{o.volume.name} · {o.pool}</option>
-                      {/each}
-                    </Select>
-                  </label>
-                  <Button size="sm" disabled={busy || draft.media === ''} onclick={() => void apply({ op: 'set_media', key: d.key, media: offerRef(draft.media) ?? null })}>
-                    <Disc class="h-4 w-4" />
-                    {$LL.virtHwInsert()}
-                  </Button>
+                <div class="flex flex-wrap items-end gap-[9px]">
+                  <Select class="min-w-48 flex-1" label={$LL.virtHwMedia()} bind:value={draft.media} options={[{ value: '', label: '—' }, ...media.map((o) => ({ value: offerKey(o), label: `${o.volume.name} · ${o.pool}` }))]} />
+                  <Button size="sm" disabled={busy || draft.media === ''} onclick={() => void apply({ op: 'set_media', key: d.key, media: offerRef(draft.media) ?? null })} icon="upload">{$LL.virtHwInsert()}</Button>
                   {#if d.source}
-                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => void apply({ op: 'set_media', key: d.key, media: null })}>{$LL.virtHwEject()}</Button>
+                    <Button variant="secondary" size="sm" disabled={busy} onclick={() => void apply({ op: 'set_media', key: d.key, media: null })} icon="eject">{$LL.virtHwEject()}</Button>
                   {/if}
                 </div>
               {:else}
-                <p class="text-xs text-faint-fg">{$LL.virtHwCiDriveNote()}</p>
+                <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwCiDriveNote()}</p>
               {/if}
               {@render removeBar(`dev:${d.key}`, d.key, () => ({ op: 'remove_disk', key: d.key, delete_volume: false }))}
             </div>
           {/if}
-        </div>
+        </Card>
       {/each}
       {#each h.devices as d (d.key)}
-        <div class="rounded-lg border border-line">
+        <Card variant="raised" padding="0">
           {@render row(`v-${d.key}`, d.kind === 'pci' ? 'PCI' : d.kind === 'usb' ? 'USB' : 'TPM', [d.key, d.detail, d.mapping ? $LL.virtHwMapping() : null].filter(Boolean).join(' · '))}
           {#if open[`v-${d.key}`]}
-            <div class="space-y-3 border-t border-line p-3">
+            <div class="space-y-[13px] border-t border-(--border-hairline) p-[13px]">
               {@render removeBar(`dev:${d.key}`, d.key, () => ({ op: 'remove_device', key: d.key }))}
             </div>
           {/if}
-        </div>
+        </Card>
       {/each}
 
       {#if adding === 'device'}
-        <div class="space-y-3 rounded-lg border border-line p-3">
+        <Card variant="raised" class="space-y-[13px]">
           {@render head($LL.virtHwAddDevice())}
-          <div class="flex flex-wrap gap-1">
-            {#each [['cdrom', $LL.virtHwCdrom()], ...(s.usb ? [['usb', 'USB']] : []), ...(s.pci ? [['pci', 'PCI']] : []), ...(s.tpm && !h.devices.some((x) => x.kind === 'tpm') ? [['tpm', 'TPM']] : [])] as [k, l] (k)}
-              <Button type="button" size="sm" variant={newDev.kind === k ? 'primary' : 'secondary'} aria-pressed={newDev.kind === k} onclick={() => pickDevKind(k as typeof newDev.kind)}>{l}</Button>
-            {/each}
-          </div>
+          <SegmentedControl
+            size="sm"
+            label={$LL.virtHwAddDevice()}
+            value={newDev.kind}
+            options={[
+              { value: 'cdrom', label: $LL.virtHwCdrom() },
+              ...(s.usb ? [{ value: 'usb', label: 'USB' }] : []),
+              ...(s.pci ? [{ value: 'pci', label: 'PCI' }] : []),
+              ...(s.tpm && !h.devices.some((x) => x.kind === 'tpm') ? [{ value: 'tpm', label: 'TPM' }] : []),
+            ]}
+            onchange={(kind) => pickDevKind(kind as typeof newDev.kind)}
+          />
           {#if newDev.kind === 'cdrom'}
-            <label class="block space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtHwMedia()}</span>
-              <Select class="w-full" bind:value={newDev.media}>
-                <option value="">{$LL.virtHwNoMedia()}</option>
-                {#each media as o (offerKey(o))}
-                  <option value={offerKey(o)}>{o.volume.name} · {o.pool}</option>
-                {/each}
-              </Select>
-            </label>
+            <Select label={$LL.virtHwMedia()} class="w-full" bind:value={newDev.media} options={[{ value: '', label: $LL.virtHwNoMedia() }, ...media.map((o) => ({ value: offerKey(o), label: `${o.volume.name} · ${o.pool}` }))]} />
           {:else if newDev.kind === 'tpm'}
             {#if pve}
-              <label class="block space-y-1 text-sm">
-                <span class="text-muted-fg">{$LL.virtHwTpmStorage()}</span>
-                <Select class="w-full" bind:value={newDev.storage}>
-                  {#each storages as p (p.id)}
-                    <option value={p.id}>{p.name}</option>
-                  {/each}
-                </Select>
-              </label>
+              <Select label={$LL.virtHwTpmStorage()} class="w-full" bind:value={newDev.storage} options={storages.map((p) => ({ value: p.id, label: p.name }))} />
             {/if}
           {:else if hostDevicesError}
-            <p class="text-sm text-danger whitespace-pre-wrap break-all">{hostDevicesError}</p>
+            <p class="text-[13px] text-(--color-danger) whitespace-pre-wrap break-all">{hostDevicesError}</p>
           {:else if !hostDevices}
             <Spinner size="sm" />
           {:else}
             {@const list = newDev.kind === 'usb' ? hostDevices.usb : hostDevices.pci}
             {#if newDev.kind === 'pci' && !hostDevices.iommu}
-              <p class="text-xs text-warning">{$LL.virtHwNoIommu()}</p>
+              <p class="text-[12px] text-(--color-warning)">{$LL.virtHwNoIommu()}</p>
             {/if}
             {#if hostDevices.mappings_only}
-              <p class="text-xs text-muted-fg">{$LL.virtHwMappingsOnly()}</p>
+              <p class="text-[12px] text-(--text-secondary)">{$LL.virtHwMappingsOnly()}</p>
             {/if}
             {#if list.length === 0}
-              <p class="text-sm text-muted-fg">{$LL.virtHwNoHostDevices()}</p>
+              <p class="text-[13px] text-(--text-secondary)">{$LL.virtHwNoHostDevices()}</p>
             {:else}
-              <ul class="max-h-64 overflow-y-auto rounded-lg border border-line p-1">
+              <ul class="flex max-h-64 flex-col gap-[7px] overflow-y-auto">
                 {#each list as d (d.id)}
                   <li>
-                    <button
-                      type="button"
-                      class="w-full rounded-lg px-3 py-2 text-left transition-colors {d.id === newDev.device ? 'bg-primary/10' : 'hover:bg-muted'}"
-                      aria-pressed={d.id === newDev.device}
+                    <Card
                       onclick={() => {
                         newDev.device = d.id
                         newDev.naming = 'vendor_product'
                       }}
+                      selected={d.id === newDev.device}
+                      padding="11px 13px"
+                      class="flex flex-col gap-[5px]"
                     >
-                      <p class="truncate text-sm text-fg-strong">{d.label}</p>
-                      <p class="truncate text-xs text-muted-fg">{[d.id, d.detail, d.mapping ? $LL.virtHwMapping() : null, newDev.kind === 'pci' ? groupSize(d) : null].filter(Boolean).join(' · ')}</p>
-                    </button>
+                      <span class="truncate text-[13px] font-semibold">{d.label}</span>
+                      <span class="truncate text-[12px] text-(--text-tertiary)">{[d.id, d.detail, d.mapping ? $LL.virtHwMapping() : null, newDev.kind === 'pci' ? groupSize(d) : null].filter(Boolean).join(' · ')}</span>
+                    </Card>
                   </li>
                 {/each}
               </ul>
             {/if}
             {#if newDev.kind === 'pci'}
               {#if pickedDevice && pickedDevice.group_size > 1}
-                <p class="text-xs text-warning">{$LL.virtHwIommuGroupNote()}</p>
+                <p class="text-[12px] text-(--color-warning)">{$LL.virtHwIommuGroupNote()}</p>
               {/if}
-              <p class="text-xs text-faint-fg">{$LL.virtHwPciNote()}</p>
+              <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwPciNote()}</p>
             {/if}
             {#if newDev.kind === 'usb' && hasAddress}
               {@render seg($LL.virtHwUsbNaming(), [$LL.virtHwUsbById(), $LL.virtHwUsbByPort()], newDev.naming === 'address' ? $LL.virtHwUsbByPort() : $LL.virtHwUsbById(), (v) => (newDev.naming = v === $LL.virtHwUsbByPort() ? 'address' : 'vendor_product'))}
               {#if newDev.naming === 'address'}
-                <p class="text-xs text-faint-fg">{$LL.virtHwUsbByPortNote()}</p>
+                <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwUsbByPortNote()}</p>
               {/if}
             {/if}
           {/if}
-          <div class="flex justify-end gap-2">
+          <div class="flex justify-end gap-[9px]">
             <Button variant="secondary" size="sm" onclick={() => (adding = null)}>{$LL.cancel()}</Button>
             <Button
               size="sm"
@@ -900,10 +775,9 @@
               {$LL.virtHwAdd()}
             </Button>
           </div>
-        </div>
+        </Card>
       {:else}
-        <Button variant="ghost" size="sm" onclick={() => openAdd('device')}>
-          <Plus class="h-4 w-4" />
+        <Button variant="ghost" size="sm" icon="add" onclick={() => openAdd('device')}>
           {$LL.virtHwAddDevice()}
         </Button>
       {/if}
@@ -913,7 +787,7 @@
   {#if h.display}
     {@const dp = h.display}
     <!-- Display. -->
-    <Card class="space-y-3">
+    <Card class="space-y-[13px]">
       {@render head($LL.virtHwDisplay(), [dp.protocol, dp.gpu].filter(Boolean).join(' · '))}
       {#if s.protocols.length > 0}
         {@render seg($LL.virtHwProtocol(), options(display.protocol, s.protocols), display.protocol, (v) => (display.protocol = v))}
@@ -922,23 +796,13 @@
         {@render seg($LL.virtHwListen(), options(display.listen, ['127.0.0.1', '0.0.0.0']), display.listen, (v) => (display.listen = v))}
       {/if}
       {#if s.gpus.length > 0}
-        <label class="block w-48 space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtHwGpu()}</span>
-          <Select class="w-full" bind:value={display.gpu}>
-            {#if display.gpu === ''}
-              <option value="">{$LL.virtHwDefault()}</option>
-            {/if}
-            {#each options(display.gpu, s.gpus) as g (g)}
-              <option value={g}>{g}</option>
-            {/each}
-          </Select>
-        </label>
+        <Select class="w-48" label={$LL.virtHwGpu()} bind:value={display.gpu} options={[...(display.gpu === '' ? [{ value: '', label: $LL.virtHwDefault() }] : []), ...options(display.gpu, s.gpus).map((g) => ({ value: g, label: g }))]} />
       {/if}
       {#if dp.port !== null && dp.port > 0}
-        <p class="text-xs text-faint-fg">{$LL.virtHwPort()}: <span class="font-mono">{dp.port}</span></p>
+        <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwPort()}: <span class="lk-mono">{dp.port}</span></p>
       {/if}
       {#if display.listen === '0.0.0.0'}
-        <p class="text-xs text-warning">{$LL.virtHwListenWarn()}</p>
+        <p class="text-[12px] text-(--color-warning)">{$LL.virtHwListenWarn()}</p>
       {/if}
       {@render saveBar(displayChange(h, display) === null, () => void apply(displayChange(h, display)!))}
     </Card>
@@ -946,7 +810,7 @@
 
   {#if h.firmware || h.boot}
     <!-- Boot: firmware and the order. -->
-    <Card class="space-y-3">
+    <Card class="space-y-[13px]">
       {@render head($LL.virtHwBoot(), h.firmware ? (h.firmware.uefi ? 'UEFI' : 'BIOS') : '')}
       {#if h.firmware && (s.uefi || h.firmware.uefi)}
         {@const fw = h.firmware}
@@ -954,40 +818,36 @@
           firmware.uefi = v === 'UEFI'
           if (!firmware.uefi) firmware.secureBoot = false
         })}
-        <p class="text-xs text-faint-fg">{firmware.uefi ? $LL.virtHwUefiNote() : $LL.virtHwBiosNote()}</p>
+        <p class="text-[12px] text-(--text-tertiary)">{firmware.uefi ? $LL.virtHwUefiNote() : $LL.virtHwBiosNote()}</p>
         {#if firmware.uefi && s.secure_boot}
-          <label class="flex items-start gap-2 text-sm">
-            <input class="mt-1" type="checkbox" bind:checked={firmware.secureBoot} />
-            <span>
-              <span class="text-fg">{$LL.virtSecureBoot()}</span>
-              <span class="block text-xs text-faint-fg">{$LL.virtHwSecureBootNote()}</span>
-            </span>
-          </label>
+          <div class="flex flex-wrap items-start justify-between gap-[13px]">
+            <div>
+              <p class="text-[13px]">{$LL.virtSecureBoot()}</p>
+              <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwSecureBootNote()}</p>
+            </div>
+            <Checkbox bind:checked={firmware.secureBoot} label={$LL.virtSecureBoot()} />
+          </div>
         {/if}
         {#if pve && firmware.uefi && !fw.uefi}
-          <label class="block space-y-1 text-sm">
-            <span class="text-muted-fg">{$LL.virtHwEfiStorage()}</span>
-            <Select class="w-full" bind:value={firmware.storage}>
-              {#if fw.vars_storage}
-                <option value="">{$LL.virtHwCurrent({ name: fw.vars_storage })}</option>
-              {:else}
-                <option value="">—</option>
-              {/if}
-              {#each storages as p (p.id)}
-                <option value={p.id}>{p.name}</option>
-              {/each}
-            </Select>
-          </label>
+          <Select
+            label={$LL.virtHwEfiStorage()}
+            class="w-full"
+            bind:value={firmware.storage}
+            options={[
+              { value: '', label: fw.vars_storage ? $LL.virtHwCurrent({ name: fw.vars_storage }) : '—' },
+              ...storages.map((p) => ({ value: p.id, label: p.name })),
+            ]}
+          />
         {/if}
         {#if firmware.uefi !== fw.uefi || firmware.secureBoot !== fw.secure_boot}
-          <p class="text-xs text-warning">{$LL.virtHwFirmwareWarn()}</p>
-          <div class="flex justify-end gap-2">
+          <p class="text-[12px] text-(--color-warning)">{$LL.virtHwFirmwareWarn()}</p>
+          <div class="flex justify-end gap-[9px]">
             {#if confirm === 'firmware'}
               <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>{$LL.cancel()}</Button>
             {/if}
             <Button
               size="sm"
-              variant={confirm === 'firmware' ? 'danger' : 'primary'}
+              variant={confirm === 'firmware' ? 'destructive' : 'primary'}
               disabled={busy || (pve && firmware.uefi && !fw.uefi && !fw.vars_storage && firmware.storage === '')}
               onclick={() => twice('firmware', () => ({ op: 'set_firmware', uefi: firmware.uefi, secure_boot: firmware.uefi && firmware.secureBoot, storage: firmware.storage || null }))}
             >
@@ -997,19 +857,15 @@
         {/if}
       {/if}
       {#if h.boot}
-        <p class="text-xs text-faint-fg">{$LL.virtHwBootOrder()}</p>
-        <ul class="space-y-1">
+        <p class="text-[12px] text-(--text-tertiary)">{$LL.virtHwBootOrder()}</p>
+        <ul class="flex flex-col gap-[7px]">
           {#each boot as b, i (b.key)}
-            <li class="flex items-center gap-2 rounded-lg border border-line px-2 py-1.5">
-              <input type="checkbox" aria-label={$LL.virtHwBootOn({ name: b.key })} bind:checked={b.on} />
-              <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs {i === 0 && b.on ? 'bg-primary text-white' : 'bg-soft text-muted-fg'}">{i + 1}</span>
-              <span class="min-w-0 flex-1 truncate font-mono text-sm {b.on ? 'text-fg' : 'text-faint-fg'}">{bootLabel(b.key)}</span>
-              <Button variant="ghost" size="sm" aria-label={$LL.virtHwUp()} disabled={i === 0} onclick={() => (boot = moveItem(boot, i, -1))}>
-                <ArrowUp class="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" aria-label={$LL.virtHwDown()} disabled={i === boot.length - 1} onclick={() => (boot = moveItem(boot, i, 1))}>
-                <ArrowDown class="h-4 w-4" />
-              </Button>
+            <li class="flex items-center gap-[9px] rounded-[9px] bg-(--surface-card) px-[9px] py-[7px]">
+              <Checkbox aria-label={$LL.virtHwBootOn({ name: b.key })} bind:checked={b.on} />
+              <Badge tone={i === 0 && b.on ? 'accent' : 'neutral'}>{i + 1}</Badge>
+              <span class="min-w-0 flex-1 truncate lk-mono text-[13px] {b.on ? 'text-(--text-primary)' : 'text-(--text-tertiary)'}">{bootLabel(b.key)}</span>
+              <IconButton icon="arrow_upward" label={$LL.virtHwUp()} disabled={i === 0} onclick={() => (boot = moveItem(boot, i, -1))} />
+              <IconButton icon="arrow_downward" label={$LL.virtHwDown()} disabled={i === boot.length - 1} onclick={() => (boot = moveItem(boot, i, 1))} />
             </li>
           {/each}
         </ul>
@@ -1020,15 +876,15 @@
 
   {#if h.config_text}
     <!-- The configuration as the host writes it. -->
-    <Card class="space-y-2">
-      <button type="button" class="flex w-full items-center gap-2 text-left" aria-expanded={!!open.__config} onclick={() => toggle('__config')}>
-        <h3 class="text-sm font-medium text-fg-strong">{$LL.virtHwConfig()}</h3>
-        <span class="ml-auto font-mono text-xs text-faint-fg">{pve ? (lxc ? 'pct config' : 'qm config') : 'virsh dumpxml'}</span>
-        <ChevronDown class="h-4 w-4 shrink-0 text-faint-fg transition-transform {open.__config ? 'rotate-180' : ''}" />
+    <Card class="space-y-[9px]">
+      <button type="button" class="flex w-full items-center gap-[9px] text-left" aria-expanded={!!open.__config} onclick={() => toggle('__config')}>
+        <h3 class="text-[13px] font-medium text-(--text-primary)">{$LL.virtHwConfig()}</h3>
+        <span class="ml-auto lk-mono text-[12px] text-(--text-tertiary)">{pve ? (lxc ? 'pct config' : 'qm config') : 'virsh dumpxml'}</span>
+        <Icon name={open.__config ? 'expand_less' : 'expand_more'} size={18} />
       </button>
       {#if open.__config}
         <div class="overflow-x-auto">
-          <pre class="rounded-lg bg-soft p-3 font-mono text-xs text-fg">{h.config_text}</pre>
+          <pre class="rounded-lg bg-(--surface-control) p-3 lk-mono text-[12px] text-(--text-primary)">{h.config_text}</pre>
         </div>
       {/if}
     </Card>

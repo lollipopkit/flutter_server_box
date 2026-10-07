@@ -1,29 +1,7 @@
 <script lang="ts">
-  import {
-    ArrowLeft,
-    ArrowRight,
-    ArrowUp,
-    ChevronRight,
-    Download,
-    Ellipsis,
-    File as FileIcon,
-    FilePenLine,
-    Folder,
-    FolderPlus,
-    LayoutGrid,
-    Link2,
-    List,
-    MonitorUp,
-    Pencil,
-    Shield,
-    Trash2,
-    Upload,
-  } from '@lucide/svelte'
-  import { Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
+  import { Button, Card, Dialog, Icon, IconButton, Input, Menu, SegmentedControl, SidebarItem, SidebarSection, Spinner, type MenuEntry } from '../../lk'
   import FileEditor from './FileEditor.svelte'
   import AppToolbar from '../../ui/AppToolbar.svelte'
-  import SourceGroup from '../../ui/SourceGroup.svelte'
-  import SourceItem from '../../ui/SourceItem.svelte'
   import SplitView from '../../ui/SplitView.svelte'
   import { useWindow } from '../../deskState.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -53,7 +31,6 @@
 
   /// The desk's accent at low opacity: the fill a picked row, an active view
   /// button and the menu's hover take, as the sidebar's own rows do.
-  const TINT = 'color-mix(in srgb, var(--desk-accent) 12%, transparent)'
 
   const win = useWindow()
 
@@ -387,6 +364,34 @@
   let pane = $state<HTMLDivElement | null>(null)
   let menuEl = $state<HTMLDivElement | null>(null)
   let menu = $state<{ entry: FsEntry; x: number; y: number } | null>(null)
+  const menuItems = $derived.by((): MenuEntry[] => {
+    if (!menu) return []
+    const entry = menu.entry
+    const items: MenuEntry[] = []
+    if (entry.kind === 'file') {
+      items.push({ label: $LL.filesEdit(), icon: 'edit', action: () => void edit(entry) })
+    }
+    if (entry.kind === 'dir') {
+      if (cwd) {
+        items.push({
+          label: $LL.deskAddToDesk(),
+          icon: 'add_to_home_screen',
+          action: () => win.addPathIcon(joinPath(cwd!, entry.name), entry.name),
+        })
+      }
+    } else {
+      items.push({ label: $LL.filesDownload(), icon: 'download', action: () => void download(entry) })
+    }
+    if (write) {
+      items.push(
+        { separator: true },
+        { label: $LL.filesRename(), icon: 'edit', action: () => (dialog = { kind: 'rename', entry, value: entry.name }) },
+        { label: $LL.filesPermissions(), icon: 'shield_lock', action: () => (dialog = { kind: 'chmod', entry, value: modeText(entry.mode) }) },
+        { label: $LL.filesDelete(), icon: 'delete', danger: true, action: () => (dialog = { kind: 'delete', entry }) },
+      )
+    }
+    return items
+  })
 
   /// [screenX]/[screenY] are viewport coordinates; the pane's own corner is
   /// taken off them so the menu is placed inside the window wherever it sits.
@@ -411,13 +416,6 @@
     event.stopPropagation()
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
     showMenu(entry, rect.right, rect.bottom + 2)
-  }
-
-  /// Run [fn] on the entry the menu is about, closing the menu first.
-  function run(fn: (entry: FsEntry) => void) {
-    const entry = menu?.entry
-    menu = null
-    if (entry) fn(entry)
   }
 
   /// Focus goes into a menu as it opens, so the keyboard reaches its actions
@@ -445,89 +443,60 @@
   })
 </script>
 
-{#snippet entryIcon(entry: FsEntry, big = false)}
-  {@const cls = big ? 'h-8 w-8 shrink-0' : 'h-4 w-4 shrink-0'}
-  {#if entry.kind === 'dir'}
-    <Folder class={cls} style="color: var(--desk-accent)" />
-  {:else if entry.kind === 'link'}
-    <Link2 class="{cls} text-muted-fg" />
-  {:else}
-    <FileIcon class="{cls} text-muted-fg" />
-  {/if}
+{#snippet entryIcon(entry: FsEntry, big = false, selectedEntry = false)}
+  <Icon
+    name={entry.kind === 'dir' ? (big ? 'folder' : 'folder_open') : entry.kind === 'link' ? 'link' : 'description'}
+    size={big ? 32 : 17}
+    color={selectedEntry ? 'var(--text-on-accent)' : entry.kind === 'dir' ? 'var(--color-accent)' : 'var(--text-secondary)'}
+  />
 {/snippet}
 
 <AppToolbar>
   {#snippet leading()}
     {#if available}
       <div class="flex min-w-0 flex-1 items-center gap-0.5">
-        <IconButton label={$LL.back()} disabled={!canBack} onclick={back}>
-          <ArrowLeft class="h-4 w-4" />
-        </IconButton>
-        <IconButton label={$LL.filesForward()} disabled={!canForward} onclick={forward}>
-          <ArrowRight class="h-4 w-4" />
-        </IconButton>
-        <IconButton label={$LL.filesUp()} disabled={!parent} onclick={() => parent && load(parent)}>
-          <ArrowUp class="h-4 w-4" />
-        </IconButton>
+        <IconButton icon="arrow_back" label={$LL.back()} disabled={!canBack} onclick={back} />
+        <IconButton icon="arrow_forward" label={$LL.filesForward()} disabled={!canForward} onclick={forward} />
+        <IconButton icon="arrow_upward" label={$LL.filesUp()} disabled={!parent} onclick={() => parent && load(parent)} />
         <nav class="flex min-w-0 flex-1 items-center overflow-hidden" aria-label={$LL.filesRoots()}>
           {#each crumbs as crumb, i (crumb.path)}
             {#if i > 0}
-              <ChevronRight class="h-3.5 w-3.5 shrink-0 text-muted-fg" />
+              <Icon name="chevron_right" size={14} class="shrink-0 text-(--text-tertiary)" />
             {/if}
             <button
               type="button"
-              class="min-w-0 truncate rounded-md px-1.5 py-1 text-[0.8rem] text-muted-fg hover:bg-soft hover:text-fg"
-              class:text-fg-strong={i === crumbs.length - 1}
+              class="min-w-0 truncate rounded-[7px] px-[7px] py-[5px] text-[13px] text-(--text-secondary) hover:bg-(--fill-hover) hover:text-(--text-primary)"
+              class:text-(--text-primary)={i === crumbs.length - 1}
               onclick={() => crumb.path !== cwd && void load(crumb.path)}
             >
               {crumb.label}
             </button>
           {/each}
         </nav>
-        {#if busy}<Spinner class="h-4 w-4 shrink-0" />{/if}
+        {#if busy}<Spinner size={16} class="shrink-0" />{/if}
       </div>
     {/if}
   {/snippet}
 
   {#snippet actions()}
     {#if available}
-      <div class="flex items-center gap-0.5 rounded-lg border border-line p-0.5">
-        <button
-          type="button"
-          class="grid h-6 w-6 place-items-center rounded-md text-muted-fg hover:text-fg"
-          class:text-fg-strong={view === 'list'}
-          style:background={view === 'list' ? TINT : undefined}
-          aria-pressed={view === 'list'}
-          aria-label={$LL.filesViewList()}
-          onclick={() => setView('list')}
-        >
-          <List class="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          class="grid h-6 w-6 place-items-center rounded-md text-muted-fg hover:text-fg"
-          class:text-fg-strong={view === 'grid'}
-          style:background={view === 'grid' ? TINT : undefined}
-          aria-pressed={view === 'grid'}
-          aria-label={$LL.filesViewGrid()}
-          onclick={() => setView('grid')}
-        >
-          <LayoutGrid class="h-3.5 w-3.5" />
-        </button>
-      </div>
+      <SegmentedControl
+        size="sm"
+        label={$LL.filesView()}
+        options={[
+          { value: 'list', icon: 'view_list', title: $LL.filesViewList() },
+          { value: 'grid', icon: 'grid_view', title: $LL.filesViewGrid() },
+        ]}
+        value={view}
+        onchange={(value) => setView(value)}
+      />
     {/if}
     {#if cwd}
-      <IconButton label={$LL.deskAddToDesk()} onclick={() => win.addPathIcon(cwd!, cwd!.split('/').filter(Boolean).at(-1) ?? cwd!)}>
-        <MonitorUp class="h-4 w-4" />
-      </IconButton>
+      <IconButton icon="add_to_home_screen" label={$LL.deskAddToDesk()} onclick={() => win.addPathIcon(cwd!, cwd!.split('/').filter(Boolean).at(-1) ?? cwd!)} />
     {/if}
     {#if available && write && cwd}
-      <IconButton label={$LL.filesNewFolder()} onclick={() => (dialog = { kind: 'mkdir', value: '' })}>
-        <FolderPlus class="h-4 w-4" />
-      </IconButton>
-      <IconButton label={$LL.filesUpload()} onclick={() => uploadInput?.click()}>
-        <Upload class="h-4 w-4" />
-      </IconButton>
+      <IconButton icon="create_new_folder" label={$LL.filesNewFolder()} onclick={() => (dialog = { kind: 'mkdir', value: '' })} />
+      <IconButton icon="upload" label={$LL.filesUpload()} onclick={() => uploadInput?.click()} />
     {/if}
   {/snippet}
 </AppToolbar>
@@ -535,9 +504,9 @@
 <input type="file" class="hidden" bind:this={uploadInput} onchange={onUpload} />
 
 {#if !available}
-  <main class="mx-auto max-w-3xl px-4 py-4 @3xl:px-6">
+  <main class="mx-auto max-w-3xl px-[17px] pb-[17px] pt-[4px]">
     <Card>
-      <p class="text-sm text-muted-fg">
+      <p class="text-[13px] text-(--text-secondary)">
         {caps?.grants ? whyText(access.why, $LL) : $LL.filesUnavailable()}
       </p>
     </Card>
@@ -548,109 +517,114 @@
   <div class="relative min-h-0 flex-1">
     <SplitView width={13}>
       {#snippet sidebar()}
-        <SourceGroup title={$LL.filesRoots()}>
+        <SidebarSection title={$LL.filesRoots()}>
           {#each roots as root (root)}
-            <!-- The wrapper carries the whole path: the row itself truncates. -->
-            <div title={root}>
-              <SourceItem
-                label={rootLabel(root)}
-                icon={Folder}
-                selected={activeRoot === root}
-                onclick={() => root !== cwd && void load(root)}
-              />
-            </div>
+            <SidebarItem
+              label={rootLabel(root)}
+              icon="folder"
+              active={activeRoot === root}
+              title={root}
+              onclick={() => root !== cwd && void load(root)}
+            />
           {/each}
-        </SourceGroup>
+        </SidebarSection>
       {/snippet}
 
       <div bind:this={pane} class="relative flex h-full min-h-0 flex-col">
         {#if !write}
-          <p class="px-3 pt-3 text-xs text-muted-fg">{$LL.filesReadOnly()}</p>
+          <p class="px-[13px] pt-[9px] text-[12px] text-(--text-tertiary)">{$LL.filesReadOnly()}</p>
         {/if}
 
         {#if error}
-          <div class="px-3 pt-3">
-            <Card class="border-danger/40 bg-danger/5">
-              <p class="text-sm text-danger break-all">{error}</p>
+          <div class="px-[13px] pt-[9px]">
+            <Card class="flex items-start gap-[9px] text-[13px] text-(--color-danger)">
+              <Icon name="error" size={17} />
+              <p class="break-all">{error}</p>
             </Card>
           </div>
         {/if}
 
-        <div class="min-h-0 flex-1 overflow-auto p-3">
+        <div class="min-h-0 flex-1 overflow-auto px-[17px] pb-[17px] pt-[4px]">
           {#if loading}
-            <Card><Spinner class="h-5 w-5" /></Card>
+            <Card><Spinner size={20} /></Card>
           {:else if cwd && entries.length === 0}
-            <Card><p class="text-sm text-muted-fg">{$LL.filesEmpty()}</p></Card>
+            <div class="flex min-h-48 flex-col items-center justify-center gap-[9px]">
+              <Icon name="folder_open" size={48} weight={300} color="var(--text-tertiary)" />
+              <p class="text-[13px] text-(--text-secondary)">{$LL.filesEmptyState()}</p>
+            </div>
           {:else if cwd}
             {#if view === 'list'}
-              <div class="overflow-hidden rounded-xl border border-line bg-surface">
-                {#each entries as entry (entry.name)}
+              <div class="overflow-hidden rounded-[13px] bg-(--surface-card)">
+                <div class="sticky top-0 z-10 grid grid-cols-[minmax(0,1fr)] gap-[9px] bg-(--surface-window) px-[13px] py-[7px] lk-caps @5xl:grid-cols-[minmax(0,1fr)_80px_160px_40px_28px] @5xl:gap-[13px]">
+                  <span>{$LL.filesName()}</span>
+                  <span class="hidden text-right @5xl:block">{$LL.filesSize()}</span>
+                  <span class="hidden text-right @5xl:block">{$LL.filesModified()}</span>
+                  <span class="hidden text-right @5xl:block">{$LL.filesPermissions()}</span>
+                  <span></span>
+                </div>
+                {#each entries as entry, i (entry.name)}
                   <!-- The row is a button, so the "more" button is its sibling
                        rather than nested inside it (a button in a button is
                        not valid markup). -->
-                  <div class="group/row relative border-b border-line last:border-b-0">
+                  <div class="group/row relative" class:bg-(--fill-hover)={selected !== entry.name && i % 2 === 1}>
                     <button
                       type="button"
-                      class="flex w-full items-center gap-3 py-2 pl-3 pr-9 text-left transition-colors hover:bg-soft"
-                      style:background={selected === entry.name ? TINT : undefined}
+                      class="grid h-7 w-full grid-cols-[minmax(0,1fr)] items-center gap-[9px] rounded-[7px] px-[13px] text-left text-[13px] hover:bg-(--fill-hover) @5xl:grid-cols-[minmax(0,1fr)_80px_160px_40px_28px] @5xl:gap-[13px]"
+                      class:bg-(--color-accent)={selected === entry.name}
+                      class:text-(--text-on-accent)={selected === entry.name}
                       onpointerdown={(e) => (touched = e.pointerType === 'touch')}
                       onclick={() => tap(entry)}
                       ondblclick={() => openEntry(entry)}
                       onkeydown={(e) => e.key === 'Enter' && openEntry(entry)}
                       oncontextmenu={(e) => openMenu(e, entry)}
                     >
-                      {@render entryIcon(entry)}
-                      <span class="min-w-0 flex-1 truncate text-[0.8rem]" title={entry.link_target ?? undefined}>
-                        {entry.name}
+                      <span class="flex min-w-0 items-center gap-[9px]">
+                        {@render entryIcon(entry, false, selected === entry.name)}
+                        <span class="min-w-0 truncate" title={entry.link_target ?? undefined}>{entry.name}</span>
                       </span>
-                      <span class="hidden w-20 shrink-0 text-right text-xs text-muted-fg @2xl:block">
-                        {entry.kind === 'file' && entry.size !== null ? fmtBytes(entry.size) : ''}
-                      </span>
-                      <span class="hidden w-40 shrink-0 text-right text-xs text-muted-fg @5xl:block">
-                        {modifiedOf(entry)}
-                      </span>
-                      <span class="hidden w-10 shrink-0 text-right font-mono text-xs text-muted-fg @2xl:block">
-                        {modeText(entry.mode)}
-                      </span>
+                      <span class="lk-num hidden text-right text-[12px] text-(--text-tertiary) @5xl:block">{entry.kind === 'file' && entry.size !== null ? fmtBytes(entry.size) : ''}</span>
+                      <span class="lk-num hidden text-right text-[12px] text-(--text-tertiary) @5xl:block">{modifiedOf(entry)}</span>
+                      <span class="lk-mono hidden text-right text-[12px] text-(--text-tertiary) @5xl:block">{modeText(entry.mode)}</span>
                     </button>
                     <button
                       type="button"
-                      class="files-more absolute right-1.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-muted-fg opacity-0 transition-opacity hover:bg-soft hover:text-fg focus-visible:opacity-100 group-hover/row:opacity-100"
+                      class="files-more absolute right-[5px] top-1/2 z-10 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-[7px] bg-(--surface-card) text-(--text-secondary) opacity-0 transition-opacity hover:bg-(--fill-hover) hover:text-(--text-primary) focus-visible:opacity-100 group-hover/row:opacity-100"
                       aria-label={$LL.filesMoreActions()}
                       onclick={(e) => openMenuAt(e, entry)}
                     >
-                      <Ellipsis class="h-4 w-4" />
+                      <Icon name="more_horiz" size={17} />
                     </button>
                   </div>
                 {/each}
               </div>
             {:else}
-              <div class="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-2">
+              <div class="grid grid-cols-[repeat(auto-fill,minmax(112px,1fr))] gap-[9px]">
                 {#each entries as entry (entry.name)}
                   <div class="group/tile relative">
                     <button
                       type="button"
-                      class="flex w-full flex-col items-center gap-2 rounded-xl border border-line bg-surface px-2 py-3 text-center transition-colors hover:bg-soft"
-                      style:background={selected === entry.name ? TINT : undefined}
+                      class="flex w-full flex-col items-center gap-[9px] rounded-[13px] bg-(--surface-card) px-[9px] py-[13px] text-center text-[13px] text-(--text-primary) transition-colors hover:bg-(--fill-hover)"
+                      class:bg-(--color-accent)={selected === entry.name}
+                      class:text-(--text-on-accent)={selected === entry.name}
                       onpointerdown={(e) => (touched = e.pointerType === 'touch')}
                       onclick={() => tap(entry)}
                       ondblclick={() => openEntry(entry)}
                       onkeydown={(e) => e.key === 'Enter' && openEntry(entry)}
                       oncontextmenu={(e) => openMenu(e, entry)}
                     >
-                      {@render entryIcon(entry, true)}
-                      <span class="line-clamp-2 w-full break-words text-xs leading-tight">{entry.name}</span>
+                      {@render entryIcon(entry, true, selected === entry.name)}
+                      <span class="line-clamp-2 w-full break-words text-[13px] leading-tight">{entry.name}</span>
                       {#if entry.kind === 'file' && entry.size !== null}
-                        <span class="text-[0.68rem] text-muted-fg">{fmtBytes(entry.size)}</span>
+                        <span class="lk-num text-[12px] text-(--text-tertiary)">{fmtBytes(entry.size)}</span>
                       {/if}
                     </button>
                     <button
                       type="button"
-                      class="files-more absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-surface/80 text-muted-fg opacity-0 transition-opacity hover:bg-soft hover:text-fg focus-visible:opacity-100 group-hover/tile:opacity-100"
+                      class="files-more absolute right-[5px] top-[5px] grid h-6 w-6 place-items-center rounded-[7px] bg-(--surface-card) text-(--text-secondary) opacity-0 transition-opacity hover:bg-(--fill-hover) hover:text-(--text-primary) focus-visible:opacity-100 group-hover/tile:opacity-100"
                       aria-label={$LL.filesMoreActions()}
                       onclick={(e) => openMenuAt(e, entry)}
                     >
-                      <Ellipsis class="h-4 w-4" />
+                      <Icon name="more_horiz" size={17} />
                     </button>
                   </div>
                 {/each}
@@ -658,6 +632,12 @@
             {/if}
           {/if}
         </div>
+
+        {#if cwd && !loading}
+          <div class="files-status lk-num">
+            {$LL.files()} · {entries.length}
+          </div>
+        {/if}
 
         {#if menu}
           <button
@@ -670,77 +650,13 @@
               menu = null
             }}
           ></button>
-          <div
-            bind:this={menuEl}
-            class="desk-pop absolute z-30 min-w-44 rounded-xl border border-line bg-surface p-1 text-[0.8rem] shadow-lg"
-            style:left="{menu.x}px"
-            style:top="{menu.y}px"
-            role="menu"
-          >
-            {#if menu.entry.kind === 'file'}
-              <button
-                type="button"
-                role="menuitem"
-                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-soft"
-                onclick={() => run((e) => void edit(e))}
-              >
-                <FilePenLine class="h-3.5 w-3.5 shrink-0 text-muted-fg" />
-                <span class="flex-1 truncate">{$LL.filesEdit()}</span>
-              </button>
-            {/if}
-            {#if menu.entry.kind === 'dir'}
-              {#if cwd}
-                <button
-                  type="button"
-                  role="menuitem"
-                  class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-soft"
-                  onclick={() => run((e) => win.addPathIcon(joinPath(cwd!, e.name), e.name))}
-                >
-                  <MonitorUp class="h-3.5 w-3.5 shrink-0 text-muted-fg" />
-                  <span class="flex-1 truncate">{$LL.deskAddToDesk()}</span>
-                </button>
-              {/if}
-            {:else}
-              <button
-                type="button"
-                role="menuitem"
-                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-soft"
-                onclick={() => run((e) => void download(e))}
-              >
-                <Download class="h-3.5 w-3.5 shrink-0 text-muted-fg" />
-                <span class="flex-1 truncate">{$LL.filesDownload()}</span>
-              </button>
-            {/if}
-            {#if write}
-              <div class="mx-2 my-1 h-px bg-line"></div>
-              <button
-                type="button"
-                role="menuitem"
-                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-soft"
-                onclick={() => run((e) => (dialog = { kind: 'rename', entry: e, value: e.name }))}
-              >
-                <Pencil class="h-3.5 w-3.5 shrink-0 text-muted-fg" />
-                <span class="flex-1 truncate">{$LL.filesRename()}</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-soft"
-                onclick={() => run((e) => (dialog = { kind: 'chmod', entry: e, value: modeText(e.mode) }))}
-              >
-                <Shield class="h-3.5 w-3.5 shrink-0 text-muted-fg" />
-                <span class="flex-1 truncate">{$LL.filesPermissions()}</span>
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-danger hover:bg-soft"
-                onclick={() => run((e) => (dialog = { kind: 'delete', entry: e }))}
-              >
-                <Trash2 class="h-3.5 w-3.5 shrink-0" />
-                <span class="flex-1 truncate">{$LL.filesDelete()}</span>
-              </button>
-            {/if}
+          <div class="absolute z-30" style:left="{menu.x}px" style:top="{menu.y}px">
+            <Menu
+              bind:ref={menuEl}
+              items={menuItems}
+              onselect={() => (menu = null)}
+              onclose={() => (menu = null)}
+            />
           </div>
         {/if}
       </div>
@@ -749,8 +665,9 @@
 {/if}
 
 {#if dialog}
-  <Modal
+  <Dialog
     open
+    wide={dialog.kind !== 'delete'}
     title={dialog.kind === 'mkdir'
       ? $LL.filesNewFolder()
       : dialog.kind === 'rename'
@@ -758,36 +675,31 @@
         : dialog.kind === 'chmod'
           ? $LL.filesPermissions()
           : $LL.filesDelete()}
+    message={dialog.kind === 'delete'
+      ? dialog.entry.kind === 'dir'
+        ? $LL.filesDeleteRecursive()
+        : $LL.filesConfirmDelete()
+      : undefined}
     onclose={() => (dialog = null)}
   >
-    <div class="space-y-3">
-      {#if dialog.kind === 'delete'}
-        <p class="text-sm text-fg-strong break-all">{dialog.entry.name}</p>
-        <p class="text-sm text-muted-fg">
-          {dialog.entry.kind === 'dir' ? $LL.filesDeleteRecursive() : $LL.filesConfirmDelete()}
-        </p>
-      {:else if dialog.kind === 'chmod'}
-        <div class="space-y-1">
-          <label class="text-sm text-muted-fg" for="fs-mode">{$LL.filesPermissions()}</label>
-          <Input id="fs-mode" bind:value={dialog.value} placeholder="644" />
-        </div>
-      {:else}
-        <div class="space-y-1">
-          <label class="text-sm text-muted-fg" for="fs-name">{$LL.filesName()}</label>
-          <Input id="fs-name" bind:value={dialog.value} />
-        </div>
-      {/if}
-      <div class="flex justify-end gap-2">
+    {@const currentDialog = dialog}
+    {#if currentDialog.kind === 'delete'}
+      <p class="break-all text-[13px] font-semibold text-(--text-primary)">{currentDialog.entry.name}</p>
+    {:else if currentDialog.kind === 'chmod'}
+      <Input label={$LL.filesPermissions()} id="fs-mode" bind:value={currentDialog.value} placeholder="644" mono />
+    {:else}
+      <Input label={$LL.filesName()} id="fs-name" bind:value={currentDialog.value} />
+    {/if}
+    {#snippet actions()}
+      {#if currentDialog.kind === 'delete'}
+        <Button variant="destructive" icon="delete" onclick={() => void submitDialog()}>{$LL.filesDelete()}</Button>
         <Button variant="secondary" onclick={() => (dialog = null)}>{$LL.cancel()}</Button>
-        <Button
-          variant={dialog.kind === 'delete' ? 'danger' : 'primary'}
-          onclick={submitDialog}
-        >
-          {dialog.kind === 'delete' ? $LL.filesDelete() : $LL.save()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+      {:else}
+        <Button variant="secondary" onclick={() => (dialog = null)}>{$LL.cancel()}</Button>
+        <Button onclick={() => void submitDialog()}>{$LL.save()}</Button>
+      {/if}
+    {/snippet}
+  </Dialog>
 {/if}
 
 {#if editing}
@@ -805,6 +717,16 @@
 {/if}
 
 <style>
+  .files-status {
+    display: flex;
+    height: 28px;
+    align-items: center;
+    border-top: 0.5px solid var(--border-hairline);
+    padding: 0 13px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+  }
+
   /* A pointer that cannot hover (touch) has no way to reveal the row's "more"
      button, so there it is always visible. */
   @media (hover: none) {

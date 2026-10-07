@@ -3,7 +3,7 @@
   /// choice. Neither is tied to a server, and both persist on change — there
   /// is no save step here.
 
-  import { Card } from '@serverbox/webui'
+  import { Group, Row } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import AppToolbar from '../../ui/AppToolbar.svelte'
   import LocaleToggle from './LocaleToggle.svelte'
@@ -12,15 +12,13 @@
 
 <AppToolbar title={$LL.settingsGeneral()} />
 
-<main class="mx-auto max-w-3xl space-y-4 px-4 py-4 @3xl:px-6">
-  <Card class="space-y-4">
-    <div class="space-y-1">
-      <span class="text-sm text-muted-fg">{$LL.language()}</span>
+<main class="mx-auto max-w-[560px] px-[21px] pb-[21px] pt-[4px]">
+  <Group>
+    <Row label={$LL.language()}>
       <LocaleToggle />
-    </div>
-    <div class="space-y-1">
-      <span class="block text-sm text-muted-fg">{$LL.theme()}</span>
+    </Row>
+    <Row label={$LL.theme()}>
       <ThemeToggle />
-    </div>
-  </Card>
+    </Row>
+  </Group>
 </main>

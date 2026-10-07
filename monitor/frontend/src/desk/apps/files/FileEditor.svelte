@@ -7,7 +7,7 @@
   /// it was opened, so a file someone else wrote to since is answered 409
   /// rather than overwritten — the user is asked instead of losing the change.
   import { untrack } from 'svelte'
-  import { Button, Modal, Spinner } from '@serverbox/webui'
+  import { Button, Checkbox, Dialog, Spinner, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { ApiError, api } from '../../../lib/api'
   import { servers } from '../../../lib/servers.svelte'
@@ -128,81 +128,75 @@
   }
 </script>
 
-<Modal
-  open
-  title={entry.name}
-  onclose={requestClose}
-  class="max-w-3xl w-full"
->
-  <div class="space-y-3">
-    <textarea
-      bind:value
-      readonly={!canWrite}
-      spellcheck="false"
-      onkeydown={onKeydown}
-      class="w-full h-80 rounded-md border border-border bg-bg px-3 py-2 font-mono text-xs resize-y
-        {wrap ? 'whitespace-pre-wrap' : 'whitespace-pre'}"
-    ></textarea>
-
-    <div class="flex flex-wrap items-center gap-3 text-sm">
-      <label class="flex items-center gap-2 text-muted-fg">
-        <input type="checkbox" bind:checked={wrap} />
-        {$LL.filesEditorWrap()}
-      </label>
-      {#if dirty}
-        <span class="text-warning">{$LL.filesEditorUnsaved()}</span>
-      {/if}
+<Dialog open wide title={entry.name} onclose={requestClose} class="max-w-3xl w-full">
+  <div class="space-y-[13px]">
+    <div class="file-editor-field" class:wrapped={wrap}>
+      <Textarea
+        class="file-editor-textarea"
+        bind:value
+        readonly={!canWrite}
+        spellcheck="false"
+        onkeydown={onKeydown}
+        mono
+        rows={16}
+      />
     </div>
 
-    {#if error}
-      <p class="text-sm text-danger">{error}</p>
-    {/if}
-
-    <div class="flex justify-end gap-2">
-      <Button variant="secondary" onclick={requestClose}>{$LL.cancel()}</Button>
-      {#if canWrite}
-        <Button onclick={() => save()} disabled={saving || !dirty}>
-          {#if saving}<Spinner class="w-4 h-4" />{/if}
-          {$LL.save()}
-        </Button>
-      {/if}
+    <div class="flex flex-wrap items-center gap-[9px] text-[13px]">
+      <Checkbox bind:checked={wrap} label={$LL.filesEditorWrap()} />
+      {#if dirty}<span class="text-(--color-warning)">{$LL.filesEditorUnsaved()}</span>{/if}
     </div>
+
+    {#if error}<p class="text-[13px] text-(--color-danger)">{error}</p>{/if}
   </div>
-</Modal>
+  {#snippet actions()}
+    <Button variant="secondary" onclick={requestClose}>{$LL.cancel()}</Button>
+    {#if canWrite}
+      <Button onclick={() => void save()} disabled={saving || !dirty}>
+        {#if saving}<Spinner size={16} />{/if}
+        {$LL.save()}
+      </Button>
+    {/if}
+  {/snippet}
+</Dialog>
+
+<style>
+  .file-editor-field :global(.lk-textarea) {
+    height: 20rem;
+    resize: vertical;
+    border-radius: 9px;
+    background: var(--surface-terminal);
+    padding: 11px 15px;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: pre;
+  }
+
+  .file-editor-field.wrapped :global(.lk-textarea) {
+    white-space: pre-wrap;
+  }
+</style>
 
 {#if conflict}
-  <Modal open title={$LL.filesEditorConflictTitle()} onclose={() => (conflict = false)}>
-    <div class="space-y-3">
-      <p class="text-sm text-muted-fg">{$LL.filesEditorConflictBody()}</p>
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (conflict = false)}>{$LL.cancel()}</Button>
-        <Button variant="danger" onclick={() => save(true)} disabled={saving}>
-          {#if saving}<Spinner class="w-4 h-4" />{/if}
-          {$LL.filesEditorOverwrite()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.filesEditorConflictTitle()} message={$LL.filesEditorConflictBody()} onclose={() => (conflict = false)}>
+    {#snippet actions()}
+      <Button variant="destructive" onclick={() => void save(true)} disabled={saving}>
+        {#if saving}<Spinner size={16} />{/if}
+        {$LL.filesEditorOverwrite()}
+      </Button>
+      <Button variant="secondary" onclick={() => (conflict = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}
 
 {#if confirmDiscard}
-  <Modal open title={$LL.filesEditorDiscardTitle()} onclose={() => (confirmDiscard = false)}>
-    <div class="space-y-3">
-      <p class="text-sm text-muted-fg">{$LL.filesEditorDiscardBody()}</p>
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (confirmDiscard = false)}>
-          {$LL.cancel()}
-        </Button>
-        <Button
-          variant="danger"
-          onclick={() => {
-            confirmDiscard = false
-            onclose()
-          }}
-        >
-          {$LL.filesEditorDiscard()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.filesEditorDiscardTitle()} message={$LL.filesEditorDiscardBody()} onclose={() => (confirmDiscard = false)}>
+    {#snippet actions()}
+      <Button variant="destructive" onclick={() => {
+        confirmDiscard = false
+        onclose()
+      }}>{$LL.filesEditorDiscard()}</Button>
+      <Button variant="secondary" onclick={() => (confirmDiscard = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}

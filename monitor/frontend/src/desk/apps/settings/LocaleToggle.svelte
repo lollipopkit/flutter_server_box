@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Select } from '@serverbox/webui'
+  import { Select } from '../../lk'
   import { locale } from '../../../i18n/i18n-svelte'
   import { persistLocale } from '../../../i18n/init'
   import type { Locales } from '../../../i18n/i18n-types'
@@ -26,11 +26,8 @@
 </script>
 
 <Select
-  class="text-sm w-full"
+  class="w-[170px]"
   value={$locale}
+  options={Object.entries(options).map(([value, label]) => ({ value, label }))}
   onchange={(e: Event) => persistLocale((e.currentTarget as HTMLSelectElement).value as Locales)}
->
-  {#each Object.entries(options) as [value, label] (value)}
-    <option {value}>{label}</option>
-  {/each}
-</Select>
+/>

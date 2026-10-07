@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Modal, Spinner } from '@serverbox/webui'
-  import { Pencil, Play, Plus, RefreshCw, Trash2 } from '@lucide/svelte'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Button, Card, Dialog, Icon, IconButton } from '../../lk'
   import SnippetForm, {
     snippetFormState,
     type SnippetFormState,
@@ -177,144 +177,82 @@
 
 <AppToolbar subtitle={view ? subtitle() : undefined}>
   {#snippet actions()}
-    <IconButton label={$LL.snippetAdd()} onclick={() => openForm(null)}>
-      <Plus class="w-4 h-4" />
-    </IconButton>
-    <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
-      <RefreshCw class="w-4 h-4" />
-    </IconButton>
+    <Button size="sm" variant="tinted" icon="add" onclick={() => openForm(null)}>{$LL.snippetAdd()}</Button>
+    <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} disabled={loading} />
   {/snippet}
 </AppToolbar>
 
-<main class="mx-auto max-w-3xl space-y-3 px-4 py-4 @3xl:px-6">
-  {#if error}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <p class="text-sm text-danger">{error}</p>
-    </Card>
-  {/if}
-
-  {#if actionError}
-    <Card class="border-danger/40 bg-danger/5 p-3">
-      <p class="text-sm text-danger whitespace-pre-wrap break-all">{actionError}</p>
-    </Card>
-  {/if}
-
-  {#if notice}
-    <Card class="p-3">
-      <p class="text-sm text-muted-fg">{notice}</p>
-    </Card>
-  {/if}
+<main class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+  {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
+  {#if actionError}<Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{actionError}</p></Card>{/if}
+  {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
 
   {#if loading && !view}
-    <Card class="grid place-items-center p-8"><Spinner class="h-5 w-5" /></Card>
+    <Card class="grid place-items-center" padding="21px"><Spinner class="h-5 w-5" /></Card>
   {:else if view}
     {#if snippets.length === 0}
-      <Card class="p-4">
-        <p class="text-sm text-muted-fg">{$LL.snippetEmpty()}</p>
-      </Card>
+      <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)">
+        <Icon name="terminal" size={48} weight={300} />
+        <span class="text-[13px]">{$LL.snippetsEmptyState()}</span>
+      </div>
     {:else}
-      <!-- One snippet per card: what it is called and what it would type. Its
-           three actions are in the dialog the card opens, so a Run press is
-           never the thing nearest the cursor. -->
-      <ul class="space-y-2">
+      <!-- Each item opens its details before Run is available. -->
+      <ul class="space-y-[7px]">
         {#each snippets as snippet (snippet.id)}
           <li>
-            <button
-              class="flex w-full items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2.5 text-left transition-colors hover:bg-soft/40"
-              onclick={() => open(snippet)}
-            >
-              <span class="min-w-0 flex-1">
-                <span class="flex flex-wrap items-baseline gap-2">
-                  <span class="truncate text-[0.85rem] font-medium text-fg-strong">{snippet.name}</span>
-                  {#each snippet.tags as tag (tag)}
-                    <Badge tone="neutral">{tag}</Badge>
-                  {/each}
-                </span>
-                <span class="mt-0.5 block truncate font-mono text-xs text-muted-fg">{snippet.script}</span>
-              </span>
-            </button>
+            <Card padding="11px 13px" onclick={() => open(snippet)}>
+              <div class="flex min-w-0 items-center gap-[13px]">
+                <span class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-(--surface-raised) text-(--color-accent-text)"><Icon name="terminal" size={18} /></span>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-[7px]">
+                    <span class="truncate text-[13px] font-semibold">{snippet.name}</span>
+                    {#each snippet.tags as tag (tag)}<Badge tone="neutral">{tag}</Badge>{/each}
+                  </div>
+                  <p class="lk-mono truncate text-[12px] text-(--text-tertiary)">{snippet.script}</p>
+                </div>
+              </div>
+            </Card>
           </li>
         {/each}
       </ul>
     {/if}
 
-    <!-- What a snippet is and what pressing Run does, in one place: the list
-         is the only screen either is visible from, and the answer to "what
-         happens" is not on this page at all. -->
-    <p class="px-1 text-[0.7rem] text-muted-fg">{$LL.snippetRunNote()}</p>
-
-    {#if busy}
-      <div class="flex items-center gap-2 px-1 text-xs text-muted-fg">
-        <Spinner size="sm" />
-      </div>
-    {/if}
+    <!-- Run expands the script and types it into a terminal session. -->
+    <p class="px-[3px] text-[12px] text-(--text-tertiary)">{$LL.snippetRunNote()}</p>
+    {#if busy}<div class="flex items-center gap-[7px] px-[3px] text-[12px] text-(--text-tertiary)"><Spinner size="sm" /></div>{/if}
   {/if}
 </main>
 
-<!-- One snippet: what is stored, and the three things that may be done with it.
-     Its own dialog rather than buttons on the row, so the script is on screen
-     before it is run — a Run press is the one action here that cannot be taken
-     back, and it is not the one nearest the cursor. -->
+<!-- One snippet: what is stored, and the actions that use it. -->
 {#if opened && editing === undefined}
-  <Modal open title={opened.name} onclose={() => (opened = null)}>
-    <div class="space-y-4">
-      {#if opened.tags.length > 0}
-        <div class="flex flex-wrap gap-1.5">
-          {#each opened.tags as tag (tag)}
-            <Badge tone="neutral">{tag}</Badge>
-          {/each}
-        </div>
-      {/if}
-
-      {#if opened.note}
-        <p class="text-sm text-muted-fg">{opened.note}</p>
-      {/if}
-
-      <pre
-        class="max-h-64 overflow-auto rounded-md border border-line bg-soft/40 px-3 py-2 font-mono text-xs whitespace-pre-wrap break-all text-fg">{opened.script}</pre>
-
+  <Dialog open wide title={opened.name} onclose={() => (opened = null)}>
+    {#snippet actions()}
       {#if removing}
-        <Card class="space-y-2">
-          <p class="text-sm text-fg">{$LL.snippetDeleteConfirm({ name: opened.name })}</p>
-          <div class="flex justify-end gap-2">
-            <Button variant="secondary" onclick={() => (removing = false)}>{$LL.cancel()}</Button>
-            <Button disabled={busy} onclick={() => void remove()}>{$LL.snippetDelete()}</Button>
-          </div>
-        </Card>
+        <Button variant="destructive" disabled={busy} onclick={() => void remove()}>{$LL.snippetDelete()}</Button>
+        <Button variant="secondary" onclick={() => (removing = false)}>{$LL.cancel()}</Button>
       {:else}
-        <div class="flex flex-wrap items-center gap-2">
-          <Button disabled={planning || busy} onclick={() => void run(opened!)}>
-            {#if planning}<Spinner class="w-4 h-4" />{:else}<Play class="w-4 h-4" />{/if}
-            {$LL.snippetRun()}
-          </Button>
-          <Button variant="secondary" onclick={() => openForm(opened!)}>
-            <Pencil class="w-4 h-4" />
-            {$LL.snippetEdit()}
-          </Button>
-          <Button variant="secondary" onclick={() => (removing = true)}>
-            <Trash2 class="w-4 h-4" />
-            {$LL.snippetDelete()}
-          </Button>
-        </div>
-        {#if runError}
-          <p class="text-sm text-danger whitespace-pre-wrap break-all">{runError}</p>
-        {/if}
+        <Button variant="primary" icon="play_arrow" disabled={planning || busy} onclick={() => void run(opened!)}>{$LL.snippetRun()}</Button>
+        <Button variant="secondary" icon="edit" onclick={() => openForm(opened!)}>{$LL.snippetEdit()}</Button>
+        <Button variant="destructive" icon="delete" onclick={() => (removing = true)}>{$LL.snippetDelete()}</Button>
+        <Button variant="secondary" onclick={() => (opened = null)}>{$LL.close()}</Button>
       {/if}
-    </div>
-  </Modal>
+    {/snippet}
+    {#if opened.tags.length > 0}<div class="flex flex-wrap gap-[7px]">{#each opened.tags as tag (tag)}<Badge tone="neutral">{tag}</Badge>{/each}</div>{/if}
+    {#if removing}<p class="my-[13px] text-[13px] text-(--text-secondary)">{$LL.snippetDeleteConfirm({ name: opened.name })}</p>{/if}
+    {#if opened.note}<p class="mt-[9px] text-[13px] text-(--text-secondary)">{opened.note}</p>{/if}
+    <pre class="mt-[13px] max-h-64 overflow-auto rounded-[9px] bg-(--surface-terminal) p-[11px_15px] lk-mono whitespace-pre-wrap break-all text-[13px]">{opened.script}</pre>
+    {#if planning}<div class="mt-[9px]"><Spinner class="w-4 h-4" /></div>{/if}
+    {#if runError}<p class="mt-[9px] whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{runError}</p>{/if}
+  </Dialog>
 {/if}
 
 {#if editing !== undefined}
-  <Modal
-    open
-    title={editing ? $LL.snippetEdit() : $LL.snippetAdd()}
-    onclose={() => (editing = undefined)}
-  >
+  <Dialog open wide title={editing ? $LL.snippetEdit() : $LL.snippetAdd()} onclose={() => (editing = undefined)}>
     <SnippetForm
       snippet={editing ?? undefined}
       fields={formState}
       onsaved={(snippet) => void submit(snippet, editing ?? null)}
       oncancel={() => (editing = undefined)}
     />
-  </Modal>
+  </Dialog>
 {/if}

@@ -14,9 +14,9 @@
 
 <AppToolbar title={$LL.settingsAccount()} />
 
-<main class="mx-auto max-w-3xl space-y-4 px-4 py-4 @3xl:px-6">
+<main class="mx-auto max-w-[560px] space-y-[13px] px-[21px] pb-[21px] pt-[4px]">
   {#if !servers.authenticated}
-    <p class="text-sm text-muted-fg">{$LL.settingsNeedsAuth()}</p>
+    <p class="text-[13px] text-(--text-secondary)">{$LL.settingsNeedsAuth()}</p>
   {:else if caps?.me}
     <MyAccount me={caps.me} />
   {/if}

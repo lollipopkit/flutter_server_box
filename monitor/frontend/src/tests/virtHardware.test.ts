@@ -314,7 +314,7 @@ describe('the hardware view', () => {
     virtHardware.mockResolvedValue({ hardware: hardware({ running: false }), error: null })
     virtHardwareChange.mockResolvedValue({ outcome: null, error: err({ detail: { code: 'hardware_refused', issue: 'storage_missing' } }) })
     show()
-    await fireEvent.click(await screen.findByRole('button', { name: 'UEFI' }))
+    await fireEvent.click(await screen.findByRole('tab', { name: 'UEFI' }))
     expect(screen.getByText(/unable to boot/)).toBeInTheDocument()
     expect(virtHardwareChange).not.toHaveBeenCalled()
   })

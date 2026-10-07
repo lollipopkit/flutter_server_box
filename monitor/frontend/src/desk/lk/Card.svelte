@@ -14,6 +14,9 @@
     /// At the title's right.
     action?: Snippet
     selected?: boolean
+    /// How a clickable card's [selected] is announced: a toggle (`pressed`,
+    /// a series shown or not) or the item in view (`current`, a list's row).
+    selectedAs?: 'pressed' | 'current'
     onclick?: (e: MouseEvent) => void
     /// Overrides the default 13px 17px.
     padding?: string
@@ -27,6 +30,7 @@
     icon,
     action,
     selected = false,
+    selectedAs = 'pressed',
     onclick,
     padding,
     class: className = '',
@@ -49,7 +53,11 @@
 {/snippet}
 
 {#if onclick}
-  <button type="button" class="{classes} block w-full text-left" style:padding aria-pressed={selected} {onclick}>
+  <button type="button" class="{classes} block w-full text-left" style:padding
+    aria-pressed={selectedAs === 'pressed' ? selected : undefined}
+    aria-current={selectedAs === 'current' && selected ? 'true' : undefined}
+    {onclick}
+  >
     {@render body()}
   </button>
 {:else}

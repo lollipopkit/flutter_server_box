@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, IconButton, Modal, Spinner } from '@serverbox/webui'
-  import { Archive, Download, Info, RefreshCw, Trash2, Upload } from '@lucide/svelte'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, Spinner } from '../../lk'
   import { api } from '../../../lib/api'
   import { APP_BACKUP_NAME, backupRefusalText, validBackupName } from '../../../lib/backup'
   import { fmtBytes, fmtTime } from '../../../lib/format'
@@ -106,76 +105,72 @@
     subtitle={view ? $LL.backupSubtitle({ count: blobs.length, max: fmtBytes(view.max_bytes) }) : undefined}
   >
     {#snippet actions()}
-      <IconButton label={$LL.backupUpload()} disabled={!view} onclick={() => uploadInput?.click()}>
-        <Upload class="w-4 h-4" />
-      </IconButton>
-      <IconButton label={$LL.refresh()} disabled={loading} onclick={() => void load()}>
-        <RefreshCw class="w-4 h-4" />
-      </IconButton>
+      <IconButton icon="upload" label={$LL.backupUpload()} disabled={!view} onclick={() => uploadInput?.click()} />
+      <IconButton icon="refresh" label={$LL.refresh()} disabled={loading} onclick={() => void load()} />
     {/snippet}
   </AppToolbar>
 
   <input type="file" class="hidden" bind:this={uploadInput} onchange={onUpload} />
 
 <div class="min-h-0 flex-1 overflow-auto">
-  <main class="mx-auto w-full max-w-3xl space-y-4 px-4 py-4 @3xl:px-6">
+  <main class="mx-auto w-full max-w-3xl space-y-[13px] px-[17px] pb-[17px] pt-[4px]">
     {#if error}
-      <Card class="border-danger/40 bg-danger/5">
-        <p class="text-sm text-danger">{error}</p>
+      <Card class="flex items-start gap-[9px] text-[13px] text-(--color-danger)">
+        <Icon name="error" size={17} />
+        <p>{error}</p>
       </Card>
     {/if}
     {#if notice}
-      <Card>
-        <p class="text-sm text-muted-fg">{notice}</p>
-      </Card>
+      <Card class="text-[13px] text-(--text-secondary)">{notice}</Card>
     {/if}
 
-    <Card class="space-y-2">
-      <div class="flex items-center gap-2">
-        <Info class="h-4 w-4 shrink-0 text-muted-fg" />
-        <p class="text-[0.95rem] font-semibold text-fg-strong">{$LL.backupHowItWorks()}</p>
+    <Card class="space-y-[7px]">
+      <div class="flex items-center gap-[7px]">
+        <Icon name="info" size={17} class="shrink-0 text-(--text-secondary)" />
+        <p class="text-[15px] font-semibold text-(--text-primary)">{$LL.backupHowItWorks()}</p>
       </div>
-      <p class="text-xs leading-relaxed text-muted-fg">{$LL.backupWhatItIs()}</p>
+      <p class="text-[13px] leading-relaxed text-(--text-secondary)">{$LL.backupWhatItIs()}</p>
     </Card>
 
     {#if loading && !view}
-      <Card><Spinner class="w-5 h-5" /></Card>
+      <Card><Spinner size={20} /></Card>
     {:else if view}
       <section class="space-y-3">
-        <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-3">
-          <Card class="space-y-1 rounded-xl border border-line bg-surface p-3">
-            <p class="text-xs text-muted-fg">{$LL.backupStoredFiles()}</p>
-            <p class="text-xl font-semibold tabular-nums text-fg-strong">{blobs.length}</p>
+        <div class="grid grid-cols-1 gap-[9px] @2xl:grid-cols-3">
+          <Card variant="raised" class="space-y-[5px]">
+            <p class="text-[12px] text-(--text-secondary)">{$LL.backupStoredFiles()}</p>
+            <p class="lk-num text-[21px] font-semibold text-(--text-primary)">{blobs.length}</p>
           </Card>
-          <Card class="space-y-1 rounded-xl border border-line bg-surface p-3">
-            <p class="text-xs text-muted-fg">{$LL.backupTotalSize()}</p>
-            <p class="text-xl font-semibold tabular-nums text-fg-strong">{fmtBytes(storedBytes)}</p>
+          <Card variant="raised" class="space-y-[5px]">
+            <p class="text-[12px] text-(--text-secondary)">{$LL.backupTotalSize()}</p>
+            <p class="lk-num text-[21px] font-semibold text-(--text-primary)">{fmtBytes(storedBytes)}</p>
           </Card>
-          <Card class="space-y-1 rounded-xl border border-line bg-surface p-3">
-            <p class="text-xs text-muted-fg">{$LL.backupPerFileLimit()}</p>
-            <p class="text-xl font-semibold tabular-nums text-fg-strong">{fmtBytes(view.max_bytes)}</p>
+          <Card variant="raised" class="space-y-[5px]">
+            <p class="text-[12px] text-(--text-secondary)">{$LL.backupPerFileLimit()}</p>
+            <p class="lk-num text-[21px] font-semibold text-(--text-primary)">{fmtBytes(view.max_bytes)}</p>
           </Card>
         </div>
-        <div class="flex items-center justify-between gap-2 px-1">
-          <h3 class="text-[0.95rem] font-semibold text-fg-strong">{$LL.backupStoredFiles()}</h3>
+        <div class="flex items-center justify-between gap-[7px]">
+          <h3 class="text-[15px] font-semibold text-(--text-primary)">{$LL.backupStoredFiles()}</h3>
           <Badge tone="neutral">{blobs.length}</Badge>
         </div>
         {#if blobs.length === 0}
-          <Card>
-            <p class="text-sm text-muted-fg">{$LL.backupEmpty()}</p>
-          </Card>
+          <div class="flex min-h-48 flex-col items-center justify-center gap-[9px]">
+            <Icon name="backup" size={48} weight={300} color="var(--text-tertiary)" />
+            <p class="text-[13px] text-(--text-secondary)">{$LL.backupEmptyState()}</p>
+          </div>
         {:else}
-          <div class="overflow-hidden rounded-xl border border-line bg-surface">
+          <div class="overflow-hidden rounded-[13px] bg-(--surface-card)">
             {#each blobs as entry (entry.name)}
-              <div class="flex items-center gap-3 border-b border-line px-3 py-2.5 last:border-b-0 hover:bg-soft">
-                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-soft text-muted-fg">
-                  <Archive class="h-4 w-4" />
+              <div class="flex min-h-11 items-center gap-[13px] border-b border-(--border-hairline) px-[13px] py-[7px] last:border-b-0 hover:bg-(--fill-hover)">
+                <span class="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[9px] bg-(--surface-content) text-(--color-accent) shadow-[inset_0_0_0_.5px_var(--border-hairline)]">
+                  <Icon name="inventory_2" size={18} />
                 </span>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-[0.8rem] font-medium text-fg-strong" title={entry.name}>
+                  <p class="truncate text-[13px] font-semibold text-(--text-primary)" title={entry.name}>
                     {entry.name}
                   </p>
-                  <p class="text-xs text-muted-fg">
+                  <p class="text-[12px] text-(--text-tertiary)">
                     {fmtBytes(entry.size)} · {fmtTime(entry.updated_at, { withDate: true })}
                   </p>
                 </div>
@@ -183,15 +178,11 @@
                   <Badge tone="neutral">{$LL.backupAppFile()}</Badge>
                 {/if}
                 {#if busy === entry.name}
-                  <Spinner size="sm" />
+                  <Spinner size={16} />
                 {/if}
                 <div class="flex shrink-0">
-                  <IconButton label={$LL.filesDownload()} disabled={busy !== ''} onclick={() => download(entry)}>
-                    <Download class="w-4 h-4" />
-                  </IconButton>
-                  <IconButton label={$LL.filesDelete()} disabled={busy !== ''} onclick={() => (removing = entry)}>
-                    <Trash2 class="w-4 h-4" />
-                  </IconButton>
+                  <IconButton icon="download" label={$LL.filesDownload()} disabled={busy !== ''} onclick={() => download(entry)} />
+                  <IconButton icon="delete" label={$LL.filesDelete()} disabled={busy !== ''} onclick={() => (removing = entry)} />
                 </div>
               </div>
             {/each}
@@ -205,15 +196,10 @@
 
 {#if removing}
   {@const target = removing}
-  <Modal open title={$LL.filesDelete()} onclose={() => (removing = null)}>
-    <div class="space-y-4">
-      <p class="text-sm text-muted-fg">{$LL.backupConfirmRemove({ name: target.name })}</p>
-      <div class="flex justify-end gap-2">
-        <Button variant="secondary" onclick={() => (removing = null)}>{$LL.cancel()}</Button>
-        <Button variant="danger" disabled={busy !== ''} onclick={() => remove(target)}>
-          {$LL.filesDelete()}
-        </Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open title={$LL.filesDelete()} message={$LL.backupConfirmRemove({ name: target.name })} onclose={() => (removing = null)}>
+    {#snippet actions()}
+      <Button variant="destructive" icon="delete" disabled={busy !== ''} onclick={() => remove(target)}>{$LL.filesDelete()}</Button>
+      <Button variant="secondary" onclick={() => (removing = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}

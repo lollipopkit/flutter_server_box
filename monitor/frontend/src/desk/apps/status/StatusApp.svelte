@@ -1,23 +1,5 @@
 <script lang="ts">
-  import {
-    BatteryMedium,
-    Cpu,
-    FolderOpen,
-    Gauge,
-    Gpu,
-    HardDrive,
-    MemoryStick,
-    Server,
-    Settings as SettingsIcon,
-    SquareTerminal,
-    ShieldCheck,
-    Network,
-    CircleAlert,
-    RefreshCw,
-    Power,
-    Zap,
-  } from '@lucide/svelte'
-  import { Badge, Button, Card, IconButton, Modal, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, SegmentedControl, Spinner } from '../../lk'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'
   import LineChart from '../../../components/LineChart.svelte'
@@ -263,68 +245,41 @@
   })
 </script>
 
-{#if metrics.loading}
-  <div class="flex h-full items-center justify-center">
-    <Spinner size="lg" />
-  </div>
+{#if detail}
+  <AppToolbar title={detailTitles[detail]} back={() => (detail = null)} />
 {:else}
-  {#if detail}
-    <AppToolbar title={detailTitles[detail]} back={() => (detail = null)} />
-  {:else}
-    <AppToolbar title={headerName}>
-      {#snippet leading()}
-        {@const statusCls = connected ? 'text-success' : 'text-danger'}
-        {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
-        {#if capabilities?.platform}
-          <OsIcon platform={capabilities.platform} class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
-        {:else}
-          <Server class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
-        {/if}
-      {/snippet}
-      {#snippet actions()}
-        <Badge tone={connected ? 'success' : 'danger'}>
-          {connected ? $LL.connected() : $LL.disconnected()}
-        </Badge>
-        {#if access.terminal}
-          <IconButton label={$LL.terminal()} onclick={() => win.open('terminal')}>
-            <SquareTerminal class="w-4 h-4" />
-          </IconButton>
-        {/if}
-        {#if access.files}
-          <IconButton label={$LL.files()} onclick={() => win.open('files')}>
-            <FolderOpen class="w-4 h-4" />
-          </IconButton>
-        {/if}
-        {#if canIperf}
-          <IconButton label={$LL.iperf()} onclick={() => (iperfOpen = true)}>
-            <Zap class="w-4 h-4" />
-          </IconButton>
-        {/if}
-        {#if canPower}
-          <IconButton label={$LL.powerControl()} onclick={() => (powerOpen = true)}>
-            <Power class="w-4 h-4" />
-          </IconButton>
-        {/if}
-        <IconButton label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })}>
-          <SettingsIcon class="w-4 h-4" />
-        </IconButton>
-        <IconButton label={$LL.refresh()} onclick={refresh}>
-          <RefreshCw class="w-4 h-4" />
-        </IconButton>
-      {/snippet}
-    </AppToolbar>
-  {/if}
+  <AppToolbar title={headerName}>
+    {#snippet leading()}
+      {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
+      {#if capabilities?.platform}
+        <OsIcon platform={capabilities.platform} size={20} title={statusTitle} />
+      {:else}
+        <Icon name="dns" size={20} color={connected ? 'var(--color-success)' : 'var(--color-danger)'} title={statusTitle} />
+      {/if}
+    {/snippet}
+    {#snippet actions()}
+      <Badge tone={connected ? 'success' : 'danger'} dot>
+        {connected ? $LL.connected() : $LL.disconnected()}
+      </Badge>
+      {#if access.terminal}<IconButton icon="terminal" label={$LL.terminal()} onclick={() => win.open('terminal')} />{/if}
+      {#if access.files}<IconButton icon="folder_open" label={$LL.files()} onclick={() => win.open('files')} />{/if}
+      {#if canIperf}<IconButton icon="speed" label={$LL.iperf()} onclick={() => (iperfOpen = true)} />{/if}
+      {#if canPower}<IconButton icon="power_settings_new" label={$LL.powerControl()} onclick={() => (powerOpen = true)} />{/if}
+      <IconButton icon="settings" label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })} />
+      <IconButton icon="refresh" label={$LL.refresh()} onclick={refresh} />
+    {/snippet}
+  </AppToolbar>
+{/if}
 
-  <main class="status-app mx-auto w-full max-w-7xl px-3 py-3 @3xl:px-5 @3xl:py-4">
+<main class="status-app mx-auto w-full max-w-7xl px-[17px] pb-[17px] pt-[4px]">
+  {#if metrics.loading}
+    <div class="flex h-full items-center justify-center"><Spinner size={48} /></div>
+  {:else}
     {#if error}
-      <div class="mb-6 bg-danger/10 border border-danger/30 rounded-(--radius-container) p-4">
-        <div class="flex">
-          <CircleAlert class="w-5 h-5 text-danger" />
-          <div class="ml-3">
-            <p class="text-sm text-danger">{error}</p>
-          </div>
-        </div>
-      </div>
+      <Card class="mb-[13px] flex items-start gap-[9px] text-[13px] text-(--color-danger)">
+        <Icon name="error" size={18} />
+        <p>{error}</p>
+      </Card>
     {/if}
 
     <!-- Informational, not a warning: every switch under `[remote_access]` is
@@ -332,13 +287,11 @@
          that way. Most agents are in this state on purpose, so this says what
          is off and where the switches are, and stops there. -->
     {#if access.viewOnly}
-      <Card class="mb-6 space-y-1">
-        <h2 class="text-sm font-semibold font-display text-fg-strong">
-          {$LL.remoteAccessOffTitle()}
-        </h2>
+      <Card class="mb-[13px] space-y-[7px]">
+        <h2 class="text-[15px] font-semibold text-(--text-primary)">{$LL.remoteAccessOffTitle()}</h2>
         <!-- With roles, more is an administrator's grant away rather than a
              config file's edit. -->
-        <p class="text-sm text-muted-fg">
+        <p class="text-[13px] text-(--text-secondary)">
           {capabilities?.grants ? $LL.remoteAccessOffBodyRoles() : $LL.remoteAccessOffBody()}
         </p>
       </Card>
@@ -354,9 +307,8 @@
     {#snippet card(id: CardId)}
       {#if id === 'cpu'}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={Cpu}
-          iconClass="text-[var(--status-chart-one)]"
+          icon="memory"
+          iconColor="var(--hue-blue)"
           label={$LL.cpuUsage()}
           value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
           detail={m
@@ -373,9 +325,8 @@
         />
       {:else if id === 'memory'}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={MemoryStick}
-          iconClass="text-[var(--status-chart-six)]"
+          icon="memory"
+          iconColor="var(--hue-teal)"
           label={$LL.memory()}
           value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
           detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
@@ -383,9 +334,8 @@
         />
       {:else if id === 'disk'}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={HardDrive}
-          iconClass="text-[var(--status-chart-four)]"
+          icon="hard_drive"
+          iconColor="var(--hue-amber)"
           label={$LL.diskUsage()}
           value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
           detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
@@ -393,14 +343,13 @@
         />
       {:else if id === 'network'}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={Network}
-          iconClass="text-[var(--status-chart-seven)]"
+          icon="lan"
+          iconColor="var(--hue-violet)"
           label={$LL.network()}
+          compact
           value={latest
             ? `\u2193 ${fmtBytesPerSec(latest.net_rx_speed)}  \u2191 ${fmtBytesPerSec(latest.net_tx_speed)}`
             : '--'}
-          valueClass="text-lg"
           detail={m
             ? `RX ${fmtBytes(m.network.rx_bytes_exact ?? m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes_exact ?? m.network.tx_bytes)}`
             : ''}
@@ -408,9 +357,8 @@
         />
       {:else if id === 'gpu' && m?.gpus?.length}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={Gpu}
-          iconClass="text-[var(--status-chart-eight)]"
+          icon="speed"
+          iconColor="var(--hue-red)"
           label={$LL.gpu()}
           value={m.gpus[0].usage_percent != null ? `${m.gpus[0].usage_percent.toFixed(0)}%` : '--'}
           detail={m.gpus[0].name}
@@ -418,9 +366,8 @@
         />
       {:else if id === 'battery' && m?.batteries?.length}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={BatteryMedium}
-          iconClass="text-[var(--status-chart-six)]"
+          icon="battery_5_bar"
+          iconColor="var(--hue-green)"
           label={$LL.battery()}
           value={m.batteries[0].percent != null ? `${m.batteries[0].percent}%` : '--'}
           detail={m.batteries[0].name ?? ''}
@@ -428,9 +375,8 @@
         />
       {:else if id === 'sensors' && m?.sensors?.length}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={Gauge}
-          iconClass="text-[var(--status-chart-two)]"
+          icon="thermostat"
+          iconColor="var(--hue-blue)"
           label={$LL.sensors()}
           value={String(m.sensors.length)}
           detail={m.sensors[0].device}
@@ -438,9 +384,8 @@
         />
       {:else if id === 'smart' && m?.disk_smart?.length}
         <StatCard
-          class="p-4 @2xl:p-6"
-          icon={ShieldCheck}
-          iconClass={m.disk_smart.every((d) => d.healthy !== false) ? 'text-success' : 'text-danger'}
+          icon="shield_lock"
+          iconColor={m.disk_smart.every((d) => d.healthy !== false) ? 'var(--color-success)' : 'var(--color-danger)'}
           label={$LL.smart()}
           value={`${m.disk_smart.filter((d) => d.healthy !== false).length} / ${m.disk_smart.length}`}
           detail={$LL.healthy()}
@@ -452,7 +397,7 @@
     <!-- Three columns prevent the optional cards from crowding tablet-width
          viewports before the layout expands to four columns. Card order is
          synced through cardOrder; HTML5 drag-and-drop is pointer-only. -->
-    <div class="grid grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-3 @7xl:grid-cols-4 gap-3 @2xl:gap-4 mb-6">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-[9px] mb-[17px]">
       {#each visibleCardOrder as id (id)}
         <div
           role="listitem"
@@ -468,24 +413,19 @@
       {/each}
     </div>
 
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-[0.95rem] font-semibold font-display text-fg-strong">{$LL.history()}</h2>
-      <div class="flex rounded-lg border border-line bg-soft/60 p-0.5 overflow-hidden">
-        {#each RANGES as r (r.minutes)}
-          <button
-            class="px-3 py-1 text-xs font-medium cursor-pointer rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent {rangeMinutes === r.minutes
-              ? 'bg-surface text-fg-strong shadow-xs'
-              : 'text-muted-fg hover:text-fg'}"
-            onclick={() => (rangeMinutes = r.minutes)}
-          >
-            {r.label}
-          </button>
-        {/each}
-      </div>
+    <div class="mb-[9px] flex items-center justify-between">
+      <h2 class="text-[15px] font-semibold text-(--text-primary)">{$LL.history()}</h2>
+      <SegmentedControl
+        size="sm"
+        label={$LL.history()}
+        options={RANGES.map((r) => ({ value: String(r.minutes), label: r.label }))}
+        value={String(rangeMinutes)}
+        onchange={(value) => (rangeMinutes = Number(value))}
+      />
     </div>
 
     {#if historyError}
-      <p class="mb-4 text-sm text-danger">{historyError}</p>
+      <p class="mb-[9px] text-[13px] text-(--color-danger)">{historyError}</p>
     {/if}
 
     <div class="grid grid-cols-1 gap-3 @2xl:gap-4">
@@ -508,47 +448,42 @@
       <aside class="min-w-0 space-y-4">
     {#if metrics.data}
       {@const m = metrics.data}
-      <Card class="rounded-2xl">
-        <h3 class="text-[0.9rem] font-semibold font-display text-fg-strong mb-3">{$LL.systemInformation()}</h3>
-        <div class="space-y-3">
-          <div class="flex justify-between">
-            <span class="text-sm text-muted-fg">{$LL.serverNameLabel()}</span>
-            <span class="text-sm font-medium">{m.server_name}</span>
+      <Card title={$LL.systemInformation()}>
+        <div class="divide-y divide-(--border-hairline)">
+          <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
+            <span class="text-(--text-secondary)">{$LL.serverNameLabel()}</span>
+            <span class="lk-num text-right">{m.server_name}</span>
           </div>
           {#if m.sys}
-            <div class="flex justify-between gap-4">
-              <span class="text-sm text-muted-fg">{$LL.osHost()}</span>
-              <span class="text-sm font-medium text-right truncate">{m.sys}</span>
+            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.osHost()}</span>
+              <span class="lk-mono truncate text-right text-[12px]">{m.sys}</span>
             </div>
           {/if}
           {#if m.uptime}
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.uptime()}</span>
-              <span class="text-sm font-medium">{m.uptime}</span>
+            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.uptime()}</span>
+              <span class="lk-num">{m.uptime}</span>
             </div>
           {/if}
           {#if m.conn}
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.connections()}</span>
+            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.connections()}</span>
               <!-- Linux reports tcpMaxConn as -1 when no static connection
                    limit exists. Display that sentinel as "unlimited". -->
-              <span class="text-sm font-medium">
+              <span class="lk-num">
                 {m.conn.max_conn === -1 ? $LL.unlimited() : m.conn.max_conn}
               </span>
             </div>
           {/if}
-          <div class="flex justify-between">
-            <span class="text-sm text-muted-fg">{$LL.lastUpdated()}</span>
-            <span class="text-sm font-medium">
-              {new Date(m.timestamp).toLocaleString()}
-            </span>
+          <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
+            <span class="text-(--text-secondary)">{$LL.lastUpdated()}</span>
+            <span class="lk-num text-right text-[12px]">{new Date(m.timestamp).toLocaleString()}</span>
           </div>
           {#if m.swap.total > 0}
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.swap()}</span>
-              <span class="text-sm font-medium">
-                {fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}
-              </span>
+            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
+              <span class="text-(--text-secondary)">{$LL.swap()}</span>
+              <span class="lk-num text-right">{fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}</span>
             </div>
           {/if}
         </div>
@@ -559,18 +494,12 @@
          cycle. Absent when there are none, like the app's card; each row is
          one line, and a longer output opens in the dialog below. -->
     {#if m?.custom_cmds?.length}
-      <Card class="rounded-2xl">
-        <div class="flex items-center justify-between gap-3 mb-2">
-          <h3 class="text-[0.9rem] font-semibold font-display text-fg-strong">{$LL.customCmd()}</h3>
-          <button
-            type="button"
-            class="text-sm text-primary hover:underline cursor-pointer"
-            onclick={() => win.open('settings', { appState: { section: 'server' } })}
-          >
-            {$LL.serverSettings()}
-          </button>
+      <Card>
+        <div class="mb-[9px] flex items-center gap-[9px]">
+          <h3 class="min-w-0 flex-1 text-[15px] font-semibold text-(--text-primary)">{$LL.customCmd()}</h3>
+          <IconButton icon="settings" label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })} />
         </div>
-        <div class="divide-y divide-line">
+        <div class="divide-y divide-(--border-hairline)">
           {#each m.custom_cmds as cmd (cmd.name)}
             {@const multi = displayOutput(cmd.output).includes('\n')}
             <!-- A row is one line; a multi-line output is what the dialog is
@@ -578,18 +507,16 @@
                  text and never as markup. -->
             <button
               type="button"
-              class="flex w-full items-center justify-between gap-4 rounded-lg px-2 py-2 text-left transition-colors {multi
-                ? 'cursor-pointer hover:bg-soft'
-                : 'cursor-default'}"
+              class="flex w-full items-center justify-between gap-[9px] rounded-[7px] px-[13px] py-[7px] text-left even:bg-(--fill-hover) {multi ? 'cursor-pointer hover:bg-(--fill-hover)' : 'cursor-default'}"
               disabled={!multi}
               onclick={() => (cmdDetail = multi ? cmd : null)}
             >
-              <span class="text-sm text-muted-fg truncate shrink-0">{cmd.name}</span>
-              <span class="text-sm font-medium text-fg truncate">{firstLine(cmd.output)}</span>
+              <span class="lk-mono shrink-0 truncate text-[12px] text-(--text-tertiary)">{cmd.name}</span>
+              <span class="lk-mono truncate text-[13px] text-(--text-primary)">{firstLine(cmd.output)}</span>
             </button>
           {/each}
         </div>
-        <p class="text-xs text-faint-fg mt-3">{$LL.customCmdCount({ count: m.custom_cmds.length })}</p>
+        <p class="mt-[9px] text-[12px] text-(--text-tertiary)">{$LL.customCmdCount({ count: m.custom_cmds.length })}</p>
       </Card>
     {/if}
       </aside>
@@ -597,45 +524,19 @@
     {/if}
       </div>
     {/key}
-  </main>
-{/if}
+  {/if}
+</main>
 
 <style>
   .status-app {
-    --status-chart-one: #2a78d6;
-    --status-chart-two: #eb6834;
-    --status-chart-three: #1baf7a;
-    --status-chart-four: #eda100;
-    --status-chart-five: #e87ba4;
-    --status-chart-six: #008300;
-    --status-chart-seven: #4a3aa7;
-    --status-chart-eight: #e34948;
-  }
-
-  :global(.dark) .status-app,
-  :global(.desk-dark) .status-app {
-    --status-chart-one: #3987e5;
-    --status-chart-two: #d95926;
-    --status-chart-three: #199e70;
-    --status-chart-four: #c98500;
-    --status-chart-five: #d55181;
-    --status-chart-six: #008300;
-    --status-chart-seven: #9085e9;
-    --status-chart-eight: #e66767;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(:root:not(.light)) .status-app,
-    :global(.desk-root:not(.desk-light)) .status-app {
-      --status-chart-one: #3987e5;
-      --status-chart-two: #d95926;
-      --status-chart-three: #199e70;
-      --status-chart-four: #c98500;
-      --status-chart-five: #d55181;
-      --status-chart-six: #008300;
-      --status-chart-seven: #9085e9;
-      --status-chart-eight: #e66767;
-    }
+    --status-chart-one: var(--color-accent);
+    --status-chart-two: var(--hue-blue);
+    --status-chart-three: var(--hue-teal);
+    --status-chart-four: var(--hue-violet);
+    --status-chart-five: var(--hue-amber);
+    --status-chart-six: var(--hue-green);
+    --status-chart-seven: var(--hue-teal);
+    --status-chart-eight: var(--hue-red);
   }
 </style>
 
@@ -648,13 +549,10 @@
 <!-- A custom command's full output. It is the machine's own text, so it is
      drawn as text in a `pre` — never as HTML or Markdown. -->
 {#if cmdDetail}
-  <Modal open title={cmdDetail.name} onclose={() => (cmdDetail = null)}>
-    <div class="space-y-4">
-      <pre
-        class="max-h-96 overflow-auto rounded border border-line bg-surface p-3 text-xs font-mono text-fg whitespace-pre-wrap break-all">{cmdDetail.output}</pre>
-      <div class="flex justify-end">
-        <Button variant="secondary" onclick={() => (cmdDetail = null)}>{$LL.close()}</Button>
-      </div>
-    </div>
-  </Modal>
+  <Dialog open wide title={cmdDetail.name} onclose={() => (cmdDetail = null)}>
+    <pre class="lk-mono max-h-96 overflow-auto rounded-[9px] bg-(--surface-terminal) p-[11px_15px] text-[13px] whitespace-pre-wrap break-all text-(--text-primary)">{cmdDetail.output}</pre>
+    {#snippet actions()}
+      <Button variant="secondary" onclick={() => (cmdDetail = null)}>{$LL.close()}</Button>
+    {/snippet}
+  </Dialog>
 {/if}

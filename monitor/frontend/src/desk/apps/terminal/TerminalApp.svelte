@@ -9,8 +9,7 @@
   /// could ship, and most visits never open a terminal.
 
   import { onDestroy, tick, untrack } from 'svelte'
-  import { SquareTerminal, Unplug } from '@lucide/svelte'
-  import { Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
+  import { Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Spinner, Textarea } from '../../lk'
   import AppToolbar from '../../ui/AppToolbar.svelte'
   import { useWindow } from '../../deskState.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -402,27 +401,10 @@
     <!-- Unplug rather than a power symbol: next to a server's terminal,
          "power off" reads as an offer to shut the machine down -->
     {#if session.phase === 'running'}
-      <IconButton label={$LL.terminalDisconnect()} onclick={disconnect}>
-        <Unplug class="w-4 h-4" />
-      </IconButton>
+      <IconButton icon="link_off" label={$LL.terminalDisconnect()} onclick={disconnect} />
     {/if}
   {/snippet}
 </AppToolbar>
-
-<!-- One choice of the authentication segmented control. -->
-{#snippet authTab(kind: 'password' | 'key' | 'interactive', label: string)}
-  <button
-    type="button"
-    class="cursor-pointer rounded-md px-3 py-1 text-xs font-medium transition-colors {authKind ===
-    kind
-      ? 'bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]'
-      : 'text-muted-fg hover:text-fg'}"
-    aria-pressed={authKind === kind}
-    onclick={() => (authKind = kind)}
-  >
-    {label}
-  </button>
-{/snippet}
 
 <!-- The window's body. The connect form is a centred card until there is a
      session; from there the terminal takes everything the toolbar leaves,
@@ -430,17 +412,17 @@
      sibling in flow, so a full-height main would run past the window's
      bottom edge. -->
 <main
-  class="relative flex min-h-0 flex-1 flex-col bg-bg text-fg"
+  class="relative flex min-h-0 flex-1 flex-col bg-(--surface-window) text-(--text-primary)"
   style:background-color={showSurface && !formShown ? terminalSurface.current : undefined}
 >
   <!-- Said, because keystrokes that arrive unasked would otherwise look like a
        fault. Above the terminal rather than over it: a banner that covered
        output would hide what it is telling you about. -->
   {#if alerting}
-    <div class="shrink-0 space-y-2 p-3 pb-0 @3xl:p-4 @3xl:pb-0">
+    <div class="shrink-0 space-y-[7px] px-[17px] pb-0 pt-[9px]">
       {#if typing || queuedName}
-        <Card class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm text-fg">
+        <Card class="flex flex-wrap items-center justify-between gap-[9px]">
+          <p class="text-[13px] text-(--text-primary)">
             {#if typing}
               {$LL.snippetTyping({ name: typing.name })}
             {:else}
@@ -454,14 +436,13 @@
       {/if}
 
       {#if session.phase === 'prompting'}
-        <Card class="space-y-3">
+        <Card class="space-y-[9px]">
           {#if session.instructions}
-            <p class="text-sm text-muted-fg">{session.instructions}</p>
+            <p class="text-[13px] text-(--text-secondary)">{session.instructions}</p>
           {/if}
           {#each session.prompts as prompt, i (i)}
-            <div class="space-y-1">
-              <span class="text-sm text-muted-fg">{prompt.prompt}</span>
-              <Input bind:value={answers[i]} type={prompt.echo ? 'text' : 'password'} />
+            <div class="space-y-[5px]">
+              <Input label={prompt.prompt} bind:value={answers[i]} type={prompt.echo ? 'text' : 'password'} />
             </div>
           {/each}
           <Button onclick={submitAnswers}>{$LL.terminalSubmit()}</Button>
@@ -469,14 +450,16 @@
       {/if}
 
       {#if errorText}
-        <Card class="border-danger/40 bg-danger/5">
-          <p class="text-sm text-danger">{errorText}</p>
+        <Card class="flex items-start gap-[9px] text-[13px] text-(--color-danger)">
+          <Icon name="error" size={17} />
+          <p>{errorText}</p>
         </Card>
       {/if}
 
       {#if session.truncated}
-        <Card class="border-warning/40 bg-warning/5">
-          <p class="text-sm text-muted-fg">{$LL.terminalOutputLost()}</p>
+        <Card class="flex items-start gap-[9px] text-[13px] text-(--color-warning)">
+          <Icon name="warning" size={17} />
+          <p>{$LL.terminalOutputLost()}</p>
         </Card>
       {/if}
     </div>
@@ -486,16 +469,16 @@
     <!-- Centred in what the window has: the surface below takes the rest once
          there is one, so a session's last screen stays on show. -->
     <div class="min-h-0 overflow-auto {showSurface ? 'max-h-[55%] shrink-0' : 'flex-1'}">
-      <div class="flex min-h-full justify-center p-3 @3xl:p-6">
-        <div class="my-auto w-full max-w-xl space-y-3">
+      <div class="flex min-h-full justify-center p-[13px]">
+        <div class="my-auto w-full max-w-xl space-y-[9px]">
           {#if !showSurface}
-            <div class="flex items-center gap-3 px-1 pb-1">
-              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line bg-surface shadow-xs">
-                <SquareTerminal class="h-5 w-5 text-[var(--desk-accent)]" />
+            <div class="flex items-center gap-[9px] px-[3px] pb-[3px]">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-[11px] bg-(--surface-content) shadow-[inset_0_0_0_.5px_var(--border-hairline)]">
+                <Icon name="terminal" size={21} color="var(--color-accent)" />
               </span>
               <div class="min-w-0">
-                <h1 class="font-display text-base font-semibold text-fg-strong">{$LL.terminal()}</h1>
-                <p class="truncate text-xs text-muted-fg">{servers.current ? displayName(servers.current) : servers.currentId}</p>
+                <h1 class="text-[15px] font-semibold text-(--text-primary)">{$LL.terminal()}</h1>
+                <p class="truncate text-[12px] text-(--text-tertiary)">{servers.current ? displayName(servers.current) : servers.currentId}</p>
               </div>
             </div>
           {/if}
@@ -503,17 +486,17 @@
             <Card>
               <!-- With roles the agent says why; before them, the one reason
                    there was is the config switch. -->
-              <p class="text-sm text-muted-fg">
+              <p class="text-[13px] text-(--text-secondary)">
                 {caps?.grants ? whyText(access.why, $LL) : $LL.terminalUnavailable()}
               </p>
             </Card>
           {:else}
             {#if showNotice}
-              <Card class="space-y-3 border-warning/40 bg-warning/5">
-                <h2 class="text-[0.95rem] font-semibold font-display text-fg-strong">
+              <Card class="space-y-[9px]">
+                <h2 class="text-[15px] font-semibold text-(--text-primary)">
                   {$LL.terminalPasswordlessNoticeTitle()}
                 </h2>
-                <p class="text-[0.8rem] leading-relaxed text-muted-fg">
+                <p class="text-[13px] leading-relaxed text-(--text-secondary)">
                   {caps?.grants ? $LL.terminalPasswordlessNoticeBodyRoles() : $LL.terminalPasswordlessNoticeBody()}
                 </p>
                 <div class="flex flex-wrap gap-2">
@@ -521,8 +504,8 @@
                     {$LL.terminalPasswordlessKeep()}
                   </Button>
                   {#if canTurnOff}
-                    <Button variant="danger" onclick={disablePasswordless} disabled={disabling}>
-                      {#if disabling}<Spinner class="w-4 h-4" />{/if}
+                    <Button variant="destructive" onclick={disablePasswordless} disabled={disabling}>
+                      {#if disabling}<Spinner size={16} />{/if}
                       {$LL.terminalPasswordlessDisable()}
                     </Button>
                   {/if}
@@ -531,48 +514,46 @@
             {/if}
 
             {#if fullAccess}
-              <Card class="space-y-3">
-                <p class="text-[0.8rem] leading-relaxed text-muted-fg">
+              <Card class="space-y-[9px]">
+                <p class="text-[13px] leading-relaxed text-(--text-secondary)">
                   {$LL.terminalPasswordlessHint()}
                 </p>
                 <Button onclick={openPasswordless} disabled={busy}>
-                  {#if busy}<Spinner class="w-4 h-4" />{/if}
+                  {#if busy}<Spinner size={16} />{/if}
                   {$LL.terminalOpenDirectly()}
                 </Button>
 
                 {#if tmux?.available}
-                  <div class="space-y-2 border-t border-line pt-3">
-                    <p class="text-xs font-semibold tracking-wide text-muted-fg uppercase">
+                  <div class="space-y-[7px] border-t border-(--border-hairline) pt-[9px]">
+                    <p class="lk-caps">
                       {$LL.terminalTmuxSessions()}
                     </p>
                     {#if tmux.error}
                       <!-- The listing failed: said, because an empty list would
                            read as this machine having no sessions. -->
-                      <p class="text-sm text-danger">{$LL.terminalTmuxListFailed()}</p>
-                      <p class="text-xs text-muted-fg break-all">{tmux.error}</p>
+                      <p class="text-[13px] text-(--color-danger)">{$LL.terminalTmuxListFailed()}</p>
+                      <p class="lk-mono break-all text-[12px] text-(--text-tertiary)">{tmux.error}</p>
                     {/if}
                     {#each tmux.sessions as s (s.id)}
-                      <div
-                        class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-line bg-soft/50 px-3 py-2"
-                      >
+                      <div class="flex flex-wrap items-center gap-x-[9px] gap-y-[5px] rounded-[13px] bg-(--surface-control) px-[13px] py-[9px]">
                         <!-- A dot, like every other status in the panel: filled
                              while the session has a client attached. -->
                         <span
-                          class="h-1.5 w-1.5 shrink-0 rounded-full {s.attached
-                            ? 'bg-success'
-                            : 'bg-faint-fg'}"
+                          class="h-[7px] w-[7px] shrink-0 rounded-full {s.attached
+                            ? 'bg-(--color-success)'
+                            : 'bg-(--text-tertiary)'}"
                           title={s.attached ? $LL.terminalTmuxAttached() : $LL.terminalTmuxDetached()}
                         ></span>
-                        <span class="min-w-0 flex-1 truncate text-sm font-medium text-fg-strong">
+                        <span class="min-w-0 flex-1 truncate text-[13px] font-semibold text-(--text-primary)">
                           {s.name}
                         </span>
-                        <span class="text-xs text-muted-fg">
+                        <span class="text-[12px] text-(--text-secondary)">
                           {$LL.terminalTmuxWindows({ count: s.windows })}
                         </span>
                         <!-- Epoch seconds from tmux, in the viewer's locale;
                              nothing when tmux had no value for it. -->
                         {#if s.activity !== null}
-                          <span class="text-xs text-faint-fg">{fmtEpochSeconds(s.activity)}</span>
+                          <span class="text-[12px] text-(--text-tertiary)">{fmtEpochSeconds(s.activity)}</span>
                         {/if}
                         <Button size="sm" variant="secondary" onclick={() => attachTmux(s)}>
                           {$LL.terminalTmuxAttach()}
@@ -595,25 +576,31 @@
 
             {#if access.ssh}
               <Card class="space-y-4">
-                <p class="text-[0.8rem] leading-relaxed text-muted-fg">
+                <p class="text-[13px] leading-relaxed text-(--text-secondary)">
                   {$LL.terminalCredentialsHint()}
                 </p>
 
                 <div class="space-y-1.5">
-                  <span class="block text-xs font-semibold tracking-wide text-muted-fg uppercase">
+                  <span class="lk-caps block">
                     {$LL.terminalAuthMethod()}
                   </span>
                   <!-- A segmented control, the panel's shape for two or three
                        exclusive choices; the accent marks the one in force. -->
-                  <div class="flex w-fit rounded-lg border border-line bg-soft p-0.5">
-                    {@render authTab('password', $LL.password())}
-                    {@render authTab('key', $LL.terminalPrivateKey())}
-                    {@render authTab('interactive', $LL.terminalInteractive())}
-                  </div>
+                  <SegmentedControl
+                    size="sm"
+                    label={$LL.terminalAuthMethod()}
+                    options={[
+                      { value: 'password', label: $LL.password() },
+                      { value: 'key', label: $LL.terminalPrivateKey() },
+                      { value: 'interactive', label: $LL.terminalInteractive() },
+                    ]}
+                    value={authKind}
+                    onchange={(value) => (authKind = value)}
+                  />
                 </div>
 
                 <div class="space-y-1.5">
-                  <span class="block text-xs font-semibold tracking-wide text-muted-fg uppercase">
+                  <span class="lk-caps block">
                     {$LL.terminalSshUser()}
                   </span>
                   <Input bind:value={user} placeholder="root" autocomplete="username" />
@@ -621,41 +608,34 @@
 
                 {#if authKind === 'password'}
                   <div class="space-y-1.5">
-                    <span class="block text-xs font-semibold tracking-wide text-muted-fg uppercase">
+                    <span class="lk-caps block">
                       {$LL.password()}
                     </span>
                     <Input bind:value={password} type="password" autocomplete="current-password" />
                   </div>
-                  <label class="flex items-center gap-2 text-sm text-muted-fg">
-                    <input type="checkbox" bind:checked={remember} />
-                    {$LL.terminalRememberForTab()}
-                  </label>
+                  <Checkbox bind:checked={remember} label={$LL.terminalRememberForTab()} />
                 {:else if authKind === 'key'}
-                  <label class="block space-y-1.5">
-                    <span class="block text-xs font-semibold tracking-wide text-muted-fg uppercase">
-                      {$LL.terminalPrivateKey()}
-                    </span>
-                    <textarea
-                      bind:value={pem}
-                      rows="6"
-                      spellcheck="false"
-                      class="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-xs text-fg"
-                      placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                    ></textarea>
-                  </label>
+                  <Textarea
+                    bind:value={pem}
+                    rows={6}
+                    label={$LL.terminalPrivateKey()}
+                    mono
+                    spellcheck="false"
+                    placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
+                  />
                   <div class="space-y-1.5">
-                    <span class="block text-xs font-semibold tracking-wide text-muted-fg uppercase">
+                    <span class="lk-caps block">
                       {$LL.terminalPassphrase()}
                     </span>
                     <Input bind:value={passphrase} type="password" />
                   </div>
                 {:else}
-                  <p class="text-sm text-muted-fg">{$LL.terminalInteractiveHint()}</p>
+                  <p class="text-[13px] text-(--text-secondary)">{$LL.terminalInteractiveHint()}</p>
                 {/if}
 
                 <div class="flex items-center gap-2">
                   <Button onclick={connect} disabled={busy || !user}>
-                    {#if busy}<Spinner class="w-4 h-4" />{/if}
+                    {#if busy}<Spinner size={16} />{/if}
                     {$LL.terminalConnect()}
                   </Button>
                   {#if session.resumable}
@@ -689,10 +669,10 @@
 
       {#if session.phase === 'reconnecting'}
         <div
-          class="absolute inset-0 flex items-center justify-center gap-2 bg-bg/70 backdrop-blur-[1px]"
+          class="absolute inset-0 flex items-center justify-center gap-[7px] bg-(--surface-window)/70 backdrop-blur-[1px]"
         >
-          <Spinner class="w-5 h-5" />
-          <span class="text-sm text-fg-strong">{$LL.terminalReconnecting()}</span>
+          <Spinner size={20} />
+          <span class="text-[13px] text-(--text-primary)">{$LL.terminalReconnecting()}</span>
         </div>
       {/if}
     </div>

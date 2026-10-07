@@ -3,7 +3,7 @@
   /// its own password — the one thing an account that is not an
   /// administrator may change.
 
-  import { Badge, Button, Card, Input, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Group, Input, Row, Spinner } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { accessMessage } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -45,35 +45,27 @@
   }
 </script>
 
-<Card class="space-y-4">
-  <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.myAccount()}</h2>
-  <div class="flex flex-wrap items-center gap-2 text-sm">
-    <span class="font-mono">{me.username}</span>
-    <span class="text-muted-fg">·</span>
-    <span class="text-muted-fg">{$LL.accountRole()}</span>
+<Group title={$LL.myAccount()}>
+  <Row label={me.username} sub={$LL.accountRole()}>
     <Badge tone={me.admin ? 'success' : 'neutral'}>{me.role}</Badge>
-  </div>
-  <form class="space-y-3" onsubmit={change}>
-    <h3 class="text-sm font-medium text-fg-strong">{$LL.changePassword()}</h3>
-    <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-2">
-      <div class="space-y-1">
-        <span class="text-xs text-muted-fg">{$LL.currentPassword()}</span>
-        <Input type="password" autocomplete="current-password" bind:value={current} />
-      </div>
-      <div class="space-y-1">
-        <span class="text-xs text-muted-fg">{$LL.newPassword()}</span>
-        <Input type="password" autocomplete="new-password" bind:value={next} />
-      </div>
-    </div>
-    <Button size="sm" variant="secondary" type="submit" disabled={busy || !current || !next}>
-      {#if busy}<Spinner class="w-4 h-4" />{/if}
+  </Row>
+</Group>
+
+<form onsubmit={change}>
+  <Group title={$LL.changePassword()}>
+    <Row label={$LL.currentPassword()}>
+      <Input class="w-[170px]" type="password" autocomplete="current-password" bind:value={current} />
+    </Row>
+    <Row label={$LL.newPassword()}>
+      <Input class="w-[170px]" type="password" autocomplete="new-password" bind:value={next} />
+    </Row>
+  </Group>
+  <div class="flex flex-wrap items-center gap-[9px]">
+    <Button size="sm" variant="primary" type="submit" disabled={busy || !current || !next}>
+      {#if busy}<Spinner size={16} />{/if}
       {$LL.changePassword()}
     </Button>
-    {#if error}
-      <p class="text-sm text-danger">{error}</p>
-    {/if}
-    {#if done}
-      <p class="text-sm text-success">{$LL.passwordChanged()}</p>
-    {/if}
-  </form>
-</Card>
+    {#if error}<p class="text-[13px] text-(--color-danger)" role="alert">{error}</p>{/if}
+    {#if done}<p class="text-[13px] text-(--color-success)">{$LL.passwordChanged()}</p>{/if}
+  </div>
+</form>

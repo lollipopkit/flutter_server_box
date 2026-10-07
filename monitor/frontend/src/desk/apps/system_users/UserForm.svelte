@@ -65,7 +65,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Card, Input } from '@serverbox/webui'
+  import { Button, Card, Checkbox, Input } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import { userRefusalText } from '../../../lib/userRefusal'
@@ -133,85 +133,45 @@
     <pre class="text-sm text-danger whitespace-pre-wrap break-all">{error}</pre>
   {/if}
 
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="user-name">{$LL.username()}</label>
+  <div class="grid gap-[13px]">
     {#if editing}
-      <!-- A rename is refused by the agent, so the field is not offered: the
-           name is what every file and process on the machine knows the account
-           by, and changing it would leave those behind. -->
-      <p class="text-sm font-mono text-fg-strong">{fields.name}</p>
+      <!-- A rename is refused by the agent, so the field is not offered. -->
+      <div><span class="lk-field__label">{$LL.username()}</span><p class="lk-mono mt-[5px] text-[13px]">{fields.name}</p></div>
     {:else}
-      <Input id="user-name" bind:value={fields.name} placeholder="deploy" />
+      <Input id="user-name" bind:value={fields.name} label={$LL.username()} placeholder="deploy" />
     {/if}
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="user-comment">{$LL.userComment()}</label>
-    <Input id="user-comment" bind:value={fields.comment} />
-  </div>
-
-  <div class="grid gap-4 @2xl:grid-cols-2">
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="user-home">{$LL.userHome()}</label>
-      <Input id="user-home" bind:value={fields.home} placeholder="/home/deploy" />
+    <Input id="user-comment" bind:value={fields.comment} label={$LL.userComment()} />
+    <div class="grid gap-[13px] @2xl:grid-cols-2">
+      <Input id="user-home" bind:value={fields.home} label={$LL.userHome()} placeholder="/home/deploy" />
+      <Input id="user-shell" bind:value={fields.shell} label={$LL.userLoginShell()} placeholder="/bin/bash" />
+      <Input id="user-primary" bind:value={fields.primaryGroup} label={$LL.userPrimaryGroup()} />
+      <Input id="user-groups" bind:value={fields.groups} label={$LL.userSupplementaryGroups()} hint={$LL.userGroupsHint()} />
     </div>
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="user-shell">{$LL.userLoginShell()}</label>
-      <Input id="user-shell" bind:value={fields.shell} placeholder="/bin/bash" />
-    </div>
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="user-primary">{$LL.userPrimaryGroup()}</label>
-      <Input id="user-primary" bind:value={fields.primaryGroup} />
-    </div>
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="user-groups">{$LL.userSupplementaryGroups()}</label>
-      <Input id="user-groups" bind:value={fields.groups} />
-    </div>
-  </div>
-  <p class="text-xs text-muted-fg">{$LL.userGroupsHint()}</p>
-
-  <div class="space-y-2">
     {#if editing}
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={fields.moveHome} />
-        {$LL.userMoveHome()}
-      </label>
+      <Checkbox bind:checked={fields.moveHome} label={$LL.userMoveHome()} />
     {:else}
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={fields.createHome} />
-        {$LL.userCreateHome()}
-      </label>
-      <label class="flex items-center gap-2 text-sm text-fg">
-        <input type="checkbox" bind:checked={fields.system} />
-        {$LL.userSystemAccount()}
-      </label>
+      <div class="grid gap-[9px]">
+        <Checkbox bind:checked={fields.createHome} label={$LL.userCreateHome()} />
+        <Checkbox bind:checked={fields.system} label={$LL.userSystemAccount()} />
+      </div>
     {/if}
-  </div>
-
-  <div class="space-y-1">
-    <label class="text-sm text-muted-fg" for="user-password">{$LL.password()}</label>
-    <Input id="user-password" type="password" bind:value={fields.password} />
-    <p class="text-xs text-muted-fg">
-      {editing ? $LL.userPasswordEditTip() : $LL.userPasswordCreateTip()}
-    </p>
+    <Input id="user-password" type="password" bind:value={fields.password} label={$LL.password()} hint={editing ? $LL.userPasswordEditTip() : $LL.userPasswordCreateTip()} />
   </div>
 
   {#if needsSudo}
     <!-- The second attempt. The password travels as its own field, so it never
          lands in the machine's process list nor in the agent's audit row. -->
-    <Card class="space-y-1">
-      <label class="text-sm text-muted-fg" for="user-sudo">{$LL.powerPassword()}</label>
-      <Input id="user-sudo" type="password" bind:value={sudoPassword} />
-      <p class="text-xs text-muted-fg">{$LL.powerPasswordHint()}</p>
+    <Card class="mt-[13px]">
+      <Input id="user-sudo" type="password" bind:value={sudoPassword} label={$LL.powerPassword()} hint={$LL.powerPasswordHint()} />
     </Card>
   {/if}
 
-  <div class="flex justify-end gap-2">
+  <div class="mt-[17px] flex justify-end gap-[7px]">
     <Button variant="secondary" onclick={oncancel}>{$LL.cancel()}</Button>
     {#if needsSudo}
-      <Button disabled={busy} onclick={() => void submit(true)}>{$LL.serviceRetryAsRoot()}</Button>
+      <Button variant="primary" disabled={busy} onclick={() => void submit(true)}>{$LL.serviceRetryAsRoot()}</Button>
     {:else}
-      <Button disabled={busy} onclick={() => void submit()}>{$LL.save()}</Button>
+      <Button variant="primary" disabled={busy} onclick={() => void submit()}>{$LL.save()}</Button>
     {/if}
   </div>
 </div>

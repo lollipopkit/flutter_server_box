@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Spinner } from '@serverbox/webui'
+  import Spinner from './lk/Spinner.svelte'
   import { onDestroy, onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { theme } from '../lib/theme.svelte'

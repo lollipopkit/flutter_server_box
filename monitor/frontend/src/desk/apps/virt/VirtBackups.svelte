@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Input, Select, Spinner } from '@serverbox/webui'
-  import { Archive, ChevronDown, ChevronRight, Lock, Pencil, Plus, RotateCcw, Trash2, X } from '@lucide/svelte'
+  import { Badge, Button, Card, Checkbox, Icon, Input, Select, SegmentedControl, Spinner } from '../../lk/index'
   import VirtBackupJobForm from './VirtBackupJobForm.svelte'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
@@ -248,62 +247,59 @@
 </script>
 
 {#snippet head(title: string, right: string = '')}
-  <div class="flex items-center gap-2">
-    <h3 class="text-sm font-medium text-fg-strong">{title}</h3>
+  <div class="flex items-center gap-[9px]">
+    <h3 class="text-[15px] font-semibold">{title}</h3>
     {#if right}
-      <span class="ml-auto truncate text-xs text-faint-fg">{right}</span>
+      <span class="lk-num ml-auto truncate text-[12px] text-(--text-tertiary)">{right}</span>
     {/if}
   </div>
 {/snippet}
 
 {#snippet field(label: string, value: string, mono: boolean = false)}
   <div class="min-w-0">
-    <dt class="text-faint-fg">{label}</dt>
-    <dd class="break-all text-muted-fg {mono ? 'font-mono' : ''}">{value}</dd>
+    <dt class="text-[12px] text-(--text-tertiary)">{label}</dt>
+    <dd class="break-all text-[12px] text-(--text-secondary) {mono ? 'lk-mono' : ''}">{value}</dd>
   </div>
 {/snippet}
 
 {#if error}
-  <Card class="border-danger/40 bg-danger/5">
-    <p class="text-sm text-danger whitespace-pre-wrap break-all">{error}</p>
+  <Card>
+    <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p>
   </Card>
 {/if}
 {#if notice}
   <Card>
-    <p class="text-sm text-muted-fg whitespace-pre-wrap">{notice}</p>
+    <p class="whitespace-pre-wrap text-[13px] text-(--text-secondary)">{notice}</p>
   </Card>
 {/if}
 
 {#if readError}
-  <Card><p class="text-sm text-danger whitespace-pre-wrap break-all">{readError}</p></Card>
+  <Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{readError}</p></Card>
 {:else if !data}
   <Card><Spinner class="h-5 w-5" /></Card>
 {:else}
   <!-- Plan: the jobs that take this guest. -->
-  <Card class="space-y-3">
-    <div class="flex items-center gap-2">
-      <h3 class="text-sm font-medium text-fg-strong">{$LL.virtBakPlan()}</h3>
+  <Card class="space-y-[13px]">
+    <div class="flex items-center gap-[9px]">
+      <h3 class="text-[15px] font-semibold">{$LL.virtBakPlan()}</h3>
       {#if onjobs && view.capabilities.backup_jobs === true}
-        <button type="button" class="ml-auto flex items-center gap-0.5 text-xs text-faint-fg hover:text-fg" onclick={onjobs}>
-          {$LL.virtBakDatacenter()}
-          <ChevronRight class="h-3.5 w-3.5" />
-        </button>
+        <Button type="button" variant="ghost" size="sm" class="ml-auto" iconRight="chevron_right" onclick={onjobs}>{$LL.virtBakDatacenter()}</Button>
       {/if}
     </div>
 
     {#if jobs.length === 0 && !plan}
-      <p class="text-sm text-muted-fg">{$LL.virtBakNoPlan()}</p>
+      <p class="text-[13px] text-(--text-secondary)">{$LL.virtBakNoPlan()}</p>
     {/if}
 
     {#each jobs as job (job.id)}
       {@const mine = job.id === own?.id}
-      <div class="space-y-2 rounded-lg border border-line p-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="font-mono text-sm text-fg-strong">{job.id}</span>
+      <Card variant="raised" class="space-y-[9px]">
+        <div class="flex flex-wrap items-center gap-[9px]">
+          <span class="lk-mono text-[13px] font-semibold">{job.id}</span>
           {#if !job.enabled}<Badge>{$LL.virtBakDisabled()}</Badge>{/if}
-          {#if !mine}<span class="text-xs text-faint-fg">{selectionText(job)}</span>{/if}
+          {#if !mine}<span class="text-[12px] text-(--text-tertiary)">{selectionText(job)}</span>{/if}
         </div>
-        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs @2xl:grid-cols-4">
+        <dl class="grid grid-cols-2 gap-x-[13px] gap-y-[9px] text-[12px] @2xl:grid-cols-4">
           {@render field($LL.virtBakSchedule(), job.schedule ?? '—', true)}
           {@render field($LL.virtBakStorage(), job.storage ?? '—')}
           {@render field($LL.virtBakRetention(), pruneText(job.prune))}
@@ -314,40 +310,34 @@
             <VirtBackupJobForm draft={plan} {storages} busy={busy !== null} onsave={(e) => void savePlan(e)} oncancel={() => (plan = null)} />
           {:else}
             {#if confirm === 'plan'}
-              <p class="text-xs text-danger">{$LL.virtConfirmAgain()}</p>
+              <p class="text-[12px] text-(--color-danger)">{$LL.virtConfirmAgain()}</p>
             {/if}
-            <div class="flex justify-end gap-2">
+            <div class="flex justify-end gap-[5px]">
               {#if confirm === 'plan'}
-                <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>
-                  <X class="h-4 w-4" />
-                  {$LL.cancel()}
-                </Button>
+                <Button variant="secondary" size="sm" onclick={() => (confirm = null)} icon="close">{$LL.cancel()}</Button>
               {/if}
-              <Button variant="secondary" size="sm" disabled={busy !== null} onclick={() => void removePlan()}>
-                <Trash2 class="h-4 w-4" />
+              <Button variant="destructive" size="sm" disabled={busy !== null} onclick={() => void removePlan()} icon="delete">
                 {confirm === 'plan' ? $LL.virtBakConfirmRemovePlan({ id: job.id }) : $LL.virtBakRemovePlan()}
               </Button>
-              <Button size="sm" disabled={busy !== null} onclick={() => { confirm = null; plan = ownJobDraft(job, vmid) }}>
-                <Pencil class="h-4 w-4" />
+              <Button size="sm" disabled={busy !== null} onclick={() => { confirm = null; plan = ownJobDraft(job, vmid) }} icon="edit">
                 {$LL.virtBakEditPlan()}
               </Button>
             </div>
           {/if}
         {:else}
-          <p class="text-xs text-faint-fg">{$LL.virtBakSharedJob()}</p>
+          <p class="text-[12px] text-(--text-tertiary)">{$LL.virtBakSharedJob()}</p>
         {/if}
-      </div>
+      </Card>
     {/each}
 
     {#if vmid !== null && !own}
       {#if plan?.isNew}
-        <div class="rounded-lg border border-line p-3">
+        <Card variant="raised">
           <VirtBackupJobForm draft={plan} {storages} busy={busy !== null} onsave={(e) => void savePlan(e)} oncancel={() => (plan = null)} />
-        </div>
+        </Card>
       {:else}
         <div class="flex justify-end">
-          <Button variant="secondary" size="sm" disabled={busy !== null} onclick={() => (plan = ownJobDraft(null, vmid, names[0] ?? ''))}>
-            <Plus class="h-4 w-4" />
+          <Button variant="secondary" size="sm" disabled={busy !== null} onclick={() => (plan = ownJobDraft(null, vmid, names[0] ?? ''))} icon="add">
             {$LL.virtBakAddPlan()}
           </Button>
         </div>
@@ -356,182 +346,143 @@
   </Card>
 
   <!-- Backups: one taken now, then each, newest first. -->
-  <Card class="space-y-2">
+  <Card class="space-y-[9px]">
     {@render head($LL.virtBakList(), backups.length ? String(backups.length) : '')}
 
     {#if busy === 'backup' || busy === 'restore'}
-      <div class="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-muted-fg">
+      <Card padding="11px 13px" class="flex items-center gap-[9px] text-[13px] text-(--text-secondary)">
         <Spinner size="sm" />
         {busy === 'backup' ? $LL.virtBakRunning() : $LL.virtBakRestoring()}
-      </div>
+      </Card>
     {/if}
 
     {#if taking}
-      <form class="space-y-3 rounded-lg border border-line p-3" onsubmit={backUp}>
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtBakStorage()}</span>
-          <Select class="w-full" bind:value={take.storage}>
-            {#each names as n (n)}
-              <option value={n}>{n}</option>
-            {/each}
-          </Select>
-        </label>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="w-28 shrink-0 text-sm text-muted-fg">{$LL.virtBakMode()}</span>
-          <div class="flex flex-wrap gap-1">
-            {#each BACKUP_MODES as m (m)}
-              <Button type="button" size="sm" variant={take.mode === m ? 'primary' : 'secondary'} aria-pressed={take.mode === m} onclick={() => (take.mode = m)}>{m}</Button>
-            {/each}
+      <Card variant="raised" class="space-y-[13px]">
+        <form class="space-y-[13px]" onsubmit={backUp}>
+          <Select label={$LL.virtBakStorage()} class="w-full" bind:value={take.storage} options={names.map((n) => ({ value: n, label: n }))} />
+          <div class="flex flex-wrap items-center gap-[9px]">
+            <span class="text-[12px] text-(--text-secondary)">{$LL.virtBakMode()}</span>
+            <SegmentedControl size="sm" label={$LL.virtBakMode()} value={take.mode} options={BACKUP_MODES.map((m) => ({ value: m, label: m }))} onchange={(mode) => (take.mode = mode as VirtBackupMode)} />
           </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="w-28 shrink-0 text-sm text-muted-fg">{$LL.virtBakCompress()}</span>
-          <div class="flex flex-wrap gap-1">
-            {#each BACKUP_COMPRESSIONS as c (c)}
-              <Button type="button" size="sm" variant={take.compress === c ? 'primary' : 'secondary'} aria-pressed={take.compress === c} onclick={() => (take.compress = c)}>{compressText(c)}</Button>
-            {/each}
+          <div class="flex flex-wrap items-center gap-[9px]">
+            <span class="text-[12px] text-(--text-secondary)">{$LL.virtBakCompress()}</span>
+            <SegmentedControl size="sm" label={$LL.virtBakCompress()} value={take.compress} options={BACKUP_COMPRESSIONS.map((c) => ({ value: c, label: compressText(c) }))} onchange={(compress) => (take.compress = compress as VirtBackupCompress)} />
           </div>
-        </div>
-        <label class="block space-y-1 text-sm">
-          <span class="text-muted-fg">{$LL.virtBakNotes()}</span>
-          <Input bind:value={take.notes} placeholder={$LL.virtBakOptional()} />
-        </label>
-        <label class="flex items-center gap-1.5 text-sm text-fg"><input type="checkbox" bind:checked={take.protected} /> {$LL.virtBakProtected()}</label>
-        <div class="flex justify-end gap-2">
-          <Button type="button" variant="secondary" size="sm" onclick={() => (taking = false)}>
-            <X class="h-4 w-4" />
-            {$LL.cancel()}
-          </Button>
-          <Button type="submit" size="sm" disabled={busy !== null || take.storage === ''}>
-            <Archive class="h-4 w-4" />
-            {$LL.virtBakStart()}
-          </Button>
-        </div>
-      </form>
+          <Input label={$LL.virtBakNotes()} bind:value={take.notes} placeholder={$LL.virtBakOptional()} />
+          <Checkbox bind:checked={take.protected} label={$LL.virtBakProtected()} />
+          <div class="flex justify-end gap-[9px]">
+            <Button type="button" variant="secondary" size="sm" icon="close" onclick={() => (taking = false)}>{$LL.cancel()}</Button>
+            <Button type="submit" size="sm" icon="backup" disabled={busy !== null || take.storage === ''}>{$LL.virtBakStart()}</Button>
+          </div>
+        </form>
+      </Card>
     {:else}
-      <div class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-line py-4 text-center">
-        <p class="text-xs text-muted-fg">{$LL.virtBakNowNote()}</p>
-        <Button size="sm" disabled={busy !== null || names.length === 0} onclick={() => (taking = true)}>
-          <Archive class="h-4 w-4" />
+      <div class="flex flex-col items-center gap-[9px] py-[17px] text-center">
+        <p class="text-[12px] text-(--text-secondary)">{$LL.virtBakNowNote()}</p>
+        <Button size="sm" icon="backup" disabled={busy !== null || names.length === 0} onclick={() => (taking = true)}>
           {$LL.virtBakNow()}
         </Button>
         {#if names.length === 0}
-          <p class="text-xs text-warning">{$LL.virtBakNoStorage()}</p>
+          <p class="text-[12px] text-(--color-warning)">{$LL.virtBakNoStorage()}</p>
         {/if}
       </div>
     {/if}
 
     {#if backups.length === 0}
-      <p class="text-sm text-muted-fg">{$LL.virtBakNone()}</p>
+      <div class="flex flex-col items-center gap-[9px] py-[17px] text-(--text-tertiary)">
+        <Icon name="backup" size={48} weight={300} />
+        <p class="text-[13px]">{$LL.virtEmptyBackups()}</p>
+      </div>
     {/if}
     {#each backups as b (b.id)}
       {@const ed = edits[b.id]}
       {@const r = restores[b.id]}
-      <div class="rounded-lg border border-line">
-        <button type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted" aria-expanded={!!open[b.id]} onclick={() => toggle(b)}>
-          <span class="text-sm text-fg-strong">{when(b.created_at)}</span>
-          <span class="min-w-0 flex-1 truncate text-xs text-muted-fg">{summary(b)}</span>
-          {#if b.protected}<Lock class="h-3.5 w-3.5 shrink-0 text-faint-fg" aria-label={$LL.virtBakProtected()} />{/if}
+      <Card variant="raised" padding="0">
+        <button type="button" class="flex w-full items-center gap-[9px] rounded-[13px] px-[13px] py-[9px] text-left" aria-expanded={!!open[b.id]} onclick={() => toggle(b)}>
+          <span class="text-[13px] font-semibold text-(--text-primary)">{when(b.created_at)}</span>
+          <span class="min-w-0 flex-1 truncate text-[12px] text-(--text-secondary)">{summary(b)}</span>
+          {#if b.protected}<Icon name="lock" size={16} title={$LL.virtBakProtected()} />{/if}
           {#if b.verification === 'ok'}
-            <Badge tone="success">{$LL.virtBakVerified()}</Badge>
+            <Badge tone="success" dot>{$LL.virtBakVerified()}</Badge>
           {:else if b.verification === 'failed'}
-            <Badge tone="danger">{$LL.virtBakVerifyFailed()}</Badge>
+            <Badge tone="danger" dot>{$LL.virtBakVerifyFailed()}</Badge>
           {/if}
-          <ChevronDown class="h-4 w-4 shrink-0 text-faint-fg transition-transform {open[b.id] ? 'rotate-180' : ''}" />
+          <Icon name={open[b.id] ? 'expand_less' : 'expand_more'} size={18} />
         </button>
         {#if open[b.id] && ed && r}
-          <div class="space-y-3 border-t border-line p-3">
-            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-              <dt class="text-faint-fg">{$LL.virtBakFile()}</dt>
-              <dd class="break-all font-mono text-muted-fg">{b.id}</dd>
+          <div class="space-y-[13px] border-t border-(--border-hairline) p-[13px]">
+            <dl class="grid grid-cols-[auto_1fr] gap-x-[9px] gap-y-[5px] text-[12px]">
+              <dt class="text-(--text-tertiary)">{$LL.virtBakFile()}</dt>
+              <dd class="break-all lk-mono text-(--text-secondary)">{b.id}</dd>
             </dl>
 
             <!-- Its own fields. -->
-            <label class="block space-y-1 text-sm">
-              <span class="text-muted-fg">{$LL.virtBakNotes()}</span>
-              <textarea class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg" rows="2" bind:value={ed.notes}></textarea>
-            </label>
-            <label class="flex items-start gap-2 text-sm">
-              <input class="mt-1" type="checkbox" bind:checked={ed.protected} />
-              <span>
-                <span class="text-fg">{$LL.virtBakProtected()}</span>
-                <span class="block text-xs text-faint-fg">{$LL.virtBakProtectedNote()}</span>
-              </span>
-            </label>
+            <Input label={$LL.virtBakNotes()} bind:value={ed.notes} />
+            <div class="flex flex-wrap items-start justify-between gap-[9px]">
+              <div>
+                <p class="text-[13px]">{$LL.virtBakProtected()}</p>
+                <p class="text-[12px] text-(--text-tertiary)">{$LL.virtBakProtectedNote()}</p>
+              </div>
+              <Checkbox bind:checked={ed.protected} label={$LL.virtBakProtected()} />
+            </div>
             <div class="flex justify-end">
               <Button size="sm" disabled={busy !== null || (ed.notes === (b.notes ?? '') && ed.protected === b.protected)} onclick={() => void saveEdit(b)}>{$LL.save()}</Button>
             </div>
 
             <!-- Restore. -->
-            <div class="space-y-2 border-t border-line pt-3">
-              <div class="flex flex-wrap gap-1">
-                <Button type="button" size="sm" variant={r.asNew ? 'secondary' : 'primary'} aria-pressed={!r.asNew} onclick={() => { r.asNew = false; confirm = null }}>{$LL.virtBakOverGuest()}</Button>
-                <Button type="button" size="sm" variant={r.asNew ? 'primary' : 'secondary'} aria-pressed={r.asNew} onclick={() => { r.asNew = true; confirm = null }}>{$LL.virtBakAsNew()}</Button>
-              </div>
-              <div class="flex flex-wrap gap-3">
+            <div class="space-y-[9px] border-t border-(--border-hairline) pt-[13px]">
+              <SegmentedControl
+                size="sm"
+                label={$LL.virtBakRestore()}
+                value={r.asNew ? 'new' : 'over'}
+                options={[{ value: 'over', label: $LL.virtBakOverGuest() }, { value: 'new', label: $LL.virtBakAsNew() }]}
+                onchange={(value) => { r.asNew = value === 'new'; confirm = null }}
+              />
+              <div class="flex flex-wrap gap-[13px]">
                 {#if r.asNew}
-                  <label class="block w-36 space-y-1 text-sm">
-                    <span class="text-muted-fg">VMID</span>
-                    <Input type="number" min="100" bind:value={r.vmid} placeholder={$LL.virtVmidNext()} />
-                  </label>
+                  <Input class="w-36" label="VMID" type="number" min="100" bind:value={r.vmid} placeholder={$LL.virtVmidNext()} />
                 {/if}
-                <label class="block min-w-40 flex-1 space-y-1 text-sm">
-                  <span class="text-muted-fg">{$LL.virtBakRestoreStorage()}</span>
-                  <Select class="w-full" bind:value={r.storage}>
-                    <option value="">{$LL.virtBakRestoreStorageOwn()}</option>
-                    {#each diskStorages ?? [] as p (p.id)}
-                      <option value={p.name}>{p.name} · {p.type}</option>
-                    {/each}
-                  </Select>
-                </label>
+                <Select class="min-w-40 flex-1" label={$LL.virtBakRestoreStorage()} bind:value={r.storage} options={[{ value: '', label: $LL.virtBakRestoreStorageOwn() }, ...(diskStorages ?? []).map((p) => ({ value: p.name, label: `${p.name} · ${p.type}` }))]} />
               </div>
               {#if !r.asNew}
-                <p class="text-xs text-warning">{$LL.virtBakOverwrites()}</p>
+                <p class="text-[12px] text-(--color-warning)">{$LL.virtBakOverwrites()}</p>
                 {#if !stopped}
-                  <p class="text-xs text-muted-fg">{$LL.virtStopFirst()}</p>
+                  <p class="text-[12px] text-(--text-secondary)">{$LL.virtStopFirst()}</p>
                 {/if}
               {/if}
               {#if confirm === `restore:${b.id}`}
-                <p class="text-xs text-danger">{$LL.virtConfirmAgain()}</p>
+                <p class="text-[12px] text-(--color-danger)">{$LL.virtConfirmAgain()}</p>
               {/if}
-              <div class="flex justify-end gap-2">
+              <div class="flex justify-end gap-[9px]">
                 {#if confirm === `restore:${b.id}`}
-                  <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>
-                    <X class="h-4 w-4" />
-                    {$LL.cancel()}
-                  </Button>
+                  <Button variant="secondary" size="sm" onclick={() => (confirm = null)} icon="close">{$LL.cancel()}</Button>
                 {/if}
-                <Button variant={r.asNew ? 'primary' : 'danger'} size="sm" disabled={busy !== null || (!r.asNew && !stopped)} onclick={() => void restore(b)}>
-                  <RotateCcw class="h-4 w-4" />
+                <Button variant={r.asNew ? 'primary' : 'destructive'} size="sm" disabled={busy !== null || (!r.asNew && !stopped)} onclick={() => void restore(b)} icon="restart_alt">
                   {confirm === `restore:${b.id}` ? $LL.virtBakConfirmRestore({ name: guest.name }) : $LL.virtBakRestore()}
                 </Button>
               </div>
             </div>
 
             <!-- Delete. -->
-            <div class="space-y-2 border-t border-line pt-3">
+            <div class="space-y-[9px] border-t border-(--border-hairline) pt-[13px]">
               {#if b.protected}
-                <p class="text-xs text-muted-fg">{$LL.virtBakProtectedNoDelete()}</p>
+                <p class="text-[12px] text-(--text-secondary)">{$LL.virtBakProtectedNoDelete()}</p>
               {/if}
               {#if confirm === `delete:${b.id}`}
-                <p class="text-xs text-danger">{$LL.virtConfirmAgain()}</p>
+                <p class="text-[12px] text-(--color-danger)">{$LL.virtConfirmAgain()}</p>
               {/if}
-              <div class="flex justify-end gap-2">
+              <div class="flex justify-end gap-[9px]">
                 {#if confirm === `delete:${b.id}`}
-                  <Button variant="secondary" size="sm" onclick={() => (confirm = null)}>
-                    <X class="h-4 w-4" />
-                    {$LL.cancel()}
-                  </Button>
+                  <Button variant="secondary" size="sm" onclick={() => (confirm = null)} icon="close">{$LL.cancel()}</Button>
                 {/if}
-                <Button variant="danger" size="sm" disabled={busy !== null || b.protected} onclick={() => void remove(b)}>
-                  <Trash2 class="h-4 w-4" />
+                <Button variant="destructive" size="sm" disabled={busy !== null || b.protected} onclick={() => void remove(b)} icon="delete">
                   {confirm === `delete:${b.id}` ? $LL.virtBakConfirmDelete() : $LL.virtBakDelete()}
                 </Button>
               </div>
             </div>
           </div>
         {/if}
-      </div>
+      </Card>
     {/each}
   </Card>
 {/if}

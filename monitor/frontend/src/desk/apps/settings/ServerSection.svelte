@@ -4,8 +4,7 @@
   /// an administrator's: an account that has no admin role gets the note that
   /// says so and nothing to edit.
 
-  import { ChevronDown, ChevronUp, Plus, Trash2 } from '@lucide/svelte'
-  import { Badge, Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '../../lk'
   import { fade } from 'svelte/transition'
   import Disclosure from '../../../components/Disclosure.svelte'
   import Markdown from '../../../components/Markdown.svelte'
@@ -264,15 +263,15 @@
   {/snippet}
 </AppToolbar>
 
-<main class="mx-auto max-w-3xl space-y-4 px-4 py-4 @3xl:px-6">
+<main class="mx-auto max-w-[560px] space-y-[13px] px-[21px] pb-[21px] pt-[4px]">
   {#if !servers.authenticated}
-    <p class="text-sm text-muted-fg">{$LL.settingsNeedsAuth()}</p>
+    <p class="text-[13px] text-(--text-secondary)">{$LL.settingsNeedsAuth()}</p>
   {:else if nonAdmin}
     <div in:fade={{ duration: 200 }} class="space-y-4">
-      <p class="text-sm text-muted-fg">{$LL.adminOnlySettings()}</p>
+      <p class="text-[13px] text-(--text-secondary)">{$LL.adminOnlySettings()}</p>
     </div>
   {:else if loading}
-    <div class="flex justify-center py-12"><Spinner size="lg" /></div>
+    <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else if loadError}
     <p class="text-sm text-danger">{loadError}</p>
   {:else if settings}
@@ -281,235 +280,169 @@
          local prefs) can land after the toolbar is drawn — fade this in on
          its own instead of popping in abruptly -->
     <div in:fade={{ duration: 200 }} class="space-y-4">
-    <p class="text-sm text-muted-fg">{$LL.settingsIntro()}</p>
+    <p class="text-[13px] text-(--text-secondary)">{$LL.settingsIntro()}</p>
 
-    <Card class="space-y-4">
-      <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.collection()}</h2>
-      <div class="space-y-1">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-muted-fg">{$LL.intervalSeconds()}</span>
+    <Group title={$LL.collection()}>
+      <Row label={$LL.intervalSeconds()}>
+        <div class="flex items-center gap-[7px]">
           {@render liveBadge('interval_seconds')}
+          <Input class="w-[170px]" type="number" min="1" bind:value={intervalSeconds} />
         </div>
-        <Input type="number" min="1" bind:value={intervalSeconds} />
-      </div>
-      <div class="space-y-1">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-muted-fg">{$LL.extendedIntervalSecs()}</span>
+      </Row>
+      <Row label={$LL.extendedIntervalSecs()}>
+        <div class="flex items-center gap-[7px]">
           {@render liveBadge('extended_interval_secs')}
+          <Input class="w-[170px]" type="number" min="1" placeholder={$LL.defaultsToInterval()} bind:value={extendedIntervalSecs} />
         </div>
-        <Input type="number" min="1" placeholder={$LL.defaultsToInterval()} bind:value={extendedIntervalSecs} />
-      </div>
-    </Card>
+      </Row>
+    </Group>
 
-    <Card class="space-y-4">
-      <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.idlePause()}</h2>
-      <Disclosure summary={$LL.moreDetails()}>
-        <Markdown text={$LL.idlePauseNote()} class="text-xs text-faint-fg" />
-      </Disclosure>
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" bind:checked={idlePauseEnabled} class="w-4 h-4" />
-        {$LL.idlePauseEnabled()}
-        {@render liveBadge('idle_pause_enabled')}
-      </label>
-      <div class="space-y-1">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-muted-fg">{$LL.idlePauseThresholdSecs()}</span>
+    <Group title={$LL.idlePause()}>
+      <div class="mb-[9px] pt-[7px]">
+        <Disclosure summary={$LL.moreDetails()}>
+          <Markdown text={$LL.idlePauseNote()} class="text-[12px] text-(--text-tertiary)" />
+        </Disclosure>
+      </div>
+      <Row label={$LL.idlePauseEnabled()}>
+        <div class="flex items-center gap-[9px]">
+          {@render liveBadge('idle_pause_enabled')}
+          <Checkbox bind:checked={idlePauseEnabled} />
+        </div>
+      </Row>
+      <Row label={$LL.idlePauseThresholdSecs()}>
+        <div class="flex items-center gap-[7px]">
           {@render liveBadge('idle_pause_threshold_secs')}
+          <Input class="w-[170px]" type="number" min="1" placeholder={$LL.defaultsToIntervalTimes4()} disabled={!idlePauseEnabled} bind:value={idlePauseThresholdSecs} />
         </div>
-        <Input
-          type="number"
-          min="1"
-          placeholder={$LL.defaultsToIntervalTimes4()}
-          disabled={!idlePauseEnabled}
-          bind:value={idlePauseThresholdSecs}
-        />
-      </div>
-    </Card>
+      </Row>
+    </Group>
 
-    <Card class="space-y-4">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.monitoringRules()}</h2>
+    <Group title={$LL.monitoringRules()}>
+      <div class="flex justify-end py-[7px]">
         {@render liveBadge('rules')}
       </div>
-      <Disclosure summary={$LL.moreDetails()}>
-        <div class="bg-soft/50 rounded-lg p-3 text-xs text-faint-fg leading-relaxed space-y-1">
-          <Markdown text={$LL.ruleHelpType()} />
-          <Markdown text={$LL.ruleHelpMatcher()} />
-          <Markdown text={$LL.ruleHelpThreshold()} />
-        </div>
-      </Disclosure>
-      <div class="divide-y divide-line">
-        {#each rules as rule, i (i)}
-          <div class="py-4 first:pt-0 last:pb-0">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-sm text-faint-fg tabular-nums">{i + 1}</span>
-              <span class="flex-1"></span>
-              <IconButton label={$LL.removeRule()} class="hover:text-danger" onclick={() => removeRule(i)}>
-                <Trash2 class="w-4 h-4" />
-              </IconButton>
-            </div>
-            <div class="grid grid-cols-2 gap-2 @2xl:grid-cols-4">
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg">{$LL.ruleName()}</span>
-                <Input placeholder={$LL.ruleNamePlaceholder()} bind:value={rule.name} />
-              </div>
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg">{$LL.ruleType()}</span>
-                <Input placeholder="cpu / memory / ..." bind:value={rule.monitor_type} />
-              </div>
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg">{$LL.ruleThreshold()}</span>
-                <Input placeholder={$LL.ruleThresholdPlaceholder()} bind:value={rule.threshold} />
-              </div>
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg">{$LL.ruleMatcher()}</span>
-                <Input placeholder={$LL.ruleMatcherPlaceholder()} bind:value={rule.matcher} />
-              </div>
-            </div>
+      <div class="border-b border-(--border-hairline) py-[9px]">
+        <Disclosure summary={$LL.moreDetails()}>
+          <div class="space-y-[5px] rounded-[9px] bg-(--surface-control) p-[9px] text-[12px] leading-relaxed text-(--text-tertiary)">
+            <Markdown text={$LL.ruleHelpType()} />
+            <Markdown text={$LL.ruleHelpMatcher()} />
+            <Markdown text={$LL.ruleHelpThreshold()} />
           </div>
-        {/each}
+        </Disclosure>
       </div>
-      <Button variant="secondary" size="sm" onclick={addRule}>
-        <Plus class="w-4 h-4 mr-1" />{$LL.addRule()}
-      </Button>
-    </Card>
+      {#each rules as rule, i (i)}
+        <div class="border-b border-(--border-hairline) py-[9px] last:border-0">
+          <div class="mb-[7px] flex items-center gap-[7px]">
+            <span class="lk-num text-[12px] text-(--text-tertiary)">{i + 1}</span>
+            <span class="flex-1"></span>
+            <IconButton icon="delete" label={$LL.removeRule()} onclick={() => removeRule(i)} />
+          </div>
+          <div class="grid grid-cols-2 gap-[7px] @2xl:grid-cols-4">
+            <Input label={$LL.ruleName()} placeholder={$LL.ruleNamePlaceholder()} bind:value={rule.name} />
+            <Input label={$LL.ruleType()} placeholder="cpu / memory / ..." bind:value={rule.monitor_type} />
+            <Input label={$LL.ruleThreshold()} placeholder={$LL.ruleThresholdPlaceholder()} bind:value={rule.threshold} />
+            <Input label={$LL.ruleMatcher()} placeholder={$LL.ruleMatcherPlaceholder()} bind:value={rule.matcher} />
+          </div>
+        </div>
+      {/each}
+      <div class="py-[7px]">
+        <Button variant="tinted" size="sm" icon="add" onclick={addRule}>{$LL.addRule()}</Button>
+      </div>
+    </Group>
 
     <!-- Next to the rules because it is what a rule that fires delivers
          through, but its own endpoint and its own save: a credential must not
          have to travel through the payload above to be kept. -->
     <PushChannels />
 
-    <Card class="space-y-4">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.dataRetention()}</h2>
-        {@render liveBadge('data_retention')}
+    <Group title={$LL.dataRetention()}>
+      <Row label={$LL.dataRetentionEnabled()}>
+        <div class="flex items-center gap-[9px]">
+          {@render liveBadge('data_retention')}
+          <Checkbox bind:checked={retentionEnabled} />
+        </div>
+      </Row>
+      <div class="border-b border-(--border-hairline) py-[9px]">
+        <Disclosure summary={$LL.moreDetails()}>
+          <Markdown text={$LL.dataRetentionNote()} class="text-[12px] text-(--text-tertiary)" />
+        </Disclosure>
       </div>
-      <Disclosure summary={$LL.moreDetails()}>
-        <Markdown text={$LL.dataRetentionNote()} class="text-xs text-faint-fg" />
-      </Disclosure>
-      <label class="flex items-center gap-2 text-sm">
-        <input type="checkbox" bind:checked={retentionEnabled} class="w-4 h-4" />
-        {$LL.dataRetentionEnabled()}
-      </label>
-      <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-2">
-        <div class="space-y-1">
-          <span class="text-xs text-muted-fg">{$LL.retentionMetricsDays()}</span>
-          <Input type="number" min="1" disabled={!retentionEnabled} bind:value={retentionMetricsDays} />
-        </div>
-        <div class="space-y-1">
-          <span class="text-xs text-muted-fg">{$LL.retentionAlertsDays()}</span>
-          <Input type="number" min="1" disabled={!retentionEnabled} bind:value={retentionAlertsDays} />
-        </div>
-        <div class="space-y-1">
-          <span class="text-xs text-muted-fg">{$LL.retentionCleanupHours()}</span>
-          <Input type="number" min="1" disabled={!retentionEnabled} bind:value={retentionCleanupHours} />
-        </div>
-        <div class="space-y-1">
-          <span class="text-xs text-muted-fg">{$LL.retentionMaxDbSizeMb()}</span>
-          <Input type="number" min="0" disabled={!retentionEnabled} bind:value={retentionMaxDbSizeMb} />
-        </div>
-      </div>
-    </Card>
+      <Row label={$LL.retentionMetricsDays()}>
+        <Input class="w-[170px]" type="number" min="1" disabled={!retentionEnabled} bind:value={retentionMetricsDays} />
+      </Row>
+      <Row label={$LL.retentionAlertsDays()}>
+        <Input class="w-[170px]" type="number" min="1" disabled={!retentionEnabled} bind:value={retentionAlertsDays} />
+      </Row>
+      <Row label={$LL.retentionCleanupHours()}>
+        <Input class="w-[170px]" type="number" min="1" disabled={!retentionEnabled} bind:value={retentionCleanupHours} />
+      </Row>
+      <Row label={$LL.retentionMaxDbSizeMb()}>
+        <Input class="w-[170px]" type="number" min="0" disabled={!retentionEnabled} bind:value={retentionMaxDbSizeMb} />
+      </Row>
+    </Group>
 
-    <Card class="space-y-4">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.corsOrigins()}</h2>
+    <Group title={$LL.corsOrigins()}>
+      <Row label={$LL.corsOrigins()}>
         {@render liveBadge('cors_allowed_origins')}
+      </Row>
+      {#each corsOrigins as origin, i (i)}
+        <Row label={origin}>
+          <span class="flex items-center gap-[5px]">
+            <span class="lk-num text-[12px] text-(--text-tertiary)">{i + 1}</span>
+            <IconButton icon="delete" label={$LL.removeOrigin()} onclick={() => removeOrigin(i)} />
+          </span>
+        </Row>
+      {/each}
+      <div class="flex items-center gap-[7px] py-[7px]">
+        <Input class="flex-1" label={$LL.corsOrigins()} placeholder="https://panel.example.com" bind:value={newOrigin} />
+        <Button variant="tinted" size="sm" icon="add" onclick={addOrigin}>{$LL.save()}</Button>
       </div>
-      <div class="divide-y divide-line">
-        {#each corsOrigins as origin, i (i)}
-          <div class="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-            <span class="w-5 shrink-0 text-sm text-faint-fg tabular-nums">{i + 1}</span>
-            <span class="flex-1 text-sm font-mono truncate">{origin}</span>
-            <IconButton label={$LL.removeOrigin()} class="hover:text-danger shrink-0" onclick={() => removeOrigin(i)}>
-              <Trash2 class="w-4 h-4" />
-            </IconButton>
-          </div>
-        {/each}
-      </div>
-      <div class="flex gap-2">
-        <Input placeholder="https://panel.example.com" bind:value={newOrigin} />
-        <Button variant="secondary" size="sm" onclick={addOrigin}>
-          <Plus class="w-4 h-4" />
-        </Button>
-      </div>
-    </Card>
+    </Group>
 
-    <Card class="space-y-4">
-      <div class="flex items-center justify-between gap-2">
-        <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.customCmds()}</h2>
-        {#if customCmdsEditable}
-          <Button size="sm" variant="secondary" onclick={saveCustomCmds} disabled={customCmdsSaving}>
+    <Group title={$LL.customCmds()}>
+      {#if customCmdsEditable}
+        <Row label={$LL.customCmds()}>
+          <Button size="sm" variant="primary" disabled={customCmdsSaving} onclick={saveCustomCmds}>
             {customCmdsSaving ? $LL.saving() : $LL.save()}
           </Button>
-        {/if}
+        </Row>
+      {/if}
+      <div class="border-b border-(--border-hairline) py-[9px]">
+        <Disclosure summary={$LL.moreDetails()}>
+          <Markdown text={$LL.customCmdsNote()} class="text-[12px] text-(--text-tertiary)" />
+        </Disclosure>
       </div>
-      <Disclosure summary={$LL.moreDetails()}>
-        <Markdown text={$LL.customCmdsNote()} class="text-xs text-faint-fg" />
-      </Disclosure>
       {#if !customCmdsEditable}
         <!-- With roles the gate is the admin role's shell grant; before them,
              the agent's full_access switch. -->
-        <p class="text-xs text-faint-fg">
+        <p class="py-[7px] text-[12px] text-(--text-tertiary)">
           {caps?.grants ? $LL.customCmdsReadOnlyRoles() : $LL.customCmdsReadOnly()}
         </p>
       {/if}
-      <div class="divide-y divide-line">
-        {#each customCmds as cmd, i (i)}
-          <div class="py-4 first:pt-0 last:pb-0">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-sm text-faint-fg tabular-nums">{i + 1}</span>
-              <span class="flex-1"></span>
-              <IconButton label={$LL.moveUp()} disabled={!customCmdsEditable || i === 0} onclick={() => moveCustomCmd(i, -1)}>
-                <ChevronUp class="w-4 h-4" />
-              </IconButton>
-              <IconButton
-                label={$LL.moveDown()}
-                disabled={!customCmdsEditable || i === customCmds.length - 1}
-                onclick={() => moveCustomCmd(i, 1)}
-              >
-                <ChevronDown class="w-4 h-4" />
-              </IconButton>
-              <IconButton
-                label={$LL.removeCustomCmd()}
-                class="hover:text-danger"
-                disabled={!customCmdsEditable}
-                onclick={() => removeCustomCmd(i)}
-              >
-                <Trash2 class="w-4 h-4" />
-              </IconButton>
-            </div>
-            <div class="space-y-2">
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg">{$LL.customCmdName()}</span>
-                <Input disabled={!customCmdsEditable} bind:value={cmd.name} />
-              </div>
-              <div class="space-y-1">
-                <span class="text-xs text-muted-fg">{$LL.customCmdBody()}</span>
-                <textarea
-                  class="w-full rounded-lg bg-soft/50 border border-line px-3 py-2 text-sm font-mono
-                         focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
-                  rows="3"
-                  disabled={!customCmdsEditable}
-                  bind:value={cmd.cmd}
-                ></textarea>
-              </div>
-            </div>
+      {#each customCmds as cmd, i (i)}
+        <div class="border-b border-(--border-hairline) py-[9px] last:border-0">
+          <div class="mb-[7px] flex items-center gap-[5px]">
+            <span class="lk-num text-[12px] text-(--text-tertiary)">{i + 1}</span>
+            <span class="flex-1"></span>
+            <IconButton icon="arrow_upward" label={$LL.moveUp()} disabled={!customCmdsEditable || i === 0} onclick={() => moveCustomCmd(i, -1)} />
+            <IconButton icon="arrow_downward" label={$LL.moveDown()} disabled={!customCmdsEditable || i === customCmds.length - 1} onclick={() => moveCustomCmd(i, 1)} />
+            <IconButton icon="delete" label={$LL.removeCustomCmd()} disabled={!customCmdsEditable} onclick={() => removeCustomCmd(i)} />
           </div>
-        {/each}
-      </div>
+          <div class="space-y-[9px]">
+            <Input label={$LL.customCmdName()} disabled={!customCmdsEditable} bind:value={cmd.name} />
+            <Textarea label={$LL.customCmdBody()} rows={3} disabled={!customCmdsEditable} bind:value={cmd.cmd} mono />
+          </div>
+        </div>
+      {/each}
       {#if customCmdsEditable}
-        <Button variant="secondary" size="sm" onclick={addCustomCmd}>
-          <Plus class="w-4 h-4 mr-1" />{$LL.addCustomCmd()}
-        </Button>
+        <div class="flex flex-wrap items-center gap-[9px] py-[7px]">
+          <Button variant="tinted" size="sm" icon="add" onclick={addCustomCmd}>{$LL.addCustomCmd()}</Button>
+          {#if customCmdsSaving}<Spinner size={16} />{/if}
+        </div>
       {/if}
-      {#if customCmdsError}
-        <p class="text-sm text-danger">{customCmdsError}</p>
-      {/if}
-      {#if customCmdsOk}
-        <p class="text-sm text-success">{$LL.settingsSaved()}</p>
-      {/if}
-    </Card>
+      {#if customCmdsError}<p class="py-[7px] text-[13px] text-(--color-danger)" role="alert">{customCmdsError}</p>{/if}
+      {#if customCmdsOk}<p class="py-[7px] text-[13px] text-(--color-success)">{$LL.settingsSaved()}</p>{/if}
+    </Group>
 
     {#if saveError}
       <p class="text-sm text-danger">{saveError}</p>
