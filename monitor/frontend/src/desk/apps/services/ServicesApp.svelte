@@ -1,9 +1,8 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { AppToolbar, SplitView } from '../../sys'
   import { Badge, Button, Card, Dialog, Icon, IconButton, Input, SidebarItem, SidebarSection, type BadgeTone } from '../../lk'
   import ServiceDetail from './ServiceDetail.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
-  import SplitView from '../../ui/SplitView.svelte'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'

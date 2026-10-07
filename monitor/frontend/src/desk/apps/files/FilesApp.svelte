@@ -1,9 +1,7 @@
 <script lang="ts">
   import { Button, Card, Dialog, Icon, IconButton, Input, Menu, SegmentedControl, SidebarItem, SidebarSection, Spinner, type MenuEntry } from '../../lk'
+  import { AppToolbar, SplitView, useMenus, useWindow } from '../../sys'
   import FileEditor from './FileEditor.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
-  import SplitView from '../../ui/SplitView.svelte'
-  import { useWindow } from '../../deskState.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { filesAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -431,6 +429,41 @@
     const x = Math.max(4, Math.min(menu.x, pane.clientWidth - menuEl.offsetWidth - 4))
     const y = Math.max(4, Math.min(menu.y, pane.clientHeight - menuEl.offsetHeight - 4))
     if (x !== menu.x || y !== menu.y) menu = { ...menu, x, y }
+  })
+
+  // The menubar: what the toolbar offers, with shortcuts.
+  useMenus(() => {
+    if (!available) return []
+    const file: MenuEntry[] = []
+    if (write && cwd) {
+      file.push(
+        { label: $LL.filesNewFolder(), icon: 'create_new_folder', shortcut: '⌥⌘N', action: () => (dialog = { kind: 'mkdir', value: '' }) },
+        { label: $LL.filesUpload(), icon: 'upload', shortcut: '⌘U', action: () => uploadInput?.click() },
+        { separator: true },
+      )
+    }
+    if (cwd) {
+      const at = cwd
+      file.push({ label: $LL.deskAddToDesk(), icon: 'add_to_home_screen', action: () => win.addPathIcon(at, at.split('/').filter(Boolean).at(-1) ?? at) })
+    }
+    return [
+      { label: $LL.deskMenuFile(), items: file },
+      {
+        label: $LL.filesView(),
+        items: [
+          { label: $LL.filesViewList(), checked: view === 'list', shortcut: '⌥⌘1', action: () => setView('list') },
+          { label: $LL.filesViewGrid(), checked: view === 'grid', shortcut: '⌥⌘2', action: () => setView('grid') },
+        ],
+      },
+      {
+        label: $LL.deskMenuGo(),
+        items: [
+          { label: $LL.back(), disabled: !canBack, shortcut: '⌘[', action: back },
+          { label: $LL.filesForward(), disabled: !canForward, shortcut: '⌘]', action: forward },
+          { label: $LL.filesUp(), disabled: !parent, shortcut: '⌘↑', action: () => parent && void load(parent) },
+        ],
+      },
+    ]
   })
 
   $effect(() => {

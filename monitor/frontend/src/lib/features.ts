@@ -1,7 +1,7 @@
 /// The machine-management pages, and which of them this agent offers the
 /// caller (issue #1623).
 ///
-/// What each needs of the caller; the desk's app list (`desk/apps.ts`) asks
+/// What each needs of the caller; the desk's app manifests (`desk/apps/<id>/manifest.ts`) ask
 /// it whether an app is offered. Ordered by what the thing is — the running
 /// machine first, then its configuration, then what lies beyond it.
 import { isAdmin, machineAccess } from './access'

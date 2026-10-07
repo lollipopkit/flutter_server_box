@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
-  import { useWindow } from '../deskState.svelte'
+  import { useWindow } from './window.svelte'
   import IconButton from '../lk/IconButton.svelte'
 
   /// An app's title and tools. Inside a window they go into the window's

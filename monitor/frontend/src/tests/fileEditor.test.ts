@@ -53,7 +53,8 @@ vi.mock('../lib/saveBlob', () => ({ saveBlob: mocks.saveBlob }))
 /// The app is rendered without a window; this is the same no-op handle
 /// `useWindow` falls back to, with the desk side recorded instead.
 const deskMocks = vi.hoisted(() => ({ addPathIcon: vi.fn() }))
-vi.mock('../desk/deskState.svelte', () => ({
+vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../desk/sys/window.svelte')>()),
   useWindow: () => ({
     id: 'test',
     appState: null,

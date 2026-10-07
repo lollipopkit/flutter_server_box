@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, Spinner } from '../../lk'
+  import { AppToolbar } from '../../sys'
   import { api } from '../../../lib/api'
   import { APP_BACKUP_NAME, backupRefusalText, validBackupName } from '../../../lib/backup'
   import { fmtBytes, fmtTime } from '../../../lib/format'
@@ -8,7 +9,6 @@
   import { untrack } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { BackupBlob, BackupView } from '../../../types'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
 
   /// The backups the agent hosts: the app's sync file, and whatever was
   /// uploaded here. The panel moves the bytes and never opens them — they are

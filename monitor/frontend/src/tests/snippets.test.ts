@@ -15,7 +15,10 @@ vi.mock('../lib/api', async (importOriginal) => ({
 // Run opens the terminal app; the window is what a rendered app alone has no
 // context for, so the handle is a spy here.
 const { open } = vi.hoisted(() => ({ open: vi.fn() }))
-vi.mock('../desk/deskState.svelte', () => ({ useWindow: () => ({ open }) }))
+vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../desk/sys/window.svelte')>()),
+  useWindow: () => ({ open }),
+}))
 const getSnippets = vi.mocked(api.getSnippets)
 const updateSnippets = vi.mocked(api.updateSnippets)
 const planSnippet = vi.mocked(api.planSnippet)

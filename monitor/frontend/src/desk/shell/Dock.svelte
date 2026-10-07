@@ -1,6 +1,7 @@
 <script lang="ts">
   import { LL } from '../../i18n/i18n-svelte'
-  import { app, type AppSpec } from '../apps'
+  import { app } from '../registry.svelte'
+  import type { AppSpec } from '../sys/manifest'
   import { useDesk, type MenuItem } from '../deskState.svelte'
   import LkAppIcon from '../lk/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
@@ -87,6 +88,11 @@
   let dragging = $state<string | null>(null)
 </script>
 
+{#snippet badge(appId: string)}
+  {@const text = desk.appChrome(appId).badge}
+  {#if text}<span class="lk-badge lk-badge--count absolute -right-[5px] -top-[5px]" style:height="18px" style:min-width="18px">{text}</span>{/if}
+{/snippet}
+
 <div class="pointer-events-none absolute inset-x-0 bottom-[var(--dock-bottom)] z-[100000] flex justify-center px-2">
   <nav
     class="lk-dock pointer-events-auto max-w-full"
@@ -137,6 +143,7 @@
       >
         <span class="lk-dock__label">{spec.title($LL)}</span>
         <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
+        {@render badge(spec.id)}
         {#if isRunning(spec.id)}<span class="lk-dock__dot"></span>{/if}
       </button>
     {/each}
@@ -154,6 +161,7 @@
         >
           <span class="lk-dock__label">{spec.title($LL)}</span>
           <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
+          {@render badge(spec.id)}
           <span class="lk-dock__dot"></span>
         </button>
       {/each}

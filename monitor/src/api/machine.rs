@@ -55,6 +55,8 @@ pub const FEATURES: &[&str] = &[
     // The panel's desk keeps its arrangement here (`api::desk`); without it
     // the panel keeps it in the browser.
     "desk",
+    // Its preferences carry `background` (an older agent refuses the field).
+    "desk_background",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

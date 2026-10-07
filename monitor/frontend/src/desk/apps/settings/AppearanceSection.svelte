@@ -1,15 +1,15 @@
 <script lang="ts">
   /// The desk's wallpaper (a preset, or one image the desk keeps) and how
   /// that image is fitted. This is the one section that touches the desk's
-  /// preferences — see `useDeskAppearance`.
+  /// preferences — see `useDeskPrefs`.
 
   import { Button, Card, Group, Row, Select, Spinner } from '../../lk'
+  import { AppToolbar } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { ApiError } from '../../../lib/api'
-  import { useDeskAppearance } from '../../deskState.svelte'
+  import { useDeskPrefs } from '../../deskState.svelte'
   import { WALLPAPERS, type WallpaperPreset } from '../../prefs.svelte'
   import Wallpaper from '../../shell/Wallpaper.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
 
   /// The agent's own limit (`api::desk`); checked here too, so an oversized
@@ -22,7 +22,7 @@
     { value: 'fill' as const, label: $LL.settingsFitFill() },
   ])
 
-  const appearance = useDeskAppearance()
+  const appearance = useDeskPrefs()
   const prefs = $derived(appearance.prefs)
   const value = $derived(prefs?.value ?? null)
   /// The preset in use, or null for the custom image.

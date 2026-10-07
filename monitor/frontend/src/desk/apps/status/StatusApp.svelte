@@ -1,13 +1,12 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, SegmentedControl, Spinner } from '../../lk'
+  import { AppToolbar, useLifecycle, useWindow } from '../../sys'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'
   import LineChart from '../../../components/LineChart.svelte'
   import OsIcon from '../../../components/OsIcon.svelte'
   import PowerModal from './PowerModal.svelte'
   import StatCard from './StatCard.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
-  import { useWindow } from '../../deskState.svelte'
   import { dashboardAccess, isAdmin, machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
@@ -21,6 +20,8 @@
 
   const metrics = new Poller(api.getMetrics, 5000)
   const win = useWindow()
+  const life = useLifecycle()
+  const shown = $derived(life.state !== 'background')
 
   // Capabilities are platform-specific and do not change per sample. Fetch
   // once per server (shared with the lock screen's icons), rather than on the
@@ -127,12 +128,15 @@
   // Polling (and the 401 it'd draw) only makes sense once this server has a
   // session; toggling auth state starts/stops it instead of an unconditional
   // onMount, so a freshly-added, not-yet-logged-in server stays quiet
+  // Hidden (minimised), nothing is drawn: polling stops and picks up again
+  // when shown, the last figures staying until the new ones arrive.
+  $effect(() => {
+    void servers.currentId
+    metrics.reset()
+  })
   $effect(() => {
     const serverId = servers.currentId
-    if (serverId && servers.authenticated) {
-      metrics.reset()
-      metrics.start()
-    }
+    if (serverId && servers.authenticated && shown) metrics.start()
     return () => {
       metrics.stop()
     }
@@ -141,13 +145,14 @@
   // History additionally depends on the selected range. Restarting aborts
   // the old request so a slow 7d response cannot overwrite a newer 1h view.
   $effect(() => {
+    void servers.currentId
+    requestedHistoryMinutes = rangeMinutes
+    historyPoller.reset()
+  })
+  $effect(() => {
     const serverId = servers.currentId
-    const minutes = rangeMinutes
-    requestedHistoryMinutes = minutes
-    if (serverId && servers.authenticated) {
-      historyPoller.reset()
-      historyPoller.start()
-    }
+    void rangeMinutes
+    if (serverId && servers.authenticated && shown) historyPoller.start()
     return () => {
       historyPoller.stop()
     }

@@ -1493,6 +1493,13 @@ const id = {
 	benchmarkEmptyState: 'Tanpa eksekusi',
 	bmcEmptyState: 'Tanpa target',
 	benchmarkRunShare: '{percent}% eksekusi',
+	deskWindowMenu: 'Jendela',
+	settingsApps: 'Aplikasi',
+	settingsBackgroundApps: 'Jalankan aplikasi di latar belakang',
+	settingsBackgroundAppsSub: 'Nonaktif: jendela tersembunyi berhenti, lalu berjalan lagi saat ditampilkan',
+	deskMenuFile: 'Berkas',
+	deskMenuGo: 'Buka',
+	settingsBackgroundAppsOld: 'Agent ini terlalu lama untuk menyimpan pilihan ini',
 } satisfies Translation
 
 export default id

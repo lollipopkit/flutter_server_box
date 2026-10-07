@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
-  import { app } from '../apps'
+  import { app } from '../registry.svelte'
   import { useDesk } from '../deskState.svelte'
   import type { DeskIcon } from '../deskApi'
   import { placeIcons, CELL } from '../iconGrid'

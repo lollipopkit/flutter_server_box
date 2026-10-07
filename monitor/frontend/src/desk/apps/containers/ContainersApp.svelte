@@ -1,9 +1,8 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { AppToolbar, SplitView } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, SidebarItem, SidebarSection } from '../../lk'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
-  import SplitView from '../../ui/SplitView.svelte'
   import { machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'

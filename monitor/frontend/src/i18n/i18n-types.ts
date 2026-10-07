@@ -6155,6 +6155,34 @@ type RootTranslation = {
 	 * @param {unknown} percent
 	 */
 	benchmarkRunShare: RequiredParams<'percent'>
+	/**
+	 * W​i​n​d​o​w
+	 */
+	deskWindowMenu: string
+	/**
+	 * A​p​p​s
+	 */
+	settingsApps: string
+	/**
+	 * R​u​n​ ​a​p​p​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsBackgroundApps: string
+	/**
+	 * O​f​f​:​ ​a​ ​h​i​d​d​e​n​ ​w​i​n​d​o​w​ ​s​t​o​p​s​,​ ​a​n​d​ ​s​t​a​r​t​s​ ​a​g​a​i​n​ ​w​h​e​n​ ​s​h​o​w​n
+	 */
+	settingsBackgroundAppsSub: string
+	/**
+	 * F​i​l​e
+	 */
+	deskMenuFile: string
+	/**
+	 * G​o
+	 */
+	deskMenuGo: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​t​o​o​ ​o​l​d​ ​t​o​ ​k​e​e​p​ ​t​h​e​ ​c​h​o​i​c​e
+	 */
+	settingsBackgroundAppsOld: string
 }
 
 export type TranslationFunctions = {
@@ -12126,6 +12154,34 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * {percent}% of runs
 	 */
 	benchmarkRunShare: (arg: { percent: unknown }) => LocalizedString
+	/**
+	 * Window
+	 */
+	deskWindowMenu: () => LocalizedString
+	/**
+	 * Apps
+	 */
+	settingsApps: () => LocalizedString
+	/**
+	 * Run apps in the background
+	 */
+	settingsBackgroundApps: () => LocalizedString
+	/**
+	 * Off: a hidden window stops, and starts again when shown
+	 */
+	settingsBackgroundAppsSub: () => LocalizedString
+	/**
+	 * File
+	 */
+	deskMenuFile: () => LocalizedString
+	/**
+	 * Go
+	 */
+	deskMenuGo: () => LocalizedString
+	/**
+	 * This agent is too old to keep the choice
+	 */
+	settingsBackgroundAppsOld: () => LocalizedString
 }
 
 export type Formatters = {}

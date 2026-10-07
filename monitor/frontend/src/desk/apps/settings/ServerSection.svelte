@@ -5,6 +5,7 @@
   /// says so and nothing to edit.
 
   import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '../../lk'
+  import { AppToolbar } from '../../sys'
   import { fade } from 'svelte/transition'
   import Disclosure from '../../../components/Disclosure.svelte'
   import Markdown from '../../../components/Markdown.svelte'
@@ -21,7 +22,6 @@
     SettingsPayload,
     SettingsView,
   } from '../../../types'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import PushChannels from './PushChannels.svelte'
 
   let loading = $state(true)

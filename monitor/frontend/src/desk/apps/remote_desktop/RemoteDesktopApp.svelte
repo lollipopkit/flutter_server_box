@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, Input, Spinner } from '../../lk'
+  import { AppToolbar } from '../../sys'
   import DesktopForm, { desktopFormState, type DesktopFormState } from './DesktopForm.svelte'
   import RdpViewer from './RdpViewer.svelte'
   import VncViewer from '../../../components/VncViewer.svelte'
@@ -10,7 +11,6 @@
   import { onDestroy, untrack } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { Desktop, DesktopsView } from '../../../types'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
 
   /// The desktop routes saved on the agent, and the session opened on one: VNC
   /// is noVNC over the `/stream/ws` relay, RDP is IronRDP through the agent's

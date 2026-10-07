@@ -1493,6 +1493,13 @@ const uk = {
 	benchmarkEmptyState: 'Немає запусків',
 	bmcEmptyState: 'Немає цілей',
 	benchmarkRunShare: '{percent}% запусків',
+	deskWindowMenu: 'Вікно',
+	settingsApps: 'Програми',
+	settingsBackgroundApps: 'Запускати програми у фоновому режимі',
+	settingsBackgroundAppsSub: 'Вимкнено: приховане вікно зупиняється та запускається знову, коли його показано',
+	deskMenuFile: 'Файл',
+	deskMenuGo: 'Перейти',
+	settingsBackgroundAppsOld: 'Цей агент застарий і не може зберегти цей вибір',
 } satisfies Translation
 
 export default uk

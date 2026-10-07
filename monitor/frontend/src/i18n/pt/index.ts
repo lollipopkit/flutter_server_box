@@ -1493,6 +1493,13 @@ const pt = {
 	benchmarkEmptyState: 'Sem execuções',
 	bmcEmptyState: 'Sem destinos',
 	benchmarkRunShare: '{percent}% das execuções',
+	deskWindowMenu: 'Janela',
+	settingsApps: 'Apps',
+	settingsBackgroundApps: 'Executar apps em segundo plano',
+	settingsBackgroundAppsSub: 'Desativado: uma janela oculta para e inicia novamente quando é exibida',
+	deskMenuFile: 'Ficheiro',
+	deskMenuGo: 'Ir',
+	settingsBackgroundAppsOld: 'Este agente é demasiado antigo para guardar esta escolha',
 } satisfies Translation
 
 export default pt

@@ -1493,6 +1493,13 @@ const nl = {
 	benchmarkEmptyState: 'Geen uitvoeringen',
 	bmcEmptyState: 'Geen doelen',
 	benchmarkRunShare: '{percent}% van de uitvoeringen',
+	deskWindowMenu: 'Venster',
+	settingsApps: 'Apps',
+	settingsBackgroundApps: 'Apps op de achtergrond uitvoeren',
+	settingsBackgroundAppsSub: 'Uit: een verborgen venster stopt en start weer zodra het wordt getoond',
+	deskMenuFile: 'Archief',
+	deskMenuGo: 'Ga',
+	settingsBackgroundAppsOld: 'Deze agent is te oud om deze keuze op te slaan',
 } satisfies Translation
 
 export default nl

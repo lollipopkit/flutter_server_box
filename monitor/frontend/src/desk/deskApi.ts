@@ -25,6 +25,8 @@ export interface DeskPreferences {
   wallpaper_fit: 'cover' | 'contain' | 'fill'
   dock: string[]
   icons: DeskIcon[]
+  /// Hidden apps keep running; off suspends them (`docs/dev/desk-sys.md`).
+  background: boolean
 }
 
 export interface DeskView {

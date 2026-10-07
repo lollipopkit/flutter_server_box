@@ -1493,6 +1493,13 @@ const fr = {
 	benchmarkEmptyState: 'Aucune exécution',
 	bmcEmptyState: 'Aucune cible',
 	benchmarkRunShare: '{percent}% des exécutions',
+	deskWindowMenu: 'Fenêtre',
+	settingsApps: 'Applications',
+	settingsBackgroundApps: 'Exécuter les apps en arrière-plan',
+	settingsBackgroundAppsSub: 'Désactivé : une fenêtre masquée s’arrête et redémarre lorsqu’elle est affichée',
+	deskMenuFile: 'Fichier',
+	deskMenuGo: 'Aller',
+	settingsBackgroundAppsOld: 'Cet agent est trop ancien pour enregistrer ce choix',
 } satisfies Translation
 
 export default fr

@@ -18,7 +18,7 @@
   provideDesk(desk)
   const chrome = new WindowChrome()
   // svelte-ignore state_referenced_locally
-  provideWindow(desk, id, chrome)
+  provideWindow(desk, id, chrome, () => 'active')
 </script>
 
 <!-- What the window's frame would draw: the sidebar and the bar's title. -->

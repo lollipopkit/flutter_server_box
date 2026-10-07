@@ -1493,6 +1493,13 @@ const en = {
 	benchmarkEmptyState: 'No runs',
 	bmcEmptyState: 'No targets',
 	benchmarkRunShare: '{percent}% of runs',
+	deskWindowMenu: 'Window',
+	settingsApps: 'Apps',
+	settingsBackgroundApps: 'Run apps in the background',
+	settingsBackgroundAppsSub: 'Off: a hidden window stops, and starts again when shown',
+	deskMenuFile: 'File',
+	deskMenuGo: 'Go',
+	settingsBackgroundAppsOld: 'This agent is too old to keep the choice',
 } satisfies BaseTranslation
 
 export default en

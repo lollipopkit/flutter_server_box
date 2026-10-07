@@ -53,7 +53,7 @@
 
 {#if servers.current?.token}
   {#key `${servers.current.id}:${servers.current.token}`}
-    <Desk entry={servers.current} onlock={() => (locked = true)} onswitch={switchTo} />
+    <Desk entry={servers.current} {locked} onlock={() => (locked = true)} onswitch={switchTo} />
   {/key}
 {/if}
 {#if locked || !servers.current?.token}

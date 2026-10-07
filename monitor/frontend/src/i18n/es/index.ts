@@ -1493,6 +1493,13 @@ const es = {
 	benchmarkEmptyState: 'Sin ejecuciones',
 	bmcEmptyState: 'Sin objetivos',
 	benchmarkRunShare: '{percent}% de las ejecuciones',
+	deskWindowMenu: 'Ventana',
+	settingsApps: 'Apps',
+	settingsBackgroundApps: 'Ejecutar apps en segundo plano',
+	settingsBackgroundAppsSub: 'Desactivado: una ventana oculta se detiene y vuelve a iniciarse al mostrarla',
+	deskMenuFile: 'Archivo',
+	deskMenuGo: 'Ir',
+	settingsBackgroundAppsOld: 'Este agente es demasiado antiguo para guardar esta opción',
 } satisfies Translation
 
 export default es

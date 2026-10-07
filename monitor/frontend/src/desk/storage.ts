@@ -9,6 +9,8 @@ import { deskApi, readEvents, type DeskNotification, type DeskPreferences, type 
 export interface DeskStorage {
   /// Whether this is the agent's (shared by every browser) or this browser's.
   readonly remote: boolean
+  /// Whether `background` is kept (an older agent's storage drops it).
+  readonly keepsBackground: boolean
   load(): Promise<{ preferences: DeskPreferences | null; wallpaperSha: string | null }>
   savePreferences(p: DeskPreferences): Promise<void>
   loadSession(device: string): Promise<StoredSession>
@@ -24,11 +26,15 @@ export interface DeskStorage {
 
 export class AgentStorage implements DeskStorage {
   readonly remote = true
+  readonly keepsBackground: boolean
   #entry: ServerEntry
 
-  constructor(entry: ServerEntry) {
+  /// [keepsBackground]: the agent stores `background` (`desk_background`);
+  /// an older one refuses preferences carrying it.
+  constructor(entry: ServerEntry, keepsBackground: boolean) {
     // A copy: the session token it was made with is the one it keeps using.
     this.#entry = { ...entry }
+    this.keepsBackground = keepsBackground
   }
 
   async load() {
@@ -36,7 +42,13 @@ export class AgentStorage implements DeskStorage {
     return { preferences: view.preferences, wallpaperSha: view.wallpaper_sha256 }
   }
   async savePreferences(p: DeskPreferences) {
-    await deskApi.putPreferences(this.#entry, p)
+    if (this.keepsBackground) {
+      await deskApi.putPreferences(this.#entry, p)
+    } else {
+      // TODO: remove once agents without `desk_background` are gone.
+      const { background: _, ...older } = p
+      await deskApi.putPreferences(this.#entry, older as DeskPreferences)
+    }
   }
   loadSession(device: string) {
     return deskApi.getSession(this.#entry, device)
@@ -67,6 +79,7 @@ export class AgentStorage implements DeskStorage {
 /// (an image does not belong in `localStorage`) and nothing to be told.
 export class BrowserStorage implements DeskStorage {
   readonly remote = false
+  readonly keepsBackground = true
   #key: string
 
   constructor(serverId: string) {

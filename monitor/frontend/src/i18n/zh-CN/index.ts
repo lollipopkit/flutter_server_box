@@ -1492,6 +1492,13 @@ const zh_CN = {
 	benchmarkEmptyState: '无运行记录',
 	bmcEmptyState: '无目标',
 	benchmarkRunShare: '占运行记录 {percent}%',
+	deskWindowMenu: '窗口',
+	settingsApps: '应用',
+	settingsBackgroundApps: '允许应用在后台运行',
+	settingsBackgroundAppsSub: '关闭后,隐藏的窗口会停止运行,再次显示时重新启动',
+	deskMenuFile: '文件',
+	deskMenuGo: '前往',
+	settingsBackgroundAppsOld: '此 agent 版本过旧,无法保存该设置',
 } satisfies Translation
 
 export default zh_CN

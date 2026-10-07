@@ -10,8 +10,7 @@
 
   import { onDestroy, tick, untrack } from 'svelte'
   import { Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Spinner, Textarea } from '../../lk'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
-  import { useWindow } from '../../deskState.svelte'
+  import { AppToolbar, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { isAdmin, machineAccess, terminalAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'

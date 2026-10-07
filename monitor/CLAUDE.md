@@ -99,7 +99,7 @@ Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set
 
 ### `/api/v1/desk*` (`api/desk.rs`, any signed-in account)
 
-- The panel's desk: preferences (accent, wallpaper `preset:<id>`|`custom`, fit, dock, icons as child tables), one custom wallpaper (PNG/JPEG/WebP sniffed from the bytes, ≤8 MiB, ETag = SHA-256), the window session per account + device, notifications. All keyed by `users.id`, `ON DELETE CASCADE` (migration 018).
+- The panel's desk: preferences (accent, wallpaper `preset:<id>`|`custom`, fit, `background` (migration 019; absent in a body = on), dock, icons as child tables), one custom wallpaper (PNG/JPEG/WebP sniffed from the bytes, ≤8 MiB, ETag = SHA-256), the window session per account + device, notifications. All keyed by `users.id`, `ON DELETE CASCADE` (migration 018).
 - **Session writes are compare-and-swap on `revision`**: the transaction's first statement is the `UPDATE … WHERE revision = expected` (or `INSERT OR IGNORE` from 0), so SQLite's write lock is taken there; a loser gets 409 `{error: conflict, current}`. Never read-then-write. `app_state` is opaque JSON ≤16 KiB.
 - `/desk/events`: `text/event-stream` over `fetch` + bearer (not `EventSource`), `data:` JSON lines, `: ping` every 25 s, `{type: resync}` on lag. A hint to refetch, never the only copy. Session/preferences events go only to their own account; it ends when the account's password changes or it is deleted.
 - Notifications: `DeskHub::rules_checked` gets the firing rules each cycle and stores one per rule that *starts* firing; the newest 500 are kept; read state per account.

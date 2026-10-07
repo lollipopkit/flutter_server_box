@@ -1,7 +1,7 @@
 /// One desk's preferences: accent, wallpaper, dock, icons. Loaded once, saved
 /// after a pause, and taken again when another tab changed them.
 
-import { DEFAULT_DOCK } from './apps'
+import { defaultDock } from './registry.svelte'
 import type { DeskIcon, DeskPreferences } from './deskApi'
 import type { DeskStorage } from './storage'
 
@@ -16,11 +16,12 @@ export function defaults(): DeskPreferences {
     accent: null,
     wallpaper: 'preset:bloom',
     wallpaper_fit: 'cover',
-    dock: [...DEFAULT_DOCK],
+    dock: defaultDock(),
     icons: [
       { id: 'files', kind: 'app', app_id: 'files', label: '', col: null, row: null },
       { id: 'terminal', kind: 'app', app_id: 'terminal', label: '', col: null, row: null },
     ],
+    background: true,
   }
 }
 
@@ -42,6 +43,11 @@ export class DeskPrefs {
     return this.#storage.remote
   }
 
+  /// Whether the background choice is kept (an older agent cannot).
+  get keepsBackground(): boolean {
+    return this.#storage.keepsBackground
+  }
+
   /// The preset id, or null for the custom image.
   get preset(): WallpaperPreset | null {
     const id = this.value.wallpaper.startsWith('preset:') ? this.value.wallpaper.slice(7) : null
@@ -51,7 +57,8 @@ export class DeskPrefs {
   async load() {
     try {
       const { preferences, wallpaperSha } = await this.#storage.load()
-      this.value = preferences ?? defaults()
+      // A preference newer than what was stored takes its default.
+      this.value = preferences ? { ...defaults(), ...preferences } : defaults()
       if (wallpaperSha !== this.#wallpaperSha) {
         this.#wallpaperSha = wallpaperSha
         this.#setWallpaperUrl(wallpaperSha ? await this.#storage.wallpaperUrl() : null)

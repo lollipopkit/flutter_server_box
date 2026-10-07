@@ -2,8 +2,9 @@
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { serverNames } from '../../lib/serverNames.svelte'
   import { displayName, servers } from '../../lib/servers.svelte'
-  import { app } from '../apps'
+  import { app } from '../registry.svelte'
   import { useDesk, type MenuItem } from '../deskState.svelte'
+  import AppIcon from '../lk/AppIcon.svelte'
   import Icon from '../lk/Icon.svelte'
 
   interface Props {
@@ -28,15 +29,25 @@
     `${new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(now)}  ${new Intl.DateTimeFormat($locale, { hour: '2-digit', minute: '2-digit' }).format(now)}`,
   )
 
-  function menuUnder(e: MouseEvent, items: MenuItem[]) {
+  const chrome = $derived(desk.activeChrome)
+  const appName = $derived(chrome?.appName ?? activeSpec?.title($LL) ?? '')
+  const appIcon = $derived(chrome?.icon ?? (activeSpec ? { glyph: activeSpec.glyph, tone: activeSpec.tone } : null))
+
+  /// Opens [items] under the bar title [e] came from, as [owner].
+  function menuUnder(e: MouseEvent, owner: string, items: MenuItem[]) {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
     e.stopPropagation()
     desk.panel = null
-    desk.menu = { x: r.left, y: r.bottom + 3, items }
+    desk.menu = desk.menu?.owner === owner && e.type === 'click' ? null : { x: r.left, y: r.bottom + 3, items, owner }
   }
 
-  function serverMenu(e: MouseEvent) {
-    menuUnder(e, [
+  /// With one of the bar's menus open, pointing at another title opens it.
+  function hover(e: MouseEvent, owner: string, items: () => MenuItem[]) {
+    if (desk.menu?.owner && desk.menu.owner !== owner) menuUnder(e, owner, items())
+  }
+
+  function serverItems(): MenuItem[] {
+    return [
       { label: $LL.deskAboutServer(), icon: 'info', action: () => desk.open('status') },
       { separator: true },
       { label: $LL.deskAppSettings(), icon: 'settings', shortcut: '⌘,', action: () => desk.open('settings') },
@@ -51,31 +62,61 @@
           onlock()
         },
       },
-    ])
+    ]
   }
 
-  function appMenu(e: MouseEvent) {
-    if (!active || !activeSpec) return
-    const id = active.id
+  /// The app menu: the app as a whole.
+  function appItems(): MenuItem[] {
+    if (!activeSpec) return []
+    const spec = activeSpec
     const items: MenuItem[] = []
-    if (activeSpec.instances > 1) {
-      items.push({
-        label: $LL.deskNewWindow(),
-        disabled: desk.windows.of(activeSpec.id).length >= activeSpec.instances,
-        action: () => desk.open(activeSpec.id, { newWindow: true }),
-      })
+    if (spec.instances > 1) {
+      items.push(
+        {
+          label: $LL.deskNewWindow(),
+          icon: 'add',
+          disabled: desk.windows.of(spec.id).length >= spec.instances,
+          action: () => desk.open(spec.id, { newWindow: true }),
+        },
+        { separator: true },
+      )
     }
-    items.push(
+    items.push({ label: `${$LL.deskQuit()} ${appName}`, icon: 'close', action: () => desk.windows.closeApp(spec.id) })
+    return items
+  }
+
+  /// The Window menu: the front window, then every window of its app.
+  function windowItems(): MenuItem[] {
+    if (!active || !activeSpec) return []
+    const id = active.id
+    const mine = desk.windows.of(activeSpec.id)
+    const items: MenuItem[] = [
       { label: $LL.deskMinimize(), action: () => desk.windows.minimize(id) },
       { label: $LL.deskZoom(), action: () => desk.windows.toggleMaximize(id) },
       { separator: true },
+      ...mine.map((w) => ({
+        label: w.title ?? activeSpec!.title($LL),
+        checked: w.id === id,
+        action: () => desk.windows.focus(w.id),
+      })),
+      { separator: true },
       { label: $LL.deskClose(), action: () => desk.windows.close(id) },
-    )
-    if (desk.windows.of(activeSpec.id).length > 1) {
-      items.push({ label: $LL.deskCloseAll(), action: () => desk.windows.closeApp(activeSpec.id) })
-    }
-    menuUnder(e, items)
+    ]
+    if (mine.length > 1) items.push({ label: $LL.deskCloseAll(), action: () => desk.windows.closeApp(activeSpec!.id) })
+    return items
   }
+
+  /// The bar's menus left to right: the server, the app, the app's own, Window.
+  const titles = $derived.by(() => {
+    const out: { owner: string; label: string; items: () => MenuItem[] }[] = []
+    if (!activeSpec) return out
+    out.push({ owner: 'app', label: appName, items: appItems })
+    for (const [i, menu] of (chrome?.menus ?? []).entries()) {
+      out.push({ owner: `menu:${i}`, label: menu.label, items: () => menu.items })
+    }
+    out.push({ owner: 'window', label: $LL.deskWindowMenu(), items: windowItems })
+    return out
+  })
 
   const unread = $derived(desk.notifications?.unread ?? 0)
 </script>
@@ -90,13 +131,30 @@
     desk.menu = null
   }}
 >
-  <button class="lk-menubar__item lk-menubar__brand" onclick={serverMenu}>lollipopkit</button>
-  {#if activeSpec}
-    <button class="lk-menubar__item lk-menubar__app" onclick={appMenu}>{activeSpec.title($LL)}</button>
+  <button
+    class="lk-menubar__item lk-menubar__brand"
+    class:lk-menubar__item--open={desk.menu?.owner === 'server'}
+    aria-haspopup="menu"
+    onclick={(e) => menuUnder(e, 'server', serverItems())}
+    onpointerenter={(e) => hover(e, 'server', serverItems)}>lollipopkit</button
+  >
+  {#if appIcon}
+    <span class="inline-flex" aria-hidden="true"><AppIcon glyph={appIcon.glyph} tone={appIcon.tone} size={17} /></span>
   {/if}
+  {#each titles as t (t.owner)}
+    <button
+      class="lk-menubar__item max-w-48 truncate"
+      class:lk-menubar__app={t.owner === 'app'}
+      class:hidden={t.owner !== 'app' && desk.windows.compact}
+      class:lk-menubar__item--open={desk.menu?.owner === t.owner}
+      aria-haspopup="menu"
+      onclick={(e) => menuUnder(e, t.owner, t.items())}
+      onpointerenter={(e) => hover(e, t.owner, t.items)}>{t.label}</button
+    >
+  {/each}
   <div class="lk-menubar__spacer"></div>
 
-  <button class="lk-menubar__item" title={serverLabel} onclick={serverMenu}>
+  <button class="lk-menubar__item" title={serverLabel} onclick={(e) => menuUnder(e, 'server', serverItems())}>
     {#if desk.storage?.remote}
       <span
         class="h-[7px] w-[7px] rounded-full"

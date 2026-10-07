@@ -1493,6 +1493,13 @@ const zh_TW = {
 	benchmarkEmptyState: '沒有執行記錄',
 	bmcEmptyState: '沒有目標',
 	benchmarkRunShare: '{percent}% 的執行記錄',
+	deskWindowMenu: '視窗',
+	settingsApps: 'App',
+	settingsBackgroundApps: '在背景執行 App',
+	settingsBackgroundAppsSub: '關閉時，隱藏的視窗會停止，重新顯示時再啟動',
+	deskMenuFile: '檔案',
+	deskMenuGo: '前往',
+	settingsBackgroundAppsOld: '此 agent 版本過舊，無法儲存此選項',
 } satisfies Translation
 
 export default zh_TW

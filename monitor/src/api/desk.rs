@@ -196,6 +196,13 @@ pub struct Preferences {
     pub wallpaper_fit: String,
     pub dock: Vec<String>,
     pub icons: Vec<Icon>,
+    /// Hidden apps keep running; false suspends them.
+    #[serde(default = "yes")]
+    pub background: bool,
+}
+
+fn yes() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -846,8 +853,8 @@ async fn still_signed_in(state: &AppState, caller: &Caller) -> bool {
 // -----------------------------------------------------------------------------
 
 async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferences>, sqlx::Error> {
-    let Some((accent, wallpaper, wallpaper_fit)) = sqlx::query_as::<_, (Option<String>, String, String)>(
-        "SELECT accent, wallpaper, wallpaper_fit FROM desk_preferences WHERE user_id = ?",
+    let Some((accent, wallpaper, wallpaper_fit, background)) = sqlx::query_as::<_, (Option<String>, String, String, bool)>(
+        "SELECT accent, wallpaper, wallpaper_fit, background FROM desk_preferences WHERE user_id = ?",
     )
     .bind(user)
     .fetch_optional(db)
@@ -883,20 +890,22 @@ async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferenc
         wallpaper_fit,
         dock,
         icons,
+        background,
     }))
 }
 
 async fn store_preferences(db: &SqlitePool, user: i64, p: &Preferences) -> Result<(), sqlx::Error> {
     let mut tx = db.begin().await?;
     sqlx::query(
-        "INSERT INTO desk_preferences (user_id, accent, wallpaper, wallpaper_fit, updated_at) VALUES (?, ?, ?, ?, ?) \
+        "INSERT INTO desk_preferences (user_id, accent, wallpaper, wallpaper_fit, background, updated_at) VALUES (?, ?, ?, ?, ?, ?) \
          ON CONFLICT(user_id) DO UPDATE SET accent = excluded.accent, wallpaper = excluded.wallpaper, \
-         wallpaper_fit = excluded.wallpaper_fit, updated_at = excluded.updated_at",
+         wallpaper_fit = excluded.wallpaper_fit, background = excluded.background, updated_at = excluded.updated_at",
     )
     .bind(user)
     .bind(&p.accent)
     .bind(&p.wallpaper)
     .bind(&p.wallpaper_fit)
+    .bind(p.background)
     .bind(chrono::Utc::now().to_rfc3339())
     .execute(&mut *tx)
     .await?;
@@ -1069,6 +1078,7 @@ mod tests {
             accent: Some("#8B2252".into()),
             wallpaper: "preset:dusk".into(),
             wallpaper_fit: "cover".into(),
+            background: false,
             dock: vec!["files".into(), "terminal".into()],
             icons: vec![Icon {
                 id: "i1".into(),

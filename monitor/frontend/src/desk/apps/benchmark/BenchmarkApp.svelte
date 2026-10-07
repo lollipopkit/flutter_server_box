@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AppIcon, Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '../../lk'
+  import { AppToolbar } from '../../sys'
   import { api } from '../../../lib/api'
   import { benchRefusalText, benchRunErrorText } from '../../../lib/benchRefusal'
   import { fmtBytes, fmtTime } from '../../../lib/format'
@@ -7,7 +8,6 @@
   import { servers } from '../../../lib/servers.svelte'
   import { untrack } from 'svelte'
   import type { BenchDetail, BenchEstimate, BenchOptions, BenchRun, BenchView } from '../../../types'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
 
   /// The agent's own defaults, spelled here because the form starts from them
   /// rather than from whatever the last run used. Three of them differ from

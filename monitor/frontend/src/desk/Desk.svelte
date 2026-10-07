@@ -4,7 +4,8 @@
   import { LL } from '../i18n/i18n-svelte'
   import { theme } from '../lib/theme.svelte'
   import type { ServerEntry } from '../lib/servers.svelte'
-  import { app } from './apps'
+  import { app } from './registry.svelte'
+  import { menuItemFor } from './shortcuts'
   import { Desk, provideDesk, type MenuItem } from './deskState.svelte'
   import Banner from './shell/Banner.svelte'
   import CalendarPanel from './shell/CalendarPanel.svelte'
@@ -21,16 +22,22 @@
 
   interface Props {
     entry: ServerEntry
+    /// The lock screen is over this desk: its apps are hidden.
+    locked?: boolean
     /// Locks this desk: the lock screen, where another server can be chosen.
     onlock: () => void
     /// Switches to another server's desk.
     onswitch: (serverId: string) => void
   }
 
-  const { entry, onlock, onswitch }: Props = $props()
+  const { entry, locked = false, onlock, onswitch }: Props = $props()
   // svelte-ignore state_referenced_locally
   const desk = new Desk(entry)
   provideDesk(desk)
+
+  $effect.pre(() => {
+    desk.locked = locked
+  })
 
   let root = $state<HTMLDivElement | null>(null)
 
@@ -63,6 +70,7 @@
   })
 
   function onkeydown(e: KeyboardEvent) {
+    if (e.defaultPrevented) return
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       desk.panel = null
@@ -78,6 +86,13 @@
       desk.spotlight = false
       desk.panel = null
       desk.menu = null
+    } else if (!locked) {
+      // The front app's menus, by their shortcuts.
+      const item = menuItemFor(e, desk.activeChrome?.menus ?? [])
+      if (item) {
+        e.preventDefault()
+        item.action()
+      }
     }
   }
 
@@ -112,6 +127,7 @@
 </script>
 
 <svelte:window {onkeydown} />
+<svelte:document onvisibilitychange={() => (desk.hidden = document.visibilityState === 'hidden')} />
 
 <div
   bind:this={root}

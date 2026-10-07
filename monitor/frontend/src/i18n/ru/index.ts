@@ -1493,6 +1493,13 @@ const ru = {
 	benchmarkEmptyState: 'Нет запусков',
 	bmcEmptyState: 'Нет целей',
 	benchmarkRunShare: '{percent}% запусков',
+	deskWindowMenu: 'Окно',
+	settingsApps: 'Приложения',
+	settingsBackgroundApps: 'Запускать приложения в фоновом режиме',
+	settingsBackgroundAppsSub: 'Выключено: скрытое окно останавливается и запускается снова при отображении',
+	deskMenuFile: 'Файл',
+	deskMenuGo: 'Переход',
+	settingsBackgroundAppsOld: 'Этот агент слишком старый, чтобы сохранить этот выбор',
 } satisfies Translation
 
 export default ru

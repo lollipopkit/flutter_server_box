@@ -1,7 +1,7 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { AppToolbar } from '../../sys'
   import { Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl } from '../../lk'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../../../lib/format'

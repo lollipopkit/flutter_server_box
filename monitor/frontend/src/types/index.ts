@@ -136,6 +136,7 @@ export type MachineFeature =
   | 'virt'
   /// The agent keeps the panel's desk (`/desk*`).
   | 'desk'
+  | 'desk_background'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 

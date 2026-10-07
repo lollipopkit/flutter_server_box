@@ -3,7 +3,7 @@
 /// another app can open Settings straight at what it is about — the desk's
 /// control centre sends `appearance`, the status app's gear sends `server`.
 
-export const SETTINGS_SECTIONS = ['general', 'appearance', 'account', 'server', 'access'] as const
+export const SETTINGS_SECTIONS = ['general', 'appearance', 'apps', 'account', 'server', 'access'] as const
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]
 

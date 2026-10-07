@@ -1493,6 +1493,13 @@ const ja = {
 	benchmarkEmptyState: '実行履歴なし',
 	bmcEmptyState: '対象なし',
 	benchmarkRunShare: '{percent}% の実行',
+	deskWindowMenu: 'ウインドウ',
+	settingsApps: 'アプリ',
+	settingsBackgroundApps: 'アプリをバックグラウンドで実行',
+	settingsBackgroundAppsSub: 'オフの場合、非表示のウインドウは停止し、表示すると再起動します',
+	deskMenuFile: 'ファイル',
+	deskMenuGo: '移動',
+	settingsBackgroundAppsOld: 'このagentは古いため、この選択を保存できません',
 } satisfies Translation
 
 export default ja

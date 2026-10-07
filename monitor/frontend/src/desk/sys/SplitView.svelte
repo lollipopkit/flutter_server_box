@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack, type Snippet } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
-  import { useWindow } from '../deskState.svelte'
+  import { useWindow } from './window.svelte'
 
   /// An app's two columns: the sidebar (places, sections, items — built from
   /// `lk` SidebarSection/SidebarItem) goes into the window's floating inset

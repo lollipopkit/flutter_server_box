@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, SidebarItem, SidebarSection, Spinner } from '../../lk'
-  import SplitView from '../../ui/SplitView.svelte'
+  import { AppToolbar, SplitView } from '../../sys'
   import BmcForm from './BmcForm.svelte'
   import { api } from '../../../lib/api'
   import { bmcErrorText, intentText, keepPasswords, powerStateText } from '../../../lib/bmc'
@@ -8,7 +8,6 @@
   import { onDestroy, untrack } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { BmcIntent, BmcList, BmcStatus, BmcTarget, BmcTargetInput } from '../../../types'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
 
   /// The BMCs this agent reaches: each one's power state, system and sensors,
   /// and its power actions. Everything goes through the agent, which signs in

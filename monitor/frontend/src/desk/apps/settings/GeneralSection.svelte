@@ -4,8 +4,8 @@
   /// is no save step here.
 
   import { Group, Row } from '../../lk'
+  import { AppToolbar } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import LocaleToggle from './LocaleToggle.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl, SidebarItem, SidebarSection, Spinner } from '../../lk/index'
-  import SplitView from '../../ui/SplitView.svelte'
+  import { AppToolbar, SplitView } from '../../sys'
   import LineChart from '../../../components/LineChart.svelte'
   import PveForm from './PveForm.svelte'
   import VirtBackupJobs from './VirtBackupJobs.svelte'
@@ -12,7 +12,6 @@
   import VirtNetworks from './VirtNetworks.svelte'
   import VirtSnapshots from './VirtSnapshots.svelte'
   import VirtStorage from './VirtStorage.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import { api } from '../../../lib/api'
   import { prettyFingerprint } from '../../../lib/bmc'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../../../lib/format'

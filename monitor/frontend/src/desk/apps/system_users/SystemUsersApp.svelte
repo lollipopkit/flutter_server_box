@@ -1,9 +1,9 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { AppToolbar } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
   import UserForm, { userFormState, type UserFormState } from './UserForm.svelte'
   import UserSecurity from './UserSecurity.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'

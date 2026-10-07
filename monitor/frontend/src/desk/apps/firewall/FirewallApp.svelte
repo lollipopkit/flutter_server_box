@@ -1,7 +1,7 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { AppToolbar } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, IconButton, Input, SegmentedControl, Select } from '../../lk'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import { ApiError, api } from '../../../lib/api'
   import {
     accessName,

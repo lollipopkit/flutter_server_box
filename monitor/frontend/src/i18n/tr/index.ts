@@ -1493,6 +1493,13 @@ const tr = {
 	benchmarkEmptyState: 'Çalıştırma yok',
 	bmcEmptyState: 'Hedef yok',
 	benchmarkRunShare: '{percent}% çalıştırma',
+	deskWindowMenu: 'Pencere',
+	settingsApps: 'Uygulamalar',
+	settingsBackgroundApps: 'Uygulamaları arka planda çalıştır',
+	settingsBackgroundAppsSub: 'Kapalı: gizli bir pencere durur ve gösterildiğinde yeniden başlar',
+	deskMenuFile: 'Dosya',
+	deskMenuGo: 'Git',
+	settingsBackgroundAppsOld: 'Bu agent bu seçimi kaydedemeyecek kadar eski',
 } satisfies Translation
 
 export default tr

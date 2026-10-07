@@ -3,9 +3,9 @@
   /// an administrator only. Every change is re-authenticated.
 
   import { LL } from '../../../i18n/i18n-svelte'
+  import { AppToolbar } from '../../sys'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
-  import AppToolbar from '../../ui/AppToolbar.svelte'
   import AccessAdmin from './AccessAdmin.svelte'
 
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])

@@ -1,0 +1,91 @@
+/// What an app tells the desk about itself: its manifest. Every app, built in
+/// or not, is one `defineApp({...})` (a built-in app's sits in
+/// `apps/<id>/manifest.ts` and is found on its own); the dock, the
+/// launchpad, Spotlight, the window manager and the session read nothing else.
+
+import type { Component } from 'svelte'
+import type { TranslationFunctions } from '../../i18n/i18n-types'
+import { dashboardAccess } from '../../lib/access'
+import { enabledFeatures, type FeatureId } from '../../lib/features'
+import type { Capabilities } from '../../types'
+import type { IconTone } from '../lk/AppIcon.svelte'
+import type { Size } from '../geometry'
+import type { WindowPolicy } from '../windows.svelte'
+
+/// Text in the user's language: a fixed string, or read from the
+/// translations when the app has keys there.
+export type Localized = string | ((ll: TranslationFunctions) => string)
+
+export interface AppManifest {
+  /// Stable: windows, the dock and desk icons are stored by it.
+  /// Lowercase letters, digits and `_`, starting with a letter.
+  id: string
+  title: Localized
+  /// Words Spotlight also finds it by, besides its title.
+  keywords?: (ll: TranslationFunctions) => string[]
+  /// The app icon's glyph (Material Symbols Rounded) and tile tone.
+  glyph: string
+  tone: IconTone
+  /// Whether this server and this account can use it; always when absent.
+  /// `undefined` capabilities (not fetched yet) answer false for anything
+  /// gated.
+  available?: (caps: Capabilities | undefined) => boolean
+  /// How many windows may be open; 1 (the default) focuses the open one.
+  instances?: number
+  size?: Size
+  minSize?: Size
+  /// Place in the launchpad and Spotlight, lowest first; then by id.
+  order?: number
+  /// In a fresh desk's dock.
+  pinned?: boolean
+  /// The window's content. Lazy, so an app nobody opens is never loaded.
+  load: () => Promise<{ default: Component }>
+}
+
+/// A manifest with every default filled in, as the shell reads it.
+export interface AppSpec extends WindowPolicy {
+  id: string
+  title: (ll: TranslationFunctions) => string
+  keywords?: (ll: TranslationFunctions) => string[]
+  glyph: string
+  tone: IconTone
+  available: (caps: Capabilities | undefined) => boolean
+  order: number
+  pinned: boolean
+  load: () => Promise<{ default: Component }>
+}
+
+const ID = /^[a-z][a-z0-9_]{0,63}$/
+const SIZE: Size = { width: 1040, height: 680 }
+const MIN_SIZE: Size = { width: 420, height: 300 }
+
+export function defineApp(m: AppManifest): AppSpec {
+  if (!ID.test(m.id)) throw new Error(`app id ${JSON.stringify(m.id)}: lowercase letters, digits and _`)
+  const instances = m.instances ?? 1
+  if (!Number.isInteger(instances) || instances < 1) throw new Error(`app ${m.id}: instances must be ≥ 1`)
+  const title = m.title
+  return {
+    id: m.id,
+    title: typeof title === 'string' ? () => title : title,
+    keywords: m.keywords,
+    glyph: m.glyph,
+    tone: m.tone,
+    available: m.available ?? (() => true),
+    instances,
+    size: m.size ?? SIZE,
+    minSize: m.minSize ?? MIN_SIZE,
+    order: m.order ?? Number.MAX_SAFE_INTEGER,
+    pinned: m.pinned ?? false,
+    load: m.load,
+  }
+}
+
+/// Available when the agent lists [id] among its features.
+export function feature(id: FeatureId) {
+  return (caps: Capabilities | undefined) => enabledFeatures(caps).some((f) => f.id === id)
+}
+
+/// Available when this account may use the server's terminal or files.
+export function access(kind: 'terminal' | 'files') {
+  return (caps: Capabilities | undefined) => dashboardAccess(caps)[kind]
+}

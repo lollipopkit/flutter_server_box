@@ -1,0 +1,112 @@
+/// An app's handle on the window it runs in: the one way an app reaches the
+/// desk (see `docs/dev/desk-sys.md`).
+
+import { getContext } from 'svelte'
+import type { MenuEntry } from '../lk/Menu.svelte'
+import type { AppIconChrome, AppMenu, WindowChrome } from '../window/chrome.svelte'
+import type { OpenOptions } from '../windows.svelte'
+
+/// Where a window's process is in its life.
+/// - `active`: the front window.
+/// - `visible`: on screen behind it.
+/// - `background`: hidden (minimised, the desk locked, the browser tab
+///   hidden). Not drawn; the app should stop work done only for the eye.
+/// - `suspended`: hidden while background running is not allowed. The app's
+///   content is unmounted and mounted again when the window comes back.
+export type LifecycleState = 'active' | 'visible' | 'background' | 'suspended'
+
+export interface WindowHandle {
+  readonly id: string
+  /// What the app saved for itself; null on a fresh window.
+  readonly appState: unknown
+  /// Small JSON (≤16 KiB, never secrets) to come back with after a reload or
+  /// a suspension. Save it when it changes.
+  setAppState(state: unknown): void
+  /// Replaces the app's title in the title bar, the dock menu and Spotlight.
+  setTitle(title: string | null): void
+  /// The app's name in the menubar; null for the manifest's.
+  setAppName(name: string | null): void
+  /// The app's icon in the menubar and dock; null for the manifest's.
+  setIcon(icon: AppIconChrome | null): void
+  /// A short badge on the app's dock icon (a count); null for none.
+  setBadge(badge: string | number | null): void
+  close(): void
+  /// Opens another app (or another window of one) on this desk. Answers the
+  /// window's id, or null when the app is not available or at its limit.
+  open(appId: string, options?: OpenOptions): string | null
+  /// Puts an icon on the desk that opens [path] with this window's app.
+  addPathIcon(path: string, label: string): void
+  readonly active: boolean
+  readonly lifecycle: LifecycleState
+  /// The window's frame, where `AppToolbar`, `SplitView` and `useMenus` put
+  /// what they register; null outside a window (a test), where `AppToolbar`
+  /// and `SplitView` draw themselves in place.
+  readonly chrome: WindowChrome | null
+}
+
+export const WINDOW = Symbol('desk-window')
+
+/// The window the calling component is in. Outside one (a test rendering an
+/// app alone) it answers a handle that does nothing.
+export function useWindow(): WindowHandle {
+  return getContext<WindowHandle | undefined>(WINDOW) ?? DETACHED
+}
+
+const DETACHED: WindowHandle = {
+  id: '',
+  appState: null,
+  setAppState() {},
+  setTitle() {},
+  setAppName() {},
+  setIcon() {},
+  setBadge() {},
+  close() {},
+  open: () => null,
+  addPathIcon() {},
+  active: true,
+  lifecycle: 'active',
+  chrome: null,
+}
+
+/// The app's menubar menus while the calling component is mounted, read
+/// again whenever what [menus] reads changes.
+export function useMenus(menus: () => AppMenu[]) {
+  const chrome = useWindow().chrome
+  if (!chrome) return
+  const entry = {
+    get menus() {
+      return menus()
+    },
+  }
+  $effect(() => chrome.pushMenus(entry))
+}
+
+const KEEP_ALIVE_MAX_MS = 10 * 60_000
+
+export interface Lifecycle {
+  readonly state: LifecycleState
+  /// Keeps the app running while hidden, even where background running is
+  /// off, until the returned function is called or 10 minutes pass. For
+  /// work the user started and would lose (an upload).
+  keepAlive(reason: string): () => void
+}
+
+export function useLifecycle(): Lifecycle {
+  const win = useWindow()
+  return {
+    get state() {
+      return win.lifecycle
+    },
+    keepAlive(reason) {
+      if (!win.chrome) return () => {}
+      const release = win.chrome.holdKeepAlive(reason)
+      const timer = setTimeout(release, KEEP_ALIVE_MAX_MS)
+      return () => {
+        clearTimeout(timer)
+        release()
+      }
+    },
+  }
+}
+
+export type { AppMenu, AppIconChrome, MenuEntry }

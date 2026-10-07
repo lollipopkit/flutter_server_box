@@ -1,13 +1,17 @@
 <script lang="ts">
   import Spinner from '../lk/Spinner.svelte'
   import { LL } from '../../i18n/i18n-svelte'
-  import { app } from '../apps'
+  import { app } from '../registry.svelte'
+  import { onDestroy } from 'svelte'
   import { provideWindow, useDesk } from '../deskState.svelte'
+  import type { LifecycleState } from '../sys/window.svelte'
   import IconButton from '../lk/IconButton.svelte'
   import TrafficLights from '../lk/TrafficLights.svelte'
   import { WindowChrome } from './chrome.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
   import type { DeskWindow } from '../windows.svelte'
+
+  const SUSPEND_AFTER_MS = 5000
 
   interface Props {
     win: DeskWindow
@@ -18,8 +22,33 @@
   const { win, onsnappreview }: Props = $props()
   const desk = useDesk()
   const chrome = new WindowChrome()
+  /// A window keeps its id for life (the layer is keyed by it).
   // svelte-ignore state_referenced_locally
-  provideWindow(desk, win.id, chrome)
+  const id = win.id
+  provideWindow(desk, id, chrome, () => lifecycle)
+  desk.chromes.set(id, chrome)
+  onDestroy(() => desk.chromes.delete(id))
+
+  /// Hidden while background running is off: the app's content goes after a
+  /// grace period (a quick minimise and restore keeps it) and comes back
+  /// with the window, restoring itself from its `appState`.
+  let suspended = $state(false)
+  const hidden = $derived(desk.isHidden(win.id))
+  const mayRun = $derived(desk.backgroundAllowed || chrome.keepAlive.length > 0)
+  $effect(() => {
+    if (!hidden || mayRun) {
+      suspended = false
+      return
+    }
+    const t = setTimeout(() => {
+      suspended = true
+      chrome.reset()
+    }, SUSPEND_AFTER_MS)
+    return () => clearTimeout(t)
+  })
+  const lifecycle = $derived<LifecycleState>(
+    suspended ? 'suspended' : hidden ? 'background' : desk.windows.active?.id === win.id ? 'active' : 'visible',
+  )
 
   const spec = $derived(app(win.appId))
   const title = $derived(win.title ?? (spec ? spec.title($LL) : win.appId))
@@ -184,7 +213,7 @@
              (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app
              whose content fills the window takes `min-h-0 flex-1`. -->
         <div class="lk-window__content desk-window-body @container flex flex-col">
-          {#if spec}
+          {#if spec && !suspended}
             {#await spec.load()}
               <div class="flex h-full items-center justify-center"><Spinner /></div>
             {:then mod}

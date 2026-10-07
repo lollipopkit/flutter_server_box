@@ -151,6 +151,15 @@ async fn preferences_round_trip_per_account() {
     assert_eq!(body["preferences"], saved);
     assert_eq!(body["preferences"]["dock"], serde_json::json!(["status", "files", "terminal"]));
     assert_eq!(body["preferences"]["icons"][1]["path"], "/etc");
+    // A client older than background running leaves it out: on.
+    assert_eq!(body["preferences"]["background"], true);
+
+    let mut off = prefs();
+    off["background"] = serde_json::json!(false);
+    let (status, _, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/desk/preferences", json(off)).await;
+    assert_eq!(status, 200);
+    let (_, body, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk", None).await;
+    assert_eq!(body["preferences"]["background"], false);
 
     // Another account's desk is its own.
     let (_, other, _) = call(&srv, Some("intruder"), Method::GET, "/api/v1/desk", None).await;

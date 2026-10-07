@@ -1493,6 +1493,13 @@ const de = {
 	benchmarkEmptyState: 'Keine Läufe',
 	bmcEmptyState: 'Keine Ziele',
 	benchmarkRunShare: '{percent}% der Läufe',
+	deskWindowMenu: 'Fenster',
+	settingsApps: 'Apps',
+	settingsBackgroundApps: 'Apps im Hintergrund ausführen',
+	settingsBackgroundAppsSub: 'Aus: Ein ausgeblendetes Fenster wird angehalten und beim Einblenden wieder gestartet',
+	deskMenuFile: 'Ablage',
+	deskMenuGo: 'Gehe zu',
+	settingsBackgroundAppsOld: 'Dieser agent ist zu alt, um diese Auswahl zu speichern',
 } satisfies Translation
 
 export default de

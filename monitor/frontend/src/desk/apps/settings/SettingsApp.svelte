@@ -4,14 +4,14 @@
   /// this browser come first; the agent's own configuration follows.
 
   import { SidebarItem, SidebarSection } from '../../lk'
+  import { SplitView, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
-  import { useWindow } from '../../deskState.svelte'
-  import SplitView from '../../ui/SplitView.svelte'
   import AccessSection from './AccessSection.svelte'
   import AccountSection from './AccountSection.svelte'
   import AppearanceSection from './AppearanceSection.svelte'
+  import AppsSection from './AppsSection.svelte'
   import GeneralSection from './GeneralSection.svelte'
   import ServerSection from './ServerSection.svelte'
   import { resolveSection, type SettingsSection } from './sections'
@@ -58,6 +58,12 @@
     </SidebarSection>
     <SidebarSection title={$LL.settingsThisServer()}>
       <SidebarItem
+        label={$LL.settingsApps()}
+        icon="apps"
+        active={current === 'apps'}
+        onclick={() => show('apps')}
+      />
+      <SidebarItem
         label={$LL.settingsAccount()}
         icon="person"
         active={current === 'account'}
@@ -84,6 +90,8 @@
     <GeneralSection />
   {:else if current === 'appearance'}
     <AppearanceSection />
+  {:else if current === 'apps'}
+    <AppsSection />
   {:else if current === 'account'}
     <AccountSection />
   {:else if current === 'server'}
