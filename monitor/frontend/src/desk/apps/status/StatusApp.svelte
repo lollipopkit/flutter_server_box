@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { Badge, Button, Card, Dialog, Icon, IconButton, SegmentedControl, Spinner } from '../../lk'
-  import { AppToolbar, useLifecycle, useWindow } from '../../sys'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, LegendChip, SegmentedControl, Spinner, StatTile, ToolbarGroup } from '../../lk'
+  import { AppToolbar, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'
-  import LineChart from '../../../components/LineChart.svelte'
-  import OsIcon from '../../../components/OsIcon.svelte'
   import PowerModal from './PowerModal.svelte'
-  import StatCard from './StatCard.svelte'
+  import UsageChart from './UsageChart.svelte'
+  import { enabledFeatures } from '../../../lib/features'
   import { dashboardAccess, isAdmin, machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
@@ -16,12 +15,16 @@
   import { LL } from '../../../i18n/i18n-svelte'
   import { Poller } from '../../../lib/poller.svelte'
   import { fly } from 'svelte/transition'
-  import type { CustomCmdOutput, HistoryPoint } from '../../../types'
+  import type { CustomCmdOutput, HistoryPoint, ProcessView } from '../../../types'
 
-  const metrics = new Poller(api.getMetrics, 5000)
+  const INTERVAL_MS = 5000
+  const metrics = new Poller(api.getMetrics, INTERVAL_MS)
   const win = useWindow()
   const life = useLifecycle()
-  const shown = $derived(life.state !== 'background')
+  /// Paused by the user: the figures stay as they were.
+  let paused = $state(false)
+  /// Read while drawn and not paused; hidden (minimised), nothing is drawn.
+  const shown = $derived(life.state !== 'background' && !paused)
 
   // Capabilities are platform-specific and do not change per sample. Fetch
   // once per server (shared with the lock screen's icons), rather than on the
@@ -159,15 +162,41 @@
   })
 
   const historyLabels = $derived(history.map((p) => p.timestamp))
-  const usageSeries = $derived([
-    { label: 'CPU', color: 'var(--status-chart-one)', values: history.map((p) => p.cpu) },
-    { label: $LL.memory(), color: 'var(--status-chart-two)', values: history.map((p) => p.memory) },
-    { label: $LL.diskUsage(), color: 'var(--status-chart-three)', values: history.map((p) => p.disk) },
+  /// The usage chart's series, each turned on and off by its legend chip.
+  let seriesOn = $state({ cpu: true, memory: true, disk: true })
+  const USAGE = $derived([
+    { id: 'cpu' as const, label: 'CPU', color: 'var(--color-accent)', values: history.map((p) => p.cpu) },
+    { id: 'memory' as const, label: $LL.memory(), color: 'var(--hue-blue)', values: history.map((p) => p.memory) },
+    { id: 'disk' as const, label: $LL.diskUsage(), color: 'var(--hue-teal)', values: history.map((p) => p.disk) },
   ])
+  const usageSeries = $derived(USAGE.filter((s) => seriesOn[s.id]).map((s) => ({ ...s, fill: s.id === 'cpu' })))
+  /// A nice top for the percentages on screen: the next step above the
+  /// largest, so a quiet machine's 1% is not drawn flat.
+  const usageMax = $derived.by(() => {
+    const peak = Math.max(1, ...usageSeries.flatMap((s) => s.values)) * 1.2
+    return [5, 10, 25, 50, 100].find((v) => v >= peak) ?? 100
+  })
   const networkSeries = $derived([
-    { label: $LL.down(), color: 'var(--status-chart-one)', values: history.map((p) => p.net_rx_speed) },
-    { label: $LL.up(), color: 'var(--status-chart-two)', values: history.map((p) => p.net_tx_speed) },
+    { label: $LL.down(), color: 'var(--color-accent)', values: history.map((p) => p.net_rx_speed), fill: true },
+    { label: $LL.up(), color: 'var(--hue-blue)', values: history.map((p) => p.net_tx_speed) },
   ])
+  const xLabels = $derived.by((): [string, string, string] => {
+    const fmt = (t: string | undefined) =>
+      t ? new Intl.DateTimeFormat(undefined, rangeMinutes > 1440 ? { month: 'short', day: 'numeric' } : { hour: '2-digit', minute: '2-digit' }).format(new Date(t)) : ''
+    return [fmt(historyLabels[0]), fmt(historyLabels[Math.floor(historyLabels.length / 2)]), fmt(historyLabels.at(-1))]
+  })
+
+  /// The busiest processes, when this account may read them: read along with
+  /// the figures, less often.
+  const canProcesses = $derived(enabledFeatures(capabilities).some((f) => f.id === 'process'))
+  const topPoller = new Poller(() => api.getProcess('cpu'), INTERVAL_MS * 2)
+  $effect(() => {
+    if (canProcesses && servers.authenticated && shown) topPoller.start()
+    return () => topPoller.stop()
+  })
+  const topProcs = $derived(
+    ((topPoller.data as ProcessView | null)?.procs ?? []).filter((p) => !p.is_kernel_thread).slice(0, 4),
+  )
 
   const error = $derived(metrics.error)
   // Agent reachability (unauthenticated /health ping, always running via
@@ -248,40 +277,158 @@
     sensors: $LL.sensors(),
     smart: $LL.smart(),
   })
+
+  /// The interface that carried the most, loopback aside: the one the
+  /// network card is about.
+  const iface = $derived(
+    (m?.ifaces ?? []).filter((i) => i.name !== 'lo').reduce<{ name: string; rx_bytes: number } | null>((a, b) => (!a || b.rx_bytes > a.rx_bytes ? b : a), null)?.name,
+  )
+
+  /// What the machine runs on, in one line under its name.
+  const about = $derived(
+    [m?.sys, m?.cpu_brand || (m?.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : ''), m?.temperature != null ? `${m.temperature.toFixed(1)} °C` : '']
+      .filter(Boolean)
+      .join(' · '),
+  )
+
+  /// One reading's tile. CPU and memory lead to the processes in that order;
+  /// the rest to their detail.
+  function tile(id: CardId) {
+    const procs = (sort: 'cpu' | 'mem') => (canProcesses ? () => win.open('process', { appState: { sort } }) : () => (detail = id))
+    switch (id) {
+      case 'cpu':
+        return {
+          icon: 'memory',
+          color: 'var(--color-accent)',
+          label: 'CPU',
+          value: m ? fmtPercent(m.cpu_usage) : '--',
+          sub: m?.cpu_cores?.length ? $LL.deskCores({ n: m.cpu_cores.length }) : (m?.cpu_brand ?? ''),
+          percent: m?.cpu_usage,
+          title: canProcesses ? $LL.statusProcessesByCpu() : undefined,
+          onclick: procs('cpu'),
+        }
+      case 'memory':
+        return {
+          icon: 'memory_alt',
+          color: 'var(--hue-blue)',
+          label: $LL.memory(),
+          value: m ? fmtPercent(m.memory.usage_percent) : '--',
+          sub: m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : '',
+          percent: m?.memory.usage_percent,
+          title: canProcesses ? $LL.statusProcessesByMemory() : undefined,
+          onclick: procs('mem'),
+        }
+      case 'disk':
+        return {
+          icon: 'hard_drive',
+          color: 'var(--hue-amber)',
+          label: $LL.diskUsage(),
+          value: m ? fmtPercent(m.disk.usage_percent) : '--',
+          sub: m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : '',
+          percent: m?.disk.usage_percent,
+          onclick: () => (detail = 'disk'),
+        }
+      case 'network':
+        return {
+          icon: 'lan',
+          color: 'var(--hue-violet)',
+          label: $LL.network(),
+          value: latest ? fmtBytesPerSec(latest.net_rx_speed) : '--',
+          sub: latest ? `↑ ${fmtBytesPerSec(latest.net_tx_speed)}` : '',
+          onclick: () => (detail = 'network'),
+        }
+      case 'gpu':
+        return m?.gpus?.length
+          ? {
+              icon: 'developer_board',
+              color: 'var(--hue-violet)',
+              label: $LL.gpu(),
+              value: m.gpus[0].usage_percent != null ? fmtPercent(m.gpus[0].usage_percent) : '--',
+              sub: m.gpus[0].name,
+              percent: m.gpus[0].usage_percent ?? undefined,
+              onclick: () => (detail = 'gpu'),
+            }
+          : null
+      case 'battery':
+        return m?.batteries?.length
+          ? {
+              icon: 'battery_5_bar',
+              color: 'var(--hue-green)',
+              label: $LL.battery(),
+              value: m.batteries[0].percent != null ? `${m.batteries[0].percent}%` : '--',
+              sub: m.batteries[0].name ?? '',
+              percent: m.batteries[0].percent ?? undefined,
+              onclick: () => (detail = 'battery'),
+            }
+          : null
+      case 'sensors':
+        return m?.sensors?.length
+          ? { icon: 'thermostat', color: 'var(--hue-blue)', label: $LL.sensors(), value: String(m.sensors.length), sub: m.sensors[0].device, onclick: () => (detail = 'sensors') }
+          : null
+      case 'smart':
+        return m?.disk_smart?.length
+          ? {
+              icon: 'shield_lock',
+              color: m.disk_smart.every((d) => d.healthy !== false) ? 'var(--color-success)' : 'var(--color-danger)',
+              label: $LL.smart(),
+              value: `${m.disk_smart.filter((d) => d.healthy !== false).length} / ${m.disk_smart.length}`,
+              sub: $LL.healthy(),
+              onclick: () => (detail = 'smart'),
+            }
+          : null
+    }
+  }
+
+  /// The machine's other doors and every reading's detail, in the menubar.
+  useMenus(() => {
+    const go: MenuEntry[] = []
+    if (access.terminal) go.push({ label: $LL.terminal(), icon: 'terminal', action: () => win.open('terminal') })
+    if (access.files) go.push({ label: $LL.files(), icon: 'folder_open', action: () => win.open('files') })
+    if (canProcesses) go.push({ label: $LL.processes(), icon: 'list_alt', action: () => win.open('process', { appState: { sort: 'cpu' } }) })
+    if (canIperf) go.push({ label: `${$LL.iperf()}…`, icon: 'speed', action: () => (iperfOpen = true) })
+    if (canPower) go.push({ label: `${$LL.powerControl()}…`, icon: 'power_settings_new', action: () => (powerOpen = true) })
+    go.push({ separator: true }, { label: $LL.serverSettings(), icon: 'settings', action: () => win.open('settings', { appState: { section: 'server' } }) })
+    const view: MenuEntry[] = [
+      { heading: $LL.history() },
+      ...RANGES.map((r) => ({ label: r.label, checked: rangeMinutes === r.minutes, action: () => (rangeMinutes = r.minutes) })),
+      { separator: true },
+      ...visibleCardOrder.map((id) => ({ label: detailTitles[id], checked: detail === id, action: () => (detail = id) })),
+      { separator: true },
+      { label: paused ? $LL.deskResumeRefresh() : $LL.deskPauseRefresh(), icon: paused ? 'play_arrow' : 'pause', action: () => (paused = !paused) },
+      { label: $LL.refresh(), icon: 'refresh', shortcut: '⌘R', action: refresh },
+    ]
+    return [
+      { label: $LL.deskMenuView(), items: view },
+      { label: $LL.deskMenuGo(), items: go },
+    ]
+  })
 </script>
 
 {#if detail}
   <AppToolbar title={detailTitles[detail]} back={() => (detail = null)} />
 {:else}
-  <AppToolbar title={headerName}>
-    {#snippet leading()}
-      {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
-      {#if capabilities?.platform}
-        <OsIcon platform={capabilities.platform} size={20} title={statusTitle} />
-      {:else}
-        <Icon name="dns" size={20} color={connected ? 'var(--color-success)' : 'var(--color-danger)'} title={statusTitle} />
-      {/if}
-    {/snippet}
+  <AppToolbar subtitle={paused ? $LL.deskPaused() : `${$LL.deskLiveShort()} · ${$LL.deskEverySeconds({ n: INTERVAL_MS / 1000 })}`}>
     {#snippet actions()}
-      <Badge tone={connected ? 'success' : 'danger'} dot>
-        {connected ? $LL.connected() : $LL.disconnected()}
-      </Badge>
-      {#if access.terminal}<IconButton icon="terminal" label={$LL.terminal()} onclick={() => win.open('terminal')} />{/if}
-      {#if access.files}<IconButton icon="folder_open" label={$LL.files()} onclick={() => win.open('files')} />{/if}
-      {#if canIperf}<IconButton icon="speed" label={$LL.iperf()} onclick={() => (iperfOpen = true)} />{/if}
-      {#if canPower}<IconButton icon="power_settings_new" label={$LL.powerControl()} onclick={() => (powerOpen = true)} />{/if}
-      <IconButton icon="settings" label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })} />
-      <IconButton icon="refresh" label={$LL.refresh()} onclick={refresh} />
+      <ToolbarGroup
+        items={[
+          {
+            label: paused ? $LL.deskResumeRefresh() : $LL.deskPauseRefresh(),
+            icon: paused ? 'play_arrow' : 'pause',
+            onclick: () => (paused = !paused),
+          },
+          ...(canProcesses ? [{ label: $LL.processes(), icon: 'list_alt', onclick: () => win.open('process', { appState: { sort: 'cpu' } }) }] : []),
+        ]}
+      />
     {/snippet}
   </AppToolbar>
 {/if}
 
-<main class="status-app mx-auto w-full max-w-7xl px-[17px] pb-[17px] pt-[4px]">
+<main class="status-app px-[17px] pb-[17px]">
   {#if metrics.loading}
     <div class="flex h-full items-center justify-center"><Spinner size={48} /></div>
   {:else}
     {#if error}
-      <Card class="mb-[13px] flex items-start gap-[9px] text-[13px] text-(--color-danger)">
+      <Card class="mb-[9px] flex items-start gap-[9px] text-[13px] text-(--color-danger)">
         <Icon name="error" size={18} />
         <p>{error}</p>
       </Card>
@@ -292,7 +439,7 @@
          that way. Most agents are in this state on purpose, so this says what
          is off and where the switches are, and stops there. -->
     {#if access.viewOnly}
-      <Card class="mb-[13px] space-y-[7px]">
+      <Card class="mb-[9px] space-y-[7px]">
         <h2 class="text-[15px] font-semibold text-(--text-primary)">{$LL.remoteAccessOffTitle()}</h2>
         <!-- With roles, more is an administrator's grant away rather than a
              config file's edit. -->
@@ -307,243 +454,174 @@
     {#if detail}
       <DetailPanel kind={detail} metrics={m} {history} />
     {:else}
-    <div class="grid grid-cols-1 @5xl:grid-cols-[minmax(0,1fr)_18rem] items-start gap-4 @5xl:gap-5">
-      <section class="min-w-0 space-y-4">
-    {#snippet card(id: CardId)}
-      {#if id === 'cpu'}
-        <StatCard
-          icon="memory"
-          iconColor="var(--hue-blue)"
-          label={$LL.cpuUsage()}
-          value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
-          detail={m
-            ? [
-                // `cpu_brand` already includes the logical core count, e.g.
-                // "Apple M5 Pro (x18)". Older agents use a bare core count.
-                m.cpu_brand || (m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : ''),
-                m.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : '',
-              ]
-                .filter(Boolean)
-                .join(' \u00B7 ')
-            : ''}
-          onclick={() => (detail = 'cpu')}
-        />
-      {:else if id === 'memory'}
-        <StatCard
-          icon="memory"
-          iconColor="var(--hue-teal)"
-          label={$LL.memory()}
-          value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
-          detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
-          onclick={() => (detail = 'memory')}
-        />
-      {:else if id === 'disk'}
-        <StatCard
-          icon="hard_drive"
-          iconColor="var(--hue-amber)"
-          label={$LL.diskUsage()}
-          value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
-          detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
-          onclick={() => (detail = 'disk')}
-        />
-      {:else if id === 'network'}
-        <StatCard
-          icon="lan"
-          iconColor="var(--hue-violet)"
-          label={$LL.network()}
-          compact
-          value={latest
-            ? `\u2193 ${fmtBytesPerSec(latest.net_rx_speed)}  \u2191 ${fmtBytesPerSec(latest.net_tx_speed)}`
-            : '--'}
-          detail={m
-            ? `RX ${fmtBytes(m.network.rx_bytes_exact ?? m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes_exact ?? m.network.tx_bytes)}`
-            : ''}
-          onclick={() => (detail = 'network')}
-        />
-      {:else if id === 'gpu' && m?.gpus?.length}
-        <StatCard
-          icon="speed"
-          iconColor="var(--hue-red)"
-          label={$LL.gpu()}
-          value={m.gpus[0].usage_percent != null ? `${m.gpus[0].usage_percent.toFixed(0)}%` : '--'}
-          detail={m.gpus[0].name}
-          onclick={() => (detail = 'gpu')}
-        />
-      {:else if id === 'battery' && m?.batteries?.length}
-        <StatCard
-          icon="battery_5_bar"
-          iconColor="var(--hue-green)"
-          label={$LL.battery()}
-          value={m.batteries[0].percent != null ? `${m.batteries[0].percent}%` : '--'}
-          detail={m.batteries[0].name ?? ''}
-          onclick={() => (detail = 'battery')}
-        />
-      {:else if id === 'sensors' && m?.sensors?.length}
-        <StatCard
-          icon="thermostat"
-          iconColor="var(--hue-blue)"
-          label={$LL.sensors()}
-          value={String(m.sensors.length)}
-          detail={m.sensors[0].device}
-          onclick={() => (detail = 'sensors')}
-        />
-      {:else if id === 'smart' && m?.disk_smart?.length}
-        <StatCard
-          icon="shield_lock"
-          iconColor={m.disk_smart.every((d) => d.healthy !== false) ? 'var(--color-success)' : 'var(--color-danger)'}
-          label={$LL.smart()}
-          value={`${m.disk_smart.filter((d) => d.healthy !== false).length} / ${m.disk_smart.length}`}
-          detail={$LL.healthy()}
-          onclick={() => (detail = 'smart')}
-        />
-      {/if}
-    {/snippet}
-
-    <!-- Three columns prevent the optional cards from crowding tablet-width
-         viewports before the layout expands to four columns. Card order is
-         synced through cardOrder; HTML5 drag-and-drop is pointer-only. -->
-    <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-[9px] mb-[17px]">
-      {#each visibleCardOrder as id (id)}
-        <div
-          role="listitem"
-          draggable={canArrange}
-          title={canArrange ? undefined : $LL.cardOrderAdminOnly()}
-          ondragstart={() => onCardDragStart(id)}
-          ondragover={onCardDragOver}
-          ondrop={() => onCardDrop(id)}
-          class={canArrange ? 'cursor-grab active:cursor-grabbing' : undefined}
-        >
-          {@render card(id)}
-        </div>
-      {/each}
-    </div>
-
-    <div class="mb-[9px] flex items-center justify-between">
-      <h2 class="text-[15px] font-semibold text-(--text-primary)">{$LL.history()}</h2>
-      <SegmentedControl
-        size="sm"
-        label={$LL.history()}
-        options={RANGES.map((r) => ({ value: String(r.minutes), label: r.label }))}
-        value={String(rangeMinutes)}
-        onchange={(value) => (rangeMinutes = Number(value))}
-      />
-    </div>
-
-    {#if historyError}
-      <p class="mb-[9px] text-[13px] text-(--color-danger)">{historyError}</p>
-    {/if}
-
-    <div class="grid grid-cols-1 gap-3 @2xl:gap-4">
-      <LineChart
-        title={$LL.usage()}
-        labels={historyLabels}
-        series={usageSeries}
-        yMax={100}
-        format={fmtPercent}
-      />
-      <LineChart
-        title={$LL.network()}
-        labels={historyLabels}
-        series={networkSeries}
-        format={fmtBytesPerSec}
-      />
-    </div>
-
-      </section>
-      <aside class="min-w-0 space-y-4">
-    {#if metrics.data}
-      {@const m = metrics.data}
-      <Card title={$LL.systemInformation()}>
-        <div class="divide-y divide-(--border-hairline)">
-          <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
-            <span class="text-(--text-secondary)">{$LL.serverNameLabel()}</span>
-            <span class="lk-num text-right">{m.server_name}</span>
+      <!-- The machine: its name and state, then what it runs on. -->
+      <header class="flex flex-wrap items-end gap-[17px] px-[3px] pb-[17px] pt-[9px]">
+        <div class="flex min-w-0 flex-1 flex-col gap-[5px]">
+          <div class="flex items-center gap-[9px]">
+            <span class="truncate text-[27px] leading-none font-extrabold tracking-[-0.02em]">{headerName}</span>
+            <Badge tone={connected ? 'success' : 'danger'} dot>{connected ? $LL.connected() : $LL.disconnected()}</Badge>
           </div>
-          {#if m.sys}
-            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
-              <span class="text-(--text-secondary)">{$LL.osHost()}</span>
-              <span class="lk-mono truncate text-right text-[12px]">{m.sys}</span>
-            </div>
-          {/if}
-          {#if m.uptime}
-            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
-              <span class="text-(--text-secondary)">{$LL.uptime()}</span>
-              <span class="lk-num">{m.uptime}</span>
-            </div>
-          {/if}
-          {#if m.conn}
-            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
-              <span class="text-(--text-secondary)">{$LL.connections()}</span>
-              <!-- Linux reports tcpMaxConn as -1 when no static connection
-                   limit exists. Display that sentinel as "unlimited". -->
-              <span class="lk-num">
-                {m.conn.max_conn === -1 ? $LL.unlimited() : m.conn.max_conn}
-              </span>
-            </div>
-          {/if}
-          <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
-            <span class="text-(--text-secondary)">{$LL.lastUpdated()}</span>
-            <span class="lk-num text-right text-[12px]">{new Date(m.timestamp).toLocaleString()}</span>
+          <p class="text-[12px] text-(--text-secondary) [text-wrap:pretty]">{about}</p>
+        </div>
+        {#if m?.uptime}
+          <div class="flex flex-col items-end gap-[3px]">
+            <span class="text-[11px] font-bold tracking-[.06em] text-(--text-tertiary) uppercase">{$LL.uptime()}</span>
+            <span class="lk-num text-[15px] font-semibold">{m.uptime}</span>
           </div>
-          {#if m.swap.total > 0}
-            <div class="flex justify-between gap-[9px] py-[7px] text-[13px]">
-              <span class="text-(--text-secondary)">{$LL.swap()}</span>
-              <span class="lk-num text-right">{fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}</span>
-            </div>
-          {/if}
-        </div>
-      </Card>
-    {/if}
+        {/if}
+      </header>
 
-    <!-- The user's custom commands and their latest output, from the extended
-         cycle. Absent when there are none, like the app's card; each row is
-         one line, and a longer output opens in the dialog below. -->
-    {#if m?.custom_cmds?.length}
-      <Card>
-        <div class="mb-[9px] flex items-center gap-[9px]">
-          <h3 class="min-w-0 flex-1 text-[15px] font-semibold text-(--text-primary)">{$LL.customCmd()}</h3>
-          <IconButton icon="settings" label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })} />
-        </div>
-        <div class="divide-y divide-(--border-hairline)">
-          {#each m.custom_cmds as cmd (cmd.name)}
-            {@const multi = displayOutput(cmd.output).includes('\n')}
-            <!-- A row is one line; a multi-line output is what the dialog is
-                 for. The text is the machine's own output, so it is drawn as
-                 text and never as markup. -->
-            <button
-              type="button"
-              class="flex w-full items-center justify-between gap-[9px] rounded-[7px] px-[13px] py-[7px] text-left even:bg-(--fill-hover) {multi ? 'cursor-pointer hover:bg-(--fill-hover)' : 'cursor-default'}"
-              disabled={!multi}
-              onclick={() => (cmdDetail = multi ? cmd : null)}
+      <!-- Card order is the agent's, shared by everyone who views it; an
+           administrator rearranges it by dragging. -->
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(138px,1fr))] gap-[9px]" role="list">
+        {#each visibleCardOrder as id (id)}
+          {@const t = tile(id)}
+          {#if t}
+            <div
+              role="listitem"
+              draggable={canArrange}
+              title={canArrange ? undefined : $LL.cardOrderAdminOnly()}
+              ondragstart={() => onCardDragStart(id)}
+              ondragover={onCardDragOver}
+              ondrop={() => onCardDrop(id)}
+              class="min-w-0"
             >
-              <span class="lk-mono shrink-0 truncate text-[12px] text-(--text-tertiary)">{cmd.name}</span>
-              <span class="lk-mono truncate text-[13px] text-(--text-primary)">{firstLine(cmd.output)}</span>
-            </button>
-          {/each}
+              <StatTile {...t} />
+            </div>
+          {/if}
+        {/each}
+      </div>
+
+      <!-- Usage over the chosen range. -->
+      <section class="mt-[9px] rounded-[13px] bg-(--surface-card) px-[13px] pt-[13px] pb-[9px]">
+        <div class="mb-[9px] flex flex-wrap items-center gap-[9px]">
+          <h2 class="text-[15px] font-bold">{$LL.usage()}</h2>
+          <div class="flex flex-wrap gap-[3px]">
+            {#each USAGE as s (s.id)}
+              <LegendChip
+                label={s.label}
+                value={s.values.length ? fmtPercent(s.values.at(-1)!) : undefined}
+                color={s.color}
+                on={seriesOn[s.id]}
+                onclick={() => (seriesOn = { ...seriesOn, [s.id]: !seriesOn[s.id] })}
+              />
+            {/each}
+          </div>
+          <span class="flex-1"></span>
+          <SegmentedControl
+            size="sm"
+            label={$LL.history()}
+            options={RANGES.map((r) => ({ value: String(r.minutes), label: r.label }))}
+            value={String(rangeMinutes)}
+            onchange={(value) => (rangeMinutes = Number(value))}
+          />
         </div>
-        <p class="mt-[9px] text-[12px] text-(--text-tertiary)">{$LL.customCmdCount({ count: m.custom_cmds.length })}</p>
-      </Card>
-    {/if}
-      </aside>
-    </div>
+        {#if historyError}<p class="mb-[9px] text-[13px] text-(--color-danger)">{historyError}</p>{/if}
+        <UsageChart label={$LL.usage()} series={usageSeries} times={historyLabels} max={usageMax} format={(v) => `${+v.toFixed(1)}%`} axis {xLabels} />
+      </section>
+
+      <div class="mt-[9px] grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[9px]">
+        <!-- The network now, and over the range. -->
+        <section class="flex min-w-0 flex-col gap-[9px] rounded-[13px] bg-(--surface-card) p-[13px]">
+          <div class="flex flex-wrap items-baseline gap-[9px]">
+            <h2 class="text-[15px] font-bold">{$LL.network()}</h2>
+            {#if iface}<span class="text-[12px] text-(--text-tertiary)">{iface}</span>{/if}
+            <span class="flex-1"></span>
+            {#if m}
+              <span class="lk-num text-[12px] text-(--text-tertiary)"
+                >↓ {fmtBytes(m.network.rx_bytes_exact ?? m.network.rx_bytes)} · ↑ {fmtBytes(m.network.tx_bytes_exact ?? m.network.tx_bytes)}</span
+              >
+            {/if}
+          </div>
+          <div class="flex gap-[21px]">
+            {#each [{ label: $LL.down(), color: 'var(--color-accent)', value: latest?.net_rx_speed }, { label: $LL.up(), color: 'var(--hue-blue)', value: latest?.net_tx_speed }] as r (r.label)}
+              <div class="flex flex-col gap-[3px]">
+                <span class="flex items-center gap-[5px] text-[12px] text-(--text-secondary)"
+                  ><span class="h-[7px] w-[7px] rounded-full" style:background={r.color}></span>{r.label}</span
+                >
+                <span class="lk-num text-[21px] font-bold tracking-[-0.01em]">{r.value != null ? fmtBytesPerSec(r.value) : '--'}</span>
+              </div>
+            {/each}
+          </div>
+          <UsageChart label={$LL.network()} series={networkSeries} times={historyLabels} format={fmtBytesPerSec} height={55} />
+        </section>
+
+        {#if canProcesses}
+          <!-- The busiest processes; the whole table is one click away. -->
+          <section class="flex min-w-0 flex-col rounded-[13px] bg-(--surface-card) px-[13px] pt-[13px] pb-[7px]">
+            <div class="mb-[5px] flex items-baseline gap-[9px]">
+              <h2 class="text-[15px] font-bold">{$LL.statusTopProcesses()}</h2>
+              <span class="flex-1"></span>
+              <button type="button" class="text-[12px] font-semibold text-(--color-accent-text) hover:underline" onclick={() => win.open('process', { appState: { sort: 'cpu' } })}
+                >{$LL.statusAllProcesses()}</button
+              >
+            </div>
+            {#each topProcs as p (p.pid)}
+              <button
+                type="button"
+                class="-mx-[5px] grid h-[30px] grid-cols-[minmax(0,1fr)_54px_54px] items-center gap-[9px] rounded-[7px] px-[5px] text-left hover:bg-(--fill-hover)"
+                onclick={() => win.open('process', { appState: { sort: 'cpu' } })}
+              >
+                <span class="truncate font-semibold">{p.name}</span>
+                <span class="lk-num text-right text-(--text-secondary)">{p.cpu === null ? '—' : fmtPercent(p.cpu)}</span>
+                <span class="lk-num text-right text-(--text-secondary)">{p.mem === null ? '—' : fmtPercent(p.mem)}</span>
+              </button>
+            {:else}
+              <div class="grid flex-1 place-items-center py-[13px]"><Spinner size="sm" /></div>
+            {/each}
+          </section>
+        {/if}
+
+        {#if m}
+          <section class="min-w-0 rounded-[13px] bg-(--surface-card) px-[13px] pt-[13px] pb-[5px]">
+            <h2 class="mb-[5px] text-[15px] font-bold">{$LL.systemInformation()}</h2>
+            <dl class="divide-y divide-(--border-hairline) text-[13px]">
+              <div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.serverNameLabel()}</dt><dd class="truncate text-right">{m.server_name}</dd></div>
+              {#if m.sys}<div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.osHost()}</dt><dd class="lk-mono truncate text-right text-[12px]">{m.sys}</dd></div>{/if}
+              {#if m.conn}
+                <!-- Linux reports tcpMaxConn as -1 when no static connection
+                     limit exists. Display that sentinel as "unlimited". -->
+                <div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.connections()}</dt><dd class="lk-num">{m.conn.max_conn === -1 ? $LL.unlimited() : m.conn.max_conn}</dd></div>
+              {/if}
+              {#if m.swap.total > 0}<div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.swap()}</dt><dd class="lk-num text-right">{fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}</dd></div>{/if}
+              <div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.lastUpdated()}</dt><dd class="lk-num text-right text-[12px]">{new Date(m.timestamp).toLocaleString()}</dd></div>
+            </dl>
+          </section>
+        {/if}
+
+        <!-- The user's custom commands and their latest output, from the
+             extended cycle. Each row is one line; a longer output opens in the
+             dialog below. -->
+        {#if m?.custom_cmds?.length}
+          <section class="min-w-0 rounded-[13px] bg-(--surface-card) px-[13px] pt-[13px] pb-[7px]">
+            <div class="mb-[5px] flex items-center gap-[9px]">
+              <h2 class="min-w-0 flex-1 text-[15px] font-bold">{$LL.customCmd()}</h2>
+              <IconButton icon="settings" size="sm" label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })} />
+            </div>
+            {#each m.custom_cmds as cmd (cmd.name)}
+              {@const multi = displayOutput(cmd.output).includes('\n')}
+              <!-- The text is the machine's own output, so it is drawn as text
+                   and never as markup. -->
+              <button
+                type="button"
+                class="-mx-[5px] flex h-[30px] w-[calc(100%+10px)] items-center justify-between gap-[9px] rounded-[7px] px-[5px] text-left {multi ? 'hover:bg-(--fill-hover)' : ''}"
+                disabled={!multi}
+                onclick={() => (cmdDetail = multi ? cmd : null)}
+              >
+                <span class="lk-mono shrink-0 truncate text-[12px] text-(--text-tertiary)">{cmd.name}</span>
+                <span class="lk-mono truncate text-[13px] text-(--text-primary)">{firstLine(cmd.output)}</span>
+              </button>
+            {/each}
+            <p class="pt-[3px] text-[12px] text-(--text-tertiary)">{$LL.customCmdCount({ count: m.custom_cmds.length })}</p>
+          </section>
+        {/if}
+      </div>
     {/if}
       </div>
     {/key}
   {/if}
 </main>
 
-<style>
-  .status-app {
-    --status-chart-one: var(--color-accent);
-    --status-chart-two: var(--hue-blue);
-    --status-chart-three: var(--hue-teal);
-    --status-chart-four: var(--hue-violet);
-    --status-chart-five: var(--hue-amber);
-    --status-chart-six: var(--hue-green);
-    --status-chart-seven: var(--hue-teal);
-    --status-chart-eight: var(--hue-red);
-  }
-</style>
 
 <PowerModal open={powerOpen} onclose={() => (powerOpen = false)} />
 

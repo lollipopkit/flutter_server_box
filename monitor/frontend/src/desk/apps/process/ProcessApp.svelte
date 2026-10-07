@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppToolbar, useLifecycle, useMenus, WindowFooter } from '../../sys'
+  import { AppToolbar, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
   import {
     Button,
     Card,
@@ -25,6 +25,7 @@
   /// How often the table is read again while it is in sight and not paused.
   const REFRESH_MS = 5000
 
+  const win = useWindow()
   let view = $state<ProcessView | null>(null)
   let loading = $state(true)
   let error = $state('')
@@ -42,7 +43,7 @@
   /// this machine cannot answer (it printed no `read` column) leaves the
   /// header and the ordering agreeing with each other rather than with the
   /// click.
-  let sort = $state<ProcessSortMode | undefined>(undefined)
+  let sort = $state<ProcessSortMode | undefined>(asked())
   let ascending = $state<boolean | undefined>(undefined)
 
   /// The selected row's PID.
@@ -56,6 +57,18 @@
   let stopError = $state('')
 
   const life = useLifecycle()
+
+  /// The order another app opened this window for (Status's CPU tile).
+  function asked(): ProcessSortMode | undefined {
+    const want = (win.appState as { sort?: unknown } | null)?.sort
+    return want === 'cpu' || want === 'mem' ? want : undefined
+  }
+
+  /// Opened again for an order: that order, the agent's own direction.
+  $effect(() => {
+    const want = asked()
+    if (want && want !== untrack(() => sort)) untrack(() => void load(want, undefined))
+  })
 
   /// A reply that arrives after the desk has switched servers belongs to
   /// neither.

@@ -34,6 +34,17 @@ vi.mock('../lib/xterm', () => ({
   })),
 }))
 
+/// The app's menubar menus, as it last gave them (its iperf and power
+/// entries live there).
+const menus = vi.hoisted(() => ({ provide: null as null | (() => { label: string; items: { label?: string }[] }[]) }))
+vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../desk/sys/window.svelte')>()),
+  useMenus: (provide: () => { label: string; items: { label?: string }[] }[]) => {
+    menus.provide = provide
+  },
+}))
+const menuLabels = () => (menus.provide?.() ?? []).flatMap((m) => m.items.map((i) => i.label ?? ''))
+
 const mocked = vi.mocked(api)
 
 const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
@@ -183,13 +194,13 @@ describe('Dashboard iperf action', () => {
     capabilitiesStore.byServer['local'] = caps([])
     render(Dashboard)
     await rendered()
-    expect(screen.queryByRole('button', { name: /^iperf$/i })).toBeNull()
+    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(false)
   })
 
   it('is offered when the agent lists iperf and the account holds shell', async () => {
     capabilitiesStore.byServer['local'] = caps(['iperf'])
     render(Dashboard)
     await rendered()
-    expect(await screen.findByRole('button', { name: /^iperf$/i })).toBeInTheDocument()
+    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(true)
   })
 })

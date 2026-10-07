@@ -16,8 +16,8 @@
   const { kind, metrics: m, history }: Props = $props()
 
   const labels = $derived(history.map((p) => p.timestamp))
-  const chartOne = 'var(--status-chart-one)'
-  const chartTwo = 'var(--status-chart-two)'
+  const chartOne = 'var(--color-accent)'
+  const chartTwo = 'var(--hue-blue)'
 
   // `adapt_cpu` resolves cumulative Linux ticks and one-shot BSD/Windows
   // counters into percentages. The first Linux sample has no baseline.
