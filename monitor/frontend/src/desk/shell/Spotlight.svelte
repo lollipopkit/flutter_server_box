@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { AppWindow, FolderOpen, Search, Server } from '@lucide/svelte'
-  import type { Component } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { serverNames } from '../../lib/serverNames.svelte'
   import { serverMatches } from '../../lib/serverSearch'
   import { displayName, servers } from '../../lib/servers.svelte'
   import { app, type AppSpec } from '../apps'
   import { useDesk } from '../deskState.svelte'
+  import LkAppIcon, { type IconTone } from '../lk/AppIcon.svelte'
+  import Icon from '../lk/Icon.svelte'
   import AppIcon from './AppIcon.svelte'
 
   interface Props {
@@ -22,13 +22,16 @@
     queueMicrotask(() => el.focus())
   }
 
+
   interface Hit {
     key: string
     group: string
     label: string
     detail?: string
     spec?: AppSpec
-    icon?: Component
+    /// For a hit that is not an app: its glyph and tone.
+    glyph?: string
+    tone?: IconTone
     run: () => void
   }
 
@@ -44,7 +47,8 @@
         group: $LL.files(),
         label: query.trim(),
         detail: $LL.deskOpenInFiles(),
-        icon: FolderOpen,
+        glyph: 'folder',
+        tone: 'sky',
         run: () => desk.open('files', { appState: { path: query.trim() }, newWindow: true }),
       })
     }
@@ -62,7 +66,8 @@
           key: `win:${w.id}`,
           group: $LL.deskWindows(),
           label,
-          icon: AppWindow,
+          glyph: 'select_window',
+          tone: 'mist',
           run: () => desk.windows.focus(w.id),
         })
       }
@@ -77,7 +82,8 @@
             group: $LL.deskServers(),
             label: name,
             detail: s.url,
-            icon: Server,
+            glyph: 'dns',
+            tone: 'pale',
             run: () => onswitch(s.id),
           })
         }
@@ -114,21 +120,18 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="desk-sheet desk-pop absolute bottom-(--dock-reserve) left-1/2 z-[100002] flex max-h-[calc(100%-var(--dock-reserve)-var(--menubar-h)-1.5rem)] w-[min(44rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col rounded-(--radius-panel) p-5"
-  role="dialog"
-  aria-label={$LL.deskSearch()}
-  tabindex="-1"
-  onpointerdown={(e) => e.stopPropagation()}
+  class="absolute inset-0 z-[100002] flex justify-center"
+  onpointerdown={(e) => {
+    e.stopPropagation()
+    if (e.target === e.currentTarget) desk.spotlight = false
+  }}
 >
-  <label class="block">
-    <span class="desk-eyebrow">{$LL.deskSearch()}</span>
-    <span
-      class="mt-1.5 flex items-center gap-2.5 rounded-xl border border-line px-3 py-2 transition-colors focus-within:border-primary"
-    >
-      <Search class="h-4 w-4 opacity-60" />
+  <div class="lk-spot mt-[18vh] self-start" role="dialog" aria-label={$LL.deskSearch()}>
+    <label class="lk-spot__bar">
+      <Icon name="search" size={22} />
       <input
-        class="w-full bg-transparent text-[0.95rem] outline-none placeholder:opacity-50"
         placeholder={$LL.deskSpotlightHint()}
         bind:value={query}
         {onkeydown}
@@ -137,34 +140,36 @@
         aria-expanded={hits.length > 0}
         aria-controls="desk-spotlight-results"
       />
-    </span>
-  </label>
-  {#if hits.length > 0}
-    <ul id="desk-spotlight-results" class="-mx-1 mt-3 min-h-0 overflow-y-auto px-1" role="listbox">
-      {#each hits as hit, i (hit.key)}
-        {#if i === 0 || hits[i - 1].group !== hit.group}
-          <li class="desk-eyebrow px-2.5 pb-1 pt-2" role="presentation">
-            {hit.group}
+    </label>
+    {#if query.trim()}
+      <ul id="desk-spotlight-results" class="lk-spot__list" role="listbox">
+        {#each hits as hit, i (hit.key)}
+          {#if i === 0 || hits[i - 1].group !== hit.group}
+            <li class="lk-spot__group" role="presentation">{hit.group}</li>
+          {/if}
+          <li role="option" aria-selected={i === selected}>
+            <button
+              class="lk-spot__row w-full text-left"
+              class:lk-spot__row--on={i === selected}
+              onpointermove={() => (selected = i)}
+              onclick={() => run(hit)}
+            >
+              {#if hit.spec}
+                <AppIcon spec={hit.spec} size={26} />
+              {:else if hit.glyph}
+                <LkAppIcon glyph={hit.glyph} tone={hit.tone} size={26} />
+              {/if}
+              <span class="min-w-0">
+                <span class="lk-spot__title block truncate">{hit.label}</span>
+                {#if hit.detail}<span class="lk-spot__sub block truncate">{hit.detail}</span>{/if}
+              </span>
+              <span class="lk-spot__kind">{hit.group}</span>
+            </button>
           </li>
-        {/if}
-        {@const Icon = hit.icon}
-        <li role="option" aria-selected={i === selected}>
-          <button
-            class="flex w-full items-center gap-2.5 rounded-[0.6rem] border border-transparent px-2.5 py-1.5 text-left text-sm"
-            class:desk-chosen={i === selected}
-            onpointermove={() => (selected = i)}
-            onclick={() => run(hit)}
-          >
-            {#if hit.spec}
-              <AppIcon spec={hit.spec} size={1.75} />
-            {:else if Icon}
-              <span class="desk-glyph h-7 w-7 rounded-[0.5rem]"><Icon class="h-4 w-4" /></span>
-            {/if}
-            <span class="flex-1 truncate font-medium">{hit.label}</span>
-            {#if hit.detail}<span class="desk-muted truncate text-xs">{hit.detail}</span>{/if}
-          </button>
-        </li>
-      {/each}
-    </ul>
-  {/if}
+        {:else}
+          <li class="lk-spot__empty">{$LL.deskNoResults()}</li>
+        {/each}
+      </ul>
+    {/if}
+  </div>
 </div>

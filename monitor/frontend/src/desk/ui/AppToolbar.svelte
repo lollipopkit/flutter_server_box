@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { ChevronLeft } from '@lucide/svelte'
-  import { IconButton } from '@serverbox/webui'
   import type { Snippet } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
+  import { useWindow } from '../deskState.svelte'
+  import IconButton from '../lk/IconButton.svelte'
 
-  /// An app's toolbar, the first thing in its window under the title bar:
-  /// what this view is about and what can be done to it. The app's name is
-  /// the window's title already; [title] is for a view inside the app (a
-  /// guest, a service), with [back] to leave it.
+  /// An app's title and tools. Inside a window they go into the window's
+  /// title bar (the app's name is the bar's title already; [title] is for a
+  /// view inside the app, with [back] to leave it); outside one (a test) they
+  /// are drawn here. Write it first in the app's markup.
 
   interface Props {
     title?: string
@@ -16,43 +16,42 @@
     leading?: Snippet
     /// Leaves a view inside the app; absent at the app's first view.
     back?: () => void
-    /// Right-aligned: buttons, badges.
+    /// At the bar's right: IconButtons, a SegmentedControl, a small Button.
     actions?: Snippet
-    /// Other views of the app, under the title row.
+    /// Other views of the app, under the bar.
     tabs?: Snippet
   }
 
   const { title, subtitle, leading, back, actions, tabs }: Props = $props()
+  const chrome = useWindow().chrome
+
+  if (chrome) {
+    // One entry for this toolbar's life, kept in step with its props.
+    const entry = $state<{ title?: string; subtitle?: string; leading?: Snippet; back?: () => void; actions?: Snippet; tabs?: Snippet }>({})
+    $effect.pre(() => {
+      entry.title = title
+      entry.subtitle = subtitle
+      entry.leading = leading
+      entry.back = back
+      entry.actions = actions
+      entry.tabs = tabs
+    })
+    $effect(() => chrome.pushToolbar(entry))
+  }
 </script>
 
-<header class="app-toolbar sticky top-0 z-10 border-b border-line bg-surface/90 backdrop-blur">
-  <div class="flex min-h-13 items-center gap-2 px-3.5 py-2">
-    {#if back}
-      <IconButton class="-ml-1" label={$LL.back()} onclick={back}>
-        <ChevronLeft class="h-5 w-5" />
-      </IconButton>
-    {/if}
-    {#if leading}{@render leading()}{/if}
+{#if !chrome}
+  <header class="flex min-h-11 flex-wrap items-center gap-[9px] px-[17px] py-[5px]">
+    {#if back}<IconButton icon="chevron_left" label={$LL.back()} onclick={back} />{/if}
+    {@render leading?.()}
     {#if title || subtitle}
       <div class="min-w-0 leading-tight">
-        {#if title}<h1 class="truncate font-display text-[0.95rem] font-bold text-fg-strong">{title}</h1>{/if}
-        {#if subtitle}<p class="truncate text-xs text-muted-fg">{subtitle}</p>{/if}
+        {#if title}<h1 class="lk-window__title">{title}</h1>{/if}
+        {#if subtitle}<p class="truncate text-[12px] text-(--text-tertiary)">{subtitle}</p>{/if}
       </div>
     {/if}
     <span class="flex-1"></span>
-    {#if actions}
-      <div class="flex shrink-0 items-center gap-1.5">{@render actions()}</div>
-    {/if}
-  </div>
-  {#if tabs}
-    <div class="px-3">{@render tabs()}</div>
-  {/if}
-</header>
-
-<style>
-  /* Nothing in it (an app whose actions all depend on a state it is not in):
-     no strip under the title bar. */
-  .app-toolbar:not(:has(:global(:is(h1, p, button, a, input, select, svg, img)))) {
-    display: none;
-  }
-</style>
+    {#if actions}<div class="flex shrink-0 items-center gap-[3px]">{@render actions()}</div>{/if}
+    {#if tabs}<div class="w-full">{@render tabs()}</div>{/if}
+  </header>
+{/if}

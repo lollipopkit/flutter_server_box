@@ -1,16 +1,12 @@
 <script lang="ts">
-  import { ChevronLeft, ChevronRight } from '@lucide/svelte'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { monthGrid } from '../calendar'
-  import PanelHead from './PanelHead.svelte'
+  import IconButton from '../lk/IconButton.svelte'
 
   const today = new Date()
   let shown = $state(new Date(today.getFullYear(), today.getMonth(), 1))
   const weeks = $derived(monthGrid(shown.getFullYear(), shown.getMonth()))
   const title = $derived(new Intl.DateTimeFormat($locale, { year: 'numeric', month: 'long' }).format(shown))
-  const todayLabel = $derived(
-    new Intl.DateTimeFormat($locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(today),
-  )
   const weekdays = $derived(
     // 2023-01-02 was a Monday.
     Array.from({ length: 7 }, (_, i) =>
@@ -27,40 +23,38 @@
   }
 </script>
 
-<PanelHead eyebrow={$LL.deskCalendar()} {title} subtitle={todayLabel}>
-  {#snippet aside()}
-    <div class="flex gap-1">
-      <button class="desk-card grid h-7 w-7 place-items-center" aria-label={$LL.deskPrevious()} onclick={() => step(-1)}>
-        <ChevronLeft class="h-4 w-4" />
-      </button>
-      <button class="desk-card grid h-7 w-7 place-items-center" aria-label={$LL.deskNext()} onclick={() => step(1)}>
-        <ChevronRight class="h-4 w-4" />
-      </button>
+<div class="lk-ctile lk-ctile--col">
+  <div class="flex items-center justify-between">
+    <span class="text-[15px] font-semibold">{title}</span>
+    <div class="flex">
+      <IconButton icon="chevron_left" label={$LL.deskPrevious()} size="sm" onclick={() => step(-1)} />
+      <IconButton icon="chevron_right" label={$LL.deskNext()} size="sm" onclick={() => step(1)} />
     </div>
-  {/snippet}
-</PanelHead>
-
-<div class="grid grid-cols-7 gap-1.5 text-center text-[0.8rem]">
-  {#each weekdays as d, i (i)}
-    <span class="desk-muted pb-0.5 text-xs font-semibold">{d}</span>
-  {/each}
-  {#each weeks.flat() as day (day.date.toISOString())}
-    <span
-      class="grid h-10 place-items-center rounded-[0.6rem] border font-semibold tabular-nums"
-      class:day-out={!day.inMonth}
-      class:border-line={!isToday(day.date)}
-      class:desk-chosen={isToday(day.date)}
-      class:border-transparent={isToday(day.date)}
-      aria-current={isToday(day.date) ? 'date' : undefined}
-    >
-      {day.date.getDate()}
-    </span>
-  {/each}
+  </div>
+  <div class="grid grid-cols-7 gap-[3px] text-center text-[12px]">
+    {#each weekdays as d, i (i)}
+      <span class="lk-caps py-[3px]">{d}</span>
+    {/each}
+    {#each weeks.flat() as day (day.date.toISOString())}
+      <span
+        class="lk-num grid h-[30px] place-items-center rounded-full text-[13px]"
+        class:out={!day.inMonth}
+        class:today={isToday(day.date)}
+        aria-current={isToday(day.date) ? 'date' : undefined}
+      >
+        {day.date.getDate()}
+      </span>
+    {/each}
+  </div>
 </div>
 
 <style>
-  .day-out {
-    background: hsl(var(--ink) / 0.06);
-    color: hsl(var(--ink) / 0.4);
+  .out {
+    color: var(--text-disabled);
+  }
+  .today {
+    background: var(--color-accent);
+    color: var(--text-on-accent);
+    font-weight: var(--weight-semibold);
   }
 </style>

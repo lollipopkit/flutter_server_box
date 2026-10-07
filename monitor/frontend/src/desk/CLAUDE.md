@@ -9,27 +9,27 @@ The panel is a macOS-style desktop: a lock screen to choose a server, then that 
 - `windows.svelte.ts` (state, no DOM) + `geometry.ts` (pure) — tested in `tests/deskWindows.test.ts`. `window/Window.svelte` is the chrome (pointer events: drag, 8 edges, snap to halves/top, double-click zoom).
 - `session.svelte.ts` (window session, revision CAS, the focused tab wins), `prefs.svelte.ts`, `notifications.svelte.ts`, `storage.ts` (`AgentStorage` when the agent lists `desk`, `BrowserStorage` otherwise), `deskApi.ts` (always to an explicit `ServerEntry`).
 - `shell/` — Menubar, Dock, Launchpad, ControlCenter, NotificationCenter, CalendarPanel, Spotlight, Banner, ContextMenu, DeskIcons, Wallpaper, AppIcon.
-- `apps.ts` — **the only list of apps** (id, title, icon, tint, availability, instances, sizes, lazy `load`). `apps/<id>/` holds each app.
-- `ui/` — what apps are built from: `AppToolbar`, `SplitView` (sidebar + content, the sidebar folds below `@3xl`), `SourceGroup` (`boxed` for Settings-style cards)/`SourceItem` (sidebar rows), `Section` (titled card, count, actions), `Segmented` (a few views or values), `StatusPill` (ACTIVE/EXITED-style state).
-- `desk.css` — the palette (`--glass` light surface, `--ink` text and borders; dark swaps them), the shared kit's `--sb-*` tokens set from it inside `.desk-root` (so `bg`, `surface`, `fg`, `line`, `soft`, `primary`, `Button`, `IconButton` follow the mode and the accent), and `desk-*` classes in `@layer components`. Shell parts use these, never raw colours.
+- `apps.ts` — **the only list of apps** (id, title, glyph, tone, availability, instances, sizes, lazy `load`). `apps/<id>/` holds each app.
+- `ui/` — `AppToolbar` (title and tools into the window's title bar) and `SplitView` (sidebar into the window's inset sidebar, folding in a narrow window); the rest are TODO-remove shims. `lk/` — the design system (below).
+- `desk.css` — window placement and animation, wallpaper light/dark; imports `lk/lk.css`.
 
-## Look: Bloom (after ClawBox, `/Users/lk/proj/claw-box/webui`, reference only)
+## Design system: lollipopkit (`lk/`)
 
-The design is called Bloom (after its default wallpaper): soft blooms of colour, a berry accent, opaque sheets.
+The desk follows the lollipopkit Design System exactly; `lk/` is its Svelte form. **Apps build their UI from `lk` and nothing else.**
 
-
-- Windows and panels are opaque sheets (white / black), hairline borders, soft shadows, large radii; the menubar and dock are frosted glass over the wallpaper.
-- The accent (default berry `#8b2252`) marks what is chosen: a tint plus a tinted border (`desk-chosen`), never a solid black fill. A primary `Button` is the accent.
-- App icons are one glyph on a neutral tile (`AppIcon`), no colours per app.
-- Panels open over the dock (launchpad, Spotlight centred; control centre, notifications, calendar at the right) with `PanelHead`: a capitalised eyebrow, a bold title, a rule.
-- In apps: content as `Section` cards (radius 24, bold 18px titles, a count circle), state as `StatusPill`, choices as `Segmented`, actions as bordered `IconButton`s in the `AppToolbar`.
+- `lk/lk.css` — tokens (`--color-accent`, `--surface-*`, `--text-*`, `--border-hairline`, `--fill-hover`, `--space-*` odd scale 3/5/7/9/11/13/17/21/27/34/55, `--radius-*` 5/7/9/11/13/17/21/27, `--shadow-*`, `--glass-*`, `--dur-*`/`--ease-*` springs) scoped to `.lk`; dark via `data-theme="dark"` on <html> (`lib/theme.svelte.ts`). `lk-*` classes in `@layer components`. Values are the design system's; never invent one.
+- Components (`lk/index.ts`): Icon (Material Symbols Rounded by name), Button (primary/secondary/tinted/ghost/destructive), IconButton, Badge, Input, Select, Checkbox, Radio, Switch, Slider, SegmentedControl, Card (flat/raised/glass), Tooltip, Dialog, Notification, Menu, AppIcon, TrafficLights, SidebarSection, SidebarItem, ControlTile, Group + Row (settings lists).
+- Rules: one seed (berry `#730c37`, no accent picker); Figtree 13px body, JetBrains Mono for paths/permissions/terminal (`lk-mono`), tabular figures (`lk-num`); flat cards (no border, no shadow; `raised` only on a tinted ground); one hairline (`--border-hairline`, 0.5px); glass only for chrome over the wallpaper; selection in lists solid accent with white text, in sidebars soft accent with a filled glyph; segmented thumb raised white, never inverted; section headings `lk-caps`; sentence case, dry copy, no emoji; empty state = one 44–56px glyph + at most two words; press = shrink and spring back.
+- Icons: Material Symbols Rounded names only (no lucide in new code, no hand-drawn SVG). App icons: `AppIcon` glyph + tone from `apps.ts`.
+- The window frame (`window/Window.svelte`) draws the title bar and the inset sidebar; an app puts its title/tools there with `ui/AppToolbar` and its sidebar with `ui/SplitView` (they register into `useWindow().chrome`). `ui/SourceGroup`, `SourceItem`, `Segmented`, `Section`, `StatusPill` are TODO-remove shims; use `lk` instead.
+- Never name where the design system was authored, in code or commits: it is "the lollipopkit Design System".
 
 ## Rules
 
 - **Minimised windows are hidden, never unmounted**; windows are keyed by id. An app keeps its state and sockets while open.
 - **A window body is a size container.** Apps use container variants (`@md:`, `@3xl:`), never viewport breakpoints (`sm:`, `md:`, `lg:`): a narrow window on a wide screen must lay out narrow.
 - No `min-h-screen`, `h-screen`, `100vh`/`dvh` inside an app: the window is the screen. Use `h-full`/`min-h-full`.
-- `position: fixed` inside an app is relative to its window (the window's `backdrop-filter` makes it the containing block): a `Modal` is a sheet over its window, which is intended, and scrolls inside it when taller.
+- `position: fixed` inside an app is relative to its window (`.desk-window` has `contain: layout`, which makes it the containing block): a `Modal` is a sheet over its window, which is intended, and scrolls inside it when taller.
 - An app never imports `layout`, `Sidebar`, `PageHeader` or `FeatureTabs` (being deleted). Its first element is `ui/AppToolbar.svelte` (no title at the app's first view — the window shows it; `title` + `back` for a view inside the app).
 - Going to another app: `useWindow().open(appId, { appState })`. The receiving app reads `useWindow().appState` once on mount (and `$effect` on it if it should follow a second open, e.g. Files given a new path).
 - Per-window state worth restoring after a reload (a path, a tab): `useWindow().setAppState(...)` — small JSON, ≤16 KiB, never secrets.

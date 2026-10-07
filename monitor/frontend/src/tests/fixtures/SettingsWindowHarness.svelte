@@ -5,6 +5,7 @@
 
   import SettingsApp from '../../desk/apps/settings/SettingsApp.svelte'
   import { provideDesk, provideWindow, type Desk } from '../../desk/deskState.svelte'
+  import { WindowChrome } from '../../desk/window/chrome.svelte'
 
   interface Props {
     desk: Desk
@@ -15,8 +16,12 @@
 
   // svelte-ignore state_referenced_locally
   provideDesk(desk)
+  const chrome = new WindowChrome()
   // svelte-ignore state_referenced_locally
-  provideWindow(desk, id)
+  provideWindow(desk, id, chrome)
 </script>
 
+<!-- What the window's frame would draw: the sidebar and the bar's title. -->
+{#if chrome.sidebar}<nav>{@render chrome.sidebar.content()}</nav>{/if}
+{#if chrome.toolbar?.title}<h1>{chrome.toolbar.title}</h1>{/if}
 <SettingsApp />

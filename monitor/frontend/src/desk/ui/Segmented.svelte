@@ -1,14 +1,13 @@
 <script lang="ts" generics="T extends string">
   import type { Component } from 'svelte'
 
-  /// A choice of a few views or values, side by side: a bordered strip, the
-  /// chosen one tinted with the accent.
+  /// TODO: remove once every app uses `lk/SegmentedControl` (glyph names) —
+  /// a compatibility shim drawing lucide icons on the design system's thumb.
 
   interface Option {
     value: T
     label: string
     icon?: Component
-    /// Shows only the icon, the label as its tooltip.
     iconOnly?: boolean
   }
 
@@ -16,29 +15,22 @@
     options: Option[]
     value: T
     onchange: (value: T) => void
-    /// Stretches to the width it is given, each option an equal share.
     block?: boolean
-    /// Names the group for a screen reader.
     label?: string
   }
 
   const { options, value, onchange, block = false, label }: Props = $props()
+  const at = $derived(Math.max(0, options.findIndex((o) => o.value === value)))
 </script>
 
-<div
-  class="{block ? 'flex w-full' : 'inline-flex'} gap-0.5 rounded-[0.625rem] border border-line p-0.5"
-  role="group"
-  aria-label={label}
->
+<div role="group" aria-label={label} class="lk-seg" class:lk-seg--block={block}>
+  <span class="lk-seg__thumb" style:width="calc((100% - 4px) / {options.length})" style:transform="translateX({at * 100}%)"></span>
   {#each options as opt (opt.value)}
-    {@const chosen = opt.value === value}
     <button
       type="button"
-      class="flex items-center justify-center gap-1.5 rounded-[0.5rem] px-2.5 py-1 text-[0.8rem] transition-colors {chosen
-        ? 'desk-chosen font-semibold text-fg-strong'
-        : 'text-muted-fg hover:bg-soft hover:text-fg'}"
-      class:flex-1={block}
-      aria-pressed={chosen}
+      class="lk-seg__item"
+      class:lk-seg__item--on={opt.value === value}
+      aria-pressed={opt.value === value}
       aria-label={opt.iconOnly ? opt.label : undefined}
       title={opt.iconOnly ? opt.label : undefined}
       onclick={() => onchange(opt.value)}

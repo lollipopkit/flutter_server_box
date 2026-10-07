@@ -1,0 +1,436 @@
+/* lollipopkit Design System tokens (tokens/*.css), scoped to `.lk` — the
+   desk's root and the lock screen — instead of :root, so nothing outside the
+   desk sees them. Dark mode keys on `data-theme="dark"` on <html>, which
+   lib/theme.svelte.ts keeps in step with the theme in effect. Values are the
+   design system's; change them there first. */
+
+/* ---------- Colour (tokens/colors.css) ----------
+   One seed — #730c37, "berry" — and everything else derived from its hue.
+   Neutrals keep a trace of the seed's chroma, so light greys read warm-pink,
+   never blue. */
+.lk {
+  --lk-seed: #730c37;
+
+  /* Berry tonal palette */
+  --berry-98: #fff7f9;
+  --berry-95: #ffecf1;
+  --berry-90: #ffd9e3;
+  --berry-80: #ffb0c7;
+  --berry-70: #f585a7;
+  --berry-60: #d95f86;
+  --berry-50: #b83d68;
+  --berry-40: #962451;
+  --berry-35: #730c37;
+  --berry-30: #5e0a2d;
+  --berry-20: #420620;
+  --berry-10: #2a0313;
+
+  /* Tinted neutrals */
+  --ink-99: #fdf9fa;
+  --ink-98: #faf5f6;
+  --ink-96: #f5eef0;
+  --ink-94: #efe7ea;
+  --ink-92: #e9e0e3;
+  --ink-90: #e2d9dc;
+  --ink-80: #c8bec1;
+  --ink-60: #958a8e;
+  --ink-50: #7b7074;
+  --ink-40: #62585b;
+  --ink-30: #4a4144;
+  --ink-22: #362f31;
+  --ink-17: #2b2527;
+  --ink-12: #211c1e;
+  --ink-10: #1c1719;
+  --ink-6: #140f11;
+  --ink-4: #0e0a0c;
+
+  /* Fixed hues (do not follow the seed) */
+  --hue-green: #2fa85a;
+  --hue-amber: #e9a23b;
+  --hue-red: #e5484d;
+  --hue-blue: #3b82f6;
+  --hue-violet: #8b5cf6;
+  --hue-teal: #14a3a3;
+
+  /* Window controls — macOS order and meaning, lollipopkit tones */
+  --light-close: #f2555a;
+  --light-minimize: #f5b83d;
+  --light-zoom: #3cc35f;
+  --light-idle: #d6cdd0;
+
+  /* Semantic: light */
+  --color-accent: var(--berry-35);
+  --color-accent-hover: #851544;
+  --color-accent-press: var(--berry-30);
+  --color-accent-text: var(--berry-35);
+  --color-accent-soft: var(--berry-90);
+  --color-on-accent-soft: var(--berry-20);
+  --text-on-accent: #ffffff;
+
+  --color-success: #23864a;
+  --color-success-soft: #dcf3e3;
+  --color-warning: #a8650b;
+  --color-warning-soft: #fcefd6;
+  --color-danger: #c62f3a;
+  --color-danger-soft: #fde1e2;
+  --color-info: #2563eb;
+  --color-info-soft: #e0eaff;
+
+  --surface-desktop: var(--ink-94);
+  --surface-window: var(--ink-99);
+  --surface-content: #ffffff;
+  --surface-card: var(--ink-96);
+  --surface-raised: #ffffff;
+  --surface-raised-hover: var(--ink-98);
+  --surface-control: var(--ink-94);
+  --surface-field: #ffffff;
+  --surface-selected: var(--berry-90);
+  --surface-terminal: #ffffff;
+
+  --text-primary: #1f1619;
+  --text-secondary: var(--ink-40);
+  --text-tertiary: var(--ink-60);
+  --text-disabled: var(--ink-80);
+
+  --border-hairline: rgba(70, 20, 40, 0.09);
+  --border-strong: rgba(70, 20, 40, 0.17);
+  --border-glass: rgba(255, 255, 255, 0.55);
+
+  --fill-hover: rgba(70, 20, 40, 0.06);
+  --fill-press: rgba(70, 20, 40, 0.11);
+
+  /* App icons — Berry: flat tile / glyph */
+  --icon-berry-bg: var(--berry-35);
+  --icon-berry-fg: var(--berry-90);
+  --icon-soft-bg: var(--berry-90);
+  --icon-soft-fg: var(--berry-35);
+  --icon-bright-bg: var(--berry-60);
+  --icon-bright-fg: #ffffff;
+  --icon-pale-bg: var(--berry-95);
+  --icon-pale-fg: var(--berry-50);
+  --icon-mist-bg: var(--ink-94);
+  --icon-mist-fg: var(--berry-40);
+  --icon-ink-bg: var(--ink-12);
+  --icon-ink-fg: var(--berry-80);
+  --icon-sky-bg: #dbe8ff;
+  --icon-sky-fg: #1e40af;
+  --icon-violet-bg: #ece4ff;
+  --icon-violet-fg: #4c1d95;
+  --icon-teal-bg: #d6f5f3;
+  --icon-teal-fg: #0b5e5f;
+  --icon-leaf-bg: #dcf3e3;
+  --icon-leaf-fg: #1d6b3b;
+  --icon-amber-bg: #fcefd6;
+  --icon-amber-fg: #8a4f06;
+
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-accent) 32%, transparent);
+}
+
+:root[data-theme='dark'] .lk {
+  color-scheme: dark;
+  --color-accent: var(--berry-50);
+  --color-accent-hover: #c74a76;
+  --color-accent-press: var(--berry-40);
+  --color-accent-text: var(--berry-80);
+  --color-accent-soft: #4a1229;
+  --color-on-accent-soft: var(--berry-90);
+
+  --color-success: #5fd18a;
+  --color-success-soft: #173a25;
+  --color-warning: #f2bd62;
+  --color-warning-soft: #3d2c10;
+  --color-danger: #ff8086;
+  --color-danger-soft: #45181b;
+  --color-info: #8cb4ff;
+  --color-info-soft: #172a4d;
+
+  --surface-desktop: var(--ink-6);
+  --surface-window: var(--ink-10);
+  --surface-content: #171214;
+  --surface-card: #241e20;
+  --surface-raised: var(--ink-22);
+  --surface-raised-hover: #3e3639;
+  --surface-control: var(--ink-17);
+  --surface-field: #241e20;
+  --surface-selected: #4a1229;
+  --surface-terminal: #0e0a0c;
+
+  --text-primary: #f5eef0;
+  --text-secondary: #bcb1b5;
+  --text-tertiary: #877c80;
+  --text-disabled: #4f4649;
+
+  --border-hairline: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-glass: rgba(255, 255, 255, 0.12);
+
+  --fill-hover: rgba(255, 255, 255, 0.07);
+  --fill-press: rgba(255, 255, 255, 0.12);
+  --light-idle: #4a4144;
+  --icon-berry-bg: var(--berry-50);
+  --icon-berry-fg: #ffffff;
+  --icon-soft-bg: #4a1229;
+  --icon-soft-fg: var(--berry-80);
+  --icon-bright-bg: var(--berry-70);
+  --icon-bright-fg: var(--berry-10);
+  --icon-pale-bg: #341020;
+  --icon-pale-fg: var(--berry-90);
+  --icon-mist-bg: var(--ink-17);
+  --icon-mist-fg: var(--berry-80);
+  --icon-ink-bg: var(--ink-4);
+  --icon-ink-fg: var(--berry-80);
+  --icon-sky-bg: #0b1f5c;
+  --icon-sky-fg: #9ec0ff;
+  --icon-violet-bg: #22094d;
+  --icon-violet-fg: #c4b0ff;
+  --icon-teal-bg: #05302f;
+  --icon-teal-fg: #93e0da;
+  --icon-leaf-bg: #0f2e1b;
+  --icon-leaf-fg: #8fe0ac;
+  --icon-amber-bg: #3a2506;
+  --icon-amber-fg: #f7c463;
+}
+
+/* ---------- Type (tokens/typography.css) ----------
+   13px is the body size (desktop density). Fonts are bundled
+   (`@fontsource-variable/figtree`, `@fontsource/jetbrains-mono`,
+   `material-symbols`), never fetched from a CDN. */
+.lk {
+  --font-ui: 'Figtree Variable', 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+  --font-display: 'Figtree Variable', 'Figtree', -apple-system, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-15: 15px;
+  --text-17: 17px;
+  --text-21: 21px;
+  --text-27: 27px;
+  --text-34: 34px;
+  --text-55: 55px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --leading-body: 1.45;
+
+  --tracking-display: -0.02em;
+  --tracking-caps: 0.06em;
+  --figures-tabular: tabular-nums;
+}
+
+/* ---------- Spacing (tokens/spacing.css) ----------
+   Odd rhythm, inherited from ServerBox. Do not snap 13 → 12 or 17 → 16. */
+.lk {
+  --space-1: 1px;
+  --space-3: 3px;
+  --space-5: 5px;
+  --space-7: 7px;
+  --space-9: 9px;
+  --space-11: 11px;
+  --space-13: 13px;
+  --space-17: 17px;
+  --space-21: 21px;
+  --space-27: 27px;
+  --space-34: 34px;
+  --space-55: 55px;
+
+  --menubar-height: 30px;
+  --titlebar-height: 44px;
+  --toolbar-height: 44px;
+  --sidebar-width: 200px;
+  --sidebar-inset: 7px;
+  --dock-icon: 44px;
+  --dock-padding: 9px;
+  --dock-gap: 9px;
+  --dock-bottom: 9px;
+  --row-height: 30px;
+  --menu-item-height: 26px;
+  --control-height: 30px;
+  --control-height-sm: 24px;
+  --control-height-lg: 36px;
+  --traffic-light: 12px;
+  --traffic-gap: 8px;
+}
+
+/* ---------- Radius (tokens/radius.css) ----------
+   Rounder the bigger the surface; inner = outer − inset. */
+.lk {
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-control: 9px;
+  --radius-md: 11px;
+  --radius-card: 13px;
+  --radius-window: 17px;
+  --radius-panel: 21px;
+  --radius-sheet: 27px;
+  --radius-icon: 23%;
+  --radius-full: 999px;
+}
+
+/* ---------- Elevation (tokens/elevation.css) ----------
+   Content is flat; only what floats casts a shadow, tinted with the seed. */
+.lk {
+  --shadow-control: 0 0.5px 1px rgba(60, 10, 30, 0.14), 0 1px 2px rgba(60, 10, 30, 0.06);
+  --shadow-thumb: 0 1px 3px rgba(60, 10, 30, 0.22), 0 0 0 0.5px rgba(60, 10, 30, 0.08);
+  --shadow-popover: 0 0 0 0.5px rgba(60, 10, 30, 0.12), 0 8px 24px rgba(60, 10, 30, 0.16);
+  --shadow-menu: 0 0 0 0.5px rgba(60, 10, 30, 0.14), 0 10px 30px rgba(60, 10, 30, 0.2);
+  --shadow-window: 0 0 0 0.5px rgba(60, 10, 30, 0.16), 0 12px 32px rgba(60, 10, 30, 0.16),
+    0 34px 90px rgba(60, 10, 30, 0.22);
+  --shadow-window-inactive: 0 0 0 0.5px rgba(60, 10, 30, 0.12), 0 6px 18px rgba(60, 10, 30, 0.1),
+    0 18px 48px rgba(60, 10, 30, 0.12);
+  --shadow-dock: 0 0 0 0.5px rgba(60, 10, 30, 0.1), 0 10px 40px rgba(60, 10, 30, 0.22);
+  --shadow-icon: 0 1px 2px rgba(40, 5, 20, 0.2), 0 4px 10px rgba(40, 5, 20, 0.16);
+  --scrim: rgba(30, 6, 16, 0.28);
+}
+:root[data-theme='dark'] .lk {
+  --shadow-control: 0 0.5px 1px rgba(0, 0, 0, 0.5);
+  --shadow-thumb: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-menu: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-window: 0 0 0 0.5px rgba(0, 0, 0, 0.8), 0 12px 32px rgba(0, 0, 0, 0.4), 0 34px 90px rgba(0, 0, 0, 0.55);
+  --shadow-window-inactive: 0 0 0 0.5px rgba(0, 0, 0, 0.7), 0 6px 18px rgba(0, 0, 0, 0.3),
+    0 18px 48px rgba(0, 0, 0, 0.35);
+  --shadow-dock: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 10px 40px rgba(0, 0, 0, 0.5);
+  --scrim: rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Materials (tokens/materials.css) ----------
+   Glass only for chrome that floats over the wallpaper or other windows. */
+.lk {
+  --glass-bar: rgba(253, 248, 250, 0.6);
+  --glass-dock: rgba(255, 248, 250, 0.42);
+  --glass-menu: rgba(251, 246, 248, 0.8);
+  --glass-panel: rgba(250, 244, 246, 0.74);
+  --glass-tile: rgba(255, 255, 255, 0.55);
+  --glass-sidebar: rgba(243, 234, 237, 0.82);
+  --blur-bar: blur(30px) saturate(1.8);
+  --blur-menu: blur(40px) saturate(1.8);
+  --blur-dock: blur(24px) saturate(1.6);
+  --blur-sidebar: blur(50px) saturate(1.5);
+
+  --wallpaper-berry: radial-gradient(120% 90% at 15% 10%, #ffd9e3 0%, transparent 55%),
+    radial-gradient(90% 80% at 90% 20%, #f2c9d8 0%, transparent 60%),
+    radial-gradient(110% 90% at 60% 110%, #b83d68 0%, transparent 60%),
+    linear-gradient(160deg, #f7e3ea 0%, #e7b9ca 55%, #962451 120%);
+  --wallpaper-dusk: radial-gradient(120% 90% at 20% 0%, #5e0a2d 0%, transparent 55%),
+    radial-gradient(90% 90% at 100% 100%, #730c37 0%, transparent 60%), linear-gradient(160deg, #211c1e 0%, #2a0313 100%);
+  --wallpaper: var(--wallpaper-berry);
+}
+:root[data-theme='dark'] .lk {
+  --glass-bar: rgba(30, 24, 27, 0.55);
+  --glass-dock: rgba(44, 36, 40, 0.45);
+  --glass-menu: rgba(40, 33, 36, 0.8);
+  --glass-panel: rgba(36, 30, 33, 0.74);
+  --glass-tile: rgba(255, 255, 255, 0.08);
+  --glass-sidebar: rgba(34, 28, 31, 0.8);
+  --wallpaper: var(--wallpaper-dusk);
+}
+
+/* ---------- Motion (tokens/motion.css) ----------
+   Things that appear spring in from 0.9–0.96; things that leave fall away
+   faster. Springs are CSS linear() curves. */
+.lk {
+  --dur-instant: 90ms;
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 350ms;
+  --dur-window: 450ms;
+  --dur-genie: 560ms;
+  --dur-scene: 677ms;
+  --dur-bounce: 900ms;
+
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: linear(
+    0,
+    0.006,
+    0.025 2.8%,
+    0.101 6.1%,
+    0.539 18.9%,
+    0.721 25.3%,
+    0.849 31.5%,
+    0.937 38.1%,
+    0.968 41.8%,
+    0.991 45.7%,
+    1.006 50.1%,
+    1.015 55%,
+    1.017 63.9%,
+    1.001 85.9%,
+    1
+  );
+  --ease-spring-bouncy: linear(
+    0,
+    0.009,
+    0.035 2.1%,
+    0.141,
+    0.281 6.7%,
+    0.723 12.9%,
+    0.938 16.7%,
+    1.017,
+    1.077,
+    1.121,
+    1.149 24.3%,
+    1.159,
+    1.163,
+    1.161,
+    1.154 29.9%,
+    1.129 32.8%,
+    1.051 39.6%,
+    1.017 43.1%,
+    0.991,
+    0.977 51%,
+    0.974 53.8%,
+    0.975 57.1%,
+    0.997 69.8%,
+    1.003 76.9%,
+    1.004 83.8%,
+    1
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .lk {
+    --dur-base: 120ms;
+    --dur-slow: 120ms;
+    --dur-window: 150ms;
+    --dur-genie: 150ms;
+    --dur-scene: 150ms;
+    --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ease-spring-bouncy: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+/* ---------- The shared kit inside the desk ----------
+   Apps still built on `@serverbox/webui` and its Tailwind tokens (`bg`,
+   `surface`, `fg`, `line`, `soft`, `primary`, …) take the design system's
+   values here until they move to the `lk` components.
+   TODO: remove once every app uses `desk/lk` only. */
+.lk {
+  --sb-snow: var(--surface-window);
+  --sb-white: var(--surface-content);
+  --sb-near-black: var(--text-primary);
+  --sb-black: var(--text-primary);
+  --sb-stone: var(--text-secondary);
+  --sb-silver: var(--text-tertiary);
+  --sb-border: var(--border-strong);
+  --sb-light-gray: var(--fill-hover);
+  --sb-ring: color-mix(in srgb, var(--color-accent) 32%, transparent);
+  --sb-primary: var(--color-accent);
+  --sb-button-primary-bg: var(--color-accent);
+  --sb-button-primary-fg: var(--text-on-accent);
+  --sb-icon-button-border: transparent;
+  --sb-radius-control: var(--radius-control);
+  --sb-radius-container: var(--radius-card);
+  --sb-font-body: var(--font-ui);
+  --sb-font-display: var(--font-display);
+  --sb-font-mono: var(--font-mono);
+}

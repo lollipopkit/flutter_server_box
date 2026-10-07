@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Bell, Box, LockKeyhole, LogOut, Search, Settings, SlidersHorizontal } from '@lucide/svelte'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { serverNames } from '../../lib/serverNames.svelte'
   import { displayName, servers } from '../../lib/servers.svelte'
   import { app } from '../apps'
   import { useDesk, type MenuItem } from '../deskState.svelte'
+  import Icon from '../lk/Icon.svelte'
 
   interface Props {
     onlock: () => void
@@ -25,25 +25,26 @@
     return () => clearInterval(t)
   })
   const clock = $derived(
-    new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(now),
+    `${new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(now)}  ${new Intl.DateTimeFormat($locale, { hour: '2-digit', minute: '2-digit' }).format(now)}`,
   )
 
   function menuUnder(e: MouseEvent, items: MenuItem[]) {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
     e.stopPropagation()
     desk.panel = null
-    desk.menu = { x: r.left, y: r.bottom + 6, items }
+    desk.menu = { x: r.left, y: r.bottom + 3, items }
   }
 
   function serverMenu(e: MouseEvent) {
     menuUnder(e, [
-      { label: $LL.deskAboutServer(), action: () => desk.open('status') },
-      { label: $LL.deskAppSettings(), icon: Settings, action: () => desk.open('settings') },
+      { label: $LL.deskAboutServer(), icon: 'info', action: () => desk.open('status') },
       { separator: true },
-      { label: $LL.deskLock(), icon: LockKeyhole, action: onlock },
+      { label: $LL.deskAppSettings(), icon: 'settings', shortcut: '⌘,', action: () => desk.open('settings') },
+      { separator: true },
+      { label: $LL.deskLock(), icon: 'lock', action: onlock },
       {
         label: $LL.logout(),
-        icon: LogOut,
+        icon: 'logout',
         danger: true,
         action: () => {
           servers.logout(desk.entry.id)
@@ -80,7 +81,7 @@
 </script>
 
 <nav
-  class="desk-bar absolute inset-x-3 top-2 z-[100000] flex h-(--menubar-h) select-none items-center gap-0.5 rounded-(--radius-bar) px-1.5 text-[0.76rem] tracking-[0.2px]"
+  class="lk-menubar absolute inset-x-0 top-0 z-[100000]"
   aria-label={$LL.deskMenubar()}
   onpointerdown={(e) => {
     // Its buttons toggle what they open; the desk's own dismissal would
@@ -89,26 +90,26 @@
     desk.menu = null
   }}
 >
-  <button class="desk-hover flex h-6 items-center gap-1.5 px-2 font-semibold" onclick={serverMenu} title={serverLabel}>
-    <Box class="h-3.5 w-3.5" strokeWidth={2.2} />
+  <button class="lk-menubar__item lk-menubar__brand" onclick={serverMenu}>lollipopkit</button>
+  {#if activeSpec}
+    <button class="lk-menubar__item lk-menubar__app" onclick={appMenu}>{activeSpec.title($LL)}</button>
+  {/if}
+  <div class="lk-menubar__spacer"></div>
+
+  <button class="lk-menubar__item" title={serverLabel} onclick={serverMenu}>
+    {#if desk.storage?.remote}
+      <span
+        class="h-[7px] w-[7px] rounded-full"
+        style:background={desk.live ? 'var(--hue-green)' : 'var(--hue-amber)'}
+        style:box-shadow="0 0 0 3px color-mix(in srgb, {desk.live ? 'var(--hue-green)' : 'var(--hue-amber)'} 25%, transparent)"
+        title={desk.live ? $LL.deskLive() : $LL.deskOffline()}
+      ></span>
+    {/if}
     <span class="max-w-40 truncate">{serverLabel}</span>
   </button>
-  {#if activeSpec}
-    <button class="desk-hover hidden h-6 items-center px-2 font-medium sm:flex" onclick={appMenu}>
-      {activeSpec.title($LL)}
-    </button>
-  {/if}
-
-  <div class="flex-1"></div>
-
-  {#if desk.storage?.remote}
-    <span
-      class="mx-1 h-1.5 w-1.5 rounded-full {desk.live ? 'bg-success' : 'bg-warning'}"
-      title={desk.live ? $LL.deskLive() : $LL.deskOffline()}
-    ></span>
-  {/if}
   <button
-    class="desk-hover grid h-6 w-7 place-items-center"
+    class="lk-menubar__item"
+    class:lk-menubar__item--open={desk.spotlight}
     aria-label={$LL.deskSearch()}
     title="{$LL.deskSearch()} (⌘K)"
     onclick={(e) => {
@@ -117,10 +118,11 @@
       desk.spotlight = !desk.spotlight
     }}
   >
-    <Search class="h-3.5 w-3.5" />
+    <Icon name="search" size={17} />
   </button>
   <button
-    class="desk-hover grid h-6 w-7 place-items-center"
+    class="lk-menubar__item"
+    class:lk-menubar__item--open={desk.panel === 'control'}
     aria-label={$LL.deskControlCenter()}
     aria-expanded={desk.panel === 'control'}
     onclick={(e) => {
@@ -128,11 +130,12 @@
       desk.togglePanel('control')
     }}
   >
-    <SlidersHorizontal class="h-3.5 w-3.5" />
+    <Icon name="toggle_on" size={17} fill={desk.panel === 'control'} />
   </button>
   {#if desk.storage?.remote}
     <button
-      class="desk-hover relative grid h-6 w-7 place-items-center"
+      class="lk-menubar__item"
+      class:lk-menubar__item--open={desk.panel === 'notifications'}
       aria-label={$LL.deskNotifications()}
       aria-expanded={desk.panel === 'notifications'}
       onclick={(e) => {
@@ -140,18 +143,13 @@
         desk.togglePanel('notifications')
       }}
     >
-      <Bell class="h-3.5 w-3.5" />
-      {#if unread > 0}
-        <span
-          class="absolute right-0.5 top-0.5 min-w-3.5 rounded-full bg-danger px-1 text-center text-[0.6rem] font-bold leading-3.5 text-white"
-        >
-          {unread > 99 ? '99+' : unread}
-        </span>
-      {/if}
+      <Icon name={desk.notifications?.dnd ? 'notifications_off' : 'notifications'} size={17} fill={desk.panel === 'notifications'} />
+      {#if unread > 0}<span class="lk-badge lk-badge--count" style:height="16px" style:min-width="16px">{unread > 99 ? '99+' : unread}</span>{/if}
     </button>
   {/if}
   <button
-    class="desk-hover h-6 whitespace-nowrap px-2 font-medium tabular-nums"
+    class="lk-menubar__item lk-menubar__clock"
+    class:lk-menubar__item--open={desk.panel === 'calendar'}
     aria-expanded={desk.panel === 'calendar'}
     onclick={(e) => {
       e.stopPropagation()

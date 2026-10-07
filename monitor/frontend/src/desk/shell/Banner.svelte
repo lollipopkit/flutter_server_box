@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { TriangleAlert } from '@lucide/svelte'
-  import { fly } from 'svelte/transition'
+  import { LL } from '../../i18n/i18n-svelte'
   import { useDesk } from '../deskState.svelte'
+  import AppIcon from '../lk/AppIcon.svelte'
+  import Notification from '../lk/Notification.svelte'
 
   const desk = useDesk()
   const banner = $derived(desk.notifications?.banner ?? null)
@@ -9,19 +10,21 @@
 
 {#if banner}
   {#key banner.id}
-    <button
-      class="desk-sheet absolute right-3 top-[calc(var(--menubar-h)+1.25rem)] z-[100002] flex w-80 max-w-[calc(100%-1.5rem)] gap-2.5 rounded-2xl border-warning/50 p-3 text-left"
-      transition:fly={{ x: 40, duration: 220 }}
-      onclick={() => {
-        desk.notifications?.dismissBanner()
-        desk.togglePanel('notifications')
-      }}
-    >
-      <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-      <span class="min-w-0">
-        <span class="block truncate text-[0.8rem] font-semibold">{banner.subject}</span>
-        <span class="desk-muted line-clamp-2 text-xs">{banner.body}</span>
-      </span>
-    </button>
+    <div class="absolute right-[9px] top-[39px] z-[100002] max-w-[calc(100%-18px)]">
+      <Notification
+        app={$LL.deskAppStatus()}
+        time={$LL.deskNow()}
+        title={banner.subject}
+        closeLabel={$LL.deskClose()}
+        onclose={() => desk.notifications?.dismissBanner()}
+        onclick={() => {
+          desk.notifications?.dismissBanner()
+          desk.togglePanel('notifications')
+        }}
+      >
+        {#snippet icon()}<AppIcon glyph="monitoring" tone="berry" size={34} />{/snippet}
+        {banner.body}
+      </Notification>
+    </div>
   {/key}
 {/if}

@@ -1,0 +1,27 @@
+/// The lollipopkit Design System for the desk: tokens and `lk-*` styles in
+/// `lk.css`, these components on top. Apps build their UI from these (see
+/// `desk/CLAUDE.md`); glyph names are Material Symbols Rounded.
+
+export { default as Icon } from './Icon.svelte'
+export { default as Button } from './Button.svelte'
+export { default as IconButton } from './IconButton.svelte'
+export { default as Badge, type BadgeTone } from './Badge.svelte'
+export { default as Input } from './Input.svelte'
+export { default as Select } from './Select.svelte'
+export { default as Checkbox } from './Checkbox.svelte'
+export { default as Radio } from './Radio.svelte'
+export { default as Switch } from './Switch.svelte'
+export { default as Slider } from './Slider.svelte'
+export { default as SegmentedControl } from './SegmentedControl.svelte'
+export { default as Card } from './Card.svelte'
+export { default as Tooltip } from './Tooltip.svelte'
+export { default as Dialog } from './Dialog.svelte'
+export { default as Notification } from './Notification.svelte'
+export { default as Menu, type MenuEntry } from './Menu.svelte'
+export { default as AppIcon, type IconTone } from './AppIcon.svelte'
+export { default as TrafficLights } from './TrafficLights.svelte'
+export { default as SidebarSection } from './SidebarSection.svelte'
+export { default as SidebarItem } from './SidebarItem.svelte'
+export { default as ControlTile } from './ControlTile.svelte'
+export { default as Group } from './Group.svelte'
+export { default as Row } from './Row.svelte'

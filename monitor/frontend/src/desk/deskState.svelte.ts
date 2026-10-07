@@ -5,31 +5,23 @@
 /// [useWindow] and nothing else of the desk.
 
 import { getContext, setContext } from 'svelte'
-import type { Component } from 'svelte'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { Capabilities } from '../types'
 import { app, availableApps, type AppSpec } from './apps'
 import type { DeskNotification } from './deskApi'
+import type { MenuEntry } from './lk/Menu.svelte'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
 import { SessionSync } from './session.svelte'
 import { AgentStorage, BrowserStorage, deviceId, type DeskStorage } from './storage'
+import type { WindowChrome } from './window/chrome.svelte'
 import { WindowManager, type OpenOptions } from './windows.svelte'
 
 export type Panel = 'control' | 'notifications' | 'calendar' | 'launchpad'
 
-export type MenuItem =
-  | {
-      label: string
-      icon?: Component
-      shortcut?: string
-      checked?: boolean
-      disabled?: boolean
-      danger?: boolean
-      action: () => void
-    }
-  | { separator: true }
+/// A context menu's rows (`lk/Menu.svelte`); icons are glyph names.
+export type MenuItem = MenuEntry
 
 export interface ContextMenu {
   x: number
@@ -188,11 +180,16 @@ export interface WindowHandle {
   /// Puts an icon on the desk that opens [path] with this window's app.
   addPathIcon(path: string, label: string): void
   readonly active: boolean
+  /// The window's frame, where `ui/AppToolbar` and `ui/SplitView` put the
+  /// title, tools and sidebar; null outside a window (a test), where they
+  /// draw themselves in place.
+  readonly chrome: WindowChrome | null
 }
 
-export function provideWindow(desk: Desk, id: string) {
+export function provideWindow(desk: Desk, id: string, chrome: WindowChrome) {
   const handle: WindowHandle = {
     id,
+    chrome,
     get appState() {
       return desk.windows.get(id)?.appState ?? null
     },
@@ -225,6 +222,7 @@ export function useWindow(): WindowHandle {
       open: () => null,
       addPathIcon() {},
       active: true,
+      chrome: null,
     }
   )
 }

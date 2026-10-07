@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { LayoutGrid } from '@lucide/svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { app, type AppSpec } from '../apps'
   import { useDesk, type MenuItem } from '../deskState.svelte'
+  import LkAppIcon from '../lk/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
 
   const desk = useDesk()
@@ -29,6 +29,7 @@
   function activate(spec: AppSpec) {
     const mine = desk.windows.of(spec.id)
     if (mine.length === 0) {
+      bounce(spec.id)
       desk.open(spec.id)
       return
     }
@@ -50,6 +51,7 @@
     if (spec.instances > 1) {
       items.push({
         label: $LL.deskNewWindow(),
+        icon: 'add',
         disabled: mine.length >= spec.instances,
         action: () => desk.open(spec.id, { newWindow: true }),
       })
@@ -57,10 +59,11 @@
     const isPinned = desk.prefs?.value.dock.includes(spec.id)
     items.push({
       label: isPinned ? $LL.deskUnpin() : $LL.deskPin(),
+      icon: isPinned ? 'keep_off' : 'keep',
       action: () => (isPinned ? prefs?.unpin(spec.id) : prefs?.pin(spec.id)),
     })
     if (mine.length > 0) {
-      items.push({ separator: true }, { label: $LL.deskQuit(), action: () => desk.windows.closeApp(spec.id) })
+      items.push({ separator: true }, { label: $LL.deskQuit(), icon: 'close', action: () => desk.windows.closeApp(spec.id) })
     }
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
     e.preventDefault()
@@ -69,115 +72,109 @@
   }
 
   /// Smaller tiles on a phone, so the dock fits more of them.
-  const tile = $derived(desk.windows.compact ? 2.5 : 2.875)
+  const tile = $derived(desk.windows.compact ? 40 : 44)
+
+  /// The app just launched from the dock bounces twice.
+  let bouncing = $state<string | null>(null)
+  function bounce(id: string) {
+    bouncing = id
+    setTimeout(() => {
+      if (bouncing === id) bouncing = null
+    }, 1800)
+  }
 
   // Reordering the pinned part by dragging.
   let dragging = $state<string | null>(null)
 </script>
 
-<nav
-  class="desk-dock absolute bottom-2 left-1/2 z-[100000] flex max-w-[calc(100%-1rem)] -translate-x-1/2 select-none items-end overflow-x-auto rounded-[1.2rem] px-1.5 pb-2 pt-1.5"
-  aria-label={$LL.deskDock()}
-  onpointerdown={(e) => {
-    e.stopPropagation()
-    desk.menu = null
-  }}
->
-  <button
-    class="dock-item"
-    aria-label={$LL.deskLaunchpad()}
-    title={$LL.deskLaunchpad()}
-    aria-expanded={desk.panel === 'launchpad'}
-    onclick={(e) => {
+<div class="pointer-events-none absolute inset-x-0 bottom-[var(--dock-bottom)] z-[100000] flex justify-center px-2">
+  <nav
+    class="lk-dock pointer-events-auto max-w-full"
+    style:padding={desk.windows.compact ? '7px' : undefined}
+    aria-label={$LL.deskDock()}
+    onpointerdown={(e) => {
       e.stopPropagation()
-      desk.togglePanel('launchpad')
+      desk.menu = null
     }}
   >
-    <span class="desk-tile" style:width="{tile}rem" style:height="{tile}rem">
-      <LayoutGrid style="width: {tile * 0.42}rem; height: {tile * 0.42}rem" strokeWidth={1.8} />
-    </span>
-  </button>
-
-  {#each pinned as spec (spec.id)}
     <button
-      class="dock-item"
-      class:opacity-50={dragging === spec.id}
-      title={spec.title($LL)}
-      aria-label={spec.title($LL)}
-      draggable="true"
-      ondragstart={(e) => {
-        dragging = spec.id
-        e.dataTransfer?.setData('text/plain', spec.id)
+      class="lk-dock__item"
+      style:width="{tile}px"
+      style:height="{tile}px"
+      aria-label={$LL.deskLaunchpad()}
+      aria-expanded={desk.panel === 'launchpad'}
+      onclick={(e) => {
+        e.stopPropagation()
+        desk.togglePanel('launchpad')
       }}
-      ondragend={() => (dragging = null)}
-      ondragover={(e) => e.preventDefault()}
-      ondrop={(e) => {
-        e.preventDefault()
-        if (dragging && dragging !== spec.id) desk.prefs?.moveInDock(dragging, pinned.findIndex((p) => p.id === spec.id))
-        dragging = null
-      }}
-      onclick={() => activate(spec)}
-      oncontextmenu={(e) => menu(e, spec)}
     >
-      <AppIcon {spec} size={tile} />
-      <span class="dock-dot" data-running={isRunning(spec.id)}></span>
+      <span class="lk-dock__label">{$LL.deskLaunchpad()}</span>
+      <span class="lk-dock__icon"><LkAppIcon glyph="apps" tone="pale" size={tile} /></span>
     </button>
-  {/each}
 
-  {#if running.length > 0}
-    <span class="mx-0.5 h-[72%] w-px self-center bg-current opacity-20"></span>
-    {#each running as spec (spec.id)}
+    {#each pinned as spec (spec.id)}
       <button
-        class="dock-item"
-        title={spec.title($LL)}
+        class="lk-dock__item"
+        class:lk-dock__item--bounce={bouncing === spec.id}
+        class:opacity-50={dragging === spec.id}
+        style:width="{tile}px"
+        style:height="{tile}px"
         aria-label={spec.title($LL)}
+        draggable="true"
+        ondragstart={(e) => {
+          dragging = spec.id
+          e.dataTransfer?.setData('text/plain', spec.id)
+        }}
+        ondragend={() => (dragging = null)}
+        ondragover={(e) => e.preventDefault()}
+        ondrop={(e) => {
+          e.preventDefault()
+          if (dragging && dragging !== spec.id) desk.prefs?.moveInDock(dragging, pinned.findIndex((p) => p.id === spec.id))
+          dragging = null
+        }}
         onclick={() => activate(spec)}
         oncontextmenu={(e) => menu(e, spec)}
       >
-        <AppIcon {spec} size={tile} />
-        <span class="dock-dot" data-running="true"></span>
+        <span class="lk-dock__label">{spec.title($LL)}</span>
+        <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
+        {#if isRunning(spec.id)}<span class="lk-dock__dot"></span>{/if}
       </button>
     {/each}
-  {/if}
-</nav>
+
+    {#if running.length > 0}
+      <span class="lk-dock__sep"></span>
+      {#each running as spec (spec.id)}
+        <button
+          class="lk-dock__item"
+          style:width="{tile}px"
+          style:height="{tile}px"
+          aria-label={spec.title($LL)}
+          onclick={() => activate(spec)}
+          oncontextmenu={(e) => menu(e, spec)}
+        >
+          <span class="lk-dock__label">{spec.title($LL)}</span>
+          <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
+          <span class="lk-dock__dot"></span>
+        </button>
+      {/each}
+    {/if}
+  </nav>
+</div>
 
 <style>
-  .dock-item {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1px 0.25rem;
-    border-radius: 0.9rem;
-    transition: transform 140ms;
+  /* The items are buttons: reset what a button brings, keep the focus ring. */
+  .lk-dock__item {
+    padding: 0;
+    border: 0;
+    background: none;
   }
-  .dock-item:hover {
-    transform: translateY(-2px);
+  .lk-dock__item:focus-visible {
+    outline: none;
+    border-radius: var(--radius-icon);
+    box-shadow: var(--focus-ring);
   }
-  .dock-item:hover :global(.desk-tile),
-  .dock-item:focus-visible :global(.desk-tile),
-  .dock-item[aria-expanded='true'] :global(.desk-tile) {
-    border-color: hsl(var(--ink) / 0.25);
-    background: hsl(var(--glass) / 0.72);
-  }
-  .dock-item:focus-visible {
-    outline: 2px solid var(--desk-accent);
-    outline-offset: 1px;
-  }
-  /* Under a running app's tile. */
-  .dock-dot {
-    position: absolute;
-    left: 50%;
-    bottom: -0.4rem;
-    width: 4px;
-    height: 4px;
-    border-radius: 9999px;
-    background: hsl(var(--ink));
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 120ms;
-  }
-  .dock-dot[data-running='true'] {
-    opacity: 0.75;
+  .lk-dock__item:focus-visible .lk-dock__label {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 </style>

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { ArrowRight, CircleAlert, Plus, Server, X } from '@lucide/svelte'
-  import { Button, Input, Spinner } from '@serverbox/webui'
+  import { Spinner } from '@serverbox/webui'
   import OsIcon from '../../components/OsIcon.svelte'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { ApiError, loginTo, testConnection } from '../../lib/api'
@@ -8,7 +7,10 @@
   import { capabilitiesStore } from '../../lib/capabilities.svelte'
   import { serverNames } from '../../lib/serverNames.svelte'
   import { displayName, servers, type ServerEntry } from '../../lib/servers.svelte'
-  import Wallpaper from '../shell/Wallpaper.svelte'
+  import AppIcon from '../lk/AppIcon.svelte'
+  import Button from '../lk/Button.svelte'
+  import Icon from '../lk/Icon.svelte'
+  import Input from '../lk/Input.svelte'
 
   interface Props {
     /// [serverId] is signed in: show its desk.
@@ -97,142 +99,187 @@
   }
 </script>
 
-<!-- After ClawBox's sign-in: the wallpaper on one side, the form on the
-     other, a large title over it. -->
-<div class="desk-root fixed inset-0 z-[200000] flex bg-bg font-body text-fg" role="main">
-  <aside class="relative hidden w-[55%] overflow-hidden border-r border-line md:block">
-    <Wallpaper preset="bloom" url={null} fit="cover" />
-    <p class="lock-brand absolute left-8 top-8 text-xs font-semibold uppercase tracking-[0.14em]">ServerBox</p>
-    <div class="absolute bottom-10 left-8">
-      <p class="text-6xl font-bold tracking-tight tabular-nums">{time}</p>
-      <p class="mt-1 text-[0.95rem] font-medium text-muted-fg">{date}</p>
-    </div>
-  </aside>
+<!-- The design system's lock screen: the wallpaper, the time large over it,
+     the servers to choose from, and a glass card to sign in or connect. -->
+<div class="lk desk-root fixed inset-0 z-[200000] overflow-hidden" style:background="var(--wallpaper)" role="main">
+  <div class="relative flex h-full flex-col items-center overflow-y-auto px-4 pb-10 pt-[11vh]">
+    <p class="text-[17px] font-medium text-(--text-secondary)">{date}</p>
+    <p class="lk-num text-[55px] font-extrabold leading-[1.1] tracking-[-0.02em]">{time}</p>
 
-  <div class="flex flex-1 flex-col overflow-y-auto bg-soft px-6 py-10 sm:px-8">
-    <div class="my-auto w-full max-w-xl">
-      <h1 class="text-4xl font-bold leading-tight tracking-tight text-fg-strong sm:text-5xl">
-        {connecting ? $LL.deskConnectServer() : entry?.token ? $LL.deskUnlock() : $LL.signIn()}
-      </h1>
-      <p class="mt-1 truncate text-3xl font-bold leading-tight tracking-tight text-fg-strong sm:text-4xl">
-        {connecting ? $LL.deskServers() : entry ? name(entry) : ''}
-      </p>
-
-      <div class="mt-6 flex flex-wrap gap-2">
-        {#each servers.list as s (s.id)}
-          {@const caps = capabilitiesStore.byServer[s.id]}
-          {@const chosenHere = chosen === s.id && !connecting}
-          <div class="group relative">
-            <button
-              class="flex max-w-56 items-center gap-2 rounded-xl border bg-surface py-1.5 pl-2 pr-3 text-sm font-medium transition-colors hover:border-fg/25"
-              class:border-line={!chosenHere}
-              class:lock-chosen={chosenHere}
-              onclick={() => choose(s.id)}
-              aria-pressed={chosenHere}
-            >
-              <span class="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-line bg-soft">
-                {#if caps?.platform}
-                  <OsIcon platform={caps.platform} class="h-4 w-4" />
-                {:else}
-                  <Server class="h-4 w-4" />
-                {/if}
-              </span>
-              <span class="truncate">{name(s)}</span>
-            </button>
-            {#if !servers.servedByAgent}
-              <button
-                class="absolute -right-1.5 -top-1.5 hidden h-5 w-5 place-items-center rounded-full border border-line bg-surface text-muted-fg group-hover:grid"
-                aria-label={$LL.removeServer()}
-                title={$LL.removeServer()}
-                onclick={() => {
-                  servers.remove(s.id)
-                  if (chosen === s.id) chosen = servers.list[0]?.id ?? null
-                  if (servers.empty) connecting = true
-                }}
-              >
-                <X class="h-3 w-3" />
-              </button>
-            {/if}
-          </div>
-        {/each}
-        {#if !servers.servedByAgent}
-          <button
-            class="flex items-center gap-2 rounded-xl border border-dashed py-1.5 pl-2 pr-3 text-sm font-medium transition-colors hover:border-fg/40"
-            class:border-line={!connecting}
-            class:lock-chosen={connecting}
-            onclick={() => {
-              connecting = true
-              error = ''
-            }}
-            aria-pressed={connecting}
-          >
-            <span class="grid h-7 w-7 place-items-center rounded-lg"><Plus class="h-4 w-4" /></span>
-            {$LL.deskConnectServer()}
+    <div class="mt-[7vh] flex w-full max-w-xl flex-wrap justify-center gap-[13px]">
+      {#each servers.list as s (s.id)}
+        {@const caps = capabilitiesStore.byServer[s.id]}
+        {@const chosenHere = chosen === s.id && !connecting}
+        <div class="group relative">
+          <button class="server" aria-pressed={chosenHere} onclick={() => choose(s.id)}>
+            <span class="avatar">
+              {#if caps?.platform}
+                <OsIcon platform={caps.platform} class="h-[30px] w-[30px]" />
+              {:else}
+                <Icon name="dns" size={30} fill />
+              {/if}
+            </span>
+            <span class="w-full truncate text-center text-[13px] font-semibold">{name(s)}</span>
           </button>
-        {/if}
-      </div>
+          {#if !servers.servedByAgent}
+            <button
+              class="remove"
+              aria-label={$LL.removeServer()}
+              title={$LL.removeServer()}
+              onclick={() => {
+                servers.remove(s.id)
+                if (chosen === s.id) chosen = servers.list[0]?.id ?? null
+                if (servers.empty) connecting = true
+              }}
+            >
+              <Icon name="close" size={13} weight={600} />
+            </button>
+          {/if}
+        </div>
+      {/each}
+      {#if !servers.servedByAgent}
+        <button
+          class="server"
+          aria-pressed={connecting}
+          onclick={() => {
+            connecting = true
+            error = ''
+          }}
+        >
+          <span class="avatar add"><Icon name="add" size={30} /></span>
+          <span class="text-[13px] font-semibold">{$LL.deskConnectServer()}</span>
+        </button>
+      {/if}
+    </div>
 
-      <div class="mt-6">
-        {#if connecting}
-          <form class="flex flex-col gap-4" onsubmit={connect}>
-            <label class="block text-sm">
-              <span class="mb-1.5 block">{$LL.serverUrlLabel()}</span>
-              <Input placeholder="https://host:3770" bind:value={url} required />
-            </label>
-            <div class="flex justify-end">
-              <Button size="sm" disabled={busy}>
-                {#if busy}<Spinner size="sm" />{/if}
-                {$LL.deskConnect()}
-              </Button>
+    <div class="card mt-[27px] w-full max-w-[320px]">
+      {#if connecting}
+        <form class="flex flex-col gap-[13px]" onsubmit={connect}>
+          <Input label={$LL.serverUrlLabel()} placeholder="https://host:3770" bind:value={url} required />
+          <Button type="submit" variant="primary" block disabled={busy}>
+            {#if busy}<Spinner size="sm" />{/if}
+            {$LL.deskConnect()}
+          </Button>
+        </form>
+      {:else if entry}
+        <form class="flex flex-col gap-[13px]" onsubmit={signIn}>
+          <div class="flex items-center gap-[11px]">
+            <AppIcon glyph="dns" tone="berry" size={34} />
+            <div class="min-w-0">
+              <div class="truncate text-[15px] font-semibold">{name(entry)}</div>
+              <div class="truncate text-[12px] text-(--text-tertiary)">
+                {entry.token ? $LL.deskSignedInAs({ user: entry.username ?? '' }) : entry.url}
+              </div>
             </div>
-          </form>
-        {:else if entry}
-          <form class="flex flex-col gap-4" onsubmit={signIn}>
-            {#if entry.token}
-              <p class="text-sm text-muted-fg">{$LL.deskSignedInAs({ user: entry.username ?? '' })}</p>
-              <div class="flex justify-end">
-                <Button size="sm" class="gap-1.5">
-                  {$LL.deskUnlock()}
-                  <ArrowRight class="h-4 w-4" />
-                </Button>
-              </div>
-            {:else}
-              <div class="grid gap-4 sm:grid-cols-2">
-                <label class="block text-sm">
-                  <span class="mb-1.5 block">{$LL.username()}</span>
-                  <Input autocomplete="username" bind:value={username} required />
-                </label>
-                <label class="block text-sm">
-                  <span class="mb-1.5 block">{$LL.password()}</span>
-                  <Input type="password" autocomplete="current-password" bind:value={password} required />
-                </label>
-              </div>
-              <div class="flex justify-end">
-                <Button size="sm" class="gap-1.5" disabled={busy}>
-                  {#if busy}<Spinner size="sm" />{/if}
-                  {$LL.signIn()}
-                </Button>
-              </div>
-            {/if}
-          </form>
-        {/if}
-        {#if error}
-          <p class="mt-3 flex items-center gap-1.5 text-sm text-danger">
-            <CircleAlert class="h-4 w-4 shrink-0" />{error}
-          </p>
-        {/if}
-      </div>
+          </div>
+          {#if entry.token}
+            <Button type="submit" variant="primary" block iconRight="arrow_forward">{$LL.deskUnlock()}</Button>
+          {:else}
+            <Input aria-label={$LL.username()} placeholder={$LL.username()} autocomplete="username" bind:value={username} required />
+            <Input
+              aria-label={$LL.password()}
+              placeholder={$LL.password()}
+              type="password"
+              autocomplete="current-password"
+              bind:value={password}
+              required
+            />
+            <Button type="submit" variant="primary" block disabled={busy}>
+              {#if busy}<Spinner size="sm" />{/if}
+              {$LL.signIn()}
+            </Button>
+          {/if}
+        </form>
+      {/if}
+      {#if error}
+        <p class="mt-[11px] flex items-center gap-[5px] text-[12px] text-(--color-danger)">
+          <Icon name="error" size={16} />{error}
+        </p>
+      {/if}
     </div>
   </div>
 </div>
 
 <style>
-  /* The accent, lifted towards the text colour so it reads on either ground. */
-  .lock-brand {
-    color: color-mix(in srgb, var(--desk-accent) 75%, hsl(var(--ink)));
+  .server {
+    display: flex;
+    width: 104px;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-7);
+    padding: var(--space-9) var(--space-5);
+    border: 0;
+    border-radius: var(--radius-card);
+    background: none;
+    color: var(--text-primary);
+    cursor: default;
+    transition:
+      background-color var(--dur-fast),
+      transform var(--dur-slow) var(--ease-spring-bouncy);
   }
-  .lock-chosen {
-    border-color: color-mix(in srgb, var(--desk-accent) 40%, transparent);
-    background: color-mix(in srgb, var(--desk-accent) 12%, transparent);
+  .server:hover {
+    background: var(--fill-hover);
+  }
+  .server:active {
+    transform: scale(0.96);
+  }
+  .server[aria-pressed='true'] {
+    background: var(--fill-press);
+  }
+  .server:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  .avatar {
+    display: grid;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--glass-tile);
+    backdrop-filter: var(--blur-menu);
+    -webkit-backdrop-filter: var(--blur-menu);
+    box-shadow: var(--shadow-popover), inset 0 0 0 0.5px var(--border-glass);
+    color: var(--color-accent-text);
+  }
+  .server[aria-pressed='true'] .avatar {
+    box-shadow:
+      0 0 0 2px var(--color-accent),
+      var(--shadow-popover);
+  }
+  .avatar.add {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--border-strong);
+    color: var(--text-secondary);
+  }
+  .remove {
+    position: absolute;
+    top: 2px;
+    right: 14px;
+    display: none;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-thumb);
+    color: var(--text-secondary);
+  }
+  .group:hover .remove,
+  .remove:focus-visible {
+    display: grid;
+  }
+  .card {
+    padding: var(--space-17);
+    border-radius: var(--radius-panel);
+    background: var(--glass-panel);
+    backdrop-filter: var(--blur-menu);
+    -webkit-backdrop-filter: var(--blur-menu);
+    box-shadow:
+      var(--shadow-window),
+      inset 0 0 0 0.5px var(--border-glass);
+    animation: lk-pop-in var(--dur-window) var(--ease-spring-bouncy);
   }
 </style>

@@ -1,0 +1,5 @@
+/* lollipopkit Design System: tokens, base and component styles, in that
+   order. Imported once by `desk/DeskRoot.svelte`. */
+@import './base.css';
+@import './tokens.css';
+@import './components.css';

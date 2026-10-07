@@ -1,0 +1,121 @@
+/* lollipopkit Design System base (styles/base.css), scoped to `.lk`. */
+@import '@fontsource-variable/figtree';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+/* TODO: the full variable font is 5.4 MB; subset it to the glyphs the panel uses. */
+@import 'material-symbols/rounded.css';
+
+.lk {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-ui);
+  font-size: var(--text-13);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+}
+.lk ::selection {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+
+@layer components {
+  .lk a {
+    color: var(--color-accent-text);
+    text-decoration: none;
+  }
+  .lk a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .lk-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .lk-caps {
+    font-size: var(--text-11);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+  .lk-num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes lk-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes lk-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-window-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-notif-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 24px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-dock-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  18% {
+    transform: translateY(-26px);
+  }
+  36% {
+    transform: translateY(0);
+  }
+  52% {
+    transform: translateY(-12px);
+  }
+  68% {
+    transform: translateY(0);
+  }
+}
+@keyframes lk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lk-caret {
+  50% {
+    opacity: 0;
+  }
+}

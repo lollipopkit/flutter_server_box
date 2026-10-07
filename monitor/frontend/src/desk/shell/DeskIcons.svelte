@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { ExternalLink, Folder, Pencil, Trash2 } from '@lucide/svelte'
   import { tick } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { app } from '../apps'
   import { useDesk } from '../deskState.svelte'
   import type { DeskIcon } from '../deskApi'
   import { placeIcons, CELL } from '../iconGrid'
+  import LkAppIcon from '../lk/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
 
   const desk = useDesk()
@@ -48,10 +48,10 @@
   function menu(e: MouseEvent, icon: DeskIcon) {
     selected = icon.id
     desk.showMenu(e, [
-      { label: $LL.deskOpen(), icon: ExternalLink, action: () => open(icon) },
-      { label: $LL.deskRename(), icon: Pencil, action: () => void startRename(icon) },
+      { label: $LL.deskOpen(), icon: 'open_in_new', action: () => open(icon) },
+      { label: $LL.deskRename(), icon: 'edit', action: () => void startRename(icon) },
       { separator: true },
-      { label: $LL.deskRemoveFromDesk(), icon: Trash2, danger: true, action: () => desk.prefs?.removeIcon(icon.id) },
+      { label: $LL.deskRemoveFromDesk(), icon: 'delete', danger: true, action: () => desk.prefs?.removeIcon(icon.id) },
     ])
   }
 
@@ -95,7 +95,7 @@
     {@const spec = app(icon.app_id)}
     {@const dragged = drag?.id === icon.id && drag.moved}
     <div
-      class="pointer-events-auto absolute flex w-24 select-none flex-col items-center gap-1 rounded-lg p-1.5 text-center"
+      class="desk-icon pointer-events-auto absolute flex w-[84px] select-none flex-col items-center gap-[5px] rounded-[11px] py-[7px] text-center"
       class:desk-icon-selected={selected === icon.id}
       style:left="{x + (dragged ? drag!.dx : 0)}px"
       style:top="{y + (dragged ? drag!.dy : 0)}px"
@@ -116,16 +116,13 @@
       }}
     >
       {#if icon.kind === 'path'}
-        <span class="desk-tile h-12 w-12">
-          <Folder class="h-5 w-5" strokeWidth={1.8} />
-        </span>
+        <LkAppIcon glyph="folder" tone="sky" size={54} />
       {:else if spec}
-        <AppIcon {spec} size={3} />
+        <AppIcon {spec} size={54} />
       {/if}
       {#if renaming === icon.id}
         <input
-          class="w-full rounded bg-white px-1 text-center text-xs text-black outline-none ring-2"
-          style:--tw-ring-color="var(--desk-accent)"
+          class="lk-rename w-full text-center"
           data-rename={icon.id}
           bind:value={draft}
           maxlength="64"
@@ -137,7 +134,7 @@
           onblur={commitRename}
         />
       {:else}
-        <span class="desk-icon-label line-clamp-2 break-words rounded px-1 text-xs font-medium">{label(icon)}</span>
+        <span class="desk-icon-label line-clamp-2 break-words">{label(icon)}</span>
       {/if}
     </div>
   {/each}
@@ -145,15 +142,28 @@
 
 <style>
   .desk-icon-label {
-    color: hsl(var(--ink));
-    text-shadow: 0 1px 2px hsl(var(--glass) / 0.85);
+    padding: 1px 7px;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-12);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
   }
   .desk-icon-selected {
-    background: hsl(var(--ink) / 0.14);
+    background: var(--fill-press);
   }
   .desk-icon-selected .desk-icon-label {
-    background: var(--desk-accent);
-    color: var(--desk-accent-fg);
-    text-shadow: none;
+    background: var(--color-accent);
+    color: var(--text-on-accent);
+  }
+  .lk-rename {
+    height: 22px;
+    padding: 0 var(--space-5);
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: var(--surface-field);
+    box-shadow: inset 0 0 0 1px var(--color-accent), var(--focus-ring);
+    font: var(--weight-semibold) var(--text-12) var(--font-ui);
+    color: var(--text-primary);
+    outline: none;
   }
 </style>

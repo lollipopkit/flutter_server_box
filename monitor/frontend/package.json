@@ -18,11 +18,14 @@
   "dependencies": {
     "@devolutions/iron-remote-desktop": "0.11.0",
     "@devolutions/iron-remote-desktop-rdp": "0.7.0",
+    "@fontsource-variable/figtree": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
     "@lucide/svelte": "^1.48.0",
     "@novnc/novnc": "1.7.0",
     "@serverbox/webui": "file:../../packages/webui",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
+    "material-symbols": "0.47.6",
     "snarkdown": "^2.0.0",
     "typesafe-i18n": "^5.27.1"
   },

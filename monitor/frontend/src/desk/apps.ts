@@ -3,25 +3,7 @@
 /// here and nowhere else (see `desk/CLAUDE.md`).
 
 import type { Component } from 'svelte'
-import {
-  Activity,
-  ArchiveRestore,
-  Boxes,
-  BrickWall,
-  CalendarClock,
-  Container,
-  Cpu,
-  FolderOpen,
-  Gauge,
-  type LucideIcon,
-  MonitorPlay,
-  ScrollText,
-  ServerCog,
-  Settings,
-  SquareTerminal,
-  Users,
-  ChartNoAxesCombined,
-} from '@lucide/svelte'
+import type { IconTone } from './lk/AppIcon.svelte'
 import type { TranslationFunctions } from '../i18n/i18n-types'
 import { dashboardAccess } from '../lib/access'
 import { enabledFeatures, type FeatureId } from '../lib/features'
@@ -51,9 +33,9 @@ export interface AppSpec extends WindowPolicy {
   title: (ll: TranslationFunctions) => string
   /// Words Spotlight also finds it by, besides its title.
   keywords?: (ll: TranslationFunctions) => string[]
-  icon: LucideIcon
-  /// One line under its name in the launchpad.
-  about: (ll: TranslationFunctions) => string
+  /// The app icon's glyph (Material Symbols Rounded) and tile tone.
+  glyph: string
+  tone: IconTone
   /// Whether this server and this account can use it. `undefined`
   /// capabilities (not fetched yet) answer false for anything gated.
   available: (caps: Capabilities | undefined) => boolean
@@ -74,9 +56,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'status',
     title: (ll) => ll.deskAppStatus(),
-    about: (ll) => ll.deskAboutStatus(),
     keywords: (ll) => [ll.cpuUsage(), ll.memory(), ll.diskUsage(), ll.network()],
-    icon: ChartNoAxesCombined,
+    glyph: 'monitoring',
+    tone: 'berry',
     available: always,
     instances: 1,
     size: { width: 1100, height: 720 },
@@ -86,8 +68,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'files',
     title: (ll) => ll.files(),
-    about: (ll) => ll.deskAboutFiles(),
-    icon: FolderOpen,
+    glyph: 'folder',
+    tone: 'soft',
     available: (caps) => dashboardAccess(caps).files,
     instances: 4,
     size: SIZE,
@@ -97,8 +79,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'terminal',
     title: (ll) => ll.terminal(),
-    about: (ll) => ll.deskAboutTerminal(),
-    icon: SquareTerminal,
+    glyph: 'terminal',
+    tone: 'ink',
     available: (caps) => dashboardAccess(caps).terminal,
     instances: 6,
     size: { width: 860, height: 540 },
@@ -108,8 +90,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'containers',
     title: (ll) => ll.containers(),
-    about: (ll) => ll.deskAboutContainers(),
-    icon: Container,
+    glyph: 'inventory_2',
+    tone: 'sky',
     available: feature('containers'),
     instances: 1,
     size: SIZE,
@@ -119,8 +101,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'process',
     title: (ll) => ll.processes(),
-    about: (ll) => ll.deskAboutProcess(),
-    icon: Activity,
+    glyph: 'browse_activity',
+    tone: 'teal',
     available: feature('process'),
     instances: 1,
     size: SIZE,
@@ -130,8 +112,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'services',
     title: (ll) => ll.services(),
-    about: (ll) => ll.deskAboutServices(),
-    icon: ServerCog,
+    glyph: 'dns',
+    tone: 'violet',
     available: feature('services'),
     instances: 1,
     size: SIZE,
@@ -141,8 +123,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'cron',
     title: (ll) => ll.cron(),
-    about: (ll) => ll.deskAboutCron(),
-    icon: CalendarClock,
+    glyph: 'schedule',
+    tone: 'amber',
     available: feature('cron'),
     instances: 1,
     size: SIZE,
@@ -152,8 +134,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'system_users',
     title: (ll) => ll.systemUsers(),
-    about: (ll) => ll.deskAboutSystemUsers(),
-    icon: Users,
+    glyph: 'group',
+    tone: 'leaf',
     available: feature('system_users'),
     instances: 1,
     size: SIZE,
@@ -163,8 +145,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'firewall',
     title: (ll) => ll.fwTitle(),
-    about: (ll) => ll.deskAboutFirewall(),
-    icon: BrickWall,
+    glyph: 'shield_lock',
+    tone: 'pale',
     available: feature('firewall'),
     instances: 1,
     size: SIZE,
@@ -174,8 +156,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'snippets',
     title: (ll) => ll.snippets(),
-    about: (ll) => ll.deskAboutSnippets(),
-    icon: ScrollText,
+    glyph: 'code_blocks',
+    tone: 'violet',
     available: feature('snippets'),
     instances: 1,
     size: SIZE,
@@ -185,9 +167,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'remote_desktop',
     title: (ll) => ll.desktop(),
-    about: (ll) => ll.deskAboutRemoteDesktop(),
     keywords: () => ['VNC', 'RDP'],
-    icon: MonitorPlay,
+    glyph: 'desktop_windows',
+    tone: 'sky',
     available: feature('desktop'),
     instances: 4,
     size: { width: 1180, height: 760 },
@@ -197,8 +179,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'benchmark',
     title: (ll) => ll.benchmark(),
-    about: (ll) => ll.deskAboutBenchmark(),
-    icon: Gauge,
+    glyph: 'speed',
+    tone: 'amber',
     available: feature('benchmark'),
     instances: 1,
     size: SIZE,
@@ -208,9 +190,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'virt',
     title: (ll) => ll.virt(),
-    about: (ll) => ll.deskAboutVirt(),
     keywords: () => ['KVM', 'libvirt', 'Proxmox', 'PVE'],
-    icon: Boxes,
+    glyph: 'deployed_code',
+    tone: 'bright',
     available: feature('virt'),
     instances: 1,
     size: { width: 1180, height: 760 },
@@ -220,9 +202,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'bmc',
     title: (ll) => ll.bmc(),
-    about: (ll) => ll.deskAboutBmc(),
     keywords: () => ['IPMI', 'Redfish'],
-    icon: Cpu,
+    glyph: 'developer_board',
+    tone: 'teal',
     available: feature('bmc'),
     instances: 1,
     size: SIZE,
@@ -232,8 +214,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'backup',
     title: (ll) => ll.backup(),
-    about: (ll) => ll.deskAboutBackup(),
-    icon: ArchiveRestore,
+    glyph: 'backup',
+    tone: 'leaf',
     available: feature('backup'),
     instances: 1,
     size: SIZE,
@@ -243,8 +225,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'settings',
     title: (ll) => ll.deskAppSettings(),
-    about: (ll) => ll.deskAboutSettings(),
-    icon: Settings,
+    glyph: 'settings',
+    tone: 'mist',
     available: always,
     instances: 1,
     size: { width: 900, height: 640 },

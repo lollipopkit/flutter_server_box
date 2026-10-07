@@ -6094,20 +6094,6 @@ type RootTranslation = {
 	 */
 	snippetNoTerminal: string
 	/**
-	 * W​e​l​c​o​m​e​ ​b​a​c​k​,​ ​{​u​s​e​r​}
-	 * @param {unknown} user
-	 */
-	deskWelcome: RequiredParams<'user'>
-	/**
-	 * {​c​o​u​n​t​}​ ​u​n​r​e​a​d
-	 * @param {unknown} count
-	 */
-	deskUnread: RequiredParams<'count'>
-	/**
-	 * C​a​l​e​n​d​a​r
-	 */
-	deskCalendar: string
-	/**
 	 * L​i​v​e
 	 */
 	deskLiveShort: string
@@ -6132,73 +6118,17 @@ type RootTranslation = {
 	 */
 	deskLockHint: string
 	/**
-	 * A​l​e​r​t​s​ ​r​a​i​s​e​d​ ​b​y​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​r​u​l​e​s​ ​s​h​o​w​ ​u​p​ ​h​e​r​e​.
+	 * N​o​ ​r​e​s​u​l​t​s
 	 */
-	deskNoNotificationsHint: string
+	deskNoResults: string
 	/**
-	 * U​s​a​g​e​,​ ​h​i​s​t​o​r​y​ ​a​n​d​ ​a​l​e​r​t​s
+	 * n​o​w
 	 */
-	deskAboutStatus: string
+	deskNow: string
 	/**
-	 * B​r​o​w​s​e​,​ ​e​d​i​t​ ​a​n​d​ ​t​r​a​n​s​f​e​r
+	 * U​s​e​ ​d​a​r​k​ ​a​p​p​e​a​r​a​n​c​e
 	 */
-	deskAboutFiles: string
-	/**
-	 * S​h​e​l​l​ ​s​e​s​s​i​o​n​s
-	 */
-	deskAboutTerminal: string
-	/**
-	 * D​o​c​k​e​r​ ​a​n​d​ ​P​o​d​m​a​n
-	 */
-	deskAboutContainers: string
-	/**
-	 * R​u​n​n​i​n​g​ ​p​r​o​c​e​s​s​e​s
-	 */
-	deskAboutProcess: string
-	/**
-	 * S​y​s​t​e​m​ ​s​e​r​v​i​c​e​s
-	 */
-	deskAboutServices: string
-	/**
-	 * S​c​h​e​d​u​l​e​d​ ​t​a​s​k​s
-	 */
-	deskAboutCron: string
-	/**
-	 * A​c​c​o​u​n​t​s​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e
-	 */
-	deskAboutSystemUsers: string
-	/**
-	 * u​f​w​ ​a​n​d​ ​f​i​r​e​w​a​l​l​d​ ​r​u​l​e​s
-	 */
-	deskAboutFirewall: string
-	/**
-	 * S​a​v​e​d​ ​s​c​r​i​p​t​s
-	 */
-	deskAboutSnippets: string
-	/**
-	 * V​N​C​ ​a​n​d​ ​R​D​P
-	 */
-	deskAboutRemoteDesktop: string
-	/**
-	 * D​i​s​k​,​ ​n​e​t​w​o​r​k​ ​a​n​d​ ​C​P​U
-	 */
-	deskAboutBenchmark: string
-	/**
-	 * V​i​r​t​u​a​l​ ​m​a​c​h​i​n​e​s
-	 */
-	deskAboutVirt: string
-	/**
-	 * O​u​t​-​o​f​-​b​a​n​d​ ​m​a​n​a​g​e​m​e​n​t
-	 */
-	deskAboutBmc: string
-	/**
-	 * A​p​p​ ​b​a​c​k​u​p​s​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t
-	 */
-	deskAboutBackup: string
-	/**
-	 * P​a​n​e​l​ ​a​n​d​ ​s​e​r​v​e​r
-	 */
-	deskAboutSettings: string
+	deskUseDark: string
 }
 
 export type TranslationFunctions = {
@@ -12111,18 +12041,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	snippetNoTerminal: () => LocalizedString
 	/**
-	 * Welcome back, {user}
-	 */
-	deskWelcome: (arg: { user: unknown }) => LocalizedString
-	/**
-	 * {count} unread
-	 */
-	deskUnread: (arg: { count: unknown }) => LocalizedString
-	/**
-	 * Calendar
-	 */
-	deskCalendar: () => LocalizedString
-	/**
 	 * Live
 	 */
 	deskLiveShort: () => LocalizedString
@@ -12147,73 +12065,17 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskLockHint: () => LocalizedString
 	/**
-	 * Alerts raised by this server's rules show up here.
+	 * No results
 	 */
-	deskNoNotificationsHint: () => LocalizedString
+	deskNoResults: () => LocalizedString
 	/**
-	 * Usage, history and alerts
+	 * now
 	 */
-	deskAboutStatus: () => LocalizedString
+	deskNow: () => LocalizedString
 	/**
-	 * Browse, edit and transfer
+	 * Use dark appearance
 	 */
-	deskAboutFiles: () => LocalizedString
-	/**
-	 * Shell sessions
-	 */
-	deskAboutTerminal: () => LocalizedString
-	/**
-	 * Docker and Podman
-	 */
-	deskAboutContainers: () => LocalizedString
-	/**
-	 * Running processes
-	 */
-	deskAboutProcess: () => LocalizedString
-	/**
-	 * System services
-	 */
-	deskAboutServices: () => LocalizedString
-	/**
-	 * Scheduled tasks
-	 */
-	deskAboutCron: () => LocalizedString
-	/**
-	 * Accounts on the machine
-	 */
-	deskAboutSystemUsers: () => LocalizedString
-	/**
-	 * ufw and firewalld rules
-	 */
-	deskAboutFirewall: () => LocalizedString
-	/**
-	 * Saved scripts
-	 */
-	deskAboutSnippets: () => LocalizedString
-	/**
-	 * VNC and RDP
-	 */
-	deskAboutRemoteDesktop: () => LocalizedString
-	/**
-	 * Disk, network and CPU
-	 */
-	deskAboutBenchmark: () => LocalizedString
-	/**
-	 * Virtual machines
-	 */
-	deskAboutVirt: () => LocalizedString
-	/**
-	 * Out-of-band management
-	 */
-	deskAboutBmc: () => LocalizedString
-	/**
-	 * App backups on this agent
-	 */
-	deskAboutBackup: () => LocalizedString
-	/**
-	 * Panel and server
-	 */
-	deskAboutSettings: () => LocalizedString
+	deskUseDark: () => LocalizedString
 }
 
 export type Formatters = {}

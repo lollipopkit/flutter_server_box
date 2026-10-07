@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { FolderOpen, Image, LayoutGrid, Settings, SquareTerminal } from '@lucide/svelte'
   import { Spinner } from '@serverbox/webui'
   import { onDestroy, onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
+  import { theme } from '../lib/theme.svelte'
   import type { ServerEntry } from '../lib/servers.svelte'
   import { app } from './apps'
   import { Desk, provideDesk, type MenuItem } from './deskState.svelte'
-  import { ACCENTS } from './prefs.svelte'
   import Banner from './shell/Banner.svelte'
   import CalendarPanel from './shell/CalendarPanel.svelte'
   import ContextMenu from './shell/ContextMenu.svelte'
@@ -35,9 +34,10 @@
 
   let root = $state<HTMLDivElement | null>(null)
 
-  /// The menubar's height and gap above the windows, the dock's below.
-  const TOP = 48
-  const BOTTOM = 84
+  /// The menubar's height and the gap under it, above the windows; the
+  /// dock's below (its icons, padding and distance from the edge).
+  const TOP = 37
+  const BOTTOM = 74
 
   function measure() {
     if (!root) return
@@ -62,13 +62,14 @@
     desk.session?.schedule()
   })
 
-  const accent = $derived(desk.prefs?.value.accent ?? ACCENTS[0])
-
   function onkeydown(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       desk.panel = null
       desk.spotlight = !desk.spotlight
+    } else if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+      e.preventDefault()
+      desk.open('settings')
     } else if (e.altKey && e.code === 'Backquote') {
       // Alt+` brings the window at the back to the front, round and round.
       e.preventDefault()
@@ -89,22 +90,22 @@
   function deskMenu(e: MouseEvent) {
     const items: MenuItem[] = []
     if (app('terminal')?.available(desk.caps)) {
-      items.push({ label: $LL.deskNewTerminal(), icon: SquareTerminal, action: () => desk.open('terminal', { newWindow: true }) })
+      items.push({ label: $LL.deskNewTerminal(), icon: 'terminal', action: () => desk.open('terminal', { newWindow: true }) })
     }
     if (app('files')?.available(desk.caps)) {
-      items.push({ label: $LL.files(), icon: FolderOpen, action: () => desk.open('files') })
+      items.push({ label: $LL.files(), icon: 'folder', action: () => desk.open('files') })
     }
     items.push(
       { separator: true },
-      { label: $LL.deskChangeWallpaper(), icon: Image, action: () => desk.open('settings', { appState: { section: 'appearance' } }) },
+      { label: $LL.deskUseDark(), checked: theme.dark, action: () => theme.set(theme.dark ? 'light' : 'dark') },
       {
         label: $LL.deskCleanUpIcons(),
-        icon: LayoutGrid,
+        icon: 'grid_view',
         action: () =>
           desk.prefs?.update({ icons: desk.prefs.value.icons.map((i) => ({ ...i, col: null, row: null })) }),
       },
       { separator: true },
-      { label: $LL.deskAppSettings(), icon: Settings, action: () => desk.open('settings') },
+      { label: $LL.deskChangeWallpaper(), icon: 'wallpaper', action: () => desk.open('settings', { appState: { section: 'appearance' } }) },
     )
     desk.showMenu(e, items)
   }
@@ -114,8 +115,7 @@
 
 <div
   bind:this={root}
-  class="desk-root fixed inset-0 overflow-hidden font-body text-fg"
-  style:--desk-accent={accent}
+  class="lk desk-root fixed inset-0 overflow-hidden bg-(--surface-desktop)"
   role="application"
   aria-label={$LL.deskTitle()}
   onpointerdown={dismiss}
@@ -146,13 +146,8 @@
   {#if desk.panel === 'launchpad'}
     <Launchpad />
   {:else if desk.panel}
-    <!-- Over the dock's right, as ClawBox opens its panels. -->
-    <div
-      class="desk-sheet desk-pop absolute bottom-(--dock-reserve) right-3 z-[100001] flex max-h-[calc(100%-var(--dock-reserve)-var(--menubar-h)-1.5rem)] w-[min(26.875rem,calc(100%-1.5rem))] flex-col overflow-y-auto rounded-(--radius-panel) p-6"
-      role="dialog"
-      tabindex="-1"
-      onpointerdown={(e) => e.stopPropagation()}
-    >
+    <!-- Under the menubar's right end, as macOS opens them. -->
+    <div class="desk-panel" role="dialog" tabindex="-1" onpointerdown={(e) => e.stopPropagation()}>
       {#if desk.panel === 'control'}
         <ControlCenter {onlock} />
       {:else if desk.panel === 'notifications'}
@@ -169,3 +164,25 @@
   <Banner />
   <ContextMenu />
 </div>
+
+<style>
+  .desk-panel {
+    position: absolute;
+    top: 36px;
+    right: 9px;
+    z-index: 100001;
+    width: min(330px, calc(100% - 18px));
+    max-height: calc(100% - 36px - var(--dock-icon) - 40px);
+    overflow-y: auto;
+    padding: var(--space-11);
+    border-radius: var(--radius-panel);
+    background: var(--glass-panel);
+    backdrop-filter: var(--blur-menu);
+    -webkit-backdrop-filter: var(--blur-menu);
+    box-shadow:
+      var(--shadow-menu),
+      inset 0 0 0 0.5px var(--border-glass);
+    transform-origin: top right;
+    animation: lk-menu-in var(--dur-slow) var(--ease-spring);
+  }
+</style>

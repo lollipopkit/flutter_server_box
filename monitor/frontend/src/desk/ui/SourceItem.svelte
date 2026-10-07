@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { Component, Snippet } from 'svelte'
 
-  /// One row of a sidebar: an icon, a label, an optional count or badge.
+  /// TODO: remove once every app uses `lk/SidebarItem` (glyph names) — a
+  /// compatibility shim drawing a lucide icon in the design system's row.
 
   interface Props {
     label: string
     icon?: Component
     selected?: boolean
-    /// A tooltip, for a label that had to be shortened.
     title?: string
     trailing?: Snippet
     onclick: () => void
@@ -17,12 +17,14 @@
 </script>
 
 <button
-  class="desk-app-source flex w-full items-center gap-2 rounded-[0.625rem] px-2.5 py-1.5 text-left text-[0.8rem]"
+  type="button"
+  class="lk-side__item w-full text-left"
+  class:lk-side__item--on={selected}
   aria-current={selected ? 'true' : undefined}
   {title}
   {onclick}
 >
-  {#if Icon}<Icon class="h-4 w-4 shrink-0 opacity-75" />{/if}
-  <span class="min-w-0 flex-1 truncate">{label}</span>
-  {#if trailing}{@render trailing()}{/if}
+  {#if Icon}<Icon class="h-[17px] w-[17px] shrink-0 text-(--color-accent-text)" />{/if}
+  <span class="lk-side__label">{label}</span>
+  {#if trailing}<span class="lk-side__trail">{@render trailing()}</span>{/if}
 </button>

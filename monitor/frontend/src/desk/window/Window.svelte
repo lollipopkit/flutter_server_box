@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { Maximize2, Minus, X } from '@lucide/svelte'
   import { Spinner } from '@serverbox/webui'
   import { LL } from '../../i18n/i18n-svelte'
   import { app } from '../apps'
   import { provideWindow, useDesk } from '../deskState.svelte'
+  import IconButton from '../lk/IconButton.svelte'
+  import TrafficLights from '../lk/TrafficLights.svelte'
+  import { WindowChrome } from './chrome.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
   import type { DeskWindow } from '../windows.svelte'
 
@@ -15,13 +17,16 @@
 
   const { win, onsnappreview }: Props = $props()
   const desk = useDesk()
+  const chrome = new WindowChrome()
   // svelte-ignore state_referenced_locally
-  provideWindow(desk, win.id)
+  provideWindow(desk, win.id, chrome)
 
   const spec = $derived(app(win.appId))
   const title = $derived(win.title ?? (spec ? spec.title($LL) : win.appId))
   const active = $derived(desk.windows.active?.id === win.id)
   const compact = $derived(desk.windows.compact)
+  const toolbar = $derived(chrome.toolbar)
+  const sidebar = $derived(chrome.sidebar)
 
   /// The rect while a drag or resize is under way; the store gets it on release.
   let live = $state<Rect | null>(null)
@@ -32,6 +37,10 @@
     if (compact) return usable(desk.windows.area)
     return live ?? win.rect
   })
+  /// Too narrow for the sidebar beside the content: it folds behind a
+  /// title-bar button and opens over the content.
+  const folded = $derived(compact || rect.width < 640)
+  const lightLabels = $derived({ close: $LL.deskClose(), minimize: $LL.deskMinimize(), zoom: $LL.deskZoom() })
 
   function animateOnce() {
     animate = true
@@ -51,7 +60,7 @@
   function onTitlePointerDown(e: PointerEvent) {
     desk.windows.focus(win.id)
     if (compact || e.button !== 0) return
-    if ((e.target as HTMLElement).closest('button, input, a, [data-no-drag]')) return
+    if ((e.target as HTMLElement).closest('button, input, select, a, [role=tab], [data-no-drag]')) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     drag = { pointerX: e.clientX, pointerY: e.clientY, start: { ...win.rect }, moved: false, zone: null }
   }
@@ -139,7 +148,7 @@
 </script>
 
 <div
-  class="desk-window desk-opening absolute"
+  class="desk-window desk-opening absolute flex"
   style:left="{rect.x}px"
   style:top="{rect.y}px"
   style:width="{rect.width}px"
@@ -157,71 +166,52 @@
   tabindex="-1"
   onpointerdowncapture={() => desk.windows.focus(win.id)}
 >
-  <!-- Clipped to the window's corners; the resize edges outside it are not,
-       so they can be taken from just beyond the border. -->
-  <div class="flex h-full flex-col overflow-hidden rounded-[inherit]">
-  <!-- The title bar is a drag handle; its buttons are the keyboard's way. -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <header
-    class="relative grid h-11 shrink-0 select-none grid-cols-[6rem_1fr_6rem] items-center px-3"
-    style:touch-action="none"
-    onpointerdown={onTitlePointerDown}
-    onpointermove={onTitlePointerMove}
-    onpointerup={onTitlePointerUp}
-    onpointercancel={onTitlePointerUp}
-    ondblclick={(e) => {
-      if (!(e.target as HTMLElement).closest('button')) toggleMaximize()
-    }}
-  >
-    <div class="desk-traffic-group flex w-fit items-center gap-2" data-no-drag>
-      <button
-        class="desk-traffic bg-[#ff5f57]"
-        aria-label={$LL.deskClose()}
-        title={$LL.deskClose()}
-        onclick={() => desk.windows.close(win.id)}
-      >
-        <X strokeWidth={3} />
-      </button>
-      {#if !compact}
-        <button
-          class="desk-traffic bg-[#febb2e]"
-          aria-label={$LL.deskMinimize()}
-          title={$LL.deskMinimize()}
-          onclick={() => desk.windows.minimize(win.id)}
-        >
-          <Minus strokeWidth={3} />
-        </button>
-        <button
-          class="desk-traffic bg-[#28c840]"
-          aria-label={$LL.deskZoom()}
-          title={$LL.deskZoom()}
-          onclick={toggleMaximize}
-        >
-          <Maximize2 strokeWidth={3} />
-        </button>
+  <!-- The design system's window: an inset glass sidebar holding the lights
+       when the app has one, else the lights in the title bar; the bar holds
+       the title and the app's tools. Both are drag handles. -->
+  <div class="lk-window min-w-0 flex-1" class:lk-window--inactive={!active}>
+    <div class="lk-window__frame">
+      {#if sidebar && !folded}
+        <aside class="lk-window__sidebar" style:width="{sidebar.width}px" aria-label={$LL.deskSidebar()}>
+          {@render handle('side')}
+          <div class="lk-window__sidebar-body">{@render sidebar.content()}</div>
+        </aside>
       {/if}
+      <div class="lk-window__main">
+        {@render handle('bar')}
+        {#if toolbar?.tabs}<div class="shrink-0 px-[17px] pb-[7px]">{@render toolbar.tabs()}</div>{/if}
+        <!-- A size container: an app lays itself out by its window's width
+             (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app
+             whose content fills the window takes `min-h-0 flex-1`. -->
+        <div class="lk-window__content desk-window-body @container flex flex-col">
+          {#if spec}
+            {#await spec.load()}
+              <div class="flex h-full items-center justify-center"><Spinner /></div>
+            {:then mod}
+              <mod.default />
+            {:catch}
+              <p class="p-6 text-sm text-(--color-danger)">{$LL.deskAppFailed()}</p>
+            {/await}
+          {/if}
+          {#if sidebar && folded && chrome.sidebarOpen}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+            <div class="absolute inset-0 z-20" onclick={() => (chrome.sidebarOpen = false)}></div>
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+            <aside
+              class="lk-window__sidebar absolute bottom-0 left-0 top-0 z-30 pt-[9px]"
+              style:width="{Math.min(sidebar.width, rect.width - 40)}px"
+              aria-label={$LL.deskSidebar()}
+              onclick={(e) => {
+                // A choice made in the folded sidebar is a reason to fold it again.
+                if ((e.target as HTMLElement).closest('button')) chrome.sidebarOpen = false
+              }}
+            >
+              <div class="lk-window__sidebar-body">{@render sidebar.content()}</div>
+            </aside>
+          {/if}
+        </div>
+      </div>
     </div>
-    <h2 class="truncate text-center text-xs font-semibold tracking-[0.01em]" class:desk-muted={!active}>
-      {title}
-    </h2>
-    <div></div>
-  </header>
-
-  <!-- A size container: an app lays itself out by its window's width
-       (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app whose
-       content fills the window under its toolbar takes `min-h-0 flex-1`,
-       never a height worked out from the toolbar's. -->
-  <div class="desk-window-body @container relative flex min-h-0 flex-1 flex-col overflow-auto">
-    {#if spec}
-      {#await spec.load()}
-        <div class="flex h-full items-center justify-center"><Spinner /></div>
-      {:then mod}
-        <mod.default />
-      {:catch}
-        <p class="p-6 text-sm text-danger">{$LL.deskAppFailed()}</p>
-      {/await}
-    {/if}
-  </div>
   </div>
 
   {#if !compact && !win.snap}
@@ -238,3 +228,52 @@
     {/each}
   {/if}
 </div>
+
+<!-- A part of the frame the window is dragged by; a double-click zooms. -->
+{#snippet handle(part: 'bar' | 'side')}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="{part === 'bar' ? 'lk-window__bar' : 'lk-window__sidebar-top'} select-none"
+    style:touch-action="none"
+    onpointerdown={onTitlePointerDown}
+    onpointermove={onTitlePointerMove}
+    onpointerup={onTitlePointerUp}
+    onpointercancel={onTitlePointerUp}
+    ondblclick={(e) => {
+      if (!(e.target as HTMLElement).closest('button, input, select, [role=tab]')) toggleMaximize()
+    }}
+  >
+    {#if part === 'bar'}{@render bar()}{:else}{@render lights()}{/if}
+  </div>
+{/snippet}
+
+{#snippet lights()}
+  <TrafficLights
+    inactive={!active}
+    labels={lightLabels}
+    onclose={() => desk.windows.close(win.id)}
+    onminimize={compact ? undefined : () => desk.windows.minimize(win.id)}
+    onzoom={compact ? undefined : toggleMaximize}
+  />
+{/snippet}
+
+{#snippet bar()}
+  {#if !sidebar || folded}{@render lights()}{/if}
+  {#if sidebar && folded}
+    <IconButton
+      icon="side_navigation"
+      label={$LL.deskSidebar()}
+      size="sm"
+      active={chrome.sidebarOpen}
+      aria-expanded={chrome.sidebarOpen}
+      onclick={() => (chrome.sidebarOpen = !chrome.sidebarOpen)}
+    />
+  {/if}
+  {#if toolbar?.back}<IconButton icon="chevron_left" label={$LL.back()} size="sm" onclick={toolbar.back} />{/if}
+  {@render toolbar?.leading?.()}
+  <div class="min-w-0" class:ml-[9px]={!sidebar || folded}>
+    <h2 class="lk-window__title">{toolbar?.title ?? title}</h2>
+    {#if toolbar?.subtitle}<p class="mt-0.5 truncate text-[12px] text-(--text-tertiary)">{toolbar.subtitle}</p>{/if}
+  </div>
+  {#if toolbar?.actions}<div class="lk-window__tools" data-no-drag>{@render toolbar.actions()}</div>{/if}
+{/snippet}

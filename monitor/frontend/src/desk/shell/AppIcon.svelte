@@ -1,16 +1,17 @@
 <script lang="ts">
   import type { AppSpec } from '../apps'
+  import LkAppIcon from '../lk/AppIcon.svelte'
+
+  /// An app's icon by its registry entry.
 
   interface Props {
     spec: AppSpec
-    /// The tile's edge, in rem.
+    /// The tile's edge, in px.
     size?: number
+    class?: string
   }
 
-  const { spec, size = 3 }: Props = $props()
-  const Icon = $derived(spec.icon)
+  const { spec, size = 44, class: className }: Props = $props()
 </script>
 
-<span class="desk-tile shrink-0" style:width="{size}rem" style:height="{size}rem" aria-hidden="true">
-  <Icon style="width: {size * 0.42}rem; height: {size * 0.42}rem" strokeWidth={1.8} />
-</span>
+<LkAppIcon glyph={spec.glyph} tone={spec.tone} {size} class={className} />
