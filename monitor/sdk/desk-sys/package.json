@@ -1,0 +1,11 @@
+{
+  "name": "@lollipopkit/desk-sys",
+  "version": "0.1.0",
+  "description": "Build apps for the ServerBox monitor's desk: the client of its app bridge.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src", "README.md"]
+}

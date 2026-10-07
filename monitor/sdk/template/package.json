@@ -1,0 +1,16 @@
+{
+  "name": "desk-app-template",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "pack": "vite build && node pack.mjs"
+  },
+  "dependencies": {
+    "@lollipopkit/desk-sys": "file:../desk-sys"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vite": "^8.3.1"
+  }
+}

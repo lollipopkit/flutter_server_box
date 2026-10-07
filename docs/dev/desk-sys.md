@@ -2,7 +2,7 @@
 
 The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, launchpad, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
 
-Status: phases 1–4 are implemented (see [Phases](#phases)); the rest is the agreed design.
+Status: phases 1–5 are implemented (the SDK is not published yet) (see [Phases](#phases)); the rest is the agreed design.
 
 ## App kinds
 
@@ -52,7 +52,7 @@ An app saves what it needs to come back with `setAppState` (≤16 KiB JSON, neve
 
 ## The `sys` interface
 
-One import for system apps: `import { … } from '../../sys'`. Third-party apps get the same interface from the `@lollipopkit/desk-sys` package, which carries it over `postMessage` (all calls are asynchronous there; reactive values arrive as events).
+One import for system apps: `import { … } from '../../sys'`. Third-party apps get the same interface from `@lollipopkit/desk-sys` (`monitor/sdk/desk-sys`), which carries it over `postMessage` (all calls are asynchronous there; reactive values arrive as events).
 
 | Area | Interface | Notes |
 |---|---|---|
@@ -123,4 +123,4 @@ Intents carry `from`, set by the desk: an app acts on one only from the apps it 
 2. **Services** (done): per-app background choice (`background_denied`, migration 020), storage, notifications, dock menus, `keepAlive`, Control Centre's background list, intents and "Open with" (Snippets → Terminal moved onto them), app settings pages.
 3. **`web` apps** (done): the agent's package store (`api::apps`, migration 022), the frame host and bridge (`desk/webapps/`: `protocol.ts`, `bridge.svelte.ts`, `WebAppFrame.svelte`), Settings → Apps (install, approve, remove), an example (`monitor/examples/desk-app-hello`). The SDK package moves to phase 5.
 4. **`wasm` apps** (done): `api::app_runtime`, `/apps/{id}/call`, host functions, bounds; the bridge's `backend.call`. Events from a backend and `fs.write`/`net` are left.
-5. **SDK**: the package published, a template app, an example of each kind, docs.
+5. **SDK** (done, unpublished): `monitor/sdk/desk-sys` (the client; `protocol.ts` is the one copy of the protocol, the panel's bridge imports it), `monitor/sdk/template` (vite, relative URLs, `npm run pack`), examples `monitor/examples/desk-app-hello` (`web`) and `desk-app-uptime` (`wasm`, Rust). Publishing waits for a license decision.

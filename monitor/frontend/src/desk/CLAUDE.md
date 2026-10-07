@@ -11,7 +11,7 @@ The panel is a macOS-style desktop: a lock screen to choose a server, then that 
 - `session.svelte.ts` (window session, revision CAS, the focused tab wins), `prefs.svelte.ts`, `notifications.svelte.ts`, `storage.ts` (`AgentStorage` when the agent lists `desk`, `BrowserStorage` otherwise), `deskApi.ts` (always to an explicit `ServerEntry`).
 - `shell/` — Menubar, Dock, Launchpad, ControlCenter, NotificationCenter, CalendarPanel, Spotlight, Banner, ContextMenu, DeskIcons, Wallpaper, AppIcon.
 - `apps/<id>/` holds each app; **its `manifest.ts` (`defineApp`) is the app's only registration** (`apps/index.ts` finds them; `registry.svelte.ts` is the list the shell reads). Adding an app is adding its directory.
-- `webapps/` — installed (`web`) apps: `register.ts` adds the agent's approved ones per desk, `WebAppFrame.svelte` runs one in a sandboxed iframe (opaque origin), `bridge.svelte.ts` answers its messages (`protocol.ts`) within its approved permissions. Settings → Apps installs/approves/removes (`InstalledApps.svelte`).
+- `webapps/` — installed (`web`) apps: `register.ts` adds the agent's approved ones per desk, `WebAppFrame.svelte` runs one in a sandboxed iframe (opaque origin), `bridge.svelte.ts` answers its messages (protocol: `monitor/sdk/desk-sys/src/protocol.ts`, shared with the SDK) within its approved permissions; `backend.call` reaches a `wasm` app's backend. Settings → Apps installs/approves/removes (`InstalledApps.svelte`).
 - `ui/` — TODO-remove shims. `lk/` — the design system (below).
 - `desk.css` — window placement and animation, wallpaper light/dark; imports `lk/lk.css`.
 
