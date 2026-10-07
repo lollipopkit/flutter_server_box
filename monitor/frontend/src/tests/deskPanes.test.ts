@@ -72,9 +72,11 @@ describe('panes', () => {
     expect(layout.focus).toBe('p3')
 
     const fewer = removeTab(layout, 't3')!
-    // The neighbour of what went is shown.
-    expect(fewer.tab).toBe('t2')
-    expect(fewer.focus).toBe('p2')
+    // The tab left of what went is shown.
+    expect(fewer.tab).toBe('tw')
+    expect(fewer.focus).toBe('w')
+    // The first gone, the next is.
+    expect(removeTab(showTab(layout, 'tw'), 'tw')!.tab).toBe('t3')
     expect(removeTab(readLayout(null, 'w'), 'tw')).toBeNull()
   })
 

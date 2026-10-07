@@ -404,9 +404,19 @@
     1.004 83.8%,
     1
   );
+  /* Selection indicator: ONE motion for every "one of N peers" switch
+     (TitleTabs, SegmentedControl, the login instance list). */
+  --dur-indicator: 380ms;
+  --ease-indicator: cubic-bezier(0.34, 1.3, 0.64, 1);
+  --dur-tab-content: 160ms; /* the incoming view fades in; no exit, no slide */
+  --dur-tab-in: 220ms; /* a new tab grows from 0 to its share */
 }
 @media (prefers-reduced-motion: reduce) {
   .lk {
+    --dur-indicator: 150ms;
+    --dur-tab-content: 0ms;
+    --dur-tab-in: 0ms;
+    --ease-indicator: cubic-bezier(0.2, 0.8, 0.2, 1);
     --dur-base: 120ms;
     --dur-slow: 120ms;
     --dur-window: 150ms;

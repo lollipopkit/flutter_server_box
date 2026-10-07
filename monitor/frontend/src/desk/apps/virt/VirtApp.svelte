@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl, SidebarItem, SidebarSection, Spinner } from '../../lk/index'
+  import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl, SidebarItem, SidebarSection, Spinner, viewIn } from '../../lk/index'
   import { AppToolbar, SplitView } from '../../sys'
   import LineChart from '../../../components/LineChart.svelte'
   import PveForm from './PveForm.svelte'
@@ -642,6 +642,8 @@
             </div>
           </Card>
 
+          <!-- The chosen pane fades in as the tabs above switch. -->
+          <div class="space-y-[13px]" use:viewIn={pane}>
           {#if pane === 'settings'}
             <VirtManage
               {view}
@@ -767,6 +769,7 @@
             </dl>
           </Card>
           {/if}
+          </div>
         {:else if guests.length > 0}
           <Card><p class="text-[13px] text-(--text-secondary)">{$LL.virtPick()}</p></Card>
         {/if}

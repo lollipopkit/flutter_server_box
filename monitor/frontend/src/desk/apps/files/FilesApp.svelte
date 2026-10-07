@@ -14,6 +14,7 @@
     Spinner,
     StatusBar,
     ToolbarGroup,
+    viewIn,
     type Column,
     type MenuEntry,
     type TableSort,
@@ -718,8 +719,9 @@
       {/if}
     {/snippet}
 
-    <!-- The entry menu's coordinates are this box's. -->
-    <div bind:this={pane} class="relative flex flex-1 flex-col">
+    <!-- The entry menu's coordinates are this box's. A list/grid switch
+         fades the new view in. -->
+    <div bind:this={pane} class="relative flex flex-1 flex-col" use:viewIn={view}>
       {#if !write}
         <p class="px-(--content-pad) pb-[7px] text-[12px] text-(--text-tertiary)">{$LL.filesReadOnly()}</p>
       {/if}

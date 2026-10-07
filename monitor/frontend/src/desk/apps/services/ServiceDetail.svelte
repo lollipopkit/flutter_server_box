@@ -1,6 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
-  import { Card, SegmentedControl } from '../../lk'
+  import { Card, SegmentedControl, viewIn } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { ServicePart, ServiceView } from '../../../types'
@@ -76,6 +76,7 @@
 <div class="space-y-[9px]">
   <SegmentedControl size="sm" label={$LL.serviceLogs()} options={tabOptions} value={part} onchange={(value) => (part = value)} />
 
+  <div use:viewIn={part}>
   {#if error}
     <p class="text-sm text-danger">{error}</p>
   {:else if loading && !view}
@@ -122,4 +123,5 @@
       {/if}
     {/if}
   {/if}
+  </div>
 </div>

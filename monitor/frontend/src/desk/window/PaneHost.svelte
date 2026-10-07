@@ -10,7 +10,8 @@
 
   import type { Component } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
-  import Icon from '../lk/Icon.svelte'
+  import TitleTabs, { type TitleTabsDrag } from '../lk/TitleTabs.svelte'
+  import { viewEnter, viewIn } from '../lk/motion'
   import { useDesk } from '../deskState.svelte'
   import { activeTab, dividers, paneRects, type Divider, type Rect } from '../panes'
   import { useWindow } from '../sys/window.svelte'
@@ -131,6 +132,13 @@
 
   let area = $state<HTMLDivElement | null>(null)
 
+  /// Past the first render: a pane mounting now is a new tab or a split,
+  /// and fades in; the panes the window opens with do not.
+  const life = { mounted: false }
+  $effect(() => {
+    life.mounted = true
+  })
+
   const pct = (n: number) => `${n * 100}%`
 
   // ---- dividers ---------------------------------------------------------
@@ -167,7 +175,6 @@
   let tabDrag: { id: string; x: number; y: number; moved: boolean; away: boolean } | null = $state(null)
 
   function onTabDown(e: PointerEvent, id: string) {
-    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     tabDrag = { id, x: e.clientX, y: e.clientY, moved: false, away: false }
     host.showTab(id)
@@ -196,6 +203,13 @@
     if (drag?.moved && drag.away) desk.detachTab(parent.id, drag.id, { x: e.clientX, y: e.clientY })
   }
 
+  const tabDragging: TitleTabsDrag = {
+    down: onTabDown,
+    move: onTabMove,
+    up: onTabUp,
+    cancel: () => (tabDrag = null),
+  }
+
   // ---- a window dragged onto this one -----------------------------------
 
   const drop = $derived(desk.paneDrop?.windowId === parent.id ? desk.paneDrop : null)
@@ -217,38 +231,20 @@
 </script>
 
 {#snippet tabsHeading()}
-  <div class="desk-tabbar">
-    <div bind:this={strip} class="desk-tabs" role="tablist" aria-label={appTitle} data-pane-strip>
-      {#each layout.tabs as t, i (t.id)}
-        <div
-          role="tab"
-          tabindex={t.id === tab.id ? 0 : -1}
-          aria-selected={t.id === tab.id}
-          class="desk-tab"
-          class:desk-tab--on={t.id === tab.id}
-          class:desk-tab--dragging={tabDrag?.id === t.id && tabDrag?.moved}
-          title={tabTitles[i] ?? appTitle}
-          style:touch-action="none"
-          onpointerdown={(e) => onTabDown(e, t.id)}
-          onpointermove={onTabMove}
-          onpointerup={onTabUp}
-          onpointercancel={() => (tabDrag = null)}
-          onkeydown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') host.showTab(t.id)
-          }}
-        >
-          <button type="button" class="desk-tab__close" aria-label={$LL.deskCloseTab()} onclick={() => host.closeTab(t.id)}>
-            <Icon name="close" size={14} />
-          </button>
-          <span class="desk-tab__title">{tabLabels[i]}</span>
-        </div>
-      {/each}
-      <!-- At the end of the tabs, in the same capsule: a new one goes there. -->
-      <button type="button" class="desk-tabs__add" title={$LL.deskNewTab()} aria-label={$LL.deskNewTab()} onclick={() => host.newTab()}>
-        <Icon name="add" size={17} />
-      </button>
-    </div>
-  </div>
+  <TitleTabs
+    bind:well={strip}
+    data-pane-strip
+    label={appTitle}
+    tabs={layout.tabs.map((t, i) => ({ key: t.id, label: tabLabels[i], title: tabTitles[i] ?? appTitle }))}
+    active={tab.id}
+    onselect={(id) => host.showTab(id)}
+    onclose={(id) => host.closeTab(id)}
+    onadd={() => host.newTab()}
+    addLabel={$LL.deskNewTab()}
+    closeLabel={$LL.deskCloseTab()}
+    drag={tabDragging}
+    dragging={tabDrag?.moved ? tabDrag.id : null}
+  />
 {/snippet}
 
 <div class="desk-panes absolute inset-0" data-pane-host>
@@ -270,6 +266,8 @@
         style:--pane-top={underBar ? '0px' : 'var(--titlebar-height)'}
         style:visibility={shown ? null : 'hidden'}
         inert={!shown}
+        use:viewIn={shown ? tab.id : null}
+        use:viewEnter={life.mounted && shown}
         onpointerdowncapture={() => host.focus(p.id)}
       >
         <div class="shrink-0" style:height="var(--pane-top)" aria-hidden="true"></div>

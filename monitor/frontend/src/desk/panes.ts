@@ -189,11 +189,12 @@ export function removeTab(layout: Layout, tabId: string): Layout | null {
   return settle(layout, tabs)
 }
 
-/// [tabs] with the tab on show and the focus kept where they still exist, or
-/// moved to the neighbour of what went.
+/// [tabs] with the tab on show and the focus kept where they still exist;
+/// the tab on show gone, the one left of it is shown (the design system's
+/// tabs; the first when it was the first).
 function settle(layout: Layout, tabs: Tab[]): Layout {
   const was = layout.tabs.findIndex((t) => t.id === layout.tab)
-  const tab = tabs.find((t) => t.id === layout.tab) ?? tabs[Math.min(Math.max(was, 0), tabs.length - 1)]
+  const tab = tabs.find((t) => t.id === layout.tab) ?? tabs[Math.min(Math.max(was - 1, 0), tabs.length - 1)]
   const panes = panesOf(tab.root)
   const focus = panes.some((p) => p.id === layout.focus) ? layout.focus : panes[0].id
   return { tabs, tab: tab.id, focus }

@@ -21,6 +21,7 @@
   import Checkbox from '../lk/Checkbox.svelte'
   import Icon from '../lk/Icon.svelte'
   import IconButton from '../lk/IconButton.svelte'
+  import Indicator from '../lk/Indicator.svelte'
   import Input from '../lk/Input.svelte'
   import Wallpaper from '../shell/Wallpaper.svelte'
   import LockClock from './LockClock.svelte'
@@ -327,7 +328,8 @@
         {#if !single}
           <aside class="instances">
             <div class="lk-caps px-[13px] pb-[7px] pt-[13px]">{$LL.lockInstances()}</div>
-            <div class="flex min-h-0 flex-1 flex-col gap-[2px] overflow-y-auto px-[7px]">
+            <div class="relative flex min-h-0 flex-1 flex-col gap-[2px] overflow-y-auto px-[7px]">
+              <Indicator selector=".row--on" class="lock-pill" />
               {#each list as s (s.id)}
                 {@const of = servers.accountsOf(s.id)}
                 {@const online = health.status[s.id]}
@@ -620,8 +622,27 @@
   .row:hover {
     background: var(--fill-hover);
   }
+  /* In the list the chosen row is marked by the one indicator gliding to it
+     (the design system's selection motion); the new-instance row has its own. */
+  :global(.lock-pill) {
+    position: absolute;
+    border-radius: var(--radius-sm);
+    background: var(--surface-selected);
+    pointer-events: none;
+    transition: opacity 200ms;
+  }
+  :global(.lock-pill--glide) {
+    transition:
+      transform var(--dur-indicator) var(--ease-indicator),
+      height var(--dur-indicator) var(--ease-indicator),
+      opacity 200ms;
+  }
   .row--on,
   .row--on:hover {
+    background: transparent;
+  }
+  .row--new.row--on,
+  .row--new.row--on:hover {
     background: var(--surface-selected);
   }
   .row--new {
