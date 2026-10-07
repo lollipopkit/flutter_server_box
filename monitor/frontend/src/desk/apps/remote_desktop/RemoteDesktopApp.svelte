@@ -201,7 +201,7 @@
 
   <!-- The session fills what the toolbar leaves of the window; the viewer
        takes its parent's height. -->
-  <main class="flex min-h-72 flex-1 flex-col px-[17px] pb-[17px] pt-[4px]">
+  <main class="flex min-h-72 flex-1 flex-col px-(--content-pad) pb-[21px] pt-[5px]">
     {#key live}
       {#if live.kind === 'vnc'}
         <VncViewer
@@ -230,7 +230,7 @@
     {/snippet}
   </AppToolbar>
 
-  <main class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+  <main class="space-y-[9px] px-(--content-pad) pb-[21px] pt-[5px]">
     {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
     {#if actionError}
       <Card>

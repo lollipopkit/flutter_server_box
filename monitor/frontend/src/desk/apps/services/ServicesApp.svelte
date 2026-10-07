@@ -305,12 +305,12 @@
     </SidebarSection>
   {/snippet}
 
-  {#if error}<div class="px-[17px] pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>{/if}
+  {#if error}<div class="px-(--content-pad) pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>{/if}
 
   {#if loading && !view}
     <div class="grid flex-1 place-items-center"><Spinner /></div>
   {:else if view && !view.available}
-    <div class="px-[17px] pb-[17px]">
+    <div class="px-(--content-pad) pb-[17px]">
       <Card>
         <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
         {#if view.reason && view.reason_kind !== 'unsupported_manager'}

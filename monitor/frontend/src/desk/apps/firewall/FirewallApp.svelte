@@ -355,7 +355,7 @@
   {/snippet}
 </AppToolbar>
 
-<main class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+<main class="space-y-[9px] px-(--content-pad) pb-[21px] pt-[5px]">
   {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
   {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
   {#if actionError}<Card><pre class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{actionError}</pre></Card>{/if}

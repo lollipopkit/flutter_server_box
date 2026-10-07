@@ -177,7 +177,7 @@
     </SidebarSection>
   {/snippet}
 
-  <div class="space-y-[9px] px-[17px] pb-[17px] pt-[4px]">
+  <div class="space-y-[9px] px-(--content-pad) pb-[17px] pt-[4px]">
     {#if error}<Card><p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
     {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
 

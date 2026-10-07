@@ -100,7 +100,7 @@
   const storedBytes = $derived(blobs.reduce((total, entry) => total + entry.size, 0))
 </script>
 
-<div class="flex h-full min-h-0 flex-col">
+<div class="flex flex-1 flex-col">
   <AppToolbar
     subtitle={view ? $LL.backupSubtitle({ count: blobs.length, max: fmtBytes(view.max_bytes) }) : undefined}
   >
@@ -112,8 +112,8 @@
 
   <input type="file" class="hidden" bind:this={uploadInput} onchange={onUpload} />
 
-<div class="min-h-0 flex-1 overflow-auto">
-  <main class="mx-auto w-full max-w-3xl space-y-[13px] px-[17px] pb-[17px] pt-[4px]">
+<div class="flex-1">
+  <main class="pane-form space-y-[13px] pb-[21px] pt-[5px]">
     {#if error}
       <Card class="flex items-start gap-[9px] text-[13px] text-(--color-danger)">
         <Icon name="error" size={17} />

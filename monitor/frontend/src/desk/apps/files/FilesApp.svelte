@@ -659,7 +659,7 @@
 <input type="file" class="hidden" bind:this={uploadInput} onchange={onUpload} />
 
 {#if !available}
-  <main class="mx-auto max-w-3xl px-[17px] pb-[17px]">
+  <main class="pane-form pb-[21px]">
     <Card>
       <p class="text-[13px] text-(--text-secondary)">
         {caps?.grants ? whyText(access.why, $LL) : $LL.filesUnavailable()}
@@ -697,11 +697,11 @@
     <!-- The entry menu's coordinates are this box's. -->
     <div bind:this={pane} class="relative flex flex-1 flex-col">
       {#if !write}
-        <p class="px-[17px] pb-[7px] text-[12px] text-(--text-tertiary)">{$LL.filesReadOnly()}</p>
+        <p class="px-(--content-pad) pb-[7px] text-[12px] text-(--text-tertiary)">{$LL.filesReadOnly()}</p>
       {/if}
 
       {#if error}
-        <div class="px-[17px] pb-[9px]">
+        <div class="px-(--content-pad) pb-[9px]">
           <Card class="flex items-start gap-[9px] text-[13px] text-(--color-danger)">
             <Icon name="error" size={17} />
             <p class="break-all">{error}</p>

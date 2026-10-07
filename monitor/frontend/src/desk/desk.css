@@ -74,3 +74,28 @@
     width: 100%;
   }
 }
+
+/* Wide windows (the lollipopkit Design System's rule): the sidebar never
+   grows, the extra width goes to the content pane, and what happens there
+   depends on the content. A form or settings page caps at 640 and centres; a
+   page of reading at 720; a dashboard or tile grid at 1280. Tables and lists
+   fill (no class). The gutter is 21 at every width. */
+@layer components {
+  .pane-form,
+  .pane-reading,
+  .pane-board {
+    box-sizing: border-box;
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--content-pad);
+  }
+  .pane-form {
+    max-width: calc(var(--content-max-form) + 2 * var(--content-pad));
+  }
+  .pane-reading {
+    max-width: calc(var(--content-max-reading) + 2 * var(--content-pad));
+  }
+  .pane-board {
+    max-width: calc(var(--content-max-board) + 2 * var(--content-pad));
+  }
+}

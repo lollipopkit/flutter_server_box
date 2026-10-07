@@ -423,7 +423,7 @@
        fault. Above the terminal rather than over it: a banner that covered
        output would hide what it is telling you about. -->
   {#if alerting}
-    <div class="shrink-0 space-y-[7px] px-[17px] pb-0 pt-[9px]">
+    <div class="shrink-0 space-y-[7px] px-(--content-pad) pb-0 pt-[9px]">
       {#if typing || queuedName}
         <Card class="flex flex-wrap items-center justify-between gap-[9px]">
           <p class="text-[13px] text-(--text-primary)">

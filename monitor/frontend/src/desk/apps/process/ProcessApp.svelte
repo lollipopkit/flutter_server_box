@@ -365,13 +365,13 @@
 </AppToolbar>
 
 {#if error}
-  <div class="px-[17px] pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>
+  <div class="px-(--content-pad) pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>
 {/if}
 
 {#if loading && !view}
   <div class="grid flex-1 place-items-center"><Spinner /></div>
 {:else if view && !view.available}
-  <div class="px-[17px] pb-[17px]">
+  <div class="px-(--content-pad) pb-[17px]">
     <Card>
       <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason}
@@ -381,7 +381,7 @@
   </div>
 {:else if view}
   {#if view.issue}
-    <div class="px-[17px] pb-[9px]">
+    <div class="px-(--content-pad) pb-[9px]">
       <Card>
         <p class="text-[13px] text-(--text-secondary)">{$LL.processIssue()}</p>
         <pre class="lk-mono mt-[7px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.issue.diagnostics}</pre>

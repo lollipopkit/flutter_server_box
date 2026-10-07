@@ -312,7 +312,7 @@
   {/snippet}
 </AppToolbar>
 
-<main class="space-y-[13px] px-[17px] pb-[17px] pt-[4px]">
+<main class="pane-form space-y-[13px] pb-[21px] pt-[5px]">
   {#if error}<Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card>{/if}
   {#if notice}<Card><p class="text-[13px] text-(--text-secondary)">{notice}</p></Card>{/if}
 

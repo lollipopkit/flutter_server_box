@@ -454,13 +454,13 @@
   {/snippet}
 
   {#if error}
-    <div class="px-[17px] pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>
+    <div class="px-(--content-pad) pb-[9px]"><Card><p class="text-[13px] text-(--color-danger)">{error}</p></Card></div>
   {/if}
 
   {#if actionExit !== 0}
     <!-- A failure is said even when the runtime printed nothing: the refreshed
          listing alone would look like the action went through. -->
-    <div class="px-[17px] pb-[9px]">
+    <div class="px-(--content-pad) pb-[9px]">
       <Card padding="11px 15px">
         {#if actionExit === undefined}
           <p class="text-[13px] text-(--color-danger)">{$LL.containerActionUnfinished()}</p>
@@ -473,7 +473,7 @@
   {:else if actionOutput}
     <!-- What a successful action printed — a pull's digest, a run's id. Not a
          failure, so not in the danger tone. -->
-    <div class="px-[17px] pb-[9px]">
+    <div class="px-(--content-pad) pb-[9px]">
       <Card padding="11px 15px"><pre class="lk-mono whitespace-pre-wrap break-all text-[12px] text-(--text-secondary)">{actionOutput}</pre></Card>
     </div>
   {/if}
@@ -481,7 +481,7 @@
   {#if loading && !view}
     <div class="grid flex-1 place-items-center"><Spinner /></div>
   {:else if view && !view.available}
-    <div class="px-[17px] pb-[17px]">
+    <div class="px-(--content-pad) pb-[17px]">
       <Card>
         <p class="text-[13px] text-(--text-secondary)">{reasonText(view)}</p>
         {#if view.reason}<pre class="lk-mono mt-[9px] whitespace-pre-wrap break-all text-[12px] text-(--text-tertiary)">{view.reason}</pre>{/if}

@@ -261,6 +261,11 @@
   --control-height-lg: 36px;
   --traffic-light: 12px;
   --traffic-gap: 8px;
+  /* Wide windows: content column caps, centred in the content pane */
+  --content-max-form: 640px; /* settings, forms, dialogs-as-pages */
+  --content-max-reading: 720px; /* logs, docs, detail text */
+  --content-max-board: 1280px; /* dashboards, tile grids */
+  --content-pad: 21px; /* pane gutter, every width */
 }
 
 /* ---------- Radius (tokens/radius.css) ----------

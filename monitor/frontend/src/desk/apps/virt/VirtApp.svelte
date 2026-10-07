@@ -458,7 +458,7 @@
       </SidebarSection>
     {/snippet}
 
-    <main class="mx-auto max-w-6xl space-y-[13px] px-[17px] pb-[17px] pt-[4px] @3xl:px-[21px]">
+    <main class="pane-board space-y-[13px] pb-[21px] pt-[5px]">
   {#if requestError}
     <Card>
       <p class="whitespace-pre-wrap break-all text-[13px] text-(--color-danger)">{requestError}</p>

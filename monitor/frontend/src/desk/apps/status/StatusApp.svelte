@@ -423,7 +423,7 @@
   </AppToolbar>
 {/if}
 
-<main class="status-app px-[17px] pb-[17px]">
+<main class="status-app pane-board pb-[21px]">
   {#if metrics.loading}
     <div class="flex h-full items-center justify-center"><Spinner size={48} /></div>
   {:else}
