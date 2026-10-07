@@ -1502,6 +1502,7 @@ const de = {
 	settingsBackgroundAppsOld: 'Dieser agent ist zu alt, um diese Auswahl zu speichern',
 	deskInBackground: 'Im Hintergrund',
 	settingsBackgroundPerApp: 'Hintergrundbetrieb',
+	deskOpenWith: 'Öffnen mit',
 } satisfies Translation
 
 export default de

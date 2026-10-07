@@ -1,12 +1,12 @@
 /// An app's handle on the window it runs in: the one way an app reaches the
 /// desk (see `docs/dev/desk-sys.md`).
 
-import { getContext } from 'svelte'
+import { getContext, untrack } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { AppIconChrome, AppMenu, WindowChrome } from '../window/chrome.svelte'
 import type { AppStorage } from '../appData'
 import type { AppNotice } from '../notifications.svelte'
-import type { OpenOptions } from '../windows.svelte'
+import type { Intent, OpenOptions } from '../windows.svelte'
 
 /// Where a window's process is in its life.
 /// - `active`: the front window.
@@ -42,6 +42,10 @@ export interface WindowHandle {
   /// What the app keeps for itself, shared by its windows: per account and
   /// server, kept by the agent. Not for secrets.
   readonly storage: AppStorage
+  /// The other apps that open [path] (`opens` in their manifests), for an
+  /// "Open with" menu; open one with `open(id, { intent: { action: 'open',
+  /// data: { path, kind } } })`.
+  handlers(path: string, kind: 'file' | 'dir'): AppHandler[]
   /// Puts an icon on the desk that opens [path] with this window's app.
   addPathIcon(path: string, label: string): void
   readonly active: boolean
@@ -50,6 +54,20 @@ export interface WindowHandle {
   /// what they register; null outside a window (a test), where `AppToolbar`
   /// and `SplitView` draw themselves in place.
   readonly chrome: WindowChrome | null
+}
+
+export interface AppHandler {
+  id: string
+  title: string
+  glyph: string
+  tone: AppIconChrome['tone']
+}
+
+/// The desk's own intent: open a path (`data: OpenPath`).
+export const OPEN = 'open'
+export interface OpenPath {
+  path: string
+  kind: 'file' | 'dir'
 }
 
 export const WINDOW = Symbol('desk-window')
@@ -71,6 +89,7 @@ const DETACHED: WindowHandle = {
   close() {},
   open: () => null,
   notify() {},
+  handlers: () => [],
   storage: {
     get: async () => undefined,
     set: async () => {},
@@ -109,6 +128,18 @@ export function useDockMenu(items: () => MenuEntry[]) {
   $effect(() => chrome.pushDockMenu(entry))
 }
 
+/// Runs [handle] for each intent this window is given: the one it was opened
+/// with, and any later `open` that lands on it (an app of one window).
+/// Intents wait until a handler is mounted, so none is lost to timing.
+export function useIntents(handle: (intent: Intent) => void) {
+  const chrome = useWindow().chrome
+  if (!chrome) return
+  $effect(() => {
+    if (chrome.pendingIntents === 0) return
+    for (const intent of untrack(() => chrome.takeIntents())) handle(intent)
+  })
+}
+
 const KEEP_ALIVE_MAX_MS = 10 * 60_000
 
 export interface Lifecycle {
@@ -137,4 +168,4 @@ export function useLifecycle(): Lifecycle {
   }
 }
 
-export type { AppMenu, AppIconChrome, AppNotice, AppStorage, MenuEntry }
+export type { AppMenu, AppIconChrome, AppNotice, AppStorage, Intent, MenuEntry, OpenOptions }

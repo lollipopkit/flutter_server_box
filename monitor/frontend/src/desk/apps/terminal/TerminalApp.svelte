@@ -10,14 +10,14 @@
 
   import { onDestroy, tick, untrack } from 'svelte'
   import { Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Spinner, Textarea } from '../../lk'
-  import { AppToolbar, useWindow } from '../../sys'
+  import { AppToolbar, useIntents, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { isAdmin, machineAccess, terminalAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { fmtEpochSeconds } from '../../../lib/format'
   import { displayName, servers } from '../../../lib/servers.svelte'
-  import { snippetRun } from '../../../lib/snippetRun.svelte'
+  import { queuedSnippet, TYPE_SNIPPET, type QueuedSnippet } from '../../../lib/snippetIntent'
   import { runSteps } from '../../../lib/snippetSteps'
   import { theme } from '../../../lib/theme.svelte'
   import { TerminalSession, type Credential, type Renderer } from '../../../lib/terminal.svelte'
@@ -210,9 +210,6 @@
 
   onDestroy(() => {
     destroyed = true
-    // Leaving the terminal abandons a snippet not yet typed: the Run press
-    // opened this page for it, so closing the page is the answer.
-    snippetRun.clear(win.id)
     session.dispose()
     terminal?.dispose()
   })
@@ -347,12 +344,18 @@
   /// The snippet being typed, and whether the operator stopped it. One object:
   /// a stop belongs to the run in flight.
   let typing = $state<{ name: string; stopped: boolean } | null>(null)
-  /// A snippet whose Run press landed here before there was a shell.
-  const queuedName = $derived(snippetRun.for(win.id)?.name ?? '')
+  /// A snippet the Snippets app opened this window for, not typed yet
+  /// (`lib/snippetIntent`). Closing the window abandons it.
+  let queued = $state<QueuedSnippet | null>(null)
+  const queuedName = $derived(queued?.name ?? '')
+  useIntents((intent) => {
+    if (intent.action !== TYPE_SNIPPET) return
+    const snippet = queuedSnippet(intent.data)
+    if (snippet) queued = snippet
+  })
 
   $effect(() => {
-    // `waiting` is the trigger too, so a Run while a shell is up types at once.
-    const queued = snippetRun.for(win.id)
+    // `queued` is the trigger too, so a Run while a shell is up types at once.
     if (session.phase !== 'running' || !queued || typing) return
     untrack(() => void typeQueued())
   })
@@ -361,7 +364,8 @@
   /// types it twice. The steps are the agent's (`/snippets/plan`); this sends
   /// bytes and decides nothing about what they mean.
   async function typeQueued() {
-    const taken = snippetRun.take(win.id)
+    const taken = queued
+    queued = null
     if (!taken) return
     typing = { name: taken.name, stopped: false }
     const run = typing
@@ -384,7 +388,7 @@
   /// a keystroke in flight lands and the next does not.
   function stopTyping() {
     if (typing) typing.stopped = true
-    else snippetRun.clear(win.id)
+    else queued = null
   }
 
   /// Whether there is a card to show above the terminal. One flag, so the

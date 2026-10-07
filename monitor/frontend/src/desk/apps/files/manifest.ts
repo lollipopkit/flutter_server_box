@@ -7,6 +7,7 @@ export default defineApp({
   tone: 'soft',
   available: access('files'),
   instances: 4,
+  opens: { dirs: true },
   order: 10,
   pinned: true,
   load: () => import('./FilesApp.svelte'),

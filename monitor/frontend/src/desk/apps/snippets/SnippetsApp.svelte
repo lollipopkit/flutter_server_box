@@ -10,7 +10,7 @@
   import { api } from '../../../lib/api'
   import { servers } from '../../../lib/servers.svelte'
   import { snippetPlanRefusalText, snippetRefusalText } from '../../../lib/snippetRefusal'
-  import { snippetRun } from '../../../lib/snippetRun.svelte'
+  import { TYPE_SNIPPET } from '../../../lib/snippetIntent'
   import { untrack } from 'svelte'
   import type { Snippet, SnippetsView } from '../../../types'
 
@@ -19,7 +19,7 @@
   /// Running hands the script to the terminal rather than executing it here:
   /// the agent's `/snippets/plan` answers what a shell should be *typed*, and
   /// the terminal is the only page with a shell. So Run expands the script,
-  /// leaves it in `snippetRun` and opens the terminal, which types it once its
+  /// opens a terminal with it as an intent (`lib/snippetIntent`), which types it once its
   /// session is up.
   const win = useWindow()
 
@@ -152,12 +152,14 @@
       if (stale(serverId)) return
       // A terminal of its own: the script goes to the shell this opens and
       // to no other terminal already on the desk.
-      const terminal = win.open('terminal', { newWindow: true })
+      const terminal = win.open('terminal', {
+        newWindow: true,
+        intent: { action: TYPE_SNIPPET, data: { name: snippet.name, steps: plan.steps } },
+      })
       if (!terminal) {
         runError = $LL.snippetNoTerminal()
         return
       }
-      snippetRun.queue(snippet.name, plan.steps, terminal)
       opened = null
     } catch (e) {
       if (stale(serverId)) return

@@ -1502,6 +1502,7 @@ const pt = {
 	settingsBackgroundAppsOld: 'Este agente é demasiado antigo para guardar esta escolha',
 	deskInBackground: 'Em segundo plano',
 	settingsBackgroundPerApp: 'Em segundo plano',
+	deskOpenWith: 'Abrir com',
 } satisfies Translation
 
 export default pt

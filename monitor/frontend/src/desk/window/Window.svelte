@@ -27,6 +27,7 @@
   const id = win.id
   provideWindow(desk, id, chrome, () => lifecycle)
   desk.chromes.set(id, chrome)
+  chrome.deliver(...desk.takeIntents(id))
   onDestroy(() => desk.chromes.delete(id))
 
   /// Hidden while background running is off: the app's content goes after a

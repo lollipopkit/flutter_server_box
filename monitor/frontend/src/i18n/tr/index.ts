@@ -1502,6 +1502,7 @@ const tr = {
 	settingsBackgroundAppsOld: 'Bu agent bu seçimi kaydedemeyecek kadar eski',
 	deskInBackground: 'Arka planda',
 	settingsBackgroundPerApp: 'Arka plan',
+	deskOpenWith: 'Birlikte aç',
 } satisfies Translation
 
 export default tr

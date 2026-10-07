@@ -1501,6 +1501,7 @@ const zh_CN = {
 	settingsBackgroundAppsOld: '此 agent 版本过旧,无法保存该设置',
 	deskInBackground: '后台运行中',
 	settingsBackgroundPerApp: '后台运行',
+	deskOpenWith: '打开方式',
 } satisfies Translation
 
 export default zh_CN

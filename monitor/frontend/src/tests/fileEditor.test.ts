@@ -61,6 +61,7 @@ vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
     setAppState: vi.fn(),
     setTitle: vi.fn(),
     addPathIcon: deskMocks.addPathIcon,
+    handlers: () => [],
   }),
 }))
 

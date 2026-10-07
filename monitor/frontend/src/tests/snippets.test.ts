@@ -4,7 +4,6 @@ import '@testing-library/jest-dom/vitest'
 import Snippets from '../desk/apps/snippets/SnippetsApp.svelte'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
-import { snippetRun } from '../lib/snippetRun.svelte'
 import type { Snippet } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -29,7 +28,6 @@ const login: Snippet = { id: 'b', name: 'Login', script: 'ssh ${user}@${host}', 
 describe('Snippets page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    snippetRun.waiting = null
     open.mockReturnValue('term-1')
     getSnippets.mockResolvedValue({ snippets: [disk, login] })
   })
@@ -42,11 +40,14 @@ describe('Snippets page', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /Disk/ }))
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
 
-    await waitFor(() => expect(open).toHaveBeenCalledWith('terminal', { newWindow: true }))
+    // A terminal of its own, opened with the agent's steps to type.
+    await waitFor(() =>
+      expect(open).toHaveBeenCalledWith('terminal', {
+        newWindow: true,
+        intent: { action: 'terminal.type', data: { name: 'Disk', steps } },
+      }),
+    )
     expect(planSnippet).toHaveBeenCalledWith('df -h')
-    // For the window that Run opened, and no other terminal.
-    expect(snippetRun.waiting).toEqual({ name: 'Disk', steps, window: 'term-1' })
-    expect(snippetRun.for('another')).toBeNull()
   })
 
   it('queues nothing when no terminal window can be opened', async () => {
@@ -58,7 +59,6 @@ describe('Snippets page', () => {
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
 
     expect(await screen.findByText(/close one to run a snippet/)).toBeInTheDocument()
-    expect(snippetRun.waiting).toBeNull()
   })
 
   it('drops a plan that answers after the server was switched', async () => {
@@ -73,7 +73,6 @@ describe('Snippets page', () => {
     answer({ steps: [] })
 
     await waitFor(() => expect(screen.getByRole('button', { name: /^run$/i })).toBeEnabled())
-    expect(snippetRun.waiting).toBeNull()
     expect(open).not.toHaveBeenCalled()
     current.mockRestore()
   })
@@ -88,7 +87,7 @@ describe('Snippets page', () => {
     await fireEvent.click(screen.getByRole('button', { name: /^run$/i }))
 
     expect(await screen.findByText(/uses \$\{user\}, which the panel/)).toBeInTheDocument()
-    expect(snippetRun.waiting).toBeNull()
+    expect(open).not.toHaveBeenCalled()
   })
 
   it('removes a snippet by sending the library without it', async () => {

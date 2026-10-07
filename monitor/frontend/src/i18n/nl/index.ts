@@ -1502,6 +1502,7 @@ const nl = {
 	settingsBackgroundAppsOld: 'Deze agent is te oud om deze keuze op te slaan',
 	deskInBackground: 'Op de achtergrond',
 	settingsBackgroundPerApp: 'Op de achtergrond',
+	deskOpenWith: 'Open met',
 } satisfies Translation
 
 export default nl

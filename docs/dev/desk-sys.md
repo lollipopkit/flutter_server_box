@@ -2,7 +2,7 @@
 
 The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, launchpad, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
 
-Status: phase 1 and most of phase 2 are implemented (see [Phases](#phases)); the rest is the agreed design.
+Status: phases 1 and 2 are implemented (see [Phases](#phases)); the rest is the agreed design.
 
 ## App kinds
 
@@ -31,7 +31,7 @@ Every app is a manifest. A built-in app's is `apps/<id>/manifest.ts` (`defineApp
 | `order`, `pinned` | Place in the launchpad; in a fresh desk's dock |
 | `permissions` | Third-party only, see [Permissions](#permissions) |
 | `opens` | File types and URL schemes the app can open (`{ "ext": ["log", "txt"], "mime": ["text/*"] }`), see [Intents](#intents) |
-| `settings` | Whether the app adds a page to Settings → Apps |
+| `settings` | Its page in Settings → Apps (lazy), run as the app (its storage) inside the Settings window |
 
 ## Processes and lifecycle
 
@@ -65,7 +65,7 @@ One import for system apps: `import { … } from '../../sys'`. Third-party apps 
 | Lifecycle | `useLifecycle()`: `state`, `keepAlive(reason)` | See above |
 | Notifications | `useWindow().notify({ title, body, level })` | A banner (unless Do Not Disturb) and a row in the notification centre; clicking it brings the window forward (or opens the app). Kept for the page's life; the agent's own (monitoring rules) are stored |
 | Storage | `useWindow().storage.get/set/remove/keys` | JSON by key, per app, account and server: the agent's `/desk/apps/{app}/storage` (feature `desk_storage`, migration 021), else the browser. 256 KiB per app, keys ≤128 bytes. The agent cannot tell apps apart (the panel names the app), so it is not a boundary between apps of one account; for `web` apps the desk, not the iframe, names the app |
-| Intents | `openWith(target)`, `opens` in the manifest | Files' "Open with", Spotlight paths |
+| Intents | `open(appId, { intent })`, `useIntents(handler)`, `handlers(path, kind)`, `opens` in the manifest | An intent is `{ action, data }`, delivered once to the window it opened (held until the app's handler is mounted, so none is lost to timing). `open` (`data: { path, kind }`) is the desk's; others are named by the receiving app (`terminal.type`, `lib/snippetIntent`). Files lists the apps whose `opens` match under "Open with" |
 | Clipboard | `clipboard.writeText` | Read is not offered (browsers prompt; an app gets text by paste) |
 | Theme and locale | `theme.dark`, `locale` | Tokens come from `lk.css` |
 | Backend | `backend.call(method, params)`, `backend.events(handler)` | `wasm` apps only |
@@ -100,7 +100,7 @@ A package is a `.sbapp` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/i
 ## Phases
 
 1. **sys core, system apps** (done, `656d5872`): manifests and registry, `sys` (window, identity, menus, shortcuts, lifecycle, background setting), the shell reading it; apps import only `sys`, `lk` and shared code (lint-enforced).
-2. **Services**: done: per-app background choice (`background_denied`, migration 020), storage, notifications, dock menus, `keepAlive`, Control Centre's background list. Left: intents and "Open with", app settings pages.
+2. **Services** (done): per-app background choice (`background_denied`, migration 020), storage, notifications, dock menus, `keepAlive`, Control Centre's background list, intents and "Open with" (Snippets → Terminal moved onto them), app settings pages.
 3. **`web` apps**: the iframe host and the bridge, `@lollipopkit/desk-sys`, package install and serving, Settings → Apps (install, approve, remove, background).
 4. **`wasm` apps**: the agent's runtime, host functions, `/apps/{id}/call` and events, limits and audit.
 5. **SDK**: the package published, a template app, an example of each kind, docs.

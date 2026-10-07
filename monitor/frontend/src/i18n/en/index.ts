@@ -1502,6 +1502,7 @@ const en = {
 	settingsBackgroundAppsOld: 'This agent is too old to keep the choice',
 	deskInBackground: 'In the background',
 	settingsBackgroundPerApp: 'In the background',
+	deskOpenWith: 'Open with',
 } satisfies BaseTranslation
 
 export default en

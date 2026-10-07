@@ -16,6 +16,18 @@ import type { WindowPolicy } from '../windows.svelte'
 /// translations when the app has keys there.
 export type Localized = string | ((ll: TranslationFunctions) => string)
 
+export interface Opens {
+  dirs?: boolean
+  ext?: string[]
+}
+
+/// Whether an app that opens [opens] takes [path] of [kind].
+export function opensPath(opens: Opens, path: string, kind: 'file' | 'dir'): boolean {
+  if (kind === 'dir') return opens.dirs === true
+  const ext = /\.([^./]+)$/.exec(path)?.[1]?.toLowerCase()
+  return (opens.ext ?? []).some((e) => e === '*' || e === ext)
+}
+
 export interface AppManifest {
   /// Stable: windows, the dock and desk icons are stored by it.
   /// Lowercase letters, digits and `_`, starting with a letter.
@@ -34,6 +46,12 @@ export interface AppManifest {
   instances?: number
   size?: Size
   minSize?: Size
+  /// What it opens, for Files' "Open with" and the `open` intent: folders,
+  /// and files by extension (lowercase, no dot; `*` for any file).
+  opens?: Opens
+  /// Its page in Settings → Apps, lazy like [load]. It runs as the app
+  /// (`useWindow().storage` is the app's), inside the Settings window.
+  settings?: () => Promise<{ default: Component }>
   /// Place in the launchpad and Spotlight, lowest first; then by id.
   order?: number
   /// In a fresh desk's dock.
@@ -50,6 +68,8 @@ export interface AppSpec extends WindowPolicy {
   glyph: string
   tone: IconTone
   available: (caps: Capabilities | undefined) => boolean
+  opens: Opens
+  settings?: () => Promise<{ default: Component }>
   order: number
   pinned: boolean
   load: () => Promise<{ default: Component }>
@@ -72,9 +92,11 @@ export function defineApp(m: AppManifest): AppSpec {
     glyph: m.glyph,
     tone: m.tone,
     available: m.available ?? (() => true),
+    opens: { dirs: m.opens?.dirs === true, ext: (m.opens?.ext ?? []).map((e) => e.toLowerCase().replace(/^\./, '')) },
     instances,
     size: m.size ?? SIZE,
     minSize: m.minSize ?? MIN_SIZE,
+    settings: m.settings,
     order: m.order ?? Number.MAX_SAFE_INTEGER,
     pinned: m.pinned ?? false,
     load: m.load,

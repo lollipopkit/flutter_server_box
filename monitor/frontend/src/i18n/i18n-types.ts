@@ -6191,6 +6191,10 @@ type RootTranslation = {
 	 * I​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
 	 */
 	settingsBackgroundPerApp: string
+	/**
+	 * O​p​e​n​ ​w​i​t​h
+	 */
+	deskOpenWith: string
 }
 
 export type TranslationFunctions = {
@@ -12198,6 +12202,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * In the background
 	 */
 	settingsBackgroundPerApp: () => LocalizedString
+	/**
+	 * Open with
+	 */
+	deskOpenWith: () => LocalizedString
 }
 
 export type Formatters = {}

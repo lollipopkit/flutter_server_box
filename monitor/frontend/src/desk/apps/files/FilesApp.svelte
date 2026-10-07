@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button, Card, Dialog, Icon, IconButton, Input, Menu, SegmentedControl, SidebarItem, SidebarSection, Spinner, type MenuEntry } from '../../lk'
-  import { AppToolbar, SplitView, useMenus, useWindow } from '../../sys'
+  import { AppToolbar, OPEN, SplitView, useIntents, useMenus, useWindow, type OpenPath } from '../../sys'
   import FileEditor from './FileEditor.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { filesAccess, whyText } from '../../../lib/access'
@@ -154,6 +154,23 @@
     return root
   }
 
+  /// A folder another app asked this window to show (the `open` intent),
+  /// until the roots are known.
+  let intentPath: string | null = null
+  useIntents((intent) => {
+    if (intent.action !== OPEN) return
+    const { path, kind } = (intent.data ?? {}) as Partial<OpenPath>
+    if (kind !== 'dir' || typeof path !== 'string') return
+    intentPath = path
+    if (cwd !== null) openAsked()
+  })
+
+  function openAsked() {
+    const path = intentPath
+    intentPath = null
+    if (path && insideRoots(path)) void load(path)
+  }
+
   async function start(serverId: string) {
     loading = true
     error = ''
@@ -171,7 +188,11 @@
         loading = false
         return
       }
-      await load(typeof asked === 'string' && insideRoots(asked) ? asked : roots[0], serverId)
+      const first = intentPath ?? asked
+      intentPath = null
+      await load(typeof first === 'string' && insideRoots(first) ? first : roots[0], serverId)
+      // A folder another app asked for while the first one was read.
+      if (intentPath && !stale(serverId)) openAsked()
     } catch (e) {
       if (stale(serverId)) return
       error = e instanceof Error ? e.message : String(e)
@@ -368,6 +389,17 @@
     const items: MenuEntry[] = []
     if (entry.kind === 'file') {
       items.push({ label: $LL.filesEdit(), icon: 'edit', action: () => void edit(entry) })
+    }
+    // Other apps that take it.
+    const kind = entry.kind === 'dir' ? 'dir' : entry.kind === 'file' ? 'file' : null
+    const path = cwd ? joinPath(cwd, entry.name) : null
+    const others = kind && path ? win.handlers(path, kind) : []
+    if (others.length > 0) {
+      items.push({ heading: $LL.deskOpenWith() })
+      for (const h of others) {
+        items.push({ label: h.title, icon: h.glyph, action: () => win.open(h.id, { intent: { action: OPEN, data: { path, kind } } }) })
+      }
+      items.push({ separator: true })
     }
     if (entry.kind === 'dir') {
       if (cwd) {

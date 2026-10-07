@@ -1502,6 +1502,7 @@ const ru = {
 	settingsBackgroundAppsOld: 'Этот агент слишком старый, чтобы сохранить этот выбор',
 	deskInBackground: 'В фоновом режиме',
 	settingsBackgroundPerApp: 'В фоновом режиме',
+	deskOpenWith: 'Открыть с помощью',
 } satisfies Translation
 
 export default ru

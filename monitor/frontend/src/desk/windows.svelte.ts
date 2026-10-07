@@ -57,6 +57,17 @@ export interface OpenOptions {
   appState?: unknown
   /// Open another window even where one is open (up to the app's limit).
   newWindow?: boolean
+  /// Something for the app to do once open (`sys.useIntents`). Not saved
+  /// with the window: it is delivered once.
+  intent?: Intent
+}
+
+/// A request handed to an app. `open` is the desk's own (a path from Files
+/// or Spotlight, `data: { path, kind }`); an app may name others for apps it
+/// knows, prefixed by the receiving app's id (`terminal.type`).
+export interface Intent {
+  action: string
+  data?: unknown
 }
 
 function newWindowId(): string {

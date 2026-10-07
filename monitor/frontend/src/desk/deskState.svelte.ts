@@ -11,7 +11,7 @@ import type { ServerEntry } from '../lib/servers.svelte'
 import type { Capabilities } from '../types'
 import './apps'
 import { app, availableApps } from './registry.svelte'
-import type { AppSpec } from './sys/manifest'
+import { opensPath, type AppSpec } from './sys/manifest'
 import { WINDOW, type LifecycleState, type WindowHandle } from './sys/window.svelte'
 import { get } from 'svelte/store'
 import { LL } from '../i18n/i18n-svelte'
@@ -24,7 +24,7 @@ import { DeskPrefs } from './prefs.svelte'
 import { SessionSync } from './session.svelte'
 import { AgentStorage, BrowserStorage, deviceId, type DeskStorage } from './storage'
 import type { AppIconChrome, WindowChrome } from './window/chrome.svelte'
-import { WindowManager, type DeskWindow, type OpenOptions } from './windows.svelte'
+import { WindowManager, type DeskWindow, type Intent, type OpenOptions } from './windows.svelte'
 
 export type Panel = 'control' | 'notifications' | 'calendar' | 'launchpad'
 
@@ -69,6 +69,7 @@ export class Desk {
   readonly chromes = new SvelteMap<string, WindowChrome>()
 
   #abort = new AbortController()
+  #intents = new SvelteMap<string, Intent[]>()
 
   constructor(entry: ServerEntry) {
     this.entry = { ...entry }
@@ -165,7 +166,21 @@ export class Desk {
     if (!spec || !spec.available(this.caps)) return null
     this.panel = null
     this.spotlight = false
-    return this.windows.open(appId, options)
+    const id = this.windows.open(appId, options)
+    if (id && options?.intent) {
+      const intent = { action: String(options.intent.action), data: options.intent.data }
+      const chrome = this.chromes.get(id)
+      if (chrome) chrome.deliver(intent)
+      else this.#intents.set(id, [...(this.#intents.get(id) ?? []), intent])
+    }
+    return id
+  }
+
+  /// Intents for a window opened just now, before its frame existed.
+  takeIntents(windowId: string): Intent[] {
+    const intents = this.#intents.get(windowId) ?? []
+    this.#intents.delete(windowId)
+    return intents
   }
 
   showMenu(event: MouseEvent, items: MenuItem[]) {
@@ -262,6 +277,13 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
       const n = appId ? desk.notifications?.posted(appId, notice) : undefined
       if (n) desk.noticeWindows.set(n.id, id)
     },
+    handlers: (path, kind) => {
+      const self = desk.windows.get(id)?.appId
+      const ll = get(LL)
+      return desk.apps
+        .filter((a) => a.id !== self && opensPath(a.opens, path, kind))
+        .map((a) => ({ id: a.id, title: a.title(ll), glyph: a.glyph, tone: a.tone }))
+    },
     get storage() {
       const appId = desk.windows.get(id)?.appId
       if (!appId || !desk.appData) throw new Error('storage before the desk loaded')
@@ -278,6 +300,37 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     get lifecycle() {
       return lifecycle()
     },
+  }
+  setContext(WINDOW, handle)
+}
+
+/// Settings → Apps showing [appId]'s own page: it runs as that app (its
+/// storage, its notifications) while its toolbar and window are Settings'.
+export function provideAppSettings(desk: Desk, appId: string, settings: WindowHandle) {
+  const handle: WindowHandle = {
+    ...settings,
+    get appState() {
+      return null
+    },
+    setAppState() {},
+    setAppName() {},
+    setIcon() {},
+    setBadge() {},
+    get active() {
+      return settings.active
+    },
+    get lifecycle() {
+      return settings.lifecycle
+    },
+    notify: (notice) => {
+      desk.notifications?.posted(appId, notice)
+    },
+    handlers: () => [],
+    get storage() {
+      if (!desk.appData) throw new Error('storage before the desk loaded')
+      return desk.appData.for(appId)
+    },
+    addPathIcon() {},
   }
   setContext(WINDOW, handle)
 }

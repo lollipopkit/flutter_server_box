@@ -1502,6 +1502,7 @@ const ja = {
 	settingsBackgroundAppsOld: 'このagentは古いため、この選択を保存できません',
 	deskInBackground: 'バックグラウンド実行中',
 	settingsBackgroundPerApp: 'バックグラウンド実行',
+	deskOpenWith: 'このアプリケーションで開く',
 } satisfies Translation
 
 export default ja

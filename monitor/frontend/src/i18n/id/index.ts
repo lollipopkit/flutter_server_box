@@ -1502,6 +1502,7 @@ const id = {
 	settingsBackgroundAppsOld: 'Agent ini terlalu lama untuk menyimpan pilihan ini',
 	deskInBackground: 'Di latar belakang',
 	settingsBackgroundPerApp: 'Latar belakang',
+	deskOpenWith: 'Buka dengan',
 } satisfies Translation
 
 export default id

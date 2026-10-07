@@ -3,15 +3,26 @@
   /// running, for every app and for each. Saved with the desk's preferences
   /// (`useDeskPrefs`).
 
-  import { AppIcon, Group, Row, Spinner, Switch } from '../../lk'
+  import { AppIcon, Group, Icon, Row, Spinner, Switch } from '../../lk'
+  import AppSettingsHost from '../../window/AppSettingsHost.svelte'
   import { AppToolbar } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
 
   const desk = useDeskPrefs()
   const prefs = $derived(desk.prefs)
+  /// The app whose own page is showing, if any.
+  let page = $state<string | null>(null)
+  const pageSpec = $derived(page ? desk.apps.find((a) => a.id === page && a.settings) : undefined)
+  const withPages = $derived(desk.apps.filter((a) => a.settings))
 </script>
 
+{#if pageSpec}
+  <AppToolbar title={pageSpec.title($LL)} back={() => (page = null)} />
+  <main class="mx-auto max-w-[560px] px-[21px] pb-[21px] pt-[4px]">
+    {#key pageSpec.id}<AppSettingsHost spec={pageSpec} />{/key}
+  </main>
+{:else}
 <AppToolbar title={$LL.settingsApps()} />
 
 <main class="mx-auto max-w-[560px] space-y-[13px] px-[21px] pb-[21px] pt-[4px]">
@@ -31,6 +42,18 @@
         />
       </Row>
     </Group>
+    {#if withPages.length > 0}
+      <Group>
+        {#each withPages as spec (spec.id)}
+          <button type="button" class="block w-full text-left" onclick={() => (page = spec.id)}>
+            <Row label={spec.title($LL)}>
+              {#snippet leading()}<AppIcon glyph={spec.glyph} tone={spec.tone} size={26} />{/snippet}
+              <Icon name="chevron_right" size={17} class="text-(--text-tertiary)" />
+            </Row>
+          </button>
+        {/each}
+      </Group>
+    {/if}
     {#if prefs.keepsBackground}
       <Group title={$LL.settingsBackgroundPerApp()}>
         {#each desk.apps as spec (spec.id)}
@@ -50,3 +73,4 @@
     {/if}
   {/if}
 </main>
+{/if}

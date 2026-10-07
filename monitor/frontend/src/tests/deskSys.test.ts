@@ -164,3 +164,42 @@ describe('app notifications', () => {
     list.setDnd(false)
   })
 })
+
+describe('intents', () => {
+  it('matches what an app opens', async () => {
+    const { opensPath } = await import('../desk/sys/manifest')
+    const spec = defineApp({ id: 'viewer', title: 'V', glyph: 'note', tone: 'amber', opens: { ext: ['.LOG', 'txt'] }, load })
+    expect(spec.opens.ext).toEqual(['log', 'txt'])
+    expect(opensPath(spec.opens, '/var/x.log', 'file')).toBe(true)
+    expect(opensPath(spec.opens, '/var/x.LOG', 'file')).toBe(true)
+    expect(opensPath(spec.opens, '/var/x.log.gz', 'file')).toBe(false)
+    expect(opensPath(spec.opens, '/var/log', 'dir')).toBe(false)
+    expect(opensPath({ dirs: true }, '/var/log', 'dir')).toBe(true)
+    expect(opensPath({ ext: ['*'] }, '/etc/hosts', 'file')).toBe(true)
+  })
+
+  it('waits for the window that opens with one, and is taken once', async () => {
+    const { Desk } = await import('../desk/deskState.svelte')
+    const off = registerApp({ id: 'acme_viewer', title: 'Viewer', glyph: 'note', tone: 'amber', instances: 1, load })
+    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const id = desk.open('acme_viewer', { intent: { action: 'open', data: { path: '/a', kind: 'dir' } } })!
+    expect(desk.takeIntents(id)).toEqual([{ action: 'open', data: { path: '/a', kind: 'dir' } }])
+    expect(desk.takeIntents(id)).toEqual([])
+
+    // An app of one window: a later open lands on the mounted window.
+    const chrome = new WindowChrome()
+    desk.chromes.set(id, chrome)
+    expect(desk.open('acme_viewer', { intent: { action: 'open', data: { path: '/b', kind: 'dir' } } })).toBe(id)
+    expect(chrome.pendingIntents).toBe(1)
+    expect(chrome.takeIntents()).toEqual([{ action: 'open', data: { path: '/b', kind: 'dir' } }])
+    expect(chrome.pendingIntents).toBe(0)
+    off()
+  })
+
+  it('reads a snippet handed to the terminal, and nothing else', async () => {
+    const { queuedSnippet } = await import('../lib/snippetIntent')
+    expect(queuedSnippet({ name: 'Disk', steps: [] })).toEqual({ name: 'Disk', steps: [] })
+    expect(queuedSnippet({ name: 'Disk' })).toBeNull()
+    expect(queuedSnippet(null)).toBeNull()
+  })
+})

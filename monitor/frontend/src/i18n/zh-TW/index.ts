@@ -1502,6 +1502,7 @@ const zh_TW = {
 	settingsBackgroundAppsOld: '此 agent 版本過舊，無法儲存此選項',
 	deskInBackground: '背景執行中',
 	settingsBackgroundPerApp: '背景執行',
+	deskOpenWith: '開啟方式',
 } satisfies Translation
 
 export default zh_TW

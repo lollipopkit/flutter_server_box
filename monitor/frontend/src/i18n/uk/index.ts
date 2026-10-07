@@ -1502,6 +1502,7 @@ const uk = {
 	settingsBackgroundAppsOld: 'Цей агент застарий і не може зберегти цей вибір',
 	deskInBackground: 'У фоновому режимі',
 	settingsBackgroundPerApp: 'Фоновий режим',
+	deskOpenWith: 'Відкрити за допомогою',
 } satisfies Translation
 
 export default uk

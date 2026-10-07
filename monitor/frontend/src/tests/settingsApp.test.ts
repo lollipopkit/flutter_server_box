@@ -158,3 +158,33 @@ describe('settings app', () => {
     expect(screen.queryByRole('button', { name: /^access$/i })).toBeNull()
   })
 })
+
+describe('settings pages of other apps', () => {
+  it('lists them under Apps and runs one as its app', async () => {
+    const { registerApp } = await import('../desk/sys')
+    const { BrowserStorage } = await import('../desk/storage')
+    const { DeskPrefs } = await import('../desk/prefs.svelte')
+    const { AppData } = await import('../desk/appData')
+    const off = registerApp({
+      id: 'acme_greeter',
+      title: 'Greeter',
+      glyph: 'waving_hand',
+      tone: 'amber',
+      load: () => import('./fixtures/AppSettingsPage.svelte'),
+      settings: () => import('./fixtures/AppSettingsPage.svelte'),
+    })
+    const { desk, id } = deskWith({ section: 'apps' })
+    const storage = new BrowserStorage(`test-${crypto.randomUUID()}`)
+    desk.prefs = new DeskPrefs(storage)
+    desk.appData = new AppData(storage)
+    render(SettingsWindowHarness, { desk, id })
+
+    await fireEvent.click(await screen.findByRole('button', { name: /Greeter/ }))
+    await fireEvent.click(await screen.findByRole('button', { name: 'Save greeting' }))
+    expect(await screen.findByText('saved: hi')).toBeInTheDocument()
+    // Kept as the app's, not Settings'.
+    expect(await desk.appData.for('acme_greeter').get('greeting')).toBe('hi')
+    expect(await desk.appData.for('settings').keys()).toEqual([])
+    off()
+  })
+})

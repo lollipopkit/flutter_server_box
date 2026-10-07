@@ -53,7 +53,8 @@ export default tseslint.config(
     },
   },
   {
-    // Settings is the system's own app: it alone edits the desk's preferences.
+    // Settings is the system's own app: it alone edits the desk's preferences
+    // and hosts other apps' settings pages.
     files: ['src/desk/apps/settings/**/*.{ts,svelte}'],
     rules: {
       'no-restricted-imports': [
@@ -61,7 +62,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^\\.\\./\\.\\./(?!(sys|lk|deskState\\.svelte|prefs\\.svelte|shell/Wallpaper\\.svelte)(/|$))[^.]',
+              regex: '^\\.\\./\\.\\./(?!(sys|lk|deskState\\.svelte|prefs\\.svelte|shell/Wallpaper\\.svelte|window/AppSettingsHost\\.svelte)(/|$))[^.]',
               message: 'Settings uses `sys`, `lk` and the desk preferences only.',
             },
             { regex: '^\\.\\./[a-z_]+/', message: 'Apps are independent.' },

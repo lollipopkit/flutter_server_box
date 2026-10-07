@@ -1502,6 +1502,7 @@ const ko = {
 	settingsBackgroundAppsOld: '이 agent는 오래되어 이 선택을 저장할 수 없습니다',
 	deskInBackground: '백그라운드에서 실행 중',
 	settingsBackgroundPerApp: '백그라운드 실행',
+	deskOpenWith: '다음으로 열기',
 } satisfies Translation
 
 export default ko

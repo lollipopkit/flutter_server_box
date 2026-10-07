@@ -11,6 +11,7 @@ import { untrack, type Snippet } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { IconTone } from '../lk/AppIcon.svelte'
 import type { LifecycleState } from '../sys/window.svelte'
+import type { Intent } from '../windows.svelte'
 
 export interface ToolbarChrome {
   title?: string
@@ -54,6 +55,7 @@ export class WindowChrome {
   #menus = $state.raw<MenusChrome[]>([])
   #dockMenus = $state.raw<MenusChrome[]>([])
   #keepAlive = $state.raw<string[]>([])
+  #intents = $state.raw<Intent[]>([])
   /// A folded sidebar shown over the content (a narrow window).
   sidebarOpen = $state(false)
   /// The app's name, icon and badge as this window shows them; null is the
@@ -117,6 +119,21 @@ export class WindowChrome {
       () => (this.#dockMenus = [...this.#dockMenus, menu]),
       () => (this.#dockMenus = this.#dockMenus.filter((m) => m !== menu)),
     )
+  }
+
+  /// Intents waiting for the app to take them.
+  get pendingIntents(): number {
+    return this.#intents.length
+  }
+
+  deliver(...intents: Intent[]) {
+    if (intents.length) untrack(() => (this.#intents = [...this.#intents, ...intents]))
+  }
+
+  takeIntents(): Intent[] {
+    const taken = this.#intents
+    untrack(() => (this.#intents = []))
+    return taken
   }
 
   holdKeepAlive(reason: string): () => void {
