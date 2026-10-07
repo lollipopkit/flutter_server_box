@@ -40,10 +40,24 @@ function isDark(): boolean {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 
+/// The selection is the accent's tint: xterm's own default is a translucent
+/// white, which on the light background cannot be seen at all.
 function terminalTheme() {
   return isDark()
-    ? { background: '#0b0f14', foreground: '#d7dce2', cursor: '#d7dce2' }
-    : { background: '#ffffff', foreground: '#1f2933', cursor: '#1f2933' }
+    ? {
+        background: '#0b0f14',
+        foreground: '#d7dce2',
+        cursor: '#d7dce2',
+        selectionBackground: 'rgba(232, 121, 170, 0.36)',
+        selectionInactiveBackground: 'rgba(232, 121, 170, 0.2)',
+      }
+    : {
+        background: '#ffffff',
+        foreground: '#1f2933',
+        cursor: '#1f2933',
+        selectionBackground: 'rgba(139, 34, 82, 0.24)',
+        selectionInactiveBackground: 'rgba(139, 34, 82, 0.12)',
+      }
 }
 
 /// The terminal's own background, for a container the terminal does not fill.
