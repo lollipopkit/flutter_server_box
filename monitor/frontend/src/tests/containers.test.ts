@@ -144,7 +144,8 @@ describe('Containers page on the images tab', () => {
   it('asks before removing an image, and sends the tag on the row', async () => {
     render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
-    await screen.findByText(/alpine/)
+    // Select the image; its actions sit over the status bar.
+    await fireEvent.click(await screen.findByText(/alpine/))
 
     await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     expect(actContainer).not.toHaveBeenCalled()
@@ -169,7 +170,7 @@ describe('Containers page on the images tab', () => {
     )
     render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
-    await screen.findAllByText(/<none>/)
+    await fireEvent.click((await screen.findAllByText(/<none>/))[0])
     await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
     await fireEvent.click(buttons.at(-1)!)
@@ -202,7 +203,7 @@ describe('Containers page on the images tab', () => {
     )
     render(Containers)
     await fireEvent.click(await screen.findByRole('button', { name: /^images$/i }))
-    await screen.findByText(/alpine/)
+    await fireEvent.click(await screen.findByText(/alpine/))
 
     await fireEvent.click(screen.getByRole('button', { name: /^remove$/i }))
     const buttons = await screen.findAllByRole('button', { name: /^remove$/i })
@@ -255,7 +256,7 @@ describe('Containers page shell action', () => {
       grants: { shell: { ok: true } },
     } as unknown as Capabilities
     render(Containers)
-    await screen.findByText('web')
+    await fireEvent.click(await screen.findByText('web'))
     expect(screen.queryByRole('button', { name: /open shell/i })).toBeNull()
   })
 
@@ -265,7 +266,8 @@ describe('Containers page shell action', () => {
       grants: { shell: { ok: true } },
     } as unknown as Capabilities
     render(Containers)
-    await screen.findByText('web')
+    // A container's actions are the selected one's.
+    await fireEvent.click(await screen.findByText('web'))
     expect(await screen.findByRole('button', { name: /open shell/i })).toBeInTheDocument()
   })
 })

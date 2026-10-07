@@ -6330,6 +6330,30 @@ type RootTranslation = {
 	 */
 	deskFind: string
 	/**
+	 * N​a​m​e
+	 */
+	containerName: string
+	/**
+	 * I​m​a​g​e
+	 */
+	containerImage: string
+	/**
+	 * P​o​r​t​s
+	 */
+	containerPorts: string
+	/**
+	 * S​i​z​e
+	 */
+	containerSize: string
+	/**
+	 * U​s​e​d​ ​b​y
+	 */
+	containerUse: string
+	/**
+	 * C​r​e​a​t​e​d
+	 */
+	containerCreatedAt: string
+	/**
 	 * B​u​s​i​e​s​t
 	 */
 	statusTopProcesses: string
@@ -12598,6 +12622,30 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Find…
 	 */
 	deskFind: () => LocalizedString
+	/**
+	 * Name
+	 */
+	containerName: () => LocalizedString
+	/**
+	 * Image
+	 */
+	containerImage: () => LocalizedString
+	/**
+	 * Ports
+	 */
+	containerPorts: () => LocalizedString
+	/**
+	 * Size
+	 */
+	containerSize: () => LocalizedString
+	/**
+	 * Used by
+	 */
+	containerUse: () => LocalizedString
+	/**
+	 * Created
+	 */
+	containerCreatedAt: () => LocalizedString
 	/**
 	 * Busiest
 	 */
