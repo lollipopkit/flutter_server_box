@@ -553,15 +553,50 @@ describe('TerminalSession', () => {
     )
     const session = new TerminalSession()
 
-    // No credential: this is Resume, the way back to the dropped shell.
+    // No credential: this is Resume, the way back to the dropped shell. The
+    // renderer is new to the session (a reload), so it asks for the whole
+    // buffer rather than what follows the stored position.
     await session.start(renderer, '', null)
     FakeSocket.latest().onopen?.()
 
     expect(FakeSocket.latest().sent[0]).toMatchObject({
       type: 'attach',
       session: 'abc.def',
-      since: 5,
+      since: 0,
     })
+  })
+
+  it('treats a gap before a fresh renderer\'s replay as old scrollback', async () => {
+    window.sessionStorage.setItem(
+      'terminal.session',
+      JSON.stringify({ handle: 'abc.def', rendered: 5 }),
+    )
+    const session = new TerminalSession()
+    await session.start(renderer, '', null)
+    const first = FakeSocket.latest()
+    first.onopen?.()
+    first.control({ type: 'ready', session: 'abc.def', since: 3 })
+    first.control({ type: 'error', code: 'gap_truncated', message: 'lost' })
+    expect(session.truncated).toBe(false)
+
+    // A gap on the reconnect after an outage is output lost again.
+    first.close()
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    const second = FakeSocket.latest()
+    second.onopen?.()
+    second.control({ type: 'ready', session: 'abc.def', since: 9 })
+    second.control({ type: 'error', code: 'gap_truncated', message: 'lost' })
+    expect(session.truncated).toBe(true)
+  })
+
+  it('says why when the socket closes before a session starts', async () => {
+    const session = new TerminalSession()
+    await session.start(renderer, '', { kind: 'local' })
+    FakeSocket.latest().close()
+
+    expect(session.phase).toBe('closed')
+    expect(session.error).toBe('The terminal connection closed before a session started')
   })
 
   it('never writes the handle to localStorage', async () => {

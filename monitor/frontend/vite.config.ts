@@ -24,6 +24,29 @@ export default defineConfig({
         // The terminal endpoint is a WebSocket upgrade; without this the dev
         // server answers the handshake itself and it never reaches the agent.
         ws: true,
+        // The agent refuses a WebSocket whose Origin it does not allow, and
+        // `changeOrigin` rewrites only Host. A handshake from this dev server's
+        // own page is presented as the agent's own origin; any other origin
+        // passes through unchanged and is judged by the agent as usual.
+        configure: (proxy) => {
+          // The event's shape, written out: this config is checked without
+          // Node's types.
+          const events = proxy as unknown as {
+            on(
+              event: 'proxyReqWs',
+              listener: (
+                proxyReq: { setHeader(name: string, value: string): void },
+                req: { headers: { origin?: string; host?: string } },
+              ) => void,
+            ): void
+          }
+          events.on('proxyReqWs', (proxyReq, req) => {
+            const { origin, host } = req.headers
+            if (origin && host && URL.parse(origin)?.host === host) {
+              proxyReq.setHeader('origin', new URL(agent).origin)
+            }
+          })
+        },
       },
     },
   },

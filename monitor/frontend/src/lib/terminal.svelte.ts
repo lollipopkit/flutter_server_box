@@ -187,6 +187,9 @@ export class TerminalSession {
   /// Absolute position of the next byte to be rendered. Only ever advanced by
   /// the renderer's completion callback.
   private rendered = 0
+  /// Set while an attach asks for the whole buffer on a fresh renderer: a gap
+  /// before it is old scrollback, not output lost in an outage.
+  private replayAll = false
   private persistedAt = 0
   private attempt = 0
   private reconnectTimer: number | null = null
@@ -243,6 +246,11 @@ export class TerminalSession {
     credential: Credential | null,
     target: TerminalTarget | null = null,
   ) {
+    // A renderer this session has not drawn on yet (a reload rejoining the
+    // stored handle) holds none of what was rendered before, so it asks for
+    // the agent's whole buffer rather than only what follows.
+    this.replayAll = this.renderer !== renderer && !credential
+    if (this.replayAll) this.rendered = 0
     this.renderer = renderer
     this.user = user
     this.credential = credential
@@ -425,7 +433,7 @@ export class TerminalSession {
     this.issueCode = msg.issue ?? null
     if (msg.code === 'gap_truncated') {
       // Not a failure: the session is fine, only the scrollback fell behind
-      this.truncated = true
+      if (!this.replayAll) this.truncated = true
       this.renderer?.reset()
       return
     }
@@ -485,6 +493,9 @@ export class TerminalSession {
 
   private onDisconnect(generation: number, socket: WebSocket) {
     if (!this.isCurrentConnection(generation, socket)) return
+    // The `gap_truncated` that follows `ready` has come by now; a gap on the
+    // reconnect after an outage is lost output again.
+    this.replayAll = false
     this.clearHeartbeat()
     this.socket = null
     socket.close()
@@ -493,8 +504,14 @@ export class TerminalSession {
       return
     }
     if (!this.handle) {
-      // Never got a session; reconnecting would just repeat the same failure
-      this.phase = 'closed'
+      // Never got a session; reconnecting would just repeat the same failure.
+      // Said, because a socket refused at the handshake carries no reason and
+      // would otherwise read as a session that ended normally.
+      if (this.phase === 'connecting' || this.phase === 'authenticating') {
+        this.fail(this.error ?? 'The terminal connection closed before a session started')
+      } else {
+        this.phase = 'closed'
+      }
       return
     }
     this.flush()

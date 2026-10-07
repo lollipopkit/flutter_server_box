@@ -1448,53 +1448,29 @@ type RootTranslation = {
 	 */
 	terminal: string
 	/**
-	 * T​h​e​ ​a​g​e​n​t​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​S​S​H​ ​s​e​r​v​i​c​e​ ​o​n​ ​y​o​u​r​ ​b​e​h​a​l​f​,​ ​s​o​ ​a​ ​s​e​s​s​i​o​n​ ​h​a​s​ ​e​x​a​c​t​l​y​ ​t​h​e​ ​p​e​r​m​i​s​s​i​o​n​s​ ​o​f​ ​t​h​e​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​y​o​u​ ​s​i​g​n​ ​i​n​ ​a​s​.​ ​Y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​g​r​a​n​t​s​ ​n​o​ ​s​h​e​l​l​ ​b​y​ ​i​t​s​e​l​f​.
-	 */
-	terminalCredentialsHint: string
-	/**
-	 * A​u​t​h​e​n​t​i​c​a​t​i​o​n
-	 */
-	terminalAuthMethod: string
-	/**
-	 * S​S​H​ ​u​s​e​r
-	 */
-	terminalSshUser: string
-	/**
-	 * P​r​i​v​a​t​e​ ​k​e​y
-	 */
-	terminalPrivateKey: string
-	/**
-	 * K​e​y​ ​p​a​s​s​p​h​r​a​s​e
-	 */
-	terminalPassphrase: string
-	/**
-	 * I​n​t​e​r​a​c​t​i​v​e
-	 */
-	terminalInteractive: string
-	/**
-	 * T​h​e​ ​s​e​r​v​e​r​ ​d​e​c​i​d​e​s​ ​w​h​a​t​ ​t​o​ ​a​s​k​ ​f​o​r​.​ ​U​s​e​ ​t​h​i​s​ ​w​h​e​n​ ​t​w​o​-​f​a​c​t​o​r​ ​a​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​i​s​ ​e​n​a​b​l​e​d​.
-	 */
-	terminalInteractiveHint: string
-	/**
-	 * R​e​m​e​m​b​e​r​ ​i​n​ ​t​h​i​s​ ​t​a​b​ ​(​c​l​e​a​r​e​d​ ​w​h​e​n​ ​i​t​ ​c​l​o​s​e​s​)
-	 */
-	terminalRememberForTab: string
-	/**
-	 * C​o​n​n​e​c​t
-	 */
-	terminalConnect: string
-	/**
-	 * R​e​j​o​i​n​ ​p​r​e​v​i​o​u​s​ ​s​e​s​s​i​o​n
-	 */
-	terminalResume: string
-	/**
 	 * E​n​d​ ​s​e​s​s​i​o​n
 	 */
 	terminalDisconnect: string
 	/**
-	 * S​u​b​m​i​t
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​r​o​l​e​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​e​ ​s​h​e​l​l​.
 	 */
-	terminalSubmit: string
+	terminalNeedsShell: string
+	/**
+	 * S​e​s​s​i​o​n​ ​e​n​d​e​d
+	 */
+	terminalEnded: string
+	/**
+	 * N​e​w​ ​s​e​s​s​i​o​n
+	 */
+	terminalNewSession: string
+	/**
+	 * S​h​e​l​l
+	 */
+	terminalMenuShell: string
+	/**
+	 * N​e​w​ ​t​m​u​x​ ​s​e​s​s​i​o​n​…
+	 */
+	terminalTmuxNew: string
 	/**
 	 * R​e​c​o​n​n​e​c​t​i​n​g​.​.​.
 	 */
@@ -1511,14 +1487,6 @@ type RootTranslation = {
 	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	terminalUnavailable: string
-	/**
-	 * O​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l
-	 */
-	terminalOpenDirectly: string
-	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​o​p​e​n​s​ ​a​ ​s​h​e​l​l​ ​f​o​r​ ​a​n​y​o​n​e​ ​s​i​g​n​e​d​ ​i​n​t​o​ ​t​h​e​ ​p​a​n​e​l​,​ ​r​u​n​n​i​n​g​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​.​ ​N​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​ ​n​e​e​d​e​d​.
-	 */
-	terminalPasswordlessHint: string
 	/**
 	 * T​h​i​s​ ​p​a​n​e​l​ ​l​o​g​i​n​ ​c​a​n​ ​o​p​e​n​ ​a​ ​s​h​e​l​l
 	 */
@@ -1539,10 +1507,6 @@ type RootTranslation = {
 	 * t​m​u​x​ ​s​e​s​s​i​o​n​s
 	 */
 	terminalTmuxSessions: string
-	/**
-	 * A​t​t​a​c​h
-	 */
-	terminalTmuxAttach: string
 	/**
 	 * S​e​s​s​i​o​n​ ​n​a​m​e
 	 */
@@ -7987,53 +7951,29 @@ export type TranslationFunctions = {
 	 */
 	terminal: () => LocalizedString
 	/**
-	 * The agent connects to this machine's SSH service on your behalf, so a session has exactly the permissions of the SSH account you sign in as. Your panel password grants no shell by itself.
-	 */
-	terminalCredentialsHint: () => LocalizedString
-	/**
-	 * Authentication
-	 */
-	terminalAuthMethod: () => LocalizedString
-	/**
-	 * SSH user
-	 */
-	terminalSshUser: () => LocalizedString
-	/**
-	 * Private key
-	 */
-	terminalPrivateKey: () => LocalizedString
-	/**
-	 * Key passphrase
-	 */
-	terminalPassphrase: () => LocalizedString
-	/**
-	 * Interactive
-	 */
-	terminalInteractive: () => LocalizedString
-	/**
-	 * The server decides what to ask for. Use this when two-factor authentication is enabled.
-	 */
-	terminalInteractiveHint: () => LocalizedString
-	/**
-	 * Remember in this tab (cleared when it closes)
-	 */
-	terminalRememberForTab: () => LocalizedString
-	/**
-	 * Connect
-	 */
-	terminalConnect: () => LocalizedString
-	/**
-	 * Rejoin previous session
-	 */
-	terminalResume: () => LocalizedString
-	/**
 	 * End session
 	 */
 	terminalDisconnect: () => LocalizedString
 	/**
-	 * Submit
+	 * This account's role does not include the shell.
 	 */
-	terminalSubmit: () => LocalizedString
+	terminalNeedsShell: () => LocalizedString
+	/**
+	 * Session ended
+	 */
+	terminalEnded: () => LocalizedString
+	/**
+	 * New session
+	 */
+	terminalNewSession: () => LocalizedString
+	/**
+	 * Shell
+	 */
+	terminalMenuShell: () => LocalizedString
+	/**
+	 * New tmux session…
+	 */
+	terminalTmuxNew: () => LocalizedString
 	/**
 	 * Reconnecting...
 	 */
@@ -8050,14 +7990,6 @@ export type TranslationFunctions = {
 	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	terminalUnavailable: () => LocalizedString
-	/**
-	 * Open a terminal
-	 */
-	terminalOpenDirectly: () => LocalizedString
-	/**
-	 * This agent opens a shell for anyone signed into the panel, running as the account the agent itself runs as. No SSH credentials needed.
-	 */
-	terminalPasswordlessHint: () => LocalizedString
 	/**
 	 * This panel login can open a shell
 	 */
@@ -8078,10 +8010,6 @@ export type TranslationFunctions = {
 	 * tmux sessions
 	 */
 	terminalTmuxSessions: () => LocalizedString
-	/**
-	 * Attach
-	 */
-	terminalTmuxAttach: () => LocalizedString
 	/**
 	 * Session name
 	 */
