@@ -1503,6 +1503,19 @@ const zh_TW = {
 	deskInBackground: '背景執行中',
 	settingsBackgroundPerApp: '背景執行',
 	deskOpenWith: '開啟方式',
+	settingsInstalledApps: '已安裝',
+	settingsInstallApp: '安裝 App 套件',
+	settingsInstallAppButton: '安裝…',
+	settingsAppWaiting: '等待核准',
+	settingsAppApprove: '核准',
+	settingsAppRemove: '移除',
+	settingsAppApproveMessage: '允許 {name} 在此桌面執行，並{permissions}。',
+	settingsAppApproveBare: '允許 {name} 在此桌面執行。',
+	settingsAppRemoveMessage: '從此伺服器的所有帳號移除 {name}。',
+	settingsPermNotifications: '顯示通知',
+	settingsPermBackground: '在背景執行',
+	settingsAppNoPermissions: '沒有權限',
+	settingsAppRefused: '套件遭拒：{reason}',
 } satisfies Translation
 
 export default zh_TW

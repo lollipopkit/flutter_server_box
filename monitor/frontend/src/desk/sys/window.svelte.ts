@@ -19,6 +19,8 @@ export type LifecycleState = 'active' | 'visible' | 'background' | 'suspended'
 
 export interface WindowHandle {
   readonly id: string
+  /// The app it runs.
+  readonly appId: string
   /// What the app saved for itself; null on a fresh window.
   readonly appState: unknown
   /// Small JSON (≤16 KiB, never secrets) to come back with after a reload or
@@ -80,6 +82,7 @@ export function useWindow(): WindowHandle {
 
 const DETACHED: WindowHandle = {
   id: '',
+  appId: '',
   appState: null,
   setAppState() {},
   setTitle() {},

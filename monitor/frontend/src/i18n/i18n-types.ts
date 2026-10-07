@@ -6195,6 +6195,63 @@ type RootTranslation = {
 	 * O​p​e​n​ ​w​i​t​h
 	 */
 	deskOpenWith: string
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	settingsInstalledApps: string
+	/**
+	 * I​n​s​t​a​l​l​ ​a​n​ ​a​p​p​ ​p​a​c​k​a​g​e
+	 */
+	settingsInstallApp: string
+	/**
+	 * I​n​s​t​a​l​l​…
+	 */
+	settingsInstallAppButton: string
+	/**
+	 * W​a​i​t​i​n​g
+	 */
+	settingsAppWaiting: string
+	/**
+	 * A​p​p​r​o​v​e
+	 */
+	settingsAppApprove: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	settingsAppRemove: string
+	/**
+	 * L​e​t​ ​{​n​a​m​e​}​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​d​e​s​k​ ​a​n​d​ ​{​p​e​r​m​i​s​s​i​o​n​s​}​.
+	 * @param {unknown} name
+	 * @param {unknown} permissions
+	 */
+	settingsAppApproveMessage: RequiredParams<'name' | 'permissions'>
+	/**
+	 * L​e​t​ ​{​n​a​m​e​}​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​d​e​s​k​.
+	 * @param {unknown} name
+	 */
+	settingsAppApproveBare: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​ ​f​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * @param {unknown} name
+	 */
+	settingsAppRemoveMessage: RequiredParams<'name'>
+	/**
+	 * s​h​o​w​ ​n​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	settingsPermNotifications: string
+	/**
+	 * r​u​n​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsPermBackground: string
+	/**
+	 * N​o​ ​p​e​r​m​i​s​s​i​o​n​s
+	 */
+	settingsAppNoPermissions: string
+	/**
+	 * T​h​e​ ​p​a​c​k​a​g​e​ ​w​a​s​ ​r​e​f​u​s​e​d​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} reason
+	 */
+	settingsAppRefused: RequiredParams<'reason'>
 }
 
 export type TranslationFunctions = {
@@ -12206,6 +12263,58 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Open with
 	 */
 	deskOpenWith: () => LocalizedString
+	/**
+	 * Installed
+	 */
+	settingsInstalledApps: () => LocalizedString
+	/**
+	 * Install an app package
+	 */
+	settingsInstallApp: () => LocalizedString
+	/**
+	 * Install…
+	 */
+	settingsInstallAppButton: () => LocalizedString
+	/**
+	 * Waiting
+	 */
+	settingsAppWaiting: () => LocalizedString
+	/**
+	 * Approve
+	 */
+	settingsAppApprove: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	settingsAppRemove: () => LocalizedString
+	/**
+	 * Let {name} run on this desk and {permissions}.
+	 */
+	settingsAppApproveMessage: (arg: { name: unknown, permissions: unknown }) => LocalizedString
+	/**
+	 * Let {name} run on this desk.
+	 */
+	settingsAppApproveBare: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Remove {name} for every account on this server.
+	 */
+	settingsAppRemoveMessage: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * show notifications
+	 */
+	settingsPermNotifications: () => LocalizedString
+	/**
+	 * run in the background
+	 */
+	settingsPermBackground: () => LocalizedString
+	/**
+	 * No permissions
+	 */
+	settingsAppNoPermissions: () => LocalizedString
+	/**
+	 * The package was refused: {reason}
+	 */
+	settingsAppRefused: (arg: { reason: unknown }) => LocalizedString
 }
 
 export type Formatters = {}

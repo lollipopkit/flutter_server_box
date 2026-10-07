@@ -1502,6 +1502,19 @@ const zh_CN = {
 	deskInBackground: '后台运行中',
 	settingsBackgroundPerApp: '后台运行',
 	deskOpenWith: '打开方式',
+	settingsInstalledApps: '已安装',
+	settingsInstallApp: '安装应用包',
+	settingsInstallAppButton: '安装…',
+	settingsAppWaiting: '待批准',
+	settingsAppApprove: '批准',
+	settingsAppRemove: '移除',
+	settingsAppApproveMessage: '允许 {name} 在此桌面运行,并{permissions}。',
+	settingsAppApproveBare: '允许 {name} 在此桌面运行。',
+	settingsAppRemoveMessage: '为此服务器上的所有账号移除 {name}。',
+	settingsPermNotifications: '显示通知',
+	settingsPermBackground: '在后台运行',
+	settingsAppNoPermissions: '无权限',
+	settingsAppRefused: '应用包被拒绝:{reason}',
 } satisfies Translation
 
 export default zh_CN

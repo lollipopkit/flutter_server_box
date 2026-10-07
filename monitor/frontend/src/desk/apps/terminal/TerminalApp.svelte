@@ -349,7 +349,8 @@
   let queued = $state<QueuedSnippet | null>(null)
   const queuedName = $derived(queued?.name ?? '')
   useIntents((intent) => {
-    if (intent.action !== TYPE_SNIPPET) return
+    // Typed into a shell: only the Snippets app may ask.
+    if (intent.action !== TYPE_SNIPPET || intent.from !== 'snippets') return
     const snippet = queuedSnippet(intent.data)
     if (snippet) queued = snippet
   })

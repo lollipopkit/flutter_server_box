@@ -19,6 +19,7 @@ import type { DeskNotification } from './deskApi'
 import type { IconTone } from './lk/AppIcon.svelte'
 import type { MenuEntry } from './lk/Menu.svelte'
 import { AppData } from './appData'
+import { registerWebApps } from './webapps/register'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
 import { SessionSync } from './session.svelte'
@@ -69,6 +70,7 @@ export class Desk {
   readonly chromes = new SvelteMap<string, WindowChrome>()
 
   #abort = new AbortController()
+  #offWebApps: (() => void) | null = null
   #intents = new SvelteMap<string, Intent[]>()
 
   constructor(entry: ServerEntry) {
@@ -83,10 +85,19 @@ export class Desk {
     return availableApps(this.caps)
   }
 
-  /// Whether a hidden window of [appId] keeps running (Settings → Apps).
+  /// Whether a hidden window of [appId] keeps running (Settings → Apps; an
+  /// installed app also needs the `background` permission).
   mayRunHidden(appId: string): boolean {
+    if (!this.allows(appId, 'background')) return false
     const p = this.prefs?.value
     return !p || (p.background && !p.background_denied.includes(appId))
+  }
+
+  /// Whether [appId] may use [permission]: a built-in app always, an
+  /// installed one when its approved permissions list it.
+  allows(appId: string, permission: string): boolean {
+    const spec = app(appId)
+    return !!spec && (spec.kind === 'system' || (spec.permissions ?? []).includes(permission))
   }
 
   /// Hidden from the user: minimised, behind the front window on a phone,
@@ -156,19 +167,34 @@ export class Desk {
     this.notifications = new DeskNotifications(storage)
     this.appData = new AppData(storage)
     this.session = new SessionSync(this.windows, storage, deviceId(), this.entry.id)
+    // Installed apps first: a restored window of one needs it registered.
+    await this.reloadWebApps()
     await Promise.all([this.prefs.load(), this.session.load(), this.notifications.load()])
     if (storage.events) void this.#listen(storage)
   }
 
-  /// Opens [appId] if this server and account may use it.
-  open(appId: string, options?: OpenOptions): string | null {
+  /// Reads the installed apps again (one approved or removed in Settings).
+  async reloadWebApps() {
+    if (!this.caps?.features?.includes('desk_apps')) return
+    try {
+      const off = await registerWebApps(this.entry, () => this.#offWebApps?.())
+      if (this.#abort.signal.aborted) off()
+      else this.#offWebApps = off
+    } catch {
+      // The desk works without them; they come back on the next start.
+    }
+  }
+
+  /// Opens [appId] if this server and account may use it. [from] is the app
+  /// asking, stamped on its intent.
+  open(appId: string, options?: OpenOptions, from?: string): string | null {
     const spec = app(appId)
     if (!spec || !spec.available(this.caps)) return null
     this.panel = null
     this.spotlight = false
     const id = this.windows.open(appId, options)
     if (id && options?.intent) {
-      const intent = { action: String(options.intent.action), data: options.intent.data }
+      const intent: Intent = { action: String(options.intent.action), data: options.intent.data, from }
       const chrome = this.chromes.get(id)
       if (chrome) chrome.deliver(intent)
       else this.#intents.set(id, [...(this.#intents.get(id) ?? []), intent])
@@ -197,6 +223,8 @@ export class Desk {
   /// Saves what is pending and stops listening: the desk is going away.
   async stop() {
     this.#abort.abort()
+    this.#offWebApps?.()
+    this.#offWebApps = null
     this.prefs?.close()
     this.notifications?.close()
     await this.session?.close()
@@ -261,6 +289,9 @@ export function useDesk(): Desk {
 export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, lifecycle: () => LifecycleState) {
   const handle: WindowHandle = {
     id,
+    get appId() {
+      return desk.windows.get(id)?.appId ?? ''
+    },
     chrome,
     get appState() {
       return desk.windows.get(id)?.appState ?? null
@@ -271,10 +302,11 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     setIcon: (icon) => (chrome.icon = icon && { glyph: String(icon.glyph), tone: icon.tone }),
     setBadge: (badge) => (chrome.badge = badge === null || badge === '' ? null : String(badge).slice(0, 8)),
     close: () => desk.windows.close(id),
-    open: (appId, options) => desk.open(appId, options),
+    open: (appId, options) => desk.open(appId, options, desk.windows.get(id)?.appId),
     notify: (notice) => {
       const appId = desk.windows.get(id)?.appId
-      const n = appId ? desk.notifications?.posted(appId, notice) : undefined
+      if (!appId || !desk.allows(appId, 'notifications')) return
+      const n = desk.notifications?.posted(appId, notice)
       if (n) desk.noticeWindows.set(n.id, id)
     },
     handlers: (path, kind) => {
@@ -309,6 +341,7 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
 export function provideAppSettings(desk: Desk, appId: string, settings: WindowHandle) {
   const handle: WindowHandle = {
     ...settings,
+    appId,
     get appState() {
       return null
     },
@@ -337,7 +370,7 @@ export function provideAppSettings(desk: Desk, appId: string, settings: WindowHa
 
 /// The desk's preferences (wallpaper, background apps), for the Settings app
 /// only — no other app touches them. Null until they have loaded.
-export function useDeskPrefs(): { readonly prefs: DeskPrefs | null; readonly apps: AppSpec[] } {
+export function useDeskPrefs(): { readonly prefs: DeskPrefs | null; readonly apps: AppSpec[]; reloadApps(): Promise<void> } {
   const desk = getContext<Desk | undefined>(DESK)
   return {
     get prefs() {
@@ -347,5 +380,6 @@ export function useDeskPrefs(): { readonly prefs: DeskPrefs | null; readonly app
     get apps() {
       return desk?.apps ?? []
     },
+    reloadApps: async () => desk?.reloadWebApps(),
   }
 }

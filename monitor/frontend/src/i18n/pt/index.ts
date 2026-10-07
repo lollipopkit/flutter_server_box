@@ -1503,6 +1503,19 @@ const pt = {
 	deskInBackground: 'Em segundo plano',
 	settingsBackgroundPerApp: 'Em segundo plano',
 	deskOpenWith: 'Abrir com',
+	settingsInstalledApps: 'Instaladas',
+	settingsInstallApp: 'Instalar um pacote de app',
+	settingsInstallAppButton: 'Instalar…',
+	settingsAppWaiting: 'Aguardando aprovação',
+	settingsAppApprove: 'Aprovar',
+	settingsAppRemove: 'Remover',
+	settingsAppApproveMessage: 'Permitir que {name} seja executada nesta área de trabalho e {permissions}.',
+	settingsAppApproveBare: 'Permitir que {name} seja executada nesta área de trabalho.',
+	settingsAppRemoveMessage: 'Remover {name} de todas as contas deste servidor.',
+	settingsPermNotifications: 'mostre notificações',
+	settingsPermBackground: 'se execute em segundo plano',
+	settingsAppNoPermissions: 'Sem permissões',
+	settingsAppRefused: 'O pacote foi recusado: {reason}',
 } satisfies Translation
 
 export default pt

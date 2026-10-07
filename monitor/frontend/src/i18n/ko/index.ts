@@ -1503,6 +1503,19 @@ const ko = {
 	deskInBackground: '백그라운드에서 실행 중',
 	settingsBackgroundPerApp: '백그라운드 실행',
 	deskOpenWith: '다음으로 열기',
+	settingsInstalledApps: '설치됨',
+	settingsInstallApp: '앱 패키지 설치',
+	settingsInstallAppButton: '설치…',
+	settingsAppWaiting: '승인 대기',
+	settingsAppApprove: '승인',
+	settingsAppRemove: '제거',
+	settingsAppApproveMessage: '이 데스크톱에서 {name}을(를) 실행하고 {permissions}도록 허용합니다.',
+	settingsAppApproveBare: '이 데스크톱에서 {name}을(를) 실행하도록 허용합니다.',
+	settingsAppRemoveMessage: '이 서버의 모든 계정에서 {name}을(를) 제거합니다.',
+	settingsPermNotifications: '알림 표시',
+	settingsPermBackground: '백그라운드에서 실행',
+	settingsAppNoPermissions: '권한 없음',
+	settingsAppRefused: '패키지가 거부되었습니다: {reason}',
 } satisfies Translation
 
 export default ko

@@ -63,6 +63,10 @@ export interface AppManifest {
 /// A manifest with every default filled in, as the shell reads it.
 export interface AppSpec extends WindowPolicy {
   id: string
+  /// `system`: built in, trusted. `web`: installed on the agent, run in a
+  /// sandboxed frame with only its approved [permissions].
+  kind: 'system' | 'web'
+  permissions?: readonly string[]
   title: (ll: TranslationFunctions) => string
   keywords?: (ll: TranslationFunctions) => string[]
   glyph: string
@@ -87,6 +91,7 @@ export function defineApp(m: AppManifest): AppSpec {
   const title = m.title
   return {
     id: m.id,
+    kind: 'system',
     title: typeof title === 'string' ? () => title : title,
     keywords: m.keywords,
     glyph: m.glyph,

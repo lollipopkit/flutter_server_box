@@ -1503,6 +1503,19 @@ const tr = {
 	deskInBackground: 'Arka planda',
 	settingsBackgroundPerApp: 'Arka plan',
 	deskOpenWith: 'Birlikte aç',
+	settingsInstalledApps: 'Yüklü',
+	settingsInstallApp: 'Uygulama paketi yükle',
+	settingsInstallAppButton: 'Yükle…',
+	settingsAppWaiting: 'Onay bekliyor',
+	settingsAppApprove: 'Onayla',
+	settingsAppRemove: 'Kaldır',
+	settingsAppApproveMessage: '{name} uygulamasının bu masaüstünde çalışmasına ve {permissions} izin ver.',
+	settingsAppApproveBare: '{name} uygulamasının bu masaüstünde çalışmasına izin ver.',
+	settingsAppRemoveMessage: '{name} uygulamasını bu sunucudaki tüm hesaplardan kaldır.',
+	settingsPermNotifications: 'bildirimleri göstermesine',
+	settingsPermBackground: 'arka planda çalışmasına',
+	settingsAppNoPermissions: 'İzin yok',
+	settingsAppRefused: 'Paket reddedildi: {reason}',
 } satisfies Translation
 
 export default tr

@@ -2,7 +2,7 @@
 
 The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, launchpad, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
 
-Status: phases 1 and 2 are implemented (see [Phases](#phases)); the rest is the agreed design.
+Status: phases 1–3 are implemented (see [Phases](#phases)); the rest is the agreed design.
 
 ## App kinds
 
@@ -89,6 +89,24 @@ An admin installs an app and approves its permissions in Settings → Apps; a la
 
 A package is a `.sbapp` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only), `LICENSE`. Admin endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
 
+## The bridge (phase 3)
+
+The frame posts calls `{ sbm: 1, id, call, args }` to its parent and gets `{ sbm: 1, re, ok, value | error }`; the desk sends events `{ sbm: 1, event, data }` (held until the frame's `hello`). The desk hears only messages whose `source` is that frame's window and checks every shape and size (1 MiB, 32 calls in flight).
+
+| Call | Does |
+|---|---|
+| `hello` | Answers app and window id, `appState`, lifecycle, theme, locale, granted permissions |
+| `setTitle`, `setAppName`, `setIcon`, `setBadge`, `setAppState`, `close` | As the window handle |
+| `toolbar` `{ title, subtitle, actions }`, `menus` `{ menus }` | Described, drawn by the desk with `lk`; a use sends `action { id }` |
+| `notify` | Needs `notifications` |
+| `storage.get/set/remove/keys` | The app's own storage |
+| `open` `{ appId, newWindow, intent }` | The only intent it may hand on is `open` of a path (an app must not make Terminal type) |
+| `handlers` `{ path, kind }`, `keepAlive`/`release` `{ token, reason }` (needs `background`) | |
+
+Events: `lifecycle`, `theme`, `locale`, `intent` (`{ action, data, from }`), `action`.
+
+Intents carry `from`, set by the desk: an app acts on one only from the apps it expects (Terminal takes `terminal.type` from Snippets alone).
+
 ## The WASM backend
 
 - The agent runs `backend.wasm` as a WASI component in wasmtime, one instance per app and server, started on the first call and stopped after 5 minutes without calls.
@@ -101,6 +119,6 @@ A package is a `.sbapp` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/i
 
 1. **sys core, system apps** (done, `656d5872`): manifests and registry, `sys` (window, identity, menus, shortcuts, lifecycle, background setting), the shell reading it; apps import only `sys`, `lk` and shared code (lint-enforced).
 2. **Services** (done): per-app background choice (`background_denied`, migration 020), storage, notifications, dock menus, `keepAlive`, Control Centre's background list, intents and "Open with" (Snippets → Terminal moved onto them), app settings pages.
-3. **`web` apps**: the iframe host and the bridge, `@lollipopkit/desk-sys`, package install and serving, Settings → Apps (install, approve, remove, background).
+3. **`web` apps** (done): the agent's package store (`api::apps`, migration 022), the frame host and bridge (`desk/webapps/`: `protocol.ts`, `bridge.svelte.ts`, `WebAppFrame.svelte`), Settings → Apps (install, approve, remove), an example (`monitor/examples/desk-app-hello`). The SDK package moves to phase 5.
 4. **`wasm` apps**: the agent's runtime, host functions, `/apps/{id}/call` and events, limits and audit.
 5. **SDK**: the package published, a template app, an example of each kind, docs.

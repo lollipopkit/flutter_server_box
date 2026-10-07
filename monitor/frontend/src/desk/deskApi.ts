@@ -4,6 +4,7 @@
 
 import { ApiError, requestFor } from '../lib/api'
 import { isSecureAgentUrl } from '../lib/agentUrl'
+import type { InstalledApp } from '../types'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { StoredWindow } from './windows.svelte'
 
@@ -118,6 +119,14 @@ export const deskApi = {
       { method: 'DELETE' },
       'Failed to save',
     ),
+
+  /// The apps installed on the agent (`api::apps`); an admin also sees those
+  /// waiting for approval.
+  apps: (entry: ServerEntry) => requestFor<{ apps: InstalledApp[] }>(entry, '/apps', {}, 'Failed to load the apps'),
+
+  /// Where an installed app's UI loads from (a ticketed path).
+  launchApp: (entry: ServerEntry, id: string) =>
+    requestFor<{ url: string; version: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}, 'Failed to open the app'),
 
   notifications: (entry: ServerEntry, limit = 80) =>
     requestFor<{ notifications: DeskNotification[]; unread: number }>(

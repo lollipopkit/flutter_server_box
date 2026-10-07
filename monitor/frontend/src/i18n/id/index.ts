@@ -1503,6 +1503,19 @@ const id = {
 	deskInBackground: 'Di latar belakang',
 	settingsBackgroundPerApp: 'Latar belakang',
 	deskOpenWith: 'Buka dengan',
+	settingsInstalledApps: 'Terpasang',
+	settingsInstallApp: 'Pasang paket aplikasi',
+	settingsInstallAppButton: 'Pasang…',
+	settingsAppWaiting: 'Menunggu persetujuan',
+	settingsAppApprove: 'Setujui',
+	settingsAppRemove: 'Hapus',
+	settingsAppApproveMessage: 'Izinkan {name} berjalan di desktop ini dan {permissions}.',
+	settingsAppApproveBare: 'Izinkan {name} berjalan di desktop ini.',
+	settingsAppRemoveMessage: 'Hapus {name} untuk semua akun di server ini.',
+	settingsPermNotifications: 'menampilkan notifikasi',
+	settingsPermBackground: 'berjalan di latar belakang',
+	settingsAppNoPermissions: 'Tanpa izin',
+	settingsAppRefused: 'Paket ditolak: {reason}',
 } satisfies Translation
 
 export default id

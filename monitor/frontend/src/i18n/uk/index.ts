@@ -1503,6 +1503,19 @@ const uk = {
 	deskInBackground: 'У фоновому режимі',
 	settingsBackgroundPerApp: 'Фоновий режим',
 	deskOpenWith: 'Відкрити за допомогою',
+	settingsInstalledApps: 'Установлені',
+	settingsInstallApp: 'Установити пакет програми',
+	settingsInstallAppButton: 'Установити…',
+	settingsAppWaiting: 'Очікує на схвалення',
+	settingsAppApprove: 'Схвалити',
+	settingsAppRemove: 'Видалити',
+	settingsAppApproveMessage: 'Дозволити {name} працювати на цьому робочому столі та {permissions}.',
+	settingsAppApproveBare: 'Дозволити {name} працювати на цьому робочому столі.',
+	settingsAppRemoveMessage: 'Видалити {name} для всіх облікових записів на цьому сервері.',
+	settingsPermNotifications: 'показувати сповіщення',
+	settingsPermBackground: 'працювати у фоновому режимі',
+	settingsAppNoPermissions: 'Немає дозволів',
+	settingsAppRefused: 'Пакет відхилено: {reason}',
 } satisfies Translation
 
 export default uk

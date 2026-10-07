@@ -1503,6 +1503,19 @@ const nl = {
 	deskInBackground: 'Op de achtergrond',
 	settingsBackgroundPerApp: 'Op de achtergrond',
 	deskOpenWith: 'Open met',
+	settingsInstalledApps: 'Geïnstalleerd',
+	settingsInstallApp: 'App-pakket installeren',
+	settingsInstallAppButton: 'Installeren…',
+	settingsAppWaiting: 'Wacht op goedkeuring',
+	settingsAppApprove: 'Goedkeuren',
+	settingsAppRemove: 'Verwijderen',
+	settingsAppApproveMessage: 'Sta {name} toe op dit bureaublad te draaien en {permissions}.',
+	settingsAppApproveBare: 'Sta {name} toe op dit bureaublad te draaien.',
+	settingsAppRemoveMessage: 'Verwijder {name} voor alle accounts op deze server.',
+	settingsPermNotifications: 'meldingen te tonen',
+	settingsPermBackground: 'op de achtergrond te draaien',
+	settingsAppNoPermissions: 'Geen machtigingen',
+	settingsAppRefused: 'Het pakket is geweigerd: {reason}',
 } satisfies Translation
 
 export default nl

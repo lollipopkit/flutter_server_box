@@ -1503,6 +1503,19 @@ const ru = {
 	deskInBackground: 'В фоновом режиме',
 	settingsBackgroundPerApp: 'В фоновом режиме',
 	deskOpenWith: 'Открыть с помощью',
+	settingsInstalledApps: 'Установленные',
+	settingsInstallApp: 'Установить пакет приложения',
+	settingsInstallAppButton: 'Установить…',
+	settingsAppWaiting: 'Ожидает одобрения',
+	settingsAppApprove: 'Одобрить',
+	settingsAppRemove: 'Удалить',
+	settingsAppApproveMessage: 'Разрешить {name} работать на этом рабочем столе и {permissions}.',
+	settingsAppApproveBare: 'Разрешить {name} работать на этом рабочем столе.',
+	settingsAppRemoveMessage: 'Удалить {name} для всех учётных записей на этом сервере.',
+	settingsPermNotifications: 'показывать уведомления',
+	settingsPermBackground: 'работать в фоновом режиме',
+	settingsAppNoPermissions: 'Нет разрешений',
+	settingsAppRefused: 'Пакет отклонён: {reason}',
 } satisfies Translation
 
 export default ru

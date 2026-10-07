@@ -1503,6 +1503,19 @@ const en = {
 	deskInBackground: 'In the background',
 	settingsBackgroundPerApp: 'In the background',
 	deskOpenWith: 'Open with',
+	settingsInstalledApps: 'Installed',
+	settingsInstallApp: 'Install an app package',
+	settingsInstallAppButton: 'Install…',
+	settingsAppWaiting: 'Waiting',
+	settingsAppApprove: 'Approve',
+	settingsAppRemove: 'Remove',
+	settingsAppApproveMessage: 'Let {name} run on this desk and {permissions}.',
+	settingsAppApproveBare: 'Let {name} run on this desk.',
+	settingsAppRemoveMessage: 'Remove {name} for every account on this server.',
+	settingsPermNotifications: 'show notifications',
+	settingsPermBackground: 'run in the background',
+	settingsAppNoPermissions: 'No permissions',
+	settingsAppRefused: 'The package was refused: {reason}',
 } satisfies BaseTranslation
 
 export default en

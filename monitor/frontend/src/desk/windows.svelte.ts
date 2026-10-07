@@ -68,6 +68,9 @@ export interface OpenOptions {
 export interface Intent {
   action: string
   data?: unknown
+  /// The app that sent it, set by the desk (never by the sender): an app
+  /// acts on an intent only from the apps it expects.
+  from?: string
 }
 
 function newWindowId(): string {

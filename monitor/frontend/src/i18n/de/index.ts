@@ -1503,6 +1503,19 @@ const de = {
 	deskInBackground: 'Im Hintergrund',
 	settingsBackgroundPerApp: 'Hintergrundbetrieb',
 	deskOpenWith: 'Öffnen mit',
+	settingsInstalledApps: 'Installiert',
+	settingsInstallApp: 'App-Paket installieren',
+	settingsInstallAppButton: 'Installieren…',
+	settingsAppWaiting: 'Wartet auf Freigabe',
+	settingsAppApprove: 'Genehmigen',
+	settingsAppRemove: 'Entfernen',
+	settingsAppApproveMessage: 'Erlaube {name}, auf diesem Schreibtisch zu laufen und {permissions}.',
+	settingsAppApproveBare: 'Erlaube {name}, auf diesem Schreibtisch zu laufen.',
+	settingsAppRemoveMessage: 'Entferne {name} für alle Konten auf diesem Server.',
+	settingsPermNotifications: 'Benachrichtigungen anzuzeigen',
+	settingsPermBackground: 'im Hintergrund zu laufen',
+	settingsAppNoPermissions: 'Keine Berechtigungen',
+	settingsAppRefused: 'Das Paket wurde abgelehnt: {reason}',
 } satisfies Translation
 
 export default de

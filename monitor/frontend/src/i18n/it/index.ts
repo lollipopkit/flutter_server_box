@@ -1503,6 +1503,19 @@ const it = {
 	deskInBackground: 'In secondo piano',
 	settingsBackgroundPerApp: 'In secondo piano',
 	deskOpenWith: 'Apri con',
+	settingsInstalledApps: 'Installate',
+	settingsInstallApp: 'Installa un pacchetto app',
+	settingsInstallAppButton: 'Installa…',
+	settingsAppWaiting: 'In attesa di approvazione',
+	settingsAppApprove: 'Approva',
+	settingsAppRemove: 'Rimuovi',
+	settingsAppApproveMessage: 'Consenti a {name} di funzionare su questo desktop e di {permissions}.',
+	settingsAppApproveBare: 'Consenti a {name} di funzionare su questo desktop.',
+	settingsAppRemoveMessage: 'Rimuovi {name} per tutti gli account su questo server.',
+	settingsPermNotifications: 'mostrare notifiche',
+	settingsPermBackground: 'funzionare in background',
+	settingsAppNoPermissions: 'Nessuna autorizzazione',
+	settingsAppRefused: 'Il pacchetto è stato rifiutato: {reason}',
 } satisfies Translation
 
 export default it

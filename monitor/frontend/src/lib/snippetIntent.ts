@@ -12,6 +12,7 @@
 
 import type { SnippetStep } from '../types'
 
+/// Taken by Terminal from the Snippets app only (`Intent.from`).
 export const TYPE_SNIPPET = 'terminal.type'
 
 export interface QueuedSnippet {

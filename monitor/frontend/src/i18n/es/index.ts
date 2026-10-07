@@ -1503,6 +1503,19 @@ const es = {
 	deskInBackground: 'En segundo plano',
 	settingsBackgroundPerApp: 'En segundo plano',
 	deskOpenWith: 'Abrir con',
+	settingsInstalledApps: 'Instaladas',
+	settingsInstallApp: 'Instalar un paquete de app',
+	settingsInstallAppButton: 'Instalar…',
+	settingsAppWaiting: 'Pendiente de aprobación',
+	settingsAppApprove: 'Aprobar',
+	settingsAppRemove: 'Eliminar',
+	settingsAppApproveMessage: 'Permitir que {name} se ejecute en este escritorio y {permissions}.',
+	settingsAppApproveBare: 'Permitir que {name} se ejecute en este escritorio.',
+	settingsAppRemoveMessage: 'Eliminar {name} para todas las cuentas de este servidor.',
+	settingsPermNotifications: 'muestre notificaciones',
+	settingsPermBackground: 'se ejecute en segundo plano',
+	settingsAppNoPermissions: 'Sin permisos',
+	settingsAppRefused: 'Se rechazó el paquete: {reason}',
 } satisfies Translation
 
 export default es

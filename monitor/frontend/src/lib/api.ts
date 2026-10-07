@@ -1,4 +1,5 @@
 import type {
+  InstalledApp,
   AgentUser,
   CardOrderPayload,
   Capabilities,
@@ -1111,6 +1112,31 @@ export const api = {
   // administrator's own password: what changes access is re-authenticated,
   // not taken on the strength of a session that may have been left open.
   listUsers: () => request<AgentUser[]>('/users', {}, 'Failed to fetch accounts'),
+  /// Desk apps installed on the agent (`api::apps`); an admin also sees the
+  /// ones waiting for approval.
+  listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
+  /// Uploads a package (`.sbapp`); it waits for approval.
+  async installApp(file: Blob): Promise<InstalledApp> {
+    const res = await fsBytes(
+      '/apps',
+      { method: 'POST', body: file, headers: { 'Content-Type': 'application/gzip' } },
+      'Failed to install the app',
+      AbortSignal.timeout(120_000),
+    )
+    return res.json() as Promise<InstalledApp>
+  },
+  approveApp: (id: string, permissions: string[], currentPassword: string) =>
+    request<InstalledApp>(
+      `/apps/${encodeURIComponent(id)}/approval`,
+      { method: 'PUT', body: JSON.stringify({ permissions, current_password: currentPassword }) },
+      'Failed to approve the app',
+    ),
+  removeApp: (id: string, currentPassword: string) =>
+    request<void>(
+      `/apps/${encodeURIComponent(id)}`,
+      { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
+      'Failed to remove the app',
+    ),
   createUser: (username: string, password: string, role: string, current_password: string) =>
     request<AgentUser>(
       '/users',

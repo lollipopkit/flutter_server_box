@@ -2657,3 +2657,32 @@ export type VirtBackupIssue =
   | 'not_stopped'
   | 'not_found'
   | 'unsupported'
+
+/// Desk apps installed on the agent (`api::apps`).
+/// A package's manifest as the agent checked it (`api::apps::Manifest`).
+export interface PackageManifest {
+  id: string
+  version: string
+  api: number
+  kind: 'web'
+  title: string | Record<string, string>
+  glyph: string
+  tone: string
+  permissions: string[]
+  instances?: number
+  size?: { width: number; height: number }
+  min_size?: { width: number; height: number }
+  opens?: { dirs?: boolean; ext?: string[] }
+  keywords?: string[]
+}
+
+export interface InstalledApp {
+  id: string
+  version: string
+  manifest: PackageManifest
+  /// Null while waiting for an admin's approval.
+  approved_permissions: string[] | null
+  installed_by: string
+  installed_at: string
+  approved_at: string | null
+}

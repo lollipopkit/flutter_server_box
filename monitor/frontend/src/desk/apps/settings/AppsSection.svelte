@@ -5,11 +5,15 @@
 
   import { AppIcon, Group, Icon, Row, Spinner, Switch } from '../../lk'
   import AppSettingsHost from '../../window/AppSettingsHost.svelte'
+  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { servers } from '../../../lib/servers.svelte'
+  import InstalledApps from './InstalledApps.svelte'
   import { AppToolbar } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
 
   const desk = useDeskPrefs()
+  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
   const prefs = $derived(desk.prefs)
   /// The app whose own page is showing, if any.
   let page = $state<string | null>(null)
@@ -42,6 +46,9 @@
         />
       </Row>
     </Group>
+    {#if admin}
+      <InstalledApps onchange={desk.reloadApps} />
+    {/if}
     {#if withPages.length > 0}
       <Group>
         {#each withPages as spec (spec.id)}
@@ -56,7 +63,8 @@
     {/if}
     {#if prefs.keepsBackground}
       <Group title={$LL.settingsBackgroundPerApp()}>
-        {#each desk.apps as spec (spec.id)}
+        <!-- An installed app runs hidden only with the `background` permission. -->
+        {#each desk.apps.filter((a) => a.kind === 'system' || a.permissions?.includes('background')) as spec (spec.id)}
           {@const title = spec.title($LL)}
           <Row label={title}>
             {#snippet leading()}<AppIcon glyph={spec.glyph} tone={spec.tone} size={26} />{/snippet}

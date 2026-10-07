@@ -1503,6 +1503,19 @@ const fr = {
 	deskInBackground: 'En arrière-plan',
 	settingsBackgroundPerApp: 'En arrière-plan',
 	deskOpenWith: 'Ouvrir avec',
+	settingsInstalledApps: 'Installées',
+	settingsInstallApp: 'Installer un paquet d’app',
+	settingsInstallAppButton: 'Installer…',
+	settingsAppWaiting: 'En attente d’autorisation',
+	settingsAppApprove: 'Autoriser',
+	settingsAppRemove: 'Supprimer',
+	settingsAppApproveMessage: 'Autoriser {name} à s’exécuter sur ce bureau et à {permissions}.',
+	settingsAppApproveBare: 'Autoriser {name} à s’exécuter sur ce bureau.',
+	settingsAppRemoveMessage: 'Supprimer {name} pour tous les comptes de ce serveur.',
+	settingsPermNotifications: 'afficher des notifications',
+	settingsPermBackground: 's’exécuter en arrière-plan',
+	settingsAppNoPermissions: 'Aucune autorisation',
+	settingsAppRefused: 'Le paquet a été refusé : {reason}',
 } satisfies Translation
 
 export default fr

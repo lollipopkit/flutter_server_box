@@ -1503,6 +1503,19 @@ const ja = {
 	deskInBackground: 'バックグラウンド実行中',
 	settingsBackgroundPerApp: 'バックグラウンド実行',
 	deskOpenWith: 'このアプリケーションで開く',
+	settingsInstalledApps: 'インストール済み',
+	settingsInstallApp: 'アプリパッケージをインストール',
+	settingsInstallAppButton: 'インストール…',
+	settingsAppWaiting: '承認待ち',
+	settingsAppApprove: '承認',
+	settingsAppRemove: '削除',
+	settingsAppApproveMessage: 'このデスクトップで{name}が実行され、{permissions}ことを許可します。',
+	settingsAppApproveBare: 'このデスクトップで{name}の実行を許可します。',
+	settingsAppRemoveMessage: 'このサーバーのすべてのアカウントから{name}を削除します。',
+	settingsPermNotifications: '通知を表示する',
+	settingsPermBackground: 'バックグラウンドで実行する',
+	settingsAppNoPermissions: '権限なし',
+	settingsAppRefused: 'パッケージは拒否されました: {reason}',
 } satisfies Translation
 
 export default ja
