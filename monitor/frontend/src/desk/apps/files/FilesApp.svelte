@@ -133,7 +133,8 @@
         histAt = step
       }
       win.setAppState({ path, view })
-      win.setTitle(path.split('/').filter(Boolean).at(-1) ?? path)
+      // The whole path: a tab or the title shows its last segment(s).
+      win.setTitle(path)
     } catch (e) {
       if (stale(serverId)) return
       error = e instanceof Error ? e.message : String(e)
@@ -457,6 +458,7 @@
   ])
 
   const picked = $derived(selected === null ? undefined : entries.find((e) => e.name === selected))
+  const folderName = $derived(cwd === null ? '' : cwd === '/' ? '/' : (cwd.split('/').filter(Boolean).at(-1) ?? cwd))
   const footLeft = $derived.by(() => {
     const dirs = shown.filter((e) => e.kind === 'dir').length
     const parts = [dirs ? $LL.filesItemsWithFolders({ count: shown.length, dirs }) : $LL.filesItems({ count: shown.length })]
@@ -464,8 +466,7 @@
     return parts.join(' · ')
   })
   const footRight = $derived(
-    // The name is in the path bar beside it.
-    picked ? [picked.kind === 'file' && picked.size !== null ? fmtBytes(picked.size) : '', modeText(picked.mode)].filter(Boolean).join(' · ') : '',
+    picked ? [picked.name, picked.kind === 'file' && picked.size !== null ? fmtBytes(picked.size) : '', modeText(picked.mode)].filter(Boolean).join(' · ') : '',
   )
 
   /// The machine's disk, for the sidebar and the status bar; nothing when it
@@ -575,18 +576,18 @@
     // tab would.
     const here = cwd ? { path: cwd, view } : undefined
     const panes = win.panes
-    const file: MenuEntry[] = [
-      { label: $LL.deskNewWindow(), icon: 'select_window', disabled: !win.canOpenWindow, action: () => win.openWindow(here) },
-    ]
+    // As the design system's Files: a new tab first (a new window is in the
+    // app's menu and the dock's).
+    const file: MenuEntry[] = []
     if (panes) {
       file.push(
-        { label: $LL.deskNewTab(), icon: 'add', action: () => panes.newTab(here) },
+        { label: $LL.deskNewTab(), icon: 'tab', action: () => panes.newTab(here) },
         { label: $LL.deskSplitRight(), icon: 'splitscreen_right', shortcut: '⌘D', action: () => panes.split('right', here) },
         { label: $LL.deskSplitDown(), icon: 'splitscreen_bottom', shortcut: '⇧⌘D', action: () => panes.split('bottom', here) },
         { label: $LL.deskClosePane(), icon: 'close', action: () => panes.close() },
       )
     }
-    file.push({ separator: true })
+    if (file.length) file.push({ separator: true })
     if (write && cwd) {
       file.push(
         { label: $LL.filesNewFolder(), icon: 'create_new_folder', shortcut: '⌥⌘N', action: () => (dialog = { kind: 'mkdir', value: '' }) },
@@ -631,35 +632,25 @@
 </script>
 
 <AppToolbar flush={available && view === 'list' && !!cwd && shown.length > 0}>
+  <!-- Back and forward lead the bar, before the folder's name or, with
+       several tabs, before the tabs. -->
+  {#snippet leading()}
+    {#if available}
+      <ToolbarGroup
+        class="-ml-[6px]"
+        items={[
+          { label: $LL.back(), icon: 'chevron_left', disabled: !canBack, onclick: back },
+          { label: $LL.filesForward(), icon: 'chevron_right', disabled: !canForward, onclick: forward },
+        ]}
+      />
+    {/if}
+  {/snippet}
+
   {#snippet heading()}
     {#if available}
-      <div class="-ml-[6px] flex min-w-0 items-center gap-[9px]">
-        <ToolbarGroup
-          items={[
-            { label: $LL.back(), icon: 'chevron_left', disabled: !canBack, onclick: back },
-            { label: $LL.filesForward(), icon: 'chevron_right', disabled: !canForward, onclick: forward },
-          ]}
-        />
-        <nav class="flex min-w-0 items-center overflow-hidden" aria-label={$LL.filesRoots()}>
-          {#each crumbs as crumb, i (crumb.path)}
-            {@const last = i === crumbs.length - 1}
-            <div class="flex min-w-0 items-center" class:shrink-0={last}>
-              {#if i > 0}<Icon name="chevron_right" size={15} color="var(--text-tertiary)" />{/if}
-              <button
-                type="button"
-                class="h-[26px] min-w-0 truncate rounded-[7px] px-[7px] tracking-[-0.01em] hover:bg-(--fill-hover)"
-                class:text-[15px]={last}
-                class:font-bold={last}
-                class:text-(--text-primary)={last}
-                class:text-[13px]={!last}
-                class:font-medium={!last}
-                class:text-(--text-secondary)={!last}
-                aria-current={last ? 'location' : undefined}
-                onclick={() => crumb.path !== cwd && void load(crumb.path)}>{crumb.label}</button
-              >
-            </div>
-          {/each}
-        </nav>
+      <div class="flex min-w-0 items-center gap-[9px]">
+        <!-- The folder's name; the way to it is the path bar below. -->
+        <span class="lk-window__title min-w-0 truncate pl-[3px]">{folderName}</span>
         {#if busy}<Spinner size={16} class="shrink-0" />{/if}
       </div>
     {/if}
@@ -816,28 +807,21 @@
   <WindowFooter>
     <StatusBar>
       {#if cwd}
-        <!-- Where this is, as a path bar: each folder on the way opens it, and
-             the selection ends it. The early steps give way first. -->
-        <nav class="pathbar" aria-label={$LL.filesPath()} title={picked ? joinPath(cwd, picked.name) : cwd}>
+        <!-- Where this is, as a path bar: each step on the way opens it. -->
+        <nav class="pathbar" aria-label={$LL.filesPath()}>
           {#each crumbs as crumb, i (crumb.path)}
-            {#if i > 0}<Icon name="chevron_right" size={13} color="var(--text-tertiary)" />{/if}
+            {#if i > 0}<Icon name="chevron_right" size={14} color="var(--text-tertiary)" />{/if}
             <button
               type="button"
               class="pathbar__step"
-              class:pathbar__step--here={!picked && i === crumbs.length - 1}
+              class:pathbar__step--here={i === crumbs.length - 1}
+              title={crumb.path}
               onclick={() => crumb.path !== cwd && void load(crumb.path)}
             >
-              <Icon name={i === 0 ? 'hard_drive' : 'folder'} size={14} fill color="var(--color-accent-text)" />
+              {#if i === 0}<Icon name="hard_drive" size={14} color="var(--color-accent-text)" />{/if}
               <span class="truncate">{crumb.label}</span>
             </button>
           {/each}
-          {#if picked}
-            <Icon name="chevron_right" size={13} color="var(--text-tertiary)" />
-            <span class="pathbar__step pathbar__step--here">
-              <Icon name={glyph(picked)} size={14} fill={picked.kind === 'dir'} color={picked.kind === 'dir' ? 'var(--color-accent-text)' : 'var(--text-secondary)'} />
-              <span class="truncate">{picked.name}</span>
-            </span>
-          {/if}
         </nav>
         <span class="flex-1"></span>
         <span class="lk-num shrink-0 truncate">{picked ? footRight : footLeft}</span>
@@ -923,21 +907,23 @@
     min-width: 0;
     flex-shrink: 1;
     align-items: center;
-    gap: var(--space-3);
-    height: 20px;
+    gap: 4px;
+    height: 22px;
     padding: 0 var(--space-5);
+    font-size: 12px;
+    font-weight: 500;
     border: 0;
     border-radius: var(--radius-xs);
     background: transparent;
     color: var(--text-secondary);
-    font: inherit;
+    font-family: inherit;
     white-space: nowrap;
   }
   button.pathbar__step:hover {
     background: var(--fill-hover);
     color: var(--text-primary);
   }
-  /* Where one is, and the selection, give way last. */
+  /* Where one is gives way last. */
   .pathbar__step--here {
     flex-shrink: 0;
     max-width: 60%;

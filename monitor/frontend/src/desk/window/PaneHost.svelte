@@ -87,7 +87,8 @@
 
   let shownTitle: string | null | undefined
   $effect(() => {
-    const title = host.titleOf(host.focusId)
+    const full = host.titleOf(host.focusId)
+    const title = full !== null && full.startsWith('/') ? (full === '/' ? '/' : (full.split('/').filter(Boolean).at(-1) ?? full)) : full
     if (title === shownTitle) return
     shownTitle = title
     parent.setTitle(title)
@@ -113,8 +114,20 @@
   })
   const lines = $derived(dividers(tab.root))
 
-  /// Each tab is called what its session calls itself, as it is.
-  const tabLabels = $derived(layout.tabs.map((t) => host.tabTitle(t) ?? appTitle))
+  /// Each tab is called what its pane calls itself, as it is (a terminal's
+  /// session title); a title that is an absolute path (Files) by its last
+  /// segment, or its last two where another tab ends the same way.
+  const isPath = (t: string | null): t is string => !!t && t.startsWith('/')
+  const lastOf = (p: string) => (p === '/' ? '/' : (p.split('/').filter(Boolean).at(-1) ?? p))
+  const lastTwo = (p: string) => p.split('/').filter(Boolean).slice(-2).join('/') || '/'
+  const tabTitles = $derived(layout.tabs.map((t) => host.tabTitle(t)))
+  const tabLabels = $derived(
+    tabTitles.map((t) => {
+      if (!isPath(t)) return t ?? appTitle
+      const same = tabTitles.filter((q) => isPath(q) && lastOf(q) === lastOf(t)).length
+      return same > 1 ? lastTwo(t) : lastOf(t)
+    }),
+  )
 
   let area = $state<HTMLDivElement | null>(null)
 
@@ -214,7 +227,7 @@
           class="desk-tab"
           class:desk-tab--on={t.id === tab.id}
           class:desk-tab--dragging={tabDrag?.id === t.id && tabDrag?.moved}
-          title={tabLabels[i]}
+          title={tabTitles[i] ?? appTitle}
           style:touch-action="none"
           onpointerdown={(e) => onTabDown(e, t.id)}
           onpointermove={onTabMove}
