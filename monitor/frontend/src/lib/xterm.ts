@@ -24,6 +24,9 @@ export interface TerminalHandle {
   /// Puts the caret in the terminal, so typing reaches the shell rather than
   /// whichever element had focus before this one was opened.
   focus(): void
+  /// Calls [listener] with each title the shell sets (OSC 0/2), and once
+  /// with the one set so far; the returned function stops it.
+  onTitle(listener: (title: string) => void): () => void
   dispose(): void
 }
 
@@ -106,6 +109,12 @@ export async function mountTerminal(
   term.onBell(() => {
     if (bell) ring()
   })
+  let title = ''
+  const titleListeners = new Set<(title: string) => void>()
+  term.onTitleChange((next) => {
+    title = next
+    for (const listener of titleListeners) listener(next)
+  })
   term.onData((data) => session.input(data))
   term.onResize(({ cols, rows }) => session.resize(cols, rows))
 
@@ -151,6 +160,11 @@ export async function mountTerminal(
     },
     focus() {
       term.focus()
+    },
+    onTitle(listener) {
+      titleListeners.add(listener)
+      if (title) listener(title)
+      return () => titleListeners.delete(listener)
     },
     dispose() {
       resizeObserver?.disconnect()

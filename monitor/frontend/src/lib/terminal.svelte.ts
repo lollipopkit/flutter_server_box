@@ -335,6 +335,10 @@ export class TerminalSession {
         this.phase = 'authenticating'
         this.send({
           type: 'open',
+          // TODO: remove once no agent from before migration 023 is served:
+          // those require the field (it named the SSH account) and refuse
+          // an open without it.
+          user: '',
           auth: this.credential,
           ...(this.target ? { target: this.target } : {}),
           cols: this.renderer?.cols ?? 80,

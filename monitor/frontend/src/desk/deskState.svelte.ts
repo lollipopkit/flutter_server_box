@@ -27,6 +27,12 @@ import { SessionSync } from './session.svelte'
 import { AgentStorage, BrowserStorage, deviceId, type DeskStorage } from './storage'
 import type { AppIconChrome, WindowChrome } from './window/chrome.svelte'
 import { WindowManager, type DeskWindow, type Intent, type OpenOptions } from './windows.svelte'
+import { merge, panesOf, readLayout, removeTab, writeLayout, type Layout, type Placement, type Side } from './panes'
+
+/// A drop that merges a dragged window into another (see `Desk.paneDrop`).
+export type PaneDrop =
+  | { windowId: string; kind: 'tab' }
+  | { windowId: string; kind: 'split'; paneId: string; side: Side }
 
 export type Panel = 'control' | 'notifications' | 'calendar' | 'launchpad'
 
@@ -71,6 +77,10 @@ export class Desk {
   readonly noticeWindows = new SvelteMap<number, string>()
   /// Each open window's frame (what its app registered), by window id.
   readonly chromes = new SvelteMap<string, WindowChrome>()
+  /// Where a window being dragged would merge if let go now: into another
+  /// window of its app with panes, as a tab or beside one of its panes. The
+  /// target draws it (`window/PaneHost.svelte`).
+  paneDrop = $state<PaneDrop | null>(null)
 
   #abort = new AbortController()
   #offWebApps: (() => void) | null = null
@@ -207,6 +217,41 @@ export class Desk {
       else this.#intents.set(id, [...(this.#intents.get(id) ?? []), intent])
     }
     return id
+  }
+
+  /// Merges window [sourceId] into the window [drop] names: its tabs and
+  /// panes, with their ids, move there and it goes without being closed, so
+  /// what its panes hold open (a terminal's session) is rejoined.
+  mergeWindow(sourceId: string, drop: PaneDrop) {
+    const source = this.windows.get(sourceId)
+    const target = this.windows.get(drop.windowId)
+    if (!source || !target || source === target || source.appId !== target.appId) return
+    if (!app(source.appId)?.panes) return
+    const placement: Placement =
+      drop.kind === 'tab' ? { kind: 'tab' } : { kind: 'split', paneId: drop.paneId, side: drop.side }
+    const merged = merge(readLayout(target.appState, target.id), readLayout(source.appState, source.id), placement)
+    this.windows.setAppState(target.id, writeLayout(merged))
+    this.windows.absorb(source.id)
+    this.windows.focus(target.id)
+  }
+
+  /// Takes tab [tabId] out of window [windowId] into a window of its own at
+  /// [at] (the pointer). Not for a window's only tab: dragging the window is
+  /// that. False when the app is at its window limit.
+  detachTab(windowId: string, tabId: string, at: { x: number; y: number }): boolean {
+    const w = this.windows.get(windowId)
+    if (!w) return false
+    const layout = readLayout(w.appState, w.id)
+    const tab = layout.tabs.find((t) => t.id === tabId)
+    const rest = removeTab(layout, tabId)
+    if (!tab || !rest) return false
+    const own: Layout = { tabs: [tab], tab: tab.id, focus: panesOf(tab.root)[0].id }
+    const id = this.windows.open(w.appId, { newWindow: true, appState: writeLayout(own) })
+    const opened = id ? this.windows.get(id) : undefined
+    if (!opened || opened.id === w.id) return false
+    this.windows.setAppState(w.id, writeLayout(rest))
+    this.windows.place(opened.id, { ...opened.rect, x: Math.round(at.x - 80), y: Math.round(at.y - 16) })
+    return true
   }
 
   /// Intents for a window opened just now, before its frame existed.
@@ -351,6 +396,8 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     get lifecycle() {
       return lifecycle()
     },
+    // A pane's handle has them (`window/PaneHost.svelte`); the window's not.
+    panes: null,
   }
   setContext(WINDOW, handle)
 }

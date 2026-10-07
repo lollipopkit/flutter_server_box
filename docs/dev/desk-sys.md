@@ -59,7 +59,7 @@ One import for system apps: `import { … } from '../../sys'`. Third-party apps 
 | Area | Interface | Notes |
 |---|---|---|
 | Manifest | `defineApp(manifest)`, `registerApp(manifest)` | `registerApp` returns an unregister function |
-| Window | `useWindow()`: `id`, `appState`, `setAppState`, `setTitle`, `close`, `open(appId, {appState, newWindow})`, `openWindow(appState)` + `canOpenWindow` (another window of its own app) | `open` goes through the target's `available` |
+| Window | `useWindow()`: `id`, `appState`, `setAppState`, `setTitle`, `close`, `open(appId, {appState, newWindow})`, `openWindow(appState)` + `canOpenWindow` (another window of its own app), `closed`, `panes` (`newTab`, `split`, `close`, `count`; a pane of an app whose manifest sets `panes`) | `open` goes through the target's `available` |
 | Identity | `setAppName`, `setIcon({glyph, tone})`, `setBadge(text)` | Per window; the menubar shows the front window's, the dock the newest window's badge |
 | Chrome | `AppToolbar` (title bar title or `heading` snippet, back, tools, tabs, `flush` over a table), `SplitView` (inset sidebar), `WindowFooter` (status bar and what sits over it) | Third-party: declarative descriptions, drawn by the desk |
 | Menus | `useMenus(() => AppMenu[])` | Menubar menus between the app menu and the Window menu. Entries carry `shortcut` (`⌘⇧N`); the desk runs it while the window is active. The desk's own shortcuts (⌘K, ⌘,) come first |

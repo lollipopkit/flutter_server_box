@@ -5639,6 +5639,26 @@ type RootTranslation = {
 	 */
 	deskNewWindow: string
 	/**
+	 * N​e​w​ ​t​a​b
+	 */
+	deskNewTab: string
+	/**
+	 * C​l​o​s​e​ ​t​a​b
+	 */
+	deskCloseTab: string
+	/**
+	 * S​p​l​i​t​ ​r​i​g​h​t
+	 */
+	deskSplitRight: string
+	/**
+	 * S​p​l​i​t​ ​d​o​w​n
+	 */
+	deskSplitDown: string
+	/**
+	 * C​l​o​s​e​ ​p​a​n​e
+	 */
+	deskClosePane: string
+	/**
 	 * Q​u​i​t
 	 */
 	deskQuit: string
@@ -12014,6 +12034,26 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * New window
 	 */
 	deskNewWindow: () => LocalizedString
+	/**
+	 * New tab
+	 */
+	deskNewTab: () => LocalizedString
+	/**
+	 * Close tab
+	 */
+	deskCloseTab: () => LocalizedString
+	/**
+	 * Split right
+	 */
+	deskSplitRight: () => LocalizedString
+	/**
+	 * Split down
+	 */
+	deskSplitDown: () => LocalizedString
+	/**
+	 * Close pane
+	 */
+	deskClosePane: () => LocalizedString
 	/**
 	 * Quit
 	 */

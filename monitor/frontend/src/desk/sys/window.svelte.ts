@@ -63,10 +63,25 @@ export interface WindowHandle {
   /// does on any unmount).
   readonly closed: boolean
   readonly lifecycle: LifecycleState
+  /// The pane this content runs in, for an app whose manifest sets `panes`;
+  /// null for any other.
+  readonly panes: PaneControls | null
   /// The window's frame, where `AppToolbar`, `SplitView` and `useMenus` put
   /// what they register; null outside a window (a test), where `AppToolbar`
   /// and `SplitView` draw themselves in place.
   readonly chrome: WindowChrome | null
+}
+
+/// Tabs and split panes, from inside one pane (an app with `panes`).
+export interface PaneControls {
+  /// A new tab beside the one on show, starting from [state], and shown.
+  newTab(state?: unknown): void
+  /// This pane split in two, the new one on [side] starting from [state].
+  split(side: 'right' | 'bottom', state?: unknown): void
+  /// Closes this pane; the window goes with its last.
+  close(): void
+  /// The panes in this window, every tab's.
+  readonly count: number
 }
 
 export interface AppHandler {
@@ -116,6 +131,7 @@ const DETACHED: WindowHandle = {
   active: true,
   closed: false,
   lifecycle: 'active',
+  panes: null,
   chrome: null,
 }
 

@@ -7,6 +7,7 @@ export default defineApp({
   tone: 'soft',
   available: access('files'),
   instances: 4,
+  panes: true,
   opens: { dirs: true },
   order: 10,
   pinned: true,

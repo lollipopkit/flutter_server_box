@@ -67,8 +67,25 @@ export class WindowChrome {
   #dockMenus = $state.raw<MenusChrome[]>([])
   #keepAlive = $state.raw<string[]>([])
   #intents = $state.raw<Intent[]>([])
+  #sidebarOpen = $state(false)
+  /// The window's chrome, for a pane's (`window/PaneHost.svelte`): what is
+  /// about the window as a whole — a folded sidebar's state, keeping it
+  /// running — is the window's.
+  readonly #parent: WindowChrome | null
+
+  constructor(parent: WindowChrome | null = null) {
+    this.#parent = parent
+  }
+
   /// A folded sidebar shown over the content (a narrow window).
-  sidebarOpen = $state(false)
+  get sidebarOpen(): boolean {
+    return this.#parent ? this.#parent.sidebarOpen : this.#sidebarOpen
+  }
+
+  set sidebarOpen(open: boolean) {
+    if (this.#parent) this.#parent.sidebarOpen = open
+    else this.#sidebarOpen = open
+  }
   /// The app's name, icon and badge as this window shows them; null is the
   /// manifest's (no badge).
   appName = $state<string | null>(null)
@@ -159,6 +176,7 @@ export class WindowChrome {
   }
 
   holdKeepAlive(reason: string): () => void {
+    if (this.#parent) return this.#parent.holdKeepAlive(reason)
     const entry = String(reason)
     let held = true
     untrack(() => (this.#keepAlive = [...this.#keepAlive, entry]))

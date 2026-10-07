@@ -8,6 +8,9 @@
   import IconButton from '../lk/IconButton.svelte'
   import TrafficLights from '../lk/TrafficLights.svelte'
   import { WindowChrome } from './chrome.svelte'
+  import PaneHost from './PaneHost.svelte'
+  import { sideAt } from '../panes'
+  import type { PaneDrop } from '../deskState.svelte'
   import { shellPrefs } from '../shellPrefs.svelte'
   import { systemPrefs, TEXT_SCALE } from '../sys/systemPrefs.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
@@ -136,6 +139,17 @@
       x: drag.start.x + dx,
       y: Math.max(desk.windows.area.top, drag.start.y + dy),
     }
+    // Over another window of this app: a merge, not a snap.
+    const merge = spec?.panes ? mergeAt(e.clientX, e.clientY) : null
+    if (!samePaneDrop(merge, desk.paneDrop)) desk.paneDrop = merge
+    merging = merge !== null
+    if (merge) {
+      if (drag.zone) {
+        drag.zone = null
+        onsnappreview(null)
+      }
+      return
+    }
     const zone = snapZoneAt(e.clientX, e.clientY, desk.windows.area)
     if (zone !== drag.zone) {
       drag.zone = zone
@@ -148,6 +162,14 @@
     const { moved, zone } = drag
     drag = null
     onsnappreview(null)
+    const merge = desk.paneDrop
+    desk.paneDrop = null
+    merging = false
+    if (moved && merge) {
+      live = null
+      desk.mergeWindow(win.id, merge)
+      return
+    }
     if (moved && zone) {
       animateOnce()
       desk.windows.snap(win.id, zone)
@@ -156,6 +178,39 @@
     }
     live = null
   }
+
+  /// The window of this app under the pointer, other than this one, and
+  /// where in it this one would go: over its bar or tab strip a tab, over a
+  /// pane beside it, on the side nearest the pointer.
+  function mergeAt(x: number, y: number): PaneDrop | null {
+    for (const el of document.elementsFromPoint(x, y)) {
+      const target = (el as HTMLElement).closest<HTMLElement>('.desk-window')
+      if (!target || target.dataset.windowId === win.id) continue
+      const windowId = target.dataset.windowId
+      if (!windowId || target.dataset.appId !== win.appId || target.dataset.minimized === 'true') return null
+      const band = [target.querySelector('.lk-window__bar'), target.querySelector('[data-pane-strip]')]
+        .map((b) => b?.getBoundingClientRect().bottom ?? 0)
+        .reduce((a, b) => Math.max(a, b), 0)
+      if (y < band) return { windowId, kind: 'tab' }
+      const pane = (el as HTMLElement).closest<HTMLElement>('[data-pane-id]')
+      const paneId = pane?.dataset.paneId
+      if (!pane || !paneId) return null
+      const r = pane.getBoundingClientRect()
+      return { windowId, kind: 'split', paneId, side: sideAt({ x: r.left, y: r.top, w: r.width, h: r.height }, x, y) }
+    }
+    return null
+  }
+
+  function samePaneDrop(a: PaneDrop | null, b: PaneDrop | null): boolean {
+    if (a === null || b === null) return a === b
+    if (a.windowId !== b.windowId || a.kind !== b.kind) return false
+    return a.kind === 'tab' || (b.kind === 'split' && a.paneId === b.paneId && a.side === b.side)
+  }
+
+  /// This window is the one a dragged window would merge into as a tab.
+  const tabDrop = $derived(desk.paneDrop?.windowId === win.id && desk.paneDrop.kind === 'tab')
+  /// This window is being dragged onto another to merge.
+  let merging = $state(false)
 
   // ---- resize -----------------------------------------------------------
 
@@ -209,6 +264,7 @@
   data-animate={animate}
   data-window-id={win.id}
   data-app-id={win.appId}
+  data-merging={merging}
   aria-label={title}
   role="dialog"
   tabindex="-1"
@@ -227,22 +283,33 @@
     {/if}
     <div class="lk-window__main" style:left="{sidebar && !folded ? sidebar.width + 14 : 0}px">
       {@render handle('bar')}
+      {#if tabDrop}
+        <div class="desk-pane-drop desk-pane-drop--tab" aria-hidden="true"></div>
+      {/if}
       <!-- A size container: an app lays itself out by its window's width
            (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app
            whose content fills the window takes `min-h-0 flex-1`. -->
       <div
         class="lk-window__content desk-window-body @container flex flex-col"
+        class:lk-window__content--panes={spec?.panes}
         style:bottom="{footer ? footerHeight : 0}px"
         style:zoom={TEXT_SCALE[systemPrefs.value.textSize] === 1 ? undefined : TEXT_SCALE[systemPrefs.value.textSize]}
         onscrollcapture={onContentScroll}
       >
-        <div class="lk-window__spacer" aria-hidden="true"></div>
-        {#if toolbar?.tabs}<div class="shrink-0 px-[17px] pb-[7px]">{@render toolbar.tabs()}</div>{/if}
+        <!-- A window with panes lays them out under the bar itself. -->
+        {#if !spec?.panes}
+          <div class="lk-window__spacer" aria-hidden="true"></div>
+          {#if toolbar?.tabs}<div class="shrink-0 px-[17px] pb-[7px]">{@render toolbar.tabs()}</div>{/if}
+        {/if}
         {#if spec && !suspended}
           {#await spec.load()}
             <div class="flex flex-1 items-center justify-center"><Spinner /></div>
           {:then mod}
-            <mod.default />
+            {#if spec.panes}
+              <PaneHost content={mod.default} appTitle={spec.title($LL)} />
+            {:else}
+              <mod.default />
+            {/if}
           {:catch}
             <p class="p-6 text-sm text-(--color-danger)">{$LL.deskAppFailed()}</p>
           {/await}

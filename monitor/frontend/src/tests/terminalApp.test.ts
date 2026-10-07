@@ -22,6 +22,7 @@ vi.mock('../lib/xterm', () => ({
     setTheme() {},
     setLook() {},
     focus() {},
+    onTitle: () => () => {},
     dispose() {},
   })),
 }))

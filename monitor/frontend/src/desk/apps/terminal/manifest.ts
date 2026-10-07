@@ -7,6 +7,7 @@ export default defineApp({
   tone: 'ink',
   available: access('terminal'),
   instances: 6,
+  panes: true,
   size: { width: 860, height: 540 },
   minSize: { width: 360, height: 220 },
   order: 20,

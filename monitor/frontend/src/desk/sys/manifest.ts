@@ -44,6 +44,11 @@ export interface AppManifest {
   available?: (caps: Capabilities | undefined) => boolean
   /// How many windows may be open; 1 (the default) focuses the open one.
   instances?: number
+  /// Tabs and split panes inside a window (`window/PaneHost.svelte`): each
+  /// pane runs the app's content on its own, with its own `useWindow()`
+  /// (id, `appState`, title, chrome, `panes`), and a window dragged onto
+  /// another of the app's merges into it, as a tab or beside a pane.
+  panes?: boolean
   size?: Size
   minSize?: Size
   /// What it opens, for Files' "Open with" and the `open` intent: folders,
@@ -76,6 +81,7 @@ export interface AppSpec extends WindowPolicy {
   settings?: () => Promise<{ default: Component }>
   order: number
   pinned: boolean
+  panes: boolean
   load: () => Promise<{ default: Component }>
 }
 
@@ -104,6 +110,7 @@ export function defineApp(m: AppManifest): AppSpec {
     settings: m.settings,
     order: m.order ?? Number.MAX_SAFE_INTEGER,
     pinned: m.pinned ?? false,
+    panes: m.panes === true,
     load: m.load,
   }
 }

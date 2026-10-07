@@ -161,6 +161,14 @@ export class WindowManager {
     this.#changed()
   }
 
+  /// Takes [id] away without closing it: its content went into another
+  /// window (a merge, `deskState`), so what it holds open lives on there.
+  absorb(id: string) {
+    const before = this.windows.length
+    this.windows = this.windows.filter((w) => w.id !== id)
+    if (this.windows.length !== before) this.#changed()
+  }
+
   /// Whether [id] was closed here. Plain, not reactive: it is read in an app's
   /// teardown, where state reads answer the value from before the change.
   wasClosed(id: string): boolean {

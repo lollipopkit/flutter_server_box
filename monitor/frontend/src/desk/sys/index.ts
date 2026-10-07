@@ -14,6 +14,7 @@ export {
   useIntents,
   useLifecycle,
   type WindowHandle,
+  type PaneControls,
   type LifecycleState,
   type Lifecycle,
   type AppMenu,

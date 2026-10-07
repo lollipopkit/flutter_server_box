@@ -570,11 +570,22 @@
   // The menubar: what the toolbar offers, with shortcuts.
   useMenus(() => {
     if (!available) return []
+    // A new window, tab or pane starts where this one is, as a duplicated
+    // tab would.
+    const here = cwd ? { path: cwd, view } : undefined
+    const panes = win.panes
     const file: MenuEntry[] = [
-      // A new window starts where this one is, as a duplicate tab would.
-      { label: $LL.deskNewWindow(), icon: 'add', disabled: !win.canOpenWindow, action: () => win.openWindow(cwd ? { path: cwd, view } : undefined) },
-      { separator: true },
+      { label: $LL.deskNewWindow(), icon: 'select_window', disabled: !win.canOpenWindow, action: () => win.openWindow(here) },
     ]
+    if (panes) {
+      file.push(
+        { label: $LL.deskNewTab(), icon: 'add', action: () => panes.newTab(here) },
+        { label: $LL.deskSplitRight(), icon: 'splitscreen_right', shortcut: '⌘D', action: () => panes.split('right', here) },
+        { label: $LL.deskSplitDown(), icon: 'splitscreen_bottom', shortcut: '⇧⌘D', action: () => panes.split('bottom', here) },
+        { label: $LL.deskClosePane(), icon: 'close', action: () => panes.close() },
+      )
+    }
+    file.push({ separator: true })
     if (write && cwd) {
       file.push(
         { label: $LL.filesNewFolder(), icon: 'create_new_folder', shortcut: '⌥⌘N', action: () => (dialog = { kind: 'mkdir', value: '' }) },

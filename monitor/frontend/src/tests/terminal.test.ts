@@ -596,8 +596,10 @@ describe('TerminalSession', () => {
 
     const open = socket.sent[0] as { auth: { kind: string } }
     expect(open.auth).toEqual({ kind: 'local' })
-    // No account name, password, key or passphrase rides along
-    expect(JSON.stringify(open)).not.toMatch(/user|password|pem|passphrase/)
+    // No account name, password, key or passphrase rides along (`user` is
+    // empty, for agents that still require the field)
+    expect(open).toMatchObject({ user: '' })
+    expect(JSON.stringify(open)).not.toMatch(/password|pem|passphrase/)
   })
 
   it('carries a container target in the open frame', async () => {

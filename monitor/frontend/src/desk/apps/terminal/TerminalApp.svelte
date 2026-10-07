@@ -104,9 +104,22 @@
   })
 
   /// Typing belongs in the shell. It fires when a fresh open or rejoin reaches
-  /// `running`, and never takes focus back from a field the user is in.
+  /// `running`, or this pane gets the focus, and never takes focus back from
+  /// a field the user is in.
   $effect(() => {
-    if (session.phase === 'running') terminal?.focus()
+    if (session.phase === 'running' && win.active) terminal?.focus()
+  })
+
+  /// The title the shell sets (its prompt's directory, a running program)
+  /// names the tab and the window, as a terminal's does.
+  $effect(() => {
+    const t = terminal
+    if (!t) return
+    const stop = t.onTitle((title) => win.setTitle(title))
+    return () => {
+      stop()
+      win.setTitle(null)
+    }
   })
 
   function disconnect() {
@@ -324,19 +337,30 @@
     else queued = null
   }
 
-  /// Turning it off takes shell access from every role, not only this window.
+  /// Whether there is a card to show above the terminal.
   const alerting = $derived(
     Boolean(typing || queuedName || errorText || session.truncated || showNotice),
   )
 
   useMenus(() => {
+    const panes = win.panes
     const items: MenuEntry[] = [
       {
         label: $LL.deskNewWindow(),
-        icon: 'add',
+        icon: 'select_window',
         disabled: !win.canOpenWindow,
         action: () => win.openWindow(),
       },
+    ]
+    if (panes) {
+      items.push(
+        { label: $LL.deskNewTab(), icon: 'add', action: () => panes.newTab() },
+        { label: $LL.deskSplitRight(), icon: 'splitscreen_right', shortcut: '⌘D', action: () => panes.split('right') },
+        { label: $LL.deskSplitDown(), icon: 'splitscreen_bottom', shortcut: '⇧⌘D', action: () => panes.split('bottom') },
+        { label: $LL.deskClosePane(), icon: 'close', action: () => panes.close() },
+      )
+    }
+    items.push(
       { separator: true },
       {
         label: $LL.terminalNewSession(),
@@ -350,7 +374,7 @@
         disabled: session.phase !== 'running',
         action: disconnect,
       },
-    ]
+    )
     if (tmuxOffered) {
       items.push({ separator: true })
       items.push({
@@ -373,7 +397,12 @@
 <AppToolbar>
   {#snippet actions()}
     {#if fullAccess}
-      <IconButton icon="add" label={$LL.deskNewWindow()} disabled={!win.canOpenWindow} onclick={() => win.openWindow()} />
+      <!-- A tab, as a terminal's + opens; a new window where there are none. -->
+      {#if win.panes}
+        <IconButton icon="add" label={$LL.deskNewTab()} onclick={() => win.panes?.newTab()} />
+      {:else}
+        <IconButton icon="add" label={$LL.deskNewWindow()} disabled={!win.canOpenWindow} onclick={() => win.openWindow()} />
+      {/if}
     {/if}
     {#if fullAccess && tmuxOffered}
       <div class="relative">
