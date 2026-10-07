@@ -32,6 +32,8 @@ export class DeskPrefs {
   value = $state<DeskPreferences>(defaults())
   /// The custom wallpaper as an object URL, while there is one.
   wallpaperUrl = $state<string | null>(null)
+  /// The stored preferences have been read (the defaults stand until then).
+  loaded = $state(false)
   #wallpaperSha: string | null = null
   #storage: DeskStorage
   #timer: ReturnType<typeof setTimeout> | null = null
@@ -73,6 +75,7 @@ export class DeskPrefs {
     } catch {
       // The defaults stand.
     }
+    this.loaded = true
   }
 
   update(patch: Partial<DeskPreferences>) {

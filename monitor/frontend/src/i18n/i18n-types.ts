@@ -5788,6 +5788,153 @@ type RootTranslation = {
 	 */
 	deskBadUrl: string
 	/**
+	 * I​n​s​t​a​n​c​e​s
+	 */
+	lockInstances: string
+	/**
+	 * C​o​n​n​e​c​t​ ​a​ ​n​e​w​ ​i​n​s​t​a​n​c​e
+	 */
+	lockConnectNew: string
+	/**
+	 * N​e​w​ ​i​n​s​t​a​n​c​e
+	 */
+	lockNewInstance: string
+	/**
+	 * E​n​t​e​r​ ​t​h​e​ ​i​n​s​t​a​n​c​e​ ​a​d​d​r​e​s​s
+	 */
+	lockEnterAddress: string
+	/**
+	 * S​i​g​n​e​d​ ​i​n
+	 */
+	lockSignedIn: string
+	/**
+	 * O​p​e​n​i​n​g​ ​t​h​e​ ​d​e​s​k​ ​o​f​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	lockOpening: RequiredParams<'name'>
+	/**
+	 * C​o​n​n​e​c​t​ ​a​n​d​ ​s​i​g​n​ ​i​n
+	 */
+	lockConnectAndSignIn: string
+	/**
+	 * S​i​g​n​i​n​g​ ​i​n​…
+	 */
+	lockSigningIn: string
+	/**
+	 * U​n​l​o​c​k​i​n​g​…
+	 */
+	lockUnlocking: string
+	/**
+	 * O​t​h​e​r​ ​u​s​e​r
+	 */
+	lockOtherUser: string
+	/**
+	 * S​a​v​e​d​ ​a​c​c​o​u​n​t​s
+	 */
+	lockSavedAccounts: string
+	/**
+	 * R​e​m​e​m​b​e​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t
+	 */
+	lockRemember: string
+	/**
+	 * {​u​s​e​r​}​'​s​ ​p​a​s​s​w​o​r​d
+	 * @param {unknown} user
+	 */
+	lockPasswordOf: RequiredParams<'user'>
+	/**
+	 * C​a​n​'​t​ ​c​o​n​n​e​c​t
+	 */
+	lockUnreachable: string
+	/**
+	 * L​a​s​t​ ​o​n​l​i​n​e​ ​{​w​h​e​n​}
+	 * @param {unknown} when
+	 */
+	lockLastOnline: RequiredParams<'when'>
+	/**
+	 * R​e​t​r​y
+	 */
+	lockRetry: string
+	/**
+	 * C​o​n​n​e​c​t​i​n​g​…
+	 */
+	lockConnecting: string
+	/**
+	 * C​o​n​n​e​c​t​ ​t​o​ ​a​n​o​t​h​e​r​ ​i​n​s​t​a​n​c​e
+	 */
+	lockConnectOther: string
+	/**
+	 * B​a​c​k​ ​t​o​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	lockBackTo: RequiredParams<'name'>
+	/**
+	 * O​f​f​l​i​n​e
+	 */
+	lockOffline: string
+	/**
+	 * O​n​l​i​n​e
+	 */
+	lockOnline: string
+	/**
+	 * {​u​s​e​r​}​ ​·​ ​s​i​g​n​e​d​ ​i​n
+	 * @param {unknown} user
+	 */
+	lockAccountSignedIn: RequiredParams<'user'>
+	/**
+	 * S​i​g​n​e​d​ ​i​n​ ​·​ ​{​w​h​e​n​}
+	 * @param {unknown} when
+	 */
+	lockSignedInAgo: RequiredParams<'when'>
+	/**
+	 * L​a​s​t​ ​s​i​g​n​e​d​ ​i​n​ ​{​w​h​e​n​}
+	 * @param {unknown} when
+	 */
+	lockLastSignIn: RequiredParams<'when'>
+	/**
+	 * S​w​i​t​c​h​ ​i​n​s​t​a​n​c​e
+	 */
+	lockSwitchInstance: string
+	/**
+	 * C​l​o​c​k​ ​s​t​y​l​e
+	 */
+	lockClockStyle: string
+	/**
+	 * S​p​a​c​i​n​g
+	 */
+	lockSpacing: string
+	/**
+	 * W​e​i​g​h​t
+	 */
+	lockWeight: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	lockFontSystem: string
+	/**
+	 * M​o​n​o​s​p​a​c​e
+	 */
+	lockFontMono: string
+	/**
+	 * R​e​s​e​t
+	 */
+	lockReset: string
+	/**
+	 * D​o​n​e
+	 */
+	lockDone: string
+	/**
+	 * D​r​a​g​ ​t​o​ ​r​e​s​i​z​e
+	 */
+	lockDragResize: string
+	/**
+	 * F​o​r​g​e​t​ ​t​h​i​s​ ​a​c​c​o​u​n​t
+	 */
+	lockForgetAccount: string
+	/**
+	 * W​r​o​n​g​ ​u​s​e​r​n​a​m​e​ ​o​r​ ​p​a​s​s​w​o​r​d
+	 */
+	lockWrongCredentials: string
+	/**
 	 * N​o​ ​s​e​r​v​e​r​ ​a​n​s​w​e​r​e​d​ ​a​t​ ​t​h​a​t​ ​a​d​d​r​e​s​s
 	 */
 	deskUnreachable: string
@@ -12182,6 +12329,146 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Not a valid server address
 	 */
 	deskBadUrl: () => LocalizedString
+	/**
+	 * Instances
+	 */
+	lockInstances: () => LocalizedString
+	/**
+	 * Connect a new instance
+	 */
+	lockConnectNew: () => LocalizedString
+	/**
+	 * New instance
+	 */
+	lockNewInstance: () => LocalizedString
+	/**
+	 * Enter the instance address
+	 */
+	lockEnterAddress: () => LocalizedString
+	/**
+	 * Signed in
+	 */
+	lockSignedIn: () => LocalizedString
+	/**
+	 * Opening the desk of {name}
+	 */
+	lockOpening: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Connect and sign in
+	 */
+	lockConnectAndSignIn: () => LocalizedString
+	/**
+	 * Signing in…
+	 */
+	lockSigningIn: () => LocalizedString
+	/**
+	 * Unlocking…
+	 */
+	lockUnlocking: () => LocalizedString
+	/**
+	 * Other user
+	 */
+	lockOtherUser: () => LocalizedString
+	/**
+	 * Saved accounts
+	 */
+	lockSavedAccounts: () => LocalizedString
+	/**
+	 * Remember this account
+	 */
+	lockRemember: () => LocalizedString
+	/**
+	 * {user}'s password
+	 */
+	lockPasswordOf: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * Can't connect
+	 */
+	lockUnreachable: () => LocalizedString
+	/**
+	 * Last online {when}
+	 */
+	lockLastOnline: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * Retry
+	 */
+	lockRetry: () => LocalizedString
+	/**
+	 * Connecting…
+	 */
+	lockConnecting: () => LocalizedString
+	/**
+	 * Connect to another instance
+	 */
+	lockConnectOther: () => LocalizedString
+	/**
+	 * Back to {name}
+	 */
+	lockBackTo: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Offline
+	 */
+	lockOffline: () => LocalizedString
+	/**
+	 * Online
+	 */
+	lockOnline: () => LocalizedString
+	/**
+	 * {user} · signed in
+	 */
+	lockAccountSignedIn: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * Signed in · {when}
+	 */
+	lockSignedInAgo: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * Last signed in {when}
+	 */
+	lockLastSignIn: (arg: { when: unknown }) => LocalizedString
+	/**
+	 * Switch instance
+	 */
+	lockSwitchInstance: () => LocalizedString
+	/**
+	 * Clock style
+	 */
+	lockClockStyle: () => LocalizedString
+	/**
+	 * Spacing
+	 */
+	lockSpacing: () => LocalizedString
+	/**
+	 * Weight
+	 */
+	lockWeight: () => LocalizedString
+	/**
+	 * System
+	 */
+	lockFontSystem: () => LocalizedString
+	/**
+	 * Monospace
+	 */
+	lockFontMono: () => LocalizedString
+	/**
+	 * Reset
+	 */
+	lockReset: () => LocalizedString
+	/**
+	 * Done
+	 */
+	lockDone: () => LocalizedString
+	/**
+	 * Drag to resize
+	 */
+	lockDragResize: () => LocalizedString
+	/**
+	 * Forget this account
+	 */
+	lockForgetAccount: () => LocalizedString
+	/**
+	 * Wrong username or password
+	 */
+	lockWrongCredentials: () => LocalizedString
 	/**
 	 * No server answered at that address
 	 */

@@ -40,7 +40,10 @@ class HealthStore {
         this.#controllers.add(controller)
         try {
           const reachable = (await probe(server.url, controller.signal)) === 'healthy'
-          if (generation === this.#generation) this.status[server.id] = reachable
+          if (generation === this.#generation) {
+            this.status[server.id] = reachable
+            if (reachable) servers.markOnline(server.id)
+          }
         } finally {
           this.#controllers.delete(controller)
         }

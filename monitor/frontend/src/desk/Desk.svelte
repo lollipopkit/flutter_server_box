@@ -21,6 +21,7 @@
   import NotificationCenter from './shell/NotificationCenter.svelte'
   import Spotlight from './shell/Spotlight.svelte'
   import Wallpaper from './shell/Wallpaper.svelte'
+  import { saveWallpaper } from './lock/wallpapers'
   import WindowLayer from './window/WindowLayer.svelte'
 
   interface Props {
@@ -40,6 +41,25 @@
 
   $effect.pre(() => {
     desk.locked = locked
+  })
+
+  /// The login screen shows each account's wallpaper before it signs in, from
+  /// a copy kept in this browser (`lock/wallpapers.ts`).
+  $effect(() => {
+    const prefs = desk.prefs
+    if (!prefs?.loaded || entry.username === null) return
+    const fit = prefs.value.wallpaper_fit
+    const preset = prefs.preset
+    const url = prefs.wallpaperUrl
+    const { id, username } = entry
+    if (preset) {
+      void saveWallpaper(id, username, { preset, fit })
+    } else if (url) {
+      void fetch(url)
+        .then((r) => r.blob())
+        .then((image) => saveWallpaper(id, username, { image, fit }))
+        .catch(() => {})
+    }
   })
 
   let root = $state<HTMLDivElement | null>(null)

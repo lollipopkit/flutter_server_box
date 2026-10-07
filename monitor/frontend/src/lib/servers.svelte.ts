@@ -7,15 +7,37 @@ export interface ServerEntry {
   id: string
   /// Base URL of the agent ('' = same origin)
   url: string
+  /// The session in use on it (see [ServersStore.sessions] for the others).
   token: string | null
   username: string | null
+}
+
+/// An account the login screen offers for a server: remembered ("Remember
+/// this account"), or signed in in this tab.
+export interface ServerAccount {
+  username: string
+  /// When it last signed in here, Unix ms; 0 when not known.
+  lastLogin: number
+  /// It has a session in this tab: choosing it unlocks without a password.
+  signedIn: boolean
 }
 
 import { probe } from './probe'
 import { isSecureAgentUrl, normalizeAgentUrl } from './agentUrl'
 
 const KEY = 'servers.v1'
-const SESSION_KEY = 'servers.sessions.v1'
+/// TODO: remove the read of this key once no tab can still hold it (the
+/// single session per server before several accounts, 2026-10-08).
+const SESSION_KEY_V1 = 'servers.sessions.v1'
+/// Per server: the account in use and every account's token, for this tab
+/// only (`sessionStorage`: a token must not outlive the tab).
+const SESSION_KEY = 'servers.sessions.v2'
+/// Per server: the accounts remembered, by name — never a password or token.
+const ACCOUNTS_KEY = 'servers.accounts.v1'
+/// Per server: when it last answered, Unix ms, for "last online".
+const ONLINE_KEY = 'servers.online.v1'
+
+type Sessions = Record<string, { active: string | null; tokens: Record<string, string> }>
 
 /// The entry assumed before anything has been asked: the origin this panel was
 /// served from. See confirmSameOrigin().
@@ -54,28 +76,38 @@ class ServersStore {
   /// both production builds, so this cannot be what tells those two apart.
   servedByAgent = $state(!import.meta.env.DEV)
 
+  /// Every account's session on every server, this tab's.
+  sessions = $state<Sessions>({})
+  /// The accounts remembered per server.
+  remembered = $state<Record<string, { username: string; lastLogin: number }[]>>({})
+  /// When each server last answered.
+  lastOnline = $state<Record<string, number>>({})
+
   constructor() {
-    let sessions: Record<string, { token: string; username: string | null }> = {}
-    try {
-      sessions = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) ?? '{}') as typeof sessions
-    } catch {
-      // Corrupt session state is equivalent to being logged out.
-    }
+    this.sessions = readJson<Sessions>(window.sessionStorage, SESSION_KEY) ?? {}
+    this.remembered = readJson(window.localStorage, ACCOUNTS_KEY) ?? {}
+    this.lastOnline = readJson(window.localStorage, ONLINE_KEY) ?? {}
+    // TODO: remove with SESSION_KEY_V1.
+    const v1 = readJson<Record<string, { token: string; username: string | null }>>(window.sessionStorage, SESSION_KEY_V1) ?? {}
+    window.sessionStorage.removeItem(SESSION_KEY_V1)
     const raw = window.localStorage.getItem(KEY)
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as { list?: ServerEntry[]; currentId?: string }
         this.list = (parsed.list ?? []).map((entry) => {
-          const migratedToken = entry.token ?? sessions[entry.id]?.token ?? null
-          const migratedUsername = entry.username ?? sessions[entry.id]?.username ?? null
-          if (migratedToken) {
-            sessions[entry.id] = { token: migratedToken, username: migratedUsername }
+          const old = v1[entry.id] ?? (entry.token ? { token: entry.token, username: entry.username } : undefined)
+          if (old?.token && !this.sessions[entry.id]) {
+            const name = old.username ?? ''
+            this.sessions[entry.id] = { active: name, tokens: { [name]: old.token } }
           }
+          const session = this.sessions[entry.id]
+          const active = session?.active ?? null
+          const token = active !== null ? (session?.tokens[active] ?? null) : null
           return {
             id: entry.id,
             url: entry.url,
-            token: isSecureAgentUrl(entry.url) ? migratedToken : null,
-            username: migratedUsername,
+            token: isSecureAgentUrl(entry.url) ? token : null,
+            username: active,
           }
         })
         this.currentId = parsed.currentId ?? ''
@@ -170,9 +202,9 @@ class ServersStore {
   }
 
   /// Edits the URL of an existing entry (edit-server form); re-normalizes it
-  /// the same way add() does. A URL change drops the saved session (the old
-  /// token belongs to whatever agent was at the old URL) so the app falls
-  /// back to login.
+  /// the same way add() does. A URL change drops the saved sessions and
+  /// accounts (they belong to whatever agent was at the old URL) so the app
+  /// falls back to login.
   update(id: string, url: string) {
     const entry = this.list.find((s) => s.id === id)
     if (!entry) return
@@ -180,15 +212,89 @@ class ServersStore {
     if (normalized !== entry.url) {
       entry.token = null
       entry.username = null
+      delete this.sessions[id]
+      delete this.remembered[id]
+      delete this.lastOnline[id]
     }
     entry.url = normalized
     this.#persist()
   }
 
+  /// Takes a server away, with every session and remembered account it had.
   remove(id: string) {
     this.list = this.list.filter((s) => s.id !== id)
     if (this.currentId === id) this.currentId = this.list[0]?.id ?? ''
+    delete this.sessions[id]
+    delete this.remembered[id]
+    delete this.lastOnline[id]
     this.#persist()
+  }
+
+  /// The accounts the login screen offers for [id]: remembered ones and those
+  /// signed in in this tab, the most recent first.
+  accountsOf(id: string): ServerAccount[] {
+    const tokens = this.sessions[id]?.tokens ?? {}
+    const remembered = this.remembered[id] ?? []
+    const out: ServerAccount[] = remembered.map((a) => ({
+      username: a.username,
+      lastLogin: a.lastLogin,
+      signedIn: a.username in tokens,
+    }))
+    for (const username of Object.keys(tokens)) {
+      if (!remembered.some((a) => a.username === username)) out.push({ username, lastLogin: 0, signedIn: true })
+    }
+    return out.sort((a, b) => b.lastLogin - a.lastLogin)
+  }
+
+  /// [username] signed in to [id] with [token]: its session is the one in
+  /// use, and with [remember] the account is offered next time.
+  signIn(id: string, username: string, token: string, remember: boolean) {
+    const entry = this.list.find((s) => s.id === id)
+    if (!entry) return
+    entry.token = token
+    entry.username = username
+    const session = (this.sessions[id] ??= { active: username, tokens: {} })
+    session.active = username
+    session.tokens[username] = token
+    const list = (this.remembered[id] ?? []).filter((a) => a.username !== username)
+    if (remember || list.length !== (this.remembered[id] ?? []).length) {
+      this.remembered[id] = [{ username, lastLogin: Date.now() }, ...list]
+    }
+    this.#persist()
+  }
+
+  /// Uses [username]'s session on [id], when this tab has one.
+  useAccount(id: string, username: string): boolean {
+    const entry = this.list.find((s) => s.id === id)
+    const token = this.sessions[id]?.tokens[username]
+    if (!entry || !token) return false
+    entry.token = token
+    entry.username = username
+    this.sessions[id].active = username
+    this.#persist()
+    return true
+  }
+
+  /// No longer offers [username] for [id], and ends its session here.
+  forget(id: string, username: string) {
+    this.remembered[id] = (this.remembered[id] ?? []).filter((a) => a.username !== username)
+    const entry = this.list.find((s) => s.id === id)
+    if (entry?.username === username) this.logout(id)
+    else {
+      delete this.sessions[id]?.tokens[username]
+      this.#persist()
+    }
+  }
+
+  /// [id] answered just now.
+  markOnline(id: string) {
+    if (!this.list.some((s) => s.id === id)) return
+    this.lastOnline[id] = Date.now()
+    try {
+      window.localStorage.setItem(ONLINE_KEY, JSON.stringify($state.snapshot(this.lastOnline)))
+    } catch {
+      // Only "last online" is lost.
+    }
   }
 
   select(id: string) {
@@ -202,20 +308,23 @@ class ServersStore {
     this.setSession(this.currentId, token, username)
   }
 
-  /// Like login(), but for an arbitrary entry — used by the add/edit form to
-  /// save a session for a server that isn't necessarily the selected one.
+  /// Like login(), but for an arbitrary entry, without remembering the
+  /// account (see [signIn]).
   setSession(id: string, token: string, username: string) {
-    const entry = this.list.find((s) => s.id === id)
-    if (!entry) return
-    entry.token = token
-    entry.username = username
-    this.#persist()
+    this.signIn(id, username, token, false)
   }
 
+  /// Ends the session in use on [id] (only if it is still [expected]); the
+  /// account stays remembered.
   logout(id = this.currentId, expected?: Pick<ServerEntry, 'url' | 'token'>) {
     const entry = this.list.find((server) => server.id === id)
     if (!entry) return
     if (expected && (entry.url !== expected.url || entry.token !== expected.token)) return
+    const session = this.sessions[id]
+    if (session && entry.username !== null) {
+      delete session.tokens[entry.username]
+      session.active = null
+    }
     entry.token = null
     entry.username = null
     this.#persist()
@@ -236,12 +345,30 @@ class ServersStore {
   }
 
   #persistSessions() {
-    const sessions = Object.fromEntries(
-      this.list
-        .filter((entry) => entry.token)
-        .map((entry) => [entry.id, { token: entry.token, username: entry.username }]),
-    )
+    // An entry's session is always among its server's (the legacy keys set
+    // one directly), and a server no longer listed keeps none.
+    for (const entry of this.list) {
+      if (!entry.token) continue
+      const name = entry.username ?? ''
+      const session = (this.sessions[entry.id] ??= { active: name, tokens: {} })
+      session.active = name
+      session.tokens[name] = entry.token
+    }
+    const ids = new Set(this.list.map((e) => e.id))
+    const sessions = Object.fromEntries(Object.entries($state.snapshot(this.sessions)).filter(([id]) => ids.has(id)))
     window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions))
+    const remembered = Object.fromEntries(Object.entries($state.snapshot(this.remembered)).filter(([id]) => ids.has(id)))
+    window.localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(remembered))
+  }
+}
+
+function readJson<T>(storage: Storage, key: string): T | null {
+  try {
+    const raw = storage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    // Corrupt state is equivalent to none.
+    return null
   }
 }
 
