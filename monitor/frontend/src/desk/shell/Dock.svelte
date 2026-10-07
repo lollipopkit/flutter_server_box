@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { app } from '../registry.svelte'
   import type { AppSpec } from '../sys/manifest'
@@ -15,20 +16,25 @@
   /// Hidden until the pointer reaches its edge, when it hides itself.
   const autoHide = $derived(shellPrefs.dockAutoHide && !desk.windows.compact)
   let hovered = $state(false)
+  /// The pointer is on the dock or on the strip along its edge.
+  let pointerIn = $state(false)
   let hideTimer: ReturnType<typeof setTimeout> | undefined
-  function show() {
+  function enter() {
     clearTimeout(hideTimer)
+    pointerIn = true
     hovered = true
   }
-  function hideSoon() {
+  function leave() {
+    pointerIn = false
     clearTimeout(hideTimer)
     // A menu opened from it keeps it out.
     hideTimer = setTimeout(() => {
-      if (!desk.menu) hovered = false
+      if (!desk.menu && !pointerIn) hovered = false
     }, 500)
   }
+  // The menu it opened has closed with the pointer elsewhere: it goes.
   $effect(() => {
-    if (!desk.menu && hovered && autoHide) hideSoon()
+    if (!desk.menu && hovered && !untrack(() => pointerIn) && autoHide) leave()
   })
   const hidden = $derived(autoHide && !hovered)
 
@@ -128,7 +134,7 @@
 
 {#if autoHide}
   <!-- The strip along the dock's edge that brings it back. -->
-  <div class="dock-reveal dock-reveal--{position} absolute z-[99999]" aria-hidden="true" onpointerenter={show}></div>
+  <div class="dock-reveal dock-reveal--{position} absolute z-[99999]" aria-hidden="true" onpointerenter={enter} onpointerleave={leave}></div>
 {/if}
 <div class="dock-place dock-place--{position} pointer-events-none absolute z-[100000] flex items-center justify-center">
   <nav
@@ -139,8 +145,8 @@
     aria-label={$LL.deskDock()}
     aria-hidden={hidden || undefined}
     inert={hidden}
-    onpointerenter={show}
-    onpointerleave={() => autoHide && hideSoon()}
+    onpointerenter={enter}
+    onpointerleave={() => autoHide && leave()}
     onpointerdown={(e) => {
       e.stopPropagation()
       desk.menu = null
