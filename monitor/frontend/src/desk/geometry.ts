@@ -71,13 +71,18 @@ export function cascade(open: number, size: Size, area: Area): Rect {
 }
 
 /// The rect a window covers when snapped to [zone].
+/// The gap a snapped or maximised window keeps from the screen's sides and
+/// from its neighbour (the design system's 7px inset).
+export const SNAP_GUTTER = 7
+
 export function snapRect(zone: SnapZone, area: Area): Rect {
   const space = usable(area)
-  if (zone === 'max') return space
+  const g = SNAP_GUTTER
+  if (zone === 'max') return { x: g, y: space.y, width: space.width - 2 * g, height: space.height }
   const half = Math.round(space.width / 2)
   return zone === 'left'
-    ? { x: 0, y: space.y, width: half, height: space.height }
-    : { x: half, y: space.y, width: space.width - half, height: space.height }
+    ? { x: g, y: space.y, width: half - g - Math.floor(g / 2), height: space.height }
+    : { x: half + Math.ceil(g / 2), y: space.y, width: space.width - half - g - Math.ceil(g / 2), height: space.height }
 }
 
 /// The zone a drag let go at ([x], [y], the pointer) snaps to, if any: the

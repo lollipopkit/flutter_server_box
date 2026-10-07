@@ -38,9 +38,9 @@ describe('geometry', () => {
   })
 
   it('snaps to halves and the whole area', () => {
-    expect(snapRect('max', area)).toEqual({ x: 0, y: 40, width: 1200, height: 680 })
-    expect(snapRect('left', area)).toEqual({ x: 0, y: 40, width: 600, height: 680 })
-    expect(snapRect('right', area)).toEqual({ x: 600, y: 40, width: 600, height: 680 })
+    expect(snapRect('max', area)).toEqual({ x: 7, y: 40, width: 1186, height: 680 })
+    expect(snapRect('left', area)).toEqual({ x: 7, y: 40, width: 590, height: 680 })
+    expect(snapRect('right', area)).toEqual({ x: 604, y: 40, width: 589, height: 680 })
     expect(snapZoneAt(500, 42, area)).toBe('max')
     expect(snapZoneAt(2, 400, area)).toBe('left')
     expect(snapZoneAt(1198, 400, area)).toBe('right')
