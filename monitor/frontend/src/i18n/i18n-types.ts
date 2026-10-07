@@ -6330,6 +6330,32 @@ type RootTranslation = {
 	 */
 	deskFind: string
 	/**
+	 * D​i​s​k
+	 */
+	filesDisk: string
+	/**
+	 * {​f​r​e​e​}​ ​f​r​e​e​ ​o​f​ ​{​t​o​t​a​l​}
+	 * @param {unknown} free
+	 * @param {unknown} total
+	 */
+	filesDiskFree: RequiredParams<'free' | 'total'>
+	/**
+	 * {​c​o​u​n​t​}​ ​i​t​e​m​s
+	 * @param {unknown} count
+	 */
+	filesItems: RequiredParams<'count'>
+	/**
+	 * {​c​o​u​n​t​}​ ​i​t​e​m​s​ ​(​{​d​i​r​s​}​ ​f​o​l​d​e​r​s​)
+	 * @param {unknown} count
+	 * @param {unknown} dirs
+	 */
+	filesItemsWithFolders: RequiredParams<'count' | 'dirs'>
+	/**
+	 * {​f​r​e​e​}​ ​f​r​e​e
+	 * @param {unknown} free
+	 */
+	filesFree: RequiredParams<'free'>
+	/**
 	 * N​a​m​e
 	 */
 	containerName: string
@@ -12622,6 +12648,26 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Find…
 	 */
 	deskFind: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	filesDisk: () => LocalizedString
+	/**
+	 * {free} free of {total}
+	 */
+	filesDiskFree: (arg: { free: unknown, total: unknown }) => LocalizedString
+	/**
+	 * {count} items
+	 */
+	filesItems: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {count} items ({dirs} folders)
+	 */
+	filesItemsWithFolders: (arg: { count: unknown, dirs: unknown }) => LocalizedString
+	/**
+	 * {free} free
+	 */
+	filesFree: (arg: { free: unknown }) => LocalizedString
 	/**
 	 * Name
 	 */

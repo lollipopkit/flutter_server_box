@@ -44,6 +44,8 @@ vi.mock('../lib/api', () => {
       fsRename: mocks.fsRename,
       fsChmod: mocks.fsChmod,
       fsRemove: mocks.fsRemove,
+      // The disk line is optional: unread here.
+      getMetrics: () => Promise.reject(new Error('not in this test')),
     },
   }
 })
@@ -222,7 +224,7 @@ describe('the Files page moving around', () => {
       path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
     )
     render(Files)
-    const row = (await screen.findByText('sub')).closest('button')!
+    const row = (await screen.findByText('sub')).closest('[role=row]')!
 
     await fireEvent.pointerDown(row, { pointerType: 'mouse' })
     await fireEvent.click(row)
@@ -238,7 +240,7 @@ describe('the Files page moving around', () => {
       path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
     )
     render(Files)
-    const row = (await screen.findByText('sub')).closest('button')!
+    const row = (await screen.findByText('sub')).closest('[role=row]')!
     await fireEvent.keyDown(row, { key: 'Enter' })
     await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`))
   })
@@ -282,7 +284,8 @@ describe('the Files page moving around', () => {
   it('opens a row\'s menu from its own button, for pointers that cannot right-click', async () => {
     mocks.fsList.mockResolvedValue([entry()])
     render(Files)
-    await screen.findByText('note.txt')
+    // Select the row; its menu hangs off the status bar's button.
+    await fireEvent.click(await screen.findByText('note.txt'))
 
     await fireEvent.click(screen.getByRole('button', { name: 'More actions' }))
 

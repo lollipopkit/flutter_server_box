@@ -58,7 +58,7 @@
     selected?: unknown
     /// Called with null when the selected row is clicked again.
     onselect?: (key: unknown, row: R | null) => void
-    /// A double-click or Enter.
+    /// A double-click, Enter, or a tap on a touch screen.
     onopen?: (row: R) => void
     /// Opens a context menu for the row.
     onmenu?: (e: MouseEvent, row: R) => void
@@ -100,6 +100,9 @@
     const on = sort?.key === key
     onsort?.({ key, dir: on ? (-sort!.dir as 1 | -1) : (c.defaultDir ?? 1) })
   }
+
+  /// A touch has no double tap to speak of: there a tap opens.
+  let touched = false
 
   function select(row: R) {
     const key = row[rowKey]
@@ -164,9 +167,13 @@
         role="row"
         aria-selected={sel}
         tabindex={sel || (selected == null && i === 0) ? 0 : -1}
+        onpointerdown={(e) => (touched = e.pointerType === 'touch')}
         onclick={(e) => {
           e.stopPropagation()
-          select(row)
+          if (touched && onopen) {
+            onselect?.(row[rowKey], row)
+            onopen(row)
+          } else select(row)
         }}
         ondblclick={() => onopen?.(row)}
         oncontextmenu={onmenu ? (e) => onmenu(e, row) : undefined}
