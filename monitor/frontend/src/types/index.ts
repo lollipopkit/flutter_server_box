@@ -156,7 +156,7 @@ export interface PowerResult {
 
 /// The grants a role can hold. `read` is held by every account and is not
 /// one of them.
-export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen' | 'virt'
+export type GrantName = 'shell' | 'files' | 'connect' | 'listen' | 'virt'
 
 /// Why a grant is not usable: the role lacks it, the request did not arrive
 /// over TLS or loopback, or the machine side is not set up (files with no
@@ -173,7 +173,6 @@ export type FilesMode = 'read' | 'write'
 
 export interface CallerGrants {
   shell: GrantStatus
-  ssh_terminal: GrantStatus
   files: GrantStatus & { mode?: FilesMode }
   connect: GrantStatus & { allow?: string[] }
   listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
@@ -192,7 +191,6 @@ export interface Me {
 /// with those options.
 export interface RoleGrants {
   shell: boolean
-  ssh_terminal: boolean
   files: { mode: FilesMode } | null
   /// `allow` empty means anywhere.
   connect: { allow: string[] } | null

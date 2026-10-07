@@ -136,7 +136,6 @@
   function summary(g: RoleGrants): string {
     const parts: string[] = []
     if (g.shell) parts.push($LL.grantShell())
-    if (g.ssh_terminal) parts.push($LL.grantSshTerminal())
     if (g.files) parts.push(`${$LL.grantFiles()} (${g.files.mode === 'read' ? $LL.filesRead() : $LL.filesWrite()})`)
     if (g.connect) parts.push($LL.grantConnect())
     if (g.listen) parts.push($LL.grantListen())

@@ -1,9 +1,8 @@
 //! End-to-end coverage for `GET /api/v1/terminal/ws`.
 //!
-//! The admission rules and the control protocol are exercised against the real
-//! app; the SSH half is not, because standing up an sshd is not something a
-//! unit test should do. `ssh_session_reaches_a_real_sshd` fills that gap and is
-//! opt-in, following the same convention as `sbm_parser`'s `ssh_e2e`.
+//! The admission rules, the control protocol and the session machinery
+//! (replay, takeover, the cap, the reaper) are exercised against the real app
+//! and a real shell on a local PTY — the only kind of shell there is.
 
 mod common;
 
@@ -25,8 +24,7 @@ use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::terminal::terminal_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
 use server_box_monitor::core::config::Config;
-
-mod fake_sshd;
+use server_box_monitor::core::remote_access::RemoteAccessConfig;
 
 fn ensure_crypto_provider() {
     static ONCE: Once = Once::new();
@@ -35,25 +33,31 @@ fn ensure_crypto_provider() {
     });
 }
 
-/// `terminal_enabled` defaults on because most tests want to reach the
-/// protocol; `ssh_addr` points nowhere by default, since the tests that get
-/// that far assert on the failure rather than on a shell.
-async fn app_state(enabled: bool, ssh_addr: &str) -> Arc<AppState> {
+/// A state whose admin role holds `shell` or not ([shell]), with [tune]
+/// applied to the remote-access section first (a cap, a scrollback, a grace).
+async fn state_with(shell: bool, tune: impl FnOnce(&mut RemoteAccessConfig)) -> Arc<AppState> {
     ensure_crypto_provider();
     let mut config = Config {
         jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(enabled);
-    remote.ssh_addr = ssh_addr.to_string();
+    // The switches an upgraded agent had; `seed_as_upgrade` turns them into
+    // the admin role's grants (`shell` needs both).
+    remote.terminal.enabled = Some(true);
+    remote.full_access = Some(shell);
+    tune(&mut remote);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-
     common::seed_as_upgrade(&db, &config).await;
     AppState::new(Arc::new(config), db)
+}
+
+/// An account that holds `shell`.
+async fn app_state() -> Arc<AppState> {
+    state_with(true, |_| {}).await
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
@@ -66,14 +70,6 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
         }
     })
     .await
-}
-
-/// A port nothing is listening on, so `open` fails at connect.
-fn dead_addr() -> String {
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let addr = listener.local_addr().unwrap().to_string();
-    drop(listener);
-    addr
 }
 
 /// Reads frames until a Text one arrives, and returns it parsed.
@@ -122,8 +118,8 @@ async fn terminal_connection(
 }
 
 #[ntex::test]
-async fn a_disabled_terminal_refuses_even_a_valid_ticket() {
-    let state = app_state(false, "127.0.0.1:22").await;
+async fn an_account_without_shell_is_refused_even_with_a_valid_ticket() {
+    let state = state_with(false, |_| {}).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
@@ -132,7 +128,7 @@ async fn a_disabled_terminal_refuses_even_a_valid_ticket() {
 
 #[ntex::test]
 async fn a_missing_or_forged_ticket_is_refused() {
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     let srv = test_server(state).await;
 
     assert!(srv.ws_at("/api/v1/terminal/ws").await.is_err());
@@ -141,7 +137,7 @@ async fn a_missing_or_forged_ticket_is_refused() {
 
 #[ntex::test]
 async fn a_ticket_works_only_once() {
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
@@ -151,7 +147,7 @@ async fn a_ticket_works_only_once() {
 
 #[ntex::test]
 async fn a_failed_upgrade_does_not_burn_the_ticket() {
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let response = srv.get("/api/v1/terminal/ws").send().await.unwrap();
@@ -163,7 +159,7 @@ async fn a_failed_upgrade_does_not_burn_the_ticket() {
 async fn a_plaintext_listener_still_serves_a_loopback_client() {
     // The test client connects over loopback, which counts as secure even
     // without TLS — that is the reverse-proxy case, and it must keep working
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     assert!(!state.tls_active);
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
@@ -173,7 +169,7 @@ async fn a_plaintext_listener_still_serves_a_loopback_client() {
 
 #[ntex::test]
 async fn an_unparseable_control_message_is_reported_not_ignored() {
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
@@ -188,30 +184,35 @@ async fn an_unparseable_control_message_is_reported_not_ignored() {
     assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
 }
 
+/// The SSH logins this endpoint once offered are refused at the frame, never
+/// opened as the agent's own user instead: with a target or without.
 #[ntex::test]
-async fn an_unreachable_sshd_is_reported_as_a_connect_failure() {
-    let state = app_state(true, &dead_addr()).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+async fn an_open_with_an_ssh_credential_is_refused() {
+    let state = app_state().await;
+    let sessions = state.sessions.clone();
+    let tickets = state.tickets.clone();
     let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
 
-    io.send(
-        ws::Message::Text(ByteString::from(
-            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let reply = next_control(&io, &codec).await;
-    assert_eq!(reply["type"], "error");
-    assert_eq!(reply["code"], "connect_failed");
+    for open in [
+        r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"}}"#,
+        r#"{"type":"open","user":"ops","auth":{"kind":"key","pem":"-----","passphrase":null}}"#,
+        r#"{"type":"open","user":"ops","auth":{"kind":"interactive"}}"#,
+        r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"container","id":"abc"}}"#,
+        r#"{"type":"answer","answers":["x"]}"#,
+    ] {
+        let ticket = tickets.issue(Purpose::Terminal, "admin").unwrap();
+        let (io, codec) = open_terminal(&srv, &ticket).await;
+        io.send(ws::Message::Text(ByteString::from(open)), &codec)
+            .await
+            .unwrap();
+        assert_eq!(next_control(&io, &codec).await["code"], "bad_request", "{open}");
+    }
+    assert!(sessions.is_empty(), "nothing should have been opened");
 }
 
 #[ntex::test]
 async fn attaching_to_an_unknown_session_says_it_is_gone() {
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
@@ -234,25 +235,8 @@ async fn attaching_to_an_unknown_session_says_it_is_gone() {
 }
 
 #[ntex::test]
-async fn answering_without_a_prompt_is_refused() {
-    let state = app_state(true, "127.0.0.1:22").await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    io.send(
-        ws::Message::Text(ByteString::from(r#"{"type":"answer","answers":["x"]}"#)),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
-}
-
-#[ntex::test]
 async fn a_ping_is_answered() {
-    let state = app_state(true, "127.0.0.1:22").await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
@@ -275,17 +259,15 @@ async fn a_ping_is_answered() {
     );
 }
 
-/// Opens a shell against the in-process fake sshd and returns the connection
-/// plus the session handle from `ready`.
+/// Opens a shell and returns the connection plus the session handle from
+/// `ready`, once the shell has run a command (so its start-up output is
+/// behind it).
 async fn open_shell(srv: &TestServer, ticket: &str) -> (Io<Sealed>, ws::Codec, String) {
     let (io, codec) = open_terminal(srv, ticket).await;
-    let open = serde_json::json!({
-        "type": "open",
-        "user": fake_sshd::USER,
-        "auth": {"kind": "password", "password": fake_sshd::PASSWORD},
-    });
     io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","auth":{"kind":"local"}}"#,
+        )),
         &codec,
     )
     .await
@@ -294,18 +276,61 @@ async fn open_shell(srv: &TestServer, ticket: &str) -> (Io<Sealed>, ws::Codec, S
     let ready = next_control(&io, &codec).await;
     assert_eq!(ready["type"], "ready", "expected a shell, got {ready}");
     let handle = ready["session"].as_str().unwrap().to_string();
+    answer_cursor_position_query(&io, &codec).await;
     (io, codec, handle)
 }
 
+/// Runs `echo` with [tag] split by quoting, so that only the command's output
+/// (`<tag>-42`), not the echo of what was typed, matches; answers what was
+/// read up to it.
+async fn run_marker(io: &Io<Sealed>, codec: &ws::Codec, tag: &str) -> Vec<u8> {
+    // `''` joins in sh, bash, zsh and fish; `^` escapes in cmd.
+    let command = if cfg!(windows) {
+        format!("echo {tag}-4^2\r")
+    } else {
+        format!("echo {tag}-4''2\r")
+    };
+    io.send(ws::Message::Binary(ntex::util::Bytes::from(command)), codec)
+        .await
+        .unwrap();
+    let marker = format!("{tag}-42");
+    let seen = read_until(io, codec, marker.as_bytes()).await;
+    assert!(
+        seen.windows(marker.len()).any(|w| w == marker.as_bytes()),
+        "the shell should run what it is sent; saw {:?}",
+        String::from_utf8_lossy(&seen)
+    );
+    seen
+}
+
 /// Collects binary frames until `needle` shows up, or gives up.
+///
+/// Answers a primary device-attributes query on the way: some shells (fish)
+/// send one at start-up and wait for the reply before reading input, as a real
+/// terminal would give it.
 async fn read_until(io: &Io<Sealed>, codec: &ws::Codec, needle: &[u8]) -> Vec<u8> {
+    const DA1: [&[u8]; 2] = [b"\x1b[c", b"\x1b[0c"];
     let mut seen = Vec::new();
+    let mut answered = 0;
     while seen.windows(needle.len()).all(|w| w != needle) {
         let Ok(Ok(Some(frame))) = timeout(Duration::from_secs(5), io.recv(codec)).await else {
             break;
         };
         if let ws::Frame::Binary(data) = frame {
             seen.extend_from_slice(&data);
+            let asked = DA1
+                .iter()
+                .map(|q| seen.windows(q.len()).filter(|w| w == q).count())
+                .sum::<usize>();
+            while answered < asked {
+                answered += 1;
+                io.send(
+                    ws::Message::Binary(ntex::util::Bytes::from_static(b"\x1b[?62;22c")),
+                    codec,
+                )
+                .await
+                .unwrap();
+            }
         }
     }
     seen
@@ -331,220 +356,70 @@ async fn answer_cursor_position_query(io: &Io<Sealed>, codec: &ws::Codec) {
 async fn answer_cursor_position_query(_io: &Io<Sealed>, _codec: &ws::Codec) {}
 
 #[ntex::test]
-async fn a_password_login_produces_a_working_shell() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+async fn an_open_starts_a_working_shell() {
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &ticket).await;
     assert!(handle.contains('.'), "the handle must carry its secret");
-
-    let banner = read_until(&io, &codec, fake_sshd::BANNER).await;
-    assert!(
-        banner
-            .windows(fake_sshd::BANNER.len())
-            .any(|w| w == fake_sshd::BANNER),
-        "the shell's own output should reach the browser"
-    );
-
-    io.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo hi\n")),
-        &codec,
-    )
-    .await
-    .unwrap();
-    let echoed = read_until(&io, &codec, b"echo hi").await;
-    assert!(
-        echoed.windows(7).any(|w| w == b"echo hi"),
-        "keystrokes should reach the shell and come back"
-    );
+    run_marker(&io, &codec, "works").await;
 }
 
 /// A paste bigger than ntex's default 64 KiB frame limit arrives as one
 /// frame: the shell gets all of it, and the connection stays up.
+#[cfg(unix)]
 #[ntex::test]
 async fn a_paste_bigger_than_64_kib_reaches_the_shell() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec, _) = open_shell(&srv, &ticket).await;
-    read_until(&io, &codec, fake_sshd::BANNER).await;
+    run_marker(&io, &codec, "start").await;
 
-    let marker = b"sbm-paste-end";
-    let mut paste = vec![b'a'; 200 << 10];
-    paste.extend_from_slice(marker);
+    // Raw and silent, so the bytes reach `head` exactly; `wc` counts them. The
+    // `count-` prefix is added by `sed`, so the echo of the command line
+    // cannot match it.
     io.send(
-        ws::Message::Binary(ntex::util::Bytes::from(paste.clone())),
+        ws::Message::Binary(ntex::util::Bytes::from_static(
+            b"stty raw -echo; echo go-4''2; head -c 204800 | wc -c | sed 's/ //g; s/^/count-/'; stty sane\r",
+        )),
         &codec,
     )
     .await
     .unwrap();
-    // The fake shell echoes verbatim, so the whole paste comes back: a dropped
-    // or duplicated frame changes the bytes, not just whether the marker shows.
-    let echoed = read_until(&io, &codec, marker).await;
+    // Sent once `head` is about to read, not into the line editor.
+    read_until(&io, &codec, b"go-42").await;
+    io.send(
+        ws::Message::Binary(ntex::util::Bytes::from(vec![b'a'; 200 << 10])),
+        &codec,
+    )
+    .await
+    .unwrap();
+    let count = b"count-204800";
+    let seen = read_until(&io, &codec, count).await;
     assert!(
-        echoed == paste,
-        "the whole paste should reach the shell and come back; got {} of {} bytes",
-        echoed.len(),
-        paste.len()
+        seen.windows(count.len()).any(|w| w == count),
+        "the whole paste should reach the shell; saw {:?}",
+        String::from_utf8_lossy(&seen)
     );
-}
-
-#[ntex::test]
-async fn a_wrong_password_is_reported_as_an_auth_failure() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    let open = serde_json::json!({
-        "type": "open",
-        "user": fake_sshd::USER,
-        "auth": {"kind": "password", "password": "wrong"},
-    });
-    io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let reply = next_control(&io, &codec).await;
-    assert_eq!(reply["code"], "auth_failed");
-    assert!(
-        !reply["message"]
-            .as_str()
-            .unwrap()
-            .to_lowercase()
-            .contains("password"),
-        "the message must not narrow the search for a guesser"
-    );
-}
-
-#[ntex::test]
-async fn a_second_factor_prompt_is_forwarded_and_answerable() {
-    let sshd = fake_sshd::start(true).await;
-    let state = app_state(true, &sshd).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    let open = serde_json::json!({
-        "type": "open",
-        "user": fake_sshd::USER,
-        "auth": {"kind": "interactive"},
-    });
-    io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let prompt = next_control(&io, &codec).await;
-    assert_eq!(prompt["type"], "prompt");
-    assert_eq!(prompt["prompts"][0]["prompt"], "Code: ");
-    assert_eq!(
-        prompt["prompts"][0]["echo"], false,
-        "a code must not be echoed while typing"
-    );
-
-    let answer = serde_json::json!({"type": "answer", "answers": [fake_sshd::PASSWORD]});
-    io.send(
-        ws::Message::Text(ByteString::from(answer.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-    assert_eq!(next_control(&io, &codec).await["type"], "ready");
-}
-
-#[ntex::test]
-async fn concurrent_answers_cannot_open_two_shells() {
-    let sshd = fake_sshd::start(true).await;
-    let state = app_state(true, &sshd).await;
-    let sessions = state.sessions.clone();
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    let open = serde_json::json!({
-        "type": "open",
-        "user": fake_sshd::USER,
-        "auth": {"kind": "interactive"},
-    });
-    io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-    assert_eq!(next_control(&io, &codec).await["type"], "prompt");
-
-    let answer = serde_json::json!({"type": "answer", "answers": [fake_sshd::PASSWORD]});
-    io.send(
-        ws::Message::Text(ByteString::from(answer.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-    io.send(
-        ws::Message::Text(ByteString::from(answer.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let replies = [
-        next_control(&io, &codec).await,
-        next_control(&io, &codec).await,
-    ];
-    assert_eq!(
-        replies
-            .iter()
-            .filter(|reply| reply["type"] == "ready")
-            .count(),
-        1
-    );
-    assert_eq!(
-        replies
-            .iter()
-            .filter(|reply| reply["code"] == "bad_request")
-            .count(),
-        1
-    );
-    assert_eq!(sessions.len(), 1);
 }
 
 #[ntex::test]
 async fn concurrent_open_frames_create_only_one_session() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let sessions = state.sessions.clone();
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
-    let open = serde_json::json!({
-        "type": "open",
-        "user": fake_sshd::USER,
-        "auth": {"kind": "password", "password": fake_sshd::PASSWORD},
-    });
+    let open = r#"{"type":"open","auth":{"kind":"local"}}"#;
 
-    io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-    io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
+    io.send(ws::Message::Text(ByteString::from_static(open)), &codec)
+        .await
+        .unwrap();
+    io.send(ws::Message::Text(ByteString::from_static(open)), &codec)
+        .await
+        .unwrap();
 
     let replies = [
         next_control(&io, &codec).await,
@@ -569,27 +444,27 @@ async fn concurrent_open_frames_create_only_one_session() {
 
 #[ntex::test]
 async fn a_reconnect_replays_only_what_was_missed() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let sessions = state.sessions.clone();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
-    let seen = read_until(&io, &codec, fake_sshd::BANNER).await;
+    let seen = run_marker(&io, &codec, "before").await;
     let rendered = seen.len() as u64;
     let session = sessions.get(&handle, "admin").unwrap();
 
-    // Produce output the first connection will not see
-    const MISSED: &[u8] = b"missed-while-away";
+    // Produce output the first connection will not see: typed, so the line
+    // editor echoes it.
+    const MISSED: &[u8] = b"missedwhileaway";
     io.send(
         ws::Message::Binary(ntex::util::Bytes::from_static(MISSED)),
         &codec,
     )
     .await
     .unwrap();
-    for _ in 0..50 {
+    for _ in 0..100 {
         let received =
             session.scrollback.lock().unwrap().next_seq() >= rendered + MISSED.len() as u64;
         if received {
@@ -628,23 +503,20 @@ async fn a_reconnect_replays_only_what_was_missed() {
         "a recoverable gap must not clear the screen"
     );
     assert!(
-        replayed
-            .windows(fake_sshd::BANNER.len())
-            .all(|w| w != fake_sshd::BANNER),
+        replayed.windows(9).all(|w| w != b"before-42"),
         "already-rendered output must not be sent twice"
     );
 }
 
 #[ntex::test]
 async fn a_superseded_connection_is_told_rather_than_left_silent() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
-    read_until(&io, &codec, fake_sshd::BANNER).await;
+    run_marker(&io, &codec, "ready").await;
 
     // Duplicating a tab copies sessionStorage, so two tabs can genuinely hold
     // the same handle. The one that loses must find out: a connection that
@@ -670,15 +542,14 @@ async fn a_superseded_connection_is_told_rather_than_left_silent() {
 
 #[ntex::test]
 async fn reattaching_before_the_old_socket_is_noticed_still_works() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let tickets = state.tickets.clone();
     let first = tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
-    read_until(&io, &codec, fake_sshd::BANNER).await;
+    run_marker(&io, &codec, "ready").await;
 
     // Reattach immediately, without giving the agent time to process the old
     // socket's death. This is the ordinary case, not a corner one: a phone
@@ -698,22 +569,21 @@ async fn reattaching_before_the_old_socket_is_noticed_still_works() {
     assert_eq!(next_control(&io2, &codec2).await["type"], "ready");
 
     io2.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"after-reattach")),
+        ws::Message::Binary(ntex::util::Bytes::from_static(b"afterreattach")),
         &codec2,
     )
     .await
     .unwrap();
-    let echoed = read_until(&io2, &codec2, b"after-reattach").await;
+    let echoed = read_until(&io2, &codec2, b"afterreattach").await;
     assert!(
-        echoed.windows(14).any(|w| w == b"after-reattach"),
+        echoed.windows(13).any(|w| w == b"afterreattach"),
         "the reattached connection must keep receiving output"
     );
 }
 
 #[ntex::test]
 async fn another_account_cannot_take_over_a_session() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let mine = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let theirs = state.tickets.issue(Purpose::Terminal, "intruder").unwrap();
     let srv = test_server(state).await;
@@ -734,8 +604,7 @@ async fn another_account_cannot_take_over_a_session() {
 
 #[ntex::test]
 async fn closing_explicitly_ends_the_session_for_good() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
+    let state = app_state().await;
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
@@ -763,22 +632,7 @@ async fn closing_explicitly_ends_the_session_for_good() {
 
 #[ntex::test]
 async fn the_session_cap_refuses_the_extra_terminal() {
-    let sshd = fake_sshd::start(false).await;
-    ensure_crypto_provider();
-    let mut config = Config {
-        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
-        ..Default::default()
-    };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.ssh_addr = sshd.clone();
-    remote.terminal.max_sessions = Some(1);
-    config.remote_access = Some(remote);
-    let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
-    sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
-    let state = AppState::new(Arc::new(config), db);
-
+    let state = state_with(true, |remote| remote.terminal.max_sessions = Some(1)).await;
     let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
@@ -786,13 +640,10 @@ async fn the_session_cap_refuses_the_extra_terminal() {
     let (_io, _codec, _handle) = open_shell(&srv, &first).await;
 
     let (io2, codec2) = open_terminal(&srv, &second).await;
-    let open = serde_json::json!({
-        "type": "open",
-        "user": fake_sshd::USER,
-        "auth": {"kind": "password", "password": fake_sshd::PASSWORD},
-    });
     io2.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","auth":{"kind":"local"}}"#,
+        )),
         &codec2,
     )
     .await
@@ -800,115 +651,18 @@ async fn the_session_cap_refuses_the_extra_terminal() {
     assert_eq!(next_control(&io2, &codec2).await["code"], "at_capacity");
 }
 
-/// A state with the access without SSH explicitly on or off.
-async fn full_access_state(enabled: bool) -> Arc<AppState> {
-    ensure_crypto_provider();
-    let mut config = Config {
-        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
-        ..Default::default()
-    };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    // Nothing listens here: an SSH-less shell must not need it
-    remote.ssh_addr = "127.0.0.1:1".to_string();
-    remote.full_access = Some(enabled);
-    config.remote_access = Some(remote);
-
-    let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
-    sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
-    AppState::new(Arc::new(config), db)
-}
-
-#[ntex::test]
-async fn a_full_access_open_starts_a_shell_without_any_credential() {
-    let state = full_access_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    io.send(
-        ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let ready = next_control(&io, &codec).await;
-    assert_eq!(ready["type"], "ready", "expected a shell, got {ready}");
-
-    answer_cursor_position_query(&io, &codec).await;
-
-    io.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo full-access-ok\r")),
-        &codec,
-    )
-    .await
-    .unwrap();
-    let marker = b"full-access-ok";
-    let seen = read_until(&io, &codec, marker).await;
-    assert!(
-        seen.windows(marker.len()).any(|w| w == marker),
-        "the local shell must actually run what it is sent"
-    );
-}
-
-#[ntex::test]
-async fn a_full_access_open_is_refused_when_the_feature_is_off() {
-    let state = full_access_state(false).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    // The panel hides the entry when it is off, but the UI is not the
-    // boundary — a client can send this frame regardless
-    io.send(
-        ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(next_control(&io, &codec).await["code"], "forbidden");
-}
-
-/// A target runs as the agent's own user; an SSH credential would run it as
-/// the signed-in account instead, which is a different thing.
-#[ntex::test]
-async fn a_target_with_an_ssh_credential_is_refused() {
-    let state = full_access_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    io.send(
-        ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"container","id":"abc"}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
-}
-
 /// The same grant the container page needs, re-checked at the frame.
 #[ntex::test]
 async fn a_container_target_needs_the_shell_grant() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
-    take_shell(&state).await;
-
+    // Taken after the upgrade: without it the upgrade itself is refused.
     let (io, codec) = open_terminal(&srv, &ticket).await;
+    take_shell(&state).await;
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"abc"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"container","id":"abc"}}"#,
         )),
         &codec,
     )
@@ -922,14 +676,14 @@ async fn a_container_target_needs_the_shell_grant() {
 /// even probed, let alone a shell spawned.
 #[ntex::test]
 async fn an_invalid_container_id_is_refused_before_anything_spawns() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"-x"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"container","id":"-x"}}"#,
         )),
         &codec,
     )
@@ -945,14 +699,14 @@ async fn an_invalid_container_id_is_refused_before_anything_spawns() {
 /// and it is the untrimmed value that reaches the command.
 #[ntex::test]
 async fn a_container_id_with_a_control_character_is_refused() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"container","id":"abc\n"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"container","id":"abc\n"}}"#,
         )),
         &codec,
     )
@@ -968,14 +722,14 @@ async fn a_container_id_with_a_control_character_is_refused() {
 /// reached, with the issue the panel phrases.
 #[ntex::test]
 async fn an_invalid_iperf_host_is_refused_before_anything_spawns() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"host;echo","port":5201}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"iperf","host":"host;echo","port":5201}}"#,
         )),
         &codec,
     )
@@ -991,14 +745,14 @@ async fn an_invalid_iperf_host_is_refused_before_anything_spawns() {
 /// A port out of `1..=65535` is refused too.
 #[ntex::test]
 async fn an_iperf_port_out_of_range_is_refused_before_anything_spawns() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":0}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"iperf","host":"example.com","port":0}}"#,
         )),
         &codec,
     )
@@ -1011,39 +765,18 @@ async fn an_iperf_port_out_of_range_is_refused_before_anything_spawns() {
     assert!(state.sessions.is_empty(), "nothing should have been registered");
 }
 
-/// A target runs as the agent's own user, so an SSH credential is refused for
-/// an iperf target exactly as for a container one.
-#[ntex::test]
-async fn an_iperf_target_with_an_ssh_credential_is_refused() {
-    let state = full_access_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    io.send(
-        ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"iperf","host":"example.com","port":5201}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
-}
-
 /// A tmux session id that is not `$` and digits is refused before tmux is even
 /// looked for, with the issue the panel phrases.
 #[ntex::test]
 async fn an_invalid_tmux_session_id_is_refused_before_anything_spawns() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux","session":"$3;rm"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"tmux","session":"$3;rm"}}"#,
         )),
         &codec,
     )
@@ -1060,14 +793,14 @@ async fn an_invalid_tmux_session_id_is_refused_before_anything_spawns() {
 /// broke: `:` is tmux's own session/window separator.
 #[ntex::test]
 async fn an_invalid_tmux_new_name_is_refused_before_anything_spawns() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"},"target":{"kind":"tmux_new","name":"a:b"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"tmux_new","name":"a:b"}}"#,
         )),
         &codec,
     )
@@ -1080,27 +813,6 @@ async fn an_invalid_tmux_new_name_is_refused_before_anything_spawns() {
     assert!(state.sessions.is_empty(), "nothing should have been registered");
 }
 
-/// A target runs as the agent's own user, so an SSH credential is refused for
-/// a tmux target exactly as for the other two.
-#[ntex::test]
-async fn a_tmux_target_with_an_ssh_credential_is_refused() {
-    let state = full_access_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    io.send(
-        ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"tmux","session":"$1"}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
-}
-
 /// Takes `shell` away from the admin role, as an admin editing it would.
 async fn take_shell(state: &AppState) {
     let mut grants = common::grants_of(&state.db, "admin").await;
@@ -1110,16 +822,16 @@ async fn take_shell(state: &AppState) {
 
 #[ntex::test]
 async fn taking_shell_away_applies_without_a_restart() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
 
-    take_shell(&state).await;
-
+    // Between the upgrade and the frame, as an admin editing the role would.
     let (io, codec) = open_terminal(&srv, &ticket).await;
+    take_shell(&state).await;
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"}}"#,
         )),
         &codec,
     )
@@ -1135,14 +847,14 @@ async fn taking_shell_away_applies_without_a_restart() {
 
 #[ntex::test]
 async fn taking_shell_away_closes_an_existing_local_shell() {
-    let state = full_access_state(true).await;
+    let state = app_state().await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
     io.send(
         ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","user":"","auth":{"kind":"local"}}"#,
+            r#"{"type":"open","auth":{"kind":"local"}}"#,
         )),
         &codec,
     )
@@ -1160,79 +872,17 @@ async fn taking_shell_away_closes_an_existing_local_shell() {
 }
 
 #[ntex::test]
-async fn taking_shell_away_does_not_strand_an_ssh_session() {
-    let sshd = fake_sshd::start(false).await;
-    let state = app_state(true, &sshd).await;
-    let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state.clone()).await;
-    let (io, codec, handle) = open_shell(&srv, &first).await;
-    read_until(&io, &codec, fake_sshd::BANNER).await;
-
-    take_shell(&state).await;
-    revoke_lost(&state, "permission_revoked").await;
-    assert_eq!(state.sessions.len(), 1, "an SSH session is not a local shell");
-    drop(io);
-
-    let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let (io2, codec2) = open_terminal(&srv, &second).await;
-    io2.send(
-        ws::Message::Text(ByteString::from(
-            serde_json::json!({"type":"attach","session":handle,"since":0}).to_string(),
-        )),
-        &codec2,
-    )
-    .await
-    .unwrap();
-    assert_eq!(next_control(&io2, &codec2).await["type"], "ready");
-
-    io2.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"after-disable")),
-        &codec2,
-    )
-    .await
-    .unwrap();
-    let echoed = read_until(&io2, &codec2, b"after-disable").await;
-    assert!(echoed.windows(13).any(|window| window == b"after-disable"));
-}
-
-/// Builds a state with explicit capacity/timeout overrides, for the tests that
-/// need a session to expire or a buffer to overflow inside a test's lifetime.
-async fn tuned_state(
-    ssh_addr: &str,
-    scrollback: Option<usize>,
-    detached_secs: u64,
-) -> Arc<AppState> {
-    ensure_crypto_provider();
-    let mut config = Config {
-        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
-        ..Default::default()
-    };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.ssh_addr = ssh_addr.to_string();
-    remote.terminal.scrollback_bytes = scrollback;
-    remote.terminal.detached_timeout_secs = detached_secs;
-    config.remote_access = Some(remote);
-
-    let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
-    sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
-    AppState::new(Arc::new(config), db)
-}
-
-#[ntex::test]
 async fn an_outage_longer_than_the_buffer_reports_and_replays() {
     // A scrollback small enough that a single command's output overruns it,
     // which is the only way to reach the truncated path end to end
-    let sshd = fake_sshd::start(false).await;
-    let state = tuned_state(&sshd, Some(256), 300).await;
+    let state = state_with(true, |remote| remote.terminal.scrollback_bytes = Some(256)).await;
     let tickets = state.tickets.clone();
     let first = tickets.issue(Purpose::Terminal, "admin").unwrap();
     let second = tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
-    read_until(&io, &codec, fake_sshd::BANNER).await;
+    run_marker(&io, &codec, "ready").await;
 
     // Detach at position 0, then push far more than 256 bytes through, so the
     // client's resume point falls out of the buffer entirely
@@ -1313,16 +963,15 @@ async fn an_outage_longer_than_the_buffer_reports_and_replays() {
 
 #[ntex::test]
 async fn a_session_nobody_comes_back_for_is_reaped() {
-    let sshd = fake_sshd::start(false).await;
     // One second of grace, so the reaper's own interval (a quarter of it,
     // floored at ten seconds elsewhere) isn't what the test waits on
-    let state = tuned_state(&sshd, None, 1).await;
+    let state = state_with(true, |remote| remote.terminal.detached_timeout_secs = 1).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let sessions = state.sessions.clone();
     let srv = test_server(state).await;
 
     let (io, codec, _handle) = open_shell(&srv, &ticket).await;
-    read_until(&io, &codec, fake_sshd::BANNER).await;
+    run_marker(&io, &codec, "ready").await;
     assert_eq!(sessions.len(), 1);
 
     drop(io);
@@ -1333,104 +982,4 @@ async fn a_session_nobody_comes_back_for_is_reaped() {
         "a session detached past its grace period must be collected"
     );
     assert_eq!(sessions.len(), 0);
-}
-
-/// Opt-in: needs a reachable sshd and credentials that work against it.
-///
-/// The fake server in `fake_sshd` covers the protocol; this covers OpenSSH,
-/// which is the thing that will actually be on the other end. Set one of:
-///
-/// ```sh
-/// # key auth (also exercises decode_secret_key and RSA hash negotiation)
-/// SBM_E2E_TERMINAL_ADDR=127.0.0.1:2222 \
-/// SBM_E2E_TERMINAL_USER=me \
-/// SBM_E2E_TERMINAL_KEY=/path/to/id_ed25519 \
-/// cargo test -p server_box_monitor --test terminal_ws -- --ignored
-///
-/// # or password auth
-/// SBM_E2E_TERMINAL_ADDR=127.0.0.1:22 \
-/// SBM_E2E_TERMINAL_USER=me \
-/// SBM_E2E_TERMINAL_PASSWORD=... \
-/// cargo test -p server_box_monitor --test terminal_ws -- --ignored
-/// ```
-///
-/// Credentials come from the environment and are never written to the repo.
-/// Ignored by default because it requires a reachable SSH server.
-#[ntex::test]
-#[ignore = "requires SBM_E2E_TERMINAL_* credentials and a reachable SSH server"]
-async fn a_real_sshd_produces_a_working_shell() {
-    let addr = std::env::var("SBM_E2E_TERMINAL_ADDR")
-        .expect("SBM_E2E_TERMINAL_ADDR must be set for this ignored test");
-    let user = std::env::var("SBM_E2E_TERMINAL_USER")
-        .expect("SBM_E2E_TERMINAL_USER must be set for this ignored test");
-    let auth = match (
-        std::env::var("SBM_E2E_TERMINAL_KEY"),
-        std::env::var("SBM_E2E_TERMINAL_PASSWORD"),
-    ) {
-        (Ok(path), _) => serde_json::json!({
-            "kind": "key",
-            "pem": std::fs::read_to_string(&path).expect("readable private key"),
-            "passphrase": std::env::var("SBM_E2E_TERMINAL_PASSPHRASE").ok(),
-        }),
-        (_, Ok(password)) => serde_json::json!({"kind": "password", "password": password}),
-        _ => panic!("set SBM_E2E_TERMINAL_KEY or SBM_E2E_TERMINAL_PASSWORD"),
-    };
-
-    let state = app_state(true, &addr).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-
-    let open = serde_json::json!({
-        "type": "open",
-        "user": user,
-        "auth": auth,
-        "cols": 80,
-        "rows": 24,
-    });
-    io.send(
-        ws::Message::Text(ByteString::from(open.to_string())),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let ready = next_control(&io, &codec).await;
-    assert_eq!(ready["type"], "ready", "expected a shell, got {ready}");
-    assert!(
-        ready["session"].as_str().is_some_and(|s| s.contains('.')),
-        "ready must carry the handle used to reattach"
-    );
-
-    // Prove the PTY is live in both directions
-    io.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo sbm-e2e-marker\n")),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    let mut seen = Vec::new();
-    let found = loop {
-        let Ok(Ok(Some(frame))) = timeout(Duration::from_secs(15), io.recv(&codec)).await else {
-            break false;
-        };
-        if let ws::Frame::Binary(data) = frame {
-            seen.extend_from_slice(&data);
-            // The echoed command appears first, then its output — two
-            // occurrences means the shell actually ran it
-            if String::from_utf8_lossy(&seen)
-                .matches("sbm-e2e-marker")
-                .count()
-                >= 2
-            {
-                break true;
-            }
-        }
-    };
-    assert!(
-        found,
-        "the shell should echo the command and its output; saw {:?}",
-        String::from_utf8_lossy(&seen)
-    );
 }

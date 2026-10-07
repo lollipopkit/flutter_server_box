@@ -45,9 +45,6 @@ flutter test test/unit/app/frb_parser_test.dart
 # SBM_E2E_SSH_HOST=<SSH 目标或 ~/.ssh/config 别名>
 cargo test -p sbm_parser --test ssh_e2e
 
-# 使用真实 sshd 测试 Monitor terminal
-# 需要 SBM_E2E_TERMINAL_* 环境变量
-cargo test -p server_box_monitor --test terminal_ws
 ```
 
 ## Monitor 面板测试
@@ -113,7 +110,7 @@ test('returns server status', () async {
 
 默认测试必须保持确定性。parser、model、命令构建和普通 Widget test 不应访问网络或真实服务器。引入外部服务边界时，添加专用 fake、fixture 或 mock。
 
-上文的 SSH end-to-end 和真实 sshd 测试是例外；它们只在配置环境变量后运行，因此默认 `cargo test --workspace` 不需要外部服务。
+上文的 SSH end-to-end 测试是例外；它只在配置环境变量后运行，因此默认 `cargo test --workspace` 不需要外部服务。
 
 ## 存储迁移测试
 

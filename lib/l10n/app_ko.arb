@@ -1428,7 +1428,6 @@
   "monitorRoleNameRule": "소문자, 숫자, - 및 _, 최대 32자",
   "monitorGrantShell": "셸과 명령",
   "monitorGrantShellTip": "터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — agent 계정으로 실행",
-  "monitorGrantSshTerminal": "SSH를 통한 패널 터미널",
   "monitorGrantVirt": "가상화",
   "monitorGrantVirtTip": "에이전트 웹 패널에서 연결하는 Proxmox VE, libvirt, BMC",
   "monitorGrantFiles": "파일",

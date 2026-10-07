@@ -116,7 +116,7 @@
   async function newSession() {
     session.close()
     terminal?.renderer.reset()
-    await startWith((renderer) => session.start(renderer, '', { kind: 'local' }))
+    await startWith((renderer) => session.start(renderer, { kind: 'local' }))
   }
 
   /// A device coming back from sleep or a dead network should reconnect at
@@ -151,24 +151,23 @@
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   /// Which terminals this account can open here — see `terminalAccess`.
   const access = $derived(terminalAccess(caps))
-  const available = $derived(access.available)
 
   /// The dashboard only offers the entry point when the agent reports a
   /// terminal, but a cached capability or stale tab can still land here.
   let turnedOff = $state(false)
-  const fullAccess = $derived(!turnedOff && access.direct)
+  const fullAccess = $derived(!turnedOff && access.available)
   const canTurnOff = $derived(isAdmin(caps) !== false)
 
   /// Start once when capabilities say a direct shell is available. Do not gate
   /// on lifecycle: hidden windows keep their shell running like visible ones.
   let autoStarted = false
   $effect(() => {
-    if (!available || !fullAccess) return
+    if (!fullAccess) return
     untrack(() => {
       if (autoStarted) return
       autoStarted = true
       const resume = session.resumable
-      void startWith((renderer) => session.start(renderer, '', resume ? null : { kind: 'local' }))
+      void startWith((renderer) => session.start(renderer, resume ? null : { kind: 'local' }))
     })
   })
 
@@ -245,7 +244,7 @@
   async function attachTmux(s: TmuxSession) {
     tmuxOpen = false
     await startWith((renderer) =>
-      session.start(renderer, '', { kind: 'local' }, { kind: 'tmux', session: s.id }),
+      session.start(renderer, { kind: 'local' }, { kind: 'tmux', session: s.id }),
     )
   }
 
@@ -261,7 +260,7 @@
     const name = tmuxName.trim()
     if (name === '') return
     await startWith(async (renderer) => {
-      await session.start(renderer, '', { kind: 'local' }, { kind: 'tmux_new', name })
+      await session.start(renderer, { kind: 'local' }, { kind: 'tmux_new', name })
       tmuxName = ''
       tmuxDialogOpen = false
     })
@@ -364,14 +363,10 @@
     return [{ label: $LL.terminalMenuShell(), items }]
   })
 
-  /// Why there is no shell here. A transport or configuration reason comes
-  /// first: granting the shell would not help until that is fixed.
+  /// Why there is no shell here.
   const noPermissionText = $derived.by(() => {
     if (turnedOff) return whyText('not_granted', $LL)
-    const g = caps?.grants
-    if (!g) return available ? $LL.terminalNeedsShell() : $LL.terminalUnavailable()
-    if (g.shell.why && g.shell.why !== 'not_granted') return whyText(g.shell.why, $LL)
-    return g.ssh_terminal.ok ? $LL.terminalNeedsShell() : whyText(g.shell.why, $LL)
+    return caps?.grants ? whyText(access.why, $LL) : $LL.terminalUnavailable()
   })
 </script>
 
@@ -464,7 +459,7 @@
 
 <main
   class="relative flex min-h-0 flex-1 flex-col text-(--text-primary)"
-  style:background-color={available && fullAccess ? terminalSurface.current : 'var(--surface-window)'}
+  style:background-color={fullAccess ? terminalSurface.current : 'var(--surface-window)'}
 >
   {#if alerting}
     <div class="max-h-[40%] shrink-0 space-y-[7px] overflow-auto px-(--content-pad) pb-0 pt-[9px]">
@@ -521,7 +516,7 @@
     </div>
   {/if}
 
-  {#if available && fullAccess}
+  {#if fullAccess}
     <!-- Positioned against the flex item so xterm measures exactly the space
          beneath the title bar and alert strip. Its host owns the only scroll. -->
     <div class="relative min-h-0 flex-1" style:background-color={terminalSurface.current}>
@@ -551,7 +546,7 @@
   {/if}
 </main>
 
-{#if available && fullAccess && session.phase === 'closed'}
+{#if fullAccess && session.phase === 'closed'}
   <WindowFooter>
     <StatusBar>
       <span class="truncate">{$LL.terminalEnded()}</span>

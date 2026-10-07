@@ -14,15 +14,15 @@ supports and what the signed-in account may use. The response answers for the
 caller:
 
 - `me`: `username`, `role`, and `admin`. A watch token gets no `me`.
-- `grants`: one entry for each of `shell`, `ssh_terminal`, `files`,
-  `connect`, and `listen`, with `ok` and, when it is not usable, `why`:
+- `grants`: one entry for each of `shell`, `files`, `connect`, `listen`,
+  and `virt`, with `ok` and, when it is not usable, `why`:
   `not_granted` (the role does not hold it), `insecure_transport` (it needs
   TLS, a loopback caller, or `[remote_access] allow_insecure`), or
   `not_configured` (`files` with no `roots`). A grant also carries its
   options: `files.mode`, `connect.allow`, `listen.public`, and
   `listen.ports`. For a watch token every grant is `not_granted`.
 - `remote_access`: the booleans agents reported before roles, derived from
-  `grants` for older Apps (`terminal` is `ssh_terminal` or `shell`,
+  `grants` for older Apps (`terminal` is `shell`,
   `full_access` is `shell`, `stream` is `connect`). The App reads `grants`
   when it is present.
 
@@ -61,8 +61,7 @@ including every request and response shape, is
 
 | Grant | Endpoints |
 |---|---|
-| `shell` | `POST /api/v1/exec`, the App's terminal (a local PTY on `/api/v1/terminal/ws`), running custom commands |
-| `ssh_terminal` | The web panel's terminal on `/api/v1/terminal/ws`, which signs in to `ssh_addr` with SSH credentials |
+| `shell` | `POST /api/v1/exec`, the terminal of the App and the web panel (a local PTY on `/api/v1/terminal/ws`), running custom commands |
 | `files` | `/api/v1/fs/*`; `mode = "read"` allows `roots`, `list`, `stat`, and `read` only |
 | `connect` | `open` on `/api/v1/stream/ws`, checked against `allow` |
 | `listen` | `/api/v1/listen/ws`, and `accept` on `/api/v1/stream/ws` |
@@ -122,7 +121,7 @@ and `listen` from every role and still closes sessions with
 Every grant needs TLS or a loopback caller, which includes a reverse proxy on
 the same host, unless `[remote_access] allow_insecure = true`. The older
 keys still count for what they used to cover, and no more:
-`[remote_access.terminal] allow_insecure` for `shell`, `ssh_terminal`,
+`[remote_access.terminal] allow_insecure` for `shell`,
 `connect` and `listen`, `[remote_access.fs] allow_insecure` for `files`. A plaintext connection from the App also needs
 **Allow insecure HTTP** for that server. Without either, the grant is reported
 with `why: insecure_transport`.
@@ -149,8 +148,6 @@ warning.
 
 ### Terminal endpoint
 
-The web-panel terminal connects to `ssh_addr` as an SSH client and uses the
-SSH account's permissions; it needs `ssh_terminal`. The App terminal uses the
-agent process user's local shell and needs `shell`. The endpoint's first
-message may contain an SSH password, which is why it follows the transport
-rule above.
+The terminal of the App and of the web panel is a local shell running as the
+agent process user, on a PTY, and needs `shell`. The agent no longer signs in
+to sshd: an `open` carrying SSH credentials is refused.

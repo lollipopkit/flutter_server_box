@@ -5078,9 +5078,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Terminal, süreçler, servisler, konteynerler, snippet\'ler, güç — agent hesabıyla';
 
   @override
-  String get monitorGrantSshTerminal => 'SSH üzerinden panel terminali';
-
-  @override
   String get monitorGrantVirt => 'Sanallaştırma';
 
   @override

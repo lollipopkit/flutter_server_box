@@ -4844,9 +4844,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'ターミナル、プロセス、サービス、コンテナ、スニペット、電源 —— agent のアカウントで実行';
 
   @override
-  String get monitorGrantSshTerminal => 'SSH 経由のパネルターミナル';
-
-  @override
   String get monitorGrantVirt => '仮想化';
 
   @override

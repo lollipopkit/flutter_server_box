@@ -53,7 +53,6 @@ const caps = (admin: boolean): Capabilities =>
     features: [],
     grants: {
       shell: { ok: true },
-      ssh_terminal: { ok: false },
       files: { ok: false },
       connect: { ok: false },
       listen: { ok: false },

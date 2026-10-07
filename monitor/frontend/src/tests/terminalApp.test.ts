@@ -98,14 +98,13 @@ class FakeSocket {
   }
 }
 
-function setCapabilities({ shell = true, ssh = true, features = ['tmux'], admin = true } = {}) {
+function setCapabilities({ shell = true, features = ['tmux'], admin = true } = {}) {
   ;(capabilitiesStore as unknown as { byServer: Record<string, unknown> }).byServer['local'] = {
     platform: 'linux',
     features,
     me: { username: 'admin', admin },
     grants: {
       shell: { ok: shell, why: shell ? undefined : 'not_granted' },
-      ssh_terminal: { ok: ssh, why: ssh ? undefined : 'not_granted' },
       files: { ok: false, why: 'not_granted' },
       connect: { ok: true },
       listen: { ok: true },
@@ -192,11 +191,11 @@ describe('desk terminal app', () => {
     expect(socket.sent[0]).toEqual({ type: 'attach', session: 'saved-handle', since: 0, cols: 80, rows: 24 })
   })
 
-  it('does not open a socket for ssh_terminal-only roles', async () => {
-    setCapabilities({ shell: false, ssh: true, features: [] })
+  it('does not open a socket for a role without the shell', async () => {
+    setCapabilities({ shell: false, features: [] })
     render(Terminal)
 
-    expect(await screen.findByText("This account's role does not include the shell.")).toBeInTheDocument()
+    expect(await screen.findByText(/does not include this/)).toBeInTheDocument()
     expect(FakeSocket.instances).toHaveLength(0)
     expect(mocks.issueWsTicket).not.toHaveBeenCalled()
     expect(screen.queryByLabelText(/SSH|password|private key/i)).toBeNull()

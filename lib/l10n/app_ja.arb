@@ -1428,7 +1428,6 @@
   "monitorRoleNameRule": "小文字、数字、- と _、32 文字まで",
   "monitorGrantShell": "シェルとコマンド",
   "monitorGrantShellTip": "ターミナル、プロセス、サービス、コンテナ、スニペット、電源 —— agent のアカウントで実行",
-  "monitorGrantSshTerminal": "SSH 経由のパネルターミナル",
   "monitorGrantVirt": "仮想化",
   "monitorGrantVirtTip": "エージェントの Web パネルで接続する Proxmox VE、libvirt、BMC",
   "monitorGrantFiles": "ファイル",

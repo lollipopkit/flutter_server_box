@@ -32,7 +32,8 @@ async fn migrations_apply_to_a_database_that_already_has_rows() {
         .await
         .unwrap();
     sqlx::query("DROP TABLE access_log").execute(&pool).await.unwrap();
-    sqlx::query("DROP TABLE ssh_known_hosts").execute(&pool).await.unwrap();
+    // Recreated by 006 when it runs again below; 023 dropped it.
+    sqlx::query("DROP TABLE IF EXISTS ssh_known_hosts").execute(&pool).await.unwrap();
     sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 6")
         .execute(&pool)
         .await
@@ -74,12 +75,6 @@ async fn migrations_apply_to_a_database_that_already_has_rows() {
     // And the new schema is usable
     sqlx::query(
         "INSERT INTO access_log (kind, action, subject, result) VALUES ('terminal','open','admin','ok')",
-    )
-    .execute(&pool)
-    .await
-    .unwrap();
-    sqlx::query(
-        "INSERT INTO ssh_known_hosts (addr, key_type, fingerprint) VALUES ('127.0.0.1:22','ssh-ed25519','SHA256:x')",
     )
     .execute(&pool)
     .await
@@ -483,7 +478,7 @@ async fn upgrading_to_roles_keeps_every_account_and_what_it_could_do() {
     // And the admin role holds what those switches gave.
     let role = accounts::role(&pool, "admin").await.unwrap().unwrap();
     assert!(role.admin && role.builtin);
-    assert!(role.grants.shell && role.grants.ssh_terminal);
+    assert!(role.grants.shell);
     assert_eq!(role.grants.connect, Some(ConnectGrant::default()));
     assert_eq!(
         role.grants.listen,
@@ -518,11 +513,10 @@ async fn an_upgrade_grants_only_what_the_old_switches_effectively_gave() {
     let grants = accounts::role(&pool, "admin").await.unwrap().unwrap().grants;
     assert_eq!(grants, Default::default());
 
-    // The terminal alone is the SSH terminal and nothing else.
+    // The terminal alone was the SSH terminal, which is gone: nothing.
     let pool = upgraded("[remote_access]\nfull_access = false\n[remote_access.terminal]\nenabled = true\n").await;
     let grants = accounts::role(&pool, "admin").await.unwrap().unwrap().grants;
-    assert!(grants.ssh_terminal && !grants.shell);
-    assert!(grants.connect.is_none() && grants.listen.is_none());
+    assert_eq!(grants, Default::default());
 
     // The file API switched on with no roots served nothing.
     let pool = upgraded("[remote_access.fs]\nenabled = true\n").await;
@@ -584,7 +578,7 @@ async fn a_fresh_install_with_an_old_config_grants_no_more_than_it_said() {
     // And what it did allow is still a ceiling a `read` install stays under.
     let open = old_config("[remote_access]\nfull_access = true\n[remote_access.terminal]\nenabled = true\n");
     let full = fresh_admin_role(&open, InitPermissions::Full).await.grants;
-    assert!(full.shell && full.ssh_terminal);
+    assert!(full.shell);
     assert!(full.files.is_none(), "no roots, no files");
     assert_eq!(
         fresh_admin_role(&open, InitPermissions::Read).await.grants,
@@ -615,6 +609,68 @@ async fn fresh_admin_role(
 /// `virt` field, so the JSON below is byte for byte what it stored: a role
 /// with `shell` (the upgraded admin), one without (a remote-desktop role an
 /// admin created), and a built-in still waiting for `ensure_roles`.
+/// Migration 023 against roles saved with `ssh_terminal`, as every agent from
+/// 0.2.0 until it saved them.
+#[tokio::test]
+async fn migration_023_drops_the_ssh_terminal_grant_and_the_pinned_host_key() {
+    use server_box_monitor::db::accounts;
+    use server_box_monitor::core::permissions::ConnectGrant;
+
+    let pool = pool().await;
+    migrator_through(22).run(&pool).await.unwrap();
+    sqlx::query(
+        "INSERT INTO ssh_known_hosts (addr, key_type, fingerprint) VALUES ('127.0.0.1:22','ssh-ed25519','SHA256:x')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+    for (name, grants) in [
+        (
+            "admin",
+            r#"{"shell":true,"ssh_terminal":true,"files":{"mode":"write"},"connect":{"allow":[]},"listen":{"public":false,"ports":null},"virt":true}"#,
+        ),
+        (
+            "ssh_only",
+            r#"{"shell":false,"ssh_terminal":true,"files":null,"connect":null,"listen":null,"virt":false}"#,
+        ),
+    ] {
+        sqlx::query(
+            "INSERT INTO roles (name, admin, builtin, grants, created_at, updated_at) \
+             VALUES (?, 0, 0, ?, '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z') \
+             ON CONFLICT(name) DO UPDATE SET grants = excluded.grants",
+        )
+        .bind(name)
+        .bind(grants)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    // Readable again (`Grants` refuses the field), and nothing else changed.
+    let admin = accounts::role(&pool, "admin").await.unwrap().unwrap();
+    assert!(admin.grants.shell && admin.grants.virt);
+    assert_eq!(admin.grants.connect, Some(ConnectGrant::default()));
+    // A role that held only the SSH terminal holds nothing now: it is not
+    // given `shell` in its place.
+    let ssh_only = accounts::role(&pool, "ssh_only").await.unwrap().unwrap();
+    assert_eq!(ssh_only.grants, Default::default());
+    // Undecided stays undecided.
+    let viewer: Option<String> = sqlx::query_scalar("SELECT grants FROM roles WHERE name = 'viewer'")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(viewer, None);
+    let table: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'ssh_known_hosts'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(table, 0);
+}
+
 #[tokio::test]
 async fn migration_011_gives_virt_to_the_roles_that_hold_shell() {
     use server_box_monitor::db::accounts;
@@ -698,6 +754,7 @@ fn shipped_migrations_keep_their_checksums() {
         (20, "3fcf9300b02b96325ae075c7147ace3a3ac085693a5c7bc80400d035fd334937f86e180ef901082dde02f1b08aec2d3c"),
         (21, "8549100ea818734178a5c13ddcb90999e29d3636163abda31f2f7b6ae749a17e53ba128315f60a0b7d879aca525f5c7e"),
         (22, "7122ab7e33fe302a7e82f40a3b79efb8fd6fd85047f4bc7dd675a85aedc02e92813b4987db46891978f4cba329dd4c3a"),
+        (23, "5f9544a9e8df9e588c6c604ca7be4871c4b4996489f0faeacd34037fe44f8beca506a418f56fe79598f39f7fa5c03aad"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();

@@ -107,7 +107,6 @@ function setFiles(mode: 'write' | 'read') {
     platform: 'linux',
     grants: {
       shell: { ok: true },
-      ssh_terminal: { ok: true },
       files: { ok: true, mode },
       connect: { ok: true },
       listen: { ok: true },

@@ -1428,7 +1428,6 @@
   "monitorRoleNameRule": "Küçük harfler, rakamlar, - ve _, en fazla 32 karakter",
   "monitorGrantShell": "Kabuk ve komutlar",
   "monitorGrantShellTip": "Terminal, süreçler, servisler, konteynerler, snippet'ler, güç — agent hesabıyla",
-  "monitorGrantSshTerminal": "SSH üzerinden panel terminali",
   "monitorGrantVirt": "Sanallaştırma",
   "monitorGrantVirtTip": "Ajanın web panelinde eriştiği Proxmox VE, libvirt ve BMC’ler",
   "monitorGrantFiles": "Dosyalar",

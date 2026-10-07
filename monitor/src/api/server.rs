@@ -1098,7 +1098,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
                 caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
             };
             RemoteAccessView {
-                terminal: ok(Grant::SshTerminal) || ok(Grant::Shell),
+                terminal: ok(Grant::Shell),
                 full_access: ok(Grant::Shell),
                 files: ok(Grant::Files),
                 stream: ok(Grant::Connect),
@@ -1134,13 +1134,12 @@ async fn issue_ws_ticket(
     let purpose = payload.into_inner().purpose;
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
     // The grants each endpoint can be used under at all; which one a frame
-    // needs is checked again when it arrives (a local shell needs `shell`, an
-    // SSH one `ssh_terminal`; a stream `open` needs `connect`, an `accept`
-    // `listen`).
+    // needs is checked again when it arrives (a shell needs `shell`; a stream
+    // `open` needs `connect`, an `accept` `listen`).
     let ok = |grant| caller.check(grant, &app_state, secure).is_ok();
     let (available, detail) = match purpose {
         Purpose::Terminal => (
-            ok(Grant::Shell) || ok(Grant::SshTerminal),
+            ok(Grant::Shell),
             "terminal not available",
         ),
         Purpose::Stream => (

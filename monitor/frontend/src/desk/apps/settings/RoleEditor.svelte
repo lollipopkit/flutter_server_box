@@ -62,9 +62,6 @@
     <Checkbox bind:checked={d.shell}>
       {@render grant($LL.grantShell(), $LL.grantShellNote())}
     </Checkbox>
-    <Checkbox bind:checked={d.ssh_terminal}>
-      {@render grant($LL.grantSshTerminal(), $LL.grantSshTerminalNote())}
-    </Checkbox>
 
     {#if d.virt !== undefined}
       <Checkbox bind:checked={d.virt}>

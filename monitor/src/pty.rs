@@ -1,15 +1,14 @@
-//! A login shell on a local PTY, for the access without SSH.
+//! A login shell on a local PTY: the terminal's shell.
 //!
-//! The other terminal path authenticates against sshd and therefore borrows
-//! its identity from whoever signed in. This one has no such step: the shell
-//! runs as the account the agent itself runs as, so **the panel password is
-//! the only thing between a visitor and that shell**. That is the whole point
-//! of the feature and also its entire risk; `install.sh` installs a *user*
-//! service by default so the account in question is an ordinary one.
+//! The shell runs as the account the agent itself runs as, so **the panel
+//! password is the only thing between a visitor and that shell** (for an
+//! account whose role holds `shell`). That is the whole point of the feature
+//! and also its entire risk; `install.sh` installs a *user* service by default
+//! so the account in question is an ordinary one.
 //!
-//! Interface-compatible with the SSH path on purpose: both produce a stream of
-//! [`ShellEvent`] and accept resize/write, so `api::ws::terminal` drives them
-//! through the same session, scrollback and reconnect machinery.
+//! It produces a stream of [`ShellEvent`] and accepts resize/write, which
+//! `api::ws::terminal` drives through the session, scrollback and reconnect
+//! machinery.
 
 use std::io::{Read, Write};
 use std::sync::{Arc, Condvar, Mutex};
@@ -17,7 +16,11 @@ use std::sync::{Arc, Condvar, Mutex};
 use portable_pty::{CommandBuilder, MasterPty, PtySize, native_pty_system};
 use tokio::sync::mpsc;
 
-use crate::ssh::client::ShellEvent;
+/// PTY output, or the reason there won't be any more.
+pub enum ShellEvent {
+    Data(Vec<u8>),
+    Exit(Option<u32>),
+}
 
 /// A running local shell.
 pub struct LocalShell {

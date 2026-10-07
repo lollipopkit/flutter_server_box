@@ -5083,9 +5083,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Terminal, proses, layanan, kontainer, snippet, daya — sebagai akun agent';
 
   @override
-  String get monitorGrantSshTerminal => 'Terminal panel lewat SSH';
-
-  @override
   String get monitorGrantVirt => 'Virtualisasi';
 
   @override

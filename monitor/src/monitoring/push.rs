@@ -21,7 +21,7 @@ fn http_client() -> &'static Client {
         // the rest of the agent uses has to be the process default before it
         // builds a TLS config — otherwise the first HTTPS push panics inside
         // rustls rather than failing as a push error. `ring`, matching the
-        // server side (`api/server.rs`) and russh; the alternative is pulling
+        // server side (`api/server.rs`); the alternative is pulling
         // aws-lc-rs in beside it for this one client.
         //
         // `install_default` answers Err only when one is already installed,

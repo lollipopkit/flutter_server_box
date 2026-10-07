@@ -52,10 +52,6 @@
         "shell": {
             "ok": false,
             "why": "not_granted"
-        },
-        "ssh_terminal": {
-            "ok": false,
-            "why": "not_granted"
         }
     }
 }

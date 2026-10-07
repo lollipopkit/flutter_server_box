@@ -8,19 +8,18 @@ Six grants. `read` (status, charts, history) is held by every account and is not
 
 | Grant | Covers | Options |
 |---|---|---|
-| `shell` | `POST /exec`, the app terminal (local PTY on `/terminal/ws` without SSH credentials), running custom commands, the panel's machine pages (`POST /power`; `GET`/`POST /process` — reading the table too, since a command line is where an argument-borne secret shows; `GET`/`POST /services`; `GET`/`PUT /cron`; `GET`/`POST /containers`; `GET`/`POST`/`DELETE /benchmark`; `GET`/`POST /system-users`; `GET`/`PUT /snippets` and `POST /snippets/plan` — reading the library too, since a script can carry a password — #1623) | — |
+| `shell` | `POST /exec`, the terminal, the app's and the panel's (a local PTY on `/terminal/ws`), running custom commands, the panel's machine pages (`POST /power`; `GET`/`POST /process` — reading the table too, since a command line is where an argument-borne secret shows; `GET`/`POST /services`; `GET`/`PUT /cron`; `GET`/`POST /containers`; `GET`/`POST`/`DELETE /benchmark`; `GET`/`POST /system-users`; `GET`/`PUT /snippets` and `POST /snippets/plan` — reading the library too, since a script can carry a password — #1623) | — |
 | `files` | `/fs/*` | `mode`: `"read"` \| `"write"` (read = list, stat, read, roots; write adds write, mkdir, rename, chmod, remove) |
 | `connect` | `/stream/ws` `open` (local/dynamic forwards, RDP/VNC); the panel's RDP sessions, `/rdp/ws` (same `allow` list; the ticket rides in the RDCleanPath request); the panel's desktop routes, `GET`/`PUT /desktops` (#1623) | `allow`: list of `"<ip or cidr>"` or `"<ip or cidr>:<port or lo-hi>"`; empty = anywhere. A host name in a request is resolved by the agent and *every* resolved address must match. IPv6 as `[addr]:port`. |
 | `listen` | `/listen/ws` (remote forwards) and `/stream/ws` `accept` | `public`: bool (non-loopback binds); `ports`: `[lo, hi]` or null (any) |
-| `ssh_terminal` | The panel's terminal that logs into sshd (`/terminal/ws` with SSH credentials) | — |
 | `virt` | The hypervisors and BMCs the agent reaches for the panel (Proxmox VE, libvirt, Redfish): seeing them and controlling them: `GET /bmc`, `GET /bmc/{id}`, `POST /bmc/{id}/power`, `POST /virt`, `POST /virt/power`, `/virt/detail`, `/virt/history`, `/virt/console` and its `/virt/console/ws`, `/virt/snapshots`, `/virt/snapshot`, `/virt/snapshot/diff`, `GET /virt/pve`, `POST /virt/pve/tfa` (#1623). Where they are and the credentials to sign in are agent configuration, admin only: `PUT /bmc`, `POST /bmc/probe`, `PUT`/`DELETE /virt/pve`, `POST /virt/pve/cert`. | — |
 
 Admin only, outside the grants: the backups the agent hosts for the app's sync and the panel, `GET /backup` and `GET`/`PUT`/`DELETE /backup/blob` (#1623). A backup holds every server and key the app knows, encrypted or not, and replacing it replaces what every synced device merges next.
 
-Machine-level config stays in `config.toml`: `ssh_addr`, terminal/exec/fs limits, `fs.roots`. A grant is *usable* only when the machine side allows it (e.g. `files` with empty `roots` is `not_configured`).
+Machine-level config stays in `config.toml`: `ssh_addr` (read by the firewall page), terminal/exec/fs limits, `fs.roots`. A grant is *usable* only when the machine side allows it (e.g. `files` with empty `roots` is `not_configured`).
 
 ### Transport
-Everything beyond `read` needs TLS or a loopback peer, unless `[remote_access] allow_insecure = true`. The two legacy keys still count, each for what it used to cover and no more (TODO remove): `[remote_access.terminal] allow_insecure` for `shell`, `ssh_terminal`, `connect`, `listen`; `[remote_access.fs] allow_insecure` for `files`. Neither covers `virt`, which is newer than both. (An earlier draft folded them into one, which let an old config that trusted a plaintext link with its files put a shell on it after the upgrade.)
+Everything beyond `read` needs TLS or a loopback peer, unless `[remote_access] allow_insecure = true`. The two legacy keys still count, each for what it used to cover and no more (TODO remove): `[remote_access.terminal] allow_insecure` for `shell`, `connect`, `listen`; `[remote_access.fs] allow_insecure` for `files`. Neither covers `virt`, which is newer than both. (An earlier draft folded them into one, which let an old config that trusted a plaintext link with its files put a shell on it after the upgrade.)
 
 ## Roles and accounts
 
@@ -31,7 +30,6 @@ Everything beyond `read` needs TLS or a loopback peer, unless `[remote_access] a
   "builtin": false,
   "grants": {
     "shell": false,
-    "ssh_terminal": false,
     "files": null,
     "connect": { "allow": ["127.0.0.1:3389"] },
     "listen": null,
@@ -40,7 +38,7 @@ Everything beyond `read` needs TLS or a loopback peer, unless `[remote_access] a
 }
 ```
 
-- `files` / `connect` / `listen`: `null` = not granted; an object = granted with those options. `shell` / `ssh_terminal` / `virt`: bool.
+- `files` / `connect` / `listen`: `null` = not granted; an object = granted with those options. `shell` / `virt`: bool. `ssh_terminal` (the SSH terminal's grant, removed with it by migration 023) is dropped from a `POST`/`PUT /roles` body rather than refused, for apps that still send it (TODO remove); anywhere else `Grants` refuses it.
 - **`PUT /roles/{name}` keeps a grant the body does not mention.** A client older than a grant (`virt`) sends every grant it knows and leaves the new one out; reading that as "not granted" would take it away on any save from that client. Written out as `false`/`null`, it is taken away. `POST /roles` reads an absent grant as not granted.
 - `files` object: `{"mode": "read"|"write"}`; `listen` object: `{"public": bool, "ports": [lo, hi] | null}`.
 - `admin: true` = may manage accounts, roles and the agent's configuration. Only the built-in `admin` role has it; it cannot be set on another role.
@@ -86,7 +84,6 @@ Every mutation is audited (`Kind::Admin`; detail names the account/role and what
 "me": { "username": "alice", "role": "desktop", "admin": false },
 "grants": {
   "shell":        { "ok": false, "why": "not_granted" },
-  "ssh_terminal": { "ok": false, "why": "not_granted" },
   "files":        { "ok": true,  "mode": "read" },
   "connect":      { "ok": true,  "allow": ["127.0.0.1:3389"] },
   "listen":       { "ok": false, "why": "insecure_transport", "public": false, "ports": null },
@@ -98,7 +95,7 @@ Every mutation is audited (`Kind::Admin`; detail names the account/role and what
 
 `features` lists the machine-management endpoints the agent serves (`["power", ...]`, `api::machine::FEATURES`), for any caller; absent on an agent that serves none. A client offers a page when its name is there and the grant it needs is `ok`. Not every entry is a page: `container_exec` (a shell inside a container) and `iperf` (an iperf client) are the terminal's `target`s, both needing the same `shell` grant, and each offered only where it is listed — an older agent ignores the field and would open a host shell.
 
-The old `remote_access` object stays, derived for the caller (TODO remove): `terminal` = `ssh_terminal.ok || shell.ok`, `full_access` = `shell.ok`, `files` = `files.ok`, `stream` = `connect.ok`, `listen` = `listen.ok`.
+The old `remote_access` object stays, derived for the caller (TODO remove): `terminal` = `shell.ok`, `full_access` = `shell.ok`, `files` = `files.ok`, `stream` = `connect.ok`, `listen` = `listen.ok`.
 
 ## Live sessions
 
@@ -108,9 +105,10 @@ When a role or an account changes, sessions of the affected accounts that relied
 
 - Migration `010_*`: `roles` table, `users.role`, `watch_tokens.scope TEXT NOT NULL DEFAULT 'read'`.
 - Migration `011_*`: `virt` on every saved role that holds `shell` and has not said either way. A shell runs as the agent's account, which can read the credentials those pages use, so withholding `virt` from it only hides the pages. A built-in role not decided yet gets it from `Grants::from_legacy` the same way, and a fresh install's `full` includes it.
+- Migration `023_*`: removes `ssh_terminal` from every role (a role that held only it holds nothing; it is not turned into `shell`) and drops `ssh_known_hosts`, with the SSH terminal they served.
 - At start, if `roles` is empty, create `admin` and `viewer`:
-  - **Fresh install** (no users yet): `admin` gets everything (`files` write, `connect` any, `listen` loopback with any port, `shell`, `ssh_terminal`) unless initial permissions are `read`, in which case `admin` holds no grants. Initial permissions come from `--init-permissions full|read` or `SBM_INIT_PERMISSIONS=full|read` (default `full`).
-  - **Upgrade** (users exist): `admin`'s grants are what the old switches *effectively* gave: `ssh_terminal` = `terminal.enabled`; `shell` = `connect` = `full_access` resolved as today (platform default, `SBM_FULL_ACCESS`) **and** `terminal.enabled`; `listen` = same as `shell`, `public` = `listen_public`; `files` = `fs.enabled && roots non-empty` ⇒ `write`. Every existing user gets role `admin`.
+  - **Fresh install** (no users yet): `admin` gets everything (`files` write, `connect` any, `listen` loopback with any port, `shell`) unless initial permissions are `read`, in which case `admin` holds no grants. Initial permissions come from `--init-permissions full|read` or `SBM_INIT_PERMISSIONS=full|read` (default `full`).
+  - **Upgrade** (users exist): `admin`'s grants are what the old switches *effectively* gave: `shell` = `connect` = `full_access` resolved as today (platform default, `SBM_FULL_ACCESS`) **and** `terminal.enabled`; `listen` = same as `shell`, `public` = `listen_public`; `files` = `fs.enabled && roots non-empty` ⇒ `write`. Every existing user gets role `admin`.
   - Afterwards `full_access`, `SBM_FULL_ACCESS`, `terminal.enabled`, `fs.enabled`, `listen_public` are not read again; the agent logs once that they moved to roles. Kept parseable (TODO remove).
 - `DELETE /api/v1/remote-access/full-access` (admin): clears `shell`, `connect`, `listen` on every role (the panel's first-use notice uses it).
 

@@ -17,7 +17,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 - `../crates/sbm_parser/`: commands, scripts and parsers shared with the app over FFI. Pure, no IO. `capabilities::capabilities(system)` says per `ServerStatus` field whether a platform collects it; check it before calling an empty field a bug.
 - `../crates/sbm_native/`: monitor-only native sampler (`sample(state, system)`): cpu/mem/swap/disks/diskio/net/uptime/host/sys via `sysinfo` or procfs, feeding `sbm_parser::linux::parse_*` unchanged. NVIDIA (`nvidia-smi`) and Linux AMD/Intel (shared DRM command) run every cycle; sensors, batteries, SMART and legacy Windows AMD on the extended cycle via the script. `monitoring.rs::collect_metrics` merges them.
-- `src/`: `cli/` (`serve`, `config`, `cleanup`), `core/` (config, `remote_access.rs`, `fs_roots.rs`, `config_file.rs`), `api/` (handlers, `authz.rs`, `ratelimit.rs`, `ws/`), `ssh/` (`client.rs` russh, `known_hosts.rs` TOFU pin of the local sshd, `local_pty.rs` the SSH-less PTY), `monitoring/` (sampling, `rules.rs`, `push.rs`, `custom_cmds`), `db/` (migrations, retention cleanup).
+- `src/`: `cli/` (`serve`, `config`, `cleanup`), `core/` (config, `remote_access.rs`, `fs_roots.rs`, `config_file.rs`), `api/` (handlers, `authz.rs`, `ratelimit.rs`, `ws/`), `pty.rs` (the terminal's shell on a local PTY), `monitoring/` (sampling, `rules.rs`, `push.rs`, `custom_cmds`), `db/` (migrations, retention cleanup).
 - `frontend/src/`: Svelte 5 runes, Tailwind 4 (class-driven dark), no router (`layout.svelte.ts`). `pages/`, `components/`, `lib/` (API client, rune stores, `terminal.svelte.ts`), `types/`, `i18n/` (15 locales). Tests: vitest + testing-library; svelte-check is the type gate.
 
 ### Cross-platform semantics left as is (changing them would change stored history)
@@ -45,7 +45,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 ## Permissions (`docs/dev/monitor-permissions.md` is the contract)
 
-- Every account has one role (`users.role`); a role is a set of grants: `shell`, `ssh_terminal`, `files` (read/write), `connect` (`allow` list), `listen` (`public`, `ports`), `virt`. `admin` roles also manage accounts, roles and configuration. `config.toml` keeps only the machine side: `ssh_addr`, `fs.roots`, limits, and one `allow_insecure` (TLS or a loopback peer otherwise; legacy `terminal.allow_insecure` / `fs.allow_insecure` still count for their old grants).
+- Every account has one role (`users.role`); a role is a set of grants: `shell`, `files` (read/write), `connect` (`allow` list), `listen` (`public`, `ports`), `virt`. `admin` roles also manage accounts, roles and configuration. `config.toml` keeps only the machine side: `ssh_addr`, `fs.roots`, limits, and one `allow_insecure` (TLS or a loopback peer otherwise; legacy `terminal.allow_insecure` / `fs.allow_insecure` still count for their old grants).
 - `api/authz.rs` is the one place a request becomes a `Caller` (JWT → account → role); `Caller::check(grant, state, secure)` is the one question. A JWT for a deleted account is 401. Grants are re-checked at the moment of use, never trusted from the UI.
 - Password change: `users.password_changed_ms` moves, older panel tokens are refused, watch tokens deleted, `authz::end_account` closes sessions, tickets, relays and listeners.
 - `api/admin.rs` (`/me`, `/me/password`, `/users*`, `/roles*`): admin-only except `/me`; every change re-asks the admin's password through the login throttle; the last admin cannot be deleted or demoted (`accounts::Guarded`, in the statement itself); built-in roles keep their name and `admin` flag. Losing a grant ends what ran under it (`authz::revoke_lost`, `AppState.grants_changed` → `permission_revoked`).
@@ -110,8 +110,8 @@ Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set
 
 ### `/api/v1/terminal/ws`
 
-- The agent is an SSH **client** to the local sshd: a session has the SSH account's privileges; the panel password grants none. Binary frames are PTY bytes, text frames control JSON (`api/ws/terminal.rs`).
-- `auth: {"kind":"local"}` is the SSH-less path (a shell as the agent's user, needs `shell`). An optional `target` narrows it, built in Rust and run via `LocalShell::spawn_command` (`/bin/sh -c`, `cmd.exe /C` on Windows): `container` (`shell_command`), `iperf` (`sbm_parser::iperf`), `tmux` / `tmux_new` (tmux's plain client; xterm.js cannot decode control mode). Refused: a target with an SSH credential, unknown fields (`deny_unknown_fields`), invalid values (`invalid_input` + `issue`), no runtime / no tmux (`no_container_runtime`, `no_tmux`). No frame carries a command. Panels send a target only where `features` lists `container_exec`, `iperf` or `tmux`.
+- A session is a shell the agent starts as its own user on a PTY (`pty.rs`), for an account with `shell`; there is no SSH login (removed with `ssh_terminal`, migration 023). Binary frames are PTY bytes, text frames control JSON (`api/ws/terminal.rs`).
+- `auth: {"kind":"local"}` is the only kind; an SSH credential (`password`/`key`/`interactive`) or an `answer` frame is refused by parsing (`bad_request`). An optional `target` narrows it, built in Rust and run via `LocalShell::spawn_command` (`/bin/sh -c`, `cmd.exe /C` on Windows): `container` (`shell_command`), `iperf` (`sbm_parser::iperf`), `tmux` / `tmux_new` (tmux's plain client; xterm.js cannot decode control mode). Refused: unknown fields (`deny_unknown_fields`), invalid values (`invalid_input` + `issue`), no runtime / no tmux (`no_container_runtime`, `no_tmux`). No frame carries a command. Panels send a target only where `features` lists `container_exec`, `iperf` or `tmux`.
 - ConPTY sends `ESC[6n` and holds output until answered; Windows PTY tests use `answer_cursor_position_query`.
 
 ### `/api/v1/stream/ws` and `/api/v1/listen/ws`
@@ -126,8 +126,8 @@ Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set
 - **`is_secure_transport` treats loopback as secure** (same-host proxy / `cloudflared`); it never reads `X-Forwarded-Proto`.
 - **Terminal sessions outlive the socket** (`api/ws/session.rs`): the handle is a 256-bit bearer capability bound to the panel account, constant-time compared, memory-only; an `attach` takes over; detached sessions end after `detached_timeout_secs` (300). Capacity (`max_sessions`) is derived from memory.
 - **Replay is incremental**: the client reports bytes rendered; `ready.since` is the absolute position the following stream starts at, and `ready` precedes output.
-- **`shell` deliberately bypasses sshd** (no SSH auth, logging or 2FA), so `install.sh` runs the agent as an ordinary account (`systemctl --user`, or OpenRC `command_user`). `DELETE /api/v1/remote-access/full-access` (admin) takes `shell`, `connect`, `listen` from every role (`full_access_disabled`). `connect`/`listen` without `shell` is the meaningful restriction.
-- `tests/fake_sshd/` is an in-process SSH server for `tests/terminal_ws.rs`; `a_real_sshd_produces_a_working_shell` runs only with `SBM_E2E_TERMINAL_*`.
+- **`shell` deliberately bypasses sshd** (no SSH auth, logging or 2FA; `ssh_addr` is read only by the firewall page), so `install.sh` runs the agent as an ordinary account (`systemctl --user`, or OpenRC `command_user`). `DELETE /api/v1/remote-access/full-access` (admin) takes `shell`, `connect`, `listen` from every role (`full_access_disabled`). `connect`/`listen` without `shell` is the meaningful restriction.
+- `tests/terminal_ws.rs` runs real shells on local PTYs (the account's passwd shell; `read_until` answers fish's start-up DA query).
 
 ## Configuration
 
@@ -145,7 +145,7 @@ Reads go to the file on disk, not `AppState.config` (a startup snapshot). **A PU
 
 ## Database
 
-Migrations in `migrations/`: metrics history, `users` (with `role`), `roles` (010), `watch_tokens` (`scope` = `read`), config storage, `access_log` (audit: `kind, action, result, detail`; never a credential; retained via `DataCleanupService::POLICY_TABLES`), `ssh_known_hosts` (the pinned local sshd key), and the feature tables named above.
+Migrations in `migrations/`: metrics history, `users` (with `role`), `roles` (010), `watch_tokens` (`scope` = `read`), config storage, `access_log` (audit: `kind, action, result, detail`; never a credential; retained via `DataCleanupService::POLICY_TABLES`) (`ssh_known_hosts`, the pinned key of the sshd the removed SSH terminal logged into, dropped by 023), and the feature tables named above.
 
 ## Release
 

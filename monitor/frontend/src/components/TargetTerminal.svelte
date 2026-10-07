@@ -68,7 +68,7 @@
       mounting = false
       // The local account, with the target: the agent runs the command as its
       // own user.
-      await session.start(mounted.renderer, '', { kind: 'local' }, target)
+      await session.start(mounted.renderer, { kind: 'local' }, target)
     })()
     return () => {
       cancelled = true

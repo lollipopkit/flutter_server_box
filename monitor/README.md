@@ -107,7 +107,7 @@ exactly that:
 | File browser | `files` (`/api/v1/fs/*`), `read` or `write`, inside `[remote_access.fs] roots` |
 | Remote desktop, local and dynamic port forwards | `connect` (`/api/v1/stream/ws`), optionally limited by an `allow` list |
 | Remote port forwards | `listen` (`/api/v1/listen/ws`); loopback only unless its `public` option is on |
-| The panel's in-browser terminal | `ssh_terminal` |
+| The panel's terminal | `shell` (`/api/v1/terminal/ws`) |
 | The panel's remote desktops (VNC, RDP) | `connect` (`/api/v1/stream/ws`, `/api/v1/rdp/ws`), the same `allow` list |
 | The panel's BMCs (Redfish): state and power | `virt` (`/api/v1/bmc`); adding a BMC and its credentials: admin |
 | Backup sync to this agent, the panel's backup page | admin (`/api/v1/backup`) |
@@ -140,7 +140,7 @@ the account lost is closed. The full API contract is
   `127.0.0.1:3389`.
 
 A fresh install's `admin` starts with every grant (`files` write, `connect`
-anywhere, `listen` on loopback, `shell`, `ssh_terminal`), or none with
+anywhere, `listen` on loopback, `shell`), or none with
 `install.sh --permissions read` — `SBM_INIT_PERMISSIONS=read`, or `serve
 --init-permissions read` when running the binary yourself. That choice is read
 only when the first account is created.
@@ -152,10 +152,7 @@ default — a `systemctl --user` service under systemd, or an `/etc/init.d` scri
 with `command_user` under OpenRC. Grant `files`, `connect` or `listen` on their
 own when that is all an account needs.
 
-**`ssh_terminal`** is the panel's in-browser terminal. The agent acts as an SSH
-client to `ssh_addr`, so a session has exactly the privileges of the SSH account
-the browser signs in as — the panel password alone grants no shell, and sshd's
-own logging, `AllowUsers` and two-factor prompts all still apply. Sessions
+A terminal (the app's or the panel's) is that same shell on a PTY. Sessions
 survive a dropped connection for a few minutes, so a phone changing networks
 rejoins the same shell instead of losing it.
 
@@ -169,8 +166,7 @@ when one is set.
 
 Upgrading from an agent without roles converts the old switches once: every
 existing account becomes an admin, and the `admin` role gets what they actually
-granted — `[remote_access.terminal] enabled` becomes `ssh_terminal`;
-`full_access` (with its platform default and `SBM_FULL_ACCESS`), counted only
+granted — `full_access` (with its platform default and `SBM_FULL_ACCESS`), counted only
 while the terminal was enabled, becomes `shell`, `connect` and `listen`;
 `listen_public` becomes `listen.public`; `[remote_access.fs] enabled` with roots
 becomes `files` write. The agent then stops reading those keys and logs once
@@ -192,9 +188,6 @@ Notes:
   control.
 - `files` serves nothing without `[remote_access.fs] roots`. `roots = ["/"]`
   with write access is worth a shell, and the agent warns about it at startup.
-- The agent pins the host key of the sshd it connects to on first use and
-  refuses a changed one, rather than re-pinning silently. Clearing the pin is
-  deliberate: delete the row from `ssh_known_hosts`.
 - `access_log` records who opened what, from where, and whether it worked, and
   every change to an account or a role. It never records a credential.
 - Failed logins, and wrong passwords when re-authenticating, are throttled per

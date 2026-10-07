@@ -28,7 +28,6 @@ void main() {
     'me': {'username': 'alice', 'role': 'desktop', 'admin': false},
     'grants': {
       'shell': {'ok': false, 'why': 'not_granted'},
-      'ssh_terminal': {'ok': false, 'why': 'not_granted'},
       'files': {'ok': true, 'mode': 'read'},
       'connect': {
         'ok': true,

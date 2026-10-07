@@ -66,7 +66,7 @@ class MonitorRemoteAccess {
   /// [grants] as the booleans every other part of the app asks.
   factory MonitorRemoteAccess.ofGrants(MonitorGrants grants) =>
       MonitorRemoteAccess(
-        terminal: grants.shell.ok || grants.sshTerminal.ok,
+        terminal: grants.shell.ok,
         fullAccess: grants.shell.ok,
         files: grants.files.ok,
         stream: grants.connect.ok,

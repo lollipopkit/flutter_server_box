@@ -15,8 +15,9 @@
 //!
 //! What stays in `config.toml` is what is about the machine rather than about
 //! an account — the roots the file API may reach, how long a command may run,
-//! where sshd is — and a grant is only usable where the machine side allows it
-//! (`files` with no roots configured answers `not_configured`).
+//! where sshd listens (for the firewall page) — and a grant is only usable
+//! where the machine side allows it (`files` with no roots configured answers
+//! `not_configured`).
 
 use std::fmt;
 use std::net::{IpAddr, SocketAddr};
@@ -28,14 +29,12 @@ use serde::{Deserialize, Serialize};
 pub const ADMIN_ROLE: &str = "admin";
 pub const VIEWER_ROLE: &str = "viewer";
 
-/// One of the six things an account can be granted, beyond `read`, which
+/// One of the five things an account can be granted, beyond `read`, which
 /// every account holds and is therefore not a grant at all.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Grant {
-    /// `POST /exec`, the app's terminal (a local PTY), running custom commands.
+    /// `POST /exec`, the terminal (a local PTY), running custom commands.
     Shell,
-    /// The panel's terminal, which logs into sshd with SSH credentials.
-    SshTerminal,
     /// `/fs/*`, read or read-write.
     Files,
     /// `/stream/ws` `open`: a connection dialled out from this machine.
@@ -49,9 +48,8 @@ pub enum Grant {
 }
 
 impl Grant {
-    pub const ALL: [Grant; 6] = [
+    pub const ALL: [Grant; 5] = [
         Grant::Shell,
-        Grant::SshTerminal,
         Grant::Files,
         Grant::Connect,
         Grant::Listen,
@@ -61,7 +59,6 @@ impl Grant {
     pub fn as_str(self) -> &'static str {
         match self {
             Grant::Shell => "shell",
-            Grant::SshTerminal => "ssh_terminal",
             Grant::Files => "files",
             Grant::Connect => "connect",
             Grant::Listen => "listen",
@@ -152,8 +149,6 @@ pub struct Grants {
     #[serde(default)]
     pub shell: bool,
     #[serde(default)]
-    pub ssh_terminal: bool,
-    #[serde(default)]
     pub files: Option<FilesGrant>,
     #[serde(default)]
     pub connect: Option<ConnectGrant>,
@@ -174,7 +169,6 @@ impl Grants {
     pub fn all() -> Self {
         Self {
             shell: true,
-            ssh_terminal: true,
             files: Some(FilesGrant {
                 mode: FilesMode::Write,
             }),
@@ -238,7 +232,6 @@ impl Grants {
         };
         Grants {
             shell: self.shell && other.shell,
-            ssh_terminal: self.ssh_terminal && other.ssh_terminal,
             files,
             connect,
             listen,
@@ -250,7 +243,6 @@ impl Grants {
     pub fn holds(&self, grant: Grant) -> bool {
         match grant {
             Grant::Shell => self.shell,
-            Grant::SshTerminal => self.ssh_terminal,
             Grant::Files => self.files.is_some(),
             Grant::Connect => self.connect.is_some(),
             Grant::Listen => self.listen.is_some(),
@@ -276,7 +268,6 @@ impl Grants {
         let shell = terminal_enabled && full_access;
         Self {
             shell,
-            ssh_terminal: terminal_enabled,
             files: files_usable.then_some(FilesGrant {
                 mode: FilesMode::Write,
             }),
@@ -595,7 +586,7 @@ mod tests {
 
     #[test]
     fn grants_read_and_write_the_documented_shape() {
-        let json = r#"{"shell":false,"ssh_terminal":false,"files":null,
+        let json = r#"{"shell":false,"files":null,
             "connect":{"allow":["127.0.0.1:3389"]},"listen":null,"virt":true}"#;
         let grants: Grants = serde_json::from_str(json).unwrap();
         assert_eq!(grants.connect.as_ref().unwrap().allow, ["127.0.0.1:3389"]);
@@ -608,6 +599,9 @@ mod tests {
         assert_eq!(serde_json::from_str::<Grants>("{}").unwrap(), Grants::none());
         // A misspelt grant is an error, not a grant quietly left off.
         assert!(serde_json::from_str::<Grants>(r#"{"shel":true}"#).is_err());
+        // The SSH terminal's grant is gone with the SSH terminal; migration
+        // 023 removed it from every stored role.
+        assert!(serde_json::from_str::<Grants>(r#"{"ssh_terminal":true}"#).is_err());
     }
 
     #[test]
@@ -618,7 +612,7 @@ mod tests {
             Grants::none()
         );
         let both = Grants::from_legacy(true, true, true, true);
-        assert!(both.shell && both.ssh_terminal && both.virt);
+        assert!(both.shell && both.virt);
         assert_eq!(both.connect, Some(ConnectGrant::default()));
         assert_eq!(
             both.listen,
@@ -633,9 +627,11 @@ mod tests {
                 mode: FilesMode::Write
             })
         );
-        let terminal_only = Grants::from_legacy(true, false, false, false);
-        assert!(terminal_only.ssh_terminal && !terminal_only.shell && !terminal_only.virt);
-        assert!(terminal_only.connect.is_none() && terminal_only.listen.is_none());
+        // The terminal alone was the SSH terminal, which no longer exists.
+        assert_eq!(
+            Grants::from_legacy(true, false, false, false),
+            Grants::none()
+        );
     }
 
     #[test]

@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use super::fs_roots::FsRoots;
 use super::permissions::Grant;
 
-/// The SSH server the panel's terminal connects to.
+/// The machine's SSH server: the firewall page keeps a way in to it open.
 fn default_ssh_addr() -> String {
     "127.0.0.1:22".to_string()
 }
@@ -65,8 +65,7 @@ pub struct RemoteAccessConfig {
     ///
     /// The two keys that came before it still count, each for what it used to
     /// cover and no further: `terminal.allow_insecure` for the grants that
-    /// were behind the terminal switch (`shell`, `ssh_terminal`, `connect`,
-    /// `listen`), `fs.allow_insecure` for `files`. Folded into one, an old
+    /// were behind the terminal switch (`shell`, `connect`, `listen`), `fs.allow_insecure` for `files`. Folded into one, an old
     /// file that let the file API onto a trusted plaintext link would have
     /// put a shell on it after the upgrade.
     #[serde(default)]
@@ -82,9 +81,8 @@ pub struct RemoteAccessConfig {
     /// surprise.
     ///
     /// **This makes the panel password equivalent to a shell as whatever user
-    /// the agent runs as.** That is the trade being made deliberately: the
-    /// SSH path stays available alongside it for anyone who wants sshd's
-    /// authentication, logging and second factor instead. `install.sh`
+    /// the agent runs as.** That is the trade being made deliberately.
+    /// `install.sh`
     /// installs a *user* service by default so that identity is an ordinary
     /// account rather than root.
     ///
@@ -134,7 +132,9 @@ impl Default for RemoteAccessConfig {
 /// `[remote_access.terminal]` — the panel's in-browser terminal.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TerminalConfig {
-    /// Legacy: moved to the roles (`ssh_terminal`). See the module docs.
+    /// Legacy: the SSH terminal's switch; that terminal is gone. Still read so
+    /// that its presence marks an upgrade (see the module docs).
+    /// TODO: remove with the other legacy keys.
     ///
     /// An `Option` so that a file which says `false` is told apart from one
     /// that does not mention it — see [`RemoteAccessConfig::legacy_present`].
@@ -440,7 +440,7 @@ impl RemoteAccessConfig {
 #[derive(Debug, Clone)]
 pub struct RemoteAccess {
     pub ssh_addr: String,
-    /// Whether `shell`, `ssh_terminal`, `connect` and `listen` may be used over
+    /// Whether `shell`, `connect` and `listen` may be used over
     /// plaintext: [`RemoteAccessConfig::allow_insecure`] or the terminal's
     /// legacy key.
     pub insecure_shell: bool,
@@ -496,8 +496,7 @@ impl RemoteAccess {
     /// that is [`secure`] or not — see `api::ws::is_secure_transport` for what
     /// counts.
     ///
-    /// One rule for every grant. A terminal's first frame can carry an SSH
-    /// password, a file read is the file, a relay is whatever it relays, and
+    /// One rule for every grant. A terminal is a shell, a file read is the file, a relay is whatever it relays, and
     /// all of them ride on a bearer token that a plaintext link hands to
     /// anyone on the path. Which opt-out applies depends on [grant] only
     /// because of the legacy keys — see [`RemoteAccessConfig::allow_insecure`].
@@ -505,7 +504,7 @@ impl RemoteAccess {
         secure
             || match grant {
                 Grant::Files => self.insecure_files,
-                Grant::Shell | Grant::SshTerminal | Grant::Connect | Grant::Listen => {
+                Grant::Shell | Grant::Connect | Grant::Listen => {
                     self.insecure_shell
                 }
                 Grant::Virt => self.insecure_rest,
@@ -654,7 +653,7 @@ mod tests {
 
     #[test]
     fn each_old_allow_insecure_key_covers_what_it_used_to_and_no_more() {
-        let shellish = [Grant::Shell, Grant::SshTerminal, Grant::Connect, Grant::Listen];
+        let shellish = [Grant::Shell, Grant::Connect, Grant::Listen];
 
         // The new key: everything.
         let all = RemoteAccessConfig {

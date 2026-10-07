@@ -78,7 +78,7 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 | 文件浏览 | `files`（`/api/v1/fs/*`），`read` 或 `write`，限定在 `[remote_access.fs] roots` 内 |
 | 远程桌面、本地和动态端口转发 | `connect`（`/api/v1/stream/ws`），可以用 `allow` 列表限制目标 |
 | 远程端口转发 | `listen`（`/api/v1/listen/ws`）；未开启其 `public` 选项时只能监听 loopback |
-| 面板的网页终端 | `ssh_terminal` |
+| 面板的终端 | `shell`（`/api/v1/terminal/ws`） |
 | 面板里的远程桌面（VNC、RDP） | `connect`（`/api/v1/stream/ws`、`/api/v1/rdp/ws`），同一份 `allow` 列表 |
 | 面板里的 BMC（Redfish）：状态和电源 | `virt`（`/api/v1/bmc`）；添加 BMC 和凭据：admin |
 | 备份同步到这个 agent、面板的备份页面 | admin（`/api/v1/backup`） |
@@ -105,7 +105,7 @@ App 或面板中编辑账号和角色，每次修改都需要再次输入自己�
 - admin 可以添加角色，例如只能 `connect` 到 `127.0.0.1:3389` 的角色。
 
 全新安装时，`admin` 账号拥有全部权限（可写的 `files`、不限地址的 `connect`、只监听
-loopback 的 `listen`、`shell`、`ssh_terminal`）。使用 `install.sh --permissions read`
+loopback 的 `listen`、`shell`）。使用 `install.sh --permissions read`
 时则不带任何权限；也可以设置 `SBM_INIT_PERMISSIONS=read`，或自行运行二进制时使用
 `serve --init-permissions read`。这一选择只在创建第一个账号时读取。`user
 set-password` 新建的账号默认属于 `viewer`，用 `--role <名称>` 可以指定角色，也可以
@@ -116,9 +116,7 @@ set-password` 新建的账号默认属于 `viewer`，用 `--role <名称>` 可�
 下是 `systemctl --user` 服务，OpenRC 下是带 `command_user` 的 `/etc/init.d` 脚本。
 账号只需要某一项时，可以只授予 `files`、`connect` 或 `listen`。
 
-**`ssh_terminal`** 是面板的网页终端。agent 作为 SSH 客户端连接 `ssh_addr`，因此会话
-权限完全等同于浏览器登录的那个 SSH 账号。仅有面板密码不会获得 shell，sshd 自身的
-日志、`AllowUsers`、两步验证提示也都照常生效。会话在连接断开后会保留几分钟，手机
+终端（App 的和面板的）就是 PTY 上的这个 shell。会话在连接断开后会保留几分钟，手机
 切换网络后可以接回同一个 shell 而不是丢失它。
 
 **`connect.allow`** 填写 IP 地址或 CIDR 网段，后面可以跟端口或端口范围（`10.0.0.0/8`、
@@ -128,8 +126,7 @@ set-password` 新建的账号默认属于 `viewer`，用 `--role <名称>` 可�
 （对应 sshd 的 `GatewayPorts`），设置了端口范围时只能绑定范围内的端口。
 
 从没有角色的 agent 升级时，旧开关会转换一次：所有已有账号成为 admin，`admin` 角色
-获得旧开关实际允许的权限——`[remote_access.terminal] enabled` 转为 `ssh_terminal`；
-`full_access`（包括平台默认值和 `SBM_FULL_ACCESS`）仅在终端开启时计入，转为
+获得旧开关实际允许的权限——`full_access`（包括平台默认值和 `SBM_FULL_ACCESS`）仅在终端开启时计入，转为
 `shell`、`connect` 和 `listen`；`listen_public` 转为 `listen.public`；
 `[remote_access.fs] enabled` 且有 roots 时转为可写的 `files`。之后 agent 不再读取
 这些配置，并在日志中提示一次可以删除。面板首次使用提示中的“关闭 shell 访问”会从
@@ -146,8 +143,6 @@ set-password` 新建的账号默认属于 `viewer`，用 `--role <名称>` 可�
   明文传输，不应在普通局域网或不受控制的网络中使用。
 - `files` 在没有 `[remote_access.fs] roots` 时不提供任何文件。`roots = ["/"]` 加上
   写权限等价于一个 shell，agent 启动时会对此发出警告。
-- 代理会在首次连接时固定 sshd 的 host key，之后不匹配即拒绝，而不是静默重新固定。
-  清除固定需要手动操作：删除 `ssh_known_hosts` 中对应的记录。
 - `access_log` 记录谁在何时从何处打开了什么、结果如何，以及每一次账号和角色的修改，
   不记录任何凭据。
 - 登录失败，以及重新验证密码时输错，按来源地址和用户名双重限流。

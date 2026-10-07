@@ -5121,9 +5121,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Терминал, процессы, службы, контейнеры, сниппеты, питание — от учётной записи agent';
 
   @override
-  String get monitorGrantSshTerminal => 'Терминал панели через SSH';
-
-  @override
   String get monitorGrantVirt => 'Виртуализация';
 
   @override

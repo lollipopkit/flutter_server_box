@@ -42,25 +42,15 @@ const SESSION_KEY = 'terminal.session'
 export type Phase =
   | 'idle'
   | 'connecting'
+  /// The open frame is sent; waiting for `ready`.
   | 'authenticating'
-  /// Waiting on answers to a keyboard-interactive prompt (2FA and friends).
-  | 'prompting'
   | 'running'
   | 'reconnecting'
   | 'closed'
 
-export interface Prompt {
-  prompt: string
-  echo: boolean
-}
-
-export type Credential =
-  | { kind: 'password'; password: string }
-  | { kind: 'key'; pem: string; passphrase?: string }
-  | { kind: 'interactive' }
-  /// No credentials: the agent runs a shell as its own user. Only accepted
-  /// when the agent reports `remote_access.full_access`.
-  | { kind: 'local' }
+/// How a shell is opened: the one kind there is, a shell as the agent's own
+/// user (the `shell` grant). The agent refuses any other.
+export type Credential = { kind: 'local' }
 
 /// Where a local shell runs, when it is not the agent's own login shell.
 ///
@@ -78,11 +68,9 @@ export type TerminalTarget =
   | { kind: 'tmux_new'; name: string }
 
 interface ServerMessage {
-  type: 'ready' | 'prompt' | 'error' | 'exit' | 'hb'
+  type: 'ready' | 'error' | 'exit' | 'hb'
   session?: string
   since?: number
-  instructions?: string
-  prompts?: Prompt[]
   code?: string
   message?: string
   /// A stable issue code, for a refusal the client is meant to phrase itself
@@ -169,9 +157,6 @@ export class TerminalSession {
   errorCode = $state<string | null>(null)
   /// The issue behind [`errorCode`], for a refusal the client phrases itself.
   issueCode = $state<string | null>(null)
-  /// Set while the agent is waiting on keyboard-interactive answers.
-  prompts = $state<Prompt[]>([])
-  instructions = $state('')
   /// Whether output was lost because the outage outlasted the agent's buffer.
   truncated = $state(false)
   /// The status the shell exited with, once it has. `null` while running, and
@@ -182,7 +167,6 @@ export class TerminalSession {
   private renderer: Renderer | null = null
   private credential: Credential | null = null
   private target: TerminalTarget | null = null
-  private user = ''
   private handle: string | null = null
   /// Absolute position of the next byte to be rendered. Only ever advanced by
   /// the renderer's completion callback.
@@ -242,7 +226,6 @@ export class TerminalSession {
   /// told to close it: it is not this tab's to end, and it times out.
   async start(
     renderer: Renderer,
-    user: string,
     credential: Credential | null,
     target: TerminalTarget | null = null,
   ) {
@@ -252,7 +235,6 @@ export class TerminalSession {
     this.replayAll = this.renderer !== renderer && !credential
     if (this.replayAll) this.rendered = 0
     this.renderer = renderer
-    this.user = user
     this.credential = credential
     this.target = target
     this.finished = false
@@ -273,13 +255,6 @@ export class TerminalSession {
     this.handle = null
     this.rendered = 0
     this.phase = 'closed'
-  }
-
-  /// Answers an outstanding keyboard-interactive prompt.
-  answer(answers: string[]) {
-    this.prompts = []
-    this.phase = 'authenticating'
-    this.send({ type: 'answer', answers })
   }
 
   resize(cols: number, rows: number) {
@@ -360,7 +335,6 @@ export class TerminalSession {
         this.phase = 'authenticating'
         this.send({
           type: 'open',
-          user: this.user,
           auth: this.credential,
           ...(this.target ? { target: this.target } : {}),
           cols: this.renderer?.cols ?? 80,
@@ -401,17 +375,11 @@ export class TerminalSession {
         // replay it moves forward past output nobody will ever see.
         this.rendered = msg.since ?? 0
         this.saveStored()
-        this.prompts = []
         this.error = null
         this.errorCode = null
         this.issueCode = null
         this.exitStatus = null
         this.phase = 'running'
-        break
-      case 'prompt':
-        this.instructions = msg.instructions ?? ''
-        this.prompts = msg.prompts ?? []
-        this.phase = 'prompting'
         break
       case 'error':
         this.onError(msg)
@@ -457,12 +425,6 @@ export class TerminalSession {
       this.phase = 'closed'
     }
     this.error = msg.message ?? 'Terminal error'
-    if (msg.code === 'auth_failed' || msg.code === 'bad_key') {
-      // Recoverable by re-entering credentials rather than by reconnecting
-      this.credential = null
-      this.finished = true
-      this.phase = 'idle'
-    }
   }
 
   private onOutput(data: Uint8Array, generation: number) {

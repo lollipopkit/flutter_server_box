@@ -506,7 +506,7 @@ async fn a_watch_tokens_capabilities_grant_nothing() {
         .unwrap();
     let body: serde_json::Value = resp.json().await.unwrap();
     assert!(body.get("me").is_none(), "{body}");
-    for grant in ["shell", "ssh_terminal", "files", "connect", "listen"] {
+    for grant in ["shell", "files", "connect", "listen", "virt"] {
         assert_eq!(body["grants"][grant]["ok"], false, "{grant}");
         assert_eq!(body["grants"][grant]["why"], "not_granted", "{grant}");
     }

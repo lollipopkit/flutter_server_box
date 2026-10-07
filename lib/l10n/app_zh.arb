@@ -1428,7 +1428,6 @@
   "monitorRoleNameRule": "小写字母、数字、- 和 _，最多 32 个字符",
   "monitorGrantShell": "Shell 和命令",
   "monitorGrantShellTip": "终端、进程、服务、容器、代码片段、电源 —— 以 agent 的系统账号运行",
-  "monitorGrantSshTerminal": "面板 SSH 终端",
   "monitorGrantVirt": "虚拟化",
   "monitorGrantVirtTip": "agent 网页面板中连接的 Proxmox VE、libvirt 和 BMC",
   "monitorGrantFiles": "文件",

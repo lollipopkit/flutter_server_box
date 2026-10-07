@@ -505,7 +505,9 @@ async fn saving_a_role_without_virt_keeps_what_it_had() {
     assert_eq!((status, &body["grants"]["virt"]), (200, &json!(true)), "{body}");
 
     // What an app from before `virt` sends: every grant it knows, written out.
-    let old_client = json!({ "shell": false, "ssh_terminal": false, "files": { "mode": "read" }, "connect": null, "listen": null });
+    // `ssh_terminal` is a grant that no longer exists; it is dropped, not
+    // refused (TODO in `admin::parse_role`).
+    let old_client = json!({ "shell": false, "ssh_terminal": true, "files": { "mode": "read" }, "connect": null, "listen": null });
     let (status, body) = call(&srv, "admin", Method::PUT, "/api/v1/roles/viewer", put(old_client)).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["grants"]["virt"], true);
@@ -572,7 +574,7 @@ async fn the_panels_legacy_switch_takes_shell_connect_and_listen_from_every_role
     }
     // What it does not cover stays.
     let admin = roles.as_array().unwrap().iter().find(|r| r["name"] == "admin").unwrap();
-    assert_eq!(admin["grants"]["ssh_terminal"], true);
+    assert_eq!(admin["grants"]["ssh_terminal"], Value::Null, "no such grant");
     assert_eq!(admin["grants"]["files"]["mode"], "write");
     // And the effect is immediate.
     let (status, _) = call(&srv, "admin", Method::POST, "/api/v1/exec", Some(json!({ "cmd": "true" }))).await;
@@ -744,14 +746,14 @@ async fn a_password_changed_behind_the_agents_back_ends_its_terminals_at_the_nex
     // open terminal stays until something next sweeps the sessions. That sweep
     // must not keep it just because the role still grants a shell.
     use server_box_monitor::api::authz::{caller_named, revoke_lost};
-    use server_box_monitor::api::ws::session::{Session, SessionAuth};
+    use server_box_monitor::api::ws::session::Session;
     use server_box_monitor::core::permissions::Grants;
     use server_box_monitor::db::accounts;
 
     let state = common::upgraded_state(Config::default()).await;
     common::set_grants(&state.db, "admin", &Grants::all()).await;
     let since = caller_named(&state, "admin").await.unwrap().since;
-    let (mut session, _input) = Session::new("admin", "admin", SessionAuth::Local, 1024, 8);
+    let (mut session, _input) = Session::new("admin", "admin", 1024, 8);
     session.since = since;
     state.sessions.insert(session).unwrap().unwrap();
 

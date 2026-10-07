@@ -64,7 +64,6 @@ const caps = (features: string[]): Capabilities =>
     features,
     grants: {
       shell: { ok: true },
-      ssh_terminal: { ok: false },
       files: { ok: false },
       connect: { ok: false },
       listen: { ok: false },

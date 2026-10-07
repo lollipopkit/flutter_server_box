@@ -1452,10 +1452,6 @@ type RootTranslation = {
 	 */
 	terminalDisconnect: string
 	/**
-	 * T​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​r​o​l​e​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​e​ ​s​h​e​l​l​.
-	 */
-	terminalNeedsShell: string
-	/**
 	 * S​e​s​s​i​o​n​ ​e​n​d​e​d
 	 */
 	terminalEnded: string
@@ -1492,7 +1488,7 @@ type RootTranslation = {
 	 */
 	terminalPasswordlessNoticeTitle: string
 	/**
-	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​a​ ​s​h​e​l​l​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​K​e​e​p​ ​i​t​ ​i​f​ ​t​h​a​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​w​a​n​t​,​ ​o​r​ ​t​u​r​n​ ​i​t​ ​o​f​f​ ​a​n​d​ ​s​i​g​n​ ​i​n​ ​w​i​t​h​ ​a​n​ ​S​S​H​ ​a​c​c​o​u​n​t​ ​i​n​s​t​e​a​d​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​b​a​c​k​ ​o​n​ ​l​a​t​e​r​ ​m​e​a​n​s​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​ ​f​i​l​e​.
+	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​a​ ​s​h​e​l​l​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​K​e​e​p​ ​i​t​ ​i​f​ ​t​h​a​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​w​a​n​t​,​ ​o​r​ ​t​u​r​n​ ​i​t​ ​o​f​f​,​ ​w​h​i​c​h​ ​l​e​a​v​e​s​ ​n​o​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​b​a​c​k​ ​o​n​ ​l​a​t​e​r​ ​m​e​a​n​s​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​ ​f​i​l​e​.
 	 */
 	terminalPasswordlessNoticeBody: string
 	/**
@@ -1913,14 +1909,6 @@ type RootTranslation = {
 	 * R​u​n​ ​c​o​m​m​a​n​d​s​ ​a​n​d​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​.​ ​W​h​o​e​v​e​r​ ​h​a​s​ ​t​h​i​s​ ​c​a​n​ ​d​o​ ​e​v​e​r​y​t​h​i​n​g​ ​b​e​l​o​w​ ​a​s​ ​w​e​l​l​.
 	 */
 	grantShellNote: string
-	/**
-	 * S​S​H​ ​t​e​r​m​i​n​a​l
-	 */
-	grantSshTerminal: string
-	/**
-	 * T​h​e​ ​p​a​n​e​l​’​s​ ​t​e​r​m​i​n​a​l​ ​t​h​a​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​s​s​h​d​ ​w​i​t​h​ ​a​n​ ​S​S​H​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​t​h​a​t​ ​a​c​c​o​u​n​t​’​s​ ​r​i​g​h​t​s​.
-	 */
-	grantSshTerminalNote: string
 	/**
 	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
 	 */
@@ -7955,10 +7943,6 @@ export type TranslationFunctions = {
 	 */
 	terminalDisconnect: () => LocalizedString
 	/**
-	 * This account's role does not include the shell.
-	 */
-	terminalNeedsShell: () => LocalizedString
-	/**
 	 * Session ended
 	 */
 	terminalEnded: () => LocalizedString
@@ -7995,7 +7979,7 @@ export type TranslationFunctions = {
 	 */
 	terminalPasswordlessNoticeTitle: () => LocalizedString
 	/**
-	 * Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off and sign in with an SSH account instead. Turning it back on later means editing the agent's config file.
+	 * Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off, which leaves no terminal here. Turning it back on later means editing the agent's config file.
 	 */
 	terminalPasswordlessNoticeBody: () => LocalizedString
 	/**
@@ -8410,14 +8394,6 @@ export type TranslationFunctions = {
 	 * Run commands and open a terminal as the agent’s own account, with no SSH credentials. Whoever has this can do everything below as well.
 	 */
 	grantShellNote: () => LocalizedString
-	/**
-	 * SSH terminal
-	 */
-	grantSshTerminal: () => LocalizedString
-	/**
-	 * The panel’s terminal that signs in to sshd with an SSH account, with that account’s rights.
-	 */
-	grantSshTerminalNote: () => LocalizedString
 	/**
 	 * Virtualization
 	 */

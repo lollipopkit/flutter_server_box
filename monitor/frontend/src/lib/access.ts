@@ -42,36 +42,20 @@ export function isAdmin(caps: Capabilities | undefined): boolean | undefined {
 }
 
 export interface TerminalAccess {
-  /// Some terminal can be opened: through sshd, or as the agent's account.
+  /// A shell as the agent's account can be opened: the `shell` grant.
   available: boolean
-  /// A shell straight from the panel session, with no SSH credentials.
-  direct: boolean
-  /// The terminal that signs in to sshd with an SSH account.
-  ssh: boolean
-  /// Why neither is there, on an agent with roles.
+  /// Why not, on an agent with roles.
   why?: GrantWhy
 }
 
-/// The terminal page's question.
-///
-/// An agent before roles: `terminal` is the gate for both kinds, and an
-/// agent that says nothing about it is not read as a refusal — the agent
-/// decides in the end.
+/// The terminal page's question. An agent before roles answered it with
+/// `full_access` (its terminal switch alone was the SSH terminal, which is
+/// gone); one that says nothing is not read as a refusal — the agent decides
+/// in the end.
 export function terminalAccess(caps: Capabilities | undefined): TerminalAccess {
   const g = caps?.grants
-  if (!g) {
-    const available = caps?.remote_access?.terminal !== false
-    return { available, direct: caps?.remote_access?.full_access === true, ssh: available }
-  }
-  const available = g.shell.ok || g.ssh_terminal.ok
-  return {
-    available,
-    direct: g.shell.ok,
-    ssh: g.ssh_terminal.ok,
-    // The SSH terminal's reason first: it is the one that does not hand out a
-    // shell, so it is what someone without a grant would be offered.
-    why: available ? undefined : (g.ssh_terminal.why ?? g.shell.why),
-  }
+  if (!g) return { available: caps?.remote_access?.full_access !== false }
+  return { available: g.shell.ok, why: g.shell.ok ? undefined : g.shell.why }
 }
 
 export interface FilesAccess {
@@ -113,8 +97,8 @@ export function dashboardAccess(caps: Capabilities | undefined): {
     const files = caps?.remote_access?.files === true
     return { terminal, files, viewOnly: caps !== undefined && !terminal && !files }
   }
-  const terminal = g.shell.ok || g.ssh_terminal.ok
-  const all: GrantStatus[] = [g.shell, g.ssh_terminal, g.files, g.connect, g.listen]
+  const terminal = g.shell.ok
+  const all: GrantStatus[] = [g.shell, g.files, g.connect, g.listen]
   if (g.virt) all.push(g.virt)
   return { terminal, files: g.files.ok, viewOnly: !all.some((s) => s.ok) }
 }
@@ -131,7 +115,6 @@ export interface RoleDraft {
   admin: boolean
   builtin: boolean
   shell: boolean
-  ssh_terminal: boolean
   files: 'none' | FilesMode
   connect: boolean
   /// One destination per line (commas also separate).
@@ -153,7 +136,6 @@ export function emptyDraft(virtKnown = false): RoleDraft {
     admin: false,
     builtin: false,
     shell: false,
-    ssh_terminal: false,
     files: 'none',
     connect: false,
     connectAllow: '',
@@ -172,7 +154,6 @@ export function draftFromRole(role: Role): RoleDraft {
     admin: role.admin,
     builtin: role.builtin,
     shell: g.shell,
-    ssh_terminal: g.ssh_terminal,
     files: g.files?.mode ?? 'none',
     connect: g.connect !== null,
     connectAllow: (g.connect?.allow ?? []).join('\n'),
@@ -224,7 +205,6 @@ export function roleFromDraft(draft: RoleDraft): Role | { error: DraftError } {
     builtin: draft.builtin,
     grants: {
       shell: draft.shell,
-      ssh_terminal: draft.ssh_terminal,
       files: draft.files === 'none' ? null : { mode: draft.files },
       connect: draft.connect ? { allow } : null,
       listen,
@@ -237,7 +217,6 @@ export function roleFromDraft(draft: RoleDraft): Role | { error: DraftError } {
 export function grantNames(grants: RoleGrants): string[] {
   const out: string[] = []
   if (grants.shell) out.push('shell')
-  if (grants.ssh_terminal) out.push('ssh_terminal')
   if (grants.files) out.push(`files:${grants.files.mode}`)
   if (grants.connect) out.push('connect')
   if (grants.listen) out.push('listen')

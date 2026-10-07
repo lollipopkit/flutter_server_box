@@ -1428,7 +1428,6 @@
   "monitorRoleNameRule": "Малі літери, цифри, - і _, до 32 символів",
   "monitorGrantShell": "Shell і команди",
   "monitorGrantShellTip": "Термінал, процеси, служби, контейнери, сніпети, живлення — від облікового запису agent",
-  "monitorGrantSshTerminal": "Термінал панелі через SSH",
   "monitorGrantVirt": "Віртуалізація",
   "monitorGrantVirtTip": "Proxmox VE, libvirt і BMC, до яких підключається агент, у його вебпанелі",
   "monitorGrantFiles": "Файли",

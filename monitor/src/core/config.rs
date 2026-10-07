@@ -19,7 +19,7 @@ pub struct Config {
     pub jwt_secret: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<Vec<PushConfig>>,
-    /// WebSocket access to the local sshd — off unless present and enabled.
+    /// The machine side of remote access: sshd, file roots, limits.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
     #[serde(skip_serializing_if = "Option::is_none")]

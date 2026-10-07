@@ -352,6 +352,26 @@ pub async fn list_roles(req: HttpRequest, state: web::types::State<Arc<AppState>
     Ok(HttpResponse::Ok().json(&accounts::roles(&state.db).await?))
 }
 
+/// [body] as a [`RoleBody`], with grants that no longer exist dropped from
+/// it first.
+///
+/// TODO: remove once no supported app sends `ssh_terminal` (the app's role
+/// editor wrote it out with every save until the SSH terminal was removed
+/// from the agent, migration 023); `Grants` refuses it, so without this every
+/// role save from such an app would fail.
+fn parse_role(
+    mut body: web::types::Json<serde_json::Value>,
+) -> std::result::Result<RoleBody, HttpResponse> {
+    if let Some(grants) = body
+        .get_mut("role")
+        .and_then(|role| role.get_mut("grants"))
+        .and_then(|grants| grants.as_object_mut())
+    {
+        grants.remove("ssh_terminal");
+    }
+    parse(body)
+}
+
 #[derive(Deserialize)]
 pub struct RoleBody {
     role: Role,
@@ -367,7 +387,7 @@ pub async fn create_role(
     let RoleBody {
         mut role,
         current_password,
-    } = require!(parse(body));
+    } = require!(parse_role(body));
     require!(reauth(&req, &state, &caller, current_password.as_deref()).await);
     if !valid_role_name(&role.name) {
         return Ok(bad_request("A role name is 1–32 of a-z, 0-9, '_' or '-'"));
@@ -412,7 +432,7 @@ pub async fn update_role(
     let RoleBody {
         mut role,
         current_password,
-    } = require!(parse(body));
+    } = require!(parse_role(body));
     require!(reauth(&req, &state, &caller, current_password.as_deref()).await);
     let Some(stored) = accounts::role(&state.db, &name).await? else {
         return Ok(not_found("No such role"));
