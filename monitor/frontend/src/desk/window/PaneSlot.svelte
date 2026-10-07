@@ -68,6 +68,9 @@
       get count() {
         return host.count
       },
+      get tabs() {
+        return host.layout.tabs.length
+      },
     },
   }
   setContext(WINDOW, handle)

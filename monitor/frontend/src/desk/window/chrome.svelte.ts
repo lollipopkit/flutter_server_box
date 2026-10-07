@@ -26,6 +26,8 @@ export interface ToolbarChrome {
   tabs?: Snippet
   /// Instead of the title (and subtitle): a path, a breadcrumb.
   heading?: Snippet
+  /// The heading takes the bar's free width (a window's tabs).
+  headingFill?: boolean
   /// A solid bar running to the window's edge, never glass: for a view whose
   /// table header sits right under it.
   flush?: boolean

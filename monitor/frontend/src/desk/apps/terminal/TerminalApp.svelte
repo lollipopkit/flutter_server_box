@@ -6,7 +6,7 @@
   /// xterm.js is loaded on demand; most visits never open a terminal.
 
   import { onDestroy, onMount, tick, untrack } from 'svelte'
-  import { Button, Card, Dialog, Icon, IconButton, Input, Spinner, StatusBar } from '../../lk'
+  import { Button, Card, Dialog, Icon, Input, Spinner, StatusBar } from '../../lk'
   import { AppToolbar, type MenuEntry, useIntents, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { isAdmin, machineAccess, terminalAccess, whyText } from '../../../lib/access'
@@ -396,23 +396,36 @@
 
 <AppToolbar>
   {#snippet actions()}
-    {#if fullAccess}
-      <!-- A tab, as a terminal's + opens; a new window where there are none. -->
-      {#if win.panes}
-        <IconButton icon="add" label={$LL.deskNewTab()} onclick={() => win.panes?.newTab()} />
-      {:else}
-        <IconButton icon="add" label={$LL.deskNewWindow()} disabled={!win.canOpenWindow} onclick={() => win.openWindow()} />
-      {/if}
+    <!-- The design system's terminal bar: + alone in a capsule (beside the
+         tabs, which bring their own, once there are several), then the
+         session's tools in another. -->
+    {#if fullAccess && (win.panes?.tabs ?? 1) <= 1}
+      <div class="lk-tbgroup" role="group">
+        {#if win.panes}
+          {@render tool('add', $LL.deskNewTab(), () => win.panes?.newTab())}
+        {:else}
+          {@render tool('add', $LL.deskNewWindow(), () => win.openWindow(), !win.canOpenWindow)}
+        {/if}
+      </div>
     {/if}
-    {#if fullAccess && tmuxOffered}
-      <div class="relative">
-        <IconButton
-          icon="view_column"
-          label={$LL.terminalTmuxSessions()}
-          active={tmuxOpen}
+    {#if fullAccess}
+    <div class="lk-tbgroup" role="group">
+    {#if win.panes}
+      {@render tool('vertical_split', $LL.deskSplitRight(), () => win.panes?.split('right'))}
+    {/if}
+    {#if tmuxOffered}
+      <div class="relative flex">
+        <button
+          type="button"
+          class="lk-tbgroup__btn"
+          class:lk-tbgroup__btn--on={tmuxOpen}
+          title={$LL.terminalTmuxSessions()}
+          aria-label={$LL.terminalTmuxSessions()}
           aria-expanded={tmuxOpen}
           onclick={toggleTmux}
-        />
+        >
+          <Icon name="view_column" size={17} fill={tmuxOpen} />
+        </button>
         {#if tmuxOpen}
           <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
           <div class="fixed inset-0 z-40" onclick={() => (tmuxOpen = false)}></div>
@@ -478,13 +491,19 @@
         {/if}
       </div>
     {/if}
-    {#if session.phase === 'running'}
-      <!-- Unplug rather than a power symbol: next to a server's terminal,
-           "power off" reads as an offer to shut the machine down. -->
-      <IconButton icon="link_off" label={$LL.terminalDisconnect()} onclick={disconnect} />
+    <!-- Unplug rather than a power symbol: next to a server's terminal,
+         "power off" reads as an offer to shut the machine down. -->
+    {@render tool('link_off', $LL.terminalDisconnect(), disconnect, session.phase !== 'running')}
+    </div>
     {/if}
   {/snippet}
 </AppToolbar>
+
+{#snippet tool(icon: string, label: string, onclick: () => void, disabled = false)}
+  <button type="button" class="lk-tbgroup__btn" title={label} aria-label={label} {disabled} {onclick}>
+    <Icon name={icon} size={17} />
+  </button>
+{/snippet}
 
 <main
   class="relative flex min-h-0 flex-1 flex-col text-(--text-primary)"

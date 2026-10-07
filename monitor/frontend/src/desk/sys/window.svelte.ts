@@ -82,6 +82,8 @@ export interface PaneControls {
   close(): void
   /// The panes in this window, every tab's.
   readonly count: number
+  /// The tabs in this window (more than one: they are its title bar).
+  readonly tabs: number
 }
 
 export interface AppHandler {

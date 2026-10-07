@@ -33,9 +33,30 @@
   // ---- the window shows the focused pane --------------------------------
 
   if (winChrome) {
+    // With several tabs the tabs are the title (the design system's terminal
+    // tabs): the focused pane's tools stay, its title gives way to them.
     $effect(() => {
       const toolbar = host.focusedChrome?.toolbar
-      if (toolbar) return winChrome.pushToolbar(toolbar)
+      if (!multiTab) {
+        if (toolbar) return winChrome.pushToolbar(toolbar)
+        return
+      }
+      return winChrome.pushToolbar({
+        get actions() {
+          return host.focusedChrome?.toolbar?.actions
+        },
+        get leading() {
+          return host.focusedChrome?.toolbar?.leading
+        },
+        get back() {
+          return host.focusedChrome?.toolbar?.back
+        },
+        get flush() {
+          return host.focusedChrome?.toolbar?.flush
+        },
+        heading: tabsHeading,
+        headingFill: true,
+      })
     })
     $effect(() => {
       const sidebar = host.focusedChrome?.sidebar
@@ -92,6 +113,9 @@
     return out.sort((a, b) => (a.id < b.id ? -1 : 1))
   })
   const lines = $derived(dividers(tab.root))
+
+  /// Each tab is called what its session calls itself, as it is.
+  const tabLabels = $derived(layout.tabs.map((t) => host.tabTitle(t) ?? appTitle))
 
   let area = $state<HTMLDivElement | null>(null)
 
@@ -180,16 +204,10 @@
   })
 </script>
 
-<div class="desk-panes absolute inset-0" data-pane-host>
-  {#if multiTab}
-    <div
-      bind:this={strip}
-      class="desk-tabstrip"
-      role="tablist"
-      aria-label={appTitle}
-      data-pane-strip
-    >
-      {#each layout.tabs as t (t.id)}
+{#snippet tabsHeading()}
+  <div class="desk-tabbar">
+    <div bind:this={strip} class="desk-tabs" role="tablist" aria-label={appTitle} data-pane-strip>
+      {#each layout.tabs as t, i (t.id)}
         <div
           role="tab"
           tabindex={t.id === tab.id ? 0 : -1}
@@ -197,6 +215,7 @@
           class="desk-tab"
           class:desk-tab--on={t.id === tab.id}
           class:desk-tab--dragging={tabDrag?.id === t.id && tabDrag?.moved}
+          title={tabLabels[i]}
           style:touch-action="none"
           onpointerdown={(e) => onTabDown(e, t.id)}
           onpointermove={onTabMove}
@@ -206,26 +225,23 @@
             if (e.key === 'Enter' || e.key === ' ') host.showTab(t.id)
           }}
         >
-          <span class="desk-tab__title">{host.tabTitle(t) ?? appTitle}</span>
-          <button
-            type="button"
-            class="desk-tab__close"
-            aria-label={$LL.deskCloseTab()}
-            onclick={() => host.closeTab(t.id)}
-          >
-            <Icon name="close" size={13} />
+          <button type="button" class="desk-tab__close" aria-label={$LL.deskCloseTab()} onclick={() => host.closeTab(t.id)}>
+            <Icon name="close" size={14} />
           </button>
+          <span class="desk-tab__title">{tabLabels[i]}</span>
         </div>
       {/each}
-      <IconButton icon="add" size="sm" label={$LL.deskNewTab()} onclick={() => host.newTab()} />
     </div>
-  {/if}
+    <IconButton icon="add" label={$LL.deskNewTab()} onclick={() => host.newTab()} />
+  </div>
+{/snippet}
+
+<div class="desk-panes absolute inset-0" data-pane-host>
 
   <div
     bind:this={area}
     class="desk-panes__area"
-    class:desk-panes__area--bar={underBar && !multiTab}
-    class:desk-panes__area--tabs={multiTab}
+    class:desk-panes__area--bar={underBar}
   >
     {#each placed as p (p.id)}
       {@const shown = p.tabId === tab.id}

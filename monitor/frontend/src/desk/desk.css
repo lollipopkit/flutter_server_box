@@ -115,78 +115,83 @@
 /* Tabs and split panes inside one window (window/PaneHost.svelte), in the
    design system's terms: the tab on show is the segmented thumb (raised
    white), a split is one hairline, a pane without the focus is dimmed. */
-.desk-tabstrip {
-  position: absolute;
-  top: var(--titlebar-height);
-  left: 0;
-  right: 0;
-  z-index: 4;
+.desk-tabbar {
   display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-9);
+}
+.desk-tabs {
+  display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: var(--space-3);
-  height: 34px;
-  padding: 0 var(--space-9) var(--space-3);
-  box-sizing: border-box;
-  background: var(--surface-window);
-  box-shadow: 0 0.5px 0 var(--border-hairline);
+  padding: var(--space-3);
+  border-radius: 12px;
+  background: var(--surface-control);
 }
 .desk-tab {
   position: relative;
   display: flex;
   flex: 1 1 0;
-  min-width: 0;
+  min-width: 84px;
   max-width: 240px;
   height: 26px;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-21);
-  border-radius: var(--radius-sm);
+  gap: var(--space-5);
+  padding: 0 24px;
+  border-radius: var(--radius-control);
   color: var(--text-secondary);
-  font: var(--weight-semibold) var(--text-12) / 1 var(--font-ui);
+  font: 500 12px / 1 var(--font-ui);
   cursor: default;
   user-select: none;
-  transition: background-color var(--dur-fast), color var(--dur-fast);
+  transition: background-color 120ms, color 120ms;
 }
 .desk-tab:hover {
   background: var(--fill-hover);
-  color: var(--text-primary);
 }
 .desk-tab--on,
 .desk-tab--on:hover {
   background: var(--surface-raised);
   color: var(--text-primary);
-  box-shadow: var(--shadow-control), 0 0 0 0.5px var(--border-hairline);
+  font-weight: 600;
+  box-shadow: var(--shadow-control), 0 0 0 0.5px var(--border-strong);
 }
 .desk-tab--dragging {
   opacity: 0.7;
 }
 .desk-tab__title {
   overflow: hidden;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .desk-tab__close {
   position: absolute;
-  left: var(--space-5);
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
+  left: 5px;
+  display: flex;
+  width: 17px;
+  height: 17px;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border: 0;
   border-radius: var(--radius-xs);
   background: transparent;
-  color: var(--text-tertiary);
+  color: inherit;
   opacity: 0;
-  transition: opacity var(--dur-fast);
+  transition: opacity 120ms;
 }
 .desk-tab:hover .desk-tab__close,
-.desk-tab--on .desk-tab__close {
+.desk-tab__close:focus-visible {
   opacity: 1;
 }
 .desk-tab__close:hover {
-  background: var(--fill-hover);
-  color: var(--text-primary);
+  background: var(--fill-press);
 }
 .desk-panes__area {
   position: absolute;
@@ -195,9 +200,6 @@
 .desk-panes__area--bar {
   top: var(--titlebar-height);
   box-shadow: inset 0 0.5px 0 var(--border-hairline);
-}
-.desk-panes__area--tabs {
-  top: calc(var(--titlebar-height) + 34px);
 }
 .desk-pane {
   position: absolute;

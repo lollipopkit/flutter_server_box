@@ -398,7 +398,7 @@
   {#if toolbar?.back}<IconButton icon="chevron_left" label={$LL.back()} size="sm" onclick={toolbar.back} />{/if}
   {@render toolbar?.leading?.()}
   {#if toolbar?.heading}
-    <div class="flex min-w-0 items-center" data-no-drag>{@render toolbar.heading()}</div>
+    <div class="flex min-w-0 items-center" class:flex-1={toolbar.headingFill} data-no-drag>{@render toolbar.heading()}</div>
   {:else}
     <!-- One line: the title, then what it is about, which gives way first. -->
     <div class="lk-window__heading">
