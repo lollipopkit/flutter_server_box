@@ -2,6 +2,7 @@
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { useDesk } from '../deskState.svelte'
   import type { DeskNotification } from '../deskApi'
+  import { fmtDate } from '../../lib/format'
   import LkNotificationCenter, { type CenterNotice } from '../lk/NotificationCenter.svelte'
 
   const desk = useDesk()
@@ -15,10 +16,7 @@
   function when(n: DeskNotification) {
     const at = new Date(n.created_at)
     const today = new Date().toDateString() === at.toDateString()
-    return new Intl.DateTimeFormat(
-      $locale,
-      today ? { hour: '2-digit', minute: '2-digit' } : { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' },
-    ).format(at)
+    return fmtDate(at, today ? { hour: '2-digit', minute: '2-digit' } : { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }, $locale)
   }
 
   const notices = $derived(

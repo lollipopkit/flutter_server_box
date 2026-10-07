@@ -11,7 +11,7 @@
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { health } from '../../../lib/health.svelte'
   import { displayName, servers } from '../../../lib/servers.svelte'
-  import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../../../lib/format'
+  import { DATE_TIME, fmtBytes, fmtBytesPerSec, fmtDate, fmtPercent } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { Poller } from '../../../lib/poller.svelte'
   import { fly } from 'svelte/transition'
@@ -182,7 +182,7 @@
   ])
   const xLabels = $derived.by((): [string, string, string] => {
     const fmt = (t: string | undefined) =>
-      t ? new Intl.DateTimeFormat(undefined, rangeMinutes > 1440 ? { month: 'short', day: 'numeric' } : { hour: '2-digit', minute: '2-digit' }).format(new Date(t)) : ''
+      t ? fmtDate(new Date(t), rangeMinutes > 1440 ? { month: 'short', day: 'numeric' } : { hour: '2-digit', minute: '2-digit' }) : ''
     return [fmt(historyLabels[0]), fmt(historyLabels[Math.floor(historyLabels.length / 2)]), fmt(historyLabels.at(-1))]
   })
 
@@ -584,7 +584,7 @@
                 <div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.connections()}</dt><dd class="lk-num">{m.conn.max_conn === -1 ? $LL.unlimited() : m.conn.max_conn}</dd></div>
               {/if}
               {#if m.swap.total > 0}<div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.swap()}</dt><dd class="lk-num text-right">{fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}</dd></div>{/if}
-              <div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.lastUpdated()}</dt><dd class="lk-num text-right text-[12px]">{new Date(m.timestamp).toLocaleString()}</dd></div>
+              <div class="flex justify-between gap-[9px] py-[7px]"><dt class="text-(--text-secondary)">{$LL.lastUpdated()}</dt><dd class="lk-num text-right text-[12px]">{fmtDate(new Date(m.timestamp), DATE_TIME)}</dd></div>
             </dl>
           </section>
         {/if}

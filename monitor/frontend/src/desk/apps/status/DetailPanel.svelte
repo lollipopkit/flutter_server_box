@@ -2,7 +2,7 @@
   import { Badge, Card, Icon } from '../../lk'
   import LineChart from '../../../components/LineChart.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../../../lib/format'
+  import { DATE_TIME, fmtBytes, fmtBytesPerSec, fmtDate, fmtGpuPower, fmtPercent } from '../../../lib/format'
   import type { DiskDetail, DiskIoMetrics, HistoryPoint, IfaceMetrics, SystemMetrics } from '../../../types'
 
   export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'battery' | 'sensors' | 'smart'
@@ -162,7 +162,7 @@
          system info card would misleadingly look live every poll -->
     <p class="text-[12px] text-(--text-tertiary)">
       {$LL.lastUpdated()}
-      {new Date(m.extended_updated_at).toLocaleString()}
+      {fmtDate(new Date(m.extended_updated_at), DATE_TIME)}
     </p>
   {/if}
 

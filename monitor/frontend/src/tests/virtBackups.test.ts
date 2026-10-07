@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { DATE_TIME, fmtDate } from '../lib/format'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import VirtBackups from '../desk/apps/virt/VirtBackups.svelte'
@@ -385,10 +386,10 @@ describe('the datacenter\'s backup jobs', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /^new job$/i }))
     await fireEvent.click(screen.getByRole('button', { name: /^validate$/i }))
     await waitFor(() => expect(checkBackupSchedule).toHaveBeenCalledWith('02:00'))
-    expect(await screen.findByText(new Date(1_790_086_400 * 1000).toLocaleString())).toBeInTheDocument()
+    expect(await screen.findByText(fmtDate(1_790_086_400 * 1000, DATE_TIME))).toBeInTheDocument()
 
     await fireEvent.input(screen.getByDisplayValue('02:00'), { target: { value: '25:00' } })
-    expect(screen.queryByText(new Date(1_790_086_400 * 1000).toLocaleString())).not.toBeInTheDocument()
+    expect(screen.queryByText(fmtDate(1_790_086_400 * 1000, DATE_TIME))).not.toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^validate$/i }))
     expect(await screen.findByText('PVE does not take this schedule: value \'25:00\' out of range')).toBeInTheDocument()
   })

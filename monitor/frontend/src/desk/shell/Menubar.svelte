@@ -1,7 +1,7 @@
 <script lang="ts">
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { api } from '../../lib/api'
-  import { fmtBytes, fmtPercent } from '../../lib/format'
+  import { fmtBytes, fmtDate, fmtPercent } from '../../lib/format'
   import { Poller } from '../../lib/poller.svelte'
   import { serverNames } from '../../lib/serverNames.svelte'
   import { displayName, servers } from '../../lib/servers.svelte'
@@ -30,7 +30,7 @@
     return () => clearInterval(t)
   })
   const clock = $derived(
-    `${new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(now)}  ${new Intl.DateTimeFormat($locale, { hour: '2-digit', minute: '2-digit' }).format(now)}`,
+    `${new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(now)}  ${fmtDate(now, { hour: '2-digit', minute: '2-digit' }, $locale)}`,
   )
 
   /// The machine's CPU in the bar, read while the desk is in sight. An

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fmtDate } from '../../lib/format'
   import Spinner from '../lk/Spinner.svelte'
   import OsIcon from '../../components/OsIcon.svelte'
   import { LL, locale } from '../../i18n/i18n-svelte'
@@ -40,7 +41,7 @@
     const t = setInterval(() => (now = new Date()), 10_000)
     return () => clearInterval(t)
   })
-  const time = $derived(new Intl.DateTimeFormat($locale, { hour: '2-digit', minute: '2-digit' }).format(now))
+  const time = $derived(fmtDate(now, { hour: '2-digit', minute: '2-digit' }, $locale))
   const date = $derived(new Intl.DateTimeFormat($locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(now))
 
   function name(s: ServerEntry): string {

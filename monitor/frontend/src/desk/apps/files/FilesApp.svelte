@@ -25,7 +25,7 @@
   import { api } from '../../../lib/api'
   import { saveBlob } from '../../../lib/saveBlob'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
-  import { fmtBytes } from '../../../lib/format'
+  import { fmtBytes, fmtDate } from '../../../lib/format'
   import { joinPath, modeText, parentOf, parseMode, sortEntries } from '../../../lib/fsPath'
   import { servers } from '../../../lib/servers.svelte'
   import type { FsEntry } from '../../../types'
@@ -366,7 +366,7 @@
     const at = new Date(entry.modified * 1000)
     // The year only when it is not this one, as a file manager writes it.
     const year = at.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
-    return at.toLocaleString([], { year, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    return fmtDate(at, { year, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   /// The root the current path sits in, deepest first: the sidebar marks it and

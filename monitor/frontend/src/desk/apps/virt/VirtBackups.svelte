@@ -2,7 +2,7 @@
   import { Badge, Button, Card, Checkbox, Icon, Input, Select, SegmentedControl, Spinner } from '../../lk/index'
   import VirtBackupJobForm from './VirtBackupJobForm.svelte'
   import { api } from '../../../lib/api'
-  import { fmtBytes } from '../../../lib/format'
+  import { DATE_TIME, fmtBytes, fmtDate } from '../../../lib/format'
   import {
     BACKUP_COMPRESSIONS,
     BACKUP_MODES,
@@ -238,7 +238,7 @@
   }
 
   function when(seconds: number | null): string {
-    return seconds === null ? '—' : new Date(seconds * 1000).toLocaleString()
+    return seconds === null ? '—' : fmtDate(seconds * 1000, DATE_TIME)
   }
 
   function summary(b: VirtBackup): string {

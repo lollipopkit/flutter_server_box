@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { DATE_TIME, fmtDate } from '../../../lib/format'
   import { Button, Checkbox, Input, SegmentedControl, Select, Spinner } from '../../lk/index'
   import { api } from '../../../lib/api'
   import {
@@ -79,7 +80,7 @@
   }
 
   function when(seconds: number): string {
-    return new Date(seconds * 1000).toLocaleString()
+    return fmtDate(seconds * 1000, DATE_TIME)
   }
 </script>
 

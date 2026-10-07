@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { DATE_TIME, fmtDate } from '../../../lib/format'
   import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '../../lk/index'
   import { api } from '../../../lib/api'
   import { snapshotTree, virtErrorText, virtRequestText } from '../../../lib/virt'
@@ -113,7 +114,7 @@
   const canExternal = $derived(chain !== null && !chain.external_refusal)
 
   function date(seconds: number | null): string {
-    return seconds === null ? '' : new Date(seconds * 1000).toLocaleString()
+    return seconds === null ? '' : fmtDate(seconds * 1000, DATE_TIME)
   }
 </script>
 

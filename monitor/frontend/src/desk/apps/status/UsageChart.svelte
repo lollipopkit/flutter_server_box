@@ -10,6 +10,7 @@
 
 <script lang="ts">
   import { locale } from '../../../i18n/i18n-svelte'
+  import { fmtDate } from '../../../lib/format'
 
   /// A history chart as the design draws it: lines over dashed gridlines, a
   /// scale on the left ([axis]), and a reading of every series under the
@@ -61,7 +62,7 @@
   const hoverTime = $derived(
     hover === null || !times[hover]
       ? ''
-      : new Intl.DateTimeFormat($locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(times[hover])),
+      : fmtDate(new Date(times[hover]), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }, $locale),
   )
 </script>
 

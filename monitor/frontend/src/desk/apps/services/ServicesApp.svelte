@@ -17,7 +17,7 @@
   } from '../../lk'
   import ServiceDetail from './ServiceDetail.svelte'
   import { api } from '../../../lib/api'
-  import { fmtBytes } from '../../../lib/format'
+  import { fmtBytes, fmtDate } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { untrack } from 'svelte'
@@ -245,7 +245,7 @@
   /// guessed at.
   function timeText(millis: number | null): string {
     if (millis === null) return '—'
-    return new Date(millis).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    return fmtDate(millis, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   /// What the selected unit is, at a glance.

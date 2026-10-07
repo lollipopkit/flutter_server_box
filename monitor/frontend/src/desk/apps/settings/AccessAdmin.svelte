@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { DATE_TIME, fmtDate } from '../../../lib/format'
   /// Accounts and roles on this agent, for an administrator.
   ///
   /// Every change goes through one `ReauthDialog`: what is asked for here is
@@ -144,7 +145,7 @@
   }
 
   function when(t: string | null): string {
-    return t ? new Date(t).toLocaleString() : $LL.neverSignedIn()
+    return t ? fmtDate(new Date(t), DATE_TIME) : $LL.neverSignedIn()
   }
 </script>
 
