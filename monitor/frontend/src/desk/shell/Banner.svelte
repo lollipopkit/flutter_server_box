@@ -10,7 +10,7 @@
 {#if banner}
   {#key banner.id}
     <button
-      class="desk-glass-strong absolute right-2 top-[calc(var(--menubar-h)+1rem)] z-[100002] flex w-80 max-w-[calc(100%-1rem)] gap-2.5 rounded-2xl p-3 text-left"
+      class="desk-sheet absolute right-3 top-[calc(var(--menubar-h)+1.25rem)] z-[100002] flex w-80 max-w-[calc(100%-1.5rem)] gap-2.5 rounded-2xl border-warning/50 p-3 text-left"
       transition:fly={{ x: 40, duration: 220 }}
       onclick={() => {
         desk.notifications?.dismissBanner()

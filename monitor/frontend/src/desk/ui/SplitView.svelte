@@ -14,7 +14,7 @@
     width?: number
   }
 
-  const { sidebar, children, width = 14 }: Props = $props()
+  const { sidebar, children, width = 15 }: Props = $props()
   let open = $state(false)
   /// The container's width, which decides whether the sidebar folds (`@3xl`
   /// is 48rem); folded and closed, it is `inert` so the keyboard does not
@@ -33,7 +33,7 @@
 <div class="relative flex h-full min-h-0" bind:this={root}>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
   <aside
-    class="desk-app-sidebar absolute inset-y-0 left-0 z-20 overflow-y-auto p-2 transition-transform @3xl:static @3xl:translate-x-0"
+    class="desk-app-sidebar absolute inset-y-0 left-0 z-20 overflow-y-auto px-2.5 py-3 transition-transform @3xl:static @3xl:translate-x-0"
     class:-translate-x-full={!open}
     style:width="{width}rem"
     aria-label={$LL.deskSidebar()}
@@ -52,7 +52,7 @@
        own below it, so a full-height content never scrolls twice. -->
   <div class="flex min-w-0 flex-1 flex-col">
     <button
-      class="m-2 mb-0 grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-fg hover:bg-soft @3xl:hidden"
+      class="m-2 mb-0 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-fg inset-ring inset-ring-line hover:bg-soft @3xl:hidden"
       aria-label={$LL.deskSidebar()}
       aria-expanded={open}
       onclick={() => (open = !open)}

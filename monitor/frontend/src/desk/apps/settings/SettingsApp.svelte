@@ -3,7 +3,7 @@
   /// after the System Settings the desk imitates. The sections that belong to
   /// this browser come first; the agent's own configuration follows.
 
-  import { CircleUserRound, Image, ServerCog, ShieldCheck, SlidersHorizontal } from '@lucide/svelte'
+  import { CircleUserRound, Image, Monitor, Server, ServerCog, ShieldCheck, SlidersHorizontal } from '@lucide/svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
@@ -42,9 +42,9 @@
   }
 </script>
 
-<SplitView width={14}>
+<SplitView width={16}>
   {#snippet sidebar()}
-    <SourceGroup title={$LL.settingsThisBrowser()}>
+    <SourceGroup title={$LL.settingsThisBrowser()} icon={Monitor} boxed>
       <SourceItem
         label={$LL.settingsGeneral()}
         icon={SlidersHorizontal}
@@ -58,7 +58,7 @@
         onclick={() => show('appearance')}
       />
     </SourceGroup>
-    <SourceGroup title={$LL.settingsThisServer()}>
+    <SourceGroup title={$LL.settingsThisServer()} icon={Server} boxed>
       <SourceItem
         label={$LL.settingsAccount()}
         icon={CircleUserRound}

@@ -17,7 +17,7 @@
 </script>
 
 <button
-  class="desk-app-source flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.8rem]"
+  class="desk-app-source flex w-full items-center gap-2 rounded-[0.625rem] px-2.5 py-1.5 text-left text-[0.8rem]"
   aria-current={selected ? 'true' : undefined}
   {title}
   {onclick}

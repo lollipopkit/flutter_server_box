@@ -80,7 +80,7 @@
 </script>
 
 <nav
-  class="desk-glass absolute inset-x-2 top-2 z-[100000] flex select-none h-(--menubar-h) items-center gap-1 rounded-(--radius-bar) px-1.5 text-[0.8rem]"
+  class="desk-bar absolute inset-x-3 top-2 z-[100000] flex h-(--menubar-h) select-none items-center gap-0.5 rounded-(--radius-bar) px-1.5 text-[0.76rem] tracking-[0.2px]"
   aria-label={$LL.deskMenubar()}
   onpointerdown={(e) => {
     // Its buttons toggle what they open; the desk's own dismissal would
@@ -89,12 +89,12 @@
     desk.menu = null
   }}
 >
-  <button class="desk-hover flex h-7 items-center gap-1.5 px-2 font-semibold" onclick={serverMenu} title={serverLabel}>
-    <Box class="h-4 w-4" strokeWidth={2.2} />
+  <button class="desk-hover flex h-6 items-center gap-1.5 px-2 font-semibold" onclick={serverMenu} title={serverLabel}>
+    <Box class="h-3.5 w-3.5" strokeWidth={2.2} />
     <span class="max-w-40 truncate">{serverLabel}</span>
   </button>
   {#if activeSpec}
-    <button class="desk-hover hidden h-7 items-center px-2 font-semibold sm:flex" onclick={appMenu}>
+    <button class="desk-hover hidden h-6 items-center px-2 font-medium sm:flex" onclick={appMenu}>
       {activeSpec.title($LL)}
     </button>
   {/if}
@@ -108,7 +108,7 @@
     ></span>
   {/if}
   <button
-    class="desk-hover grid h-7 w-7 place-items-center"
+    class="desk-hover grid h-6 w-7 place-items-center"
     aria-label={$LL.deskSearch()}
     title="{$LL.deskSearch()} (⌘K)"
     onclick={(e) => {
@@ -117,10 +117,10 @@
       desk.spotlight = !desk.spotlight
     }}
   >
-    <Search class="h-4 w-4" />
+    <Search class="h-3.5 w-3.5" />
   </button>
   <button
-    class="desk-hover grid h-7 w-7 place-items-center"
+    class="desk-hover grid h-6 w-7 place-items-center"
     aria-label={$LL.deskControlCenter()}
     aria-expanded={desk.panel === 'control'}
     onclick={(e) => {
@@ -128,11 +128,11 @@
       desk.togglePanel('control')
     }}
   >
-    <SlidersHorizontal class="h-4 w-4" />
+    <SlidersHorizontal class="h-3.5 w-3.5" />
   </button>
   {#if desk.storage?.remote}
     <button
-      class="desk-hover relative grid h-7 w-7 place-items-center"
+      class="desk-hover relative grid h-6 w-7 place-items-center"
       aria-label={$LL.deskNotifications()}
       aria-expanded={desk.panel === 'notifications'}
       onclick={(e) => {
@@ -140,7 +140,7 @@
         desk.togglePanel('notifications')
       }}
     >
-      <Bell class="h-4 w-4" />
+      <Bell class="h-3.5 w-3.5" />
       {#if unread > 0}
         <span
           class="absolute right-0.5 top-0.5 min-w-3.5 rounded-full bg-danger px-1 text-center text-[0.6rem] font-bold leading-3.5 text-white"
@@ -151,7 +151,7 @@
     </button>
   {/if}
   <button
-    class="desk-hover h-7 whitespace-nowrap px-2 tabular-nums"
+    class="desk-hover h-6 whitespace-nowrap px-2 font-medium tabular-nums"
     aria-expanded={desk.panel === 'calendar'}
     onclick={(e) => {
       e.stopPropagation()

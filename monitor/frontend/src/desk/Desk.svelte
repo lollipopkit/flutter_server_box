@@ -6,6 +6,7 @@
   import type { ServerEntry } from '../lib/servers.svelte'
   import { app } from './apps'
   import { Desk, provideDesk, type MenuItem } from './deskState.svelte'
+  import { ACCENTS } from './prefs.svelte'
   import Banner from './shell/Banner.svelte'
   import CalendarPanel from './shell/CalendarPanel.svelte'
   import ContextMenu from './shell/ContextMenu.svelte'
@@ -61,7 +62,7 @@
     desk.session?.schedule()
   })
 
-  const accent = $derived(desk.prefs?.value.accent ?? '#2563eb')
+  const accent = $derived(desk.prefs?.value.accent ?? ACCENTS[0])
 
   function onkeydown(e: KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -145,8 +146,9 @@
   {#if desk.panel === 'launchpad'}
     <Launchpad />
   {:else if desk.panel}
+    <!-- Over the dock's right, as ClawBox opens its panels. -->
     <div
-      class="desk-glass desk-pop absolute right-2 top-[calc(var(--menubar-h)+0.75rem)] z-[100001] w-[min(22rem,calc(100%-1rem))] rounded-(--radius-panel)"
+      class="desk-sheet desk-pop absolute bottom-(--dock-reserve) right-3 z-[100001] flex max-h-[calc(100%-var(--dock-reserve)-var(--menubar-h)-1.5rem)] w-[min(26.875rem,calc(100%-1.5rem))] flex-col overflow-y-auto rounded-(--radius-panel) p-6"
       role="dialog"
       tabindex="-1"
       onpointerdown={(e) => e.stopPropagation()}

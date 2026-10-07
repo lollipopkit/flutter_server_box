@@ -2,11 +2,15 @@
   import { ChevronLeft, ChevronRight } from '@lucide/svelte'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { monthGrid } from '../calendar'
+  import PanelHead from './PanelHead.svelte'
 
   const today = new Date()
   let shown = $state(new Date(today.getFullYear(), today.getMonth(), 1))
   const weeks = $derived(monthGrid(shown.getFullYear(), shown.getMonth()))
   const title = $derived(new Intl.DateTimeFormat($locale, { year: 'numeric', month: 'long' }).format(shown))
+  const todayLabel = $derived(
+    new Intl.DateTimeFormat($locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(today),
+  )
   const weekdays = $derived(
     // 2023-01-02 was a Monday.
     Array.from({ length: 7 }, (_, i) =>
@@ -23,30 +27,40 @@
   }
 </script>
 
-<div class="p-3">
-  <div class="mb-2 flex items-center justify-between">
-    <span class="text-sm font-semibold">{title}</span>
-    <div class="flex">
-      <button class="desk-hover grid h-6 w-6 place-items-center" aria-label={$LL.deskPrevious()} onclick={() => step(-1)}>
+<PanelHead eyebrow={$LL.deskCalendar()} {title} subtitle={todayLabel}>
+  {#snippet aside()}
+    <div class="flex gap-1">
+      <button class="desk-card grid h-7 w-7 place-items-center" aria-label={$LL.deskPrevious()} onclick={() => step(-1)}>
         <ChevronLeft class="h-4 w-4" />
       </button>
-      <button class="desk-hover grid h-6 w-6 place-items-center" aria-label={$LL.deskNext()} onclick={() => step(1)}>
+      <button class="desk-card grid h-7 w-7 place-items-center" aria-label={$LL.deskNext()} onclick={() => step(1)}>
         <ChevronRight class="h-4 w-4" />
       </button>
     </div>
-  </div>
-  <div class="grid grid-cols-7 gap-0.5 text-center text-xs">
-    {#each weekdays as d, i (i)}
-      <span class="desk-muted py-1 font-semibold">{d}</span>
-    {/each}
-    {#each weeks.flat() as day (day.date.toISOString())}
-      <span
-        class="grid h-7 place-items-center rounded-full tabular-nums"
-        class:opacity-35={!day.inMonth}
-        class:desk-selected={isToday(day.date)}
-      >
-        {day.date.getDate()}
-      </span>
-    {/each}
-  </div>
+  {/snippet}
+</PanelHead>
+
+<div class="grid grid-cols-7 gap-1.5 text-center text-[0.8rem]">
+  {#each weekdays as d, i (i)}
+    <span class="desk-muted pb-0.5 text-xs font-semibold">{d}</span>
+  {/each}
+  {#each weeks.flat() as day (day.date.toISOString())}
+    <span
+      class="grid h-10 place-items-center rounded-[0.6rem] border font-semibold tabular-nums"
+      class:day-out={!day.inMonth}
+      class:border-line={!isToday(day.date)}
+      class:desk-chosen={isToday(day.date)}
+      class:border-transparent={isToday(day.date)}
+      aria-current={isToday(day.date) ? 'date' : undefined}
+    >
+      {day.date.getDate()}
+    </span>
+  {/each}
 </div>
+
+<style>
+  .day-out {
+    background: hsl(var(--ink) / 0.06);
+    color: hsl(var(--ink) / 0.4);
+  }
+</style>

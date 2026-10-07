@@ -163,7 +163,7 @@
   <!-- The title bar is a drag handle; its buttons are the keyboard's way. -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <header
-    class="relative grid h-10 shrink-0 select-none grid-cols-[5rem_1fr_5rem] items-center px-3"
+    class="relative grid h-11 shrink-0 select-none grid-cols-[6rem_1fr_6rem] items-center px-3"
     style:touch-action="none"
     onpointerdown={onTitlePointerDown}
     onpointermove={onTitlePointerMove}
@@ -173,7 +173,7 @@
       if (!(e.target as HTMLElement).closest('button')) toggleMaximize()
     }}
   >
-    <div class="desk-traffic-group flex items-center gap-2" data-no-drag>
+    <div class="desk-traffic-group flex w-fit items-center gap-2" data-no-drag>
       <button
         class="desk-traffic bg-[#ff5f57]"
         aria-label={$LL.deskClose()}
@@ -201,7 +201,7 @@
         </button>
       {/if}
     </div>
-    <h2 class="truncate text-center text-[0.8rem] font-semibold desk-muted" class:!opacity-100={active}>
+    <h2 class="truncate text-center text-xs font-semibold tracking-[0.01em]" class:desk-muted={!active}>
       {title}
     </h2>
     <div></div>

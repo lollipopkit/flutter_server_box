@@ -116,8 +116,8 @@
       }}
     >
       {#if icon.kind === 'path'}
-        <span class="desk-tile h-12 w-12" style:background="linear-gradient(180deg,#7dd3fc,#0284c7)">
-          <Folder class="h-6 w-6" />
+        <span class="desk-tile h-12 w-12">
+          <Folder class="h-5 w-5" strokeWidth={1.8} />
         </span>
       {:else if spec}
         <AppIcon {spec} size={3} />
@@ -145,14 +145,15 @@
 
 <style>
   .desk-icon-label {
-    color: white;
-    text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+    color: hsl(var(--ink));
+    text-shadow: 0 1px 2px hsl(var(--glass) / 0.85);
   }
   .desk-icon-selected {
     background: hsl(var(--ink) / 0.14);
   }
   .desk-icon-selected .desk-icon-label {
     background: var(--desk-accent);
+    color: var(--desk-accent-fg);
     text-shadow: none;
   }
 </style>

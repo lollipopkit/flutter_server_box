@@ -42,7 +42,7 @@
 {#if desk.menu}
   <div
     bind:this={el}
-    class="desk-glass-strong desk-pop fixed z-[100003] min-w-48 rounded-xl p-1 text-[0.8rem]"
+    class="desk-sheet desk-pop fixed z-[100003] min-w-52 rounded-xl p-1 text-[0.78rem]"
     style:left="{pos.left}px"
     style:top="{pos.top}px"
     role="menu"

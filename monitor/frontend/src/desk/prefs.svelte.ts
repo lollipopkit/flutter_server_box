@@ -8,7 +8,8 @@ import type { DeskStorage } from './storage'
 export const WALLPAPERS = ['bloom', 'dusk', 'nightfall', 'graphite'] as const
 export type WallpaperPreset = (typeof WALLPAPERS)[number]
 
-export const ACCENTS = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#525252']
+/// The first is the default (stored as `null`): ClawBox's berry.
+export const ACCENTS = ['#8b2252', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0891b2', '#525252']
 
 export function defaults(): DeskPreferences {
   return {

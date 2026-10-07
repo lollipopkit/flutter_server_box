@@ -20,6 +20,13 @@
   /* The interactive colour (links, selected tabs). A consumer may set it per
      subtree — the panel's desk sets it to the account's accent. */
   --sb-primary: #2563eb;
+  /* The primary button, an icon button's border and a control's radius; a
+     consumer may set them per subtree (the panel's desk: the accent, a
+     hairline, 10px). */
+  --sb-button-primary-bg: var(--sb-black);
+  --sb-button-primary-fg: var(--sb-white);
+  --sb-icon-button-border: transparent;
+  --sb-radius-control: 9999px;
 
   --sb-radius-container: 12px;
 

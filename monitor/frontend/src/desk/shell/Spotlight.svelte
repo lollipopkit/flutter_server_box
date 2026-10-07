@@ -115,48 +115,53 @@
 </script>
 
 <div
-  class="desk-glass-strong desk-pop absolute left-1/2 top-[18%] z-[100002] w-[min(40rem,calc(100%-1rem))] -translate-x-1/2 overflow-hidden rounded-2xl"
+  class="desk-sheet desk-pop absolute bottom-(--dock-reserve) left-1/2 z-[100002] flex max-h-[calc(100%-var(--dock-reserve)-var(--menubar-h)-1.5rem)] w-[min(44rem,calc(100%-1.5rem))] -translate-x-1/2 flex-col rounded-(--radius-panel) p-5"
   role="dialog"
   aria-label={$LL.deskSearch()}
   tabindex="-1"
   onpointerdown={(e) => e.stopPropagation()}
 >
-  <label class="flex items-center gap-3 px-4 py-3">
-    <Search class="h-5 w-5 opacity-60" />
-    <input
-      class="w-full bg-transparent text-lg outline-none placeholder:opacity-50"
-      placeholder={$LL.deskSpotlightHint()}
-      bind:value={query}
-      {onkeydown}
-      use:focusNow
-      role="combobox"
-      aria-expanded={hits.length > 0}
-      aria-controls="desk-spotlight-results"
-    />
+  <label class="block">
+    <span class="desk-eyebrow">{$LL.deskSearch()}</span>
+    <span
+      class="mt-1.5 flex items-center gap-2.5 rounded-xl border border-line px-3 py-2 transition-colors focus-within:border-primary"
+    >
+      <Search class="h-4 w-4 opacity-60" />
+      <input
+        class="w-full bg-transparent text-[0.95rem] outline-none placeholder:opacity-50"
+        placeholder={$LL.deskSpotlightHint()}
+        bind:value={query}
+        {onkeydown}
+        use:focusNow
+        role="combobox"
+        aria-expanded={hits.length > 0}
+        aria-controls="desk-spotlight-results"
+      />
+    </span>
   </label>
   {#if hits.length > 0}
-    <ul id="desk-spotlight-results" class="desk-separator-top max-h-80 overflow-y-auto p-1.5" role="listbox">
+    <ul id="desk-spotlight-results" class="-mx-1 mt-3 min-h-0 overflow-y-auto px-1" role="listbox">
       {#each hits as hit, i (hit.key)}
         {#if i === 0 || hits[i - 1].group !== hit.group}
-          <li class="desk-muted px-2.5 pb-0.5 pt-2 text-[0.65rem] font-bold uppercase tracking-wider" role="presentation">
+          <li class="desk-eyebrow px-2.5 pb-1 pt-2" role="presentation">
             {hit.group}
           </li>
         {/if}
         {@const Icon = hit.icon}
         <li role="option" aria-selected={i === selected}>
           <button
-            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm"
-            class:desk-selected={i === selected}
+            class="flex w-full items-center gap-2.5 rounded-[0.6rem] border border-transparent px-2.5 py-1.5 text-left text-sm"
+            class:desk-chosen={i === selected}
             onpointermove={() => (selected = i)}
             onclick={() => run(hit)}
           >
             {#if hit.spec}
-              <AppIcon spec={hit.spec} size={1.5} />
+              <AppIcon spec={hit.spec} size={1.75} />
             {:else if Icon}
-              <Icon class="h-5 w-5 opacity-70" />
+              <span class="desk-glyph h-7 w-7 rounded-[0.5rem]"><Icon class="h-4 w-4" /></span>
             {/if}
-            <span class="flex-1 truncate">{hit.label}</span>
-            {#if hit.detail}<span class="truncate text-xs opacity-60">{hit.detail}</span>{/if}
+            <span class="flex-1 truncate font-medium">{hit.label}</span>
+            {#if hit.detail}<span class="desk-muted truncate text-xs">{hit.detail}</span>{/if}
           </button>
         </li>
       {/each}

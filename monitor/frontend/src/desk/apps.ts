@@ -52,8 +52,8 @@ export interface AppSpec extends WindowPolicy {
   /// Words Spotlight also finds it by, besides its title.
   keywords?: (ll: TranslationFunctions) => string[]
   icon: LucideIcon
-  /// The icon tile's two gradient stops, top to bottom.
-  tint: [string, string]
+  /// One line under its name in the launchpad.
+  about: (ll: TranslationFunctions) => string
   /// Whether this server and this account can use it. `undefined`
   /// capabilities (not fetched yet) answer false for anything gated.
   available: (caps: Capabilities | undefined) => boolean
@@ -74,9 +74,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'status',
     title: (ll) => ll.deskAppStatus(),
+    about: (ll) => ll.deskAboutStatus(),
     keywords: (ll) => [ll.cpuUsage(), ll.memory(), ll.diskUsage(), ll.network()],
     icon: ChartNoAxesCombined,
-    tint: ['#34d399', '#059669'],
     available: always,
     instances: 1,
     size: { width: 1100, height: 720 },
@@ -86,8 +86,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'files',
     title: (ll) => ll.files(),
+    about: (ll) => ll.deskAboutFiles(),
     icon: FolderOpen,
-    tint: ['#60a5fa', '#2563eb'],
     available: (caps) => dashboardAccess(caps).files,
     instances: 4,
     size: SIZE,
@@ -97,8 +97,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'terminal',
     title: (ll) => ll.terminal(),
+    about: (ll) => ll.deskAboutTerminal(),
     icon: SquareTerminal,
-    tint: ['#525252', '#171717'],
     available: (caps) => dashboardAccess(caps).terminal,
     instances: 6,
     size: { width: 860, height: 540 },
@@ -108,8 +108,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'containers',
     title: (ll) => ll.containers(),
+    about: (ll) => ll.deskAboutContainers(),
     icon: Container,
-    tint: ['#38bdf8', '#0369a1'],
     available: feature('containers'),
     instances: 1,
     size: SIZE,
@@ -119,8 +119,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'process',
     title: (ll) => ll.processes(),
+    about: (ll) => ll.deskAboutProcess(),
     icon: Activity,
-    tint: ['#fb923c', '#c2410c'],
     available: feature('process'),
     instances: 1,
     size: SIZE,
@@ -130,8 +130,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'services',
     title: (ll) => ll.services(),
+    about: (ll) => ll.deskAboutServices(),
     icon: ServerCog,
-    tint: ['#a78bfa', '#6d28d9'],
     available: feature('services'),
     instances: 1,
     size: SIZE,
@@ -141,8 +141,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'cron',
     title: (ll) => ll.cron(),
+    about: (ll) => ll.deskAboutCron(),
     icon: CalendarClock,
-    tint: ['#f472b6', '#be185d'],
     available: feature('cron'),
     instances: 1,
     size: SIZE,
@@ -152,8 +152,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'system_users',
     title: (ll) => ll.systemUsers(),
+    about: (ll) => ll.deskAboutSystemUsers(),
     icon: Users,
-    tint: ['#fbbf24', '#b45309'],
     available: feature('system_users'),
     instances: 1,
     size: SIZE,
@@ -163,8 +163,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'firewall',
     title: (ll) => ll.fwTitle(),
+    about: (ll) => ll.deskAboutFirewall(),
     icon: BrickWall,
-    tint: ['#f87171', '#b91c1c'],
     available: feature('firewall'),
     instances: 1,
     size: SIZE,
@@ -174,8 +174,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'snippets',
     title: (ll) => ll.snippets(),
+    about: (ll) => ll.deskAboutSnippets(),
     icon: ScrollText,
-    tint: ['#2dd4bf', '#0f766e'],
     available: feature('snippets'),
     instances: 1,
     size: SIZE,
@@ -185,9 +185,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'remote_desktop',
     title: (ll) => ll.desktop(),
+    about: (ll) => ll.deskAboutRemoteDesktop(),
     keywords: () => ['VNC', 'RDP'],
     icon: MonitorPlay,
-    tint: ['#818cf8', '#4338ca'],
     available: feature('desktop'),
     instances: 4,
     size: { width: 1180, height: 760 },
@@ -197,8 +197,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'benchmark',
     title: (ll) => ll.benchmark(),
+    about: (ll) => ll.deskAboutBenchmark(),
     icon: Gauge,
-    tint: ['#facc15', '#a16207'],
     available: feature('benchmark'),
     instances: 1,
     size: SIZE,
@@ -208,9 +208,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'virt',
     title: (ll) => ll.virt(),
+    about: (ll) => ll.deskAboutVirt(),
     keywords: () => ['KVM', 'libvirt', 'Proxmox', 'PVE'],
     icon: Boxes,
-    tint: ['#c084fc', '#7e22ce'],
     available: feature('virt'),
     instances: 1,
     size: { width: 1180, height: 760 },
@@ -220,9 +220,9 @@ export const APPS: AppSpec[] = [
   {
     id: 'bmc',
     title: (ll) => ll.bmc(),
+    about: (ll) => ll.deskAboutBmc(),
     keywords: () => ['IPMI', 'Redfish'],
     icon: Cpu,
-    tint: ['#94a3b8', '#334155'],
     available: feature('bmc'),
     instances: 1,
     size: SIZE,
@@ -232,8 +232,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'backup',
     title: (ll) => ll.backup(),
+    about: (ll) => ll.deskAboutBackup(),
     icon: ArchiveRestore,
-    tint: ['#4ade80', '#15803d'],
     available: feature('backup'),
     instances: 1,
     size: SIZE,
@@ -243,8 +243,8 @@ export const APPS: AppSpec[] = [
   {
     id: 'settings',
     title: (ll) => ll.deskAppSettings(),
+    about: (ll) => ll.deskAboutSettings(),
     icon: Settings,
-    tint: ['#a3a3a3', '#525252'],
     available: always,
     instances: 1,
     size: { width: 900, height: 640 },

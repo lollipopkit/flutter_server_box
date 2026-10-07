@@ -11,12 +11,6 @@
   const Icon = $derived(spec.icon)
 </script>
 
-<span
-  class="desk-tile shrink-0"
-  style:width="{size}rem"
-  style:height="{size}rem"
-  style:background="linear-gradient(180deg, {spec.tint[0]}, {spec.tint[1]})"
-  aria-hidden="true"
->
-  <Icon style="width: {size * 0.5}rem; height: {size * 0.5}rem" strokeWidth={1.9} />
+<span class="desk-tile shrink-0" style:width="{size}rem" style:height="{size}rem" aria-hidden="true">
+  <Icon style="width: {size * 0.42}rem; height: {size * 0.42}rem" strokeWidth={1.8} />
 </span>

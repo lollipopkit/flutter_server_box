@@ -69,14 +69,14 @@
   }
 
   /// Smaller tiles on a phone, so the dock fits more of them.
-  const tile = $derived(desk.windows.compact ? 2.5 : 3)
+  const tile = $derived(desk.windows.compact ? 2.5 : 2.875)
 
   // Reordering the pinned part by dragging.
   let dragging = $state<string | null>(null)
 </script>
 
 <nav
-  class="desk-glass absolute bottom-2 left-1/2 z-[100000] flex select-none max-w-[calc(100%-1rem)] -translate-x-1/2 items-end gap-1 overflow-x-auto rounded-(--radius-panel) px-2 py-1.5"
+  class="desk-dock absolute bottom-2 left-1/2 z-[100000] flex max-w-[calc(100%-1rem)] -translate-x-1/2 select-none items-end overflow-x-auto rounded-[1.2rem] px-1.5 pb-2 pt-1.5"
   aria-label={$LL.deskDock()}
   onpointerdown={(e) => {
     e.stopPropagation()
@@ -84,7 +84,7 @@
   }}
 >
   <button
-    class="desk-hover group relative flex flex-col items-center px-1"
+    class="dock-item"
     aria-label={$LL.deskLaunchpad()}
     title={$LL.deskLaunchpad()}
     aria-expanded={desk.panel === 'launchpad'}
@@ -93,15 +93,14 @@
       desk.togglePanel('launchpad')
     }}
   >
-    <span class="desk-tile" style:width="{tile}rem" style:height="{tile}rem" style:background="linear-gradient(180deg,#a5b4fc,#6366f1)">
-      <LayoutGrid class="h-6 w-6" />
+    <span class="desk-tile" style:width="{tile}rem" style:height="{tile}rem">
+      <LayoutGrid style="width: {tile * 0.42}rem; height: {tile * 0.42}rem" strokeWidth={1.8} />
     </span>
-    <span class="mt-0.5 h-1 w-1"></span>
   </button>
 
   {#each pinned as spec (spec.id)}
     <button
-      class="desk-hover relative flex flex-col items-center px-1 transition-transform hover:-translate-y-1"
+      class="dock-item"
       class:opacity-50={dragging === spec.id}
       title={spec.title($LL)}
       aria-label={spec.title($LL)}
@@ -121,23 +120,64 @@
       oncontextmenu={(e) => menu(e, spec)}
     >
       <AppIcon {spec} size={tile} />
-      <span class="mt-0.5 h-1 w-1 rounded-full" class:bg-current={isRunning(spec.id)}></span>
+      <span class="dock-dot" data-running={isRunning(spec.id)}></span>
     </button>
   {/each}
 
   {#if running.length > 0}
-    <span class="mx-1 mb-2 h-10 w-px self-center bg-current opacity-20"></span>
+    <span class="mx-0.5 h-[72%] w-px self-center bg-current opacity-20"></span>
     {#each running as spec (spec.id)}
       <button
-        class="desk-hover relative flex flex-col items-center px-1 transition-transform hover:-translate-y-1"
+        class="dock-item"
         title={spec.title($LL)}
         aria-label={spec.title($LL)}
         onclick={() => activate(spec)}
         oncontextmenu={(e) => menu(e, spec)}
       >
         <AppIcon {spec} size={tile} />
-        <span class="mt-0.5 h-1 w-1 rounded-full bg-current"></span>
+        <span class="dock-dot" data-running="true"></span>
       </button>
     {/each}
   {/if}
 </nav>
+
+<style>
+  .dock-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 0.25rem;
+    border-radius: 0.9rem;
+    transition: transform 140ms;
+  }
+  .dock-item:hover {
+    transform: translateY(-2px);
+  }
+  .dock-item:hover :global(.desk-tile),
+  .dock-item:focus-visible :global(.desk-tile),
+  .dock-item[aria-expanded='true'] :global(.desk-tile) {
+    border-color: hsl(var(--ink) / 0.25);
+    background: hsl(var(--glass) / 0.72);
+  }
+  .dock-item:focus-visible {
+    outline: 2px solid var(--desk-accent);
+    outline-offset: 1px;
+  }
+  /* Under a running app's tile. */
+  .dock-dot {
+    position: absolute;
+    left: 50%;
+    bottom: -0.4rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 9999px;
+    background: hsl(var(--ink));
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .dock-dot[data-running='true'] {
+    opacity: 0.75;
+  }
+</style>
