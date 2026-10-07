@@ -271,9 +271,10 @@
   {/if}
   {#if toolbar?.back}<IconButton icon="chevron_left" label={$LL.back()} size="sm" onclick={toolbar.back} />{/if}
   {@render toolbar?.leading?.()}
-  <div class="min-w-0" class:ml-[9px]={!sidebar || folded}>
-    <h2 class="lk-window__title">{toolbar?.title ?? title}</h2>
-    {#if toolbar?.subtitle}<p class="mt-0.5 truncate text-[12px] text-(--text-tertiary)">{toolbar.subtitle}</p>{/if}
+  <!-- One line: the title, then what it is about, which gives way first. -->
+  <div class="flex min-w-0 items-baseline gap-[7px]" class:ml-[9px]={!sidebar || folded}>
+    <h2 class="lk-window__title min-w-0 shrink-[0.2]">{toolbar?.title ?? title}</h2>
+    {#if toolbar?.subtitle}<p class="min-w-0 truncate text-[12px] text-(--text-tertiary)">{toolbar.subtitle}</p>{/if}
   </div>
   {#if toolbar?.actions}<div class="lk-window__tools" data-no-drag>{@render toolbar.actions()}</div>{/if}
 {/snippet}

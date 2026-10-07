@@ -45,9 +45,9 @@
     {#if back}<IconButton icon="chevron_left" label={$LL.back()} onclick={back} />{/if}
     {@render leading?.()}
     {#if title || subtitle}
-      <div class="min-w-0 leading-tight">
-        {#if title}<h1 class="lk-window__title">{title}</h1>{/if}
-        {#if subtitle}<p class="truncate text-[12px] text-(--text-tertiary)">{subtitle}</p>{/if}
+      <div class="flex min-w-0 items-baseline gap-[7px]">
+        {#if title}<h1 class="lk-window__title min-w-0 shrink-[0.2]">{title}</h1>{/if}
+        {#if subtitle}<p class="min-w-0 truncate text-[12px] text-(--text-tertiary)">{subtitle}</p>{/if}
       </div>
     {/if}
     <span class="flex-1"></span>
