@@ -76,7 +76,7 @@
   async function confirm(password: string) {
     if (!asking) return
     const { kind, app } = asking
-    if (kind === 'approve') await api.approveApp(app.id, app.manifest.permissions, password)
+    if (kind === 'approve') await api.approveApp(app.id, app.sha256, app.manifest.permissions, password)
     else await api.removeApp(app.id, password)
     await load()
     await onchange()
@@ -87,14 +87,15 @@
     const name = titleOf(asking.app)
     if (asking.kind === 'remove') return $LL.settingsAppRemoveMessage({ name })
     const asks = asking.app.manifest.permissions.map(permissionText)
-    return asks.length ? $LL.settingsAppApproveMessage({ name, permissions: asks.join(', ') }) : $LL.settingsAppApproveBare({ name })
+    const what = asks.length ? $LL.settingsAppApproveMessage({ name, permissions: asks.join(', ') }) : $LL.settingsAppApproveBare({ name })
+    return `${what} ${$LL.settingsAppApproveRisk()}`
   })
 </script>
 
 <Group title={$LL.settingsInstalledApps()}>
   {#each apps as app (app.id)}
     {@const title = titleOf(app)}
-    <Row label={title} sub="{app.version} · {app.manifest.permissions.map(permissionText).join(', ') || $LL.settingsAppNoPermissions()}">
+    <Row label={title} sub="{app.version} · {app.sha256.slice(0, 12)} · {app.manifest.permissions.map(permissionText).join(', ') || $LL.settingsAppNoPermissions()}">
       {#snippet leading()}<AppIcon glyph={app.manifest.glyph} tone={app.manifest.tone as IconTone} size={26} />{/snippet}
       {#if !app.approved_permissions}
         <Badge tone="warning" dot>{$LL.settingsAppWaiting()}</Badge>

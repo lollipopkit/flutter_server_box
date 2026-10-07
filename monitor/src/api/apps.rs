@@ -48,6 +48,8 @@ pub const MAX_PACKAGE_BYTES: usize = 20 << 20;
 /// small archive that inflates without end is refused at this point.
 const MAX_UNPACKED_BYTES: u64 = 20 << 20;
 const MAX_FILES: usize = 2000;
+/// Room for the archive's own headers on top of the files' bytes.
+const HEADER_ALLOWANCE: u64 = 4 << 20;
 const MAX_PATH_BYTES: usize = 200;
 const MAX_MANIFEST_BYTES: u64 = 64 << 10;
 /// How long a launch ticket opens the UI for.
@@ -58,6 +60,12 @@ const API_VERSION: u32 = 1;
 /// come with `wasm`.
 const WEB_PERMISSIONS: &[&str] = &["notifications", "background"];
 const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "files.read", "exec"];
+/// The panel's own apps (`desk/apps/<id>`): an installed app never takes
+/// one's id, nor the storage its users keep under it.
+const BUILT_IN: &[&str] = &[
+    "status", "files", "terminal", "containers", "process", "services", "cron", "system_users", "firewall", "snippets",
+    "remote_desktop", "benchmark", "virt", "bmc", "backup", "settings",
+];
 const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"];
 
 // -----------------------------------------------------------------------------
@@ -125,7 +133,9 @@ fn refused_at(error: &'static str, path: &str) -> Refusal {
 /// desk app id (`api::desk::valid_app_id`). The prefix keeps it off the
 /// built-in apps' plain names.
 pub fn valid_package_id(id: &str) -> bool {
-    super::desk::valid_app_id(id) && id.split_once('_').is_some_and(|(publisher, name)| publisher.len() >= 2 && !name.is_empty())
+    !BUILT_IN.contains(&id)
+        && super::desk::valid_app_id(id)
+        && id.split_once('_').is_some_and(|(publisher, name)| publisher.len() >= 2 && !name.is_empty())
 }
 
 fn short_text(text: &str, max: usize) -> bool {
@@ -230,12 +240,21 @@ pub fn read_package(bytes: &[u8]) -> Result<Package, Refusal> {
         return Err(refused("tooLarge"));
     }
     let sha256 = hex::encode(Sha256::digest(bytes));
-    let mut archive = tar::Archive::new(flate2::read::GzDecoder::new(bytes));
+    // Everything inflated is bounded here, headers included: tar reads a
+    // long-name or PAX header whole, before any entry's own bound applies.
+    let inflated = flate2::read::GzDecoder::new(bytes).take(MAX_UNPACKED_BYTES + HEADER_ALLOWANCE);
+    let mut archive = tar::Archive::new(inflated);
     let mut files = BTreeMap::new();
     let mut total: u64 = 0;
+    let mut seen = 0usize;
     let entries = archive.entries().map_err(|_| refused("notAPackage"))?;
     for entry in entries {
         let mut entry = entry.map_err(|_| refused("notAPackage"))?;
+        // Directories and every other entry count too.
+        seen += 1;
+        if seen > MAX_FILES {
+            return Err(refused("tooManyFiles"));
+        }
         let raw = entry.path_bytes();
         let path = std::str::from_utf8(&raw).map_err(|_| refused("invalidPath"))?.trim_start_matches("./").to_string();
         let kind = entry.header().entry_type();
@@ -251,9 +270,6 @@ pub fn read_package(bytes: &[u8]) -> Result<Package, Refusal> {
         }
         if !allowed_top(&path) {
             return Err(refused_at("unexpectedFile", &path));
-        }
-        if files.len() >= MAX_FILES {
-            return Err(refused("tooManyFiles"));
         }
         // The header's size is a claim; the reader is bounded by what is
         // left of the budget either way.
@@ -322,24 +338,25 @@ fn ticket_key(state: &AppState) -> ring::hmac::Key {
     ring::hmac::Key::new(ring::hmac::HMAC_SHA256, derived.as_ref())
 }
 
-fn ticket_message(app: &str, version: &str, expires: i64) -> Vec<u8> {
-    format!("{app}\n{version}\n{expires}").into_bytes()
+fn ticket_message(app: &str, package: &str, expires: i64) -> Vec<u8> {
+    format!("{app}\n{package}\n{expires}").into_bytes()
 }
 
-/// `<expiry>.<mac>`: opens [app] at [version] until the expiry.
-pub fn mint_ticket(state: &AppState, app: &str, version: &str, now: i64) -> String {
+/// `<expiry>.<mac>`: opens [app]'s package [package] (its sha256) until the
+/// expiry; a new package, even under the same version, needs a new ticket.
+pub fn mint_ticket(state: &AppState, app: &str, package: &str, now: i64) -> String {
     let expires = now + TICKET_SECS;
-    let tag = ring::hmac::sign(&ticket_key(state), &ticket_message(app, version, expires));
+    let tag = ring::hmac::sign(&ticket_key(state), &ticket_message(app, package, expires));
     format!("{expires}.{}", hex::encode(tag.as_ref()))
 }
 
-pub fn ticket_ok(state: &AppState, ticket: &str, app: &str, version: &str, now: i64) -> bool {
+pub fn ticket_ok(state: &AppState, ticket: &str, app: &str, package: &str, now: i64) -> bool {
     let Some((expires, mac)) = ticket.split_once('.') else { return false };
     let Ok(expires) = expires.parse::<i64>() else { return false };
     let Ok(mac) = hex::decode(mac) else { return false };
     expires > now
         && expires <= now + TICKET_SECS
-        && ring::hmac::verify(&ticket_key(state), &ticket_message(app, version, expires), &mac).is_ok()
+        && ring::hmac::verify(&ticket_key(state), &ticket_message(app, package, expires), &mac).is_ok()
 }
 
 // -----------------------------------------------------------------------------
@@ -350,6 +367,9 @@ pub fn ticket_ok(state: &AppState, ticket: &str, app: &str, version: &str, now: 
 pub struct Installed {
     pub id: String,
     pub version: String,
+    /// Of the package: what an approval names, so it approves exactly the
+    /// code the admin saw.
+    pub sha256: String,
     pub manifest: Manifest,
     /// Null while waiting for approval.
     pub approved_permissions: Option<Vec<String>>,
@@ -358,13 +378,14 @@ pub struct Installed {
     pub approved_at: Option<String>,
 }
 
-type Row = (String, String, String, Option<String>, String, String, Option<String>);
+type Row = (String, String, String, String, Option<String>, String, String, Option<String>);
 
 fn installed(row: Row) -> Option<Installed> {
-    let (id, version, manifest, approved, installed_by, installed_at, approved_at) = row;
+    let (id, version, sha256, manifest, approved, installed_by, installed_at, approved_at) = row;
     Some(Installed {
         id,
         version,
+        sha256,
         manifest: serde_json::from_str(&manifest).ok()?,
         approved_permissions: match approved {
             Some(a) => Some(serde_json::from_str(&a).ok()?),
@@ -379,7 +400,7 @@ fn installed(row: Row) -> Option<Installed> {
 macro_rules! select {
     ($tail:literal) => {
         concat!(
-            "SELECT app_id, version, manifest, approved_permissions, installed_by, installed_at, approved_at \
+            "SELECT app_id, version, sha256, manifest, approved_permissions, installed_by, installed_at, approved_at \
              FROM desk_app_package ",
             $tail
         )
@@ -392,21 +413,18 @@ async fn load(db: &sqlx::SqlitePool, id: &str) -> Result<Option<Installed>, sqlx
 }
 
 /// Stores [package], replacing an installed version. Its approval stays only
-/// when it asks for no permission the approved one did not.
+/// for the very same package (an upload needs no password; an approval does,
+/// so new code always waits for one).
 async fn store(db: &sqlx::SqlitePool, package: &Package, by: &str) -> Result<Installed, sqlx::Error> {
     let m = &package.manifest;
     let mut tx = db.begin().await?;
-    let previous: Option<Option<String>> =
-        sqlx::query_scalar("SELECT approved_permissions FROM desk_app_package WHERE app_id = ?")
+    let previous: Option<(String, Option<String>)> =
+        sqlx::query_as("SELECT sha256, approved_permissions FROM desk_app_package WHERE app_id = ?")
             .bind(&m.id)
             .fetch_optional(&mut *tx)
             .await?;
-    let kept = previous.flatten().filter(|approved| {
-        let approved: BTreeSet<String> = serde_json::from_str::<Vec<String>>(approved).unwrap_or_default().into_iter().collect();
-        m.permissions.iter().all(|p| approved.contains(p))
-    });
+    let kept = previous.and_then(|(sha, approved)| approved.filter(|_| sha == package.sha256));
     let now = chrono::Utc::now().to_rfc3339();
-    let kept = kept.map(|_| serde_json::to_string(&m.permissions).unwrap_or_default());
     sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(&m.id).execute(&mut *tx).await?;
     sqlx::query(
         "INSERT INTO desk_app_package (app_id, version, manifest, sha256, approved_permissions, installed_by, installed_at, approved_at) \
@@ -490,12 +508,14 @@ pub async fn install(
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     let caller = require!(authz::admin_caller(&req, &state).await);
-    let package = match read_package(&body) {
-        Ok(p) => p,
-        Err(refusal) => {
+    // Inflating and checking takes a while: off the worker.
+    let package = match tokio::task::spawn_blocking(move || read_package(&body)).await {
+        Ok(Ok(p)) => p,
+        Ok(Err(refusal)) => {
             let status = if refusal.error == "tooLarge" { 413 } else { 400 };
             return Ok(HttpResponse::build(ntex::http::StatusCode::from_u16(status).unwrap()).json(&refusal));
         }
+        Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
     match store(&state.db, &package, &caller.username).await {
         Ok(app) => {
@@ -509,6 +529,8 @@ pub async fn install(
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Approval {
+    /// The package the admin looked at.
+    sha256: String,
     permissions: Vec<String>,
     current_password: Option<String>,
 }
@@ -531,19 +553,19 @@ pub async fn approve(
     // a screen out of date.
     let asked: BTreeSet<&String> = app.manifest.permissions.iter().collect();
     let given: BTreeSet<&String> = body.permissions.iter().collect();
-    if asked != given || body.permissions.len() != given.len() {
+    if body.sha256 != app.sha256 || asked != given || body.permissions.len() != given.len() {
         return Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "permissionsChanged", "app": app })));
     }
-    let done = sqlx::query("UPDATE desk_app_package SET approved_permissions = ?, approved_at = ? WHERE app_id = ? AND version = ?")
+    let done = sqlx::query("UPDATE desk_app_package SET approved_permissions = ?, approved_at = ? WHERE app_id = ? AND sha256 = ?")
         .bind(serde_json::to_string(&app.manifest.permissions).unwrap_or_default())
         .bind(chrono::Utc::now().to_rfc3339())
         .bind(&app.id)
-        .bind(&app.version)
+        .bind(&app.sha256)
         .execute(&state.db)
         .await;
     match done {
         Ok(r) if r.rows_affected() == 1 => {
-            audit(&req, &state, &caller, Action::Write, format!("app approve {} {}", app.id, app.version)).await;
+            audit(&req, &state, &caller, Action::Write, format!("app approve {} {} {}", app.id, app.version, app.sha256)).await;
             match load(&state.db, &app.id).await {
                 Ok(Some(app)) => Ok(HttpResponse::Ok().json(&app)),
                 Ok(None) => Ok(not_found()),
@@ -570,6 +592,12 @@ pub async fn remove(
         Err(e) => return Ok(internal_error(&e)),
     };
     let files = sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
+    // What its users kept goes with it: an app installed later under this id
+    // starts with nothing of theirs.
+    let kept = sqlx::query("DELETE FROM desk_app_storage WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
+    if let Err(e) = kept {
+        return Ok(internal_error(&e));
+    }
     let package = sqlx::query("DELETE FROM desk_app_package WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
     match (files, package) {
         (Ok(_), Ok(r)) => {
@@ -597,7 +625,7 @@ pub async fn launch(
         Ok(_) => return Ok(not_found()),
         Err(e) => return Ok(internal_error(&e)),
     };
-    let ticket = mint_ticket(&state, &app.id, &app.version, chrono::Utc::now().timestamp());
+    let ticket = mint_ticket(&state, &app.id, &app.sha256, chrono::Utc::now().timestamp());
     Ok(HttpResponse::Ok().json(&serde_json::json!({
         "url": format!("/api/v1/apps/{}/ui/{ticket}/index.html", app.id),
         "version": app.version,
@@ -609,8 +637,8 @@ pub async fn ui(
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     let (id, ticket, file) = path.into_inner();
-    let version: Option<(String, Option<String>)> =
-        match sqlx::query_as("SELECT version, approved_permissions FROM desk_app_package WHERE app_id = ?")
+    let package: Option<(String, Option<String>)> =
+        match sqlx::query_as("SELECT sha256, approved_permissions FROM desk_app_package WHERE app_id = ?")
             .bind(&id)
             .fetch_optional(&state.db)
             .await
@@ -618,8 +646,8 @@ pub async fn ui(
             Ok(v) => v,
             Err(e) => return Ok(internal_error(&e)),
         };
-    let Some((version, Some(_))) = version else { return Ok(not_found()) };
-    if !ticket_ok(&state, &ticket, &id, &version, chrono::Utc::now().timestamp()) {
+    let Some((sha256, Some(_))) = package else { return Ok(not_found()) };
+    if !ticket_ok(&state, &ticket, &id, &sha256, chrono::Utc::now().timestamp()) {
         return Ok(HttpResponse::Forbidden().json(&refused("ticket")));
     }
     let file = format!("ui/{file}");

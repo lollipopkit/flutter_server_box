@@ -1516,6 +1516,7 @@ const de = {
 	settingsPermBackground: 'im Hintergrund zu laufen',
 	settingsAppNoPermissions: 'Keine Berechtigungen',
 	settingsAppRefused: 'Das Paket wurde abgelehnt: {reason}',
+	settingsAppApproveRisk: 'Sie läuft mit dem Konto der Person, die sie öffnet, und kann gelesene Serverdaten weitergeben.',
 } satisfies Translation
 
 export default de

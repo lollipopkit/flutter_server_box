@@ -1516,6 +1516,7 @@ const ru = {
 	settingsPermBackground: 'работать в фоновом режиме',
 	settingsAppNoPermissions: 'Нет разрешений',
 	settingsAppRefused: 'Пакет отклонён: {reason}',
+	settingsAppApproveRisk: 'Приложение работает с правами открывшей его учётной записи и может отправлять прочитанные данные сервера в другие места.',
 } satisfies Translation
 
 export default ru

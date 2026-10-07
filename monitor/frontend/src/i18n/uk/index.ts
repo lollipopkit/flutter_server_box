@@ -1516,6 +1516,7 @@ const uk = {
 	settingsPermBackground: 'працювати у фоновому режимі',
 	settingsAppNoPermissions: 'Немає дозволів',
 	settingsAppRefused: 'Пакет відхилено: {reason}',
+	settingsAppApproveRisk: 'Застосунок працює з правами облікового запису, який його відкрив, і може надсилати прочитані дані сервера в інші місця.',
 } satisfies Translation
 
 export default uk

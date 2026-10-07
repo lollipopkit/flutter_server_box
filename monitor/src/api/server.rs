@@ -122,6 +122,8 @@ pub struct AppState {
     /// The desk's events and which monitoring rules are firing — see
     /// `api::desk`.
     pub desk: Arc<crate::api::desk::DeskHub>,
+    /// Desk app backend calls running now (`api::app_runtime`).
+    pub app_calls: crate::api::app_runtime::AppCalls,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -212,6 +214,7 @@ impl AppState {
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
             desk: Arc::new(crate::api::desk::DeskHub::default()),
+            app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
             config,

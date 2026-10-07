@@ -74,23 +74,38 @@ export interface Desk {
   backend<T = unknown>(method: string, params?: unknown): Promise<T>
 }
 
-/// The window an app's messages go to, and come from: its parent (the desk).
+/// Where the desk's port arrives: this frame's window, from its parent.
 export interface Channel {
-  parent: { postMessage(message: unknown, targetOrigin: string): void }
+  parent: unknown
   self: {
     addEventListener(type: 'message', listener: (e: MessageEvent) => void): void
   }
 }
 
+/// The app's end of its channel to the desk (a `MessagePort`).
+interface Port {
+  postMessage(message: unknown): void
+  onmessage: ((e: MessageEvent) => void) | null
+}
+
+/// The port the desk hands this page once it has loaded.
+function portFrom(channel: Channel): Promise<Port> {
+  return new Promise((resolve) => {
+    channel.self.addEventListener('message', (e: MessageEvent) => {
+      const m = e.data as { sbm?: number; event?: string } | null
+      if (e.source === channel.parent && m?.sbm === PROTOCOL && m.event === 'connect' && e.ports[0]) resolve(e.ports[0])
+    })
+  })
+}
+
 /// Connects to the desk this frame runs in. [channel] is for tests.
 export async function connect(channel?: Channel): Promise<Desk> {
-  const { parent, self }: Channel = channel ?? { parent: window.parent, self: window as unknown as Channel['self'] }
+  const port = await portFrom(channel ?? { parent: window.parent, self: window as unknown as Channel['self'] })
   let next = 1
   const waiting = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>()
   const listeners = new Map<string, Set<(data: unknown) => void>>()
 
-  self.addEventListener('message', (e: MessageEvent) => {
-    if (e.source !== parent) return
+  port.onmessage = (e: MessageEvent) => {
     const m = e.data as { sbm?: number; re?: number; ok?: boolean; value?: unknown; error?: string; event?: string; data?: unknown }
     if (!m || m.sbm !== PROTOCOL) return
     if (typeof m.re === 'number') {
@@ -102,13 +117,13 @@ export async function connect(channel?: Channel): Promise<Desk> {
     } else if (typeof m.event === 'string') {
       for (const f of listeners.get(m.event) ?? []) f(m.data)
     }
-  })
+  }
 
   function call<T = unknown>(name: string, args?: unknown): Promise<T> {
     const id = next++
     return new Promise<T>((resolve, reject) => {
       waiting.set(id, { resolve: resolve as (v: unknown) => void, reject })
-      parent.postMessage({ sbm: PROTOCOL, id, call: name, args }, '*')
+      port.postMessage({ sbm: PROTOCOL, id, call: name, args })
     })
   }
 

@@ -1516,6 +1516,7 @@ const id = {
 	settingsPermBackground: 'berjalan di latar belakang',
 	settingsAppNoPermissions: 'Tanpa izin',
 	settingsAppRefused: 'Paket ditolak: {reason}',
+	settingsAppApproveRisk: 'Aplikasi berjalan dengan akun yang membukanya dan dapat mengirim data yang dibacanya dari server ke tempat lain.',
 } satisfies Translation
 
 export default id

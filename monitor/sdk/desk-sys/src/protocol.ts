@@ -1,6 +1,9 @@
 /// The messages between the desk and an installed app's frame
 /// (`docs/dev/desk-sys.md`). Every message carries `sbm: 1`.
 ///
+/// The desk posts `{ sbm, event: 'connect' }` with a `MessagePort` to the
+/// frame's first page; everything after goes over that port (a page the
+/// frame navigates to later has none).
 /// Frame → desk: a call, `{ sbm, id, call, args }`, answered by
 /// `{ sbm, re: id, ok: true, value }` or `{ sbm, re: id, ok: false, error }`.
 /// Desk → frame: an event, `{ sbm, event, data }`.

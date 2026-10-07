@@ -1516,6 +1516,7 @@ const it = {
 	settingsPermBackground: 'funzionare in background',
 	settingsAppNoPermissions: 'Nessuna autorizzazione',
 	settingsAppRefused: 'Il pacchetto è stato rifiutato: {reason}',
+	settingsAppApproveRisk: 'Viene eseguita con l’account di chi la apre e può inviare altrove i dati che legge dal server.',
 } satisfies Translation
 
 export default it

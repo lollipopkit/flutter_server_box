@@ -1516,6 +1516,7 @@ const pt = {
 	settingsPermBackground: 'se execute em segundo plano',
 	settingsAppNoPermissions: 'Sem permissões',
 	settingsAppRefused: 'O pacote foi recusado: {reason}',
+	settingsAppApproveRisk: 'A aplicação é executada com a conta de quem a abre e pode enviar para outros destinos os dados que lê do servidor.',
 } satisfies Translation
 
 export default pt

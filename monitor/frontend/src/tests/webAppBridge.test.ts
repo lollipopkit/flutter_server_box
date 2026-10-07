@@ -3,7 +3,7 @@ import { WebAppBridge } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
 
 function setup(permissions: string[] = []) {
-  const frame = { postMessage: vi.fn() } as unknown as Window
+  const port = { postMessage: vi.fn(), onmessage: null as ((e: MessageEvent) => void) | null }
   const handle = {
     id: 'w1',
     appId: 'acme_notes',
@@ -21,25 +21,35 @@ function setup(permissions: string[] = []) {
     close: vi.fn(),
     storage: { get: vi.fn(async () => 3), set: vi.fn(async () => {}), remove: vi.fn(async () => {}), keys: vi.fn(async () => []) },
   } as unknown as WindowHandle
-  const bridge = new WebAppBridge(
-    { handle, allows: (p) => permissions.includes(p), theme: () => ({ dark: false }), locale: () => 'en' },
-    () => frame,
-  )
-  const post = frame.postMessage as ReturnType<typeof vi.fn>
+  const bridge = new WebAppBridge({ handle, allows: (p) => permissions.includes(p), theme: () => ({ dark: false }), locale: () => 'en' })
+  bridge.attach(port)
+  const post = port.postMessage
   let id = 0
-  const call = async (name: string, args?: unknown, source: unknown = frame) => {
+  const call = async (name: string, args?: unknown) => {
     const n = ++id
-    await bridge.receive(new MessageEvent('message', { data: { sbm: 1, id: n, call: name, args }, source: source as Window }))
+    await bridge.receive({ sbm: 1, id: n, call: name, args })
     return post.mock.calls.map((c) => c[0]).find((m) => m.re === n)
   }
-  return { bridge, handle, post, call }
+  return { bridge, handle, post, call, port }
 }
 
 describe('the bridge to an installed app', () => {
-  it('hears only its own frame', async () => {
-    const { call, handle } = setup()
-    expect(await call('setTitle', { title: 'x' }, window)).toBeUndefined()
-    expect(handle.setTitle).not.toHaveBeenCalled()
+  it('hears its port, and nothing once closed (the frame left its page)', async () => {
+    const { bridge, call, handle, port } = setup()
+    port.onmessage?.(new MessageEvent('message', { data: { sbm: 1, id: 99, call: 'setTitle', args: { title: 'a' } } }))
+    await Promise.resolve()
+    expect(handle.setTitle).toHaveBeenCalledWith('a')
+    bridge.close()
+    expect(port.onmessage).toBeNull()
+    expect(await call('setTitle', { title: 'b' })).toBeUndefined()
+    expect(handle.setTitle).toHaveBeenCalledTimes(1)
+  })
+
+  it('refuses app state the agent would not keep, and opening apps in a loop', async () => {
+    const { call } = setup()
+    expect(await call('setAppState', { state: 'x'.repeat(17 * 1024) })).toMatchObject({ ok: false, error: 'tooLarge' })
+    for (let i = 0; i < 3; i++) expect(await call('open', { appId: 'files' })).toMatchObject({ ok: true })
+    expect(await call('open', { appId: 'terminal' })).toMatchObject({ ok: false, error: 'busy' })
   })
 
   it('says hello with what the app may know, and nothing else', async () => {
@@ -99,15 +109,19 @@ describe('the bridge to an installed app', () => {
 
 describe('the bridge to an app backend', () => {
   it('answers what the backend said, or its error', async () => {
-    const frame = { postMessage: vi.fn() } as unknown as Window
+    const port = { postMessage: vi.fn(), onmessage: null }
     const backend = vi.fn(async (method: string) => (method === 'ok' ? { ok: { n: 1 } } : { error: 'nope' }))
-    const bridge = new WebAppBridge(
-      { handle: { id: 'w', appId: 'a' } as unknown as WindowHandle, allows: () => false, theme: () => ({ dark: false }), locale: () => 'en', backend },
-      () => frame,
-    )
-    const post = frame.postMessage as ReturnType<typeof vi.fn>
-    await bridge.receive(new MessageEvent('message', { data: { sbm: 1, id: 1, call: 'backend.call', args: { method: 'ok', params: { x: 1 } } }, source: frame }))
-    await bridge.receive(new MessageEvent('message', { data: { sbm: 1, id: 2, call: 'backend.call', args: { method: 'bad' } }, source: frame }))
+    const bridge = new WebAppBridge({
+      handle: { id: 'w', appId: 'a' } as unknown as WindowHandle,
+      allows: () => false,
+      theme: () => ({ dark: false }),
+      locale: () => 'en',
+      backend,
+    })
+    bridge.attach(port)
+    const post = port.postMessage
+    await bridge.receive({ sbm: 1, id: 1, call: 'backend.call', args: { method: 'ok', params: { x: 1 } } })
+    await bridge.receive({ sbm: 1, id: 2, call: 'backend.call', args: { method: 'bad' } })
     expect(backend).toHaveBeenCalledWith('ok', { x: 1 })
     expect(post.mock.calls[0][0]).toMatchObject({ re: 1, ok: true, value: { n: 1 } })
     expect(post.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'nope' })

@@ -6252,6 +6252,10 @@ type RootTranslation = {
 	 * @param {unknown} reason
 	 */
 	settingsAppRefused: RequiredParams<'reason'>
+	/**
+	 * I​t​ ​r​u​n​s​ ​a​s​ ​w​h​o​e​v​e​r​ ​o​p​e​n​s​ ​i​t​,​ ​a​n​d​ ​c​a​n​ ​s​e​n​d​ ​w​h​a​t​ ​i​t​ ​r​e​a​d​s​ ​e​l​s​e​w​h​e​r​e​.
+	 */
+	settingsAppApproveRisk: string
 }
 
 export type TranslationFunctions = {
@@ -12315,6 +12319,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * The package was refused: {reason}
 	 */
 	settingsAppRefused: (arg: { reason: unknown }) => LocalizedString
+	/**
+	 * It runs as whoever opens it, and can send what it reads elsewhere.
+	 */
+	settingsAppApproveRisk: () => LocalizedString
 }
 
 export type Formatters = {}

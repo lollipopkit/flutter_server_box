@@ -29,8 +29,26 @@
       locale: () => get(locale),
       backend: (method, params) => deskApi.callApp(desk.entry, win.appId, method, params),
     },
-    () => frame?.contentWindow ?? null,
   )
+
+  /// The frame's first page gets the bridge's port. A second load is the app
+  /// navigating away from its bundle (somewhere CSP does not reach): the
+  /// bridge closes and the frame goes, so that page never acts as the app.
+  let loads = 0
+  function onload() {
+    loads++
+    if (loads > 1) {
+      bridge.close()
+      src = null
+      failed = true
+      return
+    }
+    const channel = new MessageChannel()
+    bridge.attach(channel.port1)
+    // An opaque origin cannot be named; the port goes to this frame's
+    // window only.
+    frame?.contentWindow?.postMessage({ sbm: 1, event: 'connect' }, '*', [channel.port2])
+  }
 
   $effect(() => {
     let cancelled = false
@@ -55,8 +73,6 @@
   onDestroy(() => bridge.close())
 </script>
 
-<svelte:window onmessage={(e) => void bridge.receive(e)} />
-
 <AppToolbar title={bridge.toolbar.title} subtitle={bridge.toolbar.subtitle}>
   {#snippet actions()}
     {#each bridge.toolbar.actions ?? [] as a, i (i)}
@@ -79,6 +95,7 @@
       sandbox="allow-scripts allow-forms"
       referrerpolicy="no-referrer"
       allow=""
+      {onload}
     ></iframe>
   {:else}
     <div class="flex h-full items-center justify-center"><Spinner /></div>

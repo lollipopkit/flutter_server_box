@@ -500,3 +500,21 @@ async fn app_storage_is_per_account_and_bounded() {
         assert_eq!(status, 400, "{path}");
     }
 }
+
+#[ntex::test]
+async fn app_storage_is_bounded_per_account_across_apps() {
+    let srv = server(state().await).await;
+    // Under each app's own bound, past the account's once there are enough apps.
+    let value = json(serde_json::json!("x".repeat(250 << 10)));
+    let mut refused_at = None;
+    for i in 0..20 {
+        let path = format!("/api/v1/desk/apps/app{i}/storage?key=k");
+        let (status, _, _) = call(&srv, Some("admin"), Method::PUT, &path, value.clone()).await;
+        if status == 413 {
+            refused_at = Some(i);
+            break;
+        }
+        assert_eq!(status, 204);
+    }
+    assert_eq!(refused_at, Some(16));
+}

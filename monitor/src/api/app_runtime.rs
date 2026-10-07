@@ -62,6 +62,52 @@ const MAX_FS_READ: u64 = 1 << 20;
 const MAX_LOG: usize = 1024;
 const THREAD_STACK: usize = 16 << 20;
 
+/// Calls running at once, all accounts together, and per account.
+const MAX_CALLS: usize = 8;
+const MAX_CALLS_PER_ACCOUNT: usize = 2;
+
+/// The calls running on one agent (`AppState::app_calls`).
+#[derive(Clone)]
+pub struct AppCalls {
+    slots: Arc<tokio::sync::Semaphore>,
+    running: Arc<Mutex<HashMap<String, usize>>>,
+}
+
+impl Default for AppCalls {
+    fn default() -> Self {
+        Self { slots: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)), running: Default::default() }
+    }
+}
+
+/// One of an account's [MAX_CALLS_PER_ACCOUNT] running calls, given back
+/// when dropped.
+struct AccountSlot(Arc<Mutex<HashMap<String, usize>>>, String);
+
+impl AccountSlot {
+    fn take(calls: &AppCalls, account: &str) -> Option<Self> {
+        let mut running = calls.running.lock().ok()?;
+        let n = running.entry(account.to_string()).or_default();
+        if *n >= MAX_CALLS_PER_ACCOUNT {
+            return None;
+        }
+        *n += 1;
+        Some(Self(calls.running.clone(), account.to_string()))
+    }
+}
+
+impl Drop for AccountSlot {
+    fn drop(&mut self) {
+        if let Ok(mut running) = self.0.lock()
+            && let Some(n) = running.get_mut(&self.1)
+        {
+            *n -= 1;
+            if *n == 0 {
+                running.remove(&self.1);
+            }
+        }
+    }
+}
+
 fn engine() -> &'static Engine {
     static ENGINE: OnceLock<Engine> = OnceLock::new();
     ENGINE.get_or_init(|| {
@@ -89,6 +135,12 @@ pub struct Host {
     pub runtime: tokio::runtime::Handle,
     limits: StoreLimits,
     calls: u32,
+    /// Inside a host function: the guest's `sbm_alloc` reaching `sbm.host`
+    /// again would recurse on the native stack without end.
+    in_host: bool,
+    started: std::time::Instant,
+    /// Stopped by the clock inside a host call, rather than by a trap.
+    timed_out: bool,
 }
 
 impl Host {
@@ -109,10 +161,6 @@ fn host_error(code: impl Into<String>) -> Value {
 /// Runs one host function. Blocking: called on a blocking thread, it waits
 /// for the agent's async work with the runtime's handle.
 fn host_call(host: &mut Host, request: &[u8]) -> Value {
-    host.calls += 1;
-    if host.calls > MAX_HOST_CALLS {
-        return host_error("tooManyCalls");
-    }
     #[derive(Deserialize)]
     struct Request {
         #[serde(rename = "fn")]
@@ -126,7 +174,9 @@ fn host_call(host: &mut Host, request: &[u8]) -> Value {
     let rt = host.runtime.clone();
     match request.name.as_str() {
         "log" => {
-            let message: String = text("message").unwrap_or_default().chars().take(MAX_LOG).collect();
+            // One line of the agent's log, never one that passes for another.
+            let message: String =
+                text("message").unwrap_or_default().chars().filter(|c| !c.is_control()).take(MAX_LOG).collect();
             tracing::info!(app = %host.app, user = %host.caller.username, "app log: {message}");
             json!({ "ok": null })
         }
@@ -214,6 +264,11 @@ fn host_call(host: &mut Host, request: &[u8]) -> Value {
                 let length = args.get("length").and_then(Value::as_u64).unwrap_or(MAX_FS_READ).min(MAX_FS_READ);
                 let bytes = rt.block_on(async {
                     use tokio::io::{AsyncReadExt, AsyncSeekExt};
+                    // A regular file only: a FIFO or a device would hold the
+                    // call past every bound.
+                    if !tokio::fs::metadata(&resolved).await?.is_file() {
+                        return Err(std::io::Error::other("not a file"));
+                    }
                     let mut file = tokio::fs::File::open(&resolved).await?;
                     file.seek(std::io::SeekFrom::Start(offset)).await?;
                     let mut buf = Vec::new();
@@ -319,10 +374,26 @@ pub fn run(wasm_key: (String, String), wasm: &[u8], host: Host, method: &str, pa
                 .get_export("memory")
                 .and_then(Extern::into_memory)
                 .ok_or_else(|| wasmi::Error::new("memory missing"))?;
+            let host = caller.data_mut();
+            if host.in_host {
+                return Err(wasmi::Error::new("sbm.host called from inside sbm.host"));
+            }
+            host.calls += 1;
+            if host.calls > MAX_HOST_CALLS {
+                return Err(wasmi::Error::new("too many host calls"));
+            }
+            if host.started.elapsed() >= WALL {
+                host.timed_out = true;
+                return Err(wasmi::Error::new("out of time"));
+            }
             let request = read_guest(&memory, &caller, ptr as u32, len as u32, MAX_REQUEST).map_err(wasmi::Error::new)?;
+            caller.data_mut().in_host = true;
             let answer = host_call(caller.data_mut(), &request);
             let bytes = serde_json::to_vec(&answer).unwrap_or_default();
-            give(&mut caller, &bytes)
+            // `give` runs the guest's allocator, still inside this call.
+            let given = give(&mut caller, &bytes);
+            caller.data_mut().in_host = false;
+            given
         })
         .map_err(|_| "internal")?;
     let instance = linker.instantiate_and_start(&mut store, &module).map_err(|e| {
@@ -334,7 +405,7 @@ pub fn run(wasm_key: (String, String), wasm: &[u8], host: Host, method: &str, pa
     let memory = instance.get_memory(&store, "memory").ok_or("invalidModule")?;
 
     let len = i32::try_from(request.len()).map_err(|_| "tooLarge")?;
-    let started = std::time::Instant::now();
+    let started = store.data().started;
     let mut spent = 0;
     let ptr = bounded(&mut store, &alloc, len, started, &mut spent)?;
     memory.write(&mut store, ptr as u32 as usize, &request).map_err(|_| "badPointer")?;
@@ -353,7 +424,8 @@ fn bounded<P: wasmi::WasmParams, R: wasmi::WasmResults>(
     spent: &mut u64,
 ) -> Result<R, String> {
     store.set_fuel(FUEL_SLICE).map_err(|_| "internal")?;
-    let mut call = func.call_resumable(&mut *store, params).map_err(|e| trap_code(&e))?;
+    let code = |store: &Store<Host>, e: &wasmi::Error| if store.data().timed_out { "tooLong".to_string() } else { trap_code(e) };
+    let mut call = func.call_resumable(&mut *store, params).map_err(|e| code(store, &e))?;
     loop {
         match call {
             wasmi::TypedResumableCall::Finished(results) => return Ok(results),
@@ -365,7 +437,7 @@ fn bounded<P: wasmi::WasmParams, R: wasmi::WasmResults>(
                     return Err("tooLong".into());
                 }
                 store.set_fuel(FUEL_SLICE.max(invocation.required_fuel())).map_err(|_| "internal")?;
-                call = invocation.resume(&mut *store).map_err(|e| trap_code(&e))?;
+                call = invocation.resume(&mut *store).map_err(|e| code(store, &e))?;
             }
         }
     }
@@ -398,6 +470,14 @@ pub async fn call(
     if !(1..=64).contains(&body.method.len()) {
         return Ok(HttpResponse::BadRequest().json(&json!({ "error": "invalidMethod" })));
     }
+    // Bounded together and per account: a call holds a thread and up to
+    // 64 MiB until its bounds end it.
+    let Ok(_global) = state.app_calls.slots.clone().try_acquire_owned() else {
+        return Ok(HttpResponse::TooManyRequests().json(&json!({ "error": "busy" })));
+    };
+    let Some(_mine) = AccountSlot::take(&state.app_calls, &caller.username) else {
+        return Ok(HttpResponse::TooManyRequests().json(&json!({ "error": "busy" })));
+    };
     let user: Option<i64> = match sqlx::query_scalar("SELECT id FROM users WHERE username = ?").bind(&caller.username).fetch_optional(&state.db).await {
         Ok(u) => u,
         Err(e) => return Ok(super::desk::internal_error(&e)),
@@ -428,6 +508,9 @@ pub async fn call(
         runtime: tokio::runtime::Handle::current(),
         limits: StoreLimits::default(),
         calls: 0,
+        in_host: false,
+        started: std::time::Instant::now(),
+        timed_out: false,
     };
     let key = (id.clone(), sha);
     let method = body.method.clone();
@@ -444,7 +527,12 @@ pub async fn call(
     if spawned.is_err() {
         return Ok(HttpResponse::ServiceUnavailable().json(&json!({ "error": "busy" })));
     }
-    let outcome = rx.await;
+    // The thread ends by its own bounds; a reply later than that is not
+    // waited for.
+    let outcome = match tokio::time::timeout(WALL + std::time::Duration::from_secs(30), rx).await {
+        Ok(outcome) => outcome,
+        Err(_) => return Ok(HttpResponse::GatewayTimeout().json(&json!({ "error": "tooLong" }))),
+    };
     tracing::info!(app = %id.as_str(), user = %caller.username, ip = ?peer_ip(&req), "app call {}", body.method);
     match outcome {
         Ok(Ok(reply)) => Ok(HttpResponse::Ok().json(&reply)),

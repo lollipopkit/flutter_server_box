@@ -2,14 +2,17 @@
 /// its window handle allows and its approved permissions grant, and tells it
 /// what changes (lifecycle, theme, locale, intents, its buttons used).
 ///
-/// Everything from the frame is untrusted: shapes and sizes are checked here,
-/// one message at a time; a message from any window but the frame's is
-/// ignored. Nothing secret is ever sent to it.
+/// It talks over one `MessagePort` handed to the page the frame first loaded
+/// (`attach`): a page the frame navigates to later has no port, so it never
+/// reaches the bridge, and the window tears the frame down when it sees the
+/// second load. Everything from the port is untrusted: shapes and sizes are
+/// checked here, one message at a time. Nothing secret is ever sent.
 
 import { SvelteMap } from 'svelte/reactivity'
 import type { WindowHandle } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
+import type { IconTone } from '../lk/AppIcon.svelte'
 import { isCall, PROTOCOL, type ActionItem, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/desk-sys/src/protocol'
 
 const MAX_MESSAGE_BYTES = 1 << 20
@@ -18,6 +21,10 @@ const MAX_ITEMS = 64
 const MAX_MENUS = 8
 const MAX_LABEL = 80
 const MAX_KEEP_ALIVE = 4
+const MAX_APP_STATE = 16 * 1024
+const TONES: IconTone[] = ['berry', 'soft', 'ink', 'sky', 'teal', 'violet', 'amber', 'leaf', 'pale', 'bright', 'mist']
+const MAX_OPENS = 3
+const OPEN_WINDOW_MS = 10_000
 /// As `sys.useLifecycle().keepAlive`.
 const KEEP_ALIVE_MAX_MS = 10 * 60_000
 
@@ -52,6 +59,13 @@ function actionItems(value: unknown): ActionItem[] {
   })
 }
 
+/// The desk's end of the frame's channel (a `MessagePort`).
+export interface BridgePort {
+  postMessage(message: unknown): void
+  onmessage: ((e: MessageEvent) => void) | null
+  close?(): void
+}
+
 export interface BridgeHost {
   handle: WindowHandle
   /// Whether the app's approved permissions include [permission].
@@ -71,14 +85,20 @@ export class WebAppBridge {
   ready = $state(false)
 
   #host: BridgeHost
-  #frame: () => Window | null
+  #port: BridgePort | null = null
+  #opens: number[] = []
   #inFlight = 0
   #keepAlive = new SvelteMap<string, () => void>()
   #pending: Event[] = []
 
-  constructor(host: BridgeHost, frame: () => Window | null) {
+  constructor(host: BridgeHost) {
     this.#host = host
-    this.#frame = frame
+  }
+
+  /// Talks over [port] from now on (the frame's first page holds the other end).
+  attach(port: BridgePort) {
+    this.#port = port
+    port.onmessage = (e) => void this.receive(e.data)
   }
 
   /// A row or button the desk drew was used.
@@ -112,12 +132,10 @@ export class WebAppBridge {
     this.#post(message)
   }
 
-  /// The window's `message` listener.
-  async receive(e: MessageEvent) {
-    const frame = this.#frame()
-    if (!frame || e.source !== frame) return
-    if (!isCall(e.data)) return
-    const call = e.data
+  /// One message from the port.
+  async receive(data: unknown) {
+    if (!this.#port || !isCall(data)) return
+    const call = data
     if (this.#inFlight >= MAX_IN_FLIGHT) return this.#reply({ sbm: PROTOCOL, re: call.id, ok: false, error: 'busy' })
     let size: number
     try {
@@ -137,8 +155,13 @@ export class WebAppBridge {
     }
   }
 
-  /// The frame is going away.
+  /// The frame is going away (or left its page): nothing more is heard.
   close() {
+    if (this.#port) {
+      this.#port.onmessage = null
+      this.#port.close?.()
+      this.#port = null
+    }
     for (const release of this.#keepAlive.values()) release()
     this.#keepAlive.clear()
   }
@@ -169,11 +192,15 @@ export class WebAppBridge {
         return h.setAppName(a.name === null ? null : (text(a.name, 64) ?? null))
       case 'setIcon': {
         const g = glyph(a.glyph)
-        return h.setIcon(g && typeof a.tone === 'string' ? { glyph: g, tone: a.tone as never } : null)
+        const tone = TONES.find((t) => t === a.tone)
+        return h.setIcon(g && tone ? { glyph: g, tone } : null)
       }
       case 'setBadge':
         return h.setBadge(typeof a.badge === 'number' || typeof a.badge === 'string' ? a.badge : null)
       case 'setAppState':
+        // The agent keeps 16 KiB per window; more would fail the whole
+        // desk's session save.
+        if (JSON.stringify(a.state ?? null).length > MAX_APP_STATE) throw new Error('tooLarge')
         return h.setAppState(JSON.parse(JSON.stringify(a.state ?? null)))
       case 'toolbar':
         this.toolbar = { title: text(a.title, MAX_LABEL), subtitle: text(a.subtitle, MAX_LABEL), actions: actionItems(a.actions) }
@@ -199,6 +226,12 @@ export class WebAppBridge {
       case 'open': {
         // Another app, as itself; the only intent it may hand on is the
         // desk's `open` of a path, never a request another app acts on.
+        // Opening another app takes the focus (and the keyboard): not a
+        // thing to do in a loop.
+        const now = Date.now()
+        this.#opens = this.#opens.filter((t) => now - t < OPEN_WINDOW_MS)
+        if (this.#opens.length >= MAX_OPENS) throw new Error('busy')
+        this.#opens.push(now)
         const appId = String(a.appId)
         const intent = a.intent as { action?: unknown; data?: unknown } | undefined
         if (intent && intent.action !== 'open') throw new Error('notPermitted')
@@ -248,8 +281,6 @@ export class WebAppBridge {
   }
 
   #post(message: Reply | Event) {
-    // An opaque origin cannot be named; the message goes to this frame's
-    // window only, and carries nothing the app may not see.
-    this.#frame()?.postMessage(message, '*')
+    this.#port?.postMessage(message)
   }
 }

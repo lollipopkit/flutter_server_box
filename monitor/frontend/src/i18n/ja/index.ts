@@ -1516,6 +1516,7 @@ const ja = {
 	settingsPermBackground: 'バックグラウンドで実行する',
 	settingsAppNoPermissions: '権限なし',
 	settingsAppRefused: 'パッケージは拒否されました: {reason}',
+	settingsAppApproveRisk: '開いたアカウントの権限で実行され、サーバーから読み取ったデータを外部に送信できます。',
 } satisfies Translation
 
 export default ja

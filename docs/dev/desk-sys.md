@@ -14,6 +14,8 @@ Status: phases 1–5 are implemented (the SDK is not published yet) (see [Phases
 
 A third-party app never runs in the panel's own page. Code in the page can read the session token and act as the signed-in account; an iframe with `sandbox="allow-scripts"` (no `allow-same-origin`) runs in an opaque origin, which is the only boundary the browser enforces. The agent serves an installed bundle with `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; connect-src 'none'`, so the bundle stays sandboxed even when it is opened directly.
 
+What the sandbox does not do: stop an app from sending data out. `connect-src 'none'` blocks its requests, but a frame may navigate itself to any URL (with data in it), and WebRTC is outside `connect-src` in Chromium. So the bridge is reached only over a `MessagePort` the desk hands the frame's first page; when the frame loads a second page the desk closes the bridge and removes the frame, so a page the app navigates to never acts as the app. One navigation can still carry out what the app had read. **An approved app is trusted with whatever its permissions let it read**, and the approval dialog says so.
+
 ## Manifest
 
 Every app is a manifest. A built-in app's is `apps/<id>/manifest.ts` (`defineApp({...})`) and is registered by being there; a third-party app's is `manifest.json` in its package.
@@ -64,7 +66,7 @@ One import for system apps: `import { … } from '../../sys'`. Third-party apps 
 | Dock | `useDockMenu(() => MenuEntry[])` | Rows above the desk's own in the app's dock menu (the newest window's) |
 | Lifecycle | `useLifecycle()`: `state`, `keepAlive(reason)` | See above |
 | Notifications | `useWindow().notify({ title, body, level })` | A banner (unless Do Not Disturb) and a row in the notification centre; clicking it brings the window forward (or opens the app). Kept for the page's life; the agent's own (monitoring rules) are stored |
-| Storage | `useWindow().storage.get/set/remove/keys` | JSON by key, per app, account and server: the agent's `/desk/apps/{app}/storage` (feature `desk_storage`, migration 021), else the browser. 256 KiB per app, keys ≤128 bytes. The agent cannot tell apps apart (the panel names the app), so it is not a boundary between apps of one account; for `web` apps the desk, not the iframe, names the app |
+| Storage | `useWindow().storage.get/set/remove/keys` | JSON by key, per app, account and server: the agent's `/desk/apps/{app}/storage` (feature `desk_storage`, migration 021), else the browser. 256 KiB per app and 4 MiB per account across apps, keys ≤128 bytes. The agent cannot tell apps apart (the panel names the app), so it is not a boundary between apps of one account; for `web` apps the desk, not the iframe, names the app |
 | Intents | `open(appId, { intent })`, `useIntents(handler)`, `handlers(path, kind)`, `opens` in the manifest | An intent is `{ action, data }`, delivered once to the window it opened (held until the app's handler is mounted, so none is lost to timing). `open` (`data: { path, kind }`) is the desk's; others are named by the receiving app (`terminal.type`, `lib/snippetIntent`). Files lists the apps whose `opens` match under "Open with" |
 | Clipboard | `clipboard.writeText` | Read is not offered (browsers prompt; an app gets text by paste) |
 | Theme and locale | `theme.dark`, `locale` | Tokens come from `lk.css` |
@@ -83,7 +85,7 @@ A third-party manifest lists what it needs. The agent decides on every call: wha
 | `net` | The backend's outbound TCP, to the addresses listed in the manifest | `connect` covering them |
 | `status` | The backend's read of the status sample | — |
 
-An admin installs an app and approves its permissions in Settings → Apps; a later version that asks for more is held until approved again. Every account sees the apps whose permissions its role covers.
+An admin installs an app and approves it in Settings → Apps. An approval names the package (its SHA-256) and asks the admin's password; an upload asks none, so **any new package, whatever its version or permissions, waits for approval again**. Ids of the panel's own apps are refused. Removing an app removes what its users kept in its storage.
 
 ## Packages and installation (`web`, `wasm`)
 
@@ -91,7 +93,7 @@ A package is a `.sbapp` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/i
 
 ## The bridge (phase 3)
 
-The frame posts calls `{ sbm: 1, id, call, args }` to its parent and gets `{ sbm: 1, re, ok, value | error }`; the desk sends events `{ sbm: 1, event, data }` (held until the frame's `hello`). The desk hears only messages whose `source` is that frame's window and checks every shape and size (1 MiB, 32 calls in flight).
+The desk posts `{ sbm: 1, event: 'connect' }` with a `MessagePort` to the frame's first page; the frame posts calls `{ sbm: 1, id, call, args }` on that port and gets `{ sbm: 1, re, ok, value | error }`; the desk sends events `{ sbm: 1, event, data }` (held until the frame's `hello`). Only the port is heard, and every shape and size is checked (1 MiB, 32 calls in flight, `appState` ≤ 16 KiB, three `open`s per 10 s).
 
 | Call | Does |
 |---|---|
@@ -115,6 +117,7 @@ Intents carry `from`, set by the desk: an app acts on one only from the apps it 
 - Host functions: `log`; `kv.get/set/remove/keys` (the calling account's app storage); `status` (`status`); `fs.list`, `fs.read` (`files.read` and the caller's `files` grant, inside `fs.roots`, 1 MiB per read); `exec` (`exec` and the caller's `shell` grant, `[remote_access.exec]`'s bounds, audited like `/exec`). Nothing else of the host is linked.
 - Bounds per call: 2·10⁹ fuel or 10 s, whichever ends first (checked between fuel slices); 64 MiB of memory, one instance; 1000 host calls; 1 MiB request, 4 MiB reply. A bound reached answers `422 { error: "tooLong" | "trap" | … }`.
 - `POST /apps/{id}/call` (`{ method, params }`, any account) runs it as the signed-in account; the frame reaches it with the bridge's `backend.call`. Calls are logged with the account and app.
+- At most 8 calls at once per agent and 2 per account (`429 busy`). A host function is never re-entered (the guest's allocator calling `sbm.host` traps), and the clock is checked before each host call.
 - Not yet: `fs.write`, `net`, events pushed from a backend.
 
 ## Phases

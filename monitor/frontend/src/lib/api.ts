@@ -1125,10 +1125,10 @@ export const api = {
     )
     return res.json() as Promise<InstalledApp>
   },
-  approveApp: (id: string, permissions: string[], currentPassword: string) =>
+  approveApp: (id: string, sha256: string, permissions: string[], currentPassword: string) =>
     request<InstalledApp>(
       `/apps/${encodeURIComponent(id)}/approval`,
-      { method: 'PUT', body: JSON.stringify({ permissions, current_password: currentPassword }) },
+      { method: 'PUT', body: JSON.stringify({ sha256, permissions, current_password: currentPassword }) },
       'Failed to approve the app',
     ),
   removeApp: (id: string, currentPassword: string) =>

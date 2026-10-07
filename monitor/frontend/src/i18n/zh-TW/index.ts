@@ -1516,6 +1516,7 @@ const zh_TW = {
 	settingsPermBackground: '在背景執行',
 	settingsAppNoPermissions: '沒有權限',
 	settingsAppRefused: '套件遭拒：{reason}',
+	settingsAppApproveRisk: 'App 會以開啟它的帳號身分執行，並可將從伺服器讀取的資料傳送至其他地方。',
 } satisfies Translation
 
 export default zh_TW

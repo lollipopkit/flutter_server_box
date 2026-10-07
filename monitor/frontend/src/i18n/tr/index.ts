@@ -1516,6 +1516,7 @@ const tr = {
 	settingsPermBackground: 'arka planda çalışmasına',
 	settingsAppNoPermissions: 'İzin yok',
 	settingsAppRefused: 'Paket reddedildi: {reason}',
+	settingsAppApproveRisk: 'Uygulama, onu açan hesabın yetkileriyle çalışır ve sunucudan okuduğu verileri başka yerlere gönderebilir.',
 } satisfies Translation
 
 export default tr

@@ -1515,6 +1515,7 @@ const zh_CN = {
 	settingsPermBackground: '在后台运行',
 	settingsAppNoPermissions: '无权限',
 	settingsAppRefused: '应用包被拒绝:{reason}',
+	settingsAppApproveRisk: '它以打开它的账号身份运行,并且可以把读到的内容发送到别处。',
 } satisfies Translation
 
 export default zh_CN

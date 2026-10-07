@@ -3,6 +3,7 @@
 
 mod common;
 
+use std::io::Read;
 use std::sync::Arc;
 
 use ntex::http::Method;
@@ -116,8 +117,15 @@ async fn install(srv: &TestServer, bytes: Vec<u8>) -> Reply {
     call(srv, Some("admin"), Method::POST, "/api/v1/apps", Some((bytes, "application/gzip"))).await
 }
 
+/// Approves what is installed now as acme_notes, naming its package.
 async fn approve(srv: &TestServer, permissions: &[&str], password: &str) -> Reply {
-    let body = json!({ "permissions": permissions, "current_password": password }).to_string().into_bytes();
+    let apps = call(srv, Some("admin"), Method::GET, "/api/v1/apps", None).await.json;
+    let sha = apps["apps"][0]["sha256"].as_str().unwrap_or_default().to_string();
+    approve_package(srv, &sha, permissions, password).await
+}
+
+async fn approve_package(srv: &TestServer, sha256: &str, permissions: &[&str], password: &str) -> Reply {
+    let body = json!({ "sha256": sha256, "permissions": permissions, "current_password": password }).to_string().into_bytes();
     call(srv, Some("admin"), Method::PUT, "/api/v1/apps/acme_notes/approval", Some((body, "application/json"))).await
 }
 
@@ -176,16 +184,59 @@ async fn an_app_is_served_only_once_approved_and_only_with_a_ticket() {
 }
 
 #[ntex::test]
-async fn a_new_version_asking_for_more_waits_for_approval_again() {
+async fn new_code_waits_for_approval_again() {
     let srv = server().await;
     install(&srv, good(&["notifications"])).await;
     approve(&srv, &["notifications"], common::PASSWORD).await;
 
     let r = install(&srv, good(&["notifications"])).await;
-    assert_eq!(r.json["approved_permissions"], json!(["notifications"]), "same asks: still approved");
-    let r = install(&srv, good(&["notifications", "background"])).await;
-    assert!(r.json["approved_permissions"].is_null(), "asks for more: waits");
+    assert_eq!(r.json["approved_permissions"], json!(["notifications"]), "the same package: still approved");
+    // Other code under the same version and asks: an upload needs no
+    // password, so it never inherits an approval.
+    let mut other = manifest(&["notifications"]);
+    other["title"] = json!("Notes 2");
+    let r = install(&srv, package(&[("manifest.json", other.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
+    assert!(r.json["approved_permissions"].is_null(), "new code: waits");
     assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme_notes/launch", None).await.status, 404);
+}
+
+#[ntex::test]
+async fn an_approval_names_the_package_it_was_given_for() {
+    let srv = server().await;
+    let first = install(&srv, good(&[])).await.json["sha256"].as_str().unwrap().to_string();
+    // Replaced while the admin was reading the first.
+    let mut other = manifest(&[]);
+    other["title"] = json!("Other");
+    install(&srv, package(&[("manifest.json", other.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
+    let r = approve_package(&srv, &first, &[], common::PASSWORD).await;
+    assert_eq!(r.status, 409);
+    let r = call(&srv, Some("admin"), Method::GET, "/api/v1/apps", None).await;
+    assert!(r.json["apps"][0]["approved_permissions"].is_null());
+}
+
+#[ntex::test]
+async fn a_built_in_apps_id_is_not_taken() {
+    let srv = server().await;
+    let mut m = manifest(&[]);
+    m["id"] = json!("system_users");
+    let r = install(&srv, package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
+    assert_eq!(r.json["error"], "invalidId");
+}
+
+#[ntex::test]
+async fn archive_headers_are_bounded_too() {
+    let srv = server().await;
+    // A GNU long-name header declaring 30 MiB: tar reads such a header whole.
+    let mut builder = tar::Builder::new(flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast()));
+    let mut header = tar::Header::new_gnu();
+    header.set_entry_type(tar::EntryType::GNULongName);
+    header.set_size(30 << 20);
+    header.as_old_mut().name[..13].copy_from_slice(b"././@LongLink");
+    header.set_cksum();
+    builder.append(&header, std::io::repeat(b'a').take(30 << 20)).unwrap();
+    let bytes = builder.into_inner().unwrap().finish().unwrap();
+    let r = install(&srv, bytes).await;
+    assert_eq!(r.status, 400, "{}", r.json);
 }
 
 #[ntex::test]
@@ -346,9 +397,10 @@ async fn a_backend_keeps_what_it_stores_per_account() {
     installed_backend(&srv, asking(r#"{"fn":"kv.set","args":{"key":"k","value":42}}"#), &[]).await;
     assert_eq!(call_backend(&srv, "admin", "set", json!(null)).await.json, json!({ "ok": null }));
     let srv2 = srv;
-    // Read back by a module that asks for it (a new version keeps its approval).
+    // Read back by a module that asks for it.
     let r = install(&srv2, wasm_package(asking(r#"{"fn":"kv.get","args":{"key":"k"}}"#), &[])).await;
     assert_eq!(r.status, 200);
+    assert_eq!(approve(&srv2, &[], common::PASSWORD).await.status, 200);
     assert_eq!(call_backend(&srv2, "admin", "get", json!(null)).await.json, json!({ "ok": 42 }));
     assert_eq!(call_backend(&srv2, "watcher", "get", json!(null)).await.json, json!({ "ok": null }));
 }
@@ -370,4 +422,27 @@ async fn a_package_brings_a_backend_only_as_wasm() {
     install(&srv, good(&[])).await;
     approve(&srv, &[], common::PASSWORD).await;
     assert_eq!(call_backend(&srv, "admin", "x", json!(null)).await.status, 404);
+}
+
+#[ntex::test]
+async fn a_guest_reentering_the_host_traps_rather_than_overflowing() {
+    let srv = server().await;
+    // `sbm_alloc` itself asks the host, so answering any host call recurses.
+    let wasm = wat::parse_str(
+        r#"(module
+          (import "sbm" "host" (func $host (param i32 i32) (result i64)))
+          (memory (export "memory") 1)
+          (data (i32.const 16) "{}")
+          (func (export "sbm_alloc") (param i32) (result i32)
+            i32.const 16 i32.const 2 call $host drop
+            i32.const 1024)
+          (func (export "sbm_call") (param i32 i32) (result i64)
+            i32.const 16 i32.const 2 call $host))"#,
+    )
+    .unwrap();
+    installed_backend(&srv, wasm, &[]).await;
+    let r = call_backend(&srv, "admin", "x", json!(null)).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (422, Some("trap")), "{}", r.json);
+    // The agent is still here.
+    assert_eq!(call_backend(&srv, "admin", "x", json!(null)).await.status, 422);
 }

@@ -2679,6 +2679,8 @@ export interface PackageManifest {
 export interface InstalledApp {
   id: string
   version: string
+  /// Of the package; an approval names it, so it approves exactly this code.
+  sha256: string
   manifest: PackageManifest
   /// Null while waiting for an admin's approval.
   approved_permissions: string[] | null

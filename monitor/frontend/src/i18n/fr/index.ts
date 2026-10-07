@@ -1516,6 +1516,7 @@ const fr = {
 	settingsPermBackground: 's’exécuter en arrière-plan',
 	settingsAppNoPermissions: 'Aucune autorisation',
 	settingsAppRefused: 'Le paquet a été refusé : {reason}',
+	settingsAppApproveRisk: 'Elle s’exécute avec le compte de la personne qui l’ouvre et peut envoyer ailleurs les données qu’elle lit sur le serveur.',
 } satisfies Translation
 
 export default fr

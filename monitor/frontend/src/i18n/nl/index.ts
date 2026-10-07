@@ -1516,6 +1516,7 @@ const nl = {
 	settingsPermBackground: 'op de achtergrond te draaien',
 	settingsAppNoPermissions: 'Geen machtigingen',
 	settingsAppRefused: 'Het pakket is geweigerd: {reason}',
+	settingsAppApproveRisk: 'De app draait met het account van degene die haar opent en kan gelezen servergegevens elders naartoe sturen.',
 } satisfies Translation
 
 export default nl

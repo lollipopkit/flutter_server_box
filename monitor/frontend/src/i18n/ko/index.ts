@@ -1516,6 +1516,7 @@ const ko = {
 	settingsPermBackground: '백그라운드에서 실행',
 	settingsAppNoPermissions: '권한 없음',
 	settingsAppRefused: '패키지가 거부되었습니다: {reason}',
+	settingsAppApproveRisk: '앱을 연 계정으로 실행되며 서버에서 읽은 데이터를 다른 곳으로 보낼 수 있습니다.',
 } satisfies Translation
 
 export default ko

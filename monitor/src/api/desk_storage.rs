@@ -21,6 +21,9 @@ use super::server::AppState;
 
 /// Every key and value one app keeps, together.
 pub const MAX_APP_BYTES: usize = 256 << 10;
+/// Every app of one account together: app ids are the client's to name, so
+/// a bound per app alone would be no bound.
+pub const MAX_ACCOUNT_BYTES: usize = 4 << 20;
 /// A write's body: one value, at most all an app may keep.
 pub const MAX_BODY: usize = MAX_APP_BYTES + 1024;
 const MAX_KEY_BYTES: usize = 128;
@@ -158,7 +161,14 @@ pub(crate) async fn store(db: &sqlx::SqlitePool, user: i64, app: &str, key: &str
     .bind(app)
     .fetch_one(&mut *tx)
     .await?;
-    if total as usize > MAX_APP_BYTES {
+    let account: i64 = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(LENGTH(CAST(key AS BLOB)) + LENGTH(CAST(value AS BLOB))), 0) \
+         FROM desk_app_storage WHERE user_id = ?",
+    )
+    .bind(user)
+    .fetch_one(&mut *tx)
+    .await?;
+    if total as usize > MAX_APP_BYTES || account as usize > MAX_ACCOUNT_BYTES {
         tx.rollback().await?;
         return Ok(false);
     }

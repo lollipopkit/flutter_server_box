@@ -1516,6 +1516,7 @@ const en = {
 	settingsPermBackground: 'run in the background',
 	settingsAppNoPermissions: 'No permissions',
 	settingsAppRefused: 'The package was refused: {reason}',
+	settingsAppApproveRisk: 'It runs as whoever opens it, and can send what it reads elsewhere.',
 } satisfies BaseTranslation
 
 export default en

@@ -1516,6 +1516,7 @@ const es = {
 	settingsPermBackground: 'se ejecute en segundo plano',
 	settingsAppNoPermissions: 'Sin permisos',
 	settingsAppRefused: 'Se rechazó el paquete: {reason}',
+	settingsAppApproveRisk: 'Se ejecuta con la cuenta que la abre y puede enviar a otros destinos los datos que lee del servidor.',
 } satisfies Translation
 
 export default es
