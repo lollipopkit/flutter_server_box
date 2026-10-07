@@ -8,4 +8,5 @@ export default defineApp({
   available: feature('process'),
   order: 40,
   load: () => import('./ProcessApp.svelte'),
+  settings: () => import('./ProcessSettings.svelte'),
 })

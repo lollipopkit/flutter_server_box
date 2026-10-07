@@ -12,4 +12,5 @@ export default defineApp({
   order: 20,
   pinned: true,
   load: () => import('./TerminalApp.svelte'),
+  settings: () => import('./TerminalSettings.svelte'),
 })

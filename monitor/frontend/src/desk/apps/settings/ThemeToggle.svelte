@@ -4,13 +4,13 @@
   import { theme, type Theme } from '../../../lib/theme.svelte'
 
   const options = $derived([
-    { value: 'system' as Theme, icon: 'desktop_windows', title: $LL.themeSystem() },
-    { value: 'light' as Theme, icon: 'light_mode', title: $LL.themeLight() },
-    { value: 'dark' as Theme, icon: 'dark_mode', title: $LL.themeDark() },
+    { value: 'light' as Theme, label: $LL.deskThemeLight() },
+    { value: 'dark' as Theme, label: $LL.deskThemeDark() },
+    { value: 'system' as Theme, label: $LL.deskThemeSystem() },
   ])
 </script>
 
 <!-- Segmented switch (not a single cycling icon button) — system/light/dark
      is a genuine 3-way choice, a binary on/off switch would lose "system".
      Stretches full width to match the language select box above it. -->
-<SegmentedControl options={options} value={theme.current} onchange={(value) => theme.set(value as Theme)} label={$LL.theme()} />
+<SegmentedControl size="sm" options={options} value={theme.current} onchange={(value) => theme.set(value as Theme)} label={$LL.theme()} />

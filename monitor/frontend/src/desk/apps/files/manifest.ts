@@ -11,4 +11,5 @@ export default defineApp({
   order: 10,
   pinned: true,
   load: () => import('./FilesApp.svelte'),
+  settings: () => import('./FilesSettings.svelte'),
 })

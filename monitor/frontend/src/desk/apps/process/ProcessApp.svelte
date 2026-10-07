@@ -20,6 +20,7 @@
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { untrack } from 'svelte'
+  import { DEFAULT_PREFS, loadPrefs, type ProcessPrefs } from './prefs'
   import type { ProcessSignal, ProcessSortMode, ProcessView } from '../../../types'
 
 
@@ -36,6 +37,12 @@
   let query = $state('')
   let search = $state<HTMLInputElement | null>(null)
   let showKernel = $state(false)
+  /// How Processes behaves (Settings → Apps → Processes).
+  let prefs = $state<ProcessPrefs>(DEFAULT_PREFS)
+  void loadPrefs(win.storage).then((p) => {
+    prefs = p
+    showKernel = p.kernelThreads
+  })
   let paused = $state(!systemPrefs.value.autoRefresh)
   /// The order the window is asking for. Adopted from each answer, so a mode
   /// this machine cannot answer (it printed no `read` column) leaves the
@@ -426,7 +433,7 @@
       {#if target}
         <span class="truncate font-semibold text-(--text-primary)">{target.name}</span>
         {#if target.killable && signals.length > 0}
-          <Button variant="ghost" size="sm" class="!text-(--color-danger)" onclick={() => (asking = true)}>{$LL.processStop()}</Button>
+          <Button variant="ghost" size="sm" class="!text-(--color-danger)" onclick={() => (prefs.confirmStop ? (asking = true) : void signal(signals[0]))}>{$LL.processStop()}</Button>
         {/if}
       {/if}
     {/if}

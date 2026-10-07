@@ -10,7 +10,7 @@
 
   import { onDestroy, tick, untrack } from 'svelte'
   import { Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Spinner, Textarea } from '../../lk'
-  import { AppToolbar, useIntents, useWindow } from '../../sys'
+  import { AppToolbar, useIntents, useLifecycle, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { isAdmin, machineAccess, terminalAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -24,6 +24,7 @@
   import { terminalSurface } from '../../../lib/terminalSurface.svelte'
   import { tmuxIssueText } from '../../../lib/tmux'
   import { mountTerminal, type TerminalHandle } from '../../../lib/xterm'
+  import { loadLook } from './look'
   import type { TmuxSession, TmuxView } from '../../../types'
 
   const win = useWindow()
@@ -104,7 +105,9 @@
       showSurface = true
       await tick()
       if (!host) throw new Error('the terminal host is not mounted')
-      mounting ??= mountTerminal(host, session).then(
+      const look = await loadLook(win.storage)
+      if (!host) throw new Error('the terminal host is not mounted')
+      mounting ??= mountTerminal(host, session, look).then(
         (mounted) => {
           if (destroyed) {
             mounted.dispose()
@@ -138,6 +141,15 @@
       startBusy = false
     }
   }
+
+  /// The look may have changed in Settings while this window was behind:
+  /// read again each time it comes to the front.
+  const life = useLifecycle()
+  $effect(() => {
+    if (life.state !== 'active' || !terminal) return
+    const t = terminal
+    void loadLook(win.storage).then((look) => t.setLook(look))
+  })
 
   $effect(() => {
     // Re-read on every theme change; `theme.current` is the trigger even

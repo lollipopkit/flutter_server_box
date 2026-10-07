@@ -45,27 +45,26 @@
   }
 </script>
 
-<Group title={$LL.myAccount()}>
-  <Row label={me.username} sub={$LL.accountRole()}>
+<Group title={$LL.settingsPersonal()}>
+  <Row label={$LL.settingsUser()} value={me.username} mono />
+  <Row label={$LL.accountRole()}>
     <Badge tone={me.admin ? 'success' : 'neutral'}>{me.role}</Badge>
   </Row>
 </Group>
 
 <form onsubmit={change}>
-  <Group title={$LL.changePassword()}>
-    <Row label={$LL.currentPassword()}>
-      <Input class="w-[170px]" type="password" autocomplete="current-password" bind:value={current} />
+  <Group title={$LL.settingsSecurity()}>
+    <Row label={$LL.currentPassword()} sub={$LL.settingsPasswordHint()}>
+      <Input class="w-[200px]" type="password" autocomplete="current-password" bind:value={current} />
     </Row>
     <Row label={$LL.newPassword()}>
-      <Input class="w-[170px]" type="password" autocomplete="new-password" bind:value={next} />
+      <Input class="w-[200px]" type="password" autocomplete="new-password" bind:value={next} />
+    </Row>
+    <Row label={$LL.changePassword()} sub={error ?? (done ? $LL.passwordChanged() : undefined)}>
+      <Button size="sm" variant="secondary" type="submit" disabled={busy || !current || !next}>
+        {#if busy}<Spinner size={16} />{/if}
+        {$LL.settingsChange()}
+      </Button>
     </Row>
   </Group>
-  <div class="flex flex-wrap items-center gap-[9px]">
-    <Button size="sm" variant="primary" type="submit" disabled={busy || !current || !next}>
-      {#if busy}<Spinner size={16} />{/if}
-      {$LL.changePassword()}
-    </Button>
-    {#if error}<p class="text-[13px] text-(--color-danger)" role="alert">{error}</p>{/if}
-    {#if done}<p class="text-[13px] text-(--color-success)">{$LL.passwordChanged()}</p>{/if}
-  </div>
 </form>

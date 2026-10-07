@@ -7,7 +7,17 @@
 /// correct.
 import type { Renderer, TerminalSession } from './terminal.svelte'
 
+/// How the terminal looks and sounds (Settings → Apps → Terminal).
+export interface TerminalLook {
+  fontSize?: number
+  cursor?: 'block' | 'bar' | 'underline'
+  /// A short tone on the bell character.
+  bell?: boolean
+}
+
 export interface TerminalHandle {
+  /// Applies a changed look to the running terminal.
+  setLook(look: TerminalLook): void
   renderer: Renderer
   /// Re-reads the theme from the document, for a theme change.
   setTheme(): void
@@ -49,9 +59,28 @@ export function terminalBackground(): string {
 const nextFrame = () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
+/// One short, quiet tone: the bell.
+function ring() {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.08, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+    osc.connect(gain).connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.15)
+    osc.onended = () => void ctx.close()
+  } catch {
+    // No audio here: the bell is silent.
+  }
+}
+
 export async function mountTerminal(
   host: HTMLElement,
   session: TerminalSession,
+  look: TerminalLook = {},
 ): Promise<TerminalHandle> {
   // The stylesheet comes along in the same dynamic chunk, so it is fetched
   // with the terminal rather than on every panel load
@@ -63,7 +92,8 @@ export async function mountTerminal(
   const term = new Terminal({
     convertEol: false,
     cursorBlink: true,
-    fontSize: 13,
+    fontSize: look.fontSize ?? 13,
+    cursorStyle: look.cursor ?? 'block',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     theme: terminalTheme(),
   })
@@ -72,6 +102,10 @@ export async function mountTerminal(
   term.open(host)
   const decoder = new TextDecoder()
 
+  let bell = look.bell ?? false
+  term.onBell(() => {
+    if (bell) ring()
+  })
   term.onData((data) => session.input(data))
   term.onResize(({ cols, rows }) => session.resize(cols, rows))
 
@@ -108,6 +142,12 @@ export async function mountTerminal(
     },
     setTheme() {
       term.options.theme = terminalTheme()
+    },
+    setLook(next) {
+      if (next.fontSize !== undefined) term.options.fontSize = next.fontSize
+      if (next.cursor !== undefined) term.options.cursorStyle = next.cursor
+      if (next.bell !== undefined) bell = next.bell
+      fit.fit()
     },
     focus() {
       term.focus()

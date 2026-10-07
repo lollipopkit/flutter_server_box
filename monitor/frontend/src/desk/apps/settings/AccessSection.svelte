@@ -3,7 +3,7 @@
   /// an administrator only. Every change is re-authenticated.
 
   import { LL } from '../../../i18n/i18n-svelte'
-  import { AppToolbar } from '../../sys'
+  import SettingsPage from './SettingsPage.svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
   import AccessAdmin from './AccessAdmin.svelte'
@@ -25,9 +25,7 @@
 <!-- The sidebar offers this section only where it is allowed; the check is
      repeated here so a window restored with `access` shows nothing. -->
 {#if admin}
-  <AppToolbar title={$LL.settingsAccess()} />
-
-  <main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
+  <SettingsPage title={$LL.settingsAccess()} description={$LL.settingsAccessDesc()}>
     <AccessAdmin onchanged={refreshAccess} />
-  </main>
+  </SettingsPage>
 {/if}

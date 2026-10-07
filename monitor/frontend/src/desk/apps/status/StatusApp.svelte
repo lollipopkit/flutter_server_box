@@ -3,7 +3,7 @@
   import { AppToolbar, systemPrefs, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'
-  import PowerModal from './PowerModal.svelte'
+  import PowerModal from '../../../components/PowerModal.svelte'
   import UsageChart from './UsageChart.svelte'
   import { enabledFeatures } from '../../../lib/features'
   import { dashboardAccess, isAdmin, machineAccess } from '../../../lib/access'

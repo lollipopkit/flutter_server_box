@@ -1,15 +1,23 @@
 <script lang="ts">
-  import { Button, Dialog, Input, Spinner } from '../../lk'
-  import { LL } from '../../../i18n/i18n-svelte'
-  import { ApiError, api } from '../../../lib/api'
-  import type { PowerAction } from '../../../types'
+  import Button from '../desk/lk/Button.svelte'
+  import Dialog from '../desk/lk/Dialog.svelte'
+  import Input from '../desk/lk/Input.svelte'
+  import Spinner from '../desk/lk/Spinner.svelte'
+  import { LL } from '../i18n/i18n-svelte'
+  import { ApiError, api } from '../lib/api'
+  import type { PowerAction } from '../types'
+
+  /// Shuts down, reboots or suspends the machine: shared by Status and
+  /// Settings → Server.
 
   interface Props {
     open: boolean
     onclose: () => void
+    /// The action already picked (a Settings row's), still to be confirmed.
+    initial?: PowerAction
   }
 
-  const { open, onclose }: Props = $props()
+  const { open, onclose, initial }: Props = $props()
 
   /// Two steps on purpose: the first click picks the action, the second runs
   /// it. One click from a shutdown is one misclick from one, and the machine
@@ -26,7 +34,7 @@
 
   $effect(() => {
     if (open) {
-      pending = null
+      pending = initial ?? null
       password = ''
       running = false
       error = ''

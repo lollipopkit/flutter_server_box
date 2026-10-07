@@ -20,6 +20,7 @@
   } from '../../lk'
   import { AppToolbar, OPEN, type OpenPath, SplitView, systemPrefs, useIntents, useMenus, useWindow, WindowFooter } from '../../sys'
   import FileEditor from './FileEditor.svelte'
+  import { DEFAULT_PREFS, loadPrefs, PREFS_KEY, type FilesPrefs } from './prefs'
   import { LL } from '../../../i18n/i18n-svelte'
   import { filesAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -67,6 +68,20 @@
   let busy = $state('')
   /// List or grid — a per-window preference, kept beside the path.
   let view = $state<'list' | 'grid'>(askedState?.view === 'grid' ? 'grid' : 'list')
+  /// How Files opens and shows things (Settings → Apps → Files).
+  let prefs = $state<FilesPrefs>(DEFAULT_PREFS)
+  void loadPrefs(win.storage).then((p) => {
+    prefs = p
+    // A window that kept its own view keeps it.
+    if (askedState?.view !== 'grid' && askedState?.view !== 'list') view = p.view
+  })
+  function setHidden(hidden: boolean) {
+    prefs = { ...prefs, hidden }
+    void win.storage?.set(PREFS_KEY, prefs).catch(() => {})
+  }
+  /// The listing as shown: dot entries only when hidden files are.
+  const shown = $derived(prefs.hidden ? entries : entries.filter((e) => !e.name.startsWith('.')))
+
   /// The entry the pointer last landed on: the row that reads as picked.
   let selected = $state<string | null>(null)
 
@@ -252,7 +267,7 @@
   function openEntry(entry: FsEntry) {
     if (!cwd) return
     if (entry.kind === 'dir') void load(joinPath(cwd, entry.name))
-    else if (entry.kind === 'file') void edit(entry)
+    else if (entry.kind === 'file') void (prefs.open === 'download' ? download(entry) : edit(entry))
   }
 
   async function download(entry: FsEntry) {
@@ -400,7 +415,7 @@
   let sortBy = $state<TableSort>({ key: 'name', dir: 1 })
   const sorted = $derived.by(() => {
     const { key, dir } = sortBy
-    return [...entries].sort((a, b) => {
+    return [...shown].sort((a, b) => {
       const kind = Number(b.kind === 'dir') - Number(a.kind === 'dir')
       if (kind !== 0) return kind
       const by =
@@ -443,8 +458,8 @@
 
   const picked = $derived(selected === null ? undefined : entries.find((e) => e.name === selected))
   const footLeft = $derived.by(() => {
-    const dirs = entries.filter((e) => e.kind === 'dir').length
-    const parts = [dirs ? $LL.filesItemsWithFolders({ count: entries.length, dirs }) : $LL.filesItems({ count: entries.length })]
+    const dirs = shown.filter((e) => e.kind === 'dir').length
+    const parts = [dirs ? $LL.filesItemsWithFolders({ count: shown.length, dirs }) : $LL.filesItems({ count: shown.length })]
     if (disk) parts.push($LL.filesFree({ free: fmtBytes(disk.total - disk.used) }))
     return parts.join(' · ')
   })
@@ -574,6 +589,8 @@
         items: [
           { label: $LL.filesViewList(), checked: view === 'list', shortcut: '⌥⌘1', action: () => setView('list') },
           { label: $LL.filesViewGrid(), checked: view === 'grid', shortcut: '⌥⌘2', action: () => setView('grid') },
+          { separator: true },
+          { label: $LL.filesShowHidden(), checked: prefs.hidden, shortcut: '⇧⌘.', action: () => setHidden(!prefs.hidden) },
         ],
       },
       {
@@ -597,7 +614,7 @@
   })
 </script>
 
-<AppToolbar flush={available && view === 'list' && !!cwd && entries.length > 0}>
+<AppToolbar flush={available && view === 'list' && !!cwd && shown.length > 0}>
   {#snippet heading()}
     {#if available}
       <div class="-ml-[6px] flex min-w-0 items-center gap-[9px]">
@@ -709,9 +726,9 @@
         </div>
       {/if}
 
-      {#if loading && entries.length === 0}
+      {#if loading && shown.length === 0}
         <div class="grid flex-1 place-items-center"><Spinner /></div>
-      {:else if cwd && entries.length === 0}
+      {:else if cwd && shown.length === 0}
         <div class="flex flex-1 flex-col items-center justify-center gap-[9px] pb-[52px] text-(--text-tertiary)">
           <Icon name="folder_open" size={55} weight={300} />
           <span class="text-[15px] font-bold text-(--text-secondary)">{$LL.filesEmptyState()}</span>

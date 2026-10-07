@@ -6147,6 +6147,279 @@ type RootTranslation = {
 	 */
 	deskFind: string
 	/**
+	 * L​i​g​h​t
+	 */
+	deskThemeLight: string
+	/**
+	 * D​e​f​a​u​l​t​ ​v​i​e​w
+	 */
+	filesDefaultView: string
+	/**
+	 * D​o​u​b​l​e​-​c​l​i​c​k​ ​a​ ​f​i​l​e
+	 */
+	filesOpenFile: string
+	/**
+	 * S​h​o​w​ ​h​i​d​d​e​n​ ​f​i​l​e​s
+	 */
+	filesShowHidden: string
+	/**
+	 * F​i​l​e​s​ ​a​n​d​ ​f​o​l​d​e​r​s​ ​w​h​o​s​e​ ​n​a​m​e​s​ ​s​t​a​r​t​ ​w​i​t​h​ ​a​ ​d​o​t
+	 */
+	filesShowHiddenHint: string
+	/**
+	 * C​o​n​f​i​r​m​ ​b​e​f​o​r​e​ ​s​t​o​p​p​i​n​g
+	 */
+	processConfirmStop: string
+	/**
+	 * I​n​ ​t​h​e​ ​s​t​a​t​u​s​ ​b​a​r​,​ ​n​o​t​ ​a​ ​d​i​a​l​o​g
+	 */
+	processConfirmStopHint: string
+	/**
+	 * W​h​o​ ​m​a​y​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​S​i​g​n​i​n​g​ ​i​n​ ​o​v​e​r​ ​S​S​H​ ​i​s​ ​n​o​t​ ​l​i​m​i​t​e​d​ ​h​e​r​e​.
+	 */
+	settingsAccessDesc: string
+	/**
+	 * {​u​s​e​r​}​ ​o​n​ ​{​s​e​r​v​e​r​}​.​ ​C​h​a​n​g​e​s​ ​a​p​p​l​y​ ​i​n​ ​e​v​e​r​y​ ​b​r​o​w​s​e​r​ ​s​i​g​n​e​d​ ​i​n​.
+	 * @param {unknown} server
+	 * @param {unknown} user
+	 */
+	settingsAccountDesc: RequiredParams<'server' | 'user'>
+	/**
+	 * O​n​l​y​ ​t​h​i​s​ ​b​r​o​w​s​e​r​.
+	 */
+	settingsAppearanceDesc: string
+	/**
+	 * A​p​p​e​a​r​a​n​c​e
+	 */
+	settingsAppearanceMode: string
+	/**
+	 * K​e​p​t​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​:​ ​t​h​e​y​ ​a​p​p​l​y​ ​i​n​ ​e​v​e​r​y​ ​b​r​o​w​s​e​r​ ​y​o​u​ ​s​i​g​n​ ​i​n​ ​f​r​o​m​.
+	 */
+	settingsAppsDesc: string
+	/**
+	 * R​e​f​r​e​s​h​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
+	 */
+	settingsAutoRefresh: string
+	/**
+	 * P​a​u​s​e​d​,​ ​S​t​a​t​u​s​ ​a​n​d​ ​P​r​o​c​e​s​s​e​s​ ​k​e​e​p​ ​t​h​e​i​r​ ​l​a​s​t​ ​r​e​a​d​i​n​g
+	 */
+	settingsAutoRefreshHint: string
+	/**
+	 * S​h​o​w​ ​n​o​t​i​f​i​c​a​t​i​o​n​s
+	 */
+	settingsBanners: string
+	/**
+	 * A​ ​b​a​n​n​e​r​ ​f​o​r​ ​a​l​e​r​t​s​ ​a​n​d​ ​f​i​n​i​s​h​e​d​ ​b​a​c​k​g​r​o​u​n​d​ ​w​o​r​k
+	 */
+	settingsBannersHint: string
+	/**
+	 * C​h​a​n​g​e​…
+	 */
+	settingsChange: string
+	/**
+	 * 1​2​-​h​o​u​r
+	 */
+	settingsClock12: string
+	/**
+	 * 2​4​-​h​o​u​r
+	 */
+	settingsClock24: string
+	/**
+	 * C​o​m​f​o​r​t​a​b​l​e
+	 */
+	settingsComfortable: string
+	/**
+	 * C​o​m​p​a​c​t
+	 */
+	settingsCompact: string
+	/**
+	 * L​i​s​t​ ​d​e​n​s​i​t​y
+	 */
+	settingsDensity: string
+	/**
+	 * T​a​b​l​e​ ​r​o​w​s​ ​3​0​ ​/​ ​3​6
+	 */
+	settingsDensityHint: string
+	/**
+	 * N​o​t​i​f​i​c​a​t​i​o​n​s​ ​g​o​ ​t​o​ ​t​h​e​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​c​e​n​t​r​e​ ​w​i​t​h​o​u​t​ ​a​ ​b​a​n​n​e​r
+	 */
+	settingsDndHint: string
+	/**
+	 * A​p​p​s​ ​i​n​ ​t​h​e​ ​d​o​c​k
+	 */
+	settingsDockApps: string
+	/**
+	 * O​n​l​y​ ​t​h​i​s​ ​b​r​o​w​s​e​r​:​ ​k​e​p​t​ ​h​e​r​e​,​ ​n​e​v​e​r​ ​s​e​n​t​ ​t​o​ ​t​h​e​ ​s​e​r​v​e​r​.
+	 */
+	settingsGeneralDesc: string
+	/**
+	 * H​o​s​t
+	 */
+	settingsHost: string
+	/**
+	 * L​a​n​g​u​a​g​e​ ​a​n​d​ ​r​e​g​i​o​n
+	 */
+	settingsLanguageRegion: string
+	/**
+	 * C​l​o​s​e​s​ ​e​v​e​r​y​ ​w​i​n​d​o​w​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r
+	 */
+	settingsLogoutHint: string
+	/**
+	 * N​e​x​t​ ​w​i​n​d​o​w
+	 */
+	settingsNextWindow: string
+	/**
+	 * N​o​t​h​i​n​g
+	 */
+	settingsNothing: string
+	/**
+	 * O​p​e​n​ ​a​t​ ​s​t​a​r​t
+	 */
+	settingsOpenAtStart: string
+	/**
+	 * W​h​e​n​ ​n​o​ ​w​i​n​d​o​w​s​ ​c​o​m​e​ ​b​a​c​k
+	 */
+	settingsOpenAtStartHint: string
+	/**
+	 * O​n​l​y​ ​f​o​r​ ​s​i​g​n​i​n​g​ ​i​n​ ​h​e​r​e​;​ ​S​S​H​ ​i​s​ ​n​o​t​ ​a​f​f​e​c​t​e​d
+	 */
+	settingsPasswordHint: string
+	/**
+	 * P​e​r​s​o​n​a​l
+	 */
+	settingsPersonal: string
+	/**
+	 * P​o​w​e​r
+	 */
+	settingsPower: string
+	/**
+	 * O​p​e​n​ ​t​e​r​m​i​n​a​l​ ​s​e​s​s​i​o​n​s​ ​a​n​d​ ​t​r​a​n​s​f​e​r​s​ ​a​r​e​ ​c​l​o​s​e​d
+	 */
+	settingsRebootHint: string
+	/**
+	 * R​e​b​o​o​t​ ​{​s​e​r​v​e​r​}
+	 * @param {unknown} server
+	 */
+	settingsRebootHost: RequiredParams<'server'>
+	/**
+	 * R​e​d​u​c​e​ ​m​o​t​i​o​n
+	 */
+	settingsReduceMotion: string
+	/**
+	 * W​i​n​d​o​w​s​ ​a​n​d​ ​m​e​n​u​s​ ​a​p​p​e​a​r​ ​w​i​t​h​o​u​t​ ​s​c​a​l​i​n​g​ ​o​r​ ​s​p​r​i​n​g​i​n​g
+	 */
+	settingsReduceMotionHint: string
+	/**
+	 * R​e​f​r​e​s​h​i​n​g
+	 */
+	settingsRefresh: string
+	/**
+	 * I​n​t​e​r​v​a​l
+	 */
+	settingsRefreshInterval: string
+	/**
+	 * S​h​o​r​t​e​r​ ​m​e​a​n​s​ ​m​o​r​e​ ​w​o​r​k​ ​f​o​r​ ​t​h​e​ ​s​e​r​v​e​r
+	 */
+	settingsRefreshIntervalHint: string
+	/**
+	 * R​e​s​t​o​r​e​ ​t​h​e​ ​l​a​s​t​ ​w​i​n​d​o​w​s
+	 */
+	settingsRestoreWindows: string
+	/**
+	 * P​o​s​i​t​i​o​n​,​ ​s​i​z​e​ ​a​n​d​ ​w​h​e​r​e​ ​e​a​c​h​ ​w​a​s
+	 */
+	settingsRestoreWindowsHint: string
+	/**
+	 * R​u​n​n​i​n​g​ ​i​n​d​i​c​a​t​o​r​s
+	 */
+	settingsRunDots: string
+	/**
+	 * {​n​}​ ​s
+	 * @param {unknown} n
+	 */
+	settingsSeconds: RequiredParams<'n'>
+	/**
+	 * S​e​c​u​r​i​t​y
+	 */
+	settingsSecurity: string
+	/**
+	 * {​s​e​r​v​e​r​}​ ​i​t​s​e​l​f​.​ ​S​a​v​i​n​g​ ​c​h​a​n​g​e​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 * @param {unknown} server
+	 */
+	settingsServerDesc: RequiredParams<'server'>
+	/**
+	 * K​e​y​b​o​a​r​d​ ​s​h​o​r​t​c​u​t​s
+	 */
+	settingsShortcuts: string
+	/**
+	 * I​t​ ​c​o​m​e​s​ ​b​a​c​k​ ​o​n​l​y​ ​f​r​o​m​ ​i​t​s​ ​c​o​n​s​o​l​e​ ​o​r​ ​i​t​s​ ​p​o​w​e​r​ ​b​u​t​t​o​n
+	 */
+	settingsShutdownHint: string
+	/**
+	 * S​i​z​e​ ​u​n​i​t​s
+	 */
+	settingsSizeUnits: string
+	/**
+	 * B​i​n​a​r​y​:​ ​1​ ​G​i​B​ ​=​ ​1​0​2​4​ ​M​i​B
+	 */
+	settingsSizeUnitsHint: string
+	/**
+	 * S​t​a​n​d​a​r​d
+	 */
+	settingsStandard: string
+	/**
+	 * S​t​a​r​t​u​p
+	 */
+	settingsStartup: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	settingsSystem: string
+	/**
+	 * T​e​x​t​ ​s​i​z​e
+	 */
+	settingsTextSize: string
+	/**
+	 * I​n​s​i​d​e​ ​w​i​n​d​o​w​s
+	 */
+	settingsTextSizeHint: string
+	/**
+	 * T​i​m​e​ ​f​o​r​m​a​t
+	 */
+	settingsTimeFormat: string
+	/**
+	 * U​s​e​r
+	 */
+	settingsUser: string
+	/**
+	 * W​i​n​d​o​w​s
+	 */
+	settingsWindows: string
+	/**
+	 * B​e​l​l
+	 */
+	terminalBell: string
+	/**
+	 * C​u​r​s​o​r
+	 */
+	terminalCursor: string
+	/**
+	 * B​a​r
+	 */
+	terminalCursorBar: string
+	/**
+	 * B​l​o​c​k
+	 */
+	terminalCursorBlock: string
+	/**
+	 * U​n​d​e​r​l​i​n​e
+	 */
+	terminalCursorUnderline: string
+	/**
+	 * F​o​n​t​ ​s​i​z​e
+	 */
+	terminalFontSize: string
+	/**
 	 * D​i​s​k
 	 */
 	filesDisk: string
@@ -12289,6 +12562,274 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Find…
 	 */
 	deskFind: () => LocalizedString
+	/**
+	 * Light
+	 */
+	deskThemeLight: () => LocalizedString
+	/**
+	 * Default view
+	 */
+	filesDefaultView: () => LocalizedString
+	/**
+	 * Double-click a file
+	 */
+	filesOpenFile: () => LocalizedString
+	/**
+	 * Show hidden files
+	 */
+	filesShowHidden: () => LocalizedString
+	/**
+	 * Files and folders whose names start with a dot
+	 */
+	filesShowHiddenHint: () => LocalizedString
+	/**
+	 * Confirm before stopping
+	 */
+	processConfirmStop: () => LocalizedString
+	/**
+	 * In the status bar, not a dialog
+	 */
+	processConfirmStopHint: () => LocalizedString
+	/**
+	 * Who may do what on this agent. Signing in over SSH is not limited here.
+	 */
+	settingsAccessDesc: () => LocalizedString
+	/**
+	 * {user} on {server}. Changes apply in every browser signed in.
+	 */
+	settingsAccountDesc: (arg: { server: unknown, user: unknown }) => LocalizedString
+	/**
+	 * Only this browser.
+	 */
+	settingsAppearanceDesc: () => LocalizedString
+	/**
+	 * Appearance
+	 */
+	settingsAppearanceMode: () => LocalizedString
+	/**
+	 * Kept on the server: they apply in every browser you sign in from.
+	 */
+	settingsAppsDesc: () => LocalizedString
+	/**
+	 * Refresh automatically
+	 */
+	settingsAutoRefresh: () => LocalizedString
+	/**
+	 * Paused, Status and Processes keep their last reading
+	 */
+	settingsAutoRefreshHint: () => LocalizedString
+	/**
+	 * Show notifications
+	 */
+	settingsBanners: () => LocalizedString
+	/**
+	 * A banner for alerts and finished background work
+	 */
+	settingsBannersHint: () => LocalizedString
+	/**
+	 * Change…
+	 */
+	settingsChange: () => LocalizedString
+	/**
+	 * 12-hour
+	 */
+	settingsClock12: () => LocalizedString
+	/**
+	 * 24-hour
+	 */
+	settingsClock24: () => LocalizedString
+	/**
+	 * Comfortable
+	 */
+	settingsComfortable: () => LocalizedString
+	/**
+	 * Compact
+	 */
+	settingsCompact: () => LocalizedString
+	/**
+	 * List density
+	 */
+	settingsDensity: () => LocalizedString
+	/**
+	 * Table rows 30 / 36
+	 */
+	settingsDensityHint: () => LocalizedString
+	/**
+	 * Notifications go to the notification centre without a banner
+	 */
+	settingsDndHint: () => LocalizedString
+	/**
+	 * Apps in the dock
+	 */
+	settingsDockApps: () => LocalizedString
+	/**
+	 * Only this browser: kept here, never sent to the server.
+	 */
+	settingsGeneralDesc: () => LocalizedString
+	/**
+	 * Host
+	 */
+	settingsHost: () => LocalizedString
+	/**
+	 * Language and region
+	 */
+	settingsLanguageRegion: () => LocalizedString
+	/**
+	 * Closes every window in this browser
+	 */
+	settingsLogoutHint: () => LocalizedString
+	/**
+	 * Next window
+	 */
+	settingsNextWindow: () => LocalizedString
+	/**
+	 * Nothing
+	 */
+	settingsNothing: () => LocalizedString
+	/**
+	 * Open at start
+	 */
+	settingsOpenAtStart: () => LocalizedString
+	/**
+	 * When no windows come back
+	 */
+	settingsOpenAtStartHint: () => LocalizedString
+	/**
+	 * Only for signing in here; SSH is not affected
+	 */
+	settingsPasswordHint: () => LocalizedString
+	/**
+	 * Personal
+	 */
+	settingsPersonal: () => LocalizedString
+	/**
+	 * Power
+	 */
+	settingsPower: () => LocalizedString
+	/**
+	 * Open terminal sessions and transfers are closed
+	 */
+	settingsRebootHint: () => LocalizedString
+	/**
+	 * Reboot {server}
+	 */
+	settingsRebootHost: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * Reduce motion
+	 */
+	settingsReduceMotion: () => LocalizedString
+	/**
+	 * Windows and menus appear without scaling or springing
+	 */
+	settingsReduceMotionHint: () => LocalizedString
+	/**
+	 * Refreshing
+	 */
+	settingsRefresh: () => LocalizedString
+	/**
+	 * Interval
+	 */
+	settingsRefreshInterval: () => LocalizedString
+	/**
+	 * Shorter means more work for the server
+	 */
+	settingsRefreshIntervalHint: () => LocalizedString
+	/**
+	 * Restore the last windows
+	 */
+	settingsRestoreWindows: () => LocalizedString
+	/**
+	 * Position, size and where each was
+	 */
+	settingsRestoreWindowsHint: () => LocalizedString
+	/**
+	 * Running indicators
+	 */
+	settingsRunDots: () => LocalizedString
+	/**
+	 * {n} s
+	 */
+	settingsSeconds: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Security
+	 */
+	settingsSecurity: () => LocalizedString
+	/**
+	 * {server} itself. Saving changes the agent's configuration.
+	 */
+	settingsServerDesc: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * Keyboard shortcuts
+	 */
+	settingsShortcuts: () => LocalizedString
+	/**
+	 * It comes back only from its console or its power button
+	 */
+	settingsShutdownHint: () => LocalizedString
+	/**
+	 * Size units
+	 */
+	settingsSizeUnits: () => LocalizedString
+	/**
+	 * Binary: 1 GiB = 1024 MiB
+	 */
+	settingsSizeUnitsHint: () => LocalizedString
+	/**
+	 * Standard
+	 */
+	settingsStandard: () => LocalizedString
+	/**
+	 * Startup
+	 */
+	settingsStartup: () => LocalizedString
+	/**
+	 * System
+	 */
+	settingsSystem: () => LocalizedString
+	/**
+	 * Text size
+	 */
+	settingsTextSize: () => LocalizedString
+	/**
+	 * Inside windows
+	 */
+	settingsTextSizeHint: () => LocalizedString
+	/**
+	 * Time format
+	 */
+	settingsTimeFormat: () => LocalizedString
+	/**
+	 * User
+	 */
+	settingsUser: () => LocalizedString
+	/**
+	 * Windows
+	 */
+	settingsWindows: () => LocalizedString
+	/**
+	 * Bell
+	 */
+	terminalBell: () => LocalizedString
+	/**
+	 * Cursor
+	 */
+	terminalCursor: () => LocalizedString
+	/**
+	 * Bar
+	 */
+	terminalCursorBar: () => LocalizedString
+	/**
+	 * Block
+	 */
+	terminalCursorBlock: () => LocalizedString
+	/**
+	 * Underline
+	 */
+	terminalCursorUnderline: () => LocalizedString
+	/**
+	 * Font size
+	 */
+	terminalFontSize: () => LocalizedString
 	/**
 	 * Disk
 	 */

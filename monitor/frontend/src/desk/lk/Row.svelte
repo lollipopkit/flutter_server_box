@@ -9,6 +9,8 @@
     sub?: string
     /// A read-only value at the right, instead of a control.
     value?: string
+    /// The value is a key, a path, an address: monospace.
+    mono?: boolean
     /// Before the label (an app icon).
     leading?: Snippet
     /// The control.
@@ -16,7 +18,7 @@
     class?: string
   }
 
-  const { label, sub, value, leading, children, class: className = '' }: Props = $props()
+  const { label, sub, value, mono = false, leading, children, class: className = '' }: Props = $props()
 </script>
 
 <div class="lk-setrow {className}">
@@ -25,6 +27,6 @@
     <span class="lk-setrow__label">{label}</span>
     {#if sub}<span class="lk-setrow__hint">{sub}</span>{/if}
   </div>
-  {#if value != null}<span class="lk-setrow__value">{value}</span>{/if}
+  {#if value != null}<span class="lk-setrow__value" class:lk-mono={mono}>{value}</span>{/if}
   {@render children?.()}
 </div>

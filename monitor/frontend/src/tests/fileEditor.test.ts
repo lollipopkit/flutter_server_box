@@ -263,6 +263,14 @@ describe('the Files page moving around', () => {
     expect(screen.getByRole('button', { name: 'Forward' })).toBeDisabled()
   })
 
+  it('hides dot entries unless hidden files are shown', async () => {
+    mocks.fsList.mockResolvedValue([entry({ name: '.bashrc' }), entry({ name: 'note.txt' })])
+    render(Files)
+    await screen.findByText('note.txt')
+    expect(screen.queryByText('.bashrc')).toBeNull()
+    expect(screen.getByText(/^1 items/)).toBeInTheDocument()
+  })
+
   it('switches between the list and the grid', async () => {
     mocks.fsList.mockResolvedValue([entry({ mode: 0o644 })])
     render(Files)

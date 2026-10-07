@@ -377,11 +377,20 @@ export function provideAppSettings(desk: Desk, appId: string, settings: WindowHa
 
 /// The desk's preferences (wallpaper, background apps), for the Settings app
 /// only — no other app touches them. Null until they have loaded.
-export function useDeskPrefs(): { readonly prefs: DeskPrefs | null; readonly apps: AppSpec[]; reloadApps(): Promise<void> } {
+export function useDeskPrefs(): {
+  readonly prefs: DeskPrefs | null
+  readonly notifications: DeskNotifications | null
+  readonly apps: AppSpec[]
+  reloadApps(): Promise<void>
+} {
   const desk = getContext<Desk | undefined>(DESK)
   return {
     get prefs() {
       return desk?.prefs ?? null
+    },
+    /// Do Not Disturb lives here.
+    get notifications() {
+      return desk?.notifications ?? null
     },
     /// The apps this account can use here.
     get apps() {

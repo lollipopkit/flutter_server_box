@@ -5,7 +5,9 @@
   /// says so and nothing to edit.
 
   import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '../../lk'
-  import { AppToolbar } from '../../sys'
+  import SettingsPage from './SettingsPage.svelte'
+  import PowerModal from '../../../components/PowerModal.svelte'
+  import { machineAccess } from '../../../lib/access'
   import { fade } from 'svelte/transition'
   import Disclosure from '../../../components/Disclosure.svelte'
   import Markdown from '../../../components/Markdown.svelte'
@@ -19,8 +21,10 @@
     CustomCmd,
     DataRetentionConfig,
     MonitoringRule,
+    PowerAction,
     SettingsPayload,
     SettingsView,
+    SystemMetrics,
   } from '../../../types'
   import PushChannels from './PushChannels.svelte'
 
@@ -29,6 +33,23 @@
   let saving = $state(false)
   let saveError = $state<string | null>(null)
   let saveOk = $state(false)
+
+  const serverLabel = $derived(serverNames.byServer[servers.currentId] ?? (servers.current ? displayName(servers.current) : ''))
+  const canPower = $derived(machineAccess(capabilitiesStore.byServer[servers.currentId], 'power'))
+  /// The power action being confirmed.
+  let power = $state<PowerAction | null>(null)
+  /// The machine as it reports itself; nothing when it cannot be read.
+  let host = $state<SystemMetrics | null>(null)
+  $effect(() => {
+    const serverId = servers.currentId
+    if (!servers.authenticated) return
+    void api
+      .getMetrics()
+      .then((m) => {
+        if (serverId === servers.currentId) host = m
+      })
+      .catch(() => {})
+  })
 
   let settings = $state<SettingsView | null>(null)
   // Editable copies, kept as strings for the optional numeric fields so an
@@ -249,21 +270,24 @@
   {/if}
 {/snippet}
 
-<AppToolbar
-  title={$LL.serverSettings()}
-  subtitle={serverNames.byServer[servers.currentId] ??
-    (servers.current ? displayName(servers.current) : '')}
->
-  {#snippet actions()}
-    {#if settings && !nonAdmin}
-      <Button size="sm" onclick={save} disabled={saving}>
-        {saving ? $LL.saving() : $LL.save()}
-      </Button>
-    {/if}
-  {/snippet}
-</AppToolbar>
+{#snippet saveButton()}
+  {#if settings && !nonAdmin}
+    <Button size="sm" variant="primary" onclick={save} disabled={saving}>
+      {saving ? $LL.saving() : $LL.save()}
+    </Button>
+  {/if}
+{/snippet}
 
-<main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
+<SettingsPage title={$LL.serverSettings()} subtitle={serverLabel} description={$LL.settingsServerDesc({ server: serverLabel })} actions={saveButton}>
+  {#if host}
+    <!-- The machine itself, as it reports itself. -->
+    <Group title={$LL.settingsHost()}>
+      <Row label={$LL.serverNameLabel()} value={host.server_name} mono />
+      {#if host.sys}<Row label={$LL.settingsSystem()} value={host.sys} />{/if}
+      {#if host.cpu_brand}<Row label="CPU" value={host.cpu_brand} />{/if}
+      {#if host.uptime}<Row label={$LL.uptime()} value={host.uptime} />{/if}
+    </Group>
+  {/if}
   {#if !servers.authenticated}
     <p class="text-[13px] text-(--text-secondary)">{$LL.settingsNeedsAuth()}</p>
   {:else if nonAdmin}
@@ -280,7 +304,6 @@
          local prefs) can land after the toolbar is drawn — fade this in on
          its own instead of popping in abruptly -->
     <div in:fade={{ duration: 200 }} class="space-y-4">
-    <p class="text-[13px] text-(--text-secondary)">{$LL.settingsIntro()}</p>
 
     <Group title={$LL.collection()}>
       <Row label={$LL.intervalSeconds()}>
@@ -452,4 +475,17 @@
     {/if}
     </div>
   {/if}
-</main>
+  {#if canPower}
+    <!-- Destructive, so last and alone. -->
+    <Group title={$LL.settingsPower()}>
+      <Row label={$LL.settingsRebootHost({ server: serverLabel })} sub={$LL.settingsRebootHint()}>
+        <Button size="sm" variant="secondary" onclick={() => (power = 'reboot')}>{$LL.powerReboot()}…</Button>
+      </Row>
+      <Row label={$LL.powerShutdown()} sub={$LL.settingsShutdownHint()}>
+        <Button size="sm" variant="destructive" onclick={() => (power = 'shutdown')}>{$LL.powerShutdown()}…</Button>
+      </Row>
+    </Group>
+  {/if}
+</SettingsPage>
+
+<PowerModal open={power !== null} initial={power ?? undefined} onclose={() => (power = null)} />

@@ -17,6 +17,8 @@ vi.mock('../lib/api', async (importOriginal) => ({
     getPush: vi.fn(),
     listUsers: vi.fn(),
     listRoles: vi.fn(),
+    // The host card is optional: unread here.
+    getMetrics: () => Promise.reject(new Error('not in this test')),
   },
 }))
 
@@ -160,7 +162,7 @@ describe('settings app', () => {
 })
 
 describe('settings pages of other apps', () => {
-  it('lists them under Apps and runs one as its app', async () => {
+  it('shows them under Apps, each run as its app', async () => {
     const { registerApp } = await import('../desk/sys')
     const { BrowserStorage } = await import('../desk/storage')
     const { DeskPrefs } = await import('../desk/prefs.svelte')
@@ -179,7 +181,8 @@ describe('settings pages of other apps', () => {
     desk.appData = new AppData(storage)
     render(SettingsWindowHarness, { desk, id })
 
-    await fireEvent.click(await screen.findByRole('button', { name: /Greeter/ }))
+    // Inline, in the app's own group.
+    expect(await screen.findByRole('heading', { name: 'Greeter' })).toBeInTheDocument()
     await fireEvent.click(await screen.findByRole('button', { name: 'Save greeting' }))
     expect(await screen.findByText('saved: hi')).toBeInTheDocument()
     // Kept as the app's, not Settings'.

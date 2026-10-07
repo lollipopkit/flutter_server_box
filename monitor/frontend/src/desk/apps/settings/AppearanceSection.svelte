@@ -4,7 +4,8 @@
   /// preferences — see `useDeskPrefs`.
 
   import { Button, Card, Group, Row, SegmentedControl, Select, Spinner, Switch } from '../../lk'
-  import { AppToolbar } from '../../sys'
+  import { systemPrefs, type Density, type TextSize } from '../../sys'
+  import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { ApiError } from '../../../lib/api'
   import { useDeskPrefs } from '../../deskState.svelte'
@@ -24,6 +25,7 @@
   ])
 
   const appearance = useDeskPrefs()
+  const sys = $derived(systemPrefs.value)
   const prefs = $derived(appearance.prefs)
   const value = $derived(prefs?.value ?? null)
   /// The preset in use, or null for the custom image.
@@ -86,12 +88,90 @@
   }
 </script>
 
-<AppToolbar title={$LL.deskAppearance()} />
-
-<main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
+<SettingsPage title={$LL.deskAppearance()} description={$LL.settingsAppearanceDesc()}>
   {#if !prefs}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}
+    <Group title={$LL.theme()}>
+      <Row label={$LL.settingsAppearanceMode()}>
+        <ThemeToggle />
+      </Row>
+      <Row label={$LL.settingsTextSize()} sub={$LL.settingsTextSizeHint()}>
+        <SegmentedControl
+          size="sm"
+          label={$LL.settingsTextSize()}
+          value={sys.textSize}
+          options={[
+            { value: 's' as TextSize, label: $LL.deskSizeSmall() },
+            { value: 'm' as TextSize, label: $LL.settingsStandard() },
+            { value: 'l' as TextSize, label: $LL.deskSizeLarge() },
+          ]}
+          onchange={(textSize) => systemPrefs.set({ textSize })}
+        />
+      </Row>
+      <Row label={$LL.settingsReduceMotion()} sub={$LL.settingsReduceMotionHint()}>
+        <Switch label={$LL.settingsReduceMotion()} checked={sys.reduceMotion} onchange={(reduceMotion) => systemPrefs.set({ reduceMotion })} />
+      </Row>
+    </Group>
+
+    <Group title={$LL.settingsWindows()}>
+      <Row label={$LL.deskTitlebar()} sub={$LL.deskTitlebarHint()}>
+        <SegmentedControl
+          size="sm"
+          label={$LL.deskTitlebar()}
+          value={shellPrefs.titlebar}
+          options={[
+            { value: 'glass' as TitlebarStyle, label: $LL.deskTitlebarGlass() },
+            { value: 'always' as TitlebarStyle, label: $LL.deskTitlebarAlways() },
+          ]}
+          onchange={(titlebar) => shellPrefs.set({ titlebar })}
+        />
+      </Row>
+      <Row label={$LL.settingsDensity()} sub={$LL.settingsDensityHint()}>
+        <SegmentedControl
+          size="sm"
+          label={$LL.settingsDensity()}
+          value={sys.density}
+          options={[
+            { value: 'compact' as Density, label: $LL.settingsCompact() },
+            { value: 'comfortable' as Density, label: $LL.settingsComfortable() },
+          ]}
+          onchange={(density) => systemPrefs.set({ density })}
+        />
+      </Row>
+    </Group>
+
+    <Group title={$LL.deskDock()}>
+      <Row label={$LL.deskDockPosition()}>
+        <SegmentedControl
+          size="sm"
+          label={$LL.deskDockPosition()}
+          value={shellPrefs.dockPosition}
+          options={[
+            { value: 'left' as DockPosition, label: $LL.deskDockLeft() },
+            { value: 'bottom' as DockPosition, label: $LL.deskDockBottom() },
+            { value: 'right' as DockPosition, label: $LL.deskDockRight() },
+          ]}
+          onchange={(dockPosition) => shellPrefs.set({ dockPosition })}
+        />
+      </Row>
+      <Row label={$LL.deskDockAutoHide()} sub={$LL.deskDockAutoHideHint()}>
+        <Switch label={$LL.deskDockAutoHide()} checked={shellPrefs.dockAutoHide} onchange={(dockAutoHide: boolean) => shellPrefs.set({ dockAutoHide })} />
+      </Row>
+      <Row label={$LL.deskDockSize()}>
+        <SegmentedControl
+          size="sm"
+          label={$LL.deskDockSize()}
+          value={String(shellPrefs.dockSize)}
+          options={DOCK_SIZES.map((size, i) => ({ value: String(size), label: [$LL.deskSizeSmall(), $LL.deskSizeMedium(), $LL.deskSizeLarge()][i] }))}
+          onchange={(v) => shellPrefs.set({ dockSize: Number(v) as DockSize })}
+        />
+      </Row>
+      <Row label={$LL.settingsRunDots()}>
+        <Switch label={$LL.settingsRunDots()} checked={shellPrefs.dockRunDots} onchange={(dockRunDots: boolean) => shellPrefs.set({ dockRunDots })} />
+      </Row>
+    </Group>
+
     <Group title={$LL.deskWallpaper()}>
       <div class="space-y-[13px] py-[13px]">
 
@@ -165,57 +245,5 @@
       </div>
     </Group>
 
-    <Group title={$LL.deskAppearance()}>
-      <Row label={$LL.theme()}>
-        <ThemeToggle />
-      </Row>
-      <Row label={$LL.deskTitlebar()} sub={$LL.deskTitlebarHint()}>
-        <SegmentedControl
-          size="sm"
-          label={$LL.deskTitlebar()}
-          value={shellPrefs.titlebar}
-          options={[
-            { value: 'glass' as TitlebarStyle, label: $LL.deskTitlebarGlass() },
-            { value: 'always' as TitlebarStyle, label: $LL.deskTitlebarAlways() },
-          ]}
-          onchange={(titlebar) => shellPrefs.set({ titlebar })}
-        />
-      </Row>
-    </Group>
-
-    <Group title={$LL.deskDock()}>
-      <Row label={$LL.deskDockPosition()}>
-        <SegmentedControl
-          size="sm"
-          label={$LL.deskDockPosition()}
-          value={shellPrefs.dockPosition}
-          options={[
-            { value: 'left' as DockPosition, label: $LL.deskDockLeft() },
-            { value: 'bottom' as DockPosition, label: $LL.deskDockBottom() },
-            { value: 'right' as DockPosition, label: $LL.deskDockRight() },
-          ]}
-          onchange={(dockPosition) => shellPrefs.set({ dockPosition })}
-        />
-      </Row>
-      <Row label={$LL.deskDockAutoHide()} sub={$LL.deskDockAutoHideHint()}>
-        <Switch
-          checked={shellPrefs.dockAutoHide}
-          label={$LL.deskDockAutoHide()}
-          onchange={(dockAutoHide: boolean) => shellPrefs.set({ dockAutoHide })}
-        />
-      </Row>
-      <Row label={$LL.deskDockSize()}>
-        <SegmentedControl
-          size="sm"
-          label={$LL.deskDockSize()}
-          value={String(shellPrefs.dockSize)}
-          options={DOCK_SIZES.map((size, i) => ({
-            value: String(size),
-            label: [$LL.deskSizeSmall(), $LL.deskSizeMedium(), $LL.deskSizeLarge()][i],
-          }))}
-          onchange={(v) => shellPrefs.set({ dockSize: Number(v) as DockSize })}
-        />
-      </Row>
-    </Group>
   {/if}
-</main>
+</SettingsPage>
