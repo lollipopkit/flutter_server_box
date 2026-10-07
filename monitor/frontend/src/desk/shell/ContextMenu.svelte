@@ -16,8 +16,9 @@
       if (!el) return
       const r = el.getBoundingClientRect()
       const top = menu.above ? menu.y - r.height : menu.y
+      const left = menu.end ? menu.x - r.width : menu.x
       pos = {
-        left: Math.max(6, Math.min(menu.x, window.innerWidth - r.width - 6)),
+        left: Math.max(6, Math.min(left, window.innerWidth - r.width - 6)),
         top: Math.max(6, Math.min(top, window.innerHeight - r.height - 6)),
       }
       el.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()

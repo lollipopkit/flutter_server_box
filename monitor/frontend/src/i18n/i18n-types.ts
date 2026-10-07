@@ -6196,6 +6196,87 @@ type RootTranslation = {
 	 */
 	deskOpenWith: string
 	/**
+	 * H​i​d​e
+	 */
+	deskHide: string
+	/**
+	 * B​r​i​n​g​ ​a​l​l​ ​t​o​ ​f​r​o​n​t
+	 */
+	deskBringAllToFront: string
+	/**
+	 * H​e​l​p
+	 */
+	deskHelpMenu: string
+	/**
+	 * R​e​p​o​r​t​ ​a​ ​p​r​o​b​l​e​m​…
+	 */
+	deskReportProblem: string
+	/**
+	 * {​n​}​ ​c​o​r​e​s
+	 * @param {unknown} n
+	 */
+	deskCores: RequiredParams<'n'>
+	/**
+	 * O​p​e​n​ ​S​t​a​t​u​s
+	 */
+	deskOpenStatus: string
+	/**
+	 * T​i​t​l​e​ ​b​a​r
+	 */
+	deskTitlebar: string
+	/**
+	 * G​l​a​s​s​:​ ​t​h​e​ ​m​a​t​e​r​i​a​l​ ​s​h​o​w​s​ ​o​n​c​e​ ​c​o​n​t​e​n​t​ ​s​c​r​o​l​l​s​ ​u​n​d​e​r​ ​t​h​e​ ​b​a​r
+	 */
+	deskTitlebarHint: string
+	/**
+	 * G​l​a​s​s
+	 */
+	deskTitlebarGlass: string
+	/**
+	 * A​l​w​a​y​s​ ​s​h​o​w​n
+	 */
+	deskTitlebarAlways: string
+	/**
+	 * P​o​s​i​t​i​o​n
+	 */
+	deskDockPosition: string
+	/**
+	 * L​e​f​t
+	 */
+	deskDockLeft: string
+	/**
+	 * B​o​t​t​o​m
+	 */
+	deskDockBottom: string
+	/**
+	 * R​i​g​h​t
+	 */
+	deskDockRight: string
+	/**
+	 * H​i​d​e​ ​a​u​t​o​m​a​t​i​c​a​l​l​y
+	 */
+	deskDockAutoHide: string
+	/**
+	 * S​h​o​w​n​ ​w​h​e​n​ ​t​h​e​ ​p​o​i​n​t​e​r​ ​r​e​a​c​h​e​s​ ​t​h​e​ ​s​c​r​e​e​n​ ​e​d​g​e
+	 */
+	deskDockAutoHideHint: string
+	/**
+	 * I​c​o​n​ ​s​i​z​e
+	 */
+	deskDockSize: string
+	/**
+	 * S​m​a​l​l
+	 */
+	deskSizeSmall: string
+	/**
+	 * M​e​d​i​u​m
+	 */
+	deskSizeMedium: string
+	/**
+	 * L​a​r​g​e
+	 */
+	deskSizeLarge: string
+	/**
 	 * I​n​s​t​a​l​l​e​d
 	 */
 	settingsInstalledApps: string
@@ -12267,6 +12348,86 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Open with
 	 */
 	deskOpenWith: () => LocalizedString
+	/**
+	 * Hide
+	 */
+	deskHide: () => LocalizedString
+	/**
+	 * Bring all to front
+	 */
+	deskBringAllToFront: () => LocalizedString
+	/**
+	 * Help
+	 */
+	deskHelpMenu: () => LocalizedString
+	/**
+	 * Report a problem…
+	 */
+	deskReportProblem: () => LocalizedString
+	/**
+	 * {n} cores
+	 */
+	deskCores: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Open Status
+	 */
+	deskOpenStatus: () => LocalizedString
+	/**
+	 * Title bar
+	 */
+	deskTitlebar: () => LocalizedString
+	/**
+	 * Glass: the material shows once content scrolls under the bar
+	 */
+	deskTitlebarHint: () => LocalizedString
+	/**
+	 * Glass
+	 */
+	deskTitlebarGlass: () => LocalizedString
+	/**
+	 * Always shown
+	 */
+	deskTitlebarAlways: () => LocalizedString
+	/**
+	 * Position
+	 */
+	deskDockPosition: () => LocalizedString
+	/**
+	 * Left
+	 */
+	deskDockLeft: () => LocalizedString
+	/**
+	 * Bottom
+	 */
+	deskDockBottom: () => LocalizedString
+	/**
+	 * Right
+	 */
+	deskDockRight: () => LocalizedString
+	/**
+	 * Hide automatically
+	 */
+	deskDockAutoHide: () => LocalizedString
+	/**
+	 * Shown when the pointer reaches the screen edge
+	 */
+	deskDockAutoHideHint: () => LocalizedString
+	/**
+	 * Icon size
+	 */
+	deskDockSize: () => LocalizedString
+	/**
+	 * Small
+	 */
+	deskSizeSmall: () => LocalizedString
+	/**
+	 * Medium
+	 */
+	deskSizeMedium: () => LocalizedString
+	/**
+	 * Large
+	 */
+	deskSizeLarge: () => LocalizedString
 	/**
 	 * Installed
 	 */

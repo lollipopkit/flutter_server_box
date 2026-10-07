@@ -39,6 +39,8 @@ export interface ContextMenu {
   /// [y] is where the menu ends rather than starts (the dock's, which opens
   /// upwards).
   above?: boolean
+  /// [x] is where the menu ends rather than starts (under the bar's right side).
+  end?: boolean
   /// The menubar title that opened it, so moving along the bar switches.
   owner?: string
 }

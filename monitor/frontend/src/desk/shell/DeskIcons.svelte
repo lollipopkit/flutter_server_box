@@ -15,7 +15,9 @@
     (desk.prefs?.value.icons ?? []).filter((i) => app(i.app_id)?.available(desk.caps) ?? false),
   )
   const area = $derived(desk.windows.area)
-  const placed = $derived(placeIcons(usable, { width: area.width, height: area.height - area.top - area.bottom }))
+  /// Beside a dock on a side, never under it.
+  const width = $derived(area.width - area.left - area.right)
+  const placed = $derived(placeIcons(usable, { width, height: area.height - area.top - area.bottom }))
 
   let selected = $state<string | null>(null)
   let renaming = $state<string | null>(null)
@@ -76,7 +78,6 @@
     const { id, dx, dy, moved } = drag
     drag = null
     if (!moved) return
-    const width = area.width
     // Cells count from the right edge, as the grid lays them out.
     const col = Math.max(0, Math.round((width - CELL.width - CELL.margin - (x + dx)) / CELL.width))
     const row = Math.max(0, Math.round((y + dy - CELL.margin) / CELL.height))
@@ -90,7 +91,13 @@
   }}
 />
 
-<div class="pointer-events-none absolute inset-x-0" style:top="{area.top}px" style:bottom="{area.bottom}px">
+<div
+  class="pointer-events-none absolute"
+  style:top="{area.top}px"
+  style:bottom="{area.bottom}px"
+  style:left="{area.left}px"
+  style:right="{area.right}px"
+>
   {#each placed as { icon, x, y } (icon.id)}
     {@const spec = app(icon.app_id)}
     {@const dragged = drag?.id === icon.id && drag.moved}

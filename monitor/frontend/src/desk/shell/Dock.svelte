@@ -5,8 +5,32 @@
   import { useDesk, type MenuItem } from '../deskState.svelte'
   import LkAppIcon from '../lk/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
+  import { shellPrefs } from '../shellPrefs.svelte'
 
   const desk = useDesk()
+
+  /// On a side or at the bottom; on a phone always at the bottom.
+  const position = $derived(shellPrefs.dockAt(desk.windows.compact))
+  const vertical = $derived(position !== 'bottom')
+  /// Hidden until the pointer reaches its edge, when it hides itself.
+  const autoHide = $derived(shellPrefs.dockAutoHide && !desk.windows.compact)
+  let hovered = $state(false)
+  let hideTimer: ReturnType<typeof setTimeout> | undefined
+  function show() {
+    clearTimeout(hideTimer)
+    hovered = true
+  }
+  function hideSoon() {
+    clearTimeout(hideTimer)
+    // A menu opened from it keeps it out.
+    hideTimer = setTimeout(() => {
+      if (!desk.menu) hovered = false
+    }, 500)
+  }
+  $effect(() => {
+    if (!desk.menu && hovered && autoHide) hideSoon()
+  })
+  const hidden = $derived(autoHide && !hovered)
 
   /// The pinned apps this account can use, then the running ones not pinned.
   const pinned = $derived(
@@ -72,11 +96,17 @@
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
     e.preventDefault()
     e.stopPropagation()
-    desk.menu = { x: r.left, y: r.top - 8, items, above: true }
+    // Away from the dock's edge: above it, or beside it on a side.
+    desk.menu =
+      position === 'left'
+        ? { x: r.right + 13, y: r.top, items }
+        : position === 'right'
+          ? { x: r.left - 13, y: r.top, items, end: true }
+          : { x: r.left, y: r.top - 8, items, above: true }
   }
 
   /// Smaller tiles on a phone, so the dock fits more of them.
-  const tile = $derived(desk.windows.compact ? 40 : 44)
+  const tile = $derived(desk.windows.compact ? 40 : shellPrefs.dockSize)
 
   /// The app just launched from the dock bounces twice.
   let bouncing = $state<string | null>(null)
@@ -96,11 +126,21 @@
   {#if text}<span class="lk-badge lk-badge--count absolute -right-[5px] -top-[5px]" style:height="18px" style:min-width="18px">{text}</span>{/if}
 {/snippet}
 
-<div class="pointer-events-none absolute inset-x-0 bottom-[var(--dock-bottom)] z-[100000] flex justify-center px-2">
+{#if autoHide}
+  <!-- The strip along the dock's edge that brings it back. -->
+  <div class="dock-reveal dock-reveal--{position} absolute z-[99999]" aria-hidden="true" onpointerenter={show}></div>
+{/if}
+<div class="dock-place dock-place--{position} pointer-events-none absolute z-[100000] flex items-center justify-center">
   <nav
-    class="lk-dock pointer-events-auto max-w-full"
+    class="lk-dock lk-dock--{position} pointer-events-auto max-h-full max-w-full"
+    class:lk-dock--vertical={vertical}
+    class:lk-dock--hidden={hidden}
     style:padding={desk.windows.compact ? '7px' : undefined}
     aria-label={$LL.deskDock()}
+    aria-hidden={hidden || undefined}
+    inert={hidden}
+    onpointerenter={show}
+    onpointerleave={() => autoHide && hideSoon()}
     onpointerdown={(e) => {
       e.stopPropagation()
       desk.menu = null
@@ -173,6 +213,42 @@
 </div>
 
 <style>
+  .dock-place--bottom {
+    left: 0;
+    right: 0;
+    bottom: var(--dock-bottom);
+    padding: 0 8px;
+  }
+  .dock-place--left,
+  .dock-place--right {
+    top: var(--menubar-height);
+    bottom: 0;
+    padding: 8px 0;
+  }
+  .dock-place--left {
+    left: 9px;
+  }
+  .dock-place--right {
+    right: 9px;
+  }
+  .dock-reveal--bottom {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+  }
+  .dock-reveal--left,
+  .dock-reveal--right {
+    top: var(--menubar-height);
+    bottom: 0;
+    width: 4px;
+  }
+  .dock-reveal--left {
+    left: 0;
+  }
+  .dock-reveal--right {
+    right: 0;
+  }
   /* The items are buttons: reset what a button brings, keep the focus ring. */
   .lk-dock__item {
     padding: 0;
@@ -187,5 +263,8 @@
   .lk-dock__item:focus-visible .lk-dock__label {
     opacity: 1;
     transform: translate(-50%, 0);
+  }
+  .lk-dock--vertical .lk-dock__item:focus-visible .lk-dock__label {
+    transform: translate(0, -50%);
   }
 </style>

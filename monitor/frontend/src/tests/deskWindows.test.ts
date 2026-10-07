@@ -17,6 +17,18 @@ function manager() {
 }
 
 describe('geometry', () => {
+  it('keeps a side dock clear', () => {
+    const side: Area = { ...area, left: 78, right: 0 }
+    expect(snapRect('max', side)).toEqual({ x: 85, y: 40, width: 1200 - 78 - 14, height: 680 })
+    expect(snapRect('left', side).x).toBe(85)
+    expect(snapZoneAt(80, 400, side)).toBe('left')
+    expect(snapZoneAt(40, 400, side)).toBe('left')
+    expect(clamp({ x: -5000, y: 100, width: 400, height: 300 }, side, min).x).toBe(78 + KEEP_VISIBLE - 400)
+    const right: Area = { ...area, right: 78 }
+    expect(snapZoneAt(1200 - 80, 400, right)).toBe('right')
+    expect(snapRect('right', right).x + snapRect('right', right).width).toBe(1200 - 78 - 7)
+  })
+
   it('keeps a window reachable and within its limits', () => {
     expect(clamp({ x: -5000, y: -50, width: 100, height: 5000 }, area, min)).toEqual({
       x: KEEP_VISIBLE - 300,

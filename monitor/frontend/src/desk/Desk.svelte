@@ -170,13 +170,16 @@
 
   {#if desk.panel === 'launchpad'}
     <Launchpad />
+  {:else if desk.panel === 'notifications'}
+    <!-- Its own glass panel, under the menubar's right end. -->
+    <div class="desk-panel-place" role="dialog" tabindex="-1" aria-label={$LL.deskNotifications()} onpointerdown={(e) => e.stopPropagation()}>
+      <NotificationCenter />
+    </div>
   {:else if desk.panel}
     <!-- Under the menubar's right end, as macOS opens them. -->
     <div class="desk-panel" role="dialog" tabindex="-1" onpointerdown={(e) => e.stopPropagation()}>
       {#if desk.panel === 'control'}
         <ControlCenter {onlock} />
-      {:else if desk.panel === 'notifications'}
-        <NotificationCenter />
       {:else if desk.panel === 'calendar'}
         <CalendarPanel />
       {/if}
@@ -191,6 +194,15 @@
 </div>
 
 <style>
+  .desk-panel-place {
+    position: absolute;
+    top: 37px;
+    right: 9px;
+    z-index: 100001;
+    max-width: calc(100% - 18px);
+    transform-origin: top right;
+    animation: lk-menu-in var(--dur-base) var(--ease-spring);
+  }
   .desk-panel {
     position: absolute;
     top: 36px;
