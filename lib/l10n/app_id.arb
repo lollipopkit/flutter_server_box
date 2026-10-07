@@ -1172,7 +1172,7 @@
   "virtPoolMountPoint": "Titik kait",
   "virtPoolSourceNfs": "Sumber (host:/path)",
   "virtPoolSourceVg": "Volume group",
-  "virtPoolSourceThin": "Volume group / thin pool",
+  "virtPoolSourceThin": "Grup volume / thin pool",
   "virtPoolSourceZfs": "Pool ZFS",
   "virtPoolTypeVg": "Volume group LVM",
   "virtResNameEmpty": "Masukkan nama",

@@ -4150,7 +4150,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get virtPoolSourceVg => 'Volume group';
 
   @override
-  String get virtPoolSourceThin => 'Volume group / thin pool';
+  String get virtPoolSourceThin => 'Grup volume / thin pool';
 
   @override
   String get virtPoolSourceZfs => 'Pool ZFS';
