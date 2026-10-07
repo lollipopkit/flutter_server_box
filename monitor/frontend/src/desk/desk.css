@@ -213,3 +213,10 @@
 .desk-pane:not(:has(.xterm)) {
   scrollbar-gutter: stable;
 }
+/* A page stack is the window's scrolling body there (sys/PageStack): its
+   pages scroll, each with its own scrollbar, and the window does not. */
+.lk-window__content[data-page-scroll],
+.desk-pane[data-page-scroll] {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}

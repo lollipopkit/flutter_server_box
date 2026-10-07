@@ -432,6 +432,14 @@
   </AppToolbar>
 {/if}
 
+<!-- A reading's detail is a page over the overview: back (or a swipe)
+     returns, and a swipe the other way opens the detail left last. -->
+<PageStack
+  key={detail ?? 'overview'}
+  depth={detail ? 1 : 0}
+  back={detail ? { key: 'overview', go: leaveDetail } : null}
+  forward={!detail && leftDetail ? { key: leftDetail, go: () => (detail = leftDetail) } : null}
+>
 <main class="status-app pane-board pb-[21px]">
   {#if metrics.loading}
     <div class="flex h-full items-center justify-center"><Spinner size={48} /></div>
@@ -458,14 +466,6 @@
       </Card>
     {/if}
 
-    <!-- A reading's detail is a page over the overview: back (or a swipe)
-         returns, and a swipe the other way opens the detail left last. -->
-    <PageStack
-      key={detail ?? 'overview'}
-      depth={detail ? 1 : 0}
-      back={detail ? { key: 'overview', go: leaveDetail } : null}
-      forward={!detail && leftDetail ? { key: leftDetail, go: () => (detail = leftDetail) } : null}
-    >
     {#if detail}
       <DetailPanel kind={detail} metrics={m} {history} />
     {:else}
@@ -632,9 +632,9 @@
         {/if}
       </div>
     {/if}
-    </PageStack>
   {/if}
 </main>
+</PageStack>
 
 
 <PowerModal open={powerOpen} onclose={() => (powerOpen = false)} />

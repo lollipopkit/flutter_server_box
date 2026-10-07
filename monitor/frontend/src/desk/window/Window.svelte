@@ -70,13 +70,13 @@
   const flush = $derived(!!toolbar?.flush)
 
   /// The content (or a list inside it) has scrolled away from the top: the
-  /// bar turns to glass over it, unless it is glass always or flush.
+  /// bar blurs what is under it, unless it is blurred always or flush.
   let scrolled = $state(false)
-  const glass = $derived(!flush && (shellPrefs.titlebar === 'always' || scrolled))
+  const blurred = $derived(!flush && (shellPrefs.titlebar === 'always' || scrolled))
   function onContentScroll(e: Event) {
     const content = e.currentTarget as HTMLElement
     const target = e.target as HTMLElement
-    // Pages sliding past each other (sys.PageStack): glass over both.
+    // Pages sliding past each other (sys.PageStack): blurred over both.
     scrolled = !!(content.dataset.pageMoving || target.dataset?.pageMoving) || content.scrollTop > 2 || (target !== content && target.scrollTop > 2)
   }
 
@@ -272,7 +272,7 @@
   onpointerdowncapture={() => desk.windows.focus(win.id)}
 >
   <!-- The design system's window: the bar floats over the content, which
-       scrolls under it (glass once scrolled, or always). With a sidebar the
+       scrolls under it (blurred once scrolled, or always). With a sidebar the
        inset glass sidebar holds the lights; else the bar does. Both are drag
        handles. -->
   <div class="lk-window h-full min-w-0 flex-1" class:lk-window--inactive={!active}>
@@ -359,7 +359,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="{part === 'bar' ? 'lk-window__bar' : 'lk-window__sidebar-top'} select-none"
-    class:lk-window__bar--glass={part === 'bar' && glass}
+    class:lk-window__bar--glass={part === 'bar' && blurred}
     class:lk-window__bar--flush={part === 'bar' && flush}
     style:touch-action="none"
     onpointerdown={onTitlePointerDown}

@@ -22,6 +22,12 @@
   /// page the swipe heads for is shown as it was left (a still copy kept when
   /// the app moved away from it) and becomes the live page once the app has
   /// gone there.
+  ///
+  /// In a window (or a pane) the stack is the window's scrolling body: it
+  /// covers the window's content and every page scrolls by itself under the
+  /// bar, as a route does in Flutter. Two pages in a slide keep their own
+  /// scroll positions and scrollbars, and nothing about the window's scroll
+  /// changes under them.
 
   import { untrack, type Snippet } from 'svelte'
   import {
@@ -99,19 +105,61 @@
     if (copies.size > KEEP) copies.delete(copies.keys().next().value!)
   }
 
+  // ---- the stack as the window's scrolling body ---------------------------
+
+  /// Where the stack would sit in the app's layout: the pages start their
+  /// content this far down (under the bar, below what the app puts first).
+  let anchor = $state<HTMLDivElement | null>(null)
+  /// The window's content or a pane this stack scrolls in place of.
+  let host = $state<HTMLElement | null>(null)
+  let box = $state<{ top: number; left: number; width: number; height: number; pageTop: number } | null>(null)
+
+  $effect(() => {
+    if (!root || !anchor) return
+    const scroller = scrollerOf(root)
+    if (!scroller?.matches('.lk-window__content, .desk-pane')) return
+    host = scroller
+    scroller.scrollTop = 0
+    scroller.dataset.pageScroll = '1'
+    const a = anchor
+    const place = () => {
+      const parent = a.parentElement
+      if (!parent) return
+      // Lengths here are the app's CSS pixels; the window may be zoomed.
+      const zoom = parent.offsetWidth ? parent.getBoundingClientRect().width / parent.offsetWidth : 1
+      const s = scroller.getBoundingClientRect()
+      const op = (a.offsetParent as HTMLElement | null) ?? scroller
+      const o = op === scroller ? s : op.getBoundingClientRect()
+      box = {
+        top: op === scroller ? 0 : (s.top - o.top) / zoom - op.clientTop,
+        left: op === scroller ? 0 : (s.left - o.left) / zoom - op.clientLeft,
+        width: scroller.clientWidth,
+        height: scroller.clientHeight,
+        pageTop: (a.getBoundingClientRect().top - s.top) / zoom,
+      }
+    }
+    place()
+    const ro = new ResizeObserver(place)
+    ro.observe(scroller)
+    if (a.parentElement) ro.observe(a.parentElement)
+    return () => {
+      ro.disconnect()
+      delete scroller.dataset.pageScroll
+      host = null
+      box = null
+    }
+  })
+
   // ---- a change of page ---------------------------------------------------
 
   type Plan = 'push' | 'pop' | 'fade' | 'none'
   let plan: Plan = 'none'
   let shown = untrack(() => ({ key, depth }))
-  let fromScroll = 0
   let toScroll = 0
   let changed = false
-  let scrollApplied = false
   /// The swipe went through and waits for the app's page to arrive.
   let swapping: { copy: HTMLElement; live: HTMLElement } | null = null
   let swapTimer = 0
-  let leaving: HTMLElement | null = null
   let moving = $state(0)
 
   $effect.pre(() => {
@@ -119,16 +167,14 @@
     const d = depth
     untrack(() => {
       if (k === shown.key || !root) return
-      const scroller = scrollerOf(root)
       const page = livePage()
-      fromScroll = scroller?.scrollTop ?? 0
-      if (page) remember(shown.key, page, fromScroll)
+      if (page) remember(shown.key, page, page.scrollTop)
       plan = swapping ? 'none' : d > shown.depth ? 'push' : d < shown.depth ? 'pop' : 'fade'
-      if (plan === 'push' || plan === 'pop') hold(scroller)
+      if (plan === 'push' || plan === 'pop') hold()
+      // A page gone back to is where it was left; a new one at its top.
       toScroll = plan === 'pop' || plan === 'none' ? (copies.get(k)?.scroll ?? 0) : 0
       shown = { key: k, depth: d }
       changed = true
-      scrollApplied = false
     })
   })
 
@@ -137,12 +183,8 @@
     untrack(() => {
       if (!changed || !root) return
       changed = false
-      const scroller = scrollerOf(root)
-      if (scroller) {
-        scroller.scrollTop = toScroll
-        scrollApplied = true
-        if (leaving) leaving.style.top = `${scroller.scrollTop - fromScroll}px`
-      }
+      const page = livePage()
+      if (page && host) page.scrollTop = toScroll
       if (swapping) {
         clearTimeout(swapTimer)
         swapping.copy.remove()
@@ -153,10 +195,11 @@
     })
   })
 
-  /// While pages move, the scroll position is the arriving page's but the
-  /// leaving one is still drawn as it was: the window keeps its bar as glass
-  /// over both (`data-page-moving`), and looks again once they are still.
-  function hold(scroller: HTMLElement | null) {
+  /// While pages move the bar stays blurred over both (the page arriving may
+  /// be at its top while the one leaving was scrolled): `data-page-moving` on
+  /// the scroller the window watches; it looks again at the live page after.
+  function hold() {
+    const scroller = host ?? (root ? scrollerOf(root) : null)
     if (!scroller || scroller.dataset.pageMoving) return
     scroller.dataset.pageMoving = '1'
     scroller.dispatchEvent(new Event('scroll'))
@@ -164,31 +207,25 @@
 
   $effect(() => {
     if (moving > 0 || !root) return
-    const scroller = scrollerOf(root)
+    const scroller = host ?? scrollerOf(root)
     if (!scroller?.dataset.pageMoving) return
     delete scroller.dataset.pageMoving
-    scroller.dispatchEvent(new Event('scroll'))
+    ;(livePage() ?? scroller).dispatchEvent(new Event('scroll'))
   })
 
   function livePage(): HTMLElement | null {
     return root?.querySelector<HTMLElement>(':scope > .page:not(.page--leaving):not(.page--copy)') ?? null
   }
 
-  /// A moving page: opaque, at least as tall as what can be seen of it.
+  /// A moving page: opaque, so the one under it is covered.
   function dress(node: HTMLElement, z: number) {
     if (!root) return
-    const scroller = scrollerOf(root)
     node.style.background = groundOf(root)
     node.style.zIndex = String(z)
-    if (!node.style.position) node.style.position = 'relative'
-    if (scroller) {
-      const top = root.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
-      node.style.minHeight = `${Math.max(0, Math.max(fromScroll, toScroll, scroller.scrollTop) + scroller.clientHeight - top)}px`
-    }
   }
 
   function undress(node: HTMLElement) {
-    for (const p of ['background', 'zIndex', 'minHeight', 'transform', 'opacity', 'position', 'top', 'left', 'right'] as const) node.style[p] = ''
+    for (const p of ['background', 'zIndex', 'transform', 'opacity'] as const) node.style[p] = ''
   }
 
   /// Somewhere with no Web Animations (a test's DOM), pages change at once.
@@ -216,12 +253,6 @@
     if (p === 'none' || p === 'fade' || still(node)) return { duration: 0 }
     count(node)
     node.classList.add('page--leaving')
-    node.style.position = 'absolute'
-    node.style.left = '0'
-    node.style.right = '0'
-    const scroller = root ? scrollerOf(root) : null
-    node.style.top = `${(scrollApplied && scroller ? scroller.scrollTop : toScroll) - fromScroll}px`
-    leaving = node
     dress(node, p === 'pop' ? 2 : 1)
     const reduce = reducedMotion(node)
     if (reduce) return p === 'pop' ? { duration: PAGE_FADE_MS, css: (t: number) => `opacity:${t}` } : { duration: PAGE_FADE_MS, css: () => '' }
@@ -253,7 +284,6 @@
   }
 
   function left(node: HTMLElement) {
-    if (leaving === node) leaving = null
     uncount(node)
   }
 
@@ -288,30 +318,23 @@
   function begin(dir: Dir, step: PageStep, source: Swipe['source']): boolean {
     const live = livePage()
     if (!root || !live || swapping) return false
-    const scroller = scrollerOf(root)
     const kept = copies.get(step.key)
     let copy: HTMLElement
-    if (kept) {
-      copy = kept.node
-      copy.style.top = `${(scroller?.scrollTop ?? 0) - kept.scroll}px`
-    } else {
+    if (kept) copy = kept.node
+    else {
       // Never seen (a window restored deep): the page's ground alone.
       copy = document.createElement('div')
       copy.className = 'page page--copy'
-      copy.style.top = '0'
     }
-    copy.style.position = 'absolute'
-    copy.style.left = '0'
-    copy.style.right = '0'
     // A still copy outside what Svelte renders, after the page's anchor, and
     // taken out again before the page changes.
     // eslint-disable-next-line svelte/no-dom-manipulating -- see above
     root.append(copy)
+    if (kept) copy.scrollTop = kept.scroll
     moving++
-    hold(scroller)
+    hold()
     dress(copy, dir === 'back' ? 1 : 2)
     dress(live, dir === 'back' ? 2 : 1)
-    live.style.position = 'relative'
     swipe = { dir, step, source, width: root.clientWidth || 1, live, copy, dx: 0, samples: [], reduce: reducedMotion(root) }
     render(0)
     return true
@@ -480,11 +503,18 @@
   })
 </script>
 
+<div bind:this={anchor} class="page-stack__anchor" aria-hidden="true"></div>
 <div
   bind:this={root}
   class="page-stack"
+  class:page-stack--host={!!box}
   class:page-stack--moving={moving > 0}
   class:page-stack--swipe={!!(back || forward)}
+  style:top={box ? `${box.top}px` : null}
+  style:left={box ? `${box.left}px` : null}
+  style:width={box ? `${box.width}px` : null}
+  style:height={box ? `${box.height}px` : null}
+  style:--page-top={box ? `${box.pageTop}px` : null}
   role="presentation"
   {onpointerdown}
   {onpointermove}
@@ -493,18 +523,29 @@
 >
   {#key key}
     <div class="page" in:enter out:leave onintroend={(e) => entered(e.currentTarget)} onoutroend={(e) => left(e.currentTarget)}>
+      <!-- A spacer, not padding: a sticky header measures from the padding box. -->
+      {#if box}<div class="page__spacer" aria-hidden="true"></div>{/if}
       {@render children()}
     </div>
   {/key}
 </div>
 
 <style>
+  .page-stack__anchor {
+    flex: none;
+    height: 0;
+  }
   .page-stack {
     position: relative;
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
     min-width: 0;
+  }
+  /* The window's scrolling body: over its content, each page a scroller. */
+  .page-stack--host {
+    position: absolute;
+    overflow: hidden;
   }
   /* A horizontal drag is the page's; a vertical one still scrolls. */
   .page-stack--swipe {
@@ -515,9 +556,27 @@
     user-select: none;
   }
   .page-stack :global(.page) {
+    position: relative;
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
     min-width: 0;
+  }
+  .page-stack:not(.page-stack--host) :global(.page--leaving),
+  .page-stack:not(.page-stack--host) :global(.page--copy) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  .page-stack--host > :global(.page) {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    scrollbar-gutter: stable;
+  }
+  .page-stack :global(.page__spacer) {
+    flex: none;
+    height: var(--page-top);
   }
 </style>

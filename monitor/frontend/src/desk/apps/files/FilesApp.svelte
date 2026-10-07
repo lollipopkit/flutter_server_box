@@ -719,6 +719,14 @@
       {/if}
     {/snippet}
 
+    <!-- A folder opened is a page over the one it is in; back and forward
+         (buttons, ⌘[ ⌘], or a swipe) move through where the window has been. -->
+    <PageStack
+      key={`${histAt}:${cwd ?? ''}`}
+      depth={Math.max(histAt, 0)}
+      back={canBack ? { key: `${histAt - 1}:${hist[histAt - 1]}`, go: back } : null}
+      forward={canForward ? { key: `${histAt + 1}:${hist[histAt + 1]}`, go: forward } : null}
+    >
     <!-- The entry menu's coordinates are this box's. A list/grid switch
          fades the new view in. -->
     <div bind:this={pane} class="relative flex flex-1 flex-col" use:viewIn={view}>
@@ -735,14 +743,6 @@
         </div>
       {/if}
 
-      <!-- A folder opened is a page over the one it is in; back and forward
-           (buttons, ⌘[ ⌘], or a swipe) move through where the window has been. -->
-      <PageStack
-        key={`${histAt}:${cwd ?? ''}`}
-        depth={Math.max(histAt, 0)}
-        back={canBack ? { key: `${histAt - 1}:${hist[histAt - 1]}`, go: back } : null}
-        forward={canForward ? { key: `${histAt + 1}:${hist[histAt + 1]}`, go: forward } : null}
-      >
       {#if loading && shown.length === 0}
         <div class="grid flex-1 place-items-center"><Spinner /></div>
       {:else if cwd && shown.length === 0}
@@ -795,7 +795,6 @@
           {/each}
         </div>
       {/if}
-      </PageStack>
 
       {#if menu}
         <button
@@ -813,6 +812,7 @@
         </div>
       {/if}
     </div>
+    </PageStack>
   </SplitView>
 
   <WindowFooter>
