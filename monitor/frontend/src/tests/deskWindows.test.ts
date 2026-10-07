@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { type Area, cascade, clamp, KEEP_VISIBLE, resize, snapRect, snapZoneAt, unsnapUnder } from '../desk/geometry'
 import { WindowManager, type WindowPolicy } from '../desk/windows.svelte'
 
-const area: Area = { width: 1200, height: 800, top: 40, bottom: 80 }
+const area: Area = { width: 1200, height: 800, top: 40, bottom: 80, left: 0, right: 0 }
 const min = { width: 300, height: 200 }
 
 const policies: Record<string, WindowPolicy> = {

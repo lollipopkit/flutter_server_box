@@ -8,6 +8,7 @@
   import IconButton from '../lk/IconButton.svelte'
   import TrafficLights from '../lk/TrafficLights.svelte'
   import { WindowChrome } from './chrome.svelte'
+  import { shellPrefs } from '../shellPrefs.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
   import type { DeskWindow } from '../windows.svelte'
 
@@ -60,6 +61,19 @@
   const compact = $derived(desk.windows.compact)
   const toolbar = $derived(chrome.toolbar)
   const sidebar = $derived(chrome.sidebar)
+  const footer = $derived(chrome.footer)
+  let footerHeight = $state(0)
+  const flush = $derived(!!toolbar?.flush)
+
+  /// The content (or a list inside it) has scrolled away from the top: the
+  /// bar turns to glass over it, unless it is glass always or flush.
+  let scrolled = $state(false)
+  const glass = $derived(!flush && (shellPrefs.titlebar === 'always' || scrolled))
+  function onContentScroll(e: Event) {
+    const content = e.currentTarget as HTMLElement
+    const target = e.target as HTMLElement
+    scrolled = content.scrollTop > 2 || (target !== content && target.scrollTop > 2)
+  }
 
   /// The rect while a drag or resize is under way; the store gets it on release.
   let live = $state<Rect | null>(null)
@@ -199,51 +213,59 @@
   tabindex="-1"
   onpointerdowncapture={() => desk.windows.focus(win.id)}
 >
-  <!-- The design system's window: an inset glass sidebar holding the lights
-       when the app has one, else the lights in the title bar; the bar holds
-       the title and the app's tools. Both are drag handles. -->
-  <div class="lk-window min-w-0 flex-1" class:lk-window--inactive={!active}>
-    <div class="lk-window__frame">
-      {#if sidebar && !folded}
-        <aside class="lk-window__sidebar" style:width="{sidebar.width}px" aria-label={$LL.deskSidebar()}>
-          {@render handle('side')}
+  <!-- The design system's window: the bar floats over the content, which
+       scrolls under it (glass once scrolled, or always). With a sidebar the
+       inset glass sidebar holds the lights; else the bar does. Both are drag
+       handles. -->
+  <div class="lk-window h-full min-w-0 flex-1" class:lk-window--inactive={!active}>
+    {#if sidebar && !folded}
+      <aside class="lk-window__sidebar" style:width="{sidebar.width}px" aria-label={$LL.deskSidebar()}>
+        {@render handle('side')}
+        <div class="lk-window__sidebar-body">{@render sidebar.content()}</div>
+      </aside>
+    {/if}
+    <div class="lk-window__main" style:left="{sidebar && !folded ? sidebar.width + 14 : 0}px">
+      {@render handle('bar')}
+      <!-- A size container: an app lays itself out by its window's width
+           (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app
+           whose content fills the window takes `min-h-0 flex-1`. -->
+      <div
+        class="lk-window__content desk-window-body @container flex flex-col"
+        style:bottom="{footer ? footerHeight : 0}px"
+        onscrollcapture={onContentScroll}
+      >
+        <div class="lk-window__spacer" aria-hidden="true"></div>
+        {#if toolbar?.tabs}<div class="shrink-0 px-[17px] pb-[7px]">{@render toolbar.tabs()}</div>{/if}
+        {#if spec && !suspended}
+          {#await spec.load()}
+            <div class="flex flex-1 items-center justify-center"><Spinner /></div>
+          {:then mod}
+            <mod.default />
+          {:catch}
+            <p class="p-6 text-sm text-(--color-danger)">{$LL.deskAppFailed()}</p>
+          {/await}
+        {/if}
+      </div>
+      {#if footer}
+        <div class="lk-window__footer" bind:clientHeight={footerHeight}>{@render footer.content()}</div>
+      {/if}
+      {#if sidebar && folded && chrome.sidebarOpen}
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <div class="absolute inset-0 z-20" onclick={() => (chrome.sidebarOpen = false)}></div>
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+        <aside
+          class="lk-window__sidebar z-30 pt-[9px]"
+          style:top="var(--titlebar-height)"
+          style:width="{Math.min(sidebar.width, rect.width - 40)}px"
+          aria-label={$LL.deskSidebar()}
+          onclick={(e) => {
+            // A choice made in the folded sidebar is a reason to fold it again.
+            if ((e.target as HTMLElement).closest('button')) chrome.sidebarOpen = false
+          }}
+        >
           <div class="lk-window__sidebar-body">{@render sidebar.content()}</div>
         </aside>
       {/if}
-      <div class="lk-window__main">
-        {@render handle('bar')}
-        {#if toolbar?.tabs}<div class="shrink-0 px-[17px] pb-[7px]">{@render toolbar.tabs()}</div>{/if}
-        <!-- A size container: an app lays itself out by its window's width
-             (`@md:`, `@3xl:`), never the screen's (`md:`). A column: an app
-             whose content fills the window takes `min-h-0 flex-1`. -->
-        <div class="lk-window__content desk-window-body @container flex flex-col">
-          {#if spec && !suspended}
-            {#await spec.load()}
-              <div class="flex h-full items-center justify-center"><Spinner /></div>
-            {:then mod}
-              <mod.default />
-            {:catch}
-              <p class="p-6 text-sm text-(--color-danger)">{$LL.deskAppFailed()}</p>
-            {/await}
-          {/if}
-          {#if sidebar && folded && chrome.sidebarOpen}
-            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-            <div class="absolute inset-0 z-20" onclick={() => (chrome.sidebarOpen = false)}></div>
-            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-            <aside
-              class="lk-window__sidebar absolute bottom-0 left-0 top-0 z-30 pt-[9px]"
-              style:width="{Math.min(sidebar.width, rect.width - 40)}px"
-              aria-label={$LL.deskSidebar()}
-              onclick={(e) => {
-                // A choice made in the folded sidebar is a reason to fold it again.
-                if ((e.target as HTMLElement).closest('button')) chrome.sidebarOpen = false
-              }}
-            >
-              <div class="lk-window__sidebar-body">{@render sidebar.content()}</div>
-            </aside>
-          {/if}
-        </div>
-      </div>
     </div>
   </div>
 
@@ -267,6 +289,8 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="{part === 'bar' ? 'lk-window__bar' : 'lk-window__sidebar-top'} select-none"
+    class:lk-window__bar--glass={part === 'bar' && glass}
+    class:lk-window__bar--flush={part === 'bar' && flush}
     style:touch-action="none"
     onpointerdown={onTitlePointerDown}
     onpointermove={onTitlePointerMove}
@@ -304,10 +328,14 @@
   {/if}
   {#if toolbar?.back}<IconButton icon="chevron_left" label={$LL.back()} size="sm" onclick={toolbar.back} />{/if}
   {@render toolbar?.leading?.()}
-  <!-- One line: the title, then what it is about, which gives way first. -->
-  <div class="flex min-w-0 items-baseline gap-[7px]" class:ml-[9px]={!sidebar || folded}>
-    <h2 class="lk-window__title min-w-0 shrink-[0.2]">{toolbar?.title ?? title}</h2>
-    {#if toolbar?.subtitle}<p class="min-w-0 truncate text-[12px] text-(--text-tertiary)">{toolbar.subtitle}</p>{/if}
-  </div>
+  {#if toolbar?.heading}
+    <div class="flex min-w-0 items-center" data-no-drag>{@render toolbar.heading()}</div>
+  {:else}
+    <!-- One line: the title, then what it is about, which gives way first. -->
+    <div class="lk-window__heading">
+      <h2 class="lk-window__title min-w-0 shrink-[0.2]">{toolbar?.title ?? title}</h2>
+      {#if toolbar?.subtitle}<p class="lk-window__subtitle min-w-0">{toolbar.subtitle}</p>{/if}
+    </div>
+  {/if}
   {#if toolbar?.actions}<div class="lk-window__tools" data-no-drag>{@render toolbar.actions()}</div>{/if}
 {/snippet}

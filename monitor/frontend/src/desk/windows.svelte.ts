@@ -81,7 +81,7 @@ function newWindowId(): string {
 
 export class WindowManager {
   windows = $state<DeskWindow[]>([])
-  area = $state<Area>({ width: 1280, height: 800, top: 40, bottom: 84 })
+  area = $state<Area>({ width: 1280, height: 800, top: 40, bottom: 84, left: 0, right: 0 })
   /// Bumped on every change worth saving (`session.svelte.ts` watches it).
   changes = $state(0)
 

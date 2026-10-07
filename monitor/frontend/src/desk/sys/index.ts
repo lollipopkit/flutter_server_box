@@ -26,3 +26,4 @@ export {
 } from './window.svelte'
 export { default as AppToolbar } from './AppToolbar.svelte'
 export { default as SplitView } from './SplitView.svelte'
+export { default as WindowFooter } from './WindowFooter.svelte'

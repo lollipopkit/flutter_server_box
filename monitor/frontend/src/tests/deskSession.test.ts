@@ -10,7 +10,7 @@ const policy: WindowPolicy = { instances: 3, size: { width: 600, height: 400 }, 
 
 function manager() {
   const m = new WindowManager((id) => (id === 'files' || id === 'terminal' ? policy : undefined))
-  m.resizeArea({ width: 1200, height: 800, top: 40, bottom: 80 })
+  m.resizeArea({ width: 1200, height: 800, top: 40, bottom: 80, left: 0, right: 0 })
   return m
 }
 

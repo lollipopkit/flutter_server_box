@@ -243,15 +243,18 @@
   --space-55: 55px;
 
   --menubar-height: 30px;
-  --titlebar-height: 44px;
-  --toolbar-height: 44px;
-  --sidebar-width: 200px;
+  --titlebar-height: 52px; /* the bar floats over the content; glass once scrolled */
+  --toolbar-pill-height: 32px; /* ToolbarGroup / SearchField capsule */
+  --statusbar-height: 34px;
+  --sidebar-width: 196px;
+  --sidebar-top: 45px; /* the lights row inside the inset sidebar */
   --sidebar-inset: 7px;
   --dock-icon: 44px;
   --dock-padding: 9px;
   --dock-gap: 9px;
   --dock-bottom: 9px;
   --row-height: 30px;
+  --row-height-comfortable: 36px;
   --menu-item-height: 26px;
   --control-height: 30px;
   --control-height-sm: 24px;

@@ -119,3 +119,29 @@
     opacity: 0;
   }
 }
+
+/* Scrollbars: thin, tinted, inset from the window's edge. */
+.lk * {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-primary) 22%, transparent) transparent;
+}
+.lk ::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+  background: transparent;
+}
+.lk ::-webkit-scrollbar-track,
+.lk ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.lk ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  border-radius: 11px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 34px;
+}
+.lk ::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--text-primary) 36%, transparent);
+  border-width: 2px;
+}

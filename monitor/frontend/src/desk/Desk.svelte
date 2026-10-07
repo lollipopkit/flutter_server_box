@@ -1,10 +1,12 @@
 <script lang="ts">
   import Spinner from './lk/Spinner.svelte'
-  import { onDestroy, onMount } from 'svelte'
+  import { onDestroy, onMount, untrack } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { theme } from '../lib/theme.svelte'
   import type { ServerEntry } from '../lib/servers.svelte'
   import { app } from './registry.svelte'
+  import { COMPACT_WIDTH } from './geometry'
+  import { shellPrefs } from './shellPrefs.svelte'
   import { menuItemFor } from './shortcuts'
   import { Desk, provideDesk, type MenuItem } from './deskState.svelte'
   import Banner from './shell/Banner.svelte'
@@ -41,15 +43,22 @@
 
   let root = $state<HTMLDivElement | null>(null)
 
-  /// The menubar's height and the gap under it, above the windows; the
-  /// dock's below (its icons, padding and distance from the edge).
+  /// The menubar's height and the gap under it, above the windows; the gap
+  /// a window keeps from the bottom, besides the dock's room.
   const TOP = 37
-  const BOTTOM = 74
+  const EDGE = 7
 
+  let size = $state({ width: 0, height: 0 })
   function measure() {
-    if (!root) return
-    desk.windows.resizeArea({ width: root.clientWidth, height: root.clientHeight, top: TOP, bottom: BOTTOM })
+    if (root) size = { width: root.clientWidth, height: root.clientHeight }
   }
+  $effect(() => {
+    if (!size.width) return
+    const dock = shellPrefs.dockReserve(size.width < COMPACT_WIDTH)
+    const area = { ...size, top: TOP, bottom: EDGE + dock.bottom, left: dock.left, right: dock.right }
+    // Only the size and the dock lead here; the windows it moves do not.
+    untrack(() => desk.windows.resizeArea(area))
+  })
 
   onMount(() => {
     measure()

@@ -13,12 +13,15 @@ export interface Size {
   height: number
 }
 
-/// The area windows live in: below the menubar, above the dock.
+/// The area windows live in: below the menubar, beside or above the dock.
+/// [width] and [height] are the screen's; the rest is kept from its edges.
 export interface Area {
   width: number
   height: number
   top: number
   bottom: number
+  left: number
+  right: number
 }
 
 /// Edges a resize handle moves.
@@ -36,9 +39,9 @@ export const SNAP_EDGE = 6
 
 export function usable(area: Area): Rect {
   return {
-    x: 0,
+    x: area.left,
     y: area.top,
-    width: area.width,
+    width: Math.max(0, area.width - area.left - area.right),
     height: Math.max(0, area.height - area.top - area.bottom),
   }
 }
@@ -49,7 +52,7 @@ export function clamp(rect: Rect, area: Area, min: Size): Rect {
   const space = usable(area)
   const width = Math.round(Math.min(Math.max(rect.width, min.width), space.width))
   const height = Math.round(Math.min(Math.max(rect.height, min.height), space.height))
-  const x = Math.round(Math.min(Math.max(rect.x, KEEP_VISIBLE - width), space.width - KEEP_VISIBLE))
+  const x = Math.round(Math.min(Math.max(rect.x, space.x + KEEP_VISIBLE - width), space.x + space.width - KEEP_VISIBLE))
   // The title bar never goes under the menubar or below the area.
   const y = Math.round(Math.min(Math.max(rect.y, space.y), space.y + space.height - KEEP_VISIBLE / 2))
   return { x, y, width, height }
@@ -78,19 +81,20 @@ export const SNAP_GUTTER = 7
 export function snapRect(zone: SnapZone, area: Area): Rect {
   const space = usable(area)
   const g = SNAP_GUTTER
-  if (zone === 'max') return { x: g, y: space.y, width: space.width - 2 * g, height: space.height }
+  const x = space.x
+  if (zone === 'max') return { x: x + g, y: space.y, width: space.width - 2 * g, height: space.height }
   const half = Math.round(space.width / 2)
   return zone === 'left'
-    ? { x: g, y: space.y, width: half - g - Math.floor(g / 2), height: space.height }
-    : { x: half + Math.ceil(g / 2), y: space.y, width: space.width - half - g - Math.ceil(g / 2), height: space.height }
+    ? { x: x + g, y: space.y, width: half - g - Math.floor(g / 2), height: space.height }
+    : { x: x + half + Math.ceil(g / 2), y: space.y, width: space.width - half - g - Math.ceil(g / 2), height: space.height }
 }
 
 /// The zone a drag let go at ([x], [y], the pointer) snaps to, if any: the
 /// top edge maximises, a side edge takes that half.
 export function snapZoneAt(x: number, y: number, area: Area): SnapZone | null {
   if (y <= area.top + SNAP_EDGE) return 'max'
-  if (x <= SNAP_EDGE) return 'left'
-  if (x >= area.width - SNAP_EDGE) return 'right'
+  if (x <= area.left + SNAP_EDGE) return 'left'
+  if (x >= area.width - area.right - SNAP_EDGE) return 'right'
   return null
 }
 

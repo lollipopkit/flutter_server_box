@@ -1,6 +1,6 @@
 /// What an app shows of itself outside its content: the title bar's title,
 /// back button and tools (`sys/AppToolbar.svelte`), the inset sidebar
-/// (`sys/SplitView.svelte`), its menubar menus (`sys.useMenus`) and its
+/// (`sys/SplitView.svelte`), the footer (`sys/WindowFooter.svelte`), its menubar menus (`sys.useMenus`) and its
 /// name, icon and badge as the menubar and dock show them. The app sets them
 /// through `sys`; the window (`window/Window.svelte`) and the shell draw them.
 /// Toolbars, sidebars and menus are stacks, so a view inside an app that
@@ -24,6 +24,16 @@ export interface ToolbarChrome {
   actions?: Snippet
   /// Other views of the app, under the bar.
   tabs?: Snippet
+  /// Instead of the title (and subtitle): a path, a breadcrumb.
+  heading?: Snippet
+  /// A solid bar running to the window's edge, never glass: for a view whose
+  /// table header sits right under it.
+  flush?: boolean
+}
+
+export interface FooterChrome {
+  /// A `StatusBar`, and what goes over it (the selection's detail).
+  content: Snippet
 }
 
 export interface SidebarChrome {
@@ -52,6 +62,7 @@ export class WindowChrome {
   // Raw: an entry is the registrant's own object, found again by identity.
   #toolbars = $state.raw<ToolbarChrome[]>([])
   #sidebars = $state.raw<SidebarChrome[]>([])
+  #footers = $state.raw<FooterChrome[]>([])
   #menus = $state.raw<MenusChrome[]>([])
   #dockMenus = $state.raw<MenusChrome[]>([])
   #keepAlive = $state.raw<string[]>([])
@@ -72,6 +83,10 @@ export class WindowChrome {
 
   get sidebar(): SidebarChrome | null {
     return this.#sidebars.at(-1) ?? null
+  }
+
+  get footer(): FooterChrome | null {
+    return this.#footers.at(-1) ?? null
   }
 
   get menus(): AppMenu[] {
@@ -104,6 +119,13 @@ export class WindowChrome {
         this.#sidebars = this.#sidebars.filter((s) => s !== sidebar)
         if (this.#sidebars.length === 0) this.sidebarOpen = false
       },
+    )
+  }
+
+  pushFooter(footer: FooterChrome): () => void {
+    return this.#push(
+      () => (this.#footers = [...this.#footers, footer]),
+      () => (this.#footers = this.#footers.filter((f) => f !== footer)),
     )
   }
 
@@ -154,6 +176,7 @@ export class WindowChrome {
   reset() {
     this.#toolbars = []
     this.#sidebars = []
+    this.#footers = []
     this.#menus = []
     this.#dockMenus = []
     this.#keepAlive = []
