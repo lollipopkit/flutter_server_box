@@ -52,12 +52,6 @@
   --hue-violet: #8b5cf6;
   --hue-teal: #14a3a3;
 
-  /* Window controls — macOS order and meaning, lollipopkit tones */
-  --light-close: #f2555a;
-  --light-minimize: #f5b83d;
-  --light-zoom: #3cc35f;
-  --light-idle: #d6cdd0;
-
   /* Semantic: light */
   --color-accent: var(--berry-35);
   --color-accent-hover: #851544;
@@ -166,7 +160,6 @@
 
   --fill-hover: rgba(255, 255, 255, 0.07);
   --fill-press: rgba(255, 255, 255, 0.12);
-  --light-idle: #4a4144;
   --icon-berry-bg: var(--berry-50);
   --icon-berry-fg: #ffffff;
   --icon-soft-bg: #4a1229;
@@ -259,8 +252,6 @@
   --control-height: 30px;
   --control-height-sm: 24px;
   --control-height-lg: 36px;
-  --traffic-light: 12px;
-  --traffic-gap: 8px;
   /* Wide windows: content column caps, centred in the content pane */
   --content-max-form: 640px; /* settings, forms, dialogs-as-pages */
   --content-max-reading: 720px; /* logs, docs, detail text */

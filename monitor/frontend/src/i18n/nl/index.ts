@@ -1353,6 +1353,7 @@ const nl = {
 	deskCloseAll: 'Alle vensters sluiten',
 	deskMinimize: 'Minimaliseren',
 	deskZoom: 'Vergroten',
+	deskUnzoom: 'Herstellen',
 	deskNewWindow: 'Nieuw venster',
 	deskNewTab: 'Nieuw tabblad',
 	deskCloseTab: 'Tabblad sluiten',

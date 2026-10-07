@@ -1,8 +1,8 @@
 /// How a page inside an app arrives and leaves (`PageStack`), after fl_lib's
 /// pane slide: the page going in slides in from the end edge over the one
 /// below, which moves a third of the way out; going back is the same motion
-/// run backwards in time, so the page leaving starts slowly and falls away
-/// fast. One curve, Flutter's `Curves.fastEaseInToSlowEaseOut`, 300 ms.
+/// in the other direction, on the same curve (fast, then settling): Flutter's
+/// `Curves.fastEaseInToSlowEaseOut`, 300 ms.
 
 export const PAGE_MS = 300
 /// The faded stand-in when motion is reduced.

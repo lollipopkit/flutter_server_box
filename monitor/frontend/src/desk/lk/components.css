@@ -253,19 +253,26 @@
 .lk-appicon--amber .lk-appicon__glyph{color:var(--icon-amber-fg)}
 :root[data-theme='dark'] .lk-appicon{box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08)}
 
-/* ---------- Traffic lights ---------- */
-.lk-lights{display:inline-flex;align-items:center;gap:var(--traffic-gap)}
-.lk-lights__b{width:var(--traffic-light);height:var(--traffic-light);padding:0;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(60,0,10,.62);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14);cursor:default;transition:transform var(--dur-slow) var(--ease-spring-bouncy),filter var(--dur-fast)}
-.lk-lights__b .lk-icon{opacity:0;transition:opacity var(--dur-fast)}
-.lk-lights:hover .lk-lights__b .lk-icon{opacity:1}
-.lk-lights__b:active{filter:brightness(.85);transform:scale(.88)}
-.lk-lights__b--close{background:var(--light-close)}
-.lk-lights__b--min{background:var(--light-minimize)}
-.lk-lights__b--zoom{background:var(--light-zoom)}
-.lk-lights--inactive .lk-lights__b{background:var(--light-idle)}
-.lk-lights--inactive:hover .lk-lights__b--close{background:var(--light-close)}
-.lk-lights--inactive:hover .lk-lights__b--min{background:var(--light-minimize)}
-.lk-lights--inactive:hover .lk-lights__b--zoom{background:var(--light-zoom)}
+/* ---------- Window controls — three berry tones, deep → light: close · minimize · zoom; glyphs on hover ---------- */
+.lk-winctl{flex:none;position:relative;top:-1px;left:2px;display:inline-flex;align-items:center;gap:var(--space-7)}
+.lk-window__bar > .lk-winctl:first-child{margin-left:calc(var(--space-11) - var(--space-17))}
+.lk-winctl__b{width:13px;height:13px;padding:0;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.95);box-shadow:inset 0 0 0 .5px rgba(70,0,20,.18);transition:background var(--dur-fast),filter var(--dur-fast),transform var(--dur-fast) var(--ease-spring)}
+.lk-winctl__b--close{background:var(--berry-40)}
+.lk-winctl__b--min{background:var(--berry-60)}
+.lk-winctl__b--zoom{background:var(--berry-80);color:var(--berry-20)}
+.lk-winctl__b .lk-icon{opacity:0;transition:opacity var(--dur-fast)}
+.lk-winctl:hover .lk-winctl__b .lk-icon,.lk-winctl__b:focus-visible .lk-icon{opacity:1}
+.lk-winctl__b:hover{filter:brightness(.9)}
+.lk-winctl__b:active{transform:scale(.86);transition-duration:var(--dur-instant)}
+.lk-winctl__b:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.lk-winctl--inactive .lk-winctl__b{background:var(--ink-90);box-shadow:inset 0 0 0 .5px rgba(70,20,40,.08)}
+.lk-winctl--inactive:hover .lk-winctl__b--close{background:var(--berry-40)}
+.lk-winctl--inactive:hover .lk-winctl__b--min{background:var(--berry-60)}
+.lk-winctl--inactive:hover .lk-winctl__b--zoom{background:var(--berry-80)}
+[data-theme="dark"] .lk-winctl__b--close{background:var(--berry-60)}
+[data-theme="dark"] .lk-winctl__b--min{background:var(--berry-40)}
+[data-theme="dark"] .lk-winctl__b--zoom{background:var(--berry-30);color:var(--berry-90)}
+[data-theme="dark"] .lk-winctl--inactive .lk-winctl__b{background:var(--ink-22)}
 
 /* ---------- Window ----------
    The bar (52px) floats over the content. Content scrolls under it; once it
@@ -283,7 +290,7 @@
 .lk-window__bar{position:absolute;top:0;left:0;right:11px;z-index:5;display:flex;align-items:center;gap:var(--space-13);height:var(--titlebar-height);padding:0 var(--space-13) 0 var(--space-17);user-select:none;transition:background-color var(--dur-base),box-shadow var(--dur-base)}
 .lk-window__bar--glass{background:color-mix(in srgb,var(--surface-window) 78%,transparent);box-shadow:0 .5px 0 var(--border-hairline);backdrop-filter:blur(24px) saturate(1.7);-webkit-backdrop-filter:blur(24px) saturate(1.7)}
 .lk-window__bar--flush{right:0;background:var(--surface-window);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-.lk-window__heading{display:flex;align-items:baseline;gap:var(--space-7);min-width:0}
+.lk-window__heading{display:flex;align-items:center;gap:var(--space-7);min-width:0}
 .lk-window__title{font:var(--weight-bold) var(--text-15)/1 var(--font-ui);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lk-window__subtitle{font-size:var(--text-12);color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lk-window--inactive .lk-window__title{color:var(--text-secondary)}

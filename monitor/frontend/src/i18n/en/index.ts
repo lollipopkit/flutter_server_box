@@ -1366,6 +1366,7 @@ const en = {
 	deskCloseAll: 'Close all windows',
 	deskMinimize: 'Minimize',
 	deskZoom: 'Zoom',
+	deskUnzoom: 'Restore',
 	deskNewWindow: 'New window',
 	deskNewTab: 'New tab',
 	deskCloseTab: 'Close tab',

@@ -1353,6 +1353,7 @@ const id = {
 	deskCloseAll: 'Tutup semua jendela',
 	deskMinimize: 'Minimalkan',
 	deskZoom: 'Perbesar',
+	deskUnzoom: 'Pulihkan',
 	deskNewWindow: 'Jendela baru',
 	deskNewTab: 'Tab baru',
 	deskCloseTab: 'Tutup tab',

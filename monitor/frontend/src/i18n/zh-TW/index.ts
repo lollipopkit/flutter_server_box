@@ -1419,6 +1419,7 @@ const zh_TW = {
 	deskWallpaper: '桌布',
 	deskWindows: '視窗',
 	deskZoom: '縮放',
+	deskUnzoom: '還原',
 	filesForward: '前進',
 	filesMoreActions: '更多操作',
 	filesPath: '路徑',

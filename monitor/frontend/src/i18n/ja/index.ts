@@ -1419,6 +1419,7 @@ const ja = {
 	deskWallpaper: '壁紙',
 	deskWindows: 'ウィンドウ',
 	deskZoom: 'ズーム',
+	deskUnzoom: '元のサイズに戻す',
 	filesForward: '進む',
 	filesMoreActions: 'その他の操作',
 	filesPath: 'パス',

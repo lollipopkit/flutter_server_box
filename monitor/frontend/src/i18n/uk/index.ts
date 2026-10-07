@@ -1419,6 +1419,7 @@ const uk = {
 	deskWallpaper: 'Шпалери',
 	deskWindows: 'Вікна',
 	deskZoom: 'Масштаб',
+	deskUnzoom: 'Відновити',
 	filesForward: 'Уперед',
 	filesMoreActions: 'Інші дії',
 	filesPath: 'Шлях',

@@ -1353,6 +1353,7 @@ const pt = {
 	deskCloseAll: 'Fechar todas as janelas',
 	deskMinimize: 'Minimizar',
 	deskZoom: 'Ampliar',
+	deskUnzoom: 'Restaurar',
 	deskNewWindow: 'Nova janela',
 	deskNewTab: 'Novo separador',
 	deskCloseTab: 'Fechar separador',

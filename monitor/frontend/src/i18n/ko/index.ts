@@ -1419,6 +1419,7 @@ const ko = {
 	deskWallpaper: '배경화면',
 	deskWindows: '창',
 	deskZoom: '확대',
+	deskUnzoom: '복원',
 	filesForward: '앞으로',
 	filesMoreActions: '추가 작업',
 	filesPath: '경로',

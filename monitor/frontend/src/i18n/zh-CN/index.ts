@@ -1365,6 +1365,7 @@ const zh_CN = {
 	deskCloseAll: '关闭所有窗口',
 	deskMinimize: '最小化',
 	deskZoom: '缩放',
+	deskUnzoom: '还原',
 	deskNewWindow: '新建窗口',
 	deskNewTab: '新建标签页',
 	deskCloseTab: '关闭标签页',

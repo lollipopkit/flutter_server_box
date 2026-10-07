@@ -6,7 +6,7 @@
   import { provideWindow, useDesk } from '../deskState.svelte'
   import type { LifecycleState } from '../sys/window.svelte'
   import IconButton from '../lk/IconButton.svelte'
-  import TrafficLights from '../lk/TrafficLights.svelte'
+  import WindowControls from '../lk/WindowControls.svelte'
   import { WindowChrome } from './chrome.svelte'
   import PaneHost from './PaneHost.svelte'
   import { sideAt } from '../panes'
@@ -76,7 +76,8 @@
   function onContentScroll(e: Event) {
     const content = e.currentTarget as HTMLElement
     const target = e.target as HTMLElement
-    scrolled = content.scrollTop > 2 || (target !== content && target.scrollTop > 2)
+    // Pages sliding past each other (sys.PageStack): glass over both.
+    scrolled = !!(content.dataset.pageMoving || target.dataset?.pageMoving) || content.scrollTop > 2 || (target !== content && target.scrollTop > 2)
   }
 
   /// The rect while a drag or resize is under way; the store gets it on release.
@@ -91,7 +92,7 @@
   /// Too narrow for the sidebar beside the content: it folds behind a
   /// title-bar button and opens over the content.
   const folded = $derived(compact || rect.width < 640)
-  const lightLabels = $derived({ close: $LL.deskClose(), minimize: $LL.deskMinimize(), zoom: $LL.deskZoom() })
+  const controlLabels = $derived({ close: $LL.deskClose(), minimize: $LL.deskMinimize(), zoom: $LL.deskZoom(), restore: $LL.deskUnzoom() })
 
   function animateOnce() {
     animate = true
@@ -369,14 +370,15 @@
       if (!(e.target as HTMLElement).closest('button, input, select, [role=tab]')) toggleMaximize()
     }}
   >
-    {#if part === 'bar'}{@render bar()}{:else}{@render lights()}{/if}
+    {#if part === 'bar'}{@render bar()}{:else}{@render controls()}{/if}
   </div>
 {/snippet}
 
-{#snippet lights()}
-  <TrafficLights
+{#snippet controls()}
+  <WindowControls
     inactive={!active}
-    labels={lightLabels}
+    zoomed={win.snap === 'max'}
+    labels={controlLabels}
     onclose={() => desk.windows.close(win.id)}
     onminimize={compact ? undefined : () => desk.windows.minimize(win.id)}
     onzoom={compact ? undefined : toggleMaximize}
@@ -384,7 +386,7 @@
 {/snippet}
 
 {#snippet bar()}
-  {#if !sidebar || folded}{@render lights()}{/if}
+  {#if !sidebar || folded}{@render controls()}{/if}
   {#if sidebar && folded}
     <IconButton
       icon="side_navigation"

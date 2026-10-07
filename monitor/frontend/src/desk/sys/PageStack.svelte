@@ -124,6 +124,7 @@
       fromScroll = scroller?.scrollTop ?? 0
       if (page) remember(shown.key, page, fromScroll)
       plan = swapping ? 'none' : d > shown.depth ? 'push' : d < shown.depth ? 'pop' : 'fade'
+      if (plan === 'push' || plan === 'pop') hold(scroller)
       toScroll = plan === 'pop' || plan === 'none' ? (copies.get(k)?.scroll ?? 0) : 0
       shown = { key: k, depth: d }
       changed = true
@@ -150,6 +151,23 @@
         moving--
       }
     })
+  })
+
+  /// While pages move, the scroll position is the arriving page's but the
+  /// leaving one is still drawn as it was: the window keeps its bar as glass
+  /// over both (`data-page-moving`), and looks again once they are still.
+  function hold(scroller: HTMLElement | null) {
+    if (!scroller || scroller.dataset.pageMoving) return
+    scroller.dataset.pageMoving = '1'
+    scroller.dispatchEvent(new Event('scroll'))
+  }
+
+  $effect(() => {
+    if (moving > 0 || !root) return
+    const scroller = scrollerOf(root)
+    if (!scroller?.dataset.pageMoving) return
+    delete scroller.dataset.pageMoving
+    scroller.dispatchEvent(new Event('scroll'))
   })
 
   function livePage(): HTMLElement | null {
@@ -187,7 +205,7 @@
     return {
       duration: PAGE_MS,
       css: (t: number) =>
-        p === 'push' ? `transform:translateX(${slide(pageCurve(t)).upper * 100}%)` : `transform:translateX(${slide(pageCurve(1 - t)).lower * 100}%)`,
+        p === 'push' ? `transform:translateX(${slide(pageCurve(t)).upper * 100}%)` : `transform:translateX(${slide(1 - pageCurve(t)).lower * 100}%)`,
     }
   }
 
@@ -211,7 +229,7 @@
     return {
       duration: PAGE_MS,
       css: (t: number) =>
-        p === 'push' ? `transform:translateX(${slide(pageCurve(1 - t)).lower * 100}%)` : `transform:translateX(${slide(pageCurve(t)).upper * 100}%)`,
+        p === 'push' ? `transform:translateX(${slide(pageCurve(1 - t)).lower * 100}%)` : `transform:translateX(${slide(1 - pageCurve(1 - t)).upper * 100}%)`,
     }
   }
 
@@ -290,6 +308,7 @@
     // eslint-disable-next-line svelte/no-dom-manipulating -- see above
     root.append(copy)
     moving++
+    hold(scroller)
     dress(copy, dir === 'back' ? 1 : 2)
     dress(live, dir === 'back' ? 2 : 1)
     live.style.position = 'relative'

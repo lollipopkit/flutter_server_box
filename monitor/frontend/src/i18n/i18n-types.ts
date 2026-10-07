@@ -5639,6 +5639,10 @@ type RootTranslation = {
 	 */
 	deskZoom: string
 	/**
+	 * R​e​s​t​o​r​e
+	 */
+	deskUnzoom: string
+	/**
 	 * N​e​w​ ​w​i​n​d​o​w
 	 */
 	deskNewWindow: string
@@ -12229,6 +12233,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Zoom
 	 */
 	deskZoom: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	deskUnzoom: () => LocalizedString
 	/**
 	 * New window
 	 */

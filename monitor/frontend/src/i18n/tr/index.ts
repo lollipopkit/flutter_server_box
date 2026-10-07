@@ -1353,6 +1353,7 @@ const tr = {
 	deskCloseAll: 'Tüm pencereleri kapat',
 	deskMinimize: 'Simge durumuna küçült',
 	deskZoom: 'Yakınlaştır',
+	deskUnzoom: 'Geri yükle',
 	deskNewWindow: 'Yeni pencere',
 	deskNewTab: 'Yeni sekme',
 	deskCloseTab: 'Sekmeyi kapat',

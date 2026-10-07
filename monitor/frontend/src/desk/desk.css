@@ -203,3 +203,13 @@
 .lk-setgroup__card:has(> .lk-setrow--link) {
   overflow: hidden;
 }
+
+/* A window's content and a pane always keep the scrollbar's lane (the bar
+   already stops short of it): a scrollbar coming or going — a page growing
+   as it slides in — never changes the content's width. Browsers no longer
+   draw scrollbars over content once they are styled. A terminal scrolls
+   inside itself and keeps its width to the edge. */
+.lk-window__content:not(.lk-window__content--panes),
+.desk-pane:not(:has(.xterm)) {
+  scrollbar-gutter: stable;
+}

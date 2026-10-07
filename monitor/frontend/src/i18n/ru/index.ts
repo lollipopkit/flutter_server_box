@@ -1419,6 +1419,7 @@ const ru = {
 	deskWallpaper: 'Обои',
 	deskWindows: 'Окна',
 	deskZoom: 'Масштаб',
+	deskUnzoom: 'Восстановить',
 	filesForward: 'Вперёд',
 	filesMoreActions: 'Другие действия',
 	filesPath: 'Путь',

@@ -1353,6 +1353,7 @@ const fr = {
 	deskCloseAll: 'Fermer toutes les fenêtres',
 	deskMinimize: 'Réduire',
 	deskZoom: 'Zoomer',
+	deskUnzoom: 'Restaurer',
 	deskNewWindow: 'Nouvelle fenêtre',
 	deskNewTab: 'Nouvel onglet',
 	deskCloseTab: 'Fermer l’onglet',
