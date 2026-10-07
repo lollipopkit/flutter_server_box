@@ -30,7 +30,7 @@ export interface WindowHandle {
   setTitle(title: string | null): void
   /// The app's name in the menubar; null for the manifest's.
   setAppName(name: string | null): void
-  /// The app's icon in the menubar and dock; null for the manifest's.
+  /// The app’s icon in the dock; null for the manifest’s.
   setIcon(icon: AppIconChrome | null): void
   /// A short badge on the app's dock icon (a count); null for none.
   setBadge(badge: string | number | null): void

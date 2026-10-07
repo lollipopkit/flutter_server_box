@@ -8,7 +8,6 @@
   import { app } from '../registry.svelte'
   import { systemPrefs } from '../sys/systemPrefs.svelte'
   import { useDesk, type MenuItem } from '../deskState.svelte'
-  import AppIcon from '../lk/AppIcon.svelte'
   import Icon from '../lk/Icon.svelte'
 
   interface Props {
@@ -49,7 +48,6 @@
 
   const chrome = $derived(desk.activeChrome)
   const appName = $derived(chrome?.appName ?? activeSpec?.title($LL) ?? '')
-  const appIcon = $derived(chrome?.icon ?? (activeSpec ? { glyph: activeSpec.glyph, tone: activeSpec.tone } : null))
 
   /// Opens [items] under the bar item [e] came from, as [owner]; [end]
   /// aligns its right edge with the item's (the bar's right side).
@@ -236,9 +234,6 @@
       onclick={(e) => menuUnder(e, t.owner, t.items())}
       onpointerenter={(e) => hover(e, t.owner, t.items)}
     >
-      {#if t.owner === 'app' && appIcon}
-        <span class="inline-flex" aria-hidden="true"><AppIcon glyph={appIcon.glyph} tone={appIcon.tone} size={17} /></span>
-      {/if}
       {t.label}
     </button>
   {/each}
