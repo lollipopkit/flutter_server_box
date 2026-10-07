@@ -35,6 +35,7 @@ The desk follows the lollipopkit Design System exactly; `lk/` is its Svelte form
 - No `min-h-screen`, `h-screen`, `100vh`/`dvh` inside an app: the window is the screen. Use `h-full`/`min-h-full`.
 - `position: fixed` inside an app is relative to its window (`.desk-window` has `contain: layout`, which makes it the containing block): a `Modal` is a sheet over its window, which is intended, and scrolls inside it when taller.
 - An app never imports `layout`, `Sidebar`, `PageHeader` or `FeatureTabs` (being deleted). Its first element is `AppToolbar` from `sys` (no title at the app's first view — the window shows it; `title` + `back` for a view inside the app).
+- Another window of the same app (`instances` > 1): `useWindow().openWindow(appState)`, offered as "New window" in the app's first menu and disabled by `canOpenWindow` at the limit (Terminal also has it in the bar; Files starts it at its folder).
 - Going to another app: `useWindow().open(appId, { appState })` for where it starts, `{ intent }` for something it should do once (never a shared module-level slot between apps). The receiving app reads `useWindow().appState` once on mount (and `$effect` on it if it should follow a second open, e.g. Files given a new path).
 - Per-window state worth restoring after a reload (a path, a tab): `useWindow().setAppState(...)` — small JSON, ≤16 KiB, never secrets.
 - Window title for a view inside the app: `useWindow().setTitle(...)`; `null` restores the app's name.

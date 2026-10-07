@@ -310,6 +310,15 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     setBadge: (badge) => (chrome.badge = badge === null || badge === '' ? null : String(badge).slice(0, 8)),
     close: () => desk.windows.close(id),
     open: (appId, options) => desk.open(appId, options, desk.windows.get(id)?.appId),
+    openWindow: (appState) => {
+      const appId = desk.windows.get(id)?.appId
+      return appId ? desk.open(appId, { newWindow: true, appState }, appId) : null
+    },
+    get canOpenWindow() {
+      const appId = desk.windows.get(id)?.appId
+      const spec = appId ? app(appId) : undefined
+      return !!spec && desk.windows.of(spec.id).length < spec.instances
+    },
     notify: (notice) => {
       const appId = desk.windows.get(id)?.appId
       if (!appId || !desk.allows(appId, 'notifications')) return
@@ -335,6 +344,9 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     },
     get active() {
       return desk.windows.active?.id === id
+    },
+    get closed() {
+      return desk.windows.wasClosed(id)
     },
     get lifecycle() {
       return lifecycle()

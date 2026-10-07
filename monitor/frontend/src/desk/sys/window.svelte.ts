@@ -38,6 +38,11 @@ export interface WindowHandle {
   /// Opens another app (or another window of one) on this desk. Answers the
   /// window's id, or null when the app is not available or at its limit.
   open(appId: string, options?: OpenOptions): string | null
+  /// Opens another window of this app, starting from [appState]; null at the
+  /// app's limit (`instances`), where its newest window is focused instead.
+  openWindow(appState?: unknown): string | null
+  /// Whether another window of this app may open now.
+  readonly canOpenWindow: boolean
   /// Tells the user something: a banner (unless Do Not Disturb) and a row in
   /// the notification centre, which brings this window forward when clicked.
   notify(notice: AppNotice): void
@@ -51,6 +56,12 @@ export interface WindowHandle {
   /// Puts an icon on the desk that opens [path] with this window's app.
   addPathIcon(path: string, label: string): void
   readonly active: boolean
+  /// Whether the window has been closed. Meant for `onDestroy`: content also
+  /// unmounts while its window lives on (suspended, the desk locked or
+  /// switched), and only a closed window should end what it holds open. A
+  /// window another tab closed is not reported (its app falls back to what it
+  /// does on any unmount).
+  readonly closed: boolean
   readonly lifecycle: LifecycleState
   /// The window's frame, where `AppToolbar`, `SplitView` and `useMenus` put
   /// what they register; null outside a window (a test), where `AppToolbar`
@@ -91,6 +102,8 @@ const DETACHED: WindowHandle = {
   setBadge() {},
   close() {},
   open: () => null,
+  openWindow: () => null,
+  canOpenWindow: false,
   notify() {},
   handlers: () => [],
   storage: {
@@ -101,6 +114,7 @@ const DETACHED: WindowHandle = {
   },
   addPathIcon() {},
   active: true,
+  closed: false,
   lifecycle: 'active',
   chrome: null,
 }

@@ -62,6 +62,7 @@ vi.mock('../lib/theme.svelte', () => ({ theme: { current: 'light' } }))
 vi.mock('../lib/terminalSurface.svelte', () => ({ terminalSurface: { current: '#ffffff' } }))
 
 import Terminal from '../desk/apps/terminal/TerminalApp.svelte'
+import TerminalWindowHarness from './fixtures/TerminalWindowHarness.svelte'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 
 class FakeSocket {
@@ -153,6 +154,23 @@ afterEach(() => {
 })
 
 describe('desk terminal app', () => {
+  it('ends its shell when its window closes, and keeps it when only unmounted', async () => {
+    const state = { closed: false }
+    const kept = render(TerminalWindowHarness, { window: state })
+    const first = await started()
+    first.control({ type: 'ready', session: 'kept-handle', since: 0 })
+    kept.unmount()
+    // Unmounted with the window still there (suspended): no close frame.
+    expect(first.sent).not.toContainEqual({ type: 'close' })
+
+    const ended = render(TerminalWindowHarness, { window: state })
+    const second = await started(1)
+    second.control({ type: 'ready', session: 'kept-handle', since: 0 })
+    state.closed = true
+    ended.unmount()
+    expect(second.sent).toContainEqual({ type: 'close' })
+  })
+
   it('opens one local shell automatically without a target', async () => {
     render(Terminal)
 

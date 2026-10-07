@@ -87,6 +87,9 @@ export class WindowManager {
 
   #policy: (appId: string) => WindowPolicy | undefined
   #z = 0
+  /// Ids closed on this desk (ids are never reused); see `wasClosed`.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- deliberately plain; see `wasClosed`
+  readonly #closed = new Set<string>()
 
   constructor(policy: (appId: string) => WindowPolicy | undefined) {
     this.#policy = policy
@@ -146,12 +149,22 @@ export class WindowManager {
   close(id: string) {
     const before = this.windows.length
     this.windows = this.windows.filter((w) => w.id !== id)
-    if (this.windows.length !== before) this.#changed()
+    if (this.windows.length !== before) {
+      this.#closed.add(id)
+      this.#changed()
+    }
   }
 
   closeApp(appId: string) {
+    for (const w of this.of(appId)) this.#closed.add(w.id)
     this.windows = this.windows.filter((w) => w.appId !== appId)
     this.#changed()
+  }
+
+  /// Whether [id] was closed here. Plain, not reactive: it is read in an app's
+  /// teardown, where state reads answer the value from before the change.
+  wasClosed(id: string): boolean {
+    return this.#closed.has(id)
   }
 
   focus(id: string) {

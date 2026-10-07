@@ -570,7 +570,11 @@
   // The menubar: what the toolbar offers, with shortcuts.
   useMenus(() => {
     if (!available) return []
-    const file: MenuEntry[] = []
+    const file: MenuEntry[] = [
+      // A new window starts where this one is, as a duplicate tab would.
+      { label: $LL.deskNewWindow(), icon: 'add', disabled: !win.canOpenWindow, action: () => win.openWindow(cwd ? { path: cwd, view } : undefined) },
+      { separator: true },
+    ]
     if (write && cwd) {
       file.push(
         { label: $LL.filesNewFolder(), icon: 'create_new_folder', shortcut: '⌥⌘N', action: () => (dialog = { kind: 'mkdir', value: '' }) },

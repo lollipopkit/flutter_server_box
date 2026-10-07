@@ -140,7 +140,11 @@
 
   onDestroy(() => {
     destroyed = true
-    session.dispose()
+    // A closed window ends its shell, which would otherwise hold one of the
+    // agent's few session slots until it times out; content unmounted while
+    // its window lives on keeps the shell to rejoin.
+    if (win.closed) session.close()
+    else session.dispose()
     terminal?.dispose()
   })
 
@@ -329,8 +333,15 @@
   useMenus(() => {
     const items: MenuEntry[] = [
       {
-        label: $LL.terminalNewSession(),
+        label: $LL.deskNewWindow(),
         icon: 'add',
+        disabled: !win.canOpenWindow,
+        action: () => win.openWindow(),
+      },
+      { separator: true },
+      {
+        label: $LL.terminalNewSession(),
+        icon: 'restart_alt',
         disabled: !fullAccess || startBusy,
         action: () => void newSession(),
       },
@@ -366,6 +377,9 @@
 
 <AppToolbar>
   {#snippet actions()}
+    {#if fullAccess}
+      <IconButton icon="add" label={$LL.deskNewWindow()} disabled={!win.canOpenWindow} onclick={() => win.openWindow()} />
+    {/if}
     {#if fullAccess && tmuxOffered}
       <div class="relative">
         <IconButton
