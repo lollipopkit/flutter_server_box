@@ -23,13 +23,13 @@
 
 {#if pageSpec}
   <AppToolbar title={pageSpec.title($LL)} back={() => (page = null)} />
-  <main class="mx-auto max-w-[560px] px-[21px] pb-[21px] pt-[4px]">
+  <main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
     {#key pageSpec.id}<AppSettingsHost spec={pageSpec} />{/key}
   </main>
 {:else}
 <AppToolbar title={$LL.settingsApps()} />
 
-<main class="mx-auto max-w-[560px] space-y-[13px] px-[21px] pb-[21px] pt-[4px]">
+<main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
   {#if !prefs}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}

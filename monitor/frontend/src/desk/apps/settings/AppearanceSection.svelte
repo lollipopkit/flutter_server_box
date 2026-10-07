@@ -88,7 +88,7 @@
 
 <AppToolbar title={$LL.deskAppearance()} />
 
-<main class="mx-auto max-w-[560px] px-[21px] pb-[21px] pt-[4px]">
+<main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
   {#if !prefs}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}

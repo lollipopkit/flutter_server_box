@@ -1,24 +1,20 @@
 <script lang="ts">
-  /// This browser's own settings: the panel's language and its light/dark
-  /// choice. Neither is tied to a server, and both persist on change — there
-  /// is no save step here.
+  /// This browser's own settings: the panel's language. Not tied to a
+  /// server, kept on change — there is no save step here. The light/dark
+  /// choice is under Appearance.
 
   import { Group, Row } from '../../lk'
   import { AppToolbar } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import LocaleToggle from './LocaleToggle.svelte'
-  import ThemeToggle from './ThemeToggle.svelte'
 </script>
 
 <AppToolbar title={$LL.settingsGeneral()} />
 
-<main class="mx-auto max-w-[560px] px-[21px] pb-[21px] pt-[4px]">
+<main class="flex max-w-[560px] flex-col gap-[17px] pb-[21px] pl-[17px] pr-[21px] pt-[5px]">
   <Group>
     <Row label={$LL.language()}>
       <LocaleToggle />
-    </Row>
-    <Row label={$LL.theme()}>
-      <ThemeToggle />
     </Row>
   </Group>
 </main>

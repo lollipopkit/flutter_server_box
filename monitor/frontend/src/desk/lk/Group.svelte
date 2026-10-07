@@ -12,7 +12,7 @@
   const { title, class: className = '', children }: Props = $props()
 </script>
 
-<section class="lk-setgroup mb-[17px] {className}">
+<section class="lk-setgroup {className}">
   {#if title}<h3 class="lk-setgroup__title">{title}</h3>{/if}
   <div class="lk-setgroup__card">{@render children()}</div>
 </section>

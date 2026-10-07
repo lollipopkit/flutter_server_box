@@ -40,7 +40,7 @@
   }
 </script>
 
-<SplitView width={16}>
+<SplitView>
   {#snippet sidebar()}
     <SidebarSection title={$LL.settingsThisBrowser()}>
       <SidebarItem
@@ -51,7 +51,7 @@
       />
       <SidebarItem
         label={$LL.deskAppearance()}
-        icon="wallpaper"
+        icon="palette"
         active={current === 'appearance'}
         onclick={() => show('appearance')}
       />
@@ -78,7 +78,7 @@
       {#if admin}
         <SidebarItem
           label={$LL.settingsAccess()}
-          icon="shield_lock"
+          icon="shield_person"
           active={current === 'access'}
           onclick={() => show('access')}
         />

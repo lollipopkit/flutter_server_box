@@ -4,7 +4,7 @@ export default defineApp({
   id: 'services',
   title: (ll) => ll.services(),
   glyph: 'dns',
-  tone: 'violet',
+  tone: 'bright',
   available: feature('services'),
   order: 50,
   load: () => import('./ServicesApp.svelte'),
