@@ -222,6 +222,11 @@
     right: 9px;
     z-index: 100001;
     max-width: calc(100% - 18px);
+  }
+  /* On the glass itself, not on this wrapper: an ancestor whose opacity is
+     below 1 is where a backdrop-filter stops looking, so the panel would be
+     clear until the fade ended and only then blur the desk. */
+  .desk-panel-place > :global(*) {
     transform-origin: top right;
     animation: lk-menu-in var(--dur-base) var(--ease-spring);
   }
