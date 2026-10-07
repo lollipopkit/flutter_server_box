@@ -7,6 +7,7 @@
   import LkAppIcon from '../lk/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
   import { shellPrefs } from '../shellPrefs.svelte'
+  import { dockItem } from './dockMotion'
 
   const desk = useDesk()
 
@@ -50,6 +51,23 @@
       .map((id) => app(id))
       .filter((a): a is AppSpec => !!a),
   )
+
+  /// The dock as the desk first draws it does not animate in; what comes
+  /// and goes after does. (The transitions are global: each item sits in an
+  /// `{#if}` inside the list.)
+  let ready = $state(false)
+  $effect(() => {
+    const t = setTimeout(() => (ready = true), 0)
+    return () => clearTimeout(t)
+  })
+
+  /// What the dock shows, in order, each keyed by what it is.
+  type Slot = { key: string; kind: 'pinned' | 'running'; spec: AppSpec } | { key: string; kind: 'sep' }
+  const slots = $derived<Slot[]>([
+    ...pinned.map((spec): Slot => ({ key: spec.id, kind: 'pinned', spec })),
+    ...(running.length ? [{ key: '|', kind: 'sep' } as Slot] : []),
+    ...running.map((spec): Slot => ({ key: spec.id, kind: 'running', spec })),
+  ])
 
   function isRunning(id: string) {
     return desk.windows.windows.some((w) => w.appId === id)
@@ -167,54 +185,50 @@
       <span class="lk-dock__icon"><LkAppIcon glyph="apps" tone="pale" size={tile} /></span>
     </button>
 
-    {#each pinned as spec (spec.id)}
-      <button
-        class="lk-dock__item"
-        class:lk-dock__item--bounce={bouncing === spec.id}
-        class:opacity-50={dragging === spec.id}
-        style:width="{tile}px"
-        style:height="{tile}px"
-        aria-label={spec.title($LL)}
-        draggable="true"
-        ondragstart={(e) => {
-          dragging = spec.id
-          e.dataTransfer?.setData('text/plain', spec.id)
-        }}
-        ondragend={() => (dragging = null)}
-        ondragover={(e) => e.preventDefault()}
-        ondrop={(e) => {
-          e.preventDefault()
-          if (dragging && dragging !== spec.id) desk.prefs?.moveInDock(dragging, pinned.findIndex((p) => p.id === spec.id))
-          dragging = null
-        }}
-        onclick={() => activate(spec)}
-        oncontextmenu={(e) => menu(e, spec)}
-      >
-        <span class="lk-dock__label">{spec.title($LL)}</span>
-        <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
-        {@render badge(spec.id)}
-        {#if isRunning(spec.id)}<span class="lk-dock__dot"></span>{/if}
-      </button>
-    {/each}
-
-    {#if running.length > 0}
-      <span class="lk-dock__sep"></span>
-      {#each running as spec (spec.id)}
+    <!-- Pinned apps, then (after a separator) the running ones not pinned:
+         one keyed list, so an app that comes or goes animates and the rest
+         slide over. -->
+    {#each slots as slot (slot.key)}
+      {#if slot.kind === 'sep'}
+        <span
+          class="lk-dock__sep"
+          in:dockItem|global={{ size: 1, vertical, still: !ready }}
+          out:dockItem|global={{ size: 1, vertical, leaving: true }}
+        ></span>
+      {:else}
+        {@const spec = slot.spec}
         <button
           class="lk-dock__item"
+          class:lk-dock__item--bounce={bouncing === spec.id}
+          class:opacity-50={dragging === spec.id}
           style:width="{tile}px"
           style:height="{tile}px"
           aria-label={spec.title($LL)}
+          draggable={slot.kind === 'pinned'}
+          in:dockItem|global={{ size: tile, vertical, still: !ready }}
+          out:dockItem|global={{ size: tile, vertical, leaving: true }}
+          ondragstart={(e) => {
+            if (slot.kind !== 'pinned') return
+            dragging = spec.id
+            e.dataTransfer?.setData('text/plain', spec.id)
+          }}
+          ondragend={() => (dragging = null)}
+          ondragover={(e) => slot.kind === 'pinned' && e.preventDefault()}
+          ondrop={(e) => {
+            e.preventDefault()
+            if (dragging && dragging !== spec.id) desk.prefs?.moveInDock(dragging, pinned.findIndex((p) => p.id === spec.id))
+            dragging = null
+          }}
           onclick={() => activate(spec)}
           oncontextmenu={(e) => menu(e, spec)}
         >
           <span class="lk-dock__label">{spec.title($LL)}</span>
           <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
           {@render badge(spec.id)}
-          <span class="lk-dock__dot"></span>
+          {#if isRunning(spec.id) && shellPrefs.dockRunDots}<span class="lk-dock__dot"></span>{/if}
         </button>
-      {/each}
-    {/if}
+      {/if}
+    {/each}
   </nav>
 </div>
 

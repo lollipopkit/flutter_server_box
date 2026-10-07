@@ -14,11 +14,13 @@ interface Stored {
   dockAutoHide: boolean
   dockSize: DockSize
   titlebar: TitlebarStyle
+  /// A dot under a running app's icon.
+  dockRunDots: boolean
 }
 
 const KEY = 'desk.shell'
 
-const DEFAULTS: Stored = { dockPosition: 'left', dockAutoHide: false, dockSize: 44, titlebar: 'glass' }
+const DEFAULTS: Stored = { dockPosition: 'left', dockAutoHide: false, dockSize: 44, titlebar: 'glass', dockRunDots: true }
 
 function load(): Stored {
   try {
@@ -28,6 +30,7 @@ function load(): Stored {
       dockAutoHide: raw.dockAutoHide === true,
       dockSize: DOCK_SIZES.find((s) => s === raw.dockSize) ?? DEFAULTS.dockSize,
       titlebar: raw.titlebar === 'always' ? 'always' : 'glass',
+      dockRunDots: raw.dockRunDots !== false,
     }
   } catch {
     return { ...DEFAULTS }
@@ -48,6 +51,9 @@ class ShellPrefs {
   }
   get titlebar(): TitlebarStyle {
     return this.#value.titlebar
+  }
+  get dockRunDots(): boolean {
+    return this.#value.dockRunDots
   }
 
   /// Where the dock is: on a phone ([compact]) always at the bottom.
