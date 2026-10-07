@@ -28,10 +28,6 @@ export type Translations = RootTranslation
 
 type RootTranslation = {
 	/**
-	 * S​i​g​n​ ​i​n​ ​t​o​ ​a​c​c​e​s​s​ ​y​o​u​r​ ​s​e​r​v​e​r​ ​m​o​n​i​t​o​r​i​n​g​ ​d​a​s​h​b​o​a​r​d
-	 */
-	signInSubtitle: string
-	/**
 	 * U​s​e​r​n​a​m​e
 	 */
 	username: string
@@ -40,25 +36,9 @@ type RootTranslation = {
 	 */
 	password: string
 	/**
-	 * E​n​t​e​r​ ​y​o​u​r​ ​u​s​e​r​n​a​m​e
-	 */
-	enterUsername: string
-	/**
-	 * E​n​t​e​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d
-	 */
-	enterPassword: string
-	/**
 	 * S​i​g​n​ ​i​n
 	 */
 	signIn: string
-	/**
-	 * S​i​g​n​i​n​g​ ​i​n​.​.​.
-	 */
-	signingIn: string
-	/**
-	 * N​o​ ​s​e​r​v​e​r​s​ ​y​e​t​.​ ​A​d​d​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​f​ ​a​n​ ​a​g​e​n​t​ ​t​o​ ​m​o​n​i​t​o​r​ ​i​t​.
-	 */
-	noServersTip: string
 	/**
 	 * A​d​d​ ​s​e​r​v​e​r
 	 */
@@ -68,25 +48,13 @@ type RootTranslation = {
 	 */
 	removeServer: string
 	/**
-	 * N​a​m​e
-	 */
-	serverName: string
-	/**
 	 * A​d​d
 	 */
 	add: string
 	/**
-	 * W​e​l​c​o​m​e​,
-	 */
-	welcome: string
-	/**
 	 * L​o​g​o​u​t
 	 */
 	logout: string
-	/**
-	 * U​n​k​n​o​w​n​ ​S​e​r​v​e​r
-	 */
-	unknownServer: string
 	/**
 	 * T​h​i​s​ ​s​e​r​v​e​r
 	 */
@@ -111,10 +79,6 @@ type RootTranslation = {
 	 * A​c​t​i​v​e
 	 */
 	active: string
-	/**
-	 * N​/​A
-	 */
-	na: string
 	/**
 	 * H​i​s​t​o​r​y
 	 */
@@ -148,33 +112,9 @@ type RootTranslation = {
 	 */
 	lastUpdated: string
 	/**
-	 * C​P​U​ ​U​s​a​g​e​:
-	 */
-	cpuUsageLabel: string
-	/**
-	 * M​e​m​o​r​y​ ​U​s​a​g​e​:
-	 */
-	memoryUsageLabel: string
-	/**
-	 * D​i​s​k​ ​U​s​a​g​e​:
-	 */
-	diskUsageLabel: string
-	/**
 	 * T​e​m​p​e​r​a​t​u​r​e​:
 	 */
 	temperature: string
-	/**
-	 * Q​u​i​c​k​ ​A​c​t​i​o​n​s
-	 */
-	quickActions: string
-	/**
-	 * R​e​f​r​e​s​h​ ​D​a​t​a
-	 */
-	refreshData: string
-	/**
-	 * D​a​t​a​ ​r​e​f​r​e​s​h​e​s​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​e​v​e​r​y​ ​5​ ​s​e​c​o​n​d​s
-	 */
-	autoRefreshNote: string
 	/**
 	 * S​y​s​t​e​m​ ​t​h​e​m​e
 	 */
@@ -196,25 +136,9 @@ type RootTranslation = {
 	 */
 	servers: string
 	/**
-	 * S​e​a​r​c​h
-	 */
-	serversSearch: string
-	/**
-	 * N​o​ ​m​a​t​c​h​i​n​g​ ​s​e​r​v​e​r​s
-	 */
-	serversNoMatch: string
-	/**
 	 * M​e​n​u
 	 */
 	menu: string
-	/**
-	 * C​o​l​l​a​p​s​e​ ​s​i​d​e​b​a​r
-	 */
-	collapseSidebar: string
-	/**
-	 * E​x​p​a​n​d​ ​s​i​d​e​b​a​r
-	 */
-	expandSidebar: string
 	/**
 	 * G​P​U
 	 */
@@ -264,10 +188,6 @@ type RootTranslation = {
 	 */
 	refresh: string
 	/**
-	 * E​d​i​t​ ​s​e​r​v​e​r
-	 */
-	editServer: string
-	/**
 	 * S​e​r​v​e​r​ ​U​R​L
 	 */
 	serverUrlLabel: string
@@ -279,10 +199,6 @@ type RootTranslation = {
 	 * T​e​s​t​ ​c​o​n​n​e​c​t​i​o​n
 	 */
 	testConnection: string
-	/**
-	 * T​e​s​t​i​n​g​.​.​.
-	 */
-	testingConnection: string
 	/**
 	 * S​a​v​e
 	 */
@@ -336,10 +252,6 @@ type RootTranslation = {
 	 * @param {unknown} action
 	 */
 	powerActionSent: RequiredParams<'action'>
-	/**
-	 * M​a​n​a​g​e​ ​m​a​c​h​i​n​e
-	 */
-	manageMachine: string
 	/**
 	 * B​e​n​c​h​m​a​r​k
 	 */
@@ -637,10 +549,6 @@ type RootTranslation = {
 	 */
 	containerNetwork: string
 	/**
-	 * N​o​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	containerNoImages: string
-	/**
 	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​d​o​c​k​e​r​ ​o​r​ ​p​o​d​m​a​n​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
 	 */
 	containerNotInstalled: string
@@ -693,12 +601,6 @@ type RootTranslation = {
 	 * R​u​n​n​i​n​g
 	 */
 	containerRunning: string
-	/**
-	 * {​r​u​n​t​i​m​e​}​ ​{​v​e​r​s​i​o​n​}
-	 * @param {unknown} runtime
-	 * @param {unknown} version
-	 */
-	containerRuntime: RequiredParams<'runtime' | 'version'>
 	/**
 	 * S​t​a​r​t
 	 */
@@ -1084,10 +986,6 @@ type RootTranslation = {
 	 */
 	serviceDetailsUnavailable: string
 	/**
-	 * N​o​ ​u​n​i​t​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
-	 */
-	serviceEmpty: string
-	/**
 	 * A​l​l
 	 */
 	servicesFilterAll: string
@@ -1127,10 +1025,6 @@ type RootTranslation = {
 	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
 	 */
 	serviceRetryAsRoot: string
-	/**
-	 * S​y​s​t​e​m
-	 */
-	serviceScopeSystem: string
 	/**
 	 * T​h​i​s​ ​a​c​c​o​u​n​t
 	 */
@@ -1203,10 +1097,6 @@ type RootTranslation = {
 	 */
 	processColumnThreads: string
 	/**
-	 * T​i​m​e
-	 */
-	processColumnTime: string
-	/**
 	 * C​P​U
 	 */
 	processCpu: string
@@ -1226,11 +1116,6 @@ type RootTranslation = {
 	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​r​o​w​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​n​o​t​ ​l​i​s​t​e​d​ ​h​e​r​e​.
 	 */
 	processIssue: string
-	/**
-	 * S​h​o​w​ ​{​c​o​u​n​t​}​ ​k​e​r​n​e​l​ ​t​h​r​e​a​d​s
-	 * @param {unknown} count
-	 */
-	processKernelThreads: RequiredParams<'count'>
 	/**
 	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​d​o​e​s​ ​n​o​t​ ​o​w​n​ ​t​h​a​t​ ​p​r​o​c​e​s​s​.
 	 */
@@ -1273,23 +1158,9 @@ type RootTranslation = {
 	 */
 	processRss: string
 	/**
-	 * R​e​a​d​ ​a​t​ ​{​t​i​m​e​}​ ​·​ ​{​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
-	 * @param {unknown} count
-	 * @param {unknown} time
-	 */
-	processSampledAt: RequiredParams<'count' | 'time'>
-	/**
 	 * N​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D
 	 */
 	processSearchHint: string
-	/**
-	 * C​P​U
-	 */
-	processSortCpu: string
-	/**
-	 * M​e​m​o​r​y
-	 */
-	processSortMem: string
 	/**
 	 * N​a​m​e
 	 */
@@ -1302,10 +1173,6 @@ type RootTranslation = {
 	 * R​e​a​d
 	 */
 	processSortRead: string
-	/**
-	 * R​S​S
-	 */
-	processSortRss: string
 	/**
 	 * U​s​e​r
 	 */
@@ -1325,11 +1192,6 @@ type RootTranslation = {
 	 */
 	processStopConfirm: RequiredParams<'name' | 'pid'>
 	/**
-	 * {​c​o​u​n​t​}​ ​t​h​r​e​a​d​s
-	 * @param {unknown} count
-	 */
-	processThreads: RequiredParams<'count'>
-	/**
 	 * T​h​e​ ​t​a​b​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​r​e​a​d​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
 	 */
 	processTooLarge: string
@@ -1345,10 +1207,6 @@ type RootTranslation = {
 	 * C​l​o​s​e
 	 */
 	close: string
-	/**
-	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
-	 */
-	confirmDeleteServer: string
 	/**
 	 * U​p​t​i​m​e
 	 */
@@ -1578,10 +1436,6 @@ type RootTranslation = {
 	 */
 	serverSettings: string
 	/**
-	 * P​a​n​e​l​ ​S​e​t​t​i​n​g​s
-	 */
-	panelSettings: string
-	/**
 	 * U​n​l​i​m​i​t​e​d
 	 */
 	unlimited: string
@@ -1689,10 +1543,6 @@ type RootTranslation = {
 	 * A​t​t​a​c​h
 	 */
 	terminalTmuxAttach: string
-	/**
-	 * N​e​w​ ​s​e​s​s​i​o​n
-	 */
-	terminalTmuxNewSession: string
 	/**
 	 * S​e​s​s​i​o​n​ ​n​a​m​e
 	 */
@@ -2568,10 +2418,6 @@ type RootTranslation = {
 	 * @param {unknown} count
 	 */
 	desktopSubtitle: RequiredParams<'count'>
-	/**
-	 * S​a​v​e​d​ ​r​o​u​t​e​s
-	 */
-	desktopRoutes: string
 	/**
 	 * N​e​w​ ​d​e​s​k​t​o​p
 	 */
@@ -3782,14 +3628,6 @@ type RootTranslation = {
 	 * @param {unknown} size
 	 */
 	virtVolumeOnDisk: RequiredParams<'size'>
-	/**
-	 * A​c​t​i​v​e
-	 */
-	virtNetActive: string
-	/**
-	 * I​n​a​c​t​i​v​e
-	 */
-	virtNetInactive: string
 	/**
 	 * A​u​t​o​s​t​a​r​t
 	 */
@@ -5472,10 +5310,6 @@ type RootTranslation = {
 	 */
 	fwProtocol: string
 	/**
-	 * I​n​t​e​r​f​a​c​e
-	 */
-	fwInterface: string
-	/**
 	 * C​o​m​m​e​n​t
 	 */
 	fwComment: string
@@ -5865,10 +5699,6 @@ type RootTranslation = {
 	 */
 	deskUnpin: string
 	/**
-	 * A​b​o​u​t​ ​t​h​i​s​ ​s​e​r​v​e​r
-	 */
-	deskAboutServer: string
-	/**
 	 * L​o​c​k
 	 */
 	deskLock: string
@@ -5917,10 +5747,6 @@ type RootTranslation = {
 	 */
 	deskAppearance: string
 	/**
-	 * L​i​g​h​t
-	 */
-	deskThemeLight: string
-	/**
 	 * D​a​r​k
 	 */
 	deskThemeDark: string
@@ -5932,10 +5758,6 @@ type RootTranslation = {
 	 * W​a​l​l​p​a​p​e​r
 	 */
 	deskWallpaper: string
-	/**
-	 * M​o​r​e​ ​s​e​t​t​i​n​g​s​…
-	 */
-	deskMoreSettings: string
 	/**
 	 * P​r​e​v​i​o​u​s
 	 */
@@ -6109,11 +5931,6 @@ type RootTranslation = {
 	 * N​o​ ​p​r​o​c​e​s​s​e​s
 	 */
 	processEmptyState: string
-	/**
-	 * {​c​o​u​n​t​}​ ​v​i​s​i​b​l​e
-	 * @param {unknown} count
-	 */
-	processVisibleCount: RequiredParams<'count'>
 	/**
 	 * N​o​ ​s​e​r​v​i​c​e​s
 	 */
@@ -6513,10 +6330,6 @@ type RootTranslation = {
 
 export type TranslationFunctions = {
 	/**
-	 * Sign in to access your server monitoring dashboard
-	 */
-	signInSubtitle: () => LocalizedString
-	/**
 	 * Username
 	 */
 	username: () => LocalizedString
@@ -6525,25 +6338,9 @@ export type TranslationFunctions = {
 	 */
 	password: () => LocalizedString
 	/**
-	 * Enter your username
-	 */
-	enterUsername: () => LocalizedString
-	/**
-	 * Enter your password
-	 */
-	enterPassword: () => LocalizedString
-	/**
 	 * Sign in
 	 */
 	signIn: () => LocalizedString
-	/**
-	 * Signing in...
-	 */
-	signingIn: () => LocalizedString
-	/**
-	 * No servers yet. Add the address of an agent to monitor it.
-	 */
-	noServersTip: () => LocalizedString
 	/**
 	 * Add server
 	 */
@@ -6553,25 +6350,13 @@ export type TranslationFunctions = {
 	 */
 	removeServer: () => LocalizedString
 	/**
-	 * Name
-	 */
-	serverName: () => LocalizedString
-	/**
 	 * Add
 	 */
 	add: () => LocalizedString
 	/**
-	 * Welcome,
-	 */
-	welcome: () => LocalizedString
-	/**
 	 * Logout
 	 */
 	logout: () => LocalizedString
-	/**
-	 * Unknown Server
-	 */
-	unknownServer: () => LocalizedString
 	/**
 	 * This server
 	 */
@@ -6596,10 +6381,6 @@ export type TranslationFunctions = {
 	 * Active
 	 */
 	active: () => LocalizedString
-	/**
-	 * N/A
-	 */
-	na: () => LocalizedString
 	/**
 	 * History
 	 */
@@ -6633,33 +6414,9 @@ export type TranslationFunctions = {
 	 */
 	lastUpdated: () => LocalizedString
 	/**
-	 * CPU Usage:
-	 */
-	cpuUsageLabel: () => LocalizedString
-	/**
-	 * Memory Usage:
-	 */
-	memoryUsageLabel: () => LocalizedString
-	/**
-	 * Disk Usage:
-	 */
-	diskUsageLabel: () => LocalizedString
-	/**
 	 * Temperature:
 	 */
 	temperature: () => LocalizedString
-	/**
-	 * Quick Actions
-	 */
-	quickActions: () => LocalizedString
-	/**
-	 * Refresh Data
-	 */
-	refreshData: () => LocalizedString
-	/**
-	 * Data refreshes automatically every 5 seconds
-	 */
-	autoRefreshNote: () => LocalizedString
 	/**
 	 * System theme
 	 */
@@ -6681,25 +6438,9 @@ export type TranslationFunctions = {
 	 */
 	servers: () => LocalizedString
 	/**
-	 * Search
-	 */
-	serversSearch: () => LocalizedString
-	/**
-	 * No matching servers
-	 */
-	serversNoMatch: () => LocalizedString
-	/**
 	 * Menu
 	 */
 	menu: () => LocalizedString
-	/**
-	 * Collapse sidebar
-	 */
-	collapseSidebar: () => LocalizedString
-	/**
-	 * Expand sidebar
-	 */
-	expandSidebar: () => LocalizedString
 	/**
 	 * GPU
 	 */
@@ -6749,10 +6490,6 @@ export type TranslationFunctions = {
 	 */
 	refresh: () => LocalizedString
 	/**
-	 * Edit server
-	 */
-	editServer: () => LocalizedString
-	/**
 	 * Server URL
 	 */
 	serverUrlLabel: () => LocalizedString
@@ -6764,10 +6501,6 @@ export type TranslationFunctions = {
 	 * Test connection
 	 */
 	testConnection: () => LocalizedString
-	/**
-	 * Testing...
-	 */
-	testingConnection: () => LocalizedString
 	/**
 	 * Save
 	 */
@@ -6820,10 +6553,6 @@ export type TranslationFunctions = {
 	 * Sent: {action}. If the machine is going down, this panel loses it until it is back.
 	 */
 	powerActionSent: (arg: { action: unknown }) => LocalizedString
-	/**
-	 * Manage machine
-	 */
-	manageMachine: () => LocalizedString
 	/**
 	 * Benchmark
 	 */
@@ -7113,10 +6842,6 @@ export type TranslationFunctions = {
 	 */
 	containerNetwork: () => LocalizedString
 	/**
-	 * No images on this machine.
-	 */
-	containerNoImages: () => LocalizedString
-	/**
 	 * This machine has no docker or podman command, so there is nothing to show or change here.
 	 */
 	containerNotInstalled: () => LocalizedString
@@ -7168,10 +6893,6 @@ export type TranslationFunctions = {
 	 * Running
 	 */
 	containerRunning: () => LocalizedString
-	/**
-	 * {runtime} {version}
-	 */
-	containerRuntime: (arg: { runtime: unknown, version: unknown }) => LocalizedString
 	/**
 	 * Start
 	 */
@@ -7541,10 +7262,6 @@ export type TranslationFunctions = {
 	 */
 	serviceDetailsUnavailable: () => LocalizedString
 	/**
-	 * No units on this machine.
-	 */
-	serviceEmpty: () => LocalizedString
-	/**
 	 * All
 	 */
 	servicesFilterAll: () => LocalizedString
@@ -7584,10 +7301,6 @@ export type TranslationFunctions = {
 	 * Retry as root
 	 */
 	serviceRetryAsRoot: () => LocalizedString
-	/**
-	 * System
-	 */
-	serviceScopeSystem: () => LocalizedString
 	/**
 	 * This account
 	 */
@@ -7657,10 +7370,6 @@ export type TranslationFunctions = {
 	 */
 	processColumnThreads: () => LocalizedString
 	/**
-	 * Time
-	 */
-	processColumnTime: () => LocalizedString
-	/**
 	 * CPU
 	 */
 	processCpu: () => LocalizedString
@@ -7680,10 +7389,6 @@ export type TranslationFunctions = {
 	 * The machine printed rows this agent could not read. They are not listed here.
 	 */
 	processIssue: () => LocalizedString
-	/**
-	 * Show {count} kernel threads
-	 */
-	processKernelThreads: (arg: { count: unknown }) => LocalizedString
 	/**
 	 * This account does not own that process.
 	 */
@@ -7721,21 +7426,9 @@ export type TranslationFunctions = {
 	 */
 	processRss: () => LocalizedString
 	/**
-	 * Read at {time} · {count} processes
-	 */
-	processSampledAt: (arg: { count: unknown, time: unknown }) => LocalizedString
-	/**
 	 * Name, user or PID
 	 */
 	processSearchHint: () => LocalizedString
-	/**
-	 * CPU
-	 */
-	processSortCpu: () => LocalizedString
-	/**
-	 * Memory
-	 */
-	processSortMem: () => LocalizedString
 	/**
 	 * Name
 	 */
@@ -7748,10 +7441,6 @@ export type TranslationFunctions = {
 	 * Read
 	 */
 	processSortRead: () => LocalizedString
-	/**
-	 * RSS
-	 */
-	processSortRss: () => LocalizedString
 	/**
 	 * User
 	 */
@@ -7769,10 +7458,6 @@ export type TranslationFunctions = {
 	 */
 	processStopConfirm: (arg: { name: unknown, pid: unknown }) => LocalizedString
 	/**
-	 * {count} threads
-	 */
-	processThreads: (arg: { count: unknown }) => LocalizedString
-	/**
 	 * The table is larger than this agent will read, so nothing is shown here.
 	 */
 	processTooLarge: () => LocalizedString
@@ -7788,10 +7473,6 @@ export type TranslationFunctions = {
 	 * Close
 	 */
 	close: () => LocalizedString
-	/**
-	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
-	 */
-	confirmDeleteServer: () => LocalizedString
 	/**
 	 * Uptime
 	 */
@@ -8021,10 +7702,6 @@ export type TranslationFunctions = {
 	 */
 	serverSettings: () => LocalizedString
 	/**
-	 * Panel Settings
-	 */
-	panelSettings: () => LocalizedString
-	/**
 	 * Unlimited
 	 */
 	unlimited: () => LocalizedString
@@ -8132,10 +7809,6 @@ export type TranslationFunctions = {
 	 * Attach
 	 */
 	terminalTmuxAttach: () => LocalizedString
-	/**
-	 * New session
-	 */
-	terminalTmuxNewSession: () => LocalizedString
 	/**
 	 * Session name
 	 */
@@ -8992,10 +8665,6 @@ export type TranslationFunctions = {
 	 * {count} saved routes
 	 */
 	desktopSubtitle: (arg: { count: unknown }) => LocalizedString
-	/**
-	 * Saved routes
-	 */
-	desktopRoutes: () => LocalizedString
 	/**
 	 * New desktop
 	 */
@@ -10167,14 +9836,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * {size} on disk
 	 */
 	virtVolumeOnDisk: (arg: { size: unknown }) => LocalizedString
-	/**
-	 * Active
-	 */
-	virtNetActive: () => LocalizedString
-	/**
-	 * Inactive
-	 */
-	virtNetInactive: () => LocalizedString
 	/**
 	 * Autostart
 	 */
@@ -11809,10 +11470,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	fwProtocol: () => LocalizedString
 	/**
-	 * Interface
-	 */
-	fwInterface: () => LocalizedString
-	/**
 	 * Comment
 	 */
 	fwComment: () => LocalizedString
@@ -12193,10 +11850,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskUnpin: () => LocalizedString
 	/**
-	 * About this server
-	 */
-	deskAboutServer: () => LocalizedString
-	/**
 	 * Lock
 	 */
 	deskLock: () => LocalizedString
@@ -12245,10 +11898,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskAppearance: () => LocalizedString
 	/**
-	 * Light
-	 */
-	deskThemeLight: () => LocalizedString
-	/**
 	 * Dark
 	 */
 	deskThemeDark: () => LocalizedString
@@ -12260,10 +11909,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Wallpaper
 	 */
 	deskWallpaper: () => LocalizedString
-	/**
-	 * More settings…
-	 */
-	deskMoreSettings: () => LocalizedString
 	/**
 	 * Previous
 	 */
@@ -12436,10 +12081,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * No processes
 	 */
 	processEmptyState: () => LocalizedString
-	/**
-	 * {count} visible
-	 */
-	processVisibleCount: (arg: { count: unknown }) => LocalizedString
 	/**
 	 * No services
 	 */
