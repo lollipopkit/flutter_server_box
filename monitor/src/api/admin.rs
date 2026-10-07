@@ -92,7 +92,7 @@ async fn audit(req: &HttpRequest, state: &AppState, caller: &Caller, action: Act
 }
 
 /// Checks [password] against [caller]'s own, through the login throttle.
-async fn reauth(
+pub(crate) async fn reauth(
     req: &HttpRequest,
     state: &AppState,
     caller: &Caller,
@@ -316,7 +316,7 @@ pub async fn update_user(
 
 #[derive(Deserialize, Default)]
 pub struct Reauth {
-    current_password: Option<String>,
+    pub(crate) current_password: Option<String>,
 }
 
 /// The body of a DELETE: optional as far as the extractor goes, so a missing

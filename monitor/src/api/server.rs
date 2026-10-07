@@ -480,6 +480,16 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
             .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
             .service(
+                web::resource("/apps")
+                    .state(web::types::PayloadConfig::new(crate::api::apps::MAX_PACKAGE_BYTES))
+                    .route(web::get().to(crate::api::apps::list))
+                    .route(web::post().to(crate::api::apps::install)),
+            )
+            .service(web::resource("/apps/{id}").route(web::delete().to(crate::api::apps::remove)))
+            .service(web::resource("/apps/{id}/approval").route(web::put().to(crate::api::apps::approve)))
+            .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))
+            .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
+            .service(
                 web::resource("/desk/apps/{app}/storage")
                     .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))
                     .route(web::get().to(crate::api::desk_storage::list))

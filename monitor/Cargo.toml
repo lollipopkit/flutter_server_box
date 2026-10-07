@@ -52,6 +52,13 @@ jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_c
 bcrypt = "0.19"
 # sha2 0.11 returns a `hybrid_array::Array`, which has no `LowerHex` — hence hex
 sha2 = "0.11"
+
+# Desk app packages (`api::apps`): a gzipped tar, read entry by entry with
+# every size bounded while it is read.
+tar = { version = "0.4", default-features = false }
+flate2 = "1"
+# Launch tickets for their UI (HMAC); the crypto already in the tree.
+ring = "0.17"
 hex = "0.4"
 
 # Configuration

@@ -59,6 +59,8 @@ pub const FEATURES: &[&str] = &[
     "desk_background",
     // `/desk/apps/{app}/storage`: what each desk app keeps for itself.
     "desk_storage",
+    // `/apps`: desk apps an admin installs (`api::apps`).
+    "desk_apps",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

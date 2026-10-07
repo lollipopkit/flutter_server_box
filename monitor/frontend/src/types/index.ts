@@ -138,6 +138,7 @@ export type MachineFeature =
   | 'desk'
   | 'desk_background'
   | 'desk_storage'
+  | 'desk_apps'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
