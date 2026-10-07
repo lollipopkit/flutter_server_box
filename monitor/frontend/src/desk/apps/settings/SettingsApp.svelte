@@ -4,7 +4,7 @@
   /// this browser come first; the agent's own configuration follows.
 
   import { SidebarItem, SidebarSection } from '../../lk'
-  import { SplitView, useWindow } from '../../sys'
+  import { PageStack, SplitView, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
@@ -49,6 +49,17 @@
     const id = (win.appState as { app?: unknown } | null)?.app
     return typeof id === 'string' ? (deskPrefs.apps.find((a) => a.id === id) ?? null) : null
   })
+
+  function openApp(app: string) {
+    win.setAppState({ section: 'apps', app })
+  }
+
+  /// The app page last gone back from: a swipe forward on Apps reopens it.
+  let leftApp = $state<string | null>(null)
+  function leaveApp() {
+    leftApp = appPage?.id ?? null
+    show('apps')
+  }
 </script>
 
 <SplitView>
@@ -97,14 +108,21 @@
     </SidebarSection>
   {/snippet}
 
+  <!-- An app's page is a page over Apps; the sections are peers. -->
+  <PageStack
+    key={appPage ? `apps/${appPage.id}` : current}
+    depth={appPage ? 1 : 0}
+    back={appPage ? { key: 'apps', go: leaveApp } : null}
+    forward={current === 'apps' && !appPage && leftApp ? { key: `apps/${leftApp}`, go: () => openApp(leftApp!) } : null}
+  >
   {#if current === 'general'}
     <GeneralSection />
   {:else if current === 'appearance'}
     <AppearanceSection />
   {:else if current === 'apps' && appPage}
-    {#key appPage.id}<AppPage spec={appPage} onback={() => show('apps')} />{/key}
+    <AppPage spec={appPage} onback={leaveApp} />
   {:else if current === 'apps'}
-    <AppsSection onopen={(app) => win.setAppState({ section: 'apps', app })} />
+    <AppsSection onopen={openApp} />
   {:else if current === 'account'}
     <AccountSection />
   {:else if current === 'server'}
@@ -112,4 +130,5 @@
   {:else}
     <AccessSection />
   {/if}
+  </PageStack>
 </SplitView>

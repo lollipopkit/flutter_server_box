@@ -19,7 +19,7 @@
     type MenuEntry,
     type TableSort,
   } from '../../lk'
-  import { AppToolbar, OPEN, type OpenPath, SplitView, systemPrefs, useIntents, useMenus, useWindow, WindowFooter } from '../../sys'
+  import { AppToolbar, OPEN, type OpenPath, PageStack, SplitView, systemPrefs, useIntents, useMenus, useWindow, WindowFooter } from '../../sys'
   import FileEditor from './FileEditor.svelte'
   import { DEFAULT_PREFS, loadPrefs, PREFS_KEY, type FilesPrefs } from './prefs'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -735,6 +735,14 @@
         </div>
       {/if}
 
+      <!-- A folder opened is a page over the one it is in; back and forward
+           (buttons, ⌘[ ⌘], or a swipe) move through where the window has been. -->
+      <PageStack
+        key={`${histAt}:${cwd ?? ''}`}
+        depth={Math.max(histAt, 0)}
+        back={canBack ? { key: `${histAt - 1}:${hist[histAt - 1]}`, go: back } : null}
+        forward={canForward ? { key: `${histAt + 1}:${hist[histAt + 1]}`, go: forward } : null}
+      >
       {#if loading && shown.length === 0}
         <div class="grid flex-1 place-items-center"><Spinner /></div>
       {:else if cwd && shown.length === 0}
@@ -787,6 +795,7 @@
           {/each}
         </div>
       {/if}
+      </PageStack>
 
       {#if menu}
         <button

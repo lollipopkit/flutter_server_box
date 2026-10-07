@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, LegendChip, SegmentedControl, Spinner, StatTile, ToolbarGroup } from '../../lk'
-  import { AppToolbar, systemPrefs, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
+  import { AppToolbar, PageStack, systemPrefs, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'
   import PowerModal from '../../../components/PowerModal.svelte'
@@ -14,7 +14,6 @@
   import { DATE_TIME, fmtBytes, fmtBytesPerSec, fmtDate, fmtPercent } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { Poller } from '../../../lib/poller.svelte'
-  import { fly } from 'svelte/transition'
   import type { CustomCmdOutput, HistoryPoint, ProcessView } from '../../../types'
 
   const metrics = new Poller(api.getMetrics, systemPrefs.refreshMs)
@@ -209,6 +208,12 @@
   const connected = $derived(health.status[servers.currentId] ?? false)
 
   let detail = $state<DetailKind | null>(null)
+  /// The detail last gone back from: a swipe forward reopens it.
+  let leftDetail = $state<DetailKind | null>(null)
+  function leaveDetail() {
+    leftDetail = detail
+    detail = null
+  }
 
   /// Reads everything again now rather than at the next poll, the figures on
   /// screen staying until the new ones arrive; the capabilities too, which a
@@ -409,7 +414,7 @@
 </script>
 
 {#if detail}
-  <AppToolbar title={detailTitles[detail]} back={() => (detail = null)} />
+  <AppToolbar title={detailTitles[detail]} back={leaveDetail} />
 {:else}
   <AppToolbar subtitle={paused ? $LL.deskPaused() : `${$LL.deskLiveShort()} · ${$LL.deskEverySeconds({ n: systemPrefs.value.refreshSeconds })}`}>
     {#snippet actions()}
@@ -453,8 +458,14 @@
       </Card>
     {/if}
 
-    {#key detail}
-      <div in:fly={{ x: detail ? 16 : -16, duration: 200, delay: 150 }} out:fly={{ x: detail ? -16 : 16, duration: 150 }}>
+    <!-- A reading's detail is a page over the overview: back (or a swipe)
+         returns, and a swipe the other way opens the detail left last. -->
+    <PageStack
+      key={detail ?? 'overview'}
+      depth={detail ? 1 : 0}
+      back={detail ? { key: 'overview', go: leaveDetail } : null}
+      forward={!detail && leftDetail ? { key: leftDetail, go: () => (detail = leftDetail) } : null}
+    >
     {#if detail}
       <DetailPanel kind={detail} metrics={m} {history} />
     {:else}
@@ -621,8 +632,7 @@
         {/if}
       </div>
     {/if}
-      </div>
-    {/key}
+    </PageStack>
   {/if}
 </main>
 

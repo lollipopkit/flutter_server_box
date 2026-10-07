@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, Input, Spinner } from '../../lk'
-  import { AppToolbar } from '../../sys'
+  import { AppToolbar, PageStack } from '../../sys'
   import DesktopForm, { desktopFormState, type DesktopFormState } from './DesktopForm.svelte'
   import RdpViewer from './RdpViewer.svelte'
   import VncViewer from '../../../components/VncViewer.svelte'
@@ -190,6 +190,9 @@
   }
 </script>
 
+<!-- The session is a page over the list. No swipe back: that would close a
+     live connection, which only the chevron and Disconnect do. -->
+<PageStack key={live && sessionDesktop ? 'session' : 'list'} depth={live && sessionDesktop ? 1 : 0}>
 {#if live && sessionDesktop}
   <!-- The session takes the page: leaving it by the back chevron closes it,
        since a relay left open is a connection nobody is looking at. -->
@@ -277,6 +280,7 @@
     {/if}
   </main>
 {/if}
+</PageStack>
 
 {#if opened && editing === undefined && !live}
   {@const desktop = opened}
