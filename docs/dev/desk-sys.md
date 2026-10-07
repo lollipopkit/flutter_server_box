@@ -2,7 +2,7 @@
 
 The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, launchpad, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
 
-Status: phases 1–3 are implemented (see [Phases](#phases)); the rest is the agreed design.
+Status: phases 1–4 are implemented (see [Phases](#phases)); the rest is the agreed design.
 
 ## App kinds
 
@@ -102,23 +102,25 @@ The frame posts calls `{ sbm: 1, id, call, args }` to its parent and gets `{ sbm
 | `storage.get/set/remove/keys` | The app's own storage |
 | `open` `{ appId, newWindow, intent }` | The only intent it may hand on is `open` of a path (an app must not make Terminal type) |
 | `handlers` `{ path, kind }`, `keepAlive`/`release` `{ token, reason }` (needs `background`) | |
+| `backend.call` `{ method, params }` | Its backend (`wasm` apps), as the signed-in account |
 
 Events: `lifecycle`, `theme`, `locale`, `intent` (`{ action, data, from }`), `action`.
 
 Intents carry `from`, set by the desk: an app acts on one only from the apps it expects (Terminal takes `terminal.type` from Snippets alone).
 
-## The WASM backend
+## The WASM backend (phase 4)
 
-- The agent runs `backend.wasm` as a WASI component in wasmtime, one instance per app and server, started on the first call and stopped after 5 minutes without calls.
-- Limits per instance: memory (64 MiB), fuel per call, wall time per call (30 s), concurrent calls.
-- Host functions (a WIT world, `sbm:desk/host`): `fs`, `exec`, `net`, `status`, `kv`, `notify`, `log`. Each checks the app's approved permissions and the calling account's grants before acting; nothing else of the host is linked (no WASI filesystem preopens, no sockets, no environment).
-- `POST /apps/{id}/call` (`{ method, params }`, JSON, ≤1 MiB) runs an exported `call` with the account's identity; `/apps/{id}/events` streams what the backend emits to that account's open windows.
-- The app's calls are logged with the account and the app id.
+- The agent runs `backend.wasm`, a core WebAssembly module, with wasmi (an interpreter: no JIT, no executable memory; `portable-dispatch`, so a long loop cannot overflow the stack in any build). One fresh instance per call on a thread of its own; what an app keeps between calls goes through `kv`.
+- ABI: the module exports `memory`, `sbm_alloc(len) -> ptr` and `sbm_call(ptr, len) -> (ptr << 32) | len`; the request is `{ method, params, caller: { username, admin } }`, the reply `{ ok }` or `{ error }`. It imports `sbm.host(ptr, len)`, called with `{ fn, args }` and answered the same way. A Rust example: `monitor/examples/desk-app-uptime`.
+- Host functions: `log`; `kv.get/set/remove/keys` (the calling account's app storage); `status` (`status`); `fs.list`, `fs.read` (`files.read` and the caller's `files` grant, inside `fs.roots`, 1 MiB per read); `exec` (`exec` and the caller's `shell` grant, `[remote_access.exec]`'s bounds, audited like `/exec`). Nothing else of the host is linked.
+- Bounds per call: 2·10⁹ fuel or 10 s, whichever ends first (checked between fuel slices); 64 MiB of memory, one instance; 1000 host calls; 1 MiB request, 4 MiB reply. A bound reached answers `422 { error: "tooLong" | "trap" | … }`.
+- `POST /apps/{id}/call` (`{ method, params }`, any account) runs it as the signed-in account; the frame reaches it with the bridge's `backend.call`. Calls are logged with the account and app.
+- Not yet: `fs.write`, `net`, events pushed from a backend.
 
 ## Phases
 
 1. **sys core, system apps** (done, `656d5872`): manifests and registry, `sys` (window, identity, menus, shortcuts, lifecycle, background setting), the shell reading it; apps import only `sys`, `lk` and shared code (lint-enforced).
 2. **Services** (done): per-app background choice (`background_denied`, migration 020), storage, notifications, dock menus, `keepAlive`, Control Centre's background list, intents and "Open with" (Snippets → Terminal moved onto them), app settings pages.
 3. **`web` apps** (done): the agent's package store (`api::apps`, migration 022), the frame host and bridge (`desk/webapps/`: `protocol.ts`, `bridge.svelte.ts`, `WebAppFrame.svelte`), Settings → Apps (install, approve, remove), an example (`monitor/examples/desk-app-hello`). The SDK package moves to phase 5.
-4. **`wasm` apps**: the agent's runtime, host functions, `/apps/{id}/call` and events, limits and audit.
+4. **`wasm` apps** (done): `api::app_runtime`, `/apps/{id}/call`, host functions, bounds; the bridge's `backend.call`. Events from a backend and `fs.write`/`net` are left.
 5. **SDK**: the package published, a template app, an example of each kind, docs.

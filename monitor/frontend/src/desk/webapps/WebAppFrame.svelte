@@ -27,6 +27,7 @@
       allows: (p) => desk.allows(win.appId, p),
       theme: () => ({ dark: theme.dark }),
       locale: () => get(locale),
+      backend: (method, params) => deskApi.callApp(desk.entry, win.appId, method, params),
     },
     () => frame?.contentWindow ?? null,
   )

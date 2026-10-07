@@ -9,7 +9,7 @@ use ntex::http::Method;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::json;
-use server_box_monitor::api::apps;
+use server_box_monitor::api::{app_runtime, apps};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
@@ -22,6 +22,7 @@ async fn server() -> TestServer {
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
     common::seed_as_upgrade(&db, &config).await;
     common::add_account(&db, "watcher", "viewer").await;
+    common::set_grants(&db, "admin", &server_box_monitor::core::permissions::Grants::all()).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     web_test::server(move || {
         let state = state.clone();
@@ -37,6 +38,7 @@ async fn server() -> TestServer {
                     .service(web::resource("/apps/{id}").route(web::delete().to(apps::remove)))
                     .service(web::resource("/apps/{id}/approval").route(web::put().to(apps::approve)))
                     .service(web::resource("/apps/{id}/launch").route(web::get().to(apps::launch)))
+                    .service(web::resource("/apps/{id}/call").route(web::post().to(app_runtime::call)))
                     .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(apps::ui))),
             )
         }
@@ -223,4 +225,149 @@ async fn a_package_is_refused_whole_for_any_bad_entry() {
     }
     let r = call(&srv, Some("admin"), Method::GET, "/api/v1/apps", None).await;
     assert_eq!(r.json["apps"], json!([]), "nothing kept of a refused package");
+}
+
+// ---------------------------------------------------------------------------
+// Backends (`kind: wasm`)
+// ---------------------------------------------------------------------------
+
+/// A guest in the agent's ABI: a bump allocator, and `sbm_call` doing [body]
+/// (which may use `$ptr`/`$len`, the request, and the data at 16).
+fn guest(data: &str, body: &str) -> Vec<u8> {
+    let escaped = data.replace('\\', "\\\\").replace('"', "\\\"");
+    wat::parse_str(format!(
+        r#"(module
+          (import "sbm" "host" (func $host (param i32 i32) (result i64)))
+          (memory (export "memory") 1)
+          (global $next (mut i32) (i32.const 4096))
+          (data (i32.const 16) "{escaped}")
+          (func (export "sbm_alloc") (param $len i32) (result i32)
+            (local $p i32)
+            global.get $next
+            local.set $p
+            global.get $next
+            local.get $len
+            i32.add
+            global.set $next
+            (block $done
+              (loop $grow
+                global.get $next
+                memory.size
+                i32.const 65536
+                i32.mul
+                i32.le_u
+                br_if $done
+                i32.const 1
+                memory.grow
+                i32.const -1
+                i32.eq
+                if
+                  unreachable
+                end
+                br $grow))
+            local.get $p)
+          (func (export "sbm_call") (param $ptr i32) (param $len i32) (result i64)
+            {body}))"#
+    ))
+    .unwrap()
+}
+
+const ECHO: &str = "local.get $ptr i64.extend_i32_u i64.const 32 i64.shl local.get $len i64.extend_i32_u i64.or";
+
+/// Asks the host [request] (the data at 16) and answers what it said.
+fn asking(request: &str) -> Vec<u8> {
+    guest(request, &format!("i32.const 16 i32.const {} call $host", request.len()))
+}
+
+fn wasm_package(wasm: Vec<u8>, permissions: &[&str]) -> Vec<u8> {
+    let mut m = manifest(permissions);
+    m["kind"] = json!("wasm");
+    package(&[
+        ("manifest.json", m.to_string().into_bytes()),
+        ("ui/index.html", b"<p>backend</p>".to_vec()),
+        ("backend.wasm", wasm),
+    ])
+}
+
+async fn installed_backend(srv: &TestServer, wasm: Vec<u8>, permissions: &[&str]) {
+    let r = install(srv, wasm_package(wasm, permissions)).await;
+    assert_eq!(r.status, 200, "{}", r.json);
+    assert_eq!(approve(srv, permissions, common::PASSWORD).await.status, 200);
+}
+
+async fn call_backend(srv: &TestServer, user: &str, method: &str, params: serde_json::Value) -> Reply {
+    let body = json!({ "method": method, "params": params }).to_string().into_bytes();
+    call(srv, Some(user), Method::POST, "/api/v1/apps/acme_notes/call", Some((body, "application/json"))).await
+}
+
+#[ntex::test]
+async fn a_backend_answers_as_the_account_calling() {
+    let srv = server().await;
+    installed_backend(&srv, guest("", ECHO), &[]).await;
+    let r = call_backend(&srv, "watcher", "ping", json!({ "n": 1 })).await;
+    assert_eq!(r.status, 200, "{}", r.json);
+    assert_eq!(r.json, json!({ "method": "ping", "params": { "n": 1 }, "caller": { "username": "watcher", "admin": false } }));
+}
+
+#[ntex::test]
+async fn a_backend_is_stopped_by_its_bounds() {
+    let srv = server().await;
+    installed_backend(&srv, guest("", "(loop $l br $l) i64.const 0"), &[]).await;
+    let r = call_backend(&srv, "admin", "spin", json!(null)).await;
+    assert_eq!((r.status, r.json["error"].as_str()), (422, Some("tooLong")));
+
+    // 64 MiB is 1024 pages; asking for 2000 more is refused.
+    let srv = server().await;
+    installed_backend(&srv, guest("", "i32.const 2000 memory.grow drop i32.const 2000 memory.grow i64.extend_i32_s"), &[]).await;
+    let r = call_backend(&srv, "admin", "grow", json!(null)).await;
+    assert_eq!(r.status, 422, "{}", r.json);
+}
+
+#[ntex::test]
+async fn host_functions_need_the_permission_and_the_callers_grant() {
+    // Not approved for `exec`: refused whoever calls.
+    let srv = server().await;
+    installed_backend(&srv, asking(r#"{"fn":"exec","args":{"cmd":"echo hi"}}"#), &[]).await;
+    let r = call_backend(&srv, "admin", "run", json!(null)).await;
+    assert_eq!(r.json, json!({ "error": "notPermitted" }));
+
+    // Approved: runs for an account with the shell, not for one without.
+    let srv = server().await;
+    installed_backend(&srv, asking(r#"{"fn":"exec","args":{"cmd":"echo hi"}}"#), &["exec"]).await;
+    let r = call_backend(&srv, "admin", "run", json!(null)).await;
+    assert_eq!(r.json["ok"]["stdout"], "hi\n", "{}", r.json);
+    let r = call_backend(&srv, "watcher", "run", json!(null)).await;
+    assert!(r.json["error"].as_str().unwrap().starts_with("forbidden"), "{}", r.json);
+}
+
+#[ntex::test]
+async fn a_backend_keeps_what_it_stores_per_account() {
+    let srv = server().await;
+    installed_backend(&srv, asking(r#"{"fn":"kv.set","args":{"key":"k","value":42}}"#), &[]).await;
+    assert_eq!(call_backend(&srv, "admin", "set", json!(null)).await.json, json!({ "ok": null }));
+    let srv2 = srv;
+    // Read back by a module that asks for it (a new version keeps its approval).
+    let r = install(&srv2, wasm_package(asking(r#"{"fn":"kv.get","args":{"key":"k"}}"#), &[])).await;
+    assert_eq!(r.status, 200);
+    assert_eq!(call_backend(&srv2, "admin", "get", json!(null)).await.json, json!({ "ok": 42 }));
+    assert_eq!(call_backend(&srv2, "watcher", "get", json!(null)).await.json, json!({ "ok": null }));
+}
+
+#[ntex::test]
+async fn a_package_brings_a_backend_only_as_wasm() {
+    let srv = server().await;
+    let mut m = manifest(&[]);
+    m["kind"] = json!("wasm");
+    let no_backend = package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())]);
+    assert_eq!(install(&srv, no_backend).await.json["error"], "backendMismatch");
+    let stray = package(&[
+        ("manifest.json", manifest(&[]).to_string().into_bytes()),
+        ("ui/index.html", b"x".to_vec()),
+        ("backend.wasm", guest("", ECHO)),
+    ]);
+    assert_eq!(install(&srv, stray).await.json["error"], "backendMismatch");
+    // A web app has no backend to call.
+    install(&srv, good(&[])).await;
+    approve(&srv, &[], common::PASSWORD).await;
+    assert_eq!(call_backend(&srv, "admin", "x", json!(null)).await.status, 404);
 }

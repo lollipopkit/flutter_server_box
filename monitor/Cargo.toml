@@ -59,6 +59,12 @@ tar = { version = "0.4", default-features = false }
 flate2 = "1"
 # Launch tickets for their UI (HMAC); the crypto already in the tree.
 ring = "0.17"
+# Desk app backends (`api::app_runtime`): an interpreter, so no JIT and no
+# executable memory in the agent; fuel bounds every call.
+# `portable-dispatch`: a loop, not tail calls, so no build profile can turn
+# a long-running guest into a stack overflow.
+wasmi = { version = "2", default-features = false, features = ["std", "validate", "portable-dispatch"] }
+base64 = "0.22"
 hex = "0.4"
 
 # Configuration
@@ -131,6 +137,8 @@ fs2 = "0.4"
 libc = "0.2"
 
 [dev-dependencies]
+# Test modules for the app runtime, written as text.
+wat = "1"
 tempfile = "3.27.0"
 # Self-signed certificates for the fake RDP server in `tests/rdp_ws.rs`.
 # `ring`, so the tree keeps one crypto implementation.

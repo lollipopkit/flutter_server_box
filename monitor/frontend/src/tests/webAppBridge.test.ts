@@ -96,3 +96,20 @@ describe('the bridge to an installed app', () => {
     expect(await call('eval', {})).toMatchObject({ ok: false, error: 'unknownCall' })
   })
 })
+
+describe('the bridge to an app backend', () => {
+  it('answers what the backend said, or its error', async () => {
+    const frame = { postMessage: vi.fn() } as unknown as Window
+    const backend = vi.fn(async (method: string) => (method === 'ok' ? { ok: { n: 1 } } : { error: 'nope' }))
+    const bridge = new WebAppBridge(
+      { handle: { id: 'w', appId: 'a' } as unknown as WindowHandle, allows: () => false, theme: () => ({ dark: false }), locale: () => 'en', backend },
+      () => frame,
+    )
+    const post = frame.postMessage as ReturnType<typeof vi.fn>
+    await bridge.receive(new MessageEvent('message', { data: { sbm: 1, id: 1, call: 'backend.call', args: { method: 'ok', params: { x: 1 } } }, source: frame }))
+    await bridge.receive(new MessageEvent('message', { data: { sbm: 1, id: 2, call: 'backend.call', args: { method: 'bad' } }, source: frame }))
+    expect(backend).toHaveBeenCalledWith('ok', { x: 1 })
+    expect(post.mock.calls[0][0]).toMatchObject({ re: 1, ok: true, value: { n: 1 } })
+    expect(post.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'nope' })
+  })
+})

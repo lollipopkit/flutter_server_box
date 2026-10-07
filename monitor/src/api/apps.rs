@@ -23,9 +23,10 @@
 //! password. The files live in the database (outside every `fs.roots`), so
 //! no file grant can rewrite approved code.
 //!
-//! Only `web` apps (no backend) are taken for now: their permissions are the
-//! desk's (`notifications`, `background`). `wasm` is refused until the agent
-//! runs backends.
+//! A `web` app is UI only: its permissions are the desk's (`notifications`,
+//! `background`). A `wasm` app adds `backend.wasm`, run by the agent
+//! (`api::app_runtime`), and may ask for what that reaches (`status`,
+//! `files.read`, `exec`), each still bounded by the calling account's grants.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::io::Read;
@@ -56,6 +57,7 @@ const API_VERSION: u32 = 1;
 /// What a `web` app may ask for. A backend's (`files.read`, `exec`, …)
 /// come with `wasm`.
 const WEB_PERMISSIONS: &[&str] = &["notifications", "background"];
+const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "files.read", "exec"];
 const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"];
 
 // -----------------------------------------------------------------------------
@@ -144,11 +146,11 @@ pub fn check_manifest(m: &Manifest) -> Result<(), Refusal> {
     if m.api != API_VERSION {
         return Err(refused("unsupportedApi"));
     }
-    match m.kind.as_str() {
-        "web" => {}
-        "wasm" => return Err(refused("unsupportedKind")),
+    let allowed = match m.kind.as_str() {
+        "web" => WEB_PERMISSIONS,
+        "wasm" => WASM_PERMISSIONS,
         _ => return Err(refused("invalidKind")),
-    }
+    };
     let title_ok = match &m.title {
         serde_json::Value::String(t) => short_text(t, 64),
         serde_json::Value::Object(map) => {
@@ -171,7 +173,7 @@ pub fn check_manifest(m: &Manifest) -> Result<(), Refusal> {
     }
     let mut seen = HashSet::new();
     for p in &m.permissions {
-        if !WEB_PERMISSIONS.contains(&p.as_str()) {
+        if !allowed.contains(&p.as_str()) {
             return Err(refused("invalidPermission"));
         }
         if !seen.insert(p) {
@@ -218,7 +220,7 @@ fn valid_entry_path(path: &str) -> bool {
 
 /// What may sit at a package's top: the UI, the manifest, notices.
 fn allowed_top(path: &str) -> bool {
-    path == "manifest.json" || path.starts_with("ui/") || ["LICENSE", "README.md", "NOTICE"].contains(&path)
+    path == "manifest.json" || path == "backend.wasm" || path.starts_with("ui/") || ["LICENSE", "README.md", "NOTICE"].contains(&path)
 }
 
 /// Reads and checks a whole package. Nothing is stored before every entry
@@ -274,6 +276,10 @@ pub fn read_package(bytes: &[u8]) -> Result<Package, Refusal> {
     check_manifest(&manifest)?;
     if !files.contains_key("ui/index.html") {
         return Err(refused("noEntry"));
+    }
+    // A backend is what `wasm` means, and only `wasm` brings one.
+    if files.contains_key("backend.wasm") != (manifest.kind == "wasm") {
+        return Err(refused("backendMismatch"));
     }
     Ok(Package { manifest, files, sha256 })
 }
@@ -676,7 +682,6 @@ mod tests {
             (|m| m.id = "Acme_notes".into(), "invalidId"),
             (|m| m.version = String::new(), "invalidVersion"),
             (|m| m.api = 2, "unsupportedApi"),
-            (|m| m.kind = "wasm".into(), "unsupportedKind"),
             (|m| m.kind = "native".into(), "invalidKind"),
             (|m| m.title = serde_json::json!({ "de": "Notizen" }), "invalidTitle"),
             (|m| m.title = serde_json::json!(""), "invalidTitle"),

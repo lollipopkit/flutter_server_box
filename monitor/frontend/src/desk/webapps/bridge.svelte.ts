@@ -59,6 +59,8 @@ export interface BridgeHost {
   /// Light or dark, and the panel's language, as they change.
   theme(): { dark: boolean }
   locale(): string
+  /// Runs [method] of the app's backend, when it has one.
+  backend?: (method: string, params: unknown) => Promise<{ ok?: unknown; error?: string }>
 }
 
 export class WebAppBridge {
@@ -226,6 +228,13 @@ export class WebAppBridge {
         this.#keepAlive.get(token)?.()
         this.#keepAlive.delete(token)
         return
+      }
+      case 'backend.call': {
+        const method = text(a.method, 64)
+        if (!method || !this.#host.backend) throw new Error('noBackend')
+        const reply = await this.#host.backend(method, a.params ?? null)
+        if (reply && typeof reply === 'object' && 'error' in reply && reply.error !== undefined) throw new Error(String(reply.error))
+        return reply?.ok ?? null
       }
       case 'close':
         return h.close()

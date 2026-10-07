@@ -52,6 +52,41 @@ fn checked_key(key: &str) -> Result<(), HttpResponse> {
     if valid_key(key) { Ok(()) } else { Err(HttpResponse::BadRequest().json(&refused("invalidKey", None))) }
 }
 
+/// Every key and value [user] keeps for [app].
+pub(crate) async fn items(
+    db: &sqlx::SqlitePool,
+    user: i64,
+    app: &str,
+) -> Result<serde_json::Map<String, serde_json::Value>, sqlx::Error> {
+    let rows = sqlx::query_as::<_, (String, String)>(
+        "SELECT key, value FROM desk_app_storage WHERE user_id = ? AND app_id = ? ORDER BY key",
+    )
+    .bind(user)
+    .bind(app)
+    .fetch_all(db)
+    .await?;
+    let mut items = serde_json::Map::new();
+    for (key, value) in rows {
+        // Stored by `put` from parsed JSON, so it parses.
+        items.insert(key, serde_json::from_str(&value).unwrap_or(serde_json::Value::Null));
+    }
+    Ok(items)
+}
+
+pub(crate) async fn remove_key(db: &sqlx::SqlitePool, user: i64, app: &str, key: &str) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM desk_app_storage WHERE user_id = ? AND app_id = ? AND key = ?")
+        .bind(user)
+        .bind(app)
+        .bind(key)
+        .execute(db)
+        .await
+        .map(|_| ())
+}
+
+pub(crate) fn key_ok(key: &str) -> bool {
+    valid_key(key)
+}
+
 pub async fn list(
     req: HttpRequest,
     app: web::types::Path<String>,
@@ -59,22 +94,8 @@ pub async fn list(
 ) -> Result<HttpResponse, web::Error> {
     let (_, user) = require!(account(&req, &state).await);
     require!(checked_app(&app));
-    let rows = sqlx::query_as::<_, (String, String)>(
-        "SELECT key, value FROM desk_app_storage WHERE user_id = ? AND app_id = ? ORDER BY key",
-    )
-    .bind(user)
-    .bind(app.as_str())
-    .fetch_all(&state.db)
-    .await;
-    match rows {
-        Ok(rows) => {
-            let mut items = serde_json::Map::new();
-            for (key, value) in rows {
-                // Stored by `put` from parsed JSON, so it parses.
-                items.insert(key, serde_json::from_str(&value).unwrap_or(serde_json::Value::Null));
-            }
-            Ok(HttpResponse::Ok().json(&serde_json::json!({ "items": items })))
-        }
+    match items(&state.db, user, &app).await {
+        Ok(items) => Ok(HttpResponse::Ok().json(&serde_json::json!({ "items": items }))),
         Err(e) => Ok(internal_error(&e)),
     }
 }
@@ -106,13 +127,7 @@ pub async fn remove(
     let (_, user) = require!(account(&req, &state).await);
     require!(checked_app(&app));
     require!(checked_key(&query.key));
-    let done = sqlx::query("DELETE FROM desk_app_storage WHERE user_id = ? AND app_id = ? AND key = ?")
-        .bind(user)
-        .bind(app.as_str())
-        .bind(query.key.as_str())
-        .execute(&state.db)
-        .await;
-    match done {
+    match remove_key(&state.db, user, &app, &query.key).await {
         Ok(_) => Ok(HttpResponse::NoContent().finish()),
         Err(e) => Ok(internal_error(&e)),
     }
@@ -121,7 +136,7 @@ pub async fn remove(
 /// Writes [value] at [key] unless the app's rows would then pass
 /// [`MAX_APP_BYTES`]; false when refused. The sum and the write share one
 /// transaction, so two writes racing cannot both slip under the bound.
-async fn store(db: &sqlx::SqlitePool, user: i64, app: &str, key: &str, value: &str) -> Result<bool, sqlx::Error> {
+pub(crate) async fn store(db: &sqlx::SqlitePool, user: i64, app: &str, key: &str, value: &str) -> Result<bool, sqlx::Error> {
     let mut tx = db.begin().await?;
     // A write first, so SQLite's write lock is held while the sum is read.
     sqlx::query(

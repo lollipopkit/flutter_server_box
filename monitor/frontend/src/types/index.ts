@@ -2664,7 +2664,7 @@ export interface PackageManifest {
   id: string
   version: string
   api: number
-  kind: 'web'
+  kind: 'web' | 'wasm'
   title: string | Record<string, string>
   glyph: string
   tone: string

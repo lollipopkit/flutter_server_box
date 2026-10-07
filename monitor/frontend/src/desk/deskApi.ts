@@ -128,6 +128,18 @@ export const deskApi = {
   launchApp: (entry: ServerEntry, id: string) =>
     requestFor<{ url: string; version: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}, 'Failed to open the app'),
 
+  /// Runs [method] of an installed app's backend (`kind: wasm`) as the
+  /// signed-in account; answers the backend's own reply.
+  callApp: (entry: ServerEntry, id: string, method: string, params: unknown) =>
+    requestFor<{ ok?: unknown; error?: string }>(
+      entry,
+      `/apps/${encodeURIComponent(id)}/call`,
+      { method: 'POST', body: JSON.stringify({ method, params: params ?? null }) },
+      'The app’s backend failed',
+      undefined,
+      60_000,
+    ),
+
   notifications: (entry: ServerEntry, limit = 80) =>
     requestFor<{ notifications: DeskNotification[]; unread: number }>(
       entry,

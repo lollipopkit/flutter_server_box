@@ -23,6 +23,7 @@ pub mod tmux;
 pub mod push;
 pub mod cors;
 pub mod admin;
+pub mod app_runtime;
 pub mod apps;
 pub mod containers;
 pub mod auth;

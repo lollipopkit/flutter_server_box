@@ -488,6 +488,11 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/apps/{id}").route(web::delete().to(crate::api::apps::remove)))
             .service(web::resource("/apps/{id}/approval").route(web::put().to(crate::api::apps::approve)))
             .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))
+            .service(
+                web::resource("/apps/{id}/call")
+                    .state(web::types::JsonConfig::default().limit(crate::api::app_runtime::MAX_REQUEST))
+                    .route(web::post().to(crate::api::app_runtime::call)),
+            )
             .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
             .service(
                 web::resource("/desk/apps/{app}/storage")

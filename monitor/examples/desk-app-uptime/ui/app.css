@@ -1,0 +1,7 @@
+:root { color-scheme: light; font: 13px/1.5 system-ui, sans-serif; color: #1d1b1e; background: #fbf7f9; }
+:root.dark { color-scheme: dark; color: #f1eef0; background: #1d1a1c; }
+main { padding: 17px; }
+h1 { font-size: 21px; margin: 0 0 9px; }
+pre { font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; }
+.muted { opacity: .7; }
+.error { color: #c0392b; }
