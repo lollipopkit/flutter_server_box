@@ -20,9 +20,6 @@
       new Date(n.created_at),
     )
   }
-
-  const GLYPH = { info: 'info', warning: 'warning', critical: 'error' } as const
-  const TONE = { info: 'sky', warning: 'amber', critical: 'berry' } as const
 </script>
 
 <div class="flex items-center justify-between px-[3px] pb-[9px]">
@@ -33,17 +30,15 @@
 </div>
 <div class="flex flex-col gap-[9px]">
   {#each list as n (n.id)}
+    {@const from = desk.noticeSource(n)}
     <Notification
       class="!w-full !animate-none {n.read ? 'opacity-70' : ''}"
-      app={$LL.deskAppStatus()}
+      app={from.title}
       time={when(n)}
       title={n.subject}
-      onclick={() => {
-        void desk.notifications?.markRead(n.id)
-        desk.open('status')
-      }}
+      onclick={() => desk.openNotice(n)}
     >
-      {#snippet icon()}<AppIcon glyph={GLYPH[n.level] ?? 'info'} tone={TONE[n.level] ?? 'sky'} size={34} />{/snippet}
+      {#snippet icon()}<AppIcon glyph={from.glyph} tone={from.tone} size={34} />{/snippet}
       {n.body}
     </Notification>
   {:else}

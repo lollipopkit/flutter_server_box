@@ -1500,6 +1500,8 @@ const uk = {
 	deskMenuFile: 'Файл',
 	deskMenuGo: 'Перейти',
 	settingsBackgroundAppsOld: 'Цей агент застарий і не може зберегти цей вибір',
+	deskInBackground: 'У фоновому режимі',
+	settingsBackgroundPerApp: 'Фоновий режим',
 } satisfies Translation
 
 export default uk

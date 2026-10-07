@@ -22,7 +22,7 @@ describe('app manifests', () => {
   })
 
   it('refuses an id the desk could not store', () => {
-    for (const id of ['', 'Notes', '1notes', 'a-b', 'a/b', 'x'.repeat(65)]) {
+    for (const id of ['', 'Notes', '1notes', 'a-b', 'a/b', 'x'.repeat(33)]) {
       expect(() => defineApp({ id, title: 'x', glyph: 'note', tone: 'amber', load })).toThrow()
     }
     expect(() => defineApp({ id: 'ok', title: 'x', glyph: 'note', tone: 'amber', instances: 0, load })).toThrow()
@@ -117,5 +117,50 @@ describe('window chrome', () => {
     chrome.pushMenus({ menus: [{ label: 'A', items: [] }] })
     chrome.reset()
     expect([chrome.appName, chrome.badge, chrome.menus]).toEqual([null, null, []])
+  })
+})
+
+describe('app storage', () => {
+  it('keeps each app its own values, as plain JSON', async () => {
+    const { AppData } = await import('../desk/appData')
+    const { BrowserStorage } = await import('../desk/storage')
+    const data = new AppData(new BrowserStorage(`test-${crypto.randomUUID()}`))
+    const notes = data.for('notes')
+    await notes.set('draft', { text: 'hi', at: new Date(0) })
+    expect(await notes.get('draft')).toEqual({ text: 'hi', at: '1970-01-01T00:00:00.000Z' })
+    expect(await data.for('files').keys()).toEqual([])
+    await notes.remove('draft')
+    expect(await notes.keys()).toEqual([])
+  })
+
+  it('refuses bad keys, undefined and too much', async () => {
+    const { AppData } = await import('../desk/appData')
+    const { BrowserStorage } = await import('../desk/storage')
+    const notes = new AppData(new BrowserStorage(`test-${crypto.randomUUID()}`)).for('notes')
+    await expect(notes.set('', 1)).rejects.toThrow('invalidKey')
+    await expect(notes.set('a\nb', 1)).rejects.toThrow('invalidKey')
+    await expect(notes.set('x'.repeat(129), 1)).rejects.toThrow('invalidKey')
+    await expect(notes.set('a', undefined)).rejects.toThrow('invalidValue')
+    await expect(notes.set('big', 'x'.repeat(300 * 1024))).rejects.toThrow('tooLarge')
+    expect(await notes.keys()).toEqual([])
+  })
+})
+
+describe('app notifications', () => {
+  it('sit with the server’s, newest first, and count as unread until read', async () => {
+    const { DeskNotifications } = await import('../desk/notifications.svelte')
+    const { BrowserStorage } = await import('../desk/storage')
+    const list = new DeskNotifications(new BrowserStorage(`test-${crypto.randomUUID()}`))
+    list.setDnd(true)
+    const n = list.posted('notes', { title: 'Saved', body: 'x'.repeat(5000), level: 'nonsense' as never })
+    expect(n.id).toBeLessThan(0)
+    expect(n.source).toBe('app:notes')
+    expect(n.level).toBe('info')
+    expect(n.body).toHaveLength(2000)
+    expect(list.unread).toBe(1)
+    await list.markRead(n.id)
+    expect(list.unread).toBe(0)
+    expect(list.list[0].subject).toBe('Saved')
+    list.setDnd(false)
   })
 })

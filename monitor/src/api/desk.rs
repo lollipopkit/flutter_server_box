@@ -9,6 +9,8 @@
 //!   refused (409, with what is current) when another tab moved it since.
 //! - `GET /desk/notifications`, `POST /desk/notifications/read`: what the
 //!   machine said (a monitoring rule that started firing), read per account.
+//! - `/desk/apps/{app}/storage`: what an app keeps for itself, see
+//!   `api::desk_storage`.
 //! - `GET /desk/events`: a `text/event-stream` of the above as they happen,
 //!   read with `fetch` and the bearer header (an `EventSource` cannot send
 //!   one). A hint to refetch, never the only copy.
@@ -199,6 +201,9 @@ pub struct Preferences {
     /// Hidden apps keep running; false suspends them.
     #[serde(default = "yes")]
     pub background: bool,
+    /// Apps suspended when hidden even while [background] is on.
+    #[serde(default)]
+    pub background_denied: Vec<String>,
 }
 
 fn yes() -> bool {
@@ -314,7 +319,7 @@ pub struct Refusal {
     pub index: Option<usize>,
 }
 
-fn refused(error: &'static str, index: Option<usize>) -> Refusal {
+pub(crate) fn refused(error: &'static str, index: Option<usize>) -> Refusal {
     Refusal { error, index }
 }
 
@@ -377,6 +382,18 @@ pub fn check_preferences(mut p: Preferences) -> Result<Preferences, Refusal> {
         }
         if !seen.insert(app.as_str()) {
             return Err(refused("duplicateApp", Some(index)));
+        }
+    }
+    if p.background_denied.len() > MAX_DOCK {
+        return Err(refused("tooMany", None));
+    }
+    let mut denied = HashSet::new();
+    for (index, app) in p.background_denied.iter().enumerate() {
+        if !valid_app_id(app) {
+            return Err(refused("invalidBackgroundApp", Some(index)));
+        }
+        if !denied.insert(app.as_str()) {
+            return Err(refused("duplicateBackgroundApp", Some(index)));
         }
     }
     if p.icons.len() > MAX_ICONS {
@@ -500,7 +517,7 @@ macro_rules! require {
 
 /// The caller and its account id. A token for an account deleted since is
 /// already 401 in `jwt_caller`; the id lookup failing after it is the same.
-async fn account(req: &HttpRequest, state: &AppState) -> Result<(Caller, i64), HttpResponse> {
+pub(crate) async fn account(req: &HttpRequest, state: &AppState) -> Result<(Caller, i64), HttpResponse> {
     let caller = authz::jwt_caller(req, state).await?;
     match user_id(&state.db, &caller.username).await {
         Ok(Some(id)) => Ok((caller, id)),
@@ -516,7 +533,7 @@ async fn user_id(db: &SqlitePool, username: &str) -> Result<Option<i64>, sqlx::E
         .await
 }
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
+pub(crate) fn internal_error(e: &sqlx::Error) -> HttpResponse {
     tracing::error!("desk: {e}");
     HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
 }
@@ -862,6 +879,11 @@ async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferenc
     else {
         return Ok(None);
     };
+    let background_denied =
+        sqlx::query_scalar::<_, String>("SELECT app_id FROM desk_background_denied WHERE user_id = ? ORDER BY app_id")
+            .bind(user)
+            .fetch_all(db)
+            .await?;
     let dock = sqlx::query_scalar::<_, String>("SELECT app_id FROM desk_dock WHERE user_id = ? ORDER BY position")
         .bind(user)
         .fetch_all(db)
@@ -891,6 +913,7 @@ async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferenc
         dock,
         icons,
         background,
+        background_denied,
     }))
 }
 
@@ -914,6 +937,14 @@ async fn store_preferences(db: &SqlitePool, user: i64, p: &Preferences) -> Resul
         sqlx::query("INSERT INTO desk_dock (user_id, position, app_id) VALUES (?, ?, ?)")
             .bind(user)
             .bind(position as i64)
+            .bind(app)
+            .execute(&mut *tx)
+            .await?;
+    }
+    sqlx::query("DELETE FROM desk_background_denied WHERE user_id = ?").bind(user).execute(&mut *tx).await?;
+    for app in &p.background_denied {
+        sqlx::query("INSERT INTO desk_background_denied (user_id, app_id) VALUES (?, ?)")
+            .bind(user)
             .bind(app)
             .execute(&mut *tx)
             .await?;
@@ -1079,6 +1110,7 @@ mod tests {
             wallpaper: "preset:dusk".into(),
             wallpaper_fit: "cover".into(),
             background: false,
+            background_denied: vec!["status".into()],
             dock: vec!["files".into(), "terminal".into()],
             icons: vec![Icon {
                 id: "i1".into(),
@@ -1110,6 +1142,8 @@ mod tests {
             (|p| p.wallpaper_fit = "tile".into(), "invalidWallpaperFit"),
             (|p| p.dock.push("files".into()), "duplicateApp"),
             (|p| p.dock.push("Files".into()), "invalidAppId"),
+            (|p| p.background_denied.push("Status".into()), "invalidBackgroundApp"),
+            (|p| p.background_denied.push("status".into()), "duplicateBackgroundApp"),
             (|p| p.icons[0].path = None, "invalidIcon"),
             (|p| p.icons[0].server_id = None, "invalidIcon"),
             (|p| p.icons[0].kind = "app".into(), "invalidIcon"),

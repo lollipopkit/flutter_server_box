@@ -10,6 +10,7 @@
 import { untrack, type Snippet } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { IconTone } from '../lk/AppIcon.svelte'
+import type { LifecycleState } from '../sys/window.svelte'
 
 export interface ToolbarChrome {
   title?: string
@@ -51,6 +52,7 @@ export class WindowChrome {
   #toolbars = $state.raw<ToolbarChrome[]>([])
   #sidebars = $state.raw<SidebarChrome[]>([])
   #menus = $state.raw<MenusChrome[]>([])
+  #dockMenus = $state.raw<MenusChrome[]>([])
   #keepAlive = $state.raw<string[]>([])
   /// A folded sidebar shown over the content (a narrow window).
   sidebarOpen = $state(false)
@@ -59,6 +61,8 @@ export class WindowChrome {
   appName = $state<string | null>(null)
   icon = $state<AppIconChrome | null>(null)
   badge = $state<string | null>(null)
+  /// Where the window's process is; the window keeps it current.
+  lifecycle = $state<LifecycleState>('active')
 
   get toolbar(): ToolbarChrome | null {
     return this.#toolbars.at(-1) ?? null
@@ -70,6 +74,11 @@ export class WindowChrome {
 
   get menus(): AppMenu[] {
     return this.#menus.at(-1)?.menus ?? []
+  }
+
+  /// Rows the app adds to its dock menu (only the first menu's rows).
+  get dockItems(): MenuEntry[] {
+    return this.#dockMenus.at(-1)?.menus[0]?.items ?? []
   }
 
   /// Why the app asked to keep running while hidden; empty when it did not.
@@ -103,6 +112,13 @@ export class WindowChrome {
     )
   }
 
+  pushDockMenu(menu: MenusChrome): () => void {
+    return this.#push(
+      () => (this.#dockMenus = [...this.#dockMenus, menu]),
+      () => (this.#dockMenus = this.#dockMenus.filter((m) => m !== menu)),
+    )
+  }
+
   holdKeepAlive(reason: string): () => void {
     const entry = String(reason)
     let held = true
@@ -122,6 +138,7 @@ export class WindowChrome {
     this.#toolbars = []
     this.#sidebars = []
     this.#menus = []
+    this.#dockMenus = []
     this.#keepAlive = []
     this.sidebarOpen = false
     this.appName = null

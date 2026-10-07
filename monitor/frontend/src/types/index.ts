@@ -137,6 +137,7 @@ export type MachineFeature =
   /// The agent keeps the panel's desk (`/desk*`).
   | 'desk'
   | 'desk_background'
+  | 'desk_storage'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 

@@ -57,6 +57,8 @@ pub const FEATURES: &[&str] = &[
     "desk",
     // Its preferences carry `background` (an older agent refuses the field).
     "desk_background",
+    // `/desk/apps/{app}/storage`: what each desk app keeps for itself.
+    "desk_storage",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

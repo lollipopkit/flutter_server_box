@@ -5,6 +5,9 @@
   import { theme } from '../../lib/theme.svelte'
   import { useDesk } from '../deskState.svelte'
   import ControlTile from '../lk/ControlTile.svelte'
+  import IconButton from '../lk/IconButton.svelte'
+  import AppIcon from './AppIcon.svelte'
+  import { app } from '../registry.svelte'
   import { WALLPAPERS } from '../prefs.svelte'
   import Wallpaper from './Wallpaper.svelte'
 
@@ -19,6 +22,10 @@
     serverNames.byServer[desk.entry.id] ?? (desk.entry.id === 'local' ? $LL.thisServer() : displayName(desk.entry)),
   )
   const dnd = $derived(desk.notifications?.dnd ?? false)
+  /// Apps with a window running out of sight, each once.
+  const background = $derived(
+    [...new Set(desk.inBackground.map((w) => w.appId))].map((id) => app(id)).filter((a) => a !== undefined),
+  )
 </script>
 
 <div class="grid grid-cols-2 gap-[9px]">
@@ -67,6 +74,23 @@
       {/each}
     </div>
   </div>
+  {#if background.length > 0}
+    <div class="lk-ctile lk-ctile--col col-span-2">
+      <div class="lk-ctile__label">{$LL.deskInBackground()}</div>
+      {#each background as spec (spec.id)}
+        <div class="flex items-center gap-[9px]">
+          <AppIcon {spec} size={22} />
+          <span class="min-w-0 flex-1 truncate text-[13px]">{spec.title($LL)}</span>
+          <IconButton
+            icon="stop_circle"
+            size="sm"
+            label="{$LL.deskQuit()} {spec.title($LL)}"
+            onclick={() => desk.windows.closeApp(spec.id)}
+          />
+        </div>
+      {/each}
+    </div>
+  {/if}
   <ControlTile
     class="col-span-2"
     icon="settings"

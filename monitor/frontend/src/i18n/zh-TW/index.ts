@@ -1500,6 +1500,8 @@ const zh_TW = {
 	deskMenuFile: '檔案',
 	deskMenuGo: '前往',
 	settingsBackgroundAppsOld: '此 agent 版本過舊，無法儲存此選項',
+	deskInBackground: '背景執行中',
+	settingsBackgroundPerApp: '背景執行',
 } satisfies Translation
 
 export default zh_TW

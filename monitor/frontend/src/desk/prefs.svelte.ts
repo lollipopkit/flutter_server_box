@@ -22,6 +22,7 @@ export function defaults(): DeskPreferences {
       { id: 'terminal', kind: 'app', app_id: 'terminal', label: '', col: null, row: null },
     ],
     background: true,
+    background_denied: [],
   }
 }
 
@@ -41,6 +42,12 @@ export class DeskPrefs {
 
   get remote(): boolean {
     return this.#storage.remote
+  }
+
+  /// Lets [appId] run while hidden, or not.
+  setBackground(appId: string, allowed: boolean) {
+    const others = this.value.background_denied.filter((id) => id !== appId)
+    this.update({ background_denied: allowed ? others : [...others, appId] })
   }
 
   /// Whether the background choice is kept (an older agent cannot).

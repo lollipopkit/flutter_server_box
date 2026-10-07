@@ -480,6 +480,13 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
             .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
             .service(
+                web::resource("/desk/apps/{app}/storage")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))
+                    .route(web::get().to(crate::api::desk_storage::list))
+                    .route(web::put().to(crate::api::desk_storage::put))
+                    .route(web::delete().to(crate::api::desk_storage::remove)),
+            )
+            .service(
                 web::resource("/snippets/plan")
                     .state(
                         web::types::JsonConfig::default()

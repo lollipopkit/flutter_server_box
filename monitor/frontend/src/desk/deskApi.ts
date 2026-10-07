@@ -27,6 +27,8 @@ export interface DeskPreferences {
   icons: DeskIcon[]
   /// Hidden apps keep running; off suspends them (`docs/dev/desk-sys.md`).
   background: boolean
+  /// Apps suspended when hidden even while [background] is on.
+  background_denied: string[]
 }
 
 export interface DeskView {
@@ -97,6 +99,25 @@ export const deskApi = {
       throw e
     }
   },
+
+  appItems: (entry: ServerEntry, app: string) =>
+    requestFor<{ items: Record<string, unknown> }>(entry, `/desk/apps/${encodeURIComponent(app)}/storage`, {}, 'Failed to load'),
+
+  appPut: (entry: ServerEntry, app: string, key: string, value: unknown) =>
+    requestFor<void>(
+      entry,
+      `/desk/apps/${encodeURIComponent(app)}/storage?key=${encodeURIComponent(key)}`,
+      { method: 'PUT', body: JSON.stringify(value) },
+      'Failed to save',
+    ),
+
+  appRemove: (entry: ServerEntry, app: string, key: string) =>
+    requestFor<void>(
+      entry,
+      `/desk/apps/${encodeURIComponent(app)}/storage?key=${encodeURIComponent(key)}`,
+      { method: 'DELETE' },
+      'Failed to save',
+    ),
 
   notifications: (entry: ServerEntry, limit = 80) =>
     requestFor<{ notifications: DeskNotification[]; unread: number }>(

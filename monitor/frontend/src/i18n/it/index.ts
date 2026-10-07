@@ -1500,6 +1500,8 @@ const it = {
 	deskMenuFile: 'File',
 	deskMenuGo: 'Vai',
 	settingsBackgroundAppsOld: 'Questo agent è troppo vecchio per salvare questa scelta',
+	deskInBackground: 'In secondo piano',
+	settingsBackgroundPerApp: 'In secondo piano',
 } satisfies Translation
 
 export default it

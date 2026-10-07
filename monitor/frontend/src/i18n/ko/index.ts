@@ -1500,6 +1500,8 @@ const ko = {
 	deskMenuFile: '파일',
 	deskMenuGo: '이동',
 	settingsBackgroundAppsOld: '이 agent는 오래되어 이 선택을 저장할 수 없습니다',
+	deskInBackground: '백그라운드에서 실행 중',
+	settingsBackgroundPerApp: '백그라운드 실행',
 } satisfies Translation
 
 export default ko

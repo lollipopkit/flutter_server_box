@@ -1,8 +1,9 @@
 <script lang="ts">
   /// How the desk runs apps on this server: whether a hidden window keeps
-  /// running. Saved with the desk's preferences (`useDeskPrefs`).
+  /// running, for every app and for each. Saved with the desk's preferences
+  /// (`useDeskPrefs`).
 
-  import { Group, Row, Spinner, Switch } from '../../lk'
+  import { AppIcon, Group, Row, Spinner, Switch } from '../../lk'
   import { AppToolbar } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
@@ -13,7 +14,7 @@
 
 <AppToolbar title={$LL.settingsApps()} />
 
-<main class="mx-auto max-w-[560px] px-[21px] pb-[21px] pt-[4px]">
+<main class="mx-auto max-w-[560px] space-y-[13px] px-[21px] pb-[21px] pt-[4px]">
   {#if !prefs}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}
@@ -30,5 +31,22 @@
         />
       </Row>
     </Group>
+    {#if prefs.keepsBackground}
+      <Group title={$LL.settingsBackgroundPerApp()}>
+        {#each desk.apps as spec (spec.id)}
+          {@const title = spec.title($LL)}
+          <Row label={title}>
+            {#snippet leading()}<AppIcon glyph={spec.glyph} tone={spec.tone} size={26} />{/snippet}
+            <Switch
+              size="sm"
+              label="{$LL.settingsBackgroundApps()}: {title}"
+              disabled={!prefs.value.background}
+              checked={prefs.value.background && !prefs.value.background_denied.includes(spec.id)}
+              onchange={(on) => prefs.setBackground(spec.id, on)}
+            />
+          </Row>
+        {/each}
+      </Group>
+    {/if}
   {/if}
 </main>

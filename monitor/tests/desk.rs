@@ -10,6 +10,7 @@ use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::desk::{self, Level, Source};
+use server_box_monitor::api::desk_storage;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
 
@@ -50,7 +51,14 @@ async fn server(state: Arc<AppState>) -> TestServer {
                     )
                     .route("/desk/notifications", web::get().to(desk::notifications))
                     .route("/desk/notifications/read", web::post().to(desk::mark_read))
-                    .route("/desk/events", web::get().to(desk::events)),
+                    .route("/desk/events", web::get().to(desk::events))
+                    .service(
+                        web::resource("/desk/apps/{app}/storage")
+                            .state(web::types::JsonConfig::default().limit(desk_storage::MAX_BODY))
+                            .route(web::get().to(desk_storage::list))
+                            .route(web::put().to(desk_storage::put))
+                            .route(web::delete().to(desk_storage::remove)),
+                    ),
             )
         }
     })
@@ -154,12 +162,16 @@ async fn preferences_round_trip_per_account() {
     // A client older than background running leaves it out: on.
     assert_eq!(body["preferences"]["background"], true);
 
+    assert_eq!(body["preferences"]["background_denied"], serde_json::json!([]));
+
     let mut off = prefs();
     off["background"] = serde_json::json!(false);
+    off["background_denied"] = serde_json::json!(["status", "files"]);
     let (status, _, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/desk/preferences", json(off)).await;
     assert_eq!(status, 200);
     let (_, body, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk", None).await;
     assert_eq!(body["preferences"]["background"], false);
+    assert_eq!(body["preferences"]["background_denied"], serde_json::json!(["files", "status"]));
 
     // Another account's desk is its own.
     let (_, other, _) = call(&srv, Some("intruder"), Method::GET, "/api/v1/desk", None).await;
@@ -445,4 +457,46 @@ async fn events_reach_the_right_readers() {
     assert!(seen.contains("\"type\":\"session\""), "{seen}");
     let seen = read_until(&mut other, "\"notification\"").await;
     assert!(!seen.contains("\"type\":\"session\""), "another account's session leaked: {seen}");
+}
+
+#[ntex::test]
+async fn app_storage_is_per_account_and_bounded() {
+    let srv = server(state().await).await;
+    let base = "/api/v1/desk/apps/notes/storage";
+    let (status, _, _) = call(&srv, None, Method::GET, base, None).await;
+    assert_eq!(status, 401);
+
+    let (status, _, _) =
+        call(&srv, Some("admin"), Method::PUT, &format!("{base}?key=draft"), json(serde_json::json!({ "text": "hi" }))).await;
+    assert_eq!(status, 204);
+    let (status, _, _) = call(&srv, Some("admin"), Method::PUT, &format!("{base}?key=count"), json(serde_json::json!(3))).await;
+    assert_eq!(status, 204);
+    let (_, body, _) = call(&srv, Some("admin"), Method::GET, base, None).await;
+    assert_eq!(body, serde_json::json!({ "items": { "count": 3, "draft": { "text": "hi" } } }));
+
+    // Another account and another app see nothing of it.
+    let (_, other, _) = call(&srv, Some("intruder"), Method::GET, base, None).await;
+    assert_eq!(other["items"], serde_json::json!({}));
+    let (_, other_app, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk/apps/files/storage", None).await;
+    assert_eq!(other_app["items"], serde_json::json!({}));
+
+    // Past the app's bound: refused, and nothing of it kept.
+    let big = "x".repeat(200 << 10);
+    let (status, _, _) = call(&srv, Some("admin"), Method::PUT, &format!("{base}?key=a"), json(serde_json::json!(big))).await;
+    assert_eq!(status, 204);
+    let (status, body, _) =
+        call(&srv, Some("admin"), Method::PUT, &format!("{base}?key=b"), json(serde_json::json!("y".repeat(100 << 10)))).await;
+    assert_eq!((status, body["error"].as_str()), (413, Some("tooLarge")));
+    let (_, body, _) = call(&srv, Some("admin"), Method::GET, base, None).await;
+    assert!(body["items"].get("b").is_none());
+
+    let (status, _, _) = call(&srv, Some("admin"), Method::DELETE, &format!("{base}?key=a"), None).await;
+    assert_eq!(status, 204);
+    let (_, body, _) = call(&srv, Some("admin"), Method::GET, base, None).await;
+    assert!(body["items"].get("a").is_none());
+
+    for path in ["/api/v1/desk/apps/Notes/storage", "/api/v1/desk/apps/notes/storage?key="] {
+        let (status, _, _) = call(&srv, Some("admin"), Method::PUT, path, json(serde_json::json!(1))).await;
+        assert_eq!(status, 400, "{path}");
+    }
 }

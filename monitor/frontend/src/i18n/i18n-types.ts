@@ -6183,6 +6183,14 @@ type RootTranslation = {
 	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​t​o​o​ ​o​l​d​ ​t​o​ ​k​e​e​p​ ​t​h​e​ ​c​h​o​i​c​e
 	 */
 	settingsBackgroundAppsOld: string
+	/**
+	 * I​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	deskInBackground: string
+	/**
+	 * I​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	settingsBackgroundPerApp: string
 }
 
 export type TranslationFunctions = {
@@ -12182,6 +12190,14 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * This agent is too old to keep the choice
 	 */
 	settingsBackgroundAppsOld: () => LocalizedString
+	/**
+	 * In the background
+	 */
+	deskInBackground: () => LocalizedString
+	/**
+	 * In the background
+	 */
+	settingsBackgroundPerApp: () => LocalizedString
 }
 
 export type Formatters = {}

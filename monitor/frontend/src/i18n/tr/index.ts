@@ -1500,6 +1500,8 @@ const tr = {
 	deskMenuFile: 'Dosya',
 	deskMenuGo: 'Git',
 	settingsBackgroundAppsOld: 'Bu agent bu seçimi kaydedemeyecek kadar eski',
+	deskInBackground: 'Arka planda',
+	settingsBackgroundPerApp: 'Arka plan',
 } satisfies Translation
 
 export default tr

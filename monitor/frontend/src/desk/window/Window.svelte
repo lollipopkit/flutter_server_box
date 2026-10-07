@@ -34,7 +34,7 @@
   /// with the window, restoring itself from its `appState`.
   let suspended = $state(false)
   const hidden = $derived(desk.isHidden(win.id))
-  const mayRun = $derived(desk.backgroundAllowed || chrome.keepAlive.length > 0)
+  const mayRun = $derived(desk.mayRunHidden(win.appId) || chrome.keepAlive.length > 0)
   $effect(() => {
     if (!hidden || mayRun) {
       suspended = false
@@ -49,6 +49,9 @@
   const lifecycle = $derived<LifecycleState>(
     suspended ? 'suspended' : hidden ? 'background' : desk.windows.active?.id === win.id ? 'active' : 'visible',
   )
+  $effect.pre(() => {
+    chrome.lifecycle = lifecycle
+  })
 
   const spec = $derived(app(win.appId))
   const title = $derived(win.title ?? (spec ? spec.title($LL) : win.appId))

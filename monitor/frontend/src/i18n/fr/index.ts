@@ -1500,6 +1500,8 @@ const fr = {
 	deskMenuFile: 'Fichier',
 	deskMenuGo: 'Aller',
 	settingsBackgroundAppsOld: 'Cet agent est trop ancien pour enregistrer ce choix',
+	deskInBackground: 'En arrière-plan',
+	settingsBackgroundPerApp: 'En arrière-plan',
 } satisfies Translation
 
 export default fr

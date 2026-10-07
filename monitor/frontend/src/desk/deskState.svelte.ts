@@ -13,8 +13,12 @@ import './apps'
 import { app, availableApps } from './registry.svelte'
 import type { AppSpec } from './sys/manifest'
 import { WINDOW, type LifecycleState, type WindowHandle } from './sys/window.svelte'
+import { get } from 'svelte/store'
+import { LL } from '../i18n/i18n-svelte'
 import type { DeskNotification } from './deskApi'
+import type { IconTone } from './lk/AppIcon.svelte'
 import type { MenuEntry } from './lk/Menu.svelte'
+import { AppData } from './appData'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
 import { SessionSync } from './session.svelte'
@@ -48,6 +52,7 @@ export class Desk {
   session = $state<SessionSync | null>(null)
   prefs = $state<DeskPrefs | null>(null)
   notifications = $state<DeskNotifications | null>(null)
+  appData = $state.raw<AppData | null>(null)
 
   panel = $state<Panel | null>(null)
   spotlight = $state(false)
@@ -58,6 +63,8 @@ export class Desk {
   locked = $state(false)
   /// The browser tab is hidden.
   hidden = $state(typeof document !== 'undefined' && document.visibilityState === 'hidden')
+  /// The window each app notification came from, by notification id.
+  readonly noticeWindows = new SvelteMap<number, string>()
   /// Each open window's frame (what its app registered), by window id.
   readonly chromes = new SvelteMap<string, WindowChrome>()
 
@@ -75,9 +82,10 @@ export class Desk {
     return availableApps(this.caps)
   }
 
-  /// Whether a hidden app keeps running (Settings → General).
-  get backgroundAllowed(): boolean {
-    return this.prefs?.value.background ?? true
+  /// Whether a hidden window of [appId] keeps running (Settings → Apps).
+  mayRunHidden(appId: string): boolean {
+    const p = this.prefs?.value
+    return !p || (p.background && !p.background_denied.includes(appId))
   }
 
   /// Hidden from the user: minimised, behind the front window on a phone,
@@ -90,10 +98,39 @@ export class Desk {
   }
 
   /// What the app's newest window set for its icon and badge, for the dock.
-  appChrome(appId: string): { icon: AppIconChrome | null; badge: string | null } {
+  appChrome(appId: string): { icon: AppIconChrome | null; badge: string | null; dockItems: MenuEntry[] } {
     const newest = this.windows.of(appId).reduce<DeskWindow | null>((a, w) => (!a || w.z > a.z ? w : a), null)
     const chrome = newest ? this.chromes.get(newest.id) : undefined
-    return { icon: chrome?.icon ?? null, badge: chrome?.badge ?? null }
+    return { icon: chrome?.icon ?? null, badge: chrome?.badge ?? null, dockItems: chrome?.dockItems ?? [] }
+  }
+
+  /// Who a notification is from, as the banner and the centre show it.
+  noticeSource(n: DeskNotification): { appId: string; title: string; glyph: string; tone: IconTone } {
+    const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'status'
+    const spec = app(appId)
+    if (appId !== 'status' && spec) return { appId, title: spec.title(get(LL)), glyph: spec.glyph, tone: spec.tone }
+    // The agent's own: its alerts, shown as the Status app's by level.
+    const level = { info: ['info', 'sky'], warning: ['warning', 'amber'], critical: ['error', 'berry'] } as const
+    const [glyph, tone] = level[n.level] ?? level.info
+    return { appId: 'status', title: get(LL).deskAppStatus(), glyph, tone }
+  }
+
+  /// A notification was clicked: the window that posted it comes forward, or
+  /// its app opens.
+  openNotice(n: DeskNotification) {
+    void this.notifications?.markRead(n.id)
+    const windowId = this.noticeWindows.get(n.id)
+    if (windowId && this.windows.get(windowId)) {
+      this.panel = null
+      this.windows.focus(windowId)
+    } else {
+      this.open(this.noticeSource(n).appId)
+    }
+  }
+
+  /// The windows running out of sight (hidden, not suspended).
+  get inBackground(): DeskWindow[] {
+    return this.windows.windows.filter((w) => this.chromes.get(w.id)?.lifecycle === 'background')
   }
 
   /// The front window's frame.
@@ -111,11 +148,12 @@ export class Desk {
     await capabilitiesStore.ensure(this.entry.id)
     if (this.#abort.signal.aborted) return
     const storage: DeskStorage = this.caps?.features?.includes('desk')
-      ? new AgentStorage(this.entry, this.caps.features.includes('desk_background'))
+      ? new AgentStorage(this.entry, this.caps.features.includes('desk_background'), this.caps.features.includes('desk_storage'))
       : new BrowserStorage(this.entry.id)
     this.storage = storage
     this.prefs = new DeskPrefs(storage)
     this.notifications = new DeskNotifications(storage)
+    this.appData = new AppData(storage)
     this.session = new SessionSync(this.windows, storage, deviceId(), this.entry.id)
     await Promise.all([this.prefs.load(), this.session.load(), this.notifications.load()])
     if (storage.events) void this.#listen(storage)
@@ -219,6 +257,16 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     setBadge: (badge) => (chrome.badge = badge === null || badge === '' ? null : String(badge).slice(0, 8)),
     close: () => desk.windows.close(id),
     open: (appId, options) => desk.open(appId, options),
+    notify: (notice) => {
+      const appId = desk.windows.get(id)?.appId
+      const n = appId ? desk.notifications?.posted(appId, notice) : undefined
+      if (n) desk.noticeWindows.set(n.id, id)
+    },
+    get storage() {
+      const appId = desk.windows.get(id)?.appId
+      if (!appId || !desk.appData) throw new Error('storage before the desk loaded')
+      return desk.appData.for(appId)
+    },
     addPathIcon: (path, label) => {
       const appId = desk.windows.get(id)?.appId
       if (!appId) return
@@ -236,11 +284,15 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
 
 /// The desk's preferences (wallpaper, background apps), for the Settings app
 /// only — no other app touches them. Null until they have loaded.
-export function useDeskPrefs(): { readonly prefs: DeskPrefs | null } {
+export function useDeskPrefs(): { readonly prefs: DeskPrefs | null; readonly apps: AppSpec[] } {
   const desk = getContext<Desk | undefined>(DESK)
   return {
     get prefs() {
       return desk?.prefs ?? null
+    },
+    /// The apps this account can use here.
+    get apps() {
+      return desk?.apps ?? []
     },
   }
 }

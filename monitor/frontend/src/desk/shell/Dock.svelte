@@ -49,6 +49,9 @@
       action: () => desk.windows.focus(w.id),
     }))
     if (items.length > 0) items.push({ separator: true })
+    // What the app adds of its own (a recent file, a new session).
+    const own = desk.appChrome(spec.id).dockItems
+    if (own.length > 0) items.push(...own, { separator: true })
     if (spec.instances > 1) {
       items.push({
         label: $LL.deskNewWindow(),

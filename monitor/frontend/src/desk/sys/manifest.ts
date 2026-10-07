@@ -55,7 +55,8 @@ export interface AppSpec extends WindowPolicy {
   load: () => Promise<{ default: Component }>
 }
 
-const ID = /^[a-z][a-z0-9_]{0,63}$/
+/// The agent keeps app ids to 32 bytes (`api::desk::valid_app_id`).
+const ID = /^[a-z][a-z0-9_]{0,31}$/
 const SIZE: Size = { width: 1040, height: 680 }
 const MIN_SIZE: Size = { width: 420, height: 300 }
 

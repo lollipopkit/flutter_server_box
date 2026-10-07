@@ -7,15 +7,18 @@
   interface Props {
     label: string
     sub?: string
+    /// Before the label (an app icon).
+    leading?: Snippet
     /// The control.
     children?: Snippet
     class?: string
   }
 
-  const { label, sub, children, class: className = '' }: Props = $props()
+  const { label, sub, leading, children, class: className = '' }: Props = $props()
 </script>
 
 <div class="lk-row {className}">
+  {@render leading?.()}
   <div class="min-w-0 flex-1">
     <div class="text-[13px]">{label}</div>
     {#if sub}<div class="text-[12px] text-(--text-tertiary)">{sub}</div>{/if}

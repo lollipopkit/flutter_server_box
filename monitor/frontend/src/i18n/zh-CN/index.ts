@@ -1499,6 +1499,8 @@ const zh_CN = {
 	deskMenuFile: '文件',
 	deskMenuGo: '前往',
 	settingsBackgroundAppsOld: '此 agent 版本过旧,无法保存该设置',
+	deskInBackground: '后台运行中',
+	settingsBackgroundPerApp: '后台运行',
 } satisfies Translation
 
 export default zh_CN

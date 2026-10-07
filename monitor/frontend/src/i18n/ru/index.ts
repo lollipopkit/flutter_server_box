@@ -1500,6 +1500,8 @@ const ru = {
 	deskMenuFile: 'Файл',
 	deskMenuGo: 'Переход',
 	settingsBackgroundAppsOld: 'Этот агент слишком старый, чтобы сохранить этот выбор',
+	deskInBackground: 'В фоновом режиме',
+	settingsBackgroundPerApp: 'В фоновом режиме',
 } satisfies Translation
 
 export default ru

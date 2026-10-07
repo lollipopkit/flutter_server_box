@@ -6,23 +6,24 @@
 
   const desk = useDesk()
   const banner = $derived(desk.notifications?.banner ?? null)
+  const from = $derived(banner ? desk.noticeSource(banner) : null)
 </script>
 
 {#if banner}
   {#key banner.id}
     <div class="absolute right-[9px] top-[39px] z-[100002] max-w-[calc(100%-18px)]">
       <Notification
-        app={$LL.deskAppStatus()}
+        app={from?.title ?? ''}
         time={$LL.deskNow()}
         title={banner.subject}
         closeLabel={$LL.deskClose()}
         onclose={() => desk.notifications?.dismissBanner()}
         onclick={() => {
           desk.notifications?.dismissBanner()
-          desk.togglePanel('notifications')
+          desk.openNotice(banner)
         }}
       >
-        {#snippet icon()}<AppIcon glyph="monitoring" tone="berry" size={34} />{/snippet}
+        {#snippet icon()}<AppIcon glyph={from?.glyph ?? 'info'} tone={from?.tone ?? 'sky'} size={34} />{/snippet}
         {banner.body}
       </Notification>
     </div>

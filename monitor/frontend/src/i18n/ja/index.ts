@@ -1500,6 +1500,8 @@ const ja = {
 	deskMenuFile: 'ファイル',
 	deskMenuGo: '移動',
 	settingsBackgroundAppsOld: 'このagentは古いため、この選択を保存できません',
+	deskInBackground: 'バックグラウンド実行中',
+	settingsBackgroundPerApp: 'バックグラウンド実行',
 } satisfies Translation
 
 export default ja

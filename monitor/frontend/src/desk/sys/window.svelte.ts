@@ -4,6 +4,8 @@
 import { getContext } from 'svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { AppIconChrome, AppMenu, WindowChrome } from '../window/chrome.svelte'
+import type { AppStorage } from '../appData'
+import type { AppNotice } from '../notifications.svelte'
 import type { OpenOptions } from '../windows.svelte'
 
 /// Where a window's process is in its life.
@@ -34,6 +36,12 @@ export interface WindowHandle {
   /// Opens another app (or another window of one) on this desk. Answers the
   /// window's id, or null when the app is not available or at its limit.
   open(appId: string, options?: OpenOptions): string | null
+  /// Tells the user something: a banner (unless Do Not Disturb) and a row in
+  /// the notification centre, which brings this window forward when clicked.
+  notify(notice: AppNotice): void
+  /// What the app keeps for itself, shared by its windows: per account and
+  /// server, kept by the agent. Not for secrets.
+  readonly storage: AppStorage
   /// Puts an icon on the desk that opens [path] with this window's app.
   addPathIcon(path: string, label: string): void
   readonly active: boolean
@@ -62,6 +70,13 @@ const DETACHED: WindowHandle = {
   setBadge() {},
   close() {},
   open: () => null,
+  notify() {},
+  storage: {
+    get: async () => undefined,
+    set: async () => {},
+    remove: async () => {},
+    keys: async () => [],
+  },
   addPathIcon() {},
   active: true,
   lifecycle: 'active',
@@ -79,6 +94,19 @@ export function useMenus(menus: () => AppMenu[]) {
     },
   }
   $effect(() => chrome.pushMenus(entry))
+}
+
+/// Rows added to the app's dock menu while the calling component is mounted
+/// (the newest window's, above the desk's own rows).
+export function useDockMenu(items: () => MenuEntry[]) {
+  const chrome = useWindow().chrome
+  if (!chrome) return
+  const entry = {
+    get menus() {
+      return [{ label: '', items: items() }]
+    },
+  }
+  $effect(() => chrome.pushDockMenu(entry))
 }
 
 const KEEP_ALIVE_MAX_MS = 10 * 60_000
@@ -109,4 +137,4 @@ export function useLifecycle(): Lifecycle {
   }
 }
 
-export type { AppMenu, AppIconChrome, MenuEntry }
+export type { AppMenu, AppIconChrome, AppNotice, AppStorage, MenuEntry }

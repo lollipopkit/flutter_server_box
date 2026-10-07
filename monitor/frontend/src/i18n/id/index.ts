@@ -1500,6 +1500,8 @@ const id = {
 	deskMenuFile: 'Berkas',
 	deskMenuGo: 'Buka',
 	settingsBackgroundAppsOld: 'Agent ini terlalu lama untuk menyimpan pilihan ini',
+	deskInBackground: 'Di latar belakang',
+	settingsBackgroundPerApp: 'Latar belakang',
 } satisfies Translation
 
 export default id

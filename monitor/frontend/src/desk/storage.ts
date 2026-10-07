@@ -11,6 +11,10 @@ export interface DeskStorage {
   readonly remote: boolean
   /// Whether `background` is kept (an older agent's storage drops it).
   readonly keepsBackground: boolean
+  /// What an app keeps for itself (`sys.storage`), all of it.
+  appItems(app: string): Promise<Record<string, unknown>>
+  appPut(app: string, key: string, value: unknown): Promise<void>
+  appRemove(app: string, key: string): Promise<void>
   load(): Promise<{ preferences: DeskPreferences | null; wallpaperSha: string | null }>
   savePreferences(p: DeskPreferences): Promise<void>
   loadSession(device: string): Promise<StoredSession>
@@ -29,12 +33,31 @@ export class AgentStorage implements DeskStorage {
   readonly keepsBackground: boolean
   #entry: ServerEntry
 
+  /// Where apps keep their own data when the agent cannot (no
+  /// `desk_storage`). TODO: remove once agents without it are gone.
+  #appFallback: BrowserStorage | null
+
   /// [keepsBackground]: the agent stores `background` (`desk_background`);
-  /// an older one refuses preferences carrying it.
-  constructor(entry: ServerEntry, keepsBackground: boolean) {
+  /// an older one refuses preferences carrying it. [keepsAppData]: it has
+  /// `/desk/apps/{app}/storage` (`desk_storage`).
+  constructor(entry: ServerEntry, keepsBackground: boolean, keepsAppData: boolean) {
     // A copy: the session token it was made with is the one it keeps using.
     this.#entry = { ...entry }
     this.keepsBackground = keepsBackground
+    this.#appFallback = keepsAppData ? null : new BrowserStorage(entry.id)
+  }
+
+  async appItems(app: string) {
+    if (this.#appFallback) return this.#appFallback.appItems(app)
+    return (await deskApi.appItems(this.#entry, app)).items
+  }
+  async appPut(app: string, key: string, value: unknown) {
+    if (this.#appFallback) return this.#appFallback.appPut(app, key, value)
+    await deskApi.appPut(this.#entry, app, key, value)
+  }
+  async appRemove(app: string, key: string) {
+    if (this.#appFallback) return this.#appFallback.appRemove(app, key)
+    await deskApi.appRemove(this.#entry, app, key)
   }
 
   async load() {
@@ -46,7 +69,7 @@ export class AgentStorage implements DeskStorage {
       await deskApi.putPreferences(this.#entry, p)
     } else {
       // TODO: remove once agents without `desk_background` are gone.
-      const { background: _, ...older } = p
+      const { background: _, background_denied: __, ...older } = p
       await deskApi.putPreferences(this.#entry, older as DeskPreferences)
     }
   }
@@ -77,6 +100,12 @@ export class AgentStorage implements DeskStorage {
 
 /// This browser's copy, for an agent that keeps no desk. No custom wallpaper
 /// (an image does not belong in `localStorage`) and nothing to be told.
+const MAX_APP_BYTES = 256 * 1024
+
+function bytes(text: string): number {
+  return new TextEncoder().encode(text).length
+}
+
 export class BrowserStorage implements DeskStorage {
   readonly remote = false
   readonly keepsBackground = true
@@ -101,6 +130,22 @@ export class BrowserStorage implements DeskStorage {
     } catch {
       // Full or refused: the desk keeps working, unsaved.
     }
+  }
+
+  async appItems(app: string) {
+    return this.#read<Record<string, unknown>>(`app:${app}`) ?? {}
+  }
+  async appPut(app: string, key: string, value: unknown) {
+    const items = { ...(await this.appItems(app)), [key]: value }
+    // The agent's bound (`api::desk_storage`), counted the same way.
+    const size = Object.entries(items).reduce((n, [k, v]) => n + bytes(k) + bytes(JSON.stringify(v)), 0)
+    if (size > MAX_APP_BYTES) throw new Error('tooLarge')
+    this.#write(`app:${app}`, items)
+  }
+  async appRemove(app: string, key: string) {
+    const items = { ...(await this.appItems(app)) }
+    delete items[key]
+    this.#write(`app:${app}`, items)
   }
 
   async load() {

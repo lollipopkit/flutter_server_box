@@ -7,12 +7,15 @@ export { registerApp } from './register'
 export {
   useWindow,
   useMenus,
+  useDockMenu,
   useLifecycle,
   type WindowHandle,
   type LifecycleState,
   type Lifecycle,
   type AppMenu,
   type AppIconChrome,
+  type AppNotice,
+  type AppStorage,
   type MenuEntry,
 } from './window.svelte'
 export { default as AppToolbar } from './AppToolbar.svelte'
