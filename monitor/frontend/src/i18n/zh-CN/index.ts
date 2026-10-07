@@ -410,6 +410,7 @@ const zh_CN = {
 	filesForward: '前进',
 	filesUp: '上一级',
 	filesMoreActions: '更多操作',
+	filesPath: '路径',
 	pushChannels: '通知渠道',
 	pushNote: '规则触发时会经由此处列出的每个渠道发送。密钥和 token 不会回传到面板：标记为「已设置」的字段已有值，留空即保持不变。此处未列出的字段可直接写入 `config.toml`，写入后会在这里出现。',
 	addPush: '添加渠道',

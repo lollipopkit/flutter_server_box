@@ -1332,6 +1332,7 @@ const it = {
 	filesForward: 'Avanti',
 	filesUp: 'Su',
 	filesMoreActions: 'Altre azioni',
+	filesPath: 'Percorso',
 	systemUsersGroupRegular: 'Account normali',
 	systemUsersGroupSystem: 'Account di sistema',
 	backupTotalSize: 'Dimensione totale archiviata',

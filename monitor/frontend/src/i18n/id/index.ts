@@ -1332,6 +1332,7 @@ const id = {
 	filesForward: 'Maju',
 	filesUp: 'Ke atas',
 	filesMoreActions: 'Tindakan lainnya',
+	filesPath: 'Jalur',
 	systemUsersGroupRegular: 'Akun biasa',
 	systemUsersGroupSystem: 'Akun sistem',
 	backupTotalSize: 'Total ukuran tersimpan',

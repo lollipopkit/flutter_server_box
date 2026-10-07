@@ -1332,6 +1332,7 @@ const fr = {
 	filesForward: 'Suivant',
 	filesUp: 'Remonter',
 	filesMoreActions: 'Plus d’actions',
+	filesPath: 'Chemin',
 	systemUsersGroupRegular: 'Comptes ordinaires',
 	systemUsersGroupSystem: 'Comptes système',
 	backupTotalSize: 'Taille totale stockée',

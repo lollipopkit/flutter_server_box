@@ -319,8 +319,10 @@ describe('the Files page moving around', () => {
     await screen.findByText('tmp — /private')
 
     expect(screen.getByText('tmp — /var')).toBeInTheDocument()
-    expect(screen.getByTitle('/private/tmp')).toBeInTheDocument()
-    expect(screen.getByTitle('/var/tmp')).toBeInTheDocument()
+    // The sidebar rows' tooltips (the path bar names the root shown too).
+    const titled = (name: string) => screen.getAllByRole('button', { name }).map((b) => b.getAttribute('title'))
+    expect(titled('tmp — /private')).toContain('/private/tmp')
+    expect(titled('tmp — /var')).toContain('/var/tmp')
   })
 })
 

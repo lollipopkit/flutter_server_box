@@ -161,6 +161,24 @@
   font-weight: 600;
   box-shadow: var(--shadow-control), 0 0 0 0.5px var(--border-strong);
 }
+.desk-tabs__add {
+  display: flex;
+  flex: none;
+  width: 30px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background-color 120ms, color 120ms;
+}
+.desk-tabs__add:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
 .desk-tab--dragging {
   opacity: 0.7;
 }

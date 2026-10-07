@@ -411,6 +411,7 @@ const en = {
 	filesForward: 'Forward',
 	filesUp: 'Up',
 	filesMoreActions: 'More actions',
+	filesPath: 'Path',
 	pushChannels: 'Notification channels',
 	pushNote: 'A rule that fires delivers through every channel listed here. Keys and tokens are never sent back to this panel: a field marked Set already holds one, and leaving it blank keeps it. Settings beyond the fields shown can be added to `config.toml`, and appear here once they are.',
 	addPush: 'Add channel',

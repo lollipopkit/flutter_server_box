@@ -1332,6 +1332,7 @@ const es = {
 	filesForward: 'Adelante',
 	filesUp: 'Subir',
 	filesMoreActions: 'Más acciones',
+	filesPath: 'Ruta',
 	systemUsersGroupRegular: 'Cuentas normales',
 	systemUsersGroupSystem: 'Cuentas del sistema',
 	backupTotalSize: 'Tamaño total almacenado',

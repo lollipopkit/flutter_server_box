@@ -1332,6 +1332,7 @@ const nl = {
 	filesForward: 'Vooruit',
 	filesUp: 'Omhoog',
 	filesMoreActions: 'Meer acties',
+	filesPath: 'Pad',
 	systemUsersGroupRegular: 'Gewone accounts',
 	systemUsersGroupSystem: 'Systeemaccounts',
 	backupTotalSize: 'Totale opgeslagen grootte',

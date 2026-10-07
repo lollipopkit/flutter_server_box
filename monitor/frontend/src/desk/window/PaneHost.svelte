@@ -11,7 +11,6 @@
   import type { Component } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import Icon from '../lk/Icon.svelte'
-  import IconButton from '../lk/IconButton.svelte'
   import { useDesk } from '../deskState.svelte'
   import { activeTab, dividers, paneRects, type Divider, type Rect } from '../panes'
   import { useWindow } from '../sys/window.svelte'
@@ -231,8 +230,11 @@
           <span class="desk-tab__title">{tabLabels[i]}</span>
         </div>
       {/each}
+      <!-- At the end of the tabs, in the same capsule: a new one goes there. -->
+      <button type="button" class="desk-tabs__add" title={$LL.deskNewTab()} aria-label={$LL.deskNewTab()} onclick={() => host.newTab()}>
+        <Icon name="add" size={17} />
+      </button>
     </div>
-    <IconButton icon="add" label={$LL.deskNewTab()} onclick={() => host.newTab()} />
   </div>
 {/snippet}
 

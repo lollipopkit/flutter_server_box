@@ -1704,6 +1704,10 @@ type RootTranslation = {
 	 */
 	filesMoreActions: string
 	/**
+	 * P​a​t​h
+	 */
+	filesPath: string
+	/**
 	 * N​o​t​i​f​i​c​a​t​i​o​n​ ​c​h​a​n​n​e​l​s
 	 */
 	pushChannels: string
@@ -8357,6 +8361,10 @@ export type TranslationFunctions = {
 	 * More actions
 	 */
 	filesMoreActions: () => LocalizedString
+	/**
+	 * Path
+	 */
+	filesPath: () => LocalizedString
 	/**
 	 * Notification channels
 	 */

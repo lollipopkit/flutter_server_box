@@ -1421,6 +1421,7 @@ const zh_TW = {
 	deskZoom: '縮放',
 	filesForward: '前進',
 	filesMoreActions: '更多操作',
+	filesPath: '路徑',
 	filesUp: '上一層',
 	filesViewGrid: '格狀檢視',
 	filesViewList: '清單檢視',

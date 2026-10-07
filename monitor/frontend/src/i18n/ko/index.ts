@@ -1421,6 +1421,7 @@ const ko = {
 	deskZoom: '확대',
 	filesForward: '앞으로',
 	filesMoreActions: '추가 작업',
+	filesPath: '경로',
 	filesUp: '위로',
 	filesViewGrid: '그리드 보기',
 	filesViewList: '목록 보기',

@@ -1332,6 +1332,7 @@ const de = {
 	filesForward: 'Weiter',
 	filesUp: 'Eine Ebene nach oben',
 	filesMoreActions: 'Weitere Aktionen',
+	filesPath: 'Pfad',
 	systemUsersGroupRegular: 'Reguläre Konten',
 	systemUsersGroupSystem: 'Systemkonten',
 	backupTotalSize: 'Gespeicherte Gesamtgröße',

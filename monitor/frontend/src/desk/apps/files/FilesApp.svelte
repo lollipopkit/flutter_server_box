@@ -464,7 +464,8 @@
     return parts.join(' · ')
   })
   const footRight = $derived(
-    picked ? [picked.name, picked.kind === 'file' && picked.size !== null ? fmtBytes(picked.size) : '', modeText(picked.mode)].filter(Boolean).join(' · ') : '',
+    // The name is in the path bar beside it.
+    picked ? [picked.kind === 'file' && picked.size !== null ? fmtBytes(picked.size) : '', modeText(picked.mode)].filter(Boolean).join(' · ') : '',
   )
 
   /// The machine's disk, for the sidebar and the status bar; nothing when it
@@ -815,10 +816,32 @@
   <WindowFooter>
     <StatusBar>
       {#if cwd}
-        <span class="lk-num truncate">{footLeft}</span>
+        <!-- Where this is, as a path bar: each folder on the way opens it, and
+             the selection ends it. The early steps give way first. -->
+        <nav class="pathbar" aria-label={$LL.filesPath()} title={picked ? joinPath(cwd, picked.name) : cwd}>
+          {#each crumbs as crumb, i (crumb.path)}
+            {#if i > 0}<Icon name="chevron_right" size={13} color="var(--text-tertiary)" />{/if}
+            <button
+              type="button"
+              class="pathbar__step"
+              class:pathbar__step--here={!picked && i === crumbs.length - 1}
+              onclick={() => crumb.path !== cwd && void load(crumb.path)}
+            >
+              <Icon name={i === 0 ? 'hard_drive' : 'folder'} size={14} fill color="var(--color-accent-text)" />
+              <span class="truncate">{crumb.label}</span>
+            </button>
+          {/each}
+          {#if picked}
+            <Icon name="chevron_right" size={13} color="var(--text-tertiary)" />
+            <span class="pathbar__step pathbar__step--here">
+              <Icon name={glyph(picked)} size={14} fill={picked.kind === 'dir'} color={picked.kind === 'dir' ? 'var(--color-accent-text)' : 'var(--text-secondary)'} />
+              <span class="truncate">{picked.name}</span>
+            </span>
+          {/if}
+        </nav>
         <span class="flex-1"></span>
+        <span class="lk-num shrink-0 truncate">{picked ? footRight : footLeft}</span>
         {#if picked}
-          <span class="lk-num truncate">{footRight}</span>
           <!-- The selection's menu, for pointers that cannot right-click. -->
           <IconButton icon="more_horiz" size="sm" label={$LL.filesMoreActions()} onclick={(e: MouseEvent) => openMenuAt(e, picked!)} />
         {/if}
@@ -886,5 +909,39 @@
   .files-tile:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
+  }
+
+  .pathbar {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 1px;
+    overflow: hidden;
+  }
+  .pathbar__step {
+    display: flex;
+    min-width: 0;
+    flex-shrink: 1;
+    align-items: center;
+    gap: var(--space-3);
+    height: 20px;
+    padding: 0 var(--space-5);
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    white-space: nowrap;
+  }
+  button.pathbar__step:hover {
+    background: var(--fill-hover);
+    color: var(--text-primary);
+  }
+  /* Where one is, and the selection, give way last. */
+  .pathbar__step--here {
+    flex-shrink: 0;
+    max-width: 60%;
+    color: var(--text-primary);
+    font-weight: 600;
   }
 </style>

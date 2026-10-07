@@ -1332,6 +1332,7 @@ const tr = {
 	filesForward: 'İleri',
 	filesUp: 'Yukarı',
 	filesMoreActions: 'Diğer işlemler',
+	filesPath: 'Yol',
 	systemUsersGroupRegular: 'Normal hesaplar',
 	systemUsersGroupSystem: 'Sistem hesapları',
 	backupTotalSize: 'Toplam depolanan boyut',

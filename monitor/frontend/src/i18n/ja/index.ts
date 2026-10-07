@@ -1421,6 +1421,7 @@ const ja = {
 	deskZoom: 'ズーム',
 	filesForward: '進む',
 	filesMoreActions: 'その他の操作',
+	filesPath: 'パス',
 	filesUp: '上へ',
 	filesViewGrid: 'グリッド表示',
 	filesViewList: 'リスト表示',

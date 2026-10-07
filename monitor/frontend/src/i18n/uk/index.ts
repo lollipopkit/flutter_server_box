@@ -1421,6 +1421,7 @@ const uk = {
 	deskZoom: 'Масштаб',
 	filesForward: 'Уперед',
 	filesMoreActions: 'Інші дії',
+	filesPath: 'Шлях',
 	filesUp: 'Вгору',
 	filesViewGrid: 'Сітка',
 	filesViewList: 'Список',

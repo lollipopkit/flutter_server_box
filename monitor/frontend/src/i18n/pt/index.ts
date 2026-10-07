@@ -1332,6 +1332,7 @@ const pt = {
 	filesForward: 'Avançar',
 	filesUp: 'Subir',
 	filesMoreActions: 'Mais ações',
+	filesPath: 'Caminho',
 	systemUsersGroupRegular: 'Contas comuns',
 	systemUsersGroupSystem: 'Contas do sistema',
 	backupTotalSize: 'Tamanho total armazenado',

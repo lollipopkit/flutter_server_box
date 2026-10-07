@@ -1421,6 +1421,7 @@ const ru = {
 	deskZoom: 'Масштаб',
 	filesForward: 'Вперёд',
 	filesMoreActions: 'Другие действия',
+	filesPath: 'Путь',
 	filesUp: 'Вверх',
 	filesViewGrid: 'Сетка',
 	filesViewList: 'Список',
