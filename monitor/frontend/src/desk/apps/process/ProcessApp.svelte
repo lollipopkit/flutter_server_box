@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppToolbar, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
+  import { AppToolbar, systemPrefs, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
   import {
     Button,
     Card,
@@ -22,8 +22,6 @@
   import { untrack } from 'svelte'
   import type { ProcessSignal, ProcessSortMode, ProcessView } from '../../../types'
 
-  /// How often the table is read again while it is in sight and not paused.
-  const REFRESH_MS = 5000
 
   const win = useWindow()
   let view = $state<ProcessView | null>(null)
@@ -38,7 +36,7 @@
   let query = $state('')
   let search = $state<HTMLInputElement | null>(null)
   let showKernel = $state(false)
-  let paused = $state(false)
+  let paused = $state(!systemPrefs.value.autoRefresh)
   /// The order the window is asking for. Adopted from each answer, so a mode
   /// this machine cannot answer (it printed no `read` column) leaves the
   /// header and the ordering agreeing with each other rather than with the
@@ -107,7 +105,7 @@
     if (paused || life.state === 'background' || life.state === 'suspended' || asking || pending !== undefined) return
     const t = setInterval(() => {
       if (!loading) void refresh()
-    }, REFRESH_MS)
+    }, systemPrefs.refreshMs)
     return () => clearInterval(t)
   })
 
@@ -318,7 +316,7 @@
     if (view?.load) {
       parts.push($LL.processLoad({ one: view.load.one.toFixed(2), five: view.load.five.toFixed(2), fifteen: view.load.fifteen.toFixed(2) }))
     }
-    parts.push(paused ? $LL.deskPaused() : $LL.deskEverySeconds({ n: REFRESH_MS / 1000 }))
+    parts.push(paused ? $LL.deskPaused() : $LL.deskEverySeconds({ n: systemPrefs.value.refreshSeconds }))
     return parts.join(' · ')
   })
 
@@ -391,6 +389,7 @@
   <!-- One line per process, the columns the machine printed; the header
        sticks under the title bar, a narrow window scrolls sideways. -->
   <DataTable
+    density={systemPrefs.value.density}
     label={$LL.processes()}
     columns={tableColumns}
     rows={table}

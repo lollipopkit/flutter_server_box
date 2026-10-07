@@ -13,6 +13,7 @@ import './apps'
 import { app, availableApps } from './registry.svelte'
 import { opensPath, type AppSpec } from './sys/manifest'
 import { WINDOW, type LifecycleState, type WindowHandle } from './sys/window.svelte'
+import { systemPrefs } from './sys/systemPrefs.svelte'
 import { get } from 'svelte/store'
 import { LL } from '../i18n/i18n-svelte'
 import type { DeskNotification } from './deskApi'
@@ -171,7 +172,11 @@ export class Desk {
     this.session = new SessionSync(this.windows, storage, deviceId(), this.entry.id)
     // Installed apps first: a restored window of one needs it registered.
     await this.reloadWebApps()
-    await Promise.all([this.prefs.load(), this.session.load(), this.notifications.load()])
+    const system = systemPrefs.value
+    await Promise.all([this.prefs.load(), this.session.load(system.restoreWindows), this.notifications.load()])
+    if (this.#abort.signal.aborted) return
+    // Nothing came back: the app this browser opens at start.
+    if (this.windows.windows.length === 0 && system.openOnStart !== 'none') this.open(system.openOnStart)
     if (storage.events) void this.#listen(storage)
   }
 

@@ -27,3 +27,4 @@ export {
 export { default as AppToolbar } from './AppToolbar.svelte'
 export { default as SplitView } from './SplitView.svelte'
 export { default as WindowFooter } from './WindowFooter.svelte'
+export { systemPrefs, TEXT_SCALE, type SystemPrefsValue, type RefreshSeconds, type Density, type TextSize, type StartApp } from './systemPrefs.svelte'

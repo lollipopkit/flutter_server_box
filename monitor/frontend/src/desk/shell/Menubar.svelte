@@ -6,6 +6,7 @@
   import { serverNames } from '../../lib/serverNames.svelte'
   import { displayName, servers } from '../../lib/servers.svelte'
   import { app } from '../registry.svelte'
+  import { systemPrefs } from '../sys/systemPrefs.svelte'
   import { useDesk, type MenuItem } from '../deskState.svelte'
   import AppIcon from '../lk/AppIcon.svelte'
   import Icon from '../lk/Icon.svelte'
@@ -35,7 +36,10 @@
 
   /// The machine's CPU in the bar, read while the desk is in sight. An
   /// account that may not read metrics simply has no reading.
-  const metrics = new Poller(api.getMetrics, 5000)
+  const metrics = new Poller(api.getMetrics, systemPrefs.refreshMs)
+  $effect(() => {
+    metrics.interval = Math.max(2000, systemPrefs.refreshMs)
+  })
   $effect(() => {
     if (desk.locked || desk.hidden) return
     metrics.start()
@@ -109,7 +113,7 @@
       )
     }
     items.push(
-      { label: `${$LL.deskHide()} ${appName}`, shortcut: '⌘H', action: () => desk.windows.minimize(id) },
+      { label: `${$LL.deskHide()} ${appName}`, action: () => desk.windows.minimize(id) },
       { label: `${$LL.deskQuit()} ${appName}`, icon: 'close', action: () => desk.windows.closeApp(spec.id) },
     )
     return items
@@ -121,7 +125,7 @@
     const id = active.id
     const mine = desk.windows.of(activeSpec.id)
     const items: MenuItem[] = [
-      { label: $LL.deskMinimize(), shortcut: '⌘M', action: () => desk.windows.minimize(id) },
+      { label: $LL.deskMinimize(), action: () => desk.windows.minimize(id) },
       { label: $LL.deskZoom(), action: () => desk.windows.toggleMaximize(id) },
       { label: $LL.deskBringAllToFront(), action: () => mine.forEach((w) => desk.windows.focus(w.id)) },
       { separator: true },
@@ -131,7 +135,7 @@
         action: () => desk.windows.focus(w.id),
       })),
       { separator: true },
-      { label: $LL.deskClose(), shortcut: '⌘W', action: () => desk.windows.close(id) },
+      { label: $LL.deskClose(), action: () => desk.windows.close(id) },
     ]
     if (mine.length > 1) items.push({ label: $LL.deskCloseAll(), action: () => desk.windows.closeApp(activeSpec!.id) })
     return items

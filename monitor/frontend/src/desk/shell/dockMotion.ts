@@ -5,6 +5,7 @@
 
 import { backOut, cubicIn } from 'svelte/easing'
 import type { TransitionConfig } from 'svelte/transition'
+import { systemPrefs } from '../sys/systemPrefs.svelte'
 
 export interface DockMotion {
   /// The item's size along the dock, in px.
@@ -19,6 +20,7 @@ export interface DockMotion {
 }
 
 function reduced(): boolean {
+  if (systemPrefs.value.reduceMotion) return true
   return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 }
 

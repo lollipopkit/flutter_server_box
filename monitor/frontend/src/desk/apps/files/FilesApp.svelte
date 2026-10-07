@@ -18,7 +18,7 @@
     type MenuEntry,
     type TableSort,
   } from '../../lk'
-  import { AppToolbar, OPEN, SplitView, useIntents, useMenus, useWindow, WindowFooter, type OpenPath } from '../../sys'
+  import { AppToolbar, OPEN, type OpenPath, SplitView, systemPrefs, useIntents, useMenus, useWindow, WindowFooter } from '../../sys'
   import FileEditor from './FileEditor.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { filesAccess, whyText } from '../../../lib/access'
@@ -718,6 +718,7 @@
         </div>
       {:else if cwd && view === 'list'}
         <DataTable
+          density={systemPrefs.value.density}
           label={$LL.files()}
           columns={columns}
           rows={lines}

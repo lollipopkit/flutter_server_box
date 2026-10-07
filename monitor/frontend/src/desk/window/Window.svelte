@@ -9,6 +9,7 @@
   import TrafficLights from '../lk/TrafficLights.svelte'
   import { WindowChrome } from './chrome.svelte'
   import { shellPrefs } from '../shellPrefs.svelte'
+  import { systemPrefs, TEXT_SCALE } from '../sys/systemPrefs.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
   import type { DeskWindow } from '../windows.svelte'
 
@@ -232,6 +233,7 @@
       <div
         class="lk-window__content desk-window-body @container flex flex-col"
         style:bottom="{footer ? footerHeight : 0}px"
+        style:zoom={TEXT_SCALE[systemPrefs.value.textSize] === 1 ? undefined : TEXT_SCALE[systemPrefs.value.textSize]}
         onscrollcapture={onContentScroll}
       >
         <div class="lk-window__spacer" aria-hidden="true"></div>

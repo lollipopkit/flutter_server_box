@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppToolbar, SplitView, WindowFooter } from '../../sys'
+  import { AppToolbar, SplitView, systemPrefs, WindowFooter } from '../../sys'
   import {
     Button,
     Card,
@@ -320,6 +320,7 @@
     </div>
   {:else if view}
     <DataTable
+      density={systemPrefs.value.density}
       label={$LL.services()}
       {columns}
       {rows}

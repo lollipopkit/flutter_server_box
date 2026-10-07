@@ -46,12 +46,14 @@ export class SessionSync {
     return this.#revision
   }
 
-  async load() {
+  /// [restore] false starts with no windows; the next save replaces what
+  /// was kept.
+  async load(restore = true) {
     try {
       const session = await this.#storage.loadSession(this.#device)
       if (this.#closed) return
       this.#revision = session.revision
-      this.#windows.hydrate(session.windows)
+      if (restore) this.#windows.hydrate(session.windows)
       this.status = 'ready'
     } catch {
       if (!this.#closed) this.status = 'failed'

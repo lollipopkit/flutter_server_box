@@ -1,6 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
-  import { AppToolbar, SplitView, useMenus, WindowFooter, type MenuEntry } from '../../sys'
+  import { AppToolbar, type MenuEntry, SplitView, systemPrefs, useMenus, WindowFooter } from '../../sys'
   import {
     Button,
     Card,
@@ -496,6 +496,7 @@
         </div>
       {:else}
         <DataTable
+          density={systemPrefs.value.density}
           label={$LL.containers()}
           columns={containerColumns}
           rows={containerLines}
@@ -512,6 +513,7 @@
       </div>
     {:else}
       <DataTable
+        density={systemPrefs.value.density}
         label={$LL.containerImages()}
         columns={imageColumns}
         rows={imageLines}

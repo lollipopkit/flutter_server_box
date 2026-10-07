@@ -3,6 +3,7 @@
 /// moment. The server's are kept by the agent; an app's (`sys.notify`) last
 /// as long as the page.
 
+import { systemPrefs } from './sys/systemPrefs.svelte'
 import type { DeskNotification } from './deskApi'
 import type { DeskStorage } from './storage'
 
@@ -61,7 +62,7 @@ export class DeskNotifications {
     if (this.#remote.some((x) => x.id === n.id)) return
     this.#remote = [n, ...this.#remote].slice(0, 200)
     if (!n.read) this.#remoteUnread++
-    if (!this.dnd) this.#show(n)
+    if (!this.dnd && systemPrefs.value.banners) this.#show(n)
   }
 
   /// One an app posted. Its `source` is `app:<appId>`; ids are negative, so
@@ -78,7 +79,7 @@ export class DeskNotifications {
       read: false,
     }
     this.#local = [n, ...this.#local].slice(0, MAX_LOCAL)
-    if (!this.dnd) this.#show(n)
+    if (!this.dnd && systemPrefs.value.banners) this.#show(n)
     return n
   }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, LegendChip, SegmentedControl, Spinner, StatTile, ToolbarGroup } from '../../lk'
-  import { AppToolbar, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
+  import { AppToolbar, systemPrefs, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'
   import PowerModal from './PowerModal.svelte'
@@ -17,12 +17,16 @@
   import { fly } from 'svelte/transition'
   import type { CustomCmdOutput, HistoryPoint, ProcessView } from '../../../types'
 
-  const INTERVAL_MS = 5000
-  const metrics = new Poller(api.getMetrics, INTERVAL_MS)
+  const metrics = new Poller(api.getMetrics, systemPrefs.refreshMs)
   const win = useWindow()
   const life = useLifecycle()
-  /// Paused by the user: the figures stay as they were.
-  let paused = $state(false)
+  /// Paused by the user (or by the system setting): the figures stay as they
+  /// were.
+  let paused = $state(!systemPrefs.value.autoRefresh)
+  $effect(() => {
+    metrics.interval = systemPrefs.refreshMs
+    topPoller.interval = Math.max(5000, systemPrefs.refreshMs * 2)
+  })
   /// Read while drawn and not paused; hidden (minimised), nothing is drawn.
   const shown = $derived(life.state !== 'background' && !paused)
 
@@ -189,7 +193,7 @@
   /// The busiest processes, when this account may read them: read along with
   /// the figures, less often.
   const canProcesses = $derived(enabledFeatures(capabilities).some((f) => f.id === 'process'))
-  const topPoller = new Poller(() => api.getProcess('cpu'), INTERVAL_MS * 2)
+  const topPoller = new Poller(() => api.getProcess('cpu'), Math.max(5000, systemPrefs.refreshMs * 2))
   $effect(() => {
     if (canProcesses && servers.authenticated && shown) topPoller.start()
     return () => topPoller.stop()
@@ -407,7 +411,7 @@
 {#if detail}
   <AppToolbar title={detailTitles[detail]} back={() => (detail = null)} />
 {:else}
-  <AppToolbar subtitle={paused ? $LL.deskPaused() : `${$LL.deskLiveShort()} · ${$LL.deskEverySeconds({ n: INTERVAL_MS / 1000 })}`}>
+  <AppToolbar subtitle={paused ? $LL.deskPaused() : `${$LL.deskLiveShort()} · ${$LL.deskEverySeconds({ n: systemPrefs.value.refreshSeconds })}`}>
     {#snippet actions()}
       <ToolbarGroup
         items={[

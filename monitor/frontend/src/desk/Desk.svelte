@@ -7,6 +7,7 @@
   import { app } from './registry.svelte'
   import { COMPACT_WIDTH } from './geometry'
   import { shellPrefs } from './shellPrefs.svelte'
+  import { systemPrefs } from './sys/systemPrefs.svelte'
   import { menuItemFor } from './shortcuts'
   import { Desk, provideDesk, type MenuItem } from './deskState.svelte'
   import Banner from './shell/Banner.svelte'
@@ -141,6 +142,7 @@
 <div
   bind:this={root}
   class="lk desk-root fixed inset-0 overflow-hidden bg-(--surface-desktop)"
+  data-reduce-motion={systemPrefs.value.reduceMotion || undefined}
   role="application"
   aria-label={$LL.deskTitle()}
   onpointerdown={dismiss}

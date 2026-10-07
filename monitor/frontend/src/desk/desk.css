@@ -99,3 +99,15 @@
     max-width: calc(var(--content-max-board) + 2 * var(--content-pad));
   }
 }
+
+/* Reduce motion (Settings > Appearance): as the system's own reduced-motion
+   setting does in the design system's tokens — short, no overshoot. */
+.lk[data-reduce-motion] {
+  --dur-base: 120ms;
+  --dur-slow: 120ms;
+  --dur-window: 150ms;
+  --dur-genie: 150ms;
+  --dur-scene: 150ms;
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring-bouncy: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
