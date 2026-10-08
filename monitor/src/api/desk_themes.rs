@@ -1,8 +1,8 @@
 //! `/api/v1/desk/themes*` — theme packages (`.fsbt`) an account installs for
-//! its desk, read and checked by `sbm_theme` with the app's own rules.
+//! its desk, read and checked by `fl_theme` with the app's own rules.
 //!
 //! - `GET /desk/themes`: what this account installed, each package as
-//!   `sbm_theme` read it (one theme, or one per variant).
+//!   `fl_theme` read it (one theme, or one per variant).
 //! - `POST /desk/themes`: the body is a `.fsbt`. Installing a theme again (the
 //!   same manifest `id`) replaces the earlier installation, and a desk drawn
 //!   with that one moves to the new one, variant kept.
@@ -35,9 +35,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tokio::sync::Mutex;
 
+use crate::core::blobs::Blobs;
 use super::desk::{DeskEvent, account, internal_error, refused};
 use super::server::AppState;
-use sbm_theme::repo::{self, Catalog, Index, Listing, Release};
+use fl_theme::repo::{self, Catalog, Index, Listing, Release};
 
 /// Themes one account may keep.
 pub const MAX_THEMES: i64 = 32;
@@ -47,6 +48,9 @@ pub const MAX_ACCOUNT_BYTES: i64 = 128 << 20;
 const STORE_TTL: Duration = Duration::from_secs(3600);
 /// The catalog this build ships, read when the catalog's address does not
 /// answer.
+/// The catalog the app reads (`Urls.themeCatalog`), fetched by the store.
+pub const CATALOG_URL: &str = "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/assets/catalog/repos.toml";
+
 const BUNDLED_CATALOG: &str = include_str!("../../../assets/catalog/repos.toml");
 
 macro_rules! require {
@@ -70,7 +74,7 @@ pub struct Installed {
     pub id: String,
     pub name: String,
     pub installed_at: String,
-    /// `sbm_theme::Package`, JSON.
+    /// `fl_theme::Package`, JSON.
     pub package: serde_json::Value,
 }
 
@@ -87,7 +91,7 @@ pub fn valid_theme_value(value: &str) -> bool {
     let (id, variant) = split_theme(value);
     id.len() == 64
         && id.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
-        && variant.is_none_or(sbm_theme::package::is_variant_key)
+        && variant.is_none_or(fl_theme::package::is_variant_key)
 }
 
 /// Whether [value] names a theme [user] has: the installation, and the
@@ -113,16 +117,24 @@ pub async fn theme_exists(db: &SqlitePool, user: i64, value: &str) -> Result<boo
 
 /// Why an install was refused.
 pub enum InstallError {
-    /// The package itself, in `sbm_theme`'s words.
+    /// The package itself, in `fl_theme`'s words.
     Invalid(String),
     TooMany,
     TooLarge,
     Db(sqlx::Error),
+    /// Writing a background's file (`core::blobs`).
+    Io(std::io::Error),
 }
 
 impl From<sqlx::Error> for InstallError {
     fn from(e: sqlx::Error) -> Self {
         Self::Db(e)
+    }
+}
+
+impl From<std::io::Error> for InstallError {
+    fn from(e: std::io::Error) -> Self {
+        Self::Io(e)
     }
 }
 
@@ -135,15 +147,16 @@ impl InstallError {
             Self::TooMany => HttpResponse::Conflict().json(&refused("tooMany", None)),
             Self::TooLarge => HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None)),
             Self::Db(e) => internal_error(&e),
+            Self::Io(e) => internal_error(&e),
         }
     }
 }
 
 /// Reads [bytes] as a package and keeps it for [user], replacing an earlier
-/// installation of the same theme.
-pub async fn install(db: &SqlitePool, user: i64, bytes: Vec<u8>) -> Result<Installed, InstallError> {
+/// installation of the same theme. Its backgrounds are files in [blobs].
+pub async fn install(db: &SqlitePool, blobs: &Arc<Blobs>, user: i64, bytes: Vec<u8>) -> Result<Installed, InstallError> {
     // Reading a package is CPU work (inflating up to 16 MiB): off the reactor.
-    let package = tokio::task::spawn_blocking(move || sbm_theme::install(&bytes))
+    let package = tokio::task::spawn_blocking(move || fl_theme::install(&bytes))
         .await
         .map_err(|e| InstallError::Invalid(e.to_string()))?
         .map_err(|e| InstallError::Invalid(e.0))?;
@@ -160,6 +173,49 @@ pub async fn install(db: &SqlitePool, user: i64, bytes: Vec<u8>) -> Result<Insta
         .collect();
     let weight: i64 = backgrounds.iter().map(|(_, _, b)| b.len() as i64).sum();
 
+    // Written before the transaction, so no file is written while it holds
+    // the database's write lock; kept from collection until the rows naming
+    // them are committed, and collected when the install is refused.
+    let writing = blobs.writing().await;
+    let mut stored = Vec::with_capacity(backgrounds.len());
+    for (variant, mime, bytes) in &backgrounds {
+        stored.push((variant, *mime, blobs.put(bytes).await?, bytes.len() as i64));
+    }
+    let written = !stored.is_empty();
+    let outcome = install_rows(db, user, &package, &summary, &installed_at, weight, &stored).await;
+    drop(writing);
+    let earlier = match outcome {
+        Ok(earlier) => earlier,
+        Err(e) => {
+            if written {
+                blobs.collect_soon(db);
+            }
+            return Err(e);
+        }
+    };
+    if earlier.is_some() {
+        blobs.collect_soon(db);
+    }
+    Ok(Installed {
+        installation_id: package.installation_id.clone(),
+        id: package.id.clone(),
+        name: package.name.clone(),
+        installed_at,
+        package: summary,
+    })
+}
+
+/// The rows of an install whose files are written: answers the installation
+/// it replaced, if any.
+async fn install_rows(
+    db: &SqlitePool,
+    user: i64,
+    package: &fl_theme::Package,
+    summary: &serde_json::Value,
+    installed_at: &str,
+    weight: i64,
+    backgrounds: &[(&String, &'static str, String, i64)],
+) -> Result<Option<String>, InstallError> {
     let mut tx = db.begin().await?;
     let earlier = sqlx::query_scalar::<_, String>(
         "SELECT installation_id FROM desk_theme WHERE user_id = ? AND theme_id = ? AND installation_id != ?",
@@ -178,7 +234,7 @@ pub async fn install(db: &SqlitePool, user: i64, bytes: Vec<u8>) -> Result<Insta
     if !already {
         let (count, used): (i64, i64) = sqlx::query_as(
             "SELECT (SELECT COUNT(*) FROM desk_theme WHERE user_id = ?1 AND installation_id IS NOT ?2), \
-             (SELECT COALESCE(SUM(LENGTH(bytes)), 0) FROM desk_theme_background WHERE user_id = ?1 AND installation_id IS NOT ?2)",
+             (SELECT COALESCE(SUM(size), 0) FROM desk_theme_background WHERE user_id = ?1 AND installation_id IS NOT ?2)",
         )
         .bind(user)
         .bind(earlier.as_deref())
@@ -229,30 +285,25 @@ pub async fn install(db: &SqlitePool, user: i64, bytes: Vec<u8>) -> Result<Insta
         .bind(&package.id)
         .bind(&package.name)
         .bind(summary.to_string())
-        .bind(&installed_at)
+        .bind(installed_at)
         .execute(&mut *tx)
         .await?;
-        for (variant, mime, bytes) in &backgrounds {
+        for (variant, mime, sha, size) in backgrounds {
             sqlx::query(
-                "INSERT INTO desk_theme_background (user_id, installation_id, variant, mime, bytes) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO desk_theme_background (user_id, installation_id, variant, mime, sha256, size) VALUES (?, ?, ?, ?, ?, ?)",
             )
             .bind(user)
             .bind(&package.installation_id)
             .bind(variant)
             .bind(*mime)
-            .bind(*bytes)
+            .bind(sha)
+            .bind(size)
             .execute(&mut *tx)
             .await?;
         }
     }
     tx.commit().await?;
-    Ok(Installed {
-        installation_id: package.installation_id.clone(),
-        id: package.id.clone(),
-        name: package.name.clone(),
-        installed_at,
-        package: summary,
-    })
+    Ok(earlier)
 }
 
 // -----------------------------------------------------------------------------
@@ -296,12 +347,12 @@ pub async fn upload(
         let Ok(chunk) = chunk else {
             return Ok(HttpResponse::BadRequest().finish());
         };
-        if data.len() + chunk.len() > sbm_theme::package::MAX_PACKAGE_BYTES {
+        if data.len() + chunk.len() > fl_theme::package::MAX_PACKAGE_BYTES {
             return Ok(HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None)));
         }
         data.extend_from_slice(&chunk);
     }
-    match install(&state.db, user, data).await {
+    match install(&state.db, &state.blobs, user, data).await {
         Ok(installed) => {
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::Ok().json(&installed))
@@ -345,6 +396,7 @@ pub async fn remove(
     match done {
         Ok(0) => Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
         Ok(_) => {
+            state.blobs.collect_soon(&state.db);
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::NoContent().finish())
         }
@@ -367,17 +419,22 @@ pub async fn background(
     let (_, user) = require!(account(&req, &state).await);
     let installation = path.into_inner();
     let variant = query.into_inner().variant.unwrap_or_default();
-    let row = sqlx::query_as::<_, (String, Vec<u8>)>(
-        "SELECT mime, bytes FROM desk_theme_background WHERE user_id = ? AND installation_id = ? AND variant = ?",
+    let row = sqlx::query_as::<_, (String, String)>(
+        "SELECT mime, sha256 FROM desk_theme_background WHERE user_id = ? AND installation_id = ? AND variant = ?",
     )
     .bind(user)
     .bind(&installation)
     .bind(&variant)
     .fetch_optional(&state.db)
     .await;
-    match row {
+    let (mime, sha) = match row {
+        Ok(Some(row)) => row,
+        Ok(None) => return Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
+        Err(e) => return Ok(internal_error(&e)),
+    };
+    match state.blobs.read(&sha).await {
         // The bytes of one installation never change: it is named by them.
-        Ok(Some((mime, bytes))) => Ok(HttpResponse::Ok()
+        Ok(Some(bytes)) => Ok(HttpResponse::Ok()
             .content_type(mime)
             .header("cache-control", "private, max-age=31536000, immutable")
             .header("x-content-type-options", "nosniff")
@@ -495,7 +552,7 @@ impl Default for ThemeStore {
     fn default() -> Self {
         Self {
             fetch: std::sync::RwLock::new(Arc::new(HttpFetch::default())),
-            catalog_url: std::sync::RwLock::new(repo::CATALOG_URL.to_string()),
+            catalog_url: std::sync::RwLock::new(CATALOG_URL.to_string()),
             read: Mutex::new(None),
         }
     }
@@ -534,7 +591,7 @@ impl ThemeStore {
         let base = url::Url::parse(&catalog_url).ok();
         let catalog = match fetch.get(&catalog_url, repo::MAX_CATALOG_BYTES).await {
             Ok(bytes) => Catalog::parse(&bytes, base.as_ref()),
-            Err(e) => Err(sbm_theme::ThemeError::new(e)),
+            Err(e) => Err(fl_theme::ThemeError::new(e)),
         };
         let catalog = catalog.unwrap_or_else(|e| {
             tracing::warn!("theme store: reading the catalog: {e}");
@@ -548,7 +605,7 @@ impl ThemeStore {
                     let tree = fetch
                         .get(&repo::archive_url_of(&address), repo::MAX_ARCHIVE_BYTES)
                         .await
-                        .map_err(sbm_theme::ThemeError::new)
+                        .map_err(fl_theme::ThemeError::new)
                         .and_then(|bytes| repo::read_archive(&bytes))
                         .and_then(|files| Index::from_files(&files));
                     (address, tree)
@@ -624,7 +681,7 @@ impl ThemeStore {
                 .and_then(|p| read.indexes.get(repo_url).and_then(|i| i.packages.get(p)).cloned());
             (release, carried)
         };
-        if !release.runs_on(sbm_theme::package::SUPPORTED_SCHEMA_MIN, sbm_theme::package::SUPPORTED_SCHEMA_MAX) {
+        if !release.runs_on(fl_theme::package::SUPPORTED_SCHEMA_MIN, fl_theme::package::SUPPORTED_SCHEMA_MAX) {
             return Err("that version needs a newer app".into());
         }
         // A version with no digest is not one anything can be said about.
@@ -632,7 +689,7 @@ impl ThemeStore {
             return Err(format!("{id} {version} has no sha256"));
         }
         let bytes = match (&release.url, carried) {
-            (Some(url), _) => self.fetcher().get(url, sbm_theme::package::MAX_PACKAGE_BYTES).await?,
+            (Some(url), _) => self.fetcher().get(url, fl_theme::package::MAX_PACKAGE_BYTES).await?,
             (None, Some(bytes)) => bytes,
             (None, None) => return Err(format!("the repository does not carry {}", release.path.unwrap_or_default())),
         };
@@ -682,7 +739,7 @@ pub async fn store_install(
             return Ok(HttpResponse::BadGateway().json(&serde_json::json!({ "error": "store", "reason": reason })));
         }
     };
-    match install(&state.db, user, bytes).await {
+    match install(&state.db, &state.blobs, user, bytes).await {
         Ok(installed) => {
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::Ok().json(&installed))

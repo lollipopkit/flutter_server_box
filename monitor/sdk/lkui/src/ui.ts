@@ -5,7 +5,7 @@
 /// with those classes and tokens (docs/dev/desk-sys.md, "UI"); outside the
 /// desk there is nothing to load, so it is the desk's to use only.
 
-import type { AppTheme } from './protocol'
+import type { AppTheme } from './protocol.js'
 
 /// Loads the desk's stylesheet into [doc]; settles once it applied or
 /// failed (an agent without it), or after [timeout] ms, so the app never

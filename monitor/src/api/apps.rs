@@ -37,6 +37,7 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::core::blobs::Blobs;
 use super::admin::{Reauth, reauth};
 use super::authz::{self, Caller};
 use super::server::AppState;
@@ -414,9 +415,15 @@ async fn load(db: &sqlx::SqlitePool, id: &str) -> Result<Option<Installed>, sqlx
 
 /// Stores [package], replacing an installed version. Its approval stays only
 /// for the very same package (an upload needs no password; an approval does,
-/// so new code always waits for one).
-async fn store(db: &sqlx::SqlitePool, package: &Package, by: &str) -> Result<Installed, sqlx::Error> {
+/// so new code always waits for one). Its files go to [blobs] first, the rows
+/// naming them after.
+async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by: &str) -> anyhow::Result<Installed> {
     let m = &package.manifest;
+    let writing = blobs.writing().await;
+    let mut files = Vec::with_capacity(package.files.len());
+    for (path, bytes) in &package.files {
+        files.push((path, blobs.put(bytes).await?, bytes.len() as i64));
+    }
     let mut tx = db.begin().await?;
     let previous: Option<(String, Option<String>)> =
         sqlx::query_as("SELECT sha256, approved_permissions FROM desk_app_package WHERE app_id = ?")
@@ -443,15 +450,19 @@ async fn store(db: &sqlx::SqlitePool, package: &Package, by: &str) -> Result<Ins
     .bind(kept.as_ref().map(|_| now.clone()))
     .execute(&mut *tx)
     .await?;
-    for (path, bytes) in &package.files {
-        sqlx::query("INSERT INTO desk_app_file (app_id, path, bytes) VALUES (?, ?, ?)")
+    for (path, sha, size) in &files {
+        sqlx::query("INSERT INTO desk_app_file (app_id, path, sha256, size) VALUES (?, ?, ?, ?)")
             .bind(&m.id)
             .bind(path)
-            .bind(bytes.as_slice())
+            .bind(sha)
+            .bind(size)
             .execute(&mut *tx)
             .await?;
     }
     tx.commit().await?;
+    drop(writing);
+    // The files of the version it replaced.
+    blobs.collect_soon(db);
     Ok(load(db, &m.id).await?.expect("just stored"))
 }
 
@@ -468,7 +479,7 @@ macro_rules! require {
     }};
 }
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
+fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
     tracing::error!("apps: {e}");
     HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
 }
@@ -517,12 +528,12 @@ pub async fn install(
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
-    match store(&state.db, &package, &caller.username).await {
+    match store(&state.db, &state.blobs, &package, &caller.username).await {
         Ok(app) => {
             audit(&req, &state, &caller, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(internal_error(&format!("{e:#}"))),
     }
 }
 
@@ -607,6 +618,7 @@ pub async fn remove(
             if r.rows_affected() == 0 {
                 return Ok(not_found());
             }
+            state.blobs.collect_soon(&state.db);
             audit(&req, &state, &caller, Action::Write, format!("app remove {}", id.as_str())).await;
             Ok(HttpResponse::NoContent().finish())
         }
@@ -658,16 +670,21 @@ pub async fn ui(
     if !valid_entry_path(&file) {
         return Ok(not_found());
     }
-    let bytes: Option<Vec<u8>> = match sqlx::query_scalar("SELECT bytes FROM desk_app_file WHERE app_id = ? AND path = ?")
+    let sha: Option<String> = match sqlx::query_scalar("SELECT sha256 FROM desk_app_file WHERE app_id = ? AND path = ?")
         .bind(&id)
         .bind(&file)
         .fetch_optional(&state.db)
         .await
     {
-        Ok(b) => b,
+        Ok(s) => s,
         Err(e) => return Ok(internal_error(&e)),
     };
-    let Some(bytes) = bytes else { return Ok(not_found()) };
+    let Some(sha) = sha else { return Ok(not_found()) };
+    let bytes = match state.blobs.read(&sha).await {
+        Ok(Some(bytes)) => bytes,
+        Ok(None) => return Ok(not_found()),
+        Err(e) => return Ok(internal_error(&e)),
+    };
     Ok(HttpResponse::Ok()
         .content_type(mime_of(&file))
         .header("content-security-policy", UI_CSP)

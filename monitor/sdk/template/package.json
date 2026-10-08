@@ -7,7 +7,7 @@
     "pack": "vite build && node pack.mjs"
   },
   "dependencies": {
-    "@lollipopkit/desk-sys": "file:../desk-sys"
+    "lkui": "file:../lkui"
   },
   "devDependencies": {
     "typescript": "^5.9.0",

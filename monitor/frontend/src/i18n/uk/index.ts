@@ -1511,7 +1511,6 @@ const uk = {
 	settingsBackgroundAppsSub: 'Вимкнено: приховане вікно зупиняється та запускається знову, коли його показано',
 	deskMenuFile: 'Файл',
 	deskMenuGo: 'Перейти',
-	settingsBackgroundAppsOld: 'Цей агент застарий і не може зберегти цей вибір',
 	deskInBackground: 'У фоновому режимі',
 	settingsBackgroundPerApp: 'Фоновий режим',
 	deskOpenWith: 'Відкрити за допомогою',

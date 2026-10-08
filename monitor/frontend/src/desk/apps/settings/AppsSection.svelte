@@ -28,7 +28,7 @@
     const parts: string[] = []
     if (prefs.value.dock.includes(id)) parts.push($LL.settingsAppInDock())
     const hidden = kind === 'system' || !!permissions?.includes('background')
-    if (prefs.keepsBackground && hidden && prefs.value.background && !prefs.value.background_denied.includes(id)) {
+    if (hidden && prefs.value.background && !prefs.value.background_denied.includes(id)) {
       parts.push($LL.settingsAppInBackground())
     }
     return parts.join(' · ')
@@ -48,13 +48,9 @@
     </Group>
 
     <Group title={$LL.settingsBackgroundPerApp()}>
-      <Row
-        label={$LL.settingsBackgroundApps()}
-        sub={prefs.keepsBackground ? $LL.settingsBackgroundAppsSub() : $LL.settingsBackgroundAppsOld()}
-      >
+      <Row label={$LL.settingsBackgroundApps()} sub={$LL.settingsBackgroundAppsSub()}>
         <Switch
           label={$LL.settingsBackgroundApps()}
-          disabled={!prefs.keepsBackground}
           checked={prefs.value.background}
           onchange={(on) => prefs.update({ background: on })}
         />

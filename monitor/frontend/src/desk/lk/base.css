@@ -119,20 +119,22 @@
 /* Scrollbars: thin, tinted, inset from the window's edge. */
 .lk * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--text-primary) 22%, transparent) transparent;
+  scrollbar-color: var(--lk-scrollbar-thumb-color, color-mix(in srgb, var(--text-primary) 22%, transparent))
+    var(--lk-scrollbar-track-color, transparent);
 }
+/* A theme's thickness is the thumb's; the 3px inset stays around it. */
 .lk ::-webkit-scrollbar {
-  width: 11px;
-  height: 11px;
+  width: calc(var(--lk-scrollbar-thickness, 5px) + 6px);
+  height: calc(var(--lk-scrollbar-thickness, 5px) + 6px);
   background: transparent;
 }
 .lk ::-webkit-scrollbar-track,
 .lk ::-webkit-scrollbar-corner {
-  background: transparent;
+  background: var(--lk-scrollbar-track-color, transparent);
 }
 .lk ::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--text-primary) 18%, transparent);
-  border-radius: 11px;
+  background: var(--lk-scrollbar-thumb-color, color-mix(in srgb, var(--text-primary) 18%, transparent));
+  border-radius: var(--lk-scrollbar-radius, 11px);
   border: 3px solid transparent;
   background-clip: padding-box;
   min-height: 34px;

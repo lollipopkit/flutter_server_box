@@ -124,6 +124,8 @@ pub struct AppState {
     pub desk: Arc<crate::api::desk::DeskHub>,
     /// The theme store as last read — see `api::desk_themes`.
     pub themes: Arc<crate::api::desk_themes::ThemeStore>,
+    /// Files kept beside the database — see `core::blobs`.
+    pub blobs: Arc<crate::core::blobs::Blobs>,
     /// Desk app backend calls running now (`api::app_runtime`).
     pub app_calls: crate::api::app_runtime::AppCalls,
     /// The last process table read, which the next one's read and write
@@ -154,9 +156,17 @@ fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
     (!memory).then(|| file.to_path_buf())
 }
 
+/// The file [db] opened, or `None` for an in-memory database.
+fn sqlite_file_of(db: &SqlitePool) -> Option<std::path::PathBuf> {
+    let file = db.connect_options().get_filename().to_path_buf();
+    let memory = file.as_os_str().is_empty() || file.to_string_lossy().starts_with("file:") || file.to_string_lossy() == ":memory:";
+    (!memory).then_some(file)
+}
+
 /// Where this agent keeps what the file API must never reach — see
 /// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
-/// with `jwt.secret` and the first-start credentials beside it, `config.toml`
+/// with `jwt.secret`, the first-start credentials and the blob directory
+/// (`core::blobs`) beside it, `config.toml`
 /// and its backups, `.env`, the TLS certificate and key, and the
 /// custom-commands directory.
 fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
@@ -168,6 +178,7 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     // database was `my db.db`.
     if let Some(db) = sqlite_file(&url) {
         protected.file(&db);
+        protected.tree(crate::core::blobs::Blobs::beside(&db).dir());
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -217,6 +228,12 @@ impl AppState {
             grants_changed: broadcast::channel(16).0,
             desk: Arc::new(crate::api::desk::DeskHub::default()),
             themes: Arc::new(crate::api::desk_themes::ThemeStore::default()),
+            // Beside the database actually open, which a test's in-memory
+            // one is not, whatever its configuration names.
+            blobs: Arc::new(match sqlite_file_of(&db) {
+                Some(file) => crate::core::blobs::Blobs::beside(&file),
+                None => crate::core::blobs::Blobs::temporary(),
+            }),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
@@ -1934,6 +1951,16 @@ mod agent_state_tests {
         assert!(protected.covers(&cwd.join(".env")));
         assert!(protected.covers(&cwd.join(".env.bak-1789489640")));
         assert!(!protected.covers(&cwd.join("notes.env")));
+    }
+
+    #[test]
+    fn the_blob_directory_is_agent_state() {
+        // The default database is `serverbox_monitor.db` in the working
+        // directory, so its files are `./blobs/...`, every one of them.
+        let protected = agent_state(&Config::default());
+        let cwd = std::fs::canonicalize(".").unwrap();
+        assert!(protected.covers(&cwd.join("blobs").join("ab").join("ab".repeat(32))));
+        assert!(protected.covers(&cwd.join("blobs").join("tmp").join("x")));
     }
 }
 

@@ -1511,7 +1511,6 @@ const de = {
 	settingsBackgroundAppsSub: 'Aus: Ein ausgeblendetes Fenster wird angehalten und beim Einblenden wieder gestartet',
 	deskMenuFile: 'Ablage',
 	deskMenuGo: 'Gehe zu',
-	settingsBackgroundAppsOld: 'Dieser agent ist zu alt, um diese Auswahl zu speichern',
 	deskInBackground: 'Im Hintergrund',
 	settingsBackgroundPerApp: 'Hintergrundbetrieb',
 	deskOpenWith: 'Öffnen mit',

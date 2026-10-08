@@ -1,4 +1,4 @@
-/// An installed theme (`.fsbt`, read by the agent's `sbm_theme`) drawn with
+/// An installed theme (`.fsbt`, read by the agent's `fl_theme`) drawn with
 /// the lollipopkit Design System's tokens (`lk/tokens.css`): the theme's
 /// accent and neutral palettes take the places of `--berry-*` and `--ink-*`,
 /// so every token the design system derives from them follows in its own
@@ -7,9 +7,11 @@
 /// the cards and buttons; the background is a wallpaper
 /// (`themeWallpaper`).
 ///
-/// What a theme's `[components]` say is kept and not drawn yet (TODO).
+/// A theme's `[components]` and `[layout]` reach the design system's
+/// components too (`themeComponents`).
 
 import type { PackageTheme } from './deskApi'
+import { componentVars, densityVars } from './themeComponents'
 
 export function css(argb: number): string {
   const a = ((argb >>> 24) & 0xff) / 255
@@ -122,6 +124,10 @@ export function themeVars(theme: PackageTheme, dark: boolean): Record<string, st
   // system's rounded selection, so it is not drawn.
   vars['--shape-card'] = `${theme.shapes.card}px`
   vars['--shape-button'] = `${theme.shapes.button}px`
+
+  const color = (value: unknown) =>
+    typeof value === 'number' ? css(value) : typeof value === 'string' && s[value] !== undefined ? css(s[value]) : null
+  Object.assign(vars, componentVars(theme, dark, color), densityVars(theme))
   return vars
 }
 

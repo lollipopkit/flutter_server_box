@@ -1511,7 +1511,6 @@ const tr = {
 	settingsBackgroundAppsSub: 'Kapalı: gizli bir pencere durur ve gösterildiğinde yeniden başlar',
 	deskMenuFile: 'Dosya',
 	deskMenuGo: 'Git',
-	settingsBackgroundAppsOld: 'Bu agent bu seçimi kaydedemeyecek kadar eski',
 	deskInBackground: 'Arka planda',
 	settingsBackgroundPerApp: 'Arka plan',
 	deskOpenWith: 'Birlikte aç',

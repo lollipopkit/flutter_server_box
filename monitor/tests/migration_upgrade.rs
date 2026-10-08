@@ -32,7 +32,7 @@ async fn migrations_apply_to_a_database_that_already_has_rows() {
         .await
         .unwrap();
     sqlx::query("DROP TABLE access_log").execute(&pool).await.unwrap();
-    // Recreated by 006 when it runs again below; 023 dropped it.
+    // Recreated by 006 when it runs again below; 019 dropped it.
     sqlx::query("DROP TABLE IF EXISTS ssh_known_hosts").execute(&pool).await.unwrap();
     sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 6")
         .execute(&pool)
@@ -145,6 +145,46 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
 /// a subset out of the same `Migration` values is what makes the second run
 /// apply only what is left: it re-validates the checksums of what is already
 /// recorded, and those match by construction.
+/// The backups monitor 0.2.0 hosted in the database (migration 015) become
+/// files once migration 020 has run and the agent starts, and the table that
+/// held them goes.
+#[tokio::test]
+async fn hosted_backups_move_out_of_the_database() {
+    use server_box_monitor::core::blobs::{Blobs, move_database_backups};
+    let pool = pool().await;
+    migrator_through(17).run(&pool).await.unwrap();
+    for (name, data) in [("srvbox_bak_v3.json", b"ciphertext".as_slice()), ("panel.json", b"other".as_slice())] {
+        sqlx::query("INSERT INTO backup_blob (name, data, size, updated_at) VALUES (?, ?, ?, '2026-10-01T00:00:00.000Z')")
+            .bind(name)
+            .bind(data)
+            .bind(data.len() as i64)
+            .execute(&pool)
+            .await
+            .unwrap();
+    }
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    let blobs = Blobs::temporary();
+    move_database_backups(&pool, &blobs).await.unwrap();
+    // Once: a second start finds nothing to move.
+    move_database_backups(&pool, &blobs).await.unwrap();
+
+    let gone: bool = sqlx::query_scalar("SELECT NOT EXISTS (SELECT 1 FROM sqlite_master WHERE name = 'backup_blob')")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(gone);
+    let (sha, size, updated_at): (String, i64, String) =
+        sqlx::query_as("SELECT sha256, size, updated_at FROM backup_file WHERE name = 'srvbox_bak_v3.json'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!((size, updated_at.as_str()), (10, "2026-10-01T00:00:00.000Z"));
+    assert_eq!(blobs.read(&sha).await.unwrap().as_deref(), Some(&b"ciphertext"[..]));
+    // Named by its row, so a collection keeps it.
+    blobs.collect(&pool).await.unwrap();
+    assert!(blobs.read(&sha).await.unwrap().is_some());
+}
+
 fn migrator_through(through: i64) -> sqlx::migrate::Migrator {
     let all = sqlx::migrate!("./migrations");
     sqlx::migrate::Migrator {
@@ -609,15 +649,15 @@ async fn fresh_admin_role(
 /// `virt` field, so the JSON below is byte for byte what it stored: a role
 /// with `shell` (the upgraded admin), one without (a remote-desktop role an
 /// admin created), and a built-in still waiting for `ensure_roles`.
-/// Migration 023 against roles saved with `ssh_terminal`, as every agent from
+/// Migration 019 against roles saved with `ssh_terminal`, as every agent from
 /// 0.2.0 until it saved them.
 #[tokio::test]
-async fn migration_023_drops_the_ssh_terminal_grant_and_the_pinned_host_key() {
+async fn migration_019_drops_the_ssh_terminal_grant_and_the_pinned_host_key() {
     use server_box_monitor::db::accounts;
     use server_box_monitor::core::permissions::ConnectGrant;
 
     let pool = pool().await;
-    migrator_through(22).run(&pool).await.unwrap();
+    migrator_through(18).run(&pool).await.unwrap();
     sqlx::query(
         "INSERT INTO ssh_known_hosts (addr, key_type, fingerprint) VALUES ('127.0.0.1:22','ssh-ed25519','SHA256:x')",
     )
@@ -749,13 +789,9 @@ fn shipped_migrations_keep_their_checksums() {
         (15, "3f6636970de6cca7356e0e1107330778898416f76f71bf5aae1bd3baa78e011ca6551f5e2c27f03166c9cdb7ae9d5618"),
         (16, "7196b34f2a606e66eb4c66659542d023b3d9e2dcb10f859efc0dae770102088963dda18b5cdc93a4c00fbbf54d16f2c1"),
         (17, "ba885b434ae998eb589c4ea50f2d7a68790e5a44007ddfe50ebed79f767d8a81a04744bf10774e94056e58d51c3920ac"),
-        (18, "d01153e6b7558e25e007cce38b62ce6d64117f07ba932c1726317b48625c9fdd438ea3b58bc86e0d6b90d421c8dcc77d"),
-        (19, "b3b7998eb4ddae83e72cf79667588eaae5c197ae667f4c836e5533b91adf228acda1c237111472a9661045f8feb70e24"),
-        (20, "3fcf9300b02b96325ae075c7147ace3a3ac085693a5c7bc80400d035fd334937f86e180ef901082dde02f1b08aec2d3c"),
-        (21, "8549100ea818734178a5c13ddcb90999e29d3636163abda31f2f7b6ae749a17e53ba128315f60a0b7d879aca525f5c7e"),
-        (22, "7122ab7e33fe302a7e82f40a3b79efb8fd6fd85047f4bc7dd675a85aedc02e92813b4987db46891978f4cba329dd4c3a"),
-        (23, "5f9544a9e8df9e588c6c604ca7be4871c4b4996489f0faeacd34037fe44f8beca506a418f56fe79598f39f7fa5c03aad"),
-        (24, "d675ebe7efaa6fc5ce519b7e7944b5f0781723cc6111646f496c73bf1e35816866cb94860bad0907617953ea63a80b5f"),
+        (18, "441e628e50c650653e520d2e381b2fb7e2ea9a577c13da2d7a207793627a45355e646250c2c5c6f99e743e1a3f49d71d"),
+        (19, "5f9544a9e8df9e588c6c604ca7be4871c4b4996489f0faeacd34037fe44f8beca506a418f56fe79598f39f7fa5c03aad"),
+        (20, "6f2530558f99971da044a40d3915e6ff0f1941d01cd455174582b1ee38688dce1eed560c7da805f91c500f196751b9b7"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();

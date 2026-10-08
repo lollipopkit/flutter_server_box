@@ -50,7 +50,7 @@
           onchange={(on) => (on ? prefs.pin(spec.id) : prefs.unpin(spec.id))}
         />
       </Row>
-      {#if prefs.keepsBackground && mayRunHidden}
+      {#if mayRunHidden}
         <Row
           label={$LL.settingsAppRunHidden()}
           sub={prefs.value.background ? $LL.settingsAppRunHiddenSub() : $LL.settingsAppRunHiddenOff()}

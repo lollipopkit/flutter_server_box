@@ -9,9 +9,7 @@ import { deskApi, readEvents, type DeskNotification, type DeskPreferences, type 
 export interface DeskStorage {
   /// Whether this is the agent's (shared by every browser) or this browser's.
   readonly remote: boolean
-  /// Whether `background` is kept (an older agent's storage drops it).
-  readonly keepsBackground: boolean
-  /// Whether installed themes and `theme` are kept (`desk_themes`).
+  /// Whether installed themes and `theme` are kept: only on the agent.
   readonly keepsThemes: boolean
   /// What an app keeps for itself (`sys.storage`), all of it.
   appItems(app: string): Promise<Record<string, unknown>>
@@ -32,36 +30,21 @@ export interface DeskStorage {
 
 export class AgentStorage implements DeskStorage {
   readonly remote = true
-  readonly keepsBackground: boolean
-  readonly keepsThemes: boolean
+  readonly keepsThemes = true
   #entry: ServerEntry
 
-  /// Where apps keep their own data when the agent cannot (no
-  /// `desk_storage`). TODO: remove once agents without it are gone.
-  #appFallback: BrowserStorage | null
-
-  /// [keepsBackground]: the agent stores `background` (`desk_background`);
-  /// an older one refuses preferences carrying it. [keepsAppData]: it has
-  /// `/desk/apps/{app}/storage` (`desk_storage`). [keepsThemes]: it has
-  /// `/desk/themes` and stores `theme` (`desk_themes`).
-  constructor(entry: ServerEntry, keepsBackground: boolean, keepsAppData: boolean, keepsThemes = false) {
+  constructor(entry: ServerEntry) {
     // A copy: the session token it was made with is the one it keeps using.
     this.#entry = { ...entry }
-    this.keepsBackground = keepsBackground
-    this.keepsThemes = keepsThemes
-    this.#appFallback = keepsAppData ? null : new BrowserStorage(entry.id)
   }
 
   async appItems(app: string) {
-    if (this.#appFallback) return this.#appFallback.appItems(app)
     return (await deskApi.appItems(this.#entry, app)).items
   }
   async appPut(app: string, key: string, value: unknown) {
-    if (this.#appFallback) return this.#appFallback.appPut(app, key, value)
     await deskApi.appPut(this.#entry, app, key, value)
   }
   async appRemove(app: string, key: string) {
-    if (this.#appFallback) return this.#appFallback.appRemove(app, key)
     await deskApi.appRemove(this.#entry, app, key)
   }
 
@@ -70,18 +53,7 @@ export class AgentStorage implements DeskStorage {
     return { preferences: view.preferences, wallpaperSha: view.wallpaper_sha256 }
   }
   async savePreferences(p: DeskPreferences) {
-    if (!this.keepsThemes) {
-      // TODO: remove once agents without `desk_themes` are gone.
-      const { theme: _, ...older } = p
-      p = { ...older, wallpaper: p.wallpaper === 'theme' ? 'preset:bloom' : p.wallpaper } as DeskPreferences
-    }
-    if (this.keepsBackground) {
-      await deskApi.putPreferences(this.#entry, p)
-    } else {
-      // TODO: remove once agents without `desk_background` are gone.
-      const { background: _, background_denied: __, ...older } = p
-      await deskApi.putPreferences(this.#entry, older as DeskPreferences)
-    }
+    await deskApi.putPreferences(this.#entry, p)
   }
   loadSession(device: string) {
     return deskApi.getSession(this.#entry, device)
@@ -118,7 +90,6 @@ function bytes(text: string): number {
 
 export class BrowserStorage implements DeskStorage {
   readonly remote = false
-  readonly keepsBackground = true
   readonly keepsThemes = false
   #key: string
 

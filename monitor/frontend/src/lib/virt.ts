@@ -187,11 +187,11 @@ export function stateTone(state: VirtGuestState): 'success' | 'warning' | 'neutr
 export function stateDot(state: VirtGuestState): string {
   switch (stateTone(state)) {
     case 'success':
-      return 'bg-success'
+      return 'bg-(--color-success)'
     case 'warning':
-      return 'bg-warning'
+      return 'bg-(--color-warning)'
     default:
-      return 'bg-faint-fg'
+      return 'bg-(--text-tertiary)'
   }
 }
 

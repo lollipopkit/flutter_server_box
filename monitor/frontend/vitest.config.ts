@@ -14,6 +14,9 @@ export default defineConfig({
         include: ['src/**/*.test.ts'],
         exclude: ['src/tests/{format,fsPath,agentUrl}.test.ts'],
         setupFiles: ['./src/tests/setup.ts'],
+        // A stylesheet read as text (`?raw`, the theme hooks' test) is its
+        // text; any other stays empty, as Vitest leaves them.
+        css: { include: [/\.css\?raw$/] },
       } },
     ],
   },

@@ -6,7 +6,7 @@
 //!
 //! `/desk-app/{name}`: the desk's design system (`dist/desk-app`: `desk.css`
 //! and its fonts), which an installed app's frame loads to be drawn like the
-//! desk (`@lollipopkit/desk-sys`) without carrying any of it. One URL for
+//! desk (`lkui`) without carrying any of it. One URL for
 //! every app and launch, so the browser keeps one copy; open to any origin,
 //! since the frame's is opaque and fonts load with CORS.
 

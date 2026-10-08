@@ -52,18 +52,11 @@ pub const FEATURES: &[&str] = &[
     "bmc",
     "virt",
     "firewall",
-    // The panel's desk keeps its arrangement here (`api::desk`); without it
-    // the panel keeps it in the browser.
+    // The panel's desk (`api::desk`): its arrangement and preferences, each
+    // app's storage, installed apps (`api::apps`) and theme packages
+    // (`api::desk_themes`). Without it the panel keeps the desk in the
+    // browser.
     "desk",
-    // Its preferences carry `background` (an older agent refuses the field).
-    "desk_background",
-    // `/desk/apps/{app}/storage`: what each desk app keeps for itself.
-    "desk_storage",
-    // `/apps`: desk apps an admin installs (`api::apps`).
-    "desk_apps",
-    // `/desk/themes*`: theme packages (`.fsbt`), and preferences carrying
-    // `theme` and the `theme` wallpaper (an older agent refuses both).
-    "desk_themes",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

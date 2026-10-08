@@ -5,32 +5,27 @@ import { terminalSurface } from '../lib/terminalSurface.svelte'
 describe('theme', () => {
   beforeEach(() => {
     window.localStorage.removeItem('theme')
-    document.documentElement.classList.remove('dark', 'light')
   })
 
-  it('cycles system -> light -> dark, applying explicit classes only', () => {
-    const cls = document.documentElement.classList
+  it('cycles system -> light -> dark, marking the mode in effect', () => {
+    const root = document.documentElement
+    const system = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
     while (theme.current !== 'system') theme.cycle()
-    // system preference is handled by the theme CSS media query: no classes
-    expect(cls.contains('dark')).toBe(false)
-    expect(cls.contains('light')).toBe(false)
+    expect(root.dataset.theme).toBe(system)
 
     theme.cycle()
     expect(theme.current).toBe('light')
     expect(window.localStorage.getItem('theme')).toBe('light')
-    expect(cls.contains('light')).toBe(true)
-    expect(cls.contains('dark')).toBe(false)
+    expect(root.dataset.theme).toBe('light')
 
     theme.cycle()
     expect(theme.current).toBe('dark')
     expect(window.localStorage.getItem('theme')).toBe('dark')
-    expect(cls.contains('dark')).toBe(true)
-    expect(cls.contains('light')).toBe(false)
+    expect(root.dataset.theme).toBe('dark')
 
     theme.cycle()
     expect(theme.current).toBe('system')
-    expect(cls.contains('dark')).toBe(false)
-    expect(cls.contains('light')).toBe(false)
+    expect(root.dataset.theme).toBe(system)
   })
 
   it('gives the terminals a surface matching the terminal theme', () => {

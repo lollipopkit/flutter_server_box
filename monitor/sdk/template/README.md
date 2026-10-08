@@ -1,6 +1,6 @@
 # Desk app template
 
-A `web` desk app built with `@lollipopkit/desk-sys` (`../desk-sys`,
+A `web` desk app built with `lkui` (`../lkui`,
 Apache-2.0) and vite.
 Read `docs/dev/desk-sys.md` first.
 
@@ -8,6 +8,10 @@ Read `docs/dev/desk-sys.md` first.
 npm install
 npm run pack        # dist/ + manifest.json -> <id>.fsba
 ```
+
+Here `lkui` is the copy beside it (`file:../lkui`), which needs
+`npm run build --prefix ../lkui` once; a copy of this template elsewhere
+depends on the published `lkui` instead.
 
 Install the package as an admin in Settings → Apps, then approve it.
 

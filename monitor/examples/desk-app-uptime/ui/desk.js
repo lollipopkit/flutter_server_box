@@ -1,5 +1,5 @@
 // A minimal client of the desk's app bridge (docs/dev/desk-sys.md), enough
-// for this example; `monitor/sdk/desk-sys` is the full one. The desk hands
+// for this example; `monitor/sdk/lkui` is the full one. The desk hands
 // this page a MessagePort once it has loaded; everything goes over it.
 ;(function () {
   let next = 1

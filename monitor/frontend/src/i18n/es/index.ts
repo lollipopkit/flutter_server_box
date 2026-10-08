@@ -1511,7 +1511,6 @@ const es = {
 	settingsBackgroundAppsSub: 'Desactivado: una ventana oculta se detiene y vuelve a iniciarse al mostrarla',
 	deskMenuFile: 'Archivo',
 	deskMenuGo: 'Ir',
-	settingsBackgroundAppsOld: 'Este agente es demasiado antiguo para guardar esta opción',
 	deskInBackground: 'En segundo plano',
 	settingsBackgroundPerApp: 'En segundo plano',
 	deskOpenWith: 'Abrir con',

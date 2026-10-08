@@ -297,7 +297,7 @@
   {:else if loading}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else if loadError}
-    <p class="text-sm text-danger">{loadError}</p>
+    <p class="text-sm text-(--color-danger)">{loadError}</p>
   {:else if settings}
     <!-- The API round-trip (network latency to a remote agent, unlike
          Dashboard's already-cached poller data or Panel Settings' no-fetch
@@ -468,10 +468,10 @@
     </Group>
 
     {#if saveError}
-      <p class="text-sm text-danger">{saveError}</p>
+      <p class="text-sm text-(--color-danger)">{saveError}</p>
     {/if}
     {#if saveOk}
-      <p class="text-sm text-success">{$LL.settingsSaved()}</p>
+      <p class="text-sm text-(--color-success)">{$LL.settingsSaved()}</p>
     {/if}
     </div>
   {/if}

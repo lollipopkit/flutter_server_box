@@ -90,14 +90,14 @@
 
 <div class="space-y-2">
   {#if error}
-    <p class="text-sm text-danger">{error}</p>
+    <p class="text-sm text-(--color-danger)">{error}</p>
   {:else if loading && !view}
     <Spinner class="w-4 h-4" />
   {:else if view && !view.available}
     <div class="space-y-1">
       <p class="text-sm text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason && view.reason_kind !== 'no_such_user'}
-        <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
+        <pre class="text-xs font-mono text-(--text-tertiary) whitespace-pre-wrap break-all">{view.reason}</pre>
       {/if}
     </div>
   {:else if view?.detail}

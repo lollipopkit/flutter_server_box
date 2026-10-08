@@ -1511,7 +1511,6 @@ const id = {
 	settingsBackgroundAppsSub: 'Nonaktif: jendela tersembunyi berhenti, lalu berjalan lagi saat ditampilkan',
 	deskMenuFile: 'Berkas',
 	deskMenuGo: 'Buka',
-	settingsBackgroundAppsOld: 'Agent ini terlalu lama untuk menyimpan pilihan ini',
 	deskInBackground: 'Di latar belakang',
 	settingsBackgroundPerApp: 'Latar belakang',
 	deskOpenWith: 'Buka dengan',

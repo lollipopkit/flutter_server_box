@@ -1511,7 +1511,6 @@ const zh_TW = {
 	settingsBackgroundAppsSub: '關閉時，隱藏的視窗會停止，重新顯示時再啟動',
 	deskMenuFile: '檔案',
 	deskMenuGo: '前往',
-	settingsBackgroundAppsOld: '此 agent 版本過舊，無法儲存此選項',
 	deskInBackground: '背景執行中',
 	settingsBackgroundPerApp: '背景執行',
 	deskOpenWith: '開啟方式',

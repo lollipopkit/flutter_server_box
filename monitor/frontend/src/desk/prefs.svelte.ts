@@ -52,11 +52,6 @@ export class DeskPrefs {
     this.update({ background_denied: allowed ? others : [...others, appId] })
   }
 
-  /// Whether the background choice is kept (an older agent cannot).
-  get keepsBackground(): boolean {
-    return this.#storage.keepsBackground
-  }
-
   /// The preset id, or null for the custom image.
   get preset(): WallpaperPreset | null {
     const id = this.value.wallpaper.startsWith('preset:') ? this.value.wallpaper.slice(7) : null

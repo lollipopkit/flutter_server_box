@@ -1,9 +1,7 @@
 /// Theme selection: light / dark / system, persisted in localStorage.
-/// The shared theme tokens (@serverbox/webui/theme.css) follow the system via
-/// media query by default; an explicit `.dark` / `.light` class on <html>
-/// overrides it (pre-paint init lives in index.html). The theme in effect is
-/// also `data-theme="light|dark"` on <html>, which the desk's design system
-/// (`desk/lk/`) keys its dark palette on.
+/// The theme in effect is `data-theme="light|dark"` on <html> (set before
+/// first paint in index.html), which the desk's design system (`desk/lk/`)
+/// keys its dark palette on.
 
 import { flushSync } from 'svelte'
 
@@ -101,10 +99,6 @@ class ThemeStore {
 
   #apply() {
     this.revision++
-    const cls = document.documentElement.classList
-    const mode = this.locked ?? this.current
-    cls.toggle('dark', mode === 'dark')
-    cls.toggle('light', mode === 'light')
     document.documentElement.dataset.theme = this.dark ? 'dark' : 'light'
   }
 

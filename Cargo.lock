@@ -1423,6 +1423,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d45db016d36b838f563236e9193d0ee6ce38f3f68b6c94e914b4929c96bbb890"
 
 [[package]]
+name = "fl_theme"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "imagesize",
+ "indexmap",
+ "material-colors",
+ "quick-xml",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "tar",
+ "toml",
+ "url",
+ "zip",
+]
+
+[[package]]
 name = "flagset"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4261,24 +4279,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sbm_theme"
-version = "0.1.0"
-dependencies = [
- "flate2",
- "imagesize",
- "indexmap",
- "material-colors",
- "quick-xml",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "tar",
- "toml",
- "url",
- "zip",
-]
-
-[[package]]
 name = "sbm_virt"
 version = "0.1.0"
 dependencies = [
@@ -4495,12 +4495,14 @@ dependencies = [
  "chrono",
  "clap",
  "dotenvy",
+ "fl_theme",
  "flate2",
  "fs2",
  "futures",
  "getrandom 0.4.3",
  "hex",
  "hostname",
+ "indexmap",
  "ironrdp-rdcleanpath",
  "jsonwebtoken",
  "libc",
@@ -4517,7 +4519,6 @@ dependencies = [
  "sbm_native",
  "sbm_parser",
  "sbm_redfish",
- "sbm_theme",
  "sbm_virt",
  "serde",
  "serde_json",

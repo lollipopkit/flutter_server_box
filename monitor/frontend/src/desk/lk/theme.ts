@@ -1,4 +1,4 @@
-/// How the desk is drawn, as `@lollipopkit/desk-sys` hands it to an app
+/// How the desk is drawn, as `lkui` hands it to an app
 /// (`info.theme`, then each `theme` event): its mode, and the tokens of the
 /// theme the account installed (empty for the design system's own).
 export interface DeskTheme {

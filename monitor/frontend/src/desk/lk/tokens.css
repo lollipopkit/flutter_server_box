@@ -420,29 +420,3 @@
     --ease-spring-bouncy: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
-
-/* ---------- The shared kit inside the desk ----------
-   Apps still built on `@serverbox/webui` and its Tailwind tokens (`bg`,
-   `surface`, `fg`, `line`, `soft`, `primary`, …) take the design system's
-   values here until they move to the `lk` components.
-   TODO: remove once every app uses `desk/lk` only. */
-.lk {
-  --sb-snow: var(--surface-window);
-  --sb-white: var(--surface-content);
-  --sb-near-black: var(--text-primary);
-  --sb-black: var(--text-primary);
-  --sb-stone: var(--text-secondary);
-  --sb-silver: var(--text-tertiary);
-  --sb-border: var(--border-strong);
-  --sb-light-gray: var(--fill-hover);
-  --sb-ring: color-mix(in srgb, var(--color-accent) 32%, transparent);
-  --sb-primary: var(--color-accent);
-  --sb-button-primary-bg: var(--color-accent);
-  --sb-button-primary-fg: var(--text-on-accent);
-  --sb-icon-button-border: transparent;
-  --sb-radius-control: var(--radius-control);
-  --sb-radius-container: var(--radius-card);
-  --sb-font-body: var(--font-ui);
-  --sb-font-display: var(--font-display);
-  --sb-font-mono: var(--font-mono);
-}

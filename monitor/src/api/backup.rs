@@ -4,7 +4,8 @@
 //!
 //! # What a blob is
 //!
-//! Opaque bytes under a name (migration 015). The app encrypts a backup before
+//! Opaque bytes under a name (migration 020), kept as a file beside the
+//! database (`core::blobs`). The app encrypts a backup before
 //! it is sent (`fl_lib`'s `Cryptor`, a key derived from a password the operator
 //! typed), so what arrives is ciphertext. **Nothing here reads a blob**: there
 //! is nothing it could check, and the one thing it could do is leak.
@@ -22,6 +23,7 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 
+use crate::core::blobs::Blobs;
 use super::authz;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
@@ -75,7 +77,7 @@ fn refusal(status: ntex::http::StatusCode, error: &'static str) -> HttpResponse 
     HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
 }
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
+fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
     tracing::error!("backup: {e}");
     refusal(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "internal")
 }
@@ -114,11 +116,16 @@ pub async fn download(
     if !valid_name(&query.name) {
         return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
-    let row = sqlx::query_scalar::<_, Vec<u8>>("SELECT data FROM backup_blob WHERE name = ?")
+    let sha = match sqlx::query_scalar::<_, String>("SELECT sha256 FROM backup_file WHERE name = ?")
         .bind(&query.name)
         .fetch_optional(&state.db)
-        .await;
-    match row {
+        .await
+    {
+        Ok(Some(sha)) => sha,
+        Ok(None) => return Ok(refusal(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob")),
+        Err(e) => return Ok(internal_error(&e)),
+    };
+    match state.blobs.read(&sha).await {
         Ok(Some(data)) => Ok(HttpResponse::Ok()
             .content_type("application/octet-stream")
             .header(
@@ -160,7 +167,7 @@ pub async fn upload(
     }
 
     let size = data.len() as i64;
-    match store(&state.db, &name, data).await {
+    match store(&state.db, &state.blobs, &name, data).await {
         Ok(Some(view)) => {
             record(&state, &req, &caller, Outcome::Ok, format!("backup write {name}: {size} bytes")).await;
             Ok(HttpResponse::Ok().json(&view))
@@ -168,7 +175,7 @@ pub async fn upload(
         Ok(None) => Ok(refusal(ntex::http::StatusCode::CONFLICT, "tooMany")),
         Err(e) => {
             record(&state, &req, &caller, Outcome::Error, format!("backup write {name}: failed")).await;
-            Ok(internal_error(&e))
+            Ok(internal_error(&format!("{e:#}")))
         }
     }
 }
@@ -185,7 +192,7 @@ pub async fn remove(
     if !valid_name(&query.name) {
         return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
-    match sqlx::query("DELETE FROM backup_blob WHERE name = ?")
+    match sqlx::query("DELETE FROM backup_file WHERE name = ?")
         .bind(&query.name)
         .execute(&state.db)
         .await
@@ -194,6 +201,7 @@ pub async fn remove(
             Ok(refusal(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob"))
         }
         Ok(_) => {
+            state.blobs.collect_soon(&state.db);
             record(&state, &req, &caller, Outcome::Ok, format!("backup remove {}", query.name)).await;
             Ok(HttpResponse::NoContent().finish())
         }
@@ -202,26 +210,31 @@ pub async fn remove(
 }
 
 async fn load(db: &SqlitePool) -> Result<Vec<BlobView>, sqlx::Error> {
-    sqlx::query_as::<_, BlobView>("SELECT name, size, updated_at FROM backup_blob ORDER BY name")
+    sqlx::query_as::<_, BlobView>("SELECT name, size, updated_at FROM backup_file ORDER BY name")
         .fetch_all(db)
         .await
 }
 
 /// Writes the blob, or answers `None` when it would be a new name past
 /// [`MAX_BLOBS`]. Counted in the same transaction as the write, so two
-/// uploads cannot both take the last place.
-async fn store(db: &SqlitePool, name: &str, data: Vec<u8>) -> Result<Option<BlobView>, sqlx::Error> {
+/// uploads cannot both take the last place. The bytes are a file in [blobs]
+/// (`core::blobs`), written before the row that names it.
+async fn store(db: &SqlitePool, blobs: &Arc<Blobs>, name: &str, data: Vec<u8>) -> anyhow::Result<Option<BlobView>> {
+    let writing = blobs.writing().await;
+    let sha = blobs.put(&data).await?;
     let mut tx = db.begin().await?;
-    let exists = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM backup_blob WHERE name = ?")
+    let exists = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM backup_file WHERE name = ?")
         .bind(name)
         .fetch_one(&mut *tx)
         .await?
         > 0;
     if !exists {
-        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM backup_blob")
+        let count = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM backup_file")
             .fetch_one(&mut *tx)
             .await?;
         if count >= MAX_BLOBS {
+            drop(writing);
+            blobs.collect_soon(db);
             return Ok(None);
         }
     }
@@ -231,17 +244,20 @@ async fn store(db: &SqlitePool, name: &str, data: Vec<u8>) -> Result<Option<Blob
         updated_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     };
     sqlx::query(
-        "INSERT INTO backup_blob (name, data, size, updated_at) VALUES (?, ?, ?, ?) \
-         ON CONFLICT(name) DO UPDATE SET data = excluded.data, size = excluded.size, \
+        "INSERT INTO backup_file (name, sha256, size, updated_at) VALUES (?, ?, ?, ?) \
+         ON CONFLICT(name) DO UPDATE SET sha256 = excluded.sha256, size = excluded.size, \
          updated_at = excluded.updated_at",
     )
     .bind(name)
-    .bind(data)
+    .bind(&sha)
     .bind(view.size)
     .bind(&view.updated_at)
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;
+    drop(writing);
+    // The version it replaced.
+    blobs.collect_soon(db);
     Ok(Some(view))
 }
 

@@ -218,9 +218,17 @@ jobs:
       - name: Test Rust workspace
         run: cargo test --workspace --no-fail-fast
 
+      # fl_lib's Rust (`fl_theme`, which the agent depends on by path, and its
+      # bridge to Dart) is a workspace of its own, so `--workspace` above does
+      # not reach it.
+      - name: Test fl_lib's Rust
+        run: cargo test --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --no-fail-fast
+
       - name: Clippy
         if: matrix.os == 'ubuntu-latest'
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: |
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+          cargo clippy --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --all-targets -- -D warnings
 
   monitorFrontend:
     name: Monitor frontend
@@ -613,12 +621,20 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: flutter-tests-ffi
+          workspaces: |
+            . -> target
+            packages/fl_lib/rust -> target
           save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 0 }}
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
       # load the dylib from target/debug via test/helpers/rust_lib_helper.dart
       - name: Build native FFI library
         run: cargo build -p sbm_ffi
+
+      # Every test loads fl_lib's Rust (theme packages) from its own target/
+      # (`test/flutter_test_config.dart`): a workspace of its own.
+      - name: Build fl_lib's Rust
+        run: cargo build --manifest-path packages/fl_lib/rust/Cargo.toml -p fl_lib_ffi
 
       # `flutter test` builds sbm_ffi again through the build hook, for a
       # library no unit test loads (they take the one built above).

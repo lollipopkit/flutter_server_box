@@ -1511,7 +1511,6 @@ const nl = {
 	settingsBackgroundAppsSub: 'Uit: een verborgen venster stopt en start weer zodra het wordt getoond',
 	deskMenuFile: 'Archief',
 	deskMenuGo: 'Ga',
-	settingsBackgroundAppsOld: 'Deze agent is te oud om deze keuze op te slaan',
 	deskInBackground: 'Op de achtergrond',
 	settingsBackgroundPerApp: 'Op de achtergrond',
 	deskOpenWith: 'Open met',

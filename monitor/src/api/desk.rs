@@ -30,7 +30,6 @@ use futures::StreamExt;
 use ntex::util::Bytes;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use sqlx::SqlitePool;
 use tokio::sync::broadcast;
 
@@ -547,7 +546,7 @@ async fn user_id(db: &SqlitePool, username: &str) -> Result<Option<i64>, sqlx::E
         .await
 }
 
-pub(crate) fn internal_error(e: &sqlx::Error) -> HttpResponse {
+pub(crate) fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
     tracing::error!("desk: {e}");
     HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
 }
@@ -599,26 +598,30 @@ pub async fn put_preferences(
 
 pub async fn get_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (_, user) = require!(account(&req, &state).await);
-    let row = sqlx::query_as::<_, (String, Vec<u8>, String)>(
-        "SELECT mime, bytes, sha256 FROM desk_wallpaper WHERE user_id = ?",
-    )
-    .bind(user)
-    .fetch_optional(&state.db)
-    .await;
-    match row {
-        Ok(Some((mime, bytes, sha))) => {
-            let etag = format!("\"{sha}\"");
-            let matches = req
-                .headers()
-                .get("if-none-match")
-                .and_then(|v| v.to_str().ok())
-                .is_some_and(|v| v == etag);
-            let mut res = if matches { HttpResponse::NotModified() } else { HttpResponse::Ok() };
-            res.header("etag", etag)
-                .header("cache-control", "private, no-cache")
-                .header("x-content-type-options", "nosniff");
-            Ok(if matches { res.finish() } else { res.content_type(mime).body(bytes) })
-        }
+    let row = sqlx::query_as::<_, (String, String)>("SELECT mime, sha256 FROM desk_wallpaper WHERE user_id = ?")
+        .bind(user)
+        .fetch_optional(&state.db)
+        .await;
+    let (mime, sha) = match row {
+        Ok(Some(row)) => row,
+        Ok(None) => return Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
+        Err(e) => return Ok(internal_error(&e)),
+    };
+    let etag = format!("\"{sha}\"");
+    let matches = req
+        .headers()
+        .get("if-none-match")
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|v| v == etag);
+    let mut res = if matches { HttpResponse::NotModified() } else { HttpResponse::Ok() };
+    res.header("etag", etag)
+        .header("cache-control", "private, no-cache")
+        .header("x-content-type-options", "nosniff");
+    if matches {
+        return Ok(res.finish());
+    }
+    match state.blobs.read(&sha).await {
+        Ok(Some(bytes)) => Ok(res.content_type(mime).body(bytes)),
         Ok(None) => Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
         Err(e) => Ok(internal_error(&e)),
     }
@@ -644,19 +647,25 @@ pub async fn put_wallpaper(
     let Some(mime) = sniff_image(&data) else {
         return Ok(HttpResponse::UnsupportedMediaType().json(&refused("notAnImage", None)));
     };
-    let sha = hex(&Sha256::digest(&data));
+    let writing = state.blobs.writing().await;
+    let sha = match state.blobs.put(&data).await {
+        Ok(sha) => sha,
+        Err(e) => return Ok(internal_error(&e)),
+    };
     let stored = sqlx::query(
-        "INSERT INTO desk_wallpaper (user_id, mime, bytes, sha256) VALUES (?, ?, ?, ?) \
-         ON CONFLICT(user_id) DO UPDATE SET mime = excluded.mime, bytes = excluded.bytes, sha256 = excluded.sha256",
+        "INSERT INTO desk_wallpaper (user_id, mime, sha256) VALUES (?, ?, ?) \
+         ON CONFLICT(user_id) DO UPDATE SET mime = excluded.mime, sha256 = excluded.sha256",
     )
     .bind(user)
     .bind(mime)
-    .bind(&data)
     .bind(&sha)
     .execute(&state.db)
     .await;
+    drop(writing);
     match stored {
         Ok(_) => {
+            // The image it replaced.
+            state.blobs.collect_soon(&state.db);
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::Ok().json(&serde_json::json!({ "sha256": sha })))
         }
@@ -683,6 +692,7 @@ pub async fn delete_wallpaper(req: HttpRequest, state: web::types::State<Arc<App
     .await;
     match done {
         Ok(()) => {
+            state.blobs.collect_soon(&state.db);
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::NoContent().finish())
         }
@@ -1118,10 +1128,6 @@ async fn store_session(db: &SqlitePool, user: i64, write: &SessionWrite) -> Resu
     }
     tx.commit().await?;
     Ok(Stored::Written(revision))
-}
-
-fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 #[cfg(test)]

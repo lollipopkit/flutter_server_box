@@ -25,7 +25,7 @@
   let stylesheet: string | null = null
 
   /// The desk's mode and its installed theme's tokens (none for the design
-  /// system's own), which `@lollipopkit/desk-sys` sets on the app's page.
+  /// system's own), which `lkui` sets on the app's page.
   const appTheme = () => ({ dark: theme.dark, tokens: desk.themes?.vars(theme.dark) ?? {} })
 
   const bridge = new WebAppBridge(

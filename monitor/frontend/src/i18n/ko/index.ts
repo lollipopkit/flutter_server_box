@@ -1511,7 +1511,6 @@ const ko = {
 	settingsBackgroundAppsSub: '끄면 숨겨진 창이 중지되고 다시 표시할 때 시작됩니다',
 	deskMenuFile: '파일',
 	deskMenuGo: '이동',
-	settingsBackgroundAppsOld: '이 agent는 오래되어 이 선택을 저장할 수 없습니다',
 	deskInBackground: '백그라운드에서 실행 중',
 	settingsBackgroundPerApp: '백그라운드 실행',
 	deskOpenWith: '다음으로 열기',

@@ -196,7 +196,9 @@ async fn a_refused_preference_names_why_and_stores_nothing() {
 
 #[ntex::test]
 async fn wallpaper_is_an_image_and_cached_by_its_hash() {
-    let srv = server(state().await).await;
+    let state = state().await;
+    let blobs = state.blobs.clone();
+    let srv = server(state).await;
     let svg = b"<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>".to_vec();
     let (status, body, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/desk/wallpaper", Some(svg)).await;
     assert_eq!(status, 415);
@@ -208,6 +210,9 @@ async fn wallpaper_is_an_image_and_cached_by_its_hash() {
     assert_eq!(status, 200);
     let sha = body["sha256"].as_str().unwrap().to_owned();
     assert_eq!(sha.len(), 64);
+    // A file beside the database, named by its digest; not a row's bytes.
+    let file = blobs.dir().join(&sha[..2]).join(&sha);
+    assert_eq!(std::fs::read(&file).unwrap(), png);
 
     let resp = srv
         .get("/api/v1/desk/wallpaper")
@@ -246,6 +251,14 @@ async fn wallpaper_is_an_image_and_cached_by_its_hash() {
     let (_, body, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk", None).await;
     assert_eq!(body["preferences"]["wallpaper"], desk::DEFAULT_WALLPAPER);
     assert!(body["wallpaper_sha256"].is_null());
+    // And its file goes once nothing names it.
+    for _ in 0..50 {
+        if !file.exists() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+    assert!(!file.exists());
 }
 
 #[ntex::test]

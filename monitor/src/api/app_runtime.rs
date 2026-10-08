@@ -341,14 +341,17 @@ fn read_guest(memory: &wasmi::Memory, store: impl wasmi::AsContext, ptr: u32, le
 }
 
 /// Runs [method] of [wasm] for [host]. Blocking.
-pub fn run(wasm_key: (String, String), wasm: &[u8], host: Host, method: &str, params: Value) -> Result<Value, String> {
+/// [wasm_key] is the app and the digest of its `backend.wasm`, read from the
+/// blob store only when no compiled module is kept for it.
+pub fn run(wasm_key: (String, String), host: Host, method: &str, params: Value) -> Result<Value, String> {
     let engine = engine();
     let module = {
         let mut cache = modules().lock().map_err(|_| "internal")?;
         match cache.get(&wasm_key) {
             Some(m) => m.clone(),
             None => {
-                let m = Module::new(engine, wasm).map_err(|_| "invalidModule")?;
+                let wasm = host.state.blobs.read_blocking(&wasm_key.1).ok().flatten().ok_or("internal")?;
+                let m = Module::new(engine, &wasm).map_err(|_| "invalidModule")?;
                 // One version per app is enough to keep.
                 cache.retain(|(app, _), _| app != &wasm_key.0);
                 cache.insert(wasm_key.clone(), m.clone());
@@ -483,8 +486,8 @@ pub async fn call(
         Err(e) => return Ok(super::desk::internal_error(&e)),
     };
     let Some(user) = user else { return Ok(HttpResponse::Unauthorized().finish()) };
-    let row: Option<(String, Option<String>, String, Vec<u8>)> = match sqlx::query_as(
-        "SELECT p.manifest, p.approved_permissions, p.sha256, f.bytes FROM desk_app_package p \
+    let row: Option<(String, Option<String>, String)> = match sqlx::query_as(
+        "SELECT p.manifest, p.approved_permissions, f.sha256 FROM desk_app_package p \
          JOIN desk_app_file f ON f.app_id = p.app_id AND f.path = 'backend.wasm' WHERE p.app_id = ?",
     )
     .bind(id.as_str())
@@ -494,7 +497,7 @@ pub async fn call(
         Ok(r) => r,
         Err(e) => return Ok(super::desk::internal_error(&e)),
     };
-    let Some((_, Some(approved), sha, wasm)) = row else {
+    let Some((_, Some(approved), sha)) = row else {
         return Ok(HttpResponse::NotFound().json(&json!({ "error": "notFound" })));
     };
     let permissions: Vec<String> = serde_json::from_str(&approved).unwrap_or_default();
@@ -522,7 +525,7 @@ pub async fn call(
         .name("sbm-app".into())
         .stack_size(THREAD_STACK)
         .spawn(move || {
-            let _ = tx.send(run(key, &wasm, host, &method, params));
+            let _ = tx.send(run(key, host, &method, params));
         });
     if spawned.is_err() {
         return Ok(HttpResponse::ServiceUnavailable().json(&json!({ "error": "busy" })));

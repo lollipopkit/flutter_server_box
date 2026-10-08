@@ -130,7 +130,7 @@
 
 <div class="space-y-4">
   {#if error}
-    <pre class="text-sm text-danger whitespace-pre-wrap break-all">{error}</pre>
+    <pre class="text-sm text-(--color-danger) whitespace-pre-wrap break-all">{error}</pre>
   {/if}
 
   <div class="grid gap-[13px]">

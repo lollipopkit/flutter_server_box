@@ -6231,10 +6231,6 @@ type RootTranslation = {
 	 */
 	deskMenuGo: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​t​o​o​ ​o​l​d​ ​t​o​ ​k​e​e​p​ ​t​h​e​ ​c​h​o​i​c​e
-	 */
-	settingsBackgroundAppsOld: string
-	/**
 	 * I​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
 	 */
 	deskInBackground: string
@@ -12920,10 +12916,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Go
 	 */
 	deskMenuGo: () => LocalizedString
-	/**
-	 * This agent is too old to keep the choice
-	 */
-	settingsBackgroundAppsOld: () => LocalizedString
 	/**
 	 * In the background
 	 */

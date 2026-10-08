@@ -10,7 +10,9 @@ path = "src/lib.rs"
 [dependencies]
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
-sbm_theme = { path = "../crates/sbm_theme" }
+# Theme packages and the theme store, the same reader the app runs through
+# fl_lib (its own Cargo workspace, in the fl_lib submodule).
+fl_theme = { path = "../packages/fl_lib/rust/theme" }
 sbm_redfish = { path = "../crates/sbm_redfish" }
 sbm_virt = { path = "../crates/sbm_virt" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
@@ -62,9 +64,10 @@ flate2 = "1"
 ring = "0.17"
 # Desk app backends (`api::app_runtime`): an interpreter, so no JIT and no
 # executable memory in the agent; fuel bounds every call.
-# `portable-dispatch`: a loop, not tail calls, so no build profile can turn
-# a long-running guest into a stack overflow.
-wasmi = { version = "2", default-features = false, features = ["std", "validate", "portable-dispatch"] }
+# `auto-dispatch`: tail-call dispatch (3-4x faster) only where LLVM is known
+# to turn it into jumps and the build is optimised; elsewhere (a debug build)
+# the portable loop, so a long-running guest never grows the stack.
+wasmi = { version = "2", default-features = false, features = ["std", "validate", "auto-dispatch"] }
 base64 = "0.22"
 hex = "0.4"
 
@@ -124,6 +127,8 @@ fs2 = "0.4"
 libc = "0.2"
 
 [dev-dependencies]
+# Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
+indexmap = "2"
 # Building theme packages in `tests/desk_themes.rs`.
 zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
 # Test modules for the app runtime, written as text.

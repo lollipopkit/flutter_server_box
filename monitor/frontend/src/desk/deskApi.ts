@@ -32,14 +32,14 @@ export interface DeskPreferences {
   background_denied: string[]
   /// The installed theme the desk is drawn with: `<installation>` or
   /// `<installation>#<variant>`; null for the design system's own
-  /// (`desk_themes`).
+  /// (`/desk/themes`).
   theme?: string | null
 }
 
 /// A color as a theme writes one: ARGB, or a palette role.
 export type ThemeColor = number | string
 
-/// One theme of an installed package (`sbm_theme::Theme`): the package, or
+/// One theme of an installed package (`fl_theme::Theme`): the package, or
 /// one of its variants.
 export interface PackageTheme {
   variant: { key: string; name: string } | null
@@ -54,7 +54,7 @@ export interface PackageTheme {
   neutralTones: Record<string, number>
   background: { style: 'none' | 'gradient' | 'image'; opacity: number; blur: number; tile: number }
   shapes: { card: number; tile: number; button: number }
-  /// Checked and kept; not drawn by the desk yet (TODO).
+  /// `[components]` as the app reads them (`themeComponents`).
   components: Record<string, unknown>
   density: string | null
 }

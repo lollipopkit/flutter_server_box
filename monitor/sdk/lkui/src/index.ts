@@ -1,16 +1,16 @@
-/// `@lollipopkit/desk-sys`: what an installed desk app uses of the desk,
+/// `lkui`: what an installed desk app uses of the desk,
 /// from inside its sandboxed frame (docs/dev/desk-sys.md).
 ///
-///   import { connect } from '@lollipopkit/desk-sys'
+///   import { connect } from 'lkui'
 ///   const desk = await connect() // the desk's styles and theme are on the page
 ///   document.body.innerHTML = '<button class="lk-btn lk-btn--primary">Run</button>'
 ///   desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
 ///   desk.on('action', ({ id }) => …)
 
-import { PROTOCOL, type AppTheme, type MenuDescription, type ToolbarDescription } from './protocol'
-import { applyTheme, useStylesheet } from './ui'
+import { PROTOCOL, type AppTheme, type MenuDescription, type ToolbarDescription } from './protocol.js'
+import { applyTheme, useStylesheet } from './ui.js'
 
-export type { ActionItem, AppTheme, MenuDescription, ToolbarDescription } from './protocol'
+export type { ActionItem, AppTheme, MenuDescription, ToolbarDescription } from './protocol.js'
 
 export type Lifecycle = 'active' | 'visible' | 'background' | 'suspended'
 

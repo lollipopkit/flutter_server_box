@@ -38,7 +38,7 @@ Everything beyond `read` needs TLS or a loopback peer, unless `[remote_access] a
 }
 ```
 
-- `files` / `connect` / `listen`: `null` = not granted; an object = granted with those options. `shell` / `virt`: bool. `ssh_terminal` (the SSH terminal's grant, removed with it by migration 023) is dropped from a `POST`/`PUT /roles` body rather than refused, for apps that still send it (TODO remove); anywhere else `Grants` refuses it.
+- `files` / `connect` / `listen`: `null` = not granted; an object = granted with those options. `shell` / `virt`: bool. `ssh_terminal` (the SSH terminal's grant, removed with it by migration 019) is dropped from a `POST`/`PUT /roles` body rather than refused, for apps that still send it (TODO remove); anywhere else `Grants` refuses it.
 - **`PUT /roles/{name}` keeps a grant the body does not mention.** A client older than a grant (`virt`) sends every grant it knows and leaves the new one out; reading that as "not granted" would take it away on any save from that client. Written out as `false`/`null`, it is taken away. `POST /roles` reads an absent grant as not granted.
 - `files` object: `{"mode": "read"|"write"}`; `listen` object: `{"public": bool, "ports": [lo, hi] | null}`.
 - `admin: true` = may manage accounts, roles and the agent's configuration. Only the built-in `admin` role has it; it cannot be set on another role.
@@ -105,7 +105,7 @@ When a role or an account changes, sessions of the affected accounts that relied
 
 - Migration `010_*`: `roles` table, `users.role`, `watch_tokens.scope TEXT NOT NULL DEFAULT 'read'`.
 - Migration `011_*`: `virt` on every saved role that holds `shell` and has not said either way. A shell runs as the agent's account, which can read the credentials those pages use, so withholding `virt` from it only hides the pages. A built-in role not decided yet gets it from `Grants::from_legacy` the same way, and a fresh install's `full` includes it.
-- Migration `023_*`: removes `ssh_terminal` from every role (a role that held only it holds nothing; it is not turned into `shell`) and drops `ssh_known_hosts`, with the SSH terminal they served.
+- Migration `019_*`: removes `ssh_terminal` from every role (a role that held only it holds nothing; it is not turned into `shell`) and drops `ssh_known_hosts`, with the SSH terminal they served.
 - At start, if `roles` is empty, create `admin` and `viewer`:
   - **Fresh install** (no users yet): `admin` gets everything (`files` write, `connect` any, `listen` loopback with any port, `shell`) unless initial permissions are `read`, in which case `admin` holds no grants. Initial permissions come from `--init-permissions full|read` or `SBM_INIT_PERMISSIONS=full|read` (default `full`).
   - **Upgrade** (users exist): `admin`'s grants are what the old switches *effectively* gave: `shell` = `connect` = `full_access` resolved as today (platform default, `SBM_FULL_ACCESS`) **and** `terminal.enabled`; `listen` = same as `shell`, `public` = `listen_public`; `files` = `fs.enabled && roots non-empty` ⇒ `write`. Every existing user gets role `admin`.

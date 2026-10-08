@@ -1,11 +1,15 @@
-# @lollipopkit/desk-sys
+# lkui
 
 The client an installed desk app uses, from inside its sandboxed frame, to
 reach the ServerBox monitor's desk. The design, the permissions and the
 message protocol: `docs/dev/desk-sys.md`. A starting point: `../template`.
 
+```sh
+npm install lkui
+```
+
 ```ts
-import { connect } from '@lollipopkit/desk-sys'
+import { connect } from 'lkui'
 
 const desk = await connect()
 await desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
@@ -33,6 +37,8 @@ none of it (`docs/dev/desk-sys.md`, "UI"):
 (`monitor/frontend/src/desk/webapps/bridge.svelte.ts`) imports it from here,
 and `monitor/frontend/src/tests/deskSdk.test.ts` runs this client against it.
 
+`npm run build` writes `dist/`, what the package exports (`npm publish` runs
+it first); the panel and its tests use `src/` directly.
+
 Apache-2.0 (`LICENSE`, `NOTICE`): an app built on it, closed-source included,
-keeps its own license. Not published yet
-(`private`).
+keeps its own license.

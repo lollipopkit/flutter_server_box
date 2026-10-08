@@ -336,7 +336,8 @@ pub async fn delete_user(
     let body = reauth_body(body);
     require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
     match accounts::delete_account(&state.db, &username).await? {
-        Guarded::Done => {}
+        // Its wallpaper and theme backgrounds went with its rows.
+        Guarded::Done => state.blobs.collect_soon(&state.db),
         Guarded::NotFound => return Ok(not_found("No such account")),
         Guarded::LastAdmin => return Ok(last_admin()),
     }
@@ -357,7 +358,7 @@ pub async fn list_roles(req: HttpRequest, state: web::types::State<Arc<AppState>
 ///
 /// TODO: remove once no supported app sends `ssh_terminal` (the app's role
 /// editor wrote it out with every save until the SSH terminal was removed
-/// from the agent, migration 023); `Grants` refuses it, so without this every
+/// from the agent, migration 019); `Grants` refuses it, so without this every
 /// role save from such an app would fail.
 fn parse_role(
     mut body: web::types::Json<serde_json::Value>,

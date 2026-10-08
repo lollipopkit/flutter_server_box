@@ -1,8 +1,4 @@
 @import "tailwindcss";
-@import "@serverbox/webui/theme.css";
-
-/* Tailwind must scan the linked UI package for its utility classes */
-@source "../../../packages/webui/src";
 
 /* Light / dark as one crossfade (`crossfade` in lib/theme.svelte.ts sets the
    pace from the design system's tokens). */
@@ -19,7 +15,8 @@
     overflow: hidden;
     overscroll-behavior: none;
   }
+  /* The page is drawn in the design system (`desk/lk`, `.lk` on <body>). */
   body {
-    @apply bg-bg text-fg font-body;
+    background: var(--surface-desktop);
   }
 }

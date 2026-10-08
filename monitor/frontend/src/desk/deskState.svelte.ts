@@ -62,7 +62,7 @@ export class Desk {
   storage = $state<DeskStorage | null>(null)
   session = $state<SessionSync | null>(null)
   prefs = $state<DeskPrefs | null>(null)
-  /// Installed themes, where the agent keeps them (`desk_themes`).
+  /// Installed themes, where the agent keeps them (`/desk/themes`).
   themes = $state<DeskThemes | null>(null)
   notifications = $state<DeskNotifications | null>(null)
   appData = $state.raw<AppData | null>(null)
@@ -176,12 +176,7 @@ export class Desk {
     await capabilitiesStore.ensure(this.entry.id)
     if (this.#abort.signal.aborted) return
     const storage: DeskStorage = this.caps?.features?.includes('desk')
-      ? new AgentStorage(
-          this.entry,
-          this.caps.features.includes('desk_background'),
-          this.caps.features.includes('desk_storage'),
-          this.caps.features.includes('desk_themes'),
-        )
+      ? new AgentStorage(this.entry)
       : new BrowserStorage(this.entry.id)
     this.storage = storage
     this.prefs = new DeskPrefs(storage)
@@ -206,7 +201,7 @@ export class Desk {
 
   /// Reads the installed apps again (one approved or removed in Settings).
   async reloadWebApps() {
-    if (!this.caps?.features?.includes('desk_apps')) return
+    if (!this.caps?.features?.includes('desk')) return
     try {
       const off = await registerWebApps(this.entry, () => this.#offWebApps?.())
       if (this.#abort.signal.aborted) off()

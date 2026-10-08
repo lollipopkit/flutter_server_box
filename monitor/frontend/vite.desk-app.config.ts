@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 // The design system an installed app's frame loads from the agent
 // (`/apps/{id}/ui/{ticket}/_desk/desk.css`, `api::apps::ui`): `lk.css` with
 // its fonts, built on its own into dist/desk-app after the panel. `desk.css`
-// keeps its name (the agent and `@lollipopkit/desk-sys` ask for it by name);
+// keeps its name (the agent and `lkui` ask for it by name);
 // the fonts are hashed and referenced relatively.
 export default defineConfig({
   base: './',

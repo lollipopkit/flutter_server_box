@@ -34,13 +34,12 @@ export interface TerminalHandle {
   dispose(): void
 }
 
-/// Resolved from the document, not from the theme store: the store's 'system'
-/// setting is decided by a media query at paint time, so the class on <html>
-/// is the only place the answer actually exists.
+/// Resolved from the document, not from the theme store: `data-theme` on
+/// <html> is the mode in effect (a choice, the system's, or a theme's lock),
+/// set before first paint.
 function isDark(): boolean {
-  const cls = document.documentElement.classList
-  if (cls.contains('dark')) return true
-  if (cls.contains('light')) return false
+  const mode = document.documentElement.dataset.theme
+  if (mode) return mode === 'dark'
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 

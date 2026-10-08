@@ -1511,7 +1511,6 @@ const fr = {
 	settingsBackgroundAppsSub: 'Désactivé : une fenêtre masquée s’arrête et redémarre lorsqu’elle est affichée',
 	deskMenuFile: 'Fichier',
 	deskMenuGo: 'Aller',
-	settingsBackgroundAppsOld: 'Cet agent est trop ancien pour enregistrer ce choix',
 	deskInBackground: 'En arrière-plan',
 	settingsBackgroundPerApp: 'En arrière-plan',
 	deskOpenWith: 'Ouvrir avec',

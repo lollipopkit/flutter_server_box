@@ -78,25 +78,25 @@
 
   <div use:viewIn={part}>
   {#if error}
-    <p class="text-sm text-danger">{error}</p>
+    <p class="text-sm text-(--color-danger)">{error}</p>
   {:else if loading && !view}
     <Spinner class="w-4 h-4" />
   {:else if view && !view.available}
     <div class="space-y-1">
       <p class="text-sm text-(--text-secondary)">{reasonText(view)}</p>
       {#if view.reason && view.reason_kind !== 'no_log'}
-        <pre class="text-xs font-mono text-faint-fg whitespace-pre-wrap break-all">{view.reason}</pre>
+        <pre class="text-xs font-mono text-(--text-tertiary) whitespace-pre-wrap break-all">{view.reason}</pre>
       {/if}
     </div>
   {:else if view}
     {#if part === 'logs'}
       {#if view.log && view.log.lines.length > 0}
         <Card class="max-h-72 overflow-auto p-0">
-          <div class="divide-y divide-line">
+          <div class="divide-y divide-(--border-strong)">
             {#each view.log.lines as line, index (index)}
               <p class="px-3 py-1.5 text-xs font-mono break-all">
                 {#if line.time}
-                  <span class="mr-1 text-faint-fg">{line.time}</span>
+                  <span class="mr-1 text-(--text-tertiary)">{line.time}</span>
                 {/if}
                 <span class="text-(--text-secondary)">{line.text}</span>
               </p>

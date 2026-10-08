@@ -13,7 +13,7 @@ import type { WindowHandle } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
 import type { IconTone } from '../lk/AppIcon.svelte'
-import { isCall, PROTOCOL, type ActionItem, type AppTheme, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/desk-sys/src/protocol'
+import { isCall, PROTOCOL, type ActionItem, type AppTheme, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/lkui/src/protocol'
 
 const MAX_MESSAGE_BYTES = 1 << 20
 const MAX_IN_FLIGHT = 32

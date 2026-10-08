@@ -1511,7 +1511,6 @@ const pt = {
 	settingsBackgroundAppsSub: 'Desativado: uma janela oculta para e inicia novamente quando é exibida',
 	deskMenuFile: 'Ficheiro',
 	deskMenuGo: 'Ir',
-	settingsBackgroundAppsOld: 'Este agente é demasiado antigo para guardar esta escolha',
 	deskInBackground: 'Em segundo plano',
 	settingsBackgroundPerApp: 'Em segundo plano',
 	deskOpenWith: 'Abrir com',

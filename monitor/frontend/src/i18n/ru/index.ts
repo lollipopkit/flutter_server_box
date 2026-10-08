@@ -1511,7 +1511,6 @@ const ru = {
 	settingsBackgroundAppsSub: 'Выключено: скрытое окно останавливается и запускается снова при отображении',
 	deskMenuFile: 'Файл',
 	deskMenuGo: 'Переход',
-	settingsBackgroundAppsOld: 'Этот агент слишком старый, чтобы сохранить этот выбор',
 	deskInBackground: 'В фоновом режиме',
 	settingsBackgroundPerApp: 'В фоновом режиме',
 	deskOpenWith: 'Открыть с помощью',

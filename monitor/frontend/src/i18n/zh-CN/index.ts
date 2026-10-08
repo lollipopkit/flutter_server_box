@@ -1510,7 +1510,6 @@ const zh_CN = {
 	settingsBackgroundAppsSub: '关闭后,隐藏的窗口会停止运行,再次显示时重新启动',
 	deskMenuFile: '文件',
 	deskMenuGo: '前往',
-	settingsBackgroundAppsOld: '此 agent 版本过旧,无法保存该设置',
 	deskInBackground: '后台运行中',
 	settingsBackgroundPerApp: '后台运行',
 	deskOpenWith: '打开方式',

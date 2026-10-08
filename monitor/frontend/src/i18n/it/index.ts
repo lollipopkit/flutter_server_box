@@ -1511,7 +1511,6 @@ const it = {
 	settingsBackgroundAppsSub: 'Disattivato: una finestra nascosta si arresta e si riavvia quando viene mostrata',
 	deskMenuFile: 'File',
 	deskMenuGo: 'Vai',
-	settingsBackgroundAppsOld: 'Questo agent è troppo vecchio per salvare questa scelta',
 	deskInBackground: 'In secondo piano',
 	settingsBackgroundPerApp: 'In secondo piano',
 	deskOpenWith: 'Apri con',

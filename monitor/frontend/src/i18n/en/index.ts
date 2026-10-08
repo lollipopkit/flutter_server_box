@@ -1511,7 +1511,6 @@ const en = {
 	settingsBackgroundAppsSub: 'Off: a hidden window stops, and starts again when shown',
 	deskMenuFile: 'File',
 	deskMenuGo: 'Go',
-	settingsBackgroundAppsOld: 'This agent is too old to keep the choice',
 	deskInBackground: 'In the background',
 	settingsBackgroundPerApp: 'In the background',
 	deskOpenWith: 'Open with',

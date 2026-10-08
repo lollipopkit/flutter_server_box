@@ -1,4 +1,4 @@
-/// The theme packages this account installed on the agent (`desk_themes`),
+/// The theme packages this account installed on the agent (`/desk/themes`),
 /// which one the desk is drawn with, and its background as a URL an image
 /// can load.
 

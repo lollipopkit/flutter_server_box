@@ -6,19 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ServerBox Monitor</title>
     <script>
-      // Apply the theme before first paint: an explicit choice as a class,
-      // and the mode in effect as data-theme (the desk's design system keys
-      // on it); lib/theme.svelte.ts keeps both up to date afterwards.
+      // Apply the theme before first paint: the mode in effect as
+      // data-theme (the desk's design system keys on it);
+      // lib/theme.svelte.ts keeps it up to date afterwards.
       const theme = localStorage.getItem('theme')
-      if (theme === 'dark' || theme === 'light') {
-        document.documentElement.classList.add(theme)
-      }
       const dark = theme === 'dark' || (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
       document.documentElement.dataset.theme = dark ? 'dark' : 'light'
 
     </script>
   </head>
-  <body>
+  <body class="lk">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

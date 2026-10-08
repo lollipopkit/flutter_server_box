@@ -4,12 +4,11 @@
 #                       collection path only — never used by the SSH-based app
 # - crates/sbm_redfish: Redfish (BMC) client shared by monitor and the app
 # - crates/sbm_virt:   virtualization (libvirt command layer) shared by monitor and the app
-# - crates/sbm_theme:  theme packages (.fsbt) and the theme store, read as fl_lib's installer reads them
 # - crates/sbm_ffi:    flutter_rust_bridge binding layer + cargokit Flutter plugin shell (one directory)
 # - monitor:           server-side monitoring (service + web frontend)
 [workspace]
 resolver = "2"
-members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_theme", "crates/sbm_ffi", "monitor"]
+members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_ffi", "monitor"]
 exclude = ["third_party/ironrdp"]
 
 # IronRDP 0.17 pins an sspi/picky combination that still pins pre-release
