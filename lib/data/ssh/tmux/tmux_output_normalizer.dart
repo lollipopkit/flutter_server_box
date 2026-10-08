@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:xterm/core.dart';
+
 /// Normalizes the terminal byte stream carried by tmux `%output`.
 ///
 /// This is deliberately a stream parser rather than a list of ad-hoc string
@@ -13,6 +15,14 @@ final class TmuxOutputNormalizer {
   /// Called for an escape final byte which the outer terminal is not known to
   /// support. The byte pair is consumed instead of being printed as text.
   void Function(String escape)? onUnknownEscape;
+
+  /// Called for a pane's program status report, progress bar or shell
+  /// integration mark (OSC 7501, OSC 9;4, OSC 133), which is then taken out of
+  /// the stream. While null they pass through to xterm.
+  ///
+  /// The pane is the terminal these belong to, not the local xterm: it shows
+  /// one pane after another, each replay starting with a full reset.
+  void Function(TerminalStatusEvent event)? onStatus;
 
   static const _maxControlBytes = 4 * 1024;
   static const _maxPayloadBytes = 2 * 1024 * 1024;
@@ -274,6 +284,7 @@ final class TmuxOutputNormalizer {
         _finishDcs(payload, output);
       case _ParserState.osc:
         if (_isOscQuery(payload)) return;
+        if (_takeStatus(payload)) return;
         output
           ..addAll(_introducerFor(state))
           ..addAll(payload);
@@ -384,9 +395,23 @@ final class TmuxOutputNormalizer {
     if (code == '4') {
       return value.split(';').any((item) => item.trim() == '?');
     }
+    // Its answer would reach the pane after tmux has answered the DA that
+    // follows it, which is how a program tells there is no support, and would
+    // land in the input of whatever runs there by then.
+    if (code == ProgramStatusReport.oscCode) return value == '?';
     // OSC 52 is handled by TerminalSession: set requests write the system
     // clipboard and query requests are ignored.
     return false;
+  }
+
+  bool _takeStatus(List<int> payload) {
+    final onStatus = this.onStatus;
+    if (onStatus == null) return false;
+    final fields = utf8.decode(payload, allowMalformed: true).split(';');
+    final event = TerminalStatusEvent.fromOsc(fields.first, fields.sublist(1));
+    if (event == null) return false;
+    onStatus(event);
+    return true;
   }
 
   bool _isDcsQuery(List<int> payload) {

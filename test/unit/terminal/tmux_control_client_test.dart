@@ -283,6 +283,44 @@ void main() {
       terminalSession.close();
     });
 
+    test('the shell adapter reads every pane\'s status', () async {
+      final shell = _FakeTmuxShell();
+      final client = TmuxControlClient(shell);
+      final terminalSession = TmuxControlShellSession(client, shell);
+      final events = <(TmuxPaneId, TerminalStatusEvent)>[];
+      final panes = <List<TmuxPaneId>>[];
+      terminalSession
+        ..onPaneStatus = ((pane, event) => events.add((pane, event)))
+        ..onPanes = ((live) => panes.add(live.toList()));
+      final output = <String>[];
+      final subscription = terminalSession.stdout!.listen(
+        (data) => output.add(utf8.decode(data, allowMalformed: true)),
+      );
+      final initialized = client.initialize();
+      shell.emit('\x1bP1000p%begin 1 100 1\n%end 1 100 1\n');
+      await initialized;
+      await _pumpEventQueue();
+
+      shell.emit(
+        '%output %3 \\033]7501;state=blocked\\033\\134\n'
+        '%output %0 \\033]7501;state=working\\007shown\n',
+      );
+      await _pumpEventQueue();
+
+      expect(
+        events.map((e) => (e.$1, (e.$2 as ProgramStatusReport).state)),
+        [
+          (TmuxPaneId('%3'), ProgramState.blocked),
+          (TmuxPaneId('%0'), ProgramState.working),
+        ],
+      );
+      expect(output.join(), contains('shown'));
+      expect(output.join(), isNot(contains('7501')));
+      expect(panes.last, [TmuxPaneId('%0'), TmuxPaneId('%3')]);
+      await subscription.cancel();
+      terminalSession.close();
+    });
+
     test('resize targets the active window for the control client', () async {
       final shell = _FakeTmuxShell();
       final client = TmuxControlClient(shell);
@@ -836,6 +874,10 @@ final class _FakeTmuxShell implements ShellSession {
       } else {
         _result('@0\t0\tshell\t1\n@1\t1\tlogs\t0');
       }
+      return;
+    }
+    if (command.startsWith('list-panes -s')) {
+      _result(splitPanes ? '%0\t@0\n%3\t@0' : '%0\t@0\n%3\t@1');
       return;
     }
     if (command.startsWith('list-panes')) {

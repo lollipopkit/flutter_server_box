@@ -234,7 +234,7 @@ class ForegroundService : Service() {
             0 -> "Ready for connections"
             1 -> {
                 val session = sessions.first()
-                "${session.subtitle} · ${session.status}"
+                "${session.subtitle} · ${session.line}"
             }
             else -> "Multiple SSH connections active"
         }
@@ -303,8 +303,9 @@ class ForegroundService : Service() {
                 val sub = s.optString("subtitle")
                 val whenMs = s.optLong("startTimeMs", System.currentTimeMillis())
                 val status = s.optString("status", "connected")
+                val program = s.optString("program").ifEmpty { null }
                 if (id.isNotEmpty()) {
-                    sessions.add(SessionItem(id, title, sub, whenMs, status))
+                    sessions.add(SessionItem(id, title, sub, whenMs, status, program))
                 }
             }
         } catch (e: Exception) {
@@ -335,7 +336,7 @@ class ForegroundService : Service() {
         notificationIdMap.clear()
 
         // Create merged notification content
-        val summaryLines = sessions.map { "${it.title}: ${it.status}" }
+        val summaryLines = sessions.map { "${it.title}: ${it.line}" }
         val mergedNotification = createMergedNotification(sessions.size, summaryLines, sessions)
         ensureForeground(mergedNotification)
     }
@@ -346,7 +347,12 @@ class ForegroundService : Service() {
         val subtitle: String,
         val startWhen: Long,
         val status: String,
-    )
+        /** What the session's programs report (OSC 7501), when anything. */
+        val program: String? = null,
+    ) {
+        /** The program's report over the connection state: it says more. */
+        val line: String get() = program ?: status
+    }
 
     /**
      * Leaves the foreground, takes every notification down, and stops.

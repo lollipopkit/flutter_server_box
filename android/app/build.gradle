@@ -116,6 +116,8 @@ android {
     }
 
     compileOptions {
+        // flutter_local_notifications uses java.time below API 26.
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -219,6 +221,8 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+
     // JVM unit tests only (`./gradlew :app:testDebugUnitTest`); nothing here
     // reaches the APK.
     testImplementation 'junit:junit:4.13.2'

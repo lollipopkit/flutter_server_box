@@ -77,6 +77,7 @@ memory; otherwise give the user the link.
 | Widgets and the watch app | `/docs/advanced/widgets/` |
 | The Agent (you): providers, tools, MCP, skills, approvals | `/docs/advanced/agent/` |
 | Terminal on this device | `/docs/advanced/local-terminal/` |
+| Program status in terminals (waiting / done / failed, notifications) | `/docs/advanced/program-status/` |
 | Common problems | `/docs/advanced/troubleshooting/` |
 | Custom status commands | `/docs/advanced/custom-commands/` |
 | Custom server logo | `/docs/advanced/custom-logo/` |

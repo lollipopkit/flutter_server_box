@@ -5463,4 +5463,47 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'Узел задания не в сети.';
+
+  @override
+  String get programWaiting => 'Ожидает вас';
+
+  @override
+  String get programWaitingPermission => 'Ожидает вашего подтверждения';
+
+  @override
+  String get programWaitingQuestion => 'Ожидает вашего ответа';
+
+  @override
+  String get programWaitingAuth => 'Ожидает входа в систему';
+
+  @override
+  String get programStatus => 'Состояние программы';
+
+  @override
+  String get programIdle => 'Неактивна';
+
+  @override
+  String get programThisShell => 'Эта оболочка';
+
+  @override
+  String get programProgress => 'Ход выполнения';
+
+  @override
+  String get programCommandRunning => 'Выполняется команда';
+
+  @override
+  String get programCommandSucceeded => 'Последняя команда выполнена успешно';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'Последняя команда завершилась с кодом $code';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Уведомлять, когда программе нужно ваше внимание';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Для невидимого терминала: когда программа сообщает, что ожидает вас, завершилась или выдала ошибку (OSC 7501, OSC 9;4), либо завершается команда, выполнявшаяся не менее 30 секунд (OSC 133).';
 }

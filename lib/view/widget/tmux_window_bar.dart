@@ -1,9 +1,11 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/ssh/terminal_status.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:server_box/view/widget/terminal_status_dot.dart';
 
 /// A native app bar for the windows in the attached tmux session.
 ///
@@ -18,9 +20,14 @@ final class TmuxWindowBar extends StatelessWidget {
   final ValueChanged<TmuxControlWindow>? onCloseWindow;
   final ValueChanged<TmuxControlPane>? onClosePane;
 
+  /// What each pane's programs report, marked on its window and in the pane
+  /// menu: a pane out of sight is where a program waiting is easy to miss.
+  final TerminalStatus? status;
+
   const TmuxWindowBar({
     super.key,
     required this.client,
+    this.status,
     this.onSelectWindow,
     this.onSelectPane,
     this.onNewWindow,
@@ -44,13 +51,20 @@ final class TmuxWindowBar extends StatelessWidget {
           builder: (context, snapshot) {
             final state = snapshot.data;
             if (state == null) return const SizedBox.shrink();
-            return _TmuxWindowBarView(
+            Widget view() => _TmuxWindowBarView(
               state: state,
+              status: status,
               onSelectWindow: onSelectWindow,
               onSelectPane: onSelectPane,
               onNewWindow: onNewWindow,
               onCloseWindow: onCloseWindow,
               onClosePane: onClosePane,
+            );
+            final status_ = status;
+            if (status_ == null) return view();
+            return ListenableBuilder(
+              listenable: status_,
+              builder: (_, _) => view(),
             );
           },
         ),
@@ -61,6 +75,7 @@ final class TmuxWindowBar extends StatelessWidget {
 
 final class _TmuxWindowBarView extends StatelessWidget {
   final TmuxControlSnapshot state;
+  final TerminalStatus? status;
   final ValueChanged<TmuxControlWindow>? onSelectWindow;
   final ValueChanged<TmuxControlPane>? onSelectPane;
   final VoidCallback? onNewWindow;
@@ -69,6 +84,7 @@ final class _TmuxWindowBarView extends StatelessWidget {
 
   const _TmuxWindowBarView({
     required this.state,
+    this.status,
     this.onSelectWindow,
     this.onSelectPane,
     this.onNewWindow,
@@ -85,6 +101,11 @@ final class _TmuxWindowBarView extends StatelessWidget {
     final activePane = panes
         .where((pane) => pane.id == state.activePaneId)
         .firstOrNull;
+    TerminalStatusHeadline? windowStatus(TmuxWindowId window) =>
+        status?.headlineOf([
+          for (final MapEntry(:key, :value) in state.paneWindows.entries)
+            if (value == window) key,
+        ]);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -147,6 +168,7 @@ final class _TmuxWindowBarView extends StatelessWidget {
                         _TmuxBarChip(
                           label: '${window.index}:${window.name}',
                           selected: window.id == state.activeWindowId,
+                          status: windowStatus(window.id),
                           onTap: onSelectWindow == null
                               ? null
                               : () => onSelectWindow!(window),
@@ -158,6 +180,7 @@ final class _TmuxWindowBarView extends StatelessWidget {
                 _PaneSummaryButton(
                   panes: panes,
                   activePaneId: activePane.id,
+                  status: status,
                   onSelectPane: onSelectPane,
                   onClosePane: onClosePane,
                 ),
@@ -188,12 +211,14 @@ final class _TmuxWindowBarView extends StatelessWidget {
 final class _PaneSummaryButton extends StatefulWidget {
   final List<TmuxControlPane> panes;
   final TmuxPaneId activePaneId;
+  final TerminalStatus? status;
   final ValueChanged<TmuxControlPane>? onSelectPane;
   final ValueChanged<TmuxControlPane>? onClosePane;
 
   const _PaneSummaryButton({
     required this.panes,
     required this.activePaneId,
+    this.status,
     this.onSelectPane,
     this.onClosePane,
   });
@@ -216,6 +241,7 @@ final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
         for (final pane in widget.panes)
           ContextMenuAction(
             text: '${pane.index}:${pane.displayName}',
+            note: widget.status?.headlineOf([pane.id])?.describe(),
             checked: pane.id == widget.activePaneId,
             // Run once the menu has closed, by when the bar may be gone with
             // the session it was for.
@@ -245,32 +271,61 @@ final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
     final activeIndex = widget.panes.indexWhere(
       (pane) => pane.id == widget.activePaneId,
     );
+    // The panes out of sight: the one on screen speaks for itself.
+    final hidden = widget.status
+        ?.headlineOf([
+          for (final pane in widget.panes)
+            if (pane.id != widget.activePaneId) pane.id,
+        ])
+        ?.colorIn(scheme);
+
+    final active = activeIndex < 0 ? null : widget.panes[activeIndex];
+    final label = [
+      if (active != null) '${active.index}:${active.displayName}',
+      '${activeIndex < 0 ? 1 : activeIndex + 1}/${widget.panes.length}',
+    ].join(' ');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Material(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
+      // What it opens is the pane list, so it says which pane is on screen and
+      // of how many, to a screen reader and on hover alike.
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: Semantics(
+          button: true,
+          label: label,
           onTap: () => _showPaneMenu(context),
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.grid_view_outlined, size: 13, color: foreground),
-                const SizedBox(width: 4),
-                Text(
-                  '${activeIndex < 0 ? 1 : activeIndex + 1}'
-                  '/${widget.panes.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: foreground,
-                  ),
+          excludeSemantics: true,
+          child: Material(
+            color: scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: () => _showPaneMenu(context),
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.grid_view_outlined,
+                      size: 13,
+                      color: hidden ?? foreground,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${activeIndex < 0 ? 1 : activeIndex + 1}'
+                      '/${widget.panes.length}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: foreground,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -282,9 +337,15 @@ final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
 final class _TmuxBarChip extends StatelessWidget {
   final String label;
   final bool selected;
+  final TerminalStatusHeadline? status;
   final VoidCallback? onTap;
 
-  const _TmuxBarChip({required this.label, required this.selected, this.onTap});
+  const _TmuxBarChip({
+    required this.label,
+    required this.selected,
+    this.status,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -295,8 +356,9 @@ final class _TmuxBarChip extends StatelessWidget {
     final foreground = selected
         ? scheme.onPrimaryContainer
         : scheme.onSurfaceVariant;
+    final mark = status?.colorIn(scheme);
 
-    return Padding(
+    final chip = Padding(
       padding: const EdgeInsets.only(right: 6),
       child: Material(
         color: background,
@@ -310,9 +372,13 @@ final class _TmuxBarChip extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  selected ? Icons.check_circle : Icons.circle_outlined,
+                  selected
+                      ? Icons.check_circle
+                      : mark != null
+                      ? Icons.circle
+                      : Icons.circle_outlined,
                   size: 11,
-                  color: foreground,
+                  color: mark ?? foreground,
                 ),
                 const SizedBox(width: 5),
                 ConstrainedBox(
@@ -334,5 +400,8 @@ final class _TmuxBarChip extends StatelessWidget {
         ),
       ),
     );
+    final status_ = status;
+    if (status_ == null || mark == null) return chip;
+    return Tooltip(message: status_.describe(), child: chip);
   }
 }

@@ -7042,5 +7042,62 @@
   "virtBackupIssueNodeOffline": "The job's node is not online.",
   "@virtBackupIssueNodeOffline": {
     "description": "Run now: the job's node is not online, or no node is."
+  },
+  "programWaiting": "Waiting for you",
+  "@programWaiting": {
+    "description": "A program in a terminal reported that it cannot continue until the user does something (OSC 7501 blocked)."
+  },
+  "programWaitingPermission": "Waiting for your approval",
+  "@programWaitingPermission": {
+    "description": "A program in a terminal is blocked on the user approving something."
+  },
+  "programWaitingQuestion": "Waiting for your answer",
+  "@programWaitingQuestion": {
+    "description": "A program in a terminal is blocked on the user answering a question."
+  },
+  "programWaitingAuth": "Waiting for you to sign in",
+  "@programWaitingAuth": {
+    "description": "A program in a terminal is blocked on a password or another credential."
+  },
+  "programStatus": "Program status",
+  "@programStatus": {
+    "description": "Title of the sheet listing what the programs in a terminal report about themselves (OSC 7501, OSC 9;4, OSC 133)."
+  },
+  "programIdle": "Idle",
+  "@programIdle": {
+    "description": "A program in a terminal is at rest, waiting for the user's next instruction."
+  },
+  "programThisShell": "This shell",
+  "@programThisShell": {
+    "description": "Heading over the program status reported by the terminal's own shell, as opposed to a tmux pane."
+  },
+  "programProgress": "Progress",
+  "@programProgress": {
+    "description": "A progress bar a program shows in the terminal (OSC 9;4)."
+  },
+  "programCommandRunning": "A command is running",
+  "@programCommandRunning": {
+    "description": "The shell reported that a command is running (OSC 133 C)."
+  },
+  "programCommandSucceeded": "The last command succeeded",
+  "@programCommandSucceeded": {
+    "description": "The shell reported that its last command finished with exit code 0 (OSC 133 D)."
+  },
+  "programCommandFailed": "The last command exited with {code}",
+  "@programCommandFailed": {
+    "description": "The shell reported that its last command finished with a non-zero exit code (OSC 133 D).",
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "programStatusAlerts": "Notify when a program needs you",
+  "@programStatusAlerts": {
+    "description": "Setting: show a system notification when a program in a terminal that is not on screen reports that it is waiting, done or failed."
+  },
+  "programStatusAlertsTip": "For a terminal out of sight: a program waiting for you, finished or failed, as it reports itself (OSC 7501, OSC 9;4), or a command that ran for 30 seconds or more ending (OSC 133).",
+  "@programStatusAlertsTip": {
+    "description": "Explains the program status notification setting."
   }
 }

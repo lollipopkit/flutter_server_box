@@ -5464,4 +5464,47 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'Вузол завдання не в мережі.';
+
+  @override
+  String get programWaiting => 'Очікує на вас';
+
+  @override
+  String get programWaitingPermission => 'Очікує на ваше підтвердження';
+
+  @override
+  String get programWaitingQuestion => 'Очікує на вашу відповідь';
+
+  @override
+  String get programWaitingAuth => 'Очікує на вхід';
+
+  @override
+  String get programStatus => 'Стан програми';
+
+  @override
+  String get programIdle => 'Бездіяльна';
+
+  @override
+  String get programThisShell => 'Ця оболонка';
+
+  @override
+  String get programProgress => 'Хід виконання';
+
+  @override
+  String get programCommandRunning => 'Виконується команда';
+
+  @override
+  String get programCommandSucceeded => 'Остання команда завершилася успішно';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'Остання команда завершилася з кодом $code';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Сповіщати, коли програма потребує вашої уваги';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Для термінала поза екраном: коли програма повідомляє, що очікує на вас, завершилася або сталася помилка (OSC 7501, OSC 9;4), або завершується команда, що виконувалася щонайменше 30 секунд (OSC 133).';
 }

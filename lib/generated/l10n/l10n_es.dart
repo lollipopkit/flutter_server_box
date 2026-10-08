@@ -5503,4 +5503,47 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get virtBackupIssueNodeOffline =>
       'El nodo de la tarea no está en línea.';
+
+  @override
+  String get programWaiting => 'Te está esperando';
+
+  @override
+  String get programWaitingPermission => 'Esperando tu aprobación';
+
+  @override
+  String get programWaitingQuestion => 'Esperando tu respuesta';
+
+  @override
+  String get programWaitingAuth => 'Esperando a que inicies sesión';
+
+  @override
+  String get programStatus => 'Estado del programa';
+
+  @override
+  String get programIdle => 'Inactivo';
+
+  @override
+  String get programThisShell => 'Este shell';
+
+  @override
+  String get programProgress => 'Progreso';
+
+  @override
+  String get programCommandRunning => 'Se está ejecutando un comando';
+
+  @override
+  String get programCommandSucceeded =>
+      'El último comando se completó correctamente';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'El último comando terminó con el código $code';
+  }
+
+  @override
+  String get programStatusAlerts => 'Avisar cuando un programa te necesite';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Para un terminal que no está a la vista: cuando un programa te espera, termina o falla, según lo que comunica (OSC 7501, OSC 9;4), o cuando termina un comando que llevaba al menos 30 segundos ejecutándose (OSC 133).';
 }

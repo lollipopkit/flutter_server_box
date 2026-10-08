@@ -5170,4 +5170,46 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'ジョブのノードはオンラインではありません。';
+
+  @override
+  String get programWaiting => '操作待ち';
+
+  @override
+  String get programWaitingPermission => '承認待ち';
+
+  @override
+  String get programWaitingQuestion => '回答待ち';
+
+  @override
+  String get programWaitingAuth => 'サインイン待ち';
+
+  @override
+  String get programStatus => 'プログラムの状態';
+
+  @override
+  String get programIdle => '待機中';
+
+  @override
+  String get programThisShell => 'この shell';
+
+  @override
+  String get programProgress => '進行状況';
+
+  @override
+  String get programCommandRunning => 'コマンドを実行中';
+
+  @override
+  String get programCommandSucceeded => '最後のコマンドは成功しました';
+
+  @override
+  String programCommandFailed(int code) {
+    return '最後のコマンドは終了コード $code で終了しました';
+  }
+
+  @override
+  String get programStatusAlerts => 'プログラムが応答を求めているときに通知';
+
+  @override
+  String get programStatusAlertsTip =>
+      '画面に表示されていない terminal について、プログラムが自身の状態として待機・完了・失敗を報告したとき（OSC 7501、OSC 9;4）、または30秒以上実行されたコマンドが終了したとき（OSC 133）に通知します。';
 }

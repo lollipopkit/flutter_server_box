@@ -85,6 +85,10 @@ final class TmuxControlSnapshot {
   final TmuxPaneId activePaneId;
   final TmuxPaneModeSnapshot mode;
 
+  /// Every pane of the session, by window: what a pane's status belongs to,
+  /// and how a pane that has closed is told apart from one not shown.
+  final Map<TmuxPaneId, TmuxWindowId> paneWindows;
+
   const TmuxControlSnapshot({
     required this.sessions,
     required this.session,
@@ -92,6 +96,7 @@ final class TmuxControlSnapshot {
     required this.activeWindowId,
     required this.activePaneId,
     this.mode = const TmuxPaneModeSnapshot(),
+    this.paneWindows = const {},
   });
 
   TmuxControlWindow? get activeWindow {

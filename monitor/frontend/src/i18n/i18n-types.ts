@@ -1622,6 +1622,38 @@ type RootTranslation = {
 	 */
 	terminalRememberForTab: string
 	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​y​o​u
+	 */
+	terminalProgramWaiting: string
+	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l
+	 */
+	terminalProgramWaitingPermission: string
+	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​y​o​u​r​ ​a​n​s​w​e​r
+	 */
+	terminalProgramWaitingQuestion: string
+	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​y​o​u​ ​t​o​ ​s​i​g​n​ ​i​n
+	 */
+	terminalProgramWaitingAuth: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	terminalProgramWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	terminalProgramDone: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	terminalProgramError: string
+	/**
+	 * D​i​s​m​i​s​s
+	 */
+	terminalProgramDismiss: string
+	/**
 	 * C​o​n​n​e​c​t
 	 */
 	terminalConnect: string
@@ -7307,6 +7339,38 @@ export type TranslationFunctions = {
 	 * Remember in this tab (cleared when it closes)
 	 */
 	terminalRememberForTab: () => LocalizedString
+	/**
+	 * Waiting for you
+	 */
+	terminalProgramWaiting: () => LocalizedString
+	/**
+	 * Waiting for your approval
+	 */
+	terminalProgramWaitingPermission: () => LocalizedString
+	/**
+	 * Waiting for your answer
+	 */
+	terminalProgramWaitingQuestion: () => LocalizedString
+	/**
+	 * Waiting for you to sign in
+	 */
+	terminalProgramWaitingAuth: () => LocalizedString
+	/**
+	 * Running
+	 */
+	terminalProgramWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	terminalProgramDone: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	terminalProgramError: () => LocalizedString
+	/**
+	 * Dismiss
+	 */
+	terminalProgramDismiss: () => LocalizedString
 	/**
 	 * Connect
 	 */

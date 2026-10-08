@@ -47,6 +47,8 @@ extension _AskAi on SSHPageState {
         // Read per call, not captured: by the next turn the screen has moved
         // on.
         screen: () => _sess.screenText,
+        programStatus: () =>
+            _sess.status.describeForAgent(paneLabel: tmuxPaneLabel),
         cancel: _cancelAiCommand,
       ),
     );
@@ -153,6 +155,9 @@ extension _AskAi on SSHPageState {
     _aiCommandCancelled = false;
     final session = await client.execute(proposal.command);
     _aiCommandSession = session;
+    // Cancelled while the channel was opening, when there was nothing yet to
+    // stop: stop it now rather than let it run to the end.
+    if (_aiCommandCancelled) await _terminateAiCommandSession(session);
     final stdoutFuture = const Utf8Decoder(
       allowMalformed: true,
     ).bind(session.stdout).join();

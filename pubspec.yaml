@@ -124,6 +124,7 @@ dependencies:
   window_manager: ^0.5.2
   cross_file: ^0.3.5+4
   collection: ^1.19.1
+  flutter_local_notifications: ^22.3.1
 dependency_overrides:
   # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
   fl_lib:

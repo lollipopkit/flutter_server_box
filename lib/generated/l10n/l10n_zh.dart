@@ -5078,6 +5078,48 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => '此任务的节点不在线。';
+
+  @override
+  String get programWaiting => '正在等待你';
+
+  @override
+  String get programWaitingPermission => '正在等待你批准';
+
+  @override
+  String get programWaitingQuestion => '正在等待你回答';
+
+  @override
+  String get programWaitingAuth => '正在等待你登录';
+
+  @override
+  String get programStatus => '程序状态';
+
+  @override
+  String get programIdle => '空闲';
+
+  @override
+  String get programThisShell => '此 shell';
+
+  @override
+  String get programProgress => '进度';
+
+  @override
+  String get programCommandRunning => '命令正在运行';
+
+  @override
+  String get programCommandSucceeded => '上一条命令已成功';
+
+  @override
+  String programCommandFailed(int code) {
+    return '上一条命令以退出码 $code 结束';
+  }
+
+  @override
+  String get programStatusAlerts => '程序需要你时通知';
+
+  @override
+  String get programStatusAlertsTip =>
+      '对于当前不可见的终端：程序报告正在等待你、已完成或失败时（OSC 7501、OSC 9;4），或者运行至少 30 秒的命令结束时（OSC 133）通知你。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10153,4 +10195,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtBackupIssueNodeOffline => '此工作的節點不在線上。';
+
+  @override
+  String get programWaiting => '正在等待您';
+
+  @override
+  String get programWaitingPermission => '正在等待您核准';
+
+  @override
+  String get programWaitingQuestion => '正在等待您回答';
+
+  @override
+  String get programWaitingAuth => '正在等待您登入';
+
+  @override
+  String get programStatus => '程式狀態';
+
+  @override
+  String get programIdle => '閒置';
+
+  @override
+  String get programThisShell => '此 shell';
+
+  @override
+  String get programProgress => '進度';
+
+  @override
+  String get programCommandRunning => '命令正在執行';
+
+  @override
+  String get programCommandSucceeded => '上一個命令已成功';
+
+  @override
+  String programCommandFailed(int code) {
+    return '上一個命令以結束碼 $code 結束';
+  }
+
+  @override
+  String get programStatusAlerts => '程式需要您時通知';
+
+  @override
+  String get programStatusAlertsTip =>
+      '對於目前不可見的終端：程式回報正在等待您、已完成或失敗時（OSC 7501、OSC 9;4），或執行至少 30 秒的命令結束時（OSC 133）通知您。';
 }

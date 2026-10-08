@@ -60,6 +60,7 @@ export default defineConfig({
 						{ label: 'Remote Desktop', translations: { 'zh-CN': '远程桌面' }, slug: 'advanced/remote-desktop' },
 						{ label: 'Agent', translations: { 'zh-CN': 'Agent' }, slug: 'advanced/agent' },
 						{ label: 'Terminal on This Device', translations: { 'zh-CN': '本机终端' }, slug: 'advanced/local-terminal' },
+						{ label: 'Program Status', translations: { 'zh-CN': '程序状态' }, slug: 'advanced/program-status' },
 						{ label: 'BMC (Redfish)', translations: { 'zh-CN': 'BMC(Redfish)' }, slug: 'advanced/bmc' },
 						{ label: 'Bulk Import Servers', translations: { 'zh-CN': '批量导入服务器' }, slug: 'advanced/bulk-import' },
 						{ label: 'Widget Setup', translations: { 'zh-CN': '小组件设置' }, slug: 'advanced/widgets' },

@@ -467,6 +467,18 @@ final class TmuxControlClient {
       );
     }
 
+    final allPanesResult = await runRequired(
+      "list-panes -s -t '$sessionId' -F '#{pane_id}\t#{window_id}'",
+    );
+    final paneWindows = <TmuxPaneId, TmuxWindowId>{};
+    for (final line in allPanesResult.lines) {
+      final fields = splitTmuxFields(line);
+      if (fields.length < 2) continue;
+      final pane = TmuxPaneId.tryParse(fields[0]);
+      final window = TmuxWindowId.tryParse(fields[1]);
+      if (pane != null && window != null) paneWindows[pane] = window;
+    }
+
     final activeWindowWithPanes = TmuxControlWindow(
       id: activeWindow.id,
       index: activeWindow.index,
@@ -496,6 +508,7 @@ final class TmuxControlClient {
       activeWindowId: activeWindow.id,
       activePaneId: activePaneId,
       mode: mode,
+      paneWindows: paneWindows,
     );
     _stateController.add(_snapshot!);
     if (captureActivePane) await _captureActivePane();

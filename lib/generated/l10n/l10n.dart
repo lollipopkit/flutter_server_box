@@ -9296,6 +9296,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The job\'s node is not online.'**
   String get virtBackupIssueNodeOffline;
+
+  /// A program in a terminal reported that it cannot continue until the user does something (OSC 7501 blocked).
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you'**
+  String get programWaiting;
+
+  /// A program in a terminal is blocked on the user approving something.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your approval'**
+  String get programWaitingPermission;
+
+  /// A program in a terminal is blocked on the user answering a question.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your answer'**
+  String get programWaitingQuestion;
+
+  /// A program in a terminal is blocked on a password or another credential.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for you to sign in'**
+  String get programWaitingAuth;
+
+  /// Title of the sheet listing what the programs in a terminal report about themselves (OSC 7501, OSC 9;4, OSC 133).
+  ///
+  /// In en, this message translates to:
+  /// **'Program status'**
+  String get programStatus;
+
+  /// A program in a terminal is at rest, waiting for the user's next instruction.
+  ///
+  /// In en, this message translates to:
+  /// **'Idle'**
+  String get programIdle;
+
+  /// Heading over the program status reported by the terminal's own shell, as opposed to a tmux pane.
+  ///
+  /// In en, this message translates to:
+  /// **'This shell'**
+  String get programThisShell;
+
+  /// A progress bar a program shows in the terminal (OSC 9;4).
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get programProgress;
+
+  /// The shell reported that a command is running (OSC 133 C).
+  ///
+  /// In en, this message translates to:
+  /// **'A command is running'**
+  String get programCommandRunning;
+
+  /// The shell reported that its last command finished with exit code 0 (OSC 133 D).
+  ///
+  /// In en, this message translates to:
+  /// **'The last command succeeded'**
+  String get programCommandSucceeded;
+
+  /// The shell reported that its last command finished with a non-zero exit code (OSC 133 D).
+  ///
+  /// In en, this message translates to:
+  /// **'The last command exited with {code}'**
+  String programCommandFailed(int code);
+
+  /// Setting: show a system notification when a program in a terminal that is not on screen reports that it is waiting, done or failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify when a program needs you'**
+  String get programStatusAlerts;
+
+  /// Explains the program status notification setting.
+  ///
+  /// In en, this message translates to:
+  /// **'For a terminal out of sight: a program waiting for you, finished or failed, as it reports itself (OSC 7501, OSC 9;4), or a command that ran for 30 seconds or more ending (OSC 133).'**
+  String get programStatusAlertsTip;
 }
 
 class _AppLocalizationsDelegate

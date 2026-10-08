@@ -25,6 +25,8 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/terminal_status_dot.dart';
+import 'package:server_box/view/widget/terminal_status_sheet.dart';
 
 part 'tab_add.dart';
 part 'tab_sort.dart';
@@ -46,10 +48,18 @@ class SSHTabPage extends ConsumerStatefulWidget {
 /// terminal's state lives in its element, and handing `PageView` a fresh
 /// widget every frame would be leaning on `GlobalKey` to put it back.
 class _SshSession {
-  const _SshSession({required this.page, required this.pageKey});
+  const _SshSession({
+    required this.page,
+    required this.pageKey,
+    required this.session,
+  });
 
   final SSHPage page;
   final GlobalKey<SSHPageState> pageKey;
+
+  /// The page's terminal session, once the page has been built: a tab is
+  /// built when first visited.
+  final ValueNotifier<TerminalSession?> session;
 
   /// What has to survive a relaunch. Read from the live page when there is
   /// one, and from the arguments it was opened with when there is not — a tab
@@ -63,6 +73,14 @@ class _SshSession {
       'tmuxSession': live?.tmuxCurrentSession ?? page.args.tmuxSession,
       'tmuxWindow': live?.tmuxCurrentWindow ?? page.args.tmuxWindow,
     };
+  }
+}
+
+extension on SessionTabsController<_SshSession> {
+  /// What the programs in the session at [index] report about themselves.
+  Widget? statusOf(int index) {
+    final tab = tabs.elementAtOrNull(index - 1);
+    return tab == null ? null : TerminalStatusDot(tab.data.session);
   }
 }
 
@@ -245,6 +263,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           onTap: _sessions.select,
           onClose: _confirmClose,
           detailOf: _sessionAddr,
+          leadingOf: _sessions.statusOf,
           sessionActions: _serverActions,
           leadingActions: [_sortBtn, _searchBtn, _settingsBtn],
         ),
@@ -321,14 +340,18 @@ extension _Sessions on _SSHTabPageState {
       preferred: source.label,
       build: (name, focus, visible) {
         final key = GlobalKey<SSHPageState>(debugLabel: name);
+        final live = ValueNotifier<TerminalSession?>(session);
         return _SshSession(
           pageKey: key,
+          session: live,
           page: SSHPage(
             key: key,
             args: SshPageArgs(
               source: source,
               initSnippet: snippet,
               session: session,
+              onSession: (session) => live.value = session,
+              onReveal: () => _reveal(id),
               notFromTab: false,
               // The tab's id, not its name: a connection can end long after
               // its tab was closed, by which time the name may belong to a
@@ -452,6 +475,13 @@ extension _Sessions on _SSHTabPageState {
       if (tabs[i].data.page.args.source is! LocalSource) return i + 1;
     }
     return null;
+  }
+
+  /// Selects the tab [id], if it is still open: a tapped notification.
+  void _reveal(String id) {
+    if (!mounted) return;
+    final at = _sessions.tabs.indexWhere((tab) => tab.id == id);
+    if (at >= 0) _sessions.select(at + 1);
   }
 
   void _closeTab(String id) {
@@ -586,9 +616,14 @@ extension _Actions on _SSHTabPageState {
     final current = _sessions.current;
     if (current == null) return const [];
     final onServer = current.data.page.args.spi != null;
+    final status = TerminalStatusButton(
+      session: current.data.session,
+      paneLabel: (pane) =>
+          current.data.pageKey.currentState?.tmuxPaneLabel(pane),
+    );
     return onServer
-        ? [_agentBtn, _snippetBtn, _settingsBtn, _floatBtn]
-        : [_snippetBtn, _settingsBtn, _floatBtn];
+        ? [status, _agentBtn, _snippetBtn, _settingsBtn, _floatBtn]
+        : [status, _snippetBtn, _settingsBtn, _floatBtn];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,

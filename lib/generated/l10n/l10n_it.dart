@@ -5489,4 +5489,47 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'Il nodo del job non è online.';
+
+  @override
+  String get programWaiting => 'In attesa di te';
+
+  @override
+  String get programWaitingPermission => 'In attesa della tua approvazione';
+
+  @override
+  String get programWaitingQuestion => 'In attesa della tua risposta';
+
+  @override
+  String get programWaitingAuth => 'In attesa che tu acceda';
+
+  @override
+  String get programStatus => 'Stato del programma';
+
+  @override
+  String get programIdle => 'Inattivo';
+
+  @override
+  String get programThisShell => 'Questa shell';
+
+  @override
+  String get programProgress => 'Avanzamento';
+
+  @override
+  String get programCommandRunning => 'È in esecuzione un comando';
+
+  @override
+  String get programCommandSucceeded => 'L’ultimo comando è riuscito';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'L’ultimo comando è terminato con il codice $code';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Avvisami quando un programma ha bisogno di te';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Per un terminale non visibile: quando un programma segnala che ti sta aspettando, che è terminato o che non è riuscito (OSC 7501, OSC 9;4), oppure quando termina un comando eseguito per almeno 30 secondi (OSC 133).';
 }

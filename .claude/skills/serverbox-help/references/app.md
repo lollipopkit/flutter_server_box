@@ -63,6 +63,11 @@ reaches every server. More: <https://serverbox.lollipopkit.com/docs/advanced/age
 - **Terminal keys** (Esc, Tab, Ctrl, arrows): the bar above the keyboard in a
   terminal; **IME** shows or hides the system keyboard. A third-party keyboard
   that sends odd input: try the system one.
+- **Knowing when a program in a terminal needs you** (a dot before the
+  terminal's name, a notification while it is out of sight): programs report
+  it themselves (OSC 7501, OSC 9;4, OSC 133); the notification switch is
+  **Settings → SSH → Notify when a program needs you**:
+  <https://serverbox.lollipopkit.com/docs/advanced/program-status/>.
 - **A shell on this phone or computer** without a server:
   <https://serverbox.lollipopkit.com/docs/advanced/local-terminal/>.
 - **Extra status commands** shown on a server's page:
