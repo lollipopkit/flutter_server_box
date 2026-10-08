@@ -79,7 +79,7 @@ let
 
     sourceRoot = "source/monitor/frontend";
 
-    npmDepsHash = "sha256-8AtNkesSP6+lyd3Ih1S8/k22P2FiVPu8tqTWkMOPKcI=";
+    npmDepsHash = "sha256-0WJgMowLKnP7SUKSCok3bA5eVgSGSpPto3vuqVg897I=";
 
     nativeBuildInputs = [ nodejs npmHooks.npmConfigHook ];
 
