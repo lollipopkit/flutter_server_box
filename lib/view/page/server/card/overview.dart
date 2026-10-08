@@ -512,7 +512,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
       final ss = srv.status;
       if (ss.mem.total > 0) {
         memTotal += ss.mem.total.toDouble();
-        memUsed += (ss.mem.total - ss.mem.free).toDouble();
+        memUsed += ss.mem.used.toDouble();
       }
       if (ss.diskUsage case final usage?) {
         diskTotal += usage.size.toDouble();

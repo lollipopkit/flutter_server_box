@@ -915,8 +915,10 @@ fn e2e_unix_a_failed_command_speaks_in_its_own_segment() {
     // it: this segment names one command and no other.
     assert!(!sensors.contains("diskstats"), "sensors: {sensors:?}");
 
+    // `grep` is quiet about a missing file, and the `uname -n` it falls back
+    // to is what complains.
     let host = map.get("host").map(String::as_str).unwrap_or_default();
-    assert!(host.contains("cat"), "host: {host:?}");
+    assert!(host.contains("uname"), "host: {host:?}");
 }
 
 /// The two functions that print segments keep what a command says; the two
