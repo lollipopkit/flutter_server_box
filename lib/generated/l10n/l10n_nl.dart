@@ -5529,5 +5529,5 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get termFontTip =>
-      'Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met ontbrekende CJK- en emoji-glyphs.';
+      'Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met CJK- en emoji-glyphs voor wat daarin ontbreekt.';
 }

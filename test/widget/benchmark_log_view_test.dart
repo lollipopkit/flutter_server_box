@@ -79,6 +79,16 @@ void main() {
         .fontFamilyFallback;
     expect(fallback.where((f) => f == 'sans-serif'), hasLength(1));
     expect(fallback, const TerminalStyle().fontFamilyFallback);
+ 
+    // The line height setting, held to the range the settings page offers.
+    Stores.setting.termLineHeight.put(1.5);
+    await tester.pumpWidget(MaterialApp(home: const Scaffold(body: log)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TerminalView>(find.byType(TerminalView)).textStyle.height, 1.5);
+    Stores.setting.termLineHeight.put(9);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(key: UniqueKey(), body: log)));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TerminalView>(find.byType(TerminalView)).textStyle.height, 2.0);
   });
 
   testWidgets('a progress line is overwritten, not run together', (

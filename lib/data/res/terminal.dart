@@ -128,53 +128,27 @@ abstract final class TerminalLook {
 
   static TerminalStyle styleOf(BuildContext context) {
     final family = Stores.setting.fontPath.fetch().getFileName();
+    final size = Stores.setting.termFontSize.fetch();
+    final height = Stores.setting.termLineHeight.fetch().clamp(
+      minLineHeight,
+      maxLineHeight,
+    );
     final style = TerminalStyle.fromTextStyle(
-      TextStyle(
-        fontSize: Stores.setting.termFontSize.fetch(),
-        height: Stores.setting.termLineHeight.fetch().clamp(
-          minLineHeight,
-          maxLineHeight,
-        ),
-      ),
+      TextStyle(fontFamily: family, fontSize: size, height: height),
     );
-    final fonts = fontsFor(
-      custom: family,
-      linux: isLinux,
-      uiFallbacks:
-          Theme.of(context).textTheme.bodyMedium?.fontFamilyFallback ??
-          const [],
-    );
+    // Keep the terminal's monospace and custom fonts ahead of UI fallbacks,
+    // and a family already on the terminal's list is not added again:
+    // `sans-serif` is on both, and the UI list is appended on every theme
+    // change.
+    final own = style.fontFamilyFallback;
+    final uiFallbacks =
+        Theme.of(context).textTheme.bodyMedium?.fontFamilyFallback ?? const [];
     return style.copyWith(
-      fontFamily: fonts.first,
-      fontFamilyFallback: fonts.skip(1).toList(),
+      fontFamilyFallback: [
+        ...own,
+        ...uiFallbacks.where((f) => !own.contains(f)),
+      ],
     );
-  }
-
-  /// The families a terminal asks for, in order: [custom] first when there
-  /// is one, then xterm's monospace and CJK list, then the UI's own fallbacks.
-  ///
-  /// On [linux] the fontconfig `monospace` alias goes right after [custom]:
-  /// it is the font the system's own terminal uses. Last in xterm's list, it
-  /// came after macOS's and Windows's fonts and after Noto Sans Mono CJK, so
-  /// a system without Liberation Mono drew Latin text in a CJK font's glyphs
-  /// — not what the system terminal showed. A family is listed once.
-  @visibleForTesting
-  static List<String> fontsFor({
-    required String? custom,
-    required bool linux,
-    List<String> uiFallbacks = const [],
-  }) {
-    final fonts = <String>[
-      if (custom != null && custom.isNotEmpty) custom,
-      if (linux) 'monospace',
-      ...const TerminalStyle().fontFamilyFallback,
-      ...uiFallbacks,
-    ];
-    final seen = <String>{};
-    return [
-      for (final font in fonts)
-        if (seen.add(font)) font,
-    ];
   }
 
   /// The terminal's own theme setting, falling back to the app's and then to
@@ -199,19 +173,27 @@ abstract final class TerminalFont {
   /// Whether the chosen file failed to load. False with none chosen.
   static final failed = ValueNotifier(false);
 
+  /// Moves on with every [load], so one that finishes after a later one —
+  /// the startup load, after the user chose another file or cleared it —
+  /// does not report on a font that is no longer the chosen one.
+  static int _loads = 0;
+
   static Future<void> load(String path) async {
+    final load = ++_loads;
     if (path.isEmpty) {
       failed.value = false;
       return;
     }
+    bool ok;
     try {
       if (!await File(path).exists()) throw FileSystemException('missing', path);
       await FontUtils.loadFrom(path);
-      failed.value = false;
+      ok = true;
     } catch (e, s) {
-      failed.value = true;
+      ok = false;
       Loggers.app.warning('Could not load the terminal font', e, s);
     }
+    if (load == _loads) failed.value = !ok;
   }
 }
 
