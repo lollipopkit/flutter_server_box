@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart' show ThemeBackup, ThemeRestoreReport;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
@@ -86,6 +87,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// every file this build writes, for those builds to read. What [merge]
     /// makes of either is `_pveToRestore`'s rule.
     @Default(<String, Object?>{}) Map<String, Object?> pve,
+
+    /// The installed theme packages, by installation id — see
+    /// [ThemeBackup]. Only beside [settings]: they are what the theme
+    /// settings point at. Absent from files written before themes were
+    /// carried (#1637), whose theme settings restore onto the default.
+    @Default(<String, Object?>{}) Map<String, Object?> themes,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -100,8 +107,22 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
   @override
   Future<void> merge({bool force = false}) async {
+    await mergeReporting(force: force);
+  }
+
+  /// [merge], answering what became of [themes]: which came back, and which
+  /// could not — for a restore the user started to say so.
+  Future<ThemeRestoreReport?> mergeReporting({bool force = false}) async {
     _validateRestorableTypedStores();
     _loggerV2.info('Merging...');
+
+    // Before the settings that select one: the network is not something to
+    // hold the transaction open for, and a selection is only restored onto a
+    // theme that is there.
+    final themeReport = themes.isEmpty ? null : await ThemeBackup.restore(themes);
+    if (themeReport != null && themeReport.failed.isNotEmpty) {
+      _loggerV2.warning('Themes not restored: ${themeReport.failed}');
+    }
 
     late bool keysChanged;
     late bool credsChanged;
@@ -264,7 +285,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     }
     if (containerChanged) GlobalRef.gRef?.invalidate(containerProvider);
 
+    // After the settings: it points what they restored at this device's
+    // installations, and falls back where a theme did not come back.
+    if (themeReport != null) ThemeBackup.reselect(themeReport);
+
     _loggerV2.info('Merge completed');
+    return themeReport;
   }
 
   /// Envelope version. Bumped to 3 with the nested `Spi.ssh` layout, so a
@@ -294,7 +320,17 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
               deviceLocal: SettingStore.deviceLocalKeys,
             )
           : const {},
+      themes: includeSettings ? await _themes() : const {},
     );
+  }
+
+  static Future<Map<String, Object?>> _themes() async {
+    final export = await ThemeBackup.export();
+    if (export.skipped.isNotEmpty) {
+      // Listed with nothing to install them from; the restore names them.
+      _loggerV2.warning('Themes without a package to carry: ${export.skipped}');
+    }
+    return export.entries;
   }
 
   static Future<String> backup([

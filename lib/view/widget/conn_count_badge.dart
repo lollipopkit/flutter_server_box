@@ -1,8 +1,10 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 
 /// How many servers are up, as the two places that draw it need it.
@@ -48,10 +50,15 @@ class ConnCountRailBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConnCountBuilder(
-      builder: (_, count) => count == null
+    // Off, nothing is counted either: no watch on every server's state.
+    return Stores.setting.serverTabConnBadge.listenable().listenVal(
+      (shown) => !shown
           ? const SizedBox.shrink()
-          : NavRailBadge(label: count, opacity: opacity),
+          : ConnCountBuilder(
+              builder: (_, count) => count == null
+                  ? const SizedBox.shrink()
+                  : NavRailBadge(label: count, opacity: opacity),
+            ),
     );
   }
 }

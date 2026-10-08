@@ -193,6 +193,9 @@ extension _Widgets on _RemoteDesktopProfileEditPageState {
               Input(
                 controller: _password,
                 label: l10n.remoteDesktopPassword,
+                hint: _protocol == RemoteDesktopProtocol.vnc
+                    ? l10n.remoteDesktopVncPasswordHint
+                    : null,
                 icon: Icons.password,
                 obscureText: true,
                 suggestion: false,
@@ -531,17 +534,11 @@ void _answerPassword(
   RemoteDesktopProfile profile,
   String password,
 ) {
-  if (profile.protocol == RemoteDesktopProtocol.vnc) {
-    // Two limits, two answers, in the order the form checks them: a password
-    // that is both too long and non-ASCII is reported as the former.
-    if (password.codeUnits.length > 8) {
-      Toast.show(l10n.remoteDesktopVncPasswordLength);
-      return;
-    }
-    if (password.codeUnits.any((unit) => unit > 0x7f)) {
-      Toast.show(l10n.remoteDesktopVncPasswordAscii);
-      return;
-    }
+  // The form's own rule, from Rust: any length, ASCII only (#1637).
+  if (profile.protocol == RemoteDesktopProtocol.vnc &&
+      ffi.desktopValidateVncPassword(password: password) != null) {
+    Toast.show(l10n.remoteDesktopVncPasswordAscii);
+    return;
   }
   dialogContext.popDialog(password);
 }
@@ -587,7 +584,6 @@ String? validateRemoteDesktopProfileInput({
     'invalidPort' => l10n.remoteDesktopPortRequired,
     'usernameRequired' => l10n.remoteDesktopUsernameRequired,
     'invalidCredential' => l10n.remoteDesktopCredentialInvalid,
-    'vncPasswordLength' => l10n.remoteDesktopVncPasswordLength,
     'vncPasswordAscii' => l10n.remoteDesktopVncPasswordAscii,
     _ => code,
   };

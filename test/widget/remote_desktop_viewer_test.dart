@@ -10,7 +10,8 @@ library;
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/gestures.dart' show PointerDeviceKind, kDoubleTapTimeout;
+import 'package:flutter/gestures.dart'
+    show PointerDeviceKind, kDoubleTapTimeout, kLongPressTimeout;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -319,6 +320,41 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
+    // #1640: most VNC clients right-click on a long press; this one did
+    // nothing.
+    testWidgets('a long press is a right click, and lifting sends nothing', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byType(RemoteDesktopViewer)),
+        kind: PointerDeviceKind.touch,
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      expect(sessions.buttons, [4, 0]);
+
+      await finger.up();
+      await tester.pump(kDoubleTapTimeout);
+      expect(sessions.buttons, [4, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a finger that moves before the long press is no long press', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byType(RemoteDesktopViewer)),
+        kind: PointerDeviceKind.touch,
+      );
+      await finger.moveBy(const Offset(40, 0));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await finger.up();
+      await tester.pump(kDoubleTapTimeout);
+      expect(sessions.buttons, everyElement(0));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
     testWidgets('a second finger after a tap is a right click, not a drag', (
       tester,
     ) async {
@@ -553,6 +589,52 @@ void main() {
         Offset(170, 85),
         Offset(170, 85),
       ]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a direct finger held still lets go, then right-clicks', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byType(RemoteDesktopViewer)),
+        kind: PointerDeviceKind.touch,
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await finger.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // Pressed on landing, as a direct finger is; let go, right click, and
+      // nothing for the lift.
+      expect(sessions.buttons, [1, 0, 4, 0]);
+      expect(sessions.points.toSet(), {const Offset(160, 85)});
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    // #1639: the keyboard shrank the canvas, and the picture with it.
+    testWidgets('a soft keyboard leaves the picture at its scale', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 400);
+      await tester.pump();
+
+      final at = tester.getTopLeft(find.byType(RemoteDesktopViewer)) +
+          const Offset(640, 200);
+      final finger = await tester.startGesture(
+        at,
+        kind: PointerDeviceKind.touch,
+      );
+      await finger.moveBy(const Offset(40, 0));
+      await finger.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // Drawn at 4× as before the keyboard: 40 points are 10 pixels.
+      expect(sessions.points, hasLength(3));
+      expect(sessions.points[1].dx - sessions.points[0].dx, 10);
+      tester.view.resetViewInsets();
       await tester.pumpWidget(const SizedBox.shrink());
     });
 

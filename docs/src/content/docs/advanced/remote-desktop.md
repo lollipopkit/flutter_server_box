@@ -103,7 +103,8 @@ return to the app.
   resolution, and text CLIPRDR are supported. Username/password authentication
   with an optional domain primarily uses NTLM; Kerberos is not guaranteed.
 - **VNC:** RFB 3.3, 3.7, and 3.8 are supported with None or classic VNC
-  Authentication. Classic VNC passwords are limited to eight ASCII bytes.
+  Authentication. Classic VNC passwords are ASCII; a longer one is accepted
+  and, as in TigerVNC, only its first eight characters are used.
   Supported updates include Raw, CopyRect, ZRLE, Tight, Tight JPEG, cursor, and
   desktop size.
 - VNC does not support VeNCrypt, SASL, Apple Remote Desktop authentication, or

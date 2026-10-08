@@ -146,7 +146,11 @@ final class BakSyncer extends SyncIface {
     if (includeSettings) return mergeable;
 
     return switch (mergeable) {
-      final BackupV2 backup => backup.copyWith(settings: const {}),
+      // The themes go with the settings: they are what the settings select.
+      final BackupV2 backup => backup.copyWith(
+        settings: const {},
+        themes: const {},
+      ),
       final Backup backup => Backup(
         version: backup.version,
         date: backup.date,

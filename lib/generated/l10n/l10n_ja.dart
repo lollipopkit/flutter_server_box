@@ -276,6 +276,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      '復元しましたが、これらのテーマは復元されませんでした。テーマストアまたは元のファイルから再インストールしてください。';
+
+  @override
   String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
 
   @override
@@ -493,6 +497,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'トークンが空です';
+
+  @override
+  String get githubGistIdInvalid =>
+      'これは Gist ID でも Gist のリンクでもありません。gist のアドレスの末尾 (https://gist.github.com/<user>/<ID>) を使用するか、最初のバックアップ時に新しい secret gist を作成するには空欄にしてください。';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub で、この ID の gist のうちこのトークンで読み取れるものが見つかりませんでした。ID が間違っている、gist が削除された、または別のアカウントに属している可能性があります。最初のバックアップ時に新しい secret gist を作成するには、ID を空欄にしてください。';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub がこのトークンを拒否しました。トークンが間違っている、期限切れ、または取り消されているか、gist 権限がない可能性があります (classic token: \"gist\" scope; fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '移動';
@@ -963,6 +979,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'サーバーはまだありません';
+
+  @override
+  String get serverTabConnBadge => 'サーバータブの接続数';
+
+  @override
+  String get serverTabConnBadgeTip => '接続中のサーバー数（例: 2/4）';
 
   @override
   String get serverTabRequired => 'サーバータブは削除できません';
@@ -2758,10 +2780,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteDesktopUniqueName => 'このサーバーではプロファイル名を重複させられません。';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      '従来の VNC パスワードは 8 ASCII バイトまでです。';
-
-  @override
   String get remoteDesktopNameRequired => 'プロファイル名を入力してください。';
 
   @override
@@ -2782,6 +2800,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'ユーザー名とドメインは 256 文字以内で、改行は使えません。';
+
+  @override
+  String get remoteDesktopVncPasswordHint => '従来の VNC では最初の 8 文字のみ使用されます';
 
   @override
   String get remoteDesktopVncPasswordAscii =>

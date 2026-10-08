@@ -77,6 +77,10 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   RemoteDesktopScaleMode _scaleMode = RemoteDesktopScaleMode.fit;
   double _customScale = 1;
   Offset _pan = Offset.zero;
+
+  /// The canvas's size while no soft keyboard is open: what it keeps while
+  /// one is.
+  Size? _restingViewport;
   int _buttons = 0;
   int _touches = 0;
   int _maxTouches = 0;
@@ -97,6 +101,17 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   /// Sends [_lastTap]'s click once no second touch has come for it. Non-null
   /// for exactly as long as that click is owed.
   Timer? _pendingClick;
+
+  /// A finger held still: a right click once [kLongPressTimeout] has passed,
+  /// as in most VNC clients (#1640). Cancelled by anything else it does.
+  Timer? _longPress;
+
+  /// The finger down was held long enough to right-click: lifting it sends
+  /// nothing more.
+  bool _longPressed = false;
+
+  /// Where the finger [_longPress] waits on landed.
+  Offset? _longPressAt;
 
   _TapDrag _tapDrag = _TapDrag.none;
   _TouchMode _touchMode = _TouchMode.trackpad;
@@ -154,6 +169,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   void dispose() {
     _resizeTimer?.cancel();
     _pendingClick?.cancel();
+    _longPress?.cancel();
     _input?.releaseAll();
     _keyboardFocus.removeListener(_onFocusChanged);
     _keyboardFocus.dispose();
@@ -586,13 +602,35 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         final viewport = constraints.biggest;
         _scheduleResize(session, viewport);
         final desktop = Size(session.width.toDouble(), session.height.toDouble());
-        final transform = RemoteDesktopViewportTransform.calculate(
-          viewport: viewport,
-          desktop: desktop,
-          mode: _scaleMode,
-          customScale: _customScale,
-          pan: _pan,
-        );
+        // A soft keyboard shrinks the canvas — the scaffolds above resize for
+        // it — and a picture fitted to the strip left above it was tiny
+        // (#1639). Laid out at the size it had before instead, moved up just
+        // enough to keep the pointer in sight; the keyboard covers the rest.
+        // Asked of the `View`, as in [_scheduleResize].
+        final keyboard = View.of(context).viewInsets.bottom > 0;
+        if (!keyboard) _restingViewport = viewport;
+        final resting = _restingViewport;
+        final keepSize = keyboard &&
+            resting != null &&
+            resting.width == viewport.width &&
+            resting.height > viewport.height;
+        RemoteDesktopViewportTransform layout(Offset pan) =>
+            RemoteDesktopViewportTransform.calculate(
+              viewport: keepSize ? resting : viewport,
+              desktop: desktop,
+              mode: _scaleMode,
+              customScale: _customScale,
+              pan: pan,
+            );
+        var transform = layout(_pan);
+        if (keepSize) {
+          final shift = remoteDesktopKeyboardShift(
+            transform,
+            visibleHeight: viewport.height,
+            pointer: _pointerOr(transform),
+          );
+          if (shift > 0) transform = layout(_pan + Offset(0, -shift));
+        }
         _placePointer(transform);
         return Focus(
           focusNode: _keyboardFocus,
@@ -793,6 +831,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     if (point == null) return;
     _buttons = _buttonMask(event.buttons);
     _sendPointer(session, point);
+    if (event.kind == ui.PointerDeviceKind.touch) {
+      // The left button is down already, as a finger on the picture is a
+      // mouse there: let go of it first, then the right click — Windows'
+      // own press and hold selects the same way before its menu opens.
+      _armLongPress(event.localPosition, () {
+        _buttons = 0;
+        _sendPointer(session, point);
+        _click(session, point, 4);
+      });
+    }
   }
 
   void _pointerMove(
@@ -803,6 +851,8 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     if (session.viewOnly) return;
     if (_touchpad(event)) return _touchpadMove(event, transform, session);
     if (!_isDirectPointer(event)) return;
+    _moveLongPress(event.localPosition);
+    if (_longPressed) return;
     // Clamped while something is held on the desktop, so a drag that leaves
     // the picture stays pressed at its edge rather than going silent. Only
     // when the desktop was told of the press ([_buttons], the last state
@@ -845,6 +895,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     if (_touchpad(event)) return _touchpadUp(event, transform, session);
     if (!_isDirectPointer(event)) return;
     _directPointer = null;
+    if (_endLongPress()) return;
     if (session.viewOnly) return;
     // Clamped: a release outside the picture is still the release.
     final point = transform.toRemote(event.localPosition, clamp: true);
@@ -871,6 +922,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     // released the finger that did, mid-drag, and stopped following it.
     if (!_touchpad(event) && !_isDirectPointer(event)) return;
     _resetTouchpad();
+    _endLongPress();
     _directPointer = null;
     _buttons = 0;
     final point = _pointer.value;

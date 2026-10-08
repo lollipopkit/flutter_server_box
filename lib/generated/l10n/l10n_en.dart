@@ -290,6 +290,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Restored, except these themes. Install them again from the theme store or the file they came from.';
+
+  @override
   String get backupTip =>
       'The exported data can be encrypted with password. \nPlease keep it safe.';
 
@@ -511,6 +515,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
+  String get githubGistIdInvalid =>
+      'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Go to';
@@ -1006,6 +1022,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'No servers yet';
+
+  @override
+  String get serverTabConnBadge => 'Connection count on the server tab';
+
+  @override
+  String get serverTabConnBadgeTip =>
+      'How many servers are connected, such as 2/4';
 
   @override
   String get serverTabRequired => 'Server tab cannot be removed';
@@ -2899,10 +2922,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Profile names must be unique for this server.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Classic VNC passwords are limited to 8 ASCII bytes.';
-
-  @override
   String get remoteDesktopNameRequired => 'Enter a profile name.';
 
   @override
@@ -2925,6 +2944,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'The username and domain can be up to 256 characters and cannot contain line breaks.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'Classic VNC uses only the first 8 characters';
 
   @override
   String get remoteDesktopVncPasswordAscii =>

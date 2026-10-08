@@ -983,6 +983,7 @@ extension on _BackupPageState {
             label: appL10n.githubGistToken,
             controller: tokenCtrl,
             suggestion: false,
+            obscureText: true,
             node: nodeToken,
           ),
           Input(
@@ -995,33 +996,66 @@ extension on _BackupPageState {
       ),
       actions: Btnx.oks,
     );
-    if (result == true) {
-      try {
-        final token_ = tokenCtrl.text.trim();
-        final gistId_ = gistIdCtrl.text.trim();
-
-        await GistRs.test(
-          token: token_,
-          gistId: gistId_.isEmpty ? null : gistId_,
-        );
-        Toast.success(libL10n.success);
-
-        await SecureStoreProps.githubToken.write(token_);
-        GistRs.shared.token = token_;
-        if (gistId_.isEmpty) {
-          await PrefProps.gistId.remove();
-        } else {
-          await PrefProps.gistId.set(gistId_);
-        }
-        // Same reason as WebDAV: a different gist behind the same backend.
-        await BakSyncer.forgetCheckpoint();
-      } catch (e, s) {
-        context.showErrDialog(e, s, 'Gist');
-      }
+    try {
+      if (result == true) await _saveGistSetting(context, tokenCtrl, gistIdCtrl);
+    } finally {
+      tokenCtrl.dispose();
+      gistIdCtrl.dispose();
+      nodeToken.dispose();
     }
-    tokenCtrl.dispose();
-    gistIdCtrl.dispose();
-    nodeToken.dispose();
+  }
+
+  Future<void> _saveGistSetting(
+    BuildContext context,
+    TextEditingController tokenCtrl,
+    TextEditingController gistIdCtrl,
+  ) async {
+    final appL10n = context.l10n;
+    final token = tokenCtrl.text.trim();
+    if (token.isEmpty) {
+      Toast.show(appL10n.githubGistTokenEmpty);
+      return;
+    }
+    // An id, or the link a browser shows for the gist.
+    final gistInput = gistIdCtrl.text.trim();
+    final gistId = gistInput.isEmpty ? null : GistRs.idOf(gistInput);
+    if (gistInput.isNotEmpty && gistId == null) {
+      _showGistProblem(context, appL10n.githubGistIdInvalid);
+      return;
+    }
+    try {
+      await GistRs.test(token: token, gistId: gistId);
+      Toast.success(libL10n.success);
+
+      await SecureStoreProps.githubToken.write(token);
+      GistRs.shared.token = token;
+      if (gistId == null) {
+        await PrefProps.gistId.remove();
+      } else {
+        await PrefProps.gistId.set(gistId);
+      }
+      // Same reason as WebDAV: a different gist behind the same backend.
+      await BakSyncer.forgetCheckpoint();
+    } on GistTestException catch (e) {
+      if (!context.mounted) return;
+      _showGistProblem(context, switch (e.reason) {
+        GistTestFailure.badToken => appL10n.githubGistTokenRejected,
+        GistTestFailure.notFound => appL10n.githubGistNotFound,
+      });
+    } catch (e, s) {
+      if (!context.mounted) return;
+      context.showErrDialog(e, s, 'Gist');
+    }
+  }
+
+  /// What was wrong with what the user entered, in words: the response itself
+  /// says only 401 or 404.
+  void _showGistProblem(BuildContext context, String message) {
+    context.showRoundDialog(
+      title: 'GitHub Gist',
+      child: Text(message),
+      actions: Btnx.oks,
+    );
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {

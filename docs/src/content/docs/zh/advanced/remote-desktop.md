@@ -79,7 +79,7 @@ Server Box 会拒绝发送，避免字符损坏。RDP 可以根据查看器调�
 - **RDP：**支持 TCP、TLS、CredSSP/NLA、图形、键盘与指针输入、动态分辨率和文本 CLIPRDR。
   用户名/密码和可选域主要使用 NTLM；不保证支持 Kerberos。
 - **VNC：**支持 RFB 3.3、3.7、3.8，以及 None 和经典 VNC Authentication。经典 VNC 密码
-  最多为 8 个 ASCII 字节。支持 Raw、CopyRect、ZRLE、Tight、Tight JPEG、光标和桌面尺寸更新。
+  只能是 ASCII；可以输入更长的密码，与 TigerVNC 一样只使用前 8 个字符。支持 Raw、CopyRect、ZRLE、Tight、Tight JPEG、光标和桌面尺寸更新。
 - VNC 暂不支持 VeNCrypt、SASL、Apple Remote Desktop 认证和 RealVNC 私有认证。
 - 暂不支持音频、麦克风、多显示器、RemoteApp、RDP Gateway、UDP，以及文件、磁盘、打印机、
   USB 或智能卡重定向。

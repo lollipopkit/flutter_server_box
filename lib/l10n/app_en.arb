@@ -346,6 +346,10 @@
       }
     }
   },
+  "backupThemesNotRestored": "Restored, except these themes. Install them again from the theme store or the file they came from.",
+  "@backupThemesNotRestored": {
+    "description": "Toast after a restore: the backup was restored, but the themes named below it could not be installed — not in the theme store or not carried by the backup (installed from a folder, or imported with an older version of the app)."
+  },
   "backupTip": "The exported data can be encrypted with password. \nPlease keep it safe.",
   "@backupTip": {
     "description": "Help text for the backup setting or action."
@@ -643,6 +647,18 @@
   "githubGistTokenEmpty": "Token is empty",
   "@githubGistTokenEmpty": {
     "description": "Empty-state message for github gist token empty."
+  },
+  "githubGistIdInvalid": "This is neither a Gist ID nor a Gist link. Use the last part of the gist's address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.",
+  "@githubGistIdInvalid": {
+    "description": "Error shown when the Gist ID field holds something that is neither an ID nor a gist URL."
+  },
+  "githubGistNotFound": "GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.",
+  "@githubGistNotFound": {
+    "description": "Error shown when GitHub answers 404 for the entered Gist ID. GitHub gives the same answer for a missing gist and for someone else's secret gist."
+  },
+  "githubGistTokenRejected": "GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).",
+  "@githubGistTokenRejected": {
+    "description": "Error shown when GitHub answers 401 or 403 for the token. Keep \"gist\" and \"Gists\" as GitHub names them."
   },
   "goto": "Go to",
   "@goto": {
@@ -1301,6 +1317,14 @@
   "serverTabEmpty": "No servers yet",
   "@serverTabEmpty": {
     "description": "Empty-state message for server tab empty."
+  },
+  "serverTabConnBadge": "Connection count on the server tab",
+  "@serverTabConnBadge": {
+    "description": "Switch title: whether the server tab in the navigation bar shows how many servers are connected, e.g. 2/4."
+  },
+  "serverTabConnBadgeTip": "How many servers are connected, such as 2/4",
+  "@serverTabConnBadgeTip": {
+    "description": "Subtitle of the switch that shows the connection count on the server tab."
   },
   "serverTabRequired": "Server tab cannot be removed",
   "@serverTabRequired": {
@@ -3760,7 +3784,6 @@
   "remoteDesktopShareSession": "Share session",
   "remoteDesktopProtocol": "Protocol",
   "remoteDesktopUniqueName": "Profile names must be unique for this server.",
-  "remoteDesktopVncPasswordLength": "Classic VNC passwords are limited to 8 ASCII bytes.",
   "remoteDesktopNameRequired": "Enter a profile name.",
   "remoteDesktopHostRequired": "Enter a target host.",
   "remoteDesktopPortRequired": "Enter a valid port.",
@@ -3768,6 +3791,10 @@
   "remoteDesktopNameInvalid": "The profile name can be up to 64 characters and cannot contain line breaks.",
   "remoteDesktopHostInvalid": "The target host cannot contain spaces or line breaks.",
   "remoteDesktopCredentialInvalid": "The username and domain can be up to 256 characters and cannot contain line breaks.",
+  "remoteDesktopVncPasswordHint": "Classic VNC uses only the first 8 characters",
+  "@remoteDesktopVncPasswordHint": {
+    "description": "Placeholder of the VNC password field: a longer password is accepted, and only its first 8 characters are used to sign in, as in TigerVNC."
+  },
   "remoteDesktopVncPasswordAscii": "Classic VNC passwords must contain ASCII characters only.",
   "remoteDesktopCertificateRequired": "Certificate confirmation required",
   "remoteDesktopWaiting": "Waiting for desktop…",

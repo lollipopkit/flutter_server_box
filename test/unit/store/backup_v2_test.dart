@@ -195,6 +195,28 @@ void main() {
 
       expect(backup.toJsonString, throwsA(isA<StateError>()));
     });
+
+    // #1637: the themes the settings select travel with them.
+    test('carries themes, and reads a file from before them', () {
+      const entry = {'id': 'example.amethyst', 'name': 'Amethyst'};
+      final id = 'a' * 64;
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {},
+        themes: {id: entry},
+      );
+      final json = jsonDecode(backup.toJsonString()) as Map<String, dynamic>;
+      expect(BackupV2.fromJson(json).themes, {id: entry});
+
+      json.remove('themes');
+      expect(BackupV2.fromJson(json).themes, isEmpty);
+    });
   });
 
   group('BackupV2 restore validation', () {

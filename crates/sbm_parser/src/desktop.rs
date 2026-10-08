@@ -18,8 +18,9 @@ pub const MAX_NAME: usize = 64;
 pub const MAX_HOST: usize = 253;
 /// A user name or a domain.
 pub const MAX_IDENT: usize = 256;
-/// Classic VNC authentication is DES keyed by the first eight bytes.
-pub const MAX_VNC_PASSWORD: usize = 8;
+/// Classic VNC authentication is DES keyed by the first eight bytes; the rest
+/// of a longer password takes no part in it.
+pub const VNC_PASSWORD_KEY_LEN: usize = 8;
 
 /// The fields of a route that have rules. The port is an `i64` so a form can
 /// pass what was typed, out of range included, and be told so.
@@ -75,14 +76,12 @@ impl ProfileError {
 /// Why a classic VNC password would not work.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VncPasswordError {
-    TooLong,
     NotAscii,
 }
 
 impl VncPasswordError {
     pub fn as_str(self) -> &'static str {
         match self {
-            VncPasswordError::TooLong => "vncPasswordLength",
             VncPasswordError::NotAscii => "vncPasswordAscii",
         }
     }
@@ -139,17 +138,28 @@ pub fn validate_profile(input: &ProfileInput) -> Result<(), ProfileError> {
     Ok(())
 }
 
-/// Classic VNC authentication: at most eight bytes, ASCII only. Counted in
-/// UTF-16 units first, as the Dart editor did, so a long non-ASCII password
-/// is reported as too long rather than as non-ASCII.
+/// Classic VNC authentication: ASCII only. Any length is accepted, as
+/// TigerVNC's own tools accept it; only the first [VNC_PASSWORD_KEY_LEN]
+/// bytes are used ([vnc_auth_password]). Refusing a longer one (#1637) left
+/// a server set up with `vncpasswd` unreachable by its owner's password.
 pub fn validate_vnc_password(password: &str) -> Result<(), VncPasswordError> {
-    if password.encode_utf16().count() > MAX_VNC_PASSWORD {
-        return Err(VncPasswordError::TooLong);
-    }
     if !password.is_ascii() {
         return Err(VncPasswordError::NotAscii);
     }
     Ok(())
+}
+
+/// What classic VNC authentication is keyed by: the first
+/// [VNC_PASSWORD_KEY_LEN] bytes of [password], which [validate_vnc_password]
+/// has made sure are whole characters.
+pub fn vnc_auth_password(password: &str) -> &str {
+    let end = password
+        .char_indices()
+        .map(|(i, c)| i + c.len_utf8())
+        .take_while(|&end| end <= VNC_PASSWORD_KEY_LEN)
+        .last()
+        .unwrap_or(0);
+    &password[..end]
 }
 
 #[cfg(test)]
@@ -203,6 +213,6 @@ mod tests {
     #[test]
     fn the_codes_are_the_ones_clients_phrase() {
         assert_eq!(ProfileError::UsernameRequired.as_str(), "usernameRequired");
-        assert_eq!(VncPasswordError::TooLong.as_str(), "vncPasswordLength");
+        assert_eq!(VncPasswordError::NotAscii.as_str(), "vncPasswordAscii");
     }
 }

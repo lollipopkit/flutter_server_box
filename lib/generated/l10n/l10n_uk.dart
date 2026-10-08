@@ -292,6 +292,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Відновлено, крім цих тем. Встановіть їх знову з магазину тем або з вихідного файлу.';
+
+  @override
   String get backupTip =>
       'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
 
@@ -518,6 +522,18 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Токен порожній';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Це не ID Gist і не посилання на Gist. Використайте останню частину адреси gist (https://gist.github.com/<user>/<ID>) або залиште поле порожнім, щоб під час першого резервного копіювання створити новий секретний gist.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub не знайшов gist із цим ID, який може прочитати цей токен: ID може бути неправильним, gist могли видалити або він може належати іншому обліковому запису. Залиште ID порожнім, щоб під час першого резервного копіювання створити новий секретний gist.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub відхилив цей токен: можливо, він неправильний, термін його дії минув або його відкликано, чи йому бракує дозволу gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Перейти до';
@@ -1015,6 +1031,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Серверів ще немає';
+
+  @override
+  String get serverTabConnBadge => 'Кількість підключень на вкладці сервера';
+
+  @override
+  String get serverTabConnBadgeTip =>
+      'Кількість підключених серверів, наприклад 2/4';
 
   @override
   String get serverTabRequired => 'Вкладку сервера не можна видалити';
@@ -2920,10 +2943,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Імена профілів мають бути унікальними для цього сервера.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Класичні паролі VNC обмежені 8 байтами ASCII.';
-
-  @override
   String get remoteDesktopNameRequired => 'Введіть ім\'я профілю.';
 
   @override
@@ -2946,6 +2965,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'Імʼя користувача й домен — не більше 256 символів, без перенесень рядка.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'Класичний VNC використовує лише перші 8 символів';
 
   @override
   String get remoteDesktopVncPasswordAscii =>

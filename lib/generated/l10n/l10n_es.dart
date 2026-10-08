@@ -294,6 +294,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Restaurado todo, excepto estos temas. Vuelve a instalarlos desde la tienda de temas o desde el archivo de origen.';
+
+  @override
   String get backupTip =>
       'Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.';
 
@@ -519,6 +523,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'El token está vacío';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Esto no es ni un ID de Gist ni un enlace a un Gist. Usa la última parte de la dirección del gist (https://gist.github.com/<user>/<ID>) o déjalo vacío para crear un nuevo gist secreto en la primera copia de seguridad.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub no encontró ningún gist con este ID que este token pueda leer: puede que el ID sea incorrecto, que el gist se haya eliminado o que pertenezca a otra cuenta. Deja el ID vacío para crear un nuevo gist secreto en la primera copia de seguridad.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub rechazó este token: puede ser incorrecto, haber caducado o haberse revocado, o carecer del permiso gist (classic token: el ámbito \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Ir a';
@@ -1022,6 +1038,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Aún no hay servidores';
+
+  @override
+  String get serverTabConnBadge =>
+      'Número de conexiones en la pestaña del servidor';
+
+  @override
+  String get serverTabConnBadgeTip =>
+      'Número de servidores conectados, por ejemplo, 2/4';
 
   @override
   String get serverTabRequired =>
@@ -2947,10 +2971,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los nombres de perfil deben ser únicos para este servidor.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Las contraseñas VNC clásicas se limitan a 8 bytes ASCII.';
-
-  @override
   String get remoteDesktopNameRequired => 'Introduce un nombre de perfil.';
 
   @override
@@ -2974,6 +2994,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'El usuario y el dominio pueden tener hasta 256 caracteres y no pueden contener saltos de línea.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'El VNC clásico solo usa los primeros 8 caracteres';
 
   @override
   String get remoteDesktopVncPasswordAscii =>

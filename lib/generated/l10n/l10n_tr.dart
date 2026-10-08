@@ -291,6 +291,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Bu temalar dışında geri yüklendi. Temaları tema mağazasından veya geldikleri dosyadan yeniden yükleyin.';
+
+  @override
   String get backupTip =>
       'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
@@ -517,6 +521,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Belirteç boş';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Bu, Gist kimliği de Gist bağlantısı da değil. Gist adresinin son bölümünü kullanın (https://gist.github.com/<user>/<ID>) veya ilk yedeklemede yeni bir gizli gist oluşturulması için boş bırakın.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub, bu tokenin okuyabileceği bu kimliğe sahip bir gist bulamadı: kimlik yanlış olabilir, gist silinmiş olabilir veya başka bir hesaba ait olabilir. İlk yedeklemede yeni bir gizli gist oluşturulması için kimliği boş bırakın.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub bu tokeni reddetti: token yanlış, süresi dolmuş veya iptal edilmiş olabilir ya da gist izni eksik olabilir (classic token: \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Git';
@@ -1013,6 +1029,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Henüz sunucu yok';
+
+  @override
+  String get serverTabConnBadge => 'Sunucu sekmesindeki bağlantı sayısı';
+
+  @override
+  String get serverTabConnBadgeTip => 'Bağlı sunucu sayısı, örneğin 2/4';
 
   @override
   String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
@@ -2897,10 +2919,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Profil adları bu sunucuda benzersiz olmalıdır.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Klasik VNC parolaları 8 ASCII baytla sınırlıdır.';
-
-  @override
   String get remoteDesktopNameRequired => 'Bir profil adı girin.';
 
   @override
@@ -2923,6 +2941,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'Kullanıcı adı ve etki alanı en fazla 256 karakter olabilir ve satır sonu içeremez.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'Klasik VNC yalnızca ilk 8 karakteri kullanır';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
