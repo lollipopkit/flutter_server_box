@@ -2,7 +2,7 @@
 //!
 //! - `GET /apps`: the installed apps. Every account sees the approved ones;
 //!   an admin also those waiting for approval.
-//! - `POST /apps` (admin): a package (`.sbapp`, a gzipped tar) as the body.
+//! - `POST /apps` (admin): a package (`.fsba`, a gzipped tar) as the body.
 //!   Checked whole, then stored waiting for approval; a new version of an
 //!   installed app keeps its approval only when it asks for nothing more.
 //! - `PUT /apps/{id}/approval` (admin, password): approves exactly the

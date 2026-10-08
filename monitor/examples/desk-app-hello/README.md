@@ -6,5 +6,5 @@ storage, a toolbar button and a menu that send a notification.
 Package it and install it as an admin (Settings → Apps, or the API):
 
 ```sh
-COPYFILE_DISABLE=1 tar -czf example_hello.sbapp manifest.json ui  # macOS: no ._ files
+COPYFILE_DISABLE=1 tar -czf example_hello.fsba manifest.json ui  # macOS: no ._ files
 ```

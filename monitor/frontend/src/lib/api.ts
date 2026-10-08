@@ -1115,7 +1115,7 @@ export const api = {
   /// Desk apps installed on the agent (`api::apps`); an admin also sees the
   /// ones waiting for approval.
   listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
-  /// Uploads a package (`.sbapp`); it waits for approval.
+  /// Uploads a package (`.fsba`); it waits for approval.
   async installApp(file: Blob): Promise<InstalledApp> {
     const res = await fsBytes(
       '/apps',
