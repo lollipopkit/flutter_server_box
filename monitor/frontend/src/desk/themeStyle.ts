@@ -3,8 +3,9 @@
 /// accent and neutral palettes take the places of `--berry-*` and `--ink-*`,
 /// so every token the design system derives from them follows in its own
 /// proportions, and the tokens it writes as values (surfaces, text, lines,
-/// glass) take the theme's scheme roles that play the same part. Shapes set
-/// the corner radii; the background is a wallpaper (`themeWallpaper`).
+/// glass) take the theme's scheme roles that play the same part. Shapes round
+/// the cards, list rows and buttons; the background is a wallpaper
+/// (`themeWallpaper`).
 ///
 /// What a theme's `[components]` say is kept and not drawn yet (TODO).
 
@@ -105,9 +106,13 @@ export function themeVars(theme: PackageTheme, dark: boolean): Record<string, st
     'linear-gradient(160deg, var(--ink-12) 0%, var(--berry-10) 100%)',
   ].join(', ')
 
-  vars['--radius-card'] = `${theme.shapes.card}px`
-  vars['--radius-sm'] = `${theme.shapes.tile}px`
-  vars['--radius-control'] = `${theme.shapes.button}px`
+  // Shapes name components (the app's cards, list tiles and buttons), so they
+  // reach those components (`--shape-*` in `lk/components.css`) and never the
+  // design system's radius scale, which segmented thumbs, fields, menus and
+  // windows share: a theme with square list rows keeps round controls.
+  vars['--shape-card'] = `${theme.shapes.card}px`
+  vars['--shape-tile'] = `${theme.shapes.tile}px`
+  vars['--shape-button'] = `${theme.shapes.button}px`
   return vars
 }
 
