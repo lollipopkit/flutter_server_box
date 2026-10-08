@@ -5422,4 +5422,46 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'Node tugas ini tidak online.';
+
+  @override
+  String get programWaiting => 'Menunggu Anda';
+
+  @override
+  String get programWaitingPermission => 'Menunggu persetujuan Anda';
+
+  @override
+  String get programWaitingQuestion => 'Menunggu jawaban Anda';
+
+  @override
+  String get programWaitingAuth => 'Menunggu Anda masuk';
+
+  @override
+  String get programStatus => 'Status program';
+
+  @override
+  String get programIdle => 'Tidak aktif';
+
+  @override
+  String get programThisShell => 'Shell ini';
+
+  @override
+  String get programProgress => 'Progres';
+
+  @override
+  String get programCommandRunning => 'Perintah sedang berjalan';
+
+  @override
+  String get programCommandSucceeded => 'Perintah terakhir berhasil';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'Perintah terakhir berakhir dengan kode $code';
+  }
+
+  @override
+  String get programStatusAlerts => 'Beri tahu saat program membutuhkan Anda';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Untuk terminal yang tidak terlihat: saat program melaporkan bahwa program menunggu Anda, selesai, atau gagal (OSC 7501, OSC 9;4), atau saat perintah yang berjalan selama setidaknya 30 detik berakhir (OSC 133).';
 }

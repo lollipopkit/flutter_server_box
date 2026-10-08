@@ -1525,5 +1525,18 @@
   "virtCreateImageBigger": "Das Image ist größer als die Festplatte: Machen Sie die Festplatte mindestens so groß.",
   "virtBackupIssueStorage": "Dieser Speicher nimmt auf diesem Knoten keine Backups auf.",
   "virtBackupIssueOption": "Kein Modus und keine Kompression, die PVE annimmt.",
-  "virtBackupIssueNodeOffline": "Der Knoten des Jobs ist nicht online."
+  "virtBackupIssueNodeOffline": "Der Knoten des Jobs ist nicht online.",
+  "programWaiting": "Wartet auf Sie",
+  "programWaitingPermission": "Wartet auf Ihre Genehmigung",
+  "programWaitingQuestion": "Wartet auf Ihre Antwort",
+  "programWaitingAuth": "Wartet darauf, dass Sie sich anmelden",
+  "programStatus": "Programmstatus",
+  "programIdle": "Inaktiv",
+  "programThisShell": "Diese Shell",
+  "programProgress": "Fortschritt",
+  "programCommandRunning": "Ein Befehl wird ausgeführt",
+  "programCommandSucceeded": "Der letzte Befehl war erfolgreich",
+  "programCommandFailed": "Der letzte Befehl wurde mit {code} beendet",
+  "programStatusAlerts": "Benachrichtigen, wenn ein Programm Sie benötigt",
+  "programStatusAlertsTip": "Für Terminals im Hintergrund: wenn ein Programm meldet, dass es auf Sie wartet, abgeschlossen ist oder fehlgeschlagen ist (OSC 7501, OSC 9;4), oder wenn ein mindestens 30 Sekunden laufender Befehl endet (OSC 133)."
 }

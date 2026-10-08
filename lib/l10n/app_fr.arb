@@ -1525,5 +1525,18 @@
   "virtCreateImageBigger": "L'image est plus grande que le disque : faites le disque au moins aussi grand.",
   "virtBackupIssueStorage": "Ce stockage ne contient pas de sauvegardes sur ce nœud.",
   "virtBackupIssueOption": "Ce n'est pas un mode ou une compression que PVE accepte.",
-  "virtBackupIssueNodeOffline": "Le nœud de la tâche n'est pas en ligne."
+  "virtBackupIssueNodeOffline": "Le nœud de la tâche n'est pas en ligne.",
+  "programWaiting": "En attente de vous",
+  "programWaitingPermission": "En attente de votre approbation",
+  "programWaitingQuestion": "En attente de votre réponse",
+  "programWaitingAuth": "En attente de votre connexion",
+  "programStatus": "État du programme",
+  "programIdle": "Inactif",
+  "programThisShell": "Ce shell",
+  "programProgress": "Progression",
+  "programCommandRunning": "Une commande est en cours d’exécution",
+  "programCommandSucceeded": "La dernière commande a réussi",
+  "programCommandFailed": "La dernière commande s’est terminée avec le code {code}",
+  "programStatusAlerts": "Me prévenir lorsqu’un programme a besoin de vous",
+  "programStatusAlertsTip": "Pour un terminal hors écran : lorsqu’un programme indique qu’il vous attend, qu’il a terminé ou échoué (OSC 7501, OSC 9;4), ou lorsqu’une commande exécutée pendant au moins 30 secondes se termine (OSC 133)."
 }

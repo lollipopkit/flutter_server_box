@@ -5473,4 +5473,47 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get virtBackupIssueNodeOffline =>
       'De node van de taak is niet online.';
+
+  @override
+  String get programWaiting => 'Wacht op je';
+
+  @override
+  String get programWaitingPermission => 'Wacht op je goedkeuring';
+
+  @override
+  String get programWaitingQuestion => 'Wacht op je antwoord';
+
+  @override
+  String get programWaitingAuth => 'Wacht tot je je aanmeldt';
+
+  @override
+  String get programStatus => 'Programmastatus';
+
+  @override
+  String get programIdle => 'Inactief';
+
+  @override
+  String get programThisShell => 'Deze shell';
+
+  @override
+  String get programProgress => 'Voortgang';
+
+  @override
+  String get programCommandRunning => 'Er wordt een opdracht uitgevoerd';
+
+  @override
+  String get programCommandSucceeded => 'De laatste opdracht is geslaagd';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'De laatste opdracht is beëindigd met code $code';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Melden wanneer een programma je nodig heeft';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Voor een terminal buiten beeld: wanneer een programma meldt dat het op je wacht, is voltooid of is mislukt (OSC 7501, OSC 9;4), of wanneer een opdracht eindigt die minstens 30 seconden draaide (OSC 133).';
 }

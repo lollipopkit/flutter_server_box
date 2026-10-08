@@ -5515,4 +5515,47 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get virtBackupIssueNodeOffline =>
       'Le nœud de la tâche n\'est pas en ligne.';
+
+  @override
+  String get programWaiting => 'En attente de vous';
+
+  @override
+  String get programWaitingPermission => 'En attente de votre approbation';
+
+  @override
+  String get programWaitingQuestion => 'En attente de votre réponse';
+
+  @override
+  String get programWaitingAuth => 'En attente de votre connexion';
+
+  @override
+  String get programStatus => 'État du programme';
+
+  @override
+  String get programIdle => 'Inactif';
+
+  @override
+  String get programThisShell => 'Ce shell';
+
+  @override
+  String get programProgress => 'Progression';
+
+  @override
+  String get programCommandRunning => 'Une commande est en cours d’exécution';
+
+  @override
+  String get programCommandSucceeded => 'La dernière commande a réussi';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'La dernière commande s’est terminée avec le code $code';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Me prévenir lorsqu’un programme a besoin de vous';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Pour un terminal hors écran : lorsqu’un programme indique qu’il vous attend, qu’il a terminé ou échoué (OSC 7501, OSC 9;4), ou lorsqu’une commande exécutée pendant au moins 30 secondes se termine (OSC 133).';
 }

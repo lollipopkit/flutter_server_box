@@ -12,6 +12,7 @@ import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
+import 'package:xterm/core.dart';
 
 /// Runs the CC parser and command queue against the real tmux binary.
 ///
@@ -311,6 +312,96 @@ void main() {
     } finally {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, null);
+      terminalSession.dispose();
+      await client.dispose();
+      shell.close();
+      await Process.run(
+        'tmux',
+        ['-L', socketName, 'kill-server'],
+        environment: {'TMUX_TMPDIR': tempDir.path},
+      );
+      try {
+        await tempDir.delete(recursive: true);
+      } on FileSystemException {
+        // tmux can remove its socket directory concurrently with the test.
+      }
+    }
+  });
+
+  test('reads real tmux panes\' program status, hidden ones too', () async {
+    if (Platform.isWindows) {
+      markTestSkipped('the real-PTY tmux harness is POSIX-only');
+      return;
+    }
+    final ProcessResult version;
+    try {
+      version = Process.runSync('tmux', ['-V']);
+    } on ProcessException {
+      markTestSkipped('tmux is not installed');
+      return;
+    }
+    if (version.exitCode != 0) {
+      markTestSkipped('tmux is not installed');
+      return;
+    }
+
+    final tempDir = await Directory.systemTemp.createTemp('sb-osc7501-');
+    final socketName =
+        'pst${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}';
+    final pty = await _startTmuxControlProcess(
+      socketName,
+      tempDir.path,
+      sessionName: 'serverbox_status',
+      paneCommand: const [
+        'sh',
+        '-c',
+        "sleep 1; printf '\\033]7501;state=working:app=build\\033\\\\'; cat",
+      ],
+    );
+    final shell = _PtyShellSession(pty);
+    final client = TmuxControlClient(shell);
+    final terminalSession = TerminalSession(
+      source: ServerSource(
+        Spi(
+          name: 'agent',
+          id: 'osc7501-test',
+          ssh: const SshCredential(ip: '10.0.0.1'),
+        ),
+      ),
+    );
+    final tmuxSession = TmuxControlShellSession(client, shell);
+    terminalSession.bindForeground(tmuxSession);
+    final status = terminalSession.status;
+
+    Future<void> until(bool Function() done) async {
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (!done()) {
+        if (DateTime.now().isAfter(deadline)) {
+          fail('timed out; status: ${status.headline?.state}');
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+    }
+
+    try {
+      await client.initialize().timeout(const Duration(seconds: 10));
+      final shown = client.snapshot!.activePaneId;
+      await until(() => status.pane(shown)?.state == ProgramState.working);
+
+      // A window never selected: its output is never on screen.
+      final created = await client.runRequired(
+        "new-window -d -P -F '#{pane_id}' "
+        "'sleep 0.5; printf \"\\033]7501;state=blocked:kind=permission\\007\"; cat'",
+      );
+      final hidden = TmuxPaneId.parse(created.output.trim());
+      await until(() => status.pane(hidden)?.state == ProgramState.blocked);
+      expect(status.headline!.report!.kind, ProgramBlockKind.permission);
+
+      await client.runRequired("kill-pane -t '$hidden'");
+      await client.refreshState();
+      await until(() => status.pane(hidden) == null);
+      expect(status.state, ProgramState.working);
+    } finally {
       terminalSession.dispose();
       await client.dispose();
       shell.close();

@@ -173,6 +173,16 @@ The xterm.dart fork uses a custom painter and repaints only when terminal conten
 - **SFTP quick access** opens the SFTP browser at the terminal's current working directory.
 - **Shared backends** let local shells, Alpine environments, and Monitor terminals use the same upper-level terminal UI as SSH.
 
+## Program status
+
+Programs report their own state with OSC 7501 (the Program Status Protocol), OSC 9;4 (a progress bar) and OSC 133 (shell integration); see [Program Status](/docs/advanced/program-status/) for what is shown.
+
+- The emulator parses the sequences (`program_status.dart` in the xterm.dart fork) and emits them through `Terminal.onStatus`. It keeps no records itself, and answers the support query only while something listens.
+- The records live in `ProgramStatusRecords`, owned by whatever counts as one terminal: the `TerminalSession`, or under `tmux -CC` each pane. The local emulator shows one pane after another and replays each after a full reset, so a pane's records cannot belong to it.
+- Under tmux, `TmuxOutputNormalizer` takes the sequences out of every pane's `%output`, panes not on screen included, and a refresh lists the session's panes so a closed pane's records go.
+- A shell's next prompt (OSC 133 `A`) or its exit removes `working`, `blocked` and `idle` records; `done` and `error` stay. A full reset removes everything.
+- The Monitor agent's web panel applies the same rules on top of xterm.js (`monitor/frontend/src/lib/programStatus.ts`).
+
 ## Keep-alive
 
 SSH keep-alive messages operate at the protocol layer. They are separate from bytes typed into or displayed by the terminal; see [SSH Connection](/docs/principles/ssh/).

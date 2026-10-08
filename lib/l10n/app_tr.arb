@@ -1525,5 +1525,18 @@
   "virtCreateImageBigger": "İmaj diskten büyük: diski en az onun kadar büyük yapın.",
   "virtBackupIssueStorage": "Bu depolama bu düğümde yedek tutmuyor.",
   "virtBackupIssueOption": "PVE'nin kabul ettiği bir mod veya sıkıştırma değil.",
-  "virtBackupIssueNodeOffline": "İşin düğümü çevrimiçi değil."
+  "virtBackupIssueNodeOffline": "İşin düğümü çevrimiçi değil.",
+  "programWaiting": "Sizi bekliyor",
+  "programWaitingPermission": "Onayınızı bekliyor",
+  "programWaitingQuestion": "Yanıtınızı bekliyor",
+  "programWaitingAuth": "Oturum açmanızı bekliyor",
+  "programStatus": "Program durumu",
+  "programIdle": "Boşta",
+  "programThisShell": "Bu shell",
+  "programProgress": "İlerleme",
+  "programCommandRunning": "Bir komut çalışıyor",
+  "programCommandSucceeded": "Son komut başarıyla tamamlandı",
+  "programCommandFailed": "Son komut {code} çıkış koduyla tamamlandı",
+  "programStatusAlerts": "Bir program size ihtiyaç duyduğunda bildir",
+  "programStatusAlertsTip": "Görünmeyen bir terminal için: program kendisinin bildirdiği üzere sizi beklediğinde, tamamlandığında veya hata verdiğinde (OSC 7501, OSC 9;4) ya da en az 30 saniye çalışan bir komut sona erdiğinde (OSC 133)."
 }

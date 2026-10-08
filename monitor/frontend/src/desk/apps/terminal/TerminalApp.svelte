@@ -22,6 +22,7 @@
   import { tmuxIssueText } from '../../../lib/tmux'
   import { mountTerminal, type TerminalHandle } from '../../../lib/xterm'
   import { loadLook } from './look'
+  import ProgramStatusBar from '../../../components/ProgramStatusBar.svelte'
   import type { TmuxSession, TmuxView } from '../../../types'
 
   const win = useWindow()
@@ -32,7 +33,13 @@
   let host = $state<HTMLDivElement | null>(null)
   /// The mounted xterm, once loaded. Its renderer is what the session writes
   /// through; see `mountTerminal`.
-  let terminal = $state<TerminalHandle | null>(null)
+  let terminal = $state.raw<TerminalHandle | null>(null)
+
+  /// The shell behind the terminal has gone: what only lasts while its
+  /// programs run goes with it (OSC 7501's lifetime rules).
+  $effect(() => {
+    if (session.phase === 'closed') terminal?.status.processExited()
+  })
   /// The one mount in flight, shared by starts that arrive while xterm loads.
   let mounting: Promise<TerminalHandle | null> | null = null
   let startBusy = $state(false)
@@ -565,6 +572,7 @@
   {/if}
 
   {#if fullAccess}
+    <ProgramStatusBar records={terminal?.status ?? null} />
     <!-- Positioned against the flex item so xterm measures exactly the space
          beneath the title bar and alert strip. Its host owns the only scroll. -->
     <div class="relative min-h-0 flex-1" style:background-color={terminalSurface.current}>

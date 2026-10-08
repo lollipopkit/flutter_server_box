@@ -1525,5 +1525,18 @@
   "virtCreateImageBigger": "Образ больше диска: сделайте диск не меньше образа.",
   "virtBackupIssueStorage": "Это хранилище не содержит резервных копий на этом узле.",
   "virtBackupIssueOption": "PVE не принимает такой режим или сжатие.",
-  "virtBackupIssueNodeOffline": "Узел задания не в сети."
+  "virtBackupIssueNodeOffline": "Узел задания не в сети.",
+  "programWaiting": "Ожидает вас",
+  "programWaitingPermission": "Ожидает вашего подтверждения",
+  "programWaitingQuestion": "Ожидает вашего ответа",
+  "programWaitingAuth": "Ожидает входа в систему",
+  "programStatus": "Состояние программы",
+  "programIdle": "Неактивна",
+  "programThisShell": "Эта оболочка",
+  "programProgress": "Ход выполнения",
+  "programCommandRunning": "Выполняется команда",
+  "programCommandSucceeded": "Последняя команда выполнена успешно",
+  "programCommandFailed": "Последняя команда завершилась с кодом {code}",
+  "programStatusAlerts": "Уведомлять, когда программе нужно ваше внимание",
+  "programStatusAlertsTip": "Для невидимого терминала: когда программа сообщает, что ожидает вас, завершилась или выдала ошибку (OSC 7501, OSC 9;4), либо завершается команда, выполнявшаяся не менее 30 секунд (OSC 133)."
 }

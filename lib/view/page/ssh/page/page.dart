@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
+import 'package:server_box/core/service/program_status_alerts.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -31,6 +32,8 @@ import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/ssh/terminal_status.dart';
+import 'package:server_box/data/ssh/terminal_status_alerts.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/view/page/agent/view.dart';
@@ -41,6 +44,7 @@ import 'package:server_box/view/page/ssh/present_server.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/terminal_connection_progress.dart';
+import 'package:server_box/view/widget/terminal_status_dot.dart';
 import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
 import 'package:server_box/view/widget/tmux_window_bar.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -50,6 +54,7 @@ import 'package:xterm/ui.dart' hide TerminalThemes;
 part 'ask_ai.dart';
 part 'init.dart';
 part 'keyboard.dart';
+part 'status.dart';
 part 'virt_key.dart';
 
 final class SshPageArgs {
@@ -97,6 +102,15 @@ final class SshPageArgs {
   /// terminal, and with nothing called when its shell ends. Called after the
   /// frame that removed the page, so it may write to a provider.
   final void Function(TerminalSession session)? onLeave;
+
+  /// Given the page's session after its first frame: made here or handed in
+  /// as [session]. For a host showing what the session's programs report
+  /// without the page being on screen.
+  final void Function(TerminalSession session)? onSession;
+
+  /// Brings this terminal on screen in its host, for a tapped notification.
+  /// The home tab is switched to [homeTab] before this is called.
+  final VoidCallback? onReveal;
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
@@ -126,6 +140,8 @@ final class SshPageArgs {
     this.detachInput,
     this.session,
     this.onLeave,
+    this.onSession,
+    this.onReveal,
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
@@ -223,6 +239,21 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The floating window is the only caller: it draws this session while this
   /// page stands its own view down — see [terminalShellProvider].
   TerminalSession get session => _sess;
+
+  /// A tmux pane by its window and its own name, for a heading over what it
+  /// reports. Null once the pane is not in the attached session.
+  String? tmuxPaneLabel(TmuxPaneId pane) {
+    final snapshot = _tmuxControl?.snapshot;
+    final windowId = snapshot?.paneWindows[pane];
+    if (snapshot == null || windowId == null) return null;
+    final window = snapshot.windows.where((w) => w.id == windowId).firstOrNull;
+    if (window == null) return null;
+    final label = '${window.index}:${window.name}';
+    final shown = window.panes.where((p) => p.id == pane).firstOrNull;
+    return shown == null || window.panes.length < 2
+        ? label
+        : '$label · ${shown.index}:${shown.displayName}';
+  }
 
   /// Held from `initState` rather than read where it is used, because
   /// [dispose] is one of the places that uses it and `ref` is not usable by
@@ -395,6 +426,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// Used to activate the wake lock while at least one terminal page exists.
   static var _sshConnCount = 0;
   late final String _sessionId = ShortId.generate();
+
+  /// See [_ProgramStatus]. The listener is a field: an extension method's
+  /// tear-off is a new closure each time, which `removeListener` never finds.
+  final _statusAlerts = TerminalStatusAlerts();
+  late final VoidCallback _programStatusListener = _onProgramStatus;
   late final int _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
 
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
@@ -418,6 +454,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _unwatchProgramStatus();
     // The floating window is a view onto this page's session, and once
     // `_sess.dispose()` below has taken its output subscriptions away it is a
     // terminal that has silently stopped answering. So it goes with the page.
@@ -500,6 +537,12 @@ class SSHPageState extends ConsumerState<SSHPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _watchProgramStatus();
+    // After the frame: the host is likely to be building something that
+    // shows what the session reports.
+    if (widget.args.onSession case final onSession?) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => onSession(_sess));
+    }
     _terminalShell = ref.read(terminalShellProvider.notifier);
     _attachAgentHost();
     _reloadVirtKeys();
@@ -540,6 +583,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       status: TermSessionStatus.connecting,
       setAsActive: _shouldActivateSessionOnInit,
     );
+    _publishProgramStatus();
     if (_shouldActivateSessionOnInit) {
       TermSessionManager.setActive(_sessionId, hasTerminal: true);
     }
@@ -553,6 +597,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     switch (state) {
       case AppLifecycleState.resumed:
         if (!_isVisibleSessionPage) return;
+        _programStatusSeen();
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
         if (_retryInitialConnectionOnResume && !_openingTerminal) {
           unawaited(_initTerminal());
@@ -808,6 +853,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       children: [
         TmuxWindowBar(
           client: _tmuxControl,
+          status: _sess.status,
           onSelectWindow: (window) => unawaited(_selectTmuxWindow(window.id)),
           onSelectPane: (pane) => unawaited(_selectTmuxPane(pane.id)),
           onNewWindow: _createTmuxWindow,
@@ -1200,6 +1246,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     void listener() {
       if (!mounted) return;
       if (_isVisibleSessionPage) {
+        _programStatusSeen();
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
         if (_retryInitialConnectionOnResume && !_openingTerminal) {
           unawaited(_initTerminal());

@@ -5168,4 +5168,46 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => '작업의 노드가 온라인이 아닙니다.';
+
+  @override
+  String get programWaiting => '대기 중';
+
+  @override
+  String get programWaitingPermission => '승인 대기 중';
+
+  @override
+  String get programWaitingQuestion => '답변 대기 중';
+
+  @override
+  String get programWaitingAuth => '로그인 대기 중';
+
+  @override
+  String get programStatus => '프로그램 상태';
+
+  @override
+  String get programIdle => '유휴';
+
+  @override
+  String get programThisShell => '이 shell';
+
+  @override
+  String get programProgress => '진행률';
+
+  @override
+  String get programCommandRunning => '명령 실행 중';
+
+  @override
+  String get programCommandSucceeded => '마지막 명령이 성공했습니다';
+
+  @override
+  String programCommandFailed(int code) {
+    return '마지막 명령이 종료 코드 $code(으)로 종료되었습니다';
+  }
+
+  @override
+  String get programStatusAlerts => '프로그램이 사용자를 필요로 할 때 알림';
+
+  @override
+  String get programStatusAlertsTip =>
+      '화면에 보이지 않는 터미널에서 프로그램이 대기, 완료 또는 실패를 보고할 때(OSC 7501, OSC 9;4), 또는 30초 이상 실행된 명령이 종료될 때(OSC 133) 알립니다.';
 }

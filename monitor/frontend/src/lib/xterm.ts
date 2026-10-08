@@ -5,6 +5,7 @@
 /// xterm is loaded by dynamic `import()` so it stays out of the main bundle,
 /// and the fit-after-a-frame dance is what keeps the size sent to the agent
 /// correct.
+import { attachProgramStatus, ProgramStatusRecords } from './programStatus'
 import type { Renderer, TerminalSession } from './terminal.svelte'
 
 /// How the terminal looks and sounds (Settings → Apps → Terminal).
@@ -19,6 +20,9 @@ export interface TerminalHandle {
   /// Applies a changed look to the running terminal.
   setLook(look: TerminalLook): void
   renderer: Renderer
+  /// What the programs in the terminal report about themselves (OSC 7501,
+  /// OSC 9;4, OSC 133). The page says when the shell behind it has exited.
+  status: ProgramStatusRecords
   /// Re-reads the theme from the document, for a theme change.
   setTheme(): void
   /// Puts the caret in the terminal, so typing reaches the shell rather than
@@ -169,6 +173,9 @@ export async function mountTerminal(
     title = next
     for (const listener of titleListeners) listener(next)
   })
+  const status = new ProgramStatusRecords()
+  const detachStatus = attachProgramStatus(term.parser, status, (data) => session.input(data))
+
   term.onData((data) => session.input(data))
   term.onResize(({ cols, rows }) => session.resize(cols, rows))
 
@@ -195,6 +202,7 @@ export async function mountTerminal(
       },
       reset() {
         term.reset()
+        status.clear()
       },
       get cols() {
         return term.cols
@@ -203,6 +211,7 @@ export async function mountTerminal(
         return term.rows
       },
     },
+    status,
     setTheme() {
       term.options.theme = terminalTheme()
     },
@@ -222,6 +231,7 @@ export async function mountTerminal(
     },
     dispose() {
       resizeObserver?.disconnect()
+      detachStatus()
       term.dispose()
     },
   }

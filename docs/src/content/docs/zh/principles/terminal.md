@@ -173,6 +173,16 @@ xterm.dart fork 使用自定义 painter，仅在终端内容变化时重绘。�
 - **SFTP 快速访问**：从终端当前工作目录打开 SFTP 浏览器。
 - **跨 backend**：本机 shell、Alpine 环境和 Monitor terminal 使用与 SSH 相同的上层终端 UI。
 
+## 程序状态
+
+程序通过 OSC 7501（程序状态协议）、OSC 9;4（进度条）和 OSC 133（shell integration）报告自身状态；[程序状态](/docs/zh/advanced/program-status/)介绍了界面中的显示方式。
+
+- 模拟器解析这些 sequence（xterm.dart fork 中的 `program_status.dart`），并通过 `Terminal.onStatus` 发出事件。模拟器本身不保存记录，只有存在监听方时才会响应功能支持查询。
+- `ProgramStatusRecords` 保存记录，由一个 terminal 对应的对象持有：`TerminalSession`，或 `tmux -CC` 下的各 pane。本地模拟器会依次显示 pane，并在完全重置后重新发送每个 pane 的内容，因此 pane 的记录不能由该模拟器持有。
+- 在 tmux 下，`TmuxOutputNormalizer` 从每个 pane 的 `%output` 中提取这些 sequence，包括当前未显示的 pane。刷新时会重新列出 session 中的 pane，并移除已关闭 pane 的记录。
+- shell 显示下一个 prompt（OSC 133 `A`）或退出时，会移除 `working`、`blocked` 和 `idle` 记录；`done` 和 `error` 记录会保留。完全重置会移除所有记录。
+- Monitor agent 的 Web panel 基于 xterm.js 实现相同的规则（`monitor/frontend/src/lib/programStatus.ts`）。
+
 ## Keep-alive
 
 SSH keep-alive message 位于 protocol 层，与终端中输入或显示的字节无关。详见 [SSH 连接](/docs/zh/principles/ssh/)。

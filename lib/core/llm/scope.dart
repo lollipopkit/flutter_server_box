@@ -33,6 +33,7 @@ final class TerminalHost {
     required this.run,
     required this.insert,
     required this.screen,
+    required this.programStatus,
     required this.cancel,
   });
 
@@ -46,6 +47,10 @@ final class TerminalHost {
 
   /// What the terminal shows now.
   final String Function() screen;
+
+  /// What the terminal's programs report about themselves (OSC 7501, OSC 9;4,
+  /// OSC 133), one line each; empty when nothing is reported.
+  final String Function() programStatus;
 
   /// Stops the command [run] is waiting on.
   final Future<void> Function() cancel;

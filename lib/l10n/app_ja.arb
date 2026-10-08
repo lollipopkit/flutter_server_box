@@ -1525,5 +1525,18 @@
   "virtCreateImageBigger": "イメージがディスクより大きいです。ディスクを少なくとも同じ大きさにしてください。",
   "virtBackupIssueStorage": "そのストレージはこのノードでバックアップを保持しません。",
   "virtBackupIssueOption": "PVE が受け付けるモードや圧縮ではありません。",
-  "virtBackupIssueNodeOffline": "ジョブのノードはオンラインではありません。"
+  "virtBackupIssueNodeOffline": "ジョブのノードはオンラインではありません。",
+  "programWaiting": "操作待ち",
+  "programWaitingPermission": "承認待ち",
+  "programWaitingQuestion": "回答待ち",
+  "programWaitingAuth": "サインイン待ち",
+  "programStatus": "プログラムの状態",
+  "programIdle": "待機中",
+  "programThisShell": "この shell",
+  "programProgress": "進行状況",
+  "programCommandRunning": "コマンドを実行中",
+  "programCommandSucceeded": "最後のコマンドは成功しました",
+  "programCommandFailed": "最後のコマンドは終了コード {code} で終了しました",
+  "programStatusAlerts": "プログラムが応答を求めているときに通知",
+  "programStatusAlertsTip": "画面に表示されていない terminal について、プログラムが自身の状態として待機・完了・失敗を報告したとき（OSC 7501、OSC 9;4）、または30秒以上実行されたコマンドが終了したとき（OSC 133）に通知します。"
 }

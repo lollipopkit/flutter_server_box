@@ -1525,5 +1525,18 @@
   "virtCreateImageBigger": "이미지가 디스크보다 큽니다. 디스크를 최소한 그만큼 크게 하세요.",
   "virtBackupIssueStorage": "해당 스토리지는 이 노드에서 백업을 보관하지 않습니다.",
   "virtBackupIssueOption": "PVE가 받는 모드나 압축이 아닙니다.",
-  "virtBackupIssueNodeOffline": "작업의 노드가 온라인이 아닙니다."
+  "virtBackupIssueNodeOffline": "작업의 노드가 온라인이 아닙니다.",
+  "programWaiting": "대기 중",
+  "programWaitingPermission": "승인 대기 중",
+  "programWaitingQuestion": "답변 대기 중",
+  "programWaitingAuth": "로그인 대기 중",
+  "programStatus": "프로그램 상태",
+  "programIdle": "유휴",
+  "programThisShell": "이 shell",
+  "programProgress": "진행률",
+  "programCommandRunning": "명령 실행 중",
+  "programCommandSucceeded": "마지막 명령이 성공했습니다",
+  "programCommandFailed": "마지막 명령이 종료 코드 {code}(으)로 종료되었습니다",
+  "programStatusAlerts": "프로그램이 사용자를 필요로 할 때 알림",
+  "programStatusAlertsTip": "화면에 보이지 않는 터미널에서 프로그램이 대기, 완료 또는 실패를 보고할 때(OSC 7501, OSC 9;4), 또는 30초 이상 실행된 명령이 종료될 때(OSC 133) 알립니다."
 }

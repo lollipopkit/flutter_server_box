@@ -5412,4 +5412,47 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'İşin düğümü çevrimiçi değil.';
+
+  @override
+  String get programWaiting => 'Sizi bekliyor';
+
+  @override
+  String get programWaitingPermission => 'Onayınızı bekliyor';
+
+  @override
+  String get programWaitingQuestion => 'Yanıtınızı bekliyor';
+
+  @override
+  String get programWaitingAuth => 'Oturum açmanızı bekliyor';
+
+  @override
+  String get programStatus => 'Program durumu';
+
+  @override
+  String get programIdle => 'Boşta';
+
+  @override
+  String get programThisShell => 'Bu shell';
+
+  @override
+  String get programProgress => 'İlerleme';
+
+  @override
+  String get programCommandRunning => 'Bir komut çalışıyor';
+
+  @override
+  String get programCommandSucceeded => 'Son komut başarıyla tamamlandı';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'Son komut $code çıkış koduyla tamamlandı';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Bir program size ihtiyaç duyduğunda bildir';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Görünmeyen bir terminal için: program kendisinin bildirdiği üzere sizi beklediğinde, tamamlandığında veya hata verdiğinde (OSC 7501, OSC 9;4) ya da en az 30 saniye çalışan bir komut sona erdiğinde (OSC 133).';
 }

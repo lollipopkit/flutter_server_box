@@ -5495,4 +5495,47 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtBackupIssueNodeOffline =>
       'Der Knoten des Jobs ist nicht online.';
+
+  @override
+  String get programWaiting => 'Wartet auf Sie';
+
+  @override
+  String get programWaitingPermission => 'Wartet auf Ihre Genehmigung';
+
+  @override
+  String get programWaitingQuestion => 'Wartet auf Ihre Antwort';
+
+  @override
+  String get programWaitingAuth => 'Wartet darauf, dass Sie sich anmelden';
+
+  @override
+  String get programStatus => 'Programmstatus';
+
+  @override
+  String get programIdle => 'Inaktiv';
+
+  @override
+  String get programThisShell => 'Diese Shell';
+
+  @override
+  String get programProgress => 'Fortschritt';
+
+  @override
+  String get programCommandRunning => 'Ein Befehl wird ausgeführt';
+
+  @override
+  String get programCommandSucceeded => 'Der letzte Befehl war erfolgreich';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'Der letzte Befehl wurde mit $code beendet';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Benachrichtigen, wenn ein Programm Sie benötigt';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Für Terminals im Hintergrund: wenn ein Programm meldet, dass es auf Sie wartet, abgeschlossen ist oder fehlgeschlagen ist (OSC 7501, OSC 9;4), oder wenn ein mindestens 30 Sekunden laufender Befehl endet (OSC 133).';
 }

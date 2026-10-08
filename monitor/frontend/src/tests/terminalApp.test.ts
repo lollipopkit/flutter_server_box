@@ -23,6 +23,8 @@ vi.mock('../lib/xterm', () => ({
     setLook() {},
     focus() {},
     onTitle: () => () => {},
+    // A shell that reports nothing (programStatus.ts has its own tests).
+    status: { state: null, records: [], subscribe: () => () => {}, processExited() {}, clear() {} },
     dispose() {},
   })),
 }))

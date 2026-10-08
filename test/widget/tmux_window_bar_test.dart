@@ -75,6 +75,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('1/2'), findsOneWidget);
+    // Named for a screen reader: which pane is on screen, of how many.
+    final semantics = tester.ensureSemantics();
+    expect(find.bySemanticsLabel('0:top 1/2'), findsOneWidget);
+    semantics.dispose();
     expect(find.text('0:top'), findsNothing);
     expect(find.text('1:tail'), findsNothing);
 
@@ -136,6 +140,8 @@ final class _FakeTmuxShell implements ShellSession {
       _result(r'$0	main	2	1');
     } else if (command.startsWith('list-windows')) {
       _result('@0	0	shell	1\n@1	1	logs	0');
+    } else if (command.startsWith('list-panes -s')) {
+      _result(splitPanes ? '%0\t@0\n%3\t@0' : '%0\t@0');
     } else if (command.startsWith('list-panes')) {
       if (splitPanes) {
         _result('%0	0	1	top	cat\n%3	1	0	tail	cat');
