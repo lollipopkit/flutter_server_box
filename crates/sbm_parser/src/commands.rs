@@ -116,7 +116,13 @@ pub const LINUX: &[CommandSpec] = &[
     // page draws absence rather than an error.
     CommandSpec { key: TEMP_TYPE, cmd: "cat /sys/class/thermal/thermal_zone*/type 2>/dev/null" },
     CommandSpec { key: TEMP_VAL, cmd: "cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null" },
-    CommandSpec { key: HOST, cmd: "cat /etc/hostname" },
+    // `/etc/hostname` first: in a container it can be the machine's own name
+    // where the kernel's is the container's. OpenWrt, Gentoo's OpenRC and
+    // Termux have no such file, so then the kernel's (`uname -n`, in BusyBox
+    // too — unlike `hostname`, which OpenWrt leaves out). `grep` rather than
+    // `cat`: it fails on a blank file as well as a missing one, and ends its
+    // output with a newline the file may lack (see `script::split_marker`).
+    CommandSpec { key: HOST, cmd: "grep '[^[:space:]]' /etc/hostname 2>/dev/null || uname -n" },
     CommandSpec { key: DISKIO, cmd: "cat /proc/diskstats" },
     CommandSpec {
         key: BATTERY,

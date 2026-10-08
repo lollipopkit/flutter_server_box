@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'e71fbdd651d43abf4a539578692510c683d6ff5b';
+String _$virtHostNotifierHash() => r'dee24ea0b747838e7d6e341affe459020f7c9e73';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).

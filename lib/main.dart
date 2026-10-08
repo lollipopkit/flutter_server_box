@@ -30,6 +30,7 @@ import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
@@ -269,13 +270,8 @@ Future<void> _initData() async {
   StoredPaths.repair(alsoRepair: [Stores.setting.fontPath]);
 
   // Not awaited: only the terminal uses it, and a broken font file is the
-  // user's, not a defect to report.
-  final fontPath = Stores.setting.fontPath.fetch();
-  unawaited(
-    FontUtils.loadFrom(fontPath).catchError((Object e, StackTrace s) {
-      Loggers.app.warning('Could not load the terminal font', e, s);
-    }),
-  );
+  // user's, not a defect to report — the settings page says it failed.
+  unawaited(TerminalFont.load(Stores.setting.fontPath.fetch()));
   await ThemePackages.prepareSelectedTheme();
   ThemePackages.reconcileSelection();
   // Not awaited: a bundled theme is one more choice in the picker, and the

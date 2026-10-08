@@ -279,6 +279,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      '복원했지만 다음 테마는 복원되지 않았습니다. 테마 스토어나 원본 파일에서 다시 설치하세요.';
+
+  @override
   String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
 
   @override
@@ -495,6 +499,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => '토큰이 비어 있습니다';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Gist ID나 Gist 링크가 아닙니다. gist 주소의 마지막 부분(https://gist.github.com/<user>/<ID>)을 사용하거나, 첫 백업 시 새 비밀 gist를 만들려면 비워 두세요.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub에서 이 토큰으로 읽을 수 있는 해당 ID의 gist를 찾지 못했습니다. ID가 잘못되었거나, gist가 삭제되었거나, 다른 계정의 gist일 수 있습니다. 첫 백업 시 새 비밀 gist를 만들려면 ID를 비워 두세요.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub에서 이 토큰을 거부했습니다. 토큰이 잘못되었거나 만료 또는 취소되었거나 gist 권한이 없을 수 있습니다(classic token: \"gist\" scope, fine-grained token: Gists read and write).';
 
   @override
   String get goto => '이동';
@@ -965,6 +981,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serverTabEmpty => '아직 서버가 없습니다';
+
+  @override
+  String get serverTabConnBadge => '서버 탭의 연결 수';
+
+  @override
+  String get serverTabConnBadgeTip => '연결된 서버 수(예: 2/4)';
 
   @override
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
@@ -2763,10 +2785,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteDesktopUniqueName => '이 서버에서는 프로필 이름이 중복될 수 없습니다.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      '클래식 VNC 비밀번호는 8 ASCII 바이트로 제한됩니다.';
-
-  @override
   String get remoteDesktopNameRequired => '프로필 이름을 입력하세요.';
 
   @override
@@ -2787,6 +2805,9 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       '사용자 이름과 도메인은 256자 이하이며 줄바꿈을 쓸 수 없습니다.';
+
+  @override
+  String get remoteDesktopVncPasswordHint => '클래식 VNC는 처음 8자만 사용합니다';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
@@ -5210,4 +5231,15 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       '화면에 보이지 않는 터미널에서 프로그램이 대기, 완료 또는 실패를 보고할 때(OSC 7501, OSC 9;4), 또는 30초 이상 실행된 명령이 종료될 때(OSC 133) 알립니다.';
+
+  @override
+  String get termLineHeight => '줄 높이';
+
+  @override
+  String get termLineHeightTip =>
+      '터미널 한 줄이 차지하는 공간을 글꼴 크기의 배수로 지정합니다(1.0~2.0). 글꼴 크기와 마찬가지로 표시할 수 있는 줄 수에 영향을 줍니다.';
+
+  @override
+  String get termFontTip =>
+      '글꼴 파일을 선택하지 않으면 터미널은 시스템 고정폭 글꼴을 사용하고, 없는 글리프는 CJK 및 emoji 글리프가 포함된 글꼴로 표시합니다.';
 }

@@ -292,6 +292,10 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Hersteld, behalve deze thema’s. Installeer ze opnieuw vanuit de themastore of het oorspronkelijke bestand.';
+
+  @override
   String get backupTip =>
       'De geëxporteerde gegevens kunnen worden versleuteld met een wachtwoord. \nBewaar deze aub veilig.';
 
@@ -517,6 +521,18 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Token is leeg';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Dit is geen Gist-ID en ook geen Gist-link. Gebruik het laatste deel van het gist-adres (https://gist.github.com/<user>/<ID>) of laat dit leeg om bij de eerste back-up een nieuwe geheime gist te laten maken.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub heeft geen gist met deze ID gevonden die dit token kan lezen: de ID is mogelijk onjuist, de gist is verwijderd of hoort bij een ander account. Laat de ID leeg om bij de eerste back-up een nieuwe geheime gist te laten maken.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub heeft dit token geweigerd: het is mogelijk onjuist, verlopen of ingetrokken, of mist de gist-machtiging (classic token: de scope \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Ga naar';
@@ -1014,6 +1030,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Nog geen servers';
+
+  @override
+  String get serverTabConnBadge => 'Aantal verbindingen op het servertabblad';
+
+  @override
+  String get serverTabConnBadgeTip =>
+      'Aantal verbonden servers, bijvoorbeeld 2/4';
 
   @override
   String get serverTabRequired => 'Servertabblad kan niet worden verwijderd';
@@ -2926,10 +2949,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Profielnamen moeten uniek zijn voor deze server.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Klassieke VNC-wachtwoorden zijn beperkt tot 8 ASCII-bytes.';
-
-  @override
   String get remoteDesktopNameRequired => 'Voer een profielnaam in.';
 
   @override
@@ -2952,6 +2971,10 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'Gebruikersnaam en domein mogen maximaal 256 tekens bevatten en geen regeleinden.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'Klassieke VNC gebruikt alleen de eerste 8 tekens';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
@@ -5516,4 +5539,15 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Voor een terminal buiten beeld: wanneer een programma meldt dat het op je wacht, is voltooid of is mislukt (OSC 7501, OSC 9;4), of wanneer een opdracht eindigt die minstens 30 seconden draaide (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Regelhoogte';
+
+  @override
+  String get termLineHeightTip =>
+      'De ruimte die een terminalregel inneemt, als veelvoud van de tekengrootte van 1,0 tot 2,0. Net als de tekengrootte bepaalt dit hoeveel regels er passen.';
+
+  @override
+  String get termFontTip =>
+      'Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met CJK- en emoji-glyphs voor wat daarin ontbreekt.';
 }

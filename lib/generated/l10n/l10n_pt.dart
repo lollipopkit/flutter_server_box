@@ -293,6 +293,10 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Restaurado, exceto estes temas. Instale-os novamente pela loja de temas ou pelo arquivo de origem.';
+
+  @override
   String get backupTip =>
       'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
 
@@ -517,6 +521,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'O token está vazio';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Isto não é um ID de Gist nem um link de Gist. Use a última parte do endereço do gist (https://gist.github.com/<user>/<ID>) ou deixe vazio para criar um novo gist secreto no primeiro backup.';
+
+  @override
+  String get githubGistNotFound =>
+      'O GitHub não encontrou nenhum gist com este ID que este token possa ler: o ID pode estar incorreto, o gist pode ter sido excluído ou pertencer a outra conta. Deixe o ID vazio para criar um novo gist secreto no primeiro backup.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'O GitHub rejeitou este token: ele pode estar incorreto, expirado ou revogado, ou não ter a permissão gist (classic token: o escopo \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Ir para';
@@ -1013,6 +1029,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Ainda não há servidores';
+
+  @override
+  String get serverTabConnBadge => 'Número de conexões na aba do servidor';
+
+  @override
+  String get serverTabConnBadgeTip =>
+      'Número de servidores conectados, por exemplo, 2/4';
 
   @override
   String get serverTabRequired => 'A aba do servidor não pode ser removida';
@@ -2932,10 +2955,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Os nomes de perfil devem ser únicos para este servidor.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'As senhas VNC clássicas são limitadas a 8 bytes ASCII.';
-
-  @override
   String get remoteDesktopNameRequired => 'Informe um nome de perfil.';
 
   @override
@@ -2959,6 +2978,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'O usuário e o domínio podem ter até 256 caracteres e não podem conter quebras de linha.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'O VNC clássico usa apenas os primeiros 8 caracteres';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
@@ -5516,4 +5539,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Para um terminal fora de vista: quando um programa informar que está aguardando você, que terminou ou falhou (OSC 7501, OSC 9;4), ou quando terminar um comando que foi executado por 30 segundos ou mais (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Altura da linha';
+
+  @override
+  String get termLineHeightTip =>
+      'O espaço ocupado por uma linha do terminal, como múltiplo do tamanho da fonte, de 1,0 a 2,0. Assim como o tamanho da fonte, isso altera quantas linhas cabem.';
+
+  @override
+  String get termFontTip =>
+      'Sem um arquivo de fonte selecionado, o terminal usa a fonte monoespaçada do sistema e, para os glifos ausentes, fontes com glifos CJK e emoji.';
 }

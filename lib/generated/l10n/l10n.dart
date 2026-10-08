@@ -629,6 +629,12 @@ abstract class AppLocalizations {
   /// **'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})'**
   String monitorHttpTip(String url);
 
+  /// Toast after a restore: the backup was restored, but the themes named below it could not be installed — not in the theme store or not carried by the backup (installed from a folder, or imported with an older version of the app).
+  ///
+  /// In en, this message translates to:
+  /// **'Restored, except these themes. Install them again from the theme store or the file they came from.'**
+  String get backupThemesNotRestored;
+
   /// Help text for the backup setting or action.
   ///
   /// In en, this message translates to:
@@ -1024,6 +1030,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Token is empty'**
   String get githubGistTokenEmpty;
+
+  /// Error shown when the Gist ID field holds something that is neither an ID nor a gist URL.
+  ///
+  /// In en, this message translates to:
+  /// **'This is neither a Gist ID nor a Gist link. Use the last part of the gist\'s address (https://gist.github.com/<user>/<ID>), or leave it empty to have a new secret gist created on the first backup.'**
+  String get githubGistIdInvalid;
+
+  /// Error shown when GitHub answers 404 for the entered Gist ID. GitHub gives the same answer for a missing gist and for someone else's secret gist.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub found no gist with this ID that this token can read: the ID may be wrong, the gist deleted, or it may belong to another account. Leave the ID empty to have a new secret gist created on the first backup.'**
+  String get githubGistNotFound;
+
+  /// Error shown when GitHub answers 401 or 403 for the token. Keep "gist" and "Gists" as GitHub names them.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub rejected this token: it may be wrong, expired or revoked, or lack the gist permission (classic token: the \"gist\" scope; fine-grained token: Gists read and write).'**
+  String get githubGistTokenRejected;
 
   /// User-facing label or message for goto.
   ///
@@ -1875,6 +1899,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No servers yet'**
   String get serverTabEmpty;
+
+  /// Switch title: whether the server tab in the navigation bar shows how many servers are connected, e.g. 2/4.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection count on the server tab'**
+  String get serverTabConnBadge;
+
+  /// Subtitle of the switch that shows the connection count on the server tab.
+  ///
+  /// In en, this message translates to:
+  /// **'How many servers are connected, such as 2/4'**
+  String get serverTabConnBadgeTip;
 
   /// User-facing label or message for server tab required.
   ///
@@ -5026,12 +5062,6 @@ abstract class AppLocalizations {
   /// **'Profile names must be unique for this server.'**
   String get remoteDesktopUniqueName;
 
-  /// No description provided for @remoteDesktopVncPasswordLength.
-  ///
-  /// In en, this message translates to:
-  /// **'Classic VNC passwords are limited to 8 ASCII bytes.'**
-  String get remoteDesktopVncPasswordLength;
-
   /// No description provided for @remoteDesktopNameRequired.
   ///
   /// In en, this message translates to:
@@ -5073,6 +5103,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The username and domain can be up to 256 characters and cannot contain line breaks.'**
   String get remoteDesktopCredentialInvalid;
+
+  /// Placeholder of the VNC password field: a longer password is accepted, and only its first 8 characters are used to sign in, as in TigerVNC.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic VNC uses only the first 8 characters'**
+  String get remoteDesktopVncPasswordHint;
 
   /// No description provided for @remoteDesktopVncPasswordAscii.
   ///
@@ -9368,6 +9404,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For a terminal out of sight: a program waiting for you, finished or failed, as it reports itself (OSC 7501, OSC 9;4), or a command that ran for 30 seconds or more ending (OSC 133).'**
   String get programStatusAlertsTip;
+
+  /// Setting: the height of a terminal row as a multiple of the font size.
+  ///
+  /// In en, this message translates to:
+  /// **'Line height'**
+  String get termLineHeight;
+
+  /// Explains the terminal line height setting.
+  ///
+  /// In en, this message translates to:
+  /// **'The space a terminal row takes, as a multiple of the font size, from 1.0 to 2.0. Like the font size, it changes how many rows fit.'**
+  String get termLineHeightTip;
+
+  /// Explains which font the terminal uses when no font file is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a font file, the terminal uses the system\'s monospace font, then fonts with CJK and emoji glyphs for what it lacks.'**
+  String get termFontTip;
 }
 
 class _AppLocalizationsDelegate

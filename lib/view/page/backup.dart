@@ -976,52 +976,91 @@ extension on _BackupPageState {
     final appL10n = context.l10n;
     final result = await context.showRoundDialog<bool>(
       title: 'GitHub Gist',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            label: appL10n.githubGistToken,
-            controller: tokenCtrl,
-            suggestion: false,
-            node: nodeToken,
-          ),
-          Input(
-            label: appL10n.githubGistIdOptional,
-            controller: gistIdCtrl,
-            suggestion: false,
-            onSubmitted: (_) => context.popDialog(true),
-          ),
-        ],
+      // Disposed by the tree, once the fields have left it: see
+      // `_onTapSetBakPwd`.
+      child: DisposeWith(
+        notifiers: [tokenCtrl, gistIdCtrl, nodeToken],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              label: appL10n.githubGistToken,
+              controller: tokenCtrl,
+              suggestion: false,
+              obscureText: true,
+              node: nodeToken,
+            ),
+            Input(
+              label: appL10n.githubGistIdOptional,
+              controller: gistIdCtrl,
+              suggestion: false,
+              onSubmitted: (_) => context.popDialog(true),
+            ),
+          ],
+        ),
       ),
       actions: Btnx.oks,
     );
-    if (result == true) {
-      try {
-        final token_ = tokenCtrl.text.trim();
-        final gistId_ = gistIdCtrl.text.trim();
+    if (result != true || !context.mounted) return;
+    // Read now: the check below goes to the network, and the fields are gone
+    // by the time it answers.
+    await _saveGistSetting(
+      context,
+      token: tokenCtrl.text.trim(),
+      gistInput: gistIdCtrl.text.trim(),
+    );
+  }
 
-        await GistRs.test(
-          token: token_,
-          gistId: gistId_.isEmpty ? null : gistId_,
-        );
-        Toast.success(libL10n.success);
-
-        await SecureStoreProps.githubToken.write(token_);
-        GistRs.shared.token = token_;
-        if (gistId_.isEmpty) {
-          await PrefProps.gistId.remove();
-        } else {
-          await PrefProps.gistId.set(gistId_);
-        }
-        // Same reason as WebDAV: a different gist behind the same backend.
-        await BakSyncer.forgetCheckpoint();
-      } catch (e, s) {
-        context.showErrDialog(e, s, 'Gist');
-      }
+  Future<void> _saveGistSetting(
+    BuildContext context, {
+    required String token,
+    required String gistInput,
+  }) async {
+    final appL10n = context.l10n;
+    if (token.isEmpty) {
+      Toast.show(appL10n.githubGistTokenEmpty);
+      return;
     }
-    tokenCtrl.dispose();
-    gistIdCtrl.dispose();
-    nodeToken.dispose();
+    // An id, or the link a browser shows for the gist.
+    final gistId = gistInput.isEmpty ? null : GistRs.idOf(gistInput);
+    if (gistInput.isNotEmpty && gistId == null) {
+      _showGistProblem(context, appL10n.githubGistIdInvalid);
+      return;
+    }
+    try {
+      await GistRs.test(token: token, gistId: gistId);
+
+      await SecureStoreProps.githubToken.write(token);
+      GistRs.shared.token = token;
+      if (gistId == null) {
+        await PrefProps.gistId.remove();
+      } else {
+        await PrefProps.gistId.set(gistId);
+      }
+      // Same reason as WebDAV: a different gist behind the same backend.
+      await BakSyncer.forgetCheckpoint();
+      // Only once all of it is saved: a write that fails is the error below.
+      Toast.success(libL10n.success);
+    } on GistTestException catch (e) {
+      if (!context.mounted) return;
+      _showGistProblem(context, switch (e.reason) {
+        GistTestFailure.badToken => appL10n.githubGistTokenRejected,
+        GistTestFailure.notFound => appL10n.githubGistNotFound,
+      });
+    } catch (e, s) {
+      if (!context.mounted) return;
+      context.showErrDialog(e, s, 'Gist');
+    }
+  }
+
+  /// What was wrong with what the user entered, in words: the response itself
+  /// says only 401 or 404.
+  void _showGistProblem(BuildContext context, String message) {
+    context.showRoundDialog(
+      title: 'GitHub Gist',
+      child: Text(message),
+      actions: Btnx.oks,
+    );
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {

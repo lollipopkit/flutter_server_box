@@ -533,9 +533,9 @@ void main() {
     tester,
   ) async {
     // Test authenticates with what is typed even when the save
-    // switch is off, so it has to validate that password too. A VNC password
-    // over eight bytes is refused by the server, which would present it as a
-    // failed session rather than as the field that has to change.
+    // switch is off, so it has to validate that password too. A non-ASCII VNC
+    // password cannot be sent at all, which would present it as a failed
+    // session rather than as the field that has to change.
     Stores.remoteDesktop.put(
       const RemoteDesktopProfile(
         id: 'vnc-1',
@@ -558,7 +558,7 @@ void main() {
 
     await tester.enterText(
       find.byType(TextField).last,
-      'far-too-long-for-classic-vnc',
+      '密码密码',
     );
     await tester.tap(find.widgetWithText(TextButton, 'Test'));
     await tester.pump();

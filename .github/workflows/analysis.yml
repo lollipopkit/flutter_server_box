@@ -184,6 +184,11 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    env:
+      # File and line in a backtrace, without the full debuginfo: that is most
+      # of what the linker writes, and linking the test binaries — over forty
+      # for the monitor alone — was most of this job on Windows.
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -216,13 +221,23 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Test Rust workspace
+        if: matrix.os == 'ubuntu-latest'
         run: cargo test --workspace --no-fail-fast
 
       # fl_lib's Rust (`fl_theme`, which the agent depends on by path, and its
       # bridge to Dart) is a workspace of its own, so `--workspace` above does
       # not reach it.
       - name: Test fl_lib's Rust
+        if: matrix.os == 'ubuntu-latest'
         run: cargo test --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --no-fail-fast
+
+      # Only the crates with code of their own for Windows: the native sampler,
+      # the agent (ConPTY, paths, services) and the script's PowerShell side.
+      # The rest is platform-neutral and tested above; that `sbm_ffi` builds
+      # for Windows is the manual `Windows build` job's to show.
+      - name: Test Windows-specific crates
+        if: matrix.os == 'windows-latest'
+        run: cargo test -p sbm_parser -p sbm_native -p server_box_monitor --no-fail-fast
 
       - name: Clippy
         if: matrix.os == 'ubuntu-latest'

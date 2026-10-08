@@ -457,8 +457,8 @@ impl RemoteDesktopSessionHandle {
     pub fn start_vnc(params: VncSessionParams) -> Result<Self, String> {
         validate_endpoint(&params.connect_host, params.connect_port)?;
         if let Some(password) = &params.password {
-            if !password.is_ascii() || password.len() > 8 {
-                return Err("VNC passwords must contain at most 8 ASCII bytes".to_owned());
+            if sbm_parser::desktop::validate_vnc_password(password).is_err() {
+                return Err("VNC passwords must be ASCII".to_owned());
             }
         }
         Self::spawn(move |commands, events| run_vnc(params, commands, events))
@@ -1176,7 +1176,14 @@ async fn run_vnc(
             return;
         }
     }
-    let password = params.password.unwrap_or_default();
+    // Keyed by its first eight bytes only, as every classic VNC client does;
+    // said here rather than left to the library's own key derivation.
+    let password = params
+        .password
+        .as_deref()
+        .map(sbm_parser::desktop::vnc_auth_password)
+        .unwrap_or_default()
+        .to_owned();
     let shared = params.shared;
     let handshake = async move {
         let state = VncConnector::new(stream)
@@ -1899,12 +1906,12 @@ mod tests {
     }
 
     #[test]
-    fn vnc_password_limit_is_enforced_before_spawning() {
+    fn a_non_ascii_vnc_password_is_refused_before_spawning() {
         let result = RemoteDesktopSessionHandle::start_vnc(VncSessionParams {
             connect_host: "127.0.0.1".to_owned(),
             connect_port: 5900,
             access_token: None,
-            password: Some("123456789".to_owned()),
+            password: Some("密码".to_owned()),
             shared: true,
         });
         assert!(result.is_err());

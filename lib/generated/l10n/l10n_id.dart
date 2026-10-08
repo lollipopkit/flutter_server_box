@@ -292,6 +292,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Dipulihkan, kecuali tema-tema ini. Instal ulang dari toko tema atau dari file asalnya.';
+
+  @override
   String get backupTip =>
       'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
 
@@ -517,6 +521,18 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Token kosong';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Ini bukan ID Gist maupun tautan Gist. Gunakan bagian terakhir dari alamat gist (https://gist.github.com/<user>/<ID>), atau kosongkan agar gist rahasia baru dibuat saat pencadangan pertama.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub tidak menemukan gist dengan ID ini yang dapat dibaca oleh token ini: ID mungkin salah, gist mungkin telah dihapus, atau gist tersebut milik akun lain. Kosongkan ID agar gist rahasia baru dibuat saat pencadangan pertama.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub menolak token ini: token mungkin salah, kedaluwarsa, atau dicabut, atau tidak memiliki izin gist (classic token: scope \"gist\"; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Pergi ke';
@@ -1013,6 +1029,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Belum ada server';
+
+  @override
+  String get serverTabConnBadge => 'Jumlah koneksi pada tab server';
+
+  @override
+  String get serverTabConnBadgeTip =>
+      'Jumlah server yang terhubung, misalnya 2/4';
 
   @override
   String get serverTabRequired => 'Tab server tidak dapat dihapus';
@@ -2903,10 +2926,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Nama profil harus unik untuk server ini.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Kata sandi VNC klasik dibatasi 8 byte ASCII.';
-
-  @override
   String get remoteDesktopNameRequired => 'Masukkan nama profil.';
 
   @override
@@ -2929,6 +2948,10 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'Nama pengguna dan domain paling banyak 256 karakter dan tidak boleh berisi baris baru.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'VNC klasik hanya menggunakan 8 karakter pertama';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
@@ -5464,4 +5487,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Untuk terminal yang tidak terlihat: saat program melaporkan bahwa program menunggu Anda, selesai, atau gagal (OSC 7501, OSC 9;4), atau saat perintah yang berjalan selama setidaknya 30 detik berakhir (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Tinggi baris';
+
+  @override
+  String get termLineHeightTip =>
+      'Ruang yang digunakan satu baris terminal, sebagai kelipatan ukuran font dari 1,0 hingga 2,0. Seperti ukuran font, pengaturan ini memengaruhi jumlah baris yang dapat ditampilkan.';
+
+  @override
+  String get termFontTip =>
+      'Jika tidak ada file font yang dipilih, terminal menggunakan font monospace sistem, lalu font dengan glif CJK dan emoji untuk karakter yang tidak tersedia.';
 }

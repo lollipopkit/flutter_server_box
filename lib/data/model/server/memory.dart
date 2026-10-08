@@ -15,6 +15,12 @@ class Memory {
 
   double get usedPercent => 1 - availPercent;
 
+  /// In use, in KiB: what is not available, so the page cache the kernel
+  /// gives back on demand does not count. `MemFree` where the kernel has no
+  /// `MemAvailable` (before 3.14). The same rule as `sbm_parser`'s and the
+  /// monitor agent's, and the one [usedPercent] follows.
+  int get used => total - (avail == 0 ? free : avail);
+
 }
 
 // Parsing implementation migrated to the shared Rust library sbm_parser

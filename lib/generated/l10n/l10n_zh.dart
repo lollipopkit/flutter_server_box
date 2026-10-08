@@ -273,6 +273,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored => '已恢复，但以下主题除外。请从主题商店或原始文件重新安装。';
+
+  @override
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
@@ -484,6 +487,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Token 为空';
+
+  @override
+  String get githubGistIdInvalid =>
+      '这既不是 Gist ID，也不是 Gist 链接。请使用 gist 地址的最后一部分 (https://gist.github.com/<user>/<ID>)，或留空以便在首次备份时创建新的私密 gist。';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub 找不到此 token 可读取的该 ID 对应 gist：ID 可能有误，gist 可能已被删除，或属于其他账户。请将 ID 留空，以便在首次备份时创建新的私密 gist。';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub 拒绝了此 token：它可能有误、已过期或已撤销，也可能缺少 gist 权限 (classic token: \"gist\" scope；fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '前往';
@@ -948,6 +963,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverTabEmpty => '还没有服务器';
+
+  @override
+  String get serverTabConnBadge => '服务器标签页上的连接数';
+
+  @override
+  String get serverTabConnBadgeTip => '已连接的服务器数量，例如 2/4';
 
   @override
   String get serverTabRequired => '服务器标签不能被移除';
@@ -2709,9 +2730,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopUniqueName => '此服务器的配置名称不能重复。';
 
   @override
-  String get remoteDesktopVncPasswordLength => '传统 VNC 密码最多为 8 个 ASCII 字节。';
-
-  @override
   String get remoteDesktopNameRequired => '请输入配置名称。';
 
   @override
@@ -2731,6 +2749,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopCredentialInvalid => '用户名和域最多 256 个字符，不能换行。';
+
+  @override
+  String get remoteDesktopVncPasswordHint => '传统 VNC 仅使用前 8 个字符';
 
   @override
   String get remoteDesktopVncPasswordAscii => '传统 VNC 密码只能包含 ASCII 字符。';
@@ -5117,6 +5138,17 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       '对于当前不可见的终端：程序报告正在等待你、已完成或失败时（OSC 7501、OSC 9;4），或者运行至少 30 秒的命令结束时（OSC 133）通知你。';
+
+  @override
+  String get termLineHeight => '行高';
+
+  @override
+  String get termLineHeightTip =>
+      '终端一行占用的空间，以字体大小的倍数表示，范围为 1.0 到 2.0。与字体大小一样，它会影响可显示的行数。';
+
+  @override
+  String get termFontTip =>
+      '未选择字体文件时，终端会使用系统等宽字体；对于缺少的字形，则使用包含 CJK 和 emoji 字形的字体。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5387,6 +5419,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get backupThemesNotRestored => '已還原，但以下主題除外。請從主題商店或原始檔案重新安裝。';
+
+  @override
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
 
   @override
@@ -5598,6 +5633,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get githubGistTokenEmpty => 'Token 為空';
+
+  @override
+  String get githubGistIdInvalid =>
+      '這既不是 Gist ID，也不是 Gist 連結。請使用 gist 位址的最後一部分 (https://gist.github.com/<user>/<ID>)，或留空以便在首次備份時建立新的私人 gist。';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub 找不到此 token 可讀取的該 ID 對應 gist：ID 可能有誤、gist 可能已遭刪除，或屬於其他帳戶。請將 ID 留空，以便在首次備份時建立新的私人 gist。';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub 拒絕了此 token：它可能有誤、已過期或已撤銷，也可能缺少 gist 權限 (classic token: \"gist\" scope；fine-grained token: Gists read and write)。';
 
   @override
   String get goto => '前往';
@@ -6062,6 +6109,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverTabEmpty => '還沒有伺服器';
+
+  @override
+  String get serverTabConnBadge => '伺服器分頁的連線數';
+
+  @override
+  String get serverTabConnBadgeTip => '已連線的伺服器數量，例如 2/4';
 
   @override
   String get serverTabRequired => '服務器標籤不能被移除';
@@ -7822,9 +7875,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remoteDesktopUniqueName => '此伺服器的設定檔名稱不可重複。';
 
   @override
-  String get remoteDesktopVncPasswordLength => '傳統 VNC 密碼最多為 8 個 ASCII 位元組。';
-
-  @override
   String get remoteDesktopNameRequired => '請輸入設定檔名稱。';
 
   @override
@@ -7844,6 +7894,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopCredentialInvalid => '使用者名稱和網域最多 256 個字元，不能換行。';
+
+  @override
+  String get remoteDesktopVncPasswordHint => '傳統 VNC 僅使用前 8 個字元';
 
   @override
   String get remoteDesktopVncPasswordAscii => '傳統 VNC 密碼只能包含 ASCII 字元。';
@@ -10231,4 +10284,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get programStatusAlertsTip =>
       '對於目前不可見的終端：程式回報正在等待您、已完成或失敗時（OSC 7501、OSC 9;4），或執行至少 30 秒的命令結束時（OSC 133）通知您。';
+
+  @override
+  String get termLineHeight => '行高';
+
+  @override
+  String get termLineHeightTip =>
+      '終端機一行所佔的空間，以字型大小的倍數表示，範圍為 1.0 到 2.0。與字型大小一樣，這會影響可顯示的行數。';
+
+  @override
+  String get termFontTip =>
+      '未選擇字型檔案時，終端機會使用系統等寬字型；對於缺少的字形，則使用包含 CJK 和 emoji 字形的字型。';
 }
