@@ -5506,4 +5506,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Для невидимого терминала: когда программа сообщает, что ожидает вас, завершилась или выдала ошибку (OSC 7501, OSC 9;4), либо завершается команда, выполнявшаяся не менее 30 секунд (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Высота строки';
+
+  @override
+  String get termLineHeightTip =>
+      'Высота строки терминала в диапазоне от 1,0 до 2,0 размера шрифта. Как и размер шрифта, этот параметр влияет на количество помещающихся строк.';
+
+  @override
+  String get termFontTip =>
+      'Если файл шрифта не выбран, терминал использует системный моноширинный шрифт, а для отсутствующих глифов — шрифты с глифами CJK и emoji.';
 }

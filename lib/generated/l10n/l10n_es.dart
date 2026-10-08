@@ -5546,4 +5546,15 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Para un terminal que no está a la vista: cuando un programa te espera, termina o falla, según lo que comunica (OSC 7501, OSC 9;4), o cuando termina un comando que llevaba al menos 30 segundos ejecutándose (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Altura de línea';
+
+  @override
+  String get termLineHeightTip =>
+      'El espacio que ocupa una línea del terminal, como múltiplo del tamaño de fuente, de 1,0 a 2,0. Al igual que el tamaño de fuente, determina cuántas líneas caben.';
+
+  @override
+  String get termFontTip =>
+      'Si no se selecciona un archivo de fuente, el terminal usa la fuente monoespaciada del sistema y, para los glifos que falten, fuentes con glifos CJK y emoji.';
 }

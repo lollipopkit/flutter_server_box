@@ -5467,4 +5467,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Untuk terminal yang tidak terlihat: saat program melaporkan bahwa program menunggu Anda, selesai, atau gagal (OSC 7501, OSC 9;4), atau saat perintah yang berjalan selama setidaknya 30 detik berakhir (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Tinggi baris';
+
+  @override
+  String get termLineHeightTip =>
+      'Ruang yang digunakan satu baris terminal, sebagai kelipatan ukuran font dari 1,0 hingga 2,0. Seperti ukuran font, pengaturan ini memengaruhi jumlah baris yang dapat ditampilkan.';
+
+  @override
+  String get termFontTip =>
+      'Jika tidak ada file font yang dipilih, terminal menggunakan font monospace sistem, lalu font dengan glif CJK dan emoji untuk karakter yang tidak tersedia.';
 }

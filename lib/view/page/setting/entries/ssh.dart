@@ -21,6 +21,7 @@ extension _SSH on _AppSettingsPageState {
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
+        _buildTermLineHeight(),
       ]),
       // Three rows about one picture, which is what the tile they were folded
       // into was for.
@@ -203,11 +204,32 @@ extension _SSH on _AppSettingsPageState {
       label,
       () => ListTile(
         leading: const Icon(MingCute.font_fill),
-        title: Text(label),
-        trailing: _setting.fontPath.listenable().listenVal((val) {
-          final fontName = val.getFileName(withoutExtension: true);
-          return Text(fontName ?? libL10n.empty, style: UIs.text15);
-        }),
+        title: TipText(label, l10n.termFontTip),
+        // Which font is in use: the system's when none is chosen, and a chosen
+        // one that did not load says so instead of looking as if it applied.
+        trailing: ListenableBuilder(
+          listenable: Listenable.merge([
+            _setting.fontPath.listenable(),
+            TerminalFont.failed,
+          ]),
+          builder: (_, _) {
+            final fontName = _setting.fontPath.fetch().getFileName(
+              withoutExtension: true,
+            );
+            if (fontName == null) {
+              return Text(libL10n.system, style: UIs.text15);
+            }
+            if (TerminalFont.failed.value) {
+              return Text(
+                '$fontName · ${libL10n.fail}',
+                style: UIs.text15.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              );
+            }
+            return Text(fontName, style: UIs.text15);
+          },
+        ),
         onTap: () {
           context.showRoundDialog(
             title: label,
@@ -220,6 +242,7 @@ extension _SSH on _AppSettingsPageState {
                 onPressed: () async {
                   await _clearCachedFont();
                   _setting.fontPath.delete();
+                  await TerminalFont.load('');
                   _refreshApp(closeDialog: true);
                 },
                 child: Text(libL10n.clear),
@@ -248,7 +271,7 @@ extension _SSH on _AppSettingsPageState {
     // its original path instead of copying it into the app directory.
     if (isIOS) {
       _setting.fontPath.put(path);
-      await FontUtils.loadFrom(path);
+      await TerminalFont.load(path);
     } else {
       await _clearCachedFont();
 
@@ -257,7 +280,7 @@ extension _SSH on _AppSettingsPageState {
       final fontPath = Paths.font.joinPath(fontName ?? 'font.ttf');
       await fontFile.copy(fontPath);
       _setting.fontPath.put(fontPath);
-      await FontUtils.loadFrom(fontPath);
+      await TerminalFont.load(fontPath);
     }
 
     _refreshApp(closeDialog: true);
@@ -277,6 +300,53 @@ extension _SSH on _AppSettingsPageState {
         onTap: () => _showFontSizeDialog(_setting.termFontSize),
       ),
       keywords: l10n.termFontSizeTip,
+    );
+  }
+
+  SettingsRow _buildTermLineHeight() {
+    final label = l10n.termLineHeight;
+    final ctrl = TextEditingController(
+      text: _setting.termLineHeight.fetch().toString(),
+    );
+    void onSave() {
+      final val = double.tryParse(ctrl.text);
+      if (val == null) {
+        Toast.error('${libL10n.invalid}: ${ctrl.text}');
+        return;
+      }
+      _setting.termLineHeight.put(
+        val.clamp(TerminalLook.minLineHeight, TerminalLook.maxLineHeight),
+      );
+      context.popDialog();
+    }
+
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.format_line_spacing),
+        title: TipText(label, l10n.termLineHeightTip),
+        trailing: ValBuilder(
+          listenable: _setting.termLineHeight.listenable(),
+          builder: (val) => Text(val.toString(), style: UIs.text15),
+        ),
+        onTap: () {
+          ctrl.text = _setting.termLineHeight.fetch().toString();
+          context.showRoundDialog(
+            title: label,
+            child: Input(
+              controller: ctrl,
+              autoFocus: true,
+              type: const TextInputType.numberWithOptions(decimal: true),
+              hint: '1.2',
+              icon: Icons.format_line_spacing,
+              suggestion: false,
+              onSubmitted: (_) => onSave(),
+            ),
+            actions: Btn.ok(onTap: onSave).toList,
+          );
+        },
+      ),
+      keywords: l10n.termLineHeightTip,
     );
   }
 

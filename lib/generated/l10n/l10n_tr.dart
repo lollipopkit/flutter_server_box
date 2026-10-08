@@ -5458,4 +5458,15 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Görünmeyen bir terminal için: program kendisinin bildirdiği üzere sizi beklediğinde, tamamlandığında veya hata verdiğinde (OSC 7501, OSC 9;4) ya da en az 30 saniye çalışan bir komut sona erdiğinde (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Satır yüksekliği';
+
+  @override
+  String get termLineHeightTip =>
+      'Bir terminal satırının kapladığı alanı, yazı tipi boyutunun 1,0 ile 2,0 katı arasında belirler. Yazı tipi boyutu gibi, ekrana sığan satır sayısını etkiler.';
+
+  @override
+  String get termFontTip =>
+      'Bir yazı tipi dosyası seçilmediğinde terminal, sistemin eş aralıklı yazı tipini kullanır; eksik glifler için CJK ve emoji glifleri içeren yazı tiplerine başvurur.';
 }

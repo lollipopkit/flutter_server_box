@@ -5470,4 +5470,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'For a terminal out of sight: a program waiting for you, finished or failed, as it reports itself (OSC 7501, OSC 9;4), or a command that ran for 30 seconds or more ending (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Line height';
+
+  @override
+  String get termLineHeightTip =>
+      'The space a terminal row takes, as a multiple of the font size, from 1.0 to 2.0. Like the font size, it changes how many rows fit.';
+
+  @override
+  String get termFontTip =>
+      'Without a font file, the terminal uses the system\'s monospace font, then fonts with CJK and emoji glyphs for what it lacks.';
 }

@@ -1539,5 +1539,8 @@
   "programCommandSucceeded": "最後のコマンドは成功しました",
   "programCommandFailed": "最後のコマンドは終了コード {code} で終了しました",
   "programStatusAlerts": "プログラムが応答を求めているときに通知",
-  "programStatusAlertsTip": "画面に表示されていない terminal について、プログラムが自身の状態として待機・完了・失敗を報告したとき（OSC 7501、OSC 9;4）、または30秒以上実行されたコマンドが終了したとき（OSC 133）に通知します。"
+  "programStatusAlertsTip": "画面に表示されていない terminal について、プログラムが自身の状態として待機・完了・失敗を報告したとき（OSC 7501、OSC 9;4）、または30秒以上実行されたコマンドが終了したとき（OSC 133）に通知します。",
+  "termLineHeight": "行の高さ",
+  "termLineHeightTip": "端末の1行が占める高さを、フォントサイズの倍率（1.0～2.0）で指定します。フォントサイズと同様に、表示できる行数に影響します。",
+  "termFontTip": "フォントファイルを選択していない場合、端末はシステムの等幅フォントを使用し、不足する文字には CJK と emoji のグリフを含むフォントを使用します。"
 }

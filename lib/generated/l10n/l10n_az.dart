@@ -5467,4 +5467,15 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Görünməyən terminal üçün: proqram sizi gözlədiyini, tamamlandığını və ya uğursuz olduğunu bildirdikdə (OSC 7501, OSC 9;4), yaxud ən azı 30 saniyə işləyən əmr başa çatdıqda (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Sətir hündürlüyü';
+
+  @override
+  String get termLineHeightTip =>
+      'Terminal sətirinin tutduğu yer şrift ölçüsünün 1,0–2,0 misli arasındadır. Şrift ölçüsü kimi, ekrana neçə sətir yerləşəcəyinə təsir edir.';
+
+  @override
+  String get termFontTip =>
+      'Şrift faylı seçilmədikdə terminal əvvəlcə sistemin sabit enli şriftindən, onda olmayan qliflər üçün isə CJK və emoji qliflərini dəstəkləyən şriftlərdən istifadə edir.';
 }

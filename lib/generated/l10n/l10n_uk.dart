@@ -5507,4 +5507,15 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Для термінала поза екраном: коли програма повідомляє, що очікує на вас, завершилася або сталася помилка (OSC 7501, OSC 9;4), або завершується команда, що виконувалася щонайменше 30 секунд (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Висота рядка';
+
+  @override
+  String get termLineHeightTip =>
+      'Висота рядка термінала в межах від 1,0 до 2,0 розміру шрифту. Як і розмір шрифту, цей параметр впливає на кількість рядків, що вміщуються.';
+
+  @override
+  String get termFontTip =>
+      'Якщо файл шрифту не вибрано, термінал використовує системний моноширинний шрифт, а для відсутніх гліфів — шрифти з гліфами CJK та emoji.';
 }

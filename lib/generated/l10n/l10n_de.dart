@@ -5541,4 +5541,15 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Für Terminals im Hintergrund: wenn ein Programm meldet, dass es auf Sie wartet, abgeschlossen ist oder fehlgeschlagen ist (OSC 7501, OSC 9;4), oder wenn ein mindestens 30 Sekunden laufender Befehl endet (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Zeilenhöhe';
+
+  @override
+  String get termLineHeightTip =>
+      'Der Platz, den eine Terminalzeile einnimmt, als Vielfaches der Schriftgröße von 1,0 bis 2,0. Wie die Schriftgröße beeinflusst sie, wie viele Zeilen hineinpassen.';
+
+  @override
+  String get termFontTip =>
+      'Ohne ausgewählte Schriftdatei verwendet das Terminal die Monospace-Schrift des Systems und für fehlende Glyphen Schriftarten mit CJK- und Emoji-Glyphen.';
 }
