@@ -1,9 +1,10 @@
-// Load the small locale dictionaries synchronously. Prefer the persisted
-// locale, then fall back to the browser language. Custom detection keeps
+// Loads the one locale in use, each dictionary being its own chunk (all of
+// them at once were 1.3 MB of the first load). Prefer the persisted locale,
+// then fall back to the browser language. Custom detection keeps
 // storage access on `window.localStorage` for the test shim in `tests/setup.ts`.
 import type { Locales } from './i18n-types.js'
 import { isLocale, locales } from './i18n-util.js'
-import { loadAllLocales } from './i18n-util.sync.js'
+import { loadLocaleAsync } from './i18n-util.async.js'
 import { setLocale } from './i18n-svelte.js'
 
 // Map Chinese script and region variants to the supported Simplified or
@@ -42,10 +43,17 @@ export function detectLocale(): Locales {
 	return fromBrowserLanguage(navigator.language)
 }
 
-export function persistLocale(locale: Locales) {
-	window.localStorage.setItem('locale', locale)
+/// Loads [locale]'s dictionary, then switches to it.
+async function use(locale: Locales) {
+	await loadLocaleAsync(locale)
 	setLocale(locale)
 }
 
-loadAllLocales()
-setLocale(detectLocale())
+export function persistLocale(locale: Locales): Promise<void> {
+	window.localStorage.setItem('locale', locale)
+	return use(locale)
+}
+
+/// The detected locale, loaded (English when its chunk cannot be): the panel
+/// mounts once this settles.
+export const ready: Promise<void> = use(detectLocale()).catch(() => use('en'))

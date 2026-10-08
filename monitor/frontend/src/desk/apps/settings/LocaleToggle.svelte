@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Select } from '@lollipopkit/desk-ui'
+  import { Select } from '../../lk'
   import { locale } from '../../../i18n/i18n-svelte'
   import { persistLocale } from '../../../i18n/init'
   import type { Locales } from '../../../i18n/i18n-types'
@@ -29,5 +29,5 @@
   class="w-[170px]"
   value={$locale}
   options={Object.entries(options).map(([value, label]) => ({ value, label }))}
-  onchange={(e: Event) => persistLocale((e.currentTarget as HTMLSelectElement).value as Locales)}
+  onchange={(e: Event) => void persistLocale((e.currentTarget as HTMLSelectElement).value as Locales)}
 />
