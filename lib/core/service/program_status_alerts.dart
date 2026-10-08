@@ -28,6 +28,9 @@ abstract final class ProgramStatusAlerts {
   /// What tapping each terminal's notification does: bring the terminal back.
   static final _reveal = <String, VoidCallback>{};
 
+  /// How many times each terminal's notification has been cancelled.
+  static final _cancels = <String, int>{};
+
   static const _minInterval = Duration(seconds: 3);
   static DateTime? _lastShown;
   static Timer? _flush;
@@ -159,6 +162,9 @@ abstract final class ProgramStatusAlerts {
   /// gone.
   static void cancel(String key, {bool forget = false}) {
     _pending.remove(key);
+    // A show already past the queue is waiting on [prepare]; this tells it
+    // the notification is no longer wanted.
+    _cancels[key] = (_cancels[key] ?? 0) + 1;
     if (forget) _reveal.remove(key);
     if (_ready == null) return;
     unawaited(_cancel(key));
@@ -186,7 +192,9 @@ abstract final class ProgramStatusAlerts {
   }
 
   static Future<void> _show(String key, String title, String body) async {
+    final cancels = _cancels[key];
     if (!await prepare()) return;
+    if (_cancels[key] != cancels) return;
     try {
       await _plugin.show(
         id: _idOf(key),

@@ -75,6 +75,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('1/2'), findsOneWidget);
+    // Named for a screen reader: which pane is on screen, of how many.
+    final semantics = tester.ensureSemantics();
+    expect(find.bySemanticsLabel('0:top 1/2'), findsOneWidget);
+    semantics.dispose();
     expect(find.text('0:top'), findsNothing);
     expect(find.text('1:tail'), findsNothing);
 

@@ -279,35 +279,53 @@ final class _PaneSummaryButtonState extends State<_PaneSummaryButton> {
         ])
         ?.colorIn(scheme);
 
+    final active = activeIndex < 0 ? null : widget.panes[activeIndex];
+    final label = [
+      if (active != null) '${active.index}:${active.displayName}',
+      '${activeIndex < 0 ? 1 : activeIndex + 1}/${widget.panes.length}',
+    ].join(' ');
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Material(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
+      // What it opens is the pane list, so it says which pane is on screen and
+      // of how many, to a screen reader and on hover alike.
+      child: Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: Semantics(
+          button: true,
+          label: label,
           onTap: () => _showPaneMenu(context),
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.grid_view_outlined,
-                  size: 13,
-                  color: hidden ?? foreground,
+          excludeSemantics: true,
+          child: Material(
+            color: scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: () => _showPaneMenu(context),
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.grid_view_outlined,
+                      size: 13,
+                      color: hidden ?? foreground,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${activeIndex < 0 ? 1 : activeIndex + 1}'
+                      '/${widget.panes.length}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: foreground,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '${activeIndex < 0 ? 1 : activeIndex + 1}'
-                  '/${widget.panes.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: foreground,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
