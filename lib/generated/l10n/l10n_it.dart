@@ -5532,4 +5532,15 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Per un terminale non visibile: quando un programma segnala che ti sta aspettando, che è terminato o che non è riuscito (OSC 7501, OSC 9;4), oppure quando termina un comando eseguito per almeno 30 secondi (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Altezza riga';
+
+  @override
+  String get termLineHeightTip =>
+      'Lo spazio occupato da una riga del terminale, come multiplo della dimensione del carattere da 1,0 a 2,0. Come la dimensione del carattere, determina quante righe possono essere visualizzate.';
+
+  @override
+  String get termFontTip =>
+      'Se non è selezionato alcun file di font, il terminale usa il font monospaziato del sistema e poi font con glifi CJK ed emoji per quelli mancanti.';
 }

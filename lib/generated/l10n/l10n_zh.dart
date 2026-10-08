@@ -5120,6 +5120,17 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       '对于当前不可见的终端：程序报告正在等待你、已完成或失败时（OSC 7501、OSC 9;4），或者运行至少 30 秒的命令结束时（OSC 133）通知你。';
+
+  @override
+  String get termLineHeight => '行高';
+
+  @override
+  String get termLineHeightTip =>
+      '终端一行占用的空间，以字体大小的倍数表示，范围为 1.0 到 2.0。与字体大小一样，它会影响可显示的行数。';
+
+  @override
+  String get termFontTip =>
+      '未选择字体文件时，终端会使用系统等宽字体；对于缺少的字形，则使用包含 CJK 和 emoji 字形的字体。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10237,4 +10248,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get programStatusAlertsTip =>
       '對於目前不可見的終端：程式回報正在等待您、已完成或失敗時（OSC 7501、OSC 9;4），或執行至少 30 秒的命令結束時（OSC 133）通知您。';
+
+  @override
+  String get termLineHeight => '行高';
+
+  @override
+  String get termLineHeightTip =>
+      '終端機一行所佔的空間，以字型大小的倍數表示，範圍為 1.0 到 2.0。與字型大小一樣，這會影響可顯示的行數。';
+
+  @override
+  String get termFontTip =>
+      '未選擇字型檔案時，終端機會使用系統等寬字型；對於缺少的字形，則使用包含 CJK 和 emoji 字形的字型。';
 }

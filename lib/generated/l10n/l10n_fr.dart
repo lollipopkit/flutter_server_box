@@ -5561,4 +5561,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Pour un terminal hors écran : lorsqu’un programme indique qu’il vous attend, qu’il a terminé ou échoué (OSC 7501, OSC 9;4), ou lorsqu’une commande exécutée pendant au moins 30 secondes se termine (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Hauteur de ligne';
+
+  @override
+  String get termLineHeightTip =>
+      'L’espace occupé par une ligne du terminal, exprimé en multiple de la taille de police, de 1,0 à 2,0. Comme la taille de police, ce réglage modifie le nombre de lignes affichées.';
+
+  @override
+  String get termFontTip =>
+      'Si aucun fichier de police n’est sélectionné, le terminal utilise la police à chasse fixe du système, puis des polices contenant les glyphes CJK et emoji manquants.';
 }

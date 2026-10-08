@@ -119,6 +119,10 @@ class SettingStore extends SqliteStore with ThemeSettings {
   // SSH term font size
   late final termFontSize = propertyDefault('termFontSize', 13.0);
 
+  /// A terminal row's height as a multiple of the font size, 1.0–2.0. 1.2 is
+  /// what every terminal had before this was a setting.
+  late final termLineHeight = propertyDefault('termLineHeight', 1.2);
+
   // Locale
   late final locale = propertyDefault('locale', '');
 

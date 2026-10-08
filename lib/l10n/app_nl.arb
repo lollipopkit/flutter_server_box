@@ -1539,5 +1539,8 @@
   "programCommandSucceeded": "De laatste opdracht is geslaagd",
   "programCommandFailed": "De laatste opdracht is beëindigd met code {code}",
   "programStatusAlerts": "Melden wanneer een programma je nodig heeft",
-  "programStatusAlertsTip": "Voor een terminal buiten beeld: wanneer een programma meldt dat het op je wacht, is voltooid of is mislukt (OSC 7501, OSC 9;4), of wanneer een opdracht eindigt die minstens 30 seconden draaide (OSC 133)."
+  "programStatusAlertsTip": "Voor een terminal buiten beeld: wanneer een programma meldt dat het op je wacht, is voltooid of is mislukt (OSC 7501, OSC 9;4), of wanneer een opdracht eindigt die minstens 30 seconden draaide (OSC 133).",
+  "termLineHeight": "Regelhoogte",
+  "termLineHeightTip": "De ruimte die een terminalregel inneemt, als veelvoud van de tekengrootte van 1,0 tot 2,0. Net als de tekengrootte bepaalt dit hoeveel regels er passen.",
+  "termFontTip": "Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met CJK- en emoji-glyphs voor wat daarin ontbreekt."
 }

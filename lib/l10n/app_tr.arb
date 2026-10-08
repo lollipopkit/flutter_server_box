@@ -1539,5 +1539,8 @@
   "programCommandSucceeded": "Son komut başarıyla tamamlandı",
   "programCommandFailed": "Son komut {code} çıkış koduyla tamamlandı",
   "programStatusAlerts": "Bir program size ihtiyaç duyduğunda bildir",
-  "programStatusAlertsTip": "Görünmeyen bir terminal için: program kendisinin bildirdiği üzere sizi beklediğinde, tamamlandığında veya hata verdiğinde (OSC 7501, OSC 9;4) ya da en az 30 saniye çalışan bir komut sona erdiğinde (OSC 133)."
+  "programStatusAlertsTip": "Görünmeyen bir terminal için: program kendisinin bildirdiği üzere sizi beklediğinde, tamamlandığında veya hata verdiğinde (OSC 7501, OSC 9;4) ya da en az 30 saniye çalışan bir komut sona erdiğinde (OSC 133).",
+  "termLineHeight": "Satır yüksekliği",
+  "termLineHeightTip": "Bir terminal satırının kapladığı alanı, yazı tipi boyutunun 1,0 ile 2,0 katı arasında belirler. Yazı tipi boyutu gibi, ekrana sığan satır sayısını etkiler.",
+  "termFontTip": "Bir yazı tipi dosyası seçilmediğinde terminal, sistemin eş aralıklı yazı tipini kullanır; eksik glifler için CJK ve emoji glifleri içeren yazı tiplerine başvurur."
 }

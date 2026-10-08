@@ -5212,4 +5212,15 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       '画面に表示されていない terminal について、プログラムが自身の状態として待機・完了・失敗を報告したとき（OSC 7501、OSC 9;4）、または30秒以上実行されたコマンドが終了したとき（OSC 133）に通知します。';
+
+  @override
+  String get termLineHeight => '行の高さ';
+
+  @override
+  String get termLineHeightTip =>
+      '端末の1行が占める高さを、フォントサイズの倍率（1.0～2.0）で指定します。フォントサイズと同様に、表示できる行数に影響します。';
+
+  @override
+  String get termFontTip =>
+      'フォントファイルを選択していない場合、端末はシステムの等幅フォントを使用し、不足する文字には CJK と emoji のグリフを含むフォントを使用します。';
 }

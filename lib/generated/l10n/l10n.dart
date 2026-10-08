@@ -9374,6 +9374,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For a terminal out of sight: a program waiting for you, finished or failed, as it reports itself (OSC 7501, OSC 9;4), or a command that ran for 30 seconds or more ending (OSC 133).'**
   String get programStatusAlertsTip;
+
+  /// Setting: the height of a terminal row as a multiple of the font size.
+  ///
+  /// In en, this message translates to:
+  /// **'Line height'**
+  String get termLineHeight;
+
+  /// Explains the terminal line height setting.
+  ///
+  /// In en, this message translates to:
+  /// **'The space a terminal row takes, as a multiple of the font size, from 1.0 to 2.0. Like the font size, it changes how many rows fit.'**
+  String get termLineHeightTip;
+
+  /// Explains which font the terminal uses when no font file is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a font file, the terminal uses the system\'s monospace font, then fonts with CJK and emoji glyphs for what it lacks.'**
+  String get termFontTip;
 }
 
 class _AppLocalizationsDelegate

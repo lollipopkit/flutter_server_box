@@ -5519,4 +5519,15 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get programStatusAlertsTip =>
       'Voor een terminal buiten beeld: wanneer een programma meldt dat het op je wacht, is voltooid of is mislukt (OSC 7501, OSC 9;4), of wanneer een opdracht eindigt die minstens 30 seconden draaide (OSC 133).';
+
+  @override
+  String get termLineHeight => 'Regelhoogte';
+
+  @override
+  String get termLineHeightTip =>
+      'De ruimte die een terminalregel inneemt, als veelvoud van de tekengrootte van 1,0 tot 2,0. Net als de tekengrootte bepaalt dit hoeveel regels er passen.';
+
+  @override
+  String get termFontTip =>
+      'Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met CJK- en emoji-glyphs voor wat daarin ontbreekt.';
 }
