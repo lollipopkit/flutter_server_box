@@ -23,6 +23,7 @@ import { AppData } from './appData'
 import { registerWebApps } from './webapps/register'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
+import { DeskThemes } from './themes.svelte'
 import { SessionSync } from './session.svelte'
 import { AgentStorage, BrowserStorage, deviceId, type DeskStorage } from './storage'
 import type { AppIconChrome, WindowChrome } from './window/chrome.svelte'
@@ -61,6 +62,8 @@ export class Desk {
   storage = $state<DeskStorage | null>(null)
   session = $state<SessionSync | null>(null)
   prefs = $state<DeskPrefs | null>(null)
+  /// Installed themes, where the agent keeps them (`desk_themes`).
+  themes = $state<DeskThemes | null>(null)
   notifications = $state<DeskNotifications | null>(null)
   appData = $state.raw<AppData | null>(null)
 
@@ -173,17 +176,28 @@ export class Desk {
     await capabilitiesStore.ensure(this.entry.id)
     if (this.#abort.signal.aborted) return
     const storage: DeskStorage = this.caps?.features?.includes('desk')
-      ? new AgentStorage(this.entry, this.caps.features.includes('desk_background'), this.caps.features.includes('desk_storage'))
+      ? new AgentStorage(
+          this.entry,
+          this.caps.features.includes('desk_background'),
+          this.caps.features.includes('desk_storage'),
+          this.caps.features.includes('desk_themes'),
+        )
       : new BrowserStorage(this.entry.id)
     this.storage = storage
     this.prefs = new DeskPrefs(storage)
+    this.themes = storage.keepsThemes ? new DeskThemes(this.entry, this.prefs) : null
     this.notifications = new DeskNotifications(storage)
     this.appData = new AppData(storage)
     this.session = new SessionSync(this.windows, storage, deviceId(), this.entry.id)
     // Installed apps first: a restored window of one needs it registered.
     await this.reloadWebApps()
     const system = systemPrefs.value
-    await Promise.all([this.prefs.load(), this.session.load(system.restoreWindows), this.notifications.load()])
+    await Promise.all([
+      this.prefs.load(),
+      this.session.load(system.restoreWindows),
+      this.notifications.load(),
+      this.themes?.load(),
+    ])
     if (this.#abort.signal.aborted) return
     // Nothing came back: the app this browser opens at start.
     if (this.windows.windows.length === 0 && system.openOnStart !== 'none') this.open(system.openOnStart)
@@ -278,6 +292,7 @@ export class Desk {
     this.#offWebApps?.()
     this.#offWebApps = null
     this.prefs?.close()
+    this.themes?.close()
     this.notifications?.close()
     await this.session?.close()
   }
@@ -314,10 +329,13 @@ export class Desk {
         void this.session?.remoteChanged(String(e.device), Number(e.revision))
         break
       case 'preferences':
+        // A theme installed or removed elsewhere says so this way too.
         void this.prefs?.load()
+        void this.themes?.load()
         break
       case 'resync':
         void this.prefs?.load()
+        void this.themes?.load()
         void this.notifications?.load()
         break
     }
@@ -438,6 +456,8 @@ export function provideAppSettings(desk: Desk, appId: string, settings: WindowHa
 /// only — no other app touches them. Null until they have loaded.
 export function useDeskPrefs(): {
   readonly prefs: DeskPrefs | null
+  /// Installed themes; null where the agent keeps none.
+  readonly themes: DeskThemes | null
   readonly notifications: DeskNotifications | null
   readonly apps: AppSpec[]
   reloadApps(): Promise<void>
@@ -446,6 +466,9 @@ export function useDeskPrefs(): {
   return {
     get prefs() {
       return desk?.prefs ?? null
+    },
+    get themes() {
+      return desk?.themes ?? null
     },
     /// Do Not Disturb lives here.
     get notifications() {

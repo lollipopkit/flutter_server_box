@@ -20,17 +20,20 @@
     block?: boolean
     /// Names the group for a screen reader.
     label?: string
+    /// Shows [value] without letting it change.
+    disabled?: boolean
     class?: string
   }
 
-  const { options, value, onchange, size = 'md', block = false, label, class: className = '' }: Props = $props()
+  const { options, value, onchange, size = 'md', block = false, label, disabled = false, class: className = '' }: Props = $props()
   const at = $derived(Math.max(0, options.findIndex((o) => o.value === value)))
 </script>
 
 <div
   role="tablist"
   aria-label={label}
-  class="lk-seg {size === 'sm' ? 'lk-seg--sm' : ''} {block ? 'lk-seg--block' : ''} {className}"
+  aria-disabled={disabled || undefined}
+  class="lk-seg {size === 'sm' ? 'lk-seg--sm' : ''} {block ? 'lk-seg--block' : ''} {disabled ? 'lk-seg--disabled' : ''} {className}"
 >
   <span
     class="lk-seg__thumb"
@@ -46,6 +49,7 @@
       title={o.label ? undefined : o.title}
       class="lk-seg__item"
       class:lk-seg__item--on={o.value === value}
+      {disabled}
       onclick={() => onchange(o.value)}
     >
       {#if o.icon}<Icon name={o.icon} size={size === 'sm' ? 14 : 16} />{/if}{o.label ?? ''}

@@ -21,7 +21,7 @@ export interface DeskIcon {
 
 export interface DeskPreferences {
   accent: string | null
-  /// `preset:<id>` or `custom`.
+  /// `preset:<id>`, `custom`, or `theme` (the selected theme's background).
   wallpaper: string
   wallpaper_fit: 'cover' | 'contain' | 'fill'
   dock: string[]
@@ -30,6 +30,84 @@ export interface DeskPreferences {
   background: boolean
   /// Apps suspended when hidden even while [background] is on.
   background_denied: string[]
+  /// The installed theme the desk is drawn with: `<installation>` or
+  /// `<installation>#<variant>`; null for the design system's own
+  /// (`desk_themes`).
+  theme?: string | null
+}
+
+/// A color as a theme writes one: ARGB, or a palette role.
+export type ThemeColor = number | string
+
+/// One theme of an installed package (`sbm_theme::Theme`): the package, or
+/// one of its variants.
+export interface PackageTheme {
+  variant: { key: string; name: string } | null
+  modes: ('light' | 'dark')[]
+  /// The initial preference: 0 system, 1 light, 2 dark.
+  mode: 0 | 1 | 2
+  seed: number
+  schemeLight: Record<string, number>
+  schemeDark: Record<string, number>
+  /// The accent and neutral palettes by tone.
+  accentTones: Record<string, number>
+  neutralTones: Record<string, number>
+  background: { style: 'none' | 'gradient' | 'image'; opacity: number; blur: number; tile: number }
+  shapes: { card: number; tile: number; button: number }
+  /// Checked and kept; not drawn by the desk yet (TODO).
+  components: Record<string, unknown>
+  density: string | null
+}
+
+export interface ThemePackage {
+  installationId: string
+  id: string
+  name: string
+  schemaMin: number
+  schemaMax: number
+  themes: PackageTheme[]
+}
+
+export interface InstalledTheme {
+  installationId: string
+  id: string
+  name: string
+  installedAt: string
+  package: ThemePackage
+}
+
+export interface StoreRelease {
+  version: string
+  schemaMin: number
+  schemaMax: number
+  url: string | null
+  path: string | null
+  sha256: string | null
+  size: number | null
+  notes: string | null
+}
+
+export interface StoreItem {
+  repo: string
+  repoUrl: string
+  listing: {
+    id: string
+    name: string
+    /// One string, or one per language tag (`zh-tw`, `zh`, `en`).
+    description: string | Record<string, string>
+    homepage: string | null
+    license: string | null
+    releases: StoreRelease[]
+  }
+  /// The newest version the agent installs; null when all need newer.
+  release: StoreRelease | null
+}
+
+export interface ThemeStoreView {
+  catalog: string | null
+  repos: string[]
+  items: StoreItem[]
+  fetchedAt: string
 }
 
 export interface DeskView {
@@ -183,14 +261,69 @@ export const deskApi = {
     const res = await raw(entry, '/desk/wallpaper', { method: 'DELETE' })
     if (!res.ok) throw new ApiError('Failed to remove the wallpaper', res.status)
   },
+
+  themes: (entry: ServerEntry) => requestFor<InstalledTheme[]>(entry, '/desk/themes', {}, 'Failed to load the themes'),
+
+  /// Installs a `.fsbt`; a refused package throws with the reason the app's
+  /// installer would give (`code` `invalidTheme`).
+  async installTheme(entry: ServerEntry, file: Blob): Promise<InstalledTheme> {
+    const res = await raw(entry, '/desk/themes', { method: 'POST', body: file })
+    return themeAnswer(res, 'Failed to install the theme')
+  },
+
+  async removeTheme(entry: ServerEntry, installation: string): Promise<void> {
+    const res = await raw(entry, `/desk/themes/${encodeURIComponent(installation)}`, { method: 'DELETE' })
+    if (!res.ok && res.status !== 404) throw new ApiError('Failed to remove the theme', res.status)
+  },
+
+  /// A theme's background as an object URL; null when it has none.
+  async themeBackgroundUrl(entry: ServerEntry, installation: string, variant: string | null): Promise<string | null> {
+    const query = variant ? `?variant=${encodeURIComponent(variant)}` : ''
+    const res = await raw(entry, `/desk/themes/${encodeURIComponent(installation)}/background${query}`, { method: 'GET' })
+    if (res.status === 404) return null
+    if (!res.ok) throw new ApiError('Failed to load the theme background', res.status)
+    return URL.createObjectURL(await res.blob())
+  },
+
+  themeStore: (entry: ServerEntry, refresh = false) =>
+    requestFor<ThemeStoreView>(
+      entry,
+      `/desk/themes/store${refresh ? '?refresh=1' : ''}`,
+      {},
+      'Failed to read the theme store',
+      undefined,
+      120_000,
+    ),
+
+  async installFromStore(entry: ServerEntry, item: StoreItem, version: string): Promise<InstalledTheme> {
+    const res = await raw(entry, '/desk/themes/store/install', {
+      method: 'POST',
+      body: JSON.stringify({ repo: item.repoUrl, id: item.listing.id, version }),
+      headers: { 'content-type': 'application/json' },
+    })
+    return themeAnswer(res, 'Failed to install the theme')
+  },
+}
+
+/// An install's answer, or its refusal: `reason` (the package's or the
+/// store's own words) as the message.
+async function themeAnswer(res: Response, fallback: string): Promise<InstalledTheme> {
+  let body: { error?: string; reason?: string } & Partial<InstalledTheme> = {}
+  try {
+    body = await res.json()
+  } catch {
+    // No body to read.
+  }
+  if (!res.ok) throw new ApiError(body.reason ?? body.error ?? fallback, res.status, body.error)
+  return body as InstalledTheme
 }
 
 async function raw(entry: ServerEntry, path: string, init: RequestInit): Promise<Response> {
   if (!isSecureAgentUrl(entry.url)) throw new ApiError('Remote monitor agents require HTTPS; HTTP is allowed only on loopback.')
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) }
   if (entry.token) headers.Authorization = `Bearer ${entry.token}`
   try {
-    return await fetch(`${entry.url}/api/v1${path}`, { ...init, headers, signal: AbortSignal.timeout(60_000) })
+    return await fetch(`${entry.url}/api/v1${path}`, { ...init, headers, signal: AbortSignal.timeout(120_000) })
   } catch {
     throw new ApiError('Request failed')
   }

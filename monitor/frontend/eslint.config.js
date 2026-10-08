@@ -62,7 +62,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^\\.\\./\\.\\./(?!(sys|lk|deskState\\.svelte|prefs\\.svelte|shellPrefs\\.svelte|shell/Wallpaper\\.svelte|window/AppSettingsHost\\.svelte)(/|$))[^.]',
+              regex: '^\\.\\./\\.\\./(?!(sys|lk|deskState\\.svelte|prefs\\.svelte|themes\\.svelte|shellPrefs\\.svelte|shell/Wallpaper\\.svelte|window/AppSettingsHost\\.svelte)(/|$))[^.]',
               message: 'Settings uses `sys`, `lk` and the desk preferences only.',
             },
             { regex: '^\\.\\./[a-z_]+/', message: 'Apps are independent.' },

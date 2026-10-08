@@ -125,6 +125,7 @@
 .lk-seg__item:active{transform:scale(.95)}
 .lk-seg__item--on{color:var(--text-primary)}
 .lk-seg--sm .lk-seg__item{height:20px;padding:0 var(--space-9);font-size:var(--text-12)}
+.lk-seg--disabled{opacity:.5;pointer-events:none}
 
 /* ---------- Card ---------- */
 .lk-card{border-radius:var(--radius-card);background:var(--surface-card);padding:var(--space-13) var(--space-17);min-width:0}

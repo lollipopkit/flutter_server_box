@@ -11,6 +11,7 @@
 //!   machine said (a monitoring rule that started firing), read per account.
 //! - `/desk/apps/{app}/storage`: what an app keeps for itself, see
 //!   `api::desk_storage`.
+//! - `/desk/themes*`: theme packages, see `api::desk_themes`.
 //! - `GET /desk/events`: a `text/event-stream` of the above as they happen,
 //!   read with `fetch` and the bearer header (an `EventSource` cannot send
 //!   one). A hint to refetch, never the only copy.
@@ -93,7 +94,7 @@ impl DeskHub {
         self.events.subscribe()
     }
 
-    fn send(&self, event: DeskEvent) {
+    pub(crate) fn send(&self, event: DeskEvent) {
         // No receiver is no panel open: nothing to tell.
         let _ = self.events.send(event);
     }
@@ -204,6 +205,11 @@ pub struct Preferences {
     /// Apps suspended when hidden even while [background] is on.
     #[serde(default)]
     pub background_denied: Vec<String>,
+    /// The installed theme the desk is drawn with (`api::desk_themes`):
+    /// `<installation>` or `<installation>#<variant>`; None for the panel's
+    /// own.
+    #[serde(default)]
+    pub theme: Option<String>,
 }
 
 fn yes() -> bool {
@@ -352,6 +358,8 @@ fn valid_accent(accent: &str) -> bool {
 
 pub fn valid_wallpaper(wallpaper: &str) -> bool {
     wallpaper == "custom"
+        // The selected theme's background.
+        || wallpaper == "theme"
         || wallpaper
             .strip_prefix("preset:")
             .is_some_and(|id| WALLPAPER_PRESETS.contains(&id))
@@ -367,6 +375,12 @@ pub fn check_preferences(mut p: Preferences) -> Result<Preferences, Refusal> {
         p.accent = Some(accent);
     }
     if !valid_wallpaper(&p.wallpaper) {
+        return Err(refused("invalidWallpaper", None));
+    }
+    if p.theme.as_deref().is_some_and(|t| !super::desk_themes::valid_theme_value(t)) {
+        return Err(refused("invalidTheme", None));
+    }
+    if p.wallpaper == "theme" && p.theme.is_none() {
         return Err(refused("invalidWallpaper", None));
     }
     if !FITS.contains(&p.wallpaper_fit.as_str()) {
@@ -569,6 +583,13 @@ pub async fn put_preferences(
         Ok(p) => p,
         Err(refusal) => return Ok(HttpResponse::BadRequest().json(&refusal)),
     };
+    if let Some(theme) = &preferences.theme {
+        match super::desk_themes::theme_exists(&state.db, user, theme).await {
+            Ok(true) => {}
+            Ok(false) => return Ok(HttpResponse::BadRequest().json(&refused("unknownTheme", None))),
+            Err(e) => return Ok(internal_error(&e)),
+        }
+    }
     if let Err(e) = store_preferences(&state.db, user, &preferences).await {
         return Ok(internal_error(&e));
     }
@@ -870,8 +891,8 @@ async fn still_signed_in(state: &AppState, caller: &Caller) -> bool {
 // -----------------------------------------------------------------------------
 
 async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferences>, sqlx::Error> {
-    let Some((accent, wallpaper, wallpaper_fit, background)) = sqlx::query_as::<_, (Option<String>, String, String, bool)>(
-        "SELECT accent, wallpaper, wallpaper_fit, background FROM desk_preferences WHERE user_id = ?",
+    let Some((accent, wallpaper, wallpaper_fit, background, theme)) = sqlx::query_as::<_, (Option<String>, String, String, bool, Option<String>)>(
+        "SELECT accent, wallpaper, wallpaper_fit, background, theme FROM desk_preferences WHERE user_id = ?",
     )
     .bind(user)
     .fetch_optional(db)
@@ -914,21 +935,24 @@ async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferenc
         icons,
         background,
         background_denied,
+        theme,
     }))
 }
 
 async fn store_preferences(db: &SqlitePool, user: i64, p: &Preferences) -> Result<(), sqlx::Error> {
     let mut tx = db.begin().await?;
     sqlx::query(
-        "INSERT INTO desk_preferences (user_id, accent, wallpaper, wallpaper_fit, background, updated_at) VALUES (?, ?, ?, ?, ?, ?) \
+        "INSERT INTO desk_preferences (user_id, accent, wallpaper, wallpaper_fit, background, theme, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) \
          ON CONFLICT(user_id) DO UPDATE SET accent = excluded.accent, wallpaper = excluded.wallpaper, \
-         wallpaper_fit = excluded.wallpaper_fit, background = excluded.background, updated_at = excluded.updated_at",
+         wallpaper_fit = excluded.wallpaper_fit, background = excluded.background, theme = excluded.theme, \
+         updated_at = excluded.updated_at",
     )
     .bind(user)
     .bind(&p.accent)
     .bind(&p.wallpaper)
     .bind(&p.wallpaper_fit)
     .bind(p.background)
+    .bind(&p.theme)
     .bind(chrono::Utc::now().to_rfc3339())
     .execute(&mut *tx)
     .await?;
@@ -1122,6 +1146,7 @@ mod tests {
                 col: Some(0),
                 row: None,
             }],
+            theme: None,
         }
     }
 

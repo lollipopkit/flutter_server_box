@@ -10,6 +10,7 @@ path = "src/lib.rs"
 [dependencies]
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
+sbm_theme = { path = "../crates/sbm_theme" }
 sbm_redfish = { path = "../crates/sbm_redfish" }
 sbm_virt = { path = "../crates/sbm_virt" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
@@ -112,6 +113,7 @@ clap = { version = "4.6", features = ["derive", "env"] }
 hostname = "0.4.2"
 async-stream = "0.3.6"
 futures = "0.3.34"
+url = "2"
 # Advisory process-wide lock for custom-command directory replacements.
 fs2 = "0.4"
 
@@ -122,6 +124,8 @@ fs2 = "0.4"
 libc = "0.2"
 
 [dev-dependencies]
+# Building theme packages in `tests/desk_themes.rs`.
+zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
 # Test modules for the app runtime, written as text.
 wat = "1"
 tempfile = "3.27.0"

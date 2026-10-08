@@ -13,6 +13,16 @@
   import { DOCK_SIZES, shellPrefs, type DockPosition, type DockSize, type TitlebarStyle } from '../../shellPrefs.svelte'
   import Wallpaper from '../../shell/Wallpaper.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
+  import ThemesGroup from './ThemesGroup.svelte'
+  import { themeDark, themeValue, themeWallpaper } from '../../themes.svelte'
+  import { theme as mode } from '../../../lib/theme.svelte'
+
+  interface Props {
+    /// Opens the theme store (a page over this one).
+    onstore: () => void
+  }
+
+  const { onstore }: Props = $props()
 
   /// The agent's own limit (`api::desk`); checked here too, so an oversized
   /// file is refused before it travels.
@@ -31,6 +41,12 @@
   /// The preset in use, or null for the custom image.
   const preset = $derived(prefs?.preset ?? null)
   const custom = $derived(value?.wallpaper === 'custom')
+  const themes = $derived(appearance.themes)
+  const active = $derived(themes?.active ?? null)
+  /// The installed theme's background, drawn as it is on the desk.
+  const activeWallpaper = $derived(
+    active ? themeWallpaper(active.theme, themeDark(active.theme, mode.dark), themes?.backgroundUrl ?? null) : null,
+  )
   const fit = $derived(value?.wallpaper_fit ?? 'cover')
 
   let busy = $state(false)
@@ -93,7 +109,7 @@
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}
     <Group title={$LL.theme()}>
-      <Row label={$LL.settingsAppearanceMode()}>
+      <Row label={$LL.settingsAppearanceMode()} sub={mode.locked ? $LL.settingsThemeLockedMode() : undefined}>
         <ThemeToggle />
       </Row>
       <Row label={$LL.settingsTextSize()} sub={$LL.settingsTextSizeHint()}>
@@ -113,6 +129,14 @@
         <Switch label={$LL.settingsReduceMotion()} checked={sys.reduceMotion} onchange={(reduceMotion) => systemPrefs.set({ reduceMotion })} />
       </Row>
     </Group>
+
+    {#if themes}
+      <ThemesGroup
+        {themes}
+        selected={active ? themeValue(active.pkg.installationId, active.theme) : null}
+        {onstore}
+      />
+    {/if}
 
     <Group title={$LL.settingsWindows()}>
       <Row label={$LL.deskTitlebar()} sub={$LL.deskTitlebarHint()}>
@@ -178,7 +202,12 @@
       <!-- The desk as it looks now, at 16:10: the wallpaper with a menubar
            and a dock drawn over it, so the choice is seen in place. -->
       <div class="relative aspect-[16/10] w-full overflow-hidden rounded-[13px] shadow-[inset_0_0_0_.5px_var(--border-hairline)]">
-        <Wallpaper preset={preset} url={prefs.wallpaperUrl} fit={fit} />
+        <Wallpaper
+          preset={preset}
+          url={custom ? prefs.wallpaperUrl : null}
+          fit={fit}
+          theme={value?.wallpaper === 'theme' ? activeWallpaper : null}
+        />
         <div class="absolute inset-x-2 top-2 flex items-center gap-1.5 rounded-[9px] bg-(--glass-bar) px-[9px] py-[7px] backdrop-blur-sm">
           <span class="h-2 w-2 rounded-full bg-(--color-accent)"></span>
           <span class="h-1.5 w-12 rounded-full bg-white/50"></span>
@@ -196,6 +225,19 @@
       </div>
 
       <div class="grid grid-cols-2 gap-[9px] @2xl:grid-cols-4">
+        {#if active && activeWallpaper}
+          <Card
+            onclick={() => prefs.update({ wallpaper: 'theme' })}
+            selected={value?.wallpaper === 'theme'}
+            class="cursor-default text-left"
+            padding="5px"
+          >
+            <span class="relative block aspect-[16/10] overflow-hidden rounded-[9px]">
+              <Wallpaper preset={null} url={null} fit="cover" theme={activeWallpaper} />
+            </span>
+            <span class="mt-[5px] block truncate px-[3px] text-[12px] text-(--text-primary)">{active.theme.variant ? `${active.pkg.name} · ${active.theme.variant.name}` : active.pkg.name}</span>
+          </Card>
+        {/if}
         {#each WALLPAPERS as name (name)}
           {@const active = !custom && preset === name}
           <Card

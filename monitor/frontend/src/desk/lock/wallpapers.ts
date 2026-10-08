@@ -12,9 +12,19 @@ import type { WallpaperPreset } from '../prefs.svelte'
 
 export type Fit = 'cover' | 'contain' | 'fill'
 
+/// An installed theme's background as the desk drew it (`themeWallpaper`).
+export interface CachedTheme {
+  ground: string
+  image: Blob | null
+  opacity: number
+  blur: number
+  tile: number
+}
+
 export type CachedWallpaper =
   | { preset: WallpaperPreset; fit: Fit }
   | { image: Blob; fit: Fit }
+  | { theme: CachedTheme; fit: Fit }
 
 interface Row {
   key: string
@@ -23,6 +33,7 @@ interface Row {
   at: number
   preset?: WallpaperPreset
   image?: Blob
+  theme?: CachedTheme
   fit: Fit
 }
 
@@ -72,7 +83,11 @@ export async function saveWallpaper(serverId: string, username: string, wallpape
     username,
     at: Date.now(),
     fit: wallpaper.fit,
-    ...('preset' in wallpaper ? { preset: wallpaper.preset } : { image: wallpaper.image }),
+    ...('preset' in wallpaper
+      ? { preset: wallpaper.preset }
+      : 'theme' in wallpaper
+        ? { theme: wallpaper.theme }
+        : { image: wallpaper.image }),
   }
   await run('readwrite', (s) => s.put(row))
 }
@@ -89,6 +104,7 @@ export async function loadWallpaper(serverId: string, username: string | null): 
   if (!row) return null
   if (row.preset) return { preset: row.preset, fit: row.fit }
   if (row.image) return { image: row.image, fit: row.fit }
+  if (row.theme) return { theme: row.theme, fit: row.fit }
   return null
 }
 

@@ -1,0 +1,26 @@
+[package]
+name = "sbm_theme"
+version = "0.1.0"
+edition = "2024"
+description = "Theme packages (.fsbt) and the theme store's catalog and repositories, read and checked as fl_lib's installer does"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+toml = { version = "1.1", default-features = false, features = ["parse", "serde", "preserve_order"] }
+indexmap = { version = "2", features = ["serde"] }
+zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
+flate2 = "1"
+tar = { version = "0.4", default-features = false }
+sha2 = "0.11"
+quick-xml = "0.38"
+imagesize = "0.15"
+material-colors = "0.5"
+url = "2"
+
+[dev-dependencies]
+toml = { version = "1.1", features = ["display", "preserve_order"] }
+zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
+tar = "0.4"
+flate2 = "1"
+url = "2"

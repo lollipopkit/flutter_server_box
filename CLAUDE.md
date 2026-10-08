@@ -42,6 +42,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `crates/sbm_parser/` — status command manifest, scripts, parsers (pure, raw counters; rates stay with the caller), locked by `tests/dart_compat.rs` / `script_compat.rs`. Porting: move a module's Dart tests to Rust first, delete the Dart side only once the FFI result matches. `ProcKill` checks a PID against the process table's `START_ID`.
 - `crates/sbm_virt/` — one virtualization model for libvirt (pure command layer) and the PVE API client (session, TOTP, tickets, pinning, console; over a stream the caller dials: `TcpDial` agent, `LoopbackDial` app).
 - `crates/sbm_redfish/` — the BMC client; app via `sbm_ffi::api::bmc`. Also decides PVE certificate pins (`certPinAccepts`); pins are SHA-256 lowercase hex.
+- `crates/sbm_theme/` — `.fsbt` theme packages (fl_lib's validation, the seed → scheme of `ColorScheme.fromSeed`, the theme store); used by the agent, the app later through FFI (TODO).
 - `crates/sbm_ffi/` — FRB bindings. `crates/sbm_native/` — native sampler, monitor only.
 - `monitor/` — the agent (Rust + Svelte panel), see `monitor/CLAUDE.md`. Machine pages are listed as `features` in `/capabilities`.
 - `lib/core/` utilities, `lib/view/` UI, `lib/data/{model,provider,store}/`, `lib/src/rust/` generated, `lib/hive/` legacy adapters for `HiveImport` only (TODO: remove).

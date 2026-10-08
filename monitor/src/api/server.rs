@@ -122,6 +122,8 @@ pub struct AppState {
     /// The desk's events and which monitoring rules are firing — see
     /// `api::desk`.
     pub desk: Arc<crate::api::desk::DeskHub>,
+    /// The theme store as last read — see `api::desk_themes`.
+    pub themes: Arc<crate::api::desk_themes::ThemeStore>,
     /// Desk app backend calls running now (`api::app_runtime`).
     pub app_calls: crate::api::app_runtime::AppCalls,
     /// The last process table read, which the next one's read and write
@@ -214,6 +216,7 @@ impl AppState {
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
             desk: Arc::new(crate::api::desk::DeskHub::default()),
+            themes: Arc::new(crate::api::desk_themes::ThemeStore::default()),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
@@ -478,6 +481,24 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
                     .route(web::get().to(crate::api::desk::get_session))
                     .route(web::put().to(crate::api::desk::put_session)),
+            )
+            .service(
+                web::resource("/desk/themes")
+                    .route(web::get().to(crate::api::desk_themes::list))
+                    .route(web::post().to(crate::api::desk_themes::upload)),
+            )
+            .service(
+                web::resource("/desk/themes/store")
+                    .route(web::get().to(crate::api::desk_themes::store)),
+            )
+            .service(
+                web::resource("/desk/themes/store/install")
+                    .route(web::post().to(crate::api::desk_themes::store_install)),
+            )
+            .service(web::resource("/desk/themes/{installation}").route(web::delete().to(crate::api::desk_themes::remove)))
+            .service(
+                web::resource("/desk/themes/{installation}/background")
+                    .route(web::get().to(crate::api::desk_themes::background)),
             )
             .service(web::resource("/desk/notifications").route(web::get().to(crate::api::desk::notifications)))
             .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))

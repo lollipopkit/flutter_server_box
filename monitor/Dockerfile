@@ -36,6 +36,8 @@ COPY monitor/src/ ./src/
 # relative to `src/api/`: in the repository that is the root's `assets/`, and
 # with `src/` at `/app/src` here it is `/assets`.
 COPY assets/yabs.b64 /assets/yabs.b64
+# The theme store's catalog, embedded the same way (`api/desk_themes.rs`).
+COPY assets/catalog/repos.toml /assets/catalog/repos.toml
 
 # 独立构建 monitor(脱离 monorepo workspace),修正 crates/ 下各依赖的相对路径
 #

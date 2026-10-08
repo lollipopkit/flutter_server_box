@@ -25,7 +25,8 @@
   import Input from '../lk/Input.svelte'
   import Wallpaper from '../shell/Wallpaper.svelte'
   import LockClock from './LockClock.svelte'
-  import { dropWallpapers, loadWallpaper, type CachedWallpaper } from './wallpapers'
+  import { dropWallpapers, loadWallpaper, type CachedTheme, type CachedWallpaper } from './wallpapers'
+  import type { ThemeWallpaper } from '../themeStyle'
 
   interface Props {
     /// [serverId] is signed in: show its desk.
@@ -142,6 +143,10 @@
 
   // ---- wallpaper --------------------------------------------------------
 
+  function lockTheme(t: CachedTheme, url: string | null): ThemeWallpaper {
+    return { ground: t.ground, image: url ? { url, opacity: t.opacity, blur: t.blur, tile: t.tile } : null }
+  }
+
   let wallpaper = $state<{ key: string; preset: CachedWallpaper | null; url: string | null } | null>(null)
   $effect(() => {
     const id = inst?.id ?? null
@@ -156,6 +161,7 @@
     void loadWallpaper(id, username).then((wp) => {
       if (gone) return
       if (wp && 'image' in wp) url = URL.createObjectURL(wp.image)
+      if (wp && 'theme' in wp && wp.theme.image) url = URL.createObjectURL(wp.theme.image)
       wallpaper = { key, preset: wp, url }
     })
     return () => {
@@ -311,8 +317,9 @@
       {#if wallpaper?.preset}
         <Wallpaper
           preset={'preset' in wallpaper.preset ? wallpaper.preset.preset : null}
-          url={wallpaper.url}
+          url={'image' in wallpaper.preset ? wallpaper.url : null}
           fit={wallpaper.preset.fit}
+          theme={'theme' in wallpaper.preset ? lockTheme(wallpaper.preset.theme, wallpaper.url) : null}
         />
       {:else}
         <div class="absolute inset-0" style:background="var(--wallpaper)"></div>

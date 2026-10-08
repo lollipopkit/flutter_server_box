@@ -5983,6 +5983,81 @@ type RootTranslation = {
 	 */
 	settingsWallpaperRemove: string
 	/**
+	 * T​h​e​m​e​s
+	 */
+	settingsThemePackages: string
+	/**
+	 * D​e​f​a​u​l​t
+	 */
+	settingsThemeDefault: string
+	/**
+	 * T​h​e​ ​d​e​s​k​'​s​ ​o​w​n​ ​c​o​l​o​r​s
+	 */
+	settingsThemeDefaultHint: string
+	/**
+	 * D​a​r​k​ ​o​n​l​y
+	 */
+	settingsThemeDarkOnly: string
+	/**
+	 * L​i​g​h​t​ ​o​n​l​y
+	 */
+	settingsThemeLightOnly: string
+	/**
+	 * T​h​e​m​e​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} reason
+	 */
+	settingsThemeRefused: RequiredParams<'reason'>
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	settingsThemeRemove: RequiredParams<'name'>
+	/**
+	 * I​n​s​t​a​l​l​ ​a​ ​t​h​e​m​e
+	 */
+	settingsThemeInstall: string
+	/**
+	 * F​r​o​m​ ​f​i​l​e
+	 */
+	settingsThemeInstallFile: string
+	/**
+	 * T​h​e​m​e​ ​s​t​o​r​e
+	 */
+	settingsThemeStore: string
+	/**
+	 * T​h​e​m​e​s​ ​f​r​o​m​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​c​a​t​a​l​o​g​,​ ​d​o​w​n​l​o​a​d​e​d​ ​a​n​d​ ​c​h​e​c​k​e​d​ ​b​y​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	settingsThemeStoreDesc: string
+	/**
+	 * N​o​ ​t​h​e​m​e​s
+	 */
+	settingsThemeStoreEmpty: string
+	/**
+	 * F​r​o​m​ ​{​r​e​p​o​}
+	 * @param {unknown} repo
+	 */
+	settingsThemeStoreFrom: RequiredParams<'repo'>
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	settingsThemeInstalled: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​n​e​w​e​r​ ​a​g​e​n​t
+	 */
+	settingsThemeNeedsNewer: string
+	/**
+	 * U​p​d​a​t​e
+	 */
+	settingsThemeUpdate: string
+	/**
+	 * G​e​t
+	 */
+	settingsThemeGet: string
+	/**
+	 * S​e​t​ ​b​y​ ​t​h​e​ ​t​h​e​m​e
+	 */
+	settingsThemeLockedMode: string
+	/**
 	 * F​i​t
 	 */
 	settingsWallpaperFit: string
@@ -12569,6 +12644,78 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Remove image
 	 */
 	settingsWallpaperRemove: () => LocalizedString
+	/**
+	 * Themes
+	 */
+	settingsThemePackages: () => LocalizedString
+	/**
+	 * Default
+	 */
+	settingsThemeDefault: () => LocalizedString
+	/**
+	 * The desk's own colors
+	 */
+	settingsThemeDefaultHint: () => LocalizedString
+	/**
+	 * Dark only
+	 */
+	settingsThemeDarkOnly: () => LocalizedString
+	/**
+	 * Light only
+	 */
+	settingsThemeLightOnly: () => LocalizedString
+	/**
+	 * Theme not installed: {reason}
+	 */
+	settingsThemeRefused: (arg: { reason: unknown }) => LocalizedString
+	/**
+	 * Remove {name}
+	 */
+	settingsThemeRemove: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Install a theme
+	 */
+	settingsThemeInstall: () => LocalizedString
+	/**
+	 * From file
+	 */
+	settingsThemeInstallFile: () => LocalizedString
+	/**
+	 * Theme store
+	 */
+	settingsThemeStore: () => LocalizedString
+	/**
+	 * Themes from the ServerBox catalog, downloaded and checked by this server.
+	 */
+	settingsThemeStoreDesc: () => LocalizedString
+	/**
+	 * No themes
+	 */
+	settingsThemeStoreEmpty: () => LocalizedString
+	/**
+	 * From {repo}
+	 */
+	settingsThemeStoreFrom: (arg: { repo: unknown }) => LocalizedString
+	/**
+	 * Installed
+	 */
+	settingsThemeInstalled: () => LocalizedString
+	/**
+	 * Needs a newer agent
+	 */
+	settingsThemeNeedsNewer: () => LocalizedString
+	/**
+	 * Update
+	 */
+	settingsThemeUpdate: () => LocalizedString
+	/**
+	 * Get
+	 */
+	settingsThemeGet: () => LocalizedString
+	/**
+	 * Set by the theme
+	 */
+	settingsThemeLockedMode: () => LocalizedString
 	/**
 	 * Fit
 	 */

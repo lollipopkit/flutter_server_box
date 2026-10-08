@@ -25,18 +25,37 @@
 </script>
 
 <script lang="ts">
+  import type { ThemeWallpaper } from '../themeStyle'
+
   interface Props {
     preset: WallpaperPreset | null
     /// The custom image, when [preset] is null.
     url: string | null
     fit: 'cover' | 'contain' | 'fill'
+    /// A theme's background, which wins over both (`themeStyle`).
+    theme?: ThemeWallpaper | null
   }
 
-  const { preset, url, fit }: Props = $props()
+  const { preset, url, fit, theme = null }: Props = $props()
   const size = $derived(fit === 'fill' ? '100% 100%' : fit)
 </script>
 
-{#if preset}
+{#if theme}
+  <!-- As the app draws a theme's background: its ground, and the image over
+       it, faint, blurred, repeated from the top left or cover-fitted. -->
+  <div class="absolute inset-0" style:background={theme.ground}></div>
+  {#if theme.image}
+    <div
+      class="absolute inset-0"
+      style:background-image="url({theme.image.url})"
+      style:background-repeat={theme.image.tile > 0 ? 'repeat' : 'no-repeat'}
+      style:background-size={theme.image.tile > 0 ? `${theme.image.tile}px auto` : 'cover'}
+      style:background-position={theme.image.tile > 0 ? 'top left' : 'center'}
+      style:opacity={theme.image.opacity}
+      style:filter={theme.image.blur > 0 ? `blur(${theme.image.blur}px)` : null}
+    ></div>
+  {/if}
+{:else if preset}
   {#key preset}
     <div class="desk-wall-light absolute inset-0" style:background={PRESETS[preset].light}></div>
     <div class="desk-wall-dark absolute inset-0" style:background={PRESETS[preset].dark}></div>

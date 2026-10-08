@@ -61,6 +61,9 @@ pub const FEATURES: &[&str] = &[
     "desk_storage",
     // `/apps`: desk apps an admin installs (`api::apps`).
     "desk_apps",
+    // `/desk/themes*`: theme packages (`.fsbt`), and preferences carrying
+    // `theme` and the `theme` wallpaper (an older agent refuses both).
+    "desk_themes",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

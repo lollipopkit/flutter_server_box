@@ -11,6 +11,8 @@ export interface DeskStorage {
   readonly remote: boolean
   /// Whether `background` is kept (an older agent's storage drops it).
   readonly keepsBackground: boolean
+  /// Whether installed themes and `theme` are kept (`desk_themes`).
+  readonly keepsThemes: boolean
   /// What an app keeps for itself (`sys.storage`), all of it.
   appItems(app: string): Promise<Record<string, unknown>>
   appPut(app: string, key: string, value: unknown): Promise<void>
@@ -31,6 +33,7 @@ export interface DeskStorage {
 export class AgentStorage implements DeskStorage {
   readonly remote = true
   readonly keepsBackground: boolean
+  readonly keepsThemes: boolean
   #entry: ServerEntry
 
   /// Where apps keep their own data when the agent cannot (no
@@ -39,11 +42,13 @@ export class AgentStorage implements DeskStorage {
 
   /// [keepsBackground]: the agent stores `background` (`desk_background`);
   /// an older one refuses preferences carrying it. [keepsAppData]: it has
-  /// `/desk/apps/{app}/storage` (`desk_storage`).
-  constructor(entry: ServerEntry, keepsBackground: boolean, keepsAppData: boolean) {
+  /// `/desk/apps/{app}/storage` (`desk_storage`). [keepsThemes]: it has
+  /// `/desk/themes` and stores `theme` (`desk_themes`).
+  constructor(entry: ServerEntry, keepsBackground: boolean, keepsAppData: boolean, keepsThemes = false) {
     // A copy: the session token it was made with is the one it keeps using.
     this.#entry = { ...entry }
     this.keepsBackground = keepsBackground
+    this.keepsThemes = keepsThemes
     this.#appFallback = keepsAppData ? null : new BrowserStorage(entry.id)
   }
 
@@ -65,6 +70,11 @@ export class AgentStorage implements DeskStorage {
     return { preferences: view.preferences, wallpaperSha: view.wallpaper_sha256 }
   }
   async savePreferences(p: DeskPreferences) {
+    if (!this.keepsThemes) {
+      // TODO: remove once agents without `desk_themes` are gone.
+      const { theme: _, ...older } = p
+      p = { ...older, wallpaper: p.wallpaper === 'theme' ? 'preset:bloom' : p.wallpaper } as DeskPreferences
+    }
     if (this.keepsBackground) {
       await deskApi.putPreferences(this.#entry, p)
     } else {
@@ -109,6 +119,7 @@ function bytes(text: string): number {
 export class BrowserStorage implements DeskStorage {
   readonly remote = false
   readonly keepsBackground = true
+  readonly keepsThemes = false
   #key: string
 
   constructor(serverId: string) {

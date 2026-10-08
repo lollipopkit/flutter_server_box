@@ -13,4 +13,12 @@
 <!-- Segmented switch (not a single cycling icon button) — system/light/dark
      is a genuine 3-way choice, a binary on/off switch would lose "system".
      Stretches full width to match the language select box above it. -->
-<SegmentedControl size="sm" options={options} value={theme.current} onchange={(value) => theme.set(value as Theme)} label={$LL.theme()} />
+<!-- A theme with one brightness holds it: shown, not choosable. -->
+<SegmentedControl
+  size="sm"
+  options={options}
+  value={theme.locked ?? theme.current}
+  disabled={theme.locked !== null}
+  onchange={(value) => theme.set(value as Theme)}
+  label={$LL.theme()}
+/>

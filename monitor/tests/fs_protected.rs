@@ -302,7 +302,6 @@ mod over_http {
             .await
             .unwrap();
         assert_eq!(resp.status().as_u16(), 400);
-        let mut resp = resp;
         let body: serde_json::Value = resp.json().await.unwrap();
         assert_eq!(body["error"], "not_a_directory");
 

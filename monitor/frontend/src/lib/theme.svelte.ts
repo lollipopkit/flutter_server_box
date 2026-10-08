@@ -15,6 +15,9 @@ class ThemeStore {
   current = $state<Theme>(this.#stored())
   /// Whether the system asks for dark, followed live.
   #systemDark = $state(window.matchMedia?.(SYSTEM_DARK).matches ?? false)
+  /// The one mode a desk's theme supports, which wins over the choice while
+  /// that theme is drawn (`lock`).
+  locked = $state<'light' | 'dark' | null>(null)
 
   constructor() {
     window.matchMedia?.(SYSTEM_DARK).addEventListener?.('change', (e) => {
@@ -26,7 +29,16 @@ class ThemeStore {
 
   /// The mode in effect: the choice, or the system's under `system`.
   get dark(): boolean {
+    if (this.locked) return this.locked === 'dark'
     return this.current === 'dark' || (this.current === 'system' && this.#systemDark)
+  }
+
+  /// Holds the mode at [mode] (a theme that declares only one), or lets the
+  /// choice apply again (null). The choice itself is kept.
+  lock(mode: 'light' | 'dark' | null) {
+    if (this.locked === mode) return
+    this.locked = mode
+    this.#apply()
   }
 
   #stored(): Theme {
@@ -36,8 +48,9 @@ class ThemeStore {
 
   #apply() {
     const cls = document.documentElement.classList
-    cls.toggle('dark', this.current === 'dark')
-    cls.toggle('light', this.current === 'light')
+    const mode = this.locked ?? this.current
+    cls.toggle('dark', mode === 'dark')
+    cls.toggle('light', mode === 'light')
     document.documentElement.dataset.theme = this.dark ? 'dark' : 'light'
   }
 

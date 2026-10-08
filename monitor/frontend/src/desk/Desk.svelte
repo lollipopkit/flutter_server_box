@@ -22,6 +22,7 @@
   import Spotlight from './shell/Spotlight.svelte'
   import Wallpaper from './shell/Wallpaper.svelte'
   import { saveWallpaper } from './lock/wallpapers'
+  import { themeDark, themeVars, themeWallpaper } from './themeStyle'
   import WindowLayer from './window/WindowLayer.svelte'
 
   interface Props {
@@ -50,9 +51,25 @@
     if (!prefs?.loaded || entry.username === null) return
     const fit = prefs.value.wallpaper_fit
     const preset = prefs.preset
-    const url = prefs.wallpaperUrl
+    const url = prefs.value.wallpaper === 'custom' ? prefs.wallpaperUrl : null
+    const drawn = wallpaperTheme
     const { id, username } = entry
-    if (preset) {
+    if (drawn) {
+      const { ground, image } = drawn
+      // An image theme is kept once its image is here.
+      if (activeTheme?.background.style === 'image' && !image) return
+      const keep = (blob: Blob | null) =>
+        saveWallpaper(id, username, {
+          theme: { ground, image: blob, opacity: image?.opacity ?? 1, blur: image?.blur ?? 0, tile: image?.tile ?? 0 },
+          fit,
+        })
+      if (!image) void keep(null)
+      else
+        void fetch(image.url)
+          .then((r) => r.blob())
+          .then(keep)
+          .catch(() => {})
+    } else if (preset) {
       void saveWallpaper(id, username, { preset, fit })
     } else if (url) {
       void fetch(url)
@@ -61,6 +78,33 @@
         .catch(() => {})
     }
   })
+
+  // ---- the installed theme the desk is drawn with ------------------------
+
+  const activeTheme = $derived(desk.themes?.active?.theme ?? null)
+  /// A theme that supports one brightness holds the desk at it.
+  $effect(() => {
+    const modes = activeTheme?.modes
+    theme.lock(modes?.length === 1 ? modes[0] : null)
+  })
+  onDestroy(() => theme.lock(null))
+  $effect(() => {
+    // The background follows the selection, wherever it was made.
+    void desk.prefs?.value.theme
+    desk.themes?.preferencesChanged()
+  })
+  const themeStyle = $derived.by(() => {
+    if (!activeTheme) return undefined
+    const vars = themeVars(activeTheme, themeDark(activeTheme, theme.dark))
+    return Object.entries(vars)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('; ')
+  })
+  const wallpaperTheme = $derived(
+    activeTheme && desk.prefs?.value.wallpaper === 'theme'
+      ? themeWallpaper(activeTheme, themeDark(activeTheme, theme.dark), desk.themes?.backgroundUrl ?? null)
+      : null,
+  )
 
   let root = $state<HTMLDivElement | null>(null)
 
@@ -162,6 +206,7 @@
 <div
   bind:this={root}
   class="lk desk-root fixed inset-0 overflow-hidden bg-(--surface-desktop)"
+  style={themeStyle}
   data-reduce-motion={systemPrefs.value.reduceMotion || undefined}
   role="application"
   aria-label={$LL.deskTitle()}
@@ -173,9 +218,10 @@
 >
   <div class="absolute inset-0" data-desk-background>
     <Wallpaper
-      preset={desk.prefs?.preset ?? 'bloom'}
-      url={desk.prefs?.wallpaperUrl ?? null}
+      preset={desk.prefs ? desk.prefs.preset : 'bloom'}
+      url={desk.prefs?.value.wallpaper === 'custom' ? desk.prefs.wallpaperUrl : null}
       fit={desk.prefs?.value.wallpaper_fit ?? 'cover'}
+      theme={wallpaperTheme}
     />
   </div>
   {#if desk.ready && !desk.windows.compact}

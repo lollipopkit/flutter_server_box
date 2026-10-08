@@ -13,6 +13,7 @@
   import AppearanceSection from './AppearanceSection.svelte'
   import AppPage from './AppPage.svelte'
   import AppsSection from './AppsSection.svelte'
+  import ThemeStorePage from './ThemeStorePage.svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
   import GeneralSection from './GeneralSection.svelte'
   import ServerSection from './ServerSection.svelte'
@@ -52,6 +53,19 @@
 
   function openApp(app: string) {
     win.setAppState({ section: 'apps', app })
+  }
+
+  /// The theme store, a page over Appearance (`{ section: 'appearance', page: 'store' }`).
+  const storePage = $derived(
+    current === 'appearance' && (win.appState as { page?: unknown } | null)?.page === 'store' && deskPrefs.themes !== null,
+  )
+  let leftStore = $state(false)
+  function openStore() {
+    win.setAppState({ section: 'appearance', page: 'store' })
+  }
+  function leaveStore() {
+    leftStore = true
+    show('appearance')
   }
 
   /// The app page last gone back from: a swipe forward on Apps reopens it.
@@ -108,17 +122,24 @@
     </SidebarSection>
   {/snippet}
 
-  <!-- An app's page is a page over Apps; the sections are peers. -->
+  <!-- An app's page is a page over Apps, the theme store one over
+       Appearance; the sections are peers. -->
   <PageStack
-    key={appPage ? `apps/${appPage.id}` : current}
-    depth={appPage ? 1 : 0}
-    back={appPage ? { key: 'apps', go: leaveApp } : null}
-    forward={current === 'apps' && !appPage && leftApp ? { key: `apps/${leftApp}`, go: () => openApp(leftApp!) } : null}
+    key={appPage ? `apps/${appPage.id}` : storePage ? 'appearance/store' : current}
+    depth={appPage || storePage ? 1 : 0}
+    back={appPage ? { key: 'apps', go: leaveApp } : storePage ? { key: 'appearance', go: leaveStore } : null}
+    forward={current === 'apps' && !appPage && leftApp
+      ? { key: `apps/${leftApp}`, go: () => openApp(leftApp!) }
+      : current === 'appearance' && !storePage && leftStore
+        ? { key: 'appearance/store', go: openStore }
+        : null}
   >
   {#if current === 'general'}
     <GeneralSection />
+  {:else if current === 'appearance' && storePage}
+    <ThemeStorePage onback={leaveStore} />
   {:else if current === 'appearance'}
-    <AppearanceSection />
+    <AppearanceSection onstore={openStore} />
   {:else if current === 'apps' && appPage}
     <AppPage spec={appPage} onback={leaveApp} />
   {:else if current === 'apps'}
