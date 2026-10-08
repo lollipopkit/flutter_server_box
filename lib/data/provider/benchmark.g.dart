@@ -91,7 +91,7 @@ final class BenchmarkNotifierProvider
   }
 }
 
-String _$benchmarkNotifierHash() => r'64e857531eb3c80e83c1f70dc3ced6c11a553a13';
+String _$benchmarkNotifierHash() => r'd94e93b848909b3e75d2d46f07ed8c1759a6b775';
 
 /// Drives one server's benchmark: install, start, poll, finish.
 ///

@@ -292,6 +292,10 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String get backupThemesNotRestored =>
+      'Bərpa edildi, bu mövzular istisna olmaqla. Onları mövzu mağazasından və ya gəldikləri fayldan yenidən quraşdırın.';
+
+  @override
   String get backupTip =>
       'İxrac edilən məlumatlar parolla şifrələnə bilər. \nOnları təhlükəsiz yerdə saxla.';
 
@@ -519,6 +523,18 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get githubGistTokenEmpty => 'Token boşdur';
+
+  @override
+  String get githubGistIdInvalid =>
+      'Bu, nə Gist ID-dir, nə də Gist linkidir. Gist ünvanının son hissəsini istifadə edin (https://gist.github.com/<user>/<ID>) və ya ilk ehtiyat nüsxə zamanı yeni gizli gist yaradılması üçün boş saxlayın.';
+
+  @override
+  String get githubGistNotFound =>
+      'GitHub bu ID ilə tokenin oxuya biləcəyi gist tapmadı: ID səhv ola, gist silinmiş ola və ya başqa hesaba aid ola bilər. İlk ehtiyat nüsxə zamanı yeni gizli gist yaradılması üçün ID-ni boş saxlayın.';
+
+  @override
+  String get githubGistTokenRejected =>
+      'GitHub bu tokeni rədd etdi: token səhv, vaxtı bitmiş və ya ləğv edilmiş ola bilər, yaxud gist icazəsi çatışmır (classic token: \"gist\" scope; fine-grained token: Gists read and write).';
 
   @override
   String get goto => 'Keç';
@@ -1018,6 +1034,12 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get serverTabEmpty => 'Hələ server yoxdur';
+
+  @override
+  String get serverTabConnBadge => 'Server vərəqində bağlantı sayı';
+
+  @override
+  String get serverTabConnBadgeTip => 'Qoşulmuş serverlərin sayı, məsələn, 2/4';
 
   @override
   String get serverTabRequired => 'Server vərəqi silinə bilməz';
@@ -2914,10 +2936,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu server üçün profil adları unikal olmalıdır.';
 
   @override
-  String get remoteDesktopVncPasswordLength =>
-      'Klassik VNC parolları 8 ASCII baytla məhdudlaşır.';
-
-  @override
   String get remoteDesktopNameRequired => 'Profil adı daxil et.';
 
   @override
@@ -2940,6 +2958,10 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get remoteDesktopCredentialInvalid =>
       'İstifadəçi adı və domen ən çox 256 simvol ola bilər və sətir sonu ola bilməz.';
+
+  @override
+  String get remoteDesktopVncPasswordHint =>
+      'Klassik VNC yalnız ilk 8 simvoldan istifadə edir';
 
   @override
   String get remoteDesktopVncPasswordAscii =>

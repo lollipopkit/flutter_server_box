@@ -480,11 +480,14 @@ class SettingStore extends SqliteStore with ThemeSettings {
   static const deviceLocalKeys = {
     'agentLocalExec',
     'liveActivity',
-    // TODO(appearance): package image bytes when backups can carry theme assets.
-    'appBackgroundPath',
-    'appCustomBackgroundPath',
-    // TODO(appearance): include installed theme/font assets in backup packages.
+    // Where this device installed the selected theme, and its background
+    // inside that: the backup carries the themes themselves (`themes`), and a
+    // restore points these at this device's copy — `ThemeBackup.reselect`.
     'appThemePackage',
+    'appBackgroundPath',
+    // TODO(appearance): carry a custom background image and an imported font
+    // in backups; until then they are files only this device has.
+    'appCustomBackgroundPath',
     'appImportedFontPath',
     'themeStoreCache',
     // What this device's themes directory holds, like `appThemePackage`.
@@ -695,6 +698,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
+
+  /// The connection count (`2/4`) on the server tab (#1637).
+  late final serverTabConnBadge = propertyDefault('serverTabConnBadge', true);
 
   /// Tabs at home page
   ///

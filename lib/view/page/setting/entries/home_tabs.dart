@@ -84,6 +84,17 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
       child: Column(
         children: [
           Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7),
+            child: CardX(
+              child: ListTile(
+                leading: const Icon(Icons.looks_two_outlined),
+                title: Text(l10n.serverTabConnBadge),
+                subtitle: Text(l10n.serverTabConnBadgeTip, style: UIs.textGrey),
+                trailing: StoreSwitch(prop: Stores.setting.serverTabConnBadge),
+              ),
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.fromLTRB(17, 13, 17, 7),
             child: Text(l10n.homeTabsCustomizeDesc, style: UIs.textGrey),
           ),

@@ -77,3 +77,22 @@ class RemoteDesktopViewportTransform {
     destination.top + remote.dy * scale,
   );
 }
+
+/// How far to move the picture up while a soft keyboard covers the bottom of
+/// the canvas: enough that [pointer] — where the user is typing — stays
+/// [margin] above the keyboard, and no more than the keyboard covers.
+///
+/// [atRest] is laid out at the size the canvas had before the keyboard, so
+/// the picture keeps its scale instead of shrinking into the strip above it
+/// (#1639); [visibleHeight] is what is left of that above the keyboard.
+double remoteDesktopKeyboardShift(
+  RemoteDesktopViewportTransform atRest, {
+  required double visibleHeight,
+  required Offset? pointer,
+  double margin = 48,
+}) {
+  final covered = atRest.viewport.height - visibleHeight;
+  if (pointer == null || covered <= 0) return 0;
+  final y = atRest.toLocal(pointer).dy;
+  return (y - (visibleHeight - margin)).clamp(0, covered).toDouble();
+}

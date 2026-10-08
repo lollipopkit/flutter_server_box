@@ -17,6 +17,9 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     _maxTouches = math.max(_maxTouches, _touches);
     _touchAt[event.pointer] = event.localPosition;
     if (_touches > 1) {
+      // No longer a long press; but one that already right-clicked stays
+      // done, or the two-finger lift would right-click again.
+      _stopLongPressWait();
       // A second finger: a right click or a scroll, not a tap and drag. The
       // tap before it was still a tap, and its click is owed.
       if (_tapDrag == _TapDrag.armed) {
@@ -43,6 +46,10 @@ extension _TouchpadX on _RemoteDesktopViewerState {
       return;
     }
     _flushPendingClick(session);
+    _armLongPress(event.localPosition, () {
+      final point = _pointer.value;
+      if (point != null) _click(session, point, 4);
+    });
   }
 
   void _touchpadMove(
@@ -67,6 +74,7 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     if (!_touchMoved) {
       if (delta.distance <= kTouchSlop) return;
       _touchMoved = true;
+      _endLongPress();
     }
     _touchAt[event.pointer] = event.localPosition;
     // Only one finger moves the pointer; two are the scroll or the pinch the
@@ -100,6 +108,11 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     _touches = math.max(0, _touches - 1);
     _touchAt.remove(event.pointer);
     if (_touches > 0) return;
+    if (_endLongPress()) {
+      _maxTouches = 0;
+      _touchMoved = false;
+      return;
+    }
     final twoFingers = _maxTouches >= 2;
     final moved = _touchMoved;
     final tapDrag = _tapDrag;
@@ -156,6 +169,47 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     _sendPointer(session, point);
     _buttons = 0;
     _sendPointer(session, point);
+  }
+
+  /// Starts the wait for a long press of the finger at [at]: [rightClick]
+  /// runs if it is still down, and still there, after [kLongPressTimeout].
+  void _armLongPress(Offset at, VoidCallback rightClick) {
+    _longPress?.cancel();
+    _longPressed = false;
+    _longPressAt = at;
+    _longPress = Timer(kLongPressTimeout, () {
+      _longPress = null;
+      if (!mounted) return;
+      _longPressed = true;
+      HapticFeedback.mediumImpact();
+      rightClick();
+    });
+  }
+
+  /// A move of the finger: one further than a tap can go is no long press.
+  void _moveLongPress(Offset to) {
+    final at = _longPressAt;
+    if (_longPress == null || at == null) return;
+    if ((to - at).distance > kTouchSlop) _endLongPress();
+  }
+
+  /// Stops the wait, and nothing else: whether one already right-clicked is
+  /// for the lift that ends the gesture to read.
+  void _stopLongPressWait() {
+    _longPress?.cancel();
+    _longPress = null;
+    _longPressAt = null;
+  }
+
+  /// Stops waiting for a long press; true if one already right-clicked, so
+  /// the lift that ends it sends nothing.
+  bool _endLongPress() {
+    _longPress?.cancel();
+    _longPress = null;
+    _longPressAt = null;
+    final pressed = _longPressed;
+    _longPressed = false;
+    return pressed;
   }
 
   /// Forgets the gesture in progress, and any click still owed.

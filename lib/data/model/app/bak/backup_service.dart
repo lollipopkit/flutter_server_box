@@ -221,9 +221,24 @@ class BackupService {
         Btn.ok(
           onTap: () async {
             try {
-              await backup.$1.merge(force: true);
+              final mergeable = backup.$1;
+              final themes = mergeable is BackupV2
+                  ? await mergeable.mergeReporting(force: true)
+                  : null;
+              if (mergeable is! BackupV2) await mergeable.merge(force: true);
               if (!context.mounted) return;
               context.popDialog();
+              // Said once the restore is done, not as a failure of it: the
+              // rest of the backup is in place, and these can be installed
+              // again by hand.
+              if (themes != null && themes.failed.isNotEmpty) {
+                Toast.show(
+                  l10n.backupThemesNotRestored,
+                  body: themes.failed.join(', '),
+                  duration: const Duration(seconds: 8),
+                  level: ToastLevel.warn,
+                );
+              }
             } catch (e, s) {
               if (!context.mounted) return;
               context.popDialog();
