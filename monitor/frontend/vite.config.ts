@@ -14,9 +14,6 @@ export default defineConfig({
   plugins: [svelte(), tailwindcss()],
   server: {
     port: 3000,
-    // `@lollipopkit/desk-ui` is linked from ../sdk, outside this root: its
-    // fonts are served from there.
-    fs: { allow: ['.', '../sdk/desk-ui'] },
     proxy: {
       '/api': {
         target: agent,

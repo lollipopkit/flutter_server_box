@@ -204,7 +204,7 @@ export const deskApi = {
 
   /// Where an installed app's UI loads from (a ticketed path).
   launchApp: (entry: ServerEntry, id: string) =>
-    requestFor<{ url: string; version: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}, 'Failed to open the app'),
+    requestFor<{ url: string; version: string; stylesheet?: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}, 'Failed to open the app'),
 
   /// Runs [method] of an installed app's backend (`kind: wasm`) as the
   /// signed-in account; answers the backend's own reply.

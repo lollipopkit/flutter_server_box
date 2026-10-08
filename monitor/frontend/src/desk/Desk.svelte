@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import Spinner from './lk/Spinner.svelte'
   import { onDestroy, onMount, untrack } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { theme } from '../lib/theme.svelte'

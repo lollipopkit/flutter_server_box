@@ -425,7 +425,7 @@
    Apps still built on `@serverbox/webui` and its Tailwind tokens (`bg`,
    `surface`, `fg`, `line`, `soft`, `primary`, …) take the design system's
    values here until they move to the `lk` components.
-   TODO: remove once every app uses `@lollipopkit/desk-ui` only. */
+   TODO: remove once every app uses `desk/lk` only. */
 .lk {
   --sb-snow: var(--surface-window);
   --sb-white: var(--surface-content);

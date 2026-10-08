@@ -7,7 +7,7 @@ import { locale } from '../../i18n/i18n-svelte'
 import type { ServerEntry } from '../../lib/servers.svelte'
 import type { InstalledApp } from '../../types'
 import { deskApi } from '../deskApi'
-import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
+import type { IconTone } from '../lk/AppIcon.svelte'
 import { registry } from '../registry.svelte'
 import { defineApp, type AppSpec } from '../sys/manifest'
 

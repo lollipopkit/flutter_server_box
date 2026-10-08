@@ -1,18 +1,13 @@
 import { connect } from '@lollipopkit/desk-sys'
-import { applyTheme } from '@lollipopkit/desk-ui/theme'
-// No icons in this UI (the desk draws the toolbar's): the 3 MB icon font
-// stays out. Import '@lollipopkit/desk-ui/lk.css' for everything.
-import '@lollipopkit/desk-ui/core.css'
-import '@lollipopkit/desk-ui/fonts.css'
 import './style.css'
 
+// Once connected, the page is in the desk's design system (its `lk-*`
+// classes and tokens, served by the desk) and follows the desk's mode and
+// theme. Nothing of it is in this package.
 const desk = await connect()
 const state = document.getElementById('state')!
 const title = document.getElementById('title')!
 
-// Drawn as the desk is: its mode and the installed theme's tokens.
-applyTheme(desk.info.theme)
-desk.on('theme', (theme) => applyTheme(theme))
 desk.on('lifecycle', (s) => (state.textContent = `State: ${s}`))
 state.textContent = `State: ${desk.info.lifecycle}`
 

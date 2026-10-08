@@ -63,7 +63,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Input, Textarea } from '@lollipopkit/desk-ui'
+  import { Button, Input, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
 
   interface Props {

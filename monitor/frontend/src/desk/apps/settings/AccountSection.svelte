@@ -3,7 +3,7 @@
   /// password — the one thing an account that is not an administrator may
   /// change — and signing out of this browser.
 
-  import { Button, Group, Row } from '@lollipopkit/desk-ui'
+  import { Button, Group, Row } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { displayName, servers } from '../../../lib/servers.svelte'

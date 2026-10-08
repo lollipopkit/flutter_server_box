@@ -65,7 +65,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Card, Checkbox, Input } from '@lollipopkit/desk-ui'
+  import { Button, Card, Checkbox, Input } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import { userRefusalText } from '../../../lib/userRefusal'

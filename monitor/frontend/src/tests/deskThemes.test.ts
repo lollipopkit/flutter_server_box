@@ -51,7 +51,8 @@ describe('themeStyle', () => {
     expect(light['--color-accent']).toBe('#6750a4')
     expect(light['--surface-window']).toBe(css(t.schemeLight.surface))
     expect(light['--shape-card']).toBe('12px')
-    expect(light['--shape-tile']).toBe('8px')
+    // A list tile has no counterpart in the desk: its rows keep the design system's.
+    expect(light['--shape-tile']).toBeUndefined()
     expect(light['--shape-button']).toBe('20px')
     // What is drawn on the accent or the danger colour, shadows and the scrim
     // follow the theme too.

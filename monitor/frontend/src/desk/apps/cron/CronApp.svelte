@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import Spinner from '../../lk/Spinner.svelte'
   import { AppToolbar } from '../../sys'
-  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'

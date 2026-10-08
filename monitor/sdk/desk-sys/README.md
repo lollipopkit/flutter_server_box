@@ -14,10 +14,25 @@ const count = (await desk.storage.get<number>('count')) ?? 0
 await desk.storage.set('count', count + 1)
 ```
 
+Once `connect()` resolves, the page is in the desk's design system: the desk
+serves its stylesheet (`/desk-app/desk.css`) and keeps the page in its mode
+and theme, so the app writes markup with its classes and tokens and carries
+none of it (`docs/dev/desk-sys.md`, "UI"):
+
+```html
+<body>
+  <div class="lk-card">
+    <button class="lk-btn lk-btn--primary"><span class="lk-icon" data-icon="play_arrow"></span>Run</button>
+  </div>
+</body>
+```
+
+`connect({ style: false })` leaves the page alone.
+
 `src/protocol.ts` is the protocol itself; the desk's side
 (`monitor/frontend/src/desk/webapps/bridge.svelte.ts`) imports it from here,
 and `monitor/frontend/src/tests/deskSdk.test.ts` runs this client against it.
 
-Apache-2.0 (`LICENSE`, `NOTICE`), as `@lollipopkit/desk-ui`: an app built on
-it, closed-source included, keeps its own license. Not published yet
+Apache-2.0 (`LICENSE`, `NOTICE`): an app built on it, closed-source included,
+keeps its own license. Not published yet
 (`private`).

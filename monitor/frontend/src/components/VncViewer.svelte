@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import Spinner from '../desk/lk/Spinner.svelte'
   import { onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import type { RelayChannel } from '../lib/desktop.svelte'

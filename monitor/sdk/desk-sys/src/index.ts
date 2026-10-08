@@ -2,11 +2,13 @@
 /// from inside its sandboxed frame (docs/dev/desk-sys.md).
 ///
 ///   import { connect } from '@lollipopkit/desk-sys'
-///   const desk = await connect()
+///   const desk = await connect() // the desk's styles and theme are on the page
+///   document.body.innerHTML = '<button class="lk-btn lk-btn--primary">Run</button>'
 ///   desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
 ///   desk.on('action', ({ id }) => …)
 
 import { PROTOCOL, type AppTheme, type MenuDescription, type ToolbarDescription } from './protocol'
+import { applyTheme, useStylesheet } from './ui'
 
 export type { ActionItem, AppTheme, MenuDescription, ToolbarDescription } from './protocol'
 
@@ -20,6 +22,9 @@ export interface Hello {
   lifecycle: Lifecycle
   theme: AppTheme
   locale: string
+  /// The desk's design system for this frame (`_desk/desk.css` under the
+  /// app's own path); absent from a desk before it served one.
+  ui?: { stylesheet: string } | null
   /// What the admin approved that the desk itself grants (`notifications`,
   /// `background`).
   permissions: string[]
@@ -98,9 +103,18 @@ function portFrom(channel: Channel): Promise<Port> {
   })
 }
 
-/// Connects to the desk this frame runs in. [channel] is for tests.
-export async function connect(channel?: Channel): Promise<Desk> {
-  const port = await portFrom(channel ?? { parent: window.parent, self: window as unknown as Channel['self'] })
+export interface ConnectOptions {
+  /// Put the desk's design system on the page and keep it in the desk's
+  /// mode and theme (default). Off for an app that draws itself entirely.
+  style?: boolean
+  /// Where the desk's port arrives; for tests.
+  channel?: Channel
+}
+
+/// Connects to the desk this frame runs in; by default the page is in the
+/// desk's design system once this resolves (`ui.ts`).
+export async function connect(options: ConnectOptions = {}): Promise<Desk> {
+  const port = await portFrom(options.channel ?? { parent: window.parent, self: window as unknown as Channel['self'] })
   let next = 1
   const waiting = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>()
   const listeners = new Map<string, Set<(data: unknown) => void>>()
@@ -128,6 +142,13 @@ export async function connect(channel?: Channel): Promise<Desk> {
   }
 
   const info = await call<Hello>('hello')
+  if (options.style !== false) {
+    applyTheme(info.theme)
+    const set = listeners.get('theme') ?? new Set()
+    set.add((theme) => applyTheme(theme as AppTheme))
+    listeners.set('theme', set)
+    if (info.ui?.stylesheet) await useStylesheet(info.ui.stylesheet)
+  }
   let keep = 0
 
   return {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Dialog, Icon, IconButton, Spinner } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, Spinner } from '../../lk'
   import { AppToolbar } from '../../sys'
   import { api } from '../../../lib/api'
   import { APP_BACKUP_NAME, backupRefusalText, validBackupName } from '../../../lib/backup'

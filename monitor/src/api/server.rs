@@ -644,6 +644,9 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .configure(configure_api(exec_max_request))
             // TODO: Remove this root-level 410 response after one release.
             .route("/status", web::get().to(get_status_compat))
+            // Built assets: hashed, precompressed, cached for good.
+            .service(crate::api::assets::asset)
+            .service(crate::api::assets::desk_app)
             // Serve legacy `/static` paths and root assets from the bundled
             // Svelte frontend.
             .service(

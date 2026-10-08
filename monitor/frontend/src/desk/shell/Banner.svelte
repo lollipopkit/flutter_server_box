@@ -1,8 +1,8 @@
 <script lang="ts">
   import { LL } from '../../i18n/i18n-svelte'
   import { useDesk } from '../deskState.svelte'
-  import AppIcon from '@lollipopkit/desk-ui/AppIcon.svelte'
-  import Notification from '@lollipopkit/desk-ui/Notification.svelte'
+  import AppIcon from '../lk/AppIcon.svelte'
+  import Notification from '../lk/Notification.svelte'
 
   const desk = useDesk()
   const banner = $derived(desk.notifications?.banner ?? null)

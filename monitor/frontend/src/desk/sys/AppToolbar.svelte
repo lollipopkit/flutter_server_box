@@ -3,7 +3,7 @@
   import { LL } from '../../i18n/i18n-svelte'
   import { useWindow } from './window.svelte'
   import type { ToolbarChrome } from '../window/chrome.svelte'
-  import IconButton from '@lollipopkit/desk-ui/IconButton.svelte'
+  import IconButton from '../lk/IconButton.svelte'
 
   /// An app's title and tools. Inside a window they go into the window's
   /// title bar (the app's name is the bar's title already; [title] is for a

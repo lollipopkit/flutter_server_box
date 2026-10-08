@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { connect } from '../../../sdk/desk-sys/src/index'
-import { applyTheme } from '@lollipopkit/desk-ui/theme'
+import { applyTheme } from '../../../sdk/desk-sys/src/ui'
 import { WebAppBridge } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
 
 /// The SDK in a frame and the desk's bridge, joined by a real port pair,
 /// handed over the way the frame window would be.
-function joined(permissions: string[]) {
+function joined(permissions: string[], stylesheet: string | null = null) {
   const listeners: ((e: MessageEvent) => void)[] = []
   const parent = {}
   const handle = {
@@ -24,10 +24,11 @@ function joined(permissions: string[]) {
     allows: (p) => permissions.includes(p),
     theme: () => ({ dark: true, tokens: { '--color-accent': '#6750a4' } }),
     locale: () => 'de',
+    stylesheet: () => stylesheet,
     backend: async () => ({ ok: 7 }),
   })
   const channel = { parent, self: { addEventListener: (_: 'message', f: (e: MessageEvent) => void) => listeners.push(f) } }
-  const connecting = connect(channel)
+  const connecting = connect({ channel })
   const pair = new MessageChannel()
   bridge.attach(pair.port1)
   // From another window first: ignored.
@@ -75,5 +76,27 @@ describe('applyTheme', () => {
     expect(document.documentElement.dataset.theme).toBe('light')
     expect(root.style.getPropertyValue('--color-accent')).toBe('')
     expect(root.style.getPropertyValue('--shape-card')).toBe('')
+  })
+})
+
+describe('the desk’s design system in a frame', () => {
+  it('loads the stylesheet the desk names and follows its theme', async () => {
+    const { bridge, connecting } = joined([], '/desk-app/desk.css')
+    // The SDK waits for the sheet; jsdom loads none, so it is told.
+    let link: HTMLLinkElement | null = null
+    await vi.waitFor(() => {
+      link = document.head.querySelector('link[href="/desk-app/desk.css"]')
+      expect(link).not.toBeNull()
+    })
+    expect(document.head.firstElementChild).toBe(link)
+    link!.dispatchEvent(new Event('load'))
+    await connecting
+    expect(document.body.classList.contains('lk')).toBe(true)
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(document.body.style.getPropertyValue('--color-accent')).toBe('#6750a4')
+    bridge.send('theme', { dark: false, tokens: {} })
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'))
+    expect(document.body.style.getPropertyValue('--color-accent')).toBe('')
+    link!.remove()
   })
 })

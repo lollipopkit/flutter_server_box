@@ -10,8 +10,8 @@
 
   import type { Component } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
-  import TitleTabs, { type TitleTabsDrag } from '@lollipopkit/desk-ui/TitleTabs.svelte'
-  import { viewEnter, viewIn } from '@lollipopkit/desk-ui/motion'
+  import TitleTabs, { type TitleTabsDrag } from '../lk/TitleTabs.svelte'
+  import { viewEnter, viewIn } from '../lk/motion'
   import { useDesk } from '../deskState.svelte'
   import { activeTab, dividers, paneRects, type Divider, type Rect } from '../panes'
   import { useWindow } from '../sys/window.svelte'

@@ -58,7 +58,7 @@ describe('the bridge to an installed app', () => {
     expect(r.ok).toBe(true)
     expect(r.value).toEqual({
       protocol: 1, appId: 'acme_notes', windowId: 'w1', appState: null, lifecycle: 'active',
-      theme: { dark: false }, locale: 'en', permissions: ['notifications'],
+      theme: { dark: false }, locale: 'en', ui: null, permissions: ['notifications'],
     })
   })
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Icon, Spinner } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Icon, Spinner } from '../../lk'
   import VirtBackupJobForm from './VirtBackupJobForm.svelte'
   import { api } from '../../../lib/api'
   import { jobDraft, jobEdit, modeText, pruneText, selectionText, storageNames, virtErrorText, virtRequestText, type JobDraft } from '../../../lib/virt'

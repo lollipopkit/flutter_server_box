@@ -12,14 +12,12 @@
 # vendor hash at all — a guessed or stale one is a class of breakage this
 # avoids entirely.
 #
-# npm has no equivalent, and there are *three* lock files: the panel's, and
-# `packages/webui`'s and `monitor/sdk/desk-ui`'s, which the panel depends on
-# through `file:` links. Get
+# npm has no equivalent, and there are *two* lock files: the panel's, and
+# `packages/webui`'s, which the panel depends on through a `file:` link. Get
 # either with, from the repository root:
 #
 #     nix run nixpkgs#prefetch-npm-deps -- monitor/frontend/package-lock.json
 #     nix run nixpkgs#prefetch-npm-deps -- packages/webui/package-lock.json
-#     nix run nixpkgs#prefetch-npm-deps -- monitor/sdk/desk-ui/package-lock.json
 #
 # Each changes whenever its own lock file does.
 #
@@ -74,16 +72,6 @@ let
     hash = "sha256-XkjHnnOw/WVci9Z8zpKtK42TefzdbEmmlbewoCpFUlg=";
   };
 
-  # `@lollipopkit/desk-ui` (`monitor/sdk/desk-ui`), the panel's other `file:`
-  # dependency: its fonts, which vite bundles (and `material-symbols`, the
-  # icon font's source, a devDependency). Its svelte is a peer and left
-  # out (`--omit=peer`), so the panel's is the only one.
-  deskUiDeps = fetchNpmDeps {
-    name = "serverbox-desk-ui-npm-deps";
-    src = ../sdk/desk-ui;
-    hash = "sha256-wzGVgSS7yK5G62fuFo26GuEDaAM0UgRPBU3E4Hr0GLg=";
-  };
-
   panel = buildNpmPackage {
     pname = "server-box-monitor-panel";
     version = "0-unstable";
@@ -91,7 +79,7 @@ let
 
     sourceRoot = "source/monitor/frontend";
 
-    npmDepsHash = "sha256-1NEqe1Z6TMnk8rC0DqOx/vhnc+ho9/gRXZ73jOnOgwk=";
+    npmDepsHash = "sha256-8AtNkesSP6+lyd3Ih1S8/k22P2FiVPu8tqTWkMOPKcI=";
 
     nativeBuildInputs = [ nodejs npmHooks.npmConfigHook ];
 
@@ -112,12 +100,9 @@ let
       # Writable first: the source arrives from the store, and buildNpmPackage
       # only makes `sourceRoot` writable — a sibling directory is still
       # r-xr-xr-x, so `npm ci` fails on `mkdir node_modules` with EACCES.
-      chmod -R u+w ../../packages/webui ../sdk/desk-ui
+      chmod -R u+w ../../packages/webui
       pushd ../../packages/webui
       npm ci --offline --no-audit --no-fund --cache=${webuiDeps} --nodedir=${nodejs}
-      popd
-      pushd ../sdk/desk-ui
-      npm ci --offline --omit=peer --no-audit --no-fund --cache=${deskUiDeps} --nodedir=${nodejs}
       popd
     '';
 

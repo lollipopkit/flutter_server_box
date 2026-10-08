@@ -1,5 +1,5 @@
-/* Layout only: colours, type and controls come from @lollipopkit/desk-ui,
-   in the design system's tokens, so the app follows the desk's theme. */
+/* Layout only: colours, type and controls are the desk's (`lk-*` classes and
+   tokens, put on the page by `connect()`), so the app follows its theme. */
 body {
   margin: 0;
   background: var(--surface-window);

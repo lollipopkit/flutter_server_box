@@ -628,6 +628,9 @@ pub async fn launch(
     let ticket = mint_ticket(&state, &app.id, &app.sha256, chrono::Utc::now().timestamp());
     Ok(HttpResponse::Ok().json(&serde_json::json!({
         "url": format!("/api/v1/apps/{}/ui/{ticket}/index.html", app.id),
+        // The desk's design system, which the app's frame loads to look like
+        // the desk without carrying any of it (`api::assets::desk_app`).
+        "stylesheet": "/desk-app/desk.css",
         "version": app.version,
     })))
 }
@@ -637,6 +640,7 @@ pub async fn ui(
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     let (id, ticket, file) = path.into_inner();
+
     let package: Option<(String, Option<String>)> =
         match sqlx::query_as("SELECT sha256, approved_permissions FROM desk_app_package WHERE app_id = ?")
             .bind(&id)

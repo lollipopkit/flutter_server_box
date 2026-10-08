@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import Spinner from '../../lk/Spinner.svelte'
   import { AppToolbar, useWindow } from '../../sys'
-  import { Badge, Button, Card, Dialog, Icon, IconButton } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Dialog, Icon, IconButton } from '../../lk'
   import SnippetForm, {
     snippetFormState,
     type SnippetFormState,

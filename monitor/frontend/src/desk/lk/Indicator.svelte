@@ -40,11 +40,17 @@
       if (!target) return
       const p = parent.getBoundingClientRect()
       const t = target.getBoundingClientRect()
+      // Client rects include transforms: a window scaling in as it opens
+      // (a reload restoring it) would have the block placed and sized for
+      // the scaled row, and nothing observed fires once the scale ends. In
+      // the row's own (untransformed) pixels instead.
+      const sx = parent.offsetWidth ? p.width / parent.offsetWidth : 1
+      const sy = parent.offsetHeight ? p.height / parent.offsetHeight : 1
       const next = {
-        x: t.left - p.left - parent.clientLeft + parent.scrollLeft,
-        y: t.top - p.top - parent.clientTop + parent.scrollTop,
-        w: t.width,
-        h: t.height,
+        x: (t.left - p.left) / sx - parent.clientLeft + parent.scrollLeft,
+        y: (t.top - p.top) / sy - parent.clientTop + parent.scrollTop,
+        w: t.width / sx,
+        h: t.height / sy,
       }
       // Never write when nothing moved: the observers fire often while a
       // row reflows.

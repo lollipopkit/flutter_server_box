@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, SidebarItem, SidebarSection, Spinner } from '@lollipopkit/desk-ui'
+  import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, SidebarItem, SidebarSection, Spinner } from '../../lk'
   import { AppToolbar, SplitView } from '../../sys'
   import BmcForm from './BmcForm.svelte'
   import { api } from '../../../lib/api'

@@ -12,7 +12,7 @@ export const PROTOCOL = 1
 
 /// How the desk is drawn (`hello`'s `theme`, the `theme` event): its mode,
 /// and the CSS custom properties of the theme the account installed, to set
-/// on the app's `.lk` root (`@lollipopkit/desk-ui`'s `applyTheme`). Empty for
+/// on the app's `.lk` root (`applyTheme` in `ui.ts`). Empty for
 /// the design system's own; absent from a desk before themes.
 export interface AppTheme {
   dark: boolean

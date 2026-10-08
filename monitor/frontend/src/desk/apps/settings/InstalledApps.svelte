@@ -4,11 +4,11 @@
   /// the admin's password. A change reaches this desk's launchpad at once;
   /// other desks see it when they next start.
 
-  import { AppIcon, Badge, Button, Group, Row } from '@lollipopkit/desk-ui'
+  import { AppIcon, Badge, Button, Group, Row } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
   import type { InstalledApp } from '../../../types'
-  import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
+  import type { IconTone } from '../../lk/AppIcon.svelte'
   import ReauthDialog from './ReauthDialog.svelte'
 
   interface Props {

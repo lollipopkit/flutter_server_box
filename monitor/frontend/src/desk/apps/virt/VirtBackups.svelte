@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Checkbox, Icon, Input, Select, SegmentedControl, Spinner } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Checkbox, Icon, Input, Select, SegmentedControl, Spinner } from '../../lk'
   import VirtBackupJobForm from './VirtBackupJobForm.svelte'
   import { api } from '../../../lib/api'
   import { DATE_TIME, fmtBytes, fmtDate } from '../../../lib/format'

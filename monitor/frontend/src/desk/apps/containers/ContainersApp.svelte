@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import Spinner from '../../lk/Spinner.svelte'
   import { AppToolbar, type MenuEntry, SplitView, systemPrefs, useMenus, WindowFooter } from '../../sys'
   import {
     Button,
@@ -14,7 +14,7 @@
     SidebarSection,
     StatusBar,
     type Column,
-  } from '@lollipopkit/desk-ui'
+  } from '../../lk'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
   import { machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'

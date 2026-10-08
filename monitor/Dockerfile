@@ -4,15 +4,13 @@
 # 构建上下文为 monorepo 根:docker build -f monitor/Dockerfile .
 FROM node:24-alpine AS frontend-builder
 
-# Layout mirrors the repo so the panel's file:../../packages/webui and
-# file:../sdk/desk-ui links resolve (from /app/monitor/frontend)
+# Layout mirrors the repo so the panel's file:../../packages/webui link
+# resolves (/app/packages/webui from /app/monitor/frontend)
 WORKDIR /app/monitor/frontend
 COPY packages/ /app/packages/
-COPY monitor/sdk/desk-ui/ /app/monitor/sdk/desk-ui/
 # webui's own devDependencies (svelte, typescript) are needed for its type
-# declarations to resolve when svelte-check follows the file: link below;
-# desk-ui's fonts for vite (its svelte is a peer: the panel's is used)
-RUN npm install --prefix /app/packages/webui && npm ci --omit=peer --prefix /app/monitor/sdk/desk-ui
+# declarations to resolve when svelte-check follows the file: link below
+RUN npm install --prefix /app/packages/webui
 COPY monitor/frontend/package*.json ./
 RUN npm install
 

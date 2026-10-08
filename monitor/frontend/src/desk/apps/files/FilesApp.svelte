@@ -18,7 +18,7 @@
     type Column,
     type MenuEntry,
     type TableSort,
-  } from '@lollipopkit/desk-ui'
+  } from '../../lk'
   import { AppToolbar, OPEN, type OpenPath, PageStack, SplitView, systemPrefs, useIntents, useMenus, useWindow, WindowFooter } from '../../sys'
   import FileEditor from './FileEditor.svelte'
   import { DEFAULT_PREFS, loadPrefs, PREFS_KEY, type FilesPrefs } from './prefs'

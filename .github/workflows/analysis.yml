@@ -231,22 +231,19 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: monitor/frontend/package-lock.json
-      # packages/webui and monitor/sdk/desk-ui are `file:` dependencies, so
-      # the install above only symlinks them and their own dependencies are
-      # never fetched. `npm run check` is what needs them here — svelte-check
-      # reads those packages' source, and without them reports every import in
-      # them as a missing module. desk-ui's svelte is a peer, left out so the
-      # panel's is the only one.
+      # packages/webui is a `file:` dependency, so the install above only
+      # symlinks it and its own dependencies are never fetched. `npm run check`
+      # is what needs them here — svelte-check reads that package's source, and
+      # without them reports every import in it as a missing module.
       - name: Install dependencies
         working-directory: monitor/frontend
         run: |
           npm ci
           npm ci --prefix ../../packages/webui
-          npm ci --omit=peer --prefix ../sdk/desk-ui
       - name: Test, lint, check and build
         working-directory: monitor/frontend
         # `--ignore-scripts` skips the `prebuild` hook, which installs
-        # packages/webui and monitor/sdk/desk-ui — the step above has already done exactly that, and
+        # packages/webui — the step above has already done exactly that, and
         # this is the one place where both run. Nowhere else may drop the hook:
         # Cloudflare Pages and a local `npm run build` have no step above them,
         # and the hook is the only thing that installs it there.

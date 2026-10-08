@@ -9,8 +9,8 @@
   import { theme } from '../../lib/theme.svelte'
   import { deskApi } from '../deskApi'
   import { useDesk } from '../deskState.svelte'
-  import IconButton from '@lollipopkit/desk-ui/IconButton.svelte'
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import IconButton from '../lk/IconButton.svelte'
+  import Spinner from '../lk/Spinner.svelte'
   import AppToolbar from '../sys/AppToolbar.svelte'
   import { useIntents, useMenus, useWindow } from '../sys/window.svelte'
   import { WebAppBridge } from './bridge.svelte'
@@ -20,9 +20,12 @@
   let frame = $state<HTMLIFrameElement | null>(null)
   let src = $state<string | null>(null)
   let failed = $state(false)
+  /// The desk's design system for the frame (`_desk/desk.css` under its
+  /// ticketed path), from an agent that serves one.
+  let stylesheet: string | null = null
 
   /// The desk's mode and its installed theme's tokens (none for the design
-  /// system's own), which `@lollipopkit/desk-ui`'s `applyTheme` sets.
+  /// system's own), which `@lollipopkit/desk-sys` sets on the app's page.
   const appTheme = () => ({ dark: theme.dark, tokens: desk.themes?.vars(theme.dark) ?? {} })
 
   const bridge = new WebAppBridge(
@@ -31,6 +34,7 @@
       allows: (p) => desk.allows(win.appId, p),
       theme: () => appTheme(),
       locale: () => get(locale),
+      stylesheet: () => stylesheet,
       backend: (method, params) => deskApi.callApp(desk.entry, win.appId, method, params),
     },
   )
@@ -59,7 +63,9 @@
     deskApi
       .launchApp(desk.entry, win.appId)
       .then((r) => {
-        if (!cancelled) src = `${desk.entry.url ?? ''}${r.url}`
+        if (cancelled) return
+        stylesheet = r.stylesheet ? `${desk.entry.url ?? ''}${r.stylesheet}` : null
+        src = `${desk.entry.url ?? ''}${r.url}`
       })
       .catch(() => {
         if (!cancelled) failed = true

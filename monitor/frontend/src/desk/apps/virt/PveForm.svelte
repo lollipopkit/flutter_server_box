@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Card, Input, Select } from '@lollipopkit/desk-ui'
+  import { Button, Card, Input, Select } from '../../lk'
   import { prettyFingerprint } from '../../../lib/bmc'
   import { pveDraft } from '../../../lib/virt'
   import { LL } from '../../../i18n/i18n-svelte'

@@ -2,7 +2,7 @@
   /// Processes in Settings → Apps: kernel threads at open, and whether a
   /// stop is asked about first.
 
-  import { Row, Switch } from '@lollipopkit/desk-ui'
+  import { Row, Switch } from '../../lk'
   import { useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { DEFAULT_PREFS, loadPrefs, PREFS_KEY, type ProcessPrefs } from './prefs'

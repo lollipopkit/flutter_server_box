@@ -6,7 +6,7 @@
   /// into the stored shape only on save, where an off grant is `null` whatever
   /// its fields say (`roleFromDraft`).
 
-  import { Button, Checkbox, Dialog, Input, Select, Textarea } from '@lollipopkit/desk-ui'
+  import { Button, Checkbox, Dialog, Input, Select, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { emptyDraft, roleFromDraft, type RoleDraft } from '../../../lib/access'
   import type { Role } from '../../../types'

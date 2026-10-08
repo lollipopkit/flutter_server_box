@@ -8,7 +8,7 @@
   import { app } from '../registry.svelte'
   import { systemPrefs } from '../sys/systemPrefs.svelte'
   import { useDesk, type MenuItem } from '../deskState.svelte'
-  import Icon from '@lollipopkit/desk-ui/Icon.svelte'
+  import Icon from '../lk/Icon.svelte'
 
   interface Props {
     onlock: () => void

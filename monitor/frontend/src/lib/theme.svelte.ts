@@ -3,7 +3,7 @@
 /// media query by default; an explicit `.dark` / `.light` class on <html>
 /// overrides it (pre-paint init lives in index.html). The theme in effect is
 /// also `data-theme="light|dark"` on <html>, which the desk's design system
-/// (`@lollipopkit/desk-ui`) keys its dark palette on.
+/// (`desk/lk/`) keys its dark palette on.
 
 import { flushSync } from 'svelte'
 

@@ -6,7 +6,7 @@
   /// who can do what on the machine, so each request carries the
   /// administrator's own password rather than riding on the session.
 
-  import { Badge, Button, Dialog, Group, IconButton, Input, Row, Select, Spinner } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Dialog, Group, IconButton, Input, Row, Select, Spinner } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { accessMessage, draftFromRole, emptyDraft, type RoleDraft } from '../../../lib/access'
   import { api } from '../../../lib/api'

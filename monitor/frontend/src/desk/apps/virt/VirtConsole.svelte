@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Card, Input, Spinner } from '@lollipopkit/desk-ui'
+  import { Button, Card, Input, Spinner } from '../../lk'
   import VncViewer from '../../../components/VncViewer.svelte'
   import { api } from '../../../lib/api'
   import { RelayChannel, parseControl } from '../../../lib/desktop.svelte'

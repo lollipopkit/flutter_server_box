@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Card from '@lollipopkit/desk-ui/Card.svelte'
+  import Card from '../desk/lk/Card.svelte'
   import { fmtTime, parseTimestamp } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
 

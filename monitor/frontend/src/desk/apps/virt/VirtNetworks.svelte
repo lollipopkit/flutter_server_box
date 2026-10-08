@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner, Switch } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner, Switch } from '../../lk'
   import { api } from '../../../lib/api'
   import { refText, virtErrorText, virtRequestText } from '../../../lib/virt'
   import { untrack } from 'svelte'

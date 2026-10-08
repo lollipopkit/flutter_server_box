@@ -36,8 +36,3 @@
   style:font-variation-settings={settings}
 ></span>
 
-<style>
-  .lk-icon::before {
-    content: attr(data-icon);
-  }
-</style>

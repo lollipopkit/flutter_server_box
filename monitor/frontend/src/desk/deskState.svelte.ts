@@ -17,8 +17,8 @@ import { systemPrefs } from './sys/systemPrefs.svelte'
 import { get } from 'svelte/store'
 import { LL } from '../i18n/i18n-svelte'
 import type { DeskNotification } from './deskApi'
-import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
-import type { MenuEntry } from '@lollipopkit/desk-ui/Menu.svelte'
+import type { IconTone } from './lk/AppIcon.svelte'
+import type { MenuEntry } from './lk/Menu.svelte'
 import { AppData } from './appData'
 import { registerWebApps } from './webapps/register'
 import { DeskNotifications } from './notifications.svelte'
@@ -37,7 +37,7 @@ export type PaneDrop =
 
 export type Panel = 'control' | 'notifications' | 'calendar' | 'launchpad'
 
-/// A context menu's rows (desk-ui's `Menu.svelte`); icons are glyph names.
+/// A context menu's rows (`lk/Menu.svelte`); icons are glyph names.
 export type MenuItem = MenuEntry
 
 export interface ContextMenu {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl, SidebarItem, SidebarSection, Spinner, viewIn } from '@lollipopkit/desk-ui'
+  import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl, SidebarItem, SidebarSection, Spinner, viewIn } from '../../lk'
   import { AppToolbar, SplitView } from '../../sys'
   import LineChart from '../../../components/LineChart.svelte'
   import PveForm from './PveForm.svelte'

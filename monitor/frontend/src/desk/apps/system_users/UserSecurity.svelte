@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
-  import { Badge, Card, type BadgeTone } from '@lollipopkit/desk-ui'
+  import Spinner from '../../lk/Spinner.svelte'
+  import { Badge, Card, type BadgeTone } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { UserDetail, UserPasswordState, UserView } from '../../../types'

@@ -4,7 +4,7 @@
   /// desk's keys. Kept here, never sent to the server; each takes effect on
   /// change.
 
-  import { Group, Row, SegmentedControl, Select, Switch } from '@lollipopkit/desk-ui'
+  import { Group, Row, SegmentedControl, Select, Switch } from '../../lk'
   import { systemPrefs, type RefreshSeconds, type StartApp } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { displayPrefs, type SizeUnits, type TimeFormat } from '../../../lib/displayPrefs.svelte'

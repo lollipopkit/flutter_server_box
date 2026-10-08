@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DATE_TIME, fmtDate } from '../../../lib/format'
-  import { Button, Checkbox, Input, SegmentedControl, Select, Spinner } from '@lollipopkit/desk-ui'
+  import { Button, Checkbox, Input, SegmentedControl, Select, Spinner } from '../../lk'
   import { api } from '../../../lib/api'
   import {
     BACKUP_COMPRESSIONS,

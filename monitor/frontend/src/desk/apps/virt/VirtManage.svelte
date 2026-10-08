@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Checkbox, Icon, Input, SegmentedControl, Select, Spinner, Switch, Textarea } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Checkbox, Icon, Input, SegmentedControl, Select, Spinner, Switch, Textarea } from '../../lk'
   import { api } from '../../../lib/api'
   import { ciDraft, cloudInitEdit, outcomeText, virtErrorText, virtRequestText, type CiDraft } from '../../../lib/virt'
   import { untrack } from 'svelte'

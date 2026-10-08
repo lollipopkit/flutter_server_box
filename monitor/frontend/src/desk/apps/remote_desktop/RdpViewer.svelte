@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Spinner } from '@lollipopkit/desk-ui'
+  import { Spinner } from '../../lk'
   import { onMount } from 'svelte'
   import type { UserInteraction } from '@devolutions/iron-remote-desktop'
   import { LL } from '../../../i18n/i18n-svelte'

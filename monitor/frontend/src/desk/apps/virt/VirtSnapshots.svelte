@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DATE_TIME, fmtDate } from '../../../lib/format'
-  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '../../lk'
   import { api } from '../../../lib/api'
   import { snapshotTree, virtErrorText, virtRequestText } from '../../../lib/virt'
   import { untrack } from 'svelte'

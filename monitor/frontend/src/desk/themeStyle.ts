@@ -1,10 +1,10 @@
 /// An installed theme (`.fsbt`, read by the agent's `sbm_theme`) drawn with
-/// the lollipopkit Design System's tokens (desk-ui's `tokens.css`): the theme's
+/// the lollipopkit Design System's tokens (`lk/tokens.css`): the theme's
 /// accent and neutral palettes take the places of `--berry-*` and `--ink-*`,
 /// so every token the design system derives from them follows in its own
 /// proportions, and the tokens it writes as values (surfaces, text, lines,
 /// glass) take the theme's scheme roles that play the same part. Shapes round
-/// the cards, list rows and buttons; the background is a wallpaper
+/// the cards and buttons; the background is a wallpaper
 /// (`themeWallpaper`).
 ///
 /// What a theme's `[components]` say is kept and not drawn yet (TODO).
@@ -114,14 +114,13 @@ export function themeVars(theme: PackageTheme, dark: boolean): Record<string, st
     'linear-gradient(160deg, var(--ink-12) 0%, var(--berry-10) 100%)',
   ].join(', ')
 
-  // Shapes name components (the app's cards, list tiles and buttons), so they
-  // reach those components (`--shape-*` in desk-ui's `components.css`) and never the
-  // design system's radius scale, which segmented thumbs, fields, menus and
-  // windows share: a theme with square list rows keeps round controls. A
-  // list tile is a row of a list (`DataTable`); sidebar items, menu items and
-  // Spotlight results are navigation and menus, as they are in the app.
+  // Shapes name components (the app's cards and buttons), so they reach
+  // those components (`--shape-*` in `lk/components.css`) and never
+  // the design system's radius scale, which segmented thumbs, fields, menus
+  // and windows share. `tile` (the app's flat list rows) has no counterpart
+  // here: the desk's rows, sidebar items and menu rows are the design
+  // system's rounded selection, so it is not drawn.
   vars['--shape-card'] = `${theme.shapes.card}px`
-  vars['--shape-tile'] = `${theme.shapes.tile}px`
   vars['--shape-button'] = `${theme.shapes.button}px`
   return vars
 }

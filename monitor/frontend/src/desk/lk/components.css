@@ -331,7 +331,7 @@ button.lk-table__th:hover{background:var(--fill-hover)}
 .lk-table__th--on{color:var(--text-primary);font-weight:var(--weight-bold)}
 .lk-table__th--end{justify-content:flex-end}
 .lk-table__body{padding:0 7px 7px}
-.lk-table__row{display:grid;align-items:center;height:var(--row-height);padding:0 6px;border-radius:var(--shape-tile,var(--radius-sm));cursor:default}
+.lk-table__row{display:grid;align-items:center;height:var(--row-height);padding:0 6px;border-radius:var(--radius-sm);cursor:default}
 .lk-table--comfortable .lk-table__row{height:var(--row-height-comfortable)}
 .lk-table--striped .lk-table__row:nth-child(odd){background:color-mix(in srgb,var(--text-primary) 3%,transparent)}
 .lk-table__row:hover{box-shadow:inset 0 0 0 100px var(--fill-hover)}
@@ -463,8 +463,9 @@ button.lk-table__th:hover{background:var(--fill-hover)}
 .lk-ttabs__add:active{transform:scale(.9)}
 
 /* ---------- Not in the design system's sheet ----------
-   What the components used to get from Tailwind utilities, so the kit stands
-   alone in an app without Tailwind (`@lollipopkit/desk-ui`). */
+   What the components used to get from Tailwind utilities or their own
+   scoped styles, so the classes alone draw them: in an installed app's frame
+   there is only markup (`desk.css`, `@lollipopkit/desk-sys`). */
 .lk-menu__item,.lk-side__item,.lk-ctile--toggle,.lk-card--button,.lk-stat--interactive,.lk-ncenter__item--button{width:100%;text-align:left}
 .lk-stat--interactive,.lk-ncenter__item--button{border:0}
 .lk-card--button{display:block}
@@ -473,4 +474,7 @@ button.lk-table__th:hover{background:var(--fill-hover)}
 .lk-stat__spacer{flex:1}
 .lk-spinner{display:flex;align-items:center;justify-content:center}
 .lk-statusbar__text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk-icon[data-icon]::before{content:attr(data-icon)}
+.lk-icon{font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24}
+.lk-icon--fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}
 }

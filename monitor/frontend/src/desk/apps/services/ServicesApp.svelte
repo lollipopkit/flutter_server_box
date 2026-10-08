@@ -14,7 +14,7 @@
     Spinner,
     StatusBar,
     type Column,
-  } from '@lollipopkit/desk-ui'
+  } from '../../lk'
   import ServiceDetail from './ServiceDetail.svelte'
   import { api } from '../../../lib/api'
   import { fmtBytes, fmtDate } from '../../../lib/format'

@@ -11,8 +11,8 @@
 import { SvelteMap } from 'svelte/reactivity'
 import type { WindowHandle } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
-import type { MenuEntry } from '@lollipopkit/desk-ui/Menu.svelte'
-import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
+import type { MenuEntry } from '../lk/Menu.svelte'
+import type { IconTone } from '../lk/AppIcon.svelte'
 import { isCall, PROTOCOL, type ActionItem, type AppTheme, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/desk-sys/src/protocol'
 
 const MAX_MESSAGE_BYTES = 1 << 20
@@ -73,6 +73,8 @@ export interface BridgeHost {
   /// Light or dark, and the panel's language, as they change.
   theme(): AppTheme
   locale(): string
+  /// The desk's design system served to this frame, once launched.
+  stylesheet?(): string | null
   /// Runs [method] of the app's backend, when it has one.
   backend?: (method: string, params: unknown) => Promise<{ ok?: unknown; error?: string }>
 }
@@ -183,6 +185,7 @@ export class WebAppBridge {
           lifecycle: h.lifecycle,
           theme: this.#host.theme(),
           locale: this.#host.locale(),
+          ui: this.#host.stylesheet?.() ? { stylesheet: this.#host.stylesheet!() } : null,
           permissions: ['notifications', 'background'].filter((p) => this.#host.allows(p)),
         }
       }

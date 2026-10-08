@@ -31,6 +31,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 - **The panel is a desk** (a macOS-style web desktop, every feature an app in a window): `frontend/src/desk/CLAUDE.md`.
 - **State and UI only.** The panel never composes a shell command or parses output: it calls an agent endpoint, which builds and parses through `sbm_parser` (the app reaches the same functions over FFI). Sending text to `/exec` and parsing it in TypeScript is ruled out.
+- First load: one locale's dictionary (`i18n/init.ts`, `ready` before mount; tests load all), and `/assets/{name}` (`api/assets.rs`) serves the hashed build output `immutable`, as the `.br`/`.gz` copies `npm run build` writes (`scripts/compress.mjs`); `/desk-app/{name}` the design system installed apps load (`dist/desk-app`, any origin, see `docs/dev/desk-sys.md` UI). The 3 MB icon font is most of what is left.
 - The terminal store (`lib/terminal.svelte.ts`) owns protocol and reconnect and knows nothing about xterm.js; xterm is a dynamic import (`lib/xterm.ts`). Dialog terminals (`TargetTerminal`) use `persist: false` and `close()` on destroy, never the page's stored handle. An explicit open forgets the stored handle; only Resume rejoins it.
 - An answer that arrives after the sidebar switched servers is dropped (`stale(serverId)` pattern); anything that writes binds to the server it was opened on.
 - Multi-server: a server list (URL + session) in localStorage. Served by an agent (same origin) or hosted statically talking to several agents.

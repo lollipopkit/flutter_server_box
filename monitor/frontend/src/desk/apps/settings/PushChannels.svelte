@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Group, IconButton, Input, Row, Select, Spinner, Textarea } from '@lollipopkit/desk-ui'
+  import { Badge, Button, Group, IconButton, Input, Row, Select, Spinner, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
   import { servers } from '../../../lib/servers.svelte'
