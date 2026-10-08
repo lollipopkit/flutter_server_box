@@ -6608,6 +6608,18 @@ type RootTranslation = {
 	 */
 	settingsRunDots: string
 	/**
+	 * A​p​p​ ​i​c​o​n​s
+	 */
+	settingsIconShape: string
+	/**
+	 * C​i​r​c​l​e
+	 */
+	settingsIconShapeCircle: string
+	/**
+	 * R​o​u​n​d​e​d​ ​s​q​u​a​r​e
+	 */
+	settingsIconShapeSquircle: string
+	/**
 	 * {​n​}​ ​s
 	 * @param {unknown} n
 	 */
@@ -13284,6 +13296,18 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Running indicators
 	 */
 	settingsRunDots: () => LocalizedString
+	/**
+	 * App icons
+	 */
+	settingsIconShape: () => LocalizedString
+	/**
+	 * Circle
+	 */
+	settingsIconShapeCircle: () => LocalizedString
+	/**
+	 * Rounded square
+	 */
+	settingsIconShapeSquircle: () => LocalizedString
 	/**
 	 * {n} s
 	 */

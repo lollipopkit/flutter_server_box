@@ -95,6 +95,8 @@ export class WindowChrome {
   badge = $state<string | null>(null)
   /// Where the window's process is; the window keeps it current.
   lifecycle = $state<LifecycleState>('active')
+  /// The app's code is still loading; the dock shows it under the icon.
+  launching = $state(false)
 
   get toolbar(): ToolbarChrome | null {
     return this.#toolbars.at(-1) ?? null

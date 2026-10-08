@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { shellPrefs } from '../shellPrefs.svelte'
   /// The login screen (the lollipopkit Design System's): a clock over the
   /// chosen instance's wallpaper, and a window with the instances on the left
   /// (where there are several) and, on the right, the chosen one's saved
@@ -311,7 +312,7 @@
 
 <svelte:window {onkeydown} />
 
-<div class="lk desk-root lock fixed inset-0 z-[200000] overflow-hidden" role="main">
+<div class="lk desk-root lock fixed inset-0 z-[200000] overflow-hidden" data-icon-shape={shellPrefs.iconShape} role="main">
   {#key wallpaper?.key}
     <div class="absolute inset-0" transition:fade={{ duration: 700 }}>
       {#if wallpaper?.preset}
@@ -663,7 +664,7 @@
     height: 32px;
     align-items: center;
     justify-content: center;
-    border-radius: 23%;
+    border-radius: var(--radius-icon);
     box-shadow: inset 0 0 0 1px var(--border-strong);
   }
   .avatar {

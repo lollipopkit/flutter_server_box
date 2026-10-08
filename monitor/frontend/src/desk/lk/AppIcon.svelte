@@ -18,7 +18,8 @@
 <script lang="ts">
   import Icon from './Icon.svelte'
 
-  /// An app's icon: a flat 23% squircle in one tone, a hairline edge, one
+  /// An app's icon: a flat 23% squircle (a circle where the desk says so,
+  /// `--radius-icon`) in one tone, a hairline edge, one
   /// filled glyph at 54%. No gradient, no sheen, no shadow.
 
   interface Props {

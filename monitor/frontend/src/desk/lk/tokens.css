@@ -347,7 +347,6 @@
   --dur-window: 450ms;
   --dur-genie: 560ms;
   --dur-scene: 677ms;
-  --dur-bounce: 900ms;
 
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);

@@ -7,12 +7,19 @@ describe('shell preferences', () => {
   })
 
   it('starts from the defaults and refuses what it does not know', async () => {
-    window.localStorage.setItem('desk.shell', JSON.stringify({ dockPosition: 'top', dockSize: 99, titlebar: 'solid', dockAutoHide: 'yes' }))
+    window.localStorage.setItem('desk.shell', JSON.stringify({ dockPosition: 'top', dockSize: 99, titlebar: 'solid', dockAutoHide: 'yes', iconShape: 'star' }))
     const { shellPrefs } = await import('../desk/shellPrefs.svelte')
     expect(shellPrefs.dockPosition).toBe('left')
     expect(shellPrefs.dockSize).toBe(44)
     expect(shellPrefs.titlebar).toBe('glass')
     expect(shellPrefs.dockAutoHide).toBe(false)
+    expect(shellPrefs.iconShape).toBe('circle')
+  })
+
+  it('keeps the squircle once picked', async () => {
+    window.localStorage.setItem('desk.shell', JSON.stringify({ iconShape: 'squircle' }))
+    const { shellPrefs } = await import('../desk/shellPrefs.svelte')
+    expect(shellPrefs.iconShape).toBe('squircle')
   })
 
   it('keeps room for the dock on its side, none when it hides', async () => {

@@ -214,6 +214,7 @@
   class="lk desk-root fixed inset-0 overflow-hidden bg-(--surface-desktop)"
   style={themeStyle}
   data-reduce-motion={systemPrefs.value.reduceMotion || undefined}
+  data-icon-shape={shellPrefs.iconShape}
   role="application"
   aria-label={$LL.deskTitle()}
   onpointerdown={dismiss}

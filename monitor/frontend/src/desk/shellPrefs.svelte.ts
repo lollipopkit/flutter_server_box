@@ -1,10 +1,12 @@
 /// How the desk's chrome looks in this browser: where the dock sits, whether
-/// it hides, its icon size, and whether a window's title bar is always
-/// glass. Per browser (a phone and a desktop want different docks), kept in
+/// it hides, its icon size, whether a window's title bar is always glass, and
+/// the apps' icon shape. Per browser (a phone and a desktop want different docks), kept in
 /// localStorage; what follows the account lives in `prefs.svelte.ts`.
 
 export type DockPosition = 'left' | 'bottom' | 'right'
 export type TitlebarStyle = 'glass' | 'always'
+/// An app icon's outline: a circle, or the design system's squircle.
+export type IconShape = 'circle' | 'squircle'
 
 export const DOCK_SIZES = [36, 44, 54] as const
 export type DockSize = (typeof DOCK_SIZES)[number]
@@ -16,11 +18,12 @@ interface Stored {
   titlebar: TitlebarStyle
   /// A dot under a running app's icon.
   dockRunDots: boolean
+  iconShape: IconShape
 }
 
 const KEY = 'desk.shell'
 
-const DEFAULTS: Stored = { dockPosition: 'left', dockAutoHide: false, dockSize: 44, titlebar: 'glass', dockRunDots: true }
+const DEFAULTS: Stored = { dockPosition: 'left', dockAutoHide: false, dockSize: 44, titlebar: 'glass', dockRunDots: true, iconShape: 'circle' }
 
 function load(): Stored {
   try {
@@ -31,6 +34,7 @@ function load(): Stored {
       dockSize: DOCK_SIZES.find((s) => s === raw.dockSize) ?? DEFAULTS.dockSize,
       titlebar: raw.titlebar === 'always' ? 'always' : 'glass',
       dockRunDots: raw.dockRunDots !== false,
+      iconShape: raw.iconShape === 'squircle' ? 'squircle' : 'circle',
     }
   } catch {
     return { ...DEFAULTS }
@@ -54,6 +58,9 @@ class ShellPrefs {
   }
   get dockRunDots(): boolean {
     return this.#value.dockRunDots
+  }
+  get iconShape(): IconShape {
+    return this.#value.iconShape
   }
 
   /// Where the dock is: on a phone ([compact]) always at the bottom.

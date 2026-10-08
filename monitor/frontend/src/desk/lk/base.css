@@ -87,22 +87,12 @@
     transform: none;
   }
 }
-@keyframes lk-dock-bounce {
-  0%,
-  100% {
-    transform: translateY(0);
+@keyframes lk-dock-progress {
+  from {
+    transform: translateX(-100%);
   }
-  18% {
-    transform: translateY(-26px);
-  }
-  36% {
-    transform: translateY(0);
-  }
-  52% {
-    transform: translateY(-12px);
-  }
-  68% {
-    transform: translateY(0);
+  to {
+    transform: translateX(250%);
   }
 }
 @keyframes lk-spin {

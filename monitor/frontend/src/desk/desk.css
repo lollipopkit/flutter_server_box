@@ -116,6 +116,12 @@
   --ease-indicator: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* App icons are circles unless Settings > Appearance picks the design
+   system's squircle (`shellPrefs.iconShape`). */
+.lk[data-icon-shape='circle'] {
+  --radius-icon: 50%;
+}
+
 /* Split panes inside one window (window/PaneHost.svelte; its tabs are the
    design system's TitleTabs): a split is one hairline, a pane without the
    focus is dimmed. */

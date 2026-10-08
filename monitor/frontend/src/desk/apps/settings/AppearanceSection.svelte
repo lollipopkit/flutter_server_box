@@ -10,7 +10,7 @@
   import { ApiError } from '../../../lib/api'
   import { useDeskPrefs } from '../../deskState.svelte'
   import { WALLPAPERS, type WallpaperPreset } from '../../prefs.svelte'
-  import { DOCK_SIZES, shellPrefs, type DockPosition, type DockSize, type TitlebarStyle } from '../../shellPrefs.svelte'
+  import { DOCK_SIZES, shellPrefs, type DockPosition, type DockSize, type IconShape, type TitlebarStyle } from '../../shellPrefs.svelte'
   import Wallpaper from '../../shell/Wallpaper.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
   import ThemesGroup from './ThemesGroup.svelte'
@@ -123,6 +123,18 @@
             { value: 'l' as TextSize, label: $LL.deskSizeLarge() },
           ]}
           onchange={(textSize) => systemPrefs.set({ textSize })}
+        />
+      </Row>
+      <Row label={$LL.settingsIconShape()}>
+        <SegmentedControl
+          size="sm"
+          label={$LL.settingsIconShape()}
+          value={shellPrefs.iconShape}
+          options={[
+            { value: 'circle' as IconShape, label: $LL.settingsIconShapeCircle() },
+            { value: 'squircle' as IconShape, label: $LL.settingsIconShapeSquircle() },
+          ]}
+          onchange={(iconShape) => shellPrefs.set({ iconShape })}
         />
       </Row>
       <Row label={$LL.settingsReduceMotion()} sub={$LL.settingsReduceMotionHint()}>

@@ -78,7 +78,6 @@
   function activate(spec: AppSpec) {
     const mine = desk.windows.of(spec.id)
     if (mine.length === 0) {
-      bounce(spec.id)
       desk.open(spec.id)
       return
     }
@@ -131,15 +130,6 @@
 
   /// Smaller tiles on a phone, so the dock fits more of them.
   const tile = $derived(desk.windows.compact ? 40 : shellPrefs.dockSize)
-
-  /// The app just launched from the dock bounces twice.
-  let bouncing = $state<string | null>(null)
-  function bounce(id: string) {
-    bouncing = id
-    setTimeout(() => {
-      if (bouncing === id) bouncing = null
-    }, 1800)
-  }
 
   // Reordering the pinned part by dragging.
   let dragging = $state<string | null>(null)
@@ -199,11 +189,11 @@
         {@const spec = slot.spec}
         <button
           class="lk-dock__item"
-          class:lk-dock__item--bounce={bouncing === spec.id}
           class:opacity-50={dragging === spec.id}
           style:width="{tile}px"
           style:height="{tile}px"
           aria-label={spec.title($LL)}
+          aria-busy={desk.launching(spec.id) || undefined}
           draggable={slot.kind === 'pinned'}
           in:dockItem|global={{ size: tile, vertical, still: !ready }}
           out:dockItem|global={{ size: tile, vertical, leaving: true }}
@@ -225,7 +215,9 @@
           <span class="lk-dock__label">{spec.title($LL)}</span>
           <span class="lk-dock__icon"><AppIcon {spec} size={tile} /></span>
           {@render badge(spec.id)}
-          {#if isRunning(spec.id) && shellPrefs.dockRunDots}<span class="lk-dock__dot"></span>{/if}
+          {#if desk.launching(spec.id)}
+            <span class="lk-dock__progress" aria-hidden="true"></span>
+          {:else if isRunning(spec.id) && shellPrefs.dockRunDots}<span class="lk-dock__dot"></span>{/if}
         </button>
       {/if}
     {/each}

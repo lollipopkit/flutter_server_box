@@ -10,6 +10,7 @@
   import WindowControls from '../lk/WindowControls.svelte'
   import { WindowChrome } from './chrome.svelte'
   import PaneHost from './PaneHost.svelte'
+  import { windowClose } from './windowMotion'
   import { sideAt } from '../panes'
   import type { PaneDrop } from '../deskState.svelte'
   import { shellPrefs } from '../shellPrefs.svelte'
@@ -68,6 +69,22 @@
   })
 
   const spec = $derived(app(win.appId))
+  /// The app's code, loaded while the window is not suspended; the dock
+  /// shows a window still waiting for it.
+  const code = $derived(spec && !suspended ? spec.load() : null)
+  $effect(() => {
+    if (!code) return
+    let current = true
+    chrome.launching = true
+    const done = () => {
+      if (current) chrome.launching = false
+    }
+    code.then(done, done)
+    return () => {
+      current = false
+      chrome.launching = false
+    }
+  })
   const title = $derived(win.title ?? (spec ? spec.title($LL) : win.appId))
   const active = $derived(desk.windows.active?.id === win.id)
   const compact = $derived(desk.windows.compact)
@@ -274,6 +291,7 @@
   data-window-id={win.id}
   data-app-id={win.appId}
   data-merging={merging}
+  out:windowClose|global={{ closed: desk.windows.wasClosed(id) }}
   aria-label={title}
   role="dialog"
   tabindex="-1"
@@ -310,8 +328,8 @@
           <div class="lk-window__spacer" aria-hidden="true"></div>
           {#if toolbar?.tabs}<div class="shrink-0 px-[17px] pb-[7px]">{@render toolbar.tabs()}</div>{/if}
         {/if}
-        {#if spec && !suspended}
-          {#await spec.load()}
+        {#if spec && code}
+          {#await code}
             <div class="flex flex-1 items-center justify-center"><Spinner /></div>
           {:then mod}
             {#if spec.panes}

@@ -132,6 +132,11 @@ export class Desk {
     return { icon: chrome?.icon ?? null, badge: chrome?.badge ?? null, dockItems: chrome?.dockItems ?? [] }
   }
 
+  /// Whether a window of [appId] is still loading the app's code.
+  launching(appId: string): boolean {
+    return this.windows.of(appId).some((w) => this.chromes.get(w.id)?.launching)
+  }
+
   /// Who a notification is from, as the banner and the centre show it.
   noticeSource(n: DeskNotification): { appId: string; title: string; glyph: string; tone: IconTone } {
     const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'status'

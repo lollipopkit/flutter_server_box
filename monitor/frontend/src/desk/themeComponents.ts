@@ -25,7 +25,8 @@
 /// - `navigation`'s icon and label colors: the dock's items are app icons.
 /// - `appBar.iconColor`, `elevation`: the title bar's tools are icon buttons
 ///   (`iconButton` draws them), and it floats over the content unshadowed.
-/// - `progress.color`: a stat's fill has its own metric's color.
+/// - `progress.color` on a stat: its fill has its own metric's color (the
+///   dock's launch bar takes it).
 /// - `badge.smallSize`: the desk's badges always carry a label.
 /// - the buttons' `focused` and `selected` states: focus is the design
 ///   system's ring, and its buttons have no selected state.
@@ -63,7 +64,7 @@ export const drawn: Record<string, Record<string, Kind>> = {
   toast: { ...shape, backgroundColor: 'color', textColor: 'color', elevation: 'elevation' },
   switch: { thumbColor: 'color', trackColor: 'color', trackOutlineColor: 'color', selectedThumbColor: 'color', selectedTrackColor: 'color', selectedTrackOutlineColor: 'color' },
   slider: { activeTrackColor: 'color', inactiveTrackColor: 'color', thumbColor: 'color', trackHeight: 'px' },
-  progress: { trackColor: 'color', thickness: 'px', radius: 'px' },
+  progress: { color: 'color', trackColor: 'color', thickness: 'px', radius: 'px' },
   badge: { backgroundColor: 'color', textColor: 'color', largeSize: 'px' },
   divider: { color: 'color', thickness: 'px' },
   scrollbar: { thumbColor: 'color', trackColor: 'color', radius: 'px', thickness: 'px' },
