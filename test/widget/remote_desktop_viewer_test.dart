@@ -339,6 +339,31 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
+    testWidgets('a second finger after a long press right-clicks no more', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      await first.down(canvas);
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await second.down(canvas + const Offset(60, 0));
+      await second.up();
+      await first.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // The long press's right click, and not the two-finger tap's as well.
+      expect(sessions.buttons, [4, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
     testWidgets('a finger that moves before the long press is no long press', (
       tester,
     ) async {
@@ -634,6 +659,75 @@ void main() {
       // Drawn at 4× as before the keyboard: 40 points are 10 pixels.
       expect(sessions.points, hasLength(3));
       expect(sessions.points[1].dx - sessions.points[0].dx, 10);
+      tester.view.resetViewInsets();
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a second direct finger is no long press', (tester) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      await first.down(canvas);
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await second.down(canvas + const Offset(80, 0));
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+      await second.up();
+      await first.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      expect(sessions.buttons, isNot(contains(4)));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('view-only lets go of a button held down first', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byType(RemoteDesktopViewer)),
+        kind: PointerDeviceKind.touch,
+      );
+      expect(sessions.buttons, [1]);
+
+      await tester.tap(find.byIcon(Icons.mouse));
+      await tester.pump();
+      // Released while the desktop still takes input, and nothing after.
+      expect(sessions.buttons, [1, 0]);
+      await finger.up();
+      await tester.pump(kLongPressTimeout + kDoubleTapTimeout);
+      expect(sessions.buttons, [1, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('under a keyboard, the picture follows the pointer', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = true;
+      await pumpFramed(tester);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 400);
+      await tester.pump();
+      double top() => tester.getRect(find.byType(RawImage)).top;
+      final before = top();
+
+      // The touchpad moves the pointer down, with no frame from the desktop.
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byType(RemoteDesktopViewer)),
+        kind: PointerDeviceKind.touch,
+      );
+      await finger.moveBy(const Offset(0, 100));
+      await finger.up();
+      await tester.pump();
+      await tester.pump();
+
+      expect(top(), lessThan(before));
       tester.view.resetViewInsets();
       await tester.pumpWidget(const SizedBox.shrink());
     });

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -81,6 +82,10 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   /// The canvas's size while no soft keyboard is open: what it keeps while
   /// one is.
   Size? _restingViewport;
+
+  /// While a keyboard is open: the layout at rest, the height left above the
+  /// keyboard, and the shift it was drawn with.
+  (RemoteDesktopViewportTransform, double, double)? _keyboardAtRest;
   int _buttons = 0;
   int _touches = 0;
   int _maxTouches = 0;
@@ -143,6 +148,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _keyboardFocus.addListener(_onFocusChanged);
     _imeFocus = FocusNode();
     _imeController = TextEditingController();
+    _pointer.addListener(_onPointerMoved);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _keyboardFocus.requestFocus();
@@ -158,6 +164,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _resetCursor();
     // Owed to the session that was showing, not to this one.
     _resetTouchpad();
+    _endLongPress();
     _directPointer = null;
     _resizeTimer?.cancel();
     _resizeTimer = null;
@@ -176,12 +183,37 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _imeFocus.dispose();
     _imeController.dispose();
     _frame.dispose();
+    _pointer.removeListener(_onPointerMoved);
     _pointer.dispose();
     _cursorImage?.dispose();
     if (widget.fullScreen && isMobile) {
       unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     }
     super.dispose();
+  }
+
+  /// A pointer that moves under the keyboard brings the picture along. The
+  /// canvas is laid out again only for that: a desktop with nothing changing
+  /// on it sends no frame that would.
+  void _onPointerMoved() {
+    final atRest = _keyboardAtRest;
+    if (atRest == null) return;
+    final (transform, visible, drawn) = atRest;
+    final shift = remoteDesktopKeyboardShift(
+      transform,
+      visibleHeight: visible,
+      pointer: _pointer.value,
+    );
+    if (shift == drawn) return;
+    // Also set while building (`_placePointer`): not a time to mark dirty.
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    } else {
+      setState(() {});
+    }
   }
 
   /// `setState` for the parts of this state in extensions, which may not call
@@ -315,7 +347,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
                       ? l10n.remoteDesktopDisableViewOnly
                       : l10n.remoteDesktopViewOnly,
                   session.viewOnly ? Icons.visibility : Icons.mouse,
-                  () => notifier.setViewOnly(session.id, !session.viewOnly),
+                  () => _setViewOnly(session, !session.viewOnly),
                   // On is the exception: input is not reaching the desktop.
                   color: on(session.viewOnly),
                   key: _viewOnlyKey,
@@ -392,6 +424,25 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         ),
       ),
     );
+  }
+
+  /// Turning input off lets go of everything held first: the desktop is not
+  /// sent anything once it is off, so a button down then stayed down there.
+  void _setViewOnly(RemoteDesktopSessionView session, bool viewOnly) {
+    if (viewOnly) {
+      _input?.releaseAll();
+      _resetTouchpad();
+      _endLongPress();
+      _directPointer = null;
+      final point = _pointer.value;
+      if (_buttons != 0 && point != null) {
+        _buttons = 0;
+        _sendPointer(session, point);
+      }
+    }
+    ref
+        .read(remoteDesktopSessionsProvider.notifier)
+        .setViewOnly(session.id, viewOnly);
   }
 
   void _setScaleMode(RemoteDesktopScaleMode mode) => setState(() {
@@ -623,12 +674,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
               pan: pan,
             );
         var transform = layout(_pan);
+        _keyboardAtRest = null;
         if (keepSize) {
           final shift = remoteDesktopKeyboardShift(
             transform,
             visibleHeight: viewport.height,
             pointer: _pointerOr(transform),
           );
+          // Kept, so a pointer moving with nothing else changing can ask for
+          // another shift — see [_onPointerMoved].
+          _keyboardAtRest = (transform, viewport.height, shift);
           if (shift > 0) transform = layout(_pan + Offset(0, -shift));
         }
         _placePointer(transform);
@@ -824,7 +879,11 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     // One finger at a time. The others are a pinch or a scroll, which the
     // gesture detector underneath handles.
     if (event.kind == ui.PointerDeviceKind.touch) {
-      if (_directPointer != null) return;
+      if (_directPointer != null) {
+        // A pinch or a scroll, which no long press is part of.
+        _stopLongPressWait();
+        return;
+      }
       _directPointer = event.pointer;
     }
     final point = transform.toRemote(event.localPosition);

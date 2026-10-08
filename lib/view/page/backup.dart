@@ -976,48 +976,52 @@ extension on _BackupPageState {
     final appL10n = context.l10n;
     final result = await context.showRoundDialog<bool>(
       title: 'GitHub Gist',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(
-            label: appL10n.githubGistToken,
-            controller: tokenCtrl,
-            suggestion: false,
-            obscureText: true,
-            node: nodeToken,
-          ),
-          Input(
-            label: appL10n.githubGistIdOptional,
-            controller: gistIdCtrl,
-            suggestion: false,
-            onSubmitted: (_) => context.popDialog(true),
-          ),
-        ],
+      // Disposed by the tree, once the fields have left it: see
+      // `_onTapSetBakPwd`.
+      child: DisposeWith(
+        notifiers: [tokenCtrl, gistIdCtrl, nodeToken],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              label: appL10n.githubGistToken,
+              controller: tokenCtrl,
+              suggestion: false,
+              obscureText: true,
+              node: nodeToken,
+            ),
+            Input(
+              label: appL10n.githubGistIdOptional,
+              controller: gistIdCtrl,
+              suggestion: false,
+              onSubmitted: (_) => context.popDialog(true),
+            ),
+          ],
+        ),
       ),
       actions: Btnx.oks,
     );
-    try {
-      if (result == true) await _saveGistSetting(context, tokenCtrl, gistIdCtrl);
-    } finally {
-      tokenCtrl.dispose();
-      gistIdCtrl.dispose();
-      nodeToken.dispose();
-    }
+    if (result != true || !context.mounted) return;
+    // Read now: the check below goes to the network, and the fields are gone
+    // by the time it answers.
+    await _saveGistSetting(
+      context,
+      token: tokenCtrl.text.trim(),
+      gistInput: gistIdCtrl.text.trim(),
+    );
   }
 
   Future<void> _saveGistSetting(
-    BuildContext context,
-    TextEditingController tokenCtrl,
-    TextEditingController gistIdCtrl,
-  ) async {
+    BuildContext context, {
+    required String token,
+    required String gistInput,
+  }) async {
     final appL10n = context.l10n;
-    final token = tokenCtrl.text.trim();
     if (token.isEmpty) {
       Toast.show(appL10n.githubGistTokenEmpty);
       return;
     }
     // An id, or the link a browser shows for the gist.
-    final gistInput = gistIdCtrl.text.trim();
     final gistId = gistInput.isEmpty ? null : GistRs.idOf(gistInput);
     if (gistInput.isNotEmpty && gistId == null) {
       _showGistProblem(context, appL10n.githubGistIdInvalid);
@@ -1025,7 +1029,6 @@ extension on _BackupPageState {
     }
     try {
       await GistRs.test(token: token, gistId: gistId);
-      Toast.success(libL10n.success);
 
       await SecureStoreProps.githubToken.write(token);
       GistRs.shared.token = token;
@@ -1036,6 +1039,8 @@ extension on _BackupPageState {
       }
       // Same reason as WebDAV: a different gist behind the same backend.
       await BakSyncer.forgetCheckpoint();
+      // Only once all of it is saved: a write that fails is the error below.
+      Toast.success(libL10n.success);
     } on GistTestException catch (e) {
       if (!context.mounted) return;
       _showGistProblem(context, switch (e.reason) {

@@ -17,7 +17,9 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     _maxTouches = math.max(_maxTouches, _touches);
     _touchAt[event.pointer] = event.localPosition;
     if (_touches > 1) {
-      _endLongPress();
+      // No longer a long press; but one that already right-clicked stays
+      // done, or the two-finger lift would right-click again.
+      _stopLongPressWait();
       // A second finger: a right click or a scroll, not a tap and drag. The
       // tap before it was still a tap, and its click is owed.
       if (_tapDrag == _TapDrag.armed) {
@@ -189,6 +191,14 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     final at = _longPressAt;
     if (_longPress == null || at == null) return;
     if ((to - at).distance > kTouchSlop) _endLongPress();
+  }
+
+  /// Stops the wait, and nothing else: whether one already right-clicked is
+  /// for the lift that ends the gesture to read.
+  void _stopLongPressWait() {
+    _longPress?.cancel();
+    _longPress = null;
+    _longPressAt = null;
   }
 
   /// Stops waiting for a long press; true if one already right-clicked, so

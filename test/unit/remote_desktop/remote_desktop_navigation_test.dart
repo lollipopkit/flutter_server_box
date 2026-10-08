@@ -23,7 +23,7 @@ void main() {
     );
   });
 
-  test('classic VNC passwords are at most eight ASCII bytes', () {
+  test('classic VNC passwords are ASCII, of any length', () {
     String? validate(String password) => validateRemoteDesktopProfileInput(
       name: 'Desktop',
       host: '127.0.0.1',
@@ -34,7 +34,8 @@ void main() {
     );
 
     expect(validate('12345678'), isNull);
-    expect(validate('123456789'), isNotNull);
+    // Only the first eight sign in, as in TigerVNC (#1637).
+    expect(validate('123456789'), isNull);
     expect(validate('密码'), isNotNull);
   });
 
