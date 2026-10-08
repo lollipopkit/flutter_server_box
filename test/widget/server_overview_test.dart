@@ -66,10 +66,13 @@ void main() {
   });
 
   /// Half the memory gone and [diskPercent] of the disk.
-  ServerStatus sampled({double diskPercent = 40}) {
+  ServerStatus sampled({
+    double diskPercent = 40,
+    Memory mem = const Memory(total: 1048576, free: 524288, avail: 524288),
+  }) {
     final status = ServerStatus(
       cpu: Cpus(),
-      mem: const Memory(total: 1048576, free: 524288, avail: 524288),
+      mem: mem,
       disk: [
         Disk(
           path: '/dev/sda1',
@@ -156,6 +159,22 @@ void main() {
     return (tester.widget<Container>(dots.first).decoration! as BoxDecoration)
         .color;
   }
+
+  testWidgets('memory in use is what is not available, as on the card', (
+    tester,
+  ) async {
+    // #1652: an OpenWrt box with most of its memory in the page cache read
+    // 90% here, from `MemFree`, and 60% on its card, from `MemAvailable`.
+    await pump(
+      tester,
+      width: 1200,
+      status: sampled(
+        mem: const Memory(total: 2000000, free: 200000, avail: 800000),
+      ),
+    );
+    expect(find.text('60.0%'), findsOneWidget);
+    expect(find.text('90.0%'), findsNothing);
+  });
 
   testWidgets('a bar each where there is room for three', (tester) async {
     await pump(tester, width: 800);

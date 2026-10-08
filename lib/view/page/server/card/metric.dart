@@ -474,7 +474,7 @@ List<ServerMetric> _readings(ServerState srv) {
         icon: ServerDetailCards.mem.icon,
         value: ReadingFmt.pct(used),
         note:
-            '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / '
+            '${(ss.mem.used * 1024).bytes2Str} / '
             '${(ss.mem.total * 1024).bytes2Str}',
         bigNote: l10n.ofFmt((ss.mem.total * 1024).bytes2Str),
         percent: used / 100,

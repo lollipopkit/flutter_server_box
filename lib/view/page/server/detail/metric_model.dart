@@ -335,7 +335,7 @@ List<DetailMetric> serverDetailMetrics(
         label: libL10n.memory,
         icon: ServerDetailCards.mem.icon,
         value: ReadingFmt.pct(used),
-        note: '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / $total',
+        note: '${(ss.mem.used * 1024).bytes2Str} / $total',
         bigNote: l10n.ofFmt(total),
         percent: used / 100,
         stats: [

@@ -335,7 +335,10 @@ pub fn sample() -> ServerStatus {
         sys: common::parse_sys_version(&os_release),
         os_id: common::parse_os_id(&os_release),
         os_id_like: common::parse_os_id_like(&os_release),
-        host: common::parse_hostname(&read("/etc/hostname")),
+        // As the status script: the file, else the kernel's name, which is
+        // what OpenWrt and others without the file have.
+        host: common::parse_hostname(&read("/etc/hostname"))
+            .or_else(|| common::parse_hostname(&read("/proc/sys/kernel/hostname"))),
         diskio: linux::parse_diskio(&read("/proc/diskstats")),
         ..ServerStatus::default()
     }
