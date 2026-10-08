@@ -1526,5 +1526,18 @@
   "virtCreateImageBigger": "Şəkil diskdən böyükdür: diski ən azı onun qədər edin.",
   "virtBackupIssueStorage": "Bu yaddaş bu node-da ehtiyat nüsxələri saxlamır.",
   "virtBackupIssueOption": "PVE-nin qəbul etdiyi rejim və ya sıxışdırma deyil.",
-  "virtBackupIssueNodeOffline": "İşin node-u onlayn deyil."
+  "virtBackupIssueNodeOffline": "İşin node-u onlayn deyil.",
+  "programWaiting": "Sizi gözləyir",
+  "programWaitingPermission": "Təsdiqinizi gözləyir",
+  "programWaitingQuestion": "Cavabınızı gözləyir",
+  "programWaitingAuth": "Daxil olmağınızı gözləyir",
+  "programStatus": "Proqram statusu",
+  "programIdle": "Boşda",
+  "programThisShell": "Bu shell",
+  "programProgress": "İrəliləyiş",
+  "programCommandRunning": "Əmr icra olunur",
+  "programCommandSucceeded": "Son əmr uğurla tamamlandı",
+  "programCommandFailed": "Son əmr {code} çıxış kodu ilə tamamlandı",
+  "programStatusAlerts": "Proqram sizə ehtiyac duyduqda bildiriş göndər",
+  "programStatusAlertsTip": "Görünməyən terminal üçün: proqram sizi gözlədiyini, tamamlandığını və ya uğursuz olduğunu bildirdikdə (OSC 7501, OSC 9;4), yaxud ən azı 30 saniyə işləyən əmr başa çatdıqda (OSC 133)."
 }

@@ -15,6 +15,7 @@ extension _SSH on _AppSettingsPageState {
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildSSHVirtualKeyAutoOff(),
+        _buildProgramStatusAlerts(),
       ]),
       SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
@@ -344,6 +345,19 @@ extension _SSH on _AppSettingsPageState {
         title: Text(label),
         trailing: StoreSwitch(prop: _setting.sshWakeLock),
       ),
+    );
+  }
+
+  SettingsRow _buildProgramStatusAlerts() {
+    final label = l10n.programStatusAlerts;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.notification_line),
+        title: TipText(label, l10n.programStatusAlertsTip),
+        trailing: StoreSwitch(prop: _setting.programStatusAlerts),
+      ),
+      keywords: l10n.programStatusAlertsTip,
     );
   }
 

@@ -136,6 +136,8 @@ final class _FakeTmuxShell implements ShellSession {
       _result(r'$0	main	2	1');
     } else if (command.startsWith('list-windows')) {
       _result('@0	0	shell	1\n@1	1	logs	0');
+    } else if (command.startsWith('list-panes -s')) {
+      _result(splitPanes ? '%0\t@0\n%3\t@0' : '%0\t@0');
     } else if (command.startsWith('list-panes')) {
       if (splitPanes) {
         _result('%0	0	1	top	cat\n%3	1	0	tail	cat');

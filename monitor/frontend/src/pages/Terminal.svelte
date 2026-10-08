@@ -26,6 +26,7 @@
   import { terminalSurface } from '../lib/terminalSurface.svelte'
   import { tmuxIssueText } from '../lib/tmux'
   import { mountTerminal, type TerminalHandle } from '../lib/xterm'
+  import ProgramStatusBar from '../components/ProgramStatusBar.svelte'
   import type { TmuxSession, TmuxView } from '../types'
 
   const session = new TerminalSession()
@@ -41,7 +42,13 @@
 
   /// The mounted xterm, once loaded. Its renderer is what the session writes
   /// through; see `mountTerminal`.
-  let terminal: TerminalHandle | null = null
+  let terminal = $state.raw<TerminalHandle | null>(null)
+
+  /// The shell behind the terminal has gone: what only lasts while its
+  /// programs run goes with it (OSC 7501's lifetime rules).
+  $effect(() => {
+    if (session.phase === 'closed') terminal?.status.processExited()
+  })
 
   const CREDENTIAL_KEY = 'terminal.credential'
 
@@ -575,6 +582,8 @@
       <p class="text-sm text-muted-fg">{$LL.terminalOutputLost()}</p>
     </Card>
   {/if}
+
+  <ProgramStatusBar records={terminal?.status ?? null} />
 
   <!-- Takes whatever the cards above leave, down to a floor that keeps the
        terminal usable on a short window -->

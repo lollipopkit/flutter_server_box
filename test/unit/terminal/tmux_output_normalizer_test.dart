@@ -171,4 +171,42 @@ void main() {
     expect(normalizer(utf8.encode(oversized)), isEmpty);
     expect(utf8.decode(normalizer(utf8.encode('after'))), 'after');
   });
+
+  group('program status', () {
+    test('passes through while nothing reads it', () {
+      final normalizer = TmuxOutputNormalizer();
+      final data = utf8.encode('\x1b]7501;state=done\x1b\\\x1b]133;A\x07');
+      expect(normalizer(data), data);
+    });
+
+    test('takes status out of the stream', () {
+      final events = <TerminalStatusEvent>[];
+      final normalizer = TmuxOutputNormalizer()..onStatus = events.add;
+      final output = normalizer(
+        utf8.encode(
+          'a\x1b]7501;state=done\x1b\\b\x1b]9;4;3\x07c\x1b]133;D;1\x07'
+          '\x1b]9;note\x07',
+        ),
+      );
+      expect(utf8.decode(output), 'abc\x1b]9;note\x07');
+      expect(events.map((e) => e.runtimeType), [
+        ProgramStatusReport,
+        TerminalProgress,
+        ShellMark,
+      ]);
+    });
+
+    test('reads a report split across chunks and wrapped for passthrough', () {
+      final events = <TerminalStatusEvent>[];
+      final normalizer = TmuxOutputNormalizer()..onStatus = events.add;
+      normalizer(utf8.encode('\x1bPtmux;\x1b\x1b]7501;state=bl'));
+      normalizer(utf8.encode('ocked\x1b\x1b\\\x1b\\'));
+      expect((events.single as ProgramStatusReport).state, ProgramState.blocked);
+    });
+
+    test('drops the query, which only tmux could answer in time', () {
+      final normalizer = TmuxOutputNormalizer();
+      expect(normalizer(utf8.encode('\x1b]7501;?\x1b\\')), isEmpty);
+    });
+  });
 }

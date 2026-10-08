@@ -1526,5 +1526,18 @@
   "virtCreateImageBigger": "Image lebih besar dari disk: buat disk setidaknya sebesar itu.",
   "virtBackupIssueStorage": "Penyimpanan itu tidak menyimpan cadangan di node ini.",
   "virtBackupIssueOption": "Bukan mode atau kompresi yang diterima PVE.",
-  "virtBackupIssueNodeOffline": "Node tugas ini tidak online."
+  "virtBackupIssueNodeOffline": "Node tugas ini tidak online.",
+  "programWaiting": "Menunggu Anda",
+  "programWaitingPermission": "Menunggu persetujuan Anda",
+  "programWaitingQuestion": "Menunggu jawaban Anda",
+  "programWaitingAuth": "Menunggu Anda masuk",
+  "programStatus": "Status program",
+  "programIdle": "Tidak aktif",
+  "programThisShell": "Shell ini",
+  "programProgress": "Progres",
+  "programCommandRunning": "Perintah sedang berjalan",
+  "programCommandSucceeded": "Perintah terakhir berhasil",
+  "programCommandFailed": "Perintah terakhir berakhir dengan kode {code}",
+  "programStatusAlerts": "Beri tahu saat program membutuhkan Anda",
+  "programStatusAlertsTip": "Untuk terminal yang tidak terlihat: saat program melaporkan bahwa program menunggu Anda, selesai, atau gagal (OSC 7501, OSC 9;4), atau saat perintah yang berjalan selama setidaknya 30 detik berakhir (OSC 133)."
 }

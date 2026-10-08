@@ -7,6 +7,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/android_service_policy.dart';
 import 'package:server_box/data/ssh/ios_live_activity_policy.dart';
+import 'package:xterm/core.dart' show ProgramState;
 
 enum TermSessionStatus {
   connecting,
@@ -28,13 +29,33 @@ class TermSessionInfo {
   final int startTimeMs;
   final TermSessionStatus status;
 
+  /// The most urgent thing the session's programs report (OSC 7501 and
+  /// friends), and that in words. Null while they report nothing.
+  final ProgramState? programState;
+  final String? program;
+
   TermSessionInfo({
     required this.id,
     required this.title,
     required this.subtitle,
     required this.startTimeMs,
     required this.status,
+    this.programState,
+    this.program,
   });
+
+  TermSessionInfo copyWith({
+    TermSessionStatus? status,
+    (ProgramState?, String?)? program,
+  }) => TermSessionInfo(
+    id: id,
+    title: title,
+    subtitle: subtitle,
+    startTimeMs: startTimeMs,
+    status: status ?? this.status,
+    programState: program == null ? programState : program.$1,
+    program: program == null ? this.program : program.$2,
+  );
 
   Map<String, Object> toJson() => {
     'id': id,
@@ -42,6 +63,7 @@ class TermSessionInfo {
     'subtitle': subtitle,
     'startTimeMs': startTimeMs,
     'status': status.toString(),
+    'program': ?program,
   };
 }
 
@@ -149,17 +171,37 @@ abstract final class TermSessionManager {
     if (old == null) return;
     if (old.info.status == status) return;
     _entries[id] = _Entry(
-      TermSessionInfo(
-        id: old.info.id,
-        title: old.info.title,
-        subtitle: old.info.subtitle,
-        startTimeMs: old.info.startTimeMs,
-        status: status,
-      ),
+      old.info.copyWith(status: status),
       old.disconnect,
       hasTerminalUI: old.hasTerminalUI,
     );
     _sync();
+  }
+
+  /// What session [id]'s programs report, for the notification and the Live
+  /// Activity: a program waiting is worth reading off the lock screen.
+  static void updateProgram(String id, ProgramState? state, String? text) {
+    final old = _entries[id];
+    if (old == null) return;
+    if (old.info.programState == state && old.info.program == text) return;
+    _entries[id] = _Entry(
+      old.info.copyWith(program: (state, text)),
+      old.disconnect,
+      hasTerminalUI: old.hasTerminalUI,
+    );
+    _sync();
+  }
+
+  /// The entry whose programs report the most urgent state, if any do.
+  static _Entry? get _mostUrgentProgram {
+    _Entry? best;
+    for (final entry in _entries.values) {
+      final state = entry.info.programState;
+      if (state == null || entry.info.program == null) continue;
+      final bestState = best?.info.programState;
+      if (bestState == null || state.index < bestState.index) best = entry;
+    }
+    return best;
   }
 
   static void remove(String id) {
@@ -297,8 +339,12 @@ abstract final class TermSessionManager {
       final id = _activeId ?? _entries.keys.first;
       final entry = _entries[id];
       if (entry == null) return;
+      final program = entry.info.program;
       final payload = jsonEncode({
         ...entry.info.toJson(),
+        // In place of the address: what the session is doing is the more
+        // useful line on a lock screen, and the widget has one.
+        'subtitle': ?program,
         'hasTerminal': entry.hasTerminalUI,
         'connectionCount': connectionCount,
       });
@@ -321,7 +367,10 @@ abstract final class TermSessionManager {
       final payload = jsonEncode({
         'id': 'multi_connections',
         'title': '$connectionCount',
-        'subtitle': _entries.values.map((e) => e.info.title).join(' · '),
+        'subtitle': switch (_mostUrgentProgram) {
+          final urgent? => '${urgent.info.title}: ${urgent.info.program}',
+          null => _entries.values.map((e) => e.info.title).join(' · '),
+        },
         'startTimeMs': entry.info.startTimeMs,
         'status': TermSessionStatus.connected.toString(),
         'hasTerminal': entry.hasTerminalUI,

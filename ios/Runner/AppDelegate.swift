@@ -2,6 +2,7 @@ import UIKit
 import WidgetKit
 import Flutter
 import ActivityKit
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -43,6 +44,12 @@ import ActivityKit
         if #available(iOS 14.0, *) {
             CrashDiagnostics.shared.start()
         }
+
+        // flutter_local_notifications answers through the app delegate, which
+        // `FlutterAppDelegate` forwards to its plugins: without this, a
+        // notification shown while the app is in front is not presented, and a
+        // tap on one is not reported.
+        UNUserNotificationCenter.current().delegate = self
 
         // TODO(appearance): remove after installs using the old alternate icon have migrated.
         if application.alternateIconName != nil {

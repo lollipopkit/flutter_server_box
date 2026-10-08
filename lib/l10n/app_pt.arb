@@ -1526,5 +1526,18 @@
   "virtCreateImageBigger": "A imagem é maior que o disco: faça o disco pelo menos do mesmo tamanho.",
   "virtBackupIssueStorage": "Esse armazenamento não guarda backups neste nó.",
   "virtBackupIssueOption": "Não é um modo ou compressão que o PVE aceite.",
-  "virtBackupIssueNodeOffline": "O nó da tarefa não está online."
+  "virtBackupIssueNodeOffline": "O nó da tarefa não está online.",
+  "programWaiting": "Aguardando você",
+  "programWaitingPermission": "Aguardando sua aprovação",
+  "programWaitingQuestion": "Aguardando sua resposta",
+  "programWaitingAuth": "Aguardando você entrar",
+  "programStatus": "Status do programa",
+  "programIdle": "Inativo",
+  "programThisShell": "Este shell",
+  "programProgress": "Progresso",
+  "programCommandRunning": "Um comando está em execução",
+  "programCommandSucceeded": "O último comando foi concluído com sucesso",
+  "programCommandFailed": "O último comando terminou com o código {code}",
+  "programStatusAlerts": "Notificar quando um programa precisar de você",
+  "programStatusAlertsTip": "Para um terminal fora de vista: quando um programa informar que está aguardando você, que terminou ou falhou (OSC 7501, OSC 9;4), ou quando terminar um comando que foi executado por 30 segundos ou mais (OSC 133)."
 }

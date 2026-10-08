@@ -620,6 +620,11 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// ssh page
   late final sshWakeLock = propertyDefault('sshWakeLock', true);
+
+  /// Notify when a program in a terminal out of sight is waiting for the
+  /// user, finishes or fails (OSC 7501, OSC 9;4), or a long command ends
+  /// (OSC 133).
+  late final programStatusAlerts = propertyDefault('programStatusAlerts', true);
   late final sshBgImage = propertyDefault('sshBgImage', '');
   late final sshBgOpacity = propertyDefault('sshBgOpacity', 0.3);
   late final sshBlurRadius = propertyDefault('sshBlurRadius', 0.0);

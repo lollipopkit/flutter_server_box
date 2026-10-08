@@ -343,6 +343,7 @@ class _SideBarState extends ConsumerState<_SideBar> {
         index: widget.sessions.index,
         onTap: widget.onSelect,
         onClose: widget.onClose,
+        leadingOf: widget.sessions.statusOf,
         actions: widget.actions,
         search: widget.search,
         targets: [

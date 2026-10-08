@@ -5424,4 +5424,47 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get virtBackupIssueNodeOffline => 'İşin node-u onlayn deyil.';
+
+  @override
+  String get programWaiting => 'Sizi gözləyir';
+
+  @override
+  String get programWaitingPermission => 'Təsdiqinizi gözləyir';
+
+  @override
+  String get programWaitingQuestion => 'Cavabınızı gözləyir';
+
+  @override
+  String get programWaitingAuth => 'Daxil olmağınızı gözləyir';
+
+  @override
+  String get programStatus => 'Proqram statusu';
+
+  @override
+  String get programIdle => 'Boşda';
+
+  @override
+  String get programThisShell => 'Bu shell';
+
+  @override
+  String get programProgress => 'İrəliləyiş';
+
+  @override
+  String get programCommandRunning => 'Əmr icra olunur';
+
+  @override
+  String get programCommandSucceeded => 'Son əmr uğurla tamamlandı';
+
+  @override
+  String programCommandFailed(int code) {
+    return 'Son əmr $code çıxış kodu ilə tamamlandı';
+  }
+
+  @override
+  String get programStatusAlerts =>
+      'Proqram sizə ehtiyac duyduqda bildiriş göndər';
+
+  @override
+  String get programStatusAlertsTip =>
+      'Görünməyən terminal üçün: proqram sizi gözlədiyini, tamamlandığını və ya uğursuz olduğunu bildirdikdə (OSC 7501, OSC 9;4), yaxud ən azı 30 saniyə işləyən əmr başa çatdıqda (OSC 133).';
 }

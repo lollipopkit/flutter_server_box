@@ -47,6 +47,8 @@ extension _AskAi on SSHPageState {
         // Read per call, not captured: by the next turn the screen has moved
         // on.
         screen: () => _sess.screenText,
+        programStatus: () =>
+            _sess.status.describeForAgent(paneLabel: tmuxPaneLabel),
         cancel: _cancelAiCommand,
       ),
     );

@@ -211,6 +211,7 @@ void main() {
         },
         insert: (_) {},
         screen: () => r'root@web:~# ',
+        programStatus: () => '',
         cancel: () async {},
       ),
     );

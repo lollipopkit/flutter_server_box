@@ -23,6 +23,8 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
 import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/data/ssh/terminal_status.dart';
+import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
 import 'package:xterm/core.dart';
 
 /// Whether a server's shell comes from its agent rather than over SSH.
@@ -88,6 +90,7 @@ class TerminalSession {
   TerminalSession({required this.source, ShellBackend? backend})
     : _backend = backend {
     terminal.onPrivateOSC = _handlePrivateOSC;
+    terminal.onStatus = _handleTerminalStatus;
   }
 
   static int _serials = 0;
@@ -112,6 +115,10 @@ class TerminalSession {
   };
 
   final terminal = Terminal(platform: hostTerminalPlatform);
+
+  /// What the programs in this terminal report about themselves. Outlives a
+  /// reconnect: a tmux pane's programs are still running behind it.
+  final status = TerminalStatus();
 
   /// Typed into every shell a reconnect opens for this session: what makes a
   /// shell this session's. A guest's `virsh console` — without it, the fresh
@@ -380,6 +387,14 @@ class TerminalSession {
   /// is rejected before `base64.decode` allocates another copy of the payload.
   static final int _maxOsc52EncodedChars = ((_maxOsc52Bytes + 2) ~/ 3) * 4;
 
+  void _handleTerminalStatus(TerminalStatusEvent event) {
+    // Under tmux the local terminal shows one pane after another, and every
+    // switch replays the pane after a full reset: the panes' own status comes
+    // from [TmuxControlShellSession.onPaneStatus] instead.
+    if (_foreground is TmuxControlShellSession) return;
+    status.shell.apply(event);
+  }
+
   void _handlePrivateOSC(String code, List<String> args) {
     // Selection and payload; base64 has no `;`, so more fields are malformed.
     // xterm bounds the sequence itself (`EscapeParser.maxOscLength`).
@@ -433,6 +448,16 @@ class TerminalSession {
     terminal.buffer.setCursor(0, 0);
     _cancelOutputSubscriptions();
 
+    // Whatever ran in the terminal before has exited; a tmux pane has not.
+    status.shell.processExited();
+    if (session is TmuxControlShellSession) {
+      session
+        ..onPaneStatus = status.applyPane
+        ..onPanes = status.retainPanes;
+    } else {
+      status.clearPanes();
+    }
+
     terminal.onOutput = (data) => session.write(utf8.encode(data));
     terminal.onResize = (width, height, _, _) {
       // A shell whose connection has gone throws here, and it is not the
@@ -458,6 +483,8 @@ class TerminalSession {
     if (!identical(_foreground, session)) return;
     _foreground = null;
     drainOutput();
+    status.shell.processExited();
+    if (session is TmuxControlShellSession) status.clearPanes();
     onForegroundDone?.call(session);
   }
 

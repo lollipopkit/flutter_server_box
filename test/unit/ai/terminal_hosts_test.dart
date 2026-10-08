@@ -6,6 +6,7 @@ TerminalHost _host(String name) => TerminalHost(
   run: (_) => throw UnimplementedError(),
   insert: (_) {},
   screen: () => name,
+  programStatus: () => '',
   cancel: () async {},
 );
 

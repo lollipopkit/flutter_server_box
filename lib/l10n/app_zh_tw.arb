@@ -1526,5 +1526,18 @@
   "virtCreateImageBigger": "映像比磁碟大：磁碟至少要和映像一樣大。",
   "virtBackupIssueStorage": "該儲存在此節點上不存放備份。",
   "virtBackupIssueOption": "不是 PVE 接受的模式或壓縮方式。",
-  "virtBackupIssueNodeOffline": "此工作的節點不在線上。"
+  "virtBackupIssueNodeOffline": "此工作的節點不在線上。",
+  "programWaiting": "正在等待您",
+  "programWaitingPermission": "正在等待您核准",
+  "programWaitingQuestion": "正在等待您回答",
+  "programWaitingAuth": "正在等待您登入",
+  "programStatus": "程式狀態",
+  "programIdle": "閒置",
+  "programThisShell": "此 shell",
+  "programProgress": "進度",
+  "programCommandRunning": "命令正在執行",
+  "programCommandSucceeded": "上一個命令已成功",
+  "programCommandFailed": "上一個命令以結束碼 {code} 結束",
+  "programStatusAlerts": "程式需要您時通知",
+  "programStatusAlertsTip": "對於目前不可見的終端：程式回報正在等待您、已完成或失敗時（OSC 7501、OSC 9;4），或執行至少 30 秒的命令結束時（OSC 133）通知您。"
 }
