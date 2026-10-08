@@ -13,9 +13,15 @@ fn host_command() -> &'static str {
 }
 
 /// What `sh` prints for the command with `/etc/hostname` read from [file].
+/// The path goes in through the environment, quoted, so a temporary directory
+/// with a space in it stays one argument.
 fn run_with(file: &std::path::Path) -> String {
-    let cmd = host_command().replace("/etc/hostname", &file.display().to_string());
-    let out = Command::new("sh").args(["-c", &cmd]).output().expect("sh runs");
+    let cmd = host_command().replace("/etc/hostname", "\"$SBM_HOSTNAME_FILE\"");
+    let out = Command::new("sh")
+        .args(["-c", &cmd])
+        .env("SBM_HOSTNAME_FILE", file)
+        .output()
+        .expect("sh runs");
     String::from_utf8(out.stdout).expect("utf-8")
 }
 
@@ -54,6 +60,14 @@ fn a_blank_file_falls_back_to_the_kernel_name() {
     let file = dir.path().join("hostname");
     std::fs::write(&file, " \n\n").unwrap();
     assert_eq!(parse_hostname(&run_with(&file)), Some(uname_n()));
+}
+
+#[test]
+fn a_path_with_a_space_is_one_argument() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("host name");
+    std::fs::write(&file, "box\n").unwrap();
+    assert_eq!(run_with(&file), "box\n");
 }
 
 #[test]
