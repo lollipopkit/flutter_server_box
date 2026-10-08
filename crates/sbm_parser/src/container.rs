@@ -855,6 +855,10 @@ pub struct ContainerStats {
     pub cpu_avg: Option<String>,
     /// `1.2MiB / 7.6GiB`.
     pub mem: Option<String>,
+    /// The two halves of [`Self::mem`]: `1.2MiB` used, `7.6GiB` the limit
+    /// (the host's memory when the container has none of its own).
+    pub mem_used: Option<String>,
+    pub mem_limit: Option<String>,
     pub net_down: Option<String>,
     pub net_up: Option<String>,
     pub disk_read: Option<String>,
@@ -1029,10 +1033,18 @@ fn parse_docker_stats(value: &serde_json::Value) -> ContainerStats {
     };
     let (net_down, net_up) = pair("NetIO");
     let (disk_read, disk_write) = pair("BlockIO");
+    let mem = text("MemUsage");
+    let (mem_used, mem_limit) = match mem.as_deref().map(|m| m.split_once(" / ")) {
+        Some(Some((used, limit))) => (Some(used.to_string()), Some(limit.to_string())),
+        Some(None) => (mem.clone(), None),
+        None => (None, None),
+    };
     ContainerStats {
         cpu: text("CPUPerc"),
         cpu_avg: None,
-        mem: text("MemUsage"),
+        mem,
+        mem_used,
+        mem_limit,
         net_down: Some(net_down),
         net_up: Some(net_up),
         disk_read: Some(disk_read),
@@ -1086,6 +1098,8 @@ fn parse_podman_stats(value: &serde_json::Value, version: Option<&str>) -> Conta
         cpu: Some(format!("{}%", fixed1(number("CPU")))),
         cpu_avg: Some(format!("{}%", fixed1(number("AvgCPU")))),
         mem: Some(format!("{mem_usage} / {mem_limit}")),
+        mem_used: Some(mem_usage),
+        mem_limit: Some(mem_limit),
         net_down: Some(human_bytes(net_in)),
         net_up: Some(human_bytes(net_out)),
         disk_read: Some(human_bytes(bytes("BlockInput"))),
@@ -2702,6 +2716,8 @@ mod tests {
         assert_eq!(stats.cpu.as_deref(), Some("0.15%"));
         assert_eq!(stats.cpu_avg, None);
         assert_eq!(stats.mem.as_deref(), Some("1.2MiB / 7.6GiB"));
+        assert_eq!(stats.mem_used.as_deref(), Some("1.2MiB"));
+        assert_eq!(stats.mem_limit.as_deref(), Some("7.6GiB"));
         assert_eq!(stats.net_down.as_deref(), Some("1.2kB"));
         assert_eq!(stats.net_up.as_deref(), Some("3.4kB"));
         assert_eq!(stats.disk_read.as_deref(), Some("5kB"));
@@ -2720,6 +2736,8 @@ mod tests {
         assert_eq!(stats.cpu.as_deref(), Some("1.0%"));
         assert_eq!(stats.cpu_avg.as_deref(), Some("0.0%"));
         assert_eq!(stats.mem.as_deref(), Some("1 B / 1 GB"));
+        assert_eq!(stats.mem_used.as_deref(), Some("1 B"));
+        assert_eq!(stats.mem_limit.as_deref(), Some("1 GB"));
         assert_eq!(stats.net_down.as_deref(), Some("0 B"));
         assert_eq!(stats.disk_read.as_deref(), Some("0 B"));
     }
