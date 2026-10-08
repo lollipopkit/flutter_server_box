@@ -21,7 +21,7 @@ description: 查看终端中的程序何时正在等待你、已完成或执行�
 - **终端栏中的状态按钮**：列出所有报告，首先是终端自身 shell 的报告，其后是每个 tmux pane 的报告。已完成或失败的报告会保留，直到程序更新报告或你在此处清除报告。
 - **tmux**：窗口标记使用其 pane 中优先级最高的状态颜色；pane 菜单会显示各 pane 的报告。即使 pane 当前不在屏幕上，也会读取其报告。
 - **通知**：终端当前不可见时，例如显示其他标签页或 App 在后台运行，程序开始等待、完成或失败时会显示通知。运行时间达到 30 秒的命令结束时也会显示通知。点击通知可打开对应终端。可在 **设置 → SSH → 程序需要你时通知** 中关闭此功能。
-- Android 上的**持续通知**和 iOS 上的 **Live Activity** 会显示 session 中程序报告的状态，而不是地址。
+- Android 上的**持续通知**和 iOS 上的 **Live Activity** 会显示 session 中程序的状态（等待、已完成、失败或运行中），而不是地址。这两处无需解锁即可查看，因此只显示状态，不显示程序报告的标题或消息；上述通知开关关闭时不显示。
 - **Agent** 会结合屏幕内容读取这些报告，因此可以判断程序正在等待回答。
 - **Monitor agent 的 Web panel** 会在终端上方显示优先级最高的报告。
 
@@ -39,7 +39,7 @@ status working 'Backing up /srv'
 status done 'Backup finished'
 ```
 
-`state=clear` 会移除报告。程序的 shell 显示下一个 prompt（启用了 shell integration 时）或 session 结束时，`working` 和 `blocked` 报告会被移除；`done` 和 `error` 报告会保留。多个报告、同一程序的报告 `id` 等完整规则见[规范](https://gist.github.com/mitchellh/7acae3abd8355c1c00287d67e96c913a)。
+`state=clear` 会移除报告。程序的 shell 显示下一个 prompt（启用了 shell integration 时）或 session 结束时，`working`、`blocked` 和 `idle` 报告会被移除；`done` 和 `error` 报告会保留。多个报告、同一程序的报告 `id` 等完整规则见[规范](https://gist.github.com/mitchellh/7acae3abd8355c1c00287d67e96c913a)。
 
 ## tmux
 

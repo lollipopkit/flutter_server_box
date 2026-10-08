@@ -583,6 +583,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       status: TermSessionStatus.connecting,
       setAsActive: _shouldActivateSessionOnInit,
     );
+    _publishProgramStatus();
     if (_shouldActivateSessionOnInit) {
       TermSessionManager.setActive(_sessionId, hasTerminal: true);
     }

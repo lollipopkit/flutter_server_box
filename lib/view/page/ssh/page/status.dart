@@ -5,10 +5,21 @@ part of 'page.dart';
 extension _ProgramStatus on SSHPageState {
   void _watchProgramStatus() {
     _sess.status.addListener(_programStatusListener);
+    // Turning alerts off takes the state off the lock screen now.
+    Stores.setting.programStatusAlerts.listenable().addListener(
+      _programStatusListener,
+    );
   }
+
+  /// What an adopted session already reports, for the session manager only:
+  /// it is not news, so no alert.
+  void _publishProgramStatus() => _reportProgramToSessionManager();
 
   void _unwatchProgramStatus() {
     _sess.status.removeListener(_programStatusListener);
+    Stores.setting.programStatusAlerts.listenable().removeListener(
+      _programStatusListener,
+    );
     ProgramStatusAlerts.cancel(_sessionId, forget: true);
   }
 
@@ -38,28 +49,29 @@ extension _ProgramStatus on SSHPageState {
     );
   }
 
-  /// For the foreground notification and the Live Activity. Without the
-  /// progress, and without a running program's message: either would make
-  /// every step of it a platform call, and ActivityKit budgets updates.
+  /// For the foreground notification and the Live Activity, which can be
+  /// read without unlocking: the state in the app's own words, never the
+  /// title or message a program sent. Nothing while alerts are off.
   void _reportProgramToSessionManager() {
-    final headline = _sess.status.headline;
-    final report = headline?.report;
+    final headline = Stores.setting.programStatusAlerts.fetch()
+        ? _sess.status.headline
+        : null;
     final shown = headline == null || headline.state == ProgramState.idle
         ? null
         : TerminalStatusHeadline(
             state: headline.state,
-            report: headline.state != ProgramState.working || report == null
-                ? report
-                : ProgramStatusReport(
-                    state: report.state,
-                    kind: report.kind,
-                    title: report.title,
-                  ),
+            report: switch (headline.report?.kind) {
+              final kind? => ProgramStatusReport(
+                state: ProgramState.blocked,
+                kind: kind,
+              ),
+              null => null,
+            },
           );
     TermSessionManager.updateProgram(
       _sessionId,
       shown?.state,
-      shown?.describe(),
+      shown?.stateLabel,
     );
   }
 

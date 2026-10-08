@@ -15,7 +15,15 @@ import 'package:server_box/core/extension/context/locale.dart';
 abstract final class ProgramStatusAlerts {
   static final _plugin = FlutterLocalNotificationsPlugin();
 
+  /// Whether the plugin initialized: once, for the life of the process.
   static Future<bool>? _ready;
+
+  /// Whether notifications are allowed, as last asked. Not cached when they
+  /// are not: the user can allow them in the system settings at any time.
+  static bool _allowed = false;
+  static Future<bool>? _asking;
+  static DateTime? _lastAsked;
+  static const _askInterval = Duration(minutes: 1);
 
   /// What tapping each terminal's notification does: bring the terminal back.
   static final _reveal = <String, VoidCallback>{};
@@ -31,12 +39,34 @@ abstract final class ProgramStatusAlerts {
       !kIsWeb &&
       (isAndroid || isIOS || isMacOS || isLinux || isWindows);
 
-  /// Initializes the plugin and asks for permission, once. Called while the
-  /// app is in front — on iOS a request made from the background is not shown,
-  /// and is then not asked again.
-  static Future<bool> prepare() {
-    if (!_supported) return Future.value(false);
-    return _ready ??= _init();
+  /// Initializes the plugin once, and asks whether notifications are allowed
+  /// — again on a later call while they are not, at most once per
+  /// [_askInterval]. Called while the app is in front: on iOS a request made
+  /// from the background is not shown.
+  static Future<bool> prepare() async {
+    if (!_supported) return false;
+    if (!await (_ready ??= _init())) return false;
+    if (_allowed) return true;
+    final last = _lastAsked;
+    if (_asking == null &&
+        last != null &&
+        DateTime.now().difference(last) < _askInterval) {
+      return false;
+    }
+    _allowed = await (_asking ??= _ask());
+    return _allowed;
+  }
+
+  static Future<bool> _ask() async {
+    try {
+      return await _requestPermission();
+    } catch (e, s) {
+      Loggers.app.warning('Program status notifications not allowed', e, s);
+      return false;
+    } finally {
+      _lastAsked = DateTime.now();
+      _asking = null;
+    }
   }
 
   static Future<bool> _init() async {
@@ -66,7 +96,7 @@ abstract final class ProgramStatusAlerts {
           if (key != null) _reveal[key]?.call();
         },
       );
-      return await _requestPermission();
+      return true;
     } catch (e, s) {
       Loggers.app.warning('Program status notifications unavailable', e, s);
       return false;
@@ -79,7 +109,11 @@ abstract final class ProgramStatusAlerts {
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
-      return await android?.requestNotificationsPermission() ?? false;
+      if (android == null) return false;
+      // What the system settings say now, on every Android version; asking
+      // only adds a prompt from 13 on.
+      if (await android.areNotificationsEnabled() ?? false) return true;
+      return await android.requestNotificationsPermission() ?? false;
     }
     if (isIOS) {
       final ios = _plugin
@@ -139,15 +173,16 @@ abstract final class ProgramStatusAlerts {
     }
   }
 
+  /// Shows the terminal that has waited longest, and leaves the rest, each at
+  /// its latest, for the next interval.
   static void _flushPending() {
     _flush = null;
     if (_pending.isEmpty) return;
     _lastShown = DateTime.now();
-    final pending = Map.of(_pending);
-    _pending.clear();
-    for (final MapEntry(:key, :value) in pending.entries) {
-      unawaited(_show(key, value.title, value.body));
-    }
+    final key = _pending.keys.first;
+    final next = _pending.remove(key)!;
+    unawaited(_show(key, next.title, next.body));
+    if (_pending.isNotEmpty) _flush = Timer(_minInterval, _flushPending);
   }
 
   static Future<void> _show(String key, String title, String body) async {

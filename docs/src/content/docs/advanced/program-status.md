@@ -35,8 +35,11 @@ terminal or a terminal on this device, like the rest of the output.
   shows a notification, and so does a command that ran for 30 seconds or more
   ending. Tapping it opens that terminal. Turn it off in **Settings → SSH →
   Notify when a program needs you**.
-- **The ongoing notification** on Android and the **Live Activity** on iOS show
-  what the session's programs report instead of the address.
+- **The ongoing notification** on Android and the **Live Activity** on iOS say
+  what the session's programs are doing — waiting, finished, failed or running —
+  instead of the address. Both can be read without unlocking, so they carry
+  only that state, never a program's own title or message, and nothing while
+  the notification switch above is off.
 - **The Agent** reads the reports along with the screen, so it can tell that a
   program is waiting for an answer.
 - **The Monitor agent's web panel** shows the most urgent report above its
@@ -57,7 +60,7 @@ status working 'Backing up /srv'
 status done 'Backup finished'
 ```
 
-`state=clear` removes the report. A `working` or `blocked` report is removed
+`state=clear` removes the report. A `working`, `blocked` or `idle` report is removed
 when the program's shell shows its next prompt (with shell integration) or the
 session ends; `done` and `error` stay. The full rules, such as `id` for
 several reports from one program, are in the

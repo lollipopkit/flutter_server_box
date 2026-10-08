@@ -484,7 +484,9 @@ class TerminalSession {
     _foreground = null;
     drainOutput();
     status.shell.processExited();
-    if (session is TmuxControlShellSession) status.clearPanes();
+    // Not the panes': a tmux client ends with the link too, and the reconnect
+    // that follows finds them running. The next shell bound decides — a tmux
+    // refresh keeps the live ones, a plain shell clears them.
     onForegroundDone?.call(session);
   }
 
