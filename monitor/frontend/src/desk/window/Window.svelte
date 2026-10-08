@@ -2,7 +2,8 @@
   import Spinner from '../lk/Spinner.svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { app } from '../registry.svelte'
-  import { onDestroy } from 'svelte'
+  import { onDestroy, onMount } from 'svelte'
+  import { viewEnter, viewIn } from '../lk/motion'
   import { provideWindow, useDesk } from '../deskState.svelte'
   import type { LifecycleState } from '../sys/window.svelte'
   import IconButton from '../lk/IconButton.svelte'
@@ -15,6 +16,13 @@
   import { systemPrefs, TEXT_SCALE } from '../sys/systemPrefs.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
   import type { DeskWindow } from '../windows.svelte'
+
+  /// After the first render: the title and the tabs that replace each other
+  /// (one tab left, a second opened; an app's own heading as well, keyed by
+  /// which heading it is) fade in as the design system's views do; the
+  /// window's first title does not.
+  let shown = $state(false)
+  onMount(() => (shown = true))
 
   const SUSPEND_AFTER_MS = 5000
 
@@ -400,10 +408,10 @@
   {#if toolbar?.back}<IconButton icon="chevron_left" label={$LL.back()} size="sm" onclick={toolbar.back} />{/if}
   {@render toolbar?.leading?.()}
   {#if toolbar?.heading}
-    <div class="flex min-w-0 items-center" class:flex-1={toolbar.headingFill} data-no-drag>{@render toolbar.heading()}</div>
+    <div class="flex min-w-0 items-center" class:flex-1={toolbar.headingFill} data-no-drag use:viewEnter={shown} use:viewIn={toolbar.heading}>{@render toolbar.heading()}</div>
   {:else}
     <!-- One line: the title, then what it is about, which gives way first. -->
-    <div class="lk-window__heading">
+    <div class="lk-window__heading" use:viewEnter={shown}>
       <h2 class="lk-window__title min-w-0 shrink-[0.2]">{toolbar?.title ?? title}</h2>
       {#if toolbar?.subtitle}<p class="lk-window__subtitle min-w-0">{toolbar.subtitle}</p>{/if}
     </div>

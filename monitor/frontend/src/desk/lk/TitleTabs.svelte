@@ -22,8 +22,9 @@
   /// Tabs in the window bar, in place of the title (two or more; one tab is
   /// an ordinary title). One raised indicator glides between them
   /// (`Indicator`); a tab added grows from nothing to its share
-  /// (`--dur-tab-in`) and is chosen; a tab closed goes at once and the rest
-  /// share the row again. The + is inside the well, after the last tab.
+  /// (`--dur-tab-in`) and is chosen; a tab closed shrinks back to nothing in
+  /// the same motion, the rest taking its share. The + is inside the well,
+  /// after the last tab.
 
   import Icon from './Icon.svelte'
   import Indicator from './Indicator.svelte'
@@ -66,6 +67,24 @@
 
   const closable = $derived(!!onclose && tabs.length > 1)
 
+  /// A closed tab leaves as an added one arrives, reversed: its share, its
+  /// width and its padding to nothing, fading (`--dur-tab-in`,
+  /// `--ease-standard`, which reduced motion shortens). Svelte keeps it until
+  /// then; it takes no clicks meanwhile.
+  function tabOut(node: HTMLElement) {
+    const style = getComputedStyle(node)
+    const duration = parseFloat(style.getPropertyValue('--dur-tab-in')) || 0
+    node.style.pointerEvents = 'none'
+    node.animate?.(
+      [
+        { flexGrow: style.flexGrow, minWidth: style.minWidth, paddingLeft: style.paddingLeft, paddingRight: style.paddingRight, opacity: 1 },
+        { flexGrow: 0, minWidth: '0px', paddingLeft: '0px', paddingRight: '0px', opacity: 0 },
+      ],
+      { duration, easing: style.getPropertyValue('--ease-standard').trim() || 'ease', fill: 'forwards' },
+    )
+    return { duration }
+  }
+
   // A key not seen before is new until its grow-in ends, not for one render.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never rendered from
   const seen = new Set<string>()
@@ -95,6 +114,7 @@
         class="lk-ttabs__tab"
         class:lk-ttabs__tab--on={on}
         class:lk-ttabs__tab--new={fresh.includes(t.key)}
+        out:tabOut
         style:opacity={dragging === t.key ? 0.7 : null}
         style:touch-action={drag ? 'none' : null}
         onanimationend={(e) => {

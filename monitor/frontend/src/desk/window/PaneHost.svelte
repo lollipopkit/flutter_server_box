@@ -8,7 +8,7 @@
   /// in the background. The window shows the focused pane's toolbar,
   /// sidebar, footer and menus; intents go to it.
 
-  import type { Component } from 'svelte'
+  import { untrack, type Component } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import TitleTabs, { type TitleTabsDrag } from '../lk/TitleTabs.svelte'
   import { viewEnter, viewIn } from '../lk/motion'
@@ -98,7 +98,28 @@
   // ---- layout -----------------------------------------------------------
 
   const layout = $derived(host.layout)
-  const multiTab = $derived(layout.tabs.length > 1)
+  /// The last tab but one closed: the strip stays while that tab shrinks
+  /// away (`TitleTabs`), then gives way to the title, which fades in
+  /// (`Window`), so going back to one tab is one motion with opening a second.
+  let collapsing = $state(false)
+  let tabCount = untrack(() => host.layout.tabs.length)
+  // Before the DOM updates, so the strip is never taken down for a frame
+  // (which would drop the closing tab's exit).
+  $effect.pre(() => {
+    const n = layout.tabs.length
+    const was = tabCount
+    tabCount = n
+    if (!(was > 1 && n === 1)) return
+    const ms = area ? parseFloat(getComputedStyle(area).getPropertyValue('--dur-tab-in')) || 0 : 0
+    if (!ms) return
+    collapsing = true
+    const timer = setTimeout(() => (collapsing = false), ms)
+    return () => {
+      clearTimeout(timer)
+      collapsing = false
+    }
+  })
+  const multiTab = $derived(layout.tabs.length > 1 || collapsing)
   const tab = $derived(activeTab(layout))
   /// Split: the panes start under the bar rather than behind it, so no
   /// divider runs through the title.
