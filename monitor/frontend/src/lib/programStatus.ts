@@ -47,7 +47,14 @@ const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/
 /// formatting characters.
 const INVISIBLE =
   /[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF9-\uFFFB]/g
-const CONTROL = /[\u0000-\u001F\u007F-\u009F]/
+/// C0, DEL and C1 controls, which a decoded `msg` or `title` must not carry.
+function hasControl(text: string): boolean {
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i)
+    if (c <= 0x1f || (c >= 0x7f && c <= 0x9f)) return true
+  }
+  return false
+}
 
 class Refused extends Error {}
 
@@ -58,7 +65,10 @@ export const QUERY_REPLY = '\x1b]7501;?\x1b\\'
 /// Parses the payload after `7501;`, or returns `null` when the spec says to
 /// refuse the whole report.
 export function parseReport(payload: string): ProgramStatusReport | null {
+  // Bytes, not UTF-16 units: a malformed pair is skipped rather than refused,
+  // so the payload can carry text outside the value alphabet.
   if (payload.length + FRAMING > MAX_SEQUENCE) return null
+  if (new TextEncoder().encode(payload).length + FRAMING > MAX_SEQUENCE) return null
   const pairs = new Map<string, string>()
   for (const pair of payload.split(':')) {
     const eq = pair.indexOf('=')
@@ -135,7 +145,7 @@ function decodeText(raw: string | undefined, maxEncoded: number, maxDecoded: num
   } catch {
     return undefined
   }
-  if (CONTROL.test(text)) throw new Refused()
+  if (hasControl(text)) throw new Refused()
   const shown = text.replace(INVISIBLE, '')
   return shown === '' ? undefined : shown
 }

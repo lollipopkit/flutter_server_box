@@ -42,6 +42,8 @@ describe('parseReport', () => {
     expect(parseReport(`state=done:msg=${b64('a'.repeat(2049))}`)).toBeNull()
     expect(parseReport(`state=done:app=${'a'.repeat(33)}`)).toBeNull()
     expect(parseReport(`state=done:x=${'a'.repeat(4100)}`)).toBeNull()
+    expect(parseReport(`state=done:x=${'界'.repeat(1400)}`)).toBeNull()
+    expect(parseReport(`state=done:x=${'界'.repeat(1000)}`)?.state).toBe('done')
   })
 
   it('keeps kind and progress only where they apply, and strips invisibles', () => {
