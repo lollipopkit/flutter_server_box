@@ -275,11 +275,15 @@ extension _SSH on _AppSettingsPageState {
     } else {
       final fontName = path.getFileName();
       final fontPath = Paths.font.joinPath(fontName ?? 'font.ttf');
-      // Copied before the old one goes: a file that cannot be read now leaves
-      // the font that was working, and says why.
+      // Copied beside the target and renamed over it only once whole: a file
+      // that cannot be read now leaves the font that was working — even one
+      // of the same name — and says why.
+      final part = File('$fontPath.part');
       try {
-        await File(path).copy(fontPath);
+        await File(path).copy(part.path);
+        await part.rename(fontPath);
       } catch (e, s) {
+        if (await part.exists()) await part.delete();
         if (mounted) context.showErrDialog(e, s, libL10n.font);
         return;
       }
