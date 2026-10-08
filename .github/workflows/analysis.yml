@@ -77,12 +77,18 @@ jobs:
           echo "changed files:"
           echo "$files"
 
+          # emit <filter> <pattern> [exclude]: files matching `exclude` are
+          # left out before `pattern` is asked.
           emit() {
             if [[ "$strict" != *" $1 "* ]]; then
               echo "$1=true" >> "$GITHUB_OUTPUT"
               return
             fi
-            if grep -qE "$2" <<< "$files"; then
+            local covered="$files"
+            if [[ -n "${3:-}" ]]; then
+              covered="$(grep -vE "$3" <<< "$files" || true)"
+            fi
+            if grep -qE "$2" <<< "$covered"; then
               echo "$1=true" >> "$GITHUB_OUTPUT"
             else
               echo "$1=false" >> "$GITHUB_OUTPUT"
@@ -103,7 +109,9 @@ jobs:
           # reaching main with nothing having compiled anything.
           shared='^\.github/(workflows/(analysis|build)\.yml$|actions/)|^pubspec\.(yaml|lock)$|^packages/'
 
-          emit rust "$shared|^crates/|^monitor/|^Cargo\.(toml|lock)$"
+          # Not the panel and its SDK under `monitor/`: the agent reads only the
+          # panel's build output, at run time, and the tests build none of it.
+          emit rust "$shared|^crates/|^monitor/|^Cargo\.(toml|lock)$" '^monitor/(frontend|sdk)/'
           # `crates/` because `flutter test` loads the FFI dylib and the
           # generated bindings come from there.
           #
