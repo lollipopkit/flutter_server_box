@@ -15,6 +15,9 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
+      // The design system installed apps load (`api::assets::desk_app`): the
+      // agent's, as `/api` is.
+      '/desk-app': { target: agent, changeOrigin: true, secure: false },
       '/api': {
         target: agent,
         changeOrigin: true,
