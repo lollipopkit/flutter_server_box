@@ -679,6 +679,11 @@
   {/snippet}
 
   {#snippet actions()}
+    <!-- + alone in its capsule while there is one tab (the tabs bring their
+         own once there are several), as Terminal's bar; it starts here. -->
+    {#if available && win.panes && win.panes.tabs <= 1}
+      <ToolbarGroup items={[{ label: $LL.deskNewTab(), icon: 'add', onclick: () => win.panes?.newTab(cwd ? { path: cwd, view } : undefined) }]} />
+    {/if}
     {#if available}
       <SegmentedControl
         size="sm"
