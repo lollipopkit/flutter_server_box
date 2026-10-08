@@ -8,8 +8,8 @@
 /// goes.
 
 import { untrack, type Snippet } from 'svelte'
-import type { MenuEntry } from '../lk/Menu.svelte'
-import type { IconTone } from '../lk/AppIcon.svelte'
+import type { MenuEntry } from '@lollipopkit/desk-ui/Menu.svelte'
+import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
 import type { LifecycleState } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
 

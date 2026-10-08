@@ -5,7 +5,7 @@
   /// administrator) the installed ones. Saved on the server, so they apply in
   /// every browser this account signs in from.
 
-  import { AppIcon, Group, Row, Spinner, Switch } from '../../lk'
+  import { AppIcon, Group, Row, Spinner, Switch } from '@lollipopkit/desk-ui'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
   import InstalledApps from './InstalledApps.svelte'

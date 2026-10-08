@@ -3,7 +3,7 @@
 
   import { LL } from '../../i18n/i18n-svelte'
   import { provideAppSettings, useDesk } from '../deskState.svelte'
-  import Spinner from '../lk/Spinner.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import type { AppSpec } from '../sys/manifest'
   import { useWindow } from '../sys/window.svelte'
 

@@ -4,11 +4,11 @@
   /// the admin's password. A change reaches this desk's launchpad at once;
   /// other desks see it when they next start.
 
-  import { AppIcon, Badge, Button, Group, Row } from '../../lk'
+  import { AppIcon, Badge, Button, Group, Row } from '@lollipopkit/desk-ui'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
   import type { InstalledApp } from '../../../types'
-  import type { IconTone } from '../../lk/AppIcon.svelte'
+  import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
   import ReauthDialog from './ReauthDialog.svelte'
 
   interface Props {
@@ -105,7 +105,7 @@
     </Row>
   {/each}
   <Row label={$LL.settingsInstallApp()} sub={error || undefined}>
-    <input bind:this={fileInput} type="file" class="hidden" accept=".sbapp,application/gzip" onchange={install} />
+    <input bind:this={fileInput} type="file" class="hidden" accept=".fsba,application/gzip" onchange={install} />
     <Button size="sm" icon="upload" disabled={busy} onclick={() => fileInput?.click()}>{$LL.settingsInstallAppButton()}</Button>
   </Row>
 </Group>

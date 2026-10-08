@@ -1,7 +1,7 @@
 <script lang="ts">
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { monthGrid } from '../calendar'
-  import IconButton from '../lk/IconButton.svelte'
+  import IconButton from '@lollipopkit/desk-ui/IconButton.svelte'
 
   const today = new Date()
   let shown = $state(new Date(today.getFullYear(), today.getMonth(), 1))

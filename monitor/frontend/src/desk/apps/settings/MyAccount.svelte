@@ -3,7 +3,7 @@
   /// its own password — the one thing an account that is not an
   /// administrator may change.
 
-  import { Badge, Button, Group, Input, Row, Spinner } from '../../lk'
+  import { Badge, Button, Group, Input, Row, Spinner } from '@lollipopkit/desk-ui'
   import { LL } from '../../../i18n/i18n-svelte'
   import { accessMessage } from '../../../lib/access'
   import { api } from '../../../lib/api'

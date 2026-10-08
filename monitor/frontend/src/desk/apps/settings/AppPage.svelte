@@ -4,7 +4,7 @@
   /// installed one may do, and its own preferences (its manifest's `settings`
   /// page, run as the app).
 
-  import { AppIcon, Group, Row, Spinner, Switch } from '../../lk'
+  import { AppIcon, Group, Row, Spinner, Switch } from '@lollipopkit/desk-ui'
   import AppSettingsHost from '../../window/AppSettingsHost.svelte'
   import type { AppSpec } from '../../sys'
   import SettingsPage from './SettingsPage.svelte'

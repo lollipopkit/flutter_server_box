@@ -7,5 +7,11 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src", "README.md"]
+  "files": [
+    "src",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "license": "Apache-2.0"
 }

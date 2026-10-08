@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import { useDesk } from '../deskState.svelte'
-  import Menu from '../lk/Menu.svelte'
+  import Menu from '@lollipopkit/desk-ui/Menu.svelte'
 
   const desk = useDesk()
   let el = $state<HTMLDivElement | null>(null)

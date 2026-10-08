@@ -11,9 +11,9 @@
 import { SvelteMap } from 'svelte/reactivity'
 import type { WindowHandle } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
-import type { MenuEntry } from '../lk/Menu.svelte'
-import type { IconTone } from '../lk/AppIcon.svelte'
-import { isCall, PROTOCOL, type ActionItem, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/desk-sys/src/protocol'
+import type { MenuEntry } from '@lollipopkit/desk-ui/Menu.svelte'
+import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
+import { isCall, PROTOCOL, type ActionItem, type AppTheme, type Event, type MenuDescription, type Reply, type ToolbarDescription } from '../../../../sdk/desk-sys/src/protocol'
 
 const MAX_MESSAGE_BYTES = 1 << 20
 const MAX_IN_FLIGHT = 32
@@ -71,7 +71,7 @@ export interface BridgeHost {
   /// Whether the app's approved permissions include [permission].
   allows(permission: string): boolean
   /// Light or dark, and the panel's language, as they change.
-  theme(): { dark: boolean }
+  theme(): AppTheme
   locale(): string
   /// Runs [method] of the app's backend, when it has one.
   backend?: (method: string, params: unknown) => Promise<{ ok?: unknown; error?: string }>

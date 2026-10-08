@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { AppSpec } from '../sys/manifest'
   import { useDesk } from '../deskState.svelte'
-  import LkAppIcon from '../lk/AppIcon.svelte'
+  import LkAppIcon from '@lollipopkit/desk-ui/AppIcon.svelte'
 
   /// An app's icon by its registry entry.
 

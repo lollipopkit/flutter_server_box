@@ -3,7 +3,7 @@
   import { useDesk } from '../deskState.svelte'
   import type { DeskNotification } from '../deskApi'
   import { fmtDate } from '../../lib/format'
-  import LkNotificationCenter, { type CenterNotice } from '../lk/NotificationCenter.svelte'
+  import LkNotificationCenter, { type CenterNotice } from '@lollipopkit/desk-ui/NotificationCenter.svelte'
 
   const desk = useDesk()
   const list = $derived(desk.notifications?.list ?? [])

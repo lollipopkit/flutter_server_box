@@ -39,7 +39,7 @@ describe('theme', () => {
     theme.set('light')
     expect(terminalSurface.current).toBe('#ffffff')
     theme.set('dark')
-    expect(terminalSurface.current).toBe('#0b0f14')
+    expect(terminalSurface.current).toBe('#0e0a0c')
     theme.set('system')
   })
 })

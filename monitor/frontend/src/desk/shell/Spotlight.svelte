@@ -6,8 +6,8 @@
   import { app } from '../registry.svelte'
   import type { AppSpec } from '../sys/manifest'
   import { useDesk } from '../deskState.svelte'
-  import LkAppIcon, { type IconTone } from '../lk/AppIcon.svelte'
-  import Icon from '../lk/Icon.svelte'
+  import LkAppIcon, { type IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
+  import Icon from '@lollipopkit/desk-ui/Icon.svelte'
   import AppIcon from './AppIcon.svelte'
 
   interface Props {

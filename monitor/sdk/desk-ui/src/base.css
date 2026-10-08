@@ -1,10 +1,6 @@
 /* lollipopkit Design System base (styles/base.css), scoped to `.lk`. */
-@import '@fontsource-variable/figtree';
-@import '@fontsource/jetbrains-mono/400.css';
-@import '@fontsource/jetbrains-mono/500.css';
-@import '@fontsource/jetbrains-mono/700.css';
-/* TODO: the full variable font is 5.4 MB; subset it to the glyphs the panel uses. */
-@import 'material-symbols/rounded.css';
+/* Fonts are separate (`fonts.css`, `icons.css`), so an app takes only what
+   it draws. */
 
 .lk {
   -webkit-font-smoothing: antialiased;

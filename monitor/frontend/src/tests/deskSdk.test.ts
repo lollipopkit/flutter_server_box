@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { connect } from '../../../sdk/desk-sys/src/index'
+import { applyTheme } from '@lollipopkit/desk-ui/theme'
 import { WebAppBridge } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
 
@@ -21,7 +22,7 @@ function joined(permissions: string[]) {
   const bridge = new WebAppBridge({
     handle,
     allows: (p) => permissions.includes(p),
-    theme: () => ({ dark: true }),
+    theme: () => ({ dark: true, tokens: { '--color-accent': '#6750a4' } }),
     locale: () => 'de',
     backend: async () => ({ ok: 7 }),
   })
@@ -39,7 +40,7 @@ describe('the desk SDK against the bridge', () => {
   it('connects, calls and hears events', async () => {
     const { bridge, handle, connecting } = joined(['notifications'])
     const desk = await connecting
-    expect(desk.info).toMatchObject({ appId: 'acme_notes', appState: { page: 2 }, theme: { dark: true }, locale: 'de', permissions: ['notifications'] })
+    expect(desk.info).toMatchObject({ appId: 'acme_notes', appState: { page: 2 }, theme: { dark: true, tokens: { '--color-accent': '#6750a4' } }, locale: 'de', permissions: ['notifications'] })
     await desk.setTitle('Draft')
     expect(handle.setTitle).toHaveBeenCalledWith('Draft')
     expect(await desk.storage.get('k')).toBe('v')
@@ -58,5 +59,21 @@ describe('the desk SDK against the bridge', () => {
     const desk = await connecting
     await expect(desk.notify({ title: 'x' })).rejects.toThrow('notPermitted')
     await expect(desk.keepAlive('upload')).rejects.toThrow('notPermitted')
+  })
+})
+
+describe('applyTheme', () => {
+  it('draws an app the way the desk is, and lets go of a theme removed', () => {
+    const root = document.createElement('div')
+    applyTheme({ dark: true, tokens: { '--color-accent': '#6750a4', '--shape-card': '20px', color: 'red' } }, root)
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(root.classList.contains('lk')).toBe(true)
+    expect(root.style.getPropertyValue('--color-accent')).toBe('#6750a4')
+    // Only custom properties: a token cannot restyle the element itself.
+    expect(root.style.color).toBe('')
+    applyTheme({ dark: false, tokens: {} }, root)
+    expect(document.documentElement.dataset.theme).toBe('light')
+    expect(root.style.getPropertyValue('--color-accent')).toBe('')
+    expect(root.style.getPropertyValue('--shape-card')).toBe('')
   })
 })

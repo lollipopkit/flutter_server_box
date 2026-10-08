@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Select } from '../../lk'
+  import { Select } from '@lollipopkit/desk-ui'
   import { locale } from '../../../i18n/i18n-svelte'
   import { persistLocale } from '../../../i18n/init'
   import type { Locales } from '../../../i18n/i18n-types'

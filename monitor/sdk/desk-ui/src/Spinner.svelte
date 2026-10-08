@@ -15,7 +15,7 @@
   const px = $derived(typeof size === 'number' ? size : { sm: 16, md: 32, lg: 48 }[size])
 </script>
 
-<span class="flex items-center justify-center {className}" role={label ? 'status' : undefined} aria-label={label}>
+<span class="lk-spinner {className}" role={label ? 'status' : undefined} aria-label={label}>
   <Icon name="progress_activity" size={px} weight={500} color="var(--color-accent)" class="lk-spinner" />
 </span>
 

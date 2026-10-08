@@ -1,11 +1,11 @@
 /* The desk's own layout rules. Its look is the lollipopkit Design System
-   (`lk/lk.css`: tokens and `lk-*` classes); this file only places windows,
+   (`@lollipopkit/desk-ui/lk.css`: tokens and `lk-*` classes); this file only places windows,
    animates them and picks a wallpaper's light or dark version. */
 /* Whichever stylesheet loads first fixes the layers' order; stated here as
    Tailwind states it, so the design system's components layer sits under
    the utilities. */
 @layer theme, base, components, utilities;
-@import './lk/lk.css';
+@import '@lollipopkit/desk-ui/lk.css';
 
 /* A window's box on the desk (`window/Window.svelte`); the `lk-window`
    inside it is the visible frame. */

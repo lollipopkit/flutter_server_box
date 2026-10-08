@@ -2,7 +2,7 @@
   /// Files in Settings → Apps: the view a window starts in, hidden files,
   /// and what a double-click on a file does.
 
-  import { Row, SegmentedControl, Select, Switch } from '../../lk'
+  import { Row, SegmentedControl, Select, Switch } from '@lollipopkit/desk-ui'
   import { useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { DEFAULT_PREFS, loadPrefs, PREFS_KEY, type FilesPrefs } from './prefs'

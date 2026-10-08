@@ -11,7 +11,13 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["svelte", "vite/client", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["svelte", "vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    // `@lollipopkit/desk-ui` (linked) has svelte as a peer: its sources find
+    // the panel's, as vite's `dedupe` does at build time.
+    "paths": {
+      "svelte": ["./node_modules/svelte"],
+      "svelte/*": ["./node_modules/svelte/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.svelte", "vite.config.ts", "vitest.config.ts"]
 }

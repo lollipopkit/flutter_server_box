@@ -60,6 +60,7 @@
   --color-accent-soft: var(--berry-90);
   --color-on-accent-soft: var(--berry-20);
   --text-on-accent: #ffffff;
+  --text-on-danger: #ffffff;
 
   --color-success: #23864a;
   --color-success-soft: #dcf3e3;
@@ -186,13 +187,12 @@
 
 /* ---------- Type (tokens/typography.css) ----------
    13px is the body size (desktop density). Fonts are bundled
-   (`@fontsource-variable/figtree`, `@fontsource/jetbrains-mono`,
-   `material-symbols`), never fetched from a CDN. */
+   (`fonts.css`, `icons.css`), never fetched from a CDN. */
 .lk {
   --font-ui: 'Figtree Variable', 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
     'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
   --font-display: 'Figtree Variable', 'Figtree', -apple-system, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --text-11: 11px;
   --text-12: 12px;
@@ -275,18 +275,21 @@
 }
 
 /* ---------- Elevation (tokens/elevation.css) ----------
-   Content is flat; only what floats casts a shadow, tinted with the seed. */
+   Content is flat; only what floats casts a shadow, tinted with the seed
+   (`--shadow-ink`, `--shadow-ink-deep`, so a theme can tint them). */
 .lk {
-  --shadow-control: 0 0.5px 1px rgba(60, 10, 30, 0.14), 0 1px 2px rgba(60, 10, 30, 0.06);
-  --shadow-thumb: 0 1px 3px rgba(60, 10, 30, 0.22), 0 0 0 0.5px rgba(60, 10, 30, 0.08);
-  --shadow-popover: 0 0 0 0.5px rgba(60, 10, 30, 0.12), 0 8px 24px rgba(60, 10, 30, 0.16);
-  --shadow-menu: 0 0 0 0.5px rgba(60, 10, 30, 0.14), 0 10px 30px rgba(60, 10, 30, 0.2);
-  --shadow-window: 0 0 0 0.5px rgba(60, 10, 30, 0.16), 0 12px 32px rgba(60, 10, 30, 0.16),
-    0 34px 90px rgba(60, 10, 30, 0.22);
-  --shadow-window-inactive: 0 0 0 0.5px rgba(60, 10, 30, 0.12), 0 6px 18px rgba(60, 10, 30, 0.1),
-    0 18px 48px rgba(60, 10, 30, 0.12);
-  --shadow-dock: 0 0 0 0.5px rgba(60, 10, 30, 0.1), 0 10px 40px rgba(60, 10, 30, 0.22);
-  --shadow-icon: 0 1px 2px rgba(40, 5, 20, 0.2), 0 4px 10px rgba(40, 5, 20, 0.16);
+  --shadow-ink: rgb(60 10 30);
+  --shadow-ink-deep: rgb(40 5 20);
+  --shadow-control: 0 0.5px 1px color-mix(in srgb, var(--shadow-ink) 14%, transparent), 0 1px 2px color-mix(in srgb, var(--shadow-ink) 6%, transparent);
+  --shadow-thumb: 0 1px 3px color-mix(in srgb, var(--shadow-ink) 22%, transparent), 0 0 0 0.5px color-mix(in srgb, var(--shadow-ink) 8%, transparent);
+  --shadow-popover: 0 0 0 0.5px color-mix(in srgb, var(--shadow-ink) 12%, transparent), 0 8px 24px color-mix(in srgb, var(--shadow-ink) 16%, transparent);
+  --shadow-menu: 0 0 0 0.5px color-mix(in srgb, var(--shadow-ink) 14%, transparent), 0 10px 30px color-mix(in srgb, var(--shadow-ink) 20%, transparent);
+  --shadow-window: 0 0 0 0.5px color-mix(in srgb, var(--shadow-ink) 16%, transparent), 0 12px 32px color-mix(in srgb, var(--shadow-ink) 16%, transparent),
+    0 34px 90px color-mix(in srgb, var(--shadow-ink) 22%, transparent);
+  --shadow-window-inactive: 0 0 0 0.5px color-mix(in srgb, var(--shadow-ink) 12%, transparent), 0 6px 18px color-mix(in srgb, var(--shadow-ink) 10%, transparent),
+    0 18px 48px color-mix(in srgb, var(--shadow-ink) 12%, transparent);
+  --shadow-dock: 0 0 0 0.5px color-mix(in srgb, var(--shadow-ink) 10%, transparent), 0 10px 40px color-mix(in srgb, var(--shadow-ink) 22%, transparent);
+  --shadow-icon: 0 1px 2px color-mix(in srgb, var(--shadow-ink-deep) 20%, transparent), 0 4px 10px color-mix(in srgb, var(--shadow-ink-deep) 16%, transparent);
   --scrim: rgba(30, 6, 16, 0.28);
 }
 :root[data-theme='dark'] .lk {
@@ -422,7 +425,7 @@
    Apps still built on `@serverbox/webui` and its Tailwind tokens (`bg`,
    `surface`, `fg`, `line`, `soft`, `primary`, …) take the design system's
    values here until they move to the `lk` components.
-   TODO: remove once every app uses `desk/lk` only. */
+   TODO: remove once every app uses `@lollipopkit/desk-ui` only. */
 .lk {
   --sb-snow: var(--surface-window);
   --sb-white: var(--surface-content);

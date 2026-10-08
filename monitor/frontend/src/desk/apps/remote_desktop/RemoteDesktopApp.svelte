@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Dialog, Icon, IconButton, Input, Spinner } from '../../lk'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, Input, Spinner } from '@lollipopkit/desk-ui'
   import { AppToolbar, PageStack } from '../../sys'
   import DesktopForm, { desktopFormState, type DesktopFormState } from './DesktopForm.svelte'
   import RdpViewer from './RdpViewer.svelte'

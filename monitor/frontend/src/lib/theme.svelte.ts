@@ -3,7 +3,7 @@
 /// media query by default; an explicit `.dark` / `.light` class on <html>
 /// overrides it (pre-paint init lives in index.html). The theme in effect is
 /// also `data-theme="light|dark"` on <html>, which the desk's design system
-/// (`desk/lk/`) keys its dark palette on.
+/// (`@lollipopkit/desk-ui`) keys its dark palette on.
 
 import { flushSync } from 'svelte'
 
@@ -56,6 +56,10 @@ class ThemeStore {
   /// The one mode a desk's theme supports, which wins over the choice while
   /// that theme is drawn (`lock`).
   locked = $state<'light' | 'dark' | null>(null)
+  /// Moves whenever what the page is drawn with may have changed: the mode,
+  /// or the desk's theme tokens (`touch`). For what reads colours from the
+  /// document rather than through CSS (a terminal's canvas).
+  revision = $state(0)
 
   constructor() {
     window.matchMedia?.(SYSTEM_DARK).addEventListener?.('change', (e) => {
@@ -89,7 +93,14 @@ class ThemeStore {
     return v === 'light' || v === 'dark' ? v : 'system'
   }
 
+  /// Says the desk's tokens changed (another installed theme), once they are
+  /// on the page.
+  touch() {
+    this.revision++
+  }
+
   #apply() {
+    this.revision++
     const cls = document.documentElement.classList
     const mode = this.locked ?? this.current
     cls.toggle('dark', mode === 'dark')

@@ -118,7 +118,7 @@ jobs:
           # `store/` because `test/unit/theme_store_tree_test.dart` reads the
           # official theme repository the way the store does.
           emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/|^store/"
-          emit frontend "$shared|^monitor/frontend/|^packages/webui/"
+          emit frontend "$shared|^monitor/frontend/|^monitor/sdk/|^packages/webui/"
           # `store/` (and fl_lib, under `$shared`) for the theme manifests the
           # docs job validates against that same schema; `assets/catalog/` for
           # the catalog the docs describe.
@@ -231,19 +231,22 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: monitor/frontend/package-lock.json
-      # packages/webui is a `file:` dependency, so the install above only
-      # symlinks it and its own dependencies are never fetched. `npm run check`
-      # is what needs them here — svelte-check reads that package's source, and
-      # without them reports every import in it as a missing module.
+      # packages/webui and monitor/sdk/desk-ui are `file:` dependencies, so
+      # the install above only symlinks them and their own dependencies are
+      # never fetched. `npm run check` is what needs them here — svelte-check
+      # reads those packages' source, and without them reports every import in
+      # them as a missing module. desk-ui's svelte is a peer, left out so the
+      # panel's is the only one.
       - name: Install dependencies
         working-directory: monitor/frontend
         run: |
           npm ci
           npm ci --prefix ../../packages/webui
+          npm ci --omit=peer --prefix ../sdk/desk-ui
       - name: Test, lint, check and build
         working-directory: monitor/frontend
         # `--ignore-scripts` skips the `prebuild` hook, which installs
-        # packages/webui — the step above has already done exactly that, and
+        # packages/webui and monitor/sdk/desk-ui — the step above has already done exactly that, and
         # this is the one place where both run. Nowhere else may drop the hook:
         # Cloudflare Pages and a local `npm run build` have no step above them,
         # and the hook is the only thing that installs it there.

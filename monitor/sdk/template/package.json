@@ -3,11 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "_comment_prebuild": "The two packages are file: dependencies (only linked here): desk-ui's own dependencies (its fonts) are installed beside it, as the panel does.",
+    "prebuild": "npm ci --omit=peer --prefix ../desk-ui",
     "build": "vite build",
-    "pack": "vite build && node pack.mjs"
+    "pack": "npm run build && node pack.mjs"
   },
   "dependencies": {
-    "@lollipopkit/desk-sys": "file:../desk-sys"
+    "@lollipopkit/desk-sys": "file:../desk-sys",
+    "@lollipopkit/desk-ui": "file:../desk-ui"
   },
   "devDependencies": {
     "typescript": "^5.9.0",

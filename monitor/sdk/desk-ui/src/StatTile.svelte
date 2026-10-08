@@ -26,18 +26,18 @@
 
 {#snippet body()}
   <span class="lk-stat__head">
-    {#if icon}<Icon name={icon} size={15} {color} />{/if}{label}<span class="flex-1"></span>
+    {#if icon}<Icon name={icon} size={15} {color} />{/if}{label}<span class="lk-stat__spacer"></span>
     {#if onclick}<Icon name="chevron_right" size={15} color="var(--text-tertiary)" />{/if}
   </span>
   <span class="lk-stat__value lk-num">{value}</span>
   {#if sub}<span class="lk-stat__sub">{sub}</span>{/if}
   {#if percent != null}
-    <span class="lk-stat__track"><span class="lk-stat__fill block" style:width="{width}%" style:background={color}></span></span>
+    <span class="lk-stat__track"><span class="lk-stat__fill" style:width="{width}%" style:background={color}></span></span>
   {/if}
 {/snippet}
 
 {#if onclick}
-  <button type="button" class="lk-stat lk-stat--interactive w-full border-0 text-left {className}" {title} {onclick}>{@render body()}</button>
+  <button type="button" class="lk-stat lk-stat--interactive {className}" {title} {onclick}>{@render body()}</button>
 {:else}
   <div class="lk-stat {className}" {title}>{@render body()}</div>
 {/if}

@@ -1,7 +1,7 @@
 <script lang="ts">
   /// Terminal in Settings → Apps: font size, cursor and bell.
 
-  import { Row, SegmentedControl, Switch } from '../../lk'
+  import { Row, SegmentedControl, Switch } from '@lollipopkit/desk-ui'
   import { useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { DEFAULT_LOOK, FONT_SIZES, loadLook, LOOK_KEY, type Look } from './look'

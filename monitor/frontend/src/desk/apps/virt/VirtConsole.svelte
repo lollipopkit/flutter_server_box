@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Button, Card, Input, Spinner } from '../../lk/index'
+  import { Button, Card, Input, Spinner } from '@lollipopkit/desk-ui'
   import VncViewer from '../../../components/VncViewer.svelte'
   import { api } from '../../../lib/api'
   import { RelayChannel, parseControl } from '../../../lib/desktop.svelte'
   import { theme } from '../../../lib/theme.svelte'
+  import { terminalTheme } from '../../../lib/xterm'
   import { openConsoleSocket, resizeMessage } from '../../../lib/virtConsole'
   import { virtErrorText } from '../../../lib/virt'
   import { onDestroy } from 'svelte'
@@ -31,7 +32,13 @@
   let command = $state<string | null>(null)
   let socket: WebSocket | null = null
   let host = $state<HTMLDivElement | null>(null)
-  let term: import('@xterm/xterm').Terminal | null = null
+  let term: import('@xterm/xterm').Terminal | null = $state.raw(null)
+
+  $effect(() => {
+    // The desk's mode or theme changed: the console follows, as Terminal does.
+    void theme.revision
+    if (term) term.options.theme = terminalTheme()
+  })
   let resizeObserver: ResizeObserver | null = null
 
   onDestroy(() => close())
@@ -83,16 +90,11 @@
       import('@xterm/addon-fit'),
       import('@xterm/xterm/css/xterm.css'),
     ])
-    const dark =
-      theme.current === 'dark' ||
-      (theme.current === 'system' && (window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false))
     term = new Terminal({
       cursorBlink: true,
       fontSize: 13,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-      theme: dark
-        ? { background: '#0b0f14', foreground: '#d7dce2', cursor: '#d7dce2' }
-        : { background: '#ffffff', foreground: '#1f2933', cursor: '#1f2933' },
+      theme: terminalTheme(),
     })
     const fit = new FitAddon()
     term.loadAddon(fit)

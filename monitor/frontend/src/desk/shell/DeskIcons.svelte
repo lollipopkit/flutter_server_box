@@ -5,7 +5,7 @@
   import { useDesk } from '../deskState.svelte'
   import type { DeskIcon } from '../deskApi'
   import { placeIcons, CELL } from '../iconGrid'
-  import LkAppIcon from '../lk/AppIcon.svelte'
+  import LkAppIcon from '@lollipopkit/desk-ui/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
 
   const desk = useDesk()

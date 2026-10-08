@@ -1,4 +1,23 @@
-:root { color-scheme: light; font: 13px/1.5 system-ui, sans-serif; color: #1d1b1e; background: #fbf7f9; }
-:root.dark { color-scheme: dark; color: #f1eef0; background: #1d1a1c; }
-main { padding: 17px; }
-h1 { font-size: 21px; margin: 0 0 9px; }
+/* Layout only: colours, type and controls come from @lollipopkit/desk-ui,
+   in the design system's tokens, so the app follows the desk's theme. */
+body {
+  margin: 0;
+  background: var(--surface-window);
+}
+main {
+  box-sizing: border-box;
+  max-width: var(--content-max-form);
+  margin-inline: auto;
+  padding: var(--content-pad);
+}
+h1 {
+  margin: 0 0 var(--space-13);
+  font: var(--weight-bold) var(--text-21) / var(--leading-snug) var(--font-display);
+  letter-spacing: var(--tracking-display);
+}
+main .lk-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-9);
+}

@@ -7,8 +7,8 @@
   /// it, so nothing here composes one. Offered only where the agent lists the
   /// matching feature.
   import { onMount } from 'svelte'
-  import Button from '../desk/lk/Button.svelte'
-  import Spinner from '../desk/lk/Spinner.svelte'
+  import Button from '@lollipopkit/desk-ui/Button.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { TerminalSession, type TerminalTarget } from '../lib/terminal.svelte'
   import { terminalSurface } from '../lib/terminalSurface.svelte'

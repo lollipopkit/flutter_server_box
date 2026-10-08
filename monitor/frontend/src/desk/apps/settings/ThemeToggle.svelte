@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SegmentedControl } from '../../lk'
+  import { SegmentedControl } from '@lollipopkit/desk-ui'
   import { LL } from '../../../i18n/i18n-svelte'
   import { theme, type Theme } from '../../../lib/theme.svelte'
 

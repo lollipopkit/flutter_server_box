@@ -53,7 +53,7 @@
   </div>
   <div class="lk-ncenter__list">
     {#each notices as n (n.id)}
-      <button type="button" class="lk-ncenter__item w-full border-0 text-left" class:opacity-70={n.read} onclick={n.onclick}>
+      <button type="button" class="lk-ncenter__item lk-ncenter__item--button" class:lk-ncenter__item--read={n.read} onclick={n.onclick}>
         <AppIcon glyph={n.glyph} tone={n.tone} size={30} />
         <span class="lk-ncenter__body">
           <span class="lk-ncenter__row">

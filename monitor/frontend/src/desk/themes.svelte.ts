@@ -7,7 +7,7 @@ import type { ServerEntry } from '../lib/servers.svelte'
 import { crossfade, theme as appearance } from '../lib/theme.svelte'
 import { deskApi, type InstalledTheme, type PackageTheme, type StoreItem, type ThemeStoreView } from './deskApi'
 import type { DeskPrefs } from './prefs.svelte'
-import { themeOf, themeValue } from './themeStyle'
+import { themeDark, themeOf, themeValue, themeVars } from './themeStyle'
 
 export type { InstalledTheme, PackageTheme, StoreItem, ThemeStoreView }
 export { css, themeDark, themeValue, themeWallpaper } from './themeStyle'
@@ -30,6 +30,14 @@ export class DeskThemes {
   /// The package and theme the desk is drawn with, or null.
   get active(): { pkg: InstalledTheme; theme: PackageTheme } | null {
     return themeOf(this.installed, this.#prefs.value.theme)
+  }
+
+  /// The tokens the active theme draws the desk with in [dark] or light (a
+  /// theme with one mode keeps it), or null for the design system's own. The
+  /// desk sets them on its root; installed apps get them through the bridge.
+  vars(dark: boolean): Record<string, string> | null {
+    const active = this.active
+    return active ? themeVars(active.theme, themeDark(active.theme, dark)) : null
   }
 
   async load() {

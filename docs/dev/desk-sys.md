@@ -69,7 +69,7 @@ One import for system apps: `import { … } from '../../sys'`. Third-party apps 
 | Storage | `useWindow().storage.get/set/remove/keys` | JSON by key, per app, account and server: the agent's `/desk/apps/{app}/storage` (feature `desk_storage`, migration 021), else the browser. 256 KiB per app and 4 MiB per account across apps, keys ≤128 bytes. The agent cannot tell apps apart (the panel names the app), so it is not a boundary between apps of one account; for `web` apps the desk, not the iframe, names the app |
 | Intents | `open(appId, { intent })`, `useIntents(handler)`, `handlers(path, kind)`, `opens` in the manifest | An intent is `{ action, data }`, delivered once to the window it opened (held until the app's handler is mounted, so none is lost to timing). `open` (`data: { path, kind }`) is the desk's; others are named by the receiving app (`terminal.type`, `lib/snippetIntent`). Files lists the apps whose `opens` match under "Open with" |
 | Clipboard | `clipboard.writeText` | Read is not offered (browsers prompt; an app gets text by paste) |
-| Theme and locale | `theme.dark`, `locale` | Tokens come from `lk.css` |
+| Theme and locale | `theme` (`{ dark, tokens }`), `locale` | The UI kit is `@lollipopkit/desk-ui` (Apache-2.0 like `desk-sys`, `monitor/sdk/desk-ui`): `lk.css` and the Svelte components; `applyTheme(theme)` sets `tokens`, the installed theme's custom properties (empty for the design system's own), on the app's `.lk` root, on `hello` and every `theme` event |
 | Backend | `backend.call(method, params)`, `backend.events(handler)` | `wasm` apps only |
 
 ## Permissions
@@ -89,7 +89,7 @@ An admin installs an app and approves it in Settings → Apps. An approval names
 
 ## Packages and installation (`web`, `wasm`)
 
-A package is a `.sbapp` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only), `LICENSE`. Admin endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
+A package is a `.fsba` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only), `LICENSE`. Admin endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
 
 ## The bridge (phase 3)
 

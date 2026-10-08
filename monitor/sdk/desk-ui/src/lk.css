@@ -1,5 +1,6 @@
-/* lollipopkit Design System: tokens, base and component styles, in that
-   order. Imported once by `desk/DeskRoot.svelte`. */
-@import './base.css';
-@import './tokens.css';
-@import './components.css';
+/* lollipopkit Design System: everything — fonts, icons, tokens, base and
+   component styles. The panel imports this; an app that draws no icons may
+   import `core.css` and `fonts.css` instead and leave the 3 MB icon font out. */
+@import './fonts.css';
+@import './icons.css';
+@import './core.css';

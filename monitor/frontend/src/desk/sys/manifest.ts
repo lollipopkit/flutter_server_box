@@ -8,7 +8,7 @@ import type { TranslationFunctions } from '../../i18n/i18n-types'
 import { dashboardAccess } from '../../lib/access'
 import { enabledFeatures, type FeatureId } from '../../lib/features'
 import type { Capabilities } from '../../types'
-import type { IconTone } from '../lk/AppIcon.svelte'
+import type { IconTone } from '@lollipopkit/desk-ui/AppIcon.svelte'
 import type { Size } from '../geometry'
 import type { WindowPolicy } from '../windows.svelte'
 

@@ -65,7 +65,7 @@
       <button
         type="button"
         role="menuitem"
-        class="lk-menu__item w-full text-left"
+        class="lk-menu__item"
         class:lk-menu__item--danger={it.danger}
         class:lk-menu__item--disabled={it.disabled}
         disabled={it.disabled}

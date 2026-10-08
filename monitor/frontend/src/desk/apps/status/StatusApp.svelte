@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Dialog, Icon, IconButton, LegendChip, SegmentedControl, Spinner, StatTile, ToolbarGroup } from '../../lk'
+  import { Badge, Button, Card, Dialog, Icon, IconButton, LegendChip, SegmentedControl, Spinner, StatTile, ToolbarGroup } from '@lollipopkit/desk-ui'
   import { AppToolbar, PageStack, systemPrefs, useLifecycle, useMenus, useWindow, type MenuEntry } from '../../sys'
   import DetailPanel, { type DetailKind } from './DetailPanel.svelte'
   import IperfModal from './IperfModal.svelte'

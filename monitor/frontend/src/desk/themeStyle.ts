@@ -1,5 +1,5 @@
 /// An installed theme (`.fsbt`, read by the agent's `sbm_theme`) drawn with
-/// the lollipopkit Design System's tokens (`lk/tokens.css`): the theme's
+/// the lollipopkit Design System's tokens (desk-ui's `tokens.css`): the theme's
 /// accent and neutral palettes take the places of `--berry-*` and `--ink-*`,
 /// so every token the design system derives from them follows in its own
 /// proportions, and the tokens it writes as values (surfaces, text, lines,
@@ -48,6 +48,7 @@ export function themeVars(theme: PackageTheme, dark: boolean): Record<string, st
   set('--text-on-accent', 'onPrimary')
   set('--color-danger', 'error')
   set('--color-danger-soft', 'errorContainer')
+  set('--text-on-danger', 'onError')
 
   // The surface each of the design system's surfaces is, by tone.
   const surfaces: Record<string, [string, string]> = {
@@ -87,6 +88,13 @@ export function themeVars(theme: PackageTheme, dark: boolean): Record<string, st
     vars[name] = dark ? alpha(s[darkRole], da) : alpha(s[light], la)
   }
 
+  // Shadows and the scrim are tinted with the seed in the design system; here
+  // with the theme's accent at the same tones.
+  const tone = (t: number) => theme.accentTones[t] ?? s.shadow ?? 0xff000000
+  vars['--shadow-ink'] = css(tone(20) | 0xff000000)
+  vars['--shadow-ink-deep'] = css(tone(10) | 0xff000000)
+  if (!dark) vars['--scrim'] = alpha(tone(10), 0.28)
+
   // The icon tones the design system writes as values in the dark.
   if (dark) {
     set('--icon-soft-bg', 'primaryContainer')
@@ -107,9 +115,11 @@ export function themeVars(theme: PackageTheme, dark: boolean): Record<string, st
   ].join(', ')
 
   // Shapes name components (the app's cards, list tiles and buttons), so they
-  // reach those components (`--shape-*` in `lk/components.css`) and never the
+  // reach those components (`--shape-*` in desk-ui's `components.css`) and never the
   // design system's radius scale, which segmented thumbs, fields, menus and
-  // windows share: a theme with square list rows keeps round controls.
+  // windows share: a theme with square list rows keeps round controls. A
+  // list tile is a row of a list (`DataTable`); sidebar items, menu items and
+  // Spotlight results are navigation and menus, as they are in the app.
   vars['--shape-card'] = `${theme.shapes.card}px`
   vars['--shape-tile'] = `${theme.shapes.tile}px`
   vars['--shape-button'] = `${theme.shapes.button}px`

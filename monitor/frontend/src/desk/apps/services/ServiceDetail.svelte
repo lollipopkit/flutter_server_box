@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Spinner from '../../lk/Spinner.svelte'
-  import { Card, SegmentedControl, viewIn } from '../../lk'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
+  import { Card, SegmentedControl, viewIn } from '@lollipopkit/desk-ui'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { ServicePart, ServiceView } from '../../../types'

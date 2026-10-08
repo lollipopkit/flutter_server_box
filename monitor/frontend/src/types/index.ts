@@ -878,6 +878,9 @@ export interface ContainerStats {
   /// Podman's average over the sample window. Docker reports none.
   cpu_avg: string | null
   mem: string | null
+  /// The halves of `mem`; absent from an agent before they were split.
+  mem_used?: string | null
+  mem_limit?: string | null
   net_down: string | null
   net_up: string | null
   disk_read: string | null

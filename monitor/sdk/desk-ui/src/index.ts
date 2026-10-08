@@ -37,3 +37,4 @@ export { default as NotificationCenter, type CenterNotice } from './Notification
 export { default as TitleTabs, type TitleTab } from './TitleTabs.svelte'
 export { default as Indicator } from './Indicator.svelte'
 export { viewEnter, viewIn } from './motion'
+export { applyTheme, type DeskTheme } from './theme'

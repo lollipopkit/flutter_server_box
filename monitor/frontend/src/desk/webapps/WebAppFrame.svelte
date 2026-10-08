@@ -9,8 +9,8 @@
   import { theme } from '../../lib/theme.svelte'
   import { deskApi } from '../deskApi'
   import { useDesk } from '../deskState.svelte'
-  import IconButton from '../lk/IconButton.svelte'
-  import Spinner from '../lk/Spinner.svelte'
+  import IconButton from '@lollipopkit/desk-ui/IconButton.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import AppToolbar from '../sys/AppToolbar.svelte'
   import { useIntents, useMenus, useWindow } from '../sys/window.svelte'
   import { WebAppBridge } from './bridge.svelte'
@@ -21,11 +21,15 @@
   let src = $state<string | null>(null)
   let failed = $state(false)
 
+  /// The desk's mode and its installed theme's tokens (none for the design
+  /// system's own), which `@lollipopkit/desk-ui`'s `applyTheme` sets.
+  const appTheme = () => ({ dark: theme.dark, tokens: desk.themes?.vars(theme.dark) ?? {} })
+
   const bridge = new WebAppBridge(
     {
       handle: win,
       allows: (p) => desk.allows(win.appId, p),
-      theme: () => ({ dark: theme.dark }),
+      theme: () => appTheme(),
       locale: () => get(locale),
       backend: (method, params) => deskApi.callApp(desk.entry, win.appId, method, params),
     },
@@ -68,7 +72,7 @@
   useMenus(() => bridge.menuEntries())
   useIntents((intent) => bridge.intent(intent))
   $effect(() => bridge.send('lifecycle', win.lifecycle))
-  $effect(() => bridge.send('theme', { dark: theme.dark }))
+  $effect(() => bridge.send('theme', appTheme()))
   $effect(() => bridge.send('locale', $locale))
   onDestroy(() => bridge.close())
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Select, Spinner } from '../../lk/index'
+  import { Badge, Button, Card, Checkbox, Icon, IconButton, Input, SegmentedControl, Select, Spinner } from '@lollipopkit/desk-ui'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
   import {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Spinner from '../../lk/Spinner.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import { AppToolbar, type MenuEntry, SplitView, systemPrefs, useMenus, WindowFooter } from '../../sys'
   import {
     Button,
@@ -14,7 +14,7 @@
     SidebarSection,
     StatusBar,
     type Column,
-  } from '../../lk'
+  } from '@lollipopkit/desk-ui'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
   import { machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'
@@ -346,7 +346,9 @@
         image: row.image ?? $LL.containerUnknown(),
         ports: row.ports ?? '',
         cpu: row.stats?.cpu ?? '—',
-        mem: row.stats?.mem ?? '—',
+        // The table has room for what is used; the limit is in the detail.
+        // TODO: drop the `mem` fallback once agents without `mem_used` are gone.
+        mem: row.stats?.mem_used ?? row.stats?.mem ?? '—',
         state: statusText(row),
         stateColor: TONE_COLOR[statusTone(row)],
       }),

@@ -5,7 +5,7 @@
   /// The agent validates both values (`sbm_parser::iperf`) and builds the
   /// command, so this is a form and nothing more. The dialog is rendered by
   /// its opener only while it is open, so closing it drops the session.
-  import { Button, Dialog, Input } from '../../lk'
+  import { Button, Dialog, Input } from '@lollipopkit/desk-ui'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { iperfIssueText } from '../../../lib/iperf'

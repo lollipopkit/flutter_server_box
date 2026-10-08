@@ -6,14 +6,14 @@
 /// their own, which would show as a strip under the rows.
 ///
 /// A getter rather than a value each page reads once: it is read from the
-/// document (see `isDark`), so it follows a theme change by being read again —
-/// `theme.current` is what makes a read of it refresh.
+/// document, so it follows a theme change by being read again —
+/// `theme.revision` is what makes a read of it refresh.
 import { theme } from './theme.svelte'
 import { terminalBackground } from './xterm'
 
 class TerminalSurface {
   get current(): string {
-    void theme.current
+    void theme.revision
     return terminalBackground()
   }
 }

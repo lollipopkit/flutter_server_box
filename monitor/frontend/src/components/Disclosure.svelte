@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
-  import Icon from '../desk/lk/Icon.svelte'
+  import Icon from '@lollipopkit/desk-ui/Icon.svelte'
 
   interface Props {
     summary: string

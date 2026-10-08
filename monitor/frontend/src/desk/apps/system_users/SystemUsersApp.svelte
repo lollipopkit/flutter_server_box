@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Spinner from '../../lk/Spinner.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import { AppToolbar } from '../../sys'
-  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '@lollipopkit/desk-ui'
   import UserForm, { userFormState, type UserFormState } from './UserForm.svelte'
   import UserSecurity from './UserSecurity.svelte'
   import { api } from '../../../lib/api'

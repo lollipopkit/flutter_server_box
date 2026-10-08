@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppIcon, Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '../../lk'
+  import { AppIcon, Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '@lollipopkit/desk-ui'
   import { AppToolbar } from '../../sys'
   import { api } from '../../../lib/api'
   import { benchRefusalText, benchRunErrorText } from '../../../lib/benchRefusal'

@@ -3,7 +3,7 @@
   /// after the System Settings the desk imitates. The sections that belong to
   /// this browser come first; the agent's own configuration follows.
 
-  import { SidebarItem, SidebarSection } from '../../lk'
+  import { SidebarItem, SidebarSection } from '@lollipopkit/desk-ui'
   import { PageStack, SplitView, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'

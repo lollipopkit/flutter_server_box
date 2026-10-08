@@ -3,7 +3,7 @@
   /// that image is fitted. This is the one section that touches the desk's
   /// preferences — see `useDeskPrefs`.
 
-  import { Button, Card, Group, Row, SegmentedControl, Select, Spinner, Switch } from '../../lk'
+  import { Button, Card, Group, Row, SegmentedControl, Select, Spinner, Switch } from '@lollipopkit/desk-ui'
   import { systemPrefs, type Density, type TextSize } from '../../sys'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'

@@ -44,7 +44,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `crates/sbm_redfish/` — the BMC client; app via `sbm_ffi::api::bmc`. Also decides PVE certificate pins (`certPinAccepts`); pins are SHA-256 lowercase hex.
 - `crates/sbm_theme/` — `.fsbt` theme packages (fl_lib's validation, the seed → scheme of `ColorScheme.fromSeed`, the theme store); used by the agent, the app later through FFI (TODO).
 - `crates/sbm_ffi/` — FRB bindings. `crates/sbm_native/` — native sampler, monitor only.
-- `monitor/` — the agent (Rust + Svelte panel), see `monitor/CLAUDE.md`. Machine pages are listed as `features` in `/capabilities`.
+- `monitor/` — the agent (Rust + Svelte panel), see `monitor/CLAUDE.md`. `monitor/sdk/`: what installed desk apps use, `desk-sys` (the bridge client) and `desk-ui` (the design system; the panel uses it too), both Apache-2.0 for closed third-party apps. Machine pages are listed as `features` in `/capabilities`.
 - `lib/core/` utilities, `lib/view/` UI, `lib/data/{model,provider,store}/`, `lib/src/rust/` generated, `lib/hive/` legacy adapters for `HiveImport` only (TODO: remove).
 - `packages/` — Dart forks as submodules (dartssh2, xterm, fl_lib, fl_build, flutter_pty, …) and the in-repo `webui`. `third_party/` — `ish-arm64`, `ironrdp`. `website/` — Svelte + bun.
 - **The Agent is `packages/fl_pi_llm`** (submodule shared with GPT Box, its own Cargo workspace; PR changes there). This app hooks in at `lib/core/llm/` (`LlmHost`, `AgentTools`, `AgentScope`/`TerminalHosts`/`AgentChats`). `.claude/skills/serverbox-help` ships as assets: a new file needs its directory in `pubspec.yaml`, and its docs links must exist (`builtin_skill_test.dart`). Tests load `build/native_assets/<os>/libfl_pi_llm.*`.

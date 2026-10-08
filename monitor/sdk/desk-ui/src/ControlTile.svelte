@@ -21,13 +21,13 @@
   type="button"
   role={ontoggle ? 'switch' : undefined}
   aria-checked={ontoggle ? on : undefined}
-  class="lk-ctile lk-ctile--toggle w-full text-left {className}"
+  class="lk-ctile lk-ctile--toggle {className}"
   class:lk-ctile--on={on}
   onclick={() => (ontoggle ? ontoggle(!on) : onclick?.())}
 >
   <span class="lk-ctile__glyph"><Icon name={icon} size={18} fill={on} /></span>
   <span class="lk-ctile__text">
-    <span class="lk-ctile__label block">{label}</span>
-    {#if detail}<span class="lk-ctile__detail block">{detail}</span>{/if}
+    <span class="lk-ctile__label">{label}</span>
+    {#if detail}<span class="lk-ctile__detail">{detail}</span>{/if}
   </span>
 </button>

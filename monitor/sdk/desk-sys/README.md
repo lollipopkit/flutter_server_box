@@ -18,5 +18,6 @@ await desk.storage.set('count', count + 1)
 (`monitor/frontend/src/desk/webapps/bridge.svelte.ts`) imports it from here,
 and `monitor/frontend/src/tests/deskSdk.test.ts` runs this client against it.
 
-Not published yet (`private`): the license an app built on it takes is still
-to be decided.
+Apache-2.0 (`LICENSE`, `NOTICE`), as `@lollipopkit/desk-ui`: an app built on
+it, closed-source included, keeps its own license. Not published yet
+(`private`).

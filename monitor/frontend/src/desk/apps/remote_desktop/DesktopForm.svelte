@@ -64,7 +64,7 @@
 </script>
 
 <script lang="ts">
-  import { Button, Checkbox, Input, Select } from '../../lk'
+  import { Button, Checkbox, Input, Select } from '@lollipopkit/desk-ui'
   import { LL } from '../../../i18n/i18n-svelte'
 
   interface Props {

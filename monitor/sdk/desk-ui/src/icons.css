@@ -1,0 +1,10 @@
+/* Material Symbols Rounded, narrowed to the axes the kit draws
+   (`scripts/icons.py`; every glyph kept, since icons are named at run time).
+   Apache-2.0: `fonts/LICENSE-material-symbols`. */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url('./fonts/material-symbols-rounded.woff2') format('woff2');
+}

@@ -53,7 +53,7 @@
 {/snippet}
 
 {#if onclick}
-  <button type="button" class="{classes} block w-full text-left" style:padding
+  <button type="button" class="{classes} lk-card--button" style:padding
     aria-pressed={selectedAs === 'pressed' ? selected : undefined}
     aria-current={selectedAs === 'current' && selected ? 'true' : undefined}
     {onclick}

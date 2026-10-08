@@ -7,7 +7,7 @@
   /// password; a rejection keeps the dialog open with the reason, so a mistyped
   /// password is retyped rather than the change started over.
 
-  import { Button, Dialog, Input, Spinner } from '../../lk'
+  import { Button, Dialog, Input, Spinner } from '@lollipopkit/desk-ui'
   import { LL } from '../../../i18n/i18n-svelte'
   import { accessMessage } from '../../../lib/access'
 

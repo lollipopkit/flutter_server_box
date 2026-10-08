@@ -6,9 +6,9 @@
 ///   desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })
 ///   desk.on('action', ({ id }) => …)
 
-import { PROTOCOL, type MenuDescription, type ToolbarDescription } from './protocol'
+import { PROTOCOL, type AppTheme, type MenuDescription, type ToolbarDescription } from './protocol'
 
-export type { ActionItem, MenuDescription, ToolbarDescription } from './protocol'
+export type { ActionItem, AppTheme, MenuDescription, ToolbarDescription } from './protocol'
 
 export type Lifecycle = 'active' | 'visible' | 'background' | 'suspended'
 
@@ -18,7 +18,7 @@ export interface Hello {
   windowId: string
   appState: unknown
   lifecycle: Lifecycle
-  theme: { dark: boolean }
+  theme: AppTheme
   locale: string
   /// What the admin approved that the desk itself grants (`notifications`,
   /// `background`).
@@ -34,7 +34,7 @@ export interface Intent {
 
 export interface Events {
   lifecycle: Lifecycle
-  theme: { dark: boolean }
+  theme: AppTheme
   locale: string
   intent: Intent
   /// A toolbar button or menu row the app described was used.

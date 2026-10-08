@@ -7,7 +7,7 @@
   interface Props {
     left?: string
     right?: string
-    /// After [left]; a `<span class="flex-1">` pushes the rest right.
+    /// After [left]; a `<span class="lk-statusbar__spacer">` pushes the rest right.
     children?: Snippet
     class?: string
   }
@@ -16,7 +16,7 @@
 </script>
 
 <div class="lk-statusbar {className}">
-  {#if left}<span class="truncate">{left}</span>{/if}
+  {#if left}<span class="lk-statusbar__text">{left}</span>{/if}
   {@render children?.()}
-  {#if right}<span class="lk-statusbar__spacer"></span><span class="truncate">{right}</span>{/if}
+  {#if right}<span class="lk-statusbar__spacer"></span><span class="lk-statusbar__text">{right}</span>{/if}
 </div>

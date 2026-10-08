@@ -1,7 +1,7 @@
 <script lang="ts">
   import { LL } from '../../i18n/i18n-svelte'
   import { useDesk } from '../deskState.svelte'
-  import Input from '../lk/Input.svelte'
+  import Input from '@lollipopkit/desk-ui/Input.svelte'
   import AppIcon from './AppIcon.svelte'
 
   const desk = useDesk()

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Icon from '../desk/lk/Icon.svelte'
+  import Icon from '@lollipopkit/desk-ui/Icon.svelte'
   import type { Platform } from '../types'
 
   interface Props {

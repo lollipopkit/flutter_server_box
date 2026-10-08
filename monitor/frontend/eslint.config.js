@@ -40,8 +40,8 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^\\.\\./\\.\\./(?!(sys|lk)(/|$))[^.]',
-              message: 'An app uses the desk through `sys` (and `lk` for its UI) only.',
+              regex: '^\\.\\./\\.\\./(?!sys(/|$))[^.]',
+              message: 'An app uses the desk through `sys` (and `@lollipopkit/desk-ui` for its UI) only.',
             },
             {
               regex: '^\\.\\./[a-z_]+/',
@@ -62,8 +62,8 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^\\.\\./\\.\\./(?!(sys|lk|deskState\\.svelte|prefs\\.svelte|themes\\.svelte|shellPrefs\\.svelte|shell/Wallpaper\\.svelte|window/AppSettingsHost\\.svelte)(/|$))[^.]',
-              message: 'Settings uses `sys`, `lk` and the desk preferences only.',
+              regex: '^\\.\\./\\.\\./(?!(sys|deskState\\.svelte|prefs\\.svelte|themes\\.svelte|shellPrefs\\.svelte|shell/Wallpaper\\.svelte|window/AppSettingsHost\\.svelte)(/|$))[^.]',
+              message: 'Settings uses `sys`, `@lollipopkit/desk-ui` and the desk preferences only.',
             },
             { regex: '^\\.\\./[a-z_]+/', message: 'Apps are independent.' },
           ],

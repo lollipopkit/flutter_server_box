@@ -3,7 +3,7 @@
   /// one the desk is drawn with (one row per package, or per variant), one
   /// installed from a file, and the way to the store.
 
-  import { Button, Group, Icon, IconButton, Radio, Row, Spinner } from '../../lk'
+  import { Button, Group, Icon, IconButton, Radio, Row, Spinner } from '@lollipopkit/desk-ui'
   import { LL } from '../../../i18n/i18n-svelte'
   import { css, themeDark, themeValue, type DeskThemes, type InstalledTheme, type PackageTheme } from '../../themes.svelte'
   import { theme as mode } from '../../../lib/theme.svelte'

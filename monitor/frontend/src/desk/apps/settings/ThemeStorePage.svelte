@@ -3,7 +3,7 @@
   /// read by this server's agent (which fetches, checks each package's digest
   /// and installs it for this account).
 
-  import { Button, Card, Icon, IconButton, Spinner } from '../../lk'
+  import { Button, Card, Icon, IconButton, Spinner } from '@lollipopkit/desk-ui'
   import SettingsPage from './SettingsPage.svelte'
   import { LL, locale } from '../../../i18n/i18n-svelte'
   import { useDeskPrefs } from '../../deskState.svelte'

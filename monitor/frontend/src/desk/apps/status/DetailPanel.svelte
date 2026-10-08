@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Card, Icon } from '../../lk'
+  import { Badge, Card, Icon } from '@lollipopkit/desk-ui'
   import LineChart from '../../../components/LineChart.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { DATE_TIME, fmtBytes, fmtBytesPerSec, fmtDate, fmtGpuPower, fmtPercent } from '../../../lib/format'

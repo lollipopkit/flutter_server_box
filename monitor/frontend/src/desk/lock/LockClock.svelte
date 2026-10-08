@@ -32,9 +32,9 @@
 <script lang="ts">
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { fmtDate } from '../../lib/format'
-  import Button from '../lk/Button.svelte'
-  import SegmentedControl from '../lk/SegmentedControl.svelte'
-  import Slider from '../lk/Slider.svelte'
+  import Button from '@lollipopkit/desk-ui/Button.svelte'
+  import SegmentedControl from '@lollipopkit/desk-ui/SegmentedControl.svelte'
+  import Slider from '@lollipopkit/desk-ui/Slider.svelte'
 
   interface Props {
     /// Being restyled: the editor shows under it and a drag resizes it.

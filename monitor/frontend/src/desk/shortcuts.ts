@@ -2,7 +2,7 @@
 /// presses that run them. `⌘` is Command on a Mac and Control elsewhere, as
 /// the desk's own shortcuts are; `⌃` is Control everywhere.
 
-import type { MenuEntry } from './lk/Menu.svelte'
+import type { MenuEntry } from '@lollipopkit/desk-ui/Menu.svelte'
 import type { AppMenu } from './window/chrome.svelte'
 
 export interface Shortcut {

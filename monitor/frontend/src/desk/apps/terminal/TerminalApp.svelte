@@ -6,7 +6,7 @@
   /// xterm.js is loaded on demand; most visits never open a terminal.
 
   import { onDestroy, onMount, tick, untrack } from 'svelte'
-  import { Button, Card, Dialog, Icon, Input, Spinner, StatusBar } from '../../lk'
+  import { Button, Card, Dialog, Icon, Input, Spinner, StatusBar } from '@lollipopkit/desk-ui'
   import { AppToolbar, type MenuEntry, useIntents, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { isAdmin, machineAccess, terminalAccess, whyText } from '../../../lib/access'
@@ -97,9 +97,9 @@
   })
 
   $effect(() => {
-    // Re-read on every theme change; `theme.current` is the trigger even
-    // though the value comes from the document.
-    void theme.current
+    // Re-read on every change of mode or theme; `theme.revision` is the
+    // trigger even though the value comes from the document.
+    void theme.revision
     terminal?.setTheme()
   })
 

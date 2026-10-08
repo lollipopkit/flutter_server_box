@@ -13,7 +13,7 @@
     ToolbarGroup,
     type Column,
     type TableSort,
-  } from '../../lk'
+  } from '@lollipopkit/desk-ui'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../../../lib/format'

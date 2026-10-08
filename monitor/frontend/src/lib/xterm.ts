@@ -40,24 +40,62 @@ function isDark(): boolean {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 
-/// The selection is the accent's tint: xterm's own default is a translucent
-/// white, which on the light background cannot be seen at all.
-function terminalTheme() {
-  return isDark()
+/// What the terminal is drawn with when the desk's tokens cannot be read
+/// (no desk on screen, no canvas): the design system's own values.
+function fallbackTheme(dark: boolean) {
+  return dark
     ? {
-        background: '#0b0f14',
-        foreground: '#d7dce2',
-        cursor: '#d7dce2',
-        selectionBackground: 'rgba(232, 121, 170, 0.36)',
-        selectionInactiveBackground: 'rgba(232, 121, 170, 0.2)',
+        background: '#0e0a0c',
+        foreground: '#f5eef0',
+        cursor: '#f5eef0',
+        selectionBackground: 'rgba(184, 61, 104, 0.36)',
+        selectionInactiveBackground: 'rgba(184, 61, 104, 0.2)',
       }
     : {
         background: '#ffffff',
-        foreground: '#1f2933',
-        cursor: '#1f2933',
-        selectionBackground: 'rgba(139, 34, 82, 0.24)',
-        selectionInactiveBackground: 'rgba(139, 34, 82, 0.12)',
+        foreground: '#1f1619',
+        cursor: '#1f1619',
+        selectionBackground: 'rgba(115, 12, 55, 0.24)',
+        selectionInactiveBackground: 'rgba(115, 12, 55, 0.12)',
       }
+}
+
+/// [css] (any colour CSS takes: a token, `color-mix()`) as `rgba()`, which is
+/// what xterm parses; null without a canvas to resolve it on.
+function concrete(css: string, probe: HTMLElement, ctx: CanvasRenderingContext2D): string | null {
+  probe.style.color = ''
+  probe.style.color = css
+  if (!probe.style.color) return null
+  ctx.clearRect(0, 0, 1, 1)
+  ctx.fillStyle = getComputedStyle(probe).color
+  ctx.fillRect(0, 0, 1, 1)
+  const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+  return `rgba(${r}, ${g}, ${b}, ${+(a / 255).toFixed(3)})`
+}
+
+/// The terminal in the desk's tokens, so it follows the design system and an
+/// installed theme alike: `--surface-terminal` under `--text-primary`, the
+/// selection the accent's tint (xterm's own default is a translucent white,
+/// which on a light background cannot be seen at all).
+function terminalTheme() {
+  const root = document.querySelector<HTMLElement>('.desk-root') ?? document.querySelector<HTMLElement>('.lk')
+  const ctx = root ? document.createElement('canvas').getContext('2d', { willReadFrequently: true }) : null
+  if (!root || !ctx) return fallbackTheme(isDark())
+  const probe = document.createElement('span')
+  probe.hidden = true
+  root.append(probe)
+  try {
+    const read = (css: string) => concrete(css, probe, ctx)
+    const background = read('var(--surface-terminal)')
+    const foreground = read('var(--text-primary)')
+    const [on, off] = isDark() ? [36, 20] : [24, 12]
+    const selection = read(`color-mix(in srgb, var(--color-accent) ${on}%, transparent)`)
+    const inactive = read(`color-mix(in srgb, var(--color-accent) ${off}%, transparent)`)
+    if (!background || !foreground || !selection || !inactive) return fallbackTheme(isDark())
+    return { background, foreground, cursor: foreground, selectionBackground: selection, selectionInactiveBackground: inactive }
+  } finally {
+    probe.remove()
+  }
 }
 
 /// The terminal's own background, for a container the terminal does not fill.
@@ -66,6 +104,8 @@ function terminalTheme() {
 /// container's bottom edge: a container of a fixed height leaves a strip below
 /// it. That strip is filled with this, rather than with whatever colour the
 /// container happens to have, so it is invisible.
+export { terminalTheme }
+
 export function terminalBackground(): string {
   return terminalTheme().background
 }

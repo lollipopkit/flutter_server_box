@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import TitleTabs from '../desk/lk/TitleTabs.svelte'
-import { viewIn } from '../desk/lk/motion'
+import TitleTabs from '@lollipopkit/desk-ui/TitleTabs.svelte'
+import { viewIn } from '@lollipopkit/desk-ui/motion'
 
 const props = (keys: string[], active: string) => ({
   tabs: keys.map((key) => ({ key, label: key, title: `/root/${key}` })),

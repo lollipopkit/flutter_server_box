@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Spinner from './lk/Spinner.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import { onDestroy, onMount, untrack } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { theme } from '../lib/theme.svelte'
@@ -22,7 +22,7 @@
   import Spotlight from './shell/Spotlight.svelte'
   import Wallpaper from './shell/Wallpaper.svelte'
   import { saveWallpaper } from './lock/wallpapers'
-  import { themeDark, themeVars, themeWallpaper } from './themeStyle'
+  import { themeDark, themeWallpaper } from './themeStyle'
   import WindowLayer from './window/WindowLayer.svelte'
 
   interface Props {
@@ -94,11 +94,17 @@
     desk.themes?.preferencesChanged()
   })
   const themeStyle = $derived.by(() => {
-    if (!activeTheme) return undefined
-    const vars = themeVars(activeTheme, themeDark(activeTheme, theme.dark))
+    const vars = desk.themes?.vars(theme.dark)
+    if (!vars) return undefined
     return Object.entries(vars)
       .map(([k, v]) => `${k}: ${v}`)
       .join('; ')
+  })
+  $effect(() => {
+    // Effects run once the DOM has the new style: what reads colours from the
+    // document (terminals) reads them again.
+    void themeStyle
+    untrack(() => theme.touch())
   })
   const wallpaperTheme = $derived(
     activeTheme && desk.prefs?.value.wallpaper === 'theme'

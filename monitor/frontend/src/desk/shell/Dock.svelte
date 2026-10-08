@@ -4,7 +4,7 @@
   import { app } from '../registry.svelte'
   import type { AppSpec } from '../sys/manifest'
   import { useDesk, type MenuItem } from '../deskState.svelte'
-  import LkAppIcon from '../lk/AppIcon.svelte'
+  import LkAppIcon from '@lollipopkit/desk-ui/AppIcon.svelte'
   import AppIcon from './AppIcon.svelte'
   import { shellPrefs } from '../shellPrefs.svelte'
   import { dockItem } from './dockMotion'

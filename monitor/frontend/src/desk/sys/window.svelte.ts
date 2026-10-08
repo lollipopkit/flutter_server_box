@@ -2,7 +2,7 @@
 /// desk (see `docs/dev/desk-sys.md`).
 
 import { getContext, untrack } from 'svelte'
-import type { MenuEntry } from '../lk/Menu.svelte'
+import type { MenuEntry } from '@lollipopkit/desk-ui/Menu.svelte'
 import type { AppIconChrome, AppMenu, WindowChrome } from '../window/chrome.svelte'
 import type { AppStorage } from '../appData'
 import type { AppNotice } from '../notifications.svelte'

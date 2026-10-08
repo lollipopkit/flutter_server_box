@@ -4,7 +4,7 @@
   /// an administrator's: an account that has no admin role gets the note that
   /// says so and nothing to edit.
 
-  import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '../../lk'
+  import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '@lollipopkit/desk-ui'
   import SettingsPage from './SettingsPage.svelte'
   import PowerModal from '../../../components/PowerModal.svelte'
   import { machineAccess } from '../../../lib/access'

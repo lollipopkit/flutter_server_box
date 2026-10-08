@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button from '../desk/lk/Button.svelte'
-  import Dialog from '../desk/lk/Dialog.svelte'
-  import Input from '../desk/lk/Input.svelte'
-  import Spinner from '../desk/lk/Spinner.svelte'
+  import Button from '@lollipopkit/desk-ui/Button.svelte'
+  import Dialog from '@lollipopkit/desk-ui/Dialog.svelte'
+  import Input from '@lollipopkit/desk-ui/Input.svelte'
+  import Spinner from '@lollipopkit/desk-ui/Spinner.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { ApiError, api } from '../lib/api'
   import type { PowerAction } from '../types'

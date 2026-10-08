@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Input } from '../../lk'
+  import { Button, Input } from '@lollipopkit/desk-ui'
   import { api } from '../../../lib/api'
   import { bmcErrorText, prettyFingerprint } from '../../../lib/bmc'
   import { newId } from '../../../lib/newId'

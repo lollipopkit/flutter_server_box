@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner, Switch } from '../../lk/index'
+  import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner, Switch } from '@lollipopkit/desk-ui'
   import { api } from '../../../lib/api'
   import { fmtBytes } from '../../../lib/format'
   import { refText, virtErrorText, virtRequestText } from '../../../lib/virt'

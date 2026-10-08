@@ -10,7 +10,7 @@ const role = (base: number) => (name: string) => base + name.length
 function theme(over: Partial<PackageTheme> = {}): PackageTheme {
   const light: Record<string, number> = {}
   const dark: Record<string, number> = {}
-  for (const r of ['primary', 'onPrimary', 'primaryContainer', 'onPrimaryContainer', 'error', 'errorContainer', 'surface', 'surfaceDim', 'surfaceBright', 'surfaceContainerLowest', 'surfaceContainerLow', 'surfaceContainer', 'surfaceContainerHigh', 'surfaceContainerHighest', 'onSurface', 'onSurfaceVariant', 'outline', 'outlineVariant']) {
+  for (const r of ['primary', 'onPrimary', 'primaryContainer', 'onPrimaryContainer', 'error', 'onError', 'errorContainer', 'surface', 'surfaceDim', 'surfaceBright', 'surfaceContainerLowest', 'surfaceContainerLow', 'surfaceContainer', 'surfaceContainerHigh', 'surfaceContainerHighest', 'onSurface', 'onSurfaceVariant', 'outline', 'outlineVariant']) {
     light[r] = (0xff000000 | role(0x100000)(r)) >>> 0
     dark[r] = (0xff000000 | role(0x200000)(r)) >>> 0
   }
@@ -22,7 +22,7 @@ function theme(over: Partial<PackageTheme> = {}): PackageTheme {
     seed: 0xff6750a4,
     schemeLight: light,
     schemeDark: dark,
-    accentTones: { 40: 0xff6750a4, 90: 0xffeaddff },
+    accentTones: { 10: 0xff21005d, 20: 0xff381e72, 40: 0xff6750a4, 90: 0xffeaddff },
     neutralTones: { 10: 0xff1d1b20 },
     background: { style: 'none', opacity: 1, blur: 0, tile: 0 },
     shapes: { card: 12, tile: 8, button: 20 },
@@ -53,6 +53,14 @@ describe('themeStyle', () => {
     expect(light['--shape-card']).toBe('12px')
     expect(light['--shape-tile']).toBe('8px')
     expect(light['--shape-button']).toBe('20px')
+    // What is drawn on the accent or the danger colour, shadows and the scrim
+    // follow the theme too.
+    expect(light['--text-on-accent']).toBe(css(t.schemeLight.onPrimary))
+    expect(light['--text-on-danger']).toBe(css(t.schemeLight.onError))
+    expect(light['--shadow-ink']).toBe('#381e72')
+    expect(light['--shadow-ink-deep']).toBe('#21005d')
+    expect(light['--scrim']).toBe('color-mix(in srgb, #21005d 28%, transparent)')
+    expect(themeVars(t, true)['--scrim']).toBeUndefined()
     // The design system's radius scale is shared by every control.
     expect(Object.keys(light).some((k) => k.startsWith('--radius-'))).toBe(false)
     const dark = themeVars(t, true)

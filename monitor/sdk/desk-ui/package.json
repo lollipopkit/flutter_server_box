@@ -1,0 +1,48 @@
+{
+  "name": "@lollipopkit/desk-ui",
+  "version": "0.1.0",
+  "description": "The lollipopkit Design System for ServerBox desk apps: tokens, component styles and Svelte components.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "private": true,
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": {
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./motion": "./src/motion.ts",
+    "./theme": "./src/theme.ts",
+    "./lk.css": "./src/lk.css",
+    "./tokens.css": "./src/tokens.css",
+    "./components.css": "./src/components.css",
+    "./base.css": "./src/base.css",
+    "./*.svelte": {
+      "svelte": "./src/*.svelte",
+      "default": "./src/*.svelte"
+    },
+    "./core.css": "./src/core.css",
+    "./fonts.css": "./src/fonts.css",
+    "./icons.css": "./src/icons.css"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "scripts"
+  ],
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "dependencies": {
+    "@fontsource-variable/figtree": "5.3.0",
+    "@fontsource-variable/jetbrains-mono": "5.3.0"
+  },
+  "devDependencies": {
+    "material-symbols": "0.47.6"
+  },
+  "scripts": {
+    "icons": "uv run scripts/icons.py"
+  }
+}

@@ -24,7 +24,7 @@
 
 <button
   type="button"
-  class="lk-side__item w-full text-left {className}"
+  class="lk-side__item {className}"
   class:lk-side__item--on={active}
   aria-current={active ? 'true' : undefined}
   {title}
