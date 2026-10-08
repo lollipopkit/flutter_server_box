@@ -4,6 +4,14 @@
 /* Tailwind must scan the linked UI package for its utility classes */
 @source "../../../packages/webui/src";
 
+/* Light / dark as one crossfade (`crossfade` in lib/theme.svelte.ts sets the
+   pace from the design system's tokens). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--appearance-fade, 0ms);
+  animation-timing-function: var(--appearance-ease, ease);
+}
+
 @layer base {
   html,
   body {

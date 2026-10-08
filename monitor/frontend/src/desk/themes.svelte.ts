@@ -4,7 +4,7 @@
 
 import { ApiError } from '../lib/api'
 import type { ServerEntry } from '../lib/servers.svelte'
-import { theme as appearance } from '../lib/theme.svelte'
+import { crossfade, theme as appearance } from '../lib/theme.svelte'
 import { deskApi, type InstalledTheme, type PackageTheme, type StoreItem, type ThemeStoreView } from './deskApi'
 import type { DeskPrefs } from './prefs.svelte'
 import { themeOf, themeValue } from './themeStyle'
@@ -77,6 +77,11 @@ export class DeskThemes {
   /// system's own for null. As the app does: the theme's background becomes
   /// the wallpaper, and its preferred brightness the mode unless it locks one.
   select(installationId: string | null, theme: PackageTheme | null) {
+    crossfade(() => this.#select(installationId, theme))
+    void this.#syncBackground()
+  }
+
+  #select(installationId: string | null, theme: PackageTheme | null) {
     const wallpaper = this.#prefs.value.wallpaper
     if (!installationId || !theme) {
       this.#prefs.update({ theme: null, wallpaper: wallpaper === 'theme' ? 'preset:bloom' : wallpaper })
@@ -88,7 +93,6 @@ export class DeskThemes {
       })
       if (theme.modes.length > 1) appearance.set(theme.mode === 1 ? 'light' : theme.mode === 2 ? 'dark' : 'system')
     }
-    void this.#syncBackground()
   }
 
   /// Fetches the active theme's background again when the theme changed.
