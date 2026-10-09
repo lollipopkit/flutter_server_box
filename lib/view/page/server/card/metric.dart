@@ -3,6 +3,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -58,6 +59,10 @@ const kNetTrafficIcon = MingCute.chart_bar_line;
 /// and the extra slot's ranking all mean the same thing by "over".
 const kServerAlertPercent = 85.0;
 
+/// The charge at which a battery running on itself is worth a look: the one
+/// reading whose trouble is at the bottom rather than the top.
+const kServerBatteryLowPercent = 20.0;
+
 /// One reading, as a card draws it.
 ///
 /// The same object is the row and the chart: promoting a row is choosing which
@@ -76,7 +81,8 @@ final class ServerMetric {
     required this.format,
     this.percent,
     this.binary = false,
-  });
+    bool? over,
+  }) : _over = over;
 
   final ServerMetricKind kind;
   final String label;
@@ -128,8 +134,12 @@ final class ServerMetric {
   /// rather than of 10.
   final bool binary;
 
-  /// Whether this reading is past [kServerAlertPercent].
-  bool get over => percent != null && percent! * 100 >= kServerAlertPercent;
+  final bool? _over;
+
+  /// Whether this reading is past its line: [kServerAlertPercent] for a share
+  /// of something that runs out, unless the reading says otherwise.
+  bool get over =>
+      _over ?? (percent != null && percent! * 100 >= kServerAlertPercent);
 }
 
 /// Which reading a machine is being watched by, remembered per machine.
@@ -661,6 +671,12 @@ List<ServerMetric> _readings(ServerState srv) {
         note: [battery.status.name, ?battery.name].join(' · '),
         bigNote: battery.status.name,
         percent: percent == null ? null : percent / 100,
+        // Full is where a battery should be. Low is only trouble while it is
+        // what the machine runs on.
+        over:
+            percent != null &&
+            percent <= kServerBatteryLowPercent &&
+            battery.status == BatteryStatus.discharging,
         samples: h.battery.toList(),
         times: times,
         format: ReadingFmt.pct,
