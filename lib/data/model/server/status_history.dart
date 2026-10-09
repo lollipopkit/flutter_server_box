@@ -214,6 +214,11 @@ class _DeviceHistory {
         return f;
       });
       series.add(values[device]);
+      // Gone for a whole buffer: nothing of it is left to draw, and kept, a
+      // host cycling through short-lived interfaces grows a series for each.
+      if (!values.containsKey(device) && series.every((e) => e == null)) {
+        byDevice.remove(device);
+      }
     }
   }
 

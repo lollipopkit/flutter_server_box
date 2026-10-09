@@ -37,6 +37,19 @@ void main() {
       expect(h.netTxByDevice['tun0'], [2, null]);
     });
 
+    test('a device gone for a whole buffer is dropped', () {
+      final h = StatusHistory();
+
+      h.add(timeMs: 0, netTxs: const {'eth0': 1, 'tun0': 2});
+      for (var t = 1; t < StatusHistory.capacity; t++) {
+        h.add(timeMs: t, netTxs: const {'eth0': 1});
+      }
+      expect(h.netTxByDevice, contains('tun0'));
+
+      h.add(timeMs: StatusHistory.capacity, netTxs: const {'eth0': 1});
+      expect(h.netTxByDevice.keys, ['eth0']);
+    });
+
     test('each metric keeps its own devices', () {
       final h = StatusHistory();
 
