@@ -607,7 +607,9 @@ jobs:
       # Signing adds a signing block and touches no entry, which is what lets
       # F-Droid copy the signature onto its own build to compare the two.
       # `--alignment-preserved` keeps the entries where Gradle put them; the
-      # check after it fails the job if any moved or changed.
+      # check after it fails the job if any moved or changed. v2 alone, as Gradle
+      # signed: apksigner also adds a JAR (v1) signature by default, which is
+      # three more entries.
       - name: Sign
         shell: bash
         env:
@@ -644,6 +646,10 @@ jobs:
             --ks-pass env:KS_PASS \
             --key-pass env:KEY_PASS \
             --alignment-preserved \
+            --v1-signing-enabled false \
+            --v2-signing-enabled true \
+            --v3-signing-enabled false \
+            --v4-signing-enabled false \
             --out "$out" \
             "$unsigned"
           "$APKSIGNER" verify "$out"
