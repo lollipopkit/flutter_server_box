@@ -67,7 +67,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   _apply(ss, 'mem', () => _applyMemory(ss, status));
   _apply(ss, 'swap', () => _applySwap(ss, status));
   _apply(ss, 'disk', () => _applyDisks(ss, status));
-  _apply(ss, 'net', () => _applyNet(ss, status, req, time));
+  _apply(ss, 'net', () => _applyNet(ss, status, time));
   _apply(ss, 'temps', () => _applyTemps(ss, status));
   _apply(ss, 'conn', () => _applyConn(ss, status));
   _apply(ss, 'more', () => _applyMore(ss, status));
@@ -359,41 +359,19 @@ void _applyDisks(ServerStatus ss, Map<String, dynamic> status) {
       .toList();
 }
 
-void _applyNet(
-  ServerStatus ss,
-  Map<String, dynamic> status,
-  ServerStatusUpdateReq req,
-  int time,
-) {
-  final List<NetSpeedPart> parts;
-  if (req.system == SystemType.windows) {
-    // Windows network speed comes from a two-sample WMI delta; the FFI returns
-    // the rates directly.
-    final speedsJson = ffi.parseWindowsNetSpeedJson(
-      raw: WindowsStatusCmdType.net.findInMap(req.parsedOutput),
-    );
-    parts = (jsonDecode(speedsJson) as List)
-        .map(
-          (s) => NetSpeedPart(
-            s['name'] as String,
-            BigInt.from((s['rx'] as num).toInt()),
-            BigInt.from((s['tx'] as num).toInt()),
-            time,
-          ),
-        )
-        .toList();
-  } else {
-    parts = (status['net'] as List)
-        .map(
-          (n) => NetSpeedPart(
-            n['device'] as String,
-            BigInt.from(n['rx_bytes'] as int),
-            BigInt.from(n['tx_bytes'] as int),
-            time,
-          ),
-        )
-        .toList();
-  }
+/// Cumulative counters on every system, Windows included: the rates are
+/// taken across polls by [NetSpeed].
+void _applyNet(ServerStatus ss, Map<String, dynamic> status, int time) {
+  final parts = (status['net'] as List)
+      .map(
+        (n) => NetSpeedPart(
+          n['device'] as String,
+          BigInt.from(n['rx_bytes'] as int),
+          BigInt.from(n['tx_bytes'] as int),
+          time,
+        ),
+      )
+      .toList();
   if (parts.isNotEmpty) {
     ss.netSpeed.update(parts);
   }

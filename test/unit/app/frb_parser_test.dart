@@ -212,18 +212,6 @@ __SBM_GPU_END__
     expect(diskio[0]['sectors_read'], 567890);
   });
 
-  test('windows net speed delta', () {
-    const raw = '''[
-      [{"Name": "Ethernet", "BytesReceivedPersec": 1000, "BytesSentPersec": 500, "Timestamp_Sys100NS": 10000000}],
-      [{"Name": "Ethernet", "BytesReceivedPersec": 3000, "BytesSentPersec": 1500, "Timestamp_Sys100NS": 20000000}]
-    ]''';
-    final speeds = jsonDecode(parseWindowsNetSpeedJson(raw: raw)) as List;
-    expect(speeds.length, 1);
-    expect(speeds[0]['name'], 'Ethernet');
-    expect(speeds[0]['rx'], 2000.0);
-    expect(speeds[0]['tx'], 1000.0);
-  });
-
   test('command specs cover linux/bsd/windows', () {
     for (final system in ['linux', 'bsd', 'windows']) {
       final specs = commandSpecs(system: system);

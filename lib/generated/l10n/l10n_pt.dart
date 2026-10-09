@@ -5550,4 +5550,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get termFontTip =>
       'Sem um arquivo de fonte selecionado, o terminal usa a fonte monoespaçada do sistema e, para os glifos ausentes, fontes com glifos CJK e emoji.';
+
+  @override
+  String get netSpeed => 'Velocidade de rede';
+
+  @override
+  String get inRange => 'no período';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count threads';
+  }
 }

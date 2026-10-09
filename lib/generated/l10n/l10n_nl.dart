@@ -5550,4 +5550,15 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get termFontTip =>
       'Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met CJK- en emoji-glyphs voor wat daarin ontbreekt.';
+
+  @override
+  String get netSpeed => 'Netwerksnelheid';
+
+  @override
+  String get inRange => 'in periode';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count threads';
+  }
 }

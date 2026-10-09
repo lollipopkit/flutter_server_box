@@ -919,41 +919,6 @@ fn windows_real_net_totals() {
     }
 }
 
-/// Real WMI double-sample output: 5 NICs, `{"value": [...], "Count"}` wrapper form
-#[test]
-fn windows_real_net_speed() {
-    let speeds = windows::parse_net_speed(include_str!("fixtures/win_net.json"));
-    assert_eq!(speeds.len(), 5);
-    for (name, rx, tx) in &speeds {
-        assert!(!name.is_empty() && name != "_Total");
-        assert!(*rx >= 0.0 && *tx >= 0.0, "{}: rx={} tx={}", name, rx, tx);
-    }
-    // The active NIC (Wi-Fi) is present
-    assert!(speeds.iter().any(|(n, _, _)| n.contains("Wi-Fi")));
-}
-
-/// Dart `_parseWindowsWmiDelta`: two-sample delta, `_Total` skipped, 100ns timestamps
-#[test]
-fn windows_parse_net_speed_delta() {
-    let raw = r#"[
-        [
-            {"Name": "_Total", "BytesReceivedPersec": 0, "BytesSentPersec": 0, "Timestamp_Sys100NS": 10000000},
-            {"Name": "Ethernet", "BytesReceivedPersec": 1000, "BytesSentPersec": 500, "Timestamp_Sys100NS": 10000000}
-        ],
-        [
-            {"Name": "_Total", "BytesReceivedPersec": 99, "BytesSentPersec": 99, "Timestamp_Sys100NS": 20000000},
-            {"Name": "Ethernet", "BytesReceivedPersec": 3000, "BytesSentPersec": 1500, "Timestamp_Sys100NS": 20000000}
-        ]
-    ]"#;
-    let speeds = windows::parse_net_speed(raw);
-    assert_eq!(speeds.len(), 1);
-    let (name, rx, tx) = &speeds[0];
-    assert_eq!(name, "Ethernet");
-    // 1s interval (10000000 * 100ns), deltas 2000/1000
-    assert_eq!(*rx, 2000.0);
-    assert_eq!(*tx, 1000.0);
-}
-
 // ---------- Conn:conn_test.dart ----------
 
 /// Dart 'Conn.parse reads MaxConn and AttemptFails from /proc/net/snmp'

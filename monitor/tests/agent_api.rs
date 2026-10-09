@@ -452,10 +452,10 @@ async fn a_search_only_reads_and_can_be_carried_into_a_task() {
     let steps: Vec<&Value> = ev.iter().filter(|e| e["type"] == "step").collect();
     assert!(steps.iter().all(|e| e["command"] == "uname -s"), "the change never ran: {body}");
     assert!(steps.iter().any(|e| e["state"] == "done"), "{body}");
-    let items = ev.iter().find(|e| e["type"] == "items").unwrap();
+    let items = ev.iter().find(|e| e["type"] == "items").unwrap_or_else(|| panic!("no items: {body}"));
     assert_eq!(items["items"][0]["ref"], "1", "{body}");
     assert_eq!(items["followups"][0]["request"], "restart sshd");
-    let done = ev.iter().find(|e| e["type"] == "done").unwrap();
+    let done = ev.iter().find(|e| e["type"] == "done").unwrap_or_else(|| panic!("no done: {body}"));
     assert_eq!(done["answer"], "It runs.");
     assert_eq!(done["steps"], 1);
     let id = done["id"].as_str().unwrap().to_string();
@@ -489,7 +489,7 @@ async fn a_change_is_drafted_never_run() {
     let (s, body) = common::machine::post_text(&srv, "admin", "/api/v1/agent/search", json!({ "query": "clean up", "kind": "change" })).await;
     assert_eq!(s, 200, "{body}");
     let ev = events_of(&body);
-    let plan = ev.iter().find(|e| e["type"] == "plan").unwrap();
+    let plan = ev.iter().find(|e| e["type"] == "plan").unwrap_or_else(|| panic!("no plan: {body}"));
     assert_eq!(plan["steps"][0]["effect"], "read");
     // The command's shape outranks the model's word.
     assert_eq!(plan["steps"][1]["effect"], "danger", "{body}");

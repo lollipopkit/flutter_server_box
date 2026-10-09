@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
@@ -8,6 +9,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 
 import '../../helpers/spi_fixture.dart';
@@ -98,7 +100,7 @@ void main() {
             ServerMetricKind.cpu,
             ServerMetricKind.mem,
             ServerMetricKind.disk,
-            ServerMetricKind.net,
+            ServerMetricKind.netSpeed,
           }.contains(k),
         );
 
@@ -114,14 +116,15 @@ void main() {
   });
 
   test('no reading is drawn twice, and the five slots are what is drawn', () {
-    // Nothing but what every card draws: the slot that varies has no
-    // candidate, and the network must not be taken for one.
+    // Nothing but what every card draws and the traffic beside the speed:
+    // the network's speed must not be taken for the slot that varies.
     final r = serverCardReadings(state(net: true));
     expect(kinds(r.shown), [
       ServerMetricKind.cpu,
       ServerMetricKind.mem,
       ServerMetricKind.disk,
-      ServerMetricKind.net,
+      ServerMetricKind.netSpeed,
+      ServerMetricKind.netTraffic,
     ]);
     // Everything the machine reports has a place, so nothing is left over.
     expect(r.shown.length, r.all.length);
@@ -135,5 +138,43 @@ void main() {
     // counted from what is drawn, not from this — see `ServerCardReadings`,
     // which has no count of its own for that reason.
     expect(full.all.length, greaterThan(full.shown.length));
+  });
+
+  test('the CPU row names the model and its threads', () {
+    final srv = state();
+    srv.status.cpu
+      ..brand.addAll({'Xeon E5': 2})
+      ..update([
+        for (final id in ['cpu', 'cpu0', 'cpu1'])
+          SingleCpuCore(id, 1, 0, 0, 1, 0, 0, 0),
+      ]);
+    final cpu = serverCardReadings(srv).all.first;
+    expect(cpu.note, 'Xeon E5 ×2');
+
+    // No model reported: the count alone, not a leading space.
+    srv.status.cpu.brand.clear();
+    expect(serverCardReadings(srv).all.first.note, '×2');
+  });
+
+  test('a battery is over its line when low and discharging, not when full', () {
+    ServerMetric battery(int percent, BatteryStatus status) {
+      final srv = state();
+      srv.status.batteries.add(Battery(status: status, percent: percent));
+      return serverCardReadings(srv).all.firstWhere(
+        (m) => m.kind == ServerMetricKind.battery,
+      );
+    }
+
+    // #1673: a charged laptop turned its machine's dot yellow.
+    expect(battery(97, BatteryStatus.discharging).over, isFalse);
+    expect(battery(100, BatteryStatus.full).over, isFalse);
+    expect(battery(15, BatteryStatus.discharging).over, isTrue);
+    expect(battery(15, BatteryStatus.charging).over, isFalse);
+
+    final srv = state();
+    srv.status.batteries.add(
+      const Battery(status: BatteryStatus.discharging, percent: 97),
+    );
+    expect(serverStateDot(srv), StatePalette.running);
   });
 }

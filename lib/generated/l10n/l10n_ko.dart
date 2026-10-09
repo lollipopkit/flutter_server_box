@@ -5242,4 +5242,15 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get termFontTip =>
       '글꼴 파일을 선택하지 않으면 터미널은 시스템 고정폭 글꼴을 사용하고, 없는 글리프는 CJK 및 emoji 글리프가 포함된 글꼴로 표시합니다.';
+
+  @override
+  String get netSpeed => '네트워크 속도';
+
+  @override
+  String get inRange => '기간 내';
+
+  @override
+  String threadsFmt(int count) {
+    return '스레드 $count개';
+  }
 }

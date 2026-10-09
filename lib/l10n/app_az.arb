@@ -1547,5 +1547,8 @@
   "programStatusAlertsTip": "Görünməyən terminal üçün: proqram sizi gözlədiyini, tamamlandığını və ya uğursuz olduğunu bildirdikdə (OSC 7501, OSC 9;4), yaxud ən azı 30 saniyə işləyən əmr başa çatdıqda (OSC 133).",
   "termLineHeight": "Sətir hündürlüyü",
   "termLineHeightTip": "Terminal sətirinin tutduğu yer şrift ölçüsünün 1,0–2,0 misli arasındadır. Şrift ölçüsü kimi, ekrana neçə sətir yerləşəcəyinə təsir edir.",
-  "termFontTip": "Şrift faylı seçilmədikdə terminal əvvəlcə sistemin sabit enli şriftindən, onda olmayan qliflər üçün isə CJK və emoji qliflərini dəstəkləyən şriftlərdən istifadə edir."
+  "termFontTip": "Şrift faylı seçilmədikdə terminal əvvəlcə sistemin sabit enli şriftindən, onda olmayan qliflər üçün isə CJK və emoji qliflərini dəstəkləyən şriftlərdən istifadə edir.",
+  "netSpeed": "Şəbəkə sürəti",
+  "inRange": "aralıqda",
+  "threadsFmt": "{count} axın"
 }

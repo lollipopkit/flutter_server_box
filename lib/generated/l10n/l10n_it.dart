@@ -5563,4 +5563,15 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get termFontTip =>
       'Se non è selezionato alcun file di font, il terminale usa il font monospaziato del sistema e poi font con glifi CJK ed emoji per quelli mancanti.';
+
+  @override
+  String get netSpeed => 'Velocità di rete';
+
+  @override
+  String get inRange => 'nel periodo';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count thread';
+  }
 }

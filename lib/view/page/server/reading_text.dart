@@ -25,6 +25,12 @@ abstract final class ReadingFmt {
   /// A rate on an axis, where there is always a value.
   static String rateAxis(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
 
+  /// An amount of data, or a dash before anything has been measured.
+  static String size(double? bytes) => bytes == null ? '--' : bytes.bytes2Str;
+
+  /// An amount on an axis, where there is always a value.
+  static String sizeAxis(double bytes) => bytes.bytes2Str;
+
   /// Trailing `.0` dropped: with round ticks the axis reads 0/25/50/75/100,
   /// and the decimal was only ever noise there.
   static String temp(double celsius) =>

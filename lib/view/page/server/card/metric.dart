@@ -3,6 +3,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -11,7 +12,45 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 
 /// Which reading a row, or the chart above the rows, is showing.
-enum ServerMetricKind { cpu, mem, swap, disk, diskIo, net, gpu, temp, battery }
+enum ServerMetricKind {
+  cpu,
+  mem,
+  swap,
+  disk,
+  diskIo,
+  netSpeed,
+  netTraffic,
+  gpu,
+  temp,
+  battery,
+}
+
+/// The bytes a rate moved over a window, added up sample by sample: index `i`
+/// is what moved from the window's start to `times[i]`.
+///
+/// A rate is the average since the sample before it, so each one is weighed by
+/// the gap it covers — including a long one, which is a poll that ran late and
+/// whose rate is the average over that whole gap. A rate after a missing one
+/// has no known start, and adds nothing; a missing rate is a gap in the line.
+List<double?> cumulativeBytes(List<int> times, List<double?> rates) {
+  final out = <double?>[];
+  var sum = 0.0;
+  for (var i = 0; i < rates.length && i < times.length; i++) {
+    final rate = rates[i];
+    if (rate == null) {
+      out.add(null);
+      continue;
+    }
+    if (i > 0 && rates[i - 1] != null) {
+      sum += rate * (times[i] - times[i - 1]) / 1000;
+    }
+    out.add(sum);
+  }
+  return out;
+}
+
+/// The traffic row's, beside the network's own for its speed.
+const kNetTrafficIcon = MingCute.chart_bar_line;
 
 /// The share at which a reading stops being a number and becomes a reason to
 /// look at this machine.
@@ -19,6 +58,10 @@ enum ServerMetricKind { cpu, mem, swap, disk, diskIo, net, gpu, temp, battery }
 /// One line for the whole app: the card's footer, the overview's alert count
 /// and the extra slot's ranking all mean the same thing by "over".
 const kServerAlertPercent = 85.0;
+
+/// The charge at which a battery running on itself is worth a look: the one
+/// reading whose trouble is at the bottom rather than the top.
+const kServerBatteryLowPercent = 20.0;
 
 /// One reading, as a card draws it.
 ///
@@ -38,7 +81,8 @@ final class ServerMetric {
     required this.format,
     this.percent,
     this.binary = false,
-  });
+    bool? over,
+  }) : _over = over;
 
   final ServerMetricKind kind;
   final String label;
@@ -90,8 +134,12 @@ final class ServerMetric {
   /// rather than of 10.
   final bool binary;
 
-  /// Whether this reading is past [kServerAlertPercent].
-  bool get over => percent != null && percent! * 100 >= kServerAlertPercent;
+  final bool? _over;
+
+  /// Whether this reading is past its line: [kServerAlertPercent] for a share
+  /// of something that runs out, unless the reading says otherwise.
+  bool get over =>
+      _over ?? (percent != null && percent! * 100 >= kServerAlertPercent);
 }
 
 /// Which reading a machine is being watched by, remembered per machine.
@@ -285,7 +333,7 @@ const _kAlwaysShown = {
   ServerMetricKind.cpu,
   ServerMetricKind.mem,
   ServerMetricKind.disk,
-  ServerMetricKind.net,
+  ServerMetricKind.netSpeed,
 };
 
 /// The readings [srv] reports, and the five a card draws.
@@ -456,7 +504,7 @@ List<ServerMetric> _readings(ServerState srv) {
       label: 'CPU',
       icon: ServerDetailCards.cpu.icon,
       value: ReadingFmt.pct(cpu),
-      note: ss.cpu.brand.keys.firstOrNull ?? '',
+      note: cpuNote(ss),
       bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
       percent: cpu == null ? null : cpu / 100,
       samples: h.cpu.toList(),
@@ -545,8 +593,8 @@ List<ServerMetric> _readings(ServerState srv) {
     final tx = ns.speedOutBytesOf();
     out.add(
       ServerMetric(
-        kind: ServerMetricKind.net,
-        label: libL10n.net,
+        kind: ServerMetricKind.netSpeed,
+        label: l10n.netSpeed,
         icon: ServerDetailCards.net.icon,
         value: ReadingFmt.rate(tx),
         note: '↓ ${ReadingFmt.rate(rx)} · ↑ ${ReadingFmt.rate(tx)}',
@@ -554,6 +602,23 @@ List<ServerMetric> _readings(ServerState srv) {
         samples: h.netTx.toList(),
         times: times,
         format: ReadingFmt.rateAxis,
+        binary: true,
+      ),
+    );
+
+    final rxTotal = ns.sizeInBytesOf()?.toDouble();
+    final txTotal = ns.sizeOutBytesOf()?.toDouble();
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.netTraffic,
+        label: libL10n.traffic,
+        icon: kNetTrafficIcon,
+        value: ReadingFmt.size(txTotal),
+        note: '↓ ${ReadingFmt.size(rxTotal)} · ↑ ${ReadingFmt.size(txTotal)}',
+        bigNote: '↑ · ${ReadingFmt.size(rxTotal)} ↓',
+        samples: cumulativeBytes(times, h.netTx.toList()),
+        times: times,
+        format: ReadingFmt.sizeAxis,
         binary: true,
       ),
     );
@@ -606,6 +671,12 @@ List<ServerMetric> _readings(ServerState srv) {
         note: [battery.status.name, ?battery.name].join(' · '),
         bigNote: battery.status.name,
         percent: percent == null ? null : percent / 100,
+        // Full is where a battery should be. Low is only trouble while it is
+        // what the machine runs on.
+        over:
+            percent != null &&
+            percent <= kServerBatteryLowPercent &&
+            battery.status == BatteryStatus.discharging,
         samples: h.battery.toList(),
         times: times,
         format: ReadingFmt.pct,
@@ -614,6 +685,18 @@ List<ServerMetric> _readings(ServerState srv) {
   }
 
   return out;
+}
+
+/// The CPU's model and how many threads it runs, as `Xeon E5 ×8`.
+///
+/// The threads are `Cpus.coresCount`: the logical processors, which is what
+/// the usage is spread over.
+String cpuNote(ServerStatus ss) {
+  final cores = ss.cpu.coresCount;
+  return [
+    ?ss.cpu.brand.keys.firstOrNull,
+    if (cores > 0) '×$cores',
+  ].join(' ');
 }
 
 /// The GPU carrying the most work — the one the row reads, and the one the

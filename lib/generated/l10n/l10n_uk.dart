@@ -5538,4 +5538,15 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get termFontTip =>
       'Якщо файл шрифту не вибрано, термінал використовує системний моноширинний шрифт, а для відсутніх гліфів — шрифти з гліфами CJK та emoji.';
+
+  @override
+  String get netSpeed => 'Швидкість мережі';
+
+  @override
+  String get inRange => 'за період';
+
+  @override
+  String threadsFmt(int count) {
+    return 'Потоків: $count';
+  }
 }

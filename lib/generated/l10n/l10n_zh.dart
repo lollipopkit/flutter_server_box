@@ -5149,6 +5149,17 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get termFontTip =>
       '未选择字体文件时，终端会使用系统等宽字体；对于缺少的字形，则使用包含 CJK 和 emoji 字形的字体。';
+
+  @override
+  String get netSpeed => '网速';
+
+  @override
+  String get inRange => '区间内';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count 个线程';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10295,4 +10306,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get termFontTip =>
       '未選擇字型檔案時，終端機會使用系統等寬字型；對於缺少的字形，則使用包含 CJK 和 emoji 字形的字型。';
+
+  @override
+  String get netSpeed => '網速';
+
+  @override
+  String get inRange => '區間內';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count 個執行緒';
+  }
 }

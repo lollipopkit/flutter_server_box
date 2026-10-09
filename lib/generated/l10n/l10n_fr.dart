@@ -5592,4 +5592,15 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get termFontTip =>
       'Si aucun fichier de police n’est sélectionné, le terminal utilise la police à chasse fixe du système, puis des polices contenant les glyphes CJK et emoji manquants.';
+
+  @override
+  String get netSpeed => 'Débit réseau';
+
+  @override
+  String get inRange => 'sur la période';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count threads';
+  }
 }

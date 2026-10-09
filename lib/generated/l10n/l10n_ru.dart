@@ -5537,4 +5537,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get termFontTip =>
       'Если файл шрифта не выбран, терминал использует системный моноширинный шрифт, а для отсутствующих глифов — шрифты с глифами CJK и emoji.';
+
+  @override
+  String get netSpeed => 'Скорость сети';
+
+  @override
+  String get inRange => 'за период';
+
+  @override
+  String threadsFmt(int count) {
+    return 'Потоков: $count';
+  }
 }

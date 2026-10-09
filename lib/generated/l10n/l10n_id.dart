@@ -5498,4 +5498,15 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get termFontTip =>
       'Jika tidak ada file font yang dipilih, terminal menggunakan font monospace sistem, lalu font dengan glif CJK dan emoji untuk karakter yang tidak tersedia.';
+
+  @override
+  String get netSpeed => 'Kecepatan jaringan';
+
+  @override
+  String get inRange => 'dalam rentang';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count thread';
+  }
 }
