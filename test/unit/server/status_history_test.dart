@@ -88,4 +88,39 @@ void main() {
 
     expect(h.gpu, [41, null]);
   });
+
+  group('seed', () {
+    test('fills an empty buffer', () {
+      final h = StatusHistory();
+      h.seed(const [StatusHistorySample(timeMs: 1, cpu: 10), StatusHistorySample(timeMs: 2, cpu: 20)]);
+      expect(h.time.toList(), [1, 2]);
+      expect(h.cpu.toList(), [10, 20]);
+    });
+
+    test('goes before the live samples, which keep everything they had', () {
+      final h = StatusHistory();
+      // The first live sample has no CPU rate yet.
+      h.add(timeMs: 100, cpu: null, mem: 50, netRxs: const {'eth0': 7});
+      h.seed(const [
+        StatusHistorySample(timeMs: 10, cpu: 1),
+        StatusHistorySample(timeMs: 20, cpu: 2),
+        // Newer than what is live: the live sample stands.
+        StatusHistorySample(timeMs: 100, cpu: 99),
+        StatusHistorySample(timeMs: 150, cpu: 99),
+      ]);
+      expect(h.time.toList(), [10, 20, 100]);
+      expect(h.cpu.toList(), [1, 2, null]);
+      expect(h.mem.toList(), [null, null, 50]);
+      expect(h.netRxByDevice['eth0']?.toList(), [null, null, 7]);
+    });
+
+    test('past the capacity the oldest stored samples go, never live ones', () {
+      final h = StatusHistory();
+      h.add(timeMs: 1000000, cpu: 5);
+      h.seed([for (var i = 0; i < StatusHistory.capacity; i++) StatusHistorySample(timeMs: i, cpu: 1)]);
+      expect(h.length, StatusHistory.capacity);
+      expect(h.time.last, 1000000);
+      expect(h.time.first, 1);
+    });
+  });
 }
