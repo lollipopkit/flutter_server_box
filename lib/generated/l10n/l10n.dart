@@ -3889,7 +3889,7 @@ abstract class AppLocalizations {
   /// Formatted user-facing message for devices; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
-  /// **'{count} devices'**
+  /// **'{count, plural, =1{1 device} other{{count} devices}}'**
   String devicesFmt(int count);
 
   /// Formatted user-facing message for devices busiest; runtime values are supplied by placeholders.

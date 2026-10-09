@@ -129,6 +129,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   double? _speed(int i, BigInt Function(NetSpeedPart) counter) {
     final elapsed = _elapsed;
     if (elapsed == null || i >= now.length || i >= pre.length) return null;
+    if (appeared(i)) return null;
     final delta = counterDeltaBig(counter(pre[i]), counter(now[i]));
     if (delta == null) return null;
     return delta.toDouble() / elapsed;

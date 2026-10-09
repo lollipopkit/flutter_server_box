@@ -94,7 +94,9 @@ void main() {
         [_part('eth0', 3000, 3000, 2000), _part('eth1', 5000, 5000, 2000)],
       ]);
       expect(ns.speedInBytes(ns.deviceIdx('eth0')), 2);
-      expect(ns.speedInBytes(ns.deviceIdx('eth1')), 0);
+      // No baseline, which is no reading, not an idle link.
+      expect(ns.speedInBytes(ns.deviceIdx('eth1')), isNull);
+      expect(ns.speedIn(device: 'eth1'), NetSpeed.noReading);
     });
 
     test('devices are realigned when the collection order changes', () {

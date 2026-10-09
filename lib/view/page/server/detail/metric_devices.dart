@@ -124,10 +124,15 @@ class MetricDevices {
           // Not the hottest few: a Mac reports fourteen PMU dies within a
           // degree of each other, and picking by temperature alone draws them
           // all and drops the SSD.
-          defaults: [
+          defaults: switch ([
             for (final s in _tempSeries(si))
               if (names.contains(s.label)) s.label,
-          ],
+          ]) {
+            // History with the aggregate only — seeded from an agent, before
+            // the first live sample — names no sensor: the hottest stands in.
+            [] => [names.first],
+            final picked => picked,
+          },
           subtitle: (d) {
             final v = ss.temps.get(d);
             return v == null ? '--' : ReadingFmt.temp(v);

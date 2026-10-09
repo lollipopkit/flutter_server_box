@@ -2876,7 +2876,7 @@
       }
     }
   },
-  "devicesFmt": "{count} devices",
+  "devicesFmt": "{count, plural, =1{1 device} other{{count} devices}}",
   "@devicesFmt": {
     "description": "Formatted user-facing message for devices; runtime values are supplied by placeholders.",
     "placeholders": {

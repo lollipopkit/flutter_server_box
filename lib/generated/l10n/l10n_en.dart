@@ -2241,7 +2241,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String devicesFmt(int count) {
-    return '$count devices';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count devices',
+      one: '1 device',
+    );
+    return '$_temp0';
   }
 
   @override
