@@ -201,7 +201,8 @@ const _kMetricSections = <ServerMetricKind, List<String>>{
   ServerMetricKind.swap: ['swap'],
   ServerMetricKind.disk: ['disk'],
   ServerMetricKind.diskIo: ['diskio'],
-  ServerMetricKind.net: ['net'],
+  ServerMetricKind.netSpeed: ['net'],
+  ServerMetricKind.netTraffic: ['net'],
   ServerMetricKind.gpu: ['gpu', 'gpus'],
   ServerMetricKind.temp: ['temps'],
   ServerMetricKind.battery: ['battery'],
@@ -215,11 +216,11 @@ String? _sectionErr(ServerStatus ss, ServerMetricKind kind) {
   return null;
 }
 
-/// A row for one of the five every machine has, whose section could not be
+/// A row for one of the six every machine has, whose section could not be
 /// read.
 ///
 /// Absence is a claim about the machine — that it has no such hardware — and
-/// for these five it is never the true one. So the row stays where it was and
+/// for these six it is never the true one. So the row stays where it was and
 /// says what happened to the reading, rather than leaving the reader to notice
 /// that a line is gone.
 DetailMetric _failedMetric(
@@ -240,7 +241,7 @@ DetailMetric _failedMetric(
 
 /// The rows a machine has before it has answered.
 ///
-/// Every machine has these five, so they are drawn with dashes rather than
+/// Every machine has these six, so they are drawn with dashes rather than
 /// left out: what the page looks like while it waits is what it will look
 /// like, and one that grows a row at a time as the first status lands moves
 /// everything under each one. The first answer replaces them — and removes the
@@ -264,7 +265,8 @@ List<DetailMetric> _blankMetrics() {
     dash(ServerMetricKind.mem, libL10n.memory, ServerDetailCards.mem.icon),
     dash(ServerMetricKind.swap, 'Swap', ServerDetailCards.swap.icon),
     dash(ServerMetricKind.disk, libL10n.disk, ServerDetailCards.disk.icon),
-    dash(ServerMetricKind.net, libL10n.net, ServerDetailCards.net.icon),
+    dash(ServerMetricKind.netSpeed, l10n.netSpeed, ServerDetailCards.net.icon),
+    dash(ServerMetricKind.netTraffic, libL10n.traffic, kNetTrafficIcon),
   ];
 }
 
@@ -308,7 +310,7 @@ List<DetailMetric> serverDetailMetrics(
         label: 'CPU',
         icon: ServerDetailCards.cpu.icon,
         value: ReadingFmt.pct(cpu),
-        note: ss.cpu.brand.keys.firstOrNull ?? '',
+        note: cpuNote(ss),
         bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
         percent: cpu == null ? null : cpu / 100,
         // Not idle as well: the line beside the number already says it,
@@ -458,8 +460,8 @@ List<DetailMetric> serverDetailMetrics(
     final tx = ns.speedOutBytesOf();
     views.add(
       DetailMetric(
-        kind: ServerMetricKind.net,
-        label: libL10n.net,
+        kind: ServerMetricKind.netSpeed,
+        label: l10n.netSpeed,
         icon: ServerDetailCards.net.icon,
         value: ReadingFmt.rate(tx),
         note: _busiestNote(
@@ -474,7 +476,7 @@ List<DetailMetric> serverDetailMetrics(
         bigNote: '↑ · ${ReadingFmt.rate(rx)} ↓',
         stats: _rateStats(w.netTx),
         series:
-            deviceSeries(ServerMetricKind.net) ??
+            deviceSeries(ServerMetricKind.netSpeed) ??
             [
               HistorySeries('↑', ChartPalette.lines[0], w.netTx),
               HistorySeries('↓', ChartPalette.lines[1], w.netRx),
@@ -483,12 +485,61 @@ List<DetailMetric> serverDetailMetrics(
         binary: true,
       ),
     );
-  } else if (_sectionErr(ss, ServerMetricKind.net) case final err?) {
+
+    // Since boot, which is what the counters are: the one figure here that
+    // does not depend on how long this app has been watching. The chart is
+    // the window's own, added up from the rates.
+    final rxTotal = ns.sizeInBytesOf()?.toDouble();
+    final txTotal = ns.sizeOutBytesOf()?.toDouble();
+    final rxWindow = cumulativeBytes(w.times, w.netRx);
+    final txWindow = cumulativeBytes(w.times, w.netTx);
+    views.add(
+      DetailMetric(
+        kind: ServerMetricKind.netTraffic,
+        label: libL10n.traffic,
+        icon: kNetTrafficIcon,
+        value: ReadingFmt.size(txTotal),
+        note: _busiestNote(
+          ns.realIfaces.length,
+          _busiest(
+            ns.realIfaces,
+            (dev) =>
+                ((ns.sizeInBytesOf(device: dev) ?? BigInt.zero) +
+                        (ns.sizeOutBytesOf(device: dev) ?? BigInt.zero))
+                    .toDouble(),
+          ),
+        ),
+        bigNote: '↑ · ${ReadingFmt.size(rxTotal)} ↓',
+        stats: [
+          if (_last(txWindow) case final v?)
+            (k: '${l10n.inRange} ↑', v: ReadingFmt.size(v)),
+          if (_last(rxWindow) case final v?)
+            (k: '${l10n.inRange} ↓', v: ReadingFmt.size(v)),
+        ],
+        series:
+            deviceSeries(ServerMetricKind.netTraffic) ??
+            [
+              HistorySeries('↑', ChartPalette.lines[0], txWindow),
+              HistorySeries('↓', ChartPalette.lines[1], rxWindow),
+            ],
+        format: ReadingFmt.sizeAxis,
+        binary: true,
+      ),
+    );
+  } else if (_sectionErr(ss, ServerMetricKind.netSpeed) case final err?) {
     views.add(
       _failedMetric(
-        ServerMetricKind.net,
-        libL10n.net,
+        ServerMetricKind.netSpeed,
+        l10n.netSpeed,
         ServerDetailCards.net.icon,
+        err,
+      ),
+    );
+    views.add(
+      _failedMetric(
+        ServerMetricKind.netTraffic,
+        libL10n.traffic,
+        kNetTrafficIcon,
         err,
       ),
     );
@@ -590,6 +641,9 @@ String? _busiest(Iterable<String> devices, double Function(String) of) {
   }
   return name;
 }
+
+/// The newest value of a series that has one.
+double? _last(List<double?> values) => values.lastWhereOrNull((v) => v != null);
 
 /// How many devices a rate is the sum of, and which of them is carrying it.
 String _busiestNote(int count, String? busiest) {

@@ -132,7 +132,7 @@ class ServerCardLine extends StatelessWidget {
                     child: Text(
                       readings?.all
                               .firstWhereOrNull(
-                                (m) => m.kind == ServerMetricKind.net,
+                                (m) => m.kind == ServerMetricKind.netSpeed,
                               )
                               ?.note ??
                           '',

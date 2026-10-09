@@ -14,6 +14,7 @@ import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/memory.dart';
@@ -29,8 +30,10 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/chart.dart';
+import 'package:server_box/view/page/server/detail/focus_parts.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
+import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 import '../helpers/spi_fixture.dart';
@@ -688,5 +691,53 @@ void main() {
     expect(tester.takeException(), isNull);
     // Still on the one window it has.
     expect(find.text(app_locale.l10n.rangeLive), findsOneWidget);
+  });
+
+  testWidgets('the threads unfold under the CPU chart, as many a line as fit', (
+    tester,
+  ) async {
+    ServerStatus withThreads() {
+      final status = statusOf();
+      SingleCpuCore core(String id, int used, int idle) =>
+          SingleCpuCore(id, used, 0, 0, idle, 0, 0, 0);
+      status.cpu
+        ..update([core('cpu', 0, 0), for (var i = 0; i < 12; i++) core('cpu$i', 0, 0)])
+        ..update([
+          core('cpu', 528, 672),
+          for (var i = 0; i < 12; i++) core('cpu$i', i * 8, 100 - i * 8),
+        ]);
+      return status;
+    }
+
+    await pump(tester, size: const Size(400, 900), status: withThreads);
+
+    // Folded until asked.
+    expect(find.byType(ServerCpuCoreBars), findsNothing);
+    await tester.tap(find.text(app_locale.l10n.threadsFmt(12)));
+    await settle(tester);
+
+    final bars = find.descendant(
+      of: find.byType(ServerCpuCoreBars),
+      matching: find.byType(Tooltip),
+    );
+    expect(bars, findsNWidgets(12));
+    // As many columns as the width holds at the narrowest a bar may be, so
+    // twelve take more than one line here and none is narrower than that.
+    final rects = [for (final e in bars.evaluate()) tester.getRect(find.byWidget(e.widget))];
+    for (final r in rects) {
+      expect(r.width, greaterThanOrEqualTo(ServerCpuCoreBars.minWidth));
+    }
+    final perLine = rects.where((r) => r.top == rects.first.top).length;
+    expect(perLine, inInclusiveRange(2, 11));
+    expect(rects.last.top, greaterThan(rects.first.top));
+
+    // The figure is a tap away.
+    await tester.tap(bars.last);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('cpu11 · ${ReadingFmt.pct(88)}'), findsOneWidget);
+
+    await tester.tap(find.text(app_locale.l10n.threadsFmt(12)));
+    await settle(tester);
+    expect(find.byType(ServerCpuCoreBars), findsNothing);
   });
 }

@@ -1,10 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/metric_model.dart';
+import 'package:server_box/view/page/server/reading_text.dart';
 
 /// A part of the focus card that eases to the height of what is in it.
 ///
@@ -257,10 +261,15 @@ class ServerDetailDeviceButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onTap,
+    this.open,
   });
 
   final String label;
   final VoidCallback onTap;
+
+  /// Whether what it opens is open, for one that unfolds in place rather
+  /// than opening a sheet. Null for a sheet.
+  final bool? open;
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +293,94 @@ class ServerDetailDeviceButton extends StatelessWidget {
                 style: UIs.text12Grey,
               ),
             ),
+            if (open case final open?)
+              Icon(
+                open ? Icons.expand_less : Icons.expand_more,
+                size: 15,
+                color: UIs.textGrey.color,
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// How busy each thread is, as a bar each, laid out in as many columns as
+/// the width has room for.
+///
+/// No figures: a hundred of them is a table nobody reads, and what the bars
+/// are for is the one that is full. The figure is a hover or a tap away.
+class ServerCpuCoreBars extends StatelessWidget {
+  const ServerCpuCoreBars({super.key, required this.cores});
+
+  /// Each thread's name and its busy share, 0-100, in the machine's order:
+  /// a core that stays full is found by staying in its place.
+  final List<({String id, double? used})> cores;
+
+  /// How narrow a bar may be before a column is dropped.
+  static const minWidth = 40.0;
+  static const _gap = 6.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final track = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
+    return LayoutBuilder(
+      builder: (_, box) {
+        final cols = math.max(
+          1,
+          ((box.maxWidth + _gap) / (minWidth + _gap)).floor(),
+        );
+        return Column(
+          children: [
+            for (var start = 0; start < cores.length; start += cols)
+              Row(
+                children: [
+                  for (var i = start; i < start + cols; i++) ...[
+                    if (i > start) const SizedBox(width: _gap),
+                    Expanded(
+                      child: i < cores.length
+                          ? _bar(cores[i], track)
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _bar(({String id, double? used}) core, Color track) {
+    final used = core.used;
+    return Tooltip(
+      message: '${core.id} · ${ReadingFmt.pct(used)}',
+      triggerMode: TooltipTriggerMode.tap,
+      waitDuration: Duration.zero,
+      // The bar is six points tall; the room round it is what is pressed.
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: SizedBox(
+            height: 6,
+            child: ColoredBox(
+              color: track,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: ((used ?? 0) / 100).clamp(0.0, 1.0),
+                  heightFactor: 1,
+                  child: ColoredBox(
+                    color: (used ?? 0) >= kServerAlertPercent
+                        ? StatePalette.warn
+                        : ChartPalette.accent,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

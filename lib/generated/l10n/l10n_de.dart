@@ -5575,4 +5575,15 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get termFontTip =>
       'Ohne ausgewählte Schriftdatei verwendet das Terminal die Monospace-Schrift des Systems und für fehlende Glyphen Schriftarten mit CJK- und Emoji-Glyphen.';
+
+  @override
+  String get netSpeed => 'Netzgeschwindigkeit';
+
+  @override
+  String get inRange => 'im Zeitraum';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count Threads';
+  }
 }

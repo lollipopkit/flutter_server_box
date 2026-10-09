@@ -21,10 +21,6 @@ Future<String> parseStatusJson({
   tempDivisor: tempDivisor,
 );
 
-/// Windows WMI double-sample net speed delta, returning `[{name, rx, tx}]` JSON (bytes/sec)
-String parseWindowsNetSpeedJson({required String raw}) =>
-    RustLib.instance.api.crateApiParserParseWindowsNetSpeedJson(raw: raw);
-
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 List<CommandSpec> commandSpecs({required String system}) =>
     RustLib.instance.api.crateApiParserCommandSpecs(system: system);

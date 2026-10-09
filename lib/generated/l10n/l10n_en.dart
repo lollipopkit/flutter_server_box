@@ -5504,4 +5504,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get termFontTip =>
       'Without a font file, the terminal uses the system\'s monospace font, then fonts with CJK and emoji glyphs for what it lacks.';
+
+  @override
+  String get netSpeed => 'Net speed';
+
+  @override
+  String get inRange => 'in range';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count threads';
+  }
 }

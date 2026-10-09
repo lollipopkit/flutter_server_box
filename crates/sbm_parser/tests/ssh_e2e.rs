@@ -939,6 +939,13 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
         None,
     )
     .expect("run status script");
+    // A second poll, for the net counters to be compared across the two
+    let raw_next = ssh_raw(
+        &host,
+        &script::exec_command(SystemType::Windows, &path, ShellFunc::Status),
+        None,
+    )
+    .expect("run status script again");
     let _ = ssh_raw(
         &host,
         &script::encoded_powershell_command(&format!("Remove-Item -Recurse -Force '{dir}'")),
@@ -964,6 +971,27 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
         !status.net.is_empty(),
         "net counters parsed from WMI double sample"
     );
+
+    // Counters since boot, as on Unix: none goes down between two polls, and a
+    // host with a session open moves some bytes. Rates would do neither
+    // reliably — which is what the app once read these as.
+    let next = sbm_parser::parse_status(
+        SystemType::Windows,
+        &script::parse_script_output(&raw_next),
+    );
+    let mut grew = false;
+    for a in &status.net {
+        let Some(b) = next.net.iter().find(|b| b.device == a.device) else {
+            continue;
+        };
+        assert!(
+            b.rx_bytes >= a.rx_bytes && b.tx_bytes >= a.tx_bytes,
+            "{}: counters went down: {a:?} -> {b:?}",
+            a.device
+        );
+        grew |= b.rx_bytes > a.rx_bytes || b.tx_bytes > a.tx_bytes;
+    }
+    assert!(grew, "no interface counted any traffic between two polls");
 
     let remote_epoch: i64 = segments["time"]
         .trim()
@@ -1019,13 +1047,13 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
     assert_eq!(script_names, direct_names, "GPU names: script vs direct");
 
     eprintln!(
-        "windows ssh e2e ok: host={:?} sys={:?} cores={} mem_total={}KiB disks={} net_ifaces={} gpus={}",
+        "windows ssh e2e ok: host={:?} sys={:?} cores={} mem_total={}KiB disks={} net_ifaces={:?} gpus={}",
         status.host,
         status.sys,
         status.cpu.len(),
         mem.total,
         status.disks.len(),
-        status.net.len(),
+        status.net.iter().map(|n| &n.device).collect::<Vec<_>>(),
         status.nvidia.len()
     );
 }

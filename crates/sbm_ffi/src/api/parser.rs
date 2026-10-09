@@ -45,16 +45,6 @@ pub fn parse_status_json(
     serde_json::to_string(&status).map_err(|e| e.to_string())
 }
 
-/// Windows WMI double-sample net speed delta, returning `[{name, rx, tx}]` JSON (bytes/sec)
-#[flutter_rust_bridge::frb(sync)]
-pub fn parse_windows_net_speed_json(raw: String) -> String {
-    let speeds: Vec<_> = sbm_parser::windows::parse_net_speed(&raw)
-        .into_iter()
-        .map(|(name, rx, tx)| serde_json::json!({ "name": name, "rx": rx, "tx": tx }))
-        .collect();
-    serde_json::Value::Array(speeds).to_string()
-}
-
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 #[flutter_rust_bridge::frb(sync)]
 pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {

@@ -229,6 +229,30 @@ __SBM_GPU_END__
       expect(result.cpu.coresCount, 8);
     });
 
+    test('Windows interfaces carry counters, not rates', () async {
+      // The WMI `*Persec` fields of the raw class are cumulative. Read as
+      // rates, the totals were a rate and the speed a difference of two.
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.windows,
+          ss: InitStatus.status,
+          parsedOutput: {
+            WindowsStatusCmdType.net.name:
+                '[[{"Name":"Ethernet","BytesReceivedPersec":1000,'
+                '"BytesSentPersec":500,"Timestamp_Sys100NS":10000000}],'
+                '[{"Name":"Ethernet","BytesReceivedPersec":3000,'
+                '"BytesSentPersec":1500,"Timestamp_Sys100NS":20000000}]]',
+          },
+        ),
+      );
+
+      final ns = result.netSpeed;
+      expect(ns.devices, ['Ethernet']);
+      // Totals add it up although no prefix matches its name.
+      expect(ns.sizeInBytesOf(), BigInt.from(3000));
+      expect(ns.sizeOutBytesOf(), BigInt.from(1500));
+    });
+
     test('Windows Celsius temperatures ignore Unix divisor settings', () async {
       for (final divisor in [1.0, 1000.0]) {
         final result = await getStatus(

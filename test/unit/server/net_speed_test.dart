@@ -156,4 +156,42 @@ void main() {
       expect(ns.cachedVals.speedOut, '500 B/s');
     });
   });
+
+  group('NetSpeed interfaces', () {
+    test('loopback is left out on every system', () {
+      for (final dev in ['lo', 'lo0', 'Loopback Pseudo-Interface 1']) {
+        expect(NetSpeed.isLoopback(dev), isTrue, reason: dev);
+      }
+      for (final dev in ['eth0', 'lowpan0', 'Local Area Connection']) {
+        expect(NetSpeed.isLoopback(dev), isFalse, reason: dev);
+      }
+    });
+
+    test('totals add up every interface where no name is recognised', () {
+      // Windows: adapter names, none of which a prefix matches.
+      final ns = _seeded([
+        [
+          _part('Realtek PCIe GbE Family Controller', 0, 0, 1),
+          _part('Intel[R] Wi-Fi 6 AX200 160MHz', 0, 0, 1),
+        ],
+        [
+          _part('Realtek PCIe GbE Family Controller', 1000, 100, 2),
+          _part('Intel[R] Wi-Fi 6 AX200 160MHz', 3000, 300, 2),
+        ],
+      ]);
+      expect(ns.realIfaces, hasLength(2));
+      expect(ns.speedInBytesOf(), 4000);
+      expect(ns.sizeOutBytesOf(), BigInt.from(400));
+    });
+
+    test('a recognised name keeps the rest out of the totals', () {
+      final ns = _seeded([
+        [_part('eth0', 0, 0, 1), _part('docker0', 0, 0, 1), _part('lo', 0, 0, 1)],
+        [_part('eth0', 10, 0, 2), _part('docker0', 50, 0, 2), _part('lo', 90, 0, 2)],
+      ]);
+      expect(ns.realIfaces, ['eth0']);
+      expect(ns.ifaces, ['eth0', 'docker0']);
+      expect(ns.speedInBytesOf(), 10);
+    });
+  });
 }
