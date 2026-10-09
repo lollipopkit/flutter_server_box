@@ -566,14 +566,33 @@ jobs:
       - name: Fix the Android build epoch
         shell: bash
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
-      - name: Install the pinned Android NDK
+      - name: Install the pinned Android SDK and NDK
         shell: bash
         run: |
           set -euo pipefail
+          compile_sdk="$(tr -d '[:space:]' < android/compile-sdk-version.txt)"
+          build_tools="$(tr -d '[:space:]' < android/build-tools-version.txt)"
           ndk_version="$(tr -d '[:space:]' < android/ndk-version.txt)"
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          "$sdkmanager" "ndk;$ndk_version"
+          "$sdkmanager" \
+            "platforms;android-$compile_sdk" \
+            "build-tools;$build_tools" \
+            "ndk;$ndk_version"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
+          echo "APKSIGNER=$ANDROID_HOME/build-tools/$build_tools/apksigner" >> "$GITHUB_ENV"
+      - name: Fetch dependencies
+        run: flutter pub get --enforce-lockfile
+      # The script F-Droid runs, so what it rebuilds from this commit is this
+      # APK without its signature. `fl_build` ran a plain `flutter build apk`
+      # instead: no dev plugins pruned, the plugin registrant left at a path
+      # under `.dart_tool`, so `libapp.so` came out different from F-Droid's
+      # (#1274) and tied to this runner's checkout path. The script also
+      # patches jni and builds proot for arm64.
+      - name: Build
+        shell: bash
+        run: scripts/release/build-fdroid.sh ${{ matrix.abi }}
+      # After the build, not before: with `key.properties` present Gradle signs
+      # the release itself, and the unsigned APK above is never produced.
       - name: Fetch secrets
         # Through the environment, and quoted. Expanded into the script the way
         # they were, a space or a shell metacharacter in either value is parsed
@@ -585,26 +604,63 @@ jobs:
           set -euo pipefail
           curl --fail --show-error --location -u "$BASIC_AUTH" -o android/app/app.key "${URL_PREFIX}app.key"
           curl --fail --show-error --location -u "$BASIC_AUTH" -o android/key.properties "${URL_PREFIX}key.properties"
-      - name: Patch JNI build-id
+      # Signing adds a signing block and touches no entry, which is what lets
+      # F-Droid copy the signature onto its own build to compare the two.
+      # `--alignment-preserved` keeps the entries where Gradle put them; the
+      # check after it fails the job if any moved or changed. v2 alone, as Gradle
+      # signed: apksigner also adds a JAR (v1) signature by default, which is
+      # three more entries.
+      - name: Sign
+        shell: bash
+        env:
+          ABI: ${{ matrix.abi }}
         run: |
-          flutter pub get
-          scripts/release/patch-jni-build-id.sh
-      # The Linux userland the terminal tab offers. Not in the repository —
-      # these are binaries, and they are built from pinned upstream sources
-      # here. Without this step the feature is absent from the build rather
-      # than broken in it, which is why the check below exists.
-      - name: Build proot
-        if: matrix.abi == 'arm64'
-        shell: bash
-        run: scripts/build-proot-android.sh
-      - name: Build (release)
-        if: needs.reproducibilityCheck.outputs.isRelease == 'true'
-        shell: bash
-        run: dart run fl_build -bp -p android -- --target-platform=${{ matrix.target }}
-      - name: Build (test)
-        if: needs.reproducibilityCheck.outputs.isRelease != 'true'
-        shell: bash
-        run: dart run fl_build -p android -- --target-platform=${{ matrix.target }}
+          set -euo pipefail
+          case "$ABI" in
+            arm64) unsigned=app-arm64-v8a-release-unsigned.apk ;;
+            arm) unsigned=app-armeabi-v7a-release-unsigned.apk ;;
+            amd64) unsigned=app-x86_64-release-unsigned.apk ;;
+            *) echo "::error::unknown ABI $ABI"; exit 1 ;;
+          esac
+          unsigned="build/app/outputs/apk/release/$unsigned"
+          out="build/app/outputs/flutter-apk/${APP_NAME}_v1.0.${BUILD_NUMBER}_${ABI}.apk"
+
+          prop() {
+            sed -n -E "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*(.*)$/\1/p" android/key.properties |
+              tail -n 1 | tr -d '\r'
+          }
+          store_file="$(prop storeFile)"
+          key_alias="$(prop keyAlias)"
+          KS_PASS="$(prop storePassword)"
+          KEY_PASS="$(prop keyPassword)"
+          echo "::add-mask::$KS_PASS"
+          echo "::add-mask::$KEY_PASS"
+          export KS_PASS KEY_PASS
+          # Relative to the app module, as Gradle's `file()` resolved it.
+          [[ "$store_file" == /* ]] || store_file="android/app/$store_file"
+
+          mkdir -p "$(dirname "$out")"
+          "$APKSIGNER" sign \
+            --ks "$store_file" \
+            --ks-key-alias "$key_alias" \
+            --ks-pass env:KS_PASS \
+            --key-pass env:KEY_PASS \
+            --alignment-preserved \
+            --v1-signing-enabled false \
+            --v2-signing-enabled true \
+            --v3-signing-enabled false \
+            --v4-signing-enabled false \
+            --out "$out" \
+            "$unsigned"
+          "$APKSIGNER" verify "$out"
+
+          entries() {
+            zipinfo -v "$1" | grep -E '^  (offset of local header|32-bit CRC value|compressed size)'
+          }
+          diff <(entries "$unsigned") <(entries "$out") ||
+            { echo "::error::signing changed the APK's entries"; exit 1; }
+          # Flutter's copies of the unsigned APKs, which are not published.
+          rm -f build/app/outputs/flutter-apk/app-*-release.apk
       # `useLegacyPackaging` off means nothing is extracted from the APK, so
       # `nativeLibraryDir` does not exist and proot cannot be run from
       # anywhere. The APK still builds, installs and runs — the rootfs entry
@@ -622,15 +678,6 @@ jobs:
             unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot-loader.so' ||
               { echo "$apk carries proot but not its loader; entering the rootfs would be refused"; exit 1; }
           done
-      - name: Rename
-        shell: bash
-        run: |
-          cd build/app/outputs/flutter-apk
-          for f in *_"${BUILD_NUMBER}"_*.apk; do
-            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
-          done
-          # Remove original APKs copied by fl_build
-          rm -f app-*-release.apk
       # Each matrix leg names one exact APK. Besides making a missing ABI fail
       # at its source, this keeps the release build invocation identical to the
       # one F-Droid runs for that ABI.
