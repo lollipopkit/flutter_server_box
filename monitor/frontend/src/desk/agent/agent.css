@@ -1,0 +1,154 @@
+/* Agent mode's motion and the few styles its views share (the lollipopkit
+   Design System's Agent mode page). Scoped under `.am-root`. */
+
+@keyframes am-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+@keyframes am-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
+}
+@keyframes am-line {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes am-check {
+  0% {
+    transform: scale(0) rotate(-40deg);
+  }
+  60% {
+    transform: scale(1.22) rotate(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes am-stripe {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 22px 0;
+  }
+}
+@keyframes am-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes am-rise {
+  from {
+    opacity: 0;
+    transform: translateY(11px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.am-root {
+  --am-stripe: linear-gradient(110deg, transparent 0 40%, rgba(255, 255, 255, 0.28) 40% 60%, transparent 60%);
+}
+
+/* A small heading over a group: 11px, bold, tracked, tertiary. */
+.am-root .am-label {
+  font-size: var(--text-11);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+
+/* Words being worked on: a light passing through them. */
+.am-root .am-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--text-secondary) 0%,
+    var(--text-secondary) 38%,
+    var(--color-accent-text) 50%,
+    var(--text-secondary) 62%,
+    var(--text-secondary) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: am-shimmer 1.8s linear infinite;
+}
+
+.am-root .am-spin {
+  display: inline-grid;
+  animation: lk-spin 900ms linear infinite;
+}
+.am-root .am-pulse {
+  animation: am-pulse 1.6s ease-in-out infinite;
+}
+.am-root .am-check {
+  display: grid;
+  animation: am-check 460ms var(--ease-spring-bouncy);
+}
+
+/* A card on the timeline: glass over the wallpaper, raised on hover. */
+.am-root .am-tile {
+  border: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  border-radius: var(--radius-panel);
+  background: var(--glass-tile);
+  box-shadow: inset 0 0 0 0.5px var(--border-hairline);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-spring-bouncy);
+}
+.am-root .am-tile:hover {
+  background: var(--surface-raised);
+  box-shadow:
+    inset 0 0 0 0.5px var(--border-hairline),
+    var(--shadow-popover);
+}
+.am-root .am-tile:active {
+  transform: scale(0.98);
+}
+
+.am-root .am-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.am-root .am-num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .am-root * {
+    animation-duration: 120ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+  }
+}

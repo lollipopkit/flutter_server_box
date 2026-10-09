@@ -2,7 +2,7 @@
 /// explicit server: a desk saves to the server it was opened for, even while
 /// the panel is switching to another.
 
-import { ApiError, requestFor } from '../lib/api'
+import { ApiError, readEventStream, requestFor } from '../lib/api'
 import { isSecureAgentUrl } from '../lib/agentUrl'
 import type { InstalledApp } from '../types'
 import type { ServerEntry } from '../lib/servers.svelte'
@@ -332,35 +332,11 @@ async function raw(entry: ServerEntry, path: string, init: RequestInit): Promise
 /// Reads `/desk/events` until [signal] aborts or the stream ends, calling
 /// [onEvent] with each parsed `data:` line. Throws on a refused or broken
 /// stream; the caller decides when to try again.
-export async function readEvents(
+export function readEvents(
   entry: ServerEntry,
   signal: AbortSignal,
   onEvent: (event: Record<string, unknown>) => void,
 ): Promise<void> {
-  if (!isSecureAgentUrl(entry.url)) throw new ApiError('insecure')
-  const res = await fetch(`${entry.url}/api/v1/desk/events`, {
-    headers: entry.token ? { Authorization: `Bearer ${entry.token}` } : {},
-    signal,
-  })
-  if (!res.ok || !res.body) throw new ApiError('Failed to open the event stream', res.status)
-  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
-  let buffer = ''
-  for (;;) {
-    const { value, done } = await reader.read()
-    if (done) return
-    buffer += value
-    let end: number
-    while ((end = buffer.indexOf('\n\n')) >= 0) {
-      const frame = buffer.slice(0, end)
-      buffer = buffer.slice(end + 2)
-      for (const line of frame.split('\n')) {
-        if (!line.startsWith('data:')) continue
-        try {
-          onEvent(JSON.parse(line.slice(5).trim()) as Record<string, unknown>)
-        } catch {
-          // A line that is not JSON is not an event.
-        }
-      }
-    }
-  }
+  return readEventStream(entry, '/desk/events', signal, onEvent)
 }
+

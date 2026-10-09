@@ -24,6 +24,7 @@
   import { saveWallpaper } from './lock/wallpapers'
   import { themeDark, themeWallpaper } from './themeStyle'
   import WindowLayer from './window/WindowLayer.svelte'
+  import AgentMode from './agent/AgentMode.svelte'
 
   interface Props {
     entry: ServerEntry
@@ -231,17 +232,34 @@
       theme={wallpaperTheme}
     />
   </div>
-  {#if desk.ready && !desk.windows.compact}
-    <DeskIcons />
-  {/if}
-  {#if desk.ready}
-    <WindowLayer />
-  {:else}
-    <div class="absolute inset-0 grid place-items-center"><Spinner size="lg" /></div>
+  <!-- Under Agent mode the desk is out of sight, not gone: its windows keep
+       running where they were. -->
+  <div class="contents" style:visibility={desk.agentMode ? 'hidden' : undefined} inert={desk.agentMode}>
+    {#if desk.ready && !desk.windows.compact}
+      <DeskIcons />
+    {/if}
+    {#if desk.ready}
+      <WindowLayer />
+    {:else}
+      <div class="absolute inset-0 grid place-items-center"><Spinner size="lg" /></div>
+    {/if}
+  </div>
+  {#if desk.agentMode && desk.agent}
+    <AgentMode
+      store={desk.agent}
+      name={entry.username ?? ''}
+      admin={desk.caps?.me?.admin === true}
+      onsettings={() => {
+        desk.toggleAgent(false)
+        desk.open('settings', { appState: { section: 'agent' } })
+      }}
+    />
   {/if}
 
   <Menubar {onlock} />
-  <Dock />
+  {#if !desk.agentMode}
+    <Dock />
+  {/if}
 
   {#if desk.panel === 'launchpad'}
     <Launchpad />

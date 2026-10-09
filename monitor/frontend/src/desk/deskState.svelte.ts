@@ -20,6 +20,7 @@ import type { DeskNotification } from './deskApi'
 import type { IconTone } from './lk/AppIcon.svelte'
 import type { MenuEntry } from './lk/Menu.svelte'
 import { AppData } from './appData'
+import { AgentStore } from './agent/agentStore.svelte'
 import { registerWebApps } from './webapps/register'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
@@ -76,6 +77,10 @@ export class Desk {
   locked = $state(false)
   /// The browser tab is hidden.
   hidden = $state(typeof document !== 'undefined' && document.visibilityState === 'hidden')
+  /// Agent mode is over the desk (`agent/AgentMode.svelte`).
+  agentMode = $state(false)
+  /// Agent mode's tasks, from the first time it opens until the desk goes.
+  agent = $state.raw<AgentStore | null>(null)
   /// The window each app notification came from, by notification id.
   readonly noticeWindows = new SvelteMap<number, string>()
   /// Each open window's frame (what its app registered), by window id.
@@ -223,6 +228,8 @@ export class Desk {
     if (!spec || !spec.available(this.caps)) return null
     this.panel = null
     this.spotlight = false
+    // A window opened is a window to see.
+    this.agentMode = false
     const id = this.windows.open(appId, options)
     if (id && options?.intent) {
       const intent: Intent = { action: String(options.intent.action), data: options.intent.data, from }
@@ -281,6 +288,22 @@ export class Desk {
     this.menu = { x: event.clientX, y: event.clientY, items }
   }
 
+  /// Whether this agent runs Agent mode and the account may use it (`shell`).
+  get agentAvailable(): boolean {
+    const caps = this.caps
+    return !!caps?.features?.includes('agent_mode') && caps.grants?.shell?.ok === true
+  }
+
+  /// Turns Agent mode on or off; the windows stay as they are.
+  toggleAgent(on = !this.agentMode) {
+    if (on && !this.agentAvailable) return
+    if (on && !this.agent) this.agent = new AgentStore(this.entry)
+    this.agentMode = on
+    this.panel = null
+    this.spotlight = false
+    this.menu = null
+  }
+
   togglePanel(panel: Panel) {
     this.panel = this.panel === panel ? null : panel
     this.spotlight = false
@@ -289,6 +312,7 @@ export class Desk {
   /// Saves what is pending and stops listening: the desk is going away.
   async stop() {
     this.#abort.abort()
+    this.agent?.stop()
     this.#offWebApps?.()
     this.#offWebApps = null
     this.prefs?.close()

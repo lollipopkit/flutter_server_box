@@ -6885,6 +6885,759 @@ type RootTranslation = {
 	 * I​t​ ​r​u​n​s​ ​a​s​ ​w​h​o​e​v​e​r​ ​o​p​e​n​s​ ​i​t​,​ ​a​n​d​ ​c​a​n​ ​s​e​n​d​ ​w​h​a​t​ ​i​t​ ​r​e​a​d​s​ ​e​l​s​e​w​h​e​r​e​.
 	 */
 	settingsAppApproveRisk: string
+	/**
+	 * A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskAgentMode: string
+	/**
+	 * I​n​ ​p​r​o​g​r​e​s​s
+	 */
+	deskAgentRunning: string
+	/**
+	 * N​e​e​d​s​ ​y​o​u
+	 */
+	deskAgentNeedsYou: string
+	/**
+	 * D​o​n​e
+	 */
+	deskAgentDone: string
+	/**
+	 * S​e​e​ ​a​l​l
+	 */
+	deskAgentSeeAll: string
+	/**
+	 * N​o​t​h​i​n​g​ ​y​e​t
+	 */
+	deskAgentNothing: string
+	/**
+	 * {​n​}​ ​m​o​r​e
+	 * @param {unknown} n
+	 */
+	deskAgentMore: RequiredParams<'n'>
+	/**
+	 * T​o​d​a​y
+	 */
+	deskAgentToday: string
+	/**
+	 * Y​e​s​t​e​r​d​a​y
+	 */
+	deskAgentYesterday: string
+	/**
+	 * E​a​r​l​i​e​r
+	 */
+	deskAgentEarlier: string
+	/**
+	 * U​p​ ​l​a​t​e
+	 */
+	deskAgentGreetNight: string
+	/**
+	 * G​o​o​d​ ​m​o​r​n​i​n​g
+	 */
+	deskAgentGreetMorning: string
+	/**
+	 * G​o​o​d​ ​d​a​y
+	 */
+	deskAgentGreetNoon: string
+	/**
+	 * G​o​o​d​ ​a​f​t​e​r​n​o​o​n
+	 */
+	deskAgentGreetAfternoon: string
+	/**
+	 * G​o​o​d​ ​e​v​e​n​i​n​g
+	 */
+	deskAgentGreetEvening: string
+	/**
+	 * {​g​r​e​e​t​i​n​g​}​,​ ​{​n​a​m​e​}
+	 * @param {unknown} greeting
+	 * @param {unknown} name
+	 */
+	deskAgentGreeting: RequiredParams<'greeting' | 'name'>
+	/**
+	 * W​h​a​t​ ​s​h​o​u​l​d​ ​I​ ​d​o​?
+	 */
+	deskAgentAsk: string
+	/**
+	 * W​h​a​t​ ​s​h​o​u​l​d​ ​I​ ​d​o​?​ ​N​e​w​ ​t​a​s​k​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n
+	 */
+	deskAgentAskQueued: string
+	/**
+	 * S​e​n​d
+	 */
+	deskAgentSend: string
+	/**
+	 * ⏎​ ​s​e​n​d​ ​ ​ ​e​s​c​ ​c​l​e​a​r
+	 */
+	deskAgentSendHint: string
+	/**
+	 * A​t​ ​m​o​s​t​ ​{​n​}​ ​t​a​s​k​s​ ​r​u​n​ ​a​t​ ​o​n​c​e​;​ ​n​e​w​ ​o​n​e​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n​.
+	 * @param {unknown} n
+	 */
+	deskAgentAtLimit: RequiredParams<'n'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​d​ ​a​n​d​ ​a​c​t​ ​o​n​ ​{​h​o​s​t​}​:​ ​i​t​s​ ​s​t​a​t​e​,​ ​p​r​o​c​e​s​s​e​s​,​ ​s​e​r​v​i​c​e​s​,​ ​c​o​n​t​a​i​n​e​r​s​ ​a​n​d​ ​f​i​l​e​s​.​ ​B​e​f​o​r​e​ ​a​n​y​ ​c​h​a​n​g​e​ ​i​t​ ​l​a​y​s​ ​o​u​t​ ​a​ ​p​l​a​n​.
+	 * @param {unknown} host
+	 */
+	deskAgentIntro: RequiredParams<'host'>
+	/**
+	 * C​h​e​c​k​ ​d​i​s​k​ ​u​s​a​g​e
+	 */
+	deskAgentSuggestDisk: string
+	/**
+	 * U​p​d​a​t​e​ ​s​y​s​t​e​m​ ​p​a​c​k​a​g​e​s
+	 */
+	deskAgentSuggestUpdate: string
+	/**
+	 * L​i​s​t​ ​f​a​i​l​e​d​ ​s​e​r​v​i​c​e​s
+	 */
+	deskAgentSuggestFailed: string
+	/**
+	 * C​l​e​a​n​ ​u​p​ ​D​o​c​k​e​r​ ​i​m​a​g​e​s
+	 */
+	deskAgentSuggestDocker: string
+	/**
+	 * P​a​s​t​e​d​ ​t​e​x​t
+	 */
+	deskAgentPasted: string
+	/**
+	 * {​l​i​n​e​s​}​ ​l​i​n​e​s​ ​·​ ​{​s​i​z​e​}
+	 * @param {unknown} lines
+	 * @param {unknown} size
+	 */
+	deskAgentPastedMeta: RequiredParams<'lines' | 'size'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	deskAgentRemove: string
+	/**
+	 * I​n​ ​p​r​o​g​r​e​s​s
+	 */
+	deskAgentStatusRunning: string
+	/**
+	 * Q​u​e​u​e​d
+	 */
+	deskAgentStatusQueued: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	deskAgentStatusFailed: string
+	/**
+	 * C​a​n​c​e​l​l​e​d
+	 */
+	deskAgentStatusCancelled: string
+	/**
+	 * D​o​n​e
+	 */
+	deskAgentStatusDone: string
+	/**
+	 * N​e​e​d​s​ ​c​o​n​f​i​r​m​i​n​g
+	 */
+	deskAgentWaitConfirm: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​p​a​s​s​w​o​r​d
+	 */
+	deskAgentWaitSudo: string
+	/**
+	 * N​e​e​d​s​ ​a​n​ ​a​n​s​w​e​r
+	 */
+	deskAgentWaitClarify: string
+	/**
+	 * D​a​n​g​e​r​o​u​s
+	 */
+	deskAgentWaitDanger: string
+	/**
+	 * {​t​i​m​e​}​ ​s​o​ ​f​a​r
+	 * @param {unknown} time
+	 */
+	deskAgentElapsed: RequiredParams<'time'>
+	/**
+	 * {​s​}​s
+	 * @param {unknown} s
+	 */
+	deskAgentSeconds: RequiredParams<'s'>
+	/**
+	 * {​m​}​m​ ​{​s​}​s
+	 * @param {unknown} m
+	 * @param {unknown} s
+	 */
+	deskAgentMinutes: RequiredParams<'m' | 's'>
+	/**
+	 * {​h​}​h​ ​{​m​}​m
+	 * @param {unknown} h
+	 * @param {unknown} m
+	 */
+	deskAgentHours: RequiredParams<'h' | 'm'>
+	/**
+	 * S​t​e​p​ ​{​n​}​ ​·​ ​{​t​i​t​l​e​}
+	 * @param {unknown} n
+	 * @param {unknown} title
+	 */
+	deskAgentStepLine: RequiredParams<'n' | 'title'>
+	/**
+	 * T​i​m​e​l​i​n​e
+	 */
+	deskAgentTimeline: string
+	/**
+	 * A​l​s​o​ ​r​u​n​n​i​n​g
+	 */
+	deskAgentAlsoRunning: string
+	/**
+	 * S​t​a​r​t​e​d​ ​{​t​i​m​e​}​ ​·​ ​{​d​u​r​a​t​i​o​n​}
+	 * @param {unknown} duration
+	 * @param {unknown} time
+	 */
+	deskAgentStarted: RequiredParams<'duration' | 'time'>
+	/**
+	 * P​r​e​v​i​o​u​s​ ​s​t​e​p
+	 */
+	deskAgentPrevStep: string
+	/**
+	 * N​e​x​t​ ​s​t​e​p
+	 */
+	deskAgentNextStep: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	deskAgentAreaStatus: string
+	/**
+	 * P​r​o​c​e​s​s​e​s
+	 */
+	deskAgentAreaProcess: string
+	/**
+	 * S​e​r​v​i​c​e​s
+	 */
+	deskAgentAreaService: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	deskAgentAreaContainer: string
+	/**
+	 * F​i​l​e​s
+	 */
+	deskAgentAreaFiles: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	deskAgentAreaSystem: string
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	deskAgentThinking: string
+	/**
+	 * A​n​s​w​e​r
+	 */
+	deskAgentAnswer: string
+	/**
+	 * N​e​x​t​ ​s​t​e​p
+	 */
+	deskAgentNext: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	deskAgentCmdRunning: string
+	/**
+	 * R​a​n
+	 */
+	deskAgentCmdRan: string
+	/**
+	 * W​o​u​l​d​ ​r​u​n
+	 */
+	deskAgentCmdWould: string
+	/**
+	 * W​i​l​l​ ​r​u​n
+	 */
+	deskAgentCmdWill: string
+	/**
+	 * R​u​n​n​i​n​g​;​ ​t​h​e​ ​o​u​t​p​u​t​ ​i​s​ ​o​n​ ​t​h​e​ ​r​i​g​h​t
+	 */
+	deskAgentRunningPlain: string
+	/**
+	 * Y​o​u​ ​c​a​n​ ​l​e​a​v​e​;​ ​i​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​ ​a​n​d​ ​y​o​u​ ​w​i​l​l​ ​b​e​ ​t​o​l​d​ ​w​h​e​n​ ​i​t​ ​e​n​d​s​.
+	 */
+	deskAgentCanLeave: string
+	/**
+	 * R​u​n​ ​i​n​ ​b​a​c​k​g​r​o​u​n​d
+	 */
+	deskAgentInBackground: string
+	/**
+	 * P​l​a​n
+	 */
+	deskAgentPlan: string
+	/**
+	 * R​u​n
+	 */
+	deskAgentRun: string
+	/**
+	 * C​h​a​n​g​e​ ​t​h​e​ ​p​l​a​n
+	 */
+	deskAgentChangePlan: string
+	/**
+	 * S​a​y​ ​w​h​a​t​ ​t​o​ ​c​h​a​n​g​e​,​ ​e​.​g​.​ ​s​k​i​p​ ​s​t​e​p​ ​2​ ​o​r​ ​c​h​e​c​k​ ​d​i​s​k​ ​s​p​a​c​e​ ​f​i​r​s​t
+	 */
+	deskAgentChangePlanHint: string
+	/**
+	 * R​e​a​d​ ​m​e​m​o​r​y
+	 */
+	deskAgentMemoryRead: string
+	/**
+	 * U​p​d​a​t​e​ ​m​e​m​o​r​y
+	 */
+	deskAgentMemoryWrite: string
+	/**
+	 * M​e​m​o​r​y​ ​f​i​l​e
+	 */
+	deskAgentMemoryFile: string
+	/**
+	 * C​a​n​c​e​l
+	 */
+	deskAgentCancel: string
+	/**
+	 * C​a​n​c​e​l​l​e​d​;​ ​n​o​t​h​i​n​g​ ​w​a​s​ ​c​h​a​n​g​e​d​.
+	 */
+	deskAgentCancelled: string
+	/**
+	 * R​o​o​t​ ​n​e​e​d​e​d
+	 */
+	deskAgentRootNeeded: string
+	/**
+	 * U​s​e​d​ ​o​n​l​y​ ​t​o​ ​r​u​n​ ​t​h​e​ ​c​o​m​m​a​n​d​ ​a​b​o​v​e​.
+	 */
+	deskAgentRootOnly: string
+	/**
+	 * {​u​s​e​r​}​'​s​ ​p​a​s​s​w​o​r​d
+	 * @param {unknown} user
+	 */
+	deskAgentPasswordOf: RequiredParams<'user'>
+	/**
+	 * N​e​v​e​r​ ​w​r​i​t​t​e​n​ ​t​o​ ​d​i​s​k​.
+	 */
+	deskAgentPasswordHint: string
+	/**
+	 * D​o​n​'​t​ ​a​s​k​ ​a​g​a​i​n​ ​f​o​r​ ​1​5​ ​m​i​n​u​t​e​s
+	 */
+	deskAgentRemember: string
+	/**
+	 * A​u​t​h​o​r​i​z​e​ ​a​n​d​ ​r​u​n
+	 */
+	deskAgentAuthorize: string
+	/**
+	 * W​r​o​n​g​ ​p​a​s​s​w​o​r​d
+	 */
+	deskAgentWrongPassword: string
+	/**
+	 * E​n​t​e​r​ ​t​h​e​ ​p​a​s​s​w​o​r​d
+	 */
+	deskAgentEnterPassword: string
+	/**
+	 * P​i​c​k​ ​o​n​e
+	 */
+	deskAgentPickOne: string
+	/**
+	 * N​o​n​e​ ​o​f​ ​t​h​e​s​e​?​ ​W​r​i​t​e​ ​i​t​ ​b​e​l​o​w​.
+	 */
+	deskAgentNoneOfThese: string
+	/**
+	 * T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e
+	 */
+	deskAgentIrreversible: string
+	/**
+	 * T​y​p​e​ ​{​h​o​s​t​}​ ​t​o​ ​c​o​n​f​i​r​m
+	 * @param {unknown} host
+	 */
+	deskAgentTypeToConfirm: RequiredParams<'host'>
+	/**
+	 * R​u​n​ ​a​n​y​w​a​y
+	 */
+	deskAgentRunAnyway: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	deskAgentFailed: string
+	/**
+	 * E​x​i​t​ ​c​o​d​e​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	deskAgentExitCode: RequiredParams<'code'>
+	/**
+	 * T​i​m​e​d​ ​o​u​t
+	 */
+	deskAgentTimedOut: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n
+	 */
+	deskAgentRetry: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n​.
+	 */
+	deskAgentRetryPrompt: string
+	/**
+	 * Q​u​e​u​e​d​;​ ​i​t​ ​s​t​a​r​t​s​ ​w​h​e​n​ ​o​n​e​ ​b​e​f​o​r​e​ ​i​t​ ​e​n​d​s​.
+	 */
+	deskAgentQueuedNote: string
+	/**
+	 * N​o​t​ ​r​u​n
+	 */
+	deskAgentDeclined: string
+	/**
+	 * C​h​o​s​e​:​ ​{​a​n​s​w​e​r​}
+	 * @param {unknown} answer
+	 */
+	deskAgentChose: RequiredParams<'answer'>
+	/**
+	 * A​p​p​r​o​v​e​d
+	 */
+	deskAgentApproved: string
+	/**
+	 * T​e​l​l​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​a​t​ ​t​o​ ​d​o​ ​n​e​x​t
+	 */
+	deskAgentReplyHint: string
+	/**
+	 * A​d​d​ ​t​o​ ​i​t​ ​o​r​ ​c​h​a​n​g​e​ ​t​h​e​ ​p​l​a​n
+	 */
+	deskAgentReplyWaiting: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t​e​d​;​ ​c​a​n​n​o​t​ ​s​e​n​d​ ​n​o​w
+	 */
+	deskAgentReplyOffline: string
+	/**
+	 * ↑​↓​ ​s​t​e​p​s
+	 */
+	deskAgentKeySteps: string
+	/**
+	 * ⏎​ ​s​e​n​d
+	 */
+	deskAgentKeySend: string
+	/**
+	 * e​s​c​ ​b​a​c​k
+	 */
+	deskAgentKeyBack: string
+	/**
+	 * {​h​o​s​t​}​ ​d​i​s​c​o​n​n​e​c​t​e​d
+	 * @param {unknown} host
+	 */
+	deskAgentOffline: RequiredParams<'host'>
+	/**
+	 * T​a​s​k​s​ ​k​e​e​p​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​;​ ​t​h​e​ ​o​u​t​p​u​t​ ​r​e​s​u​m​e​s​ ​w​h​e​n​ ​i​t​ ​r​e​c​o​n​n​e​c​t​s​.
+	 */
+	deskAgentOfflineNote: string
+	/**
+	 * R​e​c​o​n​n​e​c​t​ ​n​o​w
+	 */
+	deskAgentReconnect: string
+	/**
+	 * O​u​t​p​u​t
+	 */
+	deskAgentOutput: string
+	/**
+	 * {​n​}​ ​l​i​n​e​s
+	 * @param {unknown} n
+	 */
+	deskAgentLines: RequiredParams<'n'>
+	/**
+	 * A​l​l
+	 */
+	deskAgentAll: string
+	/**
+	 * E​r​r​o​r​s​ ​{​n​}
+	 * @param {unknown} n
+	 */
+	deskAgentErrors: RequiredParams<'n'>
+	/**
+	 * W​r​a​p​ ​l​i​n​e​s
+	 */
+	deskAgentWrap: string
+	/**
+	 * C​o​p​y
+	 */
+	deskAgentCopy: string
+	/**
+	 * N​o​ ​o​u​t​p​u​t
+	 */
+	deskAgentNoOutput: string
+	/**
+	 * {​n​}​ ​l​i​n​e​s​ ​f​o​l​d​e​d​;​ ​c​l​i​c​k​ ​t​o​ ​s​h​o​w
+	 * @param {unknown} n
+	 */
+	deskAgentFolded: RequiredParams<'n'>
+	/**
+	 * {​n​}​ ​l​i​n​e​s​ ​n​o​t​ ​k​e​p​t
+	 * @param {unknown} n
+	 */
+	deskAgentNotKept: RequiredParams<'n'>
+	/**
+	 * R​e​c​e​i​v​i​n​g
+	 */
+	deskAgentReceiving: string
+	/**
+	 * N​o​t​ ​r​u​n
+	 */
+	deskAgentNotRun: string
+	/**
+	 * J​u​m​p​ ​t​o​ ​l​a​t​e​s​t
+	 */
+	deskAgentJumpLatest: string
+	/**
+	 * {​n​}​ ​t​a​s​k​s
+	 * @param {unknown} n
+	 */
+	deskAgentTasks: RequiredParams<'n'>
+	/**
+	 * S​e​a​r​c​h
+	 */
+	deskAgentSearch: string
+	/**
+	 * C​l​o​s​e
+	 */
+	deskAgentClose: string
+	/**
+	 * N​o​ ​m​a​t​c​h​e​s
+	 */
+	deskAgentNoMatch: string
+	/**
+	 * J​u​s​t​ ​n​o​w
+	 */
+	deskAgentJustNow: string
+	/**
+	 * {​t​i​t​l​e​}​ ​i​s​ ​d​o​n​e
+	 * @param {unknown} title
+	 */
+	deskAgentNoticeDone: RequiredParams<'title'>
+	/**
+	 * {​t​i​t​l​e​}​ ​n​e​e​d​s​ ​y​o​u
+	 * @param {unknown} title
+	 */
+	deskAgentNoticeWaiting: RequiredParams<'title'>
+	/**
+	 * {​t​i​t​l​e​}​ ​f​a​i​l​e​d
+	 * @param {unknown} title
+	 */
+	deskAgentNoticeFailed: RequiredParams<'title'>
+	/**
+	 * N​o​ ​m​o​d​e​l​ ​s​e​t​ ​u​p
+	 */
+	deskAgentNoModel: string
+	/**
+	 * A​d​d​ ​a​ ​p​r​o​v​i​d​e​r​ ​a​n​d​ ​p​i​c​k​ ​a​ ​m​o​d​e​l​ ​i​n​ ​S​e​t​t​i​n​g​s​.
+	 */
+	deskAgentNoModelAdmin: string
+	/**
+	 * A​s​k​ ​a​n​ ​a​d​m​i​n​ ​t​o​ ​s​e​t​ ​u​p​ ​a​ ​m​o​d​e​l​ ​i​n​ ​S​e​t​t​i​n​g​s​.
+	 */
+	deskAgentNoModelUser: string
+	/**
+	 * O​p​e​n​ ​S​e​t​t​i​n​g​s
+	 */
+	deskAgentOpenSettings: string
+	/**
+	 * S​t​o​p
+	 */
+	deskAgentStop: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	deskAgentDelete: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​l​o​a​d​ ​t​h​e​ ​t​a​s​k​s
+	 */
+	deskAgentFailedToLoad: string
+	/**
+	 * W​h​a​t​ ​w​o​u​l​d​ ​b​e​ ​l​o​s​t
+	 */
+	deskAgentDangerReason: string
+	/**
+	 * A​g​e​n​t
+	 */
+	settingsAgent: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​a​s​k​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​w​i​t​h​ ​t​h​e​ ​m​o​d​e​l​ ​c​h​o​s​e​n​ ​h​e​r​e​.​ ​I​t​ ​r​e​a​d​s​ ​f​r​e​e​l​y​,​ ​a​n​d​ ​a​s​k​s​ ​b​e​f​o​r​e​ ​c​h​a​n​g​i​n​g​ ​a​n​y​t​h​i​n​g​.
+	 */
+	settingsAgentAbout: string
+	/**
+	 * M​o​d​e​l
+	 */
+	settingsAgentModel: string
+	/**
+	 * N​o​n​e​ ​(​A​g​e​n​t​ ​m​o​d​e​ ​o​f​f​)
+	 */
+	settingsAgentNoModel: string
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	settingsAgentThinking: string
+	/**
+	 * O​f​f
+	 */
+	settingsAgentThinkingOff: string
+	/**
+	 * M​i​n​i​m​a​l
+	 */
+	settingsAgentThinkingMinimal: string
+	/**
+	 * L​o​w
+	 */
+	settingsAgentThinkingLow: string
+	/**
+	 * M​e​d​i​u​m
+	 */
+	settingsAgentThinkingMedium: string
+	/**
+	 * H​i​g​h
+	 */
+	settingsAgentThinkingHigh: string
+	/**
+	 * T​a​s​k​s​ ​a​t​ ​o​n​c​e
+	 */
+	settingsAgentMaxRunning: string
+	/**
+	 * P​r​o​v​i​d​e​r​s
+	 */
+	settingsAgentProviders: string
+	/**
+	 * B​u​i​l​t​-​i​n
+	 */
+	settingsAgentBuiltin: string
+	/**
+	 * A​d​d​ ​a​ ​p​r​o​v​i​d​e​r
+	 */
+	settingsAgentAddProvider: string
+	/**
+	 * N​a​m​e
+	 */
+	settingsAgentProviderName: string
+	/**
+	 * A​P​I
+	 */
+	settingsAgentApi: string
+	/**
+	 * B​a​s​e​ ​U​R​L
+	 */
+	settingsAgentBaseUrl: string
+	/**
+	 * A​l​l​o​w​ ​p​l​a​i​n​ ​H​T​T​P
+	 */
+	settingsAgentAllowInsecure: string
+	/**
+	 * A​P​I​ ​k​e​y
+	 */
+	settingsAgentKey: string
+	/**
+	 * S​e​t​;​ ​l​e​a​v​e​ ​e​m​p​t​y​ ​t​o​ ​k​e​e​p​ ​i​t
+	 */
+	settingsAgentKeySet: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​k​e​y
+	 */
+	settingsAgentKeyClear: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​e​n​d​p​o​i​n​t
+	 */
+	settingsAgentRemoveProvider: string
+	/**
+	 * S​a​v​e​d
+	 */
+	settingsAgentSaved: string
+	/**
+	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​ ​c​a​n​ ​c​h​a​n​g​e​ ​t​h​i​s​.
+	 */
+	settingsAgentAdminOnly: string
+	/**
+	 * {​n​}​ ​m​o​d​e​l​s​ ​l​i​s​t​e​d
+	 * @param {unknown} n
+	 */
+	settingsAgentDiscovered: RequiredParams<'n'>
+	/**
+	 * L​i​s​t​i​n​g​ ​m​o​d​e​l​s​…
+	 */
+	settingsAgentDiscovering: string
+	/**
+	 * L​i​s​t​ ​m​o​d​e​l​s​ ​a​g​a​i​n
+	 */
+	settingsAgentDiscover: string
+	/**
+	 * T​h​i​s​ ​A​P​I​ ​d​o​e​s​ ​n​o​t​ ​l​i​s​t​ ​i​t​s​ ​m​o​d​e​l​s​;​ ​a​d​d​ ​t​h​e​m​ ​b​e​l​o​w​.
+	 */
+	settingsAgentNoListing: string
+	/**
+	 * M​o​r​e​ ​m​o​d​e​l​ ​I​D​s
+	 */
+	settingsAgentExtraModels: string
+	/**
+	 * F​o​r​ ​m​o​d​e​l​s​ ​t​h​e​ ​e​n​d​p​o​i​n​t​ ​d​o​e​s​ ​n​o​t​ ​l​i​s​t​;​ ​c​o​m​m​a​ ​o​r​ ​o​n​e​ ​p​e​r​ ​l​i​n​e​.
+	 */
+	settingsAgentExtraHint: string
+	/**
+	 * T​h​e​ ​k​e​y​ ​a​n​d​ ​e​v​e​r​y​ ​p​r​o​m​p​t​ ​t​r​a​v​e​l​ ​u​n​e​n​c​r​y​p​t​e​d​.
+	 */
+	settingsAgentInsecureHint: string
+	/**
+	 * B​u​i​l​t​-​i​n​ ​·​ ​k​e​y​ ​s​e​t
+	 */
+	settingsAgentBuiltinKeyed: string
+	/**
+	 * n​o​ ​k​e​y
+	 */
+	settingsAgentNoKey: string
+	/**
+	 * C​u​s​t​o​m​ ​e​n​d​p​o​i​n​t
+	 */
+	settingsAgentCustomEndpoint: string
+	/**
+	 * A​n​y​ ​O​p​e​n​A​I​-​,​ ​A​n​t​h​r​o​p​i​c​-​ ​o​r​ ​G​o​o​g​l​e​-​c​o​m​p​a​t​i​b​l​e​ ​A​P​I
+	 */
+	settingsAgentCustomEndpointHint: string
+	/**
+	 * {​n​}​ ​m​o​d​e​l​s
+	 * @param {unknown} n
+	 */
+	settingsAgentModelsCount: RequiredParams<'n'>
+	/**
+	 * E​n​t​e​r​ ​a​ ​n​a​m​e​ ​a​n​d​ ​a​ ​B​a​s​e​ ​U​R​L​.
+	 */
+	settingsAgentEndpointIncomplete: string
+	/**
+	 * T​h​i​s​ ​A​P​I​ ​d​o​e​s​ ​n​o​t​ ​l​i​s​t​ ​i​t​s​ ​m​o​d​e​l​s​:​ ​a​d​d​ ​a​t​ ​l​e​a​s​t​ ​o​n​e​.
+	 */
+	settingsAgentModelsRequired: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	settingsAgentMemory: string
+	/**
+	 * W​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​m​e​m​b​e​r​s​ ​a​c​r​o​s​s​ ​y​o​u​r​ ​t​a​s​k​s
+	 */
+	settingsAgentMemorySub: string
+	/**
+	 * W​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​m​e​m​b​e​r​s​ ​a​c​r​o​s​s​ ​y​o​u​r​ ​t​a​s​k​s​:​ ​t​e​x​t​ ​f​i​l​e​s​ ​i​t​ ​r​e​a​d​s​ ​a​n​d​ ​k​e​e​p​s​ ​u​p​ ​t​o​ ​d​a​t​e​.​ ​Y​o​u​r​s​ ​a​l​o​n​e​;​ ​M​E​M​O​R​Y​.​m​d​ ​i​s​ ​i​t​s​ ​i​n​d​e​x​,​ ​r​e​a​d​ ​a​t​ ​t​h​e​ ​s​t​a​r​t​ ​o​f​ ​e​v​e​r​y​ ​t​a​s​k​.
+	 */
+	settingsAgentMemoryAbout: string
+	/**
+	 * N​o​t​h​i​n​g​ ​r​e​m​e​m​b​e​r​e​d​ ​y​e​t​.
+	 */
+	settingsAgentMemoryEmpty: string
+	/**
+	 * N​e​w​ ​f​i​l​e
+	 */
+	settingsAgentMemoryNew: string
+	/**
+	 * P​a​t​h
+	 */
+	settingsAgentMemoryPath: string
+	/**
+	 * C​o​n​t​e​n​t
+	 */
+	settingsAgentMemoryContent: string
+	/**
+	 * D​e​l​e​t​e​ ​t​h​e​ ​f​i​l​e
+	 */
+	settingsAgentMemoryDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​i​t​ ​f​o​r​ ​g​o​o​d
+	 */
+	settingsAgentMemoryDeleteConfirm: string
+	/**
+	 * {​n​}​ ​c​h​a​r​a​c​t​e​r​s
+	 * @param {unknown} n
+	 */
+	settingsAgentMemoryChars: RequiredParams<'n'>
 }
 
 export type TranslationFunctions = {
@@ -13560,6 +14313,726 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * It runs as whoever opens it, and can send what it reads elsewhere.
 	 */
 	settingsAppApproveRisk: () => LocalizedString
+	/**
+	 * Agent mode
+	 */
+	deskAgentMode: () => LocalizedString
+	/**
+	 * In progress
+	 */
+	deskAgentRunning: () => LocalizedString
+	/**
+	 * Needs you
+	 */
+	deskAgentNeedsYou: () => LocalizedString
+	/**
+	 * Done
+	 */
+	deskAgentDone: () => LocalizedString
+	/**
+	 * See all
+	 */
+	deskAgentSeeAll: () => LocalizedString
+	/**
+	 * Nothing yet
+	 */
+	deskAgentNothing: () => LocalizedString
+	/**
+	 * {n} more
+	 */
+	deskAgentMore: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Today
+	 */
+	deskAgentToday: () => LocalizedString
+	/**
+	 * Yesterday
+	 */
+	deskAgentYesterday: () => LocalizedString
+	/**
+	 * Earlier
+	 */
+	deskAgentEarlier: () => LocalizedString
+	/**
+	 * Up late
+	 */
+	deskAgentGreetNight: () => LocalizedString
+	/**
+	 * Good morning
+	 */
+	deskAgentGreetMorning: () => LocalizedString
+	/**
+	 * Good day
+	 */
+	deskAgentGreetNoon: () => LocalizedString
+	/**
+	 * Good afternoon
+	 */
+	deskAgentGreetAfternoon: () => LocalizedString
+	/**
+	 * Good evening
+	 */
+	deskAgentGreetEvening: () => LocalizedString
+	/**
+	 * {greeting}, {name}
+	 */
+	deskAgentGreeting: (arg: { greeting: unknown, name: unknown }) => LocalizedString
+	/**
+	 * What should I do?
+	 */
+	deskAgentAsk: () => LocalizedString
+	/**
+	 * What should I do? New tasks wait their turn
+	 */
+	deskAgentAskQueued: () => LocalizedString
+	/**
+	 * Send
+	 */
+	deskAgentSend: () => LocalizedString
+	/**
+	 * ⏎ send   esc clear
+	 */
+	deskAgentSendHint: () => LocalizedString
+	/**
+	 * At most {n} tasks run at once; new ones wait their turn.
+	 */
+	deskAgentAtLimit: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * The agent can read and act on {host}: its state, processes, services, containers and files. Before any change it lays out a plan.
+	 */
+	deskAgentIntro: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Check disk usage
+	 */
+	deskAgentSuggestDisk: () => LocalizedString
+	/**
+	 * Update system packages
+	 */
+	deskAgentSuggestUpdate: () => LocalizedString
+	/**
+	 * List failed services
+	 */
+	deskAgentSuggestFailed: () => LocalizedString
+	/**
+	 * Clean up Docker images
+	 */
+	deskAgentSuggestDocker: () => LocalizedString
+	/**
+	 * Pasted text
+	 */
+	deskAgentPasted: () => LocalizedString
+	/**
+	 * {lines} lines · {size}
+	 */
+	deskAgentPastedMeta: (arg: { lines: unknown, size: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	deskAgentRemove: () => LocalizedString
+	/**
+	 * In progress
+	 */
+	deskAgentStatusRunning: () => LocalizedString
+	/**
+	 * Queued
+	 */
+	deskAgentStatusQueued: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	deskAgentStatusFailed: () => LocalizedString
+	/**
+	 * Cancelled
+	 */
+	deskAgentStatusCancelled: () => LocalizedString
+	/**
+	 * Done
+	 */
+	deskAgentStatusDone: () => LocalizedString
+	/**
+	 * Needs confirming
+	 */
+	deskAgentWaitConfirm: () => LocalizedString
+	/**
+	 * Needs a password
+	 */
+	deskAgentWaitSudo: () => LocalizedString
+	/**
+	 * Needs an answer
+	 */
+	deskAgentWaitClarify: () => LocalizedString
+	/**
+	 * Dangerous
+	 */
+	deskAgentWaitDanger: () => LocalizedString
+	/**
+	 * {time} so far
+	 */
+	deskAgentElapsed: (arg: { time: unknown }) => LocalizedString
+	/**
+	 * {s}s
+	 */
+	deskAgentSeconds: (arg: { s: unknown }) => LocalizedString
+	/**
+	 * {m}m {s}s
+	 */
+	deskAgentMinutes: (arg: { m: unknown, s: unknown }) => LocalizedString
+	/**
+	 * {h}h {m}m
+	 */
+	deskAgentHours: (arg: { h: unknown, m: unknown }) => LocalizedString
+	/**
+	 * Step {n} · {title}
+	 */
+	deskAgentStepLine: (arg: { n: unknown, title: unknown }) => LocalizedString
+	/**
+	 * Timeline
+	 */
+	deskAgentTimeline: () => LocalizedString
+	/**
+	 * Also running
+	 */
+	deskAgentAlsoRunning: () => LocalizedString
+	/**
+	 * Started {time} · {duration}
+	 */
+	deskAgentStarted: (arg: { duration: unknown, time: unknown }) => LocalizedString
+	/**
+	 * Previous step
+	 */
+	deskAgentPrevStep: () => LocalizedString
+	/**
+	 * Next step
+	 */
+	deskAgentNextStep: () => LocalizedString
+	/**
+	 * Status
+	 */
+	deskAgentAreaStatus: () => LocalizedString
+	/**
+	 * Processes
+	 */
+	deskAgentAreaProcess: () => LocalizedString
+	/**
+	 * Services
+	 */
+	deskAgentAreaService: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	deskAgentAreaContainer: () => LocalizedString
+	/**
+	 * Files
+	 */
+	deskAgentAreaFiles: () => LocalizedString
+	/**
+	 * System
+	 */
+	deskAgentAreaSystem: () => LocalizedString
+	/**
+	 * Thinking
+	 */
+	deskAgentThinking: () => LocalizedString
+	/**
+	 * Answer
+	 */
+	deskAgentAnswer: () => LocalizedString
+	/**
+	 * Next step
+	 */
+	deskAgentNext: () => LocalizedString
+	/**
+	 * Running
+	 */
+	deskAgentCmdRunning: () => LocalizedString
+	/**
+	 * Ran
+	 */
+	deskAgentCmdRan: () => LocalizedString
+	/**
+	 * Would run
+	 */
+	deskAgentCmdWould: () => LocalizedString
+	/**
+	 * Will run
+	 */
+	deskAgentCmdWill: () => LocalizedString
+	/**
+	 * Running; the output is on the right
+	 */
+	deskAgentRunningPlain: () => LocalizedString
+	/**
+	 * You can leave; it keeps running on the server and you will be told when it ends.
+	 */
+	deskAgentCanLeave: () => LocalizedString
+	/**
+	 * Run in background
+	 */
+	deskAgentInBackground: () => LocalizedString
+	/**
+	 * Plan
+	 */
+	deskAgentPlan: () => LocalizedString
+	/**
+	 * Run
+	 */
+	deskAgentRun: () => LocalizedString
+	/**
+	 * Change the plan
+	 */
+	deskAgentChangePlan: () => LocalizedString
+	/**
+	 * Say what to change, e.g. skip step 2 or check disk space first
+	 */
+	deskAgentChangePlanHint: () => LocalizedString
+	/**
+	 * Read memory
+	 */
+	deskAgentMemoryRead: () => LocalizedString
+	/**
+	 * Update memory
+	 */
+	deskAgentMemoryWrite: () => LocalizedString
+	/**
+	 * Memory file
+	 */
+	deskAgentMemoryFile: () => LocalizedString
+	/**
+	 * Cancel
+	 */
+	deskAgentCancel: () => LocalizedString
+	/**
+	 * Cancelled; nothing was changed.
+	 */
+	deskAgentCancelled: () => LocalizedString
+	/**
+	 * Root needed
+	 */
+	deskAgentRootNeeded: () => LocalizedString
+	/**
+	 * Used only to run the command above.
+	 */
+	deskAgentRootOnly: () => LocalizedString
+	/**
+	 * {user}'s password
+	 */
+	deskAgentPasswordOf: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * Never written to disk.
+	 */
+	deskAgentPasswordHint: () => LocalizedString
+	/**
+	 * Don't ask again for 15 minutes
+	 */
+	deskAgentRemember: () => LocalizedString
+	/**
+	 * Authorize and run
+	 */
+	deskAgentAuthorize: () => LocalizedString
+	/**
+	 * Wrong password
+	 */
+	deskAgentWrongPassword: () => LocalizedString
+	/**
+	 * Enter the password
+	 */
+	deskAgentEnterPassword: () => LocalizedString
+	/**
+	 * Pick one
+	 */
+	deskAgentPickOne: () => LocalizedString
+	/**
+	 * None of these? Write it below.
+	 */
+	deskAgentNoneOfThese: () => LocalizedString
+	/**
+	 * This cannot be undone
+	 */
+	deskAgentIrreversible: () => LocalizedString
+	/**
+	 * Type {host} to confirm
+	 */
+	deskAgentTypeToConfirm: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Run anyway
+	 */
+	deskAgentRunAnyway: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	deskAgentFailed: () => LocalizedString
+	/**
+	 * Exit code {code}
+	 */
+	deskAgentExitCode: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Timed out
+	 */
+	deskAgentTimedOut: () => LocalizedString
+	/**
+	 * Try again
+	 */
+	deskAgentRetry: () => LocalizedString
+	/**
+	 * Try again.
+	 */
+	deskAgentRetryPrompt: () => LocalizedString
+	/**
+	 * Queued; it starts when one before it ends.
+	 */
+	deskAgentQueuedNote: () => LocalizedString
+	/**
+	 * Not run
+	 */
+	deskAgentDeclined: () => LocalizedString
+	/**
+	 * Chose: {answer}
+	 */
+	deskAgentChose: (arg: { answer: unknown }) => LocalizedString
+	/**
+	 * Approved
+	 */
+	deskAgentApproved: () => LocalizedString
+	/**
+	 * Tell the agent what to do next
+	 */
+	deskAgentReplyHint: () => LocalizedString
+	/**
+	 * Add to it or change the plan
+	 */
+	deskAgentReplyWaiting: () => LocalizedString
+	/**
+	 * Disconnected; cannot send now
+	 */
+	deskAgentReplyOffline: () => LocalizedString
+	/**
+	 * ↑↓ steps
+	 */
+	deskAgentKeySteps: () => LocalizedString
+	/**
+	 * ⏎ send
+	 */
+	deskAgentKeySend: () => LocalizedString
+	/**
+	 * esc back
+	 */
+	deskAgentKeyBack: () => LocalizedString
+	/**
+	 * {host} disconnected
+	 */
+	deskAgentOffline: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Tasks keep running on the server; the output resumes when it reconnects.
+	 */
+	deskAgentOfflineNote: () => LocalizedString
+	/**
+	 * Reconnect now
+	 */
+	deskAgentReconnect: () => LocalizedString
+	/**
+	 * Output
+	 */
+	deskAgentOutput: () => LocalizedString
+	/**
+	 * {n} lines
+	 */
+	deskAgentLines: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * All
+	 */
+	deskAgentAll: () => LocalizedString
+	/**
+	 * Errors {n}
+	 */
+	deskAgentErrors: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Wrap lines
+	 */
+	deskAgentWrap: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	deskAgentCopy: () => LocalizedString
+	/**
+	 * No output
+	 */
+	deskAgentNoOutput: () => LocalizedString
+	/**
+	 * {n} lines folded; click to show
+	 */
+	deskAgentFolded: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * {n} lines not kept
+	 */
+	deskAgentNotKept: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Receiving
+	 */
+	deskAgentReceiving: () => LocalizedString
+	/**
+	 * Not run
+	 */
+	deskAgentNotRun: () => LocalizedString
+	/**
+	 * Jump to latest
+	 */
+	deskAgentJumpLatest: () => LocalizedString
+	/**
+	 * {n} tasks
+	 */
+	deskAgentTasks: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Search
+	 */
+	deskAgentSearch: () => LocalizedString
+	/**
+	 * Close
+	 */
+	deskAgentClose: () => LocalizedString
+	/**
+	 * No matches
+	 */
+	deskAgentNoMatch: () => LocalizedString
+	/**
+	 * Just now
+	 */
+	deskAgentJustNow: () => LocalizedString
+	/**
+	 * {title} is done
+	 */
+	deskAgentNoticeDone: (arg: { title: unknown }) => LocalizedString
+	/**
+	 * {title} needs you
+	 */
+	deskAgentNoticeWaiting: (arg: { title: unknown }) => LocalizedString
+	/**
+	 * {title} failed
+	 */
+	deskAgentNoticeFailed: (arg: { title: unknown }) => LocalizedString
+	/**
+	 * No model set up
+	 */
+	deskAgentNoModel: () => LocalizedString
+	/**
+	 * Add a provider and pick a model in Settings.
+	 */
+	deskAgentNoModelAdmin: () => LocalizedString
+	/**
+	 * Ask an admin to set up a model in Settings.
+	 */
+	deskAgentNoModelUser: () => LocalizedString
+	/**
+	 * Open Settings
+	 */
+	deskAgentOpenSettings: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	deskAgentStop: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	deskAgentDelete: () => LocalizedString
+	/**
+	 * Could not load the tasks
+	 */
+	deskAgentFailedToLoad: () => LocalizedString
+	/**
+	 * What would be lost
+	 */
+	deskAgentDangerReason: () => LocalizedString
+	/**
+	 * Agent
+	 */
+	settingsAgent: () => LocalizedString
+	/**
+	 * The agent runs tasks on this machine with the model chosen here. It reads freely, and asks before changing anything.
+	 */
+	settingsAgentAbout: () => LocalizedString
+	/**
+	 * Model
+	 */
+	settingsAgentModel: () => LocalizedString
+	/**
+	 * None (Agent mode off)
+	 */
+	settingsAgentNoModel: () => LocalizedString
+	/**
+	 * Thinking
+	 */
+	settingsAgentThinking: () => LocalizedString
+	/**
+	 * Off
+	 */
+	settingsAgentThinkingOff: () => LocalizedString
+	/**
+	 * Minimal
+	 */
+	settingsAgentThinkingMinimal: () => LocalizedString
+	/**
+	 * Low
+	 */
+	settingsAgentThinkingLow: () => LocalizedString
+	/**
+	 * Medium
+	 */
+	settingsAgentThinkingMedium: () => LocalizedString
+	/**
+	 * High
+	 */
+	settingsAgentThinkingHigh: () => LocalizedString
+	/**
+	 * Tasks at once
+	 */
+	settingsAgentMaxRunning: () => LocalizedString
+	/**
+	 * Providers
+	 */
+	settingsAgentProviders: () => LocalizedString
+	/**
+	 * Built-in
+	 */
+	settingsAgentBuiltin: () => LocalizedString
+	/**
+	 * Add a provider
+	 */
+	settingsAgentAddProvider: () => LocalizedString
+	/**
+	 * Name
+	 */
+	settingsAgentProviderName: () => LocalizedString
+	/**
+	 * API
+	 */
+	settingsAgentApi: () => LocalizedString
+	/**
+	 * Base URL
+	 */
+	settingsAgentBaseUrl: () => LocalizedString
+	/**
+	 * Allow plain HTTP
+	 */
+	settingsAgentAllowInsecure: () => LocalizedString
+	/**
+	 * API key
+	 */
+	settingsAgentKey: () => LocalizedString
+	/**
+	 * Set; leave empty to keep it
+	 */
+	settingsAgentKeySet: () => LocalizedString
+	/**
+	 * Remove the key
+	 */
+	settingsAgentKeyClear: () => LocalizedString
+	/**
+	 * Remove the endpoint
+	 */
+	settingsAgentRemoveProvider: () => LocalizedString
+	/**
+	 * Saved
+	 */
+	settingsAgentSaved: () => LocalizedString
+	/**
+	 * Only an admin can change this.
+	 */
+	settingsAgentAdminOnly: () => LocalizedString
+	/**
+	 * {n} models listed
+	 */
+	settingsAgentDiscovered: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Listing models…
+	 */
+	settingsAgentDiscovering: () => LocalizedString
+	/**
+	 * List models again
+	 */
+	settingsAgentDiscover: () => LocalizedString
+	/**
+	 * This API does not list its models; add them below.
+	 */
+	settingsAgentNoListing: () => LocalizedString
+	/**
+	 * More model IDs
+	 */
+	settingsAgentExtraModels: () => LocalizedString
+	/**
+	 * For models the endpoint does not list; comma or one per line.
+	 */
+	settingsAgentExtraHint: () => LocalizedString
+	/**
+	 * The key and every prompt travel unencrypted.
+	 */
+	settingsAgentInsecureHint: () => LocalizedString
+	/**
+	 * Built-in · key set
+	 */
+	settingsAgentBuiltinKeyed: () => LocalizedString
+	/**
+	 * no key
+	 */
+	settingsAgentNoKey: () => LocalizedString
+	/**
+	 * Custom endpoint
+	 */
+	settingsAgentCustomEndpoint: () => LocalizedString
+	/**
+	 * Any OpenAI-, Anthropic- or Google-compatible API
+	 */
+	settingsAgentCustomEndpointHint: () => LocalizedString
+	/**
+	 * {n} models
+	 */
+	settingsAgentModelsCount: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Enter a name and a Base URL.
+	 */
+	settingsAgentEndpointIncomplete: () => LocalizedString
+	/**
+	 * This API does not list its models: add at least one.
+	 */
+	settingsAgentModelsRequired: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	settingsAgentMemory: () => LocalizedString
+	/**
+	 * What the agent remembers across your tasks
+	 */
+	settingsAgentMemorySub: () => LocalizedString
+	/**
+	 * What the agent remembers across your tasks: text files it reads and keeps up to date. Yours alone; MEMORY.md is its index, read at the start of every task.
+	 */
+	settingsAgentMemoryAbout: () => LocalizedString
+	/**
+	 * Nothing remembered yet.
+	 */
+	settingsAgentMemoryEmpty: () => LocalizedString
+	/**
+	 * New file
+	 */
+	settingsAgentMemoryNew: () => LocalizedString
+	/**
+	 * Path
+	 */
+	settingsAgentMemoryPath: () => LocalizedString
+	/**
+	 * Content
+	 */
+	settingsAgentMemoryContent: () => LocalizedString
+	/**
+	 * Delete the file
+	 */
+	settingsAgentMemoryDelete: () => LocalizedString
+	/**
+	 * Delete it for good
+	 */
+	settingsAgentMemoryDeleteConfirm: () => LocalizedString
+	/**
+	 * {n} characters
+	 */
+	settingsAgentMemoryChars: (arg: { n: unknown }) => LocalizedString
 }
 
 export type Formatters = {}

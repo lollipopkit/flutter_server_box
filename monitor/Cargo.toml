@@ -13,6 +13,8 @@ sbm_parser = { path = "../crates/sbm_parser" }
 # Theme packages and the theme store, the same reader the app runs through
 # fl_lib (its own Cargo workspace, in the fl_lib submodule).
 fl_theme = { path = "../packages/fl_lib/rust/theme" }
+# Agent mode's agent loop: pi on QuickJS, hosted from Rust (`agent_mode`).
+fl_pi_llm = { path = "../packages/fl_pi_llm/rust", default-features = false, features = ["reqwest"] }
 sbm_redfish = { path = "../crates/sbm_redfish" }
 sbm_virt = { path = "../crates/sbm_virt" }
 # Native (syscall/procfs) status sampling for monitor's own local collection

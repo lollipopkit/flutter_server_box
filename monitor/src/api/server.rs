@@ -126,6 +126,8 @@ pub struct AppState {
     pub themes: Arc<crate::api::desk_themes::ThemeStore>,
     /// Files kept beside the database — see `core::blobs`.
     pub blobs: Arc<crate::core::blobs::Blobs>,
+    /// Agent mode's tasks and the pi runtime they run in — see `agent_mode`.
+    pub agent: Arc<crate::agent_mode::AgentMode>,
     /// Desk app backend calls running now (`api::app_runtime`).
     pub app_calls: crate::api::app_runtime::AppCalls,
     /// The last process table read, which the next one's read and write
@@ -179,6 +181,7 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     if let Some(db) = sqlite_file(&url) {
         protected.file(&db);
         protected.tree(crate::core::blobs::Blobs::beside(&db).dir());
+        protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -234,6 +237,7 @@ impl AppState {
                 Some(file) => crate::core::blobs::Blobs::beside(&file),
                 None => crate::core::blobs::Blobs::temporary(),
             }),
+            agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
@@ -520,6 +524,40 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/desk/notifications").route(web::get().to(crate::api::desk::notifications)))
             .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
             .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
+            .service(
+                web::resource("/agent/flows")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
+                    .route(web::get().to(crate::api::agent::list))
+                    .route(web::post().to(crate::api::agent::start)),
+            )
+            .service(
+                web::resource("/agent/flows/{id}")
+                    .route(web::get().to(crate::api::agent::detail))
+                    .route(web::delete().to(crate::api::agent::remove)),
+            )
+            .service(
+                web::resource("/agent/flows/{id}/reply")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
+                    .route(web::post().to(crate::api::agent::reply)),
+            )
+            .service(web::resource("/agent/flows/{id}/answer").route(web::post().to(crate::api::agent::answer)))
+            .service(web::resource("/agent/flows/{id}/stop").route(web::post().to(crate::api::agent::stop)))
+            .service(web::resource("/agent/events").route(web::get().to(crate::api::agent::events)))
+            .service(
+                web::resource("/agent/settings")
+                    .route(web::get().to(crate::api::agent::get_settings))
+                    .route(web::put().to(crate::api::agent::put_settings)),
+            )
+            .service(web::resource("/agent/models").route(web::get().to(crate::api::agent::models)))
+            .service(web::resource("/agent/models/probe").route(web::post().to(crate::api::agent::probe)))
+            .service(web::resource("/agent/memory").route(web::get().to(crate::api::agent::memory_list)))
+            .service(
+                web::resource("/agent/memory/file")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_MEMORY_REQUEST))
+                    .route(web::get().to(crate::api::agent::memory_get))
+                    .route(web::put().to(crate::api::agent::memory_put))
+                    .route(web::delete().to(crate::api::agent::memory_delete)),
+            )
             .service(
                 web::resource("/apps")
                     .state(web::types::PayloadConfig::new(crate::api::apps::MAX_PACKAGE_BYTES))

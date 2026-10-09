@@ -28,6 +28,8 @@ COPY crates/ ./crates/
 # fl_lib's theme reader (`fl_theme`), from the submodule: the build context
 # needs it checked out.
 COPY packages/fl_lib/rust/theme/ ./fl_theme/
+# fl_pi_llm's runtime (Agent mode's pi), from its submodule likewise.
+COPY packages/fl_pi_llm/rust/ ./fl_pi_llm/
 COPY monitor/migrations/ ./migrations/
 COPY monitor/.sqlx/ ./.sqlx/
 
@@ -54,7 +56,8 @@ COPY assets/catalog/repos.toml /assets/catalog/repos.toml
 # have to be written into a manifest the workspace also reads, where cargo
 # ignores a non-root package's profiles with a warning.
 RUN sed -i -e 's|path = "../crates/|path = "crates/|' \
-           -e 's|path = "../packages/fl_lib/rust/theme"|path = "fl_theme"|' Cargo.toml \
+           -e 's|path = "../packages/fl_lib/rust/theme"|path = "fl_theme"|' \
+           -e 's|path = "../packages/fl_pi_llm/rust"|path = "fl_pi_llm"|' Cargo.toml \
     && CARGO_PROFILE_RELEASE_STRIP=true \
        CARGO_PROFILE_RELEASE_LTO=fat \
        CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \

@@ -90,7 +90,7 @@ beforeEach(() => {
 
 describe('settings sections', () => {
   it('knows its own sections and nothing else', () => {
-    expect([...SETTINGS_SECTIONS]).toEqual(['general', 'appearance', 'apps', 'account', 'server', 'access'])
+    expect([...SETTINGS_SECTIONS]).toEqual(['general', 'appearance', 'apps', 'account', 'server', 'agent', 'access'])
     expect(isSection('server')).toBe(true)
     expect(isSection('Server')).toBe(false)
     expect(isSection(null)).toBe(false)

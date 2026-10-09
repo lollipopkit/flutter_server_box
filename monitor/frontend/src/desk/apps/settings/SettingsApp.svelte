@@ -10,6 +10,9 @@
   import { servers } from '../../../lib/servers.svelte'
   import AccessSection from './AccessSection.svelte'
   import AccountSection from './AccountSection.svelte'
+  import AgentSection from './AgentSection.svelte'
+  import AgentMemoryPage from './AgentMemoryPage.svelte'
+  import AgentProviderPage from './AgentProviderPage.svelte'
   import AppearanceSection from './AppearanceSection.svelte'
   import AppPage from './AppPage.svelte'
   import AppsSection from './AppsSection.svelte'
@@ -36,7 +39,9 @@
   const section = $derived(resolveSection(win.appState))
   /// An account that is no longer an administrator (or a window restored
   /// with `access`) falls back rather than showing a panel with nothing in it.
-  const current = $derived(section === 'access' && !admin ? 'account' : section)
+  /// Agent mode, on an agent that runs it, for an account that may use it.
+  const agent = $derived(!!caps?.features?.includes('agent_mode') && caps.grants?.shell?.ok === true)
+  const current = $derived((section === 'access' && !admin) || (section === 'agent' && !agent) ? 'account' : section)
 
   function show(next: SettingsSection) {
     win.setAppState({ section: next })
@@ -53,6 +58,27 @@
 
   function openApp(app: string) {
     win.setAppState({ section: 'apps', app })
+  }
+
+  /// An Agent provider's page, over Agent (`{ section: 'agent', provider }`).
+  const agentProvider = $derived.by(() => {
+    if (current !== 'agent') return null
+    const p = (win.appState as { provider?: unknown } | null)?.provider
+    return typeof p === 'string' && p ? p : null
+  })
+  function openProvider(provider: string) {
+    win.setAppState({ section: 'agent', provider })
+  }
+  /// The account's memory, a page over Agent (`{ section: 'agent', page:
+  /// 'memory' }`), and one of its files over that (`file`; empty for a new one).
+  const agentMemory = $derived.by(() => {
+    if (current !== 'agent') return null
+    const st = win.appState as { page?: unknown; file?: unknown } | null
+    if (st?.page !== 'memory') return null
+    return { file: typeof st.file === 'string' ? st.file : null }
+  })
+  function openMemory(file: string | null = null) {
+    win.setAppState(file === null ? { section: 'agent', page: 'memory' } : { section: 'agent', page: 'memory', file })
   }
 
   /// The theme store, a page over Appearance (`{ section: 'appearance', page: 'store' }`).
@@ -111,6 +137,14 @@
         active={current === 'server'}
         onclick={() => show('server')}
       />
+      {#if agent}
+        <SidebarItem
+          label={$LL.settingsAgent()}
+          icon="auto_awesome"
+          active={current === 'agent'}
+          onclick={() => show('agent')}
+        />
+      {/if}
       {#if admin}
         <SidebarItem
           label={$LL.settingsAccess()}
@@ -125,9 +159,29 @@
   <!-- An app's page is a page over Apps, the theme store one over
        Appearance; the sections are peers. -->
   <PageStack
-    key={appPage ? `apps/${appPage.id}` : storePage ? 'appearance/store' : current}
-    depth={appPage || storePage ? 1 : 0}
-    back={appPage ? { key: 'apps', go: leaveApp } : storePage ? { key: 'appearance', go: leaveStore } : null}
+    key={appPage
+      ? `apps/${appPage.id}`
+      : storePage
+        ? 'appearance/store'
+        : agentMemory
+          ? agentMemory.file === null
+            ? 'agent/memory'
+            : `agent/memory/${agentMemory.file}`
+          : agentProvider
+            ? `agent/${agentProvider}`
+            : current}
+    depth={appPage || storePage ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
+    back={appPage
+      ? { key: 'apps', go: leaveApp }
+      : storePage
+        ? { key: 'appearance', go: leaveStore }
+        : agentMemory
+          ? agentMemory.file === null
+            ? { key: 'agent', go: () => show('agent') }
+            : { key: 'agent/memory', go: () => openMemory() }
+          : agentProvider
+            ? { key: 'agent', go: () => show('agent') }
+            : null}
     forward={current === 'apps' && !appPage && leftApp
       ? { key: `apps/${leftApp}`, go: () => openApp(leftApp!) }
       : current === 'appearance' && !storePage && leftStore
@@ -148,6 +202,16 @@
     <AccountSection />
   {:else if current === 'server'}
     <ServerSection />
+  {:else if current === 'agent' && agentMemory}
+    <AgentMemoryPage
+      file={agentMemory.file}
+      onback={() => (agentMemory.file === null ? show('agent') : openMemory())}
+      onopen={openMemory}
+    />
+  {:else if current === 'agent' && agentProvider}
+    <AgentProviderPage provider={agentProvider} onback={() => show('agent')} onopen={openProvider} />
+  {:else if current === 'agent'}
+    <AgentSection onprovider={openProvider} onmemory={() => openMemory()} />
   {:else}
     <AccessSection />
   {/if}

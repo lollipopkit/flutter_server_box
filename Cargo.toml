@@ -9,7 +9,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_ffi", "monitor"]
-exclude = ["third_party/ironrdp"]
+exclude = ["third_party/ironrdp", "packages/fl_pi_llm/rust"]
 
 # IronRDP 0.17 pins an sspi/picky combination that still pins pre-release
 # RustCrypto crates. They cannot coexist with russh's stable ed25519-dalek 3

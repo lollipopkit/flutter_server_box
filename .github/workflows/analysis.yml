@@ -231,6 +231,12 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: cargo test --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --no-fail-fast
 
+      # The agent runs pi through fl_pi_llm's Rust host, a crate outside this
+      # workspace (it is its own), so `--workspace` does not reach it either.
+      - name: Test fl_pi_llm's Rust host
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo test --manifest-path packages/fl_pi_llm/rust/Cargo.toml --no-default-features --features reqwest --no-fail-fast
+
       # Only the crates with code of their own for Windows: the native sampler,
       # the agent (ConPTY, paths, services) and the script's PowerShell side.
       # The rest is platform-neutral and tested above; that `sbm_ffi` builds

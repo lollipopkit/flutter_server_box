@@ -179,6 +179,11 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         Ok(n) => tracing::info!("blobs: removed {n} unused files"),
         Err(e) => tracing::warn!("blobs: collecting unused files failed: {e:#}"),
     }
+    // Tasks a stopped agent left running are failed; sessions of removed
+    // accounts go.
+    if let Err(e) = app_state.agent.recover().await {
+        tracing::warn!("agent mode: recovering tasks failed: {e:#}");
+    }
     // Unconditional, and cheap while nothing is running: a benchmark outlives
     // the request that started it, so the party that carries it to a terminal
     // state has to be resident. See `api::benchmark::start_poller`.

@@ -189,7 +189,8 @@
   /// The bar's menus left to right: the app, the app's own, Window, Help.
   const titles = $derived.by(() => {
     const out: { owner: string; label: string; items: () => MenuItem[] }[] = []
-    if (activeSpec) {
+    // Agent mode is over the windows: their menus are not what is in front.
+    if (activeSpec && !desk.agentMode) {
       out.push({ owner: 'app', label: appName, items: appItems })
       for (const [i, menu] of (chrome?.menus ?? []).entries()) {
         out.push({ owner: `menu:${i}`, label: menu.label, items: () => menu.items })
@@ -248,6 +249,22 @@
   {/each}
   <div class="lk-menubar__spacer"></div>
 
+  {#if desk.agentAvailable}
+    <button
+      class="lk-menubar__item"
+      class:lk-menubar__item--open={desk.agentMode}
+      aria-pressed={desk.agentMode}
+      aria-label={$LL.deskAgentMode()}
+      title={$LL.deskAgentMode()}
+      onclick={(e) => {
+        e.stopPropagation()
+        desk.toggleAgent()
+      }}
+    >
+      <Icon name="auto_awesome" size={17} fill={desk.agentMode} />
+      {#if !desk.windows.compact}<span class="agent-label">{$LL.deskAgentMode()}</span>{/if}
+    </button>
+  {/if}
   {#if reading && !desk.windows.compact}
     <button
       class="lk-menubar__item"
@@ -316,6 +333,11 @@
 </nav>
 
 <style>
+  .agent-label {
+    font-size: var(--text-12);
+    font-weight: 600;
+    padding-right: 3px;
+  }
   .lk-menubar__item:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);

@@ -28,7 +28,7 @@
 .lk-btn--ghost:active{background:var(--lk-text-button-pressed-background-color,var(--fill-press));color:var(--lk-text-button-pressed-foreground-color,var(--lk-text-button-foreground-color,var(--text-primary)))}
 .lk-btn--destructive{background:var(--color-danger);color:var(--text-on-danger);box-shadow:var(--shadow-control),inset 0 1px 0 rgba(255,255,255,.16)}
 .lk-btn--destructive:hover{filter:brightness(1.06)}
-.lk-btn--sm{height:var(--control-height-sm);padding:var(--_btn-padding,0 var(--space-9));border-radius:var(--_btn-radius,var(--shape-button,var(--radius-sm)));font-size:var(--text-12)}
+.lk-btn--sm{height:var(--control-height-sm);min-height:0;padding:0 var(--space-9);border-radius:var(--_btn-radius,var(--shape-button,var(--radius-sm)));font-size:var(--text-12)}
 .lk-btn--lg{height:var(--control-height-lg);padding:var(--_btn-padding,0 var(--space-17));border-radius:var(--_btn-radius,var(--shape-button,var(--radius-md)));font-size:var(--text-15)}
 .lk-btn--block{width:100%}
 .lk-btn[disabled]{opacity:var(--_btn-disabled-opacity,.4);pointer-events:none}

@@ -9,6 +9,14 @@
   font-size: var(--text-13);
   line-height: var(--leading-body);
   color: var(--text-primary);
+  /* Monospaced text is what a machine reads — paths, URLs, commands — and
+     JetBrains Mono's contextual ligatures redraw it (`->` as an arrow, `!=`
+     as ≠, and in Safari `//` as a gap). Figtree has none to lose. */
+  font-feature-settings: 'calt' 0;
+}
+/* Form controls do not inherit it on their own. */
+.lk :is(input, textarea, select) {
+  font-feature-settings: inherit;
 }
 .lk ::selection {
   background: color-mix(in srgb, var(--color-accent) 24%, transparent);

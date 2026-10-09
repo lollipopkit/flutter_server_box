@@ -246,6 +246,46 @@ async function fsBytes(
   return res
 }
 
+/// One of the agent's `text/event-stream`s at [path] (`/desk/events`,
+/// `/agent/events`), read with the bearer header, which an `EventSource`
+/// cannot send.
+export async function readEventStream(
+  entry: ServerEntry,
+  path: string,
+  signal: AbortSignal,
+  onEvent: (event: Record<string, unknown>) => void,
+  /// The stream is open: the agent may send nothing for a long time.
+  onOpen?: () => void,
+): Promise<void> {
+  requireSecureUrl(entry.url)
+  const res = await fetch(`${entry.url}/api/v1${path}`, {
+    headers: entry.token ? { Authorization: `Bearer ${entry.token}` } : {},
+    signal,
+  })
+  if (!res.ok || !res.body) throw new ApiError('Failed to open the event stream', res.status)
+  onOpen?.()
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) return
+    buffer += value
+    let end: number
+    while ((end = buffer.indexOf('\n\n')) >= 0) {
+      const frame = buffer.slice(0, end)
+      buffer = buffer.slice(end + 2)
+      for (const line of frame.split('\n')) {
+        if (!line.startsWith('data:')) continue
+        try {
+          onEvent(JSON.parse(line.slice(5).trim()) as Record<string, unknown>)
+        } catch {
+          // A line that is not JSON is not an event.
+        }
+      }
+    }
+  }
+}
+
 /// Fetches capabilities for an explicit server entry (rather than
 /// `servers.current`) — used by the lock screen to show every authenticated
 /// entry's OS icon, not just the currently selected one.

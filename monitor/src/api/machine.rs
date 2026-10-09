@@ -57,6 +57,8 @@ pub const FEATURES: &[&str] = &[
     // (`api::desk_themes`). Without it the panel keeps the desk in the
     // browser.
     "desk",
+    // Agent mode (`api::agent`): tasks an AI agent runs here.
+    "agent_mode",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

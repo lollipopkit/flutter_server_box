@@ -60,6 +60,11 @@ pub enum Kind {
     /// account; the detail the verb, the blob's name and its size — never its
     /// contents.
     Backup,
+    /// Agent mode (`agent_mode`): a task started, a command it ran, an answer
+    /// given, the configuration changed. The subject is the account; the
+    /// detail the verb and the command's first line — never a password, an
+    /// API key, what was typed or what a command printed.
+    Agent,
 }
 
 impl Kind {
@@ -76,6 +81,7 @@ impl Kind {
             Kind::Admin => "admin",
             Kind::Machine => "machine",
             Kind::Backup => "backup",
+            Kind::Agent => "agent",
         }
     }
 }

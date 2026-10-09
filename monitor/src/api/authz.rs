@@ -259,6 +259,7 @@ pub fn end_account(state: &Arc<AppState>, username: &str, code: &'static str) {
         tracing::info!("Closed {closed} terminal sessions of {username}: its password changed");
     }
     state.tickets.revoke_subject(username);
+    state.agent.end_account(username);
     let _ = state.grants_changed.send(code);
 }
 
@@ -282,6 +283,13 @@ pub async fn revoke_lost(state: &Arc<AppState>, code: &'static str) {
         );
         if closed > 0 {
             tracing::info!("Closed {closed} terminal sessions of {subject}: their grant is gone");
+        }
+    }
+    // Agent mode's tasks run commands as the shell does.
+    for subject in state.agent.subjects() {
+        let caller = caller_named(state, &subject).await;
+        if !caller.is_some_and(|c| c.grants().holds(Grant::Shell)) {
+            state.agent.end_account(&subject);
         }
     }
     let _ = state.grants_changed.send(code);

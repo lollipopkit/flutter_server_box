@@ -136,6 +136,8 @@ export type MachineFeature =
   | 'virt'
   /// The agent keeps the panel's desk (`/desk*`).
   | 'desk'
+  /// Agent mode: tasks an AI agent runs on the machine (`/agent*`).
+  | 'agent_mode'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 

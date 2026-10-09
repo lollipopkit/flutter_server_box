@@ -792,6 +792,8 @@ fn shipped_migrations_keep_their_checksums() {
         (18, "441e628e50c650653e520d2e381b2fb7e2ea9a577c13da2d7a207793627a45355e646250c2c5c6f99e743e1a3f49d71d"),
         (19, "5f9544a9e8df9e588c6c604ca7be4871c4b4996489f0faeacd34037fe44f8beca506a418f56fe79598f39f7fa5c03aad"),
         (20, "6f2530558f99971da044a40d3915e6ff0f1941d01cd455174582b1ee38688dce1eed560c7da805f91c500f196751b9b7"),
+        (21, "698d6dc12f8faad2042b189dbd4d7ef7e05cad67e82ac45ac8a21a4959a5e8ee3c5eaaed3b6dc194b2382fdd48113afe"),
+        (22, "4cdc307a072820d20b606c08671e7d46fd9d728f83a6196c94140994819378ed65ba9a2f78b92dc20ea06248b82044f3"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();
