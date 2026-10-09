@@ -4698,6 +4698,7 @@ dependencies = [
  "serde_json",
  "sha2 0.11.0",
  "sqlx",
+ "sysinfo",
  "tar",
  "tempfile",
  "thiserror 2.0.21",

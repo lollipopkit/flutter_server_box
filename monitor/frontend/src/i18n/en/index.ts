@@ -1826,6 +1826,8 @@ const en = {
 	deskAgentHintDropLabel: 'Attach',
 	deskAgentHintCancel: 'Cancel',
 	deskAgentApprovedBypass: 'Approved: this task allows all',
+	deskAgentAlwaysAllow: 'Always allow',
+	deskAgentAlwaysAllowNote: 'Adds to this server\'s allow rules, for every account:',
 	deskAgentReplyHint: 'Tell the agent what to do next',
 	deskAgentReplyWaiting: 'Add to it or change the plan',
 	deskAgentReplyOffline: 'Disconnected; cannot send now',

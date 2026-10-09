@@ -45,7 +45,7 @@ use super::authz::{self, Caller};
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::agent_mode::files::FileError;
-use crate::agent_mode::{Answer, FlowError, MAX_PROMPT, NewTask, SearchKind, config};
+use crate::agent_mode::{Answer, FlowError, MAX_PROMPT, NewTask, SearchKind, config, first_line, permissions};
 use fl_pi_llm::host::memory::{self, MemoryError};
 use crate::core::permissions::Grant;
 
@@ -177,9 +177,9 @@ pub async fn upload(
     body: ntex::util::Bytes,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let (_, user, _) = require!(shell(&req, &state).await);
+    let (caller, user, _) = require!(shell(&req, &state).await);
     let mime = req.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("");
-    match state.agent.files.put(user, &query.name, mime, &body).await {
+    match state.agent.files.put(user, &caller.username, &query.name, mime, &body).await {
         Ok(view) => Ok(HttpResponse::Created().json(&view)),
         Err(FileError::TooMany) => Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "tooManyFiles" }))),
         Err(e) => {
@@ -235,8 +235,38 @@ pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::ty
 
 pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Answer>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
-    let answer = body.into_inner();
+    let mut answer = body.into_inner();
     let action = answer.action.clone();
+    // "Always allow": the rule goes to the machine's rules first, so only an
+    // admin may; the command then runs as with "run".
+    if action == "always" {
+        if !caller.is_admin() {
+            return Ok(authz::error(StatusCode::FORBIDDEN, "forbidden", "admin"));
+        }
+        let Some(rule) = state.agent.pending_rule(user, &id, &answer.id) else {
+            return Ok(refused(FlowError::Stale));
+        };
+        let mut perms = match permissions::load(&state.db).await {
+            Ok(p) => p,
+            Err(e) => return Ok(refused(e.into())),
+        };
+        if !perms.rules.allow.contains(&rule) {
+            perms.rules.allow.push(rule.clone());
+            if let Err(reason) = perms.check() {
+                return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidPermissions", "reason": reason })));
+            }
+            if let Err(e) = permissions::store(&state.db, &perms).await {
+                return Ok(refused(e.into()));
+            }
+            Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+                .subject(&caller.username)
+                .remote_ip(peer_ip(&req))
+                .detail(format!("permissions: allow `{}` from task {}", first_line(&rule, 200), id.as_str()))
+                .record(&state.db)
+                .await;
+        }
+        answer.action = "always".into();
+    }
     match state.agent.answer(user, secure, &id, answer) {
         Ok(()) => {
             // The verb only: never a password, never what was typed.

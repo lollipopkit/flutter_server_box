@@ -1826,6 +1826,8 @@ const nl = {
 	deskAgentHintDropLabel: 'Bijvoegen',
 	deskAgentHintCancel: 'Annuleren',
 	deskAgentApprovedBypass: 'Goedgekeurd: deze taak staat alles toe',
+	deskAgentAlwaysAllow: 'Altijd toestaan',
+	deskAgentAlwaysAllowNote: 'Wordt toegevoegd aan de toestaan-regels van deze server, voor alle accounts:',
 	deskAgentReplyHint: 'Vertel Agent wat de volgende taak is',
 	deskAgentReplyWaiting: 'Voeg iets toe of wijzig het plan',
 	deskAgentReplyOffline: 'Verbinding verbroken; kan nu niet verzenden',

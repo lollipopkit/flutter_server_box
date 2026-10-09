@@ -1826,6 +1826,8 @@ const tr = {
 	deskAgentHintDropLabel: 'Ekle',
 	deskAgentHintCancel: 'İptal',
 	deskAgentApprovedBypass: 'Onaylandı: bu görev tümüne izin veriyor',
+	deskAgentAlwaysAllow: 'Her zaman izin ver',
+	deskAgentAlwaysAllowNote: 'Bu sunucunun izin kurallarına eklenir, tüm hesaplar için:',
 	deskAgentReplyHint: 'Agent için sıradaki görevi yazın',
 	deskAgentReplyWaiting: 'Göreve ekleme yapın veya planı değiştirin',
 	deskAgentReplyOffline: 'Bağlantı kesildi; şu anda gönderilemiyor',

@@ -2,6 +2,9 @@
 //! `sudo` when asked, the password on stdin), its output line by line as it
 //! comes so a page can show it, and the whole process group stopped when the
 //! task is.
+//!
+//! The shell is `/bin/sh` on Unix and Windows PowerShell on Windows, where
+//! there is no `sudo` and the process tree is ended with `taskkill /T`.
 
 use std::process::Stdio;
 use std::time::{Duration, Instant};
@@ -43,6 +46,12 @@ pub struct Spec<'a> {
 /// stop the whole process group.
 pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>, cancel: &Cancel) -> std::io::Result<Finished> {
     let started = Instant::now();
+    #[cfg(windows)]
+    let mut command = match spec.sudo_password {
+        Some(_) => return Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "sudo does not exist on Windows")),
+        None => powershell(spec.command),
+    };
+    #[cfg(not(windows))]
     let mut command = match spec.sudo_password {
         // `-k`: the password is checked now, never a cached credential; `-p ''`:
         // no prompt in the output; `--`: the rest is the command. The password
@@ -96,18 +105,45 @@ pub async fn run(spec: Spec<'_>, lines: mpsc::UnboundedSender<(Stream, String)>,
             Ok(Finished { exit_code: status.code(), timed_out: false, cancelled: false, duration: started.elapsed() })
         }
         _ = tokio::time::sleep(spec.timeout) => {
-            stop(pid);
+            stop(pid).await;
             Ok(Finished { exit_code: None, timed_out: true, cancelled: false, duration: started.elapsed() })
         }
         _ = cancel.cancelled() => {
-            stop(pid);
+            stop(pid).await;
             Ok(Finished { exit_code: None, timed_out: false, cancelled: true, duration: started.elapsed() })
         }
     }
 }
 
+/// Windows PowerShell running [script]: as `-EncodedCommand` (UTF-16LE,
+/// base64), so no quoting reaches a command line; output as UTF-8, not the
+/// console code page; no window. Like `sh`, the last statement decides the
+/// exit code: a native command's own, 1 for a failed cmdlet, else 0. The
+/// script runs as written, not in a block, or `$?` would only say whether
+/// the block ran.
+#[cfg(windows)]
+fn powershell(script: &str) -> Command {
+    use base64::Engine;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let wrapped = format!(
+        "$ProgressPreference = 'SilentlyContinue'\n\
+         [Console]::OutputEncoding = [Text.Encoding]::UTF8\n\
+         $OutputEncoding = [Text.Encoding]::UTF8\n\
+         $LASTEXITCODE = 0\n\
+         {script}\n\
+         if (-not $?) {{ if ($LASTEXITCODE) {{ exit $LASTEXITCODE }} else {{ exit 1 }} }}\n\
+         exit 0"
+    );
+    let utf16: Vec<u8> = wrapped.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    let mut c = Command::new("powershell.exe");
+    c.args(["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand"])
+        .arg(base64::engine::general_purpose::STANDARD.encode(utf16))
+        .creation_flags(CREATE_NO_WINDOW);
+    c
+}
+
 /// Ends the process group [pid] leads: what the shell started goes with it.
-fn stop(pid: Option<u32>) {
+async fn stop(pid: Option<u32>) {
     #[cfg(unix)]
     if let Some(pid) = pid {
         // SAFETY: a signal to a process group this process created.
@@ -123,7 +159,19 @@ fn stop(pid: Option<u32>) {
             }
         });
     }
-    #[cfg(not(unix))]
+    // The tree under PowerShell: Windows has no process groups to signal.
+    // Waited for: the tree is found through its root, which `kill_on_drop`
+    // ends as soon as this returns.
+    #[cfg(windows)]
+    if let Some(pid) = pid {
+        let _ = Command::new("taskkill")
+            .args(["/T", "/F", "/PID", &pid.to_string()])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .await;
+    }
+    #[cfg(not(any(unix, windows)))]
     let _ = pid;
 }
 
@@ -206,5 +254,48 @@ mod tests {
     async fn stdin_is_closed() {
         let (done, _) = collect("cat", Duration::from_secs(5), &Cancel::new()).await;
         assert_eq!(done.exit_code, Some(0));
+    }
+}
+
+#[cfg(all(test, windows))]
+mod windows_tests {
+    use super::*;
+
+    async fn collect(command: &str, timeout: Duration) -> (Finished, Vec<(Stream, String)>) {
+        let (tx, mut rx) = mpsc::unbounded_channel();
+        let done = run(Spec { command, sudo_password: None, timeout }, tx, &Cancel::new()).await.unwrap();
+        let mut lines = Vec::new();
+        while let Ok(l) = rx.try_recv() {
+            lines.push(l);
+        }
+        (done, lines)
+    }
+
+    #[tokio::test]
+    async fn powershell_runs_it_and_says_how_it_ended() {
+        let (done, lines) = collect("Write-Output 'out'; [Console]::Error.WriteLine('err'); Write-Output '中文'; cmd /c exit 3", Duration::from_secs(60)).await;
+        assert_eq!(done.exit_code, Some(3));
+        assert!(lines.contains(&(Stream::Out, "out".into())), "{lines:?}");
+        assert!(lines.contains(&(Stream::Err, "err".into())), "{lines:?}");
+        assert!(lines.contains(&(Stream::Out, "中文".into())), "{lines:?}");
+        let (done, _) = collect("Get-Item C:\\does-not-exist-sbm", Duration::from_secs(60)).await;
+        assert_eq!(done.exit_code, Some(1));
+    }
+
+    #[tokio::test]
+    async fn a_timeout_ends_the_whole_tree() {
+        let marker = std::env::temp_dir().join(format!("sbm-tree-{}", std::process::id()));
+        let script = format!("Start-Process -NoNewWindow -FilePath powershell.exe -ArgumentList '-NoProfile','-Command','Start-Sleep 30; New-Item {}'; Start-Sleep 30", marker.display());
+        let (done, _) = collect(&script, Duration::from_secs(5)).await;
+        assert!(done.timed_out);
+        tokio::time::sleep(Duration::from_secs(30)).await;
+        assert!(!marker.exists(), "a child outlived the task");
+    }
+
+    #[tokio::test]
+    async fn sudo_is_refused() {
+        let (tx, _rx) = mpsc::unbounded_channel();
+        let r = run(Spec { command: "whoami", sudo_password: Some("x"), timeout: Duration::from_secs(5) }, tx, &Cancel::new()).await;
+        assert_eq!(r.unwrap_err().kind(), std::io::ErrorKind::Unsupported);
     }
 }

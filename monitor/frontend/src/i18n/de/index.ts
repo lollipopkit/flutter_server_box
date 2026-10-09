@@ -1826,6 +1826,8 @@ const de = {
 	deskAgentHintDropLabel: 'Anhängen',
 	deskAgentHintCancel: 'Abbrechen',
 	deskAgentApprovedBypass: 'Genehmigt: diese Aufgabe erlaubt alles',
+	deskAgentAlwaysAllow: 'Immer erlauben',
+	deskAgentAlwaysAllowNote: 'Wird zu den Erlauben-Regeln dieses Servers hinzugefügt, für alle Konten:',
 	deskAgentReplyHint: 'Dem Agent mitteilen, was als Nächstes zu tun ist',
 	deskAgentReplyWaiting: 'Ergänzen oder den Plan ändern',
 	deskAgentReplyOffline: 'Getrennt; derzeit kein Versand möglich',

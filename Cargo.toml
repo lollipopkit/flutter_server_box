@@ -89,3 +89,11 @@ strip = false
 inherits = "release"
 lto = "fat"
 codegen-units = 1
+
+# The agent built to deploy to a test machine while developing: the release
+# profile's optimisation without `release-monitor`'s fat LTO, and incremental,
+# so a change to the agent alone relinks in minutes rather than the quarter of
+# an hour the fat link takes there. Never shipped, never measured for size.
+[profile.monitor-test]
+inherits = "release"
+incremental = true

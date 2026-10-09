@@ -105,6 +105,35 @@ impl CommandRules {
     }
 }
 
+/// The allow rule an "always allow" offers for [command], in the shape
+/// Claude Code offers: the part that is not a known read, as its first two
+/// words then ` *` (`systemctl restart *`) when more follows a plain second
+/// word, otherwise word for word, wrappers (`sudo`) left off. `None` when one
+/// rule cannot allow it: a substitution or a write redirect, more than one
+/// part that changes something, or nothing that needs a rule.
+pub fn suggest(command: &str) -> Option<String> {
+    if !allowable(command) {
+        return None;
+    }
+    let parts = subcommands(command)?;
+    let mut changing = parts.iter().map(|p| strip_wrappers(p, false)).filter(|p| command_risk::classify(p) != CommandRisk::ReadOnly);
+    let part = changing.next()?;
+    if changing.next().is_some() {
+        return None;
+    }
+    let words: Vec<&str> = part.split_whitespace().collect();
+    let plain = |w: &str| !w.is_empty() && w.chars().all(|c| c.is_ascii_alphanumeric() || "-_.:@+".contains(c)) && !w.starts_with('-');
+    let wide = match words.as_slice() {
+        [first, second, _, ..] if plain(first) && plain(second) => Some(format!("{first} {second} *")),
+        _ => None,
+    };
+    let rules = |r: &String| CommandRules { allow: vec![r.clone()], ..Default::default() };
+    [wide, Some(collapse(&part))]
+        .into_iter()
+        .flatten()
+        .find(|r| rules(r).check().is_ok() && matches!(rules(r).verdict(command), RuleVerdict::Allow(_)))
+}
+
 fn first_match(rules: &[String], candidates: &[String]) -> Option<String> {
     rules.iter().find(|r| {
         let p = pattern_of(r);
@@ -314,6 +343,21 @@ pub fn strip_wrappers(part: &str, any_env: bool) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn always_allow_offers_one_rule_that_covers_the_change() {
+        assert_eq!(suggest("sudo systemctl restart nginx").as_deref(), Some("systemctl restart *"));
+        assert_eq!(suggest("apt-get install -y htop").as_deref(), Some("apt-get install *"));
+        // A flag second, or two words: word for word.
+        assert_eq!(suggest("apt-get -y install htop").as_deref(), Some("apt-get -y install htop"));
+        assert_eq!(suggest("systemctl daemon-reload").as_deref(), Some("systemctl daemon-reload"));
+        // The read in a chain needs no rule.
+        assert_eq!(suggest("cat /etc/nginx/nginx.conf && systemctl reload nginx").as_deref(), Some("systemctl reload *"));
+        // What one allow rule could never cover.
+        assert_eq!(suggest("echo $(id) > /tmp/x"), None);
+        assert_eq!(suggest("touch a && rm b"), None);
+        assert_eq!(suggest("ls /"), None);
+    }
 
     fn rules(allow: &[&str], ask: &[&str], deny: &[&str]) -> CommandRules {
         let v = |l: &[&str]| l.iter().map(|s| s.to_string()).collect();

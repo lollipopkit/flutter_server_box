@@ -1826,6 +1826,8 @@ const id = {
 	deskAgentHintDropLabel: 'Lampirkan',
 	deskAgentHintCancel: 'Batal',
 	deskAgentApprovedBypass: 'Disetujui: tugas ini mengizinkan semua',
+	deskAgentAlwaysAllow: 'Selalu izinkan',
+	deskAgentAlwaysAllowNote: 'Ditambahkan ke aturan izin server ini, untuk semua akun:',
 	deskAgentReplyHint: 'Beri tahu Agent apa yang harus dilakukan selanjutnya',
 	deskAgentReplyWaiting: 'Tambahkan instruksi atau ubah rencana',
 	deskAgentReplyOffline: 'Terputus; belum dapat mengirim',

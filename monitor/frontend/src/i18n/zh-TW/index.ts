@@ -1826,6 +1826,8 @@ const zh_TW = {
 	deskAgentHintDropLabel: '新增附件',
 	deskAgentHintCancel: '取消',
 	deskAgentApprovedBypass: '已核准：此任務全部放行',
+	deskAgentAlwaysAllow: '以後都允許',
+	deskAgentAlwaysAllowNote: '加入這台伺服器的允許規則，對所有帳號生效：',
 	deskAgentReplyHint: '告訴 Agent 接下來要做什麼',
 	deskAgentReplyWaiting: '新增內容或變更計畫',
 	deskAgentReplyOffline: '連線中斷；目前無法傳送',

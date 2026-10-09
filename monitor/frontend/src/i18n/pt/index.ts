@@ -1826,6 +1826,8 @@ const pt = {
 	deskAgentHintDropLabel: 'Anexar',
 	deskAgentHintCancel: 'Cancelar',
 	deskAgentApprovedBypass: 'Aprovado: esta tarefa permite tudo',
+	deskAgentAlwaysAllow: 'Permitir sempre',
+	deskAgentAlwaysAllowNote: 'Adicionada às regras de permissão deste servidor, para todas as contas:',
 	deskAgentReplyHint: 'Diga ao Agent o que fazer a seguir',
 	deskAgentReplyWaiting: 'Adicionar à tarefa ou alterar o plano',
 	deskAgentReplyOffline: 'Desconectado; não é possível enviar agora',

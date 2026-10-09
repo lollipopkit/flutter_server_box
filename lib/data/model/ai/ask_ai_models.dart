@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/src/rust/api/command_risk.dart';
 
 /// How much of a command the local check could actually establish.
 ///
@@ -298,136 +299,16 @@ class AskAiCommand {
     'model_destructive': modelDestructive,
   };
 
+  /// The command's shape as `sbm_parser::command_risk` reads it: the same
+  /// reading the monitor agent's Agent mode asks by.
   @visibleForTesting
-  static AskAiCommandRisk classifyRisk(String command) {
-    var normalized = command.trim().toLowerCase();
-    if (normalized.isEmpty) return AskAiCommandRisk.caution;
-
-    // Read-only inspection commands commonly silence expected errors. Ignore
-    // only these exact redirections before checking for writes.
-    normalized = normalized.replaceAll(
-      RegExp(r'\b[012]?>>?\s*/dev/null\b'),
-      '',
-    );
-
-    final destructivePatterns = <RegExp>[
-      RegExp(r'(^|[;&|]\s*)(sudo\s+)?rm\s'),
-      RegExp(r'(^|[;&|]\s*)(sudo\s+)?(shred|wipefs|mkfs(\.[a-z0-9]+)?)\b'),
-      RegExp(r'(^|[;&|]\s*)(sudo\s+)?dd\s+.*\bof='),
-      RegExp(r'\b(find|xargs)\b.*\b-delete\b'),
-      RegExp(r'\b(find|xargs)\b.*\brm\b'),
-      RegExp(r'\b(git\s+reset\s+--hard|git\s+clean\s+-[^\s]*f)\b'),
-      RegExp(r'\b(docker|podman)\s+(system\s+)?prune\b'),
-      RegExp(r'\bkubectl\s+delete\b'),
-      RegExp(r'\b(drop|truncate)\s+(database|table)\b'),
-      RegExp(r'\bdelete\s+from\b'),
-      RegExp(r'(^|[;&|]\s*)(shutdown|reboot|poweroff|halt)\b'),
-      RegExp(r'\b(remove-item|format-volume|clear-disk)\b'),
-      RegExp(r'(^|[;&|]\s*)(del|rmdir)\s'),
-      RegExp(r':\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:'),
-    ];
-    if (destructivePatterns.any((pattern) => pattern.hasMatch(normalized))) {
-      return AskAiCommandRisk.destructive;
-    }
-
-    final mutatingPatterns = <RegExp>[
-      RegExp(r'(^|[^<])>>?\s*[^&]'),
-      RegExp(
-        r'\|\s*(sudo\s+)?(sh|bash|zsh|fish|python\d*|perl|ruby|node|pwsh|powershell|cmd)\b',
-      ),
-      RegExp(r'(^|[;&|]\s*)(eval|source)\b|(^|[;&|]\s*)\.\s+'),
-      RegExp(r'\$\(|`'),
-      RegExp(r'(^|[;&|]\s*)(sh|bash|zsh|fish)\s+-c\b'),
-      RegExp(r'\bfind\b.*\s-exec(dir)?\b'),
-      RegExp(r'\bawk\b.*\bsystem\s*\('),
-      RegExp(r'(^|[;&|]\s*)(sudo\s+)?(mv|cp|touch|mkdir|chmod|chown|ln)\s'),
-      RegExp(r'(^|[;&|]\s*)(sudo\s+)?tee\b'),
-      RegExp(r'\bsed\s+[^;&|]*\s-i([.\s]|$)'),
-      RegExp(
-        r'\b(systemctl|service)\s+(start|stop|restart|reload|enable|disable|mask|unmask)\b',
-      ),
-      RegExp(r'(^|[;&|]\s*)(sudo\s+)?(kill|pkill|killall)\b'),
-      RegExp(
-        r'\b(apt|apt-get|dnf|yum|pacman|zypper|apk|brew)\s+(install|remove|erase|upgrade|update)\b',
-      ),
-      RegExp(
-        r'\b(docker|podman)\s+(start|stop|restart|rm|rmi|pull|push|build|run|exec)\b',
-      ),
-      RegExp(r'\b(docker|podman)\s+compose\s+(up|down|restart|pull|build)\b'),
-      RegExp(
-        r'\bkubectl\s+(apply|create|edit|patch|replace|scale|rollout|set)\b',
-      ),
-      RegExp(
-        r'\bgit\s+(add|commit|push|pull|merge|rebase|checkout|switch|restore|tag)\b',
-      ),
-      RegExp(
-        r'\b(curl|wget)\b.*\s(-o|--output|-x\s+(post|put|patch|delete)|--request\s+(post|put|patch|delete))\b',
-      ),
-      RegExp(
-        r'\b(set-content|add-content|new-item|copy-item|move-item|rename-item|start-service|stop-service|restart-service)\b',
-      ),
-    ];
-    if (mutatingPatterns.any((pattern) => pattern.hasMatch(normalized))) {
-      return AskAiCommandRisk.caution;
-    }
-
-    final readOnlyStarts = <RegExp>[
-      RegExp(r'^(ls|pwd|whoami|id|groups|uname|hostname|uptime|date|cal)\b'),
-      RegExp(
-        r'^(cat|head|tail|less|more|grep|egrep|fgrep|rg|awk|cut|sort|uniq|wc|tr|sed\s+(?!.*\s-i))\b',
-      ),
-      RegExp(
-        r'^(df|du|free|vmstat|iostat|mpstat|top|ps|pgrep|lsof|stat|file|readlink|realpath)\b',
-      ),
-      RegExp(r'^(find|locate|which|whereis|type|command\s+-v)\b'),
-      RegExp(
-        r'^(ip|ss|netstat|ifconfig|route|ping|traceroute|tracepath|dig|nslookup|host)\b',
-      ),
-      RegExp(
-        r'^(journalctl|dmesg|systemctl\s+(status|show|is-active|is-enabled|list-)|service\s+[^\s]+\s+status)\b',
-      ),
-      RegExp(
-        r'^(docker|podman)\s+(ps|images|inspect|logs|stats|info|version)\b',
-      ),
-      RegExp(r'^(docker|podman)\s+compose\s+(ps|logs|config|ls)\b'),
-      RegExp(
-        r'^kubectl\s+(get|describe|logs|api-resources|api-versions|cluster-info|version)\b',
-      ),
-      RegExp(
-        r'^git\s+(status|diff|log|show|branch|remote|rev-parse|ls-files|ls-tree)\b',
-      ),
-      RegExp(
-        r'^(get-[a-z0-9-]+|test-[a-z0-9-]+|select-[a-z0-9-]+|where-object|measure-object|compare-object|tasklist|systeminfo|dir|type)\b',
-      ),
-    ];
-
-    bool isReadOnlySegment(String segment) {
-      final stripped = segment
-          .trim()
-          .replaceFirst(RegExp(r'^sudo\s+'), '')
-          .replaceFirst(RegExp(r'^(env\s+)?([a-z_][a-z0-9_]*=[^\s]+\s+)+'), '');
-      return readOnlyStarts.any((pattern) => pattern.hasMatch(stripped));
-    }
-
-    // Chained commands are not taken apart, so nothing can be established
-    // about them — including that they change anything. `ls && pwd` is as
-    // unanalysed here as `ls && rm -rf /`, and only the first of those two
-    // would be a lie to call a system change.
-    final chainCandidate = normalized.replaceAll(RegExp(r'\d*>&\d+'), '');
-    if (RegExp(r'&&|\|\||[;\r\n]|&').hasMatch(chainCandidate)) {
-      return AskAiCommandRisk.unknown;
-    }
-
-    final pipelineSegments = normalized.split('|');
-    if (pipelineSegments.every(
-      (segment) => segment.trim().isNotEmpty && isReadOnlySegment(segment),
-    )) {
-      return AskAiCommandRisk.readOnly;
-    }
-    // Matched nothing at all — not a known mutation, not a known read. `sleep`
-    // lands here, and so does anything the lists have never heard of.
-    return AskAiCommandRisk.unknown;
-  }
+  static AskAiCommandRisk classifyRisk(String command) =>
+      switch (classifyCommand(command: command)) {
+        CommandRisk.readOnly => AskAiCommandRisk.readOnly,
+        CommandRisk.unknown => AskAiCommandRisk.unknown,
+        CommandRisk.caution => AskAiCommandRisk.caution,
+        CommandRisk.destructive => AskAiCommandRisk.destructive,
+      };
 }
 
 @immutable

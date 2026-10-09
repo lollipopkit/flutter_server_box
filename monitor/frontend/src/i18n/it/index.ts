@@ -1826,6 +1826,8 @@ const it = {
 	deskAgentHintDropLabel: 'Allega',
 	deskAgentHintCancel: 'Annulla',
 	deskAgentApprovedBypass: 'Approvato: quest\'attività consente tutto',
+	deskAgentAlwaysAllow: 'Consenti sempre',
+	deskAgentAlwaysAllowNote: 'Aggiunta alle regole di consenso di questo server, per tutti gli account:',
 	deskAgentReplyHint: 'Indica ad Agent cosa fare dopo',
 	deskAgentReplyWaiting: 'Aggiungi dettagli o modifica il piano',
 	deskAgentReplyOffline: 'Disconnesso; impossibile inviare ora',

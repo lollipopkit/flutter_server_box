@@ -1826,6 +1826,8 @@ const ja = {
 	deskAgentHintDropLabel: '添付',
 	deskAgentHintCancel: 'キャンセル',
 	deskAgentApprovedBypass: '承認済み：このタスクはすべて許可',
+	deskAgentAlwaysAllow: '今後は常に許可',
+	deskAgentAlwaysAllowNote: 'このサーバーの許可ルールに追加されます（全アカウントに適用）：',
 	deskAgentReplyHint: 'Agent に次の操作を指示',
 	deskAgentReplyWaiting: '追加の指示、または計画の変更',
 	deskAgentReplyOffline: '切断中のため、現在送信できません',

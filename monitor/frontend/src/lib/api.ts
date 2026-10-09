@@ -222,6 +222,65 @@ export async function requestFor<T>(
 /// for it — ten seconds is generous for a status poll and nothing at all for a
 /// file. Bounded by the caller's own `signal` instead, which is also what a
 /// cancel button pulls.
+/// Sends [body] to [path] on [entry] and answers the JSON reply: as
+/// [requestFor], over XHR, which reports how much of the body has gone
+/// ([onProgress], 0–1). Aborting [signal] fails it with code `aborted`.
+export function uploadFor<T>(
+  entry: ServerEntry,
+  path: string,
+  body: Blob,
+  opts: { onProgress?: (sent: number) => void; signal?: AbortSignal; timeoutMs?: number; fallback?: string } = {},
+): Promise<T> {
+  const server = { ...entry }
+  const fallback = opts.fallback ?? 'Request failed'
+  requireSecureUrl(server.url)
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${server.url}/api/v1${path}`)
+    xhr.timeout = opts.timeoutMs ?? TIMEOUT_MS
+    xhr.setRequestHeader('Content-Type', body.type || 'application/octet-stream')
+    if (server.token) xhr.setRequestHeader('Authorization', `Bearer ${server.token}`)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && e.total > 0) opts.onProgress?.(e.loaded / e.total)
+    }
+    const abort = () => xhr.abort()
+    opts.signal?.addEventListener('abort', abort, { once: true })
+    const done = () => opts.signal?.removeEventListener('abort', abort)
+    xhr.onabort = () => {
+      done()
+      reject(new ApiError('Aborted', 0, 'aborted'))
+    }
+    xhr.onerror = xhr.ontimeout = () => {
+      done()
+      reject(new ApiError(fallback))
+    }
+    xhr.onload = () => {
+      done()
+      let json: (Record<string, unknown> & { error?: string; message?: string }) | null = null
+      try {
+        json = JSON.parse(xhr.responseText)
+      } catch {
+        // Not JSON: the fallback below.
+      }
+      if (xhr.status === 401) {
+        servers.logout(server.id, server)
+        reject(new ApiError('Session expired', 401))
+      } else if (xhr.status < 200 || xhr.status >= 300) {
+        if (json?.message) reject(new ApiError(json.message, xhr.status, json.error, json))
+        else if (json?.error) reject(new ApiError(json.error, xhr.status, undefined, json))
+        else reject(new ApiError(fallback, xhr.status))
+      } else {
+        resolve(json as T)
+      }
+    }
+    if (opts.signal?.aborted) {
+      xhr.onabort?.(new ProgressEvent('abort'))
+      return
+    }
+    xhr.send(body)
+  })
+}
+
 async function fsBytes(
   path: string,
   init: RequestInit,

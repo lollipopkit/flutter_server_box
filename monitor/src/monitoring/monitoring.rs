@@ -314,7 +314,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     // cross-cycle delta to yield current usage
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
-    let mut native_state = sbm_native::NativeState::new();
+    let mut native = NativeSampler::default();
 
     loop {
         // Re-read every cycle (not captured once outside the loop) so a
@@ -337,7 +337,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
             &mut prev_cpu,
             extended_due,
             prev_metrics.as_ref(),
-            &mut native_state,
+            &mut native,
         )
         .await
         {
@@ -430,35 +430,76 @@ fn native_status_available(system: SystemType) -> bool {
     }
 }
 
+type SampleRequest = (SystemType, tokio::sync::oneshot::Sender<ServerStatus>);
+
+/// Where `sbm_native::sample` runs: one thread of its own, holding the
+/// `NativeState` for that thread's whole life.
+///
+/// Off the reactor, because `sample` is synchronous and does real IO (procfs
+/// and sysfs on Linux, a `statvfs` per mount on the sysinfo backends); a mount
+/// that does not answer holds this thread, not a worker serving the API.
+///
+/// Always the same thread, because on Windows sysinfo's components are WMI
+/// COM objects bound to the thread that made them. Moving the state through
+/// the blocking pool ran each sample wherever a pooled thread was free, and
+/// once the thread that made them had been retired an idle pool thread
+/// refreshing them faulted the whole process (`ComponentInner::refresh`,
+/// access violation).
+///
+/// A sample that panics ends the thread; the next one starts a new thread
+/// with fresh state, which costs the CPU delta for one sample.
+#[derive(Default)]
+struct NativeSampler {
+    tx: Option<std::sync::mpsc::Sender<SampleRequest>>,
+}
+
+impl NativeSampler {
+    fn start() -> std::io::Result<std::sync::mpsc::Sender<SampleRequest>> {
+        let (tx, rx) = std::sync::mpsc::channel::<SampleRequest>();
+        std::thread::Builder::new().name("native-sampler".into()).spawn(move || {
+            let mut state = sbm_native::NativeState::new();
+            for (system, reply) in rx {
+                let _ = reply.send(sbm_native::sample(&mut state, system));
+            }
+        })?;
+        Ok(tx)
+    }
+
+    async fn sample(&mut self, system: SystemType) -> Result<ServerStatus> {
+        let failed = |why: String| crate::utils::error::MonitorError::Monitoring(format!("Native sampling failed: {why}"));
+        let tx = match &self.tx {
+            Some(tx) => tx.clone(),
+            None => {
+                let tx = Self::start().map_err(|e| failed(e.to_string()))?;
+                self.tx = Some(tx.clone());
+                tx
+            }
+        };
+        let (reply, answer) = tokio::sync::oneshot::channel();
+        if tx.send((system, reply)).is_err() {
+            self.tx = None;
+            return Err(failed("the sampler thread is gone".into()));
+        }
+        match answer.await {
+            Ok(status) => Ok(status),
+            // It panicked: a fresh thread next cycle.
+            Err(_) => {
+                self.tx = None;
+                Err(failed("the sampler thread panicked".into()))
+            }
+        }
+    }
+}
+
 async fn collect_metrics(
     config: &Config,
     prev_cpu: &mut Option<CpuCore>,
     extended_due: bool,
     prev_metrics: Option<&SystemMetrics>,
-    native_state: &mut sbm_native::NativeState,
+    native: &mut NativeSampler,
 ) -> Result<SystemMetrics> {
     let system = system_type();
-    // Off the reactor. `sample` is synchronous and does real IO — procfs and
-    // sysfs reads on Linux, and on the sysinfo backends a `statvfs` per mount.
-    // Called straight from here it blocks a tokio worker thread for as long as
-    // that takes, on the same runtime that serves the HTTP API; a mount that
-    // does not answer blocks it indefinitely. On the blocking pool the cost of
-    // that is one pooled thread and an empty disk list.
-    //
-    // The state has to go with it, since a blocking task cannot borrow. It
-    // comes back on the far side; if the task panicked it stays at its default
-    // and the next cycle starts a fresh one, which costs the CPU delta for one
-    // sample.
-    let mut owned_state = std::mem::take(native_state);
-    let (mut status, returned_state) = tokio::task::spawn_blocking(move || {
-        let status = sbm_native::sample(&mut owned_state, system);
-        (status, owned_state)
-    })
-    .await
-    .map_err(|e| {
-        crate::utils::error::MonitorError::Monitoring(format!("Native sampling failed: {e}"))
-    })?;
-    *native_state = returned_state;
+    let mut status = native.sample(system).await?;
 
     // Not part of sbm_native: neither a pure syscall nor worth bundling into
     // the shared script (a single targeted `nvidia-smi` call, same output
@@ -1562,6 +1603,25 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
 
 #[cfg(test)]
 mod tests {
+    #[tokio::test]
+    async fn the_native_sampler_keeps_its_state_across_samples() {
+        let mut sampler = super::NativeSampler::default();
+        let system = super::system_type();
+        let first = sampler.sample(system).await.unwrap();
+        let second = sampler.sample(system).await.unwrap();
+        // On the sysinfo backends the first sample has no CPU baseline and the
+        // second has one only if the state stayed with the thread between
+        // them (Linux reads cumulative counters and keeps no state).
+        if !cfg!(target_os = "linux") {
+            assert!(first.cpu.is_empty());
+            assert!(!second.cpu.is_empty());
+        }
+        let tx = sampler.tx.clone().unwrap();
+        let (reply, answer) = tokio::sync::oneshot::channel();
+        tx.send((system, reply)).unwrap();
+        assert!(answer.await.is_ok());
+    }
+
     use super::*;
 
     #[test]

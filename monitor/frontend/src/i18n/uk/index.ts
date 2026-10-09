@@ -1826,6 +1826,8 @@ const uk = {
 	deskAgentHintDropLabel: 'Вкласти',
 	deskAgentHintCancel: 'Скасувати',
 	deskAgentApprovedBypass: 'Схвалено: у цьому завданні дозволено все',
+	deskAgentAlwaysAllow: 'Дозволяти завжди',
+	deskAgentAlwaysAllowNote: 'Додасться до правил дозволу цього сервера для всіх облікових записів:',
 	deskAgentReplyHint: 'Скажіть Agent, що робити далі',
 	deskAgentReplyWaiting: 'Доповнити завдання або змінити план',
 	deskAgentReplyOffline: 'Немає з’єднання; зараз надіслати не можна',

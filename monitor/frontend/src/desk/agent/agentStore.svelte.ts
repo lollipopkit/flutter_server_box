@@ -4,6 +4,7 @@
 /// account says.
 
 import type { ServerEntry } from '../../lib/servers.svelte'
+import { Draft } from './attachments.svelte'
 import { agentApi, type Answer, type Entry, type Flow, type FlowDetail, type FlowStatus, type LiveOutput, type OutLine, type Pending, type PermissionMode } from '../../lib/agentApi'
 
 const RETRY_MIN_MS = 1000
@@ -46,6 +47,11 @@ export class AgentStore {
   /// The task open in the flow view, whole.
   detail = $state<FlowDetail | null>(null)
   openId = $state<string | null>(null)
+  /// Drafts by task id; `''` is the composer's new task. Not reactive: a
+  /// view reads one in a `$derived`, which may create it, and what changes
+  /// is each draft's own state.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  readonly #drafts = new Map<string, Draft>()
   /// The words the model is writing now in the open task.
   streaming = $state('')
   notice = $state<AgentNotice | null>(null)
@@ -146,6 +152,20 @@ export class AgentStore {
     await this.#loadDetail(id)
   }
 
+  draft(key: string): Draft {
+    let d = this.#drafts.get(key)
+    if (!d) {
+      d = new Draft(this.entry)
+      this.#drafts.set(key, d)
+    }
+    return d
+  }
+
+  #dropDraft(id: string) {
+    this.#drafts.get(id)?.clear(true)
+    this.#drafts.delete(id)
+  }
+
   close(): void {
     this.openId = null
     this.detail = null
@@ -189,6 +209,7 @@ export class AgentStore {
     await agentApi.remove(this.entry, id)
     this.flows = this.flows.filter((f) => f.id !== id)
     if (this.openId === id) this.close()
+    this.#dropDraft(id)
   }
 
   dismissNotice(): void {
@@ -216,6 +237,7 @@ export class AgentStore {
       case 'removed':
         this.flows = this.flows.filter((f) => f.id !== e.id)
         if (this.openId === e.id) this.close()
+        this.#dropDraft(String(e.id))
         break
       case 'pending':
         if (this.detail && this.detail.flow.id === e.id) this.detail.pending = (e.pending as Pending | null) ?? null

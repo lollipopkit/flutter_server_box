@@ -1826,6 +1826,8 @@ const ru = {
 	deskAgentHintDropLabel: 'Вложить',
 	deskAgentHintCancel: 'Отмена',
 	deskAgentApprovedBypass: 'Одобрено: в этой задаче разрешено всё',
+	deskAgentAlwaysAllow: 'Разрешать всегда',
+	deskAgentAlwaysAllowNote: 'Добавится в правила разрешения этого сервера для всех учётных записей:',
 	deskAgentReplyHint: 'Укажите Agent, что делать дальше',
 	deskAgentReplyWaiting: 'Дополнить задачу или изменить план',
 	deskAgentReplyOffline: 'Нет подключения; сейчас отправить нельзя',

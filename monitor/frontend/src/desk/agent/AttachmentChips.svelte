@@ -14,14 +14,17 @@
 
 <div class="atts">
   {#each atts.items as a (a.key)}
-    <div class="att" class:att--failed={a.failed} class:att--busy={!a.id && !a.failed}>
+    <div class="att" class:att--failed={a.failed}>
       {#if a.thumb}
         <img src={a.thumb} alt="" class="att__thumb" />
       {:else}
         <span class="att__glyph"><Icon name={a.glyph} size={15} fill /></span>
       {/if}
       <span class="att__name">{a.name}</span>
-      <span class="att__meta">{a.meta}</span>
+      <span class="att__meta">{!a.id && !a.failed ? `${Math.round(a.progress * 100)}%` : a.meta}</span>
+      {#if !a.id && !a.failed}
+        <span class="att__bar" style:transform="scaleX({a.progress})"></span>
+      {/if}
       <span onmousedown={keep} role="presentation" class="att__x">
         <IconButton icon="close" label={$LL.deskAgentRemoveAttachment()} size="sm" onclick={() => atts.remove(a)} />
       </span>
@@ -36,6 +39,8 @@
     gap: var(--space-7);
   }
   .att {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     gap: var(--space-7);
@@ -49,8 +54,16 @@
     animation: lk-pop-in 300ms var(--ease-spring-bouncy);
     transition: opacity var(--dur-fast) var(--ease-standard);
   }
-  .att--busy {
-    opacity: 0.6;
+  /* Uploading: the share sent fills the chip's foot. */
+  .att__bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--color-accent);
+    transform-origin: left;
+    transition: transform var(--dur-fast) linear;
   }
   .att--failed .att__meta {
     color: var(--color-danger);

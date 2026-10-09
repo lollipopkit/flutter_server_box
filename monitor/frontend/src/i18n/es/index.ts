@@ -1826,6 +1826,8 @@ const es = {
 	deskAgentHintDropLabel: 'Adjuntar',
 	deskAgentHintCancel: 'Cancelar',
 	deskAgentApprovedBypass: 'Aprobado: esta tarea lo permite todo',
+	deskAgentAlwaysAllow: 'Permitir siempre',
+	deskAgentAlwaysAllowNote: 'Se añade a las reglas de permitir de este servidor, para todas las cuentas:',
 	deskAgentReplyHint: 'Indica a Agent qué debe hacer a continuación',
 	deskAgentReplyWaiting: 'Añade instrucciones o cambia el plan',
 	deskAgentReplyOffline: 'Desconectado; no se puede enviar ahora',

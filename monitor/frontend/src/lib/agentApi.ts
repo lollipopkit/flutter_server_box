@@ -1,7 +1,7 @@
 /// The agent's `/api/v1/agent*` (`monitor/src/api/agent.rs`): Agent mode's
 /// tasks on this machine, always to an explicit server.
 
-import { readEventStream, requestFor } from './api'
+import { readEventStream, requestFor, uploadFor } from './api'
 import type { ServerEntry } from './servers.svelte'
 
 export type FlowStatus = 'queued' | 'running' | 'waiting' | 'done' | 'failed' | 'cancelled'
@@ -65,6 +65,8 @@ export interface Pending {
   user?: string
   /// `wrongPassword` after a refused one.
   error?: string
+  /// The allow rule a command's confirm offers ("always allow"; admin only).
+  allowRule?: string
 }
 
 export interface LiveOutput {
@@ -129,7 +131,7 @@ export interface Upload {
 
 export interface Answer {
   id: string
-  action: 'run' | 'cancel' | 'edit' | 'pick' | 'text' | 'password' | 'alternative'
+  action: 'run' | 'always' | 'cancel' | 'edit' | 'pick' | 'text' | 'password' | 'alternative'
   text?: string
   index?: number
   password?: string
@@ -257,15 +259,10 @@ export const agentApi = {
   list: (e: ServerEntry) => requestFor<FlowList>(e, '/agent/flows'),
   start: (e: ServerEntry, prompt: string, mode?: PermissionMode, files: string[] = []) =>
     requestFor<Flow>(e, '/agent/flows', { method: 'POST', body: JSON.stringify({ prompt, mode, files }) }),
-  upload: (e: ServerEntry, file: Blob, name: string) =>
-    requestFor<Upload>(
-      e,
-      `/agent/files?name=${enc(name)}`,
-      { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } },
-      'Upload failed',
-      undefined,
-      120_000,
-    ),
+  /// A file for a task about to start or a reply; [onProgress] is told
+  /// how much has gone (0–1), [signal] gives up on it.
+  upload: (e: ServerEntry, file: Blob, name: string, opts: { onProgress?: (sent: number) => void; signal?: AbortSignal } = {}) =>
+    uploadFor<Upload>(e, `/agent/files?name=${enc(name)}`, file, { ...opts, timeoutMs: 300_000, fallback: 'Upload failed' }),
   discard: (e: ServerEntry, id: string) => requestFor<void>(e, `/agent/files/${enc(id)}`, { method: 'DELETE' }),
   detail: (e: ServerEntry, id: string) => requestFor<FlowDetail>(e, `/agent/flows/${enc(id)}`, {}, 'Request failed', undefined, 60_000),
   reply: (e: ServerEntry, id: string, text: string, files: string[] = []) =>

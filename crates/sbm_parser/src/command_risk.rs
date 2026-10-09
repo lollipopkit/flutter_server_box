@@ -96,6 +96,9 @@ static READ_ONLY_STARTS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         r"^(apt|apt-cache)\s+(list|show|search|policy)\b",
         r"^(dpkg\s+-l|dpkg\s+-s|rpm\s+-q)\b",
         r"^(get-[a-z0-9-]+|test-[a-z0-9-]+|select-[a-z0-9-]+|where-object|measure-object|compare-object|tasklist|systeminfo|dir|type)\b",
+        // What only shapes output at the end of a pipeline (`| Format-List`);
+        // never `Out-File`, which writes, or `ForEach-Object`, which runs code.
+        r"^(format-(list|table|wide|custom)|out-string|convertto-(json|csv|html|xml)|group-object)\b",
     ])
 });
 
@@ -161,6 +164,15 @@ pub fn classify(command: &str) -> CommandRisk {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn powershell_reads_with_formatting_at_the_end_are_reads() {
+        let read = "Get-ComputerInfo | Select-Object WindowsProductName | Format-List; Get-CimInstance Win32_Processor | Format-Table";
+        assert_eq!(classify(read), CommandRisk::ReadOnly);
+        assert_eq!(classify("Get-Service | ConvertTo-Json"), CommandRisk::ReadOnly);
+        assert_ne!(classify("Get-Process | Out-File C:\\x.txt"), CommandRisk::ReadOnly);
+        assert_ne!(classify("Get-ChildItem | ForEach-Object { Remove-Item $_ }"), CommandRisk::ReadOnly);
+    }
     use CommandRisk::*;
 
     fn check(cases: &[&str], want: CommandRisk) {

@@ -10,7 +10,6 @@
   import { Button, Icon, IconButton } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import AttachmentChips from './AttachmentChips.svelte'
-  import { Attachments } from './attachments.svelte'
   import { autosize } from './autosize'
 
   interface Props {
@@ -26,24 +25,22 @@
 
   const { store, placeholder, disabled, focused, onfocuschange, onstarted }: Props = $props()
 
-  let draft = $state('')
+  /// The new task's unsent words, files and mode, kept by the store.
   // svelte-ignore state_referenced_locally
-  const atts = new Attachments(store.entry)
-  // Files never sent go when the composer does.
-  $effect(() => () => atts.clear(true))
+  const d = store.draft('')
+  const atts = d.atts
   let sending = $state(false)
   let error = $state<string | null>(null)
   let multi = $state(false)
   let cy = $state(0)
   let modeOpen = $state(false)
-  let picked = $state<PermissionMode | null>(null)
   let box = $state<HTMLDivElement | null>(null)
   let ta = $state<HTMLTextAreaElement | null>(null)
   let picker = $state<HTMLInputElement | null>(null)
   let menu = $state<HTMLDivElement | null>(null)
 
   const mode = $derived.by<PermissionMode>(() => {
-    const m = picked ?? store.defaultMode
+    const m = d.mode ?? store.defaultMode
     return m === 'bypass' && !store.bypassAllowed ? 'manual' : m
   })
 
@@ -67,7 +64,7 @@
 
   function cycleMode() {
     const ids = MODES.map((m) => m.id).filter(usable)
-    picked = ids[(ids.indexOf(mode) + 1) % ids.length]
+    d.mode = ids[(ids.indexOf(mode) + 1) % ids.length]
   }
 
   const keys = $derived([
@@ -100,7 +97,7 @@
   }
 
   function onfocusout() {
-    if (!draft.trim() && !atts.length) onfocuschange(false)
+    if (!d.text.trim() && !atts.length) onfocuschange(false)
   }
 
   export function focus() {
@@ -113,8 +110,7 @@
 
   /// Empties it; [discard] also drops the uploads, which no task took.
   function clear(discard: boolean) {
-    atts.clear(discard)
-    draft = ''
+    d.clear(discard)
     error = null
     modeOpen = false
     onfocuschange(false)
@@ -123,7 +119,7 @@
   // ---------------------------------------------------------------------------
   // Sending
 
-  export async function send(text = draft) {
+  export async function send(text = d.text) {
     const words = text.trim()
     if ((!words && !atts.length) || sending || disabled) return
     sending = true
@@ -133,7 +129,7 @@
       if (!ids) return
       const f = await store.startFlow(words, mode, ids)
       clear(false)
-      picked = null
+      d.mode = null
       ta?.blur()
       onstarted(f)
     } catch (e) {
@@ -210,10 +206,10 @@
       <span class="sr-only">{$LL.deskAgentTaskLabel()}</span>
       <textarea
         bind:this={ta}
-        bind:value={draft}
+        bind:value={d.text}
         rows="1"
         class="ta"
-        use:autosize={{ value: draft, max: 8, onmulti: (m) => (multi = m) }}
+        use:autosize={{ value: d.text, max: 8, onmulti: (m) => (multi = m) }}
         {placeholder}
         {disabled}
         onfocus={enter}
@@ -225,7 +221,7 @@
     <div class="ctl" inert={focused}>
       {@render chip(false)}
       <IconButton icon="attach_file" label={$LL.deskAgentAttach()} {disabled} onmousedown={keep} onclick={() => picker?.click()} />
-      <Button variant="primary" icon="arrow_upward" disabled={(!draft.trim() && !atts.length) || sending || disabled} onclick={() => send()}>
+      <Button variant="primary" icon="arrow_upward" disabled={(!d.text.trim() && !atts.length) || sending || disabled} onclick={() => send()}>
         {$LL.deskAgentSend()}
       </Button>
     </div>
@@ -257,7 +253,7 @@
           disabled={!usable(m.id)}
           onmousedown={keep}
           onclick={() => {
-            picked = m.id
+            d.mode = m.id
             modeOpen = false
           }}
         >

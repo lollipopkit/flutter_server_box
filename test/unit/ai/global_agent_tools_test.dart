@@ -5,7 +5,12 @@ import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  // The command risk is `sbm_parser::command_risk`, over FFI.
+  setUpAll(initRustLibForTest);
+
   test('global Agent instructions expose exact live server IDs', () {
     final instructions = buildGlobalAgentInstructions(
       localeHint: 'zh-CN',

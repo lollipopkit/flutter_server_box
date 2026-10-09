@@ -23,9 +23,11 @@
     onbackground: () => void
     /// Asks the model to try again.
     onretry: () => void
+    /// May add to the machine's rules ("always allow").
+    admin: boolean
   }
 
-  const { step, pending, status, onanswer, onreply, onbackground, onretry }: Props = $props()
+  const { step, pending, status, onanswer, onreply, onbackground, onretry, admin }: Props = $props()
 
   let password = $state('')
   let remember = $state(true)
@@ -169,9 +171,15 @@
       </div>
       <div class="actions">
         <Button variant="primary" icon="play_arrow" disabled={busy} onclick={() => send({ action: 'run' })}>{$LL.deskAgentRun()}</Button>
+        {#if admin && waiting?.allowRule}
+          <Button variant="secondary" icon="done_all" disabled={busy} onclick={() => send({ action: 'always' })}>{$LL.deskAgentAlwaysAllow()}</Button>
+        {/if}
         <Button variant="secondary" icon="edit" disabled={busy || editing} onclick={() => (editing = true)}>{$LL.deskAgentChangePlan()}</Button>
         <Button variant="ghost" disabled={busy} onclick={() => send({ action: 'cancel' })}>{$LL.deskAgentCancel()}</Button>
       </div>
+      {#if admin && waiting?.allowRule}
+        <div class="quiet">{$LL.deskAgentAlwaysAllowNote()} <code class="plan__cmd">{waiting.allowRule}</code></div>
+      {/if}
     </div>
   {/if}
 

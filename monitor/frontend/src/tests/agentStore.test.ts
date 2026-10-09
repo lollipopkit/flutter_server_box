@@ -81,6 +81,16 @@ describe('Agent mode state', () => {
     expect(store.detail?.flow.status).toBe('done')
   })
 
+  it('keeps what was typed per task until the task goes', () => {
+    const d = store.draft('a')
+    d.text = 'half a reply'
+    expect(store.draft('a')).toBe(d)
+    expect(store.draft('b')).not.toBe(d)
+    emit({ type: 'removed', id: 'a' })
+    expect(store.draft('a')).not.toBe(d)
+    expect(store.draft('a').text).toBe('')
+  })
+
   it('ignores what another task says while one is open, and forgets a removed one', () => {
     emit({ type: 'pending', id: 'b', pending: { id: 'p', kind: 'confirm', toolCallId: 'c', title: 't' } })
     expect(store.detail?.pending).toBeNull()

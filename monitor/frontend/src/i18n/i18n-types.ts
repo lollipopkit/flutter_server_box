@@ -7548,6 +7548,14 @@ type RootTranslation = {
 	 */
 	deskAgentApprovedBypass: string
 	/**
+	 * A​l​w​a​y​s​ ​a​l​l​o​w
+	 */
+	deskAgentAlwaysAllow: string
+	/**
+	 * A​d​d​s​ ​t​o​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​a​l​l​o​w​ ​r​u​l​e​s​,​ ​f​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​:
+	 */
+	deskAgentAlwaysAllowNote: string
+	/**
 	 * T​e​l​l​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​a​t​ ​t​o​ ​d​o​ ​n​e​x​t
 	 */
 	deskAgentReplyHint: string
@@ -15291,6 +15299,14 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Approved: this task allows all
 	 */
 	deskAgentApprovedBypass: () => LocalizedString
+	/**
+	 * Always allow
+	 */
+	deskAgentAlwaysAllow: () => LocalizedString
+	/**
+	 * Adds to this server's allow rules, for every account:
+	 */
+	deskAgentAlwaysAllowNote: () => LocalizedString
 	/**
 	 * Tell the agent what to do next
 	 */

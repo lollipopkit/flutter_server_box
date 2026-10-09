@@ -5,7 +5,7 @@
   /// not.
 
   import './agent.css'
-  import { onDestroy, onMount } from 'svelte'
+  import { onMount } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { AppIcon, Notification } from '../lk'
   import type { Flow } from '../../lib/agentApi'
@@ -31,7 +31,8 @@
   let history = $state<DOMRect | null | undefined>(undefined)
   let root = $state<HTMLDivElement | null>(null)
   /// Where the open task came from on the timeline, to go back into it.
-  let back: string | null = null
+  // svelte-ignore state_referenced_locally
+  let back: string | null = store.openId
 
   let ground = $state<HTMLDivElement | null>(null)
   let stage = $state<HTMLDivElement | null>(null)
@@ -45,12 +46,10 @@
   onMount(() => {
     if (ground && stage) agentIn(ground, stage)
     store.start()
+    // Back where it was left: the task open then is read again.
+    if (store.openId) void store.open(store.openId)
     const t = setInterval(() => (now = new Date()), 1000)
     return () => clearInterval(t)
-  })
-  onDestroy(() => {
-    // The stream goes on for notifications; only the open task closes.
-    store.close()
   })
 
   function open(id: string, from: HTMLElement | null = null) {
@@ -190,7 +189,7 @@
   <div class="ground" bind:this={ground} aria-hidden="true"></div>
   <div class="stage" bind:this={stage}>
   {#if store.openId}
-    <AgentFlow {store} {now} onback={home} onopen={(id) => open(id)} />
+    <AgentFlow {store} {now} {admin} onback={home} onopen={(id) => open(id)} />
   {:else}
     <AgentHome
       {store}

@@ -187,6 +187,10 @@ pub struct PendingView {
     /// Whose password `sudo` asks for.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
+    /// The allow rule a command's `confirm` offers to add ("always allow",
+    /// `command_rules::suggest`); only an admin may take it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_rule: Option<String>,
     /// Why the last answer was not taken (a wrong password).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -806,6 +810,13 @@ impl AgentMode {
         Ok(flow.view())
     }
 
+    /// The allow rule what [id] waits on offers, when [pending] is it.
+    pub fn pending_rule(&self, user: i64, id: &str, pending: &str) -> Option<String> {
+        let flow = self.active(user, id)?;
+        let p = flow.pending.lock().unwrap();
+        p.as_ref().filter(|p| p.view.id == pending).and_then(|p| p.view.allow_rule.clone())
+    }
+
     /// Answers what [id] waits on.
     pub fn answer(&self, user: i64, secure: bool, id: &str, answer: Answer) -> Result<(), FlowError> {
         let flow = self.active(user, id).ok_or(FlowError::NotWaiting)?;
@@ -1109,6 +1120,7 @@ impl AgentMode {
     /// password it left in memory goes.
     pub fn end_account(&self, username: &str) {
         self.sudo.lock().unwrap().retain(|_, (_, _, name)| name != username);
+        self.files.forget(username);
         let flows: Vec<Arc<Flow>> = self.flows.lock().unwrap().values().filter(|f| f.username == username).cloned().collect();
         for f in flows {
             f.cancel_token().cancel();

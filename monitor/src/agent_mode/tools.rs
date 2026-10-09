@@ -64,6 +64,7 @@ pub(super) fn check_answer(view: &PendingView, answer: &Answer) -> Result<(), &'
     let ok = match (view.kind, answer.action.as_str()) {
         (_, "cancel") => true,
         ("confirm", "run") => true,
+        ("confirm", "always") => view.allow_rule.is_some(),
         ("confirm" | "danger", "edit") | ("clarify", "text") => {
             if !text_ok() {
                 return Err("emptyText");
@@ -113,6 +114,7 @@ fn pending(kind: &'static str, call: &ToolCall, title: String) -> PendingView {
         alternatives: Vec::new(),
         confirm_text: None,
         user: None,
+        allow_rule: None,
         error: None,
     }
 }
@@ -221,6 +223,11 @@ impl Tool for RunCommand {
             let area = str_arg(args, "area");
             let area = if AREAS.contains(&area.as_str()) { area } else { "system".into() };
             let sudo = args["sudo"].as_bool().unwrap_or(false) && !prompt::is_root();
+            if sudo && cfg!(windows) {
+                return Err("`sudo` does not exist on Windows: commands run with this account's rights. Run it without `sudo`, \
+                    or tell the person it needs an administrator."
+                    .into());
+            }
             let timeout = Duration::from_secs(60 * args["timeout_minutes"].as_u64().unwrap_or(DEFAULT_TIMEOUT_MINUTES).clamp(1, MAX_TIMEOUT_MINUTES));
 
             may_run(state, &flow).await?;
@@ -306,6 +313,10 @@ impl RunCommand {
                     let mut v = pending("confirm", call, title.clone());
                     v.steps = vec![super::PlanStep { text: title.clone(), command: Some(command.clone()) }];
                     v.command = Some(command.clone());
+                    // An ask rule outranks any allow rule: nothing to offer.
+                    if !ask_rule {
+                        v.allow_rule = sbm_parser::command_rules::suggest(&command);
+                    }
                     v
                 }),
                 Effect::Danger => Some({
@@ -329,7 +340,7 @@ impl RunCommand {
                 let alternatives = view.alternatives.clone();
                 let Some(answer) = hub.ask(&flow, view).await else { return cancelled() };
                 match answer.action.as_str() {
-                    "run" => {}
+                    "run" | "always" => {}
                     "edit" => {
                         return Ok(ToolResult::text(format!("Not run. The person said: {}", answer.text.unwrap_or_default()))
                             .with_details(json!({ "declined": true })));
@@ -760,6 +771,7 @@ mod tests {
             alternatives: vec!["backup".into()],
             confirm_text: Some("t10".into()),
             user: None,
+            allow_rule: None,
             error: None,
         };
         if kind != "clarify" {

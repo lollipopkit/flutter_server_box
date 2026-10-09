@@ -1826,6 +1826,8 @@ const ko = {
 	deskAgentHintDropLabel: '첨부',
 	deskAgentHintCancel: '취소',
 	deskAgentApprovedBypass: '승인됨: 이 작업은 모두 허용',
+	deskAgentAlwaysAllow: '항상 허용',
+	deskAgentAlwaysAllowNote: '이 서버의 허용 규칙에 추가되며 모든 계정에 적용됩니다:',
 	deskAgentReplyHint: 'Agent에게 다음 작업을 알려주세요',
 	deskAgentReplyWaiting: '내용을 추가하거나 계획을 변경하세요',
 	deskAgentReplyOffline: '연결이 끊겨 지금은 보낼 수 없습니다',

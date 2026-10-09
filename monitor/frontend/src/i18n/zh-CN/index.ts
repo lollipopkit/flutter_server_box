@@ -1825,6 +1825,8 @@ const zh_CN = {
 	deskAgentHintDropLabel: '添加附件',
 	deskAgentHintCancel: '取消',
 	deskAgentApprovedBypass: '已批准：此任务全部放行',
+	deskAgentAlwaysAllow: '以后都允许',
+	deskAgentAlwaysAllowNote: '加入这台服务器的允许规则，对所有账号生效：',
 	deskAgentReplyHint: '告诉 Agent 接下来怎么做',
 	deskAgentReplyWaiting: '补充要求或修改方案',
 	deskAgentReplyOffline: '连接中断，暂时无法发送',

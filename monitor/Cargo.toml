@@ -128,6 +128,10 @@ fs2 = "0.4"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
+# Agent mode tells the model which Windows it is on (`prompt::os_name`).
+[target.'cfg(windows)'.dependencies]
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+
 [dev-dependencies]
 # Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
 indexmap = "2"

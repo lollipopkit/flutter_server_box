@@ -546,6 +546,39 @@ async fn start_in(srv: &TestServer, prompt: &str, mode: &str) -> (u16, Value) {
 }
 
 #[ntex::test]
+async fn always_allow_adds_the_rule_and_runs() {
+    let (srv, _) = server().await;
+    let dir = scratch("always");
+    let one = dir.join("one");
+    let url = model(vec![
+        Say::Tool("run_command", json!({ "command": format!("touch {}", one.display()).leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Text("Done."),
+    ]);
+    configure(&srv, &url).await;
+    let id = start(&srv, "go").await;
+    let v = until(&srv, &id, |v| !v["pending"].is_null()).await;
+    let rule = format!("touch {}", one.display());
+    assert_eq!(v["pending"]["allowRule"], rule.as_str(), "{v}");
+    let pid = v["pending"]["id"].as_str().unwrap().to_string();
+    // A stale prompt adds nothing.
+    let (s, _) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/answer"), Some(json!({ "id": "old", "action": "always" }))).await;
+    assert_eq!(s, 409);
+    let (s, body) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/answer"), Some(json!({ "id": pid, "action": "always" }))).await;
+    assert_eq!(s, 204, "{body}");
+    until(&srv, &id, |v| status(v) == "done").await;
+    assert!(one.exists());
+    let (_, read) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/permissions", None).await;
+    assert_eq!(read["permissions"]["rules"]["allow"], json!([rule]));
+    // The same command in another task runs unasked now.
+    std::fs::remove_file(&one).unwrap();
+    let id = start(&srv, "again").await;
+    let v = until(&srv, &id, |v| !v["pending"].is_null() || status(v) == "done").await;
+    assert!(v["pending"].is_null(), "{v}");
+    assert!(one.exists());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[ntex::test]
 async fn bypass_runs_destruction_unasked_but_the_rules_still_hold() {
     let (srv, _) = server().await;
     let dir = scratch("bypass");

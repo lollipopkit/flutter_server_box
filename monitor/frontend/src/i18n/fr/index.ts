@@ -1826,6 +1826,8 @@ const fr = {
 	deskAgentHintDropLabel: 'Joindre',
 	deskAgentHintCancel: 'Annuler',
 	deskAgentApprovedBypass: 'Approuvé : cette tâche autorise tout',
+	deskAgentAlwaysAllow: 'Toujours autoriser',
+	deskAgentAlwaysAllowNote: 'Ajouté aux règles d\'autorisation de ce serveur, pour tous les comptes :',
 	deskAgentReplyHint: 'Indiquez à Agent quoi faire ensuite',
 	deskAgentReplyWaiting: 'Ajouter des instructions ou modifier le plan',
 	deskAgentReplyOffline: 'Déconnecté ; envoi impossible pour l’instant',

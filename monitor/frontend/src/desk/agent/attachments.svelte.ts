@@ -4,7 +4,7 @@
 
 import { get } from 'svelte/store'
 import { LL } from '../../i18n/i18n-svelte'
-import { agentApi, type Upload } from '../../lib/agentApi'
+import { agentApi, type PermissionMode, type Upload } from '../../lib/agentApi'
 import { fmtBytes } from '../../lib/format'
 import type { ServerEntry } from '../../lib/servers.svelte'
 import { fileGlyph } from './agentView'
@@ -21,8 +21,12 @@ export interface Att {
   /// An object URL of an image, or empty.
   thumb: string
   upload: Promise<Upload | null>
+  /// How much has gone, 0–1, until it has arrived.
+  progress: number
   id: string | null
   failed: boolean
+  /// Gives up on the upload.
+  abort: AbortController
 }
 
 export class Attachments {
@@ -50,8 +54,15 @@ export class Attachments {
       return
     }
     const key = ++this.#seq
+    const abort = new AbortController()
     const upload = agentApi
-      .upload(this.#entry, blob, uploadName)
+      .upload(this.#entry, blob, uploadName, {
+        signal: abort.signal,
+        onProgress: (p) => {
+          const a = this.items.find((x) => x.key === key)
+          if (a) a.progress = p
+        },
+      })
       .then((u) => {
         const a = this.items.find((x) => x.key === key)
         if (a) a.id = u.id
@@ -60,12 +71,14 @@ export class Attachments {
         return u
       })
       .catch((e) => {
+        // Removed: nothing to say.
+        if (abort.signal.aborted) return null
         const a = this.items.find((x) => x.key === key)
         if (a) a.failed = true
         this.error = t.deskAgentUploadFailed({ name: display.name, reason: e instanceof Error ? e.message : String(e) })
         return null
       })
-    this.items.push({ ...display, key, upload, id: null, failed: false })
+    this.items.push({ ...display, key, upload, progress: 0, id: null, failed: false, abort })
   }
 
   addFiles(list: FileList | File[] | null | undefined) {
@@ -105,6 +118,7 @@ export class Attachments {
   }
 
   remove(a: Att) {
+    if (!a.id) a.abort.abort()
     if (a.thumb) URL.revokeObjectURL(a.thumb)
     this.items = this.items.filter((x) => x.key !== a.key)
     if (a.id) void agentApi.discard(this.#entry, a.id).catch(() => {})
@@ -113,6 +127,7 @@ export class Attachments {
   /// Empties it; [discard] also drops the uploads, which nothing took.
   clear(discard: boolean) {
     for (const a of this.items) {
+      if (discard && !a.id) a.abort.abort()
       if (a.thumb) URL.revokeObjectURL(a.thumb)
       if (discard && a.id) void agentApi.discard(this.#entry, a.id).catch(() => {})
     }
@@ -124,5 +139,24 @@ export class Attachments {
   async ids(): Promise<string[] | null> {
     const uploads = await Promise.all(this.items.map((a) => a.upload))
     return uploads.every((u) => u) ? uploads.map((u) => u!.id) : null
+  }
+}
+
+/// What was typed and attached but not sent: kept per task (and for a new
+/// one) while Agent mode is away, so coming back finds it as it was left.
+export class Draft {
+  text = $state('')
+  /// A new task's permission mode, when one was picked.
+  mode = $state<PermissionMode | null>(null)
+  readonly atts: Attachments
+
+  constructor(entry: ServerEntry) {
+    this.atts = new Attachments(entry)
+  }
+
+  /// Empties it; [discard] also drops the uploads.
+  clear(discard: boolean) {
+    this.text = ''
+    this.atts.clear(discard)
   }
 }

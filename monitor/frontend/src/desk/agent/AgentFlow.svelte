@@ -2,14 +2,13 @@
   /// One task: its steps on the left, the chosen one in the middle with the
   /// reply field, its output on the right.
 
-  import { tick, untrack } from 'svelte'
+  import { tick } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { fmtDate } from '../../lib/format'
   import { AppIcon, Button, Icon, IconButton, Spinner, ToolbarGroup } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import { AREA, duration, fileGlyph, statusLook, stepLook, waitLabel } from './agentView'
   import AttachmentChips from './AttachmentChips.svelte'
-  import { Attachments } from './attachments.svelte'
   import { autosize } from './autosize'
   import { changesMemory, currentStep, deriveSteps, elapsed, type Step } from './flowModel'
   import OutputPane from './OutputPane.svelte'
@@ -20,9 +19,10 @@
     now: Date
     onback: () => void
     onopen: (id: string) => void
+    admin: boolean
   }
 
-  const { store, now, onback, onopen }: Props = $props()
+  const { store, now, onback, onopen, admin }: Props = $props()
 
   const detail = $derived(store.detail)
   const flow = $derived(detail?.flow ?? store.flows.find((f) => f.id === store.openId) ?? null)
@@ -43,25 +43,16 @@
   const sel = $derived(Math.min(picked ?? currentStep(steps), Math.max(0, steps.length - 1)))
   const step = $derived(steps[sel] ?? null)
 
-  let reply = $state('')
   let sending = $state(false)
   let replyError = $state<string | null>(null)
   let replyInput = $state<HTMLTextAreaElement | null>(null)
   let replyMulti = $state(false)
   let picker = $state<HTMLInputElement | null>(null)
-  // svelte-ignore state_referenced_locally
-  const atts = new Attachments(store.entry)
+  /// The open task's unsent words and files, kept by the store.
+  const draft = $derived(store.draft(store.openId ?? ''))
+  const atts = $derived(draft.atts)
   let dragging = $state(false)
   let dragDepth = 0
-  // Files not sent stay with the task they were added to: another task, or
-  // leaving, drops them.
-  let attsFor: string | undefined
-  $effect(() => {
-    const id = flow?.id
-    if (attsFor !== undefined && id !== attsFor) untrack(() => atts.clear(true))
-    attsFor = id
-  })
-  $effect(() => () => atts.clear(true))
 
   const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files')
   function ondragenter(e: DragEvent) {
@@ -94,7 +85,7 @@
     pick(Math.max(0, Math.min(steps.length - 1, sel + d)), false)
   }
 
-  async function send(text = reply) {
+  async function send(text = draft.text) {
     const t = text.trim()
     if ((!t && !atts.length) || !flow || sending || offline) return
     sending = true
@@ -103,8 +94,7 @@
       const ids = await atts.ids()
       if (!ids) return
       await store.reply(flow.id, t, ids)
-      atts.clear(false)
-      reply = ''
+      draft.clear(false)
       picked = null
     } catch (e) {
       replyError = e instanceof Error ? e.message : String(e)
@@ -416,6 +406,7 @@
                 }}
                 onbackground={onback}
                 onretry={() => send($LL.deskAgentRetryPrompt())}
+                {admin}
               />
             </section>
           {/each}
@@ -431,9 +422,9 @@
           <Icon name="auto_awesome" size={15} color="var(--text-tertiary)" />
           <textarea
             bind:this={replyInput}
-            bind:value={reply}
+            bind:value={draft.text}
             rows="1"
-            use:autosize={{ value: reply, max: 6, onmulti: (m) => (replyMulti = m) }}
+            use:autosize={{ value: draft.text, max: 6, onmulti: (m) => (replyMulti = m) }}
             readonly={offline}
             {placeholder}
             aria-label={placeholder}
@@ -459,7 +450,7 @@
             label={$LL.deskAgentSend()}
             variant="filled"
             size="sm"
-            disabled={(!reply.trim() && !atts.length) || offline || sending}
+            disabled={(!draft.text.trim() && !atts.length) || offline || sending}
             onclick={() => send()}
           />
           <input
