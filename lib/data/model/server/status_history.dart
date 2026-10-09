@@ -116,13 +116,26 @@ class StatusHistory {
     _netTx.add(netTxs, time.length);
   }
 
-  /// Replaces the buffer with [samples], oldest first. Used to prefill from
-  /// monitor's stored history before live sampling takes over; a no-op once
-  /// live samples exist, so a late-arriving history response can't rewind
-  /// what has already been charted.
+  /// Puts the agent's stored [samples] (oldest first) before the live ones,
+  /// so a page opened on a monitor server draws the last hour at once.
+  ///
+  /// Only the part older than the first live sample goes in: the live samples
+  /// are what has been drawn, and a late response must not rewrite them. They
+  /// were often there already — the home page samples every server as it
+  /// lists it — and when that first one has no rate yet (it is the first),
+  /// keeping the history out until the buffer was empty left the chart with
+  /// nothing to draw until the agent's next cycle. The capacity keeps the
+  /// newest: past it, the oldest stored samples go, never live ones.
   void seed(List<StatusHistorySample> samples) {
-    if (!isEmpty || samples.isEmpty) return;
-    for (final s in samples) {
+    final firstLive = isEmpty ? null : time.first;
+    final older = [
+      for (final s in samples)
+        if (firstLive == null || s.timeMs < firstLive) s,
+    ];
+    if (older.isEmpty) return;
+    final live = [for (var i = 0; i < length; i++) _sampleAt(i)];
+    _clear();
+    for (final s in older) {
       add(
         timeMs: s.timeMs,
         cpu: s.cpu,
@@ -136,6 +149,47 @@ class StatusHistory {
         temp: s.temp,
         battery: s.battery,
       );
+    }
+    for (final replay in live) {
+      replay();
+    }
+  }
+
+  /// The sample at [i] as a call that appends it again, devices included.
+  void Function() _sampleAt(int i) {
+    final (t, c, m, sw, d, rx, tx, dr, dw, g, te, b) = (
+      time[i], cpu[i], mem[i], swap[i], disk[i], netRx[i], netTx[i],
+      diskRead[i], diskWrite[i], gpu[i], temp[i], battery[i],
+    );
+    final temps = _temps.at(i), reads = _diskReads.at(i), writes = _diskWrites.at(i);
+    final rxs = _netRx.at(i), txs = _netTx.at(i);
+    return () => add(
+      timeMs: t,
+      cpu: c,
+      mem: m,
+      swap: sw,
+      disk: d,
+      netRx: rx,
+      netTx: tx,
+      diskRead: dr,
+      diskWrite: dw,
+      gpu: g,
+      temp: te,
+      temps: temps,
+      diskReads: reads,
+      diskWrites: writes,
+      netRxs: rxs,
+      netTxs: txs,
+      battery: b,
+    );
+  }
+
+  void _clear() {
+    for (final f in [time, cpu, mem, swap, disk, netRx, netTx, diskRead, diskWrite, gpu, temp, battery]) {
+      f.clear();
+    }
+    for (final d in [_temps, _diskReads, _diskWrites, _netRx, _netTx]) {
+      d.byDevice.clear();
     }
   }
 }
@@ -160,8 +214,18 @@ class _DeviceHistory {
         return f;
       });
       series.add(values[device]);
+      // Gone for a whole buffer: nothing of it is left to draw, and kept, a
+      // host cycling through short-lived interfaces grows a series for each.
+      if (!values.containsKey(device) && series.every((e) => e == null)) {
+        byDevice.remove(device);
+      }
     }
   }
+
+  /// What sample [i] had per device, the devices without a reading left out.
+  Map<String, double> at(int i) => {
+    for (final MapEntry(:key, :value) in byDevice.entries) key: ?value[i],
+  };
 }
 
 /// One point handed to [StatusHistory.seed].
