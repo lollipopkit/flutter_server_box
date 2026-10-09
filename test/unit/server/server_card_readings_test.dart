@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
@@ -8,6 +9,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 
 import '../../helpers/spi_fixture.dart';
@@ -152,5 +154,27 @@ void main() {
     // No model reported: the count alone, not a leading space.
     srv.status.cpu.brand.clear();
     expect(serverCardReadings(srv).all.first.note, '×2');
+  });
+
+  test('a battery is over its line when low and discharging, not when full', () {
+    ServerMetric battery(int percent, BatteryStatus status) {
+      final srv = state();
+      srv.status.batteries.add(Battery(status: status, percent: percent));
+      return serverCardReadings(srv).all.firstWhere(
+        (m) => m.kind == ServerMetricKind.battery,
+      );
+    }
+
+    // #1673: a charged laptop turned its machine's dot yellow.
+    expect(battery(97, BatteryStatus.discharging).over, isFalse);
+    expect(battery(100, BatteryStatus.full).over, isFalse);
+    expect(battery(15, BatteryStatus.discharging).over, isTrue);
+    expect(battery(15, BatteryStatus.charging).over, isFalse);
+
+    final srv = state();
+    srv.status.batteries.add(
+      const Battery(status: BatteryStatus.discharging, percent: 97),
+    );
+    expect(serverStateDot(srv), StatePalette.running);
   });
 }
