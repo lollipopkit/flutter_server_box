@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppToolbar, SplitView, systemPrefs, WindowFooter } from '../../sys'
+  import { AppToolbar, SplitView, systemPrefs, useWindow, WindowFooter } from '../../sys'
   import {
     Button,
     Card,
@@ -36,6 +36,12 @@
   let actionError = $state('')
   /// The filter is the window's own: it is not a question for the machine.
   let query = $state('')
+  /// Opened for one unit (the desk's search): filtered to it.
+  const win = useWindow()
+  $effect(() => {
+    const q = (win.appState as { query?: unknown } | null)?.query
+    if (typeof q === 'string') untrack(() => (query = q))
+  })
   /// The selected unit's key; its detail sits over the status bar.
   let selected = $state<string | null>(null)
   /// The unit's log and definition, in a dialog.

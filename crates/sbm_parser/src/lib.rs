@@ -15,6 +15,7 @@ pub mod bench;
 pub mod bsd;
 pub mod capabilities;
 pub mod command_risk;
+pub mod command_rules;
 pub mod commands;
 pub mod common;
 pub mod container;

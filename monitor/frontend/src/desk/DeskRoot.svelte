@@ -15,6 +15,9 @@
   /// desk, and this one goes (its windows are kept by its own agent).
 
   let locked = $state(!servers.authenticated)
+  /// The desk was left (Disconnect): not drawn, its session kept, until a
+  /// server is chosen on the lock screen.
+  let away = $state(false)
 
   onMount(() => {
     // Before the pollers: the list may still hold the assumed same-origin
@@ -43,6 +46,7 @@
   function unlock(serverId: string) {
     servers.select(serverId)
     locked = false
+    away = false
   }
 
   function switchTo(serverId: string) {
@@ -51,9 +55,18 @@
   }
 </script>
 
-{#if servers.current?.token}
+{#if servers.current?.token && !away}
   {#key `${servers.current.id}:${servers.current.token}`}
-    <Desk entry={servers.current} {locked} onlock={() => (locked = true)} onswitch={switchTo} />
+    <Desk
+      entry={servers.current}
+      {locked}
+      onlock={() => (locked = true)}
+      ondisconnect={() => {
+        away = true
+        locked = true
+      }}
+      onswitch={switchTo}
+    />
   {/key}
 {/if}
 {#if locked || !servers.current?.token}

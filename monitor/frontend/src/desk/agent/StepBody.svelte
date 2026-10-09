@@ -96,7 +96,7 @@
   const plan = $derived(waiting?.steps?.length ? waiting.steps : step.plan)
   const note = $derived.by(() => {
     if (step.state !== 'done') return null
-    if (step.kind === 'plan') return $LL.deskAgentApproved()
+    if (step.kind === 'plan') return step.by === 'auto' ? $LL.deskAgentApprovedAuto() : step.by === 'bypass' ? $LL.deskAgentApprovedBypass() : $LL.deskAgentApproved()
     if (step.kind === 'ask' && step.answer) return $LL.deskAgentChose({ answer: step.answer })
     if (step.kind === 'command' && step.exitCode === 0)
       return step.durationMs !== null && step.durationMs >= 1000
@@ -329,10 +329,16 @@
     </div>
   {/if}
 
+  <!-- The model's words look as they did while it wrote them; the account's are a bubble. -->
   {#each step.chat as m, i (i)}
-    <div class="chat" class:chat--me={m.me}>
-      <div class="chat__bubble">{#if m.me}{m.text}{:else}<Markdown text={m.text} />{/if}</div>
-    </div>
+    {#if m.me}
+      <div class="chat chat--me"><div class="chat__bubble">{m.text}</div></div>
+    {:else}
+      <div class="say chat">
+        <div class="orb"><Icon name="auto_awesome" size={16} fill color="var(--color-accent-text)" /></div>
+        <div class="say__text"><Markdown text={m.text} /></div>
+      </div>
+    {/if}
   {/each}
 
   {#if error && waiting?.kind !== 'sudo' && waiting?.kind !== 'danger'}
@@ -647,14 +653,11 @@
     max-width: 80%;
     padding: var(--space-9) var(--space-13);
     border-radius: var(--radius-card);
-    background: var(--surface-card);
+    background: var(--surface-selected);
     font-size: var(--text-13);
     line-height: var(--leading-snug);
     color: var(--text-primary);
     text-wrap: pretty;
     white-space: pre-wrap;
-  }
-  .chat--me .chat__bubble {
-    background: var(--surface-selected);
   }
 </style>

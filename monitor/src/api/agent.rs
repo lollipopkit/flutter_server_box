@@ -15,6 +15,13 @@
 //!   an admin: everything but credentials), `PUT` (admin), `GET
 //!   /agent/models` (admin): the providers and their models, as pi lists
 //!   them.
+//! - `POST /agent/search {query, kind?}`: the desk's search, answered by
+//!   the agent reading only: a `text/event-stream` (`kind`, `step`, `items`,
+//!   `plan`, `delta`, `said`, `done` with the search's id, `error`) that ends
+//!   with the search; closing it stops it. `POST /agent/search/{id}/task
+//!   {text?}` carries it into a task, and runs it on with [text].
+//! - `GET /agent/permissions` (any account with `shell`): how commands are
+//!   approved, and the built-in auto mode lists; `PUT` (admin) replaces it.
 //! - `GET /agent/memory`: the account's memory, its files without their
 //!   content; `GET /agent/memory/file?path=` one with it, `PUT
 //!   /agent/memory/file {path, content}` writes one, `DELETE
@@ -37,7 +44,8 @@ use tokio::sync::broadcast;
 use super::authz::{self, Caller};
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
-use crate::agent_mode::{Answer, FlowError, MAX_PROMPT, config};
+use crate::agent_mode::files::FileError;
+use crate::agent_mode::{Answer, FlowError, MAX_PROMPT, NewTask, SearchKind, config};
 use fl_pi_llm::host::memory::{self, MemoryError};
 use crate::core::permissions::Grant;
 
@@ -102,12 +110,18 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
         Ok(s) => s,
         Err(e) => return Ok(refused(e.into())),
     };
+    let perms = match crate::agent_mode::permissions::load(&state.db).await {
+        Ok(p) => p,
+        Err(e) => return Ok(refused(e.into())),
+    };
     match state.agent.list(user).await {
         Ok(flows) => Ok(HttpResponse::Ok().json(&serde_json::json!({
             "flows": flows,
             "configured": settings.model.is_some(),
             "maxRunning": settings.max_running,
             "hostname": state.agent.hostname(),
+            "defaultMode": perms.default_mode,
+            "bypassAllowed": !perms.disable_bypass,
         }))),
         Err(e) => Ok(refused(e.into())),
     }
@@ -117,16 +131,26 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
 #[serde(deny_unknown_fields)]
 pub struct Start {
     prompt: String,
+    /// The permission mode; absent is the machine's default.
+    #[serde(default)]
+    mode: Option<crate::agent_mode::permissions::Mode>,
+    /// Uploads (`POST /agent/files`) the task is given.
+    #[serde(default)]
+    files: Vec<String>,
 }
 
 pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
-    let prompt = body.into_inner().prompt;
-    if !valid_text(&prompt) {
+    let Start { prompt, mode, files } = body.into_inner();
+    // Files alone are a prompt too.
+    if prompt.len() > MAX_PROMPT || (prompt.trim().is_empty() && files.is_empty()) {
         return Ok(bad("invalidPrompt"));
     }
+    if files.len() > crate::agent_mode::files::MAX_PER_TASK {
+        return Ok(bad("tooManyFiles"));
+    }
     let state = state.get_ref().clone();
-    match state.agent.start(&state, user, &caller.username, secure, prompt).await {
+    match state.agent.start(&state, user, &caller.username, secure, NewTask { prompt, mode, files }).await {
         Ok(view) => {
             Event::new(Kind::Agent, Action::Open, Outcome::Ok)
                 .subject(&caller.username)
@@ -137,6 +161,40 @@ pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::
             Ok(HttpResponse::Created().json(&view))
         }
         Err(e) => Ok(refused(e)),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct Upload {
+    name: String,
+}
+
+/// A file for a task the account is about to start: the body is its bytes,
+/// `Content-Type` its type, `?name=` its name.
+pub async fn upload(
+    req: HttpRequest,
+    query: web::types::Query<Upload>,
+    body: ntex::util::Bytes,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let (_, user, _) = require!(shell(&req, &state).await);
+    let mime = req.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("");
+    match state.agent.files.put(user, &query.name, mime, &body).await {
+        Ok(view) => Ok(HttpResponse::Created().json(&view)),
+        Err(FileError::TooMany) => Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "tooManyFiles" }))),
+        Err(e) => {
+            tracing::error!("agent mode: keeping an upload: {e:?}");
+            Ok(HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" })))
+        }
+    }
+}
+
+pub async fn discard(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let (_, user, _) = require!(shell(&req, &state).await);
+    if state.agent.files.discard(user, &id).await {
+        Ok(HttpResponse::NoContent().finish())
+    } else {
+        Ok(refused(FlowError::NotFound))
     }
 }
 
@@ -154,16 +212,22 @@ pub async fn detail(req: HttpRequest, id: web::types::Path<String>, state: web::
 #[serde(deny_unknown_fields)]
 pub struct Reply {
     text: String,
+    /// Uploads (`POST /agent/files`) given with it.
+    #[serde(default)]
+    files: Vec<String>,
 }
 
 pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Reply>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
-    let text = body.into_inner().text;
-    if !valid_text(&text) {
+    let Reply { text, files } = body.into_inner();
+    if text.len() > MAX_PROMPT || (text.trim().is_empty() && files.is_empty()) {
         return Ok(bad("invalidPrompt"));
     }
+    if files.len() > crate::agent_mode::files::MAX_PER_TASK {
+        return Ok(bad("tooManyFiles"));
+    }
     let state = state.get_ref().clone();
-    match state.agent.reply(&state, user, &caller.username, secure, &id, text).await {
+    match state.agent.reply(&state, user, &caller.username, secure, &id, text, files).await {
         Ok(view) => Ok(HttpResponse::Ok().json(&view)),
         Err(e) => Ok(refused(e)),
     }
@@ -419,4 +483,134 @@ pub async fn memory_delete(req: HttpRequest, q: web::types::Query<MemoryPath>, s
         }
         Err(e) => Ok(memory_refused(e)),
     }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Search {
+    query: String,
+    kind: Option<String>,
+}
+
+/// Ends the search when the page stops listening.
+struct StopOnDrop(fl_pi_llm::host::Cancel);
+
+impl Drop for StopOnDrop {
+    fn drop(&mut self) {
+        self.0.cancel();
+    }
+}
+
+pub async fn search(req: HttpRequest, body: web::types::Json<Search>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let Search { query, kind } = body.into_inner();
+    let query = query.trim().to_string();
+    if query.is_empty() || query.len() > 2000 {
+        return Ok(bad("invalidQuery"));
+    }
+    let kind = match kind.as_deref() {
+        None => None,
+        Some(k) => match SearchKind::parse(k) {
+            Some(k) => Some(k),
+            None => return Ok(bad("invalidKind")),
+        },
+    };
+    if let Err(e) = config::load(&state.db).await.map_err(FlowError::from).and_then(|s| s.model.map(drop).ok_or(FlowError::NotConfigured)) {
+        return Ok(refused(e));
+    }
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<serde_json::Value>();
+    let cancel = fl_pi_llm::host::Cancel::new();
+    let guard = StopOnDrop(cancel.clone());
+    let state = state.get_ref().clone();
+    {
+        let state = state.clone();
+        let username = caller.username.clone();
+        tokio::spawn(async move {
+            let sink = tx.clone();
+            if let Err(e) = state.agent.search(&state, user, &username, secure, query, kind, tx, cancel).await {
+                let _ = sink.send(serde_json::json!({ "type": "error", "message": e.to_string() }));
+            }
+        });
+    }
+    let stream = async_stream::stream! {
+        let _guard = guard;
+        yield Ok::<_, std::io::Error>(Bytes::from_static(b": ok\n\n"));
+        let mut beat = tokio::time::interval(HEARTBEAT);
+        beat.tick().await;
+        loop {
+            tokio::select! {
+                event = rx.recv() => match event {
+                    Some(json) => yield Ok(Bytes::from(format!("data: {json}\n\n"))),
+                    None => break,
+                },
+                _ = beat.tick() => yield Ok(Bytes::from_static(b": ping\n\n")),
+            }
+        }
+    };
+    Ok(HttpResponse::Ok()
+        .content_type("text/event-stream")
+        .header("cache-control", "no-cache")
+        .header("x-accel-buffering", "no")
+        .streaming(Box::pin(stream.boxed())))
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Adopt {
+    text: Option<String>,
+}
+
+pub async fn adopt_search(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Adopt>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let text = body.into_inner().text;
+    if let Some(t) = &text
+        && !valid_text(t)
+    {
+        return Ok(bad("invalidPrompt"));
+    }
+    let state = state.get_ref().clone();
+    match state.agent.adopt(&state, user, &caller.username, secure, &id, text).await {
+        Ok(view) => Ok(HttpResponse::Created().json(&view)),
+        Err(e) => Ok(refused(e)),
+    }
+}
+
+pub async fn get_permissions(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let _ = require!(shell(&req, &state).await);
+    match crate::agent_mode::permissions::load(&state.db).await {
+        Ok(p) => Ok(HttpResponse::Ok().json(&serde_json::json!({
+            "permissions": p,
+            "defaults": state.agent.auto_defaults(),
+        }))),
+        Err(e) => Ok(refused(e.into())),
+    }
+}
+
+pub async fn put_permissions(
+    req: HttpRequest,
+    body: web::types::Json<crate::agent_mode::permissions::Permissions>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    let p = body.into_inner();
+    if let Err(reason) = p.check() {
+        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidPermissions", "reason": reason })));
+    }
+    if let Err(e) = crate::agent_mode::permissions::store(&state.db, &p).await {
+        return Ok(refused(e.into()));
+    }
+    Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+        .subject(&caller.username)
+        .remote_ip(peer_ip(&req))
+        .detail(format!(
+            "permissions: default {}{}, {} allow, {} ask, {} deny",
+            p.default_mode.as_str(),
+            if p.disable_bypass { ", bypass off" } else { "" },
+            p.rules.allow.len(),
+            p.rules.ask.len(),
+            p.rules.deny.len()
+        ))
+        .record(&state.db)
+        .await;
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "permissions": p, "defaults": state.agent.auto_defaults() })))
 }

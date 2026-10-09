@@ -12,7 +12,9 @@ use serde_json::{Value, json};
 use tokio::sync::mpsc;
 
 use super::command::{self, Stream};
+use super::permissions::{self, AutoMode, Judgment, Mode};
 use super::{Answer, Flow, MAX_PROMPT, PendingView, first_line, prompt};
+use sbm_parser::command_rules::RuleVerdict;
 use crate::api::authz;
 use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
@@ -261,10 +263,46 @@ impl RunCommand {
             // higher one counts.
             let claimed = Effect::parse(args["effect"].as_str().unwrap_or("change"));
             let effect = claimed.max(Effect::of(command_risk::classify(&command)));
+            // Then the operator's rules and mode (`permissions`).
+            let perms = permissions::load(&state.db).await.map_err(|e| format!("reading the permissions: {e}"))?;
+            let verdict = perms.rules.verdict(&command);
+            if let RuleVerdict::Deny(rule) = &verdict {
+                record(state, &flow.username, &format!("denied by rule `{rule}`: {}", first_line(&command, 200)), Outcome::Denied).await;
+                return Err(format!("Refused: this machine's rule `{rule}` forbids it. Nothing was run; do not run it another way."));
+            }
+            let mode = perms.mode_for(flow.view.lock().unwrap().mode);
+            let ask_rule = matches!(verdict, RuleVerdict::Ask(_));
+            let confirm = match mode {
+                // Bypass: only the operator's ask rules stop it.
+                Mode::Bypass => {
+                    if !ask_rule && effect != Effect::Read {
+                        record(state, &flow.username, &format!("bypass: ran {}", first_line(&command, 200)), Outcome::Ok).await;
+                    }
+                    ask_rule
+                }
+                _ if effect == Effect::Danger || ask_rule => true,
+                _ if verdict != RuleVerdict::None || effect != Effect::Change || hub.approved(&flow, &command) => false,
+                Mode::Manual => true,
+                Mode::Auto => match judge(state, &flow, &command, &title, claimed.as_str(), sudo, &perms.auto_mode).await {
+                    Some(Judgment::Allow) => {
+                        record(state, &flow.username, &format!("auto: allowed {}", first_line(&command, 200)), Outcome::Ok).await;
+                        false
+                    }
+                    Some(Judgment::Block { rule, reason }) => {
+                        record(state, &flow.username, &format!("auto: blocked [{rule}] {}", first_line(&command, 200)), Outcome::Denied).await;
+                        let label = if rule.is_empty() { String::new() } else { format!(" [{rule}]") };
+                        return Err(format!(
+                            "Blocked by auto mode{label}: {reason} Nothing was run. Do not try to reach the same end another way; \
+                             if it is needed, tell the person, who can ask for it in their own words or change the rules."
+                        ));
+                    }
+                    // No verdict: the person decides.
+                    None => true,
+                },
+            };
             let ask = match effect {
-                Effect::Read => None,
-                Effect::Change if hub.approved(&flow, &command) => None,
-                Effect::Change => Some({
+                _ if !confirm => None,
+                Effect::Read | Effect::Change => Some({
                     let mut v = pending("confirm", call, title.clone());
                     v.steps = vec![super::PlanStep { text: title.clone(), command: Some(command.clone()) }];
                     v.command = Some(command.clone());
@@ -347,6 +385,33 @@ impl RunCommand {
             Ok(ToolResult::text("sudo refused the password three times. Nothing was run.").with_details(json!({ "declined": true })))
         }
     }
+}
+
+async fn record(state: &AppState, username: &str, detail: &str, outcome: Outcome) {
+    Event::new(Kind::Agent, if matches!(outcome, Outcome::Ok) { Action::Open } else { Action::Denied }, outcome)
+        .subject(username)
+        .detail(detail.to_string())
+        .record(&state.db)
+        .await;
+}
+
+/// The auto mode judge on [subject] (a command, or a plan's steps); `None`
+/// when it gave no verdict.
+async fn judge(state: &AppState, flow: &Arc<Flow>, subject: &str, title: &str, claimed: &str, sudo: bool, auto: &AutoMode) -> Option<Judgment> {
+    let hub = &state.agent;
+    let model = super::config::load(&state.db).await.ok()?.model?;
+    let rt = hub.runtime().await.ok()?;
+    let session = flow.session.lock().unwrap().clone();
+    let entries = match session {
+        Some(s) => s.entries().await.unwrap_or_default(),
+        None => Vec::new(),
+    };
+    let system = permissions::judge_prompt(auto, &hub.auto_defaults());
+    let input = permissions::judge_input(&entries, subject, title, claimed, sudo);
+    let messages = json!([{ "role": "user", "content": [{ "type": "text", "text": input }], "timestamp": 0 }]);
+    let reply = tokio::time::timeout(Duration::from_secs(90), rt.complete(json!(model), messages, Some(system), None)).await.ok()?.ok()?;
+    let text: String = reply["content"].as_array().into_iter().flatten().filter_map(|c| c["text"].as_str()).collect();
+    permissions::parse_judgment(&text)
 }
 
 struct Ran {
@@ -534,6 +599,53 @@ impl Tool for ProposePlan {
             v.steps = steps.clone();
             hub.note_area(&flow, "system", &title);
             hub.step_begin(&flow, &call.id, &title, "system");
+            // The operator's rules and mode decide before the person does.
+            let state = &self.state;
+            let perms = permissions::load(&state.db).await.map_err(|e| format!("reading the permissions: {e}"))?;
+            let verdicts: Vec<RuleVerdict> = steps.iter().filter_map(|s| s.command.as_deref()).map(|c| perms.rules.verdict(c)).collect();
+            if let Some(RuleVerdict::Deny(rule)) = verdicts.iter().find(|v| matches!(v, RuleVerdict::Deny(_))) {
+                hub.step_state(&flow, &call.id, "cancelled");
+                return Ok(ToolResult::text(format!("Not approved: this machine's rule `{rule}` forbids a step. Leave it out or propose another way."))
+                    .with_details(json!({ "decision": "refused", "rule": rule })));
+            }
+            let asks = verdicts.iter().any(|v| matches!(v, RuleVerdict::Ask(_)));
+            let mode = perms.mode_for(flow.view.lock().unwrap().mode);
+            match mode {
+                Mode::Bypass if !asks => {
+                    record(state, &flow.username, &format!("bypass: approved plan {title}"), Outcome::Ok).await;
+                    hub.step_state(&flow, &call.id, "done");
+                    hub.approve_commands(&flow, steps.iter().filter_map(|s| s.command.clone()));
+                    return Ok(ToolResult::text("Approved (this task runs everything unasked). Carry out the steps now, in order, with exactly these commands.")
+                        .with_details(json!({ "decision": "approved", "by": "bypass" })));
+                }
+                Mode::Auto if !asks => {
+                    let subject: String = steps
+                        .iter()
+                        .enumerate()
+                        .map(|(i, s)| format!("\n  {}. {}{}", i + 1, s.text, s.command.as_deref().map(|c| format!(" — `{c}`")).unwrap_or_default()))
+                        .collect();
+                    match judge(state, &flow, &format!("a plan of {} steps:{subject}", steps.len()), &title, "plan", false, &perms.auto_mode).await {
+                        Some(Judgment::Allow) => {
+                            record(state, &flow.username, &format!("auto: approved plan {title}"), Outcome::Ok).await;
+                            hub.step_state(&flow, &call.id, "done");
+                            hub.approve_commands(&flow, steps.iter().filter_map(|s| s.command.clone()));
+                            return Ok(ToolResult::text("Approved by auto mode. Carry out the steps now, in order, with exactly these commands.")
+                                .with_details(json!({ "decision": "approved", "by": "auto" })));
+                        }
+                        Some(Judgment::Block { rule, reason }) => {
+                            record(state, &flow.username, &format!("auto: blocked plan [{rule}] {title}"), Outcome::Denied).await;
+                            hub.step_state(&flow, &call.id, "cancelled");
+                            let label = if rule.is_empty() { String::new() } else { format!(" [{rule}]") };
+                            return Ok(ToolResult::text(format!(
+                                "Not approved by auto mode{label}: {reason} Change nothing for it; tell the person, who can ask for it in their own words."
+                            ))
+                            .with_details(json!({ "decision": "blocked", "by": "auto", "rule": rule, "reason": reason })));
+                        }
+                        None => {}
+                    }
+                }
+                _ => {}
+            }
             let Some(answer) = hub.ask(&flow, v).await else {
                 hub.step_state(&flow, &call.id, "cancelled");
                 return cancelled();

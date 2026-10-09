@@ -3,8 +3,9 @@
   /// done) above the prompt that starts a task.
 
   import { LL } from '../../i18n/i18n-svelte'
-  import { fmtBytes, fmtDate } from '../../lib/format'
-  import { AppIcon, Button, Icon, IconButton } from '../lk'
+  import { fmtDate } from '../../lib/format'
+  import { AppIcon, Button, Icon } from '../lk'
+  import Composer from './Composer.svelte'
   import type { Flow, OutLine } from '../../lib/agentApi'
   import type { AgentStore } from './agentStore.svelte'
   import { AREA, duration, greeting, segment, statusLook } from './agentView'
@@ -30,16 +31,36 @@
   const doneGroups = $derived(firstOf(byDay(cols.done, now), 6))
   const empty = $derived(store.loaded && store.flows.length === 0)
 
-  let query = $state('')
-  let paste = $state<string | null>(null)
-  let focus = $state(false)
-  let sending = $state(false)
-  let error = $state<string | null>(null)
-  let input = $state<HTMLInputElement | null>(null)
-  let blurTimer: ReturnType<typeof setTimeout> | null = null
+  let composer = $state<ReturnType<typeof Composer> | null>(null)
+  /// The composer has the focus: everything else steps back.
+  let focused = $state(false)
+  let dragging = $state(false)
+  let dragDepth = 0
 
-  const pasteLines = $derived(paste ? paste.split('\n') : [])
-  const draft = $derived(!!(query.trim() || paste))
+  const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files')
+  function ondragenter(e: DragEvent) {
+    if (!hasFiles(e) || !store.configured) return
+    e.preventDefault()
+    dragDepth += 1
+    dragging = true
+  }
+  function ondragover(e: DragEvent) {
+    if (!hasFiles(e) || !store.configured) return
+    e.preventDefault()
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+  }
+  function ondragleave() {
+    dragDepth = Math.max(0, dragDepth - 1)
+    if (!dragDepth) dragging = false
+  }
+  function ondrop(e: DragEvent) {
+    if (!hasFiles(e) || !store.configured) return
+    e.preventDefault()
+    dragDepth = 0
+    dragging = false
+    composer?.addFiles(e.dataTransfer?.files)
+    composer?.focus()
+  }
 
   const SUGGEST: { glyph: string; label: () => string }[] = [
     { glyph: 'hard_drive', label: () => $LL.deskAgentSuggestDisk() },
@@ -48,58 +69,14 @@
     { glyph: 'cleaning_services', label: () => $LL.deskAgentSuggestDocker() },
   ]
 
-  function onpaste(e: ClipboardEvent) {
-    const t = e.clipboardData?.getData('text') ?? ''
-    // A long paste (a log) is carried beside the words, not in the field.
-    if (t.length > 240 || t.split('\n').length > 3) {
-      e.preventDefault()
-      paste = t
-    }
-  }
-
-  async function submit(text = query) {
-    const words = text.trim()
-    if ((!words && !paste) || sending || !store.configured) return
-    const prompt = paste ? `${words || $LL.deskAgentPasted()}\n\n\`\`\`\n${paste}\n\`\`\`` : words
-    sending = true
-    error = null
-    try {
-      const f = await store.startFlow(prompt)
-      query = ''
-      paste = null
-      focus = false
-      input?.blur()
-      onstarted(f)
-    } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
-    } finally {
-      sending = false
-    }
-  }
-
-  function onkeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.isComposing) {
-      e.preventDefault()
-      void submit()
-    } else if (e.key === 'Escape') {
-      query = ''
-      paste = null
-      focus = false
-      input?.blur()
-    }
-  }
-
-  function onfocus() {
-    if (blurTimer) clearTimeout(blurTimer)
-    focus = true
-  }
-
-  function onblur() {
-    if (blurTimer) clearTimeout(blurTimer)
-    blurTimer = setTimeout(() => {
-      if (!query.trim() && !paste && document.activeElement !== input) focus = false
-    }, 160)
-  }
+  // Agent → New task: the prompt, even when this page came up for it.
+  let handled = 0
+  $effect(() => {
+    const r = store.request
+    if (!r || r.n === handled) return
+    handled = r.n
+    if (r.kind === 'new' && Date.now() - r.at < 1000) requestAnimationFrame(() => composer?.focus())
+  })
 
   const DAYS: Record<Day, () => string> = {
     today: () => $LL.deskAgentToday(),
@@ -126,8 +103,18 @@
   }
 </script>
 
-<div class="home">
-  <div class="top" class:top--away={focus}>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="home" class:home--focused={focused} {ondragenter} {ondragover} {ondragleave} {ondrop}>
+  {#if dragging}
+    <div class="drop">
+      <div class="drop__box">
+        <Icon name="upload_file" size={34} color="var(--color-accent-text)" />
+        <span class="drop__title">{$LL.deskAgentDropTitle()}</span>
+        <span class="drop__note">{$LL.deskAgentDropNote()}</span>
+      </div>
+    </div>
+  {/if}
+  <div class="top" inert={focused}>
     <div class="cols">
       {#if empty}
         <div class="nothing">
@@ -274,103 +261,134 @@
     </div>
   </div>
 
-  <div class="hero-wrap">
-    <div class="hero" class:hero--focus={focus}>
-      <div class="hero__greet">{$LL.deskAgentGreeting({ greeting: greeting($LL, now.getHours()), name })}</div>
-      <input
-        bind:this={input}
-        bind:value={query}
-        class="hero__input"
-        placeholder={store.atLimit ? $LL.deskAgentAskQueued() : $LL.deskAgentAsk()}
-        aria-label={$LL.deskAgentAsk()}
-        disabled={!store.configured}
-        {onkeydown}
-        {onpaste}
-        {onfocus}
-        {onblur}
-      />
-      <div class="hero__below">
-        {#if !store.configured && store.loaded}
-          <div class="setup">
-            <Icon name="key" size={18} color="var(--color-warning)" />
-            <div class="setup__text">
-              <span class="setup__title">{$LL.deskAgentNoModel()}</span>
-              <span class="setup__note">{admin ? $LL.deskAgentNoModelAdmin() : $LL.deskAgentNoModelUser()}</span>
-            </div>
-            {#if admin}
-              <Button size="sm" variant="secondary" icon="settings" onclick={onsettings}>{$LL.deskAgentOpenSettings()}</Button>
-            {/if}
-          </div>
-        {/if}
-        {#if paste}
-          <div class="paste">
-            <div class="paste__icon"><Icon name="article" size={18} fill color="var(--color-accent-text)" /></div>
-            <div class="paste__body">
-              <div class="paste__head">
-                <span class="paste__title">{$LL.deskAgentPasted()}</span>
-                <span class="paste__meta am-num">{$LL.deskAgentPastedMeta({ lines: pasteLines.length.toLocaleString(), size: fmtBytes(new Blob([paste]).size) })}</span>
-              </div>
-              <div class="paste__lines">
-                {#each pasteLines.slice(0, 3) as l, i (i)}<div class="am-ellipsis">{l}</div>{/each}
-              </div>
-            </div>
-            <IconButton icon="close" label={$LL.deskAgentRemove()} size="sm" onclick={() => (paste = null)} />
-          </div>
-        {/if}
-        {#if draft}
-          <div class="send">
-            <Button variant="primary" size="sm" icon="arrow_upward" disabled={sending} onclick={() => submit()}>{$LL.deskAgentSend()}</Button>
-            <span class="send__hint">{$LL.deskAgentSendHint()}</span>
-          </div>
-        {/if}
-        {#if error}
-          <div class="limit" style:color="var(--color-danger)"><Icon name="error" size={15} color="var(--color-danger)" />{error}</div>
-        {/if}
-        {#if store.atLimit}
-          <div class="limit">
-            <Icon name="hourglass_top" size={15} color="var(--color-warning)" />
-            {$LL.deskAgentAtLimit({ n: store.maxRunning })}
-          </div>
-        {/if}
-        {#if store.configured}
-          <div class="chips">
-            {#each SUGGEST as s (s.glyph)}
-              <button class="chip" onclick={() => submit(s.label())}>
-                <Icon name={s.glyph} size={15} color="var(--color-accent-text)" />
-                {s.label()}
-              </button>
-            {/each}
-          </div>
-        {/if}
-        {#if empty}
-          <div class="intro">{$LL.deskAgentIntro({ host: store.hostname })}</div>
+  <div class="hero">
+    <div class="hero__greet away away--up">{$LL.deskAgentGreeting({ greeting: greeting($LL, now.getHours()), name })}</div>
+    <Composer
+      bind:this={composer}
+      {store}
+      {focused}
+      onfocuschange={(f) => (focused = f)}
+      {onstarted}
+      disabled={!store.configured}
+      placeholder={store.atLimit ? $LL.deskAgentAskQueued() : $LL.deskAgentAskOn({ host: store.hostname || name })}
+    />
+    <div class="below away" inert={focused}>
+    {#if !store.configured && store.loaded}
+      <div class="setup">
+        <Icon name="key" size={18} color="var(--color-warning)" />
+        <div class="setup__text">
+          <span class="setup__title">{$LL.deskAgentNoModel()}</span>
+          <span class="setup__note">{admin ? $LL.deskAgentNoModelAdmin() : $LL.deskAgentNoModelUser()}</span>
+        </div>
+        {#if admin}
+          <Button size="sm" variant="secondary" icon="settings" onclick={onsettings}>{$LL.deskAgentOpenSettings()}</Button>
         {/if}
       </div>
+    {/if}
+    {#if store.atLimit}
+      <div class="limit">
+        <Icon name="hourglass_top" size={15} color="var(--color-warning)" />
+        {$LL.deskAgentAtLimit({ n: store.maxRunning })}
+      </div>
+    {/if}
+    {#if store.configured}
+      <div class="chips">
+        {#each SUGGEST as s (s.glyph)}
+          <button class="chip" onclick={() => composer?.send(s.label())}>
+            <Icon name={s.glyph} size={15} color="var(--color-accent-text)" />
+            {s.label()}
+          </button>
+        {/each}
+      </div>
+    {/if}
+    {#if empty}
+      <div class="intro">{$LL.deskAgentIntro({ host: store.hostname })}</div>
+    {/if}
+    <span class="leave">{$LL.deskAgentLeaveHint()}</span>
     </div>
   </div>
-  <div class="spacer" class:spacer--grow={focus}></div>
 </div>
 
 <style>
   .home {
+    position: relative;
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     animation: lk-fade-in var(--dur-tab-content) var(--ease-standard);
   }
+  /* Focused, the composer moves to the middle and the rest steps back
+     (the design system's storyboard). */
   .top {
     flex: 1 1 0;
     min-height: 0;
     overflow: hidden;
     transition:
-      opacity 260ms var(--ease-standard),
+      opacity 340ms var(--ease-standard) 150ms,
       transform 600ms var(--ease-emphasized);
   }
-  .top--away {
+  .home--focused .top {
     opacity: 0;
     transform: scale(0.97);
     pointer-events: none;
+    transition:
+      opacity 200ms var(--ease-exit),
+      transform 600ms var(--ease-emphasized);
+  }
+  .away {
+    transition:
+      opacity 340ms var(--ease-standard) 150ms,
+      transform 340ms var(--ease-emphasized) 150ms;
+  }
+  .home--focused .away {
+    opacity: 0;
+    transform: translateY(7px);
+    pointer-events: none;
+    transition:
+      opacity 200ms var(--ease-exit),
+      transform 200ms var(--ease-exit);
+  }
+  .home--focused .away--up {
+    transform: translateY(-7px);
+  }
+  .below {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-17);
+  }
+  .drop {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--surface-window) 55%, transparent);
+    animation: lk-fade-in 150ms var(--ease-standard);
+  }
+  .drop__box {
+    width: min(880px, calc(100% - 42px));
+    height: 220px;
+    box-sizing: border-box;
+    border-radius: 27px;
+    border: 1.5px dashed color-mix(in srgb, var(--color-accent-text) 70%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-9);
+    animation: lk-pop-in 220ms var(--ease-spring);
+  }
+  .drop__title {
+    font-size: var(--text-17);
+    font-weight: 600;
+  }
+  .drop__note {
+    font-size: var(--text-12);
+    color: var(--text-tertiary);
   }
   .cols {
     max-width: 1280px;
@@ -716,113 +734,24 @@
     white-space: nowrap;
   }
 
-  .hero-wrap {
-    flex: none;
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    box-sizing: border-box;
-    padding: var(--space-13) var(--space-55) var(--space-34);
-  }
   .hero {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-7);
-    max-width: 760px;
-    transition: transform 600ms var(--ease-emphasized);
-  }
-  .hero--focus {
-    margin: 0 auto;
-  }
-  .hero__greet,
-  .hero__input {
-    font-size: 27px;
-    font-weight: var(--weight-semibold);
-    letter-spacing: var(--tracking-display);
-    line-height: var(--leading-tight);
-    transition: font-size 600ms var(--ease-emphasized);
-  }
-  .hero__input {
-    border: 0;
-    outline: 0;
-    background: transparent;
-    padding: 0;
-    font-family: inherit;
-    font-weight: var(--weight-regular);
-    color: var(--text-primary);
-    caret-color: var(--color-accent);
-  }
-  .hero__input::placeholder {
-    color: var(--text-tertiary);
-  }
-  .hero--focus .hero__greet,
-  .hero--focus .hero__input {
-    font-size: 41px;
-  }
-  .hero__below {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-11);
-    margin-top: var(--space-11);
-  }
-  .paste {
-    display: flex;
-    gap: var(--space-11);
-    align-items: flex-start;
-    width: min(100%, 460px);
-    box-sizing: border-box;
-    padding: var(--space-11) var(--space-11) var(--space-11) var(--space-13);
-    border-radius: var(--radius-card);
-    background: var(--surface-raised);
-    box-shadow: var(--shadow-popover);
-    animation: lk-pop-in var(--dur-slow) var(--ease-spring-bouncy);
-  }
-  .paste__icon {
     flex: none;
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-control);
-    background: var(--color-accent-soft);
-  }
-  .paste__body {
-    flex: 1;
-    min-width: 0;
     display: flex;
     flex-direction: column;
-  }
-  .paste__head {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-7);
-  }
-  .paste__title {
-    font-size: var(--text-13);
-    font-weight: 600;
-  }
-  .paste__meta {
-    font-size: var(--text-12);
-    color: var(--text-tertiary);
-  }
-  .paste__lines {
-    margin-top: var(--space-7);
-    font-family: var(--font-mono);
-    font-size: var(--text-11);
-    line-height: 1.65;
-    color: var(--text-secondary);
-    -webkit-mask-image: linear-gradient(#000 45%, transparent);
-    mask-image: linear-gradient(#000 45%, transparent);
-  }
-  .send {
-    display: flex;
     align-items: center;
-    gap: var(--space-11);
+    gap: var(--space-17);
+    padding: var(--space-13) var(--space-21) var(--space-55);
   }
-  .send__hint {
+  .hero__greet {
+    font-size: 27px;
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: var(--leading-tight);
+    text-align: center;
+  }
+  .leave {
     font-size: var(--text-12);
     color: var(--text-tertiary);
-    white-space: pre;
   }
   .limit {
     display: flex;
@@ -834,21 +763,21 @@
   .chips {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: var(--space-7);
   }
   .chip {
     display: flex;
     align-items: center;
-    gap: var(--space-5);
+    gap: var(--space-7);
     height: 32px;
-    padding: 0 var(--space-13) 0 var(--space-11);
+    padding: 0 var(--space-13);
     border: 0;
     border-radius: var(--radius-full);
     background: var(--glass-tile);
-    box-shadow: inset 0 0 0 0.5px var(--border-hairline);
-    font: inherit;
-    font-size: var(--text-13);
-    color: var(--text-secondary);
+    box-shadow: inset 0 0 0 0.5px var(--border-glass);
+    font: var(--weight-medium) var(--text-13) / 1 var(--font-ui);
+    color: var(--text-primary);
     cursor: default;
     transition:
       background var(--dur-fast) var(--ease-standard),
@@ -893,14 +822,6 @@
     font-size: var(--text-12);
     color: var(--text-secondary);
   }
-  .spacer {
-    flex: 0 1 0;
-    min-height: 0;
-    transition: flex-grow 600ms var(--ease-emphasized);
-  }
-  .spacer--grow {
-    flex-grow: 1;
-  }
 
   @container (max-width: 760px) {
     .cols {
@@ -908,8 +829,8 @@
       overflow-y: auto;
       gap: var(--space-21);
     }
-    .hero-wrap {
-      padding: var(--space-13) var(--space-21) var(--space-21);
+    .hero {
+      padding-bottom: var(--space-21);
     }
   }
 </style>

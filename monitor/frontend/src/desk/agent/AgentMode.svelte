@@ -13,6 +13,7 @@
   import AgentHistory from './AgentHistory.svelte'
   import AgentHome from './AgentHome.svelte'
   import type { AgentStore } from './agentStore.svelte'
+  import { agentIn, agentOut } from './transition'
 
   interface Props {
     store: AgentStore
@@ -20,9 +21,11 @@
     name: string
     admin: boolean
     onsettings: () => void
+    /// Back to the desk.
+    onexit: () => void
   }
 
-  const { store, name, admin, onsettings }: Props = $props()
+  const { store, name, admin, onsettings, onexit }: Props = $props()
 
   let now = $state(new Date())
   let history = $state<DOMRect | null | undefined>(undefined)
@@ -30,7 +33,17 @@
   /// Where the open task came from on the timeline, to go back into it.
   let back: string | null = null
 
+  let ground = $state<HTMLDivElement | null>(null)
+  let stage = $state<HTMLDivElement | null>(null)
+
+  /// Leaves: the content goes, the ground closes into the menubar's Agent
+  /// mode item. The desk unmounts this once it resolves.
+  export async function leave(): Promise<void> {
+    if (ground && stage) await agentOut(ground, stage)
+  }
+
   onMount(() => {
+    if (ground && stage) agentIn(ground, stage)
     store.start()
     const t = setInterval(() => (now = new Date()), 1000)
     return () => clearInterval(t)
@@ -100,7 +113,7 @@
           timing,
         )
       }
-      const home = [...host.children].find((el) => el !== ghost && el.classList.contains('home')) as HTMLElement | undefined
+      const home = host.querySelector<HTMLElement>('.stage > .home')
       home?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out' })
       setTimeout(() => ghost.remove(), timing.duration)
     })
@@ -132,6 +145,20 @@
     return copy
   }
 
+  // The menubar's Agent menus.
+  let handled = 0
+  $effect(() => {
+    const r = store.request
+    if (!r || r.n === handled) return
+    handled = r.n
+    if (r.kind === 'history') {
+      if (store.openId) home()
+      history = null
+    } else if (r.kind === 'new' && store.openId) {
+      home()
+    }
+  })
+
   function started(f: Flow) {
     if (f.status !== 'queued') open(f.id)
   }
@@ -146,7 +173,22 @@
   })
 </script>
 
+<svelte:window
+  onkeydown={(e) => {
+    // On the timeline, esc goes back to the desk; whatever is open over it
+    // (a task, the history, a panel) took the key first.
+    const tag = ((e.target as HTMLElement | null)?.tagName ?? '').toLowerCase()
+    if (e.key !== 'Escape' || e.defaultPrevented || store.openId || history !== undefined) return
+    if (tag === 'input' || tag === 'textarea') return
+    e.preventDefault()
+    onexit()
+  }}
+/>
+
 <div class="am-root agent" bind:this={root}>
+  <!-- What the desk is covered with: opens from the Agent mode item. -->
+  <div class="ground" bind:this={ground} aria-hidden="true"></div>
+  <div class="stage" bind:this={stage}>
   {#if store.openId}
     <AgentFlow {store} {now} onback={home} onopen={(id) => open(id)} />
   {:else}
@@ -161,6 +203,7 @@
       onstarted={started}
     />
   {/if}
+  </div>
 
   {#if history !== undefined}
     <AgentHistory flows={store.flows} {now} from={history} onopen={(id) => open(id)} onclose={() => (history = undefined)} />
@@ -184,6 +227,22 @@
 </div>
 
 <style>
+  .ground {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      color-mix(in srgb, var(--surface-window) 80%, transparent),
+      color-mix(in srgb, var(--surface-window) 62%, transparent)
+    );
+  }
+  .stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
   .agent {
     position: absolute;
     inset: 0;
@@ -194,10 +253,6 @@
     box-sizing: border-box;
     font-family: var(--font-ui);
     color: var(--text-primary);
-    background: linear-gradient(
-      color-mix(in srgb, var(--surface-window) 80%, transparent),
-      color-mix(in srgb, var(--surface-window) 62%, transparent)
-    );
     container-type: size;
     animation: lk-fade-in var(--dur-base) var(--ease-standard);
   }

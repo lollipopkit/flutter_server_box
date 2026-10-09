@@ -26,6 +26,8 @@ export interface Flow {
   /// What it is doing, or what it did.
   line: string
   areas: Area[]
+  /// The permission mode it was started in.
+  mode: PermissionMode
   createdAt: string
   updatedAt: string
   startedAt: string | null
@@ -112,6 +114,17 @@ export interface FlowList {
   configured: boolean
   maxRunning: number
   hostname: string
+  /// The mode a new task starts in unless another is picked.
+  defaultMode: PermissionMode
+  bypassAllowed: boolean
+}
+
+/// A file given to a task, uploaded before the task starts.
+export interface Upload {
+  id: string
+  name: string
+  mime: string
+  size: number
 }
 
 export interface Answer {
@@ -165,6 +178,70 @@ export interface ProviderInfo {
   models: { provider: string; id: string; name: string }[]
 }
 
+/// How the commands a task runs are approved (`/agent/permissions`), picked
+/// per task.
+export type PermissionMode = 'manual' | 'auto' | 'bypass'
+
+export interface CommandRules {
+  allow: string[]
+  ask: string[]
+  deny: string[]
+}
+
+/// The auto mode judge's prose lists; absent is the built-in list.
+export interface AutoModeRules {
+  environment?: string[]
+  allow?: string[]
+  soft_deny?: string[]
+  hard_deny?: string[]
+}
+
+export interface Permissions {
+  defaultMode: PermissionMode
+  disableBypass: boolean
+  rules: CommandRules
+  autoMode: AutoModeRules
+}
+
+export interface PermissionsView {
+  permissions: Permissions
+  defaults: Required<AutoModeRules>
+}
+
+/// What the desk's search was taken for.
+export type SearchKind = 'keyword' | 'question' | 'change'
+
+/// A thing a search found.
+export interface SearchItem {
+  kind: 'service' | 'process' | 'file' | 'container'
+  title: string
+  sub: string
+  /// The unit, the PID, the path, the container's name.
+  ref: string
+}
+
+export interface SearchFollowup {
+  label: string
+  request: string
+}
+
+export interface SearchPlanStep {
+  text: string
+  command: string | null
+  effect: 'read' | 'change' | 'danger'
+}
+
+/// One event of a search's stream.
+export type SearchEvent =
+  | { type: 'kind'; kind: SearchKind }
+  | { type: 'step'; id: string; command: string; state: 'running' | 'done' | 'failed' }
+  | { type: 'items'; items: SearchItem[]; followups: SearchFollowup[] }
+  | { type: 'plan'; steps: SearchPlanStep[] }
+  | { type: 'said' }
+  | { type: 'delta'; text: string }
+  | { type: 'done'; id: string; answer: string; steps: number; ms: number }
+  | { type: 'error'; message: string }
+
 /// A file of the account's memory, below `/memories`.
 export interface MemoryFileInfo {
   path: string
@@ -178,11 +255,21 @@ const enc = encodeURIComponent
 
 export const agentApi = {
   list: (e: ServerEntry) => requestFor<FlowList>(e, '/agent/flows'),
-  start: (e: ServerEntry, prompt: string) =>
-    requestFor<Flow>(e, '/agent/flows', { method: 'POST', body: JSON.stringify({ prompt }) }),
+  start: (e: ServerEntry, prompt: string, mode?: PermissionMode, files: string[] = []) =>
+    requestFor<Flow>(e, '/agent/flows', { method: 'POST', body: JSON.stringify({ prompt, mode, files }) }),
+  upload: (e: ServerEntry, file: Blob, name: string) =>
+    requestFor<Upload>(
+      e,
+      `/agent/files?name=${enc(name)}`,
+      { method: 'POST', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } },
+      'Upload failed',
+      undefined,
+      120_000,
+    ),
+  discard: (e: ServerEntry, id: string) => requestFor<void>(e, `/agent/files/${enc(id)}`, { method: 'DELETE' }),
   detail: (e: ServerEntry, id: string) => requestFor<FlowDetail>(e, `/agent/flows/${enc(id)}`, {}, 'Request failed', undefined, 60_000),
-  reply: (e: ServerEntry, id: string, text: string) =>
-    requestFor<Flow>(e, `/agent/flows/${enc(id)}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
+  reply: (e: ServerEntry, id: string, text: string, files: string[] = []) =>
+    requestFor<Flow>(e, `/agent/flows/${enc(id)}/reply`, { method: 'POST', body: JSON.stringify({ text, files }) }),
   answer: (e: ServerEntry, id: string, answer: Answer) =>
     requestFor<void>(e, `/agent/flows/${enc(id)}/answer`, { method: 'POST', body: JSON.stringify(answer) }),
   stop: (e: ServerEntry, id: string) => requestFor<void>(e, `/agent/flows/${enc(id)}/stop`, { method: 'POST' }),
@@ -201,6 +288,15 @@ export const agentApi = {
   writeMemory: (e: ServerEntry, path: string, content: string) =>
     requestFor<void>(e, '/agent/memory/file', { method: 'PUT', body: JSON.stringify({ path, content }) }),
   deleteMemory: (e: ServerEntry, path: string) => requestFor<void>(e, `/agent/memory/file?path=${enc(path)}`, { method: 'DELETE' }),
+  permissions: (e: ServerEntry) => requestFor<PermissionsView>(e, '/agent/permissions'),
+  savePermissions: (e: ServerEntry, p: Permissions) =>
+    requestFor<PermissionsView>(e, '/agent/permissions', { method: 'PUT', body: JSON.stringify(p) }),
+  /// The desk's search, answered by the agent reading only, as it goes.
+  search: (e: ServerEntry, query: string, kind: SearchKind | undefined, signal: AbortSignal, onEvent: (event: SearchEvent) => void) =>
+    readEventStream(e, '/agent/search', signal, (ev) => onEvent(ev as unknown as SearchEvent), undefined, kind ? { query, kind } : { query }),
+  /// The search [id] as a task; run on with [text].
+  adoptSearch: (e: ServerEntry, id: string, text?: string) =>
+    requestFor<Flow>(e, `/agent/search/${enc(id)}/task`, { method: 'POST', body: JSON.stringify(text ? { text } : {}) }),
   events: (e: ServerEntry, signal: AbortSignal, onEvent: (event: Record<string, unknown>) => void, onOpen?: () => void) =>
     readEventStream(e, '/agent/events', signal, onEvent, onOpen),
 }

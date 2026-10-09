@@ -92,6 +92,7 @@
 />
 
 <div
+  data-desk-fade
   class="pointer-events-none absolute"
   style:top="{area.top}px"
   style:bottom="{area.bottom}px"

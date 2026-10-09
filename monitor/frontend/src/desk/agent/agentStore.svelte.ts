@@ -4,7 +4,7 @@
 /// account says.
 
 import type { ServerEntry } from '../../lib/servers.svelte'
-import { agentApi, type Answer, type Entry, type Flow, type FlowDetail, type FlowStatus, type LiveOutput, type OutLine, type Pending } from '../../lib/agentApi'
+import { agentApi, type Answer, type Entry, type Flow, type FlowDetail, type FlowStatus, type LiveOutput, type OutLine, type Pending, type PermissionMode } from '../../lib/agentApi'
 
 const RETRY_MIN_MS = 1000
 const RETRY_MAX_MS = 30_000
@@ -20,6 +20,17 @@ export interface AgentNotice {
   status: FlowStatus
 }
 
+/// A menubar command for Agent mode's views: start a task from the prompt,
+/// open every finished task, go to the previous or next step.
+export interface AgentRequest {
+  kind: 'new' | 'history' | 'step'
+  /// For `step`: -1 or 1.
+  d?: number
+  n: number
+  /// When it was asked: a view mounted by the ask still takes it.
+  at: number
+}
+
 export class AgentStore {
   readonly entry: ServerEntry
   flows = $state<Flow[]>([])
@@ -27,6 +38,8 @@ export class AgentStore {
   configured = $state(false)
   hostname = $state('')
   maxRunning = $state(3)
+  defaultMode = $state<PermissionMode>('manual')
+  bypassAllowed = $state(true)
   error = $state<string | null>(null)
   /// The event stream is up: what is shown is current.
   live = $state(false)
@@ -36,6 +49,9 @@ export class AgentStore {
   /// The words the model is writing now in the open task.
   streaming = $state('')
   notice = $state<AgentNotice | null>(null)
+  /// What the menubar's Agent menus last asked the views for; [n] tells two
+  /// asks for the same thing apart.
+  request = $state<AgentRequest | null>(null)
 
   #abort: AbortController | null = null
   #retry = RETRY_MIN_MS
@@ -52,6 +68,10 @@ export class AgentStore {
 
   get atLimit(): boolean {
     return this.running >= this.maxRunning
+  }
+
+  ask(kind: AgentRequest['kind'], d?: number): void {
+    this.request = { kind, d, n: (this.request?.n ?? 0) + 1, at: Date.now() }
   }
 
   /// Starts listening; idempotent.
@@ -76,6 +96,8 @@ export class AgentStore {
       this.configured = list.configured
       this.hostname = list.hostname
       this.maxRunning = list.maxRunning
+      this.defaultMode = list.defaultMode ?? 'manual'
+      this.bypassAllowed = list.bypassAllowed ?? true
       this.error = null
     } catch (e) {
       this.error = e instanceof Error ? e.message : String(e)
@@ -143,14 +165,14 @@ export class AgentStore {
     }
   }
 
-  async startFlow(prompt: string): Promise<Flow> {
-    const f = await agentApi.start(this.entry, prompt)
+  async startFlow(prompt: string, mode?: PermissionMode, files: string[] = []): Promise<Flow> {
+    const f = await agentApi.start(this.entry, prompt, mode, files)
     this.#upsert(f)
     return f
   }
 
-  async reply(id: string, text: string): Promise<void> {
-    this.#upsert(await agentApi.reply(this.entry, id, text))
+  async reply(id: string, text: string, files: string[] = []): Promise<void> {
+    this.#upsert(await agentApi.reply(this.entry, id, text, files))
   }
 
   async answer(id: string, answer: Answer): Promise<void> {

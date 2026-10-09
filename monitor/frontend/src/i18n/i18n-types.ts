@@ -6953,10 +6953,6 @@ type RootTranslation = {
 	 */
 	deskAgentGreeting: RequiredParams<'greeting' | 'name'>
 	/**
-	 * W​h​a​t​ ​s​h​o​u​l​d​ ​I​ ​d​o​?
-	 */
-	deskAgentAsk: string
-	/**
 	 * W​h​a​t​ ​s​h​o​u​l​d​ ​I​ ​d​o​?​ ​N​e​w​ ​t​a​s​k​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n
 	 */
 	deskAgentAskQueued: string
@@ -6964,10 +6960,6 @@ type RootTranslation = {
 	 * S​e​n​d
 	 */
 	deskAgentSend: string
-	/**
-	 * ⏎​ ​s​e​n​d​ ​ ​ ​e​s​c​ ​c​l​e​a​r
-	 */
-	deskAgentSendHint: string
 	/**
 	 * A​t​ ​m​o​s​t​ ​{​n​}​ ​t​a​s​k​s​ ​r​u​n​ ​a​t​ ​o​n​c​e​;​ ​n​e​w​ ​o​n​e​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n​.
 	 * @param {unknown} n
@@ -7187,6 +7179,155 @@ type RootTranslation = {
 	 */
 	deskAgentMemoryFile: string
 	/**
+	 * T​a​s​k​s
+	 */
+	deskAgentTasksMenu: string
+	/**
+	 * N​e​w​ ​t​a​s​k
+	 */
+	deskAgentNewTask: string
+	/**
+	 * A​l​l​ ​t​a​s​k​s
+	 */
+	deskAgentAllTasks: string
+	/**
+	 * L​o​c​k​ ​S​c​r​e​e​n
+	 */
+	deskLockScreen: string
+	/**
+	 * L​o​g​ ​O​u​t
+	 */
+	deskLogOut: string
+	/**
+	 * S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​…
+	 */
+	deskServerSettings: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t
+	 */
+	deskDisconnect: string
+	/**
+	 * D​e​s​c​r​i​b​e​ ​w​h​a​t​ ​t​o​ ​g​e​t​ ​d​o​n​e​ ​o​n​ ​{​h​o​s​t​}​;​ ​p​a​s​t​e​ ​o​r​ ​d​r​o​p​ ​f​i​l​e​s
+	 * @param {unknown} host
+	 */
+	deskAgentAskOn: RequiredParams<'host'>
+	/**
+	 * T​a​s​k
+	 */
+	deskAgentTaskLabel: string
+	/**
+	 * P​r​e​s​s​ ​e​s​c​ ​o​r​ ​c​l​i​c​k​ ​A​g​e​n​t​ ​m​o​d​e​ ​a​g​a​i​n​ ​t​o​ ​g​o​ ​b​a​c​k​ ​t​o​ ​t​h​e​ ​d​e​s​k
+	 */
+	deskAgentLeaveHint: string
+	/**
+	 * S​e​a​r​c​h​ ​a​p​p​s​,​ ​s​e​r​v​i​c​e​s​,​ ​p​r​o​c​e​s​s​e​s​ ​a​n​d​ ​f​i​l​e​s​,​ ​o​r​ ​a​s​k
+	 */
+	deskSpotlightHintAgent: string
+	/**
+	 * R​e​l​a​t​e​d
+	 */
+	deskSearchRelated: string
+	/**
+	 * G​o​ ​a​h​e​a​d​ ​w​i​t​h​ ​t​h​i​s​ ​p​l​a​n​;​ ​l​e​t​ ​m​e​ ​c​o​n​f​i​r​m​ ​i​t​ ​b​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​c​h​a​n​g​e​s​.
+	 */
+	deskSearchGoAhead: string
+	/**
+	 * S​e​a​r​c​h​ ​n​e​v​e​r​ ​c​h​a​n​g​e​s​ ​t​h​e​ ​s​e​r​v​e​r
+	 */
+	deskSearchNoChange: string
+	/**
+	 * C​h​a​n​g​e​s​ ​a​r​e​ ​c​o​n​f​i​r​m​e​d​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskSearchConfirmInAgent: string
+	/**
+	 * A​g​e​n​t​ ​i​s​ ​l​o​o​k​i​n​g​…
+	 */
+	deskSearchLooking: string
+	/**
+	 * A​g​e​n​t​ ​·​ ​{​s​t​e​p​s​}​ ​s​t​e​p​s​ ​·​ ​{​s​}​ ​s
+	 * @param {unknown} s
+	 * @param {unknown} steps
+	 */
+	deskSearchAgentStats: RequiredParams<'s' | 'steps'>
+	/**
+	 * ⌘​⏎​ ​C​o​n​t​i​n​u​e​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskSearchKeysChange: string
+	/**
+	 * ⏎​ ​V​i​e​w​ ​i​n​ ​{​a​p​p​}​ ​ ​ ​⌘​⏎​ ​M​a​k​e​ ​i​t​ ​a​ ​t​a​s​k
+	 * @param {unknown} app
+	 */
+	deskSearchKeysQuestion: RequiredParams<'app'>
+	/**
+	 * ⌘​⏎​ ​M​a​k​e​ ​i​t​ ​a​ ​t​a​s​k
+	 */
+	deskSearchKeysTask: string
+	/**
+	 * ↑​↓​ ​s​e​l​e​c​t​ ​ ​ ​⏎​ ​o​p​e​n​ ​ ​ ​⇥​ ​a​s​k​ ​A​g​e​n​t
+	 */
+	deskSearchKeys: string
+	/**
+	 * C​h​a​n​g​e​ ​t​o​ ​c​o​n​f​i​r​m
+	 */
+	deskSearchChange: string
+	/**
+	 * R​e​a​d​ ​{​n​}​ ​i​t​e​m​s
+	 * @param {unknown} n
+	 */
+	deskSearchRead: RequiredParams<'n'>
+	/**
+	 * R​e​a​d​ ​o​n​l​y​ ​·​ ​{​s​t​e​p​s​}​ ​s​t​e​p​s​ ​·​ ​{​s​}​ ​s
+	 * @param {unknown} s
+	 * @param {unknown} steps
+	 */
+	deskSearchReadOnlyStats: RequiredParams<'s' | 'steps'>
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	deskSearchReadOnly: string
+	/**
+	 * r​e​a​d
+	 */
+	deskSearchTagRead: string
+	/**
+	 * c​h​a​n​g​e
+	 */
+	deskSearchTagChange: string
+	/**
+	 * c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e
+	 */
+	deskSearchTagDanger: string
+	/**
+	 * D​r​a​f​t​i​n​g​ ​t​h​e​ ​p​l​a​n​…
+	 */
+	deskSearchDrafting: string
+	/**
+	 * V​i​e​w​ ​i​n​ ​{​a​p​p​}
+	 * @param {unknown} app
+	 */
+	deskSearchViewIn: RequiredParams<'app'>
+	/**
+	 * M​a​k​e​ ​i​t​ ​a​ ​t​a​s​k
+	 */
+	deskSearchToTask: string
+	/**
+	 * C​o​n​t​i​n​u​e​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e
+	 */
+	deskSearchContinue: string
+	/**
+	 * O​p​e​n​ ​t​h​e​ ​f​i​l​e
+	 */
+	deskSearchOpenFile: string
+	/**
+	 * A​s​k​ ​A​g​e​n​t​:​ ​“​{​q​}​”
+	 * @param {unknown} q
+	 */
+	deskSearchAsk: RequiredParams<'q'>
+	/**
+	 * L​o​o​k​s​ ​a​c​r​o​s​s​ ​s​e​r​v​i​c​e​s​,​ ​p​r​o​c​e​s​s​e​s​,​ ​l​o​g​s​ ​a​n​d​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​;​ ​r​e​a​d​ ​o​n​l​y
+	 */
+	deskSearchAskSub: string
+	/**
 	 * C​a​n​c​e​l
 	 */
 	deskAgentCancel: string
@@ -7286,6 +7427,126 @@ type RootTranslation = {
 	 * A​p​p​r​o​v​e​d
 	 */
 	deskAgentApproved: string
+	/**
+	 * A​p​p​r​o​v​e​d​ ​b​y​ ​a​u​t​o​ ​m​o​d​e
+	 */
+	deskAgentApprovedAuto: string
+	/**
+	 * A​l​l​o​w​ ​a​l​l
+	 */
+	settingsAgentModeBypass: string
+	/**
+	 * N​e​w​ ​t​a​s​k​s​ ​r​u​n​ ​e​v​e​r​y​ ​s​t​e​p​ ​u​n​a​s​k​e​d​,​ ​d​e​l​e​t​i​n​g​,​ ​r​e​s​t​a​r​t​i​n​g​ ​a​n​d​ ​c​o​n​f​i​g​ ​c​h​a​n​g​e​s​ ​i​n​c​l​u​d​e​d​.​ ​D​e​n​y​ ​a​n​d​ ​a​s​k​ ​r​u​l​e​s​ ​s​t​i​l​l​ ​a​p​p​l​y​.
+	 */
+	settingsAgentModeBypassNote: string
+	/**
+	 * T​u​r​n​ ​o​f​f​ ​A​l​l​o​w​ ​a​l​l
+	 */
+	settingsAgentDisableBypass: string
+	/**
+	 * N​o​ ​t​a​s​k​ ​r​u​n​s​ ​i​n​ ​A​l​l​o​w​ ​a​l​l​;​ ​o​n​e​ ​s​t​a​r​t​e​d​ ​i​n​ ​i​t​ ​a​s​k​s​ ​a​s​ ​i​n​ ​M​a​n​u​a​l​.
+	 */
+	settingsAgentDisableBypassSub: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​ ​m​o​d​e
+	 */
+	deskAgentModeTitle: string
+	/**
+	 * P​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​:​ ​{​m​o​d​e​}
+	 * @param {unknown} mode
+	 */
+	deskAgentModeAria: RequiredParams<'mode'>
+	/**
+	 * T​h​e​ ​m​o​d​e​l​ ​a​l​l​o​w​s​ ​o​r​ ​r​e​f​u​s​e​s​ ​e​a​c​h​ ​s​t​e​p​.​ ​A​ ​r​e​f​u​s​e​d​ ​s​t​e​p​ ​s​t​o​p​s​ ​a​n​d​ ​s​a​y​s​ ​w​h​y​.
+	 */
+	deskAgentModeAutoDesc: string
+	/**
+	 * S​t​e​p​s​ ​g​o​ ​b​y​ ​t​h​e​ ​r​u​l​e​s​ ​i​n​ ​S​e​t​t​i​n​g​s​.​ ​A​ ​c​h​a​n​g​e​ ​n​o​ ​r​u​l​e​ ​m​a​t​c​h​e​s​ ​w​a​i​t​s​ ​f​o​r​ ​y​o​u​ ​t​o​ ​c​o​n​f​i​r​m​ ​i​t​.
+	 */
+	deskAgentModeManualDesc: string
+	/**
+	 * E​v​e​r​y​ ​s​t​e​p​ ​r​u​n​s​,​ ​d​e​l​e​t​i​n​g​,​ ​r​e​s​t​a​r​t​i​n​g​ ​a​n​d​ ​c​o​n​f​i​g​ ​c​h​a​n​g​e​s​ ​i​n​c​l​u​d​e​d​,​ ​w​i​t​h​o​u​t​ ​a​s​k​i​n​g​.
+	 */
+	deskAgentModeBypassDesc: string
+	/**
+	 * T​u​r​n​e​d​ ​o​f​f​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	deskAgentModeBypassOff: string
+	/**
+	 * ⇧​⇥​ ​s​w​i​t​c​h​e​s​ ​·​ ​r​u​l​e​s​ ​a​r​e​ ​i​n​ ​S​e​t​t​i​n​g​s​ ​›​ ​A​g​e​n​t​ ​›​ ​C​o​m​m​a​n​d​ ​p​e​r​m​i​s​s​i​o​n​s​ ​·​ ​a​p​p​l​i​e​s​ ​t​o​ ​n​e​w​ ​t​a​s​k​s
+	 */
+	deskAgentModeFoot: string
+	/**
+	 * A​l​l​o​w​ ​a​l​l​:​ ​d​e​l​e​t​i​n​g​,​ ​r​e​s​t​a​r​t​i​n​g​ ​a​n​d​ ​c​o​n​f​i​g​ ​c​h​a​n​g​e​s​ ​r​u​n​ ​d​i​r​e​c​t​l​y​,​ ​w​i​t​h​o​u​t​ ​a​s​k​i​n​g​.
+	 */
+	deskAgentBypassWarn: string
+	/**
+	 * A​d​d​ ​a​t​t​a​c​h​m​e​n​t
+	 */
+	deskAgentAttach: string
+	/**
+	 * R​e​m​o​v​e​ ​a​t​t​a​c​h​m​e​n​t
+	 */
+	deskAgentRemoveAttachment: string
+	/**
+	 * R​e​l​e​a​s​e​ ​t​o​ ​a​t​t​a​c​h
+	 */
+	deskAgentDropTitle: string
+	/**
+	 * I​m​a​g​e​s​,​ ​l​o​g​s​,​ ​c​o​n​f​i​g​ ​f​i​l​e​s​,​ ​u​p​ ​t​o​ ​2​0​ ​M​B​ ​e​a​c​h
+	 */
+	deskAgentDropNote: string
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​2​0​ ​M​B
+	 * @param {unknown} name
+	 */
+	deskAgentFileTooBig: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​u​p​l​o​a​d​e​d​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} name
+	 * @param {unknown} reason
+	 */
+	deskAgentUploadFailed: RequiredParams<'name' | 'reason'>
+	/**
+	 * S​h​o​r​t​c​u​t​s
+	 */
+	deskAgentHints: string
+	/**
+	 * S​e​n​d
+	 */
+	deskAgentHintSend: string
+	/**
+	 * N​e​w​ ​l​i​n​e
+	 */
+	deskAgentHintNewline: string
+	/**
+	 * P​a​s​t​e​ ​i​m​a​g​e​s​,​ ​f​i​l​e​s​ ​o​r​ ​l​o​n​g​ ​t​e​x​t
+	 */
+	deskAgentHintPaste: string
+	/**
+	 * C​h​o​o​s​e​ ​f​i​l​e​s
+	 */
+	deskAgentHintPick: string
+	/**
+	 * S​w​i​t​c​h​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e
+	 */
+	deskAgentHintMode: string
+	/**
+	 * D​r​o​p
+	 */
+	deskAgentHintDrop: string
+	/**
+	 * A​t​t​a​c​h
+	 */
+	deskAgentHintDropLabel: string
+	/**
+	 * C​a​n​c​e​l
+	 */
+	deskAgentHintCancel: string
+	/**
+	 * A​p​p​r​o​v​e​d​:​ ​t​h​i​s​ ​t​a​s​k​ ​a​l​l​o​w​s​ ​a​l​l
+	 */
+	deskAgentApprovedBypass: string
 	/**
 	 * T​e​l​l​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​a​t​ ​t​o​ ​d​o​ ​n​e​x​t
 	 */
@@ -7638,6 +7899,95 @@ type RootTranslation = {
 	 * @param {unknown} n
 	 */
 	settingsAgentMemoryChars: RequiredParams<'n'>
+	/**
+	 * C​o​m​m​a​n​d​ ​p​e​r​m​i​s​s​i​o​n​s
+	 */
+	settingsAgentPermissions: string
+	/**
+	 * H​o​w​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​m​m​a​n​d​s​ ​a​r​e​ ​a​p​p​r​o​v​e​d
+	 */
+	settingsAgentPermissionsSub: string
+	/**
+	 * E​v​e​r​y​ ​c​o​m​m​a​n​d​ ​a​n​ ​A​g​e​n​t​ ​m​o​d​e​ ​t​a​s​k​ ​r​u​n​s​ ​m​e​e​t​s​ ​t​h​e​s​e​ ​r​u​l​e​s​ ​f​i​r​s​t​:​ ​d​e​n​y​,​ ​t​h​e​n​ ​a​s​k​,​ ​t​h​e​n​ ​a​l​l​o​w​.​ ​W​h​a​t​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​a​n​d​ ​i​s​ ​n​o​t​ ​a​ ​k​n​o​w​n​ ​r​e​a​d​ ​g​o​e​s​ ​b​y​ ​t​h​e​ ​t​a​s​k​'​s​ ​m​o​d​e​,​ ​p​i​c​k​e​d​ ​w​h​e​n​ ​i​t​ ​s​t​a​r​t​s​.​ ​F​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	settingsAgentPermissionsAbout: string
+	/**
+	 * D​e​f​a​u​l​t​ ​m​o​d​e
+	 */
+	settingsAgentMode: string
+	/**
+	 * M​a​n​u​a​l
+	 */
+	settingsAgentModeManual: string
+	/**
+	 * A​u​t​o
+	 */
+	settingsAgentModeAuto: string
+	/**
+	 * N​e​w​ ​t​a​s​k​s​ ​a​s​k​ ​a​b​o​u​t​ ​c​h​a​n​g​e​s​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​.
+	 */
+	settingsAgentModeManualNote: string
+	/**
+	 * N​e​w​ ​t​a​s​k​s​ ​h​a​v​e​ ​c​h​a​n​g​e​s​ ​n​o​ ​r​u​l​e​ ​c​o​v​e​r​s​ ​j​u​d​g​e​d​ ​b​y​ ​t​h​e​ ​m​o​d​e​l​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​a​u​t​o​ ​m​o​d​e​ ​r​u​l​e​s​ ​b​e​l​o​w​:​ ​a​l​l​o​w​e​d​ ​r​u​n​s​ ​i​t​,​ ​b​l​o​c​k​e​d​ ​t​e​l​l​s​ ​t​h​e​ ​a​g​e​n​t​ ​w​h​y​;​ ​w​i​t​h​ ​n​o​ ​v​e​r​d​i​c​t​ ​y​o​u​ ​a​r​e​ ​a​s​k​e​d​.
+	 */
+	settingsAgentModeAutoNote: string
+	/**
+	 * U​n​l​e​s​s​ ​a​ ​t​a​s​k​ ​a​l​l​o​w​s​ ​a​l​l​,​ ​a​ ​c​o​m​m​a​n​d​ ​t​h​a​t​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​ ​(​d​e​l​e​t​i​n​g​ ​d​a​t​a​,​ ​p​a​r​t​i​t​i​o​n​s​)​ ​a​s​k​s​ ​y​o​u​ ​t​o​ ​t​y​p​e​ ​t​h​e​ ​s​e​r​v​e​r​'​s​ ​n​a​m​e​.
+	 */
+	settingsAgentDangerAlwaysAsks: string
+	/**
+	 * C​o​m​m​a​n​d​ ​r​u​l​e​s
+	 */
+	settingsAgentRules: string
+	/**
+	 * D​e​n​y
+	 */
+	settingsAgentRulesDeny: string
+	/**
+	 * A​s​k
+	 */
+	settingsAgentRulesAsk: string
+	/**
+	 * A​l​l​o​w
+	 */
+	settingsAgentRulesAllow: string
+	/**
+	 * O​n​e​ ​p​e​r​ ​l​i​n​e​.​ ​*​ ​i​s​ ​a​n​y​ ​t​e​x​t​,​ ​a​s​ ​i​n​ ​s​y​s​t​e​m​c​t​l​ ​s​t​a​t​u​s​ ​*​ ​o​r​ ​a​p​t​-​g​e​t​ ​i​n​s​t​a​l​l​ ​*​;​ ​a​ ​t​r​a​i​l​i​n​g​ ​:​*​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​a​s​ ​"​ ​*​"​.​ ​A​ ​c​h​a​i​n​e​d​ ​c​o​m​m​a​n​d​ ​i​s​ ​c​h​e​c​k​e​d​ ​p​a​r​t​ ​b​y​ ​p​a​r​t​:​ ​d​e​n​y​ ​a​n​d​ ​a​s​k​ ​a​p​p​l​y​ ​w​h​e​n​ ​a​n​y​ ​p​a​r​t​ ​m​a​t​c​h​e​s​,​ ​a​l​l​o​w​ ​o​n​l​y​ ​w​h​e​n​ ​e​v​e​r​y​ ​p​a​r​t​ ​i​s​ ​c​o​v​e​r​e​d​.​ ​R​u​l​e​s​ ​m​a​t​c​h​ ​t​h​e​ ​c​o​m​m​a​n​d​ ​a​s​ ​w​r​i​t​t​e​n​ ​(​/​b​i​n​/​r​m​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h​ ​r​m​ ​*​)​;​ ​t​h​e​y​ ​a​r​e​ ​n​o​t​ ​a​ ​s​e​c​u​r​i​t​y​ ​b​o​u​n​d​a​r​y​.
+	 */
+	settingsAgentRulesHint: string
+	/**
+	 * A​u​t​o​ ​m​o​d​e​ ​r​u​l​e​s
+	 */
+	settingsAgentAutoRules: string
+	/**
+	 * P​l​a​i​n​-​l​a​n​g​u​a​g​e​ ​r​u​l​e​s​ ​t​h​e​ ​m​o​d​e​l​ ​j​u​d​g​e​s​ ​b​y​.​ ​E​m​p​t​y​ ​u​s​e​s​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​l​i​s​t​;​ ​a​ ​l​i​n​e​ ​$​d​e​f​a​u​l​t​s​ ​k​e​e​p​s​ ​i​t​ ​a​n​d​ ​a​d​d​s​ ​y​o​u​r​s​.​ ​O​r​d​e​r​:​ ​h​a​r​d​ ​d​e​n​y​,​ ​t​h​e​n​ ​s​o​f​t​ ​d​e​n​y​ ​(​a​n​ ​a​l​l​o​w​ ​r​u​l​e​ ​o​r​ ​y​o​u​r​ ​o​w​n​ ​e​x​p​l​i​c​i​t​ ​r​e​q​u​e​s​t​ ​c​l​e​a​r​s​ ​i​t​)​,​ ​t​h​e​n​ ​a​l​l​o​w​.
+	 */
+	settingsAgentAutoHint: string
+	/**
+	 * E​n​v​i​r​o​n​m​e​n​t
+	 */
+	settingsAgentAutoEnvironment: string
+	/**
+	 * A​l​l​o​w
+	 */
+	settingsAgentAutoAllow: string
+	/**
+	 * S​o​f​t​ ​d​e​n​y
+	 */
+	settingsAgentAutoSoftDeny: string
+	/**
+	 * H​a​r​d​ ​d​e​n​y
+	 */
+	settingsAgentAutoHardDeny: string
+	/**
+	 * B​u​i​l​t​-​i​n​ ​r​u​l​e​s
+	 */
+	settingsAgentAutoBuiltIn: string
+	/**
+	 * B​u​i​l​t​-​i​n​ ​r​u​l​e​s​ ​(​{​n​}​)
+	 * @param {unknown} n
+	 */
+	settingsAgentAutoShowDefaults: RequiredParams<'n'>
 }
 
 export type TranslationFunctions = {
@@ -14378,10 +14728,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskAgentGreeting: (arg: { greeting: unknown, name: unknown }) => LocalizedString
 	/**
-	 * What should I do?
-	 */
-	deskAgentAsk: () => LocalizedString
-	/**
 	 * What should I do? New tasks wait their turn
 	 */
 	deskAgentAskQueued: () => LocalizedString
@@ -14389,10 +14735,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Send
 	 */
 	deskAgentSend: () => LocalizedString
-	/**
-	 * ⏎ send   esc clear
-	 */
-	deskAgentSendHint: () => LocalizedString
 	/**
 	 * At most {n} tasks run at once; new ones wait their turn.
 	 */
@@ -14598,6 +14940,146 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskAgentMemoryFile: () => LocalizedString
 	/**
+	 * Tasks
+	 */
+	deskAgentTasksMenu: () => LocalizedString
+	/**
+	 * New task
+	 */
+	deskAgentNewTask: () => LocalizedString
+	/**
+	 * All tasks
+	 */
+	deskAgentAllTasks: () => LocalizedString
+	/**
+	 * Lock Screen
+	 */
+	deskLockScreen: () => LocalizedString
+	/**
+	 * Log Out
+	 */
+	deskLogOut: () => LocalizedString
+	/**
+	 * Server Settings…
+	 */
+	deskServerSettings: () => LocalizedString
+	/**
+	 * Disconnect
+	 */
+	deskDisconnect: () => LocalizedString
+	/**
+	 * Describe what to get done on {host}; paste or drop files
+	 */
+	deskAgentAskOn: (arg: { host: unknown }) => LocalizedString
+	/**
+	 * Task
+	 */
+	deskAgentTaskLabel: () => LocalizedString
+	/**
+	 * Press esc or click Agent mode again to go back to the desk
+	 */
+	deskAgentLeaveHint: () => LocalizedString
+	/**
+	 * Search apps, services, processes and files, or ask
+	 */
+	deskSpotlightHintAgent: () => LocalizedString
+	/**
+	 * Related
+	 */
+	deskSearchRelated: () => LocalizedString
+	/**
+	 * Go ahead with this plan; let me confirm it before anything changes.
+	 */
+	deskSearchGoAhead: () => LocalizedString
+	/**
+	 * Search never changes the server
+	 */
+	deskSearchNoChange: () => LocalizedString
+	/**
+	 * Changes are confirmed in Agent mode
+	 */
+	deskSearchConfirmInAgent: () => LocalizedString
+	/**
+	 * Agent is looking…
+	 */
+	deskSearchLooking: () => LocalizedString
+	/**
+	 * Agent · {steps} steps · {s} s
+	 */
+	deskSearchAgentStats: (arg: { s: unknown, steps: unknown }) => LocalizedString
+	/**
+	 * ⌘⏎ Continue in Agent mode
+	 */
+	deskSearchKeysChange: () => LocalizedString
+	/**
+	 * ⏎ View in {app}   ⌘⏎ Make it a task
+	 */
+	deskSearchKeysQuestion: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * ⌘⏎ Make it a task
+	 */
+	deskSearchKeysTask: () => LocalizedString
+	/**
+	 * ↑↓ select   ⏎ open   ⇥ ask Agent
+	 */
+	deskSearchKeys: () => LocalizedString
+	/**
+	 * Change to confirm
+	 */
+	deskSearchChange: () => LocalizedString
+	/**
+	 * Read {n} items
+	 */
+	deskSearchRead: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Read only · {steps} steps · {s} s
+	 */
+	deskSearchReadOnlyStats: (arg: { s: unknown, steps: unknown }) => LocalizedString
+	/**
+	 * Read only
+	 */
+	deskSearchReadOnly: () => LocalizedString
+	/**
+	 * read
+	 */
+	deskSearchTagRead: () => LocalizedString
+	/**
+	 * change
+	 */
+	deskSearchTagChange: () => LocalizedString
+	/**
+	 * cannot be undone
+	 */
+	deskSearchTagDanger: () => LocalizedString
+	/**
+	 * Drafting the plan…
+	 */
+	deskSearchDrafting: () => LocalizedString
+	/**
+	 * View in {app}
+	 */
+	deskSearchViewIn: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Make it a task
+	 */
+	deskSearchToTask: () => LocalizedString
+	/**
+	 * Continue in Agent mode
+	 */
+	deskSearchContinue: () => LocalizedString
+	/**
+	 * Open the file
+	 */
+	deskSearchOpenFile: () => LocalizedString
+	/**
+	 * Ask Agent: “{q}”
+	 */
+	deskSearchAsk: (arg: { q: unknown }) => LocalizedString
+	/**
+	 * Looks across services, processes, logs and configuration; read only
+	 */
+	deskSearchAskSub: () => LocalizedString
+	/**
 	 * Cancel
 	 */
 	deskAgentCancel: () => LocalizedString
@@ -14693,6 +15175,122 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Approved
 	 */
 	deskAgentApproved: () => LocalizedString
+	/**
+	 * Approved by auto mode
+	 */
+	deskAgentApprovedAuto: () => LocalizedString
+	/**
+	 * Allow all
+	 */
+	settingsAgentModeBypass: () => LocalizedString
+	/**
+	 * New tasks run every step unasked, deleting, restarting and config changes included. Deny and ask rules still apply.
+	 */
+	settingsAgentModeBypassNote: () => LocalizedString
+	/**
+	 * Turn off Allow all
+	 */
+	settingsAgentDisableBypass: () => LocalizedString
+	/**
+	 * No task runs in Allow all; one started in it asks as in Manual.
+	 */
+	settingsAgentDisableBypassSub: () => LocalizedString
+	/**
+	 * Permission mode
+	 */
+	deskAgentModeTitle: () => LocalizedString
+	/**
+	 * Permission mode: {mode}
+	 */
+	deskAgentModeAria: (arg: { mode: unknown }) => LocalizedString
+	/**
+	 * The model allows or refuses each step. A refused step stops and says why.
+	 */
+	deskAgentModeAutoDesc: () => LocalizedString
+	/**
+	 * Steps go by the rules in Settings. A change no rule matches waits for you to confirm it.
+	 */
+	deskAgentModeManualDesc: () => LocalizedString
+	/**
+	 * Every step runs, deleting, restarting and config changes included, without asking.
+	 */
+	deskAgentModeBypassDesc: () => LocalizedString
+	/**
+	 * Turned off on this server
+	 */
+	deskAgentModeBypassOff: () => LocalizedString
+	/**
+	 * ⇧⇥ switches · rules are in Settings › Agent › Command permissions · applies to new tasks
+	 */
+	deskAgentModeFoot: () => LocalizedString
+	/**
+	 * Allow all: deleting, restarting and config changes run directly, without asking.
+	 */
+	deskAgentBypassWarn: () => LocalizedString
+	/**
+	 * Add attachment
+	 */
+	deskAgentAttach: () => LocalizedString
+	/**
+	 * Remove attachment
+	 */
+	deskAgentRemoveAttachment: () => LocalizedString
+	/**
+	 * Release to attach
+	 */
+	deskAgentDropTitle: () => LocalizedString
+	/**
+	 * Images, logs, config files, up to 20 MB each
+	 */
+	deskAgentDropNote: () => LocalizedString
+	/**
+	 * {name} is larger than 20 MB
+	 */
+	deskAgentFileTooBig: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * {name} could not be uploaded: {reason}
+	 */
+	deskAgentUploadFailed: (arg: { name: unknown, reason: unknown }) => LocalizedString
+	/**
+	 * Shortcuts
+	 */
+	deskAgentHints: () => LocalizedString
+	/**
+	 * Send
+	 */
+	deskAgentHintSend: () => LocalizedString
+	/**
+	 * New line
+	 */
+	deskAgentHintNewline: () => LocalizedString
+	/**
+	 * Paste images, files or long text
+	 */
+	deskAgentHintPaste: () => LocalizedString
+	/**
+	 * Choose files
+	 */
+	deskAgentHintPick: () => LocalizedString
+	/**
+	 * Switch permission mode
+	 */
+	deskAgentHintMode: () => LocalizedString
+	/**
+	 * Drop
+	 */
+	deskAgentHintDrop: () => LocalizedString
+	/**
+	 * Attach
+	 */
+	deskAgentHintDropLabel: () => LocalizedString
+	/**
+	 * Cancel
+	 */
+	deskAgentHintCancel: () => LocalizedString
+	/**
+	 * Approved: this task allows all
+	 */
+	deskAgentApprovedBypass: () => LocalizedString
 	/**
 	 * Tell the agent what to do next
 	 */
@@ -15033,6 +15631,94 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * {n} characters
 	 */
 	settingsAgentMemoryChars: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Command permissions
+	 */
+	settingsAgentPermissions: () => LocalizedString
+	/**
+	 * How the agent's commands are approved
+	 */
+	settingsAgentPermissionsSub: () => LocalizedString
+	/**
+	 * Every command an Agent mode task runs meets these rules first: deny, then ask, then allow. What no rule covers and is not a known read goes by the task's mode, picked when it starts. For every account on this server.
+	 */
+	settingsAgentPermissionsAbout: () => LocalizedString
+	/**
+	 * Default mode
+	 */
+	settingsAgentMode: () => LocalizedString
+	/**
+	 * Manual
+	 */
+	settingsAgentModeManual: () => LocalizedString
+	/**
+	 * Auto
+	 */
+	settingsAgentModeAuto: () => LocalizedString
+	/**
+	 * New tasks ask about changes no rule covers.
+	 */
+	settingsAgentModeManualNote: () => LocalizedString
+	/**
+	 * New tasks have changes no rule covers judged by the model against the auto mode rules below: allowed runs it, blocked tells the agent why; with no verdict you are asked.
+	 */
+	settingsAgentModeAutoNote: () => LocalizedString
+	/**
+	 * Unless a task allows all, a command that cannot be undone (deleting data, partitions) asks you to type the server's name.
+	 */
+	settingsAgentDangerAlwaysAsks: () => LocalizedString
+	/**
+	 * Command rules
+	 */
+	settingsAgentRules: () => LocalizedString
+	/**
+	 * Deny
+	 */
+	settingsAgentRulesDeny: () => LocalizedString
+	/**
+	 * Ask
+	 */
+	settingsAgentRulesAsk: () => LocalizedString
+	/**
+	 * Allow
+	 */
+	settingsAgentRulesAllow: () => LocalizedString
+	/**
+	 * One per line. * is any text, as in systemctl status * or apt-get install *; a trailing :* is the same as " *". A chained command is checked part by part: deny and ask apply when any part matches, allow only when every part is covered. Rules match the command as written (/bin/rm does not match rm *); they are not a security boundary.
+	 */
+	settingsAgentRulesHint: () => LocalizedString
+	/**
+	 * Auto mode rules
+	 */
+	settingsAgentAutoRules: () => LocalizedString
+	/**
+	 * Plain-language rules the model judges by. Empty uses the built-in list; a line $defaults keeps it and adds yours. Order: hard deny, then soft deny (an allow rule or your own explicit request clears it), then allow.
+	 */
+	settingsAgentAutoHint: () => LocalizedString
+	/**
+	 * Environment
+	 */
+	settingsAgentAutoEnvironment: () => LocalizedString
+	/**
+	 * Allow
+	 */
+	settingsAgentAutoAllow: () => LocalizedString
+	/**
+	 * Soft deny
+	 */
+	settingsAgentAutoSoftDeny: () => LocalizedString
+	/**
+	 * Hard deny
+	 */
+	settingsAgentAutoHardDeny: () => LocalizedString
+	/**
+	 * Built-in rules
+	 */
+	settingsAgentAutoBuiltIn: () => LocalizedString
+	/**
+	 * Built-in rules ({n})
+	 */
+	settingsAgentAutoShowDefaults: (arg: { n: unknown }) => LocalizedString
 }
 
 export type Formatters = {}

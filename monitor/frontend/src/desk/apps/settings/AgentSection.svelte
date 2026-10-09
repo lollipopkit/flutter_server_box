@@ -18,9 +18,11 @@
     onprovider: (id: string) => void
     /// Opens the account's memory.
     onmemory: () => void
+    /// Opens how commands are approved.
+    onpermissions: () => void
   }
 
-  const { onprovider, onmemory }: Props = $props()
+  const { onprovider, onmemory, onpermissions }: Props = $props()
 
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   const admin = $derived(caps?.me?.admin === true)
@@ -123,6 +125,7 @@
 
 {#snippet memoryRow()}
   <Group>
+    <Row label={$LL.settingsAgentPermissions()} sub={$LL.settingsAgentPermissionsSub()} onclick={onpermissions} />
     <Row label={$LL.settingsAgentMemory()} sub={$LL.settingsAgentMemorySub()} onclick={onmemory} />
   </Group>
 {/snippet}

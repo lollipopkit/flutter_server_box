@@ -144,7 +144,7 @@
   <!-- The strip along the dock's edge that brings it back. -->
   <div class="dock-reveal dock-reveal--{position} absolute z-[99999]" aria-hidden="true" onpointerenter={enter} onpointerleave={leave}></div>
 {/if}
-<div class="dock-place dock-place--{position} pointer-events-none absolute z-[100000] flex items-center justify-center">
+<div data-desk-fade class="dock-place dock-place--{position} pointer-events-none absolute z-[100000] flex items-center justify-center">
   <nav
     class="lk-dock lk-dock--{position} pointer-events-auto max-h-full max-w-full"
     class:lk-dock--vertical={vertical}

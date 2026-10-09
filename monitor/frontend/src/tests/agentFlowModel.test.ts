@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Entry, Flow, Message } from '../lib/agentApi'
-import { byDay, changesMemory, columns, currentStep, deriveSteps, firstOf, termRows } from '../desk/agent/flowModel'
+import { byDay, changesMemory, columns, currentStep, deriveSteps, firstOf, splitAttachments, termRows } from '../desk/agent/flowModel'
 
 let seq = 0
 const entry = (message: Message): Entry => ({ id: `e${++seq}`, type: 'message', seq, message })
@@ -103,7 +103,7 @@ const flow = (id: string, status: Flow['status'], finishedAt: string | null = nu
   title: id,
   status,
   line: '',
-  areas: [],
+  areas: [], mode: 'manual',
   createdAt: '2026-10-09T00:00:00Z',
   updatedAt: finishedAt ?? '2026-10-09T00:00:00Z',
   startedAt: null,
@@ -147,5 +147,34 @@ describe('the output', () => {
     expect(termRows(lines, { errorsOnly: true, expanded: false, omitted: 0, omittedAt: 200 }).length).toBe(4)
     const rows = termRows(lines.slice(0, 4), { errorsOnly: false, expanded: true, omitted: 1000, omittedAt: 2 })
     expect(rows.map((r) => ('n' in r ? r.n : r.fold))).toEqual([1, 2, 'omitted', 1003, 1004])
+  })
+})
+
+describe('splitAttachments', () => {
+  it('takes the files out of a prompt and leaves the words', () => {
+    const text = [
+      'why does it fail?',
+      '',
+      '<attachments>',
+      'The person attached these files; they are on this machine, read them with commands.',
+      '- `app.log` (text/plain, 2.0 KiB) at `/data/agent/files/t/app.log`:',
+      '````',
+      '- `fake.txt` (text/plain, 1 B) at `/nope`',
+      '```',
+      '````',
+      '- `shot (2).png` (image/png, 340.0 KiB) at `/data/agent/files/t/shot (2).png` (the image is attached)',
+      '</attachments>',
+    ].join('\n')
+    expect(splitAttachments(text)).toEqual({
+      text: 'why does it fail?',
+      files: [
+        { name: 'app.log', mime: 'text/plain', size: '2.0 KiB' },
+        { name: 'shot (2).png', mime: 'image/png', size: '340.0 KiB' },
+      ],
+    })
+  })
+
+  it('leaves a prompt without the block alone', () => {
+    expect(splitAttachments('<attachments> are mentioned here')).toEqual({ text: '<attachments> are mentioned here', files: [] })
   })
 })

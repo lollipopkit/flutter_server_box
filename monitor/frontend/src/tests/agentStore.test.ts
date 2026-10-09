@@ -29,7 +29,7 @@ function flow(id: string, status: Flow['status']): Flow {
     title: id,
     status,
     line: '',
-    areas: [],
+    areas: [], mode: 'manual',
     createdAt: '2026-10-09T00:00:00Z',
     updatedAt: '2026-10-09T00:00:00Z',
     startedAt: null,

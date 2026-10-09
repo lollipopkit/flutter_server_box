@@ -10,6 +10,8 @@
     icon?: string
     /// The accessible name when there is no visible [label].
     title?: string
+    /// This one cannot be chosen.
+    disabled?: boolean
   }
 
   interface Props {
@@ -49,7 +51,7 @@
       title={o.label ? undefined : o.title}
       class="lk-seg__item"
       class:lk-seg__item--on={o.value === value}
-      {disabled}
+      disabled={disabled || o.disabled}
       onclick={() => onchange(o.value)}
     >
       {#if o.icon}<Icon name={o.icon} size={size === 'sm' ? 14 : 16} />{/if}{o.label ?? ''}

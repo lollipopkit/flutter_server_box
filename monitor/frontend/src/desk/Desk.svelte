@@ -1,9 +1,9 @@
 <script lang="ts">
   import Spinner from './lk/Spinner.svelte'
-  import { onDestroy, onMount, untrack } from 'svelte'
+  import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { theme } from '../lib/theme.svelte'
-  import type { ServerEntry } from '../lib/servers.svelte'
+  import { servers, type ServerEntry } from '../lib/servers.svelte'
   import { app } from './registry.svelte'
   import { COMPACT_WIDTH } from './geometry'
   import { shellPrefs } from './shellPrefs.svelte'
@@ -25,6 +25,7 @@
   import { themeDark, themeWallpaper } from './themeStyle'
   import WindowLayer from './window/WindowLayer.svelte'
   import AgentMode from './agent/AgentMode.svelte'
+  import { deskAway, deskBack } from './agent/transition'
 
   interface Props {
     entry: ServerEntry
@@ -32,11 +33,13 @@
     locked?: boolean
     /// Locks this desk: the lock screen, where another server can be chosen.
     onlock: () => void
+    /// Leaves this desk for the lock screen without signing out.
+    ondisconnect: () => void
     /// Switches to another server's desk.
     onswitch: (serverId: string) => void
   }
 
-  const { entry, locked = false, onlock, onswitch }: Props = $props()
+  const { entry, locked = false, onlock, ondisconnect, onswitch }: Props = $props()
   // svelte-ignore state_referenced_locally
   const desk = new Desk(entry)
   provideDesk(desk)
@@ -115,6 +118,32 @@
 
   let root = $state<HTMLDivElement | null>(null)
 
+  // The switch to Agent mode and back (`agent/transition.ts`): the Agent
+  // view stays up while it leaves, the desk is drawn until it has receded.
+  let agentShown = $state(false)
+  let deskHidden = $state(false)
+  let agentView = $state<{ leave: () => Promise<void> } | null>(null)
+  let switching = 0
+  $effect(() => {
+    const on = desk.agentMode
+    untrack(() => void switchAgent(on))
+  })
+  async function switchAgent(on: boolean) {
+    const seq = ++switching
+    if (on) {
+      agentShown = true
+      if (root) await deskAway(root)
+      if (seq === switching) deskHidden = true
+      return
+    }
+    if (!agentShown) return
+    deskHidden = false
+    await tick()
+    if (root) deskBack(root)
+    await agentView?.leave()
+    if (seq === switching) agentShown = false
+  }
+
   /// The menubar's height and the gap under it, above the windows; the gap
   /// a window keeps from the bottom, besides the dock's room.
   const TOP = 37
@@ -164,17 +193,33 @@
       e.preventDefault()
       desk.windows.cycle()
     } else if (e.key === 'Escape' && (desk.spotlight || desk.panel || desk.menu)) {
+      e.preventDefault()
       desk.spotlight = false
       desk.panel = null
       desk.menu = null
     } else if (!locked) {
-      // The front app's menus, by their shortcuts.
-      const item = menuItemFor(e, desk.activeChrome?.menus ?? [])
+      // The session's shortcuts, then the front app's menus by theirs.
+      const item = menuItemFor(e, [{ label: '', items: session() }, ...(desk.activeChrome?.menus ?? [])])
       if (item) {
         e.preventDefault()
         item.action()
       }
     }
+  }
+
+  /// Lock and log out, as the server menu lists them.
+  function session(): MenuItem[] {
+    return [
+      { label: $LL.deskLockScreen(), shortcut: '⌃⌘Q', action: onlock },
+      {
+        label: $LL.deskLogOut(),
+        shortcut: '⇧⌘Q',
+        action: () => {
+          servers.logout(entry.id)
+          onlock()
+        },
+      },
+    ]
   }
 
   function dismiss() {
@@ -234,7 +279,7 @@
   </div>
   <!-- Under Agent mode the desk is out of sight, not gone: its windows keep
        running where they were. -->
-  <div class="contents" style:visibility={desk.agentMode ? 'hidden' : undefined} inert={desk.agentMode}>
+  <div class="contents" style:visibility={deskHidden ? 'hidden' : undefined} inert={desk.agentMode}>
     {#if desk.ready && !desk.windows.compact}
       <DeskIcons />
     {/if}
@@ -244,8 +289,10 @@
       <div class="absolute inset-0 grid place-items-center"><Spinner size="lg" /></div>
     {/if}
   </div>
-  {#if desk.agentMode && desk.agent}
+  {#if agentShown && desk.agent}
     <AgentMode
+      bind:this={agentView}
+      onexit={() => desk.toggleAgent(false)}
       store={desk.agent}
       name={entry.username ?? ''}
       admin={desk.caps?.me?.admin === true}
@@ -256,10 +303,10 @@
     />
   {/if}
 
-  <Menubar {onlock} />
-  {#if !desk.agentMode}
+  <Menubar {session} {ondisconnect} />
+  <div class="contents" style:visibility={deskHidden ? 'hidden' : undefined} inert={desk.agentMode}>
     <Dock />
-  {/if}
+  </div>
 
   {#if desk.panel === 'launchpad'}
     <Launchpad />
@@ -292,7 +339,7 @@
 <style>
   .desk-panel-place {
     position: absolute;
-    top: 37px;
+    top: 32px;
     right: 9px;
     z-index: 100001;
     max-width: calc(100% - 18px);
@@ -306,11 +353,11 @@
   }
   .desk-panel {
     position: absolute;
-    top: 36px;
+    top: 32px;
     right: 9px;
     z-index: 100001;
     width: min(330px, calc(100% - 18px));
-    max-height: calc(100% - 36px - var(--dock-icon) - 40px);
+    max-height: calc(100% - 32px - var(--dock-icon) - 40px);
     overflow-y: auto;
     padding: var(--space-11);
     border-radius: var(--radius-panel);

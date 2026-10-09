@@ -2,12 +2,15 @@
   /// One task: its steps on the left, the chosen one in the middle with the
   /// reply field, its output on the right.
 
-  import { tick } from 'svelte'
+  import { tick, untrack } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { fmtDate } from '../../lib/format'
   import { AppIcon, Button, Icon, IconButton, Spinner, ToolbarGroup } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
-  import { AREA, duration, statusLook, stepLook, waitLabel } from './agentView'
+  import { AREA, duration, fileGlyph, statusLook, stepLook, waitLabel } from './agentView'
+  import AttachmentChips from './AttachmentChips.svelte'
+  import { Attachments } from './attachments.svelte'
+  import { autosize } from './autosize'
   import { changesMemory, currentStep, deriveSteps, elapsed, type Step } from './flowModel'
   import OutputPane from './OutputPane.svelte'
   import StepBody from './StepBody.svelte'
@@ -24,7 +27,7 @@
   const detail = $derived(store.detail)
   const flow = $derived(detail?.flow ?? store.flows.find((f) => f.id === store.openId) ?? null)
   const model = $derived(
-    detail ? deriveSteps(detail.entries, detail.flow.status, detail.pending, detail.output, store.streaming) : { prompt: '', steps: [] as Step[] },
+    detail ? deriveSteps(detail.entries, detail.flow.status, detail.pending, detail.output, store.streaming) : { prompt: '', files: [], steps: [] as Step[] },
   )
   const steps = $derived(model.steps)
 
@@ -43,7 +46,47 @@
   let reply = $state('')
   let sending = $state(false)
   let replyError = $state<string | null>(null)
-  let replyInput = $state<HTMLInputElement | null>(null)
+  let replyInput = $state<HTMLTextAreaElement | null>(null)
+  let replyMulti = $state(false)
+  let picker = $state<HTMLInputElement | null>(null)
+  // svelte-ignore state_referenced_locally
+  const atts = new Attachments(store.entry)
+  let dragging = $state(false)
+  let dragDepth = 0
+  // Files not sent stay with the task they were added to: another task, or
+  // leaving, drops them.
+  let attsFor: string | undefined
+  $effect(() => {
+    const id = flow?.id
+    if (attsFor !== undefined && id !== attsFor) untrack(() => atts.clear(true))
+    attsFor = id
+  })
+  $effect(() => () => atts.clear(true))
+
+  const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files')
+  function ondragenter(e: DragEvent) {
+    if (!hasFiles(e) || offline) return
+    e.preventDefault()
+    dragDepth += 1
+    dragging = true
+  }
+  function ondragover(e: DragEvent) {
+    if (!hasFiles(e) || offline) return
+    e.preventDefault()
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+  }
+  function ondragleave() {
+    dragDepth = Math.max(0, dragDepth - 1)
+    if (!dragDepth) dragging = false
+  }
+  function ondrop(e: DragEvent) {
+    if (!hasFiles(e) || offline) return
+    e.preventDefault()
+    dragDepth = 0
+    dragging = false
+    atts.addFiles(e.dataTransfer?.files)
+    replyInput?.focus()
+  }
   const offline = $derived(!store.live && store.loaded)
 
   function move(d: number) {
@@ -53,11 +96,14 @@
 
   async function send(text = reply) {
     const t = text.trim()
-    if (!t || !flow || sending || offline) return
+    if ((!t && !atts.length) || !flow || sending || offline) return
     sending = true
     replyError = null
     try {
-      await store.reply(flow.id, t)
+      const ids = await atts.ids()
+      if (!ids) return
+      await store.reply(flow.id, t, ids)
+      atts.clear(false)
       reply = ''
       picked = null
     } catch (e) {
@@ -66,6 +112,20 @@
       sending = false
     }
   }
+
+  // View → Previous / Next step, from the menubar.
+  // Only asks made while this view is up: one before it is not for it.
+  let handledAsk: number | null = null
+  $effect(() => {
+    const r = store.request
+    if (handledAsk === null) {
+      handledAsk = r?.n ?? 0
+      return
+    }
+    if (!r || r.n === handledAsk) return
+    handledAsk = r.n
+    if (r.kind === 'step' && r.d) move(r.d)
+  })
 
   function onkeydown(e: KeyboardEvent) {
     const tag = ((e.target as HTMLElement | null)?.tagName ?? '').toLowerCase()
@@ -270,7 +330,17 @@
     {/if}
   </aside>
 
-  <section class="center">
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <section class="center" {ondragenter} {ondragover} {ondragleave} {ondrop}>
+    {#if dragging}
+      <div class="drop">
+        <div class="drop__box">
+          <Icon name="upload_file" size={34} color="var(--color-accent-text)" />
+          <span class="drop__title">{$LL.deskAgentDropTitle()}</span>
+          <span class="drop__note">{$LL.deskAgentDropNote()}</span>
+        </div>
+      </div>
+    {/if}
     <div class="bar">
       {#if step}
         <AppIcon glyph={AREA[step.area].glyph} tone={AREA[step.area].tone} size={22} />
@@ -309,8 +379,21 @@
         <div class="loading"><Spinner /></div>
       {:else}
         <div class="cards" bind:this={cardsEl}>
-          {#if model.prompt}
-            <div class="ask"><div class="ask__bubble">{model.prompt}</div></div>
+          {#if model.prompt || model.files.length}
+            <div class="ask">
+              {#if model.files.length}
+                <div class="ask__files">
+                  {#each model.files as f, i (i)}
+                    <div class="ask__file">
+                      <span class="ask__glyph"><Icon name={fileGlyph(f.name, f.mime)} size={15} fill /></span>
+                      <span class="ask__name">{f.name}</span>
+                      <span class="ask__size am-num">{f.size}</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+              {#if model.prompt}<div class="ask__bubble">{model.prompt}</div>{/if}
+            </div>
           {/if}
           {#each steps as s, i (s.id)}
             <!-- Pointer convenience only: the step list and the arrow keys pick a step from the keyboard. -->
@@ -342,29 +425,66 @@
 
     <div class="reply">
       <div class="reply__inner">
-        <div class="field" style:opacity={offline ? 0.5 : 1}>
+        <div class="field" class:field--multi={replyMulti} class:field--files={atts.length > 0} style:opacity={offline ? 0.5 : 1}>
+          {#if atts.length}<AttachmentChips {atts} />{/if}
+          <div class="field__row">
           <Icon name="auto_awesome" size={15} color="var(--text-tertiary)" />
-          <input
+          <textarea
             bind:this={replyInput}
             bind:value={reply}
+            rows="1"
+            use:autosize={{ value: reply, max: 6, onmulti: (m) => (replyMulti = m) }}
             readonly={offline}
             {placeholder}
             aria-label={placeholder}
             onkeydown={(e) => {
-              if (e.key === 'Enter' && !e.isComposing) {
+              if (e.isComposing) return
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
                 void send()
               } else if (e.key === 'Escape') {
                 replyInput?.blur()
+              } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault()
+                picker?.click()
               }
             }}
+            onpaste={(e) => {
+              if (atts.paste(e)) e.preventDefault()
+            }}
+          ></textarea>
+          <IconButton icon="attach_file" label={$LL.deskAgentAttach()} size="sm" disabled={offline} onmousedown={(e) => e.preventDefault()} onclick={() => picker?.click()} />
+          <IconButton
+            icon="arrow_upward"
+            label={$LL.deskAgentSend()}
+            variant="filled"
+            size="sm"
+            disabled={(!reply.trim() && !atts.length) || offline || sending}
+            onclick={() => send()}
           />
-          <IconButton icon="arrow_upward" label={$LL.deskAgentSend()} variant="filled" size="sm" disabled={!reply.trim() || offline || sending} onclick={() => send()} />
+          <input
+            bind:this={picker}
+            type="file"
+            multiple
+            tabindex="-1"
+            aria-hidden="true"
+            hidden
+            onchange={(e) => {
+              const input = e.currentTarget
+              atts.addFiles(input.files)
+              input.value = ''
+              replyInput?.focus()
+            }}
+          />
+          </div>
         </div>
-        {#if replyError}
-          <div class="reply__error">{replyError}</div>
+        {#if replyError ?? atts.error}
+          <div class="reply__error">{replyError ?? atts.error}</div>
         {:else}
-          <div class="keys"><span>{$LL.deskAgentKeySteps()}</span><span>{$LL.deskAgentKeySend()}</span><span>{$LL.deskAgentKeyBack()}</span></div>
+          <div class="keys">
+            <span>{$LL.deskAgentKeySteps()}</span><span>{$LL.deskAgentKeySend()}</span><span>⇧⏎ {$LL.deskAgentHintNewline()}</span>
+            <span>⌘U {$LL.deskAgentHintPick()}</span><span>{$LL.deskAgentKeyBack()}</span>
+          </div>
         {/if}
       </div>
     </div>
@@ -621,6 +741,7 @@
   }
 
   .center {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -700,8 +821,53 @@
   }
   .ask {
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-7);
     padding-top: var(--space-27);
+  }
+  .ask__files {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-7);
+    max-width: 80%;
+  }
+  .ask__file {
+    display: flex;
+    align-items: center;
+    gap: var(--space-7);
+    height: 34px;
+    max-width: 280px;
+    box-sizing: border-box;
+    padding: 0 var(--space-9) 0 var(--space-7);
+    border-radius: 9px;
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-control);
+  }
+  .ask__glyph {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+  }
+  .ask__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-12);
+    font-weight: 600;
+  }
+  .ask__size {
+    flex: none;
+    font-size: var(--text-11);
+    color: var(--text-tertiary);
   }
   .ask__bubble {
     max-width: 80%;
@@ -776,26 +942,52 @@
     flex-direction: column;
     gap: var(--space-7);
   }
+  /* 38 tall with one line; the text grows it (`autosize`). */
   .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-9);
+    min-height: 38px;
+    box-sizing: border-box;
+    padding: 7px var(--space-5) 7px var(--space-13);
+    border-radius: 19px;
+    background: var(--surface-card);
+  }
+  .field--files {
+    padding-top: var(--space-9);
+    padding-left: var(--space-9);
+  }
+  .field__row {
     display: flex;
     align-items: center;
     gap: var(--space-9);
-    height: 38px;
-    padding: 0 var(--space-5) 0 var(--space-13);
-    border-radius: var(--radius-full);
-    background: var(--surface-card);
   }
-  .field input {
+  .field--files .field__row {
+    padding-left: var(--space-3);
+  }
+  .field--multi .field__row {
+    align-items: flex-end;
+  }
+  .field textarea {
     flex: 1;
     min-width: 0;
+    box-sizing: border-box;
+    height: calc(1.4em + 6px);
+    margin: 0;
+    padding: 3px 0;
     border: 0;
     outline: 0;
+    resize: none;
     background: transparent;
     font: inherit;
     font-size: var(--text-13);
+    line-height: 1.4;
     color: var(--text-primary);
   }
-  .field input::placeholder {
+  .field textarea::placeholder {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: var(--text-tertiary);
   }
   .keys {
@@ -809,6 +1001,39 @@
     padding-left: var(--space-13);
     font-size: var(--text-12);
     color: var(--color-danger);
+  }
+  .drop {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--surface-window) 55%, transparent);
+    animation: lk-fade-in 150ms var(--ease-standard);
+  }
+  .drop__box {
+    width: calc(100% - 42px);
+    max-width: 640px;
+    height: 220px;
+    box-sizing: border-box;
+    border-radius: 27px;
+    border: 1.5px dashed color-mix(in srgb, var(--color-accent-text) 70%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-9);
+    animation: lk-pop-in 220ms var(--ease-spring);
+  }
+  .drop__title {
+    font-size: var(--text-17);
+    font-weight: 600;
+  }
+  .drop__note {
+    font-size: var(--text-12);
+    color: var(--text-tertiary);
   }
   .right {
     min-height: 0;

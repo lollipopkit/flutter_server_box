@@ -27,6 +27,11 @@ enum Say {
 /// the script's `n`th entry after `n` results. A request without tools (the
 /// task's title) is answered `Title`.
 fn model(script: Vec<Say>) -> String {
+    model_judging(script, "Title")
+}
+
+/// [model], answering the auto mode judge with [judge].
+fn model_judging(script: Vec<Say>, judge: &'static str) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = listener.local_addr().unwrap();
     std::thread::spawn(move || {
@@ -63,7 +68,10 @@ fn model(script: Vec<Say>) -> String {
                 reader.read_exact(&mut body).unwrap();
                 let req: Value = serde_json::from_slice(&body).unwrap();
                 let results = req["messages"].as_array().unwrap().iter().filter(|m| m["role"] == "tool").count();
-                let say = if req.get("tools").is_none() {
+                let judging = req["messages"].as_array().is_some_and(|m| m.iter().any(|m| m["content"].as_str().is_some_and(|c| c.contains("You review one shell command"))));
+                let say = if judging {
+                    Say::Text(judge)
+                } else if req.get("tools").is_none() {
                     Say::Text("Title")
                 } else {
                     script.get(results).cloned().unwrap_or(Say::Text("Done."))
@@ -280,6 +288,49 @@ async fn what_cannot_be_undone_needs_the_machine_named() {
 }
 
 #[ntex::test]
+async fn attached_files_go_to_the_task_and_with_it() {
+    let (srv, _) = server().await;
+    let url = model(vec![Say::Text("Seen."), Say::Text("Seen again.")]);
+    configure(&srv, &url).await;
+    let (s, log) = common::machine::post_bytes(&srv, "admin", "/api/v1/agent/files?name=..%2Fapp.log", "text/plain", b"boom at 12:00\n".to_vec()).await;
+    assert_eq!(s, 201, "{log}");
+    assert_eq!(log["name"], "app.log");
+    let (_, png) = common::machine::post_bytes(&srv, "admin", "/api/v1/agent/files?name=shot.png", "image/png", b"\x89PNG fake".to_vec()).await;
+    // Another account cannot use or remove them.
+    let (s, _) = call(&srv, Some("intruder"), Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": "x", "files": [log["id"]] }))).await;
+    assert_eq!(s, 400);
+    let (s, _) = call(&srv, Some("intruder"), Method::DELETE, &format!("/api/v1/agent/files/{}", png["id"].as_str().unwrap()), None).await;
+    assert_eq!(s, 404);
+    // Files alone start a task, named after the first.
+    let (s, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": "", "files": [log["id"], png["id"]] }))).await;
+    assert_eq!(s, 201, "{body}");
+    assert_eq!(body["title"], "app.log");
+    let id = body["id"].as_str().unwrap().to_string();
+    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let content = &v["entries"][0]["message"]["content"];
+    let text = content[0]["text"].as_str().unwrap();
+    assert!(text.starts_with("<attachments>"), "{v}");
+    assert!(text.contains("boom at 12:00"), "{v}");
+    assert_eq!(content[1]["type"], "image", "{v}");
+    let path = text.split("at `").nth(1).unwrap().split('`').next().unwrap().to_string();
+    assert!(std::path::Path::new(&path).exists(), "{path}");
+    // Used once.
+    let (s, _) = call(&srv, Some("admin"), Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": "again", "files": [log["id"]] }))).await;
+    assert_eq!(s, 400);
+    // A reply takes files too, beside the ones the task has.
+    let (_, more) = common::machine::post_bytes(&srv, "admin", "/api/v1/agent/files?name=app.log", "text/plain", b"second\n".to_vec()).await;
+    let (s, body) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/reply"), Some(json!({ "text": "and this", "files": [more["id"]] }))).await;
+    assert_eq!(s, 200, "{body}");
+    let v = until(&srv, &id, |v| status(v) == "done" && v["entries"].as_array().is_some_and(|e| e.len() >= 4)).await;
+    let second = v["entries"].as_array().unwrap().iter().filter(|e| e["message"]["role"] == "user").nth(1).unwrap();
+    let text = second["message"]["content"][0]["text"].as_str().unwrap();
+    assert!(text.starts_with("and this\n\n<attachments>") && text.contains("app (2).log") && text.contains("second"), "{v}");
+    let (s, _) = call(&srv, Some("admin"), Method::DELETE, &format!("/api/v1/agent/flows/{id}"), None).await;
+    assert_eq!(s, 204);
+    assert!(!std::path::Path::new(&path).exists());
+}
+
+#[ntex::test]
 async fn a_finished_task_takes_a_reply_as_a_new_run() {
     let (srv, _) = server().await;
     let url = model(vec![Say::Text("Hello.")]);
@@ -373,4 +424,267 @@ async fn the_memory_is_kept_across_tasks_and_is_its_accounts_alone() {
     assert_eq!(s, 204);
     let (_, list) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/memory", None).await;
     assert_eq!(list["files"].as_array().unwrap().iter().map(|f| f["path"].clone()).collect::<Vec<_>>(), [json!("MEMORY.md")]);
+}
+
+/// The `data:` events of a stream.
+fn events_of(body: &str) -> Vec<Value> {
+    body.lines().filter_map(|l| l.strip_prefix("data: ")).filter_map(|j| serde_json::from_str(j).ok()).collect()
+}
+
+#[ntex::test]
+async fn a_search_only_reads_and_can_be_carried_into_a_task() {
+    let (srv, _) = server().await;
+    let url = model(vec![
+        // Refused: it would change the machine.
+        Say::Tool("run_command", json!({ "command": "rm -rf /tmp/sbm-search-never", "title": "Remove" })),
+        Say::Tool("run_command", json!({ "command": "uname -s", "title": "System" })),
+        Say::Tool("report_results", json!({
+            "items": [{ "kind": "process", "title": "sshd", "sub": "PID 1", "ref": "1" }],
+            "followups": [{ "label": "Restart", "request": "restart sshd" }],
+        })),
+        Say::Text("It runs."),
+    ]);
+    configure(&srv, &url).await;
+    let (s, body) = common::machine::post_text(&srv, "admin", "/api/v1/agent/search", json!({ "query": "what runs here?", "kind": "question" })).await;
+    assert_eq!(s, 200, "{body}");
+    let ev = events_of(&body);
+    assert_eq!(ev[0], json!({ "type": "kind", "kind": "question" }), "{body}");
+    let steps: Vec<&Value> = ev.iter().filter(|e| e["type"] == "step").collect();
+    assert!(steps.iter().all(|e| e["command"] == "uname -s"), "the change never ran: {body}");
+    assert!(steps.iter().any(|e| e["state"] == "done"), "{body}");
+    let items = ev.iter().find(|e| e["type"] == "items").unwrap();
+    assert_eq!(items["items"][0]["ref"], "1", "{body}");
+    assert_eq!(items["followups"][0]["request"], "restart sshd");
+    let done = ev.iter().find(|e| e["type"] == "done").unwrap();
+    assert_eq!(done["answer"], "It runs.");
+    assert_eq!(done["steps"], 1);
+    let id = done["id"].as_str().unwrap().to_string();
+
+    // Not anybody's to adopt but the account's.
+    let (s, _) = call(&srv, Some("intruder"), Method::POST, &format!("/api/v1/agent/search/{id}/task"), Some(json!({}))).await;
+    assert_eq!(s, 404);
+    let (s, view) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/search/{id}/task"), Some(json!({}))).await;
+    assert_eq!(s, 201, "{view}");
+    assert_eq!(view["id"], id);
+    assert_eq!(view["title"], "what runs here?");
+    // The conversation came along.
+    let v = until(&srv, &id, |v| v["entries"].as_array().is_some_and(|e| !e.is_empty())).await;
+    assert!(results(&v).len() >= 2, "{v}");
+    // Once only.
+    let (s, _) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/search/{id}/task"), Some(json!({}))).await;
+    assert_eq!(s, 404);
+}
+
+#[ntex::test]
+async fn a_change_is_drafted_never_run() {
+    let (srv, _) = server().await;
+    let url = model(vec![
+        Say::Tool("draft_plan", json!({ "steps": [
+            { "text": "cat /etc/hostname", "command": "cat /etc/hostname", "effect": "read" },
+            { "text": "wipe it", "command": "rm -rf /tmp/sbm-search-never", "effect": "read" },
+        ] })),
+        Say::Text("Unreachable."),
+    ]);
+    configure(&srv, &url).await;
+    let (s, body) = common::machine::post_text(&srv, "admin", "/api/v1/agent/search", json!({ "query": "clean up", "kind": "change" })).await;
+    assert_eq!(s, 200, "{body}");
+    let ev = events_of(&body);
+    let plan = ev.iter().find(|e| e["type"] == "plan").unwrap();
+    assert_eq!(plan["steps"][0]["effect"], "read");
+    // The command's shape outranks the model's word.
+    assert_eq!(plan["steps"][1]["effect"], "danger", "{body}");
+    assert!(ev.iter().all(|e| e["type"] != "step"), "{body}");
+    assert!(ev.iter().any(|e| e["type"] == "done"), "{body}");
+
+    // Without shell, no search.
+    let (s, _) = call(&srv, Some("viewer"), Method::POST, "/api/v1/agent/search", Some(json!({ "query": "x" }))).await;
+    assert!(s == 403 || s == 401, "{s}");
+}
+
+async fn set_permissions(srv: &TestServer, p: Value) {
+    let (s, body) = call(srv, Some("admin"), Method::PUT, "/api/v1/agent/permissions", Some(p)).await;
+    assert_eq!(s, 200, "{body}");
+}
+
+#[ntex::test]
+async fn the_operators_rules_deny_ask_and_allow() {
+    let (srv, _) = server().await;
+    let dir = scratch("rules");
+    let made = dir.join("made");
+    let touch = format!("touch {}", made.display());
+    let url = model(vec![
+        Say::Tool("run_command", json!({ "command": "uname -s", "title": "System", "area": "system", "effect": "read" })),
+        Say::Tool("run_command", json!({ "command": touch.clone().leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Text("Done."),
+    ]);
+    configure(&srv, &url).await;
+    // Only an admin sets them, and a rule allowing anything is refused.
+    let (s, _) = call(&srv, Some("viewer"), Method::PUT, "/api/v1/agent/permissions", Some(json!({ "defaultMode": "auto" }))).await;
+    assert!(s == 403 || s == 401, "{s}");
+    let (s, body) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/permissions", Some(json!({ "rules": { "allow": ["*"] } }))).await;
+    assert_eq!((s, body["error"].as_str()), (400, Some("invalidPermissions")), "{body}");
+    set_permissions(&srv, json!({ "rules": { "deny": ["uname *"], "allow": [format!("touch {}/*", dir.display())] } })).await;
+    let (_, read) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/permissions", None).await;
+    assert_eq!(read["permissions"]["rules"]["deny"], json!(["uname *"]));
+    assert!(read["defaults"]["soft_deny"].as_array().is_some_and(|l| !l.is_empty()), "{read}");
+
+    let id = start(&srv, "go").await;
+    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let r = results(&v);
+    // A read the rules deny is refused; a change they allow runs unasked.
+    assert_eq!(r[0]["isError"], true, "{v}");
+    assert!(r[0]["content"][0]["text"].as_str().unwrap().contains("uname *"), "{v}");
+    assert_eq!(r[1]["details"]["exitCode"], 0, "{v}");
+    assert!(made.exists());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// Starts a task in [mode]; answers the status and body.
+async fn start_in(srv: &TestServer, prompt: &str, mode: &str) -> (u16, Value) {
+    let (status, body) = call(srv, Some("admin"), Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": prompt, "mode": mode }))).await;
+    (status, body)
+}
+
+#[ntex::test]
+async fn bypass_runs_destruction_unasked_but_the_rules_still_hold() {
+    let (srv, _) = server().await;
+    let dir = scratch("bypass");
+    let made = dir.join("made");
+    let doomed = dir.join("doomed");
+    std::fs::write(&doomed, "x").unwrap();
+    let url = model(vec![
+        Say::Tool("run_command", json!({ "command": format!("touch {}", made.display()).leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Tool("run_command", json!({ "command": format!("rm -rf {}", doomed.display()).leak() as &str, "title": "Remove", "area": "files", "effect": "danger" })),
+        Say::Tool("run_command", json!({ "command": "uname -s", "title": "System", "area": "system", "effect": "read" })),
+        Say::Tool("run_command", json!({ "command": "systemctl stop sbm-bypass-never", "title": "Stop", "area": "system", "effect": "change" })),
+        Say::Text("Done."),
+    ]);
+    configure(&srv, &url).await;
+    set_permissions(&srv, json!({ "rules": { "deny": ["uname *"], "ask": ["systemctl stop *"] } })).await;
+    let (s, body) = start_in(&srv, "go", "bypass").await;
+    assert_eq!(s, 201, "{body}");
+    assert_eq!(body["mode"], "bypass");
+    let id = body["id"].as_str().unwrap().to_string();
+    // The ask rule stops it; everything before ran unasked but the denied read.
+    let v = until(&srv, &id, |v| !v["pending"].is_null() || status(v) != "running").await;
+    assert_eq!(v["pending"]["kind"], "confirm", "{v}");
+    let r = results(&v);
+    assert!(made.exists(), "{v}");
+    assert!(!doomed.exists(), "{v}");
+    assert_eq!(r[2]["isError"], true, "{v}");
+    let (s, _) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/stop"), None).await;
+    assert_eq!(s, 204);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[ntex::test]
+async fn an_admin_can_turn_bypass_off() {
+    let (srv, _) = server().await;
+    let url = model(vec![Say::Text("Done.")]);
+    configure(&srv, &url).await;
+    let (_, list) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/flows", None).await;
+    assert_eq!((list["defaultMode"].as_str(), list["bypassAllowed"].as_bool()), (Some("manual"), Some(true)), "{list}");
+    // The default cannot be what is turned off.
+    let (s, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/permissions", Some(json!({ "defaultMode": "bypass", "disableBypass": true }))).await;
+    assert_eq!(s, 400);
+    set_permissions(&srv, json!({ "defaultMode": "auto", "disableBypass": true })).await;
+    let (s, body) = start_in(&srv, "go", "bypass").await;
+    assert_eq!((s, body["error"].as_str()), (400, Some("bypassDisabled")), "{body}");
+    // Absent is the default.
+    let id = start(&srv, "go").await;
+    let v = until(&srv, &id, |v| status(v) == "done").await;
+    assert_eq!(v["flow"]["mode"], "auto", "{v}");
+}
+
+#[ntex::test]
+async fn auto_mode_runs_what_the_judge_allows_and_refuses_what_it_blocks() {
+    for (judge, runs) in [
+        (r#"{"decision":"allow","rule":"","reason":"routine"}"#, true),
+        (r#"{"decision":"block","rule":"Data Loss","reason":"not asked for"}"#, false),
+    ] {
+        let (srv, _) = server().await;
+        let dir = scratch(if runs { "auto-allow" } else { "auto-block" });
+        let made = dir.join("made");
+        let url = model_judging(
+            vec![
+                Say::Tool("run_command", json!({ "command": format!("touch {}", made.display()).leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+                Say::Text("Done."),
+            ],
+            judge,
+        );
+        configure(&srv, &url).await;
+        set_permissions(&srv, json!({ "defaultMode": "auto" })).await;
+        let id = start(&srv, "make the file").await;
+        let v = until(&srv, &id, |v| status(v) == "done").await;
+        let r = results(&v);
+        assert_eq!(made.exists(), runs, "{v}");
+        if !runs {
+            assert_eq!(r[0]["isError"], true);
+            assert!(r[0]["content"][0]["text"].as_str().unwrap().contains("[Data Loss]"), "{v}");
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[ntex::test]
+async fn auto_mode_asks_when_the_judge_says_nothing_usable_and_destruction_always_asks() {
+    let (srv, _) = server().await;
+    let url = model_judging(
+        vec![
+            Say::Tool("run_command", json!({ "command": "touch /tmp/sbm-auto-unsure-never", "title": "Touch", "area": "files", "effect": "change" })),
+            Say::Text("Done."),
+        ],
+        "I think so.",
+    );
+    configure(&srv, &url).await;
+    set_permissions(&srv, json!({ "defaultMode": "auto", "rules": { "allow": ["rm *"] } })).await;
+    let id = start(&srv, "go").await;
+    let v = until(&srv, &id, |v| !v["pending"].is_null()).await;
+    assert_eq!(v["pending"]["kind"], "confirm", "{v}");
+    let (s, _) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/stop"), None).await;
+    assert_eq!(s, 204);
+
+    // `rm` is allowed by a rule, yet what cannot be undone still names the machine.
+    let url = model_judging(
+        vec![
+            Say::Tool("run_command", json!({ "command": "rm -rf /tmp/sbm-auto-rm-never", "title": "Remove", "area": "files", "effect": "danger" })),
+            Say::Text("Done."),
+        ],
+        r#"{"decision":"allow"}"#,
+    );
+    configure(&srv, &url).await;
+    let id = start(&srv, "go").await;
+    let v = until(&srv, &id, |v| !v["pending"].is_null()).await;
+    assert_eq!(v["pending"]["kind"], "danger", "{v}");
+}
+
+#[ntex::test]
+async fn auto_mode_judges_a_plan_and_bypass_approves_one() {
+    let (srv, _) = server().await;
+    let dir = scratch("auto-plan");
+    let made = dir.join("made");
+    let touch: &'static str = format!("touch {}", made.display()).leak();
+    let script = vec![
+        Say::Tool("propose_plan", json!({ "title": "Make it", "summary": "Make the file.", "steps": [{ "text": "Make the file", "command": touch }] })),
+        Say::Tool("run_command", json!({ "command": touch, "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Text("Done."),
+    ];
+    let url = model_judging(script.clone(), r#"{"decision":"allow","rule":"","reason":"asked for"}"#);
+    configure(&srv, &url).await;
+    set_permissions(&srv, json!({ "defaultMode": "auto" })).await;
+    let id = start(&srv, "make the file").await;
+    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let r = results(&v);
+    assert_eq!(r[0]["details"]["by"], "auto", "{v}");
+    assert!(made.exists(), "{v}");
+
+    let _ = std::fs::remove_file(&made);
+    let url = model(script);
+    configure(&srv, &url).await;
+    let (s, body) = start_in(&srv, "make the file", "bypass").await;
+    assert_eq!(s, 201, "{body}");
+    let v = until(&srv, body["id"].as_str().unwrap(), |v| status(v) == "done").await;
+    assert_eq!(results(&v)[0]["details"]["by"], "bypass", "{v}");
+    assert!(made.exists(), "{v}");
+    let _ = std::fs::remove_dir_all(&dir);
 }

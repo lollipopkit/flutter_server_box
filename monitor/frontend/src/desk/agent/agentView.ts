@@ -108,3 +108,11 @@ export function greeting(LL: TranslationFunctions, hour: number): string {
   if (hour < 18) return LL.deskAgentGreetAfternoon()
   return LL.deskAgentGreetEvening()
 }
+
+/// The glyph for a file given to a task.
+export function fileGlyph(name: string, mime: string): string {
+  if (mime.startsWith('image/')) return 'image'
+  if (/\.(log|txt|out)$/i.test(name)) return 'description'
+  if (/\.(conf|cfg|ya?ml|json|toml|ini|env|service)$/i.test(name)) return 'settings'
+  return 'draft'
+}

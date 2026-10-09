@@ -188,7 +188,8 @@ export async function requestFor<T>(
 ): Promise<T> {
   const server = entry ? { ...entry } : undefined
   requireSecureUrl(server?.url ?? '')
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  // JSON unless the caller says what it sends.
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(init.headers as Record<string, string> | undefined) }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
 
   let res: Response
@@ -256,13 +257,22 @@ export async function readEventStream(
   onEvent: (event: Record<string, unknown>) => void,
   /// The stream is open: the agent may send nothing for a long time.
   onOpen?: () => void,
+  /// Posted as JSON: a stream that answers a request.
+  body?: unknown,
 ): Promise<void> {
   requireSecureUrl(entry.url)
+  const headers: Record<string, string> = entry.token ? { Authorization: `Bearer ${entry.token}` } : {}
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
   const res = await fetch(`${entry.url}/api/v1${path}`, {
-    headers: entry.token ? { Authorization: `Bearer ${entry.token}` } : {},
+    method: body === undefined ? 'GET' : 'POST',
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal,
   })
-  if (!res.ok || !res.body) throw new ApiError('Failed to open the event stream', res.status)
+  if (!res.ok || !res.body) {
+    const err = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    throw new ApiError('Failed to open the event stream', res.status, typeof err?.error === 'string' ? err.error : undefined, err ?? undefined)
+  }
   onOpen?.()
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
   let buffer = ''

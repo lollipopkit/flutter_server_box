@@ -42,6 +42,8 @@ export interface Step {
   answer: string | null
   /// The tool's failure, as the model was told.
   error: string | null
+  /// Who decided it when nobody was asked (`auto`: the auto mode judge).
+  by: string | null
   chat: ChatLine[]
 }
 
@@ -65,6 +67,37 @@ function textOf(content: unknown): string {
     .filter((p): p is { type: 'text'; text: string } => (p as { type?: string })?.type === 'text')
     .map((p) => p.text)
     .join('')
+}
+
+/// A file given with the account's words, as the agent listed it.
+export interface Attachment {
+  name: string
+  mime: string
+  /// As the agent wrote it (`2.0 KiB`).
+  size: string
+}
+
+const ATTACHMENTS = '<attachments>'
+const ATTACHMENT = /^- `(.+)` \(([^,()]+), ([^)]+)\) at `/
+
+/// [text] without the `<attachments>` block the agent adds to a prompt with
+/// files (`agent_mode/files.rs`), and the files it lists.
+export function splitAttachments(text: string): { text: string; files: Attachment[] } {
+  const at = text.lastIndexOf(ATTACHMENTS)
+  if (at < 0 || !text.trimEnd().endsWith('</attachments>')) return { text, files: [] }
+  const files: Attachment[] = []
+  let fence: string | null = null
+  for (const line of text.slice(at + ATTACHMENTS.length).split('\n')) {
+    const ticks = /^(`{3,})$/.exec(line)?.[1]
+    if (ticks && (fence === null || ticks === fence)) {
+      fence = fence === null ? ticks : null
+      continue
+    }
+    if (fence !== null) continue
+    const m = ATTACHMENT.exec(line)
+    if (m) files.push({ name: m[1], mime: m[2], size: m[3] })
+  }
+  return { text: text.slice(0, at).trimEnd(), files }
 }
 
 function str(v: unknown): string {
@@ -93,6 +126,7 @@ function blank(id: string, kind: StepKind, a: Area): Step {
     durationMs: null,
     answer: null,
     error: null,
+    by: null,
     chat: [],
   }
 }
@@ -104,6 +138,8 @@ function isActive(status: FlowStatus): boolean {
 export interface Derived {
   /// The first thing the account asked.
   prompt: string
+  /// The files given with it.
+  files: Attachment[]
   steps: Step[]
 }
 
@@ -120,6 +156,7 @@ export function deriveSteps(
   const steps: Step[] = []
   const byCall = new Map<string, Step>()
   let prompt = ''
+  let files: Attachment[] = []
   let seenPrompt = false
   let replies = 0
   const lastArea = (): Area => steps.at(-1)?.area ?? 'system'
@@ -138,7 +175,7 @@ export function deriveSteps(
     if (m.role === 'user') {
       const text = textOf(m.content)
       if (!seenPrompt) {
-        prompt = text
+        ;({ text: prompt, files } = splitAttachments(text))
         seenPrompt = true
       } else {
         conversation().chat.push({ me: true, text })
@@ -151,6 +188,8 @@ export function deriveSteps(
       const calls = parts.filter((p) => p.type === 'toolCall')
       for (const c of calls) {
         if (c.type !== 'toolCall') continue
+        // A search's own (`agent_mode/search.rs`): shown by the search, not a step.
+        if (c.name === 'report_results' || c.name === 'draft_plan') continue
         const args = c.arguments ?? {}
         let s: Step
         if (c.name === 'run_command') {
@@ -210,7 +249,8 @@ export function deriveSteps(
       if (typeof d.alternative === 'string') s.answer = d.alternative
       if (typeof d.answer === 'string') s.answer = d.answer
       if (typeof d.decision === 'string') s.answer = d.decision
-      if (m.isError) {
+      if (typeof d.by === 'string') s.by = d.by
+      if (m.isError || d.decision === 'blocked' || d.decision === 'refused') {
         s.state = 'failed'
         s.error = result
       } else if (d.declined === true || d.cancelled === true || d.decision === 'cancelled' || (s.kind === 'ask' && d.answer === null)) {
@@ -253,7 +293,7 @@ export function deriveSteps(
     s.state = 'pending'
     steps.push(s)
   }
-  return { prompt, steps }
+  return { prompt, files, steps }
 }
 
 /// The step a task opens at: the first not done, or the last.

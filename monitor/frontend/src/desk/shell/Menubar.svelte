@@ -4,17 +4,20 @@
   import { fmtBytes, fmtDate, fmtPercent } from '../../lib/format'
   import { Poller } from '../../lib/poller.svelte'
   import { serverNames } from '../../lib/serverNames.svelte'
-  import { displayName, servers } from '../../lib/servers.svelte'
+  import { displayName } from '../../lib/servers.svelte'
   import { app } from '../registry.svelte'
   import { systemPrefs } from '../sys/systemPrefs.svelte'
   import { useDesk, type MenuItem } from '../deskState.svelte'
   import Icon from '../lk/Icon.svelte'
 
   interface Props {
-    onlock: () => void
+    /// Lock and log out, with their shortcuts (the desk runs those).
+    session: () => MenuItem[]
+    /// Leaves this server's desk for the lock screen, still signed in.
+    ondisconnect: () => void
   }
 
-  const { onlock }: Props = $props()
+  const { session, ondisconnect }: Props = $props()
   const desk = useDesk()
 
   const serverLabel = $derived(
@@ -30,7 +33,7 @@
     return () => clearInterval(t)
   })
   const clock = $derived(
-    `${new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(now)}  ${fmtDate(now, { hour: '2-digit', minute: '2-digit' }, $locale)}`,
+    `${new Intl.DateTimeFormat($locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(now)} ${fmtDate(now, { hour: '2-digit', minute: '2-digit' }, $locale)}`,
   )
 
   /// The machine's CPU in the bar, read while the desk is in sight. An
@@ -53,6 +56,7 @@
   /// aligns its right edge with the item's (the bar's right side).
   function menuUnder(e: MouseEvent, owner: string, items: MenuItem[], end = false) {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const barBottom = bar?.getBoundingClientRect().bottom ?? r.bottom
     e.stopPropagation()
     desk.panel = null
     desk.spotlight = false
@@ -60,8 +64,16 @@
     // already took it down, so ask what was open then).
     const open = e.type === 'click' ? openAtPress : desk.menu?.owner
     openAtPress = null
-    desk.menu = open === owner ? null : { x: end ? r.right : r.left, y: r.bottom + 3, items, owner, end }
+    desk.menu = open === owner ? null : { x: end ? r.right : r.left, y: barBottom + 2, items, owner, end }
   }
+
+  let bar = $state<HTMLElement | null>(null)
+
+  /// Glass under the bar once a window reaches up to it; the wallpaper
+  /// through it otherwise.
+  const glass = $derived(
+    !desk.agentMode && desk.windows.windows.some((w) => !w.minimized && w.rect.y <= desk.windows.area.top + 1),
+  )
 
   /// The bar menu open when the pointer went down on the bar.
   let openAtPress: string | null = null
@@ -75,27 +87,19 @@
     return !!app(id)?.available(desk.caps)
   }
 
-  /// The server menu: where the desk is, its main apps, the session.
+  /// The server menu: its main apps, its settings, the session.
   function serverItems(): MenuItem[] {
-    const items: MenuItem[] = [{ heading: `${serverLabel} · ${online ? $LL.deskLiveShort() : $LL.deskOfflineShort()}` }]
+    const items: MenuItem[] = []
     for (const id of ['status', 'process', 'services']) {
       const spec = app(id)
       if (spec && openable(id)) items.push({ label: spec.title($LL), icon: spec.glyph, action: () => desk.open(id) })
     }
     items.push(
       { separator: true },
-      { label: $LL.deskAppSettings(), icon: 'settings', shortcut: '⌘,', action: () => desk.open('settings') },
+      { label: $LL.deskServerSettings(), icon: 'dns', action: () => desk.open('settings', { appState: { section: 'server' } }) },
+      { label: $LL.deskDisconnect(), icon: 'link_off', action: ondisconnect },
       { separator: true },
-      { label: $LL.deskLock(), icon: 'lock', action: onlock },
-      {
-        label: $LL.logout(),
-        icon: 'logout',
-        danger: true,
-        action: () => {
-          servers.logout(desk.entry.id)
-          onlock()
-        },
-      },
+      ...session(),
     )
     return items
   }
@@ -186,11 +190,40 @@
     return items
   }
 
-  /// The bar's menus left to right: the app, the app's own, Window, Help.
-  const titles = $derived.by(() => {
-    const out: { owner: string; label: string; items: () => MenuItem[] }[] = []
-    // Agent mode is over the windows: their menus are not what is in front.
-    if (activeSpec && !desk.agentMode) {
+  /// Agent → the tasks: a new one, every finished one, the open one.
+  function agentTaskItems(): MenuItem[] {
+    const a = desk.agent
+    if (!a) return []
+    const open = a.flows.find((f) => f.id === a.openId)
+    const items: MenuItem[] = [
+      { label: $LL.deskAgentNewTask(), icon: 'add', action: () => a.ask('new') },
+      { label: $LL.deskAgentAllTasks(), icon: 'history', action: () => a.ask('history') },
+    ]
+    if (open && (open.status === 'running' || open.status === 'waiting' || open.status === 'queued')) {
+      items.push({ separator: true }, { label: $LL.deskAgentStop(), icon: 'stop_circle', action: () => void a.stopFlow(open.id) })
+    }
+    return items
+  }
+
+  /// Agent → what is shown: the timeline, the open task's steps.
+  function agentViewItems(): MenuItem[] {
+    const a = desk.agent
+    if (!a) return []
+    const inFlow = !!a.openId
+    return [
+      { label: $LL.deskAgentTimeline(), icon: 'view_timeline', disabled: !inFlow, action: () => a.close() },
+      { separator: true },
+      { label: $LL.deskAgentPrevStep(), icon: 'keyboard_arrow_up', disabled: !inFlow, action: () => a.ask('step', -1) },
+      { label: $LL.deskAgentNextStep(), icon: 'keyboard_arrow_down', disabled: !inFlow, action: () => a.ask('step', 1) },
+    ]
+  }
+
+  type Title = { owner: string; label: string; items: () => MenuItem[] }
+
+  /// The desk's menus left to right: the app, the app's own, Window, Help.
+  const deskTitles = $derived.by(() => {
+    const out: Title[] = []
+    if (activeSpec) {
       out.push({ owner: 'app', label: appName, items: appItems })
       for (const [i, menu] of (chrome?.menus ?? []).entries()) {
         out.push({ owner: `menu:${i}`, label: menu.label, items: () => menu.items })
@@ -201,12 +234,34 @@
     return out
   })
 
+  /// Agent mode's own: Tasks, View, Help.
+  const agentTitles = $derived<Title[]>([
+    { owner: 'agent:tasks', label: $LL.deskAgentTasksMenu(), items: agentTaskItems },
+    { owner: 'agent:view', label: $LL.deskMenuView(), items: agentViewItems },
+    { owner: 'agent:help', label: $LL.deskHelpMenu(), items: helpItems },
+  ])
+
   const unread = $derived(desk.notifications?.unread ?? 0)
   const dnd = $derived(desk.notifications?.dnd ?? false)
 </script>
 
+{#snippet titleButton(t: Title)}
+  <button
+    class="lk-menubar__item max-w-48 truncate"
+    class:hidden={t.owner !== 'app' && desk.windows.compact}
+    class:lk-menubar__item--open={desk.menu?.owner === t.owner}
+    aria-haspopup="menu"
+    onclick={(e) => menuUnder(e, t.owner, t.items())}
+    onpointerenter={(e) => hover(e, t.owner, t.items)}
+  >
+    {t.label}
+  </button>
+{/snippet}
+
 <nav
+  bind:this={bar}
   class="lk-menubar absolute inset-x-0 top-0 z-[100000]"
+  class:lk-menubar--glass={glass}
   aria-label={$LL.deskMenubar()}
   onpointerdown={(e) => {
     // Its buttons toggle what they open; the desk's own dismissal would
@@ -217,127 +272,121 @@
     desk.menu = null
   }}
 >
-  <!-- The server this desk is on leads the bar, its dot saying whether the
-       desk hears from it. -->
-  <button
-    class="lk-menubar__item lk-menubar__lead"
-    class:lk-menubar__item--open={desk.menu?.owner === 'server'}
-    aria-haspopup="menu"
-    title={desk.storage?.remote ? (desk.live ? $LL.deskLive() : $LL.deskOffline()) : undefined}
-    onclick={(e) => menuUnder(e, 'server', serverItems())}
-    onpointerenter={(e) => hover(e, 'server', serverItems)}
-  >
-    <span
-      class="h-[7px] w-[7px] shrink-0 rounded-full"
-      style:background={online ? 'var(--hue-green)' : 'var(--hue-amber)'}
-      style:box-shadow="0 0 0 3px color-mix(in srgb, {online ? 'var(--hue-green)' : 'var(--hue-amber)'} 22%, transparent)"
-    ></span>
-    <span class="max-w-40 truncate font-bold tracking-[-0.01em]">{serverLabel}</span>
-  </button>
-  {#each titles as t (t.owner)}
+  <!-- The server this desk is on, its dot saying whether the desk hears from
+       it; then the front app's menus, or Agent mode's, one fading into the
+       other. -->
+  <div class="lk-menubar__side">
     <button
-      class="lk-menubar__item max-w-48 truncate"
-      class:lk-menubar__app={t.owner === 'app'}
-      class:hidden={t.owner !== 'app' && desk.windows.compact}
-      class:lk-menubar__item--open={desk.menu?.owner === t.owner}
+      class="lk-menubar__item lk-menubar__lead"
+      class:lk-menubar__item--open={desk.menu?.owner === 'server'}
       aria-haspopup="menu"
-      onclick={(e) => menuUnder(e, t.owner, t.items())}
-      onpointerenter={(e) => hover(e, t.owner, t.items)}
+      title={desk.storage?.remote ? (desk.live ? $LL.deskLive() : $LL.deskOffline()) : undefined}
+      onclick={(e) => menuUnder(e, 'server', serverItems())}
+      onpointerenter={(e) => hover(e, 'server', serverItems)}
     >
-      {t.label}
+      <span class="lk-menubar__status" class:lk-menubar__status--off={!online}></span>
+      <span class="max-w-40 truncate">{serverLabel}</span>
     </button>
-  {/each}
-  <div class="lk-menubar__spacer"></div>
+    <div class="lk-menubar__menus">
+      <div class="lk-menubar__group" class:lk-menubar__group--off={desk.agentMode} data-to="agent" inert={desk.agentMode}>
+        {#each deskTitles as t (t.owner)}{@render titleButton(t)}{/each}
+      </div>
+      {#if desk.agentAvailable}
+        <div class="lk-menubar__group" class:lk-menubar__group--off={!desk.agentMode} data-to="desk" inert={!desk.agentMode}>
+          {#each agentTitles as t (t.owner)}{@render titleButton(t)}{/each}
+        </div>
+      {/if}
+    </div>
+  </div>
 
-  {#if desk.agentAvailable}
+  <!-- Agent mode · CPU · search · Control Centre · notifications · the clock,
+       the measured ones at fixed widths so a changing number moves nothing. -->
+  <div class="lk-menubar__side lk-menubar__side--end">
+    {#if desk.agentAvailable}
+      <button
+        class="lk-menubar__item lk-menubar__agent"
+        class:lk-menubar__agent--on={desk.agentMode}
+        aria-pressed={desk.agentMode}
+        aria-label={$LL.deskAgentMode()}
+        title={$LL.deskAgentMode()}
+        onclick={(e) => {
+          e.stopPropagation()
+          desk.toggleAgent()
+        }}
+      >
+        <Icon name="auto_awesome" size={15} fill={desk.agentMode} />
+        {#if !desk.windows.compact}<span>{$LL.deskAgentMode()}</span>{/if}
+      </button>
+    {/if}
+    {#if reading && !desk.windows.compact}
+      <button
+        class="lk-menubar__item lk-menubar__cpu"
+        class:lk-menubar__item--open={desk.menu?.owner === 'cpu'}
+        aria-haspopup="menu"
+        aria-label="CPU {fmtPercent(reading.cpu_usage)}"
+        onclick={(e) => menuUnder(e, 'cpu', cpuItems(), true)}
+        onpointerenter={(e) => hover(e, 'cpu', cpuItems, true)}
+      >
+        <Icon name="data_usage" size={15} />{fmtPercent(reading.cpu_usage)}
+      </button>
+    {/if}
     <button
-      class="lk-menubar__item"
-      class:lk-menubar__item--open={desk.agentMode}
-      aria-pressed={desk.agentMode}
-      aria-label={$LL.deskAgentMode()}
-      title={$LL.deskAgentMode()}
+      class="lk-menubar__item lk-menubar__icon"
+      class:lk-menubar__item--open={desk.spotlight}
+      aria-label={$LL.deskSearch()}
+      title="{$LL.deskSearch()} ⌘K"
       onclick={(e) => {
         e.stopPropagation()
-        desk.toggleAgent()
+        desk.panel = null
+        desk.spotlight = !desk.spotlight
       }}
     >
-      <Icon name="auto_awesome" size={17} fill={desk.agentMode} />
-      {#if !desk.windows.compact}<span class="agent-label">{$LL.deskAgentMode()}</span>{/if}
+      <Icon name="search" size={17} fill={desk.spotlight} />
     </button>
-  {/if}
-  {#if reading && !desk.windows.compact}
     <button
-      class="lk-menubar__item"
-      class:lk-menubar__item--open={desk.menu?.owner === 'cpu'}
-      aria-haspopup="menu"
-      aria-label="CPU"
-      title="CPU"
-      onclick={(e) => menuUnder(e, 'cpu', cpuItems(), true)}
-      onpointerenter={(e) => hover(e, 'cpu', cpuItems, true)}
+      class="lk-menubar__item lk-menubar__icon"
+      class:lk-menubar__item--open={desk.panel === 'control'}
+      aria-label={$LL.deskControlCenter()}
+      title={$LL.deskControlCenter()}
+      aria-expanded={desk.panel === 'control'}
+      onclick={(e) => {
+        e.stopPropagation()
+        desk.togglePanel('control')
+      }}
     >
-      <Icon name="memory" size={15} color="var(--text-secondary)" />
-      <span class="lk-num min-w-[34px] text-right">{fmtPercent(reading.cpu_usage)}</span>
+      <Icon name="toggle_on" size={17} fill={desk.panel === 'control'} />
     </button>
-  {/if}
-  <button
-    class="lk-menubar__item"
-    class:lk-menubar__item--open={desk.spotlight}
-    aria-label={$LL.deskSearch()}
-    title="{$LL.deskSearch()} ⌘K"
-    onclick={(e) => {
-      e.stopPropagation()
-      desk.panel = null
-      desk.spotlight = !desk.spotlight
-    }}
-  >
-    <Icon name="search" size={17} fill={desk.spotlight} />
-  </button>
-  <button
-    class="lk-menubar__item"
-    class:lk-menubar__item--open={desk.panel === 'control'}
-    aria-label={$LL.deskControlCenter()}
-    title={$LL.deskControlCenter()}
-    aria-expanded={desk.panel === 'control'}
-    onclick={(e) => {
-      e.stopPropagation()
-      desk.togglePanel('control')
-    }}
-  >
-    <Icon name="toggle_on" size={17} fill={desk.panel === 'control'} />
-  </button>
-  <button
-    class="lk-menubar__item"
-    class:lk-menubar__item--open={desk.panel === 'notifications'}
-    aria-label={$LL.deskNotifications()}
-    title={$LL.deskNotifications()}
-    aria-expanded={desk.panel === 'notifications'}
-    onclick={(e) => {
-      e.stopPropagation()
-      desk.togglePanel('notifications')
-    }}
-  >
-    <Icon name={dnd ? 'notifications_off' : 'notifications'} size={17} fill={desk.panel === 'notifications'} />
-    {#if unread > 0 && !dnd}<span class="lk-menubar__dot"></span>{/if}
-  </button>
-  <button
-    class="lk-menubar__item lk-menubar__clock font-medium"
-    class:lk-menubar__item--open={desk.panel === 'calendar'}
-    aria-expanded={desk.panel === 'calendar'}
-    onclick={(e) => {
-      e.stopPropagation()
-      desk.togglePanel('calendar')
-    }}
-  >
-    {clock}
-  </button>
+    <button
+      class="lk-menubar__item lk-menubar__icon"
+      class:lk-menubar__item--open={desk.panel === 'notifications'}
+      aria-label={$LL.deskNotifications()}
+      title={$LL.deskNotifications()}
+      aria-expanded={desk.panel === 'notifications'}
+      onclick={(e) => {
+        e.stopPropagation()
+        desk.togglePanel('notifications')
+      }}
+    >
+      <Icon name={dnd ? 'notifications_off' : 'notifications'} size={17} fill={desk.panel === 'notifications'} />
+      {#if unread > 0 && !dnd}<span class="lk-menubar__dot"></span>{/if}
+    </button>
+    {#if !desk.windows.compact}
+      <button
+        class="lk-menubar__item lk-menubar__clock"
+        class:lk-menubar__item--open={desk.panel === 'calendar'}
+        aria-expanded={desk.panel === 'calendar'}
+        onclick={(e) => {
+          e.stopPropagation()
+          desk.togglePanel('calendar')
+        }}
+      >
+        {clock}
+      </button>
+    {/if}
+  </div>
 </nav>
 
 <style>
-  .agent-label {
-    font-size: var(--text-12);
-    font-weight: 600;
-    padding-right: 3px;
-  }
   .lk-menubar__item:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);

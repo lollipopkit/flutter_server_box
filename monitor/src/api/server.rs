@@ -550,6 +550,19 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             )
             .service(web::resource("/agent/models").route(web::get().to(crate::api::agent::models)))
             .service(web::resource("/agent/models/probe").route(web::post().to(crate::api::agent::probe)))
+            .service(
+                web::resource("/agent/permissions")
+                    .route(web::get().to(crate::api::agent::get_permissions))
+                    .route(web::put().to(crate::api::agent::put_permissions)),
+            )
+            .service(web::resource("/agent/search").route(web::post().to(crate::api::agent::search)))
+            .service(web::resource("/agent/search/{id}/task").route(web::post().to(crate::api::agent::adopt_search)))
+            .service(
+                web::resource("/agent/files")
+                    .state(web::types::PayloadConfig::new(crate::agent_mode::files::MAX_BYTES))
+                    .route(web::post().to(crate::api::agent::upload)),
+            )
+            .service(web::resource("/agent/files/{id}").route(web::delete().to(crate::api::agent::discard)))
             .service(web::resource("/agent/memory").route(web::get().to(crate::api::agent::memory_list)))
             .service(
                 web::resource("/agent/memory/file")

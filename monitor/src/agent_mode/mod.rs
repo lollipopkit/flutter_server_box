@@ -17,11 +17,13 @@
 //! # What runs without asking
 //!
 //! The model calls three tools (`tools.rs`): `run_command`, `propose_plan`,
-//! `ask_user`. A command runs unasked only when both readers call it a read:
-//! the model's `effect` and `sbm_parser::command_risk`. Anything else waits
-//! for the account to confirm it — a plan it approved covers the commands
-//! the plan listed, word for word — and a command that cannot be undone asks
-//! for the machine's name to be typed, plan or not. A sudo password is asked
+//! `ask_user`. The admin's command rules come first; then a command runs
+//! unasked when both readers call it a read: the model's `effect` and
+//! `sbm_parser::command_risk`. Anything else goes by the task's mode
+//! (`permissions`): asked, judged by the model, or run — a plan the account
+//! approved covers the commands the plan listed, word for word — and outside
+//! `bypass` a command that cannot be undone asks for the machine's name to
+//! be typed, plan or not. A sudo password is asked
 //! for when needed, used on sudo's stdin only, and kept in memory for 15
 //! minutes when the account says so; never written anywhere.
 //!
@@ -33,9 +35,12 @@
 //! Tasks are the account's own; nobody else lists, reads or answers them.
 
 mod command;
+pub mod files;
 mod memory;
 pub mod config;
+pub mod permissions;
 mod prompt;
+mod search;
 mod tools;
 
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -53,6 +58,7 @@ use tokio::sync::{broadcast, oneshot};
 
 use crate::api::server::AppState;
 
+pub use search::SearchKind;
 pub use tools::{PlanStep, Choice};
 
 /// Kept in memory after the account said so, then asked again.
@@ -116,6 +122,8 @@ pub struct FlowView {
     /// What it is doing, or what it did.
     pub line: String,
     pub areas: Vec<String>,
+    /// The permission mode it was started in (`permissions`).
+    pub mode: permissions::Mode,
     pub created_at: String,
     pub updated_at: String,
     pub started_at: Option<String>,
@@ -129,6 +137,15 @@ pub struct FlowView {
     /// The last lines of the running command, while there is one.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub tail: Vec<(u8, String)>,
+}
+
+/// What starts a task.
+pub struct NewTask {
+    pub prompt: String,
+    /// Absent is the machine's default.
+    pub mode: Option<permissions::Mode>,
+    /// Uploads ([`files::Files::put`]) it is given.
+    pub files: Vec<String>,
 }
 
 /// One step (a tool call) as a list shows it.
@@ -231,7 +248,8 @@ pub(crate) struct Flow {
     secure: Mutex<bool>,
     view: Mutex<FlowView>,
     pending: Mutex<Option<Pending>>,
-    replies: Mutex<VecDeque<String>>,
+    /// Turns typed while it runs: text and pi `ImageContent` parts.
+    replies: Mutex<VecDeque<(String, Option<Value>)>>,
     /// Commands a plan the account approved listed.
     approved: Mutex<HashSet<String>>,
     output: Mutex<Option<LiveOutput>>,
@@ -275,7 +293,10 @@ pub struct AgentMode {
     /// and a reply to it never open it twice.
     opening: tokio::sync::Mutex<()>,
     flows: Mutex<HashMap<String, Arc<Flow>>>,
-    queue: Mutex<VecDeque<(String, String)>>,
+    /// Tasks waiting their turn: the id and its first prompt (text and pi
+    /// `ImageContent` parts).
+    queue: Mutex<VecDeque<(String, String, Option<Value>)>>,
+    pub files: files::Files,
     max_running: AtomicI64,
     events: broadcast::Sender<AgentEvent>,
     /// By account id: the password, when it was given, and the account's name.
@@ -283,6 +304,11 @@ pub struct AgentMode {
     /// By account id: its memory, one per account so its changes are made
     /// one at a time.
     memories: Mutex<HashMap<i64, Arc<Memory>>>,
+    /// Searches not yet carried into a task, by session id.
+    searches: Mutex<HashMap<String, search::SearchEntry>>,
+    /// By account id: its running search, to end when it searches again.
+    search_runs: Mutex<HashMap<i64, (u64, Cancel)>>,
+    search_seq: std::sync::atomic::AtomicU64,
     hostname: String,
 }
 
@@ -311,6 +337,7 @@ impl AgentMode {
             .expect("a valid HTTP client");
         Self {
             db,
+            files: files::Files::new(&dir),
             store: Arc::new(DirectoryStore::new(dir)),
             owned,
             fetch: Arc::new(ReqwestFetch::new(client)),
@@ -323,6 +350,9 @@ impl AgentMode {
             events: broadcast::channel(1024).0,
             sudo: Mutex::default(),
             memories: Mutex::default(),
+            searches: Mutex::default(),
+            search_runs: Mutex::default(),
+            search_seq: std::sync::atomic::AtomicU64::new(0),
             hostname: hostname::get().map(|h| h.to_string_lossy().into_owned()).unwrap_or_else(|_| "localhost".into()),
         }
     }
@@ -341,6 +371,11 @@ impl AgentMode {
             .entry(user)
             .or_insert_with(|| Arc::new(Memory::new(Arc::new(memory::DbMemory { db: self.db.clone(), user_id: user }))))
             .clone()
+    }
+
+    /// The built-in auto mode lists, for this machine.
+    pub fn auto_defaults(&self) -> Value {
+        permissions::defaults(&self.hostname, &prompt::os_name(), &prompt::system_user())
     }
 
     pub fn hostname(&self) -> &str {
@@ -369,6 +404,7 @@ impl AgentMode {
         .execute(&self.db)
         .await?;
         let known: HashSet<String> = sqlx::query_scalar("SELECT id FROM agent_flow").fetch_all(&self.db).await?.into_iter().collect();
+        self.files.recover(&known).await;
         let Ok(mut dirs) = tokio::fs::read_dir(self.store.root().join("sessions")).await else { return Ok(()) };
         while let Some(d) = dirs.next_entry().await? {
             let Ok(mut files) = tokio::fs::read_dir(d.path()).await else { continue };
@@ -485,7 +521,7 @@ impl AgentMode {
 
     pub async fn list(&self, user: i64) -> Result<Vec<FlowView>, sqlx::Error> {
         let rows = sqlx::query_as::<_, Row>(
-            "SELECT id, title, status, line, areas, created_at, updated_at, started_at, finished_at FROM agent_flow \
+            "SELECT id, title, status, line, areas, mode, created_at, updated_at, started_at, finished_at FROM agent_flow \
              WHERE user_id = ? ORDER BY updated_at DESC",
         )
         .bind(user)
@@ -506,7 +542,7 @@ impl AgentMode {
             return Ok(Some(f.view()));
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT id, title, status, line, areas, created_at, updated_at, started_at, finished_at FROM agent_flow \
+            "SELECT id, title, status, line, areas, mode, created_at, updated_at, started_at, finished_at FROM agent_flow \
              WHERE user_id = ? AND id = ?",
         )
         .bind(user)
@@ -561,25 +597,46 @@ impl AgentMode {
     // -------------------------------------------------------------------------
     // Starting, replying, answering, stopping
 
-    /// Starts a task for [user] with [prompt]. Answers its row; it runs when
-    /// its turn comes.
-    pub async fn start(self: &Arc<Self>, state: &Arc<AppState>, user: i64, username: &str, secure: bool, prompt: String) -> Result<FlowView, FlowError> {
+    /// Starts [task] for [user]. Answers its row; it runs when its turn
+    /// comes.
+    pub async fn start(self: &Arc<Self>, state: &Arc<AppState>, user: i64, username: &str, secure: bool, task: NewTask) -> Result<FlowView, FlowError> {
+        let NewTask { prompt, mode, files: file_ids } = task;
         if config::load(&self.db).await?.model.is_none() {
             return Err(FlowError::NotConfigured);
         }
+        let perms = permissions::load(&self.db).await?;
+        let mode = mode.unwrap_or(perms.default_mode);
+        if perms.mode_for(mode) != mode {
+            return Err(FlowError::Invalid("bypassDisabled"));
+        }
+        if !self.files.has(user, &file_ids) {
+            return Err(FlowError::Invalid("unknownFile"));
+        }
         let id = uuid_v4();
         let now = chrono::Utc::now().to_rfc3339();
-        let title = first_line(&prompt, MAX_TITLE_CHARS);
-        sqlx::query(
-            "INSERT INTO agent_flow (id, user_id, title, status, line, areas, created_at, updated_at) VALUES (?, ?, ?, 'queued', '', '[]', ?, ?)",
+        let attached = self.attach(user, &id, &file_ids).await?;
+        let named = match attached.first() {
+            Some(f) if prompt.trim().is_empty() => f.name.clone(),
+            _ => prompt.clone(),
+        };
+        let title = first_line(&named, MAX_TITLE_CHARS);
+        let (text, images) = files::compose(&prompt, &attached, true).await;
+        let inserted = sqlx::query(
+            "INSERT INTO agent_flow (id, user_id, title, status, line, areas, mode, created_at, updated_at) \
+             VALUES (?, ?, ?, 'queued', '', '[]', ?, ?, ?)",
         )
         .bind(&id)
         .bind(user)
         .bind(&title)
+        .bind(mode.as_str())
         .bind(&now)
         .bind(&now)
         .execute(&self.db)
-        .await?;
+        .await;
+        if let Err(e) = inserted {
+            self.files.remove_task(&id).await;
+            return Err(e.into());
+        }
         self.trim(user).await?;
         let view = FlowView {
             id: id.clone(),
@@ -587,6 +644,7 @@ impl AgentMode {
             status: Status::Queued,
             line: String::new(),
             areas: Vec::new(),
+            mode,
             created_at: now.clone(),
             updated_at: now,
             started_at: None,
@@ -610,10 +668,10 @@ impl AgentMode {
             cancel: Mutex::new(Cancel::new()),
         });
         self.flows.lock().unwrap().insert(id.clone(), flow.clone());
-        self.queue.lock().unwrap().push_back((id.clone(), prompt.clone()));
+        self.queue.lock().unwrap().push_back((id.clone(), text, images));
         self.emit(user, json!({ "type": "flow", "flow": view }));
         self.schedule(state);
-        self.name_later(user, id, prompt);
+        self.name_later(user, id, named);
         Ok(flow.view())
     }
 
@@ -666,13 +724,40 @@ impl AgentMode {
         });
     }
 
-    /// Something the account typed into a task: the answer to what it waits
-    /// on when it waits for words, a turn after the current one while it
-    /// runs, and a new run of a finished task.
-    pub async fn reply(self: &Arc<Self>, state: &Arc<AppState>, user: i64, username: &str, secure: bool, id: &str, text: String) -> Result<FlowView, FlowError> {
+    async fn attach(&self, user: i64, flow: &str, ids: &[String]) -> Result<Vec<files::Attached>, FlowError> {
+        self.files.attach(user, flow, ids).await.map_err(|e| match e {
+            files::FileError::TooMany => FlowError::Invalid("tooManyFiles"),
+            files::FileError::Unknown => FlowError::Invalid("unknownFile"),
+            files::FileError::Io(e) => FlowError::Other(anyhow::anyhow!("attaching files: {e}")),
+        })
+    }
+
+    /// Something the account typed into a task, with the uploads [file_ids]:
+    /// the answer to what it waits on when it waits for words, a turn after
+    /// the current one while it runs, and a new run of a finished task.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn reply(
+        self: &Arc<Self>,
+        state: &Arc<AppState>,
+        user: i64,
+        username: &str,
+        secure: bool,
+        id: &str,
+        text: String,
+        file_ids: Vec<String>,
+    ) -> Result<FlowView, FlowError> {
+        if !self.files.has(user, &file_ids) {
+            return Err(FlowError::Invalid("unknownFile"));
+        }
         if let Some(flow) = self.active(user, id) {
             *flow.secure.lock().unwrap() = secure;
             let kind = flow.pending.lock().unwrap().as_ref().map(|p| (p.view.kind, p.view.id.clone()));
+            if matches!(kind, Some((k, _)) if !matches!(k, "confirm" | "danger" | "clarify")) {
+                return Err(FlowError::Busy);
+            }
+            let attached = self.attach(user, id, &file_ids).await?;
+            // An answer is a tool's result, which carries no images.
+            let (text, images) = files::compose(&text, &attached, kind.is_none()).await;
             match kind {
                 Some(("confirm", pid)) | Some(("danger", pid)) => {
                     self.answer_flow(&flow, Answer { id: pid, action: "edit".into(), text: Some(text), index: None, password: None, remember: false, confirm: None })?;
@@ -681,7 +766,7 @@ impl AgentMode {
                     self.answer_flow(&flow, Answer { id: pid, action: "text".into(), text: Some(text), index: None, password: None, remember: false, confirm: None })?;
                 }
                 Some(_) => return Err(FlowError::Busy),
-                None => flow.replies.lock().unwrap().push_back(text),
+                None => flow.replies.lock().unwrap().push_back((text, images)),
             }
             return Ok(flow.view());
         }
@@ -689,6 +774,11 @@ impl AgentMode {
         if config::load(&self.db).await?.model.is_none() {
             return Err(FlowError::NotConfigured);
         }
+        if self.flows.lock().unwrap().contains_key(id) {
+            return Err(FlowError::Busy);
+        }
+        let attached = self.attach(user, id, &file_ids).await?;
+        let (text, images) = files::compose(&text, &attached, true).await;
         let flow = Arc::new(Flow {
             id: id.to_string(),
             user_id: user,
@@ -710,7 +800,7 @@ impl AgentMode {
             }
             flows.insert(id.to_string(), flow.clone());
         }
-        self.queue.lock().unwrap().push_back((id.to_string(), text));
+        self.queue.lock().unwrap().push_back((id.to_string(), text, images));
         self.persist(&flow).await;
         self.schedule(state);
         Ok(flow.view())
@@ -746,7 +836,7 @@ impl AgentMode {
         let queued = {
             let mut q = self.queue.lock().unwrap();
             let before = q.len();
-            q.retain(|(qid, _)| qid != id);
+            q.retain(|(qid, _, _)| qid != id);
             q.len() != before
         };
         if queued {
@@ -777,6 +867,7 @@ impl AgentMode {
     async fn remove_stored(&self, user: i64, id: &str) -> Result<bool, FlowError> {
         let gone = sqlx::query("DELETE FROM agent_flow WHERE user_id = ? AND id = ?").bind(user).bind(id).execute(&self.db).await?.rows_affected() > 0;
         if gone {
+            self.files.remove_task(id).await;
             let _open = self.opening.lock().await;
             let rt = self.runtime().await?;
             if let Err(e) = rt.delete_session(id).await {
@@ -799,7 +890,7 @@ impl AgentMode {
             if self.running() >= self.max_running.load(Ordering::Relaxed) {
                 return;
             }
-            let Some((id, text)) = self.queue.lock().unwrap().pop_front() else { return };
+            let Some((id, text, images)) = self.queue.lock().unwrap().pop_front() else { return };
             let Some(flow) = self.flows.lock().unwrap().get(&id).cloned() else { continue };
             {
                 let mut v = flow.view.lock().unwrap();
@@ -807,13 +898,13 @@ impl AgentMode {
                 v.started_at = Some(chrono::Utc::now().to_rfc3339());
             }
             let (this, state) = (self.clone(), state.clone());
-            tokio::spawn(async move { this.drive(state, flow, text).await });
+            tokio::spawn(async move { this.drive(state, flow, text, images).await });
         }
     }
 
-    async fn drive(self: Arc<Self>, state: Arc<AppState>, flow: Arc<Flow>, first: String) {
+    async fn drive(self: Arc<Self>, state: Arc<AppState>, flow: Arc<Flow>, first: String, images: Option<Value>) {
         self.persist(&flow).await;
-        let outcome = self.run(&state, &flow, first).await;
+        let outcome = self.run(&state, &flow, first, images).await;
         // Closed before the task leaves the active set, under the lock a
         // read takes, so a read never opens it alongside.
         {
@@ -845,7 +936,7 @@ impl AgentMode {
         self.schedule(&state);
     }
 
-    async fn run(&self, state: &Arc<AppState>, flow: &Arc<Flow>, first: String) -> Result<Outcome, FlowError> {
+    async fn run(&self, state: &Arc<AppState>, flow: &Arc<Flow>, first: String, images: Option<Value>) -> Result<Outcome, FlowError> {
         let settings = config::load(&self.db).await?;
         let Some(model) = settings.model else { return Err(FlowError::NotConfigured) };
         let rt = self.runtime().await?;
@@ -874,12 +965,12 @@ impl AgentMode {
             self.forward(flow.clone(), events);
             session
         };
-        let mut text = first;
+        let (mut text, mut images) = (first, images);
         loop {
             if flow.cancel_token().is_cancelled() {
                 return Ok(Outcome::Done);
             }
-            let result = session.prompt(&text, None).await?;
+            let result = session.prompt(&text, images.take()).await?;
             match result["status"].as_str() {
                 Some("failed") => {
                     let why = result["error"]["message"].as_str().unwrap_or("failed").to_string();
@@ -890,7 +981,7 @@ impl AgentMode {
             }
             let next = flow.replies.lock().unwrap().pop_front();
             match next {
-                Some(t) => text = t,
+                Some((t, i)) => (text, images) = (t, i),
                 None => return Ok(Outcome::Done),
             }
         }
@@ -1151,6 +1242,7 @@ struct Row {
     status: String,
     line: String,
     areas: String,
+    mode: String,
     created_at: String,
     updated_at: String,
     started_at: Option<String>,
@@ -1165,6 +1257,7 @@ impl Row {
             status: Status::parse(&self.status),
             line: self.line,
             areas: serde_json::from_str(&self.areas).unwrap_or_default(),
+            mode: permissions::Mode::parse(&self.mode),
             created_at: self.created_at,
             updated_at: self.updated_at,
             started_at: self.started_at,

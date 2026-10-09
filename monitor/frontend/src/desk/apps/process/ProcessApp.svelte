@@ -63,6 +63,12 @@
 
   const life = useLifecycle()
 
+  /// Opened for one process (the desk's search): filtered to it.
+  $effect(() => {
+    const q = (win.appState as { query?: unknown } | null)?.query
+    if (typeof q === 'string') untrack(() => (query = q))
+  })
+
   /// The order another app opened this window for (Status's CPU tile).
   function asked(): ProcessSortMode | undefined {
     const want = (win.appState as { sort?: unknown } | null)?.sort

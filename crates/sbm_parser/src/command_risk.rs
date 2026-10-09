@@ -80,7 +80,7 @@ static MUTATING: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 
 static READ_ONLY_STARTS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     all(&[
-        r"^(ls|pwd|whoami|id|groups|uname|hostname|uptime|date|cal)\b",
+        r"^(ls|pwd|whoami|id|groups|uname|hostname|uptime|date|cal|echo|printf|true)\b",
         r"^(cat|head|tail|less|more|grep|egrep|fgrep|rg|awk|cut|sort|uniq|wc|tr|sed)\b",
         r"^(df|du|free|vmstat|iostat|mpstat|top|ps|pgrep|lsof|stat|file|readlink|realpath)\b",
         r"^(lsblk|findmnt|blkid|lscpu|lspci|lsusb|lsmod|nproc|getent|printenv|who|w|last|sensors|arch|tty)\b",
@@ -102,7 +102,8 @@ static READ_ONLY_STARTS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 static SUDO: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^sudo\s+").unwrap());
 static ENV_PREFIX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(env\s+)?([a-z_][a-z0-9_]*=[^\s]+\s+)+").unwrap());
 static FD_DUP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d*>&\d+").unwrap());
-static CHAIN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"&&|\|\||[;\r\n]|&").unwrap());
+static CHAIN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"&&|\|\||[;\r\n]").unwrap());
+static BACKGROUND: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"&").unwrap());
 /// `apt-get -s upgrade` and the like: a simulation, nothing else on the line.
 static SIMULATED_APT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"^(sudo\s+)?apt(-get)?\s+(-s|--simulate|--dry-run|--just-print|--no-act)(\s+[a-z0-9.:+=_-]+)*\s*$").unwrap()
@@ -139,13 +140,19 @@ pub fn classify(command: &str) -> CommandRisk {
     if MUTATING.iter().any(|p| p.is_match(&normalized)) {
         return CommandRisk::Caution;
     }
-    // A chain is not taken apart, so nothing can be said about it — not even
-    // that it changes something.
-    if CHAIN.is_match(&FD_DUP.replace_all(&normalized, "")) {
+    // A chain reads when every command in it does. The writes, redirections,
+    // substitutions and shells above were looked for in the whole line; what
+    // is left is where each command starts. A separator inside quotes splits
+    // too, which can only add starts to check, never hide one. Something sent
+    // to the background (`&`) is not taken apart.
+    let line = FD_DUP.replace_all(&normalized, "");
+    if BACKGROUND.is_match(&line.replace("&&", "")) {
         return CommandRisk::Unknown;
     }
-    let segments: Vec<&str> = normalized.split('|').collect();
-    if segments.iter().all(|s| !s.trim().is_empty() && read_only_segment(s)) {
+    let commands: Vec<&str> = CHAIN.split(&line).map(str::trim).filter(|c| !c.is_empty()).collect();
+    if !commands.is_empty()
+        && commands.iter().all(|c| c.split('|').all(|s| !s.trim().is_empty() && read_only_segment(s)))
+    {
         return CommandRisk::ReadOnly;
     }
     CommandRisk::Unknown
@@ -244,8 +251,29 @@ mod tests {
 
     #[test]
     fn what_is_not_recognised_is_not_called_a_read() {
-        check(&["sleep 10", "ls && pwd", "openssl version", "uptime; id", "foo | grep x"], Unknown);
+        check(&["sleep 10", "openssl version", "foo | grep x", "ls; foo", "uptime && sleep 1", "ls & pwd", "ps aux &"], Unknown);
         assert_eq!(classify("   "), Caution);
+    }
+
+    #[test]
+    fn a_chain_reads_when_every_command_in_it_does() {
+        check(
+            &[
+                "ls && pwd",
+                "uptime; id",
+                "systemctl list-units --all --no-pager | grep -i nginx; ps -eo pid,args | grep -i '[n]ginx'; \
+                 find /etc /var/log -maxdepth 3 -iname '*nginx*' -print 2>/dev/null",
+                "ls\npwd",
+                "printf '--- conf ---'; ls -l /etc/systemd/journald.conf 2>/dev/null",
+                "echo ok",
+            ],
+            ReadOnly,
+        );
+        assert_eq!(classify("df -h || true_not_here"), Unknown);
+        // A separator in quotes splits too: what follows it is not a known
+        // start, so the line is not called a read.
+        assert_eq!(classify("grep 'a;b' /etc/hosts"), Unknown);
+        check(&["ls; touch x", "cat a; cat $(id)", "ps; kill 1", "ls; ls > /tmp/x"], Caution);
     }
 
     #[test]

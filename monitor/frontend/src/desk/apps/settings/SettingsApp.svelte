@@ -12,6 +12,7 @@
   import AccountSection from './AccountSection.svelte'
   import AgentSection from './AgentSection.svelte'
   import AgentMemoryPage from './AgentMemoryPage.svelte'
+  import AgentPermissionsPage from './AgentPermissionsPage.svelte'
   import AgentProviderPage from './AgentProviderPage.svelte'
   import AppearanceSection from './AppearanceSection.svelte'
   import AppPage from './AppPage.svelte'
@@ -77,6 +78,11 @@
     if (st?.page !== 'memory') return null
     return { file: typeof st.file === 'string' ? st.file : null }
   })
+  /// How commands are approved, a page over Agent (`{ section: 'agent', page: 'permissions' }`).
+  const agentPermissions = $derived(current === 'agent' && (win.appState as { page?: unknown } | null)?.page === 'permissions')
+  function openPermissions() {
+    win.setAppState({ section: 'agent', page: 'permissions' })
+  }
   function openMemory(file: string | null = null) {
     win.setAppState(file === null ? { section: 'agent', page: 'memory' } : { section: 'agent', page: 'memory', file })
   }
@@ -163,19 +169,23 @@
       ? `apps/${appPage.id}`
       : storePage
         ? 'appearance/store'
-        : agentMemory
+        : agentPermissions
+          ? 'agent/permissions'
+          : agentMemory
           ? agentMemory.file === null
             ? 'agent/memory'
             : `agent/memory/${agentMemory.file}`
           : agentProvider
             ? `agent/${agentProvider}`
             : current}
-    depth={appPage || storePage ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
+    depth={appPage || storePage || agentPermissions ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
     back={appPage
       ? { key: 'apps', go: leaveApp }
       : storePage
         ? { key: 'appearance', go: leaveStore }
-        : agentMemory
+        : agentPermissions
+          ? { key: 'agent', go: () => show('agent') }
+          : agentMemory
           ? agentMemory.file === null
             ? { key: 'agent', go: () => show('agent') }
             : { key: 'agent/memory', go: () => openMemory() }
@@ -202,6 +212,8 @@
     <AccountSection />
   {:else if current === 'server'}
     <ServerSection />
+  {:else if current === 'agent' && agentPermissions}
+    <AgentPermissionsPage onback={() => show('agent')} />
   {:else if current === 'agent' && agentMemory}
     <AgentMemoryPage
       file={agentMemory.file}
@@ -211,7 +223,7 @@
   {:else if current === 'agent' && agentProvider}
     <AgentProviderPage provider={agentProvider} onback={() => show('agent')} onopen={openProvider} />
   {:else if current === 'agent'}
-    <AgentSection onprovider={openProvider} onmemory={() => openMemory()} />
+    <AgentSection onprovider={openProvider} onmemory={() => openMemory()} onpermissions={openPermissions} />
   {:else}
     <AccessSection />
   {/if}
