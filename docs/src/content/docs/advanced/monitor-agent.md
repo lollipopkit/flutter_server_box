@@ -241,7 +241,8 @@ admin edits from the App or the panel. See
 [Accounts and permissions](#accounts-and-permissions).
 
 The editor never returns stored secrets such as ServerChan or Bark keys, an
-iOS push token, or an `Authorization` header. It shows that each value is
+iOS push token, an `Authorization` header, an SMTP password, a Telegram bot
+token, a Discord webhook URL, or an ntfy token. It shows that each value is
 *set* while leaving the field empty. Leave it empty to keep the existing
 secret, or enter a replacement.
 
@@ -528,6 +529,36 @@ App does not need to stay in the foreground:
 - **Home-screen widgets**: Configure the server in the App after installing Monitor agent. The widget selects from the server list published by the App; you do not enter a URL manually.
 - **Watch app**: It can show only servers with Monitor agent configured. These servers sync by default, and you can exclude individual servers in the iOS settings.
 - **Push alerts**: A rule decides when to alert and a channel decides where it goes — `[[monitoring.rules]]` and `[[push]]` in `config.toml`, or the same two lists in the App and the web panel, where a channel also has a **Send a test** button. See [Alert rules](#alert-rules) for how a rule is written.
+
+## Notification channels
+
+A `[[push]]` entry has a `name`, a `push_type` and that type's settings.
+`{{message}}` and `{{name}}` (this server's name) are replaced in the text
+fields. Every type is listed in
+[`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml).
+
+| `push_type` | Required | Optional |
+| --- | --- | --- |
+| `webhook` | `url` | `method`, `headers`, `body_template` |
+| `serverchan` | `sc_key` | `title`, `desp` |
+| `bark` | `key` | `server`, `title`, `subtitle`, `body`, `markdown`, `level`, `volume`, `badge`, `sound`, `icon`, `image`, `group`, `url`, `copy`, `auto_copy`, `call`, `is_archive`, `ttl`, `action`, `cipher_key` |
+| `ios` | `token` | `title`, `content` |
+| `smtp` | `host`, `from`, `to` | `port`, `security`, `username`, `password`, `subject`, `body` |
+| `telegram` | `bot_token`, `chat_id` | `text`, `parse_mode`, `message_thread_id`, `disable_notification`, `disable_link_preview`, `api_base` |
+| `discord` | `webhook_url` | `content`, `username`, `avatar_url`, `thread_id` |
+| `ntfy` | `topic` | `server`, `title`, `message`, `priority`, `tags`, `click`, `icon`, `attach`, `delay`, `email`, `markdown`, `token`, `username`, `password` |
+
+- **Bark**: with `cipher_key` set, the notification is encrypted with AES-CBC
+  (a 16, 24 or 32 character key for AES-128/192/256). Enter the same key and
+  algorithm under Push Encryption in the Bark app. Only the device key and the
+  ciphertext reach the Bark server.
+- **SMTP**: `security` is `starttls` (port 587, the default), `tls` (465) or
+  `none` (25). With `none`, a password is accepted only for a server on the
+  same machine. `to` takes several addresses, comma-separated.
+- **Telegram**: with `parse_mode`, the message and the server name are escaped
+  for that mode, so only your own `text` is read as markup.
+- **Discord**: mentions in the text, such as `@everyone`, do not notify
+  anyone.
 
 ## Alert rules
 

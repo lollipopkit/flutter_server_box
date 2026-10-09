@@ -190,7 +190,7 @@ agent 从二进制文件所在目录读取 `config.toml`。所有可用配置项
 
 只有 admin 账号能查看和修改这些设置。JWT secret、`database_url` 和 `[remote_access]`（是否允许明文、文件 roots、SSH 地址和各项限额）只能通过配置文件修改。账号能做什么不属于这两处：它由账号的角色决定，由 admin 在 App 或面板中编辑，详见[账号和权限](#账号和权限)。
 
-编辑器不会返回文件中已保存的 secret，例如 ServerChan key、Bark key、iOS push token 或 `Authorization` header。界面会显示“已设置”，但输入框保持为空。留空表示保留原值；输入新值则会替换。
+编辑器不会返回文件中已保存的 secret，例如 ServerChan key、Bark key、iOS push token、`Authorization` header、SMTP 密码、Telegram bot token、Discord webhook URL 或 ntfy token。界面会显示“已设置”，但输入框保持为空。留空表示保留原值；输入新值则会替换。
 
 通知渠道、告警规则、采集间隔、数据保留和允许来源需要重启 agent 后生效。扩展采集周期和两个闲置暂停设置会立即生效。App 会标明哪些配置需要重启。
 
@@ -353,6 +353,26 @@ Monitor HTTP 连接不支持 SFTP：SFTP 运行在 SSH channel 上。文件 API 
 - **主屏幕小组件**：安装 Monitor agent 后，在 App 中配置服务器；小组件从 App 发布的服务器列表中选择目标，不需要手动填写 URL。
 - **Watch App**：只能显示已配置 Monitor agent 的服务器。默认会同步这些服务器，也可以在 iOS 设置中排除指定服务器。
 - **推送告警**：规则决定何时告警，渠道决定发往哪里 —— 即 `config.toml` 中的 `[[monitoring.rules]]` 和 `[[push]]`，也可以在 App 和网页面板里编辑这两个列表，渠道还带一个 **发送测试** 按钮。规则怎么写见 [告警规则](#告警规则)。
+
+## 通知渠道
+
+每个 `[[push]]` 条目包含 `name`、`push_type` 和该类型的设置。文本字段中的 `{{message}}` 和 `{{name}}`（本服务器的名称）会被替换。所有类型的示例见 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml)。
+
+| `push_type` | 必填 | 可选 |
+| --- | --- | --- |
+| `webhook` | `url` | `method`、`headers`、`body_template` |
+| `serverchan` | `sc_key` | `title`、`desp` |
+| `bark` | `key` | `server`、`title`、`subtitle`、`body`、`markdown`、`level`、`volume`、`badge`、`sound`、`icon`、`image`、`group`、`url`、`copy`、`auto_copy`、`call`、`is_archive`、`ttl`、`action`、`cipher_key` |
+| `ios` | `token` | `title`、`content` |
+| `smtp` | `host`、`from`、`to` | `port`、`security`、`username`、`password`、`subject`、`body` |
+| `telegram` | `bot_token`、`chat_id` | `text`、`parse_mode`、`message_thread_id`、`disable_notification`、`disable_link_preview`、`api_base` |
+| `discord` | `webhook_url` | `content`、`username`、`avatar_url`、`thread_id` |
+| `ntfy` | `topic` | `server`、`title`、`message`、`priority`、`tags`、`click`、`icon`、`attach`、`delay`、`email`、`markdown`、`token`、`username`、`password` |
+
+- **Bark**：设置 `cipher_key` 后，通知内容使用 AES-CBC 加密（16、24 或 32 个字符的 key，分别对应 AES-128/192/256）。在 Bark App 的“推送加密”中填写相同的 key 和算法。Bark 服务器只能收到 device key 和密文。
+- **SMTP**：`security` 可选 `starttls`（587 端口，默认）、`tls`（465）或 `none`（25）。使用 `none` 时，只有服务器在本机才接受密码。`to` 可以填写多个地址，用逗号分隔。
+- **Telegram**：设置 `parse_mode` 后，消息内容和服务器名称会按该模式转义，只有你自己写的 `text` 会被当作标记解析。
+- **Discord**：文本中的提及（例如 `@everyone`）不会通知任何人。
 
 ## 告警规则
 

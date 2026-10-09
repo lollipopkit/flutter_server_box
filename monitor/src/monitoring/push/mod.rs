@@ -105,6 +105,12 @@ impl PushRateLimiter {
     }
 }
 
+mod bark;
+mod discord;
+mod ntfy;
+mod smtp;
+mod telegram;
+
 pub async fn send_notification(config: &Config, push: &PushConfig, message: &str) -> Result<()> {
     let _permit = push_limit()
         .clone()
@@ -115,13 +121,101 @@ pub async fn send_notification(config: &Config, push: &PushConfig, message: &str
         "webhook" => send_webhook_notification(config, push, message).await,
         "serverchan" => send_serverchan_notification(config, push, message).await,
         "server_chan" => send_serverchan_notification(config, push, message).await, // Go compatibility
-        "bark" => send_bark_notification(config, push, message).await,
+        "bark" => bark::send(config, push, message).await,
         "ios" => send_ios_notification(config, push, message).await,
+        "smtp" => smtp::send(config, push, message).await,
+        "telegram" => telegram::send(config, push, message).await,
+        "discord" => discord::send(config, push, message).await,
+        "ntfy" => ntfy::send(config, push, message).await,
         _ => {
             warn!("Unknown push type: {}", push.push_type);
             Ok(())
         }
     }
+}
+
+/// Checks what a channel's sender would refuse at send time, so a save can
+/// report it instead of a rule failing silently later. The required keys and
+/// the credential rules are `api::push`'s; this is what only the sender knows:
+/// a URL that is not http(s), an address that does not parse, a key of the
+/// wrong length, a password that would cross the network in clear.
+pub fn validate(push: &PushConfig) -> std::result::Result<(), String> {
+    let urls: &[&str] = match push.push_type.as_str() {
+        "webhook" => &["url"],
+        "bark" => &["server"],
+        "telegram" => &["api_base"],
+        "discord" => &["webhook_url"],
+        "ntfy" => &["server"],
+        _ => &[],
+    };
+    for key in urls {
+        if let Some(url) = text(push, key)
+            && !(url.starts_with("http://") || url.starts_with("https://"))
+        {
+            return Err(format!("'{}' has a {key} that is not http(s)", push.name));
+        }
+    }
+    let checked = match push.push_type.as_str() {
+        "bark" => bark::validate(push),
+        "smtp" => smtp::validate(push),
+        "telegram" => telegram::validate(push),
+        "discord" => discord::validate(push),
+        "ntfy" => ntfy::validate(push),
+        _ => Ok(()),
+    };
+    checked.map_err(|error| format!("'{}': {error}", push.name))
+}
+
+fn push_error(message: impl Into<String>) -> crate::utils::error::MonitorError {
+    crate::utils::error::MonitorError::Push(message.into())
+}
+
+/// A string setting with something in it. A blank one is how a cleared field
+/// arrives, and every sender treats it as absent so its default applies.
+fn text<'a>(push: &'a PushConfig, key: &str) -> Option<&'a str> {
+    push.config
+        .get(key)
+        .and_then(|value| value.as_str())
+        .filter(|value| !value.trim().is_empty())
+}
+
+fn flag(push: &PushConfig, key: &str) -> Option<bool> {
+    push.config.get(key).and_then(|value| value.as_bool())
+}
+
+fn integer(push: &PushConfig, key: &str) -> Option<i64> {
+    push.config.get(key).and_then(|value| value.as_integer())
+}
+
+/// A list setting given either as a TOML array or as one comma-separated
+/// string, the form a text field in the editors produces.
+fn list(push: &PushConfig, key: &str) -> Vec<String> {
+    match push.config.get(key) {
+        Some(TomlValue::String(value)) => value
+            .split(',')
+            .map(str::trim)
+            .filter(|item| !item.is_empty())
+            .map(str::to_string)
+            .collect(),
+        Some(TomlValue::Array(values)) => values
+            .iter()
+            .filter_map(|value| value.as_str())
+            .map(str::trim)
+            .filter(|item| !item.is_empty())
+            .map(str::to_string)
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+/// Sends a request and reads at most [`MAX_RESPONSE_BYTES`] of the answer,
+/// checked against the channel's expected status and `body_regex`.
+async fn deliver(push: &PushConfig, request: reqwest::RequestBuilder) -> Result<String> {
+    let response = request.send().await?;
+    let status = response.status();
+    let body = response_text_limited(response).await?;
+    validate_response(push, status.as_u16(), &body)?;
+    Ok(body)
 }
 
 async fn send_webhook_notification(config: &Config, push: &PushConfig, message: &str) -> Result<()> {
@@ -258,83 +352,6 @@ async fn send_serverchan_notification(config: &Config, push: &PushConfig, messag
     Ok(())
 }
 
-async fn send_bark_notification(config: &Config, push: &PushConfig, message: &str) -> Result<()> {
-    let client = http_client();
-    
-    // Extract Bark configuration
-    let server = push.config.get("server")
-        .and_then(|v| v.as_str())
-        .unwrap_or("https://api.day.app");
-    let key = push.config.get("key")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing Bark key".to_string()))?;
-    
-    let title = push.config.get("title")
-        .and_then(|v| v.as_str())
-        .unwrap_or("ServerBox Monitor");
-    let body = push.config.get("body")
-        .and_then(|v| v.as_str())
-        .unwrap_or(message);
-    let level = push.config.get("level")
-        .and_then(|v| v.as_str())
-        .unwrap_or("active");
-    
-    let title = replace_template_string(title, message, &config.get_server_name());
-    let body = replace_template_string(body, message, &config.get_server_name());
-    let server = server.trim_end_matches('/');
-    // The Go agent put title and body in the path. Its successor initially
-    // moved title to a query parameter, so retain the original path for data
-    // imported from that agent.
-    let url = if is_legacy_go_push(push) {
-        format!("{server}/{key}/{}/{}", go_url_encode(&title), go_url_encode(&body))
-    } else {
-        format!("{server}/{key}/{}", url_encode(&body))
-    };
-    
-    // Build query parameters
-    let mut query_params = Vec::new();
-    if !is_legacy_go_push(push) {
-        query_params.push(format!("title={}", url_encode(&title)));
-    }
-    
-    // Add level if not default
-    if level != "active" {
-        query_params.push(format!("level={}", level));
-    }
-    
-    // Add optional parameters
-    if let Some(group) = push.config.get("group").and_then(|v| v.as_str()) {
-        query_params.push(format!("group={}", url_encode(group)));
-    }
-    
-    if let Some(sound) = push.config.get("sound").and_then(|v| v.as_str()) {
-        query_params.push(format!("sound={}", url_encode(sound)));
-    }
-    
-    if let Some(icon) = push.config.get("icon").and_then(|v| v.as_str()) {
-        query_params.push(format!("icon={}", url_encode(icon)));
-    }
-    
-    if let Some(url_param) = push.config.get("url").and_then(|v| v.as_str()) {
-        query_params.push(format!("url={}", url_encode(url_param)));
-    }
-    
-    // Build final URL with query parameters
-    let final_url = if !query_params.is_empty() {
-        format!("{}?{}", url, query_params.join("&"))
-    } else {
-        url
-    };
-    
-    let response = client.get(&final_url).send().await?;
-    let status = response.status();
-    let response_text = response_text_limited(response).await?;
-    validate_response(push, status.as_u16(), &response_text)?;
-    info!("Bark notification sent successfully to {}", push.name);
-    
-    Ok(())
-}
-
 async fn send_ios_notification(config: &Config, push: &PushConfig, message: &str) -> Result<()> {
     let client = http_client();
     
@@ -437,10 +454,35 @@ fn replace_template_variables(value: &mut Value, message: &str, server_name: &st
 }
 
 fn replace_template_string(template: &str, message: &str, server_name: &str) -> String {
-    template
-        .replace("{{message}}", message)
-        .replace("{{msg}}", message)
-        .replace("{{name}}", server_name)
+    render(template, message, server_name, |value| value.to_string())
+}
+
+/// Fills `{{message}}` (or `{{msg}}`) and `{{name}}` in one pass, passing each
+/// value through `escape` — for a channel whose text is markup, the values are
+/// plain text and must not be read as any. One pass also means a message that
+/// happens to contain `{{name}}` stays as written.
+fn render(template: &str, message: &str, server_name: &str, escape: impl Fn(&str) -> String) -> String {
+    let mut out = String::with_capacity(template.len() + message.len());
+    let mut rest = template;
+    while let Some(start) = rest.find("{{") {
+        out.push_str(&rest[..start]);
+        let after = &rest[start..];
+        let value = [("{{message}}", message), ("{{msg}}", message), ("{{name}}", server_name)]
+            .into_iter()
+            .find(|(placeholder, _)| after.starts_with(placeholder));
+        match value {
+            Some((placeholder, value)) => {
+                out.push_str(&escape(value));
+                rest = &after[placeholder.len()..];
+            }
+            None => {
+                out.push_str("{{");
+                rest = &after[2..];
+            }
+        }
+    }
+    out.push_str(rest);
+    out
 }
 
 fn validate_response(push: &PushConfig, status: u16, body: &str) -> Result<()> {
@@ -499,7 +541,7 @@ mod tests {
         url
     }
 
-    async fn local_server(status: u16, body: Vec<u8>) -> (String, tokio::task::JoinHandle<Vec<u8>>) {
+    pub(super) async fn local_server(status: u16, body: Vec<u8>) -> (String, tokio::task::JoinHandle<Vec<u8>>) {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let request = tokio::spawn(async move {
@@ -537,6 +579,13 @@ mod tests {
         (format!("http://{addr}"), request)
     }
 
+    /// A captured request's head and its JSON body.
+    pub(super) fn request_json(request: Vec<u8>) -> (String, Value) {
+        let request = String::from_utf8(request).unwrap();
+        let (head, body) = request.split_once("\r\n\r\n").unwrap();
+        (head.to_string(), serde_json::from_str(body).unwrap())
+    }
+
     fn webhook(url: String) -> PushConfig {
         let mut config = toml::Table::new();
         config.insert("url".to_string(), toml::Value::String(url));
@@ -547,10 +596,16 @@ mod tests {
         }
     }
 
-    fn config(server_name: &str) -> Config {
+    pub(super) fn config(server_name: &str) -> Config {
         let mut config = Config::default();
         config.server.as_mut().unwrap().name = Some(server_name.to_string());
         config
+    }
+
+    #[test]
+    fn a_placeholder_inside_the_message_is_left_as_written() {
+        assert_eq!(render("{{name}}: {{msg}}", "see {{name}}", "h", str::to_string), "h: see {{name}}");
+        assert_eq!(render("{{other}} {{", "m", "h", str::to_string), "{{other}} {{");
     }
 
     #[test]
@@ -615,17 +670,4 @@ mod tests {
         assert!(request.starts_with("POST / HTTP/1.1"));
         assert!(request.contains("\"message\":\"legacy-host CPU: 91%\""), "request was {request}");
     }
-
-    #[test]
-    fn a_legacy_bark_push_keeps_title_in_the_path() {
-        let mut config = toml::Table::new();
-        config.insert("legacy_go_format".to_string(), TomlValue::Boolean(true));
-        let push = PushConfig {
-            name: "legacy bark".to_string(),
-            push_type: "bark".to_string(),
-            config,
-        };
-        assert!(is_legacy_go_push(&push));
-    }
-
 }

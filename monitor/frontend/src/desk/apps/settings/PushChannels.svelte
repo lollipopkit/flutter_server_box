@@ -18,6 +18,10 @@
     /// Arrived as `null`: set on the agent and deliberately not disclosed.
     /// Left blank, it goes back as `null`, which the agent reads as "keep".
     withheld: boolean
+    /// Not in the channel's config, offered from its type's template so a
+    /// setting left out before can still be filled in. Left blank, or off for
+    /// a switch, it stays absent and the agent's default applies.
+    optional: boolean
   }
 
   interface HeaderRow {
@@ -47,33 +51,116 @@
     testResult: { ok: boolean; error?: string } | null
   }
 
-  /// What a new channel of each type starts with — the same fields
-  /// `config.example.toml` documents, so a channel added here looks like one
-  /// written by hand. An existing channel is rendered from whatever the agent
-  /// sent instead, so a key this list does not mention is still editable once
-  /// it is in the file.
-  const TEMPLATES: Record<string, Record<string, unknown>> = {
+  type Kind = FieldRow['kind']
+
+  interface Template {
+    /// What a new channel starts with — the same fields `config.example.toml`
+    /// documents, so a channel added here looks like one written by hand.
+    values: Record<string, unknown>
+    /// Settings the type also reads, offered blank.
+    more?: Record<string, Kind>
+  }
+
+  /// Per type. An existing channel is rendered from whatever the agent sent,
+  /// plus the template's keys it does not have, offered blank; a key this list
+  /// does not mention is still editable once it is in the file.
+  const TEMPLATES: Record<string, Template> = {
     webhook: {
-      url: '',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body_template: { message: 'Server {{name}}: {{message}}' },
+      values: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body_template: { message: 'Server {{name}}: {{message}}' },
+      },
     },
-    serverchan: { sc_key: '', title: 'ServerBox Monitor', desp: '{{message}}' },
+    serverchan: { values: { sc_key: '', title: 'ServerBox Monitor', desp: '{{message}}' } },
     bark: {
-      server: 'https://api.day.app',
-      key: '',
-      title: 'ServerBox Monitor',
-      body: '{{message}}',
-      level: 'active',
+      values: {
+        server: 'https://api.day.app',
+        key: '',
+        title: 'ServerBox Monitor',
+        body: '{{message}}',
+        level: 'active',
+      },
+      more: {
+        subtitle: 'string',
+        sound: 'string',
+        group: 'string',
+        icon: 'string',
+        image: 'string',
+        url: 'string',
+        copy: 'string',
+        action: 'string',
+        badge: 'number',
+        volume: 'number',
+        ttl: 'number',
+        markdown: 'boolean',
+        call: 'boolean',
+        auto_copy: 'boolean',
+        is_archive: 'boolean',
+        cipher_key: 'string',
+      },
     },
     ios: {
-      token: '',
-      title: 'ServerBox Monitor',
-      content: '{{message}}',
-      body_regex: '.*',
-      code: 200,
+      values: {
+        token: '',
+        title: 'ServerBox Monitor',
+        content: '{{message}}',
+        body_regex: '.*',
+        code: 200,
+      },
     },
+    smtp: {
+      values: {
+        host: '',
+        security: 'starttls',
+        username: '',
+        password: '',
+        from: '',
+        to: '',
+        subject: 'ServerBox Monitor: {{name}}',
+        body: '{{message}}',
+      },
+      more: { port: 'number' },
+    },
+    telegram: {
+      values: { bot_token: '', chat_id: '', text: '{{name}}: {{message}}' },
+      more: {
+        parse_mode: 'string',
+        message_thread_id: 'number',
+        disable_notification: 'boolean',
+        disable_link_preview: 'boolean',
+        api_base: 'string',
+      },
+    },
+    discord: {
+      values: { webhook_url: '', content: '{{name}}: {{message}}' },
+      // A thread id is a snowflake, past what a number holds exactly.
+      more: { username: 'string', avatar_url: 'string', thread_id: 'string' },
+    },
+    ntfy: {
+      values: { server: 'https://ntfy.sh', topic: '', title: '{{name}}', message: '{{message}}' },
+      more: {
+        priority: 'string',
+        tags: 'string',
+        click: 'string',
+        icon: 'string',
+        attach: 'string',
+        delay: 'string',
+        email: 'string',
+        markdown: 'boolean',
+        token: 'string',
+        username: 'string',
+        password: 'string',
+      },
+    },
+  }
+
+  function kindOf(value: unknown): Kind | null {
+    if (typeof value === 'number') return 'number'
+    if (typeof value === 'boolean') return 'boolean'
+    if (typeof value === 'string') return 'string'
+    return null
   }
 
   let loading = $state(true)
@@ -89,7 +176,7 @@
 
   function toDraft(view: PushView, index: number): Draft {
     return {
-      ...fromConfig(view.config),
+      ...fromConfig(view.config, TEMPLATES[view.push_type]),
       name: view.name,
       push_type: view.push_type,
       from_index: index,
@@ -103,7 +190,7 @@
   /// render. Anything that is not a scalar, `headers`, or a table becomes a
   /// JSON row rather than being dropped — losing a key on load would lose it on
   /// the next save too.
-  function fromConfig(config: Record<string, unknown>): Pick<Draft, 'fields' | 'headers' | 'json'> {
+  function fromConfig(config: Record<string, unknown>, template?: Template): Pick<Draft, 'fields' | 'headers' | 'json'> {
     const fields: FieldRow[] = []
     const json: JsonRow[] = []
     let headers: HeaderRow[] | null = null
@@ -116,16 +203,21 @@
           withheld: header === null,
         }))
       } else if (value === null) {
-        fields.push({ key, value: '', kind: 'string', withheld: true })
+        fields.push({ key, value: '', kind: 'string', withheld: true, optional: false })
       } else if (typeof value === 'object') {
         json.push({ key, text: JSON.stringify(value, null, 2) })
-      } else if (typeof value === 'number') {
-        fields.push({ key, value: String(value), kind: 'number', withheld: false })
-      } else if (typeof value === 'boolean') {
-        fields.push({ key, value: String(value), kind: 'boolean', withheld: false })
       } else {
-        fields.push({ key, value: String(value), kind: 'string', withheld: false })
+        fields.push({ key, value: String(value), kind: kindOf(value) ?? 'string', withheld: false, optional: false })
       }
+    }
+
+    const offered: [string, Kind | null][] = [
+      ...Object.entries(template?.values ?? {}).map(([key, value]): [string, Kind | null] => [key, kindOf(value)]),
+      ...Object.entries(template?.more ?? {}),
+    ]
+    for (const [key, kind] of offered) {
+      if (kind === null || key in config) continue
+      fields.push({ key, value: kind === 'boolean' ? 'false' : '', kind, withheld: false, optional: true })
     }
     return { fields, headers, json }
   }
@@ -146,6 +238,7 @@
       // default behind them, so absent and blank mean the same thing to the
       // agent — and absent is the one that lets the default apply.
       if (field.value === '') continue
+      if (field.optional && field.kind === 'boolean' && field.value === 'false') continue
       if (field.kind === 'number') {
         const parsed = Number(field.value)
         config[field.key] = Number.isFinite(parsed) ? parsed : field.value
@@ -178,6 +271,11 @@
       }
     }
     return config
+  }
+
+  function fromTemplate(type: string): Pick<Draft, 'fields' | 'headers' | 'json'> {
+    const template = TEMPLATES[type]
+    return fromConfig(structuredClone(template?.values ?? {}), template)
   }
 
   function toEntry(draft: Draft): PushEntry {
@@ -221,7 +319,7 @@
         push_type: type,
         from_index: null,
         editable: true,
-        ...fromConfig(structuredClone(TEMPLATES[type] ?? {})),
+        ...fromTemplate(type),
         testing: false,
         testResult: null,
       },
@@ -252,7 +350,7 @@
       // And it is no longer the entry that was loaded from that position, so
       // nothing of the old one may be kept by pointing at it.
       from_index: null,
-      ...fromConfig(structuredClone(TEMPLATES[type] ?? {})),
+      ...fromTemplate(type),
       testResult: null,
     }
   }

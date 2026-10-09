@@ -199,6 +199,10 @@ key = ""
 title = "ServerBox Monitor"
 body = "{{message}}"
 level = "active"
+# Optional: subtitle, sound, group, icon, image, url (opened on tap), copy,
+# badge, volume (0-10, critical level), ttl, action, call / auto_copy /
+# is_archive / markdown (true or false), and cipher_key (16, 24 or 32
+# characters) to encrypt like the app's Push Encryption, AES-CBC.
 
 [[push]]
 name = "ios"
@@ -208,3 +212,42 @@ title = "ServerBox Monitor"
 content = "{{message}}"
 body_regex = ".*"
 code = 200
+
+# [[push]]
+# name = "email"
+# push_type = "smtp"
+# host = "smtp.example.com"
+# security = "starttls"        # starttls (587), tls (465) or none (25)
+# username = "alerts@example.com"
+# password = ""
+# from = "ServerBox <alerts@example.com>"
+# to = "me@example.com"        # several: comma-separated, or an array
+# subject = "ServerBox Monitor: {{name}}"
+# body = "{{message}}"
+
+# [[push]]
+# name = "telegram"
+# push_type = "telegram"
+# bot_token = ""
+# chat_id = ""                 # a number, or @channel
+# text = "{{name}}: {{message}}"
+# parse_mode = "HTML"          # optional: HTML, MarkdownV2, Markdown
+# message_thread_id = 0        # optional: a topic in a forum group
+
+# [[push]]
+# name = "discord"
+# push_type = "discord"
+# webhook_url = ""
+# content = "{{name}}: {{message}}"
+# username = "ServerBox"
+
+# [[push]]
+# name = "ntfy"
+# push_type = "ntfy"
+# server = "https://ntfy.sh"
+# topic = ""
+# title = "{{name}}"
+# message = "{{message}}"
+# priority = "high"            # 1-5 or min, low, default, high, max
+# tags = "warning"
+# token = ""                   # or username + password

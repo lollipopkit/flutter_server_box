@@ -111,6 +111,10 @@ regex = "1.13"
 
 # URL encoding
 percent-encoding = "2.3"
+# Bark's encrypted push (AES-CBC); the versions already in the lockfile.
+aes = "0.9"
+cbc = { version = "0.2", features = ["alloc"] }
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "rustls-platform-verifier"] }
 
 # CLI argument parsing
 clap = { version = "4.6", features = ["derive", "env"] }

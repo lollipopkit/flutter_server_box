@@ -9,7 +9,8 @@
 //! `SettingsPayload`.
 //!
 //! **A credential is write-only.** These entries hold a ServerChan key, a Bark
-//! key, an iOS token, an `Authorization` header — things a panel login could
+//! key, an iOS token, an `Authorization` header, an SMTP password, a Telegram
+//! bot token, a Discord webhook URL, an ntfy token — things a panel login could
 //! not read before this endpoint existed, and the agent's standing position is
 //! that the panel password does not widen what it discloses (`jwt_secret` and
 //! `database_url` are absent from `/settings` for the same reason, and
@@ -51,7 +52,7 @@ use super::authz;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::config::{PushConfig, validate_push_rate};
 use crate::core::config_file;
-use crate::monitoring::push::{PushRateLimiter, send_notification};
+use crate::monitoring::push::{PushRateLimiter, send_notification, validate};
 
 /// The largest request body accepted: every channel at once, since a write
 /// replaces the whole set. A webhook's `body_template` is a document the user
@@ -73,7 +74,9 @@ const TEST_RATE: (usize, Duration) = (6, Duration::from_secs(60));
 /// editors offer them. `server_chan` is the Go agent's spelling of the second
 /// one: still accepted and still written back as it was found, but not offered
 /// for a new channel.
-const OFFERED_TYPES: &[&str] = &["webhook", "serverchan", "bark", "ios"];
+const OFFERED_TYPES: &[&str] = &[
+    "webhook", "serverchan", "bark", "ios", "smtp", "telegram", "discord", "ntfy",
+];
 
 /// Which sender handles `push_type`, or `None` when nothing does.
 ///
@@ -87,6 +90,10 @@ fn canonical_type(push_type: &str) -> Option<&'static str> {
         "serverchan" | "server_chan" => Some("serverchan"),
         "bark" => Some("bark"),
         "ios" => Some("ios"),
+        "smtp" => Some("smtp"),
+        "telegram" => Some("telegram"),
+        "discord" => Some("discord"),
+        "ntfy" => Some("ntfy"),
         _ => None,
     }
 }
@@ -108,14 +115,19 @@ fn secrets(push_type: &str) -> &'static [Secret] {
         // Both spellings: `send_serverchan_notification` reads `sc_key` and
         // falls back to `sckey`, so a file may hold either.
         Some("serverchan") => &[Secret::Key("sc_key"), Secret::Key("sckey")],
-        Some("bark") => &[Secret::Key("key")],
+        Some("bark") => &[Secret::Key("key"), Secret::Key("cipher_key")],
         Some("ios") => &[Secret::Key("token")],
+        Some("smtp") => &[Secret::Key("password")],
+        Some("telegram") => &[Secret::Key("bot_token")],
+        // The URL is the credential: anyone holding it can post.
+        Some("discord") => &[Secret::Key("webhook_url")],
+        Some("ntfy") => &[Secret::Key("token"), Secret::Key("password")],
         _ => &[],
     }
 }
 
-/// The key that decides *where* a channel's credential is sent, for the types
-/// that have one.
+/// The keys that decide *where* a channel's credential is sent, for the types
+/// that have them.
 ///
 /// A withheld credential may be kept only while this is unchanged. Without
 /// that, a caller who cannot read the stored value can still have the agent
@@ -124,25 +136,37 @@ fn secrets(push_type: &str) -> &'static [Secret] {
 /// `Authorization` header goes to whatever `url` names. Keeping the credential
 /// is a claim that the channel is the same channel, and it is not.
 ///
+/// An SMTP password goes to `host` on `port`, in clear when `security` is
+/// `none`, so all three are its destination.
+///
 /// `serverchan` posts to a fixed host and `ios` to a fixed address, so neither
-/// has a destination a request can move.
-fn destination_key(push_type: &str) -> Option<&'static str> {
+/// has a destination a request can move; a Discord webhook URL is itself the
+/// credential.
+fn destination_keys(push_type: &str) -> &'static [&'static str] {
     match canonical_type(push_type) {
-        Some("webhook") => Some("url"),
-        Some("bark") => Some("server"),
-        _ => None,
+        Some("webhook") => &["url"],
+        Some("bark") => &["server"],
+        Some("smtp") => &["host", "port", "security"],
+        Some("telegram") => &["api_base"],
+        Some("ntfy") => &["server"],
+        _ => &[],
     }
 }
 
-/// The keys one of which must hold a value for the channel to deliver
-/// anything. Checked on save so clearing a field is reported then, rather than
-/// leaving a channel that looks configured and silently sends nothing.
-fn required_any_of(push_type: &str) -> &'static [&'static str] {
+/// What must hold a value for the channel to deliver anything: each group is
+/// one requirement, met by any key in it. Checked on save so clearing a field
+/// is reported then, rather than leaving a channel that looks configured and
+/// silently sends nothing.
+fn required(push_type: &str) -> &'static [&'static [&'static str]] {
     match canonical_type(push_type) {
-        Some("webhook") => &["url"],
-        Some("serverchan") => &["sc_key", "sckey"],
-        Some("bark") => &["key"],
-        Some("ios") => &["token"],
+        Some("webhook") => &[&["url"]],
+        Some("serverchan") => &[&["sc_key", "sckey"]],
+        Some("bark") => &[&["key"]],
+        Some("ios") => &[&["token"]],
+        Some("smtp") => &[&["host"], &["from"], &["to"]],
+        Some("telegram") => &[&["bot_token"], &["chat_id"]],
+        Some("discord") => &[&["webhook_url"]],
+        Some("ntfy") => &[&["topic"]],
         _ => &[],
     }
 }
@@ -482,7 +506,11 @@ fn resolve_all(
 
         keep_withheld(&mut entry, existing)?;
         check_required(&entry)?;
-        resolved.push(into_push_config(entry)?);
+        let push = into_push_config(entry)?;
+        // What only the sender knows to refuse: a URL that is not http(s), an
+        // address that does not parse, a password that would go in clear.
+        validate(&push)?;
+        resolved.push(push);
     }
 
     Ok(resolved)
@@ -500,23 +528,23 @@ fn keep_withheld(entry: &mut PushEntry, existing: &[PushConfig]) -> Result<(), S
         .filter(|source| canonical_type(&source.push_type) == canonical_type(&entry.push_type));
 
     // Keeping a credential is a claim that this is the same channel, so it may
-    // not arrive with the destination moved — see [`destination_key`]. Checked
+    // not arrive with the destination moved — see [`destination_keys`]. Checked
     // before anything is filled in, and on the presence of a `null` rather than
     // on which key holds it: every `null` here is a withheld credential, which
     // is what the check below the loop enforces.
-    if let Some(key) = destination_key(&entry.push_type)
-        && first_null(&entry.config).is_some()
-    {
-        let submitted = entry.config.get(key).cloned();
-        let stored = source.and_then(|source| source.config.get(key)).and_then(to_json);
-        // A `null` destination is not a move: it is refused below, with the
-        // message about nulls, which is the more useful of the two.
-        if !matches!(submitted, Some(JsonValue::Null)) && submitted != stored {
-            return Err(format!(
-                "'{}' changes its '{key}' while keeping a credential it was not shown; \
-                 send the credential along with the new '{key}'",
-                entry.name
-            ));
+    if first_null(&entry.config).is_some() {
+        for key in destination_keys(&entry.push_type) {
+            let submitted = entry.config.get(*key).cloned();
+            let stored = source.and_then(|source| source.config.get(*key)).and_then(to_json);
+            // A `null` destination is not a move: it is refused below, with the
+            // message about nulls, which is the more useful of the two.
+            if !matches!(submitted, Some(JsonValue::Null)) && submitted != stored {
+                return Err(format!(
+                    "'{}' changes its '{key}' while keeping a credential it was not shown; \
+                     send the credential along with the new '{key}'",
+                    entry.name
+                ));
+            }
         }
     }
 
@@ -613,28 +641,17 @@ fn has_value(value: &JsonValue) -> bool {
 }
 
 fn check_required(entry: &PushEntry) -> Result<(), String> {
-    let required = required_any_of(&entry.push_type);
-    if required.is_empty() {
-        return Ok(());
-    }
-    let present = required
-        .iter()
-        .any(|key| entry.config.get(*key).is_some_and(has_value));
-    if !present {
-        return Err(format!(
-            "'{}' needs {} before it can send anything",
-            entry.name,
-            required.join(" or ")
-        ));
-    }
-
-    // Scheme only, not a parse: this is about not saving a webhook that can
-    // never be requested, and reqwest is the thing that decides the rest.
-    if canonical_type(&entry.push_type) == Some("webhook")
-        && let Some(url) = entry.config.get("url").and_then(JsonValue::as_str)
-        && !(url.starts_with("http://") || url.starts_with("https://"))
-    {
-        return Err(format!("'{}' has a url that is not http(s)", entry.name));
+    for group in required(&entry.push_type) {
+        let present = group
+            .iter()
+            .any(|key| entry.config.get(*key).is_some_and(has_value));
+        if !present {
+            return Err(format!(
+                "'{}' needs {} before it can send anything",
+                entry.name,
+                group.join(" or ")
+            ));
+        }
     }
     Ok(())
 }
@@ -744,7 +761,7 @@ mod tests {
 
     #[test]
     fn an_unknown_type_discloses_nothing() {
-        let view = view(&stored("odd", "telegram", "bot_token = \"secret\""));
+        let view = view(&stored("odd", "matrix", "access_token = \"secret\""));
         assert!(!view.editable);
         assert!(view.config.is_empty(), "no key of an unknown type is known to be safe");
     }
@@ -914,7 +931,7 @@ mod tests {
     #[test]
     fn an_unknown_type_cannot_be_saved() {
         let error = resolve_all(
-            vec![entry("odd", "telegram", serde_json::json!({}), None)],
+            vec![entry("odd", "matrix", serde_json::json!({}), None)],
             &[],
         )
         .expect_err("a type nothing sends through would be silently dead");
@@ -979,6 +996,59 @@ mod tests {
         .expect("what a GET returned is what a PUT accepts");
         assert_eq!(resolved[0].config["legacy_go_format"].as_bool(), Some(true));
         assert_eq!(resolved[0].config["expected_http_status"].as_integer(), Some(204));
+    }
+
+    #[test]
+    fn an_smtp_password_cannot_be_kept_while_its_security_drops() {
+        let existing = vec![stored(
+            "mail",
+            "smtp",
+            "host = \"mail.example.invalid\"\nsecurity = \"starttls\"\nusername = \"u\"\npassword = \"p\"\nfrom = \"a@example.invalid\"\nto = \"b@example.invalid\"",
+        )];
+        let mut config = view(&existing[0]).config;
+        assert_eq!(config["password"], JsonValue::Null);
+        config.insert("security".to_string(), "tls".into());
+        let error = resolve_all(vec![entry("mail", "smtp", JsonValue::Object(config), Some(0))], &existing)
+            .expect_err("the password would go somewhere it was not set for");
+        assert!(error.contains("changes its 'security'"), "{error}");
+    }
+
+    #[test]
+    fn a_discord_webhook_url_is_withheld_and_kept() {
+        let existing = vec![stored("dc", "discord", "webhook_url = \"https://discord.com/api/webhooks/1/secret\"")];
+        let config = view(&existing[0]).config;
+        assert_eq!(config["webhook_url"], JsonValue::Null);
+        let resolved = resolve_all(vec![entry("dc", "discord", JsonValue::Object(config), Some(0))], &existing)
+            .expect("an unchanged channel saves");
+        assert_eq!(
+            resolved[0].config["webhook_url"].as_str(),
+            Some("https://discord.com/api/webhooks/1/secret")
+        );
+    }
+
+    #[test]
+    fn every_required_group_is_checked() {
+        let error = resolve_all(
+            vec![entry("tg", "telegram", serde_json::json!({ "bot_token": "1:a" }), None)],
+            &[],
+        )
+        .expect_err("a bot with nowhere to send");
+        assert!(error.contains("needs chat_id"), "{error}");
+    }
+
+    #[test]
+    fn what_the_sender_would_refuse_is_refused_on_save() {
+        let error = resolve_all(
+            vec![entry(
+                "ntfy",
+                "ntfy",
+                serde_json::json!({ "topic": "alerts", "server": "ftp://example.invalid" }),
+                None,
+            )],
+            &[],
+        )
+        .expect_err("nothing requests an ftp: server");
+        assert!(error.contains("not http(s)"), "{error}");
     }
 
     #[test]
