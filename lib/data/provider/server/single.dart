@@ -144,6 +144,11 @@ class ServerNotifier extends _$ServerNotifier {
   bool _usePersistentShellForStatus = true;
   int _operationGeneration = 0;
 
+  /// The generation [seedHistory] last asked the source for, so each
+  /// connection asks once however many places want the trend. Cleared when
+  /// the asking fails, for the next poll to try again.
+  int? _seededOperation;
+
   /// Last [ShellFunc.statusExt] output, appended to every status refresh's raw
   /// output so its segments don't blank out on the polls in between — see
   /// [_extendedStatusInterval]
@@ -177,6 +182,10 @@ class ServerNotifier extends _$ServerNotifier {
   @override
   ServerState build(String serverId) {
     ref.onDispose(() {
+      // Supersedes whatever is in flight, so it ends at its next
+      // [_isRefreshCurrent] — which compares this before reading `state`,
+      // and reading `state` after disposal throws.
+      _operationGeneration++;
       unawaited(_disposePersistentShell());
       _source?.close();
       try {
@@ -458,6 +467,10 @@ class ServerNotifier extends _$ServerNotifier {
     if (_refreshingOperation == operation) return;
 
     _refreshingOperation = operation;
+    // Alongside the first poll rather than after it: the card in the list
+    // draws the same trend as the page, and built up from live samples alone
+    // its first point waited for two agent cycles — rates need a pair.
+    unawaited(seedHistory());
     try {
       // Somebody pressed Retry, and the first thing they are owed is that it
       // registered. Both paths raise a connecting/loading state of their own,
@@ -812,8 +825,9 @@ class ServerNotifier extends _$ServerNotifier {
   /// Prefills [ServerStatus.history] from whatever trend data the source
   /// already holds, so a freshly opened detail page shows a trend instead of
   /// building one up from scratch. A no-op for sources without
-  /// [ServerCapabilities.storedHistory], and once live samples exist — see
-  /// [StatusHistory.seed].
+  /// [ServerCapabilities.storedHistory]; what is older than the first live
+  /// sample goes before it — see [StatusHistory.seed]. Once per connection:
+  /// [refresh] asks with every poll, and the page again when it opens.
   Future<void> seedHistory({int minutes = 60}) async {
     final generation = _operationGeneration;
     final spi = state.spi;
@@ -822,8 +836,10 @@ class ServerNotifier extends _$ServerNotifier {
     // leading one meant `capabilities.storedHistory` advertised a trend the
     // page then never seeded, and the chart built up from empty exactly where
     // an agent had months of it.
+    if (_seededOperation == generation) return;
     final credential = _historyCredential(spi);
     if (credential == null) return;
+    _seededOperation = generation;
     try {
       // Asking for exactly what the buffer holds. Any more is averaged down
       // on the agent's side instead of being carried here and dropped by
@@ -840,6 +856,7 @@ class ServerNotifier extends _$ServerNotifier {
       updateStatus(_copyStatus(state.status));
     } catch (e, s) {
       if (!_isRefreshCurrent(generation, spi)) return;
+      _seededOperation = null;
       Loggers.app.warning('Seed history for ${spi.name}', e, s);
     }
   }
