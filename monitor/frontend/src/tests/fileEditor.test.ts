@@ -44,12 +44,29 @@ vi.mock('../lib/api', () => {
       fsRename: mocks.fsRename,
       fsChmod: mocks.fsChmod,
       fsRemove: mocks.fsRemove,
+      // The disk line is optional: unread here.
+      getMetrics: () => Promise.reject(new Error('not in this test')),
     },
   }
 })
 
 vi.mock('../lib/saveBlob', () => ({ saveBlob: mocks.saveBlob }))
-vi.mock('../lib/layout.svelte', () => ({ layout: { back: vi.fn() } }))
+
+/// The app is rendered without a window; this is the same no-op handle
+/// `useWindow` falls back to, with the desk side recorded instead.
+const deskMocks = vi.hoisted(() => ({ addPathIcon: vi.fn() }))
+vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../desk/sys/window.svelte')>()),
+  useWindow: () => ({
+    id: 'test',
+    appState: null,
+    setAppState: vi.fn(),
+    setTitle: vi.fn(),
+    addPathIcon: deskMocks.addPathIcon,
+    handlers: () => [],
+  }),
+}))
+
 vi.mock('../lib/servers.svelte', () => ({
   servers: {
     currentId: 'local',
@@ -61,8 +78,8 @@ vi.mock('../lib/capabilities.svelte', () => ({
   capabilitiesStore: { byServer: {} as Record<string, unknown> },
 }))
 
-import Files from '../pages/Files.svelte'
-import FileEditor from '../components/FileEditor.svelte'
+import Files from '../desk/apps/files/FilesApp.svelte'
+import FileEditor from '../desk/apps/files/FileEditor.svelte'
 import { ApiError } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -90,7 +107,6 @@ function setFiles(mode: 'write' | 'read') {
     platform: 'linux',
     grants: {
       shell: { ok: true },
-      ssh_terminal: { ok: true },
       files: { ok: true, mode },
       connect: { ok: true },
       listen: { ok: true },
@@ -100,8 +116,15 @@ function setFiles(mode: 'write' | 'read') {
 
 const textbox = () => screen.getByRole('textbox') as HTMLTextAreaElement
 
+/// The row's actions live in its context menu, which the app builds itself.
+async function chooseAction(name: string, action: string) {
+  await fireEvent.contextMenu(screen.getByText(name))
+  await fireEvent.click(await screen.findByRole('menuitem', { name: action }))
+}
+
 beforeEach(() => {
   for (const fn of Object.values(mocks)) fn.mockReset()
+  deskMocks.addPathIcon.mockReset()
   setFiles('write')
   ;(servers as unknown as { currentId: string }).currentId = 'local'
   mocks.fsRoots.mockResolvedValue({ roots: [ROOT] })
@@ -118,7 +141,7 @@ describe('the Files page opening the editor', () => {
     render(Files)
     await screen.findByText('big.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await chooseAction('big.txt', 'Edit')
 
     expect(mocks.fsRead).not.toHaveBeenCalled()
     expect(await screen.findByText(/too large/)).toBeInTheDocument()
@@ -132,7 +155,7 @@ describe('the Files page opening the editor', () => {
     render(Files)
     await screen.findByText('note.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await chooseAction('note.txt', 'Edit')
 
     expect(await screen.findByText(/not UTF-8 text/)).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).toBeNull()
@@ -146,7 +169,7 @@ describe('the Files page opening the editor', () => {
     render(Files)
     await screen.findByText('note.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await chooseAction('note.txt', 'Edit')
 
     expect(await screen.findByText(/too large/)).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).toBeNull()
@@ -158,9 +181,148 @@ describe('the Files page opening the editor', () => {
     render(Files)
     await screen.findByText('note.txt')
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await chooseAction('note.txt', 'Edit')
 
     expect(await screen.findByRole('textbox')).toHaveValue('one')
+  })
+
+  it('opens a text file in the editor on a double-click', async () => {
+    mocks.fsList.mockResolvedValue([entry()])
+    mocks.fsRead.mockResolvedValue(new Blob(['one']))
+    render(Files)
+    await screen.findByText('note.txt')
+
+    await fireEvent.dblClick(screen.getByText('note.txt'))
+
+    expect(await screen.findByRole('textbox')).toHaveValue('one')
+  })
+})
+
+describe('the Files page moving around', () => {
+  it('enters a folder on a double-click and walks back through the history', async () => {
+    mocks.fsList.mockImplementation(async (path: string) =>
+      path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
+    )
+    render(Files)
+    await screen.findByText('sub')
+
+    await fireEvent.dblClick(screen.getByText('sub'))
+
+    // The folder is empty, so the listing says so rather than showing `sub`.
+    expect(await screen.findByText('Empty folder')).toBeInTheDocument()
+    expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`)
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+    await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(ROOT))
+    expect(await screen.findByText('sub')).toBeInTheDocument()
+  })
+
+  it('a tap on a touch screen enters a folder; a mouse click only selects it', async () => {
+    mocks.fsList.mockImplementation(async (path: string) =>
+      path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
+    )
+    render(Files)
+    const row = (await screen.findByText('sub')).closest('[role=row]')!
+
+    await fireEvent.pointerDown(row, { pointerType: 'mouse' })
+    await fireEvent.click(row)
+    expect(mocks.fsList).toHaveBeenLastCalledWith(ROOT)
+
+    await fireEvent.pointerDown(row, { pointerType: 'touch' })
+    await fireEvent.click(row)
+    await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`))
+  })
+
+  it('Enter enters a folder', async () => {
+    mocks.fsList.mockImplementation(async (path: string) =>
+      path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : [],
+    )
+    render(Files)
+    const row = (await screen.findByText('sub')).closest('[role=row]')!
+    await fireEvent.keyDown(row, { key: 'Enter' })
+    await vi.waitFor(() => expect(mocks.fsList).toHaveBeenLastCalledWith(`${ROOT}/sub`))
+  })
+
+  it('a step back that fails to list leaves the history where the window is', async () => {
+    let fail = false
+    mocks.fsList.mockImplementation(async (path: string) => {
+      if (fail) throw new Error('gone')
+      return path === ROOT ? [entry({ name: 'sub', kind: 'dir', size: null })] : []
+    })
+    render(Files)
+    await fireEvent.dblClick(await screen.findByText('sub'))
+    await screen.findByText('Empty folder')
+
+    fail = true
+    await fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(await screen.findByText('gone')).toBeInTheDocument()
+    // Still able to go back: the failed step did not move the history.
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Forward' })).toBeDisabled()
+  })
+
+  it('hides dot entries unless hidden files are shown', async () => {
+    mocks.fsList.mockResolvedValue([entry({ name: '.bashrc' }), entry({ name: 'note.txt' })])
+    render(Files)
+    await screen.findByText('note.txt')
+    expect(screen.queryByText('.bashrc')).toBeNull()
+    expect(screen.getByText(/^1 items/)).toBeInTheDocument()
+  })
+
+  it('switches between the list and the grid', async () => {
+    mocks.fsList.mockResolvedValue([entry({ mode: 0o644 })])
+    render(Files)
+    await screen.findByText('note.txt')
+
+    // The list carries a permissions column; the grid shows tiles instead.
+    expect(screen.getByText('644')).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'true')
+
+    await fireEvent.click(screen.getByRole('tab', { name: 'Grid' }))
+
+    expect(screen.getByRole('tab', { name: 'Grid' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'List' })).toHaveAttribute('aria-selected', 'false')
+    expect(screen.queryByText('644')).toBeNull()
+    // Still the same folder, just laid out the other way.
+    expect(screen.getByText('note.txt')).toBeInTheDocument()
+  })
+
+  it('opens a row\'s menu from its own button, for pointers that cannot right-click', async () => {
+    mocks.fsList.mockResolvedValue([entry()])
+    render(Files)
+    // Select the row; its menu hangs off the status bar's button.
+    await fireEvent.click(await screen.findByText('note.txt'))
+
+    await fireEvent.click(screen.getByRole('button', { name: 'More actions' }))
+
+    // The same menu the context menu opens, actions and all.
+    expect(await screen.findByRole('menuitem', { name: 'Edit' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument()
+  })
+
+  it('adds a folder to the desk from its menu', async () => {
+    mocks.fsList.mockResolvedValue([entry({ name: 'sub', kind: 'dir', size: null })])
+    render(Files)
+    await screen.findByText('sub')
+
+    await chooseAction('sub', 'Add to desk')
+
+    expect(deskMocks.addPathIcon).toHaveBeenCalledWith(`${ROOT}/sub`, 'sub')
+  })
+
+  it('tells two roots with the same last segment apart', async () => {
+    // Only the last segment fits in a sidebar row, so the pair needs the
+    // parent that separates them; the whole path stays on the tooltip.
+    mocks.fsRoots.mockResolvedValue({ roots: ['/private/tmp', '/var/tmp'] })
+    render(Files)
+    await screen.findByText('tmp — /private')
+
+    expect(screen.getByText('tmp — /var')).toBeInTheDocument()
+    // The sidebar rows' tooltips (the path bar names the root shown too).
+    const titled = (name: string) => screen.getAllByRole('button', { name }).map((b) => b.getAttribute('title'))
+    expect(titled('tmp — /private')).toContain('/private/tmp')
+    expect(titled('tmp — /var')).toContain('/var/tmp')
   })
 })
 

@@ -1,0 +1,328 @@
+<script lang="ts">
+  /// A window's tabs and split panes (an app whose manifest sets `panes`).
+  ///
+  /// Every pane of every tab stays mounted, laid out absolutely in one flat
+  /// list keyed by its id, so a split, a closed neighbour, a tab switch or a
+  /// merge never remounts a pane — a terminal keeps its screen. Panes of
+  /// other tabs are hidden (`visibility`, `inert`) at their size, and run
+  /// in the background. The window shows the focused pane's toolbar,
+  /// sidebar, footer and menus; intents go to it.
+
+  import { untrack, type Component } from 'svelte'
+  import { LL } from '../../i18n/i18n-svelte'
+  import TitleTabs, { type TitleTabsDrag } from '../lk/TitleTabs.svelte'
+  import { viewEnter, viewIn } from '../lk/motion'
+  import { useDesk } from '../deskState.svelte'
+  import { activeTab, dividers, paneRects, type Divider, type Rect } from '../panes'
+  import { useWindow } from '../sys/window.svelte'
+  import PaneSlot from './PaneSlot.svelte'
+  import { PaneHostState } from './paneHostState.svelte'
+
+  interface Props {
+    content: Component
+    /// What a tab is called before its pane names itself.
+    appTitle: string
+  }
+
+  const { content, appTitle }: Props = $props()
+  const desk = useDesk()
+  const parent = useWindow()
+  const host = new PaneHostState(parent)
+  const winChrome = parent.chrome
+
+  // ---- the window shows the focused pane --------------------------------
+
+  if (winChrome) {
+    // With several tabs the tabs are the title (the design system's terminal
+    // tabs): the focused pane's tools stay, its title gives way to them.
+    $effect(() => {
+      const toolbar = host.focusedChrome?.toolbar
+      if (!multiTab) {
+        if (toolbar) return winChrome.pushToolbar(toolbar)
+        return
+      }
+      return winChrome.pushToolbar({
+        get actions() {
+          return host.focusedChrome?.toolbar?.actions
+        },
+        get leading() {
+          return host.focusedChrome?.toolbar?.leading
+        },
+        get back() {
+          return host.focusedChrome?.toolbar?.back
+        },
+        get flush() {
+          return host.focusedChrome?.toolbar?.flush
+        },
+        heading: tabsHeading,
+        headingFill: true,
+      })
+    })
+    $effect(() => {
+      const sidebar = host.focusedChrome?.sidebar
+      if (sidebar) return winChrome.pushSidebar(sidebar)
+    })
+    $effect(() => {
+      const footer = host.focusedChrome?.footer
+      if (footer) return winChrome.pushFooter(footer)
+    })
+    $effect(() =>
+      winChrome.pushMenus({
+        get menus() {
+          return host.focusedChrome?.menus ?? []
+        },
+      }),
+    )
+    $effect(() =>
+      winChrome.pushDockMenu({
+        get menus() {
+          return [{ label: '', items: host.focusedChrome?.dockItems ?? [] }]
+        },
+      }),
+    )
+    $effect(() => {
+      const chrome = host.focusedChrome
+      if (chrome && winChrome.pendingIntents > 0) chrome.deliver(...winChrome.takeIntents())
+    })
+  }
+
+  let shownTitle: string | null | undefined
+  $effect(() => {
+    const full = host.titleOf(host.focusId)
+    const title = full !== null && full.startsWith('/') ? (full === '/' ? '/' : (full.split('/').filter(Boolean).at(-1) ?? full)) : full
+    if (title === shownTitle) return
+    shownTitle = title
+    parent.setTitle(title)
+  })
+
+  // ---- layout -----------------------------------------------------------
+
+  const layout = $derived(host.layout)
+  /// The last tab but one closed: the strip stays while that tab shrinks
+  /// away (`TitleTabs`), then gives way to the title, which fades in
+  /// (`Window`), so going back to one tab is one motion with opening a second.
+  let collapsing = $state(false)
+  let tabCount = untrack(() => host.layout.tabs.length)
+  // Before the DOM updates, so the strip is never taken down for a frame
+  // (which would drop the closing tab's exit).
+  $effect.pre(() => {
+    const n = layout.tabs.length
+    const was = tabCount
+    tabCount = n
+    if (!(was > 1 && n === 1)) return
+    const ms = area ? parseFloat(getComputedStyle(area).getPropertyValue('--dur-tab-in')) || 0 : 0
+    if (!ms) return
+    collapsing = true
+    const timer = setTimeout(() => (collapsing = false), ms)
+    return () => {
+      clearTimeout(timer)
+      collapsing = false
+    }
+  })
+  const multiTab = $derived(layout.tabs.length > 1 || collapsing)
+  const tab = $derived(activeTab(layout))
+  /// Split: the panes start under the bar rather than behind it, so no
+  /// divider runs through the title.
+  const underBar = $derived(multiTab || tab.root.kind === 'split')
+  /// Every pane, every tab, in one list ordered by id: a pane added or gone
+  /// never moves the others in the DOM.
+  const placed = $derived.by(() => {
+    const out: { id: string; tabId: string; rect: Rect; alone: boolean }[] = []
+    for (const t of layout.tabs) {
+      const rects = paneRects(t.root)
+      for (const [id, rect] of rects) out.push({ id, tabId: t.id, rect, alone: rects.size === 1 })
+    }
+    return out.sort((a, b) => (a.id < b.id ? -1 : 1))
+  })
+  const lines = $derived(dividers(tab.root))
+
+  /// Each tab is called what its pane calls itself, as it is (a terminal's
+  /// session title); a title that is an absolute path (Files) by its last
+  /// segment, or its last two where another tab ends the same way.
+  const isPath = (t: string | null): t is string => !!t && t.startsWith('/')
+  const lastOf = (p: string) => (p === '/' ? '/' : (p.split('/').filter(Boolean).at(-1) ?? p))
+  const lastTwo = (p: string) => p.split('/').filter(Boolean).slice(-2).join('/') || '/'
+  const tabTitles = $derived(layout.tabs.map((t) => host.tabTitle(t)))
+  const tabLabels = $derived(
+    tabTitles.map((t) => {
+      if (!isPath(t)) return t ?? appTitle
+      const same = tabTitles.filter((q) => isPath(q) && lastOf(q) === lastOf(t)).length
+      return same > 1 ? lastTwo(t) : lastOf(t)
+    }),
+  )
+
+  let area = $state<HTMLDivElement | null>(null)
+
+  /// Past the first render: a pane mounting now is a new tab or a split,
+  /// and fades in; the panes the window opens with do not.
+  const life = { mounted: false }
+  $effect(() => {
+    life.mounted = true
+  })
+
+  const pct = (n: number) => `${n * 100}%`
+
+  // ---- dividers ---------------------------------------------------------
+
+  let sizing: { divider: Divider; tabId: string } | null = null
+
+  function onDividerDown(e: PointerEvent, divider: Divider) {
+    if (e.button !== 0) return
+    e.preventDefault()
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    sizing = { divider, tabId: tab.id }
+  }
+
+  function onDividerMove(e: PointerEvent) {
+    if (!sizing || !area) return
+    const r = area.getBoundingClientRect()
+    const { box, dir, path } = sizing.divider
+    const ratio =
+      dir === 'row'
+        ? ((e.clientX - r.left) / r.width - box.x) / box.w
+        : ((e.clientY - r.top) / r.height - box.y) / box.h
+    host.setRatio(sizing.tabId, path, ratio)
+  }
+
+  function onDividerUp() {
+    sizing = null
+  }
+
+  // ---- tabs -------------------------------------------------------------
+
+  let strip = $state<HTMLDivElement | null>(null)
+  /// A tab under the pointer: moved along the strip it is reordered, pulled
+  /// away from it it becomes a window of its own.
+  let tabDrag: { id: string; x: number; y: number; moved: boolean; away: boolean } | null = $state(null)
+
+  function onTabDown(e: PointerEvent, id: string) {
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    tabDrag = { id, x: e.clientX, y: e.clientY, moved: false, away: false }
+    host.showTab(id)
+  }
+
+  function onTabMove(e: PointerEvent) {
+    if (!tabDrag || !strip) return
+    if (!tabDrag.moved && Math.abs(e.clientX - tabDrag.x) + Math.abs(e.clientY - tabDrag.y) < 5) return
+    tabDrag.moved = true
+    const r = strip.getBoundingClientRect()
+    tabDrag.away = e.clientY < r.top - 24 || e.clientY > r.bottom + 24
+    if (tabDrag.away) return
+    const tabs = [...strip.querySelectorAll<HTMLElement>('[role=tab]')]
+    const to = tabs.findIndex((el) => {
+      const b = el.getBoundingClientRect()
+      return e.clientX < b.left + b.width / 2
+    })
+    const index = to < 0 ? tabs.length - 1 : to
+    const from = layout.tabs.findIndex((t) => t.id === tabDrag!.id)
+    if (index !== from) host.moveTab(tabDrag.id, index > from ? index - 1 : index)
+  }
+
+  function onTabUp(e: PointerEvent) {
+    const drag = tabDrag
+    tabDrag = null
+    if (drag?.moved && drag.away) desk.detachTab(parent.id, drag.id, { x: e.clientX, y: e.clientY })
+  }
+
+  const tabDragging: TitleTabsDrag = {
+    down: onTabDown,
+    move: onTabMove,
+    up: onTabUp,
+    cancel: () => (tabDrag = null),
+  }
+
+  // ---- a window dragged onto this one -----------------------------------
+
+  const drop = $derived(desk.paneDrop?.windowId === parent.id ? desk.paneDrop : null)
+  const dropRect = $derived.by(() => {
+    if (drop?.kind !== 'split') return null
+    const r = placed.find((p) => p.id === drop.paneId)?.rect
+    if (!r) return null
+    switch (drop.side) {
+      case 'left':
+        return { ...r, w: r.w / 2 }
+      case 'right':
+        return { ...r, x: r.x + r.w / 2, w: r.w / 2 }
+      case 'top':
+        return { ...r, h: r.h / 2 }
+      case 'bottom':
+        return { ...r, y: r.y + r.h / 2, h: r.h / 2 }
+    }
+  })
+</script>
+
+{#snippet tabsHeading()}
+  <TitleTabs
+    bind:well={strip}
+    data-pane-strip
+    label={appTitle}
+    tabs={layout.tabs.map((t, i) => ({ key: t.id, label: tabLabels[i], title: tabTitles[i] ?? appTitle }))}
+    active={tab.id}
+    onselect={(id) => host.showTab(id)}
+    onclose={(id) => host.closeTab(id)}
+    onadd={() => host.newTab()}
+    addLabel={$LL.deskNewTab()}
+    closeLabel={$LL.deskCloseTab()}
+    drag={tabDragging}
+    dragging={tabDrag?.moved ? tabDrag.id : null}
+  />
+{/snippet}
+
+<div class="desk-panes absolute inset-0" data-pane-host>
+
+  <div
+    bind:this={area}
+    class="desk-panes__area"
+    class:desk-panes__area--bar={underBar}
+  >
+    {#each placed as p (p.id)}
+      {@const shown = p.tabId === tab.id}
+      <div
+        class="desk-pane"
+        data-pane-id={p.id}
+        style:left={pct(p.rect.x)}
+        style:top={pct(p.rect.y)}
+        style:width={pct(p.rect.w)}
+        style:height={pct(p.rect.h)}
+        style:--pane-top={underBar ? '0px' : 'var(--titlebar-height)'}
+        style:visibility={shown ? null : 'hidden'}
+        inert={!shown}
+        use:viewIn={shown ? tab.id : null}
+        use:viewEnter={life.mounted && shown}
+        onpointerdowncapture={() => host.focus(p.id)}
+      >
+        <div class="shrink-0" style:height="var(--pane-top)" aria-hidden="true"></div>
+        <PaneSlot {host} paneId={p.id} {content} />
+        {#if shown && !p.alone && host.focusId !== p.id}<div class="desk-pane__dim" aria-hidden="true"></div>{/if}
+      </div>
+    {/each}
+
+    {#each lines as d (d.path)}
+      <div
+        class="desk-divider desk-divider--{d.dir}"
+        style:left={d.dir === 'row' ? pct(d.at) : pct(d.box.x)}
+        style:top={d.dir === 'row' ? pct(d.box.y) : pct(d.at)}
+        style:width={d.dir === 'row' ? null : pct(d.box.w)}
+        style:height={d.dir === 'row' ? pct(d.box.h) : null}
+        style:touch-action="none"
+        role="separator"
+        aria-orientation={d.dir === 'row' ? 'vertical' : 'horizontal'}
+        onpointerdown={(e) => onDividerDown(e, d)}
+        onpointermove={onDividerMove}
+        onpointerup={onDividerUp}
+        onpointercancel={onDividerUp}
+      ></div>
+    {/each}
+
+    {#if dropRect}
+      <div
+        class="desk-pane-drop"
+        style:left={pct(dropRect.x)}
+        style:top={pct(dropRect.y)}
+        style:width={pct(dropRect.w)}
+        style:height={pct(dropRect.h)}
+        aria-hidden="true"
+      ></div>
+    {/if}
+  </div>
+</div>

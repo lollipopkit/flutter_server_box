@@ -314,7 +314,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     // cross-cycle delta to yield current usage
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
-    let mut native_state = sbm_native::NativeState::new();
+    let mut native = NativeSampler::default();
 
     loop {
         // Re-read every cycle (not captured once outside the loop) so a
@@ -337,7 +337,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
             &mut prev_cpu,
             extended_due,
             prev_metrics.as_ref(),
-            &mut native_state,
+            &mut native,
         )
         .await
         {
@@ -363,14 +363,15 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                     .await;
 
                 // Check rules and send alerts with velocity data
-                if let Err(e) = crate::monitoring::rules::check_rules_with_velocity(
+                match crate::monitoring::rules::check_rules_with_velocity(
                     &metrics,
                     &app_state.config,
                     &*app_state.velocity_manager.read().await,
                 )
                 .await
                 {
-                    error!("Failed to check enhanced rules: {}", e);
+                    Ok(firing) => app_state.desk.rules_checked(&app_state.db, firing).await,
+                    Err(e) => error!("Failed to check enhanced rules: {}", e),
                 }
 
                 // Update current metrics in app state
@@ -429,35 +430,76 @@ fn native_status_available(system: SystemType) -> bool {
     }
 }
 
+type SampleRequest = (SystemType, tokio::sync::oneshot::Sender<ServerStatus>);
+
+/// Where `sbm_native::sample` runs: one thread of its own, holding the
+/// `NativeState` for that thread's whole life.
+///
+/// Off the reactor, because `sample` is synchronous and does real IO (procfs
+/// and sysfs on Linux, a `statvfs` per mount on the sysinfo backends); a mount
+/// that does not answer holds this thread, not a worker serving the API.
+///
+/// Always the same thread, because on Windows sysinfo's components are WMI
+/// COM objects bound to the thread that made them. Moving the state through
+/// the blocking pool ran each sample wherever a pooled thread was free, and
+/// once the thread that made them had been retired an idle pool thread
+/// refreshing them faulted the whole process (`ComponentInner::refresh`,
+/// access violation).
+///
+/// A sample that panics ends the thread; the next one starts a new thread
+/// with fresh state, which costs the CPU delta for one sample.
+#[derive(Default)]
+struct NativeSampler {
+    tx: Option<std::sync::mpsc::Sender<SampleRequest>>,
+}
+
+impl NativeSampler {
+    fn start() -> std::io::Result<std::sync::mpsc::Sender<SampleRequest>> {
+        let (tx, rx) = std::sync::mpsc::channel::<SampleRequest>();
+        std::thread::Builder::new().name("native-sampler".into()).spawn(move || {
+            let mut state = sbm_native::NativeState::new();
+            for (system, reply) in rx {
+                let _ = reply.send(sbm_native::sample(&mut state, system));
+            }
+        })?;
+        Ok(tx)
+    }
+
+    async fn sample(&mut self, system: SystemType) -> Result<ServerStatus> {
+        let failed = |why: String| crate::utils::error::MonitorError::Monitoring(format!("Native sampling failed: {why}"));
+        let tx = match &self.tx {
+            Some(tx) => tx.clone(),
+            None => {
+                let tx = Self::start().map_err(|e| failed(e.to_string()))?;
+                self.tx = Some(tx.clone());
+                tx
+            }
+        };
+        let (reply, answer) = tokio::sync::oneshot::channel();
+        if tx.send((system, reply)).is_err() {
+            self.tx = None;
+            return Err(failed("the sampler thread is gone".into()));
+        }
+        match answer.await {
+            Ok(status) => Ok(status),
+            // It panicked: a fresh thread next cycle.
+            Err(_) => {
+                self.tx = None;
+                Err(failed("the sampler thread panicked".into()))
+            }
+        }
+    }
+}
+
 async fn collect_metrics(
     config: &Config,
     prev_cpu: &mut Option<CpuCore>,
     extended_due: bool,
     prev_metrics: Option<&SystemMetrics>,
-    native_state: &mut sbm_native::NativeState,
+    native: &mut NativeSampler,
 ) -> Result<SystemMetrics> {
     let system = system_type();
-    // Off the reactor. `sample` is synchronous and does real IO — procfs and
-    // sysfs reads on Linux, and on the sysinfo backends a `statvfs` per mount.
-    // Called straight from here it blocks a tokio worker thread for as long as
-    // that takes, on the same runtime that serves the HTTP API; a mount that
-    // does not answer blocks it indefinitely. On the blocking pool the cost of
-    // that is one pooled thread and an empty disk list.
-    //
-    // The state has to go with it, since a blocking task cannot borrow. It
-    // comes back on the far side; if the task panicked it stays at its default
-    // and the next cycle starts a fresh one, which costs the CPU delta for one
-    // sample.
-    let mut owned_state = std::mem::take(native_state);
-    let (mut status, returned_state) = tokio::task::spawn_blocking(move || {
-        let status = sbm_native::sample(&mut owned_state, system);
-        (status, owned_state)
-    })
-    .await
-    .map_err(|e| {
-        crate::utils::error::MonitorError::Monitoring(format!("Native sampling failed: {e}"))
-    })?;
-    *native_state = returned_state;
+    let mut status = native.sample(system).await?;
 
     // Not part of sbm_native: neither a pure syscall nor worth bundling into
     // the shared script (a single targeted `nvidia-smi` call, same output
@@ -1381,13 +1423,19 @@ fn percent(used: u64, total: u64) -> f32 {
     }
 }
 
-/// APFS volumes of one container each report the full container size/avail
-/// (df shows /dev/disk3s1, /dev/disk3s5, ... all at ~container size), so a
-/// naive sum multiplies the real capacity. Volumes sharing (base disk, size,
-/// avail) belong to one pool: count size/avail once, keep summing used.
+/// APFS volumes of one container each report the whole container's size and
+/// free space (df shows /dev/disk3s1, /dev/disk3s5, ... all at the container's
+/// size), so a naive sum multiplies the real capacity. Volumes of one
+/// container are one pool, counted once: its size and free space, and as used
+/// what the container has used (size - free). Per-volume `used` cannot be
+/// summed instead: native sampling only has size and free per volume, so
+/// each volume's `used` there is already the whole container's, and a
+/// volume that is not mounted is in no row at all. The container alone is
+/// the key: free space read per volume can differ by what was written
+/// between readings. As `sbm_parser::types::disk_usage` counts it for the app.
 /// Linux paths never match the /dev/diskN pattern and are unaffected.
-fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
-    let container = apfs_container(&d.path).or_else(|| {
+fn apfs_pool_key(d: &Disk) -> Option<String> {
+    apfs_container(&d.path).or_else(|| {
         // Native sampling keys a volume by its mount point — the panel needs
         // one row each — so no device reaches `path` there. It arrives in
         // `name` instead, spelled the lsblk way ("disk3s5"). Restricted to
@@ -1397,8 +1445,7 @@ fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
             .as_deref()
             .filter(|t| t.eq_ignore_ascii_case("apfs"))?;
         apfs_container(d.name.as_deref()?)
-    })?;
-    Some((container, d.size, d.avail))
+    })
 }
 
 /// The APFS container a device belongs to: `disk3` out of `/dev/disk3s1s1` or
@@ -1423,24 +1470,26 @@ fn aggregate_disks(system: SystemType, disks: &[Disk]) -> DiskMetrics {
         system: SystemType,
         disks: &'a [Disk],
         seen: &mut Vec<&'a str>,
-        pools: &mut Vec<(String, u64, u64)>,
+        pools: &mut Vec<String>,
         acc: &mut (u64, u64, u64),
     ) {
         for d in disks {
             if is_real_disk(system, d) && !seen.contains(&d.path.as_str()) {
                 seen.push(&d.path);
-                let pooled = match apfs_pool_key(d) {
-                    Some(key) if pools.contains(&key) => true,
+                match apfs_pool_key(d) {
+                    // Another volume of a container already counted.
+                    Some(key) if pools.contains(&key) => {}
                     Some(key) => {
                         pools.push(key);
-                        false
+                        acc.0 += d.size;
+                        acc.1 += d.size.saturating_sub(d.avail);
+                        acc.2 += d.avail;
                     }
-                    None => false,
-                };
-                acc.1 += d.used;
-                if !pooled {
-                    acc.0 += d.size;
-                    acc.2 += d.avail;
+                    None => {
+                        acc.0 += d.size;
+                        acc.1 += d.used;
+                        acc.2 += d.avail;
+                    }
                 }
             }
             walk(system, &d.children, seen, pools, acc);
@@ -1554,6 +1603,25 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
 
 #[cfg(test)]
 mod tests {
+    #[tokio::test]
+    async fn the_native_sampler_keeps_its_state_across_samples() {
+        let mut sampler = super::NativeSampler::default();
+        let system = super::system_type();
+        let first = sampler.sample(system).await.unwrap();
+        let second = sampler.sample(system).await.unwrap();
+        // On the sysinfo backends the first sample has no CPU baseline and the
+        // second has one only if the state stayed with the thread between
+        // them (Linux reads cumulative counters and keeps no state).
+        if !cfg!(target_os = "linux") {
+            assert!(first.cpu.is_empty());
+            assert!(!second.cpu.is_empty());
+        }
+        let tx = sampler.tx.clone().unwrap();
+        let (reply, answer) = tokio::sync::oneshot::channel();
+        tx.send((system, reply)).unwrap();
+        assert!(answer.await.is_ok());
+    }
+
     use super::*;
 
     #[test]
@@ -1794,7 +1862,7 @@ mod tests {
             mount: mount.to_string(),
             fs_type: Some("apfs".to_string()),
             name: Some(device.to_string()),
-            used: 200,
+            used: 400,
             size: 1000,
             avail: 600,
             ..Default::default()
@@ -1802,13 +1870,53 @@ mod tests {
         let disks = vec![
             volume("/", "disk3s1s1"),
             volume("/System/Volumes/Data", "disk3s5"),
+            volume("/System/Volumes/VM", "disk3s6"),
         ];
 
         let metrics = aggregate_disks(SystemType::Bsd, &disks);
         assert_eq!(metrics.total, 1000 * 1024, "capacity counted once");
         assert_eq!(metrics.free, 600 * 1024);
-        // Used is per volume and still sums, as in the /dev/diskN case.
+        // Each volume's `used` is the container's (size - free): counted once,
+        // or a Mac reports more used than it has.
         assert_eq!(metrics.used, 400 * 1024);
+        assert_eq!(metrics.usage_percent, 40.0);
+    }
+
+    /// The script path (`df`): each volume has its own `used`, and the
+    /// container is still counted once, used = size - free. Values from a
+    /// real Mac, except the Data volume's free space, moved a little as it
+    /// would when written to between two volumes' readings.
+    #[test]
+    fn df_apfs_volumes_are_one_container() {
+        let volume = |path: &str, mount: &str, used: u64, avail: u64| Disk {
+            path: path.to_string(),
+            mount: mount.to_string(),
+            used,
+            size: 971298980,
+            avail,
+            ..Default::default()
+        };
+        let disks = vec![
+            volume("/dev/disk3s1s1", "/", 13340072, 193612532),
+            volume("/dev/disk3s6", "/System/Volumes/VM", 15729228, 193612532),
+            volume("/dev/disk3s5", "/System/Volumes/Data", 735346236, 193612480),
+            Disk {
+                path: "/dev/disk12s1".to_string(),
+                mount: "/Volumes/aigo".to_string(),
+                used: 696246752,
+                size: 2000193840,
+                avail: 433466892,
+                ..Default::default()
+            },
+        ];
+
+        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        assert_eq!(metrics.total, (971298980 + 2000193840) * 1024);
+        assert_eq!(metrics.free, (193612532 + 433466892) * 1024);
+        // `aigo` shares its container with a volume that is not mounted, so
+        // the container's own figure is what that disk has used.
+        assert_eq!(metrics.used, (971298980 - 193612532 + 2000193840 - 433466892) * 1024);
+        assert!(metrics.usage_percent < 100.0);
     }
 
     /// Two disks are two disks. The volume *label* cannot say so — two drives
@@ -1822,7 +1930,7 @@ mod tests {
             mount: mount.to_string(),
             fs_type: Some("apfs".to_string()),
             name: Some(device.to_string()),
-            used: 200,
+            used: 400,
             size: 1000,
             avail: 600,
             ..Default::default()
@@ -1835,7 +1943,7 @@ mod tests {
         let metrics = aggregate_disks(SystemType::Bsd, &disks);
         assert_eq!(metrics.total, 2000 * 1024);
         assert_eq!(metrics.free, 1200 * 1024);
-        assert_eq!(metrics.used, 400 * 1024);
+        assert_eq!(metrics.used, 800 * 1024);
     }
 
     /// The `name` fallback is APFS-only: on Linux `name` is an lsblk NAME, and

@@ -1,0 +1,11 @@
+{
+  "id": "example_uptime",
+  "version": "1.0.0",
+  "api": 1,
+  "kind": "wasm",
+  "title": { "en": "Uptime", "zh-CN": "运行时间" },
+  "glyph": "timer",
+  "tone": "teal",
+  "permissions": ["status", "exec"],
+  "size": { "width": 520, "height": 420 }
+}

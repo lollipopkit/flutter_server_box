@@ -1,0 +1,4 @@
+/* The text faces, variable and woff2 only (every browser the desk runs in
+   reads it): Figtree for the UI, JetBrains Mono for paths and code. */
+@import '@fontsource-variable/figtree';
+@import '@fontsource-variable/jetbrains-mono';

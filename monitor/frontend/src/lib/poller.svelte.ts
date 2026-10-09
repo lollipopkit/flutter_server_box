@@ -17,6 +17,11 @@ export class Poller<T> {
     this.#intervalMs = intervalMs
   }
 
+  /// Takes effect from the next reading.
+  set interval(ms: number) {
+    this.#intervalMs = ms
+  }
+
   start() {
     this.stop()
     const generation = ++this.#generation

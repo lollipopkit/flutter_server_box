@@ -1,0 +1,11 @@
+{
+  "id": "example_hello",
+  "version": "1.0.0",
+  "api": 1,
+  "kind": "web",
+  "title": { "en": "Hello", "zh-CN": "你好" },
+  "glyph": "waving_hand",
+  "tone": "amber",
+  "permissions": ["notifications"],
+  "size": { "width": 520, "height": 380 }
+}

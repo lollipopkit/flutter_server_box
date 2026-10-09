@@ -17,6 +17,16 @@
   --sb-snow: #fafafa;
   --sb-white: #ffffff;
   --sb-ring: rgba(59, 130, 246, 0.5);
+  /* The interactive colour (links, selected tabs). A consumer may set it per
+     subtree — the panel's desk sets it to the account's accent. */
+  --sb-primary: #2563eb;
+  /* The primary button, an icon button's border and a control's radius; a
+     consumer may set them per subtree (the panel's desk: the accent, a
+     hairline, 10px). */
+  --sb-button-primary-bg: var(--sb-black);
+  --sb-button-primary-fg: var(--sb-white);
+  --sb-icon-button-border: transparent;
+  --sb-radius-control: 9999px;
 
   --sb-radius-container: 12px;
 
@@ -69,6 +79,7 @@
   --color-ring: var(--sb-ring);
 
   --color-accent: #3b82f6;
+  --color-primary: var(--sb-primary);
   --color-success: #16a34a;
   --color-warning: #d97706;
   --color-danger: #dc2626;

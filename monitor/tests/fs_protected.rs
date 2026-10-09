@@ -293,6 +293,18 @@ mod over_http {
             .collect();
         assert_eq!(names, ["notes.txt"]);
 
+        // A file is not listed as a folder: a request mistake, not a fault.
+        let file = home.join("notes.txt").to_string_lossy().into_owned();
+        let resp = srv
+            .get(format!("/api/v1/fs/list?path={}", encode(&file)))
+            .header("Authorization", &auth)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status().as_u16(), 400);
+        let body: serde_json::Value = resp.json().await.unwrap();
+        assert_eq!(body["error"], "not_a_directory");
+
         // The directory they are in is not moved, removed or opened up.
         let status = srv
             .post("/api/v1/fs/rename")

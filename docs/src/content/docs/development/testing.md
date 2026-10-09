@@ -46,9 +46,6 @@ The following suites need a real host. They are skipped silently when the requir
 # SBM_E2E_SSH_HOST=<SSH destination or ~/.ssh/config alias>
 cargo test -p sbm_parser --test ssh_e2e
 
-# Monitor terminal against a real sshd
-# Requires SBM_E2E_TERMINAL_* environment variables.
-cargo test -p server_box_monitor --test terminal_ws
 ```
 
 ## Monitor panel tests
@@ -115,7 +112,7 @@ test('returns server status', () async {
 
 The default test suite must remain deterministic. Parser, model, command-builder, and ordinary Widget tests must not access a network or a real server. When a feature introduces a service boundary, add a targeted fake or fixture.
 
-The SSH end-to-end and real-sshd suites above are exceptions. They run only when their environment variables are configured, so a default `cargo test --workspace` still needs no external service.
+The SSH end-to-end suite above is an exception. It runs only when their environment variables are configured, so a default `cargo test --workspace` still needs no external service.
 
 ## Storage migration tests
 

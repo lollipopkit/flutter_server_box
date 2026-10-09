@@ -23,7 +23,6 @@ void main() {
     'builtin': false,
     'grants': {
       'shell': false,
-      'ssh_terminal': false,
       'files': {'mode': 'read'},
       'connect': {
         'allow': ['127.0.0.1:3389'],

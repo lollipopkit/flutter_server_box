@@ -2,17 +2,22 @@ use crate::{core::config::{Config, MonitoringRule}, monitoring::SystemMetrics, u
 use crate::monitoring::threshold::{Threshold, ThresholdType};
 use tracing::{info, warn};
 
+/// Checks every rule, pushes what fires, and answers the rules firing now
+/// with what each said — for the desk's notifications (`api::desk`).
 pub async fn check_rules_with_velocity(
-    metrics: &SystemMetrics, 
-    config: &Config, 
+    metrics: &SystemMetrics,
+    config: &Config,
     velocity_manager: &VelocityManager
-) -> Result<()> {
+) -> Result<Vec<(String, String)>> {
+    let mut firing = Vec::new();
     for rule in &config.get_monitoring().rules {
-        if let Err(e) = check_enhanced_rule(rule, metrics, config, velocity_manager).await {
-            warn!("Failed to check enhanced rule '{}': {}", rule.name, e);
+        match check_enhanced_rule(rule, metrics, config, velocity_manager).await {
+            Ok(Some(message)) => firing.push((rule.name.clone(), message)),
+            Ok(None) => {}
+            Err(e) => warn!("Failed to check enhanced rule '{}': {}", rule.name, e),
         }
     }
-    Ok(())
+    Ok(firing)
 }
 
 /// What a rule's `monitor_type` names.
@@ -60,10 +65,10 @@ async fn check_enhanced_rule(
     metrics: &SystemMetrics, 
     config: &Config, 
     velocity_manager: &VelocityManager
-) -> Result<()> {
+) -> Result<Option<String>> {
     let Some(kind) = RuleKind::parse(&rule.monitor_type) else {
         warn!("Unknown monitor type: {}", rule.monitor_type);
-        return Ok(());
+        return Ok(None);
     };
 
     let (should_alert, _current_value, formatted_value) = match kind {
@@ -98,9 +103,10 @@ async fn check_enhanced_rule(
                 Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
             }
         }
+        return Ok(Some(message));
     }
-    
-    Ok(())
+
+    Ok(None)
 }
 
 

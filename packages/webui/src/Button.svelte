@@ -2,10 +2,10 @@
   import { tv, type VariantProps } from 'tailwind-variants'
 
   export const button = tv({
-    base: 'inline-flex items-center justify-center font-body font-medium rounded-full no-underline cursor-pointer transition-opacity duration-200 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 disabled:cursor-not-allowed',
+    base: 'inline-flex items-center justify-center font-body font-medium rounded-(--sb-radius-control) no-underline cursor-pointer transition-opacity duration-200 hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 disabled:cursor-not-allowed',
     variants: {
       variant: {
-        primary: 'bg-fg-strong text-surface',
+        primary: 'bg-(--sb-button-primary-bg) text-(--sb-button-primary-fg)',
         secondary: 'bg-soft text-fg',
         danger: 'bg-danger text-white',
         ghost: 'bg-transparent text-muted-fg hover:opacity-100 hover:text-fg hover:bg-soft',

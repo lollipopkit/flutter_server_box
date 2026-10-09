@@ -13,5 +13,5 @@
     "noUnusedParameters": true,
     "types": ["svelte", "vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "vite.config.ts", "vite.desk-app.config.ts", "vitest.config.ts"]
 }

@@ -1,19 +1,23 @@
 <script lang="ts">
-  import { Apple, Grid2x2, Terminal, type LucideProps } from '@lucide/svelte'
+  import Icon from '../desk/lk/Icon.svelte'
   import type { Platform } from '../types'
 
-  type Props = LucideProps & {
+  interface Props {
     platform: Platform | undefined
+    /// In px.
+    size?: number
+    /// Read out; absent, the icon is decoration.
+    title?: string
+    class?: string
   }
 
-  // No trademarked-logo icons in lucide; these are generic stand-ins per OS
-  // family — Bsd covers macOS, the only Bsd target this monitor ships on
-  const ICONS = { linux: Terminal, bsd: Apple, windows: Grid2x2 }
+  // No trademarked logos: a neutral glyph per OS family. Bsd covers macOS,
+  // the only Bsd target this monitor ships on.
+  const GLYPHS: Record<Platform, string> = { linux: 'terminal', bsd: 'laptop_mac', windows: 'grid_view' }
 
-  const { platform, ...rest }: Props = $props()
-  const Icon = $derived(platform ? ICONS[platform] : undefined)
+  const { platform, size = 20, title, class: className }: Props = $props()
 </script>
 
-{#if Icon}
-  <Icon {...rest} />
+{#if platform}
+  <Icon name={GLYPHS[platform]} {size} {title} fill class={className} />
 {/if}

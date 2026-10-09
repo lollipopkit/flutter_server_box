@@ -11,8 +11,8 @@ description: Capability 上报、指标历史和 remote access 行为
 App 通过 `GET /api/v1/capabilities` 查询 agent 支持的功能，以及当前登录账号可以使用的功能。返回内容针对调用者：
 
 - `me`：`username`、`role` 和 `admin`。watch token 没有 `me`。
-- `grants`：`shell`、`ssh_terminal`、`files`、`connect` 和 `listen` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
-- `remote_access`：角色功能之前的 agent 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `ssh_terminal` 或 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
+- `grants`：`shell`、`files`、`connect`、`listen` 和 `virt` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
+- `remote_access`：角色功能之前的 agent 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
 
 不要仅根据 agent 版本或默认配置推断功能是否可用；应读取运行中 agent
 返回的 capabilities。
@@ -40,8 +40,7 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 | 权限 | Endpoint |
 |---|---|
-| `shell` | `POST /api/v1/exec`、App 终端（`/api/v1/terminal/ws` 上的本地 PTY）、执行自定义命令 |
-| `ssh_terminal` | `/api/v1/terminal/ws` 上的网页面板终端，使用 SSH 凭据登录 `ssh_addr` |
+| `shell` | `POST /api/v1/exec`、App 和网页面板的终端（`/api/v1/terminal/ws` 上的本地 PTY）、执行自定义命令 |
 | `files` | `/api/v1/fs/*`；`mode = "read"` 时只允许 `roots`、`list`、`stat` 和 `read` |
 | `connect` | `/api/v1/stream/ws` 上的 `open`，按 `allow` 检查 |
 | `listen` | `/api/v1/listen/ws`，以及 `/api/v1/stream/ws` 上的 `accept` |
@@ -85,7 +84,7 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 ### 传输安全
 
-所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。旧的 key 仍然只对原来覆盖的范围生效：`[remote_access.terminal] allow_insecure` 对应 `shell`、`ssh_terminal`、`connect` 和 `listen`，`[remote_access.fs] allow_insecure` 只对应 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。两者都不满足时，该权限会以 `why: insecure_transport` 上报。
+所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。旧的 key 仍然只对原来覆盖的范围生效：`[remote_access.terminal] allow_insecure` 对应 `shell`、`connect` 和 `listen`，`[remote_access.fs] allow_insecure` 只对应 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。两者都不满足时，该权限会以 `why: insecure_transport` 上报。
 
 ### 连接和监听
 
@@ -99,4 +98,4 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 ### Terminal endpoint
 
-网页面板终端作为 SSH 客户端连接 `ssh_addr`，使用该 SSH 账户的权限，需要 `ssh_terminal`。App 终端使用 agent 进程用户的本地 shell，需要 `shell`。该 endpoint 的第一条消息可能包含 SSH 密码，所以它遵循上面的传输安全规则。
+App 和网页面板的终端都是以 agent 进程用户身份在 PTY 上运行的本地 shell，需要 `shell`。agent 不再登录 sshd：携带 SSH 凭据的 `open` 会被拒绝。

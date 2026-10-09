@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Spinner } from '@serverbox/webui'
+  import Spinner from '../desk/lk/Spinner.svelte'
   import { onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import type { RelayChannel } from '../lib/desktop.svelte'
@@ -80,11 +80,11 @@
   })
 </script>
 
-<div class="relative h-[70vh] min-h-96 w-full overflow-hidden rounded-lg border border-line bg-black">
+<div class="relative h-full min-h-72 w-full overflow-hidden rounded-[var(--radius-card)] bg-(--ink-4) shadow-[inset_0_0_0_0.5px_var(--border-hairline)]">
   <div bind:this={container} class="h-full w-full"></div>
   {#if connecting}
-    <div class="absolute inset-0 flex items-center justify-center bg-black/40">
-      <Spinner class="w-6 h-6" />
+    <div class="absolute inset-0 flex items-center justify-center bg-(--scrim)">
+      <Spinner size={24} />
     </div>
   {/if}
 </div>

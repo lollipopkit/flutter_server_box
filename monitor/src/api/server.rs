@@ -119,6 +119,17 @@ pub struct AppState {
     /// and re-checks its own account when it fires; terminal sessions, which
     /// outlive their sockets, are swept by `authz::revoke_lost` instead.
     pub grants_changed: broadcast::Sender<&'static str>,
+    /// The desk's events and which monitoring rules are firing — see
+    /// `api::desk`.
+    pub desk: Arc<crate::api::desk::DeskHub>,
+    /// The theme store as last read — see `api::desk_themes`.
+    pub themes: Arc<crate::api::desk_themes::ThemeStore>,
+    /// Files kept beside the database — see `core::blobs`.
+    pub blobs: Arc<crate::core::blobs::Blobs>,
+    /// Agent mode's tasks and the pi runtime they run in — see `agent_mode`.
+    pub agent: Arc<crate::agent_mode::AgentMode>,
+    /// Desk app backend calls running now (`api::app_runtime`).
+    pub app_calls: crate::api::app_runtime::AppCalls,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -147,9 +158,17 @@ fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
     (!memory).then(|| file.to_path_buf())
 }
 
+/// The file [db] opened, or `None` for an in-memory database.
+fn sqlite_file_of(db: &SqlitePool) -> Option<std::path::PathBuf> {
+    let file = db.connect_options().get_filename().to_path_buf();
+    let memory = file.as_os_str().is_empty() || file.to_string_lossy().starts_with("file:") || file.to_string_lossy() == ":memory:";
+    (!memory).then_some(file)
+}
+
 /// Where this agent keeps what the file API must never reach — see
 /// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
-/// with `jwt.secret` and the first-start credentials beside it, `config.toml`
+/// with `jwt.secret`, the first-start credentials and the blob directory
+/// (`core::blobs`) beside it, `config.toml`
 /// and its backups, `.env`, the TLS certificate and key, and the
 /// custom-commands directory.
 fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
@@ -161,6 +180,8 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
     // database was `my db.db`.
     if let Some(db) = sqlite_file(&url) {
         protected.file(&db);
+        protected.tree(crate::core::blobs::Blobs::beside(&db).dir());
+        protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -208,6 +229,16 @@ impl AppState {
             pending: Arc::new(PendingStore::default()),
             login_throttle: Arc::new(LoginThrottle::new()),
             grants_changed: broadcast::channel(16).0,
+            desk: Arc::new(crate::api::desk::DeskHub::default()),
+            themes: Arc::new(crate::api::desk_themes::ThemeStore::default()),
+            // Beside the database actually open, which a test's in-memory
+            // one is not, whatever its configuration names.
+            blobs: Arc::new(match sqlite_file_of(&db) {
+                Some(file) => crate::core::blobs::Blobs::beside(&file),
+                None => crate::core::blobs::Blobs::temporary(),
+            }),
+            agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
+            app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
             config,
@@ -453,6 +484,115 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::desktops::list))
                     .route(web::put().to(crate::api::desktops::replace)),
             )
+            .service(web::resource("/desk").route(web::get().to(crate::api::desk::get)))
+            .service(
+                web::resource("/desk/preferences")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
+                    .route(web::put().to(crate::api::desk::put_preferences)),
+            )
+            .service(
+                // A streamed body, read whole and bounded in the handler.
+                web::resource("/desk/wallpaper")
+                    .route(web::get().to(crate::api::desk::get_wallpaper))
+                    .route(web::put().to(crate::api::desk::put_wallpaper))
+                    .route(web::delete().to(crate::api::desk::delete_wallpaper)),
+            )
+            .service(
+                web::resource("/desk/session")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
+                    .route(web::get().to(crate::api::desk::get_session))
+                    .route(web::put().to(crate::api::desk::put_session)),
+            )
+            .service(
+                web::resource("/desk/themes")
+                    .route(web::get().to(crate::api::desk_themes::list))
+                    .route(web::post().to(crate::api::desk_themes::upload)),
+            )
+            .service(
+                web::resource("/desk/themes/store")
+                    .route(web::get().to(crate::api::desk_themes::store)),
+            )
+            .service(
+                web::resource("/desk/themes/store/install")
+                    .route(web::post().to(crate::api::desk_themes::store_install)),
+            )
+            .service(web::resource("/desk/themes/{installation}").route(web::delete().to(crate::api::desk_themes::remove)))
+            .service(
+                web::resource("/desk/themes/{installation}/background")
+                    .route(web::get().to(crate::api::desk_themes::background)),
+            )
+            .service(web::resource("/desk/notifications").route(web::get().to(crate::api::desk::notifications)))
+            .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
+            .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
+            .service(
+                web::resource("/agent/flows")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
+                    .route(web::get().to(crate::api::agent::list))
+                    .route(web::post().to(crate::api::agent::start)),
+            )
+            .service(
+                web::resource("/agent/flows/{id}")
+                    .route(web::get().to(crate::api::agent::detail))
+                    .route(web::delete().to(crate::api::agent::remove)),
+            )
+            .service(
+                web::resource("/agent/flows/{id}/reply")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
+                    .route(web::post().to(crate::api::agent::reply)),
+            )
+            .service(web::resource("/agent/flows/{id}/answer").route(web::post().to(crate::api::agent::answer)))
+            .service(web::resource("/agent/flows/{id}/stop").route(web::post().to(crate::api::agent::stop)))
+            .service(web::resource("/agent/events").route(web::get().to(crate::api::agent::events)))
+            .service(
+                web::resource("/agent/settings")
+                    .route(web::get().to(crate::api::agent::get_settings))
+                    .route(web::put().to(crate::api::agent::put_settings)),
+            )
+            .service(web::resource("/agent/models").route(web::get().to(crate::api::agent::models)))
+            .service(web::resource("/agent/models/probe").route(web::post().to(crate::api::agent::probe)))
+            .service(
+                web::resource("/agent/permissions")
+                    .route(web::get().to(crate::api::agent::get_permissions))
+                    .route(web::put().to(crate::api::agent::put_permissions)),
+            )
+            .service(web::resource("/agent/search").route(web::post().to(crate::api::agent::search)))
+            .service(web::resource("/agent/search/{id}/task").route(web::post().to(crate::api::agent::adopt_search)))
+            .service(
+                web::resource("/agent/files")
+                    .state(web::types::PayloadConfig::new(crate::agent_mode::files::MAX_BYTES))
+                    .route(web::post().to(crate::api::agent::upload)),
+            )
+            .service(web::resource("/agent/files/{id}").route(web::delete().to(crate::api::agent::discard)))
+            .service(web::resource("/agent/memory").route(web::get().to(crate::api::agent::memory_list)))
+            .service(
+                web::resource("/agent/memory/file")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_MEMORY_REQUEST))
+                    .route(web::get().to(crate::api::agent::memory_get))
+                    .route(web::put().to(crate::api::agent::memory_put))
+                    .route(web::delete().to(crate::api::agent::memory_delete)),
+            )
+            .service(
+                web::resource("/apps")
+                    .state(web::types::PayloadConfig::new(crate::api::apps::MAX_PACKAGE_BYTES))
+                    .route(web::get().to(crate::api::apps::list))
+                    .route(web::post().to(crate::api::apps::install)),
+            )
+            .service(web::resource("/apps/{id}").route(web::delete().to(crate::api::apps::remove)))
+            .service(web::resource("/apps/{id}/approval").route(web::put().to(crate::api::apps::approve)))
+            .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))
+            .service(
+                web::resource("/apps/{id}/call")
+                    .state(web::types::JsonConfig::default().limit(crate::api::app_runtime::MAX_REQUEST))
+                    .route(web::post().to(crate::api::app_runtime::call)),
+            )
+            .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
+            .service(
+                web::resource("/desk/apps/{app}/storage")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))
+                    .route(web::get().to(crate::api::desk_storage::list))
+                    .route(web::put().to(crate::api::desk_storage::put))
+                    .route(web::delete().to(crate::api::desk_storage::remove)),
+            )
             .service(
                 web::resource("/snippets/plan")
                     .state(
@@ -572,6 +712,9 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .configure(configure_api(exec_max_request))
             // TODO: Remove this root-level 410 response after one release.
             .route("/status", web::get().to(get_status_compat))
+            // Built assets: hashed, precompressed, cached for good.
+            .service(crate::api::assets::asset)
+            .service(crate::api::assets::desk_app)
             // Serve legacy `/static` paths and root assets from the bundled
             // Svelte frontend.
             .service(
@@ -1047,7 +1190,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
                 caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
             };
             RemoteAccessView {
-                terminal: ok(Grant::SshTerminal) || ok(Grant::Shell),
+                terminal: ok(Grant::Shell),
                 full_access: ok(Grant::Shell),
                 files: ok(Grant::Files),
                 stream: ok(Grant::Connect),
@@ -1083,13 +1226,12 @@ async fn issue_ws_ticket(
     let purpose = payload.into_inner().purpose;
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
     // The grants each endpoint can be used under at all; which one a frame
-    // needs is checked again when it arrives (a local shell needs `shell`, an
-    // SSH one `ssh_terminal`; a stream `open` needs `connect`, an `accept`
-    // `listen`).
+    // needs is checked again when it arrives (a shell needs `shell`; a stream
+    // `open` needs `connect`, an `accept` `listen`).
     let ok = |grant| caller.check(grant, &app_state, secure).is_ok();
     let (available, detail) = match purpose {
         Purpose::Terminal => (
-            ok(Grant::Shell) || ok(Grant::SshTerminal),
+            ok(Grant::Shell),
             "terminal not available",
         ),
         Purpose::Stream => (
@@ -1860,6 +2002,16 @@ mod agent_state_tests {
         assert!(protected.covers(&cwd.join(".env")));
         assert!(protected.covers(&cwd.join(".env.bak-1789489640")));
         assert!(!protected.covers(&cwd.join("notes.env")));
+    }
+
+    #[test]
+    fn the_blob_directory_is_agent_state() {
+        // The default database is `serverbox_monitor.db` in the working
+        // directory, so its files are `./blobs/...`, every one of them.
+        let protected = agent_state(&Config::default());
+        let cwd = std::fs::canonicalize(".").unwrap();
+        assert!(protected.covers(&cwd.join("blobs").join("ab").join("ab".repeat(32))));
+        assert!(protected.covers(&cwd.join("blobs").join("tmp").join("x")));
     }
 }
 

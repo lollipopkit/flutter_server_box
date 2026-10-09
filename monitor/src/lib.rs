@@ -2,10 +2,11 @@
 // the default query depth during layout computation
 #![recursion_limit = "256"]
 
+pub mod agent_mode;
 pub mod api;
 pub mod cli;
 pub mod core;
 pub mod db;
 pub mod monitoring;
-pub mod ssh;
+pub mod pty;
 pub mod utils;

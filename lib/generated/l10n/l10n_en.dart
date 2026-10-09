@@ -5119,9 +5119,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Terminal, processes, services, containers, snippets, power — as the agent\'s account';
 
   @override
-  String get monitorGrantSshTerminal => 'Panel terminal over SSH';
-
-  @override
   String get monitorGrantVirt => 'Virtualization';
 
   @override

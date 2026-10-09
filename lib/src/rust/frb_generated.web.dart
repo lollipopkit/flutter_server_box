@@ -13,6 +13,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'package:server_box/src/rust/api/backup.dart';
 import 'package:server_box/src/rust/api/bench.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/src/rust/api/command_risk.dart';
 import 'package:server_box/src/rust/api/container.dart';
 import 'package:server_box/src/rust/api/create.dart';
 import 'package:server_box/src/rust/api/cron.dart';
@@ -393,6 +394,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ChangeError dco_decode_change_error(dynamic raw);
+
+  @protected
+  CommandRisk dco_decode_command_risk(dynamic raw);
 
   @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
@@ -1287,6 +1291,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ChangeError sse_decode_change_error(SseDeserializer deserializer);
+
+  @protected
+  CommandRisk sse_decode_command_risk(SseDeserializer deserializer);
 
   @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
@@ -2345,6 +2352,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_change_error(ChangeError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_command_risk(CommandRisk self, SseSerializer serializer);
 
   @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);

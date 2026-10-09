@@ -123,7 +123,7 @@ function installSessionStorage() {
 /// Opens a session and gets it as far as `running`.
 async function connected(renderer: FakeRenderer) {
   const session = new TerminalSession()
-  await session.start(renderer, 'ops', { kind: 'password', password: 'x' })
+  await session.start(renderer, { kind: 'local' })
   const socket = FakeSocket.latest()
   socket.onopen?.()
   socket.control({ type: 'ready', session: 'abc.def', since: 0 })
@@ -176,7 +176,7 @@ describe('TerminalSession', () => {
     vi.unstubAllGlobals()
   })
 
-  it('takes a ticket, then opens with the supplied credentials', async () => {
+  it('takes a ticket, then opens a shell', async () => {
     const { session, socket } = await connected(renderer)
 
     expect(ticketMock).toHaveBeenCalledWith('terminal')
@@ -184,8 +184,7 @@ describe('TerminalSession', () => {
     expect(socket.protocols).toEqual(['sbm-ticket.id.secret'])
     expect(socket.sent[0]).toMatchObject({
       type: 'open',
-      user: 'ops',
-      auth: { kind: 'password', password: 'x' },
+      auth: { kind: 'local' },
     })
     expect(session.phase).toBe('running')
   })
@@ -352,35 +351,17 @@ describe('TerminalSession', () => {
     expect(session.error).toBeNull()
   })
 
-  it('forwards a prompt and sends the answers back', async () => {
+  it('does not reconnect after a refused open', async () => {
     const session = new TerminalSession()
-    await session.start(renderer, 'ops', { kind: 'interactive' })
+    await session.start(renderer, { kind: 'local' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
-
-    socket.control({
-      type: 'prompt',
-      instructions: 'Enter the code',
-      prompts: [{ prompt: 'Code: ', echo: false }],
-    })
-    expect(session.phase).toBe('prompting')
-    expect(session.prompts).toEqual([{ prompt: 'Code: ', echo: false }])
-
-    session.answer(['123456'])
-    expect(socket.sent.at(-1)).toMatchObject({ type: 'answer', answers: ['123456'] })
-    expect(session.phase).toBe('authenticating')
-  })
-
-  it('does not reconnect after an authentication failure', async () => {
-    const session = new TerminalSession()
-    await session.start(renderer, 'ops', { kind: 'password', password: 'wrong' })
-    const socket = FakeSocket.latest()
-    socket.onopen?.()
-    socket.control({ type: 'error', code: 'auth_failed', message: 'Authentication failed' })
+    socket.control({ type: 'error', code: 'forbidden', message: 'not allowed' })
 
     socket.close()
-    // Retrying the same wrong password forever would only lock the account out
-    expect(session.phase).toBe('idle')
+    // The agent would refuse again
+    expect(session.phase).toBe('closed')
+    expect(session.error).toBe('not allowed')
     expect(FakeSocket.instances.length).toBe(1)
   })
 
@@ -467,7 +448,7 @@ describe('TerminalSession', () => {
     const session = new TerminalSession({ persist: false })
     expect(session.resumable).toBe(false)
 
-    await session.start(renderer, '', { kind: 'local' }, { kind: 'container', id: 'abc' })
+    await session.start(renderer, { kind: 'local' }, { kind: 'container', id: 'abc' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
 
@@ -483,7 +464,7 @@ describe('TerminalSession', () => {
     window.sessionStorage.setItem('terminal.session', stored)
 
     const session = new TerminalSession({ persist: false })
-    await session.start(renderer, '', { kind: 'local' }, { kind: 'container', id: 'abc' })
+    await session.start(renderer, { kind: 'local' }, { kind: 'container', id: 'abc' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
     socket.control({ type: 'ready', session: 'container.handle', since: 0 })
@@ -509,7 +490,7 @@ describe('TerminalSession', () => {
       FakeSocket.instances = []
       window.sessionStorage.setItem('terminal.session', JSON.stringify({ handle: 'abc.def', rendered }))
       const session = new TerminalSession()
-      await session.start(renderer, '', null)
+      await session.start(renderer, null)
       FakeSocket.latest().onopen?.()
       expect(FakeSocket.latest().sent[0]).toMatchObject({ type: 'attach', since: 0 })
       session.dispose()
@@ -527,7 +508,7 @@ describe('TerminalSession', () => {
     const session = new TerminalSession()
     expect(session.resumable).toBe(true)
 
-    await session.start(renderer, '', { kind: 'local' }, { kind: 'tmux', session: '$1' })
+    await session.start(renderer, { kind: 'local' }, { kind: 'tmux', session: '$1' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
 
@@ -553,15 +534,50 @@ describe('TerminalSession', () => {
     )
     const session = new TerminalSession()
 
-    // No credential: this is Resume, the way back to the dropped shell.
-    await session.start(renderer, '', null)
+    // No credential: this is Resume, the way back to the dropped shell. The
+    // renderer is new to the session (a reload), so it asks for the whole
+    // buffer rather than what follows the stored position.
+    await session.start(renderer, null)
     FakeSocket.latest().onopen?.()
 
     expect(FakeSocket.latest().sent[0]).toMatchObject({
       type: 'attach',
       session: 'abc.def',
-      since: 5,
+      since: 0,
     })
+  })
+
+  it('treats a gap before a fresh renderer\'s replay as old scrollback', async () => {
+    window.sessionStorage.setItem(
+      'terminal.session',
+      JSON.stringify({ handle: 'abc.def', rendered: 5 }),
+    )
+    const session = new TerminalSession()
+    await session.start(renderer, null)
+    const first = FakeSocket.latest()
+    first.onopen?.()
+    first.control({ type: 'ready', session: 'abc.def', since: 3 })
+    first.control({ type: 'error', code: 'gap_truncated', message: 'lost' })
+    expect(session.truncated).toBe(false)
+
+    // A gap on the reconnect after an outage is output lost again.
+    first.close()
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    const second = FakeSocket.latest()
+    second.onopen?.()
+    second.control({ type: 'ready', session: 'abc.def', since: 9 })
+    second.control({ type: 'error', code: 'gap_truncated', message: 'lost' })
+    expect(session.truncated).toBe(true)
+  })
+
+  it('says why when the socket closes before a session starts', async () => {
+    const session = new TerminalSession()
+    await session.start(renderer, { kind: 'local' })
+    FakeSocket.latest().close()
+
+    expect(session.phase).toBe('closed')
+    expect(session.error).toBe('The terminal connection closed before a session started')
   })
 
   it('never writes the handle to localStorage', async () => {
@@ -574,19 +590,21 @@ describe('TerminalSession', () => {
 
   it('opens without any credential when the agent allows it', async () => {
     const session = new TerminalSession()
-    await session.start(renderer, '', { kind: 'local' })
+    await session.start(renderer, { kind: 'local' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
 
-    const open = socket.sent[0] as { auth: { kind: string }; user: string }
+    const open = socket.sent[0] as { auth: { kind: string } }
     expect(open.auth).toEqual({ kind: 'local' })
-    // No password, key or passphrase may ride along on this path
+    // No account name, password, key or passphrase rides along (`user` is
+    // empty, for agents that still require the field)
+    expect(open).toMatchObject({ user: '' })
     expect(JSON.stringify(open)).not.toMatch(/password|pem|passphrase/)
   })
 
   it('carries a container target in the open frame', async () => {
     const session = new TerminalSession()
-    await session.start(renderer, '', { kind: 'local' }, { kind: 'container', id: 'abc' })
+    await session.start(renderer, { kind: 'local' }, { kind: 'container', id: 'abc' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
 
@@ -600,7 +618,7 @@ describe('TerminalSession', () => {
 
   it('sends no target for an ordinary open', async () => {
     const session = new TerminalSession()
-    await session.start(renderer, '', { kind: 'local' })
+    await session.start(renderer, { kind: 'local' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
 
@@ -609,7 +627,7 @@ describe('TerminalSession', () => {
 
   it('reports a refusal when the agent has full access turned off', async () => {
     const session = new TerminalSession()
-    await session.start(renderer, '', { kind: 'local' })
+    await session.start(renderer, { kind: 'local' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
     socket.control({

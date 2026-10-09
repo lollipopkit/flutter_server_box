@@ -23,6 +23,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
+import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
 
@@ -160,6 +161,8 @@ void main() {
   final credentials = MemoryCredentials({});
 
   setUpAll(() async {
+    // Whether a command runs by itself is `sbm_parser::command_risk`, over FFI.
+    await initRustLibForTest();
     (server, seen) = await _mockServer();
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));

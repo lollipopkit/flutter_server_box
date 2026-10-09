@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Bmc from '../pages/Bmc.svelte'
+import Bmc from '../desk/apps/bmc/BmcApp.svelte'
 import { api, ApiError } from '../lib/api'
 import { bmcErrorText, keepPasswords, prettyFingerprint } from '../lib/bmc'
 import { enabledFeatures } from '../lib/features'
@@ -82,7 +82,7 @@ describe('the BMC page', () => {
   afterEach(() => vi.useRealTimers())
 
   it('shows the selected target’s state and offers only the actions it answers', async () => {
-    render(Bmc, { onback: () => {} })
+    render(Bmc)
     expect(await screen.findByText('R740')).toBeInTheDocument()
     expect(screen.getByText('On')).toBeInTheDocument()
     expect(screen.getByText('180 W')).toBeInTheDocument()
@@ -92,7 +92,7 @@ describe('the BMC page', () => {
 
   it('asks before a power action and then sends it', async () => {
     bmcPower.mockResolvedValue({ outcome: { kind: 'done' } })
-    render(Bmc, { onback: () => {} })
+    render(Bmc)
     await fireEvent.click(await screen.findByRole('button', { name: /force off/i }))
     expect(bmcPower).not.toHaveBeenCalled()
     const buttons = screen.getAllByRole('button', { name: /force off/i })
@@ -102,7 +102,7 @@ describe('the BMC page', () => {
 
   it('removes a target by sending the set without it, passwords kept', async () => {
     updateBmc.mockResolvedValue({ targets: [], editable: true })
-    render(Bmc, { onback: () => {} })
+    render(Bmc)
     await screen.findByText('R740')
     await fireEvent.click(screen.getByRole('button', { name: /remove bmc/i }))
     const confirm = screen.getAllByRole('button', { name: /remove bmc/i })

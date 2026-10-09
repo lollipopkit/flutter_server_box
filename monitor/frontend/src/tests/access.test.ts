@@ -29,7 +29,6 @@ const off = { ok: false, why: 'not_granted' } as const
 function grants(over: Partial<CallerGrants>): CallerGrants {
   return {
     shell: off,
-    ssh_terminal: off,
     files: off,
     connect: off,
     listen: off,
@@ -117,7 +116,7 @@ describe('the account and role endpoints', () => {
       name: 'desktop',
       admin: false,
       builtin: false,
-      grants: { shell: false, ssh_terminal: false, files: null, connect: { allow: [] }, listen: null },
+      grants: { shell: false, files: null, connect: { allow: [] }, listen: null },
     }
     answer(200, role)
     await api.updateRole(role, 'pw')
@@ -142,21 +141,20 @@ describe('what a page offers', () => {
     expect(dashboardAccess(caps({}))).toEqual({ terminal: false, files: false, viewOnly: true })
 
     const legacy = caps({ remote_access: { terminal: true, full_access: true, files: false } })
-    expect(terminalAccess(legacy)).toEqual({ available: true, direct: true, ssh: true })
+    expect(terminalAccess(legacy)).toEqual({ available: true })
+    // Its terminal switch alone was the SSH terminal, which is gone.
+    expect(terminalAccess(caps({ remote_access: { terminal: true, full_access: false } })).available).toBe(false)
     expect(filesAccess(legacy).available).toBe(false)
     expect(dashboardAccess(legacy)).toEqual({ terminal: true, files: false, viewOnly: false })
   })
 
-  it('the terminal: either kind opens it, and the SSH form needs its own grant', () => {
+  it('the terminal: the shell grant opens it', () => {
     const direct = terminalAccess(caps({ grants: grants({ shell: { ok: true } }) }))
-    expect(direct).toMatchObject({ available: true, direct: true, ssh: false })
-
-    const sshOnly = terminalAccess(caps({ grants: grants({ ssh_terminal: { ok: true } }) }))
-    expect(sshOnly).toMatchObject({ available: true, direct: false, ssh: true })
+    expect(direct).toEqual({ available: true, why: undefined })
 
     const none = terminalAccess(
       caps({
-        grants: grants({ ssh_terminal: { ok: false, why: 'insecure_transport' } }),
+        grants: grants({ shell: { ok: false, why: 'insecure_transport' } }),
       }),
     )
     expect(none).toMatchObject({ available: false, why: 'insecure_transport' })
@@ -195,7 +193,7 @@ describe('the role editor', () => {
       name: 'desktop',
       admin: false,
       builtin: false,
-      grants: { shell: false, ssh_terminal: false, files: null, connect: null, listen: null },
+      grants: { shell: false, files: null, connect: null, listen: null },
     })
   })
 
@@ -241,7 +239,6 @@ describe('the role editor', () => {
       builtin: false,
       grants: {
         shell: true,
-        ssh_terminal: false,
         files: { mode: 'read' },
         connect: { allow: ['10.0.0.0/8'] },
         listen: { public: false, ports: [8000, 8100] },
@@ -259,7 +256,7 @@ describe('the role editor', () => {
       name: 'admin',
       admin: true,
       builtin: true,
-      grants: { shell: false, ssh_terminal: false, files: null, connect: null, listen: null },
+      grants: { shell: false, files: null, connect: null, listen: null },
     }
     expect(roleFromDraft(draftFromRole(admin))).toEqual(admin)
   })
@@ -270,7 +267,7 @@ describe('the role editor', () => {
       name: 'ops',
       admin: false,
       builtin: false,
-      grants: { shell: true, ssh_terminal: false, files: null, connect: null, listen: null },
+      grants: { shell: true, files: null, connect: null, listen: null },
     }
     const back = roleFromDraft(draftFromRole(old))
     expect(back).toEqual(old)

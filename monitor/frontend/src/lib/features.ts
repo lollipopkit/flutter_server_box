@@ -1,18 +1,13 @@
 /// The machine-management pages, and which of them this agent offers the
 /// caller (issue #1623).
 ///
-/// One list: the tab bar draws it, the Dashboard opens its first entry, and a
-/// page names itself in it. Ordered by what the thing is — the running
+/// What each needs of the caller; the desk's app manifests (`desk/apps/<id>/manifest.ts`) ask
+/// it whether an app is offered. Ordered by what the thing is — the running
 /// machine first, then its configuration, then what lies beyond it.
-///
-/// How each is drawn (label, icon) is `components/FeatureTabs.svelte`'s: a
-/// label is `$LL` and an icon a component, and this module is plain
-/// TypeScript.
 import { isAdmin, machineAccess } from './access'
 import type { Capabilities, GrantName } from '../types'
 
-/// A machine-management page. Also a `View` — `layout.svelte.ts` widens it
-/// with this type, so the two cannot drift.
+/// A machine-management page.
 export type FeatureId =
   | 'containers'
   | 'process'

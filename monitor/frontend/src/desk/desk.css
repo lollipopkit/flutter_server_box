@@ -1,0 +1,228 @@
+/* The desk's own layout rules. Its look is the lollipopkit Design System
+   (`lk/lk.css`: tokens and `lk-*` classes); this file only places windows,
+   animates them and picks a wallpaper's light or dark version. */
+/* Whichever stylesheet loads first fixes the layers' order; stated here as
+   Tailwind states it, so the design system's components layer sits under
+   the utilities. */
+@layer theme, base, components, utilities;
+@import './lk/lk.css';
+
+/* A window's box on the desk (`window/Window.svelte`); the `lk-window`
+   inside it is the visible frame. */
+.desk-window {
+  /* The containing block of anything `position: fixed` inside: a dialog or
+     a modal covers its own window, not the desk. */
+  contain: layout;
+  transition:
+    opacity var(--dur-base) var(--ease-standard),
+    transform var(--dur-genie) var(--ease-in-out);
+}
+.desk-window[data-snapped='true'] > .lk-window {
+  border-radius: var(--radius-card);
+}
+.desk-window[data-compact='true'] > .lk-window {
+  border-radius: 0;
+}
+/* Minimised: hidden, never unmounted (an app keeps its state and sockets). */
+.desk-window[data-minimized='true'] {
+  opacity: 0;
+  transform: translateY(40vh) scale(0.1);
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-genie) var(--ease-in-out),
+    transform var(--dur-genie) var(--ease-in-out),
+    visibility 0s var(--dur-genie);
+}
+/* Geometry springs on maximise/snap, never while dragging. */
+.desk-window[data-animate='true'] {
+  transition:
+    left var(--dur-slow) var(--ease-spring),
+    top var(--dur-slow) var(--ease-spring),
+    width var(--dur-slow) var(--ease-spring),
+    height var(--dur-slow) var(--ease-spring);
+}
+.desk-opening > .lk-window {
+  animation: lk-window-in var(--dur-window) var(--ease-spring);
+}
+
+/* A wallpaper's two versions; the mode in effect picks one. */
+.desk-wall-dark {
+  display: none;
+}
+:root[data-theme='dark'] .desk-wall-dark {
+  display: block;
+}
+:root[data-theme='dark'] .desk-wall-light {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-window,
+  .desk-window[data-animate='true'],
+  .desk-opening > .lk-window {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* The content is a column (an app fills it with `flex-1`); its children
+   still take the full width a block would, so `mx-auto max-w-*` centres
+   rather than shrinks to the content. In the base layer, under any utility. */
+@layer base {
+  .desk-window-body > * {
+    width: 100%;
+  }
+}
+
+/* Wide windows (the lollipopkit Design System's rule): the sidebar never
+   grows, the extra width goes to the content pane, and what happens there
+   depends on the content. A form or settings page caps at 640 and centres; a
+   page of reading at 720; a dashboard or tile grid at 1280. Tables and lists
+   fill (no class). The gutter is 21 at every width. */
+@layer components {
+  .pane-form,
+  .pane-reading,
+  .pane-board {
+    box-sizing: border-box;
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--content-pad);
+  }
+  .pane-form {
+    max-width: calc(var(--content-max-form) + 2 * var(--content-pad));
+  }
+  .pane-reading {
+    max-width: calc(var(--content-max-reading) + 2 * var(--content-pad));
+  }
+  .pane-board {
+    max-width: calc(var(--content-max-board) + 2 * var(--content-pad));
+  }
+}
+
+/* Reduce motion (Settings > Appearance): as the system's own reduced-motion
+   setting does in the design system's tokens — short, no overshoot. */
+.lk[data-reduce-motion] {
+  --dur-base: 120ms;
+  --dur-slow: 120ms;
+  --dur-window: 150ms;
+  --dur-genie: 150ms;
+  --dur-scene: 150ms;
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring-bouncy: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-indicator: 150ms;
+  --dur-tab-content: 0ms;
+  --dur-tab-in: 0ms;
+  --ease-indicator: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* App icons are circles unless Settings > Appearance picks the design
+   system's squircle (`shellPrefs.iconShape`). */
+.lk[data-icon-shape='circle'] {
+  --radius-icon: 50%;
+}
+
+/* Split panes inside one window (window/PaneHost.svelte; its tabs are the
+   design system's TitleTabs): a split is one hairline, a pane without the
+   focus is dimmed. */
+.desk-panes__area {
+  position: absolute;
+  inset: 0;
+}
+.desk-panes__area--bar {
+  top: var(--titlebar-height);
+  box-shadow: inset 0 0.5px 0 var(--border-hairline);
+}
+.desk-pane {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  box-sizing: border-box;
+}
+/* A table's header sticks under the bar only in a pane that reaches it. */
+.desk-pane .lk-table__head {
+  top: var(--pane-top);
+}
+.desk-pane__dim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--surface-window) 32%, transparent);
+}
+.desk-divider {
+  position: absolute;
+  z-index: 3;
+}
+.desk-divider::after {
+  content: '';
+  position: absolute;
+  background: var(--border-strong);
+}
+.desk-divider--row {
+  width: 7px;
+  transform: translateX(-50%);
+  cursor: col-resize;
+}
+.desk-divider--row::after {
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+}
+.desk-divider--column {
+  height: 7px;
+  transform: translateY(-50%);
+  cursor: row-resize;
+}
+.desk-divider--column::after {
+  left: 0;
+  right: 0;
+  top: 3px;
+  height: 1px;
+}
+/* Where a window let go now would go. */
+.desk-pane-drop {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-accent) 60%, transparent);
+  transition: left var(--dur-fast), top var(--dur-fast), width var(--dur-fast), height var(--dur-fast);
+}
+.lk-window__content--panes {
+  overflow: hidden;
+}
+.desk-pane-drop--tab {
+  left: var(--space-9);
+  right: var(--space-9);
+  top: var(--space-5);
+  height: calc(var(--titlebar-height) - 2 * var(--space-5));
+}
+/* A window dragged onto another, about to merge into it. */
+.desk-window[data-merging='true'] {
+  opacity: 0.72;
+}
+/* A settings card whose rows open pages: their hover keeps the card's corners. */
+.lk-setgroup__card:has(> .lk-setrow--link) {
+  overflow: hidden;
+}
+
+/* A window's content and a pane always keep the scrollbar's lane (the bar
+   already stops short of it): a scrollbar coming or going — a page growing
+   as it slides in — never changes the content's width. Browsers no longer
+   draw scrollbars over content once they are styled. A terminal scrolls
+   inside itself and keeps its width to the edge. */
+.lk-window__content:not(.lk-window__content--panes),
+.desk-pane:not(:has(.xterm)) {
+  scrollbar-gutter: stable;
+}
+/* A page stack is the window's scrolling body there (sys/PageStack): its
+   pages scroll, each with its own scrollbar, and the window does not. */
+.lk-window__content[data-page-scroll],
+.desk-pane[data-page-scroll] {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}

@@ -4871,9 +4871,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — agent 계정으로 실행';
 
   @override
-  String get monitorGrantSshTerminal => 'SSH를 통한 패널 터미널';
-
-  @override
   String get monitorGrantVirt => '가상화';
 
   @override

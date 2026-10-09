@@ -1,0 +1,11 @@
+{
+  "id": "acme_template",
+  "version": "0.1.0",
+  "api": 1,
+  "kind": "web",
+  "title": "Template",
+  "glyph": "widgets",
+  "tone": "violet",
+  "permissions": [],
+  "size": { "width": 640, "height": 440 }
+}

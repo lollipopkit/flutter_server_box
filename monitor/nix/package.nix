@@ -12,14 +12,11 @@
 # vendor hash at all — a guessed or stale one is a class of breakage this
 # avoids entirely.
 #
-# npm has no equivalent, and there are *two* lock files: the panel's, and
-# `packages/webui`'s, which the panel depends on through a `file:` link. Get
-# either with, from the repository root:
+# npm has no equivalent: the panel's hash is, from the repository root,
 #
 #     nix run nixpkgs#prefetch-npm-deps -- monitor/frontend/package-lock.json
-#     nix run nixpkgs#prefetch-npm-deps -- packages/webui/package-lock.json
 #
-# Each changes whenever its own lock file does.
+# and changes whenever that lock file does.
 #
 # ## What has actually been built, and what has not
 #
@@ -54,23 +51,10 @@ let
   # The monorepo root: `monitor` is a workspace member, and the crate it
   # depends on (`crates/sbm_parser`) is a sibling, so the source cannot be
   # `monitor/` alone.
+  # The agent also reads theme packages with fl_lib's `fl_theme`, a path
+  # dependency into the `packages/fl_lib` submodule: a checkout without
+  # submodules has an empty directory there and the build fails.
   src = lib.cleanSource ../..;
-
-  # `@serverbox/webui` is a `file:` dependency of the panel, so an install in
-  # `monitor/frontend` only symlinks it and fetches none of its own packages.
-  # The panel needs both halves: `clsx` / `tailwind-merge` /
-  # `tailwind-variants` because vite bundles webui's source, and `svelte` /
-  # `typescript` because `npm run build` runs `svelte-check` first.
-  #
-  # A second dependency set rather than one, because `npmDepsHash` below hashes
-  # exactly one lock file and this is a different one. The repository solves the
-  # same problem with a `prebuild` script that runs `npm install` — which cannot
-  # work here, since a Nix build has no network.
-  webuiDeps = fetchNpmDeps {
-    name = "serverbox-webui-npm-deps";
-    src = ../../packages/webui;
-    hash = "sha256-XkjHnnOw/WVci9Z8zpKtK42TefzdbEmmlbewoCpFUlg=";
-  };
 
   panel = buildNpmPackage {
     pname = "server-box-monitor-panel";
@@ -79,32 +63,9 @@ let
 
     sourceRoot = "source/monitor/frontend";
 
-    npmDepsHash = "sha256-6BtSAJfCCrxoRHbySnlPHS5cxnjsbVWgqxhAoGkw19M=";
+    npmDepsHash = "sha256-0WJgMowLKnP7SUKSCok3bA5eVgSGSpPto3vuqVg897I=";
 
     nativeBuildInputs = [ nodejs npmHooks.npmConfigHook ];
-
-    # `npm run build` otherwise runs the panel's own `prebuild`, `npm install
-    # --prefix ../../packages/webui`, immediately after the offline install
-    # below has already produced that directory. Measured in the sandbox it
-    # reports "up to date" and does not fail, since `npm ci` has already written
-    # the tree the lock file describes — so this flag is about not depending on
-    # npm reaching that conclusion, with no registry to fall back on the day it
-    # does not. `--ignore-scripts` on `npm run` drops only `prebuild`/
-    # `postbuild`; `build` itself still runs, and the `npm run typesafe-i18n`
-    # inside it inherits the flag through `npm_config_ignore_scripts` and has no
-    # pre/post script of its own.
-    npmBuildFlags = [ "--ignore-scripts" ];
-
-    # Offline, from the cache above, standing in for the `prebuild` script.
-    preBuild = ''
-      # Writable first: the source arrives from the store, and buildNpmPackage
-      # only makes `sourceRoot` writable — a sibling directory is still
-      # r-xr-xr-x, so `npm ci` fails on `mkdir node_modules` with EACCES.
-      chmod -R u+w ../../packages/webui
-      pushd ../../packages/webui
-      npm ci --offline --no-audit --no-fund --cache=${webuiDeps} --nodedir=${nodejs}
-      popd
-    '';
 
     installPhase = ''
       runHook preInstall

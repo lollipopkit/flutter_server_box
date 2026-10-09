@@ -170,6 +170,20 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     db::bootstrap::ensure_admin_user(&db, &config.get_database_url()).await?;
 
     let app_state = crate::api::server::AppState::new(config.clone(), db);
+    // Files kept beside the database: what an older agent kept in it moves
+    // out, and what no row names any more (an account deleted, a write cut
+    // short) goes.
+    crate::core::blobs::move_database_backups(&app_state.db, &app_state.blobs).await?;
+    match app_state.blobs.collect(&app_state.db).await {
+        Ok(0) => {}
+        Ok(n) => tracing::info!("blobs: removed {n} unused files"),
+        Err(e) => tracing::warn!("blobs: collecting unused files failed: {e:#}"),
+    }
+    // Tasks a stopped agent left running are failed; sessions of removed
+    // accounts go.
+    if let Err(e) = app_state.agent.recover().await {
+        tracing::warn!("agent mode: recovering tasks failed: {e:#}");
+    }
     // Unconditional, and cheap while nothing is running: a benchmark outlives
     // the request that started it, so the party that carries it to a terminal
     // state has to be resident. See `api::benchmark::start_poller`.

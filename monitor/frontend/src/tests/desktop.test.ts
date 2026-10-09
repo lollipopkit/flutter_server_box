@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { DesktopSession, MAX_EARLY_BYTES, RelayChannel, parseControl, relayOpenMessage } from '../lib/desktop.svelte'
 import { agentWsUrl, wsTicketProtocol } from '../lib/agentUrl'
-import { desktopDraftOf, desktopFormState } from '../components/DesktopForm.svelte'
+import { desktopDraftOf, desktopFormState } from '../desk/apps/remote_desktop/DesktopForm.svelte'
 import { servers } from '../lib/servers.svelte'
 import type { Desktop } from '../types'
 

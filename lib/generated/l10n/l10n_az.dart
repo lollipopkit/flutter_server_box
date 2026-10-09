@@ -5108,9 +5108,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Terminal, proseslər, xidmətlər, konteynerlər, snippet-lər, enerji — agent hesabı ilə';
 
   @override
-  String get monitorGrantSshTerminal => 'SSH üzərindən panel terminalı';
-
-  @override
   String get monitorGrantVirt => 'Virtuallaşdırma';
 
   @override

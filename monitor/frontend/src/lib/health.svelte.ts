@@ -1,4 +1,4 @@
-/// Per-server reachability, shown as dots in the sidebar. Uses the
+/// Per-server reachability, shown as the Status app's connection badge. Uses the
 /// unauthenticated /health endpoint; cross-origin agents must allow the
 /// panel origin (same CORS requirement as the rest of the panel).
 
@@ -40,7 +40,10 @@ class HealthStore {
         this.#controllers.add(controller)
         try {
           const reachable = (await probe(server.url, controller.signal)) === 'healthy'
-          if (generation === this.#generation) this.status[server.id] = reachable
+          if (generation === this.#generation) {
+            this.status[server.id] = reachable
+            if (reachable) servers.markOnline(server.id)
+          }
         } finally {
           this.#controllers.delete(controller)
         }

@@ -134,6 +134,10 @@ export type MachineFeature =
   | 'backup'
   | 'bmc'
   | 'virt'
+  /// The agent keeps the panel's desk (`/desk*`).
+  | 'desk'
+  /// Agent mode: tasks an AI agent runs on the machine (`/agent*`).
+  | 'agent_mode'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -151,7 +155,7 @@ export interface PowerResult {
 
 /// The grants a role can hold. `read` is held by every account and is not
 /// one of them.
-export type GrantName = 'shell' | 'ssh_terminal' | 'files' | 'connect' | 'listen' | 'virt'
+export type GrantName = 'shell' | 'files' | 'connect' | 'listen' | 'virt'
 
 /// Why a grant is not usable: the role lacks it, the request did not arrive
 /// over TLS or loopback, or the machine side is not set up (files with no
@@ -168,7 +172,6 @@ export type FilesMode = 'read' | 'write'
 
 export interface CallerGrants {
   shell: GrantStatus
-  ssh_terminal: GrantStatus
   files: GrantStatus & { mode?: FilesMode }
   connect: GrantStatus & { allow?: string[] }
   listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
@@ -187,7 +190,6 @@ export interface Me {
 /// with those options.
 export interface RoleGrants {
   shell: boolean
-  ssh_terminal: boolean
   files: { mode: FilesMode } | null
   /// `allow` empty means anywhere.
   connect: { allow: string[] } | null
@@ -874,6 +876,9 @@ export interface ContainerStats {
   /// Podman's average over the sample window. Docker reports none.
   cpu_avg: string | null
   mem: string | null
+  /// The halves of `mem`; absent from an agent before they were split.
+  mem_used?: string | null
+  mem_limit?: string | null
   net_down: string | null
   net_up: string | null
   disk_read: string | null
@@ -2652,3 +2657,34 @@ export type VirtBackupIssue =
   | 'not_stopped'
   | 'not_found'
   | 'unsupported'
+
+/// Desk apps installed on the agent (`api::apps`).
+/// A package's manifest as the agent checked it (`api::apps::Manifest`).
+export interface PackageManifest {
+  id: string
+  version: string
+  api: number
+  kind: 'web' | 'wasm'
+  title: string | Record<string, string>
+  glyph: string
+  tone: string
+  permissions: string[]
+  instances?: number
+  size?: { width: number; height: number }
+  min_size?: { width: number; height: number }
+  opens?: { dirs?: boolean; ext?: string[] }
+  keywords?: string[]
+}
+
+export interface InstalledApp {
+  id: string
+  version: string
+  /// Of the package; an approval names it, so it approves exactly this code.
+  sha256: string
+  manifest: PackageManifest
+  /// Null while waiting for an admin's approval.
+  approved_permissions: string[] | null
+  installed_by: string
+  installed_at: string
+  approved_at: string | null
+}

@@ -28,7 +28,12 @@ const storage = new MemStorage()
 Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true })
 Object.defineProperty(window, 'localStorage', { value: storage, configurable: true })
 
-// Locale bootstrap must follow the storage shim (init reads window.localStorage)
-await import('../i18n/init')
+// Locale bootstrap must follow the storage shim (init reads window.localStorage).
+// Tests switch locales freely, so every dictionary is loaded here, as the
+// panel loads only the one in use.
+const { ready } = await import('../i18n/init')
+await ready
+const { loadAllLocales } = await import('../i18n/i18n-util.sync')
+loadAllLocales()
 
 export {}

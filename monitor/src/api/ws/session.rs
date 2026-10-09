@@ -133,12 +133,6 @@ pub enum SessionOutput {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SessionAuth {
-    Ssh,
-    Local,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct AttachmentId(u64);
 
 struct AttachmentState {
@@ -158,8 +152,9 @@ pub struct Session {
     /// since changed — a CLI reset the running agent was not told about, or a
     /// change that raced the open — is closed at the next sweep.
     pub since: i64,
-    pub ssh_user: String,
-    pub auth: SessionAuth,
+    /// The machine account the shell runs as (the agent's own), for the audit
+    /// log.
+    pub user: String,
     secret: String,
     pub scrollback: Mutex<Scrollback>,
     /// Feeds the shell side. Dropping every clone of this ends the session.
@@ -175,8 +170,7 @@ impl Session {
     /// or reused one.
     pub fn new(
         subject: impl Into<String>,
-        ssh_user: impl Into<String>,
-        auth: SessionAuth,
+        user: impl Into<String>,
         scrollback_bytes: usize,
         input_queue: usize,
     ) -> (Self, mpsc::Receiver<SessionInput>) {
@@ -184,8 +178,7 @@ impl Session {
         let session = Self {
             subject: subject.into(),
             since: 0,
-            ssh_user: ssh_user.into(),
-            auth,
+            user: user.into(),
             secret: String::new(),
             scrollback: Mutex::new(Scrollback::new(scrollback_bytes)),
             input,
@@ -486,7 +479,7 @@ mod tests {
     use super::*;
 
     fn session(subject: &str) -> Session {
-        Session::new(subject, "ops", SessionAuth::Ssh, 1024, 8).0
+        Session::new(subject, "ops", 1024, 8).0
     }
 
     #[test]
@@ -620,7 +613,7 @@ mod tests {
         let store = SessionStore::new(4, Duration::from_secs(300));
         let (_attached_handle, attached) = store.insert(session("admin")).unwrap().unwrap();
         let (detached_session, mut detached_input) =
-            Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+            Session::new("admin", "ops", 1024, 8);
         let (_, detached) = store.insert(detached_session).unwrap().unwrap();
 
         let _attached = attached.attach(0, 1).unwrap();
@@ -639,7 +632,7 @@ mod tests {
     #[test]
     fn insertion_reaps_expired_sessions_before_enforcing_the_cap() {
         let store = SessionStore::new(1, Duration::ZERO);
-        let (old, mut old_input) = Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+        let (old, mut old_input) = Session::new("admin", "ops", 1024, 8);
         let (_, old) = store.insert(old).unwrap().unwrap();
         let (attachment, _, _, _) = old.attach(0, 1).unwrap();
         old.detach(attachment);
@@ -694,25 +687,25 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn closing_local_sessions_leaves_ssh_sessions_running() {
+    async fn closing_where_leaves_the_other_sessions_running() {
         let store = SessionStore::new(4, Duration::from_secs(300));
-        let (local, mut local_input) = Session::new("admin", "local", SessionAuth::Local, 1024, 8);
-        let (ssh, mut ssh_input) = Session::new("admin", "ops", SessionAuth::Ssh, 1024, 8);
+        let (local, mut local_input) = Session::new("admin", "local", 1024, 8);
+        let (ssh, mut ssh_input) = Session::new("ops", "local", 1024, 8);
         let (local_handle, local) = store.insert(local).unwrap().unwrap();
         let (ssh_handle, ssh) = store.insert(ssh).unwrap().unwrap();
         let (_, mut local_output, _, _) = local.attach(0, 1).unwrap();
         let _ssh_attachment = ssh.attach(0, 1).unwrap();
 
         assert_eq!(
-            store.close_where(|s| s.auth == SessionAuth::Local, "permission_revoked"),
+            store.close_where(|s| s.subject == "admin", "permission_revoked"),
             1
         );
-        assert_eq!(store.subjects(), ["admin"]);
+        assert_eq!(store.subjects(), ["ops"]);
         assert_eq!(
             store.get(&local_handle, "admin").err(),
             Some(AttachError::Unknown)
         );
-        assert!(store.get(&ssh_handle, "admin").is_ok());
+        assert!(store.get(&ssh_handle, "ops").is_ok());
         assert!(matches!(
             local_input.recv().await,
             Some(SessionInput::Close)

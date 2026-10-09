@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import VirtHardware from '../components/VirtHardware.svelte'
-import VirtManage from '../components/VirtManage.svelte'
+import VirtHardware from '../desk/apps/virt/VirtHardware.svelte'
+import VirtManage from '../desk/apps/virt/VirtManage.svelte'
 import { api } from '../lib/api'
 import {
   bootDraft,
@@ -314,7 +314,7 @@ describe('the hardware view', () => {
     virtHardware.mockResolvedValue({ hardware: hardware({ running: false }), error: null })
     virtHardwareChange.mockResolvedValue({ outcome: null, error: err({ detail: { code: 'hardware_refused', issue: 'storage_missing' } }) })
     show()
-    await fireEvent.click(await screen.findByRole('button', { name: 'UEFI' }))
+    await fireEvent.click(await screen.findByRole('tab', { name: 'UEFI' }))
     expect(screen.getByText(/unable to boot/)).toBeInTheDocument()
     expect(virtHardwareChange).not.toHaveBeenCalled()
   })

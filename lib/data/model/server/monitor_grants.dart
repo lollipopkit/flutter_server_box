@@ -76,7 +76,6 @@ enum MonitorFilesMode {
 class MonitorGrants {
   const MonitorGrants({
     this.shell = MonitorGrant.denied,
-    this.sshTerminal = MonitorGrant.denied,
     this.files = MonitorGrant.denied,
     this.filesMode,
     this.connect = MonitorGrant.denied,
@@ -87,7 +86,6 @@ class MonitorGrants {
   });
 
   final MonitorGrant shell;
-  final MonitorGrant sshTerminal;
   final MonitorGrant files;
 
   /// What [files] allows; null when the agent did not say, which is read as
@@ -113,7 +111,6 @@ class MonitorGrants {
     Map? obj(String key) => json[key] is Map ? json[key] as Map : null;
     return MonitorGrants(
       shell: MonitorGrant.fromJson(json['shell']),
-      sshTerminal: MonitorGrant.fromJson(json['ssh_terminal']),
       files: MonitorGrant.fromJson(json['files']),
       filesMode: MonitorFilesMode.fromWire(obj('files')?['mode']),
       connect: MonitorGrant.fromJson(json['connect']),
@@ -131,7 +128,6 @@ class MonitorGrants {
   bool operator ==(Object other) =>
       other is MonitorGrants &&
       other.shell == shell &&
-      other.sshTerminal == sshTerminal &&
       other.files == files &&
       other.filesMode == filesMode &&
       other.connect == connect &&
@@ -143,7 +139,6 @@ class MonitorGrants {
   @override
   int get hashCode => Object.hash(
     shell,
-    sshTerminal,
     files,
     filesMode,
     connect,
@@ -155,7 +150,7 @@ class MonitorGrants {
 
   @override
   String toString() =>
-      'MonitorGrants(shell: $shell, sshTerminal: $sshTerminal, files: $files '
+      'MonitorGrants(shell: $shell, files: $files '
       '${filesMode?.name}, connect: $connect $connectAllow, listen: $listen '
       'public=$listenPublic, virt: $virt)';
 }
@@ -188,7 +183,6 @@ class MonitorMe {
 class MonitorRoleGrants {
   const MonitorRoleGrants({
     this.shell = false,
-    this.sshTerminal = false,
     this.files,
     this.connectAllow,
     this.listen,
@@ -196,7 +190,6 @@ class MonitorRoleGrants {
   });
 
   final bool shell;
-  final bool sshTerminal;
 
   /// Null is not granted.
   final MonitorFilesMode? files;
@@ -217,7 +210,6 @@ class MonitorRoleGrants {
     final listen = json['listen'];
     return MonitorRoleGrants(
       shell: json['shell'] == true,
-      sshTerminal: json['ssh_terminal'] == true,
       files: files is Map
           ? MonitorFilesMode.fromWire(files['mode']) ?? MonitorFilesMode.read
           : null,
@@ -237,7 +229,6 @@ class MonitorRoleGrants {
 
   Map<String, dynamic> toJson() => {
     'shell': shell,
-    'ssh_terminal': sshTerminal,
     'files': files == null ? null : {'mode': files!.name},
     'connect': connectAllow == null ? null : {'allow': connectAllow},
     'listen': listen?.toJson(),
@@ -246,14 +237,12 @@ class MonitorRoleGrants {
 
   MonitorRoleGrants copyWith({
     bool? shell,
-    bool? sshTerminal,
     MonitorFilesMode? Function()? files,
     List<String>? Function()? connectAllow,
     MonitorListenGrant? Function()? listen,
     bool? virt,
   }) => MonitorRoleGrants(
     shell: shell ?? this.shell,
-    sshTerminal: sshTerminal ?? this.sshTerminal,
     files: files == null ? this.files : files(),
     connectAllow: connectAllow == null ? this.connectAllow : connectAllow(),
     listen: listen == null ? this.listen : listen(),

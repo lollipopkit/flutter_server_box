@@ -171,4 +171,34 @@ pub mod machine {
         let bytes = resp.body().limit(16 * 1024 * 1024).await.unwrap_or_default();
         (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
     }
+
+    /// A POST answered with a stream: the whole of it, once it ends.
+    #[allow(dead_code)]
+    /// Posts raw [bytes] with [content_type].
+    pub async fn post_bytes(srv: &TestServer, user: &str, path: &str, content_type: &str, bytes: Vec<u8>) -> (u16, Value) {
+        let resp = srv
+            .request(Method::POST, srv.url(path))
+            .timeout(std::time::Duration::from_secs(60))
+            .header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()))
+            .header("Content-Type", content_type)
+            .send_body(bytes)
+            .await
+            .unwrap();
+        let status = resp.status().as_u16();
+        let body = resp.json::<Value>().await.unwrap_or(Value::Null);
+        (status, body)
+    }
+
+    pub async fn post_text(srv: &TestServer, user: &str, path: &str, body: Value) -> (u16, String) {
+        let resp = srv
+            .request(Method::POST, srv.url(path))
+            .timeout(std::time::Duration::from_secs(60))
+            .header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()))
+            .send_json(&body)
+            .await
+            .unwrap();
+        let status = resp.status().as_u16();
+        let bytes = resp.body().limit(16 * 1024 * 1024).await.unwrap_or_default();
+        (status, String::from_utf8_lossy(&bytes).into_owned())
+    }
 }

@@ -10,6 +10,11 @@ path = "src/lib.rs"
 [dependencies]
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
+# Theme packages and the theme store, the same reader the app runs through
+# fl_lib (its own Cargo workspace, in the fl_lib submodule).
+fl_theme = { path = "../packages/fl_lib/rust/theme" }
+# Agent mode's agent loop: pi on QuickJS, hosted from Rust (`agent_mode`).
+fl_pi_llm = { path = "../packages/fl_pi_llm/rust", default-features = false, features = ["reqwest"] }
 sbm_redfish = { path = "../crates/sbm_redfish" }
 sbm_virt = { path = "../crates/sbm_virt" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
@@ -52,6 +57,20 @@ jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_c
 bcrypt = "0.19"
 # sha2 0.11 returns a `hybrid_array::Array`, which has no `LowerHex` — hence hex
 sha2 = "0.11"
+
+# Desk app packages (`api::apps`): a gzipped tar, read entry by entry with
+# every size bounded while it is read.
+tar = { version = "0.4", default-features = false }
+flate2 = "1"
+# Launch tickets for their UI (HMAC); the crypto already in the tree.
+ring = "0.17"
+# Desk app backends (`api::app_runtime`): an interpreter, so no JIT and no
+# executable memory in the agent; fuel bounds every call.
+# `auto-dispatch`: tail-call dispatch (3-4x faster) only where LLVM is known
+# to turn it into jumps and the build is optimised; elsewhere (a debug build)
+# the portable loop, so a long-running guest never grows the stack.
+wasmi = { version = "2", default-features = false, features = ["std", "validate", "auto-dispatch"] }
+base64 = "0.22"
 hex = "0.4"
 
 # Configuration
@@ -73,22 +92,7 @@ rpassword = "7"
 # `monitoring::push`'s webhook tests hold.
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-no-provider", "charset", "http2", "stream"] }
 
-# SSH client for the browser terminal. `ring` rather than the default
-# aws-lc-rs, matching the backend rustls and jsonwebtoken are configured with,
-# so this adds no second crypto implementation of its own.
-#
-# `ring` is now the only one in the tree — `cargo tree -i aws-lc-sys` finds
-# nothing. It was reqwest that brought the other, and that is fixed above; the
-# "no cmake for musl" intent these features are chosen for is achieved rather
-# than merely stated. Anything added here that wants TLS has to be configured
-# the same way, or it comes back.
-russh = { version = "0.63", default-features = false, features = ["ring", "flate2", "rsa"] }
-# Wipes SSH credentials from memory once they have been used
-zeroize = "1"
-
-# Local PTY for the passwordless terminal (ConPTY on Windows, forkpty
-# elsewhere). Only used when remote_access.passwordless_terminal is on; the
-# SSH path needs none of this.
+# Local PTY for the terminal (ConPTY on Windows, forkpty elsewhere).
 portable-pty = "0.9"
 
 # Time handling
@@ -107,6 +111,10 @@ regex = "1.13"
 
 # URL encoding
 percent-encoding = "2.3"
+# Bark's encrypted push (AES-CBC); the versions already in the lockfile.
+aes = "0.9"
+cbc = { version = "0.2", features = ["alloc"] }
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "rustls-platform-verifier"] }
 
 # CLI argument parsing
 clap = { version = "4.6", features = ["derive", "env"] }
@@ -114,6 +122,7 @@ clap = { version = "4.6", features = ["derive", "env"] }
 hostname = "0.4.2"
 async-stream = "0.3.6"
 futures = "0.3.34"
+url = "2"
 # Advisory process-wide lock for custom-command directory replacements.
 fs2 = "0.4"
 
@@ -123,7 +132,17 @@ fs2 = "0.4"
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
+# Agent mode tells the model which Windows it is on (`prompt::os_name`).
+[target.'cfg(windows)'.dependencies]
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+
 [dev-dependencies]
+# Repository trees for `tests/theme_store.rs` (`fl_theme::repo::Index`).
+indexmap = "2"
+# Building theme packages in `tests/desk_themes.rs`.
+zip = { version = "8", default-features = false, features = ["deflate-flate2"] }
+# Test modules for the app runtime, written as text.
+wat = "1"
 tempfile = "3.27.0"
 # Self-signed certificates for the fake RDP server in `tests/rdp_ws.rs`.
 # `ring`, so the tree keeps one crypto implementation.

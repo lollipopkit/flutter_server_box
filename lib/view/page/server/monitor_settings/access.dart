@@ -131,7 +131,6 @@ String monitorRoleSummary(MonitorRole role) {
   final g = role.grants;
   final held = [
     if (g.shell) l10n.monitorGrantShell,
-    if (g.sshTerminal) l10n.monitorGrantSshTerminal,
     if (g.files case final mode?)
       '${l10n.monitorGrantFiles} (${mode == MonitorFilesMode.read ? libL10n.read : libL10n.write})',
     if (g.connectAllow != null) l10n.monitorGrantConnect,
@@ -566,12 +565,6 @@ final class _MonitorRoleEditPageState extends State<MonitorRoleEditPage> {
             tip: l10n.monitorGrantShellTip,
             value: _grants.shell,
             onChanged: (v) => _grants = _grants.copyWith(shell: v),
-          ),
-          _switch(
-            icon: Icons.login,
-            title: l10n.monitorGrantSshTerminal,
-            value: _grants.sshTerminal,
-            onChanged: (v) => _grants = _grants.copyWith(sshTerminal: v),
           ),
           if (_grants.virt case final virt?)
             _switch(

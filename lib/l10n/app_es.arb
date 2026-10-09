@@ -1434,7 +1434,6 @@
   "monitorRoleNameRule": "Minúsculas, dígitos, - y _, hasta 32 caracteres",
   "monitorGrantShell": "Shell y comandos",
   "monitorGrantShellTip": "Terminal, procesos, servicios, contenedores, snippets, energía — con la cuenta del agent",
-  "monitorGrantSshTerminal": "Terminal del panel por SSH",
   "monitorGrantVirt": "Virtualización",
   "monitorGrantVirtTip": "Proxmox VE, libvirt y BMC que alcanza el agente, en su panel web",
   "monitorGrantFiles": "Archivos",

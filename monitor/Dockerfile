@@ -4,17 +4,15 @@
 # 构建上下文为 monorepo 根:docker build -f monitor/Dockerfile .
 FROM node:24-alpine AS frontend-builder
 
-# Layout mirrors the repo so the panel's file:../../packages/webui link
-# resolves (/app/packages/webui from /app/monitor/frontend)
+# Layout mirrors the repo: the panel imports the app SDK beside it
+# (/app/monitor/sdk/lkui from /app/monitor/frontend).
 WORKDIR /app/monitor/frontend
-COPY packages/ /app/packages/
-# webui's own devDependencies (svelte, typescript) are needed for its type
-# declarations to resolve when svelte-check follows the file: link below
-RUN npm install --prefix /app/packages/webui
 COPY monitor/frontend/package*.json ./
 RUN npm install
 
 COPY monitor/frontend/ ./
+# The desk's app bridge imports the protocol from the app SDK's source.
+COPY monitor/sdk/lkui/src/ /app/monitor/sdk/lkui/src/
 RUN npm run build
 
 # Rust build stage
@@ -27,6 +25,11 @@ WORKDIR /app
 # Copy manifests and shared parser crate
 COPY monitor/Cargo.toml Cargo.lock ./
 COPY crates/ ./crates/
+# fl_lib's theme reader (`fl_theme`), from the submodule: the build context
+# needs it checked out.
+COPY packages/fl_lib/rust/theme/ ./fl_theme/
+# fl_pi_llm's runtime (Agent mode's pi), from its submodule likewise.
+COPY packages/fl_pi_llm/rust/ ./fl_pi_llm/
 COPY monitor/migrations/ ./migrations/
 COPY monitor/.sqlx/ ./.sqlx/
 
@@ -36,6 +39,8 @@ COPY monitor/src/ ./src/
 # relative to `src/api/`: in the repository that is the root's `assets/`, and
 # with `src/` at `/app/src` here it is `/assets`.
 COPY assets/yabs.b64 /assets/yabs.b64
+# The theme store's catalog, embedded the same way (`api/desk_themes.rs`).
+COPY assets/catalog/repos.toml /assets/catalog/repos.toml
 
 # 独立构建 monitor(脱离 monorepo workspace),修正 crates/ 下各依赖的相对路径
 #
@@ -50,7 +55,9 @@ COPY assets/yabs.b64 /assets/yabs.b64
 # Environment variables rather than a profile section, since the section would
 # have to be written into a manifest the workspace also reads, where cargo
 # ignores a non-root package's profiles with a warning.
-RUN sed -i 's|path = "../crates/|path = "crates/|' Cargo.toml \
+RUN sed -i -e 's|path = "../crates/|path = "crates/|' \
+           -e 's|path = "../packages/fl_lib/rust/theme"|path = "fl_theme"|' \
+           -e 's|path = "../packages/fl_pi_llm/rust"|path = "fl_pi_llm"|' Cargo.toml \
     && CARGO_PROFILE_RELEASE_STRIP=true \
        CARGO_PROFILE_RELEASE_LTO=fat \
        CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \

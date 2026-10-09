@@ -92,7 +92,7 @@ async fn audit(req: &HttpRequest, state: &AppState, caller: &Caller, action: Act
 }
 
 /// Checks [password] against [caller]'s own, through the login throttle.
-async fn reauth(
+pub(crate) async fn reauth(
     req: &HttpRequest,
     state: &AppState,
     caller: &Caller,
@@ -316,7 +316,7 @@ pub async fn update_user(
 
 #[derive(Deserialize, Default)]
 pub struct Reauth {
-    current_password: Option<String>,
+    pub(crate) current_password: Option<String>,
 }
 
 /// The body of a DELETE: optional as far as the extractor goes, so a missing
@@ -336,7 +336,8 @@ pub async fn delete_user(
     let body = reauth_body(body);
     require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
     match accounts::delete_account(&state.db, &username).await? {
-        Guarded::Done => {}
+        // Its wallpaper and theme backgrounds went with its rows.
+        Guarded::Done => state.blobs.collect_soon(&state.db),
         Guarded::NotFound => return Ok(not_found("No such account")),
         Guarded::LastAdmin => return Ok(last_admin()),
     }
@@ -350,6 +351,26 @@ pub async fn delete_user(
 pub async fn list_roles(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
     require!(authz::admin_caller(&req, &state).await);
     Ok(HttpResponse::Ok().json(&accounts::roles(&state.db).await?))
+}
+
+/// [body] as a [`RoleBody`], with grants that no longer exist dropped from
+/// it first.
+///
+/// TODO: remove once no supported app sends `ssh_terminal` (the app's role
+/// editor wrote it out with every save until the SSH terminal was removed
+/// from the agent, migration 019); `Grants` refuses it, so without this every
+/// role save from such an app would fail.
+fn parse_role(
+    mut body: web::types::Json<serde_json::Value>,
+) -> std::result::Result<RoleBody, HttpResponse> {
+    if let Some(grants) = body
+        .get_mut("role")
+        .and_then(|role| role.get_mut("grants"))
+        .and_then(|grants| grants.as_object_mut())
+    {
+        grants.remove("ssh_terminal");
+    }
+    parse(body)
 }
 
 #[derive(Deserialize)]
@@ -367,7 +388,7 @@ pub async fn create_role(
     let RoleBody {
         mut role,
         current_password,
-    } = require!(parse(body));
+    } = require!(parse_role(body));
     require!(reauth(&req, &state, &caller, current_password.as_deref()).await);
     if !valid_role_name(&role.name) {
         return Ok(bad_request("A role name is 1–32 of a-z, 0-9, '_' or '-'"));
@@ -412,7 +433,7 @@ pub async fn update_role(
     let RoleBody {
         mut role,
         current_password,
-    } = require!(parse(body));
+    } = require!(parse_role(body));
     require!(reauth(&req, &state, &caller, current_password.as_deref()).await);
     let Some(stored) = accounts::role(&state.db, &name).await? else {
         return Ok(not_found("No such role"));

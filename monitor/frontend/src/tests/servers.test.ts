@@ -212,8 +212,10 @@ describe('servers', () => {
     expect(persisted.list[0].token).toBeNull()
     expect(window.localStorage.getItem('token')).toBeNull()
 
-    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v1')!)
-    expect(sessions.local).toEqual({ token: 'secret-token', username: 'admin' })
+    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v2')!)
+    expect(sessions.local).toEqual({ active: 'admin', tokens: { admin: 'secret-token' } })
+    // A remembered account is a name, never a token.
+    expect(window.localStorage.getItem('servers.accounts.v1')).not.toContain('secret-token')
   })
 
   it('migrates legacy localStorage credentials into the tab session', async () => {
@@ -225,7 +227,44 @@ describe('servers', () => {
     expect(servers.current?.token).toBe('legacy-token')
     expect(window.localStorage.getItem('token')).toBeNull()
     expect(window.localStorage.getItem('username')).toBeNull()
-    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v1')!)
-    expect(sessions.local).toEqual({ token: 'legacy-token', username: 'legacy-user' })
+    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v2')!)
+    expect(sessions.local).toEqual({ active: 'legacy-user', tokens: { 'legacy-user': 'legacy-token' } })
+  })
+
+  it('reads the one session per server a tab held before several accounts', async () => {
+    window.localStorage.setItem('servers.v1', JSON.stringify({ list: [{ id: 'local', url: '' }], currentId: 'local' }))
+    window.sessionStorage.setItem('servers.sessions.v1', JSON.stringify({ local: { token: 't1', username: 'ops' } }))
+
+    const servers = await freshStore()
+
+    expect(servers.current).toMatchObject({ token: 't1', username: 'ops' })
+    expect(window.sessionStorage.getItem('servers.sessions.v1')).toBeNull()
+  })
+
+  it('keeps one session per account, remembers who asked, and forgets on request', async () => {
+    const servers = await freshStore()
+    servers.signIn('local', 'admin', 'ta', true)
+    servers.signIn('local', 'deploy', 'td', false)
+
+    expect(servers.current).toMatchObject({ token: 'td', username: 'deploy' })
+    expect(servers.accountsOf('local').map((a) => [a.username, a.signedIn])).toEqual([
+      ['admin', true],
+      ['deploy', true],
+    ])
+    // Back to the first without a password.
+    expect(servers.useAccount('local', 'admin')).toBe(true)
+    expect(servers.current?.token).toBe('ta')
+
+    // Signing out keeps the account remembered, without its session.
+    servers.logout('local')
+    expect(servers.current?.token).toBeNull()
+    expect(servers.accountsOf('local')).toEqual([
+      expect.objectContaining({ username: 'admin', signedIn: false }),
+      expect.objectContaining({ username: 'deploy', signedIn: true }),
+    ])
+    expect(servers.useAccount('local', 'admin')).toBe(false)
+
+    servers.forget('local', 'admin')
+    expect(servers.accountsOf('local').map((a) => a.username)).toEqual(['deploy'])
   })
 })

@@ -126,7 +126,7 @@ jobs:
           # `store/` because `test/unit/theme_store_tree_test.dart` reads the
           # official theme repository the way the store does.
           emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/|^store/"
-          emit frontend "$shared|^monitor/frontend/|^packages/webui/"
+          emit frontend "$shared|^monitor/frontend/|^monitor/sdk/|^packages/webui/"
           # `store/` (and fl_lib, under `$shared`) for the theme manifests the
           # docs job validates against that same schema; `assets/catalog/` for
           # the catalog the docs describe.
@@ -224,6 +224,19 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: cargo test --workspace --no-fail-fast
 
+      # fl_lib's Rust (`fl_theme`, which the agent depends on by path, and its
+      # bridge to Dart) is a workspace of its own, so `--workspace` above does
+      # not reach it.
+      - name: Test fl_lib's Rust
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo test --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --no-fail-fast
+
+      # The agent runs pi through fl_pi_llm's Rust host, a crate outside this
+      # workspace (it is its own), so `--workspace` does not reach it either.
+      - name: Test fl_pi_llm's Rust host
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo test --manifest-path packages/fl_pi_llm/rust/Cargo.toml --no-default-features --features reqwest --no-fail-fast
+
       # Only the crates with code of their own for Windows: the native sampler,
       # the agent (ConPTY, paths, services) and the script's PowerShell side.
       # The rest is platform-neutral and tested above; that `sbm_ffi` builds
@@ -234,7 +247,9 @@ jobs:
 
       - name: Clippy
         if: matrix.os == 'ubuntu-latest'
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: |
+          cargo clippy --workspace --all-targets --all-features -- -D warnings
+          cargo clippy --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --all-targets -- -D warnings
 
   monitorFrontend:
     name: Monitor frontend
@@ -627,12 +642,20 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: flutter-tests-ffi
+          workspaces: |
+            . -> target
+            packages/fl_lib/rust -> target
           save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 0 }}
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
       # load the dylib from target/debug via test/helpers/rust_lib_helper.dart
       - name: Build native FFI library
         run: cargo build -p sbm_ffi
+
+      # Every test loads fl_lib's Rust (theme packages) from its own target/
+      # (`test/flutter_test_config.dart`): a workspace of its own.
+      - name: Build fl_lib's Rust
+        run: cargo build --manifest-path packages/fl_lib/rust/Cargo.toml -p fl_lib_ffi
 
       # `flutter test` builds sbm_ffi again through the build hook, for a
       # library no unit test loads (they take the one built above).

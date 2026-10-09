@@ -9,7 +9,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_redfish", "crates/sbm_virt", "crates/sbm_ffi", "monitor"]
-exclude = ["third_party/ironrdp"]
+exclude = ["third_party/ironrdp", "packages/fl_pi_llm/rust"]
 
 # IronRDP 0.17 pins an sspi/picky combination that still pins pre-release
 # RustCrypto crates. They cannot coexist with russh's stable ed25519-dalek 3
@@ -89,3 +89,11 @@ strip = false
 inherits = "release"
 lto = "fat"
 codegen-units = 1
+
+# The agent built to deploy to a test machine while developing: the release
+# profile's optimisation without `release-monitor`'s fat LTO, and incremental,
+# so a change to the agent alone relinks in minutes rather than the quarter of
+# an hour the fat link takes there. Never shipped, never measured for size.
+[profile.monitor-test]
+inherits = "release"
+incremental = true

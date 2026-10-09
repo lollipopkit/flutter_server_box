@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ChevronDown } from '@lucide/svelte'
   import type { Snippet } from 'svelte'
+  import Icon from '../desk/lk/Icon.svelte'
 
   interface Props {
     summary: string
@@ -12,14 +12,45 @@
   let { summary, children, open = false }: Props = $props()
 </script>
 
-<details bind:open class="group">
-  <summary
-    class="flex items-center gap-1.5 cursor-pointer select-none text-xs text-faint-fg hover:text-muted-fg list-none [&::-webkit-details-marker]:hidden"
-  >
-    <ChevronDown class="w-3.5 h-3.5 shrink-0 transition-transform group-open:rotate-180" />
+<details bind:open class="disclosure">
+  <summary>
+    <Icon name="chevron_right" size={16} class="disclosure-chevron" />
     {summary}
   </summary>
-  <div class="mt-2">
+  <div class="mt-[7px]">
     {@render children()}
   </div>
 </details>
+
+<style>
+  summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    width: fit-content;
+    border-radius: var(--radius-xs);
+    font-size: var(--text-12);
+    font-weight: var(--weight-medium);
+    color: var(--text-tertiary);
+    cursor: default;
+    user-select: none;
+    list-style: none;
+    transition: color var(--dur-fast);
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary:hover {
+    color: var(--text-secondary);
+  }
+  summary:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  summary :global(.disclosure-chevron) {
+    transition: transform var(--dur-slow) var(--ease-spring);
+  }
+  .disclosure[open] summary :global(.disclosure-chevron) {
+    transform: rotate(90deg);
+  }
+</style>

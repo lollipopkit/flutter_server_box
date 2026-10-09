@@ -8739,12 +8739,6 @@ abstract class AppLocalizations {
   /// **'Terminal, processes, services, containers, snippets, power — as the agent\'s account'**
   String get monitorGrantShellTip;
 
-  /// No description provided for @monitorGrantSshTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Panel terminal over SSH'**
-  String get monitorGrantSshTerminal;
-
   /// No description provided for @monitorGrantVirt.
   ///
   /// In en, this message translates to:

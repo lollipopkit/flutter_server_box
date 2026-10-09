@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Services from '../pages/Services.svelte'
+import Services from '../desk/apps/services/ServicesApp.svelte'
 import { api } from '../lib/api'
 import type { ServiceActResult, ServiceView } from '../types'
 
@@ -50,7 +50,7 @@ describe('Services page', () => {
   })
 
   it('asks for a password when root needed one, and sends it on the retry', async () => {
-    render(Services, { onback: () => {} })
+    render(Services)
     await fireEvent.click(await screen.findByText('nginx.service'))
 
     actService.mockResolvedValueOnce(result({ sudo_rejected: true, stderr: 'sudo: a password is required' }))
@@ -65,5 +65,21 @@ describe('Services page', () => {
     await waitFor(() =>
       expect(actService).toHaveBeenLastCalledWith({ key: 'system:nginx.service', action: 'start', password: 'hunter2' }),
     )
+  })
+
+  it('narrows the list to the group the sidebar picked', async () => {
+    getServices.mockResolvedValue({
+      ...view(),
+      units: [
+        unit,
+        { ...unit, key: 'system:ssh.service', name: 'ssh', full_name: 'ssh.service', state: 'failed', actions: [] },
+      ],
+    } as unknown as ServiceView)
+    render(Services)
+    expect(await screen.findByText('nginx.service')).toBeInTheDocument()
+
+    await fireEvent.click(screen.getAllByRole('button', { name: /^failed/i })[0])
+    expect(screen.queryByText('nginx.service')).not.toBeInTheDocument()
+    expect(screen.getByText('ssh.service')).toBeInTheDocument()
   })
 })

@@ -1,4 +1,5 @@
 import type {
+  InstalledApp,
   AgentUser,
   CardOrderPayload,
   Capabilities,
@@ -171,9 +172,24 @@ async function request<T>(
   signal?: AbortSignal,
   timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
-  const server = servers.current ? { ...servers.current } : undefined
+  return requestFor<T>(servers.current, path, init, fallback, signal, timeoutMs)
+}
+
+/// [request] to an explicit entry: for what must reach the server it was
+/// started for even if another is selected meanwhile (the desk saving its
+/// session as the server switches).
+export async function requestFor<T>(
+  entry: ServerEntry | undefined,
+  path: string,
+  init: RequestInit = {},
+  fallback = 'Request failed',
+  signal?: AbortSignal,
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const server = entry ? { ...entry } : undefined
   requireSecureUrl(server?.url ?? '')
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  // JSON unless the caller says what it sends.
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(init.headers as Record<string, string> | undefined) }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
 
   let res: Response
@@ -206,6 +222,65 @@ async function request<T>(
 /// for it — ten seconds is generous for a status poll and nothing at all for a
 /// file. Bounded by the caller's own `signal` instead, which is also what a
 /// cancel button pulls.
+/// Sends [body] to [path] on [entry] and answers the JSON reply: as
+/// [requestFor], over XHR, which reports how much of the body has gone
+/// ([onProgress], 0–1). Aborting [signal] fails it with code `aborted`.
+export function uploadFor<T>(
+  entry: ServerEntry,
+  path: string,
+  body: Blob,
+  opts: { onProgress?: (sent: number) => void; signal?: AbortSignal; timeoutMs?: number; fallback?: string } = {},
+): Promise<T> {
+  const server = { ...entry }
+  const fallback = opts.fallback ?? 'Request failed'
+  requireSecureUrl(server.url)
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${server.url}/api/v1${path}`)
+    xhr.timeout = opts.timeoutMs ?? TIMEOUT_MS
+    xhr.setRequestHeader('Content-Type', body.type || 'application/octet-stream')
+    if (server.token) xhr.setRequestHeader('Authorization', `Bearer ${server.token}`)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && e.total > 0) opts.onProgress?.(e.loaded / e.total)
+    }
+    const abort = () => xhr.abort()
+    opts.signal?.addEventListener('abort', abort, { once: true })
+    const done = () => opts.signal?.removeEventListener('abort', abort)
+    xhr.onabort = () => {
+      done()
+      reject(new ApiError('Aborted', 0, 'aborted'))
+    }
+    xhr.onerror = xhr.ontimeout = () => {
+      done()
+      reject(new ApiError(fallback))
+    }
+    xhr.onload = () => {
+      done()
+      let json: (Record<string, unknown> & { error?: string; message?: string }) | null = null
+      try {
+        json = JSON.parse(xhr.responseText)
+      } catch {
+        // Not JSON: the fallback below.
+      }
+      if (xhr.status === 401) {
+        servers.logout(server.id, server)
+        reject(new ApiError('Session expired', 401))
+      } else if (xhr.status < 200 || xhr.status >= 300) {
+        if (json?.message) reject(new ApiError(json.message, xhr.status, json.error, json))
+        else if (json?.error) reject(new ApiError(json.error, xhr.status, undefined, json))
+        else reject(new ApiError(fallback, xhr.status))
+      } else {
+        resolve(json as T)
+      }
+    }
+    if (opts.signal?.aborted) {
+      xhr.onabort?.(new ProgressEvent('abort'))
+      return
+    }
+    xhr.send(body)
+  })
+}
+
 async function fsBytes(
   path: string,
   init: RequestInit,
@@ -231,8 +306,57 @@ async function fsBytes(
   return res
 }
 
+/// One of the agent's `text/event-stream`s at [path] (`/desk/events`,
+/// `/agent/events`), read with the bearer header, which an `EventSource`
+/// cannot send.
+export async function readEventStream(
+  entry: ServerEntry,
+  path: string,
+  signal: AbortSignal,
+  onEvent: (event: Record<string, unknown>) => void,
+  /// The stream is open: the agent may send nothing for a long time.
+  onOpen?: () => void,
+  /// Posted as JSON: a stream that answers a request.
+  body?: unknown,
+): Promise<void> {
+  requireSecureUrl(entry.url)
+  const headers: Record<string, string> = entry.token ? { Authorization: `Bearer ${entry.token}` } : {}
+  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const res = await fetch(`${entry.url}/api/v1${path}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
+  })
+  if (!res.ok || !res.body) {
+    const err = (await res.json().catch(() => null)) as Record<string, unknown> | null
+    throw new ApiError('Failed to open the event stream', res.status, typeof err?.error === 'string' ? err.error : undefined, err ?? undefined)
+  }
+  onOpen?.()
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) return
+    buffer += value
+    let end: number
+    while ((end = buffer.indexOf('\n\n')) >= 0) {
+      const frame = buffer.slice(0, end)
+      buffer = buffer.slice(end + 2)
+      for (const line of frame.split('\n')) {
+        if (!line.startsWith('data:')) continue
+        try {
+          onEvent(JSON.parse(line.slice(5).trim()) as Record<string, unknown>)
+        } catch {
+          // A line that is not JSON is not an event.
+        }
+      }
+    }
+  }
+}
+
 /// Fetches capabilities for an explicit server entry (rather than
-/// `servers.current`) — used by the sidebar to show every authenticated
+/// `servers.current`) — used by the lock screen to show every authenticated
 /// entry's OS icon, not just the currently selected one.
 export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSignal): Promise<Capabilities> {
   if (!entry.token) throw new ApiError('Not authenticated')
@@ -246,7 +370,7 @@ export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSigna
 }
 
 /// Fetches status, including the agent-reported `name`, for an explicit server
-/// entry — used by the sidebar/settings header so the displayed name always
+/// entry — used by the menubar and the lock screen so the displayed name always
 /// reflects `config.toml`, never a locally cached copy.
 export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Promise<StatusResponse> {
   if (!entry.token) throw new ApiError('Not authenticated')
@@ -1097,6 +1221,31 @@ export const api = {
   // administrator's own password: what changes access is re-authenticated,
   // not taken on the strength of a session that may have been left open.
   listUsers: () => request<AgentUser[]>('/users', {}, 'Failed to fetch accounts'),
+  /// Desk apps installed on the agent (`api::apps`); an admin also sees the
+  /// ones waiting for approval.
+  listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
+  /// Uploads a package (`.fsba`); it waits for approval.
+  async installApp(file: Blob): Promise<InstalledApp> {
+    const res = await fsBytes(
+      '/apps',
+      { method: 'POST', body: file, headers: { 'Content-Type': 'application/gzip' } },
+      'Failed to install the app',
+      AbortSignal.timeout(120_000),
+    )
+    return res.json() as Promise<InstalledApp>
+  },
+  approveApp: (id: string, sha256: string, permissions: string[], currentPassword: string) =>
+    request<InstalledApp>(
+      `/apps/${encodeURIComponent(id)}/approval`,
+      { method: 'PUT', body: JSON.stringify({ sha256, permissions, current_password: currentPassword }) },
+      'Failed to approve the app',
+    ),
+  removeApp: (id: string, currentPassword: string) =>
+    request<void>(
+      `/apps/${encodeURIComponent(id)}`,
+      { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
+      'Failed to remove the app',
+    ),
   createUser: (username: string, password: string, role: string, current_password: string) =>
     request<AgentUser>(
       '/users',

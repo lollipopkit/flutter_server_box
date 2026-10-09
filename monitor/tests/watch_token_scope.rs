@@ -413,6 +413,25 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         ),
         (Method::POST, "/api/v1/virt/backup-jobs/run", Some(json!({ "id": "x" }))),
         (Method::POST, "/api/v1/virt/backup-jobs/schedule", Some(json!({ "schedule": "02:00" }))),
+        // Agent mode: nothing is configured on a test server, so a start is
+        // refused after the auth check.
+        (Method::GET, "/api/v1/agent/flows", None),
+        (Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": "hi" }))),
+        (Method::GET, "/api/v1/agent/flows/absent", None),
+        (Method::DELETE, "/api/v1/agent/flows/absent", None),
+        (Method::POST, "/api/v1/agent/flows/absent/stop", None),
+        (Method::POST, "/api/v1/agent/flows/absent/reply", Some(json!({ "text": "hi" }))),
+        (Method::POST, "/api/v1/agent/flows/absent/answer", Some(json!({ "id": "x", "action": "cancel" }))),
+        (Method::GET, "/api/v1/agent/settings", None),
+        (Method::POST, "/api/v1/agent/search", Some(json!({ "query": "x" }))),
+        (Method::GET, "/api/v1/agent/permissions", None),
+        (Method::POST, "/api/v1/agent/files?name=a.txt", Some(json!("x"))),
+        (Method::DELETE, "/api/v1/agent/files/absent", None),
+        (Method::POST, "/api/v1/agent/search/absent/task", Some(json!({}))),
+        (Method::GET, "/api/v1/agent/memory", None),
+        (Method::GET, "/api/v1/agent/memory/file?path=a.md", None),
+        (Method::PUT, "/api/v1/agent/memory/file", Some(json!({ "path": "a.md", "content": "x" }))),
+        (Method::DELETE, "/api/v1/agent/memory/file?path=a.md", None),
     ]
 }
 
@@ -506,7 +525,7 @@ async fn a_watch_tokens_capabilities_grant_nothing() {
         .unwrap();
     let body: serde_json::Value = resp.json().await.unwrap();
     assert!(body.get("me").is_none(), "{body}");
-    for grant in ["shell", "ssh_terminal", "files", "connect", "listen"] {
+    for grant in ["shell", "files", "connect", "listen", "virt"] {
         assert_eq!(body["grants"][grant]["ok"], false, "{grant}");
         assert_eq!(body["grants"][grant]["why"], "not_granted", "{grant}");
     }

@@ -4786,9 +4786,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorGrantShellTip => '终端、进程、服务、容器、代码片段、电源 —— 以 agent 的系统账号运行';
 
   @override
-  String get monitorGrantSshTerminal => '面板 SSH 终端';
-
-  @override
   String get monitorGrantVirt => '虚拟化';
 
   @override
@@ -9944,9 +9941,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorGrantShellTip => '終端機、程序、服務、容器、程式碼片段、電源 —— 以 agent 的系統帳號執行';
-
-  @override
-  String get monitorGrantSshTerminal => '面板 SSH 終端機';
 
   @override
   String get monitorGrantVirt => '虛擬化';

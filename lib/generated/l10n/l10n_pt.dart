@@ -5155,9 +5155,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Terminal, processos, serviços, contêineres, snippets, energia — com a conta do agent';
 
   @override
-  String get monitorGrantSshTerminal => 'Terminal do painel via SSH';
-
-  @override
   String get monitorGrantVirt => 'Virtualização';
 
   @override

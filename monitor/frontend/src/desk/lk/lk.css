@@ -1,0 +1,6 @@
+/* lollipopkit Design System: everything — fonts, icons, tokens, base and
+   component styles. The panel imports this; an app that draws no icons may
+   import `core.css` and `fonts.css` instead and leave the 3 MB icon font out. */
+@import './fonts.css';
+@import './icons.css';
+@import './core.css';

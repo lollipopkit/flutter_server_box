@@ -238,7 +238,7 @@ pub fn grants_view(caller: Option<&Caller>, state: &AppState, secure: bool) -> s
                         );
                     }
                 }
-                Grant::Shell | Grant::SshTerminal | Grant::Virt => {}
+                Grant::Shell | Grant::Virt => {}
             }
         }
         out.insert(grant.as_str().into(), entry.into());
@@ -259,14 +259,15 @@ pub fn end_account(state: &Arc<AppState>, username: &str, code: &'static str) {
         tracing::info!("Closed {closed} terminal sessions of {username}: its password changed");
     }
     state.tickets.revoke_subject(username);
+    state.agent.end_account(username);
     let _ = state.grants_changed.send(code);
 }
 
 /// Ends what accounts can no longer do, after a role or an account changed.
 ///
 /// Terminal sessions outlive their sockets, so they are swept here: each
-/// session's account is looked up again and a session whose kind of shell
-/// its role no longer grants is closed, with [code] as what the client is
+/// session's account is looked up again and a session whose role no longer
+/// grants `shell` is closed, with [code] as what the client is
 /// told — as is one opened under a password the account no longer has. Relays and listeners are told through `AppState.grants_changed` and
 /// each re-checks its own account — see `api::ws::stream` and `listen`.
 pub async fn revoke_lost(state: &Arc<AppState>, code: &'static str) {
@@ -276,22 +277,19 @@ pub async fn revoke_lost(state: &Arc<AppState>, code: &'static str) {
         let shell = caller
             .as_ref()
             .is_some_and(|c| c.grants().holds(Grant::Shell));
-        let ssh = caller
-            .as_ref()
-            .is_some_and(|c| c.grants().holds(Grant::SshTerminal));
         let closed = state.sessions.close_where(
-            |session| {
-                session.subject == subject
-                    && (since != Some(session.since)
-                        || match session.auth {
-                            ws::session::SessionAuth::Local => !shell,
-                            ws::session::SessionAuth::Ssh => !ssh,
-                        })
-            },
+            |session| session.subject == subject && (since != Some(session.since) || !shell),
             code,
         );
         if closed > 0 {
             tracing::info!("Closed {closed} terminal sessions of {subject}: their grant is gone");
+        }
+    }
+    // Agent mode's tasks run commands as the shell does.
+    for subject in state.agent.subjects() {
+        let caller = caller_named(state, &subject).await;
+        if !caller.is_some_and(|c| c.grants().holds(Grant::Shell)) {
+            state.agent.end_account(&subject);
         }
     }
     let _ = state.grants_changed.send(code);

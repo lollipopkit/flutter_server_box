@@ -91,7 +91,7 @@ matcher = "disk"
 # or a command may get, and whether plaintext is tolerated.
 #
 # *Who* may use any of it is not here. Each account has a role, and a role
-# holds grants — shell, ssh_terminal, files (read or write), connect (with an
+# holds grants — shell, files (read or write), connect (with an
 # allow list), listen (with public and a port range). Admins edit accounts and
 # roles from the app or the panel. A fresh install's admin starts with every
 # grant, or none with `install.sh --permissions read`
@@ -99,7 +99,7 @@ matcher = "disk"
 #
 # This section is never required.
 [remote_access]
-# The SSH server the panel terminal connects to.
+# This machine's SSH server: the firewall page keeps a way in to it open.
 ssh_addr = "127.0.0.1:22"
 
 # Serve everything beyond reading the numbers — terminals, commands, files,
@@ -115,13 +115,10 @@ ssh_addr = "127.0.0.1:22"
 # roles. An agent upgrading from a release before roles reads them once, to
 # give its admin role exactly what they granted, and logs that they can go.
 # terminal.allow_insecure and fs.allow_insecure still count, each for what it
-# used to cover only: the terminal's for shell, ssh_terminal, connect and
-# listen; the file API's for files.
+# used to cover only: the terminal's for shell, connect and listen; the file
+# API's for files.
 
-# The panel's in-browser terminal (the ssh_terminal grant) and the app's
-# terminal (the shell grant): capacities, which apply to both. The panel's
-# acts as an SSH client to ssh_addr, so a session there has exactly the
-# privileges of the SSH account the browser authenticates as.
+# The terminal (the shell grant, the app's and the panel's): capacities.
 [remote_access.terminal]
 # How long a session survives the browser disconnecting, so a laptop that
 # sleeps or a phone that changes network reattaches to the same shell.
@@ -202,6 +199,10 @@ key = ""
 title = "ServerBox Monitor"
 body = "{{message}}"
 level = "active"
+# Optional: subtitle, sound, group, icon, image, url (opened on tap), copy,
+# badge, volume (0-10, critical level), ttl, action, call / auto_copy /
+# is_archive / markdown (true or false), and cipher_key (16, 24 or 32
+# characters) to encrypt like the app's Push Encryption, AES-CBC.
 
 [[push]]
 name = "ios"
@@ -211,3 +212,42 @@ title = "ServerBox Monitor"
 content = "{{message}}"
 body_regex = ".*"
 code = 200
+
+# [[push]]
+# name = "email"
+# push_type = "smtp"
+# host = "smtp.example.com"
+# security = "starttls"        # starttls (587), tls (465) or none (25)
+# username = "alerts@example.com"
+# password = ""
+# from = "ServerBox <alerts@example.com>"
+# to = "me@example.com"        # several: comma-separated, or an array
+# subject = "ServerBox Monitor: {{name}}"
+# body = "{{message}}"
+
+# [[push]]
+# name = "telegram"
+# push_type = "telegram"
+# bot_token = ""
+# chat_id = ""                 # a number, or @channel
+# text = "{{name}}: {{message}}"
+# parse_mode = "HTML"          # optional: HTML, MarkdownV2, Markdown
+# message_thread_id = 0        # optional: a topic in a forum group
+
+# [[push]]
+# name = "discord"
+# push_type = "discord"
+# webhook_url = ""
+# content = "{{name}}: {{message}}"
+# username = "ServerBox"
+
+# [[push]]
+# name = "ntfy"
+# push_type = "ntfy"
+# server = "https://ntfy.sh"
+# topic = ""
+# title = "{{name}}"
+# message = "{{message}}"
+# priority = "high"            # 1-5 or min, low, default, high, max
+# tags = "warning"
+# token = ""                   # or username + password

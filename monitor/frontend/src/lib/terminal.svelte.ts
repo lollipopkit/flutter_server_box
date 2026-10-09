@@ -42,25 +42,15 @@ const SESSION_KEY = 'terminal.session'
 export type Phase =
   | 'idle'
   | 'connecting'
+  /// The open frame is sent; waiting for `ready`.
   | 'authenticating'
-  /// Waiting on answers to a keyboard-interactive prompt (2FA and friends).
-  | 'prompting'
   | 'running'
   | 'reconnecting'
   | 'closed'
 
-export interface Prompt {
-  prompt: string
-  echo: boolean
-}
-
-export type Credential =
-  | { kind: 'password'; password: string }
-  | { kind: 'key'; pem: string; passphrase?: string }
-  | { kind: 'interactive' }
-  /// No credentials: the agent runs a shell as its own user. Only accepted
-  /// when the agent reports `remote_access.full_access`.
-  | { kind: 'local' }
+/// How a shell is opened: the one kind there is, a shell as the agent's own
+/// user (the `shell` grant). The agent refuses any other.
+export type Credential = { kind: 'local' }
 
 /// Where a local shell runs, when it is not the agent's own login shell.
 ///
@@ -78,11 +68,9 @@ export type TerminalTarget =
   | { kind: 'tmux_new'; name: string }
 
 interface ServerMessage {
-  type: 'ready' | 'prompt' | 'error' | 'exit' | 'hb'
+  type: 'ready' | 'error' | 'exit' | 'hb'
   session?: string
   since?: number
-  instructions?: string
-  prompts?: Prompt[]
   code?: string
   message?: string
   /// A stable issue code, for a refusal the client is meant to phrase itself
@@ -107,9 +95,9 @@ export interface Renderer {
 /// `sessionStorage`, never `localStorage`: the handle is a bearer capability
 /// for an authenticated shell, so it must not outlive the tab or be readable
 /// by another one.
-function loadSession(): { handle: string; rendered: number } | null {
+function loadSession(key: string): { handle: string; rendered: number } | null {
   try {
-    const raw = window.sessionStorage.getItem(SESSION_KEY)
+    const raw = window.sessionStorage.getItem(key)
     if (!raw) return null
     const parsed = JSON.parse(raw) as { handle?: string; rendered?: number }
     if (typeof parsed.handle !== 'string') return null
@@ -125,17 +113,17 @@ function loadSession(): { handle: string; rendered: number } | null {
   }
 }
 
-function saveSession(handle: string, rendered: number) {
+function saveSession(key: string, handle: string, rendered: number) {
   try {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({ handle, rendered }))
+    window.sessionStorage.setItem(key, JSON.stringify({ handle, rendered }))
   } catch {
     // Private-browsing quota errors only cost the resume-after-reload path
   }
 }
 
-function clearSession() {
+function clearSession(key: string) {
   try {
-    window.sessionStorage.removeItem(SESSION_KEY)
+    window.sessionStorage.removeItem(key)
   } catch {
     // Nothing to recover from; the handle simply expires on the agent
   }
@@ -155,6 +143,9 @@ export interface TerminalSessionOptions {
   /// it never reads, writes or clears the key the terminal page uses. It still
   /// reconnects from the in-memory handle while the dialog is open.
   persist?: boolean
+  /// Which stored handle is this session's: one per terminal window, so each
+  /// window rejoins its own shell after a reload. Unset: the one key.
+  key?: string
 }
 
 export class TerminalSession {
@@ -166,9 +157,6 @@ export class TerminalSession {
   errorCode = $state<string | null>(null)
   /// The issue behind [`errorCode`], for a refusal the client phrases itself.
   issueCode = $state<string | null>(null)
-  /// Set while the agent is waiting on keyboard-interactive answers.
-  prompts = $state<Prompt[]>([])
-  instructions = $state('')
   /// Whether output was lost because the outage outlasted the agent's buffer.
   truncated = $state(false)
   /// The status the shell exited with, once it has. `null` while running, and
@@ -179,11 +167,13 @@ export class TerminalSession {
   private renderer: Renderer | null = null
   private credential: Credential | null = null
   private target: TerminalTarget | null = null
-  private user = ''
   private handle: string | null = null
   /// Absolute position of the next byte to be rendered. Only ever advanced by
   /// the renderer's completion callback.
   private rendered = 0
+  /// Set while an attach asks for the whole buffer on a fresh renderer: a gap
+  /// before it is old scrollback, not output lost in an outage.
+  private replayAll = false
   private persistedAt = 0
   private attempt = 0
   private reconnectTimer: number | null = null
@@ -195,11 +185,13 @@ export class TerminalSession {
   /// Whether `sessionStorage` is this session's to use — see
   /// [`TerminalSessionOptions`].
   private readonly persistent: boolean
+  private readonly storageKey: string
 
   constructor(options: TerminalSessionOptions = {}) {
     this.persistent = options.persist !== false
+    this.storageKey = options.key ? `${SESSION_KEY}:${options.key}` : SESSION_KEY
     if (!this.persistent) return
-    const saved = loadSession()
+    const saved = loadSession(this.storageKey)
     if (saved) {
       this.handle = saved.handle
       this.rendered = saved.rendered
@@ -208,12 +200,12 @@ export class TerminalSession {
 
   /// Writes the handle out, unless this session must not touch the key.
   private saveStored() {
-    if (this.persistent && this.handle) saveSession(this.handle, this.rendered)
+    if (this.persistent && this.handle) saveSession(this.storageKey, this.handle, this.rendered)
   }
 
   /// Drops the stored handle, unless this session must not touch the key.
   private clearStored() {
-    if (this.persistent) clearSession()
+    if (this.persistent) clearSession(this.storageKey)
   }
 
   /// Whether a previous connection left a session worth rejoining.
@@ -234,12 +226,15 @@ export class TerminalSession {
   /// told to close it: it is not this tab's to end, and it times out.
   async start(
     renderer: Renderer,
-    user: string,
     credential: Credential | null,
     target: TerminalTarget | null = null,
   ) {
+    // A renderer this session has not drawn on yet (a reload rejoining the
+    // stored handle) holds none of what was rendered before, so it asks for
+    // the agent's whole buffer rather than only what follows.
+    this.replayAll = this.renderer !== renderer && !credential
+    if (this.replayAll) this.rendered = 0
     this.renderer = renderer
-    this.user = user
     this.credential = credential
     this.target = target
     this.finished = false
@@ -260,13 +255,6 @@ export class TerminalSession {
     this.handle = null
     this.rendered = 0
     this.phase = 'closed'
-  }
-
-  /// Answers an outstanding keyboard-interactive prompt.
-  answer(answers: string[]) {
-    this.prompts = []
-    this.phase = 'authenticating'
-    this.send({ type: 'answer', answers })
   }
 
   resize(cols: number, rows: number) {
@@ -347,7 +335,10 @@ export class TerminalSession {
         this.phase = 'authenticating'
         this.send({
           type: 'open',
-          user: this.user,
+          // TODO: remove once no agent from before migration 019 is served:
+          // those require the field (it named the SSH account) and refuse
+          // an open without it.
+          user: '',
           auth: this.credential,
           ...(this.target ? { target: this.target } : {}),
           cols: this.renderer?.cols ?? 80,
@@ -388,17 +379,11 @@ export class TerminalSession {
         // replay it moves forward past output nobody will ever see.
         this.rendered = msg.since ?? 0
         this.saveStored()
-        this.prompts = []
         this.error = null
         this.errorCode = null
         this.issueCode = null
         this.exitStatus = null
         this.phase = 'running'
-        break
-      case 'prompt':
-        this.instructions = msg.instructions ?? ''
-        this.prompts = msg.prompts ?? []
-        this.phase = 'prompting'
         break
       case 'error':
         this.onError(msg)
@@ -420,7 +405,7 @@ export class TerminalSession {
     this.issueCode = msg.issue ?? null
     if (msg.code === 'gap_truncated') {
       // Not a failure: the session is fine, only the scrollback fell behind
-      this.truncated = true
+      if (!this.replayAll) this.truncated = true
       this.renderer?.reset()
       return
     }
@@ -444,12 +429,6 @@ export class TerminalSession {
       this.phase = 'closed'
     }
     this.error = msg.message ?? 'Terminal error'
-    if (msg.code === 'auth_failed' || msg.code === 'bad_key') {
-      // Recoverable by re-entering credentials rather than by reconnecting
-      this.credential = null
-      this.finished = true
-      this.phase = 'idle'
-    }
   }
 
   private onOutput(data: Uint8Array, generation: number) {
@@ -469,7 +448,7 @@ export class TerminalSession {
     const now = Date.now()
     if (now - this.persistedAt < PERSIST_INTERVAL_MS) return
     this.persistedAt = now
-    saveSession(this.handle, this.rendered)
+    saveSession(this.storageKey, this.handle, this.rendered)
   }
 
   /// Writes the exact resume point out, ignoring the throttle. For `pagehide`,
@@ -480,6 +459,9 @@ export class TerminalSession {
 
   private onDisconnect(generation: number, socket: WebSocket) {
     if (!this.isCurrentConnection(generation, socket)) return
+    // The `gap_truncated` that follows `ready` has come by now; a gap on the
+    // reconnect after an outage is lost output again.
+    this.replayAll = false
     this.clearHeartbeat()
     this.socket = null
     socket.close()
@@ -488,8 +470,14 @@ export class TerminalSession {
       return
     }
     if (!this.handle) {
-      // Never got a session; reconnecting would just repeat the same failure
-      this.phase = 'closed'
+      // Never got a session; reconnecting would just repeat the same failure.
+      // Said, because a socket refused at the handshake carries no reason and
+      // would otherwise read as a session that ended normally.
+      if (this.phase === 'connecting' || this.phase === 'authenticating') {
+        this.fail(this.error ?? 'The terminal connection closed before a session started')
+      } else {
+        this.phase = 'closed'
+      }
       return
     }
     this.flush()

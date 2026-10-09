@@ -29,4 +29,46 @@ export default tseslint.config(
       },
     },
   },
+  {
+    // An app reaches the desk through `sys` only (docs/dev/desk-sys.md):
+    // never the shell's internals, never another app's directory.
+    files: ['src/desk/apps/*/**/*.{ts,svelte}'],
+    ignores: ['src/desk/apps/settings/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^\\.\\./\\.\\./(?!(sys|lk)(/|$))[^.]',
+              message: 'An app uses the desk through `sys` (and `lk` for its UI) only.',
+            },
+            {
+              regex: '^\\.\\./[a-z_]+/',
+              message: 'Apps are independent: share code through src/lib or src/components.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Settings is the system's own app: it alone edits the desk's preferences
+    // and hosts other apps' settings pages.
+    files: ['src/desk/apps/settings/**/*.{ts,svelte}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^\\.\\./\\.\\./(?!(sys|lk|deskState\\.svelte|prefs\\.svelte|themes\\.svelte|shellPrefs\\.svelte|shell/Wallpaper\\.svelte|window/AppSettingsHost\\.svelte)(/|$))[^.]',
+              message: 'Settings uses `sys`, `lk` and the desk preferences only.',
+            },
+            { regex: '^\\.\\./[a-z_]+/', message: 'Apps are independent.' },
+          ],
+        },
+      ],
+    },
+  },
 )

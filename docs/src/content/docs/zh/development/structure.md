@@ -86,7 +86,7 @@ Riverpod provider 协调依赖、异步操作以及跨页面共享的状态。�
 - `fl_build/`：跨平台构建工具
 - 其他平台插件和组件包
 
-`packages/webui/` 由 Monitor 面板和项目网站共用，是提供 UI 基础组件与 design token 的 Svelte 包。
+`packages/webui/` 由项目网站使用，是提供 UI 基础组件与 design token 的 Svelte 包。
 
 ## Rust workspace
 
