@@ -18,6 +18,8 @@ import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
@@ -178,6 +180,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// Which of a metric's devices the chart draws, where the reader has said.
   /// Absent means [MetricDevices.defaults], which is what a page opens on.
   final _devicePick = <ServerMetricKind, Set<String>>{};
+
+  /// Whether the CPU's threads are drawn under its chart. Closed until asked:
+  /// most of the time the total is the question.
+  var _coresOpen = false;
 
   /// The window the chart draws when the reader named one outright, and what
   /// came back for it.

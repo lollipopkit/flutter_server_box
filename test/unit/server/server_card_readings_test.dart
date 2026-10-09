@@ -98,7 +98,7 @@ void main() {
             ServerMetricKind.cpu,
             ServerMetricKind.mem,
             ServerMetricKind.disk,
-            ServerMetricKind.net,
+            ServerMetricKind.netSpeed,
           }.contains(k),
         );
 
@@ -114,14 +114,15 @@ void main() {
   });
 
   test('no reading is drawn twice, and the five slots are what is drawn', () {
-    // Nothing but what every card draws: the slot that varies has no
-    // candidate, and the network must not be taken for one.
+    // Nothing but what every card draws and the traffic beside the speed:
+    // the network's speed must not be taken for the slot that varies.
     final r = serverCardReadings(state(net: true));
     expect(kinds(r.shown), [
       ServerMetricKind.cpu,
       ServerMetricKind.mem,
       ServerMetricKind.disk,
-      ServerMetricKind.net,
+      ServerMetricKind.netSpeed,
+      ServerMetricKind.netTraffic,
     ]);
     // Everything the machine reports has a place, so nothing is left over.
     expect(r.shown.length, r.all.length);
@@ -135,5 +136,21 @@ void main() {
     // counted from what is drawn, not from this — see `ServerCardReadings`,
     // which has no count of its own for that reason.
     expect(full.all.length, greaterThan(full.shown.length));
+  });
+
+  test('the CPU row names the model and its threads', () {
+    final srv = state();
+    srv.status.cpu
+      ..brand.addAll({'Xeon E5': 2})
+      ..update([
+        for (final id in ['cpu', 'cpu0', 'cpu1'])
+          SingleCpuCore(id, 1, 0, 0, 1, 0, 0, 0),
+      ]);
+    final cpu = serverCardReadings(srv).all.first;
+    expect(cpu.note, 'Xeon E5 ×2');
+
+    // No model reported: the count alone, not a leading space.
+    srv.status.cpu.brand.clear();
+    expect(serverCardReadings(srv).all.first.note, '×2');
   });
 }

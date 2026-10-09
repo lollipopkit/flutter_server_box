@@ -5244,4 +5244,15 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get termFontTip =>
       'フォントファイルを選択していない場合、端末はシステムの等幅フォントを使用し、不足する文字には CJK と emoji のグリフを含むフォントを使用します。';
+
+  @override
+  String get netSpeed => '通信速度';
+
+  @override
+  String get inRange => '期間内';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count スレッド';
+  }
 }

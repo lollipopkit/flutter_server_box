@@ -211,9 +211,8 @@ pub fn parse_status_opts(
             status.batteries = windows::parse_batteries(get(commands::BATTERY));
             status.sensors = windows::parse_sensors(get(commands::SENSORS));
             status.disk_smart = windows::parse_disk_smart(get(commands::DISK_SMART));
-            // NET is a WMI double sample: cumulative counters go into status.net
-            // (consistent with other platforms); instantaneous rates are separately
-            // derived by windows::parse_net_speed deltas
+            // Cumulative counters, as on the other platforms: the caller derives
+            // rates across polls
             status.net = windows::parse_net(get(commands::NET));
             status.diskio = windows::parse_diskio(get(commands::DISKIO));
         }

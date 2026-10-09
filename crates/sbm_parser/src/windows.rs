@@ -178,15 +178,7 @@ pub fn parse_temps(raw: &str) -> Temperatures {
     temps
 }
 
-/// WMI raw perf-counter two-sample delta (Dart `_parseWindowsWmiDelta`):
-/// input JSON contains >= 2 sample groups; returns (name, rx_speed, tx_speed) in bytes/sec.
-/// `_Total` and empty names are skipped; timestamps are in 100ns units
-pub fn parse_net_speed(raw: &str) -> Vec<(String, f64, f64)> {
-    parse_wmi_delta(raw, "BytesReceivedPersec", "BytesSentPersec")
-}
-
-/// Same WMI sampling as `parse_net_speed`, taking the raw cumulative counters of
-/// the last group: the `*Persec` fields of Win32_PerfRawData are actually cumulative
+/// The WMI sample's raw cumulative counters, of the last group: the `*Persec` fields of Win32_PerfRawData are actually cumulative
 /// byte counts. Produces NetIface cumulative counters consistent with Linux/BSD;
 /// rates are derived by the caller via cross-sample deltas
 pub fn parse_net(raw: &str) -> Vec<NetIface> {
@@ -216,51 +208,6 @@ pub fn parse_net(raw: &str) -> Vec<NetIface> {
             })
         })
         .collect()
-}
-
-fn parse_wmi_delta(raw: &str, field1: &str, field2: &str) -> Vec<(String, f64, f64)> {
-    let Some(Value::Array(samples)) = decode(raw) else {
-        return Vec::new();
-    };
-    if samples.len() < 2 {
-        return Vec::new();
-    }
-    let unwrap_value = |v: &Value| -> Value {
-        match v.get("value") {
-            Some(inner) => inner.clone(),
-            None => v.clone(),
-        }
-    };
-    let (s1, s2) = (
-        unwrap_value(&samples[samples.len() - 2]),
-        unwrap_value(&samples[samples.len() - 1]),
-    );
-    let (Value::Array(list1), Value::Array(list2)) = (s1, s2) else {
-        return Vec::new();
-    };
-    if list1.len() != list2.len() {
-        return Vec::new();
-    }
-
-    let num = |v: &Value, key: &str| v[key].as_f64().unwrap_or(0.0);
-    let mut result = Vec::new();
-    for (a, b) in list1.iter().zip(list2.iter()) {
-        let name = a["Name"].as_str().unwrap_or("");
-        if name.is_empty() || name == "_Total" {
-            continue;
-        }
-        let time_delta = (num(b, "Timestamp_Sys100NS") - num(a, "Timestamp_Sys100NS")) / 1e7;
-        if time_delta <= 0.0 {
-            continue;
-        }
-        let d1 = num(b, field1) - num(a, field1);
-        let d2 = num(b, field2) - num(a, field2);
-        if d1 < 0.0 || d2 < 0.0 {
-            continue;
-        }
-        result.push((name.to_string(), d1 / time_delta, d2 / time_delta));
-    }
-    result
 }
 
 /// Win32_Battery JSON (Dart `_parseWindowsBatteries`).

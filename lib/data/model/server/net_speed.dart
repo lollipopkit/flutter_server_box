@@ -31,6 +31,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   NetSpeed.copy(NetSpeed source) : super.copy(source) {
     devices.addAll(source.devices);
     realIfaces.addAll(source.realIfaces);
+    ifaces.addAll(source.ifaces);
     _realIfaceIndices.addAll(source._realIfaceIndices);
     cachedVals = source.cachedVals;
   }
@@ -54,10 +55,25 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 
     realIfaces.clear();
     _realIfaceIndices.clear();
+    ifaces.clear();
+    final others = <int>[];
     for (var i = 0; i < devices.length; i++) {
       final dev = devices[i];
+      if (isLoopback(dev)) continue;
+      ifaces.add(dev);
       if (realIfacePrefixs.any((prefix) => dev.startsWith(prefix))) {
         realIfaces.add(dev);
+        _realIfaceIndices.add(i);
+      } else {
+        others.add(i);
+      }
+    }
+    // Windows names an interface by its adapter ("Realtek PCIe GbE Family
+    // Controller", or "Ethernet" through an agent), which no prefix matches.
+    // Totals of nothing read as no traffic at all; every interface is closer.
+    if (realIfaces.isEmpty) {
+      for (final i in others) {
+        realIfaces.add(devices[i]);
         _realIfaceIndices.add(i);
       }
     }
@@ -77,8 +93,22 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   /// Non-virtual network device prefix
   static const realIfacePrefixs = ['eth', 'wlan', 'en', 'ww', 'wl'];
 
-  /// Cached non-virtual network device prefix
+  /// `lo` (Linux), `lo0` (BSD, macOS), `Loopback Pseudo-Interface 1`
+  /// (Windows).
+  static bool isLoopback(String dev) {
+    final name = dev.toLowerCase();
+    return name.startsWith('loopback') || _loopbackName.hasMatch(name);
+  }
+
+  static final _loopbackName = RegExp(r'^lo\d*$');
+
+  /// The interfaces the totals add up: those matching [realIfacePrefixs], or
+  /// every one but loopback where none does.
   final realIfaces = <String>[];
+
+  /// Every interface but loopback: what a reader can pick from, bridges and
+  /// tunnels included. The totals stay the sum of [realIfaces].
+  final ifaces = <String>[];
 
   /// Cached indices of real (non-virtual) interfaces in [devices]
   final _realIfaceIndices = <int>[];
@@ -99,6 +129,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   double? _speed(int i, BigInt Function(NetSpeedPart) counter) {
     final elapsed = _elapsed;
     if (elapsed == null || i >= now.length || i >= pre.length) return null;
+    if (appeared(i)) return null;
     final delta = counterDeltaBig(counter(pre[i]), counter(now[i]));
     if (delta == null) return null;
     return delta.toDouble() / elapsed;
@@ -136,25 +167,27 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   String speedOut({String? device}) =>
       _fmtSpeed(speedOutBytesOf(device: device));
 
-  String sizeIn({String? device}) {
-    if (now.isEmpty) return noReading;
-    if (device != null) return sizeInBytes(deviceIdx(device)).bytes2Str;
+  /// Bytes moved since boot, summed over real interfaces when [device] is
+  /// null. `null` before the first sample.
+  BigInt? sizeInBytesOf({String? device}) => _total(device, sizeInBytes);
+
+  BigInt? sizeOutBytesOf({String? device}) => _total(device, sizeOutBytes);
+
+  BigInt? _total(String? device, BigInt Function(int) of) {
+    if (now.isEmpty) return null;
+    if (device != null) return of(deviceIdx(device));
     var size = BigInt.zero;
     for (final i in _realIfaceIndices) {
-      size += sizeInBytes(i);
+      size += of(i);
     }
-    return size.bytes2Str;
+    return size;
   }
 
-  String sizeOut({String? device}) {
-    if (now.isEmpty) return noReading;
-    if (device != null) return sizeOutBytes(deviceIdx(device)).bytes2Str;
-    var size = BigInt.zero;
-    for (final i in _realIfaceIndices) {
-      size += sizeOutBytes(i);
-    }
-    return size.bytes2Str;
-  }
+  String sizeIn({String? device}) =>
+      sizeInBytesOf(device: device)?.bytes2Str ?? noReading;
+
+  String sizeOut({String? device}) =>
+      sizeOutBytesOf(device: device)?.bytes2Str ?? noReading;
 
   int deviceIdx(String? device) {
     if (device != null) {

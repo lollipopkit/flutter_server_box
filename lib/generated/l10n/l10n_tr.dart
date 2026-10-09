@@ -5491,4 +5491,15 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get termFontTip =>
       'Bir yazı tipi dosyası seçilmediğinde terminal, sistemin eş aralıklı yazı tipini kullanır; eksik glifler için CJK ve emoji glifleri içeren yazı tiplerine başvurur.';
+
+  @override
+  String get netSpeed => 'Ağ hızı';
+
+  @override
+  String get inRange => 'aralıkta';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count iş parçacığı';
+  }
 }

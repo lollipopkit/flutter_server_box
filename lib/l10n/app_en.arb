@@ -2876,7 +2876,7 @@
       }
     }
   },
-  "devicesFmt": "{count} devices",
+  "devicesFmt": "{count, plural, =1{1 device} other{{count} devices}}",
   "@devicesFmt": {
     "description": "Formatted user-facing message for devices; runtime values are supplied by placeholders.",
     "placeholders": {
@@ -7138,5 +7138,22 @@
   "termFontTip": "Without a font file, the terminal uses the system's monospace font, then fonts with CJK and emoji glyphs for what it lacks.",
   "@termFontTip": {
     "description": "Explains which font the terminal uses when no font file is chosen."
+  },
+  "netSpeed": "Net speed",
+  "@netSpeed": {
+    "description": "Label of the server detail row for network throughput per second."
+  },
+  "inRange": "in range",
+  "@inRange": {
+    "description": "Prefix for the traffic moved within the chart's selected time range, followed by an arrow for the direction."
+  },
+  "threadsFmt": "{count} threads",
+  "@threadsFmt": {
+    "description": "Button under the CPU chart that shows or hides one usage bar per logical processor.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

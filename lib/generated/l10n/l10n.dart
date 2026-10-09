@@ -3889,7 +3889,7 @@ abstract class AppLocalizations {
   /// Formatted user-facing message for devices; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
-  /// **'{count} devices'**
+  /// **'{count, plural, =1{1 device} other{{count} devices}}'**
   String devicesFmt(int count);
 
   /// Formatted user-facing message for devices busiest; runtime values are supplied by placeholders.
@@ -9428,6 +9428,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Without a font file, the terminal uses the system\'s monospace font, then fonts with CJK and emoji glyphs for what it lacks.'**
   String get termFontTip;
+
+  /// Label of the server detail row for network throughput per second.
+  ///
+  /// In en, this message translates to:
+  /// **'Net speed'**
+  String get netSpeed;
+
+  /// Prefix for the traffic moved within the chart's selected time range, followed by an arrow for the direction.
+  ///
+  /// In en, this message translates to:
+  /// **'in range'**
+  String get inRange;
+
+  /// Button under the CPU chart that shows or hides one usage bar per logical processor.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} threads'**
+  String threadsFmt(int count);
 }
 
 class _AppLocalizationsDelegate

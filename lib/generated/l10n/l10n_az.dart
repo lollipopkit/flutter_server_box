@@ -5500,4 +5500,15 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get termFontTip =>
       'Şrift faylı seçilmədikdə terminal əvvəlcə sistemin sabit enli şriftindən, onda olmayan qliflər üçün isə CJK və emoji qliflərini dəstəkləyən şriftlərdən istifadə edir.';
+
+  @override
+  String get netSpeed => 'Şəbəkə sürəti';
+
+  @override
+  String get inRange => 'aralıqda';
+
+  @override
+  String threadsFmt(int count) {
+    return '$count axın';
+  }
 }

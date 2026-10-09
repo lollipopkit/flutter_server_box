@@ -23,18 +23,38 @@ extension on _ServerDetailPageState {
     if (_custom != null || _range != HistoryRange.live) return null;
     final devices = MetricDevices.of(si, kind);
     if (devices == null) return null;
+    final plotted = _plottedDevices(kind, devices);
     final series = [
-      for (final (i, name) in _plottedDevices(kind, devices).indexed)
-        HistorySeries(
-          name,
-          ChartPalette.lines[i % kMaxDeviceLines],
-          devices.byDevice[name] ?? const <double?>[],
-        ),
+      if (plotted case [final name] when devices.alone != null)
+        ...devices.alone!(name)
+      else
+        for (final (i, name) in plotted.indexed)
+          HistorySeries(
+            name,
+            ChartPalette.lines[i % kMaxDeviceLines],
+            devices.byDevice[name] ?? const <double?>[],
+          ),
     ];
     // Before the first sample of a device that only just appeared there is
     // nothing under its name, and a legend of empty lines is worse than the
     // totals.
     return series.any((s) => s.hasSpots) ? series : null;
+  }
+}
+
+// --- The CPU's threads ---
+
+extension on _ServerDetailPageState {
+  /// Each thread's share, or null where there is nothing to tell apart: one
+  /// thread, or Windows, whose WMI reports one load per processor and hands
+  /// every thread of it the same.
+  List<({String id, double? used})>? _cpuCores(ServerStatus ss) {
+    final cpu = ss.cpu;
+    if (cpu.coresCount < 2 || ss.system == SystemType.windows) return null;
+    return [
+      for (var i = 1; i <= cpu.coresCount; i++)
+        (id: cpu.now[i].id, used: cpu.usedPercent(coreIdx: i)),
+    ];
   }
 }
 
@@ -311,6 +331,19 @@ extension on _ServerDetailPageState {
               // As tall as a chart for every reading but one that failed,
               // which is as tall as what it has to say.
               ServerDetailEased(child: chart),
+              // Under the chart rather than in a sheet: which thread is full
+              // is read beside the line it adds up to.
+              ServerDetailEased(
+                child: switch (m.kind == ServerMetricKind.cpu && _coresOpen
+                    ? _cpuCores(si.status)
+                    : null) {
+                  final cores? => Padding(
+                    padding: const EdgeInsets.only(top: 11),
+                    child: ServerCpuCoreBars(cores: cores),
+                  ),
+                  null => UIs.placeholder,
+                },
+              ),
             ],
           ),
         ),
@@ -397,6 +430,14 @@ extension on _ServerDetailPageState {
   /// its devices are a list to read rather than a set to choose from.
   Widget? _buildDeviceControl(ServerState si, DetailMetric m) {
     final ss = si.status;
+    if (m.kind == ServerMetricKind.cpu) {
+      if (_cpuCores(ss) == null) return null;
+      return ServerDetailDeviceButton(
+        label: l10n.threadsFmt(ss.cpu.coresCount),
+        open: _coresOpen,
+        onTap: () => _rebuild(() => _coresOpen = !_coresOpen),
+      );
+    }
     if (m.kind == ServerMetricKind.disk) {
       if (ss.disk.length < 2) return null;
       final disks = [...ss.disk]

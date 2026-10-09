@@ -80,10 +80,10 @@ extension ServerStatusHistoryX on ServerStatus {
         for (final d in diskIO.devices) d: ?diskIO.speedBytes(d).$2,
       },
       netRxs: {
-        for (final d in netSpeed.realIfaces) d: ?netSpeed.speedInBytesOf(device: d),
+        for (final d in netSpeed.ifaces) d: ?netSpeed.speedInBytesOf(device: d),
       },
       netTxs: {
-        for (final d in netSpeed.realIfaces) d: ?netSpeed.speedOutBytesOf(device: d),
+        for (final d in netSpeed.ifaces) d: ?netSpeed.speedOutBytesOf(device: d),
       },
       battery: batteries.firstOrNull?.percent?.toDouble(),
     );

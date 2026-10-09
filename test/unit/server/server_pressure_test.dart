@@ -54,7 +54,7 @@ void main() {
     final segments = serverPressure(
       _readings([
         _metric(ServerMetricKind.disk, 0.5),
-        _metric(ServerMetricKind.net, 0.5),
+        _metric(ServerMetricKind.netSpeed, 0.5),
         _metric(ServerMetricKind.mem, 0.5),
         _metric(ServerMetricKind.cpu, 0.5),
       ]),
@@ -72,7 +72,7 @@ void main() {
     final segments = serverPressure(
       _readings([
         _metric(ServerMetricKind.cpu, 0.20),
-        _metric(ServerMetricKind.net, null),
+        _metric(ServerMetricKind.netSpeed, null),
         _metric(ServerMetricKind.diskIo, null),
       ]),
     );

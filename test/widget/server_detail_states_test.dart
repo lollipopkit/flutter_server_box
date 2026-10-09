@@ -176,12 +176,13 @@ void main() {
     await settle(tester);
 
     expect(tester.takeException(), isNull);
-    // The five every machine has, with no values yet — not a spinner in place
+    // The six every machine has, with no values yet — not a spinner in place
     // of the page.
     expect(find.text('CPU'), findsWidgets);
     expect(find.text(libL10n.memory), findsWidgets);
     expect(find.text('Swap'), findsWidgets);
-    expect(find.text(libL10n.net), findsWidgets);
+    expect(find.text(app_locale.l10n.netSpeed), findsWidgets);
+    expect(find.text(libL10n.traffic), findsWidgets);
     expect(find.text(app_locale.l10n.waitingFirstSample), findsOneWidget);
     // And a progress line saying the first answer is on its way.
     expect(find.byType(LinearProgressIndicator), findsWidgets);

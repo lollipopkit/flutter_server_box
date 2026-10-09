@@ -11,7 +11,45 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/reading_text.dart';
 
 /// Which reading a row, or the chart above the rows, is showing.
-enum ServerMetricKind { cpu, mem, swap, disk, diskIo, net, gpu, temp, battery }
+enum ServerMetricKind {
+  cpu,
+  mem,
+  swap,
+  disk,
+  diskIo,
+  netSpeed,
+  netTraffic,
+  gpu,
+  temp,
+  battery,
+}
+
+/// The bytes a rate moved over a window, added up sample by sample: index `i`
+/// is what moved from the window's start to `times[i]`.
+///
+/// A rate is the average since the sample before it, so each one is weighed by
+/// the gap it covers — including a long one, which is a poll that ran late and
+/// whose rate is the average over that whole gap. A rate after a missing one
+/// has no known start, and adds nothing; a missing rate is a gap in the line.
+List<double?> cumulativeBytes(List<int> times, List<double?> rates) {
+  final out = <double?>[];
+  var sum = 0.0;
+  for (var i = 0; i < rates.length && i < times.length; i++) {
+    final rate = rates[i];
+    if (rate == null) {
+      out.add(null);
+      continue;
+    }
+    if (i > 0 && rates[i - 1] != null) {
+      sum += rate * (times[i] - times[i - 1]) / 1000;
+    }
+    out.add(sum);
+  }
+  return out;
+}
+
+/// The traffic row's, beside the network's own for its speed.
+const kNetTrafficIcon = MingCute.chart_bar_line;
 
 /// The share at which a reading stops being a number and becomes a reason to
 /// look at this machine.
@@ -285,7 +323,7 @@ const _kAlwaysShown = {
   ServerMetricKind.cpu,
   ServerMetricKind.mem,
   ServerMetricKind.disk,
-  ServerMetricKind.net,
+  ServerMetricKind.netSpeed,
 };
 
 /// The readings [srv] reports, and the five a card draws.
@@ -456,7 +494,7 @@ List<ServerMetric> _readings(ServerState srv) {
       label: 'CPU',
       icon: ServerDetailCards.cpu.icon,
       value: ReadingFmt.pct(cpu),
-      note: ss.cpu.brand.keys.firstOrNull ?? '',
+      note: cpuNote(ss),
       bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
       percent: cpu == null ? null : cpu / 100,
       samples: h.cpu.toList(),
@@ -545,8 +583,8 @@ List<ServerMetric> _readings(ServerState srv) {
     final tx = ns.speedOutBytesOf();
     out.add(
       ServerMetric(
-        kind: ServerMetricKind.net,
-        label: libL10n.net,
+        kind: ServerMetricKind.netSpeed,
+        label: l10n.netSpeed,
         icon: ServerDetailCards.net.icon,
         value: ReadingFmt.rate(tx),
         note: '↓ ${ReadingFmt.rate(rx)} · ↑ ${ReadingFmt.rate(tx)}',
@@ -554,6 +592,23 @@ List<ServerMetric> _readings(ServerState srv) {
         samples: h.netTx.toList(),
         times: times,
         format: ReadingFmt.rateAxis,
+        binary: true,
+      ),
+    );
+
+    final rxTotal = ns.sizeInBytesOf()?.toDouble();
+    final txTotal = ns.sizeOutBytesOf()?.toDouble();
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.netTraffic,
+        label: libL10n.traffic,
+        icon: kNetTrafficIcon,
+        value: ReadingFmt.size(txTotal),
+        note: '↓ ${ReadingFmt.size(rxTotal)} · ↑ ${ReadingFmt.size(txTotal)}',
+        bigNote: '↑ · ${ReadingFmt.size(rxTotal)} ↓',
+        samples: cumulativeBytes(times, h.netTx.toList()),
+        times: times,
+        format: ReadingFmt.sizeAxis,
         binary: true,
       ),
     );
@@ -614,6 +669,18 @@ List<ServerMetric> _readings(ServerState srv) {
   }
 
   return out;
+}
+
+/// The CPU's model and how many threads it runs, as `Xeon E5 ×8`.
+///
+/// The threads are `Cpus.coresCount`: the logical processors, which is what
+/// the usage is spread over.
+String cpuNote(ServerStatus ss) {
+  final cores = ss.cpu.coresCount;
+  return [
+    ?ss.cpu.brand.keys.firstOrNull,
+    if (cores > 0) '×$cores',
+  ].join(' ');
 }
 
 /// The GPU carrying the most work — the one the row reads, and the one the

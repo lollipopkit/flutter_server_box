@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
@@ -19,6 +20,7 @@ class MetricDevices {
     required this.byDevice,
     required this.defaults,
     required this.subtitle,
+    this.alone,
   });
 
   /// Busiest first, which is also the order the picker lists them in.
@@ -34,6 +36,10 @@ class MetricDevices {
   /// What the picker says under a device's name — its reading now, which is
   /// what the choice is made on.
   final String Function(String) subtitle;
+
+  /// What is drawn when a single device is: both of its directions, which a
+  /// line per device leaves out to stay readable.
+  final List<HistorySeries> Function(String)? alone;
 
   /// The devices behind [kind], or null for a metric that has none and for a
   /// machine with only one of them — there is nothing to pick from or to tell
@@ -64,28 +70,49 @@ class MetricDevices {
             final (r, w) = io.speedBytes(d);
             return '${ReadingFmt.rate(w)} ${l10n.write} · ${ReadingFmt.rate(r)} ${l10n.read}';
           },
+          alone: (d) => [
+            HistorySeries(
+              '$d ${l10n.write}',
+              ChartPalette.lines[0],
+              h.diskWritesByDevice[d] ?? const [],
+            ),
+            HistorySeries(
+              '$d ${l10n.read}',
+              ChartPalette.lines[1],
+              h.diskReadsByDevice[d] ?? const [],
+            ),
+          ],
         );
-      case ServerMetricKind.net:
+      case ServerMetricKind.netSpeed:
         final ns = ss.netSpeed;
-        final names = [...ns.realIfaces]
-          ..sort((a, b) {
-            double of(String d) =>
-                (ns.speedInBytesOf(device: d) ?? 0) +
-                (ns.speedOutBytesOf(device: d) ?? 0);
-            return of(b).compareTo(of(a));
-          });
-        if (names.length < 2) return null;
-        return MetricDevices(
-          names: names,
-          byDevice: h.netTxByDevice,
-          defaults: names.take(kMaxDeviceLines).toList(),
-          // The totals below the rates: they are what an interface has moved
-          // since the machine came up, which is the other thing a list of
-          // interfaces is read for.
+        return _net(
+          ns,
+          busy: (d) =>
+              (ns.speedInBytesOf(device: d) ?? 0) +
+              (ns.speedOutBytesOf(device: d) ?? 0),
+          tx: h.netTxByDevice,
+          rx: h.netRxByDevice,
           subtitle: (d) =>
               '↑ ${ReadingFmt.rate(ns.speedOutBytesOf(device: d))} · '
-              '↓ ${ReadingFmt.rate(ns.speedInBytesOf(device: d))}\n'
-              '${ns.sizeOut(device: d)} | ${ns.sizeIn(device: d)}',
+              '↓ ${ReadingFmt.rate(ns.speedInBytesOf(device: d))}',
+        );
+      case ServerMetricKind.netTraffic:
+        final ns = ss.netSpeed;
+        double? total(BigInt? v) => v?.toDouble();
+        Map<String, List<double?>> added(Map<String, List<double?>> rates) => {
+          for (final MapEntry(:key, :value) in rates.entries)
+            key: cumulativeBytes(h.time, value),
+        };
+        return _net(
+          ns,
+          busy: (d) =>
+              (total(ns.sizeInBytesOf(device: d)) ?? 0) +
+              (total(ns.sizeOutBytesOf(device: d)) ?? 0),
+          tx: added(h.netTxByDevice),
+          rx: added(h.netRxByDevice),
+          subtitle: (d) =>
+              '↑ ${ReadingFmt.size(total(ns.sizeOutBytesOf(device: d)))} · '
+              '↓ ${ReadingFmt.size(total(ns.sizeInBytesOf(device: d)))}',
         );
       case ServerMetricKind.temp:
         final names = [...ss.temps.devices]
@@ -97,10 +124,15 @@ class MetricDevices {
           // Not the hottest few: a Mac reports fourteen PMU dies within a
           // degree of each other, and picking by temperature alone draws them
           // all and drops the SSD.
-          defaults: [
+          defaults: switch ([
             for (final s in _tempSeries(si))
               if (names.contains(s.label)) s.label,
-          ],
+          ]) {
+            // History with the aggregate only — seeded from an agent, before
+            // the first live sample — names no sensor: the hottest stands in.
+            [] => [names.first],
+            final picked => picked,
+          },
           subtitle: (d) {
             final v = ss.temps.get(d);
             return v == null ? '--' : ReadingFmt.temp(v);
@@ -115,6 +147,36 @@ class MetricDevices {
         return null;
     }
   }
+}
+
+/// The interfaces behind the network's speed or traffic, by [busy].
+///
+/// Every interface but loopback can be picked, bridges and tunnels included:
+/// on a host whose traffic goes through `vmbr0` that is the one worth reading.
+/// Drawn by default are the real ones, which are what the totals add up.
+MetricDevices? _net(
+  NetSpeed ns, {
+  required double Function(String) busy,
+  required Map<String, List<double?>> tx,
+  required Map<String, List<double?>> rx,
+  required String Function(String) subtitle,
+}) {
+  final names = [...ns.ifaces]..sort((a, b) => busy(b).compareTo(busy(a)));
+  if (names.length < 2) return null;
+  return MetricDevices(
+    names: names,
+    // Out, as the row and the headline lead with it.
+    byDevice: tx,
+    defaults: names
+        .where(ns.realIfaces.contains)
+        .take(kMaxDeviceLines)
+        .toList(),
+    subtitle: subtitle,
+    alone: (d) => [
+      HistorySeries('$d ↑', ChartPalette.lines[0], tx[d] ?? const []),
+      HistorySeries('$d ↓', ChartPalette.lines[1], rx[d] ?? const []),
+    ],
+  );
 }
 
 /// Which sensors the temperature metric draws by default, in order: the

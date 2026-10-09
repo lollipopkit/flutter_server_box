@@ -72,6 +72,12 @@ abstract class TimeSeq<T extends TimeSeqIface<T>> {
     return pre != null && pre.length == _now.length && _now.isNotEmpty;
   }
 
+  /// Whether item [i] of [now] appeared this refresh. It is paired with
+  /// itself in [pre] (see [_alignPre]), so it has no baseline, and a rate a
+  /// subclass takes of it is no reading rather than a zero.
+  bool appeared(int i) =>
+      hasWindow && i < _now.length && identical(_pre![i], _now[i]);
+
   /// Called after each [update], for subclasses to refresh cached values.
   void onUpdate();
 
