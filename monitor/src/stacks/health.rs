@@ -121,10 +121,26 @@ pub async fn check(state: &Arc<AppState>) {
         if state.stacks.job(&row.id).is_some_and(|j| j.running()) {
             continue;
         }
-        let title = package.manifest.title.get("en").cloned().unwrap_or_else(|| package.manifest.project.clone());
+        let titles = &package.manifest.title;
+        let title = titles.get("en").cloned().unwrap_or_else(|| package.manifest.project.clone());
         if package.manifest.version != row.version && row.update_noticed.as_deref() != Some(package.manifest.version.as_str()) {
             let body = format!("{} {} can be installed (now {}).", package.manifest.project, package.manifest.version, row.version);
-            notify(state, Level::Info, &row.id, &format!("{title}: an update"), &body).await;
+            notify(
+                state,
+                Level::Info,
+                &row.id,
+                &format!("{title}: an update"),
+                &body,
+                "stack.update",
+                serde_json::json!({
+                    "app": package.manifest.id,
+                    "titles": titles,
+                    "project": package.manifest.project,
+                    "version": package.manifest.version,
+                    "current": row.version,
+                }),
+            )
+            .await;
             let _ = store::set_update_noticed(&state.db, &row.id, &package.manifest.version).await;
         }
         let (judged, failing) = if row.stopped {
@@ -143,24 +159,55 @@ pub async fn check(state: &Arc<AppState>) {
         let mut next = Health { state: judged, failing: failing.clone(), checked_at: chrono::Utc::now().to_rfc3339(), alerted };
         if judged.bad() && was != Some(judged) {
             next.alerted = true;
+            let kind = if judged == State::Down { "stack.down" } else { "stack.unhealthy" };
             let (subject, body) = match (judged, failing.is_empty()) {
                 (State::Down, true) => (format!("{title} is down"), "None of its containers is running.".to_string()),
                 (State::Down, false) => (format!("{title} is down"), format!("Not running: {}.", failing.join(", "))),
                 _ => (format!("{title} is unhealthy"), format!("Failing its health check: {}.", failing.join(", "))),
             };
-            notify(state, Level::Warning, &row.id, &subject, &body).await;
+            notify(
+                state,
+                Level::Warning,
+                &row.id,
+                &subject,
+                &body,
+                kind,
+                serde_json::json!({ "app": package.manifest.id, "titles": titles, "services": failing }),
+            )
+            .await;
         } else if alerted && matches!(judged, State::Healthy | State::Stopped) {
             next.alerted = false;
             if judged == State::Healthy {
-                notify(state, Level::Info, &row.id, &format!("{title} is running again"), "Every container is up.").await;
+                notify(
+                    state,
+                    Level::Info,
+                    &row.id,
+                    &format!("{title} is running again"),
+                    "Every container is up.",
+                    "stack.back",
+                    serde_json::json!({ "app": package.manifest.id, "titles": titles }),
+                )
+                .await;
             }
         }
         state.stacks.record(&row.id, next);
     }
 }
 
-async fn notify(state: &AppState, level: Level, id: &str, subject: &str, body: &str) {
-    if let Err(e) = state.desk.notify(&state.db, level, Source::Stack(id.to_string()), subject, body).await {
+async fn notify(
+    state: &AppState,
+    level: Level,
+    id: &str,
+    subject: &str,
+    body: &str,
+    kind: &str,
+    params: serde_json::Value,
+) {
+    if let Err(e) = state
+        .desk
+        .notify(&state.db, level, Source::Stack(id.to_string()), subject, body, Some((kind, &params)))
+        .await
+    {
         tracing::error!("stack {id}: notifying: {e}");
     }
 }

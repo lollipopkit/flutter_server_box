@@ -134,6 +134,7 @@ pub struct AppState {
     /// `stacks`.
     pub stacks: Arc<crate::stacks::Stacks>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
+    pub storage: Arc<crate::api::storage::StorageJobs>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -245,6 +246,7 @@ impl AppState {
             }),
             agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
             container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
+            storage: Arc::default(),
             stacks: Arc::new(crate::stacks::Stacks::new(
                 sqlite_file_of(&db).as_deref(),
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
@@ -597,12 +599,18 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::app_runtime::call)),
             )
             .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
+            .service(web::resource("/storage").route(web::get().to(crate::api::storage::view)))
+            .service(web::resource("/storage/act").route(web::post().to(crate::api::storage::act)))
+            .service(web::resource("/storage/job").route(web::get().to(crate::api::storage::job)))
             .service(
                 web::resource("/container-backups")
                     .route(web::get().to(crate::api::container_backups::list))
                     .route(web::post().to(crate::api::container_backups::create)),
             )
             .service(web::resource("/container-backups/job").route(web::get().to(crate::api::container_backups::job)))
+            .service(web::resource("/container-backups/settings").route(web::put().to(crate::api::container_backups::put_settings)))
+            .service(web::resource("/container-backups/schedules").route(web::post().to(crate::api::container_backups::add_schedule)))
+            .service(web::resource("/container-backups/schedules/{id}").route(web::delete().to(crate::api::container_backups::remove_schedule)))
             .service(web::resource("/container-backups/job/cancel").route(web::post().to(crate::api::container_backups::cancel)))
             .service(web::resource("/container-backups/{id}/restore").route(web::post().to(crate::api::container_backups::restore)))
             .service(web::resource("/container-backups/{id}").route(web::delete().to(crate::api::container_backups::remove)))

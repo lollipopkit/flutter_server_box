@@ -9,7 +9,7 @@ use ntex::http::Method;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use server_box_monitor::api::auth::generate_token;
-use server_box_monitor::api::desk::{self, Level, Source};
+use server_box_monitor::api::desk::{self, DeskEvent, Level, Source};
 use server_box_monitor::api::desk_storage;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
@@ -362,7 +362,7 @@ async fn notifications_are_read_per_account() {
     for i in 0..3 {
         state
             .desk
-            .notify(&state.db, Level::Warning, Source::Alert, "High CPU", &format!("cpu {i}"))
+            .notify(&state.db, Level::Warning, Source::Alert, "High CPU", &format!("cpu {i}"), None)
             .await
             .unwrap();
     }
@@ -393,6 +393,45 @@ async fn notifications_are_read_per_account() {
 }
 
 #[ntex::test]
+async fn stack_notification_stores_and_sends_kind_and_params() {
+    let state = state().await;
+    let srv = server(state.clone()).await;
+    let params = serde_json::json!({ "app": "example.web", "titles": { "en": "Example" }, "services": ["web"] });
+    let mut events = state.desk.subscribe();
+    state
+        .desk
+        .notify(
+            &state.db,
+            Level::Warning,
+            Source::Stack("example.web".into()),
+            "Example is down",
+            "Not running: web.",
+            Some(("stack.down", &params)),
+        )
+        .await
+        .unwrap();
+
+    let DeskEvent::Notification(notification) = events.recv().await.unwrap() else {
+        panic!("expected notification event");
+    };
+    assert_eq!(notification.kind.as_deref(), Some("stack.down"));
+    assert_eq!(notification.params.as_ref(), Some(&params));
+
+    let stored: (Option<String>, Option<String>) =
+        sqlx::query_as("SELECT kind, params FROM desk_notification WHERE id = ?")
+            .bind(notification.id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap();
+    assert_eq!(stored.0.as_deref(), Some("stack.down"));
+    assert_eq!(stored.1.as_deref(), Some(params.to_string().as_str()));
+
+    let (_, body, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk/notifications", None).await;
+    assert_eq!(body["notifications"][0]["kind"], "stack.down");
+    assert_eq!(body["notifications"][0]["params"], params);
+}
+
+#[ntex::test]
 async fn a_rule_notifies_when_it_starts_firing_not_every_cycle() {
     let state = state().await;
     let firing = || vec![("High CPU".to_string(), "Alert: cpu 99%".to_string())];
@@ -413,7 +452,7 @@ async fn old_notifications_make_room() {
     for i in 0..(desk::KEEP_NOTIFICATIONS + 5) {
         state
             .desk
-            .notify(&state.db, Level::Info, Source::Alert, "r", &i.to_string())
+            .notify(&state.db, Level::Info, Source::Alert, "r", &i.to_string(), None)
             .await
             .unwrap();
     }
@@ -448,7 +487,7 @@ async fn events_reach_the_right_readers() {
     call(srv2, Some("admin"), Method::PUT, "/api/v1/desk/session", json(session(0, 1))).await;
     state
         .desk
-        .notify(&state.db, Level::Warning, Source::Alert, "High CPU", "cpu 99%")
+        .notify(&state.db, Level::Warning, Source::Alert, "High CPU", "cpu 99%", None)
         .await
         .unwrap();
 

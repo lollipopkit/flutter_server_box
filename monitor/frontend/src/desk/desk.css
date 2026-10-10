@@ -5,7 +5,10 @@
    Tailwind states it, so the design system's components layer sits under
    the utilities. */
 @layer theme, base, components, utilities;
-@import './lk/lk.css';
+/* `lk.css` but the icon font's core (the whole one follows, `lib/iconFont.ts`). */
+@import './lk/fonts.css';
+@import './lk/icons-core.css';
+@import './lk/core.css';
 
 /* A window's box on the desk (`window/Window.svelte`); the `lk-window`
    inside it is the visible frame. */

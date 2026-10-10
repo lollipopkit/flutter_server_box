@@ -10,6 +10,7 @@
     Icon,
     IconButton,
     Input,
+    Select,
     SidebarItem,
     SidebarSection,
     StatusBar,
@@ -94,6 +95,10 @@
   let backupFor = $state<ContainerRow | undefined>(undefined)
   let backupProject = $state(true)
   let backupStop = $state(true)
+  /// Once now, or on a schedule (`/container-backups/schedules`).
+  let backupRepeat = $state<'once' | 'daily' | 'weekly'>('once')
+  let backupAt = $state('03:00')
+  let backupDay = $state('6')
   /// The backup just started, shown in the Backups tab.
   let backupJob = $state<StackJob | null>(null)
 
@@ -103,7 +108,20 @@
     if (!row?.id) return
     error = ''
     try {
-      backupJob = await api.createContainerBackup([row.id], !!row.project && backupProject, backupStop)
+      const project = !!row.project && backupProject
+      if (backupRepeat === 'once') {
+        backupJob = await api.createContainerBackup([row.id], project, backupStop)
+      } else {
+        await api.addContainerBackupSchedule({
+          containers: [row.name ?? row.id],
+          project,
+          stop: backupStop,
+          every: backupRepeat,
+          at: backupAt,
+          weekday: backupRepeat === 'weekly' ? Number(backupDay) : null,
+          keep: null,
+        })
+      }
       tab = 'backups'
       selected = null
     } catch (e) {
@@ -608,6 +626,7 @@
           <Button size="sm" variant="secondary" icon="inventory_2" disabled={busy} onclick={() => {
             backupProject = true
             backupStop = true
+            backupRepeat = 'once'
             backupFor = row
           }}>{$LL.containerBackUp()}</Button>
         {/if}
@@ -671,7 +690,7 @@
 {#if backupFor !== undefined}
   <Dialog open title={$LL.containerBackUp()} message={$LL.containerBackUpBody()} onclose={() => (backupFor = undefined)}>
     {#snippet actions()}
-      <Button block onclick={() => void startBackup()}>{$LL.containerBackUp()}</Button>
+      <Button block onclick={() => void startBackup()}>{backupRepeat === 'once' ? $LL.containerBackUp() : $LL.containerBackupSchedule()}</Button>
       <Button variant="secondary" block onclick={() => (backupFor = undefined)}>{$LL.cancel()}</Button>
     {/snippet}
     <div class="space-y-[7px] text-left">
@@ -679,6 +698,29 @@
         <Checkbox bind:checked={backupProject} label={$LL.containerBackUpProject({ project: backupFor.project })} />
       {/if}
       <Checkbox bind:checked={backupStop} label={$LL.containerBackUpStop()} />
+      <Select
+        label={$LL.containerBackupRepeat()}
+        value={backupRepeat}
+        options={[
+          { value: 'once', label: $LL.containerBackupOnce() },
+          { value: 'daily', label: $LL.containerBackupEveryDay() },
+          { value: 'weekly', label: $LL.containerBackupEveryWeek() },
+        ]}
+        onchange={(e: Event) => (backupRepeat = (e.currentTarget as HTMLSelectElement).value as 'once')}
+      />
+      {#if backupRepeat !== 'once'}
+        <div class="flex gap-[9px]">
+          {#if backupRepeat === 'weekly'}
+            <Select
+              label={$LL.containerBackupDay()}
+              value={backupDay}
+              options={[$LL.weekdayMon(), $LL.weekdayTue(), $LL.weekdayWed(), $LL.weekdayThu(), $LL.weekdayFri(), $LL.weekdaySat(), $LL.weekdaySun()].map((d, i) => ({ value: String(i), label: d }))}
+              onchange={(e: Event) => (backupDay = (e.currentTarget as HTMLSelectElement).value)}
+            />
+          {/if}
+          <Input label={$LL.containerBackupAt()} type="time" value={backupAt} oninput={(e: Event) => (backupAt = (e.currentTarget as HTMLInputElement).value)} />
+        </div>
+      {/if}
     </div>
   </Dialog>
 {/if}

@@ -14,7 +14,8 @@
     stackId?: string
     /// The job from line [since] on; a web app's (`stackId`) when absent.
     read?: (since: number) => Promise<StackJob>
-    stop?: () => Promise<void>
+    /// Asks the job to stop; without it, the job cannot be cancelled here.
+    stop?: (() => Promise<void>) | null
     job: StackJob
     title: string
     /// The job ended, however it ended.
@@ -63,7 +64,7 @@
   async function cancel() {
     cancelling = true
     try {
-      await stop()
+      await stop?.()
     } finally {
       cancelling = false
     }
@@ -81,7 +82,7 @@
       <p class="text-[15px] font-semibold text-(--text-primary)">{title}</p>
       <p class="text-[12px] text-(--text-secondary)">{$LL.stackProgressHint()}</p>
     </div>
-    {#if job.state === 'running'}
+    {#if job.state === 'running' && stop}
       <Button variant="secondary" size="sm" disabled={cancelling} onclick={() => void cancel()}>{$LL.cancel()}</Button>
     {/if}
   </Card>

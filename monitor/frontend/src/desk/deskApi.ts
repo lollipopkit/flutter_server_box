@@ -131,6 +131,8 @@ export interface DeskNotification {
   source: string
   subject: string
   body: string
+  kind?: string | null
+  params?: Record<string, unknown> | null
   read: boolean
 }
 

@@ -35,6 +35,8 @@ pub enum JobKind {
     /// A container backup (`container_backups`).
     Backup,
     Restore,
+    /// A change to the machine's disks (`api::storage`).
+    Storage,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -133,6 +135,31 @@ impl Job {
             error,
             lines: lines.iter().filter(|l| l.seq >= since).cloned().collect(),
             next: self.next.load(Ordering::Relaxed),
+        }
+    }
+
+    /// Runs [script] as root (`sudo -S`, [password] on its stdin alone; an
+    /// empty one does for root and `NOPASSWD`). The script holds no secret:
+    /// it is logged as it is.
+    pub async fn run_root(&self, script: &str, password: &str) -> Result<(), String> {
+        if self.cancel.is_cancelled() {
+            return Err("cancelled".into());
+        }
+        self.push(format!("# {script}"));
+        let (tx, mut rx) = mpsc::unbounded_channel::<(Stream, String)>();
+        let run = command::run(Spec { command: script, sudo_password: Some(password), timeout: STEP_TIMEOUT }, tx, &self.cancel);
+        let drain = async {
+            while let Some((_, line)) = rx.recv().await {
+                self.push(line);
+            }
+        };
+        let (finished, ()) = tokio::join!(run, drain);
+        match finished {
+            Err(e) => Err(e.to_string()),
+            Ok(f) if f.cancelled => Err("cancelled".into()),
+            Ok(f) if f.timed_out => Err("timed out".into()),
+            Ok(f) if f.exit_code != Some(0) => Err(format!("exited with {}", f.exit_code.map_or("a signal".into(), |c| c.to_string()))),
+            Ok(_) => Ok(()),
         }
     }
 

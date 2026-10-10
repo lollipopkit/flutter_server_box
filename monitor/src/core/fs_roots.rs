@@ -120,7 +120,7 @@ impl Protected {
 
     /// Whether [path] — canonical — is protected state.
     pub fn covers(&self, path: &Path) -> bool {
-        if self.trees.iter().any(|tree| path.starts_with(tree)) {
+        if self.trees.iter().any(|tree| path.starts_with(tree)) || runtime_trees().iter().any(|tree| path.starts_with(tree)) {
             return true;
         }
         let (Some(dir), Some(name)) = (path.parent(), path.file_name()) else {
@@ -139,8 +139,31 @@ impl Protected {
     pub fn holds(&self, path: &Path) -> bool {
         self.covers(path)
             || self.trees.iter().any(|tree| tree.starts_with(path))
+            || runtime_trees().iter().any(|tree| tree.starts_with(path))
             || self.named.iter().any(|(dir, _)| dir.starts_with(path))
             || self.each.iter().any(|(dir, _)| dir.starts_with(path) || path.parent() == Some(dir.as_path()))
+    }
+}
+
+/// Trees that become the agent's state while it runs (a backup folder the
+/// admin chose on a backup disk), protected as [`Protected::tree`] is.
+static RUNTIME_TREES: std::sync::RwLock<Vec<PathBuf>> = std::sync::RwLock::new(Vec::new());
+
+fn runtime_trees() -> std::sync::RwLockReadGuard<'static, Vec<PathBuf>> {
+    RUNTIME_TREES.read().unwrap_or_else(|e| e.into_inner())
+}
+
+/// Protects everything under [dir] from now on; [previous] (the folder it
+/// replaces, if any) no longer.
+pub fn protect_at_runtime(dir: &Path, previous: Option<&Path>) {
+    let mut trees = RUNTIME_TREES.write().unwrap_or_else(|e| e.into_inner());
+    if let Some(previous) = previous {
+        let previous = settled(previous);
+        trees.retain(|t| *t != previous);
+    }
+    let dir = settled(dir);
+    if !trees.contains(&dir) {
+        trees.push(dir);
     }
 }
 

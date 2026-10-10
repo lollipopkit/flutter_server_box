@@ -151,6 +151,12 @@ pub fn lifecycle_command(runtime: ContainerType, ids: &[String], start: bool) ->
     out
 }
 
+/// How many bytes [mount] holds (`du`, from inside a throwaway container,
+/// which reads what the caller's account cannot); the number first.
+pub fn size_command(runtime: ContainerType, mount: &Mount) -> String {
+    format!("{} run --rm -v {}:/sbm-src:ro {HELPER_IMAGE} du -sb /sbm-src", runtime.name(), shell_quote_unix(mount.source()))
+}
+
 /// Archives [mount] into [dir]/[file] (a `.tar.gz`), read only.
 pub fn archive_command(runtime: ContainerType, mount: &Mount, dir: &str, file: &str) -> String {
     format!(

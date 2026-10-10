@@ -8618,6 +8618,491 @@ type RootTranslation = {
 	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
 	 */
 	containerBackupUnfinished: string
+	/**
+	 * {​a​p​p​}​ ​i​s​ ​d​o​w​n
+	 * @param {unknown} app
+	 */
+	noticeStackDown: RequiredParams<'app'>
+	/**
+	 * N​o​t​ ​r​u​n​n​i​n​g​:​ ​{​s​e​r​v​i​c​e​s​}​.
+	 * @param {unknown} services
+	 */
+	noticeStackDownBody: RequiredParams<'services'>
+	/**
+	 * N​o​n​e​ ​o​f​ ​i​t​s​ ​c​o​n​t​a​i​n​e​r​s​ ​i​s​ ​r​u​n​n​i​n​g​.
+	 */
+	noticeStackDownBodyEmpty: string
+	/**
+	 * {​a​p​p​}​ ​i​s​ ​u​n​h​e​a​l​t​h​y
+	 * @param {unknown} app
+	 */
+	noticeStackUnhealthy: RequiredParams<'app'>
+	/**
+	 * F​a​i​l​i​n​g​ ​i​t​s​ ​h​e​a​l​t​h​ ​c​h​e​c​k​:​ ​{​s​e​r​v​i​c​e​s​}​.
+	 * @param {unknown} services
+	 */
+	noticeStackUnhealthyBody: RequiredParams<'services'>
+	/**
+	 * {​a​p​p​}​ ​i​s​ ​r​u​n​n​i​n​g​ ​a​g​a​i​n
+	 * @param {unknown} app
+	 */
+	noticeStackBack: RequiredParams<'app'>
+	/**
+	 * E​v​e​r​y​ ​c​o​n​t​a​i​n​e​r​ ​i​s​ ​u​p​.
+	 */
+	noticeStackBackBody: string
+	/**
+	 * {​a​p​p​}​:​ ​a​n​ ​u​p​d​a​t​e​ ​i​s​ ​a​v​a​i​l​a​b​l​e
+	 * @param {unknown} app
+	 */
+	noticeStackUpdate: RequiredParams<'app'>
+	/**
+	 * {​p​r​o​j​e​c​t​}​ ​{​v​e​r​s​i​o​n​}​ ​c​a​n​ ​b​e​ ​i​n​s​t​a​l​l​e​d​ ​(​n​o​w​ ​{​c​u​r​r​e​n​t​}​)​.
+	 * @param {unknown} current
+	 * @param {unknown} project
+	 * @param {unknown} version
+	 */
+	noticeStackUpdateBody: RequiredParams<'current' | 'project' | 'version'>
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	storageTitle: string
+	/**
+	 * D​i​s​k​s
+	 */
+	storageDisks: string
+	/**
+	 * R​A​I​D
+	 */
+	storageRaid: string
+	/**
+	 * Z​F​S​ ​p​o​o​l​s
+	 */
+	storagePools: string
+	/**
+	 * W​h​o​l​e​ ​d​i​s​k
+	 */
+	storageWholeDisk: string
+	/**
+	 * N​o​ ​f​i​l​e​s​y​s​t​e​m
+	 */
+	storageNoFilesystem: string
+	/**
+	 * {​u​s​e​d​}​ ​o​f​ ​{​t​o​t​a​l​}
+	 * @param {unknown} total
+	 * @param {unknown} used
+	 */
+	storageUsage: RequiredParams<'total' | 'used'>
+	/**
+	 * I​n​ ​u​s​e
+	 */
+	storageBusyMounted: string
+	/**
+	 * S​w​a​p
+	 */
+	storageBusySwap: string
+	/**
+	 * I​n​ ​a​n​ ​a​r​r​a​y
+	 */
+	storageBusyRaid: string
+	/**
+	 * I​n​ ​a​ ​p​o​o​l
+	 */
+	storageBusyPool: string
+	/**
+	 * H​o​l​d​s​ ​a​ ​v​o​l​u​m​e
+	 */
+	storageBusyVolume: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	storageBusyReadOnly: string
+	/**
+	 * M​o​u​n​t
+	 */
+	storageMount: string
+	/**
+	 * U​n​m​o​u​n​t
+	 */
+	storageUnmount: string
+	/**
+	 * F​o​r​m​a​t
+	 */
+	storageFormat: string
+	/**
+	 * I​n​i​t​i​a​l​i​z​e
+	 */
+	storageInitialize: string
+	/**
+	 * S​M​A​R​T​ ​t​e​s​t
+	 */
+	storageSmartTest: string
+	/**
+	 * C​o​n​t​i​n​u​e
+	 */
+	storageContinue: string
+	/**
+	 * F​i​l​e​s​y​s​t​e​m
+	 */
+	storageFilesystem: string
+	/**
+	 * L​a​b​e​l
+	 */
+	storageLabel: string
+	/**
+	 * M​o​u​n​t​ ​p​o​i​n​t
+	 */
+	storageMountpoint: string
+	/**
+	 * M​o​u​n​t​ ​a​g​a​i​n​ ​a​t​ ​e​v​e​r​y​ ​s​t​a​r​t​ ​(​/​e​t​c​/​f​s​t​a​b​)
+	 */
+	storageMountPersist: string
+	/**
+	 * L​e​t​ ​S​e​r​v​e​r​B​o​x​ ​w​r​i​t​e​ ​h​e​r​e​ ​(​f​o​r​ ​b​a​c​k​u​p​s​)
+	 */
+	storageMountOwn: string
+	/**
+	 * N​a​m​e
+	 */
+	storageName: string
+	/**
+	 * L​e​v​e​l
+	 */
+	storageLevel: string
+	/**
+	 * L​a​y​o​u​t
+	 */
+	storageLayout: string
+	/**
+	 * D​e​v​i​c​e
+	 */
+	storageDevice: string
+	/**
+	 * P​i​c​k​ ​a​t​ ​l​e​a​s​t​ ​{​c​o​u​n​t​}​ ​d​e​v​i​c​e​s​.​ ​W​h​a​t​ ​t​h​e​y​ ​h​o​l​d​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} count
+	 */
+	storagePickDevices: RequiredParams<'count'>
+	/**
+	 * N​o​ ​f​r​e​e​ ​d​i​s​k​ ​o​r​ ​p​a​r​t​i​t​i​o​n​.
+	 */
+	storageNoFreeDevices: string
+	/**
+	 * C​r​e​a​t​e​ ​a​r​r​a​y
+	 */
+	storageCreateRaid: string
+	/**
+	 * B​u​i​l​d​s​ ​/​d​e​v​/​{​n​a​m​e​}​ ​(​R​A​I​D​ ​{​l​e​v​e​l​}​)​ ​f​r​o​m​ ​{​d​e​v​i​c​e​s​}​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​t​h​e​m​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} level
+	 * @param {unknown} name
+	 */
+	storageCreateRaidBody: RequiredParams<'devices' | 'level' | 'name'>
+	/**
+	 * C​r​e​a​t​e​ ​p​o​o​l
+	 */
+	storageCreatePool: string
+	/**
+	 * B​u​i​l​d​s​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​(​{​l​a​y​o​u​t​}​)​ ​f​r​o​m​ ​{​d​e​v​i​c​e​s​}​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​t​h​e​m​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} layout
+	 * @param {unknown} name
+	 */
+	storageCreatePoolBody: RequiredParams<'devices' | 'layout' | 'name'>
+	/**
+	 * M​a​k​e​s​ ​a​ ​n​e​w​ ​f​i​l​e​s​y​s​t​e​m​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} device
+	 */
+	storageFormatBody: RequiredParams<'device'>
+	/**
+	 * W​i​p​e​s​ ​{​d​e​v​i​c​e​}​ ​a​n​d​ ​g​i​v​e​s​ ​i​t​ ​o​n​e​ ​p​a​r​t​i​t​i​o​n​ ​f​o​r​ ​t​h​e​ ​w​h​o​l​e​ ​d​i​s​k​.​ ​E​v​e​r​y​t​h​i​n​g​ ​o​n​ ​i​t​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} device
+	 */
+	storageInitializeBody: RequiredParams<'device'>
+	/**
+	 * M​o​u​n​t​s​ ​{​d​e​v​i​c​e​}​ ​a​t​ ​{​m​o​u​n​t​p​o​i​n​t​}​.
+	 * @param {unknown} device
+	 * @param {unknown} mountpoint
+	 */
+	storageMountBody: RequiredParams<'device' | 'mountpoint'>
+	/**
+	 * U​n​m​o​u​n​t​s​ ​{​m​o​u​n​t​p​o​i​n​t​}​ ​a​n​d​ ​s​t​o​p​s​ ​m​o​u​n​t​i​n​g​ ​i​t​ ​a​t​ ​s​t​a​r​t​.
+	 * @param {unknown} mountpoint
+	 */
+	storageUnmountBody: RequiredParams<'mountpoint'>
+	/**
+	 * S​t​a​r​t​s​ ​a​ ​s​h​o​r​t​ ​s​e​l​f​-​t​e​s​t​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​I​t​s​ ​r​e​s​u​l​t​ ​s​h​o​w​s​ ​i​n​ ​S​t​a​t​u​s​ ​a​f​t​e​r​ ​a​ ​f​e​w​ ​m​i​n​u​t​e​s​.
+	 * @param {unknown} device
+	 */
+	storageSmartTestBody: RequiredParams<'device'>
+	/**
+	 * A​d​d​ ​d​i​s​k
+	 */
+	storageAddMember: string
+	/**
+	 * A​d​d​s​ ​{​d​e​v​i​c​e​}​ ​t​o​ ​/​d​e​v​/​{​a​r​r​a​y​}​:​ ​i​t​ ​r​e​p​l​a​c​e​s​ ​a​ ​f​a​i​l​e​d​ ​m​e​m​b​e​r​,​ ​o​r​ ​w​a​i​t​s​ ​a​s​ ​a​ ​s​p​a​r​e​.​ ​W​h​a​t​ ​i​t​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} array
+	 * @param {unknown} device
+	 */
+	storageAddMemberBody: RequiredParams<'array' | 'device'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	storageRemoveMember: string
+	/**
+	 * M​a​r​k​s​ ​{​d​e​v​i​c​e​}​ ​f​a​i​l​e​d​ ​a​n​d​ ​t​a​k​e​s​ ​i​t​ ​o​u​t​ ​o​f​ ​/​d​e​v​/​{​a​r​r​a​y​}​.​ ​T​h​e​ ​a​r​r​a​y​ ​r​u​n​s​ ​o​n​ ​w​i​t​h​o​u​t​ ​i​t​,​ ​d​e​g​r​a​d​e​d​ ​i​f​ ​i​t​ ​w​a​s​ ​a​ ​w​o​r​k​i​n​g​ ​m​e​m​b​e​r​.
+	 * @param {unknown} array
+	 * @param {unknown} device
+	 */
+	storageRemoveMemberBody: RequiredParams<'array' | 'device'>
+	/**
+	 * D​e​l​e​t​e​ ​a​r​r​a​y
+	 */
+	storageDeleteRaid: string
+	/**
+	 * S​t​o​p​s​ ​/​d​e​v​/​{​a​r​r​a​y​}​ ​a​n​d​ ​w​i​p​e​s​ ​i​t​s​ ​m​e​m​b​e​r​s​'​ ​R​A​I​D​ ​s​i​g​n​a​t​u​r​e​s​.​ ​I​t​s​ ​d​a​t​a​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} array
+	 */
+	storageDeleteRaidBody: RequiredParams<'array'>
+	/**
+	 * D​e​s​t​r​o​y​ ​p​o​o​l
+	 */
+	storageDestroyPool: string
+	/**
+	 * D​e​s​t​r​o​y​s​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​a​n​d​ ​e​v​e​r​y​t​h​i​n​g​ ​i​n​ ​i​t​.
+	 * @param {unknown} name
+	 */
+	storageDestroyPoolBody: RequiredParams<'name'>
+	/**
+	 * S​c​r​u​b
+	 */
+	storageScrub: string
+	/**
+	 * R​e​a​d​s​ ​a​l​l​ ​o​f​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​a​n​d​ ​r​e​p​a​i​r​s​ ​w​h​a​t​ ​i​t​ ​c​a​n​.​ ​I​t​ ​r​u​n​s​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d​.
+	 * @param {unknown} name
+	 */
+	storageScrubBody: RequiredParams<'name'>
+	/**
+	 * S​t​a​t​e
+	 */
+	storageState: string
+	/**
+	 * H​e​a​l​t​h​y
+	 */
+	storageHealthy: string
+	/**
+	 * D​e​g​r​a​d​e​d
+	 */
+	storageDegraded: string
+	/**
+	 * S​y​n​c​ ​(​{​a​c​t​i​o​n​}​)
+	 * @param {unknown} action
+	 */
+	storageSync: RequiredParams<'action'>
+	/**
+	 * F​a​i​l​e​d
+	 */
+	storageFaulty: string
+	/**
+	 * S​p​a​r​e
+	 */
+	storageSpare: string
+	/**
+	 * W​o​r​k​i​n​g
+	 */
+	storageActive: string
+	/**
+	 * L​a​s​t​ ​s​c​a​n
+	 */
+	storageScan: string
+	/**
+	 * {​c​o​u​n​t​}​ ​e​r​r​o​r​s
+	 * @param {unknown} count
+	 */
+	storageErrors: RequiredParams<'count'>
+	/**
+	 * N​o​ ​d​i​s​k​s
+	 */
+	storageNoDisks: string
+	/**
+	 * N​o​ ​a​r​r​a​y​s
+	 */
+	storageNoArrays: string
+	/**
+	 * N​o​ ​p​o​o​l​s
+	 */
+	storageNoPools: string
+	/**
+	 * m​d​a​d​m​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​:​ ​a​r​r​a​y​s​ ​c​a​n​n​o​t​ ​b​e​ ​b​u​i​l​t​ ​o​r​ ​c​h​a​n​g​e​d​ ​h​e​r​e​.
+	 */
+	storageNoMdadm: string
+	/**
+	 * Z​F​S​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​(​z​f​s​u​t​i​l​s​)​.
+	 */
+	storageNoZfs: string
+	/**
+	 * T​y​p​e​ ​{​w​o​r​d​}​ ​t​o​ ​c​o​n​f​i​r​m
+	 * @param {unknown} word
+	 */
+	storageTypeToConfirm: RequiredParams<'word'>
+	/**
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d​ ​(​i​f​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​n​e​e​d​s​ ​o​n​e​)
+	 */
+	storageSudoPassword: string
+	/**
+	 * s​u​d​o​ ​d​i​d​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​p​a​s​s​w​o​r​d​.
+	 */
+	storageSudoRejected: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​c​a​n​n​o​t​ ​u​s​e​ ​s​u​d​o​ ​h​e​r​e​.
+	 */
+	storageSudoUnavailable: string
+	/**
+	 * {​d​e​v​i​c​e​}​ ​i​s​ ​i​n​ ​u​s​e​.
+	 * @param {unknown} device
+	 */
+	storageInUse: RequiredParams<'device'>
+	/**
+	 * A​n​o​t​h​e​r​ ​c​h​a​n​g​e​ ​t​o​ ​t​h​e​ ​d​i​s​k​s​ ​i​s​ ​r​u​n​n​i​n​g​.
+	 */
+	storageBusy: string
+	/**
+	 * C​h​a​n​g​i​n​g​ ​t​h​e​ ​d​i​s​k​s​…
+	 */
+	storageWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	storageDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	storageFailed: string
+	/**
+	 * W​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o
+	 */
+	containerBackupWhere: string
+	/**
+	 * F​o​l​d​e​r
+	 */
+	containerBackupFolder: string
+	/**
+	 * {​f​r​e​e​}​ ​f​r​e​e
+	 * @param {unknown} free
+	 */
+	containerBackupFree: RequiredParams<'free'>
+	/**
+	 * C​h​a​n​g​e
+	 */
+	containerBackupChange: string
+	/**
+	 * B​a​c​k​u​p​s​ ​k​e​p​t​ ​o​f​ ​e​a​c​h
+	 */
+	containerBackupKeep: string
+	/**
+	 * A​l​l
+	 */
+	containerBackupKeepAll: string
+	/**
+	 * B​a​c​k​u​p​ ​d​i​s​k
+	 */
+	containerBackupDisk: string
+	/**
+	 * B​e​s​i​d​e​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​d​a​t​a​b​a​s​e
+	 */
+	containerBackupDefaultFolder: string
+	/**
+	 * A​ ​f​o​l​d​e​r​ ​o​n​ ​a​ ​b​a​c​k​u​p​ ​d​i​s​k​ ​(​S​t​o​r​a​g​e​:​ ​m​o​u​n​t​ ​i​t​ ​w​i​t​h​ ​“​L​e​t​ ​S​e​r​v​e​r​B​o​x​ ​w​r​i​t​e​ ​h​e​r​e​”​)​.​ ​B​a​c​k​u​p​s​ ​a​l​r​e​a​d​y​ ​m​a​d​e​ ​s​t​a​y​ ​w​h​e​r​e​ ​t​h​e​y​ ​a​r​e​.
+	 */
+	containerBackupWhereHint: string
+	/**
+	 * T​h​a​t​ ​f​o​l​d​e​r​ ​d​o​e​s​ ​n​o​t​ ​e​x​i​s​t​.
+	 */
+	containerBackupDestinationMissing: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​w​r​i​t​e​ ​i​n​ ​t​h​a​t​ ​f​o​l​d​e​r​.
+	 */
+	containerBackupDestinationNotWritable: string
+	/**
+	 * S​c​h​e​d​u​l​e​d
+	 */
+	containerBackupSchedules: string
+	/**
+	 * E​v​e​r​y​ ​d​a​y​ ​a​t​ ​{​a​t​}
+	 * @param {unknown} at
+	 */
+	containerBackupDaily: RequiredParams<'at'>
+	/**
+	 * E​v​e​r​y​ ​{​d​a​y​}​ ​a​t​ ​{​a​t​}
+	 * @param {unknown} at
+	 * @param {unknown} day
+	 */
+	containerBackupWeekly: RequiredParams<'at' | 'day'>
+	/**
+	 * L​a​s​t​:​ ​{​a​t​}
+	 * @param {unknown} at
+	 */
+	containerBackupLastRun: RequiredParams<'at'>
+	/**
+	 * L​a​s​t​ ​f​a​i​l​e​d​:​ ​{​e​r​r​o​r​}
+	 * @param {unknown} error
+	 */
+	containerBackupLastFailed: RequiredParams<'error'>
+	/**
+	 * R​e​p​e​a​t
+	 */
+	containerBackupRepeat: string
+	/**
+	 * O​n​l​y​ ​n​o​w
+	 */
+	containerBackupOnce: string
+	/**
+	 * E​v​e​r​y​ ​d​a​y
+	 */
+	containerBackupEveryDay: string
+	/**
+	 * E​v​e​r​y​ ​w​e​e​k
+	 */
+	containerBackupEveryWeek: string
+	/**
+	 * D​a​y
+	 */
+	containerBackupDay: string
+	/**
+	 * A​t
+	 */
+	containerBackupAt: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	containerBackupSchedule: string
+	/**
+	 * M​o​n​d​a​y
+	 */
+	weekdayMon: string
+	/**
+	 * T​u​e​s​d​a​y
+	 */
+	weekdayTue: string
+	/**
+	 * W​e​d​n​e​s​d​a​y
+	 */
+	weekdayWed: string
+	/**
+	 * T​h​u​r​s​d​a​y
+	 */
+	weekdayThu: string
+	/**
+	 * F​r​i​d​a​y
+	 */
+	weekdayFri: string
+	/**
+	 * S​a​t​u​r​d​a​y
+	 */
+	weekdaySat: string
+	/**
+	 * S​u​n​d​a​y
+	 */
+	weekdaySun: string
 }
 
 export type TranslationFunctions = {
@@ -16945,6 +17430,450 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Did not finish
 	 */
 	containerBackupUnfinished: () => LocalizedString
+	/**
+	 * {app} is down
+	 */
+	noticeStackDown: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Not running: {services}.
+	 */
+	noticeStackDownBody: (arg: { services: unknown }) => LocalizedString
+	/**
+	 * None of its containers is running.
+	 */
+	noticeStackDownBodyEmpty: () => LocalizedString
+	/**
+	 * {app} is unhealthy
+	 */
+	noticeStackUnhealthy: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Failing its health check: {services}.
+	 */
+	noticeStackUnhealthyBody: (arg: { services: unknown }) => LocalizedString
+	/**
+	 * {app} is running again
+	 */
+	noticeStackBack: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * Every container is up.
+	 */
+	noticeStackBackBody: () => LocalizedString
+	/**
+	 * {app}: an update is available
+	 */
+	noticeStackUpdate: (arg: { app: unknown }) => LocalizedString
+	/**
+	 * {project} {version} can be installed (now {current}).
+	 */
+	noticeStackUpdateBody: (arg: { current: unknown, project: unknown, version: unknown }) => LocalizedString
+	/**
+	 * Storage
+	 */
+	storageTitle: () => LocalizedString
+	/**
+	 * Disks
+	 */
+	storageDisks: () => LocalizedString
+	/**
+	 * RAID
+	 */
+	storageRaid: () => LocalizedString
+	/**
+	 * ZFS pools
+	 */
+	storagePools: () => LocalizedString
+	/**
+	 * Whole disk
+	 */
+	storageWholeDisk: () => LocalizedString
+	/**
+	 * No filesystem
+	 */
+	storageNoFilesystem: () => LocalizedString
+	/**
+	 * {used} of {total}
+	 */
+	storageUsage: (arg: { total: unknown, used: unknown }) => LocalizedString
+	/**
+	 * In use
+	 */
+	storageBusyMounted: () => LocalizedString
+	/**
+	 * Swap
+	 */
+	storageBusySwap: () => LocalizedString
+	/**
+	 * In an array
+	 */
+	storageBusyRaid: () => LocalizedString
+	/**
+	 * In a pool
+	 */
+	storageBusyPool: () => LocalizedString
+	/**
+	 * Holds a volume
+	 */
+	storageBusyVolume: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	storageBusyReadOnly: () => LocalizedString
+	/**
+	 * Mount
+	 */
+	storageMount: () => LocalizedString
+	/**
+	 * Unmount
+	 */
+	storageUnmount: () => LocalizedString
+	/**
+	 * Format
+	 */
+	storageFormat: () => LocalizedString
+	/**
+	 * Initialize
+	 */
+	storageInitialize: () => LocalizedString
+	/**
+	 * SMART test
+	 */
+	storageSmartTest: () => LocalizedString
+	/**
+	 * Continue
+	 */
+	storageContinue: () => LocalizedString
+	/**
+	 * Filesystem
+	 */
+	storageFilesystem: () => LocalizedString
+	/**
+	 * Label
+	 */
+	storageLabel: () => LocalizedString
+	/**
+	 * Mount point
+	 */
+	storageMountpoint: () => LocalizedString
+	/**
+	 * Mount again at every start (/etc/fstab)
+	 */
+	storageMountPersist: () => LocalizedString
+	/**
+	 * Let ServerBox write here (for backups)
+	 */
+	storageMountOwn: () => LocalizedString
+	/**
+	 * Name
+	 */
+	storageName: () => LocalizedString
+	/**
+	 * Level
+	 */
+	storageLevel: () => LocalizedString
+	/**
+	 * Layout
+	 */
+	storageLayout: () => LocalizedString
+	/**
+	 * Device
+	 */
+	storageDevice: () => LocalizedString
+	/**
+	 * Pick at least {count} devices. What they hold is lost.
+	 */
+	storagePickDevices: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No free disk or partition.
+	 */
+	storageNoFreeDevices: () => LocalizedString
+	/**
+	 * Create array
+	 */
+	storageCreateRaid: () => LocalizedString
+	/**
+	 * Builds /dev/{name} (RAID {level}) from {devices}. Everything on them is lost.
+	 */
+	storageCreateRaidBody: (arg: { devices: unknown, level: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Create pool
+	 */
+	storageCreatePool: () => LocalizedString
+	/**
+	 * Builds pool {name} ({layout}) from {devices}. Everything on them is lost.
+	 */
+	storageCreatePoolBody: (arg: { devices: unknown, layout: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Makes a new filesystem on {device}. Everything on it is lost.
+	 */
+	storageFormatBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Wipes {device} and gives it one partition for the whole disk. Everything on it is lost.
+	 */
+	storageInitializeBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Mounts {device} at {mountpoint}.
+	 */
+	storageMountBody: (arg: { device: unknown, mountpoint: unknown }) => LocalizedString
+	/**
+	 * Unmounts {mountpoint} and stops mounting it at start.
+	 */
+	storageUnmountBody: (arg: { mountpoint: unknown }) => LocalizedString
+	/**
+	 * Starts a short self-test on {device}. Its result shows in Status after a few minutes.
+	 */
+	storageSmartTestBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Add disk
+	 */
+	storageAddMember: () => LocalizedString
+	/**
+	 * Adds {device} to /dev/{array}: it replaces a failed member, or waits as a spare. What it holds is lost.
+	 */
+	storageAddMemberBody: (arg: { array: unknown, device: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	storageRemoveMember: () => LocalizedString
+	/**
+	 * Marks {device} failed and takes it out of /dev/{array}. The array runs on without it, degraded if it was a working member.
+	 */
+	storageRemoveMemberBody: (arg: { array: unknown, device: unknown }) => LocalizedString
+	/**
+	 * Delete array
+	 */
+	storageDeleteRaid: () => LocalizedString
+	/**
+	 * Stops /dev/{array} and wipes its members' RAID signatures. Its data is lost.
+	 */
+	storageDeleteRaidBody: (arg: { array: unknown }) => LocalizedString
+	/**
+	 * Destroy pool
+	 */
+	storageDestroyPool: () => LocalizedString
+	/**
+	 * Destroys pool {name} and everything in it.
+	 */
+	storageDestroyPoolBody: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Scrub
+	 */
+	storageScrub: () => LocalizedString
+	/**
+	 * Reads all of pool {name} and repairs what it can. It runs in the background.
+	 */
+	storageScrubBody: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * State
+	 */
+	storageState: () => LocalizedString
+	/**
+	 * Healthy
+	 */
+	storageHealthy: () => LocalizedString
+	/**
+	 * Degraded
+	 */
+	storageDegraded: () => LocalizedString
+	/**
+	 * Sync ({action})
+	 */
+	storageSync: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Failed
+	 */
+	storageFaulty: () => LocalizedString
+	/**
+	 * Spare
+	 */
+	storageSpare: () => LocalizedString
+	/**
+	 * Working
+	 */
+	storageActive: () => LocalizedString
+	/**
+	 * Last scan
+	 */
+	storageScan: () => LocalizedString
+	/**
+	 * {count} errors
+	 */
+	storageErrors: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No disks
+	 */
+	storageNoDisks: () => LocalizedString
+	/**
+	 * No arrays
+	 */
+	storageNoArrays: () => LocalizedString
+	/**
+	 * No pools
+	 */
+	storageNoPools: () => LocalizedString
+	/**
+	 * mdadm is not installed: arrays cannot be built or changed here.
+	 */
+	storageNoMdadm: () => LocalizedString
+	/**
+	 * ZFS is not installed (zfsutils).
+	 */
+	storageNoZfs: () => LocalizedString
+	/**
+	 * Type {word} to confirm
+	 */
+	storageTypeToConfirm: (arg: { word: unknown }) => LocalizedString
+	/**
+	 * sudo password (if the agent's account needs one)
+	 */
+	storageSudoPassword: () => LocalizedString
+	/**
+	 * sudo did not accept this password.
+	 */
+	storageSudoRejected: () => LocalizedString
+	/**
+	 * The agent's account cannot use sudo here.
+	 */
+	storageSudoUnavailable: () => LocalizedString
+	/**
+	 * {device} is in use.
+	 */
+	storageInUse: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Another change to the disks is running.
+	 */
+	storageBusy: () => LocalizedString
+	/**
+	 * Changing the disks…
+	 */
+	storageWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	storageDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	storageFailed: () => LocalizedString
+	/**
+	 * Where backups go
+	 */
+	containerBackupWhere: () => LocalizedString
+	/**
+	 * Folder
+	 */
+	containerBackupFolder: () => LocalizedString
+	/**
+	 * {free} free
+	 */
+	containerBackupFree: (arg: { free: unknown }) => LocalizedString
+	/**
+	 * Change
+	 */
+	containerBackupChange: () => LocalizedString
+	/**
+	 * Backups kept of each
+	 */
+	containerBackupKeep: () => LocalizedString
+	/**
+	 * All
+	 */
+	containerBackupKeepAll: () => LocalizedString
+	/**
+	 * Backup disk
+	 */
+	containerBackupDisk: () => LocalizedString
+	/**
+	 * Beside the agent's database
+	 */
+	containerBackupDefaultFolder: () => LocalizedString
+	/**
+	 * A folder on a backup disk (Storage: mount it with “Let ServerBox write here”). Backups already made stay where they are.
+	 */
+	containerBackupWhereHint: () => LocalizedString
+	/**
+	 * That folder does not exist.
+	 */
+	containerBackupDestinationMissing: () => LocalizedString
+	/**
+	 * The agent cannot write in that folder.
+	 */
+	containerBackupDestinationNotWritable: () => LocalizedString
+	/**
+	 * Scheduled
+	 */
+	containerBackupSchedules: () => LocalizedString
+	/**
+	 * Every day at {at}
+	 */
+	containerBackupDaily: (arg: { at: unknown }) => LocalizedString
+	/**
+	 * Every {day} at {at}
+	 */
+	containerBackupWeekly: (arg: { at: unknown, day: unknown }) => LocalizedString
+	/**
+	 * Last: {at}
+	 */
+	containerBackupLastRun: (arg: { at: unknown }) => LocalizedString
+	/**
+	 * Last failed: {error}
+	 */
+	containerBackupLastFailed: (arg: { error: unknown }) => LocalizedString
+	/**
+	 * Repeat
+	 */
+	containerBackupRepeat: () => LocalizedString
+	/**
+	 * Only now
+	 */
+	containerBackupOnce: () => LocalizedString
+	/**
+	 * Every day
+	 */
+	containerBackupEveryDay: () => LocalizedString
+	/**
+	 * Every week
+	 */
+	containerBackupEveryWeek: () => LocalizedString
+	/**
+	 * Day
+	 */
+	containerBackupDay: () => LocalizedString
+	/**
+	 * At
+	 */
+	containerBackupAt: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	containerBackupSchedule: () => LocalizedString
+	/**
+	 * Monday
+	 */
+	weekdayMon: () => LocalizedString
+	/**
+	 * Tuesday
+	 */
+	weekdayTue: () => LocalizedString
+	/**
+	 * Wednesday
+	 */
+	weekdayWed: () => LocalizedString
+	/**
+	 * Thursday
+	 */
+	weekdayThu: () => LocalizedString
+	/**
+	 * Friday
+	 */
+	weekdayFri: () => LocalizedString
+	/**
+	 * Saturday
+	 */
+	weekdaySat: () => LocalizedString
+	/**
+	 * Sunday
+	 */
+	weekdaySun: () => LocalizedString
 }
 
 export type Formatters = {}

@@ -34,7 +34,17 @@ beforeEach(() => {
   vi.clearAllMocks()
   servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
   servers.currentId = 'local'
-  mocked.listContainerBackups.mockResolvedValue({ backups: [backup], job: null })
+  mocked.listContainerBackups.mockResolvedValue({
+    backups: [backup],
+    job: null,
+    settings: { destination: '/mnt/backup', keep: 7 },
+    folder: '/mnt/backup/serverbox-container-backups',
+    default_folder: '/var/lib/sbm/container-backups',
+    free_bytes: 1_000_000_000,
+    schedules: [
+      { id: 's1', label: 'sbm-futo-immich-server-1', containers: ['sbm-futo-immich-server-1'], project: true, stop: true, every: 'weekly', at: '03:30', weekday: 6, keep: null, last_run: null, last_error: null },
+    ],
+  })
 })
 
 describe('container backups', () => {
@@ -46,6 +56,8 @@ describe('container backups', () => {
     expect(await screen.findByText('Volume pgdata → /var/lib/postgresql/data')).toBeInTheDocument()
     expect(screen.getByText('Left out: a file, not a folder')).toBeInTheDocument()
     expect(screen.getByText('Stopped while archived')).toBeInTheDocument()
+    expect(screen.getByText('/mnt/backup/serverbox-container-backups')).toBeInTheDocument()
+    expect(screen.getByText('Every Sunday at 03:30')).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: 'Restore' }))
     const password = await vi.waitFor(() => document.querySelector('input[type=password]') as HTMLInputElement)
     await fireEvent.input(password, { target: { value: 'pw' } })

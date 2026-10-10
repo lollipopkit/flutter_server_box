@@ -34,6 +34,7 @@ pub mod service;
 pub mod smart;
 pub mod snippet;
 pub mod stack;
+pub mod storage;
 pub mod tmux;
 pub mod types;
 pub mod users;

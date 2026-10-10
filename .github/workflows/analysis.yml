@@ -53,6 +53,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       website: ${{ steps.filter.outputs.website }}
       android: ${{ steps.filter.outputs.android }}
+      docker: ${{ steps.filter.outputs.docker }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -63,7 +64,7 @@ jobs:
 
           # Which filters are answered from the diff: all of them on a pull
           # request, none otherwise.
-          strict=' rust dart frontend docs website android '
+          strict=' rust dart frontend docs website android docker '
 
           if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
             files="$(gh api --paginate \
@@ -135,6 +136,7 @@ jobs:
           # tarball (scripts/store-tarball.sh).
           emit website "$shared|^website/|^packages/webui/|^store/|^scripts/store-tarball\.sh$"
           emit android "$shared|^android/"
+          emit docker '^\.github/workflows/analysis\.yml$|^monitor/(src/stacks/|src/container_backups\.rs$|src/api/(stacks|container_backups)\.rs$|tests/stacks_docker\.rs$|tests/apps/)|^crates/sbm_parser/src/(stack|container_backup)\.rs$'
 
   reproducibilityCheck:
     # These are deterministic-input guards, not a reproducibility proof. The
@@ -250,6 +252,36 @@ jobs:
         run: |
           cargo clippy --workspace --all-targets --all-features -- -D warnings
           cargo clippy --manifest-path packages/fl_lib/rust/Cargo.toml --workspace --all-targets -- -D warnings
+
+  stacksDocker:
+    name: Monitor Docker stack e2e
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: true
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      # Keep the agent's path dependencies on the toolchain it ships with.
+      - name: Install the pinned Rust toolchain
+        shell: bash
+        run: |
+          v="$(tr -d '\r' < crates/sbm_ffi/rust-toolchain.toml | sed -n 's/^channel = "\(.*\)"$/\1/p')"
+          test -n "$v" || { echo "no channel in crates/sbm_ffi/rust-toolchain.toml" >&2; exit 1; }
+          rustup toolchain install "$v" --profile minimal -c clippy --no-self-update
+          echo "RUSTUP_TOOLCHAIN=$v" >> "$GITHUB_ENV"
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Test web apps with Docker
+        run: SBM_E2E_DOCKER=1 cargo test -p server_box_monitor --test stacks_docker -- --ignored --nocapture
 
   monitorFrontend:
     name: Monitor frontend

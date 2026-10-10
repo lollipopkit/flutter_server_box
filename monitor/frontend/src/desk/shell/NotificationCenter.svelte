@@ -4,6 +4,7 @@
   import type { DeskNotification } from '../deskApi'
   import { fmtDate } from '../../lib/format'
   import LkNotificationCenter, { type CenterNotice } from '../lk/NotificationCenter.svelte'
+  import { noticeText } from '../noticeText'
 
   const desk = useDesk()
   const list = $derived(desk.notifications?.list ?? [])
@@ -22,10 +23,11 @@
   const notices = $derived(
     list.map((n): CenterNotice => {
       const from = desk.noticeSource(n)
+      const text = noticeText(n, $LL, $locale)
       return {
         id: n.id,
-        title: n.subject,
-        text: n.body,
+        title: text.subject,
+        text: text.body,
         time: when(n),
         glyph: from.glyph,
         tone: from.tone,

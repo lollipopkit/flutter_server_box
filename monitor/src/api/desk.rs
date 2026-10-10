@@ -112,7 +112,7 @@ impl DeskHub {
             started
         };
         for (rule, body) in started {
-            if let Err(e) = self.notify(db, Level::Warning, Source::Alert, &rule, &body).await {
+            if let Err(e) = self.notify(db, Level::Warning, Source::Alert, &rule, &body, None).await {
                 tracing::warn!("desk notification for rule '{rule}' not stored: {e}");
             }
         }
@@ -125,16 +125,22 @@ impl DeskHub {
         source: Source,
         subject: &str,
         body: &str,
+        kind: Option<(&str, &serde_json::Value)>,
     ) -> Result<(), sqlx::Error> {
         let created_at = chrono::Utc::now().to_rfc3339();
+        let (kind, params) = kind
+            .map(|(kind, params)| (Some(kind.to_string()), Some(params)))
+            .unwrap_or((None, None));
         let id = sqlx::query(
-            "INSERT INTO desk_notification (created_at, level, source, subject, body) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO desk_notification (created_at, level, source, subject, body, kind, params) VALUES (?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(&created_at)
         .bind(level.as_str())
         .bind(source.as_str())
         .bind(subject)
         .bind(body)
+        .bind(&kind)
+        .bind(params.map(serde_json::Value::to_string))
         .execute(db)
         .await?
         .last_insert_rowid();
@@ -149,6 +155,8 @@ impl DeskHub {
             source: source.as_str().to_string(),
             subject: subject.to_string(),
             body: body.to_string(),
+            kind,
+            params: params.cloned(),
             read: false,
         }));
         Ok(())
@@ -297,6 +305,10 @@ pub struct Notification {
     pub source: String,
     pub subject: String,
     pub body: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub params: Option<serde_json::Value>,
     pub read: bool,
 }
 
@@ -755,8 +767,8 @@ pub async fn notifications(
 ) -> Result<HttpResponse, web::Error> {
     let (_, user) = require!(account(&req, &state).await);
     let limit = query.limit.unwrap_or(50).clamp(1, 200);
-    let rows = sqlx::query_as::<_, (i64, String, String, String, String, String, bool)>(
-        "SELECT n.id, n.created_at, n.level, n.source, n.subject, n.body, r.user_id IS NOT NULL \
+    let rows = sqlx::query_as::<_, (i64, String, String, String, String, String, Option<String>, Option<String>, bool)>(
+        "SELECT n.id, n.created_at, n.level, n.source, n.subject, n.body, n.kind, n.params, r.user_id IS NOT NULL \
          FROM desk_notification n \
          LEFT JOIN desk_notification_read r ON r.notification_id = n.id AND r.user_id = ? \
          ORDER BY n.id DESC LIMIT ?",
@@ -776,13 +788,15 @@ pub async fn notifications(
         (Ok(rows), Ok(unread)) => {
             let notifications: Vec<Notification> = rows
                 .into_iter()
-                .map(|(id, created_at, level, source, subject, body, read)| Notification {
+                .map(|(id, created_at, level, source, subject, body, kind, params, read)| Notification {
                     id,
                     created_at,
                     level,
                     source,
                     subject,
                     body,
+                    kind,
+                    params: params.and_then(|params| serde_json::from_str(&params).ok()),
                     read,
                 })
                 .collect();

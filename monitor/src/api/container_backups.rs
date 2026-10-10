@@ -9,6 +9,14 @@
 //! - `GET /container-backups/job?since=<seq>`, `POST …/job/cancel`.
 //! - `POST /container-backups/{id}/restore` (password): written back.
 //! - `DELETE /container-backups/{id}` (password).
+//! - `PUT /container-backups/settings`: `{destination, keep}`, the folder
+//!   backups go to (a backup disk's mount; null beside the database) and how
+//!   many of each are kept.
+//! - `POST /container-backups/schedules`: `{containers: [name], project, stop,
+//!   every, at, weekday, keep}`; `DELETE /container-backups/schedules/{id}`.
+//!
+//! The list answers the settings, the free space where backups go, the
+//! schedules and the job too.
 
 use std::sync::Arc;
 
@@ -40,7 +48,15 @@ fn refused(r: Refusal) -> HttpResponse {
 pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::admin_caller(&req, &state).await);
     let job = state.container_backups.job().map(|j| j.view(u64::MAX));
-    Ok(HttpResponse::Ok().json(&json!({ "backups": state.container_backups.list(), "job": job })))
+    Ok(HttpResponse::Ok().json(&json!({
+        "backups": state.container_backups.list(),
+        "job": job,
+        "settings": container_backups::settings(&state.db).await,
+        "folder": state.container_backups.root(),
+        "default_folder": state.container_backups.default_root(),
+        "free_bytes": container_backups::free_bytes(&state),
+        "schedules": container_backups::schedules(&state.db).await,
+    })))
 }
 
 #[derive(Deserialize)]
@@ -65,7 +81,7 @@ pub async fn create(
     if body.containers.is_empty() || body.containers.len() > 64 {
         return Ok(HttpResponse::BadRequest().json(&json!({ "error": "invalidContainer" })));
     }
-    match container_backups::back_up(&state, &caller.username, &body.containers, body.project, body.stop).await {
+    match container_backups::back_up(&state, &caller.username, &body.containers, body.project, body.stop, None).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -135,6 +151,49 @@ pub async fn remove(
                 .await;
             Ok(HttpResponse::NoContent().finish())
         }
+        Err(r) => Ok(refused(r)),
+    }
+}
+
+pub async fn put_settings(
+    req: HttpRequest,
+    body: web::types::Json<container_backups::Settings>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    match container_backups::set_settings(&state, body.into_inner()).await {
+        Ok(settings) => {
+            Event::new(Kind::Machine, Action::Write, Outcome::Ok)
+                .subject(&caller.username)
+                .detail(format!("container backups go to {}", settings.destination.as_deref().unwrap_or("the default folder")))
+                .record(&state.db)
+                .await;
+            Ok(HttpResponse::Ok().json(&settings))
+        }
+        Err(r) => Ok(refused(r)),
+    }
+}
+
+pub async fn add_schedule(
+    req: HttpRequest,
+    body: web::types::Json<container_backups::NewSchedule>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    match container_backups::add_schedule(&state, &caller.username, body.into_inner()).await {
+        Ok(schedule) => Ok(HttpResponse::Created().json(&schedule)),
+        Err(r) => Ok(refused(r)),
+    }
+}
+
+pub async fn remove_schedule(
+    req: HttpRequest,
+    id: web::types::Path<String>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    require!(authz::admin_caller(&req, &state).await);
+    match container_backups::remove_schedule(&state, &id).await {
+        Ok(()) => Ok(HttpResponse::NoContent().finish()),
         Err(r) => Ok(refused(r)),
     }
 }

@@ -191,6 +191,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     // Deployed web apps get their proxies back; a deployment a stop cut
     // short is marked failed.
     crate::stacks::resume(&app_state).await;
+    tokio::spawn(crate::container_backups::start(app_state.clone()));
 
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();

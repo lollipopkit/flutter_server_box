@@ -38,6 +38,9 @@ pub const FEATURES: &[&str] = &[
     "container_exec",
     // Backups of containers' volumes and bound folders (`api::container_backups`).
     "container_backups",
+    // Disks, RAID arrays and ZFS pools (`api::storage`). Linux only; the page
+    // says so on another platform.
+    "storage",
     // An iperf client, opened through the terminal's `target` the same way and
     // listed for the same reason.
     "iperf",

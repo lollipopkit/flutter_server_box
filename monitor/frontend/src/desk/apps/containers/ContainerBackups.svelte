@@ -1,16 +1,18 @@
 <script lang="ts">
-  /// The Containers app's backups (`/container-backups`, admin): each one's
-  /// containers, what it archived and left out, to restore or remove; and
-  /// the backup or restore running, as it goes.
+  /// The Containers app's backups (`/container-backups`, admin): where they
+  /// go (a backup disk's folder) and how many are kept, the schedules, each
+  /// backup's containers and what it archived and left out, to restore or
+  /// remove; and the backup or restore running, as it goes.
 
-  import { Badge, Button, Card, Group, Icon, Row, Spinner } from '../../lk'
+  import { Badge, Button, Card, Dialog, Group, Icon, IconButton, Input, Row, Select, Spinner } from '../../lk'
   import StackProgress from '../../../components/stack/StackProgress.svelte'
   import ReauthDialog from '../../../components/ReauthDialog.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
   import { DATE_TIME, fmtBytes, fmtDate } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
-  import type { ContainerBackup, ContainerMount, StackJob } from '../../../types'
+  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import type { ContainerBackup, ContainerBackupSchedule, ContainerBackupSettings, ContainerMount, StackJob } from '../../../types'
   import { untrack } from 'svelte'
 
   interface Props {
@@ -21,6 +23,16 @@
   const { started = null }: Props = $props()
 
   let backups = $state<ContainerBackup[] | null>(null)
+  let settings = $state<ContainerBackupSettings | null>(null)
+  let folder = $state('')
+  let freeBytes = $state<number | null>(null)
+  let schedules = $state<ContainerBackupSchedule[]>([])
+  /// The settings form, and the mounted filesystems it offers (Storage).
+  let editing = $state(false)
+  let draftDestination = $state('')
+  let draftKeep = $state('7')
+  let mounts = $state<{ path: string; free: number | null }[]>([])
+  let settingsError = $state('')
   let job = $state<StackJob | null>(untrack(() => started))
   let error = $state('')
   /// The backup whose restore or removal asks the password.
@@ -31,6 +43,10 @@
       const r = await api.listContainerBackups()
       if (serverId !== servers.currentId) return
       backups = r.backups
+      settings = r.settings
+      folder = r.folder
+      freeBytes = r.free_bytes
+      schedules = r.schedules
       if (r.job?.state === 'running') job = r.job
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)
@@ -59,6 +75,63 @@
 
   function total(b: ContainerBackup): number {
     return b.archives.reduce((sum, a) => sum + a.bytes, 0)
+  }
+
+  const storage = $derived(capabilitiesStore.byServer[servers.currentId]?.features?.includes('storage') === true)
+
+  async function openSettings() {
+    draftDestination = settings?.destination ?? ''
+    draftKeep = String(settings?.keep ?? 7)
+    settingsError = ''
+    editing = true
+    if (storage) {
+      try {
+        const view = await api.getStorage()
+        const out: { path: string; free: number | null }[] = []
+        const walk = (d: (typeof view.disks)[number]) => {
+          for (const m of d.mountpoints) if (m.startsWith('/') && m !== '/' && !m.startsWith('/boot')) out.push({ path: m, free: d.available })
+          d.children.forEach(walk)
+        }
+        view.disks.forEach(walk)
+        mounts = out
+      } catch {
+        mounts = []
+      }
+    }
+  }
+
+  async function saveSettings() {
+    settingsError = ''
+    try {
+      settings = await api.setContainerBackupSettings({ destination: draftDestination.trim() || null, keep: Math.max(0, Number(draftKeep) || 0) })
+      editing = false
+      await load()
+    } catch (e) {
+      const code = e instanceof ApiError ? (e.body as { error?: string } | undefined)?.error : undefined
+      settingsError =
+        code === 'destinationMissing'
+          ? $LL.containerBackupDestinationMissing()
+          : code === 'destinationNotWritable'
+            ? $LL.containerBackupDestinationNotWritable()
+            : e instanceof Error
+              ? e.message
+              : String(e)
+    }
+  }
+
+  async function removeSchedule(s: ContainerBackupSchedule) {
+    try {
+      await api.removeContainerBackupSchedule(s.id)
+      await load()
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e)
+    }
+  }
+
+  function when(s: ContainerBackupSchedule): string {
+    if (s.every === 'daily') return $LL.containerBackupDaily({ at: s.at })
+    const days = [$LL.weekdayMon(), $LL.weekdayTue(), $LL.weekdayWed(), $LL.weekdayThu(), $LL.weekdayFri(), $LL.weekdaySat(), $LL.weekdaySun()]
+    return $LL.containerBackupWeekly({ day: days[s.weekday ?? 0], at: s.at })
   }
 
   async function confirm(password: string) {
@@ -104,6 +177,28 @@
     {/key}
   {/if}
 
+  {#if settings}
+    <Group title={$LL.containerBackupWhere()}>
+      <Row label={$LL.containerBackupFolder()} value={folder} mono sub={freeBytes != null ? $LL.containerBackupFree({ free: fmtBytes(freeBytes) }) : undefined}>
+        <Button size="sm" variant="secondary" onclick={() => void openSettings()}>{$LL.containerBackupChange()}</Button>
+      </Row>
+      <Row label={$LL.containerBackupKeep()} value={settings.keep ? String(settings.keep) : $LL.containerBackupKeepAll()} />
+    </Group>
+  {/if}
+  {#if schedules.length}
+    <Group title={$LL.containerBackupSchedules()}>
+      {#each schedules as s (s.id)}
+        <Row
+          label={s.project ? $LL.containerBackUpProject({ project: s.label }) : s.label}
+          value={when(s)}
+          sub={s.last_error ? $LL.containerBackupLastFailed({ error: s.last_error }) : s.last_run ? $LL.containerBackupLastRun({ at: fmtDate(new Date(s.last_run), DATE_TIME) }) : undefined}
+        >
+          <IconButton icon="delete" size="sm" label={$LL.containerBackupRemove()} onclick={() => void removeSchedule(s)} />
+        </Row>
+      {/each}
+    </Group>
+  {/if}
+
   {#if !backups}
     {#if !error}<div class="flex justify-center py-12"><Spinner /></div>{/if}
   {:else if backups.length === 0}
@@ -141,6 +236,29 @@
     {/each}
   {/if}
 </div>
+
+{#if editing}
+  <Dialog open title={$LL.containerBackupWhere()} onclose={() => (editing = false)}>
+    <div class="space-y-[9px] text-left">
+      {#if mounts.length}
+        <Select
+          label={$LL.containerBackupDisk()}
+          value={mounts.some((m) => m.path === draftDestination) ? draftDestination : ''}
+          options={[{ value: '', label: $LL.containerBackupDefaultFolder() }, ...mounts.map((m) => ({ value: m.path, label: m.free != null ? `${m.path} · ${fmtBytes(m.free)}` : m.path }))]}
+          onchange={(e: Event) => (draftDestination = (e.currentTarget as HTMLSelectElement).value)}
+        />
+      {/if}
+      <Input label={$LL.containerBackupFolder()} mono value={draftDestination} placeholder={$LL.containerBackupDefaultFolder()} oninput={(e: Event) => (draftDestination = (e.currentTarget as HTMLInputElement).value)} />
+      <Input label={$LL.containerBackupKeep()} type="number" value={draftKeep} oninput={(e: Event) => (draftKeep = (e.currentTarget as HTMLInputElement).value)} />
+      <p class="text-[12px] text-(--text-tertiary)">{$LL.containerBackupWhereHint()}</p>
+      {#if settingsError}<p class="text-[13px] text-(--color-danger)">{settingsError}</p>{/if}
+    </div>
+    {#snippet actions()}
+      <Button block onclick={() => void saveSettings()}>{$LL.save()}</Button>
+      <Button variant="secondary" block onclick={() => (editing = false)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
+{/if}
 
 <ReauthDialog
   open={!!asking}

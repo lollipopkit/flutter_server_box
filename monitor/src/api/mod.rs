@@ -31,6 +31,7 @@ pub mod apps;
 pub mod containers;
 pub mod container_backups;
 pub mod stacks;
+pub mod storage;
 pub mod auth;
 pub mod benchmark;
 pub mod authz;

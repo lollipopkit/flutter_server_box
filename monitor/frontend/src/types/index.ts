@@ -128,6 +128,8 @@ export type MachineFeature =
   | 'container_exec'
   /// Backups of containers' volumes and folders (`/container-backups`).
   | 'container_backups'
+  /// Disks, RAID arrays and ZFS pools (`/storage`).
+  | 'storage'
   | 'iperf'
   | 'tmux'
   | 'benchmark'
@@ -2882,4 +2884,96 @@ export interface ContainerBackup {
   archives: { file: string; container: string; mount: ContainerMount; bytes: number }[]
   /// Left out: a system folder of the host, or a bound file.
   skipped: { container: string; mount: ContainerMount; why: 'system' | 'notFolder' }[]
+}
+
+/// A block device (`sbm_parser::storage::BlockDevice`), sizes in bytes.
+export interface BlockDevice {
+  name: string
+  path: string
+  /// `disk`, `part`, `raid1`…, `lvm`, `crypt`, `loop`, `rom`.
+  kind: string
+  size: number
+  model: string | null
+  serial: string | null
+  rotational: boolean
+  transport: string | null
+  removable: boolean
+  read_only: boolean
+  fstype: string | null
+  label: string | null
+  uuid: string | null
+  /// `[SWAP]` for swap.
+  mountpoints: string[]
+  available: number | null
+  used: number | null
+  children: BlockDevice[]
+}
+
+export interface MdArray {
+  name: string
+  state: string
+  level: string | null
+  members: { name: string; faulty: boolean; spare: boolean }[]
+  raid_disks: number | null
+  working_disks: number | null
+  sync: { action: string; permille: number; finish: string | null } | null
+}
+
+export interface ZPool {
+  name: string
+  size: number
+  allocated: number
+  free: number
+  health: string
+  scan: string | null
+  vdevs: { name: string; state: string; depth: number; errors: number }[]
+}
+
+/// Why a device may not be partitioned, formatted or built on.
+export type DeviceBusy = 'mounted' | 'swap' | 'raidMember' | 'poolMember' | 'lvmMember' | 'holdsVolume' | 'readOnly' | 'notFound'
+
+/// `GET /storage`.
+export interface StorageView {
+  disks: BlockDevice[]
+  busy: Record<string, DeviceBusy>
+  arrays: MdArray[]
+  pools: ZPool[]
+  /// mdadm, zpool, smartctl, mkfs.ext4, mkfs.xfs, mkfs.btrfs, sfdisk, wipefs.
+  tools: string[]
+  job: StackJob | null
+}
+
+/// `sbm_parser::storage::StorageAction`.
+export type StorageAction =
+  | { action: 'partition'; device: string }
+  | { action: 'format'; device: string; fstype: 'ext4' | 'xfs' | 'btrfs'; label?: string | null }
+  | { action: 'mount'; device: string; mountpoint: string; persist: boolean; own: boolean }
+  | { action: 'unmount'; mountpoint: string }
+  | { action: 'createRaid'; name: string; level: number; devices: string[] }
+  | { action: 'addToRaid'; array: string; device: string }
+  | { action: 'removeFromRaid'; array: string; device: string }
+  | { action: 'deleteRaid'; array: string }
+  | { action: 'createPool'; name: string; layout: 'stripe' | 'mirror' | 'raidz1' | 'raidz2' | 'raidz3'; devices: string[] }
+  | { action: 'scrubPool'; name: string }
+  | { action: 'destroyPool'; name: string }
+  | { action: 'smartTest'; device: string; long: boolean }
+
+/// Where container backups go, and how many are kept (`container_backups::Settings`).
+export interface ContainerBackupSettings {
+  destination: string | null
+  keep: number
+}
+
+export interface ContainerBackupSchedule {
+  id: string
+  label: string
+  containers: string[]
+  project: boolean
+  stop: boolean
+  every: 'daily' | 'weekly'
+  at: string
+  weekday: number | null
+  keep: number | null
+  last_run: string | null
+  last_error: string | null
 }

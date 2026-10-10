@@ -1,7 +1,11 @@
 import type {
   InstalledApp,
   ContainerBackup,
+  ContainerBackupSchedule,
+  ContainerBackupSettings,
   StackApp,
+  StorageAction,
+  StorageView,
   StackEntry,
   StackJob,
   StackPrepare,
@@ -1285,7 +1289,38 @@ export const api = {
       'Failed to remove the app',
     ),
   listContainerBackups: () =>
-    request<{ backups: ContainerBackup[]; job: StackJob | null }>('/container-backups', {}, 'Failed to load the backups'),
+    request<{
+      backups: ContainerBackup[]
+      job: StackJob | null
+      settings: ContainerBackupSettings
+      folder: string
+      default_folder: string
+      free_bytes: number | null
+      schedules: ContainerBackupSchedule[]
+    }>('/container-backups', {}, 'Failed to load the backups'),
+  setContainerBackupSettings: (settings: ContainerBackupSettings) =>
+    request<ContainerBackupSettings>(
+      '/container-backups/settings',
+      { method: 'PUT', body: JSON.stringify(settings) },
+      'Failed to save the backup settings',
+    ),
+  addContainerBackupSchedule: (schedule: Omit<ContainerBackupSchedule, 'id' | 'label' | 'last_run' | 'last_error'>) =>
+    request<ContainerBackupSchedule>(
+      '/container-backups/schedules',
+      { method: 'POST', body: JSON.stringify(schedule) },
+      'Failed to schedule the backup',
+    ),
+  removeContainerBackupSchedule: (id: string) =>
+    request<void>(`/container-backups/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }, 'Failed to remove the schedule'),
+  getStorage: () => request<StorageView>('/storage', {}, 'Failed to read the disks'),
+  /// One change, run as root as a job; [sudoPassword] when sudo asks.
+  storageAct: (action: StorageAction, sudoPassword: string) =>
+    request<StackJob>(
+      '/storage/act',
+      { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null }) },
+      'Failed to change the disks',
+    ),
+  storageJob: (since: number) => request<StackJob>(`/storage/job?since=${since}`, {}, 'Failed to read the progress'),
   /// Backs up [containers] (with [project], their whole compose project).
   createContainerBackup: (containers: string[], project: boolean, stop: boolean) =>
     request<StackJob>(

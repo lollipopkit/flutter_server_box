@@ -34,6 +34,9 @@ async fn setup() -> TestServer {
                             .route(web::post().to(container_backups::create)),
                     )
                     .service(web::resource("/container-backups/job").route(web::get().to(container_backups::job)))
+                    .service(web::resource("/container-backups/settings").route(web::put().to(container_backups::put_settings)))
+                    .service(web::resource("/container-backups/schedules").route(web::post().to(container_backups::add_schedule)))
+                    .service(web::resource("/container-backups/schedules/{id}").route(web::delete().to(container_backups::remove_schedule)))
                     .service(web::resource("/container-backups/job/cancel").route(web::post().to(container_backups::cancel)))
                     .service(web::resource("/container-backups/{id}/restore").route(web::post().to(container_backups::restore)))
                     .service(web::resource("/container-backups/{id}").route(web::delete().to(container_backups::remove))),
@@ -87,4 +90,52 @@ async fn only_an_admin_backs_up_and_restoring_asks_the_password() {
     assert_eq!((status, body["error"].as_str()), (404, Some("notFound")));
     let (status, _) = call(&srv, "admin", Method::DELETE, "/api/v1/container-backups/..%2F..%2Fetc", Some(pw.clone())).await;
     assert_eq!(status, 404);
+}
+
+#[ntex::test]
+async fn backups_go_where_the_admin_says_on_the_schedule_it_sets() {
+    let srv = setup().await;
+    let (status, body) =
+        call(&srv, "admin", Method::PUT, "/api/v1/container-backups/settings", Some(json!({ "destination": "/nowhere/at/all", "keep": 3 }))).await;
+    assert_eq!((status, body["error"].as_str()), (400, Some("destinationMissing")));
+    let disk = tempfile::tempdir().unwrap();
+    let (status, body) = call(
+        &srv,
+        "admin",
+        Method::PUT,
+        "/api/v1/container-backups/settings",
+        Some(json!({ "destination": disk.path().to_str().unwrap(), "keep": 3 })),
+    )
+    .await;
+    assert_eq!(status, 200, "{body}");
+    assert_eq!(body["keep"], 3);
+    let (_, list) = call(&srv, "admin", Method::GET, "/api/v1/container-backups", None).await;
+    assert!(list["folder"].as_str().unwrap().ends_with("serverbox-container-backups"), "{list}");
+    assert!(disk.path().join("serverbox-container-backups").is_dir());
+    assert!(list["free_bytes"].as_u64().unwrap() > 0);
+
+    for bad in [
+        json!({ "containers": ["web"], "every": "hourly", "at": "03:00" }),
+        json!({ "containers": ["web"], "every": "daily", "at": "25:00" }),
+        json!({ "containers": ["web"], "every": "weekly", "at": "03:00" }),
+        json!({ "containers": ["$(id)"], "every": "daily", "at": "03:00" }),
+    ] {
+        let (status, _) = call(&srv, "admin", Method::POST, "/api/v1/container-backups/schedules", Some(bad.clone())).await;
+        assert_eq!(status, 400, "{bad}");
+    }
+    let (status, made) = call(
+        &srv,
+        "admin",
+        Method::POST,
+        "/api/v1/container-backups/schedules",
+        Some(json!({ "containers": ["sbm-futo-immich-server-1"], "project": true, "every": "weekly", "at": "03:30", "weekday": 6, "keep": 4 })),
+    )
+    .await;
+    assert_eq!(status, 201, "{made}");
+    let (_, list) = call(&srv, "admin", Method::GET, "/api/v1/container-backups", None).await;
+    assert_eq!(list["schedules"][0]["weekday"], 6);
+    let (status, _) = call(&srv, "watcher", Method::DELETE, &format!("/api/v1/container-backups/schedules/{}", made["id"].as_str().unwrap()), None).await;
+    assert_eq!(status, 403);
+    let (status, _) = call(&srv, "admin", Method::DELETE, &format!("/api/v1/container-backups/schedules/{}", made["id"].as_str().unwrap()), None).await;
+    assert_eq!(status, 204);
 }

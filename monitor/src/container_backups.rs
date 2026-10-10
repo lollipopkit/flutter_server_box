@@ -15,7 +15,7 @@
 //!   holds databases.
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
 use sbm_parser::container::ContainerType;
 use sbm_parser::container_backup::{self as cb, Inspected, Mount};
@@ -78,7 +78,10 @@ pub struct Skipped {
 }
 
 pub struct ContainerBackups {
-    root: PathBuf,
+    /// Beside the database: where backups go unless a destination is set.
+    default_root: PathBuf,
+    /// Where backups go now: [default_root] or `<destination>/BACKUP_DIR`.
+    root: RwLock<PathBuf>,
     /// Removed with this value: the directory made for an in-memory database.
     owned: bool,
     job: Mutex<Option<Arc<Job>>>,
@@ -87,10 +90,13 @@ pub struct ContainerBackups {
 impl Drop for ContainerBackups {
     fn drop(&mut self) {
         if self.owned {
-            let _ = std::fs::remove_dir_all(&self.root);
+            let _ = std::fs::remove_dir_all(&self.default_root);
         }
     }
 }
+
+/// The folder a destination gets for this agent's backups.
+const BACKUP_DIR: &str = "serverbox-container-backups";
 
 fn refusal(status: u16, error: &'static str) -> Refusal {
     Refusal { status, error, field: None }
@@ -101,11 +107,12 @@ impl ContainerBackups {
         match db_file {
             Some(f) => {
                 let dir = Self::dir_beside(f);
-                Self { root: std::path::absolute(&dir).unwrap_or(dir), owned: false, job: Mutex::default() }
+                let dir = std::path::absolute(&dir).unwrap_or(dir);
+                Self { root: RwLock::new(dir.clone()), default_root: dir, owned: false, job: Mutex::default() }
             }
             None => {
                 let dir = std::env::temp_dir().join(format!("sbm-container-backups-{}-{}", std::process::id(), rand_suffix()));
-                Self { root: dir, owned: true, job: Mutex::default() }
+                Self { root: RwLock::new(dir.clone()), default_root: dir, owned: true, job: Mutex::default() }
             }
         }
     }
@@ -128,13 +135,34 @@ impl ContainerBackups {
         Ok(next)
     }
 
+    /// Where backups go now.
+    pub fn root(&self) -> PathBuf {
+        self.root.read().unwrap_or_else(|e| e.into_inner()).clone()
+    }
+
+    pub fn default_root(&self) -> &Path {
+        &self.default_root
+    }
+
+    /// Backups go to [destination] (a folder made in it), or beside the
+    /// database for `None`. The folder is the agent's state from now on.
+    fn use_destination(&self, destination: Option<&Path>) {
+        let next = destination.map(|d| d.join(BACKUP_DIR)).unwrap_or_else(|| self.default_root.clone());
+        let previous = std::mem::replace(&mut *self.root.write().unwrap_or_else(|e| e.into_inner()), next.clone());
+        if previous != next && previous != self.default_root {
+            crate::core::fs_roots::protect_at_runtime(&next, Some(&previous));
+        } else {
+            crate::core::fs_roots::protect_at_runtime(&next, None);
+        }
+    }
+
     fn dir(&self, id: &str) -> PathBuf {
-        self.root.join(id)
+        self.root().join(id)
     }
 
     /// Every finished backup, newest first.
     pub fn list(&self) -> Vec<Meta> {
-        let mut out: Vec<Meta> = std::fs::read_dir(&self.root)
+        let mut out: Vec<Meta> = std::fs::read_dir(self.root())
             .into_iter()
             .flatten()
             .flatten()
@@ -218,7 +246,16 @@ async fn audit(state: &AppState, username: &str, outcome: Outcome, detail: Strin
 
 /// Backs up [ids] (with [whole_project], every container of their compose
 /// project), stopping them meanwhile when [stop].
-pub async fn back_up(state: &Arc<AppState>, username: &str, ids: &[String], whole_project: bool, stop: bool) -> Result<Arc<Job>, Refusal> {
+/// [keep]: backups of this label kept (the oldest past it removed once this
+/// one is made); `None` for the settings'.
+pub async fn back_up(
+    state: &Arc<AppState>,
+    username: &str,
+    ids: &[String],
+    whole_project: bool,
+    stop: bool,
+    keep: Option<u32>,
+) -> Result<Arc<Job>, Refusal> {
     // A container's id or name: what the runtimes allow in one.
     let named = |id: &str| {
         (1..=128).contains(&id.len())
@@ -241,6 +278,20 @@ pub async fn back_up(state: &Arc<AppState>, username: &str, ids: &[String], whol
     let label = match (&project, whole_project) {
         (Some(p), true) => p.clone(),
         _ => containers[0].name.clone(),
+    };
+
+    // What it would take, against what is free where backups go: archives
+    // are compressed, so this errs on the safe side.
+    let mounts: Vec<&Mount> = containers.iter().flat_map(|c| &c.mounts).filter(|m| !m.is_system()).collect();
+    if let (Some(need), Some(free)) = (estimate(state, runtime, &mounts).await, free_bytes(state))
+        && need > free
+    {
+        tracing::warn!("container backup of {label}: {need} bytes to archive, {free} free");
+        return Err(refusal(507, "notEnoughSpace"));
+    }
+    let keep = match keep {
+        Some(k) => k,
+        None => settings(&state.db).await.keep,
     };
 
     let backups = &state.container_backups;
@@ -314,6 +365,8 @@ pub async fn back_up(state: &Arc<AppState>, username: &str, ids: &[String], whol
         }
         if result.is_err() {
             let _ = std::fs::remove_dir_all(&dir);
+        } else {
+            prune(&state.container_backups, &meta.label, keep);
         }
         finish(&state, &job2, &username, &format!("container backup {id}"), result).await;
     });
@@ -381,9 +434,307 @@ fn set_private(dir: &Path) {
     let _ = dir;
 }
 
+// -----------------------------------------------------------------------------
+// Where they go, how many are kept, when they are made
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Settings {
+    /// A folder backups go to (a backup disk's mount); `None` beside the
+    /// database.
+    pub destination: Option<String>,
+    /// Backups of one label kept, the oldest removed past it; 0 keeps all.
+    pub keep: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Schedule {
+    pub id: String,
+    pub label: String,
+    /// Container names: ids change when a project is recreated.
+    pub containers: Vec<String>,
+    pub project: bool,
+    pub stop: bool,
+    /// `daily` | `weekly`.
+    pub every: String,
+    /// `HH:MM`, the machine's time.
+    pub at: String,
+    /// Weekly: 0 Monday … 6 Sunday.
+    pub weekday: Option<u8>,
+    /// Overrides [`Settings::keep`] for this label.
+    pub keep: Option<u32>,
+    pub last_run: Option<String>,
+    pub last_error: Option<String>,
+}
+
+pub async fn settings(db: &sqlx::SqlitePool) -> Settings {
+    let row: Option<(Option<String>, i64)> =
+        sqlx::query_as("SELECT destination, keep FROM container_backup_settings WHERE id = 1").fetch_optional(db).await.ok().flatten();
+    match row {
+        Some((destination, keep)) => Settings { destination, keep: keep.max(0) as u32 },
+        None => Settings { destination: None, keep: 7 },
+    }
+}
+
+/// A folder backups may go to: absolute, there, and one this agent can write
+/// in (a disk mounted for it, `api::storage`'s Mount with its owner).
+fn destination_ok(path: &str) -> Result<PathBuf, Refusal> {
+    let p = Path::new(path);
+    if !p.is_absolute() || path.contains('\n') || path.split('/').any(|s| s == "..") {
+        return Err(refusal(400, "invalidDestination"));
+    }
+    if !p.is_dir() {
+        return Err(refusal(400, "destinationMissing"));
+    }
+    let dir = p.join(BACKUP_DIR);
+    std::fs::create_dir_all(&dir).map_err(|_| refusal(400, "destinationNotWritable"))?;
+    set_private(&dir);
+    let probe = dir.join(".sbm-write-test");
+    std::fs::write(&probe, b"").map_err(|_| refusal(400, "destinationNotWritable"))?;
+    let _ = std::fs::remove_file(probe);
+    Ok(p.to_path_buf())
+}
+
+pub async fn set_settings(state: &AppState, next: Settings) -> Result<Settings, Refusal> {
+    let destination = match next.destination.as_deref().filter(|d| !d.trim().is_empty()) {
+        Some(d) => Some(destination_ok(d.trim())?),
+        None => None,
+    };
+    sqlx::query(
+        "INSERT INTO container_backup_settings (id, destination, keep) VALUES (1, ?, ?) \
+         ON CONFLICT(id) DO UPDATE SET destination = excluded.destination, keep = excluded.keep",
+    )
+    .bind(destination.as_ref().map(|d| d.to_string_lossy().into_owned()))
+    .bind(i64::from(next.keep))
+    .execute(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!("container backups: {e}");
+        refusal(500, "internal")
+    })?;
+    state.container_backups.use_destination(destination.as_deref());
+    Ok(settings(&state.db).await)
+}
+
+/// Free bytes where backups go now.
+pub fn free_bytes(state: &AppState) -> Option<u64> {
+    let root = state.container_backups.root();
+    let probe = root.ancestors().find(|p| p.exists())?.to_path_buf();
+    fs2::available_space(probe).ok()
+}
+
+pub async fn schedules(db: &sqlx::SqlitePool) -> Vec<Schedule> {
+    type Row = (String, String, String, bool, bool, String, String, Option<i64>, Option<i64>, Option<String>, Option<String>);
+    let rows: Vec<Row> = sqlx::query_as(
+        "SELECT id, label, containers, project, stop, every, at, weekday, keep, last_run, last_error FROM container_backup_schedule ORDER BY created_at",
+    )
+    .fetch_all(db)
+    .await
+    .unwrap_or_default();
+    rows.into_iter()
+        .map(|(id, label, containers, project, stop, every, at, weekday, keep, last_run, last_error)| Schedule {
+            id,
+            label,
+            containers: serde_json::from_str(&containers).unwrap_or_default(),
+            project,
+            stop,
+            every,
+            at,
+            weekday: weekday.map(|w| w as u8),
+            keep: keep.map(|k| k.max(0) as u32),
+            last_run,
+            last_error,
+        })
+        .collect()
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct NewSchedule {
+    pub containers: Vec<String>,
+    #[serde(default)]
+    pub project: bool,
+    #[serde(default = "yes")]
+    pub stop: bool,
+    pub every: String,
+    pub at: String,
+    pub weekday: Option<u8>,
+    pub keep: Option<u32>,
+}
+
+fn yes() -> bool {
+    true
+}
+
+fn time_ok(at: &str) -> bool {
+    at.split_once(':').is_some_and(|(h, m)| {
+        h.len() == 2 && m.len() == 2 && h.parse::<u8>().is_ok_and(|h| h < 24) && m.parse::<u8>().is_ok_and(|m| m < 60)
+    })
+}
+
+pub async fn add_schedule(state: &AppState, username: &str, new: NewSchedule) -> Result<Schedule, Refusal> {
+    let named = |id: &str| (1..=128).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric() || b"_.-".contains(&b));
+    if new.containers.is_empty() || new.containers.len() > 64 || !new.containers.iter().all(|c| named(c)) {
+        return Err(refusal(400, "invalidContainer"));
+    }
+    let weekly = match new.every.as_str() {
+        "daily" => false,
+        "weekly" => true,
+        _ => return Err(refusal(400, "invalidSchedule")),
+    };
+    if !time_ok(&new.at) || weekly != new.weekday.is_some() || new.weekday.is_some_and(|w| w > 6) {
+        return Err(refusal(400, "invalidSchedule"));
+    }
+    let id = crate::utils::secrets::random_hex(8).map_err(|_| refusal(500, "internal"))?;
+    let label = new.containers[0].clone();
+    sqlx::query(
+        "INSERT INTO container_backup_schedule (id, label, containers, project, stop, every, at, weekday, keep, created_by, created_at) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&id)
+    .bind(&label)
+    .bind(serde_json::to_string(&new.containers).unwrap_or_default())
+    .bind(new.project)
+    .bind(new.stop)
+    .bind(&new.every)
+    .bind(&new.at)
+    .bind(new.weekday.map(i64::from))
+    .bind(new.keep.map(i64::from))
+    .bind(username)
+    .bind(chrono::Utc::now().to_rfc3339())
+    .execute(&state.db)
+    .await
+    .map_err(|e| {
+        tracing::error!("container backups: {e}");
+        refusal(500, "internal")
+    })?;
+    schedules(&state.db).await.into_iter().find(|s| s.id == id).ok_or_else(|| refusal(500, "internal"))
+}
+
+pub async fn remove_schedule(state: &AppState, id: &str) -> Result<(), Refusal> {
+    let done = sqlx::query("DELETE FROM container_backup_schedule WHERE id = ?").bind(id).execute(&state.db).await.map_err(|_| refusal(500, "internal"))?;
+    if done.rows_affected() == 0 { Err(refusal(404, "notFound")) } else { Ok(()) }
+}
+
+/// The time slot [s] last fell due at, before or at [now] (local).
+fn due_since(s: &Schedule, now: chrono::DateTime<chrono::Local>) -> Option<chrono::DateTime<chrono::Local>> {
+    use chrono::{Datelike, Duration as D, NaiveTime, TimeZone};
+    let time = NaiveTime::parse_from_str(&s.at, "%H:%M").ok()?;
+    let mut day = now.date_naive();
+    for _ in 0..8 {
+        let weekday_ok = s.weekday.is_none_or(|w| day.weekday().num_days_from_monday() == u32::from(w));
+        if weekday_ok
+            && let Some(at) = chrono::Local.from_local_datetime(&day.and_time(time)).earliest()
+            && at <= now
+        {
+            return Some(at);
+        }
+        day -= D::days(1);
+    }
+    None
+}
+
+/// Removes the oldest backups of [label] past [keep] (0 keeps all).
+fn prune(backups: &ContainerBackups, label: &str, keep: u32) {
+    if keep == 0 {
+        return;
+    }
+    let mut of: Vec<Meta> = backups.list().into_iter().filter(|m| m.label == label).collect();
+    // Newest first already.
+    for old in of.drain(..).skip(keep as usize) {
+        if let Err(e) = std::fs::remove_dir_all(backups.dir(&old.id)) {
+            tracing::warn!("container backup {}: removing past what is kept: {e}", old.id);
+        }
+    }
+}
+
+/// At start: the destination set, and the schedule watched until the agent
+/// stops.
+pub async fn start(state: Arc<AppState>) {
+    let s = settings(&state.db).await;
+    state.container_backups.use_destination(s.destination.as_deref().map(Path::new));
+    let mut tick = tokio::time::interval(std::time::Duration::from_secs(60));
+    loop {
+        tick.tick().await;
+        run_due(&state).await;
+    }
+}
+
+async fn run_due(state: &Arc<AppState>) {
+    let now = chrono::Local::now();
+    for s in schedules(&state.db).await {
+        let Some(slot) = due_since(&s, now) else { continue };
+        let ran = s.last_run.as_deref().and_then(|r| chrono::DateTime::parse_from_rfc3339(r).ok());
+        if ran.is_some_and(|r| r >= slot) {
+            continue;
+        }
+        if state.container_backups.job().is_some_and(|j| j.running()) {
+            return;
+        }
+        let result = scheduled(state, &s).await;
+        let _ = sqlx::query("UPDATE container_backup_schedule SET last_run = ?, last_error = ? WHERE id = ?")
+            .bind(now.to_rfc3339())
+            .bind(result.err())
+            .bind(&s.id)
+            .execute(&state.db)
+            .await;
+    }
+}
+
+/// Runs schedule [s] now and waits for it.
+async fn scheduled(state: &Arc<AppState>, s: &Schedule) -> Result<(), String> {
+    let runtime = runtime(state).await.map_err(|r| r.error.to_string())?;
+    let ids = ids_of(&run(state, &cb::named_command(runtime, &s.containers)).await.map_err(|r| r.error.to_string())?);
+    if ids.is_empty() {
+        return Err("notFound".into());
+    }
+    let job = back_up(state, "schedule", &ids, s.project, s.stop, s.keep).await.map_err(|r| r.error.to_string())?;
+    match job.done().await {
+        JobState::Succeeded => Ok(()),
+        _ => Err(job.view(u64::MAX).error.unwrap_or_else(|| "failed".into())),
+    }
+}
+
+/// What [mounts] hold, in bytes, as `du` sees them from a throwaway
+/// container; `None` when it cannot be told.
+async fn estimate(state: &AppState, runtime: ContainerType, mounts: &[&Mount]) -> Option<u64> {
+    let mut total = 0;
+    for m in mounts {
+        let out = run(state, &cb::size_command(runtime, m)).await.ok()?;
+        total += out.split_whitespace().next()?.parse::<u64>().ok()?;
+    }
+    Some(total)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_schedule_falls_due_at_its_slot() {
+        use chrono::TimeZone;
+        let at = |y, mo, d, h, mi| chrono::Local.with_ymd_and_hms(y, mo, d, h, mi, 0).unwrap();
+        let mut s = Schedule {
+            id: "x".into(),
+            label: "x".into(),
+            containers: vec!["web".into()],
+            project: false,
+            stop: true,
+            every: "daily".into(),
+            at: "03:30".into(),
+            weekday: None,
+            keep: None,
+            last_run: None,
+            last_error: None,
+        };
+        // 2026-10-11 is a Sunday.
+        assert_eq!(due_since(&s, at(2026, 10, 11, 9, 0)), Some(at(2026, 10, 11, 3, 30)));
+        assert_eq!(due_since(&s, at(2026, 10, 11, 3, 0)), Some(at(2026, 10, 10, 3, 30)));
+        s.weekday = Some(6);
+        assert_eq!(due_since(&s, at(2026, 10, 14, 12, 0)), Some(at(2026, 10, 11, 3, 30)));
+        s.weekday = Some(0);
+        assert_eq!(due_since(&s, at(2026, 10, 14, 12, 0)), Some(at(2026, 10, 12, 3, 30)));
+        assert!(time_ok("00:00") && time_ok("23:59") && !time_ok("24:00") && !time_ok("3:30"));
+    }
 
     #[test]
     fn ids_are_dated_slugs() {
