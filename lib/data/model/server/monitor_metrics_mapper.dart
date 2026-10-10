@@ -257,7 +257,10 @@ void _applyGpus(ServerStatus ss, MonitorMetrics m) {
                 gpu.memoryTotal!,
                 gpu.memoryUsed!,
                 gpu.memoryUnit!,
-                const [],
+                [
+                  for (final p in gpu.processes)
+                    GpuSmiMemProcess(p.pid, p.name, p.memory),
+                ],
               )
             : null,
         fanSpeed: gpu.fanSpeed,

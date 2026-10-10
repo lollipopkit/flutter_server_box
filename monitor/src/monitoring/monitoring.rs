@@ -219,20 +219,28 @@ pub struct GpuMetrics {
     pub memory_unit: Option<String>,
     pub fan_speed: Option<i64>,
     pub clock_speed: Option<i64>,
+    /// What holds the card's memory: pid, name, MiB (0 where the driver does
+    /// not report it, as under WDDM). Every account reads it, as it reads the
+    /// rest of this; it says which program is using a GPU, not what it runs.
+    /// Empty for drivers that list none (Intel, AMD through DRM). Absent on
+    /// older agents.
+    #[serde(default)]
+    pub processes: Vec<sbm_parser::types::GpuMemProcess>,
 }
 
 impl From<sbm_parser::types::GpuItem> for GpuMetrics {
     fn from(gpu: sbm_parser::types::GpuItem) -> Self {
-        let (memory_used, memory_total, memory_unit) = gpu
+        let (memory_used, memory_total, memory_unit, processes) = gpu
             .memory
             .map(|memory| {
                 (
                     Some(memory.used),
                     Some(memory.total),
                     Some(memory.unit),
+                    memory.processes,
                 )
             })
-            .unwrap_or((None, None, None));
+            .unwrap_or((None, None, None, Vec::new()));
         Self {
             id: gpu.id,
             vendor: gpu.vendor,
@@ -245,6 +253,7 @@ impl From<sbm_parser::types::GpuItem> for GpuMetrics {
             memory_unit,
             fan_speed: gpu.fan_speed,
             clock_speed: gpu.clock_speed,
+            processes,
         }
     }
 }
@@ -1603,6 +1612,31 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_gpus_processes_reach_the_metrics() {
+        use sbm_parser::types::{GpuItem, GpuMem, GpuMemProcess};
+        let process = GpuMemProcess { pid: 42, name: "/python3.12".to_string(), memory: 0 };
+        let metrics = super::GpuMetrics::from(GpuItem {
+            id: "nvidia:0".to_string(),
+            vendor: "nvidia".to_string(),
+            name: "Tesla T10".to_string(),
+            utilization: Some(91.0),
+            temperature: Some(86),
+            power: None,
+            memory: Some(GpuMem {
+                total: 16384,
+                used: 9493,
+                unit: "MiB".to_string(),
+                processes: vec![process.clone()],
+            }),
+            fan_speed: None,
+            clock_speed: None,
+        });
+        assert_eq!(metrics.processes, vec![process]);
+        let json = serde_json::to_value(&metrics).unwrap();
+        assert_eq!(json["processes"][0]["name"], "/python3.12");
+    }
+
     #[tokio::test]
     async fn the_native_sampler_keeps_its_state_across_samples() {
         let mut sampler = super::NativeSampler::default();

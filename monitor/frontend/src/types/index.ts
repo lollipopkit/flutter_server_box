@@ -304,6 +304,9 @@ export interface GpuMetrics {
   memory_unit: string | null;
   fan_speed?: number | null;
   clock_speed?: number | null;
+  /// What holds the card's memory (MiB, 0 where the driver does not say).
+  /// Absent on older agents.
+  processes?: { pid: number; name: string; memory: number }[];
 }
 
 export interface DiskDetail {
