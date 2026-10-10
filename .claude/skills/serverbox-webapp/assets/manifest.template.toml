@@ -1,0 +1,70 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# <Name>, as a ServerBox Monitor web app. Put this file in store/apps/<id>/
+# beside the compose files it names.
+
+schema = 1
+id = "example"                      # the folder's name; lowercase, digits, -
+name = "Example"                    # the upstream project's name
+version = "1.0.0"                   # the upstream release the compose files pin
+homepage = "https://example.com"
+source = "https://github.com/example/example/tree/v1.0.0"
+glyph = "apps"                      # a Material Symbols Rounded name
+tone = "teal"                       # berry soft ink sky teal violet amber leaf pale bright mist
+categories = ["tools"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]                             # what the desk calls the window
+en = "Example"
+zh = "示例"
+
+[description]
+en = "One sentence on what it does."
+zh = "一句话说明它做什么。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/example/example/blob/v1.0.0/LICENSE"
+accept = true                       # the admin accepts it before deploying
+
+[requirements]
+memory_min_mib = 512
+cores_min = 1
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"                       # the key of the port setting below
+path = "/"
+
+[env]                               # fixed values
+EXAMPLE_VERSION = "v1.0.0"
+
+[[secrets]]                         # generated once, kept in the env file
+env = "DB_PASSWORD"
+length = 32
+
+[[settings]]
+key = "data"
+type = "path"
+env = "DATA_LOCATION"
+default = "{stack}/data"            # {stack} is the stack's own directory
+data = true                         # removed only when the admin asks
+label = { en = "Data", zh = "数据" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "EXAMPLE_PORT"
+default = 8080
+label = { en = "Port", zh = "端口" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问" }
+on = { EXAMPLE_BIND = "0.0.0.0" }
+off = { EXAMPLE_BIND = "127.0.0.1" }

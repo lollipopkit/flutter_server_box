@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json",
+  "title": "ServerBox Monitor web app manifest",
+  "description": "store/apps/<id>/manifest.toml: a web service the Monitor agent deploys with Docker Compose and shows in a desk window. Read by monitor/src/stacks/manifest.rs; checked further by the serverbox-webapp skill's validate.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "name", "version", "homepage", "source", "glyph", "tone", "title", "description", "license", "compose", "web"],
+  "properties": {
+    "schema": { "const": 1, "description": "Manifest format version." },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,31}$",
+      "description": "Stable; the folder's name, and the compose project is sbm-<id>."
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 64, "description": "The upstream project's name." },
+    "version": { "type": "string", "minLength": 1, "maxLength": 32, "description": "The upstream release the compose files pin." },
+    "homepage": { "$ref": "#/$defs/url" },
+    "source": { "$ref": "#/$defs/url", "description": "Where the service's source is." },
+    "glyph": { "type": "string", "pattern": "^[a-z0-9_]{1,64}$", "description": "A Material Symbols Rounded name." },
+    "tone": { "enum": ["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"] },
+    "categories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["photos", "media", "files", "documents", "productivity", "development", "ai", "home", "network", "monitoring", "security", "tools"] }
+    },
+    "notices": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "What the deploy dialog points out about the compose files.",
+      "items": { "enum": ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort", "privileged", "hostNetwork", "dockerSocket"] }
+    },
+    "title": { "$ref": "#/$defs/text", "description": "What the desk calls the window." },
+    "description": { "$ref": "#/$defs/text" },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spdx", "url"],
+      "properties": {
+        "spdx": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "url": { "$ref": "#/$defs/url" },
+        "accept": { "type": "boolean", "default": false, "description": "The admin must accept the licence before deploying." }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memory_min_mib": { "type": "integer", "minimum": 0 },
+        "memory_recommended_mib": { "type": "integer", "minimum": 0 },
+        "cores_min": { "type": "integer", "minimum": 0 },
+        "arch": { "type": "array", "uniqueItems": true, "items": { "enum": ["amd64", "arm64", "arm"] } },
+        "os": { "type": "array", "uniqueItems": true, "items": { "enum": ["linux", "macos", "windows"] } }
+      }
+    },
+    "compose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["files"],
+      "properties": {
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/file" },
+          "description": "Compose files in merge order. Every other file in the folder is copied too (for extends)."
+        }
+      }
+    },
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port"],
+      "properties": {
+        "port": { "$ref": "#/$defs/key", "description": "The key of the port setting the window reaches." },
+        "path": { "type": "string", "pattern": "^/", "default": "/" }
+      }
+    },
+    "env": {
+      "type": "object",
+      "description": "Fixed values for the env file.",
+      "propertyNames": { "$ref": "#/$defs/envName" },
+      "additionalProperties": { "$ref": "#/$defs/envValue" }
+    },
+    "secrets": {
+      "type": "array",
+      "description": "Generated once (alphanumeric) and kept in the env file.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["env"],
+        "properties": {
+          "env": { "$ref": "#/$defs/envName" },
+          "length": { "type": "integer", "minimum": 16, "maximum": 128, "default": 32 }
+        }
+      }
+    },
+    "settings": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/pathSetting" },
+          { "$ref": "#/$defs/portSetting" },
+          { "$ref": "#/$defs/boolSetting" },
+          { "$ref": "#/$defs/choiceSetting" },
+          { "$ref": "#/$defs/textSetting" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "url": { "type": "string", "pattern": "^https://", "maxLength": 512 },
+    "file": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+    "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$" },
+    "envName": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]{0,63}$" },
+    "envValue": { "type": "string", "maxLength": 1024, "pattern": "^[^'\\n\\r\\u0000]*$" },
+    "envMap": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/envName" },
+      "additionalProperties": { "$ref": "#/$defs/envValue" }
+    },
+    "text": {
+      "type": "object",
+      "required": ["en"],
+      "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" },
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 512 }
+    },
+    "common": {
+      "type": "object",
+      "required": ["key", "type", "label"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "label": { "$ref": "#/$defs/text" },
+        "help": { "$ref": "#/$defs/text" }
+      }
+    },
+    "pathSetting": {
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "unevaluatedProperties": false,
+      "required": ["env", "default"],
+      "properties": {
+        "key": true, "label": true, "help": true,
+        "type": { "const": "path" },
+        "env": { "$ref": "#/$defs/envName" },
+        "default": { "type": "string", "pattern": "^(/|\\{stack\\})", "description": "Absolute, or under {stack}, the stack's directory." },
+        "data": { "type": "boolean", "default": false, "description": "Holds the service's data: removed only when the admin asks." }
+      }
+    },
+    "portSetting": {
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "unevaluatedProperties": false,
+      "required": ["env", "default"],
+      "properties": {
+        "key": true, "label": true, "help": true,
+        "type": { "const": "port" },
+        "env": { "$ref": "#/$defs/envName" },
+        "default": { "type": "integer", "minimum": 1024, "maximum": 65535, "description": "The next free port is offered when this one is taken." }
+      }
+    },
+    "boolSetting": {
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "unevaluatedProperties": false,
+      "required": ["default", "on", "off"],
+      "properties": {
+        "key": true, "label": true, "help": true,
+        "type": { "const": "bool" },
+        "default": { "type": "boolean" },
+        "on": { "$ref": "#/$defs/envMap" },
+        "off": { "$ref": "#/$defs/envMap" }
+      }
+    },
+    "choiceSetting": {
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "unevaluatedProperties": false,
+      "required": ["default", "options"],
+      "properties": {
+        "key": true, "label": true, "help": true,
+        "type": { "const": "choice" },
+        "default": { "type": "string" },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "label", "env"],
+            "properties": {
+              "value": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+              "label": { "$ref": "#/$defs/text" },
+              "env": { "$ref": "#/$defs/envMap" },
+              "suggest": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Offered as the default on a machine that matches.",
+                "properties": {
+                  "gpu": { "enum": ["nvidia", "amd", "intel"] },
+                  "wsl": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "textSetting": {
+      "allOf": [{ "$ref": "#/$defs/common" }],
+      "unevaluatedProperties": false,
+      "required": ["env", "pattern"],
+      "properties": {
+        "key": true, "label": true, "help": true,
+        "type": { "const": "text" },
+        "env": { "$ref": "#/$defs/envName" },
+        "default": { "type": "string" },
+        "optional": { "type": "boolean", "default": false, "description": "Left out of the env file when empty." },
+        "pattern": { "type": "string", "description": "A regular expression the whole value must match." }
+      }
+    }
+  }
+}

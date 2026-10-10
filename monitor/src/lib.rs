@@ -9,4 +9,5 @@ pub mod core;
 pub mod db;
 pub mod monitoring;
 pub mod pty;
+pub mod stacks;
 pub mod utils;
