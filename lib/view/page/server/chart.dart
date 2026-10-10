@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/view/page/server/reading_text.dart';
 
 /// What a reading's history is drawn as, wherever it is drawn.
 ///
@@ -118,6 +119,16 @@ class MetricChartSpec {
   });
 
   bool get hasData => series.any((s) => s.hasSpots);
+
+  /// The most a value can be, which the axis does not go past: 100 for a
+  /// share, which is what every reading written by [ReadingFmt.pct] is (CPU,
+  /// memory, swap, disk, GPU, battery, a guest's CPU and memory). A GPU held
+  /// at 100% drew an axis to 105%, a value no reading can have.
+  ///
+  /// Null for a rate or a temperature, which have no top. A reading that can
+  /// pass 100% — a container's CPU across cores — needs a formatter of its
+  /// own rather than this one.
+  double? get ceiling => format == ReadingFmt.pct ? 100 : null;
 }
 
 /// One chart plus the legend line carrying each series' latest value —
@@ -189,6 +200,7 @@ class MetricChart extends StatelessWidget {
               format: spec.format,
               tooltipFont: Theme.of(context).textTheme.bodyMedium!,
               binaryScale: spec.binaryScale,
+              ceiling: spec.ceiling,
               window: spec.window,
               bands: spec.bands,
               axis: spec.axis.clamp(0.0, 1.0),
@@ -328,6 +340,7 @@ class HistorySeries {
   required double trough,
   required double peak,
   required bool binary,
+  double? ceiling,
 }) {
   // Below this the labels repeat: the formatters carry one decimal for
   // percentages and °C, and whole bytes for rates
@@ -351,6 +364,11 @@ class HistorySeries {
     final pad = math.max(hi.abs() * 0.05, minInterval * targetTicks / 2);
     lo -= pad;
     hi += pad;
+    // A line flat at the top has all of its room below it.
+    if (ceiling != null && peak <= ceiling && hi > ceiling) {
+      lo -= hi - ceiling;
+      hi = ceiling;
+    }
   }
 
   final raw = (hi - lo) / targetTicks;
@@ -379,6 +397,9 @@ class HistorySeries {
   var bottom = (lo / interval).floor() * interval;
   if (trough >= 0 && bottom < 0) bottom = 0;
   var top = (hi / interval).ceil() * interval;
+  // The same for the top, when the readings have one: a share held at 100%
+  // is drawn against an axis ending there, not at 105%.
+  if (ceiling != null && peak <= ceiling && top > ceiling) top = ceiling;
   if (top <= bottom) top = bottom + interval;
   return (bottom: bottom, top: top, interval: interval);
 }
@@ -414,6 +435,7 @@ Widget buildHistoryLineChart(
   /// families: a tooltip has no body's metrics to inherit.
   required TextStyle tooltipFont,
   bool binaryScale = false,
+  double? ceiling,
   ({int from, int to})? window,
   List<ChartBand> bands = const [],
   double axis = 1,
@@ -432,7 +454,12 @@ Widget buildHistoryLineChart(
       .expand((b) => b.spots)
       .map((e) => e.y)
       .fold<double>(double.infinity, (a, b) => a < b ? a : b);
-  final scale = niceAxis(trough: trough, peak: peak, binary: binaryScale);
+  final scale = niceAxis(
+    trough: trough,
+    peak: peak,
+    binary: binaryScale,
+    ceiling: ceiling,
+  );
   final bottom = scale.bottom;
   final top = scale.top;
   final interval = scale.interval;
