@@ -22,6 +22,7 @@ import UserNotifications
         ) { note in
             guard let scene = note.object as? UIWindowScene else { return }
             DynamicIslandBrand.shared.install(in: scene)
+            WindowControls.shared.install(in: scene)
             PrivacyBlur.shared.hideIfUnlocked()
         }
 
@@ -85,6 +86,21 @@ import UserNotifications
                 shareChannel.invokeMethod("opened", arguments: nil)
             }
         }
+
+        // Pushed on change, and readable once: the first layout can report
+        // before Dart has set its handler, and a push nobody hears is lost.
+        let windowControlsChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/window_controls", binaryMessenger: binaryMessenger)
+        WindowControls.shared.onChange = { zones in
+            windowControlsChannel.invokeMethod("changed", arguments: zones)
+        }
+        windowControlsChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
+            switch call.method {
+            case "zones":
+                result(WindowControls.shared.zones)
+            default:
+                result(FlutterMethodNotImplemented)
+            }
+        })
 
         let homeWidgetChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: binaryMessenger)
         homeWidgetChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in

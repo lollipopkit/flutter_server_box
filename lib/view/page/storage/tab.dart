@@ -53,7 +53,7 @@ sealed class FileSession {
   ///
   /// One per session: every page is built, including the ones off screen, and
   /// a shared sink would have them overwriting each other.
-  final actions = ValueNotifier<List<Widget>>(const []);
+  final actions = ValueNotifier<List<BarAction>>(const []);
 
   String? get path => currentPath ?? initialPath;
 
@@ -203,7 +203,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
           search: _search,
-          actions: [_searchBtn],
+          actions: [_searchAction],
           onLocal: _openLocal,
           onServer: _openRemote,
           onSelect: _sessions.select,
@@ -307,40 +307,53 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   }
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
-    listenable: Listenable.merge([_sessions, _search]),
+    listenable: _sessions,
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SizedBox(
-      height: SessionTabBar.height,
-      // In place of the strip, as on the terminal tab: what is searched is the
-      // picker, and the tabs beside it are open browsers.
-      child: InlineSearchBar(
-        controller: _search,
-        child: SessionTabBar(
-      names: _sessions.names,
-      index: _sessions.index,
-      leadingIcon: MingCute.folder_fill,
-      onTap: _sessions.select,
-      onClose: _close,
-      detailOf: _sessionPath,
-      // One widget that follows whichever session is showing, rather than a
-      // list the bar would have to rebuild itself to keep current.
-      sessionActions: [_SessionActions(sessions: _sessions)],
-      // The same two the rail carries. On one screen the picker is a tab
-      // rather than a column, and these act on what it lists.
-                leadingActions: [_searchBtn],
+    builder: () {
+      // The page's own, handed over through its sink — see
+      // [FileSession.actions].
+      final actions = _sessions.current?.data.actions ?? _noActions;
+      return ListenBuilder(
+        listenable: actions,
+        builder: () => SessionTabBar(
+          names: _sessions.names,
+          index: _sessions.index,
+          leadingIcon: MingCute.folder_fill,
+          onTap: _sessions.select,
+          onClose: _close,
+          detailOf: _sessionPath,
+          sessionActions: actions.value,
+          // The same one the rail carries. On one screen the picker is a tab
+          // rather than a column, and this acts on what it lists.
+          leadingActions: [_searchAction],
+          // In place of the strip, as on the terminal tab: what is searched is
+          // the picker, and the tabs beside it are open browsers.
+          search: _search,
         ),
-      ),
-    ),
+      );
+    },
   );
 
   PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
     listenable: _sessions,
-    builder: () => CustomAppBar(
-      title: Text(_sessions.current?.name ?? libL10n.file),
-      actions: [_SessionActions(sessions: _sessions)],
-    ),
+    builder: () {
+      final actions = _sessions.current?.data.actions ?? _noActions;
+      return CustomAppBar(
+        title: Text(_sessions.current?.name ?? libL10n.file),
+        actions: [
+          ListenBuilder(
+            listenable: actions,
+            builder: () => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [for (final action in actions.value) action.button()],
+            ),
+          ),
+          const SizedBox(width: 7),
+        ],
+      );
+    },
   );
 
   /// What a session's row in the sheet says under the name: where that browser
@@ -473,11 +486,14 @@ extension _Sessions on _FileTabPageState {
   }
 }
 
+/// What the bar listens to while no browser is open.
+final _noActions = ValueNotifier<List<BarAction>>(const []);
+
 /// What acts on the list of places rather than on one browser in it.
 extension _Actions on _FileTabPageState {
-  Widget get _searchBtn => Btn.icon(
-    text: libL10n.search,
-    icon: const Icon(Icons.search, size: 18),
+  BarAction get _searchAction => BarAction(
+    icon: Icons.search,
+    label: libL10n.search,
     onTap: _search.start,
   );
 
@@ -586,7 +602,7 @@ class _SideBar extends ConsumerWidget {
   final InlineSearchController search;
 
   /// What acts on the rail rather than on one session in it.
-  final List<Widget> actions;
+  final List<BarAction> actions;
 
   final VoidCallback onLocal;
   final void Function(Spi spi) onServer;
@@ -651,27 +667,3 @@ class _SideBar extends ConsumerWidget {
   }
 }
 
-/// The toolbar of whichever session is showing.
-///
-/// Rebuilt from that session's own notifier, so the strip does not have to
-/// listen to every open session to keep one row of buttons current.
-class _SessionActions extends StatelessWidget {
-  const _SessionActions({required this.sessions});
-
-  final SessionTabsController<FileSession> sessions;
-
-  @override
-  Widget build(BuildContext context) {
-    final current = sessions.current;
-    if (current == null) return const SizedBox.shrink();
-    return ValueListenableBuilder(
-      valueListenable: current.data.actions,
-      builder: (_, actions, _) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final action in actions) ...[action, const SizedBox(width: 7)],
-        ],
-      ),
-    );
-  }
-}

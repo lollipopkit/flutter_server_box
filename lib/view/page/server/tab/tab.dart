@@ -43,6 +43,7 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_share.dart';
+import 'package:server_box/view/widget/tag_switcher.dart';
 
 part 'bar.dart';
 part 'bulk.dart';

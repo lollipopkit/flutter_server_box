@@ -380,41 +380,27 @@ PreferredSizeWidget virtResourceBar({
   int? position,
   int total = 0,
   VoidCallback? onSwitch,
-  List<Widget> actions = const [],
+  List<BarAction> actions = const [],
   VoidCallback? onRefresh,
 }) {
-  return PreferredSize(
-    preferredSize: const Size.fromHeight(SessionTabBar.height),
-    // Pushed on a phone, the page is outside the tab's `SafeArea`, and the
-    // `Scaffold` leaves the status bar's inset to its bar.
-    child: SafeArea(
-      bottom: false,
-      child: SizedBox(
-        height: SessionTabBar.height,
-        child: Row(
-          children: [
-            ?leading,
-            Expanded(
-              child: SessionSwitcherLabel(
-                name: name,
-                icon: icon,
-                position: position,
-                total: total,
-                onTap: onSwitch,
-              ),
-            ),
-            ...actions,
-            if (onRefresh != null)
-              Btn.icon(
-                text: libL10n.refresh,
-                icon: const Icon(Icons.refresh, size: 18),
-                onTap: onRefresh,
-              ),
-            const SizedBox(width: 7),
-          ],
-        ),
-      ),
+  return SwitcherBar(
+    leading: leading,
+    switcher: SessionSwitcherLabel(
+      name: name,
+      icon: icon,
+      position: position,
+      total: total,
+      onTap: onSwitch,
     ),
+    actions: [
+      ...actions,
+      if (onRefresh != null)
+        BarAction(
+          icon: Icons.refresh,
+          label: libL10n.refresh,
+          onTap: onRefresh,
+        ),
+    ],
   );
 }
 

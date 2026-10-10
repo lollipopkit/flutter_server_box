@@ -25,7 +25,7 @@ final class LocalFilePageArgs {
   final String? initDir;
 
   /// Where to put this page's toolbar, for a host that draws a bar of its own.
-  final ValueNotifier<List<Widget>>? actionsSink;
+  final ValueNotifier<List<BarAction>>? actionsSink;
 
   /// Told which directory is being shown, as it changes.
   final void Function(String path)? onPathChanged;
@@ -99,16 +99,16 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
     );
   }
 
-  List<Widget> _actions(FileBrowserHandle handle) => [
+  List<BarAction> _actions(FileBrowserHandle handle) => [
     if (isDesktop)
-      Btn.icon(
-        text: libL10n.open,
-        icon: const Icon(Icons.folder_open_outlined, size: 18),
+      BarAction(
+        icon: Icons.folder_open_outlined,
+        label: libL10n.open,
         onTap: () => Pfs.revealPath(Paths.file),
       ),
-    Btn.icon(
-      text: libL10n.mission,
-      icon: const Icon(Icons.downloading, size: 18),
+    BarAction(
+      icon: Icons.downloading,
+      label: libL10n.mission,
       onTap: () => showTransfers(context),
     ),
   ];

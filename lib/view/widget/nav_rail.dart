@@ -271,12 +271,10 @@ class _AppNavRailState extends State<AppNavRail>
                 // from nothing.
                 shadowColor: shadow.withValues(alpha: shadow.a * open),
                 surfaceTintColor: Colors.transparent,
-                // Whether the shadow is drawn at all, and how far it is cast.
-                // Read off the same value as the two above, so that nothing
-                // outlives the panel: at zero `PhysicalModel` skips the shadow
-                // outright, where a panel left at three points of elevation
-                // held one for the last of the closing.
-                elevation: railTheme.elevation ?? (3 * open),
+                // None unless the theme asks for one: the panel is flat, as
+                // the rest of the app is. A theme's elevation is held whole
+                // while the shadow's colour above fades it in and out.
+                elevation: railTheme.elevation ?? 0,
                 child: Column(
                   children: [
                     Expanded(

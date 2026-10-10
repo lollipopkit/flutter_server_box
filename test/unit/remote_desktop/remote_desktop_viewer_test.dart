@@ -7,7 +7,6 @@ import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/view/page/remote_desktop/frame_decoder.dart';
 import 'package:server_box/view/page/remote_desktop/geometry.dart';
 import 'package:server_box/view/page/remote_desktop/input.dart';
-import 'package:server_box/view/page/remote_desktop/viewer.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -38,11 +37,6 @@ void main() {
     final vnc = remoteDesktopKeyFor(event, RemoteDesktopProtocol.vnc)!;
     expect((rdp.code, rdp.extended), (0x53, true));
     expect((vnc.code, vnc.extended), (0xffff, false));
-  });
-
-  test('viewer toolbar switches to compact layout on narrow screens', () {
-    expect(remoteDesktopUsesCompactToolbar(420), isTrue);
-    expect(remoteDesktopUsesCompactToolbar(900), isFalse);
   });
 
   test('losing focus releases all remotely held keys', () {

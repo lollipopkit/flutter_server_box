@@ -134,6 +134,10 @@ Future<void> _initApp(ProviderContainer container) async {
   // framework's animations — see [AppBinding].
   AppBinding();
 
+  // As early as there is a binding: until the first report arrives, a bar is
+  // laid out as if nothing covered it.
+  MethodChans.watchWindowControls();
+
   // Before anything that can fail, so that a failure during startup is at
   // least recorded — the errors worth catching most are the ones that stop the
   // app from reaching a screen anyone could copy a log from.

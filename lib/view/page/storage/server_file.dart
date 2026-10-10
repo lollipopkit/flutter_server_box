@@ -124,10 +124,10 @@ class _LocalServerFilePage extends StatelessWidget {
           }
         },
         extraActions: (_) => [
-          IconButton(
-            tooltip: libL10n.mission,
-            icon: const Icon(Icons.downloading),
-            onPressed: () => showTransfers(context),
+          BarAction(
+            icon: Icons.downloading,
+            label: libL10n.mission,
+            onTap: () => showTransfers(context),
           ),
         ],
         // This device's files are this device's, whichever page lists them:
@@ -232,10 +232,10 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
         actionsSink: widget.args.actionsSink,
         onPathChanged: _onPathChanged,
         extraActions: (_) => [
-          IconButton(
-            tooltip: libL10n.mission,
-            icon: const Icon(Icons.downloading),
-            onPressed: () => showTransfers(context),
+          BarAction(
+            icon: Icons.downloading,
+            label: libL10n.mission,
+            onTap: () => showTransfers(context),
           ),
         ],
         refOf: (path) => MonitorFileRef.forServer(_spi, path),

@@ -483,11 +483,11 @@ void main() {
     expect(find.byType(BenchmarkRunPage), findsOneWidget);
     expect(find.text('web'), findsWidgets);
 
-    // The list column's bar button, not the run form's Start: with no run in
+    // The list column's button, not the run form's Start: with no run in
     // flight the form is on screen beside it and carries the same icon.
     await tester.tap(
       find.descendant(
-        of: find.byType(CustomAppBar),
+        of: find.byType(SideBarActions),
         matching: find.byIcon(Icons.play_arrow),
       ),
     );

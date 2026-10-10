@@ -15,52 +15,59 @@ extension _Bar on _ServerPageState {
   /// shift the page contents by that much on every switch between tabs.
   PreferredSizeWidget _buildTagBar(String? openId, List<String> filtered) {
     if (_selecting) return _buildSelectionBar(filtered);
+    final narrow = !_opensInPlace(context);
     return PreferredSizeListenBuilder(
       // Which tag is on, what tags there are to choose between, and how the
       // list is ordered — the sort button draws its own current icon.
       listenable: Listenable.merge([_tags, _tag, _sortVersion, _autoDensity]),
       // The wrapper is what the `Scaffold` measures, so it has to be told; its
       // own default is a full toolbar.
-      preferSize: const Size.fromHeight(SessionTabBar.height),
+      preferSize: const Size.fromHeight(SwitcherBar.height),
       builder: () {
-        return SizedBox(
-          height: SessionTabBar.height,
-          child: InlineSearchBar(
-            controller: _search,
-            child: LayoutBuilder(
-              builder: (_, cons) => Row(
-                children: [
-                  // The way back comes first and takes no room when there is
-                  // nowhere to go back to.
-                  //
-                  // Inset to where the switcher's own glyph sits when there is
-                  // nothing open — `SessionSwitcherLabel` holds it 14 off the
-                  // edge, and a button's own 7 is half of that — so the first
-                  // thing in the bar is in the same place either way.
-                  if (openId != null) const SizedBox(width: 7),
-                  if (openId != null)
-                    Btn.icon(
-                      text: libL10n.close,
-                      icon: const Icon(Icons.arrow_back_ios_new, size: 17),
-                      onTap: _closeDetail,
+        // One column: every tab's bar. A server opens as a page of its own
+        // there, so this is always the list's.
+        if (narrow) {
+          return SwitcherBar(
+            search: _search,
+            switcher: _buildTagSwitcher(),
+            actions: [_densityAction(filtered.length), ..._listActions()],
+          );
+        }
+        return WindowControlsInset(
+          safeArea: true,
+          child: SizedBox(
+            height: SessionTabBar.height,
+            child: InlineSearchBar(
+              controller: _search,
+              child: LayoutBuilder(
+                builder: (_, cons) => Row(
+                  children: [
+                    // The way back comes first and takes no room when there is
+                    // nowhere to go back to.
+                    //
+                    // Inset to where the switcher's own glyph sits when there is
+                    // nothing open — `SessionSwitcherLabel` holds it 14 off the
+                    // edge, and a button's own 7 is half of that — so the first
+                    // thing in the bar is in the same place either way.
+                    if (openId != null) SwitcherBar.back(onTap: _closeDetail),
+                    Expanded(
+                      child: openId == null
+                          ? _buildTagSwitcher()
+                          : _buildServerSwitcher(openId, filtered),
                     ),
-                  Expanded(
-                    child: openId == null
-                        ? _buildTagSwitcher()
-                        : _buildServerSwitcher(openId, filtered),
-                  ),
-                  // Not while one is open: the page is one machine then, and
-                  // how many of them fit on a screen is not a question it has.
-                  if (openId == null)
-                    _buildDensityControl(filtered.length, room: cons.maxWidth),
-                  // With one open, the page is that machine, so the bar offers
-                  // what its own page does when pushed on a phone.
-                  if (openId == null)
-                    ..._listActions()
-                  else
-                    ..._serverActions(openId),
-                  const SizedBox(width: 7),
-                ],
+                    // Not while one is open: the page is one machine then, and
+                    // how many of them fit on a screen is not a question it has.
+                    if (openId == null)
+                      _buildDensityControl(filtered.length, room: cons.maxWidth),
+                    // With one open, the page is that machine, so the bar offers
+                    // what its own page does when pushed on a phone.
+                    for (final action in openId == null
+                        ? _listActions()
+                        : _serverActions(openId))
+                      action.button(),
+                    const SizedBox(width: 7),
+                  ],
+                ),
               ),
             ),
           ),
@@ -69,7 +76,7 @@ extension _Bar on _ServerPageState {
     );
   }
 
-  List<Widget> _serverActions(String openId) {
+  List<BarAction> _serverActions(String openId) {
     final spi = ref.read(serversProvider).servers[openId];
     if (spi == null) return const [];
     return [
@@ -78,11 +85,7 @@ extension _Bar on _ServerPageState {
         spi,
         onDeleted: _closeDetail,
       ))
-        Btn.icon(
-          text: action.label,
-          icon: Icon(action.icon, size: 18),
-          onTap: action.onTap,
-        ),
+        BarAction(icon: action.icon, label: action.label, onTap: action.onTap),
     ];
   }
 
@@ -98,14 +101,7 @@ extension _Bar on _ServerPageState {
     // Room for four labelled positions, the switcher beside them and the four
     // buttons after them. Below it the labels are what would have to shrink,
     // and a segmented control with no labels is four unexplained icons.
-    if (room < 860) {
-      final resolved = _resolvedDensity(stored, count);
-      return Btn.icon(
-        text: resolved.label,
-        icon: Icon(resolved.icon, size: 18),
-        onTap: () => _showDensitySheet(count),
-      );
-    }
+    if (room < 860) return _densityAction(count).button();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -127,6 +123,17 @@ extension _Bar on _ServerPageState {
         selected: stored,
         onSelected: _setDensity,
       ),
+    );
+  }
+
+  /// The density as a button that opens the four as a sheet, which is what
+  /// the tag and the sort already do.
+  BarAction _densityAction(int count) {
+    final resolved = _resolvedDensity(ServerDensityPref.of(_tag.value), count);
+    return BarAction(
+      icon: resolved.icon,
+      label: resolved.label,
+      onTap: () => _showDensitySheet(count),
     );
   }
 
@@ -178,16 +185,9 @@ extension _Bar on _ServerPageState {
 
   Widget _buildTagSwitcher() {
     final tags = _tags.value.toList();
-    final current = _tag.value;
-    final at = tags.indexOf(current);
-
-    return SessionSwitcherLabel(
-      name: current.isEmpty ? libL10n.all : '#$current',
-      // Counting from 1, and null on "all" — which is not one of the tags but
-      // the absence of a choice among them, so it shows the icon instead.
-      position: at < 0 ? null : at + 1,
-      total: tags.length,
-      icon: MingCute.hashtag_line,
+    return tagSwitcherLabel(
+      tags: tags,
+      current: _tag.value,
       // Opens even with no tags anywhere. It used to be a plain label then —
       // the rule the session strips follow with nothing open — but the two
       // cases are not alike: a terminal strip with no sessions is a feature
@@ -225,39 +225,30 @@ extension _Bar on _ServerPageState {
   /// for the guide to point at. A second caller drawing these while the bar is
   /// mounted would need its own key: two widgets holding one `GlobalKey` at
   /// the same time is an exception rather than a bad layout.
-  List<Widget> _listActions() => [
-    Btn.icon(
-      text: libL10n.search,
-      icon: const Icon(Icons.search, size: 18),
-      onTap: _search.start,
-    ),
-    Btn.icon(
-      text: libL10n.sort,
-      icon: Icon(ServerSortOrder.of(_tag.value).icon, size: 18),
+  List<BarAction> _listActions() => [
+    BarAction(icon: Icons.search, label: libL10n.search, onTap: _search.start),
+    BarAction(
+      icon: ServerSortOrder.of(_tag.value).icon,
+      label: libL10n.sort,
       onTap: _showSortSheet,
     ),
     // Absent, not disabled, when the feature is off: a button that explains
     // itself by doing nothing is worse than one that is not offered.
     if (Stores.setting.globeEnabled.fetch())
-      _globe.listenVal(
-        (on) => Btn.icon(
-          key: _globeBtnKey,
-          text: l10n.globe,
-          icon: Icon(
-            on ? Icons.grid_view_rounded : Icons.public,
-            size: 18,
-            color: on ? Theme.of(context).colorScheme.primary : null,
-          ),
+      BarAction.listen(
+        key: _globeBtnKey,
+        listenable: _globe,
+        build: (context) => BarAction(
+          icon: _globe.value ? Icons.grid_view_rounded : Icons.public,
+          label: l10n.globe,
+          color: _globe.value ? Theme.of(context).colorScheme.primary : null,
           onTap: _toggleGlobe,
         ),
       ),
-    // Its own context, so the menu drops from this button.
-    Builder(
-      builder: (ctx) => Btn.icon(
-        text: libL10n.add,
-        icon: const Icon(Icons.add, size: 18),
-        onTap: () => _onTapAddServer(ctx),
-      ),
+    BarAction.menu(
+      icon: Icons.add,
+      label: libL10n.add,
+      menu: _addServerMenu,
     ),
   ];
 
