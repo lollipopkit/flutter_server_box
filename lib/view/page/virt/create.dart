@@ -205,9 +205,9 @@ class _VirtCreateViewState extends ConsumerState<VirtCreateView>
         leading: widget.leading,
         actions: [
           if (widget.onCancel case final cancel?)
-            Btn.icon(
-              text: libL10n.cancel,
-              icon: const Icon(Icons.close, size: 18),
+            BarAction(
+              icon: Icons.close,
+              label: libL10n.cancel,
               onTap: cancel,
             ),
         ],

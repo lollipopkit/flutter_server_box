@@ -206,19 +206,19 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
                 search: _search,
                 actions: [
                   if (chats.isNotEmpty)
-                    Btn.icon(
-                      text: libL10n.clearHistory,
-                      icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                    BarAction(
+                      icon: Icons.delete_sweep_outlined,
+                      label: libL10n.clearHistory,
                       onTap: busy ? null : _clear,
                     ),
-                  Btn.icon(
-                    text: libL10n.search,
-                    icon: const Icon(Icons.search, size: 18),
+                  BarAction(
+                    icon: Icons.search,
+                    label: libL10n.search,
                     onTap: _search.start,
                   ),
-                  Btn.icon(
-                    text: context.l10n.askAiNewConversation,
-                    icon: const Icon(Icons.add, size: 18),
+                  BarAction(
+                    icon: Icons.add,
+                    label: context.l10n.askAiNewConversation,
                     onTap: () {
                       AgentChats.startNew(_scope);
                       _closeIfSheet();
@@ -226,10 +226,10 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
                   ),
                   // Over the sheet rather than in place of it: back returns
                   // to the list it was opened from.
-                  Btn.icon(
+                  BarAction(
                     key: const ValueKey('agent-settings'),
-                    text: libL10n.setting,
-                    icon: const Icon(Icons.settings_outlined, size: 18),
+                    icon: Icons.settings_outlined,
+                    label: libL10n.setting,
                     onTap: () => SettingsSectionPage.route.go(
                       context,
                       SettingsSection.ai,

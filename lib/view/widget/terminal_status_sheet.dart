@@ -196,6 +196,31 @@ final class _Mark extends StatelessWidget {
 
 /// Opens [showTerminalStatusSheet] for a tab's session, coloured by its most
 /// urgent state. Nothing while no program reports anything.
+BarAction terminalStatusAction({
+  required ValueListenable<TerminalSession?> session,
+  String? Function(TmuxPaneId pane)? paneLabel,
+}) => BarAction.listen(
+  listenable: session,
+  build: (_) {
+    final status = session.value?.status;
+    if (status == null) return null;
+    return BarAction.listen(
+      listenable: status,
+      build: (context) {
+        if (!status.hasReports) return null;
+        return BarAction(
+          icon: MingCute.task_line,
+          label: l10n.programStatus,
+          color: status.headline?.colorIn(Theme.of(context).colorScheme),
+          onTap: () =>
+              showTerminalStatusSheet(context, status, paneLabel: paneLabel),
+        );
+      },
+    );
+  },
+);
+
+/// [terminalStatusAction] on its own.
 final class TerminalStatusButton extends StatelessWidget {
   const TerminalStatusButton({super.key, required this.session, this.paneLabel});
 
@@ -203,31 +228,6 @@ final class TerminalStatusButton extends StatelessWidget {
   final String? Function(TmuxPaneId pane)? paneLabel;
 
   @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: session,
-      builder: (context, session, _) {
-        if (session == null) return const SizedBox.shrink();
-        final status = session.status;
-        return ListenableBuilder(
-          listenable: status,
-          builder: (context, _) {
-            if (!status.hasReports) return const SizedBox.shrink();
-            final color = status.headline?.colorIn(
-              Theme.of(context).colorScheme,
-            );
-            return Btn.icon(
-              text: l10n.programStatus,
-              icon: Icon(MingCute.task_line, size: 18, color: color),
-              onTap: () => showTerminalStatusSheet(
-                context,
-                status,
-                paneLabel: paneLabel,
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  Widget build(BuildContext context) =>
+      terminalStatusAction(session: session, paneLabel: paneLabel).button();
 }

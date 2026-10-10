@@ -3,7 +3,7 @@
 # `FDROID_OFFLINE=true build-fdroid.sh` can prove nothing is fetched during the
 # build. Used by android-reproducible.yml only: it compiles (proot and one full
 # release build to seed Gradle's cache), so it must not run in an F-Droid
-# `prebuild`. F-Droid's recipe is in fdroid/README.md.
+# `prebuild`.
 
 set -euo pipefail
 

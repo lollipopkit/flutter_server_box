@@ -45,7 +45,7 @@ final class SftpPageArgs {
   /// A host that already has a bar of its own — the file tab's strip of
   /// sessions — takes them so the screen does not carry two. Null means draw
   /// the usual app bar, which is what a pushed page does.
-  final ValueNotifier<List<Widget>>? actionsSink;
+  final ValueNotifier<List<BarAction>>? actionsSink;
 
   /// Told where the browser has moved to, after each successful listing.
   ///
@@ -369,20 +369,23 @@ extension _Open on _SftpPageState {
 }
 
 extension _Actions on _SftpPageState {
-  List<Widget> _toolbarActions(FileBrowserHandle handle) => [
-    Btn.icon(text: libL10n.mission, 
-      icon: const Icon(Icons.downloading),
+  List<BarAction> _toolbarActions(FileBrowserHandle handle) => [
+    BarAction(
+      icon: Icons.downloading,
+      label: libL10n.mission,
       onTap: () => showTransfers(context),
     ),
     if (_sudoHelper.enabled)
-      _sudoMode.listenVal(
-        (on) => IconButton(
-          tooltip: l10n.trySudo,
-          onPressed: () {
-            _sudoMode.value = !on;
+      BarAction.listen(
+        listenable: _sudoMode,
+        build: (_) => BarAction(
+          icon: Icons.security,
+          label: l10n.trySudo,
+          color: _sudoMode.value ? UIs.primaryColor : null,
+          onTap: () {
+            _sudoMode.value = !_sudoMode.value;
             handle.refresh();
           },
-          icon: Icon(Icons.security, color: on ? UIs.primaryColor : null),
         ),
       ),
   ];

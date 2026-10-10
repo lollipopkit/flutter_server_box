@@ -18,7 +18,6 @@ import 'package:server_box/view/page/virt/guest.dart';
 import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/host_error.dart';
 import 'package:server_box/view/page/virt/resources.dart';
-import 'package:server_box/view/widget/folding_bar.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 

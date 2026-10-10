@@ -227,13 +227,12 @@ class _VirtNetworkViewState extends ConsumerState<VirtNetworkView>
           : null,
       actions: [
         if (net != null && caps.networkStart)
-          Btn.icon(
+          BarAction(
             key: const ValueKey('net:toggle'),
-            text: net.active ? libL10n.stop : libL10n.start,
-            icon: Icon(
-              net.active ? Icons.stop_circle_outlined : Icons.play_circle_outline,
-              size: 18,
-            ),
+            icon: net.active
+                ? Icons.stop_circle_outlined
+                : Icons.play_circle_outline,
+            label: net.active ? libL10n.stop : libL10n.start,
             onTap: busy ? null : () => unawaited(_setActive(net, !net.active)),
           ),
       ],
@@ -1254,9 +1253,9 @@ class _VirtNetworkCreateViewState extends ConsumerState<VirtNetworkCreateView>
         icon: Icons.add_circle_outline,
         leading: widget.leading,
         actions: [
-          Btn.icon(
-            text: libL10n.cancel,
-            icon: const Icon(Icons.close, size: 18),
+          BarAction(
+            icon: Icons.close,
+            label: libL10n.cancel,
             onTap: widget.onCancel,
           ),
         ],

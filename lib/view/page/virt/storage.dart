@@ -89,17 +89,17 @@ class _VirtPoolViewState extends ConsumerState<VirtPoolView>
           : null,
       actions: [
         if (pool != null && pool.active && caps.storageEdit)
-          Btn.icon(
+          BarAction(
             key: const ValueKey('pool:vol:new'),
-            text: l10n.virtVolNew,
-            icon: const Icon(Icons.add, size: 18),
+            icon: Icons.add,
+            label: l10n.virtVolNew,
             onTap: busy ? null : () => _openNew(pool),
           ),
         if (pool != null && caps.upload && virtPoolTakesMedia(pool))
-          Btn.icon(
+          BarAction(
             key: const ValueKey('pool:upload'),
-            text: l10n.virtUploadIso,
-            icon: const Icon(Icons.upload, size: 18),
+            icon: Icons.upload,
+            label: l10n.virtUploadIso,
             onTap: busy ? null : () => unawaited(_upload(pool)),
           ),
       ],
@@ -1104,9 +1104,9 @@ class _VirtPoolCreateViewState extends ConsumerState<VirtPoolCreateView>
         icon: Icons.add_circle_outline,
         leading: widget.leading,
         actions: [
-          Btn.icon(
-            text: libL10n.cancel,
-            icon: const Icon(Icons.close, size: 18),
+          BarAction(
+            icon: Icons.close,
+            label: libL10n.cancel,
             onTap: widget.onCancel,
           ),
         ],

@@ -276,7 +276,7 @@ class _SideBar extends ConsumerStatefulWidget {
   /// The bar's search. Read rather than listened to: [sortVersion] carries it.
   final InlineSearchController search;
 
-  final List<Widget> actions;
+  final List<BarAction> actions;
   final void Function(Spi spi) onOpen;
 
   /// Opens a shell on the machine the app is running on.

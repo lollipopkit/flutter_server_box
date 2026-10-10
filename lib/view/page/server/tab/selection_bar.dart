@@ -43,35 +43,30 @@ class ServerSelectionBar extends StatelessWidget
   final VoidCallback onDelete;
 
   @override
-  Size get preferredSize => const Size.fromHeight(SessionTabBar.height);
+  Size get preferredSize => const Size.fromHeight(SwitcherBar.height);
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return SizedBox(
-      height: SessionTabBar.height,
-      child: Row(
+    return SwitcherBar(
+      leading: Btn.icon(
+        text: libL10n.close,
+        icon: const Icon(Icons.close, size: 18),
+        onTap: onClose,
+      ),
+      switcherMinWidth: 72,
+      switcher: Row(
         children: [
-          Btn.icon(
-            text: libL10n.close,
-            icon: const Icon(Icons.close, size: 18),
-            onTap: onClose,
-          ),
           Icon(Icons.check_box, size: 19, color: scheme.primary),
           const SizedBox(width: 9),
           Text(
             '$count',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(width: 7),
-          // The one part that gives way on a narrow bar. The buttons after it
-          // are fixed-size icons and all of them are needed; the total is the
-          // least of what the bar says, and at 320pt with large text it was
-          // what pushed them past the edge.
+          // The part that gives way first: the total is the least of what the
+          // bar says.
           Expanded(
             child: Text(
               '/ $total',
@@ -81,37 +76,26 @@ class ServerSelectionBar extends StatelessWidget
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Btn.icon(
-            text: l10n.connect,
-            icon: const Icon(Icons.link, size: 18),
-            onTap: onConnect,
-          ),
-          Btn.icon(
-            text: l10n.disconnect,
-            icon: const Icon(Icons.link_off, size: 18),
-            onTap: onDisconnect,
-          ),
-          Btn.icon(
-            text: libL10n.tag,
-            icon: const Icon(MingCute.hashtag_line, size: 18),
-            onTap: onTag,
-          ),
-          // The one action here that is about the list rather than about the
-          // machines. Dragging is how one server is moved, and forty is
-          // exactly where dragging stops being a way to do anything.
-          Btn.icon(
-            text: l10n.move,
-            icon: const Icon(Icons.swap_vert, size: 18),
-            onTap: onMove,
-          ),
-          Btn.icon(
-            text: libL10n.delete,
-            icon: const Icon(Icons.delete, size: 18),
-            onTap: onDelete,
-          ),
-          const SizedBox(width: 7),
         ],
       ),
+      actions: [
+        BarAction(icon: Icons.link, label: l10n.connect, onTap: onConnect),
+        BarAction(
+          icon: Icons.link_off,
+          label: l10n.disconnect,
+          onTap: onDisconnect,
+        ),
+        BarAction(
+          icon: MingCute.hashtag_line,
+          label: libL10n.tag,
+          onTap: onTag,
+        ),
+        // The one action here that is about the list rather than about the
+        // machines. Dragging is how one server is moved, and forty is exactly
+        // where dragging stops being a way to do anything.
+        BarAction(icon: Icons.swap_vert, label: l10n.move, onTap: onMove),
+        BarAction(icon: Icons.delete, label: libL10n.delete, onTap: onDelete),
+      ],
     );
   }
 }

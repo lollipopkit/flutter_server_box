@@ -109,24 +109,24 @@ extension _Actions on _ServerPageState {
   /// The cost is a tap: this used to open the editor directly. Adding a server
   /// is rare enough that finding the other two is worth more than saving it.
   ///
-  /// A menu dropped from [anchor], the button that was pressed, rather than a
-  /// dialog: three entries with nothing to read first, and a dialog took the
-  /// middle of the window and a cancel button to say so.
-  void _onTapAddServer(BuildContext anchor) {
-    showContextMenu(
-      anchor,
-      [
-        for (final way in _AddServerWay.values)
-          if (way.available)
-            ContextMenuAction(
-              text: way.label,
-              icon: way.icon,
-              onTap: () => unawaited(_addServer(way)),
-            ),
-      ],
-      at: contextMenuAnchorBelow(anchor),
-    );
-  }
+  /// A menu dropped from the button that was pressed, rather than a dialog:
+  /// three entries with nothing to read first, and a dialog took the middle of
+  /// the window and a cancel button to say so.
+  void _onTapAddServer(BuildContext anchor) => showContextMenu(
+    anchor,
+    _addServerMenu(),
+    at: contextMenuAnchorBelow(anchor),
+  );
+
+  List<ContextMenuAction> _addServerMenu() => [
+    for (final way in _AddServerWay.values)
+      if (way.available)
+        ContextMenuAction(
+          text: way.label,
+          icon: way.icon,
+          onTap: () => unawaited(_addServer(way)),
+        ),
+  ];
 
   Future<void> _addServer(_AddServerWay way) async {
     if (!mounted) return;

@@ -281,147 +281,98 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     );
   }
 
-  /// The server tab's bar: [SessionTabBar.height] tall, the switcher on the
-  /// left, [Btn.icon]s at 18pt on the right.
+  /// Every tab's bar — see [SwitcherBar].
   Widget _toolbar(RemoteDesktopSessionView session) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final notifier = ref.read(remoteDesktopSessionsProvider.notifier);
     final connected = session.connectionState ==
         ffi.RemoteDesktopConnectionState.connected;
+    final input = connected && !session.viewOnly;
     final switcher = widget.switcher;
-
-    /// A toggle drawn in the primary while it is on, as the globe button is.
-    Color? on(bool active) => active ? scheme.primary : null;
-
-    /// `Btn.icon` has no disabled look of its own: a null `onTap` only stops
-    /// the ink, so the icon is dimmed here to say so.
-    Widget btn(
-      String text,
-      IconData icon,
-      VoidCallback? onTap, {
-      Color? color,
-      Key? key,
-    }) => Btn.icon(
-      key: key,
-      text: text,
-      icon: Icon(
-        icon,
-        size: 18,
-        color: onTap == null ? scheme.onSurface.withValues(alpha: 0.38) : color,
-      ),
-      onTap: onTap,
-    );
 
     return Material(
       color: scheme.surface,
-      child: SizedBox(
-        height: SessionTabBar.height,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = remoteDesktopUsesCompactToolbar(
-              constraints.maxWidth,
-            );
-            return Row(
-              children: [
-                Expanded(
-                  child: widget.showName
-                      ? SessionSwitcherLabel(
-                          name: session.profile.name,
-                          position: switcher?.position,
-                          total: switcher?.total ?? 0,
-                          leading: _connectionDot(session.connectionState),
-                          onTap: switcher?.onTap,
-                        )
-                      : Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 17),
-                            child: _connectionDot(session.connectionState),
-                          ),
-                        ),
+      child: SwitcherBar(
+        switcher: widget.showName
+            ? SessionSwitcherLabel(
+                name: session.profile.name,
+                position: switcher?.position,
+                total: switcher?.total ?? 0,
+                leading: _connectionDot(session.connectionState),
+                onTap: switcher?.onTap,
+              )
+            : Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 17),
+                  child: _connectionDot(session.connectionState),
                 ),
-                _scaleBtn(),
-                btn(
-                  session.viewOnly
-                      ? l10n.remoteDesktopDisableViewOnly
-                      : l10n.remoteDesktopViewOnly,
-                  session.viewOnly ? Icons.visibility : Icons.mouse,
-                  () => _setViewOnly(session, !session.viewOnly),
-                  // On is the exception: input is not reaching the desktop.
-                  color: on(session.viewOnly),
-                  key: _viewOnlyKey,
-                ),
-                if (!compact)
-                  btn(
-                    l10n.remoteDesktopSendClipboardText,
-                    Icons.content_paste,
-                    connected && !session.viewOnly
-                        ? () => _sendClipboard(session)
-                        : null,
-                  ),
-                btn(
-                  l10n.remoteDesktopShowKeyboard,
-                  Icons.keyboard,
-                  session.viewOnly ? null : _showKeyboard,
-                  key: _keyboardKey,
-                ),
-                btn(
-                  widget.fullScreen
-                      ? l10n.remoteDesktopExitFullScreen
-                      : l10n.remoteDesktopFullScreen,
-                  widget.fullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                  _toggleFullScreen,
-                ),
-                _menuBtn(
-                  key: _moreKey,
-                  text: l10n.remoteDesktopMoreControls,
-                  icon: Icons.more_horiz,
-                  actions: () {
-                    final input = connected && !session.viewOnly;
-                    return [
-                      if (compact)
-                        ContextMenuAction(
-                          text: l10n.remoteDesktopSendClipboardText,
-                          icon: Icons.content_paste,
-                          enabled: input,
-                          onTap: () => _sendClipboard(session),
-                        ),
-                      ContextMenuAction(
-                        text: l10n.remoteDesktopSendCtrlAltDelete,
-                        icon: Icons.keyboard_command_key,
-                        enabled: input,
-                        onTap: () => _sendCtrlAltDelete(session),
-                      ),
-                      if (isMobile)
-                        ContextMenuAction(
-                          text: _touchMode == _TouchMode.trackpad
-                              ? l10n.remoteDesktopUseDirectPointer
-                              : l10n.remoteDesktopUseTouchpadPointer,
-                          icon: _touchMode == _TouchMode.trackpad
-                              ? Icons.touch_app
-                              : Icons.mouse,
-                          onTap: _toggleTouchMode,
-                        ),
-                      ContextMenuAction(
-                        text: l10n.remoteDesktopReconnect,
-                        icon: Icons.refresh,
-                        onTap: () => notifier.reconnect(session.id),
-                      ),
-                      ContextMenuAction(
-                        text: l10n.remoteDesktopCloseSession,
-                        icon: Icons.link_off,
-                        destructive: true,
-                        onTap: () => _closeSession(session),
-                      ),
-                    ];
-                  },
-                ),
-                const SizedBox(width: 7),
-              ],
-            );
-          },
-        ),
+              ),
+        // Most needed first: what does not fit folds into the menu from the
+        // end.
+        actions: [
+          BarAction(
+            key: _viewOnlyKey,
+            icon: session.viewOnly ? Icons.visibility : Icons.mouse,
+            label: session.viewOnly
+                ? l10n.remoteDesktopDisableViewOnly
+                : l10n.remoteDesktopViewOnly,
+            // On is the exception: input is not reaching the desktop.
+            color: session.viewOnly ? scheme.primary : null,
+            onTap: () => _setViewOnly(session, !session.viewOnly),
+          ),
+          BarAction(
+            key: _keyboardKey,
+            icon: Icons.keyboard,
+            label: l10n.remoteDesktopShowKeyboard,
+            onTap: session.viewOnly ? null : _showKeyboard,
+          ),
+          _scaleAction(),
+          BarAction(
+            icon: widget.fullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+            label: widget.fullScreen
+                ? l10n.remoteDesktopExitFullScreen
+                : l10n.remoteDesktopFullScreen,
+            onTap: _toggleFullScreen,
+          ),
+          BarAction(
+            icon: Icons.content_paste,
+            label: l10n.remoteDesktopSendClipboardText,
+            onTap: input ? () => _sendClipboard(session) : null,
+          ),
+        ],
+        menuKey: _moreKey,
+        menuLabel: l10n.remoteDesktopMoreControls,
+        menu: () => [
+          ContextMenuAction(
+            text: l10n.remoteDesktopSendCtrlAltDelete,
+            icon: Icons.keyboard_command_key,
+            enabled: input,
+            onTap: () => _sendCtrlAltDelete(session),
+          ),
+          if (isMobile)
+            ContextMenuAction(
+              text: _touchMode == _TouchMode.trackpad
+                  ? l10n.remoteDesktopUseDirectPointer
+                  : l10n.remoteDesktopUseTouchpadPointer,
+              icon: _touchMode == _TouchMode.trackpad
+                  ? Icons.touch_app
+                  : Icons.mouse,
+              onTap: _toggleTouchMode,
+            ),
+          ContextMenuAction(
+            text: l10n.remoteDesktopReconnect,
+            icon: Icons.refresh,
+            onTap: () => notifier.reconnect(session.id),
+          ),
+          ContextMenuAction(
+            text: l10n.remoteDesktopCloseSession,
+            icon: Icons.link_off,
+            destructive: true,
+            onTap: () => _closeSession(session),
+          ),
+        ],
       ),
     );
   }
@@ -452,7 +403,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
 
   /// Fit, actual size and the zoom steps are one choice, so one button: its
   /// icon says which is in effect, the menu ticks it.
-  Widget _scaleBtn() {
+  BarAction _scaleAction() {
     final l10n = context.l10n;
     ContextMenuAction item(
       String text,
@@ -460,8 +411,8 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       VoidCallback onTap,
     ) => ContextMenuAction(text: text, checked: current, onTap: onTap);
     final custom = _scaleMode == RemoteDesktopScaleMode.custom;
-    return _menuBtn(
-      text: switch (_scaleMode) {
+    return BarAction.menu(
+      label: switch (_scaleMode) {
         RemoteDesktopScaleMode.fit => l10n.remoteDesktopFitToWindow,
         RemoteDesktopScaleMode.actual => l10n.remoteDesktopActualSize,
         RemoteDesktopScaleMode.custom =>
@@ -472,7 +423,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         RemoteDesktopScaleMode.actual => Icons.crop_free,
         RemoteDesktopScaleMode.custom => Icons.zoom_in,
       },
-      actions: () => [
+      menu: () => [
         item(
           l10n.remoteDesktopFitToWindow,
           _scaleMode == RemoteDesktopScaleMode.fit,
@@ -495,32 +446,6 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       ],
     );
   }
-
-  /// A [Btn.icon] that opens a menu under itself: fl_lib's context menu, the
-  /// one the rest of the app's lists open.
-  Widget _menuBtn({
-    Key? key,
-    required String text,
-    required IconData icon,
-    required List<ContextMenuAction> Function() actions,
-  }) => Builder(
-    key: key,
-    builder: (btnContext) => Btn.icon(
-      text: text,
-      icon: Icon(icon, size: 18),
-      onTap: () {
-        final box = btnContext.findRenderObject();
-        showContextMenu(
-          btnContext,
-          actions(),
-          // Hung from the button's lower edge, so the menu drops from it.
-          at: box is RenderBox && box.hasSize
-              ? box.localToGlobal(box.size.bottomCenter(Offset.zero))
-              : null,
-        );
-      },
-    ),
-  );
 
   Widget _connectionDot(ffi.RemoteDesktopConnectionState state) {
     final l10n = context.l10n;
@@ -1023,7 +948,5 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     );
   }
 }
-
-bool remoteDesktopUsesCompactToolbar(double width) => width < 650;
 
 enum _TouchMode { trackpad, direct }

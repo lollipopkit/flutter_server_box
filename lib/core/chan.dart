@@ -398,6 +398,41 @@ abstract final class MethodChans {
     });
   }
 
+  static const _windowControlsChannel = MethodChannel(
+    '${Miscs.pkgName}/window_controls',
+  );
+
+  /// Keeps [WindowControls.zones] at what the platform reports — iPadOS only,
+  /// where a windowed app has its window controls drawn over it.
+  ///
+  /// Read once as well as listened to: the first report can come before this
+  /// handler is set.
+  static void watchWindowControls() {
+    if (!isIOS) return;
+    List<Rect> parse(Object? raw) => [
+      for (final z in (raw as List?) ?? const [])
+        if (z case [final num l, final num t, final num r, final num b])
+          Rect.fromLTRB(l.toDouble(), t.toDouble(), r.toDouble(), b.toDouble()),
+    ];
+    // The reply to the read below can arrive after a push sent later, and
+    // would put back what was there before it.
+    var pushed = false;
+    _windowControlsChannel.setMethodCallHandler((call) async {
+      if (call.method == 'changed') {
+        pushed = true;
+        WindowControls.zones.value = parse(call.arguments);
+      }
+    });
+    _windowControlsChannel
+        .invokeMethod<List<Object?>>('zones')
+        .then((raw) {
+          if (!pushed) WindowControls.zones.value = parse(raw);
+        })
+        .catchError((Object e) {
+          Loggers.app.warning('windowControls', e);
+        });
+  }
+
   /// Register a handler for native -> Flutter callbacks.
   /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}

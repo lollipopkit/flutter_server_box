@@ -90,7 +90,7 @@ class FileBrowserArgs {
   /// Given one, this draws no app bar: the file tab already has a strip across
   /// the top, and a page under it with its own bar is two rows of chrome where
   /// one would do.
-  final ValueNotifier<List<Widget>>? actionsSink;
+  final ValueNotifier<List<BarAction>>? actionsSink;
 
   /// Told which directory is shown, once a listing of it has succeeded.
   ///
@@ -100,7 +100,7 @@ class FileBrowserArgs {
   final void Function(String path)? onPathChanged;
 
   /// Toolbar buttons only this backend has.
-  final List<Widget> Function(FileBrowserHandle)? extraActions;
+  final List<BarAction> Function(FileBrowserHandle)? extraActions;
 
   // `bottomActions` was here. The bottom is an address bar now and carries no
   // per-backend buttons; the only one ever passed was SFTP's upload, which
@@ -1104,7 +1104,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     // directory again — not to rebuild on every progress tick.
     ref.listen(fileTransferProvider, (_, next) => _refreshOnArrival(next));
 
-    final actions = <Widget>[
+    final actions = <BarAction>[
       ...?widget.args.extraActions?.call(this),
       // The same menu a right-click on the directory gives — new folder, new
       // file, and bringing one in from outside — where it can be seen. It was
@@ -1113,29 +1113,27 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       // *server* list and adding a file had no button at all.
       // Said where the `+` would be, so its absence is explained.
       if (_readOnly)
-        Btn.icon(
-          text: l10n.monitorFilesReadOnly,
-          icon: const Icon(Icons.lock_outline, size: 18),
+        BarAction(
+          icon: Icons.lock_outline,
+          label: l10n.monitorFilesReadOnly,
           onTap: () => Toast.show(l10n.monitorFilesReadOnly),
         )
       else if (!widget.args.isPickFile && !widget.args.isPickDir)
-        // Its own context, so the menu drops from this button rather than
-        // opening as a dialog in the middle of the page.
-        Builder(
-          builder: (ctx) => Btn.icon(
-            text: libL10n.add,
-            icon: const Icon(Icons.add, size: 18),
-            onTap: () => showContextMenu(
-              ctx,
-              _createActions,
-              at: contextMenuAnchorBelow(ctx),
-            ),
-          ),
+        // A menu that drops from this button rather than a dialog in the
+        // middle of the page.
+        BarAction.menu(
+          icon: Icons.add,
+          label: libL10n.add,
+          menu: () => _createActions,
         ),
-      _buildViewBtn(),
-      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search, size: 18), onTap: _search.start),
+      _viewAction,
+      BarAction(
+        icon: Icons.search,
+        label: libL10n.search,
+        onTap: _search.start,
+      ),
       if (isDesktop)
-        Btn.icon(text: libL10n.refresh, icon: const Icon(Icons.refresh, size: 18), onTap: refresh),
+        BarAction(icon: Icons.refresh, label: libL10n.refresh, onTap: refresh),
     ];
 
     final body = Column(
@@ -1187,20 +1185,25 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         builder: (_, _) => Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: SafeArea(
-            bottom: false,
-            child: SizedBox(
-              height: kToolbarHeight,
-              // In place of the title and its buttons, as on every other page
-              // that searches in this app.
-              child: InlineSearchBar(
-                controller: _search,
-                child: CustomAppBar(
-                  title: AnimatedSwitcher(
-                    duration: Durations.short3,
-                    child: Text(title, key: ValueKey(title)),
+          child: WindowControlsInset(
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                height: kToolbarHeight,
+                // In place of the title and its buttons, as on every other page
+                // that searches in this app.
+                child: InlineSearchBar(
+                  controller: _search,
+                  child: CustomAppBar(
+                    title: AnimatedSwitcher(
+                      duration: Durations.short3,
+                      child: Text(title, key: ValueKey(title)),
+                    ),
+                    actions: [
+                      for (final action in actions) action.button(),
+                      const SizedBox(width: 7),
+                    ],
                   ),
-                  actions: [...actions, const SizedBox(width: 7)],
                 ),
               ),
             ),
@@ -1828,12 +1831,15 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// How this list is shown: what it is ordered by, and whether it hides the
   /// dotfiles. One menu, because both are the same kind of decision and the
   /// toolbar has no room for a button each.
-  Widget _buildViewBtn() {
-    return _sort.listenVal((value) {
+  BarAction get _viewAction => BarAction.listen(
+    listenable: _sort,
+    build: (_) {
+      final value = _sort.value;
       final hidden = Stores.setting.showHiddenFiles.fetch();
-      return ContextMenuButton(
-        tooltip: libL10n.sort,
-        actions: () => [
+      return BarAction.menu(
+        icon: Icons.sort,
+        label: libL10n.sort,
+        menu: () => [
           for (final by in _SortBy.values)
             ContextMenuAction(
               text: by.i18n,
@@ -1856,13 +1862,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             },
           ),
         ],
-        child: const Padding(
-          padding: EdgeInsets.all(7),
-          child: Icon(Icons.sort, size: 18),
-        ),
       );
-    });
-  }
+    },
+  );
+
 }
 
 @immutable

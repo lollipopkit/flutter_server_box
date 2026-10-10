@@ -249,13 +249,13 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       },
       detailOf: (index) => _sessionDetail(sessions[index - 1]),
       sessionActions: const [],
-      leadingActions: [_sortBtn],
+      leadingActions: [_sortAction],
     );
   }
 
-  Widget get _sortBtn => Btn.icon(
-    text: libL10n.sort,
-    icon: Icon(_SortOrder.stored.icon, size: 18),
+  BarAction get _sortAction => BarAction(
+    icon: _SortOrder.stored.icon,
+    label: libL10n.sort,
     onTap: _showSortSheet,
   );
 
@@ -272,7 +272,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   ) => ListView(
     padding: const EdgeInsets.only(top: 4, bottom: 77),
     children: [
-      SideBarActions(actions: [_sortBtn]),
+      SideBarActions(actions: [_sortAction]),
       if (state.ordered.isNotEmpty) SideBarSection(libL10n.running),
       for (final session in state.ordered)
         SideBarTile(

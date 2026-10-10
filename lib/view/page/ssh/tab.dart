@@ -98,6 +98,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   /// The bar's search: what is typed, and whether the bar is a field at all.
   final _search = InlineSearchController();
 
+  /// The session floating over the tabs, mirrored out of the provider for the
+  /// bar's float button, which is drawn from a listenable.
+  late final ValueNotifier<TerminalSession?> _floating;
+
   /// The picker, and the button for adding a server to pick from.
   ///
   /// A scaffold of its own so the button belongs to the page it acts on,
@@ -123,6 +127,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void initState() {
     super.initState();
+    // Here and not lazily: [dispose] touches it, and `ref` is gone by then.
+    _floating = ValueNotifier(ref.read(terminalShellProvider)?.session);
     Rootfs.removed.addListener(_onRootfsRemoved);
     // Both after the first frame, and in this order: a queued request is what
     // the user just asked for, and it should end up beside the tabs that were
@@ -149,6 +155,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     _sessions.dispose();
     _sortVersion.dispose();
     _search.dispose();
+    _floating.dispose();
     super.dispose();
   }
 
@@ -181,6 +188,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.build(context);
     ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
     ref.listen(terminalCloseAllRequestProvider, (_, _) => _drainCloseAll());
+    ref.listen(
+      terminalShellProvider.select((shell) => shell?.session),
+      (_, session) => _floating.value = session,
+    );
     return ListenBuilder(
       listenable: _sessions,
       builder: () => SbPaneList(
@@ -193,7 +204,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           sessions: _sessions,
           sortVersion: Listenable.merge([_sortVersion, _search]),
           search: _search,
-          actions: [_sortBtn, _searchBtn],
+          actions: [_sortAction, _searchAction],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
           onRootfsOpen: _openRootfs,
@@ -246,28 +257,23 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
     // Both: the bar shows which tab is current *and* how the picker behind it
     // is sorted.
-    listenable: Listenable.merge([_sessions, _sortVersion, _search]),
+    listenable: Listenable.merge([_sessions, _sortVersion]),
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SizedBox(
-      height: SessionTabBar.height,
+    builder: () => SessionTabBar(
+      names: _sessions.names,
+      index: _sessions.index,
+      onTap: _sessions.select,
+      onClose: _confirmClose,
+      detailOf: _sessionAddr,
+      leadingOf: _sessions.statusOf,
+      sessionActions: _serverActions,
+      leadingActions: [_sortAction, _searchAction, _settingsAction],
       // In place of the strip, not over it. Only on the picker: a search here
       // narrows that list, and the tabs beside it are open terminals rather
       // than anything to find.
-      child: InlineSearchBar(
-        controller: _search,
-        child: SessionTabBar(
-          names: _sessions.names,
-          index: _sessions.index,
-          onTap: _sessions.select,
-          onClose: _confirmClose,
-          detailOf: _sessionAddr,
-          leadingOf: _sessions.statusOf,
-          sessionActions: _serverActions,
-          leadingActions: [_sortBtn, _searchBtn, _settingsBtn],
-        ),
-      ),
+      search: _search,
     ),
   );
 
@@ -292,7 +298,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // stays up with none of them open there may be no such terminal. A
         // button that looks tappable and does nothing is worse than no button.
         actions: [
-          if (current == null) _settingsBtn else ..._serverActions,
+          for (final action in current == null
+              ? [_settingsAction]
+              : _serverActions)
+            action.button(),
           const SizedBox(width: 7),
         ],
       );
@@ -612,18 +621,18 @@ extension _Actions on _SSHTabPageState {
   ///
   /// [_floatBtn] is last, which puts it in the corner of the window — the
   /// place a control over the window itself belongs.
-  List<Widget> get _serverActions {
+  List<BarAction> get _serverActions {
     final current = _sessions.current;
     if (current == null) return const [];
     final onServer = current.data.page.args.spi != null;
-    final status = TerminalStatusButton(
+    final status = terminalStatusAction(
       session: current.data.session,
       paneLabel: (pane) =>
           current.data.pageKey.currentState?.tmuxPaneLabel(pane),
     );
     return onServer
-        ? [status, _agentBtn, _snippetBtn, _settingsBtn, _floatBtn]
-        : [status, _snippetBtn, _settingsBtn, _floatBtn];
+        ? [status, _agentAction, _snippetAction, _settingsAction, _floatAction]
+        : [status, _snippetAction, _settingsAction, _floatAction];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,
@@ -635,24 +644,16 @@ extension _Actions on _SSHTabPageState {
   ///
   /// Its own [Consumer] so that only the button rebuilds when the window opens
   /// or closes; the bar around it is driven by the session list.
-  Widget get _floatBtn => Consumer(
-    builder: (_, ref, _) {
+  BarAction get _floatAction => BarAction.listen(
+    listenable: _floating,
+    build: (_) {
       final session = _sessions.current?.data.pageKey.currentState?.session;
-      final floating =
-          session != null &&
-          ref.watch(
-            terminalShellProvider.select(
-              (shell) => identical(shell?.session, session),
-            ),
-          );
-      return Btn.icon(
-        text: floating ? l10n.floatReturnToTab : l10n.floatOverTabs,
-        icon: Icon(
-          floating
-              ? Icons.picture_in_picture_alt
-              : Icons.picture_in_picture_alt_outlined,
-          size: 18,
-        ),
+      final floating = session != null && identical(_floating.value, session);
+      return BarAction(
+        icon: floating
+            ? Icons.picture_in_picture_alt
+            : Icons.picture_in_picture_alt_outlined,
+        label: floating ? l10n.floatReturnToTab : l10n.floatOverTabs,
         onTap: _toggleFloat,
       );
     },
@@ -679,36 +680,36 @@ extension _Actions on _SSHTabPageState {
 
   /// Opens the agent on the terminal that is on screen, the same way the
   /// snippet picker beside it works.
-  Widget get _agentBtn => Btn.icon(
-    text: l10n.askAi,
-    icon: const Icon(Icons.auto_awesome, size: 18),
+  BarAction get _agentAction => BarAction(
+    icon: Icons.auto_awesome,
+    label: l10n.askAi,
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
   );
 
-  Widget get _snippetBtn => Btn.icon(
-    text: libL10n.snippet,
-    icon: const Icon(Icons.code, size: 18),
+  BarAction get _snippetAction => BarAction(
+    icon: Icons.code,
+    label: libL10n.snippet,
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
   );
 
-  Widget get _sortBtn => Btn.icon(
-    text: libL10n.sort,
-    icon: Icon(_SortOrder.stored.icon, size: 18),
+  BarAction get _sortAction => BarAction(
+    icon: _SortOrder.stored.icon,
+    label: libL10n.sort,
     onTap: _showSortMenu,
   );
 
-  Widget get _searchBtn => Btn.icon(
-    text: libL10n.search,
-    icon: const Icon(Icons.search, size: 18),
+  BarAction get _searchAction => BarAction(
+    icon: Icons.search,
+    label: libL10n.search,
     onTap: _search.start,
   );
 
-  Widget get _settingsBtn => Btn.icon(
+  BarAction get _settingsAction => BarAction(
     key: const ValueKey('terminal-settings'),
-    text: libL10n.setting,
-    icon: const Icon(Icons.settings_outlined, size: 18),
+    icon: Icons.settings_outlined,
+    label: libL10n.setting,
     onTap: () => SettingsSectionPage.route.go(
       context,
       SettingsSection.ssh,
