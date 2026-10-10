@@ -5,5 +5,9 @@
 # https://serverbox.lollipopkit.com/store.tar.gz, the address
 # `assets/catalog/repos.toml` lists. A theme is `themes/<id>.toml`, listing its
 # versions, beside `themes/<id>/`, the folder `scripts/publish-themes.py` packs.
+#
+# `apps/<id>/` are the Monitor's web apps (a manifest and the compose files
+# the agent deploys, `docs/schemas/monitor-app.schema.json`); the theme store
+# skips them.
 schema = 1
 name = "ServerBox official"

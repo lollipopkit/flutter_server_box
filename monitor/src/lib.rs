@@ -8,4 +8,5 @@ pub mod core;
 pub mod db;
 pub mod monitoring;
 pub mod ssh;
+pub mod stacks;
 pub mod utils;

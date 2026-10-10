@@ -1,0 +1,54 @@
+# Immich v3.3.1 (AGPL-3.0), https://github.com/immich-app/immich/releases/tag/v3.3.1
+# Unmodified copy of the release asset; used by ServerBox Monitor's Photos app.
+
+# Configurations for hardware-accelerated machine learning
+
+# If using Unraid or another platform that doesn't allow multiple Compose files,
+# you can inline the config for a backend by copying its contents
+# into the immich-machine-learning service in the docker-compose.yml file.
+
+# See https://docs.immich.app/features/ml-hardware-acceleration for info on usage.
+
+services:
+  armnn:
+    devices:
+      - /dev/mali0:/dev/mali0
+    volumes:
+      - /lib/firmware/mali_csffw.bin:/lib/firmware/mali_csffw.bin:ro # Mali firmware for your chipset (not always required depending on the driver)
+      - /usr/lib/libmali.so:/usr/lib/libmali.so:ro # Mali driver for your chipset (always required)
+
+  rknn:
+    security_opt:
+      - systempaths=unconfined
+      - apparmor=unconfined
+    devices:
+      - /dev/dri:/dev/dri
+
+  cpu: {}
+
+  cuda:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  rocm:
+    group_add:
+      - video
+    devices:
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
+
+  openvino:
+    devices:
+      - /dev/dri:/dev/dri
+
+  openvino-wsl:
+    devices:
+      - /dev/dxg:/dev/dxg
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl

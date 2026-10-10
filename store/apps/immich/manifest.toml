@@ -1,0 +1,189 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Immich, as the Monitor's Photos app: deployed with Docker Compose from the
+# files beside this one, shown in a desk window through the agent.
+
+schema = 1
+id = "immich"
+name = "Immich"
+version = "3.3.1"
+homepage = "https://immich.app"
+source = "https://github.com/immich-app/immich/tree/v3.3.1"
+glyph = "photo_library"
+tone = "sky"
+categories = ["photos"]
+notices = ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort"]
+
+[title]
+en = "Photos"
+zh = "相册"
+zh-TW = "相簿"
+
+[description]
+en = "Back up and browse photos and videos with Immich: timeline, albums, people and search."
+zh = "用 Immich 备份和浏览照片与视频：时间线、相册、人物和搜索。"
+zh-TW = "用 Immich 備份和瀏覽照片與影片：時間軸、相簿、人物和搜尋。"
+
+[license]
+spdx = "AGPL-3.0"
+url = "https://github.com/immich-app/immich/blob/v3.3.1/LICENSE"
+accept = true
+
+# docs.immich.app/install/requirements
+[requirements]
+memory_min_mib = 4096
+memory_recommended_mib = 6144
+cores_min = 2
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+IMMICH_VERSION = "v3.3.1"
+DB_USERNAME = "postgres"
+DB_DATABASE_NAME = "immich"
+
+[[secrets]]
+env = "DB_PASSWORD"
+length = 32
+
+[[settings]]
+key = "library"
+type = "path"
+env = "UPLOAD_LOCATION"
+default = "{stack}/library"
+data = true
+label = { en = "Library", zh = "照片库", zh-TW = "照片庫" }
+help = { en = "Where photos and videos are kept.", zh = "照片和视频的存放位置。", zh-TW = "照片和影片的存放位置。" }
+
+[[settings]]
+key = "database"
+type = "path"
+env = "DB_DATA_LOCATION"
+default = "{stack}/postgres"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+help = { en = "A local disk; network shares are not supported.", zh = "必须是本地磁盘，不支持网络共享。", zh-TW = "必須是本機磁碟，不支援網路共用。" }
+
+[[settings]]
+key = "hdd"
+type = "bool"
+default = false
+label = { en = "Database on a hard disk", zh = "数据库在机械硬盘上", zh-TW = "資料庫在傳統硬碟上" }
+on = { DB_STORAGE_TYPE = "HDD" }
+off = { DB_STORAGE_TYPE = "SSD" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "IMMICH_PORT"
+default = 2283
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For the Immich phone app. Off: only through the desk.", zh = "供 Immich 手机 app 连接。关闭时只能通过桌面访问。", zh-TW = "供 Immich 手機 app 連線。關閉時只能透過桌面存取。" }
+on = { IMMICH_BIND = "0.0.0.0" }
+off = { IMMICH_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "ml"
+type = "choice"
+default = "cpu"
+label = { en = "Machine learning acceleration", zh = "机器学习加速", zh-TW = "機器學習加速" }
+
+  [[settings.options]]
+  value = "cpu"
+  label = { en = "CPU" }
+  env = { ML_BACKEND = "cpu", ML_IMAGE_SUFFIX = "" }
+
+  [[settings.options]]
+  value = "cuda"
+  label = { en = "NVIDIA (CUDA)" }
+  env = { ML_BACKEND = "cuda", ML_IMAGE_SUFFIX = "-cuda" }
+  suggest = { gpu = "nvidia" }
+
+  [[settings.options]]
+  value = "openvino-wsl"
+  label = { en = "Intel (OpenVINO, WSL)" }
+  env = { ML_BACKEND = "openvino-wsl", ML_IMAGE_SUFFIX = "-openvino" }
+  suggest = { gpu = "intel", wsl = true }
+
+  [[settings.options]]
+  value = "openvino"
+  label = { en = "Intel (OpenVINO)" }
+  env = { ML_BACKEND = "openvino", ML_IMAGE_SUFFIX = "-openvino" }
+  suggest = { gpu = "intel", wsl = false }
+
+  [[settings.options]]
+  value = "rocm"
+  label = { en = "AMD (ROCm)" }
+  env = { ML_BACKEND = "rocm", ML_IMAGE_SUFFIX = "-rocm" }
+  suggest = { gpu = "amd", wsl = false }
+
+  [[settings.options]]
+  value = "armnn"
+  label = { en = "Arm Mali (Arm NN)" }
+  env = { ML_BACKEND = "armnn", ML_IMAGE_SUFFIX = "-armnn" }
+
+  [[settings.options]]
+  value = "rknn"
+  label = { en = "Rockchip (RKNN)" }
+  env = { ML_BACKEND = "rknn", ML_IMAGE_SUFFIX = "-rknn" }
+
+[[settings]]
+key = "transcode"
+type = "choice"
+default = "cpu"
+label = { en = "Video transcoding acceleration", zh = "视频转码加速", zh-TW = "影片轉碼加速" }
+
+  [[settings.options]]
+  value = "cpu"
+  label = { en = "CPU" }
+  env = { TRANSCODE_BACKEND = "cpu" }
+
+  [[settings.options]]
+  value = "nvenc"
+  label = { en = "NVIDIA (NVENC)" }
+  env = { TRANSCODE_BACKEND = "nvenc" }
+  suggest = { gpu = "nvidia" }
+
+  [[settings.options]]
+  value = "vaapi-wsl"
+  label = { en = "VA-API (WSL)" }
+  env = { TRANSCODE_BACKEND = "vaapi-wsl" }
+  suggest = { gpu = "intel", wsl = true }
+
+  [[settings.options]]
+  value = "quicksync"
+  label = { en = "Intel (Quick Sync)" }
+  env = { TRANSCODE_BACKEND = "quicksync" }
+  suggest = { gpu = "intel", wsl = false }
+
+  [[settings.options]]
+  value = "vaapi"
+  label = { en = "VA-API (AMD, Intel)" }
+  env = { TRANSCODE_BACKEND = "vaapi" }
+  suggest = { gpu = "amd", wsl = false }
+
+  [[settings.options]]
+  value = "rkmpp"
+  label = { en = "Rockchip (RKMPP)" }
+  env = { TRANSCODE_BACKEND = "rkmpp" }
+
+[[settings]]
+key = "timezone"
+type = "text"
+env = "TZ"
+optional = true
+pattern = "^[A-Za-z0-9/_+-]{1,64}$"
+label = { en = "Time zone", zh = "时区", zh-TW = "時區" }
+help = { en = "A TZ database name such as Asia/Shanghai; the host's when empty.", zh = "TZ 数据库名称，例如 Asia/Shanghai；留空时使用主机的时区。", zh-TW = "TZ 資料庫名稱，例如 Asia/Taipei；留空時使用主機的時區。" }
