@@ -18,7 +18,7 @@ void main() {
     void Function(int)? onTap,
     void Function(int)? onClose,
     String? Function(int)? detailOf,
-    List<Widget> sessionActions = const [],
+    List<BarAction> sessionActions = const [],
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 800);
@@ -80,7 +80,13 @@ void main() {
     // The shortest name there is, so a row left at `MainAxisSize.max` — which
     // would take everything the actions had not claimed, around 350 — is
     // unmistakable next to one that hugs its contents.
-    await pump(tester, index: 3, sessionActions: const [Icon(Icons.abc)]);
+    await pump(
+      tester,
+      index: 3,
+      sessionActions: [
+        BarAction(icon: Icons.abc, label: 'abc', onTap: () {}),
+      ],
+    );
 
     final ink = tester.getSize(find.byType(InkWell).first);
     expect(ink.width, lessThan(200));

@@ -215,31 +215,19 @@ extension _Widgets on _BenchmarkTabPageState {
       // and the other ways out as actions on the right. The chevron is what
       // makes that reading available at all — it says "one of several" where a
       // plain title says "this page".
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(SessionTabBar.height),
-        child: WindowControlsInset(
-          safeArea: true,
-          child: SizedBox(
-            height: SessionTabBar.height,
-            child: Row(
-              children: [
-                Expanded(
-                  child: SessionSwitcherLabel(
-                    name: spi.name,
-                    icon: Icons.dns_outlined,
-                    onTap: () => _pickServer(false),
-                  ),
-                ),
-                Btn.icon(
-                  text: l10n.history,
-                  icon: const Icon(Icons.history, size: 18),
-                  onTap: () => _showHistorySheet(servers),
-                ),
-                const SizedBox(width: 7),
-              ],
-            ),
-          ),
+      appBar: SwitcherBar(
+        switcher: SessionSwitcherLabel(
+          name: spi.name,
+          icon: Icons.dns_outlined,
+          onTap: () => _pickServer(false),
         ),
+        actions: [
+          BarAction(
+            icon: Icons.history,
+            label: l10n.history,
+            onTap: () => _showHistorySheet(servers),
+          ),
+        ],
       ),
     );
   }
@@ -262,39 +250,32 @@ extension _Widgets on _BenchmarkTabPageState {
 
     return Scaffold(
       // No title of its own: the nav rail beside this already names the tab.
-      // The bar is the search field while a search is on, and the buttons
-      // otherwise — the same strip changing rather than one control swapped
-      // for another, as on every other tab that searches.
-      //
-      // An explicit leading for the same reason as the run column's: with none,
-      // `CustomAppBar` supplies a back button wired to `onCloseDetail`, and
-      // this column is not a detail — it is the thing a detail is closed back
-      // to.
-      appBar: CustomAppBar(
-        // In a sheet the way out is dragging it away or the button that opened
-        // it; a back arrow there would be a third answer to a question already
-        // answered twice.
-        leading: const SizedBox.shrink(),
-        title: InlineSearchBar(
-          controller: _search,
-          hint: libL10n.server,
-          child: const SizedBox.shrink(),
-        ),
-        actions: [
-          Btn.icon(
-            text: libL10n.search,
-            icon: const Icon(Icons.search, size: 18),
-            onTap: _search.start,
+      // The head every list column has — the same row of buttons, centred,
+      // and the field it becomes while a search is on.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(SideBarActions.height),
+        child: WindowControlsInset(
+          safeArea: true,
+          child: SideBarActions(
+            search: _search,
+            searchHint: libL10n.server,
+            actions: [
+              BarAction(
+                icon: Icons.search,
+                label: libL10n.search,
+                onTap: _search.start,
+              ),
+              // Not in the sheet: with one column the run is already on
+              // screen behind it, and it carries this itself.
+              if (servers.isNotEmpty && !inSheet)
+                BarAction(
+                  icon: Icons.play_arrow,
+                  label: l10n.benchmark,
+                  onTap: () => _pickServer(split),
+                ),
+            ],
           ),
-          // Not in the sheet: with one column the run is already on screen
-          // behind it, and it carries this itself.
-          if (servers.isNotEmpty && !inSheet)
-            Btn.icon(
-              text: l10n.benchmark,
-              icon: const Icon(Icons.play_arrow, size: 18),
-              onTap: () => _pickServer(split),
-            ),
-        ],
+        ),
       ),
       body: servers.isEmpty
           ? _centered(l10n.benchmarkNoServers)

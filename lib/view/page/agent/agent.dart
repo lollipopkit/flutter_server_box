@@ -28,6 +28,22 @@ class _AgentPageState extends ConsumerState<AgentPage>
   @override
   bool get wantKeepAlive => true;
 
+  /// Sends this conversation floating, so it stays reachable from the other
+  /// tabs, or stops it. On by default, but the window only comes along once
+  /// there is a chat to follow — see `AgentChats.engaged`.
+  BarAction _floatAction() {
+    final floating = ref.watch(agentShellProvider) != FloatShellMode.hidden;
+    return BarAction(
+      icon: floating
+          ? Icons.picture_in_picture_alt
+          : Icons.picture_in_picture_alt_outlined,
+      label: context.l10n.floatOverTabs,
+      // On in the accent, as the server tab's globe toggle is.
+      color: floating ? Theme.of(context).colorScheme.primary : null,
+      onTap: ref.read(agentShellProvider.notifier).toggle,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -53,32 +69,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       sideBuilder: (_) => const AgentHistoryPanel(inSheet: false),
       builder: (_, split) => AgentConversationView(
         compact: !split,
-        headerTrailing: const _FloatToggle(),
-      ),
-    );
-  }
-}
-
-/// Sends this conversation floating, so it stays reachable from the other
-/// tabs, or stops it. On by default, but the window only comes along once
-/// there is a chat to follow — see `AgentChats.engaged`.
-class _FloatToggle extends ConsumerWidget {
-  const _FloatToggle();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final floating = ref.watch(agentShellProvider) != FloatShellMode.hidden;
-    // The tab's bar, so the 18pt `Btn.icon` the other tabs' bars use — on in
-    // the accent, as the server tab's globe toggle is.
-    return Btn.icon(
-      text: context.l10n.floatOverTabs,
-      onTap: ref.read(agentShellProvider.notifier).toggle,
-      icon: Icon(
-        floating
-            ? Icons.picture_in_picture_alt
-            : Icons.picture_in_picture_alt_outlined,
-        size: 18,
-        color: floating ? Theme.of(context).colorScheme.primary : null,
+        headerAction: _floatAction(),
       ),
     );
   }

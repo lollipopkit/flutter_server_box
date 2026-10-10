@@ -1,11 +1,13 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/tag_switcher.dart';
 
 class SnippetListPage extends ConsumerStatefulWidget {
   const SnippetListPage({super.key});
@@ -112,6 +114,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
             onTagChanged: (tag) => _tag.value = tag,
             initTag: _tag.value,
             search: _search,
+            split: split,
             onSearch: _search.start,
             onAdd: () => _edit(null, split),
           ),
@@ -214,6 +217,10 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onSearch;
   final VoidCallback onAdd;
 
+  /// Beside the editor, the head of a list column; on one column, every
+  /// tab's bar.
+  final bool split;
+
   /// The bar's search — see [InlineSearchBar]. It was a results page, which
   /// put a read-only copy of the list over the list.
   final InlineSearchController search;
@@ -224,48 +231,80 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onTagChanged,
     required this.onSearch,
     required this.onAdd,
+    required this.split,
     required this.search,
   });
 
   @override
   Widget build(BuildContext context) {
-    // In place of the switcher, as on every other tab that searches.
+    if (!split) {
+      return ListenableBuilder(
+        listenable: tags,
+        builder: (context, _) {
+          final all = tags.value.toList();
+          return SwitcherBar(
+            search: search,
+            switcher: tagSwitcherLabel(
+              tags: all,
+              current: initTag,
+              onTap: all.isEmpty
+                  ? null
+                  : () => showTagSheet(
+                      context,
+                      tags: all,
+                      current: initTag,
+                      onPick: onTagChanged,
+                    ),
+            ),
+            actions: [
+              BarAction(icon: Icons.search, label: libL10n.search, onTap: onSearch),
+              BarAction(icon: Icons.add, label: libL10n.add, onTap: onAdd),
+            ],
+          );
+        },
+      );
+    }
+    // Beside the editor: the head of the column, as every other tab's list
+    // has — the same row of buttons, centred, and the field it becomes.
     return WindowControlsInset(
       safeArea: true,
-      child: InlineSearchBar(
-        controller: search,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 10, right: 4),
-          child: Row(
-            children: [
-              TagSwitcher(
-                tags: tags,
-                onTagChanged: onTagChanged,
-                initTag: initTag,
-                singleLine: true,
-              ).expanded(),
-              Btn.icon(
-                text: libL10n.search,
-                icon: const Icon(Icons.search, size: 20),
-                onTap: onSearch,
-              ),
-              // Beside search rather than floating over the list, which is where
-              // every other page of this app puts the same action. A button that
-              // sits on top of the content also covers the last row of it, and
-              // needed two of itself — one size for a pane and another for a full
-              // width — for nothing the bar has to think about.
-              Btn.icon(
-                text: libL10n.add,
-                icon: const Icon(Icons.add, size: 20),
-                onTap: onAdd,
-              ),
-            ],
+      child: SideBarActions(
+        search: search,
+        actions: [
+          BarAction.listen(
+            listenable: tags,
+            build: (context) => BarAction.menu(
+              icon: MingCute.hashtag_line,
+              label: initTag.isEmpty ? libL10n.tag : '#$initTag',
+              // On in the accent while it filters, as a toggle is.
+              color: initTag.isEmpty
+                  ? null
+                  : Theme.of(context).colorScheme.primary,
+              menu: () => [
+                ContextMenuAction(
+                  text: libL10n.all,
+                  checked: initTag.isEmpty,
+                  onTap: () => onTagChanged(TagSwitcher.kDefaultTag),
+                ),
+                for (final tag in tags.value)
+                  ContextMenuAction(
+                    text: tag,
+                    checked: tag == initTag,
+                    onTap: () => onTagChanged(tag),
+                  ),
+              ],
+            ),
           ),
-        ),
+          BarAction(icon: Icons.search, label: libL10n.search, onTap: onSearch),
+          // Beside search rather than floating over the list, which is where
+          // every other page of this app puts the same action.
+          BarAction(icon: Icons.add, label: libL10n.add, onTap: onAdd),
+        ],
       ),
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(TagSwitcher.kTagBtnHeight);
+  Size get preferredSize =>
+      Size.fromHeight(split ? SideBarActions.height : SwitcherBar.height);
 }

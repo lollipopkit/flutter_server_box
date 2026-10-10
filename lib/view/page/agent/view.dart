@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
     show Chats, Composer, LlmConversation, LlmStores, llmL10n;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
@@ -17,12 +18,7 @@ class AgentHeaderActions extends StatelessWidget {
     super.key,
     this.showConversations = false,
     this.scope,
-    this.tabBar = false,
   });
-
-  /// Drawn in the tab's bar, which is drawn as every other tab's — see
-  /// [agentHeaderButton].
-  final bool tabBar;
 
   /// Whether to carry the history and new-chat buttons.
   ///
@@ -39,45 +35,38 @@ class AgentHeaderActions extends StatelessWidget {
       children: [
         if (showConversations) ...[
           agentHeaderButton(
-            tabBar: tabBar,
             tooltip: context.l10n.askAiHistory,
             onTap: () => showAgentHistorySheet(context, scope: scope),
             icon: Icons.history,
           ),
           agentHeaderButton(
-            tabBar: tabBar,
             tooltip: context.l10n.askAiNewConversation,
             onTap: () => AgentChats.startNew(scope),
             icon: Icons.add,
           ),
         ],
         // Only the app-wide Agent opens connections of its own.
-        if (scope == null) _AdHocSessionsButton(tabBar: tabBar),
+        if (scope == null) const _AdHocSessionsButton(),
       ],
     );
   }
 }
 
-/// One button of an Agent header.
-///
-/// In the tab's bar, the `Btn.icon` at 18pt that every other tab's bar draws
-/// its actions with. Elsewhere — the floating shell's title bar, the terminal's
-/// sheet — an `IconButton` at [floatHeaderIconSize], which those bars are
-/// measured for.
+/// One button of an Agent header outside the tab — the floating shell's title
+/// bar, the terminal's sheet — an `IconButton` at [floatHeaderIconSize], which
+/// those bars are measured for. The tab's bar draws [BarAction]s.
 ///
 /// [badge] is a count drawn on the icon's corner.
 Widget agentHeaderButton({
-  required bool tabBar,
   required String tooltip,
   required VoidCallback onTap,
   required IconData icon,
   int? badge,
 }) {
-  final glyph = Icon(icon, size: tabBar ? 18 : floatHeaderIconSize);
+  final glyph = Icon(icon, size: floatHeaderIconSize);
   final drawn = badge == null
       ? glyph
       : Badge.count(count: badge, child: glyph);
-  if (tabBar) return Btn.icon(text: tooltip, icon: drawn, onTap: onTap);
   return IconButton(tooltip: tooltip, onPressed: onTap, icon: drawn);
 }
 
@@ -87,58 +76,56 @@ Widget agentHeaderButton({
 /// no server row — and a connection the model opened and forgot about should
 /// not be something only the model knows exists.
 class _AdHocSessionsButton extends ConsumerWidget {
-  const _AdHocSessionsButton({required this.tabBar});
-
-  final bool tabBar;
+  const _AdHocSessionsButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sessions = ref.watch(adHocSshSessionsProvider);
     if (sessions.isEmpty) return const SizedBox.shrink();
     return agentHeaderButton(
-      tabBar: tabBar,
       tooltip: context.l10n.agentAdHocSessions,
-      onTap: () => _show(context),
+      onTap: () => _showAdHocSessions(context),
       icon: Icons.cable,
       badge: sessions.length,
     );
   }
+}
 
-  void _show(BuildContext context) {
-    context.showRoundDialog(
-      title: context.l10n.agentAdHocSessions,
-      child: Consumer(
-        builder: (context, ref, _) {
-          final sessions = ref.watch(adHocSshSessionsProvider).values.toList();
-          if (sessions.isEmpty) return Text(libL10n.empty);
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final session in sessions)
-                ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.cable, size: 20),
-                  title: Text(session.label),
-                  subtitle: Text(
-                    session.id,
-                    style: const TextStyle(fontFamily: 'monospace'),
-                  ),
-                  trailing: IconButton(
-                    tooltip: libL10n.close,
-                    onPressed: () => ref
-                        .read(adHocSshSessionsProvider.notifier)
-                        .close(session.id),
-                    icon: const Icon(Icons.link_off),
-                  ),
+/// The connections the Agent opened on its own, each with a way to close it.
+void _showAdHocSessions(BuildContext context) {
+  context.showRoundDialog(
+    title: context.l10n.agentAdHocSessions,
+    child: Consumer(
+      builder: (context, ref, _) {
+        final sessions = ref.watch(adHocSshSessionsProvider).values.toList();
+        if (sessions.isEmpty) return Text(libL10n.empty);
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final session in sessions)
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.cable, size: 20),
+                title: Text(session.label),
+                subtitle: Text(
+                  session.id,
+                  style: const TextStyle(fontFamily: 'monospace'),
                 ),
-            ],
-          );
-        },
-      ),
-      actions: [Btn.ok()],
-    );
-  }
+                trailing: IconButton(
+                  tooltip: libL10n.close,
+                  onPressed: () => ref
+                      .read(adHocSshSessionsProvider.notifier)
+                      .close(session.id),
+                  icon: const Icon(Icons.link_off),
+                ),
+              ),
+          ],
+        );
+      },
+    ),
+    actions: [Btn.ok()],
+  );
 }
 
 /// A chat of [scope] and the box you type into: fl_pi_llm_ui's conversation
@@ -152,7 +139,7 @@ class AgentConversationView extends StatelessWidget {
     required this.compact,
     this.scope,
     this.showHeader = true,
-    this.headerTrailing,
+    this.headerAction,
   });
 
   /// Too narrow for the chat list to sit beside it, so the header opens it.
@@ -165,7 +152,7 @@ class AgentConversationView extends StatelessWidget {
   final bool showHeader;
 
   /// After the chat's own buttons.
-  final Widget? headerTrailing;
+  final BarAction? headerAction;
 
   @override
   Widget build(BuildContext context) {
@@ -222,76 +209,113 @@ class AgentConversationView extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, String? id) {
-    return ListenableBuilder(
-      listenable: LlmStores.chat.changes,
-      builder: (context, _) {
-        final title = switch (id == null ? null : LlmStores.chat.fetch(id)) {
-          // As the list names it: an empty title is no title.
-          final meta? when meta.title?.isNotEmpty ?? false => meta.title!,
-          _? => context.l10n.askAiUntitledConversation,
-          null => context.l10n.askAiNewConversation,
-        };
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(13, 7, 7, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(9),
-                  // Too narrow for the list beside it: the title is the way to
-                  // it, as the terminal tab's session name is.
-                  onTap: compact
-                      ? () => showAgentHistorySheet(context, scope: scope)
-                      : null,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
-                    child: Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        if (compact) const Icon(Icons.expand_more, size: 18),
-                        // Writing a reply or running a tool: the one sign of
-                        // it that stays when the reply is scrolled away.
-                        AgentBusyBuilder(
-                          scope: scope,
-                          builder: (_, activity) =>
-                              activity == AgentActivity.idle
-                              ? UIs.placeholder
-                              : Padding(
-                                  padding: const EdgeInsets.only(left: 9),
-                                  child: AgentActivityMark(activity),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              // Only where the list is out of sight: beside it, the list's
-              // own `+` is the one, and a second here was the same button
-              // twice in one window.
-              if (id != null && compact)
-                agentHeaderButton(
-                  tabBar: true,
-                  tooltip: context.l10n.askAiNewConversation,
-                  onTap: () => AgentChats.startNew(scope),
-                  icon: Icons.add,
-                ),
-              AgentHeaderActions(scope: scope, tabBar: true),
-              ?headerTrailing,
-            ],
-          ),
+    return Consumer(
+      builder: (context, ref, _) {
+        // Only the app-wide Agent opens connections of its own.
+        final adHoc = scope == null
+            ? ref.watch(adHocSshSessionsProvider)
+            : const <String, Object>{};
+        final actions = [
+          // Only where the list is out of sight: beside it, the list's own
+          // `+` is the one, and a second here was the same button twice in
+          // one window.
+          if (id != null && compact)
+            BarAction(
+              icon: Icons.add,
+              label: context.l10n.askAiNewConversation,
+              onTap: () => AgentChats.startNew(scope),
+            ),
+          // How many hosts the Agent has open that are not configured
+          // servers. They are invisible otherwise — no card, no server row.
+          if (adHoc.isNotEmpty)
+            BarAction(
+              icon: Icons.cable,
+              label: context.l10n.agentAdHocSessions,
+              badge: adHoc.length,
+              onTap: () => _showAdHocSessions(context),
+            ),
+          ?headerAction,
+        ];
+        return ListenableBuilder(
+          listenable: LlmStores.chat.changes,
+          builder: (context, _) {
+            final title = switch (id == null ? null : LlmStores.chat.fetch(id)) {
+              // As the list names it: an empty title is no title.
+              final meta? when meta.title?.isNotEmpty ?? false => meta.title!,
+              _? => context.l10n.askAiUntitledConversation,
+              null => context.l10n.askAiNewConversation,
+            };
+            return compact
+                ? _buildBar(context, title, actions)
+                : _buildPaneHeader(title, actions);
+          },
         );
       },
+    );
+  }
+
+  /// One column: every tab's bar. The title is the way to the list, as the
+  /// terminal tab's session name is.
+  Widget _buildBar(BuildContext context, String title, List<BarAction> actions) {
+    return AgentBusyBuilder(
+      scope: scope,
+      builder: (context, activity) => SwitcherBar(
+        switcher: SessionSwitcherLabel(
+          name: title,
+          icon: MingCute.magic_2_fill,
+          // Writing a reply or running a tool: the one sign of it that stays
+          // when the reply is scrolled away.
+          leading: activity == AgentActivity.idle
+              ? null
+              : AgentActivityMark(activity),
+          onTap: () => showAgentHistorySheet(context, scope: scope),
+        ),
+        actions: actions,
+      ),
+    );
+  }
+
+  /// Beside the list of chats, which already says how to reach the others.
+  Widget _buildPaneHeader(String title, List<BarAction> actions) {
+    return WindowControlsInset(
+      safeArea: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(13, 7, 7, 0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    AgentBusyBuilder(
+                      scope: scope,
+                      builder: (_, activity) => activity == AgentActivity.idle
+                          ? UIs.placeholder
+                          : Padding(
+                              padding: const EdgeInsets.only(left: 9),
+                              child: AgentActivityMark(activity),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            for (final action in actions) action.button(),
+          ],
+        ),
+      ),
     );
   }
 
