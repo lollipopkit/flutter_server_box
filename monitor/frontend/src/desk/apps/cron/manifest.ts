@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'cron',
+  publisher: 'serverbox',
+  name: 'cron',
   title: (ll) => ll.cron(),
   glyph: 'schedule',
   tone: 'amber',

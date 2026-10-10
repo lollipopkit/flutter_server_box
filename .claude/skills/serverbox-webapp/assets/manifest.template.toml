@@ -1,10 +1,13 @@
 #:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
-# <Name>, as a ServerBox Monitor web app. Put this file in store/apps/<id>/
+# <Name>, as a ServerBox Monitor web app. Put this file in
+# store/apps/<publisher>.<name>/
 # beside the compose files it names.
 
 schema = 1
-id = "example"                      # the folder's name; lowercase, digits, -
-name = "Example"                    # the upstream project's name
+publisher = "example"               # who makes it; lowercase, digits, _ (2-24)
+name = "example"                    # the app's name; lowercase, digits, _ (1-24)
+project = "Example"                 # the upstream project's name, as shown
+developer = "Example Inc."          # who makes it, shown before deploying
 version = "1.0.0"                   # the upstream release the compose files pin
 homepage = "https://example.com"
 source = "https://github.com/example/example/tree/v1.0.0"

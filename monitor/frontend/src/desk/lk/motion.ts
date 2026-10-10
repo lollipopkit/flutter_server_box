@@ -22,3 +22,13 @@ export function viewIn(node: HTMLElement, key: unknown) {
 export function viewEnter(node: HTMLElement, on: boolean = true) {
   if (on) node.classList.add('lk-view-in')
 }
+
+/// A CSS time ([value], as `getPropertyValue` reads a `--dur-*` token) in
+/// milliseconds. Both units: the production build's minifier writes
+/// `677ms` as `.677s`, which `parseFloat` alone reads as 0.677.
+export function cssMs(value: string, fallback = 0): number {
+  const v = value.trim()
+  const n = parseFloat(v)
+  if (!Number.isFinite(n)) return fallback
+  return v.endsWith('ms') ? n : v.endsWith('s') ? n * 1000 : n
+}

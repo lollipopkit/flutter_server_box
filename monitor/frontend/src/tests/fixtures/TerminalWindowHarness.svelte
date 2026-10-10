@@ -13,7 +13,7 @@
 
   const handle = {
     id: 'w1',
-    appId: 'terminal',
+    appId: 'serverbox.terminal',
     appState: null,
     setAppState() {},
     setTitle() {},

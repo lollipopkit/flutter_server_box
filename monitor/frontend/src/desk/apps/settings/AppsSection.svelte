@@ -8,6 +8,7 @@
   import { AppIcon, Group, Row, Spinner, Switch } from '../../lk'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
+  import StoreLink from './StoreLink.svelte'
   import InstalledApps from './InstalledApps.svelte'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -58,6 +59,7 @@
     </Group>
 
     {#if admin}
+      <StoreLink />
       <InstalledApps onchange={desk.reloadApps} />
     {/if}
   {/if}

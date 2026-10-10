@@ -23,7 +23,7 @@ function handleOf(desk: Desk, id: string): WindowHandle {
 describe('openWindow', () => {
   it('opens another window of the app with the state given, up to its limit', () => {
     off = registerApp({
-      id: 'acme_twin',
+      publisher: 'acme', name: 'twin',
       title: 'Twin',
       glyph: 'folder',
       tone: 'soft',
@@ -31,19 +31,19 @@ describe('openWindow', () => {
       load: () => import('./fixtures/AppSettingsPage.svelte'),
     })
     const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
-    const first = desk.open('acme_twin')!
+    const first = desk.open('acme.twin')!
     const win = handleOf(desk, first)
 
     expect(win.canOpenWindow).toBe(true)
     const second = win.openWindow({ path: '/srv' })
     expect(second).not.toBeNull()
     expect(second).not.toBe(first)
-    expect(desk.windows.get(second!)).toMatchObject({ appId: 'acme_twin', appState: { path: '/srv' } })
+    expect(desk.windows.get(second!)).toMatchObject({ appId: 'acme.twin', appState: { path: '/srv' } })
 
     // At the limit: no third window, and the item says so.
     expect(win.canOpenWindow).toBe(false)
     expect(win.openWindow()).toBeNull()
-    expect(desk.windows.of('acme_twin')).toHaveLength(2)
+    expect(desk.windows.of('acme.twin')).toHaveLength(2)
 
     // `closed` tells an unmounting app its window is gone for good.
     expect(win.closed).toBe(false)
@@ -53,19 +53,19 @@ describe('openWindow', () => {
 
   it('is closed to an app of one window', () => {
     off = registerApp({
-      id: 'acme_single',
+      publisher: 'acme', name: 'single',
       title: 'Single',
       glyph: 'folder',
       tone: 'soft',
       load: () => import('./fixtures/AppSettingsPage.svelte'),
     })
     const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
-    const id = desk.open('acme_single')!
+    const id = desk.open('acme.single')!
     const win = handleOf(desk, id)
 
     expect(win.canOpenWindow).toBe(false)
     expect(win.openWindow()).toBe(id)
-    expect(desk.windows.of('acme_single')).toHaveLength(1)
+    expect(desk.windows.of('acme.single')).toHaveLength(1)
   })
 })
 
@@ -73,7 +73,7 @@ describe('merging windows with panes', () => {
   async function twoWindows() {
     const { readLayout } = await import('../desk/panes')
     off = registerApp({
-      id: 'acme_term',
+      publisher: 'acme', name: 'term',
       title: 'Term',
       glyph: 'terminal',
       tone: 'ink',
@@ -82,8 +82,8 @@ describe('merging windows with panes', () => {
       load: () => import('./fixtures/AppSettingsPage.svelte'),
     })
     const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
-    const a = desk.open('acme_term', { appState: { n: 1 } })!
-    const b = desk.open('acme_term', { appState: { n: 2 } })!
+    const a = desk.open('acme.term', { appState: { n: 1 } })!
+    const b = desk.open('acme.term', { appState: { n: 2 } })!
     const layoutOf = (id: string) => readLayout(desk.windows.get(id)!.appState, id)
     return { desk, a, b, layoutOf }
   }
@@ -115,7 +115,7 @@ describe('merging windows with panes', () => {
 
     expect(desk.detachTab(a, tabId, { x: 400, y: 300 })).toBe(true)
     expect(layoutOf(a).tabs).toHaveLength(1)
-    const opened = desk.windows.of('acme_term').find((w) => w.id !== a)!
+    const opened = desk.windows.of('acme.term').find((w) => w.id !== a)!
     expect(layoutOf(opened.id).tabs[0].root).toEqual({ kind: 'pane', id: b, state: { n: 2 } })
 
     const onlyTab = layoutOf(a).tabs[0].id
@@ -124,7 +124,7 @@ describe('merging windows with panes', () => {
 
   it('merges only windows of one app that has panes', async () => {
     const { desk, a } = await twoWindows()
-    const other = desk.open('settings')!
+    const other = desk.open('serverbox.settings')!
     desk.mergeWindow(other, { windowId: a, kind: 'tab' })
     expect(desk.windows.get(other)).toBeDefined()
   })
@@ -138,7 +138,7 @@ describe('a window with panes', () => {
     const { probes } = await import('./fixtures/PaneProbe.svelte')
     probes.length = 0
     off = registerApp({
-      id: 'acme_panes',
+      publisher: 'acme', name: 'panes',
       title: 'Panes',
       glyph: 'terminal',
       tone: 'ink',
@@ -146,7 +146,7 @@ describe('a window with panes', () => {
       load: () => import('./fixtures/PaneProbe.svelte'),
     })
     const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
-    const id = desk.open('acme_panes', { appState: { n: 1 } })!
+    const id = desk.open('acme.panes', { appState: { n: 1 } })!
     render(PaneHostHarness, { desk, id })
     await tick()
 

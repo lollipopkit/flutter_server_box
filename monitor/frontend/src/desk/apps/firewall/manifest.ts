@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'firewall',
+  publisher: 'serverbox',
+  name: 'firewall',
   title: (ll) => ll.fwTitle(),
   glyph: 'shield_lock',
   tone: 'pale',

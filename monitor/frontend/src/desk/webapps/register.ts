@@ -26,7 +26,8 @@ function title(t: InstalledApp['manifest']['title']): () => string {
 export function webAppSpec(app: InstalledApp): AppSpec {
   const m = app.manifest
   const spec = defineApp({
-    id: m.id,
+    publisher: m.publisher,
+    name: m.name,
     title: title(m.title),
     keywords: () => m.keywords ?? [],
     glyph: m.glyph,

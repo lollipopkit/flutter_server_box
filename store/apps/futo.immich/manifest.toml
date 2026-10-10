@@ -3,8 +3,10 @@
 # files beside this one, shown in a desk window through the agent.
 
 schema = 1
-id = "immich"
-name = "Immich"
+publisher = "futo"
+name = "immich"
+project = "Immich"
+developer = "Immich (FUTO)"
 version = "3.3.1"
 homepage = "https://immich.app"
 source = "https://github.com/immich-app/immich/tree/v3.3.1"

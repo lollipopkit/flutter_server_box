@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'benchmark',
+  publisher: 'serverbox',
+  name: 'benchmark',
   title: (ll) => ll.benchmark(),
   glyph: 'speed',
   tone: 'amber',

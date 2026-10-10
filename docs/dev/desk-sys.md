@@ -1,6 +1,6 @@
 # The desk's app framework (`sys`)
 
-The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, launchpad, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
+The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, Apps, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
 
 Status: phases 1–5 are implemented (the SDK is not published yet) (see [Phases](#phases)); the rest is the agreed design.
 
@@ -8,7 +8,7 @@ Status: phases 1–5 are implemented (the SDK is not published yet) (see [Phases
 
 | Kind | Code | Runs in | Reaches |
 |---|---|---|---|
-| `system` | Svelte components in this repo (`desk/apps/<id>/`) | The panel's page | `sys`, `lk`, the agent's HTTP API within the account's grants |
+| `system` | Svelte components in this repo (`desk/apps/<name>/`) | The panel's page | `sys`, `lk`, the agent's HTTP API within the account's grants |
 | `web` | A static bundle (HTML/JS/CSS) installed on the agent | A sandboxed iframe | `sys` only, over a message bridge. No agent API, no network |
 | `wasm` | A `web` bundle plus a WASI component installed on the agent | Frontend: a sandboxed iframe. Backend: the agent's WASM runtime | `sys`, and its own backend through `sys.backend`. The backend reaches the machine only through host functions its permissions allow |
 
@@ -18,19 +18,19 @@ What the sandbox does not do: stop an app from sending data out. `connect-src 'n
 
 ## Manifest
 
-Every app is a manifest. A built-in app's is `apps/<id>/manifest.ts` (`defineApp({...})`) and is registered by being there; a third-party app's is `manifest.json` in its package.
+Every app is a manifest. A built-in app's is `apps/<name>/manifest.ts` (`defineApp({...})`) and is registered by being there; a third-party app's is `manifest.json` in its package.
 
 | Field | Meaning |
 |---|---|
-| `id` | `[a-z][a-z0-9_]{0,31}` (the agent's bound); stable (windows, dock and icons are stored by it). Third-party ids carry a publisher prefix: `acme_notes` |
+| `publisher`, `name` | Each `[a-z][a-z0-9_]`, at most 24 (a publisher at least 2). The app's id is `<publisher>.<name>`, made from them, never written: stable (windows, dock, icons and app storage are stored by it). The panel's own apps are `serverbox.*`, a publisher no package takes: `serverbox.files`, `acme.notes` |
 | `api` | The `sys` version the app was built for (third-party only; the desk refuses a newer major) |
 | `kind` | `system` \| `web` \| `wasm` |
-| `title`, `keywords` | Shown in the dock, launchpad, Spotlight, menubar. A string, or translations keyed by locale |
+| `title`, `keywords` | Shown in the dock, Apps, Spotlight, menubar. A string, or translations keyed by locale |
 | `glyph`, `tone` | The app icon: a Material Symbols Rounded name and a tone of the lollipopkit Design System |
 | `available` | System apps: a function of the agent's capabilities. Third-party: derived from `permissions` |
 | `instances` | How many windows may be open (default 1) |
 | `size`, `minSize` | The first window's size and the smallest allowed |
-| `order`, `pinned` | Place in the launchpad; in a fresh desk's dock |
+| `order`, `pinned` | Place in Apps; in a fresh desk's dock |
 | `permissions` | Third-party only, see [Permissions](#permissions) |
 | `opens` | File types and URL schemes the app can open (`{ "ext": ["log", "txt"], "mime": ["text/*"] }`), see [Intents](#intents) |
 | `settings` | Its page in Settings → Apps (lazy), run as the app (its storage) inside the Settings window |

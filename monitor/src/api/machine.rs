@@ -59,6 +59,9 @@ pub const FEATURES: &[&str] = &[
     "desk",
     // Agent mode (`api::agent`): tasks an AI agent runs here.
     "agent_mode",
+    // Web apps deployed with Docker Compose and shown through the agent's
+    // proxy (`api::stacks`).
+    "stacks",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.

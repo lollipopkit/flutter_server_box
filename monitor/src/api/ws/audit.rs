@@ -65,6 +65,11 @@ pub enum Kind {
     /// detail the verb and the command's first line — never a password, an
     /// API key, what was typed or what a command printed.
     Agent,
+    /// A web app the agent deploys (`stacks`): deployed, updated, started,
+    /// stopped, removed, or a window entered through its proxy. The subject
+    /// is the account; the detail the verb and the app — never a setting's
+    /// value or a secret.
+    Stack,
 }
 
 impl Kind {
@@ -82,6 +87,7 @@ impl Kind {
             Kind::Machine => "machine",
             Kind::Backup => "backup",
             Kind::Agent => "agent",
+            Kind::Stack => "stack",
         }
     }
 }

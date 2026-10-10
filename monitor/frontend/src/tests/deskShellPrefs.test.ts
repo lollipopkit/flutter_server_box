@@ -7,11 +7,10 @@ describe('shell preferences', () => {
   })
 
   it('starts from the defaults and refuses what it does not know', async () => {
-    window.localStorage.setItem('desk.shell', JSON.stringify({ dockPosition: 'top', dockSize: 99, titlebar: 'solid', dockAutoHide: 'yes', iconShape: 'star' }))
+    window.localStorage.setItem('desk.shell', JSON.stringify({ dockPosition: 'top', dockSize: 99, dockAutoHide: 'yes', iconShape: 'star' }))
     const { shellPrefs } = await import('../desk/shellPrefs.svelte')
     expect(shellPrefs.dockPosition).toBe('left')
     expect(shellPrefs.dockSize).toBe(44)
-    expect(shellPrefs.titlebar).toBe('glass')
     expect(shellPrefs.dockAutoHide).toBe(false)
     expect(shellPrefs.iconShape).toBe('circle')
   })

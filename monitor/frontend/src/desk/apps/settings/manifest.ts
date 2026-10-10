@@ -1,7 +1,8 @@
 import { defineApp } from '../../sys'
 
 export default defineApp({
-  id: 'settings',
+  publisher: 'serverbox',
+  name: 'settings',
   title: (ll) => ll.deskAppSettings(),
   glyph: 'settings',
   tone: 'mist',

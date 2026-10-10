@@ -106,10 +106,10 @@ fn prefs() -> serde_json::Value {
         "accent": "#2563EB",
         "wallpaper": "preset:dusk",
         "wallpaper_fit": "cover",
-        "dock": ["status", "files", "terminal"],
+        "dock": ["serverbox.status", "serverbox.files", "serverbox.terminal"],
         "icons": [
-            { "id": "a", "kind": "app", "app_id": "settings", "label": "" },
-            { "id": "b", "kind": "path", "app_id": "files", "server_id": "local", "path": "/etc", "label": "etc", "col": 0, "row": 1 }
+            { "id": "a", "kind": "app", "app_id": "serverbox.settings", "label": "" },
+            { "id": "b", "kind": "path", "app_id": "serverbox.files", "server_id": "local", "path": "/etc", "label": "etc", "col": 0, "row": 1 }
         ]
     })
 }
@@ -119,7 +119,7 @@ fn session(expected: i64, windows: usize) -> serde_json::Value {
         .map(|i| {
             serde_json::json!({
                 "window_id": format!("w{i}"),
-                "app_id": "files",
+                "app_id": "serverbox.files",
                 "x": 10 * i, "y": 20, "width": 800, "height": 600, "z": i,
                 "minimized": false, "maximized": i == 0,
                 "app_state": { "path": "/root" }
@@ -157,7 +157,7 @@ async fn preferences_round_trip_per_account() {
 
     let (_, body, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk", None).await;
     assert_eq!(body["preferences"], saved);
-    assert_eq!(body["preferences"]["dock"], serde_json::json!(["status", "files", "terminal"]));
+    assert_eq!(body["preferences"]["dock"], serde_json::json!(["serverbox.status", "serverbox.files", "serverbox.terminal"]));
     assert_eq!(body["preferences"]["icons"][1]["path"], "/etc");
     // A client older than background running leaves it out: on.
     assert_eq!(body["preferences"]["background"], true);
@@ -166,12 +166,12 @@ async fn preferences_round_trip_per_account() {
 
     let mut off = prefs();
     off["background"] = serde_json::json!(false);
-    off["background_denied"] = serde_json::json!(["status", "files"]);
+    off["background_denied"] = serde_json::json!(["serverbox.status", "serverbox.files"]);
     let (status, _, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/desk/preferences", json(off)).await;
     assert_eq!(status, 200);
     let (_, body, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk", None).await;
     assert_eq!(body["preferences"]["background"], false);
-    assert_eq!(body["preferences"]["background_denied"], serde_json::json!(["files", "status"]));
+    assert_eq!(body["preferences"]["background_denied"], serde_json::json!(["serverbox.files", "serverbox.status"]));
 
     // Another account's desk is its own.
     let (_, other, _) = call(&srv, Some("intruder"), Method::GET, "/api/v1/desk", None).await;
@@ -475,7 +475,7 @@ async fn events_reach_the_right_readers() {
 #[ntex::test]
 async fn app_storage_is_per_account_and_bounded() {
     let srv = server(state().await).await;
-    let base = "/api/v1/desk/apps/notes/storage";
+    let base = "/api/v1/desk/apps/acme.notes/storage";
     let (status, _, _) = call(&srv, None, Method::GET, base, None).await;
     assert_eq!(status, 401);
 
@@ -490,7 +490,7 @@ async fn app_storage_is_per_account_and_bounded() {
     // Another account and another app see nothing of it.
     let (_, other, _) = call(&srv, Some("intruder"), Method::GET, base, None).await;
     assert_eq!(other["items"], serde_json::json!({}));
-    let (_, other_app, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk/apps/files/storage", None).await;
+    let (_, other_app, _) = call(&srv, Some("admin"), Method::GET, "/api/v1/desk/apps/serverbox.files/storage", None).await;
     assert_eq!(other_app["items"], serde_json::json!({}));
 
     // Past the app's bound: refused, and nothing of it kept.
@@ -508,7 +508,7 @@ async fn app_storage_is_per_account_and_bounded() {
     let (_, body, _) = call(&srv, Some("admin"), Method::GET, base, None).await;
     assert!(body["items"].get("a").is_none());
 
-    for path in ["/api/v1/desk/apps/Notes/storage", "/api/v1/desk/apps/notes/storage?key="] {
+    for path in ["/api/v1/desk/apps/acme.Notes/storage", "/api/v1/desk/apps/acme.notes/storage?key="] {
         let (status, _, _) = call(&srv, Some("admin"), Method::PUT, path, json(serde_json::json!(1))).await;
         assert_eq!(status, 400, "{path}");
     }
@@ -521,7 +521,7 @@ async fn app_storage_is_bounded_per_account_across_apps() {
     let value = json(serde_json::json!("x".repeat(250 << 10)));
     let mut refused_at = None;
     for i in 0..20 {
-        let path = format!("/api/v1/desk/apps/app{i}/storage?key=k");
+        let path = format!("/api/v1/desk/apps/acme.app{i}/storage?key=k");
         let (status, _, _) = call(&srv, Some("admin"), Method::PUT, &path, value.clone()).await;
         if status == 413 {
             refused_at = Some(i);

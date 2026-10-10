@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'virt',
+  publisher: 'serverbox',
+  name: 'virt',
   title: (ll) => ll.virt(),
   keywords: () => ['KVM', 'libvirt', 'Proxmox', 'PVE'],
   glyph: 'stacks',

@@ -125,8 +125,8 @@
     padding: 7px 9px;
     border-radius: 9px;
     background: var(--glass-menu);
-    backdrop-filter: var(--blur-menu);
     -webkit-backdrop-filter: var(--blur-menu);
+    backdrop-filter: var(--blur-menu);
     box-shadow: var(--shadow-popover);
   }
 </style>

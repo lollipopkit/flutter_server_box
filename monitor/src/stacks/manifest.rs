@@ -1,4 +1,5 @@
-//! The web app manifest: `store/apps/<id>/manifest.toml`, a web service the
+//! The web app manifest: `store/apps/<id>/manifest.toml` (`<id>` is
+//! `<publisher>.<name>`, `core::app_id`), a web service the
 //! agent deploys with Docker Compose and the desk shows in a window.
 //!
 //! The format is published as `docs/schemas/monitor-app.schema.json` (for
@@ -22,6 +23,8 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::core::app_id;
 
 pub const SCHEMA: u32 = 1;
 /// One file of a package, and all of them together.
@@ -57,11 +60,20 @@ pub enum Notice {
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
     pub schema: u32,
-    pub id: String,
+    /// Who makes the service and the entry's name; the id is
+    /// `<publisher>.<name>` (`futo.immich`), never written in the file.
+    pub publisher: String,
     pub name: String,
+    #[serde(skip_deserializing)]
+    pub id: String,
+    /// The project's own name (`Immich`), shown as it.
+    pub project: String,
     pub version: String,
     pub homepage: String,
     pub source: String,
+    /// Who makes the service (`Immich (FUTO)`), shown before deploying.
+    #[serde(default)]
+    pub developer: Option<String>,
     pub glyph: String,
     pub tone: String,
     #[serde(default)]
@@ -257,7 +269,6 @@ fn problem(at: impl Into<String>, message: impl Into<String>) -> Problem {
     Problem { at: at.into(), message: message.into() }
 }
 
-static ID: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9-]{0,31}$").expect("regex"));
 static KEY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9_]{0,31}$").expect("regex"));
 static ENV_NAME: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Z_][A-Z0-9_]{0,63}$").expect("regex"));
 static FILE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$").expect("regex"));
@@ -315,7 +326,9 @@ pub fn compose_variables(compose: &str) -> (BTreeSet<String>, BTreeSet<String>) 
 
 impl Manifest {
     pub fn parse(text: &str) -> Result<Self, Problem> {
-        toml::from_str(text).map_err(|e| problem("manifest.toml", e.message().to_string()))
+        let mut manifest: Self = toml::from_str(text).map_err(|e| problem("manifest.toml", e.message().to_string()))?;
+        manifest.id = format!("{}.{}", manifest.publisher, manifest.name);
+        Ok(manifest)
     }
 
     /// Everything one table cannot say about itself; empty when it is fine.
@@ -326,14 +339,20 @@ impl Manifest {
             if self.schema != SCHEMA {
                 bad("schema", "unsupported schema");
             }
-            if !ID.is_match(&self.id) {
-                bad("id", "lowercase letters, digits and -, starting with a letter, at most 32");
+            if !(self.publisher.len() >= 2 && app_id::valid_part(&self.publisher)) {
+                bad("publisher", "lowercase letters, digits and _, starting with a letter, 2 to 24");
             }
-            if !(1..=64).contains(&self.name.chars().count()) {
-                bad("name", "1 to 64 characters");
+            if !app_id::valid_part(&self.name) {
+                bad("name", "lowercase letters, digits and _, starting with a letter, at most 24");
+            }
+            if !(1..=64).contains(&self.project.chars().count()) {
+                bad("project", "1 to 64 characters");
             }
             if !(1..=32).contains(&self.version.chars().count()) {
                 bad("version", "1 to 32 characters");
+            }
+            if self.developer.as_ref().is_some_and(|d| !(1..=128).contains(&d.chars().count())) {
+                bad("developer", "1 to 128 characters");
             }
             for (at, url) in [("homepage", &self.homepage), ("source", &self.source), ("license.url", &self.license.url)] {
                 if !https(url) {
@@ -483,6 +502,15 @@ impl Manifest {
 
     /// The env file for checked [settings] and the generated [secrets].
     pub fn env_file(&self, settings: &BTreeMap<String, Value>, secrets: &BTreeMap<String, String>) -> String {
+        let mut out = String::from("# Written by ServerBox Monitor from the app's manifest; replaced on every update.\n");
+        for (name, value) in self.env_values(settings, secrets) {
+            out.push_str(&format!("{name}='{value}'\n"));
+        }
+        out
+    }
+
+    /// Every value the env file sets, by name.
+    pub fn env_values(&self, settings: &BTreeMap<String, Value>, secrets: &BTreeMap<String, String>) -> BTreeMap<String, String> {
         let mut values: BTreeMap<String, String> = self.env.clone();
         for s in &self.secrets {
             if let Some(v) = secrets.get(&s.env) {
@@ -510,11 +538,7 @@ impl Manifest {
                 }
             }
         }
-        let mut out = String::from("# Written by ServerBox Monitor from the app's manifest; replaced on every update.\n");
-        for (name, value) in values {
-            out.push_str(&format!("{name}='{value}'\n"));
-        }
-        out
+        values
     }
 
     /// The port the window reaches, from checked [settings].
@@ -594,6 +618,28 @@ fn setting_problems(s: &Setting, at: &str) -> Vec<Problem> {
         },
     }
     out
+}
+
+static REFERENCE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::?[-?+]([^}]*))?\}|\$([A-Za-z_][A-Za-z0-9_]*)").expect("regex"));
+
+/// [text] with `${NAME}`, `${NAME:-default}` and `$NAME` replaced from
+/// [values], as Compose interpolates; `$$` is a literal `$`.
+fn interpolate(text: &str, values: &BTreeMap<String, String>) -> String {
+    text.split("$$")
+        .map(|part| {
+            REFERENCE
+                .replace_all(part, |c: &regex::Captures| {
+                    let name = c.get(1).or(c.get(3)).map_or("", |m| m.as_str());
+                    match values.get(name).filter(|v| !v.is_empty()) {
+                        Some(v) => v.clone(),
+                        None => c.get(2).map_or("", |m| m.as_str()).to_string(),
+                    }
+                })
+                .into_owned()
+        })
+        .collect::<Vec<_>>()
+        .join("$")
 }
 
 /// [pattern] matched against the whole value.
@@ -706,6 +752,25 @@ impl Package {
         if problems.is_empty() { Ok(Self { manifest, files: texts }) } else { Err(problems) }
     }
 
+    /// The images [settings] make the compose files pull, as Compose would
+    /// read them (`${NAME}` from the env file; `${NAME:-default}` falls back).
+    pub fn images(&self, settings: &BTreeMap<String, Value>) -> Vec<String> {
+        let values = self.manifest.env_values(settings, &BTreeMap::new());
+        let mut images = Vec::new();
+        for file in &self.manifest.compose.files {
+            let Some(text) = self.files.get(file) else { continue };
+            for line in text.lines() {
+                let Some(rest) = line.trim_start().strip_prefix("image:") else { continue };
+                let raw = rest.split(" #").next().unwrap_or("").trim().trim_matches(['\'', '"']);
+                let image = interpolate(raw, &values);
+                if !image.is_empty() && !images.contains(&image) {
+                    images.push(image);
+                }
+            }
+        }
+        images
+    }
+
     /// The package in folder [dir], read from disk.
     pub fn read_dir(dir: &Path) -> Result<Self, Vec<Problem>> {
         let mut files = BTreeMap::new();
@@ -722,7 +787,7 @@ impl Package {
         let package = Self::read(&files)?;
         let folder = dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
         if package.manifest.id != folder {
-            return Err(vec![problem("id", format!("the folder is {folder}"))]);
+            return Err(vec![problem("name", format!("the folder is {folder}, the id {}", package.manifest.id))]);
         }
         Ok(package)
     }
@@ -737,7 +802,7 @@ mod tests {
     }
 
     fn immich() -> Package {
-        Package::read_dir(&store().join("immich")).expect("immich")
+        Package::read_dir(&store().join("futo.immich")).expect("immich")
     }
 
     #[test]
@@ -824,6 +889,21 @@ mod tests {
     }
 
     #[test]
+    fn images_are_read_as_compose_would() {
+        let p = immich();
+        let machine = Machine { stack: PathBuf::from("/srv/s"), ..Default::default() };
+        let cpu = p.manifest.check_settings(&BTreeMap::new(), &machine).unwrap();
+        let images = p.images(&cpu);
+        assert!(images.contains(&"ghcr.io/immich-app/immich-server:v3.3.1".to_string()), "{images:?}");
+        assert!(images.contains(&"ghcr.io/immich-app/immich-machine-learning:v3.3.1".to_string()), "{images:?}");
+        assert!(images.iter().any(|i| i.starts_with("docker.io/valkey/valkey:9@sha256:")));
+        let cuda = p.manifest.check_settings(&BTreeMap::from([("ml".to_string(), Value::from("cuda"))]), &machine).unwrap();
+        assert!(p.images(&cuda).contains(&"ghcr.io/immich-app/immich-machine-learning:v3.3.1-cuda".to_string()));
+        let values = BTreeMap::from([("A".to_string(), "1".to_string())]);
+        assert_eq!(interpolate("x:${A}-${B:-dflt}-$A-$$A", &values), "x:1-dflt-1-$A");
+    }
+
+    #[test]
     fn compose_variables_read_operators_and_comments() {
         let (needed, optional) = compose_variables(
             "image: x:${TAG}\n  # ${IN_COMMENT}\nports: ['${BIND:-0.0.0.0}:$PORT:80'] # ${TRAILING}\ncmd: echo $$HOME ${REQ:?set it}\n",
@@ -841,8 +921,9 @@ mod tests {
 
     const MINIMAL: &str = r#"
 schema = 1
-id = "demo"
-name = "Demo"
+publisher = "acme"
+name = "demo"
+project = "Demo"
 version = "1.0"
 homepage = "https://example.com"
 source = "https://example.com/src"

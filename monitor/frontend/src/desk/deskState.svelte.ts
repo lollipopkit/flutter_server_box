@@ -36,7 +36,7 @@ export type PaneDrop =
   | { windowId: string; kind: 'tab' }
   | { windowId: string; kind: 'split'; paneId: string; side: Side }
 
-export type Panel = 'control' | 'notifications' | 'calendar' | 'launchpad'
+export type Panel = 'control' | 'notifications' | 'calendar' | 'apps'
 
 /// A context menu's rows (`lk/Menu.svelte`); icons are glyph names.
 export type MenuItem = MenuEntry
@@ -144,13 +144,13 @@ export class Desk {
 
   /// Who a notification is from, as the banner and the centre show it.
   noticeSource(n: DeskNotification): { appId: string; title: string; glyph: string; tone: IconTone } {
-    const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'status'
+    const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'serverbox.status'
     const spec = app(appId)
-    if (appId !== 'status' && spec) return { appId, title: spec.title(get(LL)), glyph: spec.glyph, tone: spec.tone }
+    if (appId !== 'serverbox.status' && spec) return { appId, title: spec.title(get(LL)), glyph: spec.glyph, tone: spec.tone }
     // The agent's own: its alerts, shown as the Status app's by level.
     const level = { info: ['info', 'sky'], warning: ['warning', 'amber'], critical: ['error', 'berry'] } as const
     const [glyph, tone] = level[n.level] ?? level.info
-    return { appId: 'status', title: get(LL).deskAppStatus(), glyph, tone }
+    return { appId: 'serverbox.status', title: get(LL).deskAppStatus(), glyph, tone }
   }
 
   /// A notification was clicked: the window that posted it comes forward, or

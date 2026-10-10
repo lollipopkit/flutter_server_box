@@ -15,7 +15,8 @@ depends on the published `lkui` instead.
 
 Install the package as an admin in Settings → Apps, then approve it.
 
-- Change `id` in `manifest.json`: a publisher prefix, `_`, a name (`acme_notes`).
+- Change `publisher` and `name` in `manifest.json`: the app's id is
+  `<publisher>.<name>` (`acme.notes`), made from them.
 - The UI runs in a sandboxed frame with no network: everything it needs is
   in the bundle, and it reaches the desk only through `connect()`.
 - URLs in the bundle must be relative (`base: './'`).

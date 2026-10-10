@@ -113,7 +113,7 @@ fn prefs(theme: Option<&str>, wallpaper: &str) -> Option<Vec<u8>> {
         json!({
             "wallpaper": wallpaper,
             "wallpaper_fit": "cover",
-            "dock": ["files"],
+            "dock": ["serverbox.files"],
             "icons": [],
             "theme": theme,
         })

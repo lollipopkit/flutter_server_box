@@ -13,7 +13,6 @@
   import { windowClose } from './windowMotion'
   import { sideAt } from '../panes'
   import type { PaneDrop } from '../deskState.svelte'
-  import { shellPrefs } from '../shellPrefs.svelte'
   import { systemPrefs, TEXT_SCALE } from '../sys/systemPrefs.svelte'
   import { type Edge, type Rect, type SnapZone, resize, snapZoneAt, unsnapUnder, usable } from '../geometry'
   import type { DeskWindow } from '../windows.svelte'
@@ -95,9 +94,9 @@
   const flush = $derived(!!toolbar?.flush)
 
   /// The content (or a list inside it) has scrolled away from the top: the
-  /// bar blurs what is under it, unless it is blurred always or flush.
+  /// bar blurs what is under it, unless it is flush.
   let scrolled = $state(false)
-  const blurred = $derived(!flush && (shellPrefs.titlebar === 'always' || scrolled))
+  const blurred = $derived(!flush && scrolled)
   function onContentScroll(e: Event) {
     const content = e.currentTarget as HTMLElement
     const target = e.target as HTMLElement
@@ -298,7 +297,7 @@
   onpointerdowncapture={() => desk.windows.focus(win.id)}
 >
   <!-- The design system's window: the bar floats over the content, which
-       scrolls under it (blurred once scrolled, or always). With a sidebar the
+       scrolls under it (blurred once scrolled). With a sidebar the
        inset glass sidebar holds the lights; else the bar does. Both are drag
        handles. -->
   <div class="lk-window h-full min-w-0 flex-1" class:lk-window--inactive={!active}>

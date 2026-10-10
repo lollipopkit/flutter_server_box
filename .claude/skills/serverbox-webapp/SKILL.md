@@ -1,6 +1,6 @@
 ---
 name: serverbox-webapp
-description: Adapt a self-hosted web service (Immich, Jellyfin, Paperless-ngx, Vaultwarden, …) into a ServerBox Monitor web app — a folder in `store/apps/<id>/` with a `manifest.toml` and the Docker Compose files the agent deploys — then validate it and propose it for the catalog. Use this whenever someone wants to add, port, update, fix or validate an app for the Monitor's app catalog, including requests that never say "manifest", such as "add Jellyfin to the monitor", "make the monitor able to install Nextcloud", "bump Immich to the new release", "why does my web app fail validation", or "turn this docker-compose.yml into a monitor app".
+description: Adapt a self-hosted web service (Immich, Jellyfin, Paperless-ngx, Vaultwarden, …) into a ServerBox Monitor web app — a folder in `store/apps/<publisher>.<name>/` with a `manifest.toml` and the Docker Compose files the agent deploys — then validate it and propose it for the catalog. Use this whenever someone wants to add, port, update, fix or validate an app for the Monitor's app catalog, including requests that never say "manifest", such as "add Jellyfin to the monitor", "make the monitor able to install Nextcloud", "bump Immich to the new release", "why does my web app fail validation", or "turn this docker-compose.yml into a monitor app".
 ---
 
 # ServerBox Monitor web apps
@@ -9,7 +9,7 @@ A web app is a web service the Monitor agent deploys with Docker Compose and
 the panel's desk shows in a window. Its source is one folder:
 
 ```
-store/apps/<id>/
+store/apps/<publisher>.<name>/
   manifest.toml        what it is, its licence, and the env file it needs
   compose.yaml         the compose files the manifest names
   …                    any other file they use (extends)
@@ -17,10 +17,10 @@ store/apps/<id>/
 
 The agent copies the folder (minus the manifest) into the stack's directory,
 writes `.env` from the manifest and the deploy dialog's answers, and runs
-`docker compose -p sbm-<id> --env-file .env -f …`. The window reaches the
+`docker compose -p sbm-<publisher>-<name> --env-file .env -f …`. The window reaches the
 service on loopback at the port setting `[web] port` names.
 
-`store/apps/immich` is the worked example: Immich's release compose file,
+`store/apps/futo.immich` is the worked example: Immich's release compose file,
 adjusted as below, with GPU acceleration choices.
 
 ## Workflow
@@ -50,7 +50,7 @@ changed. Files copied unchanged say so.
 
 ### 3. Write the manifest
 
-Copy `assets/manifest.template.toml` to `store/apps/<id>/manifest.toml`. Its
+Copy `assets/manifest.template.toml` to `store/apps/<publisher>.<name>/manifest.toml`. Its
 first line is a schema directive, so editors with Taplo/Even Better TOML/Tombi
 check it as you type. Every field is in `references/manifest.md`.
 
@@ -72,7 +72,7 @@ check it as you type. Every field is in `references/manifest.md`.
 ### 4. Validate
 
 ```sh
-python3 <skill>/scripts/validate.py store/apps/<id> --compose
+python3 <skill>/scripts/validate.py store/apps/<publisher>.<name> --compose
 ```
 
 It checks the manifest against the published JSON Schema (via
@@ -92,7 +92,7 @@ which reads every folder in `store/apps/` with the agent's own reader.
 
 On a Linux machine with Docker: copy the folder (without the manifest),
 write a `.env` like the validator's (`--compose` builds one from the
-defaults), `docker compose -p sbm-<id> --env-file .env -f compose.yaml up -d`,
+defaults), `docker compose -p sbm-<publisher>-<name> --env-file .env -f compose.yaml up -d`,
 and open the port. Check first-run steps (an admin account to create, a
 setup wizard) and mention them in `description` if the window would
 otherwise look broken. `docker compose … down` when done.

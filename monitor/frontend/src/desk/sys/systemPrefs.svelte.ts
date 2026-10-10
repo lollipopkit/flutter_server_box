@@ -7,7 +7,7 @@
 export type RefreshSeconds = 1 | 2 | 5
 export type Density = 'compact' | 'comfortable'
 export type TextSize = 's' | 'm' | 'l'
-export type StartApp = 'status' | 'process' | 'files' | 'none'
+export type StartApp = 'serverbox.status' | 'serverbox.process' | 'serverbox.files' | 'none'
 
 export interface SystemPrefsValue {
   autoRefresh: boolean
@@ -29,7 +29,7 @@ const DEFAULTS: SystemPrefsValue = {
   textSize: 'm',
   reduceMotion: false,
   banners: true,
-  openOnStart: 'status',
+  openOnStart: 'serverbox.status',
   restoreWindows: true,
 }
 
@@ -47,7 +47,7 @@ function load(): SystemPrefsValue {
       textSize: pick(raw.textSize, ['s', 'm', 'l'] as const, DEFAULTS.textSize),
       reduceMotion: raw.reduceMotion === true,
       banners: raw.banners !== false,
-      openOnStart: pick(raw.openOnStart, ['status', 'process', 'files', 'none'] as const, DEFAULTS.openOnStart),
+      openOnStart: pick(raw.openOnStart, ['serverbox.status', 'serverbox.process', 'serverbox.files', 'none'] as const, DEFAULTS.openOnStart),
       restoreWindows: raw.restoreWindows !== false,
     }
   } catch {

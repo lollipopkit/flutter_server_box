@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'bmc',
+  publisher: 'serverbox',
+  name: 'bmc',
   title: (ll) => ll.bmc(),
   keywords: () => ['IPMI', 'Redfish'],
   glyph: 'developer_board',

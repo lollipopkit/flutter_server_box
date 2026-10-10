@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'snippets',
+  publisher: 'serverbox',
+  name: 'snippets',
   title: (ll) => ll.snippets(),
   glyph: 'code_blocks',
   tone: 'violet',

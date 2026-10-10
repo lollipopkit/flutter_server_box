@@ -9,7 +9,7 @@ import { WindowManager, type WindowPolicy } from '../desk/windows.svelte'
 const policy: WindowPolicy = { instances: 3, size: { width: 600, height: 400 }, minSize: { width: 300, height: 200 } }
 
 function manager() {
-  const m = new WindowManager((id) => (id === 'files' || id === 'terminal' ? policy : undefined))
+  const m = new WindowManager((id) => (id === 'serverbox.files' || id === 'serverbox.terminal' ? policy : undefined))
   m.resizeArea({ width: 1200, height: 800, top: 40, bottom: 80, left: 0, right: 0 })
   return m
 }
@@ -51,13 +51,13 @@ describe('SessionSync', () => {
     const m = manager()
     const sync = new SessionSync(m, f.storage, 'dev', 'local', () => true)
     await sync.load()
-    m.open('files')
+    m.open('serverbox.files')
     sync.schedule()
-    m.open('terminal')
+    m.open('serverbox.terminal')
     sync.schedule()
     await vi.advanceTimersByTimeAsync(SAVE_DELAY_MS + 10)
     expect(f.saves).toEqual([1])
-    expect(f.stored.windows.map((w) => w.app_id).sort()).toEqual(['files', 'terminal'])
+    expect(f.stored.windows.map((w) => w.app_id).sort()).toEqual(['serverbox.files', 'serverbox.terminal'])
   })
 
   it('the tab in use wins a conflict', async () => {
@@ -66,10 +66,10 @@ describe('SessionSync', () => {
     const sync = new SessionSync(m, f.storage, 'dev', 'local', () => true)
     await sync.load()
     f.elsewhere([])
-    m.open('files')
+    m.open('serverbox.files')
     await sync.flush()
     expect(f.stored.revision).toBe(2)
-    expect(f.stored.windows.map((w) => w.app_id)).toEqual(['files'])
+    expect(f.stored.windows.map((w) => w.app_id)).toEqual(['serverbox.files'])
     expect(sync.revision).toBe(2)
   })
 
@@ -79,11 +79,11 @@ describe('SessionSync', () => {
     const sync = new SessionSync(m, f.storage, 'dev', 'local', () => false)
     await sync.load()
     const theirs = manager()
-    theirs.open('terminal')
+    theirs.open('serverbox.terminal')
     f.elsewhere(theirs.serialize('local').windows)
-    m.open('files')
+    m.open('serverbox.files')
     await sync.flush()
-    expect(m.windows.map((w) => w.appId)).toEqual(['terminal'])
+    expect(m.windows.map((w) => w.appId)).toEqual(['serverbox.terminal'])
     expect(f.stored.revision).toBe(1)
   })
 
@@ -94,7 +94,7 @@ describe('SessionSync', () => {
     const sync = new SessionSync(m, f.storage, 'dev', 'local', () => inUse)
     await sync.load()
     const theirs = manager()
-    theirs.open('terminal')
+    theirs.open('serverbox.terminal')
     f.elsewhere(theirs.serialize('local').windows)
     await sync.remoteChanged('dev', 1)
     expect(m.windows).toHaveLength(0)
@@ -102,7 +102,7 @@ describe('SessionSync', () => {
     await sync.remoteChanged('other-device', 1)
     expect(m.windows).toHaveLength(0)
     await sync.remoteChanged('dev', 1)
-    expect(m.windows.map((w) => w.appId)).toEqual(['terminal'])
+    expect(m.windows.map((w) => w.appId)).toEqual(['serverbox.terminal'])
   })
 
   it('saves what is pending when closed, then nothing more', async () => {
@@ -110,11 +110,11 @@ describe('SessionSync', () => {
     const m = manager()
     const sync = new SessionSync(m, f.storage, 'dev', 'local', () => true)
     await sync.load()
-    m.open('files')
+    m.open('serverbox.files')
     sync.schedule()
     await sync.close()
     expect(f.saves).toEqual([1])
-    m.open('terminal')
+    m.open('serverbox.terminal')
     sync.schedule()
     await vi.advanceTimersByTimeAsync(SAVE_DELAY_MS + 10)
     expect(f.saves).toEqual([1])
@@ -130,7 +130,7 @@ describe('SessionSync', () => {
     const sync = new SessionSync(m, storage, 'dev', 'local', () => true)
     await sync.load()
     expect(sync.status).toBe('failed')
-    m.open('files')
+    m.open('serverbox.files')
     expect(m.windows).toHaveLength(1)
   })
 })
@@ -155,7 +155,7 @@ describe('icon grid', () => {
   const icon = (id: string, col?: number, row?: number): DeskIcon => ({
     id,
     kind: 'app',
-    app_id: 'files',
+    app_id: 'serverbox.files',
     label: '',
     col: col ?? null,
     row: row ?? null,

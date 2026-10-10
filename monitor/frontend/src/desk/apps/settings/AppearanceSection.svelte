@@ -10,7 +10,7 @@
   import { ApiError } from '../../../lib/api'
   import { useDeskPrefs } from '../../deskState.svelte'
   import { WALLPAPERS, type WallpaperPreset } from '../../prefs.svelte'
-  import { DOCK_SIZES, shellPrefs, type DockPosition, type DockSize, type IconShape, type TitlebarStyle } from '../../shellPrefs.svelte'
+  import { DOCK_SIZES, shellPrefs, type DockPosition, type DockSize, type IconShape } from '../../shellPrefs.svelte'
   import Wallpaper from '../../shell/Wallpaper.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
   import ThemesGroup from './ThemesGroup.svelte'
@@ -151,18 +151,6 @@
     {/if}
 
     <Group title={$LL.settingsWindows()}>
-      <Row label={$LL.deskTitlebar()} sub={$LL.deskTitlebarHint()}>
-        <SegmentedControl
-          size="sm"
-          label={$LL.deskTitlebar()}
-          value={shellPrefs.titlebar}
-          options={[
-            { value: 'glass' as TitlebarStyle, label: $LL.deskTitlebarGlass() },
-            { value: 'always' as TitlebarStyle, label: $LL.deskTitlebarAlways() },
-          ]}
-          onchange={(titlebar) => shellPrefs.set({ titlebar })}
-        />
-      </Row>
       <Row label={$LL.settingsDensity()} sub={$LL.settingsDensityHint()}>
         <SegmentedControl
           size="sm"

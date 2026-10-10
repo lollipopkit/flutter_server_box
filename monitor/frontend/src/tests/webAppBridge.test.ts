@@ -48,8 +48,8 @@ describe('the bridge to an installed app', () => {
   it('refuses app state the agent would not keep, and opening apps in a loop', async () => {
     const { call } = setup()
     expect(await call('setAppState', { state: 'x'.repeat(17 * 1024) })).toMatchObject({ ok: false, error: 'tooLarge' })
-    for (let i = 0; i < 3; i++) expect(await call('open', { appId: 'files' })).toMatchObject({ ok: true })
-    expect(await call('open', { appId: 'terminal' })).toMatchObject({ ok: false, error: 'busy' })
+    for (let i = 0; i < 3; i++) expect(await call('open', { appId: 'serverbox.files' })).toMatchObject({ ok: true })
+    expect(await call('open', { appId: 'serverbox.terminal' })).toMatchObject({ ok: false, error: 'busy' })
   })
 
   it('says hello with what the app may know, and nothing else', async () => {
@@ -80,13 +80,13 @@ describe('the bridge to an installed app', () => {
 
   it('hands on only the desk’s own open of a path', async () => {
     const { call, handle } = setup()
-    expect(await call('open', { appId: 'terminal', intent: { action: 'terminal.type', data: { name: 'x', steps: [] } } })).toMatchObject({
+    expect(await call('open', { appId: 'serverbox.terminal', intent: { action: 'terminal.type', data: { name: 'x', steps: [] } } })).toMatchObject({
       ok: false,
       error: 'notPermitted',
     })
     expect(handle.open).not.toHaveBeenCalled()
-    expect(await call('open', { appId: 'files', intent: { action: 'open', data: { path: '/etc', kind: 'dir', extra: 1 } } })).toMatchObject({ ok: true })
-    expect(handle.open).toHaveBeenCalledWith('files', { newWindow: false, intent: { action: 'open', data: { path: '/etc', kind: 'dir' } } })
+    expect(await call('open', { appId: 'serverbox.files', intent: { action: 'open', data: { path: '/etc', kind: 'dir', extra: 1 } } })).toMatchObject({ ok: true })
+    expect(handle.open).toHaveBeenCalledWith('serverbox.files', { newWindow: false, intent: { action: 'open', data: { path: '/etc', kind: 'dir' } } })
   })
 
   it('keeps the app’s own storage and draws its menus', async () => {

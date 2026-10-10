@@ -11,7 +11,7 @@
   import { accessMessage, draftFromRole, emptyDraft, type RoleDraft } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import type { AgentUser, Role, RoleGrants } from '../../../types'
-  import ReauthDialog from './ReauthDialog.svelte'
+  import ReauthDialog from '../../../components/ReauthDialog.svelte'
   import RoleEditor from './RoleEditor.svelte'
 
   interface Props {

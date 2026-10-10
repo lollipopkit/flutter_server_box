@@ -11,7 +11,7 @@
   import { untrack, type Component } from 'svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import TitleTabs, { type TitleTabsDrag } from '../lk/TitleTabs.svelte'
-  import { viewEnter, viewIn } from '../lk/motion'
+  import { cssMs, viewEnter, viewIn } from '../lk/motion'
   import { useDesk } from '../deskState.svelte'
   import { activeTab, dividers, paneRects, type Divider, type Rect } from '../panes'
   import { useWindow } from '../sys/window.svelte'
@@ -110,7 +110,7 @@
     const was = tabCount
     tabCount = n
     if (!(was > 1 && n === 1)) return
-    const ms = area ? parseFloat(getComputedStyle(area).getPropertyValue('--dur-tab-in')) || 0 : 0
+    const ms = area ? cssMs(getComputedStyle(area).getPropertyValue('--dur-tab-in')) : 0
     if (!ms) return
     collapsing = true
     const timer = setTimeout(() => (collapsing = false), ms)

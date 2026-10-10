@@ -1,7 +1,7 @@
 <script lang="ts">
   /// Apps an admin installs on this server's agent (`api::apps`): upload a
   /// package, approve what it asks for, remove it. Approving and removing ask
-  /// the admin's password. A change reaches this desk's launchpad at once;
+  /// the admin's password. A change reaches this desk's Apps at once;
   /// other desks see it when they next start.
 
   import { AppIcon, Badge, Button, Group, Row } from '../../lk'
@@ -9,7 +9,7 @@
   import { api, ApiError } from '../../../lib/api'
   import type { InstalledApp } from '../../../types'
   import type { IconTone } from '../../lk/AppIcon.svelte'
-  import ReauthDialog from './ReauthDialog.svelte'
+  import ReauthDialog from '../../../components/ReauthDialog.svelte'
 
   interface Props {
     /// Adds what changed to this desk.

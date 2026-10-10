@@ -10,13 +10,20 @@
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
+  import { stackOf } from '../../../components/stack/apps'
+  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { servers } from '../../../lib/servers.svelte'
 
   interface Props {
     spec: AppSpec
     onback: () => void
+    /// Opens the page of the web app behind [spec], for one that is.
+    onstack?: (stackId: string) => void
   }
 
-  const { spec, onback }: Props = $props()
+  const { spec, onback, onstack }: Props = $props()
+  const stackId = $derived(stackOf(spec.id))
+  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
   const desk = useDeskPrefs()
   const prefs = $derived(desk.prefs)
   const title = $derived(spec.title($LL))
@@ -42,6 +49,11 @@
   {#if !prefs}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}
+    {#if stackId && admin && onstack}
+      <Group>
+        <Row label={$LL.stackManage()} sub={$LL.stackManageSub()} onclick={() => onstack(stackId)} />
+      </Group>
+    {/if}
     <Group>
       <Row label={$LL.settingsAppShowInDock()}>
         <Switch

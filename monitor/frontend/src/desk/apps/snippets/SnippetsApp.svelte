@@ -152,7 +152,7 @@
       if (stale(serverId)) return
       // A terminal of its own: the script goes to the shell this opens and
       // to no other terminal already on the desk.
-      const terminal = win.open('terminal', {
+      const terminal = win.open('serverbox.terminal', {
         newWindow: true,
         intent: { action: TYPE_SNIPPET, data: { name: snippet.name, steps: plan.steps } },
       })

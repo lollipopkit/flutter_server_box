@@ -34,7 +34,7 @@
 //! command — an account that lost the grant, or is gone, runs nothing more.
 //! Tasks are the account's own; nobody else lists, reads or answers them.
 
-mod command;
+pub(crate) mod command;
 pub mod files;
 mod memory;
 pub mod config;

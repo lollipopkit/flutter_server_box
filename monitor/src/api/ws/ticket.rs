@@ -54,6 +54,9 @@ pub enum Purpose {
     /// `api::ws::virt_console`. Minted only by `POST /virt/console`, with the
     /// console it opens.
     Virt,
+    /// A web app's window entering its proxy — see `stacks::proxy`. Minted
+    /// only by `POST /stacks/{id}/enter`.
+    Proxy,
 }
 
 struct Entry {

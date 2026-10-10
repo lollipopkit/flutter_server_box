@@ -1,7 +1,7 @@
 /// What an app tells the desk about itself: its manifest. Every app, built in
 /// or not, is one `defineApp({...})` (a built-in app's sits in
-/// `apps/<id>/manifest.ts` and is found on its own); the dock, the
-/// launchpad, Spotlight, the window manager and the session read nothing else.
+/// `apps/<name>/manifest.ts` and is found on its own); the dock, the
+/// Apps, Spotlight, the window manager and the session read nothing else.
 
 import type { Component } from 'svelte'
 import type { TranslationFunctions } from '../../i18n/i18n-types'
@@ -29,9 +29,11 @@ export function opensPath(opens: Opens, path: string, kind: 'file' | 'dir'): boo
 }
 
 export interface AppManifest {
-  /// Stable: windows, the dock and desk icons are stored by it.
-  /// Lowercase letters, digits and `_`, starting with a letter.
-  id: string
+  /// Who makes it (`serverbox` for the panel's own) and its name: the
+  /// app's id is `<publisher>.<name>` (`appId`). Each is lowercase letters,
+  /// digits and `_`, starting with a letter.
+  publisher: string
+  name: string
   title: Localized
   /// Words Spotlight also finds it by, besides its title.
   keywords?: (ll: TranslationFunctions) => string[]
@@ -57,7 +59,7 @@ export interface AppManifest {
   /// Its page in Settings → Apps, lazy like [load]. It runs as the app
   /// (`useWindow().storage` is the app's), inside the Settings window.
   settings?: () => Promise<{ default: Component }>
-  /// Place in the launchpad and Spotlight, lowest first; then by id.
+  /// Place in Apps and Spotlight, lowest first; then by id.
   order?: number
   /// In a fresh desk's dock.
   pinned?: boolean
@@ -85,18 +87,29 @@ export interface AppSpec extends WindowPolicy {
   load: () => Promise<{ default: Component }>
 }
 
-/// The agent keeps app ids to 32 bytes (`api::desk::valid_app_id`).
-const ID = /^[a-z][a-z0-9_]{0,31}$/
+/// The panel's own apps' publisher; no installed app takes it.
+export const BUILT_IN_PUBLISHER = 'serverbox'
+/// One part of an id, as the agent bounds it (`core::app_id`).
+const PART = /^[a-z][a-z0-9_]{0,23}$/
+
+/// The id of app [name] by [publisher]: stable, windows, the dock, desk icons
+/// and app storage are kept by it.
+export function appId(publisher: string, name: string): string {
+  if (publisher.length < 2 || !PART.test(publisher) || !PART.test(name)) {
+    throw new Error(`app ${JSON.stringify(publisher)}.${JSON.stringify(name)}: lowercase letters, digits and _`)
+  }
+  return `${publisher}.${name}`
+}
 const SIZE: Size = { width: 1040, height: 680 }
 const MIN_SIZE: Size = { width: 420, height: 300 }
 
 export function defineApp(m: AppManifest): AppSpec {
-  if (!ID.test(m.id)) throw new Error(`app id ${JSON.stringify(m.id)}: lowercase letters, digits and _`)
+  const id = appId(m.publisher, m.name)
   const instances = m.instances ?? 1
-  if (!Number.isInteger(instances) || instances < 1) throw new Error(`app ${m.id}: instances must be ≥ 1`)
+  if (!Number.isInteger(instances) || instances < 1) throw new Error(`app ${id}: instances must be ≥ 1`)
   const title = m.title
   return {
-    id: m.id,
+    id,
     kind: 'system',
     title: typeof title === 'string' ? () => title : title,
     keywords: m.keywords,

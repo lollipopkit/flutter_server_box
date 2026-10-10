@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'system_users',
+  publisher: 'serverbox',
+  name: 'system_users',
   title: (ll) => ll.systemUsers(),
   glyph: 'group',
   tone: 'leaf',

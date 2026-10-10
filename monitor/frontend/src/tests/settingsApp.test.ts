@@ -64,7 +64,7 @@ const caps = (admin: boolean): Capabilities =>
 /// A desk with one Settings window open, so `useWindow()` answers its handle.
 function deskWith(appState: unknown): { desk: Desk; id: string } {
   const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
-  const id = desk.open('settings', { appState })
+  const id = desk.open('serverbox.settings', { appState })
   if (!id) throw new Error('the settings window did not open')
   return { desk, id }
 }
@@ -167,7 +167,7 @@ describe('settings pages of other apps', () => {
     const { DeskPrefs } = await import('../desk/prefs.svelte')
     const { AppData } = await import('../desk/appData')
     const off = registerApp({
-      id: 'acme_greeter',
+      publisher: 'acme', name: 'greeter',
       title: 'Greeter',
       glyph: 'waving_hand',
       tone: 'amber',
@@ -182,14 +182,14 @@ describe('settings pages of other apps', () => {
 
     // A row in the list opens the app's page, kept in the window's state.
     await fireEvent.click(await screen.findByRole('button', { name: /^Greeter/ }))
-    expect(desk.windows.get(id)?.appState).toEqual({ section: 'apps', app: 'acme_greeter' })
+    expect(desk.windows.get(id)?.appState).toEqual({ section: 'apps', app: 'acme.greeter' })
     expect(await screen.findByRole('heading', { name: 'Greeter' })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Show in the dock' })).toBeInTheDocument()
     // Its own preferences, in that page.
     await fireEvent.click(await screen.findByRole('button', { name: 'Save greeting' }))
     expect(await screen.findByText('saved: hi')).toBeInTheDocument()
     // Kept as the app's, not Settings'.
-    expect(await desk.appData.for('acme_greeter').get('greeting')).toBe('hi')
+    expect(await desk.appData.for('acme.greeter').get('greeting')).toBe('hi')
     expect(await desk.appData.for('settings').keys()).toEqual([])
 
     // Without an app, the list again.

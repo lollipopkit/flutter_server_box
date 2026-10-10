@@ -37,6 +37,7 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::core::app_id;
 use crate::core::blobs::Blobs;
 use super::admin::{Reauth, reauth};
 use super::authz::{self, Caller};
@@ -61,12 +62,6 @@ const API_VERSION: u32 = 1;
 /// come with `wasm`.
 const WEB_PERMISSIONS: &[&str] = &["notifications", "background"];
 const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "files.read", "exec"];
-/// The panel's own apps (`desk/apps/<id>`): an installed app never takes
-/// one's id, nor the storage its users keep under it.
-const BUILT_IN: &[&str] = &[
-    "status", "files", "terminal", "containers", "process", "services", "cron", "system_users", "firewall", "snippets",
-    "remote_desktop", "benchmark", "virt", "bmc", "backup", "settings",
-];
 const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"];
 
 // -----------------------------------------------------------------------------
@@ -76,7 +71,11 @@ const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
-    pub id: String,
+    /// Who makes it and its name: the id is `<publisher>.<name>`
+    /// (`core::app_id`). The panel's own publisher is not one a package takes,
+    /// so no package takes a built-in app's id, nor its users' storage.
+    pub publisher: String,
+    pub name: String,
     pub version: String,
     pub api: u32,
     pub kind: String,
@@ -96,6 +95,12 @@ pub struct Manifest {
     pub opens: Option<Opens>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub keywords: Vec<String>,
+}
+
+impl Manifest {
+    pub fn id(&self) -> String {
+        format!("{}.{}", self.publisher, self.name)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -130,15 +135,6 @@ fn refused_at(error: &'static str, path: &str) -> Refusal {
     Refusal { error, path: Some(path.chars().take(MAX_PATH_BYTES).collect()) }
 }
 
-/// A third party's id: a publisher prefix, `_`, a name (`acme_notes`), as a
-/// desk app id (`api::desk::valid_app_id`). The prefix keeps it off the
-/// built-in apps' plain names.
-pub fn valid_package_id(id: &str) -> bool {
-    !BUILT_IN.contains(&id)
-        && super::desk::valid_app_id(id)
-        && id.split_once('_').is_some_and(|(publisher, name)| publisher.len() >= 2 && !name.is_empty())
-}
-
 fn short_text(text: &str, max: usize) -> bool {
     (1..=max).contains(&text.chars().count()) && !text.chars().any(char::is_control)
 }
@@ -148,7 +144,7 @@ fn valid_size(s: &Size) -> bool {
 }
 
 pub fn check_manifest(m: &Manifest) -> Result<(), Refusal> {
-    if !valid_package_id(&m.id) {
+    if m.publisher == app_id::BUILT_IN_PUBLISHER || app_id::make(&m.publisher, &m.name).is_none() {
         return Err(refused("invalidId"));
     }
     if !short_text(&m.version, 32) {
@@ -419,6 +415,7 @@ async fn load(db: &sqlx::SqlitePool, id: &str) -> Result<Option<Installed>, sqlx
 /// naming them after.
 async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by: &str) -> anyhow::Result<Installed> {
     let m = &package.manifest;
+    let id = m.id();
     let writing = blobs.writing().await;
     let mut files = Vec::with_capacity(package.files.len());
     for (path, bytes) in &package.files {
@@ -427,12 +424,12 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by:
     let mut tx = db.begin().await?;
     let previous: Option<(String, Option<String>)> =
         sqlx::query_as("SELECT sha256, approved_permissions FROM desk_app_package WHERE app_id = ?")
-            .bind(&m.id)
+            .bind(&id)
             .fetch_optional(&mut *tx)
             .await?;
     let kept = previous.and_then(|(sha, approved)| approved.filter(|_| sha == package.sha256));
     let now = chrono::Utc::now().to_rfc3339();
-    sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(&m.id).execute(&mut *tx).await?;
+    sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(&id).execute(&mut *tx).await?;
     sqlx::query(
         "INSERT INTO desk_app_package (app_id, version, manifest, sha256, approved_permissions, installed_by, installed_at, approved_at) \
          VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(app_id) DO UPDATE SET version = excluded.version, \
@@ -440,7 +437,7 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by:
          installed_by = excluded.installed_by, installed_at = excluded.installed_at, \
          approved_at = CASE WHEN excluded.approved_permissions IS NULL THEN NULL ELSE desk_app_package.approved_at END",
     )
-    .bind(&m.id)
+    .bind(&id)
     .bind(&m.version)
     .bind(serde_json::to_string(m).unwrap_or_default())
     .bind(&package.sha256)
@@ -452,7 +449,7 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by:
     .await?;
     for (path, sha, size) in &files {
         sqlx::query("INSERT INTO desk_app_file (app_id, path, sha256, size) VALUES (?, ?, ?, ?)")
-            .bind(&m.id)
+            .bind(&id)
             .bind(path)
             .bind(sha)
             .bind(size)
@@ -463,7 +460,7 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by:
     drop(writing);
     // The files of the version it replaced.
     blobs.collect_soon(db);
-    Ok(load(db, &m.id).await?.expect("just stored"))
+    Ok(load(db, &id).await?.expect("just stored"))
 }
 
 // -----------------------------------------------------------------------------
@@ -704,7 +701,8 @@ mod tests {
 
     fn manifest() -> Manifest {
         Manifest {
-            id: "acme_notes".into(),
+            publisher: "acme".into(),
+            name: "notes".into(),
             version: "1.0.0".into(),
             api: 1,
             kind: "web".into(),
@@ -725,10 +723,12 @@ mod tests {
         assert_eq!(check_manifest(&manifest()), Ok(()));
         type Case = (fn(&mut Manifest), &'static str);
         let cases: Vec<Case> = vec![
-            (|m| m.id = "notes".into(), "invalidId"),
-            (|m| m.id = "files".into(), "invalidId"),
-            (|m| m.id = "a_notes".into(), "invalidId"),
-            (|m| m.id = "Acme_notes".into(), "invalidId"),
+            (|m| m.publisher = "serverbox".into(), "invalidId"),
+            (|m| m.publisher = "a".into(), "invalidId"),
+            (|m| m.publisher = "Acme".into(), "invalidId"),
+            (|m| m.publisher = "ac.me".into(), "invalidId"),
+            (|m| m.name = String::new(), "invalidId"),
+            (|m| m.name = "my-notes".into(), "invalidId"),
             (|m| m.version = String::new(), "invalidVersion"),
             (|m| m.api = 2, "unsupportedApi"),
             (|m| m.kind = "native".into(), "invalidKind"),

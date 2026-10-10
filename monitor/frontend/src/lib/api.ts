@@ -1,5 +1,12 @@
 import type {
   InstalledApp,
+  StackApp,
+  StackEntry,
+  StackJob,
+  StackPrepare,
+  StackPreview,
+  StackService,
+  StackValue,
   AgentUser,
   CardOrderPayload,
   Capabilities,
@@ -1224,6 +1231,57 @@ export const api = {
   /// Desk apps installed on the agent (`api::apps`); an admin also sees the
   /// ones waiting for approval.
   listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
+  /// The web apps the agent can deploy (`api::stacks`), and their state.
+  listStacks: () => request<{ apps: StackApp[] }>('/stacks', {}, 'Failed to load the apps'),
+  prepareStack: (id: string) =>
+    request<StackPrepare>(`/stacks/${encodeURIComponent(id)}/prepare`, {}, 'Failed to read this machine'),
+  checkStack: (id: string, settings: Record<string, StackValue>) =>
+    request<StackPreview>(
+      `/stacks/${encodeURIComponent(id)}/check`,
+      { method: 'POST', body: JSON.stringify({ settings }) },
+      'Failed to check the settings',
+    ),
+  /// Deploys with what the admin confirmed: that it installs third-party
+  /// software, and the licence where the manifest asks.
+  installStack: (
+    id: string,
+    settings: Record<string, StackValue>,
+    consent: { acknowledged: boolean; acceptLicense: boolean },
+    currentPassword: string,
+  ) =>
+    request<StackJob>(
+      `/stacks/${encodeURIComponent(id)}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          settings,
+          acknowledged: consent.acknowledged,
+          accept_license: consent.acceptLicense,
+          current_password: currentPassword,
+        }),
+      },
+      'Failed to set up the app',
+    ),
+  stackAction: (id: string, action: 'start' | 'stop' | 'restart' | 'update') =>
+    request<StackJob>(
+      `/stacks/${encodeURIComponent(id)}/action`,
+      { method: 'POST', body: JSON.stringify({ action }) },
+      'Failed to change the app',
+    ),
+  removeStack: (id: string, purge: boolean, currentPassword: string) =>
+    request<StackJob>(
+      `/stacks/${encodeURIComponent(id)}`,
+      { method: 'DELETE', body: JSON.stringify({ purge, current_password: currentPassword }) },
+      'Failed to remove the app',
+    ),
+  stackJob: (id: string, since: number) =>
+    request<StackJob>(`/stacks/${encodeURIComponent(id)}/job?since=${since}`, {}, 'Failed to read the progress'),
+  cancelStackJob: (id: string) =>
+    request<void>(`/stacks/${encodeURIComponent(id)}/job/cancel`, { method: 'POST' }, 'Failed to cancel'),
+  stackServices: (id: string) =>
+    request<{ services: StackService[] }>(`/stacks/${encodeURIComponent(id)}/services`, {}, 'Failed to read the containers'),
+  enterStack: (id: string) =>
+    request<StackEntry>(`/stacks/${encodeURIComponent(id)}/enter`, { method: 'POST' }, 'Failed to open the app'),
   /// Uploads a package (`.fsba`); it waits for approval.
   async installApp(file: Blob): Promise<InstalledApp> {
     const res = await fsBytes(

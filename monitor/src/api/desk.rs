@@ -333,11 +333,9 @@ pub fn valid_id(id: &str) -> bool {
     (1..=64).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
 }
 
-/// An app id (`desk/apps`): lowercase, digits and `_`, a letter first.
+/// An app id: `<publisher>.<name>` (`core::app_id`).
 pub fn valid_app_id(id: &str) -> bool {
-    (1..=32).contains(&id.len())
-        && id.as_bytes()[0].is_ascii_lowercase()
-        && id.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+    crate::core::app_id::valid(id)
 }
 
 fn valid_label(label: &str) -> bool {
@@ -1140,12 +1138,12 @@ mod tests {
             wallpaper: "preset:dusk".into(),
             wallpaper_fit: "cover".into(),
             background: false,
-            background_denied: vec!["status".into()],
-            dock: vec!["files".into(), "terminal".into()],
+            background_denied: vec!["serverbox.status".into()],
+            dock: vec!["serverbox.files".into(), "serverbox.terminal".into()],
             icons: vec![Icon {
                 id: "i1".into(),
                 kind: "path".into(),
-                app_id: "files".into(),
+                app_id: "serverbox.files".into(),
                 server_id: Some("local".into()),
                 path: Some("/etc".into()),
                 label: " etc ".into(),
@@ -1171,10 +1169,11 @@ mod tests {
             (|p| p.wallpaper = "preset:nope".into(), "invalidWallpaper"),
             (|p| p.wallpaper = "https://x/y.png".into(), "invalidWallpaper"),
             (|p| p.wallpaper_fit = "tile".into(), "invalidWallpaperFit"),
-            (|p| p.dock.push("files".into()), "duplicateApp"),
-            (|p| p.dock.push("Files".into()), "invalidAppId"),
+            (|p| p.dock.push("serverbox.files".into()), "duplicateApp"),
+            (|p| p.dock.push("files".into()), "invalidAppId"),
+            (|p| p.dock.push("serverbox.Files".into()), "invalidAppId"),
             (|p| p.background_denied.push("Status".into()), "invalidBackgroundApp"),
-            (|p| p.background_denied.push("status".into()), "duplicateBackgroundApp"),
+            (|p| p.background_denied.push("serverbox.status".into()), "duplicateBackgroundApp"),
             (|p| p.icons[0].path = None, "invalidIcon"),
             (|p| p.icons[0].server_id = None, "invalidIcon"),
             (|p| p.icons[0].kind = "app".into(), "invalidIcon"),
@@ -1192,7 +1191,7 @@ mod tests {
     fn window(id: &str) -> Window {
         Window {
             window_id: id.into(),
-            app_id: "files".into(),
+            app_id: "serverbox.files".into(),
             server_id: None,
             x: 10,
             y: 10,

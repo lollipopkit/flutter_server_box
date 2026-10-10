@@ -164,14 +164,14 @@
       class="lk-dock__item"
       style:width="{tile}px"
       style:height="{tile}px"
-      aria-label={$LL.deskLaunchpad()}
-      aria-expanded={desk.panel === 'launchpad'}
+      aria-label={$LL.deskAllApps()}
+      aria-expanded={desk.panel === 'apps'}
       onclick={(e) => {
         e.stopPropagation()
-        desk.togglePanel('launchpad')
+        desk.togglePanel('apps')
       }}
     >
-      <span class="lk-dock__label">{$LL.deskLaunchpad()}</span>
+      <span class="lk-dock__label">{$LL.deskAllApps()}</span>
       <span class="lk-dock__icon"><LkAppIcon glyph="apps" tone="pale" size={tile} /></span>
     </button>
 

@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'process',
+  publisher: 'serverbox',
+  name: 'process',
   title: (ll) => ll.processes(),
   glyph: 'memory',
   tone: 'ink',

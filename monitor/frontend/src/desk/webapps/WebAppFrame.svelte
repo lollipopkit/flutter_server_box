@@ -107,6 +107,10 @@
       allow=""
       {onload}
     ></iframe>
+    <!-- A click inside the frame never reaches the desk, so the window would
+         not come forward: while it is not in front, the first click lands
+         here instead. -->
+    {#if win.lifecycle !== 'active'}<div class="absolute inset-0" aria-hidden="true"></div>{/if}
   {:else}
     <div class="flex h-full items-center justify-center"><Spinner /></div>
   {/if}

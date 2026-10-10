@@ -1,3 +1,4 @@
+pub mod app_id;
 pub mod blobs;
 pub mod config;
 pub mod config_file;

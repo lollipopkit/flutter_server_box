@@ -18,8 +18,8 @@ export function defaults(): DeskPreferences {
     wallpaper_fit: 'cover',
     dock: defaultDock(),
     icons: [
-      { id: 'files', kind: 'app', app_id: 'files', label: '', col: null, row: null },
-      { id: 'terminal', kind: 'app', app_id: 'terminal', label: '', col: null, row: null },
+      { id: 'files', kind: 'app', app_id: 'serverbox.files', label: '', col: null, row: null },
+      { id: 'terminal', kind: 'app', app_id: 'serverbox.terminal', label: '', col: null, row: null },
     ],
     background: true,
     background_denied: [],

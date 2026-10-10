@@ -175,8 +175,8 @@
     padding: var(--space-7) var(--space-9) var(--space-7) var(--space-13);
     border-radius: var(--radius-card);
     background: var(--glass-menu);
-    backdrop-filter: var(--blur-menu);
     -webkit-backdrop-filter: var(--blur-menu);
+    backdrop-filter: var(--blur-menu);
     box-shadow:
       var(--shadow-menu),
       inset 0 0 0 0.5px var(--border-glass);

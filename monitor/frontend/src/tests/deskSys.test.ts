@@ -14,36 +14,43 @@ function key(key: string, mods: Partial<Record<'metaKey' | 'ctrlKey' | 'altKey' 
 
 describe('app manifests', () => {
   it('fills in what a manifest leaves out', () => {
-    const spec = defineApp({ id: 'notes', title: 'Notes', glyph: 'note', tone: 'amber', load })
+    const spec = defineApp({ publisher: 'acme', name: 'notes', title: 'Notes', glyph: 'note', tone: 'amber', load })
     expect(spec.title({} as never)).toBe('Notes')
     expect(spec.instances).toBe(1)
     expect(spec.pinned).toBe(false)
     expect(spec.available(undefined)).toBe(true)
   })
 
-  it('refuses an id the desk could not store', () => {
-    for (const id of ['', 'Notes', '1notes', 'a-b', 'a/b', 'x'.repeat(33)]) {
-      expect(() => defineApp({ id, title: 'x', glyph: 'note', tone: 'amber', load })).toThrow()
+  it('makes the id from the publisher and the name', () => {
+    expect(defineApp({ publisher: 'acme', name: 'my_notes', title: 'x', glyph: 'note', tone: 'amber', load }).id).toBe('acme.my_notes')
+  })
+
+  it('refuses a publisher or name the desk could not store', () => {
+    for (const name of ['', 'Notes', '1notes', 'a-b', 'a.b', 'a/b', 'x'.repeat(25)]) {
+      expect(() => defineApp({ publisher: 'acme', name, title: 'x', glyph: 'note', tone: 'amber', load })).toThrow()
+      expect(() => defineApp({ publisher: name, name: 'notes', title: 'x', glyph: 'note', tone: 'amber', load })).toThrow()
     }
-    expect(() => defineApp({ id: 'ok', title: 'x', glyph: 'note', tone: 'amber', instances: 0, load })).toThrow()
+    expect(() => defineApp({ publisher: 'a', name: 'notes', title: 'x', glyph: 'note', tone: 'amber', load })).toThrow()
+    expect(() => defineApp({ publisher: 'acme', name: 'ok', title: 'x', glyph: 'note', tone: 'amber', instances: 0, load })).toThrow()
   })
 
   it('finds every built-in app by its directory, in order', () => {
     const ids = registry.all.map((a) => a.id)
-    expect(ids[0]).toBe('status')
-    expect(ids.at(-1)).toBe('settings')
-    expect(ids).toHaveLength(16)
-    expect(defaultDock()).toEqual(['status', 'files', 'terminal', 'containers', 'virt', 'settings'])
+    expect(ids[0]).toBe('serverbox.status')
+    expect(ids.at(-1)).toBe('serverbox.settings')
+    expect(ids).toHaveLength(18)
+    expect(ids.every((id) => id.startsWith('serverbox.'))).toBe(true)
+    expect(defaultDock()).toEqual(['serverbox.status', 'serverbox.files', 'serverbox.terminal', 'serverbox.containers', 'serverbox.virt', 'serverbox.settings'])
   })
 
   it('registers an app at run time and takes it away again', () => {
-    const off = registerApp({ id: 'acme_notes', title: 'Notes', glyph: 'note', tone: 'amber', order: 5, load })
-    expect(app('acme_notes')?.title({} as never)).toBe('Notes')
-    expect(registry.all[1].id).toBe('acme_notes')
-    expect(availableApps({} as Capabilities).some((a) => a.id === 'acme_notes')).toBe(true)
-    expect(() => registerApp({ id: 'acme_notes', title: 'Again', glyph: 'note', tone: 'amber', load })).toThrow()
+    const off = registerApp({ publisher: 'acme', name: 'notes', title: 'Notes', glyph: 'note', tone: 'amber', order: 5, load })
+    expect(app('acme.notes')?.title({} as never)).toBe('Notes')
+    expect(registry.all[1].id).toBe('acme.notes')
+    expect(availableApps({} as Capabilities).some((a) => a.id === 'acme.notes')).toBe(true)
+    expect(() => registerApp({ publisher: 'acme', name: 'notes', title: 'Again', glyph: 'note', tone: 'amber', load })).toThrow()
     off()
-    expect(app('acme_notes')).toBeUndefined()
+    expect(app('acme.notes')).toBeUndefined()
   })
 })
 
@@ -125,10 +132,10 @@ describe('app storage', () => {
     const { AppData } = await import('../desk/appData')
     const { BrowserStorage } = await import('../desk/storage')
     const data = new AppData(new BrowserStorage(`test-${crypto.randomUUID()}`))
-    const notes = data.for('notes')
+    const notes = data.for('acme.notes')
     await notes.set('draft', { text: 'hi', at: new Date(0) })
     expect(await notes.get('draft')).toEqual({ text: 'hi', at: '1970-01-01T00:00:00.000Z' })
-    expect(await data.for('files').keys()).toEqual([])
+    expect(await data.for('serverbox.files').keys()).toEqual([])
     await notes.remove('draft')
     expect(await notes.keys()).toEqual([])
   })
@@ -168,7 +175,7 @@ describe('app notifications', () => {
 describe('intents', () => {
   it('matches what an app opens', async () => {
     const { opensPath } = await import('../desk/sys/manifest')
-    const spec = defineApp({ id: 'viewer', title: 'V', glyph: 'note', tone: 'amber', opens: { ext: ['.LOG', 'txt'] }, load })
+    const spec = defineApp({ publisher: 'acme', name: 'viewer', title: 'V', glyph: 'note', tone: 'amber', opens: { ext: ['.LOG', 'txt'] }, load })
     expect(spec.opens.ext).toEqual(['log', 'txt'])
     expect(opensPath(spec.opens, '/var/x.log', 'file')).toBe(true)
     expect(opensPath(spec.opens, '/var/x.LOG', 'file')).toBe(true)
@@ -180,16 +187,16 @@ describe('intents', () => {
 
   it('waits for the window that opens with one, and is taken once', async () => {
     const { Desk } = await import('../desk/deskState.svelte')
-    const off = registerApp({ id: 'acme_viewer', title: 'Viewer', glyph: 'note', tone: 'amber', instances: 1, load })
+    const off = registerApp({ publisher: 'acme', name: 'viewer', title: 'Viewer', glyph: 'note', tone: 'amber', instances: 1, load })
     const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
-    const id = desk.open('acme_viewer', { intent: { action: 'open', data: { path: '/a', kind: 'dir' } } })!
+    const id = desk.open('acme.viewer', { intent: { action: 'open', data: { path: '/a', kind: 'dir' } } })!
     expect(desk.takeIntents(id)).toEqual([{ action: 'open', data: { path: '/a', kind: 'dir' } }])
     expect(desk.takeIntents(id)).toEqual([])
 
     // An app of one window: a later open lands on the mounted window.
     const chrome = new WindowChrome()
     desk.chromes.set(id, chrome)
-    expect(desk.open('acme_viewer', { intent: { action: 'open', data: { path: '/b', kind: 'dir' } } })).toBe(id)
+    expect(desk.open('acme.viewer', { intent: { action: 'open', data: { path: '/b', kind: 'dir' } } })).toBe(id)
     expect(chrome.pendingIntents).toBe(1)
     expect(chrome.takeIntents()).toEqual([{ action: 'open', data: { path: '/b', kind: 'dir' } }])
     expect(chrome.pendingIntents).toBe(0)

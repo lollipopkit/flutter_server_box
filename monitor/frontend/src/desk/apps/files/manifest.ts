@@ -1,7 +1,8 @@
 import { defineApp, access } from '../../sys'
 
 export default defineApp({
-  id: 'files',
+  publisher: 'serverbox',
+  name: 'files',
   title: (ll) => ll.files(),
   glyph: 'folder',
   tone: 'soft',

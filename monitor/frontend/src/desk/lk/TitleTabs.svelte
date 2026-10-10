@@ -28,6 +28,7 @@
 
   import Icon from './Icon.svelte'
   import Indicator from './Indicator.svelte'
+  import { cssMs } from './motion'
 
   interface Props {
     /// `data-*` attributes go on the well.
@@ -73,7 +74,7 @@
   /// then; it takes no clicks meanwhile.
   function tabOut(node: HTMLElement) {
     const style = getComputedStyle(node)
-    const duration = parseFloat(style.getPropertyValue('--dur-tab-in')) || 0
+    const duration = cssMs(style.getPropertyValue('--dur-tab-in'))
     node.style.pointerEvents = 'none'
     node.animate?.(
       [

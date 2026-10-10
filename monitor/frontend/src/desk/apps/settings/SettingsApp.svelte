@@ -16,6 +16,7 @@
   import AgentProviderPage from './AgentProviderPage.svelte'
   import AppearanceSection from './AppearanceSection.svelte'
   import AppPage from './AppPage.svelte'
+  import StackPage from './StackPage.svelte'
   import AppsSection from './AppsSection.svelte'
   import ThemeStorePage from './ThemeStorePage.svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
@@ -36,7 +37,7 @@
 
   /// Which section is showing, read from the window's own state: a reload
   /// restores it, another app can open Settings straight at one, and a second
-  /// `open('settings', { appState: { section } })` switches to it.
+  /// `open('serverbox.settings', { appState: { section } })` switches to it.
   const section = $derived(resolveSection(win.appState))
   /// An account that is no longer an administrator (or a window restored
   /// with `access`) falls back rather than showing a panel with nothing in it.
@@ -59,6 +60,17 @@
 
   function openApp(app: string) {
     win.setAppState({ section: 'apps', app })
+  }
+
+  /// A web app the agent deploys, its page over Apps (`{ section: 'apps',
+  /// stack }`): install, progress, update, uninstall.
+  const stackPage = $derived.by(() => {
+    if (current !== 'apps') return null
+    const id = (win.appState as { stack?: unknown } | null)?.stack
+    return typeof id === 'string' && id ? id : null
+  })
+  function openStack(stack: string) {
+    win.setAppState({ section: 'apps', stack })
   }
 
   /// An Agent provider's page, over Agent (`{ section: 'agent', provider }`).
@@ -165,7 +177,9 @@
   <!-- An app's page is a page over Apps, the theme store one over
        Appearance; the sections are peers. -->
   <PageStack
-    key={appPage
+    key={stackPage
+      ? `apps/stack/${stackPage}`
+      : appPage
       ? `apps/${appPage.id}`
       : storePage
         ? 'appearance/store'
@@ -178,8 +192,10 @@
           : agentProvider
             ? `agent/${agentProvider}`
             : current}
-    depth={appPage || storePage || agentPermissions ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
-    back={appPage
+    depth={stackPage || appPage || storePage || agentPermissions ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
+    back={stackPage
+      ? { key: 'apps', go: () => show('apps') }
+      : appPage
       ? { key: 'apps', go: leaveApp }
       : storePage
         ? { key: 'appearance', go: leaveStore }
@@ -192,7 +208,7 @@
           : agentProvider
             ? { key: 'agent', go: () => show('agent') }
             : null}
-    forward={current === 'apps' && !appPage && leftApp
+    forward={current === 'apps' && !appPage && !stackPage && leftApp
       ? { key: `apps/${leftApp}`, go: () => openApp(leftApp!) }
       : current === 'appearance' && !storePage && leftStore
         ? { key: 'appearance/store', go: openStore }
@@ -204,8 +220,10 @@
     <ThemeStorePage onback={leaveStore} />
   {:else if current === 'appearance'}
     <AppearanceSection onstore={openStore} />
+  {:else if current === 'apps' && stackPage}
+    <StackPage stackId={stackPage} onback={() => show('apps')} />
   {:else if current === 'apps' && appPage}
-    <AppPage spec={appPage} onback={leaveApp} />
+    <AppPage spec={appPage} onback={leaveApp} onstack={openStack} />
   {:else if current === 'apps'}
     <AppsSection onopen={openApp} />
   {:else if current === 'account'}

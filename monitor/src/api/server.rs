@@ -130,6 +130,9 @@ pub struct AppState {
     pub agent: Arc<crate::agent_mode::AgentMode>,
     /// Desk app backend calls running now (`api::app_runtime`).
     pub app_calls: crate::api::app_runtime::AppCalls,
+    /// The web apps this agent deployed, their jobs and proxies — see
+    /// `stacks`.
+    pub stacks: Arc<crate::stacks::Stacks>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -182,6 +185,9 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
         protected.file(&db);
         protected.tree(crate::core::blobs::Blobs::beside(&db).dir());
         protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
+        for env in crate::stacks::Stacks::env_files_beside(&db) {
+            protected.file(&env);
+        }
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -238,6 +244,7 @@ impl AppState {
                 None => crate::core::blobs::Blobs::temporary(),
             }),
             agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
+            stacks: Arc::new(crate::stacks::Stacks::new(sqlite_file_of(&db).as_deref())),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
@@ -586,6 +593,19 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::app_runtime::call)),
             )
             .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
+            .service(web::resource("/stacks").route(web::get().to(crate::api::stacks::list)))
+            .service(
+                web::resource("/stacks/{id}")
+                    .route(web::post().to(crate::api::stacks::install))
+                    .route(web::delete().to(crate::api::stacks::remove)),
+            )
+            .service(web::resource("/stacks/{id}/prepare").route(web::get().to(crate::api::stacks::prepare)))
+            .service(web::resource("/stacks/{id}/check").route(web::post().to(crate::api::stacks::check)))
+            .service(web::resource("/stacks/{id}/action").route(web::post().to(crate::api::stacks::act)))
+            .service(web::resource("/stacks/{id}/job").route(web::get().to(crate::api::stacks::job)))
+            .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(crate::api::stacks::cancel)))
+            .service(web::resource("/stacks/{id}/services").route(web::get().to(crate::api::stacks::services)))
+            .service(web::resource("/stacks/{id}/enter").route(web::post().to(crate::api::stacks::enter)))
             .service(
                 web::resource("/desk/apps/{app}/storage")
                     .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))
@@ -750,7 +770,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
 
 /// Builds the rustls server config from a PEM certificate and key using the
 /// ring provider.
-fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
+pub(crate) fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
     use rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 
     let certs = CertificateDer::pem_file_iter(&tls.cert_path)
@@ -1108,6 +1128,9 @@ struct CapabilitiesView {
     /// The machine-management endpoints this agent serves — see
     /// `api::machine::FEATURES`. Whether the caller may use one is `grants`.
     features: &'static [&'static str],
+    /// The web apps this agent deployed, and their state (`stacks`): what
+    /// decides whether a panel offers their windows. Empty for a watch token.
+    stacks: Vec<StackBrief>,
     remote_access: RemoteAccessView,
     /// Who is asking — absent for a watch token, which is nobody's session.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1115,6 +1138,13 @@ struct CapabilitiesView {
     /// What the caller's role lets them do over this link, grant by grant —
     /// see `authz::grants_view`.
     grants: serde_json::Value,
+}
+
+#[derive(Serialize)]
+struct StackBrief {
+    id: String,
+    /// `installing` | `installed` | `failed`.
+    state: String,
 }
 
 #[derive(Serialize)]
@@ -1185,6 +1215,15 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .metrics_days,
         oldest_sample,
         features: crate::api::machine::FEATURES,
+        stacks: match caller {
+            Some(_) => crate::stacks::store::all(&app_state.db)
+                .await
+                .unwrap_or_default()
+                .into_iter()
+                .map(|r| StackBrief { id: r.id, state: r.state })
+                .collect(),
+            None => Vec::new(),
+        },
         remote_access: {
             let ok = |grant| {
                 caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
@@ -1243,6 +1282,7 @@ async fn issue_ws_ticket(
         // Bound to the console it opens, so only `POST /virt/console` mints
         // one.
         Purpose::Virt => (false, "virt consoles are opened through /virt/console"),
+        Purpose::Proxy => (false, "app windows are entered through /stacks/{id}/enter"),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
@@ -1267,6 +1307,7 @@ async fn issue_ws_ticket(
                     Purpose::Listen => "listen",
                     Purpose::Rdp => "rdp",
                     Purpose::Virt => "virt",
+                    Purpose::Proxy => "proxy",
                 })
                 .record(&app_state.db)
                 .await;

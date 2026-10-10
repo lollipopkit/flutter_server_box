@@ -1,7 +1,8 @@
 import { defineApp } from '../../sys'
 
 export default defineApp({
-  id: 'status',
+  publisher: 'serverbox',
+  name: 'status',
   title: (ll) => ll.deskAppStatus(),
   keywords: (ll) => [ll.cpuUsage(), ll.memory(), ll.diskUsage(), ll.network()],
   glyph: 'monitoring',

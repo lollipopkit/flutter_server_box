@@ -3,8 +3,25 @@
   import { useDesk } from '../deskState.svelte'
   import Input from '../lk/Input.svelte'
   import AppIcon from './AppIcon.svelte'
+  import { cubicIn } from 'svelte/easing'
+  import { cssMs } from '../lk/motion'
 
   const desk = useDesk()
+
+  /// The way in, backwards: it fades and grows back out over the desk.
+  /// Global, since it is the desk's `{#if}` that removes it.
+  function leave(node: HTMLElement) {
+    const ms = cssMs(getComputedStyle(node).getPropertyValue('--dur-scene'), 677)
+    return {
+      duration: ms * 0.6,
+      easing: cubicIn,
+      css: (t: number) => `opacity: ${t}; transform: scale(${1.08 - 0.08 * t})`,
+    }
+  }
+
+  /// A context menu open on an icon: a click beside it closes the menu, not
+  /// Apps (the desk's own dismissal never hears it, this stops it).
+  let closingMenu = false
 
   let search = $state<HTMLInputElement | null>(null)
   // `autofocus` is ignored once anything on the page has focus.
@@ -25,12 +42,21 @@
      closes it. -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
-  class="launchpad absolute inset-0 z-[100001] flex flex-col items-center gap-[55px] overflow-y-auto px-4 pb-28 pt-[70px]"
+  class="apps-panel absolute inset-0 z-[100001] flex flex-col items-center gap-[55px] overflow-y-auto px-4 pb-28 pt-[70px]"
   role="dialog"
-  aria-label={$LL.deskLaunchpad()}
+  aria-label={$LL.deskAllApps()}
   tabindex="-1"
-  onpointerdown={(e) => e.stopPropagation()}
+  out:leave|global
+  onpointerdown={(e) => {
+    e.stopPropagation()
+    closingMenu = desk.menu !== null
+    if (closingMenu) desk.menu = null
+  }}
   onclick={(e) => {
+    if (closingMenu) {
+      closingMenu = false
+      return
+    }
     if (e.target === e.currentTarget) desk.panel = null
   }}
 >
@@ -47,12 +73,14 @@
       }}
     />
   </div>
-  <div class="launchpad-grid">
+  <div class="apps-panel-grid">
     {#each shown as spec, i (spec.id)}
       <button
-        class="launchpad-app"
+        class="apps-panel-app"
         style:animation-delay="{i * 30}ms"
-        onclick={() => desk.open(spec.id)}
+        onclick={() => {
+          if (!closingMenu) desk.open(spec.id)
+        }}
         oncontextmenu={(e) => {
           const prefs = desk.prefs
           const pinned = prefs?.value.dock.includes(spec.id)
@@ -82,13 +110,13 @@
 </div>
 
 <style>
-  .launchpad {
+  .apps-panel {
     background: color-mix(in srgb, var(--surface-desktop) 35%, transparent);
-    backdrop-filter: blur(40px) saturate(1.4);
     -webkit-backdrop-filter: blur(40px) saturate(1.4);
-    animation: launchpad-in var(--dur-scene) var(--ease-emphasized);
+    backdrop-filter: blur(40px) saturate(1.4);
+    animation: apps-panel-in var(--dur-scene) var(--ease-emphasized);
   }
-  @keyframes launchpad-in {
+  @keyframes apps-panel-in {
     from {
       opacity: 0;
       transform: scale(1.08);
@@ -98,14 +126,14 @@
       transform: none;
     }
   }
-  .launchpad-grid {
+  .apps-panel-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, 120px);
     justify-content: center;
     gap: var(--space-34) var(--space-21);
     width: min(100%, calc(5 * 120px + 4 * 21px));
   }
-  .launchpad-app {
+  .apps-panel-app {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -120,10 +148,10 @@
     animation: lk-pop-in var(--dur-window) var(--ease-spring-bouncy) both;
     transition: transform var(--dur-slow) var(--ease-spring-bouncy);
   }
-  .launchpad-app:active {
+  .apps-panel-app:active {
     transform: scale(0.9);
   }
-  .launchpad-app:focus-visible {
+  .apps-panel-app:focus-visible {
     outline: none;
     border-radius: var(--radius-card);
     box-shadow: var(--focus-ring);

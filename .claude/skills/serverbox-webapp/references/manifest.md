@@ -1,13 +1,13 @@
 # Web app manifest reference
 
-`store/apps/<id>/manifest.toml`, schema 1. The JSON Schema is
+`store/apps/<publisher>.<name>/manifest.toml`, schema 1. The JSON Schema is
 `docs/schemas/monitor-app.schema.json`; the agent's reader is
 `monitor/src/stacks/manifest.rs`. Unknown tables and fields are errors.
 
 ## Folder
 
 ```
-store/apps/<id>/
+store/apps/<publisher>.<name>/
   manifest.toml        required
   compose.yaml         the compose files `[compose] files` names
   hwaccel.yml …        any other file a compose file uses (`extends`)
@@ -23,15 +23,32 @@ other by bare name.
 | Field | Type | Notes |
 |---|---|---|
 | `schema` | `1` | |
-| `id` | string | `^[a-z][a-z0-9-]{0,31}$`, equal to the folder's name. The compose project is `sbm-<id>` |
-| `name` | string | The upstream project's name, 1–64 characters |
+| `publisher` | string | `^[a-z][a-z0-9_]{1,23}$`: who makes the service (`futo`) |
+| `name` | string | `^[a-z][a-z0-9_]{0,23}$`: the app's name within its publisher (`immich`) |
+| `project` | string | The upstream project's name as shown (`Immich`), 1–64 characters |
+
+The app's id is `<publisher>.<name>` (`futo.immich`), never written in the
+file: the folder's name, the panel's and the API's name for the app. The
+compose project is `sbm-<publisher>-<name>`. Every app has one, the panel's
+own (`serverbox.*`) and desk packages too.
 | `version` | string | The upstream release the files pin |
+| `developer` | string | Optional: who makes the service (`Immich (FUTO)`), 1–128 characters. Shown in the confirmation before deploying |
 | `homepage`, `source` | https URL | `source` is where the service's code is |
 | `glyph` | string | Material Symbols Rounded name |
 | `tone` | enum | `berry soft ink sky teal violet amber leaf pale bright mist` |
 | `categories` | enum[] | `photos media files documents productivity development ai home network monitoring security tools` |
 | `notices` | enum[] | What the deploy dialog points out, below |
 | `title`, `description` | text | Translations by locale (`en` required; `zh`, `zh-TW`, …). `title` names the window |
+
+### What the admin confirms
+
+Before deploying, the panel shows the project (`name`, `developer`,
+`version`, `homepage`, `source`), its licence, the images the compose files
+will pull with the chosen settings, the data folders, the port and the
+notices, and says the service is third-party. The admin ticks that they
+understand this installs third-party software (always) and that they accept
+the licence (when `license.accept`); the agent refuses a deploy without
+either.
 
 ### `notices`
 

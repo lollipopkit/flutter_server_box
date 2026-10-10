@@ -1,7 +1,8 @@
 import { defineApp, access } from '../../sys'
 
 export default defineApp({
-  id: 'terminal',
+  publisher: 'serverbox',
+  name: 'terminal',
   title: (ll) => ll.terminal(),
   glyph: 'terminal',
   tone: 'ink',

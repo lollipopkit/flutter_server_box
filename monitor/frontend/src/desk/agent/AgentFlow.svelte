@@ -529,8 +529,8 @@
     padding: var(--space-9);
     border-radius: var(--radius-panel);
     background: var(--glass-sidebar);
-    backdrop-filter: var(--blur-sidebar);
     -webkit-backdrop-filter: var(--blur-sidebar);
+    backdrop-filter: var(--blur-sidebar);
     box-shadow:
       inset 0 0 0 0.5px var(--border-glass),
       var(--shadow-popover);

@@ -34,7 +34,7 @@
     label={serverLabel}
     detail={desk.storage?.remote ? (desk.live ? $LL.deskLiveShort() : $LL.deskOfflineShort()) : $LL.settingsThisBrowser()}
     on={!desk.storage?.remote || desk.live}
-    onclick={() => desk.open('status')}
+    onclick={() => desk.open('serverbox.status')}
   />
   <ControlTile
     icon="dark_mode"
@@ -96,7 +96,7 @@
     icon="settings"
     label={$LL.deskAppSettings()}
     detail={$LL.deskSettingsHint()}
-    onclick={() => desk.open('settings', { appState: { section: 'appearance' } })}
+    onclick={() => desk.open('serverbox.settings', { appState: { section: 'appearance' } })}
   />
 </div>
 

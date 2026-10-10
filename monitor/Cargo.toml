@@ -33,6 +33,11 @@ rustls = { version = "0.23", default-features = false, features = ["ring", "logg
 # to the protocol version `@devolutions/iron-remote-desktop-rdp` 0.7 speaks.
 ironrdp-rdcleanpath = "=0.2.2"
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "logging", "tls12"] }
+# The web apps' proxy (`stacks::proxy`): its own listeners, HTTP/1.1 with
+# upgrades both ways; ntex's client cannot hand an upgraded connection over.
+hyper = { version = "1", features = ["server", "client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio", "server", "client-legacy", "http1"] }
+http-body-util = "0.1"
 
 # Async runtime
 tokio = { version = "1.53", features = ["full"] }

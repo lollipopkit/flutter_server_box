@@ -110,6 +110,8 @@ export interface Capabilities {
   /// The machine-management endpoints the agent serves. Absent on agents
   /// predating them, which serve none — see `machineAccess`.
   features?: MachineFeature[]
+  /// The web apps the agent deployed (`/stacks*`); absent on older agents.
+  stacks?: { id: string; state: 'installing' | 'installed' | 'failed' }[]
 }
 
 /// A machine-management page the agent may serve (`api::machine::FEATURES`).
@@ -138,6 +140,9 @@ export type MachineFeature =
   | 'desk'
   /// Agent mode: tasks an AI agent runs on the machine (`/agent*`).
   | 'agent_mode'
+  /// Web apps deployed with Docker Compose behind the agent's proxy
+  /// (`/stacks*`).
+  | 'stacks'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -2664,7 +2669,9 @@ export type VirtBackupIssue =
 /// Desk apps installed on the agent (`api::apps`).
 /// A package's manifest as the agent checked it (`api::apps::Manifest`).
 export interface PackageManifest {
-  id: string
+  /// The app's id is `<publisher>.<name>` (`InstalledApp.id`).
+  publisher: string
+  name: string
   version: string
   api: number
   kind: 'web' | 'wasm'
@@ -2690,4 +2697,146 @@ export interface InstalledApp {
   installed_by: string
   installed_at: string
   approved_at: string | null
+}
+
+/// Text in several languages, keyed by locale (`en` always there).
+export type LocalizedText = Record<string, string>
+
+/// A setting a web app's deploy dialog asks (`stacks::manifest::Setting`).
+export type StackSetting =
+  | { type: 'path'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default: string; data: boolean }
+  | { type: 'port'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default: number }
+  | { type: 'bool'; key: string; label: LocalizedText; help?: LocalizedText | null; default: boolean }
+  | {
+      type: 'choice'
+      key: string
+      label: LocalizedText
+      help?: LocalizedText | null
+      default: string
+      options: { value: string; label: LocalizedText }[]
+    }
+  | { type: 'text'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default?: string | null; optional: boolean; pattern: string }
+
+export type StackNotice =
+  | 'pullsImages'
+  | 'bindsPaths'
+  | 'mountsHostFiles'
+  | 'gpuDevices'
+  | 'publishesPort'
+  | 'privileged'
+  | 'hostNetwork'
+  | 'dockerSocket'
+
+/// A web app of the agent's catalog (`store/apps/<id>/manifest.toml`).
+export interface StackManifest {
+  /// `<publisher>.<name>` (`futo.immich`), made by the agent.
+  id: string
+  publisher: string
+  name: string
+  /// The upstream project's name (`Immich`).
+  project: string
+  /// Who makes the service, when the manifest says.
+  developer?: string | null
+  version: string
+  homepage: string
+  source: string
+  glyph: string
+  tone: string
+  categories: string[]
+  notices: StackNotice[]
+  title: LocalizedText
+  description: LocalizedText
+  license: { spdx: string; url: string; accept: boolean }
+  requirements: {
+    memory_min_mib?: number | null
+    memory_recommended_mib?: number | null
+    cores_min?: number | null
+    arch: string[]
+    os: string[]
+  }
+  web: { port: string; path: string }
+  settings: StackSetting[]
+}
+
+export type StackValue = string | number | boolean
+
+/// A deployment (`stacks::store::StackRow`); an account that is not an admin
+/// sees only its state and version.
+export interface StackRow {
+  state: 'installing' | 'installed' | 'failed'
+  version: string
+  id?: string
+  settings?: Record<string, StackValue>
+  proxy_port?: number
+  license?: string
+  license_accepted_by?: string
+  license_accepted_at?: string
+  installed_by?: string
+  installed_at?: string
+  updated_at?: string
+  last_error?: string | null
+}
+
+export type StackJobKind = 'install' | 'update' | 'start' | 'stop' | 'restart' | 'remove'
+
+/// A deploy, update, start, stop or removal (`stacks::job::JobView`).
+export interface StackJob {
+  id: number
+  kind: StackJobKind
+  state: 'running' | 'succeeded' | 'failed' | 'cancelled'
+  error: string | null
+  lines: { seq: number; text: string }[]
+  /// The next line's sequence number: what to ask from next time.
+  next: number
+}
+
+export interface StackApp {
+  manifest: StackManifest
+  stack: StackRow | null
+  /// Admins only: the latest job.
+  job: StackJob | null
+  /// Whether the agent's proxy is in front of it now.
+  proxy: boolean
+}
+
+/// What a deploy dialog starts from (`GET /stacks/{id}/prepare`).
+export interface StackPrepare {
+  defaults: Record<string, StackValue>
+  runtime: { available: true; runtime: 'docker' | 'podman'; compose: string } | { available: false; error: 'noRuntime' | 'noCompose' }
+  memory_mib: number | null
+  cores: number | null
+  /// GPU vendors containers can be given (CUDA needs the NVIDIA Container
+  /// Toolkit).
+  gpus: string[]
+  /// Every GPU vendor the agent sees.
+  gpus_seen: string[]
+  wsl: boolean
+}
+
+/// A ticket for a web app's proxy (`POST /stacks/{id}/enter`).
+export interface StackEntry {
+  ticket: string
+  port: number
+  tls: boolean
+  path: string
+  enter: string
+}
+
+export interface StackService {
+  service: string
+  name: string
+  image: string
+  state: string
+  health: string | null
+  exit_code: number | null
+  status: string
+}
+
+/// What deploying chosen settings would do (`POST /stacks/{id}/check`).
+export interface StackPreview {
+  settings: Record<string, StackValue>
+  images: string[]
+  data_paths: string[]
+  port: number | null
+  port_free: boolean
 }

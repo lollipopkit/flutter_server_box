@@ -2,19 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json",
   "title": "ServerBox Monitor web app manifest",
-  "description": "store/apps/<id>/manifest.toml: a web service the Monitor agent deploys with Docker Compose and shows in a desk window. Read by monitor/src/stacks/manifest.rs; checked further by the serverbox-webapp skill's validate.py.",
+  "description": "store/apps/<publisher>.<name>/manifest.toml: a web service the Monitor agent deploys with Docker Compose and shows in a desk window. Read by monitor/src/stacks/manifest.rs; checked further by the serverbox-webapp skill's validate.py.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "id", "name", "version", "homepage", "source", "glyph", "tone", "title", "description", "license", "compose", "web"],
+  "required": ["schema", "publisher", "name", "project", "version", "homepage", "source", "glyph", "tone", "title", "description", "license", "compose", "web"],
   "properties": {
     "schema": { "const": 1, "description": "Manifest format version." },
-    "id": {
+    "publisher": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9-]{0,31}$",
-      "description": "Stable; the folder's name, and the compose project is sbm-<id>."
+      "pattern": "^[a-z][a-z0-9_]{1,23}$",
+      "description": "Who makes the service (`futo`). The app's id is <publisher>.<name>: stable, the folder's name; the compose project is sbm-<publisher>-<name>."
     },
-    "name": { "type": "string", "minLength": 1, "maxLength": 64, "description": "The upstream project's name." },
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,23}$", "description": "The app's name within its publisher (`immich`)." },
+    "project": { "type": "string", "minLength": 1, "maxLength": 64, "description": "The upstream project's name, as shown (`Immich`)." },
     "version": { "type": "string", "minLength": 1, "maxLength": 32, "description": "The upstream release the compose files pin." },
+    "developer": { "type": "string", "minLength": 1, "maxLength": 128, "description": "Who makes the service, shown before deploying (`Immich (FUTO)`)." },
     "homepage": { "$ref": "#/$defs/url" },
     "source": { "$ref": "#/$defs/url", "description": "Where the service's source is." },
     "glyph": { "type": "string", "pattern": "^[a-z0-9_]{1,64}$", "description": "A Material Symbols Rounded name." },

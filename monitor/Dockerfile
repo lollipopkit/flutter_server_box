@@ -41,6 +41,9 @@ COPY monitor/src/ ./src/
 COPY assets/yabs.b64 /assets/yabs.b64
 # The theme store's catalog, embedded the same way (`api/desk_themes.rs`).
 COPY assets/catalog/repos.toml /assets/catalog/repos.toml
+# The built-in web apps (`stacks::builtin`), embedded the same way: from
+# `src/stacks/` that is `/store/apps`.
+COPY store/apps/ /store/apps/
 
 # 独立构建 monitor(脱离 monorepo workspace),修正 crates/ 下各依赖的相对路径
 #

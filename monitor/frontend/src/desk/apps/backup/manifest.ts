@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'backup',
+  publisher: 'serverbox',
+  name: 'backup',
   title: (ll) => ll.backup(),
   glyph: 'backup',
   tone: 'leaf',

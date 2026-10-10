@@ -608,8 +608,8 @@
     flex-direction: column;
     border-radius: var(--radius-md);
     background: var(--glass-sidebar);
-    backdrop-filter: var(--blur-sidebar);
     -webkit-backdrop-filter: var(--blur-sidebar);
+    backdrop-filter: var(--blur-sidebar);
     box-shadow: inset 0 0 0 0.5px var(--border-hairline);
   }
   .row {
@@ -778,8 +778,8 @@
     bottom: var(--space-13);
     border-radius: 50%;
     background: var(--glass-dock);
-    backdrop-filter: var(--blur-dock);
     -webkit-backdrop-filter: var(--blur-dock);
+    backdrop-filter: var(--blur-dock);
     box-shadow: inset 0 0 0 0.5px var(--border-glass);
   }
   /* A phone: the instances above the sign-in, not beside it. */

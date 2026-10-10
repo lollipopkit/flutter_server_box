@@ -16,7 +16,7 @@
   const sys = $derived(systemPrefs.value)
   /// The apps this browser may open at start: those this account can use.
   const startApps = $derived(
-    (['status', 'process', 'files'] as const)
+    (['serverbox.status', 'serverbox.process', 'serverbox.files'] as const)
       .map((id) => desk.apps.find((a) => a.id === id))
       .filter((a) => a !== undefined)
       .map((a) => ({ value: a.id, label: a.title($LL) })),

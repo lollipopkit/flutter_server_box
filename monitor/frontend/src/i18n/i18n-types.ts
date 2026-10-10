@@ -5627,10 +5627,6 @@ type RootTranslation = {
 	 */
 	deskDock: string
 	/**
-	 * L​a​u​n​c​h​p​a​d
-	 */
-	deskLaunchpad: string
-	/**
 	 * S​t​a​t​u​s
 	 */
 	deskAppStatus: string
@@ -5646,6 +5642,10 @@ type RootTranslation = {
 	 * A​p​p​s
 	 */
 	deskApps: string
+	/**
+	 * A​l​l​ ​A​p​p​s
+	 */
+	deskAllApps: string
 	/**
 	 * W​i​n​d​o​w​s
 	 */
@@ -6267,22 +6267,6 @@ type RootTranslation = {
 	 * O​p​e​n​ ​S​t​a​t​u​s
 	 */
 	deskOpenStatus: string
-	/**
-	 * T​i​t​l​e​ ​b​a​r
-	 */
-	deskTitlebar: string
-	/**
-	 * G​l​a​s​s​:​ ​t​h​e​ ​m​a​t​e​r​i​a​l​ ​s​h​o​w​s​ ​o​n​c​e​ ​c​o​n​t​e​n​t​ ​s​c​r​o​l​l​s​ ​u​n​d​e​r​ ​t​h​e​ ​b​a​r
-	 */
-	deskTitlebarHint: string
-	/**
-	 * G​l​a​s​s
-	 */
-	deskTitlebarGlass: string
-	/**
-	 * A​l​w​a​y​s​ ​s​h​o​w​n
-	 */
-	deskTitlebarAlways: string
 	/**
 	 * P​o​s​i​t​i​o​n
 	 */
@@ -7996,6 +7980,446 @@ type RootTranslation = {
 	 * @param {unknown} n
 	 */
 	settingsAgentAutoShowDefaults: RequiredParams<'n'>
+	/**
+	 * P​h​o​t​o​s
+	 */
+	photos: string
+	/**
+	 * p​h​o​t​o​s​ ​p​i​c​t​u​r​e​s​ ​v​i​d​e​o​s​ ​g​a​l​l​e​r​y​ ​i​m​m​i​c​h
+	 */
+	photosKeywords: string
+	/**
+	 * P​o​w​e​r​e​d​ ​b​y​ ​{​n​a​m​e​}​ ​{​v​e​r​s​i​o​n​}
+	 * @param {unknown} name
+	 * @param {unknown} version
+	 */
+	stackPoweredBy: RequiredParams<'name' | 'version'>
+	/**
+	 * Y​o​u​ ​c​a​n​ ​c​l​o​s​e​ ​t​h​i​s​ ​w​i​n​d​o​w​;​ ​t​h​e​ ​a​g​e​n​t​ ​c​a​r​r​i​e​s​ ​o​n​.
+	 */
+	stackProgressHint: string
+	/**
+	 * L​o​g
+	 */
+	stackLog: string
+	/**
+	 * R​e​q​u​i​r​e​m​e​n​t​s
+	 */
+	stackRequirements: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e
+	 */
+	stackRuntime: string
+	/**
+	 * O​K
+	 */
+	stackOk: string
+	/**
+	 * M​i​s​s​i​n​g
+	 */
+	stackMissing: string
+	/**
+	 * L​o​w
+	 */
+	stackLow: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	stackMemory: string
+	/**
+	 * {​h​a​v​e​}​ ​h​e​r​e​,​ ​{​n​e​e​d​}​ ​r​e​c​o​m​m​e​n​d​e​d
+	 * @param {unknown} have
+	 * @param {unknown} need
+	 */
+	stackMemoryValue: RequiredParams<'have' | 'need'>
+	/**
+	 * C​P​U​ ​c​o​r​e​s
+	 */
+	stackCores: string
+	/**
+	 * {​h​a​v​e​}​ ​h​e​r​e​,​ ​a​t​ ​l​e​a​s​t​ ​{​n​e​e​d​}
+	 * @param {unknown} have
+	 * @param {unknown} need
+	 */
+	stackCoresValue: RequiredParams<'have' | 'need'>
+	/**
+	 * D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​,​ ​o​r​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​u​s​e​ ​i​t​.
+	 */
+	stackNoRuntime: string
+	/**
+	 * D​o​c​k​e​r​ ​C​o​m​p​o​s​e​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	stackNoCompose: string
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	stackSettings: string
+	/**
+	 * W​h​a​t​ ​i​t​ ​d​o​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	stackNotices: string
+	/**
+	 * D​o​w​n​l​o​a​d​s​ ​c​o​n​t​a​i​n​e​r​ ​i​m​a​g​e​s​ ​f​r​o​m​ ​t​h​e​i​r​ ​r​e​g​i​s​t​r​i​e​s​.
+	 */
+	stackNoticePullsImages: string
+	/**
+	 * K​e​e​p​s​ ​i​t​s​ ​d​a​t​a​ ​i​n​ ​f​o​l​d​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	stackNoticeBindsPaths: string
+	/**
+	 * R​e​a​d​s​ ​f​i​l​e​s​ ​o​f​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​u​c​h​ ​a​s​ ​i​t​s​ ​t​i​m​e​ ​z​o​n​e​.
+	 */
+	stackNoticeMountsHostFiles: string
+	/**
+	 * U​s​e​s​ ​t​h​e​ ​G​P​U​ ​w​h​e​n​ ​a​n​ ​a​c​c​e​l​e​r​a​t​i​o​n​ ​i​s​ ​c​h​o​s​e​n​.
+	 */
+	stackNoticeGpuDevices: string
+	/**
+	 * L​i​s​t​e​n​s​ ​o​n​ ​a​ ​p​o​r​t​ ​o​f​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	stackNoticePublishesPort: string
+	/**
+	 * R​u​n​s​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​w​i​t​h​ ​e​x​t​e​n​d​e​d​ ​p​r​i​v​i​l​e​g​e​s​.
+	 */
+	stackNoticePrivileged: string
+	/**
+	 * U​s​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​n​e​t​w​o​r​k​ ​d​i​r​e​c​t​l​y​.
+	 */
+	stackNoticeHostNetwork: string
+	/**
+	 * C​o​n​t​r​o​l​s​ ​D​o​c​k​e​r​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	stackNoticeDockerSocket: string
+	/**
+	 * L​i​c​e​n​c​e
+	 */
+	stackLicense: string
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​f​r​e​e​ ​s​o​f​t​w​a​r​e​ ​u​n​d​e​r​ ​t​h​e​ ​{​s​p​d​x​}​ ​l​i​c​e​n​c​e​.​ ​I​t​ ​i​s​ ​m​a​d​e​ ​b​y​ ​i​t​s​ ​o​w​n​ ​d​e​v​e​l​o​p​e​r​s​,​ ​n​o​t​ ​b​y​ ​S​e​r​v​e​r​B​o​x​.
+	 * @param {unknown} name
+	 * @param {unknown} spdx
+	 */
+	stackLicenseBody: RequiredParams<'name' | 'spdx'>
+	/**
+	 * R​e​a​d​ ​t​h​e​ ​l​i​c​e​n​c​e
+	 */
+	stackLicenseRead: string
+	/**
+	 * S​o​u​r​c​e​ ​c​o​d​e
+	 */
+	stackSource: string
+	/**
+	 * W​e​b​s​i​t​e
+	 */
+	stackHomepage: string
+	/**
+	 * I​ ​a​c​c​e​p​t​ ​t​h​e​ ​{​s​p​d​x​}​ ​l​i​c​e​n​c​e
+	 * @param {unknown} spdx
+	 */
+	stackLicenseAccept: RequiredParams<'spdx'>
+	/**
+	 * S​e​t​ ​u​p
+	 */
+	stackInstall: string
+	/**
+	 * S​e​t​ ​u​p​ ​{​n​a​m​e​}​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * @param {unknown} name
+	 */
+	stackInstallReauth: RequiredParams<'name'>
+	/**
+	 * C​h​e​c​k​ ​{​s​e​t​t​i​n​g​}​.
+	 * @param {unknown} setting
+	 */
+	stackInvalidSetting: RequiredParams<'setting'>
+	/**
+	 * N​o​t​ ​v​a​l​i​d
+	 */
+	stackInvalidValue: string
+	/**
+	 * S​o​m​e​t​h​i​n​g​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​u​n​n​i​n​g​ ​f​o​r​ ​t​h​i​s​ ​a​p​p​.
+	 */
+	stackBusy: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​i​s​ ​a​l​r​e​a​d​y​ ​s​e​t​ ​u​p​.
+	 */
+	stackAlreadyInstalled: string
+	/**
+	 * N​o​ ​f​r​e​e​ ​p​o​r​t​ ​i​s​ ​l​e​f​t​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​ ​(​3​7​8​0​–​3​7​9​9​)​.
+	 */
+	stackNoProxyPort: string
+	/**
+	 * S​e​t​t​i​n​g​ ​u​p​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackInstalling: RequiredParams<'name'>
+	/**
+	 * U​p​d​a​t​i​n​g​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackUpdating: RequiredParams<'name'>
+	/**
+	 * U​n​i​n​s​t​a​l​l​i​n​g​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackRemoving: RequiredParams<'name'>
+	/**
+	 * W​o​r​k​i​n​g​…
+	 */
+	stackWorking: string
+	/**
+	 * U​p​d​a​t​e​ ​t​o​ ​{​v​e​r​s​i​o​n​}
+	 * @param {unknown} version
+	 */
+	stackUpdate: RequiredParams<'version'>
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	stackRestart: string
+	/**
+	 * S​t​o​p
+	 */
+	stackStop: string
+	/**
+	 * S​t​a​r​t
+	 */
+	stackStart: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​…
+	 */
+	stackRemove: string
+	/**
+	 * O​p​e​n​ ​i​n​ ​a​ ​n​e​w​ ​t​a​b
+	 */
+	stackOpenTab: string
+	/**
+	 * T​h​i​s​ ​p​a​g​e​ ​i​s​ ​H​T​T​P​S​ ​a​n​d​ ​t​h​e​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​s​e​r​v​e​ ​T​L​S​ ​i​t​s​e​l​f​,​ ​s​o​ ​t​h​e​ ​b​r​o​w​s​e​r​ ​b​l​o​c​k​s​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​.​ ​G​i​v​e​ ​t​h​e​ ​a​g​e​n​t​ ​a​ ​c​e​r​t​i​f​i​c​a​t​e​,​ ​o​r​ ​o​p​e​n​ ​t​h​e​ ​p​a​n​e​l​ ​o​v​e​r​ ​H​T​T​P​ ​o​n​ ​t​h​e​ ​l​o​c​a​l​ ​n​e​t​w​o​r​k​.
+	 */
+	stackMixedContent: string
+	/**
+	 * N​o​t​ ​s​e​t​ ​u​p
+	 */
+	stackNotSetUp: string
+	/**
+	 * A​n​ ​a​d​m​i​n​ ​c​a​n​ ​s​e​t​ ​t​h​i​s​ ​a​p​p​ ​u​p​.
+	 */
+	stackAskAdmin: string
+	/**
+	 * S​e​t​u​p​ ​f​a​i​l​e​d
+	 */
+	stackFailed: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n
+	 */
+	stackRetry: string
+	/**
+	 * T​h​e​ ​a​p​p​ ​i​s​ ​s​e​t​ ​u​p​,​ ​b​u​t​ ​i​t​s​ ​w​i​n​d​o​w​ ​i​s​ ​n​o​t​ ​a​v​a​i​l​a​b​l​e​ ​r​i​g​h​t​ ​n​o​w​.
+	 */
+	stackNotReachable: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	stackRemoveTitle: RequiredParams<'name'>
+	/**
+	 * I​t​s​ ​c​o​n​t​a​i​n​e​r​s​ ​a​r​e​ ​r​e​m​o​v​e​d​.​ ​I​t​s​ ​d​a​t​a​ ​i​s​ ​k​e​p​t​ ​u​n​l​e​s​s​ ​y​o​u​ ​c​h​o​o​s​e​ ​o​t​h​e​r​w​i​s​e​,​ ​s​o​ ​s​e​t​t​i​n​g​ ​i​t​ ​u​p​ ​a​g​a​i​n​ ​f​i​n​d​s​ ​i​t​.
+	 */
+	stackRemoveBody: string
+	/**
+	 * A​l​s​o​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​a​t​a
+	 */
+	stackPurge: string
+	/**
+	 * E​v​e​r​y​ ​f​i​l​e​ ​i​n​ ​i​t​s​ ​d​a​t​a​ ​f​o​l​d​e​r​s​ ​i​s​ ​d​e​l​e​t​e​d​,​ ​p​h​o​t​o​s​ ​i​n​c​l​u​d​e​d​.​ ​T​h​i​s​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+	 */
+	stackPurgeWarning: string
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​;​ ​i​t​s​ ​d​a​t​a​ ​s​t​a​y​s​.
+	 * @param {unknown} name
+	 */
+	stackRemoveReauth: RequiredParams<'name'>
+	/**
+	 * U​n​i​n​s​t​a​l​l​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​n​d​ ​d​e​l​e​t​e​ ​i​t​s​ ​d​a​t​a​.
+	 * @param {unknown} name
+	 */
+	stackRemoveReauthPurge: RequiredParams<'name'>
+	/**
+	 * G​P​U
+	 */
+	stackGpu: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s​ ​c​a​n​n​o​t​ ​u​s​e​ ​i​t​ ​u​n​t​i​l​ ​t​h​e​ ​N​V​I​D​I​A​ ​C​o​n​t​a​i​n​e​r​ ​T​o​o​l​k​i​t​ ​i​s​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	stackGpuNoToolkit: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s​ ​c​a​n​n​o​t​ ​r​e​a​c​h​ ​i​t​:​ ​/​d​e​v​/​d​r​i​ ​i​s​ ​m​i​s​s​i​n​g​.
+	 */
+	stackGpuNoDevice: string
+	/**
+	 * S​e​t​ ​u​p​ ​{​n​a​m​e​}​?
+	 * @param {unknown} name
+	 */
+	stackConfirmTitle: RequiredParams<'name'>
+	/**
+	 * T​h​i​s​ ​i​s​ ​w​h​a​t​ ​w​i​l​l​ ​b​e​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	stackConfirmIntro: string
+	/**
+	 * P​r​o​j​e​c​t
+	 */
+	stackProject: string
+	/**
+	 * D​e​v​e​l​o​p​e​r
+	 */
+	stackDeveloper: string
+	/**
+	 * V​e​r​s​i​o​n
+	 */
+	stackVersion: string
+	/**
+	 * I​m​a​g​e​s
+	 */
+	stackImages: string
+	/**
+	 * D​a​t​a​ ​f​o​l​d​e​r​s
+	 */
+	stackData: string
+	/**
+	 * P​o​r​t
+	 */
+	stackPort: string
+	/**
+	 * P​o​r​t​ ​{​p​o​r​t​}​ ​i​s​ ​a​l​r​e​a​d​y​ ​i​n​ ​u​s​e​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * @param {unknown} port
+	 */
+	stackPortTaken: RequiredParams<'port'>
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​t​h​i​r​d​-​p​a​r​t​y​ ​s​o​f​t​w​a​r​e​.​ ​I​t​ ​i​s​ ​n​o​t​ ​m​a​d​e​,​ ​r​e​v​i​e​w​e​d​ ​o​r​ ​e​n​d​o​r​s​e​d​ ​b​y​ ​S​e​r​v​e​r​B​o​x​;​ ​i​t​s​ ​o​w​n​ ​d​e​v​e​l​o​p​e​r​s​ ​a​r​e​ ​r​e​s​p​o​n​s​i​b​l​e​ ​f​o​r​ ​i​t​.
+	 * @param {unknown} name
+	 */
+	stackThirdParty: RequiredParams<'name'>
+	/**
+	 * I​ ​u​n​d​e​r​s​t​a​n​d​ ​t​h​i​s​ ​i​n​s​t​a​l​l​s​ ​{​n​a​m​e​}​,​ ​t​h​i​r​d​-​p​a​r​t​y​ ​s​o​f​t​w​a​r​e​,​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 * @param {unknown} name
+	 */
+	stackAckThirdParty: RequiredParams<'name'>
+	/**
+	 * C​o​n​t​i​n​u​e
+	 */
+	stackContinue: string
+	/**
+	 * I​n​s​t​a​l​l​a​t​i​o​n
+	 */
+	stackManage: string
+	/**
+	 * V​e​r​s​i​o​n​,​ ​u​p​d​a​t​e​,​ ​u​n​i​n​s​t​a​l​l
+	 */
+	stackManageSub: string
+	/**
+	 * S​t​a​t​e
+	 */
+	stackStateLabel: string
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	stackInstalled: string
+	/**
+	 * O​p​e​n
+	 */
+	stackOpen: string
+	/**
+	 * A​p​p​ ​S​t​o​r​e
+	 */
+	storeTitle: string
+	/**
+	 * s​t​o​r​e​ ​i​n​s​t​a​l​l​ ​a​p​p​s​ ​c​a​t​a​l​o​g
+	 */
+	storeKeywords: string
+	/**
+	 * S​e​a​r​c​h​ ​a​p​p​s
+	 */
+	storeSearch: string
+	/**
+	 * A​l​l
+	 */
+	storeAll: string
+	/**
+	 * C​a​t​e​g​o​r​i​e​s
+	 */
+	storeCategories: string
+	/**
+	 * N​o​ ​a​p​p​s
+	 */
+	storeEmpty: string
+	/**
+	 * I​n​s​t​a​l​l​ ​a​p​p​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r
+	 */
+	storeLinkSub: string
+	/**
+	 * P​h​o​t​o​s
+	 */
+	storeCategoryPhotos: string
+	/**
+	 * M​e​d​i​a
+	 */
+	storeCategoryMedia: string
+	/**
+	 * F​i​l​e​s
+	 */
+	storeCategoryFiles: string
+	/**
+	 * D​o​c​u​m​e​n​t​s
+	 */
+	storeCategoryDocuments: string
+	/**
+	 * P​r​o​d​u​c​t​i​v​i​t​y
+	 */
+	storeCategoryProductivity: string
+	/**
+	 * D​e​v​e​l​o​p​m​e​n​t
+	 */
+	storeCategoryDevelopment: string
+	/**
+	 * A​I
+	 */
+	storeCategoryAi: string
+	/**
+	 * H​o​m​e
+	 */
+	storeCategoryHome: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	storeCategoryNetwork: string
+	/**
+	 * M​o​n​i​t​o​r​i​n​g
+	 */
+	storeCategoryMonitoring: string
+	/**
+	 * S​e​c​u​r​i​t​y
+	 */
+	storeCategorySecurity: string
+	/**
+	 * T​o​o​l​s
+	 */
+	storeCategoryTools: string
+	/**
+	 * G​e​t
+	 */
+	stackGet: string
+	/**
+	 * I​n​f​o​r​m​a​t​i​o​n
+	 */
+	stackInformation: string
+	/**
+	 * A​t​ ​l​e​a​s​t​ ​{​m​i​n​}​,​ ​{​r​e​c​o​m​m​e​n​d​e​d​}​ ​r​e​c​o​m​m​e​n​d​e​d
+	 * @param {unknown} min
+	 * @param {unknown} recommended
+	 */
+	stackMemoryNeeds: RequiredParams<'min' | 'recommended'>
+	/**
+	 * A​r​c​h​i​t​e​c​t​u​r​e​s
+	 */
+	stackArch: string
 }
 
 export type TranslationFunctions = {
@@ -13448,10 +13872,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskDock: () => LocalizedString
 	/**
-	 * Launchpad
-	 */
-	deskLaunchpad: () => LocalizedString
-	/**
 	 * Status
 	 */
 	deskAppStatus: () => LocalizedString
@@ -13467,6 +13887,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Apps
 	 */
 	deskApps: () => LocalizedString
+	/**
+	 * All Apps
+	 */
+	deskAllApps: () => LocalizedString
 	/**
 	 * Windows
 	 */
@@ -14075,22 +14499,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Open Status
 	 */
 	deskOpenStatus: () => LocalizedString
-	/**
-	 * Title bar
-	 */
-	deskTitlebar: () => LocalizedString
-	/**
-	 * Glass: the material shows once content scrolls under the bar
-	 */
-	deskTitlebarHint: () => LocalizedString
-	/**
-	 * Glass
-	 */
-	deskTitlebarGlass: () => LocalizedString
-	/**
-	 * Always shown
-	 */
-	deskTitlebarAlways: () => LocalizedString
 	/**
 	 * Position
 	 */
@@ -15735,6 +16143,422 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Built-in rules ({n})
 	 */
 	settingsAgentAutoShowDefaults: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Photos
+	 */
+	photos: () => LocalizedString
+	/**
+	 * photos pictures videos gallery immich
+	 */
+	photosKeywords: () => LocalizedString
+	/**
+	 * Powered by {name} {version}
+	 */
+	stackPoweredBy: (arg: { name: unknown, version: unknown }) => LocalizedString
+	/**
+	 * You can close this window; the agent carries on.
+	 */
+	stackProgressHint: () => LocalizedString
+	/**
+	 * Log
+	 */
+	stackLog: () => LocalizedString
+	/**
+	 * Requirements
+	 */
+	stackRequirements: () => LocalizedString
+	/**
+	 * Container runtime
+	 */
+	stackRuntime: () => LocalizedString
+	/**
+	 * OK
+	 */
+	stackOk: () => LocalizedString
+	/**
+	 * Missing
+	 */
+	stackMissing: () => LocalizedString
+	/**
+	 * Low
+	 */
+	stackLow: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	stackMemory: () => LocalizedString
+	/**
+	 * {have} here, {need} recommended
+	 */
+	stackMemoryValue: (arg: { have: unknown, need: unknown }) => LocalizedString
+	/**
+	 * CPU cores
+	 */
+	stackCores: () => LocalizedString
+	/**
+	 * {have} here, at least {need}
+	 */
+	stackCoresValue: (arg: { have: unknown, need: unknown }) => LocalizedString
+	/**
+	 * Docker or Podman is not installed, or the agent's account may not use it.
+	 */
+	stackNoRuntime: () => LocalizedString
+	/**
+	 * Docker Compose is not installed.
+	 */
+	stackNoCompose: () => LocalizedString
+	/**
+	 * Settings
+	 */
+	stackSettings: () => LocalizedString
+	/**
+	 * What it does on this machine
+	 */
+	stackNotices: () => LocalizedString
+	/**
+	 * Downloads container images from their registries.
+	 */
+	stackNoticePullsImages: () => LocalizedString
+	/**
+	 * Keeps its data in folders on this machine.
+	 */
+	stackNoticeBindsPaths: () => LocalizedString
+	/**
+	 * Reads files of this machine, such as its time zone.
+	 */
+	stackNoticeMountsHostFiles: () => LocalizedString
+	/**
+	 * Uses the GPU when an acceleration is chosen.
+	 */
+	stackNoticeGpuDevices: () => LocalizedString
+	/**
+	 * Listens on a port of this machine.
+	 */
+	stackNoticePublishesPort: () => LocalizedString
+	/**
+	 * Runs a container with extended privileges.
+	 */
+	stackNoticePrivileged: () => LocalizedString
+	/**
+	 * Uses this machine's network directly.
+	 */
+	stackNoticeHostNetwork: () => LocalizedString
+	/**
+	 * Controls Docker on this machine.
+	 */
+	stackNoticeDockerSocket: () => LocalizedString
+	/**
+	 * Licence
+	 */
+	stackLicense: () => LocalizedString
+	/**
+	 * {name} is free software under the {spdx} licence. It is made by its own developers, not by ServerBox.
+	 */
+	stackLicenseBody: (arg: { name: unknown, spdx: unknown }) => LocalizedString
+	/**
+	 * Read the licence
+	 */
+	stackLicenseRead: () => LocalizedString
+	/**
+	 * Source code
+	 */
+	stackSource: () => LocalizedString
+	/**
+	 * Website
+	 */
+	stackHomepage: () => LocalizedString
+	/**
+	 * I accept the {spdx} licence
+	 */
+	stackLicenseAccept: (arg: { spdx: unknown }) => LocalizedString
+	/**
+	 * Set up
+	 */
+	stackInstall: () => LocalizedString
+	/**
+	 * Set up {name} on this server.
+	 */
+	stackInstallReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Check {setting}.
+	 */
+	stackInvalidSetting: (arg: { setting: unknown }) => LocalizedString
+	/**
+	 * Not valid
+	 */
+	stackInvalidValue: () => LocalizedString
+	/**
+	 * Something is already running for this app.
+	 */
+	stackBusy: () => LocalizedString
+	/**
+	 * This app is already set up.
+	 */
+	stackAlreadyInstalled: () => LocalizedString
+	/**
+	 * No free port is left for the app's window (3780–3799).
+	 */
+	stackNoProxyPort: () => LocalizedString
+	/**
+	 * Setting up {name}…
+	 */
+	stackInstalling: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Updating {name}…
+	 */
+	stackUpdating: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Uninstalling {name}…
+	 */
+	stackRemoving: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Working…
+	 */
+	stackWorking: () => LocalizedString
+	/**
+	 * Update to {version}
+	 */
+	stackUpdate: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * Restart
+	 */
+	stackRestart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	stackStop: () => LocalizedString
+	/**
+	 * Start
+	 */
+	stackStart: () => LocalizedString
+	/**
+	 * Uninstall…
+	 */
+	stackRemove: () => LocalizedString
+	/**
+	 * Open in a new tab
+	 */
+	stackOpenTab: () => LocalizedString
+	/**
+	 * This page is HTTPS and the agent does not serve TLS itself, so the browser blocks the app's window. Give the agent a certificate, or open the panel over HTTP on the local network.
+	 */
+	stackMixedContent: () => LocalizedString
+	/**
+	 * Not set up
+	 */
+	stackNotSetUp: () => LocalizedString
+	/**
+	 * An admin can set this app up.
+	 */
+	stackAskAdmin: () => LocalizedString
+	/**
+	 * Setup failed
+	 */
+	stackFailed: () => LocalizedString
+	/**
+	 * Try again
+	 */
+	stackRetry: () => LocalizedString
+	/**
+	 * The app is set up, but its window is not available right now.
+	 */
+	stackNotReachable: () => LocalizedString
+	/**
+	 * Uninstall {name}
+	 */
+	stackRemoveTitle: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Its containers are removed. Its data is kept unless you choose otherwise, so setting it up again finds it.
+	 */
+	stackRemoveBody: () => LocalizedString
+	/**
+	 * Also delete its data
+	 */
+	stackPurge: () => LocalizedString
+	/**
+	 * Every file in its data folders is deleted, photos included. This cannot be undone.
+	 */
+	stackPurgeWarning: () => LocalizedString
+	/**
+	 * Uninstall {name} from this server; its data stays.
+	 */
+	stackRemoveReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Uninstall {name} from this server and delete its data.
+	 */
+	stackRemoveReauthPurge: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * GPU
+	 */
+	stackGpu: () => LocalizedString
+	/**
+	 * Containers cannot use it until the NVIDIA Container Toolkit is installed.
+	 */
+	stackGpuNoToolkit: () => LocalizedString
+	/**
+	 * Containers cannot reach it: /dev/dri is missing.
+	 */
+	stackGpuNoDevice: () => LocalizedString
+	/**
+	 * Set up {name}?
+	 */
+	stackConfirmTitle: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * This is what will be installed on this server.
+	 */
+	stackConfirmIntro: () => LocalizedString
+	/**
+	 * Project
+	 */
+	stackProject: () => LocalizedString
+	/**
+	 * Developer
+	 */
+	stackDeveloper: () => LocalizedString
+	/**
+	 * Version
+	 */
+	stackVersion: () => LocalizedString
+	/**
+	 * Images
+	 */
+	stackImages: () => LocalizedString
+	/**
+	 * Data folders
+	 */
+	stackData: () => LocalizedString
+	/**
+	 * Port
+	 */
+	stackPort: () => LocalizedString
+	/**
+	 * Port {port} is already in use on this machine.
+	 */
+	stackPortTaken: (arg: { port: unknown }) => LocalizedString
+	/**
+	 * {name} is third-party software. It is not made, reviewed or endorsed by ServerBox; its own developers are responsible for it.
+	 */
+	stackThirdParty: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * I understand this installs {name}, third-party software, on this server
+	 */
+	stackAckThirdParty: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Continue
+	 */
+	stackContinue: () => LocalizedString
+	/**
+	 * Installation
+	 */
+	stackManage: () => LocalizedString
+	/**
+	 * Version, update, uninstall
+	 */
+	stackManageSub: () => LocalizedString
+	/**
+	 * State
+	 */
+	stackStateLabel: () => LocalizedString
+	/**
+	 * Installed
+	 */
+	stackInstalled: () => LocalizedString
+	/**
+	 * Open
+	 */
+	stackOpen: () => LocalizedString
+	/**
+	 * App Store
+	 */
+	storeTitle: () => LocalizedString
+	/**
+	 * store install apps catalog
+	 */
+	storeKeywords: () => LocalizedString
+	/**
+	 * Search apps
+	 */
+	storeSearch: () => LocalizedString
+	/**
+	 * All
+	 */
+	storeAll: () => LocalizedString
+	/**
+	 * Categories
+	 */
+	storeCategories: () => LocalizedString
+	/**
+	 * No apps
+	 */
+	storeEmpty: () => LocalizedString
+	/**
+	 * Install apps on this server
+	 */
+	storeLinkSub: () => LocalizedString
+	/**
+	 * Photos
+	 */
+	storeCategoryPhotos: () => LocalizedString
+	/**
+	 * Media
+	 */
+	storeCategoryMedia: () => LocalizedString
+	/**
+	 * Files
+	 */
+	storeCategoryFiles: () => LocalizedString
+	/**
+	 * Documents
+	 */
+	storeCategoryDocuments: () => LocalizedString
+	/**
+	 * Productivity
+	 */
+	storeCategoryProductivity: () => LocalizedString
+	/**
+	 * Development
+	 */
+	storeCategoryDevelopment: () => LocalizedString
+	/**
+	 * AI
+	 */
+	storeCategoryAi: () => LocalizedString
+	/**
+	 * Home
+	 */
+	storeCategoryHome: () => LocalizedString
+	/**
+	 * Network
+	 */
+	storeCategoryNetwork: () => LocalizedString
+	/**
+	 * Monitoring
+	 */
+	storeCategoryMonitoring: () => LocalizedString
+	/**
+	 * Security
+	 */
+	storeCategorySecurity: () => LocalizedString
+	/**
+	 * Tools
+	 */
+	storeCategoryTools: () => LocalizedString
+	/**
+	 * Get
+	 */
+	stackGet: () => LocalizedString
+	/**
+	 * Information
+	 */
+	stackInformation: () => LocalizedString
+	/**
+	 * At least {min}, {recommended} recommended
+	 */
+	stackMemoryNeeds: (arg: { min: unknown, recommended: unknown }) => LocalizedString
+	/**
+	 * Architectures
+	 */
+	stackArch: () => LocalizedString
 }
 
 export type Formatters = {}

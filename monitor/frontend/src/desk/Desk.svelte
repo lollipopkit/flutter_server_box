@@ -16,7 +16,7 @@
   import ControlCenter from './shell/ControlCenter.svelte'
   import DeskIcons from './shell/DeskIcons.svelte'
   import Dock from './shell/Dock.svelte'
-  import Launchpad from './shell/Launchpad.svelte'
+  import AppsPanel from './shell/AppsPanel.svelte'
   import Menubar from './shell/Menubar.svelte'
   import NotificationCenter from './shell/NotificationCenter.svelte'
   import Spotlight from './shell/Spotlight.svelte'
@@ -187,7 +187,7 @@
       desk.spotlight = !desk.spotlight
     } else if ((e.metaKey || e.ctrlKey) && e.key === ',') {
       e.preventDefault()
-      desk.open('settings')
+      desk.open('serverbox.settings')
     } else if (e.altKey && e.code === 'Backquote') {
       // Alt+` brings the window at the back to the front, round and round.
       e.preventDefault()
@@ -230,11 +230,11 @@
 
   function deskMenu(e: MouseEvent) {
     const items: MenuItem[] = []
-    if (app('terminal')?.available(desk.caps)) {
-      items.push({ label: $LL.deskNewTerminal(), icon: 'terminal', action: () => desk.open('terminal', { newWindow: true }) })
+    if (app('serverbox.terminal')?.available(desk.caps)) {
+      items.push({ label: $LL.deskNewTerminal(), icon: 'terminal', action: () => desk.open('serverbox.terminal', { newWindow: true }) })
     }
-    if (app('files')?.available(desk.caps)) {
-      items.push({ label: $LL.files(), icon: 'folder', action: () => desk.open('files') })
+    if (app('serverbox.files')?.available(desk.caps)) {
+      items.push({ label: $LL.files(), icon: 'folder', action: () => desk.open('serverbox.files') })
     }
     items.push(
       { separator: true },
@@ -246,7 +246,7 @@
           desk.prefs?.update({ icons: desk.prefs.value.icons.map((i) => ({ ...i, col: null, row: null })) }),
       },
       { separator: true },
-      { label: $LL.deskChangeWallpaper(), icon: 'wallpaper', action: () => desk.open('settings', { appState: { section: 'appearance' } }) },
+      { label: $LL.deskChangeWallpaper(), icon: 'wallpaper', action: () => desk.open('serverbox.settings', { appState: { section: 'appearance' } }) },
     )
     desk.showMenu(e, items)
   }
@@ -298,7 +298,7 @@
       admin={desk.caps?.me?.admin === true}
       onsettings={() => {
         desk.toggleAgent(false)
-        desk.open('settings', { appState: { section: 'agent' } })
+        desk.open('serverbox.settings', { appState: { section: 'agent' } })
       }}
     />
   {/if}
@@ -308,8 +308,8 @@
     <Dock />
   </div>
 
-  {#if desk.panel === 'launchpad'}
-    <Launchpad />
+  {#if desk.panel === 'apps'}
+    <AppsPanel />
   {:else if desk.panel === 'notifications'}
     <!-- Its own glass panel, under the menubar's right end. -->
     <div class="desk-panel-place" role="dialog" tabindex="-1" aria-label={$LL.deskNotifications()} onpointerdown={(e) => e.stopPropagation()}>
@@ -362,8 +362,8 @@
     padding: var(--space-11);
     border-radius: var(--radius-panel);
     background: var(--glass-panel);
-    backdrop-filter: var(--blur-menu);
     -webkit-backdrop-filter: var(--blur-menu);
+    backdrop-filter: var(--blur-menu);
     box-shadow:
       var(--shadow-menu),
       inset 0 0 0 0.5px var(--border-glass);

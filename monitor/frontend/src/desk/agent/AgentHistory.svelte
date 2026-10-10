@@ -143,8 +143,8 @@
     padding: var(--space-34) var(--space-21);
     box-sizing: border-box;
     background: color-mix(in srgb, var(--surface-window) 40%, transparent);
-    backdrop-filter: blur(13px);
     -webkit-backdrop-filter: blur(13px);
+    backdrop-filter: blur(13px);
     animation: lk-fade-in var(--dur-base) var(--ease-standard);
   }
   .panel {

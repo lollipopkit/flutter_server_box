@@ -303,7 +303,7 @@
   /// One reading's tile. CPU and memory lead to the processes in that order;
   /// the rest to their detail.
   function tile(id: CardId) {
-    const procs = (sort: 'cpu' | 'mem') => (canProcesses ? () => win.open('process', { appState: { sort } }) : () => (detail = id))
+    const procs = (sort: 'cpu' | 'mem') => (canProcesses ? () => win.open('serverbox.process', { appState: { sort } }) : () => (detail = id))
     switch (id) {
       case 'cpu':
         return {
@@ -391,12 +391,12 @@
   /// The machine's other doors and every reading's detail, in the menubar.
   useMenus(() => {
     const go: MenuEntry[] = []
-    if (access.terminal) go.push({ label: $LL.terminal(), icon: 'terminal', action: () => win.open('terminal') })
-    if (access.files) go.push({ label: $LL.files(), icon: 'folder_open', action: () => win.open('files') })
-    if (canProcesses) go.push({ label: $LL.processes(), icon: 'list_alt', action: () => win.open('process', { appState: { sort: 'cpu' } }) })
+    if (access.terminal) go.push({ label: $LL.terminal(), icon: 'terminal', action: () => win.open('serverbox.terminal') })
+    if (access.files) go.push({ label: $LL.files(), icon: 'folder_open', action: () => win.open('serverbox.files') })
+    if (canProcesses) go.push({ label: $LL.processes(), icon: 'list_alt', action: () => win.open('serverbox.process', { appState: { sort: 'cpu' } }) })
     if (canIperf) go.push({ label: `${$LL.iperf()}…`, icon: 'speed', action: () => (iperfOpen = true) })
     if (canPower) go.push({ label: `${$LL.powerControl()}…`, icon: 'power_settings_new', action: () => (powerOpen = true) })
-    go.push({ separator: true }, { label: $LL.serverSettings(), icon: 'settings', action: () => win.open('settings', { appState: { section: 'server' } }) })
+    go.push({ separator: true }, { label: $LL.serverSettings(), icon: 'settings', action: () => win.open('serverbox.settings', { appState: { section: 'server' } }) })
     const view: MenuEntry[] = [
       { heading: $LL.history() },
       ...RANGES.map((r) => ({ label: r.label, checked: rangeMinutes === r.minutes, action: () => (rangeMinutes = r.minutes) })),
@@ -425,7 +425,7 @@
             icon: paused ? 'play_arrow' : 'pause',
             onclick: () => (paused = !paused),
           },
-          ...(canProcesses ? [{ label: $LL.processes(), icon: 'list_alt', onclick: () => win.open('process', { appState: { sort: 'cpu' } }) }] : []),
+          ...(canProcesses ? [{ label: $LL.processes(), icon: 'list_alt', onclick: () => win.open('serverbox.process', { appState: { sort: 'cpu' } }) }] : []),
         ]}
       />
     {/snippet}
@@ -567,7 +567,7 @@
             <div class="mb-[5px] flex items-baseline gap-[9px]">
               <h2 class="text-[15px] font-bold">{$LL.statusTopProcesses()}</h2>
               <span class="flex-1"></span>
-              <button type="button" class="text-[12px] font-semibold text-(--color-accent-text) hover:underline" onclick={() => win.open('process', { appState: { sort: 'cpu' } })}
+              <button type="button" class="text-[12px] font-semibold text-(--color-accent-text) hover:underline" onclick={() => win.open('serverbox.process', { appState: { sort: 'cpu' } })}
                 >{$LL.statusAllProcesses()}</button
               >
             </div>
@@ -575,7 +575,7 @@
               <button
                 type="button"
                 class="-mx-[5px] grid h-[30px] grid-cols-[minmax(0,1fr)_54px_54px] items-center gap-[9px] rounded-[7px] px-[5px] text-left hover:bg-(--fill-hover)"
-                onclick={() => win.open('process', { appState: { sort: 'cpu' } })}
+                onclick={() => win.open('serverbox.process', { appState: { sort: 'cpu' } })}
               >
                 <span class="truncate font-semibold">{p.name}</span>
                 <span class="lk-num text-right text-(--text-secondary)">{p.cpu === null ? '—' : fmtPercent(p.cpu)}</span>
@@ -611,7 +611,7 @@
           <section class="min-w-0 rounded-[13px] bg-(--surface-card) px-[13px] pt-[13px] pb-[7px]">
             <div class="mb-[5px] flex items-center gap-[9px]">
               <h2 class="min-w-0 flex-1 text-[15px] font-bold">{$LL.customCmd()}</h2>
-              <IconButton icon="settings" size="sm" label={$LL.serverSettings()} onclick={() => win.open('settings', { appState: { section: 'server' } })} />
+              <IconButton icon="settings" size="sm" label={$LL.serverSettings()} onclick={() => win.open('serverbox.settings', { appState: { section: 'server' } })} />
             </div>
             {#each m.custom_cmds as cmd (cmd.name)}
               {@const multi = displayOutput(cmd.output).includes('\n')}

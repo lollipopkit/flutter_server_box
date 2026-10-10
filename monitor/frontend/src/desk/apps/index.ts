@@ -1,4 +1,4 @@
-/// Registers the built-in apps: every `apps/<id>/manifest.ts`. Adding an app
+/// Registers the built-in apps: every `apps/<name>/manifest.ts`. Adding an app
 /// is adding its directory; nothing else lists it.
 
 import { registry } from '../registry.svelte'

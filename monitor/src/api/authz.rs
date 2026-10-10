@@ -260,6 +260,7 @@ pub fn end_account(state: &Arc<AppState>, username: &str, code: &'static str) {
     }
     state.tickets.revoke_subject(username);
     state.agent.end_account(username);
+    state.stacks.proxies.end_account(username);
     let _ = state.grants_changed.send(code);
 }
 

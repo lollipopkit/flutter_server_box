@@ -42,7 +42,7 @@ describe('Snippets page', () => {
 
     // A terminal of its own, opened with the agent's steps to type.
     await waitFor(() =>
-      expect(open).toHaveBeenCalledWith('terminal', {
+      expect(open).toHaveBeenCalledWith('serverbox.terminal', {
         newWindow: true,
         intent: { action: 'terminal.type', data: { name: 'Disk', steps } },
       }),

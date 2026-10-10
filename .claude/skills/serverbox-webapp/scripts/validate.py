@@ -135,9 +135,16 @@ def check_files(folder: Path, rep: Report) -> dict[str, str]:
     return texts
 
 
+def app_id(m: dict) -> str:
+    """The app's id, made from its publisher and name."""
+    return f"{m.get('publisher')}.{m.get('name')}"
+
+
 def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) -> None:
-    if m.get("id") != folder.name:
-        rep.error(f"id {m.get('id')!r} differs from the folder's name {folder.name!r}")
+    if "id" in m:
+        rep.error("id: not written by hand; it is <publisher>.<name>")
+    if app_id(m) != folder.name:
+        rep.error(f"the id {app_id(m)!r} differs from the folder's name {folder.name!r}")
 
     sources: dict[str, list[str]] = {}
     for name, value in m.get("env", {}).items():
@@ -242,7 +249,7 @@ def run_compose_config(m: dict, folder: Path, rep: Report) -> None:
             if path.name != "manifest.toml":
                 shutil.copy(path, stack / path.name)
         (stack / ".env").write_text(defaults_env(m, stack))
-        cmd = ["docker", "compose", "-p", f"sbm-{m['id']}", "--env-file", ".env"]
+        cmd = ["docker", "compose", "-p", "sbm-" + app_id(m).replace(".", "-"), "--env-file", ".env"]
         for f in m["compose"]["files"]:
             cmd += ["-f", f]
         proc = subprocess.run([*cmd, "config", "--quiet"], cwd=stack, capture_output=True, text=True)
@@ -281,7 +288,7 @@ def main() -> int:
         print(f"error: {e}")
     if rep.errors:
         return 1
-    print(f"ok: {manifest.get('id')} {manifest.get('version')}")
+    print(f"ok: {app_id(manifest)} {manifest.get('version')}")
     return 0
 
 

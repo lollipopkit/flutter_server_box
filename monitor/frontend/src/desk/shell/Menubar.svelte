@@ -90,13 +90,13 @@
   /// The server menu: its main apps, its settings, the session.
   function serverItems(): MenuItem[] {
     const items: MenuItem[] = []
-    for (const id of ['status', 'process', 'services']) {
+    for (const id of ['serverbox.status', 'serverbox.process', 'serverbox.services']) {
       const spec = app(id)
       if (spec && openable(id)) items.push({ label: spec.title($LL), icon: spec.glyph, action: () => desk.open(id) })
     }
     items.push(
       { separator: true },
-      { label: $LL.deskServerSettings(), icon: 'dns', action: () => desk.open('settings', { appState: { section: 'server' } }) },
+      { label: $LL.deskServerSettings(), icon: 'dns', action: () => desk.open('serverbox.settings', { appState: { section: 'server' } }) },
       { label: $LL.deskDisconnect(), icon: 'link_off', action: ondisconnect },
       { separator: true },
       ...session(),
@@ -185,8 +185,8 @@
     ]
     if (m.uptime) items.push({ label: m.uptime, disabled: true, action: () => {} })
     items.push({ separator: true })
-    if (openable('process')) items.push({ label: app('process')!.title($LL), icon: 'memory', action: () => desk.open('process') })
-    if (openable('status')) items.push({ label: $LL.deskOpenStatus(), icon: 'monitoring', action: () => desk.open('status') })
+    if (openable('serverbox.process')) items.push({ label: app('serverbox.process')!.title($LL), icon: 'memory', action: () => desk.open('serverbox.process') })
+    if (openable('serverbox.status')) items.push({ label: $LL.deskOpenStatus(), icon: 'monitoring', action: () => desk.open('serverbox.status') })
     return items
   }
 

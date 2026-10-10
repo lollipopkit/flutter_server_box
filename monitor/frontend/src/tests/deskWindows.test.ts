@@ -6,8 +6,8 @@ const area: Area = { width: 1200, height: 800, top: 40, bottom: 80, left: 0, rig
 const min = { width: 300, height: 200 }
 
 const policies: Record<string, WindowPolicy> = {
-  files: { instances: 1, size: { width: 800, height: 500 }, minSize: min },
-  terminal: { instances: 3, size: { width: 700, height: 450 }, minSize: min },
+  'serverbox.files': { instances: 1, size: { width: 800, height: 500 }, minSize: min },
+  'serverbox.terminal': { instances: 3, size: { width: 700, height: 450 }, minSize: min },
 }
 
 function manager() {
@@ -79,8 +79,8 @@ describe('geometry', () => {
 describe('WindowManager', () => {
   it('focuses the one window a single-instance app allows', () => {
     const m = manager()
-    const a = m.open('files', { appState: { path: '/a' } })!
-    const b = m.open('files', { appState: { path: '/b' } })
+    const a = m.open('serverbox.files', { appState: { path: '/a' } })!
+    const b = m.open('serverbox.files', { appState: { path: '/b' } })
     expect(b).toBe(a)
     expect(m.windows).toHaveLength(1)
     expect(m.get(a)!.appState).toEqual({ path: '/b' })
@@ -88,18 +88,18 @@ describe('WindowManager', () => {
 
   it('opens several windows up to the limit', () => {
     const m = manager()
-    m.open('terminal')
-    m.open('terminal')
-    m.open('terminal')
-    expect(m.open('terminal')).toBeNull()
-    expect(m.of('terminal')).toHaveLength(3)
+    m.open('serverbox.terminal')
+    m.open('serverbox.terminal')
+    m.open('serverbox.terminal')
+    expect(m.open('serverbox.terminal')).toBeNull()
+    expect(m.of('serverbox.terminal')).toHaveLength(3)
     expect(m.open('nope')).toBeNull()
   })
 
   it('orders, minimises and focuses', () => {
     const m = manager()
-    const a = m.open('files')!
-    const b = m.open('terminal')!
+    const a = m.open('serverbox.files')!
+    const b = m.open('serverbox.terminal')!
     expect(m.active?.id).toBe(b)
     m.minimize(b)
     expect(m.active?.id).toBe(a)
@@ -110,7 +110,7 @@ describe('WindowManager', () => {
 
   it('maximises and goes back', () => {
     const m = manager()
-    const a = m.open('files')!
+    const a = m.open('serverbox.files')!
     const before = { ...m.get(a)!.rect }
     m.toggleMaximize(a)
     expect(m.get(a)!.rect).toEqual(snapRect('max', area))
@@ -120,8 +120,8 @@ describe('WindowManager', () => {
 
   it('round-trips through what the agent stores', () => {
     const m = manager()
-    const a = m.open('files', { appState: { path: '/etc' } })!
-    const b = m.open('terminal')!
+    const a = m.open('serverbox.files', { appState: { path: '/etc' } })!
+    const b = m.open('serverbox.terminal')!
     const before = { ...m.get(a)!.rect }
     m.toggleMaximize(a)
     m.minimize(b)
@@ -145,7 +145,7 @@ describe('WindowManager', () => {
 
   it('keeps a mounted window object when hydrating over it', () => {
     const m = manager()
-    const a = m.open('files')!
+    const a = m.open('serverbox.files')!
     const object = m.get(a)
     m.hydrate(m.serialize(null).windows)
     expect(m.get(a)).toBe(object)
@@ -154,7 +154,7 @@ describe('WindowManager', () => {
   it('counts changes worth saving', () => {
     const m = manager()
     const start = m.changes
-    const a = m.open('files')!
+    const a = m.open('serverbox.files')!
     m.place(a, { x: 10, y: 50, width: 400, height: 300 })
     m.setTitle(a, 'x')
     expect(m.changes).toBe(start + 2)

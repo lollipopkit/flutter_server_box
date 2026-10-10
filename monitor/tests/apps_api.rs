@@ -74,7 +74,7 @@ async fn call(srv: &TestServer, user: Option<&str>, method: Method, path: &str, 
 
 fn manifest(permissions: &[&str]) -> serde_json::Value {
     json!({
-        "id": "acme_notes", "version": "1.0.0", "api": 1, "kind": "web",
+        "publisher": "acme", "name": "notes", "version": "1.0.0", "api": 1, "kind": "web",
         "title": { "en": "Notes" }, "glyph": "sticky_note_2", "tone": "amber",
         "permissions": permissions,
     })
@@ -117,7 +117,7 @@ async fn install(srv: &TestServer, bytes: Vec<u8>) -> Reply {
     call(srv, Some("admin"), Method::POST, "/api/v1/apps", Some((bytes, "application/gzip"))).await
 }
 
-/// Approves what is installed now as acme_notes, naming its package.
+/// Approves what is installed now as acme.notes, naming its package.
 async fn approve(srv: &TestServer, permissions: &[&str], password: &str) -> Reply {
     let apps = call(srv, Some("admin"), Method::GET, "/api/v1/apps", None).await.json;
     let sha = apps["apps"][0]["sha256"].as_str().unwrap_or_default().to_string();
@@ -126,7 +126,7 @@ async fn approve(srv: &TestServer, permissions: &[&str], password: &str) -> Repl
 
 async fn approve_package(srv: &TestServer, sha256: &str, permissions: &[&str], password: &str) -> Reply {
     let body = json!({ "sha256": sha256, "permissions": permissions, "current_password": password }).to_string().into_bytes();
-    call(srv, Some("admin"), Method::PUT, "/api/v1/apps/acme_notes/approval", Some((body, "application/json"))).await
+    call(srv, Some("admin"), Method::PUT, "/api/v1/apps/acme.notes/approval", Some((body, "application/json"))).await
 }
 
 #[ntex::test]
@@ -143,8 +143,8 @@ async fn an_app_is_served_only_once_approved_and_only_with_a_ticket() {
     let r = call(&srv, Some("watcher"), Method::GET, "/api/v1/apps", None).await;
     assert_eq!(r.json["apps"], json!([]));
     let r = call(&srv, Some("admin"), Method::GET, "/api/v1/apps", None).await;
-    assert_eq!(r.json["apps"][0]["id"], "acme_notes");
-    assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme_notes/launch", None).await.status, 404);
+    assert_eq!(r.json["apps"][0]["id"], "acme.notes");
+    assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme.notes/launch", None).await.status, 404);
 
     // Approval asks for the password and for exactly what the manifest lists.
     assert_eq!(approve(&srv, &["notifications"], "wrong").await.status, 403);
@@ -153,7 +153,7 @@ async fn an_app_is_served_only_once_approved_and_only_with_a_ticket() {
     assert_eq!(r.status, 200, "{}", r.json);
     assert_eq!(r.json["approved_permissions"], json!(["notifications"]));
 
-    let r = call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme_notes/launch", None).await;
+    let r = call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme.notes/launch", None).await;
     assert_eq!(r.status, 200);
     let url = r.json["url"].as_str().unwrap().to_string();
     assert!(url.ends_with("/index.html"));
@@ -180,7 +180,7 @@ async fn an_app_is_served_only_once_approved_and_only_with_a_ticket() {
     }
     // The manifest is not part of the UI.
     let r = call(&srv, None, Method::GET, &url.replace("index.html", "../manifest.json"), None).await;
-    assert!(!String::from_utf8_lossy(&r.bytes).contains("acme_notes"));
+    assert!(!String::from_utf8_lossy(&r.bytes).contains("\"publisher\""));
 }
 
 #[ntex::test]
@@ -197,7 +197,7 @@ async fn new_code_waits_for_approval_again() {
     other["title"] = json!("Notes 2");
     let r = install(&srv, package(&[("manifest.json", other.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
     assert!(r.json["approved_permissions"].is_null(), "new code: waits");
-    assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme_notes/launch", None).await.status, 404);
+    assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme.notes/launch", None).await.status, 404);
 }
 
 #[ntex::test]
@@ -218,7 +218,8 @@ async fn an_approval_names_the_package_it_was_given_for() {
 async fn a_built_in_apps_id_is_not_taken() {
     let srv = server().await;
     let mut m = manifest(&[]);
-    m["id"] = json!("system_users");
+    m["publisher"] = json!("serverbox");
+    m["name"] = json!("system_users");
     let r = install(&srv, package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
     assert_eq!(r.json["error"], "invalidId");
 }
@@ -244,12 +245,12 @@ async fn removing_asks_for_the_password() {
     let srv = server().await;
     install(&srv, good(&[])).await;
     let wrong = json!({ "current_password": "nope" }).to_string().into_bytes();
-    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme_notes", Some((wrong, "application/json"))).await;
+    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme.notes", Some((wrong, "application/json"))).await;
     assert_eq!(r.status, 403);
     let right = json!({ "current_password": common::PASSWORD }).to_string().into_bytes();
-    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme_notes", Some((right.clone(), "application/json"))).await;
+    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme.notes", Some((right.clone(), "application/json"))).await;
     assert_eq!(r.status, 204);
-    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme_notes", Some((right, "application/json"))).await;
+    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme.notes", Some((right, "application/json"))).await;
     assert_eq!(r.status, 404);
 }
 
@@ -348,7 +349,7 @@ async fn installed_backend(srv: &TestServer, wasm: Vec<u8>, permissions: &[&str]
 
 async fn call_backend(srv: &TestServer, user: &str, method: &str, params: serde_json::Value) -> Reply {
     let body = json!({ "method": method, "params": params }).to_string().into_bytes();
-    call(srv, Some(user), Method::POST, "/api/v1/apps/acme_notes/call", Some((body, "application/json"))).await
+    call(srv, Some(user), Method::POST, "/api/v1/apps/acme.notes/call", Some((body, "application/json"))).await
 }
 
 #[ntex::test]

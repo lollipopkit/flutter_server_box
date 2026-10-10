@@ -7,7 +7,7 @@ import type { AppSpec } from './sys/manifest'
 class AppRegistry {
   #apps = $state.raw<AppSpec[]>([])
 
-  /// In the launchpad's order.
+  /// In Apps's order.
   get all(): AppSpec[] {
     return this.#apps
   }
@@ -33,7 +33,7 @@ export function app(id: string): AppSpec | undefined {
   return registry.get(id)
 }
 
-/// The apps this server and account can use, in the launchpad's order.
+/// The apps this server and account can use, in Apps's order.
 export function availableApps(caps: Capabilities | undefined): AppSpec[] {
   return registry.all.filter((a) => a.available(caps))
 }

@@ -1,7 +1,8 @@
 import { defineApp, feature } from '../../sys'
 
 export default defineApp({
-  id: 'remote_desktop',
+  publisher: 'serverbox',
+  name: 'remote_desktop',
   title: (ll) => ll.desktop(),
   keywords: () => ['VNC', 'RDP'],
   glyph: 'desktop_windows',

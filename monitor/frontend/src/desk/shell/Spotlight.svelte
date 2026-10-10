@@ -50,7 +50,7 @@
   const localHits = $derived.by((): Hit[] => {
     const q = query.trim().toLowerCase()
     const out: Hit[] = []
-    if (q.startsWith('/') && app('files')?.available(desk.caps)) {
+    if (q.startsWith('/') && app('serverbox.files')?.available(desk.caps)) {
       out.push({
         key: 'path',
         group: $LL.files(),
@@ -58,7 +58,7 @@
         detail: $LL.deskOpenInFiles(),
         glyph: 'folder',
         tone: 'sky',
-        run: () => desk.open('files', { appState: { path: query.trim() }, newWindow: true }),
+        run: () => desk.open('serverbox.files', { appState: { path: query.trim() }, newWindow: true }),
       })
     }
     const matches = (words: string[]) => !q || words.some((w) => w.toLowerCase().includes(q))
@@ -182,10 +182,10 @@
   $effect(() => () => abort?.abort())
 
   const ITEM: Record<SearchItem['kind'], { app: string; glyph: string; tone: IconTone }> = {
-    service: { app: 'services', glyph: 'settings_suggest', tone: 'bright' },
-    process: { app: 'process', glyph: 'memory', tone: 'ink' },
-    file: { app: 'files', glyph: 'description', tone: 'soft' },
-    container: { app: 'containers', glyph: 'deployed_code', tone: 'pale' },
+    service: { app: 'serverbox.services', glyph: 'settings_suggest', tone: 'bright' },
+    process: { app: 'serverbox.process', glyph: 'memory', tone: 'ink' },
+    file: { app: 'serverbox.files', glyph: 'description', tone: 'soft' },
+    container: { app: 'serverbox.containers', glyph: 'deployed_code', tone: 'pale' },
   }
   const kindLabel = (k: SearchItem['kind']) => app(ITEM[k].app)?.title($LL) ?? k
 
@@ -194,17 +194,17 @@
     switch (i.kind) {
       case 'file': {
         const dir = i.ref.includes('/') ? i.ref.slice(0, i.ref.lastIndexOf('/')) || '/' : i.ref
-        desk.open('files', { appState: { path: dir }, newWindow: true })
+        desk.open('serverbox.files', { appState: { path: dir }, newWindow: true })
         break
       }
       case 'service':
-        desk.open('services', { appState: { query: i.ref } })
+        desk.open('serverbox.services', { appState: { query: i.ref } })
         break
       case 'process':
-        desk.open('process', { appState: { query: i.title } })
+        desk.open('serverbox.process', { appState: { query: i.title } })
         break
       case 'container':
-        desk.open('containers')
+        desk.open('serverbox.containers')
         break
     }
   }
