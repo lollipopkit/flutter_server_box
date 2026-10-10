@@ -12,6 +12,7 @@
 		4A2DCD6B2E4B127100CF68B7 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */; };
 		4A2DCD712E4B127100CF68B7 /* DynamicIslandBrand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD722E4B127100CF68B7 /* DynamicIslandBrand.swift */; };
 		4A2DCD732E4B127100CF68B7 /* PrivacyBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */; };
+		4A2DCD752E4B127100CF68B7 /* WindowControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD762E4B127100CF68B7 /* WindowControls.swift */; };
 		4A2DCD802E4B127100CF68B7 /* CrashDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCD812E4B127100CF68B7 /* CrashDiagnostics.swift */; };
 		4A2DCDB22E4B127100CF68B7 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCDB32E4B127100CF68B7 /* SceneDelegate.swift */; };
 		4A2DCDB02E4B127100CF68B7 /* IncomingShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2DCDB12E4B127100CF68B7 /* IncomingShare.swift */; };
@@ -135,6 +136,7 @@
 		4A2DCD692E4B127100CF68B7 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		4A2DCD722E4B127100CF68B7 /* DynamicIslandBrand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicIslandBrand.swift; sourceTree = "<group>"; };
 		4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyBlur.swift; sourceTree = "<group>"; };
+		4A2DCD762E4B127100CF68B7 /* WindowControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowControls.swift; sourceTree = "<group>"; };
 		4A2DCD812E4B127100CF68B7 /* CrashDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashDiagnostics.swift; sourceTree = "<group>"; };
 		4A2DCDB32E4B127100CF68B7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		4A2DCDB12E4B127100CF68B7 /* IncomingShare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IncomingShare.swift; sourceTree = "<group>"; };
@@ -323,6 +325,7 @@
 				4A2DCD6A2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift */,
 				4A2DCD722E4B127100CF68B7 /* DynamicIslandBrand.swift */,
 				4A2DCD742E4B127100CF68B7 /* PrivacyBlur.swift */,
+				4A2DCD762E4B127100CF68B7 /* WindowControls.swift */,
 				4A2DCD812E4B127100CF68B7 /* CrashDiagnostics.swift */,
 				4A2DCDB32E4B127100CF68B7 /* SceneDelegate.swift */,
 				4A2DCDB12E4B127100CF68B7 /* IncomingShare.swift */,
@@ -652,6 +655,7 @@
 				4A2DCD6C2E4B127100CF68B7 /* TerminalLiveActivityAttributes.swift in Sources */,
 				4A2DCD712E4B127100CF68B7 /* DynamicIslandBrand.swift in Sources */,
 				4A2DCD732E4B127100CF68B7 /* PrivacyBlur.swift in Sources */,
+				4A2DCD752E4B127100CF68B7 /* WindowControls.swift in Sources */,
 				4A2DCD802E4B127100CF68B7 /* CrashDiagnostics.swift in Sources */,
 				4A2DCDB22E4B127100CF68B7 /* SceneDelegate.swift in Sources */,
 				4A2DCDB02E4B127100CF68B7 /* IncomingShare.swift in Sources */,

@@ -58,58 +58,61 @@ extension _List on _VirtTabPageState {
     final at = hostId == null ? -1 : hostIds.indexOf(hostId);
     final picking = split && _showHosts;
 
-    final bar = SizedBox(
-      height: SessionTabBar.height,
-      child: InlineSearchBar(
-        controller: _search,
-        hint: libL10n.name,
-        child: Row(
-          children: [
-            Expanded(
-              child: FoldingBar(
-                label: SessionSwitcherLabel(
-                  name: servers[hostId]?.name ?? l10n.virtualization,
-                  icon: Icons.dns_outlined,
-                  position: at < 0 ? null : at + 1,
-                  total: hostIds.length,
-                  // The picker below this bar, where there is a column to
-                  // open it in; a sheet over it otherwise, which needs no
-                  // `open`.
-                  open: picking,
-                  onTap: () => split
-                      ? setState(() => _showHosts = !_showHosts)
-                      : unawaited(_showHostSheet(hostId)),
-                ),
-                actions: [
-                  if (hostId != null && !picking) ...[
-                    BarAction(
-                      icon: Icons.search,
-                      label: libL10n.search,
-                      onTap: _search.start,
-                    ),
-                    BarAction(
-                      icon: Icons.refresh,
-                      label: libL10n.refresh,
-                      onTap: () => _refresh(hostId),
-                      // Where the reading is said, rather than a line under
-                      // the bar: the button asked for it.
-                      loading: refreshing,
-                    ),
-                    // In the section a new one lands in; the host's answer
-                    // says whether it takes one.
-                    if (_createLabel(caps) case final label?)
+    final bar = WindowControlsInset(
+      safeArea: true,
+      child: SizedBox(
+        height: SessionTabBar.height,
+        child: InlineSearchBar(
+          controller: _search,
+          hint: libL10n.name,
+          child: Row(
+            children: [
+              Expanded(
+                child: FoldingBar(
+                  label: SessionSwitcherLabel(
+                    name: servers[hostId]?.name ?? l10n.virtualization,
+                    icon: Icons.dns_outlined,
+                    position: at < 0 ? null : at + 1,
+                    total: hostIds.length,
+                    // The picker below this bar, where there is a column to
+                    // open it in; a sheet over it otherwise, which needs no
+                    // `open`.
+                    open: picking,
+                    onTap: () => split
+                        ? setState(() => _showHosts = !_showHosts)
+                        : unawaited(_showHostSheet(hostId)),
+                  ),
+                  actions: [
+                    if (hostId != null && !picking) ...[
                       BarAction(
-                        key: const ValueKey('virt:create'),
-                        icon: Icons.add,
-                        label: label,
-                        onTap: () => unawaited(_startCreate(hostId, split)),
+                        icon: Icons.search,
+                        label: libL10n.search,
+                        onTap: _search.start,
                       ),
+                      BarAction(
+                        icon: Icons.refresh,
+                        label: libL10n.refresh,
+                        onTap: () => _refresh(hostId),
+                        // Where the reading is said, rather than a line under
+                        // the bar: the button asked for it.
+                        loading: refreshing,
+                      ),
+                      // In the section a new one lands in; the host's answer
+                      // says whether it takes one.
+                      if (_createLabel(caps) case final label?)
+                        BarAction(
+                          key: const ValueKey('virt:create'),
+                          icon: Icons.add,
+                          label: label,
+                          onTap: () => unawaited(_startCreate(hostId, split)),
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 7),
-          ],
+              const SizedBox(width: 7),
+            ],
+          ),
         ),
       ),
     );

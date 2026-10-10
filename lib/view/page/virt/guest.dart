@@ -555,43 +555,45 @@ VirtGuestViewKind.overview => _buildOverview(st, guest, state),
       preferredSize: const Size.fromHeight(SessionTabBar.height),
       // Pushed on a phone, this page is outside the tab's `SafeArea`, and the
       // `Scaffold` leaves the status bar's inset to its bar.
-      child: SafeArea(
-        bottom: false,
-        child: SizedBox(
-          height: SessionTabBar.height,
-          child: Row(
-            children: [
-              ?widget.leading,
-              Expanded(
-                child: SessionSwitcherLabel(
-                  name: guest?.name ?? '',
-                  leading: guest == null
-                      ? null
-                      : VirtStateDot(st.displayState(guest)),
-                  position: widget.switcher && at >= 0 ? at + 1 : null,
-                  total: widget.switcher ? guests.length : 0,
-                  onTap: widget.switcher && guests.length > 1
-                      ? () => unawaited(_showGuests(st))
-                      : null,
+      child: WindowControlsInset(
+        child: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: SessionTabBar.height,
+            child: Row(
+              children: [
+                ?widget.leading,
+                Expanded(
+                  child: SessionSwitcherLabel(
+                    name: guest?.name ?? '',
+                    leading: guest == null
+                        ? null
+                        : VirtStateDot(st.displayState(guest)),
+                    position: widget.switcher && at >= 0 ? at + 1 : null,
+                    total: widget.switcher ? guests.length : 0,
+                    onTap: widget.switcher && guests.length > 1
+                        ? () => unawaited(_showGuests(st))
+                        : null,
+                  ),
                 ),
-              ),
-              if (guest != null)
-                for (final action in VirtPowerActionUi.barOrder)
-                  if (actions.contains(action))
-                    Btn.icon(
-                      key: ValueKey(action),
-                      text: action.label,
-                      icon: Icon(
-                        action.icon,
-                        size: 18,
-                        color: action.destructive
-                            ? Theme.of(context).colorScheme.error
-                            : null,
+                if (guest != null)
+                  for (final action in VirtPowerActionUi.barOrder)
+                    if (actions.contains(action))
+                      Btn.icon(
+                        key: ValueKey(action),
+                        text: action.label,
+                        icon: Icon(
+                          action.icon,
+                          size: 18,
+                          color: action.destructive
+                              ? Theme.of(context).colorScheme.error
+                              : null,
+                        ),
+                        onTap: () => unawaited(_onPower(guest, action)),
                       ),
-                      onTap: () => unawaited(_onPower(guest, action)),
-                    ),
-              const SizedBox(width: 7),
-            ],
+                const SizedBox(width: 7),
+              ],
+            ),
           ),
         ),
       ),

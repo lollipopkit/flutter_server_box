@@ -23,44 +23,47 @@ extension _Bar on _ServerPageState {
       // own default is a full toolbar.
       preferSize: const Size.fromHeight(SessionTabBar.height),
       builder: () {
-        return SizedBox(
-          height: SessionTabBar.height,
-          child: InlineSearchBar(
-            controller: _search,
-            child: LayoutBuilder(
-              builder: (_, cons) => Row(
-                children: [
-                  // The way back comes first and takes no room when there is
-                  // nowhere to go back to.
-                  //
-                  // Inset to where the switcher's own glyph sits when there is
-                  // nothing open — `SessionSwitcherLabel` holds it 14 off the
-                  // edge, and a button's own 7 is half of that — so the first
-                  // thing in the bar is in the same place either way.
-                  if (openId != null) const SizedBox(width: 7),
-                  if (openId != null)
-                    Btn.icon(
-                      text: libL10n.close,
-                      icon: const Icon(Icons.arrow_back_ios_new, size: 17),
-                      onTap: _closeDetail,
+        return WindowControlsInset(
+          safeArea: true,
+          child: SizedBox(
+            height: SessionTabBar.height,
+            child: InlineSearchBar(
+              controller: _search,
+              child: LayoutBuilder(
+                builder: (_, cons) => Row(
+                  children: [
+                    // The way back comes first and takes no room when there is
+                    // nowhere to go back to.
+                    //
+                    // Inset to where the switcher's own glyph sits when there is
+                    // nothing open — `SessionSwitcherLabel` holds it 14 off the
+                    // edge, and a button's own 7 is half of that — so the first
+                    // thing in the bar is in the same place either way.
+                    if (openId != null) const SizedBox(width: 7),
+                    if (openId != null)
+                      Btn.icon(
+                        text: libL10n.close,
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 17),
+                        onTap: _closeDetail,
+                      ),
+                    Expanded(
+                      child: openId == null
+                          ? _buildTagSwitcher()
+                          : _buildServerSwitcher(openId, filtered),
                     ),
-                  Expanded(
-                    child: openId == null
-                        ? _buildTagSwitcher()
-                        : _buildServerSwitcher(openId, filtered),
-                  ),
-                  // Not while one is open: the page is one machine then, and
-                  // how many of them fit on a screen is not a question it has.
-                  if (openId == null)
-                    _buildDensityControl(filtered.length, room: cons.maxWidth),
-                  // With one open, the page is that machine, so the bar offers
-                  // what its own page does when pushed on a phone.
-                  if (openId == null)
-                    ..._listActions()
-                  else
-                    ..._serverActions(openId),
-                  const SizedBox(width: 7),
-                ],
+                    // Not while one is open: the page is one machine then, and
+                    // how many of them fit on a screen is not a question it has.
+                    if (openId == null)
+                      _buildDensityControl(filtered.length, room: cons.maxWidth),
+                    // With one open, the page is that machine, so the bar offers
+                    // what its own page does when pushed on a phone.
+                    if (openId == null)
+                      ..._listActions()
+                    else
+                      ..._serverActions(openId),
+                    const SizedBox(width: 7),
+                  ],
+                ),
               ),
             ),
           ),

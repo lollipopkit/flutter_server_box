@@ -250,22 +250,25 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SizedBox(
-      height: SessionTabBar.height,
-      // In place of the strip, not over it. Only on the picker: a search here
-      // narrows that list, and the tabs beside it are open terminals rather
-      // than anything to find.
-      child: InlineSearchBar(
-        controller: _search,
-        child: SessionTabBar(
-          names: _sessions.names,
-          index: _sessions.index,
-          onTap: _sessions.select,
-          onClose: _confirmClose,
-          detailOf: _sessionAddr,
-          leadingOf: _sessions.statusOf,
-          sessionActions: _serverActions,
-          leadingActions: [_sortBtn, _searchBtn, _settingsBtn],
+    builder: () => WindowControlsInset(
+      safeArea: true,
+      child: SizedBox(
+        height: SessionTabBar.height,
+        // In place of the strip, not over it. Only on the picker: a search here
+        // narrows that list, and the tabs beside it are open terminals rather
+        // than anything to find.
+        child: InlineSearchBar(
+          controller: _search,
+          child: SessionTabBar(
+            names: _sessions.names,
+            index: _sessions.index,
+            onTap: _sessions.select,
+            onClose: _confirmClose,
+            detailOf: _sessionAddr,
+            leadingOf: _sessions.statusOf,
+            sessionActions: _serverActions,
+            leadingActions: [_sortBtn, _searchBtn, _settingsBtn],
+          ),
         ),
       ),
     ),

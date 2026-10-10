@@ -184,24 +184,27 @@ extension _HomePageStrip on _HomePageState {
   /// rail draws the first `shown` of [_tabs] and `_showMoreSheet` takes the
   /// remainder, exactly as the bar does.
   Widget _buildRailBar() {
-    return SafeArea(
-      // Anchored to the start, so the inset on the far side is not its to
-      // keep clear: taking it would make the rail wider than the room the
-      // `Row` holds open for it, by however much the other edge is cut off.
-      right: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final capacity = railCapacity(
-            height: constraints.maxHeight,
-            destinationExtent: railDestinationExtent,
-          );
-          final shown = railShownCount(
-            wanted: _barTabs.length,
-            total: _tabs.length,
-            capacity: capacity,
-          );
-          return _buildRail(shown: shown);
-        },
+    return WindowControlsInset(
+      axis: Axis.vertical,
+      child: SafeArea(
+        // Anchored to the start, so the inset on the far side is not its to
+        // keep clear: taking it would make the rail wider than the room the
+        // `Row` holds open for it, by however much the other edge is cut off.
+        right: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final capacity = railCapacity(
+              height: constraints.maxHeight,
+              destinationExtent: railDestinationExtent,
+            );
+            final shown = railShownCount(
+              wanted: _barTabs.length,
+              total: _tabs.length,
+              capacity: capacity,
+            );
+            return _buildRail(shown: shown);
+          },
+        ),
       ),
     );
   }

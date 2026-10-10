@@ -230,35 +230,38 @@ final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     // In place of the switcher, as on every other tab that searches.
-    return InlineSearchBar(
-      controller: search,
-      child: Padding(
-      padding: const EdgeInsets.only(left: 10, right: 4),
-      child: Row(
-        children: [
-          TagSwitcher(
-            tags: tags,
-            onTagChanged: onTagChanged,
-            initTag: initTag,
-            singleLine: true,
-          ).expanded(),
-          Btn.icon(
-            text: libL10n.search,
-            icon: const Icon(Icons.search, size: 20),
-            onTap: onSearch,
+    return WindowControlsInset(
+      safeArea: true,
+      child: InlineSearchBar(
+        controller: search,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 10, right: 4),
+          child: Row(
+            children: [
+              TagSwitcher(
+                tags: tags,
+                onTagChanged: onTagChanged,
+                initTag: initTag,
+                singleLine: true,
+              ).expanded(),
+              Btn.icon(
+                text: libL10n.search,
+                icon: const Icon(Icons.search, size: 20),
+                onTap: onSearch,
+              ),
+              // Beside search rather than floating over the list, which is where
+              // every other page of this app puts the same action. A button that
+              // sits on top of the content also covers the last row of it, and
+              // needed two of itself — one size for a pane and another for a full
+              // width — for nothing the bar has to think about.
+              Btn.icon(
+                text: libL10n.add,
+                icon: const Icon(Icons.add, size: 20),
+                onTap: onAdd,
+              ),
+            ],
           ),
-          // Beside search rather than floating over the list, which is where
-          // every other page of this app puts the same action. A button that
-          // sits on top of the content also covers the last row of it, and
-          // needed two of itself — one size for a pane and another for a full
-          // width — for nothing the bar has to think about.
-          Btn.icon(
-            text: libL10n.add,
-            icon: const Icon(Icons.add, size: 20),
-            onTap: onAdd,
-          ),
-        ],
-      ),
+        ),
       ),
     );
   }

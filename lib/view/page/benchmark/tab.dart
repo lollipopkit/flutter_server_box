@@ -217,24 +217,27 @@ extension _Widgets on _BenchmarkTabPageState {
       // plain title says "this page".
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(SessionTabBar.height),
-        child: SizedBox(
-          height: SessionTabBar.height,
-          child: Row(
-            children: [
-              Expanded(
-                child: SessionSwitcherLabel(
-                  name: spi.name,
-                  icon: Icons.dns_outlined,
-                  onTap: () => _pickServer(false),
+        child: WindowControlsInset(
+          safeArea: true,
+          child: SizedBox(
+            height: SessionTabBar.height,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SessionSwitcherLabel(
+                    name: spi.name,
+                    icon: Icons.dns_outlined,
+                    onTap: () => _pickServer(false),
+                  ),
                 ),
-              ),
-              Btn.icon(
-                text: l10n.history,
-                icon: const Icon(Icons.history, size: 18),
-                onTap: () => _showHistorySheet(servers),
-              ),
-              const SizedBox(width: 7),
-            ],
+                Btn.icon(
+                  text: l10n.history,
+                  icon: const Icon(Icons.history, size: 18),
+                  onTap: () => _showHistorySheet(servers),
+                ),
+                const SizedBox(width: 7),
+              ],
+            ),
           ),
         ),
       ),

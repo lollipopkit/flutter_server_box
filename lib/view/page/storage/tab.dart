@@ -311,25 +311,28 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     // The wrapper is what the `Scaffold` measures, so it has to be told;
     // its own default is a full toolbar.
     preferSize: const Size.fromHeight(SessionTabBar.height),
-    builder: () => SizedBox(
-      height: SessionTabBar.height,
-      // In place of the strip, as on the terminal tab: what is searched is the
-      // picker, and the tabs beside it are open browsers.
-      child: InlineSearchBar(
-        controller: _search,
-        child: SessionTabBar(
-      names: _sessions.names,
-      index: _sessions.index,
-      leadingIcon: MingCute.folder_fill,
-      onTap: _sessions.select,
-      onClose: _close,
-      detailOf: _sessionPath,
-      // One widget that follows whichever session is showing, rather than a
-      // list the bar would have to rebuild itself to keep current.
-      sessionActions: [_SessionActions(sessions: _sessions)],
-      // The same two the rail carries. On one screen the picker is a tab
-      // rather than a column, and these act on what it lists.
-                leadingActions: [_searchBtn],
+    builder: () => WindowControlsInset(
+      safeArea: true,
+      child: SizedBox(
+        height: SessionTabBar.height,
+        // In place of the strip, as on the terminal tab: what is searched is the
+        // picker, and the tabs beside it are open browsers.
+        child: InlineSearchBar(
+          controller: _search,
+          child: SessionTabBar(
+        names: _sessions.names,
+        index: _sessions.index,
+        leadingIcon: MingCute.folder_fill,
+        onTap: _sessions.select,
+        onClose: _close,
+        detailOf: _sessionPath,
+        // One widget that follows whichever session is showing, rather than a
+        // list the bar would have to rebuild itself to keep current.
+        sessionActions: [_SessionActions(sessions: _sessions)],
+        // The same two the rail carries. On one screen the picker is a tab
+        // rather than a column, and these act on what it lists.
+                  leadingActions: [_searchBtn],
+          ),
         ),
       ),
     ),

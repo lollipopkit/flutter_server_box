@@ -1187,20 +1187,22 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         builder: (_, _) => Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: SafeArea(
-            bottom: false,
-            child: SizedBox(
-              height: kToolbarHeight,
-              // In place of the title and its buttons, as on every other page
-              // that searches in this app.
-              child: InlineSearchBar(
-                controller: _search,
-                child: CustomAppBar(
-                  title: AnimatedSwitcher(
-                    duration: Durations.short3,
-                    child: Text(title, key: ValueKey(title)),
+          child: WindowControlsInset(
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                height: kToolbarHeight,
+                // In place of the title and its buttons, as on every other page
+                // that searches in this app.
+                child: InlineSearchBar(
+                  controller: _search,
+                  child: CustomAppBar(
+                    title: AnimatedSwitcher(
+                      duration: Durations.short3,
+                      child: Text(title, key: ValueKey(title)),
+                    ),
+                    actions: [...actions, const SizedBox(width: 7)],
                   ),
-                  actions: [...actions, const SizedBox(width: 7)],
                 ),
               ),
             ),
