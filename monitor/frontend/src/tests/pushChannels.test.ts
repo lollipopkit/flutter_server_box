@@ -19,6 +19,7 @@ const listed = {
       push_type: 'bark',
       config: { key: null, server: 'https://api.day.app' },
       editable: true,
+      from_index: 0,
     },
   ],
   push_rate: null,
