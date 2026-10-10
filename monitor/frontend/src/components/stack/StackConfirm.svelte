@@ -36,6 +36,11 @@
   const title = $derived(pick(manifest.title, $locale))
   const ready = $derived(acknowledged && (!manifest.license.accept || accepted))
   const notices = $derived(manifest.notices.map((n: StackNotice) => noticeText(n, $LL)))
+
+  function settingLabel(key: string): string {
+    const label = manifest.settings.find((s) => s.key === key)?.label
+    return label ? pick(label, $locale) : key
+  }
 </script>
 
 <Dialog {open} wide title={$LL.stackConfirmTitle({ name: title })} {onclose}>
@@ -76,6 +81,10 @@
           <dt class="text-(--text-tertiary)">{$LL.stackPort()}</dt>
           <dd class="lk-num text-(--text-primary)">{preview.port}</dd>
         {/if}
+        {#each preview.moved as m (m.setting)}
+          <dt class="text-(--text-tertiary)">{settingLabel(m.setting)}</dt>
+          <dd class="text-(--color-warning)">{$LL.stackPortMoved({ from: m.from, to: m.to })}</dd>
+        {/each}
       {/if}
     </dl>
 

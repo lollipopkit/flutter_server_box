@@ -389,6 +389,21 @@
             {@render row('Clock', `${gpu.clock_speed} MHz`)}
           {/if}
         </div>
+        {#if gpu.processes?.length}
+          <h4 class="mt-[13px] mb-[3px] text-[12px] font-semibold text-(--text-secondary)">{$LL.processes()}</h4>
+          {#each gpu.processes as p (p.pid)}
+            <div class="flex justify-between gap-[9px] border-t border-(--border-hairline) py-[7px] text-[13px] first-of-type:border-0">
+              <span class="min-w-0 truncate">
+                {p.name || $LL.gpuProcessUnnamed()}
+                <span class="lk-num text-(--text-tertiary)">· {p.pid}</span>
+              </span>
+              {#if p.memory > 0}<span class="lk-num shrink-0">{p.memory} MiB</span>{/if}
+            </div>
+          {/each}
+        {:else if gpu.processes && (gpu.memory_used ?? 0) > 0}
+          <!-- Memory in use and no process: the driver does not show them here. -->
+          <p class="mt-[13px] text-[12px] text-(--text-tertiary)">{$LL.gpuNoProcesses()}</p>
+        {/if}
       </Card>
     {/each}
   {:else if kind === 'battery'}

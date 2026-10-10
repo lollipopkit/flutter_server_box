@@ -542,6 +542,39 @@ impl Manifest {
     }
 
     /// The port the window reaches, from checked [settings].
+    /// Checks every port setting of [settings] against [machine] and each
+    /// other. With [follow], a port in the range the dialog suggests from
+    /// (the default and the next [`PORT_SEARCH`]) that has been taken since
+    /// moves to the next free one there; a port chosen outside it is the
+    /// admin's choice and is refused instead. Answers the ports moved.
+    pub fn settle_ports(&self, settings: &mut BTreeMap<String, Value>, machine: &Machine, follow: bool) -> Result<Vec<MovedPort>, Invalid> {
+        let mut used = BTreeSet::new();
+        let mut moved = Vec::new();
+        for s in &self.settings {
+            let Setting::Port { key, default, .. } = s else { continue };
+            let Some(port) = settings.get(key).and_then(Value::as_u64).and_then(|p| u16::try_from(p).ok()) else {
+                continue;
+            };
+            let ok = |p: u16| !used.contains(&p) && machine.free(p);
+            let port = if ok(port) {
+                port
+            } else {
+                let last = default.saturating_add(PORT_SEARCH);
+                let next = if follow && (*default..=last).contains(&port) {
+                    (port.saturating_add(1)..=last).find(|p| ok(*p))
+                } else {
+                    None
+                };
+                let Some(next) = next else { return Err(Invalid { field: key.clone(), error: "portTaken" }) };
+                settings.insert(key.clone(), Value::from(next));
+                moved.push(MovedPort { setting: key.clone(), from: port, to: next });
+                next
+            };
+            used.insert(port);
+        }
+        Ok(moved)
+    }
+
     pub fn web_port(&self, settings: &BTreeMap<String, Value>) -> Option<u16> {
         settings.get(&self.web.port)?.as_u64()?.try_into().ok()
     }
@@ -661,6 +694,14 @@ pub struct Invalid {
     pub error: &'static str,
 }
 
+/// A port setting moved off a port in use (`Manifest::settle_ports`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MovedPort {
+    pub setting: String,
+    pub from: u16,
+    pub to: u16,
+}
+
 /// What the defaults depend on.
 #[derive(Debug, Clone, Default)]
 pub struct Machine {
@@ -670,13 +711,13 @@ pub struct Machine {
     pub gpus: Vec<String>,
     /// Linux under WSL2.
     pub wsl: bool,
-    /// Whether a port can be bound now; every port is free without one.
-    pub port_free: Option<fn(u16) -> bool>,
+    /// Which ports the stack may publish; every port is free without.
+    pub ports: Option<super::ports::Ports>,
 }
 
 impl Machine {
-    fn free(&self, port: u16) -> bool {
-        self.port_free.is_none_or(|f| f(port))
+    pub fn free(&self, port: u16) -> bool {
+        self.ports.as_ref().is_none_or(|p| p.free(port))
     }
 
     fn matches(&self, s: &Suggest) -> bool {
@@ -821,6 +862,24 @@ mod tests {
     }
 
     #[test]
+    fn ports_settle_against_the_machine_and_each_other() {
+        let text = format!("{MINIMAL}\n[[settings]]\nkey = \"admin\"\ntype = \"port\"\nenv = \"ADMIN\"\ndefault = 8080\nlabel = {{ en = \"Admin\" }}\n");
+        let m = package(&text, "services:\n  a:\n    image: x\n    ports: ['${PORT}:80', '${ADMIN}:81']\n").expect("package").manifest;
+        let machine = Machine { ports: Some(super::super::ports::Ports::new(vec![], "x", |p| p != 8081 && p != 9999)), ..Default::default() };
+        let both = || BTreeMap::from([("port".to_string(), Value::from(8080)), ("admin".to_string(), Value::from(8080))]);
+        let mut s = both();
+        assert_eq!(m.settle_ports(&mut s, &machine, true).unwrap(), vec![MovedPort { setting: "admin".into(), from: 8080, to: 8082 }]);
+        assert_eq!(s["admin"], 8082);
+        // Not followed: the second is refused.
+        let mut s = both();
+        let refused = m.settle_ports(&mut s, &machine, false).unwrap_err();
+        assert_eq!((refused.field.as_str(), refused.error), ("admin", "portTaken"));
+        // Chosen outside the suggested range: the admin's to change.
+        let mut s = BTreeMap::from([("port".to_string(), Value::from(9999)), ("admin".to_string(), Value::from(8082))]);
+        assert_eq!(m.settle_ports(&mut s, &machine, true).unwrap_err().field, "port");
+    }
+
+    #[test]
     fn defaults_follow_the_machine() {
         let m = immich().manifest;
         let mut machine = Machine { stack: PathBuf::from("/srv/sbm/stacks/immich"), ..Default::default() };
@@ -830,7 +889,7 @@ mod tests {
         assert_eq!(d["port"], 2283);
 
         machine.gpus = vec!["nvidia".into()];
-        machine.port_free = Some(|p| p != 2283);
+        machine.ports = Some(super::super::ports::Ports::new(vec![], "x", |p| p != 2283));
         let d = m.defaults(&machine);
         assert_eq!((d["ml"].as_str(), d["transcode"].as_str()), (Some("cuda"), Some("nvenc")));
         assert_eq!(d["port"], 2284);

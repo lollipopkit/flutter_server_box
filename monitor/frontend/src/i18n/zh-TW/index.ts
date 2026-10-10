@@ -2035,6 +2035,17 @@ const zh_TW = {
 	stackInformation: '資訊',
 	stackMemoryNeeds: '至少 {min}，建議 {recommended}',
 	stackArch: '架構',
+	stackPortMoved: '{from} 已被佔用，將使用 {to}',
+	stackPortsPartial: 'agent 執行在容器或 WSL 中，可能偵測不到其他程式佔用的連接埠。',
+	stackChangeSettings: '修改設定',
+	stackReconfigureNote: '儲存後會用這些設定重新部署{name}，期間短暫無法使用。',
+	stackDataNotMoved: '舊資料夾中已有的資料不會被移動。',
+	stackReconfigureReauth: '修改此伺服器上{name}的設定。',
+	stackReconfiguring: '正在套用{name}的設定…',
+	deskAppFailedHint: '面板可能在此頁面開啟後更新過。',
+	deskReload: '重新載入',
+	gpuProcessUnnamed: '未知程序',
+	gpuNoProcesses: '驅動程式沒有列出使用此 GPU 的程序。在 WSL 或容器中看不到外部的程式；在 Windows 上，讀取其他帳號的程式需要系統管理員權限。',
 } satisfies Translation
 
 export default zh_TW

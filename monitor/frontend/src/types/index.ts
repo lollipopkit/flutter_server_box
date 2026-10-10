@@ -2777,7 +2777,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'start' | 'stop' | 'restart' | 'remove'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -2811,6 +2811,9 @@ export interface StackPrepare {
   /// Every GPU vendor the agent sees.
   gpus_seen: string[]
   wsl: boolean
+  /// The agent runs in a container or under WSL: ports other programs use
+  /// may not all be seen.
+  ports_partial: boolean
 }
 
 /// A ticket for a web app's proxy (`POST /stacks/{id}/enter`).
@@ -2838,5 +2841,6 @@ export interface StackPreview {
   images: string[]
   data_paths: string[]
   port: number | null
-  port_free: boolean
+  /// Ports suggested that are in use now, and where they will move.
+  moved: { setting: string; from: number; to: number }[]
 }

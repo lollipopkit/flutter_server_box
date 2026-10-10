@@ -26,6 +26,8 @@ const STEP_TIMEOUT: Duration = Duration::from_secs(3 * 3600);
 pub enum JobKind {
     Install,
     Update,
+    /// Deployed again with new settings.
+    Reconfigure,
     Start,
     Stop,
     Restart,

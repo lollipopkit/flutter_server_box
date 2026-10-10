@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AppLoadFailed from './AppLoadFailed.svelte'
   import Spinner from '../lk/Spinner.svelte'
   import { LL } from '../../i18n/i18n-svelte'
   import { app } from '../registry.svelte'
@@ -337,7 +338,7 @@
               <mod.default />
             {/if}
           {:catch}
-            <p class="p-6 text-sm text-(--color-danger)">{$LL.deskAppFailed()}</p>
+            <AppLoadFailed />
           {/await}
         {/if}
       </div>

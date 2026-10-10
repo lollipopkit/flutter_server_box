@@ -121,6 +121,25 @@
   })
   const multiTab = $derived(layout.tabs.length > 1 || collapsing)
   const tab = $derived(activeTab(layout))
+  /// The tab just switched away from: its panes stay visible under the new
+  /// tab's while those fade in, so the fade shows the old content, not the
+  /// window behind it (a terminal would flash its background).
+  let leaving = $state<string | null>(null)
+  let lastTab = untrack(() => tab.id)
+  $effect.pre(() => {
+    const id = tab.id
+    const was = lastTab
+    lastTab = id
+    if (was === id || !layout.tabs.some((t) => t.id === was)) return
+    const ms = area ? cssMs(getComputedStyle(area).getPropertyValue('--dur-tab-content')) : 0
+    if (!ms) return
+    leaving = was
+    const timer = setTimeout(() => (leaving = null), ms)
+    return () => {
+      clearTimeout(timer)
+      leaving = null
+    }
+  })
   /// Split: the panes start under the bar rather than behind it, so no
   /// divider runs through the title.
   const underBar = $derived(multiTab || tab.root.kind === 'split')
@@ -277,6 +296,7 @@
   >
     {#each placed as p (p.id)}
       {@const shown = p.tabId === tab.id}
+      {@const under = !shown && p.tabId === leaving}
       <div
         class="desk-pane"
         data-pane-id={p.id}
@@ -285,7 +305,8 @@
         style:width={pct(p.rect.w)}
         style:height={pct(p.rect.h)}
         style:--pane-top={underBar ? '0px' : 'var(--titlebar-height)'}
-        style:visibility={shown ? null : 'hidden'}
+        style:visibility={shown || under ? null : 'hidden'}
+        style:z-index={shown ? 1 : null}
         inert={!shown}
         use:viewIn={shown ? tab.id : null}
         use:viewEnter={life.mounted && shown}

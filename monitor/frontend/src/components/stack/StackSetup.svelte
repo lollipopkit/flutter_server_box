@@ -5,6 +5,10 @@
   /// up checks the settings with the agent, then asks for confirmation
   /// (`StackConfirm`: the project, licence, images, folders, port; ticked),
   /// then the admin's password.
+  ///
+  /// With [current], the settings of a deployed app to change: started from
+  /// them, saved with the password alone (what was confirmed stays), and the
+  /// app deployed again.
 
   import { AppIcon, Badge, Button, Card, Group, Icon, Input, Row, Select, Spinner, Switch } from '../../desk/lk'
   import type { IconTone } from '../../desk/lk'
@@ -15,15 +19,19 @@
   import ReauthDialog from '../ReauthDialog.svelte'
   import StackConfirm from './StackConfirm.svelte'
   import { noticeText } from './notices'
+  import { stackRefusal } from './refusal'
   import { mib, pick } from './text'
   import { untrack } from 'svelte'
 
   interface Props {
     manifest: StackManifest
+    /// The deployed app's settings, to change them.
+    current?: Record<string, StackValue>
     onstarted: (job: StackJob) => void
   }
 
-  const { manifest, onstarted }: Props = $props()
+  const { manifest, current, onstarted }: Props = $props()
+  const editing = $derived(current !== undefined)
 
   let prepare = $state<StackPrepare | null>(null)
   let values = $state<Record<string, StackValue>>({})
@@ -43,7 +51,7 @@
         .then((p) => {
           if (serverId !== servers.currentId) return
           prepare = p
-          values = { ...p.defaults }
+          values = { ...p.defaults, ...current }
         })
         .catch((e) => (error = e instanceof Error ? e.message : String(e)))
     })
@@ -58,6 +66,12 @@
   const coresOk = $derived(prepare?.cores == null || req.cores_min == null ? null : prepare.cores >= req.cores_min)
   const runtimeOk = $derived(prepare?.runtime.available === true)
   const canInstall = $derived(!!prepare && runtimeOk && !checking)
+  /// Data folders whose path the admin changed: their data stays behind.
+  const movedData = $derived(
+    editing
+      ? manifest.settings.filter((s) => s.type === 'path' && s.data && current?.[s.key] !== undefined && values[s.key] !== current[s.key])
+      : [],
+  )
 
 
   function runtimeText(p: StackPrepare): string {
@@ -78,67 +92,39 @@
     checking = true
     try {
       preview = await api.checkStack(manifest.id, $state.snapshot(values))
-      if (!preview.port_free && preview.port != null) {
-        invalidField = manifest.web.port
-        error = $LL.stackPortTaken({ port: preview.port })
-        return
-      }
-      confirming = true
+      if (editing) asking = true
+      else confirming = true
     } catch (e) {
-      const body = e instanceof ApiError ? (e.body as { field?: string } | undefined) : undefined
-      if (body?.field) {
-        invalidField = body.field
-        error = $LL.stackInvalidSetting({ setting: settingLabel(body.field) })
-      } else {
-        error = e instanceof Error ? e.message : String(e)
-      }
+      refused(e)
     } finally {
       checking = false
     }
   }
 
-  async function install(password: string) {
+  function refused(e: unknown) {
+    const r = stackRefusal(e, manifest, $state.snapshot(values), $LL, $locale)
+    invalidField = r.field
+    error = r.text
+  }
+
+  async function save(password: string) {
     error = ''
     try {
-      const job = await api.installStack(manifest.id, $state.snapshot(values), consent, password)
+      // Ports the check moved go as moved.
+      const settings = { ...$state.snapshot(values), ...preview?.settings }
+      const job = editing
+        ? await api.reconfigureStack(manifest.id, settings, password)
+        : await api.installStack(manifest.id, settings, consent, password)
       onstarted(job)
     } catch (e) {
       // A wrong password stays in the dialog; anything else is the form's.
-      const body = e instanceof ApiError ? (e.body as { error?: string; field?: string } | undefined) : undefined
-      if (body?.field) {
-        invalidField = body.field
-        error = $LL.stackInvalidSetting({ setting: settingLabel(body.field) })
-        asking = false
-        return
-      }
-      if (body?.error && body.error !== 'reauth' && body.error !== 'throttled') {
-        error = refusalText(body.error)
+      const code = e instanceof ApiError ? (e.body as { error?: string } | undefined)?.error : undefined
+      if (code && code !== 'reauth' && code !== 'throttled') {
+        refused(e)
         asking = false
         return
       }
       throw e
-    }
-  }
-
-  function settingLabel(key: string): string {
-    const s = manifest.settings.find((x) => x.key === key)
-    return s ? tr(s.label) : key
-  }
-
-  function refusalText(code: string): string {
-    switch (code) {
-      case 'noRuntime':
-        return $LL.stackNoRuntime()
-      case 'noCompose':
-        return $LL.stackNoCompose()
-      case 'busy':
-        return $LL.stackBusy()
-      case 'installed':
-        return $LL.stackAlreadyInstalled()
-      case 'noProxyPort':
-        return $LL.stackNoProxyPort()
-      default:
-        return code
     }
   }
 </script>
@@ -213,11 +199,13 @@
             />
           {/if}
           {#if s.help}<p class="text-[12px] text-(--text-tertiary)">{tr(s.help)}</p>{/if}
+          {#if s.type === 'port' && prepare.ports_partial}<p class="text-[12px] text-(--text-tertiary)">{$LL.stackPortsPartial()}</p>{/if}
+          {#if movedData.some((d) => d.key === s.key)}<p class="text-[12px] text-(--color-warning)">{$LL.stackDataNotMoved()}</p>{/if}
         </div>
       {/each}
     </Group>
 
-    {#if manifest.notices.length}
+    {#if manifest.notices.length && !editing}
       <Group title={$LL.stackNotices()}>
         {#each manifest.notices as n (n)}
           <div class="flex items-start gap-[9px] px-[13px] py-[9px] text-[13px] text-(--text-secondary)">
@@ -228,6 +216,7 @@
       </Group>
     {/if}
 
+    {#if !editing}
     <Group title={$LL.stackLicense()}>
       <div class="space-y-[9px] px-[13px] py-[11px] text-[13px] text-(--text-secondary)">
         <p>{$LL.stackLicenseBody({ name: manifest.project, spdx: manifest.license.spdx })}</p>
@@ -238,11 +227,13 @@
         </p>
       </div>
     </Group>
+    {/if}
 
+    {#if editing}<p class="px-[2px] text-[12px] text-(--text-tertiary)">{$LL.stackReconfigureNote({ name: tr(manifest.title) })}</p>{/if}
     <div class="flex justify-end">
-      <Button icon="download" disabled={!canInstall} onclick={() => void check()}>
+      <Button icon={editing ? 'check' : 'download'} disabled={!canInstall} onclick={() => void check()}>
         {#if checking}<Spinner size={16} />{/if}
-        {$LL.stackInstall()}
+        {editing ? $LL.save() : $LL.stackInstall()}
       </Button>
     </div>
   {/if}
@@ -262,7 +253,7 @@
 
 <ReauthDialog
   open={asking}
-  message={$LL.stackInstallReauth({ name: tr(manifest.title) })}
-  onconfirm={install}
+  message={editing ? $LL.stackReconfigureReauth({ name: tr(manifest.title) }) : $LL.stackInstallReauth({ name: tr(manifest.title) })}
+  onconfirm={save}
   onclose={() => (asking = false)}
 />

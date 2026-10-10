@@ -601,6 +601,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             )
             .service(web::resource("/stacks/{id}/prepare").route(web::get().to(crate::api::stacks::prepare)))
             .service(web::resource("/stacks/{id}/check").route(web::post().to(crate::api::stacks::check)))
+            .service(web::resource("/stacks/{id}/settings").route(web::put().to(crate::api::stacks::reconfigure)))
             .service(web::resource("/stacks/{id}/action").route(web::post().to(crate::api::stacks::act)))
             .service(web::resource("/stacks/{id}/job").route(web::get().to(crate::api::stacks::job)))
             .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(crate::api::stacks::cancel)))

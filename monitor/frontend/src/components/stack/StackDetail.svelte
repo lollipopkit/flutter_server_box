@@ -18,6 +18,7 @@
   import StackSetup from './StackSetup.svelte'
   import { STACK_APPS } from './apps'
   import { noticeText } from './notices'
+  import { stackRefusal } from './refusal'
   import { mib, pick } from './text'
   import { untrack } from 'svelte'
 
@@ -34,7 +35,8 @@
   let job = $state<StackJob | null>(null)
   let error = $state('')
   let removing = $state(false)
-  /// The setup form is open (an admin chose to install).
+  /// The setup form is open: an admin chose to install, or to change a
+  /// deployed app's settings.
   let setting = $state(false)
 
   const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
@@ -73,13 +75,14 @@
     try {
       job = await api.stackAction(stackId, 'update')
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = app ? stackRefusal(e, app.manifest, stack?.settings, $LL, $locale).text : e instanceof Error ? e.message : String(e)
     }
   }
 
   function jobTitle(j: StackJob): string {
     if (j.kind === 'install') return $LL.stackInstalling({ name: title })
     if (j.kind === 'update') return $LL.stackUpdating({ name: title })
+    if (j.kind === 'reconfigure') return $LL.stackReconfiguring({ name: title })
     if (j.kind === 'remove') return $LL.stackRemoving({ name: title })
     return $LL.stackWorking()
   }
@@ -105,8 +108,8 @@
     {#key job.id}
       <StackProgress {stackId} {job} title={jobTitle(job)} ondone={finished} />
     {/key}
-  {:else if setting && !stack}
-    <StackSetup manifest={app.manifest} onstarted={(j) => (job = j)} />
+  {:else if setting}
+    <StackSetup manifest={app.manifest} current={stack?.settings} onstarted={(j) => (job = j)} />
     <div class="flex justify-start">
       <Button variant="ghost" icon="arrow_back" onclick={() => (setting = false)}>{$LL.cancel()}</Button>
     </div>
@@ -147,6 +150,9 @@
       {#if admin}
         <div class="flex flex-wrap justify-end gap-[9px]">
           <Button variant="destructive" onclick={() => (removing = true)}>{$LL.stackRemove()}</Button>
+          {#if stack.settings}
+            <Button variant="secondary" icon="tune" onclick={() => (setting = true)}>{$LL.stackChangeSettings()}</Button>
+          {/if}
           {#if stack.version !== app.manifest.version || stack.state === 'failed'}
             <Button variant="secondary" onclick={() => void update()}>
               {stack.state === 'failed' ? $LL.stackRetry() : $LL.stackUpdate({ version: app.manifest.version })}

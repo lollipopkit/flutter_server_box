@@ -228,9 +228,87 @@ pub fn parse_ps(raw: &str) -> Vec<StackService> {
         .collect()
 }
 
+/// Every container's published host ports, stopped containers included,
+/// with its compose project; read by [`parse_published_ports`]. A stopped
+/// container still holds its ports for when it starts, which binding a port
+/// to try it cannot see.
+pub fn published_ports_command(runtime: ContainerType) -> String {
+    let rt = runtime.name();
+    format!(
+        "{rt} ps -aq | xargs -r {rt} inspect --format \
+         '{{{{.State.Running}}}} {{{{index .Config.Labels \"com.docker.compose.project\"}}}} {{{{json .HostConfig.PortBindings}}}}'"
+    )
+}
+
+/// A host port a container publishes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublishedPort {
+    pub port: u16,
+    /// The container's compose project, when it has one.
+    pub project: Option<String>,
+    /// Whether the container runs now, so holds the port.
+    pub running: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct Binding {
+    #[serde(default)]
+    host_port: String,
+}
+
+/// Reads [`published_ports_command`]'s lines (`<running> <project>
+/// <bindings>`): TCP ports only, those the runtime picks itself (an empty
+/// host port) left out.
+pub fn parse_published_ports(stdout: &str) -> Vec<PublishedPort> {
+    let mut out = Vec::new();
+    for line in stdout.lines() {
+        let mut parts = line.splitn(3, ' ');
+        let (Some(running), Some(project), Some(bindings)) = (parts.next(), parts.next(), parts.next()) else { continue };
+        let Ok(bindings) = serde_json::from_str::<Option<std::collections::BTreeMap<String, Option<Vec<Binding>>>>>(bindings.trim())
+        else {
+            continue;
+        };
+        for (spec, hosts) in bindings.unwrap_or_default() {
+            if !spec.ends_with("/tcp") {
+                continue;
+            }
+            for host in hosts.unwrap_or_default() {
+                if let Ok(port) = host.host_port.parse::<u16>() {
+                    out.push(PublishedPort {
+                        port,
+                        project: Some(project.to_string()).filter(|p| !p.is_empty()),
+                        running: running == "true",
+                    });
+                }
+            }
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn published_ports() {
+        assert_eq!(
+            published_ports_command(ContainerType::Docker),
+            "docker ps -aq | xargs -r docker inspect --format \
+         '{{.State.Running}} {{index .Config.Labels \"com.docker.compose.project\"}} {{json .HostConfig.PortBindings}}'"
+        );
+        let out = concat!(
+            "true sbm-futo-immich {\"2283/tcp\":[{\"HostIp\":\"\",\"HostPort\":\"2283\"},{\"HostIp\":\"::\",\"HostPort\":\"2283\"}]}\n",
+            "false  {\"80/tcp\":[{\"HostIp\":\"\",\"HostPort\":\"8080\"}],\"53/udp\":[{\"HostIp\":\"\",\"HostPort\":\"53\"}],\"9/tcp\":[{\"HostIp\":\"\",\"HostPort\":\"\"}],\"7/tcp\":null}\n",
+            "true other {}\n",
+            "true none null\n",
+            "garbage\n",
+        );
+        let ports = parse_published_ports(out);
+        let immich = PublishedPort { port: 2283, project: Some("sbm-futo-immich".into()), running: true };
+        assert_eq!(ports, vec![immich.clone(), immich, PublishedPort { port: 8080, project: None, running: false }]);
+    }
 
     fn stack(runtime: ContainerType) -> Stack {
         Stack {

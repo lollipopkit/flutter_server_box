@@ -13,6 +13,8 @@
 //!   acknowledged, accept_license}`: the admin confirmed it installs
 //!   third-party software, and accepted the licence where the manifest asks;
 //!   answers the job (202).
+//! - `PUT /stacks/{id}/settings` (admin, password): `{settings}` for a
+//!   deployed app; deployed again with them (its ports checked, never moved).
 //! - `POST /stacks/{id}/action` (admin): `start` | `stop` | `restart` |
 //!   `update`.
 //! - `DELETE /stacks/{id}` (admin, password): takes it down, `{purge}` with
@@ -113,6 +115,7 @@ pub async fn prepare(
         "gpus": machine.gpus,
         "gpus_seen": stacks::gpus_seen(&state).await,
         "wsl": machine.wsl,
+        "ports_partial": stacks::ports::partial(machine.wsl),
     })))
 }
 
@@ -160,6 +163,29 @@ pub async fn install(
     require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
     let consent = stacks::Consent { third_party: body.acknowledged, license: body.accept_license };
     match stacks::install(&state, &caller.username, &id, &body.settings, consent).await {
+        Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
+        Err(r) => Ok(refused(r)),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct SettingsBody {
+    current_password: Option<String>,
+    settings: BTreeMap<String, Value>,
+}
+
+/// New settings for a deployed app: its files written again and its
+/// containers recreated.
+pub async fn reconfigure(
+    req: HttpRequest,
+    id: web::types::Path<String>,
+    body: web::types::Json<SettingsBody>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    let body = body.into_inner();
+    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
+    match stacks::reconfigure(&state, &caller.username, &id, &body.settings).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }

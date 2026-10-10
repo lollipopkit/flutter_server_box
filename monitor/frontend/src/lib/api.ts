@@ -1262,6 +1262,13 @@ export const api = {
       },
       'Failed to set up the app',
     ),
+  /// New settings for a deployed app: it is deployed again with them.
+  reconfigureStack: (id: string, settings: Record<string, StackValue>, currentPassword: string) =>
+    request<StackJob>(
+      `/stacks/${encodeURIComponent(id)}/settings`,
+      { method: 'PUT', body: JSON.stringify({ settings, current_password: currentPassword }) },
+      'Failed to change the settings',
+    ),
   stackAction: (id: string, action: 'start' | 'stop' | 'restart' | 'update') =>
     request<StackJob>(
       `/stacks/${encodeURIComponent(id)}/action`,

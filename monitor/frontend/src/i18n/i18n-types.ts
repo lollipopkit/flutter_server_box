@@ -8420,6 +8420,55 @@ type RootTranslation = {
 	 * A​r​c​h​i​t​e​c​t​u​r​e​s
 	 */
 	stackArch: string
+	/**
+	 * {​f​r​o​m​}​ ​i​s​ ​i​n​ ​u​s​e​;​ ​{​t​o​}​ ​w​i​l​l​ ​b​e​ ​u​s​e​d
+	 * @param {unknown} from
+	 * @param {unknown} to
+	 */
+	stackPortMoved: RequiredParams<'from' | 'to'>
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​o​r​ ​u​n​d​e​r​ ​W​S​L​,​ ​s​o​ ​p​o​r​t​s​ ​o​t​h​e​r​ ​p​r​o​g​r​a​m​s​ ​u​s​e​ ​m​a​y​ ​n​o​t​ ​a​l​l​ ​b​e​ ​d​e​t​e​c​t​e​d​.
+	 */
+	stackPortsPartial: string
+	/**
+	 * C​h​a​n​g​e​ ​s​e​t​t​i​n​g​s
+	 */
+	stackChangeSettings: string
+	/**
+	 * S​a​v​i​n​g​ ​d​e​p​l​o​y​s​ ​{​n​a​m​e​}​ ​a​g​a​i​n​ ​w​i​t​h​ ​t​h​e​s​e​ ​s​e​t​t​i​n​g​s​;​ ​i​t​ ​i​s​ ​u​n​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​a​ ​m​o​m​e​n​t​.
+	 * @param {unknown} name
+	 */
+	stackReconfigureNote: RequiredParams<'name'>
+	/**
+	 * D​a​t​a​ ​a​l​r​e​a​d​y​ ​i​n​ ​t​h​e​ ​o​l​d​ ​f​o​l​d​e​r​ ​i​s​ ​n​o​t​ ​m​o​v​e​d​.
+	 */
+	stackDataNotMoved: string
+	/**
+	 * C​h​a​n​g​e​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​o​f​ ​{​n​a​m​e​}​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * @param {unknown} name
+	 */
+	stackReconfigureReauth: RequiredParams<'name'>
+	/**
+	 * A​p​p​l​y​i​n​g​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​o​f​ ​{​n​a​m​e​}​…
+	 * @param {unknown} name
+	 */
+	stackReconfiguring: RequiredParams<'name'>
+	/**
+	 * T​h​e​ ​p​a​n​e​l​ ​m​a​y​ ​h​a​v​e​ ​b​e​e​n​ ​u​p​d​a​t​e​d​ ​s​i​n​c​e​ ​t​h​i​s​ ​p​a​g​e​ ​o​p​e​n​e​d​.
+	 */
+	deskAppFailedHint: string
+	/**
+	 * R​e​l​o​a​d
+	 */
+	deskReload: string
+	/**
+	 * U​n​n​a​m​e​d​ ​p​r​o​c​e​s​s
+	 */
+	gpuProcessUnnamed: string
+	/**
+	 * T​h​e​ ​d​r​i​v​e​r​ ​l​i​s​t​s​ ​n​o​ ​p​r​o​c​e​s​s​ ​u​s​i​n​g​ ​t​h​i​s​ ​G​P​U​.​ ​U​n​d​e​r​ ​W​S​L​ ​o​r​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​,​ ​p​r​o​g​r​a​m​s​ ​o​u​t​s​i​d​e​ ​i​t​ ​a​r​e​ ​n​o​t​ ​v​i​s​i​b​l​e​;​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​r​e​a​d​i​n​g​ ​o​t​h​e​r​ ​a​c​c​o​u​n​t​s​'​ ​p​r​o​g​r​a​m​s​ ​n​e​e​d​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​i​g​h​t​s​.
+	 */
+	gpuNoProcesses: string
 }
 
 export type TranslationFunctions = {
@@ -16559,6 +16608,50 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Architectures
 	 */
 	stackArch: () => LocalizedString
+	/**
+	 * {from} is in use; {to} will be used
+	 */
+	stackPortMoved: (arg: { from: unknown, to: unknown }) => LocalizedString
+	/**
+	 * The agent runs in a container or under WSL, so ports other programs use may not all be detected.
+	 */
+	stackPortsPartial: () => LocalizedString
+	/**
+	 * Change settings
+	 */
+	stackChangeSettings: () => LocalizedString
+	/**
+	 * Saving deploys {name} again with these settings; it is unavailable for a moment.
+	 */
+	stackReconfigureNote: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Data already in the old folder is not moved.
+	 */
+	stackDataNotMoved: () => LocalizedString
+	/**
+	 * Change the settings of {name} on this server.
+	 */
+	stackReconfigureReauth: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Applying the settings of {name}…
+	 */
+	stackReconfiguring: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * The panel may have been updated since this page opened.
+	 */
+	deskAppFailedHint: () => LocalizedString
+	/**
+	 * Reload
+	 */
+	deskReload: () => LocalizedString
+	/**
+	 * Unnamed process
+	 */
+	gpuProcessUnnamed: () => LocalizedString
+	/**
+	 * The driver lists no process using this GPU. Under WSL or in a container, programs outside it are not visible; on Windows, reading other accounts' programs needs administrator rights.
+	 */
+	gpuNoProcesses: () => LocalizedString
 }
 
 export type Formatters = {}

@@ -126,6 +126,17 @@ pub async fn rewrite(db: &SqlitePool, id: &str, version: &str, settings: &BTreeM
     Ok(())
 }
 
+/// The proxy moved to [port]: its old one was taken.
+pub async fn set_proxy_port(db: &SqlitePool, id: &str, port: u16) -> sqlx::Result<()> {
+    sqlx::query("UPDATE stack SET proxy_port = ?, updated_at = ? WHERE id = ?")
+        .bind(i64::from(port))
+        .bind(now())
+        .bind(id)
+        .execute(db)
+        .await?;
+    Ok(())
+}
+
 pub async fn delete(db: &SqlitePool, id: &str) -> sqlx::Result<()> {
     sqlx::query("DELETE FROM stack WHERE id = ?").bind(id).execute(db).await?;
     Ok(())

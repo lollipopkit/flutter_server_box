@@ -15,6 +15,7 @@
 pub mod builtin;
 pub mod job;
 pub mod manifest;
+pub mod ports;
 pub mod proxy;
 pub mod store;
 
@@ -31,7 +32,7 @@ use sbm_parser::stack::Stack;
 use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
 use job::{Job, JobKind, JobState};
-use manifest::{Machine, Package};
+use manifest::{Machine, MovedPort, Package};
 use store::StackRow;
 
 /// The agent's own ports in front of deployed apps, one per app.
@@ -122,20 +123,20 @@ impl Stacks {
     }
 }
 
+/// [id]'s compose project. Compose takes no `.`; an id's parts have no `-`,
+/// so this maps one way.
+fn project(id: &str) -> String {
+    format!("sbm-{}", id.replace('.', "-"))
+}
+
 fn compose(runtime: ContainerType, id: &str, dir: &Path, package: &Package) -> Stack {
     Stack {
         runtime,
-        // Compose takes no `.`; an id's parts have no `-`, so this maps one way.
-        project: format!("sbm-{}", id.replace('.', "-")),
+        project: project(id),
         dir: dir.to_string_lossy().into_owned(),
         files: package.manifest.compose.files.clone(),
         env_file: ENV_FILE.into(),
     }
-}
-
-/// Whether [port] can be bound on every interface now.
-fn port_free(port: u16) -> bool {
-    std::net::TcpListener::bind(("0.0.0.0", port)).is_ok()
 }
 
 fn wsl() -> bool {
@@ -185,13 +186,32 @@ async fn container_gpus(state: &AppState, runtime: Option<ContainerType>, seen: 
 }
 
 /// What a deploy dialog's defaults depend on, on this machine: its GPUs are
-/// those containers can be given.
+/// those containers can be given, its free ports those [id] may publish.
 pub async fn machine(state: &AppState, id: &str) -> Machine {
     let wsl = wsl();
     let runtime = crate::api::containers::detect_runtime(&state.remote_access.exec).await;
     let seen = gpus_seen(state).await;
     let gpus = container_gpus(state, runtime, &seen, wsl).await;
-    Machine { stack: state.stacks.dir(id), gpus, wsl, port_free: Some(port_free) }
+    let ports = ports::Ports::read(state, runtime, project(id)).await;
+    Machine { stack: state.stacks.dir(id), gpus, wsl, ports: Some(ports) }
+}
+
+/// [given] completed and checked for [machine], its ports settled
+/// (`Manifest::settle_ports`).
+fn settings_for(
+    package: &Package,
+    given: &BTreeMap<String, Value>,
+    machine: &Machine,
+    follow: bool,
+) -> Result<(BTreeMap<String, Value>, Vec<MovedPort>), Refusal> {
+    let invalid = |i: manifest::Invalid| Refusal {
+        status: if i.error == "portTaken" { 409 } else { 400 },
+        error: i.error,
+        field: Some(i.field),
+    };
+    let mut settings = package.manifest.check_settings(given, machine).map_err(invalid)?;
+    let moved = package.manifest.settle_ports(&mut settings, machine, follow).map_err(invalid)?;
+    Ok((settings, moved))
 }
 
 /// The container runtime and its Compose, or why there is none.
@@ -211,21 +231,10 @@ async fn audit(state: &AppState, username: &str, action: Action, outcome: Outcom
     Event::new(Kind::Stack, action, outcome).subject(username).detail(detail).record(&state.db).await;
 }
 
-/// The settings checked and the files written: the folder's files, the env
+/// The files written for checked [settings]: the folder's files, the env
 /// file (secrets kept from an earlier one, else generated), and every path
 /// setting's directory.
-async fn write_files(
-    state: &AppState,
-    id: &str,
-    package: &Package,
-    given: &BTreeMap<String, Value>,
-) -> Result<BTreeMap<String, Value>, Refusal> {
-    let machine = machine(state, id).await;
-    let settings = package.manifest.check_settings(given, &machine).map_err(|i| Refusal {
-        status: 400,
-        error: i.error,
-        field: Some(i.field),
-    })?;
+async fn write_files(state: &AppState, id: &str, package: &Package, settings: &BTreeMap<String, Value>) -> Result<(), Refusal> {
     let dir = state.stacks.dir(id);
     let failed = |e: std::io::Error| {
         tracing::error!("stack {id}: {e}");
@@ -249,7 +258,7 @@ async fn write_files(
             secrets.insert(s.env.clone(), value);
         }
     }
-    let env = package.manifest.env_file(&settings, &secrets);
+    let env = package.manifest.env_file(settings, &secrets);
     // Created 0600 before the secrets go in.
     tokio::fs::write(&env_path, "").await.map_err(failed)?;
     set_mode(&env_path, 0o600).await;
@@ -262,7 +271,7 @@ async fn write_files(
             return Err(Refusal { status: 400, error: "pathUnavailable", field: Some(key.clone()) });
         }
     }
-    Ok(settings)
+    Ok(())
 }
 
 async fn set_mode(path: &Path, mode: u32) {
@@ -284,11 +293,11 @@ fn read_env(text: &str, names: &[&str]) -> BTreeMap<String, String> {
         .collect()
 }
 
-/// The proxy port for a new stack: in [`PROXY_PORTS`], not another stack's,
-/// free now.
+/// A proxy port: in [`PROXY_PORTS`], not a stack's (its own old one
+/// included), free now.
 async fn proxy_port(state: &AppState) -> Result<u16, Refusal> {
     let taken: Vec<u16> = store::all(&state.db).await.map_err(db_failed)?.iter().map(|r| r.proxy_port).collect();
-    PROXY_PORTS.clone().find(|p| !taken.contains(p) && port_free(*p)).ok_or_else(|| refusal(409, "noProxyPort"))
+    PROXY_PORTS.clone().find(|p| !taken.contains(p) && ports::bindable(*p)).ok_or_else(|| refusal(409, "noProxyPort"))
 }
 
 fn db_failed(e: sqlx::Error) -> Refusal {
@@ -296,7 +305,8 @@ fn db_failed(e: sqlx::Error) -> Refusal {
     refusal(500, "internal")
 }
 
-/// Starts [row]'s proxy listener on the agent's own address.
+/// Starts [row]'s proxy listener on the agent's own address. When its port
+/// has been taken (another program started first), it moves to a free one.
 pub async fn start_proxy(state: &Arc<AppState>, row: &StackRow) {
     let Some(package) = Stacks::package(&row.id) else { return };
     let Some(upstream_port) = package.manifest.web_port(&row.settings) else { return };
@@ -312,15 +322,35 @@ pub async fn start_proxy(state: &Arc<AppState>, row: &StackRow) {
         },
         None => None,
     };
-    let target = proxy::Target {
+    let target = |port: u16| proxy::Target {
         stack: row.id.clone(),
-        listen: SocketAddr::new(host, row.proxy_port),
+        listen: SocketAddr::new(host, port),
         upstream_port,
-        tls,
+        tls: tls.clone(),
         frame_origins: server.cors_allowed_origins.clone(),
     };
-    if let Err(e) = state.stacks.proxies.start(state.clone(), target).await {
+    let e = match state.stacks.proxies.start(state.clone(), target(row.proxy_port)).await {
+        Ok(()) => return,
+        Err(e) => e,
+    };
+    if e.kind() != std::io::ErrorKind::AddrInUse {
         tracing::error!("stack {} proxy on port {}: {e}", row.id, row.proxy_port);
+        return;
+    }
+    let port = match proxy_port(state).await {
+        Ok(port) => port,
+        Err(r) => {
+            tracing::error!("stack {} proxy: port {} is taken, and {}", row.id, row.proxy_port, r.error);
+            return;
+        }
+    };
+    if let Err(e) = store::set_proxy_port(&state.db, &row.id, port).await {
+        tracing::error!("stack {}: {e}", row.id);
+        return;
+    }
+    tracing::warn!("stack {} proxy: port {} is taken, moved to {port}", row.id, row.proxy_port);
+    if let Err(e) = state.stacks.proxies.start(state.clone(), target(port)).await {
+        tracing::error!("stack {} proxy on port {port}: {e}", row.id);
     }
 }
 
@@ -360,22 +390,23 @@ pub struct Preview {
     pub images: Vec<String>,
     pub data_paths: Vec<PathBuf>,
     pub port: Option<u16>,
-    pub port_free: bool,
+    /// Ports suggested in the dialog that are in use now, and where they
+    /// will move (`Manifest::settle_ports`).
+    pub moved: Vec<MovedPort>,
 }
 
+/// What deploying [given] would do. A deployed stack's ports are not
+/// followed: a setting changed there is the admin's choice.
 pub async fn preview(state: &AppState, id: &str, given: &BTreeMap<String, Value>) -> Result<Preview, Refusal> {
     let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let installed = store::load(&state.db, id).await.map_err(db_failed)?.is_some();
     let machine = machine(state, id).await;
-    let settings = package
-        .manifest
-        .check_settings(given, &machine)
-        .map_err(|i| Refusal { status: 400, error: i.error, field: Some(i.field) })?;
-    let port = package.manifest.web_port(&settings);
+    let (settings, moved) = settings_for(package, given, &machine, !installed)?;
     Ok(Preview {
         images: package.images(&settings),
         data_paths: package.manifest.data_paths(&settings),
-        port_free: port.is_none_or(port_free),
-        port,
+        port: package.manifest.web_port(&settings),
+        moved,
         settings,
     })
 }
@@ -402,12 +433,12 @@ pub async fn install(
     let (runtime, _) = runtime(state).await?;
     let job = state.stacks.begin(id, JobKind::Install)?;
     let result = async {
-        let settings = write_files(state, id, package, given).await?;
-        if let Some(port) = m.web_port(&settings)
-            && !port_free(port)
-        {
-            return Err(Refusal { status: 409, error: "portTaken", field: Some(m.web.port.clone()) });
+        let machine = machine(state, id).await;
+        let (settings, moved) = settings_for(package, given, &machine, true)?;
+        for m in moved {
+            job.push(format!("port {} ({}) is in use; using {}", m.from, m.setting, m.to));
         }
+        write_files(state, id, package, &settings).await?;
         let now = chrono::Utc::now().to_rfc3339();
         let row = StackRow {
             id: id.to_string(),
@@ -468,7 +499,7 @@ async fn conclude(state: &AppState, job: &Job, username: &str, id: &str, verb: &
     }
 }
 
-/// What can be done to a deployed stack without its settings.
+/// What can be done to a deployed stack with the settings it has.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum StackAction {
@@ -483,42 +514,31 @@ pub enum StackAction {
 pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackAction) -> Result<Arc<Job>, Refusal> {
     let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
     let row = store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
+    if action == StackAction::Update {
+        return redeploy(state, username, id, package, &row.settings, JobKind::Update).await;
+    }
     let (runtime, _) = runtime(state).await?;
-    let kind = match action {
-        StackAction::Start => JobKind::Start,
-        StackAction::Stop => JobKind::Stop,
-        StackAction::Restart => JobKind::Restart,
-        StackAction::Update => JobKind::Update,
+    if action != StackAction::Stop {
+        // Said before Compose fails on it halfway.
+        settings_for(package, &row.settings, &machine(state, id).await, false)?;
+    }
+    let (kind, verb) = match action {
+        StackAction::Start => (JobKind::Start, "start"),
+        StackAction::Stop => (JobKind::Stop, "stop"),
+        StackAction::Restart | StackAction::Update => (JobKind::Restart, "restart"),
     };
     let job = state.stacks.begin(id, kind)?;
     let stack = compose(runtime, id, &state.stacks.dir(id), package);
     let steps = match action {
         StackAction::Start => vec![stack.start()],
         StackAction::Stop => vec![stack.stop()],
-        StackAction::Restart => vec![stack.restart()],
-        StackAction::Update => {
-            let settings = match write_files(state, id, package, &row.settings).await {
-                Ok(s) => s,
-                Err(r) => {
-                    job.finish(JobState::Failed, Some(r.error.into()));
-                    return Err(r);
-                }
-            };
-            store::rewrite(&state.db, id, &package.manifest.version, &settings).await.map_err(db_failed)?;
-            vec![stack.pull(), stack.up()]
-        }
-    };
-    let verb = match action {
-        StackAction::Start => "start",
-        StackAction::Stop => "stop",
-        StackAction::Restart => "restart",
-        StackAction::Update => "update",
+        StackAction::Restart | StackAction::Update => vec![stack.restart()],
     };
     audit(state, username, Action::Open, Outcome::Ok, format!("{verb} {id}")).await;
     let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
     tokio::spawn(async move {
         let result = job2.run_steps(&steps).await;
-        if action == StackAction::Update || row.state != "installed" {
+        if row.state != "installed" {
             let _ = store::finish(&state.db, &id, result.as_ref().err().map(String::as_str)).await;
             if result.is_ok()
                 && let Ok(Some(row)) = store::load(&state.db, &id).await
@@ -529,6 +549,51 @@ pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackA
         conclude(&state, &job2, &username, &id, verb, result).await;
     });
     Ok(job)
+}
+
+/// Writes [id]'s files again from this agent's catalog with [given]
+/// settings, pulls its images and recreates its containers: an update
+/// ([`JobKind::Update`], the settings it has) or new settings
+/// ([`JobKind::Reconfigure`]). Its ports are checked first, never moved.
+async fn redeploy(
+    state: &Arc<AppState>,
+    username: &str,
+    id: &str,
+    package: &'static Package,
+    given: &BTreeMap<String, Value>,
+    kind: JobKind,
+) -> Result<Arc<Job>, Refusal> {
+    let (runtime, _) = runtime(state).await?;
+    let (settings, _) = settings_for(package, given, &machine(state, id).await, false)?;
+    let job = state.stacks.begin(id, kind)?;
+    if let Err(r) = write_files(state, id, package, &settings).await {
+        job.finish(JobState::Failed, Some(r.error.into()));
+        return Err(r);
+    }
+    store::rewrite(&state.db, id, &package.manifest.version, &settings).await.map_err(db_failed)?;
+    let verb = if kind == JobKind::Reconfigure { "reconfigure" } else { "update" };
+    audit(state, username, Action::Open, Outcome::Ok, format!("{verb} {id} {}", package.manifest.version)).await;
+    let stack = compose(runtime, id, &state.stacks.dir(id), package);
+    let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
+    tokio::spawn(async move {
+        let result = job2.run_steps(&[stack.pull(), stack.up()]).await;
+        let _ = store::finish(&state.db, &id, result.as_ref().err().map(String::as_str)).await;
+        // The service's port may be another now.
+        if result.is_ok()
+            && let Ok(Some(row)) = store::load(&state.db, &id).await
+        {
+            start_proxy(&state, &row).await;
+        }
+        conclude(&state, &job2, &username, &id, verb, result).await;
+    });
+    Ok(job)
+}
+
+/// Deploys [id] again with new [given] settings.
+pub async fn reconfigure(state: &Arc<AppState>, username: &str, id: &str, given: &BTreeMap<String, Value>) -> Result<Arc<Job>, Refusal> {
+    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
+    redeploy(state, username, id, package, given, JobKind::Reconfigure).await
 }
 
 /// Takes [id] down and forgets it; with [purge] its data and files go too.

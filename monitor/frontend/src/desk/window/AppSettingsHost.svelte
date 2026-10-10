@@ -1,7 +1,7 @@
 <script lang="ts">
   /// One app's page in Settings → Apps, run as that app (`provideAppSettings`).
 
-  import { LL } from '../../i18n/i18n-svelte'
+  import AppLoadFailed from './AppLoadFailed.svelte'
   import { provideAppSettings, useDesk } from '../deskState.svelte'
   import Spinner from '../lk/Spinner.svelte'
   import type { AppSpec } from '../sys/manifest'
@@ -26,6 +26,6 @@
   {:then mod}
     <mod.default />
   {:catch}
-    <p class="p-6 text-[13px] text-(--color-danger)">{$LL.deskAppFailed()}</p>
+    <AppLoadFailed />
   {/await}
 {/if}

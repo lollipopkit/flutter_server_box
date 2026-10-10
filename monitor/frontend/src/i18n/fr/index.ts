@@ -2035,6 +2035,17 @@ const fr = {
 	stackInformation: 'Information',
 	stackMemoryNeeds: 'At least {min}, {recommended} recommended',
 	stackArch: 'Architectures',
+	stackPortMoved: '{from} is in use; {to} will be used',
+	stackPortsPartial: 'The agent runs in a container or under WSL, so ports other programs use may not all be detected.',
+	stackChangeSettings: 'Change settings',
+	stackReconfigureNote: 'Saving deploys {name} again with these settings; it is unavailable for a moment.',
+	stackDataNotMoved: 'Data already in the old folder is not moved.',
+	stackReconfigureReauth: 'Change the settings of {name} on this server.',
+	stackReconfiguring: 'Applying the settings of {name}…',
+	deskAppFailedHint: 'The panel may have been updated since this page opened.',
+	deskReload: 'Reload',
+	gpuProcessUnnamed: 'Unnamed process',
+	gpuNoProcesses: 'The driver lists no process using this GPU. Under WSL or in a container, programs outside it are not visible; on Windows, reading other accounts\' programs needs administrator rights.',
 } satisfies Translation
 
 export default fr

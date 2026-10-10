@@ -44,6 +44,7 @@ async fn setup() -> (TestServer, Arc<AppState>) {
                     )
                     .service(web::resource("/stacks/{id}/prepare").route(web::get().to(stacks::prepare)))
                     .service(web::resource("/stacks/{id}/check").route(web::post().to(stacks::check)))
+            .service(web::resource("/stacks/{id}/settings").route(web::put().to(stacks::reconfigure)))
                     .service(web::resource("/stacks/{id}/action").route(web::post().to(stacks::act)))
                     .service(web::resource("/stacks/{id}/job").route(web::get().to(stacks::job)))
                     .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(stacks::cancel)))
@@ -83,6 +84,7 @@ async fn every_account_sees_the_catalog_and_only_an_admin_changes_it() {
         (Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": {} }))),
         (Method::POST, "/api/v1/stacks/futo.immich", Some(json!({ "current_password": common::PASSWORD, "accept_license": true }))),
         (Method::POST, "/api/v1/stacks/futo.immich/action", Some(json!({ "action": "start" }))),
+        (Method::PUT, "/api/v1/stacks/futo.immich/settings", Some(json!({ "current_password": common::PASSWORD, "settings": {} }))),
         (Method::DELETE, "/api/v1/stacks/futo.immich", Some(json!({ "current_password": common::PASSWORD }))),
         (Method::GET, "/api/v1/stacks/futo.immich/job", None),
         (Method::POST, "/api/v1/stacks/futo.immich/job/cancel", None),
@@ -140,6 +142,35 @@ async fn the_check_shows_what_deploying_would_do() {
     let (status, body) =
         call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 80 } }))).await;
     assert_eq!((status, body["field"].as_str()), (400, Some("port")));
+}
+
+#[ntex::test]
+async fn a_suggested_port_in_use_moves_and_a_chosen_one_is_refused() {
+    let (srv, _) = setup().await;
+    // Held here, or already in use on this machine: either way not free.
+    let _held = std::net::TcpListener::bind(("0.0.0.0", 2283));
+    let (status, body) =
+        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 2283 } }))).await;
+    assert_eq!(status, 200, "{body}");
+    let to = body["settings"]["port"].as_u64().unwrap();
+    assert!((2284..=2383).contains(&to), "{body}");
+    assert_eq!(body["moved"], json!([{ "setting": "port", "from": 2283, "to": to }]));
+
+    let chosen = std::net::TcpListener::bind(("0.0.0.0", 0)).unwrap();
+    let port = chosen.local_addr().unwrap().port();
+    let (status, body) =
+        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": port } }))).await;
+    assert_eq!((status, body["error"].as_str(), body["field"].as_str()), (409, Some("portTaken"), Some("port")), "{body}");
+}
+
+#[ntex::test]
+async fn new_settings_need_the_password_and_a_deployed_app() {
+    let (srv, _) = setup().await;
+    let path = "/api/v1/stacks/futo.immich/settings";
+    let (status, _) = call(&srv, "admin", Method::PUT, path, Some(json!({ "current_password": "wrong", "settings": {} }))).await;
+    assert_ne!(status, 202);
+    let (status, body) = call(&srv, "admin", Method::PUT, path, Some(json!({ "current_password": common::PASSWORD, "settings": {} }))).await;
+    assert_eq!((status, body["error"].as_str()), (404, Some("notInstalled")));
 }
 
 #[ntex::test]

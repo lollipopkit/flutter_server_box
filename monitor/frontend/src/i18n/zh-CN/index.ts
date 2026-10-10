@@ -2034,6 +2034,17 @@ const zh_CN = {
 	stackInformation: '信息',
 	stackMemoryNeeds: '至少 {min}，建议 {recommended}',
 	stackArch: '架构',
+	stackPortMoved: '{from} 已被占用，将使用 {to}',
+	stackPortsPartial: 'agent 运行在容器或 WSL 中，可能检测不到其他程序占用的端口。',
+	stackChangeSettings: '修改设置',
+	stackReconfigureNote: '保存后会用这些设置重新部署{name}，期间短暂不可用。',
+	stackDataNotMoved: '旧文件夹中已有的数据不会被移动。',
+	stackReconfigureReauth: '修改此服务器上{name}的设置。',
+	stackReconfiguring: '正在应用{name}的设置…',
+	deskAppFailedHint: '面板可能在此页面打开后更新过。',
+	deskReload: '重新加载',
+	gpuProcessUnnamed: '未知进程',
+	gpuNoProcesses: '驱动没有列出使用此 GPU 的进程。在 WSL 或容器中看不到外部的程序；在 Windows 上，读取其他账户的程序需要管理员权限。',
 } satisfies Translation
 
 export default zh_CN

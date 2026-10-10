@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
+import StackDetail from '../components/stack/StackDetail.svelte'
 import StackHost from '../components/stack/StackHost.svelte'
 import StackWindowHarness from './fixtures/StackWindowHarness.svelte'
 import { Desk } from '../desk/deskState.svelte'
@@ -17,6 +18,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
     listStacks: vi.fn(),
     prepareStack: vi.fn(),
     installStack: vi.fn(),
+    reconfigureStack: vi.fn(),
     checkStack: vi.fn(),
     enterStack: vi.fn(),
     stackJob: vi.fn(),
@@ -66,6 +68,7 @@ beforeEach(() => {
     gpus: [],
     gpus_seen: [],
     wsl: false,
+    ports_partial: false,
   })
 })
 
@@ -85,8 +88,8 @@ describe('the Photos window', () => {
       settings: { library: '/srv/stacks/immich/library', port: 2283 },
       images: ['ghcr.io/immich-app/immich-server:v3.3.1'],
       data_paths: ['/srv/stacks/immich/library'],
-      port: 2283,
-      port_free: true,
+      port: 2284,
+      moved: [{ setting: 'port', from: 2283, to: 2284 }],
     })
     render(StackHost, { stackId: 'futo.immich' })
     expect(await screen.findByDisplayValue('/srv/stacks/immich/library')).toBeInTheDocument()
@@ -94,6 +97,7 @@ describe('the Photos window', () => {
 
     expect(await screen.findByText('ghcr.io/immich-app/immich-server:v3.3.1')).toBeInTheDocument()
     expect(screen.getByText('Immich (FUTO)')).toBeInTheDocument()
+    expect(screen.getByText('2283 is in use; 2284 will be used')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'AGPL-3.0' })).toHaveAttribute('href', 'https://example.com/LICENSE')
     const go = screen.getByRole('button', { name: 'Continue' })
     expect(go).toBeDisabled()
@@ -128,6 +132,45 @@ describe('the Photos window', () => {
     expect(src.port).toBe('3780')
     expect(src.pathname).toBe('/__sbm/enter')
     expect(src.searchParams.get('ticket')).toBe('abc.def')
+  })
+})
+
+describe('the settings of a deployed app', () => {
+  const settings = { library: '/srv/stacks/immich/library', port: 2283 }
+  const installed = () => app({ state: 'installed', version: '3.3.1', settings })
+
+  it('start from what it has and are saved with the password alone', async () => {
+    capabilitiesStore.byServer = { local: caps(true) }
+    mocked.listStacks.mockResolvedValue({ apps: [installed()] })
+    mocked.checkStack.mockResolvedValue({ settings: { ...settings, port: 3000 }, images: [], data_paths: [], port: 3000, moved: [] })
+    mocked.reconfigureStack.mockResolvedValue({ id: 1, kind: 'reconfigure', state: 'running', error: null, lines: [], next: 0 })
+    mocked.stackJob.mockResolvedValue({ id: 1, kind: 'reconfigure', state: 'running', error: null, lines: [], next: 0 })
+    render(StackDetail, { stackId: 'futo.immich' })
+    await fireEvent.click(await screen.findByRole('button', { name: 'Change settings' }))
+    const port = await screen.findByDisplayValue('2283')
+    await fireEvent.input(port, { target: { value: '3000' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    // No licence or third-party confirmation again: the password.
+    await vi.waitFor(() => expect(document.querySelector('input[type=password]')).not.toBeNull())
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull()
+    expect(mocked.checkStack).toHaveBeenCalledWith('futo.immich', { ...settings, port: 3000 })
+    const password = document.querySelector('input[type=password]') as HTMLInputElement
+    await fireEvent.input(password, { target: { value: 'pw' } })
+    await fireEvent.submit(password.form!)
+    await vi.waitFor(() => expect(mocked.reconfigureStack).toHaveBeenCalledWith('futo.immich', { ...settings, port: 3000 }, 'pw'))
+    expect(await screen.findByText('Applying the settings of Photos…')).toBeInTheDocument()
+  })
+
+  it('name a port in use by its number', async () => {
+    capabilitiesStore.byServer = { local: caps(true) }
+    mocked.listStacks.mockResolvedValue({ apps: [installed()] })
+    const { ApiError } = await import('../lib/api')
+    mocked.checkStack.mockRejectedValue(Object.assign(new ApiError('taken', 409), { body: { error: 'portTaken', field: 'port' } }))
+    render(StackDetail, { stackId: 'futo.immich' })
+    await fireEvent.click(await screen.findByRole('button', { name: 'Change settings' }))
+    await screen.findByDisplayValue('2283')
+    await fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByText('Port 2283 is already in use on this machine.')).toBeInTheDocument()
   })
 })
 

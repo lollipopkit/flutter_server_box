@@ -14,6 +14,7 @@
   import StackProgress from './StackProgress.svelte'
   import StackRemove from './StackRemove.svelte'
   import StackSetup from './StackSetup.svelte'
+  import { stackRefusal } from './refusal'
   import { enterUrl, pick } from './text'
   import { untrack } from 'svelte'
 
@@ -85,7 +86,7 @@
       job = await api.stackAction(stackId, action)
       src = ''
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = app ? stackRefusal(e, app.manifest, stack?.settings, $LL, $locale).text : e instanceof Error ? e.message : String(e)
     }
   }
 
@@ -103,6 +104,7 @@
   function jobTitle(j: StackJob): string {
     if (j.kind === 'install') return $LL.stackInstalling({ name: title })
     if (j.kind === 'update') return $LL.stackUpdating({ name: title })
+    if (j.kind === 'reconfigure') return $LL.stackReconfiguring({ name: title })
     if (j.kind === 'remove') return $LL.stackRemoving({ name: title })
     return $LL.stackWorking()
   }
@@ -120,6 +122,12 @@
               { label: $LL.stackStop(), icon: 'stop', disabled: !!job, action: () => void act('stop') },
               { label: $LL.stackStart(), icon: 'play_arrow', disabled: !!job, action: () => void act('start') },
               { separator: true as const },
+              {
+                label: $LL.stackChangeSettings(),
+                icon: 'tune',
+                disabled: !!job,
+                action: () => win.open('serverbox.settings', { appState: { section: 'apps', stack: stackId } }),
+              },
               { label: $LL.stackRemove(), icon: 'delete', danger: true, disabled: !!job, action: () => (removing = true) },
             ],
           },
