@@ -133,6 +133,7 @@ pub struct AppState {
     /// The web apps this agent deployed, their jobs and proxies — see
     /// `stacks`.
     pub stacks: Arc<crate::stacks::Stacks>,
+    pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -185,9 +186,8 @@ fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
         protected.file(&db);
         protected.tree(crate::core::blobs::Blobs::beside(&db).dir());
         protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
-        for env in crate::stacks::Stacks::env_files_beside(&db) {
-            protected.file(&env);
-        }
+        crate::stacks::Stacks::protect_beside(&db, &mut protected);
+        protected.tree(&crate::container_backups::ContainerBackups::dir_beside(&db));
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -244,7 +244,11 @@ impl AppState {
                 None => crate::core::blobs::Blobs::temporary(),
             }),
             agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
-            stacks: Arc::new(crate::stacks::Stacks::new(sqlite_file_of(&db).as_deref())),
+            container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
+            stacks: Arc::new(crate::stacks::Stacks::new(
+                sqlite_file_of(&db).as_deref(),
+                config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
+            )),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
@@ -593,7 +597,17 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::app_runtime::call)),
             )
             .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
+            .service(
+                web::resource("/container-backups")
+                    .route(web::get().to(crate::api::container_backups::list))
+                    .route(web::post().to(crate::api::container_backups::create)),
+            )
+            .service(web::resource("/container-backups/job").route(web::get().to(crate::api::container_backups::job)))
+            .service(web::resource("/container-backups/job/cancel").route(web::post().to(crate::api::container_backups::cancel)))
+            .service(web::resource("/container-backups/{id}/restore").route(web::post().to(crate::api::container_backups::restore)))
+            .service(web::resource("/container-backups/{id}").route(web::delete().to(crate::api::container_backups::remove)))
             .service(web::resource("/stacks").route(web::get().to(crate::api::stacks::list)))
+            .service(web::resource("/stacks/refresh").route(web::post().to(crate::api::stacks::refresh)))
             .service(
                 web::resource("/stacks/{id}")
                     .route(web::post().to(crate::api::stacks::install))

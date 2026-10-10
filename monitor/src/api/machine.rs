@@ -36,6 +36,8 @@ pub const FEATURES: &[&str] = &[
     // older agent ignores the unknown `target` field and would open a host
     // shell instead.
     "container_exec",
+    // Backups of containers' volumes and bound folders (`api::container_backups`).
+    "container_backups",
     // An iperf client, opened through the terminal's `target` the same way and
     // listed for the same reason.
     "iperf",

@@ -4,7 +4,11 @@
 
 mod common;
 
+use std::collections::HashMap;
 use std::convert::Infallible;
+use std::future::Future;
+use std::io::Write;
+use std::pin::Pin;
 use std::sync::Arc;
 
 use http_body_util::Full;
@@ -16,20 +20,63 @@ use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
+use server_box_monitor::api::desk_themes::Fetch;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::stacks;
-use server_box_monitor::core::config::Config;
-use server_box_monitor::stacks::proxy::Target;
+use server_box_monitor::core::config::{Config, StacksConfig};
+use server_box_monitor::stacks::proxy::{Hosts, Target};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
+/// Answers from memory: the catalog's repositories, for tests.
+struct Memory(HashMap<String, Vec<u8>>);
+
+impl Fetch for Memory {
+    fn get<'a>(&'a self, url: &'a str, _max: usize) -> Pin<Box<dyn Future<Output = Result<Vec<u8>, String>> + Send + 'a>> {
+        let answer = self.0.get(url).cloned().ok_or_else(|| "HTTP 404".to_string());
+        Box::pin(async move { answer })
+    }
+}
+
+const CATALOG: &str = "https://catalog.test/repos.toml";
+
+/// A repository tree as a hosting service serves it: one wrapper folder.
+fn tar_gz(entries: &[(&str, &[u8])]) -> Vec<u8> {
+    let mut builder = tar::Builder::new(Vec::new());
+    for (name, bytes) in entries {
+        let mut header = tar::Header::new_gnu();
+        header.set_size(bytes.len() as u64);
+        header.set_mode(0o644);
+        header.set_cksum();
+        builder.append_data(&mut header, format!("store/{name}"), *bytes).unwrap();
+    }
+    let mut gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+    gz.write_all(&builder.into_inner().unwrap()).unwrap();
+    gz.finish().unwrap()
+}
+
+/// The test web app (`tests/apps`), as its files.
+fn testweb(file: &str) -> Vec<u8> {
+    std::fs::read(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/apps/serverbox.testweb").join(file)).unwrap()
+}
+
 async fn setup() -> (TestServer, Arc<AppState>) {
+    setup_with(None, HashMap::new()).await
+}
+
+/// An agent with [local_apps] and a catalog whose repositories [repos] holds.
+async fn setup_with(local_apps: Option<&str>, repos: HashMap<String, Vec<u8>>) -> (TestServer, Arc<AppState>) {
     let db = common::database().await;
-    let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
+    let config = Config {
+        jwt_secret: Some(SECRET.to_string()),
+        stacks: Some(StacksConfig { local_apps: local_apps.map(String::from), ..Default::default() }),
+        ..Default::default()
+    };
     common::seed_as_upgrade(&db, &config).await;
     common::add_account(&db, "watcher", "viewer").await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
+    state.stacks.catalog.set_source(CATALOG, Arc::new(Memory(repos)));
     let shared = state.clone();
     let srv = web_test::server(move || {
         let state = shared.clone();
@@ -37,6 +84,7 @@ async fn setup() -> (TestServer, Arc<AppState>) {
             App::new().state(state).service(
                 web::scope("/api/v1")
                     .service(web::resource("/stacks").route(web::get().to(stacks::list)))
+                    .service(web::resource("/stacks/refresh").route(web::post().to(stacks::refresh)))
                     .service(
                         web::resource("/stacks/{id}")
                             .route(web::post().to(stacks::install))
@@ -44,7 +92,7 @@ async fn setup() -> (TestServer, Arc<AppState>) {
                     )
                     .service(web::resource("/stacks/{id}/prepare").route(web::get().to(stacks::prepare)))
                     .service(web::resource("/stacks/{id}/check").route(web::post().to(stacks::check)))
-            .service(web::resource("/stacks/{id}/settings").route(web::put().to(stacks::reconfigure)))
+                    .service(web::resource("/stacks/{id}/settings").route(web::put().to(stacks::reconfigure)))
                     .service(web::resource("/stacks/{id}/action").route(web::post().to(stacks::act)))
                     .service(web::resource("/stacks/{id}/job").route(web::get().to(stacks::job)))
                     .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(stacks::cancel)))
@@ -319,4 +367,95 @@ async fn the_proxy_admits_a_window_and_forwards_to_the_service() {
     let answer = raw(port, get("/photos", Some(&cookie))).await;
     assert!(answer.starts_with("HTTP/1.1 401"), "{answer}");
     state.stacks.proxies.stop("futo.immich");
+}
+
+#[ntex::test]
+async fn apps_taken_by_host_each_have_their_own() {
+    let (srv, state) = setup().await;
+    let upstream_port = fake_service().await;
+    let target = Target {
+        stack: "futo.immich".into(),
+        listen: "127.0.0.1:0".parse().unwrap(),
+        upstream_port,
+        tls: None,
+        frame_origins: vec![],
+    };
+    state.stacks.proxies.start(state.clone(), target).await.unwrap();
+    let hosts = Hosts::parse("https://*.apps.test").unwrap();
+    let port = state.stacks.proxies.start_by_host("127.0.0.1:0".parse().unwrap(), hosts, None, state.clone()).await.unwrap();
+
+    // Asked from the panel's page: the window's address is the app's host.
+    let req = srv
+        .request(Method::POST, srv.url("/api/v1/stacks/futo.immich/enter"))
+        .header("Authorization", format!("Bearer {}", generate_token("watcher", SECRET).unwrap()))
+        .header("Origin", format!("http://{}", srv.addr()));
+    let resp = req.send().await.unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&resp.body().await.unwrap()).unwrap();
+    assert_eq!(body["url"], "https://futo-immich.apps.test");
+    let ticket = body["ticket"].as_str().unwrap();
+
+    let at = |path: &str, host: &str, cookie: Option<&str>| {
+        let cookie = cookie.map(|c| format!("Cookie: {c}\r\n")).unwrap_or_default();
+        format!("GET {path} HTTP/1.1\r\nHost: {host}\r\n{cookie}Connection: close\r\n\r\n")
+    };
+    let answer = raw(port, at(&format!("/__sbm/enter?ticket={ticket}"), "futo-immich.apps.test", None)).await;
+    assert!(answer.starts_with("HTTP/1.1 303"), "{answer}");
+    let set = answer.lines().find_map(|l| l.strip_prefix("set-cookie: ")).expect("a session cookie").to_string();
+    // HTTPS as the browser sees it: a cookie a cross-site frame keeps.
+    assert!(set.contains("SameSite=None; Secure; Partitioned"), "{set}");
+    let cookie = set.split(';').next().unwrap();
+
+    let answer = raw(port, at("/photos", "futo-immich.apps.test", Some(cookie))).await;
+    assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+    assert!(answer.contains("svc=1; Path=/; SameSite=None; Secure; Partitioned"), "{answer}");
+    let body: serde_json::Value = serde_json::from_str(answer.split("\r\n\r\n").nth(1).unwrap()).unwrap();
+    assert_eq!(body["proto"], "https");
+
+    // Another host, or none of this agent's apps: nothing.
+    for host in ["acme-notes.apps.test", "futo-immich.apps.other", "apps.test", "a.futo-immich.apps.test"] {
+        let answer = raw(port, at("/photos", host, Some(cookie))).await;
+        assert!(answer.starts_with("HTTP/1.1 404"), "{host}: {answer}");
+    }
+    state.stacks.proxies.stop("futo.immich");
+}
+
+#[ntex::test]
+async fn the_catalog_has_the_stores_apps_the_operators_and_the_shipped_ones() {
+    let local = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/apps");
+    let manifest = String::from_utf8(testweb("manifest.toml")).unwrap();
+    let store_manifest = manifest.replace("name = \"testweb\"", "name = \"fromstore\"");
+    let renamed = manifest.replace("name = \"testweb\"", "name = \"other\"");
+    let repos = HashMap::from([
+        (CATALOG.to_string(), b"schema = 1\nname = \"Test\"\n[[repo]]\nurl = \"https://repo.test/store.tar.gz\"\n".to_vec()),
+        (
+            "https://repo.test/store.tar.gz".to_string(),
+            tar_gz(&[
+                ("repo.toml", b"schema = 1\nname = \"Test\"\n"),
+                ("apps/serverbox.fromstore/manifest.toml", store_manifest.as_bytes()),
+                ("apps/serverbox.fromstore/compose.yaml", &testweb("compose.yaml")),
+                // Its folder names another id: left out.
+                ("apps/serverbox.wrong/manifest.toml", renamed.as_bytes()),
+                ("apps/serverbox.wrong/compose.yaml", &testweb("compose.yaml")),
+            ]),
+        ),
+    ]);
+    let (srv, state) = setup_with(Some(local.to_str().unwrap()), repos).await;
+    let source = |body: &serde_json::Value, id: &str| {
+        body["apps"].as_array().unwrap().iter().find(|a| a["manifest"]["id"] == id).map(|a| a["source"].clone())
+    };
+
+    let (status, body) = call(&srv, "watcher", Method::POST, "/api/v1/stacks/refresh", None).await;
+    assert_eq!(status, 403, "{body}");
+    let (status, body) = call(&srv, "admin", Method::POST, "/api/v1/stacks/refresh", None).await;
+    assert_eq!(status, 200, "{body}");
+    assert_eq!(source(&body, "serverbox.testweb"), Some(json!("local")));
+    assert_eq!(source(&body, "serverbox.fromstore"), Some(json!("store")));
+    assert_eq!(source(&body, "futo.immich"), Some(json!("bundled")));
+    assert_eq!(source(&body, "serverbox.wrong"), None);
+    assert!(state.stacks.package("serverbox.fromstore").is_some());
+
+    // Kept on disk: an agent started without the network still has it.
+    let cache = state.stacks.dir(".catalog");
+    let again = server_box_monitor::stacks::catalog::Catalog::new(cache, None);
+    assert_eq!(again.get("serverbox.fromstore").map(|e| e.source), Some(server_box_monitor::stacks::catalog::Source::Store));
 }

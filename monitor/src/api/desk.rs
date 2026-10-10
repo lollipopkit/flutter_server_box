@@ -172,15 +172,18 @@ impl Level {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Source {
     Alert,
+    /// A web app the agent deployed (`stacks`), by its id: `stack:<id>`.
+    Stack(String),
 }
 
 impl Source {
-    fn as_str(self) -> &'static str {
+    fn as_str(&self) -> String {
         match self {
-            Source::Alert => "alert",
+            Source::Alert => "alert".into(),
+            Source::Stack(id) => format!("stack:{id}"),
         }
     }
 }

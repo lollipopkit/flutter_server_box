@@ -223,4 +223,12 @@ describe('stack text helpers', () => {
     expect(url.origin).toBe('https://nas.example:3781')
     expect(url.searchParams.get('next')).toBe('/albums')
   })
+
+  it("enters on the app's own host when the agent takes apps by host", () => {
+    const entry = { ticket: 't.s', port: 3781, tls: false, path: '/', enter: '/__sbm/enter', url: 'https://futo-immich.apps.example.com' }
+    const url = new URL(enterUrl('https://nas.example:3770', entry))
+    expect(url.origin).toBe('https://futo-immich.apps.example.com')
+    expect(url.pathname).toBe('/__sbm/enter')
+    expect(url.searchParams.get('ticket')).toBe('t.s')
+  })
 })

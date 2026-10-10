@@ -17,10 +17,26 @@
 //! - Cookies ignore ports: apps proxied on one host share a cookie jar, the
 //!   service's own cookies included. The session cookie is `HttpOnly`, so an
 //!   app's scripts cannot read another's.
+//! - **By host** (`[stacks] apps_url = "https://*.apps.example.com"`): one
+//!   more listener (`apps_port`) takes every app, told apart by the `Host`
+//!   its request names (`futo-immich.apps.example.com` is `futo.immich`), for
+//!   an agent behind a reverse proxy or a tunnel, where the per-app ports
+//!   are not reachable. Each app is then its own host: its own cookie jar.
+//!   Whether cookies are `Secure` follows `apps_url`'s scheme (TLS usually
+//!   ends at the proxy in front).
+//! - Over HTTPS the cookies are also `Partitioned` (CHIPS): a panel on
+//!   another site (`*.pages.dev`) keeps them in browsers that block
+//!   third-party cookies but allow partitioned ones. A panel on the same
+//!   site as the apps (`panel.example.com` and `*.apps.example.com`) needs
+//!   neither.
+//! - `frame-ancestors` also names the origin of the page that asked for the
+//!   window (`POST /stacks/{id}/enter`'s `Origin`, when the agent allows it),
+//!   so a panel the agent serves frames apps on another host.
 
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicU16, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -49,12 +65,19 @@ struct Session {
     username: String,
     since: i64,
     stack: String,
+    /// The panel's origin that asked for the window, to frame it.
+    origin: Option<String>,
     expires: Instant,
     checked: Instant,
 }
 
 struct Listening {
     port: u16,
+    secure: bool,
+    ctx: Arc<Ctx>,
+    /// The service's port, which new settings may change under a listener
+    /// that stays.
+    upstream: Arc<AtomicU16>,
     task: JoinHandle<()>,
 }
 
@@ -63,6 +86,53 @@ struct Listening {
 pub struct Proxies {
     listening: Mutex<HashMap<String, Listening>>,
     sessions: Mutex<HashMap<String, Session>>,
+    /// The listener taking every app by host, when `apps_url` is set.
+    by_host: Mutex<Option<(Hosts, JoinHandle<()>)>>,
+    /// The origin a ticket was asked from, until the ticket is used.
+    entries: Mutex<HashMap<String, (String, Instant)>>,
+}
+
+/// `apps_url`: `<scheme>://*.<suffix>[:port]`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Hosts {
+    pub secure: bool,
+    /// What follows `*.`, port included when there is one.
+    pub suffix: String,
+}
+
+impl Hosts {
+    /// `https://*.apps.example.com` (a port allowed, no path), or why not.
+    pub fn parse(apps_url: &str) -> Result<Self, String> {
+        let (scheme, rest) = apps_url.trim().split_once("://").ok_or("apps_url: a scheme is required")?;
+        let secure = match scheme {
+            "https" => true,
+            "http" => false,
+            _ => return Err("apps_url: http or https".into()),
+        };
+        let rest = rest.trim_end_matches('/');
+        let suffix = rest.strip_prefix("*.").ok_or("apps_url: the host starts with *.")?;
+        if suffix.is_empty() || suffix.contains(['/', '*', '?', '#', '@']) {
+            return Err("apps_url: *.<domain>, no path".into());
+        }
+        Ok(Self { secure, suffix: suffix.to_ascii_lowercase() })
+    }
+
+    /// The address of app [id] (`futo.immich` → `https://futo-immich.<suffix>`).
+    pub fn url_of(&self, id: &str) -> String {
+        format!("{}://{}.{}", if self.secure { "https" } else { "http" }, id.replace('.', "-"), self.suffix)
+    }
+
+    /// The app a request's `Host` names: its first label, its one `-` read
+    /// back as the `.` of an id (an id's parts have no `-`).
+    fn app_of(&self, host: &str) -> Option<String> {
+        let host = host.to_ascii_lowercase();
+        let label = host.strip_suffix(&self.suffix)?.strip_suffix('.')?;
+        if label.contains('.') {
+            return None;
+        }
+        let (publisher, name) = label.split_once('-')?;
+        crate::core::app_id::make(publisher, name)
+    }
 }
 
 /// One app to put a listener in front of.
@@ -80,6 +150,9 @@ impl Drop for Proxies {
         for (_, l) in self.listening.get_mut().unwrap_or_else(|e| e.into_inner()).drain() {
             l.task.abort();
         }
+        if let Some((_, task)) = self.by_host.get_mut().unwrap_or_else(|e| e.into_inner()).take() {
+            task.abort();
+        }
     }
 }
 
@@ -89,20 +162,36 @@ impl Proxies {
         self.listening.lock().unwrap_or_else(|e| e.into_inner()).get(stack).map(|l| l.port)
     }
 
-    /// Starts [target]'s listener, replacing one [target]'s stack had.
+    /// Starts [target]'s listener, replacing one [target]'s stack had. One
+    /// already on the same port goes on, now to [Target::upstream_port]: its
+    /// sessions stay, and its port is not let go and bound again (an aborted
+    /// listener closes later than this returns).
     pub async fn start(&self, state: Arc<AppState>, target: Target) -> std::io::Result<()> {
+        {
+            let listening = self.listening.lock().unwrap_or_else(|e| e.into_inner());
+            if let Some(l) = listening.get(&target.stack)
+                && l.port == target.listen.port()
+                && l.secure == target.tls.is_some()
+            {
+                l.upstream.store(target.upstream_port, Ordering::Relaxed);
+                return Ok(());
+            }
+        }
         self.stop(&target.stack);
         let listener = TcpListener::bind(target.listen).await?;
         let port = listener.local_addr()?.port();
         let stack = target.stack.clone();
+        let upstream = Arc::new(AtomicU16::new(target.upstream_port));
+        let secure = target.tls.is_some();
         let ctx = Arc::new(Ctx {
             state,
             stack: target.stack,
-            upstream_port: target.upstream_port,
+            upstream_port: upstream.clone(),
             secure: target.tls.is_some(),
             frame_origins: target.frame_origins,
             client: Client::builder(TokioExecutor::new()).build(HttpConnector::new()),
         });
+        let kept = ctx.clone();
         let acceptor = target.tls.map(|config| {
             let mut config = (*config).clone();
             config.alpn_protocols = vec![b"http/1.1".to_vec()];
@@ -116,7 +205,10 @@ impl Proxies {
                 tokio::spawn(async move {
                     let service = hyper::service::service_fn(move |req| {
                         let ctx = ctx.clone();
-                        async move { Ok::<_, Infallible>(handle(&ctx, req, peer).await) }
+                        async move {
+                            let secure = ctx.secure;
+                            Ok::<_, Infallible>(handle(&ctx, req, peer, secure).await)
+                        }
                     });
                     let http = hyper::server::conn::http1::Builder::new();
                     let result = match acceptor {
@@ -132,8 +224,79 @@ impl Proxies {
                 });
             }
         });
-        self.listening.lock().unwrap_or_else(|e| e.into_inner()).insert(stack, Listening { port, task });
+        self.listening.lock().unwrap_or_else(|e| e.into_inner()).insert(stack, Listening { port, secure, ctx: kept, upstream, task });
         Ok(())
+    }
+
+    /// Starts the listener taking every app by host on [listen], replacing
+    /// one there was.
+    pub async fn start_by_host(&self, listen: SocketAddr, hosts: Hosts, tls: Option<Arc<rustls::ServerConfig>>, state: Arc<AppState>) -> std::io::Result<u16> {
+        if let Some((_, task)) = self.by_host.lock().unwrap_or_else(|e| e.into_inner()).take() {
+            task.abort();
+        }
+        let listener = TcpListener::bind(listen).await?;
+        let port = listener.local_addr()?.port();
+        let acceptor = tls.map(|config| {
+            let mut config = (*config).clone();
+            config.alpn_protocols = vec![b"http/1.1".to_vec()];
+            tokio_rustls::TlsAcceptor::from(Arc::new(config))
+        });
+        let routing = hosts.clone();
+        let task = tokio::spawn(async move {
+            loop {
+                let Ok((stream, peer)) = listener.accept().await else { continue };
+                let (state, hosts, acceptor) = (state.clone(), routing.clone(), acceptor.clone());
+                tokio::spawn(async move {
+                    let service = hyper::service::service_fn(move |req: Request<Incoming>| {
+                        let (state, hosts) = (state.clone(), hosts.clone());
+                        async move {
+                            let host = req.headers().get(header::HOST).and_then(|v| v.to_str().ok()).unwrap_or("");
+                            let ctx = hosts.app_of(host).and_then(|id| state.stacks.proxies.ctx(&id));
+                            Ok::<_, Infallible>(match ctx {
+                                Some(ctx) => handle(&ctx, req, peer, hosts.secure).await,
+                                None => full(StatusCode::NOT_FOUND, "text/plain; charset=utf-8", "No such app here."),
+                            })
+                        }
+                    });
+                    let http = hyper::server::conn::http1::Builder::new();
+                    let result = match acceptor {
+                        Some(acceptor) => match acceptor.accept(stream).await {
+                            Ok(tls) => http.serve_connection(TokioIo::new(tls), service).with_upgrades().await,
+                            Err(_) => return,
+                        },
+                        None => http.serve_connection(TokioIo::new(stream), service).with_upgrades().await,
+                    };
+                    if let Err(e) = result {
+                        tracing::debug!("app proxy connection: {e}");
+                    }
+                });
+            }
+        });
+        *self.by_host.lock().unwrap_or_else(|e| e.into_inner()) = Some((hosts, task));
+        Ok(port)
+    }
+
+    /// Where app [id]'s window enters when apps are taken by host.
+    pub fn host_url(&self, id: &str) -> Option<String> {
+        self.by_host.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map(|(hosts, _)| hosts.url_of(id))
+    }
+
+    fn ctx(&self, stack: &str) -> Option<Arc<Ctx>> {
+        self.listening.lock().unwrap_or_else(|e| e.into_inner()).get(stack).map(|l| l.ctx.clone())
+    }
+
+    /// Remembers that [ticket] was asked for from [origin], to frame the
+    /// window there.
+    pub fn note_entry(&self, ticket: &str, origin: String) {
+        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        entries.retain(|_, (_, at)| at.elapsed() < Duration::from_secs(120));
+        if entries.len() < MAX_SESSIONS {
+            entries.insert(ticket.to_string(), (origin, Instant::now()));
+        }
+    }
+
+    fn take_entry(&self, ticket: &str) -> Option<String> {
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).remove(ticket).map(|(o, _)| o)
     }
 
     pub fn stop(&self, stack: &str) {
@@ -148,7 +311,7 @@ impl Proxies {
         self.sessions.lock().unwrap_or_else(|e| e.into_inner()).retain(|_, s| s.username != username);
     }
 
-    fn open_session(&self, username: String, since: i64, stack: &str) -> Option<String> {
+    fn open_session(&self, username: String, since: i64, stack: &str, origin: Option<String>) -> Option<String> {
         let token = random_hex(32).ok()?;
         let now = Instant::now();
         let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
@@ -158,7 +321,7 @@ impl Proxies {
         }
         sessions.insert(
             token.clone(),
-            Session { username, since, stack: stack.to_string(), expires: now + SESSION_TTL, checked: now },
+            Session { username, since, stack: stack.to_string(), origin, expires: now + SESSION_TTL, checked: now },
         );
         Some(token)
     }
@@ -167,7 +330,7 @@ impl Proxies {
 struct Ctx {
     state: Arc<AppState>,
     stack: String,
-    upstream_port: u16,
+    upstream_port: Arc<AtomicU16>,
     secure: bool,
     frame_origins: Vec<String>,
     client: Client<HttpConnector, Incoming>,
@@ -179,16 +342,17 @@ impl Ctx {
     }
 
     /// Whether [token] names a live session for this app, its account looked
-    /// up again when it was last looked up a while ago.
-    async fn admits(&self, token: &str) -> bool {
+    /// up again when it was last looked up a while ago: the origin it was
+    /// entered from (`Some(None)` when none was noted).
+    async fn admits(&self, token: &str) -> Option<Option<String>> {
         let proxies = &self.state.stacks.proxies;
-        let (username, since, recheck) = {
+        let (username, since, recheck, origin) = {
             let sessions = proxies.sessions.lock().unwrap_or_else(|e| e.into_inner());
             match sessions.get(token) {
                 Some(s) if s.stack == self.stack && s.expires > Instant::now() => {
-                    (s.username.clone(), s.since, s.checked.elapsed() >= RECHECK)
+                    (s.username.clone(), s.since, s.checked.elapsed() >= RECHECK, s.origin.clone())
                 }
-                _ => return false,
+                _ => return None,
             }
         };
         if recheck {
@@ -196,13 +360,13 @@ impl Ctx {
             let mut sessions = proxies.sessions.lock().unwrap_or_else(|e| e.into_inner());
             if current.is_none_or(|c| c.since != since) {
                 sessions.remove(token);
-                return false;
+                return None;
             }
             if let Some(s) = sessions.get_mut(token) {
                 s.checked = Instant::now();
             }
         }
-        true
+        Some(origin)
     }
 }
 
@@ -348,11 +512,12 @@ fn rewrite_response_headers(headers: &mut HeaderMap, ancestors: &str, secure: bo
                     .map(|p| p.trim().to_string())
                     .filter(|p| {
                         let l = p.to_ascii_lowercase();
-                        !l.starts_with("samesite") && l != "secure"
+                        !l.starts_with("samesite") && l != "secure" && l != "partitioned"
                     })
                     .collect();
                 parts.push("SameSite=None".into());
                 parts.push("Secure".into());
+                parts.push("Partitioned".into());
                 if let Ok(v) = HeaderValue::from_str(&parts.join("; ")) {
                     headers.append(header::SET_COOKIE, v);
                 }
@@ -361,24 +526,25 @@ fn rewrite_response_headers(headers: &mut HeaderMap, ancestors: &str, secure: bo
     }
 }
 
-async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr) -> Response<Body> {
+/// One request to [ctx]'s app; [secure]: what the browser sees is HTTPS.
+async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr, secure: bool) -> Response<Body> {
     if req.uri().path() == ENTER_PATH {
-        return enter(ctx, &req).await;
+        return enter(ctx, &req, secure).await;
     }
     let admitted = match cookie_value(req.headers(), &ctx.cookie_name()) {
         Some(token) => ctx.admits(&token).await,
-        None => false,
+        None => None,
     };
-    if !admitted {
+    let Some(entered_from) = admitted else {
         return sign_in_page();
-    }
+    };
 
     let host = req.headers().get(header::HOST).and_then(|v| v.to_str().ok()).unwrap_or("").to_string();
     let upgrade = is_upgrade(req.headers());
     let client_upgrade = upgrade.then(|| hyper::upgrade::on(&mut req));
 
     let path = req.uri().path_and_query().map_or("/", |p| p.as_str()).to_string();
-    let Ok(uri) = format!("http://127.0.0.1:{}{path}", ctx.upstream_port).parse::<hyper::Uri>() else {
+    let Ok(uri) = format!("http://127.0.0.1:{}{path}", ctx.upstream_port.load(Ordering::Relaxed)).parse::<hyper::Uri>() else {
         return full(StatusCode::BAD_REQUEST, "text/plain", "bad path");
     };
     *req.uri_mut() = uri;
@@ -392,7 +558,7 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr) -> Resp
     if let Ok(v) = HeaderValue::from_str(&forwarded_for) {
         headers.insert("x-forwarded-for", v);
     }
-    headers.insert("x-forwarded-proto", HeaderValue::from_static(if ctx.secure { "https" } else { "http" }));
+    headers.insert("x-forwarded-proto", HeaderValue::from_static(if secure { "https" } else { "http" }));
     if let Ok(v) = HeaderValue::from_str(&host) {
         headers.insert("x-forwarded-host", v);
     }
@@ -405,7 +571,9 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr) -> Resp
         }
     };
 
-    let ancestors = frame_ancestors(&host, ctx.secure, &ctx.frame_origins);
+    let mut origins = ctx.frame_origins.clone();
+    origins.extend(entered_from.filter(|o| !ctx.frame_origins.contains(o)));
+    let ancestors = frame_ancestors(&host, secure, &origins);
     if resp.status() == StatusCode::SWITCHING_PROTOCOLS {
         let server_upgrade = hyper::upgrade::on(&mut resp);
         if let Some(client_upgrade) = client_upgrade {
@@ -416,26 +584,28 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr) -> Resp
             });
         }
         let (mut parts, _) = resp.into_parts();
-        rewrite_response_headers(&mut parts.headers, &ancestors, ctx.secure);
+        rewrite_response_headers(&mut parts.headers, &ancestors, secure);
         return Response::from_parts(parts, Empty::new().map_err(|never| match never {}).boxed());
     }
     let (mut parts, body) = resp.into_parts();
     strip_hop_by_hop(&mut parts.headers, false);
-    rewrite_response_headers(&mut parts.headers, &ancestors, ctx.secure);
+    rewrite_response_headers(&mut parts.headers, &ancestors, secure);
     Response::from_parts(parts, body.boxed())
 }
 
-async fn enter(ctx: &Ctx, req: &Request<Incoming>) -> Response<Body> {
+async fn enter(ctx: &Ctx, req: &Request<Incoming>, secure: bool) -> Response<Body> {
     let query = req.uri().query();
     let Some(ticket) = query_param(query, "ticket") else { return sign_in_page() };
     let tickets = &ctx.state.tickets;
     let Ok(reservation) = tickets.reserve(&ticket, Purpose::Proxy) else { return sign_in_page() };
     let username = tickets.commit(reservation);
+    let proxies = &ctx.state.stacks.proxies;
+    let origin = proxies.take_entry(&ticket);
     let Some(caller) = crate::api::authz::caller_named(&ctx.state, &username).await else { return sign_in_page() };
-    let Some(token) = ctx.state.stacks.proxies.open_session(caller.username.clone(), caller.since, &ctx.stack) else {
+    let Some(token) = proxies.open_session(caller.username.clone(), caller.since, &ctx.stack, origin) else {
         return full(StatusCode::SERVICE_UNAVAILABLE, "text/plain", "too many sessions");
     };
-    let attributes = if ctx.secure { "SameSite=None; Secure" } else { "SameSite=Lax" };
+    let attributes = if secure { "SameSite=None; Secure; Partitioned" } else { "SameSite=Lax" };
     let cookie = format!("{}={token}; Path=/; HttpOnly; Max-Age={}; {attributes}", ctx.cookie_name(), SESSION_TTL.as_secs());
     let mut resp = full(StatusCode::SEE_OTHER, "text/plain", "");
     if let (Ok(location), Ok(cookie)) = (HeaderValue::from_str(&local_path(query_param(query, "next"))), HeaderValue::from_str(&cookie)) {
@@ -448,6 +618,23 @@ async fn enter(ctx: &Ctx, req: &Request<Incoming>) -> Response<Body> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn apps_url_is_a_wildcard_host() {
+        let hosts = Hosts::parse("https://*.Apps.Example.com/").unwrap();
+        assert_eq!(hosts, Hosts { secure: true, suffix: "apps.example.com".into() });
+        assert_eq!(hosts.url_of("futo.immich"), "https://futo-immich.apps.example.com");
+        assert_eq!(hosts.app_of("futo-immich.apps.example.com").as_deref(), Some("futo.immich"));
+        assert_eq!(hosts.app_of("FUTO-IMMICH.apps.example.com").as_deref(), Some("futo.immich"));
+        for host in ["immich.apps.example.com", "x.futo-immich.apps.example.com", "futo-immich.apps.example.org", "futo-immich-x.apps.example.com"] {
+            assert_eq!(hosts.app_of(host), None, "{host}");
+        }
+        let with_port = Hosts::parse("http://*.apps.lan:8443").unwrap();
+        assert_eq!(with_port.app_of("serverbox-testweb.apps.lan:8443").as_deref(), Some("serverbox.testweb"));
+        for bad in ["apps.example.com", "ftp://*.x", "https://apps.example.com", "https://*.x/path", "https://*."] {
+            assert!(Hosts::parse(bad).is_err(), "{bad}");
+        }
+    }
 
     #[test]
     fn next_stays_on_this_origin() {
@@ -483,7 +670,7 @@ mod tests {
             h.get("content-security-policy").unwrap(),
             "default-src 'self'; frame-ancestors 'self' https://nas.local:* https://panel.example"
         );
-        assert_eq!(h.get(header::SET_COOKIE).unwrap(), "immich_access_token=x; Path=/; HttpOnly; SameSite=None; Secure");
+        assert_eq!(h.get(header::SET_COOKIE).unwrap(), "immich_access_token=x; Path=/; HttpOnly; SameSite=None; Secure; Partitioned");
     }
 
     #[test]

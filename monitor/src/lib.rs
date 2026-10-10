@@ -5,6 +5,7 @@
 pub mod agent_mode;
 pub mod api;
 pub mod cli;
+pub mod container_backups;
 pub mod core;
 pub mod db;
 pub mod monitoring;

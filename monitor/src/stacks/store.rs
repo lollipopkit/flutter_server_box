@@ -1,5 +1,5 @@
-//! The `stack` rows (migration 024): which apps are deployed, from which
-//! version, with what settings.
+//! The `stack` rows (migrations 024, 025): which apps are deployed, from
+//! which version, with what settings.
 
 use std::collections::BTreeMap;
 
@@ -22,6 +22,10 @@ pub struct StackRow {
     pub installed_at: String,
     pub updated_at: String,
     pub last_error: Option<String>,
+    /// An admin stopped it: its containers being down is meant.
+    pub stopped: bool,
+    /// The catalog version a notification already announced.
+    pub update_noticed: Option<String>,
 }
 
 #[derive(sqlx::FromRow)]
@@ -38,6 +42,8 @@ struct Raw {
     installed_at: String,
     updated_at: String,
     last_error: Option<String>,
+    stopped: bool,
+    update_noticed: Option<String>,
 }
 
 impl From<Raw> for StackRow {
@@ -55,6 +61,8 @@ impl From<Raw> for StackRow {
             installed_at: r.installed_at,
             updated_at: r.updated_at,
             last_error: r.last_error,
+            stopped: r.stopped,
+            update_noticed: r.update_noticed,
         }
     }
 }
@@ -62,7 +70,7 @@ impl From<Raw> for StackRow {
 macro_rules! columns {
     () => {
         "id, version, settings, proxy_port, state, license, license_accepted_by, license_accepted_at, \
-         installed_by, installed_at, updated_at, last_error"
+         installed_by, installed_at, updated_at, last_error, stopped, update_noticed"
     };
 }
 
@@ -82,11 +90,11 @@ pub async fn load(db: &SqlitePool, id: &str) -> sqlx::Result<Option<StackRow>> {
 
 /// A new row in `installing`; `false` when [row]'s app or port is taken.
 pub async fn insert(db: &SqlitePool, row: &StackRow) -> sqlx::Result<bool> {
-    let done = sqlx::query(concat!(
-        "INSERT OR IGNORE INTO stack (",
-        columns!(),
-        ") VALUES (?, ?, ?, ?, 'installing', ?, ?, ?, ?, ?, ?, NULL)"
-    ))
+    let done = sqlx::query(
+        "INSERT OR IGNORE INTO stack (id, version, settings, proxy_port, state, license, license_accepted_by, \
+         license_accepted_at, installed_by, installed_at, updated_at, last_error) \
+         VALUES (?, ?, ?, ?, 'installing', ?, ?, ?, ?, ?, ?, NULL)",
+    )
     .bind(&row.id)
     .bind(&row.version)
     .bind(serde_json::to_string(&row.settings).unwrap_or_default())
@@ -134,6 +142,18 @@ pub async fn set_proxy_port(db: &SqlitePool, id: &str, port: u16) -> sqlx::Resul
         .bind(id)
         .execute(db)
         .await?;
+    Ok(())
+}
+
+/// Whether an admin stopped it ([stopped]), or started it again.
+pub async fn set_stopped(db: &SqlitePool, id: &str, stopped: bool) -> sqlx::Result<()> {
+    sqlx::query("UPDATE stack SET stopped = ? WHERE id = ?").bind(stopped).bind(id).execute(db).await?;
+    Ok(())
+}
+
+/// A notification announced catalog [version].
+pub async fn set_update_noticed(db: &SqlitePool, id: &str, version: &str) -> sqlx::Result<()> {
+    sqlx::query("UPDATE stack SET update_noticed = ? WHERE id = ?").bind(version).bind(id).execute(db).await?;
     Ok(())
 }
 

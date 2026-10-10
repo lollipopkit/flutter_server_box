@@ -1,5 +1,6 @@
 <script lang="ts">
-  /// A deploy, update or removal as it runs: the agent's job read every
+  /// A deploy, update or removal as it runs (or any agent job read the same
+  /// way, a container backup's: [read] and [stop]): the job read every
   /// second from the last line seen, the log kept scrolled to its end.
 
   import { Button, Card, Icon, Spinner } from '../../desk/lk'
@@ -10,14 +11,17 @@
   import { untrack } from 'svelte'
 
   interface Props {
-    stackId: string
+    stackId?: string
+    /// The job from line [since] on; a web app's (`stackId`) when absent.
+    read?: (since: number) => Promise<StackJob>
+    stop?: () => Promise<void>
     job: StackJob
     title: string
     /// The job ended, however it ended.
     ondone: (job: StackJob) => void
   }
 
-  const { stackId, job: initial, title, ondone }: Props = $props()
+  const { stackId = '', read = (since: number) => api.stackJob(stackId, since), stop = () => api.cancelStackJob(stackId), job: initial, title, ondone }: Props = $props()
 
   // The job as first given; read again from the agent from here on.
   let job = $state<StackJob>(untrack(() => ({ ...initial })))
@@ -31,7 +35,7 @@
     let timer: ReturnType<typeof setTimeout> | undefined
     async function poll() {
       try {
-        const next = await api.stackJob(stackId, job.next)
+        const next = await read(job.next)
         if (stopped || serverId !== servers.currentId) return
         lines = [...lines, ...next.lines.filter((l) => l.seq >= job.next)].slice(-2000)
         job = next
@@ -59,7 +63,7 @@
   async function cancel() {
     cancelling = true
     try {
-      await api.cancelStackJob(stackId)
+      await stop()
     } finally {
       cancelling = false
     }

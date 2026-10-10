@@ -6,6 +6,7 @@
 
 import { getContext, setContext } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
+import { STACK_APPS } from '../components/stack/apps'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { Capabilities } from '../types'
@@ -143,7 +144,23 @@ export class Desk {
   }
 
   /// Who a notification is from, as the banner and the centre show it.
-  noticeSource(n: DeskNotification): { appId: string; title: string; glyph: string; tone: IconTone } {
+  noticeSource(n: DeskNotification): { appId: string; title: string; glyph: string; tone: IconTone; appState?: unknown } {
+    if (n.source.startsWith('stack:')) {
+      // A deployed web app: its own window when the panel has one, else its
+      // page in the App Store.
+      const stackId = n.source.slice(6)
+      const own = STACK_APPS[stackId]
+      const spec = (own && app(own)) || app('serverbox.store')
+      if (spec) {
+        return {
+          appId: spec.id,
+          title: spec.title(get(LL)),
+          glyph: spec.glyph,
+          tone: spec.tone,
+          appState: spec.id === 'serverbox.store' ? { app: stackId } : undefined,
+        }
+      }
+    }
     const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'serverbox.status'
     const spec = app(appId)
     if (appId !== 'serverbox.status' && spec) return { appId, title: spec.title(get(LL)), glyph: spec.glyph, tone: spec.tone }
@@ -162,7 +179,8 @@ export class Desk {
       this.panel = null
       this.windows.focus(windowId)
     } else {
-      this.open(this.noticeSource(n).appId)
+      const from = this.noticeSource(n)
+      this.open(from.appId, from.appState ? { appState: from.appState } : undefined)
     }
   }
 

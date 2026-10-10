@@ -7,11 +7,27 @@ import tailwindcss from '@tailwindcss/vite'
 /// https://192.168.31.100:3770.
 const agent = loadEnv('development', '.', 'SBM_DEV_').SBM_DEV_AGENT || 'http://localhost:3770'
 
+/// This build's id: compiled into the page and written beside it as
+/// `build.txt`, so a page tells a newer build the agent serves from its own
+/// (`lib/panelBuild.svelte.ts`).
+const build = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+
 // https://vitejs.dev/config/
 export default defineConfig({
   // Single svelte instance across the linked @serverbox/ui package
   resolve: { dedupe: ['svelte'] },
-  plugins: [svelte(), tailwindcss()],
+  define: { __PANEL_BUILD__: JSON.stringify(build) },
+  plugins: [
+    svelte(),
+    tailwindcss(),
+    {
+      name: 'panel-build-id',
+      apply: 'build',
+      generateBundle() {
+        this.emitFile({ type: 'asset', fileName: 'build.txt', source: `${build}\n` })
+      },
+    },
+  ],
   server: {
     port: 3000,
     proxy: {

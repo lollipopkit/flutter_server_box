@@ -12,7 +12,8 @@
   import { api } from '../../lib/api'
   import { capabilitiesStore } from '../../lib/capabilities.svelte'
   import { servers } from '../../lib/servers.svelte'
-  import type { StackApp, StackJob } from '../../types'
+  import type { StackApp, StackHealth, StackJob } from '../../types'
+  import { healthBadge } from './health'
   import StackProgress from './StackProgress.svelte'
   import StackRemove from './StackRemove.svelte'
   import StackSetup from './StackSetup.svelte'
@@ -87,6 +88,16 @@
     return $LL.stackWorking()
   }
 
+  function healthLook(state: StackHealth['state']): { tone: 'success' | 'neutral' | 'danger'; text: string } {
+    return healthBadge(state, $LL)
+  }
+
+  function fromText(a: StackApp): string {
+    if (a.source === 'local') return $LL.stackFromLocal()
+    if (a.source === 'store' && a.repo) return URL.parse(a.repo)?.host ?? a.repo
+    return $LL.stackFromBundled()
+  }
+
   function stateText(state: string): string {
     if (state === 'installed') return $LL.stackInstalled()
     if (state === 'installing') return $LL.stackInstalling({ name: title })
@@ -145,6 +156,12 @@
           <Badge tone={stack.state === 'installed' ? 'success' : stack.state === 'failed' ? 'danger' : 'neutral'}>{stateText(stack.state)}</Badge>
         </Row>
         <Row label={$LL.stackVersion()} value={stack.version} mono />
+        {#if app.health}
+          {@const h = healthLook(app.health.state)}
+          <Row label={$LL.stackHealth()} value={h.text} sub={app.health.failing.length ? app.health.failing.join(', ') : undefined}>
+            <Badge tone={h.tone}>{h.text}</Badge>
+          </Row>
+        {/if}
         {#if stack.last_error}<Row label={$LL.stackFailed()} value={stack.last_error} mono />{/if}
       </Group>
       {#if admin}
@@ -180,6 +197,7 @@
         />
       {/if}
       {#if app.manifest.requirements.arch.length}<Row label={$LL.stackArch()} value={app.manifest.requirements.arch.join(', ')} />{/if}
+      {#if app.source}<Row label={$LL.stackFrom()} value={fromText(app)} />{/if}
     </Group>
     <div class="flex flex-wrap gap-x-[17px] gap-y-[5px] px-[2px] text-[13px]">
       <a class="text-(--color-accent-text) hover:underline" href={app.manifest.homepage} target="_blank" rel="noreferrer noopener">{$LL.stackHomepage()}</a>

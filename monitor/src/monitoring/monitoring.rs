@@ -1166,7 +1166,15 @@ fn adapt_status(
 
     let mut gpu_items = status.gpus;
     gpu_items.extend(sbm_parser::gpu::amd_as_gpu(&amd));
-    let gpus = gpu_items.into_iter().map(GpuMetrics::from).collect();
+    let mut gpus: Vec<GpuMetrics> = gpu_items.into_iter().map(GpuMetrics::from).collect();
+    // Under WSL2 the driver lists no process; with one GPU, what holds the
+    // GPU device is what uses it.
+    if let [gpu] = gpus.as_mut_slice()
+        && gpu.processes.is_empty()
+        && gpu.memory_used.is_some_and(|m| m > 0)
+    {
+        gpu.processes = sbm_native::wsl_gpu_processes();
+    }
 
     let disk_details = flatten_disks(system, &status.disks);
 

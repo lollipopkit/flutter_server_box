@@ -1,0 +1,25 @@
+# nginx serving ${SITE_DIR}; /greeting.txt is the greeting setting, written
+# at every start. Status: nginx's stub_status on the second port.
+services:
+  web:
+    image: docker.io/library/nginx:1.29-alpine
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT}:80'
+      - '${STATUS_PORT}:8080'
+    volumes:
+      - '${SITE_DIR}:/usr/share/nginx/html'
+    environment:
+      GREETING: '${GREETING}'
+    command:
+      - sh
+      - -c
+      - |
+        printf '%s\n' "$$GREETING" > /usr/share/nginx/html/greeting.txt
+        printf 'server { listen 8080; location / { stub_status; } }\n' > /etc/nginx/conf.d/status.conf
+        exec nginx -g 'daemon off;'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1/greeting.txt']
+      interval: 5s
+      timeout: 3s
+      retries: 5

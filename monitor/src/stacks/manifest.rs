@@ -120,6 +120,10 @@ pub struct Requirements {
 #[serde(deny_unknown_fields)]
 pub struct Compose {
     pub files: Vec<String>,
+    /// Services that run once and exit (a migration): exited with 0 they are
+    /// done, not down (`health`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub jobs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -729,6 +733,8 @@ impl Machine {
 #[derive(Debug, Clone)]
 pub struct Package {
     pub manifest: Manifest,
+    /// `manifest.toml` as written, to keep the package whole (`catalog`).
+    pub manifest_text: String,
     pub files: BTreeMap<String, String>,
 }
 
@@ -790,7 +796,7 @@ impl Package {
             // name: only worth a look, so a hint rather than a refusal.
             tracing::debug!("{}: {name} is set but no compose file names it", manifest.id);
         }
-        if problems.is_empty() { Ok(Self { manifest, files: texts }) } else { Err(problems) }
+        if problems.is_empty() { Ok(Self { manifest, manifest_text: text, files: texts }) } else { Err(problems) }
     }
 
     /// The images [settings] make the compose files pull, as Compose would

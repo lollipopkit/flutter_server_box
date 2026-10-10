@@ -67,6 +67,16 @@ pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: System
     }
 }
 
+/// Processes using the GPU under WSL2 (`linux::dxg_processes`); none
+/// elsewhere, where the GPU's own tool lists them.
+pub fn wsl_gpu_processes() -> Vec<sbm_parser::types::GpuMemProcess> {
+    #[cfg(target_os = "linux")]
+    if linux::wsl() {
+        return linux::dxg_processes();
+    }
+    Vec::new()
+}
+
 /// Total physical memory in bytes, or `None` when this platform has no
 /// backend here or the read failed.
 ///

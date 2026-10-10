@@ -1,6 +1,7 @@
 //! Web apps the agent deploys with Docker Compose and the desk shows in a
-//! window. Their catalog is `store/apps/` (one folder per app, read by
-//! [`manifest`], shipped in the binary by [`builtin`]).
+//! window. Where they come from is [`catalog`]: shipped ([`builtin`], from
+//! `store/apps/`), the store's repositories, the operator's own folder; each
+//! one folder read by [`manifest`].
 //!
 //! A deployed app is a stack: its folder's files and an env file in
 //! `<database dir>/stacks/<id>/`, a `stack` row, the compose project
@@ -13,6 +14,8 @@
 //! data keeps that file, so deploying again finds its database.
 
 pub mod builtin;
+pub mod catalog;
+pub mod health;
 pub mod job;
 pub mod manifest;
 pub mod ports;
@@ -37,7 +40,11 @@ use store::StackRow;
 
 /// The agent's own ports in front of deployed apps, one per app.
 pub const PROXY_PORTS: std::ops::RangeInclusive<u16> = 3780..=3799;
+/// The listener taking every app by host (`[stacks] apps_port`).
+const APPS_PORT: u16 = 3779;
 const ENV_FILE: &str = ".env";
+/// Under the stacks' directory; never an app id (they start with a letter).
+const CATALOG_DIR: &str = ".catalog";
 
 static TEMP: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -47,6 +54,9 @@ pub struct Stacks {
     owned: bool,
     /// The latest job of each app.
     jobs: Mutex<HashMap<String, Arc<Job>>>,
+    pub catalog: catalog::Catalog,
+    /// Each installed app's last look (`health`).
+    health: Mutex<HashMap<String, health::Health>>,
     pub proxies: proxy::Proxies,
 }
 
@@ -75,8 +85,9 @@ fn refusal(status: u16, error: &'static str) -> Refusal {
 
 impl Stacks {
     /// Stacks in `stacks/` beside the database file [db_file], or in a
-    /// directory of their own for an in-memory database.
-    pub fn new(db_file: Option<&Path>) -> Self {
+    /// directory of their own for an in-memory database; apps from the
+    /// catalog and the operator's [local_apps] folder.
+    pub fn new(db_file: Option<&Path>, local_apps: Option<&Path>) -> Self {
         let (root, owned) = match db_file {
             // Absolute, whatever the database URL said: the paths go into an
             // env file Compose reads from the stack's own directory.
@@ -86,25 +97,28 @@ impl Stacks {
                 (std::env::temp_dir().join(format!("sbm-stacks-{}-{n}", std::process::id())), true)
             }
         };
-        Self { root, owned, jobs: Mutex::default(), proxies: proxy::Proxies::default() }
+        let catalog = catalog::Catalog::new(root.join(CATALOG_DIR), local_apps);
+        Self { root, owned, jobs: Mutex::default(), catalog, health: Mutex::default(), proxies: proxy::Proxies::default() }
     }
 
     pub fn dir_beside(db: &Path) -> PathBuf {
         db.parent().unwrap_or_else(|| Path::new(".")).join("stacks")
     }
 
-    /// The env files of every app this agent can deploy, for the file API to
-    /// keep out of reach.
-    pub fn env_files_beside(db: &Path) -> Vec<PathBuf> {
-        builtin::packages().iter().map(|p| Self::dir_beside(db).join(&p.manifest.id).join(ENV_FILE)).collect()
+    /// What the file API keeps out of reach: every stack's env file (its
+    /// secrets), and the catalog's cached packages (what a deploy runs).
+    pub fn protect_beside(db: &Path, protected: &mut crate::core::fs_roots::Protected) {
+        let dir = std::path::absolute(Self::dir_beside(db)).unwrap_or_else(|_| Self::dir_beside(db));
+        protected.in_each(&dir, ENV_FILE);
+        protected.tree(&dir.join(CATALOG_DIR));
     }
 
     pub fn dir(&self, id: &str) -> PathBuf {
         self.root.join(id)
     }
 
-    pub fn package(id: &str) -> Option<&'static Package> {
-        builtin::packages().iter().find(|p| p.manifest.id == id)
+    pub fn package(&self, id: &str) -> Option<Arc<Package>> {
+        self.catalog.package(id)
     }
 
     pub fn job(&self, id: &str) -> Option<Arc<Job>> {
@@ -308,7 +322,7 @@ fn db_failed(e: sqlx::Error) -> Refusal {
 /// Starts [row]'s proxy listener on the agent's own address. When its port
 /// has been taken (another program started first), it moves to a free one.
 pub async fn start_proxy(state: &Arc<AppState>, row: &StackRow) {
-    let Some(package) = Stacks::package(&row.id) else { return };
+    let Some(package) = state.stacks.package(&row.id) else { return };
     let Some(upstream_port) = package.manifest.web_port(&row.settings) else { return };
     let server = state.config.get_server();
     let host: std::net::IpAddr = server.host.parse().unwrap_or(std::net::Ipv4Addr::UNSPECIFIED.into());
@@ -354,9 +368,13 @@ pub async fn start_proxy(state: &Arc<AppState>, row: &StackRow) {
     }
 }
 
-/// At start: steps a stopped agent left unfinished fail, and every deployed
-/// app gets its proxy back.
+/// At start: the catalog's repositories are read, the watch over deployed
+/// apps starts, steps a stopped agent left unfinished fail, and every
+/// deployed app gets its proxy back.
 pub async fn resume(state: &Arc<AppState>) {
+    let st = state.clone();
+    tokio::spawn(async move { st.stacks.catalog.refresh(true).await });
+    tokio::spawn(health::watch(state.clone()));
     match store::fail_interrupted(&state.db).await {
         Ok(0) => {}
         Ok(n) => tracing::warn!("{n} app deployments were interrupted by a restart"),
@@ -369,6 +387,37 @@ pub async fn resume(state: &Arc<AppState>) {
             }
         }
         Err(e) => tracing::error!("stacks: {e}"),
+    }
+    start_by_host(state).await;
+}
+
+/// The listener taking every app by host, when `[stacks] apps_url` says.
+async fn start_by_host(state: &Arc<AppState>) {
+    let config = state.config.get_stacks();
+    let Some(apps_url) = config.apps_url else { return };
+    let hosts = match proxy::Hosts::parse(&apps_url) {
+        Ok(hosts) => hosts,
+        Err(e) => {
+            tracing::error!("[stacks] {e}");
+            return;
+        }
+    };
+    let server = state.config.get_server();
+    let host: std::net::IpAddr = server.host.parse().unwrap_or(std::net::Ipv4Addr::UNSPECIFIED.into());
+    let tls = match &server.tls {
+        Some(tls) => match crate::api::server::load_rustls_config(tls) {
+            Ok(config) => Some(Arc::new(config)),
+            Err(e) => {
+                tracing::error!("apps by host: {e}");
+                return;
+            }
+        },
+        None => None,
+    };
+    let listen = SocketAddr::new(host, config.apps_port.unwrap_or(APPS_PORT));
+    match state.stacks.proxies.start_by_host(listen, hosts, tls, state.clone()).await {
+        Ok(port) => tracing::info!("apps by host ({apps_url}) on port {port}"),
+        Err(e) => tracing::error!("apps by host on {listen}: {e}"),
     }
 }
 
@@ -398,7 +447,8 @@ pub struct Preview {
 /// What deploying [given] would do. A deployed stack's ports are not
 /// followed: a setting changed there is the admin's choice.
 pub async fn preview(state: &AppState, id: &str, given: &BTreeMap<String, Value>) -> Result<Preview, Refusal> {
-    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = &*package;
     let installed = store::load(&state.db, id).await.map_err(db_failed)?.is_some();
     let machine = machine(state, id).await;
     let (settings, moved) = settings_for(package, given, &machine, !installed)?;
@@ -419,7 +469,8 @@ pub async fn install(
     given: &BTreeMap<String, Value>,
     consent: Consent,
 ) -> Result<Arc<Job>, Refusal> {
-    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = &*package;
     let m = &package.manifest;
     if !consent.third_party {
         return Err(refusal(400, "notAcknowledged"));
@@ -453,6 +504,8 @@ pub async fn install(
             installed_at: now.clone(),
             updated_at: now,
             last_error: None,
+            stopped: false,
+            update_noticed: None,
         };
         if !store::insert(&state.db, &row).await.map_err(db_failed)? {
             return Err(refusal(409, "installed"));
@@ -512,7 +565,8 @@ pub enum StackAction {
 }
 
 pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackAction) -> Result<Arc<Job>, Refusal> {
-    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = &*package;
     let row = store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
     if action == StackAction::Update {
         return redeploy(state, username, id, package, &row.settings, JobKind::Update).await;
@@ -538,6 +592,10 @@ pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackA
     let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
     tokio::spawn(async move {
         let result = job2.run_steps(&steps).await;
+        if result.is_ok() {
+            // Down because an admin said so: the watch says nothing of it.
+            let _ = store::set_stopped(&state.db, &id, action == StackAction::Stop).await;
+        }
         if row.state != "installed" {
             let _ = store::finish(&state.db, &id, result.as_ref().err().map(String::as_str)).await;
             if result.is_ok()
@@ -559,7 +617,7 @@ async fn redeploy(
     state: &Arc<AppState>,
     username: &str,
     id: &str,
-    package: &'static Package,
+    package: &Package,
     given: &BTreeMap<String, Value>,
     kind: JobKind,
 ) -> Result<Arc<Job>, Refusal> {
@@ -578,6 +636,9 @@ async fn redeploy(
     tokio::spawn(async move {
         let result = job2.run_steps(&[stack.pull(), stack.up()]).await;
         let _ = store::finish(&state.db, &id, result.as_ref().err().map(String::as_str)).await;
+        if result.is_ok() {
+            let _ = store::set_stopped(&state.db, &id, false).await;
+        }
         // The service's port may be another now.
         if result.is_ok()
             && let Ok(Some(row)) = store::load(&state.db, &id).await
@@ -591,7 +652,8 @@ async fn redeploy(
 
 /// Deploys [id] again with new [given] settings.
 pub async fn reconfigure(state: &Arc<AppState>, username: &str, id: &str, given: &BTreeMap<String, Value>) -> Result<Arc<Job>, Refusal> {
-    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = &*package;
     store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
     redeploy(state, username, id, package, given, JobKind::Reconfigure).await
 }
@@ -600,7 +662,8 @@ pub async fn reconfigure(state: &Arc<AppState>, username: &str, id: &str, given:
 /// Without, the stack's directory stays (its env file holds the database's
 /// password), so deploying again finds the data where it was.
 pub async fn remove(state: &Arc<AppState>, username: &str, id: &str, purge: bool) -> Result<Arc<Job>, Refusal> {
-    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = &*package;
     let row = store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
     let (runtime, _) = runtime(state).await?;
     let job = state.stacks.begin(id, JobKind::Remove)?;
@@ -640,7 +703,8 @@ pub async fn remove(state: &Arc<AppState>, username: &str, id: &str, purge: bool
 
 /// The stack's containers as Compose reports them.
 pub async fn services(state: &AppState, id: &str) -> Result<Vec<sbm_parser::stack::StackService>, Refusal> {
-    let package = Stacks::package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let package = &*package;
     let (runtime, _) = runtime(state).await?;
     let stack = compose(runtime, id, &state.stacks.dir(id), package);
     let limits = crate::api::machine::at_least(&state.remote_access.exec, 4 << 20);

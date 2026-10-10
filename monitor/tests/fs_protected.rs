@@ -44,6 +44,9 @@ fn state() -> State {
         fs::write(home.join(name), name).unwrap();
     }
     fs::write(cmds.join("10-uptime"), "uptime").unwrap();
+    fs::create_dir_all(home.join("stacks/futo.immich/library")).unwrap();
+    fs::write(home.join("stacks/futo.immich/.env"), "DB_PASSWORD='x'").unwrap();
+    fs::write(home.join("stacks/futo.immich/compose.yaml"), "services: {}").unwrap();
 
     let mut protected = Protected::default();
     for name in [
@@ -56,6 +59,7 @@ fn state() -> State {
         protected.file(&home.join(name));
     }
     protected.tree(&cmds);
+    protected.in_each(&home.join("stacks"), ".env");
     // The root of the filesystem the temporary directory is on. Not the working
     // directory's: on Windows the two can be different drives, and `D:\` holds
     // nothing of `C:\`.
@@ -99,6 +103,19 @@ fn the_state_files_cannot_be_read() {
         st.roots.resolve_existing(&s(&st.cmds.join("10-uptime"))),
         Err(FsDenied::OutsideRoots)
     );
+}
+
+#[test]
+fn a_web_apps_env_file_is_state_its_other_files_are_not() {
+    let st = state();
+    let stack = st.home.join("stacks/futo.immich");
+    assert_eq!(st.roots.resolve_existing(&s(&stack.join(".env"))), Err(FsDenied::OutsideRoots));
+    // One deployed later: its own folder, made after the agent started.
+    assert_eq!(st.roots.resolve_new(&s(&st.home.join("stacks/acme.notes/.env"))), Err(FsDenied::OutsideRoots));
+    assert!(st.roots.resolve_existing(&s(&stack.join("compose.yaml"))).is_ok());
+    assert!(st.roots.resolve_new(&s(&stack.join("library/photo.jpg"))).is_ok());
+    // Moving the folder would carry the file away.
+    assert_eq!(st.roots.check_mutable(&stack), Err(FsDenied::OutsideRoots));
 }
 
 #[test]

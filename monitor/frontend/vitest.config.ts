@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   // Single svelte instance across the linked @serverbox/ui package
   resolve: { dedupe: ['svelte'] },
+  define: { __PANEL_BUILD__: JSON.stringify('test') },
   plugins: [svelte(), svelteTesting()],
   test: {
     projects: [

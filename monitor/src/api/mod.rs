@@ -29,6 +29,7 @@ pub mod admin;
 pub mod app_runtime;
 pub mod apps;
 pub mod containers;
+pub mod container_backups;
 pub mod stacks;
 pub mod auth;
 pub mod benchmark;

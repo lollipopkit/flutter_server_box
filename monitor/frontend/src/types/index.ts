@@ -126,6 +126,8 @@ export type MachineFeature =
   | 'cron'
   | 'containers'
   | 'container_exec'
+  /// Backups of containers' volumes and folders (`/container-backups`).
+  | 'container_backups'
   | 'iperf'
   | 'tmux'
   | 'benchmark'
@@ -2777,7 +2779,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -2792,11 +2794,25 @@ export interface StackJob {
 
 export interface StackApp {
   manifest: StackManifest
+  /// Where the agent has it: shipped, a repository of the store (`repo`),
+  /// or the operator's own folder (`[stacks] local_apps`).
+  source?: 'bundled' | 'store' | 'local'
+  repo?: string | null
   stack: StackRow | null
   /// Admins only: the latest job.
   job: StackJob | null
   /// Whether the agent's proxy is in front of it now.
   proxy: boolean
+  /// The agent's last look at its containers, once installed.
+  health?: StackHealth | null
+}
+
+/// `stacks::health::Health`: checked every minute.
+export interface StackHealth {
+  state: 'healthy' | 'starting' | 'unhealthy' | 'down' | 'stopped'
+  /// The services that are not well.
+  failing: string[]
+  checked_at: string
 }
 
 /// What a deploy dialog starts from (`GET /stacks/{id}/prepare`).
@@ -2823,6 +2839,9 @@ export interface StackEntry {
   tls: boolean
   path: string
   enter: string
+  /// The window's address when the agent takes apps by host
+  /// (`[stacks] apps_url`).
+  url?: string | null
 }
 
 export interface StackService {
@@ -2843,4 +2862,24 @@ export interface StackPreview {
   port: number | null
   /// Ports suggested that are in use now, and where they will move.
   moved: { setting: string; from: number; to: number }[]
+}
+
+/// A volume or a folder bound into a container (`sbm_parser::container_backup::Mount`).
+export type ContainerMount =
+  | { kind: 'volume'; name: string; destination: string }
+  | { kind: 'bind'; source: string; destination: string }
+
+/// A backup of containers' volumes and folders (`container_backups::Meta`).
+export interface ContainerBackup {
+  id: string
+  /// The compose project's name, or the container's.
+  label: string
+  created_at: string
+  created_by: string
+  /// The containers were stopped while archived.
+  stopped: boolean
+  containers: { name: string; image: string; project: string | null }[]
+  archives: { file: string; container: string; mount: ContainerMount; bytes: number }[]
+  /// Left out: a system folder of the host, or a bound file.
+  skipped: { container: string; mount: ContainerMount; why: 'system' | 'notFolder' }[]
 }

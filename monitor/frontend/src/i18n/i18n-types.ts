@@ -8469,6 +8469,155 @@ type RootTranslation = {
 	 * T​h​e​ ​d​r​i​v​e​r​ ​l​i​s​t​s​ ​n​o​ ​p​r​o​c​e​s​s​ ​u​s​i​n​g​ ​t​h​i​s​ ​G​P​U​.​ ​U​n​d​e​r​ ​W​S​L​ ​o​r​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​,​ ​p​r​o​g​r​a​m​s​ ​o​u​t​s​i​d​e​ ​i​t​ ​a​r​e​ ​n​o​t​ ​v​i​s​i​b​l​e​;​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​r​e​a​d​i​n​g​ ​o​t​h​e​r​ ​a​c​c​o​u​n​t​s​'​ ​p​r​o​g​r​a​m​s​ ​n​e​e​d​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​i​g​h​t​s​.
 	 */
 	gpuNoProcesses: string
+	/**
+	 * T​h​e​ ​p​a​n​e​l​ ​w​a​s​ ​u​p​d​a​t​e​d
+	 */
+	deskPanelUpdated: string
+	/**
+	 * R​e​l​o​a​d​ ​t​o​ ​u​s​e​ ​t​h​e​ ​n​e​w​ ​v​e​r​s​i​o​n​;​ ​y​o​u​r​ ​w​i​n​d​o​w​s​ ​c​o​m​e​ ​b​a​c​k​.
+	 */
+	deskPanelUpdatedBody: string
+	/**
+	 * C​h​e​c​k​ ​f​o​r​ ​n​e​w​ ​a​p​p​s​ ​a​n​d​ ​v​e​r​s​i​o​n​s
+	 */
+	storeRefresh: string
+	/**
+	 * L​o​c​a​l
+	 */
+	storeLocal: string
+	/**
+	 * F​r​o​m
+	 */
+	stackFrom: string
+	/**
+	 * S​h​i​p​p​e​d​ ​w​i​t​h​ ​t​h​e​ ​a​g​e​n​t
+	 */
+	stackFromBundled: string
+	/**
+	 * T​h​i​s​ ​s​e​r​v​e​r​'​s​ ​o​w​n​ ​f​o​l​d​e​r
+	 */
+	stackFromLocal: string
+	/**
+	 * H​e​a​l​t​h
+	 */
+	stackHealth: string
+	/**
+	 * H​e​a​l​t​h​y
+	 */
+	stackHealthy: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	stackStarting: string
+	/**
+	 * U​n​h​e​a​l​t​h​y
+	 */
+	stackUnhealthy: string
+	/**
+	 * D​o​w​n
+	 */
+	stackDown: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	stackStopped: string
+	/**
+	 * B​a​c​k​u​p​s
+	 */
+	containerBackups: string
+	/**
+	 * B​a​c​k​ ​U​p
+	 */
+	containerBackUp: string
+	/**
+	 * A​r​c​h​i​v​e​s​ ​t​h​e​ ​v​o​l​u​m​e​s​ ​a​n​d​ ​f​o​l​d​e​r​s​ ​t​h​i​s​ ​c​o​n​t​a​i​n​e​r​ ​k​e​e​p​s​ ​i​t​s​ ​d​a​t​a​ ​i​n​,​ ​t​o​ ​r​e​s​t​o​r​e​ ​l​a​t​e​r​.
+	 */
+	containerBackUpBody: string
+	/**
+	 * T​h​e​ ​w​h​o​l​e​ ​p​r​o​j​e​c​t​ ​(​{​p​r​o​j​e​c​t​}​)
+	 * @param {unknown} project
+	 */
+	containerBackUpProject: RequiredParams<'project'>
+	/**
+	 * S​t​o​p​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​s​ ​w​h​i​l​e​ ​a​r​c​h​i​v​i​n​g​ ​(​a​ ​d​a​t​a​b​a​s​e​ ​c​o​p​i​e​d​ ​a​s​ ​i​t​ ​w​r​i​t​e​s​ ​m​a​y​ ​n​o​t​ ​o​p​e​n​)
+	 */
+	containerBackUpStop: string
+	/**
+	 * B​a​c​k​i​n​g​ ​u​p​…
+	 */
+	containerBackupRunning: string
+	/**
+	 * R​e​s​t​o​r​i​n​g​…
+	 */
+	containerBackupRestoring: string
+	/**
+	 * N​o​ ​b​a​c​k​u​p​s
+	 */
+	containerBackupsEmpty: string
+	/**
+	 * S​e​l​e​c​t​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​a​n​d​ ​c​h​o​o​s​e​ ​B​a​c​k​ ​U​p​.​ ​I​t​s​ ​v​o​l​u​m​e​s​ ​a​n​d​ ​f​o​l​d​e​r​s​ ​a​r​e​ ​a​r​c​h​i​v​e​d​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 */
+	containerBackupsHint: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	containerBackupContainers: string
+	/**
+	 * S​i​z​e
+	 */
+	containerBackupSize: string
+	/**
+	 * S​t​o​p​p​e​d​ ​w​h​i​l​e​ ​a​r​c​h​i​v​e​d
+	 */
+	containerBackupStopped: string
+	/**
+	 * V​o​l​u​m​e​ ​{​n​a​m​e​}​ ​→​ ​{​a​t​}
+	 * @param {unknown} at
+	 * @param {unknown} name
+	 */
+	containerBackupVolume: RequiredParams<'at' | 'name'>
+	/**
+	 * L​e​f​t​ ​o​u​t​:​ ​a​ ​s​y​s​t​e​m​ ​f​o​l​d​e​r​ ​o​f​ ​t​h​e​ ​h​o​s​t
+	 */
+	containerBackupSkippedSystem: string
+	/**
+	 * L​e​f​t​ ​o​u​t​:​ ​a​ ​f​i​l​e​,​ ​n​o​t​ ​a​ ​f​o​l​d​e​r
+	 */
+	containerBackupSkippedFile: string
+	/**
+	 * R​e​s​t​o​r​e
+	 */
+	containerBackupRestore: string
+	/**
+	 * D​e​l​e​t​e
+	 */
+	containerBackupRemove: string
+	/**
+	 * R​e​p​l​a​c​e​ ​w​h​a​t​ ​{​l​a​b​e​l​}​ ​k​e​e​p​s​ ​n​o​w​ ​w​i​t​h​ ​t​h​i​s​ ​b​a​c​k​u​p​.​ ​I​t​s​ ​c​o​n​t​a​i​n​e​r​s​ ​s​t​o​p​ ​m​e​a​n​w​h​i​l​e​.
+	 * @param {unknown} label
+	 */
+	containerBackupRestoreReauth: RequiredParams<'label'>
+	/**
+	 * D​e​l​e​t​e​ ​t​h​i​s​ ​b​a​c​k​u​p​ ​o​f​ ​{​l​a​b​e​l​}​.
+	 * @param {unknown} label
+	 */
+	containerBackupRemoveReauth: RequiredParams<'label'>
+	/**
+	 * A​ ​b​a​c​k​u​p​ ​o​r​ ​r​e​s​t​o​r​e​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​u​n​n​i​n​g​.
+	 */
+	containerBackupBusy: string
+	/**
+	 * B​a​c​k​e​d​ ​u​p
+	 */
+	containerBackupDone: string
+	/**
+	 * R​e​s​t​o​r​e​d
+	 */
+	containerBackupRestored: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	containerBackupUnfinished: string
 }
 
 export type TranslationFunctions = {
@@ -16652,6 +16801,150 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * The driver lists no process using this GPU. Under WSL or in a container, programs outside it are not visible; on Windows, reading other accounts' programs needs administrator rights.
 	 */
 	gpuNoProcesses: () => LocalizedString
+	/**
+	 * The panel was updated
+	 */
+	deskPanelUpdated: () => LocalizedString
+	/**
+	 * Reload to use the new version; your windows come back.
+	 */
+	deskPanelUpdatedBody: () => LocalizedString
+	/**
+	 * Check for new apps and versions
+	 */
+	storeRefresh: () => LocalizedString
+	/**
+	 * Local
+	 */
+	storeLocal: () => LocalizedString
+	/**
+	 * From
+	 */
+	stackFrom: () => LocalizedString
+	/**
+	 * Shipped with the agent
+	 */
+	stackFromBundled: () => LocalizedString
+	/**
+	 * This server's own folder
+	 */
+	stackFromLocal: () => LocalizedString
+	/**
+	 * Health
+	 */
+	stackHealth: () => LocalizedString
+	/**
+	 * Healthy
+	 */
+	stackHealthy: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	stackStarting: () => LocalizedString
+	/**
+	 * Unhealthy
+	 */
+	stackUnhealthy: () => LocalizedString
+	/**
+	 * Down
+	 */
+	stackDown: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	stackStopped: () => LocalizedString
+	/**
+	 * Backups
+	 */
+	containerBackups: () => LocalizedString
+	/**
+	 * Back Up
+	 */
+	containerBackUp: () => LocalizedString
+	/**
+	 * Archives the volumes and folders this container keeps its data in, to restore later.
+	 */
+	containerBackUpBody: () => LocalizedString
+	/**
+	 * The whole project ({project})
+	 */
+	containerBackUpProject: (arg: { project: unknown }) => LocalizedString
+	/**
+	 * Stop the containers while archiving (a database copied as it writes may not open)
+	 */
+	containerBackUpStop: () => LocalizedString
+	/**
+	 * Backing up…
+	 */
+	containerBackupRunning: () => LocalizedString
+	/**
+	 * Restoring…
+	 */
+	containerBackupRestoring: () => LocalizedString
+	/**
+	 * No backups
+	 */
+	containerBackupsEmpty: () => LocalizedString
+	/**
+	 * Select a container and choose Back Up. Its volumes and folders are archived on this server.
+	 */
+	containerBackupsHint: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	containerBackupContainers: () => LocalizedString
+	/**
+	 * Size
+	 */
+	containerBackupSize: () => LocalizedString
+	/**
+	 * Stopped while archived
+	 */
+	containerBackupStopped: () => LocalizedString
+	/**
+	 * Volume {name} → {at}
+	 */
+	containerBackupVolume: (arg: { at: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Left out: a system folder of the host
+	 */
+	containerBackupSkippedSystem: () => LocalizedString
+	/**
+	 * Left out: a file, not a folder
+	 */
+	containerBackupSkippedFile: () => LocalizedString
+	/**
+	 * Restore
+	 */
+	containerBackupRestore: () => LocalizedString
+	/**
+	 * Delete
+	 */
+	containerBackupRemove: () => LocalizedString
+	/**
+	 * Replace what {label} keeps now with this backup. Its containers stop meanwhile.
+	 */
+	containerBackupRestoreReauth: (arg: { label: unknown }) => LocalizedString
+	/**
+	 * Delete this backup of {label}.
+	 */
+	containerBackupRemoveReauth: (arg: { label: unknown }) => LocalizedString
+	/**
+	 * A backup or restore is already running.
+	 */
+	containerBackupBusy: () => LocalizedString
+	/**
+	 * Backed up
+	 */
+	containerBackupDone: () => LocalizedString
+	/**
+	 * Restored
+	 */
+	containerBackupRestored: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	containerBackupUnfinished: () => LocalizedString
 }
 
 export type Formatters = {}

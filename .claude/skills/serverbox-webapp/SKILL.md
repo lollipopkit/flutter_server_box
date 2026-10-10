@@ -90,7 +90,13 @@ which reads every folder in `store/apps/` with the agent's own reader.
 
 ### 5. Try it
 
-On a Linux machine with Docker: copy the folder (without the manifest),
+The quickest way is a Monitor agent itself: put the folder in a directory
+the agent's `config.toml` names as `[stacks] local_apps` and restart it. The
+app shows in the App Store marked Local, and installs, opens, takes new
+settings and uninstalls as a catalog app does. `monitor/tests/apps/` holds
+a small one (`serverbox.testweb`) the agent's Docker e2e test deploys.
+
+Without an agent, on a Linux machine with Docker: copy the folder (without the manifest),
 write a `.env` like the validator's (`--compose` builds one from the
 defaults), `docker compose -p sbm-<publisher>-<name> --env-file .env -f compose.yaml up -d`,
 and open the port. Check first-run steps (an admin account to create, a

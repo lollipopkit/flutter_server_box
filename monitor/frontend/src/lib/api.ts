@@ -1,5 +1,6 @@
 import type {
   InstalledApp,
+  ContainerBackup,
   StackApp,
   StackEntry,
   StackJob,
@@ -1233,6 +1234,8 @@ export const api = {
   listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
   /// The web apps the agent can deploy (`api::stacks`), and their state.
   listStacks: () => request<{ apps: StackApp[] }>('/stacks', {}, 'Failed to load the apps'),
+  /// The catalog read again from its repositories now (admin).
+  refreshStacks: () => request<{ apps: StackApp[] }>('/stacks/refresh', { method: 'POST' }, 'Failed to load the apps'),
   prepareStack: (id: string) =>
     request<StackPrepare>(`/stacks/${encodeURIComponent(id)}/prepare`, {}, 'Failed to read this machine'),
   checkStack: (id: string, settings: Record<string, StackValue>) =>
@@ -1280,6 +1283,30 @@ export const api = {
       `/stacks/${encodeURIComponent(id)}`,
       { method: 'DELETE', body: JSON.stringify({ purge, current_password: currentPassword }) },
       'Failed to remove the app',
+    ),
+  listContainerBackups: () =>
+    request<{ backups: ContainerBackup[]; job: StackJob | null }>('/container-backups', {}, 'Failed to load the backups'),
+  /// Backs up [containers] (with [project], their whole compose project).
+  createContainerBackup: (containers: string[], project: boolean, stop: boolean) =>
+    request<StackJob>(
+      '/container-backups',
+      { method: 'POST', body: JSON.stringify({ containers, project, stop }) },
+      'Failed to back up',
+    ),
+  containerBackupJob: (since: number) =>
+    request<StackJob>(`/container-backups/job?since=${since}`, {}, 'Failed to read the progress'),
+  cancelContainerBackupJob: () => request<void>('/container-backups/job/cancel', { method: 'POST' }, 'Failed to cancel'),
+  restoreContainerBackup: (id: string, currentPassword: string) =>
+    request<StackJob>(
+      `/container-backups/${encodeURIComponent(id)}/restore`,
+      { method: 'POST', body: JSON.stringify({ current_password: currentPassword }) },
+      'Failed to restore',
+    ),
+  removeContainerBackup: (id: string, currentPassword: string) =>
+    request<void>(
+      `/container-backups/${encodeURIComponent(id)}`,
+      { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
+      'Failed to remove the backup',
     ),
   stackJob: (id: string, since: number) =>
     request<StackJob>(`/stacks/${encodeURIComponent(id)}/job?since=${since}`, {}, 'Failed to read the progress'),

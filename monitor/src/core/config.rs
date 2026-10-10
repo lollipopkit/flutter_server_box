@@ -24,6 +24,9 @@ pub struct Config {
     /// `Option`; see `core::remote_access`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_access: Option<RemoteAccessConfig>,
+    /// The web apps it deploys (`stacks`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stacks: Option<StacksConfig>,
 
     /// The flat top-level keys the Go agent's `config.json` used.
     ///
@@ -39,6 +42,26 @@ pub struct Config {
     // agent is left to migrate from.
     #[serde(flatten)]
     pub legacy: LegacyGoConfig,
+}
+
+/// `[stacks]`: where web apps come from besides the catalog, and how their
+/// windows are reached.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StacksConfig {
+    /// A folder of app folders (`<publisher>.<name>/manifest.toml` and its
+    /// compose files) offered beside the catalog's: an app being written, or
+    /// one of the operator's own. Read at start.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_apps: Option<String>,
+    /// Apps' windows by host rather than by port: `https://*.apps.example.com`
+    /// (`stacks::proxy::Hosts`), for an agent behind a reverse proxy or a
+    /// tunnel that sends that wildcard to [Self::apps_port].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub apps_url: Option<String>,
+    /// The listener [Self::apps_url] is served on; 3779 when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub apps_port: Option<u16>,
 }
 
 /// The Go agent's flat `config.json` keys — see [`Config::legacy`].
@@ -525,6 +548,10 @@ impl Config {
         self.server.clone().unwrap_or_default()
     }
 
+    pub fn get_stacks(&self) -> StacksConfig {
+        self.stacks.clone().unwrap_or_default()
+    }
+
     pub fn get_monitoring(&self) -> MonitoringConfig {
         self.monitoring.clone().unwrap_or_default()
     }
@@ -906,6 +933,7 @@ impl Default for Config {
             // Written out so a generated config.toml shows the section and
             // its switches; every switch in it defaults to off
             remote_access: Some(RemoteAccessConfig::default()),
+            stacks: None,
             push: Some(vec![
                 PushConfig {
                     name: "webhook".to_string(),

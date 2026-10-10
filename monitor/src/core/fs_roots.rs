@@ -92,6 +92,8 @@ pub struct FsRoots {
 pub struct Protected {
     trees: Vec<PathBuf>,
     named: Vec<(PathBuf, OsString)>,
+    /// A name in every subdirectory of a directory (`stacks/*/.env`).
+    each: Vec<(PathBuf, OsString)>,
 }
 
 impl Protected {
@@ -110,6 +112,12 @@ impl Protected {
         self.trees.push(settled(dir));
     }
 
+    /// Protects [name] (and names beginning with it) in every subdirectory of
+    /// [dir], those made later included: one per deployed web app.
+    pub fn in_each(&mut self, dir: &Path, name: &str) {
+        self.each.push((settled(dir), OsString::from(name)));
+    }
+
     /// Whether [path] — canonical — is protected state.
     pub fn covers(&self, path: &Path) -> bool {
         if self.trees.iter().any(|tree| path.starts_with(tree)) {
@@ -121,6 +129,8 @@ impl Protected {
         let name = name.as_encoded_bytes();
         self.named.iter().any(|(protected_dir, prefix)| {
             dir == protected_dir && name.starts_with(prefix.as_encoded_bytes())
+        }) || self.each.iter().any(|(parent, prefix)| {
+            dir.parent() == Some(parent.as_path()) && name.starts_with(prefix.as_encoded_bytes())
         })
     }
 
@@ -130,6 +140,7 @@ impl Protected {
         self.covers(path)
             || self.trees.iter().any(|tree| tree.starts_with(path))
             || self.named.iter().any(|(dir, _)| dir.starts_with(path))
+            || self.each.iter().any(|(dir, _)| dir.starts_with(path) || path.parent() == Some(dir.as_path()))
     }
 }
 

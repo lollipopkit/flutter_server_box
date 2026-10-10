@@ -251,3 +251,15 @@ code = 200
 # priority = "high"            # 1-5 or min, low, default, high, max
 # tags = "warning"
 # token = ""                   # or username + password
+
+# Web apps (App Store). Besides the catalog, a folder of app folders, each
+# <publisher>.<name>/ with a manifest.toml and its compose files (the
+# serverbox-webapp skill writes them). Read at start.
+# [stacks]
+# local_apps = "/srv/sbm-apps"
+# Behind a reverse proxy or a tunnel the apps' own ports (3780-3799) are not
+# reachable: send a wildcard host to one more listener instead, and each app
+# is <publisher>-<name>.<that domain> (futo-immich.apps.example.com). TLS may
+# end at the proxy; the scheme here is what the browser sees.
+# apps_url = "https://*.apps.example.com"
+# apps_port = 3779

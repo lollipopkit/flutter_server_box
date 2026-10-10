@@ -312,6 +312,29 @@ pub fn total_memory() -> Option<u64> {
         .map(|kib| kib * 1024)
 }
 
+/// Linux under WSL2.
+pub fn wsl() -> bool {
+    read("/proc/sys/kernel/osrelease").to_ascii_lowercase().contains("microsoft")
+}
+
+/// Processes holding WSL2's GPU device (`/dev/dxg`), which every GPU of the
+/// host is reached through: what `nvidia-smi` cannot list there. Those this
+/// account may look into (its own, all as root); no memory figure.
+pub fn dxg_processes() -> Vec<sbm_parser::types::GpuMemProcess> {
+    let Ok(procs) = std::fs::read_dir("/proc") else { return Vec::new() };
+    let mut out = Vec::new();
+    for entry in procs.flatten() {
+        let Some(pid) = entry.file_name().to_str().and_then(|n| n.parse::<i64>().ok()) else { continue };
+        let Ok(fds) = std::fs::read_dir(entry.path().join("fd")) else { continue };
+        let holds = fds.flatten().any(|fd| std::fs::read_link(fd.path()).is_ok_and(|t| t == std::path::Path::new("/dev/dxg")));
+        if holds {
+            let name = read(&format!("/proc/{pid}/comm")).trim().to_string();
+            out.push(sbm_parser::types::GpuMemProcess { pid, name, memory: 0 });
+        }
+    }
+    out
+}
+
 pub fn sample() -> ServerStatus {
     let mem_raw = read("/proc/meminfo");
     let (temp_types, temp_values) = thermal_zones();

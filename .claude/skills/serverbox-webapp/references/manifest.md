@@ -86,6 +86,12 @@ the machine and says what does not fit.
 `container_name:`: the agent names the project, and a fixed container name
 collides with a copy the user already runs.
 
+`jobs` (optional): services that run once and exit, such as a database
+migration. The agent watches every deployed app's containers and tells the
+admin when one stops; a job exited with 0 is done, not down. Give services a
+`healthcheck` where the image allows: the panel shows it as the app's
+health.
+
 ## `[web]`
 
 | Field | Notes |

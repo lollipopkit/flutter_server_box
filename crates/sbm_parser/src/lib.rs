@@ -19,6 +19,7 @@ pub mod command_rules;
 pub mod commands;
 pub mod common;
 pub mod container;
+pub mod container_backup;
 pub mod desktop;
 pub mod files;
 pub mod firewall;

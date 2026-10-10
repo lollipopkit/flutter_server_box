@@ -62,7 +62,7 @@
 
   async function entryUrl(): Promise<{ url: string; tls: boolean }> {
     const entry = await api.enterStack(stackId)
-    return { url: enterUrl(servers.current?.url ?? '', entry), tls: entry.tls }
+    return { url: enterUrl(servers.current?.url ?? '', entry), tls: entry.url ? entry.url.startsWith('https:') : entry.tls }
   }
 
   async function enter() {

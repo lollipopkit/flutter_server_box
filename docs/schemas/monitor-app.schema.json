@@ -66,6 +66,12 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/file" },
           "description": "Compose files in merge order. Every other file in the folder is copied too (for extends)."
+        },
+        "jobs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Services that run once and exit (a migration): exited with 0 they are done, not down."
         }
       }
     },

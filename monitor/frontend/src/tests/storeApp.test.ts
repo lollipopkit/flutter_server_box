@@ -9,7 +9,7 @@ import type { Capabilities, StackApp, StackManifest } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
-  api: { listStacks: vi.fn(), prepareStack: vi.fn() },
+  api: { listStacks: vi.fn(), refreshStacks: vi.fn(), prepareStack: vi.fn() },
 }))
 
 const mocked = vi.mocked(api)
@@ -42,7 +42,8 @@ const manifest = (name: string, title: string, categories: string[]): StackManif
 
 const apps: StackApp[] = [
   { manifest: manifest('immich', 'Photos', ['photos']), stack: { state: 'installed', version: '1.0.0' }, job: null, proxy: true },
-  { manifest: manifest('jellyfin', 'Media', ['media']), stack: null, job: null, proxy: false },
+  { manifest: manifest('broken', 'Broken', ['tools']), stack: { state: 'installed', version: '1.0.0' }, job: null, proxy: true, health: { state: 'down', failing: ['web'], checked_at: '' } },
+  { manifest: manifest('jellyfin', 'Media', ['media']), stack: null, job: null, proxy: false, source: 'local' },
 ]
 
 const caps = (admin: boolean) => ({ features: ['stacks'], stacks: [], me: { admin } }) as unknown as Capabilities
@@ -60,6 +61,8 @@ describe('the App Store', () => {
     render(StoreApp)
     expect(await screen.findByText('Photos does things.')).toBeInTheDocument()
     expect(screen.getByText('Installed')).toBeInTheDocument()
+    // Installed, but its containers are not running.
+    expect(screen.getByText('Down')).toBeInTheDocument()
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
     await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
     expect(screen.queryByText('Photos does things.')).toBeNull()
@@ -79,5 +82,14 @@ describe('the App Store', () => {
     await fireEvent.click(await screen.findByText('Media does things.'))
     expect(await screen.findByRole('button', { name: 'Get' })).toBeInTheDocument()
     expect(screen.getAllByText('Media team').length).toBeGreaterThan(0)
+  })
+
+  it("marks an app of the server's own folder, and lets an admin read the catalog again", async () => {
+    capabilitiesStore.byServer = { local: caps(true) }
+    mocked.refreshStacks.mockResolvedValue({ apps: structuredClone(apps) })
+    render(StoreApp)
+    expect(await screen.findByText('Local')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: 'Check for new apps and versions' }))
+    expect(mocked.refreshStacks).toHaveBeenCalled()
   })
 })

@@ -51,7 +51,7 @@ const STORE_TTL: Duration = Duration::from_secs(3600);
 /// The catalog the app reads (`Urls.themeCatalog`), fetched by the store.
 pub const CATALOG_URL: &str = "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/assets/catalog/repos.toml";
 
-const BUNDLED_CATALOG: &str = include_str!("../../../assets/catalog/repos.toml");
+pub(crate) const BUNDLED_CATALOG: &str = include_str!("../../../assets/catalog/repos.toml");
 
 macro_rules! require {
     ($result:expr) => {{

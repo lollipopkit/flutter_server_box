@@ -32,6 +32,9 @@ pub enum JobKind {
     Stop,
     Restart,
     Remove,
+    /// A container backup (`container_backups`).
+    Backup,
+    Restore,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

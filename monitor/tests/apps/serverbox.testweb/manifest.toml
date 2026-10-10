@@ -1,0 +1,73 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# A small web app for testing what the agent does with one: nginx serving a
+# data folder, with a health check, a setting written into what it serves,
+# and two ports. Not in the catalog: an agent offers it through
+# `[stacks] local_apps` (pointing at monitor/tests/apps), and
+# tests/stacks_docker.rs deploys it on a real Docker.
+
+schema = 1
+publisher = "serverbox"
+name = "testweb"
+project = "nginx"
+developer = "Test fixture (ServerBox)"
+version = "1.0.0"
+homepage = "https://nginx.org"
+source = "https://github.com/nginx/nginx"
+glyph = "science"
+tone = "teal"
+categories = ["tools"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Test Web App"
+zh = "测试 Web 应用"
+zh-TW = "測試 Web 應用程式"
+
+[description]
+en = "nginx serving a folder, for trying deploys, settings, ports, health and backups."
+zh = "用 nginx 提供一个文件夹，用于测试部署、设置、端口、健康状态和备份。"
+zh-TW = "用 nginx 提供一個資料夾，用於測試部署、設定、連接埠、健康狀態和備份。"
+
+[license]
+spdx = "BSD-2-Clause"
+url = "https://nginx.org/LICENSE"
+
+[requirements]
+memory_min_mib = 32
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[[settings]]
+key = "site"
+type = "path"
+env = "SITE_DIR"
+default = "{stack}/site"
+data = true
+label = { en = "Site folder", zh = "站点文件夹", zh-TW = "網站資料夾" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "WEB_PORT"
+default = 18080
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "status_port"
+type = "port"
+env = "STATUS_PORT"
+default = 18090
+label = { en = "Status port", zh = "状态端口", zh-TW = "狀態連接埠" }
+
+[[settings]]
+key = "greeting"
+type = "text"
+env = "GREETING"
+default = "hello"
+pattern = "[A-Za-z0-9 ._-]{1,64}"
+label = { en = "Greeting", zh = "问候语", zh-TW = "問候語" }

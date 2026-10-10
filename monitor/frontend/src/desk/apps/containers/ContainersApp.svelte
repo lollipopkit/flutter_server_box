@@ -16,6 +16,7 @@
     type Column,
   } from '../../lk'
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
+  import ContainerBackups from './ContainerBackups.svelte'
   import { machineAccess } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
@@ -29,12 +30,13 @@
     ContainerImage,
     ContainerRow,
     ContainerView,
+    StackJob,
   } from '../../../types'
 
   /// Two lists, one screen — the sidebar's two rows. `usage` is not a third:
   /// `system df` walks the whole image store, so it is a line at the top of
   /// whichever list is showing rather than a view of its own.
-  type Tab = 'containers' | 'images'
+  type Tab = 'containers' | 'images' | 'backups'
 
   /// How much of a container's log a read asks for. Mirrors
   /// `sbm_parser::container::LOG_TAIL`, which is the agent's bound — this is
@@ -88,6 +90,26 @@
   let runArgs = $state('')
   /// The container whose shell is open in the dialog, if any.
   let shellFor = $state<ContainerRow | undefined>(undefined)
+  /// The container a backup is being set up for, and its choices.
+  let backupFor = $state<ContainerRow | undefined>(undefined)
+  let backupProject = $state(true)
+  let backupStop = $state(true)
+  /// The backup just started, shown in the Backups tab.
+  let backupJob = $state<StackJob | null>(null)
+
+  async function startBackup() {
+    const row = backupFor
+    backupFor = undefined
+    if (!row?.id) return
+    error = ''
+    try {
+      backupJob = await api.createContainerBackup([row.id], !!row.project && backupProject, backupStop)
+      tab = 'backups'
+      selected = null
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e)
+    }
+  }
 
   /// A reply that arrives after the desk has switched servers belongs to
   /// neither.
@@ -96,6 +118,7 @@
   }
 
   async function load(part: Tab = tab, serverId = servers.currentId) {
+    if (part === 'backups') return
     loading = true
     error = ''
     try {
@@ -218,6 +241,7 @@
   /// `target` (`container_exec`) and the account must hold `shell`. An older
   /// agent ignores the target and would open a host shell instead.
   const canExec = $derived(machineAccess(caps, 'container_exec', 'shell'))
+  const canBackUp = $derived(caps?.features?.includes('container_backups') === true && caps?.me?.admin === true)
 
   /// How each action is drawn. A `Record` over every kind, so a kind added to
   /// the model without a button here is a type error rather than a container
@@ -415,7 +439,7 @@
   })
 </script>
 
-<AppToolbar title={tab === 'containers' ? $LL.containers() : $LL.containerImages()} flush={!!view?.available && (tab === 'containers' ? rows.length > 0 : images.length > 0)}>
+<AppToolbar title={tab === 'containers' ? $LL.containers() : tab === 'images' ? $LL.containerImages() : $LL.containerBackups()} flush={!!view?.available && (tab === 'containers' ? rows.length > 0 : images.length > 0)}>
   {#snippet actions()}
     {#if view?.available && tab === 'containers'}
       <IconButton icon="mop" label={$LL.containerPruneContainers()} disabled={busy} onclick={() => (pruning = 'prune_containers')} />
@@ -452,6 +476,17 @@
           selected = null
         }}
       />
+      {#if canBackUp}
+        <SidebarItem
+          label={$LL.containerBackups()}
+          icon="inventory_2"
+          active={tab === 'backups'}
+          onclick={() => {
+            tab = 'backups'
+            selected = null
+          }}
+        />
+      {/if}
     </SidebarSection>
   {/snippet}
 
@@ -480,7 +515,9 @@
     </div>
   {/if}
 
-  {#if loading && !view}
+  {#if tab === 'backups'}
+    <ContainerBackups started={backupJob} />
+  {:else if loading && !view}
     <div class="grid flex-1 place-items-center"><Spinner /></div>
   {:else if view && !view.available}
     <div class="px-(--content-pad) pb-[17px]">
@@ -567,6 +604,13 @@
             >
           {/if}
         {/each}
+        {#if canBackUp && row.id}
+          <Button size="sm" variant="secondary" icon="inventory_2" disabled={busy} onclick={() => {
+            backupProject = true
+            backupStop = true
+            backupFor = row
+          }}>{$LL.containerBackUp()}</Button>
+        {/if}
         {#if busy}<Spinner size="sm" />{/if}
         <span class="flex-1"></span>
         {#if row.actions.includes('logs') && row.id}
@@ -621,6 +665,21 @@
     {/snippet}
     <Checkbox bind:checked={force} label={$LL.containerRemoveForce()} />
     {#if force}<p class="mt-[7px] text-[12px] text-(--text-secondary)">{$LL.containerRemoveForceHint()}</p>{/if}
+  </Dialog>
+{/if}
+
+{#if backupFor !== undefined}
+  <Dialog open title={$LL.containerBackUp()} message={$LL.containerBackUpBody()} onclose={() => (backupFor = undefined)}>
+    {#snippet actions()}
+      <Button block onclick={() => void startBackup()}>{$LL.containerBackUp()}</Button>
+      <Button variant="secondary" block onclick={() => (backupFor = undefined)}>{$LL.cancel()}</Button>
+    {/snippet}
+    <div class="space-y-[7px] text-left">
+      {#if backupFor.project}
+        <Checkbox bind:checked={backupProject} label={$LL.containerBackUpProject({ project: backupFor.project })} />
+      {/if}
+      <Checkbox bind:checked={backupStop} label={$LL.containerBackUpStop()} />
+    </div>
   </Dialog>
 {/if}
 

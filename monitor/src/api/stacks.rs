@@ -4,6 +4,9 @@
 //! - `GET /stacks` (any account): every app of the catalog, with its
 //!   deployment's state. An admin also gets the settings it was deployed
 //!   with and the running job.
+//!   Its catalog is read again in the background when an hour old;
+//!   `POST /stacks/refresh` (admin) reads it now. Each app says where it is
+//!   from (`source`: `bundled` | `store` | `local`, and `repo`).
 //! - `GET /stacks/{id}/prepare` (admin): what the deploy dialog starts from:
 //!   defaults for this machine, whether Docker/Podman and Compose are here,
 //!   the machine's memory and cores.
@@ -22,6 +25,7 @@
 //! - `GET /stacks/{id}/job?since=<seq>` (admin), `POST /stacks/{id}/job/cancel`.
 //! - `GET /stacks/{id}/services` (admin): its containers.
 //! - `POST /stacks/{id}/enter` (any account): a ticket for the app's proxy
+//!   (`url` when apps are taken by host, `[stacks] apps_url`)
 //!   (`stacks::proxy`), and its port.
 
 use std::collections::BTreeMap;
@@ -36,7 +40,7 @@ use super::authz;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use super::ws::ticket::Purpose;
-use crate::stacks::{self, Refusal, StackAction, Stacks, store};
+use crate::stacks::{self, Refusal, StackAction, store};
 
 macro_rules! require {
     ($result:expr) => {{
@@ -63,28 +67,49 @@ fn not_found() -> HttpResponse {
 
 pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let caller = require!(authz::jwt_caller(&req, &state).await);
+    // Read again in the background when an hour old; this answer is what is
+    // known now.
+    let st = state.get_ref().clone();
+    tokio::spawn(async move { st.stacks.catalog.refresh(false).await });
+    answer_list(&state, caller.is_admin()).await
+}
+
+/// Reads the catalog's repositories now (admin), and answers as [`list`].
+pub async fn refresh(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::admin_caller(&req, &state).await);
+    state.stacks.catalog.refresh(true).await;
+    answer_list(&state, true).await
+}
+
+async fn answer_list(state: &AppState, admin: bool) -> Result<HttpResponse, web::Error> {
     let rows = match store::all(&state.db).await {
         Ok(rows) => rows,
         Err(e) => return Ok(internal_error(&e)),
     };
-    let apps: Vec<Value> = stacks::builtin::packages()
+    let apps: Vec<Value> = state
+        .stacks
+        .catalog
+        .all()
         .iter()
-        .map(|p| {
-            let id = &p.manifest.id;
+        .map(|entry| {
+            let id = &entry.package.manifest.id;
             let row = rows.iter().find(|r| &r.id == id);
             let stack = row.map(|r| {
-                if caller.is_admin() {
+                if admin {
                     serde_json::to_value(r).unwrap_or(Value::Null)
                 } else {
                     json!({ "state": r.state, "version": r.version })
                 }
             });
-            let job = caller.is_admin().then(|| state.stacks.job(id).map(|j| j.view(u64::MAX))).flatten();
+            let job = admin.then(|| state.stacks.job(id).map(|j| j.view(u64::MAX))).flatten();
             json!({
-                "manifest": p.manifest,
+                "manifest": entry.package.manifest,
+                "source": entry.source,
+                "repo": entry.repo,
                 "stack": stack,
                 "job": job,
                 "proxy": state.stacks.proxies.port(id).is_some(),
+                "health": row.and_then(|_| state.stacks.health(id)),
             })
         })
         .collect();
@@ -97,7 +122,7 @@ pub async fn prepare(
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     require!(authz::admin_caller(&req, &state).await);
-    let Some(package) = Stacks::package(&id) else { return Ok(not_found()) };
+    let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
     let machine = stacks::machine(&state, &id).await;
     let runtime = match stacks::runtime(&state).await {
         Ok((ty, compose)) => json!({ "available": true, "runtime": ty, "compose": compose }),
@@ -283,7 +308,7 @@ pub async fn enter(
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     let caller = require!(authz::jwt_caller(&req, &state).await);
-    let Some(package) = Stacks::package(&id) else { return Ok(not_found()) };
+    let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
     let Some(port) = state.stacks.proxies.port(&id) else {
         return Ok(HttpResponse::Conflict().json(&json!({ "error": "notRunning" })));
     };
@@ -291,6 +316,13 @@ pub async fn enter(
         Ok(t) => t,
         Err(e) => return Ok(internal_error(&e)),
     };
+    // The window is framed by the page that asked, when the agent would let
+    // that page call it anyway.
+    if let Some(origin) = req.headers().get("origin").and_then(|v| v.to_str().ok())
+        && super::ws::origin_allowed(&req, &state.config.get_server().cors_allowed_origins)
+    {
+        state.stacks.proxies.note_entry(&ticket, origin.to_string());
+    }
     Event::new(Kind::Stack, Action::Connect, Outcome::Ok)
         .subject(&caller.username)
         .remote_ip(peer_ip(&req))
@@ -303,5 +335,8 @@ pub async fn enter(
         "tls": state.tls_active,
         "path": package.manifest.web.path,
         "enter": crate::stacks::proxy::ENTER_PATH,
+        // Taken by host (`[stacks] apps_url`): the window's address, instead of
+        // the agent's host on `port`.
+        "url": state.stacks.proxies.host_url(&id),
     })))
 }
