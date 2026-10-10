@@ -199,11 +199,13 @@ extension on _ServerDetailPageState {
               style: UIs.text11Grey.copyWith(color: scheme.primary),
             ),
           ),
+          // Under WDDM (Windows, WSL) the driver gives no per-process
+          // memory, which arrives as 0, and a name only with privilege.
           for (final process in processes)
             ServerDetailReadoutRow(
-              k: process.name,
-              sub: 'PID ${process.pid}',
-              v: '${process.memory} MiB',
+              k: process.name.isEmpty ? 'PID ${process.pid}' : process.name,
+              sub: process.name.isEmpty ? null : 'PID ${process.pid}',
+              v: process.memory > 0 ? '${process.memory} MiB' : '--',
             ),
         ],
       ],

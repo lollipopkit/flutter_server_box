@@ -1118,6 +1118,39 @@ fn nvidia_parse_inline() {
     assert_eq!(procs[2].memory, 76);
 }
 
+/// Under WDDM (Windows, and WSL through it) a process's memory is `N/A` and
+/// its name may be blank. The Dart parser listed such a process; dropping it
+/// left a card at 91% with nothing holding it.
+#[test]
+fn nvidia_keeps_a_process_whose_memory_is_not_reported() {
+    let raw = r#"<?xml version="1.0" ?>
+<!DOCTYPE nvidia_smi_log SYSTEM "nvsmi_device_v12.dtd">
+<nvidia_smi_log>
+  <gpu id="00000000:01:00.0">
+    <product_name>Tesla T10</product_name>
+    <fb_memory_usage><total>16384 MiB</total><used>9493 MiB</used></fb_memory_usage>
+    <temperature><gpu_temp>86 C</gpu_temp></temperature>
+    <processes>
+      <process_info>
+        <pid>854129</pid><type>C</type>
+        <process_name>/python3.12</process_name>
+        <used_memory>N/A</used_memory>
+      </process_info>
+      <process_info>
+        <pid>4</pid><type>C</type>
+        <process_name></process_name>
+        <used_memory>N/A</used_memory>
+      </process_info>
+    </processes>
+  </gpu>
+</nvidia_smi_log>"#;
+    let items = sbm_parser::gpu::nvidia_from_xml(raw);
+    let procs = &items[0].memory.as_ref().unwrap().processes;
+    assert_eq!(procs.len(), 2);
+    assert_eq!((procs[0].pid, procs[0].name.as_str(), procs[0].memory), (854129, "/python3.12", 0));
+    assert_eq!((procs[1].pid, procs[1].name.as_str()), (4, ""));
+}
+
 /// Dart 'nvidia-smi with N/A':4 GPU
 #[test]
 fn nvidia_parse_multi_gpu() {

@@ -428,7 +428,9 @@ pub struct GpuMem {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GpuMemProcess {
     pub pid: i64,
+    /// Empty when the driver would not say (WDDM without privilege).
     pub name: String,
+    /// MiB; 0 when the driver does not report it, as under WDDM and WSL.
     pub memory: i64,
 }
 
