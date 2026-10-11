@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
@@ -14,6 +13,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/service/program_status_alerts.dart';
+import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -337,11 +337,10 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   ShellSession? get _session => _sess.foreground;
 
-  /// The agent's own command channel, separate from the terminal's session.
-  /// SSH-only: the agent runs commands with `exec`, which the monitor PTY
-  /// cannot do — see [ShellBackend.supportsExec].
-  SSHSession? _aiCommandSession;
-  bool _aiCommandCancelled = false;
+  /// Stops the agent's own command, on a channel separate from the terminal's
+  /// session; null when none runs. SSH-only: the agent runs commands with
+  /// `exec`, which the monitor PTY cannot do — see [ShellBackend.supportsExec].
+  Completer<void>? _aiCommandCancel;
 
   /// Takes this terminal out of reach of its Agent session, run on dispose.
   ///
@@ -473,10 +472,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (introListener != null) {
       widget.args.visibleListenable?.removeListener(introListener);
     }
-    final aiCommandSession = _aiCommandSession;
-    if (aiCommandSession != null) {
-      unawaited(_terminateAiCommandSession(aiCommandSession));
-    }
+    unawaited(_cancelAiCommand());
     unawaited(_tmuxPageController.dispose());
     _terminalController.dispose();
     _virtKeyPage.dispose();

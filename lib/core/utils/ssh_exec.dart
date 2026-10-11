@@ -19,6 +19,13 @@ typedef SshExecCollectedOutput = ({
 /// fast command can close stdout and stderr before its SSH exit status arrives;
 /// registering `asFuture` afterwards misses that already-delivered done event
 /// and falsely turns an ordinary command into a drain timeout.
+///
+/// Once [cancel] completes, [commandDone] gets [drainTimeout] and no more.
+/// sshd answers a channel close only after the process has exited and its
+/// output has closed, so a signal the server refuses (OpenSSH before 7.9,
+/// some Dropbear builds, a forced command) or a child that left the process
+/// group would otherwise hold the result until the command finishes on its
+/// own.
 Future<SshExecCollectedOutput> collectSshExecOutput({
   required Stream<List<int>> stdout,
   required Stream<List<int>> stderr,
@@ -26,6 +33,7 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   required Duration drainTimeout,
   OnExecOutput? onStdout,
   OnExecOutput? onStderr,
+  Future<void>? cancel,
 }) async {
   final out = StringBuffer();
   final err = StringBuffer();
@@ -62,18 +70,34 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   final outDone = captureDone(outSub);
   final errDone = captureDone(errSub);
 
-  await commandDone;
+  var abandoned = false;
+  await Future.any([
+    commandDone,
+    if (cancel != null)
+      cancel.then(
+        (_) => commandDone.timeout(
+          drainTimeout,
+          onTimeout: () => abandoned = true,
+        ),
+      ),
+  ]);
 
   var incomplete = false;
-  await Future.wait([outDone, errDone]).timeout(
-    drainTimeout,
-    onTimeout: () async {
-      incomplete = true;
-      await outSub.cancel();
-      await errSub.cancel();
-      return const <void>[];
-    },
-  );
+  if (abandoned) {
+    incomplete = true;
+    await outSub.cancel();
+    await errSub.cancel();
+  } else {
+    await Future.wait([outDone, errDone]).timeout(
+      drainTimeout,
+      onTimeout: () async {
+        incomplete = true;
+        await outSub.cancel();
+        await errSub.cancel();
+        return const <void>[];
+      },
+    );
+  }
 
   return (
     stdout: out.toString(),
@@ -148,6 +172,7 @@ class SshExec implements ServerByteExec {
       drainTimeout: drainTimeout,
       onStdout: onStdout,
       onStderr: onStderr,
+      cancel: cancel,
     );
 
     try {

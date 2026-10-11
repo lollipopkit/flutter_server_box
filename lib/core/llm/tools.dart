@@ -60,6 +60,10 @@ abstract final class AgentTools {
   /// Stops [run] when the user stops the reply — only while it runs: a stop
   /// after it ended would cancel whatever runs next through the same
   /// [onCancel].
+  ///
+  /// The call ends on the stop, not when [run] does: a command the server
+  /// will not let go of would otherwise hold the reply until it finishes on
+  /// its own or times out. [run] winds down behind it.
   static Future<T> cancellable<T>(
     LlmCancelToken cancel,
     Future<void> Function() onCancel,
@@ -67,16 +71,18 @@ abstract final class AgentTools {
   ) async {
     if (cancel.isCancelled) throw const LlmException('Cancelled');
     var running = true;
+    final task = run().whenComplete(() => running = false);
     unawaited(
       cancel.whenCancelled.then((_) {
         if (running) return onCancel();
       }),
     );
-    try {
-      return await run();
-    } finally {
-      running = false;
-    }
+    return Future.any([
+      task,
+      cancel.whenCancelled.then<T>(
+        (_) => throw const LlmException('Cancelled'),
+      ),
+    ]);
   }
 }
 

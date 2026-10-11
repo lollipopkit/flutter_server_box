@@ -152,51 +152,35 @@ extension _AskAi on SSHPageState {
     }
 
     final startedAt = DateTime.now();
-    _aiCommandCancelled = false;
-    final session = await client.execute(proposal.command);
-    _aiCommandSession = session;
-    // Cancelled while the channel was opening, when there was nothing yet to
-    // stop: stop it now rather than let it run to the end.
-    if (_aiCommandCancelled) await _terminateAiCommandSession(session);
-    final stdoutFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stdout).join();
-    final stderrFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stderr).join();
+    // The signal the stop button and the timeout both pull. [SshExec] stops
+    // the command on it, and gives up on a channel the server keeps open.
+    final cancel = Completer<void>();
+    _aiCommandCancel = cancel;
     var timedOut = false;
+    final timer = Timer(const Duration(minutes: 5), () {
+      if (cancel.isCompleted) return;
+      timedOut = true;
+      cancel.complete();
+    });
 
     try {
-      try {
-        await session.done.timeout(const Duration(minutes: 5));
-      } on TimeoutException {
-        timedOut = true;
-        await _terminateAiCommandSession(session);
-      }
-      final stdout = await stdoutFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => '',
-      );
-      final stderr = await stderrFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => '',
-      );
-      final limited = _limitAiCommandOutput(stdout, stderr);
+      final result = await SshExec(
+        client,
+      ).run(proposal.command, cancel: cancel.future);
+      final limited = _limitAiCommandOutput(result.stdout, result.stderr);
       return AskAiCommandResult(
         command: proposal.command,
-        exitCode: session.exitCode,
+        exitCode: result.exitCode,
         stdout: limited.stdout,
         stderr: limited.stderr,
         duration: DateTime.now().difference(startedAt),
-        cancelled: _aiCommandCancelled,
+        cancelled: cancel.isCompleted && !timedOut,
         timedOut: timedOut,
-        truncated: limited.truncated,
+        truncated: limited.truncated || result.outputIncomplete,
       );
     } finally {
-      if (identical(_aiCommandSession, session)) {
-        _aiCommandSession = null;
-        _aiCommandCancelled = false;
-      }
+      timer.cancel();
+      if (identical(_aiCommandCancel, cancel)) _aiCommandCancel = null;
     }
   }
 
@@ -230,25 +214,9 @@ extension _AskAi on SSHPageState {
     );
   }
 
-  Future<void> _terminateAiCommandSession(SSHSession session) async {
-    try {
-      session.kill(SSHSignal.KILL);
-    } catch (_) {
-      // The session may already have ended between the state check and kill.
-    } finally {
-      session.close();
-    }
-    try {
-      await session.done;
-    } catch (_) {
-      // Termination is best-effort; the command result reports cancellation.
-    }
-  }
-
   Future<void> _cancelAiCommand() async {
-    _aiCommandCancelled = true;
-    final session = _aiCommandSession;
-    if (session != null) await _terminateAiCommandSession(session);
+    final cancel = _aiCommandCancel;
+    if (cancel != null && !cancel.isCompleted) cancel.complete();
   }
 }
 
