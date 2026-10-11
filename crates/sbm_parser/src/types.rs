@@ -266,6 +266,44 @@ impl Disk {
                 .as_deref()
                 .is_none_or(|fs_type| disk_type_should_calc(fs_type, &self.mount))
     }
+
+    /// Whether another machine serves this filesystem — NFS, SMB/CIFS, SSHFS,
+    /// a VM's share of its host — so that its size is that machine's storage,
+    /// not this one's. Listed, but left out of [`disk_usage`] unless asked
+    /// for.
+    ///
+    /// By type where one is known; by source otherwise (`df -k` carries none):
+    /// `//host/share` and `host:/export`.
+    pub fn is_network(&self) -> bool {
+        self.fs_type.as_deref().is_some_and(is_network_type)
+            || self.path.starts_with("//")
+            || (!self.path.starts_with('/') && self.path.contains(":/"))
+    }
+}
+
+/// Filesystem types whose storage is on another machine.
+fn is_network_type(fs_type: &str) -> bool {
+    matches!(
+        fs_type,
+        "nfs"
+            | "nfs4"
+            | "cifs"
+            | "smb3"
+            | "smbfs"
+            | "sshfs"
+            | "fuse.sshfs"
+            | "9p"
+            | "virtiofs"
+            | "afs"
+            | "ceph"
+            | "fuse.ceph"
+            | "glusterfs"
+            | "fuse.glusterfs"
+            | "davfs"
+            | "fuse.davfs2"
+            | "fuse.rclone"
+            | "lustre"
+    )
 }
 
 /// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
@@ -491,7 +529,16 @@ fn apfs_container(disk: &Disk) -> Option<(String, u64, u64)> {
     Some((rest[..digits].to_string(), disk.size, disk.avail))
 }
 
-/// Disk usage aggregation (Dart `DiskUsage.parse`): dedupe by path:kname,
+/// The ZFS pool a dataset is in: the first component of its name. Only for a
+/// filesystem known to be ZFS (`df -kT`, the agent's sampler).
+fn zfs_pool(disk: &Disk) -> Option<&str> {
+    if disk.fs_type.as_deref() != Some("zfs") {
+        return None;
+    }
+    disk.path.split('/').next().filter(|p| !p.is_empty())
+}
+
+/// Disk usage aggregation: `(used, size)` in KiB. Deduped by path:kname,
 /// nodes carrying their own data are not descended into.
 ///
 /// The volumes of one APFS container count once. Each reports the whole
@@ -499,43 +546,68 @@ fn apfs_container(disk: &Disk) -> Option<(String, u64, u64)> {
 /// summed, a Mac with a 1 TB disk had a total of seven and read as a quarter
 /// full while its data volume was at 95%. A container's used space is its size
 /// less its free space, which is what every volume in it is sharing.
-pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
-    fn visit(
-        disk: &Disk,
-        seen: &mut Vec<String>,
-        containers: &mut Vec<(String, u64, u64)>,
-        used: &mut u64,
-        size: &mut u64,
-    ) {
-        if !disk.is_storage() {
+///
+/// The datasets of one ZFS pool likewise share its free space: each reports
+/// its own used space and the pool's free space, so a pool counts the sum of
+/// the one and the other once.
+///
+/// [`Disk::is_network`] filesystems count only with [`count_network`]. A
+/// device with no filesystem mounted adds nothing either way: it has no
+/// filesystem size to add.
+pub fn disk_usage(disks: &[Disk], count_network: bool) -> (u64, u64) {
+    #[derive(Default)]
+    struct Tally {
+        seen: Vec<String>,
+        containers: Vec<(String, u64, u64)>,
+        /// Pool → summed used space, the pool's free space.
+        pools: Vec<(String, u64, u64)>,
+        used: u64,
+        size: u64,
+    }
+    fn visit(disk: &Disk, count_network: bool, t: &mut Tally) {
+        if !disk.is_storage() || (!count_network && disk.is_network()) {
             return;
         }
         if let Some(container) = apfs_container(disk) {
-            if !containers.contains(&container) {
-                *used += container.1.saturating_sub(container.2);
-                *size += container.1;
-                containers.push(container);
+            if !t.containers.contains(&container) {
+                t.used += container.1.saturating_sub(container.2);
+                t.size += container.1;
+                t.containers.push(container);
+            }
+            return;
+        }
+        if let Some(pool) = zfs_pool(disk) {
+            match t.pools.iter_mut().find(|(p, _, _)| p == pool) {
+                Some((_, used, avail)) => {
+                    *used += disk.used;
+                    *avail = (*avail).max(disk.avail);
+                }
+                None => t.pools.push((pool.to_string(), disk.used, disk.avail)),
             }
             return;
         }
         let unique = format!("{}:{}", disk.path, disk.kname.as_deref().unwrap_or("unknown"));
-        if !seen.contains(&unique) {
-            seen.push(unique);
-            *used += disk.used;
-            *size += disk.size;
+        if !t.seen.contains(&unique) {
+            t.seen.push(unique);
+            t.used += disk.used;
+            t.size += disk.size;
         }
         if disk.used != 0 || disk.size != 0 {
             return;
         }
         for child in &disk.children {
-            visit(child, seen, containers, used, size);
+            visit(child, count_network, t);
         }
     }
-    let (mut seen, mut containers, mut used, mut size) = (Vec::new(), Vec::new(), 0, 0);
+    let mut t = Tally::default();
     for disk in disks {
-        visit(disk, &mut seen, &mut containers, &mut used, &mut size);
+        visit(disk, count_network, &mut t);
     }
-    (used, size)
+    for (_, used, avail) in &t.pools {
+        t.used += used;
+        t.size += used + avail;
+    }
+    (t.used, t.size)
 }
 
 /// Temperature table in Celsius (Dart `Temperatures`)

@@ -983,6 +983,7 @@ abstract class RustLibApi extends BaseApi {
     required String system,
     required Map<String, String> raw,
     required double tempDivisor,
+    required bool countNetwork,
   });
 
   Future<String> crateApiUsersParseUserDetailJson({
@@ -8533,6 +8534,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String system,
     required Map<String, String> raw,
     required double tempDivisor,
+    required bool countNetwork,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -8541,6 +8543,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(system, serializer);
           sse_encode_Map_String_String_None(raw, serializer);
           sse_encode_f_64(tempDivisor, serializer);
+          sse_encode_bool(countNetwork, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -8553,7 +8556,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiParserParseStatusJsonConstMeta,
-        argValues: [system, raw, tempDivisor],
+        argValues: [system, raw, tempDivisor, countNetwork],
         apiImpl: this,
       ),
     );
@@ -8562,7 +8565,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiParserParseStatusJsonConstMeta =>
       const TaskConstMeta(
         debugName: 'parse_status_json',
-        argNames: ['system', 'raw', 'tempDivisor'],
+        argNames: ['system', 'raw', 'tempDivisor', 'countNetwork'],
       );
 
   @override

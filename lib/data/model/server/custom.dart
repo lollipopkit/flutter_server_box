@@ -48,6 +48,11 @@ final class ServerCustom {
   @JsonKey(fromJson: GeoCoord.tryFromJson, toJson: GeoCoord.encode)
   final GeoCoord? geo;
 
+  /// Whether NFS, SMB and the like count in the disk total when the status
+  /// comes over SSH. Listed either way; their size is another machine's.
+  /// Over the monitor agent, the agent's own setting decides (#1669).
+  final bool diskCountsNetwork;
+
   const ServerCustom({
     this.cmds,
     this.preferTempDev,
@@ -56,6 +61,7 @@ final class ServerCustom {
     this.netDev,
     this.scriptDir,
     this.geo,
+    this.diskCountsNetwork = false,
   });
 
   /// This, with [cmds] dropped — what the app records once those commands are
@@ -68,6 +74,7 @@ final class ServerCustom {
     netDev: netDev,
     scriptDir: scriptDir,
     geo: geo,
+    diskCountsNetwork: diskCountsNetwork,
   );
 
   factory ServerCustom.fromJson(Map<String, dynamic> json) =>
@@ -84,7 +91,8 @@ final class ServerCustom {
         other.logoUrl == logoUrl &&
         other.netDev == netDev &&
         other.scriptDir == scriptDir &&
-        other.geo == geo;
+        other.geo == geo &&
+        other.diskCountsNetwork == diskCountsNetwork;
   }
 
   @override
@@ -95,5 +103,6 @@ final class ServerCustom {
       logoUrl.hashCode ^
       netDev.hashCode ^
       scriptDir.hashCode ^
-      geo.hashCode;
+      geo.hashCode ^
+      diskCountsNetwork.hashCode;
 }

@@ -1,0 +1,456 @@
+{
+   "blockdevices": [
+      {
+         "fstype": null,
+         "path": "/dev/nvme0n1",
+         "name": "nvme0n1",
+         "kname": "nvme0n1",
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null,
+         "uuid": null,
+         "children": [
+            {
+               "fstype": null,
+               "path": "/dev/nvme0n1p1",
+               "name": "nvme0n1p1",
+               "kname": "nvme0n1p1",
+               "mountpoint": null,
+               "fssize": null,
+               "fsused": null,
+               "fsavail": null,
+               "fsuse%": null,
+               "uuid": null
+            },{
+               "fstype": "vfat",
+               "path": "/dev/nvme0n1p2",
+               "name": "nvme0n1p2",
+               "kname": "nvme0n1p2",
+               "mountpoint": "/boot/efi",
+               "fssize": 1071628288,
+               "fsused": 9461760,
+               "fsavail": 1062166528,
+               "fsuse%": "1%",
+               "uuid": "000000001"
+            },{
+               "fstype": "LVM2_member",
+               "path": "/dev/nvme0n1p3",
+               "name": "nvme0n1p3",
+               "kname": "nvme0n1p3",
+               "mountpoint": null,
+               "fssize": null,
+               "fsused": null,
+               "fsavail": null,
+               "fsuse%": null,
+               "uuid": "00000000000000000000000000000000000002",
+               "children": [
+                  {
+                     "fstype": "swap",
+                     "path": "/dev/mapper/pve-swap",
+                     "name": "pve-swap",
+                     "kname": "dm-0",
+                     "mountpoint": "[SWAP]",
+                     "fssize": null,
+                     "fsused": null,
+                     "fsavail": null,
+                     "fsuse%": null,
+                     "uuid": "00000000-0000-4000-8000-000000000003"
+                  },{
+                     "fstype": "ext4",
+                     "path": "/dev/mapper/pve-root",
+                     "name": "pve-root",
+                     "kname": "dm-1",
+                     "mountpoint": "/",
+                     "fssize": 105089261568,
+                     "fsused": 16284712960,
+                     "fsavail": 83419062272,
+                     "fsuse%": "15%",
+                     "uuid": "00000000-0000-4000-8000-000000000004"
+                  },{
+                     "fstype": null,
+                     "path": "/dev/mapper/pve-data_tmeta",
+                     "name": "pve-data_tmeta",
+                     "kname": "dm-2",
+                     "mountpoint": null,
+                     "fssize": null,
+                     "fsused": null,
+                     "fsavail": null,
+                     "fsuse%": null,
+                     "uuid": null,
+                     "children": [
+                        {
+                           "fstype": null,
+                           "path": "/dev/mapper/pve-data-tpool",
+                           "name": "pve-data-tpool",
+                           "kname": "dm-4",
+                           "mountpoint": null,
+                           "fssize": null,
+                           "fsused": null,
+                           "fsavail": null,
+                           "fsuse%": null,
+                           "uuid": null,
+                           "children": [
+                              {
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-data",
+                                 "name": "pve-data",
+                                 "kname": "dm-5",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--103--cloudinit",
+                                 "name": "pve-vm--103--cloudinit",
+                                 "kname": "dm-6",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000005"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--103--disk--1",
+                                 "name": "pve-vm--103--disk--1",
+                                 "kname": "dm-7",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--103--disk--0",
+                                 "name": "pve-vm--103--disk--0",
+                                 "kname": "dm-8",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--102--cloudinit",
+                                 "name": "pve-vm--102--cloudinit",
+                                 "kname": "dm-9",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000006"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--102--disk--0",
+                                 "name": "pve-vm--102--disk--0",
+                                 "kname": "dm-10",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--9310--cloudinit",
+                                 "name": "pve-vm--9310--cloudinit",
+                                 "kname": "dm-11",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000007"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-base--9310--disk--0",
+                                 "name": "pve-base--9310--disk--0",
+                                 "kname": "dm-12",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--106--cloudinit",
+                                 "name": "pve-vm--106--cloudinit",
+                                 "kname": "dm-13",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000008"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--0",
+                                 "name": "pve-vm--106--disk--0",
+                                 "kname": "dm-14",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--1",
+                                 "name": "pve-vm--106--disk--1",
+                                 "kname": "dm-15",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--2",
+                                 "name": "pve-vm--106--disk--2",
+                                 "kname": "dm-16",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--3",
+                                 "name": "pve-vm--106--disk--3",
+                                 "kname": "dm-17",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--4",
+                                 "name": "pve-vm--106--disk--4",
+                                 "kname": "dm-18",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              }
+                           ]
+                        }
+                     ]
+                  },{
+                     "fstype": null,
+                     "path": "/dev/mapper/pve-data_tdata",
+                     "name": "pve-data_tdata",
+                     "kname": "dm-3",
+                     "mountpoint": null,
+                     "fssize": null,
+                     "fsused": null,
+                     "fsavail": null,
+                     "fsuse%": null,
+                     "uuid": null,
+                     "children": [
+                        {
+                           "fstype": null,
+                           "path": "/dev/mapper/pve-data-tpool",
+                           "name": "pve-data-tpool",
+                           "kname": "dm-4",
+                           "mountpoint": null,
+                           "fssize": null,
+                           "fsused": null,
+                           "fsavail": null,
+                           "fsuse%": null,
+                           "uuid": null,
+                           "children": [
+                              {
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-data",
+                                 "name": "pve-data",
+                                 "kname": "dm-5",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--103--cloudinit",
+                                 "name": "pve-vm--103--cloudinit",
+                                 "kname": "dm-6",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000009"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--103--disk--1",
+                                 "name": "pve-vm--103--disk--1",
+                                 "kname": "dm-7",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--103--disk--0",
+                                 "name": "pve-vm--103--disk--0",
+                                 "kname": "dm-8",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--102--cloudinit",
+                                 "name": "pve-vm--102--cloudinit",
+                                 "kname": "dm-9",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000010"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--102--disk--0",
+                                 "name": "pve-vm--102--disk--0",
+                                 "kname": "dm-10",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--9310--cloudinit",
+                                 "name": "pve-vm--9310--cloudinit",
+                                 "kname": "dm-11",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000011"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-base--9310--disk--0",
+                                 "name": "pve-base--9310--disk--0",
+                                 "kname": "dm-12",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": "iso9660",
+                                 "path": "/dev/mapper/pve-vm--106--cloudinit",
+                                 "name": "pve-vm--106--cloudinit",
+                                 "kname": "dm-13",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": "0000000000000000000012"
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--0",
+                                 "name": "pve-vm--106--disk--0",
+                                 "kname": "dm-14",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--1",
+                                 "name": "pve-vm--106--disk--1",
+                                 "kname": "dm-15",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--2",
+                                 "name": "pve-vm--106--disk--2",
+                                 "kname": "dm-16",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--3",
+                                 "name": "pve-vm--106--disk--3",
+                                 "kname": "dm-17",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              },{
+                                 "fstype": null,
+                                 "path": "/dev/mapper/pve-vm--106--disk--4",
+                                 "name": "pve-vm--106--disk--4",
+                                 "kname": "dm-18",
+                                 "mountpoint": null,
+                                 "fssize": null,
+                                 "fsused": null,
+                                 "fsavail": null,
+                                 "fsuse%": null,
+                                 "uuid": null
+                              }
+                           ]
+                        }
+                     ]
+                  }
+               ]
+            }
+         ]
+      }
+   ]
+}
+__SBM_DF__
+Filesystem           Type     1K-blocks     Used Available Use% Mounted on
+udev                 devtmpfs   7058496        0   7058496   0% /dev
+tmpfs                tmpfs      1623796     3012   1620784   1% /run
+/dev/mapper/pve-root ext4     102626232 15903040  81463928  17% /
+tmpfs                tmpfs      8118972    46800   8072172   1% /dev/shm
+efivarfs             efivarfs       128       80        44  65% /sys/firmware/efi/efivars
+tmpfs                tmpfs         5120        0      5120   0% /run/lock
+tmpfs                tmpfs         1024        0      1024   0% /run/credentials/systemd-journald.service
+tmpfs                tmpfs      8118976       92   8118884   1% /tmp
+/dev/nvme0n1p2       vfat       1046512     9240   1037272   1% /boot/efi
+tmpfs                tmpfs      1623792        4   1623788   1% /run/user/1002
+/dev/fuse            fuse        131072       28    131044   1% /etc/pve
+tmpfs                tmpfs         1024        0      1024   0% /run/credentials/getty@tty1.service
+tmpfs                tmpfs      1623792        4   1623788   1% /run/user/0

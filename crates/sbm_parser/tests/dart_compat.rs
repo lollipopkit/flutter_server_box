@@ -365,11 +365,16 @@ fn disk_parse_bsd_macos_keeps_the_volumes_a_user_has() {
 
 /// The container counts once, as its size less its free space. Summed per
 /// volume this machine had a 7 TB total and read 26% while its data volume
-/// was at 95%.
+/// was at 95%. The OrbStack share is NFS — the VM's storage, not this disk —
+/// and counts only when asked to (#1669).
 #[test]
 fn disk_usage_counts_an_apfs_container_once() {
     let disks = bsd::parse_disk(include_str!("fixtures/bsd_disk_macos.txt"));
-    let (used, size) = disk_usage(&disks);
+    let (used, size) = disk_usage(&disks, false);
+    assert_eq!(size, 971_298_980);
+    assert_eq!(used, 971_298_980 - 51_601_252);
+
+    let (used, size) = disk_usage(&disks, true);
     assert_eq!(size, 971_298_980 + 74_776_576);
     assert_eq!(used, (971_298_980 - 51_601_252) + 26_604_836);
 }
@@ -397,13 +402,13 @@ fn disk_usage_keeps_equal_partitions_that_are_not_apfs_apart() {
             partition("/dev/disk4s1", fs_type),
             partition("/dev/disk4s2", fs_type),
         ];
-        assert_eq!(disk_usage(&disks), (60, 600), "{fs_type:?}");
+        assert_eq!(disk_usage(&disks, false), (60, 600), "{fs_type:?}");
     }
     let apfs = [
         partition("/dev/disk4s1", Some("apfs")),
         partition("/dev/disk4s2", Some("apfs")),
     ];
-    assert_eq!(disk_usage(&apfs), (30, 300));
+    assert_eq!(disk_usage(&apfs, false), (30, 300));
 }
 
 /// Output from a script older than the `mount` table carries no types, so
@@ -564,7 +569,7 @@ fn disk_parse_df_keeps_sources_named_like_filesystem_types() {
         ["squashfs", "erofs", "iso9660", "snapfuse", "fuse.snapfuse", "swap"]
     );
 
-    let (used, size) = disk_usage(&disks);
+    let (used, size) = disk_usage(&disks, false);
     assert_eq!(used, 12345678 * 6);
     assert_eq!(size, 961873408 * 6);
 }
@@ -595,7 +600,7 @@ fn disk_usage_drops_rows_identified_only_by_filesystem_type() {
         row("fuse-overlayfs", "", "/home/u/.local/share/x/merged", 51343636),
     ];
 
-    let (used, size) = disk_usage(&disks);
+    let (used, size) = disk_usage(&disks, false);
     assert_eq!(used, root.used);
     assert_eq!(size, root.size);
 }
@@ -1428,7 +1433,7 @@ fn disk_parse_btrfs_raid() {
     // RAID members share one filesystem UUID
     assert_eq!(nvme1.uuid, nvme2.uuid);
     // DiskUsage semantics: both physical disks counted
-    let (used, size) = disk_usage(&disks);
+    let (used, size) = disk_usage(&disks, false);
     assert_eq!(size, nvme1.size + nvme2.size);
     assert_eq!(used, nvme1.used + nvme2.used);
 }
