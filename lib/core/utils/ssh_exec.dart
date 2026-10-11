@@ -174,28 +174,28 @@ abstract final class SshSessionId {
   ///
   /// Waits a moment only when there was something to kill, for it to be
   /// gone from the process table.
-  ///
-  /// With [owner], kills only a session one of whose processes carries
-  /// [envName] as [owner], and nothing where that cannot be read (no
-  /// `/proc`). For the kill run through sudo: the id comes off stderr, which
-  /// the login shell's startup files write to before the wrapper runs, and a
-  /// forged one must not turn the account's sudo password against a session
-  /// the account could not have touched. The account's own kill needs no such
-  /// check — it reaches nothing those files could not reach themselves.
-  static String kill(int id, {String? owner}) =>
-      "sh -c '${owner == null ? '' : _owned(id, owner)}"
-      'kill -KILL -- -$id 2>/dev/null; '
+  static String kill(int id) =>
+      "sh -c 'kill -KILL -- -$id 2>/dev/null; "
       'pkill -KILL -s $id 2>/dev/null && sleep 1; '
       'pgrep -s $id >/dev/null 2>&1; '
       "[ \$? -eq 1 ] && echo $gone'";
 
-  /// An empty session is gone already, whoever's it was.
-  static String _owned(int id, String nonce) =>
-      'ps=\$(pgrep -s $id); [ -n "\$ps" ] || { echo $gone; exit 0; }; '
-      'for p in \$ps; do '
+  /// Prints [owned] when one of session [id]'s processes carries [envName]
+  /// as [nonce], read as the account — and so only from its own processes,
+  /// and not at all without `/proc`.
+  ///
+  /// The id comes off stderr, which the login shell's startup files write to
+  /// before the wrapper runs: what keeps a forged one from turning the
+  /// account's sudo password against a session the account could not have
+  /// touched. Asked before the signal, while the command's own shell still
+  /// carries the nonce: sudo resets the environment of what it runs, and the
+  /// signal ends sudo itself, which runs as the account.
+  static String owns(int id, String nonce) =>
+      "sh -c 'for p in \$(pgrep -s $id); do "
       'tr "\\0" "\\n" </proc/\$p/environ 2>/dev/null '
-      '| grep -qx $envName=$nonce && ok=1 && break; done; '
-      '[ -n "\$ok" ] || exit 0; ';
+      '| grep -qx $envName=$nonce && echo $owned && exit 0; done\'';
+
+  static const owned = 'sbm-session-owned';
 
   static const gone = 'sbm-session-gone';
 }
@@ -232,7 +232,7 @@ class SshExec implements ServerByteExec {
   /// of its session is killed from another channel.
   static const signalGrace = Duration(seconds: 2);
 
-  /// How long each of those kills gets.
+  /// How long each of the commands that stop one gets.
   static const _killTimeout = Duration(seconds: 10);
 
   /// How long [sudoPassword] gets to answer; past it, `sudo -n`.
@@ -337,13 +337,7 @@ class SshExec implements ServerByteExec {
       cancel?.then((_) {
         if (ended) return;
         stopped = true;
-        try {
-          session.kill(SSHSignal.KILL);
-        } catch (_) {
-          // Already gone. Closing below is still what releases the channel.
-        }
-        session.close();
-        reaped = _reap(session, () => sessionId, nonce);
+        reaped = _stop(session, () => ended, sessionId, nonce);
       }),
     );
 
@@ -390,18 +384,37 @@ class SshExec implements ServerByteExec {
     }
   }
 
-  /// Kills what is left of a cancelled command's session — as the account,
-  /// then through sudo for what runs as root — once the signal has had
-  /// [signalGrace] to end it, and gives the channel as long again to close.
+  /// Stops a cancelled command: the signal first, then — once it has had
+  /// [signalGrace] — what is left of session [sessionId], as the account and,
+  /// for what runs as root, through sudo. Gives the channel as long again to
+  /// close.
   ///
   /// Whether the session is empty; null with no session id to ask about.
   /// Asked even when the channel has closed: that only says nothing holds the
   /// output, and a child that let go of it can outlive the signal.
-  Future<bool?> _reap(
+  Future<bool?> _stop(
     SSHSession session,
-    int? Function() sessionId,
+    bool Function() ended,
+    int? sessionId,
     String? nonce,
   ) async {
+    final id = sessionId;
+    // Before the signal, which ends what carries the nonce — see
+    // [SshSessionId.owns].
+    final owned =
+        id != null &&
+        nonce != null &&
+        await _confirms(SshSessionId.owns(id, nonce), SshSessionId.owned);
+    // Not on a channel that has closed meanwhile: see [_exec].
+    if (!ended()) {
+      try {
+        session.kill(SSHSignal.KILL);
+      } catch (_) {
+        // Already gone. Closing below is still what releases the channel.
+      }
+    }
+    session.close();
+
     Future<void> closed() async {
       try {
         await session.done.timeout(signalGrace);
@@ -412,15 +425,18 @@ class SshExec implements ServerByteExec {
     }
 
     await closed();
-    final id = sessionId();
     if (id == null || nonce == null) return null;
-    var gone = await _killed(SshSessionId.kill(id));
-    if (!gone) {
-      final kill = SshSessionId.kill(id, owner: nonce);
+    final kill = SshSessionId.kill(id);
+    var gone = await _confirms(kill, SshSessionId.gone);
+    if (!gone && owned) {
       final password = await _sudoPassword();
       gone = password == null
-          ? await _killed('sudo -n $kill')
-          : await _killed("sudo -S -p '' $kill", stdin: '$password\n');
+          ? await _confirms('sudo -n $kill', SshSessionId.gone)
+          : await _confirms(
+              "sudo -S -p '' $kill",
+              SshSessionId.gone,
+              stdin: '$password\n',
+            );
     }
     await closed();
     return gone;
@@ -439,16 +455,17 @@ class SshExec implements ServerByteExec {
     }
   }
 
-  Future<bool> _killed(String command, {String? stdin}) async {
+  /// Whether [command], run on a channel of its own, printed [answer].
+  Future<bool> _confirms(String command, String answer, {String? stdin}) async {
     try {
       final r = await _exec(
         command,
         script: command,
         stdin: stdin,
-        // Not tracked: stopped by the signal, the most a kill needs.
+        // Not tracked: stopped by the signal, the most these need.
         cancel: Future<void>.delayed(_killTimeout),
       );
-      return r.result.stdout.contains(SshSessionId.gone);
+      return r.result.stdout.contains(answer);
     } catch (_) {
       return false;
     }

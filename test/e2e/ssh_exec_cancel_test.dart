@@ -13,6 +13,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -163,11 +164,12 @@ Future<void> main() async {
     timeout: const Timeout(Duration(seconds: 60)),
   );
 
-  group('the kill run through sudo', () {
+  group('a session id read off stderr', () {
     /// The session of a `sleep` started on a channel of its own.
-    Future<({int sid, int s})> session(String prefix) async {
+    Future<({int sid, int s})> session(String prefix, {String? stdin}) async {
       final s = sleepFor();
-      unawaited(client.execute('${prefix}sleep $s'));
+      final channel = await client.execute('${prefix}sleep $s');
+      if (stdin != null) channel.stdin.add(utf8.encode(stdin));
       await Future<void>.delayed(const Duration(seconds: 1));
       // Through `sh`: the login shell may be fish.
       final r = await execSshE2e(
@@ -178,27 +180,40 @@ Future<void> main() async {
       return (sid: int.parse(r.stdout.trim()), s: s);
     }
 
-    test('leaves a session this run did not start', () async {
+    test('is not taken for a session this run did not start', () async {
       final v = await session('');
       final r = await execSshE2e(
         client,
-        SshSessionId.kill(v.sid, owner: 'n0t-this-run'),
+        SshSessionId.owns(v.sid, 'n0t-this-run'),
         null,
       );
-      expect(r.stdout, isNot(contains(SshSessionId.gone)));
-      expect(await running(v.s), isTrue);
+      expect(r.stdout, isNot(contains(SshSessionId.owned)));
     });
 
-    test('kills the session this run started', () async {
+    test('is taken for the session this run started', () async {
       final v = await session('env ${SshSessionId.envName}=th1s-run ');
       final r = await execSshE2e(
         client,
-        SshSessionId.kill(v.sid, owner: 'th1s-run'),
+        SshSessionId.owns(v.sid, 'th1s-run'),
         null,
       );
-      expect(r.stdout, contains(SshSessionId.gone));
-      expect(await running(v.s), isFalse);
+      expect(r.stdout, contains(SshSessionId.owned));
     });
+
+    // Even one carrying the nonce: what runs as root is not the account's to
+    // read.
+    test('is not taken for a root session', () async {
+      final v = await session(
+        "sudo -S -p '' env ${SshSessionId.envName}=r00t-run ",
+        stdin: '$sudoPassword\n',
+      );
+      final r = await execSshE2e(
+        client,
+        SshSessionId.owns(v.sid, 'r00t-run'),
+        null,
+      );
+      expect(r.stdout, isNot(contains(SshSessionId.owned)));
+    }, skip: sudoPassword == null ? 'SBM_E2E_SSH_SUDO_PASSWORD not set' : null);
   });
 
   test(

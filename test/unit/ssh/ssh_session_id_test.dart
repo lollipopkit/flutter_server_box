@@ -67,7 +67,7 @@ void main() {
     expect(r.stdout, 'n0nce\n');
   });
 
-  // The kill goes to the login shell as one command too, sudo in front.
+  // These go to the login shell as one command too, sudo in front.
   for (final name in ['sh', 'fish']) {
     final shell = find(name);
     test(
@@ -75,7 +75,7 @@ void main() {
       () async {
         for (final kill in [
           SshSessionId.kill(123),
-          SshSessionId.kill(123, owner: 'n0nce'),
+          SshSessionId.owns(123, 'n0nce'),
         ]) {
           // `printf` in place of `sh`: what the login shell hands on, unrun.
           final r = await Process.run(shell!, [
