@@ -332,6 +332,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
         let idle_secs =
             (chrono::Utc::now() - *app_state.last_viewer_seen.read().await).num_seconds();
         extended_due = should_run_extended(extended_due, &live, idle_secs);
+        let first_cycle = cycle == 0;
         cycle += 1;
         let prev_metrics = app_state.current_metrics.read().await.clone();
 
@@ -341,6 +342,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
             extended_due,
             prev_metrics.as_ref(),
             &mut native_state,
+            first_cycle,
             live.disk_counts_network,
         )
         .await
@@ -439,6 +441,7 @@ async fn collect_metrics(
     extended_due: bool,
     prev_metrics: Option<&SystemMetrics>,
     native_state: &mut sbm_native::NativeState,
+    first_cycle: bool,
     disk_counts_network: bool,
 ) -> Result<SystemMetrics> {
     let system = system_type();
@@ -456,8 +459,10 @@ async fn collect_metrics(
     let mut owned_state = std::mem::take(native_state);
     let (mut status, returned_state) = tokio::task::spawn_blocking(move || {
         // The device tree on the slower cycle, the one that pauses while
-        // nobody looks; each sample merges it with a fresh `df`.
-        if extended_due {
+        // nobody looks; each sample merges it with a fresh `df`. And once at
+        // start, which is idle by then: otherwise there is no tree until
+        // somebody opens a page.
+        if extended_due || first_cycle {
             sbm_native::refresh_block_devices(&mut owned_state);
         }
         let status = sbm_native::sample(&mut owned_state, system);

@@ -515,8 +515,12 @@ pub struct SmartAttributeFlags {
 /// `/dev/disk3s5` and `/dev/disk3s1s1` (a snapshot of `disk3s1`) are both in
 /// `disk3`. Only for a filesystem known to be APFS: partitions of another
 /// kind on one disk are separate filesystems, and two of them can report the
-/// same size and free space without sharing anything. Keyed on the numbers as
-/// well, since the name alone does not say which container a volume shares.
+/// same size and free space without sharing anything.
+///
+/// The container is the identity, not the numbers: each volume's size and
+/// free space are read one after another, and a write in between makes two
+/// volumes of one container disagree — counted twice, had the numbers been
+/// part of the key. [`disk_usage`] keeps the first volume's.
 ///
 /// The device is in `path` where `df` reported it, and in `name`, spelled
 /// `disk3s5`, where the monitor agent's native sampler keys a volume by its
@@ -596,7 +600,7 @@ pub fn disk_total(disks: &[Disk], count_network: bool) -> DiskTotal {
             return;
         }
         if let Some(container) = apfs_container(disk) {
-            if !t.containers.contains(&container) {
+            if !t.containers.iter().any(|(c, _, _)| *c == container.0) {
                 t.used += container.1.saturating_sub(container.2);
                 t.size += container.1;
                 t.avail += container.2;

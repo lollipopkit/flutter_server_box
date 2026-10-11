@@ -274,3 +274,19 @@ fn available_space_is_what_the_filesystem_says() {
         }
     );
 }
+
+/// Volumes of one container read a moment apart can disagree on free space:
+/// still one container.
+#[test]
+fn an_apfs_container_read_a_moment_apart_counts_once() {
+    let volume = |path: &str, avail: u64| Disk {
+        path: path.to_string(),
+        fs_type: Some("apfs".into()),
+        mount: format!("/Volumes/{path}"),
+        size: 1000,
+        avail,
+        ..Disk::default()
+    };
+    let disks = [volume("/dev/disk3s1s1", 100), volume("/dev/disk3s5", 98)];
+    assert_eq!(disk_total(&disks, false), DiskTotal { used: 900, size: 1000, avail: 100 });
+}
