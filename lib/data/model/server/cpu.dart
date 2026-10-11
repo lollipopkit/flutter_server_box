@@ -14,6 +14,15 @@ class Cpus extends TimeSeq<SingleCpuCore> {
 
   final Map<String, int> brand = {};
 
+  /// [brand] in a line: one kind of core by its name, several each with its
+  /// count (`Cortex-A55 ×4, Cortex-A76 ×4`) — showing only the first left a
+  /// big.LITTLE CPU looking like one kind of core.
+  String? get brandLabel => switch (brand.length) {
+    0 => null,
+    1 => brand.keys.single,
+    _ => brand.entries.map((e) => '${e.key} ×${e.value}').join(', '),
+  };
+
   @override
   void onUpdate() {
     // Everything after the first: index 0 is the aggregate "cpu" row, which

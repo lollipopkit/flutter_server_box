@@ -545,19 +545,98 @@ pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
         .collect()
 }
 
-/// model name lines of /proc/cpuinfo (Dart `CpuBrand.parse`): model → occurrence
-/// count, keeping first-seen order
+/// /proc/cpuinfo, whole or the lines [commands::CPU_BRAND] keeps: core name →
+/// how many cores have it, in first-seen order.
+///
+/// A core is named by its `model name` when that names it, by its `CPU
+/// implementer` and `CPU part` otherwise (see [crate::arm]): arm64 prints no
+/// `model name`, and ARM's own is the same `ARMv8 Processor rev N` for every
+/// kind of core in a big.LITTLE CPU.
 pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
-    let mut brands: Vec<(String, u32)> = Vec::new();
-    for line in raw.lines() {
-        if !line.contains("model name") {
-            continue;
+    #[derive(Default)]
+    struct Core {
+        model: Option<String>,
+        implementer: Option<u32>,
+        part: Option<u32>,
+    }
+    impl Core {
+        fn is_empty(&self) -> bool {
+            self.model.is_none() && self.implementer.is_none() && self.part.is_none()
         }
-        let model = line.split(':').next_back().unwrap_or("").trim().to_string();
-        match brands.iter_mut().find(|(name, _)| *name == model) {
+        fn name(self) -> Option<String> {
+            let decoded = match (self.implementer, self.part) {
+                (Some(i), Some(p)) => Some(crate::arm::core_name(i, p)),
+                _ => None,
+            };
+            match self.model {
+                Some(model) if !is_generic_arm_model(&model) => Some(model),
+                model => decoded.or(model),
+            }
+        }
+    }
+    fn hex(value: &str) -> Option<u32> {
+        u32::from_str_radix(value.strip_prefix("0x")?, 16).ok()
+    }
+
+    let mut cores: Vec<Core> = Vec::new();
+    let mut core = Core::default();
+    for line in raw.lines() {
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        let value = value.trim();
+        // A field seen twice is the next core's: the lines of the command's
+        // older form are `model name` alone, one per core.
+        match key.trim() {
+            "processor" => {
+                if !core.is_empty() {
+                    cores.push(std::mem::take(&mut core));
+                }
+            }
+            "model name" => {
+                if core.model.is_some() {
+                    cores.push(std::mem::take(&mut core));
+                }
+                core.model = Some(value.to_string()).filter(|v| !v.is_empty());
+            }
+            "CPU implementer" => {
+                if core.implementer.is_some() {
+                    cores.push(std::mem::take(&mut core));
+                }
+                core.implementer = hex(value);
+            }
+            "CPU part" => {
+                if core.part.is_some() {
+                    cores.push(std::mem::take(&mut core));
+                }
+                core.part = hex(value);
+            }
+            _ => {}
+        }
+    }
+    if !core.is_empty() {
+        cores.push(core);
+    }
+
+    let mut brands: Vec<(String, u32)> = Vec::new();
+    for name in cores.into_iter().filter_map(Core::name) {
+        match brands.iter_mut().find(|(n, _)| *n == name) {
             Some((_, count)) => *count += 1,
-            None => brands.push((model, 1)),
+            None => brands.push((name, 1)),
         }
     }
     brands
+}
+
+/// The `model name` an ARM kernel makes up when it has none to give:
+/// `ARMv7 Processor rev 4 (v7l)`, `AArch64 Processor rev 4 (aarch64)`.
+fn is_generic_arm_model(model: &str) -> bool {
+    let Some((arch, rest)) = model.split_once(' ') else {
+        return false;
+    };
+    rest.starts_with("Processor")
+        && (arch == "AArch64"
+            || arch
+                .strip_prefix("ARMv")
+                .is_some_and(|v| v.starts_with(|c: char| c.is_ascii_digit())))
 }
