@@ -63,6 +63,15 @@ class TerminalSessionClosed implements Exception {
 /// Retry transport failures after launch, but leave permission and auth
 /// failures for the user to resolve.
 bool isRetryableTerminalConnectionError(Object error) {
+  // An `SSHAuthError` by type, but authentication was never reached: the
+  // handshake ended first. That is the server turning the connection away —
+  // `MaxStartups` drops new connections at random once enough unauthenticated
+  // ones are pending, which a server being brute-forced always has, with
+  // "Not allowed at this time" in place of its version line. The next attempt
+  // may well get in; the user has nothing to resolve.
+  if (error is SSHAuthAbortError && error.reason is SSHHandshakeError) {
+    return true;
+  }
   if (error is TerminalRemoteAccessUnavailable ||
       error is TerminalSessionClosed ||
       error is SSHAuthError) {
@@ -447,6 +456,13 @@ class TerminalSession {
     terminal.buffer.clear();
     terminal.buffer.setCursor(0, 0);
     _cancelOutputSubscriptions();
+    // What the last shell printed and is not on screen yet belongs to the
+    // screen just cleared: flushed after this, it would land on the new
+    // shell's, and the tail would read it as the new shell's.
+    _flushTimer?.cancel();
+    _flushTimer = null;
+    _buffer.take(_buffer.pendingChars);
+    _tail = '';
 
     // Whatever ran in the terminal before has exited; a tmux pane has not.
     status.shell.processExited();
