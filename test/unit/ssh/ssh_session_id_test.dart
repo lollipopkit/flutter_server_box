@@ -34,7 +34,7 @@ void main() {
         final plain = await Process.run(shell, ['-c', script], environment: env);
         final wrapped = await Process.run(shell, [
           '-c',
-          SshSessionId.wrap(script),
+          SshSessionId.wrap(script, 'n0nce'),
         ], environment: env);
         final marker = SshSessionId.marker.firstMatch(wrapped.stderr as String);
         if (marker == null) {
@@ -54,8 +54,42 @@ void main() {
   test('keeps the exit code', () async {
     final r = await Process.run('/bin/sh', [
       '-c',
-      SshSessionId.wrap('exit 7'),
+      SshSessionId.wrap('exit 7', 'n0nce'),
     ], environment: {'SHELL': '/bin/sh'});
     expect(r.exitCode, 7);
   });
+
+  test('hands the run its nonce', () async {
+    final r = await Process.run('/bin/sh', [
+      '-c',
+      SshSessionId.wrap('echo "\$${SshSessionId.envName}"', 'n0nce'),
+    ], environment: {'SHELL': '/bin/sh'});
+    expect(r.stdout, 'n0nce\n');
+  });
+
+  // The kill goes to the login shell as one command too, sudo in front.
+  for (final name in ['sh', 'fish']) {
+    final shell = find(name);
+    test(
+      'in $name, the kill is one command',
+      () async {
+        for (final kill in [
+          SshSessionId.kill(123),
+          SshSessionId.kill(123, owner: 'n0nce'),
+        ]) {
+          // `printf` in place of `sh`: what the login shell hands on, unrun.
+          final r = await Process.run(shell!, [
+            '-c',
+            kill.replaceFirst('sh -c ', 'printf %s '),
+          ]);
+          expect(r.exitCode, 0, reason: '${r.stderr}');
+          final program = r.stdout as String;
+          // What `sh -c` then reads must parse.
+          final parsed = await Process.run('/bin/sh', ['-n', '-c', program]);
+          expect(parsed.exitCode, 0, reason: '${parsed.stderr}');
+        }
+      },
+      skip: shell == null ? '$name is not installed' : null,
+    );
+  }
 }

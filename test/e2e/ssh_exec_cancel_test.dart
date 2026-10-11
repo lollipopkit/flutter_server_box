@@ -163,6 +163,44 @@ Future<void> main() async {
     timeout: const Timeout(Duration(seconds: 60)),
   );
 
+  group('the kill run through sudo', () {
+    /// The session of a `sleep` started on a channel of its own.
+    Future<({int sid, int s})> session(String prefix) async {
+      final s = sleepFor();
+      unawaited(client.execute('${prefix}sleep $s'));
+      await Future<void>.delayed(const Duration(seconds: 1));
+      // Through `sh`: the login shell may be fish.
+      final r = await execSshE2e(
+        client,
+        'sh -c \'ps -o sid= -p \$(pgrep -fx "sleep $s")\'',
+        null,
+      );
+      return (sid: int.parse(r.stdout.trim()), s: s);
+    }
+
+    test('leaves a session this run did not start', () async {
+      final v = await session('');
+      final r = await execSshE2e(
+        client,
+        SshSessionId.kill(v.sid, owner: 'n0t-this-run'),
+        null,
+      );
+      expect(r.stdout, isNot(contains(SshSessionId.gone)));
+      expect(await running(v.s), isTrue);
+    });
+
+    test('kills the session this run started', () async {
+      final v = await session('env ${SshSessionId.envName}=th1s-run ');
+      final r = await execSshE2e(
+        client,
+        SshSessionId.kill(v.sid, owner: 'th1s-run'),
+        null,
+      );
+      expect(r.stdout, contains(SshSessionId.gone));
+      expect(await running(v.s), isFalse);
+    });
+  });
+
   test(
     'a stop kills what runs as root through sudo',
     () async {

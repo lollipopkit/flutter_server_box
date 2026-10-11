@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -134,8 +135,21 @@ abstract final class SshSessionId {
   /// The line [wrap] prints on stderr before anything of the command runs.
   static final marker = RegExp('\x1esbm-sid:(\\d+)\x1e\n');
 
+  /// Exported by [wrap], with the run's own [nonce], to everything the
+  /// command starts: what ties a session id read off stderr to this run.
+  static const envName = 'SBM_EXEC_ID';
+
+  /// A fresh value for [envName].
+  static String nonce() {
+    final random = Random.secure();
+    return List.generate(
+      16,
+      (_) => random.nextInt(16).toRadixString(16),
+    ).join();
+  }
+
   /// [command] run as before — by the login shell, `$SHELL` — after `sh` has
-  /// printed [marker].
+  /// printed [marker] and exported [envName] as [nonce].
   ///
   /// The login shell need not be a POSIX one, so what it is handed is valid
   /// in fish as well: one single-quoted program, and [command] single-quoted
@@ -143,11 +157,12 @@ abstract final class SshSessionId {
   /// quotes fish reads only `\'` and `\\`, POSIX shells nothing at all. A
   /// shell that rejects it anyway (cmd.exe, PowerShell, csh with a newline in
   /// quotes) runs none of [command]: the marker is printed before it starts.
-  static String wrap(String command) {
+  static String wrap(String command, String nonce) {
     final arg = command
         .replaceAll(r'\', r'\0134')
         .replaceAll("'", r'\0047');
     return r'''exec sh -c 'printf "\036sbm-sid:%s\036\n" $$ >&2; '''
+        'export $envName=$nonce; '
         r'''exec "${SHELL:-sh}" -c "$(printf %b "$1")"' sbm '''
         "'$arg'";
   }
@@ -159,11 +174,28 @@ abstract final class SshSessionId {
   ///
   /// Waits a moment only when there was something to kill, for it to be
   /// gone from the process table.
-  static String kill(int id) =>
-      "sh -c 'kill -KILL -- -$id 2>/dev/null; "
+  ///
+  /// With [owner], kills only a session one of whose processes carries
+  /// [envName] as [owner], and nothing where that cannot be read (no
+  /// `/proc`). For the kill run through sudo: the id comes off stderr, which
+  /// the login shell's startup files write to before the wrapper runs, and a
+  /// forged one must not turn the account's sudo password against a session
+  /// the account could not have touched. The account's own kill needs no such
+  /// check — it reaches nothing those files could not reach themselves.
+  static String kill(int id, {String? owner}) =>
+      "sh -c '${owner == null ? '' : _owned(id, owner)}"
+      'kill -KILL -- -$id 2>/dev/null; '
       'pkill -KILL -s $id 2>/dev/null && sleep 1; '
       'pgrep -s $id >/dev/null 2>&1; '
       "[ \$? -eq 1 ] && echo $gone'";
+
+  /// An empty session is gone already, whoever's it was.
+  static String _owned(int id, String nonce) =>
+      'ps=\$(pgrep -s $id); [ -n "\$ps" ] || { echo $gone; exit 0; }; '
+      'for p in \$ps; do '
+      'tr "\\0" "\\n" </proc/\$p/environ 2>/dev/null '
+      '| grep -qx $envName=$nonce && ok=1 && break; done; '
+      '[ -n "\$ok" ] || exit 0; ';
 
   static const gone = 'sbm-session-gone';
 }
@@ -203,6 +235,9 @@ class SshExec implements ServerByteExec {
   /// How long each of those kills gets.
   static const _killTimeout = Duration(seconds: 10);
 
+  /// How long [sudoPassword] gets to answer; past it, `sudo -n`.
+  static const _sudoPasswordTimeout = Duration(seconds: 5);
+
   @override
   Future<ExecResult> run(
     String script, {
@@ -217,7 +252,7 @@ class SshExec implements ServerByteExec {
     // stdin free to be stdin — where a sudo password belongs. With one, the
     // entry is the command and the script is what it reads.
     final command = entry ?? script;
-    Future<_Run> exec(String command, {bool track = false}) => _exec(
+    Future<_Run> exec(String command, {String? nonce}) => _exec(
       command,
       script: script,
       entry: entry,
@@ -226,14 +261,18 @@ class SshExec implements ServerByteExec {
       onStdout: onStdout,
       onStderr: onStderr,
       cancel: cancel,
-      track: track,
+      nonce: nonce,
     );
     // Nothing to stop, so no session id to know.
     if (cancel == null) return (await exec(command)).result;
 
     var cancelled = false;
     unawaited(cancel.then((_) => cancelled = true));
-    final tracked = await exec(SshSessionId.wrap(command), track: true);
+    final nonce = SshSessionId.nonce();
+    final tracked = await exec(
+      SshSessionId.wrap(command, nonce),
+      nonce: nonce,
+    );
     if (!tracked.refused || cancelled) return tracked.result;
     // The login shell could not run the wrapper, and so ran none of the
     // command: run it as it is, stopped by the signal alone.
@@ -249,9 +288,11 @@ class SshExec implements ServerByteExec {
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
     Future<void>? cancel,
-    bool track = false,
+    String? nonce,
   }) async {
     final session = await client.execute(command, environment: env);
+    // Tracked: run through [SshSessionId.wrap] with this [nonce].
+    final track = nonce != null;
 
     // Until the marker has come or stderr has ended without it, nothing is
     // passed on: output before then may be a login shell refusing the
@@ -302,7 +343,7 @@ class SshExec implements ServerByteExec {
           // Already gone. Closing below is still what releases the channel.
         }
         session.close();
-        reaped = _reap(session, () => sessionId);
+        reaped = _reap(session, () => sessionId, nonce);
       }),
     );
 
@@ -356,7 +397,11 @@ class SshExec implements ServerByteExec {
   /// Whether the session is empty; null with no session id to ask about.
   /// Asked even when the channel has closed: that only says nothing holds the
   /// output, and a child that let go of it can outlive the signal.
-  Future<bool?> _reap(SSHSession session, int? Function() sessionId) async {
+  Future<bool?> _reap(
+    SSHSession session,
+    int? Function() sessionId,
+    String? nonce,
+  ) async {
     Future<void> closed() async {
       try {
         await session.done.timeout(signalGrace);
@@ -368,17 +413,30 @@ class SshExec implements ServerByteExec {
 
     await closed();
     final id = sessionId();
-    if (id == null) return null;
-    final kill = SshSessionId.kill(id);
-    var gone = await _killed(kill);
+    if (id == null || nonce == null) return null;
+    var gone = await _killed(SshSessionId.kill(id));
     if (!gone) {
-      final password = await sudoPassword?.call();
+      final kill = SshSessionId.kill(id, owner: nonce);
+      final password = await _sudoPassword();
       gone = password == null
           ? await _killed('sudo -n $kill')
           : await _killed("sudo -S -p '' $kill", stdin: '$password\n');
     }
     await closed();
     return gone;
+  }
+
+  /// [sudoPassword]'s answer, or null when it has none, fails or takes
+  /// longer than [_sudoPasswordTimeout]: a secure store that never answers
+  /// must not hold the result of a stopped command forever.
+  Future<String?> _sudoPassword() async {
+    final read = sudoPassword;
+    if (read == null) return null;
+    try {
+      return await read().timeout(_sudoPasswordTimeout);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<bool> _killed(String command, {String? stdin}) async {
