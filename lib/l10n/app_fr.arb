@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} threads",
   "followTerminalDir": "Suivre le répertoire du terminal",
   "insertPathToTerminal": "Insérer le chemin dans le terminal",
-  "openServerDetail": "Ouvrir les détails du serveur"
+  "openServerDetail": "Ouvrir les détails du serveur",
+  "companionPanels": "Panneaux"
 }

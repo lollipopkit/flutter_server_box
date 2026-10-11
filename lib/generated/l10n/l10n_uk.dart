@@ -5577,4 +5577,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Відкрити відомості про сервер';
+
+  @override
+  String get companionPanels => 'Панелі';
 }

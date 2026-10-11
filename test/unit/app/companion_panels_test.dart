@@ -1,5 +1,5 @@
-/// The panels a tab opens beside its subject: which are open, in what order,
-/// and how the host lays them out.
+/// The panels a tab shows beside its subject: whether they are open, which
+/// one, and how the host lays them out.
 library;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -30,51 +30,42 @@ void main() {
   });
 
   group('CompanionPanels', () {
-    test('each tab offers the other two', () {
+    test('each tab offers the other two and the Agent', () {
       expect(CompanionPanel.of(AppTab.ssh), [
         CompanionPanel.status,
         CompanionPanel.files,
+        CompanionPanel.agent,
       ]);
       expect(CompanionPanel.of(AppTab.file), [
         CompanionPanel.status,
         CompanionPanel.terminal,
+        CompanionPanel.agent,
       ]);
       expect(CompanionPanel.of(AppTab.server), [
         CompanionPanel.terminal,
         CompanionPanel.files,
+        CompanionPanel.agent,
       ]);
       expect(CompanionPanel.of(AppTab.agent), isEmpty);
+      expect(CompanionPanels.isOpen(AppTab.agent), isFalse);
     });
 
-    test('opening again moves a panel to the top, per tab', () {
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
+    test('open, close and the panel shown are per tab, and kept', () {
+      expect(CompanionPanels.selectedOf(AppTab.ssh), CompanionPanel.status);
       CompanionPanels.open(AppTab.ssh, CompanionPanel.files);
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
-      expect(CompanionPanels.openOf(AppTab.ssh), [
-        CompanionPanel.files,
-        CompanionPanel.status,
-      ]);
-      expect(CompanionPanels.openOf(AppTab.file), isEmpty);
+      expect(CompanionPanels.isOpen(AppTab.ssh), isTrue);
+      expect(CompanionPanels.isOpen(AppTab.file), isFalse);
 
-      CompanionPanels.close(AppTab.ssh, CompanionPanel.status);
-      CompanionPanels.close(AppTab.ssh, CompanionPanel.files);
-      expect(CompanionPanels.openOf(AppTab.ssh), isEmpty);
-      expect(Stores.setting.companionPanels.fetch(), isEmpty);
+      CompanionPanels.close(AppTab.ssh);
+      expect(CompanionPanels.isOpen(AppTab.ssh), isFalse);
+      // Opens where it was left.
+      CompanionPanels.toggle(AppTab.ssh);
+      expect(CompanionPanels.selectedOf(AppTab.ssh), CompanionPanel.files);
     });
 
-    test('a stored name the tab does not offer is dropped', () {
-      Stores.setting.companionPanels.put({
-        AppTab.ssh.name: 'terminal,gone,files',
-      });
-      expect(CompanionPanels.openOf(AppTab.ssh), [CompanionPanel.files]);
-    });
-
-    test('folding is per panel and per tab', () {
-      CompanionPanels.setCollapsed(AppTab.ssh, CompanionPanel.status, true);
-      expect(CompanionPanels.collapsedOf(AppTab.ssh), {CompanionPanel.status});
-      expect(CompanionPanels.collapsedOf(AppTab.file), isEmpty);
-      CompanionPanels.setCollapsed(AppTab.ssh, CompanionPanel.status, false);
-      expect(CompanionPanels.collapsedOf(AppTab.ssh), isEmpty);
+    test('a stored panel the tab does not offer falls back to its first', () {
+      Stores.setting.companionPanel.put({AppTab.ssh.name: 'terminal'});
+      expect(CompanionPanels.selectedOf(AppTab.ssh), CompanionPanel.status);
     });
   });
 
@@ -86,9 +77,10 @@ void main() {
           body: CompanionHost(
             tab: AppTab.ssh,
             spi: withServer ? spiFixture(name: 'box') : null,
-            builder: (_, panel, _) =>
-                CompanionFrame(body: Text('body:${panel.name}')),
-            child: const _Counter(),
+            builder: (_, panel, _) => CompanionFrame(
+              body: _Counter(key: ValueKey('counter:${panel.name}')),
+            ),
+            child: const _Counter(key: ValueKey('subject')),
           ),
         ),
       ),
@@ -100,94 +92,79 @@ void main() {
       addTearDown(tester.view.reset);
     }
 
-    testWidgets('wide, open panels are sections in the bar order', (
+    Finder counter(String name) => find.byKey(ValueKey('counter:$name'));
+
+    testWidgets('wide, the panels are a column on the right', (tester) async {
+      await sized(tester, 1280);
+      CompanionPanels.open(AppTab.ssh, CompanionPanel.files);
+      await tester.pumpWidget(host(withServer: true));
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(counter('files')).dx, greaterThan(800));
+      // Never visited, so never built.
+      expect(counter('status'), findsNothing);
+    });
+
+    testWidgets('switching keeps every panel visited as it was', (
       tester,
     ) async {
       await sized(tester, 1280);
       CompanionPanels.open(AppTab.ssh, CompanionPanel.files);
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
       await tester.pumpWidget(host(withServer: true));
+      await tester.pumpAndSettle();
+      await tester.tap(counter('files'));
+      await tester.pump();
 
-      final status = tester.getTopLeft(find.text('body:status'));
-      final files = tester.getTopLeft(find.text('body:files'));
-      expect(status.dy, lessThan(files.dy), reason: 'status above files');
-      expect(status.dx, greaterThan(800), reason: 'in a column on the right');
+      await tester.tap(find.text(l10n.status));
+      await tester.pumpAndSettle();
+      expect(CompanionPanels.selectedOf(AppTab.ssh), CompanionPanel.status);
+      await tester.tap(find.text(libL10n.file));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: counter('files'), matching: find.text('taps:1')),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('narrow, only the newest panel shows, as a sheet', (
-      tester,
-    ) async {
+    testWidgets('narrow, a sheet that closes from its strip', (tester) async {
       await sized(tester, 400);
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
       CompanionPanels.open(AppTab.ssh, CompanionPanel.files);
       await tester.pumpWidget(host(withServer: true));
-
-      expect(find.text('body:files'), findsOneWidget);
-      expect(find.text('body:status'), findsNothing);
+      await tester.pumpAndSettle();
+      expect(counter('files'), findsOneWidget);
 
       await tester.tap(find.byTooltip(libL10n.close));
-      await tester.pump();
-      expect(find.text('body:status'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(CompanionPanels.isOpen(AppTab.ssh), isFalse);
     });
 
-    testWidgets('the subject keeps its state as panels open and close', (
+    testWidgets('the subject keeps its state as the panels open and close', (
       tester,
     ) async {
       await sized(tester, 1280);
       await tester.pumpWidget(host(withServer: true));
-      await tester.tap(find.byType(_Counter));
+      await tester.tap(find.byKey(const ValueKey('subject')));
       await tester.pump();
-      expect(find.text('taps:1'), findsOneWidget);
 
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
-      await tester.pump();
-      expect(find.text('body:status'), findsOneWidget);
-      expect(find.text('taps:1'), findsOneWidget);
-
-      CompanionPanels.close(AppTab.ssh, CompanionPanel.status);
-      await tester.pump();
-      expect(find.text('taps:1'), findsOneWidget);
-    });
-
-    testWidgets('folding one panel builds neither again', (tester) async {
-      await sized(tester, 1280);
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
-      CompanionPanels.open(AppTab.ssh, CompanionPanel.files);
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            localizationsDelegates: appLocalizationsDelegates,
-            home: Scaffold(
-              body: CompanionHost(
-                tab: AppTab.ssh,
-                spi: spiFixture(name: 'box'),
-                builder: (_, panel, _) => CompanionFrame(
-                  body: _Counter(key: ValueKey('counter:${panel.name}')),
-                ),
-                child: const SizedBox.expand(),
-              ),
-            ),
-          ),
+      CompanionPanels.open(AppTab.ssh);
+      await tester.pumpAndSettle();
+      CompanionPanels.close(AppTab.ssh);
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('subject')),
+          matching: find.text('taps:1'),
         ),
+        findsOneWidget,
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('counter:files')));
-      await tester.tap(find.byKey(const ValueKey('counter:status')));
-      await tester.pump();
-
-      CompanionPanels.setCollapsed(AppTab.ssh, CompanionPanel.status, true);
-      await tester.pumpAndSettle();
-      CompanionPanels.setCollapsed(AppTab.ssh, CompanionPanel.status, false);
-      await tester.pumpAndSettle();
-
-      expect(find.text('taps:1'), findsNWidgets(2));
     });
 
     testWidgets('nothing beside a subject with no server', (tester) async {
       await sized(tester, 1280);
       CompanionPanels.open(AppTab.ssh, CompanionPanel.status);
       await tester.pumpWidget(host(withServer: false));
-      expect(find.text('body:status'), findsNothing);
+      expect(counter('status'), findsNothing);
       expect(CompanionHost.actions(AppTab.ssh, enabled: false), isEmpty);
     });
   });

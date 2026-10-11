@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} スレッド",
   "followTerminalDir": "ターミナルのディレクトリに追従",
   "insertPathToTerminal": "パスをターミナルに挿入",
-  "openServerDetail": "サーバーの詳細を開く"
+  "openServerDetail": "サーバーの詳細を開く",
+  "companionPanels": "パネル"
 }

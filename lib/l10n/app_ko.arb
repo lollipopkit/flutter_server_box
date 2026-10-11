@@ -1558,5 +1558,6 @@
   "threadsFmt": "스레드 {count}개",
   "followTerminalDir": "터미널 디렉터리 따라가기",
   "insertPathToTerminal": "터미널에 경로 삽입",
-  "openServerDetail": "서버 세부 정보 열기"
+  "openServerDetail": "서버 세부 정보 열기",
+  "companionPanels": "패널"
 }

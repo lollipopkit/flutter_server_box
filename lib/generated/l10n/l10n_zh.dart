@@ -5186,6 +5186,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openServerDetail => '打开服务器详情';
+
+  @override
+  String get companionPanels => '面板';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10369,4 +10372,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get openServerDetail => '開啟伺服器詳情';
+
+  @override
+  String get companionPanels => '面板';
 }

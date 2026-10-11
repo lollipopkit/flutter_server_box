@@ -5535,4 +5535,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Server təfərrüatlarını aç';
+
+  @override
+  String get companionPanels => 'Panellər';
 }

@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} thread",
   "followTerminalDir": "Ikuti direktori terminal",
   "insertPathToTerminal": "Sisipkan jalur ke terminal",
-  "openServerDetail": "Buka detail server"
+  "openServerDetail": "Buka detail server",
+  "companionPanels": "Panel"
 }

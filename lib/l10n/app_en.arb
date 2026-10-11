@@ -7171,5 +7171,9 @@
   "openServerDetail": "Open server details",
   "@openServerDetail": {
     "description": "Button in the status panel: opens the server's full detail page."
+  },
+  "companionPanels": "Panels",
+  "@companionPanels": {
+    "description": "Bar button that opens or closes the panels beside a server's terminal, files or page: status, files, a terminal, the Agent."
   }
 }

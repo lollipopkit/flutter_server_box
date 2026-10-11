@@ -9488,6 +9488,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open server details'**
   String get openServerDetail;
+
+  /// Bar button that opens or closes the panels beside a server's terminal, files or page: status, files, a terminal, the Agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Panels'**
+  String get companionPanels;
 }
 
 class _AppLocalizationsDelegate

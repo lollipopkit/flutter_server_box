@@ -5631,4 +5631,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Ouvrir les détails du serveur';
+
+  @override
+  String get companionPanels => 'Panneaux';
 }

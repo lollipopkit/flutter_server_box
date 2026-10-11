@@ -5278,4 +5278,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openServerDetail => 'サーバーの詳細を開く';
+
+  @override
+  String get companionPanels => 'パネル';
 }

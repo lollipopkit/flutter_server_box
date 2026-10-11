@@ -5589,4 +5589,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Serverdetails openen';
+
+  @override
+  String get companionPanels => 'Panelen';
 }

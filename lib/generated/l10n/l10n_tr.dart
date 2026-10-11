@@ -5526,4 +5526,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Sunucu ayrıntılarını aç';
+
+  @override
+  String get companionPanels => 'Paneller';
 }

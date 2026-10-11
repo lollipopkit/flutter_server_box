@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} axın",
   "followTerminalDir": "Terminalın qovluğunu izlə",
   "insertPathToTerminal": "Yolu terminala daxil et",
-  "openServerDetail": "Server təfərrüatlarını aç"
+  "openServerDetail": "Server təfərrüatlarını aç",
+  "companionPanels": "Panellər"
 }

@@ -1558,5 +1558,6 @@
   "threadsFmt": "Потоків: {count}",
   "followTerminalDir": "Стежити за каталогом термінала",
   "insertPathToTerminal": "Вставити шлях у термінал",
-  "openServerDetail": "Відкрити відомості про сервер"
+  "openServerDetail": "Відкрити відомості про сервер",
+  "companionPanels": "Панелі"
 }

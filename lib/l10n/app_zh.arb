@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} 个线程",
   "followTerminalDir": "跟随终端目录",
   "insertPathToTerminal": "插入路径到终端",
-  "openServerDetail": "打开服务器详情"
+  "openServerDetail": "打开服务器详情",
+  "companionPanels": "面板"
 }

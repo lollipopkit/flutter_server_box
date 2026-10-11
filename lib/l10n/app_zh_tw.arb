@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} 個執行緒",
   "followTerminalDir": "跟隨終端目錄",
   "insertPathToTerminal": "插入路徑到終端",
-  "openServerDetail": "開啟伺服器詳情"
+  "openServerDetail": "開啟伺服器詳情",
+  "companionPanels": "面板"
 }

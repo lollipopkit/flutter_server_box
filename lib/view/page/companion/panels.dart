@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart' show LlmStores;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/server.dart';
+import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/companion.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -17,6 +20,8 @@ import 'package:server_box/data/ssh/terminal_cwd.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/src/rust/api/shell_cwd.dart';
+import 'package:server_box/view/page/agent/history.dart';
+import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/companion/host.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
@@ -25,25 +30,32 @@ import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 
-/// What the panels beside a server's own page are: a terminal on it, and its
-/// files.
+/// What the panels beside a server's own page are: a terminal on it, its
+/// files, and the Agent.
 Widget serverCompanion(BuildContext context, CompanionPanel panel, Spi spi) =>
     switch (panel) {
       CompanionPanel.terminal => CompanionTerminal(spi: spi),
       CompanionPanel.files => CompanionFiles(spi: spi),
+      CompanionPanel.agent => CompanionAgent(spi: spi),
       // Not offered there: that page is the status.
       CompanionPanel.status => const SizedBox.shrink(),
     };
 
 /// A server's readings, as its page shows them, in a panel.
-class CompanionStatus extends StatelessWidget {
+class CompanionStatus extends ConsumerWidget {
   const CompanionStatus({super.key, required this.spi});
 
   final Spi spi;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The line a card puts beside the name — temperature and uptime, or what
+    // `server_card_top_right` says — which the page itself leaves out.
+    final line = ref.watch(
+      serverProvider(spi.id).select((srv) => srv.listLine),
+    );
     return CompanionFrame(
+      leading: line == null ? null : Text(line),
       actions: [
         BarAction(
           icon: Icons.open_in_full,
@@ -383,6 +395,65 @@ class _CompanionTerminalState extends ConsumerState<CompanionTerminal> {
         ),
         null => const SizedBox.shrink(),
       },
+    );
+  }
+}
+
+/// The Agent on the server, in a panel: the same chats as its terminal's,
+/// whichever tab it is opened from — its tools reach the server through the
+/// terminal open on it, or a connection of their own.
+class CompanionAgent extends StatelessWidget {
+  const CompanionAgent({super.key, required this.spi});
+
+  final Spi spi;
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AgentScope.terminal(spi.id);
+    return CompanionFrame(
+      leading: _AgentTitle(scope: scope),
+      actions: [
+        BarAction(
+          icon: Icons.history,
+          label: context.l10n.askAiHistory,
+          onTap: () => showAgentHistorySheet(context, scope: scope),
+        ),
+        BarAction(
+          icon: Icons.add,
+          label: context.l10n.askAiNewConversation,
+          onTap: () => AgentChats.startNew(scope),
+        ),
+      ],
+      body: AgentConversationView(
+        scope: scope,
+        compact: true,
+        showHeader: false,
+      ),
+    );
+  }
+}
+
+/// The chat on screen, as the Agent's own bar names it.
+class _AgentTitle extends StatelessWidget {
+  const _AgentTitle({required this.scope});
+
+  final String scope;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: AgentChats.of(scope),
+      builder: (context, id, _) => ListenableBuilder(
+        listenable: LlmStores.chat.changes,
+        builder: (context, _) => Text(
+          switch (id == null ? null : LlmStores.chat.fetch(id)) {
+            // As the list names it: an empty title is no title.
+            final meta? when meta.title?.isNotEmpty ?? false => meta.title!,
+            _? => context.l10n.askAiUntitledConversation,
+            null => context.l10n.askAiNewConversation,
+          },
+        ),
+      ),
     );
   }
 }

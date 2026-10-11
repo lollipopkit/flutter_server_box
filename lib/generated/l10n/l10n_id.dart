@@ -5536,4 +5536,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Buka detail server';
+
+  @override
+  String get companionPanels => 'Panel';
 }

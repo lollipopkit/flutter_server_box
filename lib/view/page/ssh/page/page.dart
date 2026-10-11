@@ -16,6 +16,7 @@ import 'package:server_box/core/service/program_status_alerts.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/companion.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';

@@ -401,38 +401,31 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// nowhere to find the width to go back to.
   late final paneListCollapsed = propertyDefault('paneListCollapsed', false);
 
-  /// Which panels each tab has open beside its subject — status, a terminal,
-  /// files — by `AppTab.name`, as `CompanionPanel` names joined by commas, the
-  /// most recently opened last. See `CompanionPanels`.
-  late final companionPanels = propertyDefault<Map<String, String>>(
-    'companionPanels',
+  /// Which panel each tab shows beside its subject — status, a terminal,
+  /// files, the Agent — by `AppTab.name`, as a `CompanionPanel` name. Kept
+  /// while the panels are closed, so they open where they were left. See
+  /// `CompanionPanels`.
+  late final companionPanel = propertyDefault<Map<String, String>>(
+    'companionPanel',
     const {},
     fromObj: (obj) => Map<String, String>.from(obj as Map),
   );
 
-  /// Which of those are folded to their header in the side column, keyed and
-  /// written the same way.
-  late final companionCollapsed = propertyDefault<Map<String, String>>(
-    'companionCollapsed',
+  /// Which tabs have their panels open, by `AppTab.name`.
+  late final companionOpen = propertyDefault<Map<String, bool>>(
+    'companionOpen',
     const {},
-    fromObj: (obj) => Map<String, String>.from(obj as Map),
+    fromObj: (obj) => Map<String, bool>.from(obj as Map),
   );
 
-  /// How wide that column is. One width for every tab, like [paneListWidth],
-  /// so the column does not jump when the tab changes under it.
+  /// How wide the panels are beside the subject. One width for every tab,
+  /// like [paneListWidth], so the column does not jump when the tab changes
+  /// under it.
   late final companionWidth = propertyDefault('companionWidth', 340.0);
 
   /// Whether the file panel beside a terminal goes wherever the terminal's
   /// shell goes.
   late final companionFollowCwd = propertyDefault('companionFollowCwd', true);
-
-  /// How much of that column's height the upper of two panels has, when
-  /// both are unfolded.
-  late final companionSplit = propertyDefault('companionSplit', 0.5);
-
-  /// Whether that column is folded away, panels and all. Separate from the
-  /// width for the reason [paneListCollapsed] is.
-  late final companionFolded = propertyDefault('companionFolded', false);
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);

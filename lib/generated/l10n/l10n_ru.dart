@@ -5576,4 +5576,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Открыть сведения о сервере';
+
+  @override
+  String get companionPanels => 'Панели';
 }

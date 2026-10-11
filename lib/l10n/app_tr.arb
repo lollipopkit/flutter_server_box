@@ -1558,5 +1558,6 @@
   "threadsFmt": "{count} iş parçacığı",
   "followTerminalDir": "Terminalin dizinini takip et",
   "insertPathToTerminal": "Yolu terminale ekle",
-  "openServerDetail": "Sunucu ayrıntılarını aç"
+  "openServerDetail": "Sunucu ayrıntılarını aç",
+  "companionPanels": "Paneller"
 }

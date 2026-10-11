@@ -1558,5 +1558,6 @@
   "threadsFmt": "Потоков: {count}",
   "followTerminalDir": "Следовать за каталогом терминала",
   "insertPathToTerminal": "Вставить путь в терминал",
-  "openServerDetail": "Открыть сведения о сервере"
+  "openServerDetail": "Открыть сведения о сервере",
+  "companionPanels": "Панели"
 }

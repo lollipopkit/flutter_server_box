@@ -5279,4 +5279,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get openServerDetail => '서버 세부 정보 열기';
+
+  @override
+  String get companionPanels => '패널';
 }

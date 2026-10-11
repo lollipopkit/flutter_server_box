@@ -23,6 +23,7 @@ import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/companion/host.dart';
 import 'package:server_box/view/page/companion/panels.dart';
+import 'package:server_box/view/page/companion/status_line.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
@@ -296,26 +297,45 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         tab: AppTab.ssh,
         spi: _sessions.current?.data.page.args.spi,
         builder: _companion,
-        child: SessionTabsView<_SshSession>(
-          controller: _sessions,
-          // Restored sessions land while another tab may be the one on
-          // screen.
-          mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.ssh,
-          // Page 0 is the picker's on one column. Beside a rail it is what
-          // the surface shows before anything is opened — and nothing else,
-          // because the rail is already that list and drawing it twice is
-          // what the grid of cards was.
-          leading: split
-              ? const EmptyPane(icon: Icons.terminal_outlined)
-              : _picker,
-          builder: (_, tab) => tab.data.page,
+        child: Column(
+          children: [
+            // Narrow, the status has no column to stay open in: its line from
+            // the list is here instead, and opens the panel.
+            if (!split && !CompanionHost.isColumn(context))
+              if (_sessions.current?.data.page.args.spi case final spi?)
+                CompanionStatusLine(
+                  spi: spi,
+                  onTap: () =>
+                      CompanionPanels.open(AppTab.ssh, CompanionPanel.status),
+                ),
+            Expanded(
+              // Keyed, so the line coming and going above does not build the
+              // terminals again.
+              key: const ValueKey('terminals'),
+              child: SessionTabsView<_SshSession>(
+                controller: _sessions,
+                // Restored sessions land while another tab may be the one on
+                // screen.
+                mayFocus: () =>
+                    ref.read(currentHomeTabProvider) == AppTab.ssh,
+                // Page 0 is the picker's on one column. Beside a rail it is
+                // what the surface shows before anything is opened — and
+                // nothing else, because the rail is already that list and
+                // drawing it twice is what the grid of cards was.
+                leading: split
+                    ? const EmptyPane(icon: Icons.terminal_outlined)
+                    : _picker,
+                builder: (_, tab) => tab.data.page,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// What the panels beside a terminal are: the server's status, and its
-  /// files — following this terminal, and taking paths into it.
+  /// What the panels beside a terminal are: the server's status, its files —
+  /// following this terminal, and taking paths into it — and the Agent.
   Widget _companion(BuildContext context, CompanionPanel panel, Spi spi) =>
       switch (panel) {
         CompanionPanel.status => CompanionStatus(spi: spi),
@@ -326,6 +346,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
             terminal: _sessions.current?.data.session.value,
           ),
         ),
+        CompanionPanel.agent => CompanionAgent(spi: spi),
         // Not offered here: this tab is the terminal.
         CompanionPanel.terminal => const SizedBox.shrink(),
       };
@@ -707,7 +728,8 @@ extension _Actions on _SSHTabPageState {
 
   /// The buttons for whichever terminal is showing.
   ///
-  /// The agent's tools all name a server, so it is offered only on one.
+  /// The panels — status, files, the Agent — are about a server, so they are
+  /// offered only on one.
   /// Snippets are offered everywhere: the picker leaves out the ones that
   /// mention a server when there is none.
   ///
@@ -730,7 +752,6 @@ extension _Actions on _SSHTabPageState {
       // First: they are about the server, and the rest about this terminal.
       ...CompanionHost.actions(AppTab.ssh, enabled: onServer),
       status,
-      if (onServer) _agentAction,
       _snippetAction,
       _settingsAction,
       _floatAction,
@@ -779,15 +800,6 @@ extension _Actions on _SSHTabPageState {
     // tab strip does.
     shell.float(state.session, title: tab.name);
   }
-
-  /// Opens the agent on the terminal that is on screen, the same way the
-  /// snippet picker beside it works.
-  BarAction get _agentAction => BarAction(
-    icon: Icons.auto_awesome,
-    label: l10n.askAi,
-    onTap: () =>
-        _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
-  );
 
   BarAction get _snippetAction => BarAction(
     icon: Icons.code,

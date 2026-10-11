@@ -83,6 +83,16 @@ extension _AskAi on SSHPageState {
       Composer.draft.value = '```\n$selection\n```\n\n';
     }
 
+    // In a tab with panels, the Agent is one of them, beside the terminal:
+    // a reply and the command it runs are in view together. A page pushed on
+    // its own has no such column, and keeps the panel over it.
+    final tab = widget.args.homeTab;
+    if (!widget.args.notFromTab &&
+        CompanionPanel.of(tab).contains(CompanionPanel.agent)) {
+      CompanionPanels.open(tab, CompanionPanel.agent);
+      return;
+    }
+
     Widget panel(BuildContext panelContext) =>
         _AskAiPanel(scope: scope, serverName: spi.name);
 

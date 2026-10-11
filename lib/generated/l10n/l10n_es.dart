@@ -5617,4 +5617,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get openServerDetail => 'Abrir detalles del servidor';
+
+  @override
+  String get companionPanels => 'Paneles';
 }

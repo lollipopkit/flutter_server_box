@@ -322,12 +322,13 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     _ => null,
   };
 
-  /// What the panels beside a server's files are: its status, and a
-  /// terminal on it.
+  /// What the panels beside a server's files are: its status, a terminal on
+  /// it, and the Agent.
   Widget _companion(BuildContext context, CompanionPanel panel, Spi spi) =>
       switch (panel) {
         CompanionPanel.status => CompanionStatus(spi: spi),
         CompanionPanel.terminal => CompanionTerminal(spi: spi),
+        CompanionPanel.agent => CompanionAgent(spi: spi),
         // Not offered here: this tab is the files.
         CompanionPanel.files => const SizedBox.shrink(),
       };
