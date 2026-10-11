@@ -25,6 +25,23 @@ fn arm64_without_a_model_name_is_named_by_its_part() {
     );
 }
 
+/// The machines of #1685, as their owner's `grep` printed them: two
+/// Cortex-A53 and four Cortex-A73, which is what `lscpu` names them. One
+/// kernel prints the same `ARMv8 Processor rev N (v8l)` for both kinds, the
+/// other no `model name` at all.
+#[test]
+fn the_issue_machines_name_both_kinds_of_core() {
+    let expected = owned(&[("Cortex-A53", 2), ("Cortex-A73", 4)]);
+    assert_eq!(
+        brands(include_str!("fixtures/cpuinfo_a53_a73_model_name.txt")),
+        expected
+    );
+    assert_eq!(
+        brands(include_str!("fixtures/cpuinfo_a53_a73.txt")),
+        expected
+    );
+}
+
 /// big.LITTLE (an RK3588's layout): each kind of core counted on its own.
 #[test]
 fn each_kind_of_core_is_counted() {
