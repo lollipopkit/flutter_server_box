@@ -130,8 +130,9 @@ async fn a_machines_shares_are_managed_end_to_end() {
     assert_eq!(status, 200, "{v}");
     let made = v["smb"].as_array().unwrap().iter().find(|s| s["name"] == "sbme2e").unwrap().clone();
     assert_eq!((made["time_machine"].as_bool(), made["recycle"].as_bool()), (Some(true), Some(true)), "{made}");
-    let parsed = sh("testparm -s 2>/dev/null");
-    assert!(parsed.contains("fruit:time machine = Yes") && parsed.contains("recycle"), "{parsed}");
+    // testparm prints a module's own options as written, its own in its case.
+    let parsed = sh("testparm -s 2>/dev/null").to_lowercase();
+    assert!(parsed.contains("fruit:time machine = yes") && parsed.contains("vfs objects = catia fruit streams_xattr recycle"), "{parsed}");
 
     // Who is connected: nobody yet, read as root.
     let (status, c) = call(&srv, Method::POST, "/api/v1/shares/connections", Some(json!({}))).await;

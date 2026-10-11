@@ -91,8 +91,10 @@ step() {
   if "$@"; then echo "    ok"; else echo "    FAILED"; failed="$failed $name"; fi
 }
 cd "$root/monitor/frontend"
-step storage.e2e.ts npx playwright test storage --reporter=line
-step sharing.e2e.ts npx playwright test sharing --reporter=line
+# Each its own results directory: a later run empties the default one, and
+# with it the earlier one's trace.
+step storage.e2e.ts npx playwright test storage --reporter=line --output=e2e/.results/storage
+step sharing.e2e.ts npx playwright test sharing --reporter=line --output=e2e/.results/sharing
 rust() {
   vm "cd /home/sbm/app && out=\$($1=1 RUST_LOG=off timeout 1200 ./$2 --ignored 2>&1); code=\$?; printf '%s\n' \"\$out\" | grep -E -A6 'test result|panicked|is not set'; exit \$code"
 }

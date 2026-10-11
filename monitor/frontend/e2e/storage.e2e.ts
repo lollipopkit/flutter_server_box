@@ -77,6 +77,10 @@ class Storage {
   /// Waits for the job just started, which must succeed.
   async done() {
     const { page } = this
+    // The confirmation closes once the agent has the job, and the progress
+    // shows it running from then: until then the last job's Done is still
+    // on the page, and would pass for this one's.
+    await expect(page.locator('.lk-dialog')).toHaveCount(0)
     await expect(page.getByText('Changing the disks…')).toBeHidden({ timeout: 10 * 60_000 })
     await expect(page.getByText('Did not finish', { exact: true })).toHaveCount(0)
     await expect(page.getByText('Done', { exact: true })).toBeVisible()
@@ -207,7 +211,8 @@ test('the Storage app manages a machine\'s disks', async ({ page }) => {
   await test.step('a disk is encrypted, locked and unlocked', async () => {
     await s.tab('Disks')
     const phrase = 'e2e passphrase'
-    await s.rowButton(disk, 'Format')
+    // Initialized above: the partition is what is formatted.
+    await s.rowButton(part, 'Format')
     const encrypt = s.dialog().locator('.lk-check', { hasText: 'Encrypt (LUKS)' })
     if (!(await encrypt.count())) return // no cryptsetup on this machine
     await encrypt.click()
@@ -215,7 +220,7 @@ test('the Storage app manages a machine\'s disks', async ({ page }) => {
     await fillSecret(s.dialog().getByLabel(/^Passphrase/), phrase)
     await fillSecret(s.dialog().getByLabel('The same again'), phrase)
     await s.dialog().getByRole('button', { name: 'Continue' }).click()
-    await s.confirm('Format', disk)
+    await s.confirm('Format', part)
     await s.done()
     await expect(page.getByText(/^Encrypted$/)).toBeVisible()
     await page.getByRole('button', { name: 'Lock' }).first().click()
