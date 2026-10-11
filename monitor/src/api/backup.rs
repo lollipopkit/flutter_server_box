@@ -141,10 +141,14 @@ pub async fn upload(
 ) -> Result<HttpResponse, web::Error> {
     let caller = match authz::admin_caller(&req, &state).await {
         Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
+        Err(refused) => {
+            discard(&mut body).await;
+            return Ok(refused);
+        }
     };
     let name = query.into_inner().name;
     if !valid_name(&name) {
+        discard(&mut body).await;
         return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
 
@@ -154,6 +158,8 @@ pub async fn upload(
             return Ok(HttpResponse::BadRequest().finish());
         };
         if (data.len() + chunk.len()) as u64 > MAX_BYTES {
+            drop(data);
+            discard(&mut body).await;
             return Ok(refusal(ntex::http::StatusCode::PAYLOAD_TOO_LARGE, "tooLarge"));
         }
         data.extend_from_slice(&chunk);
@@ -171,6 +177,16 @@ pub async fn upload(
             Ok(internal_error(&e))
         }
     }
+}
+
+/// Reads what is left of a refused upload, keeping none of it, before the
+/// refusal is sent. Answered with the body still unread, the connection has to
+/// be closed under a client that is still writing it, which then sees a reset
+/// instead of the answer — a keep-alive client that reuses the connection
+/// fails its next request outright. The request-body limit bounds this as it
+/// bounds any upload.
+async fn discard(body: &mut web::types::Payload) {
+    while let Some(Ok(_)) = body.next().await {}
 }
 
 pub async fn remove(
