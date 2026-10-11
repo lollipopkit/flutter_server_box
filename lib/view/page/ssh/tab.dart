@@ -25,6 +25,7 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/terminal_status_dot.dart';
 import 'package:server_box/view/widget/terminal_status_sheet.dart';
 
@@ -77,11 +78,54 @@ class _SshSession {
 }
 
 extension on SessionTabsController<_SshSession> {
-  /// What the programs in the session at [index] report about themselves.
+  /// What the programs in the session at [index] report about themselves, for
+  /// the strip's sheet: on the server's mark where it has one.
   Widget? statusOf(int index) {
     final tab = tabs.elementAtOrNull(index - 1);
-    return tab == null ? null : TerminalStatusDot(tab.data.session);
+    if (tab == null) return null;
+    final serverId = tab.data.page.args.spi?.id;
+    return sideMark(
+      mark: serverId == null ? null : distIcon(serverId, size: kSideMarkSize),
+      badge: TerminalStatusDot(tab.data.session, ringed: serverId != null),
+    );
   }
+
+  /// The session at [index] as a row of the rail — see [railRow]. Read again
+  /// whenever a session's programs report something: the bar's colour is
+  /// taken from them here, not listened for.
+  RailRow railOf(int index, ColorScheme scheme) {
+    final tab = tabs[index - 1];
+    final selected = index == this.index;
+    return railRow(
+      serverId: tab.data.page.args.spi?.id,
+      live: true,
+      color: tab.data.session.value?.status.headline?.colorIn(scheme),
+      selected: selected,
+      badge: TerminalStatusDot(
+        tab.data.session,
+        ringed: true,
+        idle: SideMarkDot(selected: selected),
+      ),
+    );
+  }
+
+  /// Rebuilds [builder] whenever what [railOf] reads changes: the tabs, the
+  /// session each one has once its page is built, and what that session's
+  /// programs report. Nested, so each layer subscribes to what the layer
+  /// above has just found — a merge taken once would miss a tab opened, or a
+  /// session started, after it.
+  Widget listenRail(Widget Function() builder) => ListenBuilder(
+    listenable: this,
+    builder: () => ListenBuilder(
+      listenable: Listenable.merge([for (final tab in tabs) tab.data.session]),
+      builder: () => ListenBuilder(
+        listenable: Listenable.merge([
+          for (final tab in tabs) ?tab.data.session.value?.status,
+        ]),
+        builder: builder,
+      ),
+    ),
+  );
 }
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>

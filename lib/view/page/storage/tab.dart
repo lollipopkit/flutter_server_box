@@ -16,6 +16,7 @@ import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/server_side_tile.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
 /// strip.
@@ -324,6 +325,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
           onTap: _sessions.select,
           onClose: _close,
           detailOf: _sessionPath,
+          leadingOf: _sessions.markOf,
           sessionActions: actions.value,
           // The same one the rail carries. On one screen the picker is a tab
           // rather than a column, and this acts on what it lists.
@@ -585,6 +587,28 @@ const _kColumnWidth = 300.0;
 
 /// The same two things as [_PickPage], in a column too narrow for cards: the
 /// browsers that are open, and the places another could be opened on.
+extension on SessionTabsController<FileSession> {
+  String? _serverIdAt(int index) =>
+      switch (tabs.elementAtOrNull(index - 1)?.data) {
+        ServerFileSession(:final spi) => spi.id,
+        _ => null,
+      };
+
+  /// The server's mark before a browser's name in the strip's sheet, where it
+  /// has one.
+  Widget? markOf(int index) => switch (_serverIdAt(index)) {
+    final id? => distIcon(id, size: kSideMarkSize),
+    null => null,
+  };
+
+  /// The browser at [index] as a row of the rail — see [railRow].
+  RailRow railOf(int index) => railRow(
+    serverId: _serverIdAt(index),
+    live: true,
+    selected: index == this.index,
+  );
+}
+
 class _SideBar extends ConsumerWidget {
   const _SideBar({
     required this.sessions,
@@ -629,6 +653,8 @@ class _SideBar extends ConsumerWidget {
         index: sessions.index,
         onTap: onSelect,
         onClose: onClose,
+        leadingOf: (i) => sessions.railOf(i).leading,
+        liveOf: (i) => sessions.railOf(i).live,
         actions: actions,
         search: search,
         // Nothing here is running. A browser is a place you are looking at,
@@ -654,10 +680,9 @@ class _SideBar extends ConsumerWidget {
               if (needle.isEmpty ||
                   spi.name.toLowerCase().contains(needle) ||
                   spi.displayAddr.toLowerCase().contains(needle))
-              SideBarTile(
+              ServerSideTile(
                 key: ValueKey(id),
-                leading: distIcon(spi.id, size: 22),
-                title: spi.name,
+                spi: spi,
                 onTap: () => onServer(spi),
               ),
           ],
