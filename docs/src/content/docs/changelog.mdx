@@ -6,6 +6,48 @@ description: What changed in each released version
 Every released version, newest first. Downloads and per-release notes are on
 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
 
+## v1.0.1765 — 2026-10-12
+
+### Added
+
+- **Firewall management** for ufw and firewalld: view and edit rules and
+  zones, with checks that warn before a change would lock you out of SSH.
+- **Program status in the terminal:** progress (OSC 9;4), command start and
+  finish (OSC 133) and program status (OSC 7501) are shown on the session,
+  with an optional notification when a long command finishes.
+- **Terminal line height** setting; the terminal settings show which font is
+  in use.
+- **Network traffic** beside speed on the server page, with every interface
+  selectable; the CPU row shows the thread count and per-thread usage.
+- A per-server option to count network filesystems in the disk total.
+
+### Changed
+
+- **Every narrow tab has the same top bar**, and bars stay clear of the iPadOS
+  window controls.
+- **Server rows in every side list look the same** (server, terminal, files,
+  remote desktop): the distribution icon with a status dot, or a status bar
+  when the icon is hidden.
+- Home page charts appear faster.
+- Disks are read from both lsblk and df, so the disk list and disk total match
+  on every page.
+- Memory in use no longer counts the page cache.
+- ARM CPUs are named by implementer and part, and every core type is listed.
+
+### Fixed
+
+- The app failed to open in Italian, Korean and Azerbaijani.
+- A terminal opened at launch failed when the server refused the first
+  connection; it now retries.
+- A terminal restored on another tab took the focus and the keyboard.
+- Stopping the Agent now ends a running command at once.
+- Agent replies and their code can be selected on every platform.
+- Remote desktop: keyboard input, long press and VNC passwords.
+- Themes are included in backups.
+- A charged battery is no longer reported as an alert; a low battery on its
+  own power is.
+- A host without /etc/hostname now shows a name.
+
 ## v1.0.1719 — 2026-10-01
 
 ### Before you upgrade
