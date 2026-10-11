@@ -1,7 +1,7 @@
-/// The Sharing app on a real machine, through the panel: an SMB share added,
-/// made read only and removed, an account's SMB password set, an NFS export
-/// added and removed. Samba and the NFS server installed; it changes
-/// ServerBox's own share files only (`/etc/samba/serverbox.conf`,
+/// The Sharing app on a real machine, through the panel: Samba and the NFS
+/// server installed where missing, an SMB share added, made read only and
+/// removed, an account's SMB password set, an NFS export added and removed.
+/// It changes ServerBox's own share files only (`/etc/samba/serverbox.conf`,
 /// `/etc/exports.d/serverbox.exports`).
 ///
 ///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_USER=admin \
@@ -27,6 +27,18 @@ async function open(page: Page) {
   await page.keyboard.press('Enter')
   await page.locator('.lk-dock button[aria-label="All Apps"]').click()
   await page.getByText('Sharing', { exact: true }).first().click()
+  await expect(page.getByText('SMB', { exact: true }).first()).toBeVisible({ timeout: 30_000 })
+}
+
+/// Installs [what] from the app when it is missing; the job must succeed.
+async function installIfMissing(page: Page, what: string) {
+  const button = page.getByRole('button', { name: what })
+  await expect(page.getByText('Service', { exact: true }).or(button)).toBeVisible({ timeout: 30_000 })
+  if (!(await button.count())) return
+  await button.click()
+  await confirm(page, what)
+  await expect(page.getByText('Installing…')).toBeHidden({ timeout: 15 * 60_000 })
+  await expect(page.getByText('Did not finish', { exact: true })).toHaveCount(0)
   await expect(page.getByText('Service', { exact: true })).toBeVisible({ timeout: 30_000 })
 }
 
@@ -45,6 +57,7 @@ test('the Sharing app manages SMB shares and NFS exports', async ({ page }) => {
   await open(page)
 
   await test.step('an SMB share is added, made read only and removed', async () => {
+    await installIfMissing(page, 'Install Samba')
     await page.getByRole('button', { name: 'Add share' }).click()
     const d = page.locator('.lk-dialog').last()
     await d.getByLabel('Name').fill('sbme2e')
@@ -81,6 +94,7 @@ test('the Sharing app manages SMB shares and NFS exports', async ({ page }) => {
 
   await test.step('an NFS export is added and removed', async () => {
     await page.getByText('NFS', { exact: true }).first().click()
+    await installIfMissing(page, 'Install NFS server')
     await page.getByRole('button', { name: 'Add export' }).click()
     const d = page.locator('.lk-dialog').last()
     await d.getByLabel(/^Folder/).fill(folder)

@@ -4,8 +4,9 @@
 /// maintenance schedule set and run. RAID and ZFS are tried where mdadm and
 /// zpool are installed.
 ///
-/// It wipes the disks it is given. `scripts/storage-lab.sh` adds spare
-/// disks to a Proxmox VE VM and takes them away after.
+/// It wipes the disks it is given. `scripts/storage-e2e.sh <node>` runs it
+/// (and the rest of the storage tests) on a fresh Proxmox VE VM with spare
+/// disks, made and destroyed for the run.
 ///
 ///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_USER=admin \
 ///     SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
