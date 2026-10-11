@@ -34,6 +34,14 @@ updates:
       rust:
         patterns:
           - "*"
+    ignore:
+      # 0.2.190 stopped exporting the `_dyld_*` functions for iOS, and
+      # backtrace 0.3.76 — in the iOS build through the FFI crate — calls them:
+      # the iOS build fails to compile. Only this version: the next one is
+      # proposed as usual, and the iOS job says whether it is fixed.
+      # TODO: drop once a libc or backtrace release builds for iOS again.
+      - dependency-name: libc
+        versions: ["0.2.190"]
 
   - package-ecosystem: pub
     directory: "/"
