@@ -1304,13 +1304,19 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
+    // The shell the key was pressed for. A reconnect or a tmux switch while
+    // this waits puts another in front, and its prompt is not the one asked
+    // about.
+    final shell = _session;
+    if (shell == null) return;
+
     bool detected = false;
     const delays = [0, 100, 200, 400, 800, 1600];
     for (int i = 0; i < delays.length; i++) {
       final delayMs = delays[i];
       if (delayMs > 0) {
         await Future.delayed(Duration(milliseconds: delayMs));
-        if (!mounted) return;
+        if (!mounted || !identical(_session, shell)) return;
       }
 
       _sess.drainOutput();
@@ -1346,9 +1352,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (spi == null || !_sess.answersSudo) return;
     final password = SudoPassword.typed(spi.id);
     if (password == null) return;
+    // Only the prompt of the shell the command was typed into: one that
+    // replaced it meanwhile — a reconnect, a tmux switch — asked nothing.
+    final shell = _session;
+    if (shell == null) return;
     for (final ms in const [100, 200, 400, 800, 1600, 3200]) {
       await Future.delayed(Duration(milliseconds: ms));
-      if (!mounted) return;
+      if (!mounted || !identical(_session, shell)) return;
       _sess.drainOutput();
       if (_hasPendingSudoPrompt()) {
         _terminal.textInput(password);

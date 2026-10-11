@@ -100,6 +100,26 @@ void main() {
       session.dispose();
     });
 
+    test('a shell put in front drops what the last one had queued', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final old = _FakeShell();
+      session.bindForeground(old);
+
+      // Arrived, but not drawn yet: the flush is a frame away.
+      old.emit('stale');
+      await Future<void>.delayed(Duration.zero);
+      expect(session.outputTail, 'stale');
+
+      final fresh = _FakeShell();
+      session.bindForeground(fresh);
+      fresh.emit('fresh');
+      await flushed();
+
+      expect(session.terminal.buffer.currentLine.toString().trim(), 'fresh');
+      expect(session.outputTail, 'fresh');
+      session.dispose();
+    });
+
     test('what is typed reaches the shell', () async {
       final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();

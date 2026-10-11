@@ -456,6 +456,13 @@ class TerminalSession {
     terminal.buffer.clear();
     terminal.buffer.setCursor(0, 0);
     _cancelOutputSubscriptions();
+    // What the last shell printed and is not on screen yet belongs to the
+    // screen just cleared: flushed after this, it would land on the new
+    // shell's, and the tail would read it as the new shell's.
+    _flushTimer?.cancel();
+    _flushTimer = null;
+    _buffer.take(_buffer.pendingChars);
+    _tail = '';
 
     // Whatever ran in the terminal before has exited; a tmux pane has not.
     status.shell.processExited();
