@@ -1163,6 +1163,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'NFS-, SMB- en vergelijkbare koppelingen worden altijd vermeld. Hun capaciteit hoort bij een andere machine, dus standaard tellen ze niet mee in het schijftotaal. Geldt wanneer de status via SSH wordt verzameld; via de monitor-agent beslist de eigen instelling van de agent.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS-, SMB- en vergelijkbare koppelingen worden altijd vermeld. Hun capaciteit hoort bij een andere machine, dus standaard tellen ze niet mee in het schijftotaal — de waarde die de agent in de geschiedenis opslaat en waarop hij schijfwaarschuwingen controleert.';
+
+  @override
   String spentTime(String time) {
     return 'Gebruikte tijd: $time';
   }

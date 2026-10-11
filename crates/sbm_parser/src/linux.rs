@@ -74,6 +74,15 @@ fn meminfo_value(raw: &str, key: &str) -> Option<u64> {
 /// What [commands::DISK] prints between its `lsblk` and its `df`.
 pub const DISK_DF_MARKER: &str = "__SBM_DF__";
 
+/// The `lsblk` arguments [commands::DISK] runs with, for a caller that runs it
+/// without a shell (the monitor agent's sampler).
+pub const LSBLK_ARGS: [&str; 4] = [
+    "--bytes",
+    "--json",
+    "--output",
+    "FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID",
+];
+
 /// Disk output: `lsblk` JSON, then [DISK_DF_MARKER], then the `df` table —
 /// each source sees what the other cannot (see [merge_disks]). Either half may
 /// be missing: `lsblk` is not on busybox, and the monitor agent's sampler

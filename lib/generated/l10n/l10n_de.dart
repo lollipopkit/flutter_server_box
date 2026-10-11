@@ -1168,6 +1168,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'NFS-, SMB- und ähnliche Einhängepunkte werden immer aufgelistet. Ihre Kapazität gehört einem anderen Rechner, daher zählen sie standardmäßig nicht zur Datenträgersumme. Gilt, wenn der Status über SSH erfasst wird; über den Monitor-Agent entscheidet dessen eigene Einstellung.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS-, SMB- und ähnliche Einhängepunkte werden immer aufgelistet. Ihre Kapazität gehört einem anderen Rechner, daher zählen sie standardmäßig nicht zur Datenträgersumme – dem Wert, den der Agent im Verlauf speichert und gegen den er Datenträger-Warnungen prüft.';
+
+  @override
   String spentTime(String time) {
     return 'Benötigte Zeit: $time';
   }

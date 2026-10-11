@@ -2116,6 +2116,12 @@ abstract class AppLocalizations {
   /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.'**
   String get diskCountsNetworkTip;
 
+  /// No description provided for @diskCountsNetworkAgentTip.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.'**
+  String get diskCountsNetworkAgentTip;
+
   /// User-facing label or message for spent time.
   ///
   /// In en, this message translates to:

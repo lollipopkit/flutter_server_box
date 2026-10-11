@@ -517,16 +517,26 @@ pub struct SmartAttributeFlags {
 /// kind on one disk are separate filesystems, and two of them can report the
 /// same size and free space without sharing anything. Keyed on the numbers as
 /// well, since the name alone does not say which container a volume shares.
+///
+/// The device is in `path` where `df` reported it, and in `name`, spelled
+/// `disk3s5`, where the monitor agent's native sampler keys a volume by its
+/// mount point instead.
 fn apfs_container(disk: &Disk) -> Option<(String, u64, u64)> {
-    if disk.fs_type.as_deref() != Some("apfs") {
+    if !disk
+        .fs_type
+        .as_deref()
+        .is_some_and(|t| t.eq_ignore_ascii_case("apfs"))
+    {
         return None;
     }
-    let rest = disk.path.strip_prefix("/dev/disk")?;
-    let digits = rest.find(|c: char| !c.is_ascii_digit())?;
-    if digits == 0 || !rest[digits..].starts_with('s') {
-        return None;
-    }
-    Some((rest[..digits].to_string(), disk.size, disk.avail))
+    let container = |device: &str| -> Option<String> {
+        let rest = device.strip_prefix("/dev/").unwrap_or(device);
+        let rest = rest.strip_prefix("disk")?;
+        let digits = rest.find(|c: char| !c.is_ascii_digit())?;
+        (digits != 0 && rest[digits..].starts_with('s')).then(|| rest[..digits].to_string())
+    };
+    let base = container(&disk.path).or_else(|| container(disk.name.as_deref()?))?;
+    Some((base, disk.size, disk.avail))
 }
 
 /// The ZFS pool a dataset is in: the first component of its name. Only for a
@@ -555,6 +565,22 @@ fn zfs_pool(disk: &Disk) -> Option<&str> {
 /// device with no filesystem mounted adds nothing either way: it has no
 /// filesystem size to add.
 pub fn disk_usage(disks: &[Disk], count_network: bool) -> (u64, u64) {
+    let total = disk_total(disks, count_network);
+    (total.used, total.size)
+}
+
+/// [`disk_usage`], with the space available as well, in KiB.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct DiskTotal {
+    pub used: u64,
+    pub size: u64,
+    /// What `df` calls available: less than `size - used` by whatever the
+    /// filesystem keeps back (ext4 reserves 5% for root).
+    pub avail: u64,
+}
+
+/// [`disk_usage`] with [`DiskTotal::avail`]: what the monitor agent stores.
+pub fn disk_total(disks: &[Disk], count_network: bool) -> DiskTotal {
     #[derive(Default)]
     struct Tally {
         seen: Vec<String>,
@@ -563,6 +589,7 @@ pub fn disk_usage(disks: &[Disk], count_network: bool) -> (u64, u64) {
         pools: Vec<(String, u64, u64)>,
         used: u64,
         size: u64,
+        avail: u64,
     }
     fn visit(disk: &Disk, count_network: bool, t: &mut Tally) {
         if !disk.is_storage() || (!count_network && disk.is_network()) {
@@ -572,6 +599,7 @@ pub fn disk_usage(disks: &[Disk], count_network: bool) -> (u64, u64) {
             if !t.containers.contains(&container) {
                 t.used += container.1.saturating_sub(container.2);
                 t.size += container.1;
+                t.avail += container.2;
                 t.containers.push(container);
             }
             return;
@@ -591,6 +619,7 @@ pub fn disk_usage(disks: &[Disk], count_network: bool) -> (u64, u64) {
             t.seen.push(unique);
             t.used += disk.used;
             t.size += disk.size;
+            t.avail += disk.avail;
         }
         if disk.used != 0 || disk.size != 0 {
             return;
@@ -606,8 +635,13 @@ pub fn disk_usage(disks: &[Disk], count_network: bool) -> (u64, u64) {
     for (_, used, avail) in &t.pools {
         t.used += used;
         t.size += used + avail;
+        t.avail += avail;
     }
-    (t.used, t.size)
+    DiskTotal {
+        used: t.used,
+        size: t.size,
+        avail: t.avail,
+    }
 }
 
 /// Temperature table in Celsius (Dart `Temperatures`)

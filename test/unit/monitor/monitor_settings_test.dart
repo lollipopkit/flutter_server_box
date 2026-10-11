@@ -69,6 +69,25 @@ void main() {
       expect(settings.toPayload()['idle_pause_threshold_secs'], isNull);
     });
 
+    test('the network disk switch goes back only to an agent that has it', () {
+      // An agent older than the setting answers without it, and is sent none:
+      // absent, the agent keeps its value, where a field it does not know
+      // could be refused.
+      final old = MonitorSettings.fromJson(_settingsResponse);
+      expect(old.diskCountsNetwork, isNull);
+      expect(old.toPayload().containsKey('disk_counts_network'), isFalse);
+
+      final current = MonitorSettings.fromJson({
+        ..._settingsResponse,
+        'disk_counts_network': false,
+      });
+      expect(current.diskCountsNetwork, isFalse);
+      expect(
+        current.copyWith(diskCountsNetwork: true).toPayload()['disk_counts_network'],
+        isTrue,
+      );
+    });
+
     test('rules round-trip through the wire names', () {
       final settings = MonitorSettings.fromJson(_settingsResponse);
       expect(settings.rules.single.monitorType, 'cpu');

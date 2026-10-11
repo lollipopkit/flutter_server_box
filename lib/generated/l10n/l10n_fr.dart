@@ -1171,6 +1171,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les montages NFS, SMB et similaires sont toujours listés. Leur capacité appartient à une autre machine : par défaut, ils ne sont pas comptés dans le total du disque. S\'applique quand l\'état est collecté par SSH ; via le monitor agent, c\'est le réglage de l\'agent qui décide.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'Les montages NFS, SMB et similaires sont toujours listés. Leur capacité appartient à une autre machine : par défaut, ils ne sont pas comptés dans le total du disque, la valeur que l\'agent enregistre dans l\'historique et qu\'il compare aux alertes de disque.';
+
+  @override
   String spentTime(String time) {
     return 'Temps écoulé : $time';
   }

@@ -1102,6 +1102,10 @@ class AppLocalizationsKo extends AppLocalizations {
       'NFS, SMB 등 네트워크 마운트는 항상 목록에 표시됩니다. 용량은 다른 컴퓨터의 것이므로 기본적으로 디스크 합계에서 제외됩니다. SSH로 상태를 수집할 때 적용되며, monitor agent를 통할 때는 agent 자체 설정을 따릅니다.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS, SMB 등 네트워크 마운트는 항상 목록에 표시됩니다. 용량은 다른 컴퓨터의 것이므로 기본적으로 디스크 합계에서 제외됩니다. agent가 기록에 저장하고 디스크 알림 판단에 쓰는 값이 이 합계입니다.';
+
+  @override
   String spentTime(String time) {
     return '소요 시간: $time';
   }

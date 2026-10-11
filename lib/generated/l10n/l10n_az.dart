@@ -1164,6 +1164,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'NFS, SMB və oxşar qoşmalar həmişə siyahıda göstərilir. Onların tutumu başqa maşına aiddir, ona görə də standart olaraq disk cəminə daxil edilmir. Vəziyyət SSH ilə toplandıqda tətbiq olunur; monitor agent vasitəsilə agent-in öz ayarı qərar verir.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS, SMB və oxşar qoşmalar həmişə siyahıda göstərilir. Onların tutumu başqa maşına aiddir, ona görə də standart olaraq disk cəminə daxil edilmir — agent-in tarixçədə saxladığı və disk xəbərdarlıqlarında istifadə etdiyi dəyər budur.';
+
+  @override
   String spentTime(String time) {
     return 'Sərf olunan vaxt: $time';
   }

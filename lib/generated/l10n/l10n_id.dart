@@ -1162,6 +1162,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Mount NFS, SMB, dan sejenisnya selalu ditampilkan. Kapasitasnya milik mesin lain, sehingga secara bawaan tidak dihitung dalam total disk. Berlaku saat status dikumpulkan lewat SSH; lewat monitor agent, pengaturan agent itu sendiri yang menentukan.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'Mount NFS, SMB, dan sejenisnya selalu ditampilkan. Kapasitasnya milik mesin lain, sehingga secara bawaan tidak dihitung dalam total disk — nilai yang disimpan agent di riwayat dan dipakai untuk peringatan disk.';
+
+  @override
   String spentTime(String time) {
     return 'Menghabiskan waktu: $time';
   }

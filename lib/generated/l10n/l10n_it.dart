@@ -1168,6 +1168,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'I montaggi NFS, SMB e simili sono sempre elencati. La loro capacità appartiene a un\'altra macchina, quindi per impostazione predefinita non sono conteggiati nel totale del disco. Vale quando lo stato è raccolto via SSH; tramite il monitor agent decide l\'impostazione dell\'agent stesso.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'I montaggi NFS, SMB e simili sono sempre elencati. La loro capacità appartiene a un\'altra macchina, quindi per impostazione predefinita non sono conteggiati nel totale del disco, il valore che l\'agent salva nella cronologia e usa per gli avvisi sul disco.';
+
+  @override
   String spentTime(String time) {
     return 'Tempo impiegato: $time';
   }

@@ -3,7 +3,7 @@
 
 use sbm_parser::commands;
 use sbm_parser::linux::{self, DISK_DF_MARKER};
-use sbm_parser::types::{Disk, disk_usage};
+use sbm_parser::types::{Disk, DiskTotal, disk_total, disk_usage};
 
 /// `lsblk` JSON and a `df` table as the command prints them.
 fn output(lsblk: &str, df: &str) -> String {
@@ -27,6 +27,9 @@ fn the_command_prints_the_marker_the_parser_splits_on() {
         .find(|c| c.key == commands::DISK)
         .expect("a disk command");
     assert!(disk.cmd.contains(DISK_DF_MARKER), "{}", disk.cmd);
+    // The agent's sampler runs `lsblk` itself, with these.
+    let lsblk = format!("lsblk {} ", linux::LSBLK_ARGS.join(" "));
+    assert!(disk.cmd.starts_with(&lsblk), "{}", disk.cmd);
 }
 
 /// A Proxmox VE host on LVM-thin, as the command printed it there: the root
@@ -227,4 +230,47 @@ fn storage_named_like_a_virtual_fs_counts_as_what_it_is() {
     assert!(disks.iter().all(Disk::is_storage));
     assert_eq!(disk_usage(&disks, false).1, size);
     assert_eq!(disk_usage(&disks, true).1, size * 4);
+}
+
+/// The monitor agent's native sampler on macOS keys a volume by its mount
+/// point and puts the device in `name`: the container still counts once.
+#[test]
+fn an_apfs_container_named_the_native_way_counts_once() {
+    let volume = |label: &str, device: &str, mount: &str, used: u64| Disk {
+        path: label.to_string(),
+        name: Some(device.to_string()),
+        fs_type: Some("apfs".into()),
+        mount: mount.to_string(),
+        used,
+        size: 1000,
+        avail: 100,
+        ..Disk::default()
+    };
+    let disks = [
+        volume("Macintosh HD", "disk3s1s1", "/", 15),
+        volume("Data", "disk3s5", "/System/Volumes/Data", 800),
+    ];
+    assert_eq!(
+        disk_total(&disks, false),
+        DiskTotal {
+            used: 900,
+            size: 1000,
+            avail: 100
+        }
+    );
+}
+
+/// Available is `df`'s, not size less used: ext4 keeps 5% back for root.
+#[test]
+fn available_space_is_what_the_filesystem_says() {
+    let mut disk = row("/dev/vda1", "/", 400, 1000);
+    disk.avail = 550;
+    assert_eq!(
+        disk_total(&[disk], false),
+        DiskTotal {
+            used: 400,
+            size: 1000,
+            avail: 550
+        }
+    );
 }

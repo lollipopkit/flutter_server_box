@@ -1100,6 +1100,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'NFS、SMB などのネットワークマウントは常に一覧に表示されます。容量は別のマシンのものなので、既定ではディスク合計に含めません。SSH で状態を収集する場合に適用され、monitor agent 経由では agent 自身の設定に従います。';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS、SMB などのネットワークマウントは常に一覧に表示されます。容量は別のマシンのものなので、既定ではディスク合計に含めません。agent が履歴に保存し、ディスクアラートの判定に使うのはこの合計です。';
+
+  @override
   String spentTime(String time) {
     return '費した時間: $time';
   }

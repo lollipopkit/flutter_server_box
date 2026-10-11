@@ -1160,6 +1160,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez. Durum SSH üzerinden toplandığında geçerlidir; monitor agent üzerinden agent\'ın kendi ayarı belirler.';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez; agent\'ın geçmişe kaydettiği ve disk uyarılarında kullandığı değer bu toplamdır.';
+
+  @override
   String spentTime(String time) {
     return 'Harcanan süre: $time';
   }

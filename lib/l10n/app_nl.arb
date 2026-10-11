@@ -397,6 +397,7 @@
   "tempIsCelsiusTip": "Als dit aanstaat, wordt de temperatuurwaarde als Celsius behandeld in plaats van millicelsius. Zet dit alleen aan als de temperatuur verkeerd wordt weergegeven (bijvoorbeeld 0,1 °C in plaats van 58 °C).",
   "diskCountsNetwork": "Netwerkbestandssystemen meetellen in het totaal",
   "diskCountsNetworkTip": "NFS-, SMB- en vergelijkbare koppelingen worden altijd vermeld. Hun capaciteit hoort bij een andere machine, dus standaard tellen ze niet mee in het schijftotaal. Geldt wanneer de status via SSH wordt verzameld; via de monitor-agent beslist de eigen instelling van de agent.",
+  "diskCountsNetworkAgentTip": "NFS-, SMB- en vergelijkbare koppelingen worden altijd vermeld. Hun capaciteit hoort bij een andere machine, dus standaard tellen ze niet mee in het schijftotaal — de waarde die de agent in de geschiedenis opslaat en waarop hij schijfwaarschuwingen controleert.",
   "syncAppSettings": "App-instellingen synchroniseren",
   "syncAppSettingsTip": "Thema, indeling, editor, terminal en andere apparaatvoorkeuren meenemen in de automatische synchronisatie.",
   "menuGitHubRepository": "GitHub-repository",

@@ -10,8 +10,9 @@
 //! reading a file: `uptime` (no simple procfs equivalent that already
 //! matches `common::parse_uptime`'s expected shape — `/proc/uptime` is a raw
 //! seconds count, not the `uptime` command's structured text) and `disks`
-//! (filesystem usage isn't in one clean procfs file — `df -k` is the
-//! existing fallback path `sbm_parser::linux::parse_disk` already handles).
+//! (filesystem usage isn't in one clean procfs file — `df -kT` each sample,
+//! merged with the `lsblk` tree `block_devices` reads on the slower cycle, as
+//! the app's `commands::DISK` output is).
 //! These are still a big win over the old approach: one direct process
 //! spawn per field instead of building/writing/executing a whole generated
 //! multi-command script and splitting its output by `SrvBoxSep` markers.
@@ -312,13 +313,33 @@ pub fn total_memory() -> Option<u64> {
         .map(|kib| kib * 1024)
 }
 
-pub fn sample() -> ServerStatus {
+/// `lsblk`'s JSON, as `commands::DISK` runs it; empty where there is none.
+pub fn block_devices() -> String {
+    run("lsblk", &linux::LSBLK_ARGS)
+}
+
+/// `df -kT`, or `df -k` where `-T` is not understood (busybox): told apart by
+/// the header, since GNU df exits 1 when any one mount is unreadable and
+/// prints the rest anyway.
+fn df() -> String {
+    let typed = run("df", &["-kT"]);
+    if typed.lines().next().is_some_and(|h| h.contains("Type")) {
+        typed
+    } else {
+        run("df", &["-k"])
+    }
+}
+
+/// `block_devices` is [`block_devices`]' last output, merged with a fresh
+/// [`df`] the way `commands::DISK`'s output is — see `linux::merge_disks`.
+pub fn sample(block_devices: &str) -> ServerStatus {
     let mem_raw = read("/proc/meminfo");
     let (temp_types, temp_values) = thermal_zones();
-    let disk_raw = run("df", &["-k"]);
-    // No lsblk JSON attempt here (keeps this path to a single subprocess);
-    // `parse_disk` falls back to the `df -k` table shape it already supports
-    let disks: Vec<Disk> = linux::parse_disk(&disk_raw);
+    let disks: Vec<Disk> = linux::parse_disk(&format!(
+        "{block_devices}\n{}\n{}",
+        linux::DISK_DF_MARKER,
+        df()
+    ));
     // Read once: three fields come out of the same block.
     let os_release = os_release_block();
 
@@ -353,7 +374,7 @@ mod tests {
     // produces plausible data end to end on a real Linux machine.
     #[test]
     fn sample_produces_plausible_data() {
-        let status = sample();
+        let status = sample(&block_devices());
         assert!(
             !status.cpu.is_empty(),
             "expected at least a 'cpu' summary row"
@@ -364,6 +385,21 @@ mod tests {
             !status.net.is_empty(),
             "expected at least one network interface"
         );
+    }
+
+    /// `lsblk`'s tree and a fresh `df -kT`, merged (#1669): the root
+    /// filesystem is there, with its type — from either source — and numbers.
+    #[test]
+    fn disks_merge_the_device_tree_with_df() {
+        fn find<'a>(disks: &'a [Disk], mount: &str) -> Option<&'a Disk> {
+            disks
+                .iter()
+                .find_map(|d| (d.mount == mount).then_some(d).or_else(|| find(&d.children, mount)))
+        }
+        let status = sample(&block_devices());
+        let root = find(&status.disks, "/").expect("a root filesystem");
+        assert!(root.fs_type.is_some(), "{root:?}");
+        assert!(root.size > 0, "{root:?}");
     }
 
     #[test]

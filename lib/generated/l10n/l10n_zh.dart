@@ -1082,6 +1082,10 @@ class AppLocalizationsZh extends AppLocalizations {
       'NFS、SMB 等网络挂载始终显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。仅在通过 SSH 采集状态时生效；通过 monitor agent 采集时，由 agent 自己的设置决定。';
 
   @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS、SMB 等网络挂载始终显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。agent 记录的历史数据和磁盘告警都使用这个总量。';
+
+  @override
   String spentTime(String time) {
     return '耗时：$time';
   }
@@ -6250,6 +6254,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get diskCountsNetworkTip =>
       'NFS、SMB 等網路掛載一律顯示在明細中。它們的容量屬於另一台機器，預設不計入磁碟總量。僅在透過 SSH 收集狀態時生效；透過 monitor agent 收集時，由 agent 自己的設定決定。';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS、SMB 等網路掛載一律顯示在明細中。它們的容量屬於另一台機器，預設不計入磁碟總量。agent 記錄的歷史資料和磁碟警示都使用這個總量。';
 
   @override
   String spentTime(String time) {
