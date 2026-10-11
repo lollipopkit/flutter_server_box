@@ -343,6 +343,7 @@ class SshExec implements ServerByteExec {
           ended: () => ended,
           decided: decided.future,
           sessionId: () => sessionId,
+          refused: () => refused,
           nonce: nonce,
         );
       }),
@@ -397,9 +398,10 @@ class SshExec implements ServerByteExec {
   /// close.
   ///
   /// Whether the session is empty: false when it could not be confirmed this
-  /// run's or emptied. Null with no session to ask about — untracked, or
-  /// stopped before the wrapper printed its marker, which it does before the
-  /// command starts — where the channel is what says.
+  /// run's or emptied, or its id did not come in time to ask. Null with no
+  /// session to ask about — untracked, or stderr ended without the marker,
+  /// which the wrapper prints before the command starts — where the channel
+  /// is what says.
   /// Asked even when the channel has closed: that only says nothing holds the
   /// output, and a child that let go of it can outlive the signal.
   Future<bool?> _stop(
@@ -407,14 +409,19 @@ class SshExec implements ServerByteExec {
     required bool Function() ended,
     required Future<void> decided,
     required int? Function() sessionId,
+    required bool Function() refused,
     required String? nonce,
   }) async {
-    // A marker on its way is read rather than missed.
-    try {
-      await decided.timeout(signalGrace);
-    } catch (_) {
-      // Not in time: nothing of the command has started.
+    Future<void> settled() async {
+      try {
+        await decided.timeout(signalGrace);
+      } catch (_) {
+        // Neither the marker nor the end of stderr in time.
+      }
     }
+
+    // A marker on its way is read rather than missed.
+    await settled();
     final id = sessionId();
     // Before the signal, which ends what carries the nonce — see
     // [SshSessionId.owns].
@@ -442,7 +449,13 @@ class SshExec implements ServerByteExec {
     }
 
     await closed();
-    if (id == null || nonce == null) return null;
+    if (nonce == null) return null;
+    if (id == null) {
+      // Started for all that is known, unless stderr ended without the
+      // marker; a late one arrived after the signal, too late to confirm.
+      await settled();
+      return refused() ? null : false;
+    }
     if (!owned) return false;
     final kill = SshSessionId.kill(id);
     var gone = await _confirms(kill, SshSessionId.gone);

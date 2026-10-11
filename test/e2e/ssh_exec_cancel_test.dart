@@ -118,6 +118,14 @@ Future<void> main() async {
     expect(await running(s), isFalse, reason: 'SIGKILL reached it');
   });
 
+  test('a stop before the session is known still stops it', () async {
+    final s = sleepFor();
+    final cancel = Completer<void>()..complete();
+    final r = await SshExec(client).run('sleep $s', cancel: cancel.future);
+    expect(r.mayStillRun, isFalse);
+    expect(await running(s), isFalse);
+  });
+
   test(
     'a stop kills a child in a process group of its own',
     () async {
