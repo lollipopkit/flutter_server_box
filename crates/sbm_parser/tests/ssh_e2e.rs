@@ -335,6 +335,22 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
         "cpu core count: script vs direct"
     );
 
+    if system == SystemType::Linux {
+        // Quoted regex, passed through script generation verbatim (#1685).
+        let direct_brand = ssh(&host, manifest_cmd(system, commands::CPU_BRAND), None)
+            .expect("direct cpu brand");
+        assert_eq!(
+            status.cpu_brand,
+            sbm_parser::linux::parse_cpu_brand(&direct_brand),
+            "cpu brand: script vs direct"
+        );
+        // Where /proc/cpuinfo names its cores one way or the other — not on
+        // RISC-V, which has neither.
+        if direct_brand.contains("model name") || direct_brand.contains("CPU part") {
+            assert!(!status.cpu_brand.is_empty(), "cpu brand: {direct_brand:?}");
+        }
+    }
+
     let direct_sys_raw = ssh(&host, manifest_cmd(system, commands::SYS), None).expect("direct sys");
     let direct_sys = match system {
         SystemType::Bsd => sbm_parser::common::parse_hostname(&direct_sys_raw),

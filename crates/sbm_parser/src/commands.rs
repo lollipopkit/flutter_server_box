@@ -179,7 +179,13 @@ pub const LINUX: &[CommandSpec] = &[
         // only if the type were known per device.
         cmd: r#"for d in $(lsblk -dn -o KNAME,TYPE 2>/dev/null | awk '$2 == "disk" && $1 !~ /^zram/ { print $1 }'); do if [ -r "/dev/$d" ]; then smartctl -n standby -a -j "/dev/$d" 2>/dev/null; else sudo -n smartctl -n standby -a -j "/dev/$d" 2>/dev/null; fi; echo; done"#,
     },
-    CommandSpec { key: CPU_BRAND, cmd: r#"cat /proc/cpuinfo | grep "model name""# },
+    CommandSpec {
+        key: CPU_BRAND,
+        // `CPU implementer` and `CPU part` name an ARM core where `model name`
+        // is absent (arm64) or the same for every kind (`ARMv8 Processor`);
+        // `processor` tells one core's lines from the next.
+        cmd: r#"grep -E '^(processor|model name|CPU implementer|CPU part)' /proc/cpuinfo"#,
+    },
     CommandSpec {
         key: IP,
         // Three commands because the first is not everywhere: `ip` is iproute2
