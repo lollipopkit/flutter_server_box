@@ -5580,4 +5580,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count threads';
   }
+
+  @override
+  String get followTerminalDir => 'Map van de terminal volgen';
+
+  @override
+  String get insertPathToTerminal => 'Pad in terminal invoegen';
+
+  @override
+  String get openServerDetail => 'Serverdetails openen';
 }

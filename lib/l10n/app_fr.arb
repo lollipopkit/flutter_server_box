@@ -1555,5 +1555,8 @@
   "termFontTip": "Si aucun fichier de police n’est sélectionné, le terminal utilise la police à chasse fixe du système, puis des polices contenant les glyphes CJK et emoji manquants.",
   "netSpeed": "Débit réseau",
   "inRange": "sur la période",
-  "threadsFmt": "{count} threads"
+  "threadsFmt": "{count} threads",
+  "followTerminalDir": "Suivre le répertoire du terminal",
+  "insertPathToTerminal": "Insérer le chemin dans le terminal",
+  "openServerDetail": "Ouvrir les détails du serveur"
 }

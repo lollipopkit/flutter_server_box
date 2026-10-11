@@ -1555,5 +1555,8 @@
   "termFontTip": "Sem um arquivo de fonte selecionado, o terminal usa a fonte monoespaçada do sistema e, para os glifos ausentes, fontes com glifos CJK e emoji.",
   "netSpeed": "Velocidade de rede",
   "inRange": "no período",
-  "threadsFmt": "{count} threads"
+  "threadsFmt": "{count} threads",
+  "followTerminalDir": "Seguir o diretório do terminal",
+  "insertPathToTerminal": "Inserir caminho no terminal",
+  "openServerDetail": "Abrir detalhes do servidor"
 }

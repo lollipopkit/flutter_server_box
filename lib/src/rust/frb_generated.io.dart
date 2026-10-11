@@ -27,6 +27,7 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/service.dart';
+import 'package:server_box/src/rust/api/shell_cwd.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';

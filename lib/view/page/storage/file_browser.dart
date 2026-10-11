@@ -66,6 +66,7 @@ class FileBrowserArgs {
     this.refOf,
     this.labelOf,
     this.onOpenFile,
+    this.onHandle,
   });
 
   final FileBackend backend;
@@ -151,6 +152,12 @@ class FileBrowserArgs {
     String fullPath,
   )?
   onOpenFile;
+
+  /// Given this browser once it is up, and null as it goes, for a host that
+  /// moves it from outside — the file panel beside a terminal, following the
+  /// terminal's directory. Only ever stored by the host: it arrives while this
+  /// is being built, which is no time to make it move.
+  final void Function(FileBrowserHandle? handle)? onHandle;
 }
 
 /// One browser over one [FileBackend].
@@ -255,7 +262,14 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   bool get _isPicking => widget.args.isPickFile || widget.args.isPickDir;
 
   @override
+  void initState() {
+    super.initState();
+    widget.args.onHandle?.call(this);
+  }
+
+  @override
   void dispose() {
+    widget.args.onHandle?.call(null);
     _sort.dispose();
     _search.dispose();
     _pathFocus.removeListener(_onPathFocusChange);

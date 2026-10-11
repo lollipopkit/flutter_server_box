@@ -5269,4 +5269,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count スレッド';
   }
+
+  @override
+  String get followTerminalDir => 'ターミナルのディレクトリに追従';
+
+  @override
+  String get insertPathToTerminal => 'パスをターミナルに挿入';
+
+  @override
+  String get openServerDetail => 'サーバーの詳細を開く';
 }

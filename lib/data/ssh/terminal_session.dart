@@ -120,6 +120,21 @@ class TerminalSession {
   /// reconnect: a tmux pane's programs are still running behind it.
   final status = TerminalStatus();
 
+  /// The directory the shell last said it is in, through OSC 7 — which fish,
+  /// the vte profile script Fedora and Ubuntu ship, and many prompt themes
+  /// print at each prompt. Null until one does: a shell that never says is
+  /// asked instead, by whoever needs to know (`TerminalCwd`).
+  ///
+  /// Not disposed with the session. A panel following it may still be
+  /// unsubscribing in the frame the session closes, and a notifier nobody can
+  /// reach any more costs nothing.
+  final cwd = ValueNotifier<String?>(null);
+
+  /// The host the shell named in its first OSC 7 since it started. A report
+  /// naming another is from somewhere else — an `ssh` run inside this
+  /// terminal — and says nothing about where this shell is.
+  String? _cwdHost;
+
   /// Typed into every shell a reconnect opens for this session: what makes a
   /// shell this session's. A guest's `virsh console` — without it, the fresh
   /// shell would be one on the host, under a page still showing the guest's
@@ -396,6 +411,14 @@ class TerminalSession {
   }
 
   void _handlePrivateOSC(String code, List<String> args) {
+    if (code == '7') {
+      // `;` is the field separator, and a path may hold one.
+      final report = osc7Report(args.join(';'));
+      if (report == null) return;
+      final host = _cwdHost ??= report.host;
+      if (report.host == host) cwd.value = report.path;
+      return;
+    }
     // Selection and payload; base64 has no `;`, so more fields are malformed.
     // xterm bounds the sequence itself (`EscapeParser.maxOscLength`).
     if (code != '52' || args.length != 2) return;
@@ -444,6 +467,10 @@ class TerminalSession {
   /// Puts [session] on the screen: its bytes into the terminal, the terminal's
   /// keystrokes and size into it.
   void bindForeground(ShellSession session) {
+    // A new shell says where it is afresh; what the last one said is about a
+    // shell that has gone — a reconnect starts at home.
+    cwd.value = null;
+    _cwdHost = null;
     terminal.buffer.clear();
     terminal.buffer.setCursor(0, 0);
     _cancelOutputSubscriptions();
@@ -663,5 +690,28 @@ class TerminalSession {
     while (_buffer.hasPending) {
       _flush(scheduleNext: false);
     }
+  }
+}
+
+/// An OSC 7 report, `file://host/path` with the path percent-encoded: the
+/// host the shell names itself by, and the directory.
+///
+/// Null for anything else — another scheme, no path, or an encoding that does
+/// not decode — rather than a guess at what was meant.
+@visibleForTesting
+({String host, String path})? osc7Report(String uri) {
+  const scheme = 'file://';
+  if (!uri.startsWith(scheme)) return null;
+  final slash = uri.indexOf('/', scheme.length);
+  if (slash < 0) return null;
+  try {
+    return (
+      host: uri.substring(scheme.length, slash),
+      path: Uri.decodeComponent(uri.substring(slash)),
+    );
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    return null;
   }
 }

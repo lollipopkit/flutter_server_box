@@ -4,11 +4,14 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/model/app/companion.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/companion/host.dart';
+import 'package:server_box/view/page/companion/panels.dart';
 import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
@@ -16,6 +19,7 @@ import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/server_side_tile.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
 /// strip.
@@ -265,46 +269,68 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       // rail switches sessions and starts them, so all the bar has to say is
       // which one is on screen.
       appBar: split ? _sessionBar : _tabBar,
-      body: SessionTabsView<FileSession>(
-        controller: _sessions,
-        // Restored sessions land while another tab may be the one on screen.
-        mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.file,
-        // Page 0 is the picker's on one column. Beside a rail it is the empty
-        // surface, and not the picker: the rail is already that list.
-        leading: split
-            ? const EmptyPane(icon: Icons.folder_open)
-            : _picker,
-        builder: (_, tab) {
-          final session = tab.data;
-          void onPathChanged(String path) {
-            if (session.currentPath == path) return;
-            session.currentPath = path;
-            _save();
-          }
+      body: CompanionHost(
+        tab: AppTab.file,
+        spi: _currentServer,
+        builder: _companion,
+        child: SessionTabsView<FileSession>(
+          controller: _sessions,
+          // Restored sessions land while another tab may be the one on
+          // screen.
+          mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.file,
+          // Page 0 is the picker's on one column. Beside a rail it is the
+          // empty surface, and not the picker: the rail is already that list.
+          leading: split
+              ? const EmptyPane(icon: Icons.folder_open)
+              : _picker,
+          builder: (_, tab) {
+            final session = tab.data;
+            void onPathChanged(String path) {
+              if (session.currentPath == path) return;
+              session.currentPath = path;
+              _save();
+            }
 
-          return switch (session) {
-            LocalFileSession() => LocalFilePage(
-              key: ValueKey(tab.id),
-              args: LocalFilePageArgs(
-                initDir: session.initialPath,
-                actionsSink: session.actions,
-                onPathChanged: onPathChanged,
+            return switch (session) {
+              LocalFileSession() => LocalFilePage(
+                key: ValueKey(tab.id),
+                args: LocalFilePageArgs(
+                  initDir: session.initialPath,
+                  actionsSink: session.actions,
+                  onPathChanged: onPathChanged,
+                ),
               ),
-            ),
-            ServerFileSession(:final spi) => ServerFilePage(
-              key: ValueKey(tab.id),
-              args: SftpPageArgs(
-                spi: spi,
-                initPath: session.initialPath,
-                actionsSink: session.actions,
-                onPathChanged: onPathChanged,
+              ServerFileSession(:final spi) => ServerFilePage(
+                key: ValueKey(tab.id),
+                args: SftpPageArgs(
+                  spi: spi,
+                  initPath: session.initialPath,
+                  actionsSink: session.actions,
+                  onPathChanged: onPathChanged,
+                ),
               ),
-            ),
-          };
-        },
+            };
+          },
+        ),
       ),
     );
   }
+
+  /// The server the browser on screen is on, or null for this device's.
+  Spi? get _currentServer => switch (_sessions.current?.data) {
+    ServerFileSession(:final spi) => spi,
+    _ => null,
+  };
+
+  /// What the panels beside a server's files are: its status, and a
+  /// terminal on it.
+  Widget _companion(BuildContext context, CompanionPanel panel, Spi spi) =>
+      switch (panel) {
+        CompanionPanel.status => CompanionStatus(spi: spi),
+        CompanionPanel.terminal => CompanionTerminal(spi: spi),
+        // Not offered here: this tab is the files.
+        CompanionPanel.files => const SizedBox.shrink(),
+      };
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
     listenable: _sessions,
@@ -324,7 +350,14 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
           onTap: _sessions.select,
           onClose: _close,
           detailOf: _sessionPath,
-          sessionActions: actions.value,
+          leadingOf: _sessions.markOf,
+          sessionActions: [
+            ...CompanionHost.actions(
+              AppTab.file,
+              enabled: _currentServer != null,
+            ),
+            ...actions.value,
+          ],
           // The same one the rail carries. On one screen the picker is a tab
           // rather than a column, and this acts on what it lists.
           leadingActions: [_searchAction],
@@ -347,7 +380,16 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
             listenable: actions,
             builder: () => Row(
               mainAxisSize: MainAxisSize.min,
-              children: [for (final action in actions.value) action.button()],
+              children: [
+                for (final action in [
+                  ...CompanionHost.actions(
+                    AppTab.file,
+                    enabled: _currentServer != null,
+                  ),
+                  ...actions.value,
+                ])
+                  action.button(),
+              ],
             ),
           ),
           const SizedBox(width: 7),
@@ -585,6 +627,28 @@ const _kColumnWidth = 300.0;
 
 /// The same two things as [_PickPage], in a column too narrow for cards: the
 /// browsers that are open, and the places another could be opened on.
+extension on SessionTabsController<FileSession> {
+  String? _serverIdAt(int index) =>
+      switch (tabs.elementAtOrNull(index - 1)?.data) {
+        ServerFileSession(:final spi) => spi.id,
+        _ => null,
+      };
+
+  /// The server's mark before a browser's name in the strip's sheet, where it
+  /// has one.
+  Widget? markOf(int index) => switch (_serverIdAt(index)) {
+    final id? => distIcon(id, size: kSideMarkSize),
+    null => null,
+  };
+
+  /// The browser at [index] as a row of the rail — see [railRow].
+  RailRow railOf(int index) => railRow(
+    serverId: _serverIdAt(index),
+    live: true,
+    selected: index == this.index,
+  );
+}
+
 class _SideBar extends ConsumerWidget {
   const _SideBar({
     required this.sessions,
@@ -629,6 +693,8 @@ class _SideBar extends ConsumerWidget {
         index: sessions.index,
         onTap: onSelect,
         onClose: onClose,
+        leadingOf: (i) => sessions.railOf(i).leading,
+        liveOf: (i) => sessions.railOf(i).live,
         actions: actions,
         search: search,
         // Nothing here is running. A browser is a place you are looking at,
@@ -654,10 +720,9 @@ class _SideBar extends ConsumerWidget {
               if (needle.isEmpty ||
                   spi.name.toLowerCase().contains(needle) ||
                   spi.displayAddr.toLowerCase().contains(needle))
-              SideBarTile(
+              ServerSideTile(
                 key: ValueKey(id),
-                leading: distIcon(spi.id, size: 22),
-                title: spi.name,
+                spi: spi,
                 onTap: () => onServer(spi),
               ),
           ],

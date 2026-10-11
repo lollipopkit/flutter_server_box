@@ -5517,4 +5517,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count iş parçacığı';
   }
+
+  @override
+  String get followTerminalDir => 'Terminalin dizinini takip et';
+
+  @override
+  String get insertPathToTerminal => 'Yolu terminale ekle';
+
+  @override
+  String get openServerDetail => 'Sunucu ayrıntılarını aç';
 }

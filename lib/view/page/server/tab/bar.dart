@@ -80,6 +80,7 @@ extension _Bar on _ServerPageState {
     final spi = ref.read(serversProvider).servers[openId];
     if (spi == null) return const [];
     return [
+      ...CompanionHost.actions(AppTab.server, enabled: true),
       for (final action in ServerPageAction.of(
         context,
         spi,

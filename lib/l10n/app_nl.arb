@@ -1555,5 +1555,8 @@
   "termFontTip": "Zonder geselecteerd lettertypebestand gebruikt de terminal het monospace-lettertype van het systeem en daarna lettertypen met CJK- en emoji-glyphs voor wat daarin ontbreekt.",
   "netSpeed": "Netwerksnelheid",
   "inRange": "in periode",
-  "threadsFmt": "{count} threads"
+  "threadsFmt": "{count} threads",
+  "followTerminalDir": "Map van de terminal volgen",
+  "insertPathToTerminal": "Pad in terminal invoegen",
+  "openServerDetail": "Serverdetails openen"
 }

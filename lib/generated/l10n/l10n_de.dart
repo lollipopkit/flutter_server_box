@@ -5602,4 +5602,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count Threads';
   }
+
+  @override
+  String get followTerminalDir => 'Dem Verzeichnis des Terminals folgen';
+
+  @override
+  String get insertPathToTerminal => 'Pfad ins Terminal einfügen';
+
+  @override
+  String get openServerDetail => 'Serverdetails öffnen';
 }

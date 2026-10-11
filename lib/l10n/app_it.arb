@@ -1555,5 +1555,8 @@
   "termFontTip": "Se non è selezionato alcun file di font, il terminale usa il font monospaziato del sistema e poi font con glifi CJK ed emoji per quelli mancanti.",
   "netSpeed": "Velocità di rete",
   "inRange": "nel periodo",
-  "threadsFmt": "{count} thread"
+  "threadsFmt": "{count} thread",
+  "followTerminalDir": "Segui la directory del terminale",
+  "insertPathToTerminal": "Inserisci percorso nel terminale",
+  "openServerDetail": "Apri dettagli del server"
 }

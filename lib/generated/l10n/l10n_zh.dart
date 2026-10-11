@@ -5177,6 +5177,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count 个线程';
   }
+
+  @override
+  String get followTerminalDir => '跟随终端目录';
+
+  @override
+  String get insertPathToTerminal => '插入路径到终端';
+
+  @override
+  String get openServerDetail => '打开服务器详情';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10351,4 +10360,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String threadsFmt(int count) {
     return '$count 個執行緒';
   }
+
+  @override
+  String get followTerminalDir => '跟隨終端目錄';
+
+  @override
+  String get insertPathToTerminal => '插入路徑到終端';
+
+  @override
+  String get openServerDetail => '開啟伺服器詳情';
 }

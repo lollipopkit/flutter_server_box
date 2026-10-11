@@ -7159,5 +7159,17 @@
         "type": "int"
       }
     }
+  },
+  "followTerminalDir": "Follow the terminal's directory",
+  "@followTerminalDir": {
+    "description": "Toggle in the file panel beside a terminal: the list goes wherever the terminal's shell goes."
+  },
+  "insertPathToTerminal": "Insert path into terminal",
+  "@insertPathToTerminal": {
+    "description": "Menu entry in the file panel beside a terminal: pastes the item's path at the terminal's prompt."
+  },
+  "openServerDetail": "Open server details",
+  "@openServerDetail": {
+    "description": "Button in the status panel: opens the server's full detail page."
   }
 }

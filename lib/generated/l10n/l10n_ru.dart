@@ -5567,4 +5567,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String threadsFmt(int count) {
     return 'Потоков: $count';
   }
+
+  @override
+  String get followTerminalDir => 'Следовать за каталогом терминала';
+
+  @override
+  String get insertPathToTerminal => 'Вставить путь в терминал';
+
+  @override
+  String get openServerDetail => 'Открыть сведения о сервере';
 }

@@ -5527,4 +5527,13 @@ class AppLocalizationsId extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count thread';
   }
+
+  @override
+  String get followTerminalDir => 'Ikuti direktori terminal';
+
+  @override
+  String get insertPathToTerminal => 'Sisipkan jalur ke terminal';
+
+  @override
+  String get openServerDetail => 'Buka detail server';
 }

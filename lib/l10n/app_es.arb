@@ -1555,5 +1555,8 @@
   "termFontTip": "Si no se selecciona un archivo de fuente, el terminal usa la fuente monoespaciada del sistema y, para los glifos que falten, fuentes con glifos CJK y emoji.",
   "netSpeed": "Velocidad de red",
   "inRange": "en el período",
-  "threadsFmt": "{count} hilos"
+  "threadsFmt": "{count} hilos",
+  "followTerminalDir": "Seguir el directorio de la terminal",
+  "insertPathToTerminal": "Insertar ruta en la terminal",
+  "openServerDetail": "Abrir detalles del servidor"
 }

@@ -80,6 +80,7 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 - **A narrow (one-column) tab bar is a `SwitcherBar`** (fl_lib): a `SessionSwitcherLabel` left, `BarAction`s right (folded into ⋮ when short; `BarAction.listen` for live state; `.button()` for a wide pane's own header). It keeps clear of the iPadOS window controls; a hand-built top bar must wrap itself in `WindowControlsInset`. Wide two-pane layouts keep their own headers.
 - `detailId` is null at the root; give `leading` where the back button has nowhere to go; no `ref.watch`/`ref.listen` in `detailBuilder`; the subject is a widget, not a route.
 - `AppTab` is positional; index 7 stays in `_retiredIndices`.
+- **Companion panels** (`view/page/companion/`): the server, terminal and file tabs open the other two beside their subject — a right column from `CompanionHost.columnWidth`, a sheet below it. A terminal is drawn in one place: a panel borrows the terminal tab's session (`OpenTerminals`/`LentTerminal`), as the floating window does (`TerminalShell`).
 
 ### Dialogs
 

@@ -37,14 +37,23 @@ extension _DetailHost on _ServerPageState {
       child: Material(
         type: MaterialType.canvas,
         color: Theme.of(context).scaffoldBackgroundColor,
-        child: ServerDetailPage(
-          args: SpiRequiredArgs(spi),
-          bare: true,
-          // Mounted from the first frame of the movement, so what it has that
-          // the card has not arrives with the chart rather than after it.
-          entrance: _open,
-          // Until then the card is the one drawing them.
-          readingsShowing: _detailShowing,
+        child: CompanionHost(
+          tab: AppTab.server,
+          // Once the card has become the page, not while it is growing into
+          // it: a column arriving beside a card in flight would move the edge
+          // it is flying to.
+          spi: _detailShowing ? spi : null,
+          builder: serverCompanion,
+          child: ServerDetailPage(
+            args: SpiRequiredArgs(spi),
+            bare: true,
+            // Mounted from the first frame of the movement, so what it has
+            // that the card has not arrives with the chart rather than after
+            // it.
+            entrance: _open,
+            // Until then the card is the one drawing them.
+            readingsShowing: _detailShowing,
+          ),
         ),
       ),
     );

@@ -1555,5 +1555,8 @@
   "termFontTip": "フォントファイルを選択していない場合、端末はシステムの等幅フォントを使用し、不足する文字には CJK と emoji のグリフを含むフォントを使用します。",
   "netSpeed": "通信速度",
   "inRange": "期間内",
-  "threadsFmt": "{count} スレッド"
+  "threadsFmt": "{count} スレッド",
+  "followTerminalDir": "ターミナルのディレクトリに追従",
+  "insertPathToTerminal": "パスをターミナルに挿入",
+  "openServerDetail": "サーバーの詳細を開く"
 }

@@ -5608,4 +5608,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count hilos';
   }
+
+  @override
+  String get followTerminalDir => 'Seguir el directorio de la terminal';
+
+  @override
+  String get insertPathToTerminal => 'Insertar ruta en la terminal';
+
+  @override
+  String get openServerDetail => 'Abrir detalles del servidor';
 }

@@ -1555,5 +1555,8 @@
   "termFontTip": "Ohne ausgewählte Schriftdatei verwendet das Terminal die Monospace-Schrift des Systems und für fehlende Glyphen Schriftarten mit CJK- und Emoji-Glyphen.",
   "netSpeed": "Netzgeschwindigkeit",
   "inRange": "im Zeitraum",
-  "threadsFmt": "{count} Threads"
+  "threadsFmt": "{count} Threads",
+  "followTerminalDir": "Dem Verzeichnis des Terminals folgen",
+  "insertPathToTerminal": "Pfad ins Terminal einfügen",
+  "openServerDetail": "Serverdetails öffnen"
 }

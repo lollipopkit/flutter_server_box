@@ -5526,4 +5526,13 @@ class AppLocalizationsAz extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count axın';
   }
+
+  @override
+  String get followTerminalDir => 'Terminalın qovluğunu izlə';
+
+  @override
+  String get insertPathToTerminal => 'Yolu terminala daxil et';
+
+  @override
+  String get openServerDetail => 'Server təfərrüatlarını aç';
 }

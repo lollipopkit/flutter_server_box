@@ -29,6 +29,7 @@ pub mod output;
 pub mod proc;
 pub mod script;
 pub mod service;
+pub mod shell_cwd;
 pub mod smart;
 pub mod snippet;
 pub mod tmux;

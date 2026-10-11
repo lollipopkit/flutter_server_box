@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
+import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -133,6 +134,8 @@ class _LocalServerFilePage extends StatelessWidget {
         // This device's files are this device's, whichever page lists them:
         // a transfer from here needs no server to reach them.
         refOf: LocalFileRef.new,
+        entryActions: _hostEntryActions(args),
+        onHandle: args.onHandle,
       ),
     );
   }
@@ -239,7 +242,17 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
           ),
         ],
         refOf: (path) => MonitorFileRef.forServer(_spi, path),
+        entryActions: _hostEntryActions(widget.args),
+        onHandle: widget.args.onHandle,
       ),
     );
   }
 }
+
+/// [SftpPageArgs.hostEntryActions] in the browser's shape, for the pages that
+/// have no entries of their own to put first.
+List<ContextMenuAction> Function(FileBrowserHandle, FileEntry, String)?
+_hostEntryActions(SftpPageArgs args) => switch (args.hostEntryActions) {
+  null => null,
+  final actions => (_, entry, fullPath) => actions(entry, fullPath),
+};

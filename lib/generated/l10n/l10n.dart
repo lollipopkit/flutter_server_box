@@ -9470,6 +9470,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} threads'**
   String threadsFmt(int count);
+
+  /// Toggle in the file panel beside a terminal: the list goes wherever the terminal's shell goes.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the terminal\'s directory'**
+  String get followTerminalDir;
+
+  /// Menu entry in the file panel beside a terminal: pastes the item's path at the terminal's prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert path into terminal'**
+  String get insertPathToTerminal;
+
+  /// Button in the status panel: opens the server's full detail page.
+  ///
+  /// In en, this message translates to:
+  /// **'Open server details'**
+  String get openServerDetail;
 }
 
 class _AppLocalizationsDelegate

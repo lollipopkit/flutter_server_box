@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -7,17 +8,21 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/companion.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app/terminal_lend.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
+import 'package:server_box/view/page/companion/host.dart';
+import 'package:server_box/view/page/companion/panels.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
@@ -25,6 +30,7 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/terminal_status_dot.dart';
 import 'package:server_box/view/widget/terminal_status_sheet.dart';
 
@@ -77,11 +83,54 @@ class _SshSession {
 }
 
 extension on SessionTabsController<_SshSession> {
-  /// What the programs in the session at [index] report about themselves.
+  /// What the programs in the session at [index] report about themselves, for
+  /// the strip's sheet: on the server's mark where it has one.
   Widget? statusOf(int index) {
     final tab = tabs.elementAtOrNull(index - 1);
-    return tab == null ? null : TerminalStatusDot(tab.data.session);
+    if (tab == null) return null;
+    final serverId = tab.data.page.args.spi?.id;
+    return sideMark(
+      mark: serverId == null ? null : distIcon(serverId, size: kSideMarkSize),
+      badge: TerminalStatusDot(tab.data.session, ringed: serverId != null),
+    );
   }
+
+  /// The session at [index] as a row of the rail — see [railRow]. Read again
+  /// whenever a session's programs report something: the bar's colour is
+  /// taken from them here, not listened for.
+  RailRow railOf(int index, ColorScheme scheme) {
+    final tab = tabs[index - 1];
+    final selected = index == this.index;
+    return railRow(
+      serverId: tab.data.page.args.spi?.id,
+      live: true,
+      color: tab.data.session.value?.status.headline?.colorIn(scheme),
+      selected: selected,
+      badge: TerminalStatusDot(
+        tab.data.session,
+        ringed: true,
+        idle: SideMarkDot(selected: selected),
+      ),
+    );
+  }
+
+  /// Rebuilds [builder] whenever what [railOf] reads changes: the tabs, the
+  /// session each one has once its page is built, and what that session's
+  /// programs report. Nested, so each layer subscribes to what the layer
+  /// above has just found — a merge taken once would miss a tab opened, or a
+  /// session started, after it.
+  Widget listenRail(Widget Function() builder) => ListenBuilder(
+    listenable: this,
+    builder: () => ListenBuilder(
+      listenable: Listenable.merge([for (final tab in tabs) tab.data.session]),
+      builder: () => ListenBuilder(
+        listenable: Listenable.merge([
+          for (final tab in tabs) ?tab.data.session.value?.status,
+        ]),
+        builder: builder,
+      ),
+    ),
+  );
 }
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
@@ -97,6 +146,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   /// The bar's search: what is typed, and whether the bar is a field at all.
   final _search = InlineSearchController();
+
+  /// Whether [_publishTerminals] has a publish on its way.
+  var _publishQueued = false;
 
   /// The session floating over the tabs, mirrored out of the provider for the
   /// bar's float button, which is drawn from a listenable.
@@ -129,6 +181,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.initState();
     // Here and not lazily: [dispose] touches it, and `ref` is gone by then.
     _floating = ValueNotifier(ref.read(terminalShellProvider)?.session);
+    _sessions.addListener(_publishTerminals);
     Rootfs.removed.addListener(_onRootfsRemoved);
     // Both after the first frame, and in this order: a queued request is what
     // the user just asked for, and it should end up beside the tabs that were
@@ -152,6 +205,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   void dispose() {
     Rootfs.removed.removeListener(_onRootfsRemoved);
+    _sessions.removeListener(_publishTerminals);
     _sessions.dispose();
     _sortVersion.dispose();
     _search.dispose();
@@ -238,20 +292,61 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       // rail switches sessions and starts them, so all the bar has to say is
       // which one is on screen.
       appBar: split ? _sessionBar : _tabBar,
-      body: SessionTabsView<_SshSession>(
-        controller: _sessions,
-        // Restored sessions land while another tab may be the one on screen.
-        mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.ssh,
-        // Page 0 is the picker's on one column. Beside a rail it is what the
-        // surface shows before anything is opened — and nothing else, because
-        // the rail is already that list and drawing it twice is what the grid
-        // of cards was.
-        leading: split
-            ? const EmptyPane(icon: Icons.terminal_outlined)
-            : _picker,
-        builder: (_, tab) => tab.data.page,
+      body: CompanionHost(
+        tab: AppTab.ssh,
+        spi: _sessions.current?.data.page.args.spi,
+        builder: _companion,
+        child: SessionTabsView<_SshSession>(
+          controller: _sessions,
+          // Restored sessions land while another tab may be the one on
+          // screen.
+          mayFocus: () => ref.read(currentHomeTabProvider) == AppTab.ssh,
+          // Page 0 is the picker's on one column. Beside a rail it is what
+          // the surface shows before anything is opened — and nothing else,
+          // because the rail is already that list and drawing it twice is
+          // what the grid of cards was.
+          leading: split
+              ? const EmptyPane(icon: Icons.terminal_outlined)
+              : _picker,
+          builder: (_, tab) => tab.data.page,
+        ),
       ),
     );
+  }
+
+  /// What the panels beside a terminal are: the server's status, and its
+  /// files — following this terminal, and taking paths into it.
+  Widget _companion(BuildContext context, CompanionPanel panel, Spi spi) =>
+      switch (panel) {
+        CompanionPanel.status => CompanionStatus(spi: spi),
+        CompanionPanel.files => ListenBuilder(
+          listenable: _sessions.current?.data.session ?? _sessions,
+          builder: () => CompanionFiles(
+            spi: spi,
+            terminal: _sessions.current?.data.session.value,
+          ),
+        ),
+        // Not offered here: this tab is the terminal.
+        CompanionPanel.terminal => const SizedBox.shrink(),
+      };
+
+  /// Tells the rest of the app which shells are running here, for a panel on
+  /// another tab that shows one rather than starting its own.
+  ///
+  /// In a microtask: this is told of changes while the strip is building, and
+  /// a provider must not change under a build.
+  void _publishTerminals() {
+    if (_publishQueued) return;
+    _publishQueued = true;
+    scheduleMicrotask(() {
+      _publishQueued = false;
+      if (!mounted) return;
+      ref.read(openTerminalsProvider.notifier).publish([
+        for (final tab in _sessions.tabs)
+          if (tab.data.session.value case final session?)
+            OpenTerminal(name: tab.name, session: session),
+      ]);
+    });
   }
 
   PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
@@ -349,7 +444,8 @@ extension _Sessions on _SSHTabPageState {
       preferred: source.label,
       build: (name, focus, visible) {
         final key = GlobalKey<SSHPageState>(debugLabel: name);
-        final live = ValueNotifier<TerminalSession?>(session);
+        final live = ValueNotifier<TerminalSession?>(session)
+          ..addListener(_publishTerminals);
         return _SshSession(
           pageKey: key,
           session: live,
@@ -630,9 +726,15 @@ extension _Actions on _SSHTabPageState {
       paneLabel: (pane) =>
           current.data.pageKey.currentState?.tmuxPaneLabel(pane),
     );
-    return onServer
-        ? [status, _agentAction, _snippetAction, _settingsAction, _floatAction]
-        : [status, _snippetAction, _settingsAction, _floatAction];
+    return [
+      // First: they are about the server, and the rest about this terminal.
+      ...CompanionHost.actions(AppTab.ssh, enabled: onServer),
+      status,
+      if (onServer) _agentAction,
+      _snippetAction,
+      _settingsAction,
+      _floatAction,
+    ];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,

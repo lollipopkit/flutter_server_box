@@ -57,24 +57,28 @@ class TerminalFloatingShell extends ConsumerWidget {
       // terminal is exactly what the placeholder exists to prevent.
       builder: (_) => switch (floating) {
         null => const SizedBox.shrink(),
-        final it => _FloatTerminal(key: ValueKey(it.session), session: it.session),
+        final it => BareTerminal(key: ValueKey(it.session), session: it.session),
       },
     );
   }
 }
 
-/// What the window holds: the terminal, and on a phone the keys a terminal
-/// needs that a software keyboard has not got.
-class _FloatTerminal extends ConsumerStatefulWidget {
-  const _FloatTerminal({super.key, required this.session});
+/// A view of a running terminal and nothing else: the terminal, and on a phone
+/// the keys a terminal needs that a software keyboard has not got.
+///
+/// What the floating window holds, and what a companion panel shows — both
+/// views of a session that belongs to a tab, without the tab's tmux, snippets
+/// and reconnects around it.
+class BareTerminal extends ConsumerStatefulWidget {
+  const BareTerminal({super.key, required this.session});
 
   final TerminalSession session;
 
   @override
-  ConsumerState<_FloatTerminal> createState() => _FloatTerminalState();
+  ConsumerState<BareTerminal> createState() => _BareTerminalState();
 }
 
-class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
+class _BareTerminalState extends ConsumerState<BareTerminal> {
   final _controller = TerminalController();
   final _focusNode = FocusNode();
   final _termKey = GlobalKey<TerminalViewState>();
@@ -130,7 +134,7 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
   }
 }
 
-extension _Utils on _FloatTerminalState {
+extension _Utils on _BareTerminalState {
   /// The keys this window can actually serve.
   ///
   /// The tab's strip carries four more — snippets, the file browser, the sudo
@@ -181,7 +185,7 @@ const _keyRowHeight = 37.0;
 /// Wide enough for `PgDn` and for a 17pt icon to sit in the middle of.
 const _keyWidth = 46.0;
 
-extension _Widgets on _FloatTerminalState {
+extension _Widgets on _BareTerminalState {
   /// One row that scrolls sideways, rather than the tab's grid of seven per
   /// row: this window is as wide as it was dragged to, and a row that reflowed
   /// as it was resized would move every key under the thumb reaching for one.
@@ -248,7 +252,7 @@ extension _Widgets on _FloatTerminalState {
 
 }
 
-extension _Actions on _FloatTerminalState {
+extension _Actions on _BareTerminalState {
   void _press(VirtKey item, VirtKeyboard notifier) {
     switch (item.func) {
       case VirtualKeyFunc.toggleIME:

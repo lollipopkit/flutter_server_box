@@ -54,12 +54,22 @@ final class SftpPageArgs {
   /// the home directory.
   final void Function(String path)? onPathChanged;
 
+  /// See [FileBrowserArgs.onHandle].
+  final void Function(FileBrowserHandle? handle)? onHandle;
+
+  /// Menu entries the host adds for one item, after the page's own — what the
+  /// file panel beside a terminal can do with a path that a page alone cannot.
+  final List<ContextMenuAction> Function(FileEntry entry, String fullPath)?
+  hostEntryActions;
+
   const SftpPageArgs({
     required this.spi,
     this.isSelect = false,
     this.initPath,
     this.onPathChanged,
     this.actionsSink,
+    this.onHandle,
+    this.hostEntryActions,
   });
 }
 
@@ -190,7 +200,11 @@ class _SftpPageState extends ConsumerState<SftpPage> {
             onPathChanged: _onPathChanged,
             extraActions: _toolbarActions,
             createActions: _createActions,
-            entryActions: _entryActions,
+            entryActions: (handle, entry, fullPath) => [
+              ..._entryActions(handle, entry, fullPath),
+              ...?widget.args.hostEntryActions?.call(entry, fullPath),
+            ],
+            onHandle: widget.args.onHandle,
             pathTrailing: _sudoMode.listenVal(
               (on) => on
                   ? Icon(Icons.security, size: 16, color: UIs.primaryColor)

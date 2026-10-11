@@ -29,6 +29,8 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/src/rust/api/bmc.dart';
+import 'package:server_box/view/page/companion/host.dart';
+import 'package:server_box/view/page/companion/panels.dart';
 import 'package:server_box/view/page/server/card/chart_hero.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/name_hero.dart';
@@ -338,7 +340,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       // instead, which replaces the system's for those five: on a phone with
       // its text turned down they were a fifth larger than the rest of the
       // card they were in.
-      body: SafeArea(child: ServerTextScale(child: body)),
+      body: SafeArea(
+        child: CompanionHost(
+          tab: AppTab.server,
+          spi: si.spi,
+          // Pushed over whichever tab opened it: on screen is whether this is
+          // the top page, not which tab is current.
+          inTab: false,
+          builder: serverCompanion,
+          child: ServerTextScale(child: body),
+        ),
+      ),
     );
   }
 
@@ -676,6 +688,11 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ),
       ),
       actions: [
+        for (final action in CompanionHost.actions(
+          AppTab.server,
+          enabled: true,
+        ))
+          action.button(),
         for (final action in ServerPageAction.of(
           context,
           si.spi,

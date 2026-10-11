@@ -1555,5 +1555,8 @@
   "termFontTip": "Jika tidak ada file font yang dipilih, terminal menggunakan font monospace sistem, lalu font dengan glif CJK dan emoji untuk karakter yang tidak tersedia.",
   "netSpeed": "Kecepatan jaringan",
   "inRange": "dalam rentang",
-  "threadsFmt": "{count} thread"
+  "threadsFmt": "{count} thread",
+  "followTerminalDir": "Ikuti direktori terminal",
+  "insertPathToTerminal": "Sisipkan jalur ke terminal",
+  "openServerDetail": "Buka detail server"
 }

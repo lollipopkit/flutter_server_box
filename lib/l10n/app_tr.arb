@@ -1555,5 +1555,8 @@
   "termFontTip": "Bir yazı tipi dosyası seçilmediğinde terminal, sistemin eş aralıklı yazı tipini kullanır; eksik glifler için CJK ve emoji glifleri içeren yazı tiplerine başvurur.",
   "netSpeed": "Ağ hızı",
   "inRange": "aralıkta",
-  "threadsFmt": "{count} iş parçacığı"
+  "threadsFmt": "{count} iş parçacığı",
+  "followTerminalDir": "Terminalin dizinini takip et",
+  "insertPathToTerminal": "Yolu terminale ekle",
+  "openServerDetail": "Sunucu ayrıntılarını aç"
 }

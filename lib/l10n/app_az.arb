@@ -1555,5 +1555,8 @@
   "termFontTip": "Şrift faylı seçilmədikdə terminal əvvəlcə sistemin sabit enli şriftindən, onda olmayan qliflər üçün isə CJK və emoji qliflərini dəstəkləyən şriftlərdən istifadə edir.",
   "netSpeed": "Şəbəkə sürəti",
   "inRange": "aralıqda",
-  "threadsFmt": "{count} axın"
+  "threadsFmt": "{count} axın",
+  "followTerminalDir": "Terminalın qovluğunu izlə",
+  "insertPathToTerminal": "Yolu terminala daxil et",
+  "openServerDetail": "Server təfərrüatlarını aç"
 }

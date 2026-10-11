@@ -23,6 +23,7 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/app/terminal_lend.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
@@ -642,6 +643,15 @@ class SSHPageState extends ConsumerState<SSHPage>
       terminalShellProvider.select((shell) => identical(shell?.session, _sess)),
     );
     if (floating) return _buildFloatedAway();
+
+    // Drawn in a companion panel on another tab, for the same reason. Only
+    // while that tab is the one on screen, so nobody is looking at this
+    // either: a blank in the terminal's colour, for the frame or two a tab
+    // switch takes the panel to give it back.
+    final lent = ref.watch(
+      lentTerminalProvider.select((lent) => identical(lent?.session, _sess)),
+    );
+    if (lent) return ColoredBox(color: _terminalTheme.background);
 
     final bgImage = Stores.setting.sshBgImage.fetch();
     final bgFile = bgImage.isEmpty ? null : File(bgImage);

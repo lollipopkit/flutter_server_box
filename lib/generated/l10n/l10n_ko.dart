@@ -5270,4 +5270,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String threadsFmt(int count) {
     return '스레드 $count개';
   }
+
+  @override
+  String get followTerminalDir => '터미널 디렉터리 따라가기';
+
+  @override
+  String get insertPathToTerminal => '터미널에 경로 삽입';
+
+  @override
+  String get openServerDetail => '서버 세부 정보 열기';
 }

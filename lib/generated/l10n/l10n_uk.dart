@@ -5568,4 +5568,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String threadsFmt(int count) {
     return 'Потоків: $count';
   }
+
+  @override
+  String get followTerminalDir => 'Стежити за каталогом термінала';
+
+  @override
+  String get insertPathToTerminal => 'Вставити шлях у термінал';
+
+  @override
+  String get openServerDetail => 'Відкрити відомості про сервер';
 }
