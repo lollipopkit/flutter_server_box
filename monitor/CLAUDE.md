@@ -128,7 +128,7 @@ Files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`), the same set
 ### Editing it over the API (admin, `require_admin!`)
 
 Reads go to the file on disk, not `AppState.config` (a startup snapshot). **A PUT replaces all it names**; GETs and `POST /push/test` write nothing.
-- `GET/PUT /settings`: intervals, idle pause, rules, retention, CORS (no `jwt_secret`, `database_url`, `remote_access`). GET adds `live_fields` and `data_retention_defaults` (absent retention means no cleanup at all).
+- `GET/PUT /settings`: intervals, idle pause, rules, retention, CORS, `disk_counts_network` (no `jwt_secret`, `database_url`, `remote_access`). `disk_counts_network` absent from a PUT keeps the stored value. GET adds `live_fields` and `data_retention_defaults` (absent retention means no cleanup at all).
 - `GET/PUT /push`, `POST /push/test` (`api/push.rs`): channels and `push_rate`. **Credentials are write-only**: GET answers `null` at credential keys (`sc_key`, Bark `key`, iOS `token`, every header value); a PUT `null` keeps the stored value, matched by `from_index`; `null` elsewhere is refused. A webhook `url` is not a credential. An unknown `push_type` is withheld and unsavable. Channels and rules apply on restart (`applies_on_restart`; TODO live, like `LiveSettings`). `tests/push_api.rs` checks the response bytes.
 
 ## Database

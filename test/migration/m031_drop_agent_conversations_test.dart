@@ -51,13 +51,13 @@ void main() {
   setUp(openTestDb);
   tearDown(SqliteDb.close);
 
-  test('is the last registered schema step', () {
+  test('is registered at its own step', () {
     expect(const DropAgentConversationsMigration().from, 31);
     expect(
       kSchemaMigrations.whereType<DropAgentConversationsMigration>(),
       hasLength(1),
     );
-    expect(kSchemaMigrations.last.from, SchemaVersion.current - 1);
+    expect(SchemaVersion.current, greaterThan(31));
   });
 
   test('drops both tables and their index, with what was in them', () async {

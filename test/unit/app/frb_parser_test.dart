@@ -47,6 +47,7 @@ void main() {
       system: 'linux',
       raw: raw,
       tempDivisor: 1000.0,
+      countNetwork: false,
     );
     return jsonDecode(json) as Map<String, dynamic>;
   }
@@ -100,12 +101,14 @@ void main() {
       system: 'linux',
       raw: {'tempType': types, 'tempVal': '45000'},
       tempDivisor: 1000.0,
+      countNetwork: false,
     );
     expect(jsonDecode(milli)['temps']['x86_pkg_temp'], 45.0);
     final celsius = await parseStatusJson(
       system: 'linux',
       raw: {'tempType': types, 'tempVal': '45'},
       tempDivisor: 1.0,
+      countNetwork: false,
     );
     expect(jsonDecode(celsius)['temps']['x86_pkg_temp'], 45.0);
   });

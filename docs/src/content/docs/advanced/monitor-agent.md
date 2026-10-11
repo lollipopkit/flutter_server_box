@@ -554,7 +554,7 @@ threshold = ">=80%"
 | `memory` | `avail` | Percent available |
 | `swap` | `used`, `swap` or blank | Percent used |
 | `swap` | `free` | Percent not used |
-| `disk` | Ignored | Percent used across all filesystems |
+| `disk` | Ignored | Percent used across this machine's filesystems; NFS, SMB and similar count only with `disk_counts_network = true` under `[monitoring]` (also in Monitor settings) |
 | `network` | `rx` or `in` | Receive speed |
 | `network` | `tx` or `out` | Transmit speed |
 | `network` | Blank or anything else | Receive plus transmit |

@@ -39,6 +39,7 @@ class ScriptDataSource implements ServerDataSource {
         parsedOutput: parsedOutput,
         system: into.system,
         tempDivisor: spi.custom?.tempIsCelsius == true ? 1.0 : 1000.0,
+        diskCountsNetwork: spi.custom?.diskCountsNetwork ?? false,
       ),
     );
     // Receipt time is the only timestamp available: the shell output carries

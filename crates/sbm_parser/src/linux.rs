@@ -71,9 +71,40 @@ fn meminfo_value(raw: &str, key: &str) -> Option<u64> {
     })
 }
 
-/// Disk output (Dart `Disk.parse`): prefer lsblk JSON (tagged `LSBLK_SUCCESS`),
-/// fall back to the df table
+/// What [commands::DISK] prints between its `lsblk` and its `df`.
+pub const DISK_DF_MARKER: &str = "__SBM_DF__";
+
+/// The `lsblk` arguments [commands::DISK] runs with, for a caller that runs it
+/// without a shell (the monitor agent's sampler).
+pub const LSBLK_ARGS: [&str; 4] = [
+    "--bytes",
+    "--json",
+    "--output",
+    "FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID",
+];
+
+/// Disk output: `lsblk` JSON, then [DISK_DF_MARKER], then the `df` table —
+/// each source sees what the other cannot (see [merge_disks]). Either half may
+/// be missing: `lsblk` is not on busybox, and the monitor agent's sampler
+/// reads `df` alone. The older output, one or the other, is read as before.
 pub fn parse_disk(raw: &str) -> Vec<Disk> {
+    if let Some((lsblk, df)) = raw.split_once(DISK_DF_MARKER) {
+        let lsblk = lsblk.trim();
+        let lsblk = if lsblk.starts_with('{') {
+            serde_json::from_str::<serde_json::Value>(lsblk)
+                .map(|json| parse_lsblk(&json))
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+        let df = df.trim();
+        let df = if df.contains("Filesystem") && df.contains("Mounted on") {
+            parse_df(df)
+        } else {
+            Vec::new()
+        };
+        return merge_disks(lsblk, df);
+    }
     let raw = raw.trim();
     if raw.is_empty() {
         return Vec::new();
@@ -94,6 +125,50 @@ pub fn parse_disk(raw: &str) -> Vec<Disk> {
         return parse_df(raw);
     }
     Vec::new()
+}
+
+/// One list of `lsblk`'s devices and `df`'s mounted filesystems.
+///
+/// `lsblk` is the tree: devices, how they nest (a disk, its partitions, the
+/// LVM volumes on one), filesystem types and UUIDs, and devices nothing is
+/// mounted from. `df` is what is mounted and how full it is — including what
+/// `lsblk` cannot see (NFS and SMB, every ZFS dataset) and, in a container,
+/// numbers `lsblk` leaves empty. A `df` row lands on the device it names, by
+/// path or by mount point, and its numbers win: they are always current,
+/// where the monitor agent's `lsblk` is refreshed less often. Whatever `df`
+/// has that no device matches is added after the tree.
+pub fn merge_disks(mut lsblk: Vec<Disk>, df: Vec<Disk>) -> Vec<Disk> {
+    fn find<'a>(disks: &'a mut [Disk], row: &Disk) -> Option<&'a mut Disk> {
+        for disk in disks {
+            if disk.path == row.path || (!row.mount.is_empty() && disk.mount == row.mount) {
+                return Some(disk);
+            }
+            if let Some(found) = find(&mut disk.children, row) {
+                return Some(found);
+            }
+        }
+        None
+    }
+    let mut extra = Vec::new();
+    for row in df {
+        match find(&mut lsblk, &row) {
+            Some(disk) => {
+                disk.size = row.size;
+                disk.used = row.used;
+                disk.avail = row.avail;
+                disk.used_percent = row.used_percent;
+                if disk.mount.is_empty() {
+                    disk.mount = row.mount;
+                }
+                if disk.fs_type.is_none() {
+                    disk.fs_type = row.fs_type;
+                }
+            }
+            None => extra.push(row),
+        }
+    }
+    lsblk.extend(extra);
+    lsblk
 }
 
 /// lsblk --bytes --json(Dart `_processTopLevelDevice`)
@@ -203,14 +278,17 @@ fn lsblk_fs_fields(device: &serde_json::Value) -> (u64, u64, u64, u32) {
     (size("fssize"), size("fsused"), size("fsavail"), percent)
 }
 
-/// df table fallback (Dart `_parseWithOldMethod`), in KiB.
+/// df table, in KiB: `df -k`, or `df -kT` with its `Type` column.
 /// Handles wrapped lines caused by overlong filesystem names (a single-field line
-/// is buffered onto the next), filtered by [`disk_should_calc`].
-/// On top of the Dart semantics (df -k plain numbers), also accepts df -h K/M/G/T suffixes
+/// is buffered onto the next), filtered by [`disk_should_calc`] and, with a
+/// type, by what [`Disk::is_storage`] asks of one.
+/// Also accepts df -h K/M/G/T suffixes
 fn parse_df(raw: &str) -> Vec<Disk> {
     let mut disks = Vec::new();
     let mut lines = raw.trim().split('\n');
-    lines.next(); // header
+    let typed = lines
+        .next()
+        .is_some_and(|header| header.split_whitespace().nth(1) == Some("Type"));
     let mut path_cache = String::new();
 
     for line in lines {
@@ -230,23 +308,26 @@ fn parse_df(raw: &str) -> Vec<Disk> {
         if !path_cache.is_empty() && !fields.is_empty() {
             fields.insert(0, path_cache.as_str());
         }
+        let fs_type = typed.then(|| fields.get(1).map(|t| t.to_string())).flatten();
+        if typed && fields.len() > 1 {
+            fields.remove(1);
+        }
         let parsed = (|| -> Option<Disk> {
             let fs = fields.first()?.to_string();
             // Mount point is the LAST column: Linux df has 6 columns, macOS
             // df -k has 9 (iused/ifree/%iused between Capacity and Mounted on)
             let mount = (fields.len() >= 6).then(|| fields.last())??.to_string();
-            if !disk_should_calc(&fs, &mount) {
-                return None;
-            }
-            Some(Disk {
+            let disk = Disk {
                 used_percent: fields.get(4)?.trim_end_matches('%').parse().ok()?,
                 used: df_size_kib(fields.get(2)?)?,
                 size: df_size_kib(fields.get(1)?)?,
                 avail: df_size_kib(fields.get(3)?)?,
                 path: fs,
                 mount,
+                fs_type,
                 ..Disk::default()
-            })
+            };
+            disk.is_storage().then_some(disk)
         })();
         path_cache.clear();
         if let Some(disk) = parsed {

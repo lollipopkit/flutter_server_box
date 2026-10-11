@@ -640,6 +640,7 @@ extension _Actions on _ServerEditPageState {
       netDev: _netDevCtrl.text.selfNotEmptyOrNull,
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
       geo: geo,
+      diskCountsNetwork: _diskCountsNetwork.value,
     );
 
     // Built from the fields whatever the switch says, and the switch travels
@@ -1016,6 +1017,7 @@ extension _Utils on _ServerEditPageState {
       _unmigratedCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
+      _diskCountsNetwork.value = custom.diskCountsNetwork;
       _logoUrlCtrl.text = custom.logoUrl ?? '';
       _geoCtrl.text = custom.geo?.text ?? '';
     }

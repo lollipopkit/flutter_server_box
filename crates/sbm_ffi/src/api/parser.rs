@@ -30,11 +30,16 @@ pub(crate) fn parse_system_or_err(system: &str) -> Result<sbm_parser::SystemType
 
 /// Parse all output of one collection round, returning `ServerStatus` JSON.
 /// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
+///
+/// Beside the status, `disk_used` and `disk_size` (KiB): the disk total, by
+/// `sbm_parser::types::disk_usage` — the one the monitor agent stores — with
+/// network filesystems in it only when `count_network`.
 /// Async: runs on the Rust thread pool without blocking the UI isolate
 pub fn parse_status_json(
     system: String,
     raw: HashMap<String, String>,
     temp_divisor: f64,
+    count_network: bool,
 ) -> Result<String, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
     let status = sbm_parser::parse_status_opts(
@@ -42,7 +47,11 @@ pub fn parse_status_json(
         &raw,
         sbm_parser::ParseOptions { temp_divisor },
     );
-    serde_json::to_string(&status).map_err(|e| e.to_string())
+    let (disk_used, disk_size) = sbm_parser::types::disk_usage(&status.disks, count_network);
+    let mut json = serde_json::to_value(&status).map_err(|e| e.to_string())?;
+    json["disk_used"] = disk_used.into();
+    json["disk_size"] = disk_size.into();
+    Ok(json.to_string())
 }
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)

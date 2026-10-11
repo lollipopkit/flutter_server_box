@@ -97,7 +97,8 @@ abstract final class SchemaVersion {
   /// v31: PVE moved out of `server` into `server_pve` (API tokens, pinned
   ///      certificate), and the Virtualization tab added for installs with PVE
   /// v32: the Agent's conversations dropped, its chats being fl_pi_llm's now
-  static const current = 32;
+  /// v33: `server.disk_counts_network`
+  static const current = 33;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

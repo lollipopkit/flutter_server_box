@@ -8,10 +8,9 @@
 //!
 //! Real values probed on this machine (macOS/Tahoe) confirm `Disk::name()`
 //! returns a volume label ("Macintosh HD"), not a `/dev/...` device path —
-//! unlike Linux/BSD's `df -k`-derived `Disk.path`. Monitor's `is_real_disk`
-//! must not require a `/dev` prefix for natively-sourced Bsd disks (same
-//! class of bug as the Windows `/dev`-prefix fix from earlier — see the
-//! monitor-integration step).
+//! unlike Linux/BSD's `df`-derived `Disk.path`; the device is in `name`
+//! (`disk3s5`), which is where `sbm_parser::types::disk_total` finds an APFS
+//! container for these.
 
 use sbm_parser::types::{Disk, DiskIoPiece, Memory, NetIface, Swap, Temperatures};
 use sbm_parser::{ServerStatus, types::CpuCore};

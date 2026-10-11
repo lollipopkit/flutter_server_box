@@ -10,8 +10,9 @@
 //! reading a file: `uptime` (no simple procfs equivalent that already
 //! matches `common::parse_uptime`'s expected shape — `/proc/uptime` is a raw
 //! seconds count, not the `uptime` command's structured text) and `disks`
-//! (filesystem usage isn't in one clean procfs file — `df -k` is the
-//! existing fallback path `sbm_parser::linux::parse_disk` already handles).
+//! (filesystem usage isn't in one clean procfs file — `df -kT` each sample,
+//! merged with the `lsblk` tree `block_devices` reads on the slower cycle, as
+//! the app's `commands::DISK` output is).
 //! These are still a big win over the old approach: one direct process
 //! spawn per field instead of building/writing/executing a whole generated
 //! multi-command script and splitting its output by `SrvBoxSep` markers.
@@ -93,19 +94,35 @@ fn read(path: &str) -> String {
 /// Run one targeted command and return stdout, empty on any failure —
 /// matching the shared script's tolerance (a failed segment parses to empty)
 fn run(cmd: &str, args: &[&str]) -> String {
+    run_command(command(cmd, args))
+}
+
+/// [`run`], keeping stdout whatever the exit status — for a command that
+/// reports a partial failure in its status and still prints the rest: GNU
+/// `df` exits 1 when any one mount is unreadable. The timeout and output limit
+/// hold all the same.
+fn run_lenient(cmd: &str, args: &[&str]) -> String {
+    run_command_with_timeout(command(cmd, args), COMMAND_TIMEOUT, true)
+}
+
+fn command(cmd: &str, args: &[&str]) -> Command {
     let mut command = Command::new(cmd);
     command
         .args(args)
         .stdin(Stdio::null())
         .stderr(Stdio::null());
-    run_command(command)
+    command
 }
 
 fn run_command(command: Command) -> String {
-    run_command_with_timeout(command, COMMAND_TIMEOUT)
+    run_command_with_timeout(command, COMMAND_TIMEOUT, false)
 }
 
-fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> String {
+fn run_command_with_timeout(
+    mut command: Command,
+    command_timeout: Duration,
+    keep_failed_output: bool,
+) -> String {
     if !with_child_reaper(ChildReaper::reserve) {
         return String::new();
     }
@@ -137,7 +154,7 @@ fn run_command_with_timeout(mut command: Command, command_timeout: Duration) -> 
                 with_child_reaper(ChildReaper::release);
                 let stdout = fs::read(&file).unwrap_or_default();
                 let _ = fs::remove_file(file);
-                return if status.success() {
+                return if status.success() || keep_failed_output {
                     String::from_utf8_lossy(&stdout).into_owned()
                 } else {
                     String::new()
@@ -312,13 +329,33 @@ pub fn total_memory() -> Option<u64> {
         .map(|kib| kib * 1024)
 }
 
-pub fn sample() -> ServerStatus {
+/// `lsblk`'s JSON, as `commands::DISK` runs it; empty where there is none.
+pub fn block_devices() -> String {
+    run("lsblk", &linux::LSBLK_ARGS)
+}
+
+/// `df -kT`, or `df -k` where `-T` is not understood (busybox): told apart by
+/// the header rather than the status, and both kept whatever the status —
+/// GNU df exits 1 when any one mount is unreadable and prints the rest anyway.
+fn df() -> String {
+    let typed = run_lenient("df", &["-kT"]);
+    if typed.lines().next().is_some_and(|h| h.contains("Type")) {
+        typed
+    } else {
+        run_lenient("df", &["-k"])
+    }
+}
+
+/// `block_devices` is [`block_devices`]' last output, merged with a fresh
+/// [`df`] the way `commands::DISK`'s output is — see `linux::merge_disks`.
+pub fn sample(block_devices: &str) -> ServerStatus {
     let mem_raw = read("/proc/meminfo");
     let (temp_types, temp_values) = thermal_zones();
-    let disk_raw = run("df", &["-k"]);
-    // No lsblk JSON attempt here (keeps this path to a single subprocess);
-    // `parse_disk` falls back to the `df -k` table shape it already supports
-    let disks: Vec<Disk> = linux::parse_disk(&disk_raw);
+    let disks: Vec<Disk> = linux::parse_disk(&format!(
+        "{block_devices}\n{}\n{}",
+        linux::DISK_DF_MARKER,
+        df()
+    ));
     // Read once: three fields come out of the same block.
     let os_release = os_release_block();
 
@@ -353,7 +390,7 @@ mod tests {
     // produces plausible data end to end on a real Linux machine.
     #[test]
     fn sample_produces_plausible_data() {
-        let status = sample();
+        let status = sample(&block_devices());
         assert!(
             !status.cpu.is_empty(),
             "expected at least a 'cpu' summary row"
@@ -366,12 +403,27 @@ mod tests {
         );
     }
 
+    /// `lsblk`'s tree and a fresh `df -kT`, merged (#1669): the root
+    /// filesystem is there, with its type — from either source — and numbers.
+    #[test]
+    fn disks_merge_the_device_tree_with_df() {
+        fn find<'a>(disks: &'a [Disk], mount: &str) -> Option<&'a Disk> {
+            disks
+                .iter()
+                .find_map(|d| (d.mount == mount).then_some(d).or_else(|| find(&d.children, mount)))
+        }
+        let status = sample(&block_devices());
+        let root = find(&status.disks, "/").expect("a root filesystem");
+        assert!(root.fs_type.is_some(), "{root:?}");
+        assert!(root.size > 0, "{root:?}");
+    }
+
     #[test]
     fn a_stuck_native_command_is_terminated() {
         let mut command = Command::new("sh");
         command.args(["-c", "sleep 2"]);
         let started = Instant::now();
-        assert!(run_command_with_timeout(command, Duration::from_millis(100)).is_empty());
+        assert!(run_command_with_timeout(command, Duration::from_millis(100), true).is_empty());
         assert!(started.elapsed() < Duration::from_secs(1));
     }
 
@@ -385,8 +437,21 @@ mod tests {
         command.args(["-c", &script]);
         let started = Instant::now();
 
-        assert!(run_command_with_timeout(command, Duration::from_secs(2)).is_empty());
+        assert!(run_command_with_timeout(command, Duration::from_secs(2), true).is_empty());
         assert!(started.elapsed() < Duration::from_secs(1));
+    }
+
+    /// GNU df prints every mount it could read and exits 1 for the one it
+    /// could not: that output is kept, where a strict command's is not.
+    #[test]
+    fn a_partial_failure_keeps_its_output_only_when_asked() {
+        let failing = || {
+            let mut command = Command::new("sh");
+            command.args(["-c", "echo kept; exit 1"]);
+            command
+        };
+        assert_eq!(run_command_with_timeout(failing(), COMMAND_TIMEOUT, true), "kept\n");
+        assert!(run_command_with_timeout(failing(), COMMAND_TIMEOUT, false).is_empty());
     }
 
     #[test]

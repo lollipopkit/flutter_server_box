@@ -16,6 +16,7 @@ ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
   netDev: json['netDev'] as String?,
   scriptDir: json['scriptDir'] as String?,
   geo: GeoCoord.tryFromJson(json['geo']),
+  diskCountsNetwork: json['diskCountsNetwork'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
@@ -27,4 +28,5 @@ Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
       'netDev': ?instance.netDev,
       'scriptDir': ?instance.scriptDir,
       'geo': ?GeoCoord.encode(instance.geo),
+      'diskCountsNetwork': instance.diskCountsNetwork,
     };
