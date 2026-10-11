@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StorageApp from '../desk/apps/storage/StorageApp.svelte'
-import { arrayDevice, disksOf, expandable, freeDevices, growableArray, minimum, mountable, nextMd, overlaps, verdict, volumesOf } from '../desk/apps/storage/model'
+import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, isLuks, minimum, mountable, nextMd, opened, overlaps, poolDeviceActions, verdict, volumesOf } from '../desk/apps/storage/model'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
-import type { BlockDevice, DiskHealth, HealthReading, StorageView } from '../types'
+import type { BlockDevice, DiskHealth, HealthReading, StorageView, ZPool } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -99,6 +99,39 @@ describe('the storage model', () => {
     expect(expandable({ ...md, mountpoints: [] })).toBe(false)
     expect(expandable({ ...md, fstype: 'vfat' })).toBe(false)
     expect(['raid0', 'raid1', 'raid5', 'raid6', 'raid10', null].map(growableArray)).toEqual([false, true, true, true, false, false])
+  })
+
+  it('knows what a partition, a LUKS container and a pool\'s devices allow', () => {
+    const p1 = dev('/dev/sdb1', 'part', { size: 2 * 2 ** 30 })
+    const disk = dev('/dev/sdb', 'disk', { size: 8 * 2 ** 30, children: [dev('/dev/sdb0', 'part', { size: 2 ** 20 }), p1] })
+    expect(growablePartition(disk, p1)).toBe(true)
+    expect(growablePartition(disk, disk.children[0])).toBe(false)
+    expect(growablePartition({ ...disk, size: 2 * 2 ** 30 + 2 ** 21 }, p1)).toBe(false)
+
+    const mapper = dev('/dev/mapper/luks-1', 'crypt', { fstype: 'ext4' })
+    const luks = dev('/dev/sdc1', 'part', { fstype: 'crypto_LUKS', children: [mapper] })
+    expect([isLuks(luks), opened(luks)?.path, opened({ ...luks, children: [] })]).toEqual([true, '/dev/mapper/luks-1', undefined])
+    expect(volumesOf(dev('/dev/sdd', 'disk', { fstype: 'crypto_LUKS', children: [mapper] })).map((v) => v.path)).toEqual(['/dev/sdd'])
+
+    const pool: ZPool = {
+      name: 'tank', size: 1, allocated: 0, free: 1, health: 'DEGRADED', scan: null,
+      vdevs: [
+        { name: 'mirror-0', state: 'DEGRADED', depth: 0, errors: 0 },
+        { name: '/dev/sdb', state: 'ONLINE', depth: 1, errors: 0 },
+        { name: '/dev/sdc', state: 'OFFLINE', depth: 1, errors: 0 },
+        { name: 'raidz1-1', state: 'ONLINE', depth: 0, errors: 0 },
+        { name: '/dev/sdf', state: 'ONLINE', depth: 1, errors: 0 },
+        { name: '/dev/sdg', state: 'ONLINE', depth: 0, errors: 0 },
+        { name: '/dev/sdd', state: 'AVAIL', depth: 0, errors: 0, section: 'spares' },
+      ],
+    }
+    const acts = pool.vdevs.map((_, i) => poolDeviceActions(pool, i))
+    expect(acts[0]).toEqual({ replace: false, attach: false, remove: false, online: false })
+    expect(acts[1]).toEqual({ replace: true, attach: true, remove: false, online: false })
+    expect(acts[2]).toEqual({ replace: true, attach: true, remove: false, online: true })
+    expect(acts[4]).toEqual({ replace: true, attach: false, remove: false, online: false })
+    expect(acts[5]).toEqual({ replace: true, attach: true, remove: false, online: false })
+    expect(acts[6]).toEqual({ replace: false, attach: false, remove: true, online: false })
   })
 
   it('says what a disk\'s SMART says', () => {
@@ -207,5 +240,72 @@ describe('the Storage app', () => {
     await fireEvent.input(screen.getByLabelText('Type /dev/sdc to confirm'), { target: { value: '/dev/sdc' } })
     await fireEvent.click(screen.getAllByRole('button', { name: 'Grow' }).at(-1)!)
     await vi.waitFor(() => expect(mocked.storageAct).toHaveBeenCalledWith({ action: 'growRaid', array: 'md0', device: '/dev/sdc' }, ''))
+  })
+
+  it('formats inside LUKS and unlocks with a passphrase that never goes in the action', async () => {
+    // Done at once, so the next change is not waiting for this one.
+    const job = { id: 3, kind: 'storage' as const, state: 'succeeded' as const, error: null, lines: [], next: 0 }
+    mocked.storageAct.mockResolvedValue(job)
+    mocked.storageJob.mockResolvedValue(job)
+    const locked = dev('/dev/sde1', 'part', { fstype: 'crypto_LUKS' })
+    mocked.getStorage.mockResolvedValue({
+      ...structuredClone(view),
+      tools: [...view.tools, 'cryptsetup'],
+      disks: [...structuredClone(view.disks), dev('/dev/sde', 'disk', { children: [locked] })],
+      busy: { ...view.busy, '/dev/sde': 'holdsVolume', '/dev/sde1': 'holdsVolume' },
+    })
+    render(StorageApp)
+    await fireEvent.click(await screen.findByRole('button', { name: 'Unlock' }))
+    await fireEvent.input(screen.getByLabelText('Passphrase'), { target: { value: 'correct horse' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Unlock' }).at(-1)!)
+    await vi.waitFor(() => expect(mocked.storageAct).toHaveBeenCalledWith({ action: 'unlock', device: '/dev/sde1' }, '', 'correct horse'))
+
+    // An encrypted format asks for the passphrase twice.
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Format' })[0])
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Encrypt (LUKS)' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fireEvent.input(screen.getByLabelText(/^Passphrase/), { target: { value: 'twelve chars' } })
+    await fireEvent.input(screen.getByLabelText('The same again'), { target: { value: 'twelve chars' } })
+    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fireEvent.input(screen.getByLabelText('Type /dev/sdc to confirm'), { target: { value: '/dev/sdc' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Format' }).at(-1)!)
+    await vi.waitFor(() =>
+      expect(mocked.storageAct).toHaveBeenLastCalledWith({ action: 'format', device: '/dev/sdc', fstype: 'ext4', label: null, encrypt: true }, '', 'twelve chars'),
+    )
+  })
+
+  it('replaces a pool\'s device with a free one', async () => {
+    const job = { id: 4, kind: 'storage' as const, state: 'running' as const, error: null, lines: [], next: 0 }
+    mocked.storageAct.mockResolvedValue(job)
+    mocked.storageJob.mockResolvedValue(job)
+    mocked.getStorage.mockResolvedValue({
+      ...structuredClone(view),
+      tools: [...view.tools, 'zpool'],
+      pools: [{ name: 'tank', size: 1, allocated: 0, free: 1, health: 'DEGRADED', scan: null, vdevs: [{ name: 'mirror-0', state: 'DEGRADED', depth: 0, errors: 0 }, { name: '/dev/sdx', state: 'FAULTED', depth: 1, errors: 3 }] }],
+    })
+    render(StorageApp)
+    await fireEvent.click(await screen.findByText('ZFS pools'))
+    await fireEvent.click(await screen.findByRole('button', { name: 'Replace' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fireEvent.input(screen.getByLabelText('Type /dev/sdc to confirm'), { target: { value: '/dev/sdc' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Replace' }).at(-1)!)
+    await vi.waitFor(() => expect(mocked.storageAct).toHaveBeenCalledWith({ action: 'replaceInPool', name: 'tank', old: '/dev/sdx', new: '/dev/sdc' }, ''))
+  })
+
+  it('shows a disk\'s SMART details and starts a long test', async () => {
+    mocked.storageHealth.mockResolvedValue({
+      at: Math.floor(Date.now() / 1000),
+      disks: [health('/dev/sdb', { attributes: [{ id: 5, name: 'Reallocated_Sector_Ct', value: 100, worst: 100, thresh: 140, raw: '8', failing: true }], tests: [{ long: true, outcome: 'failed', hours: 30980 }] })],
+    })
+    mocked.storageAct.mockResolvedValue({ id: 5, kind: 'storage', state: 'running', error: null, lines: [], next: 0 })
+    mocked.storageJob.mockResolvedValue({ id: 5, kind: 'storage', state: 'running', error: null, lines: [], next: 0 })
+    render(StorageApp)
+    await fireEvent.click(await screen.findByRole('button', { name: 'Details' }))
+    expect(screen.getByText('5 Reallocated_Sector_Ct')).toBeInTheDocument()
+    expect(screen.getByText('Long · Failed · at 30980 h')).toBeInTheDocument()
+    await fireEvent.click(screen.getByRole('button', { name: 'Long test' }))
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Long test' }).at(-1)!)
+    await vi.waitFor(() => expect(mocked.storageAct).toHaveBeenCalledWith({ action: 'smartTest', device: '/dev/sdb', long: true }, ''))
   })
 })

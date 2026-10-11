@@ -9059,6 +9059,194 @@ type RootTranslation = {
 	 */
 	storageHealthAt: RequiredParams<'time'>
 	/**
+	 * G​r​o​w​ ​p​a​r​t​i​t​i​o​n
+	 */
+	storageGrowPartition: string
+	/**
+	 * G​r​o​w​s​ ​{​d​e​v​i​c​e​}​ ​i​n​t​o​ ​t​h​e​ ​f​r​e​e​ ​s​p​a​c​e​ ​a​f​t​e​r​ ​i​t​.​ ​E​x​p​a​n​d​ ​i​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​a​f​t​e​r​.
+	 * @param {unknown} device
+	 */
+	storageGrowPartitionBody: RequiredParams<'device'>
+	/**
+	 * E​n​c​r​y​p​t​ ​(​L​U​K​S​)
+	 */
+	storageEncrypt: string
+	/**
+	 * P​a​s​s​p​h​r​a​s​e
+	 */
+	storagePassphrase: string
+	/**
+	 * T​h​e​ ​s​a​m​e​ ​a​g​a​i​n
+	 */
+	storagePassphraseAgain: string
+	/**
+	 * A​t​ ​l​e​a​s​t​ ​8​ ​c​h​a​r​a​c​t​e​r​s​.​ ​W​i​t​h​o​u​t​ ​i​t​ ​t​h​e​ ​d​a​t​a​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​a​d​:​ ​k​e​e​p​ ​i​t​ ​s​a​f​e​.
+	 */
+	storagePassphraseHint: string
+	/**
+	 * T​h​e​ ​t​w​o​ ​p​a​s​s​p​h​r​a​s​e​s​ ​d​i​f​f​e​r​.
+	 */
+	storagePassphrasesDiffer: string
+	/**
+	 * E​n​c​r​y​p​t​e​d
+	 */
+	storageEncrypted: string
+	/**
+	 * L​o​c​k​e​d
+	 */
+	storageLocked: string
+	/**
+	 * U​n​l​o​c​k
+	 */
+	storageUnlock: string
+	/**
+	 * O​p​e​n​s​ ​{​d​e​v​i​c​e​}​ ​w​i​t​h​ ​i​t​s​ ​p​a​s​s​p​h​r​a​s​e​.
+	 * @param {unknown} device
+	 */
+	storageUnlockBody: RequiredParams<'device'>
+	/**
+	 * L​o​c​k
+	 */
+	storageLock: string
+	/**
+	 * C​l​o​s​e​s​ ​{​d​e​v​i​c​e​}​.​ ​I​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​m​u​s​t​ ​b​e​ ​u​n​m​o​u​n​t​e​d​.
+	 * @param {unknown} device
+	 */
+	storageLockBody: RequiredParams<'device'>
+	/**
+	 * R​e​p​l​a​c​e
+	 */
+	storageReplace: string
+	/**
+	 * R​e​p​l​a​c​e​s​ ​{​o​l​d​}​ ​i​n​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​w​i​t​h​ ​{​n​e​w​}​.​ ​T​h​e​ ​p​o​o​l​ ​c​o​p​i​e​s​ ​i​t​s​ ​d​a​t​a​ ​o​n​t​o​ ​i​t​;​ ​w​h​a​t​ ​{​n​e​w​}​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 * @param {unknown} new
+	 * @param {unknown} old
+	 */
+	storageReplaceBody: RequiredParams<'name' | 'new' | 'new' | 'old'>
+	/**
+	 * M​i​r​r​o​r
+	 */
+	storageAttach: string
+	/**
+	 * M​i​r​r​o​r​s​ ​{​e​x​i​s​t​i​n​g​}​ ​o​n​t​o​ ​{​n​e​w​}​.​ ​W​h​a​t​ ​{​n​e​w​}​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} existing
+	 * @param {unknown} new
+	 */
+	storageAttachBody: RequiredParams<'existing' | 'new' | 'new'>
+	/**
+	 * A​d​d​ ​s​p​a​r​e
+	 */
+	storageAddSpare: string
+	/**
+	 * A​d​d​s​ ​{​d​e​v​i​c​e​s​}​ ​t​o​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​a​s​ ​s​p​a​r​e​s​.​ ​W​h​a​t​ ​t​h​e​y​ ​h​o​l​d​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} name
+	 */
+	storageAddSpareBody: RequiredParams<'devices' | 'name'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	storageRemoveDevice: string
+	/**
+	 * T​a​k​e​s​ ​{​d​e​v​i​c​e​}​ ​o​u​t​ ​o​f​ ​p​o​o​l​ ​{​n​a​m​e​}​.
+	 * @param {unknown} device
+	 * @param {unknown} name
+	 */
+	storageRemoveDeviceBody: RequiredParams<'device' | 'name'>
+	/**
+	 * B​r​i​n​g​ ​o​n​l​i​n​e
+	 */
+	storageOnline: string
+	/**
+	 * B​r​i​n​g​s​ ​{​d​e​v​i​c​e​}​ ​b​a​c​k​ ​i​n​t​o​ ​p​o​o​l​ ​{​n​a​m​e​}​,​ ​g​r​o​w​n​ ​i​n​t​o​ ​t​h​e​ ​w​h​o​l​e​ ​d​i​s​k​.
+	 * @param {unknown} device
+	 * @param {unknown} name
+	 */
+	storageOnlineBody: RequiredParams<'device' | 'name'>
+	/**
+	 * D​e​t​a​i​l​s
+	 */
+	storageDetails: string
+	/**
+	 * A​t​t​r​i​b​u​t​e​s
+	 */
+	storageAttributes: string
+	/**
+	 * A​t​t​r​i​b​u​t​e
+	 */
+	storageAttrName: string
+	/**
+	 * V​a​l​u​e
+	 */
+	storageAttrValue: string
+	/**
+	 * W​o​r​s​t
+	 */
+	storageAttrWorst: string
+	/**
+	 * T​h​r​e​s​h​o​l​d
+	 */
+	storageAttrThresh: string
+	/**
+	 * R​a​w
+	 */
+	storageAttrRaw: string
+	/**
+	 * S​e​l​f​-​t​e​s​t​s
+	 */
+	storageSelfTests: string
+	/**
+	 * S​h​o​r​t
+	 */
+	storageTestShort: string
+	/**
+	 * L​o​n​g
+	 */
+	storageTestLong: string
+	/**
+	 * P​a​s​s​e​d
+	 */
+	storageTestPassed: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	storageTestFailed: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	storageTestAborted: string
+	/**
+	 * a​t​ ​{​h​o​u​r​s​}​ ​h
+	 * @param {unknown} hours
+	 */
+	storageAtHours: RequiredParams<'hours'>
+	/**
+	 * N​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w
+	 */
+	storageNothingToShow: string
+	/**
+	 * L​o​n​g​ ​t​e​s​t
+	 */
+	storageLongTest: string
+	/**
+	 * S​t​a​r​t​s​ ​a​ ​l​o​n​g​ ​s​e​l​f​-​t​e​s​t​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​I​t​ ​r​e​a​d​s​ ​t​h​e​ ​w​h​o​l​e​ ​d​i​s​k​:​ ​h​o​u​r​s​ ​o​n​ ​a​ ​l​a​r​g​e​ ​o​n​e​.
+	 * @param {unknown} device
+	 */
+	storageSmartLongTestBody: RequiredParams<'device'>
+	/**
+	 * T​h​e​ ​p​a​s​s​p​h​r​a​s​e​ ​m​u​s​t​ ​b​e​ ​8​ ​t​o​ ​5​1​2​ ​c​h​a​r​a​c​t​e​r​s​,​ ​o​n​ ​o​n​e​ ​l​i​n​e​.
+	 */
+	storageInvalidPassphrase: string
+	/**
+	 * U​n​m​o​u​n​t​ ​i​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​f​i​r​s​t​.
+	 */
+	storageMountedInside: string
+	/**
+	 * O​n​l​y​ ​a​ ​s​p​a​r​e​ ​o​r​ ​c​a​c​h​e​ ​d​e​v​i​c​e​ ​c​a​n​ ​b​e​ ​t​a​k​e​n​ ​o​u​t​ ​h​e​r​e​.
+	 */
+	storageNotRemovable: string
+	/**
 	 * M​a​i​n​t​e​n​a​n​c​e
 	 */
 	storageMaintenance: string
@@ -9466,6 +9654,46 @@ type RootTranslation = {
 	 * T​h​i​s​ ​p​a​s​s​w​o​r​d​ ​c​a​n​n​o​t​ ​b​e​ ​u​s​e​d​.
 	 */
 	sharingInvalidPassword: string
+	/**
+	 * T​i​m​e​ ​M​a​c​h​i​n​e​ ​b​a​c​k​u​p​s​ ​(​M​a​c​)
+	 */
+	sharingTimeMachineOption: string
+	/**
+	 * K​e​e​p​ ​d​e​l​e​t​e​d​ ​f​i​l​e​s​ ​i​n​ ​.​r​e​c​y​c​l​e
+	 */
+	sharingRecycleOption: string
+	/**
+	 * T​i​m​e​ ​M​a​c​h​i​n​e
+	 */
+	sharingTimeMachine: string
+	/**
+	 * R​e​c​y​c​l​e​ ​b​i​n
+	 */
+	sharingRecycle: string
+	/**
+	 * C​o​n​n​e​c​t​e​d​ ​n​o​w
+	 */
+	sharingConnectedNow: string
+	/**
+	 * N​o​b​o​d​y​ ​i​s​ ​c​o​n​n​e​c​t​e​d
+	 */
+	sharingNobodyConnected: string
+	/**
+	 * S​h​o​w​ ​c​o​n​n​e​c​t​i​o​n​s
+	 */
+	sharingShowConnections: string
+	/**
+	 * R​e​a​d​s​ ​w​h​o​ ​i​s​ ​c​o​n​n​e​c​t​e​d​,​ ​a​s​ ​r​o​o​t​.
+	 */
+	sharingShowConnectionsBody: string
+	/**
+	 * F​i​r​e​w​a​l​l
+	 */
+	sharingFirewall: string
+	/**
+	 * A​l​l​o​w​ ​i​n​ ​F​i​r​e​w​a​l​l
+	 */
+	sharingAllowFirewall: string
 	/**
 	 * W​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o
 	 */
@@ -18328,6 +18556,178 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storageHealthAt: (arg: { time: unknown }) => LocalizedString
 	/**
+	 * Grow partition
+	 */
+	storageGrowPartition: () => LocalizedString
+	/**
+	 * Grows {device} into the free space after it. Expand its filesystem after.
+	 */
+	storageGrowPartitionBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Encrypt (LUKS)
+	 */
+	storageEncrypt: () => LocalizedString
+	/**
+	 * Passphrase
+	 */
+	storagePassphrase: () => LocalizedString
+	/**
+	 * The same again
+	 */
+	storagePassphraseAgain: () => LocalizedString
+	/**
+	 * At least 8 characters. Without it the data cannot be read: keep it safe.
+	 */
+	storagePassphraseHint: () => LocalizedString
+	/**
+	 * The two passphrases differ.
+	 */
+	storagePassphrasesDiffer: () => LocalizedString
+	/**
+	 * Encrypted
+	 */
+	storageEncrypted: () => LocalizedString
+	/**
+	 * Locked
+	 */
+	storageLocked: () => LocalizedString
+	/**
+	 * Unlock
+	 */
+	storageUnlock: () => LocalizedString
+	/**
+	 * Opens {device} with its passphrase.
+	 */
+	storageUnlockBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Lock
+	 */
+	storageLock: () => LocalizedString
+	/**
+	 * Closes {device}. Its filesystem must be unmounted.
+	 */
+	storageLockBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Replace
+	 */
+	storageReplace: () => LocalizedString
+	/**
+	 * Replaces {old} in pool {name} with {new}. The pool copies its data onto it; what {new} holds is lost.
+	 */
+	storageReplaceBody: (arg: { name: unknown, new: unknown, old: unknown }) => LocalizedString
+	/**
+	 * Mirror
+	 */
+	storageAttach: () => LocalizedString
+	/**
+	 * Mirrors {existing} onto {new}. What {new} holds is lost.
+	 */
+	storageAttachBody: (arg: { existing: unknown, new: unknown }) => LocalizedString
+	/**
+	 * Add spare
+	 */
+	storageAddSpare: () => LocalizedString
+	/**
+	 * Adds {devices} to pool {name} as spares. What they hold is lost.
+	 */
+	storageAddSpareBody: (arg: { devices: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	storageRemoveDevice: () => LocalizedString
+	/**
+	 * Takes {device} out of pool {name}.
+	 */
+	storageRemoveDeviceBody: (arg: { device: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Bring online
+	 */
+	storageOnline: () => LocalizedString
+	/**
+	 * Brings {device} back into pool {name}, grown into the whole disk.
+	 */
+	storageOnlineBody: (arg: { device: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Details
+	 */
+	storageDetails: () => LocalizedString
+	/**
+	 * Attributes
+	 */
+	storageAttributes: () => LocalizedString
+	/**
+	 * Attribute
+	 */
+	storageAttrName: () => LocalizedString
+	/**
+	 * Value
+	 */
+	storageAttrValue: () => LocalizedString
+	/**
+	 * Worst
+	 */
+	storageAttrWorst: () => LocalizedString
+	/**
+	 * Threshold
+	 */
+	storageAttrThresh: () => LocalizedString
+	/**
+	 * Raw
+	 */
+	storageAttrRaw: () => LocalizedString
+	/**
+	 * Self-tests
+	 */
+	storageSelfTests: () => LocalizedString
+	/**
+	 * Short
+	 */
+	storageTestShort: () => LocalizedString
+	/**
+	 * Long
+	 */
+	storageTestLong: () => LocalizedString
+	/**
+	 * Passed
+	 */
+	storageTestPassed: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	storageTestFailed: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	storageTestAborted: () => LocalizedString
+	/**
+	 * at {hours} h
+	 */
+	storageAtHours: (arg: { hours: unknown }) => LocalizedString
+	/**
+	 * Nothing to show
+	 */
+	storageNothingToShow: () => LocalizedString
+	/**
+	 * Long test
+	 */
+	storageLongTest: () => LocalizedString
+	/**
+	 * Starts a long self-test on {device}. It reads the whole disk: hours on a large one.
+	 */
+	storageSmartLongTestBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * The passphrase must be 8 to 512 characters, on one line.
+	 */
+	storageInvalidPassphrase: () => LocalizedString
+	/**
+	 * Unmount its filesystem first.
+	 */
+	storageMountedInside: () => LocalizedString
+	/**
+	 * Only a spare or cache device can be taken out here.
+	 */
+	storageNotRemovable: () => LocalizedString
+	/**
 	 * Maintenance
 	 */
 	storageMaintenance: () => LocalizedString
@@ -18711,6 +19111,46 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * This password cannot be used.
 	 */
 	sharingInvalidPassword: () => LocalizedString
+	/**
+	 * Time Machine backups (Mac)
+	 */
+	sharingTimeMachineOption: () => LocalizedString
+	/**
+	 * Keep deleted files in .recycle
+	 */
+	sharingRecycleOption: () => LocalizedString
+	/**
+	 * Time Machine
+	 */
+	sharingTimeMachine: () => LocalizedString
+	/**
+	 * Recycle bin
+	 */
+	sharingRecycle: () => LocalizedString
+	/**
+	 * Connected now
+	 */
+	sharingConnectedNow: () => LocalizedString
+	/**
+	 * Nobody is connected
+	 */
+	sharingNobodyConnected: () => LocalizedString
+	/**
+	 * Show connections
+	 */
+	sharingShowConnections: () => LocalizedString
+	/**
+	 * Reads who is connected, as root.
+	 */
+	sharingShowConnectionsBody: () => LocalizedString
+	/**
+	 * Firewall
+	 */
+	sharingFirewall: () => LocalizedString
+	/**
+	 * Allow in Firewall
+	 */
+	sharingAllowFirewall: () => LocalizedString
 	/**
 	 * Where backups go
 	 */

@@ -610,6 +610,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/shares/smb").route(web::put().to(crate::api::shares::set_smb)))
             .service(web::resource("/shares/nfs").route(web::put().to(crate::api::shares::set_nfs)))
             .service(web::resource("/shares/smb/password").route(web::post().to(crate::api::shares::smb_password)))
+            .service(web::resource("/shares/connections").route(web::post().to(crate::api::shares::connections)))
             .service(web::resource("/shares/install").route(web::post().to(crate::api::shares::install)))
             .service(web::resource("/shares/job").route(web::get().to(crate::api::shares::job)))
             .service(web::resource("/storage/job").route(web::get().to(crate::api::storage::job)))

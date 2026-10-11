@@ -2931,7 +2931,9 @@ export interface ZPool {
   free: number
   health: string
   scan: string | null
-  vdevs: { name: string; state: string; depth: number; errors: number }[]
+  /// `section`: outside the data vdevs (`spares`, `logs`, `cache`…); absent
+  /// from older agents.
+  vdevs: { name: string; state: string; depth: number; errors: number; section?: string | null }[]
 }
 
 /// Why a device may not be partitioned, formatted or built on.
@@ -2994,13 +2996,35 @@ export interface DiskHealth {
   bad_sectors: number | null
   /// Percent left of a self-test running now.
   testing: number | null
-  last_test: { long: boolean; outcome: 'passed' | 'failed' | 'aborted'; hours: number | null } | null
+  last_test: SelfTestResult | null
+  /// Every attribute the disk reports (ATA) or its NVMe health log fields;
+  /// absent from older agents.
+  attributes?: SmartAttribute[]
+  /// Self-tests that ended, newest first.
+  tests?: SelfTestResult[]
+}
+
+export interface SelfTestResult {
+  long: boolean
+  outcome: 'passed' | 'failed' | 'aborted'
+  hours: number | null
+}
+
+/// `sbm_parser::storage::SmartAttribute`.
+export interface SmartAttribute {
+  id: number | null
+  name: string
+  value: number | null
+  worst: number | null
+  thresh: number | null
+  raw: string
+  failing: boolean
 }
 
 /// `sbm_parser::storage::StorageAction`.
 export type StorageAction =
   | { action: 'partition'; device: string }
-  | { action: 'format'; device: string; fstype: 'ext4' | 'xfs' | 'btrfs'; label?: string | null }
+  | { action: 'format'; device: string; fstype: 'ext4' | 'xfs' | 'btrfs'; label?: string | null; encrypt?: boolean }
   | { action: 'mount'; device: string; mountpoint: string; persist: boolean; own: boolean }
   | { action: 'unmount'; mountpoint: string }
   | { action: 'createRaid'; name: string; level: number; devices: string[] }
@@ -3014,6 +3038,14 @@ export type StorageAction =
   | { action: 'growRaid'; array: string; device: string }
   | { action: 'expandFilesystem'; device: string }
   | { action: 'addToPool'; name: string; layout: 'stripe' | 'mirror' | 'raidz1' | 'raidz2' | 'raidz3'; devices: string[] }
+  | { action: 'replaceInPool'; name: string; old: string; new: string }
+  | { action: 'attachToPool'; name: string; existing: string; new: string }
+  | { action: 'addSpare'; name: string; devices: string[] }
+  | { action: 'removeFromPool'; name: string; device: string }
+  | { action: 'onlineInPool'; name: string; device: string }
+  | { action: 'growPartition'; device: string }
+  | { action: 'unlock'; device: string }
+  | { action: 'lock'; device: string }
 
 /// `sbm_parser::shares::SmbShare`.
 export interface SmbShare {
@@ -3025,6 +3057,10 @@ export interface SmbShare {
   guest: boolean
   /// Accounts allowed in; none is every account with an SMB password.
   users: string[]
+  /// A Mac backs up here with Time Machine (`fruit` module).
+  time_machine: boolean
+  /// Deleted files go to `.recycle` in the share first (`recycle` module).
+  recycle: boolean
   /// ServerBox's (in its own file); the others are shown, not changed.
   managed: boolean
 }
@@ -3043,6 +3079,12 @@ export interface NfsExport {
   path: string
   clients: NfsClient[]
   managed: boolean
+}
+
+/// `POST /shares/connections`.
+export interface ShareConnections {
+  smb: { share: string; user: string | null; machine: string; since: string | null }[]
+  nfs: string[]
 }
 
 /// `GET /shares`.

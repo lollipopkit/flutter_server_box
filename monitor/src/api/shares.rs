@@ -12,6 +12,9 @@
 //! - `POST /shares/smb/password`: `{user, password, sudo_password}`, an
 //!   account's SMB password (Samba keeps its own), run so the password is
 //!   on no command line (`machine::as_root_private`).
+//! - `POST /shares/connections`: `{sudo_password?}`, who is connected now
+//!   (`smbstatus` needs root: without a password `sudo -n`, else
+//!   `sudo_rejected`).
 //! - `POST /shares/install`: `{nfs, sudo_password}`, Samba or the NFS server
 //!   installed as a job; `GET /shares/job?since=<seq>`.
 //!
@@ -191,6 +194,26 @@ pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), true).await);
     record(&req, &state, &caller.username, format!("shares smb password {user}")).await;
     Ok(HttpResponse::NoContent().finish())
+}
+
+#[derive(Deserialize)]
+pub struct ConnectionsBody {
+    #[serde(default)]
+    sudo_password: Option<String>,
+}
+
+pub async fn connections(req: HttpRequest, body: web::types::Json<ConnectionsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::admin_caller(&req, &state).await);
+    if !cfg!(target_os = "linux") {
+        return Ok(refused(409, "notLinux"));
+    }
+    let password = body.into_inner().sudo_password.filter(|p| !p.is_empty());
+    let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
+    match super::machine::as_root(sh::CONNECTIONS_COMMAND, password.as_deref(), &limits).await {
+        Ok(out) if out.exit_code == Some(0) => Ok(HttpResponse::Ok().json(&sh::parse_connections(&out.stdout))),
+        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => Ok(refused(403, "sudo_rejected")),
+        _ => Ok(refused(403, "sudo_unavailable")),
+    }
 }
 
 #[derive(Deserialize)]

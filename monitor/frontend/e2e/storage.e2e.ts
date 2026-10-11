@@ -1,7 +1,8 @@
 /// The Storage app on a real machine, through the panel: a disk initialized,
 /// formatted, mounted and unmounted; a RAID 1 built, degraded, mended, grown
 /// and deleted; a ZFS mirror built, scrubbed and destroyed; SMART read; the
-/// maintenance schedule set and run. RAID and ZFS are tried where mdadm and
+/// maintenance schedule set and run; a disk encrypted, locked and unlocked
+/// (where cryptsetup is installed). RAID and ZFS are tried where mdadm and
 /// zpool are installed.
 ///
 /// It wipes the disks it is given. `scripts/storage-e2e.sh <node>` runs it
@@ -18,6 +19,7 @@
 /// can read.
 
 import { expect, test, type Page } from '@playwright/test'
+import { fillSecret, submitForm } from './secret'
 
 const env = process.env
 const disks = (env.SBM_E2E_STORAGE_DISKS ?? '').split(',').map((d) => d.trim()).filter(Boolean)
@@ -40,8 +42,9 @@ class Storage {
     const { page } = this
     await page.goto('/')
     await page.getByPlaceholder('Username').fill(env.SBM_E2E_PANEL_USER ?? 'admin')
-    await page.locator('input[type=password]').fill(env.SBM_E2E_PANEL_PASSWORD!)
-    await page.keyboard.press('Enter')
+    const login = page.locator('input[type=password]')
+    await fillSecret(login, env.SBM_E2E_PANEL_PASSWORD!)
+    await submitForm(login)
     await page.locator('.lk-dock button[aria-label="All Apps"]').click()
     await page.getByText('Storage', { exact: true }).first().click()
     await expect(page.getByText(disks[0], { exact: true }).first()).toBeVisible({ timeout: 30_000 })
@@ -67,7 +70,7 @@ class Storage {
     const d = this.dialog()
     await expect(d).toBeVisible()
     if (word) await d.getByLabel(/to confirm/).fill(word)
-    await d.getByLabel(/sudo password/).fill(password)
+    await fillSecret(d.getByLabel(/sudo password/), password)
     await d.getByRole('button', { name: title, exact: true }).click()
   }
 
@@ -199,5 +202,34 @@ test('the Storage app manages a machine\'s disks', async ({ page }) => {
     await expect(page.getByText(/^(Started|sudo asked for a password.*)$/)).toBeVisible({ timeout: 60_000 })
     await repeat.selectOption('off')
     await expect(page.getByRole('button', { name: 'Run now' })).toHaveCount(0)
+  })
+
+  await test.step('a disk is encrypted, locked and unlocked', async () => {
+    await s.tab('Disks')
+    const phrase = 'e2e passphrase'
+    await s.rowButton(disk, 'Format')
+    const encrypt = s.dialog().locator('.lk-check', { hasText: 'Encrypt (LUKS)' })
+    if (!(await encrypt.count())) return // no cryptsetup on this machine
+    await encrypt.click()
+    await s.dialog().getByRole('button', { name: 'Continue' }).click()
+    await fillSecret(s.dialog().getByLabel(/^Passphrase/), phrase)
+    await fillSecret(s.dialog().getByLabel('The same again'), phrase)
+    await s.dialog().getByRole('button', { name: 'Continue' }).click()
+    await s.confirm('Format', disk)
+    await s.done()
+    await expect(page.getByText(/^Encrypted$/)).toBeVisible()
+    await page.getByRole('button', { name: 'Lock' }).first().click()
+    await s.confirm('Lock')
+    await s.done()
+    await expect(page.getByText('Encrypted · Locked')).toBeVisible()
+    await page.getByRole('button', { name: 'Unlock' }).first().click()
+    await fillSecret(s.dialog().getByLabel('Passphrase'), phrase)
+    await s.dialog().getByRole('button', { name: 'Continue' }).click()
+    await s.confirm('Unlock')
+    await s.done()
+    await expect(page.getByText(/^Encrypted$/)).toBeVisible()
+    await page.getByRole('button', { name: 'Lock' }).first().click()
+    await s.confirm('Lock')
+    await s.done()
   })
 })

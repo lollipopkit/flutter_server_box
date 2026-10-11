@@ -40,7 +40,8 @@ async fn setup() -> TestServer {
                     .service(web::resource("/shares").route(web::get().to(shares::view)))
                     .service(web::resource("/shares/smb").route(web::put().to(shares::set_smb)))
                     .service(web::resource("/shares/nfs").route(web::put().to(shares::set_nfs)))
-                    .service(web::resource("/shares/smb/password").route(web::post().to(shares::smb_password))),
+                    .service(web::resource("/shares/smb/password").route(web::post().to(shares::smb_password)))
+                    .service(web::resource("/shares/connections").route(web::post().to(shares::connections))),
             )
         }
     })
@@ -120,6 +121,22 @@ async fn a_machines_shares_are_managed_end_to_end() {
     let (status, v) = call(&srv, Method::PUT, "/api/v1/shares/smb", Some(json!({ "shares": [share(true)] }))).await;
     assert_eq!(status, 200, "{v}");
     assert_eq!(v["smb"].as_array().unwrap().iter().find(|s| s["name"] == "sbme2e").unwrap()["read_only"], true);
+
+    // Time Machine and a recycle bin on it.
+    let mut tm = share(true);
+    tm["time_machine"] = json!(true);
+    tm["recycle"] = json!(true);
+    let (status, v) = call(&srv, Method::PUT, "/api/v1/shares/smb", Some(json!({ "shares": [tm] }))).await;
+    assert_eq!(status, 200, "{v}");
+    let made = v["smb"].as_array().unwrap().iter().find(|s| s["name"] == "sbme2e").unwrap().clone();
+    assert_eq!((made["time_machine"].as_bool(), made["recycle"].as_bool()), (Some(true), Some(true)), "{made}");
+    let parsed = sh("testparm -s 2>/dev/null");
+    assert!(parsed.contains("fruit:time machine = Yes") && parsed.contains("recycle"), "{parsed}");
+
+    // Who is connected: nobody yet, read as root.
+    let (status, c) = call(&srv, Method::POST, "/api/v1/shares/connections", Some(json!({}))).await;
+    assert_eq!(status, 200, "{c}");
+    assert!(c["smb"].as_array().unwrap().is_empty() && c["nfs"].is_array(), "{c}");
 
     // Its account's SMB password.
     let (status, v) = call(&srv, Method::POST, "/api/v1/shares/smb/password", Some(json!({ "user": USER, "password": "e2e pass" }))).await;

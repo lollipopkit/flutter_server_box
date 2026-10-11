@@ -185,11 +185,19 @@ you can:
   every start (the previous file is kept as `/etc/fstab.sbm-bak`), and unmount it;
 - create a RAID array, add or remove a member, grow a RAID 1, 5 or 6 by one
   more working member, delete an array, and format and mount the array itself;
-- create a ZFS pool, add disks to it, scrub it, destroy it;
-- expand a mounted ext4, xfs or btrfs filesystem after the array or partition
+- create a ZFS pool (it grows by itself once its disks are replaced by larger
+  ones), add disks or a spare to it, replace a failed or smaller device,
+  mirror a device, bring an offline device back, take a spare out, scrub it,
+  destroy it;
+- grow a partition into the free space after it (a VM's disk made larger), and
+  expand a mounted ext4, xfs or btrfs filesystem after the array or partition
   under it grew;
+- format a partition or disk encrypted (LUKS2, with a passphrase), and lock and
+  unlock it. An encrypted disk is not unlocked at boot: after a restart, unlock
+  it and mount it again in Storage;
 - read every disk's SMART health (temperature, hours powered on, bad sectors,
-  the last self-test) and start a self-test on a disk that has SMART.
+  the last self-test), see every attribute and self-test in **Details**, and
+  start a short or long self-test on a disk that has SMART.
 
 Every change asks for the sudo password of the agent's account and runs as
 root. A disk or partition that is mounted, used as swap, or a member of an
@@ -233,7 +241,8 @@ manager (apt, dnf or apk).
 - **SMB**: add a share with a name and a folder, optionally read only, open to
   guests (no account), or limited to some accounts. Samba keeps its own
   passwords: set an SMB password for each account that connects under
-  **SMB passwords**.
+  **SMB passwords**. A share can take Time Machine backups from a Mac, and keep
+  deleted files in a `.recycle` folder inside it.
 - **NFS**: export a folder to clients (`*`, a host, an address or a network
   such as `192.168.1.0/24`), each read only or read and write, and what root
   on the client becomes (nobody by default).
@@ -243,5 +252,8 @@ ServerBox keeps the shares it makes in files of its own
 `/etc/exports.d/serverbox.exports`) and lists shares set up elsewhere without
 changing them. Every change asks for the sudo password and is checked
 (`testparm`, `exportfs -ra`) before it takes effect; a change that does not
-check leaves the previous configuration in place. Open TCP 445 (SMB) and 2049
-(NFS) in **Firewall** for the computers that connect.
+check leaves the previous configuration in place. **Connected now** lists who
+uses the shares (it asks for the sudo password: Samba tells only root).
+**Allow in Firewall** opens the Firewall app with TCP 445 (SMB) or 2049 (NFS)
+proposed as a rule to let in, to confirm there. Pick a share's folder from the
+disks mounted in Storage, or type any.

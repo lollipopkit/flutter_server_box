@@ -266,7 +266,7 @@ fn disk_changes(seen: &mut Seen, disks: &[DiskHealth]) -> Vec<(String, &'static 
     out
 }
 
-async fn check(state: &Arc<AppState>) {
+pub async fn check(state: &Arc<AppState>) {
     let (arrays, pools) = crate::api::storage::arrays_and_pools(state).await;
     let looked = arrays_and_pools(&arrays, &pools);
     let changes: Vec<(String, bool, serde_json::Value)> = {
@@ -366,7 +366,7 @@ mod tests {
     }
 
     fn disk(device: &str, passed: bool, bad_sectors: i64) -> DiskHealth {
-        DiskHealth { device: device.into(), supported: true, asleep: false, passed: Some(passed), temperature: None, power_on_hours: None, bad_sectors: Some(bad_sectors), testing: None, last_test: None }
+        DiskHealth { device: device.into(), supported: true, asleep: false, passed: Some(passed), temperature: None, power_on_hours: None, bad_sectors: Some(bad_sectors), testing: None, last_test: None, attributes: vec![], tests: vec![] }
     }
 
     #[test]

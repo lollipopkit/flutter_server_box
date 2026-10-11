@@ -99,16 +99,23 @@ fn refused(status: u16, error: &str) -> HttpResponse {
         .json(&json!({ "error": error }))
 }
 
-async fn devices(state: &AppState) -> Option<Vec<st::BlockDevice>> {
-    let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
-    match super::exec::run(st::LSBLK_COMMAND, None, None, &limits).await {
-        Ok(out) if out.exit_code == Some(0) => Some(st::parse_lsblk(&out.stdout)),
-        Ok(out) => {
-            tracing::warn!(exit = ?out.exit_code, timed_out = out.timed_out, stderr = %out.stderr.trim(), "storage: lsblk failed");
+/// The machine's storage as it is now (`storage::parse_view`).
+async fn read_view(state: &AppState) -> Option<st::StorageView> {
+    let limits = super::machine::at_least(&state.remote_access.exec, 8 << 20);
+    match super::exec::run(&st::view_command(), None, None, &limits).await {
+        Ok(out) if !out.timed_out => {
+            let view = st::parse_view(&out.stdout);
+            if view.is_none() {
+                tracing::warn!(exit = ?out.exit_code, stderr = %out.stderr.trim(), "storage: lsblk answered nothing");
+            }
+            view
+        }
+        Ok(_) => {
+            tracing::warn!("storage: reading the disks timed out");
             None
         }
         Err(e) => {
-            tracing::warn!("storage: lsblk did not run: {e}");
+            tracing::warn!("storage: reading the disks did not run: {e}");
             None
         }
     }
@@ -132,37 +139,17 @@ pub(crate) async fn arrays_and_pools(state: &AppState) -> (Vec<st::MdArray>, Vec
     (arrays, pools)
 }
 
-async fn held(state: &AppState) -> st::Held {
-    let (arrays, pools) = arrays_and_pools(state).await;
-    st::Held::of(&arrays, &pools)
-}
-
 pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::admin_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
-    let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
-    let tools = match super::exec::run(st::TOOLS_COMMAND, None, None, &limits).await {
-        Ok(out) => st::parse_tools(&out.stdout),
-        Err(_) => Vec::new(),
-    };
-    let Some(disks) = devices(&state).await else { return Ok(refused(502, "unreadable")) };
-    let (arrays, pools) = arrays_and_pools(&state).await;
+    let Some(v) = read_view(&state).await else { return Ok(refused(502, "unreadable")) };
     let job = state.storage.job().map(|j| j.view(u64::MAX));
-    // Why each device may not be partitioned, formatted or built on: the
-    // agent's rule, so a page offers only what it would do.
-    let held = st::Held::of(&arrays, &pools);
-    let busy: serde_json::Map<String, serde_json::Value> = disks
-        .iter()
-        .flat_map(st::BlockDevice::walk)
-        .filter_map(|d| st::in_use(&disks, &d.path, &held).map(|why| (d.path.clone(), json!(why))))
-        .collect();
-    let system: Vec<&str> = disks.iter().flat_map(st::BlockDevice::walk).filter(|d| st::system_mounted(d)).map(|d| d.path.as_str()).collect();
     let health = state.storage.health();
     let maintenance = crate::storage_watch::tasks(&state.db).await;
     Ok(HttpResponse::Ok().json(&json!({
-        "disks": disks, "busy": busy, "system": system, "arrays": arrays, "pools": pools, "tools": tools, "job": job, "health": health,
+        "disks": v.disks, "busy": v.busy, "system": v.system, "arrays": v.arrays, "pools": v.pools, "tools": v.tools, "job": job, "health": health,
         "maintenance": maintenance,
         // Who a sudoers rule for the schedule names.
         "account": std::env::var("USER").ok(),
@@ -259,6 +246,9 @@ pub struct ActBody {
     action: StorageAction,
     #[serde(default)]
     sudo_password: Option<String>,
+    /// A LUKS passphrase, for an encrypted format or an unlock; never logged.
+    #[serde(default)]
+    passphrase: Option<String>,
 }
 
 pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
@@ -266,47 +256,44 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
-    let ActBody { action, sudo_password } = body.into_inner();
-    let script = match action.script() {
+    let ActBody { action, sudo_password, passphrase } = body.into_inner();
+    // The passphrase reaches cryptsetup as a key file only the agent's
+    // account and root can read, kept until the job ends; the script, which
+    // the job logs, names its path.
+    let key = if action.needs_key() {
+        let Some(p) = passphrase.filter(|p| st::passphrase_ok(p)) else {
+            return Ok(refused(400, "invalidPassphrase"));
+        };
+        #[cfg(unix)]
+        match super::machine::PrivateScript::write(&p) {
+            Ok(file) => Some(file),
+            Err(e) => {
+                tracing::warn!("storage: writing the key file: {e}");
+                return Ok(refused(500, "internal"));
+            }
+        }
+        #[cfg(not(unix))]
+        return Ok(refused(409, "notLinux"));
+    } else {
+        None
+    };
+    #[cfg(unix)]
+    let key_path = key.as_ref().map(|k| k.path().to_string_lossy().into_owned());
+    #[cfg(not(unix))]
+    let key_path: Option<String> = None;
+    let script = match action.script_with_key(key_path.as_deref()) {
         Ok(s) => s,
         Err(e) => return Ok(refused(400, e.code())),
     };
     // Decided on what the machine has now, not on what a page saw.
-    match &action {
-        StorageAction::Unmount { mountpoint } => {
-            let Some(disks) = devices(&state).await else { return Ok(refused(502, "unreadable")) };
-            if let Some(why) = st::unmount_refusal(&disks, mountpoint) {
-                return Ok(refused(409, why));
-            }
-        }
-        StorageAction::ExpandFilesystem { device } => {
-            let Some(disks) = devices(&state).await else { return Ok(refused(502, "unreadable")) };
-            let Some(d) = st::find(&disks, device) else { return Ok(refused(409, "notFound")) };
-            if !st::growable(d) {
-                return Ok(refused(409, "notGrowable"));
-            }
-        }
-        StorageAction::GrowRaid { array, .. } => {
-            let (arrays, _) = arrays_and_pools(&state).await;
-            let level = arrays.iter().find(|a| &a.name == array).and_then(|a| a.level.clone());
-            if !matches!(level.as_deref(), Some("raid1" | "raid5" | "raid6")) {
-                return Ok(refused(409, "notGrowable"));
-            }
-        }
-        _ => {}
-    }
-    let consumes = action.consumes();
-    if !consumes.is_empty() {
-        let Some(disks) = devices(&state).await else { return Ok(refused(502, "unreadable")) };
-        if st::overlapping(&disks, &consumes) {
-            return Ok(refused(400, "overlapping"));
-        }
-        let held = held(&state).await;
-        for device in consumes {
-            if let Some(why) = st::in_use(&disks, device, &held) {
-                return Ok(HttpResponse::Conflict().json(&json!({ "error": "inUse", "device": device, "why": why })));
-            }
-        }
+    let Some(v) = read_view(&state).await else { return Ok(refused(502, "unreadable")) };
+    if let Err(r) = st::check(&v, &action) {
+        let status = ntex::http::StatusCode::from_u16(r.status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);
+        let body = match (&r.device, &r.why) {
+            (Some(device), Some(why)) => json!({ "error": r.error, "device": device, "why": why }),
+            _ => json!({ "error": r.error }),
+        };
+        return Ok(HttpResponse::build(status).json(&body));
     }
     let password = sudo_password.unwrap_or_default();
     let tried = super::machine::as_root("true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), &state.remote_access.exec).await;
@@ -327,6 +314,7 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     let (state2, job2, username) = (state.get_ref().clone(), job.clone(), caller.username.clone());
     tokio::spawn(async move {
         let result = job2.run_root(&script, &password).await;
+        drop(key);
         let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
         match &result {
             Ok(()) => job2.finish(JobState::Succeeded, None),

@@ -120,6 +120,7 @@ memory_alt
 menu
 mist
 monitor
+monitor_heart
 monitoring
 mop
 more

@@ -28,9 +28,11 @@ import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/resource.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/service.dart';
+import 'package:server_box/src/rust/api/shares.dart';
 import 'package:server_box/src/rust/api/snippet.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
+import 'package:server_box/src/rust/api/storage.dart';
 import 'package:server_box/src/rust/api/tmux.dart';
 import 'package:server_box/src/rust/api/users.dart';
 import 'package:server_box/src/rust/api/virt.dart';
@@ -806,6 +808,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceProbe dco_decode_service_probe(dynamic raw);
 
   @protected
+  SharesFfiError dco_decode_shares_ffi_error(dynamic raw);
+
+  @protected
   ShellFileRecord dco_decode_shell_file_record(dynamic raw);
 
   @protected
@@ -819,6 +824,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SnippetFfiError dco_decode_snippet_ffi_error(dynamic raw);
+
+  @protected
+  StorageFfiError dco_decode_storage_ffi_error(dynamic raw);
 
   @protected
   TmuxSessionItem dco_decode_tmux_session_item(dynamic raw);
@@ -1783,6 +1791,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ServiceProbe sse_decode_service_probe(SseDeserializer deserializer);
 
   @protected
+  SharesFfiError sse_decode_shares_ffi_error(SseDeserializer deserializer);
+
+  @protected
   ShellFileRecord sse_decode_shell_file_record(SseDeserializer deserializer);
 
   @protected
@@ -1800,6 +1811,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SnippetFfiError sse_decode_snippet_ffi_error(SseDeserializer deserializer);
+
+  @protected
+  StorageFfiError sse_decode_storage_ffi_error(SseDeserializer deserializer);
 
   @protected
   TmuxSessionItem sse_decode_tmux_session_item(SseDeserializer deserializer);
@@ -2994,6 +3008,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_service_probe(ServiceProbe self, SseSerializer serializer);
 
   @protected
+  void sse_encode_shares_ffi_error(
+    SharesFfiError self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_shell_file_record(
     ShellFileRecord self,
     SseSerializer serializer,
@@ -3017,6 +3037,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_snippet_ffi_error(
     SnippetFfiError self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_storage_ffi_error(
+    StorageFfiError self,
     SseSerializer serializer,
   );
 

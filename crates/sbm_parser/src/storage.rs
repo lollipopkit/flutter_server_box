@@ -354,6 +354,9 @@ pub struct Vdev {
     /// 0 for the pool's own vdevs, 1 for what they are made of.
     pub depth: u32,
     pub errors: u64,
+    /// Outside the data vdevs: `spares`, `logs`, `cache`, `special`, `dedup`.
+    #[serde(default)]
+    pub section: Option<String>,
 }
 
 pub fn parse_zpool_list(stdout: &str) -> Vec<Pool> {
@@ -374,16 +377,20 @@ pub fn parse_zpool_list(stdout: &str) -> Vec<Pool> {
         .collect()
 }
 
+const SECTIONS: &[&str] = &["spares", "logs", "cache", "special", "dedup"];
+
 /// Adds `zpool status`'s scan line and vdev tree to [pools].
 pub fn merge_zpool_status(pools: &mut [Pool], stdout: &str) {
     let mut current: Option<usize> = None;
     let mut in_config = false;
     let mut base_indent = 0;
+    let mut section: Option<String> = None;
     for line in stdout.lines() {
         let trimmed = line.trim();
         if let Some(name) = trimmed.strip_prefix("pool: ") {
             current = pools.iter().position(|p| p.name == name);
             in_config = false;
+            section = None;
             continue;
         }
         let Some(i) = current else { continue };
@@ -397,6 +404,12 @@ pub fn merge_zpool_status(pools: &mut [Pool], stdout: &str) {
         } else if in_config && !trimmed.is_empty() {
             let indent = line.len() - line.trim_start().len();
             let f: Vec<&str> = trimmed.split_whitespace().collect();
+            // `spares`, `logs`… stand alone at the pool's indent and head
+            // what follows.
+            if f.len() == 1 && indent == base_indent && SECTIONS.contains(&f[0]) {
+                section = Some(f[0].to_string());
+                continue;
+            }
             if f.len() < 2 || f[0] == pools[i].name {
                 continue;
             }
@@ -404,7 +417,7 @@ pub fn merge_zpool_status(pools: &mut [Pool], stdout: &str) {
             // further, what they are made of two more.
             let depth = (indent.saturating_sub(base_indent + 2) / 2) as u32;
             let errors = f.iter().skip(2).take(3).filter_map(|e| e.parse::<u64>().ok()).sum();
-            pools[i].vdevs.push(Vdev { name: f[0].to_string(), state: f[1].to_string(), depth, errors });
+            pools[i].vdevs.push(Vdev { name: f[0].to_string(), state: f[1].to_string(), depth, errors, section: section.clone() });
         }
     }
 }
@@ -443,6 +456,28 @@ pub struct DiskHealth {
     pub testing: Option<u8>,
     /// The newest self-test that ended.
     pub last_test: Option<SelfTest>,
+    /// Everything the disk reports, for its details: ATA attributes, or the
+    /// NVMe health log's fields.
+    #[serde(default)]
+    pub attributes: Vec<SmartAttribute>,
+    /// Self-tests that ended, newest first.
+    #[serde(default)]
+    pub tests: Vec<SelfTest>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SmartAttribute {
+    /// The ATA attribute id; none for an NVMe field.
+    pub id: Option<i64>,
+    pub name: String,
+    /// Normalized value, worst seen and the failure threshold (ATA).
+    pub value: Option<i64>,
+    pub worst: Option<i64>,
+    pub thresh: Option<i64>,
+    /// The raw value as smartctl prints it.
+    pub raw: String,
+    /// At or below its threshold now, or failed before.
+    pub failing: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -487,7 +522,19 @@ fn health_of(device: &str, d: Value) -> DiskHealth {
     let nvme = &d["nvme_smart_health_information_log"];
     let supported = exit & 2 == 0 && (d["smart_support"]["available"].as_bool().unwrap_or(false) || nvme.is_object());
     if !supported {
-        return DiskHealth { device: device.into(), supported: false, asleep, passed: None, temperature: None, power_on_hours: None, bad_sectors: None, testing: None, last_test: None };
+        return DiskHealth {
+            device: device.into(),
+            supported: false,
+            asleep,
+            passed: None,
+            temperature: None,
+            power_on_hours: None,
+            bad_sectors: None,
+            testing: None,
+            last_test: None,
+            attributes: Vec::new(),
+            tests: Vec::new(),
+        };
     }
     let attrs = d["ata_smart_attributes"]["table"].as_array();
     let raw = |id: i64| attrs.and_then(|t| t.iter().find(|a| a["id"].as_i64() == Some(id))).and_then(|a| a["raw"]["value"].as_i64());
@@ -506,8 +553,44 @@ fn health_of(device: &str, d: Value) -> DiskHealth {
         power_on_hours: d["power_on_time"]["hours"].as_i64().or_else(|| nvme["power_on_hours"].as_i64()),
         bad_sectors,
         testing: testing(&d),
-        last_test: last_test(&d),
+        last_test: self_tests(&d).into_iter().next(),
+        attributes: attributes(&d),
+        tests: self_tests(&d),
     }
+}
+
+fn attributes(d: &Value) -> Vec<SmartAttribute> {
+    if let Some(table) = d["ata_smart_attributes"]["table"].as_array() {
+        return table
+            .iter()
+            .filter_map(|a| {
+                let (value, thresh) = (a["value"].as_i64(), a["thresh"].as_i64());
+                let failed_before = a["when_failed"].as_str().is_some_and(|w| !w.is_empty() && w != "never");
+                Some(SmartAttribute {
+                    id: a["id"].as_i64(),
+                    name: a["name"].as_str()?.to_string(),
+                    value,
+                    worst: a["worst"].as_i64(),
+                    thresh,
+                    raw: a["raw"]["string"].as_str().map(str::to_string).unwrap_or_else(|| a["raw"]["value"].to_string()),
+                    failing: failed_before || matches!((value, thresh), (Some(v), Some(t)) if t > 0 && v <= t),
+                })
+            })
+            .collect();
+    }
+    let Some(log) = d["nvme_smart_health_information_log"].as_object() else { return Vec::new() };
+    log.iter()
+        .filter(|(k, v)| *k != "nsid" && (v.is_number() || v.is_array()))
+        .map(|(k, v)| SmartAttribute {
+            id: None,
+            name: k.clone(),
+            value: None,
+            worst: None,
+            thresh: None,
+            raw: v.to_string(),
+            failing: (k == "critical_warning" || k == "media_errors") && v.as_i64().is_some_and(|n| n > 0),
+        })
+        .collect()
 }
 
 fn testing(d: &Value) -> Option<u8> {
@@ -524,35 +607,45 @@ fn testing(d: &Value) -> Option<u8> {
     (scsi["result"]["value"].as_u64() == Some(15)).then(|| scsi["remaining_percent"].as_u64().unwrap_or(100).min(100) as u8)
 }
 
-fn last_test(d: &Value) -> Option<SelfTest> {
+fn self_tests(d: &Value) -> Vec<SelfTest> {
     // Newest first in every log; the one running has no result yet.
     if let Some(table) = d["ata_smart_self_test_log"]["standard"]["table"].as_array() {
-        let t = table.iter().find(|t| t["status"]["value"].as_u64() != Some(15))?;
-        let status = t["status"]["value"].as_u64().unwrap_or(0);
-        let outcome = match (status, t["status"]["passed"].as_bool()) {
-            (1 | 2, _) => "aborted",
-            (_, Some(true)) | (0, None) => "passed",
-            _ => "failed",
-        };
-        return Some(SelfTest { long: t["type"]["value"].as_u64().is_some_and(|v| v & 0x7f == 2), outcome: outcome.into(), hours: t["lifetime_hours"].as_i64() });
+        return table
+            .iter()
+            .filter(|t| t["status"]["value"].as_u64() != Some(15))
+            .map(|t| {
+                let status = t["status"]["value"].as_u64().unwrap_or(0);
+                let outcome = match (status, t["status"]["passed"].as_bool()) {
+                    (1 | 2, _) => "aborted",
+                    (_, Some(true)) | (0, None) => "passed",
+                    _ => "failed",
+                };
+                SelfTest { long: t["type"]["value"].as_u64().is_some_and(|v| v & 0x7f == 2), outcome: outcome.into(), hours: t["lifetime_hours"].as_i64() }
+            })
+            .collect();
     }
-    if let Some(t) = d["nvme_self_test_log"]["table"].as_array().and_then(|t| t.first()) {
-        let outcome = match t["self_test_result"]["value"].as_u64().unwrap_or(0) {
-            0 => "passed",
-            5..=7 => "failed",
-            _ => "aborted",
-        };
-        return Some(SelfTest { long: t["self_test_code"]["value"].as_u64() == Some(2), outcome: outcome.into(), hours: t["power_on_hours"].as_i64() });
+    if let Some(table) = d["nvme_self_test_log"]["table"].as_array() {
+        return table
+            .iter()
+            .map(|t| {
+                let outcome = match t["self_test_result"]["value"].as_u64().unwrap_or(0) {
+                    0 => "passed",
+                    5..=7 => "failed",
+                    _ => "aborted",
+                };
+                SelfTest { long: t["self_test_code"]["value"].as_u64() == Some(2), outcome: outcome.into(), hours: t["power_on_hours"].as_i64() }
+            })
+            .collect();
     }
     let t = &d["scsi_self_test_0"];
-    let result = t["result"]["value"].as_u64()?;
+    let Some(result) = t["result"]["value"].as_u64() else { return Vec::new() };
     let outcome = match result {
-        15 => return None,
+        15 => return Vec::new(),
         0 => "passed",
         1 | 2 => "aborted",
         _ => "failed",
     };
-    Some(SelfTest { long: matches!(t["code"]["value"].as_u64(), Some(2 | 6)), outcome: outcome.into(), hours: t["power_on_time"]["hours"].as_i64() })
+    vec![SelfTest { long: matches!(t["code"]["value"].as_u64(), Some(2 | 6)), outcome: outcome.into(), hours: t["power_on_time"]["hours"].as_i64() }]
 }
 
 // -----------------------------------------------------------------------------
@@ -628,7 +721,15 @@ const SYSTEM_TREES: &[&str] = &["/bin/", "/boot/", "/dev/", "/etc/", "/lib/", "/
 pub enum StorageAction {
     /// The whole disk becomes one GPT partition (what it held is lost).
     Partition { device: String },
-    Format { device: String, fstype: String, label: Option<String> },
+    /// With [encrypt], inside a LUKS2 container first, opened as
+    /// `luks-<uuid>` (its passphrase as a key file: [`StorageAction::script_with_key`]).
+    Format {
+        device: String,
+        fstype: String,
+        label: Option<String>,
+        #[serde(default)]
+        encrypt: bool,
+    },
     /// Mounts [device]'s filesystem at [mountpoint]; [persist] keeps it in
     /// `/etc/fstab` (by UUID, `nofail`); [own] gives its top folder to the
     /// account that asked through sudo (the agent's), so the agent can keep
@@ -662,6 +763,23 @@ pub enum StorageAction {
     /// Adds a vdev of [devices] to a pool: more room. zpool refuses one whose
     /// redundancy differs from the pool's.
     AddToPool { name: String, layout: String, devices: Vec<String> },
+    /// A pool's device swapped for another (a failed or a smaller one); the
+    /// pool resilvers, and grows once every device of a vdev is larger.
+    ReplaceInPool { name: String, old: String, new: String },
+    /// A mirror made of (or grown from) a pool's device.
+    AttachToPool { name: String, existing: String, new: String },
+    AddSpare { name: String, devices: Vec<String> },
+    /// A spare or cache device taken out of a pool.
+    RemoveFromPool { name: String, device: String },
+    /// An offline device back, and grown into a larger disk.
+    OnlineInPool { name: String, device: String },
+    /// A partition grown into the free space after it (the filesystem then
+    /// with [`StorageAction::ExpandFilesystem`]).
+    GrowPartition { device: String },
+    /// A LUKS container opened (`luks-<uuid>`) with its passphrase.
+    Unlock { device: String },
+    /// A LUKS container closed; its filesystem must be unmounted.
+    Lock { device: String },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -673,6 +791,9 @@ pub enum StorageError {
     InvalidName,
     InvalidLevel,
     TooFewDevices,
+    /// A LUKS passphrase is needed and none was given.
+    KeyRequired,
+    InvalidPassphrase,
 }
 
 impl StorageError {
@@ -685,6 +806,8 @@ impl StorageError {
             Self::InvalidName => "invalidName",
             Self::InvalidLevel => "invalidLevel",
             Self::TooFewDevices => "tooFewDevices",
+            Self::KeyRequired => "keyRequired",
+            Self::InvalidPassphrase => "invalidPassphrase",
         }
     }
 }
@@ -739,15 +862,37 @@ impl StorageAction {
             Self::Partition { device } | Self::Format { device, .. } => vec![device],
             Self::CreateRaid { devices, .. } | Self::CreatePool { devices, .. } => devices.iter().map(String::as_str).collect(),
             Self::AddToRaid { device, .. } | Self::GrowRaid { device, .. } => vec![device],
-            Self::AddToPool { devices, .. } => devices.iter().map(String::as_str).collect(),
+            Self::AddToPool { devices, .. } | Self::AddSpare { devices, .. } => devices.iter().map(String::as_str).collect(),
+            Self::ReplaceInPool { new, .. } | Self::AttachToPool { new, .. } => vec![new],
             _ => Vec::new(),
         }
     }
 
     pub fn validate(&self) -> Result<(), StorageError> {
         match self {
-            Self::Partition { device } | Self::SmartTest { device, .. } | Self::ExpandFilesystem { device } => device_ok(device),
-            Self::Format { device, fstype, label } => {
+            Self::Partition { device }
+            | Self::SmartTest { device, .. }
+            | Self::ExpandFilesystem { device }
+            | Self::GrowPartition { device }
+            | Self::Unlock { device }
+            | Self::Lock { device } => device_ok(device),
+            Self::ReplaceInPool { name, old: a, new: b } | Self::AttachToPool { name, existing: a, new: b } => {
+                pool_ok(name)?;
+                device_ok(a)?;
+                device_ok(b)
+            }
+            Self::AddSpare { name, devices } => {
+                pool_ok(name)?;
+                if devices.is_empty() || has_duplicates(devices) {
+                    return Err(StorageError::TooFewDevices);
+                }
+                devices.iter().try_for_each(|d| device_ok(d))
+            }
+            Self::RemoveFromPool { name, device } | Self::OnlineInPool { name, device } => {
+                pool_ok(name)?;
+                device_ok(device)
+            }
+            Self::Format { device, fstype, label, .. } => {
                 device_ok(device)?;
                 if !FILESYSTEMS.contains(&fstype.as_str()) {
                     return Err(StorageError::InvalidFilesystem);
@@ -806,20 +951,66 @@ impl StorageAction {
         }
     }
 
-    /// The shell text that does it, as root. Checked first.
+    /// The shell text that does it, as root. Checked first. One that needs a
+    /// LUKS passphrase is [`StorageAction::script_with_key`]'s.
     pub fn script(&self) -> Result<String, StorageError> {
+        self.script_with_key(None)
+    }
+
+    /// Whether [`StorageAction::script_with_key`] needs a passphrase.
+    pub fn needs_key(&self) -> bool {
+        matches!(self, Self::Format { encrypt: true, .. } | Self::Unlock { .. })
+    }
+
+    /// The script, reading a LUKS passphrase from [key_file] (a file only the
+    /// agent's account and root can read; the passphrase is never in the
+    /// script, which a job logs).
+    pub fn script_with_key(&self, key_file: Option<&str>) -> Result<String, StorageError> {
+        self.script_keyed(key_file.map(q))
+    }
+
+    /// The script with the passphrase written into it, into a key file made
+    /// and removed by the script itself: for a caller that sends the script
+    /// on stdin (the app), where no process list or log sees it.
+    pub fn script_with_passphrase(&self, passphrase: &str) -> Result<String, StorageError> {
+        if !passphrase_ok(passphrase) {
+            return Err(StorageError::InvalidPassphrase);
+        }
+        let inner = self.script_keyed(Some("\"$k\"".to_string()))?;
+        Ok(format!(
+            "k=$(mktemp) && chmod 600 \"$k\" && trap 'rm -f \"$k\"' EXIT && printf %s {} > \"$k\" && {{ {inner}; }}",
+            q(passphrase)
+        ))
+    }
+
+    /// [key]: the key file as shell text (quoted path or variable).
+    fn script_keyed(&self, key: Option<String>) -> Result<String, StorageError> {
         self.validate()?;
+        let key = match (self.needs_key(), key) {
+            (true, Some(k)) => k,
+            (true, None) => return Err(StorageError::KeyRequired),
+            (false, _) => String::new(),
+        };
         Ok(match self {
             Self::Partition { device } => {
                 format!("wipefs -a {d} && printf 'label: gpt\\n,,L\\n' | sfdisk --quiet {d} && {SETTLE}", d = q(device))
             }
-            Self::Format { device, fstype, label } => {
+            Self::Format { device, fstype, label, encrypt } => {
                 let label = label.as_ref().map(|l| format!(" -L {}", q(l))).unwrap_or_default();
                 let force = match fstype.as_str() {
                     "ext4" => " -F",
                     _ => " -f",
                 };
-                format!("wipefs -a {d} && mkfs.{fstype}{force}{label} {d} && {SETTLE}", d = q(device))
+                if *encrypt {
+                    format!(
+                        "wipefs -a {d} && cryptsetup luksFormat --batch-mode --type luks2 --key-file {key} {d} \
+                         && name=\"luks-$(cryptsetup luksUUID {d})\" && cryptsetup open --key-file {key} {d} \"$name\" \
+                         && mkfs.{fstype}{force}{label} \"/dev/mapper/$name\" && {SETTLE}",
+                        d = q(device)
+                    )
+                } else {
+                    format!("wipefs -a {d} && mkfs.{fstype}{force}{label} {d} && {SETTLE}", d = q(device))
+                }
             }
             Self::Mount { device, mountpoint, persist, own } => {
                 let mp = q(mountpoint.trim_end_matches('/'));
@@ -871,10 +1062,12 @@ impl StorageAction {
                  && mdadm --stop /dev/{array} && for m in $members; do mdadm --zero-superblock \"$m\"; done \
                  && {MDADM_CONF}; [ -f \"$conf\" ] && [ -n \"$uuid\" ] && sed -i \"/UUID=$uuid/d\" \"$conf\"; true"
             ),
+            // `autoexpand`: a pool grows once its disks are replaced by larger
+            // ones, without being asked.
             Self::CreatePool { name, layout, devices } => {
                 let devs: Vec<String> = devices.iter().map(|d| q(d)).collect();
                 let vdev = if layout == "stripe" { String::new() } else { format!("{layout} ") };
-                format!("zpool create -f {} {vdev}{}", q(name), devs.join(" "))
+                format!("zpool create -f -o autoexpand=on {} {vdev}{}", q(name), devs.join(" "))
             }
             Self::ScrubPool { name } => format!("zpool scrub {}", q(name)),
             Self::DestroyPool { name } => format!("zpool destroy {}", q(name)),
@@ -897,6 +1090,33 @@ impl StorageAction {
                  *) echo 'this filesystem cannot be grown here' >&2; exit 1 ;; esac",
                 d = q(device)
             ),
+            Self::ReplaceInPool { name, old, new } => format!(
+                "wipefs -a {n} && zpool set autoexpand=on {p} && zpool replace {p} {o} {n}",
+                p = q(name),
+                o = q(old),
+                n = q(new)
+            ),
+            Self::AttachToPool { name, existing, new } => {
+                format!("wipefs -a {n} && zpool attach {p} {e} {n}", p = q(name), e = q(existing), n = q(new))
+            }
+            Self::AddSpare { name, devices } => {
+                let devs: Vec<String> = devices.iter().map(|d| q(d)).collect();
+                format!("wipefs -a {d} && zpool add {} spare {d}", q(name), d = devs.join(" "))
+            }
+            Self::RemoveFromPool { name, device } => format!("zpool remove {} {}", q(name), q(device)),
+            Self::OnlineInPool { name, device } => format!("zpool online -e {} {}", q(name), q(device)),
+            // sfdisk takes the partition to the end of the free space after
+            // it; `partx -u` tells the kernel while it is in use.
+            Self::GrowPartition { device } => format!(
+                "d={d}; disk=\"/dev/$(lsblk -dno PKNAME \"$d\")\"; n=$(cat \"/sys/class/block/$(basename \"$(readlink -f \"$d\")\")/partition\") \
+                 && [ -n \"$n\" ] && echo ', +' | sfdisk --no-reread --force -N \"$n\" \"$disk\" && partx -u \"$disk\"",
+                d = q(device)
+            ),
+            Self::Unlock { device } => format!(
+                "cryptsetup open --key-file {key} {d} \"luks-$(cryptsetup luksUUID {d})\" && {SETTLE}",
+                d = q(device)
+            ),
+            Self::Lock { device } => format!("cryptsetup close \"luks-$(cryptsetup luksUUID {d})\"", d = q(device)),
             Self::AddToPool { name, layout, devices } => {
                 let devs: Vec<String> = devices.iter().map(|d| q(d)).collect();
                 let vdev = if layout == "stripe" { String::new() } else { format!("{layout} ") };
@@ -913,10 +1133,154 @@ fn has_duplicates(items: &[String]) -> bool {
 
 /// Which of the storage tools are here, one name per line; read by
 /// [`parse_tools`].
-pub const TOOLS_COMMAND: &str = "for t in mdadm zpool smartctl mkfs.ext4 mkfs.xfs mkfs.btrfs sfdisk wipefs; do command -v $t >/dev/null 2>&1 && echo $t; done; true";
+pub const TOOLS_COMMAND: &str = "for t in mdadm zpool smartctl mkfs.ext4 mkfs.xfs mkfs.btrfs sfdisk wipefs cryptsetup; do command -v $t >/dev/null 2>&1 && echo $t; done; true";
 
 pub fn parse_tools(stdout: &str) -> Vec<String> {
     stdout.lines().map(str::trim).filter(|l| !l.is_empty()).map(String::from).collect()
+}
+
+/// A LUKS passphrase this takes: 8 to 512 bytes on one line.
+pub fn passphrase_ok(p: &str) -> bool {
+    (8..=512).contains(&p.len()) && !p.contains(['\n', '\r', '\0'])
+}
+
+// -----------------------------------------------------------------------------
+// The whole view, and what a change is checked against
+// -----------------------------------------------------------------------------
+
+/// Everything a page draws, each after a `### <name>` line; read by
+/// [`parse_view`]. Readable without root.
+pub fn view_command() -> String {
+    format!(
+        "echo '### lsblk'; {LSBLK_COMMAND} 2>/dev/null\necho '### mdstat'; cat /proc/mdstat 2>/dev/null\n\
+         echo '### zpool'; {ZPOOL_LIST_COMMAND} 2>/dev/null\necho '### zstatus'; {ZPOOL_STATUS_COMMAND} 2>/dev/null\n\
+         echo '### tools'; {TOOLS_COMMAND}\ntrue"
+    )
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StorageView {
+    pub disks: Vec<BlockDevice>,
+    /// Why each device may not be partitioned, formatted or built on
+    /// ([`in_use`]).
+    pub busy: std::collections::BTreeMap<String, String>,
+    /// Devices mounted where the system lives ([`system_mounted`]).
+    pub system: Vec<String>,
+    pub arrays: Vec<MdArray>,
+    pub pools: Vec<Pool>,
+    pub tools: Vec<String>,
+}
+
+impl StorageView {
+    pub fn held(&self) -> Held {
+        Held::of(&self.arrays, &self.pools)
+    }
+}
+
+/// Reads [`view_command`]'s output; `None` when lsblk answered nothing
+/// (not Linux, or not there).
+pub fn parse_view(stdout: &str) -> Option<StorageView> {
+    let mut sections: Vec<(&str, String)> = Vec::new();
+    for line in stdout.lines() {
+        if let Some(name) = line.strip_prefix("### ") {
+            sections.push((name.trim(), String::new()));
+        } else if let Some((_, text)) = sections.last_mut() {
+            text.push_str(line);
+            text.push('\n');
+        }
+    }
+    let section = |name: &str| sections.iter().find(|(n, _)| *n == name).map(|(_, t)| t.as_str()).unwrap_or("");
+    let lsblk = section("lsblk");
+    if serde_json::from_str::<Value>(lsblk).is_err() {
+        return None;
+    }
+    let disks = parse_lsblk(lsblk);
+    let arrays = parse_mdstat(section("mdstat"));
+    let mut pools = parse_zpool_list(section("zpool"));
+    if !pools.is_empty() {
+        merge_zpool_status(&mut pools, section("zstatus"));
+    }
+    let held = Held::of(&arrays, &pools);
+    let busy = disks
+        .iter()
+        .flat_map(BlockDevice::walk)
+        .filter_map(|d| in_use(&disks, &d.path, &held).map(|why| (d.path.clone(), why.to_string())))
+        .collect();
+    let system = disks.iter().flat_map(BlockDevice::walk).filter(|d| system_mounted(d)).map(|d| d.path.clone()).collect();
+    Some(StorageView { disks, busy, system, arrays, pools, tools: parse_tools(section("tools")) })
+}
+
+/// Why [action] is refused on the machine as [view] says it is: an HTTP
+/// status, a code, and for `inUse` the device and why.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Refusal {
+    pub status: u16,
+    pub error: String,
+    pub device: Option<String>,
+    pub why: Option<String>,
+}
+
+fn refusal(status: u16, error: &str) -> Refusal {
+    Refusal { status, error: error.into(), device: None, why: None }
+}
+
+/// The checks a change passes before it runs, decided on what the machine
+/// has now: nothing in use is consumed, the system's mounts stay, a filesystem
+/// grows only mounted, a container locks only unmounted, only spares and
+/// caches leave a pool, only RAID 1/5/6 grow.
+pub fn check(view: &StorageView, action: &StorageAction) -> Result<(), Refusal> {
+    action.validate().map_err(|e| refusal(400, e.code()))?;
+    let disks = &view.disks;
+    match action {
+        StorageAction::Unmount { mountpoint } => {
+            if let Some(why) = unmount_refusal(disks, mountpoint) {
+                return Err(refusal(409, why));
+            }
+        }
+        StorageAction::ExpandFilesystem { device } => {
+            let d = find(disks, device).ok_or_else(|| refusal(409, "notFound"))?;
+            if !growable(d) {
+                return Err(refusal(409, "notGrowable"));
+            }
+        }
+        StorageAction::Lock { device } => {
+            let d = find(disks, device).ok_or_else(|| refusal(409, "notFound"))?;
+            if d.walk().iter().any(|c| !c.mountpoints.is_empty()) {
+                return Err(refusal(409, "mounted"));
+            }
+        }
+        StorageAction::GrowPartition { device } => {
+            if find(disks, device).is_none_or(|d| d.kind != "part") {
+                return Err(refusal(409, "notGrowable"));
+            }
+        }
+        StorageAction::RemoveFromPool { name, device } => {
+            let removable = view.pools.iter().find(|p| &p.name == name).is_some_and(|p| {
+                p.vdevs.iter().any(|v| &v.name == device && matches!(v.section.as_deref(), Some("spares" | "cache")))
+            });
+            if !removable {
+                return Err(refusal(409, "notRemovable"));
+            }
+        }
+        StorageAction::GrowRaid { array, .. } => {
+            let level = view.arrays.iter().find(|a| &a.name == array).and_then(|a| a.level.as_deref());
+            if !matches!(level, Some("raid1" | "raid5" | "raid6")) {
+                return Err(refusal(409, "notGrowable"));
+            }
+        }
+        _ => {}
+    }
+    let consumes = action.consumes();
+    if overlapping(disks, &consumes) {
+        return Err(refusal(400, "overlapping"));
+    }
+    let held = view.held();
+    for device in consumes {
+        if let Some(why) = in_use(disks, device, &held) {
+            return Err(Refusal { status: 409, error: "inUse".into(), device: Some(device.into()), why: Some(why.into()) });
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -1023,8 +1387,8 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
     #[test]
     fn changes_are_checked_and_quoted() {
         let bad = [
-            StorageAction::Format { device: "/dev/sdb; rm -rf /".into(), fstype: "ext4".into(), label: None },
-            StorageAction::Format { device: "/dev/sdb".into(), fstype: "ntfs".into(), label: None },
+            StorageAction::Format { device: "/dev/sdb; rm -rf /".into(), fstype: "ext4".into(), label: None, encrypt: false },
+            StorageAction::Format { device: "/dev/sdb".into(), fstype: "ntfs".into(), label: None, encrypt: false },
             StorageAction::Mount { device: "/dev/sdb1".into(), mountpoint: "/etc".into(), persist: true, own: false },
             StorageAction::Mount { device: "/dev/sdb1".into(), mountpoint: "/srv/../etc".into(), persist: true, own: false },
             StorageAction::Mount { device: "/dev/sdb1".into(), mountpoint: "/mnt/my disk".into(), persist: true, own: false },
@@ -1038,7 +1402,7 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
             assert!(a.script().is_err(), "{a:?}");
         }
         assert_eq!(
-            StorageAction::Format { device: "/dev/sdc1".into(), fstype: "xfs".into(), label: Some("data".into()) }.script().unwrap(),
+            StorageAction::Format { device: "/dev/sdc1".into(), fstype: "xfs".into(), label: Some("data".into()), encrypt: false }.script().unwrap(),
             "wipefs -a '/dev/sdc1' && mkfs.xfs -f -L 'data' '/dev/sdc1' && { partprobe 2>/dev/null; udevadm trigger --action=change --subsystem-match=block; udevadm settle; }"
         );
         assert_eq!(
@@ -1047,7 +1411,7 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         );
         assert_eq!(
             StorageAction::CreatePool { name: "tank".into(), layout: "raidz1".into(), devices: vec!["/dev/sdb".into(), "/dev/sdc".into(), "/dev/sdd".into()] }.script().unwrap(),
-            "zpool create -f 'tank' raidz1 '/dev/sdb' '/dev/sdc' '/dev/sdd'"
+            "zpool create -f -o autoexpand=on 'tank' raidz1 '/dev/sdb' '/dev/sdc' '/dev/sdd'"
         );
         let mount = StorageAction::Mount { device: "/dev/md0".into(), mountpoint: "/mnt/backup/".into(), persist: true, own: true }.script().unwrap();
         assert!(mount.starts_with("mkdir -p '/mnt/backup' && mount '/dev/md0' '/mnt/backup' && chown \"${SUDO_UID:-0}:${SUDO_GID:-0}\" '/mnt/backup'"), "{mount}");
@@ -1112,5 +1476,76 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert!(Maintenance::SmartShort.script(&["/dev/sda;id".into()]).is_err());
         assert_eq!(Maintenance::from_name("smartShort"), Some(Maintenance::SmartShort));
         assert_eq!(Maintenance::from_name("format"), None);
+    }
+
+    #[test]
+    fn pool_devices_luks_and_partitions_are_checked_scripts() {
+        let status = "  pool: tank\n state: DEGRADED\nconfig:\n\n\tNAME          STATE     READ WRITE CKSUM\n\ttank          DEGRADED     0     0     0\n\t  mirror-0    DEGRADED     0     0     0\n\t    /dev/sdb  ONLINE       0     0     0\n\t    /dev/sdc  OFFLINE      0     0     0\n\tspares\n\t  /dev/sdd    AVAIL\n\nerrors: No known data errors\n";
+        let mut pools = parse_zpool_list("tank\t100\t10\t90\tDEGRADED\n");
+        merge_zpool_status(&mut pools, status);
+        let v: Vec<(&str, u32, Option<&str>)> = pools[0].vdevs.iter().map(|v| (v.name.as_str(), v.depth, v.section.as_deref())).collect();
+        assert_eq!(v, [("mirror-0", 0, None), ("/dev/sdb", 1, None), ("/dev/sdc", 1, None), ("/dev/sdd", 0, Some("spares"))]);
+
+        let replace = StorageAction::ReplaceInPool { name: "tank".into(), old: "/dev/sdc".into(), new: "/dev/sde".into() };
+        assert_eq!(replace.script().unwrap(), "wipefs -a '/dev/sde' && zpool set autoexpand=on 'tank' && zpool replace 'tank' '/dev/sdc' '/dev/sde'");
+        assert_eq!(replace.consumes(), ["/dev/sde"]);
+        assert!(StorageAction::AttachToPool { name: "tank".into(), existing: "/dev/sdb".into(), new: "/dev/sdf".into() }.script().unwrap().ends_with("zpool attach 'tank' '/dev/sdb' '/dev/sdf'"));
+        assert!(StorageAction::AddSpare { name: "tank".into(), devices: vec!["/dev/sdg".into()] }.script().unwrap().ends_with("zpool add 'tank' spare '/dev/sdg'"));
+        assert_eq!(StorageAction::RemoveFromPool { name: "tank".into(), device: "/dev/sdd".into() }.script().unwrap(), "zpool remove 'tank' '/dev/sdd'");
+        assert_eq!(StorageAction::OnlineInPool { name: "tank".into(), device: "/dev/sdc".into() }.script().unwrap(), "zpool online -e 'tank' '/dev/sdc'");
+        assert_eq!(StorageAction::AddSpare { name: "tank".into(), devices: vec![] }.script(), Err(StorageError::TooFewDevices));
+
+        // A passphrase is only ever a key file's path in the script.
+        let luks = StorageAction::Format { device: "/dev/sdb1".into(), fstype: "ext4".into(), label: None, encrypt: true };
+        assert_eq!(luks.script(), Err(StorageError::KeyRequired));
+        let script = luks.script_with_key(Some("/run/user/1000/sbm-key")).unwrap();
+        assert!(script.contains("cryptsetup luksFormat --batch-mode --type luks2 --key-file '/run/user/1000/sbm-key' '/dev/sdb1'"), "{script}");
+        assert!(script.contains("mkfs.ext4 -F \"/dev/mapper/$name\""), "{script}");
+        assert!(StorageAction::Unlock { device: "/dev/sdb1".into() }.script_with_key(Some("/k")).unwrap().starts_with("cryptsetup open --key-file '/k' '/dev/sdb1' \"luks-$(cryptsetup luksUUID '/dev/sdb1')\""));
+        assert_eq!(StorageAction::Lock { device: "/dev/sdb1".into() }.script().unwrap(), "cryptsetup close \"luks-$(cryptsetup luksUUID '/dev/sdb1')\"");
+
+        let grow = StorageAction::GrowPartition { device: "/dev/sdb1".into() }.script().unwrap();
+        assert!(grow.contains("sfdisk --no-reread --force -N \"$n\" \"$disk\" && partx -u \"$disk\""), "{grow}");
+        assert!(StorageAction::GrowPartition { device: "/dev/sdb1;id".into() }.script().is_err());
+    }
+
+    #[test]
+    fn smart_details_keep_every_attribute_and_test() {
+        let h = parse_health(include_str!("../tests/fixtures/storage_health.txt"));
+        let ata = &h[3];
+        let names: Vec<&str> = ata.attributes.iter().map(|a| a.name.as_str()).collect();
+        assert_eq!(names, ["Reallocated_Sector_Ct", "Temperature_Celsius", "Current_Pending_Sector", "Offline_Uncorrectable"]);
+        assert_eq!(ata.attributes[1].raw, "35 (Min/Max 20/40)");
+        assert!(ata.attributes.iter().all(|a| !a.failing));
+        assert_eq!(ata.tests.iter().map(|t| t.outcome.as_str()).collect::<Vec<_>>(), ["failed", "passed"]);
+        let nvme = &h[0];
+        assert!(nvme.attributes.iter().any(|a| a.name == "percentage_used" && a.raw == "4"), "{:?}", nvme.attributes);
+        assert!(nvme.attributes.iter().all(|a| a.id.is_none()));
+        assert!(h[2].attributes.is_empty(), "a disk without SMART has none");
+    }
+
+    #[test]
+    fn the_view_reads_whole_and_changes_are_checked_against_it() {
+        let raw = format!("### lsblk\n{LSBLK}\n### mdstat\nPersonalities : [raid1]\nmd0 : active raid1 sdb1[0]\n      100 blocks [2/1] [U_]\n\n### zpool\n### zstatus\nno pools available\n### tools\nmdadm\nsfdisk\n");
+        let v = parse_view(&raw).unwrap();
+        assert_eq!(v.tools, ["mdadm", "sfdisk"]);
+        assert_eq!(v.busy.get("/dev/sdb1").map(String::as_str), Some("raidMember"));
+        assert!(v.system.contains(&"/dev/sda2".to_string()));
+        assert_eq!(parse_view("### lsblk\nlsblk: not found\n"), None);
+
+        let format = |d: &str| StorageAction::Format { device: d.into(), fstype: "ext4".into(), label: None, encrypt: false };
+        assert_eq!(check(&v, &format("/dev/sdc")), Ok(()));
+        let r = check(&v, &format("/dev/sdb")).unwrap_err();
+        assert_eq!((r.status, r.error.as_str(), r.why.as_deref()), (409, "inUse", Some("raidMember")));
+        assert_eq!(check(&v, &StorageAction::Unmount { mountpoint: "/srv/data".into() }), Ok(()));
+        assert_eq!(check(&v, &StorageAction::GrowRaid { array: "md0".into(), device: "/dev/sdc".into() }), Ok(()));
+        assert_eq!(check(&v, &StorageAction::GrowPartition { device: "/dev/sdc".into() }).unwrap_err().error, "notGrowable");
+        assert_eq!(check(&v, &format("/dev/sdb; id")).unwrap_err().error, "invalidDevice");
+
+        let luks = StorageAction::Unlock { device: "/dev/sdc".into() };
+        let s = luks.script_with_passphrase("it's a secret").unwrap();
+        assert!(s.starts_with("k=$(mktemp) && chmod 600 \"$k\" && trap 'rm -f \"$k\"' EXIT && printf %s 'it'\\''s a secret' > \"$k\""), "{s}");
+        assert!(s.contains("cryptsetup open --key-file \"$k\" '/dev/sdc'"), "{s}");
+        assert_eq!(luks.script_with_passphrase("short"), Err(StorageError::InvalidPassphrase));
     }
 }

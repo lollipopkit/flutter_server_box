@@ -46,6 +46,12 @@ pub struct SmbShare {
     /// The accounts allowed in; none is every account with an SMB password.
     #[serde(default)]
     pub users: Vec<String>,
+    /// A Mac backs up here with Time Machine (Samba's `fruit`).
+    #[serde(default)]
+    pub time_machine: bool,
+    /// Deleted files go to `.recycle` in the share first (`vfs_recycle`).
+    #[serde(default)]
+    pub recycle: bool,
     /// In [`SMB_FILE`]: ServerBox's to change.
     #[serde(default)]
     pub managed: bool,
@@ -137,6 +143,8 @@ pub fn parse_smb(text: &str) -> Vec<SmbShare> {
                 read_only: true,
                 guest: false,
                 users: Vec::new(),
+                time_machine: false,
+                recycle: false,
                 managed: false,
             });
             continue;
@@ -152,6 +160,8 @@ pub fn parse_smb(text: &str) -> Vec<SmbShare> {
             "writeable" | "writable" => share.read_only = !yes,
             "guestok" | "public" => share.guest = yes,
             "validusers" => share.users = value.split([',', ' ']).filter(|u| !u.is_empty()).map(String::from).collect(),
+            "fruit:timemachine" => share.time_machine = yes,
+            "vfsobjects" => share.recycle = value.split_whitespace().any(|o| o == "recycle"),
             _ => {}
         }
     }
@@ -203,6 +213,64 @@ pub fn parse_exports(text: &str) -> Vec<NfsExport> {
             })
             .collect();
         out.push(NfsExport { path, clients, managed: false });
+    }
+    out
+}
+
+/// Who is connected: Samba's sessions and shares in use (`smbstatus`, root)
+/// and the NFS clients with a connection open (`ss`), each after a `### <name>`
+/// line; read by [`parse_connections`].
+pub const CONNECTIONS_COMMAND: &str = r####"echo '### smb'; command -v smbstatus >/dev/null 2>&1 && smbstatus -j 2>/dev/null
+echo '### nfs'; ss -Htn state established '( sport = :2049 )' 2>/dev/null
+true"####;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Connections {
+    pub smb: Vec<SmbConnection>,
+    /// Client addresses with an NFS connection open.
+    pub nfs: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SmbConnection {
+    pub share: String,
+    pub user: Option<String>,
+    /// The client's address.
+    pub machine: String,
+    /// As Samba prints it.
+    pub since: Option<String>,
+}
+
+/// Reads [`CONNECTIONS_COMMAND`]'s output.
+pub fn parse_connections(stdout: &str) -> Connections {
+    let (smb, nfs) = match stdout.split_once("### nfs") {
+        Some((smb, nfs)) => (smb.trim_start_matches("### smb").trim(), nfs),
+        None => (stdout.trim_start_matches("### smb").trim(), ""),
+    };
+    let mut out = Connections::default();
+    if let Ok(v) = serde_json::from_str::<serde_json::Value>(smb) {
+        let sessions = v["sessions"].as_object();
+        for tcon in v["tcons"].as_object().into_iter().flat_map(|t| t.values()) {
+            let Some(share) = tcon["service"].as_str() else { continue };
+            if share.eq_ignore_ascii_case("IPC$") {
+                continue;
+            }
+            let session = tcon["session_id"].as_str().and_then(|id| sessions?.get(id));
+            out.smb.push(SmbConnection {
+                share: share.to_string(),
+                user: session.and_then(|s| s["username"].as_str()).map(String::from),
+                machine: tcon["machine"].as_str().or_else(|| session.and_then(|s| s["remote_machine"].as_str())).unwrap_or("").to_string(),
+                since: tcon["connected_at"].as_str().map(String::from),
+            });
+        }
+    }
+    for line in nfs.lines() {
+        // `0 0 10.0.0.5:2049 10.0.0.9:876`: the peer is the last field.
+        let Some(peer) = line.split_whitespace().last() else { continue };
+        let host = peer.rsplit_once(':').map_or(peer, |(h, _)| h).trim_matches(['[', ']']);
+        if !host.is_empty() && !out.nfs.iter().any(|h| h == host) {
+            out.nfs.push(host.to_string());
+        }
     }
     out
 }
@@ -284,6 +352,22 @@ pub fn render_smb(shares: &[SmbShare]) -> Result<String, ShareError> {
         out.push_str(&format!("   guest ok = {}\n", if s.guest { "yes" } else { "no" }));
         if !s.users.is_empty() {
             out.push_str(&format!("   valid users = {}\n", s.users.join(" ")));
+        }
+        let mut vfs = Vec::new();
+        if s.time_machine {
+            vfs.extend(["catia", "fruit", "streams_xattr"]);
+        }
+        if s.recycle {
+            vfs.push("recycle");
+        }
+        if !vfs.is_empty() {
+            out.push_str(&format!("   vfs objects = {}\n", vfs.join(" ")));
+        }
+        if s.time_machine {
+            out.push_str("   fruit:time machine = yes\n   fruit:metadata = stream\n");
+        }
+        if s.recycle {
+            out.push_str("   recycle:repository = .recycle\n   recycle:keeptree = yes\n   recycle:versions = yes\n");
         }
         out.push_str("   browseable = yes\n");
     }
@@ -438,7 +522,27 @@ mod tests {
     }
 
     fn share(name: &str, path: &str) -> SmbShare {
-        SmbShare { name: name.into(), path: path.into(), comment: None, read_only: false, guest: false, users: vec![], managed: true }
+        SmbShare { name: name.into(), path: path.into(), comment: None, read_only: false, guest: false, users: vec![], time_machine: false, recycle: false, managed: true }
+    }
+
+    #[test]
+    fn time_machine_and_recycle_are_written_and_read_back() {
+        let text = render_smb(&[SmbShare { time_machine: true, recycle: true, ..share("mac", "/srv/mac") }]).unwrap();
+        assert!(text.contains("   vfs objects = catia fruit streams_xattr recycle\n   fruit:time machine = yes\n"), "{text}");
+        assert!(text.contains("recycle:repository = .recycle"), "{text}");
+        let back = &parse_smb(&text)[0];
+        assert!(back.time_machine && back.recycle);
+        let plain = &parse_smb(&render_smb(&[share("x", "/srv/x")]).unwrap())[0];
+        assert!(!plain.time_machine && !plain.recycle);
+    }
+
+    #[test]
+    fn connections_are_read() {
+        let out = "### smb\n{\"sessions\": {\"3\": {\"session_id\": \"3\", \"username\": \"alice\", \"remote_machine\": \"10.0.0.9\"}},\n \"tcons\": {\"1\": {\"service\": \"media\", \"session_id\": \"3\", \"machine\": \"10.0.0.9\", \"connected_at\": \"2026-10-11T10:00:00+0000\"}, \"2\": {\"service\": \"IPC$\", \"session_id\": \"3\", \"machine\": \"10.0.0.9\"}}}\n### nfs\n0 0 10.0.0.5:2049 10.0.0.7:876\n0 0 10.0.0.5:2049 10.0.0.7:877\n0 0 [fd00::5]:2049 [fd00::8]:900\n";
+        let c = parse_connections(out);
+        assert_eq!(c.smb, [SmbConnection { share: "media".into(), user: Some("alice".into()), machine: "10.0.0.9".into(), since: Some("2026-10-11T10:00:00+0000".into()) }]);
+        assert_eq!(c.nfs, ["10.0.0.7", "fd00::8"]);
+        assert_eq!(parse_connections("### smb\n### nfs\n"), Connections::default());
     }
 
     #[test]

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
-  import { AppToolbar } from '../../sys'
+  import { AppToolbar, useIntents } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, IconButton, Input, SegmentedControl, Select } from '../../lk'
   import { ApiError, api } from '../../../lib/api'
   import {
@@ -16,6 +16,8 @@
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { untrack } from 'svelte'
+  import { parseAllowPorts } from './intent'
+  import type { Intent } from '../../sys'
   import type {
     FirewallChange,
     FirewallKind,
@@ -47,9 +49,14 @@
   /// A change the agent planned and the user is asked about, with the id the
   /// agent gave that plan: confirming sends it back, and it runs only if it
   /// is still the plan.
-  let pending = $state<{ change: FirewallChange; plan: FirewallPlan; planId: string; message?: string } | null>(
-    null,
-  )
+  let pending = $state<{
+    change: FirewallChange
+    plan: FirewallPlan
+    planId: string
+    message?: string
+    intent?: boolean
+    serverId?: string | null
+  } | null>(null)
   let keepOpen = $state(false)
   let countdown = $state(0)
   /// Bumped to draw the selects again from the state, after a change that was
@@ -63,6 +70,11 @@
   /// firewalld: the list a value is being typed for, and that value.
   let adding = $state<{ item: FirewalldItem | 'interface' } | null>(null)
   let addValue = $state('')
+  type IntentPort = { label: string; port: string; protocol: 'tcp' | 'udp'; serverId: string | null }
+  let intentQueue = $state<IntentPort[]>([])
+  let intentCurrent = $state<IntentPort | null>(null)
+  let intentStage = $state<'idle' | 'planning' | 'awaiting-confirmation' | 'waiting-password'>('idle')
+  let loadedServerId = $state<string | null>(null)
 
   /// A reply that arrives after the desk has switched servers belongs to
   /// neither.
@@ -72,6 +84,7 @@
 
   async function load(serverId = servers.currentId) {
     loading = true
+    loadedServerId = null
     error = ''
     try {
       const next = await api.getFirewall(kind, password || undefined)
@@ -83,6 +96,8 @@
         needsPassword = true
       } else {
         needsPassword = false
+        loadedServerId = serverId
+        if (intentStage === 'waiting-password') intentStage = 'idle'
       }
       view = next
       kind = next.kind ?? kind
@@ -90,7 +105,10 @@
       if (stale(serverId)) return
       error = e instanceof Error ? e.message : String(e)
     } finally {
-      if (!stale(serverId)) loading = false
+      if (!stale(serverId)) {
+        loading = false
+        pumpIntent()
+      }
     }
   }
 
@@ -107,6 +125,7 @@
   function submitPassword() {
     password = passwordDraft
     passwordDraft = ''
+    if (intentStage === 'waiting-password') intentStage = 'idle'
     void load()
   }
 
@@ -119,7 +138,7 @@
 
   /// Asks the agent what `change` does, then makes it — at once where nothing
   /// gets worse, after the user agrees otherwise.
-  async function propose(change: FirewallChange, message?: string) {
+  async function propose(change: FirewallChange, message?: string, fromIntent = false) {
     // Every request reads the server selected at the moment it is sent: a plan
     // answered for one server must not lead to a change sent to another.
     const serverId = servers.currentId
@@ -131,13 +150,14 @@
       if (stale(serverId)) return
       if (result.sudo_required || !result.plan) {
         needsPassword = true
+        if (fromIntent) intentStage = 'waiting-password'
         return
       }
-      if (result.plan.confirm) {
-        ask(change, result.plan, result.plan_id ?? '', message)
+      if (fromIntent || result.plan.confirm) {
+        ask(change, result.plan, result.plan_id ?? '', message, fromIntent, serverId)
         return
       }
-      await make(change, false, serverId)
+      await make(change, false, serverId, undefined, fromIntent)
     } catch (e) {
       const text = refused(e)
       if (text !== null) {
@@ -147,6 +167,8 @@
     } finally {
       busy = false
       rev++
+      if (fromIntent && intentStage === 'planning') finishIntent()
+      else pumpIntent()
     }
   }
 
@@ -160,26 +182,41 @@
     return e instanceof Error ? e.message : String(e)
   }
 
-  function ask(change: FirewallChange, plan: FirewallPlan, planId: string, message?: string) {
-    pending = { change, plan, planId, message }
+  function ask(
+    change: FirewallChange,
+    plan: FirewallPlan,
+    planId: string,
+    message?: string,
+    fromIntent = false,
+    serverId?: string | null,
+  ) {
+    pending = { change, plan, planId, message, intent: fromIntent, serverId }
+    if (fromIntent) intentStage = 'awaiting-confirmation'
     keepOpen = plan.keep_open_default
     countdown = plan.countdown ? 3 : 0
   }
 
-  async function make(change: FirewallChange, keep: boolean, serverId: string | null, planId?: string) {
+  async function make(
+    change: FirewallChange,
+    keep: boolean,
+    serverId: string | null,
+    planId?: string,
+    fromIntent = false,
+  ) {
     if (stale(serverId)) return
     const result = await api.actFirewall(change, keep, password || undefined, planId)
     if (stale(serverId)) return
     if (result.confirm_required && result.plan) {
       // The firewall changed since the plan was made: nothing ran, and this is
       // what the change would do now.
-      ask(change, result.plan, result.plan_id ?? '')
+      ask(change, result.plan, result.plan_id ?? '', undefined, fromIntent, serverId)
       return
     }
     if (result.sudo_rejected) {
       password = ''
       needsPassword = true
       actionError = $LL.powerRejected()
+      if (fromIntent) intentStage = 'waiting-password'
       return
     }
     if (!result.succeeded) {
@@ -197,15 +234,16 @@
   async function confirmPending() {
     const p = pending
     if (!p) return
-    const serverId = servers.currentId
+    const serverId = p.serverId === undefined ? servers.currentId : p.serverId
     pending = null
     busy = true
     try {
-      await make(p.change, keepOpen, serverId, p.planId)
+      await make(p.change, keepOpen, serverId, p.planId, p.intent)
     } catch (e) {
       actionError = refused(e) ?? ''
     } finally {
       busy = false
+      if (p.intent && intentStage === 'awaiting-confirmation' && !pending) finishIntent()
     }
   }
 
@@ -219,6 +257,69 @@
     propose({ kind: 'ufw', change }, message)
   const fwd = (change: Extract<FirewallChange, { kind: 'firewalld' }>['change'], message?: string) =>
     propose({ kind: 'firewalld', change }, message)
+
+  function receiveIntent(intent: Intent) {
+    const request = parseAllowPorts(intent)
+    if (!request) return
+    const serverId = servers.currentId
+    intentQueue.push(...request.ports.map(({ port, protocol }) => ({ label: request.label, port, protocol, serverId })))
+    pumpIntent()
+  }
+
+  useIntents(receiveIntent)
+
+  function pumpIntent() {
+    if (intentStage !== 'idle') return
+    if (!intentCurrent) intentCurrent = intentQueue.shift() ?? null
+    const current = intentCurrent
+    if (!current) return
+    if (stale(current.serverId)) {
+      intentCurrent = null
+      pumpIntent()
+      return
+    }
+    if (loading || loadedServerId !== current.serverId || !view) return
+    if (!view.available) {
+      finishIntent()
+      return
+    }
+
+    if (view.kind === 'ufw' && view.ufw_installed === true) {
+      if (!view.ufw?.active) {
+        finishIntent()
+        return
+      }
+      const rule = { ...emptyDraft(), action: 'allow' as const, direction: 'incoming' as const, port: current.port, protocol: current.protocol, comment: current.label }
+      intentStage = 'planning'
+      void propose({ kind: 'ufw', change: { type: 'add_rule', draft: rule } }, undefined, true)
+      return
+    }
+
+    if (view.kind === 'firewalld' && view.firewalld_installed === true && view.firewalld?.running) {
+      const zone = firstZone
+      if (!zone) {
+        finishIntent()
+        return
+      }
+      intentStage = 'planning'
+      void propose({ kind: 'firewalld', change: { type: 'add', zone, item: 'port', value: `${current.port}/${current.protocol}` } }, undefined, true)
+      return
+    }
+
+    finishIntent()
+  }
+
+  function finishIntent() {
+    intentCurrent = null
+    intentStage = 'idle'
+    pumpIntent()
+  }
+
+  function dismissPending() {
+    const wasIntent = pending?.intent === true
+    pending = null
+    if (wasIntent) finishIntent()
+  }
 
   function submitDraft() {
     draftError = ''
@@ -547,12 +648,12 @@
      about anyway. It is planned again when confirmed, from a fresh read. -->
 {#if pending}
   {@const plan = pending.plan}
-  <Dialog open wide title={$LL.confirm()} message={pending.message} onclose={() => (pending = null)}>
+  <Dialog open wide title={$LL.confirm()} message={pending.message} onclose={dismissPending}>
     {#snippet actions()}
       <Button variant={plan.countdown || plan.destructive ? 'destructive' : 'primary'} disabled={busy || countdown > 0} onclick={() => void confirmPending()}>
         {countdown > 0 ? `${$LL.confirm()} (${countdown})` : $LL.confirm()}
       </Button>
-      <Button variant="secondary" onclick={() => (pending = null)}>{$LL.cancel()}</Button>
+      <Button variant="secondary" onclick={dismissPending}>{$LL.cancel()}</Button>
     {/snippet}
     {#if !pending.message}
       <p class="text-[12px] text-(--text-secondary)">{$LL.fwCommands()}</p>

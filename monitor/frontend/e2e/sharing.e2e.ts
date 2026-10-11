@@ -13,6 +13,7 @@
 /// to a random one).
 
 import { expect, test, type Page } from '@playwright/test'
+import { fillSecret, submitForm } from './secret'
 
 const env = process.env
 const folder = env.SBM_E2E_SHARE_FOLDER ?? ''
@@ -23,8 +24,9 @@ test.skip(!env.SBM_E2E_PANEL_URL || !env.SBM_E2E_PANEL_PASSWORD || !folder, 'SBM
 async function open(page: Page) {
   await page.goto('/')
   await page.getByPlaceholder('Username').fill(env.SBM_E2E_PANEL_USER ?? 'admin')
-  await page.locator('input[type=password]').fill(env.SBM_E2E_PANEL_PASSWORD!)
-  await page.keyboard.press('Enter')
+  const login = page.locator('input[type=password]')
+  await fillSecret(login, env.SBM_E2E_PANEL_PASSWORD!)
+  await submitForm(login)
   await page.locator('.lk-dock button[aria-label="All Apps"]').click()
   await page.getByText('Sharing', { exact: true }).first().click()
   await expect(page.getByText('SMB', { exact: true }).first()).toBeVisible({ timeout: 30_000 })
@@ -45,7 +47,7 @@ async function installIfMissing(page: Page, what: string) {
 /// Answers the sudo dialog with [title] and waits for it to close.
 async function confirm(page: Page, title: string) {
   const d = page.locator('.lk-dialog').last()
-  await d.getByLabel(/sudo password/).fill(sudo)
+  await fillSecret(d.getByLabel(/sudo password/), sudo)
   await d.getByRole('button', { name: title, exact: true }).click()
   await expect(page.locator('.lk-dialog')).toHaveCount(0, { timeout: 60_000 })
 }
@@ -85,8 +87,8 @@ test('the Sharing app manages SMB shares and NFS exports', async ({ page }) => {
       await passwords.getByRole('button', { name: 'Set password' }).click()
       const secret = `e2e-${Math.random().toString(36).slice(2)}`
       const d = page.locator('.lk-dialog').last()
-      await d.getByLabel('New SMB password').fill(secret)
-      await d.getByLabel('The same again').fill(secret)
+      await fillSecret(d.getByLabel('New SMB password'), secret)
+      await fillSecret(d.getByLabel('The same again'), secret)
       await d.getByRole('button', { name: 'Continue' }).click()
       await confirm(page, 'Set password')
     })

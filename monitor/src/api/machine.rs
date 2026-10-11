@@ -200,15 +200,21 @@ pub(crate) async fn as_root_private(
     ))
 }
 
-/// A script file readable by this process's user alone, removed on drop.
+/// A file readable by this process's user alone (and root), removed on
+/// drop: a script holding a secret, or a secret a root command reads (a LUKS
+/// key file).
 #[cfg(unix)]
-struct PrivateScript {
+pub(crate) struct PrivateScript {
     path: std::path::PathBuf,
 }
 
 #[cfg(unix)]
 impl PrivateScript {
-    fn write(text: &str) -> std::io::Result<Self> {
+    pub(crate) fn path(&self) -> &std::path::Path {
+        &self.path
+    }
+
+    pub(crate) fn write(text: &str) -> std::io::Result<Self> {
         use std::io::Write;
         use std::os::unix::fs::OpenOptionsExt;
 

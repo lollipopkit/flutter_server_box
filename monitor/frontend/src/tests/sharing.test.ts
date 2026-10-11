@@ -2,10 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import SharingApp from '../desk/apps/sharing/SharingApp.svelte'
-import { shareNameOk, withExport, withShare, withoutExport, withoutShare } from '../desk/apps/sharing/model'
+import { firewallIntent, mountedFolders, shareNameOk, withExport, withShare, withoutExport, withoutShare } from '../desk/apps/sharing/model'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
-import type { SharesView, SmbShare } from '../types'
+import { capabilitiesStore } from '../lib/capabilities.svelte'
+import type { BlockDevice, SharesView, SmbShare, StorageView } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/api')>()),
@@ -17,6 +18,8 @@ vi.mock('../lib/api', async (importOriginal) => ({
     setSmbPassword: vi.fn(),
     installShares: vi.fn(),
     sharesJob: vi.fn(),
+    shareConnections: vi.fn(),
+    getStorage: vi.fn(),
   },
 }))
 
@@ -29,6 +32,8 @@ const share = (name: string, managed = true, extra: Partial<SmbShare> = {}): Smb
   read_only: false,
   guest: false,
   users: [],
+  time_machine: false,
+  recycle: false,
   managed,
   ...extra,
 })
@@ -46,7 +51,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
   servers.currentId = 'local'
+  capabilitiesStore.byServer.local = { features: ['shares', 'storage', 'firewall'], me: { admin: true } } as never
   mocked.getShares.mockResolvedValue(structuredClone(view))
+  mocked.shareConnections.mockResolvedValue({ smb: [], nfs: [] })
+  mocked.getStorage.mockResolvedValue({ disks: [], busy: {}, arrays: [], pools: [], tools: [], job: null } satisfies StorageView)
   mocked.getSystemUsers.mockResolvedValue({
     part: 'list', available: true, reason_kind: null, reason: null, agent_account: 'sbm', uid_min: 1000, name: null, detail: null,
     users: [
@@ -57,6 +65,40 @@ beforeEach(() => {
 })
 
 describe('the sharing model', () => {
+  it('builds firewall requests and lists mounted non-system folders', () => {
+    const dev = (path: string, mountpoints: string[], children: BlockDevice[] = []): BlockDevice => ({
+      name: path,
+      path,
+      kind: 'part',
+      size: 1,
+      model: null,
+      serial: null,
+      rotational: false,
+      transport: null,
+      removable: false,
+      read_only: false,
+      fstype: 'ext4',
+      label: null,
+      uuid: null,
+      mountpoints,
+      available: null,
+      used: null,
+      children,
+    })
+    const storage: StorageView = {
+      disks: [dev('/dev/sda1', ['/srv/data']), dev('/dev/sda2', ['/'], [dev('/dev/sda2/child', ['/boot/efi', '/mnt/backup'])])],
+      busy: {},
+      system: ['/dev/sda2'],
+      arrays: [],
+      pools: [],
+      tools: [],
+      job: null,
+    }
+    expect(firewallIntent('smb')).toEqual({ action: 'allowPorts', data: { label: 'SMB', ports: [{ port: '445', protocol: 'tcp' }] } })
+    expect(firewallIntent('nfs')).toEqual({ action: 'allowPorts', data: { label: 'NFS', ports: [{ port: '2049', protocol: 'tcp' }] } })
+    expect(mountedFolders(storage)).toEqual(['/srv/data', '/mnt/backup'])
+  })
+
   it('writes only ServerBox\'s own shares back', () => {
     expect(withShare(view.smb, share('photos'), null).map((s) => s.name)).toEqual(['backup', 'photos'])
     expect(withShare(view.smb, share('backup2'), 'backup').map((s) => s.name)).toEqual(['backup2'])
@@ -91,6 +133,47 @@ describe('the Sharing app', () => {
       ),
     )
     expect(await screen.findByText('photos')).toBeInTheDocument()
+  })
+
+  it('saves Time Machine and recycle options on an SMB share', async () => {
+    mocked.setSmbShares.mockResolvedValue({ ...structuredClone(view), smb: [share('backup', true, { users: ['alice'], time_machine: true, recycle: true })] })
+    render(SharingApp)
+    await fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Time Machine backups (Mac)' }))
+    await fireEvent.click(screen.getByRole('checkbox', { name: 'Keep deleted files in .recycle' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await fireEvent.input(await screen.findByLabelText(/sudo password/), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Save' }).at(-1)!)
+    await vi.waitFor(() =>
+      expect(mocked.setSmbShares).toHaveBeenCalledWith(
+        [share('backup', true, { users: ['alice'], time_machine: true, recycle: true })],
+        'pw',
+      ),
+    )
+  })
+
+  it('shows current SMB connections from the quiet read', async () => {
+    mocked.shareConnections.mockResolvedValue({
+      smb: [{ share: 'media', user: 'alice', machine: '10.0.0.9', since: '2026-10-11 12:30:00' }],
+      nfs: [],
+    })
+    render(SharingApp)
+    expect(await screen.findByText('media · alice · 10.0.0.9')).toBeInTheDocument()
+    expect(mocked.shareConnections).toHaveBeenCalledWith('')
+  })
+
+  it('asks for sudo to read connections when the quiet read is refused', async () => {
+    mocked.shareConnections.mockRejectedValueOnce(new ApiError('sudo_rejected', 403, 'sudo_rejected', { error: 'sudo_rejected' }))
+    mocked.shareConnections.mockResolvedValueOnce({
+      smb: [{ share: 'media', user: 'alice', machine: '10.0.0.9', since: null }],
+      nfs: [],
+    })
+    render(SharingApp)
+    await fireEvent.click(await screen.findByRole('button', { name: 'Show connections' }))
+    await fireEvent.input(await screen.findByLabelText(/sudo password/i), { target: { value: 'pw' } })
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Show connections' }).at(-1)!)
+    expect(await screen.findByText('media · alice · 10.0.0.9')).toBeInTheDocument()
+    expect(mocked.shareConnections).toHaveBeenLastCalledWith('pw')
   })
 
   it('says why a change was refused and keeps the dialog', async () => {

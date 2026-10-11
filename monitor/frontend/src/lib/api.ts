@@ -9,6 +9,7 @@ import type {
   MaintenanceTask,
   NfsExport,
   SharesView,
+  ShareConnections,
   SmbShare,
   StorageAction,
   StorageView,
@@ -1319,11 +1320,12 @@ export const api = {
   removeContainerBackupSchedule: (id: string) =>
     request<void>(`/container-backups/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }, 'Failed to remove the schedule'),
   getStorage: () => request<StorageView>('/storage', {}, 'Failed to read the disks'),
-  /// One change, run as root as a job; [sudoPassword] when sudo asks.
-  storageAct: (action: StorageAction, sudoPassword: string) =>
+  /// One change, run as root as a job; [sudoPassword] when sudo asks,
+  /// [passphrase] for an encrypted format or an unlock.
+  storageAct: (action: StorageAction, sudoPassword: string, passphrase?: string) =>
     request<StackJob>(
       '/storage/act',
-      { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null }) },
+      { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null, passphrase: passphrase || null }) },
       'Failed to change the disks',
     ),
   /// Every disk's SMART, read as root; without [sudoPassword], only where
@@ -1345,6 +1347,12 @@ export const api = {
   runStorageMaintenance: (task: MaintenanceKind) =>
     request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }, 'Failed to run the task'),
   getShares: () => request<SharesView>('/shares', {}, 'Failed to read the shares'),
+  shareConnections: (sudoPassword = '') =>
+    request<ShareConnections>(
+      '/shares/connections',
+      { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) },
+      'Failed to read the connections',
+    ),
   /// Every SMB share ServerBox keeps, written as root.
   setSmbShares: (shares: SmbShare[], sudoPassword: string) =>
     request<SharesView>('/shares/smb', { method: 'PUT', body: JSON.stringify({ shares, sudo_password: sudoPassword || null }) }, 'Failed to save the shares'),

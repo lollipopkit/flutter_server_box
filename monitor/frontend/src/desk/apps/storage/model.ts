@@ -1,7 +1,7 @@
 /// What the Storage app draws from `/storage`: pure, tested in
 /// `tests/storage.test.ts`.
 
-import type { BlockDevice, DiskHealth, StorageView } from '../../../types'
+import type { BlockDevice, DiskHealth, StorageView, ZPool } from '../../../types'
 
 /// The machine's disks, without optical drives and empty loop devices.
 export function disksOf(view: StorageView): BlockDevice[] {
@@ -37,8 +37,8 @@ export function overlaps(view: StorageView, a: string, b: string): boolean {
 /// The filesystems on a disk: its partitions, or the disk itself when it
 /// carries one whole; arrays built on them are listed with RAID.
 export function volumesOf(disk: BlockDevice): BlockDevice[] {
-  if (disk.children.length) return disk.children.filter((c) => c.kind === 'part')
-  return [disk]
+  const parts = disk.children.filter((c) => c.kind === 'part')
+  return parts.length ? parts : [disk]
 }
 
 export function isMounted(d: BlockDevice): boolean {
@@ -124,4 +124,40 @@ export function growableArray(level: string | null): boolean {
 export function expandable(d: BlockDevice): boolean {
   if (!d.mountpoints.some((m) => m.startsWith('/')) || !['ext2', 'ext3', 'ext4', 'xfs', 'btrfs'].includes(d.fstype ?? '') || d.fs_size == null) return false
   return d.size - d.fs_size > Math.max(d.size * 0.1, 256 * 2 ** 20)
+}
+
+/// A LUKS container.
+export function isLuks(d: BlockDevice): boolean {
+  return d.fstype === 'crypto_LUKS'
+}
+
+/// An unlocked LUKS container's opened device (`/dev/mapper/luks-…`).
+export function opened(d: BlockDevice): BlockDevice | undefined {
+  return d.children.find((c) => c.kind === 'crypt')
+}
+
+/// [part] is [disk]'s last partition and free space follows it (more than
+/// 1% of the disk and 64 MiB, past alignment).
+export function growablePartition(disk: BlockDevice, part: BlockDevice): boolean {
+  const parts = disk.children.filter((c) => c.kind === 'part')
+  if (part.kind !== 'part' || parts.at(-1)?.path !== part.path) return false
+  const free = disk.size - parts.reduce((sum, p) => sum + p.size, 0)
+  return free > Math.max(disk.size * 0.01, 64 * 2 ** 20)
+}
+
+/// What a pool's device may be asked for, by where it sits.
+export function poolDeviceActions(pool: ZPool, index: number): { replace: boolean; attach: boolean; remove: boolean; online: boolean } {
+  const v = pool.vdevs[index]
+  const none = { replace: false, attach: false, remove: false, online: false }
+  if (!v || !v.name.startsWith('/')) return none
+  if (v.section) return { ...none, remove: v.section === 'spares' || v.section === 'cache', online: v.state === 'OFFLINE' }
+  // The vdev it belongs to: the nearest shallower row above.
+  const parent = v.depth === 0 ? null : pool.vdevs.slice(0, index).reverse().find((p) => p.depth < v.depth && !p.section)
+  return {
+    replace: true,
+    // A single disk becomes a mirror; a mirror gets one more side.
+    attach: v.depth === 0 || !!parent?.name.startsWith('mirror'),
+    remove: false,
+    online: v.state === 'OFFLINE',
+  }
 }

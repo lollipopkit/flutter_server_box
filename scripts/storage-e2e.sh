@@ -52,6 +52,8 @@ cleanup() {
 trap cleanup EXIT INT TERM
 vm() { ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR "root@$addr" "$@"; }
 
+echo "==> vm $id: cryptsetup"
+vm 'command -v cryptsetup >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q cryptsetup >/dev/null'
 echo "==> vm $id: agent as an ordinary account"
 SBM_E2E_SUDO_PASSWORD=$(openssl rand -hex 16)
 export SBM_E2E_SUDO_PASSWORD
@@ -92,7 +94,7 @@ cd "$root/monitor/frontend"
 step storage.e2e.ts npx playwright test storage --reporter=line
 step sharing.e2e.ts npx playwright test sharing --reporter=line
 rust() {
-  vm "cd /home/sbm/app && out=\$($1=1 RUST_LOG=off ./$2 --ignored 2>&1); code=\$?; printf '%s\n' \"\$out\" | grep -E -A6 'test result|panicked|is not set'; exit \$code"
+  vm "cd /home/sbm/app && out=\$($1=1 RUST_LOG=off timeout 1200 ./$2 --ignored 2>&1); code=\$?; printf '%s\n' \"\$out\" | grep -E -A6 'test result|panicked|is not set'; exit \$code"
 }
 step storage_e2e.rs rust SBM_E2E_STORAGE "$(basename "$storage_test")"
 step shares_e2e.rs rust SBM_E2E_SHARES "$(basename "$shares_test")"

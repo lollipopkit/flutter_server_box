@@ -12,10 +12,10 @@
   import { api, ApiError } from '../../../lib/api'
   import { fmtBytes, fmtEpochSeconds } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
-  import type { BlockDevice, HealthReading, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
+  import type { BlockDevice, DiskHealth, HealthReading, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
   import StorageConfirm from './StorageConfirm.svelte'
   import StorageMaintenance from './StorageMaintenance.svelte'
-  import { arrayDevice, disksOf, expandable, freeDevices, growableArray, healthOf, isMounted, minimum, mountable, nextMd, overlaps, shortName, verdict, volumesOf, type HealthVerdict } from './model'
+  import { arrayDevice, disksOf, expandable, freeDevices, growableArray, growablePartition, healthOf, isLuks, isMounted, minimum, mountable, nextMd, opened, overlaps, poolDeviceActions, shortName, verdict, volumesOf, type HealthVerdict } from './model'
   import { untrack } from 'svelte'
 
   type Tab = 'disks' | 'raid' | 'pools' | 'maintenance'
@@ -25,7 +25,7 @@
   let error = $state('')
   let job = $state<StackJob | null>(null)
   /// The change being asked about.
-  let pending = $state<{ action: StorageAction | 'readHealth'; title: string; body: string; confirmWord?: string } | null>(null)
+  let pending = $state<{ action: StorageAction | 'readHealth'; title: string; body: string; confirmWord?: string; passphrase?: string } | null>(null)
   /// sudo wants a password to read SMART: it is read when asked, not on
   /// its own.
   let healthLocked = $state(false)
@@ -46,10 +46,16 @@
   let newName = $state('')
   let newLevel = $state<string>('1')
   let picked = $state<string[]>([])
-  let addTo = $state<MdArray | null>(null)
-  /// Adding to [addTo] as one more working member rather than a spare.
-  let addGrows = $state(false)
-  let addDevice = $state('')
+  /// A free device being picked, and what is done with it.
+  let picking = $state<{ title: string; message: string; then: (device: string) => void } | null>(null)
+  let pickedDevice = $state('')
+  let formatEncrypt = $state(false)
+  /// A passphrase being asked for: a new container's (twice) or an unlock's.
+  let passphraseFor = $state<{ title: string; twice: boolean; then: (passphrase: string) => void } | null>(null)
+  let passphrase = $state('')
+  let passphrase2 = $state('')
+  /// The disk whose SMART details are open.
+  let detailsOf = $state<{ disk: BlockDevice; health: DiskHealth } | null>(null)
 
   async function load(serverId = servers.currentId) {
     try {
@@ -211,6 +217,7 @@
   }
 
   function openFormat(d: BlockDevice) {
+    formatEncrypt = false
     formatFor = d
     formatFs = has('mkfs.ext4') ? 'ext4' : has('mkfs.xfs') ? 'xfs' : 'btrfs'
     formatLabel = ''
@@ -239,10 +246,52 @@
     newLevel = ['mirror', 'raidz1', 'raidz2', 'raidz3'].find((l) => first.startsWith(l)) ?? 'stripe'
   }
 
+  function pick(title: string, message: string, then: (device: string) => void) {
+    pickedDevice = free[0]?.path ?? ''
+    picking = { title, message, then }
+  }
+
   function openAdd(a: MdArray, grows: boolean) {
-    addTo = a
-    addGrows = grows
-    addDevice = free[0]?.path ?? ''
+    pick(grows ? $LL.storageGrowRaid() : $LL.storageAddMember(), `/dev/${a.name}`, (device) => {
+      if (grows) ask({ action: 'growRaid', array: a.name, device }, $LL.storageGrowRaid(), $LL.storageGrowRaidBody({ device, array: a.name }), device)
+      else ask({ action: 'addToRaid', array: a.name, device }, $LL.storageAddMember(), $LL.storageAddMemberBody({ device, array: a.name }), device)
+    })
+  }
+
+  function askPassphrase(title: string, twice: boolean, then: (passphrase: string) => void) {
+    passphrase = ''
+    passphrase2 = ''
+    passphraseFor = { title, twice, then }
+  }
+
+  function unlock(v: BlockDevice) {
+    askPassphrase($LL.storageUnlock(), false, (p) => {
+      ask({ action: 'unlock', device: v.path }, $LL.storageUnlock(), $LL.storageUnlockBody({ device: v.path }))
+      if (pending) pending.passphrase = p
+    })
+  }
+
+  function replaceDevice(p: ZPool, device: string) {
+    pick($LL.storageReplace(), device, (next) =>
+      ask({ action: 'replaceInPool', name: p.name, old: device, new: next }, $LL.storageReplace(), $LL.storageReplaceBody({ old: device, name: p.name, new: next }), next),
+    )
+  }
+
+  function attachDevice(p: ZPool, device: string) {
+    pick($LL.storageAttach(), device, (next) =>
+      ask({ action: 'attachToPool', name: p.name, existing: device, new: next }, $LL.storageAttach(), $LL.storageAttachBody({ existing: device, new: next }), next),
+    )
+  }
+
+  function addSpare(p: ZPool) {
+    pick($LL.storageAddSpare(), p.name, (device) =>
+      ask({ action: 'addSpare', name: p.name, devices: [device] }, $LL.storageAddSpare(), $LL.storageAddSpareBody({ devices: device, name: p.name }), device),
+    )
+  }
+
+  function testText(t: { long: boolean; outcome: string; hours: number | null }): string {
+    const outcome = t.outcome === 'passed' ? $LL.storageTestPassed() : t.outcome === 'failed' ? $LL.storageTestFailed() : $LL.storageTestAborted()
+    return [t.long ? $LL.storageTestLong() : $LL.storageTestShort(), outcome, t.hours != null ? $LL.storageAtHours({ hours: t.hours }) : undefined].filter(Boolean).join(' · ')
   }
 
   function toggle(path: string, on: boolean) {
@@ -286,13 +335,26 @@
   }
 </script>
 
-{#snippet volume(v: BlockDevice, label: string)}
+{#snippet volume(v: BlockDevice, label: string, disk?: BlockDevice)}
+  {@const inside = isLuks(v) ? opened(v) : undefined}
   <Row
     {label}
-    value={[v.fstype, v.label, isMounted(v) ? v.mountpoints.join(', ') : undefined].filter(Boolean).join(' · ') || $LL.storageNoFilesystem()}
+    value={isLuks(v)
+      ? [$LL.storageEncrypted(), inside ? undefined : $LL.storageLocked()].filter(Boolean).join(' · ')
+      : [v.fstype, v.label, isMounted(v) ? v.mountpoints.join(', ') : undefined].filter(Boolean).join(' · ') || $LL.storageNoFilesystem()}
     sub={usage(v) ?? fmtBytes(v.size)}
   >
     <div class="flex shrink-0 gap-[5px]">
+      {#if isLuks(v) && has('cryptsetup')}
+        {#if inside}
+          <Button size="sm" variant="secondary" icon="lock" disabled={job?.state === 'running'} onclick={() => ask({ action: 'lock', device: v.path }, $LL.storageLock(), $LL.storageLockBody({ device: v.path }))}>{$LL.storageLock()}</Button>
+        {:else}
+          <Button size="sm" variant="secondary" icon="lock_open" disabled={job?.state === 'running'} onclick={() => unlock(v)}>{$LL.storageUnlock()}</Button>
+        {/if}
+      {/if}
+      {#if disk && growablePartition(disk, v) && has('sfdisk')}
+        <Button size="sm" variant="secondary" icon="open_in_full" disabled={job?.state === 'running'} onclick={() => ask({ action: 'growPartition', device: v.path }, $LL.storageGrowPartition(), $LL.storageGrowPartitionBody({ device: v.path }))}>{$LL.storageGrowPartition()}</Button>
+      {/if}
       {#if view?.busy[v.path] === 'systemPartition'}
         <Badge tone="neutral">{$LL.storageBusySystem()}</Badge>
       {:else if isMounted(v) && view?.system?.includes(v.path)}
@@ -310,6 +372,7 @@
       {/if}
     </div>
   </Row>
+  {#if inside}{@render volume(inside, inside.path)}{/if}
 {/snippet}
 
 <AppToolbar title={tab === 'disks' ? $LL.storageDisks() : tab === 'raid' ? $LL.storageRaid() : tab === 'pools' ? $LL.storagePools() : $LL.storageMaintenance()}>
@@ -372,10 +435,11 @@
             <Row label={$LL.storageSmart()} value={smartFacts(d)} sub={[lastTest(d), view.health ? $LL.storageHealthAt({ time: fmtEpochSeconds(view.health.at) }) : undefined].filter(Boolean).join(' · ')} />
           {/if}
           {#each volumesOf(d) as v (v.path)}
-            {@render volume(v, v.path === d.path ? $LL.storageWholeDisk() : v.path)}
+            {@render volume(v, v.path === d.path ? $LL.storageWholeDisk() : v.path, d)}
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
             {#if health?.supported}
+              <Button size="sm" variant="ghost" icon="monitor_heart" onclick={() => (detailsOf = { disk: d, health })}>{$LL.storageDetails()}</Button>
               <Button size="sm" variant="ghost" icon="health_and_safety" disabled={job?.state === 'running' || health.testing != null} onclick={() => ask({ action: 'smartTest', device: d.path, long: false }, $LL.storageSmartTest(), $LL.storageSmartTestBody({ device: d.path }))}>{$LL.storageSmartTest()}</Button>
             {/if}
             {#if !why && has('sfdisk')}
@@ -426,10 +490,27 @@
           </Row>
           {#if p.scan}<Row label={$LL.storageScan()} value={p.scan} />{/if}
           {#each p.vdevs as v, i (`${v.name}-${i}`)}
-            <Row label={`${'  '.repeat(v.depth)}${v.name}`} value={v.errors ? $LL.storageErrors({ count: v.errors }) : v.state} mono />
+            {@const can = poolDeviceActions(p, i)}
+            <Row label={`${'  '.repeat(v.depth + (v.section ? 1 : 0))}${v.name}`} sub={v.section ?? undefined} value={v.errors ? $LL.storageErrors({ count: v.errors }) : v.state} mono>
+              <div class="flex shrink-0 gap-[5px]">
+                {#if can.online}
+                  <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => ask({ action: 'onlineInPool', name: p.name, device: v.name }, $LL.storageOnline(), $LL.storageOnlineBody({ device: v.name, name: p.name }))}>{$LL.storageOnline()}</Button>
+                {/if}
+                {#if can.replace}
+                  <Button size="sm" variant="ghost" disabled={job?.state === 'running' || free.length === 0} onclick={() => replaceDevice(p, v.name)}>{$LL.storageReplace()}</Button>
+                {/if}
+                {#if can.attach}
+                  <Button size="sm" variant="ghost" disabled={job?.state === 'running' || free.length === 0} onclick={() => attachDevice(p, v.name)}>{$LL.storageAttach()}</Button>
+                {/if}
+                {#if can.remove}
+                  <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => ask({ action: 'removeFromPool', name: p.name, device: v.name }, $LL.storageRemoveDevice(), $LL.storageRemoveDeviceBody({ device: v.name, name: p.name }))}>{$LL.storageRemoveDevice()}</Button>
+                {/if}
+              </div>
+            </Row>
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
             <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => ask({ action: 'destroyPool', name: p.name }, $LL.storageDestroyPool(), $LL.storageDestroyPoolBody({ name: p.name }), p.name)}>{$LL.storageDestroyPool()}</Button>
+            <Button size="sm" variant="secondary" disabled={job?.state === 'running' || free.length === 0} onclick={() => addSpare(p)}>{$LL.storageAddSpare()}</Button>
             <Button size="sm" variant="secondary" icon="add" disabled={job?.state === 'running' || free.length === 0} onclick={() => openPoolAdd(p)}>{$LL.storageAddToPool()}</Button>
             <Button size="sm" variant="secondary" icon="cleaning_services" disabled={job?.state === 'running'} onclick={() => ask({ action: 'scrubPool', name: p.name }, $LL.storageScrub(), $LL.storageScrubBody({ name: p.name }))}>{$LL.storageScrub()}</Button>
           </div>
@@ -451,12 +532,19 @@
         onchange={(e: Event) => (formatFs = (e.currentTarget as HTMLSelectElement).value as 'ext4')}
       />
       <Input label={$LL.storageLabel()} value={formatLabel} oninput={(e: Event) => (formatLabel = (e.currentTarget as HTMLInputElement).value)} />
+      {#if has('cryptsetup')}<Checkbox bind:checked={formatEncrypt} label={$LL.storageEncrypt()} />{/if}
     </div>
     {#snippet actions()}
       <Button variant="destructive" block onclick={() => {
         const d = formatFor!
         formatFor = null
-        ask({ action: 'format', device: d.path, fstype: formatFs, label: formatLabel.trim() || null }, $LL.storageFormat(), $LL.storageFormatBody({ device: d.path }), d.path)
+        const action: StorageAction = { action: 'format', device: d.path, fstype: formatFs, label: formatLabel.trim() || null, ...(formatEncrypt ? { encrypt: true } : {}) }
+        if (!formatEncrypt) ask(action, $LL.storageFormat(), $LL.storageFormatBody({ device: d.path }), d.path)
+        else
+          askPassphrase($LL.storageEncrypt(), true, (p) => {
+            ask(action, $LL.storageFormat(), $LL.storageFormatBody({ device: d.path }), d.path)
+            if (pending) pending.passphrase = p
+          })
       }}>{$LL.storageContinue()}</Button>
       <Button variant="secondary" block onclick={() => (formatFor = null)}>{$LL.cancel()}</Button>
     {/snippet}
@@ -512,22 +600,88 @@
   </Dialog>
 {/if}
 
-{#if addTo}
-  <Dialog open title={addGrows ? $LL.storageGrowRaid() : $LL.storageAddMember()} message={`/dev/${addTo.name}`} onclose={() => (addTo = null)}>
+{#if picking}
+  <Dialog open title={picking.title} message={picking.message} onclose={() => (picking = null)}>
     <Select
       label={$LL.storageDevice()}
-      value={addDevice}
+      value={pickedDevice}
       options={free.map((d) => ({ value: d.path, label: `${d.path} · ${fmtBytes(d.size)}` }))}
-      onchange={(e: Event) => (addDevice = (e.currentTarget as HTMLSelectElement).value)}
+      onchange={(e: Event) => (pickedDevice = (e.currentTarget as HTMLSelectElement).value)}
     />
     {#snippet actions()}
-      <Button block disabled={!addDevice} onclick={() => {
-        const a = addTo!
-        addTo = null
-        if (addGrows) ask({ action: 'growRaid', array: a.name, device: addDevice }, $LL.storageGrowRaid(), $LL.storageGrowRaidBody({ device: addDevice, array: a.name }), addDevice)
-        else ask({ action: 'addToRaid', array: a.name, device: addDevice }, $LL.storageAddMember(), $LL.storageAddMemberBody({ device: addDevice, array: a.name }), addDevice)
+      <Button block disabled={!pickedDevice} onclick={() => {
+        const p = picking!
+        picking = null
+        p.then(pickedDevice)
       }}>{$LL.storageContinue()}</Button>
-      <Button variant="secondary" block onclick={() => (addTo = null)}>{$LL.cancel()}</Button>
+      <Button variant="secondary" block onclick={() => (picking = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
+{/if}
+
+{#if passphraseFor}
+  <Dialog open title={passphraseFor.title} onclose={() => (passphraseFor = null)}>
+    <div class="space-y-[9px] text-left">
+      <Input label={$LL.storagePassphrase()} type="password" value={passphrase} hint={passphraseFor.twice ? $LL.storagePassphraseHint() : undefined} oninput={(e: Event) => (passphrase = (e.currentTarget as HTMLInputElement).value)} />
+      {#if passphraseFor.twice}
+        <Input
+          label={$LL.storagePassphraseAgain()}
+          type="password"
+          value={passphrase2}
+          error={passphrase2 && passphrase2 !== passphrase ? $LL.storagePassphrasesDiffer() : undefined}
+          oninput={(e: Event) => (passphrase2 = (e.currentTarget as HTMLInputElement).value)}
+        />
+      {/if}
+    </div>
+    {#snippet actions()}
+      <Button block disabled={passphrase.length < 8 || (passphraseFor!.twice && passphrase !== passphrase2)} onclick={() => {
+        const p = passphraseFor!
+        const value = passphrase
+        passphraseFor = null
+        passphrase = ''
+        passphrase2 = ''
+        p.then(value)
+      }}>{$LL.storageContinue()}</Button>
+      <Button variant="secondary" block onclick={() => (passphraseFor = null)}>{$LL.cancel()}</Button>
+    {/snippet}
+  </Dialog>
+{/if}
+
+{#if detailsOf}
+  {@const h = detailsOf.health}
+  <Dialog open wide title={`${diskTitle(detailsOf.disk)} · ${$LL.storageDetails()}`} message={detailsOf.disk.path} onclose={() => (detailsOf = null)}>
+    <div class="space-y-[13px] text-left">
+      <Group title={$LL.storageAttributes()}>
+        {#each h.attributes ?? [] as a (a.name)}
+          <Row
+            label={a.id != null ? `${a.id} ${a.name}` : a.name}
+            sub={a.value != null ? `${$LL.storageAttrValue()} ${a.value} · ${$LL.storageAttrWorst()} ${a.worst ?? '–'} · ${$LL.storageAttrThresh()} ${a.thresh ?? '–'}` : undefined}
+            value={a.raw}
+            mono
+          >
+            {#if a.failing}<Badge tone="danger">{$LL.storageHealthFailing()}</Badge>{/if}
+          </Row>
+        {:else}
+          <Row label={$LL.storageNothingToShow()} />
+        {/each}
+      </Group>
+      <Group title={$LL.storageSelfTests()}>
+        {#each h.tests ?? [] as t, i (i)}
+          <Row label={testText(t)}>
+            {#if t.outcome === 'failed'}<Badge tone="danger">{$LL.storageTestFailed()}</Badge>{/if}
+          </Row>
+        {:else}
+          <Row label={$LL.storageNothingToShow()} />
+        {/each}
+      </Group>
+    </div>
+    {#snippet actions()}
+      <Button block variant="secondary" disabled={job?.state === 'running' || h.testing != null} onclick={() => {
+        const d = detailsOf!.disk
+        detailsOf = null
+        ask({ action: 'smartTest', device: d.path, long: true }, $LL.storageLongTest(), $LL.storageSmartLongTestBody({ device: d.path }))
+      }}>{$LL.storageLongTest()}</Button>
+      <Button variant="secondary" block onclick={() => (detailsOf = null)}>{$LL.cancel()}</Button>
     {/snippet}
   </Dialog>
 {/if}
@@ -537,6 +691,7 @@
   title={pending?.title ?? ''}
   body={pending?.body ?? ''}
   confirmWord={pending?.confirmWord}
+  passphrase={pending?.passphrase}
   onstarted={started}
   onhealth={(reading) => {
     pending = null

@@ -36,7 +36,10 @@ core_target = fonts / "material-symbols-rounded-core.woff2"
 # What a glyph's name may be, as a string literal in the source.
 LITERAL = re.compile(r"""['"`]([a-z][a-z0-9_]{1,63})['"`]""")
 
-font = TTFont(source)
+# The source's own timestamp kept (`recalcTimestamp`): the same source makes
+# the same bytes, so running this after naming an icon leaves the 3 MB font
+# as it is in git and changes only the core.
+font = TTFont(source, recalcTimestamp=False)
 font = instancer.instantiateVariableFont(font, {"GRAD": 0, "wght": (300, 700)})
 font.flavor = "woff2"
 font.save(target)
@@ -66,7 +69,7 @@ sub = subset.Subsetter(options)
 # The letters the ligatures are spelled with, and the glyphs they make.
 letters = [g for g in glyphs if len(g) == 1 or g in {"underscore", "space"} or re.fullmatch(r"[a-z0-9]", g)]
 sub.populate(glyphs=core + letters, text="abcdefghijklmnopqrstuvwxyz0123456789_ ")
-core_font = TTFont(target)
+core_font = TTFont(target, recalcTimestamp=False)
 sub.subset(core_font)
 core_font.flavor = "woff2"
 core_font.save(core_target)

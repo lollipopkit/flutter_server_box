@@ -16,12 +16,14 @@
     body: string
     /// Typed back before a change that loses data; none for the others.
     confirmWord?: string
+    /// A LUKS passphrase the change needs, asked before.
+    passphrase?: string
     onstarted: (job: StackJob) => void
     onhealth: (reading: HealthReading) => void
     onclose: () => void
   }
 
-  const { action, title, body, confirmWord, onstarted, onhealth, onclose }: Props = $props()
+  const { action, title, body, confirmWord, passphrase: luks, onstarted, onhealth, onclose }: Props = $props()
 
   let typed = $state('')
   let password = $state('')
@@ -44,7 +46,7 @@
     error = ''
     try {
       if (action === 'readHealth') onhealth(await api.storageHealth(password))
-      else onstarted(await api.storageAct(action, password))
+      else onstarted(luks ? await api.storageAct(action, password, luks) : await api.storageAct(action, password))
     } catch (e) {
       const body = e instanceof ApiError ? (e.body as { error?: string; device?: string; why?: string } | undefined) : undefined
       switch (body?.error) {
@@ -65,6 +67,15 @@
           break
         case 'notMounted':
           error = $LL.storageNotMounted()
+          break
+        case 'invalidPassphrase':
+          error = $LL.storageInvalidPassphrase()
+          break
+        case 'mounted':
+          error = $LL.storageMountedInside()
+          break
+        case 'notRemovable':
+          error = $LL.storageNotRemovable()
           break
         default:
           error = e instanceof Error ? e.message : String(e)

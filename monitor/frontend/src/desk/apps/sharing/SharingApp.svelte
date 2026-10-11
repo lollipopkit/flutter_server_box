@@ -4,15 +4,17 @@
   /// shown as they are. Every change is root's, asked about with sudo's
   /// password (`SudoDialog`); installing Samba or the NFS server is a job.
 
-  import { AppToolbar, SplitView } from '../../sys'
+  import { AppToolbar, SplitView, useWindow } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, Group, Icon, IconButton, Input, Row, Select, SidebarItem, SidebarSection, Spinner } from '../../lk'
   import StackProgress from '../../../components/stack/StackProgress.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { api } from '../../../lib/api'
+  import { ApiError, api } from '../../../lib/api'
+  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { DATE_TIME, fmtDate, parseTimestamp } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
-  import type { NfsClient, NfsExport, SharesView, SmbShare, StackJob } from '../../../types'
+  import type { NfsClient, NfsExport, ShareConnections, SharesView, SmbShare, StackJob } from '../../../types'
   import SudoDialog from './SudoDialog.svelte'
-  import { shareNameOk, withExport, withShare, withoutExport, withoutShare } from './model'
+  import { firewallIntent, mountedFolders, shareNameOk, withExport, withShare, withoutExport, withoutShare } from './model'
   import { untrack } from 'svelte'
 
   type Tab = 'smb' | 'nfs'
@@ -33,6 +35,14 @@
   let passwordFor = $state<string | null>(null)
   let newPassword = $state('')
   let newPassword2 = $state('')
+  let connections = $state<ShareConnections | null>(null)
+  let connectionsLocked = $state(false)
+  let connectionsTried = false
+  let folderOptions = $state<string[]>([])
+  let foldersTried = false
+  const win = useWindow()
+  const folderListId = `sharing-folders-${win.id || 'detached'}`
+  const canFirewall = $derived(capabilitiesStore.byServer[servers.currentId]?.features?.includes('firewall') === true)
 
   async function load(serverId = servers.currentId) {
     try {
@@ -41,6 +51,11 @@
       view = next
       error = ''
       if (next.job?.state === 'running') job = next.job
+      void loadFolders(serverId)
+      if (!connectionsTried && (next.tools.includes('smbd') || next.tools.includes('exportfs'))) {
+        connectionsTried = true
+        void readConnections(serverId)
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)
     }
@@ -60,12 +75,71 @@
   $effect(() => {
     const serverId = servers.currentId
     untrack(() => {
+      connectionsTried = false
+      connectionsLocked = false
+      connections = null
+      foldersTried = false
+      folderOptions = []
+      void capabilitiesStore.ensure(serverId)
       void load(serverId)
       void loadAccounts(serverId)
     })
   })
 
+  $effect(() => {
+    const serverId = servers.currentId
+    const hasStorage = capabilitiesStore.byServer[serverId]?.features?.includes('storage') === true
+    if (hasStorage) void loadFolders(serverId)
+  })
+
   const has = (tool: string) => view?.tools.includes(tool) === true
+
+  async function loadFolders(serverId = servers.currentId) {
+    if (foldersTried || capabilitiesStore.byServer[serverId]?.features?.includes('storage') !== true) return
+    foldersTried = true
+    try {
+      const storage = await api.getStorage()
+      if (serverId === servers.currentId) folderOptions = mountedFolders(storage)
+    } catch {
+      if (serverId === servers.currentId) folderOptions = []
+    }
+  }
+
+  async function readConnections(serverId = servers.currentId, sudo = '', quiet = true): Promise<boolean> {
+    try {
+      const result = await api.shareConnections(sudo)
+      if (serverId !== servers.currentId) return false
+      connections = result
+      connectionsLocked = false
+      return true
+    } catch (e) {
+      if (serverId === servers.currentId && e instanceof ApiError && e.status === 403) connectionsLocked = true
+      if (!quiet) throw e
+      return false
+    }
+  }
+
+  function askConnections() {
+    ask($LL.sharingShowConnections(), $LL.sharingShowConnectionsBody(), async (sudo) => {
+      await readConnections(servers.currentId, sudo, false)
+      pending = null
+    })
+  }
+
+  function refreshConnections() {
+    if (connectionsLocked) askConnections()
+    else void readConnections()
+  }
+
+  function allowFirewall(protocol: Tab) {
+    win.open('serverbox.firewall', { intent: firewallIntent(protocol) })
+  }
+
+  function connectionSince(value: string | null): string | undefined {
+    if (!value) return undefined
+    const date = parseTimestamp(value)
+    return Number.isNaN(date.getTime()) ? undefined : fmtDate(date, DATE_TIME)
+  }
 
   function ask(title: string, body: string, run: (sudo: string) => Promise<void>) {
     pending = { title, body, run }
@@ -82,7 +156,17 @@
 
   function newShare() {
     smbOriginal = null
-    smbDraft = { name: '', path: '/mnt/', comment: null, read_only: false, guest: false, users: [], managed: true }
+    smbDraft = {
+      name: '',
+      path: '/mnt/',
+      comment: null,
+      read_only: false,
+      guest: false,
+      users: [],
+      time_machine: false,
+      recycle: false,
+      managed: true,
+    }
   }
 
   function editShare(s: SmbShare) {
@@ -111,6 +195,8 @@
     return [
       s.read_only ? $LL.sharingReadOnly() : $LL.sharingReadWrite(),
       s.guest ? $LL.sharingGuest() : undefined,
+      s.time_machine ? $LL.sharingTimeMachine() : undefined,
+      s.recycle ? $LL.sharingRecycle() : undefined,
       s.users.length ? s.users.join(', ') : undefined,
     ]
       .filter(Boolean)
@@ -171,6 +257,25 @@
   }
 </script>
 
+{#snippet connected(rows: { label: string; sub: string | undefined }[] | undefined)}
+  <Group title={$LL.sharingConnectedNow()}>
+    {#if connectionsLocked}
+      <Row label={$LL.sharingShowConnectionsBody()}>
+        <Button size="sm" variant="secondary" onclick={askConnections}>{$LL.sharingShowConnections()}</Button>
+      </Row>
+    {:else if rows}
+      {#each rows as r, i (`${r.label}:${i}`)}
+        <Row label={r.label} sub={r.sub} mono />
+      {:else}
+        <Row label={$LL.sharingNobodyConnected()} />
+      {/each}
+      <div class="flex justify-end px-[13px] py-[9px]">
+        <IconButton icon="refresh" label={$LL.refresh()} onclick={refreshConnections} />
+      </div>
+    {/if}
+  </Group>
+{/snippet}
+
 <AppToolbar title={tab === 'smb' ? $LL.sharingSmb() : $LL.sharingNfs()}>
   {#snippet actions()}
     {#if tab === 'smb' && has('smbd')}
@@ -222,6 +327,7 @@
           <Row label="Samba">
             <Badge tone={view.smb_active ? 'success' : 'neutral'}>{view.smb_active ? $LL.sharingRunning() : $LL.sharingStopped()}</Badge>
           </Row>
+          {#if canFirewall}<Row label={$LL.sharingFirewall()}><Button size="sm" variant="secondary" onclick={() => allowFirewall('smb')}>{$LL.sharingAllowFirewall()}</Button></Row>{/if}
         </Group>
         {#each view.smb as s (s.name)}
           <Group title={s.name}>
@@ -238,6 +344,7 @@
         {:else}
           <div class="flex flex-col items-center gap-[9px] py-[34px] text-(--text-tertiary)"><Icon name="folder_shared" size={48} /><p>{$LL.sharingNoShares()}</p></div>
         {/each}
+        {@render connected(connections?.smb.map((c) => ({ label: `${c.share} · ${c.user ?? '—'} · ${c.machine}`, sub: connectionSince(c.since) })))}
         <Group title={$LL.sharingPasswords()}>
           <Row label={$LL.sharingPasswordsBody()}>
             <div class="flex shrink-0 gap-[7px]">
@@ -262,7 +369,9 @@
           <Row label={$LL.sharingNfsServer()}>
             <Badge tone={view.nfs_active ? 'success' : 'neutral'}>{view.nfs_active ? $LL.sharingRunning() : $LL.sharingStopped()}</Badge>
           </Row>
+          {#if canFirewall}<Row label={$LL.sharingFirewall()}><Button size="sm" variant="secondary" onclick={() => allowFirewall('nfs')}>{$LL.sharingAllowFirewall()}</Button></Row>{/if}
         </Group>
+        {@render connected(connections?.nfs.map((address) => ({ label: address, sub: undefined })))}
         {#each view.nfs as e (e.path + e.managed)}
           <Group title={e.path}>
             {#each e.clients as c, i (i)}
@@ -288,11 +397,16 @@
 {#if smbDraft}
   <Dialog open wide title={smbOriginal === null ? $LL.sharingAddShare() : $LL.sharingEdit()} onclose={() => (smbDraft = null)}>
     <div class="space-y-[9px] text-left">
+      <datalist id={folderListId}>
+        {#each folderOptions as path (path)}<option value={path}></option>{/each}
+      </datalist>
       <Input label={$LL.storageName()} mono value={smbDraft.name} oninput={(e: Event) => (smbDraft!.name = (e.currentTarget as HTMLInputElement).value)} />
-      <Input label={$LL.sharingFolder()} mono value={smbDraft.path} hint={$LL.sharingFolderHint()} oninput={(e: Event) => (smbDraft!.path = (e.currentTarget as HTMLInputElement).value)} />
+      <Input label={$LL.sharingFolder()} mono list={folderListId} value={smbDraft.path} hint={$LL.sharingFolderHint()} oninput={(e: Event) => (smbDraft!.path = (e.currentTarget as HTMLInputElement).value)} />
       <Input label={$LL.sharingComment()} value={smbDraft.comment ?? ''} oninput={(e: Event) => (smbDraft!.comment = (e.currentTarget as HTMLInputElement).value)} />
       <Checkbox bind:checked={smbDraft.read_only} label={$LL.sharingReadOnly()} />
       <Checkbox bind:checked={smbDraft.guest} label={$LL.sharingGuestLabel()} />
+      <Checkbox bind:checked={smbDraft.time_machine} label={$LL.sharingTimeMachineOption()} />
+      <Checkbox bind:checked={smbDraft.recycle} label={$LL.sharingRecycleOption()} />
       {#if accounts.length}
         <p class="text-[12px] text-(--text-tertiary)">{$LL.sharingUsersHint()}</p>
         {#each accounts as a (a)}
@@ -309,8 +423,11 @@
 
 {#if nfsDraft}
   <Dialog open wide title={nfsOriginal === null ? $LL.sharingAddExport() : $LL.sharingEdit()} onclose={() => (nfsDraft = null)}>
+    <datalist id={folderListId}>
+      {#each folderOptions as path (path)}<option value={path}></option>{/each}
+    </datalist>
     <div class="space-y-[9px] text-left">
-      <Input label={$LL.sharingFolder()} mono value={nfsDraft.path} hint={$LL.sharingFolderHint()} oninput={(e: Event) => (nfsDraft!.path = (e.currentTarget as HTMLInputElement).value)} />
+      <Input label={$LL.sharingFolder()} mono list={folderListId} value={nfsDraft.path} hint={$LL.sharingFolderHint()} oninput={(e: Event) => (nfsDraft!.path = (e.currentTarget as HTMLInputElement).value)} />
       <p class="text-[12px] text-(--text-tertiary)">{$LL.sharingClientsHint()}</p>
       {#each nfsDraft.clients as c, i (i)}
         <div class="flex flex-wrap items-end gap-[7px]">
