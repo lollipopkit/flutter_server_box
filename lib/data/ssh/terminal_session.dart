@@ -63,6 +63,15 @@ class TerminalSessionClosed implements Exception {
 /// Retry transport failures after launch, but leave permission and auth
 /// failures for the user to resolve.
 bool isRetryableTerminalConnectionError(Object error) {
+  // An `SSHAuthError` by type, but authentication was never reached: the
+  // handshake ended first. That is the server turning the connection away —
+  // `MaxStartups` drops new connections at random once enough unauthenticated
+  // ones are pending, which a server being brute-forced always has, with
+  // "Not allowed at this time" in place of its version line. The next attempt
+  // may well get in; the user has nothing to resolve.
+  if (error is SSHAuthAbortError && error.reason is SSHHandshakeError) {
+    return true;
+  }
   if (error is TerminalRemoteAccessUnavailable ||
       error is TerminalSessionClosed ||
       error is SSHAuthError) {

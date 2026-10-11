@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -548,6 +549,32 @@ void main() {
     expect(
       isRetryableTerminalConnectionError(
         const TerminalRemoteAccessUnavailable(),
+      ),
+      isFalse,
+    );
+  });
+
+  test('a connection turned away before authentication is retried', () {
+    // What sshd's `MaxStartups` sends in place of its version line.
+    expect(
+      isRetryableTerminalConnectionError(
+        SSHAuthAbortError(
+          'Connection closed before authentication',
+          SSHHandshakeError('Invalid version: Not allowed at this time'),
+        ),
+      ),
+      isTrue,
+    );
+    // Authentication itself failing is still for the user.
+    expect(
+      isRetryableTerminalConnectionError(
+        SSHAuthFailError('All authentication methods failed'),
+      ),
+      isFalse,
+    );
+    expect(
+      isRetryableTerminalConnectionError(
+        SSHAuthAbortError('Connection closed before authentication'),
       ),
       isFalse,
     );
