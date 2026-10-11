@@ -49,7 +49,6 @@ extension _AskAi on SSHPageState {
         screen: () => _sess.screenText,
         programStatus: () =>
             _sess.status.describeForAgent(paneLabel: tmuxPaneLabel),
-        cancel: _cancelAiCommand,
       ),
     );
   }
@@ -145,22 +144,31 @@ extension _AskAi on SSHPageState {
     _focusTerminal();
   }
 
-  Future<AskAiCommandResult> _runAiCommand(AskAiCommand proposal) async {
+  Future<AskAiCommandResult> _runAiCommand(
+    AskAiCommand proposal, {
+    Future<void>? cancel,
+  }) async {
     final client = _client;
     if (client == null || client.isClosed) {
       throw StateError('SSH client is not connected.');
     }
 
     final startedAt = DateTime.now();
-    // The signal the stop button and the timeout both pull. [SshExec] stops
-    // the command on it, and gives up on a channel the server keeps open.
-    final cancel = Completer<void>();
-    _aiCommandCancel = cancel;
+    // The signal the stop button, the timeout and the page going away all
+    // pull. [SshExec] stops the command on it, and gives up on a channel the
+    // server keeps open.
+    final stop = Completer<void>();
+    _aiCommandStops.add(stop);
+    unawaited(
+      cancel?.then((_) {
+        if (!stop.isCompleted) stop.complete();
+      }),
+    );
     var timedOut = false;
     final timer = Timer(const Duration(minutes: 5), () {
-      if (cancel.isCompleted) return;
+      if (stop.isCompleted) return;
       timedOut = true;
-      cancel.complete();
+      stop.complete();
     });
 
     try {
@@ -170,7 +178,7 @@ extension _AskAi on SSHPageState {
         sudoPassword: serverId == null
             ? null
             : () => SudoPassword.known(serverId),
-      ).run(proposal.command, cancel: cancel.future);
+      ).run(proposal.command, cancel: stop.future);
       // Told to the user as well: a stop ends the reply before this result
       // exists, so the model may never read it.
       if (result.mayStillRun) Toast.show(l10n.agentCommandMayStillRun);
@@ -181,14 +189,14 @@ extension _AskAi on SSHPageState {
         stdout: limited.stdout,
         stderr: limited.stderr,
         duration: DateTime.now().difference(startedAt),
-        cancelled: cancel.isCompleted && !timedOut,
+        cancelled: stop.isCompleted && !timedOut,
         timedOut: timedOut,
         truncated: limited.truncated || result.outputIncomplete,
         mayStillRun: result.mayStillRun,
       );
     } finally {
       timer.cancel();
-      if (identical(_aiCommandCancel, cancel)) _aiCommandCancel = null;
+      _aiCommandStops.remove(stop);
     }
   }
 
@@ -222,9 +230,10 @@ extension _AskAi on SSHPageState {
     );
   }
 
-  Future<void> _cancelAiCommand() async {
-    final cancel = _aiCommandCancel;
-    if (cancel != null && !cancel.isCompleted) cancel.complete();
+  void _stopAiCommands() {
+    for (final stop in _aiCommandStops) {
+      if (!stop.isCompleted) stop.complete();
+    }
   }
 }
 

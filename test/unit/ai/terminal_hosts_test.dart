@@ -3,11 +3,10 @@ import 'package:server_box/core/llm/scope.dart';
 
 TerminalHost _host(String name) => TerminalHost(
   serverName: name,
-  run: (_) => throw UnimplementedError(),
+  run: (_, {cancel}) => throw UnimplementedError(),
   insert: (_) {},
   screen: () => name,
   programStatus: () => '',
-  cancel: () async {},
 );
 
 void main() {

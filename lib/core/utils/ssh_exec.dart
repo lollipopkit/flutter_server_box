@@ -156,9 +156,12 @@ abstract final class SshSessionId {
   /// is: POSIX `sh`, handed over in single quotes as [wrap] does, so that a
   /// fish login shell can run it too. Signals the process group as well, for
   /// a `pkill` without `-s`.
+  /// Waits a moment only when there was something to kill, for it to be
+  /// gone from the process table.
   static String kill(int id) =>
-      "sh -c 'pkill -KILL -s $id 2>/dev/null; kill -KILL -- -$id 2>/dev/null; "
-      'sleep 1; pgrep -s $id >/dev/null 2>&1; '
+      "sh -c 'kill -KILL -- -$id 2>/dev/null; "
+      'pkill -KILL -s $id 2>/dev/null && sleep 1; '
+      'pgrep -s $id >/dev/null 2>&1; '
       "[ \$? -eq 1 ] && echo $gone'";
 
   static const gone = 'sbm-session-gone';
@@ -230,7 +233,7 @@ class SshExec implements ServerByteExec {
     var cancelled = false;
     unawaited(cancel.then((_) => cancelled = true));
     final tracked = await exec(SshSessionId.wrap(command), track: true);
-    if (tracked.started || cancelled) return tracked.result;
+    if (!tracked.refused || cancelled) return tracked.result;
     // The login shell could not run the wrapper, and so ran none of the
     // command: run it as it is, stopped by the signal alone.
     return (await exec(command)).result;
@@ -252,7 +255,10 @@ class SshExec implements ServerByteExec {
     // Until the marker has come or stderr has ended without it, nothing is
     // passed on: output before then may be a login shell refusing the
     // wrapper, which is not the command's, and is run again without it.
+    // Refused only on that end: stderr cut short any other way — cancelled,
+    // or failed — says nothing about whether the command started.
     int? sessionId;
+    var refused = false;
     final decided = Completer<void>();
     Stream<List<int>> stdout = session.stdout;
     Stream<List<int>> stderr = session.stderr;
@@ -260,7 +266,8 @@ class SshExec implements ServerByteExec {
       stderr = _stripSessionId(
         session.stderr,
         decided,
-        (id) => sessionId = id,
+        onId: (id) => sessionId = id,
+        onRefused: () => refused = true,
       );
       stdout = _after(decided.future, stdout);
     } else {
@@ -281,7 +288,7 @@ class SshExec implements ServerByteExec {
     var ended = false;
     unawaited(session.done.whenComplete(() => ended = true));
     var stopped = false;
-    Future<void>? reaped;
+    Future<bool?>? reaped;
     unawaited(
       cancel?.then((_) {
         if (ended) return;
@@ -318,7 +325,7 @@ class SshExec implements ServerByteExec {
       await session.stdin.close();
 
       final collected = await output;
-      if (reaped case final reaped?) await reaped;
+      final gone = await reaped;
       return (
         result: ExecResult(
           exitCode: session.exitCode,
@@ -327,48 +334,48 @@ class SshExec implements ServerByteExec {
           outputIncomplete: collected.outputIncomplete,
           streamError: collected.streamError,
           streamErrorStackTrace: collected.streamErrorStackTrace,
-          // The channel, not the kill, is what says: whatever still holds its
-          // output open — a process that left the session included — is
-          // still running.
-          mayStillRun: stopped && !ended,
+          // Either says so: a channel still open is held by something alive
+          // — a process that left the session included — and a closed one
+          // only means nothing holds the output any more.
+          mayStillRun: stopped && (!ended || gone == false),
         ),
-        started: started(),
+        refused: refused,
       );
     } finally {
       session.close();
     }
   }
 
-  /// Kills what is left of a cancelled command's session once the signal
-  /// has had [signalGrace] to end it — as the account, then through sudo for
-  /// what runs as root — and gives the channel as long again to close.
-  Future<void> _reap(SSHSession session, int? Function() sessionId) async {
-    Future<bool> closed() async {
+  /// Kills what is left of a cancelled command's session — as the account,
+  /// then through sudo for what runs as root — once the signal has had
+  /// [signalGrace] to end it, and gives the channel as long again to close.
+  ///
+  /// Whether the session is empty; null with no session id to ask about.
+  /// Asked even when the channel has closed: that only says nothing holds the
+  /// output, and a child that let go of it can outlive the signal.
+  Future<bool?> _reap(SSHSession session, int? Function() sessionId) async {
+    Future<void> closed() async {
       try {
         await session.done.timeout(signalGrace);
-      } on TimeoutException {
-        return false;
       } catch (_) {
-        // Ended with an error, which is ended all the same.
+        // Timed out: held open, by a process the signal missed or a server
+        // that refused it. What the session holds is asked below either way.
       }
-      return true;
     }
 
-    if (await closed()) return;
-    // Held open: by a process the signal missed, or by a server that refused
-    // it.
+    await closed();
     final id = sessionId();
-    if (id == null) return;
+    if (id == null) return null;
     final kill = SshSessionId.kill(id);
-    if (!await _killed(kill)) {
+    var gone = await _killed(kill);
+    if (!gone) {
       final password = await sudoPassword?.call();
-      if (password == null) {
-        await _killed('sudo -n $kill');
-      } else {
-        await _killed("sudo -S -p '' $kill", stdin: '$password\n');
-      }
+      gone = password == null
+          ? await _killed('sudo -n $kill')
+          : await _killed("sudo -S -p '' $kill", stdin: '$password\n');
     }
     await closed();
+    return gone;
   }
 
   Future<bool> _killed(String command, {String? stdin}) async {
@@ -391,10 +398,11 @@ class SshExec implements ServerByteExec {
       _SshExecSession(await client.execute(command));
 }
 
-typedef _Run = ({ExecResult result, bool started});
+typedef _Run = ({ExecResult result, bool refused});
 
 /// [stderr] without the [SshSessionId.marker] line, held back until it has
-/// come or the stream has ended; [onId] gets the id it carried.
+/// come or the stream has ended; [onId] gets the id it carried, [onRefused]
+/// is told when the stream ended without it.
 ///
 /// Looked for anywhere rather than on the first line: a login shell's rc file
 /// can print before it. Whatever surrounds it is passed on as it was.
@@ -404,9 +412,10 @@ typedef _Run = ({ExecResult result, bool started});
 /// once it next yields, and a stream the server holds open never lets it.
 Stream<List<int>> _stripSessionId(
   Stream<Uint8List> stderr,
-  Completer<void> decided,
-  void Function(int id) onId,
-) {
+  Completer<void> decided, {
+  required void Function(int id) onId,
+  required void Function() onRefused,
+}) {
   final head = <int>[];
   return stderr.transform(
     StreamTransformer<Uint8List, List<int>>.fromHandlers(
@@ -427,6 +436,7 @@ Stream<List<int>> _stripSessionId(
       handleDone: (sink) {
         // Ended without it: what was held is the login shell's.
         if (!decided.isCompleted) {
+          onRefused();
           decided.complete();
           if (head.isNotEmpty) sink.add(List.of(head));
         }

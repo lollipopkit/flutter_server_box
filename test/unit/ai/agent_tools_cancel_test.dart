@@ -9,14 +9,10 @@ void main() {
     test('ends on the stop while the command is still running', () async {
       final cancel = LlmCancelToken();
       final command = Completer<String>();
-      var stops = 0;
-      final call = AgentTools.cancellable(cancel, () async => stops++, () {
-        return command.future;
-      });
+      final call = AgentTools.cancellable(cancel, () => command.future);
 
       cancel.cancel();
       await expectLater(call, throwsA(isA<LlmException>()));
-      expect(stops, 1);
       expect(command.isCompleted, isFalse);
 
       // Ending later is nobody's error.
@@ -26,25 +22,15 @@ void main() {
 
     test('returns the result when the command ends first', () async {
       final cancel = LlmCancelToken();
-      var stops = 0;
-      final r = await AgentTools.cancellable(
-        cancel,
-        () async => stops++,
-        () async => 'done',
-      );
+      final r = await AgentTools.cancellable(cancel, () async => 'done');
       expect(r, 'done');
-
-      // A stop after it ended must not reach whatever runs next.
-      cancel.cancel();
-      await pumpEventQueue();
-      expect(stops, 0);
     });
 
     test('runs nothing once stopped', () async {
       final cancel = LlmCancelToken()..cancel();
       var ran = false;
       await expectLater(
-        AgentTools.cancellable(cancel, () async {}, () async => ran = true),
+        AgentTools.cancellable(cancel, () async => ran = true),
         throwsA(isA<LlmException>()),
       );
       expect(ran, isFalse);

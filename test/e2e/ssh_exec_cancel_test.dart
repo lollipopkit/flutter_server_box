@@ -133,6 +133,22 @@ Future<void> main() async {
   );
 
   test(
+    'a stop kills a child that let go of the output',
+    () async {
+      // Out of the signal's reach and holding nothing open, so the channel
+      // closes at once: only the session id still finds it.
+      final s = sleepFor();
+      final r = await stop(
+        "bash -c 'set -m; sleep $s </dev/null >/dev/null 2>&1 & wait'",
+        s,
+      );
+      expect(r.result.mayStillRun, isFalse);
+      expect(await running(s), isFalse, reason: 'killed by its session');
+    },
+    timeout: const Timeout(Duration(seconds: 60)),
+  );
+
+  test(
     'a stop says so when a process has left the session',
     () async {
       // `setsid -w` waits for a child in a session of its own: out of every

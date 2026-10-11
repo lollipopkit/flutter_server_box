@@ -337,10 +337,11 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   ShellSession? get _session => _sess.foreground;
 
-  /// Stops the agent's own command, on a channel separate from the terminal's
-  /// session; null when none runs. SSH-only: the agent runs commands with
-  /// `exec`, which the monitor PTY cannot do — see [ShellBackend.supportsExec].
-  Completer<void>? _aiCommandCancel;
+  /// What stops each of the agent's own commands still running, on channels
+  /// separate from the terminal's session. SSH-only: the agent runs commands
+  /// with `exec`, which the monitor PTY cannot do — see
+  /// [ShellBackend.supportsExec].
+  final _aiCommandStops = <Completer<void>>{};
 
   /// Takes this terminal out of reach of its Agent session, run on dispose.
   ///
@@ -472,7 +473,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (introListener != null) {
       widget.args.visibleListenable?.removeListener(introListener);
     }
-    unawaited(_cancelAiCommand());
+    _stopAiCommands();
     unawaited(_tmuxPageController.dispose());
     _terminalController.dispose();
     _virtKeyPage.dispose();
