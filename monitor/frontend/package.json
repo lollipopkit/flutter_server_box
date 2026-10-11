@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typesafe-i18n && svelte-check --tsconfig ./tsconfig.json && vite build && vite build --config vite.desk-app.config.ts && node scripts/compress.mjs",
+    "build": "sh ../../scripts/check-lfs.sh monitor/frontend && npm run typesafe-i18n && svelte-check --tsconfig ./tsconfig.json && vite build && vite build --config vite.desk-app.config.ts && node scripts/compress.mjs",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",

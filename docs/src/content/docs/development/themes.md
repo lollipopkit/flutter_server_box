@@ -123,13 +123,16 @@ the way the store does, so a listing the reader would drop fails a test rather
 than disappearing from the store.
 
 The app does not download this repository. The website build runs
-`scripts/store-tarball.sh`, which writes `store/` at `HEAD` with `git archive`
-to `public/store.tar.gz`, and the catalog lists
+`scripts/store-tarball.sh`, which packs `store/` as committed at `HEAD` into
+`public/store.tar.gz`, and the catalog lists
 `https://serverbox.lollipopkit.com/store.tar.gz`. A change to `store/` reaches
 the store when the website is deployed: the Cloudflare Pages project builds on
 changes under `store/` as well as `website/` and `docs/`. The same build lists
-the themes on the site (`website/store-data.js`). `git archive` is used rather than `tar`
-because macOS `tar` writes binary xattr records the reader refuses.
+the themes on the site (`website/store-data.js`). Images and theme packages
+are Git LFS objects, and `git archive` would write their pointers, so the
+script packs the working tree: it refuses a `store/` that differs from `HEAD`
+or still holds pointers, and writes the archive with Python's `tarfile`
+(sorted, no xattr records, which macOS `tar` adds and the reader refuses).
 
 `scripts/publish-themes.py` publishes every theme that changed since its newest
 recorded version, in one run. It runs the serverbox-theme skill's

@@ -95,12 +95,14 @@ listing 的 `description` 可以是字符串，也可以是以语言标签为键
 `test/unit/theme_store_tree_test.dart` 按商店的方式读取该目录，读取器会丢弃的 listing
 会让测试失败，而不是从商店里消失。
 
-应用不会下载整个仓库。官网构建时运行 `scripts/store-tarball.sh`，用 `git archive` 把
-`HEAD` 的 `store/` 写成 `public/store.tar.gz`，catalog 列出的地址是
+应用不会下载整个仓库。官网构建时运行 `scripts/store-tarball.sh`，把 `HEAD` 提交的
+`store/` 打包成 `public/store.tar.gz`，catalog 列出的地址是
 `https://serverbox.lollipopkit.com/store.tar.gz`。对 `store/` 的改动在官网部署后生效：
 Cloudflare Pages 项目在 `store/`、`website/` 和 `docs/` 有改动时都会重新构建。同一次构建
 也会在官网上列出这些主题（`website/store-data.js`）。
-使用 `git archive` 而不是 `tar`，是因为 macOS `tar` 会写入读取器拒绝的二进制 xattr 记录。
+图片和主题包是 Git LFS 对象，`git archive` 只会写入它们的 pointer，所以脚本从工作区打包：
+`store/` 与 `HEAD` 不一致或仍是 pointer 时拒绝，用 Python 的 `tarfile` 写归档（排序，不写
+xattr 记录；macOS `tar` 会写入读取器拒绝的这类记录）。
 
 `scripts/publish-themes.py` 一次发布所有自最新记录版本以来有变化的主题。它以 `store/`
 作为主题 repository，调用 serverbox-theme skill 的 `scripts/publish.py`；第三方作者在
