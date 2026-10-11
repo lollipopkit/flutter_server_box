@@ -1290,12 +1290,21 @@ class SSHPageState extends ConsumerState<SSHPage>
     final spi = widget.args.spi;
     if (spi == null) return;
 
+    // The shell the key was pressed for, taken before anything is awaited. A
+    // reconnect or a tmux switch while this waits — on the unlock, the
+    // password dialog, the prompt — puts another in front, and its prompt is
+    // not the one asked about.
+    final shell = _session;
+    if (shell == null) return;
+    bool stillFor() => mounted && identical(_session, shell);
+
     final authed = await SudoPassword.authenticateIfNeeded();
     if (!authed) {
       if (!mounted) return;
       Toast.error(libL10n.fail);
       return;
     }
+    if (!stillFor()) return;
 
     final password = await SudoPassword.resolveForTerminal(spi);
     if (password == null || password.isEmpty) {
@@ -1303,12 +1312,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       Toast.show(libL10n.empty);
       return;
     }
-
-    // The shell the key was pressed for. A reconnect or a tmux switch while
-    // this waits puts another in front, and its prompt is not the one asked
-    // about.
-    final shell = _session;
-    if (shell == null) return;
+    if (!stillFor()) return;
 
     bool detected = false;
     const delays = [0, 100, 200, 400, 800, 1600];
@@ -1316,7 +1320,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       final delayMs = delays[i];
       if (delayMs > 0) {
         await Future.delayed(Duration(milliseconds: delayMs));
-        if (!mounted || !identical(_session, shell)) return;
+        if (!stillFor()) return;
       }
 
       _sess.drainOutput();
