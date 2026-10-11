@@ -32,9 +32,7 @@ fn tree(dir: &Path) -> IndexMap<String, Vec<u8>> {
 
 #[test]
 fn every_store_theme_in_this_repository_installs() {
-    let bundled = std::fs::read(root().join("assets/store_themes/serverbox.piggy.fsbt")).unwrap();
-    assert_eq!(fl_theme::install(&bundled).unwrap().id, "serverbox.piggy");
-    for dir in ["store/themes/serverbox.pride", "store/themes/serverbox.one-dark-pro", "docs/examples/aurora"] {
+    for dir in ["store/themes/serverbox.piggy", "store/themes/serverbox.pride", "store/themes/serverbox.one-dark-pro", "docs/examples/aurora"] {
         let p = fl_theme::install_files(tree(&root().join(dir))).unwrap_or_else(|e| panic!("{dir}: {e}"));
         assert!(!p.themes.is_empty(), "{dir}");
     }

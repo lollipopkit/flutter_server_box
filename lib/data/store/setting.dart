@@ -491,6 +491,8 @@ class SettingStore extends SqliteStore with ThemeSettings {
     'appImportedFontPath',
     'themeStoreCache',
     // What this device's themes directory holds, like `appThemePackage`.
+    // TODO: remove with the key; no theme is bundled any more, it only
+    // records the ones seeded before.
     'bundledThemesSeeded',
   };
 

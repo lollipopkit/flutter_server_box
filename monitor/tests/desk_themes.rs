@@ -28,8 +28,9 @@ fn repo_root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/.."))
 }
 
+/// The Piggy theme, packed from its store folder.
 fn piggy() -> Vec<u8> {
-    std::fs::read(repo_root().join("assets/store_themes/serverbox.piggy.fsbt")).unwrap()
+    zip_dir(&repo_root().join("store/themes/serverbox.piggy"), "")
 }
 
 /// A source folder zipped; [salt] changes the bytes and not the theme.
@@ -239,7 +240,18 @@ fn tar_gz(entries: &[(&str, &[u8])]) -> Vec<u8> {
 async fn the_store_installs_only_what_its_catalog_offers_and_checks_the_digest() {
     let state = state().await;
     let piggy = piggy();
-    let listing = std::fs::read_to_string(repo_root().join("store/themes/serverbox.piggy.toml")).unwrap();
+    // The store's listing, its release pointed at the package packed here.
+    let digest = hex::encode(<sha2::Sha256 as sha2::Digest>::digest(&piggy));
+    let listing = std::fs::read_to_string(repo_root().join("store/themes/serverbox.piggy.toml"))
+        .unwrap()
+        .lines()
+        .map(|l| match l.split_once(" = ") {
+            Some(("sha256", _)) => format!("sha256 = \"{digest}\""),
+            Some(("size", _)) => format!("size = {}", piggy.len()),
+            _ => l.to_string(),
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     let broken = "id = \"serverbox.broken\"\nname = \"Broken\"\n[[version]]\nversion = \"1.0.0\"\nschema_min = 3\nschema_max = 3\nurl = \"https://example.org/broken.fsbt\"\nsha256 = \"".to_string()
         + &"0".repeat(64)
         + "\"\n";

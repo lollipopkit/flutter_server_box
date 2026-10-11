@@ -195,9 +195,6 @@ flutter:
     # The theme catalog's floor: whose repositories the store offers when its
     # own address does not answer. The list itself is read over HTTPS.
     - assets/catalog/
-    # Store themes shipped with the app, installed once on first launch as if
-    # from the store — see `ThemePackages.seedBundled`.
-    - assets/store_themes/
     # Yet Another Bench Script, vendored verbatim under WTFPL and pinned by
     # `YabsScript.upstreamCommit`. Shipped rather than piped from the network
     # on the server: `curl | bash` fixes no version and verifies nothing, and
