@@ -2,28 +2,36 @@
   /// The machine's storage, as a NAS manages it (`/storage`): its disks with
   /// their partitions, filesystems, mounts and use; software RAID arrays;
   /// ZFS pools. Every change is asked about (`StorageConfirm`) and runs as
-  /// root as a job, its log drawn here.
+  /// root as a job, its log drawn here. Each disk's SMART health is read as
+  /// root too: on its own where sudo needs no password, else when asked.
 
   import { AppToolbar, SplitView } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, Group, Icon, IconButton, Input, Row, Select, SidebarItem, SidebarSection, Spinner } from '../../lk'
   import StackProgress from '../../../components/stack/StackProgress.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { api } from '../../../lib/api'
-  import { fmtBytes } from '../../../lib/format'
+  import { api, ApiError } from '../../../lib/api'
+  import { fmtBytes, fmtEpochSeconds } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
-  import type { BlockDevice, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
+  import type { BlockDevice, HealthReading, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
   import StorageConfirm from './StorageConfirm.svelte'
-  import { disksOf, freeDevices, isMounted, minimum, mountable, nextMd, overlaps, shortName, volumesOf } from './model'
+  import StorageMaintenance from './StorageMaintenance.svelte'
+  import { arrayDevice, disksOf, expandable, freeDevices, growableArray, healthOf, isMounted, minimum, mountable, nextMd, overlaps, shortName, verdict, volumesOf, type HealthVerdict } from './model'
   import { untrack } from 'svelte'
 
-  type Tab = 'disks' | 'raid' | 'pools'
+  type Tab = 'disks' | 'raid' | 'pools' | 'maintenance'
 
   let tab = $state<Tab>('disks')
   let view = $state<StorageView | null>(null)
   let error = $state('')
   let job = $state<StackJob | null>(null)
   /// The change being asked about.
-  let pending = $state<{ action: StorageAction; title: string; body: string; confirmWord?: string } | null>(null)
+  let pending = $state<{ action: StorageAction | 'readHealth'; title: string; body: string; confirmWord?: string } | null>(null)
+  /// sudo wants a password to read SMART: it is read when asked, not on
+  /// its own.
+  let healthLocked = $state(false)
+  let readingHealth = $state(false)
+  /// Read on its own once per server the page is opened on.
+  let healthTried = false
   /// The forms that gather a change before it is asked about.
   let formatFor = $state<BlockDevice | null>(null)
   let formatFs = $state<'ext4' | 'xfs' | 'btrfs'>('ext4')
@@ -32,11 +40,15 @@
   let mountPoint = $state('')
   let mountPersist = $state(true)
   let mountOwn = $state(true)
-  let creating = $state<'raid' | 'pool' | null>(null)
+  /// A new array or pool, or a vdev more for pool [growPool].
+  let creating = $state<'raid' | 'pool' | 'poolAdd' | null>(null)
+  let growPool = $state('')
   let newName = $state('')
   let newLevel = $state<string>('1')
   let picked = $state<string[]>([])
   let addTo = $state<MdArray | null>(null)
+  /// Adding to [addTo] as one more working member rather than a spare.
+  let addGrows = $state(false)
   let addDevice = $state('')
 
   async function load(serverId = servers.currentId) {
@@ -46,6 +58,10 @@
       view = next
       error = ''
       if (next.job?.state === 'running') job = next.job
+      if (!healthTried && next.tools.includes('smartctl') && stale(next.health)) {
+        healthTried = true
+        void readHealth(serverId)
+      }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e)
     }
@@ -53,7 +69,45 @@
 
   $effect(() => {
     const serverId = servers.currentId
-    untrack(() => void load(serverId))
+    untrack(() => {
+      healthTried = false
+      healthLocked = false
+      void load(serverId)
+    })
+  })
+
+  /// No reading, or one older than ten minutes.
+  function stale(health: HealthReading | null | undefined): boolean {
+    return !health || Date.now() / 1000 - health.at > 600
+  }
+
+  /// SMART as root without a password; a refusal means sudo wants one.
+  async function readHealth(serverId = servers.currentId) {
+    readingHealth = true
+    try {
+      const reading = await api.storageHealth()
+      if (serverId !== servers.currentId || !view) return
+      view.health = reading
+      healthLocked = false
+    } catch (e) {
+      if (serverId === servers.currentId && e instanceof ApiError && e.status === 403) healthLocked = true
+    } finally {
+      readingHealth = false
+    }
+  }
+
+  function askHealth() {
+    if (healthLocked) ask('readHealth', $LL.storageHealthRead(), $LL.storageHealthReadBody())
+    else void readHealth()
+  }
+
+  // A self-test's progress, read again while one runs, where that needs no
+  // password.
+  const testing = $derived(!!view?.health?.disks.some((d) => d.testing != null))
+  $effect(() => {
+    if (!testing || healthLocked) return
+    const timer = setInterval(() => void readHealth(), 30_000)
+    return () => clearInterval(timer)
   })
 
   // An array syncing or a pool scrubbing is read again every few seconds
@@ -69,13 +123,54 @@
   const disks = $derived(view ? disksOf(view) : [])
   const free = $derived(view ? freeDevices(view) : [])
 
-  function ask(action: StorageAction, title: string, body: string, confirmWord?: string) {
+  function ask(action: StorageAction | 'readHealth', title: string, body: string, confirmWord?: string) {
     pending = { action, title, body, confirmWord }
   }
 
   function started(next: StackJob) {
     pending = null
     job = next
+  }
+
+  function healthBadge(v: HealthVerdict): { tone: 'success' | 'warning' | 'danger' | 'neutral'; text: string } {
+    switch (v) {
+      case 'healthy':
+        return { tone: 'success', text: $LL.storageHealthy() }
+      case 'wearing':
+        return { tone: 'warning', text: $LL.storageHealthWearing() }
+      case 'failing':
+        return { tone: 'danger', text: $LL.storageHealthFailing() }
+      case 'asleep':
+        return { tone: 'neutral', text: $LL.storageHealthAsleep() }
+      case 'unsupported':
+        return { tone: 'neutral', text: $LL.storageHealthUnsupported() }
+    }
+  }
+
+  function smartFacts(d: BlockDevice): string {
+    const h = view && healthOf(view, d.path)
+    if (!h) return ''
+    return [
+      h.testing != null ? $LL.storageTesting({ percent: h.testing }) : undefined,
+      h.temperature != null ? $LL.storageTemperature({ value: h.temperature }) : undefined,
+      h.power_on_hours != null ? $LL.storagePowerOn({ hours: h.power_on_hours }) : undefined,
+      h.bad_sectors ? $LL.storageBadSectors({ count: h.bad_sectors }) : undefined,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+  }
+
+  function lastTest(d: BlockDevice): string | undefined {
+    switch (view && healthOf(view, d.path)?.last_test?.outcome) {
+      case 'passed':
+        return $LL.storageLastTestPassed()
+      case 'failed':
+        return $LL.storageLastTestFailed()
+      case 'aborted':
+        return $LL.storageLastTestAborted()
+      default:
+        return undefined
+    }
   }
 
   function diskTitle(d: BlockDevice): string {
@@ -135,6 +230,21 @@
     newLevel = what === 'raid' ? '1' : 'mirror'
   }
 
+  /// A vdev more for [p], laid out as its first one by default.
+  function openPoolAdd(p: ZPool) {
+    creating = 'poolAdd'
+    growPool = p.name
+    picked = []
+    const first = p.vdevs.find((v) => v.depth === 1)?.name ?? ''
+    newLevel = ['mirror', 'raidz1', 'raidz2', 'raidz3'].find((l) => first.startsWith(l)) ?? 'stripe'
+  }
+
+  function openAdd(a: MdArray, grows: boolean) {
+    addTo = a
+    addGrows = grows
+    addDevice = free[0]?.path ?? ''
+  }
+
   function toggle(path: string, on: boolean) {
     picked = on ? [...picked, path] : picked.filter((p) => p !== path)
   }
@@ -142,7 +252,14 @@
   function confirmCreate() {
     const devices = [...picked]
     const list = devices.join(', ')
-    if (creating === 'raid') {
+    if (creating === 'poolAdd') {
+      ask(
+        { action: 'addToPool', name: growPool, layout: newLevel as 'mirror', devices },
+        $LL.storageAddToPool(),
+        $LL.storageAddToPoolBody({ name: growPool, layout: newLevel, devices: list }),
+        growPool,
+      )
+    } else if (creating === 'raid') {
       ask(
         { action: 'createRaid', name: newName, level: Number(newLevel), devices },
         $LL.storageCreateRaid(),
@@ -169,12 +286,40 @@
   }
 </script>
 
-<AppToolbar title={tab === 'disks' ? $LL.storageDisks() : tab === 'raid' ? $LL.storageRaid() : $LL.storagePools()}>
+{#snippet volume(v: BlockDevice, label: string)}
+  <Row
+    {label}
+    value={[v.fstype, v.label, isMounted(v) ? v.mountpoints.join(', ') : undefined].filter(Boolean).join(' · ') || $LL.storageNoFilesystem()}
+    sub={usage(v) ?? fmtBytes(v.size)}
+  >
+    <div class="flex shrink-0 gap-[5px]">
+      {#if view?.busy[v.path] === 'systemPartition'}
+        <Badge tone="neutral">{$LL.storageBusySystem()}</Badge>
+      {:else if isMounted(v) && view?.system?.includes(v.path)}
+        <Badge tone="neutral">{$LL.storageSystemDisk()}</Badge>
+      {:else if isMounted(v)}
+        <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => ask({ action: 'unmount', mountpoint: v.mountpoints[0] }, $LL.storageUnmount(), $LL.storageUnmountBody({ mountpoint: v.mountpoints[0] }))}>{$LL.storageUnmount()}</Button>
+      {:else if mountable(v)}
+        <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => openMount(v)}>{$LL.storageMount()}</Button>
+      {/if}
+      {#if expandable(v)}
+        <Button size="sm" variant="secondary" icon="open_in_full" disabled={job?.state === 'running'} onclick={() => ask({ action: 'expandFilesystem', device: v.path }, $LL.storageExpand(), $LL.storageExpandBody({ device: v.path }))}>{$LL.storageExpand()}</Button>
+      {/if}
+      {#if view?.busy[v.path] === undefined}
+        <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => openFormat(v)}>{$LL.storageFormat()}</Button>
+      {/if}
+    </div>
+  </Row>
+{/snippet}
+
+<AppToolbar title={tab === 'disks' ? $LL.storageDisks() : tab === 'raid' ? $LL.storageRaid() : tab === 'pools' ? $LL.storagePools() : $LL.storageMaintenance()}>
   {#snippet actions()}
     {#if tab === 'raid' && has('mdadm')}
       <Button size="sm" icon="add" disabled={job?.state === 'running'} onclick={() => openCreate('raid')}>{$LL.storageCreateRaid()}</Button>
     {:else if tab === 'pools' && has('zpool')}
       <Button size="sm" icon="add" disabled={job?.state === 'running'} onclick={() => openCreate('pool')}>{$LL.storageCreatePool()}</Button>
+    {:else if tab === 'disks' && has('smartctl')}
+      <Button size="sm" variant="secondary" icon="health_and_safety" disabled={readingHealth} onclick={askHealth}>{$LL.storageHealthRead()}</Button>
     {/if}
     <IconButton icon="refresh" label={$LL.refresh()} onclick={() => void load()} />
   {/snippet}
@@ -186,6 +331,7 @@
       <SidebarItem label={$LL.storageDisks()} icon="hard_drive" active={tab === 'disks'} trailing={disks.length || undefined} onclick={() => (tab = 'disks')} />
       <SidebarItem label={$LL.storageRaid()} icon="stacks" active={tab === 'raid'} trailing={view?.arrays.length || undefined} onclick={() => (tab = 'raid')} />
       <SidebarItem label={$LL.storagePools()} icon="database" active={tab === 'pools'} trailing={view?.pools.length || undefined} onclick={() => (tab = 'pools')} />
+      <SidebarItem label={$LL.storageMaintenance()} icon="event_repeat" active={tab === 'maintenance'} onclick={() => (tab = 'maintenance')} />
     </SidebarSection>
   {/snippet}
 
@@ -213,35 +359,24 @@
     {:else if tab === 'disks'}
       {#each disks as d (d.path)}
         {@const why = busyText(d)}
+        {@const health = healthOf(view, d.path)}
+        {@const badge = health && healthBadge(verdict(health))}
         <Group title={`${diskTitle(d)} · ${fmtBytes(d.size)}`}>
           <Row label={d.path} value={[kindText(d), d.transport?.toUpperCase(), d.serial].filter(Boolean).join(' · ')} mono>
-            {#if why}<Badge tone="neutral">{why}</Badge>{/if}
+            <div class="flex shrink-0 gap-[5px]">
+              {#if why}<Badge tone="neutral">{why}</Badge>{/if}
+              {#if badge}<Badge tone={badge.tone}>{badge.text}</Badge>{/if}
+            </div>
           </Row>
+          {#if health?.supported}
+            <Row label={$LL.storageSmart()} value={smartFacts(d)} sub={[lastTest(d), view.health ? $LL.storageHealthAt({ time: fmtEpochSeconds(view.health.at) }) : undefined].filter(Boolean).join(' · ')} />
+          {/if}
           {#each volumesOf(d) as v (v.path)}
-            <Row
-              label={v.path === d.path ? $LL.storageWholeDisk() : v.path}
-              value={[v.fstype, v.label, isMounted(v) ? v.mountpoints.join(', ') : undefined].filter(Boolean).join(' · ') || $LL.storageNoFilesystem()}
-              sub={usage(v) ?? fmtBytes(v.size)}
-            >
-              <div class="flex shrink-0 gap-[5px]">
-                {#if view.busy[v.path] === 'systemPartition'}
-                  <Badge tone="neutral">{$LL.storageBusySystem()}</Badge>
-                {:else if isMounted(v) && view.system?.includes(v.path)}
-                  <Badge tone="neutral">{$LL.storageSystemDisk()}</Badge>
-                {:else if isMounted(v)}
-                  <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => ask({ action: 'unmount', mountpoint: v.mountpoints[0] }, $LL.storageUnmount(), $LL.storageUnmountBody({ mountpoint: v.mountpoints[0] }))}>{$LL.storageUnmount()}</Button>
-                {:else if mountable(v)}
-                  <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => openMount(v)}>{$LL.storageMount()}</Button>
-                {/if}
-                {#if view.busy[v.path] === undefined}
-                  <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => openFormat(v)}>{$LL.storageFormat()}</Button>
-                {/if}
-              </div>
-            </Row>
+            {@render volume(v, v.path === d.path ? $LL.storageWholeDisk() : v.path)}
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
-            {#if has('smartctl') && d.kind === 'disk'}
-              <Button size="sm" variant="ghost" icon="health_and_safety" disabled={job?.state === 'running'} onclick={() => ask({ action: 'smartTest', device: d.path, long: false }, $LL.storageSmartTest(), $LL.storageSmartTestBody({ device: d.path }))}>{$LL.storageSmartTest()}</Button>
+            {#if health?.supported}
+              <Button size="sm" variant="ghost" icon="health_and_safety" disabled={job?.state === 'running' || health.testing != null} onclick={() => ask({ action: 'smartTest', device: d.path, long: false }, $LL.storageSmartTest(), $LL.storageSmartTestBody({ device: d.path }))}>{$LL.storageSmartTest()}</Button>
             {/if}
             {#if !why && has('sfdisk')}
               <Button size="sm" variant="secondary" icon="layers_clear" disabled={job?.state === 'running'} onclick={() => ask({ action: 'partition', device: d.path }, $LL.storageInitialize(), $LL.storageInitializeBody({ device: d.path }), d.path)}>{$LL.storageInitialize()}</Button>
@@ -259,6 +394,8 @@
           <Row label={$LL.storageState()} value={a.state}>
             <Badge tone={a.state !== 'active' ? 'neutral' : degraded ? 'danger' : 'success'}>{a.state !== 'active' ? a.state : degraded ? $LL.storageDegraded() : $LL.storageHealthy()}</Badge>
           </Row>
+          {@const md = arrayDevice(view, a.name)}
+          {#if md}{@render volume(md, md.path)}{/if}
           {#if a.sync}
             <Row label={$LL.storageSync({ action: a.sync.action })} value={`${(a.sync.permille / 10).toFixed(1)}%${a.sync.finish ? ` · ${a.sync.finish}` : ''}`} />
           {/if}
@@ -269,15 +406,17 @@
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
             <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => ask({ action: 'deleteRaid', array: a.name }, $LL.storageDeleteRaid(), $LL.storageDeleteRaidBody({ array: a.name }), a.name)}>{$LL.storageDeleteRaid()}</Button>
-            <Button size="sm" variant="secondary" icon="add" disabled={job?.state === 'running' || free.length === 0} onclick={() => {
-              addTo = a
-              addDevice = free[0]?.path ?? ''
-            }}>{$LL.storageAddMember()}</Button>
+            {#if growableArray(a.level)}
+              <Button size="sm" variant="secondary" icon="open_in_full" disabled={job?.state === 'running' || free.length === 0} onclick={() => openAdd(a, true)}>{$LL.storageGrowRaid()}</Button>
+            {/if}
+            <Button size="sm" variant="secondary" icon="add" disabled={job?.state === 'running' || free.length === 0} onclick={() => openAdd(a, false)}>{$LL.storageAddMember()}</Button>
           </div>
         </Group>
       {:else}
         <div class="flex flex-col items-center gap-[9px] py-[55px] text-(--text-tertiary)"><Icon name="stacks" size={48} /><p>{$LL.storageNoArrays()}</p></div>
       {/each}
+    {:else if tab === 'maintenance'}
+      <StorageMaintenance {view} onchange={(tasks) => view && (view.maintenance = tasks)} />
     {:else}
       {#if !has('zpool')}<Card><p class="text-[13px] text-(--text-secondary)">{$LL.storageNoZfs()}</p></Card>{/if}
       {#each view.pools as p (p.name)}
@@ -291,6 +430,7 @@
           {/each}
           <div class="flex justify-end gap-[7px] px-[13px] py-[9px]">
             <Button size="sm" variant="ghost" disabled={job?.state === 'running'} onclick={() => ask({ action: 'destroyPool', name: p.name }, $LL.storageDestroyPool(), $LL.storageDestroyPoolBody({ name: p.name }), p.name)}>{$LL.storageDestroyPool()}</Button>
+            <Button size="sm" variant="secondary" icon="add" disabled={job?.state === 'running' || free.length === 0} onclick={() => openPoolAdd(p)}>{$LL.storageAddToPool()}</Button>
             <Button size="sm" variant="secondary" icon="cleaning_services" disabled={job?.state === 'running'} onclick={() => ask({ action: 'scrubPool', name: p.name }, $LL.storageScrub(), $LL.storageScrubBody({ name: p.name }))}>{$LL.storageScrub()}</Button>
           </div>
         </Group>
@@ -342,9 +482,11 @@
 {/if}
 
 {#if creating}
-  <Dialog open wide title={creating === 'raid' ? $LL.storageCreateRaid() : $LL.storageCreatePool()} onclose={() => (creating = null)}>
+  <Dialog open wide title={creating === 'raid' ? $LL.storageCreateRaid() : creating === 'pool' ? $LL.storageCreatePool() : $LL.storageAddToPool()} message={creating === 'poolAdd' ? growPool : undefined} onclose={() => (creating = null)}>
     <div class="space-y-[9px] text-left">
-      <Input label={$LL.storageName()} mono value={newName} oninput={(e: Event) => (newName = (e.currentTarget as HTMLInputElement).value)} />
+      {#if creating !== 'poolAdd'}
+        <Input label={$LL.storageName()} mono value={newName} oninput={(e: Event) => (newName = (e.currentTarget as HTMLInputElement).value)} />
+      {/if}
       <Select
         label={creating === 'raid' ? $LL.storageLevel() : $LL.storageLayout()}
         value={newLevel}
@@ -364,14 +506,14 @@
       {/each}
     </div>
     {#snippet actions()}
-      <Button variant="destructive" block disabled={picked.length < minimum(creating === 'raid' ? Number(newLevel) : newLevel) || !newName.trim()} onclick={confirmCreate}>{$LL.storageContinue()}</Button>
+      <Button variant="destructive" block disabled={picked.length < minimum(creating === 'raid' ? Number(newLevel) : newLevel) || (creating !== 'poolAdd' && !newName.trim())} onclick={confirmCreate}>{$LL.storageContinue()}</Button>
       <Button variant="secondary" block onclick={() => (creating = null)}>{$LL.cancel()}</Button>
     {/snippet}
   </Dialog>
 {/if}
 
 {#if addTo}
-  <Dialog open title={$LL.storageAddMember()} message={`/dev/${addTo.name}`} onclose={() => (addTo = null)}>
+  <Dialog open title={addGrows ? $LL.storageGrowRaid() : $LL.storageAddMember()} message={`/dev/${addTo.name}`} onclose={() => (addTo = null)}>
     <Select
       label={$LL.storageDevice()}
       value={addDevice}
@@ -382,7 +524,8 @@
       <Button block disabled={!addDevice} onclick={() => {
         const a = addTo!
         addTo = null
-        ask({ action: 'addToRaid', array: a.name, device: addDevice }, $LL.storageAddMember(), $LL.storageAddMemberBody({ device: addDevice, array: a.name }), addDevice)
+        if (addGrows) ask({ action: 'growRaid', array: a.name, device: addDevice }, $LL.storageGrowRaid(), $LL.storageGrowRaidBody({ device: addDevice, array: a.name }), addDevice)
+        else ask({ action: 'addToRaid', array: a.name, device: addDevice }, $LL.storageAddMember(), $LL.storageAddMemberBody({ device: addDevice, array: a.name }), addDevice)
       }}>{$LL.storageContinue()}</Button>
       <Button variant="secondary" block onclick={() => (addTo = null)}>{$LL.cancel()}</Button>
     {/snippet}
@@ -395,5 +538,10 @@
   body={pending?.body ?? ''}
   confirmWord={pending?.confirmWord}
   onstarted={started}
+  onhealth={(reading) => {
+    pending = null
+    healthLocked = false
+    if (view) view.health = reading
+  }}
   onclose={() => (pending = null)}
 />

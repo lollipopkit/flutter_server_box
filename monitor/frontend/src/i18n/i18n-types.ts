@@ -8846,7 +8846,7 @@ type RootTranslation = {
 	 */
 	storageUnmountBody: RequiredParams<'mountpoint'>
 	/**
-	 * S​t​a​r​t​s​ ​a​ ​s​h​o​r​t​ ​s​e​l​f​-​t​e​s​t​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​I​t​s​ ​r​e​s​u​l​t​ ​s​h​o​w​s​ ​i​n​ ​S​t​a​t​u​s​ ​a​f​t​e​r​ ​a​ ​f​e​w​ ​m​i​n​u​t​e​s​.
+	 * S​t​a​r​t​s​ ​a​ ​s​h​o​r​t​ ​s​e​l​f​-​t​e​s​t​ ​o​n​ ​{​d​e​v​i​c​e​}​.​ ​I​t​ ​t​a​k​e​s​ ​a​ ​f​e​w​ ​m​i​n​u​t​e​s​;​ ​i​t​s​ ​p​r​o​g​r​e​s​s​ ​a​n​d​ ​r​e​s​u​l​t​ ​s​h​o​w​ ​h​e​r​e​.
 	 * @param {unknown} device
 	 */
 	storageSmartTestBody: RequiredParams<'device'>
@@ -8993,6 +8993,479 @@ type RootTranslation = {
 	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
 	 */
 	storageFailed: string
+	/**
+	 * R​e​a​d​ ​d​i​s​k​ ​h​e​a​l​t​h
+	 */
+	storageHealthRead: string
+	/**
+	 * R​e​a​d​s​ ​e​v​e​r​y​ ​d​i​s​k​'​s​ ​S​M​A​R​T​ ​d​a​t​a​ ​a​s​ ​r​o​o​t​.
+	 */
+	storageHealthReadBody: string
+	/**
+	 * W​e​a​r​i​n​g
+	 */
+	storageHealthWearing: string
+	/**
+	 * F​a​i​l​i​n​g
+	 */
+	storageHealthFailing: string
+	/**
+	 * A​s​l​e​e​p
+	 */
+	storageHealthAsleep: string
+	/**
+	 * N​o​ ​S​M​A​R​T
+	 */
+	storageHealthUnsupported: string
+	/**
+	 * S​M​A​R​T
+	 */
+	storageSmart: string
+	/**
+	 * {​v​a​l​u​e​}​ ​°​C
+	 * @param {unknown} value
+	 */
+	storageTemperature: RequiredParams<'value'>
+	/**
+	 * {​h​o​u​r​s​}​ ​h​ ​p​o​w​e​r​e​d​ ​o​n
+	 * @param {unknown} hours
+	 */
+	storagePowerOn: RequiredParams<'hours'>
+	/**
+	 * {​c​o​u​n​t​}​ ​b​a​d​ ​s​e​c​t​o​r​s
+	 * @param {unknown} count
+	 */
+	storageBadSectors: RequiredParams<'count'>
+	/**
+	 * S​e​l​f​-​t​e​s​t​:​ ​{​p​e​r​c​e​n​t​}​%​ ​l​e​f​t
+	 * @param {unknown} percent
+	 */
+	storageTesting: RequiredParams<'percent'>
+	/**
+	 * L​a​s​t​ ​s​e​l​f​-​t​e​s​t​ ​p​a​s​s​e​d
+	 */
+	storageLastTestPassed: string
+	/**
+	 * L​a​s​t​ ​s​e​l​f​-​t​e​s​t​ ​f​a​i​l​e​d
+	 */
+	storageLastTestFailed: string
+	/**
+	 * L​a​s​t​ ​s​e​l​f​-​t​e​s​t​ ​w​a​s​ ​s​t​o​p​p​e​d
+	 */
+	storageLastTestAborted: string
+	/**
+	 * R​e​a​d​ ​{​t​i​m​e​}
+	 * @param {unknown} time
+	 */
+	storageHealthAt: RequiredParams<'time'>
+	/**
+	 * M​a​i​n​t​e​n​a​n​c​e
+	 */
+	storageMaintenance: string
+	/**
+	 * S​c​r​u​b​ ​p​o​o​l​s​ ​a​n​d​ ​c​h​e​c​k​ ​a​r​r​a​y​s
+	 */
+	storageTaskScrub: string
+	/**
+	 * R​e​a​d​s​ ​e​v​e​r​y​t​h​i​n​g​ ​o​n​ ​e​a​c​h​ ​Z​F​S​ ​p​o​o​l​ ​a​n​d​ ​R​A​I​D​ ​a​r​r​a​y​ ​a​n​d​ ​r​e​p​a​i​r​s​ ​w​h​a​t​ ​i​t​ ​c​a​n​.
+	 */
+	storageTaskScrubBody: string
+	/**
+	 * S​h​o​r​t​ ​S​M​A​R​T​ ​t​e​s​t
+	 */
+	storageTaskSmartShort: string
+	/**
+	 * A​ ​f​e​w​ ​m​i​n​u​t​e​s​ ​o​n​ ​e​v​e​r​y​ ​d​i​s​k​ ​w​i​t​h​ ​S​M​A​R​T​.
+	 */
+	storageTaskSmartShortBody: string
+	/**
+	 * L​o​n​g​ ​S​M​A​R​T​ ​t​e​s​t
+	 */
+	storageTaskSmartLong: string
+	/**
+	 * R​e​a​d​s​ ​e​v​e​r​y​ ​d​i​s​k​ ​w​i​t​h​ ​S​M​A​R​T​ ​e​n​d​ ​t​o​ ​e​n​d​:​ ​h​o​u​r​s​ ​o​n​ ​a​ ​l​a​r​g​e​ ​d​i​s​k​.
+	 */
+	storageTaskSmartLongBody: string
+	/**
+	 * O​f​f
+	 */
+	storageRepeatOff: string
+	/**
+	 * W​e​e​k​l​y
+	 */
+	storageRepeatWeekly: string
+	/**
+	 * M​o​n​t​h​l​y
+	 */
+	storageRepeatMonthly: string
+	/**
+	 * W​h​e​n
+	 */
+	storageRepeatWhen: string
+	/**
+	 * D​a​y
+	 */
+	storageRepeatDay: string
+	/**
+	 * T​i​m​e
+	 */
+	storageRepeatTime: string
+	/**
+	 * L​a​s​t​ ​r​u​n
+	 */
+	storageLastRun: string
+	/**
+	 * N​o​t​ ​y​e​t
+	 */
+	storageNeverRun: string
+	/**
+	 * S​t​a​r​t​e​d
+	 */
+	storageRanOk: string
+	/**
+	 * R​u​n​ ​n​o​w
+	 */
+	storageRunNow: string
+	/**
+	 * s​u​d​o​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​p​a​s​s​w​o​r​d​:​ ​r​u​n​ ​t​h​e​ ​a​g​e​n​t​ ​a​s​ ​r​o​o​t​,​ ​o​r​ ​a​l​l​o​w​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​(​a​b​o​v​e​)​.
+	 */
+	storageNeedsSudo: string
+	/**
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​a​ ​p​a​s​s​w​o​r​d​.​ ​U​n​l​e​s​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​ ​r​o​o​t​,​ ​s​u​d​o​ ​m​u​s​t​ ​l​e​t​ ​i​t​s​ ​a​c​c​o​u​n​t​ ​r​u​n​ ​t​h​e​s​e​ ​c​o​m​m​a​n​d​s​ ​w​i​t​h​o​u​t​ ​o​n​e​,​ ​f​o​r​ ​e​x​a​m​p​l​e​ ​i​n​ ​/​e​t​c​/​s​u​d​o​e​r​s​.​d​/​s​e​r​v​e​r​b​o​x​-​s​t​o​r​a​g​e​:
+	 */
+	storageMaintenanceSudo: string
+	/**
+	 * N​e​e​d​s​ ​Z​F​S​ ​o​r​ ​m​d​a​d​m​.
+	 */
+	storageNoScrubTools: string
+	/**
+	 * N​e​e​d​s​ ​s​m​a​r​t​m​o​n​t​o​o​l​s​.
+	 */
+	storageNoSmartctl: string
+	/**
+	 * E​x​p​a​n​d
+	 */
+	storageExpand: string
+	/**
+	 * G​r​o​w​s​ ​t​h​e​ ​f​i​l​e​s​y​s​t​e​m​ ​o​n​ ​{​d​e​v​i​c​e​}​ ​t​o​ ​f​i​l​l​ ​i​t​s​ ​d​e​v​i​c​e​.​ ​I​t​ ​s​t​a​y​s​ ​m​o​u​n​t​e​d​.
+	 * @param {unknown} device
+	 */
+	storageExpandBody: RequiredParams<'device'>
+	/**
+	 * G​r​o​w
+	 */
+	storageGrowRaid: string
+	/**
+	 * A​d​d​s​ ​{​d​e​v​i​c​e​}​ ​t​o​ ​/​d​e​v​/​{​a​r​r​a​y​}​ ​a​s​ ​o​n​e​ ​m​o​r​e​ ​w​o​r​k​i​n​g​ ​m​e​m​b​e​r​.​ ​R​A​I​D​ ​1​ ​g​a​i​n​s​ ​a​ ​m​i​r​r​o​r​;​ ​R​A​I​D​ ​5​ ​a​n​d​ ​6​ ​g​a​i​n​ ​r​o​o​m​ ​o​n​c​e​ ​t​h​e​ ​r​e​s​h​a​p​e​ ​e​n​d​s​,​ ​w​h​i​c​h​ ​c​a​n​ ​t​a​k​e​ ​h​o​u​r​s​.​ ​E​x​p​a​n​d​ ​i​t​s​ ​f​i​l​e​s​y​s​t​e​m​ ​a​f​t​e​r​.​ ​W​h​a​t​ ​{​d​e​v​i​c​e​}​ ​h​o​l​d​s​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} array
+	 * @param {unknown} device
+	 */
+	storageGrowRaidBody: RequiredParams<'array' | 'device' | 'device'>
+	/**
+	 * A​d​d​ ​d​i​s​k​s
+	 */
+	storageAddToPool: string
+	/**
+	 * A​d​d​s​ ​{​l​a​y​o​u​t​}​ ​o​f​ ​{​d​e​v​i​c​e​s​}​ ​t​o​ ​p​o​o​l​ ​{​n​a​m​e​}​ ​f​o​r​ ​m​o​r​e​ ​r​o​o​m​.​ ​T​h​e​y​ ​c​a​n​n​o​t​ ​b​e​ ​t​a​k​e​n​ ​o​u​t​ ​a​g​a​i​n​,​ ​a​n​d​ ​w​h​a​t​ ​t​h​e​y​ ​h​o​l​d​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} devices
+	 * @param {unknown} layout
+	 * @param {unknown} name
+	 */
+	storageAddToPoolBody: RequiredParams<'devices' | 'layout' | 'name'>
+	/**
+	 * /​d​e​v​/​{​a​r​r​a​y​}​ ​i​s​ ​d​e​g​r​a​d​e​d
+	 * @param {unknown} array
+	 */
+	noticeStorageArrayDegraded: RequiredParams<'array'>
+	/**
+	 * A​ ​m​e​m​b​e​r​ ​f​a​i​l​e​d​ ​o​r​ ​i​s​ ​m​i​s​s​i​n​g​;​ ​t​h​e​ ​a​r​r​a​y​ ​r​u​n​s​ ​w​i​t​h​o​u​t​ ​i​t​s​ ​r​e​d​u​n​d​a​n​c​y​.
+	 */
+	noticeStorageArrayDegradedBody: string
+	/**
+	 * /​d​e​v​/​{​a​r​r​a​y​}​ ​i​s​ ​h​e​a​l​t​h​y​ ​a​g​a​i​n
+	 * @param {unknown} array
+	 */
+	noticeStorageArrayBack: RequiredParams<'array'>
+	/**
+	 * E​v​e​r​y​ ​m​e​m​b​e​r​ ​i​s​ ​w​o​r​k​i​n​g​.
+	 */
+	noticeStorageArrayBackBody: string
+	/**
+	 * P​o​o​l​ ​{​p​o​o​l​}​ ​i​s​ ​{​h​e​a​l​t​h​}
+	 * @param {unknown} health
+	 * @param {unknown} pool
+	 */
+	noticeStoragePoolUnhealthy: RequiredParams<'health' | 'pool'>
+	/**
+	 * O​p​e​n​ ​S​t​o​r​a​g​e​ ​t​o​ ​s​e​e​ ​w​h​i​c​h​ ​d​e​v​i​c​e​.
+	 */
+	noticeStoragePoolUnhealthyBody: string
+	/**
+	 * P​o​o​l​ ​{​p​o​o​l​}​ ​i​s​ ​o​n​l​i​n​e​ ​a​g​a​i​n
+	 * @param {unknown} pool
+	 */
+	noticeStoragePoolBack: RequiredParams<'pool'>
+	/**
+	 * E​v​e​r​y​ ​d​e​v​i​c​e​ ​i​s​ ​w​o​r​k​i​n​g​.
+	 */
+	noticeStoragePoolBackBody: string
+	/**
+	 * {​d​e​v​i​c​e​}​ ​i​s​ ​f​a​i​l​i​n​g
+	 * @param {unknown} device
+	 */
+	noticeStorageDiskFailing: RequiredParams<'device'>
+	/**
+	 * I​t​s​ ​S​M​A​R​T​ ​c​h​e​c​k​ ​o​r​ ​s​e​l​f​-​t​e​s​t​ ​f​a​i​l​e​d​:​ ​c​o​p​y​ ​w​h​a​t​ ​i​t​ ​h​o​l​d​s​ ​e​l​s​e​w​h​e​r​e​ ​a​n​d​ ​r​e​p​l​a​c​e​ ​i​t​.
+	 */
+	noticeStorageDiskFailingBody: string
+	/**
+	 * {​d​e​v​i​c​e​}​ ​h​a​s​ ​{​c​o​u​n​t​}​ ​b​a​d​ ​s​e​c​t​o​r​s
+	 * @param {unknown} count
+	 * @param {unknown} device
+	 */
+	noticeStorageDiskSectors: RequiredParams<'count' | 'device'>
+	/**
+	 * I​t​ ​h​a​d​ ​{​w​a​s​}​.​ ​A​ ​d​i​s​k​ ​l​o​s​i​n​g​ ​s​e​c​t​o​r​s​ ​o​f​t​e​n​ ​f​a​i​l​s​ ​s​o​o​n​.
+	 * @param {unknown} was
+	 */
+	noticeStorageDiskSectorsBody: RequiredParams<'was'>
+	/**
+	 * S​t​o​r​a​g​e​ ​m​a​i​n​t​e​n​a​n​c​e​ ​d​i​d​ ​n​o​t​ ​r​u​n​:​ ​{​t​a​s​k​}
+	 * @param {unknown} task
+	 */
+	noticeStorageMaintenanceFailed: RequiredParams<'task'>
+	/**
+	 * S​h​a​r​i​n​g
+	 */
+	sharingTitle: string
+	/**
+	 * S​M​B
+	 */
+	sharingSmb: string
+	/**
+	 * N​F​S
+	 */
+	sharingNfs: string
+	/**
+	 * S​e​r​v​i​c​e
+	 */
+	sharingService: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	sharingRunning: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	sharingStopped: string
+	/**
+	 * N​F​S​ ​s​e​r​v​e​r
+	 */
+	sharingNfsServer: string
+	/**
+	 * S​a​m​b​a​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.​ ​W​i​n​d​o​w​s​,​ ​m​a​c​O​S​ ​a​n​d​ ​L​i​n​u​x​ ​o​p​e​n​ ​S​M​B​ ​s​h​a​r​e​s​.
+	 */
+	sharingNoSamba: string
+	/**
+	 * T​h​e​ ​N​F​S​ ​s​e​r​v​e​r​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​.​ ​L​i​n​u​x​ ​a​n​d​ ​m​a​c​O​S​ ​m​o​u​n​t​ ​N​F​S​ ​e​x​p​o​r​t​s​.
+	 */
+	sharingNoNfs: string
+	/**
+	 * I​n​s​t​a​l​l​ ​S​a​m​b​a
+	 */
+	sharingInstallSamba: string
+	/**
+	 * I​n​s​t​a​l​l​s​ ​S​a​m​b​a​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​ ​m​a​n​a​g​e​r​.
+	 */
+	sharingInstallSambaBody: string
+	/**
+	 * I​n​s​t​a​l​l​ ​N​F​S​ ​s​e​r​v​e​r
+	 */
+	sharingInstallNfs: string
+	/**
+	 * I​n​s​t​a​l​l​s​ ​t​h​e​ ​N​F​S​ ​s​e​r​v​e​r​ ​w​i​t​h​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​ ​m​a​n​a​g​e​r​.
+	 */
+	sharingInstallNfsBody: string
+	/**
+	 * I​n​s​t​a​l​l​i​n​g​…
+	 */
+	sharingInstalling: string
+	/**
+	 * A​d​d​ ​s​h​a​r​e
+	 */
+	sharingAddShare: string
+	/**
+	 * A​d​d​ ​e​x​p​o​r​t
+	 */
+	sharingAddExport: string
+	/**
+	 * E​d​i​t
+	 */
+	sharingEdit: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	sharingRemove: string
+	/**
+	 * S​a​v​e
+	 */
+	sharingSave: string
+	/**
+	 * S​h​a​r​e​s​ ​{​p​a​t​h​}​ ​o​v​e​r​ ​S​M​B​ ​a​s​ ​{​n​a​m​e​}​,​ ​t​h​e​n​ ​r​e​l​o​a​d​s​ ​S​a​m​b​a​.
+	 * @param {unknown} name
+	 * @param {unknown} path
+	 */
+	sharingSaveSmbBody: RequiredParams<'name' | 'path'>
+	/**
+	 * E​x​p​o​r​t​s​ ​{​p​a​t​h​}​ ​o​v​e​r​ ​N​F​S​,​ ​t​h​e​n​ ​r​e​l​o​a​d​s​ ​t​h​e​ ​e​x​p​o​r​t​s​.
+	 * @param {unknown} path
+	 */
+	sharingSaveNfsBody: RequiredParams<'path'>
+	/**
+	 * S​t​o​p​s​ ​s​h​a​r​i​n​g​ ​{​n​a​m​e​}​.​ ​T​h​e​ ​f​o​l​d​e​r​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​s​t​a​y​.
+	 * @param {unknown} name
+	 */
+	sharingRemoveSmbBody: RequiredParams<'name'>
+	/**
+	 * S​t​o​p​s​ ​e​x​p​o​r​t​i​n​g​ ​{​p​a​t​h​}​.​ ​T​h​e​ ​f​o​l​d​e​r​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​s​t​a​y​.
+	 * @param {unknown} path
+	 */
+	sharingRemoveNfsBody: RequiredParams<'path'>
+	/**
+	 * S​e​t​ ​u​p​ ​o​u​t​s​i​d​e​ ​S​e​r​v​e​r​B​o​x
+	 */
+	sharingElsewhere: string
+	/**
+	 * N​o​ ​S​M​B​ ​s​h​a​r​e​s
+	 */
+	sharingNoShares: string
+	/**
+	 * N​o​ ​N​F​S​ ​e​x​p​o​r​t​s
+	 */
+	sharingNoExports: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	sharingReadOnly: string
+	/**
+	 * R​e​a​d​ ​a​n​d​ ​w​r​i​t​e
+	 */
+	sharingReadWrite: string
+	/**
+	 * G​u​e​s​t​s
+	 */
+	sharingGuest: string
+	/**
+	 * L​e​t​ ​a​n​y​o​n​e​ ​o​n​ ​t​h​e​ ​n​e​t​w​o​r​k​ ​i​n​ ​w​i​t​h​o​u​t​ ​a​n​ ​a​c​c​o​u​n​t
+	 */
+	sharingGuestLabel: string
+	/**
+	 * A​c​c​o​u​n​t​s​ ​a​l​l​o​w​e​d​ ​i​n​ ​(​n​o​n​e​ ​t​i​c​k​e​d​:​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​a​n​ ​S​M​B​ ​p​a​s​s​w​o​r​d​)​:
+	 */
+	sharingUsersHint: string
+	/**
+	 * F​o​l​d​e​r
+	 */
+	sharingFolder: string
+	/**
+	 * A​ ​f​o​l​d​e​r​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​,​ ​e​.​g​.​ ​a​ ​d​i​s​k​ ​m​o​u​n​t​e​d​ ​i​n​ ​S​t​o​r​a​g​e​.
+	 */
+	sharingFolderHint: string
+	/**
+	 * D​e​s​c​r​i​p​t​i​o​n
+	 */
+	sharingComment: string
+	/**
+	 * S​M​B​ ​p​a​s​s​w​o​r​d​s
+	 */
+	sharingPasswords: string
+	/**
+	 * S​a​m​b​a​ ​k​e​e​p​s​ ​i​t​s​ ​o​w​n​ ​p​a​s​s​w​o​r​d​s​:​ ​s​e​t​ ​o​n​e​ ​f​o​r​ ​e​a​c​h​ ​a​c​c​o​u​n​t​ ​t​h​a​t​ ​c​o​n​n​e​c​t​s​.
+	 */
+	sharingPasswordsBody: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	sharingAccount: string
+	/**
+	 * S​e​t​ ​p​a​s​s​w​o​r​d
+	 */
+	sharingSetPassword: string
+	/**
+	 * S​e​t​s​ ​t​h​e​ ​S​M​B​ ​p​a​s​s​w​o​r​d​ ​o​f​ ​{​u​s​e​r​}​.
+	 * @param {unknown} user
+	 */
+	sharingSetPasswordBody: RequiredParams<'user'>
+	/**
+	 * N​e​w​ ​S​M​B​ ​p​a​s​s​w​o​r​d
+	 */
+	sharingNewPassword: string
+	/**
+	 * T​h​e​ ​s​a​m​e​ ​a​g​a​i​n
+	 */
+	sharingNewPasswordAgain: string
+	/**
+	 * T​h​e​ ​t​w​o​ ​p​a​s​s​w​o​r​d​s​ ​d​i​f​f​e​r​.
+	 */
+	sharingPasswordsDiffer: string
+	/**
+	 * W​h​o​ ​m​a​y​ ​m​o​u​n​t​ ​i​t​:​ ​*​ ​f​o​r​ ​a​n​y​o​n​e​,​ ​a​ ​h​o​s​t​,​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​ ​n​e​t​w​o​r​k​ ​s​u​c​h​ ​a​s​ ​1​9​2​.​1​6​8​.​1​.​0​/​2​4​.
+	 */
+	sharingClientsHint: string
+	/**
+	 * C​l​i​e​n​t
+	 */
+	sharingClient: string
+	/**
+	 * A​d​d​ ​c​l​i​e​n​t
+	 */
+	sharingAddClient: string
+	/**
+	 * R​o​o​t​ ​o​n​ ​t​h​e​ ​c​l​i​e​n​t
+	 */
+	sharingSquash: string
+	/**
+	 * R​o​o​t​ ​i​s​ ​n​o​b​o​d​y
+	 */
+	sharingSquashRoot: string
+	/**
+	 * E​v​e​r​y​o​n​e​ ​i​s​ ​n​o​b​o​d​y
+	 */
+	sharingSquashAll: string
+	/**
+	 * R​o​o​t​ ​s​t​a​y​s​ ​r​o​o​t
+	 */
+	sharingSquashNone: string
+	/**
+	 * {​p​a​t​h​}​ ​i​s​ ​n​o​t​ ​a​ ​f​o​l​d​e​r​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​.
+	 * @param {unknown} path
+	 */
+	sharingNotAFolder: RequiredParams<'path'>
+	/**
+	 * T​h​e​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​w​a​s​ ​r​e​f​u​s​e​d​ ​a​n​d​ ​t​h​e​ ​p​r​e​v​i​o​u​s​ ​o​n​e​ ​i​s​ ​b​a​c​k​:​ ​{​d​e​t​a​i​l​}
+	 * @param {unknown} detail
+	 */
+	sharingRefused: RequiredParams<'detail'>
+	/**
+	 * A​n​o​t​h​e​r​ ​s​h​a​r​e​ ​h​a​s​ ​t​h​i​s​ ​n​a​m​e​ ​o​r​ ​f​o​l​d​e​r​.
+	 */
+	sharingDuplicate: string
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​,​ ​_​ ​.​ ​-​ ​(​3​2​ ​a​t​ ​m​o​s​t​)​.
+	 */
+	sharingInvalidName: string
+	/**
+	 * T​h​e​ ​f​o​l​d​e​r​ ​m​u​s​t​ ​b​e​ ​a​n​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​ ​w​i​t​h​o​u​t​ ​q​u​o​t​e​s​,​ ​b​a​c​k​s​l​a​s​h​e​s​ ​o​r​ ​.​.
+	 */
+	sharingInvalidPath: string
+	/**
+	 * A​ ​c​l​i​e​n​t​ ​i​s​ ​*​,​ ​a​ ​h​o​s​t​,​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​a​ ​n​e​t​w​o​r​k​.
+	 */
+	sharingInvalidClient: string
+	/**
+	 * T​h​i​s​ ​p​a​s​s​w​o​r​d​ ​c​a​n​n​o​t​ ​b​e​ ​u​s​e​d​.
+	 */
+	sharingInvalidPassword: string
 	/**
 	 * W​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o
 	 */
@@ -17659,7 +18132,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storageUnmountBody: (arg: { mountpoint: unknown }) => LocalizedString
 	/**
-	 * Starts a short self-test on {device}. Its result shows in Status after a few minutes.
+	 * Starts a short self-test on {device}. It takes a few minutes; its progress and result show here.
 	 */
 	storageSmartTestBody: (arg: { device: unknown }) => LocalizedString
 	/**
@@ -17794,6 +18267,450 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Did not finish
 	 */
 	storageFailed: () => LocalizedString
+	/**
+	 * Read disk health
+	 */
+	storageHealthRead: () => LocalizedString
+	/**
+	 * Reads every disk's SMART data as root.
+	 */
+	storageHealthReadBody: () => LocalizedString
+	/**
+	 * Wearing
+	 */
+	storageHealthWearing: () => LocalizedString
+	/**
+	 * Failing
+	 */
+	storageHealthFailing: () => LocalizedString
+	/**
+	 * Asleep
+	 */
+	storageHealthAsleep: () => LocalizedString
+	/**
+	 * No SMART
+	 */
+	storageHealthUnsupported: () => LocalizedString
+	/**
+	 * SMART
+	 */
+	storageSmart: () => LocalizedString
+	/**
+	 * {value} °C
+	 */
+	storageTemperature: (arg: { value: unknown }) => LocalizedString
+	/**
+	 * {hours} h powered on
+	 */
+	storagePowerOn: (arg: { hours: unknown }) => LocalizedString
+	/**
+	 * {count} bad sectors
+	 */
+	storageBadSectors: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Self-test: {percent}% left
+	 */
+	storageTesting: (arg: { percent: unknown }) => LocalizedString
+	/**
+	 * Last self-test passed
+	 */
+	storageLastTestPassed: () => LocalizedString
+	/**
+	 * Last self-test failed
+	 */
+	storageLastTestFailed: () => LocalizedString
+	/**
+	 * Last self-test was stopped
+	 */
+	storageLastTestAborted: () => LocalizedString
+	/**
+	 * Read {time}
+	 */
+	storageHealthAt: (arg: { time: unknown }) => LocalizedString
+	/**
+	 * Maintenance
+	 */
+	storageMaintenance: () => LocalizedString
+	/**
+	 * Scrub pools and check arrays
+	 */
+	storageTaskScrub: () => LocalizedString
+	/**
+	 * Reads everything on each ZFS pool and RAID array and repairs what it can.
+	 */
+	storageTaskScrubBody: () => LocalizedString
+	/**
+	 * Short SMART test
+	 */
+	storageTaskSmartShort: () => LocalizedString
+	/**
+	 * A few minutes on every disk with SMART.
+	 */
+	storageTaskSmartShortBody: () => LocalizedString
+	/**
+	 * Long SMART test
+	 */
+	storageTaskSmartLong: () => LocalizedString
+	/**
+	 * Reads every disk with SMART end to end: hours on a large disk.
+	 */
+	storageTaskSmartLongBody: () => LocalizedString
+	/**
+	 * Off
+	 */
+	storageRepeatOff: () => LocalizedString
+	/**
+	 * Weekly
+	 */
+	storageRepeatWeekly: () => LocalizedString
+	/**
+	 * Monthly
+	 */
+	storageRepeatMonthly: () => LocalizedString
+	/**
+	 * When
+	 */
+	storageRepeatWhen: () => LocalizedString
+	/**
+	 * Day
+	 */
+	storageRepeatDay: () => LocalizedString
+	/**
+	 * Time
+	 */
+	storageRepeatTime: () => LocalizedString
+	/**
+	 * Last run
+	 */
+	storageLastRun: () => LocalizedString
+	/**
+	 * Not yet
+	 */
+	storageNeverRun: () => LocalizedString
+	/**
+	 * Started
+	 */
+	storageRanOk: () => LocalizedString
+	/**
+	 * Run now
+	 */
+	storageRunNow: () => LocalizedString
+	/**
+	 * sudo asked for a password: run the agent as root, or allow these commands (above).
+	 */
+	storageNeedsSudo: () => LocalizedString
+	/**
+	 * The schedule runs without a password. Unless the agent runs as root, sudo must let its account run these commands without one, for example in /etc/sudoers.d/serverbox-storage:
+	 */
+	storageMaintenanceSudo: () => LocalizedString
+	/**
+	 * Needs ZFS or mdadm.
+	 */
+	storageNoScrubTools: () => LocalizedString
+	/**
+	 * Needs smartmontools.
+	 */
+	storageNoSmartctl: () => LocalizedString
+	/**
+	 * Expand
+	 */
+	storageExpand: () => LocalizedString
+	/**
+	 * Grows the filesystem on {device} to fill its device. It stays mounted.
+	 */
+	storageExpandBody: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Grow
+	 */
+	storageGrowRaid: () => LocalizedString
+	/**
+	 * Adds {device} to /dev/{array} as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What {device} holds is lost.
+	 */
+	storageGrowRaidBody: (arg: { array: unknown, device: unknown }) => LocalizedString
+	/**
+	 * Add disks
+	 */
+	storageAddToPool: () => LocalizedString
+	/**
+	 * Adds {layout} of {devices} to pool {name} for more room. They cannot be taken out again, and what they hold is lost.
+	 */
+	storageAddToPoolBody: (arg: { devices: unknown, layout: unknown, name: unknown }) => LocalizedString
+	/**
+	 * /dev/{array} is degraded
+	 */
+	noticeStorageArrayDegraded: (arg: { array: unknown }) => LocalizedString
+	/**
+	 * A member failed or is missing; the array runs without its redundancy.
+	 */
+	noticeStorageArrayDegradedBody: () => LocalizedString
+	/**
+	 * /dev/{array} is healthy again
+	 */
+	noticeStorageArrayBack: (arg: { array: unknown }) => LocalizedString
+	/**
+	 * Every member is working.
+	 */
+	noticeStorageArrayBackBody: () => LocalizedString
+	/**
+	 * Pool {pool} is {health}
+	 */
+	noticeStoragePoolUnhealthy: (arg: { health: unknown, pool: unknown }) => LocalizedString
+	/**
+	 * Open Storage to see which device.
+	 */
+	noticeStoragePoolUnhealthyBody: () => LocalizedString
+	/**
+	 * Pool {pool} is online again
+	 */
+	noticeStoragePoolBack: (arg: { pool: unknown }) => LocalizedString
+	/**
+	 * Every device is working.
+	 */
+	noticeStoragePoolBackBody: () => LocalizedString
+	/**
+	 * {device} is failing
+	 */
+	noticeStorageDiskFailing: (arg: { device: unknown }) => LocalizedString
+	/**
+	 * Its SMART check or self-test failed: copy what it holds elsewhere and replace it.
+	 */
+	noticeStorageDiskFailingBody: () => LocalizedString
+	/**
+	 * {device} has {count} bad sectors
+	 */
+	noticeStorageDiskSectors: (arg: { count: unknown, device: unknown }) => LocalizedString
+	/**
+	 * It had {was}. A disk losing sectors often fails soon.
+	 */
+	noticeStorageDiskSectorsBody: (arg: { was: unknown }) => LocalizedString
+	/**
+	 * Storage maintenance did not run: {task}
+	 */
+	noticeStorageMaintenanceFailed: (arg: { task: unknown }) => LocalizedString
+	/**
+	 * Sharing
+	 */
+	sharingTitle: () => LocalizedString
+	/**
+	 * SMB
+	 */
+	sharingSmb: () => LocalizedString
+	/**
+	 * NFS
+	 */
+	sharingNfs: () => LocalizedString
+	/**
+	 * Service
+	 */
+	sharingService: () => LocalizedString
+	/**
+	 * Running
+	 */
+	sharingRunning: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	sharingStopped: () => LocalizedString
+	/**
+	 * NFS server
+	 */
+	sharingNfsServer: () => LocalizedString
+	/**
+	 * Samba is not installed. Windows, macOS and Linux open SMB shares.
+	 */
+	sharingNoSamba: () => LocalizedString
+	/**
+	 * The NFS server is not installed. Linux and macOS mount NFS exports.
+	 */
+	sharingNoNfs: () => LocalizedString
+	/**
+	 * Install Samba
+	 */
+	sharingInstallSamba: () => LocalizedString
+	/**
+	 * Installs Samba with the machine's package manager.
+	 */
+	sharingInstallSambaBody: () => LocalizedString
+	/**
+	 * Install NFS server
+	 */
+	sharingInstallNfs: () => LocalizedString
+	/**
+	 * Installs the NFS server with the machine's package manager.
+	 */
+	sharingInstallNfsBody: () => LocalizedString
+	/**
+	 * Installing…
+	 */
+	sharingInstalling: () => LocalizedString
+	/**
+	 * Add share
+	 */
+	sharingAddShare: () => LocalizedString
+	/**
+	 * Add export
+	 */
+	sharingAddExport: () => LocalizedString
+	/**
+	 * Edit
+	 */
+	sharingEdit: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	sharingRemove: () => LocalizedString
+	/**
+	 * Save
+	 */
+	sharingSave: () => LocalizedString
+	/**
+	 * Shares {path} over SMB as {name}, then reloads Samba.
+	 */
+	sharingSaveSmbBody: (arg: { name: unknown, path: unknown }) => LocalizedString
+	/**
+	 * Exports {path} over NFS, then reloads the exports.
+	 */
+	sharingSaveNfsBody: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * Stops sharing {name}. The folder and its files stay.
+	 */
+	sharingRemoveSmbBody: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Stops exporting {path}. The folder and its files stay.
+	 */
+	sharingRemoveNfsBody: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * Set up outside ServerBox
+	 */
+	sharingElsewhere: () => LocalizedString
+	/**
+	 * No SMB shares
+	 */
+	sharingNoShares: () => LocalizedString
+	/**
+	 * No NFS exports
+	 */
+	sharingNoExports: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	sharingReadOnly: () => LocalizedString
+	/**
+	 * Read and write
+	 */
+	sharingReadWrite: () => LocalizedString
+	/**
+	 * Guests
+	 */
+	sharingGuest: () => LocalizedString
+	/**
+	 * Let anyone on the network in without an account
+	 */
+	sharingGuestLabel: () => LocalizedString
+	/**
+	 * Accounts allowed in (none ticked: every account with an SMB password):
+	 */
+	sharingUsersHint: () => LocalizedString
+	/**
+	 * Folder
+	 */
+	sharingFolder: () => LocalizedString
+	/**
+	 * A folder on the server, e.g. a disk mounted in Storage.
+	 */
+	sharingFolderHint: () => LocalizedString
+	/**
+	 * Description
+	 */
+	sharingComment: () => LocalizedString
+	/**
+	 * SMB passwords
+	 */
+	sharingPasswords: () => LocalizedString
+	/**
+	 * Samba keeps its own passwords: set one for each account that connects.
+	 */
+	sharingPasswordsBody: () => LocalizedString
+	/**
+	 * Account
+	 */
+	sharingAccount: () => LocalizedString
+	/**
+	 * Set password
+	 */
+	sharingSetPassword: () => LocalizedString
+	/**
+	 * Sets the SMB password of {user}.
+	 */
+	sharingSetPasswordBody: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * New SMB password
+	 */
+	sharingNewPassword: () => LocalizedString
+	/**
+	 * The same again
+	 */
+	sharingNewPasswordAgain: () => LocalizedString
+	/**
+	 * The two passwords differ.
+	 */
+	sharingPasswordsDiffer: () => LocalizedString
+	/**
+	 * Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.
+	 */
+	sharingClientsHint: () => LocalizedString
+	/**
+	 * Client
+	 */
+	sharingClient: () => LocalizedString
+	/**
+	 * Add client
+	 */
+	sharingAddClient: () => LocalizedString
+	/**
+	 * Root on the client
+	 */
+	sharingSquash: () => LocalizedString
+	/**
+	 * Root is nobody
+	 */
+	sharingSquashRoot: () => LocalizedString
+	/**
+	 * Everyone is nobody
+	 */
+	sharingSquashAll: () => LocalizedString
+	/**
+	 * Root stays root
+	 */
+	sharingSquashNone: () => LocalizedString
+	/**
+	 * {path} is not a folder on the server.
+	 */
+	sharingNotAFolder: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * The configuration was refused and the previous one is back: {detail}
+	 */
+	sharingRefused: (arg: { detail: unknown }) => LocalizedString
+	/**
+	 * Another share has this name or folder.
+	 */
+	sharingDuplicate: () => LocalizedString
+	/**
+	 * A name is letters, digits, _ . - (32 at most).
+	 */
+	sharingInvalidName: () => LocalizedString
+	/**
+	 * The folder must be an absolute path without quotes, backslashes or ..
+	 */
+	sharingInvalidPath: () => LocalizedString
+	/**
+	 * A client is *, a host, an address or a network.
+	 */
+	sharingInvalidClient: () => LocalizedString
+	/**
+	 * This password cannot be used.
+	 */
+	sharingInvalidPassword: () => LocalizedString
 	/**
 	 * Where backups go
 	 */

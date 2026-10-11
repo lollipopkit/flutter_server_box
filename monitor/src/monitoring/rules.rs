@@ -91,18 +91,7 @@ async fn check_enhanced_rule(
         
         info!("Triggering enhanced alert: {}", message);
         
-        let (rate_times, rate_window) = config.get_push_rate();
-        let limiter = crate::monitoring::push::PushRateLimiter::global();
-        for push_config in &config.get_push() {
-            if !limiter.check(&push_config.name, rate_times, rate_window) {
-                warn!("Push '{}' rate limit reached, skipping", push_config.name);
-                continue;
-            }
-            match crate::monitoring::push::send_notification(config, push_config, &message).await {
-                Ok(()) => limiter.acquire(&push_config.name),
-                Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
-            }
-        }
+        crate::monitoring::push::push_all(config, &message).await;
         return Ok(Some(message));
     }
 

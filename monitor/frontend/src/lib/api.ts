@@ -4,6 +4,12 @@ import type {
   ContainerBackupSchedule,
   ContainerBackupSettings,
   StackApp,
+  HealthReading,
+  MaintenanceKind,
+  MaintenanceTask,
+  NfsExport,
+  SharesView,
+  SmbShare,
   StorageAction,
   StorageView,
   StackEntry,
@@ -1320,6 +1326,41 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null }) },
       'Failed to change the disks',
     ),
+  /// Every disk's SMART, read as root; without [sudoPassword], only where
+  /// sudo needs none (403 `sudo_rejected` otherwise).
+  storageHealth: (sudoPassword = '') =>
+    request<HealthReading>(
+      '/storage/health',
+      { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) },
+      'Failed to read the disks\' health',
+    ),
+  /// One maintenance task's schedule; [every] null turns it off.
+  setStorageMaintenance: (task: MaintenanceKind, every: 'weekly' | 'monthly' | null, at: string, day: number) =>
+    request<{ maintenance: MaintenanceTask[] }>(
+      '/storage/maintenance',
+      { method: 'PUT', body: JSON.stringify({ task, every, at, day }) },
+      'Failed to save the schedule',
+    ),
+  /// Runs a scheduled task now, as the schedule would.
+  runStorageMaintenance: (task: MaintenanceKind) =>
+    request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }, 'Failed to run the task'),
+  getShares: () => request<SharesView>('/shares', {}, 'Failed to read the shares'),
+  /// Every SMB share ServerBox keeps, written as root.
+  setSmbShares: (shares: SmbShare[], sudoPassword: string) =>
+    request<SharesView>('/shares/smb', { method: 'PUT', body: JSON.stringify({ shares, sudo_password: sudoPassword || null }) }, 'Failed to save the shares'),
+  /// Every NFS export ServerBox keeps, written as root.
+  setNfsExports: (exports: NfsExport[], sudoPassword: string) =>
+    request<SharesView>('/shares/nfs', { method: 'PUT', body: JSON.stringify({ exports, sudo_password: sudoPassword || null }) }, 'Failed to save the exports'),
+  setSmbPassword: (user: string, password: string, sudoPassword: string) =>
+    request<void>(
+      '/shares/smb/password',
+      { method: 'POST', body: JSON.stringify({ user, password, sudo_password: sudoPassword || null }) },
+      'Failed to set the password',
+    ),
+  /// Samba ([nfs] false) or the NFS server, installed as a job.
+  installShares: (nfs: boolean, sudoPassword: string) =>
+    request<StackJob>('/shares/install', { method: 'POST', body: JSON.stringify({ nfs, sudo_password: sudoPassword || null }) }, 'Failed to install'),
+  sharesJob: (since: number) => request<StackJob>(`/shares/job?since=${since}`, {}, 'Failed to read the progress'),
   storageJob: (since: number) => request<StackJob>(`/storage/job?since=${since}`, {}, 'Failed to read the progress'),
   /// Backs up [containers] (with [project], their whole compose project).
   createContainerBackup: (containers: string[], project: boolean, stop: boolean) =>

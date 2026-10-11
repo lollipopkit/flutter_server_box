@@ -185,6 +185,9 @@ pub enum Source {
     Alert,
     /// A web app the agent deployed (`stacks`), by its id: `stack:<id>`.
     Stack(String),
+    /// A disk, array, pool or maintenance task (`storage_watch`):
+    /// `storage:<what>`.
+    Storage(String),
 }
 
 impl Source {
@@ -192,6 +195,7 @@ impl Source {
         match self {
             Source::Alert => "alert".into(),
             Source::Stack(id) => format!("stack:{id}"),
+            Source::Storage(what) => format!("storage:{what}"),
         }
     }
 }

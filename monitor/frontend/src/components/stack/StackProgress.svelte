@@ -24,8 +24,10 @@
 
   const { stackId = '', read = (since: number) => api.stackJob(stackId, since), stop = () => api.cancelStackJob(stackId), job: initial, title, ondone }: Props = $props()
 
-  // The job as first given; read again from the agent from here on.
-  let job = $state<StackJob>(untrack(() => ({ ...initial })))
+  // The job as first given; read again from the agent from here on. One
+  // given without its lines (a list's summary of a job already running) is
+  // read from its first line, so a page opened mid-job shows all of it.
+  let job = $state<StackJob>(untrack(() => ({ ...initial, next: initial.lines.length ? initial.next : 0 })))
   let lines = $state<{ seq: number; text: string }[]>(untrack(() => [...initial.lines]))
   let log = $state<HTMLPreElement | undefined>(undefined)
   let cancelling = $state(false)

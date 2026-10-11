@@ -183,9 +183,13 @@ you can:
 - partition a whole disk (one GPT partition) and format it as ext4, xfs or btrfs;
 - mount a filesystem, optionally with an `/etc/fstab` line so it is mounted at
   every start (the previous file is kept as `/etc/fstab.sbm-bak`), and unmount it;
-- create a RAID array, add or remove a member, delete an array;
-- create a ZFS pool, scrub it, destroy it;
-- start a SMART self-test.
+- create a RAID array, add or remove a member, grow a RAID 1, 5 or 6 by one
+  more working member, delete an array, and format and mount the array itself;
+- create a ZFS pool, add disks to it, scrub it, destroy it;
+- expand a mounted ext4, xfs or btrfs filesystem after the array or partition
+  under it grew;
+- read every disk's SMART health (temperature, hours powered on, bad sectors,
+  the last self-test) and start a self-test on a disk that has SMART.
 
 Every change asks for the sudo password of the agent's account and runs as
 root. A disk or partition that is mounted, used as swap, or a member of an
@@ -193,3 +197,51 @@ array or pool is never partitioned, formatted or built on, nor is a firmware par
 formatting and building an array or pool erase what is on the disks; the
 confirmation names them. mdadm, ZFS (`zfsutils-linux`) and smartmontools must be
 installed for their parts to show.
+
+Reading SMART needs root too: the app reads it on its own where sudo asks no
+password, and otherwise when you click **Read disk health**.
+
+### Maintenance and alerts
+
+Under **Maintenance**, three tasks can run weekly or monthly: scrubbing every
+ZFS pool and checking every RAID array, a short SMART test and a long SMART
+test on every disk that has SMART. **Run now** starts one at once.
+
+The schedule runs without a password. If the agent does not run as root, sudo
+must allow its account these commands without one; the page shows the line,
+for example in `/etc/sudoers.d/serverbox-storage`:
+
+```
+serverbox ALL=(root) NOPASSWD: /usr/sbin/smartctl, /usr/sbin/zpool scrub *, /usr/sbin/mdadm --action=check *
+```
+
+The agent also watches the storage: every five minutes the arrays and pools,
+and every hour each disk's SMART (with the same sudo rule, or from the last
+reading made on the page). A degraded array, a pool that is not online, a disk
+whose SMART check or self-test failed, or a disk with more bad sectors than
+before is reported in the notification center and through the push channels
+(**Settings → Notification channels**). An array or pool that recovers is reported in
+the notification center.
+
+## Sharing
+
+The **Sharing** app (Linux, admin) serves folders to other computers over SMB
+(Samba: Windows, macOS, Linux) and NFS (Linux, macOS). When Samba or the NFS
+server is missing, the app offers to install it with the machine's package
+manager (apt, dnf or apk).
+
+- **SMB**: add a share with a name and a folder, optionally read only, open to
+  guests (no account), or limited to some accounts. Samba keeps its own
+  passwords: set an SMB password for each account that connects under
+  **SMB passwords**.
+- **NFS**: export a folder to clients (`*`, a host, an address or a network
+  such as `192.168.1.0/24`), each read only or read and write, and what root
+  on the client becomes (nobody by default).
+
+ServerBox keeps the shares it makes in files of its own
+(`/etc/samba/serverbox.conf`, included from `smb.conf`, and
+`/etc/exports.d/serverbox.exports`) and lists shares set up elsewhere without
+changing them. Every change asks for the sudo password and is checked
+(`testparm`, `exportfs -ra`) before it takes effect; a change that does not
+check leaves the previous configuration in place. Open TCP 445 (SMB) and 2049
+(NFS) in **Firewall** for the computers that connect.

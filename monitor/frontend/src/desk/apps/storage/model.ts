@@ -1,7 +1,7 @@
 /// What the Storage app draws from `/storage`: pure, tested in
 /// `tests/storage.test.ts`.
 
-import type { BlockDevice, StorageView } from '../../../types'
+import type { BlockDevice, DiskHealth, StorageView } from '../../../types'
 
 /// The machine's disks, without optical drives and empty loop devices.
 export function disksOf(view: StorageView): BlockDevice[] {
@@ -82,4 +82,46 @@ export function minimum(levelOrLayout: number | string): number {
 /// mdstat for `/dev/sdb1`).
 export function shortName(path: string): string {
   return path.replace(/^\/dev\//, '')
+}
+
+/// What a disk's SMART says, for its badge.
+export type HealthVerdict = 'healthy' | 'wearing' | 'failing' | 'unsupported' | 'asleep'
+
+export function verdict(h: DiskHealth): HealthVerdict {
+  if (h.asleep) return 'asleep'
+  if (!h.supported) return 'unsupported'
+  if (h.passed === false || h.last_test?.outcome === 'failed') return 'failing'
+  if ((h.bad_sectors ?? 0) > 0) return 'wearing'
+  return 'healthy'
+}
+
+/// [path]'s reading in the last one made, if it was read.
+export function healthOf(view: StorageView, path: string): DiskHealth | undefined {
+  return view.health?.disks.find((d) => d.device === path)
+}
+
+/// Array [name]'s own device in the tree, which holds its filesystem.
+export function arrayDevice(view: StorageView, name: string): BlockDevice | undefined {
+  const path = `/dev/${name}`
+  const find = (ds: BlockDevice[]): BlockDevice | undefined => {
+    for (const d of ds) {
+      if (d.path === path) return d
+      const found = find(d.children)
+      if (found) return found
+    }
+  }
+  return find(view.disks)
+}
+
+/// RAID levels that grow by one more working member (the agent's rule).
+export function growableArray(level: string | null): boolean {
+  return level === 'raid1' || level === 'raid5' || level === 'raid6'
+}
+
+/// A mounted ext/xfs/btrfs filesystem well smaller than its device (10%, and
+/// at least 256 MiB, past what the filesystem keeps for itself): the device
+/// grew under it.
+export function expandable(d: BlockDevice): boolean {
+  if (!d.mountpoints.some((m) => m.startsWith('/')) || !['ext2', 'ext3', 'ext4', 'xfs', 'btrfs'].includes(d.fstype ?? '') || d.fs_size == null) return false
+  return d.size - d.fs_size > Math.max(d.size * 0.1, 256 * 2 ** 20)
 }

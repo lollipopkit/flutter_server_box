@@ -62,3 +62,20 @@ describe('structured stack notification text', () => {
     expect(noticeText(unknown, i18nObject('en'), 'en')).toEqual({ subject: 'English subject', body: 'English body' })
   })
 })
+
+describe('storage notification text', () => {
+  it('names the array, pool, disk and task in the reader\'s language', () => {
+    const en = i18nObject('en')
+    const zh = i18nObject('zh-CN')
+    expect(noticeText(notice('storage.arrayDegraded', { array: 'md0' }), en, 'en').subject).toBe('/dev/md0 is degraded')
+    expect(noticeText(notice('storage.poolUnhealthy', { pool: 'tank', health: 'DEGRADED' }), zh, 'zh-CN').subject).toBe('存储池 tank 状态为 DEGRADED')
+    expect(noticeText(notice('storage.diskSectors', { device: '/dev/sdb', count: 12, was: 8 }), en, 'en')).toEqual({
+      subject: '/dev/sdb has 12 bad sectors',
+      body: 'It had 8. A disk losing sectors often fails soon.',
+    })
+    expect(noticeText(notice('storage.maintenanceFailed', { task: 'smartLong', error: 'sudoNeedsPassword' }), en, 'en')).toEqual({
+      subject: 'Storage maintenance did not run: Long SMART test',
+      body: en.storageNeedsSudo(),
+    })
+  })
+})

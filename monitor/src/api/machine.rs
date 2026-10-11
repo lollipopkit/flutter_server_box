@@ -41,6 +41,8 @@ pub const FEATURES: &[&str] = &[
     // Disks, RAID arrays and ZFS pools (`api::storage`). Linux only; the page
     // says so on another platform.
     "storage",
+    // SMB and NFS shares (`api::shares`). Linux only, like `storage`.
+    "shares",
     // An iperf client, opened through the terminal's `target` the same way and
     // listed for the same reason.
     "iperf",

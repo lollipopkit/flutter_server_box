@@ -1,7 +1,11 @@
 //! `/api/v1/storage*` on a real machine, with loop devices standing in for
 //! disks: partition, format, mount with `/etc/fstab`, refusing what is in use,
-//! unmount; a RAID 1 built, degraded, mended and deleted (with mdadm); a ZFS
-//! mirror built, scrubbed and destroyed (with zpool).
+//! the system's mounts and a disk picked with its own partition, unmount; a
+//! RAID 1 built, degraded, mended and deleted (with mdadm); a ZFS mirror
+//! built, scrubbed, given a mirror more and destroyed (with zpool); an array
+//! grown and its filesystem expanded; the scheduled scrub run; SMART read
+//! (with smartctl).
+//! The panel's side of the same: `frontend/e2e/storage.e2e.ts`.
 //!
 //! Opt-in and root only: it makes loop devices and changes `/etc/fstab`
 //! (restored after). Never on a machine whose disks matter more than a test.
@@ -37,6 +41,9 @@ async fn setup() -> TestServer {
             App::new().state(state).service(
                 web::scope("/api/v1")
                     .service(web::resource("/storage").route(web::get().to(storage::view)))
+                    .service(web::resource("/storage/health").route(web::post().to(storage::health)))
+                    .service(web::resource("/storage/maintenance").route(web::put().to(storage::set_maintenance)))
+                    .service(web::resource("/storage/maintenance/{task}/run").route(web::post().to(storage::run_maintenance)))
                     .service(web::resource("/storage/act").route(web::post().to(storage::act)))
                     .service(web::resource("/storage/job").route(web::get().to(storage::job))),
             )
@@ -112,6 +119,14 @@ struct Lab {
 }
 
 impl Lab {
+    /// One more loop device, dropped with the others.
+    fn extra(&mut self) -> String {
+        let file = self.files.path().join(format!("disk{}.img", self.loops.len()));
+        let l = sh(&format!("truncate -s 256M '{}' && losetup -fP --show '{}'", file.display(), file.display()));
+        self.loops.push(l.clone());
+        l
+    }
+
     fn new(n: usize) -> Self {
         let files = tempfile::tempdir().unwrap();
         let loops = (0..n)
@@ -149,7 +164,7 @@ async fn a_machines_disks_are_managed_end_to_end() {
         eprintln!("SBM_E2E_STORAGE is not set, or not root");
         return;
     }
-    let lab = Lab::new(3);
+    let mut lab = Lab::new(3);
     let (a, b, c) = (lab.loops[0].clone(), lab.loops[1].clone(), lab.loops[2].clone());
     let srv = setup().await;
 
@@ -174,6 +189,18 @@ async fn a_machines_disks_are_managed_end_to_end() {
     let (status, body) = call(&srv, Method::POST, "/api/v1/storage/act", Some(json!({ "action": "format", "device": a, "fstype": "ext4" }))).await;
     assert_eq!((status, body["error"].as_str()), (409, Some("inUse")), "{body}");
 
+    // The system's mounts stay; nothing is mounted inside its trees; a disk
+    // never goes into an array with its own partition.
+    for (action, refusal) in [
+        (json!({ "action": "unmount", "mountpoint": "/" }), (400, "invalidMountpoint")),
+        (json!({ "action": "unmount", "mountpoint": "/mnt/sbm-e2e-nothing" }), (409, "notMounted")),
+        (json!({ "action": "mount", "device": part, "mountpoint": "/boot/efi", "persist": false }), (400, "invalidMountpoint")),
+        (json!({ "action": "createRaid", "name": "md92", "level": 1, "devices": [a, part] }), (400, "overlapping")),
+    ] {
+        let (status, body) = call(&srv, Method::POST, "/api/v1/storage/act", Some(action.clone())).await;
+        assert_eq!((status, body["error"].as_str().unwrap_or_default()), refusal, "{action}: {body}");
+    }
+
     assert_eq!(act(&srv, json!({ "action": "unmount", "mountpoint": MOUNT })).await, "succeeded");
     assert!(!std::fs::read_to_string("/etc/fstab").unwrap().contains(MOUNT));
 
@@ -190,12 +217,49 @@ async fn a_machines_disks_are_managed_end_to_end() {
         assert_eq!((array["raid_disks"].as_u64(), array["working_disks"].as_u64()), (Some(2), Some(1)), "{array}");
         sh(&format!("wipefs -a {c}"));
         assert_eq!(act(&srv, json!({ "action": "addToRaid", "array": md, "device": c })).await, "succeeded");
+
+        // Its filesystem, mounted, grown into a third mirror and expanded
+        // (a no-op for RAID 1, which gains no room, but run all the same).
+        let dev = format!("/dev/{md}");
+        assert_eq!(act(&srv, json!({ "action": "format", "device": dev, "fstype": "ext4" })).await, "succeeded");
+        assert_eq!(act(&srv, json!({ "action": "mount", "device": dev, "mountpoint": MOUNT, "persist": false })).await, "succeeded");
+        assert_eq!(act(&srv, json!({ "action": "expandFilesystem", "device": dev })).await, "succeeded");
+        let (status, body) = call(&srv, Method::POST, "/api/v1/storage/act", Some(json!({ "action": "expandFilesystem", "device": a }))).await;
+        assert_eq!((status, body["error"].as_str()), (409, Some("notGrowable")), "nothing mounted on it: {body}");
+        assert_eq!(act(&srv, json!({ "action": "unmount", "mountpoint": MOUNT })).await, "succeeded");
+        sh(&format!("wipefs -a {a}"));
+        assert_eq!(act(&srv, json!({ "action": "growRaid", "array": md, "device": a })).await, "succeeded");
+        let v = view(&srv).await;
+        let array = v["arrays"].as_array().unwrap().iter().find(|x| x["name"] == md).unwrap().clone();
+        assert_eq!(array["raid_disks"].as_u64(), Some(3), "{array}");
+
+        // The schedule's scrub checks it, unattended.
+        let (status, body) = call(&srv, Method::PUT, "/api/v1/storage/maintenance", Some(json!({ "task": "scrub", "every": "weekly", "at": "03:00", "day": 6 }))).await;
+        assert_eq!(status, 200, "{body}");
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        let (status, body) = call(&srv, Method::POST, "/api/v1/storage/maintenance/scrub/run", None).await;
+        assert_eq!(status, 200, "{body}");
+        assert_eq!(body["maintenance"][0]["last_error"], Value::Null, "{body}");
+        let (status, _) = call(&srv, Method::PUT, "/api/v1/storage/maintenance", Some(json!({ "task": "scrub", "every": null }))).await;
+        assert_eq!(status, 200);
+        assert_eq!(view(&srv).await["maintenance"], json!([]));
+
         assert_eq!(act(&srv, json!({ "action": "deleteRaid", "array": md })).await, "succeeded");
         let v = view(&srv).await;
         assert!(!v["arrays"].as_array().unwrap().iter().any(|x| x["name"] == md));
         assert!(v["busy"].get(&b).is_none(), "its members are free again: {}", v["busy"]);
     } else {
         eprintln!("mdadm is not installed: RAID not tried");
+    }
+
+    if has("smartctl") {
+        let (status, reading) = call(&srv, Method::POST, "/api/v1/storage/health", Some(json!({}))).await;
+        assert_eq!(status, 200, "{reading}");
+        let disks = reading["disks"].as_array().unwrap();
+        assert!(disks.iter().all(|d| d["device"].as_str().is_some_and(|p| !p.contains("loop"))), "loop devices have no SMART: {reading}");
+        assert_eq!(view(&srv).await["health"]["at"], reading["at"], "kept for the page");
+    } else {
+        eprintln!("smartctl is not installed: SMART not read");
     }
 
     if has("zpool") {
@@ -205,6 +269,13 @@ async fn a_machines_disks_are_managed_end_to_end() {
         assert_eq!(pool["health"], "ONLINE");
         assert_eq!(pool["vdevs"][0]["name"], "mirror-0");
         assert_eq!(act(&srv, json!({ "action": "scrubPool", "name": "sbme2e" })).await, "succeeded");
+        // A mirror more: zpool add.
+        sh(&format!("wipefs -a {a}"));
+        let d = lab.extra();
+        assert_eq!(act(&srv, json!({ "action": "addToPool", "name": "sbme2e", "layout": "mirror", "devices": [a, d] })).await, "succeeded");
+        let v = view(&srv).await;
+        let pool = v["pools"].as_array().unwrap().iter().find(|p| p["name"] == "sbme2e").unwrap().clone();
+        assert!(pool["vdevs"].as_array().unwrap().iter().any(|x| x["name"] == "mirror-1"), "{pool}");
         assert_eq!(act(&srv, json!({ "action": "destroyPool", "name": "sbme2e" })).await, "succeeded");
         assert!(!view(&srv).await["pools"].as_array().unwrap().iter().any(|p| p["name"] == "sbme2e"));
     } else {

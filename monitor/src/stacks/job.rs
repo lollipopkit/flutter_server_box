@@ -37,6 +37,8 @@ pub enum JobKind {
     Restore,
     /// A change to the machine's disks (`api::storage`).
     Storage,
+    /// Samba or the NFS server installed (`api::shares`).
+    Shares,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

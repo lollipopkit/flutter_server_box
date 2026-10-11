@@ -135,6 +135,7 @@ pub struct AppState {
     pub stacks: Arc<crate::stacks::Stacks>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
+    pub shares: Arc<crate::api::shares::SharesJobs>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -247,6 +248,7 @@ impl AppState {
             agent: Arc::new(crate::agent_mode::AgentMode::new(db.clone(), sqlite_file_of(&db).as_deref())),
             container_backups: Arc::new(crate::container_backups::ContainerBackups::new(sqlite_file_of(&db).as_deref())),
             storage: Arc::default(),
+            shares: Arc::default(),
             stacks: Arc::new(crate::stacks::Stacks::new(
                 sqlite_file_of(&db).as_deref(),
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
@@ -600,7 +602,16 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             )
             .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
             .service(web::resource("/storage").route(web::get().to(crate::api::storage::view)))
+            .service(web::resource("/storage/health").route(web::post().to(crate::api::storage::health)))
+            .service(web::resource("/storage/maintenance").route(web::put().to(crate::api::storage::set_maintenance)))
+            .service(web::resource("/storage/maintenance/{task}/run").route(web::post().to(crate::api::storage::run_maintenance)))
             .service(web::resource("/storage/act").route(web::post().to(crate::api::storage::act)))
+            .service(web::resource("/shares").route(web::get().to(crate::api::shares::view)))
+            .service(web::resource("/shares/smb").route(web::put().to(crate::api::shares::set_smb)))
+            .service(web::resource("/shares/nfs").route(web::put().to(crate::api::shares::set_nfs)))
+            .service(web::resource("/shares/smb/password").route(web::post().to(crate::api::shares::smb_password)))
+            .service(web::resource("/shares/install").route(web::post().to(crate::api::shares::install)))
+            .service(web::resource("/shares/job").route(web::get().to(crate::api::shares::job)))
             .service(web::resource("/storage/job").route(web::get().to(crate::api::storage::job)))
             .service(
                 web::resource("/container-backups")

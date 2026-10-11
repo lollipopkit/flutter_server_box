@@ -67,6 +67,7 @@ enable
 error
 event
 event_available
+event_repeat
 expand
 expand_less
 expand_more
@@ -74,6 +75,7 @@ files
 flag
 folder
 folder_open
+folder_shared
 forward
 fullscreen
 fullscreen_exit
@@ -197,6 +199,7 @@ switch
 sync
 tab
 target
+task
 terminal
 thermostat
 timer

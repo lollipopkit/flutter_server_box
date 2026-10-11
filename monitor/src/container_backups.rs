@@ -571,7 +571,7 @@ fn yes() -> bool {
     true
 }
 
-fn time_ok(at: &str) -> bool {
+pub(crate) fn time_ok(at: &str) -> bool {
     at.split_once(':').is_some_and(|(h, m)| {
         h.len() == 2 && m.len() == 2 && h.parse::<u8>().is_ok_and(|h| h < 24) && m.parse::<u8>().is_ok_and(|m| m < 60)
     })

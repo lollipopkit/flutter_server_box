@@ -130,6 +130,8 @@ export type MachineFeature =
   | 'container_backups'
   /// Disks, RAID arrays and ZFS pools (`/storage`).
   | 'storage'
+  /// SMB and NFS shares (`/shares`).
+  | 'shares'
   | 'iperf'
   | 'tmux'
   | 'benchmark'
@@ -2781,7 +2783,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -2905,6 +2907,8 @@ export interface BlockDevice {
   uuid: string | null
   /// `[SWAP]` for swap.
   mountpoints: string[]
+  /// The filesystem's size, mounted only; absent from older agents.
+  fs_size?: number | null
   available: number | null
   used: number | null
   children: BlockDevice[]
@@ -2945,6 +2949,52 @@ export interface StorageView {
   /// mdadm, zpool, smartctl, mkfs.ext4, mkfs.xfs, mkfs.btrfs, sfdisk, wipefs.
   tools: string[]
   job: StackJob | null
+  /// The last SMART reading (`POST /storage/health`); null until one is
+  /// made, absent from older agents.
+  health?: HealthReading | null
+  /// The maintenance schedule, one per task that is on; absent from older
+  /// agents.
+  maintenance?: MaintenanceTask[]
+  /// The agent's account, which a sudoers rule for the schedule names.
+  account?: string | null
+}
+
+export type MaintenanceKind = 'scrub' | 'smartShort' | 'smartLong'
+
+/// `storage_watch::Task`.
+export interface MaintenanceTask {
+  task: MaintenanceKind
+  every: 'weekly' | 'monthly'
+  /// `HH:MM`, the machine's time.
+  at: string
+  /// Weekly: 0 Monday … 6 Sunday. Monthly: 1 … 28.
+  day: number
+  last_run: string | null
+  /// `sudoNeedsPassword`, or what failed.
+  last_error: string | null
+}
+
+/// `api::storage::HealthReading`.
+export interface HealthReading {
+  /// Unix seconds.
+  at: number
+  disks: DiskHealth[]
+}
+
+/// `sbm_parser::storage::DiskHealth`.
+export interface DiskHealth {
+  device: string
+  /// The disk answers SMART; false for a virtual disk or a USB bridge.
+  supported: boolean
+  asleep: boolean
+  passed: boolean | null
+  temperature: number | null
+  power_on_hours: number | null
+  /// Remapped, pending or unreadable sectors (NVMe: media errors).
+  bad_sectors: number | null
+  /// Percent left of a self-test running now.
+  testing: number | null
+  last_test: { long: boolean; outcome: 'passed' | 'failed' | 'aborted'; hours: number | null } | null
 }
 
 /// `sbm_parser::storage::StorageAction`.
@@ -2961,6 +3011,50 @@ export type StorageAction =
   | { action: 'scrubPool'; name: string }
   | { action: 'destroyPool'; name: string }
   | { action: 'smartTest'; device: string; long: boolean }
+  | { action: 'growRaid'; array: string; device: string }
+  | { action: 'expandFilesystem'; device: string }
+  | { action: 'addToPool'; name: string; layout: 'stripe' | 'mirror' | 'raidz1' | 'raidz2' | 'raidz3'; devices: string[] }
+
+/// `sbm_parser::shares::SmbShare`.
+export interface SmbShare {
+  name: string
+  path: string
+  comment: string | null
+  read_only: boolean
+  /// Anyone on the network, without an account.
+  guest: boolean
+  /// Accounts allowed in; none is every account with an SMB password.
+  users: string[]
+  /// ServerBox's (in its own file); the others are shown, not changed.
+  managed: boolean
+}
+
+/// `sbm_parser::shares::NfsClient`.
+export interface NfsClient {
+  /// `*`, a host, an address or a network.
+  host: string
+  read_only: boolean
+  squash: 'root' | 'all' | 'none'
+  options: string[]
+}
+
+/// `sbm_parser::shares::NfsExport`.
+export interface NfsExport {
+  path: string
+  clients: NfsClient[]
+  managed: boolean
+}
+
+/// `GET /shares`.
+export interface SharesView {
+  /// smbd, testparm, smbpasswd, exportfs.
+  tools: string[]
+  smb_active: boolean
+  nfs_active: boolean
+  smb: SmbShare[]
+  nfs: NfsExport[]
+  job: StackJob | null
+}
 
 /// Where container backups go, and how many are kept (`container_backups::Settings`).
 export interface ContainerBackupSettings {

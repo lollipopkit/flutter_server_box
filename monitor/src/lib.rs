@@ -11,4 +11,5 @@ pub mod db;
 pub mod monitoring;
 pub mod pty;
 pub mod stacks;
+pub mod storage_watch;
 pub mod utils;

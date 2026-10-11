@@ -38,6 +38,30 @@ export function noticeText(
           current: stringParam(params, 'current'),
         }),
       }
+    case 'storage.arrayDegraded':
+      return { subject: ll.noticeStorageArrayDegraded({ array: stringParam(params, 'array') }), body: ll.noticeStorageArrayDegradedBody() }
+    case 'storage.arrayBack':
+      return { subject: ll.noticeStorageArrayBack({ array: stringParam(params, 'array') }), body: ll.noticeStorageArrayBackBody() }
+    case 'storage.poolUnhealthy':
+      return {
+        subject: ll.noticeStoragePoolUnhealthy({ pool: stringParam(params, 'pool'), health: stringParam(params, 'health') }),
+        body: ll.noticeStoragePoolUnhealthyBody(),
+      }
+    case 'storage.poolBack':
+      return { subject: ll.noticeStoragePoolBack({ pool: stringParam(params, 'pool') }), body: ll.noticeStoragePoolBackBody() }
+    case 'storage.diskFailing':
+      return { subject: ll.noticeStorageDiskFailing({ device: stringParam(params, 'device') }), body: ll.noticeStorageDiskFailingBody() }
+    case 'storage.diskSectors':
+      return {
+        subject: ll.noticeStorageDiskSectors({ device: stringParam(params, 'device'), count: Number(params.count ?? 0) }),
+        body: ll.noticeStorageDiskSectorsBody({ was: Number(params.was ?? 0) }),
+      }
+    case 'storage.maintenanceFailed': {
+      const task = stringParam(params, 'task')
+      const error = stringParam(params, 'error')
+      const names: Record<string, string> = { scrub: ll.storageTaskScrub(), smartShort: ll.storageTaskSmartShort(), smartLong: ll.storageTaskSmartLong() }
+      return { subject: ll.noticeStorageMaintenanceFailed({ task: names[task] ?? task }), body: error === 'sudoNeedsPassword' ? ll.storageNeedsSudo() : error }
+    }
     default:
       return { subject: n.subject, body: n.body }
   }

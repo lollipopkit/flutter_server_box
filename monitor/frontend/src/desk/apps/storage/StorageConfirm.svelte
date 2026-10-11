@@ -1,25 +1,27 @@
 <script lang="ts">
   /// One change to the disks, asked about: what it does, for one that loses
   /// data the name typed back, and sudo's password when the agent's account
-  /// needs one. Starting it hands the job to the page.
+  /// needs one. Starting it hands the job to the page. Or a SMART reading
+  /// (`readHealth`), which needs root as well, handed back when made.
 
   import { Button, Dialog, Input } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
-  import type { StackJob, StorageAction } from '../../../types'
+  import type { HealthReading, StackJob, StorageAction } from '../../../types'
 
   interface Props {
-    action: StorageAction | null
+    action: StorageAction | 'readHealth' | null
     title: string
     /// What it does, said plainly.
     body: string
     /// Typed back before a change that loses data; none for the others.
     confirmWord?: string
     onstarted: (job: StackJob) => void
+    onhealth: (reading: HealthReading) => void
     onclose: () => void
   }
 
-  const { action, title, body, confirmWord, onstarted, onclose }: Props = $props()
+  const { action, title, body, confirmWord, onstarted, onhealth, onclose }: Props = $props()
 
   let typed = $state('')
   let password = $state('')
@@ -41,7 +43,8 @@
     busy = true
     error = ''
     try {
-      onstarted(await api.storageAct(action, password))
+      if (action === 'readHealth') onhealth(await api.storageHealth(password))
+      else onstarted(await api.storageAct(action, password))
     } catch (e) {
       const body = e instanceof ApiError ? (e.body as { error?: string; device?: string; why?: string } | undefined) : undefined
       switch (body?.error) {

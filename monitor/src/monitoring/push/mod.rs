@@ -111,6 +111,23 @@ mod ntfy;
 mod smtp;
 mod telegram;
 
+/// Sends [message] through every configured channel, each within its rate
+/// limit (`config.get_push_rate()`).
+pub async fn push_all(config: &Config, message: &str) {
+    let (rate_times, rate_window) = config.get_push_rate();
+    let limiter = PushRateLimiter::global();
+    for push_config in &config.get_push() {
+        if !limiter.check(&push_config.name, rate_times, rate_window) {
+            warn!("Push '{}' rate limit reached, skipping", push_config.name);
+            continue;
+        }
+        match send_notification(config, push_config, message).await {
+            Ok(()) => limiter.acquire(&push_config.name),
+            Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
+        }
+    }
+}
+
 pub async fn send_notification(config: &Config, push: &PushConfig, message: &str) -> Result<()> {
     let _permit = push_limit()
         .clone()

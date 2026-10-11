@@ -152,10 +152,35 @@ agent 会在其中创建 `serverbox-container-backups/` 并写入备份。已有
 
 - 对整块硬盘分区（一个 GPT 分区），并格式化为 ext4、xfs 或 btrfs；
 - 挂载文件系统，可选写入 `/etc/fstab` 以便每次启动时自动挂载（原文件保存为 `/etc/fstab.sbm-bak`），以及卸载；
-- 创建 RAID 阵列，添加或移除成员，删除阵列；
-- 创建 ZFS 存储池，执行 scrub，销毁存储池；
-- 启动 SMART 自检。
+- 创建 RAID 阵列，添加或移除成员，为 RAID 1、5、6 增加一个工作成员（扩容），删除阵列，格式化和挂载阵列本身；
+- 创建 ZFS 存储池，向存储池添加硬盘，执行 scrub，销毁存储池；
+- 阵列或分区扩容后，扩展其上已挂载的 ext4、xfs 或 btrfs 文件系统；
+- 读取每块硬盘的 SMART 健康信息（温度、通电时间、坏扇区、上次自检结果），并对支持 SMART 的硬盘启动自检。
 
 每项更改都会要求输入 agent 账户的 sudo 密码，并以 root 身份运行。已挂载、用作 swap、或属于阵列或存储池的
 硬盘和分区不会被分区、格式化或用于创建阵列，固件分区（EFI 系统分区、BIOS boot）也一样。系统所在的挂载点（`/`、`/boot`、`/boot/efi`）不能卸载。分区、格式化以及创建阵列或存储池会清除硬盘上的数据，确认对话框会
 列出这些硬盘。相应功能需要安装 mdadm、ZFS（`zfsutils-linux`）和 smartmontools。
+
+读取 SMART 同样需要 root：sudo 不要求密码时应用会自动读取，否则点击 **读取磁盘健康** 后输入密码读取。
+
+### 维护和告警
+
+在 **维护** 中可以设置三项任务每周或每月运行：校验所有 ZFS 存储池和 RAID 阵列、SMART 简短自检、SMART 完整自检（对所有支持 SMART 的硬盘）。**立即运行** 会马上执行一次。
+
+计划任务在没有密码的情况下运行。agent 不是以 root 运行时，sudo 必须允许它的账户免密码运行这些命令。页面会显示对应的配置行，例如写入 `/etc/sudoers.d/serverbox-storage`：
+
+```
+serverbox ALL=(root) NOPASSWD: /usr/sbin/smartctl, /usr/sbin/zpool scrub *, /usr/sbin/mdadm --action=check *
+```
+
+agent 还会持续检查存储：每 5 分钟检查阵列和存储池，每小时检查每块硬盘的 SMART（使用同一条 sudo 规则，或使用页面上最近一次读取的结果）。阵列降级、存储池不在线、硬盘 SMART 检查或自检失败、坏扇区比之前增多时，会在通知中心和通知渠道（**设置 → 通知渠道**）中提醒。阵列或存储池恢复后会在通知中心提醒。
+
+## 共享
+
+**共享** 应用（Linux，管理员）通过 SMB（Samba：Windows、macOS、Linux）和 NFS（Linux、macOS）把文件夹共享给其他电脑。
+未安装 Samba 或 NFS 服务器时，应用会提供安装按钮，使用系统的包管理器（apt、dnf 或 apk）安装。
+
+- **SMB**：用名称和文件夹添加共享，可设为只读、允许访客（无需账户）访问，或只允许部分账户访问。Samba 使用独立的密码，需要在 **SMB 密码** 中为每个要连接的账户设置。
+- **NFS**：把文件夹导出给客户端（`*`、主机名、地址或网段，例如 `192.168.1.0/24`），每个客户端可设为只读或读写，并设置客户端的 root 映射为什么用户（默认 nobody）。
+
+ServerBox 把自己创建的共享保存在独立的文件中（`/etc/samba/serverbox.conf`，由 `smb.conf` 引入；`/etc/exports.d/serverbox.exports`），在其他地方设置的共享只显示、不修改。每项更改都要求输入 sudo 密码，并在生效前检查（`testparm`、`exportfs -ra`），检查不通过时保留原配置。请在 **防火墙** 中为要连接的电脑开放 TCP 445（SMB）和 2049（NFS）。

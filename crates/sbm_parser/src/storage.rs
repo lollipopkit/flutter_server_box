@@ -21,7 +21,7 @@ use crate::script::shell_quote_unix as q;
 
 /// Every block device as a tree (disks, their partitions, what is built on
 /// them), sizes in bytes; read by [`parse_lsblk`].
-pub const LSBLK_COMMAND: &str = "lsblk -J -b -o NAME,PATH,TYPE,SIZE,MODEL,SERIAL,ROTA,TRAN,RM,RO,PARTTYPE,FSTYPE,LABEL,UUID,MOUNTPOINTS,FSAVAIL,FSUSED";
+pub const LSBLK_COMMAND: &str = "lsblk -J -b -o NAME,PATH,TYPE,SIZE,MODEL,SERIAL,ROTA,TRAN,RM,RO,PARTTYPE,FSTYPE,LABEL,UUID,MOUNTPOINTS,FSSIZE,FSAVAIL,FSUSED";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BlockDevice {
@@ -45,6 +45,10 @@ pub struct BlockDevice {
     pub uuid: Option<String>,
     /// `[SWAP]` for swap.
     pub mountpoints: Vec<String>,
+    /// The filesystem's size, mounted only: below the device's after the
+    /// device grew, until the filesystem is expanded.
+    #[serde(default)]
+    pub fs_size: Option<u64>,
     pub available: Option<u64>,
     pub used: Option<u64>,
     pub children: Vec<BlockDevice>,
@@ -99,6 +103,7 @@ fn device(v: &Value) -> Option<BlockDevice> {
         label: text(&v["label"]),
         uuid: text(&v["uuid"]),
         mountpoints,
+        fs_size: number(&v["fssize"]),
         available: number(&v["fsavail"]),
         used: number(&v["fsused"]),
         children: v["children"].as_array().map(|c| c.iter().filter_map(device).collect()).unwrap_or_default(),
@@ -165,6 +170,12 @@ const SYSTEM_PART_TYPES: &[&str] = &[
     "0xef",
     "0xee",
 ];
+
+/// A mounted filesystem [`StorageAction::ExpandFilesystem`] can grow
+/// online: ext2/3/4, xfs, btrfs.
+pub fn growable(dev: &BlockDevice) -> bool {
+    dev.mountpoints.iter().any(|m| m.starts_with('/')) && matches!(dev.fstype.as_deref(), Some("ext2" | "ext3" | "ext4" | "xfs" | "btrfs"))
+}
 
 /// [dev] is mounted where the system lives (`/`, `/boot/efi`, …): also
 /// mounted elsewhere, it is never unmounted from here.
@@ -399,6 +410,203 @@ pub fn merge_zpool_status(pools: &mut [Pool], stdout: &str) {
 }
 
 // -----------------------------------------------------------------------------
+// Disk health (SMART)
+// -----------------------------------------------------------------------------
+
+/// What makes a script's privileged commands root's when it runs without a
+/// password (the schedule, the watch): nothing as root, else `sudo -n` per
+/// command, so a sudoers rule naming just those commands is enough
+/// (`smartctl`, `zpool scrub`, `mdadm --action=check`). `$S` before each.
+pub const UNATTENDED: &str = r#"S=; [ "$(id -u)" = 0 ] || S="sudo -n";"#;
+
+/// Every disk's SMART reading, each after a `### <path>` line; read by
+/// [`parse_health`]. Root's (raw disk access): run as root, or unattended
+/// (its `$S`). `-n standby` leaves a disk that has spun down asleep.
+pub const HEALTH_COMMAND: &str = r####"command -v smartctl >/dev/null || exit 0; S=; [ "$(id -u)" = 0 ] || S="sudo -n"; for d in $(lsblk -dn -o PATH,TYPE | awk '$2 == "disk" && $1 !~ /zram/ { print $1 }'); do echo "### $d"; $S smartctl -n standby -a -j "$d"; done; true"####;
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DiskHealth {
+    pub device: String,
+    /// The disk answers SMART: false for a virtual disk or a USB bridge
+    /// that passes none through, which has nothing to read or test.
+    pub supported: bool,
+    /// Spun down, and not woken to be read.
+    pub asleep: bool,
+    /// The disk's own verdict.
+    pub passed: Option<bool>,
+    pub temperature: Option<f64>,
+    pub power_on_hours: Option<i64>,
+    /// Sectors remapped, pending or unreadable (ATA), media errors (NVMe),
+    /// grown defects (SCSI): above zero, the disk is wearing out.
+    pub bad_sectors: Option<i64>,
+    /// Percent left of a self-test running now.
+    pub testing: Option<u8>,
+    /// The newest self-test that ended.
+    pub last_test: Option<SelfTest>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SelfTest {
+    pub long: bool,
+    /// `passed`, `failed`, `aborted` (stopped by the host or a reset).
+    pub outcome: String,
+    pub hours: Option<i64>,
+}
+
+/// Reads [`HEALTH_COMMAND`]'s output.
+pub fn parse_health(stdout: &str) -> Vec<DiskHealth> {
+    let mut out = Vec::new();
+    let mut device: Option<&str> = None;
+    let mut json = String::new();
+    let mut flush = |device: Option<&str>, json: &mut String| {
+        if let Some(device) = device {
+            out.push(health_of(device, serde_json::from_str(json).unwrap_or(Value::Null)));
+        }
+        json.clear();
+    };
+    for line in stdout.lines() {
+        if let Some(next) = line.strip_prefix("### ") {
+            flush(device, &mut json);
+            device = Some(next.trim());
+        } else {
+            json.push_str(line);
+            json.push('\n');
+        }
+    }
+    flush(device, &mut json);
+    out
+}
+
+fn health_of(device: &str, d: Value) -> DiskHealth {
+    let exit = d["smartctl"]["exit_status"].as_i64().unwrap_or(0);
+    let said = |needle: &str| {
+        d["smartctl"]["messages"].as_array().is_some_and(|m| m.iter().any(|m| m["string"].as_str().is_some_and(|s| s.to_ascii_uppercase().contains(needle))))
+    };
+    // Bit 1: not opened, or asleep and left so.
+    let asleep = exit & 2 != 0 && said("STANDBY");
+    let nvme = &d["nvme_smart_health_information_log"];
+    let supported = exit & 2 == 0 && (d["smart_support"]["available"].as_bool().unwrap_or(false) || nvme.is_object());
+    if !supported {
+        return DiskHealth { device: device.into(), supported: false, asleep, passed: None, temperature: None, power_on_hours: None, bad_sectors: None, testing: None, last_test: None };
+    }
+    let attrs = d["ata_smart_attributes"]["table"].as_array();
+    let raw = |id: i64| attrs.and_then(|t| t.iter().find(|a| a["id"].as_i64() == Some(id))).and_then(|a| a["raw"]["value"].as_i64());
+    let bad_sectors = if attrs.is_some() {
+        let ids = [5, 197, 198].map(raw);
+        ids.iter().any(Option::is_some).then(|| ids.iter().flatten().sum())
+    } else {
+        nvme["media_errors"].as_i64().or_else(|| d["scsi_grown_defect_list"].as_i64())
+    };
+    DiskHealth {
+        device: device.into(),
+        supported: true,
+        asleep: false,
+        passed: d["smart_status"]["passed"].as_bool(),
+        temperature: d["temperature"]["current"].as_f64().or_else(|| raw(194).map(|t| (t & 0xff) as f64)),
+        power_on_hours: d["power_on_time"]["hours"].as_i64().or_else(|| nvme["power_on_hours"].as_i64()),
+        bad_sectors,
+        testing: testing(&d),
+        last_test: last_test(&d),
+    }
+}
+
+fn testing(d: &Value) -> Option<u8> {
+    let ata = &d["ata_smart_data"]["self_test"]["status"];
+    if let Some(left) = ata["remaining_percent"].as_u64() {
+        return Some(left.min(100) as u8);
+    }
+    let nvme = &d["nvme_self_test_log"];
+    if nvme["current_self_test_operation"]["value"].as_u64().is_some_and(|v| v != 0) {
+        let done = nvme["current_self_test_completion_percent"].as_u64().unwrap_or(0).min(100);
+        return Some((100 - done) as u8);
+    }
+    let scsi = &d["scsi_self_test_0"];
+    (scsi["result"]["value"].as_u64() == Some(15)).then(|| scsi["remaining_percent"].as_u64().unwrap_or(100).min(100) as u8)
+}
+
+fn last_test(d: &Value) -> Option<SelfTest> {
+    // Newest first in every log; the one running has no result yet.
+    if let Some(table) = d["ata_smart_self_test_log"]["standard"]["table"].as_array() {
+        let t = table.iter().find(|t| t["status"]["value"].as_u64() != Some(15))?;
+        let status = t["status"]["value"].as_u64().unwrap_or(0);
+        let outcome = match (status, t["status"]["passed"].as_bool()) {
+            (1 | 2, _) => "aborted",
+            (_, Some(true)) | (0, None) => "passed",
+            _ => "failed",
+        };
+        return Some(SelfTest { long: t["type"]["value"].as_u64().is_some_and(|v| v & 0x7f == 2), outcome: outcome.into(), hours: t["lifetime_hours"].as_i64() });
+    }
+    if let Some(t) = d["nvme_self_test_log"]["table"].as_array().and_then(|t| t.first()) {
+        let outcome = match t["self_test_result"]["value"].as_u64().unwrap_or(0) {
+            0 => "passed",
+            5..=7 => "failed",
+            _ => "aborted",
+        };
+        return Some(SelfTest { long: t["self_test_code"]["value"].as_u64() == Some(2), outcome: outcome.into(), hours: t["power_on_hours"].as_i64() });
+    }
+    let t = &d["scsi_self_test_0"];
+    let result = t["result"]["value"].as_u64()?;
+    let outcome = match result {
+        15 => return None,
+        0 => "passed",
+        1 | 2 => "aborted",
+        _ => "failed",
+    };
+    Some(SelfTest { long: matches!(t["code"]["value"].as_u64(), Some(2 | 6)), outcome: outcome.into(), hours: t["power_on_time"]["hours"].as_i64() })
+}
+
+// -----------------------------------------------------------------------------
+// Maintenance (scheduled, unattended)
+// -----------------------------------------------------------------------------
+
+/// What the schedule runs, without a password ([`UNATTENDED`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Maintenance {
+    /// Every pool scrubbed and every redundant md array checked, skipping
+    /// one already at it.
+    Scrub,
+    SmartShort,
+    SmartLong,
+}
+
+impl Maintenance {
+    pub const ALL: [Maintenance; 3] = [Self::Scrub, Self::SmartShort, Self::SmartLong];
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Scrub => "scrub",
+            Self::SmartShort => "smartShort",
+            Self::SmartLong => "smartLong",
+        }
+    }
+
+    pub fn from_name(name: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|m| m.name() == name)
+    }
+
+    /// The script; a SMART test is started on [disks] (those whose SMART
+    /// answers, [`DiskHealth::supported`]). Exits non-zero when one failed.
+    pub fn script(self, disks: &[String]) -> Result<String, StorageError> {
+        Ok(match self {
+            Self::Scrub => format!(
+                "{UNATTENDED} r=0; \
+                 for p in $(zpool list -H -o name 2>/dev/null); do \
+                 zpool status \"$p\" | grep -q 'scrub in progress' && continue; $S zpool scrub \"$p\" || r=1; done; \
+                 for a in /sys/block/md*/md/sync_action; do [ -r \"$a\" ] || continue; [ \"$(cat \"$a\")\" = idle ] || continue; \
+                 md=${{a#/sys/block/}}; md=${{md%%/*}}; $S mdadm --action=check \"/dev/$md\" || r=1; done; exit $r"
+            ),
+            Self::SmartShort | Self::SmartLong => {
+                disks.iter().try_for_each(|d| device_ok(d))?;
+                let kind = if self == Self::SmartLong { "long" } else { "short" };
+                let list: Vec<String> = disks.iter().map(|d| q(d)).collect();
+                format!("{UNATTENDED} r=0; for d in {}; do $S smartctl -t {kind} \"$d\" >/dev/null || r=1; done; exit $r", list.join(" "))
+            }
+        })
+    }
+}
+
+// -----------------------------------------------------------------------------
 // Changes
 // -----------------------------------------------------------------------------
 
@@ -445,6 +653,15 @@ pub enum StorageAction {
     ScrubPool { name: String },
     DestroyPool { name: String },
     SmartTest { device: String, long: bool },
+    /// Adds a device to a RAID 1, 5 or 6 as one more working member: a
+    /// mirror more, or more room once the reshape ends.
+    GrowRaid { array: String, device: String },
+    /// Grows the mounted filesystem on [device] to fill it (after its array
+    /// or partition grew).
+    ExpandFilesystem { device: String },
+    /// Adds a vdev of [devices] to a pool: more room. zpool refuses one whose
+    /// redundancy differs from the pool's.
+    AddToPool { name: String, layout: String, devices: Vec<String> },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -521,14 +738,15 @@ impl StorageAction {
         match self {
             Self::Partition { device } | Self::Format { device, .. } => vec![device],
             Self::CreateRaid { devices, .. } | Self::CreatePool { devices, .. } => devices.iter().map(String::as_str).collect(),
-            Self::AddToRaid { device, .. } => vec![device],
+            Self::AddToRaid { device, .. } | Self::GrowRaid { device, .. } => vec![device],
+            Self::AddToPool { devices, .. } => devices.iter().map(String::as_str).collect(),
             _ => Vec::new(),
         }
     }
 
     pub fn validate(&self) -> Result<(), StorageError> {
         match self {
-            Self::Partition { device } | Self::SmartTest { device, .. } => device_ok(device),
+            Self::Partition { device } | Self::SmartTest { device, .. } | Self::ExpandFilesystem { device } => device_ok(device),
             Self::Format { device, fstype, label } => {
                 device_ok(device)?;
                 if !FILESYSTEMS.contains(&fstype.as_str()) {
@@ -561,12 +779,12 @@ impl StorageAction {
                 }
                 Ok(())
             }
-            Self::AddToRaid { array, device } | Self::RemoveFromRaid { array, device } => {
+            Self::AddToRaid { array, device } | Self::RemoveFromRaid { array, device } | Self::GrowRaid { array, device } => {
                 md_ok(array)?;
                 device_ok(device)
             }
             Self::DeleteRaid { array } => md_ok(array),
-            Self::CreatePool { name, layout, devices } => {
+            Self::CreatePool { name, layout, devices } | Self::AddToPool { name, layout, devices } => {
                 pool_ok(name)?;
                 if !POOL_LAYOUTS.contains(&layout.as_str()) {
                     return Err(StorageError::InvalidLevel);
@@ -661,6 +879,29 @@ impl StorageAction {
             Self::ScrubPool { name } => format!("zpool scrub {}", q(name)),
             Self::DestroyPool { name } => format!("zpool destroy {}", q(name)),
             Self::SmartTest { device, long } => format!("smartctl -t {} {}", if *long { "long" } else { "short" }, q(device)),
+            // Levels without redundancy (0) or with a layout mdadm reshapes
+            // differently (10) are refused by the agent first; mdadm refuses
+            // them too.
+            Self::GrowRaid { array, device } => format!(
+                "n=$(mdadm --detail --export /dev/{array} | sed -n 's/^MD_DEVICES=//p') && [ -n \"$n\" ] \
+                 && {{ mdadm --zero-superblock {d} 2>/dev/null; true; }} && mdadm --manage /dev/{array} --add {d} \
+                 && mdadm --grow /dev/{array} --raid-devices=$((n + 1))",
+                d = q(device)
+            ),
+            Self::ExpandFilesystem { device } => format!(
+                "mp=$(findmnt -nro TARGET -S {d} | head -n 1) && [ -n \"$mp\" ] || {{ echo 'not mounted' >&2; exit 1; }}; \
+                 case $(lsblk -dno FSTYPE {d}) in \
+                 ext2|ext3|ext4) resize2fs {d} ;; \
+                 xfs) xfs_growfs \"$mp\" ;; \
+                 btrfs) btrfs filesystem resize max \"$mp\" ;; \
+                 *) echo 'this filesystem cannot be grown here' >&2; exit 1 ;; esac",
+                d = q(device)
+            ),
+            Self::AddToPool { name, layout, devices } => {
+                let devs: Vec<String> = devices.iter().map(|d| q(d)).collect();
+                let vdev = if layout == "stripe" { String::new() } else { format!("{layout} ") };
+                format!("zpool add {} {vdev}{}", q(name), devs.join(" "))
+            }
         })
     }
 }
@@ -813,5 +1054,63 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         assert!(mount.contains("defaults,nofail 0 2"));
         let parsed: StorageAction = serde_json::from_value(serde_json::json!({ "action": "createRaid", "name": "md0", "level": 1, "devices": ["/dev/sdb", "/dev/sdc"] })).unwrap();
         assert_eq!(parsed.consumes(), vec!["/dev/sdb", "/dev/sdc"]);
+    }
+
+    #[test]
+    fn disk_health_reads_every_kind_of_disk() {
+        let h = parse_health(include_str!("../tests/fixtures/storage_health.txt"));
+        let names: Vec<&str> = h.iter().map(|d| d.device.as_str()).collect();
+        assert_eq!(names, ["/dev/nvme0n1", "/dev/nvme1n1", "/dev/sda", "/dev/sdb", "/dev/sdc", "/dev/sdd", "/dev/sde"]);
+
+        // NVMe, a short test 13% in, none ended before.
+        assert!(h[0].supported && h[0].passed == Some(true));
+        assert_eq!((h[0].temperature, h[0].power_on_hours, h[0].bad_sectors, h[0].testing), (Some(58.0), Some(15511), Some(0), Some(87)));
+        assert_eq!(h[0].last_test, None);
+        // The same disk once it ended.
+        assert_eq!(h[1].testing, None);
+        assert_eq!(h[1].last_test, Some(SelfTest { long: false, outcome: "passed".into(), hours: Some(15511) }));
+
+        // A QEMU disk has no SMART: nothing to read or test.
+        assert!(!h[2].supported && !h[2].asleep);
+        assert_eq!((h[2].passed, h[2].temperature), (None, None));
+
+        // ATA: a long test running, the one before it failed, sectors going.
+        let ata = &h[3];
+        assert!(ata.supported);
+        assert_eq!((ata.temperature, ata.power_on_hours, ata.bad_sectors, ata.testing), (Some(35.0), Some(31024), Some(10), Some(90)));
+        assert_eq!(ata.last_test, Some(SelfTest { long: true, outcome: "failed".into(), hours: Some(30980) }));
+
+        // Asleep and left so; gone; smartctl printing nothing.
+        assert!(h[4].asleep && !h[4].supported);
+        assert!(!h[5].asleep && !h[5].supported);
+        assert!(!h[6].supported);
+        assert!(parse_health("").is_empty());
+    }
+
+    #[test]
+    fn growing_and_maintenance_are_checked_scripts() {
+        let grow = StorageAction::GrowRaid { array: "md0".into(), device: "/dev/sdd".into() };
+        let script = grow.script().unwrap();
+        assert!(script.contains("mdadm --manage /dev/md0 --add '/dev/sdd'") && script.contains("--raid-devices=$((n + 1))"), "{script}");
+        assert_eq!(grow.consumes(), ["/dev/sdd"]);
+        assert!(StorageAction::GrowRaid { array: "md0; reboot".into(), device: "/dev/sdd".into() }.script().is_err());
+
+        let expand = StorageAction::ExpandFilesystem { device: "/dev/md0".into() }.script().unwrap();
+        assert!(expand.contains("resize2fs '/dev/md0'") && expand.contains("xfs_growfs \"$mp\""), "{expand}");
+        assert!(StorageAction::ExpandFilesystem { device: "/dev/md0".into() }.consumes().is_empty());
+
+        let add = StorageAction::AddToPool { name: "tank".into(), layout: "mirror".into(), devices: vec!["/dev/sdd".into(), "/dev/sde".into()] };
+        assert_eq!(add.script().unwrap(), "zpool add 'tank' mirror '/dev/sdd' '/dev/sde'");
+        assert_eq!(add.consumes().len(), 2);
+        let one = StorageAction::AddToPool { name: "tank".into(), layout: "mirror".into(), devices: vec!["/dev/sdd".into()] };
+        assert_eq!(one.script(), Err(StorageError::TooFewDevices));
+
+        let scrub = Maintenance::Scrub.script(&[]).unwrap();
+        assert!(scrub.starts_with(UNATTENDED) && scrub.contains("$S zpool scrub") && scrub.contains("$S mdadm --action=check"), "{scrub}");
+        let long = Maintenance::SmartLong.script(&["/dev/sda".into(), "/dev/nvme0n1".into()]).unwrap();
+        assert!(long.contains("for d in '/dev/sda' '/dev/nvme0n1'; do $S smartctl -t long"), "{long}");
+        assert!(Maintenance::SmartShort.script(&["/dev/sda;id".into()]).is_err());
+        assert_eq!(Maintenance::from_name("smartShort"), Some(Maintenance::SmartShort));
+        assert_eq!(Maintenance::from_name("format"), None);
     }
 }
