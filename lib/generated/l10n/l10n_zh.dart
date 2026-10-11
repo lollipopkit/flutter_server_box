@@ -5174,6 +5174,718 @@ class AppLocalizationsZh extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count 个线程';
   }
+
+  @override
+  String get storageTitle => '存储';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => '磁盘';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS 存储池';
+
+  @override
+  String get storageWholeDisk => '整个磁盘';
+
+  @override
+  String get storageNoFilesystem => '无文件系统';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '已用 $used / $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => '使用中';
+
+  @override
+  String get storageBusySwap => '交换空间';
+
+  @override
+  String get storageBusyRaid => '属于阵列';
+
+  @override
+  String get storageBusyPool => '属于存储池';
+
+  @override
+  String get storageBusyVolume => '承载卷';
+
+  @override
+  String get storageBusyReadOnly => '只读';
+
+  @override
+  String get storageBusySystem => '系统分区';
+
+  @override
+  String get storageSystemMount => '系统正在使用此挂载点，不能卸载。';
+
+  @override
+  String get storageNotMounted => '该位置已没有挂载。';
+
+  @override
+  String get storageMount => '挂载';
+
+  @override
+  String get storageUnmount => '卸载';
+
+  @override
+  String get storageFormat => '格式化';
+
+  @override
+  String get storageInitialize => '初始化';
+
+  @override
+  String get storageSmartTest => 'SMART 自检';
+
+  @override
+  String get storageFilesystem => '文件系统';
+
+  @override
+  String get storageLabel => '卷标';
+
+  @override
+  String get storageMountpoint => '挂载点';
+
+  @override
+  String get storageMountPersist => '每次开机自动挂载（/etc/fstab）';
+
+  @override
+  String get storageMountOwn => '允许 ServerBox 写入（用于备份）';
+
+  @override
+  String get storageName => '名称';
+
+  @override
+  String get storageLevel => '级别';
+
+  @override
+  String get storageLayout => '布局';
+
+  @override
+  String storagePickDevices(Object count) {
+    return '至少选择 $count 个设备。设备上的数据会丢失。';
+  }
+
+  @override
+  String get storageNoFreeDevices => '没有空闲的磁盘或分区。';
+
+  @override
+  String get storageCreateRaid => '创建阵列';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '用 $devices 创建 /dev/$name（RAID $level）。设备上的数据会全部丢失。';
+  }
+
+  @override
+  String get storageCreatePool => '创建存储池';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '用 $devices 创建存储池 $name（$layout）。设备上的数据会全部丢失。';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '在 $device 上创建新的文件系统。上面的数据会全部丢失。';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '清空 $device，并创建一个占满整个磁盘的分区。上面的数据会全部丢失。';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '将 $device 挂载到 $mountpoint。';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '卸载 $mountpoint，并不再开机自动挂载。';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '在 $device 上启动简短自检，需要几分钟，进度和结果显示在这里。';
+  }
+
+  @override
+  String get storageAddMember => '添加磁盘';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '将 $device 加入 /dev/$array：替换故障成员，或作为热备盘。上面的数据会丢失。';
+  }
+
+  @override
+  String get storageRemoveMember => '移除';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '将 $device 标记为故障并从 /dev/$array 移除。阵列会继续运行；如果它是工作成员，阵列会降级。';
+  }
+
+  @override
+  String get storageDeleteRaid => '删除阵列';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '停止 /dev/$array 并清除成员上的 RAID 标记。其中的数据会丢失。';
+  }
+
+  @override
+  String get storageDestroyPool => '销毁存储池';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return '销毁存储池 $name 及其中的所有数据。';
+  }
+
+  @override
+  String get storageScrub => '数据校验';
+
+  @override
+  String storageScrubBody(Object name) {
+    return '读取存储池 $name 的全部数据并修复可修复的错误，在后台运行。';
+  }
+
+  @override
+  String get storageState => '状态';
+
+  @override
+  String get storageHealthy => '正常';
+
+  @override
+  String get storageDegraded => '已降级';
+
+  @override
+  String storageSync(Object action) {
+    return '同步（$action）';
+  }
+
+  @override
+  String get storageFaulty => '故障';
+
+  @override
+  String get storageSpare => '热备';
+
+  @override
+  String get storageActive => '工作中';
+
+  @override
+  String get storageScan => '上次扫描';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count 个错误';
+  }
+
+  @override
+  String get storageNoDisks => '没有磁盘';
+
+  @override
+  String get storageNoArrays => '没有阵列';
+
+  @override
+  String get storageNoPools => '没有存储池';
+
+  @override
+  String get storageNoMdadm => '未安装 mdadm，无法在此创建或修改阵列。';
+
+  @override
+  String get storageNoZfs => '未安装 ZFS（zfsutils）。';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return '输入 $word 以确认';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String get storageSudoPassword => 'sudo 密码（agent 账户需要时填写）';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device 正在使用中。';
+  }
+
+  @override
+  String get storageBusy => '另一项磁盘操作正在进行。';
+
+  @override
+  String get storageWorking => '正在修改磁盘…';
+
+  @override
+  String get storageDone => '完成';
+
+  @override
+  String get storageFailed => '未完成';
+
+  @override
+  String get storageHealthRead => '读取磁盘健康';
+
+  @override
+  String get storageHealthWearing => '有损耗';
+
+  @override
+  String get storageHealthFailing => '故障';
+
+  @override
+  String get storageHealthAsleep => '休眠中';
+
+  @override
+  String get storageHealthUnsupported => '无 SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '通电 $hours 小时';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count 个坏扇区';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return '自检中：剩余 $percent%';
+  }
+
+  @override
+  String get storageLastTestPassed => '上次自检通过';
+
+  @override
+  String get storageLastTestFailed => '上次自检失败';
+
+  @override
+  String get storageLastTestAborted => '上次自检被中止';
+
+  @override
+  String get storageGrowPartition => '扩展分区';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '把 $device 扩展到其后的空闲空间，之后再扩展其文件系统。';
+  }
+
+  @override
+  String get storageEncrypt => '加密（LUKS）';
+
+  @override
+  String get storagePassphrase => '密码短语';
+
+  @override
+  String get storagePassphraseAgain => '再次输入';
+
+  @override
+  String get storagePassphraseHint => '至少 8 个字符。没有它数据将无法读取，请妥善保管。';
+
+  @override
+  String get storageInvalidPassphrase => '密码短语需为 8 到 512 个字符，且不能换行。';
+
+  @override
+  String get storagePassphrasesDiffer => '两次输入的密码短语不一致。';
+
+  @override
+  String get storageEncrypted => '已加密';
+
+  @override
+  String get storageLocked => '已锁定';
+
+  @override
+  String get storageUnlock => '解锁';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return '用密码短语打开 $device。';
+  }
+
+  @override
+  String get storageLock => '锁定';
+
+  @override
+  String storageLockBody(Object device) {
+    return '关闭 $device。需要先卸载其文件系统。';
+  }
+
+  @override
+  String get storageReplace => '替换';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return '用 $replacement 替换存储池 $name 中的 $old。存储池会把数据复制到新盘上，$replacement 上的数据会丢失。';
+  }
+
+  @override
+  String get storageAttach => '镜像';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '把 $existing 镜像到 $replacement。$replacement 上的数据会丢失。';
+  }
+
+  @override
+  String get storageAddSpare => '添加热备盘';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '把 $devices 作为热备盘加入存储池 $name。这些盘上的数据会丢失。';
+  }
+
+  @override
+  String get storageRemoveDevice => '移除';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '把 $device 移出存储池 $name。';
+  }
+
+  @override
+  String get storageOnline => '恢复在线';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '让 $device 重新加入存储池 $name，并扩展到整块硬盘。';
+  }
+
+  @override
+  String get storageDetails => '详情';
+
+  @override
+  String get storageAttributes => '属性';
+
+  @override
+  String get storageAttrValue => '当前值';
+
+  @override
+  String get storageAttrWorst => '最差值';
+
+  @override
+  String get storageAttrThresh => '阈值';
+
+  @override
+  String get storageSelfTests => '自检记录';
+
+  @override
+  String get storageTestShort => '简短';
+
+  @override
+  String get storageTestLong => '完整';
+
+  @override
+  String get storageTestPassed => '通过';
+
+  @override
+  String get storageTestFailed => '失败';
+
+  @override
+  String get storageTestAborted => '已中止';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '于 $hours 小时';
+  }
+
+  @override
+  String get storageNothingToShow => '没有可显示的内容';
+
+  @override
+  String get storageLongTest => '完整自检';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '在 $device 上启动完整自检，会读取整块硬盘，大容量硬盘需要几个小时。';
+  }
+
+  @override
+  String get storageMountedInside => '请先卸载其文件系统。';
+
+  @override
+  String get storageNotRemovable => '这里只能移除热备盘或缓存盘。';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => '扩展';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '把 $device 上的文件系统扩展到整个设备，期间保持挂载。';
+  }
+
+  @override
+  String get storageGrowRaid => '扩容';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '把 $device 作为新的工作成员加入 /dev/$array。RAID 1 会多一份镜像；RAID 5 和 6 在重塑完成后增加容量，重塑可能需要几个小时，完成后再扩展其文件系统。$device 上的数据会丢失。';
+  }
+
+  @override
+  String get storageAddToPool => '添加磁盘';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return '把 $devices 以 $layout 加入存储池 $name 以增加容量。加入后无法移除，磁盘上的数据会丢失。';
+  }
+
+  @override
+  String get sharingTitle => '共享';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => '服务';
+
+  @override
+  String get sharingRunning => '运行中';
+
+  @override
+  String get sharingStopped => '已停止';
+
+  @override
+  String get sharingNfsServer => 'NFS 服务器';
+
+  @override
+  String get sharingNoSamba => '未安装 Samba。Windows、macOS 和 Linux 都能打开 SMB 共享。';
+
+  @override
+  String get sharingNoNfs => '未安装 NFS 服务器。Linux 和 macOS 可以挂载 NFS 导出。';
+
+  @override
+  String get sharingInstallSamba => '安装 Samba';
+
+  @override
+  String get sharingInstallSambaBody => '使用系统的包管理器安装 Samba。';
+
+  @override
+  String get sharingInstallNfs => '安装 NFS 服务器';
+
+  @override
+  String get sharingInstallNfsBody => '使用系统的包管理器安装 NFS 服务器。';
+
+  @override
+  String get sharingInstalling => '正在安装…';
+
+  @override
+  String get sharingAddShare => '添加共享';
+
+  @override
+  String get sharingAddExport => '添加导出';
+
+  @override
+  String get sharingEdit => '编辑';
+
+  @override
+  String get sharingRemove => '移除';
+
+  @override
+  String get sharingSave => '保存';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '通过 SMB 以 $name 共享 $path，然后重新加载 Samba。';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '通过 NFS 导出 $path，然后重新加载导出列表。';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '停止共享 $name。文件夹和其中的文件会保留。';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '停止导出 $path。文件夹和其中的文件会保留。';
+  }
+
+  @override
+  String get sharingElsewhere => '在 ServerBox 之外设置';
+
+  @override
+  String get sharingNoShares => '没有 SMB 共享';
+
+  @override
+  String get sharingNoExports => '没有 NFS 导出';
+
+  @override
+  String get sharingReadOnly => '只读';
+
+  @override
+  String get sharingReadWrite => '读写';
+
+  @override
+  String get sharingGuest => '访客';
+
+  @override
+  String get sharingGuestLabel => '允许网络中的任何人无需账户访问';
+
+  @override
+  String get sharingUsersHint => '允许访问的账户（都不勾选：所有设置了 SMB 密码的账户）：';
+
+  @override
+  String get sharingFolder => '文件夹';
+
+  @override
+  String get sharingFolderHint => '服务器上的文件夹，例如在存储中挂载的硬盘。';
+
+  @override
+  String get sharingComment => '描述';
+
+  @override
+  String get sharingPasswords => 'SMB 密码';
+
+  @override
+  String get sharingPasswordsBody => 'Samba 使用独立的密码：为每个要连接的账户设置一个。';
+
+  @override
+  String get sharingAccount => '账户';
+
+  @override
+  String get sharingSetPassword => '设置密码';
+
+  @override
+  String sharingSetPasswordBody(Object user) {
+    return '设置 $user 的 SMB 密码。';
+  }
+
+  @override
+  String get sharingNewPassword => '新的 SMB 密码';
+
+  @override
+  String get sharingNewPasswordAgain => '再次输入';
+
+  @override
+  String get sharingPasswordsDiffer => '两次输入的密码不一致。';
+
+  @override
+  String get sharingClientsHint =>
+      '允许挂载的客户端：* 表示任何人，也可以是主机名、地址或网段，例如 192.168.1.0/24。';
+
+  @override
+  String get sharingClient => '客户端';
+
+  @override
+  String get sharingAddClient => '添加客户端';
+
+  @override
+  String get sharingSquash => '客户端的 root';
+
+  @override
+  String get sharingSquashRoot => 'root 映射为 nobody';
+
+  @override
+  String get sharingSquashAll => '所有用户映射为 nobody';
+
+  @override
+  String get sharingSquashNone => 'root 保持 root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path 不是服务器上的文件夹。';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return '新配置未通过检查，已恢复原配置：$detail';
+  }
+
+  @override
+  String get sharingDuplicate => '已有共享使用这个名称或文件夹。';
+
+  @override
+  String get sharingInvalidName => '名称只能包含字母、数字和 _ . -，最多 32 个字符。';
+
+  @override
+  String get sharingInvalidPath => '文件夹必须是绝对路径，不能包含引号、反斜杠或 ..';
+
+  @override
+  String get sharingInvalidClient => '客户端可以是 *、主机名、地址或网段。';
+
+  @override
+  String get sharingInvalidPassword => '不能使用这个密码。';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine 备份（Mac）';
+
+  @override
+  String get sharingRecycleOption => '将删除的文件保留在 .recycle 中';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => '回收站';
+
+  @override
+  String get sharingConnectedNow => '当前连接';
+
+  @override
+  String get sharingNobodyConnected => '当前没有连接';
+
+  @override
+  String get sharingShowConnections => '查看连接';
+
+  @override
+  String get sharingShowConnectionsBody => '以 root 身份读取当前连接信息。';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10345,4 +11057,716 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String threadsFmt(int count) {
     return '$count 個執行緒';
   }
+
+  @override
+  String get storageTitle => '儲存空間';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => '磁碟';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS 儲存池';
+
+  @override
+  String get storageWholeDisk => '整個磁碟';
+
+  @override
+  String get storageNoFilesystem => '無檔案系統';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '已用 $used / $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => '使用中';
+
+  @override
+  String get storageBusySwap => '交換空間';
+
+  @override
+  String get storageBusyRaid => '屬於陣列';
+
+  @override
+  String get storageBusyPool => '屬於儲存池';
+
+  @override
+  String get storageBusyVolume => '承載卷';
+
+  @override
+  String get storageBusyReadOnly => '唯讀';
+
+  @override
+  String get storageBusySystem => '系統分割區';
+
+  @override
+  String get storageSystemMount => '系統正在使用此掛載點，不能卸載。';
+
+  @override
+  String get storageNotMounted => '該位置已沒有掛載。';
+
+  @override
+  String get storageMount => '掛載';
+
+  @override
+  String get storageUnmount => '卸載';
+
+  @override
+  String get storageFormat => '格式化';
+
+  @override
+  String get storageInitialize => '初始化';
+
+  @override
+  String get storageSmartTest => 'SMART 自我檢測';
+
+  @override
+  String get storageFilesystem => '檔案系統';
+
+  @override
+  String get storageLabel => '標籤';
+
+  @override
+  String get storageMountpoint => '掛載點';
+
+  @override
+  String get storageMountPersist => '每次開機自動掛載（/etc/fstab）';
+
+  @override
+  String get storageMountOwn => '允許 ServerBox 寫入（用於備份）';
+
+  @override
+  String get storageName => '名稱';
+
+  @override
+  String get storageLevel => '等級';
+
+  @override
+  String get storageLayout => '配置';
+
+  @override
+  String storagePickDevices(Object count) {
+    return '至少選擇 $count 個裝置。裝置上的資料會遺失。';
+  }
+
+  @override
+  String get storageNoFreeDevices => '沒有空閒的磁碟或分割區。';
+
+  @override
+  String get storageCreateRaid => '建立陣列';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '用 $devices 建立 /dev/$name（RAID $level）。裝置上的資料會全部遺失。';
+  }
+
+  @override
+  String get storageCreatePool => '建立儲存池';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '用 $devices 建立儲存池 $name（$layout）。裝置上的資料會全部遺失。';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '在 $device 上建立新的檔案系統。上面的資料會全部遺失。';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '清空 $device，並建立一個佔滿整個磁碟的分割區。上面的資料會全部遺失。';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '將 $device 掛載到 $mountpoint。';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '卸載 $mountpoint，並不再開機自動掛載。';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '在 $device 上啟動簡短自我檢測，需要幾分鐘；進度和結果會顯示在這裡。';
+  }
+
+  @override
+  String get storageAddMember => '新增磁碟';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '將 $device 加入 /dev/$array：取代故障成員，或作為熱備援。上面的資料會遺失。';
+  }
+
+  @override
+  String get storageRemoveMember => '移除';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '將 $device 標記為故障並從 /dev/$array 移除。陣列會繼續運作；如果它是運作中的成員，陣列會降級。';
+  }
+
+  @override
+  String get storageDeleteRaid => '刪除陣列';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '停止 /dev/$array 並清除成員上的 RAID 標記。其中的資料會遺失。';
+  }
+
+  @override
+  String get storageDestroyPool => '銷毀儲存池';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return '銷毀儲存池 $name 及其中的所有資料。';
+  }
+
+  @override
+  String get storageScrub => '資料清理';
+
+  @override
+  String storageScrubBody(Object name) {
+    return '讀取儲存池 $name 的全部資料並修復可修復的錯誤，在背景執行。';
+  }
+
+  @override
+  String get storageState => '狀態';
+
+  @override
+  String get storageHealthy => '正常';
+
+  @override
+  String get storageDegraded => '已降級';
+
+  @override
+  String storageSync(Object action) {
+    return '同步（$action）';
+  }
+
+  @override
+  String get storageFaulty => '故障';
+
+  @override
+  String get storageSpare => '熱備援';
+
+  @override
+  String get storageActive => '運作中';
+
+  @override
+  String get storageScan => '上次掃描';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count 個錯誤';
+  }
+
+  @override
+  String get storageNoDisks => '沒有磁碟';
+
+  @override
+  String get storageNoArrays => '沒有陣列';
+
+  @override
+  String get storageNoPools => '沒有儲存池';
+
+  @override
+  String get storageNoMdadm => '未安裝 mdadm，無法在此建立或修改陣列。';
+
+  @override
+  String get storageNoZfs => '未安裝 ZFS（zfsutils）。';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return '輸入 $word 以確認';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String get storageSudoPassword => 'sudo 密碼（agent 帳號需要時填寫）';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device 正在使用中。';
+  }
+
+  @override
+  String get storageBusy => '另一項磁碟操作正在進行。';
+
+  @override
+  String get storageWorking => '正在修改磁碟…';
+
+  @override
+  String get storageDone => '完成';
+
+  @override
+  String get storageFailed => '未完成';
+
+  @override
+  String get storageHealthRead => '讀取磁碟健康狀態';
+
+  @override
+  String get storageHealthWearing => '有損耗';
+
+  @override
+  String get storageHealthFailing => '故障';
+
+  @override
+  String get storageHealthAsleep => '休眠中';
+
+  @override
+  String get storageHealthUnsupported => '無 SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '通電 $hours 小時';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count 個壞扇區';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return '自我檢測中：剩餘 $percent%';
+  }
+
+  @override
+  String get storageLastTestPassed => '上次自我檢測通過';
+
+  @override
+  String get storageLastTestFailed => '上次自我檢測失敗';
+
+  @override
+  String get storageLastTestAborted => '上次自我檢測已中止';
+
+  @override
+  String get storageGrowPartition => '擴充分割區';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '將 $device 擴充至後方的可用空間。之後再擴充檔案系統。';
+  }
+
+  @override
+  String get storageEncrypt => '加密（LUKS）';
+
+  @override
+  String get storagePassphrase => '密語';
+
+  @override
+  String get storagePassphraseAgain => '再次輸入';
+
+  @override
+  String get storagePassphraseHint => '至少 8 個字元。沒有密語就無法讀取資料，請妥善保管。';
+
+  @override
+  String get storageInvalidPassphrase => '密語必須是單行且介於 8 到 512 個字元。';
+
+  @override
+  String get storagePassphrasesDiffer => '兩次密語不相符。';
+
+  @override
+  String get storageEncrypted => '已加密';
+
+  @override
+  String get storageLocked => '已鎖定';
+
+  @override
+  String get storageUnlock => '解鎖';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return '使用密語開啟 $device。';
+  }
+
+  @override
+  String get storageLock => '鎖定';
+
+  @override
+  String storageLockBody(Object device) {
+    return '關閉 $device。必須先卸載其檔案系統。';
+  }
+
+  @override
+  String get storageReplace => '取代';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return '以 $replacement 取代儲存池 $name 中的 $old。儲存池會將資料複製到新裝置，$replacement 的內容將會遺失。';
+  }
+
+  @override
+  String get storageAttach => '鏡像';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '將 $existing 鏡像至 $replacement。$replacement 的內容將會遺失。';
+  }
+
+  @override
+  String get storageAddSpare => '新增備援裝置';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '將 $devices 作為備援裝置加入儲存池 $name。裝置中的資料將會遺失。';
+  }
+
+  @override
+  String get storageRemoveDevice => '移除';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '將 $device 從儲存池 $name 移除。';
+  }
+
+  @override
+  String get storageOnline => '恢復上線';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '將 $device 加回儲存池 $name，並擴充至整顆磁碟。';
+  }
+
+  @override
+  String get storageDetails => '詳細資料';
+
+  @override
+  String get storageAttributes => '屬性';
+
+  @override
+  String get storageAttrValue => '值';
+
+  @override
+  String get storageAttrWorst => '最差值';
+
+  @override
+  String get storageAttrThresh => '門檻';
+
+  @override
+  String get storageSelfTests => '自我測試';
+
+  @override
+  String get storageTestShort => '短測試';
+
+  @override
+  String get storageTestLong => '長測試';
+
+  @override
+  String get storageTestPassed => '通過';
+
+  @override
+  String get storageTestFailed => '失敗';
+
+  @override
+  String get storageTestAborted => '已停止';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '於 $hours 小時';
+  }
+
+  @override
+  String get storageNothingToShow => '沒有可顯示的內容';
+
+  @override
+  String get storageLongTest => '長時間測試';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '在 $device 上啟動長時間自我測試。測試會讀取整顆磁碟，大容量磁碟可能需要數小時。';
+  }
+
+  @override
+  String get storageMountedInside => '請先卸載檔案系統。';
+
+  @override
+  String get storageNotRemovable => '此處只能移除備援或快取裝置。';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => '擴展';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '將 $device 上的檔案系統擴展到整個裝置，期間保持掛載。';
+  }
+
+  @override
+  String get storageGrowRaid => '擴容';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '把 $device 作為新的工作成員加入 /dev/$array。RAID 1 會多一份鏡像；RAID 5 和 6 在重塑完成後增加容量，重塑可能需要幾個小時，完成後再擴展其檔案系統。$device 上的資料會遺失。';
+  }
+
+  @override
+  String get storageAddToPool => '新增磁碟';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return '把 $devices 以 $layout 加入儲存池 $name 以增加容量。加入後無法移除，磁碟上的資料會遺失。';
+  }
+
+  @override
+  String get sharingTitle => '分享';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => '服務';
+
+  @override
+  String get sharingRunning => '執行中';
+
+  @override
+  String get sharingStopped => '已停止';
+
+  @override
+  String get sharingNfsServer => 'NFS 伺服器';
+
+  @override
+  String get sharingNoSamba => '未安裝 Samba。Windows、macOS 和 Linux 都能開啟 SMB 分享。';
+
+  @override
+  String get sharingNoNfs => '未安裝 NFS 伺服器。Linux 和 macOS 可以掛載 NFS 匯出。';
+
+  @override
+  String get sharingInstallSamba => '安裝 Samba';
+
+  @override
+  String get sharingInstallSambaBody => '使用系統的套件管理器安裝 Samba。';
+
+  @override
+  String get sharingInstallNfs => '安裝 NFS 伺服器';
+
+  @override
+  String get sharingInstallNfsBody => '使用系統的套件管理器安裝 NFS 伺服器。';
+
+  @override
+  String get sharingInstalling => '正在安裝…';
+
+  @override
+  String get sharingAddShare => '新增分享';
+
+  @override
+  String get sharingAddExport => '新增匯出';
+
+  @override
+  String get sharingEdit => '編輯';
+
+  @override
+  String get sharingRemove => '移除';
+
+  @override
+  String get sharingSave => '儲存';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '透過 SMB 以 $name 分享 $path，然後重新載入 Samba。';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '透過 NFS 匯出 $path，然後重新載入匯出清單。';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '停止分享 $name。資料夾和其中的檔案會保留。';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '停止匯出 $path。資料夾和其中的檔案會保留。';
+  }
+
+  @override
+  String get sharingElsewhere => '在 ServerBox 之外設定';
+
+  @override
+  String get sharingNoShares => '沒有 SMB 分享';
+
+  @override
+  String get sharingNoExports => '沒有 NFS 匯出';
+
+  @override
+  String get sharingReadOnly => '唯讀';
+
+  @override
+  String get sharingReadWrite => '讀寫';
+
+  @override
+  String get sharingGuest => '訪客';
+
+  @override
+  String get sharingGuestLabel => '允許網路中的任何人無需帳號存取';
+
+  @override
+  String get sharingUsersHint => '允許存取的帳號（都不勾選：所有設定了 SMB 密碼的帳號）：';
+
+  @override
+  String get sharingFolder => '資料夾';
+
+  @override
+  String get sharingFolderHint => '伺服器上的資料夾，例如在儲存空間中掛載的磁碟。';
+
+  @override
+  String get sharingComment => '描述';
+
+  @override
+  String get sharingPasswords => 'SMB 密碼';
+
+  @override
+  String get sharingPasswordsBody => 'Samba 使用獨立的密碼：為每個要連線的帳號設定一個。';
+
+  @override
+  String get sharingAccount => '帳號';
+
+  @override
+  String get sharingSetPassword => '設定密碼';
+
+  @override
+  String sharingSetPasswordBody(Object user) {
+    return '設定 $user 的 SMB 密碼。';
+  }
+
+  @override
+  String get sharingNewPassword => '新的 SMB 密碼';
+
+  @override
+  String get sharingNewPasswordAgain => '再次輸入';
+
+  @override
+  String get sharingPasswordsDiffer => '兩次輸入的密碼不一致。';
+
+  @override
+  String get sharingClientsHint =>
+      '允許掛載的用戶端：* 表示任何人，也可以是主機、位址或網段，例如 192.168.1.0/24。';
+
+  @override
+  String get sharingClient => '用戶端';
+
+  @override
+  String get sharingAddClient => '新增用戶端';
+
+  @override
+  String get sharingSquash => '用戶端的 root';
+
+  @override
+  String get sharingSquashRoot => 'root 對應為 nobody';
+
+  @override
+  String get sharingSquashAll => '所有人對應為 nobody';
+
+  @override
+  String get sharingSquashNone => 'root 保持為 root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path 不是伺服器上的資料夾。';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return '新設定未通過檢查，已恢復原設定：$detail';
+  }
+
+  @override
+  String get sharingDuplicate => '已有其他分享使用這個名稱或資料夾。';
+
+  @override
+  String get sharingInvalidName => '名稱只能包含字母、數字和 _ . -，最多 32 個字元。';
+
+  @override
+  String get sharingInvalidPath => '資料夾必須是絕對路徑，不能包含引號、反斜線或 ..';
+
+  @override
+  String get sharingInvalidClient => '用戶端可以是 *、主機、位址或網段。';
+
+  @override
+  String get sharingInvalidPassword => '不能使用這個密碼。';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine 備份（Mac）';
+
+  @override
+  String get sharingRecycleOption => '將已刪除的檔案保留在 .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => '回收桶';
+
+  @override
+  String get sharingConnectedNow => '目前連線';
+
+  @override
+  String get sharingNobodyConnected => '目前沒有人連線';
+
+  @override
+  String get sharingShowConnections => '顯示連線';
+
+  @override
+  String get sharingShowConnectionsBody => '以 root 身分讀取目前連線資訊。';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
 }

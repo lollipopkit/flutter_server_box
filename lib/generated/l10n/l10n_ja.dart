@@ -5266,4 +5266,721 @@ class AppLocalizationsJa extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count スレッド';
   }
+
+  @override
+  String get storageTitle => 'ストレージ';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'ディスク';
+
+  @override
+  String get storageRaid => 'RAID アレイ';
+
+  @override
+  String get storagePools => 'ZFS プール';
+
+  @override
+  String get storageWholeDisk => 'ディスク全体';
+
+  @override
+  String get storageNoFilesystem => 'ファイルシステムなし';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$total 中 $used 使用';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => '使用中';
+
+  @override
+  String get storageBusySwap => 'スワップ';
+
+  @override
+  String get storageBusyRaid => 'RAID アレイ内';
+
+  @override
+  String get storageBusyPool => 'プール内';
+
+  @override
+  String get storageBusyVolume => 'ボリュームを保持';
+
+  @override
+  String get storageBusyReadOnly => '読み取り専用';
+
+  @override
+  String get storageBusySystem => 'システムパーティション';
+
+  @override
+  String get storageSystemMount => 'システムが使用しているマウントポイントです。マウントは維持されます。';
+
+  @override
+  String get storageNotMounted => 'ここには何もマウントされていません。';
+
+  @override
+  String get storageMount => 'マウント';
+
+  @override
+  String get storageUnmount => 'マウント解除';
+
+  @override
+  String get storageFormat => 'フォーマット';
+
+  @override
+  String get storageInitialize => '初期化';
+
+  @override
+  String get storageSmartTest => 'SMART テスト';
+
+  @override
+  String get storageFilesystem => 'ファイルシステム';
+
+  @override
+  String get storageLabel => 'ラベル';
+
+  @override
+  String get storageMountpoint => 'マウントポイント';
+
+  @override
+  String get storageMountPersist => '起動時に毎回マウント（/etc/fstab）';
+
+  @override
+  String get storageMountOwn => 'ServerBox にここへの書き込みを許可（バックアップ用）';
+
+  @override
+  String get storageName => '名前';
+
+  @override
+  String get storageLevel => 'レベル';
+
+  @override
+  String get storageLayout => 'レイアウト';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'デバイスを $count 台以上選択してください。中のデータは失われます。';
+  }
+
+  @override
+  String get storageNoFreeDevices => '空きディスクまたはパーティションがありません。';
+
+  @override
+  String get storageCreateRaid => 'RAID アレイを作成';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '$devices から /dev/$name（RAID $level）を作成します。デバイス上のデータはすべて失われます。';
+  }
+
+  @override
+  String get storageCreatePool => 'プールを作成';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '$devices からプール $name（$layout）を作成します。デバイス上のデータはすべて失われます。';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '$device に新しいファイルシステムを作成します。データはすべて失われます。';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '$device を消去し、ディスク全体を使うパーティションを 1 つ作成します。データはすべて失われます。';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '$device を $mountpoint にマウントします。';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '$mountpoint をマウント解除し、起動時のマウントを停止します。';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '$device の短いセルフテストを開始します。数分かかり、進行状況と結果がここに表示されます。';
+  }
+
+  @override
+  String get storageAddMember => 'ディスクを追加';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '$device を /dev/$array に追加します。故障したメンバーと交換するか、スペアとして待機します。データは失われます。';
+  }
+
+  @override
+  String get storageRemoveMember => '取り外す';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '$device を故障扱いにして /dev/$array から取り外します。アレイはそのまま動作します。稼働中のメンバーだった場合は縮退状態になります。';
+  }
+
+  @override
+  String get storageDeleteRaid => 'RAID アレイを削除';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '/dev/$array を停止し、メンバーの RAID シグネチャを消去します。データは失われます。';
+  }
+
+  @override
+  String get storageDestroyPool => 'プールを破棄';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'プール $name とその中のすべてを破棄します。';
+  }
+
+  @override
+  String get storageScrub => 'スクラブ';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'プール $name 全体を読み取り、可能な範囲で修復します。バックグラウンドで実行されます。';
+  }
+
+  @override
+  String get storageState => '状態';
+
+  @override
+  String get storageHealthy => '正常';
+
+  @override
+  String get storageDegraded => '縮退';
+
+  @override
+  String storageSync(Object action) {
+    return '同期（$action）';
+  }
+
+  @override
+  String get storageFaulty => '故障';
+
+  @override
+  String get storageSpare => 'スペア';
+
+  @override
+  String get storageActive => '稼働中';
+
+  @override
+  String get storageScan => '最終スキャン';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count 件のエラー';
+  }
+
+  @override
+  String get storageNoDisks => 'ディスクなし';
+
+  @override
+  String get storageNoArrays => 'アレイなし';
+
+  @override
+  String get storageNoPools => 'プールなし';
+
+  @override
+  String get storageNoMdadm => 'mdadm がインストールされていません。ここではアレイを作成・変更できません。';
+
+  @override
+  String get storageNoZfs => 'ZFS（zfsutils）がインストールされていません。';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return '確認するには $word と入力';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String get storageSudoPassword => 'sudo パスワード（agent アカウントで必要な場合）';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device は使用中です。';
+  }
+
+  @override
+  String get storageBusy => '別のディスク変更を実行中です。';
+
+  @override
+  String get storageWorking => 'ディスクを変更中…';
+
+  @override
+  String get storageDone => '完了';
+
+  @override
+  String get storageFailed => '完了できませんでした';
+
+  @override
+  String get storageHealthRead => 'ディスクの状態を読み取る';
+
+  @override
+  String get storageHealthWearing => '消耗中';
+
+  @override
+  String get storageHealthFailing => '故障中';
+
+  @override
+  String get storageHealthAsleep => 'スリープ中';
+
+  @override
+  String get storageHealthUnsupported => 'SMART 非対応';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '$hours 時間稼働';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count 個の不良セクター';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'セルフテスト：残り $percent%';
+  }
+
+  @override
+  String get storageLastTestPassed => '前回のセルフテストに合格';
+
+  @override
+  String get storageLastTestFailed => '前回のセルフテストに失敗';
+
+  @override
+  String get storageLastTestAborted => '前回のセルフテストは中止';
+
+  @override
+  String get storageGrowPartition => 'パーティションを拡張';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '$device を後方の空き領域まで拡張します。その後、ファイルシステムを拡張してください。';
+  }
+
+  @override
+  String get storageEncrypt => '暗号化（LUKS）';
+
+  @override
+  String get storagePassphrase => 'パスフレーズ';
+
+  @override
+  String get storagePassphraseAgain => 'もう一度入力';
+
+  @override
+  String get storagePassphraseHint => '8 文字以上。失うとデータを読み取れません。安全に保管してください。';
+
+  @override
+  String get storageInvalidPassphrase => 'パスフレーズは 1 行で 8～512 文字にしてください。';
+
+  @override
+  String get storagePassphrasesDiffer => 'パスフレーズが一致しません。';
+
+  @override
+  String get storageEncrypted => '暗号化済み';
+
+  @override
+  String get storageLocked => 'ロック中';
+
+  @override
+  String get storageUnlock => 'ロック解除';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'パスフレーズを使って $device を開きます。';
+  }
+
+  @override
+  String get storageLock => 'ロック';
+
+  @override
+  String storageLockBody(Object device) {
+    return '$device を閉じます。ファイルシステムをアンマウントしてください。';
+  }
+
+  @override
+  String get storageReplace => '置換';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'プール $name の $old を $replacement に置き換えます。プールはデータをコピーし、$replacement の内容は失われます。';
+  }
+
+  @override
+  String get storageAttach => 'ミラー';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '$existing を $replacement にミラーします。$replacement の内容は失われます。';
+  }
+
+  @override
+  String get storageAddSpare => 'スペアを追加';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '$devices をプール $name にスペアとして追加します。内容は失われます。';
+  }
+
+  @override
+  String get storageRemoveDevice => '削除';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '$device をプール $name から取り外します。';
+  }
+
+  @override
+  String get storageOnline => 'オンラインにする';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '$device をプール $name に戻し、ディスク全体まで拡張します。';
+  }
+
+  @override
+  String get storageDetails => '詳細';
+
+  @override
+  String get storageAttributes => '属性';
+
+  @override
+  String get storageAttrValue => '値';
+
+  @override
+  String get storageAttrWorst => '最悪値';
+
+  @override
+  String get storageAttrThresh => 'しきい値';
+
+  @override
+  String get storageSelfTests => 'セルフテスト';
+
+  @override
+  String get storageTestShort => '短時間';
+
+  @override
+  String get storageTestLong => '長時間';
+
+  @override
+  String get storageTestPassed => '合格';
+
+  @override
+  String get storageTestFailed => '失敗';
+
+  @override
+  String get storageTestAborted => '中止';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '$hours 時間時点';
+  }
+
+  @override
+  String get storageNothingToShow => '表示する項目はありません';
+
+  @override
+  String get storageLongTest => '長時間テスト';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '$device の長時間セルフテストを開始します。ディスク全体を読み取るため、大容量では数時間かかります。';
+  }
+
+  @override
+  String get storageMountedInside => '先にファイルシステムをアンマウントしてください。';
+
+  @override
+  String get storageNotRemovable => 'ここで取り外せるのはスペアまたはキャッシュデバイスのみです。';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => '拡張';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '$device 上のファイルシステムをデバイス全体まで拡張します。マウントしたまま実行します。';
+  }
+
+  @override
+  String get storageGrowRaid => '拡張';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '$device を /dev/$array の追加の稼働メンバーとして追加します。RAID 1 はミラーが 1 つ増え、RAID 5 と 6 は再構築の完了後に容量が増えます。再構築には数時間かかる場合があります。その後、ファイルシステムを拡張してください。$device のデータは失われます。';
+  }
+
+  @override
+  String get storageAddToPool => 'ディスクを追加';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return '容量を増やすため、$devices をレイアウト $layout でプール $name に追加します。追加したディスクは取り外せず、中のデータは失われます。';
+  }
+
+  @override
+  String get sharingTitle => '共有';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'サービス';
+
+  @override
+  String get sharingRunning => '実行中';
+
+  @override
+  String get sharingStopped => '停止';
+
+  @override
+  String get sharingNfsServer => 'NFS サーバー';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba がインストールされていません。Windows、macOS、Linux から SMB 共有を開けます。';
+
+  @override
+  String get sharingNoNfs =>
+      'NFS サーバーがインストールされていません。Linux と macOS では NFS エクスポートをマウントできます。';
+
+  @override
+  String get sharingInstallSamba => 'Samba をインストール';
+
+  @override
+  String get sharingInstallSambaBody => 'マシンのパッケージマネージャーを使って Samba をインストールします。';
+
+  @override
+  String get sharingInstallNfs => 'NFS サーバーをインストール';
+
+  @override
+  String get sharingInstallNfsBody => 'マシンのパッケージマネージャーを使って NFS サーバーをインストールします。';
+
+  @override
+  String get sharingInstalling => 'インストール中…';
+
+  @override
+  String get sharingAddShare => '共有を追加';
+
+  @override
+  String get sharingAddExport => 'エクスポートを追加';
+
+  @override
+  String get sharingEdit => '編集';
+
+  @override
+  String get sharingRemove => '削除';
+
+  @override
+  String get sharingSave => '保存';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '$path を SMB で $name として共有し、Samba を再読み込みします。';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '$path を NFS でエクスポートし、エクスポート設定を再読み込みします。';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '$name の共有を停止します。フォルダーとそのファイルは残ります。';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '$path のエクスポートを停止します。フォルダーとそのファイルは残ります。';
+  }
+
+  @override
+  String get sharingElsewhere => 'ServerBox 以外で設定';
+
+  @override
+  String get sharingNoShares => 'SMB 共有はありません';
+
+  @override
+  String get sharingNoExports => 'NFS エクスポートはありません';
+
+  @override
+  String get sharingReadOnly => '読み取り専用';
+
+  @override
+  String get sharingReadWrite => '読み取りと書き込み';
+
+  @override
+  String get sharingGuest => 'ゲスト';
+
+  @override
+  String get sharingGuestLabel => 'ネットワーク上の誰でもアカウントなしでアクセスできるようにする';
+
+  @override
+  String get sharingUsersHint =>
+      'アクセスを許可するアカウント（未選択の場合：SMB パスワードを設定済みの全アカウント）：';
+
+  @override
+  String get sharingFolder => 'フォルダー';
+
+  @override
+  String get sharingFolderHint => 'サーバー上のフォルダー（ストレージにマウントしたディスクなど）。';
+
+  @override
+  String get sharingComment => '説明';
+
+  @override
+  String get sharingPasswords => 'SMB パスワード';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba は独自のパスワードを管理します。接続するアカウントごとに設定してください。';
+
+  @override
+  String get sharingAccount => 'アカウント';
+
+  @override
+  String get sharingSetPassword => 'パスワードを設定';
+
+  @override
+  String sharingSetPasswordBody(Object user) {
+    return '$user の SMB パスワードを設定します。';
+  }
+
+  @override
+  String get sharingNewPassword => '新しい SMB パスワード';
+
+  @override
+  String get sharingNewPasswordAgain => 'もう一度入力';
+
+  @override
+  String get sharingPasswordsDiffer => '2 つのパスワードが一致しません。';
+
+  @override
+  String get sharingClientsHint =>
+      'マウントできるクライアント：* は全員、ほかにホスト名、アドレス、192.168.1.0/24 のようなネットワーク。';
+
+  @override
+  String get sharingClient => 'クライアント';
+
+  @override
+  String get sharingAddClient => 'クライアントを追加';
+
+  @override
+  String get sharingSquash => 'クライアント側の root';
+
+  @override
+  String get sharingSquashRoot => 'root を nobody にする';
+
+  @override
+  String get sharingSquashAll => '全員を nobody にする';
+
+  @override
+  String get sharingSquashNone => 'root を root のままにする';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path はサーバー上のフォルダーではありません。';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return '設定が拒否され、以前の設定に戻されました：$detail';
+  }
+
+  @override
+  String get sharingDuplicate => '別の共有がこの名前またはフォルダーをすでに使用しています。';
+
+  @override
+  String get sharingInvalidName => '名前には英字、数字、_ . - を使用できます（最大 32 文字）。';
+
+  @override
+  String get sharingInvalidPath =>
+      'フォルダーには、引用符、バックスラッシュ、.. を含まない絶対パスを指定してください。';
+
+  @override
+  String get sharingInvalidClient => 'クライアントには *、ホスト名、アドレス、またはネットワークを指定できます。';
+
+  @override
+  String get sharingInvalidPassword => 'このパスワードは使用できません。';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine バックアップ（Mac）';
+
+  @override
+  String get sharingRecycleOption => '削除したファイルを .recycle に保持';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'ごみ箱';
+
+  @override
+  String get sharingConnectedNow => '現在の接続';
+
+  @override
+  String get sharingNobodyConnected => '接続はありません';
+
+  @override
+  String get sharingShowConnections => '接続を表示';
+
+  @override
+  String get sharingShowConnectionsBody => 'root として接続状況を読み取ります。';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
 }

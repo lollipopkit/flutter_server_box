@@ -24,8 +24,10 @@ import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/scheduled_tasks.dart';
 import 'package:server_box/view/page/services.dart';
+import 'package:server_box/view/page/shares/page.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
+import 'package:server_box/view/page/storage_admin/page.dart';
 import 'package:server_box/view/page/users.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
@@ -555,6 +557,16 @@ void runServerFunc(
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         unawaited(FirewallPage.route.go(context, args));
+        break;
+      case ServerFuncBtn.storage:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        unawaited(StoragePage.route.go(context, SpiRequiredArgs(spi)));
+        break;
+      case ServerFuncBtn.shares:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        unawaited(SharesPage.route.go(context, SpiRequiredArgs(spi)));
         break;
       case ServerFuncBtn.remoteDesktop:
         // A monitor-backed server has nothing to connect here: the agent dials

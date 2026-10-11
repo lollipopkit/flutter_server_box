@@ -26,7 +26,9 @@ enum ServerFuncBtn {
   users(1579),
   scheduledTasks(1579),
   remoteDesktop(1617),
-  firewall(1719);
+  firewall(1719),
+  storage(1719),
+  shares(1719);
 
   /// The last released build that did not contain this entry.
   ///
@@ -83,6 +85,8 @@ enum ServerFuncBtn {
     scheduledTasks,
     remoteDesktop,
     firewall,
+    storage,
+    shares,
   ].map((e) => e.name).toList();
 
   /// The entry a stored row names.
@@ -207,6 +211,8 @@ enum ServerFuncBtn {
     scheduledTasks => Icons.schedule,
     remoteDesktop => Icons.desktop_windows_outlined,
     firewall => Icons.shield_outlined,
+    storage => Icons.storage,
+    shares => Icons.folder_shared,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -224,7 +230,9 @@ enum ServerFuncBtn {
     power ||
     users ||
     scheduledTasks ||
-    firewall => caps.shell,
+    firewall ||
+    storage ||
+    shares => caps.shell,
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
@@ -309,6 +317,8 @@ enum ServerFuncBtn {
     scheduledTasks => l10n.scheduledTasks,
     remoteDesktop => l10n.remoteDesktop,
     firewall => l10n.firewall,
+    storage => l10n.storageTitle,
+    shares => l10n.sharingTitle,
   };
 }
 

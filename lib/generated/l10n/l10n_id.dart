@@ -5524,4 +5524,736 @@ class AppLocalizationsId extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count thread';
   }
+
+  @override
+  String get storageTitle => 'Penyimpanan';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Disk';
+
+  @override
+  String get storageRaid => 'Array RAID';
+
+  @override
+  String get storagePools => 'Pool ZFS';
+
+  @override
+  String get storageWholeDisk => 'Seluruh disk';
+
+  @override
+  String get storageNoFilesystem => 'Tidak ada sistem berkas';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$used dari $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'Sedang digunakan';
+
+  @override
+  String get storageBusySwap => 'Memori swap';
+
+  @override
+  String get storageBusyRaid => 'Dalam array RAID';
+
+  @override
+  String get storageBusyPool => 'Dalam pool';
+
+  @override
+  String get storageBusyVolume => 'Memuat volume';
+
+  @override
+  String get storageBusyReadOnly => 'Hanya baca';
+
+  @override
+  String get storageBusySystem => 'Partisi sistem';
+
+  @override
+  String get storageSystemMount =>
+      'Sistem menggunakan titik kait ini; titik kait tetap terpasang.';
+
+  @override
+  String get storageNotMounted => 'Tidak ada lagi yang terpasang di sana.';
+
+  @override
+  String get storageMount => 'Pasang';
+
+  @override
+  String get storageUnmount => 'Lepas';
+
+  @override
+  String get storageFormat => 'Format disk';
+
+  @override
+  String get storageInitialize => 'Inisialisasi';
+
+  @override
+  String get storageSmartTest => 'Tes SMART';
+
+  @override
+  String get storageFilesystem => 'Sistem berkas';
+
+  @override
+  String get storageLabel => 'Label volume';
+
+  @override
+  String get storageMountpoint => 'Titik kait';
+
+  @override
+  String get storageMountPersist =>
+      'Pasang kembali setiap kali mulai (/etc/fstab)';
+
+  @override
+  String get storageMountOwn =>
+      'Izinkan ServerBox menulis di sini (untuk cadangan)';
+
+  @override
+  String get storageName => 'Nama';
+
+  @override
+  String get storageLevel => 'Tingkat RAID';
+
+  @override
+  String get storageLayout => 'Tata letak';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'Pilih sedikitnya $count perangkat. Isinya akan hilang.';
+  }
+
+  @override
+  String get storageNoFreeDevices => 'Tidak ada disk atau partisi yang kosong.';
+
+  @override
+  String get storageCreateRaid => 'Buat array RAID';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return 'Membuat /dev/$name (RAID $level) dari $devices. Semua data di dalamnya akan hilang.';
+  }
+
+  @override
+  String get storageCreatePool => 'Buat pool';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return 'Membuat pool $name ($layout) dari $devices. Semua data di dalamnya akan hilang.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return 'Membuat sistem berkas baru di $device. Semua datanya akan hilang.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return 'Menghapus $device dan membuat satu partisi yang menggunakan seluruh disk. Semua datanya akan hilang.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return 'Memasang $device di $mountpoint.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return 'Melepas $mountpoint dan menghentikan pemasangan saat mulai.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return 'Memulai uji mandiri singkat pada $device. Prosesnya perlu beberapa menit; progres dan hasilnya muncul di sini.';
+  }
+
+  @override
+  String get storageAddMember => 'Tambah disk';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return 'Menambahkan $device ke /dev/$array: menggantikan anggota yang gagal atau menunggu sebagai cadangan. Isinya akan hilang.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Hapus';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return 'Menandai $device gagal dan mengeluarkannya dari /dev/$array. Array tetap berjalan tanpanya; statusnya degraded jika perangkat itu anggota aktif.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'Hapus array RAID';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return 'Menghentikan /dev/$array dan menghapus tanda RAID pada anggotanya. Datanya akan hilang.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Hancurkan pool';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'Menghancurkan pool $name dan semua isinya.';
+  }
+
+  @override
+  String get storageScrub => 'Pemeriksaan dan perbaikan';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'Membaca seluruh pool $name dan memperbaiki bagian yang dapat diperbaiki. Berjalan di latar belakang.';
+  }
+
+  @override
+  String get storageState => 'Status';
+
+  @override
+  String get storageHealthy => 'Sehat';
+
+  @override
+  String get storageDegraded => 'Menurun';
+
+  @override
+  String storageSync(Object action) {
+    return 'Sinkronisasi ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Gagal';
+
+  @override
+  String get storageSpare => 'Cadangan';
+
+  @override
+  String get storageActive => 'Aktif';
+
+  @override
+  String get storageScan => 'Pemindaian terakhir';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count kesalahan';
+  }
+
+  @override
+  String get storageNoDisks => 'Tidak ada disk';
+
+  @override
+  String get storageNoArrays => 'Tidak ada array';
+
+  @override
+  String get storageNoPools => 'Tidak ada pool';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm belum dipasang: array tidak dapat dibuat atau diubah di sini.';
+
+  @override
+  String get storageNoZfs => 'ZFS (zfsutils) belum dipasang.';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Ketik $word untuk mengonfirmasi';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String get storageSudoPassword =>
+      'Kata sandi sudo (jika diperlukan oleh akun agent)';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device sedang digunakan.';
+  }
+
+  @override
+  String get storageBusy => 'Perubahan disk lain sedang berjalan.';
+
+  @override
+  String get storageWorking => 'Mengubah disk…';
+
+  @override
+  String get storageDone => 'Selesai';
+
+  @override
+  String get storageFailed => 'Tidak selesai';
+
+  @override
+  String get storageHealthRead => 'Baca kesehatan disk';
+
+  @override
+  String get storageHealthWearing => 'Aus';
+
+  @override
+  String get storageHealthFailing => 'Bermasalah';
+
+  @override
+  String get storageHealthAsleep => 'Tidur';
+
+  @override
+  String get storageHealthUnsupported => 'Tanpa SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return 'Menyala selama $hours jam';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count sektor rusak';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Uji mandiri: tersisa $percent%';
+  }
+
+  @override
+  String get storageLastTestPassed => 'Uji mandiri terakhir lulus';
+
+  @override
+  String get storageLastTestFailed => 'Uji mandiri terakhir gagal';
+
+  @override
+  String get storageLastTestAborted => 'Uji mandiri terakhir dihentikan';
+
+  @override
+  String get storageGrowPartition => 'Perbesar partisi';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return 'Perbesar $device ke ruang kosong setelahnya. Perbesar sistem berkasnya setelah itu.';
+  }
+
+  @override
+  String get storageEncrypt => 'Enkripsi (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Frasa sandi';
+
+  @override
+  String get storagePassphraseAgain => 'Ulangi';
+
+  @override
+  String get storagePassphraseHint =>
+      'Minimal 8 karakter. Tanpanya data tidak dapat dibaca: simpan dengan aman.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'Frasa sandi harus terdiri dari 8 hingga 512 karakter dalam satu baris.';
+
+  @override
+  String get storagePassphrasesDiffer => 'Frasa sandi tidak sama.';
+
+  @override
+  String get storageEncrypted => 'Terenkripsi';
+
+  @override
+  String get storageLocked => 'Terkunci';
+
+  @override
+  String get storageUnlock => 'Buka kunci';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'Buka $device dengan frasa sandinya.';
+  }
+
+  @override
+  String get storageLock => 'Kunci';
+
+  @override
+  String storageLockBody(Object device) {
+    return 'Tutup $device. Sistem berkasnya harus dilepas terlebih dahulu.';
+  }
+
+  @override
+  String get storageReplace => 'Ganti';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'Ganti $old di pool $name dengan $replacement. Pool menyalin data ke sana; isi $replacement akan hilang.';
+  }
+
+  @override
+  String get storageAttach => 'Cerminkan';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return 'Cerminkan $existing ke $replacement. Isi $replacement akan hilang.';
+  }
+
+  @override
+  String get storageAddSpare => 'Tambah cadangan';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return 'Tambahkan $devices ke pool $name sebagai perangkat cadangan. Isinya akan hilang.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Hapus';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return 'Keluarkan $device dari pool $name.';
+  }
+
+  @override
+  String get storageOnline => 'Aktifkan kembali';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return 'Masukkan $device kembali ke pool $name, lalu perluas hingga seluruh disk.';
+  }
+
+  @override
+  String get storageDetails => 'Detail';
+
+  @override
+  String get storageAttributes => 'Atribut';
+
+  @override
+  String get storageAttrValue => 'Nilai';
+
+  @override
+  String get storageAttrWorst => 'Terburuk';
+
+  @override
+  String get storageAttrThresh => 'Ambang';
+
+  @override
+  String get storageSelfTests => 'Uji mandiri';
+
+  @override
+  String get storageTestShort => 'Singkat';
+
+  @override
+  String get storageTestLong => 'Panjang';
+
+  @override
+  String get storageTestPassed => 'Lulus';
+
+  @override
+  String get storageTestFailed => 'Gagal';
+
+  @override
+  String get storageTestAborted => 'Dihentikan';
+
+  @override
+  String storageAtHours(Object hours) {
+    return 'pada $hours jam';
+  }
+
+  @override
+  String get storageNothingToShow => 'Tidak ada yang ditampilkan';
+
+  @override
+  String get storageLongTest => 'Uji panjang';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return 'Mulai uji mandiri panjang pada $device. Uji membaca seluruh disk: dapat memakan waktu berjam-jam.';
+  }
+
+  @override
+  String get storageMountedInside => 'Lepas sistem berkasnya terlebih dahulu.';
+
+  @override
+  String get storageNotRemovable =>
+      'Hanya perangkat cadangan atau cache yang dapat dilepas di sini.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => 'Perluas';
+
+  @override
+  String storageExpandBody(Object device) {
+    return 'Memperluas sistem berkas pada $device hingga memenuhi seluruh perangkat. Perangkat tetap terpasang.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Perbesar';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return 'Menambahkan $device ke /dev/$array sebagai anggota aktif tambahan. RAID 1 mendapat satu cermin lagi; RAID 5 dan 6 mendapat ruang tambahan setelah proses penyusunan ulang selesai, yang dapat memerlukan waktu berjam-jam. Setelah itu, perluas sistem berkasnya. Isi $device akan hilang.';
+  }
+
+  @override
+  String get storageAddToPool => 'Tambah disk';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Menambahkan $devices dengan tata letak $layout ke pool $name untuk menambah ruang. Disk tidak dapat dilepas lagi dan isinya akan hilang.';
+  }
+
+  @override
+  String get sharingTitle => 'Berbagi';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Layanan';
+
+  @override
+  String get sharingRunning => 'Berjalan';
+
+  @override
+  String get sharingStopped => 'Berhenti';
+
+  @override
+  String get sharingNfsServer => 'Server NFS';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba belum dipasang. Windows, macOS, dan Linux dapat membuka berbagi SMB.';
+
+  @override
+  String get sharingNoNfs =>
+      'Server NFS belum dipasang. Linux dan macOS dapat memasang ekspor NFS.';
+
+  @override
+  String get sharingInstallSamba => 'Pasang Samba';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Memasang Samba dengan pengelola paket mesin.';
+
+  @override
+  String get sharingInstallNfs => 'Pasang server NFS';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'Memasang server NFS dengan pengelola paket mesin.';
+
+  @override
+  String get sharingInstalling => 'Sedang memasang…';
+
+  @override
+  String get sharingAddShare => 'Tambah berbagi';
+
+  @override
+  String get sharingAddExport => 'Tambah ekspor';
+
+  @override
+  String get sharingEdit => 'Edit';
+
+  @override
+  String get sharingRemove => 'Hapus';
+
+  @override
+  String get sharingSave => 'Simpan';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return 'Membagikan $path melalui SMB dengan nama $name, lalu memuat ulang Samba.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return 'Mengekspor $path melalui NFS, lalu memuat ulang daftar ekspor.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return 'Berhenti membagikan $name. Folder dan berkasnya tetap ada.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return 'Berhenti mengekspor $path. Folder dan berkasnya tetap ada.';
+  }
+
+  @override
+  String get sharingElsewhere => 'Atur di luar ServerBox';
+
+  @override
+  String get sharingNoShares => 'Tidak ada berbagi SMB';
+
+  @override
+  String get sharingNoExports => 'Tidak ada ekspor NFS';
+
+  @override
+  String get sharingReadOnly => 'Hanya baca';
+
+  @override
+  String get sharingReadWrite => 'Baca dan tulis';
+
+  @override
+  String get sharingGuest => 'Tamu';
+
+  @override
+  String get sharingGuestLabel =>
+      'Izinkan siapa pun di jaringan mengakses tanpa akun';
+
+  @override
+  String get sharingUsersHint =>
+      'Akun yang diizinkan (tidak ada yang dicentang: semua akun dengan kata sandi SMB):';
+
+  @override
+  String get sharingFolder => 'Folder';
+
+  @override
+  String get sharingFolderHint =>
+      'Folder di server, misalnya disk yang dipasang melalui Storage.';
+
+  @override
+  String get sharingComment => 'Deskripsi';
+
+  @override
+  String get sharingPasswords => 'Kata sandi SMB';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba menyimpan kata sandinya sendiri: tetapkan satu kata sandi untuk setiap akun yang terhubung.';
+
+  @override
+  String get sharingAccount => 'Akun';
+
+  @override
+  String get sharingSetPassword => 'Tetapkan kata sandi';
+
+  @override
+  String sharingSetPasswordBody(Object user) {
+    return 'Menetapkan kata sandi SMB untuk $user.';
+  }
+
+  @override
+  String get sharingNewPassword => 'Kata sandi SMB baru';
+
+  @override
+  String get sharingNewPasswordAgain => 'Ulangi kata sandi';
+
+  @override
+  String get sharingPasswordsDiffer => 'Kedua kata sandi berbeda.';
+
+  @override
+  String get sharingClientsHint =>
+      'Siapa yang boleh memasangnya: * untuk siapa pun, host, alamat, atau jaringan seperti 192.168.1.0/24.';
+
+  @override
+  String get sharingClient => 'Klien';
+
+  @override
+  String get sharingAddClient => 'Tambah klien';
+
+  @override
+  String get sharingSquash => 'root di klien';
+
+  @override
+  String get sharingSquashRoot => 'root menjadi nobody';
+
+  @override
+  String get sharingSquashAll => 'Semua orang menjadi nobody';
+
+  @override
+  String get sharingSquashNone => 'root tetap root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path bukan folder di server.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'Konfigurasi ditolak dan konfigurasi sebelumnya dipulihkan: $detail';
+  }
+
+  @override
+  String get sharingDuplicate =>
+      'Berbagi lain sudah menggunakan nama atau folder ini.';
+
+  @override
+  String get sharingInvalidName =>
+      'Nama hanya boleh berisi huruf, angka, dan _ . - (maksimal 32 karakter).';
+
+  @override
+  String get sharingInvalidPath =>
+      'Folder harus berupa jalur absolut tanpa tanda kutip, garis miring terbalik, atau ..';
+
+  @override
+  String get sharingInvalidClient =>
+      'Klien dapat berupa *, host, alamat, atau jaringan.';
+
+  @override
+  String get sharingInvalidPassword => 'Kata sandi ini tidak dapat digunakan.';
+
+  @override
+  String get sharingTimeMachineOption => 'Cadangan Time Machine (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Simpan berkas yang dihapus di .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Tempat sampah';
+
+  @override
+  String get sharingConnectedNow => 'Terhubung sekarang';
+
+  @override
+  String get sharingNobodyConnected => 'Tidak ada yang terhubung';
+
+  @override
+  String get sharingShowConnections => 'Tampilkan koneksi';
+
+  @override
+  String get sharingShowConnectionsBody => 'Membaca koneksi sebagai root.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
 }

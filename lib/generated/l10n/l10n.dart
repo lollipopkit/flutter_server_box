@@ -9464,6 +9464,1248 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} threads'**
   String threadsFmt(int count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage'**
+  String get storageTitle;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage management currently supports Linux servers.'**
+  String get storageLinuxOnly;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks'**
+  String get storageDisks;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'RAID'**
+  String get storageRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'ZFS pools'**
+  String get storagePools;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole disk'**
+  String get storageWholeDisk;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No filesystem'**
+  String get storageNoFilesystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {total}'**
+  String storageUsage(Object total, Object used);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} free'**
+  String storageFree(Object size);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'In use'**
+  String get storageBusyMounted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap'**
+  String get storageBusySwap;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'In an array'**
+  String get storageBusyRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'In a pool'**
+  String get storageBusyPool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Holds a volume'**
+  String get storageBusyVolume;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get storageBusyReadOnly;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'System partition'**
+  String get storageBusySystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The system uses this mount; it stays mounted.'**
+  String get storageSystemMount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is mounted there any more.'**
+  String get storageNotMounted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount'**
+  String get storageMount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmount'**
+  String get storageUnmount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get storageFormat;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialize'**
+  String get storageInitialize;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'SMART test'**
+  String get storageSmartTest;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Filesystem'**
+  String get storageFilesystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get storageLabel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point'**
+  String get storageMountpoint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount again at every start (/etc/fstab)'**
+  String get storageMountPersist;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Let ServerBox write here (for backups)'**
+  String get storageMountOwn;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get storageName;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get storageLevel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get storageLayout;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick at least {count} devices. What they hold is lost.'**
+  String storagePickDevices(Object count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No free disk or partition.'**
+  String get storageNoFreeDevices;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Create array'**
+  String get storageCreateRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Builds /dev/{name} (RAID {level}) from {devices}. Everything on them is lost.'**
+  String storageCreateRaidBody(Object devices, Object level, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Create pool'**
+  String get storageCreatePool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Builds pool {name} ({layout}) from {devices}. Everything on them is lost.'**
+  String storageCreatePoolBody(Object devices, Object layout, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Makes a new filesystem on {device}. Everything on it is lost.'**
+  String storageFormatBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Wipes {device} and gives it one partition for the whole disk. Everything on it is lost.'**
+  String storageInitializeBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mounts {device} at {mountpoint}.'**
+  String storageMountBody(Object device, Object mountpoint);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmounts {mountpoint} and stops mounting it at start.'**
+  String storageUnmountBody(Object mountpoint);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts a short self-test on {device}. It takes a few minutes; its progress and result show here.'**
+  String storageSmartTestBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add disk'**
+  String get storageAddMember;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {device} to /dev/{array}: it replaces a failed member, or waits as a spare. What it holds is lost.'**
+  String storageAddMemberBody(Object array, Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get storageRemoveMember;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Marks {device} failed and takes it out of /dev/{array}. The array runs on without it, degraded if it was a working member.'**
+  String storageRemoveMemberBody(Object array, Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete array'**
+  String get storageDeleteRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops /dev/{array} and wipes its members\' RAID signatures. Its data is lost.'**
+  String storageDeleteRaidBody(Object array);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Destroy pool'**
+  String get storageDestroyPool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Destroys pool {name} and everything in it.'**
+  String storageDestroyPoolBody(Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Scrub'**
+  String get storageScrub;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads all of pool {name} and repairs what it can. It runs in the background.'**
+  String storageScrubBody(Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'State'**
+  String get storageState;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Healthy'**
+  String get storageHealthy;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Degraded'**
+  String get storageDegraded;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync ({action})'**
+  String storageSync(Object action);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get storageFaulty;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Spare'**
+  String get storageSpare;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get storageActive;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Last scan'**
+  String get storageScan;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} errors'**
+  String storageErrors(Object count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No disks'**
+  String get storageNoDisks;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No arrays'**
+  String get storageNoArrays;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No pools'**
+  String get storageNoPools;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'mdadm is not installed: arrays cannot be built or changed here.'**
+  String get storageNoMdadm;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'ZFS is not installed (zfsutils).'**
+  String get storageNoZfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {word} to confirm'**
+  String storageTypeToConfirm(Object word);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The confirmation text did not match.'**
+  String get storageConfirmationMismatch;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo password (if the agent\'s account needs one)'**
+  String get storageSudoPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} is in use.'**
+  String storageInUse(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Another change to the disks is running.'**
+  String get storageBusy;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing the disks…'**
+  String get storageWorking;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get storageDone;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Did not finish'**
+  String get storageFailed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read disk health'**
+  String get storageHealthRead;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Wearing'**
+  String get storageHealthWearing;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Failing'**
+  String get storageHealthFailing;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Asleep'**
+  String get storageHealthAsleep;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No SMART'**
+  String get storageHealthUnsupported;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} °C'**
+  String storageTemperature(Object value);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h powered on'**
+  String storagePowerOn(Object hours);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} bad sectors'**
+  String storageBadSectors(Object count);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-test: {percent}% left'**
+  String storageTesting(Object percent);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Last self-test passed'**
+  String get storageLastTestPassed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Last self-test failed'**
+  String get storageLastTestFailed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Last self-test was stopped'**
+  String get storageLastTestAborted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow partition'**
+  String get storageGrowPartition;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grows {device} into the free space after it. Expand its filesystem after.'**
+  String storageGrowPartitionBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypt (LUKS)'**
+  String get storageEncrypt;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase'**
+  String get storagePassphrase;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The same again'**
+  String get storagePassphraseAgain;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters. Without it the data cannot be read: keep it safe.'**
+  String get storagePassphraseHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The passphrase must be 8 to 512 characters, on one line.'**
+  String get storageInvalidPassphrase;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passphrases differ.'**
+  String get storagePassphrasesDiffer;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted'**
+  String get storageEncrypted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get storageLocked;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get storageUnlock;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens {device} with its passphrase.'**
+  String storageUnlockBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get storageLock;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Closes {device}. Its filesystem must be unmounted.'**
+  String storageLockBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get storageReplace;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Replaces {old} in pool {name} with {replacement}. The pool copies its data onto it; what {replacement} holds is lost.'**
+  String storageReplaceBody(Object name, Object old, Object replacement);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirror'**
+  String get storageAttach;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Mirrors {existing} onto {replacement}. What {replacement} holds is lost.'**
+  String storageAttachBody(Object existing, Object replacement);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add spare'**
+  String get storageAddSpare;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {devices} to pool {name} as spares. What they hold is lost.'**
+  String storageAddSpareBody(Object devices, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get storageRemoveDevice;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes {device} out of pool {name}.'**
+  String storageRemoveDeviceBody(Object device, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring online'**
+  String get storageOnline;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Brings {device} back into pool {name}, grown into the whole disk.'**
+  String storageOnlineBody(Object device, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get storageDetails;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Attributes'**
+  String get storageAttributes;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get storageAttrValue;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Worst'**
+  String get storageAttrWorst;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold'**
+  String get storageAttrThresh;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-tests'**
+  String get storageSelfTests;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Short'**
+  String get storageTestShort;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Long'**
+  String get storageTestLong;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get storageTestPassed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get storageTestFailed;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get storageTestAborted;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'at {hours} h'**
+  String storageAtHours(Object hours);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to show'**
+  String get storageNothingToShow;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Long test'**
+  String get storageLongTest;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts a long self-test on {device}. It reads the whole disk: hours on a large one.'**
+  String storageSmartLongTestBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmount its filesystem first.'**
+  String get storageMountedInside;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a spare or cache device can be taken out here.'**
+  String get storageNotRemovable;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'This device cannot be grown here.'**
+  String get storageNotGrowable;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose devices that do not overlap.'**
+  String get storageOverlapping;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The device is invalid or no longer available.'**
+  String get storageInvalidDevice;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The mount point is invalid.'**
+  String get storageInvalidMountpoint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The name is invalid.'**
+  String get storageInvalidName;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The filesystem is not supported.'**
+  String get storageInvalidFilesystem;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The label is invalid.'**
+  String get storageInvalidLabel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The RAID level or pool layout is invalid.'**
+  String get storageInvalidLevel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough valid devices were selected.'**
+  String get storageTooFewDevices;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get storageExpand;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grows the filesystem on {device} to fill its device. It stays mounted.'**
+  String storageExpandBody(Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow'**
+  String get storageGrowRaid;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {device} to /dev/{array} as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What {device} holds is lost.'**
+  String storageGrowRaidBody(Object array, Object device);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add disks'**
+  String get storageAddToPool;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds {layout} of {devices} to pool {name} for more room. They cannot be taken out again, and what they hold is lost.'**
+  String storageAddToPoolBody(Object devices, Object layout, Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get sharingTitle;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'SMB'**
+  String get sharingSmb;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS'**
+  String get sharingNfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get sharingService;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get sharingRunning;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get sharingStopped;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS server'**
+  String get sharingNfsServer;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Samba is not installed. Windows, macOS and Linux open SMB shares.'**
+  String get sharingNoSamba;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The NFS server is not installed. Linux and macOS mount NFS exports.'**
+  String get sharingNoNfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Samba'**
+  String get sharingInstallSamba;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Installs Samba with the machine\'s package manager.'**
+  String get sharingInstallSambaBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Install NFS server'**
+  String get sharingInstallNfs;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Installs the NFS server with the machine\'s package manager.'**
+  String get sharingInstallNfsBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing…'**
+  String get sharingInstalling;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add share'**
+  String get sharingAddShare;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add export'**
+  String get sharingAddExport;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get sharingEdit;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get sharingRemove;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get sharingSave;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares {path} over SMB as {name}, then reloads Samba.'**
+  String sharingSaveSmbBody(Object name, Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Exports {path} over NFS, then reloads the exports.'**
+  String sharingSaveNfsBody(Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops sharing {name}. The folder and its files stay.'**
+  String sharingRemoveSmbBody(Object name);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops exporting {path}. The folder and its files stay.'**
+  String sharingRemoveNfsBody(Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up outside ServerBox'**
+  String get sharingElsewhere;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No SMB shares'**
+  String get sharingNoShares;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'No NFS exports'**
+  String get sharingNoExports;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get sharingReadOnly;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and write'**
+  String get sharingReadWrite;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Guests'**
+  String get sharingGuest;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Let anyone on the network in without an account'**
+  String get sharingGuestLabel;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts allowed in (none ticked: every account with an SMB password):'**
+  String get sharingUsersHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder'**
+  String get sharingFolder;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'A folder on the server, e.g. a disk mounted in Storage.'**
+  String get sharingFolderHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get sharingComment;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'SMB passwords'**
+  String get sharingPasswords;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Samba keeps its own passwords: set one for each account that connects.'**
+  String get sharingPasswordsBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get sharingAccount;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Set password'**
+  String get sharingSetPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets the SMB password of {user}.'**
+  String sharingSetPasswordBody(Object user);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'New SMB password'**
+  String get sharingNewPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The same again'**
+  String get sharingNewPasswordAgain;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The two passwords differ.'**
+  String get sharingPasswordsDiffer;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.'**
+  String get sharingClientsHint;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get sharingClient;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Add client'**
+  String get sharingAddClient;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Root on the client'**
+  String get sharingSquash;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Root is nobody'**
+  String get sharingSquashRoot;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone is nobody'**
+  String get sharingSquashAll;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Root stays root'**
+  String get sharingSquashNone;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'{path} is not a folder on the server.'**
+  String sharingNotAFolder(Object path);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The configuration was refused and the previous one is back: {detail}'**
+  String sharingRefused(Object detail);
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Another share has this name or folder.'**
+  String get sharingDuplicate;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'A name is letters, digits, _ . - (32 at most).'**
+  String get sharingInvalidName;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'The folder must be an absolute path without quotes, backslashes or ..'**
+  String get sharingInvalidPath;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'A client is *, a host, an address or a network.'**
+  String get sharingInvalidClient;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'This password cannot be used.'**
+  String get sharingInvalidPassword;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Machine backups (Mac)'**
+  String get sharingTimeMachineOption;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep deleted files in .recycle'**
+  String get sharingRecycleOption;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Machine'**
+  String get sharingTimeMachine;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Recycle bin'**
+  String get sharingRecycle;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected now'**
+  String get sharingConnectedNow;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody is connected'**
+  String get sharingNobodyConnected;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Show connections'**
+  String get sharingShowConnections;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads who is connected, as root.'**
+  String get sharingShowConnectionsBody;
+
+  /// Storage and sharing page text.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing management currently supports Linux servers.'**
+  String get sharingConnectionsLinuxOnly;
 }
 
 class _AppLocalizationsDelegate

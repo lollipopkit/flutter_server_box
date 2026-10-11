@@ -5514,4 +5514,736 @@ class AppLocalizationsTr extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count iş parçacığı';
   }
+
+  @override
+  String get storageTitle => 'Depolama';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Diskler';
+
+  @override
+  String get storageRaid => 'RAID dizisi';
+
+  @override
+  String get storagePools => 'ZFS havuzları';
+
+  @override
+  String get storageWholeDisk => 'Tüm disk';
+
+  @override
+  String get storageNoFilesystem => 'Dosya sistemi yok';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$total içinde $used';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'Kullanımda';
+
+  @override
+  String get storageBusySwap => 'Takas alanı';
+
+  @override
+  String get storageBusyRaid => 'Bir RAID dizisinde';
+
+  @override
+  String get storageBusyPool => 'Bir havuzda';
+
+  @override
+  String get storageBusyVolume => 'Bir birim içeriyor';
+
+  @override
+  String get storageBusyReadOnly => 'Salt okunur';
+
+  @override
+  String get storageBusySystem => 'Sistem bölümü';
+
+  @override
+  String get storageSystemMount =>
+      'Sistem bu bağlama noktasını kullanıyor; bağlı kalacak.';
+
+  @override
+  String get storageNotMounted => 'Burada artık bağlı bir şey yok.';
+
+  @override
+  String get storageMount => 'Bağla';
+
+  @override
+  String get storageUnmount => 'Bağlantıyı kes';
+
+  @override
+  String get storageFormat => 'Biçimlendir';
+
+  @override
+  String get storageInitialize => 'Başlat';
+
+  @override
+  String get storageSmartTest => 'SMART testi';
+
+  @override
+  String get storageFilesystem => 'Dosya sistemi';
+
+  @override
+  String get storageLabel => 'Etiket';
+
+  @override
+  String get storageMountpoint => 'Bağlama noktası';
+
+  @override
+  String get storageMountPersist =>
+      'Her başlangıçta yeniden bağla (/etc/fstab)';
+
+  @override
+  String get storageMountOwn =>
+      'ServerBox uygulamasının buraya yazmasına izin ver (yedekler için)';
+
+  @override
+  String get storageName => 'Ad';
+
+  @override
+  String get storageLevel => 'Seviye';
+
+  @override
+  String get storageLayout => 'Düzen';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'En az $count aygıt seçin. İçlerindeki veriler silinir.';
+  }
+
+  @override
+  String get storageNoFreeDevices => 'Boş disk veya bölüm yok.';
+
+  @override
+  String get storageCreateRaid => 'RAID dizisi oluştur';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return '$devices aygıtlarından /dev/$name (RAID $level) oluşturur. İçlerindeki tüm veriler silinir.';
+  }
+
+  @override
+  String get storageCreatePool => 'Havuz oluştur';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return '$devices aygıtlarından $name ($layout) havuzunu oluşturur. İçlerindeki tüm veriler silinir.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return '$device üzerinde yeni bir dosya sistemi oluşturur. İçindeki tüm veriler silinir.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return '$device aygıtını siler ve diskin tamamını kaplayan tek bir bölüm oluşturur. İçindeki tüm veriler silinir.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return '$device aygıtını $mountpoint konumuna bağlar.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return '$mountpoint bağlantısını keser ve başlangıçta bağlanmasını durdurur.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return '$device üzerinde kısa bir kendi kendine testi başlatır. Birkaç dakika sürer; ilerleme durumu ve sonuç burada görünür.';
+  }
+
+  @override
+  String get storageAddMember => 'Disk ekle';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return '$device aygıtını /dev/$array dizisine ekler: arızalı bir üyenin yerine geçer veya yedek olarak bekler. İçindeki veriler silinir.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Kaldır';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return '$device aygıtını arızalı olarak işaretleyip /dev/$array dizisinden çıkarır. Dizi onsuz çalışmaya devam eder; çalışan bir üyeyse durumu düşer.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'RAID dizisini sil';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return '/dev/$array dizisini durdurur ve üyelerindeki RAID imzalarını siler. Veriler kaybolur.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Havuzu yok et';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return '$name havuzunu ve içindeki her şeyi yok eder.';
+  }
+
+  @override
+  String get storageScrub => 'Bütünlük denetimi';
+
+  @override
+  String storageScrubBody(Object name) {
+    return '$name havuzunun tamamını okur ve onarılabilen sorunları düzeltir. Arka planda çalışır.';
+  }
+
+  @override
+  String get storageState => 'Durum';
+
+  @override
+  String get storageHealthy => 'Sağlıklı';
+
+  @override
+  String get storageDegraded => 'Düşük performanslı';
+
+  @override
+  String storageSync(Object action) {
+    return 'Eşitleme ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Arızalı';
+
+  @override
+  String get storageSpare => 'Yedek';
+
+  @override
+  String get storageActive => 'Çalışıyor';
+
+  @override
+  String get storageScan => 'Son tarama';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count hata';
+  }
+
+  @override
+  String get storageNoDisks => 'Disk yok';
+
+  @override
+  String get storageNoArrays => 'Dizi yok';
+
+  @override
+  String get storageNoPools => 'Havuz yok';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm kurulu değil: burada diziler oluşturulamaz veya değiştirilemez.';
+
+  @override
+  String get storageNoZfs => 'ZFS (zfsutils) kurulu değil.';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Onaylamak için $word yazın';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String get storageSudoPassword =>
+      'sudo parolası (agent hesabı gerektiriyorsa)';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device kullanımda.';
+  }
+
+  @override
+  String get storageBusy => 'Disklerde başka bir değişiklik sürüyor.';
+
+  @override
+  String get storageWorking => 'Diskler değiştiriliyor…';
+
+  @override
+  String get storageDone => 'Tamamlandı';
+
+  @override
+  String get storageFailed => 'Tamamlanmadı';
+
+  @override
+  String get storageHealthRead => 'Disk sağlığını oku';
+
+  @override
+  String get storageHealthWearing => 'Yıpranıyor';
+
+  @override
+  String get storageHealthFailing => 'Arızalı';
+
+  @override
+  String get storageHealthAsleep => 'Uykuda';
+
+  @override
+  String get storageHealthUnsupported => 'SMART yok';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '$hours saattir açık';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count bozuk sektör';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Kendi kendine test: %$percent kaldı';
+  }
+
+  @override
+  String get storageLastTestPassed => 'Son kendi kendine test başarılı';
+
+  @override
+  String get storageLastTestFailed => 'Son kendi kendine test başarısız';
+
+  @override
+  String get storageLastTestAborted => 'Son kendi kendine test durduruldu';
+
+  @override
+  String get storageGrowPartition => 'Bölümü büyüt';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return '$device aygıtını sonrasındaki boş alana genişletir. Ardından dosya sistemini genişletin.';
+  }
+
+  @override
+  String get storageEncrypt => 'Şifrele (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Parola ifadesi';
+
+  @override
+  String get storagePassphraseAgain => 'Tekrar girin';
+
+  @override
+  String get storagePassphraseHint =>
+      'En az 8 karakter. Olmadan veriler okunamaz: güvenli bir yerde saklayın.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'Parola ifadesi tek satırda 8 ila 512 karakter olmalıdır.';
+
+  @override
+  String get storagePassphrasesDiffer => 'Parola ifadeleri eşleşmiyor.';
+
+  @override
+  String get storageEncrypted => 'Şifreli';
+
+  @override
+  String get storageLocked => 'Kilitli';
+
+  @override
+  String get storageUnlock => 'Kilidi aç';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return '$device aygıtını parola ifadesiyle açar.';
+  }
+
+  @override
+  String get storageLock => 'Kilitle';
+
+  @override
+  String storageLockBody(Object device) {
+    return '$device aygıtını kapatır. Dosya sistemi önce bağdan çıkarılmalıdır.';
+  }
+
+  @override
+  String get storageReplace => 'Değiştir';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return '$name havuzundaki $old aygıtını $replacement ile değiştirir. Havuz verileri ona kopyalar; $replacement içeriği kaybolur.';
+  }
+
+  @override
+  String get storageAttach => 'Yansıt';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return '$existing aygıtını $replacement üzerine yansıtır. $replacement içeriği kaybolur.';
+  }
+
+  @override
+  String get storageAddSpare => 'Yedek ekle';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return '$devices aygıtlarını $name havuzuna yedek olarak ekler. İçerikleri kaybolur.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Kaldır';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return '$device aygıtını $name havuzundan çıkarır.';
+  }
+
+  @override
+  String get storageOnline => 'Çevrimiçi yap';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return '$device aygıtını $name havuzuna geri getirir ve tüm disk boyutuna genişletir.';
+  }
+
+  @override
+  String get storageDetails => 'Ayrıntılar';
+
+  @override
+  String get storageAttributes => 'Öznitelikler';
+
+  @override
+  String get storageAttrValue => 'Değer';
+
+  @override
+  String get storageAttrWorst => 'En kötü';
+
+  @override
+  String get storageAttrThresh => 'Eşik';
+
+  @override
+  String get storageSelfTests => 'Öz sınamalar';
+
+  @override
+  String get storageTestShort => 'Kısa';
+
+  @override
+  String get storageTestLong => 'Uzun';
+
+  @override
+  String get storageTestPassed => 'Başarılı';
+
+  @override
+  String get storageTestFailed => 'Başarısız';
+
+  @override
+  String get storageTestAborted => 'Durduruldu';
+
+  @override
+  String storageAtHours(Object hours) {
+    return '$hours saatinde';
+  }
+
+  @override
+  String get storageNothingToShow => 'Gösterilecek bir şey yok';
+
+  @override
+  String get storageLongTest => 'Uzun sınama';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return '$device üzerinde uzun bir öz sınama başlatır. Tüm diski okur: büyük disklerde saatler sürer.';
+  }
+
+  @override
+  String get storageMountedInside => 'Önce dosya sistemini bağdan çıkarın.';
+
+  @override
+  String get storageNotRemovable =>
+      'Burada yalnızca yedek veya önbellek aygıtları çıkarılabilir.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => 'Genişlet';
+
+  @override
+  String storageExpandBody(Object device) {
+    return '$device üzerindeki dosya sistemini aygıtın tamamını kullanacak şekilde genişletir. Bağlı kalır.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Büyüt';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return '$device aygıtını /dev/$array dizisine ek bir çalışan üye olarak ekler. RAID 1 bir ayna daha kazanır; RAID 5 ve 6 yeniden şekillendirme tamamlandığında kapasite kazanır. Bu işlem saatler sürebilir. Ardından dosya sistemini genişletin. $device içindeki veriler kaybolur.';
+  }
+
+  @override
+  String get storageAddToPool => 'Disk ekle';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Daha fazla alan için $devices aygıtlarını $layout düzeniyle $name havuzuna ekler. Daha sonra çıkarılamazlar ve içlerindeki veriler kaybolur.';
+  }
+
+  @override
+  String get sharingTitle => 'Paylaşımlar';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Hizmet';
+
+  @override
+  String get sharingRunning => 'Çalışıyor';
+
+  @override
+  String get sharingStopped => 'Durduruldu';
+
+  @override
+  String get sharingNfsServer => 'NFS sunucusu';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba kurulu değil. Windows, macOS ve Linux SMB paylaşımlarını açabilir.';
+
+  @override
+  String get sharingNoNfs =>
+      'NFS sunucusu kurulu değil. Linux ve macOS NFS dışa aktarımlarını bağlayabilir.';
+
+  @override
+  String get sharingInstallSamba => 'Samba\'yı kur';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Samba\'yı makinenin paket yöneticisiyle kurar.';
+
+  @override
+  String get sharingInstallNfs => 'NFS sunucusunu kur';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'NFS sunucusunu makinenin paket yöneticisiyle kurar.';
+
+  @override
+  String get sharingInstalling => 'Kuruluyor…';
+
+  @override
+  String get sharingAddShare => 'Paylaşım ekle';
+
+  @override
+  String get sharingAddExport => 'Dışa aktarım ekle';
+
+  @override
+  String get sharingEdit => 'Düzenle';
+
+  @override
+  String get sharingRemove => 'Kaldır';
+
+  @override
+  String get sharingSave => 'Kaydet';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return '$path yolunu SMB üzerinden $name adıyla paylaşır, ardından Samba\'yı yeniden yükler.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return '$path yolunu NFS üzerinden dışa aktarır, ardından dışa aktarımları yeniden yükler.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return '$name paylaşımını durdurur. Klasör ve içindeki dosyalar kalır.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return '$path dışa aktarımını durdurur. Klasör ve içindeki dosyalar kalır.';
+  }
+
+  @override
+  String get sharingElsewhere => 'ServerBox dışında ayarla';
+
+  @override
+  String get sharingNoShares => 'SMB paylaşımı yok';
+
+  @override
+  String get sharingNoExports => 'NFS dışa aktarımı yok';
+
+  @override
+  String get sharingReadOnly => 'Salt okunur';
+
+  @override
+  String get sharingReadWrite => 'Oku ve yaz';
+
+  @override
+  String get sharingGuest => 'Misafirler';
+
+  @override
+  String get sharingGuestLabel =>
+      'Ağdaki herkesin hesap olmadan erişmesine izin ver';
+
+  @override
+  String get sharingUsersHint =>
+      'İzin verilen hesaplar (hiçbiri seçilmezse: SMB parolası olan tüm hesaplar):';
+
+  @override
+  String get sharingFolder => 'Klasör';
+
+  @override
+  String get sharingFolderHint =>
+      'Sunucudaki bir klasör; örneğin Storage\'da bağlanan bir disk.';
+
+  @override
+  String get sharingComment => 'Açıklama';
+
+  @override
+  String get sharingPasswords => 'SMB parolaları';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba kendi parolalarını kullanır: bağlanan her hesap için bir parola belirleyin.';
+
+  @override
+  String get sharingAccount => 'Hesap';
+
+  @override
+  String get sharingSetPassword => 'Parola belirle';
+
+  @override
+  String sharingSetPasswordBody(Object user) {
+    return '$user için SMB parolasını belirler.';
+  }
+
+  @override
+  String get sharingNewPassword => 'Yeni SMB parolası';
+
+  @override
+  String get sharingNewPasswordAgain => 'Parolayı tekrar girin';
+
+  @override
+  String get sharingPasswordsDiffer => 'İki parola birbirinden farklı.';
+
+  @override
+  String get sharingClientsHint =>
+      'Kim bağlayabilir: * herkes için; bir ana makine, adres veya 192.168.1.0/24 gibi bir ağ.';
+
+  @override
+  String get sharingClient => 'İstemci';
+
+  @override
+  String get sharingAddClient => 'İstemci ekle';
+
+  @override
+  String get sharingSquash => 'İstemcideki root';
+
+  @override
+  String get sharingSquashRoot => 'root, nobody olur';
+
+  @override
+  String get sharingSquashAll => 'Herkes, nobody olur';
+
+  @override
+  String get sharingSquashNone => 'root, root olarak kalır';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path, sunucuda bir klasör değil.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'Yapılandırma reddedildi ve önceki yapılandırma geri yüklendi: $detail';
+  }
+
+  @override
+  String get sharingDuplicate =>
+      'Başka bir paylaşım bu adı veya klasörü zaten kullanıyor.';
+
+  @override
+  String get sharingInvalidName =>
+      'Ad; harf, rakam ve _ . - içerebilir (en fazla 32 karakter).';
+
+  @override
+  String get sharingInvalidPath =>
+      'Klasör, tırnak işareti, ters eğik çizgi veya .. içermeyen mutlak bir yol olmalıdır.';
+
+  @override
+  String get sharingInvalidClient =>
+      'İstemci *, ana makine, adres veya ağ olabilir.';
+
+  @override
+  String get sharingInvalidPassword => 'Bu parola kullanılamaz.';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine yedekleri (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Silinen dosyaları .recycle içinde tut';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Geri dönüşüm kutusu';
+
+  @override
+  String get sharingConnectedNow => 'Şu anda bağlı';
+
+  @override
+  String get sharingNobodyConnected => 'Bağlı kimse yok';
+
+  @override
+  String get sharingShowConnections => 'Bağlantıları göster';
+
+  @override
+  String get sharingShowConnectionsBody => 'Bağlı olanları root olarak okur.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
 }

@@ -5564,4 +5564,737 @@ class AppLocalizationsRu extends AppLocalizations {
   String threadsFmt(int count) {
     return 'Потоков: $count';
   }
+
+  @override
+  String get storageTitle => 'Хранилище';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Диски';
+
+  @override
+  String get storageRaid => 'RAID-массив';
+
+  @override
+  String get storagePools => 'Пулы ZFS';
+
+  @override
+  String get storageWholeDisk => 'Весь диск';
+
+  @override
+  String get storageNoFilesystem => 'Нет файловой системы';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$used из $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'Используется';
+
+  @override
+  String get storageBusySwap => 'Подкачка';
+
+  @override
+  String get storageBusyRaid => 'В RAID-массиве';
+
+  @override
+  String get storageBusyPool => 'В пуле';
+
+  @override
+  String get storageBusyVolume => 'Содержит том';
+
+  @override
+  String get storageBusyReadOnly => 'Только чтение';
+
+  @override
+  String get storageBusySystem => 'Системный раздел';
+
+  @override
+  String get storageSystemMount =>
+      'Система использует эту точку монтирования; она останется смонтированной.';
+
+  @override
+  String get storageNotMounted => 'В этой точке больше ничего не смонтировано.';
+
+  @override
+  String get storageMount => 'Подключить';
+
+  @override
+  String get storageUnmount => 'Отключить';
+
+  @override
+  String get storageFormat => 'Форматировать';
+
+  @override
+  String get storageInitialize => 'Инициализировать';
+
+  @override
+  String get storageSmartTest => 'Тест SMART';
+
+  @override
+  String get storageFilesystem => 'Файловая система';
+
+  @override
+  String get storageLabel => 'Метка';
+
+  @override
+  String get storageMountpoint => 'Точка монтирования';
+
+  @override
+  String get storageMountPersist =>
+      'Подключать при каждом запуске (/etc/fstab)';
+
+  @override
+  String get storageMountOwn =>
+      'Разрешить ServerBox запись сюда (для резервных копий)';
+
+  @override
+  String get storageName => 'Имя';
+
+  @override
+  String get storageLevel => 'Уровень';
+
+  @override
+  String get storageLayout => 'Схема';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'Выберите не менее $count устройств. Данные на них будут потеряны.';
+  }
+
+  @override
+  String get storageNoFreeDevices => 'Нет свободного диска или раздела.';
+
+  @override
+  String get storageCreateRaid => 'Создать RAID-массив';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return 'Создаёт /dev/$name (RAID $level) из $devices. Все данные на них будут потеряны.';
+  }
+
+  @override
+  String get storageCreatePool => 'Создать пул';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return 'Создаёт пул $name ($layout) из $devices. Все данные на них будут потеряны.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return 'Создаёт новую файловую систему на $device. Все данные на нём будут потеряны.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return 'Стирает $device и создаёт один раздел на весь диск. Все данные будут потеряны.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return 'Подключает $device в $mountpoint.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return 'Отключает $mountpoint и прекращает подключать его при запуске.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return 'Запускает короткий самотест $device. Он займёт несколько минут; ход выполнения и результат появятся здесь.';
+  }
+
+  @override
+  String get storageAddMember => 'Добавить диск';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return 'Добавляет $device в /dev/$array: он заменит отказавший диск или будет ждать как запасной. Данные на нём будут потеряны.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Удалить';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return 'Помечает $device как неисправный и удаляет его из /dev/$array. Массив продолжает работать без него; если это был рабочий диск, массив будет деградирован.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'Удалить RAID-массив';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return 'Останавливает /dev/$array и стирает RAID-подписи его дисков. Данные будут потеряны.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Уничтожить пул';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'Уничтожает пул $name и всё его содержимое.';
+  }
+
+  @override
+  String get storageScrub => 'Проверка целостности';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'Читает весь пул $name и исправляет ошибки, которые можно исправить. Выполняется в фоне.';
+  }
+
+  @override
+  String get storageState => 'Состояние';
+
+  @override
+  String get storageHealthy => 'Исправен';
+
+  @override
+  String get storageDegraded => 'Деградирован';
+
+  @override
+  String storageSync(Object action) {
+    return 'Синхронизация ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Неисправен';
+
+  @override
+  String get storageSpare => 'Запасной';
+
+  @override
+  String get storageActive => 'Активен';
+
+  @override
+  String get storageScan => 'Последняя проверка';
+
+  @override
+  String storageErrors(Object count) {
+    return 'Ошибок: $count';
+  }
+
+  @override
+  String get storageNoDisks => 'Нет дисков';
+
+  @override
+  String get storageNoArrays => 'Нет массивов';
+
+  @override
+  String get storageNoPools => 'Нет пулов';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm не установлен: создавать и изменять массивы здесь нельзя.';
+
+  @override
+  String get storageNoZfs => 'ZFS (zfsutils) не установлен.';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Введите $word для подтверждения';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String get storageSudoPassword =>
+      'Пароль sudo (если он нужен учётной записи agent)';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device используется.';
+  }
+
+  @override
+  String get storageBusy => 'Уже выполняется другое изменение дисков.';
+
+  @override
+  String get storageWorking => 'Изменение дисков…';
+
+  @override
+  String get storageDone => 'Готово';
+
+  @override
+  String get storageFailed => 'Не удалось завершить';
+
+  @override
+  String get storageHealthRead => 'Проверить состояние диска';
+
+  @override
+  String get storageHealthWearing => 'Износ';
+
+  @override
+  String get storageHealthFailing => 'Неисправен';
+
+  @override
+  String get storageHealthAsleep => 'Спит';
+
+  @override
+  String get storageHealthUnsupported => 'Нет SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '$hours ч под питанием';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count сбойных секторов';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Самотест: осталось $percent%';
+  }
+
+  @override
+  String get storageLastTestPassed => 'Последний самотест пройден';
+
+  @override
+  String get storageLastTestFailed => 'Последний самотест не пройден';
+
+  @override
+  String get storageLastTestAborted => 'Последний самотест прерван';
+
+  @override
+  String get storageGrowPartition => 'Расширить раздел';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return 'Расширяет $device на свободное место после него. Затем расширьте файловую систему.';
+  }
+
+  @override
+  String get storageEncrypt => 'Зашифровать (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Парольная фраза';
+
+  @override
+  String get storagePassphraseAgain => 'Повторите ввод';
+
+  @override
+  String get storagePassphraseHint =>
+      'Не менее 8 символов. Без неё данные нельзя прочитать: храните её в надёжном месте.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'Парольная фраза должна содержать от 8 до 512 символов в одной строке.';
+
+  @override
+  String get storagePassphrasesDiffer => 'Парольные фразы не совпадают.';
+
+  @override
+  String get storageEncrypted => 'Зашифровано';
+
+  @override
+  String get storageLocked => 'Заблокировано';
+
+  @override
+  String get storageUnlock => 'Разблокировать';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'Открывает $device с помощью парольной фразы.';
+  }
+
+  @override
+  String get storageLock => 'Заблокировать';
+
+  @override
+  String storageLockBody(Object device) {
+    return 'Закрывает $device. Сначала размонтируйте файловую систему.';
+  }
+
+  @override
+  String get storageReplace => 'Заменить';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'Заменяет $old в пуле $name на $replacement. Пул скопирует на него данные; содержимое $replacement будет потеряно.';
+  }
+
+  @override
+  String get storageAttach => 'Зеркало';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return 'Зеркально копирует $existing на $replacement. Содержимое $replacement будет потеряно.';
+  }
+
+  @override
+  String get storageAddSpare => 'Добавить резервный диск';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return 'Добавляет $devices в пул $name как резервные диски. Их содержимое будет потеряно.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Удалить';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return 'Удаляет $device из пула $name.';
+  }
+
+  @override
+  String get storageOnline => 'Вернуть в работу';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return 'Возвращает $device в пул $name и расширяет его на весь диск.';
+  }
+
+  @override
+  String get storageDetails => 'Сведения';
+
+  @override
+  String get storageAttributes => 'Атрибуты';
+
+  @override
+  String get storageAttrValue => 'Значение';
+
+  @override
+  String get storageAttrWorst => 'Худшее';
+
+  @override
+  String get storageAttrThresh => 'Порог';
+
+  @override
+  String get storageSelfTests => 'Самотесты';
+
+  @override
+  String get storageTestShort => 'Короткий';
+
+  @override
+  String get storageTestLong => 'Длинный';
+
+  @override
+  String get storageTestPassed => 'Пройден';
+
+  @override
+  String get storageTestFailed => 'Не пройден';
+
+  @override
+  String get storageTestAborted => 'Остановлен';
+
+  @override
+  String storageAtHours(Object hours) {
+    return 'в $hours ч';
+  }
+
+  @override
+  String get storageNothingToShow => 'Нет данных для отображения';
+
+  @override
+  String get storageLongTest => 'Длительный тест';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return 'Запускает длительный самотест $device. Читает весь диск; на большом диске это занимает часы.';
+  }
+
+  @override
+  String get storageMountedInside => 'Сначала размонтируйте файловую систему.';
+
+  @override
+  String get storageNotRemovable =>
+      'Здесь можно удалить только резервное или кэш-устройство.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => 'Расширить';
+
+  @override
+  String storageExpandBody(Object device) {
+    return 'Расширяет файловую систему на $device до размера всего устройства. Она остаётся подключённой.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Увеличить';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return 'Добавляет $device в /dev/$array как ещё один рабочий диск. В RAID 1 появится дополнительное зеркало; в RAID 5 и 6 место увеличится после завершения перестройки, которая может занять несколько часов. Затем расширьте файловую систему. Данные на $device будут потеряны.';
+  }
+
+  @override
+  String get storageAddToPool => 'Добавить диски';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Добавляет $devices с раскладкой $layout в пул $name, чтобы увеличить место. Их нельзя будет извлечь, а данные на них будут потеряны.';
+  }
+
+  @override
+  String get sharingTitle => 'Общие папки';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Служба';
+
+  @override
+  String get sharingRunning => 'Работает';
+
+  @override
+  String get sharingStopped => 'Остановлена';
+
+  @override
+  String get sharingNfsServer => 'Сервер NFS';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba не установлена. Windows, macOS и Linux могут открывать SMB-ресурсы.';
+
+  @override
+  String get sharingNoNfs =>
+      'Сервер NFS не установлен. Linux и macOS могут подключать экспорты NFS.';
+
+  @override
+  String get sharingInstallSamba => 'Установить Samba';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Устанавливает Samba с помощью системного менеджера пакетов.';
+
+  @override
+  String get sharingInstallNfs => 'Установить сервер NFS';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'Устанавливает сервер NFS с помощью системного менеджера пакетов.';
+
+  @override
+  String get sharingInstalling => 'Установка…';
+
+  @override
+  String get sharingAddShare => 'Добавить общий ресурс';
+
+  @override
+  String get sharingAddExport => 'Добавить экспорт';
+
+  @override
+  String get sharingEdit => 'Изменить';
+
+  @override
+  String get sharingRemove => 'Удалить';
+
+  @override
+  String get sharingSave => 'Сохранить';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return 'Открывает общий доступ к $path по SMB под именем $name, затем перезапускает Samba.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return 'Экспортирует $path по NFS, затем перезагружает список экспортов.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return 'Отключает общий доступ к $name. Папка и файлы останутся на месте.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return 'Отключает экспорт $path. Папка и файлы останутся на месте.';
+  }
+
+  @override
+  String get sharingElsewhere => 'Настроить вне ServerBox';
+
+  @override
+  String get sharingNoShares => 'Нет общих ресурсов SMB';
+
+  @override
+  String get sharingNoExports => 'Нет экспортов NFS';
+
+  @override
+  String get sharingReadOnly => 'Только чтение';
+
+  @override
+  String get sharingReadWrite => 'Чтение и запись';
+
+  @override
+  String get sharingGuest => 'Гости';
+
+  @override
+  String get sharingGuestLabel =>
+      'Разрешить любому пользователю в сети доступ без учётной записи';
+
+  @override
+  String get sharingUsersHint =>
+      'Разрешённые учётные записи (ничего не выбрано: все учётные записи с паролем SMB):';
+
+  @override
+  String get sharingFolder => 'Папка';
+
+  @override
+  String get sharingFolderHint =>
+      'Папка на сервере, например диск, подключённый в разделе «Хранилище».';
+
+  @override
+  String get sharingComment => 'Описание';
+
+  @override
+  String get sharingPasswords => 'Пароли SMB';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba хранит отдельные пароли: задайте пароль для каждой подключающейся учётной записи.';
+
+  @override
+  String get sharingAccount => 'Учётная запись';
+
+  @override
+  String get sharingSetPassword => 'Задать пароль';
+
+  @override
+  String sharingSetPasswordBody(Object user) {
+    return 'Задаёт пароль SMB для $user.';
+  }
+
+  @override
+  String get sharingNewPassword => 'Новый пароль SMB';
+
+  @override
+  String get sharingNewPasswordAgain => 'Повторите пароль';
+
+  @override
+  String get sharingPasswordsDiffer => 'Пароли не совпадают.';
+
+  @override
+  String get sharingClientsHint =>
+      'Кто может подключить: * для всех, узел, адрес или сеть, например 192.168.1.0/24.';
+
+  @override
+  String get sharingClient => 'Клиент';
+
+  @override
+  String get sharingAddClient => 'Добавить клиента';
+
+  @override
+  String get sharingSquash => 'root на клиенте';
+
+  @override
+  String get sharingSquashRoot => 'root становится nobody';
+
+  @override
+  String get sharingSquashAll => 'Все становятся nobody';
+
+  @override
+  String get sharingSquashNone => 'root остаётся root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path не является папкой на сервере.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'Конфигурация отклонена, восстановлена предыдущая: $detail';
+  }
+
+  @override
+  String get sharingDuplicate =>
+      'Другое общее хранилище уже использует это имя или папку.';
+
+  @override
+  String get sharingInvalidName =>
+      'Имя может содержать буквы, цифры и _ . - (не более 32 символов).';
+
+  @override
+  String get sharingInvalidPath =>
+      'Папка должна быть абсолютным путём без кавычек, обратных косых черт и ..';
+
+  @override
+  String get sharingInvalidClient =>
+      'Клиентом может быть *, узел, адрес или сеть.';
+
+  @override
+  String get sharingInvalidPassword => 'Этот пароль нельзя использовать.';
+
+  @override
+  String get sharingTimeMachineOption => 'Резервные копии Time Machine (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Хранить удалённые файлы в .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Корзина';
+
+  @override
+  String get sharingConnectedNow => 'Подключены сейчас';
+
+  @override
+  String get sharingNobodyConnected => 'Подключённых нет';
+
+  @override
+  String get sharingShowConnections => 'Показать подключения';
+
+  @override
+  String get sharingShowConnectionsBody =>
+      'Читает сведения о подключениях от имени root.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
 }
