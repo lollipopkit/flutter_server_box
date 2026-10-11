@@ -395,6 +395,8 @@
   "pvePassword": "Kata sandi PVE",
   "pvePasswordHint": "Diperlukan saat memakai autentikasi SSH berbasis kunci",
   "tempIsCelsiusTip": "Jika aktif, nilai suhu diperlakukan sebagai Celsius, bukan milicelsius. Aktifkan hanya bila suhu tampil keliru (misalnya 0,1 °C, bukan 58 °C).",
+  "diskCountsNetwork": "Hitung sistem berkas jaringan dalam total",
+  "diskCountsNetworkTip": "Mount NFS, SMB, dan sejenisnya selalu ditampilkan. Kapasitasnya milik mesin lain, sehingga secara bawaan tidak dihitung dalam total disk. Berlaku saat status dikumpulkan lewat SSH; lewat monitor agent, pengaturan agent itu sendiri yang menentukan.",
   "syncAppSettings": "Sinkronkan pengaturan aplikasi",
   "syncAppSettingsTip": "Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.",
   "menuGitHubRepository": "Repositori GitHub",

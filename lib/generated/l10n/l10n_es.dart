@@ -1168,6 +1168,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Si se activa, el valor de temperatura se tratará como grados Celsius en lugar de milicelsius. Actívalo solo si la temperatura se muestra mal (por ejemplo, 0,1 °C en lugar de 58 °C).';
 
   @override
+  String get diskCountsNetwork =>
+      'Contar los sistemas de archivos de red en el total';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'Los montajes NFS, SMB y similares siempre se muestran. Su capacidad pertenece a otra máquina, por lo que por defecto no cuentan en el total de disco. Se aplica cuando el estado se recoge por SSH; con el monitor agent decide la configuración del propio agente.';
+
+  @override
   String spentTime(String time) {
     return 'Tiempo gastado: $time';
   }

@@ -1153,6 +1153,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Açıkken sıcaklık değeri milisantigrat yerine santigrat olarak işlenir. Yalnızca sıcaklık yanlış görünüyorsa aç (örneğin 58 °C yerine 0,1 °C).';
 
   @override
+  String get diskCountsNetwork => 'Ağ dosya sistemlerini toplama dahil et';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez. Durum SSH üzerinden toplandığında geçerlidir; monitor agent üzerinden agent\'ın kendi ayarı belirler.';
+
+  @override
   String spentTime(String time) {
     return 'Harcanan süre: $time';
   }

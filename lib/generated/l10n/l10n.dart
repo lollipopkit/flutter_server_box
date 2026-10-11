@@ -2104,6 +2104,18 @@ abstract class AppLocalizations {
   /// **'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).'**
   String get tempIsCelsiusTip;
 
+  /// No description provided for @diskCountsNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Count network filesystems in the total'**
+  String get diskCountsNetwork;
+
+  /// No description provided for @diskCountsNetworkTip.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.'**
+  String get diskCountsNetworkTip;
+
   /// User-facing label or message for spent time.
   ///
   /// In en, this message translates to:

@@ -1157,6 +1157,13 @@ class AppLocalizationsAz extends AppLocalizations {
       'Aktivləşdirildikdə temperatur dəyəri milliselsi əvəzinə Selsi kimi qəbul ediləcək. Yalnız temperatur səhv göstərildikdə aktivləşdir (məsələn, 58°C əvəzinə 0.1°C göstərildikdə).';
 
   @override
+  String get diskCountsNetwork => 'Şəbəkə fayl sistemlərini cəmə daxil et';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS, SMB və oxşar qoşmalar həmişə siyahıda göstərilir. Onların tutumu başqa maşına aiddir, ona görə də standart olaraq disk cəminə daxil edilmir. Vəziyyət SSH ilə toplandıqda tətbiq olunur; monitor agent vasitəsilə agent-in öz ayarı qərar verir.';
+
+  @override
   String spentTime(String time) {
     return 'Sərf olunan vaxt: $time';
   }

@@ -218,6 +218,9 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _allowLegacyAlgorithms = ValueNotifier(false);
 
   final _tempIsCelsius = ValueNotifier(false);
+
+  /// [ServerCustom.diskCountsNetwork].
+  final _diskCountsNetwork = ValueNotifier(false);
   final _env = <String, String>{}.vn;
 
   /// Custom commands an older version of the app stored here, carried through
@@ -305,6 +308,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _fileTransport.dispose();
     _allowLegacyAlgorithms.dispose();
     _tempIsCelsius.dispose();
+    _diskCountsNetwork.dispose();
     _env.dispose();
     _unmigratedCmds.dispose();
     _tags.dispose();

@@ -1302,6 +1302,17 @@ extension _Widgets on _ServerEditPageState {
             ],
           );
         }),
+        _diskCountsNetwork.listenVal(
+          (v) => ListTile(
+            leading: const Icon(Icons.lan_outlined),
+            title: TipText(l10n.diskCountsNetwork, l10n.diskCountsNetworkTip),
+            trailing: SwitchX(
+              value: v,
+              onChanged: (val) => _diskCountsNetwork.value = val,
+            ),
+            onTap: () => _diskCountsNetwork.value = !v,
+          ).cardx,
+        ),
       ],
     );
   }

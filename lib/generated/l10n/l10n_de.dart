@@ -1160,6 +1160,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Wenn aktiviert, wird der Temperaturwert als Celsius statt als Millicelsius behandelt. Nur einschalten, wenn die Temperatur falsch angezeigt wird (z. B. 0,1 °C statt 58 °C).';
 
   @override
+  String get diskCountsNetwork =>
+      'Netzwerkdateisysteme in die Summe einbeziehen';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS-, SMB- und ähnliche Einhängepunkte werden immer aufgelistet. Ihre Kapazität gehört einem anderen Rechner, daher zählen sie standardmäßig nicht zur Datenträgersumme. Gilt, wenn der Status über SSH erfasst wird; über den Monitor-Agent entscheidet dessen eigene Einstellung.';
+
+  @override
   String spentTime(String time) {
     return 'Benötigte Zeit: $time';
   }

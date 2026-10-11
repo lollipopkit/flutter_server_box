@@ -26,7 +26,22 @@ String serverDdlBeforePveTable(String fresh) {
   const anchor = '"prefer_temp_dev" TEXT NULL, ';
   expect(fresh, contains(anchor));
   expect(fresh, isNot(contains('"pve_addr"')));
-  return fresh.replaceFirst(anchor, '$pveServerColumns$anchor');
+  return serverDdlBeforeDiskCountsNetwork(
+    fresh,
+  ).replaceFirst(anchor, '$pveServerColumns$anchor');
+}
+
+/// The column m032 added, as Drift declares it: last, where `ADD COLUMN` puts
+/// it too.
+const diskCountsNetworkColumn =
+    ', "disk_counts_network" INTEGER NOT NULL DEFAULT 0 '
+    'CHECK ("disk_counts_network" IN (0, 1))';
+
+/// `server` as it was before v33: today's table less `disk_counts_network`,
+/// asserted to have been found.
+String serverDdlBeforeDiskCountsNetwork(String fresh) {
+  expect(fresh, contains(diskCountsNetworkColumn));
+  return fresh.replaceFirst(diskCountsNetworkColumn, '');
 }
 
 /// Replaces `server` with [ddl], keeping every child table: the same pragmas
