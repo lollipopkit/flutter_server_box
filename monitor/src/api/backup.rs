@@ -154,6 +154,8 @@ pub async fn upload(
 
     let mut data = Vec::new();
     while let Some(chunk) = body.next().await {
+        // Nothing to [`discard`] here: ntex fails the payload only as the
+        // connection ends (peer gone, broken framing, a read timeout).
         let Ok(chunk) = chunk else {
             return Ok(HttpResponse::BadRequest().finish());
         };
