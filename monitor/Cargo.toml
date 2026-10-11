@@ -82,7 +82,7 @@ reqwest = { version = "0.13", default-features = false, features = ["json", "rus
 # "no cmake for musl" intent these features are chosen for is achieved rather
 # than merely stated. Anything added here that wants TLS has to be configured
 # the same way, or it comes back.
-russh = { version = "0.63", default-features = false, features = ["ring", "flate2", "rsa"] }
+russh = { version = "0.64", default-features = false, features = ["ring", "flate2", "rsa"] }
 # Wipes SSH credentials from memory once they have been used
 zeroize = "1"
 
