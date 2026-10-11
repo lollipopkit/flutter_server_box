@@ -156,6 +156,7 @@ abstract final class SshSessionId {
   /// is: POSIX `sh`, handed over in single quotes as [wrap] does, so that a
   /// fish login shell can run it too. Signals the process group as well, for
   /// a `pkill` without `-s`.
+  ///
   /// Waits a moment only when there was something to kill, for it to be
   /// gone from the process table.
   static String kill(int id) =>
@@ -285,8 +286,10 @@ class SshExec implements ServerByteExec {
     // closed: a signal on a channel the server has freed ends the whole
     // connection (OpenSSH: "server_input_channel_req: unknown channel"),
     // every other channel on it included.
+    // `ignore`: a `done` that fails is the collector's to report, not this
+    // flag's to raise again as an uncaught error.
     var ended = false;
-    unawaited(session.done.whenComplete(() => ended = true));
+    session.done.whenComplete(() => ended = true).ignore();
     var stopped = false;
     Future<bool?>? reaped;
     unawaited(
@@ -470,7 +473,7 @@ Stream<List<int>> _after(Future<void> gate, Stream<List<int>> stream) {
 /// A command on an SSH channel, fed as it runs.
 final class _SshExecSession implements ExecSession {
   _SshExecSession(this._session) {
-    unawaited(_session.done.whenComplete(() => _ended = true));
+    _session.done.whenComplete(() => _ended = true).ignore();
   }
 
   final SSHSession _session;
