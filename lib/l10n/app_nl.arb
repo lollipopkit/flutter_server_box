@@ -346,6 +346,7 @@
   "agentNoHistory": "Geen opgeslagen globale agentgesprekken",
   "agentClearHistoryTitle": "Globale agentgeschiedenis wissen?",
   "agentClearHistoryTip": "Alle globale agentgesprekken worden van dit apparaat verwijderd.",
+  "agentCommandMayStillRun": "De gestopte opdracht draait mogelijk nog op de server.",
   "agentToolShell": "Shell",
   "agentToolReadFile": "Bestand lezen",
   "agentToolWriteFile": "Bestand schrijven",

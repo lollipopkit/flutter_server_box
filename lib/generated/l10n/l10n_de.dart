@@ -122,6 +122,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Alle globalen Agent-Gespräche werden von diesem Gerät entfernt.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Der gestoppte Befehl läuft auf dem Server möglicherweise noch.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

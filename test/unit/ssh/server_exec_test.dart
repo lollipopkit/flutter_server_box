@@ -112,6 +112,32 @@ void main() {
       await stdout.close();
     });
 
+    test('keeps a throwing callback as the stream error', () async {
+      final stdout = StreamController<List<int>>();
+      final stderr = StreamController<List<int>>();
+      final commandDone = Completer<void>();
+      final error = StateError('callback failed');
+      final collecting = collectSshExecOutput(
+        stdout: stdout.stream,
+        stderr: stderr.stream,
+        commandDone: commandDone.future,
+        drainTimeout: const Duration(milliseconds: 20),
+        onStdout: (_) => throw error,
+      );
+
+      stdout
+        ..add(utf8.encode('first '))
+        ..add(utf8.encode('second'));
+      await stdout.close();
+      await stderr.close();
+      commandDone.complete();
+
+      final result = await collecting;
+      expect(result.stdout, 'first second');
+      expect(result.streamError, same(error));
+      expect(result.outputIncomplete, isFalse);
+    });
+
     test('gives up on a channel the server holds after a cancel', () async {
       final stdout = StreamController<List<int>>();
       final stderr = StreamController<List<int>>();

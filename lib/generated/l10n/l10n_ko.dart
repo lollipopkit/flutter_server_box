@@ -116,6 +116,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentClearHistoryTip => '모든 전역 에이전트 대화가 이 기기에서 삭제됩니다.';
 
   @override
+  String get agentCommandMayStillRun => '중지한 명령이 서버에서 아직 실행 중일 수 있습니다.';
+
+  @override
   String get agentToolShell => '셸';
 
   @override

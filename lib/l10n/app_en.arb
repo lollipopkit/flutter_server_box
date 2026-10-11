@@ -136,6 +136,7 @@
   "@agentClearHistoryTip": {
     "description": "Help text for the agent clear history setting or action."
   },
+  "agentCommandMayStillRun": "The stopped command may still be running on the server.",
   "agentToolShell": "Shell",
   "@agentToolShell": {
     "description": "User-facing label or message for agent tool shell."

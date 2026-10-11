@@ -39,16 +39,32 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   final err = StringBuffer();
   final decoder = const Utf8Decoder(allowMalformed: true);
 
+  Object? streamError;
+  StackTrace? streamErrorStackTrace;
+
+  // A callback that throws is the caller's error, not the stream's: kept as
+  // [streamError] like one, rather than escaping into the zone from inside
+  // the subscription while the output goes on being collected.
+  void deliver(OnExecOutput? callback, String chunk) {
+    if (callback == null) return;
+    try {
+      callback(chunk);
+    } catch (error, trace) {
+      streamError ??= error;
+      streamErrorStackTrace ??= trace;
+    }
+  }
+
   // Subscriptions rather than `forEach`, so that giving up on the drain can
   // actually let go of the streams instead of leaving them writing into
   // buffers nobody will read.
   final outSub = decoder.bind(stdout).listen((chunk) {
     out.write(chunk);
-    onStdout?.call(chunk);
+    deliver(onStdout, chunk);
   });
   final errSub = decoder.bind(stderr).listen((chunk) {
     err.write(chunk);
-    onStderr?.call(chunk);
+    deliver(onStderr, chunk);
   });
 
   // These must be obtained while the subscriptions are still live. Calling
@@ -56,8 +72,6 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   // that can no longer complete. `asFuture` also replaces the subscription's
   // error callback, so catch its error here and keep the output buffered up to
   // that point instead of letting the collector throw it away.
-  Object? streamError;
-  StackTrace? streamErrorStackTrace;
   Future<void> captureDone(StreamSubscription<String> subscription) async {
     try {
       await subscription.asFuture<void>();
@@ -108,18 +122,66 @@ Future<SshExecCollectedOutput> collectSshExecOutput({
   );
 }
 
+/// The id of the session a command runs in, printed by the command itself.
+///
+/// sshd starts every command in a session of its own (`setsid()`), so its
+/// login shell's pid is the session id, and an `exec` keeps the pid. That id
+/// reaches every process the command started that did not leave the session
+/// — which a process group does not: `set -m`, a build tool or a shell's job
+/// control moves children into groups of their own, out of reach of the
+/// signal SSH delivers.
+abstract final class SshSessionId {
+  /// The line [wrap] prints on stderr before anything of the command runs.
+  static final marker = RegExp('\x1esbm-sid:(\\d+)\x1e\n');
+
+  /// [command] run as before — by the login shell, `$SHELL` — after `sh` has
+  /// printed [marker].
+  ///
+  /// The login shell need not be a POSIX one, so what it is handed is valid
+  /// in fish as well: one single-quoted program, and [command] single-quoted
+  /// with every `'` and `\` written as a `printf %b` escape — inside single
+  /// quotes fish reads only `\'` and `\\`, POSIX shells nothing at all. A
+  /// shell that rejects it anyway (cmd.exe, PowerShell, csh with a newline in
+  /// quotes) runs none of [command]: the marker is printed before it starts.
+  static String wrap(String command) {
+    final arg = command
+        .replaceAll(r'\', r'\0134')
+        .replaceAll("'", r'\0047');
+    return r'''exec sh -c 'printf "\036sbm-sid:%s\036\n" $$ >&2; '''
+        r'''exec "${SHELL:-sh}" -c "$(printf %b "$1")"' sbm '''
+        "'$arg'";
+  }
+
+  /// Kills every process left in session [id] and prints [gone] when none
+  /// is: POSIX `sh`, handed over in single quotes as [wrap] does, so that a
+  /// fish login shell can run it too. Signals the process group as well, for
+  /// a `pkill` without `-s`.
+  static String kill(int id) =>
+      "sh -c 'pkill -KILL -s $id 2>/dev/null; kill -KILL -- -$id 2>/dev/null; "
+      'sleep 1; pgrep -s $id >/dev/null 2>&1; '
+      "[ \$? -eq 1 ] && echo $gone'";
+
+  static const gone = 'sbm-session-gone';
+}
+
 /// [ServerExec] over an SSH connection.
 ///
 /// One command, one channel — which is what SSH multiplexing is for, and why
 /// running a command has never needed the interactive shell the terminal page
 /// holds open.
 ///
-/// Cancelling here really stops the command: the channel carries a signal, and
-/// what is left of the output is what had already arrived.
+/// Cancelling here really stops the command: the channel carries a signal,
+/// and what the signal missed is killed by its session id from a channel of
+/// its own — see [SshSessionId]. What is left of the output is what had
+/// already arrived.
 class SshExec implements ServerByteExec {
-  const SshExec(this.client);
+  const SshExec(this.client, {this.sudoPassword});
 
   final SSHClient client;
+
+  /// The account's sudo password, for what a cancelled command left running
+  /// as root; null, or a null answer, tries `sudo -n`.
+  final Future<String?> Function()? sudoPassword;
 
   /// How long to keep reading once the command itself has finished.
   ///
@@ -129,6 +191,13 @@ class SshExec implements ServerByteExec {
   /// thing that ends it is whatever timeout the caller happens to have — five
   /// minutes, for the Agent.
   static const drainTimeout = Duration(seconds: 5);
+
+  /// How long the signal gets to end a cancelled command before what is left
+  /// of its session is killed from another channel.
+  static const signalGrace = Duration(seconds: 2);
+
+  /// How long each of those kills gets.
+  static const _killTimeout = Duration(seconds: 10);
 
   @override
   Future<ExecResult> run(
@@ -143,35 +212,97 @@ class SshExec implements ServerByteExec {
     // With no [entry] the script *is* the command, which leaves the channel's
     // stdin free to be stdin — where a sudo password belongs. With one, the
     // entry is the command and the script is what it reads.
-    final session = await client.execute(entry ?? script, environment: env);
+    final command = entry ?? script;
+    Future<_Run> exec(String command, {bool track = false}) => _exec(
+      command,
+      script: script,
+      entry: entry,
+      env: env,
+      stdin: stdin,
+      onStdout: onStdout,
+      onStderr: onStderr,
+      cancel: cancel,
+      track: track,
+    );
+    // Nothing to stop, so no session id to know.
+    if (cancel == null) return (await exec(command)).result;
+
+    var cancelled = false;
+    unawaited(cancel.then((_) => cancelled = true));
+    final tracked = await exec(SshSessionId.wrap(command), track: true);
+    if (tracked.started || cancelled) return tracked.result;
+    // The login shell could not run the wrapper, and so ran none of the
+    // command: run it as it is, stopped by the signal alone.
+    return (await exec(command)).result;
+  }
+
+  Future<_Run> _exec(
+    String command, {
+    required String script,
+    String? entry,
+    Map<String, String>? env,
+    String? stdin,
+    OnExecOutput? onStdout,
+    OnExecOutput? onStderr,
+    Future<void>? cancel,
+    bool track = false,
+  }) async {
+    final session = await client.execute(command, environment: env);
+
+    // Until the marker has come or stderr has ended without it, nothing is
+    // passed on: output before then may be a login shell refusing the
+    // wrapper, which is not the command's, and is run again without it.
+    int? sessionId;
+    final decided = Completer<void>();
+    Stream<List<int>> stdout = session.stdout;
+    Stream<List<int>> stderr = session.stderr;
+    if (track) {
+      stderr = _stripSessionId(
+        session.stderr,
+        decided,
+        (id) => sessionId = id,
+      );
+      stdout = _after(decided.future, stdout);
+    } else {
+      decided.complete();
+    }
+    bool started() => !track || sessionId != null;
+    OnExecOutput? gated(OnExecOutput? callback) => callback == null
+        ? null
+        : (chunk) {
+            if (started()) callback(chunk);
+          };
 
     // Registered rather than awaited: this races the command, and a signal
-    // that never comes must not hold the result up. `session.done` completes
-    // once the channel closes either way, so there is nothing else to unwind.
-    // Not after that: a signal on a channel the server has freed ends the
-    // whole connection (OpenSSH: "server_input_channel_req: unknown
-    // channel"), every other channel on it included.
+    // that never comes must not hold the result up. Not after the channel has
+    // closed: a signal on a channel the server has freed ends the whole
+    // connection (OpenSSH: "server_input_channel_req: unknown channel"),
+    // every other channel on it included.
     var ended = false;
     unawaited(session.done.whenComplete(() => ended = true));
+    var stopped = false;
+    Future<void>? reaped;
     unawaited(
       cancel?.then((_) {
         if (ended) return;
+        stopped = true;
         try {
           session.kill(SSHSignal.KILL);
         } catch (_) {
           // Already gone. Closing below is still what releases the channel.
         }
         session.close();
+        reaped = _reap(session, () => sessionId);
       }),
     );
 
     final output = collectSshExecOutput(
-      stdout: session.stdout,
-      stderr: session.stderr,
+      stdout: stdout,
+      stderr: stderr,
       commandDone: session.done,
       drainTimeout: drainTimeout,
-      onStdout: onStdout,
-      onStderr: onStderr,
+      onStdout: gated(onStdout),
+      onStderr: gated(onStderr),
       cancel: cancel,
     );
 
@@ -187,22 +318,143 @@ class SshExec implements ServerByteExec {
       await session.stdin.close();
 
       final collected = await output;
-      return ExecResult(
-        exitCode: session.exitCode,
-        stdout: collected.stdout,
-        stderr: collected.stderr,
-        outputIncomplete: collected.outputIncomplete,
-        streamError: collected.streamError,
-        streamErrorStackTrace: collected.streamErrorStackTrace,
+      if (reaped case final reaped?) await reaped;
+      return (
+        result: ExecResult(
+          exitCode: session.exitCode,
+          stdout: collected.stdout,
+          stderr: collected.stderr,
+          outputIncomplete: collected.outputIncomplete,
+          streamError: collected.streamError,
+          streamErrorStackTrace: collected.streamErrorStackTrace,
+          // The channel, not the kill, is what says: whatever still holds its
+          // output open — a process that left the session included — is
+          // still running.
+          mayStillRun: stopped && !ended,
+        ),
+        started: started(),
       );
     } finally {
       session.close();
     }
   }
 
+  /// Kills what is left of a cancelled command's session once the signal
+  /// has had [signalGrace] to end it — as the account, then through sudo for
+  /// what runs as root — and gives the channel as long again to close.
+  Future<void> _reap(SSHSession session, int? Function() sessionId) async {
+    Future<bool> closed() async {
+      try {
+        await session.done.timeout(signalGrace);
+      } on TimeoutException {
+        return false;
+      } catch (_) {
+        // Ended with an error, which is ended all the same.
+      }
+      return true;
+    }
+
+    if (await closed()) return;
+    // Held open: by a process the signal missed, or by a server that refused
+    // it.
+    final id = sessionId();
+    if (id == null) return;
+    final kill = SshSessionId.kill(id);
+    if (!await _killed(kill)) {
+      final password = await sudoPassword?.call();
+      if (password == null) {
+        await _killed('sudo -n $kill');
+      } else {
+        await _killed("sudo -S -p '' $kill", stdin: '$password\n');
+      }
+    }
+    await closed();
+  }
+
+  Future<bool> _killed(String command, {String? stdin}) async {
+    try {
+      final r = await _exec(
+        command,
+        script: command,
+        stdin: stdin,
+        // Not tracked: stopped by the signal, the most a kill needs.
+        cancel: Future<void>.delayed(_killTimeout),
+      );
+      return r.result.stdout.contains(SshSessionId.gone);
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Future<ExecSession> start(String command) async =>
       _SshExecSession(await client.execute(command));
+}
+
+typedef _Run = ({ExecResult result, bool started});
+
+/// [stderr] without the [SshSessionId.marker] line, held back until it has
+/// come or the stream has ended; [onId] gets the id it carried.
+///
+/// Looked for anywhere rather than on the first line: a login shell's rc file
+/// can print before it. Whatever surrounds it is passed on as it was.
+///
+/// A transformer rather than an `async*` generator, here and in [_after]: a
+/// generator waiting in `await for` or on a future finishes cancelling only
+/// once it next yields, and a stream the server holds open never lets it.
+Stream<List<int>> _stripSessionId(
+  Stream<Uint8List> stderr,
+  Completer<void> decided,
+  void Function(int id) onId,
+) {
+  final head = <int>[];
+  return stderr.transform(
+    StreamTransformer<Uint8List, List<int>>.fromHandlers(
+      handleData: (chunk, sink) {
+        if (decided.isCompleted) return sink.add(chunk);
+        head.addAll(chunk);
+        // Latin-1: one char per byte, so the match's offsets are byte offsets.
+        final match = SshSessionId.marker.firstMatch(latin1.decode(head));
+        if (match == null) return;
+        onId(int.parse(match[1]!));
+        decided.complete();
+        final rest = [
+          ...head.sublist(0, match.start),
+          ...head.sublist(match.end),
+        ];
+        if (rest.isNotEmpty) sink.add(rest);
+      },
+      handleDone: (sink) {
+        // Ended without it: what was held is the login shell's.
+        if (!decided.isCompleted) {
+          decided.complete();
+          if (head.isNotEmpty) sink.add(List.of(head));
+        }
+        sink.close();
+      },
+    ),
+  );
+}
+
+/// [stream], from once [gate] completes; never listened to when cancelled
+/// before that.
+Stream<List<int>> _after(Future<void> gate, Stream<List<int>> stream) {
+  StreamSubscription<List<int>>? sub;
+  var cancelled = false;
+  late final StreamController<List<int>> out;
+  out = StreamController(
+    onListen: () => gate.then((_) {
+      if (cancelled) return;
+      sub = stream.listen(out.add, onError: out.addError, onDone: out.close);
+    }),
+    onPause: () => sub?.pause(),
+    onResume: () => sub?.resume(),
+    onCancel: () {
+      cancelled = true;
+      return sub?.cancel();
+    },
+  );
+  return out.stream;
 }
 
 /// A command on an SSH channel, fed as it runs.

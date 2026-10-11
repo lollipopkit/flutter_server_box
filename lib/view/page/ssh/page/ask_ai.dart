@@ -164,9 +164,16 @@ extension _AskAi on SSHPageState {
     });
 
     try {
+      final serverId = widget.args.spi?.id;
       final result = await SshExec(
         client,
+        sudoPassword: serverId == null
+            ? null
+            : () => SudoPassword.known(serverId),
       ).run(proposal.command, cancel: cancel.future);
+      // Told to the user as well: a stop ends the reply before this result
+      // exists, so the model may never read it.
+      if (result.mayStillRun) Toast.show(l10n.agentCommandMayStillRun);
       final limited = _limitAiCommandOutput(result.stdout, result.stderr);
       return AskAiCommandResult(
         command: proposal.command,
@@ -177,6 +184,7 @@ extension _AskAi on SSHPageState {
         cancelled: cancel.isCompleted && !timedOut,
         timedOut: timedOut,
         truncated: limited.truncated || result.outputIncomplete,
+        mayStillRun: result.mayStillRun,
       );
     } finally {
       timer.cancel();

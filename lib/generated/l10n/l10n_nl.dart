@@ -122,6 +122,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Alle globale agentgesprekken worden van dit apparaat verwijderd.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'De gestopte opdracht draait mogelijk nog op de server.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

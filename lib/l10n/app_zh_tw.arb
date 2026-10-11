@@ -33,6 +33,7 @@
   "agentNoHistory": "暫無全域 Agent 對話",
   "agentClearHistoryTitle": "清除全域 Agent 歷史記錄？",
   "agentClearHistoryTip": "此裝置上的全部全域 Agent 對話都將被刪除。",
+  "agentCommandMayStillRun": "已停止的指令可能仍在伺服器上執行。",
   "agentToolShell": "終端指令",
   "agentToolReadFile": "讀取檔案",
   "agentToolWriteFile": "寫入檔案",

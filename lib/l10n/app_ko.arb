@@ -392,6 +392,7 @@
   "agentNoHistory": "저장된 전역 에이전트 대화가 없습니다",
   "agentClearHistoryTitle": "전역 에이전트 기록을 지울까요?",
   "agentClearHistoryTip": "모든 전역 에이전트 대화가 이 기기에서 삭제됩니다.",
+  "agentCommandMayStillRun": "중지한 명령이 서버에서 아직 실행 중일 수 있습니다.",
   "agentToolShell": "셸",
   "agentToolReadFile": "파일 읽기",
   "agentToolWriteFile": "파일 쓰기",

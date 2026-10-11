@@ -346,6 +346,7 @@
   "agentNoHistory": "保存されたグローバルのエージェント会話はありません",
   "agentClearHistoryTitle": "グローバルのエージェント履歴を消去しますか？",
   "agentClearHistoryTip": "グローバルのエージェント会話がすべてこの端末から削除されます。",
+  "agentCommandMayStillRun": "停止したコマンドはサーバー上でまだ実行中の可能性があります。",
   "agentToolShell": "シェル",
   "agentToolReadFile": "ファイルを読む",
   "agentToolWriteFile": "ファイルを書く",

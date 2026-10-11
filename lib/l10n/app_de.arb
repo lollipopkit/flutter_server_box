@@ -346,6 +346,7 @@
   "agentNoHistory": "Keine gespeicherten globalen Agent-Gespräche",
   "agentClearHistoryTitle": "Globalen Agent-Verlauf löschen?",
   "agentClearHistoryTip": "Alle globalen Agent-Gespräche werden von diesem Gerät entfernt.",
+  "agentCommandMayStillRun": "Der gestoppte Befehl läuft auf dem Server möglicherweise noch.",
   "agentToolShell": "Shell",
   "agentToolReadFile": "Datei lesen",
   "agentToolWriteFile": "Datei schreiben",

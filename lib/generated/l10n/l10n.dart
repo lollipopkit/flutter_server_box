@@ -329,6 +329,12 @@ abstract class AppLocalizations {
   /// **'All global Agent conversations will be removed from this device.'**
   String get agentClearHistoryTip;
 
+  /// No description provided for @agentCommandMayStillRun.
+  ///
+  /// In en, this message translates to:
+  /// **'The stopped command may still be running on the server.'**
+  String get agentCommandMayStillRun;
+
   /// User-facing label or message for agent tool shell.
   ///
   /// In en, this message translates to:

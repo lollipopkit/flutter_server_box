@@ -123,6 +123,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Semua percakapan Agent global akan dihapus dari perangkat ini.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Perintah yang dihentikan mungkin masih berjalan di server.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

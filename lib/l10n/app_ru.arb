@@ -346,6 +346,7 @@
   "agentNoHistory": "Нет сохранённых глобальных диалогов агента",
   "agentClearHistoryTitle": "Очистить глобальную историю агента?",
   "agentClearHistoryTip": "Все глобальные диалоги агента будут удалены с этого устройства.",
+  "agentCommandMayStillRun": "Остановленная команда, возможно, всё ещё выполняется на сервере.",
   "agentToolShell": "Shell",
   "agentToolReadFile": "Чтение файла",
   "agentToolWriteFile": "Запись файла",

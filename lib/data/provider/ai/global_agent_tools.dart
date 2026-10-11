@@ -8,6 +8,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
@@ -15,6 +16,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -950,7 +952,10 @@ class GlobalAgentToolService {
     final existing = state.client;
     if (existing != null && !existing.isClosed) {
       return (
-        exec: SshExec(existing),
+        exec: SshExec(
+          existing,
+          sudoPassword: () => SudoPassword.known(spi.id),
+        ),
         client: existing,
         serverId: spi.id,
         fileTransport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
@@ -1063,6 +1068,9 @@ class GlobalAgentToolService {
         timer.cancel();
       }
       _requireCurrent(handle);
+      // Told to the user as well: a stop ends the reply before this result
+      // exists, so the model may never read it.
+      if (result.mayStillRun) Toast.show(l10n.agentCommandMayStillRun);
 
       final limited = limitGlobalAgentShellOutput(
         stdoutCapture.text,
@@ -1078,11 +1086,15 @@ class GlobalAgentToolService {
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
         serverId: serverId,
-        summary: timedOut
-            ? 'Command timed out.'
-            : _cancelRequested
-            ? 'Command cancelled.'
-            : 'Command exited with code ${result.exitCode ?? -1}.',
+        summary: switch ((timedOut, _cancelRequested)) {
+          _ when result.mayStillRun =>
+            '${timedOut ? 'Command timed out' : 'Command cancelled'}, and it '
+                'may still be running on the server: check before running it '
+                'again.',
+          (true, _) => 'Command timed out.',
+          (_, true) => 'Command cancelled.',
+          _ => 'Command exited with code ${result.exitCode ?? -1}.',
+        },
         succeeded:
             !_cancelRequested && !timedOut && (result.exitCode ?? -1) == 0,
         duration: watch.elapsed,
@@ -1094,6 +1106,7 @@ class GlobalAgentToolService {
           'stdout': limited.stdout,
           'stderr': limited.stderr,
           'timed_out': timedOut,
+          if (result.mayStillRun) 'may_still_run': true,
         },
       );
     } finally {
