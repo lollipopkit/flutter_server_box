@@ -124,6 +124,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Se eliminarán de este dispositivo todas las conversaciones globales del Agente.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Es posible que el comando detenido siga ejecutándose en el servidor.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

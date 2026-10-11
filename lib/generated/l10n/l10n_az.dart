@@ -122,6 +122,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bütün ümumi agent söhbətləri bu cihazdan silinəcək.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Dayandırılan əmr serverdə hələ də işləyə bilər.';
+
+  @override
   String get agentToolShell => 'Əmr örtüyü';
 
   @override

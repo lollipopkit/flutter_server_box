@@ -348,6 +348,7 @@
   "agentNoHistory": "Nessuna conversazione globale dell'Agente salvata",
   "agentClearHistoryTitle": "Cancellare la cronologia globale dell'Agente?",
   "agentClearHistoryTip": "Tutte le conversazioni globali dell'Agente verranno rimosse da questo dispositivo.",
+  "agentCommandMayStillRun": "Il comando interrotto potrebbe essere ancora in esecuzione sul server.",
   "agentToolShell": "Shell",
   "agentToolReadFile": "Leggi file",
   "agentToolWriteFile": "Scrivi file",

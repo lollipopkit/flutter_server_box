@@ -346,6 +346,7 @@
   "agentNoHistory": "Kayıtlı genel Agent konuşması yok",
   "agentClearHistoryTitle": "Genel Agent geçmişi temizlensin mi?",
   "agentClearHistoryTip": "Tüm genel Agent konuşmaları bu cihazdan kaldırılır.",
+  "agentCommandMayStillRun": "Durdurulan komut sunucuda hâlâ çalışıyor olabilir.",
   "agentToolShell": "Shell",
   "agentToolReadFile": "Dosya oku",
   "agentToolWriteFile": "Dosya yaz",

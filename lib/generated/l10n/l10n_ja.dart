@@ -116,6 +116,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentClearHistoryTip => 'グローバルのエージェント会話がすべてこの端末から削除されます。';
 
   @override
+  String get agentCommandMayStillRun => '停止したコマンドはサーバー上でまだ実行中の可能性があります。';
+
+  @override
   String get agentToolShell => 'シェル';
 
   @override

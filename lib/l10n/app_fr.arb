@@ -346,6 +346,7 @@
   "agentNoHistory": "Aucune conversation globale de l'Agent enregistrée",
   "agentClearHistoryTitle": "Effacer l'historique global de l'Agent ?",
   "agentClearHistoryTip": "Toutes les conversations globales de l'Agent seront retirées de cet appareil.",
+  "agentCommandMayStillRun": "La commande arrêtée est peut-être encore en cours sur le serveur.",
   "agentToolShell": "Shell",
   "agentToolReadFile": "Lire un fichier",
   "agentToolWriteFile": "Écrire un fichier",

@@ -115,6 +115,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentClearHistoryTip => '此设备上的全部全局 Agent 对话都将被删除。';
 
   @override
+  String get agentCommandMayStillRun => '已停止的命令可能仍在服务器上运行。';
+
+  @override
   String get agentToolShell => '终端命令';
 
   @override
@@ -5273,6 +5276,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentClearHistoryTip => '此裝置上的全部全域 Agent 對話都將被刪除。';
+
+  @override
+  String get agentCommandMayStillRun => '已停止的指令可能仍在伺服器上執行。';
 
   @override
   String get agentToolShell => '終端指令';

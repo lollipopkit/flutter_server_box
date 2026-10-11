@@ -121,6 +121,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Tüm genel Agent konuşmaları bu cihazdan kaldırılır.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Durdurulan komut sunucuda hâlâ çalışıyor olabilir.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

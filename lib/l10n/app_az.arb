@@ -33,6 +33,7 @@
   "agentNoHistory": "Yadda saxlanmış ümumi agent söhbəti yoxdur",
   "agentClearHistoryTitle": "Ümumi agent tarixçəsi təmizlənsin?",
   "agentClearHistoryTip": "Bütün ümumi agent söhbətləri bu cihazdan silinəcək.",
+  "agentCommandMayStillRun": "Dayandırılan əmr serverdə hələ də işləyə bilər.",
   "agentToolShell": "Əmr örtüyü",
   "agentToolReadFile": "Faylı oxu",
   "agentToolWriteFile": "Fayla yaz",

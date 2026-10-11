@@ -199,7 +199,7 @@ void main() {
       'srv-1',
       TerminalHost(
         serverName: 'web',
-        run: (command) async {
+        run: (command, {cancel}) async {
           ran.add(command.command);
           return AskAiCommandResult(
             command: command.command,
@@ -212,7 +212,6 @@ void main() {
         insert: (_) {},
         screen: () => r'root@web:~# ',
         programStatus: () => '',
-        cancel: () async {},
       ),
     );
   });

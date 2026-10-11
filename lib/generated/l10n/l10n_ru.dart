@@ -122,6 +122,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Все глобальные диалоги агента будут удалены с этого устройства.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Остановленная команда, возможно, всё ещё выполняется на сервере.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

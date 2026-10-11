@@ -122,6 +122,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Усі глобальні розмови агента буде видалено з цього пристрою.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Зупинена команда, можливо, досі виконується на сервері.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override

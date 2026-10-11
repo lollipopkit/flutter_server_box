@@ -111,6 +111,78 @@ void main() {
 
       await stdout.close();
     });
+
+    test('keeps a throwing callback as the stream error', () async {
+      final stdout = StreamController<List<int>>();
+      final stderr = StreamController<List<int>>();
+      final commandDone = Completer<void>();
+      final error = StateError('callback failed');
+      final collecting = collectSshExecOutput(
+        stdout: stdout.stream,
+        stderr: stderr.stream,
+        commandDone: commandDone.future,
+        drainTimeout: const Duration(milliseconds: 20),
+        onStdout: (_) => throw error,
+      );
+
+      stdout
+        ..add(utf8.encode('first '))
+        ..add(utf8.encode('second'));
+      await stdout.close();
+      await stderr.close();
+      commandDone.complete();
+
+      final result = await collecting;
+      expect(result.stdout, 'first second');
+      expect(result.streamError, same(error));
+      expect(result.outputIncomplete, isFalse);
+    });
+
+    test('gives up on a channel the server holds after a cancel', () async {
+      final stdout = StreamController<List<int>>();
+      final stderr = StreamController<List<int>>();
+      final cancel = Completer<void>();
+      final collecting = collectSshExecOutput(
+        stdout: stdout.stream,
+        stderr: stderr.stream,
+        // sshd closes the channel only once the process and its output have
+        // ended: a refused signal leaves both open.
+        commandDone: Completer<void>().future,
+        drainTimeout: const Duration(milliseconds: 20),
+        cancel: cancel.future,
+      );
+
+      stdout.add(utf8.encode('still compiling'));
+      cancel.complete();
+
+      final result = await collecting;
+      expect(result.stdout, 'still compiling');
+      expect(result.outputIncomplete, isTrue);
+    });
+
+    test('drains as usual when the cancel ends the command', () async {
+      final stdout = StreamController<List<int>>();
+      final stderr = StreamController<List<int>>();
+      final commandDone = Completer<void>();
+      final cancel = Completer<void>();
+      final collecting = collectSshExecOutput(
+        stdout: stdout.stream,
+        stderr: stderr.stream,
+        commandDone: commandDone.future,
+        drainTimeout: const Duration(milliseconds: 200),
+        cancel: cancel.future,
+      );
+
+      stdout.add(utf8.encode('killed'));
+      cancel.complete();
+      await stdout.close();
+      await stderr.close();
+      commandDone.complete();
+
+      final result = await collecting;
+      expect(result.stdout, 'killed');
+      expect(result.outputIncomplete, isFalse);
+    });
   });
 
   group('ExecResult', () {

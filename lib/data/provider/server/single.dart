@@ -13,6 +13,7 @@ import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -966,7 +967,10 @@ class ServerNotifier extends _$ServerNotifier {
     switch (credential) {
       case ServerConnectCredentialSsh():
         // Connecting *is* the probe here, and it always happens.
-        return SshExec(await ensureShellClient(onDial: onSshDial));
+        return SshExec(
+          await ensureShellClient(onDial: onSshDial),
+          sudoPassword: () => SudoPassword.known(state.spi.id),
+        );
       case ServerConnectCredentialMonitorHttp():
         final source = _resolveSource(credential);
         if (source is! MonitorHttpDataSource) {
