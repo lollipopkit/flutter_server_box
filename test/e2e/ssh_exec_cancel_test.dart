@@ -49,30 +49,34 @@ Future<void> main() async {
     client = await connectSshE2e(target, prepared.identities);
   });
 
-  // Durations nothing else on the host sleeps for, so `pgrep` finds only
-  // this run's processes.
-  final base = 600 + Random().nextInt(100000);
-  final used = <int>[];
-  int sleepFor() {
-    final s = base + used.length;
+  // A duration whose fraction is this run's own, so that `pgrep` and the
+  // teardown's `pkill` match only what this run started — never a `sleep` of
+  // somebody else's on a shared host.
+  final run = List.generate(9, (_) => Random.secure().nextInt(10)).join();
+  final used = <String>[];
+  String sleepFor() {
+    final s = '${600 + used.length}.$run';
     used.add(s);
     return s;
   }
 
-  Future<bool> running(int s) async {
-    final r = await execSshE2e(client, 'pgrep -fx "sleep $s"', null);
+  /// [s] as a `pgrep -x` pattern: the whole command line, `.` meant literally.
+  String exactly(String s) => 'sleep ${s.replaceAll('.', r'\.')}';
+
+  Future<bool> running(String s) async {
+    final r = await execSshE2e(client, 'pgrep -fx "${exactly(s)}"', null);
     return r.exitCode == 0;
   }
 
   tearDownAll(() async {
     for (final s in used) {
-      await execSshE2e(client, 'pkill -fx "sleep $s"', null);
+      await execSshE2e(client, 'pkill -fx "${exactly(s)}"', null);
     }
     if (sudoPassword != null) {
       for (final s in used) {
         await execSshE2e(
           client,
-          "sudo -S -p '' pkill -fx 'sleep $s'",
+          "sudo -S -p '' pkill -fx '${exactly(s)}'",
           Uint8List.fromList('$sudoPassword\n'.codeUnits),
         );
       }
@@ -83,7 +87,7 @@ Future<void> main() async {
   /// Runs [command], stops it a second in, once [s] is running.
   Future<({ExecResult result, Duration took})> stop(
     String command,
-    int s, {
+    String s, {
     String? stdin,
     SshExec? exec,
   }) async {
@@ -174,7 +178,10 @@ Future<void> main() async {
 
   group('a session id read off stderr', () {
     /// The session of a `sleep` started on a channel of its own.
-    Future<({int sid, int s})> session(String prefix, {String? stdin}) async {
+    Future<({int sid, String s})> session(
+      String prefix, {
+      String? stdin,
+    }) async {
       final s = sleepFor();
       final channel = await client.execute('${prefix}sleep $s');
       if (stdin != null) channel.stdin.add(utf8.encode(stdin));
@@ -182,7 +189,7 @@ Future<void> main() async {
       // Through `sh`: the login shell may be fish.
       final r = await execSshE2e(
         client,
-        'sh -c \'ps -o sid= -p \$(pgrep -fx "sleep $s")\'',
+        'sh -c \'ps -o sid= -p \$(pgrep -fx "${exactly(s)}")\'',
         null,
       );
       return (sid: int.parse(r.stdout.trim()), s: s);
