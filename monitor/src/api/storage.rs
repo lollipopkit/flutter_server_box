@@ -2,13 +2,15 @@
 //! changes to them (`sbm_parser::storage`). Linux; admin.
 //!
 //! - `GET /storage`: every block device as a tree (filesystems, mounts,
-//!   usage) and why each is in use (`busy`, `storage::in_use`), the md arrays
+//!   usage), why each is in use (`busy`, `storage::in_use`), the devices
+//!   mounted where the system lives (`system`, never unmounted), the md arrays
 //!   (`/proc/mdstat`), the pools (`zpool`), which tools are installed.
 //! - `POST /storage/act`: `{action…, sudo_password}`, one
 //!   `StorageAction`, checked against a fresh device listing (nothing in use
 //!   is partitioned, formatted or built on) and the sudo password tried
 //!   first; then run as root as a job (202). `sudo_rejected` (403) when the
-//!   password is not sudo's.
+//!   password is not sudo's; `systemMount` / `notMounted` (409) for an
+//!   unmount of the system's mount or of nothing.
 //! - `GET /storage/job?since=<seq>`.
 //!
 //! Every change is audited (`Kind::Machine`), never the password.
@@ -65,7 +67,14 @@ async fn devices(state: &AppState) -> Option<Vec<st::BlockDevice>> {
     let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
     match super::exec::run(st::LSBLK_COMMAND, None, None, &limits).await {
         Ok(out) if out.exit_code == Some(0) => Some(st::parse_lsblk(&out.stdout)),
-        _ => None,
+        Ok(out) => {
+            tracing::warn!(exit = ?out.exit_code, timed_out = out.timed_out, stderr = %out.stderr.trim(), "storage: lsblk failed");
+            None
+        }
+        Err(e) => {
+            tracing::warn!("storage: lsblk did not run: {e}");
+            None
+        }
     }
 }
 
@@ -113,7 +122,8 @@ pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
         .flat_map(st::BlockDevice::walk)
         .filter_map(|d| st::in_use(&disks, &d.path, &held).map(|why| (d.path.clone(), json!(why))))
         .collect();
-    Ok(HttpResponse::Ok().json(&json!({ "disks": disks, "busy": busy, "arrays": arrays, "pools": pools, "tools": tools, "job": job })))
+    let system: Vec<&str> = disks.iter().flat_map(st::BlockDevice::walk).filter(|d| st::system_mounted(d)).map(|d| d.path.as_str()).collect();
+    Ok(HttpResponse::Ok().json(&json!({ "disks": disks, "busy": busy, "system": system, "arrays": arrays, "pools": pools, "tools": tools, "job": job })))
 }
 
 #[derive(Deserialize)]
@@ -135,9 +145,18 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
         Err(e) => return Ok(refused(400, e.code())),
     };
     // Decided on what the machine has now, not on what a page saw.
+    if let StorageAction::Unmount { mountpoint } = &action {
+        let Some(disks) = devices(&state).await else { return Ok(refused(502, "unreadable")) };
+        if let Some(why) = st::unmount_refusal(&disks, mountpoint) {
+            return Ok(refused(409, why));
+        }
+    }
     let consumes = action.consumes();
     if !consumes.is_empty() {
         let Some(disks) = devices(&state).await else { return Ok(refused(502, "unreadable")) };
+        if st::overlapping(&disks, &consumes) {
+            return Ok(refused(400, "overlapping"));
+        }
         let held = held(&state).await;
         for device in consumes {
             if let Some(why) = st::in_use(&disks, device, &held) {

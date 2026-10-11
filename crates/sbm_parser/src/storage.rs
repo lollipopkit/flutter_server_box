@@ -21,7 +21,7 @@ use crate::script::shell_quote_unix as q;
 
 /// Every block device as a tree (disks, their partitions, what is built on
 /// them), sizes in bytes; read by [`parse_lsblk`].
-pub const LSBLK_COMMAND: &str = "lsblk -J -b -o NAME,PATH,TYPE,SIZE,MODEL,SERIAL,ROTA,TRAN,RM,RO,FSTYPE,LABEL,UUID,MOUNTPOINTS,FSAVAIL,FSUSED";
+pub const LSBLK_COMMAND: &str = "lsblk -J -b -o NAME,PATH,TYPE,SIZE,MODEL,SERIAL,ROTA,TRAN,RM,RO,PARTTYPE,FSTYPE,LABEL,UUID,MOUNTPOINTS,FSAVAIL,FSUSED";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BlockDevice {
@@ -37,6 +37,9 @@ pub struct BlockDevice {
     pub transport: Option<String>,
     pub removable: bool,
     pub read_only: bool,
+    /// The partition table's type: a GPT GUID or an MBR `0x..` id.
+    #[serde(default)]
+    pub part_type: Option<String>,
     pub fstype: Option<String>,
     pub label: Option<String>,
     pub uuid: Option<String>,
@@ -91,6 +94,7 @@ fn device(v: &Value) -> Option<BlockDevice> {
         transport: text(&v["tran"]),
         removable: flag(&v["rm"]),
         read_only: flag(&v["ro"]),
+        part_type: text(&v["parttype"]).map(|t| t.to_ascii_lowercase()),
         fstype: text(&v["fstype"]),
         label: text(&v["label"]),
         uuid: text(&v["uuid"]),
@@ -144,6 +148,43 @@ impl Held {
     }
 }
 
+/// Two of [paths] are one device and something on it (a disk and its
+/// partition): never put into one array or pool together.
+pub fn overlapping(devices: &[BlockDevice], paths: &[&str]) -> bool {
+    paths.iter().any(|p| find(devices, p).is_some_and(|d| d.walk().iter().skip(1).any(|c| paths.contains(&c.path.as_str()))))
+}
+
+/// Partitions firmware or another system needs, never formatted or built
+/// on, even with nothing mounted: EFI system, BIOS boot, Microsoft reserved,
+/// Windows recovery (GPT), EFI and GPT protective (MBR).
+const SYSTEM_PART_TYPES: &[&str] = &[
+    "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+    "21686148-6449-6e6f-744e-656564454649",
+    "e3c9e316-0b5c-4db8-817d-f92df00215ae",
+    "de94bba4-06d1-4d40-a16a-bfd50179d6ac",
+    "0xef",
+    "0xee",
+];
+
+/// [dev] is mounted where the system lives (`/`, `/boot/efi`, …): also
+/// mounted elsewhere, it is never unmounted from here.
+pub fn system_mounted(dev: &BlockDevice) -> bool {
+    dev.mountpoints.iter().any(|m| m != "[SWAP]" && mountpoint_ok(m).is_err())
+}
+
+/// Why [mountpoint] may not be unmounted: nothing listed is mounted there,
+/// or what is serves the system too ([`system_mounted`]).
+pub fn unmount_refusal(devices: &[BlockDevice], mountpoint: &str) -> Option<&'static str> {
+    let mountpoint = match mountpoint.trim_end_matches('/') {
+        "" => "/",
+        m => m,
+    };
+    let Some(dev) = devices.iter().flat_map(BlockDevice::walk).find(|d| d.mountpoints.iter().any(|m| m == mountpoint)) else {
+        return Some("notMounted");
+    };
+    system_mounted(dev).then_some("systemMount")
+}
+
 /// Why [path] may not be partitioned, formatted or given to a new array or
 /// pool: it (or something on it) is mounted, is swap, is a member of an array
 /// or pool [held] names; it is read only; it is not found. `None` when it is
@@ -165,6 +206,9 @@ pub fn in_use(devices: &[BlockDevice], path: &str, held: &Held) -> Option<&'stat
         }
         if held.pool_devices.contains(&d.path) {
             return Some("poolMember");
+        }
+        if d.part_type.as_deref().is_some_and(|t| SYSTEM_PART_TYPES.contains(&t)) {
+            return Some("systemPartition");
         }
         if d.fstype.as_deref() == Some("LVM2_member") {
             return Some("lvmMember");
@@ -368,6 +412,8 @@ const SYSTEM_DIRS: &[&str] = &[
     "/", "/bin", "/boot", "/dev", "/etc", "/home", "/lib", "/lib32", "/lib64", "/opt", "/proc", "/root", "/run", "/sbin",
     "/srv", "/sys", "/tmp", "/usr", "/var",
 ];
+/// Host folders nothing is mounted in either (`/boot/efi`, `/run/…`).
+const SYSTEM_TREES: &[&str] = &["/bin/", "/boot/", "/dev/", "/etc/", "/lib/", "/lib32/", "/lib64/", "/proc/", "/run/", "/sbin/", "/sys/", "/usr/"];
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "camelCase", rename_all_fields = "camelCase")]
@@ -442,6 +488,7 @@ pub fn mountpoint_ok(path: &str) -> Result<(), StorageError> {
     let ok = trimmed.starts_with('/')
         && trimmed.len() <= 256
         && !SYSTEM_DIRS.contains(&trimmed)
+        && !SYSTEM_TREES.iter().any(|t| trimmed.starts_with(t))
         && !trimmed.split('/').skip(1).any(|p| p.is_empty() || p == "." || p == "..")
         && trimmed.bytes().all(|b| b.is_ascii_alphanumeric() || b"/_.-@+".contains(&b));
     if ok { Ok(()) } else { Err(StorageError::InvalidMountpoint) }
@@ -673,6 +720,34 @@ mod tests {
         let stale = parse_lsblk(r#"{"blockdevices":[{"name":"sdf","path":"/dev/sdf","type":"disk","size":1,"fstype":"linux_raid_member","mountpoints":[null]}]}"#);
         assert_eq!(in_use(&stale, "/dev/sdf", &Held::default()), None);
         assert_eq!(in_use(&stale, "/dev/sdf", &Held { md_members: vec!["sdf".into()], pool_devices: vec![] }), Some("raidMember"));
+        // Firmware's partitions, nothing mounted (a BIOS boot partition, a
+        // second disk's EFI partition).
+        let boot = parse_lsblk(
+            r#"{"blockdevices":[{"name":"sdg","path":"/dev/sdg","type":"disk","size":1,"mountpoints":[null],"children":[
+              {"name":"sdg14","path":"/dev/sdg14","type":"part","size":1,"parttype":"21686148-6449-6e6f-744e-656564454649","mountpoints":[null]},
+              {"name":"sdg15","path":"/dev/sdg15","type":"part","size":1,"parttype":"C12A7328-F81F-11D2-BA4B-00A0C93EC93B","fstype":"vfat","mountpoints":[null]},
+              {"name":"sdg2","path":"/dev/sdg2","type":"part","size":1,"parttype":"0fc63daf-8483-4772-8e79-3d69d8477de4","mountpoints":[null]}]}]}"#,
+        );
+        assert_eq!(in_use(&boot, "/dev/sdg14", &Held::default()), Some("systemPartition"));
+        assert_eq!(in_use(&boot, "/dev/sdg15", &Held::default()), Some("systemPartition"));
+        assert_eq!(in_use(&boot, "/dev/sdg", &Held::default()), Some("systemPartition"));
+        assert_eq!(in_use(&boot, "/dev/sdg2", &Held::default()), None);
+        assert!(overlapping(&boot, &["/dev/sdg", "/dev/sdg2"]));
+        assert!(!overlapping(&d, &["/dev/sdc", "/dev/sdd"]));
+    }
+
+    #[test]
+    fn the_systems_mounts_are_kept() {
+        let d = parse_lsblk(LSBLK);
+        assert_eq!(unmount_refusal(&d, "/boot/efi"), Some("systemMount"));
+        assert_eq!(unmount_refusal(&d, "/"), Some("systemMount"));
+        assert_eq!(unmount_refusal(&d, "/srv/data/"), None);
+        assert_eq!(unmount_refusal(&d, "/mnt/nothing"), Some("notMounted"));
+        // WSL: the root filesystem also at /var/lib/docker.
+        let wsl = parse_lsblk(r#"{"blockdevices":[{"name":"sdd","path":"/dev/sdd","type":"disk","size":1,"fstype":"ext4","mountpoints":["/var/lib/docker","/mnt/wslg/distro","/"]}]}"#);
+        assert_eq!(unmount_refusal(&wsl, "/var/lib/docker"), Some("systemMount"));
+        assert!(mountpoint_ok("/boot/efi").is_err() && mountpoint_ok("/run/media/x").is_err());
+        assert!(mountpoint_ok("/mnt/backup").is_ok() && mountpoint_ok("/srv/data").is_ok());
     }
 
     #[test]

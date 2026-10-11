@@ -20,6 +20,20 @@ export function freeDevices(view: StorageView): BlockDevice[] {
   return out
 }
 
+/// [a] and [b] are one device and something on it (a disk and its
+/// partition): never picked together (the agent refuses `overlapping`).
+export function overlaps(view: StorageView, a: string, b: string): boolean {
+  const find = (ds: BlockDevice[], path: string): BlockDevice | undefined => {
+    for (const d of ds) {
+      if (d.path === path) return d
+      const found = find(d.children, path)
+      if (found) return found
+    }
+  }
+  const under = (top: string, path: string) => !!find(find(view.disks, top)?.children ?? [], path)
+  return a !== b && (under(a, b) || under(b, a))
+}
+
 /// The filesystems on a disk: its partitions, or the disk itself when it
 /// carries one whole; arrays built on them are listed with RAID.
 export function volumesOf(disk: BlockDevice): BlockDevice[] {

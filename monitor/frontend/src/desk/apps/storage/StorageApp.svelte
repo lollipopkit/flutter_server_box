@@ -13,7 +13,7 @@
   import { servers } from '../../../lib/servers.svelte'
   import type { BlockDevice, MdArray, StackJob, StorageAction, StorageView, ZPool } from '../../../types'
   import StorageConfirm from './StorageConfirm.svelte'
-  import { disksOf, freeDevices, isMounted, minimum, mountable, nextMd, shortName, volumesOf } from './model'
+  import { disksOf, freeDevices, isMounted, minimum, mountable, nextMd, overlaps, shortName, volumesOf } from './model'
   import { untrack } from 'svelte'
 
   type Tab = 'disks' | 'raid' | 'pools'
@@ -54,6 +54,15 @@
   $effect(() => {
     const serverId = servers.currentId
     untrack(() => void load(serverId))
+  })
+
+  // An array syncing or a pool scrubbing is read again every few seconds
+  // while the page is open, so its progress moves.
+  const syncing = $derived(!!view && (view.arrays.some((a) => a.sync) || view.pools.some((p) => p.scan?.includes('in progress'))))
+  $effect(() => {
+    if (!syncing) return
+    const timer = setInterval(() => void load(), 3000)
+    return () => clearInterval(timer)
   })
 
   const has = (tool: string) => view?.tools.includes(tool) === true
@@ -99,6 +108,8 @@
         return $LL.storageBusyVolume()
       case 'readOnly':
         return $LL.storageBusyReadOnly()
+      case 'systemPartition':
+        return $LL.storageBusySystem()
       default:
         return undefined
     }
@@ -213,7 +224,11 @@
               sub={usage(v) ?? fmtBytes(v.size)}
             >
               <div class="flex shrink-0 gap-[5px]">
-                {#if isMounted(v)}
+                {#if view.busy[v.path] === 'systemPartition'}
+                  <Badge tone="neutral">{$LL.storageBusySystem()}</Badge>
+                {:else if isMounted(v) && view.system?.includes(v.path)}
+                  <Badge tone="neutral">{$LL.storageSystemDisk()}</Badge>
+                {:else if isMounted(v)}
                   <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => ask({ action: 'unmount', mountpoint: v.mountpoints[0] }, $LL.storageUnmount(), $LL.storageUnmountBody({ mountpoint: v.mountpoints[0] }))}>{$LL.storageUnmount()}</Button>
                 {:else if mountable(v)}
                   <Button size="sm" variant="secondary" disabled={job?.state === 'running'} onclick={() => openMount(v)}>{$LL.storageMount()}</Button>
@@ -340,7 +355,10 @@
       />
       <p class="text-[12px] text-(--text-tertiary)">{$LL.storagePickDevices({ count: minimum(creating === 'raid' ? Number(newLevel) : newLevel) })}</p>
       {#each free as d (d.path)}
-        <Checkbox checked={picked.includes(d.path)} label={`${d.path} · ${fmtBytes(d.size)}${d.model ? ` · ${d.model}` : ''}`} onchange={(e: Event) => toggle(d.path, (e.currentTarget as HTMLInputElement).checked)} />
+        <Checkbox
+          checked={picked.includes(d.path)}
+          disabled={!picked.includes(d.path) && picked.some((p) => overlaps(view!, p, d.path))}
+          label={`${d.path} · ${fmtBytes(d.size)}${d.model ? ` · ${d.model}` : ''}`} onchange={(e: Event) => toggle(d.path, (e.currentTarget as HTMLInputElement).checked)} />
       {:else}
         <p class="text-[13px] text-(--text-secondary)">{$LL.storageNoFreeDevices()}</p>
       {/each}

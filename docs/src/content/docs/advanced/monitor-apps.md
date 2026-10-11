@@ -189,7 +189,7 @@ you can:
 
 Every change asks for the sudo password of the agent's account and runs as
 root. A disk or partition that is mounted, used as swap, or a member of an
-array or pool is never partitioned, formatted or built on. Partitioning,
+array or pool is never partitioned, formatted or built on, nor is a firmware partition (EFI system, BIOS boot). What the system is mounted from (`/`, `/boot`, `/boot/efi`) is never unmounted. Partitioning,
 formatting and building an array or pool erase what is on the disks; the
 confirmation names them. mdadm, ZFS (`zfsutils-linux`) and smartmontools must be
 installed for their parts to show.

@@ -282,6 +282,11 @@ pub async fn back_up(
 
     // What it would take, against what is free where backups go: archives
     // are compressed, so this errs on the safe side.
+    // A backup disk unmounted since: never written into the folder under it.
+    let root = state.container_backups.root();
+    if root != state.container_backups.default_root() && !root.is_dir() {
+        return Err(refusal(409, "destinationMissing"));
+    }
     let mounts: Vec<&Mount> = containers.iter().flat_map(|c| &c.mounts).filter(|m| !m.is_system()).collect();
     if let (Some(need), Some(free)) = (estimate(state, runtime, &mounts).await, free_bytes(state))
         && need > free
@@ -298,7 +303,8 @@ pub async fn back_up(
     let job = backups.begin(JobKind::Backup)?;
     let id = format!("{}-{}", chrono::Local::now().format("%Y%m%d-%H%M%S"), slug(&label));
     let dir = backups.dir(&id);
-    if let Err(e) = std::fs::create_dir_all(&dir) {
+    let made = if root == backups.default_root() { std::fs::create_dir_all(&dir) } else { std::fs::create_dir(&dir) };
+    if let Err(e) = made {
         tracing::error!("container backup {id}: {e}");
         job.finish(JobState::Failed, Some("writeFailed".into()));
         return Err(refusal(500, "writeFailed"));

@@ -8718,6 +8718,22 @@ type RootTranslation = {
 	 */
 	storageBusyReadOnly: string
 	/**
+	 * S​y​s​t​e​m​ ​p​a​r​t​i​t​i​o​n
+	 */
+	storageBusySystem: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	storageSystemDisk: string
+	/**
+	 * T​h​e​ ​s​y​s​t​e​m​ ​u​s​e​s​ ​t​h​i​s​ ​m​o​u​n​t​;​ ​i​t​ ​s​t​a​y​s​ ​m​o​u​n​t​e​d​.
+	 */
+	storageSystemMount: string
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​m​o​u​n​t​e​d​ ​t​h​e​r​e​ ​a​n​y​ ​m​o​r​e​.
+	 */
+	storageNotMounted: string
+	/**
 	 * M​o​u​n​t
 	 */
 	storageMount: string
@@ -9022,6 +9038,14 @@ type RootTranslation = {
 	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​w​r​i​t​e​ ​i​n​ ​t​h​a​t​ ​f​o​l​d​e​r​.
 	 */
 	containerBackupDestinationNotWritable: string
+	/**
+	 * T​h​e​r​e​ ​i​s​ ​n​o​t​ ​e​n​o​u​g​h​ ​f​r​e​e​ ​s​p​a​c​e​ ​w​h​e​r​e​ ​b​a​c​k​u​p​s​ ​g​o​.
+	 */
+	containerBackupNotEnoughSpace: string
+	/**
+	 * T​h​e​ ​b​a​c​k​u​p​ ​d​i​s​k​ ​i​s​ ​n​o​t​ ​m​o​u​n​t​e​d​.​ ​M​o​u​n​t​ ​i​t​ ​i​n​ ​S​t​o​r​a​g​e​,​ ​o​r​ ​c​h​o​o​s​e​ ​a​n​o​t​h​e​r​ ​f​o​l​d​e​r​.
+	 */
+	containerBackupDiskMissing: string
 	/**
 	 * S​c​h​e​d​u​l​e​d
 	 */
@@ -17519,6 +17543,22 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	storageBusyReadOnly: () => LocalizedString
 	/**
+	 * System partition
+	 */
+	storageBusySystem: () => LocalizedString
+	/**
+	 * System
+	 */
+	storageSystemDisk: () => LocalizedString
+	/**
+	 * The system uses this mount; it stays mounted.
+	 */
+	storageSystemMount: () => LocalizedString
+	/**
+	 * Nothing is mounted there any more.
+	 */
+	storageNotMounted: () => LocalizedString
+	/**
 	 * Mount
 	 */
 	storageMount: () => LocalizedString
@@ -17798,6 +17838,14 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * The agent cannot write in that folder.
 	 */
 	containerBackupDestinationNotWritable: () => LocalizedString
+	/**
+	 * There is not enough free space where backups go.
+	 */
+	containerBackupNotEnoughSpace: () => LocalizedString
+	/**
+	 * The backup disk is not mounted. Mount it in Storage, or choose another folder.
+	 */
+	containerBackupDiskMissing: () => LocalizedString
 	/**
 	 * Scheduled
 	 */

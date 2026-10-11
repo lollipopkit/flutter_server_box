@@ -19,7 +19,7 @@
   import TargetTerminal from '../../../components/TargetTerminal.svelte'
   import ContainerBackups from './ContainerBackups.svelte'
   import { machineAccess } from '../../../lib/access'
-  import { api } from '../../../lib/api'
+  import { api, ApiError } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { imageReference, refusalText } from '../../../lib/container'
   import { fmtBytes } from '../../../lib/format'
@@ -125,7 +125,15 @@
       tab = 'backups'
       selected = null
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      const code = e instanceof ApiError ? (e.body as { error?: string } | undefined)?.error : undefined
+      error =
+        code === 'notEnoughSpace'
+          ? $LL.containerBackupNotEnoughSpace()
+          : code === 'destinationMissing'
+            ? $LL.containerBackupDiskMissing()
+            : e instanceof Error
+              ? e.message
+              : String(e)
     }
   }
 

@@ -49,7 +49,9 @@
       }
       if (!stopped) timer = setTimeout(poll, 1000)
     }
-    timer = setTimeout(poll, job.state === 'running' ? 300 : 0)
+    // Read untracked: `poll` replaces `job`, which must not start this again
+    // (a finished job would then be read, and reported, over and over).
+    timer = setTimeout(poll, untrack(() => job.state) === 'running' ? 300 : 0)
     return () => {
       stopped = true
       clearTimeout(timer)
@@ -80,7 +82,7 @@
     {/if}
     <div class="min-w-0 flex-1">
       <p class="text-[15px] font-semibold text-(--text-primary)">{title}</p>
-      <p class="text-[12px] text-(--text-secondary)">{$LL.stackProgressHint()}</p>
+      {#if job.state === 'running'}<p class="text-[12px] text-(--text-secondary)">{$LL.stackProgressHint()}</p>{/if}
     </div>
     {#if job.state === 'running' && stop}
       <Button variant="secondary" size="sm" disabled={cancelling} onclick={() => void cancel()}>{$LL.cancel()}</Button>

@@ -2781,7 +2781,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -2899,6 +2899,7 @@ export interface BlockDevice {
   transport: string | null
   removable: boolean
   read_only: boolean
+  part_type?: string | null
   fstype: string | null
   label: string | null
   uuid: string | null
@@ -2930,12 +2931,15 @@ export interface ZPool {
 }
 
 /// Why a device may not be partitioned, formatted or built on.
-export type DeviceBusy = 'mounted' | 'swap' | 'raidMember' | 'poolMember' | 'lvmMember' | 'holdsVolume' | 'readOnly' | 'notFound'
+export type DeviceBusy = 'mounted' | 'swap' | 'raidMember' | 'poolMember' | 'lvmMember' | 'holdsVolume' | 'readOnly' | 'systemPartition' | 'notFound'
 
 /// `GET /storage`.
 export interface StorageView {
   disks: BlockDevice[]
   busy: Record<string, DeviceBusy>
+  /// Devices mounted where the system lives: never unmounted. Absent from
+  /// older agents.
+  system?: string[]
   arrays: MdArray[]
   pools: ZPool[]
   /// mdadm, zpool, smartctl, mkfs.ext4, mkfs.xfs, mkfs.btrfs, sfdisk, wipefs.

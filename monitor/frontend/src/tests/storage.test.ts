@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import StorageApp from '../desk/apps/storage/StorageApp.svelte'
-import { disksOf, freeDevices, minimum, mountable, nextMd, volumesOf } from '../desk/apps/storage/model'
+import { disksOf, freeDevices, minimum, mountable, nextMd, overlaps, volumesOf } from '../desk/apps/storage/model'
 import { api } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 import type { BlockDevice, StorageView } from '../types'
@@ -66,6 +66,30 @@ describe('the storage model', () => {
     expect(mountable(view.disks[1].children[0])).toBe(false)
     expect(nextMd(view)).toBe('md1')
     expect([minimum(1), minimum(5), minimum(10), minimum('raidz2'), minimum('stripe')]).toEqual([2, 3, 4, 4, 1])
+    expect([overlaps(view, '/dev/sdb', '/dev/sdb1'), overlaps(view, '/dev/sdb1', '/dev/sdb'), overlaps(view, '/dev/sdc', '/dev/sdd')]).toEqual([true, true, false])
+  })
+
+  it('keeps the system\'s mounts and firmware partitions', async () => {
+    mocked.getStorage.mockResolvedValue({
+      ...structuredClone(view),
+      disks: [
+        dev('/dev/sda', 'disk', {
+          children: [
+            dev('/dev/sda1', 'part', { fstype: 'ext4', mountpoints: ['/'] }),
+            dev('/dev/sda14', 'part', { part_type: '21686148-6449-6e6f-744e-656564454649' }),
+            dev('/dev/sda2', 'part', { fstype: 'ext4', mountpoints: ['/srv/data'] }),
+          ],
+        }),
+      ],
+      busy: { '/dev/sda': 'mounted', '/dev/sda1': 'mounted', '/dev/sda14': 'systemPartition', '/dev/sda2': 'mounted' },
+      system: ['/dev/sda1'],
+    })
+    render(StorageApp)
+    expect(await screen.findByText('System partition')).toBeInTheDocument()
+    expect(screen.getByText('System')).toBeInTheDocument()
+    // Only the data volume can be unmounted; nothing here can be formatted.
+    expect(screen.getAllByRole('button', { name: 'Unmount' })).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'Format' })).toBeNull()
   })
 })
 

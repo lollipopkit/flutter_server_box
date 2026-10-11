@@ -57,6 +57,12 @@
         case 'busy':
           error = $LL.storageBusy()
           break
+        case 'systemMount':
+          error = $LL.storageSystemMount()
+          break
+        case 'notMounted':
+          error = $LL.storageNotMounted()
+          break
         default:
           error = e instanceof Error ? e.message : String(e)
       }
