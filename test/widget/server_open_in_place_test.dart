@@ -178,7 +178,10 @@ void main() {
         ..setAll({if (everything && sensor) 'coretemp': 41.0}),
       system: SystemType.linux,
       diskIO: DiskIO(),
-    );
+    )
+      ..diskUsage = everything
+          ? DiskUsage(used: BigInt.from(4000000), size: BigInt.from(10000000))
+          : null;
     status.more[StatusCmdType.uptime] = 'up 3 days';
     // Enough of a window for there to be a line: with nothing stored the page
     // draws a sentence where the chart goes, which is a different thing again.

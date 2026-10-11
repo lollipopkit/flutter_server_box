@@ -1155,6 +1155,18 @@ class AppLocalizationsNl extends AppLocalizations {
       'Als dit aanstaat, wordt de temperatuurwaarde als Celsius behandeld in plaats van millicelsius. Zet dit alleen aan als de temperatuur verkeerd wordt weergegeven (bijvoorbeeld 0,1 °C in plaats van 58 °C).';
 
   @override
+  String get diskCountsNetwork =>
+      'Netwerkbestandssystemen meetellen in het totaal';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS-, SMB- en vergelijkbare koppelingen worden altijd vermeld. Hun capaciteit hoort bij een andere machine, dus standaard tellen ze niet mee in het schijftotaal. Geldt wanneer de status via SSH wordt verzameld; via de monitor-agent beslist de eigen instelling van de agent.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS-, SMB- en vergelijkbare koppelingen worden altijd vermeld. Hun capaciteit hoort bij een andere machine, dus standaard tellen ze niet mee in het schijftotaal — de waarde die de agent in de geschiedenis opslaat en waarop hij schijfwaarschuwingen controleert.';
+
+  @override
   String spentTime(String time) {
     return 'Gebruikte tijd: $time';
   }

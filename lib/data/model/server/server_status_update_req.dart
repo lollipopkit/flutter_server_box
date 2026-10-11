@@ -31,11 +31,15 @@ class ServerStatusUpdateReq {
   final SystemType system;
   final double tempDivisor;
 
+  /// [ServerCustom.diskCountsNetwork].
+  final bool diskCountsNetwork;
+
   const ServerStatusUpdateReq({
     required this.system,
     required this.ss,
     required this.parsedOutput,
     this.tempDivisor = 1000.0,
+    this.diskCountsNetwork = false,
   });
 }
 
@@ -54,6 +58,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
     system: systemStr,
     raw: req.parsedOutput,
     tempDivisor: req.tempDivisor,
+    countNetwork: req.diskCountsNetwork,
   );
   final status = jsonDecode(statusJson) as Map<String, dynamic>;
 
@@ -357,6 +362,12 @@ void _applyDisks(ServerStatus ss, Map<String, dynamic> status) {
   ss.disk = (status['disks'] as List)
       .map((d) => _diskFromJson(d as Map<String, dynamic>))
       .toList();
+  ss.diskUsage = ss.disk.isEmpty
+      ? null
+      : DiskUsage(
+          used: BigInt.from(status['disk_used'] as int),
+          size: BigInt.from(status['disk_size'] as int),
+        );
 }
 
 /// Cumulative counters on every system, Windows included: the rates are

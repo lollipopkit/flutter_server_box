@@ -200,6 +200,15 @@ class Servers extends Table with SyncMeta {
   RealColumn get geoLat => real().nullable()();
   RealColumn get geoLon => real().nullable()();
 
+  /// Whether NFS, SMB and the like count in the disk total when status comes
+  /// over SSH; see [ServerCustom.diskCountsNetwork]. False for every row
+  /// written before the column (#1669).
+  ///
+  /// Last, where `ALTER TABLE ... ADD COLUMN` puts it on an install that was
+  /// already past v32, so both have one shape.
+  BoolColumn get diskCountsNetwork =>
+      boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 

@@ -37,6 +37,10 @@ mod sysinfo_backend;
 pub struct NativeState {
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     sysinfo: Option<sysinfo_backend::State>,
+    /// `lsblk`'s output as [`refresh_block_devices`] last read it: the device
+    /// tree each sample's `df` is merged into.
+    #[cfg(target_os = "linux")]
+    block_devices: String,
 }
 
 impl NativeState {
@@ -52,13 +56,30 @@ impl NativeState {
 pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: SystemType) -> ServerStatus {
     match system {
         #[cfg(target_os = "linux")]
-        SystemType::Linux => linux::sample(),
+        SystemType::Linux => linux::sample(&state.block_devices),
         #[cfg(any(target_os = "macos", target_os = "windows"))]
         SystemType::Bsd | SystemType::Windows => {
             sysinfo_backend::sample(state.sysinfo.get_or_insert_with(Default::default))
         }
         #[allow(unreachable_patterns)]
         _ => ServerStatus::default(),
+    }
+}
+
+/// Reads the block devices again: which there are, how they nest, their
+/// filesystem types and UUIDs, and those nothing is mounted from — what `df`
+/// cannot say (#1669). Each [`sample`] merges it with a fresh `df`, which has
+/// the numbers.
+///
+/// Separate from [`sample`] so the caller can keep it to its slower cycle: it
+/// changes when a disk is added, not between samples. `lsblk` reads udev's
+/// database and sysfs, never the disk, but where libudev is missing a root
+/// `lsblk` reads each device's superblock instead — and that cycle is the one
+/// that pauses while nobody is looking. Linux only; elsewhere a no-op.
+pub fn refresh_block_devices(#[allow(unused_variables)] state: &mut NativeState) {
+    #[cfg(target_os = "linux")]
+    {
+        state.block_devices = linux::block_devices();
     }
 }
 

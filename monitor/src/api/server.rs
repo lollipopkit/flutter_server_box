@@ -1168,6 +1168,10 @@ struct SettingsPayload {
     rules: Vec<crate::core::config::MonitoringRule>,
     data_retention: Option<crate::core::config::DataRetentionConfig>,
     cors_allowed_origins: Vec<String>,
+    /// Always present in a GET. Absent from a PUT keeps what is stored, so a
+    /// panel or app from before the field cannot turn it off by saving.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    disk_counts_network: Option<bool>,
 }
 
 /// GET-only wrapper: which fields take effect immediately vs. need a
@@ -1189,7 +1193,12 @@ struct SettingsView {
     data_retention_defaults: crate::core::config::DataRetentionConfig,
 }
 
-const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
+const SETTINGS_LIVE_FIELDS: &[&str] = &[
+    "extended_interval_secs",
+    "idle_pause_enabled",
+    "idle_pause_threshold_secs",
+    "disk_counts_network",
+];
 
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
     require_admin!(&req, &app_state);
@@ -1213,6 +1222,7 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
             rules: monitoring.rules,
             data_retention: monitoring.data_retention,
             cors_allowed_origins: file_config.get_server().cors_allowed_origins,
+            disk_counts_network: Some(live.disk_counts_network),
         },
         live_fields: SETTINGS_LIVE_FIELDS,
         data_retention_defaults: crate::core::config::DataRetentionConfig::default(),
@@ -1273,6 +1283,9 @@ async fn update_settings(
     monitoring.extended.idle_pause.threshold_secs = payload.idle_pause_threshold_secs;
     monitoring.rules = payload.rules;
     monitoring.data_retention = payload.data_retention;
+    if let Some(counts) = payload.disk_counts_network {
+        monitoring.disk_counts_network = counts;
+    }
     config.monitoring = Some(monitoring.clone());
 
     let mut server_config = config.get_server();

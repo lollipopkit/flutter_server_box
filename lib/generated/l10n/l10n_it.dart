@@ -1161,6 +1161,17 @@ class AppLocalizationsIt extends AppLocalizations {
       'Se attivo, il valore della temperatura viene trattato come Celsius anziché millicelsius. Attivalo solo se la temperatura è visualizzata in modo errato (ad esempio 0,1 °C invece di 58 °C).';
 
   @override
+  String get diskCountsNetwork => 'Conta i file system di rete nel totale';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'I montaggi NFS, SMB e simili sono sempre elencati. La loro capacità appartiene a un\'altra macchina, quindi per impostazione predefinita non sono conteggiati nel totale del disco. Vale quando lo stato è raccolto via SSH; tramite il monitor agent decide l\'impostazione dell\'agent stesso.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'I montaggi NFS, SMB e simili sono sempre elencati. La loro capacità appartiene a un\'altra macchina, quindi per impostazione predefinita non sono conteggiati nel totale del disco, il valore che l\'agent salva nella cronologia e usa per gli avvisi sul disco.';
+
+  @override
   String spentTime(String time) {
     return 'Tempo impiegato: $time';
   }

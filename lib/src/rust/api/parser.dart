@@ -10,15 +10,21 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 /// Parse all output of one collection round, returning `ServerStatus` JSON.
 /// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
+///
+/// Beside the status, `disk_used` and `disk_size` (KiB): the disk total, by
+/// `sbm_parser::types::disk_usage` — the one the monitor agent stores — with
+/// network filesystems in it only when `count_network`.
 /// Async: runs on the Rust thread pool without blocking the UI isolate
 Future<String> parseStatusJson({
   required String system,
   required Map<String, String> raw,
   required double tempDivisor,
+  required bool countNetwork,
 }) => RustLib.instance.api.crateApiParserParseStatusJson(
   system: system,
   raw: raw,
   tempDivisor: tempDivisor,
+  countNetwork: countNetwork,
 );
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)

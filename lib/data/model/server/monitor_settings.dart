@@ -112,6 +112,11 @@ class MonitorSettings {
 
   final List<String> corsAllowedOrigins;
 
+  /// Whether NFS, SMB and the like count in the agent's disk total — the one
+  /// its history and disk rules use (#1669). Null where the agent is older
+  /// than the setting: then it is neither shown nor sent.
+  final bool? diskCountsNetwork;
+
   /// Which of the fields above take effect on save. Everything else waits for
   /// the agent to restart, and the editor says so per field rather than
   /// guessing — the set has changed before.
@@ -128,6 +133,7 @@ class MonitorSettings {
     this.rules = const [],
     this.dataRetention,
     this.corsAllowedOrigins = const [],
+    this.diskCountsNetwork,
     this.liveFields = const [],
     this.dataRetentionDefaults = const MonitorDataRetention(
       metricsDays: 30,
@@ -160,6 +166,7 @@ class MonitorSettings {
         final List list => list.whereType<String>().toList(),
         _ => const [],
       },
+      diskCountsNetwork: json['disk_counts_network'] as bool?,
       liveFields: switch (json['live_fields']) {
         final List list => list.whereType<String>().toList(),
         _ => const [],
@@ -188,6 +195,8 @@ class MonitorSettings {
     'rules': [for (final rule in rules) rule.toJson()],
     'data_retention': dataRetention?.toJson(),
     'cors_allowed_origins': corsAllowedOrigins,
+    // Only to an agent that reported it; absent, the agent keeps its value.
+    'disk_counts_network': ?diskCountsNetwork,
   };
 
   bool isLive(String field) => liveFields.contains(field);
@@ -200,6 +209,7 @@ class MonitorSettings {
     List<MonitorRule>? rules,
     MonitorDataRetention? Function()? dataRetention,
     List<String>? corsAllowedOrigins,
+    bool? diskCountsNetwork,
   }) => MonitorSettings(
     intervalSeconds: intervalSeconds ?? this.intervalSeconds,
     extendedIntervalSecs: extendedIntervalSecs == null
@@ -212,6 +222,7 @@ class MonitorSettings {
     rules: rules ?? this.rules,
     dataRetention: dataRetention == null ? this.dataRetention : dataRetention(),
     corsAllowedOrigins: corsAllowedOrigins ?? this.corsAllowedOrigins,
+    diskCountsNetwork: diskCountsNetwork ?? this.diskCountsNetwork,
     liveFields: liveFields,
     dataRetentionDefaults: dataRetentionDefaults,
   );

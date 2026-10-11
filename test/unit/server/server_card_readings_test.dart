@@ -60,7 +60,7 @@ void main() {
       temps: Temperatures()..setAll({if (temp) 'coretemp': 41.0}),
       system: SystemType.linux,
       diskIO: io,
-    );
+    )..diskUsage = DiskUsage(used: BigInt.from(4000000), size: BigInt.from(10000000));
     return ServerState(
       spi: spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
       status: status,

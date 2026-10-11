@@ -33,6 +33,8 @@ pub struct LiveSettings {
     pub extended_interval_secs: u64,
     pub idle_pause_enabled: bool,
     pub idle_pause_threshold_secs: u64,
+    /// [`MonitoringConfig::disk_counts_network`].
+    pub disk_counts_network: bool,
 }
 
 impl LiveSettings {
@@ -41,6 +43,7 @@ impl LiveSettings {
             extended_interval_secs: config.effective_extended_interval_secs(),
             idle_pause_enabled: config.extended.idle_pause.enabled,
             idle_pause_threshold_secs: config.effective_idle_pause_threshold_secs(),
+            disk_counts_network: config.disk_counts_network,
         }
     }
 }
@@ -329,6 +332,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
         let idle_secs =
             (chrono::Utc::now() - *app_state.last_viewer_seen.read().await).num_seconds();
         extended_due = should_run_extended(extended_due, &live, idle_secs);
+        let first_cycle = cycle == 0;
         cycle += 1;
         let prev_metrics = app_state.current_metrics.read().await.clone();
 
@@ -338,6 +342,8 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
             extended_due,
             prev_metrics.as_ref(),
             &mut native_state,
+            first_cycle,
+            live.disk_counts_network,
         )
         .await
         {
@@ -435,6 +441,8 @@ async fn collect_metrics(
     extended_due: bool,
     prev_metrics: Option<&SystemMetrics>,
     native_state: &mut sbm_native::NativeState,
+    first_cycle: bool,
+    disk_counts_network: bool,
 ) -> Result<SystemMetrics> {
     let system = system_type();
     // Off the reactor. `sample` is synchronous and does real IO — procfs and
@@ -450,6 +458,13 @@ async fn collect_metrics(
     // sample.
     let mut owned_state = std::mem::take(native_state);
     let (mut status, returned_state) = tokio::task::spawn_blocking(move || {
+        // The device tree on the slower cycle, the one that pauses while
+        // nobody looks; each sample merges it with a fresh `df`. And once at
+        // start, which is idle by then: otherwise there is no tree until
+        // somebody opens a page.
+        if extended_due || first_cycle {
+            sbm_native::refresh_block_devices(&mut owned_state);
+        }
         let status = sbm_native::sample(&mut owned_state, system);
         (status, owned_state)
     })
@@ -535,6 +550,7 @@ async fn collect_metrics(
         prev.as_ref(),
         prev_metrics,
         extended_refreshed,
+        disk_counts_network,
     );
     metrics.custom_cmds = refreshed_custom_cmds(custom_cmds, prev_metrics, extended_refreshed);
     Ok(metrics)
@@ -1077,6 +1093,7 @@ fn adapt_status(
     prev_cpu: Option<&CpuCore>,
     prev_metrics: Option<&SystemMetrics>,
     extended_refreshed: bool,
+    disk_counts_network: bool,
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(
         system,
@@ -1085,7 +1102,7 @@ fn adapt_status(
         prev_metrics.map(|m| m.cpu_cores.as_slice()).unwrap_or(&[]),
     );
     let (memory, swap) = adapt_memory(&status);
-    let disk = aggregate_disks(system, &status.disks);
+    let disk = aggregate_disks(&status.disks, disk_counts_network);
     let network = aggregate_net(&status);
 
     // Temperature prefers CPU devices (Dart `Temperatures.first`). Bsd used
@@ -1117,7 +1134,7 @@ fn adapt_status(
     gpu_items.extend(sbm_parser::gpu::amd_as_gpu(&amd));
     let gpus = gpu_items.into_iter().map(GpuMetrics::from).collect();
 
-    let disk_details = flatten_disks(system, &status.disks);
+    let disk_details = flatten_disks(&status.disks);
 
     let ifaces = status
         .net
@@ -1221,35 +1238,30 @@ fn format_cpu_brand(brands: &[(String, u32)]) -> Option<String> {
     )
 }
 
-/// `Disk.path` is a Unix device path ("/dev/sda1") from Linux's native
-/// `df -k` sampling (`sbm_native::linux`) — the `/dev` prefix there filters
-/// out `df`'s pseudo-filesystems (tmpfs, overlay, ...) and still matters.
-/// Windows (`Disk.path` = drive letter, e.g. "C:") and Bsd/macOS (`Disk.path`
-/// = sysinfo's volume label, e.g. "Macintosh HD" — confirmed empirically,
-/// `sbm_native::sysinfo_backend` never produces a `/dev`-prefixed path)
-/// both source `disks` natively now, where the list sysinfo/WMI returns is
-/// already curated to real volumes, so a `/dev` check there would zero out
-/// every disk instead of filtering anything meaningful.
-fn is_real_disk(system: SystemType, d: &Disk) -> bool {
-    d.size > 0
-        && match system {
-            SystemType::Windows | SystemType::Bsd => true,
-            SystemType::Linux => d.path.starts_with("/dev"),
+/// Every filesystem as its own row, for the drill-down (APFS volumes are not
+/// pooled here, unlike [`aggregate_disks`]), KiB → bytes. NFS and SMB are
+/// listed whether or not they count in the total, and so is a device nothing
+/// is mounted from — though not one that only holds others (an LVM physical
+/// volume, a RAID or ZFS member, a LUKS container), which is the tree's
+/// structure rather than storage of its own.
+fn flatten_disks(disks: &[Disk]) -> Vec<DiskDetail> {
+    fn listed(d: &Disk) -> bool {
+        if !d.is_storage() {
+            return false;
         }
-}
-
-/// Every real filesystem as its own row (raw view for the drill-down; unlike
-/// aggregate_disks, APFS volumes are not pooled here), KiB -> bytes
-fn flatten_disks(system: SystemType, disks: &[Disk]) -> Vec<DiskDetail> {
-    fn walk<'a>(
-        system: SystemType,
-        disks: &'a [Disk],
-        seen: &mut Vec<(&'a str, &'a str)>,
-        out: &mut Vec<DiskDetail>,
-    ) {
+        if d.size > 0 {
+            return true;
+        }
+        d.mount.is_empty()
+            && d.children.is_empty()
+            && d.fs_type.as_deref().is_some_and(|t| {
+                !t.ends_with("_member") && t != "crypto_LUKS" && t != "LVM2_member"
+            })
+    }
+    fn walk<'a>(disks: &'a [Disk], seen: &mut Vec<(&'a str, &'a str)>, out: &mut Vec<DiskDetail>) {
         for d in disks {
             let identity = (d.path.as_str(), d.mount.as_str());
-            if is_real_disk(system, d) && !seen.contains(&identity) {
+            if listed(d) && !seen.contains(&identity) {
                 seen.push(identity);
                 out.push(DiskDetail {
                     path: d.path.clone(),
@@ -1260,11 +1272,11 @@ fn flatten_disks(system: SystemType, disks: &[Disk]) -> Vec<DiskDetail> {
                     usage_percent: percent(d.used, d.size),
                 });
             }
-            walk(system, &d.children, seen, out);
+            walk(&d.children, seen, out);
         }
     }
     let mut out = Vec::new();
-    walk(system, disks, &mut Vec::new(), &mut out);
+    walk(disks, &mut Vec::new(), &mut out);
     out
 }
 
@@ -1381,81 +1393,17 @@ fn percent(used: u64, total: u64) -> f32 {
     }
 }
 
-/// APFS volumes of one container each report the full container size/avail
-/// (df shows /dev/disk3s1, /dev/disk3s5, ... all at ~container size), so a
-/// naive sum multiplies the real capacity. Volumes sharing (base disk, size,
-/// avail) belong to one pool: count size/avail once, keep summing used.
-/// Linux paths never match the /dev/diskN pattern and are unaffected.
-fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
-    let container = apfs_container(&d.path).or_else(|| {
-        // Native sampling keys a volume by its mount point — the panel needs
-        // one row each — so no device reaches `path` there. It arrives in
-        // `name` instead, spelled the lsblk way ("disk3s5"). Restricted to
-        // APFS because on Linux `name` is an lsblk NAME, where two rows
-        // sharing one are two views of a device rather than a pool.
-        d.fs_type
-            .as_deref()
-            .filter(|t| t.eq_ignore_ascii_case("apfs"))?;
-        apfs_container(d.name.as_deref()?)
-    })?;
-    Some((container, d.size, d.avail))
-}
-
-/// The APFS container a device belongs to: `disk3` out of `/dev/disk3s1s1` or
-/// `disk3s5`. Both spellings appear — the script path reports `df`'s source in
-/// `path`, native sampling puts the bare device in `name`.
-///
-/// The container is the identity that matters and the only one available:
-/// volumes carry a *label*, which is shared inside a container and, for two
-/// disks nobody renamed, across containers too.
-fn apfs_container(device: &str) -> Option<String> {
-    let rest = device.strip_prefix("/dev/").unwrap_or(device);
-    let rest = rest.strip_prefix("disk")?;
-    let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-    (!base.is_empty()).then_some(base)
-}
-
-/// Disk aggregation with Go-compatible /status semantics: real filesystems
-/// only (see `is_real_disk`), deduped by path (APFS volumes additionally
-/// deduped per container pool), lsblk hierarchy expanded recursively; KiB → bytes
-fn aggregate_disks(system: SystemType, disks: &[Disk]) -> DiskMetrics {
-    fn walk<'a>(
-        system: SystemType,
-        disks: &'a [Disk],
-        seen: &mut Vec<&'a str>,
-        pools: &mut Vec<(String, u64, u64)>,
-        acc: &mut (u64, u64, u64),
-    ) {
-        for d in disks {
-            if is_real_disk(system, d) && !seen.contains(&d.path.as_str()) {
-                seen.push(&d.path);
-                let pooled = match apfs_pool_key(d) {
-                    Some(key) if pools.contains(&key) => true,
-                    Some(key) => {
-                        pools.push(key);
-                        false
-                    }
-                    None => false,
-                };
-                acc.1 += d.used;
-                if !pooled {
-                    acc.0 += d.size;
-                    acc.2 += d.avail;
-                }
-            }
-            walk(system, &d.children, seen, pools, acc);
-        }
-    }
-
-    let mut acc = (0u64, 0u64, 0u64);
-    walk(system, disks, &mut Vec::new(), &mut Vec::new(), &mut acc);
-    let (total, used, avail) = acc;
-
+/// The disk total history stores and disk rules check: `sbm_parser`'s, the one
+/// the app shows for a server it reaches over SSH, so the two agree (#1669) —
+/// APFS containers and ZFS pools counted once, NFS and SMB only with
+/// [`disk_counts_network`]. KiB → bytes.
+fn aggregate_disks(disks: &[Disk], disk_counts_network: bool) -> DiskMetrics {
+    let total = sbm_parser::types::disk_total(disks, disk_counts_network);
     DiskMetrics {
-        total: total * 1024,
-        used: used * 1024,
-        free: avail * 1024,
-        usage_percent: percent(used, total),
+        total: total.size * 1024,
+        used: total.used * 1024,
+        free: total.avail * 1024,
+        usage_percent: percent(total.used, total.size),
     }
 }
 
@@ -1470,8 +1418,8 @@ fn aggregate_net(status: &ServerStatus) -> NetworkMetrics {
 /// Linux-only (the legacy Go /status endpoint never ran on other platforms)
 pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(
-        SystemType::Linux,
         &sbm_parser::linux::parse_disk(segment),
+        false,
     ))
 }
 
@@ -1640,6 +1588,7 @@ mod tests {
             extended_interval_secs: 60,
             idle_pause_enabled,
             idle_pause_threshold_secs,
+            disk_counts_network: false,
         }
     }
 
@@ -1704,11 +1653,11 @@ mod tests {
             ..Default::default()
         }];
 
-        let metrics = aggregate_disks(SystemType::Windows, &disks);
+        let metrics = aggregate_disks(&disks, false);
         assert_eq!(metrics.total, 2000 * 1024);
         assert_eq!(metrics.used, 1000 * 1024);
 
-        let details = flatten_disks(SystemType::Windows, &disks);
+        let details = flatten_disks(&disks);
         assert_eq!(details.len(), 1);
         assert_eq!(details[0].path, "C:");
     }
@@ -1724,9 +1673,72 @@ mod tests {
             ..Default::default()
         }];
 
-        let metrics = aggregate_disks(SystemType::Linux, &disks);
+        let metrics = aggregate_disks(&disks, false);
         assert_eq!(metrics.total, 0);
-        assert!(flatten_disks(SystemType::Linux, &disks).is_empty());
+        assert!(flatten_disks(&disks).is_empty());
+    }
+
+    /// NFS is listed, and in the total only when the setting says (#1669).
+    #[test]
+    fn network_filesystems_count_on_request() {
+        let disks = vec![
+            Disk {
+                path: "/dev/vda1".to_string(),
+                fs_type: Some("ext4".to_string()),
+                mount: "/".to_string(),
+                used: 100,
+                size: 1000,
+                avail: 900,
+                ..Default::default()
+            },
+            Disk {
+                path: "nas:/export".to_string(),
+                fs_type: Some("nfs4".to_string()),
+                mount: "/mnt/nas".to_string(),
+                used: 400,
+                size: 500,
+                avail: 100,
+                ..Default::default()
+            },
+        ];
+        assert_eq!(aggregate_disks(&disks, false).total, 1000 * 1024);
+        assert_eq!(aggregate_disks(&disks, true).total, 1500 * 1024);
+        assert_eq!(flatten_disks(&disks).len(), 2);
+    }
+
+    /// A device nothing is mounted from is a row; one that only holds others
+    /// (the LVM physical volume under the root) is the tree, not a row.
+    #[test]
+    fn disk_details_list_unmounted_devices_but_not_containers() {
+        let disks = vec![
+            Disk {
+                path: "/dev/nvme0n1p3".to_string(),
+                fs_type: Some("LVM2_member".to_string()),
+                children: vec![Disk {
+                    path: "/dev/mapper/pve-root".to_string(),
+                    fs_type: Some("ext4".to_string()),
+                    mount: "/".to_string(),
+                    used: 100,
+                    size: 1000,
+                    avail: 900,
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+            Disk {
+                path: "/dev/sdb1".to_string(),
+                fs_type: Some("ext4".to_string()),
+                ..Default::default()
+            },
+            Disk {
+                path: "/dev/sdc".to_string(),
+                fs_type: Some("zfs_member".to_string()),
+                ..Default::default()
+            },
+        ];
+        let paths: Vec<String> = flatten_disks(&disks).into_iter().map(|d| d.path).collect();
+        assert_eq!(paths, ["/dev/mapper/pve-root", "/dev/sdb1"]);
+        assert_eq!(aggregate_disks(&disks, true).total, 1000 * 1024);
     }
 
     #[test]
@@ -1748,7 +1760,7 @@ mod tests {
             },
         ];
 
-        let details = flatten_disks(SystemType::Linux, &disks);
+        let details = flatten_disks(&disks);
         assert_eq!(details.len(), 2);
         assert_eq!(details[0].mount, "/");
         assert_eq!(details[1].mount, "/home");
@@ -1777,7 +1789,7 @@ mod tests {
             },
         ];
 
-        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        let metrics = aggregate_disks(&disks, false);
         assert_eq!(metrics.total, 2000 * 1024);
         assert_eq!(metrics.free, 1200 * 1024);
         assert_eq!(metrics.used, 400 * 1024);
@@ -1804,10 +1816,11 @@ mod tests {
             volume("/System/Volumes/Data", "disk3s5"),
         ];
 
-        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        let metrics = aggregate_disks(&disks, false);
         assert_eq!(metrics.total, 1000 * 1024, "capacity counted once");
         assert_eq!(metrics.free, 600 * 1024);
-        // Used is per volume and still sums, as in the /dev/diskN case.
+        // A container's used space is its size less its free space — what all
+        // its volumes share, the ones sysinfo does not list included.
         assert_eq!(metrics.used, 400 * 1024);
     }
 
@@ -1832,10 +1845,11 @@ mod tests {
             volume("/Volumes/Untitled 1", "disk9s1"),
         ];
 
-        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        let metrics = aggregate_disks(&disks, false);
         assert_eq!(metrics.total, 2000 * 1024);
         assert_eq!(metrics.free, 1200 * 1024);
-        assert_eq!(metrics.used, 400 * 1024);
+        // Each container's size less its free space.
+        assert_eq!(metrics.used, 800 * 1024);
     }
 
     /// The `name` fallback is APFS-only: on Linux `name` is an lsblk NAME, and
@@ -1857,20 +1871,8 @@ mod tests {
             volume("/dev/sda1-bind", "/mnt/data"),
         ];
 
-        let metrics = aggregate_disks(SystemType::Linux, &disks);
+        let metrics = aggregate_disks(&disks, false);
         assert_eq!(metrics.total, 2000 * 1024);
-    }
-
-    #[test]
-    fn apfs_container_reads_both_spellings_of_a_device() {
-        assert_eq!(apfs_container("/dev/disk3s1s1").as_deref(), Some("3"));
-        assert_eq!(apfs_container("disk3s5").as_deref(), Some("3"));
-        assert_eq!(apfs_container("/dev/disk10s1").as_deref(), Some("10"));
-        assert_eq!(apfs_container("/dev/sda1"), None);
-        assert_eq!(apfs_container("sda1"), None);
-        assert_eq!(apfs_container("/System/Volumes/Data"), None);
-        // A label, which is what this must never accept as an identity.
-        assert_eq!(apfs_container("Macintosh HD"), None);
     }
 
     #[test]
@@ -1917,6 +1919,7 @@ mod tests {
             None,
             None,
             true,
+            false,
         );
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
@@ -1948,6 +1951,7 @@ mod tests {
             &Config::default(),
             None,
             None,
+            false,
             false,
         );
 
@@ -1985,6 +1989,7 @@ mod tests {
             None,
             None,
             true,
+            false,
         );
         // Next (non-extended) cycle: script-only fields carry forward, while
         // the native disk-I/O snapshot reflects the current empty device set.
@@ -1994,6 +1999,7 @@ mod tests {
             &Config::default(),
             None,
             Some(&prev),
+            false,
             false,
         );
 
@@ -2026,6 +2032,7 @@ mod tests {
             None,
             None,
             true,
+            false,
         );
         prev.custom_cmds = vec![CustomCmdOutput {
             name: "health".to_string(),
@@ -2058,6 +2065,7 @@ mod tests {
             None,
             Some(&prev),
             execution.extended_succeeded,
+            false,
         );
 
         assert_eq!(metrics.batteries, prev.batteries);
@@ -2087,6 +2095,7 @@ mod tests {
             None,
             None,
             true,
+            false,
         );
 
         let metrics = adapt_status(
@@ -2096,6 +2105,7 @@ mod tests {
             None,
             Some(&prev),
             true,
+            false,
         );
 
         assert!(metrics.batteries.is_empty());
@@ -2116,6 +2126,7 @@ mod tests {
             None,
             None,
             false,
+            false,
         );
         assert!(
             first.diskio_rate.is_empty(),
@@ -2135,6 +2146,7 @@ mod tests {
             &Config::default(),
             None,
             Some(&first),
+            false,
             false,
         );
         // Force a known 2-second elapsed window instead of relying on real time
@@ -2164,6 +2176,7 @@ mod tests {
             &Config::default(),
             None,
             None,
+            false,
             false,
         );
 
