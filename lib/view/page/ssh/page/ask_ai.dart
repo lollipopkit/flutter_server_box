@@ -49,7 +49,6 @@ extension _AskAi on SSHPageState {
         screen: () => _sess.screenText,
         programStatus: () =>
             _sess.status.describeForAgent(paneLabel: tmuxPaneLabel),
-        cancel: _cancelAiCommand,
       ),
     );
   }
@@ -145,58 +144,59 @@ extension _AskAi on SSHPageState {
     _focusTerminal();
   }
 
-  Future<AskAiCommandResult> _runAiCommand(AskAiCommand proposal) async {
+  Future<AskAiCommandResult> _runAiCommand(
+    AskAiCommand proposal, {
+    Future<void>? cancel,
+  }) async {
     final client = _client;
     if (client == null || client.isClosed) {
       throw StateError('SSH client is not connected.');
     }
 
     final startedAt = DateTime.now();
-    _aiCommandCancelled = false;
-    final session = await client.execute(proposal.command);
-    _aiCommandSession = session;
-    // Cancelled while the channel was opening, when there was nothing yet to
-    // stop: stop it now rather than let it run to the end.
-    if (_aiCommandCancelled) await _terminateAiCommandSession(session);
-    final stdoutFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stdout).join();
-    final stderrFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stderr).join();
+    // The signal the stop button, the timeout and the page going away all
+    // pull. [SshExec] stops the command on it, and gives up on a channel the
+    // server keeps open.
+    final stop = Completer<void>();
+    _aiCommandStops.add(stop);
+    unawaited(
+      cancel?.then((_) {
+        if (!stop.isCompleted) stop.complete();
+      }),
+    );
     var timedOut = false;
+    final timer = Timer(const Duration(minutes: 5), () {
+      if (stop.isCompleted) return;
+      timedOut = true;
+      stop.complete();
+    });
 
     try {
-      try {
-        await session.done.timeout(const Duration(minutes: 5));
-      } on TimeoutException {
-        timedOut = true;
-        await _terminateAiCommandSession(session);
-      }
-      final stdout = await stdoutFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => '',
-      );
-      final stderr = await stderrFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => '',
-      );
-      final limited = _limitAiCommandOutput(stdout, stderr);
+      final serverId = widget.args.spi?.id;
+      final result = await SshExec(
+        client,
+        sudoPassword: serverId == null
+            ? null
+            : () => SudoPassword.known(serverId),
+      ).run(proposal.command, cancel: stop.future);
+      // Told to the user as well: a stop ends the reply before this result
+      // exists, so the model may never read it.
+      if (result.mayStillRun) Toast.show(l10n.agentCommandMayStillRun);
+      final limited = _limitAiCommandOutput(result.stdout, result.stderr);
       return AskAiCommandResult(
         command: proposal.command,
-        exitCode: session.exitCode,
+        exitCode: result.exitCode,
         stdout: limited.stdout,
         stderr: limited.stderr,
         duration: DateTime.now().difference(startedAt),
-        cancelled: _aiCommandCancelled,
+        cancelled: stop.isCompleted && !timedOut,
         timedOut: timedOut,
-        truncated: limited.truncated,
+        truncated: limited.truncated || result.outputIncomplete,
+        mayStillRun: result.mayStillRun,
       );
     } finally {
-      if (identical(_aiCommandSession, session)) {
-        _aiCommandSession = null;
-        _aiCommandCancelled = false;
-      }
+      timer.cancel();
+      _aiCommandStops.remove(stop);
     }
   }
 
@@ -230,25 +230,10 @@ extension _AskAi on SSHPageState {
     );
   }
 
-  Future<void> _terminateAiCommandSession(SSHSession session) async {
-    try {
-      session.kill(SSHSignal.KILL);
-    } catch (_) {
-      // The session may already have ended between the state check and kill.
-    } finally {
-      session.close();
+  void _stopAiCommands() {
+    for (final stop in _aiCommandStops) {
+      if (!stop.isCompleted) stop.complete();
     }
-    try {
-      await session.done;
-    } catch (_) {
-      // Termination is best-effort; the command result reports cancellation.
-    }
-  }
-
-  Future<void> _cancelAiCommand() async {
-    _aiCommandCancelled = true;
-    final session = _aiCommandSession;
-    if (session != null) await _terminateAiCommandSession(session);
   }
 }
 

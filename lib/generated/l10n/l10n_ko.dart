@@ -116,6 +116,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentClearHistoryTip => '모든 전역 에이전트 대화가 이 기기에서 삭제됩니다.';
 
   @override
+  String get agentCommandMayStillRun => '중지한 명령이 서버에서 아직 실행 중일 수 있습니다.';
+
+  @override
   String get agentToolShell => '셸';
 
   @override
@@ -1090,6 +1093,17 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '활성화하면 온도 값이 밀리섭씨가 아닌 섭씨로 처리됩니다. 온도가 잘못 표시될 때만 켜세요 (예: 58°C 대신 0.1°C로 표시되는 경우).';
+
+  @override
+  String get diskCountsNetwork => '네트워크 파일 시스템을 합계에 포함';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS, SMB 등 네트워크 마운트는 항상 목록에 표시됩니다. 용량은 다른 컴퓨터의 것이므로 기본적으로 디스크 합계에서 제외됩니다. SSH로 상태를 수집할 때 적용되며, monitor agent를 통할 때는 agent 자체 설정을 따릅니다.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS, SMB 등 네트워크 마운트는 항상 목록에 표시됩니다. 용량은 다른 컴퓨터의 것이므로 기본적으로 디스크 합계에서 제외됩니다. agent가 기록에 저장하고 디스크 알림 판단에 쓰는 값이 이 합계입니다.';
 
   @override
   String spentTime(String time) {

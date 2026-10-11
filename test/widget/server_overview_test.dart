@@ -89,7 +89,11 @@ void main() {
       temps: Temperatures(),
       system: SystemType.linux,
       diskIO: DiskIO(),
-    );
+    )
+      ..diskUsage = DiskUsage(
+        used: BigInt.from(diskPercent * 100000),
+        size: BigInt.from(10000000),
+      );
     status.more[StatusCmdType.uptime] = 'up 3 days';
     return status;
   }

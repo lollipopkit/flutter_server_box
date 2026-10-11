@@ -263,6 +263,7 @@ class ServerStore extends EntityStore<Spi> {
       'script_dir',
     ];
     final tempIsCelsius = (row['temp_is_celsius'] as int) == 1;
+    final diskCountsNetwork = (row['disk_counts_network'] as int) == 1;
     // Null unless both columns hold a value in range — the one place the pair
     // becomes a coordinate, since the schema has no way to say "both or
     // neither". `as num?` rather than `as double?`: a REAL column has real
@@ -277,6 +278,7 @@ class ServerStore extends EntityStore<Spi> {
     // record means here — is true, so the two would never match.
     if (cmds == null &&
         tempIsCelsius &&
+        !diskCountsNetwork &&
         geo == null &&
         strings.every((c) => row[c] == null)) {
       return null;
@@ -289,6 +291,7 @@ class ServerStore extends EntityStore<Spi> {
       netDev: row['net_dev'] as String?,
       scriptDir: row['script_dir'] as String?,
       geo: geo,
+      diskCountsNetwork: diskCountsNetwork,
     );
   }
 
@@ -335,6 +338,7 @@ class ServerStore extends EntityStore<Spi> {
       'script_dir',
       'geo_lat',
       'geo_lon',
+      'disk_counts_network',
     ];
     upsert(columns, [
       item.id,
@@ -383,6 +387,7 @@ class ServerStore extends EntityStore<Spi> {
       custom?.scriptDir,
       custom?.geo?.lat,
       custom?.geo?.lon,
+      (custom?.diskCountsNetwork ?? false) ? 1 : 0,
     ]);
 
     // Replaced wholesale rather than diffed: the record arrives as one object,

@@ -473,6 +473,9 @@ export interface SettingsPayload {
   rules: MonitoringRule[];
   data_retention: DataRetentionConfig | null;
   cors_allowed_origins: string[];
+  /// Whether NFS, SMB and the like count in the disk total. Absent from an
+  /// agent older than the setting; absent from a PUT, the agent keeps its value.
+  disk_counts_network?: boolean;
 }
 
 /// GET response: the payload plus which of its own field names take effect

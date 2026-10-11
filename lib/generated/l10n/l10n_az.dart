@@ -122,6 +122,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bütün ümumi agent söhbətləri bu cihazdan silinəcək.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Dayandırılan əmr serverdə hələ də işləyə bilər.';
+
+  @override
   String get agentToolShell => 'Əmr örtüyü';
 
   @override
@@ -1151,6 +1155,17 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Aktivləşdirildikdə temperatur dəyəri milliselsi əvəzinə Selsi kimi qəbul ediləcək. Yalnız temperatur səhv göstərildikdə aktivləşdir (məsələn, 58°C əvəzinə 0.1°C göstərildikdə).';
+
+  @override
+  String get diskCountsNetwork => 'Şəbəkə fayl sistemlərini cəmə daxil et';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS, SMB və oxşar qoşmalar həmişə siyahıda göstərilir. Onların tutumu başqa maşına aiddir, ona görə də standart olaraq disk cəminə daxil edilmir. Vəziyyət SSH ilə toplandıqda tətbiq olunur; monitor agent vasitəsilə agent-in öz ayarı qərar verir.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS, SMB və oxşar qoşmalar həmişə siyahıda göstərilir. Onların tutumu başqa maşına aiddir, ona görə də standart olaraq disk cəminə daxil edilmir — agent-in tarixçədə saxladığı və disk xəbərdarlıqlarında istifadə etdiyi dəyər budur.';
 
   @override
   String spentTime(String time) {

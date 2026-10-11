@@ -108,7 +108,10 @@ void main() {
       temps: Temperatures()..setAll({if (sensor) 'coretemp': 41.0}),
       system: SystemType.linux,
       diskIO: DiskIO(),
-    );
+    )
+      ..diskUsage = everything
+          ? DiskUsage(used: BigInt.from(4000000), size: BigInt.from(10000000))
+          : null;
     // What says a status came back at all — see `serverNeverSampled`.
     ss.more[StatusCmdType.uptime] = uptime;
     final now = DateTime.now().millisecondsSinceEpoch;

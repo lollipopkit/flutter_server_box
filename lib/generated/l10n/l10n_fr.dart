@@ -124,6 +124,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Toutes les conversations globales de l\'Agent seront retirées de cet appareil.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'La commande arrêtée est peut-être encore en cours sur le serveur.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override
@@ -1157,6 +1161,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Une fois activé, la valeur de température est traitée en degrés Celsius et non en millicelsius. À n\'activer que si la température s\'affiche mal (par exemple 0,1 °C au lieu de 58 °C).';
+
+  @override
+  String get diskCountsNetwork =>
+      'Compter les systèmes de fichiers réseau dans le total';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'Les montages NFS, SMB et similaires sont toujours listés. Leur capacité appartient à une autre machine : par défaut, ils ne sont pas comptés dans le total du disque. S\'applique quand l\'état est collecté par SSH ; via le monitor agent, c\'est le réglage de l\'agent qui décide.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'Les montages NFS, SMB et similaires sont toujours listés. Leur capacité appartient à une autre machine : par défaut, ils ne sont pas comptés dans le total du disque, la valeur que l\'agent enregistre dans l\'historique et qu\'il compare aux alertes de disque.';
 
   @override
   String spentTime(String time) {

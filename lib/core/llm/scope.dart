@@ -34,13 +34,17 @@ final class TerminalHost {
     required this.insert,
     required this.screen,
     required this.programStatus,
-    required this.cancel,
   });
 
   final String serverName;
 
-  /// Runs a command on the terminal's connection, beside the shell.
-  final Future<AskAiCommandResult> Function(AskAiCommand command) run;
+  /// Runs a command on the terminal's connection, beside the shell; [cancel]
+  /// completing stops it.
+  final Future<AskAiCommandResult> Function(
+    AskAiCommand command, {
+    Future<void>? cancel,
+  })
+  run;
 
   /// Types a command into the shell for the user to edit and run.
   final void Function(String command) insert;
@@ -51,9 +55,6 @@ final class TerminalHost {
   /// What the terminal's programs report about themselves (OSC 7501, OSC 9;4,
   /// OSC 133), one line each; empty when nothing is reported.
   final String Function() programStatus;
-
-  /// Stops the command [run] is waiting on.
-  final Future<void> Function() cancel;
 }
 
 /// The terminal each server has open, for its chats' tools. Looked up per call:

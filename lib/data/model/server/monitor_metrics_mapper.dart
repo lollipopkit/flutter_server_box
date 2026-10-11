@@ -167,6 +167,14 @@ void _applySwap(ServerStatus ss, MonitorMetrics m) {
 /// that is what the aggregate is a total of, and nothing downstream reads a
 /// mount as a path to anything.
 void _applyDisks(ServerStatus ss, MonitorMetrics m) {
+  // The agent's own total, not one summed again here: it is what its history
+  // and alert rules use, under its own setting for network filesystems.
+  ss.diskUsage = m.disk.total <= 0
+      ? null
+      : DiskUsage(
+          used: BigInt.from(_toKib(m.disk.used)),
+          size: BigInt.from(_toKib(m.disk.total)),
+        );
   if (m.diskDetails.isEmpty) {
     final total = m.disk.total;
     ss.disk = total <= 0

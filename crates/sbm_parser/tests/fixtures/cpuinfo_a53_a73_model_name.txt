@@ -1,0 +1,42 @@
+processor	: 0
+model name	: ARMv8 Processor rev 4 (v8l)
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd03
+CPU revision	: 4
+processor	: 1
+model name	: ARMv8 Processor rev 4 (v8l)
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd03
+CPU revision	: 4
+processor	: 2
+model name	: ARMv8 Processor rev 2 (v8l)
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd09
+CPU revision	: 2
+processor	: 3
+model name	: ARMv8 Processor rev 2 (v8l)
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd09
+CPU revision	: 2
+processor	: 4
+model name	: ARMv8 Processor rev 2 (v8l)
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd09
+CPU revision	: 2
+processor	: 5
+model name	: ARMv8 Processor rev 2 (v8l)
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x0
+CPU part	: 0xd09
+CPU revision	: 2

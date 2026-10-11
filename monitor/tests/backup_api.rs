@@ -124,6 +124,20 @@ async fn a_name_that_is_a_path_is_refused() {
     }
 }
 
+/// A refusal sent before the body is read used to close the connection under
+/// a client still writing it, which then saw a reset instead of the answer.
+/// The larger the body, the surer: this one is far from written by then.
+#[ntex::test]
+async fn a_refused_upload_is_answered_whatever_its_size() {
+    let (srv, _) = server().await;
+    let body = vec![0u8; 8 * 1024 * 1024];
+    for _ in 0..3 {
+        let (status, _, body) = raw(&srv, "admin", Method::PUT, &blob(".hidden"), Some(body.clone())).await;
+        assert_eq!(status, 400);
+        assert_eq!(serde_json::from_slice::<Value>(&body).unwrap()["error"], "invalidName");
+    }
+}
+
 #[ntex::test]
 async fn the_store_is_bounded() {
     let (srv, _) = server().await;

@@ -122,6 +122,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Все глобальные диалоги агента будут удалены с этого устройства.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Остановленная команда, возможно, всё ещё выполняется на сервере.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override
@@ -1154,6 +1158,18 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Если включено, значение температуры считается в градусах Цельсия, а не в миллицельсиях. Включайте, только если температура отображается неверно (например, 0,1 °C вместо 58 °C).';
+
+  @override
+  String get diskCountsNetwork =>
+      'Учитывать сетевые файловые системы в общем объёме';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'Монтирования NFS, SMB и подобные всегда показываются в списке. Их объём принадлежит другой машине, поэтому по умолчанию они не входят в общий объём диска. Действует, когда состояние собирается по SSH; через monitor agent решает настройка самого агента.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'Монтирования NFS, SMB и подобные всегда показываются в списке. Их объём принадлежит другой машине, поэтому по умолчанию они не входят в общий объём диска — значение, которое агент сохраняет в истории и по которому проверяет оповещения о диске.';
 
   @override
   String spentTime(String time) {

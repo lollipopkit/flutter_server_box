@@ -8,6 +8,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/rootfs.dart';
@@ -15,6 +16,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -779,11 +781,6 @@ class GlobalAgentToolService {
 
   final Ref _ref;
 
-  /// The signal that stops whatever [_runShell] is waiting on, or null when
-  /// nothing is running. Pulled by [cancelCurrent] and by the timeout.
-  Completer<void>? _cancelRun;
-  bool _cancelRequested = false;
-
   List<GlobalAgentServerContext> serverContexts() {
     final servers = _ref.read(serversProvider);
     return [
@@ -811,12 +808,19 @@ class GlobalAgentToolService {
     );
   }
 
-  Future<AgentToolExecutionResult> execute(AskAiCommand proposal) async {
+  /// Runs [proposal]; [cancel] completing stops a shell command it started.
+  ///
+  /// The signal is the call's own: a stopped call can still be winding down
+  /// when the next one starts, and state shared between them would hand one
+  /// call's stop to the other.
+  Future<AgentToolExecutionResult> execute(
+    AskAiCommand proposal, {
+    Future<void>? cancel,
+  }) async {
     final watch = Stopwatch()..start();
-    _cancelRequested = false;
     try {
       return switch (proposal.toolName) {
-        'run_shell_command' => await _runShell(proposal, watch),
+        'run_shell_command' => await _runShell(proposal, watch, cancel),
         'read_file' => await _readFile(proposal, watch),
         'write_file' => await _writeFile(proposal, watch),
         'ssh_connect' => await _sshConnect(proposal, watch),
@@ -829,12 +833,6 @@ class GlobalAgentToolService {
     } finally {
       watch.stop();
     }
-  }
-
-  Future<void> cancelCurrent() async {
-    _cancelRequested = true;
-    final cancel = _cancelRun;
-    if (cancel != null && !cancel.isCompleted) cancel.complete();
   }
 
   /// Opens the shell a tool call is about.
@@ -950,7 +948,10 @@ class GlobalAgentToolService {
     final existing = state.client;
     if (existing != null && !existing.isClosed) {
       return (
-        exec: SshExec(existing),
+        exec: SshExec(
+          existing,
+          sudoPassword: () => SudoPassword.known(spi.id),
+        ),
         client: existing,
         serverId: spi.id,
         fileTransport: spi.ssh?.fileTransport ?? SshFileTransport.sftp,
@@ -1021,6 +1022,7 @@ class GlobalAgentToolService {
   Future<AgentToolExecutionResult> _runShell(
     AskAiCommand proposal,
     Stopwatch watch,
+    Future<void>? stop,
   ) async {
     final handle = await _shellFor(proposal);
     final exec = handle.exec;
@@ -1034,71 +1036,78 @@ class GlobalAgentToolService {
     // The signal the stop button and the timeout both pull. It replaces
     // holding the session and killing it from outside: a command no longer
     // has to be an SSH channel for this to work, which is the whole point of
-    // going through [ServerExec].
+    // going through [ServerExec]. A stop asked for before the command started
+    // still pulls it: there is nothing to stop until it is sent, and the
+    // implementation stops it as soon as it can.
     final cancel = Completer<void>();
-    _cancelRun = cancel;
-    // Asked for before this one started. The command still has to be sent —
-    // there is nothing to stop until it is — so the signal is pre-pulled and
-    // the implementation stops it as soon as it can.
-    if (_cancelRequested && !cancel.isCompleted) cancel.complete();
-
     var timedOut = false;
-    try {
-      final timer = Timer(_operationTimeout, () {
+    var cancelled = false;
+    unawaited(
+      stop?.then((_) {
         if (cancel.isCompleted) return;
-        timedOut = true;
-        _cancelRequested = true;
+        cancelled = true;
         cancel.complete();
-      });
-      final ExecResult result;
-      try {
-        _requireCurrent(handle);
-        result = await exec.run(
-          command,
-          onStdout: stdoutCapture.add,
-          onStderr: stderrCapture.add,
-          cancel: cancel.future,
-        );
-      } finally {
-        timer.cancel();
-      }
+      }),
+    );
+    final timer = Timer(_operationTimeout, () {
+      if (cancel.isCompleted) return;
+      timedOut = true;
+      cancelled = true;
+      cancel.complete();
+    });
+    final ExecResult result;
+    try {
       _requireCurrent(handle);
-
-      final limited = limitGlobalAgentShellOutput(
-        stdoutCapture.text,
-        stderrCapture.text,
-        // `outputIncomplete` is the drain having been given up on, which is
-        // the same thing to a reader as having been cut short.
-        stdoutAlreadyTruncated:
-            stdoutCapture.truncated || result.outputIncomplete,
-        stderrAlreadyTruncated:
-            stderrCapture.truncated || result.outputIncomplete,
-        maxCharacters: _maxShellOutputCharacters,
-      );
-      return AgentToolExecutionResult(
-        toolName: proposal.toolName,
-        serverId: serverId,
-        summary: timedOut
-            ? 'Command timed out.'
-            : _cancelRequested
-            ? 'Command cancelled.'
-            : 'Command exited with code ${result.exitCode ?? -1}.',
-        succeeded:
-            !_cancelRequested && !timedOut && (result.exitCode ?? -1) == 0,
-        duration: watch.elapsed,
-        cancelled: _cancelRequested,
-        truncated: limited.truncated,
-        data: {
-          'command': command,
-          'exit_code': result.exitCode,
-          'stdout': limited.stdout,
-          'stderr': limited.stderr,
-          'timed_out': timedOut,
-        },
+      result = await exec.run(
+        command,
+        onStdout: stdoutCapture.add,
+        onStderr: stderrCapture.add,
+        cancel: cancel.future,
       );
     } finally {
-      if (identical(_cancelRun, cancel)) _cancelRun = null;
+      timer.cancel();
     }
+    _requireCurrent(handle);
+    // Told to the user as well: a stop ends the reply before this result
+    // exists, so the model may never read it.
+    if (result.mayStillRun) Toast.show(l10n.agentCommandMayStillRun);
+
+    final limited = limitGlobalAgentShellOutput(
+      stdoutCapture.text,
+      stderrCapture.text,
+      // `outputIncomplete` is the drain having been given up on, which is
+      // the same thing to a reader as having been cut short.
+      stdoutAlreadyTruncated:
+          stdoutCapture.truncated || result.outputIncomplete,
+      stderrAlreadyTruncated:
+          stderrCapture.truncated || result.outputIncomplete,
+      maxCharacters: _maxShellOutputCharacters,
+    );
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: serverId,
+      summary: switch ((timedOut, cancelled)) {
+        _ when result.mayStillRun =>
+          '${timedOut ? 'Command timed out' : 'Command cancelled'}, and it '
+              'may still be running on the server: check before running it '
+              'again.',
+        (true, _) => 'Command timed out.',
+        (_, true) => 'Command cancelled.',
+        _ => 'Command exited with code ${result.exitCode ?? -1}.',
+      },
+      succeeded: !cancelled && (result.exitCode ?? -1) == 0,
+      duration: watch.elapsed,
+      cancelled: cancelled,
+      truncated: limited.truncated,
+      data: {
+        'command': command,
+        'exit_code': result.exitCode,
+        'stdout': limited.stdout,
+        'stderr': limited.stderr,
+        'timed_out': timedOut,
+        if (result.mayStillRun) 'may_still_run': true,
+      },
+    );
   }
 
   Future<AgentToolExecutionResult> _readFile(

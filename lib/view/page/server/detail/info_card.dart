@@ -61,7 +61,7 @@ class ServerDetailInfoCard extends StatelessWidget {
     final cores = ss.cpu.coresCount;
     final usage = ss.diskUsage;
     return <ServerInfoRow>[
-      if (ss.cpu.brand.keys.firstOrNull case final brand?)
+      if (ss.cpu.brandLabel case final brand?)
         (k: 'CPU', v: brand, secret: false),
       if (cores > 0) (k: l10n.cores, v: '×$cores', secret: false),
       if (ss.mem.total > 0)

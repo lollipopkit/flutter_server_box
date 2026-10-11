@@ -115,6 +115,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentClearHistoryTip => '此设备上的全部全局 Agent 对话都将被删除。';
 
   @override
+  String get agentCommandMayStillRun => '已停止的命令可能仍在服务器上运行。';
+
+  @override
   String get agentToolShell => '终端命令';
 
   @override
@@ -1070,6 +1073,17 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。';
+
+  @override
+  String get diskCountsNetwork => '网络文件系统计入总量';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS、SMB 等网络挂载始终显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。仅在通过 SSH 采集状态时生效；通过 monitor agent 采集时，由 agent 自己的设置决定。';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS、SMB 等网络挂载始终显示在明细中。它们的容量属于另一台机器，默认不计入磁盘总量。agent 记录的历史数据和磁盘告警都使用这个总量。';
 
   @override
   String spentTime(String time) {
@@ -5272,6 +5286,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentClearHistoryTip => '此裝置上的全部全域 Agent 對話都將被刪除。';
 
   @override
+  String get agentCommandMayStillRun => '已停止的指令可能仍在伺服器上執行。';
+
+  @override
   String get agentToolShell => '終端指令';
 
   @override
@@ -6227,6 +6244,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get tempIsCelsiusTip =>
       '啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。';
+
+  @override
+  String get diskCountsNetwork => '網路檔案系統計入總量';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS、SMB 等網路掛載一律顯示在明細中。它們的容量屬於另一台機器，預設不計入磁碟總量。僅在透過 SSH 收集狀態時生效；透過 monitor agent 收集時，由 agent 自己的設定決定。';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS、SMB 等網路掛載一律顯示在明細中。它們的容量屬於另一台機器，預設不計入磁碟總量。agent 記錄的歷史資料和磁碟警示都使用這個總量。';
 
   @override
   String spentTime(String time) {

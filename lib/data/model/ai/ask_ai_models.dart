@@ -322,6 +322,7 @@ class AskAiCommandResult {
     this.cancelled = false,
     this.timedOut = false,
     this.truncated = false,
+    this.mayStillRun = false,
   });
 
   static AskAiCommandResult? tryFromToolMessage(
@@ -344,6 +345,7 @@ class AskAiCommandResult {
           milliseconds: durationMs is num ? durationMs.toInt() : 0,
         ),
         cancelled: json['cancelled'] as bool? ?? false,
+        mayStillRun: json['may_still_run'] as bool? ?? false,
         timedOut: json['timed_out'] as bool? ?? false,
         truncated: json['output_truncated'] as bool? ?? false,
       );
@@ -363,6 +365,10 @@ class AskAiCommandResult {
   final bool timedOut;
   final bool truncated;
 
+  /// Stopped, but not confirmed to have stopped on the server — see
+  /// `ExecResult.mayStillRun`.
+  final bool mayStillRun;
+
   bool get succeeded => !cancelled && !timedOut && exitCode == 0;
 
   String get displayOutput {
@@ -380,6 +386,7 @@ class AskAiCommandResult {
       'command': command,
       'exit_code': exitCode,
       'cancelled': cancelled,
+      if (mayStillRun) 'may_still_run': true,
       'timed_out': timedOut,
       'output_truncated': truncated,
       'duration_ms': duration.inMilliseconds,

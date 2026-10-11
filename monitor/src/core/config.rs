@@ -184,6 +184,12 @@ pub struct MonitoringConfig {
 
     #[serde(default)]
     pub extended: ExtendedConfig,
+
+    /// Whether NFS, SMB and the like count in the disk total — the figure
+    /// history stores and disk rules check. Listed either way; their capacity
+    /// is another machine's (#1669).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub disk_counts_network: bool,
 }
 
 /// `[monitoring.extended]` — the slower cycle that collects
@@ -278,6 +284,7 @@ impl Default for MonitoringConfig {
             data_retention: Some(DataRetentionConfig::default()),
             push_rate: None,
             extended: ExtendedConfig::default(),
+            disk_counts_network: false,
         }
     }
 }
@@ -499,6 +506,7 @@ impl Config {
                 }),
                 push_rate: self.legacy.rate.clone(),
                 extended: ExtendedConfig::default(),
+                disk_counts_network: false,
             };
 
             let push = self

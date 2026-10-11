@@ -125,6 +125,9 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
   MonitorPushList? _push;
 
   var _idlePause = true;
+
+  /// Null where the agent is older than the setting: not shown, not sent.
+  bool? _diskCountsNetwork;
   var _retentionEnabled = false;
   var _rules = <MonitorRule>[];
   var _cors = <String>[];
@@ -378,6 +381,23 @@ extension on _MonitorSettingsViewState {
         // `live_fields` is the agent's answer and has changed before, and the
         // day it moves one of these two the mark has to land on the right box.
         MonitorUi.effectNote(settings, 'idle_pause_threshold_secs'),
+        if (_diskCountsNetwork case final counts?) ...[
+          ListTile(
+            leading: const Icon(Icons.lan_outlined),
+            title: TipText(
+              l10n.diskCountsNetwork,
+              l10n.diskCountsNetworkAgentTip,
+            ),
+            trailing: SwitchX(
+              value: counts,
+              onChanged: (value) => setState(() {
+                _diskCountsNetwork = value;
+                _settingsDirty = true;
+              }),
+            ),
+          ).cardx,
+          MonitorUi.effectNote(settings, 'disk_counts_network'),
+        ],
       ],
     );
   }
@@ -624,6 +644,7 @@ extension on _MonitorSettingsViewState {
     _intervalCtrl.text = '${settings.intervalSeconds}';
     _extendedCtrl.text = settings.extendedIntervalSecs?.toString() ?? '';
     _idlePause = settings.idlePauseEnabled;
+    _diskCountsNetwork = settings.diskCountsNetwork;
     _idleThresholdCtrl.text = settings.idlePauseThresholdSecs?.toString() ?? '';
     _rules = [...settings.rules];
     _cors = [...settings.corsAllowedOrigins];
@@ -699,6 +720,7 @@ extension on _MonitorSettingsViewState {
       rules: _rules,
       dataRetention: () => retention,
       corsAllowedOrigins: _cors,
+      diskCountsNetwork: _diskCountsNetwork,
     );
   }
 }

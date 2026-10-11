@@ -11,6 +11,7 @@ class ExecResult {
     this.outputIncomplete = false,
     this.streamError,
     this.streamErrorStackTrace,
+    this.mayStillRun = false,
   });
 
   /// Null where the source cannot report one — a shell that was closed rather
@@ -31,6 +32,12 @@ class ExecResult {
   /// arrived before it.
   final Object? streamError;
   final StackTrace? streamErrorStackTrace;
+
+  /// Cancelled, and what the command started could not be confirmed stopped:
+  /// it may still be running on the server. A process that left the command's
+  /// session (`setsid`, a daemon doing the work) is out of every source's
+  /// reach, and some sources cannot stop a command at all.
+  final bool mayStillRun;
 
   /// Both streams in the order a terminal would have shown them. Most callers
   /// want this: they are parsing what a command printed, not auditing which

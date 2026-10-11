@@ -122,6 +122,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Alle globalen Agent-Gespräche werden von diesem Gerät entfernt.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Der gestoppte Befehl läuft auf dem Server möglicherweise noch.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override
@@ -1154,6 +1158,18 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Wenn aktiviert, wird der Temperaturwert als Celsius statt als Millicelsius behandelt. Nur einschalten, wenn die Temperatur falsch angezeigt wird (z. B. 0,1 °C statt 58 °C).';
+
+  @override
+  String get diskCountsNetwork =>
+      'Netzwerkdateisysteme in die Summe einbeziehen';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS-, SMB- und ähnliche Einhängepunkte werden immer aufgelistet. Ihre Kapazität gehört einem anderen Rechner, daher zählen sie standardmäßig nicht zur Datenträgersumme. Gilt, wenn der Status über SSH erfasst wird; über den Monitor-Agent entscheidet dessen eigene Einstellung.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS-, SMB- und ähnliche Einhängepunkte werden immer aufgelistet. Ihre Kapazität gehört einem anderen Rechner, daher zählen sie standardmäßig nicht zur Datenträgersumme – dem Wert, den der Agent im Verlauf speichert und gegen den er Datenträger-Warnungen prüft.';
 
   @override
   String spentTime(String time) {

@@ -1228,6 +1228,21 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _diskCountsNetworkMeta = const VerificationMeta(
+    'diskCountsNetwork',
+  );
+  @override
+  late final GeneratedColumn<bool> diskCountsNetwork = GeneratedColumn<bool>(
+    'disk_counts_network',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("disk_counts_network" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     updatedAt,
@@ -1268,6 +1283,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     scriptDir,
     geoLat,
     geoLon,
+    diskCountsNetwork,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1555,6 +1571,15 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         geoLon.isAcceptableOrUnknown(data['geo_lon']!, _geoLonMeta),
       );
     }
+    if (data.containsKey('disk_counts_network')) {
+      context.handle(
+        _diskCountsNetworkMeta,
+        diskCountsNetwork.isAcceptableOrUnknown(
+          data['disk_counts_network']!,
+          _diskCountsNetworkMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1716,6 +1741,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.double,
         data['${effectivePrefix}geo_lon'],
       ),
+      diskCountsNetwork: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}disk_counts_network'],
+      )!,
     );
   }
 
@@ -1822,6 +1851,14 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// out instead, by `GeoCoord.tryNew` in `ServerStore._customOf`.
   final double? geoLat;
   final double? geoLon;
+
+  /// Whether NFS, SMB and the like count in the disk total when status comes
+  /// over SSH; see [ServerCustom.diskCountsNetwork]. False for every row
+  /// written before the column (#1669).
+  ///
+  /// Last, where `ALTER TABLE ... ADD COLUMN` puts it on an install that was
+  /// already past v32, so both have one shape.
+  final bool diskCountsNetwork;
   const ServerRow({
     required this.updatedAt,
     required this.rev,
@@ -1861,6 +1898,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.scriptDir,
     this.geoLat,
     this.geoLon,
+    required this.diskCountsNetwork,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1961,6 +1999,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     if (!nullToAbsent || geoLon != null) {
       map['geo_lon'] = Variable<double>(geoLon);
     }
+    map['disk_counts_network'] = Variable<bool>(diskCountsNetwork);
     return map;
   }
 
@@ -2060,6 +2099,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       geoLon: geoLon == null && nullToAbsent
           ? const Value.absent()
           : Value(geoLon),
+      diskCountsNetwork: Value(diskCountsNetwork),
     );
   }
 
@@ -2113,6 +2153,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       scriptDir: serializer.fromJson<String?>(json['scriptDir']),
       geoLat: serializer.fromJson<double?>(json['geoLat']),
       geoLon: serializer.fromJson<double?>(json['geoLon']),
+      diskCountsNetwork: serializer.fromJson<bool>(json['diskCountsNetwork']),
     );
   }
   @override
@@ -2159,6 +2200,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'scriptDir': serializer.toJson<String?>(scriptDir),
       'geoLat': serializer.toJson<double?>(geoLat),
       'geoLon': serializer.toJson<double?>(geoLon),
+      'diskCountsNetwork': serializer.toJson<bool>(diskCountsNetwork),
     };
   }
 
@@ -2201,6 +2243,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> scriptDir = const Value.absent(),
     Value<double?> geoLat = const Value.absent(),
     Value<double?> geoLon = const Value.absent(),
+    bool? diskCountsNetwork,
   }) => ServerRow(
     updatedAt: updatedAt ?? this.updatedAt,
     rev: rev ?? this.rev,
@@ -2255,6 +2298,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     scriptDir: scriptDir.present ? scriptDir.value : this.scriptDir,
     geoLat: geoLat.present ? geoLat.value : this.geoLat,
     geoLon: geoLon.present ? geoLon.value : this.geoLon,
+    diskCountsNetwork: diskCountsNetwork ?? this.diskCountsNetwork,
   );
   ServerRow copyWithCompanion(ServersCompanion data) {
     return ServerRow(
@@ -2332,6 +2376,9 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       scriptDir: data.scriptDir.present ? data.scriptDir.value : this.scriptDir,
       geoLat: data.geoLat.present ? data.geoLat.value : this.geoLat,
       geoLon: data.geoLon.present ? data.geoLon.value : this.geoLon,
+      diskCountsNetwork: data.diskCountsNetwork.present
+          ? data.diskCountsNetwork.value
+          : this.diskCountsNetwork,
     );
   }
 
@@ -2375,7 +2422,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('netDev: $netDev, ')
           ..write('scriptDir: $scriptDir, ')
           ..write('geoLat: $geoLat, ')
-          ..write('geoLon: $geoLon')
+          ..write('geoLon: $geoLon, ')
+          ..write('diskCountsNetwork: $diskCountsNetwork')
           ..write(')'))
         .toString();
   }
@@ -2420,6 +2468,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     scriptDir,
     geoLat,
     geoLon,
+    diskCountsNetwork,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2462,7 +2511,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.netDev == this.netDev &&
           other.scriptDir == this.scriptDir &&
           other.geoLat == this.geoLat &&
-          other.geoLon == this.geoLon);
+          other.geoLon == this.geoLon &&
+          other.diskCountsNetwork == this.diskCountsNetwork);
 }
 
 class ServersCompanion extends UpdateCompanion<ServerRow> {
@@ -2504,6 +2554,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> scriptDir;
   final Value<double?> geoLat;
   final Value<double?> geoLon;
+  final Value<bool> diskCountsNetwork;
   const ServersCompanion({
     this.updatedAt = const Value.absent(),
     this.rev = const Value.absent(),
@@ -2543,6 +2594,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.scriptDir = const Value.absent(),
     this.geoLat = const Value.absent(),
     this.geoLon = const Value.absent(),
+    this.diskCountsNetwork = const Value.absent(),
   });
   ServersCompanion.insert({
     this.updatedAt = const Value.absent(),
@@ -2583,6 +2635,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.scriptDir = const Value.absent(),
     this.geoLat = const Value.absent(),
     this.geoLon = const Value.absent(),
+    this.diskCountsNetwork = const Value.absent(),
   }) : id = Value(id),
        name = Value(name);
   static Insertable<ServerRow> custom({
@@ -2624,6 +2677,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? scriptDir,
     Expression<double>? geoLat,
     Expression<double>? geoLon,
+    Expression<bool>? diskCountsNetwork,
   }) {
     return RawValuesInsertable({
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2666,6 +2720,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (scriptDir != null) 'script_dir': scriptDir,
       if (geoLat != null) 'geo_lat': geoLat,
       if (geoLon != null) 'geo_lon': geoLon,
+      if (diskCountsNetwork != null) 'disk_counts_network': diskCountsNetwork,
     });
   }
 
@@ -2708,6 +2763,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? scriptDir,
     Value<double?>? geoLat,
     Value<double?>? geoLon,
+    Value<bool>? diskCountsNetwork,
   }) {
     return ServersCompanion(
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2749,6 +2805,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       scriptDir: scriptDir ?? this.scriptDir,
       geoLat: geoLat ?? this.geoLat,
       geoLon: geoLon ?? this.geoLon,
+      diskCountsNetwork: diskCountsNetwork ?? this.diskCountsNetwork,
     );
   }
 
@@ -2873,6 +2930,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     if (geoLon.present) {
       map['geo_lon'] = Variable<double>(geoLon.value);
     }
+    if (diskCountsNetwork.present) {
+      map['disk_counts_network'] = Variable<bool>(diskCountsNetwork.value);
+    }
     return map;
   }
 
@@ -2916,7 +2976,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('netDev: $netDev, ')
           ..write('scriptDir: $scriptDir, ')
           ..write('geoLat: $geoLat, ')
-          ..write('geoLon: $geoLon')
+          ..write('geoLon: $geoLon, ')
+          ..write('diskCountsNetwork: $diskCountsNetwork')
           ..write(')'))
         .toString();
   }
@@ -10224,6 +10285,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> scriptDir,
       Value<double?> geoLat,
       Value<double?> geoLon,
+      Value<bool> diskCountsNetwork,
     });
 typedef $$ServersTableUpdateCompanionBuilder =
     ServersCompanion Function({
@@ -10265,6 +10327,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> scriptDir,
       Value<double?> geoLat,
       Value<double?> geoLon,
+      Value<bool> diskCountsNetwork,
     });
 
 final class $$ServersTableReferences
@@ -10760,6 +10823,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<double> get geoLon => $composableBuilder(
     column: $table.geoLon,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get diskCountsNetwork => $composableBuilder(
+    column: $table.diskCountsNetwork,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11349,6 +11417,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get diskCountsNetwork => $composableBuilder(
+    column: $table.diskCountsNetwork,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PrivateKeysTableOrderingComposer get sshKeyId {
     final $$PrivateKeysTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -11548,6 +11621,11 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<double> get geoLon =>
       $composableBuilder(column: $table.geoLon, builder: (column) => column);
+
+  GeneratedColumn<bool> get diskCountsNetwork => $composableBuilder(
+    column: $table.diskCountsNetwork,
+    builder: (column) => column,
+  );
 
   $$PrivateKeysTableAnnotationComposer get sshKeyId {
     final $$PrivateKeysTableAnnotationComposer composer = $composerBuilder(
@@ -12032,6 +12110,7 @@ class $$ServersTableTableManager
                 Value<String?> scriptDir = const Value.absent(),
                 Value<double?> geoLat = const Value.absent(),
                 Value<double?> geoLon = const Value.absent(),
+                Value<bool> diskCountsNetwork = const Value.absent(),
               }) => ServersCompanion(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12071,6 +12150,7 @@ class $$ServersTableTableManager
                 scriptDir: scriptDir,
                 geoLat: geoLat,
                 geoLon: geoLon,
+                diskCountsNetwork: diskCountsNetwork,
               ),
           createCompanionCallback:
               ({
@@ -12112,6 +12192,7 @@ class $$ServersTableTableManager
                 Value<String?> scriptDir = const Value.absent(),
                 Value<double?> geoLat = const Value.absent(),
                 Value<double?> geoLon = const Value.absent(),
+                Value<bool> diskCountsNetwork = const Value.absent(),
               }) => ServersCompanion.insert(
                 updatedAt: updatedAt,
                 rev: rev,
@@ -12151,6 +12232,7 @@ class $$ServersTableTableManager
                 scriptDir: scriptDir,
                 geoLat: geoLat,
                 geoLon: geoLon,
+                diskCountsNetwork: diskCountsNetwork,
               ),
           withReferenceMapper: (p0) => p0
               .map(

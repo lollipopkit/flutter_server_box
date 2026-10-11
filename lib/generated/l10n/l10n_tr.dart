@@ -121,6 +121,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Tüm genel Agent konuşmaları bu cihazdan kaldırılır.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Durdurulan komut sunucuda hâlâ çalışıyor olabilir.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override
@@ -1147,6 +1151,17 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Açıkken sıcaklık değeri milisantigrat yerine santigrat olarak işlenir. Yalnızca sıcaklık yanlış görünüyorsa aç (örneğin 58 °C yerine 0,1 °C).';
+
+  @override
+  String get diskCountsNetwork => 'Ağ dosya sistemlerini toplama dahil et';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez. Durum SSH üzerinden toplandığında geçerlidir; monitor agent üzerinden agent\'ın kendi ayarı belirler.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS, SMB ve benzeri bağlamalar her zaman listelenir. Kapasiteleri başka bir makineye ait olduğundan varsayılan olarak disk toplamına dahil edilmez; agent\'ın geçmişe kaydettiği ve disk uyarılarında kullandığı değer bu toplamdır.';
 
   @override
   String spentTime(String time) {

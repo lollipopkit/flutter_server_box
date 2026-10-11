@@ -35,5 +35,5 @@ abstract final class InitStatus {
     temps: Temperatures(),
     diskIO: DiskIO(),
     diskSmart: const [],
-  );
+  )..diskUsage = DiskUsage(used: BigInt.zero, size: BigInt.one);
 }

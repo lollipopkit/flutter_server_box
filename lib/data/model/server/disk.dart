@@ -212,68 +212,6 @@ class DiskUsage {
     if (size == BigInt.zero) return 0;
     return used / size * 100;
   }
-
-  /// Find all devs, add their used and size.
-  ///
-  /// The volumes of one APFS container count once — see [_apfsContainer].
-  /// Mirrors `disk_usage` in `crates/sbm_parser/src/types.rs`.
-  static DiskUsage parse(List<Disk> disks) {
-    final devs = <String>{};
-    final containers = <(String, BigInt, BigInt)>{};
-    var used = BigInt.zero;
-    var size = BigInt.zero;
-
-    void visit(Disk disk) {
-      if (!disk.isStorage) return;
-      // Each volume reports the whole container as its size and the
-      // container's free space as its own, so summed, a Mac with a 1 TB disk
-      // had a total of seven and read as a quarter full while its data volume
-      // was at 95%. What a container has used is its size less its free space.
-      final container = _apfsContainer(disk);
-      if (container != null) {
-        if (containers.add(container)) {
-          used += container.$2 - container.$3;
-          size += container.$2;
-        }
-        return;
-      }
-      // Use a combination of path and kernel name to uniquely identify disks
-      // This helps distinguish between multiple physical disks in BTRFS RAID setups
-      final uniqueId = '${disk.path}:${disk.kname ?? "unknown"}';
-      if (!devs.contains(uniqueId)) {
-        devs.add(uniqueId);
-        used += disk.used;
-        size += disk.size;
-      }
-      if (disk.used != BigInt.zero || disk.size != BigInt.zero) return;
-      for (final child in disk.children) {
-        visit(child);
-      }
-    }
-
-    for (var disk in disks) {
-      visit(disk);
-    }
-    return DiskUsage(used: used, size: size);
-  }
-
-  static final _apfsVolume = RegExp(r'^/dev/disk(\d+)s\d');
-
-  /// The APFS container [disk] is a volume of, with the size and free space
-  /// every volume in it reports, or null for anything else.
-  ///
-  /// `/dev/disk3s5` and `/dev/disk3s1s1` (a snapshot of `disk3s1`) are both in
-  /// `disk3`. Only for a filesystem known to be APFS: partitions of another
-  /// kind on one disk are separate filesystems, and two of them can report the
-  /// same size and free space without sharing anything. Keyed on the numbers
-  /// as well, since the name alone does not say which container a volume
-  /// shares.
-  static (String, BigInt, BigInt)? _apfsContainer(Disk disk) {
-    if (disk.fsTyp != 'apfs') return null;
-    final m = _apfsVolume.firstMatch(disk.path);
-    if (m == null) return null;
-    return (m.group(1)!, disk.size, disk.avail);
-  }
 }
 
 bool _shouldCalcSource(String source, String mount) {

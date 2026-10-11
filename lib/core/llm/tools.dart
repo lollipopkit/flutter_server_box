@@ -57,26 +57,23 @@ abstract final class AgentTools {
   static AskAiCommand commandOf(String name, Map<String, Object?> args) =>
       AskAiCommand.fromToolCall(id: name, name: name, args: args);
 
-  /// Stops [run] when the user stops the reply — only while it runs: a stop
-  /// after it ended would cancel whatever runs next through the same
-  /// [onCancel].
+  /// Ends the call when the user stops the reply, not when [run] does: a
+  /// command the server will not let go of would otherwise hold the reply
+  /// until it finishes on its own or times out. [run] winds down behind it,
+  /// stopped by [cancel] itself — handed to it rather than pulled through
+  /// state shared with the next call, which may have started by then.
   static Future<T> cancellable<T>(
     LlmCancelToken cancel,
-    Future<void> Function() onCancel,
     Future<T> Function() run,
   ) async {
     if (cancel.isCancelled) throw const LlmException('Cancelled');
-    var running = true;
-    unawaited(
-      cancel.whenCancelled.then((_) {
-        if (running) return onCancel();
-      }),
-    );
-    try {
-      return await run();
-    } finally {
-      running = false;
-    }
+    final task = run();
+    return Future.any([
+      task,
+      cancel.whenCancelled.then<T>(
+        (_) => throw const LlmException('Cancelled'),
+      ),
+    ]);
   }
 }
 
@@ -141,8 +138,11 @@ final class ServerAgentTool extends ToolFunc {
   @override
   Future<LlmToolResult> run(Map<String, Object?> args, ToolCtx ctx) {
     final service = AgentScope.container.read(globalAgentToolServiceProvider);
-    return AgentTools.cancellable(ctx.cancel, service.cancelCurrent, () async {
-      final r = await service.execute(AgentTools.commandOf(name, args));
+    return AgentTools.cancellable(ctx.cancel, () async {
+      final r = await service.execute(
+        AgentTools.commandOf(name, args),
+        cancel: ctx.cancel.whenCancelled,
+      );
       return LlmToolResult.text(
         r.toToolMessage(),
         details: {'status': r.succeeded ? 'ok' : 'failed'},
@@ -260,8 +260,8 @@ final class TerminalRunTool extends ToolFunc {
         'it again.',
       );
     }
-    return AgentTools.cancellable(ctx.cancel, host.cancel, () async {
-      final r = await host.run(_command(args));
+    return AgentTools.cancellable(ctx.cancel, () async {
+      final r = await host.run(_command(args), cancel: ctx.cancel.whenCancelled);
       return LlmToolResult.text(
         r.toToolMessage(),
         details: {'status': r.succeeded ? 'ok' : 'exit ${r.exitCode ?? '?'}'},

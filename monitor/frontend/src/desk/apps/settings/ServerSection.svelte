@@ -59,6 +59,8 @@
   let extendedIntervalSecs = $state('')
   let idlePauseEnabled = $state(true)
   let idlePauseThresholdSecs = $state('')
+  /// `undefined` where the agent is older than the setting: not shown, not sent.
+  let diskCountsNetwork = $state<boolean | undefined>(undefined)
   let rules = $state<MonitoringRule[]>([])
   let corsOrigins = $state<string[]>([])
   let newOrigin = $state('')
@@ -86,6 +88,7 @@
     extendedIntervalSecs = v.extended_interval_secs != null ? String(v.extended_interval_secs) : ''
     idlePauseEnabled = v.idle_pause_enabled
     idlePauseThresholdSecs = v.idle_pause_threshold_secs != null ? String(v.idle_pause_threshold_secs) : ''
+    diskCountsNetwork = v.disk_counts_network
     rules = v.rules.map((r) => ({ ...r }))
     corsOrigins = [...v.cors_allowed_origins]
     // Switched off, the numbers shown are the agent's own defaults, so
@@ -249,6 +252,7 @@
       rules,
       data_retention: retentionPayload(),
       cors_allowed_origins: corsOrigins,
+      ...(diskCountsNetwork === undefined ? {} : { disk_counts_network: diskCountsNetwork }),
     }
     try {
       await api.updateSettings(payload)
@@ -339,6 +343,22 @@
         </div>
       </Row>
     </Group>
+
+    {#if diskCountsNetwork !== undefined}
+      <Group title={$LL.diskTotal()}>
+        <div class="mb-[9px] pt-[7px]">
+          <Disclosure summary={$LL.moreDetails()}>
+            <Markdown text={$LL.diskCountsNetworkNote()} class="text-[12px] text-(--text-tertiary)" />
+          </Disclosure>
+        </div>
+        <Row label={$LL.diskCountsNetwork()}>
+          <div class="flex items-center gap-[9px]">
+            {@render liveBadge('disk_counts_network')}
+            <Checkbox bind:checked={diskCountsNetwork} />
+          </div>
+        </Row>
+      </Group>
+    {/if}
 
     <Group title={$LL.monitoringRules()}>
       <div class="flex justify-end py-[7px]">

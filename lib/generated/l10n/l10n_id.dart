@@ -123,6 +123,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Semua percakapan Agent global akan dihapus dari perangkat ini.';
 
   @override
+  String get agentCommandMayStillRun =>
+      'Perintah yang dihentikan mungkin masih berjalan di server.';
+
+  @override
   String get agentToolShell => 'Shell';
 
   @override
@@ -1149,6 +1153,17 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Jika aktif, nilai suhu diperlakukan sebagai Celsius, bukan milicelsius. Aktifkan hanya bila suhu tampil keliru (misalnya 0,1 °C, bukan 58 °C).';
+
+  @override
+  String get diskCountsNetwork => 'Hitung sistem berkas jaringan dalam total';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'Mount NFS, SMB, dan sejenisnya selalu ditampilkan. Kapasitasnya milik mesin lain, sehingga secara bawaan tidak dihitung dalam total disk. Berlaku saat status dikumpulkan lewat SSH; lewat monitor agent, pengaturan agent itu sendiri yang menentukan.';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'Mount NFS, SMB, dan sejenisnya selalu ditampilkan. Kapasitasnya milik mesin lain, sehingga secara bawaan tidak dihitung dalam total disk — nilai yang disimpan agent di riwayat dan dipakai untuk peringatan disk.';
 
   @override
   String spentTime(String time) {

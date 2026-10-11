@@ -259,8 +259,9 @@ void main() {
       );
 
       expect(status.disk.single.path, 'squashfs');
-      expect(status.diskUsage?.used, BigInt.from(2));
-      expect(status.diskUsage?.size, BigInt.from(8));
+      // The agent's own total, not one summed again from the detail list.
+      expect(status.diskUsage?.used, BigInt.from(1));
+      expect(status.diskUsage?.size, BigInt.from(4));
     });
 
     test('and aggregate network data replaces stale temperature detail', () {

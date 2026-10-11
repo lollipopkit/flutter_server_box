@@ -52,35 +52,12 @@ class ServerStatus {
   final Map<String, String> sectionErrs = {};
   final List<SensorItem> sensors = [];
 
-  /// [disk] summed — see [DiskUsage.parse] — or null with no disks, or when
-  /// the parse failed.
-  ///
-  /// Computed here, the first time it is asked for, and kept until [disk] is
-  /// replaced: the card row, the chart's disk line, the overview, the detail
-  /// and `recordSample` all read it, so they get one answer between them. A
-  /// failure is kept the same way — an unavailable reading, not a parse
-  /// retried on every build of every one of them, where it would throw again.
-  ///
-  /// Keyed on the list's identity, which holds because nothing edits one in
-  /// place: both mappers assign a new list, and a copy of the status copies it.
-  DiskUsage? get diskUsage {
-    final disks = disk;
-    if (!identical(disks, _diskUsageOf)) {
-      _diskUsageOf = disks;
-      _diskUsage = null;
-      if (disks.isNotEmpty) {
-        try {
-          _diskUsage = DiskUsage.parse(disks);
-        } catch (e, s) {
-          Loggers.app.warning('Disk usage', e, s);
-        }
-      }
-    }
-    return _diskUsage;
-  }
+  /// The disk total, as its source summed [disk]: `sbm_parser`'s
+  /// `disk_usage` on the SSH path, the agent's own over its — the figure its
+  /// history and alerts use — so the two say the same (#1669). Set with
+  /// [disk] by both mappers; null with no reading.
+  DiskUsage? diskUsage;
 
-  List<Disk>? _diskUsageOf;
-  DiskUsage? _diskUsage;
   final Map<String, String> customCmds = {};
 
   /// The machine's own interface addresses, as it reported them.

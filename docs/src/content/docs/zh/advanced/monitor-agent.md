@@ -397,7 +397,7 @@ threshold = ">=80%"
 | `memory` | `avail` | 可用百分比 |
 | `swap` | `used`、`swap` 或留空 | 已用百分比 |
 | `swap` | `free` | 未用百分比 |
-| `disk` | 忽略 | 全部文件系统合计的已用百分比 |
+| `disk` | 忽略 | 本机文件系统合计的已用百分比；NFS、SMB 等网络文件系统只有在 `[monitoring]` 下设置 `disk_counts_network = true`（也可在 Monitor 设置中开启）时才计入 |
 | `network` | `rx` 或 `in` | 接收速度 |
 | `network` | `tx` 或 `out` | 发送速度 |
 | `network` | 留空或其他值 | 接收加发送 |

@@ -116,6 +116,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentClearHistoryTip => 'グローバルのエージェント会話がすべてこの端末から削除されます。';
 
   @override
+  String get agentCommandMayStillRun => '停止したコマンドはサーバー上でまだ実行中の可能性があります。';
+
+  @override
   String get agentToolShell => 'シェル';
 
   @override
@@ -1088,6 +1091,17 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '有効にすると、温度の値をミリ摂氏ではなく摂氏として扱います。温度が正しく表示されない場合（58 °C ではなく 0.1 °C と表示されるなど）にのみ有効にしてください。';
+
+  @override
+  String get diskCountsNetwork => 'ネットワークファイルシステムを合計に含める';
+
+  @override
+  String get diskCountsNetworkTip =>
+      'NFS、SMB などのネットワークマウントは常に一覧に表示されます。容量は別のマシンのものなので、既定ではディスク合計に含めません。SSH で状態を収集する場合に適用され、monitor agent 経由では agent 自身の設定に従います。';
+
+  @override
+  String get diskCountsNetworkAgentTip =>
+      'NFS、SMB などのネットワークマウントは常に一覧に表示されます。容量は別のマシンのものなので、既定ではディスク合計に含めません。agent が履歴に保存し、ディスクアラートの判定に使うのはこの合計です。';
 
   @override
   String spentTime(String time) {

@@ -329,6 +329,12 @@ abstract class AppLocalizations {
   /// **'All global Agent conversations will be removed from this device.'**
   String get agentClearHistoryTip;
 
+  /// No description provided for @agentCommandMayStillRun.
+  ///
+  /// In en, this message translates to:
+  /// **'The stopped command may still be running on the server.'**
+  String get agentCommandMayStillRun;
+
   /// User-facing label or message for agent tool shell.
   ///
   /// In en, this message translates to:
@@ -2097,6 +2103,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).'**
   String get tempIsCelsiusTip;
+
+  /// No description provided for @diskCountsNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Count network filesystems in the total'**
+  String get diskCountsNetwork;
+
+  /// No description provided for @diskCountsNetworkTip.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total. Applies when status is collected over SSH; over the monitor agent, the agent\'s own setting decides.'**
+  String get diskCountsNetworkTip;
+
+  /// No description provided for @diskCountsNetworkAgentTip.
+  ///
+  /// In en, this message translates to:
+  /// **'NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure the agent stores in its history and checks disk alerts against.'**
+  String get diskCountsNetworkAgentTip;
 
   /// User-facing label or message for spent time.
   ///

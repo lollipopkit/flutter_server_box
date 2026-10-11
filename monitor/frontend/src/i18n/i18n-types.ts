@@ -1320,6 +1320,18 @@ type RootTranslation = {
 	 */
 	idlePauseThresholdSecs: string
 	/**
+	 * D​i​s​k​ ​t​o​t​a​l
+	 */
+	diskTotal: string
+	/**
+	 * C​o​u​n​t​ ​n​e​t​w​o​r​k​ ​f​i​l​e​s​y​s​t​e​m​s​ ​i​n​ ​t​h​e​ ​d​i​s​k​ ​t​o​t​a​l
+	 */
+	diskCountsNetwork: string
+	/**
+	 * N​F​S​,​ ​S​M​B​ ​a​n​d​ ​s​i​m​i​l​a​r​ ​m​o​u​n​t​s​ ​a​r​e​ ​a​l​w​a​y​s​ ​l​i​s​t​e​d​.​ ​T​h​e​i​r​ ​c​a​p​a​c​i​t​y​ ​b​e​l​o​n​g​s​ ​t​o​ ​a​n​o​t​h​e​r​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​b​y​ ​d​e​f​a​u​l​t​ ​t​h​e​y​ ​a​r​e​ ​l​e​f​t​ ​o​u​t​ ​o​f​ ​t​h​e​ ​d​i​s​k​ ​t​o​t​a​l​ ​—​ ​t​h​e​ ​f​i​g​u​r​e​ ​s​t​o​r​e​d​ ​i​n​ ​h​i​s​t​o​r​y​ ​a​n​d​ ​c​h​e​c​k​e​d​ ​b​y​ ​d​i​s​k​ ​a​l​e​r​t​ ​r​u​l​e​s​.
+	 */
+	diskCountsNetworkNote: string
+	/**
 	 * D​e​f​a​u​l​t​s​ ​t​o​ ​i​n​t​e​r​v​a​l​ ​×​ ​4
 	 */
 	defaultsToIntervalTimes4: string
@@ -11087,6 +11099,18 @@ export type TranslationFunctions = {
 	 * Idle threshold (seconds)
 	 */
 	idlePauseThresholdSecs: () => LocalizedString
+	/**
+	 * Disk total
+	 */
+	diskTotal: () => LocalizedString
+	/**
+	 * Count network filesystems in the disk total
+	 */
+	diskCountsNetwork: () => LocalizedString
+	/**
+	 * NFS, SMB and similar mounts are always listed. Their capacity belongs to another machine, so by default they are left out of the disk total — the figure stored in history and checked by disk alert rules.
+	 */
+	diskCountsNetworkNote: () => LocalizedString
 	/**
 	 * Defaults to interval × 4
 	 */
