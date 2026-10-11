@@ -185,8 +185,9 @@ abstract final class SshSessionId {
   /// and not at all without `/proc`.
   ///
   /// The id comes off stderr, which the login shell's startup files write to
-  /// before the wrapper runs: what keeps a forged one from turning the
-  /// account's sudo password against a session the account could not have
+  /// before the wrapper runs: nothing is killed by it until this has said the
+  /// session is this run's, so a forged one reaches neither another session
+  /// of the account nor, through its sudo password, one it could not have
   /// touched. Asked before the signal, while the command's own shell still
   /// carries the nonce: sudo resets the environment of what it runs, and the
   /// signal ends sudo itself, which runs as the account.
@@ -337,7 +338,13 @@ class SshExec implements ServerByteExec {
       cancel?.then((_) {
         if (ended) return;
         stopped = true;
-        reaped = _stop(session, () => ended, sessionId, nonce);
+        reaped = _stop(
+          session,
+          ended: () => ended,
+          decided: decided.future,
+          sessionId: () => sessionId,
+          nonce: nonce,
+        );
       }),
     );
 
@@ -385,20 +392,30 @@ class SshExec implements ServerByteExec {
   }
 
   /// Stops a cancelled command: the signal first, then — once it has had
-  /// [signalGrace] — what is left of session [sessionId], as the account and,
-  /// for what runs as root, through sudo. Gives the channel as long again to
+  /// [signalGrace] — what is left of its session, as the account and, for
+  /// what runs as root, through sudo. Gives the channel as long again to
   /// close.
   ///
-  /// Whether the session is empty; null with no session id to ask about.
+  /// Whether the session is empty: false when it could not be confirmed this
+  /// run's or emptied. Null with no session to ask about — untracked, or
+  /// stopped before the wrapper printed its marker, which it does before the
+  /// command starts — where the channel is what says.
   /// Asked even when the channel has closed: that only says nothing holds the
   /// output, and a child that let go of it can outlive the signal.
   Future<bool?> _stop(
-    SSHSession session,
-    bool Function() ended,
-    int? sessionId,
-    String? nonce,
-  ) async {
-    final id = sessionId;
+    SSHSession session, {
+    required bool Function() ended,
+    required Future<void> decided,
+    required int? Function() sessionId,
+    required String? nonce,
+  }) async {
+    // A marker on its way is read rather than missed.
+    try {
+      await decided.timeout(signalGrace);
+    } catch (_) {
+      // Not in time: nothing of the command has started.
+    }
+    final id = sessionId();
     // Before the signal, which ends what carries the nonce — see
     // [SshSessionId.owns].
     final owned =
@@ -426,9 +443,10 @@ class SshExec implements ServerByteExec {
 
     await closed();
     if (id == null || nonce == null) return null;
+    if (!owned) return false;
     final kill = SshSessionId.kill(id);
     var gone = await _confirms(kill, SshSessionId.gone);
-    if (!gone && owned) {
+    if (!gone) {
       final password = await _sudoPassword();
       gone = password == null
           ? await _confirms('sudo -n $kill', SshSessionId.gone)
