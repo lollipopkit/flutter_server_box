@@ -117,7 +117,8 @@ final class ServerTabKbIntent extends KbIntent {
 
 /// A chord string, read.
 ///
-/// `Ctrl`, `Meta`, `Alt` and `Shift` in any order, then one key. Keys are
+/// `Ctrl`, `Meta`, `Alt` and `Shift` in that order, each at most once, then
+/// one key. Keys are
 /// letters and digits as themselves, punctuation as the character, arrows as
 /// `←→↑↓`, and the named keys by their names (`Escape`, `F5`).
 abstract final class KbChord {
@@ -184,7 +185,15 @@ abstract final class KbChord {
     final key = _keys[parts.last];
     if (key == null) return null;
     final mods = parts.sublist(0, parts.length - 1);
-    if (mods.any((m) => !_modifiers.contains(m))) return null;
+    // Each modifier once and in [_modifiers]' order, as [fromEvent] writes
+    // them: `Ctrl+Ctrl+P` or `Alt+Ctrl+P` would be the same keys under a
+    // second name, which conflicts are not found by.
+    var last = -1;
+    for (final m in mods) {
+      final at = _modifiers.indexOf(m);
+      if (at <= last) return null;
+      last = at;
+    }
     return _KbActivator(
       key,
       control: mods.contains('Ctrl'),

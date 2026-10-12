@@ -65,7 +65,11 @@ class Keybindings extends _$Keybindings {
     final prefix = '${platform.name}:';
     return {
       for (final e in Stores.setting.keybindings.fetch().entries)
-        if (e.key.startsWith(prefix)) e.key.substring(prefix.length): e.value,
+        // One no chord reads — written by hand, or by a build that took more
+        // spellings — leaves its command at the default.
+        if (e.key.startsWith(prefix) &&
+            (e.value.isEmpty || KbChord.activator(e.value) != null))
+          e.key.substring(prefix.length): e.value,
     };
   }
 
@@ -82,8 +86,10 @@ class Keybindings extends _$Keybindings {
   }
 
   /// [command] bound to [chord], taken from any command it conflicts with.
+  /// A chord [KbChord.activator] cannot read is refused.
   void bind(KbCommand command, String chord) {
     if (command.fixed) return;
+    if (chord.isNotEmpty && KbChord.activator(chord) == null) return;
     final next = {...state.overrides};
     for (final c in state.conflictsOf(command, chord)) {
       next[c.id] = '';

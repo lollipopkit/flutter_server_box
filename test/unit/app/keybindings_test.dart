@@ -23,6 +23,9 @@ void main() {
       expect(KbChord.activator(''), isNull);
       expect(KbChord.activator('Ctrl+1…9'), isNull);
       expect(KbChord.activator('Hyper+P'), isNull);
+      // The same keys under another name would slip past conflict checks.
+      expect(KbChord.activator('Ctrl+Ctrl+P'), isNull);
+      expect(KbChord.activator('Alt+Ctrl+P'), isNull);
     });
 
     test('caps follow the keyboard', () {
@@ -83,6 +86,17 @@ void main() {
       expect(kb().chordOf(KbCommand.wsSplitRight), quick);
       expect(kb().chordOf(KbCommand.wsQuickOpen), isEmpty);
       expect(kb().activatorOf(KbCommand.wsQuickOpen), isNull);
+    });
+
+    test('a chord that does not read is not bound or restored', () {
+      ops().bind(KbCommand.wsSync, 'Ctrl+Ctrl+I');
+      expect(kb().isModified(KbCommand.wsSync), isFalse);
+      Stores.setting.keybindings.put({
+        '${kb().platform.name}:ws.sync': 'Alt+Ctrl+I',
+      });
+      final again = ProviderContainer();
+      addTearDown(again.dispose);
+      expect(again.read(keybindingsProvider).isModified(KbCommand.wsSync), isFalse);
     });
 
     test('a chord in another scope is no conflict', () {
