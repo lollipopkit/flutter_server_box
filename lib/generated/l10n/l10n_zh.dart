@@ -5414,7 +5414,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get kbNote =>
-      '工作区中的终端会把工作区和全局组合交给 App 处理；这里的其他组合照常发给 shell。生效范围不同的命令可以使用相同的组合。';
+      '工作区快捷键只在工作区中生效；全局快捷键（例如打开设置）在各页面都生效。在其他终端页面中，工作区、设置页和服务器标签页对应的快捷键会传给 shell，因为这些操作在此处不可用。复制、粘贴和全选不属于可配置快捷键。';
 
   @override
   String kbCurrent(String keys, String scope) {
@@ -10936,7 +10936,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get kbNote =>
-      '工作區中的終端機會把工作區和全域組合交給 App 處理；這裡的其他組合照常傳給 shell。生效範圍不同的命令可以使用相同的組合。';
+      '工作區快捷鍵只在工作區中生效；全域快捷鍵（例如開啟設定）在各頁面都生效。在其他終端頁面中，工作區、設定頁面和伺服器分頁對應的快捷鍵會傳給 shell，因為這些操作在此處無法使用。複製、貼上和全選不屬於可設定的快捷鍵。';
 
   @override
   String kbCurrent(String keys, String scope) {

@@ -34,7 +34,7 @@ App 可通过以下 endpoint 请求精确时间段：
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60，最少 5，最多 7 天），结束于 `to` 或当前时间。App 每次请求都会带上它，因此不支持 `from` 和 `to` 的旧版 agent 仍能响应。
+如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60 分钟，最少 5 分钟，最多 7 天），结束时间为 `to` 或当前时间。App 每次请求都会携带 `minutes`，因此不支持 `from` 和 `to` 的旧版 agent 仍能处理请求。
 
 ## 访问模型
 

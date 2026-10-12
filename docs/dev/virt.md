@@ -130,13 +130,13 @@ certificate is an error with the old and new fingerprints.
   (`VM.Audit`, `VM.PowerMgmt`, `VM.Console`, `Sys.Audit` on the paths the
   user wants shown; since phase 2 also `VM.Snapshot`, `VM.Snapshot.Rollback`
   and `Datastore.Audit`).
-- An account with no ACL, token or password, is still allowed to connect. On
-  PVE 9.2, `/cluster/resources` returned node names and no guests. The App
-  then reads `/access/permissions` (`ensure_auditable`) and reports
-  `permissionDenied` itself when neither `VM.Audit` nor `Sys.Audit` is granted
-  anywhere. The error includes the corrective command: `pveum acl modify /
-  --tokens … --roles PVEAuditor,PVEVMAdmin`, with `--users` for a password
-  account. Those roles provide the privileges listed above.
+- PVE accepts an authenticated account even when it has no ACL. On PVE 9.2,
+  `/cluster/resources` returned node names but no guests. The App then checks
+  `/access/permissions` (`ensure_auditable`) and reports `permissionDenied`
+  when neither `VM.Audit` nor `Sys.Audit` is granted anywhere. The error
+  includes the command to grant access:
+  `pveum acl modify / --tokens … --roles PVEAuditor,PVEVMAdmin` for an API
+  token, or the same command with `--users` for a password account.
 
 ### libvirt
 

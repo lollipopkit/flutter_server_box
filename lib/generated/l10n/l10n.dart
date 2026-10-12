@@ -9882,7 +9882,7 @@ abstract class AppLocalizations {
   /// Footnote of the shortcuts page.
   ///
   /// In en, this message translates to:
-  /// **'A terminal in a workspace leaves the workspace and global combinations to the app; the other combinations here reach the shell. Commands of different scopes can share a combination.'**
+  /// **'Workspace shortcuts work only in a workspace. Global shortcuts, such as opening Settings, work on every page. On other terminal pages, shortcuts for workspace, Settings, or server-tab actions are sent to the shell because those actions are unavailable there. Copy, paste, and select all are terminal controls, not configurable shortcuts.'**
   String get kbNote;
 
   /// Recording dialog.

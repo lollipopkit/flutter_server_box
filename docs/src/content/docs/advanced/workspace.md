@@ -3,10 +3,10 @@ title: Workspace
 description: Several views of several servers side by side, with keyboard shortcuts
 ---
 
-The **Workspace** tab shows several views at once: a terminal next to the
-status of the same server, the containers of a database host under a shell on
-the application host, and so on. Each view is the same page the app opens from
-a server's detail page, shown inside a pane.
+The **Workspace** tab shows several server views side by side. For example,
+you can place a server's terminal beside its status page, or show one server's
+shell above another server's containers. Each pane hosts a page you can also
+open from a server's detail page.
 
 A fresh install does not put the tab in the bar: open it from **More**, or add
 it under **Settings › Application › Home Tabs**.
@@ -22,9 +22,8 @@ it under **Settings › Application › Home Tabs**.
   files, Agent, containers, processes, services or snippets.
 
 Drag a tab to another pane's edge to split that pane, or to its middle to add
-the tab to it. On iOS and Android, press and hold before dragging; on a phone,
-or in a pane too narrow for a strip of tabs, the whole pane bar is what you
-drag.
+it there. On iOS and Android, press and hold a tab before dragging. If the
+pane is on a phone or too narrow to show its tabs, drag the pane bar instead.
 
 A narrow window shows two panes at a time: the focused one and the one focused
 before it. The panes button at the top lists every pane and moves the focus.
@@ -33,11 +32,10 @@ before it. The panes button at the top lists every pane and moves the focus.
 restore it. Double-clicking a pane's strip of tabs does the same. A narrow
 window has no maximize: it already shows at most two panes.
 
-Closing a tab or a pane can be undone from the message that appears, or with
-the **Reopen closed tab** shortcut. Only the last close can be undone, and
-undoing puts the whole workspace back as it was just before it, so a change
-made to the layout since is undone too. After a server with tabs in a workspace
-is deleted, nothing can be undone.
+You can undo the most recent tab or pane close from the message that appears,
+or use the **Reopen closed tab** shortcut. Reopening restores the workspace to
+the state before that close, so it also discards any layout changes made since.
+You cannot undo the close after closing that workspace or deleting a server used in it.
 
 ## After a restart
 
@@ -49,34 +47,33 @@ that has been deleted is removed.
 
 ## Sync input
 
-**Sync input** sends what you type in one terminal to every other terminal of
-the workspace, key by key, like tmux `synchronize-panes`. A bar over each
-terminal says it is on. Replies a terminal sends by itself, such as a cursor
-position report, are not copied.
+**Sync input** sends each key you type to every other terminal in the
+workspace, like tmux `synchronize-panes`. A bar above each terminal shows when
+it is enabled. Terminal-generated replies, such as cursor-position reports,
+are not copied.
 
 ## Templates
 
-**Save layout as template** stores the layout and the views of each pane,
-without servers. Choosing a template in the workspace list creates a new
-workspace with that layout, with every tab on the server of the tab shown in
-the focused pane. In an empty workspace you pick the server.
+**Save layout as template** stores the pane layout and each pane's view types,
+without server assignments. Choosing a template creates a workspace with
+that layout. Its tabs use the server assigned to the active tab in the focused
+pane; if that pane is empty, you choose a server.
 
 ## Moving a terminal into a workspace
 
-In the **Terminal** tab, **Move to workspace** puts the terminal on screen into
-a workspace. It is offered for terminals on a server, not for one on this
-device. The connection, the shell and what is on the screen stay as they
-are.
+In the **Terminal** tab, **Move to workspace** moves the current server
+terminal into a workspace. This option is not available for a terminal on
+this device. The connection, shell, and screen contents are preserved.
 
 ## Keyboard shortcuts
 
-**Settings › Application › Keyboard shortcuts** lists the app's key
-combinations, and lets you change or remove each one. A terminal in a
-workspace does not send the workspace's combinations, or the global ones such
-as opening the settings, to the shell. Outside a workspace the workspace's
-combinations reach the shell, and so do those of the server tab and the
-settings. The terminal's own copy, paste and select-all keys are not on the
-list.
+**Settings › Application › Keyboard shortcuts** lists the app's shortcuts.
+You can change or remove configurable shortcuts; fixed shortcuts are listed
+but cannot be changed. Workspace shortcuts work only in a workspace. Global
+shortcuts, such as opening Settings, work on every page. In a terminal outside
+a workspace, shortcuts assigned to workspace, Settings, or server-tab actions
+are sent to the shell because those actions are unavailable there. The
+terminal's copy, paste, and select-all controls are not configurable shortcuts.
 
 | Command | Windows / Linux | macOS |
 | --- | --- | --- |

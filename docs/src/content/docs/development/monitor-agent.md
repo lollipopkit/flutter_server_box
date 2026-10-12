@@ -55,8 +55,8 @@ If `from` precedes the oldest retained sample, the agent returns the available
 rows. It does not shift the requested start time or return an error. The chart
 represents the missing interval as a gap. Without `from`, `?minutes=` sets the
 window's length (default 60, at least 5, at most 7 days), ending at `to` or
-now. The App sends it on every request, so agents that predate `from` and `to`
-still answer.
+now. The App includes `minutes` in each request, so agents that predate
+`from` and `to` can still handle it.
 
 ## Access model
 
