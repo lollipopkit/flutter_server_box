@@ -279,20 +279,36 @@ abstract final class RootfsUnpack {
       chmodGuestFile(path, entry.mode & 0xfff);
     }
 
+    /// What [name] is a hard link to in the end: a link may name another link,
+    /// in either order, and only the end of the chain is something the
+    /// archive wrote. Each step was checked when it was recorded.
+    String origin(String name) {
+      var at = name;
+      final seen = {at};
+      for (var next = pendingHardLinks[at];
+          next != null;
+          next = pendingHardLinks[at]) {
+        if (!seen.add(next)) {
+          throw StateError('${libL10n.invalid}: ${libL10n.file} ($name)');
+        }
+        at = next;
+      }
+      return at;
+    }
+
     for (final entry in pendingHardLinks.entries) {
       final path = await _safeTarTarget(into, entry.key);
-      final pendingSymlink = pendingSymlinks[entry.value];
+      final source = origin(entry.key);
+      final pendingSymlink = pendingSymlinks[source];
       if (pendingSymlink != null) {
         await _removeTarTarget(path);
         await Link(path).create(pendingSymlink);
         continue;
       }
-      final target = await _safeTarTarget(into, entry.value);
+      final target = await _safeTarTarget(into, source);
       if (await FileSystemEntity.type(target, followLinks: false) !=
           FileSystemEntityType.file) {
-        throw StateError(
-          '${libL10n.invalid}: ${libL10n.file} (${entry.value})',
-        );
+        throw StateError('${libL10n.invalid}: ${libL10n.file} ($source)');
       }
       await _removeTarTarget(path);
       if (linkGuestFile(target, path)) continue;

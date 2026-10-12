@@ -102,6 +102,50 @@ void main() {
     expect(byName['bin']!.nameOfLinkedFile, 'usr/bin');
   });
 
+  test('a hard link to another hard link reaches the file', () async {
+    TarFile entry(String name, String type, {String? target, String? data}) {
+      final bytes = Uint8List.fromList((data ?? '').codeUnits);
+      return TarFile()
+        ..filename = name
+        ..mode = 0x1a4
+        ..lastModTime = 0
+        ..typeFlag = type
+        ..nameOfLinkedFile = target
+        ..fileSize = bytes.length
+        ..contentBytes = bytes;
+    }
+
+    final out = OutputMemoryStream();
+    // `a` names `b`, which is itself a link, and is written before it.
+    entry('a', TarFile.hardLink, target: 'b').write(out);
+    entry('c', TarFile.normalFile, data: 'file').write(out);
+    entry('b', TarFile.hardLink, target: 'c').write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-chain-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+    await RootfsUnpack.extract(
+      archive,
+      root,
+      source: const RootfsSource(
+        url: 'https://example.test/rootfs.tar.gz',
+        sha256: '',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      ),
+    );
+
+    for (final name in ['a', 'b', 'c']) {
+      expect(File('${root.path}/$name').readAsStringSync(), 'file');
+    }
+  });
+
   test('a hard link to a pending symlink preserves the symlink', () async {
     TarFile entry(String name, String type, {String? target}) => TarFile()
       ..filename = name

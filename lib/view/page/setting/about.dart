@@ -70,6 +70,11 @@ final class _AppAboutPageState extends State<_AppAboutPage>
           SimpleMarkdown(
             data:
                 '''
+#### My other apps
+[GPT Box](https://github.com/lollipopkit/flutter_gpt_box) · [MFuse](https://mfuse.lollipopkit.com)
+
+${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
+
 #### Map data
 IP geolocation by [DB-IP](https://db-ip.com), used under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Built into
@@ -84,11 +89,6 @@ ${GithubIds.contributors.map((e) => e.prsMarkdownLink).join(' ')}
 
 #### Participants
 ${GithubIds.participants.map((e) => e.issuesMarkdownLink).join(' ')}
-
-#### My other apps
-[GPT Box](https://github.com/lollipopkit/flutter_gpt_box)
-
-${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
 ''',
           ).paddingAll(13).cardx,
         ],
