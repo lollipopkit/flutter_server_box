@@ -1810,6 +1810,8 @@ const uk = {
 	deskAgentModeFoot: '⇧⇥ перемикає · правила в Налаштування › Agent › Дозволи команд · лише для нових завдань',
 	deskAgentBypassWarn: 'Дозволити все: видалення, перезапуск і зміна конфігурації виконуються одразу, без запитань.',
 	deskAgentAttach: 'Додати вкладення',
+	deskAgentPickModel: 'Модель',
+	deskAgentPickThinking: 'Рівень міркування',
 	deskAgentRemoveAttachment: 'Прибрати вкладення',
 	deskAgentDropTitle: 'Відпустіть, щоб вкласти',
 	deskAgentDropNote: 'Зображення, журнали, файли конфігурації, до 20 МБ кожен',

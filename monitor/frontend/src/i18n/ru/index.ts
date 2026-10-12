@@ -1810,6 +1810,8 @@ const ru = {
 	deskAgentModeFoot: '⇧⇥ переключает · правила в Настройки › Agent › Разрешения команд · только для новых задач',
 	deskAgentBypassWarn: 'Разрешить всё: удаление, перезапуск и изменение конфигурации выполняются сразу, без вопросов.',
 	deskAgentAttach: 'Добавить вложение',
+	deskAgentPickModel: 'Модель',
+	deskAgentPickThinking: 'Уровень рассуждений',
 	deskAgentRemoveAttachment: 'Убрать вложение',
 	deskAgentDropTitle: 'Отпустите, чтобы вложить',
 	deskAgentDropNote: 'Изображения, журналы, файлы конфигурации, до 20 МБ каждый',

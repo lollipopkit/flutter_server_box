@@ -1810,6 +1810,8 @@ const id = {
 	deskAgentModeFoot: '⇧⇥ beralih · aturan di Pengaturan › Agent › Izin perintah · hanya untuk tugas baru',
 	deskAgentBypassWarn: 'Izinkan semua: menghapus, memulai ulang, dan mengubah konfigurasi langsung dijalankan tanpa bertanya.',
 	deskAgentAttach: 'Tambah lampiran',
+	deskAgentPickModel: 'Model',
+	deskAgentPickThinking: 'Tingkat penalaran',
 	deskAgentRemoveAttachment: 'Hapus lampiran',
 	deskAgentDropTitle: 'Lepas untuk melampirkan',
 	deskAgentDropNote: 'Gambar, log, file konfigurasi, masing-masing hingga 20 MB',

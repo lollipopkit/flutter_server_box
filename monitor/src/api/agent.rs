@@ -143,11 +143,17 @@ pub struct Start {
     /// Uploads (`POST /agent/files`) the task is given.
     #[serde(default)]
     files: Vec<String>,
+    /// The model and thinking level; absent is the machine's.
+    #[serde(default)]
+    model: Option<crate::agent_mode::config::ModelRef>,
+    #[serde(default, rename = "thinkingLevel")]
+    thinking_level: Option<String>,
 }
 
 pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
-    let Start { prompt, mode, files } = body.into_inner();
+    let Start { prompt, mode, files, model, thinking_level } = body.into_inner();
+    let choice = crate::agent_mode::TaskChoice { model, thinking_level };
     // Files alone are a prompt too.
     if prompt.len() > MAX_PROMPT || (prompt.trim().is_empty() && files.is_empty()) {
         return Ok(bad("invalidPrompt"));
@@ -156,7 +162,7 @@ pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::
         return Ok(bad("tooManyFiles"));
     }
     let state = state.get_ref().clone();
-    match state.agent.start(&state, user, &caller.username, secure, NewTask { prompt, mode, files }).await {
+    match state.agent.start(&state, user, &caller.username, secure, NewTask { prompt, mode, files, choice }).await {
         Ok(view) => {
             Event::new(Kind::Agent, Action::Open, Outcome::Ok)
                 .subject(&caller.username)
@@ -221,11 +227,17 @@ pub struct Reply {
     /// Uploads (`POST /agent/files`) given with it.
     #[serde(default)]
     files: Vec<String>,
+    /// A model and thinking level from now on; absent keeps the task's.
+    #[serde(default)]
+    model: Option<crate::agent_mode::config::ModelRef>,
+    #[serde(default, rename = "thinkingLevel")]
+    thinking_level: Option<String>,
 }
 
 pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Reply>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
-    let Reply { text, files } = body.into_inner();
+    let Reply { text, files, model, thinking_level } = body.into_inner();
+    let choice = crate::agent_mode::TaskChoice { model, thinking_level };
     if text.len() > MAX_PROMPT || (text.trim().is_empty() && files.is_empty()) {
         return Ok(bad("invalidPrompt"));
     }
@@ -233,7 +245,7 @@ pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::ty
         return Ok(bad("tooManyFiles"));
     }
     let state = state.get_ref().clone();
-    match state.agent.reply(&state, user, &caller.username, secure, &id, text, files).await {
+    match state.agent.reply(&state, user, &caller.username, secure, &id, text, files, choice).await {
         Ok(view) => Ok(HttpResponse::Ok().json(&view)),
         Err(e) => Ok(refused(e)),
     }
@@ -365,6 +377,16 @@ pub async fn get_settings(req: HttpRequest, state: web::types::State<Arc<AppStat
         "thinkingLevel": settings.thinking_level,
         "maxRunning": settings.max_running,
     })))
+}
+
+/// What a task may be started or replied to with (`AgentMode::choices`):
+/// any account that may run one.
+pub async fn choices(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(shell(&req, &state).await);
+    match state.agent.choices().await {
+        Ok(v) => Ok(HttpResponse::Ok().json(&v)),
+        Err(e) => Ok(refused(e)),
+    }
 }
 
 pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::SettingsWrite>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {

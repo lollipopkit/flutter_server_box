@@ -1810,6 +1810,8 @@ const nl = {
 	deskAgentModeFoot: '⇧⇥ wisselt · regels in Instellingen › Agent › Opdrachtmachtigingen · alleen nieuwe taken',
 	deskAgentBypassWarn: 'Alles toestaan: verwijderen, herstarten en configuratiewijzigingen worden direct uitgevoerd, zonder vragen.',
 	deskAgentAttach: 'Bijlage toevoegen',
+	deskAgentPickModel: 'Model',
+	deskAgentPickThinking: 'Redeneerniveau',
 	deskAgentRemoveAttachment: 'Bijlage verwijderen',
 	deskAgentDropTitle: 'Loslaten om bij te voegen',
 	deskAgentDropNote: 'Afbeeldingen, logs, configuratiebestanden, elk tot 20 MB',

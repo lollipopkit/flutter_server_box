@@ -1810,6 +1810,8 @@ const zh_TW = {
 	deskAgentModeFoot: '⇧⇥ 切換模式 · 規則在 設定 › Agent › 命令權限 中設定 · 只對新任務生效',
 	deskAgentBypassWarn: '全部放行：刪除、重新啟動、修改設定等變更都會直接執行，不再詢問。',
 	deskAgentAttach: '新增附件',
+	deskAgentPickModel: '模型',
+	deskAgentPickThinking: '思考層級',
 	deskAgentRemoveAttachment: '移除附件',
 	deskAgentDropTitle: '放開以新增附件',
 	deskAgentDropNote: '圖片、日誌、設定檔，單個不超過 20 MB',

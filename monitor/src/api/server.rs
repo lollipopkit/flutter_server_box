@@ -563,6 +563,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::agent::get_settings))
                     .route(web::put().to(crate::api::agent::put_settings)),
             )
+            .service(web::resource("/agent/choices").route(web::get().to(crate::api::agent::choices)))
             .service(web::resource("/agent/models").route(web::get().to(crate::api::agent::models)))
             .service(web::resource("/agent/models/probe").route(web::post().to(crate::api::agent::probe)))
             .service(

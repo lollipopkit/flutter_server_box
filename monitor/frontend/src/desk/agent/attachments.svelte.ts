@@ -4,7 +4,7 @@
 
 import { get } from 'svelte/store'
 import { LL } from '../../i18n/i18n-svelte'
-import { agentApi, type PermissionMode, type Upload } from '../../lib/agentApi'
+import { agentApi, type ModelRef, type PermissionMode, type TaskChoice, type Upload } from '../../lib/agentApi'
 import { fmtBytes } from '../../lib/format'
 import type { ServerEntry } from '../../lib/servers.svelte'
 import { fileGlyph } from './agentView'
@@ -148,6 +148,9 @@ export class Draft {
   text = $state('')
   /// A new task's permission mode, when one was picked.
   mode = $state<PermissionMode | null>(null)
+  /// A model and thinking level picked for the next message; sent with it.
+  model = $state<ModelRef | null>(null)
+  thinking = $state<string | null>(null)
   readonly atts: Attachments
 
   constructor(entry: ServerEntry) {
@@ -157,6 +160,13 @@ export class Draft {
   /// Empties it; [discard] also drops the uploads.
   clear(discard: boolean) {
     this.text = ''
+    this.model = null
+    this.thinking = null
     this.atts.clear(discard)
+  }
+
+  /// What was picked, as a start or a reply sends it.
+  choice(): TaskChoice {
+    return { ...(this.model ? { model: this.model } : {}), ...(this.thinking ? { thinkingLevel: this.thinking } : {}) }
   }
 }

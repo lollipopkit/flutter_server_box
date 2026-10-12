@@ -10,6 +10,7 @@
   import { Button, Icon, IconButton } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import AttachmentChips from './AttachmentChips.svelte'
+  import ChoiceChips from './ChoiceChips.svelte'
   import { autosize } from './autosize'
 
   interface Props {
@@ -127,7 +128,7 @@
     try {
       const ids = await atts.ids()
       if (!ids) return
-      const f = await store.startFlow(words, mode, ids)
+      const f = await store.startFlow(words, mode, ids, d.choice())
       clear(false)
       d.mode = null
       ta?.blur()
@@ -220,6 +221,7 @@
     </label>
     <div class="ctl" inert={focused}>
       {@render chip(false)}
+      <ChoiceChips {store} draft={d} {disabled} />
       <IconButton icon="attach_file" label={$LL.deskAgentAttach()} {disabled} onmousedown={keep} onclick={() => picker?.click()} />
       <Button variant="primary" icon="arrow_upward" disabled={(!d.text.trim() && !atts.length) || sending || disabled} onclick={() => send()}>
         {$LL.deskAgentSend()}

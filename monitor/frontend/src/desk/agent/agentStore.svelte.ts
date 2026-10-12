@@ -5,7 +5,7 @@
 
 import type { ServerEntry } from '../../lib/servers.svelte'
 import { Draft } from './attachments.svelte'
-import { agentApi, type Answer, type Entry, type Flow, type FlowDetail, type FlowStatus, type LiveOutput, type OutLine, type Pending, type PermissionMode } from '../../lib/agentApi'
+import { agentApi, type Answer, type Entry, type Flow, type FlowDetail, type FlowStatus, type LiveOutput, type OutLine, type Pending, type PermissionMode, type Choices, type TaskChoice } from '../../lib/agentApi'
 
 const RETRY_MIN_MS = 1000
 const RETRY_MAX_MS = 30_000
@@ -41,6 +41,9 @@ export class AgentStore {
   maxRunning = $state(3)
   defaultMode = $state<PermissionMode>('manual')
   bypassAllowed = $state(true)
+  /// The models and thinking levels a task may run with; null until read,
+  /// or from an agent that does not say.
+  choices = $state<Choices | null>(null)
   error = $state<string | null>(null)
   /// The event stream is up: what is shown is current.
   live = $state(false)
@@ -105,12 +108,22 @@ export class AgentStore {
       this.defaultMode = list.defaultMode ?? 'manual'
       this.bypassAllowed = list.bypassAllowed ?? true
       this.error = null
+      if (list.configured) void this.#loadChoices()
     } catch (e) {
       this.error = e instanceof Error ? e.message : String(e)
     } finally {
       this.loaded = true
     }
     if (this.openId) await this.#loadDetail(this.openId)
+  }
+
+  async #loadChoices(): Promise<void> {
+    try {
+      this.choices = await agentApi.choices(this.entry)
+    } catch {
+      // An agent from before choices: the machine's model, nothing to pick.
+      this.choices = null
+    }
   }
 
   async #listen(signal: AbortSignal): Promise<void> {
@@ -185,14 +198,14 @@ export class AgentStore {
     }
   }
 
-  async startFlow(prompt: string, mode?: PermissionMode, files: string[] = []): Promise<Flow> {
-    const f = await agentApi.start(this.entry, prompt, mode, files)
+  async startFlow(prompt: string, mode?: PermissionMode, files: string[] = [], choice: TaskChoice = {}): Promise<Flow> {
+    const f = await agentApi.start(this.entry, prompt, mode, files, choice)
     this.#upsert(f)
     return f
   }
 
-  async reply(id: string, text: string, files: string[] = []): Promise<void> {
-    this.#upsert(await agentApi.reply(this.entry, id, text, files))
+  async reply(id: string, text: string, files: string[] = [], choice: TaskChoice = {}): Promise<void> {
+    this.#upsert(await agentApi.reply(this.entry, id, text, files, choice))
   }
 
   async answer(id: string, answer: Answer): Promise<void> {

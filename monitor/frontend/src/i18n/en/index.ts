@@ -1810,6 +1810,8 @@ const en = {
 	deskAgentModeFoot: '⇧⇥ switches · rules are in Settings › Agent › Command permissions · applies to new tasks',
 	deskAgentBypassWarn: 'Allow all: deleting, restarting and config changes run directly, without asking.',
 	deskAgentAttach: 'Add attachment',
+	deskAgentPickModel: 'Model',
+	deskAgentPickThinking: 'Thinking',
 	deskAgentRemoveAttachment: 'Remove attachment',
 	deskAgentDropTitle: 'Release to attach',
 	deskAgentDropNote: 'Images, logs, config files, up to 20 MB each',

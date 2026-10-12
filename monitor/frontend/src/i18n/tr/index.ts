@@ -1810,6 +1810,8 @@ const tr = {
 	deskAgentModeFoot: '⇧⇥ değiştirir · kurallar Ayarlar › Agent › Komut izinleri içinde · yalnızca yeni görevler',
 	deskAgentBypassWarn: 'Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sormadan doğrudan çalışır.',
 	deskAgentAttach: 'Ek ekle',
+	deskAgentPickModel: 'Model',
+	deskAgentPickThinking: 'Akıl yürütme düzeyi',
 	deskAgentRemoveAttachment: 'Eki kaldır',
 	deskAgentDropTitle: 'Eklemek için bırakın',
 	deskAgentDropNote: 'Görseller, günlükler, yapılandırma dosyaları, her biri en fazla 20 MB',

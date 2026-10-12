@@ -185,7 +185,7 @@ async fn a_read_runs_unasked_and_its_output_is_kept() {
     ]);
     configure(&srv, &url).await;
     let id = start(&srv, "what is in /").await;
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let r = results(&v);
     assert_eq!(r.len(), 1, "{v}");
     assert_eq!(r[0]["details"]["exitCode"], 0);
@@ -225,7 +225,7 @@ async fn a_plan_once_approved_runs_its_commands_without_asking_again() {
     let pid = v["pending"]["id"].as_str().unwrap();
     let (s, _) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/answer"), Some(json!({ "id": pid, "action": "run" }))).await;
     assert_eq!(s, 204);
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     assert!(made.exists(), "{v}");
     assert_eq!(results(&v).len(), 2);
     let _ = std::fs::remove_dir_all(dir);
@@ -280,7 +280,7 @@ async fn what_cannot_be_undone_needs_the_machine_named() {
     assert_eq!((s, body["error"].as_str()), (400, Some("confirmMismatch")));
     let (s, _) = call(&srv, Some("admin"), Method::POST, &answer, Some(json!({ "id": pid, "action": "alternative", "index": 0 }))).await;
     assert_eq!(s, 204);
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     assert!(keep.exists(), "{v}");
     assert_eq!(results(&v)[0]["details"]["alternative"], "Back it up first");
     assert!(!host.is_empty());
@@ -306,7 +306,7 @@ async fn attached_files_go_to_the_task_and_with_it() {
     assert_eq!(s, 201, "{body}");
     assert_eq!(body["title"], "app.log");
     let id = body["id"].as_str().unwrap().to_string();
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let content = &v["entries"][0]["message"]["content"];
     let text = content[0]["text"].as_str().unwrap();
     assert!(text.starts_with("<attachments>"), "{v}");
@@ -336,7 +336,7 @@ async fn a_finished_task_takes_a_reply_as_a_new_run() {
     let url = model(vec![Say::Text("Hello.")]);
     configure(&srv, &url).await;
     let id = start(&srv, "hi").await;
-    until(&srv, &id, |v| status(v) == "done").await;
+    until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let (s, body) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/reply"), Some(json!({ "text": "again" }))).await;
     assert_eq!(s, 200, "{body}");
     let v = until(&srv, &id, |v| status(v) == "done" && v["entries"].as_array().unwrap().iter().filter(|e| e["message"]["role"] == "user").count() == 2).await;
@@ -394,7 +394,7 @@ async fn the_memory_is_kept_across_tasks_and_is_its_accounts_alone() {
     ]);
     configure(&srv, &url).await;
     let id = start(&srv, "remember that I prefer apt").await;
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let r = results(&v);
     assert_eq!(r[0]["content"][0]["text"], "Created /memories/user.md", "{v}");
     assert_eq!(r[1]["content"][0]["text"], "     1\tPrefers apt over snap\n", "{v}");
@@ -529,7 +529,7 @@ async fn the_operators_rules_deny_ask_and_allow() {
     assert!(read["defaults"]["soft_deny"].as_array().is_some_and(|l| !l.is_empty()), "{read}");
 
     let id = start(&srv, "go").await;
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let r = results(&v);
     // A read the rules deny is refused; a change they allow runs unasked.
     assert_eq!(r[0]["isError"], true, "{v}");
@@ -565,7 +565,7 @@ async fn always_allow_adds_the_rule_and_runs() {
     assert_eq!(s, 409);
     let (s, body) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/answer"), Some(json!({ "id": pid, "action": "always" }))).await;
     assert_eq!(s, 204, "{body}");
-    until(&srv, &id, |v| status(v) == "done").await;
+    until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     assert!(one.exists());
     let (_, read) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/permissions", None).await;
     assert_eq!(read["permissions"]["rules"]["allow"], json!([rule]));
@@ -625,7 +625,7 @@ async fn an_admin_can_turn_bypass_off() {
     assert_eq!((s, body["error"].as_str()), (400, Some("bypassDisabled")), "{body}");
     // Absent is the default.
     let id = start(&srv, "go").await;
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     assert_eq!(v["flow"]["mode"], "auto", "{v}");
 }
 
@@ -648,7 +648,7 @@ async fn auto_mode_runs_what_the_judge_allows_and_refuses_what_it_blocks() {
         configure(&srv, &url).await;
         set_permissions(&srv, json!({ "defaultMode": "auto" })).await;
         let id = start(&srv, "make the file").await;
-        let v = until(&srv, &id, |v| status(v) == "done").await;
+        let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
         let r = results(&v);
         assert_eq!(made.exists(), runs, "{v}");
         if !runs {
@@ -706,7 +706,7 @@ async fn auto_mode_judges_a_plan_and_bypass_approves_one() {
     configure(&srv, &url).await;
     set_permissions(&srv, json!({ "defaultMode": "auto" })).await;
     let id = start(&srv, "make the file").await;
-    let v = until(&srv, &id, |v| status(v) == "done").await;
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
     let r = results(&v);
     assert_eq!(r[0]["details"]["by"], "auto", "{v}");
     assert!(made.exists(), "{v}");
@@ -803,4 +803,51 @@ async fn the_list_pages_newest_first_and_searches_titles() {
     assert!(ids(&found).is_empty(), "{found}");
     let (_, found) = get("/api/v1/agent/flows?q=disk&limit=1".into()).await;
     assert_eq!((ids(&found), found["next"].is_string()), (vec!["t3".to_string()], true));
+}
+
+#[ntex::test]
+async fn a_task_runs_with_the_model_and_thinking_its_account_picked() {
+    let (srv, _) = server().await;
+    let url = model(vec![Say::Text("one"), Say::Text("two")]);
+    configure(&srv, &url).await;
+
+    let (status, c) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/choices", None).await;
+    assert_eq!(status, 200, "{c}");
+    assert!(c["models"].as_array().unwrap().iter().any(|m| m["provider"] == "mock" && m["id"] == "mock"), "{c}");
+    assert_eq!(c["model"], json!({ "provider": "mock", "id": "mock" }));
+    assert!(c["thinkingLevels"].as_array().unwrap().contains(&json!("high")));
+    assert!(!c.to_string().contains("sk-test"), "no key: {c}");
+
+    let start = |extra: Value| {
+        let mut body = json!({ "prompt": "hi" });
+        for (k, v) in extra.as_object().unwrap() {
+            body[k] = v.clone();
+        }
+        body
+    };
+    let (status, v) = call(&srv, Some("admin"), Method::POST, "/api/v1/agent/flows", Some(start(json!({ "model": { "provider": "nope", "id": "x" } })))).await;
+    assert_eq!((status, v["error"].as_str()), (400, Some("unknownModel")), "{v}");
+    let (status, v) = call(&srv, Some("admin"), Method::POST, "/api/v1/agent/flows", Some(start(json!({ "thinkingLevel": "max" })))).await;
+    assert_eq!((status, v["error"].as_str()), (400, Some("invalidThinkingLevel")), "{v}");
+
+    let (status, v) = call(
+        &srv,
+        Some("admin"),
+        Method::POST,
+        "/api/v1/agent/flows",
+        Some(start(json!({ "model": { "provider": "mock", "id": "mock" }, "thinkingLevel": "low" }))),
+    )
+    .await;
+    assert_eq!(status, 201, "{v}");
+    assert_eq!((v["model"]["id"].as_str(), v["thinkingLevel"].as_str()), (Some("mock"), Some("low")), "{v}");
+    let id = v["id"].as_str().unwrap().to_string();
+    until(&srv, &id, |v| v["flow"]["status"] == "done").await;
+
+    // A reply changes it from then on; what it does not name stays.
+    let (status, v) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{id}/reply"), Some(json!({ "text": "more", "thinkingLevel": "high" }))).await;
+    assert_eq!(status, 200, "{v}");
+    let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
+    assert_eq!((v["flow"]["model"]["id"].as_str(), v["flow"]["thinkingLevel"].as_str()), (Some("mock"), Some("high")), "{v}");
+    let (_, list) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/flows", None).await;
+    assert_eq!(list["flows"][0]["thinkingLevel"], "high", "kept in the row: {list}");
 }

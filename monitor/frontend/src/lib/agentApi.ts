@@ -28,6 +28,9 @@ export interface Flow {
   areas: Area[]
   /// The permission mode it was started in.
   mode: PermissionMode
+  /// What its account picked; null is the machine's.
+  model?: ModelRef | null
+  thinkingLevel?: string | null
   createdAt: string
   updatedAt: string
   startedAt: string | null
@@ -142,6 +145,26 @@ export interface Answer {
 export interface ModelRef {
   provider: string
   id: string
+}
+
+/// A model a task may run with (`GET /agent/choices`).
+export interface ModelChoice extends ModelRef {
+  name?: string
+  reasoning?: boolean
+}
+
+/// What a task may be started or replied to with, and the machine's own.
+export interface Choices {
+  models: ModelChoice[]
+  thinkingLevels: string[]
+  model: ModelRef | null
+  thinkingLevel: string
+}
+
+/// A model and thinking level sent with a start or a reply; absent keeps.
+export interface TaskChoice {
+  model?: ModelRef
+  thinkingLevel?: string
 }
 
 export interface Provider {
@@ -261,16 +284,17 @@ const enc = encodeURIComponent
 
 export const agentApi = {
   list: (e: ServerEntry) => requestFor<FlowList>(e, '/agent/flows'),
-  start: (e: ServerEntry, prompt: string, mode?: PermissionMode, files: string[] = []) =>
-    requestFor<Flow>(e, '/agent/flows', { method: 'POST', body: JSON.stringify({ prompt, mode, files }) }),
+  start: (e: ServerEntry, prompt: string, mode?: PermissionMode, files: string[] = [], choice: TaskChoice = {}) =>
+    requestFor<Flow>(e, '/agent/flows', { method: 'POST', body: JSON.stringify({ prompt, mode, files, ...choice }) }),
+  choices: (e: ServerEntry) => requestFor<Choices>(e, '/agent/choices'),
   /// A file for a task about to start or a reply; [onProgress] is told
   /// how much has gone (0–1), [signal] gives up on it.
   upload: (e: ServerEntry, file: Blob, name: string, opts: { onProgress?: (sent: number) => void; signal?: AbortSignal } = {}) =>
     uploadFor<Upload>(e, `/agent/files?name=${enc(name)}`, file, { ...opts, timeoutMs: 300_000, fallback: 'Upload failed' }),
   discard: (e: ServerEntry, id: string) => requestFor<void>(e, `/agent/files/${enc(id)}`, { method: 'DELETE' }),
   detail: (e: ServerEntry, id: string) => requestFor<FlowDetail>(e, `/agent/flows/${enc(id)}`, {}, 'Request failed', undefined, 60_000),
-  reply: (e: ServerEntry, id: string, text: string, files: string[] = []) =>
-    requestFor<Flow>(e, `/agent/flows/${enc(id)}/reply`, { method: 'POST', body: JSON.stringify({ text, files }) }),
+  reply: (e: ServerEntry, id: string, text: string, files: string[] = [], choice: TaskChoice = {}) =>
+    requestFor<Flow>(e, `/agent/flows/${enc(id)}/reply`, { method: 'POST', body: JSON.stringify({ text, files, ...choice }) }),
   answer: (e: ServerEntry, id: string, answer: Answer) =>
     requestFor<void>(e, `/agent/flows/${enc(id)}/answer`, { method: 'POST', body: JSON.stringify(answer) }),
   stop: (e: ServerEntry, id: string) => requestFor<void>(e, `/agent/flows/${enc(id)}/stop`, { method: 'POST' }),

@@ -1809,6 +1809,8 @@ const zh_CN = {
 	deskAgentModeFoot: '⇧⇥ 切换模式 · 规则在 设置 › Agent › 命令权限 中配置 · 只对新任务生效',
 	deskAgentBypassWarn: '全部放行：删除、重启、改配置等改动都会直接执行，不再询问。',
 	deskAgentAttach: '添加附件',
+	deskAgentPickModel: '模型',
+	deskAgentPickThinking: '思考',
 	deskAgentRemoveAttachment: '移除附件',
 	deskAgentDropTitle: '松开以添加附件',
 	deskAgentDropNote: '图片、日志、配置文件，单个不超过 20 MB',

@@ -1810,6 +1810,8 @@ const ko = {
 	deskAgentModeFoot: '⇧⇥ 모드 전환 · 규칙은 설정 › Agent › 명령 권한 · 새 작업에만 적용',
 	deskAgentBypassWarn: '모두 허용: 삭제, 재시작, 설정 변경 등이 묻지 않고 바로 실행됩니다.',
 	deskAgentAttach: '첨부 파일 추가',
+	deskAgentPickModel: '모델',
+	deskAgentPickThinking: '추론 수준',
 	deskAgentRemoveAttachment: '첨부 파일 제거',
 	deskAgentDropTitle: '놓아서 첨부',
 	deskAgentDropNote: '이미지, 로그, 설정 파일, 파일당 20 MB 이하',

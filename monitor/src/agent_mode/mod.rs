@@ -138,6 +138,10 @@ pub struct FlowView {
     pub areas: Vec<String>,
     /// The permission mode it was started in (`permissions`).
     pub mode: permissions::Mode,
+    /// The model and thinking level its account picked; absent is the
+    /// machine's, whatever that is when it runs.
+    pub model: Option<config::ModelRef>,
+    pub thinking_level: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     pub started_at: Option<String>,
@@ -160,6 +164,18 @@ pub struct NewTask {
     pub mode: Option<permissions::Mode>,
     /// Uploads ([`files::Files::put`]) it is given.
     pub files: Vec<String>,
+    pub choice: TaskChoice,
+}
+
+/// The model and thinking level a task is started or replied to with; absent
+/// keeps what it had (the machine's, for a new one).
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TaskChoice {
+    #[serde(default)]
+    pub model: Option<config::ModelRef>,
+    #[serde(default)]
+    pub thinking_level: Option<String>,
 }
 
 /// One step (a tool call) as a list shows it.
@@ -563,7 +579,7 @@ impl AgentMode {
         // A NULL turns its condition off; `LIMIT -1` is no limit. One more row
         // than asked says whether there is a next page.
         let mut rows = sqlx::query_as::<_, Row>(
-            "SELECT id, title, status, line, areas, mode, created_at, updated_at, started_at, finished_at FROM agent_flow \
+            "SELECT id, title, status, line, areas, mode, model, thinking_level, created_at, updated_at, started_at, finished_at FROM agent_flow \
              WHERE user_id = ?1 \
              AND (?2 IS NULL OR updated_at < ?2 OR (updated_at = ?2 AND id < ?3)) \
              AND (?4 IS NULL OR title LIKE ?4 ESCAPE '\\' OR line LIKE ?4 ESCAPE '\\') \
@@ -599,7 +615,7 @@ impl AgentMode {
             return Ok(Some(f.view()));
         }
         let row = sqlx::query_as::<_, Row>(
-            "SELECT id, title, status, line, areas, mode, created_at, updated_at, started_at, finished_at FROM agent_flow \
+            "SELECT id, title, status, line, areas, mode, model, thinking_level, created_at, updated_at, started_at, finished_at FROM agent_flow \
              WHERE user_id = ? AND id = ?",
         )
         .bind(user)
@@ -657,10 +673,11 @@ impl AgentMode {
     /// Starts [task] for [user]. Answers its row; it runs when its turn
     /// comes.
     pub async fn start(self: &Arc<Self>, state: &Arc<AppState>, user: i64, username: &str, secure: bool, task: NewTask) -> Result<FlowView, FlowError> {
-        let NewTask { prompt, mode, files: file_ids } = task;
+        let NewTask { prompt, mode, files: file_ids, choice } = task;
         if config::load(&self.db).await?.model.is_none() {
             return Err(FlowError::NotConfigured);
         }
+        self.check_choice(&choice).await?;
         let perms = permissions::load(&self.db).await?;
         let mode = mode.unwrap_or(perms.default_mode);
         if perms.mode_for(mode) != mode {
@@ -679,13 +696,15 @@ impl AgentMode {
         let title = first_line(&named, MAX_TITLE_CHARS);
         let (text, images) = files::compose(&prompt, &attached, true).await;
         let inserted = sqlx::query(
-            "INSERT INTO agent_flow (id, user_id, title, status, line, areas, mode, created_at, updated_at) \
-             VALUES (?, ?, ?, 'queued', '', '[]', ?, ?, ?)",
+            "INSERT INTO agent_flow (id, user_id, title, status, line, areas, mode, model, thinking_level, created_at, updated_at) \
+             VALUES (?, ?, ?, 'queued', '', '[]', ?, ?, ?, ?, ?)",
         )
         .bind(&id)
         .bind(user)
         .bind(&title)
         .bind(mode.as_str())
+        .bind(choice.model.as_ref().map(|m| serde_json::to_string(m).expect("a model reference serialises")))
+        .bind(&choice.thinking_level)
         .bind(&now)
         .bind(&now)
         .execute(&self.db)
@@ -702,6 +721,8 @@ impl AgentMode {
             line: String::new(),
             areas: Vec::new(),
             mode,
+            model: choice.model,
+            thinking_level: choice.thinking_level,
             created_at: now.clone(),
             updated_at: now,
             started_at: None,
@@ -802,12 +823,15 @@ impl AgentMode {
         id: &str,
         text: String,
         file_ids: Vec<String>,
+        choice: TaskChoice,
     ) -> Result<FlowView, FlowError> {
         if !self.files.has(user, &file_ids) {
             return Err(FlowError::Invalid("unknownFile"));
         }
+        self.check_choice(&choice).await?;
         if let Some(flow) = self.active(user, id) {
             *flow.secure.lock().unwrap() = secure;
+            self.apply_choice(&flow, &choice).await;
             let kind = flow.pending.lock().unwrap().as_ref().map(|p| (p.view.kind, p.view.id.clone()));
             if matches!(kind, Some((k, _)) if !matches!(k, "confirm" | "danger" | "clarify")) {
                 return Err(FlowError::Busy);
@@ -841,7 +865,14 @@ impl AgentMode {
             user_id: user,
             username: username.to_string(),
             secure: Mutex::new(secure),
-            view: Mutex::new(FlowView { status: Status::Queued, waiting: None, finished_at: None, ..view }),
+            view: Mutex::new(FlowView {
+                status: Status::Queued,
+                waiting: None,
+                finished_at: None,
+                model: choice.model.clone().or(view.model.clone()),
+                thinking_level: choice.thinking_level.clone().or(view.thinking_level.clone()),
+                ..view
+            }),
             pending: Mutex::new(None),
             replies: Mutex::new(VecDeque::new()),
             approved: Mutex::new(HashSet::new()),
@@ -1006,7 +1037,11 @@ impl AgentMode {
 
     async fn run(&self, state: &Arc<AppState>, flow: &Arc<Flow>, first: String, images: Option<Value>) -> Result<Outcome, FlowError> {
         let settings = config::load(&self.db).await?;
-        let Some(model) = settings.model else { return Err(FlowError::NotConfigured) };
+        let Some(machine) = settings.model else { return Err(FlowError::NotConfigured) };
+        let (model, thinking_level) = {
+            let v = flow.view.lock().unwrap();
+            (v.model.clone().unwrap_or(machine), v.thinking_level.clone().unwrap_or(settings.thinking_level.clone()))
+        };
         let rt = self.runtime().await?;
         let memory = self.memory(flow.user_id);
         let mut system_prompt = prompt::system(&self.hostname, &flow.username);
@@ -1024,7 +1059,7 @@ impl AgentMode {
                     system_prompt,
                     tools,
                     approver: None,
-                    thinking_level: Some(settings.thinking_level.clone()),
+                    thinking_level: Some(thinking_level),
                     compaction: None,
                 })
                 .await?;
@@ -1106,18 +1141,86 @@ impl AgentMode {
         }
     }
 
+    /// What a task may be started or replied to with: the models whose
+    /// provider has a key here, the thinking levels, and what the machine
+    /// uses when nothing is picked. Never a key.
+    pub async fn choices(&self) -> Result<Value, FlowError> {
+        let settings = config::load(&self.db).await?;
+        let models = match settings.model {
+            Some(_) => self.runtime().await?.request("providers.available", json!({})).await.map_err(|e| anyhow::anyhow!("{e}"))?,
+            None => json!([]),
+        };
+        Ok(json!({
+            "models": models,
+            "thinkingLevels": config::THINKING_LEVELS,
+            "model": settings.model,
+            "thinkingLevel": settings.thinking_level,
+        }))
+    }
+
+    /// Whether [c] names a model a provider here has a key for, and a
+    /// thinking level there is.
+    async fn check_choice(&self, c: &TaskChoice) -> Result<(), FlowError> {
+        if let Some(level) = &c.thinking_level
+            && !config::THINKING_LEVELS.contains(&level.as_str())
+        {
+            return Err(FlowError::Invalid("invalidThinkingLevel"));
+        }
+        if let Some(m) = &c.model {
+            let models = self.choices().await?;
+            let known = models["models"].as_array().is_some_and(|a| a.iter().any(|x| x["provider"] == m.provider.as_str() && x["id"] == m.id.as_str()));
+            if !known {
+                return Err(FlowError::Invalid("unknownModel"));
+            }
+        }
+        Ok(())
+    }
+
+    /// [c] on a task that is active: kept for its next run, and on its open
+    /// session from its next request.
+    async fn apply_choice(&self, flow: &Flow, c: &TaskChoice) {
+        if c.model.is_none() && c.thinking_level.is_none() {
+            return;
+        }
+        {
+            let mut v = flow.view.lock().unwrap();
+            if let Some(m) = &c.model {
+                v.model = Some(m.clone());
+            }
+            if let Some(l) = &c.thinking_level {
+                v.thinking_level = Some(l.clone());
+            }
+        }
+        let session = flow.session.lock().unwrap().clone();
+        if let Some(s) = session {
+            if let Some(m) = &c.model
+                && let Err(e) = s.set_model(json!(m)).await
+            {
+                tracing::warn!("agent mode: switching the model of {}: {e}", flow.id);
+            }
+            if let Some(l) = &c.thinking_level
+                && let Err(e) = s.set_thinking_level(l).await
+            {
+                tracing::warn!("agent mode: switching the thinking level of {}: {e}", flow.id);
+            }
+        }
+        self.persist(flow).await;
+    }
+
     /// Writes [flow]'s row and tells its pages.
     pub(crate) async fn persist(&self, flow: &Flow) {
         let mut v = flow.view();
         v.updated_at = chrono::Utc::now().to_rfc3339();
         flow.view.lock().unwrap().updated_at = v.updated_at.clone();
         let r = sqlx::query(
-            "UPDATE agent_flow SET title = ?, status = ?, line = ?, areas = ?, updated_at = ?, started_at = ?, finished_at = ? WHERE id = ?",
+            "UPDATE agent_flow SET title = ?, status = ?, line = ?, areas = ?, model = ?, thinking_level = ?, updated_at = ?, started_at = ?, finished_at = ? WHERE id = ?",
         )
         .bind(&v.title)
         .bind(v.status.as_str())
         .bind(&v.line)
         .bind(serde_json::to_string(&v.areas).expect("areas serialise"))
+        .bind(v.model.as_ref().map(|m| serde_json::to_string(m).expect("a model reference serialises")))
+        .bind(&v.thinking_level)
         .bind(&v.updated_at)
         .bind(&v.started_at)
         .bind(&v.finished_at)
@@ -1331,6 +1434,8 @@ struct Row {
     line: String,
     areas: String,
     mode: String,
+    model: Option<String>,
+    thinking_level: Option<String>,
     created_at: String,
     updated_at: String,
     started_at: Option<String>,
@@ -1346,6 +1451,8 @@ impl Row {
             line: self.line,
             areas: serde_json::from_str(&self.areas).unwrap_or_default(),
             mode: permissions::Mode::parse(&self.mode),
+            model: self.model.as_deref().and_then(|m| serde_json::from_str(m).ok()),
+            thinking_level: self.thinking_level,
             created_at: self.created_at,
             updated_at: self.updated_at,
             started_at: self.started_at,

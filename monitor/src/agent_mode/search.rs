@@ -220,7 +220,7 @@ impl AgentMode {
         let Some(view) = self.row(user, id).await? else { return Err(FlowError::NotFound) };
         self.emit(user, json!({ "type": "flow", "flow": view }));
         match text {
-            Some(t) => self.reply(state, user, username, secure, id, t, Vec::new()).await,
+            Some(t) => self.reply(state, user, username, secure, id, t, Vec::new(), Default::default()).await,
             None => Ok(view),
         }
     }

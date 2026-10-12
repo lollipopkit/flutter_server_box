@@ -1810,6 +1810,8 @@ const it = {
 	deskAgentModeFoot: '⇧⇥ cambia · regole in Impostazioni › Agent › Permessi dei comandi · solo nuove attività',
 	deskAgentBypassWarn: 'Consenti tutto: eliminazioni, riavvii e modifiche alla configurazione vengono eseguiti direttamente, senza chiedere.',
 	deskAgentAttach: 'Aggiungi allegato',
+	deskAgentPickModel: 'Modello',
+	deskAgentPickThinking: 'Livello di ragionamento',
 	deskAgentRemoveAttachment: 'Rimuovi allegato',
 	deskAgentDropTitle: 'Rilascia per allegare',
 	deskAgentDropNote: 'Immagini, log, file di configurazione, fino a 20 MB ciascuno',

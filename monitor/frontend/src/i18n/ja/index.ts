@@ -1810,6 +1810,8 @@ const ja = {
 	deskAgentModeFoot: '⇧⇥ で切り替え · ルールは 設定 › Agent › コマンドの権限 · 新しいタスクにのみ適用',
 	deskAgentBypassWarn: 'すべて許可：削除、再起動、設定変更などが確認なしでそのまま実行されます。',
 	deskAgentAttach: '添付ファイルを追加',
+	deskAgentPickModel: 'モデル',
+	deskAgentPickThinking: '思考レベル',
 	deskAgentRemoveAttachment: '添付ファイルを削除',
 	deskAgentDropTitle: '離して添付',
 	deskAgentDropNote: '画像、ログ、設定ファイル（各 20 MB まで）',

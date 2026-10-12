@@ -1810,6 +1810,8 @@ const fr = {
 	deskAgentModeFoot: '⇧⇥ pour changer · règles dans Réglages › Agent › Autorisations des commandes · pour les nouvelles tâches',
 	deskAgentBypassWarn: 'Tout autoriser : suppressions, redémarrages et modifications de configuration s\'exécutent directement, sans demander.',
 	deskAgentAttach: 'Ajouter une pièce jointe',
+	deskAgentPickModel: 'Modèle',
+	deskAgentPickThinking: 'Niveau de raisonnement',
 	deskAgentRemoveAttachment: 'Retirer la pièce jointe',
 	deskAgentDropTitle: 'Relâchez pour joindre',
 	deskAgentDropNote: 'Images, journaux, fichiers de configuration, 20 Mo max. chacun',

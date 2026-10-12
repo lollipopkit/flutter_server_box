@@ -1810,6 +1810,8 @@ const es = {
 	deskAgentModeFoot: '⇧⇥ cambia · reglas en Ajustes › Agent › Permisos de comandos · solo tareas nuevas',
 	deskAgentBypassWarn: 'Permitir todo: borrados, reinicios y cambios de configuración se ejecutan directamente, sin preguntar.',
 	deskAgentAttach: 'Añadir adjunto',
+	deskAgentPickModel: 'Modelo',
+	deskAgentPickThinking: 'Nivel de razonamiento',
 	deskAgentRemoveAttachment: 'Quitar adjunto',
 	deskAgentDropTitle: 'Suelta para adjuntar',
 	deskAgentDropNote: 'Imágenes, registros, archivos de configuración, hasta 20 MB cada uno',

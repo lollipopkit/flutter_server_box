@@ -7481,6 +7481,14 @@ type RootTranslation = {
 	 */
 	deskAgentAttach: string
 	/**
+	 * M​o​d​e​l
+	 */
+	deskAgentPickModel: string
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	deskAgentPickThinking: string
+	/**
 	 * R​e​m​o​v​e​ ​a​t​t​a​c​h​m​e​n​t
 	 */
 	deskAgentRemoveAttachment: string
@@ -17087,6 +17095,14 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Add attachment
 	 */
 	deskAgentAttach: () => LocalizedString
+	/**
+	 * Model
+	 */
+	deskAgentPickModel: () => LocalizedString
+	/**
+	 * Thinking
+	 */
+	deskAgentPickThinking: () => LocalizedString
 	/**
 	 * Remove attachment
 	 */

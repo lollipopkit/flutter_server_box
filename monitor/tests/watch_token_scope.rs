@@ -423,6 +423,7 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         (Method::POST, "/api/v1/agent/flows/absent/reply", Some(json!({ "text": "hi" }))),
         (Method::POST, "/api/v1/agent/flows/absent/answer", Some(json!({ "id": "x", "action": "cancel" }))),
         (Method::GET, "/api/v1/agent/settings", None),
+        (Method::GET, "/api/v1/agent/choices", None),
         (Method::POST, "/api/v1/agent/search", Some(json!({ "query": "x" }))),
         (Method::GET, "/api/v1/agent/permissions", None),
         (Method::POST, "/api/v1/agent/files?name=a.txt", Some(json!("x"))),

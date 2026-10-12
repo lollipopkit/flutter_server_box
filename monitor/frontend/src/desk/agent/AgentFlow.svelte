@@ -9,6 +9,7 @@
   import type { AgentStore } from './agentStore.svelte'
   import { AREA, duration, fileGlyph, statusLook, stepLook, waitLabel } from './agentView'
   import AttachmentChips from './AttachmentChips.svelte'
+  import ChoiceChips from './ChoiceChips.svelte'
   import { autosize } from './autosize'
   import { changesMemory, currentStep, deriveSteps, elapsed, type Step } from './flowModel'
   import OutputPane from './OutputPane.svelte'
@@ -93,7 +94,7 @@
     try {
       const ids = await atts.ids()
       if (!ids) return
-      await store.reply(flow.id, t, ids)
+      await store.reply(flow.id, t, ids, draft.choice())
       draft.clear(false)
       picked = null
     } catch (e) {
@@ -444,6 +445,7 @@
               if (atts.paste(e)) e.preventDefault()
             }}
           ></textarea>
+          <ChoiceChips {store} {draft} {flow} small disabled={offline} />
           <IconButton icon="attach_file" label={$LL.deskAgentAttach()} size="sm" disabled={offline} onmousedown={(e) => e.preventDefault()} onclick={() => picker?.click()} />
           <IconButton
             icon="arrow_upward"

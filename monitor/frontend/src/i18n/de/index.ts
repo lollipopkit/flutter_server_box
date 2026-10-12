@@ -1810,6 +1810,8 @@ const de = {
 	deskAgentModeFoot: '⇧⇥ wechselt · Regeln unter Einstellungen › Agent › Befehlsberechtigungen · gilt für neue Aufgaben',
 	deskAgentBypassWarn: 'Alles erlauben: Löschen, Neustarts und Konfigurationsänderungen laufen ohne Nachfrage.',
 	deskAgentAttach: 'Anhang hinzufügen',
+	deskAgentPickModel: 'Modell',
+	deskAgentPickThinking: 'Denkstufe',
 	deskAgentRemoveAttachment: 'Anhang entfernen',
 	deskAgentDropTitle: 'Loslassen zum Anhängen',
 	deskAgentDropNote: 'Bilder, Logs, Konfigurationsdateien, je bis 20 MB',
