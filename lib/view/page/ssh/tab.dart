@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -675,7 +676,14 @@ extension _Actions on _SSHTabPageState {
           current.data.pageKey.currentState?.tmuxPaneLabel(pane),
     );
     return onServer
-        ? [status, _agentAction, _snippetAction, _settingsAction, _floatAction]
+        ? [
+            status,
+            _agentAction,
+            _snippetAction,
+            _settingsAction,
+            _moveAction,
+            _floatAction,
+          ]
         : [status, _snippetAction, _settingsAction, _floatAction];
   }
 
@@ -730,6 +738,63 @@ extension _Actions on _SSHTabPageState {
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
   );
+
+  /// Carries the terminal on screen into a workspace, still connected.
+  ///
+  /// A server's only: a workspace's tabs are views of servers.
+  BarAction get _moveAction => BarAction(
+    icon: Icons.space_dashboard_outlined,
+    label: l10n.workspaceMoveTo,
+    onTap: _moveToWorkspace,
+  );
+
+  Future<void> _moveToWorkspace() async {
+    final tab = _sessions.current;
+    final state = tab?.data.pageKey.currentState;
+    final spi = tab?.data.page.args.spi;
+    // Not yet built: there is no session to carry, only a server to open
+    // one on, which the workspace can do itself.
+    if (tab == null || state == null || spi == null) return;
+    final workspaces = ref.read(workspacesProvider).all;
+    // The id of the workspace, `''` for a new one, null for no answer.
+    final target = await showRowsSheet<String>(
+      context,
+      rows: (ctx) => [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 9, 17, 3),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(l10n.workspaceMoveTo, style: UIs.text12Grey),
+          ),
+        ),
+        for (final ws in workspaces)
+          SheetChoiceTile(
+            icon: Icons.space_dashboard_outlined,
+            title: ws.name,
+            subtitle: l10n.workspaceIntoFocused,
+            selected: false,
+            onTap: () => Navigator.of(ctx).pop(ws.id),
+          ),
+        SheetChoiceTile(
+          icon: Icons.add,
+          title: l10n.workspaceNew,
+          selected: false,
+          onTap: () => Navigator.of(ctx).pop(''),
+        ),
+      ],
+    );
+    if (target == null || !mounted) return;
+    // Still this tab: the sheet was up, and the strip did not move under it.
+    if (!identical(_sessions.current, tab)) return;
+    final session = state.handOff();
+    final notifier = ref.read(workspacesProvider.notifier);
+    notifier.adoptSession(target.isEmpty ? null : target, spi.id, session);
+    _closeTab(tab.id);
+    ref.read(homeTabRequestProvider.notifier).go(AppTab.workspace);
+    Toast.show(
+      l10n.workspaceMoved(spi.name, ref.read(workspacesProvider).current.name),
+    );
+  }
 
   BarAction get _snippetAction => BarAction(
     icon: Icons.code,

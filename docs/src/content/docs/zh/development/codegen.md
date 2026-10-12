@@ -16,7 +16,7 @@ description: 使用代码生成工具生成 Dart、Flutter 和 Rust 绑定代码
 - ARB 本地化文件
 - `crates/sbm_ffi/src/api` 下的 Rust API
 
-`lib/hive/legacy_adapters.dart` 中冻结的 adapter 不在生成列表内。它们负责读取旧版本创建的 box，不要用当前 model 重新生成。
+TODO：支持的升级范围不再需要 Hive migration reader 后，删除这些 reader。`lib/hive/legacy_adapters.dart` 中的 adapter 被排除在生成列表外，因为它们要读取旧版本创建的 box；不要用当前 model 重新生成。
 
 ## Dart 代码生成
 

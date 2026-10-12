@@ -78,16 +78,6 @@ final class SettingsHit {
   final SettingsNode? parent;
 }
 
-/// The chord that reaches the search field.
-///
-/// Meta on macOS and Control elsewhere, the same split [desktopShortcuts]
-/// makes: on Linux the Super key belongs to the window manager.
-final _kSearchShortcut = SingleActivator(
-  LogicalKeyboardKey.keyF,
-  meta: isMacOS,
-  control: !isMacOS,
-);
-
 /// Names the menu — the column beside the content, or the list a narrow
 /// window starts on. Only ever one of them is in the tree.
 const settingsMenuKey = ValueKey('settings_menu');
@@ -249,9 +239,13 @@ final class _SettingsSearchField extends StatelessWidget {
               }
               // The chord, where a field that can be reached by one says so.
               if (!isDesktop) return UIs.placeholder;
-              return Text(
-                isMacOS ? '⌘F' : 'Ctrl F',
-                style: TextStyle(fontSize: 10, height: 1, color: iconColor),
+              return Consumer(
+                builder: (_, ref, _) => Text(
+                  ref
+                      .watch(keybindingsProvider)
+                      .labelOf(KbCommand.settingsSearch),
+                  style: TextStyle(fontSize: 10, height: 1, color: iconColor),
+                ),
               );
             },
           ),

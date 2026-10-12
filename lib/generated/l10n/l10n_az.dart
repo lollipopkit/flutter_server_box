@@ -5526,4 +5526,363 @@ class AppLocalizationsAz extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count axın';
   }
+
+  @override
+  String get workspace => 'İş sahəsi';
+
+  @override
+  String get workspaceTroubleshoot => 'Problemlərin həlli';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server qoşulmayıb';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Bu server işə salınanda qoşulmamaq üçün ayarlanıb.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Bütün vərəqlər ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Qoşulmayıb';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what bağlandı';
+  }
+
+  @override
+  String get workspaceClosePane => 'Paneli bağla';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'İçindəki bütün vərəqləri bağlayır; geri qaytarmaq olar';
+
+  @override
+  String get workspaceDropLeft => 'Sol';
+
+  @override
+  String get workspaceDropRight => 'Sağ';
+
+  @override
+  String get workspaceDropTop => 'Yuxarı';
+
+  @override
+  String get workspaceDropBottom => 'Aşağı';
+
+  @override
+  String get workspaceDropMerge => 'Bu panelə əlavə et';
+
+  @override
+  String get workspaceEmpty => 'Boş iş sahəsi';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Boş iş sahəsində saxlanılacaq düzülüş yoxdur';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return '$server üzərində “$template” şablonundan yeni iş sahəsi';
+  }
+
+  @override
+  String get workspaceHidden => 'Gizli';
+
+  @override
+  String get workspaceMaximize => 'Böyüt';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Panel $pane böyüdüldü, $hidden gizlədildi';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys və ya vərəq zolağına iki dəfə klikləyin';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Yeni boş iş sahəsi';
+
+  @override
+  String get workspaceNewPane => 'Yeni panel';
+
+  @override
+  String get workspaceNewTab => 'Yeni vərəq';
+
+  @override
+  String get workspaceNewTabFocused => 'Yeni vərəq · fokuslu paneldə';
+
+  @override
+  String get workspaceNoMatch => 'Uyğun nəticə yoxdur';
+
+  @override
+  String get workspaceNothingToReopen => 'Yenidən açılacaq heç nə yoxdur';
+
+  @override
+  String workspacePane(int index) {
+    return 'Panel $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Panel əməliyyatları';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panel',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Panellər';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · iki panel göstərilir; toxunulan fokus alır';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Panel $index vərəqləri';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return '$server üzərində yeni vərəq · görünüş seçin';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Cəld aç';
+
+  @override
+  String get workspaceQuickOpenHead => 'Cəld aç · Enter birincini açır';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Serverlər, görünüşlər, vərəqlər və ya iş sahələri, məs. db docker';
+
+  @override
+  String get workspaceRestore => 'Bərpa et';
+
+  @override
+  String get workspaceSaveTemplate => 'Düzülüşü şablon kimi saxla';
+
+  @override
+  String get workspaceSeamTip =>
+      'Ölçünü dəyişmək üçün sürükləyin, bərabərləşdirmək üçün iki dəfə klikləyin';
+
+  @override
+  String get workspaceSplitDown => 'Aşağı böl';
+
+  @override
+  String get workspaceSplitRight => 'Sağa böl';
+
+  @override
+  String get workspaceSwitchTo => 'Keç';
+
+  @override
+  String get workspaceSwitchWorkspace => 'İş sahəsini dəyiş';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Sinxron daxiletmə: yazılanlar bu iş sahəsinin $count terminalına göndərilir';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Sinxron daxiletməni dayandır';
+
+  @override
+  String get workspaceSyncOn => 'Daxiletməni bütün terminallara sinxronlaşdır';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Sinxron daxiletmə açıqdır: istənilən terminalda yazılanlar bu iş sahəsinin bütün terminallarına göndərilir';
+
+  @override
+  String get workspaceSyncOffToast => 'Sinxron daxiletmə bağlıdır';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace düzülüşü';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return '“$name” şablonu saxlanıldı';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Düzülüş şablonları · fokuslu panelin serverində yeni iş sahəsi';
+
+  @override
+  String get workspaceMoveTo => 'Bağlantını saxlayaraq iş sahəsinə köçür';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return '$server terminalı “$workspace” sahəsinə köçürüldü, hələ də qoşuludur';
+  }
+
+  @override
+  String get workspaceNew => 'Yeni iş sahəsi';
+
+  @override
+  String get workspaceIntoFocused => 'Fokuslu panelə';
+
+  @override
+  String get keybindings => 'Klaviatura qısayolları';
+
+  @override
+  String get kbSearchHint => 'Əmr, düymə və ya əhatə dairəsi axtar';
+
+  @override
+  String get kbOnlyModified => 'Yalnız dəyişdirilənlər';
+
+  @override
+  String get kbResetAll => 'Hamısını standarta qaytar';
+
+  @override
+  String get kbResetAllAsk =>
+      'Bu platformadakı bütün qısayollar standarta qaytarılsın?';
+
+  @override
+  String get kbResetDone => 'Standart qısayollar bərpa olundu';
+
+  @override
+  String get kbResetOne => 'Standarta qaytar';
+
+  @override
+  String get kbUnassigned => 'Təyin olunmayıb';
+
+  @override
+  String get kbFixed => 'Sabit';
+
+  @override
+  String get kbModified => 'Dəyişdirilib';
+
+  @override
+  String get kbDefault => 'Standart';
+
+  @override
+  String get kbFixedHint => 'Bu düymələr dəyişdirilə bilməz';
+
+  @override
+  String get kbNote =>
+      'İş sahəsi kombinasiyaları yalnız iş sahəsində işləyir. Parametrləri açmaq kimi qlobal kombinasiyalar bütün səhifələrdə işləyir. İş sahəsindən kənar terminalda iş sahəsi, Parametrlər və server nişanı əməliyyatları üçün kombinasiyalar shell-ə ötürülür, çünki həmin əməliyyatlar orada əlçatan deyil. Kopyalama, yapışdırma və hamısını seçmə terminal əməliyyatlarıdır, konfiqurasiya olunan kombinasiyalar deyil.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Cari: $keys · Əhatə dairəsi: $scope';
+  }
+
+  @override
+  String get kbPress => 'Düymə kombinasiyasını basın';
+
+  @override
+  String get kbRecordHint =>
+      'Təsdiq üçün Enter, ləğv üçün Esc. Fokus itərsə, yuxarıdakı xanaya toxunub yenidən basın.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return '“$name” ($scope) ilə ziddiyyət təşkil edir';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Təsdiq etdikdə bu kombinasiya ziddiyyətli əmrdən silinir.';
+
+  @override
+  String get kbRemove => 'Qısayolu sil';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” indi $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Qlobal';
+
+  @override
+  String get kbScopeSettings => 'Parametrlər səhifəsi';
+
+  @override
+  String get kbScopeServerTab => 'Server vərəqi';
+
+  @override
+  String get kbWsSplitRight => 'İş sahəsi: sağa böl';
+
+  @override
+  String get kbWsSplitDown => 'İş sahəsi: aşağı böl';
+
+  @override
+  String get kbWsFocusLeft => 'İş sahəsi: soldakı panelə fokuslan';
+
+  @override
+  String get kbWsFocusRight => 'İş sahəsi: sağdakı panelə fokuslan';
+
+  @override
+  String get kbWsFocusUp => 'İş sahəsi: yuxarıdakı panelə fokuslan';
+
+  @override
+  String get kbWsFocusDown => 'İş sahəsi: aşağıdakı panelə fokuslan';
+
+  @override
+  String get kbWsNewTab => 'İş sahəsi: yeni vərəq';
+
+  @override
+  String get kbWsCloseTab => 'İş sahəsi: vərəqi bağla';
+
+  @override
+  String get kbWsNextTab => 'İş sahəsi: növbəti vərəq';
+
+  @override
+  String get kbWsPrevTab => 'İş sahəsi: əvvəlki vərəq';
+
+  @override
+  String get kbWsTabs => 'İş sahəsi: fokuslu panelin vərəqləri';
+
+  @override
+  String get kbWsReopenTab => 'İş sahəsi: bağlanmış vərəqi yenidən aç';
+
+  @override
+  String get kbWsMaximize => 'İş sahəsi: paneli böyüt və ya bərpa et';
+
+  @override
+  String get kbWsSync =>
+      'İş sahəsi: daxiletməni bütün terminallara sinxronlaşdır';
+
+  @override
+  String get kbWsQuickOpen => 'İş sahəsi: cəld aç';
+
+  @override
+  String get kbWsSwitcher => 'İş sahəsi: iş sahəsini dəyiş';
+
+  @override
+  String get kbHomeTab => 'Ana səhifə: 1–9 vərəqinə keç';
+
+  @override
+  String get kbAppSettings => 'Parametrləri aç';
+
+  @override
+  String get kbSettingsSearch => 'Parametrlər: axtar';
+
+  @override
+  String get kbServerPrev => 'Serverlər: əvvəlki server';
+
+  @override
+  String get kbServerNext => 'Serverlər: növbəti server';
+
+  @override
+  String get kbServerList => 'Serverlər: server siyahısı';
+
+  @override
+  String get kbServerClose => 'Serverlər: təfərrüatları bağla';
 }

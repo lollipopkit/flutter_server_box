@@ -41,8 +41,10 @@ launch.
 - Follow system
 
 AMOLED is a built-in theme. It uses a pure black background in dark mode and
-standard light colors in light mode. Existing AMOLED settings migrate to Dark +
-AMOLED; Auto AMOLED migrates to System + AMOLED.
+standard light colors in light mode. TODO: Remove migration from the old
+AMOLED and Auto AMOLED settings when supported upgrade paths no longer include
+them. They currently migrate to Dark + AMOLED and System + AMOLED,
+respectively.
 
 Themes declare whether they support light mode, dark mode, or both. A theme
 that supports only one mode locks the mode setting and explains why.

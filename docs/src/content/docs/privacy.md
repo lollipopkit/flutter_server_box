@@ -49,7 +49,7 @@ retention rules also apply.
 
 Automatic diagnostics are the only telemetry sent to the developer's diagnostic
 services. The choice is shown on the intro page before the first upload and can
-be changed at any time in **Settings → App → Privacy**.
+be changed at any time in **Settings → Application → Privacy**.
 
 | Level | What is sent automatically |
 |---|---|
@@ -63,8 +63,9 @@ the intro page is shown before the first automatic upload.
 Changing the level to **Nothing** stops automatic delivery immediately; it does
 not wait for the next launch.
 
-Earlier versions also offered a **Full information** level, which added
-performance traces and feature-use analytics. It has been removed. An install
+TODO: Remove this upgrade note when supported installations no longer retain
+the old diagnostic level. Earlier versions also offered **Full information**,
+which added performance traces and feature-use analytics. It has been removed. An install
 that had chosen it is moved to **Basic information** when it updates, and the
 per-install analytics identifier that level stored on the device is deleted.
 No performance traces or feature-use events are sent at any level.
@@ -113,7 +114,7 @@ the platform. It replaces configured server names, SSH hosts, SSH usernames and
 Monitor addresses that it recognizes, but does not claim the complete report is
 anonymous.
 
-The newest report is kept under **Settings → App → Privacy → Crash report**;
+The newest report is kept under **Settings → Application → Privacy → Crash report**;
 the row appears only while a report exists. You can review the complete text,
 copy it, copy it and open a GitHub issue page, or delete it. Nothing is posted
 automatically. This manual path is available at every diagnostic level,
@@ -133,7 +134,7 @@ anonymous. Anything pasted into GitHub is public and is covered by
 
 ## AI requests
 
-The Agent uses the providers you add at **Settings → App → AI → Providers**:
+The Agent uses the providers you add at **Settings → Application → AI → Providers**:
 built-in ones from the model catalog, and custom endpoints. No request is made
 until you send an Agent message, and each goes to the provider of the chat's
 model.

@@ -13,7 +13,9 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/tray.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/desktop_shortcuts.dart';
+import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/virt/virt.dart';
@@ -493,12 +495,30 @@ class _HomePageState extends ConsumerState<HomePage>
               tabCount: _tabs.length,
               onTab: _onDestinationSelected,
               onSettings: _openSettings,
+              // As changed on the shortcuts page.
+              settingsChord: (_) => ref
+                  .watch(keybindingsProvider)
+                  .activatorOf(KbCommand.appSettings),
             ),
             // Focused so the bindings are reachable without clicking
             // something first, and skipping traversal so Tab still walks the
             // actual controls.
             child: Focus(autofocus: true, skipTraversal: true, child: withBack),
           );
+    // The same chords as asked for by a terminal, which takes every key it
+    // is given and hands the app's on as intents rather than letting them
+    // reach the bindings above.
+    final withActions = Actions(
+      actions: {
+        GlobalKbIntent: CallbackAction<GlobalKbIntent>(
+          onInvoke: (intent) {
+            if (intent.command == KbCommand.appSettings) _openSettings();
+            return null;
+          },
+        ),
+      },
+      child: withKeys,
+    );
 
     if (Platform.isMacOS) {
       return PlatformMenuBar(
@@ -506,11 +526,14 @@ class _HomePageState extends ConsumerState<HomePage>
           context,
           _onDestinationSelected,
           onSettings: _openSettings,
+          settingsShortcut: ref
+              .watch(keybindingsProvider)
+              .activatorOf(KbCommand.appSettings),
         ),
-        child: withKeys,
+        child: withActions,
       );
     }
-    return withKeys;
+    return withActions;
   }
 
   @override

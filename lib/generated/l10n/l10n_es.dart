@@ -5608,4 +5608,369 @@ class AppLocalizationsEs extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count hilos';
   }
+
+  @override
+  String get workspace => 'Espacio de trabajo';
+
+  @override
+  String get workspaceTroubleshoot => 'Diagnóstico';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server no está conectado';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Este servidor está configurado para no conectarse al iniciar.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Todas las pestañas ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'No conectado';
+
+  @override
+  String workspaceClosed(String what) {
+    return 'Se cerró $what';
+  }
+
+  @override
+  String get workspaceClosePane => 'Cerrar panel';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Cierra todas sus pestañas; se puede deshacer';
+
+  @override
+  String get workspaceDropLeft => 'Izquierda';
+
+  @override
+  String get workspaceDropRight => 'Derecha';
+
+  @override
+  String get workspaceDropTop => 'Arriba';
+
+  @override
+  String get workspaceDropBottom => 'Abajo';
+
+  @override
+  String get workspaceDropMerge => 'Unir a este panel';
+
+  @override
+  String get workspaceEmpty => 'Espacio de trabajo vacío';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Un espacio de trabajo vacío no tiene diseño que guardar';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Nuevo espacio de trabajo con “$template” en $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Oculto';
+
+  @override
+  String get workspaceMaximize => 'Maximizar';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Panel $pane maximizado, $hidden ocultos';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys, o doble clic en la barra de pestañas';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Nuevo espacio de trabajo vacío';
+
+  @override
+  String get workspaceNewPane => 'Nuevo panel';
+
+  @override
+  String get workspaceNewTab => 'Nueva pestaña';
+
+  @override
+  String get workspaceNewTabFocused => 'Nueva pestaña · en el panel enfocado';
+
+  @override
+  String get workspaceNoMatch => 'Sin resultados';
+
+  @override
+  String get workspaceNothingToReopen => 'Nada que reabrir';
+
+  @override
+  String workspacePane(int index) {
+    return 'Panel $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Acciones del panel';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count paneles',
+      one: '1 panel',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Paneles';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · se muestran dos paneles; el que toques recibe el foco';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Pestañas del panel $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Nueva pestaña en $server · elige una vista';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Apertura rápida';
+
+  @override
+  String get workspaceQuickOpenHead =>
+      'Apertura rápida · Enter abre el primero';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Servidores, vistas, pestañas o espacios de trabajo, p. ej. db docker';
+
+  @override
+  String get workspaceRestore => 'Restaurar';
+
+  @override
+  String get workspaceSaveTemplate => 'Guardar diseño como plantilla';
+
+  @override
+  String get workspaceSeamTip =>
+      'Arrastra para cambiar el tamaño, doble clic para igualar';
+
+  @override
+  String get workspaceSplitDown => 'Dividir hacia abajo';
+
+  @override
+  String get workspaceSplitRight => 'Dividir a la derecha';
+
+  @override
+  String get workspaceSwitchTo => 'Cambiar a';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Cambiar de espacio de trabajo';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Entrada sincronizada: lo que escribas va a los $count terminales de este espacio de trabajo';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Dejar de sincronizar la entrada';
+
+  @override
+  String get workspaceSyncOn =>
+      'Sincronizar la entrada en todos los terminales';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Entrada sincronizada activada: lo que escribas en un terminal va a todos los terminales de este espacio de trabajo';
+
+  @override
+  String get workspaceSyncOffToast => 'Entrada sincronizada desactivada';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Diseño de $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Plantilla “$name” guardada';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Plantillas de diseño · nuevo espacio de trabajo en el servidor del panel enfocado';
+
+  @override
+  String get workspaceMoveTo => 'Mover a un espacio de trabajo sin desconectar';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminal $server movido a “$workspace”, sigue conectado';
+  }
+
+  @override
+  String get workspaceNew => 'Nuevo espacio de trabajo';
+
+  @override
+  String get workspaceIntoFocused => 'Al panel enfocado';
+
+  @override
+  String get keybindings => 'Atajos de teclado';
+
+  @override
+  String get kbSearchHint => 'Buscar comandos, teclas o ámbitos';
+
+  @override
+  String get kbOnlyModified => 'Solo modificados';
+
+  @override
+  String get kbResetAll => 'Restablecer todo';
+
+  @override
+  String get kbResetAllAsk =>
+      '¿Restablecer todos los atajos de esta plataforma a sus valores predeterminados?';
+
+  @override
+  String get kbResetDone => 'Atajos predeterminados restaurados';
+
+  @override
+  String get kbResetOne => 'Restablecer';
+
+  @override
+  String get kbUnassigned => 'Sin asignar';
+
+  @override
+  String get kbFixed => 'Fijo';
+
+  @override
+  String get kbModified => 'Modificado';
+
+  @override
+  String get kbDefault => 'Predeterminado';
+
+  @override
+  String get kbFixedHint => 'Estas teclas no se pueden cambiar';
+
+  @override
+  String get kbNote =>
+      'Un terminal en un espacio de trabajo deja a la app las combinaciones del espacio de trabajo y las globales; las demás combinaciones de aquí llegan a la shell. Los comandos de distintos ámbitos pueden compartir una combinación.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Actual: $keys · Ámbito: $scope';
+  }
+
+  @override
+  String get kbPress => 'Pulsa una combinación de teclas';
+
+  @override
+  String get kbRecordHint =>
+      'Enter para confirmar, Esc para cancelar. Si se pierde el foco, toca el cuadro de arriba y vuelve a pulsar.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'Entra en conflicto con “$name” ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Al confirmar, esta combinación se quita del comando en conflicto.';
+
+  @override
+  String get kbRemove => 'Quitar atajo';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” ahora es $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Global';
+
+  @override
+  String get kbScopeSettings => 'Página de ajustes';
+
+  @override
+  String get kbScopeServerTab => 'Pestaña de servidores';
+
+  @override
+  String get kbWsSplitRight => 'Espacio de trabajo: dividir a la derecha';
+
+  @override
+  String get kbWsSplitDown => 'Espacio de trabajo: dividir hacia abajo';
+
+  @override
+  String get kbWsFocusLeft =>
+      'Espacio de trabajo: enfocar el panel de la izquierda';
+
+  @override
+  String get kbWsFocusRight =>
+      'Espacio de trabajo: enfocar el panel de la derecha';
+
+  @override
+  String get kbWsFocusUp => 'Espacio de trabajo: enfocar el panel de arriba';
+
+  @override
+  String get kbWsFocusDown => 'Espacio de trabajo: enfocar el panel de abajo';
+
+  @override
+  String get kbWsNewTab => 'Espacio de trabajo: nueva pestaña';
+
+  @override
+  String get kbWsCloseTab => 'Espacio de trabajo: cerrar pestaña';
+
+  @override
+  String get kbWsNextTab => 'Espacio de trabajo: pestaña siguiente';
+
+  @override
+  String get kbWsPrevTab => 'Espacio de trabajo: pestaña anterior';
+
+  @override
+  String get kbWsTabs => 'Espacio de trabajo: pestañas del panel enfocado';
+
+  @override
+  String get kbWsReopenTab => 'Espacio de trabajo: reabrir pestaña cerrada';
+
+  @override
+  String get kbWsMaximize => 'Espacio de trabajo: maximizar o restaurar panel';
+
+  @override
+  String get kbWsSync =>
+      'Espacio de trabajo: sincronizar la entrada en todos los terminales';
+
+  @override
+  String get kbWsQuickOpen => 'Espacio de trabajo: apertura rápida';
+
+  @override
+  String get kbWsSwitcher =>
+      'Espacio de trabajo: cambiar de espacio de trabajo';
+
+  @override
+  String get kbHomeTab => 'Inicio: ir a la pestaña 1–9';
+
+  @override
+  String get kbAppSettings => 'Abrir ajustes';
+
+  @override
+  String get kbSettingsSearch => 'Ajustes: buscar';
+
+  @override
+  String get kbServerPrev => 'Servidores: servidor anterior';
+
+  @override
+  String get kbServerNext => 'Servidores: servidor siguiente';
+
+  @override
+  String get kbServerList => 'Servidores: lista de servidores';
+
+  @override
+  String get kbServerClose => 'Servidores: cerrar detalles';
 }

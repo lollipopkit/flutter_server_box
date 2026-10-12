@@ -5517,4 +5517,362 @@ class AppLocalizationsTr extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count iş parçacığı';
   }
+
+  @override
+  String get workspace => 'Çalışma alanı';
+
+  @override
+  String get workspaceTroubleshoot => 'Sorun giderme';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server bağlı değil';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Bu sunucu başlangıçta bağlanmayacak şekilde ayarlanmış.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Tüm sekmeler ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Bağlı değil';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what kapatıldı';
+  }
+
+  @override
+  String get workspaceClosePane => 'Bölmeyi kapat';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'İçindeki tüm sekmeleri kapatır; geri alınabilir';
+
+  @override
+  String get workspaceDropLeft => 'Sol';
+
+  @override
+  String get workspaceDropRight => 'Sağ';
+
+  @override
+  String get workspaceDropTop => 'Üst';
+
+  @override
+  String get workspaceDropBottom => 'Alt';
+
+  @override
+  String get workspaceDropMerge => 'Bu bölmeye ekle';
+
+  @override
+  String get workspaceEmpty => 'Boş çalışma alanı';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Boş bir çalışma alanında kaydedilecek düzen yok';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return '$server üzerinde “$template” şablonundan yeni çalışma alanı';
+  }
+
+  @override
+  String get workspaceHidden => 'Gizli';
+
+  @override
+  String get workspaceMaximize => 'Büyüt';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Bölme $pane büyütüldü, $hidden gizli';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys veya sekme çubuğuna çift tıklayın';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Yeni boş çalışma alanı';
+
+  @override
+  String get workspaceNewPane => 'Yeni bölme';
+
+  @override
+  String get workspaceNewTab => 'Yeni sekme';
+
+  @override
+  String get workspaceNewTabFocused => 'Yeni sekme · odaklı bölmede';
+
+  @override
+  String get workspaceNoMatch => 'Eşleşme yok';
+
+  @override
+  String get workspaceNothingToReopen => 'Yeniden açılacak bir şey yok';
+
+  @override
+  String workspacePane(int index) {
+    return 'Bölme $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Bölme işlemleri';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bölme',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Bölmeler';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · iki bölme gösterilir; dokunulan odaklanır';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Bölme $index sekmeleri';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return '$server üzerinde yeni sekme · bir görünüm seçin';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Hızlı aç';
+
+  @override
+  String get workspaceQuickOpenHead => 'Hızlı aç · Enter ilkini açar';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Sunucular, görünümler, sekmeler veya çalışma alanları, ör. db docker';
+
+  @override
+  String get workspaceRestore => 'Geri yükle';
+
+  @override
+  String get workspaceSaveTemplate => 'Düzeni şablon olarak kaydet';
+
+  @override
+  String get workspaceSeamTip =>
+      'Boyutlandırmak için sürükleyin, eşitlemek için çift tıklayın';
+
+  @override
+  String get workspaceSplitDown => 'Aşağı böl';
+
+  @override
+  String get workspaceSplitRight => 'Sağa böl';
+
+  @override
+  String get workspaceSwitchTo => 'Geçiş yap';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Çalışma alanı değiştir';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Girdi eşitleme: yazılanlar bu çalışma alanının $count terminaline gönderilir';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Girdi eşitlemeyi durdur';
+
+  @override
+  String get workspaceSyncOn => 'Girdiyi tüm terminallere eşitle';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Girdi eşitleme açık: herhangi bir terminalde yazılanlar bu çalışma alanının tüm terminallerine gönderilir';
+
+  @override
+  String get workspaceSyncOffToast => 'Girdi eşitleme kapalı';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace düzeni';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return '“$name” şablonu kaydedildi';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Düzen şablonları · odaklı bölmenin sunucusunda yeni çalışma alanı';
+
+  @override
+  String get workspaceMoveTo => 'Bağlantıyı koruyarak çalışma alanına taşı';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return '$server terminali “$workspace” alanına taşındı, hâlâ bağlı';
+  }
+
+  @override
+  String get workspaceNew => 'Yeni çalışma alanı';
+
+  @override
+  String get workspaceIntoFocused => 'Odaklı bölmeye';
+
+  @override
+  String get keybindings => 'Klavye kısayolları';
+
+  @override
+  String get kbSearchHint => 'Komut, tuş veya kapsam ara';
+
+  @override
+  String get kbOnlyModified => 'Yalnızca değiştirilenler';
+
+  @override
+  String get kbResetAll => 'Tümünü varsayılana sıfırla';
+
+  @override
+  String get kbResetAllAsk =>
+      'Bu platformdaki tüm kısayollar varsayılana sıfırlansın mı?';
+
+  @override
+  String get kbResetDone => 'Varsayılan kısayollar geri yüklendi';
+
+  @override
+  String get kbResetOne => 'Varsayılana sıfırla';
+
+  @override
+  String get kbUnassigned => 'Atanmamış';
+
+  @override
+  String get kbFixed => 'Sabit';
+
+  @override
+  String get kbModified => 'Değiştirildi';
+
+  @override
+  String get kbDefault => 'Varsayılan';
+
+  @override
+  String get kbFixedHint => 'Bu tuşlar değiştirilemez';
+
+  @override
+  String get kbNote =>
+      'Çalışma alanı kısayolları yalnızca çalışma alanında çalışır. Ayarları açmak gibi genel kısayollar her sayfada çalışır. Çalışma alanı dışındaki bir terminalde, çalışma alanı, Ayarlar veya sunucu sekmesi işlemlerine atanmış kısayollar shell\'e iletilir; bu işlemler o terminalde kullanılamaz. Kopyala, yapıştır ve tümünü seç terminal kontrolleridir; yapılandırılabilir kısayollar değildir.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Geçerli: $keys · Kapsam: $scope';
+  }
+
+  @override
+  String get kbPress => 'Bir tuş kombinasyonuna basın';
+
+  @override
+  String get kbRecordHint =>
+      'Onaylamak için Enter, iptal için Esc. Odak kaybolursa yukarıdaki kutuya dokunup yeniden basın.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return '“$name” ($scope) ile çakışıyor';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Onaylamak bu kombinasyonu çakışan komuttan kaldırır.';
+
+  @override
+  String get kbRemove => 'Kısayolu kaldır';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” artık $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Genel';
+
+  @override
+  String get kbScopeSettings => 'Ayarlar sayfası';
+
+  @override
+  String get kbScopeServerTab => 'Sunucu sekmesi';
+
+  @override
+  String get kbWsSplitRight => 'Çalışma alanı: sağa böl';
+
+  @override
+  String get kbWsSplitDown => 'Çalışma alanı: aşağı böl';
+
+  @override
+  String get kbWsFocusLeft => 'Çalışma alanı: soldaki bölmeye odaklan';
+
+  @override
+  String get kbWsFocusRight => 'Çalışma alanı: sağdaki bölmeye odaklan';
+
+  @override
+  String get kbWsFocusUp => 'Çalışma alanı: üstteki bölmeye odaklan';
+
+  @override
+  String get kbWsFocusDown => 'Çalışma alanı: alttaki bölmeye odaklan';
+
+  @override
+  String get kbWsNewTab => 'Çalışma alanı: yeni sekme';
+
+  @override
+  String get kbWsCloseTab => 'Çalışma alanı: sekmeyi kapat';
+
+  @override
+  String get kbWsNextTab => 'Çalışma alanı: sonraki sekme';
+
+  @override
+  String get kbWsPrevTab => 'Çalışma alanı: önceki sekme';
+
+  @override
+  String get kbWsTabs => 'Çalışma alanı: odaklı bölmenin sekmeleri';
+
+  @override
+  String get kbWsReopenTab => 'Çalışma alanı: kapatılan sekmeyi yeniden aç';
+
+  @override
+  String get kbWsMaximize => 'Çalışma alanı: bölmeyi büyüt veya geri yükle';
+
+  @override
+  String get kbWsSync => 'Çalışma alanı: girdiyi tüm terminallere eşitle';
+
+  @override
+  String get kbWsQuickOpen => 'Çalışma alanı: hızlı aç';
+
+  @override
+  String get kbWsSwitcher => 'Çalışma alanı: çalışma alanı değiştir';
+
+  @override
+  String get kbHomeTab => 'Ana sayfa: 1–9. sekmeye git';
+
+  @override
+  String get kbAppSettings => 'Ayarları aç';
+
+  @override
+  String get kbSettingsSearch => 'Ayarlar: ara';
+
+  @override
+  String get kbServerPrev => 'Sunucular: önceki sunucu';
+
+  @override
+  String get kbServerNext => 'Sunucular: sonraki sunucu';
+
+  @override
+  String get kbServerList => 'Sunucular: sunucu listesi';
+
+  @override
+  String get kbServerClose => 'Sunucular: ayrıntıları kapat';
 }

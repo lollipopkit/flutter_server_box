@@ -5177,6 +5177,349 @@ class AppLocalizationsZh extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count 个线程';
   }
+
+  @override
+  String get workspace => '工作区';
+
+  @override
+  String get workspaceTroubleshoot => '排查';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server 未连接';
+  }
+
+  @override
+  String get workspaceConnectHint => '这台服务器设置为启动时不自动连接。';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return '全部标签（$count）';
+  }
+
+  @override
+  String get workspaceAsleep => '未连接';
+
+  @override
+  String workspaceClosed(String what) {
+    return '已关闭$what';
+  }
+
+  @override
+  String get workspaceClosePane => '关闭区块';
+
+  @override
+  String get workspaceClosePaneHint => '关闭其中全部标签，可以撤销';
+
+  @override
+  String get workspaceDropLeft => '左侧';
+
+  @override
+  String get workspaceDropRight => '右侧';
+
+  @override
+  String get workspaceDropTop => '上方';
+
+  @override
+  String get workspaceDropBottom => '下方';
+
+  @override
+  String get workspaceDropMerge => '并入这个区块';
+
+  @override
+  String get workspaceEmpty => '空工作区';
+
+  @override
+  String get workspaceEmptyTemplate => '空工作区没有可保存的布局';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return '已按模板「$template」新建工作区，服务器：$server';
+  }
+
+  @override
+  String get workspaceHidden => '隐藏';
+
+  @override
+  String get workspaceMaximize => '最大化';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return '区块 $pane 已最大化，其余 $hidden 个已隐藏';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys，也可双击标签栏';
+  }
+
+  @override
+  String get workspaceNewEmpty => '新建空工作区';
+
+  @override
+  String get workspaceNewPane => '新区块';
+
+  @override
+  String get workspaceNewTab => '新标签';
+
+  @override
+  String get workspaceNewTabFocused => '新标签 · 放入焦点区块';
+
+  @override
+  String get workspaceNoMatch => '没有匹配的结果';
+
+  @override
+  String get workspaceNothingToReopen => '没有可以重新打开的标签';
+
+  @override
+  String workspacePane(int index) {
+    return '区块 $index';
+  }
+
+  @override
+  String get workspacePaneActions => '区块操作';
+
+  @override
+  String workspacePaneCount(int count) {
+    return '$count 个区块';
+  }
+
+  @override
+  String get workspacePanes => '区块列表';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · 同时显示两个区块，点按的区块成为焦点';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return '区块 $index 的标签';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return '新标签 · $server · 选择界面';
+  }
+
+  @override
+  String get workspaceQuickOpen => '快速打开';
+
+  @override
+  String get workspaceQuickOpenHead => '快速打开 · Enter 打开第一项';
+
+  @override
+  String get workspaceQuickOpenHint => '服务器、界面、标签或工作区，例如 db docker';
+
+  @override
+  String get workspaceRestore => '还原';
+
+  @override
+  String get workspaceSaveTemplate => '把当前布局保存为模板';
+
+  @override
+  String get workspaceSeamTip => '拖动调整大小，双击恢复均分';
+
+  @override
+  String get workspaceSplitDown => '向下分屏';
+
+  @override
+  String get workspaceSplitRight => '向右分屏';
+
+  @override
+  String get workspaceSwitchTo => '切换到';
+
+  @override
+  String get workspaceSwitchWorkspace => '切换工作区';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return '同步输入：键入内容会发送到本工作区的 $count 个终端';
+  }
+
+  @override
+  String get workspaceSyncOff => '关闭同步输入';
+
+  @override
+  String get workspaceSyncOn => '同步输入到所有终端';
+
+  @override
+  String get workspaceSyncOnToast => '同步输入已开启：在任一终端键入，会发送到本工作区的全部终端';
+
+  @override
+  String get workspaceSyncOffToast => '同步输入已关闭';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace 的布局';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return '已保存模板「$name」';
+  }
+
+  @override
+  String get workspaceTemplatesHead => '布局模板 · 按当前区块的服务器新建工作区';
+
+  @override
+  String get workspaceMoveTo => '移到工作区，连接保持';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return '终端 $server 已移到「$workspace」，连接保持';
+  }
+
+  @override
+  String get workspaceNew => '新工作区';
+
+  @override
+  String get workspaceIntoFocused => '放入焦点区块';
+
+  @override
+  String get keybindings => '快捷键';
+
+  @override
+  String get kbSearchHint => '搜索命令、按键或生效范围';
+
+  @override
+  String get kbOnlyModified => '仅显示已修改';
+
+  @override
+  String get kbResetAll => '全部恢复默认';
+
+  @override
+  String get kbResetAllAsk => '把这个平台的全部快捷键恢复默认？';
+
+  @override
+  String get kbResetDone => '已恢复默认快捷键';
+
+  @override
+  String get kbResetOne => '恢复默认';
+
+  @override
+  String get kbUnassigned => '未分配';
+
+  @override
+  String get kbFixed => '固定';
+
+  @override
+  String get kbModified => '已修改';
+
+  @override
+  String get kbDefault => '默认';
+
+  @override
+  String get kbFixedHint => '这一组按键不能修改';
+
+  @override
+  String get kbNote =>
+      '工作区快捷键只在工作区中生效；全局快捷键（例如打开设置）在各页面都生效。在其他终端页面中，工作区、设置页和服务器标签页对应的快捷键会传给 shell，因为这些操作在此处不可用。复制、粘贴和全选不属于可配置快捷键。';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return '当前：$keys · 生效范围：$scope';
+  }
+
+  @override
+  String get kbPress => '按下组合键';
+
+  @override
+  String get kbRecordHint => 'Enter 确认，Esc 取消。焦点离开后，点按上面的框再按。';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return '与「$name」冲突（$scope）';
+  }
+
+  @override
+  String get kbConflictNote => '确认后，冲突命令的这个组合会被移除。';
+
+  @override
+  String get kbRemove => '移除快捷键';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '「$name」改为 $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => '全局';
+
+  @override
+  String get kbScopeSettings => '设置页';
+
+  @override
+  String get kbScopeServerTab => '服务器标签页';
+
+  @override
+  String get kbWsSplitRight => '工作区：向右分屏';
+
+  @override
+  String get kbWsSplitDown => '工作区：向下分屏';
+
+  @override
+  String get kbWsFocusLeft => '工作区：焦点移到左侧区块';
+
+  @override
+  String get kbWsFocusRight => '工作区：焦点移到右侧区块';
+
+  @override
+  String get kbWsFocusUp => '工作区：焦点移到上方区块';
+
+  @override
+  String get kbWsFocusDown => '工作区：焦点移到下方区块';
+
+  @override
+  String get kbWsNewTab => '工作区：新标签';
+
+  @override
+  String get kbWsCloseTab => '工作区：关闭标签';
+
+  @override
+  String get kbWsNextTab => '工作区：下一个标签';
+
+  @override
+  String get kbWsPrevTab => '工作区：上一个标签';
+
+  @override
+  String get kbWsTabs => '工作区：当前区块的标签列表';
+
+  @override
+  String get kbWsReopenTab => '工作区：重新打开关闭的标签';
+
+  @override
+  String get kbWsMaximize => '工作区：最大化或还原区块';
+
+  @override
+  String get kbWsSync => '工作区：同步输入到所有终端';
+
+  @override
+  String get kbWsQuickOpen => '工作区：快速打开';
+
+  @override
+  String get kbWsSwitcher => '工作区：切换工作区';
+
+  @override
+  String get kbHomeTab => '主页：切换到第 1–9 个标签页';
+
+  @override
+  String get kbAppSettings => '打开设置';
+
+  @override
+  String get kbSettingsSearch => '设置：搜索';
+
+  @override
+  String get kbServerPrev => '服务器：上一台';
+
+  @override
+  String get kbServerNext => '服务器：下一台';
+
+  @override
+  String get kbServerList => '服务器：服务器列表';
+
+  @override
+  String get kbServerClose => '服务器：关闭详情';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -10351,4 +10694,352 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String threadsFmt(int count) {
     return '$count 個執行緒';
   }
+
+  @override
+  String get workspace => '工作區';
+
+  @override
+  String get workspaceTroubleshoot => '排查';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server 未連線';
+  }
+
+  @override
+  String get workspaceConnectHint => '這台伺服器設定為啟動時不自動連線。';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return '全部分頁（$count）';
+  }
+
+  @override
+  String get workspaceAsleep => '未連線';
+
+  @override
+  String workspaceClosed(String what) {
+    return '已關閉$what';
+  }
+
+  @override
+  String get workspaceClosePane => '關閉區塊';
+
+  @override
+  String get workspaceClosePaneHint => '關閉其中全部分頁，可以復原';
+
+  @override
+  String get workspaceDropLeft => '左側';
+
+  @override
+  String get workspaceDropRight => '右側';
+
+  @override
+  String get workspaceDropTop => '上方';
+
+  @override
+  String get workspaceDropBottom => '下方';
+
+  @override
+  String get workspaceDropMerge => '併入這個區塊';
+
+  @override
+  String get workspaceEmpty => '空工作區';
+
+  @override
+  String get workspaceEmptyTemplate => '空工作區沒有可儲存的版面配置';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return '已依範本「$template」新增工作區，伺服器：$server';
+  }
+
+  @override
+  String get workspaceHidden => '隱藏';
+
+  @override
+  String get workspaceMaximize => '最大化';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return '區塊 $pane 已最大化，其餘 $hidden 個已隱藏';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys，也可按兩下分頁列';
+  }
+
+  @override
+  String get workspaceNewEmpty => '新增空工作區';
+
+  @override
+  String get workspaceNewPane => '新區塊';
+
+  @override
+  String get workspaceNewTab => '新分頁';
+
+  @override
+  String get workspaceNewTabFocused => '新分頁 · 放入焦點區塊';
+
+  @override
+  String get workspaceNoMatch => '沒有符合的結果';
+
+  @override
+  String get workspaceNothingToReopen => '沒有可以重新開啟的分頁';
+
+  @override
+  String workspacePane(int index) {
+    return '區塊 $index';
+  }
+
+  @override
+  String get workspacePaneActions => '區塊操作';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個區塊',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => '區塊列表';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · 同時顯示兩個區塊，點按的區塊成為焦點';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return '區塊 $index 的分頁';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return '新分頁 · $server · 選擇介面';
+  }
+
+  @override
+  String get workspaceQuickOpen => '快速開啟';
+
+  @override
+  String get workspaceQuickOpenHead => '快速開啟 · Enter 開啟第一項';
+
+  @override
+  String get workspaceQuickOpenHint => '伺服器、介面、分頁或工作區，例如 db docker';
+
+  @override
+  String get workspaceRestore => '還原';
+
+  @override
+  String get workspaceSaveTemplate => '將目前版面配置儲存為範本';
+
+  @override
+  String get workspaceSeamTip => '拖曳調整大小，按兩下恢復均分';
+
+  @override
+  String get workspaceSplitDown => '向下分割';
+
+  @override
+  String get workspaceSplitRight => '向右分割';
+
+  @override
+  String get workspaceSwitchTo => '切換到';
+
+  @override
+  String get workspaceSwitchWorkspace => '切換工作區';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return '同步輸入：鍵入內容會傳送到本工作區的 $count 個終端機';
+  }
+
+  @override
+  String get workspaceSyncOff => '關閉同步輸入';
+
+  @override
+  String get workspaceSyncOn => '同步輸入到所有終端機';
+
+  @override
+  String get workspaceSyncOnToast => '同步輸入已開啟：在任一終端機鍵入，會傳送到本工作區的全部終端機';
+
+  @override
+  String get workspaceSyncOffToast => '同步輸入已關閉';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace 的版面配置';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return '已儲存範本「$name」';
+  }
+
+  @override
+  String get workspaceTemplatesHead => '版面配置範本 · 依目前區塊的伺服器新增工作區';
+
+  @override
+  String get workspaceMoveTo => '移到工作區，連線保持';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return '終端機 $server 已移到「$workspace」，連線保持';
+  }
+
+  @override
+  String get workspaceNew => '新工作區';
+
+  @override
+  String get workspaceIntoFocused => '放入焦點區塊';
+
+  @override
+  String get keybindings => '快速鍵';
+
+  @override
+  String get kbSearchHint => '搜尋命令、按鍵或生效範圍';
+
+  @override
+  String get kbOnlyModified => '僅顯示已修改';
+
+  @override
+  String get kbResetAll => '全部恢復預設';
+
+  @override
+  String get kbResetAllAsk => '將這個平台的全部快速鍵恢復預設？';
+
+  @override
+  String get kbResetDone => '已恢復預設快速鍵';
+
+  @override
+  String get kbResetOne => '恢復預設';
+
+  @override
+  String get kbUnassigned => '未指派';
+
+  @override
+  String get kbFixed => '固定';
+
+  @override
+  String get kbModified => '已修改';
+
+  @override
+  String get kbDefault => '預設';
+
+  @override
+  String get kbFixedHint => '這一組按鍵不能修改';
+
+  @override
+  String get kbNote =>
+      '工作區快捷鍵只在工作區中生效；全域快捷鍵（例如開啟設定）在各頁面都生效。在其他終端頁面中，工作區、設定頁面和伺服器分頁對應的快捷鍵會傳給 shell，因為這些操作在此處無法使用。複製、貼上和全選不屬於可設定的快捷鍵。';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return '目前：$keys · 生效範圍：$scope';
+  }
+
+  @override
+  String get kbPress => '按下組合鍵';
+
+  @override
+  String get kbRecordHint => 'Enter 確認，Esc 取消。焦點離開後，點按上方的框再按。';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return '與「$name」衝突（$scope）';
+  }
+
+  @override
+  String get kbConflictNote => '確認後，衝突命令的這個組合會被移除。';
+
+  @override
+  String get kbRemove => '移除快速鍵';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '「$name」改為 $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => '全域';
+
+  @override
+  String get kbScopeSettings => '設定頁';
+
+  @override
+  String get kbScopeServerTab => '伺服器分頁';
+
+  @override
+  String get kbWsSplitRight => '工作區：向右分割';
+
+  @override
+  String get kbWsSplitDown => '工作區：向下分割';
+
+  @override
+  String get kbWsFocusLeft => '工作區：焦點移到左側區塊';
+
+  @override
+  String get kbWsFocusRight => '工作區：焦點移到右側區塊';
+
+  @override
+  String get kbWsFocusUp => '工作區：焦點移到上方區塊';
+
+  @override
+  String get kbWsFocusDown => '工作區：焦點移到下方區塊';
+
+  @override
+  String get kbWsNewTab => '工作區：新分頁';
+
+  @override
+  String get kbWsCloseTab => '工作區：關閉分頁';
+
+  @override
+  String get kbWsNextTab => '工作區：下一個分頁';
+
+  @override
+  String get kbWsPrevTab => '工作區：上一個分頁';
+
+  @override
+  String get kbWsTabs => '工作區：目前區塊的分頁列表';
+
+  @override
+  String get kbWsReopenTab => '工作區：重新開啟已關閉的分頁';
+
+  @override
+  String get kbWsMaximize => '工作區：最大化或還原區塊';
+
+  @override
+  String get kbWsSync => '工作區：同步輸入到所有終端機';
+
+  @override
+  String get kbWsQuickOpen => '工作區：快速開啟';
+
+  @override
+  String get kbWsSwitcher => '工作區：切換工作區';
+
+  @override
+  String get kbHomeTab => '主頁：切換到第 1–9 個分頁';
+
+  @override
+  String get kbAppSettings => '開啟設定';
+
+  @override
+  String get kbSettingsSearch => '設定：搜尋';
+
+  @override
+  String get kbServerPrev => '伺服器：上一台';
+
+  @override
+  String get kbServerNext => '伺服器：下一台';
+
+  @override
+  String get kbServerList => '伺服器：伺服器列表';
+
+  @override
+  String get kbServerClose => '伺服器：關閉詳情';
 }

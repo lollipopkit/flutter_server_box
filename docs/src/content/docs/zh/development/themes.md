@@ -11,9 +11,10 @@ description: 内置主题如何打包、加载与分发
 
 `BuiltinTheme`（`packages/fl_lib/lib/src/theme/builtin.dart`）列出本构建内置的主题及其在
 选择器中的标签，只包含离线也必须可用的主题。`Default` 是 Dart const，不读取 asset，
-它在选择器中的标签已本地化（fl_lib 的 `defaultLabel`）。AMOLED 是旧版 AMOLED 主题模式
-迁移的目标，源目录位于 `packages/fl_lib/assets/themes/amoled/`，其中包含 `manifest.toml`，并在
-fl_lib 的 `pubspec.yaml` 中注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
+它在选择器中的标签已本地化（fl_lib 的 `defaultLabel`）。TODO：支持的升级路径不再包含旧版
+AMOLED 模式后，删除对应的迁移逻辑。AMOLED 主题源目录为
+`packages/fl_lib/assets/themes/amoled/`，其 `manifest.toml` 已在 fl_lib 的 `pubspec.yaml` 中
+注册。其他官方主题都在主题商店中（见[官方主题](#官方主题)）；如果保存的
 预设指向本构建已不再内置的主题，会回退到 Default（`ThemePackages.reconcileSelection`）。
 
 内置目录与导入目录和 `.fsbt` 压缩包共用同一个安装器，因此内置主题和已安装主题支持

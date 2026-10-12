@@ -12,11 +12,13 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
+import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
@@ -589,35 +591,42 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// those from the keyboard needs a card to be focusable first — which is a
   /// separate thing and not this.
   Widget _bound(Widget child) {
-    // The platform's own modifier: a Mac holds command where everything else
-    // holds control, and a binding that names the wrong one is a binding
-    // nobody can press.
-    SingleActivator cmd(LogicalKeyboardKey key) =>
-        SingleActivator(key, meta: isMacOS, control: !isMacOS);
+    // As set on the shortcuts page: by default the platform's own modifier,
+    // since a Mac holds command where everything else holds control.
+    final kb = ref.watch(keybindingsProvider);
+    void bind(
+      Map<ShortcutActivator, VoidCallback> into,
+      KbCommand command,
+      VoidCallback run,
+    ) {
+      final a = kb.activatorOf(command);
+      if (a != null) into[a] = run;
+    }
+
+    final bindings = <ShortcutActivator, VoidCallback>{};
+    // What the top-left arrow does, and what a set being built up is
+    // abandoned with.
+    //
+    // Handle the innermost route first. The context menu is a separate
+    // route and receives key events before this page.
+    bind(bindings, KbCommand.serverClose, () {
+      if (_selecting) {
+        _endSelecting();
+      } else {
+        _closeDetail();
+      }
+    });
+    bind(bindings, KbCommand.serverPrev, () => _stepServer(-1));
+    bind(bindings, KbCommand.serverNext, () => _stepServer(1));
+    // The list, from inside one of its machines. Nothing when the list is
+    // already the page — the bar's own search is what that wants.
+    bind(bindings, KbCommand.serverList, () {
+      final openId = ref.read(serverSelectionProvider);
+      if (openId != null) _showServerSheet(_lastFiltered, openId);
+    });
 
     return CallbackShortcuts(
-      bindings: {
-        // What the top-left arrow does, and what a set being built up is
-        // abandoned with.
-        //
-        // Handle the innermost route first. The context menu is a separate
-        // route and receives key events before this page.
-        const SingleActivator(LogicalKeyboardKey.escape): () {
-          if (_selecting) {
-            _endSelecting();
-          } else {
-            _closeDetail();
-          }
-        },
-        cmd(LogicalKeyboardKey.bracketLeft): () => _stepServer(-1),
-        cmd(LogicalKeyboardKey.bracketRight): () => _stepServer(1),
-        // The list, from inside one of its machines. Nothing when the list is
-        // already the page — the bar's own search is what that wants.
-        cmd(LogicalKeyboardKey.keyK): () {
-          final openId = ref.read(serverSelectionProvider);
-          if (openId != null) _showServerSheet(_lastFiltered, openId);
-        },
-      },
+      bindings: bindings,
       child: Focus(focusNode: _keys, child: child),
     );
   }

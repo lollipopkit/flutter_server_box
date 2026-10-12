@@ -38,7 +38,7 @@ lib/
 ├── view/              # Pages and reusable Widgets
 ├── generated/         # Generated localization code
 ├── l10n/              # Localization source ARB files
-├── hive/              # Legacy Hive adapters used only for migration
+├── hive/              # TODO: remove after the Hive migration window
 └── src/rust/          # Generated flutter_rust_bridge bindings
 ```
 

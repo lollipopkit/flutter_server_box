@@ -14,6 +14,8 @@ App 通过 `GET /api/v1/capabilities` 查询 agent 支持的功能，以及当�
 - `grants`：`shell`、`ssh_terminal`、`files`、`connect` 和 `listen` 各一项，带有 `ok`，不可用时还带有 `why`：`not_granted`（角色没有这项权限）、`insecure_transport`（需要 TLS、loopback 调用方或 `[remote_access] allow_insecure`）、`not_configured`（`files` 没有配置 `roots`）。每项权限还带有它的选项：`files.mode`、`connect.allow`、`listen.public` 和 `listen.ports`。watch token 的每项权限都是 `not_granted`。
 - `remote_access`：角色功能之前的 agent 上报的布尔值，由 `grants` 推导出来，供旧版 App 使用（`terminal` 对应 `ssh_terminal` 或 `shell`，`full_access` 对应 `shell`，`stream` 对应 `connect`）。存在 `grants` 时，App 读取 `grants`。
 
+TODO：最低支持版本的 App 改为读取 `grants` 后，删除旧版 `remote_access` response。
+
 不要仅根据 agent 版本或默认配置推断功能是否可用；应读取运行中 agent
 返回的 capabilities。
 
@@ -32,7 +34,7 @@ App 可通过以下 endpoint 请求精确时间段：
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。旧版 agent 仍支持 `?minutes=` 参数，以兼容尚不支持 `from` 和 `to` 的版本。
+如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60 分钟，最少 5 分钟，最多 7 天），结束时间为 `to` 或当前时间。App 每次请求都会携带 `minutes`，因此不支持 `from` 和 `to` 的旧版 agent 仍能处理请求。
 
 ## 访问模型
 
@@ -81,11 +83,11 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 ### 正在进行的会话
 
-修改账号或角色会立即生效。如果终端、relay 或监听所属的账号不再拥有所需的权限，会收到 `{"type":"error","code":"permission_revoked"}` 并被关闭。需要某项权限而账号没有时，WebSocket 请求返回 `forbidden`；超出角色 `public` 或 `ports` 限制的 `listen` 返回 `not_permitted`。旧的 `DELETE /api/v1/remote-access/full-access` 会从所有角色中移除 `shell`、`connect` 和 `listen`，关闭会话时仍使用 `full_access_disabled`。
+修改账号或角色会立即生效。如果终端、relay 或监听所属的账号不再拥有所需权限，会收到 `{"type":"error","code":"permission_revoked"}` 并被关闭。账号缺少所需权限时，WebSocket 请求返回 `forbidden`；`listen` 超出角色的 `public` 或 `ports` 限制时返回 `not_permitted`。旧接口 `DELETE /api/v1/remote-access/full-access` 会从所有角色移除 `shell`、`connect` 和 `listen`，并以 `full_access_disabled` 关闭失去权限的会话。TODO：面板的提示改为直接编辑角色后，删除这个接口。
 
 ### 传输安全
 
-所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。旧的 key 仍然只对原来覆盖的范围生效：`[remote_access.terminal] allow_insecure` 对应 `shell`、`ssh_terminal`、`connect` 和 `listen`，`[remote_access.fs] allow_insecure` 只对应 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。两者都不满足时，该权限会以 `why: insecure_transport` 上报。
+所有权限都需要 TLS 或 loopback 调用方（包括同机反向代理），除非设置了 `[remote_access] allow_insecure = true`。TODO：配置不再需要兼容后，删除旧版 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 只覆盖 `shell`、`ssh_terminal`、`connect` 和 `listen`；`[remote_access.fs] allow_insecure` 只覆盖 `files`。App 通过明文连接时，还需要为该服务器开启**允许不安全 HTTP**。条件不满足时，agent 会以 `why: insecure_transport` 上报该权限不可用。
 
 ### 连接和监听
 

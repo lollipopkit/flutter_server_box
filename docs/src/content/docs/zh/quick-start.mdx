@@ -1,9 +1,9 @@
 ---
 title: 快速开始
-description: 几分钟内完成首次配置
+description: 添加服务器并查看监控数据
 ---
 
-本指南会带你添加第一台服务器，并开始查看监控数据。
+按以下步骤添加服务器、连接服务器并查看监控数据。
 
 ## 第一步：添加服务器
 
@@ -39,8 +39,8 @@ SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用
 
 连接后可以：
 
-- **打开终端**：SSH 连接可直接打开终端；Monitor HTTP 连接需要 agent 授予 `full_access`，并开启终端访问。
-- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 agent 的文件 API，要求配置 `[remote_access.fs]` 和 `roots`。
+- **打开终端**：SSH 连接可直接打开终端；Monitor HTTP 连接要求当前账号所属角色拥有 `shell` 权限。
+- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 agent 的文件 API，要求账号角色拥有 `files` 权限，并配置 `[remote_access.fs].roots`。
 - **管理容器**：查看和控制 Docker 或 Podman 容器。
 - **查看进程**：检查正在运行的进程。
 - **运行代码片段**：执行已保存的命令。

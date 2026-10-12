@@ -463,10 +463,10 @@ in mind before running it as root.
 
 ### Upgrading from an agent without roles
 
-Earlier agents used switches in `config.toml` instead of roles. The first
-start of an agent with roles converts them once: every existing account
-becomes an admin, and the `admin` role holds what the old switches actually
-allowed.
+TODO: Remove this migration when direct upgrades from agents without roles
+are no longer supported. Earlier agents used `config.toml` switches for
+access; the first start of an agent with roles makes each existing account an
+admin and grants the `admin` role the access those switches allowed.
 
 | Old setting | Becomes |
 |---|---|
@@ -485,9 +485,10 @@ Everything beyond reading the numbers needs HTTPS or a caller on the same
 host, which includes a reverse proxy there. On a private network that already
 encrypts traffic, such as Tailscale, set `[remote_access] allow_insecure =
 true` and enable **Allow insecure HTTP** for this server in the App; both are
-required. The older keys still count, each for what it used to
-cover: `[remote_access.terminal] allow_insecure` for shell, terminal, connect
-and listen, `[remote_access.fs] allow_insecure` for files only.
+required. TODO: Remove the legacy `allow_insecure` keys when existing
+configurations no longer need them. Until then, `[remote_access.terminal]
+allow_insecure` covers shell, terminal, connect and listen;
+`[remote_access.fs] allow_insecure` covers files only.
 
 ### Limits on connecting and listening
 
@@ -560,9 +561,9 @@ threshold = ">=80%"
 | `network` | Blank or anything else | Receive plus transmit |
 | `temperature` | Ignored | The reading the agent reports as the machine's temperature |
 
-The aliases `mem`, `net`, and `temp` are also accepted for configurations
-migrated from the Go agent. Any other metric is logged once per cycle, and its
-rule never fires.
+TODO: Remove the Go-agent aliases after the migration window. Configurations
+migrated from Go may use `mem`, `net`, and `temp`; other unknown metrics are
+logged once per cycle and their rules do not fire.
 
 ### Threshold
 

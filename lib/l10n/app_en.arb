@@ -7159,5 +7159,521 @@
         "type": "int"
       }
     }
+  },
+  "workspace": "Workspace",
+  "@workspace": {
+    "description": "Name of the workspace tab: panes of several servers' views side by side."
+  },
+  "workspaceTroubleshoot": "Troubleshoot",
+  "@workspaceTroubleshoot": {
+    "description": "Name of a built-in workspace template: a terminal beside status and the agent."
+  },
+  "workspaceNotConnected": "{server} is not connected",
+  "@workspaceNotConnected": {
+    "description": "A workspace tab restored after a relaunch, waiting to connect.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceConnectHint": "This server is set not to connect at launch.",
+  "@workspaceConnectHint": {
+    "description": "Why a restored workspace tab is not connected yet: its server does not auto-connect."
+  },
+  "workspaceAllTabs": "All tabs ({count})",
+  "@workspaceAllTabs": {
+    "description": "Button listing every tab of a pane.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceAsleep": "Not connected",
+  "@workspaceAsleep": {
+    "description": "A tab that has not connected yet."
+  },
+  "workspaceClosed": "Closed {what}",
+  "@workspaceClosed": {
+    "description": "Toast after closing a tab or pane; offers undo.",
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceClosePane": "Close pane",
+  "@workspaceClosePane": {
+    "description": "Action: close a pane and its tabs."
+  },
+  "workspaceClosePaneHint": "Closes every tab in it; can be undone",
+  "@workspaceClosePaneHint": {
+    "description": "Subtitle of close pane."
+  },
+  "workspaceDropLeft": "Left",
+  "@workspaceDropLeft": {
+    "description": "Where a dragged tab goes, or where a pane is shown."
+  },
+  "workspaceDropRight": "Right",
+  "@workspaceDropRight": {
+    "description": "Where a dragged tab goes, or where a pane is shown."
+  },
+  "workspaceDropTop": "Top",
+  "@workspaceDropTop": {
+    "description": "Where a dragged tab goes, or where a pane is shown."
+  },
+  "workspaceDropBottom": "Bottom",
+  "@workspaceDropBottom": {
+    "description": "Where a dragged tab goes, or where a pane is shown."
+  },
+  "workspaceDropMerge": "Join this pane",
+  "@workspaceDropMerge": {
+    "description": "Dropping a tab in the middle of a pane."
+  },
+  "workspaceEmpty": "Empty workspace",
+  "@workspaceEmpty": {
+    "description": "A workspace with no panes."
+  },
+  "workspaceEmptyTemplate": "An empty workspace has no layout to save",
+  "@workspaceEmptyTemplate": {
+    "description": "Saving an empty workspace as a template."
+  },
+  "workspaceFromTemplate": "New workspace from “{template}” on {server}",
+  "@workspaceFromTemplate": {
+    "description": "Toast after applying a template.",
+    "placeholders": {
+      "template": {
+        "type": "String"
+      },
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceHidden": "Hidden",
+  "@workspaceHidden": {
+    "description": "A pane not shown on a narrow window."
+  },
+  "workspaceMaximize": "Maximize",
+  "@workspaceMaximize": {
+    "description": "Action: fill the workspace with one pane."
+  },
+  "workspaceMaximized": "Pane {pane} maximized, {hidden} hidden",
+  "@workspaceMaximized": {
+    "description": "Badge while a pane is maximized.",
+    "placeholders": {
+      "pane": {
+        "type": "int"
+      },
+      "hidden": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceMaximizeHint": "{keys}, or double-click the tab bar",
+  "@workspaceMaximizeHint": {
+    "description": "How else to maximize a pane.",
+    "placeholders": {
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceNewEmpty": "New empty workspace",
+  "@workspaceNewEmpty": {
+    "description": "Action."
+  },
+  "workspaceNewPane": "New pane",
+  "@workspaceNewPane": {
+    "description": "Action."
+  },
+  "workspaceNewTab": "New tab",
+  "@workspaceNewTab": {
+    "description": "Action: open a view of a server in a pane."
+  },
+  "workspaceNewTabFocused": "New tab · in the focused pane",
+  "@workspaceNewTabFocused": {
+    "description": "Quick open result that opens a new tab."
+  },
+  "workspaceNoMatch": "No matches",
+  "@workspaceNoMatch": {
+    "description": "Quick open found nothing."
+  },
+  "workspaceNothingToReopen": "Nothing to reopen",
+  "@workspaceNothingToReopen": {
+    "description": "Reopen closed tab with nothing closed."
+  },
+  "workspacePane": "Pane {index}",
+  "@workspacePane": {
+    "description": "A pane of a workspace, by position.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "workspacePaneActions": "Pane actions",
+  "@workspacePaneActions": {
+    "description": "Tooltip of a pane's menu button."
+  },
+  "workspacePaneCount": "{count, plural, =1{1 pane} other{{count} panes}}",
+  "@workspacePaneCount": {
+    "description": "How many panes a workspace has.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspacePanes": "Panes",
+  "@workspacePanes": {
+    "description": "Button listing a workspace's panes on a narrow window."
+  },
+  "workspacePanesHead": "{workspace} · two panes are shown; the tapped one gets focus",
+  "@workspacePanesHead": {
+    "description": "Heading of the pane list on a narrow window.",
+    "placeholders": {
+      "workspace": {
+        "type": "String"
+      }
+    }
+  },
+  "workspacePaneTabs": "Tabs of pane {index}",
+  "@workspacePaneTabs": {
+    "description": "Heading of a pane's tab list.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "workspacePickView": "New tab on {server} · choose a view",
+  "@workspacePickView": {
+    "description": "Heading of the view picker.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceQuickOpen": "Quick open",
+  "@workspaceQuickOpen": {
+    "description": "Action: search tabs, workspaces and views."
+  },
+  "workspaceQuickOpenHead": "Quick open · Enter opens the first",
+  "@workspaceQuickOpenHead": {
+    "description": "Heading of quick open."
+  },
+  "workspaceQuickOpenHint": "Servers, views, tabs or workspaces, e.g. db docker",
+  "@workspaceQuickOpenHint": {
+    "description": "Hint of quick open's field."
+  },
+  "workspaceRestore": "Restore",
+  "@workspaceRestore": {
+    "description": "Action: end a pane's maximize."
+  },
+  "workspaceSaveTemplate": "Save layout as template",
+  "@workspaceSaveTemplate": {
+    "description": "Action."
+  },
+  "workspaceSeamTip": "Drag to resize, double-click to even out",
+  "@workspaceSeamTip": {
+    "description": "Tooltip of the seam between panes."
+  },
+  "workspaceSplitDown": "Split down",
+  "@workspaceSplitDown": {
+    "description": "Action."
+  },
+  "workspaceSplitRight": "Split right",
+  "@workspaceSplitRight": {
+    "description": "Action."
+  },
+  "workspaceSwitchTo": "Switch to",
+  "@workspaceSwitchTo": {
+    "description": "Quick open result that selects an open tab."
+  },
+  "workspaceSwitchWorkspace": "Switch workspace",
+  "@workspaceSwitchWorkspace": {
+    "description": "Quick open result that selects a workspace."
+  },
+  "workspaceSyncBar": "Sync input: typing goes to the {count} terminals of this workspace",
+  "@workspaceSyncBar": {
+    "description": "Bar over a terminal while input is synchronized.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceSyncOff": "Stop syncing input",
+  "@workspaceSyncOff": {
+    "description": "Action."
+  },
+  "workspaceSyncOn": "Sync input to all terminals",
+  "@workspaceSyncOn": {
+    "description": "Action."
+  },
+  "workspaceSyncOnToast": "Sync input on: typing in any terminal goes to every terminal of this workspace",
+  "@workspaceSyncOnToast": {
+    "description": "Toast."
+  },
+  "workspaceSyncOffToast": "Sync input off",
+  "@workspaceSyncOffToast": {
+    "description": "Toast."
+  },
+  "workspaceTemplateOf": "{workspace} layout",
+  "@workspaceTemplateOf": {
+    "description": "Name given to a template saved from a workspace.",
+    "placeholders": {
+      "workspace": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceTemplateSaved": "Saved template “{name}”",
+  "@workspaceTemplateSaved": {
+    "description": "Toast.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceTemplatesHead": "Layout templates · new workspace on the focused pane's server",
+  "@workspaceTemplatesHead": {
+    "description": "Heading of the template list."
+  },
+  "workspaceMoveTo": "Move to workspace, staying connected",
+  "@workspaceMoveTo": {
+    "description": "Heading: move a terminal into a workspace."
+  },
+  "workspaceMoved": "Terminal {server} moved to “{workspace}”, still connected",
+  "@workspaceMoved": {
+    "description": "Toast.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      },
+      "workspace": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceNew": "New workspace",
+  "@workspaceNew": {
+    "description": "Action."
+  },
+  "workspaceIntoFocused": "Into the focused pane",
+  "@workspaceIntoFocused": {
+    "description": "Where a moved terminal goes."
+  },
+  "keybindings": "Keyboard shortcuts",
+  "@keybindings": {
+    "description": "Settings page listing every keyboard shortcut."
+  },
+  "kbSearchHint": "Search commands, keys or scopes",
+  "@kbSearchHint": {
+    "description": "Hint."
+  },
+  "kbOnlyModified": "Only modified",
+  "@kbOnlyModified": {
+    "description": "Filter."
+  },
+  "kbResetAll": "Reset all to default",
+  "@kbResetAll": {
+    "description": "Action."
+  },
+  "kbResetAllAsk": "Reset every shortcut on this platform to its default?",
+  "@kbResetAllAsk": {
+    "description": "Confirmation."
+  },
+  "kbResetDone": "Default shortcuts restored",
+  "@kbResetDone": {
+    "description": "Toast."
+  },
+  "kbResetOne": "Reset to default",
+  "@kbResetOne": {
+    "description": "Action."
+  },
+  "kbUnassigned": "Not assigned",
+  "@kbUnassigned": {
+    "description": "A command with no shortcut."
+  },
+  "kbFixed": "Fixed",
+  "@kbFixed": {
+    "description": "A shortcut that cannot be changed."
+  },
+  "kbModified": "Modified",
+  "@kbModified": {
+    "description": "A shortcut changed from its default."
+  },
+  "kbDefault": "Default",
+  "@kbDefault": {
+    "description": "A shortcut at its default."
+  },
+  "kbFixedHint": "These keys cannot be changed",
+  "@kbFixedHint": {
+    "description": "Toast."
+  },
+  "kbNote": "Workspace shortcuts work only in a workspace. Global shortcuts, such as opening Settings, work on every page. On other terminal pages, shortcuts for workspace, Settings, or server-tab actions are sent to the shell because those actions are unavailable there. Copy, paste, and select all are terminal controls, not configurable shortcuts.",
+  "@kbNote": {
+    "description": "Footnote of the shortcuts page."
+  },
+  "kbCurrent": "Current: {keys} · Scope: {scope}",
+  "@kbCurrent": {
+    "description": "Recording dialog.",
+    "placeholders": {
+      "keys": {
+        "type": "String"
+      },
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "kbPress": "Press a key combination",
+  "@kbPress": {
+    "description": "Recording dialog."
+  },
+  "kbRecordHint": "Enter to confirm, Esc to cancel. If focus leaves, tap the box above and press again.",
+  "@kbRecordHint": {
+    "description": "Recording dialog."
+  },
+  "kbConflict": "Conflicts with “{name}” ({scope})",
+  "@kbConflict": {
+    "description": "Recording dialog.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
+  "kbConflictNote": "Confirming removes this combination from the conflicting command.",
+  "@kbConflictNote": {
+    "description": "Recording dialog."
+  },
+  "kbRemove": "Remove shortcut",
+  "@kbRemove": {
+    "description": "Action."
+  },
+  "kbChanged": "“{name}” is now {keys}",
+  "@kbChanged": {
+    "description": "Toast.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "kbScopeGlobal": "Global",
+  "@kbScopeGlobal": {
+    "description": "Scope of a shortcut."
+  },
+  "kbScopeSettings": "Settings page",
+  "@kbScopeSettings": {
+    "description": "Scope of a shortcut."
+  },
+  "kbScopeServerTab": "Server tab",
+  "@kbScopeServerTab": {
+    "description": "Scope of a shortcut."
+  },
+  "kbWsSplitRight": "Workspace: split right",
+  "@kbWsSplitRight": {
+    "description": "Command."
+  },
+  "kbWsSplitDown": "Workspace: split down",
+  "@kbWsSplitDown": {
+    "description": "Command."
+  },
+  "kbWsFocusLeft": "Workspace: focus the pane on the left",
+  "@kbWsFocusLeft": {
+    "description": "Command."
+  },
+  "kbWsFocusRight": "Workspace: focus the pane on the right",
+  "@kbWsFocusRight": {
+    "description": "Command."
+  },
+  "kbWsFocusUp": "Workspace: focus the pane above",
+  "@kbWsFocusUp": {
+    "description": "Command."
+  },
+  "kbWsFocusDown": "Workspace: focus the pane below",
+  "@kbWsFocusDown": {
+    "description": "Command."
+  },
+  "kbWsNewTab": "Workspace: new tab",
+  "@kbWsNewTab": {
+    "description": "Command."
+  },
+  "kbWsCloseTab": "Workspace: close tab",
+  "@kbWsCloseTab": {
+    "description": "Command."
+  },
+  "kbWsNextTab": "Workspace: next tab",
+  "@kbWsNextTab": {
+    "description": "Command."
+  },
+  "kbWsPrevTab": "Workspace: previous tab",
+  "@kbWsPrevTab": {
+    "description": "Command."
+  },
+  "kbWsTabs": "Workspace: tabs of the focused pane",
+  "@kbWsTabs": {
+    "description": "Command."
+  },
+  "kbWsReopenTab": "Workspace: reopen closed tab",
+  "@kbWsReopenTab": {
+    "description": "Command."
+  },
+  "kbWsMaximize": "Workspace: maximize or restore pane",
+  "@kbWsMaximize": {
+    "description": "Command."
+  },
+  "kbWsSync": "Workspace: sync input to all terminals",
+  "@kbWsSync": {
+    "description": "Command."
+  },
+  "kbWsQuickOpen": "Workspace: quick open",
+  "@kbWsQuickOpen": {
+    "description": "Command."
+  },
+  "kbWsSwitcher": "Workspace: switch workspace",
+  "@kbWsSwitcher": {
+    "description": "Command."
+  },
+  "kbHomeTab": "Home: go to tab 1–9",
+  "@kbHomeTab": {
+    "description": "Command."
+  },
+  "kbAppSettings": "Open settings",
+  "@kbAppSettings": {
+    "description": "Command."
+  },
+  "kbSettingsSearch": "Settings: search",
+  "@kbSettingsSearch": {
+    "description": "Command."
+  },
+  "kbServerPrev": "Servers: previous server",
+  "@kbServerPrev": {
+    "description": "Command."
+  },
+  "kbServerNext": "Servers: next server",
+  "@kbServerNext": {
+    "description": "Command."
+  },
+  "kbServerList": "Servers: server list",
+  "@kbServerList": {
+    "description": "Command."
+  },
+  "kbServerClose": "Servers: close details",
+  "@kbServerClose": {
+    "description": "Command."
   }
 }

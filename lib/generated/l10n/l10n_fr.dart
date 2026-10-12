@@ -5622,4 +5622,367 @@ class AppLocalizationsFr extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count threads';
   }
+
+  @override
+  String get workspace => 'Espace de travail';
+
+  @override
+  String get workspaceTroubleshoot => 'Dépannage';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server n\'est pas connecté';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Ce serveur est configuré pour ne pas se connecter au démarrage.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Tous les onglets ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Non connecté';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what fermé';
+  }
+
+  @override
+  String get workspaceClosePane => 'Fermer le volet';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Ferme tous ses onglets ; peut être annulé';
+
+  @override
+  String get workspaceDropLeft => 'Gauche';
+
+  @override
+  String get workspaceDropRight => 'Droite';
+
+  @override
+  String get workspaceDropTop => 'Haut';
+
+  @override
+  String get workspaceDropBottom => 'Bas';
+
+  @override
+  String get workspaceDropMerge => 'Rejoindre ce volet';
+
+  @override
+  String get workspaceEmpty => 'Espace de travail vide';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Un espace de travail vide n\'a aucune disposition à enregistrer';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Nouvel espace de travail depuis « $template » sur $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Masqué';
+
+  @override
+  String get workspaceMaximize => 'Agrandir';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Volet $pane agrandi, $hidden masqués';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys, ou double-cliquez sur la barre d\'onglets';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Nouvel espace de travail vide';
+
+  @override
+  String get workspaceNewPane => 'Nouveau volet';
+
+  @override
+  String get workspaceNewTab => 'Nouvel onglet';
+
+  @override
+  String get workspaceNewTabFocused => 'Nouvel onglet · dans le volet actif';
+
+  @override
+  String get workspaceNoMatch => 'Aucun résultat';
+
+  @override
+  String get workspaceNothingToReopen => 'Rien à rouvrir';
+
+  @override
+  String workspacePane(int index) {
+    return 'Volet $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Actions du volet';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count volets',
+      one: '1 volet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Volets';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · deux volets sont affichés ; celui touché reçoit le focus';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Onglets du volet $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Nouvel onglet sur $server · choisir une vue';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Ouverture rapide';
+
+  @override
+  String get workspaceQuickOpenHead =>
+      'Ouverture rapide · Enter ouvre le premier';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Serveurs, vues, onglets ou espaces de travail, p. ex. db docker';
+
+  @override
+  String get workspaceRestore => 'Restaurer';
+
+  @override
+  String get workspaceSaveTemplate => 'Enregistrer la disposition comme modèle';
+
+  @override
+  String get workspaceSeamTip =>
+      'Faites glisser pour redimensionner, double-cliquez pour égaliser';
+
+  @override
+  String get workspaceSplitDown => 'Diviser vers le bas';
+
+  @override
+  String get workspaceSplitRight => 'Diviser à droite';
+
+  @override
+  String get workspaceSwitchTo => 'Basculer vers';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Changer d\'espace de travail';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Saisie synchronisée : la saisie est envoyée aux $count terminaux de cet espace de travail';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Arrêter la synchronisation de la saisie';
+
+  @override
+  String get workspaceSyncOn => 'Synchroniser la saisie sur tous les terminaux';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Saisie synchronisée activée : la saisie dans un terminal est envoyée à tous les terminaux de cet espace de travail';
+
+  @override
+  String get workspaceSyncOffToast => 'Saisie synchronisée désactivée';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Disposition de $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Modèle « $name » enregistré';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Modèles de disposition · nouvel espace de travail sur le serveur du volet actif';
+
+  @override
+  String get workspaceMoveTo =>
+      'Déplacer vers un espace de travail, sans déconnexion';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminal $server déplacé vers « $workspace », toujours connecté';
+  }
+
+  @override
+  String get workspaceNew => 'Nouvel espace de travail';
+
+  @override
+  String get workspaceIntoFocused => 'Dans le volet actif';
+
+  @override
+  String get keybindings => 'Raccourcis clavier';
+
+  @override
+  String get kbSearchHint => 'Rechercher des commandes, touches ou portées';
+
+  @override
+  String get kbOnlyModified => 'Modifiés uniquement';
+
+  @override
+  String get kbResetAll => 'Tout réinitialiser';
+
+  @override
+  String get kbResetAllAsk =>
+      'Réinitialiser tous les raccourcis de cette plateforme à leur valeur par défaut ?';
+
+  @override
+  String get kbResetDone => 'Raccourcis par défaut restaurés';
+
+  @override
+  String get kbResetOne => 'Réinitialiser';
+
+  @override
+  String get kbUnassigned => 'Non attribué';
+
+  @override
+  String get kbFixed => 'Fixe';
+
+  @override
+  String get kbModified => 'Modifié';
+
+  @override
+  String get kbDefault => 'Par défaut';
+
+  @override
+  String get kbFixedHint => 'Ces touches ne peuvent pas être modifiées';
+
+  @override
+  String get kbNote =>
+      'Dans un espace de travail, un terminal laisse à l\'app les combinaisons de l\'espace de travail et les combinaisons globales ; les autres combinaisons d\'ici parviennent au shell. Des commandes de portées différentes peuvent partager une combinaison.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Actuel : $keys · Portée : $scope';
+  }
+
+  @override
+  String get kbPress => 'Appuyez sur une combinaison de touches';
+
+  @override
+  String get kbRecordHint =>
+      'Enter pour confirmer, Esc pour annuler. Si le focus est perdu, touchez la zone ci-dessus et appuyez à nouveau.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'En conflit avec « $name » ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'La confirmation retire cette combinaison de la commande en conflit.';
+
+  @override
+  String get kbRemove => 'Supprimer le raccourci';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '« $name » est maintenant $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Global';
+
+  @override
+  String get kbScopeSettings => 'Page des réglages';
+
+  @override
+  String get kbScopeServerTab => 'Onglet serveurs';
+
+  @override
+  String get kbWsSplitRight => 'Espace de travail : diviser à droite';
+
+  @override
+  String get kbWsSplitDown => 'Espace de travail : diviser vers le bas';
+
+  @override
+  String get kbWsFocusLeft => 'Espace de travail : activer le volet de gauche';
+
+  @override
+  String get kbWsFocusRight => 'Espace de travail : activer le volet de droite';
+
+  @override
+  String get kbWsFocusUp => 'Espace de travail : activer le volet du dessus';
+
+  @override
+  String get kbWsFocusDown => 'Espace de travail : activer le volet du dessous';
+
+  @override
+  String get kbWsNewTab => 'Espace de travail : nouvel onglet';
+
+  @override
+  String get kbWsCloseTab => 'Espace de travail : fermer l\'onglet';
+
+  @override
+  String get kbWsNextTab => 'Espace de travail : onglet suivant';
+
+  @override
+  String get kbWsPrevTab => 'Espace de travail : onglet précédent';
+
+  @override
+  String get kbWsTabs => 'Espace de travail : onglets du volet actif';
+
+  @override
+  String get kbWsReopenTab => 'Espace de travail : rouvrir l\'onglet fermé';
+
+  @override
+  String get kbWsMaximize =>
+      'Espace de travail : agrandir ou restaurer le volet';
+
+  @override
+  String get kbWsSync =>
+      'Espace de travail : synchroniser la saisie sur tous les terminaux';
+
+  @override
+  String get kbWsQuickOpen => 'Espace de travail : ouverture rapide';
+
+  @override
+  String get kbWsSwitcher => 'Espace de travail : changer d\'espace de travail';
+
+  @override
+  String get kbHomeTab => 'Accueil : aller à l\'onglet 1–9';
+
+  @override
+  String get kbAppSettings => 'Ouvrir les réglages';
+
+  @override
+  String get kbSettingsSearch => 'Réglages : rechercher';
+
+  @override
+  String get kbServerPrev => 'Serveurs : serveur précédent';
+
+  @override
+  String get kbServerNext => 'Serveurs : serveur suivant';
+
+  @override
+  String get kbServerList => 'Serveurs : liste des serveurs';
+
+  @override
+  String get kbServerClose => 'Serveurs : fermer les détails';
 }

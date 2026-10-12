@@ -17,22 +17,22 @@ description: Server Box 如何建立和管理 SSH 连接
 
 ```dart
 class Spi {
-  String id;                      // 唯一标识
-  String name;                    // 服务器名称
-  SshCredential? ssh;             // 未配置 SSH 时为 null
+  String id;                      // Unique identifier
+  String name;                    // Server name
+  SshCredential? ssh;             // null when SSH is not configured
   MonitorHttpCredential? monitorHttp;
 }
 
 final class SshCredential {
-  String ip;              // IP 地址或域名
-  int port;               // SSH 端口，默认 22
-  String user;             // 用户名
-  String? pwd;             // 密码，加密存储
+  String ip;              // IP address or hostname
+  int port;               // SSH port, default 22
+  String user;             // Username
+  String? pwd;             // Password, encrypted at rest
   String? keyId;           // SSH key ID
-  String? alterUrl;        // 备用 URL
-  List<String>? jumpIds;   // Jump server 链
+  String? alterUrl;        // Fallback URL
+  List<String>? jumpIds;   // Jump-server candidates
   String? proxyCommand;    // ProxyCommand
-  bool allowLegacyAlgorithms; // 允许协商已被 SSH 淘汰的算法，默认关闭
+  bool allowLegacyAlgorithms; // Opt in to retired SSH algorithms; false by default
 }
 ```
 
@@ -58,7 +58,7 @@ SSHAuthAbortError(... reason: SSHInternalError(
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   final ssh = spi.ssh!;
-  // 1. 建立 socket；失败后尝试备用主机、用户和端口。
+  // 1. Establish the socket; try the fallback host, user, and port if it fails.
   SSHSocket? socket;
   var connectUser = ssh.user;
   try {
@@ -70,7 +70,7 @@ Future<SSHClient> genClient(Spi spi) async {
     connectUser = parsedUser;
   }
 
-  // 2. 身份验证
+  // 2. Authenticate
   final client = SSHClient(
     socket: socket!,
     username: connectUser,
@@ -78,7 +78,7 @@ Future<SSHClient> genClient(Spi spi) async {
     onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
-  // 3. 验证 host key
+  // 3. Verify the host key
   await verifyHostKey(client, spi);
 
   return client;
@@ -144,7 +144,7 @@ Private key 的加载流程：
 
 ```dart
 onUserInfoRequest: (instructions) async {
-  // 处理 challenge-response
+  // Handle challenge-response prompts.
   return responses;
 }
 ```
@@ -178,7 +178,7 @@ App 显示并保存 OpenSSH SHA-256 格式的 fingerprint：
 SHA256:AbCdEf1234567890...=
 ```
 
-读取旧版本保存的值时，App 会先将其转换为当前格式。
+TODO：旧版 fingerprint 格式不再需要兼容后，删除读取时的转换逻辑。目前 App 会在读取旧值时将其规范化为当前格式。
 
 ### 验证流程
 
@@ -196,39 +196,24 @@ Future<bool> verifyHostKey(
 
 ### 连接复用
 
-`ServerProvider` 维护活动 client，在终端、命令和文件功能之间复用连接：
+`ServerNotifier` 为每台服务器维护一个 client，并在状态采集和其他 SSH 功能中复用：
 
 ```dart
-class ServerProvider {
-  final Map<String, SSHClient> _clients = {};
-
-  SSHClient getClient(String spiId) {
-    return _clients[spiId] ??= connect(spiId);
-  }
-}
+final state = ref.watch(serverProvider(serverId));
+final client = state.client;
 ```
+
+需要 client 的操作应向 server provider 获取，不要在页面中为每个操作单独创建连接。
 
 ### Keep-alive
 
-客户端在空闲期间发送 keep-alive 消息：
+SSH client 会在连接空闲时发送 protocol-level keep-alive message。这些 message 与终端的
+输入和输出相互独立。
 
-```dart
-Timer.periodic(
-  Duration(seconds: 30),
-  (_) => client.sendKeepAlive(),
-);
-```
+### 重新连接
 
-### 自动重连
-
-连接丢失后，provider 会等待一段时间再尝试重连：
-
-```dart
-client.onError.listen((error) async {
-  await Future.delayed(Duration(seconds: 5));
-  reconnect();
-});
-```
+连接失败后，server provider 可在后续刷新时重新建立连接。一次状态请求失败并不能说明
+SFTP 或其他服务器功能不可用。
 
 ## 连接生命周期
 

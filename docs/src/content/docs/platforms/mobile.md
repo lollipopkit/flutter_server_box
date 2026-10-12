@@ -12,7 +12,7 @@ Use device biometrics to unlock the App:
 - **iOS**: Face ID or Touch ID
 - **Android**: A biometric method supported by the device, such as fingerprint authentication
 
-Enable it at **Settings → App → General → Biometric authentication**. If no biometrics are enrolled, the App tells you to enroll one first instead of showing a switch that cannot work.
+Enable it at **Settings → Application → General → Biometric authentication**. If no biometrics are enrolled, the App tells you to enroll one first instead of showing a switch that cannot work.
 
 ## Home screen widgets
 
@@ -42,7 +42,7 @@ Small widgets show current readings. Medium widgets show charts for multiple met
 
 To keep SSH connections alive after the App moves to the background:
 
-1. Enable **Settings → App → General → Android Setting → Background running**.
+1. Enable **Settings → Application → General → Android Setting → Background running**.
 2. Allow Server Box to send notifications in the system settings.
 3. Disable battery optimization as required by your device. MIUI/HyperOS may also require the battery policy to be set to “No restrictions”.
 

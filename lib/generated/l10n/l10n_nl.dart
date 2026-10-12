@@ -5580,4 +5580,365 @@ class AppLocalizationsNl extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count threads';
   }
+
+  @override
+  String get workspace => 'Werkruimte';
+
+  @override
+  String get workspaceTroubleshoot => 'Probleemoplossing';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server is niet verbonden';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Deze server is ingesteld om niet te verbinden bij het opstarten.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Alle tabbladen ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Niet verbonden';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what gesloten';
+  }
+
+  @override
+  String get workspaceClosePane => 'Paneel sluiten';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Sluit alle tabbladen erin; kan ongedaan worden gemaakt';
+
+  @override
+  String get workspaceDropLeft => 'Links';
+
+  @override
+  String get workspaceDropRight => 'Rechts';
+
+  @override
+  String get workspaceDropTop => 'Boven';
+
+  @override
+  String get workspaceDropBottom => 'Onder';
+
+  @override
+  String get workspaceDropMerge => 'Bij dit paneel voegen';
+
+  @override
+  String get workspaceEmpty => 'Lege werkruimte';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Een lege werkruimte heeft geen indeling om op te slaan';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Nieuwe werkruimte uit “$template” op $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Verborgen';
+
+  @override
+  String get workspaceMaximize => 'Maximaliseren';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Paneel $pane gemaximaliseerd, $hidden verborgen';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys, of dubbelklik op de tabbalk';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Nieuwe lege werkruimte';
+
+  @override
+  String get workspaceNewPane => 'Nieuw paneel';
+
+  @override
+  String get workspaceNewTab => 'Nieuw tabblad';
+
+  @override
+  String get workspaceNewTabFocused => 'Nieuw tabblad · in het actieve paneel';
+
+  @override
+  String get workspaceNoMatch => 'Geen resultaten';
+
+  @override
+  String get workspaceNothingToReopen => 'Niets om opnieuw te openen';
+
+  @override
+  String workspacePane(int index) {
+    return 'Paneel $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Paneelacties';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panelen',
+      one: '1 paneel',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Panelen';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · twee panelen worden getoond; het aangetikte krijgt de focus';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Tabbladen van paneel $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Nieuw tabblad op $server · kies een weergave';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Snel openen';
+
+  @override
+  String get workspaceQuickOpenHead => 'Snel openen · Enter opent het eerste';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Servers, weergaven, tabbladen of werkruimtes, bijv. db docker';
+
+  @override
+  String get workspaceRestore => 'Herstellen';
+
+  @override
+  String get workspaceSaveTemplate => 'Indeling opslaan als sjabloon';
+
+  @override
+  String get workspaceSeamTip =>
+      'Sleep om het formaat te wijzigen, dubbelklik om gelijk te verdelen';
+
+  @override
+  String get workspaceSplitDown => 'Naar beneden splitsen';
+
+  @override
+  String get workspaceSplitRight => 'Naar rechts splitsen';
+
+  @override
+  String get workspaceSwitchTo => 'Overschakelen naar';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Werkruimte wisselen';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Invoer synchroniseren: getypte tekst gaat naar de $count terminals van deze werkruimte';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Invoer niet meer synchroniseren';
+
+  @override
+  String get workspaceSyncOn => 'Invoer naar alle terminals synchroniseren';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Invoersynchronisatie aan: typen in een terminal gaat naar alle terminals van deze werkruimte';
+
+  @override
+  String get workspaceSyncOffToast => 'Invoersynchronisatie uit';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Indeling van $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Sjabloon “$name” opgeslagen';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Indelingssjablonen · nieuwe werkruimte op de server van het actieve paneel';
+
+  @override
+  String get workspaceMoveTo =>
+      'Naar werkruimte verplaatsen, verbinding blijft';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminal $server verplaatst naar “$workspace”, nog steeds verbonden';
+  }
+
+  @override
+  String get workspaceNew => 'Nieuwe werkruimte';
+
+  @override
+  String get workspaceIntoFocused => 'In het actieve paneel';
+
+  @override
+  String get keybindings => 'Sneltoetsen';
+
+  @override
+  String get kbSearchHint => 'Zoek opdrachten, toetsen of bereiken';
+
+  @override
+  String get kbOnlyModified => 'Alleen gewijzigd';
+
+  @override
+  String get kbResetAll => 'Alles terugzetten naar standaard';
+
+  @override
+  String get kbResetAllAsk =>
+      'Alle sneltoetsen op dit platform terugzetten naar standaard?';
+
+  @override
+  String get kbResetDone => 'Standaardsneltoetsen hersteld';
+
+  @override
+  String get kbResetOne => 'Terugzetten naar standaard';
+
+  @override
+  String get kbUnassigned => 'Niet toegewezen';
+
+  @override
+  String get kbFixed => 'Vast';
+
+  @override
+  String get kbModified => 'Gewijzigd';
+
+  @override
+  String get kbDefault => 'Standaard';
+
+  @override
+  String get kbFixedHint => 'Deze toetsen kunnen niet worden gewijzigd';
+
+  @override
+  String get kbNote =>
+      'Een terminal in een werkruimte laat de combinaties van de werkruimte en de globale combinaties aan de app over; de andere combinaties hier bereiken de shell. Opdrachten met verschillende bereiken kunnen dezelfde combinatie delen.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Huidig: $keys · Bereik: $scope';
+  }
+
+  @override
+  String get kbPress => 'Druk op een toetscombinatie';
+
+  @override
+  String get kbRecordHint =>
+      'Enter om te bevestigen, Esc om te annuleren. Als de focus wegvalt, tik op het vak hierboven en druk opnieuw.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'Conflict met “$name” ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Bij bevestigen wordt deze combinatie van de conflicterende opdracht verwijderd.';
+
+  @override
+  String get kbRemove => 'Sneltoets verwijderen';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” is nu $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Globaal';
+
+  @override
+  String get kbScopeSettings => 'Instellingenpagina';
+
+  @override
+  String get kbScopeServerTab => 'Servertabblad';
+
+  @override
+  String get kbWsSplitRight => 'Werkruimte: naar rechts splitsen';
+
+  @override
+  String get kbWsSplitDown => 'Werkruimte: naar beneden splitsen';
+
+  @override
+  String get kbWsFocusLeft => 'Werkruimte: focus op het linkerpaneel';
+
+  @override
+  String get kbWsFocusRight => 'Werkruimte: focus op het rechterpaneel';
+
+  @override
+  String get kbWsFocusUp => 'Werkruimte: focus op het paneel erboven';
+
+  @override
+  String get kbWsFocusDown => 'Werkruimte: focus op het paneel eronder';
+
+  @override
+  String get kbWsNewTab => 'Werkruimte: nieuw tabblad';
+
+  @override
+  String get kbWsCloseTab => 'Werkruimte: tabblad sluiten';
+
+  @override
+  String get kbWsNextTab => 'Werkruimte: volgend tabblad';
+
+  @override
+  String get kbWsPrevTab => 'Werkruimte: vorig tabblad';
+
+  @override
+  String get kbWsTabs => 'Werkruimte: tabbladen van het actieve paneel';
+
+  @override
+  String get kbWsReopenTab => 'Werkruimte: gesloten tabblad heropenen';
+
+  @override
+  String get kbWsMaximize => 'Werkruimte: paneel maximaliseren of herstellen';
+
+  @override
+  String get kbWsSync =>
+      'Werkruimte: invoer naar alle terminals synchroniseren';
+
+  @override
+  String get kbWsQuickOpen => 'Werkruimte: snel openen';
+
+  @override
+  String get kbWsSwitcher => 'Werkruimte: werkruimte wisselen';
+
+  @override
+  String get kbHomeTab => 'Start: naar tabblad 1–9';
+
+  @override
+  String get kbAppSettings => 'Instellingen openen';
+
+  @override
+  String get kbSettingsSearch => 'Instellingen: zoeken';
+
+  @override
+  String get kbServerPrev => 'Servers: vorige server';
+
+  @override
+  String get kbServerNext => 'Servers: volgende server';
+
+  @override
+  String get kbServerList => 'Servers: serverlijst';
+
+  @override
+  String get kbServerClose => 'Servers: details sluiten';
 }
