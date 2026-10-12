@@ -1,7 +1,7 @@
 # ServerBox Documentation
 
 The documentation site uses [Astro Starlight](https://starlight.astro.build)
-and is published at <https://serverbox.lolli.tech/docs/>. It is served under
+and is published at <https://serverbox.lollipopkit.com/docs/>. It is served under
 `/docs` of the project website; `scripts/build-cloudflare-pages.sh` builds both
 sites and copies this site's output into `website/dist/docs/`.
 

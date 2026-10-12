@@ -12,7 +12,7 @@ English | [简体中文](README_zh.md)
 <p align="center">
 A Flutter project which provides charts to display Linux, Unix and Windows server status and tools to manage servers.
 <br>
-Read the <a href="https://serverbox.lolli.tech/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
+Read the <a href="https://serverbox.lollipopkit.com/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
 </p>
 
 ## Acknowledgements
@@ -120,7 +120,7 @@ Download packages only from sources you trust.
 
 ## Features
 
-- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lolli.tech/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
+- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lollipopkit.com/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
 - Platform features include biometric authentication, push notifications, home-screen widgets, a watchOS app, and system color themes.
 - 16 languages. The current list is in `lib/l10n/`; its git history records the translators.
 

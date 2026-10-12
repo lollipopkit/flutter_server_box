@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://serverbox.lolli.tech',
+	site: 'https://serverbox.lollipopkit.com',
 	base: '/docs',
 	integrations: [
 		starlight({
