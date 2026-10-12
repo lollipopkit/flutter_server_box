@@ -73,6 +73,30 @@ void main() {
   );
 
   group('the shell on screen', () {
+    test('typing reaches every typed listener, and one leaving leaves the rest', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+      final a = <String>[];
+      final b = <String>[];
+      void la(String d) => a.add(d);
+      void lb(String d) => b.add(d);
+      session
+        ..addTypedListener(la)
+        ..addTypedListener(lb);
+
+      session.terminal.textInput('x');
+      session.removeTypedListener(la);
+      session.terminal.textInput('y');
+      // Mirrored input is sent, not typed: nobody is told of it.
+      session.sendTyped('z');
+
+      expect(a, ['x']);
+      expect(b, ['x', 'y']);
+      expect(utf8.decode(shell.written), 'xyz');
+      session.dispose();
+    });
+
     test('what it prints reaches the terminal', () async {
       final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();

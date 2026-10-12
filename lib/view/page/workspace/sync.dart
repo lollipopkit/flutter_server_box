@@ -11,10 +11,13 @@ final class _Mirror {
 
   final _WorkspaceTabState host;
 
-  /// The sessions given a mirror, and the callback each was given: only that
-  /// callback is ever taken back, and one that is not this mirror's is never
-  /// replaced.
-  var _hooked = <TerminalSession, void Function(String)>{};
+  /// The sessions mirrored now: what each listener forwards to, read when
+  /// typed, so a session joining or leaving does not re-hook the rest.
+  var _sessions = const <TerminalSession>[];
+
+  /// The listener this mirror added to each session, the only one it takes
+  /// back.
+  final _hooked = <TerminalSession, void Function(String)>{};
 
   /// The terminal tabs' session notifiers, listened to because a session
   /// arrives after its tab: once its page has connected.
@@ -43,28 +46,25 @@ final class _Mirror {
 
   void _apply() {
     final ws = _ws;
-    final sessions = <TerminalSession>[
+    _sessions = [
       if (ws != null && ws.sync)
         for (final n in _watched) ?n.value,
     ];
-    for (final e in _hooked.entries) {
-      if (!sessions.contains(e.key)) _unhook(e.key, e.value);
+    for (final s in [..._hooked.keys]) {
+      if (!_sessions.contains(s)) s.removeTypedListener(_hooked.remove(s)!);
     }
-    final hooked = <TerminalSession, void Function(String)>{};
-    for (final s in sessions) {
-      final current = s.onTyped;
-      if (current != null && !identical(current, _hooked[s])) continue;
-      s.onTyped = hooked[s] = (data) {
-        for (final other in sessions) {
-          if (!identical(other, s)) other.sendTyped(data);
+    for (final s in _sessions) {
+      _hooked.putIfAbsent(s, () {
+        void forward(String data) {
+          for (final other in _sessions) {
+            if (!identical(other, s)) other.sendTyped(data);
+          }
         }
-      };
-    }
-    _hooked = hooked;
-  }
 
-  static void _unhook(TerminalSession s, void Function(String) mine) {
-    if (identical(s.onTyped, mine)) s.onTyped = null;
+        s.addTypedListener(forward);
+        return forward;
+      });
+    }
   }
 
   void dispose() {
@@ -72,7 +72,8 @@ final class _Mirror {
       n.removeListener(_apply);
     }
     for (final e in _hooked.entries) {
-      _unhook(e.key, e.value);
+      e.key.removeTypedListener(e.value);
     }
+    _hooked.clear();
   }
 }
