@@ -89,7 +89,17 @@ abstract final class DiagnosticsUpload {
   /// default is `none` — and the intro page explaining the levels has been
   /// completed: a level picked in an intro left before its end is not yet an
   /// answer.
-  static Future<void> sync() async {
+  ///
+  /// One at a time, each reading the setting when its turn comes. Run side by
+  /// side, a start begun at launch could finish after a stop asked for from
+  /// Settings — `Sentry.init` awaits — and install the sink the user had just
+  /// turned off.
+  static Future<void> sync() =>
+      _syncing = _syncing.catchError((_) {}).then((_) => _sync());
+
+  static Future<void> _syncing = Future.value();
+
+  static Future<void> _sync() async {
     final acknowledged =
         Stores.setting.diagnosticsConsentVer.fetch() >= kDiagnosticsConsentVer;
     final wanted = availableInBuild && acknowledged && level.uploads

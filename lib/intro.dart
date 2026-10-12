@@ -123,8 +123,13 @@ final class _IntroPage extends StatelessWidget {
       final lastVer = _setting.lastVer;
       if (lastVer.fetch() == 0) lastVer.putSync(BuildData.build);
       // Written here rather than on the page itself, so that leaving the intro
-      // without reaching the end counts as unanswered and asks again.
-      _setting.diagnosticsConsentVer.putSync(kDiagnosticsConsentVer);
+      // without reaching the end counts as unanswered and asks again. Only in
+      // a build that shows the page: one without a DSN leaves it out, and its
+      // having been finished must not be read as an answer by a later build
+      // that can upload.
+      if (DiagnosticsUpload.availableInBuild) {
+        _setting.diagnosticsConsentVer.putSync(kDiagnosticsConsentVer);
+      }
       _setting.featureIntroVer.putSync(_kFeatureIntroVer);
     });
     // Applies whatever was chosen a moment ago. Nothing has been uploaded
