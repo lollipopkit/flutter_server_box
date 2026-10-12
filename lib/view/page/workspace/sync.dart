@@ -11,8 +11,10 @@ final class _Mirror {
 
   final _WorkspaceTabState host;
 
-  /// The sessions given a mirror, to take it back from.
-  var _hooked = <TerminalSession>[];
+  /// The sessions given a mirror, and the callback each was given: only that
+  /// callback is ever taken back, and one that is not this mirror's is never
+  /// replaced.
+  var _hooked = <TerminalSession, void Function(String)>{};
 
   /// The terminal tabs' session notifiers, listened to because a session
   /// arrives after its tab: once its page has connected.
@@ -45,25 +47,32 @@ final class _Mirror {
       if (ws != null && ws.sync)
         for (final n in _watched) ?n.value,
     ];
-    for (final s in _hooked) {
-      if (!sessions.contains(s)) s.onTyped = null;
+    for (final e in _hooked.entries) {
+      if (!sessions.contains(e.key)) _unhook(e.key, e.value);
     }
+    final hooked = <TerminalSession, void Function(String)>{};
     for (final s in sessions) {
-      s.onTyped = (data) {
+      final current = s.onTyped;
+      if (current != null && !identical(current, _hooked[s])) continue;
+      s.onTyped = hooked[s] = (data) {
         for (final other in sessions) {
           if (!identical(other, s)) other.sendTyped(data);
         }
       };
     }
-    _hooked = sessions;
+    _hooked = hooked;
+  }
+
+  static void _unhook(TerminalSession s, void Function(String) mine) {
+    if (identical(s.onTyped, mine)) s.onTyped = null;
   }
 
   void dispose() {
     for (final n in _watched) {
       n.removeListener(_apply);
     }
-    for (final s in _hooked) {
-      s.onTyped = null;
+    for (final e in _hooked.entries) {
+      _unhook(e.key, e.value);
     }
   }
 }
