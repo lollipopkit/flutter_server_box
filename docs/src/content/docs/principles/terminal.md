@@ -3,7 +3,7 @@ title: Terminal Implementation
 description: How the Server Box terminal works
 ---
 
-The terminal is built on a custom `xterm.dart` fork. Its UI is shared across SSH, local, Alpine, and Monitor agent sessions.
+The terminal uses a custom `xterm.dart` fork. SSH, local, Alpine, and Monitor agent sessions share its UI.
 
 ## Where the bytes come from
 

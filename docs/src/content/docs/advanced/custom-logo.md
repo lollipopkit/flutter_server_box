@@ -12,14 +12,13 @@ lists.
 1. Open the server's edit page and expand **Optional → Appearance & location**.
 2. Enter the image URL in **Logo URL** and save the server.
 
-The per-server Logo URL takes precedence over the global setting. Per-server
-Logo URLs do not support formatting placeholders.
+The per-server Logo URL takes precedence over the global setting. Both URLs
+support the formatting placeholders below.
 
 ## Global default
 
 Open **Settings → Server → General → Distribution mark → Logo URL** to set the
-default image URL for servers without their own Logo URL. Only the global Logo
-URL supports the formatting placeholders below.
+default image URL for servers without their own Logo URL.
 
 ## URL placeholders
 
@@ -32,8 +31,8 @@ https://example.com/{DIST}.png
 ```
 
 For example, the resulting URL may end in `debian.png`, `ubuntu.png`, or
-`arch.png`. The App substitutes this placeholder only in the global Logo URL.
-If it cannot detect the distribution, the global Logo is not used.
+`arch.png`. If the App cannot detect the distribution, it does not use the
+Logo URL.
 
 ### `{BRIGHT}`: Theme
 
@@ -43,8 +42,8 @@ If it cannot detect the distribution, the global Logo is not used.
 https://example.com/{BRIGHT}.png
 ```
 
-The global Logo URL resolves to `light.png` in a light theme and `dark.png` in
-a dark theme.
+The selected Logo URL resolves to `light.png` in a light theme and `dark.png`
+in a dark theme.
 
 ### Combining both
 

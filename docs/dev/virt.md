@@ -1,13 +1,5 @@
 # Virtualization tab
 
-One tab — **Virtualization** (`AppTab.virt`, zh "虚拟化") — for QEMU/KVM guests
-managed by libvirt and for Proxmox VE (QEMU VMs and LXC containers). It
-replaces the PVE page (`lib/view/page/pve.dart`), which today is reachable
-only from the server detail page's PVE readout card.
-
-Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
-`KVM Manager.dc.html` (wide) and `KVM Manager Mobile.dc.html` (phone frames).
-
 ## Decisions
 
 | Topic | Decision |
@@ -16,7 +8,7 @@ Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
 | Transports | SSH, monitor HTTP and local, for both backends. |
 | PVE access | The PVE HTTP API (`/api2/json`), unchanged. Only the TCP connection to it changes: it is carried over whichever transport the server uses. |
 | libvirt access | `virsh` run through `ServerExec`. libvirt has no HTTP API enabled by default, so there is nothing to tunnel. |
-| PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations are pointed at tokens. |
+| PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations should use API tokens. |
 | Phase 1 scope | Tab, host switcher, guest list and state, power actions, overview (charts), console, IntroPage, migration of the old PVE entry. |
 | Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them (managed since phase 6). |
 | libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External (disk-only) snapshots are phase 8; see that section. |
@@ -186,9 +178,8 @@ The probe (`sbm_virt::libvirt::probe_script`, one round trip) asks, in order:
 Verified on the PVE 9.2.2 host (PVE), its Alpine LXC 200 as root and as
 `nobody` (`lxc`, from `openrc --sys`) and VM 100 (libvirt 11.3.0).
 
-The host switcher lists hosts first and offers the other servers under
-"Check this server" (runs the probe on demand), so a server is never hidden
-because it was not probed yet.
+The host switcher lists detected hosts first. Other servers remain available
+under "Check this server", which runs the probe on demand.
 
 ### Models (`lib/data/model/virt/`)
 

@@ -3,11 +3,11 @@ title: 终端实现
 description: Server Box 终端的工作方式
 ---
 
-终端是 Server Box 中功能较多的模块之一，底层使用自定义的 xterm.dart fork。
+Server Box 的终端使用自定义的 xterm.dart fork。SSH、本机 shell、iOS Linux interpreter 和 Monitor agent 都通过 `ShellBackend` 接入终端：
 
 ## 终端数据来源
 
-无论数据来自哪里，字节流之上的 UI、终端模拟器、虚拟键盘和标签页都使用同一套实现。`ShellBackend` 有以下实现：
+所有 backend 共用同一套终端 UI、模拟器、虚拟键盘和标签页：
 
 | Backend | 数据来源 |
 |---|---|
@@ -16,7 +16,7 @@ description: Server Box 终端的工作方式
 | `IshShellBackend` | iOS 上的 Linux interpreter |
 | `MonitorShellBackend` | Monitor agent 的 `/api/v1/terminal/ws` |
 
-调用方只需打开 session 并读写字节流，不需要关心具体 backend。前两种本机实现详见[本机终端](/docs/zh/advanced/local-terminal/)，Monitor backend 详见 [Monitor agent](/docs/zh/advanced/monitor-agent/)。
+调用方只需打开 session 并读写字节流，无需识别具体 backend。各本机实现详见[本机终端](/docs/zh/advanced/local-terminal/)，Monitor backend 详见 [Monitor agent](/docs/zh/advanced/monitor-agent/)。
 
 下文介绍 SSH 路径；其他 backend 提供相同的上层接口。
 
