@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/dist.dart';
@@ -15,6 +16,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -25,6 +27,7 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/marked_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
+import 'package:server_box/view/widget/server_side_tile.dart';
 import 'package:server_box/view/widget/terminal_status_dot.dart';
 import 'package:server_box/view/widget/terminal_status_sheet.dart';
 
@@ -77,11 +80,54 @@ class _SshSession {
 }
 
 extension on SessionTabsController<_SshSession> {
-  /// What the programs in the session at [index] report about themselves.
+  /// What the programs in the session at [index] report about themselves, for
+  /// the strip's sheet: on the server's mark where it has one.
   Widget? statusOf(int index) {
     final tab = tabs.elementAtOrNull(index - 1);
-    return tab == null ? null : TerminalStatusDot(tab.data.session);
+    if (tab == null) return null;
+    final serverId = tab.data.page.args.spi?.id;
+    return sideMark(
+      mark: serverId == null ? null : distIcon(serverId, size: kSideMarkSize),
+      badge: TerminalStatusDot(tab.data.session, ringed: serverId != null),
+    );
   }
+
+  /// The session at [index] as a row of the rail — see [railRow]. Read again
+  /// whenever a session's programs report something: the bar's colour is
+  /// taken from them here, not listened for.
+  RailRow railOf(int index, ColorScheme scheme) {
+    final tab = tabs[index - 1];
+    final selected = index == this.index;
+    return railRow(
+      serverId: tab.data.page.args.spi?.id,
+      live: true,
+      color: tab.data.session.value?.status.headline?.colorIn(scheme),
+      selected: selected,
+      badge: TerminalStatusDot(
+        tab.data.session,
+        ringed: true,
+        idle: SideMarkDot(selected: selected),
+      ),
+    );
+  }
+
+  /// Rebuilds [builder] whenever what [railOf] reads changes: the tabs, the
+  /// session each one has once its page is built, and what that session's
+  /// programs report. Nested, so each layer subscribes to what the layer
+  /// above has just found — a merge taken once would miss a tab opened, or a
+  /// session started, after it.
+  Widget listenRail(Widget Function() builder) => ListenBuilder(
+    listenable: this,
+    builder: () => ListenBuilder(
+      listenable: Listenable.merge([for (final tab in tabs) tab.data.session]),
+      builder: () => ListenBuilder(
+        listenable: Listenable.merge([
+          for (final tab in tabs) ?tab.data.session.value?.status,
+        ]),
+        builder: builder,
+      ),
+    ),
+  );
 }
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
@@ -631,7 +677,14 @@ extension _Actions on _SSHTabPageState {
           current.data.pageKey.currentState?.tmuxPaneLabel(pane),
     );
     return onServer
-        ? [status, _agentAction, _snippetAction, _settingsAction, _floatAction]
+        ? [
+            status,
+            _agentAction,
+            _snippetAction,
+            _settingsAction,
+            _moveAction,
+            _floatAction,
+          ]
         : [status, _snippetAction, _settingsAction, _floatAction];
   }
 
@@ -686,6 +739,63 @@ extension _Actions on _SSHTabPageState {
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
   );
+
+  /// Carries the terminal on screen into a workspace, still connected.
+  ///
+  /// A server's only: a workspace's tabs are views of servers.
+  BarAction get _moveAction => BarAction(
+    icon: Icons.space_dashboard_outlined,
+    label: l10n.workspaceMoveTo,
+    onTap: _moveToWorkspace,
+  );
+
+  Future<void> _moveToWorkspace() async {
+    final tab = _sessions.current;
+    final state = tab?.data.pageKey.currentState;
+    final spi = tab?.data.page.args.spi;
+    // Not yet built: there is no session to carry, only a server to open
+    // one on, which the workspace can do itself.
+    if (tab == null || state == null || spi == null) return;
+    final workspaces = ref.read(workspacesProvider).all;
+    // The id of the workspace, `''` for a new one, null for no answer.
+    final target = await showRowsSheet<String>(
+      context,
+      rows: (ctx) => [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 9, 17, 3),
+          child: SizedBox(
+            width: double.infinity,
+            child: Text(l10n.workspaceMoveTo, style: UIs.text12Grey),
+          ),
+        ),
+        for (final ws in workspaces)
+          SheetChoiceTile(
+            icon: Icons.space_dashboard_outlined,
+            title: ws.name,
+            subtitle: l10n.workspaceIntoFocused,
+            selected: false,
+            onTap: () => Navigator.of(ctx).pop(ws.id),
+          ),
+        SheetChoiceTile(
+          icon: Icons.add,
+          title: l10n.workspaceNew,
+          selected: false,
+          onTap: () => Navigator.of(ctx).pop(''),
+        ),
+      ],
+    );
+    if (target == null || !mounted) return;
+    // Still this tab: the sheet was up, and the strip did not move under it.
+    if (!identical(_sessions.current, tab)) return;
+    final session = state.handOff();
+    final notifier = ref.read(workspacesProvider.notifier);
+    notifier.adoptSession(target.isEmpty ? null : target, spi.id, session);
+    _closeTab(tab.id);
+    ref.read(homeTabRequestProvider.notifier).go(AppTab.workspace);
+    Toast.show(
+      l10n.workspaceMoved(spi.name, ref.read(workspacesProvider).current.name),
+    );
+  }
 
   BarAction get _snippetAction => BarAction(
     icon: Icons.code,

@@ -31,7 +31,9 @@ abstract final class GithubIds {
     'moduvoice',
     'LittleWool',
     'Sandarr95',
-    'YangYuS8'
+    'YangYuS8',
+    'Explainfuture',
+    'jamalkamaladdin'
   };
 
   static const participants = <GhId>{
@@ -218,7 +220,20 @@ abstract final class GithubIds {
     'YangYuS8',
     'yj1028-bit',
     'yrmuq',
-    'zsdili'
+    'zsdili',
+    'yahah1585',
+    'txxxtxx',
+    'lszyk26-code',
+    'bigmanBass666',
+    'liucz000',
+    'boz700908',
+    'efateva',
+    'History-exe',
+    'CarloHD',
+    'KKKKKKKEM',
+    'BigGee97',
+    'Hatsune39',
+    'c0make'
   };
 }
 

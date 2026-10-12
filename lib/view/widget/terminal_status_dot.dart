@@ -11,10 +11,23 @@ import 'package:xterm/core.dart';
 ///
 /// Listens for itself: the bars it sits in draw a snapshot.
 class TerminalStatusDot extends StatelessWidget {
-  const TerminalStatusDot(this.session, {super.key});
+  const TerminalStatusDot(
+    this.session, {
+    super.key,
+    this.ringed = false,
+    this.idle,
+  });
 
   /// The tab's session, which exists once its page has been built.
   final ValueListenable<TerminalSession?> session;
+
+  /// Ringed in the colour behind it, for a dot on the corner of a mark — see
+  /// `sideMark`.
+  final bool ringed;
+
+  /// Drawn while the programs say nothing — a rail's dot for a session that
+  /// is merely live. Nothing by default.
+  final Widget? idle;
 
   static const _size = 7.0;
 
@@ -23,7 +36,7 @@ class TerminalStatusDot extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: session,
       builder: (context, session, _) {
-        if (session == null) return const SizedBox.shrink();
+        if (session == null) return idle ?? const SizedBox.shrink();
         return ListenableBuilder(
           listenable: session.status,
           builder: (context, _) => _build(context, session.status.headline),
@@ -34,7 +47,9 @@ class TerminalStatusDot extends StatelessWidget {
 
   Widget _build(BuildContext context, TerminalStatusHeadline? headline) {
     final color = headline?.colorIn(Theme.of(context).colorScheme);
-    if (headline == null || color == null) return const SizedBox.shrink();
+    if (headline == null || color == null) {
+      return idle ?? const SizedBox.shrink();
+    }
     final progress = headline.progress;
     final Widget mark = headline.state == ProgramState.working && progress != null
         ? SizedBox.square(
@@ -54,7 +69,20 @@ class TerminalStatusDot extends StatelessWidget {
     final description = headline.describe();
     return Tooltip(
       message: description,
-      child: Semantics(label: description, child: mark),
+      child: Semantics(
+        label: description,
+        child: ringed
+            // A ring in the colour behind it, so the dot stays a dot over
+            // whatever part of the mark it lands on.
+            ? DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(padding: const EdgeInsets.all(1.5), child: mark),
+              )
+            : mark,
+      ),
     );
   }
 }

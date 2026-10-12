@@ -17,6 +17,11 @@ Map<ShortcutActivator, VoidCallback> desktopShortcuts({
   required void Function(int index) onTab,
   required VoidCallback onSettings,
   bool? useMeta,
+
+  /// The chord that opens the settings, given the platform's chord maker;
+  /// null from it binds none. Without it, Meta/Control and comma.
+  ShortcutActivator? Function(SingleActivator Function(LogicalKeyboardKey) chord)?
+  settingsChord,
 }) {
   // Meta on macOS, Control elsewhere. `SingleActivator` does not fold the two,
   // and on Linux the Super key belongs to the window manager — a user pressing
@@ -28,7 +33,9 @@ Map<ShortcutActivator, VoidCallback> desktopShortcuts({
   return {
     for (var i = 0; i < tabCount && i < _digits.length; i++)
       chord(_digits[i]): () => onTab(i),
-    chord(LogicalKeyboardKey.comma): onSettings,
+    ?(settingsChord == null
+        ? chord(LogicalKeyboardKey.comma)
+        : settingsChord(chord)): onSettings,
   };
 }
 

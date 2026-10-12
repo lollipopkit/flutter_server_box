@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/oci_image.dart';
+import 'package:server_box/core/utils/rootfs_unpack.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -42,7 +43,8 @@ void main() {
 
   /// An OCI image of [layers], written to a file, as a download would arrive.
   Future<File> imageOf(List<List<int>> layers) async {
-    String nameOf(int i) => 'layer$i';
+    // Each blob at its own checksum, which is what the reader holds it to.
+    String nameOf(int i) => sha256.convert(layers[i]).toString();
     final manifest = utf8.encode(
       json.encode({
         'schemaVersion': 2,
@@ -67,13 +69,16 @@ void main() {
             'manifests': [
               {
                 'mediaType': 'application/vnd.oci.image.manifest.v1+json',
-                'digest': 'sha256:manifest',
+                'digest': 'sha256:${sha256.convert(manifest)}',
+                'size': manifest.length,
               },
             ],
           }),
         ),
       )
-      ..add(ArchiveFile.bytes('blobs/sha256/manifest', manifest));
+      ..add(
+        ArchiveFile.bytes('blobs/sha256/${sha256.convert(manifest)}', manifest),
+      );
     for (var i = 0; i < layers.length; i++) {
       image.add(ArchiveFile.bytes('blobs/sha256/${nameOf(i)}', layers[i]));
     }
@@ -96,7 +101,7 @@ void main() {
 
   Future<Directory> unpack(List<List<int>> layers) async {
     final into = Directory('${dir.path}/root')..createSync(recursive: true);
-    await IosRootfs.extract(await imageOf(layers), into, source: source);
+    await RootfsUnpack.extract(await imageOf(layers), into, source: source);
     return into;
   }
 
@@ -132,6 +137,18 @@ void main() {
     expect(File('${into.path}/etc/old').existsSync(), isFalse);
     // And the marker is not left behind as a file.
     expect(File('${into.path}/etc/.wh..wh..opq').existsSync(), isFalse);
+  });
+
+  test('and spares a directory the layer writes into without naming', () async {
+    // `etc/new` has no entry of its own here; the layer only writes a file in
+    // it. Sparing only the paths named deleted the directory, and the file.
+    final into = await unpack([
+      layer({'etc/old': 'from below'}),
+      layer({'etc/new/file': 'from above', 'etc/.wh..wh..opq': ''}),
+    ]);
+
+    expect(File('${into.path}/etc/new/file').readAsStringSync(), 'from above');
+    expect(File('${into.path}/etc/old').existsSync(), isFalse);
   });
 
   test('a named marker deletes only its own sibling', () async {

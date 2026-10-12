@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/core/utils/rootfs_unpack.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -41,10 +40,10 @@ void main() {
   }
 
   test(
-    'an iOS layer cannot write through a symlink from an earlier layer',
+    'a layer cannot write through a symlink from an earlier layer',
     () async {
       final links = Archive()..add(ArchiveFile.symlink('escape', outside.path));
-      await IosRootfs.extract(
+      await RootfsUnpack.extract(
         await archiveOf('links', links),
         root,
         source: source,
@@ -53,7 +52,7 @@ void main() {
       final payload = Archive()
         ..add(ArchiveFile.string('escape/payload', 'outside'));
       await expectLater(
-        IosRootfs.extract(
+        RootfsUnpack.extract(
           await archiveOf('payload', payload),
           root,
           source: source,
@@ -64,13 +63,13 @@ void main() {
     },
   );
 
-  test('an iOS layer rejects a file below its own symlink', () async {
+  test('a layer rejects a file below its own symlink', () async {
     final archive = Archive()
       ..add(ArchiveFile.symlink('escape', outside.path))
       ..add(ArchiveFile.string('escape/payload', 'inside only'));
 
     await expectLater(
-      IosRootfs.extract(
+      RootfsUnpack.extract(
         await archiveOf('same-layer', archive),
         root,
         source: source,
@@ -91,12 +90,12 @@ void main() {
     expect(File('${outside.path}/payload').existsSync(), isFalse);
   });
 
-  test('an iOS layer rejects traversal instead of skipping it', () async {
+  test('a layer rejects traversal instead of skipping it', () async {
     final archive = Archive()
       ..add(ArchiveFile.string('../outside/payload', 'outside'));
 
     await expectLater(
-      IosRootfs.extract(
+      RootfsUnpack.extract(
         await archiveOf('traversal', archive),
         root,
         source: source,
@@ -123,7 +122,7 @@ void main() {
     final archive = Archive()
       ..add(ArchiveFile.symlink('etc/resolv.conf', outsideFile.path));
 
-    await IosRootfs.extract(
+    await RootfsUnpack.extract(
       await archiveOf('final-link', archive),
       root,
       source: source,
@@ -166,40 +165,21 @@ void main() {
     );
   });
 
-  test(
-    'Android validation rejects traversal and symlink-parent writes',
-    () async {
-      final traversal = Archive()
-        ..add(ArchiveFile.string('../outside/payload', 'bad'));
-      final traversalFile = File('${temp.path}/traversal.tar')
-        ..writeAsBytesSync(TarEncoder().encodeBytes(traversal));
-      await expectLater(
-        AndroidRootfs.validateTar(traversalFile.path, root.path),
-        throwsA(isA<StateError>()),
-      );
-
-      await Link('${root.path}/escape').create(outside.path);
-      final throughLink = Archive()
-        ..add(ArchiveFile.string('escape/payload', 'bad'));
-      final linkFile = File('${temp.path}/link-parent.tar')
-        ..writeAsBytesSync(TarEncoder().encodeBytes(throughLink));
-      await expectLater(
-        AndroidRootfs.validateTar(linkFile.path, root.path),
-        throwsA(isA<StateError>()),
-      );
-      expect(File('${outside.path}/payload').existsSync(), isFalse);
-    },
-  );
-
-  test('Android validates gzip tar metadata without a temporary tar', () async {
-    final traversal = Archive()
-      ..add(ArchiveFile.string('../outside/payload', 'bad'));
-    final archive = await archiveOf('android-gzip-traversal', traversal);
-
-    await expectLater(
-      AndroidRootfs.validateGzipTar(archive.path, root.path),
-      throwsA(isA<StateError>()),
+  test('a read-only directory is still filled', () async {
+    // Rocky's `ca-trust/extracted/pem/directory-hash/` is `0555` and holds
+    // symlinks: written with its recorded mode before its contents, nothing
+    // could be put in it (#1697).
+    final readOnly = Archive()
+      ..add(ArchiveFile.directory('ro')..mode = 0x16d) // 0555
+      ..add(ArchiveFile.symlink('ro/hash.0', 'cert.pem'))
+      ..add(ArchiveFile.string('ro/cert.pem', 'pem'));
+    await RootfsUnpack.extract(
+      await archiveOf('read-only', readOnly),
+      root,
+      source: source,
     );
-    expect(File('${archive.path}.validated.tar').existsSync(), isFalse);
+
+    expect(await Link('${root.path}/ro/hash.0').target(), 'cert.pem');
+    expect(File('${root.path}/ro/cert.pem').readAsStringSync(), 'pem');
   });
 }

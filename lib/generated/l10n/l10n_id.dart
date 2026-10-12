@@ -5526,6 +5526,365 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get workspace => 'Ruang kerja';
+
+  @override
+  String get workspaceTroubleshoot => 'Pemecahan masalah';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server tidak terhubung';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Server ini diatur agar tidak terhubung saat aplikasi dibuka.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Semua tab ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Tidak terhubung';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what ditutup';
+  }
+
+  @override
+  String get workspaceClosePane => 'Tutup panel';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Menutup semua tab di dalamnya; dapat dibatalkan';
+
+  @override
+  String get workspaceDropLeft => 'Kiri';
+
+  @override
+  String get workspaceDropRight => 'Kanan';
+
+  @override
+  String get workspaceDropTop => 'Atas';
+
+  @override
+  String get workspaceDropBottom => 'Bawah';
+
+  @override
+  String get workspaceDropMerge => 'Gabungkan ke panel ini';
+
+  @override
+  String get workspaceEmpty => 'Ruang kerja kosong';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Ruang kerja kosong tidak punya tata letak untuk disimpan';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Ruang kerja baru dari “$template” di $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Tersembunyi';
+
+  @override
+  String get workspaceMaximize => 'Maksimalkan';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Panel $pane dimaksimalkan, $hidden disembunyikan';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys, atau klik dua kali bilah tab';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Ruang kerja kosong baru';
+
+  @override
+  String get workspaceNewPane => 'Panel baru';
+
+  @override
+  String get workspaceNewTab => 'Tab baru';
+
+  @override
+  String get workspaceNewTabFocused => 'Tab baru · di panel yang difokuskan';
+
+  @override
+  String get workspaceNoMatch => 'Tidak ada yang cocok';
+
+  @override
+  String get workspaceNothingToReopen => 'Tidak ada yang bisa dibuka kembali';
+
+  @override
+  String workspacePane(int index) {
+    return 'Panel $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Tindakan panel';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panel',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Panel';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · dua panel ditampilkan; panel yang diketuk mendapat fokus';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Tab panel $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Tab baru di $server · pilih tampilan';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Buka cepat';
+
+  @override
+  String get workspaceQuickOpenHead =>
+      'Buka cepat · Enter membuka yang pertama';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Server, tampilan, tab, atau ruang kerja, mis. db docker';
+
+  @override
+  String get workspaceRestore => 'Pulihkan';
+
+  @override
+  String get workspaceSaveTemplate => 'Simpan tata letak sebagai templat';
+
+  @override
+  String get workspaceSeamTip =>
+      'Seret untuk mengubah ukuran, klik dua kali untuk menyamakan';
+
+  @override
+  String get workspaceSplitDown => 'Pisah ke bawah';
+
+  @override
+  String get workspaceSplitRight => 'Pisah ke kanan';
+
+  @override
+  String get workspaceSwitchTo => 'Beralih ke';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Ganti ruang kerja';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Sinkronkan input: ketikan dikirim ke $count terminal di ruang kerja ini';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Hentikan sinkronisasi input';
+
+  @override
+  String get workspaceSyncOn => 'Sinkronkan input ke semua terminal';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Sinkronisasi input aktif: ketikan di terminal mana pun dikirim ke semua terminal di ruang kerja ini';
+
+  @override
+  String get workspaceSyncOffToast => 'Sinkronisasi input nonaktif';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Tata letak $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Templat “$name” disimpan';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Templat tata letak · ruang kerja baru di server panel yang difokuskan';
+
+  @override
+  String get workspaceMoveTo => 'Pindahkan ke ruang kerja, tetap terhubung';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminal $server dipindahkan ke “$workspace”, tetap terhubung';
+  }
+
+  @override
+  String get workspaceNew => 'Ruang kerja baru';
+
+  @override
+  String get workspaceIntoFocused => 'Ke panel yang difokuskan';
+
+  @override
+  String get keybindings => 'Pintasan keyboard';
+
+  @override
+  String get kbSearchHint => 'Cari perintah, tombol, atau cakupan';
+
+  @override
+  String get kbOnlyModified => 'Hanya yang diubah';
+
+  @override
+  String get kbResetAll => 'Atur ulang semua ke bawaan';
+
+  @override
+  String get kbResetAllAsk =>
+      'Atur ulang semua pintasan di platform ini ke bawaan?';
+
+  @override
+  String get kbResetDone => 'Pintasan bawaan dipulihkan';
+
+  @override
+  String get kbResetOne => 'Atur ulang ke bawaan';
+
+  @override
+  String get kbUnassigned => 'Belum ditetapkan';
+
+  @override
+  String get kbFixed => 'Tetap';
+
+  @override
+  String get kbModified => 'Diubah';
+
+  @override
+  String get kbDefault => 'Bawaan';
+
+  @override
+  String get kbFixedHint => 'Tombol ini tidak dapat diubah';
+
+  @override
+  String get kbNote =>
+      'Terminal di ruang kerja menyerahkan kombinasi ruang kerja dan kombinasi global kepada aplikasi; kombinasi lain di sini tetap diteruskan ke shell. Perintah dengan cakupan berbeda dapat memakai kombinasi yang sama.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Saat ini: $keys · Cakupan: $scope';
+  }
+
+  @override
+  String get kbPress => 'Tekan kombinasi tombol';
+
+  @override
+  String get kbRecordHint =>
+      'Enter untuk konfirmasi, Esc untuk batal. Jika fokus berpindah, ketuk kotak di atas lalu tekan lagi.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'Bentrok dengan “$name” ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Mengonfirmasi akan menghapus kombinasi ini dari perintah yang bentrok.';
+
+  @override
+  String get kbRemove => 'Hapus pintasan';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” sekarang $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Global';
+
+  @override
+  String get kbScopeSettings => 'Halaman pengaturan';
+
+  @override
+  String get kbScopeServerTab => 'Tab server';
+
+  @override
+  String get kbWsSplitRight => 'Ruang kerja: pisah ke kanan';
+
+  @override
+  String get kbWsSplitDown => 'Ruang kerja: pisah ke bawah';
+
+  @override
+  String get kbWsFocusLeft => 'Ruang kerja: fokus ke panel kiri';
+
+  @override
+  String get kbWsFocusRight => 'Ruang kerja: fokus ke panel kanan';
+
+  @override
+  String get kbWsFocusUp => 'Ruang kerja: fokus ke panel atas';
+
+  @override
+  String get kbWsFocusDown => 'Ruang kerja: fokus ke panel bawah';
+
+  @override
+  String get kbWsNewTab => 'Ruang kerja: tab baru';
+
+  @override
+  String get kbWsCloseTab => 'Ruang kerja: tutup tab';
+
+  @override
+  String get kbWsNextTab => 'Ruang kerja: tab berikutnya';
+
+  @override
+  String get kbWsPrevTab => 'Ruang kerja: tab sebelumnya';
+
+  @override
+  String get kbWsTabs => 'Ruang kerja: tab di panel yang difokuskan';
+
+  @override
+  String get kbWsReopenTab => 'Ruang kerja: buka kembali tab yang ditutup';
+
+  @override
+  String get kbWsMaximize => 'Ruang kerja: maksimalkan atau pulihkan panel';
+
+  @override
+  String get kbWsSync => 'Ruang kerja: sinkronkan input ke semua terminal';
+
+  @override
+  String get kbWsQuickOpen => 'Ruang kerja: buka cepat';
+
+  @override
+  String get kbWsSwitcher => 'Ruang kerja: ganti ruang kerja';
+
+  @override
+  String get kbHomeTab => 'Beranda: ke tab 1–9';
+
+  @override
+  String get kbAppSettings => 'Buka pengaturan';
+
+  @override
+  String get kbSettingsSearch => 'Pengaturan: cari';
+
+  @override
+  String get kbServerPrev => 'Server: server sebelumnya';
+
+  @override
+  String get kbServerNext => 'Server: server berikutnya';
+
+  @override
+  String get kbServerList => 'Server: daftar server';
+
+  @override
+  String get kbServerClose => 'Server: tutup detail';
+
+  @override
   String get storageTitle => 'Penyimpanan';
 
   @override

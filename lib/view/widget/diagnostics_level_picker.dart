@@ -42,8 +42,7 @@ final class DiagnosticsLevelPicker extends StatelessWidget {
         },
         child: Column(
           // Reversed, so the recommended level comes first. The default is the
-          // quiet end — `none` on Android, which is the only platform F-Droid
-          // distributes — so the case for collecting has to be made here
+          // quiet end, `none`, so the case for collecting has to be made here
           // rather than by pre-selecting it.
           children: DiagnosticsLevel.values.reversed
               .map((e) => _tile(context, e))

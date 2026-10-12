@@ -14,6 +14,9 @@ class MacOSMenuBarManager {
     BuildContext context,
     void Function(int) onTabChanged, {
     required VoidCallback onSettings,
+
+    /// As set on the shortcuts page; null for none.
+    MenuSerializableShortcut? settingsShortcut,
   }) {
     final l10n = context.l10n;
     final homeTabs = Stores.setting.homeTabs.fetch();
@@ -27,10 +30,7 @@ class MacOSMenuBarManager {
           ),
           PlatformMenuItem(
             label: libL10n.menuSettings,
-            shortcut: const SingleActivator(
-              LogicalKeyboardKey.comma,
-              meta: true,
-            ),
+            shortcut: settingsShortcut,
             onSelected: onSettings,
           ),
           PlatformMenuItem(

@@ -20,8 +20,9 @@ Every released version, newest first. Downloads and per-release notes are on
 
 ### Added
 
-- **Firewall management** for ufw and firewalld, with a check that warns before
-  a change would block the current connection or SSH.
+- **Storage and sharing** in the app and the web panel: disks, partitions,
+  RAID, ZFS pools, LUKS and SMART health; SMB shares (Time Machine, recycle
+  bin) and NFS exports.
 - **Web panel as a desktop:** every feature is an app in its own window, with a
   menubar, dock, Spotlight search, notification centre, tabs and split panes in
   Terminal and Files, and per-account wallpapers and themes.
@@ -37,38 +38,63 @@ Every released version, newest first. Downloads and per-release notes are on
 - **New notification channels:** SMTP email, Telegram, Discord and ntfy. Bark
   gains subtitle, Markdown, critical alert volume, badge, image, copy, archive
   options and encrypted push (AES-CBC).
-- **Terminal program status:** progress and status reported by programs
-  (OSC 9;4, OSC 133, OSC 7501) are shown on the terminal tab and, optionally,
-  as a notification.
-- **Terminal line height** setting, and the settings show which terminal font
-  is in use.
-- **Network traffic** beside network speed, with every interface selectable,
-  and the CPU thread count with per-thread usage.
 - **GPU processes for servers connected through the Monitor agent**, readable
   by every account.
 
 ### Changed
 
-- Home page charts appear sooner after the app opens.
 - Notification channel editors show every setting a channel type supports,
   including ones not set yet.
 - Percentage charts no longer extend their axis past 100%.
 
 ### Fixed
 
-- The app now opens when its language is Italian, Korean or Azerbaijani.
-- Remote desktop keyboard input, long press and VNC passwords; themes are now
-  included in backups.
-- A terminal restored in another tab no longer takes the focus and keyboard.
-- Agent replies and their code blocks can be selected on every platform.
 - NVIDIA GPU processes are listed again when the driver does not report their
   memory (Windows and WSL).
-- A server without `/etc/hostname` still shows its name, and memory in use no
-  longer counts the page cache.
-- A fully charged battery no longer raises an alert; a low battery does when
-  the device is not charging.
 - Error messages from notification channels no longer include the request URL,
   which could contain a token.
+
+## v1.0.1765 — 2026-10-12
+
+### Added
+
+- **Firewall management** for ufw and firewalld: view and edit rules and
+  zones, with checks that warn before a change would lock you out of SSH.
+- **Program status in the terminal:** progress (OSC 9;4), command start and
+  finish (OSC 133) and program status (OSC 7501) are shown on the session,
+  with an optional notification when a long command finishes.
+- **Terminal line height** setting; the terminal settings show which font is
+  in use.
+- **Network traffic** beside speed on the server page, with every interface
+  selectable; the CPU row shows the thread count and per-thread usage.
+- A per-server option to count network filesystems in the disk total.
+
+### Changed
+
+- **Every narrow tab has the same top bar**, and bars stay clear of the iPadOS
+  window controls.
+- **Server rows in every side list look the same** (server, terminal, files,
+  remote desktop): the distribution icon with a status dot, or a status bar
+  when the icon is hidden.
+- Home page charts appear faster.
+- Disks are read from both lsblk and df, so the disk list and disk total match
+  on every page.
+- Memory in use no longer counts the page cache.
+- ARM CPUs are named by implementer and part, and every core type is listed.
+
+### Fixed
+
+- The app failed to open in Italian, Korean and Azerbaijani.
+- A terminal opened at launch failed when the server refused the first
+  connection; it now retries.
+- A terminal restored on another tab took the focus and the keyboard.
+- Stopping the Agent now ends a running command at once.
+- Agent replies and their code can be selected on every platform.
+- Remote desktop: keyboard input, long press and VNC passwords.
+- Themes are included in backups.
+- A charged battery is no longer reported as an alert; a low battery on its
+  own power is.
+- A host without /etc/hostname now shows a name.
 
 ## v1.0.1719 — 2026-10-01
 
@@ -221,11 +247,10 @@ Every released version, newest first. Downloads and per-release notes are on
   minutes; the file uses a passphrase you choose and does not expire. Jump
   servers, key file paths and BMC credentials are not included.
 - **Crash reports.** After a crash, **Settings → App → Privacy → Crash report**
-  appears — the row exists only when there is a report, so its presence is the
-  news. Nothing is uploaded: the dialog offers delete, copy, or copy and open a
-  GitHub issue. Uploading is a separate *Diagnostic data* setting with three
-  levels, and known server names, addresses and usernames are replaced with
-  placeholders wherever data is recorded.
+  appears when a report is available. Reports are not uploaded automatically;
+  you can delete one, copy it, or copy it and open a GitHub issue. Automatic
+  uploads are controlled by the separate *Diagnostic data* setting. Known
+  server names, addresses, and usernames are replaced with placeholders.
 
 ### Changed
 

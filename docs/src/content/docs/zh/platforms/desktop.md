@@ -38,8 +38,7 @@ macOS 菜单栏包含以下菜单和快捷键：
 - 深色
 - 跟随系统
 
-AMOLED 现为内置主题：Dark 模式使用纯黑背景，Light 模式使用标准浅色配色。原有的
-AMOLED 设置会迁移为 Dark + AMOLED，Auto AMOLED 设置会迁移为 System + AMOLED。
+AMOLED 是内置主题：Dark 模式使用纯黑背景，Light 模式使用标准浅色配色。TODO：支持的升级路径不再包含旧版设置后，删除 AMOLED 和 Auto AMOLED 的迁移逻辑。目前它们分别迁移为 Dark + AMOLED 和 System + AMOLED。
 
 主题包会声明支持 Light、Dark 或两种模式。主题只支持一种模式时，ThemeMode 设置会被
 锁定，并说明原因。

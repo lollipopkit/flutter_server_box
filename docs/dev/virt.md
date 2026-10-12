@@ -1,13 +1,5 @@
 # Virtualization tab
 
-One tab — **Virtualization** (`AppTab.virt`, zh "虚拟化") — for QEMU/KVM guests
-managed by libvirt and for Proxmox VE (QEMU VMs and LXC containers). It
-replaces the PVE page (`lib/view/page/pve.dart`), which today is reachable
-only from the server detail page's PVE readout card.
-
-Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
-`KVM Manager.dc.html` (wide) and `KVM Manager Mobile.dc.html` (phone frames).
-
 ## Decisions
 
 | Topic | Decision |
@@ -15,8 +7,8 @@ Design: Claude Design project `2a6eadf3-ac6c-4925-bb18-8f763a0c3ead`,
 | Tab name | "Virtualization" / "虚拟化". Covers VMs, LXC containers, storage and networks; "VM" excludes LXC and "KVM" names one hypervisor. |
 | Transports | SSH, monitor HTTP and local, for both backends. |
 | PVE access | The PVE HTTP API (`/api2/json`), unchanged. Only the TCP connection to it changes: it is carried over whichever transport the server uses. |
-| libvirt access | `virsh` run through `ServerExec`. libvirt has no HTTP API enabled by default, so there is nothing to tunnel. |
-| PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations are pointed at tokens. |
+| libvirt access | Run `virsh` through `ServerExec`. libvirt's HTTP API is disabled by default. |
+| PVE auth | Password (+ TOTP), as today, **plus API token** (`PVEAPIToken=user@realm!tokenid=secret`). New configurations should use API tokens. |
 | Phase 1 scope | Tab, host switcher, guest list and state, power actions, overview (charts), console, IntroPage, migration of the old PVE entry. |
 | Phase 2 scope | Snapshots (list, create, revert, delete) for both backends; Storage and Network sections, read-only: pools/storages with their volumes, networks/interfaces with the guests on them (managed since phase 6). |
 | libvirt snapshots | Internal (`snapshot-create-as` without `--disk-only`): every writable disk must be qcow2, and an active domain's snapshot always holds its memory — QEMU refuses an internal one without it, so the form shows the memory switch on and fixed. External (disk-only) snapshots are phase 8; see that section. |
@@ -79,33 +71,35 @@ one shared place (proposed `lib/core/utils/server_tcp.dart`):
 - `pveAddr` host names resolve on the far end (SSH and monitor) or on this
   device (local). The default `https://localhost:8006` is correct in all
   three.
-- Remote desktop moves onto the shared dialer in the same change, so there is
-  one implementation. Its `LocalCapabilities.tcpRelay == false` rule stays
-  where it is (a remote desktop to this device is not offered); the dialer's
-  local case is a direct socket, which is what PVE needs.
-- Dio gets a `connectionFactory` from the dialer (`ServerTcpDialer.startConnect`).
-  `SecureSocket` can only wrap a socket `dart:io` created, so for SSH and the
-  relay each connection is a loopback socket pair bridged to the channel; the
-  listener accepts that one socket and closes, so no port stays open. A local
-  server gets a direct `Socket.connect`. `ServerTcpDialer.loopback` (built on
-  `SshLocalTunnel.bindWithDialer`) is for consumers that need a port number
-  (VNC client).
-- **The loopback is authenticated.** A loopback port is open to every process
-  on the device, and the first to connect used to get the remote end — a
-  guest's console. `ServerTcpDialer.loopback` and
-  `PveConsoleTunnelChannel.loopbackOnce` now bind with `authenticated: true`:
-  the tunnel draws a 32-byte token from `Random.secure()`, the remote desktop
-  engine gets it in-process with the port (`RdpSessionParams`/
-  `VncSessionParams.access_token`) and writes it first on the connection (VNC:
-  `run_vnc`; RDP: `ConfigBuilder::with_tcp_preamble` in the vendored
-  IronRDP's `connect_direct`), and the listener carries only a connection
-  that presents it — read within 5 s, compared in constant time, before
-  anything is dialled. Any other is dropped unread. `loopbackOnce` also stops
-  listening once its one connection is through. The port-forward feature's
-  `SshLocalTunnel.bind` is left open on purpose: it serves outside clients.
-  Residual risk: a process that can read this app's memory, or sniff the
-  loopback interface (root), can still take the token; both already own the
-  session by other means.
+- Remote desktop uses the shared dialer. Its `LocalCapabilities.tcpRelay ==
+  false` check remains in place, so the App does not offer remote desktop to
+  this device. PVE uses the dialer's direct local socket.
+- Dio gets a `connectionFactory` from `ServerTcpDialer.startConnect`.
+  `SecureSocket` requires a socket created by `dart:io`. For SSH and relay
+  connections, the dialer bridges a one-use loopback socket to the channel and
+  closes the listener after accepting the connection. Local servers use
+  `Socket.connect` directly. `ServerTcpDialer.loopback` (built on
+  `SshLocalTunnel.bindWithDialer`) serves clients that need a port, such as
+  the VNC client.
+- **Authenticate loopback tunnels.** A local port is reachable by other
+  processes on the device. Without authentication, the first process to
+  connect could receive a guest console. `ServerTcpDialer.loopback` and
+  `PveConsoleTunnelChannel.loopbackOnce` bind with `authenticated: true`:
+  - The tunnel generates a 32-byte token with `Random.secure()`.
+  - The remote desktop engine receives the token in process with the port
+    (`RdpSessionParams` / `VncSessionParams.access_token`) and sends it first.
+    VNC uses `run_vnc`; RDP uses `ConfigBuilder::with_tcp_preamble` in the
+    vendored IronRDP `connect_direct` path.
+  - The listener reads the token within 5 seconds and compares it in constant
+    time before dialing. It drops a connection whose token does not match
+    without forwarding anything from it.
+  - `loopbackOnce` closes its listener after the first connection. The
+    port-forward feature's `SshLocalTunnel.bind` remains open for external
+    clients.
+
+  A process with access to the App's memory or root-level access to the
+  loopback interface could still capture the token. Either level of access
+  also exposes the session by other means.
 
 ### PVE TLS
 
@@ -136,18 +130,18 @@ certificate is an error with the old and new fingerprints.
   (`VM.Audit`, `VM.PowerMgmt`, `VM.Console`, `Sys.Audit` on the paths the
   user wants shown; since phase 2 also `VM.Snapshot`, `VM.Snapshot.Rollback`
   and `Datastore.Audit`).
-- An account that may see nothing is not refused: `/cluster/resources`
-  answers the nodes' bare names and no guests (a privilege-separated token
-  with no ACL of its own, verified on PVE 9.2). A load with no guests asks
-  `/access/permissions`; with `VM.Audit` and `Sys.Audit` granted nowhere it
-  is `permissionDenied`, carrying the `pveum acl modify / --tokens … --roles
-  PVEAuditor,PVEVMAdmin` that fixes it (the two roles cover every privilege
-  above).
+- PVE accepts an authenticated account even when it has no ACL. On PVE 9.2,
+  `/cluster/resources` returned node names but no guests. The App then checks
+  `/access/permissions` (`ensure_auditable`) and reports `permissionDenied`
+  when neither `VM.Audit` nor `Sys.Audit` is granted anywhere. The error
+  includes the command to grant access:
+  `pveum acl modify / --tokens … --roles PVEAuditor,PVEVMAdmin` for an API
+  token, or the same command with `--users` for a password account.
 
 ### libvirt
 
-- Run through `ensureExec()`: works over SSH, over an agent with the
-  `full_access` grant (`caps.shell`), and locally.
+- Run through `ensureExec()` over SSH, through a Monitor agent account with the
+  `shell` permission (`caps.shell`), or locally.
 - `virsh --connect qemu:///system` with `-q`; parse `list --all --uuid`,
   `dominfo`, `domstats --raw` (CPU time, balloon, block and net counters),
   `domdisplay`, `dumpxml` (phase 1: disks, NICs, graphics only).
@@ -186,16 +180,15 @@ The probe (`sbm_virt::libvirt::probe_script`, one round trip) asks, in order:
 Verified on the PVE 9.2.2 host (PVE), its Alpine LXC 200 as root and as
 `nobody` (`lxc`, from `openrc --sys`) and VM 100 (libvirt 11.3.0).
 
-The host switcher lists hosts first and offers the other servers under
-"Check this server" (runs the probe on demand), so a server is never hidden
-because it was not probed yet.
+The host switcher lists detected hosts first. Other servers remain available
+under "Check this server", which runs the probe on demand.
 
 ### Models (`lib/data/model/virt/`)
 
 - `VirtHostKind { pve, libvirt }`, `VirtHost { spiId, kind, version, node(s), cpu, mem }`.
 - `VirtGuestKind { qemu, lxc }`.
 - `VirtGuestState { running, paused, stopped, starting, stopping, rebooting, migrating, backup, unknown }`
-  — the design's state set. Mapping: PVE `status` + `lock`, libvirt
+  — the selected state set. Mapping: PVE `status` + `lock`, libvirt
   `domstate` + reason.
 - `VirtGuest { id, name, kind, state, vmid?, node?, vcpu, memBytes, uptime, tags }`.
 - `VirtStats` — CPU %, memory, disk read/write, net in/out, as rates; the

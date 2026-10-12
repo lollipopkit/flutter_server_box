@@ -9465,6 +9465,618 @@ abstract class AppLocalizations {
   /// **'{count} threads'**
   String threadsFmt(int count);
 
+  /// Name of the workspace tab: panes of several servers' views side by side.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace'**
+  String get workspace;
+
+  /// Name of a built-in workspace template: a terminal beside status and the agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Troubleshoot'**
+  String get workspaceTroubleshoot;
+
+  /// A workspace tab restored after a relaunch, waiting to connect.
+  ///
+  /// In en, this message translates to:
+  /// **'{server} is not connected'**
+  String workspaceNotConnected(String server);
+
+  /// Why a restored workspace tab is not connected yet: its server does not auto-connect.
+  ///
+  /// In en, this message translates to:
+  /// **'This server is set not to connect at launch.'**
+  String get workspaceConnectHint;
+
+  /// Button listing every tab of a pane.
+  ///
+  /// In en, this message translates to:
+  /// **'All tabs ({count})'**
+  String workspaceAllTabs(int count);
+
+  /// A tab that has not connected yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get workspaceAsleep;
+
+  /// Toast after closing a tab or pane; offers undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed {what}'**
+  String workspaceClosed(String what);
+
+  /// Action: close a pane and its tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Close pane'**
+  String get workspaceClosePane;
+
+  /// Subtitle of close pane.
+  ///
+  /// In en, this message translates to:
+  /// **'Closes every tab in it; can be undone'**
+  String get workspaceClosePaneHint;
+
+  /// Where a dragged tab goes, or where a pane is shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get workspaceDropLeft;
+
+  /// Where a dragged tab goes, or where a pane is shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get workspaceDropRight;
+
+  /// Where a dragged tab goes, or where a pane is shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get workspaceDropTop;
+
+  /// Where a dragged tab goes, or where a pane is shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get workspaceDropBottom;
+
+  /// Dropping a tab in the middle of a pane.
+  ///
+  /// In en, this message translates to:
+  /// **'Join this pane'**
+  String get workspaceDropMerge;
+
+  /// A workspace with no panes.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty workspace'**
+  String get workspaceEmpty;
+
+  /// Saving an empty workspace as a template.
+  ///
+  /// In en, this message translates to:
+  /// **'An empty workspace has no layout to save'**
+  String get workspaceEmptyTemplate;
+
+  /// Toast after applying a template.
+  ///
+  /// In en, this message translates to:
+  /// **'New workspace from “{template}” on {server}'**
+  String workspaceFromTemplate(String template, String server);
+
+  /// A pane not shown on a narrow window.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get workspaceHidden;
+
+  /// Action: fill the workspace with one pane.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize'**
+  String get workspaceMaximize;
+
+  /// Badge while a pane is maximized.
+  ///
+  /// In en, this message translates to:
+  /// **'Pane {pane} maximized, {hidden} hidden'**
+  String workspaceMaximized(int pane, int hidden);
+
+  /// How else to maximize a pane.
+  ///
+  /// In en, this message translates to:
+  /// **'{keys}, or double-click the tab bar'**
+  String workspaceMaximizeHint(String keys);
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'New empty workspace'**
+  String get workspaceNewEmpty;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'New pane'**
+  String get workspaceNewPane;
+
+  /// Action: open a view of a server in a pane.
+  ///
+  /// In en, this message translates to:
+  /// **'New tab'**
+  String get workspaceNewTab;
+
+  /// Quick open result that opens a new tab.
+  ///
+  /// In en, this message translates to:
+  /// **'New tab · in the focused pane'**
+  String get workspaceNewTabFocused;
+
+  /// Quick open found nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches'**
+  String get workspaceNoMatch;
+
+  /// Reopen closed tab with nothing closed.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to reopen'**
+  String get workspaceNothingToReopen;
+
+  /// A pane of a workspace, by position.
+  ///
+  /// In en, this message translates to:
+  /// **'Pane {index}'**
+  String workspacePane(int index);
+
+  /// Tooltip of a pane's menu button.
+  ///
+  /// In en, this message translates to:
+  /// **'Pane actions'**
+  String get workspacePaneActions;
+
+  /// How many panes a workspace has.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 pane} other{{count} panes}}'**
+  String workspacePaneCount(int count);
+
+  /// Button listing a workspace's panes on a narrow window.
+  ///
+  /// In en, this message translates to:
+  /// **'Panes'**
+  String get workspacePanes;
+
+  /// Heading of the pane list on a narrow window.
+  ///
+  /// In en, this message translates to:
+  /// **'{workspace} · two panes are shown; the tapped one gets focus'**
+  String workspacePanesHead(String workspace);
+
+  /// Heading of a pane's tab list.
+  ///
+  /// In en, this message translates to:
+  /// **'Tabs of pane {index}'**
+  String workspacePaneTabs(int index);
+
+  /// Heading of the view picker.
+  ///
+  /// In en, this message translates to:
+  /// **'New tab on {server} · choose a view'**
+  String workspacePickView(String server);
+
+  /// Action: search tabs, workspaces and views.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick open'**
+  String get workspaceQuickOpen;
+
+  /// Heading of quick open.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick open · Enter opens the first'**
+  String get workspaceQuickOpenHead;
+
+  /// Hint of quick open's field.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers, views, tabs or workspaces, e.g. db docker'**
+  String get workspaceQuickOpenHint;
+
+  /// Action: end a pane's maximize.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get workspaceRestore;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Save layout as template'**
+  String get workspaceSaveTemplate;
+
+  /// Tooltip of the seam between panes.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to resize, double-click to even out'**
+  String get workspaceSeamTip;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Split down'**
+  String get workspaceSplitDown;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Split right'**
+  String get workspaceSplitRight;
+
+  /// Quick open result that selects an open tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to'**
+  String get workspaceSwitchTo;
+
+  /// Quick open result that selects a workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch workspace'**
+  String get workspaceSwitchWorkspace;
+
+  /// Bar over a terminal while input is synchronized.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync input: typing goes to the {count} terminals of this workspace'**
+  String workspaceSyncBar(int count);
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop syncing input'**
+  String get workspaceSyncOff;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync input to all terminals'**
+  String get workspaceSyncOn;
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync input on: typing in any terminal goes to every terminal of this workspace'**
+  String get workspaceSyncOnToast;
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync input off'**
+  String get workspaceSyncOffToast;
+
+  /// Name given to a template saved from a workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'{workspace} layout'**
+  String workspaceTemplateOf(String workspace);
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved template “{name}”'**
+  String workspaceTemplateSaved(String name);
+
+  /// Heading of the template list.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout templates · new workspace on the focused pane\'s server'**
+  String get workspaceTemplatesHead;
+
+  /// Heading: move a terminal into a workspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to workspace, staying connected'**
+  String get workspaceMoveTo;
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal {server} moved to “{workspace}”, still connected'**
+  String workspaceMoved(String server, String workspace);
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'New workspace'**
+  String get workspaceNew;
+
+  /// Where a moved terminal goes.
+  ///
+  /// In en, this message translates to:
+  /// **'Into the focused pane'**
+  String get workspaceIntoFocused;
+
+  /// Settings page listing every keyboard shortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get keybindings;
+
+  /// Hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search commands, keys or scopes'**
+  String get kbSearchHint;
+
+  /// Filter.
+  ///
+  /// In en, this message translates to:
+  /// **'Only modified'**
+  String get kbOnlyModified;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all to default'**
+  String get kbResetAll;
+
+  /// Confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset every shortcut on this platform to its default?'**
+  String get kbResetAllAsk;
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'Default shortcuts restored'**
+  String get kbResetDone;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get kbResetOne;
+
+  /// A command with no shortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Not assigned'**
+  String get kbUnassigned;
+
+  /// A shortcut that cannot be changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed'**
+  String get kbFixed;
+
+  /// A shortcut changed from its default.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get kbModified;
+
+  /// A shortcut at its default.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get kbDefault;
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'These keys cannot be changed'**
+  String get kbFixedHint;
+
+  /// Footnote of the shortcuts page.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace shortcuts work only in a workspace. Global shortcuts, such as opening Settings, work on every page. On other terminal pages, shortcuts for workspace, Settings, or server-tab actions are sent to the shell because those actions are unavailable there. Copy, paste, and select all are terminal controls, not configurable shortcuts.'**
+  String get kbNote;
+
+  /// Recording dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Current: {keys} · Scope: {scope}'**
+  String kbCurrent(String keys, String scope);
+
+  /// Recording dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Press a key combination'**
+  String get kbPress;
+
+  /// Recording dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter to confirm, Esc to cancel. If focus leaves, tap the box above and press again.'**
+  String get kbRecordHint;
+
+  /// Recording dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts with “{name}” ({scope})'**
+  String kbConflict(String name, String scope);
+
+  /// Recording dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirming removes this combination from the conflicting command.'**
+  String get kbConflictNote;
+
+  /// Action.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove shortcut'**
+  String get kbRemove;
+
+  /// Toast.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” is now {keys}'**
+  String kbChanged(String name, String keys);
+
+  /// Scope of a shortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get kbScopeGlobal;
+
+  /// Scope of a shortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings page'**
+  String get kbScopeSettings;
+
+  /// Scope of a shortcut.
+  ///
+  /// In en, this message translates to:
+  /// **'Server tab'**
+  String get kbScopeServerTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: split right'**
+  String get kbWsSplitRight;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: split down'**
+  String get kbWsSplitDown;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: focus the pane on the left'**
+  String get kbWsFocusLeft;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: focus the pane on the right'**
+  String get kbWsFocusRight;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: focus the pane above'**
+  String get kbWsFocusUp;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: focus the pane below'**
+  String get kbWsFocusDown;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: new tab'**
+  String get kbWsNewTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: close tab'**
+  String get kbWsCloseTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: next tab'**
+  String get kbWsNextTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: previous tab'**
+  String get kbWsPrevTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: tabs of the focused pane'**
+  String get kbWsTabs;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: reopen closed tab'**
+  String get kbWsReopenTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: maximize or restore pane'**
+  String get kbWsMaximize;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: sync input to all terminals'**
+  String get kbWsSync;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: quick open'**
+  String get kbWsQuickOpen;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace: switch workspace'**
+  String get kbWsSwitcher;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Home: go to tab 1–9'**
+  String get kbHomeTab;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get kbAppSettings;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings: search'**
+  String get kbSettingsSearch;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers: previous server'**
+  String get kbServerPrev;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers: next server'**
+  String get kbServerNext;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers: server list'**
+  String get kbServerList;
+
+  /// Command.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers: close details'**
+  String get kbServerClose;
+
   /// Storage and sharing page text.
   ///
   /// In en, this message translates to:

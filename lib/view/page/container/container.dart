@@ -18,13 +18,19 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/actions_sink.dart';
 
 part 'actions.dart';
 part 'types.dart';
 
 class ContainerPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
-  const ContainerPage({required this.args, super.key});
+
+  /// Where the bar's buttons go when a host draws the bar — a workspace pane.
+  /// Null draws the page's own.
+  final ActionsSink? actionsSink;
+
+  const ContainerPage({required this.args, this.actionsSink, super.key});
 
   @override
   ConsumerState<ContainerPage> createState() => _ContainerPageState();
@@ -61,6 +67,11 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     _lastTabIndex = index;
     final tab = _ContainerTabs.values[index];
     if (tab != _ContainerTabs.settings) _lastResourceTab = tab;
+    // The buttons are the tab's, and a host's bar is not rebuilt for this.
+    if (widget.actionsSink case final sink?) {
+      final state = ref.read(_provider);
+      sink.publish(this, _barActions(state.isBusy || state.runLog != null));
+    }
     unawaited(_refreshContainerTab(tab));
   }
 
@@ -96,6 +107,11 @@ extension _ContainerPageWidgets on _ContainerPageState {
     final containerState = _containerState;
     final busy = _containerActionsBusy;
 
+    final sink = widget.actionsSink;
+    if (sink != null) {
+      sink.publish(this, _barActions(busy));
+      return Scaffold(body: _buildMain(containerState));
+    }
     return Scaffold(
       appBar: _buildAppBar(busy),
       body: SafeArea(child: _buildMain(containerState)),
@@ -110,7 +126,7 @@ extension _ContainerPageWidgets on _ContainerPageState {
           listenable: _tabCtrl,
           builder: (_, _) => Row(
             mainAxisSize: MainAxisSize.min,
-            children: _buildBarActions(busy),
+            children: [for (final a in _barActions(busy)) a.button()],
           ),
         ),
       ],
@@ -122,14 +138,14 @@ extension _ContainerPageWidgets on _ContainerPageState {
   /// Add lives here rather than in a floating button: the button covered the
   /// last card in a two-column grid, and on this page it is one of four
   /// actions that belong together rather than the page's single purpose.
-  List<Widget> _buildBarActions(bool busy) {
+  List<BarAction> _barActions(bool busy) {
     final tab = _ContainerTabs.values[_tabCtrl.index];
     return switch (tab) {
       _ContainerTabs.ps => [
-        _barBtn(
+        BarAction(
           key: const ValueKey('prune-containers-button'),
           icon: Icons.cleaning_services_outlined,
-          tooltip: '${libL10n.prune} ${libL10n.container}',
+          label: '${libL10n.prune} ${libL10n.container}',
           onTap: busy
               ? null
               : () => _showPruneDialog(
@@ -137,31 +153,31 @@ extension _ContainerPageWidgets on _ContainerPageState {
                   onConfirm: _containerNotifier.pruneContainers,
                 ),
         ),
-        _barBtn(
+        BarAction(
           key: const ValueKey('refresh-containers-button'),
           icon: Icons.refresh,
-          tooltip: libL10n.refresh,
+          label: libL10n.refresh,
           onTap: busy ? null : () => _refreshResourcesAndUsage(_ContainerTabs.ps),
         ),
-        _barBtn(
+        BarAction(
           key: const ValueKey('add-container-button'),
           icon: Icons.add,
-          tooltip: libL10n.add,
-          emphasized: true,
+          label: libL10n.add,
+          color: context.theme.colorScheme.primary,
           onTap: busy ? null : () => _showAddFAB(),
         ),
       ],
       _ContainerTabs.images => [
-        _barBtn(
+        BarAction(
           key: const ValueKey('prune-images-button'),
           icon: Icons.cleaning_services_outlined,
-          tooltip: '${libL10n.prune} ${l10n.image}',
+          label: '${libL10n.prune} ${l10n.image}',
           onTap: busy ? null : _showImagePruneDialog,
         ),
-        _barBtn(
+        BarAction(
           key: const ValueKey('refresh-images-button'),
           icon: Icons.refresh,
-          tooltip: libL10n.refresh,
+          label: libL10n.refresh,
           onTap: busy
               ? null
               : () => _refreshResourcesAndUsage(_ContainerTabs.images),
@@ -169,25 +185,6 @@ extension _ContainerPageWidgets on _ContainerPageState {
       ],
       _ContainerTabs.settings => const [],
     };
-  }
-
-  Widget _barBtn({
-    required Key key,
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback? onTap,
-    bool emphasized = false,
-  }) {
-    return IconButton(
-      key: key,
-      tooltip: tooltip,
-      onPressed: onTap,
-      icon: Icon(
-        icon,
-        size: 18,
-        color: emphasized ? context.theme.colorScheme.primary : null,
-      ),
-    );
   }
 
   Widget _buildMain(ContainerState containerState) {

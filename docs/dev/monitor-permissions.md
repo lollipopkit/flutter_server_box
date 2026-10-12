@@ -1,6 +1,6 @@
 # Monitor agent permissions — the contract (issue #1610)
 
-Fixed. The agent (`monitor/src`), the web panel (`monitor/frontend`) and the app (`lib/`) are built against exactly this, in parallel. A deviation is reported back, not improvised.
+The agent (`monitor/src`), web panel (`monitor/frontend`), and app (`lib/`) share this contract. Report deviations instead of making unilateral changes. (Issue #1610.)
 
 ## Grants
 

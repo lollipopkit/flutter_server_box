@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -72,6 +73,30 @@ void main() {
   );
 
   group('the shell on screen', () {
+    test('typing reaches every typed listener, and one leaving leaves the rest', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+      final a = <String>[];
+      final b = <String>[];
+      void la(String d) => a.add(d);
+      void lb(String d) => b.add(d);
+      session
+        ..addTypedListener(la)
+        ..addTypedListener(lb);
+
+      session.terminal.textInput('x');
+      session.removeTypedListener(la);
+      session.terminal.textInput('y');
+      // Mirrored input is sent, not typed: nobody is told of it.
+      session.sendTyped('z');
+
+      expect(a, ['x']);
+      expect(b, ['x', 'y']);
+      expect(utf8.decode(shell.written), 'xyz');
+      session.dispose();
+    });
+
     test('what it prints reaches the terminal', () async {
       final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
@@ -96,6 +121,26 @@ void main() {
 
       expect(session.outputTail, contains('A'));
       expect(session.outputTail.endsWith('ok'), isTrue);
+      session.dispose();
+    });
+
+    test('a shell put in front drops what the last one had queued', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final old = _FakeShell();
+      session.bindForeground(old);
+
+      // Arrived, but not drawn yet: the flush is a frame away.
+      old.emit('stale');
+      await Future<void>.delayed(Duration.zero);
+      expect(session.outputTail, 'stale');
+
+      final fresh = _FakeShell();
+      session.bindForeground(fresh);
+      fresh.emit('fresh');
+      await flushed();
+
+      expect(session.terminal.buffer.currentLine.toString().trim(), 'fresh');
+      expect(session.outputTail, 'fresh');
       session.dispose();
     });
 
@@ -548,6 +593,32 @@ void main() {
     expect(
       isRetryableTerminalConnectionError(
         const TerminalRemoteAccessUnavailable(),
+      ),
+      isFalse,
+    );
+  });
+
+  test('a connection turned away before authentication is retried', () {
+    // What sshd's `MaxStartups` sends in place of its version line.
+    expect(
+      isRetryableTerminalConnectionError(
+        SSHAuthAbortError(
+          'Connection closed before authentication',
+          SSHHandshakeError('Invalid version: Not allowed at this time'),
+        ),
+      ),
+      isTrue,
+    );
+    // Authentication itself failing is still for the user.
+    expect(
+      isRetryableTerminalConnectionError(
+        SSHAuthFailError('All authentication methods failed'),
+      ),
+      isFalse,
+    );
+    expect(
+      isRetryableTerminalConnectionError(
+        SSHAuthAbortError('Connection closed before authentication'),
       ),
       isFalse,
     );

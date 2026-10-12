@@ -64,7 +64,7 @@ App. Those servers sync by default. To exclude one, open **iOS Settings → App
 ### Setup
 
 1. Open Server Box on the iPhone.
-2. Open **Settings → App → iOS → Watch app**.
+2. Open **Settings → Application → iOS → Watch app**.
 3. Exclude any servers you do not want on the Watch; the remaining Monitor servers will sync.
 4. Wait for synchronization to finish.
 
@@ -86,7 +86,7 @@ a server there; it has no separate setting in Server Box.
 
 - Add at least one Monitor agent server in the App.
 - Check the agent's HTTPS configuration, saved credentials, and network reachability.
-- Widgets use the App's server list instead of manually entered `/status` URLs. If an old URL remains, follow the one-time in-app prompt to configure the server again.
+- Widgets use the App's server list instead of manually entered `/status` URLs. TODO: Remove the one-time migration prompt when supported upgrade paths no longer contain old URLs. If one appears, follow it to configure the server again.
 
 ## Security
 

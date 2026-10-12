@@ -17,13 +17,16 @@ import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
+import 'package:server_box/data/provider/server/await_client.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
@@ -239,6 +242,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The floating window is the only caller: it draws this session while this
   /// page stands its own view down — see [terminalShellProvider].
   TerminalSession get session => _sess;
+
+  /// Whether [handOff] gave the session away.
+  bool _handedOff = false;
+
+  /// Gives this page's session to another page — the workspace, a terminal
+  /// moved into it — still connected and still running. Called before this
+  /// page is removed, which then leaves the session alone instead of tearing
+  /// down its output, which the next page goes on reading.
+  TerminalSession handOff() {
+    _handedOff = true;
+    return _sess;
+  }
 
   /// A tmux pane by its window and its own name, for a heading over what it
   /// reports. Null once the pane is not in the attached session.
@@ -497,7 +512,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     // keeps running, and its output keeps landing in the terminal a later page
     // will show.
     final onLeave = widget.args.onLeave;
-    if (onLeave != null) {
+    if (_handedOff) {
+      // Only this page's own handler: the page that took the session may
+      // already have installed one.
+      if (session.onForegroundDone == _onForegroundSessionDone) {
+        session.onForegroundDone = null;
+      }
+    } else if (onLeave != null) {
       // This page's own handler would run on a page that no longer exists.
       session.onForegroundDone = null;
       WidgetsBinding.instance.addPostFrameCallback((_) => onLeave(session));
@@ -795,6 +816,15 @@ class SSHPageState extends ConsumerState<SSHPage>
           ),
           hideScrollBar: false,
           focusNode: widget.args.focusNode,
+          // The app's own chords, ahead of the shell: one whose command has
+          // somewhere to run above this page — the workspace's, inside a
+          // workspace — is the app's, and the rest still reach the shell.
+          shortcuts: {
+            ...defaultTerminalShortcuts,
+            ...ref
+                .watch(keybindingsProvider)
+                .shortcutsFor(const [KbScope.global, KbScope.workspace]),
+          },
           toolbarBuilder: _buildTerminalToolbar,
           onCopied: _onTerminalCopied,
           onSelectAll: _onTerminalSelectAll,
@@ -1289,12 +1319,21 @@ class SSHPageState extends ConsumerState<SSHPage>
     final spi = widget.args.spi;
     if (spi == null) return;
 
+    // The shell the key was pressed for, taken before anything is awaited. A
+    // reconnect or a tmux switch while this waits — on the unlock, the
+    // password dialog, the prompt — puts another in front, and its prompt is
+    // not the one asked about.
+    final shell = _session;
+    if (shell == null) return;
+    bool stillFor() => mounted && identical(_session, shell);
+
     final authed = await SudoPassword.authenticateIfNeeded();
     if (!authed) {
       if (!mounted) return;
       Toast.error(libL10n.fail);
       return;
     }
+    if (!stillFor()) return;
 
     final password = await SudoPassword.resolveForTerminal(spi);
     if (password == null || password.isEmpty) {
@@ -1302,6 +1341,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       Toast.show(libL10n.empty);
       return;
     }
+    if (!stillFor()) return;
 
     bool detected = false;
     const delays = [0, 100, 200, 400, 800, 1600];
@@ -1309,7 +1349,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       final delayMs = delays[i];
       if (delayMs > 0) {
         await Future.delayed(Duration(milliseconds: delayMs));
-        if (!mounted) return;
+        if (!stillFor()) return;
       }
 
       _sess.drainOutput();
@@ -1345,9 +1385,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (spi == null || !_sess.answersSudo) return;
     final password = SudoPassword.typed(spi.id);
     if (password == null) return;
+    // Only the prompt of the shell the command was typed into: one that
+    // replaced it meanwhile — a reconnect, a tmux switch — asked nothing.
+    final shell = _session;
+    if (shell == null) return;
     for (final ms in const [100, 200, 400, 800, 1600, 3200]) {
       await Future.delayed(Duration(milliseconds: ms));
-      if (!mounted) return;
+      if (!mounted || !identical(_session, shell)) return;
       _sess.drainOutput();
       if (_hasPendingSudoPrompt()) {
         _terminal.textInput(password);

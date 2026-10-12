@@ -182,7 +182,8 @@ The App displays and stores fingerprints in the OpenSSH SHA-256 format:
 SHA256:AbCdEf1234567890...=
 ```
 
-Legacy stored values are normalized when read.
+TODO: Remove normalization when no supported installation stores the legacy
+fingerprint format. Until then, values are normalized when read.
 
 ### Verification flow
 

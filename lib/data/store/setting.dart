@@ -340,15 +340,9 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Stored by name, never by index: an index changes meaning the moment a
   /// case is inserted, and this value outlives the build that wrote it.
   ///
-  /// The default is `defaultDiagnosticsLevel`: `none` on Android, `basic`
-  /// everywhere else. The split is about F-Droid, which distributes only the
-  /// Android build and requires collection to be off by default — see that
-  /// getter for why it is decided at runtime rather than by a compile-time
-  /// flag.
-  ///
-  /// Either way nothing is uploaded until the user has been shown the intro
-  /// page that explains the three levels. That ordering is what makes this
-  /// "asked before it happens" rather than collection by surprise.
+  /// The default is `defaultDiagnosticsLevel`, `none`: nothing is uploaded
+  /// until the user picks a level that uploads, in the intro or in Settings.
+  /// A value is stored only by such a pick.
   late final diagnosticsLevel = propertyDefault(
     'diagnosticsLevel',
     defaultDiagnosticsLevel.name,
@@ -700,6 +694,29 @@ class SettingStore extends SqliteStore with ThemeSettings {
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
+
+  /// The workspace layouts saved as templates, as JSON; empty for the
+  /// built-in ones — see `WorkspaceTemplates`.
+  late final workspaceTemplates = propertyDefault('workspaceTemplates', '');
+
+  /// The keyboard shortcuts changed from their defaults, keyed
+  /// `platform:command` (`mac:ws.splitRight`) to the chord, an empty string
+  /// for one removed — see `Keybindings`.
+  ///
+  /// Keyed by platform as well as command because a backup restored on
+  /// another kind of machine should not carry a Mac's chords onto a PC.
+  late final keybindings = propertyDefault<Map<String, String>>(
+    'keybindings',
+    const {},
+    // Decoded JSON is a `Map<String, dynamic>`, which is not this type.
+    fromObj: (raw) {
+      if (raw is! Map) return <String, String>{};
+      return {
+        for (final e in raw.entries)
+          if (e.value is String) e.key.toString(): e.value as String,
+      };
+    },
+  );
 
   /// The connection count (`2/4`) on the server tab (#1637).
   late final serverTabConnBadge = propertyDefault('serverTabConnBadge', true);

@@ -63,6 +63,15 @@ class TerminalSessionClosed implements Exception {
 /// Retry transport failures after launch, but leave permission and auth
 /// failures for the user to resolve.
 bool isRetryableTerminalConnectionError(Object error) {
+  // An `SSHAuthError` by type, but authentication was never reached: the
+  // handshake ended first. That is the server turning the connection away —
+  // `MaxStartups` drops new connections at random once enough unauthenticated
+  // ones are pending, which a server being brute-forced always has, with
+  // "Not allowed at this time" in place of its version line. The next attempt
+  // may well get in; the user has nothing to resolve.
+  if (error is SSHAuthAbortError && error.reason is SSHHandshakeError) {
+    return true;
+  }
   if (error is TerminalRemoteAccessUnavailable ||
       error is TerminalSessionClosed ||
       error is SSHAuthError) {
@@ -447,6 +456,13 @@ class TerminalSession {
     terminal.buffer.clear();
     terminal.buffer.setCursor(0, 0);
     _cancelOutputSubscriptions();
+    // What the last shell printed and is not on screen yet belongs to the
+    // screen just cleared: flushed after this, it would land on the new
+    // shell's, and the tail would read it as the new shell's.
+    _flushTimer?.cancel();
+    _flushTimer = null;
+    _buffer.take(_buffer.pendingChars);
+    _tail = '';
 
     // Whatever ran in the terminal before has exited; a tmux pane has not.
     status.shell.processExited();
@@ -458,7 +474,18 @@ class TerminalSession {
       status.clearPanes();
     }
 
-    terminal.onOutput = (data) => session.write(utf8.encode(data));
+    terminal.onOutput = (data) {
+      session.write(utf8.encode(data));
+      // What the terminal answers on its own while output is being written —
+      // a cursor position, a device attribute — is not typing, and sent to
+      // another shell it would arrive there as input nobody gave.
+      if (!_writingOutput) {
+        // A copy: a listener may add or remove one while being told.
+        for (final listener in [..._typedListeners]) {
+          listener(data);
+        }
+      }
+    };
     terminal.onResize = (width, height, _, _) {
       // A shell whose connection has gone throws here, and it is not the
       // terminal's to fail over: the keyboard coming up resized the view of a
@@ -607,6 +634,36 @@ class TerminalSession {
 
   void writeLn(String line) => terminal.write('$line\r\n');
 
+  /// Told what is typed into this terminal — keys, pastes — and nothing the
+  /// terminal sends by itself. For a host mirroring one terminal's input into
+  /// others (a workspace's synchronized input).
+  ///
+  /// A set rather than one callback: whoever listens takes back only its own
+  /// listener, so two of them never undo each other.
+  final _typedListeners = <void Function(String data)>{};
+
+  void addTypedListener(void Function(String data) listener) =>
+      _typedListeners.add(listener);
+
+  void removeTypedListener(void Function(String data) listener) =>
+      _typedListeners.remove(listener);
+
+  /// Whether [terminal] is being given the shell's output, during which what
+  /// it sends back is a reply rather than typing — see [addTypedListener].
+  bool _writingOutput = false;
+
+  /// [data] to the shell as if typed here, without telling the typed
+  /// listeners: the other end of a mirror, which must not echo it back.
+  void sendTyped(String data) {
+    final shell = _foreground;
+    if (shell == null) return;
+    try {
+      shell.write(utf8.encode(data));
+    } catch (e) {
+      Loggers.app.info('Mirrored input not sent: $e');
+    }
+  }
+
   void _listen(Stream<Uint8List>? stream) {
     if (stream == null) return;
     final subscription = stream
@@ -651,7 +708,14 @@ class TerminalSession {
     _flushTimer = null;
     if (!_buffer.hasPending) return;
     final output = _buffer.take(_flushCharLimit);
-    if (output.isNotEmpty) terminal.write(output);
+    if (output.isNotEmpty) {
+      _writingOutput = true;
+      try {
+        terminal.write(output);
+      } finally {
+        _writingOutput = false;
+      }
+    }
     if (scheduleNext && _buffer.hasPending) _scheduleFlush();
   }
 

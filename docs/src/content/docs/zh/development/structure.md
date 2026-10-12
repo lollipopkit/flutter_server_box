@@ -37,7 +37,7 @@ lib/
 ├── view/              # 页面和可复用 Widget
 ├── generated/         # 生成的本地化代码
 ├── l10n/              # ARB 本地化源文件
-├── hive/              # 仅用于迁移的旧版 Hive adapter
+├── hive/              # TODO：Hive migration window 结束后删除
 └── src/rust/          # 生成的 flutter_rust_bridge bindings
 ```
 

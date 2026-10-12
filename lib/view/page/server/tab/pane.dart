@@ -110,19 +110,11 @@ extension _Pane on _ServerPageState {
       key: ValueKey(id),
       builder: (_, ref, _) {
         final srv = ref.watch(serverProvider(id));
-        return SideBarTile(
-          leading: distIcon(id, size: 22),
-          title: srv.spi.name,
+        return ServerSideTile(
+          spi: srv.spi,
           // Whether it answers, which the grid said with the card and this
-          // says with a dot — after the name, so the names start on one edge.
-          trailing: Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: serverStateDot(srv),
-            ),
-          ),
+          // says on its mark, or with the bar where it has none.
+          state: serverStateDot(srv),
           selected: id == openId,
           onTap: id == openId ? null : () => _openDetail(id),
         );

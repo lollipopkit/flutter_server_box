@@ -58,6 +58,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Monitor Agent', translations: { 'zh-CN': 'Monitor Agent' }, slug: 'advanced/monitor-agent' },
 						{ label: 'Monitor Apps', translations: { 'zh-CN': 'Monitor 应用' }, slug: 'advanced/monitor-apps' },
+						{ label: 'Workspace', translations: { 'zh-CN': '工作区' }, slug: 'advanced/workspace' },
 						{ label: 'Remote Desktop', translations: { 'zh-CN': '远程桌面' }, slug: 'advanced/remote-desktop' },
 						{ label: 'Agent', translations: { 'zh-CN': 'Agent' }, slug: 'advanced/agent' },
 						{ label: 'Terminal on This Device', translations: { 'zh-CN': '本机终端' }, slug: 'advanced/local-terminal' },

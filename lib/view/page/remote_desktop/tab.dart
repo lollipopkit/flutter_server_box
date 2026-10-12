@@ -20,6 +20,7 @@ import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/server_side_tile.dart';
 
 part 'sort.dart';
 
@@ -275,34 +276,55 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       SideBarActions(actions: [_sortAction]),
       if (state.ordered.isNotEmpty) SideBarSection(libL10n.running),
       for (final session in state.ordered)
-        SideBarTile(
-          key: ValueKey(session.id),
-          title: session.profile.name,
-          icon: Icons.desktop_windows_outlined,
-          selected:
-              _selectedServerId == null &&
-              !_showPicker &&
-              state.activeId == session.id,
-          live:
-              session.connectionState ==
-              ffi.RemoteDesktopConnectionState.connected,
-          onTap: () => _selectSession(session.id),
-          onMenu: (at) => _showSessionMenu(session, at),
-        ),
+        _sessionTile(state, session),
       for (final group in groups) ...[
         if (group.label case final label?) SideBarSection(label),
         for (final id in group.items)
           if (servers.servers[id] case final spi?)
-            SideBarTile(
+            ServerSideTile(
               key: ValueKey('server:$id'),
-              leading: distIcon(spi.id, size: 22),
-              title: spi.name,
+              spi: spi,
               selected: _selectedServerId == id,
               onTap: () => _selectServer(spi),
             ),
       ],
     ],
   );
+
+  /// A session's row, its state shown as every rail shows one — see
+  /// [railRow]: how the connection is doing, which a connected one leaves to
+  /// the ordinary live colours.
+  Widget _sessionTile(
+    RemoteDesktopSessionsState state,
+    RemoteDesktopSessionView session,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final selected =
+        _selectedServerId == null &&
+        !_showPicker &&
+        state.activeId == session.id;
+    final row = railRow(
+      serverId: session.profile.serverId,
+      live: true,
+      color: switch (session.connectionState) {
+        ffi.RemoteDesktopConnectionState.connecting ||
+        ffi.RemoteDesktopConnectionState.reconnecting => scheme.primary,
+        ffi.RemoteDesktopConnectionState.disconnected => scheme.error,
+        ffi.RemoteDesktopConnectionState.connected => null,
+      },
+      selected: selected,
+    );
+    return SideBarTile(
+      key: ValueKey(session.id),
+      title: session.profile.name,
+      leading: row.leading,
+      live: row.live,
+      liveColor: row.liveColor,
+      selected: selected,
+      onTap: () => _selectSession(session.id),
+      onMenu: (at) => _showSessionMenu(session, at),
+    );
+  }
 
   Future<void> _showSortSheet() async {
     await showRowsSheet<void>(

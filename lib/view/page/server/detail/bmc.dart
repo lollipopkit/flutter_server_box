@@ -52,7 +52,7 @@ extension on _ServerDetailPageState {
       // `betaTip` on a card that is expanded every time the page opens would
       // make it wallpaper.
       title: 'BMC',
-      mark: const BetaTag(),
+      mark: Feature.bmc.mark(),
       verdict: switch (bmc) {
         BmcState(failure: final failure?) => (
           text: _bmcFailureText(failure, bmc.failureDetail),

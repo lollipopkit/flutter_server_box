@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
@@ -110,7 +111,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
         title: TwoLineText(
           up: l10n.remoteDesktop,
           down: widget.args.spi.name,
-          mark: const BetaTag(),
+          mark: Feature.remoteDesktop.mark(),
         ),
         actions: [
           Btn.icon(
@@ -273,11 +274,14 @@ extension _Actions on _RemoteDesktopProfilesPageState {
       actions: Btnx.cancelOk,
     );
     if (confirmed != true || !mounted) return;
-    await ref
-        .read(remoteDesktopSessionsProvider.notifier)
-        .closeForProfile(profile.id);
-    ref
-        .read(remoteDesktopProfilesProvider(widget.args.spi.id).notifier)
-        .remove(profile);
+    // Both read before the wait: the deletion was confirmed, and finishes
+    // even if this page is gone by the time the sessions have closed — `ref`
+    // is not to be used then. Both providers are kept alive.
+    final sessions = ref.read(remoteDesktopSessionsProvider.notifier);
+    final profiles = ref.read(
+      remoteDesktopProfilesProvider(widget.args.spi.id).notifier,
+    );
+    await sessions.closeForProfile(profile.id);
+    profiles.remove(profile);
   }
 }

@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/refresh_scheduler.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/entity_store.dart';
@@ -365,6 +366,7 @@ class ServersNotifier extends _$ServersNotifier {
     final deleting = state.servers[id];
     if (deleting == null) return;
     await ref.read(remoteDesktopSessionsProvider.notifier).closeForServer(id);
+    ref.read(workspacesProvider.notifier).removeServer(id);
     // Started here, because revoking is an authenticated call to the agent
     // and the credential is on the record. Neither publishes — see
     // `revokeServer`: a rebuild from a store that still holds this server
@@ -504,6 +506,7 @@ class ServersNotifier extends _$ServersNotifier {
         }
         Stores.setting.serverOrder.put(newOrder);
         Stores.history.renameSshServer(old.id, newSpi.id);
+        ref.read(workspacesProvider.notifier).renameServer(old.id, newSpi.id);
         // Device-local derived state follows the same stable server identity.
         // Keeping the old key would retain an orphan and make the renamed
         // server wait for another extended poll before it can be placed.

@@ -51,6 +51,12 @@ List<SettingsNode> _buildNodes() {
           icon: Icons.tab_outlined,
           page: () => const HomeTabsConfigPage(embedded: true),
         ),
+        SettingsNode.leaf(
+          id: 'app.keybindings',
+          title: l10n.keybindings,
+          icon: Icons.keyboard_outlined,
+          page: () => const KeybindingsPage(embedded: true),
+        ),
         if (isIOS)
           SettingsNode.leaf(
             id: 'app.ios',
@@ -136,7 +142,7 @@ List<SettingsNode> _buildNodes() {
             // word in every locale this ships in.
             title: 'Linux',
             icon: Icons.layers_outlined,
-            beta: true,
+            feature: Feature.linux,
             page: () => const AppSettingsPage(section: SettingsSection.linux),
           ),
         SettingsNode.leaf(

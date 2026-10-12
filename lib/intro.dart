@@ -36,7 +36,6 @@ final class _IntroPage extends StatelessWidget {
   /// number to refer to a step by.
   static List<_IntroStep> get _steps => [
     (applies: _isFirstLaunch, build: _buildAppSettings),
-    (applies: _needsBackupPassword, build: _buildBackupPasswordMigration),
     (applies: _needsDiagnosticsConsent, build: _buildDiagnostics),
     // After the questions: these only say what the app can do.
     (applies: () async => _featureUnseen(1), build: _buildRemoteDesktop),
@@ -60,16 +59,6 @@ final class _IntroPage extends StatelessWidget {
 
   /// Nothing has ever completed the intro on this install.
   static Future<bool> _isFirstLaunch() async => _setting.introVer.fetch() == 0;
-
-  /// Upgrading from a build that predates the backup password, without one set.
-  ///
-  /// `lastVer > 0` is what separates an upgrade from a first install: a fresh
-  /// one has no data to protect and is offered the password elsewhere.
-  static Future<bool> _needsBackupPassword() async {
-    if (_setting.lastVer.fetch() == 0) return false;
-    if (_setting.introVer.fetch() >= 2) return false;
-    return (await SecureStoreProps.bakPwd.read())?.isNotEmpty != true;
-  }
 
   /// The user has not seen the current diagnostics arrangement.
   ///
@@ -134,8 +123,13 @@ final class _IntroPage extends StatelessWidget {
       final lastVer = _setting.lastVer;
       if (lastVer.fetch() == 0) lastVer.putSync(BuildData.build);
       // Written here rather than on the page itself, so that leaving the intro
-      // without reaching the end counts as unanswered and asks again.
-      _setting.diagnosticsConsentVer.putSync(kDiagnosticsConsentVer);
+      // without reaching the end counts as unanswered and asks again. Only in
+      // a build that shows the page: one without a DSN leaves it out, and its
+      // having been finished must not be read as an answer by a later build
+      // that can upload.
+      if (DiagnosticsUpload.availableInBuild) {
+        _setting.diagnosticsConsentVer.putSync(kDiagnosticsConsentVer);
+      }
       _setting.featureIntroVer.putSync(_kFeatureIntroVer);
     });
     // Applies whatever was chosen a moment ago. Nothing has been uploaded
@@ -235,41 +229,12 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
-  static Widget _buildBackupPasswordMigration(BuildContext ctx, double padTop) {
-    final l10n = ctx.l10n;
-
-    return _introList(
-      children: [
-        SizedBox(height: padTop),
-        IntroPage.title(text: l10n.backupPassword, big: true),
-        SizedBox(height: padTop * 0.5),
-        Text(
-          l10n.backupTip,
-          style: const TextStyle(fontSize: 16),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: padTop * 0.5),
-        ListTile(
-          leading: const Icon(Icons.lock, color: Colors.orange),
-          title: Text(l10n.backupPassword),
-          subtitle: Text(l10n.backupPasswordTip, style: UIs.textGrey),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () => _askBackupPassword(ctx),
-        ).cardx,
-        // Nothing further here: the two lines above — `backupTip` under the
-        // title and `backupPasswordTip` on the tile — already say what this
-        // step is and why. A third sentence restating it was also the one
-        // string on this page that was never translated.
-        UIs.height77,
-      ],
-    );
-  }
-
   /// Where diagnostics collection is explained and chosen.
   ///
-  /// Shown before anything is uploaded, and that ordering is the point: the
-  /// desktop default is `basic`, so without being asked first a user would be
-  /// sending before they had been told. [_onDone] is what releases it.
+  /// Shown before anything is uploaded. The level starts at `none` on every
+  /// platform, so going past this page without picking one sends nothing;
+  /// picking one that uploads is the user's choice, and [_onDone] is what
+  /// releases it.
   ///
   /// A radio list rather than a switch, so each level carries the sentence
   /// that says what it sends.
@@ -314,7 +279,7 @@ final class _IntroPage extends StatelessWidget {
         ..._head(
           l10n.remoteDesktop,
           padTop,
-          mark: const BetaTag(height: BetaTag.heading),
+          mark: Feature.remoteDesktop.mark(height: BetaTag.heading),
         ),
         _prose(l10n.remoteDesktopIntro),
         ListTile(
@@ -391,7 +356,7 @@ final class _IntroPage extends StatelessWidget {
         ..._head(
           l10n.virtualization,
           padTop,
-          mark: const BetaTag(height: BetaTag.heading),
+          mark: Feature.virt.mark(height: BetaTag.heading),
         ),
         _prose(l10n.virtIntro),
         ListTile(
@@ -427,7 +392,6 @@ final class _IntroPage extends StatelessWidget {
 
   // — Actions ———————————————————————————————————————————————————————
 
-
   /// Adds this device as a server, unless one already is. False, after
   /// saying why, when that failed.
   static Future<bool> _addLocalServer(BuildContext ctx) async {
@@ -457,44 +421,6 @@ final class _IntroPage extends StatelessWidget {
     if (selected == null || !ctx.mounted) return;
 
     _setting.locale.put(selected.code);
-  }
-
-  static Future<void> _askBackupPassword(BuildContext ctx) async {
-    final controller = TextEditingController();
-    final result = await ctx.showRoundDialog<bool>(
-      title: ctx.l10n.backupPassword,
-      // Disposed by the tree. It was never disposed at all before, which leaks
-      // one controller per visit and — unlike the crash the same shape causes
-      // elsewhere — says nothing about it.
-      child: DisposeWith(
-        notifiers: [controller],
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(ctx.l10n.backupPasswordTip, style: UIs.textGrey),
-            UIs.height13,
-            Input(
-              label: ctx.l10n.backupPassword,
-              controller: controller,
-              obscureText: true,
-              // `popDialog`, not `pop`: the dialog is on the root navigator
-              // and `ctx` is the page's. It happens to be the same one today
-              // only because the intro is `MaterialApp.home` — under a pane or
-              // a tab this would close the page, leave the dialog up, and
-              // never complete the future the password is written from.
-              onSubmitted: (_) => ctx.popDialog(true),
-            ),
-          ],
-        ),
-      ),
-      actions: Btnx.cancelOk,
-    );
-    if (result != true) return;
-
-    final pwd = controller.text.trim();
-    if (pwd.isEmpty) return;
-    await SecureStoreProps.bakPwd.write(pwd);
-    Toast.show(ctx.l10n.backupPasswordSet);
   }
 }
 

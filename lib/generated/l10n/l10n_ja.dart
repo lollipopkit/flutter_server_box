@@ -5268,6 +5268,357 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get workspace => 'ワークスペース';
+
+  @override
+  String get workspaceTroubleshoot => 'トラブルシュート';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server は未接続です';
+  }
+
+  @override
+  String get workspaceConnectHint => 'このサーバーは起動時に自動接続しない設定です。';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'すべてのタブ（$count）';
+  }
+
+  @override
+  String get workspaceAsleep => '未接続';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$whatを閉じました';
+  }
+
+  @override
+  String get workspaceClosePane => 'ペインを閉じる';
+
+  @override
+  String get workspaceClosePaneHint => '中のタブをすべて閉じます。元に戻せます';
+
+  @override
+  String get workspaceDropLeft => '左';
+
+  @override
+  String get workspaceDropRight => '右';
+
+  @override
+  String get workspaceDropTop => '上';
+
+  @override
+  String get workspaceDropBottom => '下';
+
+  @override
+  String get workspaceDropMerge => 'このペインに追加';
+
+  @override
+  String get workspaceEmpty => '空のワークスペース';
+
+  @override
+  String get workspaceEmptyTemplate => '空のワークスペースには保存するレイアウトがありません';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'テンプレート「$template」から $server の新しいワークスペースを作成しました';
+  }
+
+  @override
+  String get workspaceHidden => '非表示';
+
+  @override
+  String get workspaceMaximize => '最大化';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'ペイン $pane を最大化、$hidden 個を非表示';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys、またはタブバーをダブルクリック';
+  }
+
+  @override
+  String get workspaceNewEmpty => '新しい空のワークスペース';
+
+  @override
+  String get workspaceNewPane => '新しいペイン';
+
+  @override
+  String get workspaceNewTab => '新しいタブ';
+
+  @override
+  String get workspaceNewTabFocused => '新しいタブ · フォーカス中のペインに';
+
+  @override
+  String get workspaceNoMatch => '一致する項目はありません';
+
+  @override
+  String get workspaceNothingToReopen => '再度開くタブはありません';
+
+  @override
+  String workspacePane(int index) {
+    return 'ペイン $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'ペインの操作';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 個のペイン',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'ペイン一覧';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · 2 つのペインを表示中。タップしたペインにフォーカスします';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'ペイン $index のタブ';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return '新しいタブ · $server · ビューを選択';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'クイックオープン';
+
+  @override
+  String get workspaceQuickOpenHead => 'クイックオープン · Enter で先頭を開く';
+
+  @override
+  String get workspaceQuickOpenHint => 'サーバー、ビュー、タブ、ワークスペース（例: db docker）';
+
+  @override
+  String get workspaceRestore => '元に戻す';
+
+  @override
+  String get workspaceSaveTemplate => 'レイアウトをテンプレートとして保存';
+
+  @override
+  String get workspaceSeamTip => 'ドラッグでサイズ変更、ダブルクリックで均等に';
+
+  @override
+  String get workspaceSplitDown => '下に分割';
+
+  @override
+  String get workspaceSplitRight => '右に分割';
+
+  @override
+  String get workspaceSwitchTo => '切り替え';
+
+  @override
+  String get workspaceSwitchWorkspace => 'ワークスペースを切り替え';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return '入力の同期: 入力内容はこのワークスペースの $count 個のターミナルに送信されます';
+  }
+
+  @override
+  String get workspaceSyncOff => '入力の同期を停止';
+
+  @override
+  String get workspaceSyncOn => 'すべてのターミナルに入力を同期';
+
+  @override
+  String get workspaceSyncOnToast =>
+      '入力の同期をオンにしました: どのターミナルで入力しても、このワークスペースのすべてのターミナルに送信されます';
+
+  @override
+  String get workspaceSyncOffToast => '入力の同期をオフにしました';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace のレイアウト';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'テンプレート「$name」を保存しました';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'レイアウトテンプレート · フォーカス中のペインのサーバーで新しいワークスペースを作成';
+
+  @override
+  String get workspaceMoveTo => '接続を保ったままワークスペースに移動';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'ターミナル $server を「$workspace」に移動しました（接続は維持）';
+  }
+
+  @override
+  String get workspaceNew => '新しいワークスペース';
+
+  @override
+  String get workspaceIntoFocused => 'フォーカス中のペインに';
+
+  @override
+  String get keybindings => 'キーボードショートカット';
+
+  @override
+  String get kbSearchHint => 'コマンド、キー、適用範囲を検索';
+
+  @override
+  String get kbOnlyModified => '変更済みのみ';
+
+  @override
+  String get kbResetAll => 'すべてデフォルトに戻す';
+
+  @override
+  String get kbResetAllAsk => 'このプラットフォームのショートカットをすべてデフォルトに戻しますか？';
+
+  @override
+  String get kbResetDone => 'デフォルトのショートカットに戻しました';
+
+  @override
+  String get kbResetOne => 'デフォルトに戻す';
+
+  @override
+  String get kbUnassigned => '未割り当て';
+
+  @override
+  String get kbFixed => '固定';
+
+  @override
+  String get kbModified => '変更済み';
+
+  @override
+  String get kbDefault => 'デフォルト';
+
+  @override
+  String get kbFixedHint => 'これらのキーは変更できません';
+
+  @override
+  String get kbNote =>
+      'ワークスペース内のターミナルでは、ワークスペースとグローバルの組み合わせはアプリが処理します。ここにあるその他の組み合わせは shell に届きます。適用範囲が異なるコマンドは同じ組み合わせを共有できます。';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return '現在: $keys · 適用範囲: $scope';
+  }
+
+  @override
+  String get kbPress => 'キーの組み合わせを押してください';
+
+  @override
+  String get kbRecordHint =>
+      'Enter で確定、Esc でキャンセル。フォーカスが外れたら、上の枠をタップしてもう一度押してください。';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return '「$name」（$scope）と競合しています';
+  }
+
+  @override
+  String get kbConflictNote => '確定すると、競合するコマンドからこの組み合わせが削除されます。';
+
+  @override
+  String get kbRemove => 'ショートカットを削除';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '「$name」を $keys に変更しました';
+  }
+
+  @override
+  String get kbScopeGlobal => 'グローバル';
+
+  @override
+  String get kbScopeSettings => '設定ページ';
+
+  @override
+  String get kbScopeServerTab => 'サーバータブ';
+
+  @override
+  String get kbWsSplitRight => 'ワークスペース: 右に分割';
+
+  @override
+  String get kbWsSplitDown => 'ワークスペース: 下に分割';
+
+  @override
+  String get kbWsFocusLeft => 'ワークスペース: 左のペインにフォーカス';
+
+  @override
+  String get kbWsFocusRight => 'ワークスペース: 右のペインにフォーカス';
+
+  @override
+  String get kbWsFocusUp => 'ワークスペース: 上のペインにフォーカス';
+
+  @override
+  String get kbWsFocusDown => 'ワークスペース: 下のペインにフォーカス';
+
+  @override
+  String get kbWsNewTab => 'ワークスペース: 新しいタブ';
+
+  @override
+  String get kbWsCloseTab => 'ワークスペース: タブを閉じる';
+
+  @override
+  String get kbWsNextTab => 'ワークスペース: 次のタブ';
+
+  @override
+  String get kbWsPrevTab => 'ワークスペース: 前のタブ';
+
+  @override
+  String get kbWsTabs => 'ワークスペース: フォーカス中のペインのタブ一覧';
+
+  @override
+  String get kbWsReopenTab => 'ワークスペース: 閉じたタブを再度開く';
+
+  @override
+  String get kbWsMaximize => 'ワークスペース: ペインを最大化 / 元に戻す';
+
+  @override
+  String get kbWsSync => 'ワークスペース: すべてのターミナルに入力を同期';
+
+  @override
+  String get kbWsQuickOpen => 'ワークスペース: クイックオープン';
+
+  @override
+  String get kbWsSwitcher => 'ワークスペース: ワークスペースを切り替え';
+
+  @override
+  String get kbHomeTab => 'ホーム: タブ 1–9 に移動';
+
+  @override
+  String get kbAppSettings => '設定を開く';
+
+  @override
+  String get kbSettingsSearch => '設定: 検索';
+
+  @override
+  String get kbServerPrev => 'サーバー: 前のサーバー';
+
+  @override
+  String get kbServerNext => 'サーバー: 次のサーバー';
+
+  @override
+  String get kbServerList => 'サーバー: サーバー一覧';
+
+  @override
+  String get kbServerClose => 'サーバー: 詳細を閉じる';
+
+  @override
   String get storageTitle => 'ストレージ';
 
   @override

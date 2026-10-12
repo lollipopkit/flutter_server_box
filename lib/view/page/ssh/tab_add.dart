@@ -130,14 +130,14 @@ class _AddPageState extends ConsumerState<_AddPage> {
         if (Rootfs.isAvailable && needle.isEmpty) ...[
           // Where the beta is said. It used to be the collapsed tile's
           // title; with a row per system there is no one row it belongs to.
-          const Padding(
+          Padding(
             // `CenterGreyTitle`'s spacing, with the mark beside the word.
-            padding: EdgeInsets.only(top: 23, bottom: 17),
+            padding: const EdgeInsets.only(top: 23, bottom: 17),
             child: Center(
               child: MarkedTitle(
                 'Linux',
                 style: UIs.textGrey,
-                mark: BetaTag(),
+                mark: Feature.linux.mark(),
               ),
             ),
           ),
@@ -336,14 +336,16 @@ class _SideBarState extends ConsumerState<_SideBar> {
       ];
     }
 
-    return ListenBuilder(
-      listenable: widget.sessions,
-      builder: () => SessionSideBar(
+    final scheme = Theme.of(context).colorScheme;
+    return widget.sessions.listenRail(
+      () => SessionSideBar(
         names: widget.sessions.names,
         index: widget.sessions.index,
         onTap: widget.onSelect,
         onClose: widget.onClose,
-        leadingOf: widget.sessions.statusOf,
+        leadingOf: (i) => widget.sessions.railOf(i, scheme).leading,
+        liveOf: (i) => widget.sessions.railOf(i, scheme).live,
+        liveColorOf: (i) => widget.sessions.railOf(i, scheme).liveColor,
         actions: widget.actions,
         search: widget.search,
         targets: [
@@ -381,10 +383,9 @@ class _SideBarState extends ConsumerState<_SideBar> {
           SideBarSection(libL10n.servers),
           for (final id in order)
             if (state.servers[id] case final spi?)
-              SideBarTile(
+              ServerSideTile(
                 key: ValueKey(id),
-                title: spi.name,
-                leading: distIcon(spi.id, size: 17),
+                spi: spi,
                 // Always a new shell, never a jump to one that is already
                 // open: the section above is where switching happens, and a
                 // second shell on one server is an ordinary thing to want.

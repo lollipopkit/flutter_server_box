@@ -178,6 +178,8 @@ style = "mingcute"
 # "tab.remoteDesktop.selected" = "icons/tab_remoteDesktop_selected.png"
 # "tab.virt" = "icons/tab_virt.png"
 # "tab.virt.selected" = "icons/tab_virt_selected.png"
+# "tab.workspace" = "icons/tab_workspace.png"
+# "tab.workspace.selected" = "icons/tab_workspace_selected.png"
 # Navigation and settings icons.
 # "nav.more" = "icons/nav_more.png"
 # "nav.settings" = "icons/nav_settings.png"

@@ -15,13 +15,32 @@ extension _Init on SSHPageState {
 
   /// Connects a new source of shells. The provider's grant is a fallback hint;
   /// [TerminalSession.connect] asks the agent directly before opening a PTY.
-  Future<ShellBackend> _connectBackend() => _sess.connect(
-    granted: switch (widget.args.spi) {
+  ///
+  /// The status poller's connection first, when it is on its way — see
+  /// [_awaitServerClient] — and a connection of the terminal's own otherwise.
+  Future<ShellBackend> _connectBackend() async {
+    final granted = switch (widget.args.spi) {
       final spi? => ref.readPresentServer(spi.id)?.remoteAccess,
       null => null,
-    },
-    context: mounted ? context : null,
-  );
+    };
+    final shared = await _awaitServerClient();
+    // Gone while waiting: nothing is left to show a shell in.
+    if (!mounted) throw const TerminalSessionClosed();
+    if (shared != null) {
+      _sess.adopt(shared, granted: granted);
+      if (_sess.backend case final backend?) return backend;
+    }
+    return _sess.connect(granted: granted, context: mounted ? context : null);
+  }
+
+  /// The status poller's connection, when it has one or is making one — see
+  /// [awaitServerClient]. Null for a terminal on no server, or one deleted
+  /// since the tab opened.
+  Future<SSHClient?> _awaitServerClient() async {
+    final id = widget.args.spi?.id;
+    if (id == null || ref.readPresentServer(id) == null) return null;
+    return awaitServerClientOf(ref, id);
+  }
 
   Map<String, String>? get _sshEnvironment => _sess.environment;
 
@@ -355,11 +374,15 @@ extension _Init on SSHPageState {
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
     try {
       // Startup may precede the network. Permission and auth failures are not
-      // retried; only transport failures use these short backoffs.
+      // retried; only transport failures use these short backoffs. Four
+      // tries: a server whose `MaxStartups` is shedding connections turns
+      // each one away at random, a third of the time or more, and three
+      // tries still lost about one launch in thirty.
       const retryDelays = [
         Duration.zero,
         Duration(milliseconds: 500),
         Duration(seconds: 2),
+        Duration(seconds: 5),
       ];
       for (final delay in retryDelays) {
         if (delay != Duration.zero) {

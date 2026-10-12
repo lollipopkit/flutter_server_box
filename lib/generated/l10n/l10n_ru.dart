@@ -5566,6 +5566,372 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get workspace => 'Рабочее пространство';
+
+  @override
+  String get workspaceTroubleshoot => 'Диагностика';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server не подключён';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Этот сервер настроен не подключаться при запуске.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Все вкладки ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Не подключено';
+
+  @override
+  String workspaceClosed(String what) {
+    return 'Закрыто: $what';
+  }
+
+  @override
+  String get workspaceClosePane => 'Закрыть панель';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Закрывает все её вкладки; можно отменить';
+
+  @override
+  String get workspaceDropLeft => 'Слева';
+
+  @override
+  String get workspaceDropRight => 'Справа';
+
+  @override
+  String get workspaceDropTop => 'Сверху';
+
+  @override
+  String get workspaceDropBottom => 'Снизу';
+
+  @override
+  String get workspaceDropMerge => 'Добавить в эту панель';
+
+  @override
+  String get workspaceEmpty => 'Пустое рабочее пространство';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'В пустом рабочем пространстве нет макета для сохранения';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Новое рабочее пространство из «$template» на $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Скрыта';
+
+  @override
+  String get workspaceMaximize => 'Развернуть';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Панель $pane развёрнута, скрыто: $hidden';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys или двойной щелчок по панели вкладок';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Новое пустое рабочее пространство';
+
+  @override
+  String get workspaceNewPane => 'Новая панель';
+
+  @override
+  String get workspaceNewTab => 'Новая вкладка';
+
+  @override
+  String get workspaceNewTabFocused => 'Новая вкладка · в активной панели';
+
+  @override
+  String get workspaceNoMatch => 'Ничего не найдено';
+
+  @override
+  String get workspaceNothingToReopen => 'Нечего открыть повторно';
+
+  @override
+  String workspacePane(int index) {
+    return 'Панель $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Действия панели';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count панели',
+      many: '$count панелей',
+      few: '$count панели',
+      one: '$count панель',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Панели';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · показаны две панели; нажатая получает фокус';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Вкладки панели $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Новая вкладка на $server · выберите вид';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Быстрое открытие';
+
+  @override
+  String get workspaceQuickOpenHead =>
+      'Быстрое открытие · Enter открывает первый результат';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Серверы, виды, вкладки или рабочие пространства, например db docker';
+
+  @override
+  String get workspaceRestore => 'Восстановить';
+
+  @override
+  String get workspaceSaveTemplate => 'Сохранить макет как шаблон';
+
+  @override
+  String get workspaceSeamTip =>
+      'Перетащите, чтобы изменить размер; двойной щелчок выравнивает';
+
+  @override
+  String get workspaceSplitDown => 'Разделить вниз';
+
+  @override
+  String get workspaceSplitRight => 'Разделить вправо';
+
+  @override
+  String get workspaceSwitchTo => 'Перейти';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Сменить рабочее пространство';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Синхронный ввод: набранный текст отправляется в терминалы этого рабочего пространства ($count)';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Отключить синхронный ввод';
+
+  @override
+  String get workspaceSyncOn => 'Синхронный ввод во все терминалы';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Синхронный ввод включён: ввод в любом терминале отправляется во все терминалы этого рабочего пространства';
+
+  @override
+  String get workspaceSyncOffToast => 'Синхронный ввод выключен';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Макет $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Шаблон «$name» сохранён';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Шаблоны макета · новое рабочее пространство на сервере активной панели';
+
+  @override
+  String get workspaceMoveTo =>
+      'Переместить в рабочее пространство, не разрывая соединение';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Терминал $server перемещён в «$workspace», соединение сохранено';
+  }
+
+  @override
+  String get workspaceNew => 'Новое рабочее пространство';
+
+  @override
+  String get workspaceIntoFocused => 'В активную панель';
+
+  @override
+  String get keybindings => 'Сочетания клавиш';
+
+  @override
+  String get kbSearchHint => 'Поиск команд, клавиш или областей действия';
+
+  @override
+  String get kbOnlyModified => 'Только изменённые';
+
+  @override
+  String get kbResetAll => 'Сбросить все по умолчанию';
+
+  @override
+  String get kbResetAllAsk =>
+      'Сбросить все сочетания клавиш на этой платформе по умолчанию?';
+
+  @override
+  String get kbResetDone => 'Сочетания по умолчанию восстановлены';
+
+  @override
+  String get kbResetOne => 'Сбросить по умолчанию';
+
+  @override
+  String get kbUnassigned => 'Не назначено';
+
+  @override
+  String get kbFixed => 'Фиксированное';
+
+  @override
+  String get kbModified => 'Изменено';
+
+  @override
+  String get kbDefault => 'По умолчанию';
+
+  @override
+  String get kbFixedHint => 'Эти клавиши нельзя изменить';
+
+  @override
+  String get kbNote =>
+      'Сочетания для рабочей области работают только в ней. Глобальные сочетания, например для открытия настроек, работают на любой странице. В терминале вне рабочей области сочетания для действий рабочей области, настроек и вкладок сервера передаются в shell, поскольку эти действия там недоступны. Копирование, вставка и выделение всего текста — команды терминала, их нельзя настроить в этом списке.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Текущее: $keys · Область: $scope';
+  }
+
+  @override
+  String get kbPress => 'Нажмите сочетание клавиш';
+
+  @override
+  String get kbRecordHint =>
+      'Enter — подтвердить, Esc — отменить. Если фокус пропал, нажмите на поле выше и повторите.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'Конфликтует с «$name» ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'После подтверждения это сочетание будет удалено у конфликтующей команды.';
+
+  @override
+  String get kbRemove => 'Удалить сочетание';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '«$name» теперь $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Глобально';
+
+  @override
+  String get kbScopeSettings => 'Страница настроек';
+
+  @override
+  String get kbScopeServerTab => 'Вкладка серверов';
+
+  @override
+  String get kbWsSplitRight => 'Рабочее пространство: разделить вправо';
+
+  @override
+  String get kbWsSplitDown => 'Рабочее пространство: разделить вниз';
+
+  @override
+  String get kbWsFocusLeft => 'Рабочее пространство: фокус на панель слева';
+
+  @override
+  String get kbWsFocusRight => 'Рабочее пространство: фокус на панель справа';
+
+  @override
+  String get kbWsFocusUp => 'Рабочее пространство: фокус на панель сверху';
+
+  @override
+  String get kbWsFocusDown => 'Рабочее пространство: фокус на панель снизу';
+
+  @override
+  String get kbWsNewTab => 'Рабочее пространство: новая вкладка';
+
+  @override
+  String get kbWsCloseTab => 'Рабочее пространство: закрыть вкладку';
+
+  @override
+  String get kbWsNextTab => 'Рабочее пространство: следующая вкладка';
+
+  @override
+  String get kbWsPrevTab => 'Рабочее пространство: предыдущая вкладка';
+
+  @override
+  String get kbWsTabs => 'Рабочее пространство: вкладки активной панели';
+
+  @override
+  String get kbWsReopenTab => 'Рабочее пространство: открыть закрытую вкладку';
+
+  @override
+  String get kbWsMaximize =>
+      'Рабочее пространство: развернуть или восстановить панель';
+
+  @override
+  String get kbWsSync =>
+      'Рабочее пространство: синхронный ввод во все терминалы';
+
+  @override
+  String get kbWsQuickOpen => 'Рабочее пространство: быстрое открытие';
+
+  @override
+  String get kbWsSwitcher =>
+      'Рабочее пространство: сменить рабочее пространство';
+
+  @override
+  String get kbHomeTab => 'Главная: перейти на вкладку 1–9';
+
+  @override
+  String get kbAppSettings => 'Открыть настройки';
+
+  @override
+  String get kbSettingsSearch => 'Настройки: поиск';
+
+  @override
+  String get kbServerPrev => 'Серверы: предыдущий сервер';
+
+  @override
+  String get kbServerNext => 'Серверы: следующий сервер';
+
+  @override
+  String get kbServerList => 'Серверы: список серверов';
+
+  @override
+  String get kbServerClose => 'Серверы: закрыть подробности';
+
+  @override
   String get storageTitle => 'Хранилище';
 
   @override
