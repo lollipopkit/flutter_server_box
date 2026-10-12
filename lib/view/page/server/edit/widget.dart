@@ -556,15 +556,15 @@ extension _Widgets on _ServerEditPageState {
           // sentence is under the heading's `?`, first, because what matters
           // about this one is that nothing here is guaranteed and this is
           // where someone decides to turn it on.
-          summary: const BetaTag(),
-          tip: '${l10n.betaTip}\n\n${l10n.bmcTip}',
+          summary: Feature.bmc.mark(),
+          tip: _withBetaTip(Feature.bmc, l10n.bmcTip),
           children: [_buildBmc()],
         ),
         _buildOptionalTile(
           icon: Icons.power_settings_new,
           title: 'Wake on LAN',
-          summary: const BetaTag(),
-          tip: '${l10n.betaTip}\n\n${l10n.wolTip}',
+          summary: Feature.wakeOnLan.mark(),
+          tip: _withBetaTip(Feature.wakeOnLan, l10n.wolTip),
           children: [_buildWOLs()],
         ),
       ],
@@ -584,10 +584,14 @@ extension _Widgets on _ServerEditPageState {
   /// whole tile for a paragraph nobody reads twice was the first thing inside
   /// two of these groups, above the fields they describe; on the heading it is
   /// one glyph, and it is there before the group is opened.
+  /// [tip] led by the sentence that [feature] is in beta, while it is.
+  String _withBetaTip(Feature feature, String tip) =>
+      feature.beta ? '${l10n.betaTip}\n\n$tip' : tip;
+
   Widget _buildOptionalTile({
     required IconData icon,
     required String title,
-    required Widget summary,
+    required Widget? summary,
     required List<Widget> children,
     String? tip,
     Key? key,

@@ -44,9 +44,9 @@ enum SettingsSection {
     SettingsSection.fullScreen => l10n.fullScreen,
   };
 
-  /// Whether [title] carries a `BetaTag` where it is shown.
-  // TODO: from the Feature abstraction (#1587).
-  bool get beta => this == SettingsSection.linux;
+  /// The feature this section is, whose mark [title] carries where it is
+  /// shown.
+  Feature? get feature => this == SettingsSection.linux ? Feature.linux : null;
 
   /// The page this group is, inside the subject it is under.
   ///
@@ -112,7 +112,7 @@ final class SettingsSectionPage extends StatelessWidget {
       appBar: CustomAppBar(
         title: MarkedTitle(
           args.title,
-          mark: args.beta ? const BetaTag() : null,
+          mark: args.feature?.mark(),
         ),
       ),
       body: AppSettingsPage(section: args),

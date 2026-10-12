@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -36,6 +37,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   }
 
   void _showBetaWarning() {
+    if (!Feature.portForward.beta) return;
     if (Stores.setting.portForwardBetaWarned.fetch()) return;
     var noMore = false;
     context.showRoundDialog(
@@ -77,7 +79,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
           // on every page that carries one.
           up: libL10n.portForward,
           down: widget.args.spi.name,
-          mark: BetaTag(tip: context.l10n.betaTip),
+          mark: Feature.portForward.mark(tip: context.l10n.betaTip),
         ),
         actions: [IconButton(tooltip: libL10n.add, icon: const Icon(Icons.add), onPressed: _onAdd)],
       ),

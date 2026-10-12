@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/monitor_grants.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
@@ -187,8 +188,12 @@ enum ServerFuncBtn {
   /// line of 11pt text, and a pill beside a label there is taller than the
   /// label it stands next to — the row would grow a second line of height on
   /// every server, to say something only the first use needs to say.
-  Widget? get mark => switch (this) {
-    remoteDesktop => const BetaTag(),
+  Widget? get mark => feature?.mark();
+
+  /// The feature this entry opens, where it is one [Feature] knows about.
+  Feature? get feature => switch (this) {
+    remoteDesktop => Feature.remoteDesktop,
+    portForward => Feature.portForward,
     _ => null,
   };
 

@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
@@ -110,7 +111,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
         title: TwoLineText(
           up: l10n.remoteDesktop,
           down: widget.args.spi.name,
-          mark: const BetaTag(),
+          mark: Feature.remoteDesktop.mark(),
         ),
         actions: [
           Btn.icon(

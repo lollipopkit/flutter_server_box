@@ -314,7 +314,7 @@ final class _IntroPage extends StatelessWidget {
         ..._head(
           l10n.remoteDesktop,
           padTop,
-          mark: const BetaTag(height: BetaTag.heading),
+          mark: Feature.remoteDesktop.mark(height: BetaTag.heading),
         ),
         _prose(l10n.remoteDesktopIntro),
         ListTile(
@@ -391,7 +391,7 @@ final class _IntroPage extends StatelessWidget {
         ..._head(
           l10n.virtualization,
           padTop,
-          mark: const BetaTag(height: BetaTag.heading),
+          mark: Feature.virt.mark(height: BetaTag.heading),
         ),
         _prose(l10n.virtIntro),
         ListTile(

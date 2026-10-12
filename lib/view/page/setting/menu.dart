@@ -13,23 +13,23 @@ final class SettingsNode {
   final List<SettingsNode> children;
   final Widget Function()? builder;
 
-  /// Drawn with a `BetaTag` after [title] wherever the node is listed.
-  // TODO: from the Feature abstraction (#1587), not a flag per node.
-  final bool beta;
+  /// The feature this page is, whose mark is drawn after [title] wherever
+  /// the node is listed.
+  final Feature? feature;
+
+  /// Whether [feature] is still in beta.
+  bool get beta => feature?.beta ?? false;
 
   /// [title] with its mark, for a row that lists this node.
-  Widget titleWidget({TextStyle? style}) => MarkedTitle(
-    title,
-    style: style,
-    mark: beta ? const BetaTag() : null,
-  );
+  Widget titleWidget({TextStyle? style}) =>
+      MarkedTitle(title, style: style, mark: feature?.mark());
 
   const SettingsNode.leaf({
     required this.id,
     required this.title,
     required this.icon,
     required Widget Function() page,
-    this.beta = false,
+    this.feature,
   }) : builder = page,
        children = const [];
 
@@ -39,7 +39,7 @@ final class SettingsNode {
     required this.icon,
     required this.children,
   }) : builder = null,
-       beta = false;
+       feature = null;
 
   bool get isLeaf => builder != null;
 

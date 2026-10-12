@@ -130,14 +130,14 @@ class _AddPageState extends ConsumerState<_AddPage> {
         if (Rootfs.isAvailable && needle.isEmpty) ...[
           // Where the beta is said. It used to be the collapsed tile's
           // title; with a row per system there is no one row it belongs to.
-          const Padding(
+          Padding(
             // `CenterGreyTitle`'s spacing, with the mark beside the word.
-            padding: EdgeInsets.only(top: 23, bottom: 17),
+            padding: const EdgeInsets.only(top: 23, bottom: 17),
             child: Center(
               child: MarkedTitle(
                 'Linux',
                 style: UIs.textGrey,
-                mark: BetaTag(),
+                mark: Feature.linux.mark(),
               ),
             ),
           ),

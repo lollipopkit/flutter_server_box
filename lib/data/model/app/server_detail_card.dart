@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 
 /// The cards the server detail page can draw.
 ///
@@ -52,7 +53,7 @@ enum ServerDetailCards {
   /// reads in the same breath as the reading, and carries its own mark. This
   /// is for the row that switches the card on and off.
   Widget? get mark => switch (this) {
-    bmc => const BetaTag(),
+    bmc => Feature.bmc.mark(),
     _ => null,
   };
 
