@@ -56,9 +56,10 @@ be changed at any time in **Settings → Application → Privacy**.
 | **Nothing** | Nothing. Local logs remain on this device, and you can still prepare a manual report. |
 | **Basic information** | Captured crashes and errors, with build and platform information and deliberately recorded diagnostic breadcrumbs attached when relevant. Nothing is sent continuously while the app is operating normally. |
 
-The Android default is **Nothing**. The iOS, macOS, Linux and Windows defaults
-are **Basic information**. On builds where automatic diagnostics is available,
-the intro page is shown before the first automatic upload.
+The default on every platform is **Nothing**. Nothing is uploaded until you
+choose **Basic information**, on the intro page or in Settings. On builds where
+automatic diagnostics is available, the intro page is shown before the first
+automatic upload.
 
 Changing the level to **Nothing** stops automatic delivery immediately; it does
 not wait for the next launch.
@@ -241,8 +242,8 @@ Error reports go to the Sentry-compatible server operated by the developer at
 `sentry.lollipopkit.com`. No analytics service receives data from the app.
 
 The Sentry destination is written into the source, so a build made from
-unmodified source reports to it too unless its builder changes it. On Android
-automatic diagnostics are still off by default and require an explicit choice.
+unmodified source reports to it too unless its builder changes it. Automatic
+diagnostics are still off by default and require an explicit choice.
 
 Diagnostic data is not used for advertising, shared with other companies, or
 used to track you across apps or websites. The services may retain reports for as
@@ -277,8 +278,7 @@ App Store and Google Play builds may also be subject to platform reporting.
 Apple and Google collect that information under their own policies, not through
 Server Box. See [Apple's privacy policy](https://www.apple.com/legal/privacy/)
 and [Google's privacy policy](https://policies.google.com/privacy). The F-Droid
-build has no store-provided crash-reporting channel, which is one reason its
-default diagnostic level is **Nothing**.
+build has no store-provided crash-reporting channel.
 
 ## Children
 

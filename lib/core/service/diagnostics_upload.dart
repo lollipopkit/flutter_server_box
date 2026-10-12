@@ -85,11 +85,10 @@ abstract final class DiagnosticsUpload {
   ///
   /// Safe to call whenever the setting changes, and at launch.
   ///
-  /// Nothing is uploaded until the intro page explaining the levels has been
-  /// acknowledged. Off Android the default is `basic`, so without this check a
-  /// fresh install would be sending before it had said anything — which is the
-  /// difference between "opt-in" and "on by default" in F-Droid's terms, and
-  /// the difference between asking and not in anyone else's.
+  /// Nothing is uploaded unless the user picked a level that uploads — the
+  /// default is `none` — and the intro page explaining the levels has been
+  /// completed: a level picked in an intro left before its end is not yet an
+  /// answer.
   static Future<void> sync() async {
     final acknowledged =
         Stores.setting.diagnosticsConsentVer.fetch() >= kDiagnosticsConsentVer;
