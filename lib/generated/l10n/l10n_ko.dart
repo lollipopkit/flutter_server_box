@@ -6403,4 +6403,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return '$server의 agent에게 질문하거나 작업을 맡기세요.';
   }
+
+  @override
+  String get agentPermissionMode => '권한 모드';
+
+  @override
+  String get agentModeAuto => '자동';
+
+  @override
+  String get agentModeManual => '수동';
+
+  @override
+  String get agentModeBypass => '모두 허용';
+
+  @override
+  String get agentModeBypassOff => '이 서버에서 사용 중지됨';
+
+  @override
+  String get agentModeBypassWarn => '모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다.';
 }

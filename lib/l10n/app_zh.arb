@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "密码错误",
   "agentRemoteSudoRemember": "记住 15 分钟",
   "agentNewOn": "新建于 {place}",
-  "agentRemoteNewHint": "向 {server} 上的 agent 提问，或交给它一个任务。"
+  "agentRemoteNewHint": "向 {server} 上的 agent 提问，或交给它一个任务。",
+  "agentPermissionMode": "权限模式",
+  "agentModeAuto": "自动",
+  "agentModeManual": "手动",
+  "agentModeBypass": "全部放行",
+  "agentModeBypassOff": "此服务器已关闭",
+  "agentModeBypassWarn": "全部放行：删除、重启和修改配置都会直接执行，不再询问。"
 }

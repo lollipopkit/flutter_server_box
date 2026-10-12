@@ -34,6 +34,10 @@ abstract final class RemoteAgentTasks {
   /// a server whose agent runs it as a task. Kept while the app runs.
   static final newOn = ValueNotifier<String?>(null);
 
+  /// Per server id, the permission mode a new task runs in unless another is
+  /// picked, and whether `bypass` may be, as its list last said.
+  static final modes = ValueNotifier<Map<String, ({String defaultMode, bool bypassAllowed})>>(const {});
+
   /// Per server id, why its list could not be read, for the history to say.
   static final errors = ValueNotifier<Map<String, String>>(const {});
 
@@ -161,6 +165,7 @@ abstract final class RemoteAgentTasks {
       final kept = [...page.flows, ...?had?.where((f) => !fresh.contains(f.id))]
         ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
       tasks.value = {...tasks.value, serverId: kept};
+      modes.value = {...modes.value, serverId: (defaultMode: page.defaultMode, bypassAllowed: page.bypassAllowed)};
       // Further than one page already read: the cursor of the furthest read.
       if (had == null || !more.value.containsKey(serverId) && had.length <= page.flows.length) {
         more.value = {...more.value}..remove(serverId);
@@ -248,6 +253,7 @@ abstract final class RemoteAgentTasks {
     _links.remove(serverId)?.stop();
     if (tasks.value.containsKey(serverId)) tasks.value = {...tasks.value}..remove(serverId);
     if (more.value.containsKey(serverId)) more.value = {...more.value}..remove(serverId);
+    if (modes.value.containsKey(serverId)) modes.value = {...modes.value}..remove(serverId);
     if (selected.value?.serverId == serverId) selected.value = null;
   }
 
@@ -264,6 +270,7 @@ abstract final class RemoteAgentTasks {
     tasks.value = const {};
     errors.value = const {};
     more.value = const {};
+    modes.value = const {};
     loading.value = const {};
     selected.value = null;
   }

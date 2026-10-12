@@ -6299,6 +6299,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return '向 $server 上的 agent 提问，或交给它一个任务。';
   }
+
+  @override
+  String get agentPermissionMode => '权限模式';
+
+  @override
+  String get agentModeAuto => '自动';
+
+  @override
+  String get agentModeManual => '手动';
+
+  @override
+  String get agentModeBypass => '全部放行';
+
+  @override
+  String get agentModeBypassOff => '此服务器已关闭';
+
+  @override
+  String get agentModeBypassWarn => '全部放行：删除、重启和修改配置都会直接执行，不再询问。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -12600,4 +12618,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String agentRemoteNewHint(String server) {
     return '向 $server 上的 agent 提問，或交給它一項任務。';
   }
+
+  @override
+  String get agentPermissionMode => '權限模式';
+
+  @override
+  String get agentModeAuto => '自動';
+
+  @override
+  String get agentModeManual => '手動';
+
+  @override
+  String get agentModeBypass => '全部允許';
+
+  @override
+  String get agentModeBypassOff => '此伺服器已關閉';
+
+  @override
+  String get agentModeBypassWarn => '全部允許：刪除、重新啟動和設定變更都會直接執行，不再詢問。';
 }

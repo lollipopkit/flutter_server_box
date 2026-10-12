@@ -529,7 +529,13 @@ class _NewOnState extends State<_NewOn> {
     final client = RemoteAgentTasks.client(serverId);
     if (client == null) return false;
     try {
-      final flow = await client.agentStart(m.text, files: m.files, model: m.model, thinkingLevel: m.thinkingLevel);
+      final flow = await client.agentStart(
+        m.text,
+        mode: m.mode,
+        files: m.files,
+        model: m.model,
+        thinkingLevel: m.thinkingLevel,
+      );
       AgentChats.engaged.value = true;
       RemoteAgentTasks.select((serverId: serverId, flowId: flow.id));
       return true;

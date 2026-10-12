@@ -6744,4 +6744,23 @@ class AppLocalizationsNl extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return 'Stel de agent op $server een vraag of geef hem een taak.';
   }
+
+  @override
+  String get agentPermissionMode => 'Machtigingsmodus';
+
+  @override
+  String get agentModeAuto => 'Automatisch';
+
+  @override
+  String get agentModeManual => 'Handmatig';
+
+  @override
+  String get agentModeBypass => 'Alles toestaan';
+
+  @override
+  String get agentModeBypassOff => 'Uitgeschakeld op deze server';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.';
 }

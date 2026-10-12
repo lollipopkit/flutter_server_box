@@ -6770,4 +6770,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return 'Stelle dem Agent auf $server eine Frage oder gib ihm eine Aufgabe.';
   }
+
+  @override
+  String get agentPermissionMode => 'Berechtigungsmodus';
+
+  @override
+  String get agentModeAuto => 'Automatisch';
+
+  @override
+  String get agentModeManual => 'Manuell';
+
+  @override
+  String get agentModeBypass => 'Alles erlauben';
+
+  @override
+  String get agentModeBypassOff => 'Auf diesem Server deaktiviert';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Alles erlauben: Löschen, Neustarten und Konfigurationsänderungen werden ohne Nachfrage ausgeführt.';
 }

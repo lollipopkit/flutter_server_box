@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "비밀번호가 틀렸습니다",
   "agentRemoteSudoRemember": "15분 동안 기억",
   "agentNewOn": "{place}에서 새 대화 시작",
-  "agentRemoteNewHint": "{server}의 agent에게 질문하거나 작업을 맡기세요."
+  "agentRemoteNewHint": "{server}의 agent에게 질문하거나 작업을 맡기세요.",
+  "agentPermissionMode": "권한 모드",
+  "agentModeAuto": "자동",
+  "agentModeManual": "수동",
+  "agentModeBypass": "모두 허용",
+  "agentModeBypassOff": "이 서버에서 사용 중지됨",
+  "agentModeBypassWarn": "모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다."
 }

@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Palavra-passe incorreta",
   "agentRemoteSudoRemember": "Memorizar durante 15 minutos",
   "agentNewOn": "Nova conversa: {place}",
-  "agentRemoteNewHint": "Pergunte ao agente em {server} ou atribua uma tarefa."
+  "agentRemoteNewHint": "Pergunte ao agente em {server} ou atribua uma tarefa.",
+  "agentPermissionMode": "Modo de permissões",
+  "agentModeAuto": "Automático",
+  "agentModeManual": "Manual",
+  "agentModeBypass": "Permitir tudo",
+  "agentModeBypassOff": "Desativado neste servidor",
+  "agentModeBypassWarn": "Permitir tudo: exclusões, reinicializações e alterações de configuração são executadas sem perguntar."
 }

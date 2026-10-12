@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Contraseña incorrecta",
   "agentRemoteSudoRemember": "Recordar durante 15 minutos",
   "agentNewOn": "Nuevo chat: {place}",
-  "agentRemoteNewHint": "Pregúntale al agente de {server} o asígnale una tarea."
+  "agentRemoteNewHint": "Pregúntale al agente de {server} o asígnale una tarea.",
+  "agentPermissionMode": "Modo de permisos",
+  "agentModeAuto": "Automático",
+  "agentModeManual": "Manual",
+  "agentModeBypass": "Permitir todo",
+  "agentModeBypassOff": "Desactivado en este servidor",
+  "agentModeBypassWarn": "Permitir todo: las eliminaciones, los reinicios y los cambios de configuración se ejecutan sin preguntar."
 }

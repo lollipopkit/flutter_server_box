@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Неверный пароль",
   "agentRemoteSudoRemember": "Запомнить на 15 минут",
   "agentNewOn": "Новый диалог: {place}",
-  "agentRemoteNewHint": "Задайте вопрос агенту на {server} или поручите ему задачу."
+  "agentRemoteNewHint": "Задайте вопрос агенту на {server} или поручите ему задачу.",
+  "agentPermissionMode": "Режим разрешений",
+  "agentModeAuto": "Авто",
+  "agentModeManual": "Вручную",
+  "agentModeBypass": "Разрешить всё",
+  "agentModeBypassOff": "Отключено на этом сервере",
+  "agentModeBypassWarn": "Разрешить всё: удаление, перезапуск и изменение конфигурации выполняются без подтверждения."
 }

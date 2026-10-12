@@ -3,14 +3,22 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
-    show AttachButton, ComposerBox, ComposerButton, ComposerModelChip, ComposerThinkingChip, llmL10n;
+    show AttachButton, ComposerBox, ComposerButton, ComposerModelChip, ComposerThinkingChip, MenuBtn, llmL10n;
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/monitor_agent.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
 
-/// What [RemoteComposer] hands on: the words, the uploads made for them, and
-/// a model and thinking level when they were changed.
-typedef RemoteMessage = ({String text, List<String> files, MonitorAgentModel? model, String? thinkingLevel});
+/// What [RemoteComposer] hands on: the words, the uploads made for them, a
+/// model and thinking level when they were changed, and for a new task the
+/// permission mode it runs in.
+typedef RemoteMessage = ({
+  String text,
+  List<String> files,
+  MonitorAgentModel? model,
+  String? thinkingLevel,
+  String? mode,
+});
 
 /// The box a message to a server's Agent mode is written in — a reply to a
 /// task, or the start of one: the chat composer's look, with the server's
@@ -59,6 +67,9 @@ class _RemoteComposerState extends State<RemoteComposer> {
   MonitorAgentModel? _model;
   String? _thinking;
 
+  /// The permission mode picked for a new task; null for the server's.
+  String? _mode;
+
   /// As many files as one task takes at once (the agent's `MAX_PER_TASK`).
   static const _maxFiles = 10;
 
@@ -75,6 +86,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
       _choices = null;
       _model = null;
       _thinking = null;
+      _mode = null;
       unawaited(_loadChoices());
     }
   }
@@ -99,6 +111,13 @@ class _RemoteComposerState extends State<RemoteComposer> {
   MonitorAgentModel? get _effectiveModel => _choices?.find(_model ?? widget.flow?.model ?? _choices?.model);
 
   String get _effectiveThinking => _thinking ?? widget.flow?.thinkingLevel ?? _choices?.thinkingLevel ?? 'off';
+
+  /// The permission mode a new task starts in: picked, else the server's;
+  /// `bypass` only where the server allows it.
+  String _effectiveMode(({String defaultMode, bool bypassAllowed})? server) {
+    final m = _mode ?? server?.defaultMode ?? 'manual';
+    return m == 'bypass' && !(server?.bypassAllowed ?? false) ? 'manual' : m;
+  }
 
   Future<void> _pickModel() async {
     final choices = _choices;
@@ -139,6 +158,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
         files: ids,
         model: model != null && !model.same(widget.flow?.model) ? model : null,
         thinkingLevel: _thinking,
+        mode: widget.flow == null ? _effectiveMode(RemoteAgentTasks.modes.value[widget.serverId]) : null,
       ));
       if (sent && mounted) {
         _text.clear();
@@ -146,6 +166,7 @@ class _RemoteComposerState extends State<RemoteComposer> {
           _files = const [];
           _model = null;
           _thinking = null;
+          _mode = null;
         });
       }
     } catch (e) {
@@ -160,32 +181,57 @@ class _RemoteComposerState extends State<RemoteComposer> {
     final scheme = Theme.of(context).colorScheme;
     final blocked = widget.blocked;
     return ListenableBuilder(
-      listenable: _text,
+      listenable: Listenable.merge([_text, RemoteAgentTasks.modes]),
       builder: (context, _) {
         final empty = _text.text.isEmpty && _files.isEmpty;
+        // Only a new task takes a mode: a task keeps the one it began in.
+        final server = widget.flow == null ? RemoteAgentTasks.modes.value[widget.serverId] : null;
+        final mode = server == null ? null : _effectiveMode(server);
         return ComposerBox(
           controller: _text,
           enabled: !blocked,
           hint: widget.hint,
           onSubmit: () => unawaited(_send()),
-          top: _files.isEmpty
+          top: _files.isEmpty && mode != 'bypass'
               ? null
-              : Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 5,
-                    children: [
-                      for (final f in _files)
-                        InputChip(
-                          label: Text(f.split(RegExp(r'[/\\]')).last, style: UIs.text12),
-                          onDeleted: () => setState(() => _files = [..._files]..remove(f)),
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (mode == 'bypass')
+                      Padding(
+                        padding: const EdgeInsets.only(left: 5, bottom: 5),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 15, color: scheme.error),
+                            UIs.width7,
+                            Expanded(
+                              child: Text(
+                                context.l10n.agentModeBypassWarn,
+                                style: TextStyle(fontSize: 12, color: scheme.error),
+                              ),
+                            ),
+                          ],
                         ),
-                    ],
-                  ),
+                      ),
+                    if (_files.isNotEmpty)
+                      Wrap(
+                        spacing: 5,
+                        children: [
+                          for (final f in _files)
+                            InputChip(
+                              label: Text(f.split(RegExp(r'[/\\]')).last, style: UIs.text12),
+                              onDeleted: () => setState(() => _files = [..._files]..remove(f)),
+                            ),
+                        ],
+                      ),
+                  ],
                 ),
           actions: [
             if (!blocked)
               AttachButton(onPicked: (paths) => setState(() => _files = [..._files, ...paths].take(_maxFiles).toList())),
+            if (server != null && mode != null)
+              _ModeChip(mode: mode, bypassAllowed: server.bypassAllowed, onPick: (m) => setState(() => _mode = m)),
             if (_effectiveModel case final m?) Flexible(child: ComposerModelChip(name: m.label, onTap: blocked ? null : _pickModel)),
             if (_effectiveModel?.reasoning ?? false)
               ComposerThinkingChip(
@@ -201,6 +247,60 @@ class _RemoteComposerState extends State<RemoteComposer> {
               : ComposerButton.send(scheme, onTap: blocked ? null : () => unawaited(_send())),
         );
       },
+    );
+  }
+}
+
+/// The permission mode a new task runs in: what steps it takes without
+/// asking. Rules for `manual` are the server's, in its Agent settings.
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({required this.mode, required this.bypassAllowed, required this.onPick});
+
+  final String mode;
+  final bool bypassAllowed;
+  final void Function(String mode) onPick;
+
+  static const _modes = ['auto', 'manual', 'bypass'];
+
+  static IconData _icon(String mode) => switch (mode) {
+    'auto' => Icons.auto_mode,
+    'bypass' => Icons.bolt,
+    _ => Icons.rule,
+  };
+
+  static String _label(BuildContext context, String mode) => switch (mode) {
+    'auto' => context.l10n.agentModeAuto,
+    'bypass' => context.l10n.agentModeBypass,
+    _ => context.l10n.agentModeManual,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = mode == 'bypass' ? scheme.error : null;
+    return MenuBtn(
+      actions: [
+        for (final m in _modes)
+          ContextMenuAction(
+            text: _label(context, m),
+            icon: _icon(m),
+            checked: m == mode,
+            enabled: m != 'bypass' || bypassAllowed,
+            note: m == 'bypass' && !bypassAllowed ? context.l10n.agentModeBypassOff : null,
+            onTap: () => onPick(m),
+          ),
+      ],
+      builder: (toggle) => Tooltip(
+        message: context.l10n.agentPermissionMode,
+        child: Btn.row(
+          icon: Icon(_icon(mode), size: 16, color: color),
+          text: _label(context, mode),
+          textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color),
+          mainAxisSize: MainAxisSize.min,
+          onTap: toggle,
+          padding: const EdgeInsets.all(5),
+        ),
+      ),
     );
   }
 }

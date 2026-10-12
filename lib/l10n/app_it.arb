@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Password errata",
   "agentRemoteSudoRemember": "Ricorda per 15 minuti",
   "agentNewOn": "Nuova conversazione: {place}",
-  "agentRemoteNewHint": "Fai una domanda all’agent su {server} o assegnagli un’attività."
+  "agentRemoteNewHint": "Fai una domanda all’agent su {server} o assegnagli un’attività.",
+  "agentPermissionMode": "Modalità autorizzazioni",
+  "agentModeAuto": "Automatico",
+  "agentModeManual": "Manuale",
+  "agentModeBypass": "Consenti tutto",
+  "agentModeBypassOff": "Disattivato su questo server",
+  "agentModeBypassWarn": "Consenti tutto: eliminazioni, riavvii e modifiche alla configurazione vengono eseguiti senza chiedere."
 }

@@ -8605,5 +8605,29 @@
         "type": "String"
       }
     }
+  },
+  "agentPermissionMode": "Permission mode",
+  "@agentPermissionMode": {
+    "description": "Agent: what a server's agent may run in a new task without asking."
+  },
+  "agentModeAuto": "Auto",
+  "@agentModeAuto": {
+    "description": "Agent permission mode: the model allows or refuses each step."
+  },
+  "agentModeManual": "Manual",
+  "@agentModeManual": {
+    "description": "Agent permission mode: steps go by the server's rules; others wait for confirmation."
+  },
+  "agentModeBypass": "Allow all",
+  "@agentModeBypass": {
+    "description": "Agent permission mode: every step runs without asking."
+  },
+  "agentModeBypassOff": "Turned off on this server",
+  "@agentModeBypassOff": {
+    "description": "Agent: the server's admin turned the allow-all mode off."
+  },
+  "agentModeBypassWarn": "Allow all: deleting, restarting and config changes run directly, without asking.",
+  "@agentModeBypassWarn": {
+    "description": "Agent: warning shown while the allow-all mode is picked for a new task."
   }
 }

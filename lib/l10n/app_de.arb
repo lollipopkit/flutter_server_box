@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Falsches Passwort",
   "agentRemoteSudoRemember": "15 Minuten merken",
   "agentNewOn": "Neuer Chat: {place}",
-  "agentRemoteNewHint": "Stelle dem Agent auf {server} eine Frage oder gib ihm eine Aufgabe."
+  "agentRemoteNewHint": "Stelle dem Agent auf {server} eine Frage oder gib ihm eine Aufgabe.",
+  "agentPermissionMode": "Berechtigungsmodus",
+  "agentModeAuto": "Automatisch",
+  "agentModeManual": "Manuell",
+  "agentModeBypass": "Alles erlauben",
+  "agentModeBypassOff": "Auf diesem Server deaktiviert",
+  "agentModeBypassWarn": "Alles erlauben: Löschen, Neustarten und Konfigurationsänderungen werden ohne Nachfrage ausgeführt."
 }

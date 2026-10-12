@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Onjuist wachtwoord",
   "agentRemoteSudoRemember": "15 minuten onthouden",
   "agentNewOn": "Nieuw gesprek: {place}",
-  "agentRemoteNewHint": "Stel de agent op {server} een vraag of geef hem een taak."
+  "agentRemoteNewHint": "Stel de agent op {server} een vraag of geef hem een taak.",
+  "agentPermissionMode": "Machtigingsmodus",
+  "agentModeAuto": "Automatisch",
+  "agentModeManual": "Handmatig",
+  "agentModeBypass": "Alles toestaan",
+  "agentModeBypassOff": "Uitgeschakeld op deze server",
+  "agentModeBypassWarn": "Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd."
 }

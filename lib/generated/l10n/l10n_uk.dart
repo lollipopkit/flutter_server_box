@@ -6731,4 +6731,23 @@ class AppLocalizationsUk extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return 'Поставте запитання агенту на $server або доручіть йому завдання.';
   }
+
+  @override
+  String get agentPermissionMode => 'Режим дозволів';
+
+  @override
+  String get agentModeAuto => 'Авто';
+
+  @override
+  String get agentModeManual => 'Вручну';
+
+  @override
+  String get agentModeBypass => 'Дозволити все';
+
+  @override
+  String get agentModeBypassOff => 'Вимкнено на цьому сервері';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Дозволити все: видалення, перезапуск і зміни конфігурації виконуються без підтвердження.';
 }

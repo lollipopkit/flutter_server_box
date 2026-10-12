@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Yanlış parol",
   "agentRemoteSudoRemember": "15 dəqiqə yadda saxla",
   "agentNewOn": "Yeni söhbət: {place}",
-  "agentRemoteNewHint": "Agentə {server} serverində sual verin və ya ona tapşırıq verin."
+  "agentRemoteNewHint": "Agentə {server} serverində sual verin və ya ona tapşırıq verin.",
+  "agentPermissionMode": "İcazə rejimi",
+  "agentModeAuto": "Avtomatik",
+  "agentModeManual": "Əl ilə",
+  "agentModeBypass": "Hamısına icazə ver",
+  "agentModeBypassOff": "Bu serverdə deaktiv edilib",
+  "agentModeBypassWarn": "Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur."
 }

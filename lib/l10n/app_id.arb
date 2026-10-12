@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Kata sandi salah",
   "agentRemoteSudoRemember": "Ingat selama 15 menit",
   "agentNewOn": "Percakapan baru: {place}",
-  "agentRemoteNewHint": "Ajukan pertanyaan kepada agent di {server}, atau berikan tugas."
+  "agentRemoteNewHint": "Ajukan pertanyaan kepada agent di {server}, atau berikan tugas.",
+  "agentPermissionMode": "Mode izin",
+  "agentModeAuto": "Otomatis",
+  "agentModeManual": "Manual",
+  "agentModeBypass": "Izinkan semua",
+  "agentModeBypassOff": "Dinonaktifkan di server ini",
+  "agentModeBypassWarn": "Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi."
 }

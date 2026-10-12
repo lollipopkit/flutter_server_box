@@ -6681,4 +6681,23 @@ class AppLocalizationsAz extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return 'Agentə $server serverində sual verin və ya ona tapşırıq verin.';
   }
+
+  @override
+  String get agentPermissionMode => 'İcazə rejimi';
+
+  @override
+  String get agentModeAuto => 'Avtomatik';
+
+  @override
+  String get agentModeManual => 'Əl ilə';
+
+  @override
+  String get agentModeBypass => 'Hamısına icazə ver';
+
+  @override
+  String get agentModeBypassOff => 'Bu serverdə deaktiv edilib';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.';
 }

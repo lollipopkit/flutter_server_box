@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "Yanlış parola",
   "agentRemoteSudoRemember": "15 dakika boyunca hatırla",
   "agentNewOn": "Yeni sohbet: {place}",
-  "agentRemoteNewHint": "{server} sunucusundaki agenta soru sorun veya ona bir görev verin."
+  "agentRemoteNewHint": "{server} sunucusundaki agenta soru sorun veya ona bir görev verin.",
+  "agentPermissionMode": "İzin modu",
+  "agentModeAuto": "Otomatik",
+  "agentModeManual": "Manuel",
+  "agentModeBypass": "Tümüne izin ver",
+  "agentModeBypassOff": "Bu sunucuda devre dışı",
+  "agentModeBypassWarn": "Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sorulmadan yapılır."
 }

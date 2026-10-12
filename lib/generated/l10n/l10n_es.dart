@@ -6776,4 +6776,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return 'Pregúntale al agente de $server o asígnale una tarea.';
   }
+
+  @override
+  String get agentPermissionMode => 'Modo de permisos';
+
+  @override
+  String get agentModeAuto => 'Automático';
+
+  @override
+  String get agentModeManual => 'Manual';
+
+  @override
+  String get agentModeBypass => 'Permitir todo';
+
+  @override
+  String get agentModeBypassOff => 'Desactivado en este servidor';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Permitir todo: las eliminaciones, los reinicios y los cambios de configuración se ejecutan sin preguntar.';
 }

@@ -6685,4 +6685,23 @@ class AppLocalizationsId extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return 'Ajukan pertanyaan kepada agent di $server, atau berikan tugas.';
   }
+
+  @override
+  String get agentPermissionMode => 'Mode izin';
+
+  @override
+  String get agentModeAuto => 'Otomatis';
+
+  @override
+  String get agentModeManual => 'Manual';
+
+  @override
+  String get agentModeBypass => 'Izinkan semua';
+
+  @override
+  String get agentModeBypassOff => 'Dinonaktifkan di server ini';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi.';
 }

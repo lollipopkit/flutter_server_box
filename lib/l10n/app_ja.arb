@@ -1878,5 +1878,11 @@
   "agentRemoteSudoWrong": "パスワードが違います",
   "agentRemoteSudoRemember": "15 分間記憶する",
   "agentNewOn": "{place}で新しい会話を開始",
-  "agentRemoteNewHint": "{server} の agent に質問するか、タスクを依頼してください。"
+  "agentRemoteNewHint": "{server} の agent に質問するか、タスクを依頼してください。",
+  "agentPermissionMode": "権限モード",
+  "agentModeAuto": "自動",
+  "agentModeManual": "手動",
+  "agentModeBypass": "すべて許可",
+  "agentModeBypassOff": "このサーバーでは無効",
+  "agentModeBypassWarn": "すべて許可：削除、再起動、設定変更は確認なしで実行されます。"
 }

@@ -6674,4 +6674,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String agentRemoteNewHint(String server) {
     return '$server sunucusundaki agenta soru sorun veya ona bir görev verin.';
   }
+
+  @override
+  String get agentPermissionMode => 'İzin modu';
+
+  @override
+  String get agentModeAuto => 'Otomatik';
+
+  @override
+  String get agentModeManual => 'Manuel';
+
+  @override
+  String get agentModeBypass => 'Tümüne izin ver';
+
+  @override
+  String get agentModeBypassOff => 'Bu sunucuda devre dışı';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sorulmadan yapılır.';
 }
