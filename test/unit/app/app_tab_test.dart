@@ -20,6 +20,7 @@ void main() {
       expect(AppTab.defaultOrder, [
         AppTab.server,
         AppTab.ssh,
+        AppTab.workspace,
         AppTab.file,
         AppTab.agent,
         AppTab.virt,
@@ -146,6 +147,7 @@ void main() {
       AppTab.benchmark,
       AppTab.remoteDesktop,
       AppTab.virt,
+      AppTab.workspace,
     ]);
   });
 
@@ -277,6 +279,7 @@ void main() {
         AppTab.agent,
         AppTab.benchmark,
         AppTab.virt,
+        AppTab.workspace,
       });
     });
 

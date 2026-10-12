@@ -17,6 +17,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/widget/actions_sink.dart';
 
 /// Below this the table gives way to one stacked row per process: the fixed
 /// columns would leave the command nothing to be read in.
@@ -43,7 +44,11 @@ const _processCommandTimeout = Duration(seconds: 30);
 class ProcessPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
 
-  const ProcessPage({super.key, required this.args});
+  /// Where the bar's buttons go when a host draws the bar — a workspace pane.
+  /// Null draws the page's own.
+  final ActionsSink? actionsSink;
+
+  const ProcessPage({super.key, required this.args, this.actionsSink});
 
   @override
   ConsumerState<ProcessPage> createState() => _ProcessPageState();
@@ -240,11 +245,18 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   @override
   Widget build(BuildContext context) {
     final system = ref.watch(_provider.select((s) => s.status.system));
+    final sink = widget.actionsSink;
+    sink?.publish(this, _barActions());
     return Scaffold(
-      appBar: CustomAppBar(
-        title: TwoLineText(up: libL10n.process, down: widget.args.spi.name),
-        actions: _buildActions(),
-      ),
+      appBar: sink != null
+          ? null
+          : CustomAppBar(
+              title: TwoLineText(
+                up: libL10n.process,
+                down: widget.args.spi.name,
+              ),
+              actions: [for (final a in _barActions()) a.button()],
+            ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final layout = _ProcessLayout.fromWidth(
@@ -278,13 +290,13 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
 // --- Widget builders ---
 
 extension _ProcessPageWidgets on _ProcessPageState {
-  List<Widget> _buildActions() {
+  List<BarAction> _barActions() {
     final parseIssue = _result.issue;
     return [
       if (parseIssue != null)
-        Btn.icon(
-          text: _parseFailureMessage(parseIssue.failure),
-          icon: const Icon(Icons.error_outline, size: 18),
+        BarAction(
+          icon: Icons.error_outline,
+          label: _parseFailureMessage(parseIssue.failure),
           onTap: () => context.showRoundDialog(
             title: libL10n.error,
             child: Text(_parseFailureMessage(parseIssue.failure)),
@@ -296,20 +308,12 @@ extension _ProcessPageWidgets on _ProcessPageState {
             ],
           ),
         ),
-      if (_isRefreshing)
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 11),
-          child: SizedBox.square(
-            dimension: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        )
-      else
-        Btn.icon(
-          text: libL10n.refresh,
-          icon: const Icon(Icons.refresh, size: 18),
-          onTap: () => _refresh(userTriggered: true),
-        ),
+      BarAction(
+        icon: Icons.refresh,
+        label: libL10n.refresh,
+        loading: _isRefreshing,
+        onTap: () => _refresh(userTriggered: true),
+      ),
     ];
   }
 

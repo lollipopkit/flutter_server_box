@@ -5592,4 +5592,366 @@ class AppLocalizationsIt extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count thread';
   }
+
+  @override
+  String get workspace => 'Area di lavoro';
+
+  @override
+  String get workspaceTroubleshoot => 'Diagnostica';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server non è connesso';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Le aree di lavoro ripristinate si connettono quando tocchi Connetti.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Tutte le schede ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Non connesso';
+
+  @override
+  String workspaceClosed(String what) {
+    return 'Chiuso: $what';
+  }
+
+  @override
+  String get workspaceClosePane => 'Chiudi riquadro';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Chiude tutte le sue schede; si può annullare';
+
+  @override
+  String get workspaceDropLeft => 'Sinistra';
+
+  @override
+  String get workspaceDropRight => 'Destra';
+
+  @override
+  String get workspaceDropTop => 'Sopra';
+
+  @override
+  String get workspaceDropBottom => 'Sotto';
+
+  @override
+  String get workspaceDropMerge => 'Unisci a questo riquadro';
+
+  @override
+  String get workspaceEmpty => 'Area di lavoro vuota';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Un\'area di lavoro vuota non ha un layout da salvare';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Nuova area di lavoro da “$template” su $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Nascosto';
+
+  @override
+  String get workspaceMaximize => 'Ingrandisci';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Riquadro $pane ingrandito, $hidden nascosti';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys, oppure doppio clic sulla barra delle schede';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Nuova area di lavoro vuota';
+
+  @override
+  String get workspaceNewPane => 'Nuovo riquadro';
+
+  @override
+  String get workspaceNewTab => 'Nuova scheda';
+
+  @override
+  String get workspaceNewTabFocused => 'Nuova scheda · nel riquadro attivo';
+
+  @override
+  String get workspaceNoMatch => 'Nessun risultato';
+
+  @override
+  String get workspaceNothingToReopen => 'Niente da riaprire';
+
+  @override
+  String workspacePane(int index) {
+    return 'Riquadro $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Azioni del riquadro';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count riquadri',
+      one: '1 riquadro',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Riquadri';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · sono mostrati due riquadri; quello toccato riceve il focus';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Schede del riquadro $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Nuova scheda su $server · scegli una vista';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Apertura rapida';
+
+  @override
+  String get workspaceQuickOpenHead => 'Apertura rapida · Enter apre il primo';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Server, viste, schede o aree di lavoro, ad es. db docker';
+
+  @override
+  String get workspaceRestore => 'Ripristina';
+
+  @override
+  String get workspaceSaveTemplate => 'Salva layout come modello';
+
+  @override
+  String get workspaceSeamTip =>
+      'Trascina per ridimensionare, doppio clic per uniformare';
+
+  @override
+  String get workspaceSplitDown => 'Dividi in basso';
+
+  @override
+  String get workspaceSplitRight => 'Dividi a destra';
+
+  @override
+  String get workspaceSwitchTo => 'Passa a';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Cambia area di lavoro';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Input sincronizzato: ciò che digiti va ai $count terminali di quest\'area di lavoro';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Interrompi sincronizzazione input';
+
+  @override
+  String get workspaceSyncOn => 'Sincronizza input su tutti i terminali';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Input sincronizzato attivo: ciò che digiti in un terminale va a tutti i terminali di quest\'area di lavoro';
+
+  @override
+  String get workspaceSyncOffToast => 'Input sincronizzato disattivato';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Layout di $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Modello “$name” salvato';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Modelli di layout · nuova area di lavoro sul server del riquadro attivo';
+
+  @override
+  String get workspaceMoveTo =>
+      'Sposta in un\'area di lavoro, restando connesso';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminale $server spostato in “$workspace”, ancora connesso';
+  }
+
+  @override
+  String get workspaceNew => 'Nuova area di lavoro';
+
+  @override
+  String get workspaceIntoFocused => 'Nel riquadro attivo';
+
+  @override
+  String get keybindings => 'Scorciatoie da tastiera';
+
+  @override
+  String get kbSearchHint => 'Cerca comandi, tasti o ambiti';
+
+  @override
+  String get kbOnlyModified => 'Solo modificate';
+
+  @override
+  String get kbResetAll => 'Ripristina tutte le predefinite';
+
+  @override
+  String get kbResetAllAsk =>
+      'Ripristinare tutte le scorciatoie di questa piattaforma ai valori predefiniti?';
+
+  @override
+  String get kbResetDone => 'Scorciatoie predefinite ripristinate';
+
+  @override
+  String get kbResetOne => 'Ripristina predefinita';
+
+  @override
+  String get kbUnassigned => 'Non assegnata';
+
+  @override
+  String get kbFixed => 'Fissa';
+
+  @override
+  String get kbModified => 'Modificata';
+
+  @override
+  String get kbDefault => 'Predefinita';
+
+  @override
+  String get kbFixedHint => 'Questi tasti non possono essere modificati';
+
+  @override
+  String get kbNote =>
+      'L\'app gestisce queste combinazioni e non le invia alla shell anche quando un terminale ha il focus. Le combinazioni non assegnate qui arrivano comunque alla shell. Comandi di ambiti diversi possono condividere una combinazione.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Attuale: $keys · Ambito: $scope';
+  }
+
+  @override
+  String get kbPress => 'Premi una combinazione di tasti';
+
+  @override
+  String get kbRecordHint =>
+      'Enter per confermare, Esc per annullare. Se il focus si sposta, tocca il riquadro sopra e premi di nuovo.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'In conflitto con “$name” ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Confermando, questa combinazione viene rimossa dal comando in conflitto.';
+
+  @override
+  String get kbRemove => 'Rimuovi scorciatoia';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” ora è $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Globale';
+
+  @override
+  String get kbScopeSettings => 'Pagina impostazioni';
+
+  @override
+  String get kbScopeServerTab => 'Scheda server';
+
+  @override
+  String get kbWsSplitRight => 'Area di lavoro: dividi a destra';
+
+  @override
+  String get kbWsSplitDown => 'Area di lavoro: dividi in basso';
+
+  @override
+  String get kbWsFocusLeft => 'Area di lavoro: attiva il riquadro a sinistra';
+
+  @override
+  String get kbWsFocusRight => 'Area di lavoro: attiva il riquadro a destra';
+
+  @override
+  String get kbWsFocusUp => 'Area di lavoro: attiva il riquadro sopra';
+
+  @override
+  String get kbWsFocusDown => 'Area di lavoro: attiva il riquadro sotto';
+
+  @override
+  String get kbWsNewTab => 'Area di lavoro: nuova scheda';
+
+  @override
+  String get kbWsCloseTab => 'Area di lavoro: chiudi scheda';
+
+  @override
+  String get kbWsNextTab => 'Area di lavoro: scheda successiva';
+
+  @override
+  String get kbWsPrevTab => 'Area di lavoro: scheda precedente';
+
+  @override
+  String get kbWsTabs => 'Area di lavoro: schede del riquadro attivo';
+
+  @override
+  String get kbWsReopenTab => 'Area di lavoro: riapri scheda chiusa';
+
+  @override
+  String get kbWsMaximize =>
+      'Area di lavoro: ingrandisci o ripristina riquadro';
+
+  @override
+  String get kbWsSync =>
+      'Area di lavoro: sincronizza input su tutti i terminali';
+
+  @override
+  String get kbWsQuickOpen => 'Area di lavoro: apertura rapida';
+
+  @override
+  String get kbWsSwitcher => 'Area di lavoro: cambia area di lavoro';
+
+  @override
+  String get kbHomeTab => 'Home: vai alla scheda 1–9';
+
+  @override
+  String get kbAppSettings => 'Apri impostazioni';
+
+  @override
+  String get kbSettingsSearch => 'Impostazioni: cerca';
+
+  @override
+  String get kbServerPrev => 'Server: server precedente';
+
+  @override
+  String get kbServerNext => 'Server: server successivo';
+
+  @override
+  String get kbServerList => 'Server: elenco server';
+
+  @override
+  String get kbServerClose => 'Server: chiudi dettagli';
 }

@@ -29,6 +29,8 @@ class AppTabAdapter extends TypeAdapter<AppTab> {
         return AppTab.remoteDesktop;
       case 7:
         return AppTab.virt;
+      case 8:
+        return AppTab.workspace;
       default:
         return AppTab.server;
     }
@@ -53,6 +55,8 @@ class AppTabAdapter extends TypeAdapter<AppTab> {
         writer.writeByte(6);
       case AppTab.virt:
         writer.writeByte(7);
+      case AppTab.workspace:
+        writer.writeByte(8);
     }
   }
 

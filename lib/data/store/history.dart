@@ -93,6 +93,14 @@ class HistoryStore extends SqliteStore {
   /// exactly when someone wants their terminals back.
   late final sshTabs = propertyDefault('sshTabs', '');
 
+  /// The workspace tab's workspaces, as JSON — see `Workspaces`. Here rather
+  /// than in a table for the reason the terminal tabs are: it is where this
+  /// device left off, not a record anybody edits, and it is read whole.
+  late final workspaces = propertyDefault('workspaces', '');
+
+  /// Which of [workspaces] was on screen.
+  late final workspaceIndex = propertyDefault('workspaceIndex', 0);
+
   /// The file tab's sessions, for the same reason and in the same shape.
   ///
   /// This page held them in a `RestorableString` until the measurement above

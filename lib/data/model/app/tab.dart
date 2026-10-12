@@ -25,7 +25,11 @@ enum AppTab {
   /// [_retiredIndices], which is why an integer 7 still resolves to nothing
   /// rather than to this.
   @HiveField(7)
-  virt;
+  virt,
+
+  /// Several views of several servers at once, split into panes.
+  @HiveField(8)
+  workspace;
 
   /// Indices that named a tab which no longer exists, and so are never
   /// resolved as an integer.
@@ -66,7 +70,10 @@ enum AppTab {
   /// its own tabs (schema step m030 adds this one only where a PVE host was
   /// configured); one never arranged is this list, read at launch, so it gets
   /// the tab like a fresh install does.
-  static const defaultOrder = [server, ssh, file, agent, virt];
+  ///
+  /// Workspace is beside Terminal: it is where several of them go once one
+  /// is not enough.
+  static const defaultOrder = [server, ssh, workspace, file, agent, virt];
 
   /// The tabs not in [enabled], in declaration order — what "more" holds.
   ///

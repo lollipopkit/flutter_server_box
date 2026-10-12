@@ -17,11 +17,13 @@ import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/keybinding.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
+import 'package:server_box/data/provider/app/keybindings.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
 import 'package:server_box/data/provider/server/await_client.dart';
@@ -240,6 +242,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The floating window is the only caller: it draws this session while this
   /// page stands its own view down — see [terminalShellProvider].
   TerminalSession get session => _sess;
+
+  /// Whether [handOff] gave the session away.
+  bool _handedOff = false;
+
+  /// Gives this page's session to another page — the workspace, a terminal
+  /// moved into it — still connected and still running. Called before this
+  /// page is removed, which then leaves the session alone instead of tearing
+  /// down its output, which the next page goes on reading.
+  TerminalSession handOff() {
+    _handedOff = true;
+    return _sess;
+  }
 
   /// A tmux pane by its window and its own name, for a heading over what it
   /// reports. Null once the pane is not in the attached session.
@@ -498,7 +512,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     // keeps running, and its output keeps landing in the terminal a later page
     // will show.
     final onLeave = widget.args.onLeave;
-    if (onLeave != null) {
+    if (_handedOff) {
+      // Only this page's own handler: the page that took the session may
+      // already have installed one.
+      if (session.onForegroundDone == _onForegroundSessionDone) {
+        session.onForegroundDone = null;
+      }
+    } else if (onLeave != null) {
       // This page's own handler would run on a page that no longer exists.
       session.onForegroundDone = null;
       WidgetsBinding.instance.addPostFrameCallback((_) => onLeave(session));
@@ -796,6 +816,15 @@ class SSHPageState extends ConsumerState<SSHPage>
           ),
           hideScrollBar: false,
           focusNode: widget.args.focusNode,
+          // The app's own chords, ahead of the shell: one whose command has
+          // somewhere to run above this page — the workspace's, inside a
+          // workspace — is the app's, and the rest still reach the shell.
+          shortcuts: {
+            ...defaultTerminalShortcuts,
+            ...ref
+                .watch(keybindingsProvider)
+                .shortcutsFor(const [KbScope.global, KbScope.workspace]),
+          },
           toolbarBuilder: _buildTerminalToolbar,
           onCopied: _onTerminalCopied,
           onSelectAll: _onTerminalSelectAll,

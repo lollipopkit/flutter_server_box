@@ -6,6 +6,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/service.dart';
 import 'package:server_box/data/provider/services.dart';
 import 'package:server_box/view/page/service_detail.dart';
+import 'package:server_box/view/widget/actions_sink.dart';
 
 /// Below this the columns leave a unit's name nothing to be read in, and each
 /// unit becomes a two-line row.
@@ -29,9 +30,13 @@ const _kColActions = 88.0;
 enum _StatusFilter { failed, running, inactive, disabled }
 
 final class ServicesPage extends ConsumerStatefulWidget {
-  const ServicesPage({super.key, required this.args});
+  const ServicesPage({super.key, required this.args, this.actionsSink});
 
   final SpiRequiredArgs args;
+
+  /// Where the bar's buttons go when a host draws the bar — a workspace pane.
+  /// Null draws the page's own.
+  final ActionsSink? actionsSink;
 
   static const route = AppRouteArg<void, SpiRequiredArgs>(
     page: ServicesPage.new,
@@ -74,29 +79,26 @@ final class _ServicesPageState extends ConsumerState<ServicesPage> {
   Widget build(BuildContext context) {
     final manager = ref.watch(_pro.select((pro) => pro.manager));
     final isBusy = ref.watch(_pro.select((pro) => pro.isBusy));
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: TwoLineText(
-          up: l10n.services,
-          down: [widget.args.spi.name, ?manager?.displayName].join(' · '),
-        ),
-        actions: [
-          if (isBusy)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 11),
-              child: SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            Btn.icon(
-              text: libL10n.refresh,
-              icon: const Icon(Icons.refresh, size: 18),
-              onTap: _refresh,
-            ),
-        ],
+    final actions = [
+      BarAction(
+        icon: Icons.refresh,
+        label: libL10n.refresh,
+        loading: isBusy,
+        onTap: _refresh,
       ),
+    ];
+    final sink = widget.actionsSink;
+    sink?.publish(this, actions);
+    return Scaffold(
+      appBar: sink != null
+          ? null
+          : CustomAppBar(
+              title: TwoLineText(
+                up: l10n.services,
+                down: [widget.args.spi.name, ?manager?.displayName].join(' · '),
+              ),
+              actions: [for (final a in actions) a.button()],
+            ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final split = constraints.maxWidth >= _kSplitWidth;

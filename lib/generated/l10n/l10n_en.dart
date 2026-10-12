@@ -5536,4 +5536,361 @@ class AppLocalizationsEn extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count threads';
   }
+
+  @override
+  String get workspace => 'Workspace';
+
+  @override
+  String get workspaceTroubleshoot => 'Troubleshoot';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server is not connected';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Restored workspaces connect when you tap Connect.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'All tabs ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Not connected';
+
+  @override
+  String workspaceClosed(String what) {
+    return 'Closed $what';
+  }
+
+  @override
+  String get workspaceClosePane => 'Close pane';
+
+  @override
+  String get workspaceClosePaneHint => 'Closes every tab in it; can be undone';
+
+  @override
+  String get workspaceDropLeft => 'Left';
+
+  @override
+  String get workspaceDropRight => 'Right';
+
+  @override
+  String get workspaceDropTop => 'Top';
+
+  @override
+  String get workspaceDropBottom => 'Bottom';
+
+  @override
+  String get workspaceDropMerge => 'Join this pane';
+
+  @override
+  String get workspaceEmpty => 'Empty workspace';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'An empty workspace has no layout to save';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'New workspace from “$template” on $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Hidden';
+
+  @override
+  String get workspaceMaximize => 'Maximize';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Pane $pane maximized, $hidden hidden';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys, or double-click the tab bar';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'New empty workspace';
+
+  @override
+  String get workspaceNewPane => 'New pane';
+
+  @override
+  String get workspaceNewTab => 'New tab';
+
+  @override
+  String get workspaceNewTabFocused => 'New tab · in the focused pane';
+
+  @override
+  String get workspaceNoMatch => 'No matches';
+
+  @override
+  String get workspaceNothingToReopen => 'Nothing to reopen';
+
+  @override
+  String workspacePane(int index) {
+    return 'Pane $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Pane actions';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panes',
+      one: '1 pane',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Panes';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · two panes are shown; the tapped one gets focus';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Tabs of pane $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'New tab on $server · choose a view';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Quick open';
+
+  @override
+  String get workspaceQuickOpenHead => 'Quick open · Enter opens the first';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Servers, views, tabs or workspaces, e.g. db docker';
+
+  @override
+  String get workspaceRestore => 'Restore';
+
+  @override
+  String get workspaceSaveTemplate => 'Save layout as template';
+
+  @override
+  String get workspaceSeamTip => 'Drag to resize, double-click to even out';
+
+  @override
+  String get workspaceSplitDown => 'Split down';
+
+  @override
+  String get workspaceSplitRight => 'Split right';
+
+  @override
+  String get workspaceSwitchTo => 'Switch to';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Switch workspace';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Sync input: typing goes to the $count terminals of this workspace';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Stop syncing input';
+
+  @override
+  String get workspaceSyncOn => 'Sync input to all terminals';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Sync input on: typing in any terminal goes to every terminal of this workspace';
+
+  @override
+  String get workspaceSyncOffToast => 'Sync input off';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace layout';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Saved template “$name”';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Layout templates · new workspace on the focused pane\'s server';
+
+  @override
+  String get workspaceMoveTo => 'Move to workspace, staying connected';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminal $server moved to “$workspace”, still connected';
+  }
+
+  @override
+  String get workspaceNew => 'New workspace';
+
+  @override
+  String get workspaceIntoFocused => 'Into the focused pane';
+
+  @override
+  String get keybindings => 'Keyboard shortcuts';
+
+  @override
+  String get kbSearchHint => 'Search commands, keys or scopes';
+
+  @override
+  String get kbOnlyModified => 'Only modified';
+
+  @override
+  String get kbResetAll => 'Reset all to default';
+
+  @override
+  String get kbResetAllAsk =>
+      'Reset every shortcut on this platform to its default?';
+
+  @override
+  String get kbResetDone => 'Default shortcuts restored';
+
+  @override
+  String get kbResetOne => 'Reset to default';
+
+  @override
+  String get kbUnassigned => 'Not assigned';
+
+  @override
+  String get kbFixed => 'Fixed';
+
+  @override
+  String get kbModified => 'Modified';
+
+  @override
+  String get kbDefault => 'Default';
+
+  @override
+  String get kbFixedHint => 'These keys cannot be changed';
+
+  @override
+  String get kbNote =>
+      'The app handles these combinations, and does not send them to the shell even while a terminal has focus. Combinations not assigned here still reach the shell. Commands of different scopes can share a combination.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Current: $keys · Scope: $scope';
+  }
+
+  @override
+  String get kbPress => 'Press a key combination';
+
+  @override
+  String get kbRecordHint =>
+      'Enter to confirm, Esc to cancel. If focus leaves, tap the box above and press again.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'Conflicts with “$name” ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Confirming removes this combination from the conflicting command.';
+
+  @override
+  String get kbRemove => 'Remove shortcut';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name” is now $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Global';
+
+  @override
+  String get kbScopeSettings => 'Settings page';
+
+  @override
+  String get kbScopeServerTab => 'Server tab';
+
+  @override
+  String get kbWsSplitRight => 'Workspace: split right';
+
+  @override
+  String get kbWsSplitDown => 'Workspace: split down';
+
+  @override
+  String get kbWsFocusLeft => 'Workspace: focus the pane on the left';
+
+  @override
+  String get kbWsFocusRight => 'Workspace: focus the pane on the right';
+
+  @override
+  String get kbWsFocusUp => 'Workspace: focus the pane above';
+
+  @override
+  String get kbWsFocusDown => 'Workspace: focus the pane below';
+
+  @override
+  String get kbWsNewTab => 'Workspace: new tab';
+
+  @override
+  String get kbWsCloseTab => 'Workspace: close tab';
+
+  @override
+  String get kbWsNextTab => 'Workspace: next tab';
+
+  @override
+  String get kbWsPrevTab => 'Workspace: previous tab';
+
+  @override
+  String get kbWsTabs => 'Workspace: tabs of the focused pane';
+
+  @override
+  String get kbWsReopenTab => 'Workspace: reopen closed tab';
+
+  @override
+  String get kbWsMaximize => 'Workspace: maximize or restore pane';
+
+  @override
+  String get kbWsSync => 'Workspace: sync input to all terminals';
+
+  @override
+  String get kbWsQuickOpen => 'Workspace: quick open';
+
+  @override
+  String get kbWsSwitcher => 'Workspace: switch workspace';
+
+  @override
+  String get kbHomeTab => 'Home: go to tab 1–9';
+
+  @override
+  String get kbAppSettings => 'Open settings';
+
+  @override
+  String get kbSettingsSearch => 'Settings: search';
+
+  @override
+  String get kbServerPrev => 'Servers: previous server';
+
+  @override
+  String get kbServerNext => 'Servers: next server';
+
+  @override
+  String get kbServerList => 'Servers: server list';
+
+  @override
+  String get kbServerClose => 'Servers: close details';
 }

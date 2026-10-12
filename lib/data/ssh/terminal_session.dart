@@ -474,7 +474,13 @@ class TerminalSession {
       status.clearPanes();
     }
 
-    terminal.onOutput = (data) => session.write(utf8.encode(data));
+    terminal.onOutput = (data) {
+      session.write(utf8.encode(data));
+      // What the terminal answers on its own while output is being written —
+      // a cursor position, a device attribute — is not typing, and sent to
+      // another shell it would arrive there as input nobody gave.
+      if (!_writingOutput) onTyped?.call(data);
+    };
     terminal.onResize = (width, height, _, _) {
       // A shell whose connection has gone throws here, and it is not the
       // terminal's to fail over: the keyboard coming up resized the view of a
@@ -623,6 +629,27 @@ class TerminalSession {
 
   void writeLn(String line) => terminal.write('$line\r\n');
 
+  /// Told what is typed into this terminal — keys, pastes — and nothing the
+  /// terminal sends by itself. For a host mirroring one terminal's input into
+  /// others (a workspace's synchronized input).
+  void Function(String data)? onTyped;
+
+  /// Whether [terminal] is being given the shell's output, during which what
+  /// it sends back is a reply rather than typing — see [onTyped].
+  bool _writingOutput = false;
+
+  /// [data] to the shell as if typed here, without telling [onTyped]: the
+  /// other end of a mirror, which must not echo it back.
+  void sendTyped(String data) {
+    final shell = _foreground;
+    if (shell == null) return;
+    try {
+      shell.write(utf8.encode(data));
+    } catch (e) {
+      Loggers.app.info('Mirrored input not sent: $e');
+    }
+  }
+
   void _listen(Stream<Uint8List>? stream) {
     if (stream == null) return;
     final subscription = stream
@@ -667,7 +694,14 @@ class TerminalSession {
     _flushTimer = null;
     if (!_buffer.hasPending) return;
     final output = _buffer.take(_flushCharLimit);
-    if (output.isNotEmpty) terminal.write(output);
+    if (output.isNotEmpty) {
+      _writingOutput = true;
+      try {
+        terminal.write(output);
+      } finally {
+        _writingOutput = false;
+      }
+    }
     if (scheduleNext && _buffer.hasPending) _scheduleFlush();
   }
 

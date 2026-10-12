@@ -5602,4 +5602,366 @@ class AppLocalizationsDe extends AppLocalizations {
   String threadsFmt(int count) {
     return '$count Threads';
   }
+
+  @override
+  String get workspace => 'Arbeitsbereich';
+
+  @override
+  String get workspaceTroubleshoot => 'Fehlersuche';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server ist nicht verbunden';
+  }
+
+  @override
+  String get workspaceConnectHint =>
+      'Wiederhergestellte Arbeitsbereiche verbinden sich erst, wenn du auf Verbinden tippst.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return 'Alle Tabs ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => 'Nicht verbunden';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what geschlossen';
+  }
+
+  @override
+  String get workspaceClosePane => 'Bereich schließen';
+
+  @override
+  String get workspaceClosePaneHint =>
+      'Schließt alle Tabs darin; kann rückgängig gemacht werden';
+
+  @override
+  String get workspaceDropLeft => 'Links';
+
+  @override
+  String get workspaceDropRight => 'Rechts';
+
+  @override
+  String get workspaceDropTop => 'Oben';
+
+  @override
+  String get workspaceDropBottom => 'Unten';
+
+  @override
+  String get workspaceDropMerge => 'Diesem Bereich hinzufügen';
+
+  @override
+  String get workspaceEmpty => 'Leerer Arbeitsbereich';
+
+  @override
+  String get workspaceEmptyTemplate =>
+      'Ein leerer Arbeitsbereich hat kein Layout zum Speichern';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return 'Neuer Arbeitsbereich aus „$template“ auf $server';
+  }
+
+  @override
+  String get workspaceHidden => 'Ausgeblendet';
+
+  @override
+  String get workspaceMaximize => 'Maximieren';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return 'Bereich $pane maximiert, $hidden ausgeblendet';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys oder Doppelklick auf die Tab-Leiste';
+  }
+
+  @override
+  String get workspaceNewEmpty => 'Neuer leerer Arbeitsbereich';
+
+  @override
+  String get workspaceNewPane => 'Neuer Bereich';
+
+  @override
+  String get workspaceNewTab => 'Neuer Tab';
+
+  @override
+  String get workspaceNewTabFocused => 'Neuer Tab · im fokussierten Bereich';
+
+  @override
+  String get workspaceNoMatch => 'Keine Treffer';
+
+  @override
+  String get workspaceNothingToReopen => 'Nichts zum erneuten Öffnen';
+
+  @override
+  String workspacePane(int index) {
+    return 'Bereich $index';
+  }
+
+  @override
+  String get workspacePaneActions => 'Bereichsaktionen';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Bereiche',
+      one: '1 Bereich',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => 'Bereiche';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · zwei Bereiche werden angezeigt; der angetippte erhält den Fokus';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return 'Tabs von Bereich $index';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return 'Neuer Tab auf $server · Ansicht wählen';
+  }
+
+  @override
+  String get workspaceQuickOpen => 'Schnell öffnen';
+
+  @override
+  String get workspaceQuickOpenHead =>
+      'Schnell öffnen · Enter öffnet den ersten Treffer';
+
+  @override
+  String get workspaceQuickOpenHint =>
+      'Server, Ansichten, Tabs oder Arbeitsbereiche, z. B. db docker';
+
+  @override
+  String get workspaceRestore => 'Wiederherstellen';
+
+  @override
+  String get workspaceSaveTemplate => 'Layout als Vorlage speichern';
+
+  @override
+  String get workspaceSeamTip =>
+      'Ziehen zum Ändern der Größe, Doppelklick zum Angleichen';
+
+  @override
+  String get workspaceSplitDown => 'Nach unten teilen';
+
+  @override
+  String get workspaceSplitRight => 'Nach rechts teilen';
+
+  @override
+  String get workspaceSwitchTo => 'Wechseln zu';
+
+  @override
+  String get workspaceSwitchWorkspace => 'Arbeitsbereich wechseln';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return 'Eingabe synchronisieren: Eingaben gehen an die $count Terminals dieses Arbeitsbereichs';
+  }
+
+  @override
+  String get workspaceSyncOff => 'Eingabesynchronisierung beenden';
+
+  @override
+  String get workspaceSyncOn => 'Eingabe an alle Terminals senden';
+
+  @override
+  String get workspaceSyncOnToast =>
+      'Eingabesynchronisierung an: Eingaben in einem Terminal gehen an alle Terminals dieses Arbeitsbereichs';
+
+  @override
+  String get workspaceSyncOffToast => 'Eingabesynchronisierung aus';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return 'Layout von $workspace';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return 'Vorlage „$name“ gespeichert';
+  }
+
+  @override
+  String get workspaceTemplatesHead =>
+      'Layoutvorlagen · neuer Arbeitsbereich auf dem Server des fokussierten Bereichs';
+
+  @override
+  String get workspaceMoveTo =>
+      'In Arbeitsbereich verschieben, Verbindung bleibt bestehen';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return 'Terminal $server nach „$workspace“ verschoben, weiterhin verbunden';
+  }
+
+  @override
+  String get workspaceNew => 'Neuer Arbeitsbereich';
+
+  @override
+  String get workspaceIntoFocused => 'In den fokussierten Bereich';
+
+  @override
+  String get keybindings => 'Tastenkürzel';
+
+  @override
+  String get kbSearchHint => 'Befehle, Tasten oder Geltungsbereiche suchen';
+
+  @override
+  String get kbOnlyModified => 'Nur geänderte';
+
+  @override
+  String get kbResetAll => 'Alle auf Standard zurücksetzen';
+
+  @override
+  String get kbResetAllAsk =>
+      'Alle Tastenkürzel dieser Plattform auf den Standard zurücksetzen?';
+
+  @override
+  String get kbResetDone => 'Standard-Tastenkürzel wiederhergestellt';
+
+  @override
+  String get kbResetOne => 'Auf Standard zurücksetzen';
+
+  @override
+  String get kbUnassigned => 'Nicht belegt';
+
+  @override
+  String get kbFixed => 'Fest';
+
+  @override
+  String get kbModified => 'Geändert';
+
+  @override
+  String get kbDefault => 'Standard';
+
+  @override
+  String get kbFixedHint => 'Diese Tasten können nicht geändert werden';
+
+  @override
+  String get kbNote =>
+      'Die App verarbeitet diese Kombinationen und sendet sie nicht an die shell, auch wenn ein Terminal den Fokus hat. Hier nicht belegte Kombinationen erreichen weiterhin die shell. Befehle mit unterschiedlichem Geltungsbereich können dieselbe Kombination verwenden.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return 'Aktuell: $keys · Geltungsbereich: $scope';
+  }
+
+  @override
+  String get kbPress => 'Tastenkombination drücken';
+
+  @override
+  String get kbRecordHint =>
+      'Enter zum Bestätigen, Esc zum Abbrechen. Geht der Fokus verloren, tippe auf das Feld oben und drücke erneut.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return 'Konflikt mit „$name“ ($scope)';
+  }
+
+  @override
+  String get kbConflictNote =>
+      'Beim Bestätigen wird diese Kombination vom anderen Befehl entfernt.';
+
+  @override
+  String get kbRemove => 'Tastenkürzel entfernen';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '„$name“ ist jetzt $keys';
+  }
+
+  @override
+  String get kbScopeGlobal => 'Global';
+
+  @override
+  String get kbScopeSettings => 'Einstellungsseite';
+
+  @override
+  String get kbScopeServerTab => 'Server-Tab';
+
+  @override
+  String get kbWsSplitRight => 'Arbeitsbereich: nach rechts teilen';
+
+  @override
+  String get kbWsSplitDown => 'Arbeitsbereich: nach unten teilen';
+
+  @override
+  String get kbWsFocusLeft => 'Arbeitsbereich: Bereich links fokussieren';
+
+  @override
+  String get kbWsFocusRight => 'Arbeitsbereich: Bereich rechts fokussieren';
+
+  @override
+  String get kbWsFocusUp => 'Arbeitsbereich: Bereich oben fokussieren';
+
+  @override
+  String get kbWsFocusDown => 'Arbeitsbereich: Bereich unten fokussieren';
+
+  @override
+  String get kbWsNewTab => 'Arbeitsbereich: neuer Tab';
+
+  @override
+  String get kbWsCloseTab => 'Arbeitsbereich: Tab schließen';
+
+  @override
+  String get kbWsNextTab => 'Arbeitsbereich: nächster Tab';
+
+  @override
+  String get kbWsPrevTab => 'Arbeitsbereich: vorheriger Tab';
+
+  @override
+  String get kbWsTabs => 'Arbeitsbereich: Tabs des fokussierten Bereichs';
+
+  @override
+  String get kbWsReopenTab => 'Arbeitsbereich: geschlossenen Tab wieder öffnen';
+
+  @override
+  String get kbWsMaximize =>
+      'Arbeitsbereich: Bereich maximieren oder wiederherstellen';
+
+  @override
+  String get kbWsSync => 'Arbeitsbereich: Eingabe an alle Terminals senden';
+
+  @override
+  String get kbWsQuickOpen => 'Arbeitsbereich: schnell öffnen';
+
+  @override
+  String get kbWsSwitcher => 'Arbeitsbereich: Arbeitsbereich wechseln';
+
+  @override
+  String get kbHomeTab => 'Start: zu Tab 1–9 wechseln';
+
+  @override
+  String get kbAppSettings => 'Einstellungen öffnen';
+
+  @override
+  String get kbSettingsSearch => 'Einstellungen: suchen';
+
+  @override
+  String get kbServerPrev => 'Server: vorheriger Server';
+
+  @override
+  String get kbServerNext => 'Server: nächster Server';
+
+  @override
+  String get kbServerList => 'Server: Serverliste';
+
+  @override
+  String get kbServerClose => 'Server: Details schließen';
 }

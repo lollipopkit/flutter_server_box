@@ -699,6 +699,29 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
 
+  /// The workspace layouts saved as templates, as JSON; empty for the
+  /// built-in ones — see `WorkspaceTemplates`.
+  late final workspaceTemplates = propertyDefault('workspaceTemplates', '');
+
+  /// The keyboard shortcuts changed from their defaults, keyed
+  /// `platform:command` (`mac:ws.splitRight`) to the chord, an empty string
+  /// for one removed — see `Keybindings`.
+  ///
+  /// Keyed by platform as well as command because a backup restored on
+  /// another kind of machine should not carry a Mac's chords onto a PC.
+  late final keybindings = propertyDefault<Map<String, String>>(
+    'keybindings',
+    const {},
+    // Decoded JSON is a `Map<String, dynamic>`, which is not this type.
+    fromObj: (raw) {
+      if (raw is! Map) return <String, String>{};
+      return {
+        for (final e in raw.entries)
+          if (e.value is String) e.key.toString(): e.value as String,
+      };
+    },
+  );
+
   /// The connection count (`2/4`) on the server tab (#1637).
   late final serverTabConnBadge = propertyDefault('serverTabConnBadge', true);
 

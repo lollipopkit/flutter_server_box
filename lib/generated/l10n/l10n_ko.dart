@@ -5270,4 +5270,354 @@ class AppLocalizationsKo extends AppLocalizations {
   String threadsFmt(int count) {
     return '스레드 $count개';
   }
+
+  @override
+  String get workspace => '작업 공간';
+
+  @override
+  String get workspaceTroubleshoot => '문제 해결';
+
+  @override
+  String workspaceNotConnected(String server) {
+    return '$server에 연결되지 않음';
+  }
+
+  @override
+  String get workspaceConnectHint => '복원된 작업 공간은 연결을 탭하면 연결됩니다.';
+
+  @override
+  String workspaceAllTabs(int count) {
+    return '모든 탭 ($count)';
+  }
+
+  @override
+  String get workspaceAsleep => '연결되지 않음';
+
+  @override
+  String workspaceClosed(String what) {
+    return '$what 닫음';
+  }
+
+  @override
+  String get workspaceClosePane => '패널 닫기';
+
+  @override
+  String get workspaceClosePaneHint => '안의 탭을 모두 닫습니다. 실행 취소할 수 있습니다';
+
+  @override
+  String get workspaceDropLeft => '왼쪽';
+
+  @override
+  String get workspaceDropRight => '오른쪽';
+
+  @override
+  String get workspaceDropTop => '위쪽';
+
+  @override
+  String get workspaceDropBottom => '아래쪽';
+
+  @override
+  String get workspaceDropMerge => '이 패널에 합치기';
+
+  @override
+  String get workspaceEmpty => '빈 작업 공간';
+
+  @override
+  String get workspaceEmptyTemplate => '빈 작업 공간에는 저장할 레이아웃이 없습니다';
+
+  @override
+  String workspaceFromTemplate(String template, String server) {
+    return '$server에서 “$template” 템플릿으로 새 작업 공간을 만들었습니다';
+  }
+
+  @override
+  String get workspaceHidden => '숨김';
+
+  @override
+  String get workspaceMaximize => '최대화';
+
+  @override
+  String workspaceMaximized(int pane, int hidden) {
+    return '패널 $pane 최대화됨, $hidden개 숨김';
+  }
+
+  @override
+  String workspaceMaximizeHint(String keys) {
+    return '$keys 또는 탭 바를 더블클릭';
+  }
+
+  @override
+  String get workspaceNewEmpty => '새 빈 작업 공간';
+
+  @override
+  String get workspaceNewPane => '새 패널';
+
+  @override
+  String get workspaceNewTab => '새 탭';
+
+  @override
+  String get workspaceNewTabFocused => '새 탭 · 포커스된 패널에';
+
+  @override
+  String get workspaceNoMatch => '일치하는 항목 없음';
+
+  @override
+  String get workspaceNothingToReopen => '다시 열 탭이 없습니다';
+
+  @override
+  String workspacePane(int index) {
+    return '패널 $index';
+  }
+
+  @override
+  String get workspacePaneActions => '패널 작업';
+
+  @override
+  String workspacePaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '패널 $count개',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get workspacePanes => '패널 목록';
+
+  @override
+  String workspacePanesHead(String workspace) {
+    return '$workspace · 패널 두 개가 표시됩니다. 탭한 패널이 포커스를 받습니다';
+  }
+
+  @override
+  String workspacePaneTabs(int index) {
+    return '패널 $index의 탭';
+  }
+
+  @override
+  String workspacePickView(String server) {
+    return '$server에 새 탭 · 화면 선택';
+  }
+
+  @override
+  String get workspaceQuickOpen => '빠른 열기';
+
+  @override
+  String get workspaceQuickOpenHead => '빠른 열기 · Enter로 첫 항목 열기';
+
+  @override
+  String get workspaceQuickOpenHint => '서버, 화면, 탭 또는 작업 공간 (예: db docker)';
+
+  @override
+  String get workspaceRestore => '복원';
+
+  @override
+  String get workspaceSaveTemplate => '레이아웃을 템플릿으로 저장';
+
+  @override
+  String get workspaceSeamTip => '드래그하여 크기 조정, 더블클릭하여 균등 분할';
+
+  @override
+  String get workspaceSplitDown => '아래로 분할';
+
+  @override
+  String get workspaceSplitRight => '오른쪽으로 분할';
+
+  @override
+  String get workspaceSwitchTo => '전환';
+
+  @override
+  String get workspaceSwitchWorkspace => '작업 공간 전환';
+
+  @override
+  String workspaceSyncBar(int count) {
+    return '입력 동기화: 입력한 내용이 이 작업 공간의 터미널 $count개로 전송됩니다';
+  }
+
+  @override
+  String get workspaceSyncOff => '입력 동기화 중지';
+
+  @override
+  String get workspaceSyncOn => '모든 터미널에 입력 동기화';
+
+  @override
+  String get workspaceSyncOnToast =>
+      '입력 동기화 켜짐: 어느 터미널에 입력해도 이 작업 공간의 모든 터미널로 전송됩니다';
+
+  @override
+  String get workspaceSyncOffToast => '입력 동기화 꺼짐';
+
+  @override
+  String workspaceTemplateOf(String workspace) {
+    return '$workspace 레이아웃';
+  }
+
+  @override
+  String workspaceTemplateSaved(String name) {
+    return '템플릿 “$name” 저장됨';
+  }
+
+  @override
+  String get workspaceTemplatesHead => '레이아웃 템플릿 · 포커스된 패널의 서버로 새 작업 공간 만들기';
+
+  @override
+  String get workspaceMoveTo => '연결을 유지한 채 작업 공간으로 이동';
+
+  @override
+  String workspaceMoved(String server, String workspace) {
+    return '터미널 $server을(를) “$workspace”(으)로 이동했습니다. 연결은 유지됩니다';
+  }
+
+  @override
+  String get workspaceNew => '새 작업 공간';
+
+  @override
+  String get workspaceIntoFocused => '포커스된 패널로';
+
+  @override
+  String get keybindings => '키보드 단축키';
+
+  @override
+  String get kbSearchHint => '명령, 키 또는 적용 범위 검색';
+
+  @override
+  String get kbOnlyModified => '변경된 항목만';
+
+  @override
+  String get kbResetAll => '모두 기본값으로 재설정';
+
+  @override
+  String get kbResetAllAsk => '이 플랫폼의 모든 단축키를 기본값으로 재설정할까요?';
+
+  @override
+  String get kbResetDone => '기본 단축키로 복원됨';
+
+  @override
+  String get kbResetOne => '기본값으로 재설정';
+
+  @override
+  String get kbUnassigned => '할당되지 않음';
+
+  @override
+  String get kbFixed => '고정';
+
+  @override
+  String get kbModified => '변경됨';
+
+  @override
+  String get kbDefault => '기본값';
+
+  @override
+  String get kbFixedHint => '이 키는 변경할 수 없습니다';
+
+  @override
+  String get kbNote =>
+      '이 조합은 앱이 처리하며, 터미널에 포커스가 있어도 shell로 보내지 않습니다. 여기에 할당되지 않은 조합은 그대로 shell로 전달됩니다. 적용 범위가 다른 명령은 같은 조합을 사용할 수 있습니다.';
+
+  @override
+  String kbCurrent(String keys, String scope) {
+    return '현재: $keys · 적용 범위: $scope';
+  }
+
+  @override
+  String get kbPress => '키 조합을 누르세요';
+
+  @override
+  String get kbRecordHint =>
+      'Enter로 확인, Esc로 취소. 포커스가 벗어나면 위의 상자를 탭하고 다시 누르세요.';
+
+  @override
+  String kbConflict(String name, String scope) {
+    return '“$name”($scope)과(와) 충돌';
+  }
+
+  @override
+  String get kbConflictNote => '확인하면 충돌하는 명령에서 이 조합이 제거됩니다.';
+
+  @override
+  String get kbRemove => '단축키 제거';
+
+  @override
+  String kbChanged(String name, String keys) {
+    return '“$name”이(가) 이제 $keys입니다';
+  }
+
+  @override
+  String get kbScopeGlobal => '전역';
+
+  @override
+  String get kbScopeSettings => '설정 페이지';
+
+  @override
+  String get kbScopeServerTab => '서버 탭';
+
+  @override
+  String get kbWsSplitRight => '작업 공간: 오른쪽으로 분할';
+
+  @override
+  String get kbWsSplitDown => '작업 공간: 아래로 분할';
+
+  @override
+  String get kbWsFocusLeft => '작업 공간: 왼쪽 패널로 포커스 이동';
+
+  @override
+  String get kbWsFocusRight => '작업 공간: 오른쪽 패널로 포커스 이동';
+
+  @override
+  String get kbWsFocusUp => '작업 공간: 위쪽 패널로 포커스 이동';
+
+  @override
+  String get kbWsFocusDown => '작업 공간: 아래쪽 패널로 포커스 이동';
+
+  @override
+  String get kbWsNewTab => '작업 공간: 새 탭';
+
+  @override
+  String get kbWsCloseTab => '작업 공간: 탭 닫기';
+
+  @override
+  String get kbWsNextTab => '작업 공간: 다음 탭';
+
+  @override
+  String get kbWsPrevTab => '작업 공간: 이전 탭';
+
+  @override
+  String get kbWsTabs => '작업 공간: 포커스된 패널의 탭 목록';
+
+  @override
+  String get kbWsReopenTab => '작업 공간: 닫은 탭 다시 열기';
+
+  @override
+  String get kbWsMaximize => '작업 공간: 패널 최대화 또는 복원';
+
+  @override
+  String get kbWsSync => '작업 공간: 모든 터미널에 입력 동기화';
+
+  @override
+  String get kbWsQuickOpen => '작업 공간: 빠른 열기';
+
+  @override
+  String get kbWsSwitcher => '작업 공간: 작업 공간 전환';
+
+  @override
+  String get kbHomeTab => '홈: 탭 1–9로 이동';
+
+  @override
+  String get kbAppSettings => '설정 열기';
+
+  @override
+  String get kbSettingsSearch => '설정: 검색';
+
+  @override
+  String get kbServerPrev => '서버: 이전 서버';
+
+  @override
+  String get kbServerNext => '서버: 다음 서버';
+
+  @override
+  String get kbServerList => '서버: 서버 목록';
+
+  @override
+  String get kbServerClose => '서버: 상세 정보 닫기';
 }
