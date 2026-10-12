@@ -316,50 +316,47 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
         if (horizon != null) rows.removeWhere((r) => r.at.isBefore(horizon!));
         final busy = AgentChats.busy(_scope);
 
+        final actions = [
+          if (chats.isNotEmpty)
+            BarAction(
+              icon: Icons.delete_sweep_outlined,
+              label: libL10n.clearHistory,
+              onTap: busy ? null : _clear,
+            ),
+          BarAction(
+            icon: Icons.search,
+            label: libL10n.search,
+            onTap: _search.start,
+          ),
+          if (servers.isNotEmpty)
+            BarAction.menu(
+              icon: source == null ? Icons.filter_alt_outlined : Icons.filter_alt,
+              label: context.l10n.agentSource,
+              color: source == null ? null : theme.colorScheme.primary,
+              menu: () => _sources(servers),
+            ),
+          BarAction(
+            icon: Icons.add,
+            label: context.l10n.askAiNewConversation,
+            onTap: () {
+              AgentChats.startNew(_scope);
+              _closeIfSheet();
+            },
+          ),
+          // Over the sheet rather than in place of it: back returns
+          // to the list it was opened from.
+          BarAction(
+            key: const ValueKey('agent-settings'),
+            icon: Icons.settings_outlined,
+            label: libL10n.setting,
+            onTap: () => SettingsSectionPage.route.go(
+              context,
+              SettingsSection.ai,
+              target: NavTarget.root,
+            ),
+          ),
+        ];
         final head = <Widget>[
-              SideBarActions(
-                search: _search,
-                actions: [
-                  if (chats.isNotEmpty)
-                    BarAction(
-                      icon: Icons.delete_sweep_outlined,
-                      label: libL10n.clearHistory,
-                      onTap: busy ? null : _clear,
-                    ),
-                  BarAction(
-                    icon: Icons.search,
-                    label: libL10n.search,
-                    onTap: _search.start,
-                  ),
-                  if (servers.isNotEmpty)
-                    BarAction.menu(
-                      icon: source == null ? Icons.filter_alt_outlined : Icons.filter_alt,
-                      label: context.l10n.agentSource,
-                      color: source == null ? null : theme.colorScheme.primary,
-                      menu: () => _sources(servers),
-                    ),
-                  BarAction(
-                    icon: Icons.add,
-                    label: context.l10n.askAiNewConversation,
-                    onTap: () {
-                      AgentChats.startNew(_scope);
-                      _closeIfSheet();
-                    },
-                  ),
-                  // Over the sheet rather than in place of it: back returns
-                  // to the list it was opened from.
-                  BarAction(
-                    key: const ValueKey('agent-settings'),
-                    icon: Icons.settings_outlined,
-                    label: libL10n.setting,
-                    onTap: () => SettingsSectionPage.route.go(
-                      context,
-                      SettingsSection.ai,
-                      target: NavTarget.root,
-                    ),
-                  ),
-                ],
-              ),
               SideBarSection(context.l10n.askAiHistory),
               // A server's first page, or a search of them, on its way: the
               // rows it brings are not there yet.
@@ -398,8 +395,9 @@ class _AgentHistoryPanelState extends State<AgentHistoryPanel> {
         return Material(
           type: MaterialType.transparency,
           // Built as it scrolls: a server keeps hundreds of tasks.
-          child: ListView.builder(
-            padding: const EdgeInsets.only(bottom: 12),
+          child: SideBarList.builder(
+            actions: actions,
+            search: _search,
             itemCount: head.length + rows.length + (loader ? 1 : 0),
             itemBuilder: (context, i) {
               if (i < head.length) return head[i];
