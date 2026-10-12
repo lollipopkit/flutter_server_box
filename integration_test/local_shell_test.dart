@@ -175,6 +175,29 @@ void main() {
     await session.done;
   }, skip: _cannotRun != null);
 
+  testWidgets('a command that ends at once keeps everything it printed', (
+    _,
+  ) async {
+    // The exit is reported on its own thread, and closing the output on it
+    // dropped what was still on its way: a quick command came back with its
+    // last line missing, or with nothing. Many times over, because it was a
+    // race that lost about half the time on an emulator.
+    final backend = LocalShellBackend();
+    addTearDown(backend.close);
+    final command = Platform.isWindows
+        ? 'echo SBM_ONE & echo SBM_TWO'
+        : 'echo SBM_ONE; echo SBM_TWO';
+    for (var i = 0; i < 30; i++) {
+      final session = await backend.execute(command, width: 80, height: 24);
+      final out = await session.stdout!
+          .map((chunk) => utf8.decode(chunk, allowMalformed: true))
+          .join()
+          .timeout(const Duration(seconds: 20));
+      expect(out, contains('SBM_TWO'), reason: 'run $i: $out');
+      await session.done;
+    }
+  }, skip: _cannotRun != null);
+
   testWidgets('closing the backend ends the shell', (_) async {
     final backend = LocalShellBackend();
     final shell = await backend.openShell(width: 80, height: 24);

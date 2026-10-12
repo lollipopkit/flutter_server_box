@@ -146,6 +146,51 @@ void main() {
     }
   });
 
+  test('a link replaced by a later file is not resolved through', () async {
+    TarFile entry(String name, String type, {String? target, String? data}) {
+      final bytes = Uint8List.fromList((data ?? '').codeUnits);
+      return TarFile()
+        ..filename = name
+        ..mode = 0x1a4
+        ..lastModTime = 0
+        ..typeFlag = type
+        ..nameOfLinkedFile = target
+        ..fileSize = bytes.length
+        ..contentBytes = bytes;
+    }
+
+    final out = OutputMemoryStream();
+    entry('c', TarFile.normalFile, data: 'old').write(out);
+    entry('a', TarFile.hardLink, target: 'b').write(out);
+    entry('b', TarFile.hardLink, target: 'c').write(out);
+    // The last `b` is a file of its own, and it is what `a` names.
+    entry('b', TarFile.normalFile, data: 'new').write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-replaced-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+    await RootfsUnpack.extract(
+      archive,
+      root,
+      source: const RootfsSource(
+        url: 'https://example.test/rootfs.tar.gz',
+        sha256: '',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      ),
+    );
+
+    expect(File('${root.path}/b').readAsStringSync(), 'new');
+    expect(File('${root.path}/a').readAsStringSync(), 'new');
+    expect(File('${root.path}/c').readAsStringSync(), 'old');
+  });
+
   test('a hard link to a pending symlink preserves the symlink', () async {
     TarFile entry(String name, String type, {String? target}) => TarFile()
       ..filename = name

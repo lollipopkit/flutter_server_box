@@ -67,7 +67,10 @@ void main() {
       seen.write(utf8.decode(chunk, allowMalformed: true));
       if (seen.toString().contains(until)) finish();
     }, onDone: finish);
-    unawaited(session.done.then((_) => finish()));
+    // Not on `session.done`: the process ending is reported before the last of
+    // what it printed has come through the stream, and finishing then cut the
+    // read short — `uname -m` lost after the release, or the whole answer.
+    // The stream closing is what says everything has arrived.
     return done.future.timeout(timeout, onTimeout: () => seen.toString());
   }
 

@@ -90,7 +90,7 @@ void main() {
       );
 
       final layers = ociLayers(image);
-      expect(layers.map((e) => e.bytes.single), [1, 2, 3]);
+      expect(layers.map((e) => e.file.content.single), [1, 2, 3]);
     });
 
     test('selects the Linux arm64 manifest from a platform index', () {
@@ -129,7 +129,7 @@ void main() {
         ..add(blob('x64', const [1]))
         ..add(blob('arm64', const [2]));
 
-      expect(ociLayers(image).single.bytes, [2]);
+      expect(ociLayers(image).single.file.content, [2]);
     });
 
     test('reads compression from the declared media type', () {

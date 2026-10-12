@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -35,29 +36,100 @@ abstract final class RootfsUnpack {
     if (stat.size > maxArchiveSize) {
       throw StateError('Rootfs archive too large (${stat.size} bytes)');
     }
-    final bytes = await archiveFile.readAsBytes();
-    final outerDecoder = TarDecoder();
-    final outer = outerDecoder.decodeBytes(
-      decompressRootfs(bytes, source.compression),
-    );
-
-    switch (source.layout) {
-      case LinuxRootfsLayout.plain:
-        await _unpackTar(outer, outerDecoder, into, onProgress: onProgress);
-      case LinuxRootfsLayout.oci:
-        // In order, and each over the last: a later layer's copy of a path
-        // replaces an earlier one's, and its whiteouts delete what earlier
-        // layers put there.
-        for (final layer in ociLayers(outer)) {
-          final decoder = TarDecoder();
-          await _unpackTar(
-            decoder.decodeBytes(ociLayerTar(layer)),
-            decoder,
-            into,
-            applyWhiteouts: true,
-            onProgress: onProgress,
-          );
+    // Beside the tree being written, so on the same filesystem and in the
+    // app's own directory, and gone however this ends.
+    final work = await into.parent.createTemp('.unpack-');
+    try {
+      final outerDecoder = TarDecoder();
+      final outerInput = InputFileStream(
+        await _decompressed(archiveFile.path, source.compression, work),
+      );
+      try {
+        // Over a file, an entry's contents are a view into it, read when the
+        // entry is written out: neither the download nor what it unpacks to
+        // is ever held in memory whole.
+        final outer = outerDecoder.decodeStream(outerInput);
+        switch (source.layout) {
+          case LinuxRootfsLayout.plain:
+            await _unpackTar(outer, outerDecoder, into, onProgress: onProgress);
+          case LinuxRootfsLayout.oci:
+            // In order, and each over the last: a later layer's copy of a path
+            // replaces an earlier one's, and its whiteouts delete what earlier
+            // layers put there.
+            var n = 0;
+            for (final layer in ociLayers(outer)) {
+              final blob = '${work.path}/layer${n++}';
+              await _copyOut(layer.file, blob);
+              final how = layer.compression;
+              final decoder = TarDecoder();
+              final input = InputFileStream(
+                how == null ? blob : await _decompressed(blob, how, work),
+              );
+              try {
+                await _unpackTar(
+                  decoder.decodeStream(input),
+                  decoder,
+                  into,
+                  applyWhiteouts: true,
+                  onProgress: onProgress,
+                );
+              } finally {
+                await input.close();
+              }
+            }
         }
+      } finally {
+        await outerInput.close();
+      }
+    } finally {
+      await work.delete(recursive: true);
+    }
+  }
+
+  /// [from], decompressed into a file in [work], on another isolate: a
+  /// rootfs is hundreds of megabytes of inflating, and on the UI isolate that
+  /// is the app frozen for as long as it takes.
+  static Future<String> _decompressed(
+    String from,
+    LinuxRootfsCompression how,
+    Directory work,
+  ) async {
+    final to = '${work.path}/${from.split('/').last}.tar';
+    await Isolate.run(() {
+      final input = InputFileStream(from);
+      final output = OutputFileStream(to);
+      try {
+        final ok = switch (how) {
+          LinuxRootfsCompression.gzip => GZipDecoder().decodeStream(
+            input,
+            output,
+          ),
+          LinuxRootfsCompression.xz => XZDecoder().decodeStream(
+            input,
+            output,
+            throwOnError: true,
+          ),
+        };
+        if (!ok) throw StateError('The rootfs archive is truncated');
+      } finally {
+        input.closeSync();
+        output.closeSync();
+      }
+    });
+    return to;
+  }
+
+  /// [file]'s contents written to [path], a megabyte at a time.
+  static Future<void> _copyOut(ArchiveFile file, String path) async {
+    final content = file.getContent();
+    if (content == null) throw StateError('The image has an empty layer');
+    final output = OutputFileStream(path);
+    try {
+      while (!content.isEOS) {
+        output.writeBytes(content.readBytes(1 << 20).toUint8List());
+      }
+    } finally {
+      await output.close();
     }
   }
 
@@ -78,10 +150,16 @@ abstract final class RootfsUnpack {
   static Map<String, String> _hardLinks(TarDecoder decoder) {
     final links = <String, String>{};
     for (final file in decoder.files) {
-      if (file.typeFlag != TarFile.hardLink) continue;
+      final name = _tarPath(file.filename);
       final target = file.nameOfLinkedFile;
-      if (target == null || target.isEmpty) continue;
-      links[_tarPath(file.filename)] = _tarPath(target);
+      // The last entry of a name is the one that stands, as tar has it and as
+      // the archive keeps it: a link that a later regular file replaced is no
+      // link, and nothing may still resolve through it.
+      if (file.typeFlag != TarFile.hardLink || target == null || target.isEmpty) {
+        links.remove(name);
+        continue;
+      }
+      links[name] = _tarPath(target);
     }
     return links;
   }

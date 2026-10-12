@@ -3,9 +3,7 @@
 /// Shared by both platforms rather than owned by either, for the reason
 /// `linux_seed.dart` gives: they download the same file, check it against the
 /// same digest, and drifted the last time a step was written twice. What they
-/// do with the layers afterwards *is* different — iOS unpacks in Dart because
-/// it cannot start a process, Android hands each layer to the system `tar` so
-/// that symlinks survive — and that difference stays on their side of this.
+/// do with the layers afterwards is `RootfsUnpack`'s, which both use.
 ///
 /// Rocky publishes no plain rootfs tarball, only this. An image layout is
 /// `index.json` naming a manifest, the manifest naming layers, and the layers
@@ -17,9 +15,12 @@ import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 
-/// One layer's bytes and how they are packed. A null [compression] is a plain
-/// tar, which the specification allows and no image seen so far uses.
-typedef OciLayer = ({List<int> bytes, LinuxRootfsCompression? compression});
+/// One layer and how it is packed. A null [compression] is a plain tar, which
+/// the specification allows and no image seen so far uses.
+///
+/// The image's own entry rather than its bytes: a layer is most of the image,
+/// and the unpacker streams it out of the file rather than holding it.
+typedef OciLayer = ({ArchiveFile file, LinuxRootfsCompression? compression});
 
 /// Undoes [how]. The download's outer wrapper and a layer's inner one are the
 /// same question asked twice, so they share an answer.
@@ -30,9 +31,12 @@ List<int> decompressRootfs(List<int> bytes, LinuxRootfsCompression how) =>
     };
 
 /// A layer's tar, decompressed.
-List<int> ociLayerTar(OciLayer layer) => layer.compression == null
-    ? layer.bytes
-    : decompressRootfs(layer.bytes, layer.compression!);
+List<int> ociLayerTar(OciLayer layer) {
+  final bytes = layer.file.readBytes() ?? const <int>[];
+  return layer.compression == null
+      ? bytes
+      : decompressRootfs(bytes, layer.compression!);
+}
 
 /// The layers of [image], in the order they must be applied.
 ///
@@ -40,18 +44,18 @@ List<int> ociLayerTar(OciLayer layer) => layer.compression == null
 /// which is precisely the condition under which getting it wrong stays
 /// invisible until some future image has two.
 List<OciLayer> ociLayers(Archive image) {
-  List<int> blob(String digest) {
+  ArchiveFile blob(String digest) {
     // `sha256:abcd…` lives at `blobs/sha256/abcd…`, which is the whole of the
     // mapping an image layout defines between a digest and a file.
     final parts = digest.split(':');
     if (parts.length != 2) {
       throw StateError('The image names a malformed digest: $digest');
     }
-    final bytes = image.findFile('blobs/${parts[0]}/${parts[1]}')?.readBytes();
-    if (bytes == null) {
+    final file = image.findFile('blobs/${parts[0]}/${parts[1]}');
+    if (file == null) {
       throw StateError('The image is missing the blob $digest');
     }
-    return bytes;
+    return file;
   }
 
   final indexBytes = image.findFile('index.json')?.readBytes();
@@ -79,7 +83,7 @@ List<OciLayer> ociLayers(Archive image) {
     },
   );
   final manifest =
-      json.decode(utf8.decode(blob(selected['digest'] as String)))
+      json.decode(utf8.decode(blob(selected['digest'] as String).content))
           as Map<String, dynamic>;
 
   // Required, not defaulted to none. A manifest with no `layers` is either
@@ -98,7 +102,7 @@ List<OciLayer> ociLayers(Archive image) {
   return [
     for (final layer in layers)
       (
-        bytes: blob((layer as Map)['digest'] as String),
+        file: blob((layer as Map)['digest'] as String),
         compression: _layerCompression(layer['mediaType'] as String?),
       ),
   ];
