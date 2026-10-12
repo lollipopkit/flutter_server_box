@@ -167,6 +167,30 @@ extension WsNodeX<T> on WsNode<T> {
     ),
   };
 
+  /// Every leaf after the first of its value gone, its sibling taking its
+  /// space; the tree itself when there are none. A leaf is a pane, and one
+  /// pane cannot be in two places.
+  WsNode<T> withoutRepeats() {
+    final seen = <T>{};
+    WsNode<T>? walk(WsNode<T> n) {
+      switch (n) {
+        case WsLeaf(:final value):
+          return seen.add(value) ? n : null;
+        case final WsSplit<T> s:
+          final a = walk(s.a);
+          final b = walk(s.b);
+          if (a == null) return b;
+          if (b == null) return a;
+          return identical(a, s.a) && identical(b, s.b)
+              ? s
+              : s.copyWith(a: a, b: b);
+      }
+    }
+
+    // The first leaf always survives, so the walk never comes back empty.
+    return walk(this)!;
+  }
+
   /// [target] gone, its sibling taking the space they shared. Null when
   /// [target] was all there was.
   WsNode<T>? removeLeaf(T target) {

@@ -419,13 +419,15 @@ final class Workspace {
     final rawPanes = json['panes'];
     if (rawPanes is List) {
       for (final p in rawPanes.map((e) => WsPane.fromJson(e, keep))) {
-        if (p != null) panes[p.id] = p;
+        // The first of two records of one pane: the second cannot be put
+        // anywhere the first is not already.
+        if (p != null) panes.putIfAbsent(p.id, () => p);
       }
     }
     var root = WsNode.fromJson<String>(
       json['root'],
       (raw) => raw is String ? raw : null,
-    );
+    )?.withoutRepeats();
     // Leaves without a pane — one whose every tab was dropped — and panes
     // without a leaf are both let go of, so the two always describe the same
     // set.

@@ -52,12 +52,33 @@ class Workspaces extends _$Workspaces {
 
   @override
   WorkspacesState build() {
+    // Every way a tab leaves — closed, its pane or workspace closed, its
+    // server deleted, an undo replacing the workspace — goes through the
+    // state, so this is the one place a shell still waiting for its tab is
+    // let go of. Its tab was never built, so nothing else holds it.
+    listenSelf((_, next) => _dropOrphans(next));
     final all = _restore();
     final at = Stores.history.workspaceIndex.fetch();
     return WorkspacesState(
       all: all,
       index: at >= 0 && at < all.length ? at : 0,
     );
+  }
+
+  /// Closes the handed-over shells whose tab is in no workspace any more.
+  void _dropOrphans(WorkspacesState next) {
+    if (_handoff.isEmpty) return;
+    final alive = {
+      for (final ws in next.all)
+        for (final t in ws.tabs) t.id,
+    };
+    final gone = [
+      for (final id in _handoff.keys)
+        if (!alive.contains(id)) id,
+    ];
+    for (final id in gone) {
+      _handoff.remove(id)?.close();
+    }
   }
 
   /// What was saved, minus tabs on servers that are gone. Read entry by entry
@@ -68,12 +89,15 @@ class Workspaces extends _$Workspaces {
     if (raw.isNotEmpty) {
       try {
         final servers = {for (final s in Stores.server.fetch()) s.id};
+        // A tab's id keys its page across every workspace, so one written
+        // twice — by hand, by a merge — keeps its first place only.
+        final tabIds = <String>{};
         final list = jsonDecode(raw);
         if (list is List) {
           for (final e in list) {
             final ws = Workspace.fromJson(
               e,
-              keep: (t) => servers.contains(t.serverId),
+              keep: (t) => servers.contains(t.serverId) && tabIds.add(t.id),
             );
             if (ws != null) out.add(ws);
           }
@@ -146,7 +170,7 @@ class Workspaces extends _$Workspaces {
   /// Closes the workspace at [index], and every tab in it. The last one
   /// stays: there would be nothing for the tab to show.
   void close(int index) {
-    if (state.all.length < 2) return;
+    if (state.all.length < 2 || index < 0 || index >= state.all.length) return;
     final all = [...state.all]..removeAt(index);
     var at = state.index;
     if (index < at) at -= 1;
