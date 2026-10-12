@@ -21,6 +21,7 @@ import 'package:server_box/data/provider/workspace.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/view/page/workspace/tab_host.dart';
 import 'package:server_box/view/page/workspace/view_meta.dart';
+import 'package:server_box/view/widget/edge_fade_scroll.dart';
 
 part 'area.dart';
 part 'pane.dart';

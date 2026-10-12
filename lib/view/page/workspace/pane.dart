@@ -16,6 +16,7 @@ class _Pane extends ConsumerWidget {
     required this.width,
     required this.mode,
     required this.phone,
+    required this.tiled,
   });
 
   final _WorkspaceTabState host;
@@ -30,6 +31,10 @@ class _Pane extends ConsumerWidget {
   final double width;
   final _WsMode mode;
   final bool phone;
+
+  /// One of several on screen, drawn as a tile: a rounded edge of its own,
+  /// coloured where the keys go.
+  final bool tiled;
 
   bool get _focused => ws.focusId == pane.id;
 
@@ -70,9 +75,9 @@ class _Pane extends ConsumerWidget {
         // A view that takes no keys itself leaves them with the workspace.
         if (active.view != WorkspaceView.term) host._keys.requestFocus();
       },
-      child: ColoredBox(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Column(
+      child: _frame(
+        context,
+        Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ValueListenableBuilder(
@@ -110,6 +115,37 @@ class _Pane extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// [child] inside the pane's edge: a tile's when [tiled], nothing when it
+  /// fills the area alone.
+  ///
+  /// The edge is drawn over the page rather than around it, so a terminal's
+  /// own background does not cover it.
+  Widget _frame(BuildContext context, Widget child) {
+    final theme = Theme.of(context);
+    final bg = theme.scaffoldBackgroundColor;
+    if (!tiled) return ColoredBox(color: bg, child: child);
+    final radius = switch (theme.cardTheme.shape) {
+      RoundedRectangleBorder(:final BorderRadius borderRadius) => borderRadius,
+      _ => BorderRadius.circular(12),
+    };
+    return AnimatedContainer(
+      duration: context.motion(Durations.short3),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(color: bg, borderRadius: radius),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: radius,
+        border: Border.all(
+          // Softened: the edge says where the keys go, and at full strength
+          // it was the loudest thing in the window.
+          color: _focused
+              ? theme.colorScheme.primary.withValues(alpha: 0.6)
+              : theme.colorScheme.outlineVariant,
+        ),
+      ),
+      child: child,
     );
   }
 
@@ -235,19 +271,16 @@ class _SyncBar extends StatelessWidget {
   }
 }
 
-/// What marks the focused pane's selected tab: the theme's segmented
-/// marker, the one every other "which of these is on screen" control in the
-/// app is drawn with. An unfocused pane's is the same marker, faded, so two
-/// panes side by side say which one keys go to without a second colour.
+/// What marks a pane's selected tab: the theme's segmented marker, the one
+/// every other "which of these is on screen" control in the app is drawn
+/// with. Which pane has the keys is the tile's edge to say, not this.
 ({Color fill, Color text, Color quiet, BorderRadius radius}) _tabStyle(
-  BuildContext context, {
-  required bool focus,
-}) {
+  BuildContext context,
+) {
   final scheme = Theme.of(context).colorScheme;
   final style = ComponentStyles.of(context).segmented;
-  final fill = style.selectedColor ?? scheme.secondaryContainer;
   return (
-    fill: focus ? fill : fill.withValues(alpha: fill.a * 0.45),
+    fill: style.selectedColor ?? scheme.secondaryContainer,
     text: style.selectedTextColor ?? scheme.onSecondaryContainer,
     quiet: style.textColor ?? scheme.onSurfaceVariant,
     // [SessionSwitcherLabel]'s ink, so a pane's strip and a narrow pane's
@@ -438,12 +471,7 @@ class _BarHead extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            // Quieter while another pane has the keys, as the strip's marker
-            // is.
-            child: AnimatedOpacity(
-              opacity: pane._focused ? 1 : 0.6,
-              duration: context.motion(Durations.short3),
-              child: SessionSwitcherLabel(
+            child: SessionSwitcherLabel(
               name: wsTabTitle(active, servers[active.serverId]),
               position: p.activeIndex + 1,
               total: p.tabs.length,
@@ -452,7 +480,6 @@ class _BarHead extends StatelessWidget {
                 pane.host._ws.focus(p.id);
                 pane.host._showTabs(p.id);
               },
-            ),
             ),
           ),
           ..._paneButtons(
@@ -557,7 +584,12 @@ class _TabStrip extends StatelessWidget {
                 ? null
                 : Border(right: BorderSide(color: scheme.primary, width: 2)),
           ),
-          child: ListView(
+          // Faded where tabs run off an end, as the settings levels are: a
+          // pill cut off square reads as the last one.
+          child: EdgeFadeScroll(
+            fade: 24,
+            builder: (context, controller) => ListView(
+            controller: controller,
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
             children: [
@@ -569,6 +601,7 @@ class _TabStrip extends StatelessWidget {
                   spi: servers[t.serverId],
                 ),
             ],
+          ),
           ),
         );
       },
@@ -595,13 +628,40 @@ class _StripTab extends StatefulWidget {
 class _StripTabState extends State<_StripTab> {
   var _hover = false;
 
+  bool get _on => widget.pane.pane.activeId == widget.tab.id;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_on) _reveal();
+  }
+
+  @override
+  void didUpdateWidget(_StripTab old) {
+    super.didUpdateWidget(old);
+    if (_on && old.pane.pane.activeId != widget.tab.id) _reveal();
+  }
+
+  /// Scrolled into the strip when it becomes the selected one — by a key, a
+  /// sheet, a tab opened at the end — rather than left selected out of sight.
+  void _reveal() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+    // Either end, whichever it is past; neither moves it when it is in view.
+    for (final policy in const [
+      ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+    ]) {
+      Scrollable.ensureVisible(context, alignmentPolicy: policy);
+    }
+  });
+
   @override
   Widget build(BuildContext context) {
     final pane = widget.pane;
     final tab = widget.tab;
     final on = pane.pane.activeId == tab.id;
     final scheme = Theme.of(context).colorScheme;
-    final style = _tabStyle(context, focus: pane._focused);
+    final style = _tabStyle(context);
     final fg = on ? style.text : style.quiet;
     final kb = pane.host.ref.read(keybindingsProvider);
     final sync = pane.ws.sync && tab.view == WorkspaceView.term;

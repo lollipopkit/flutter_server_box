@@ -6,6 +6,9 @@ part of 'tab.dart';
 /// hidden ones and a maximised pane's neighbours are offstage — because a
 /// pane's tabs are pages with state, and a terminal let go of is a terminal
 /// that has to connect again.
+/// The room around and between panes drawn as tiles.
+const _kPaneGap = 5.0;
+
 class _WsArea extends ConsumerWidget {
   const _WsArea({
     super.key,
@@ -28,14 +31,15 @@ class _WsArea extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final root = ws.root;
     if (root == null) return _buildEmpty();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Hairline.color(context))),
-      ),
-      child: LayoutBuilder(
+    return LayoutBuilder(
         builder: (context, c) {
-          final area = Offset.zero & c.biggest;
-          final laid = _layout(root, area);
+          final full = Offset.zero & c.biggest;
+          // Several panes are tiles with a gap around each, so where one ends
+          // is plain however alike their pages are; one alone fills the area,
+          // as any other tab's page does.
+          var laid = _layout(root, full.deflate(_kPaneGap), gap: _kPaneGap);
+          final tiled = laid.panes.length > 1;
+          if (!tiled) laid = _layout(root, full);
           if (current) host._laidOut = laid.panes;
           final shown = {for (final p in laid.panes) p.id: p.rect};
           final homeOn =
@@ -51,6 +55,7 @@ class _WsArea extends ConsumerWidget {
                     resizing: resizing,
                     visible: current && homeOn,
                     reduceMotion: context.reduceMotion,
+                    tiled: tiled,
                   ),
                 for (final seam in laid.seams)
                   _Seam(host: host, seam: seam, narrow: laid.narrow),
@@ -58,7 +63,6 @@ class _WsArea extends ConsumerWidget {
             ),
           );
         },
-      ),
     );
   }
 
@@ -88,16 +92,17 @@ class _WsArea extends ConsumerWidget {
   /// tree: dragging one sets [Workspace.narrowRatio].
   ({List<WsPaneRect> panes, List<WsSeam> seams, bool narrow}) _layout(
     WsNode<String> root,
-    Rect area,
-  ) {
+    Rect area, {
+    double gap = 1,
+  }) {
     String id(String leaf) => leaf;
     if (!mode.narrow && ws.maxId != null && ws.panes.containsKey(ws.maxId)) {
-      final laid = WsLeaf(ws.maxId!).layout(area, idOf: id);
+      final laid = WsLeaf(ws.maxId!).layout(area, idOf: id, gap: gap);
       return (panes: laid.panes, seams: laid.seams, narrow: false);
     }
     final pair = ws.narrowPair();
     if (!mode.narrow || pair.length < 2) {
-      final laid = root.layout(area, idOf: id);
+      final laid = root.layout(area, idOf: id, gap: gap);
       return (panes: laid.panes, seams: laid.seams, narrow: false);
     }
     // A narrow window shows two at most: the focused pane and the one before
@@ -107,7 +112,7 @@ class _WsArea extends ConsumerWidget {
       ws.narrowRatio,
       WsLeaf(pair[0]),
       WsLeaf(pair[1]),
-    ).layout(area, idOf: id);
+    ).layout(area, idOf: id, gap: gap);
     return (panes: laid.panes, seams: laid.seams, narrow: true);
   }
 
@@ -117,6 +122,7 @@ class _WsArea extends ConsumerWidget {
     required bool resizing,
     required bool visible,
     required bool reduceMotion,
+    required bool tiled,
   }) {
     final pane = ws.panes[id]!;
     final child = _Pane(
@@ -129,6 +135,7 @@ class _WsArea extends ConsumerWidget {
       width: rect?.width ?? 0,
       mode: mode,
       phone: phone,
+      tiled: tiled,
     );
     if (rect == null) {
       // Not painted, but kept — see the class — and laid out at the size it
@@ -184,13 +191,13 @@ class _SeamState extends State<_Seam> {
   Widget build(BuildContext context) {
     final seam = widget.seam;
     final row = seam.axis == WsAxis.row;
-    final half = seam.rect.shortestSide / 2;
     return Positioned.fromRect(
       rect: seam.rect,
       child: ValueListenableBuilder(
         valueListenable: widget.host._resizing,
         builder: (context, resizing, _) {
           final active = _hover || resizing;
+          final scheme = Theme.of(context).colorScheme;
           return MouseRegion(
             cursor: row
                 ? SystemMouseCursors.resizeColumn
@@ -219,22 +226,21 @@ class _SeamState extends State<_Seam> {
               child: Tooltip(
                 message: l10n.workspaceSeamTip,
                 waitDuration: const Duration(seconds: 1),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      left: row ? half - 0.5 : 0,
-                      right: row ? null : 0,
-                      top: row ? 0 : half - 0.5,
-                      bottom: row ? 0 : null,
-                      width: row ? 1 : null,
-                      height: row ? null : 1,
-                      child: ColoredBox(
-                        color: active
-                            ? Theme.of(context).colorScheme.outline
-                            : Hairline.color(context),
+                // The gap between two tiles is the seam; what is drawn in it
+                // is the handle, and only while it is the thing being used.
+                child: Center(
+                  child: AnimatedOpacity(
+                    opacity: active ? 1 : 0,
+                    duration: context.motion(Durations.short3),
+                    child: Container(
+                      width: row ? 4 : 36,
+                      height: row ? 36 : 4,
+                      decoration: BoxDecoration(
+                        color: resizing ? scheme.primary : scheme.outline,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

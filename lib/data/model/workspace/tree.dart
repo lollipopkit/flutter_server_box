@@ -237,12 +237,14 @@ extension WsNodeX<T> on WsNode<T> {
 
   /// Every pane's rectangle in [area], and every seam between them.
   ///
-  /// One logical pixel goes to each seam's line, so neighbouring panes never
-  /// overlap and the hairline between them is drawn in a gap of its own.
+  /// [gap] logical pixels go to each seam, so neighbouring panes never
+  /// overlap: one for a hairline drawn between them, more for panes drawn as
+  /// tiles of their own.
   ({List<WsPaneRect> panes, List<WsSeam> seams}) layout(
     Rect area, {
     required String Function(T leaf) idOf,
     double seamHitWidth = 13,
+    double gap = 1,
   }) {
     final panes = <WsPaneRect>[];
     final seams = <WsSeam>[];
@@ -254,9 +256,9 @@ extension WsNodeX<T> on WsNode<T> {
           final row = axis == WsAxis.row;
           final extent = row ? r.width : r.height;
           // Rounded so a pane edge lands on a pixel and text in it is crisp.
-          final first = ((extent - 1) * ratio).roundToDouble().clamp(
+          final first = ((extent - gap) * ratio).roundToDouble().clamp(
             0.0,
-            (extent - 1).clamp(0.0, double.infinity),
+            (extent - gap).clamp(0.0, double.infinity),
           );
           final half = seamHitWidth / 2;
           // Before the children, so seams come out outermost first.
@@ -265,27 +267,27 @@ extension WsNodeX<T> on WsNode<T> {
             axis: axis,
             rect: row
                 ? Rect.fromLTWH(
-                    r.left + first + 0.5 - half,
+                    r.left + first + gap / 2 - half,
                     r.top,
                     seamHitWidth,
                     r.height,
                   )
                 : Rect.fromLTWH(
                     r.left,
-                    r.top + first + 0.5 - half,
+                    r.top + first + gap / 2 - half,
                     r.width,
                     seamHitWidth,
                   ),
             extent: extent,
             ratio: ratio,
           ));
-          final rest = (extent - first - 1).clamp(0.0, double.infinity);
+          final rest = (extent - first - gap).clamp(0.0, double.infinity);
           if (row) {
             lay(a, Rect.fromLTWH(r.left, r.top, first, r.height), [
               ...path,
               false,
             ]);
-            lay(b, Rect.fromLTWH(r.left + first + 1, r.top, rest, r.height), [
+            lay(b, Rect.fromLTWH(r.left + first + gap, r.top, rest, r.height), [
               ...path,
               true,
             ]);
@@ -294,7 +296,7 @@ extension WsNodeX<T> on WsNode<T> {
               ...path,
               false,
             ]);
-            lay(b, Rect.fromLTWH(r.left, r.top + first + 1, r.width, rest), [
+            lay(b, Rect.fromLTWH(r.left, r.top + first + gap, r.width, rest), [
               ...path,
               true,
             ]);
