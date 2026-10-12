@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Trotzdem ausführen",
   "agentRemoteSudoFor": "Passwort von {user}",
   "agentRemoteSudoWrong": "Falsches Passwort",
-  "agentRemoteSudoRemember": "15 Minuten merken"
+  "agentRemoteSudoRemember": "15 Minuten merken",
+  "agentNewOn": "Neuer Chat: {place}",
+  "agentRemoteNewHint": "Stelle dem Agent auf {server} eine Frage oder gib ihm eine Aufgabe."
 }

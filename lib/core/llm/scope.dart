@@ -10,7 +10,17 @@ import 'package:server_box/data/provider/ai/remote_agent.dart';
 abstract final class AgentScope {
   /// The app's providers, for the tools: they run outside any widget. Set
   /// once, before the first frame — see `main`.
-  static late final ProviderContainer container;
+  static ProviderContainer get container => _container!;
+  static set container(ProviderContainer c) {
+    assert(_container == null, 'set once');
+    _container = c;
+  }
+
+  static ProviderContainer? _container;
+
+  /// [container], or null where the app's providers are not up — a widget
+  /// test that pumps one page.
+  static ProviderContainer? get maybeContainer => _container;
 
   static const _terminalPrefix = 'terminal:';
 

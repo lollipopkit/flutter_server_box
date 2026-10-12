@@ -783,10 +783,27 @@ class MonitorHttpClient {
     ),
   );
 
-  /// Starts a task; [mode] null is the admin's default.
-  Future<MonitorAgentFlow> agentStart(String prompt, {String? mode}) => _access(
+  /// Starts a task; [mode] null is the admin's default, [model] and
+  /// [thinkingLevel] null the machine's. [files] are upload ids
+  /// ([agentUpload]).
+  Future<MonitorAgentFlow> agentStart(
+    String prompt, {
+    String? mode,
+    List<String> files = const [],
+    MonitorAgentModel? model,
+    String? thinkingLevel,
+  }) => _access(
     () async => MonitorAgentFlow.fromJson(
-      await _object('/api/v1/agent/flows', post: {'prompt': prompt, 'mode': ?mode}),
+      await _object(
+        '/api/v1/agent/flows',
+        post: {
+          'prompt': prompt,
+          'mode': ?mode,
+          if (files.isNotEmpty) 'files': files,
+          'model': ?model?.toJson(),
+          'thinkingLevel': ?thinkingLevel,
+        },
+      ),
     ),
   );
 

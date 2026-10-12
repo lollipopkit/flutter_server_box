@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Tetap jalankan",
   "agentRemoteSudoFor": "Kata sandi {user}",
   "agentRemoteSudoWrong": "Kata sandi salah",
-  "agentRemoteSudoRemember": "Ingat selama 15 menit"
+  "agentRemoteSudoRemember": "Ingat selama 15 menit",
+  "agentNewOn": "Percakapan baru: {place}",
+  "agentRemoteNewHint": "Ajukan pertanyaan kepada agent di {server}, atau berikan tugas."
 }

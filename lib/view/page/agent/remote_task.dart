@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart'
-    show AttachButton, ComposerBox, llmL10n, ComposerButton, ComposerModelChip, ComposerThinkingChip, LlmEntry, StreamingReply, StreamingView, ThreadBlock, ThreadBlockView, ReplyBlock, SummaryBlock, UserBlock, threadBlocks;
+    show LlmEntry, StreamingReply, StreamingView, ThreadBlock, ThreadBlockView, ReplyBlock, SummaryBlock, UserBlock, threadBlocks;
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
@@ -11,6 +10,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_agent.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/page/agent/remote_composer.dart';
 
 /// A task of a server's monitor agent, opened in the Agent's pane: its
 /// conversation as the agent keeps it, followed live, what it waits on, and a
@@ -38,19 +38,6 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
   List<String> _output = const [];
   String? _error;
   bool _loading = true;
-  bool _sending = false;
-  final _reply = TextEditingController();
-
-  /// What the agent lets a task run with; null until read, or when it
-  /// cannot say (an older agent).
-  MonitorAgentChoices? _choices;
-
-  /// Picked for the next message: files (paths), a model, a thinking level.
-  /// Sent with it, after which the task holds them.
-  List<String> _files = const [];
-  MonitorAgentModel? _model;
-  String? _thinking;
-
   RemoteTaskRef get _task => widget.task;
 
   @override
@@ -59,14 +46,12 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
     RemoteAgentTasks.follow();
     _events = RemoteAgentTasks.events(_task.serverId).listen(_onEvent);
     unawaited(_load());
-    unawaited(_loadChoices());
   }
 
   @override
   void dispose() {
     unawaited(_events?.cancel());
     RemoteAgentTasks.unfollow();
-    _reply.dispose();
     super.dispose();
   }
 
@@ -91,46 +76,6 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
         _loading = false;
       });
     }
-  }
-
-  Future<void> _loadChoices() async {
-    try {
-      final c = await RemoteAgentTasks.client(_task.serverId)?.agentChoices();
-      if (mounted && c != null) setState(() => _choices = c);
-    } catch (e) {
-      Loggers.app.warning('Agent choices of ${_task.serverId}', e);
-    }
-  }
-
-  /// The model the next message goes to: picked, the task's, the machine's.
-  MonitorAgentModel? get _effectiveModel => _choices?.find(_model ?? _flow?.model ?? _choices?.model);
-
-  String get _effectiveThinking => _thinking ?? _flow?.thinkingLevel ?? _choices?.thinkingLevel ?? 'off';
-
-  Future<void> _pickModel() async {
-    final choices = _choices;
-    if (choices == null || choices.models.isEmpty) return;
-    final current = _effectiveModel;
-    final picked = await context.showRoundDialog<MonitorAgentModel>(
-      title: llmL10n.model,
-      childBuilder: (dialogContext) => SizedBox(
-        width: 360,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final m in choices.models)
-              ListTile(
-                dense: true,
-                title: Text(m.label),
-                subtitle: Text(m.provider),
-                trailing: m.same(current) ? const Icon(Icons.check, size: 18) : null,
-                onTap: () => dialogContext.pop(m),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (picked != null && mounted) setState(() => _model = picked);
   }
 
   void _onEvent(Map<String, dynamic> e) {
@@ -158,8 +103,6 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
 
   static const _outputLines = 40;
 
-  /// As many files as one task takes at once (the agent's `MAX_PER_TASK`).
-  static const _maxFiles = 10;
 
   static Object? _roleOf(Object? message) => message is Map ? message['role'] : null;
 
@@ -204,34 +147,6 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
     } catch (e) {
       if (mounted) Toast.show(_say(e));
     }
-  }
-
-  Future<void> _send() async {
-    final text = _reply.text.trim();
-    final client = RemoteAgentTasks.client(_task.serverId);
-    if ((text.isEmpty && _files.isEmpty) || client == null || _sending) return;
-    setState(() => _sending = true);
-    await _guard(() async {
-      final ids = [for (final f in _files) await client.agentUpload(File(f))];
-      final model = _model;
-      final flow = await client.agentReply(
-        _task.flowId,
-        text,
-        files: ids,
-        model: model != null && !model.same(_flow?.model) ? model : null,
-        thinkingLevel: _thinking,
-      );
-      _reply.clear();
-      if (mounted) {
-        setState(() {
-          _flow = flow;
-          _files = const [];
-          _model = null;
-          _thinking = null;
-        });
-      }
-    });
-    if (mounted) setState(() => _sending = false);
   }
 
   Future<void> _answer(Map<String, Object?> answer) async {
@@ -330,11 +245,11 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
   }
 
   Widget _buildReply(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final flow = _flow;
     // A sudo password is answered in its card, never as a reply.
-    final blocked = _pending?.kind == 'sudo' || _flow == null;
-    // Running, and not waiting on the person: the button stops it.
-    final stops = (_flow?.status.active ?? false) && _pending == null && _reply.text.isEmpty && _files.isEmpty;
+    final blocked = _pending?.kind == 'sudo' || flow == null;
+    // Running, and not waiting on the person: an empty box stops it.
+    final running = (flow?.status.active ?? false) && _pending == null;
     // Inset and as wide as the messages above it, as a chat's composer is.
     return LayoutBuilder(
       builder: (context, cons) {
@@ -347,51 +262,15 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
               heightFactor: 1,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
-                child: ListenableBuilder(
-                  listenable: _reply,
-                  builder: (context, _) => ComposerBox(
-                    controller: _reply,
-                    enabled: !blocked,
-                    hint: context.l10n.agentRemoteReplyHint(_server),
-                    onSubmit: () => unawaited(_send()),
-                    top: _files.isEmpty
-                        ? null
-                        : Align(
-                            alignment: Alignment.centerLeft,
-                            child: Wrap(
-                              spacing: 5,
-                              children: [
-                                for (final f in _files)
-                                  InputChip(
-                                    label: Text(f.split(RegExp(r'[/\\]')).last, style: UIs.text12),
-                                    onDeleted: () => setState(() => _files = [..._files]..remove(f)),
-                                  ),
-                              ],
-                            ),
-                          ),
-                    actions: [
-                      if (!blocked)
-                        AttachButton(
-                          onPicked: (paths) => setState(() => _files = [..._files, ...paths].take(_maxFiles).toList()),
-                        ),
-                      if (_effectiveModel case final m?)
-                        Flexible(child: ComposerModelChip(name: m.label, onTap: blocked ? null : _pickModel)),
-                      if (_effectiveModel?.reasoning ?? false)
-                        ComposerThinkingChip(
-                          level: _effectiveThinking,
-                          levels: _choices?.thinkingLevels ?? const [],
-                          onPick: (l) => setState(() => _thinking = l),
-                        ),
-                    ],
-                    button: _sending
-                        ? const SizedBox(width: 32, height: 32, child: SizedLoading(20, padding: 6, builder: SizedLoading.circularBuilder))
-                        : stops
-                        ? ComposerButton.stop(
-                            scheme,
-                            onTap: () => _guard(() async => RemoteAgentTasks.client(_task.serverId)?.agentStop(_task.flowId)),
-                          )
-                        : ComposerButton.send(scheme, onTap: blocked ? null : () => unawaited(_send())),
-                  ),
+                child: RemoteComposer(
+                  serverId: _task.serverId,
+                  flow: flow,
+                  blocked: blocked,
+                  hint: context.l10n.agentRemoteReplyHint(_server),
+                  onStop: running
+                      ? () => _guard(() async => RemoteAgentTasks.client(_task.serverId)?.agentStop(_task.flowId))
+                      : null,
+                  onSend: _reply,
                 ),
               ),
             ),
@@ -399,6 +278,18 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
         );
       },
     );
+  }
+
+  Future<bool> _reply(RemoteMessage m) async {
+    final client = RemoteAgentTasks.client(_task.serverId);
+    if (client == null) return false;
+    var sent = false;
+    await _guard(() async {
+      final flow = await client.agentReply(_task.flowId, m.text, files: m.files, model: m.model, thinkingLevel: m.thinkingLevel);
+      sent = true;
+      if (mounted) setState(() => _flow = flow);
+    });
+    return sent;
   }
 }
 

@@ -6723,4 +6723,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get agentRemoteSudoRemember => 'Запомнить на 15 минут';
+
+  @override
+  String agentNewOn(String place) {
+    return 'Новый диалог: $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Задайте вопрос агенту на $server или поручите ему задачу.';
+  }
 }

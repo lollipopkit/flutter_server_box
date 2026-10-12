@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Ejecutar de todos modos",
   "agentRemoteSudoFor": "Contraseña de {user}",
   "agentRemoteSudoWrong": "Contraseña incorrecta",
-  "agentRemoteSudoRemember": "Recordar durante 15 minutos"
+  "agentRemoteSudoRemember": "Recordar durante 15 minutos",
+  "agentNewOn": "Nuevo chat: {place}",
+  "agentRemoteNewHint": "Pregúntale al agente de {server} o asígnale una tarea."
 }

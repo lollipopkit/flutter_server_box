@@ -6289,6 +6289,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentRemoteSudoRemember => '记住 15 分钟';
+
+  @override
+  String agentNewOn(String place) {
+    return '新建于 $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return '向 $server 上的 agent 提问，或交给它一个任务。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -12580,4 +12590,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentRemoteSudoRemember => '記住 15 分鐘';
+
+  @override
+  String agentNewOn(String place) {
+    return '在 $place 開始新對話';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return '向 $server 上的 agent 提問，或交給它一項任務。';
+  }
 }

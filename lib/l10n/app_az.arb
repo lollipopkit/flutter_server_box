@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Yenə də icra et",
   "agentRemoteSudoFor": "{user} istifadəçisinin parolu",
   "agentRemoteSudoWrong": "Yanlış parol",
-  "agentRemoteSudoRemember": "15 dəqiqə yadda saxla"
+  "agentRemoteSudoRemember": "15 dəqiqə yadda saxla",
+  "agentNewOn": "Yeni söhbət: {place}",
+  "agentRemoteNewHint": "Agentə {server} serverində sual verin və ya ona tapşırıq verin."
 }

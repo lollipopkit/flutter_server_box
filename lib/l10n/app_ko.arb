@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "그래도 실행",
   "agentRemoteSudoFor": "{user}의 비밀번호",
   "agentRemoteSudoWrong": "비밀번호가 틀렸습니다",
-  "agentRemoteSudoRemember": "15분 동안 기억"
+  "agentRemoteSudoRemember": "15분 동안 기억",
+  "agentNewOn": "{place}에서 새 대화 시작",
+  "agentRemoteNewHint": "{server}의 agent에게 질문하거나 작업을 맡기세요."
 }

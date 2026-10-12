@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "仍然运行",
   "agentRemoteSudoFor": "{user} 的密码",
   "agentRemoteSudoWrong": "密码错误",
-  "agentRemoteSudoRemember": "记住 15 分钟"
+  "agentRemoteSudoRemember": "记住 15 分钟",
+  "agentNewOn": "新建于 {place}",
+  "agentRemoteNewHint": "向 {server} 上的 agent 提问，或交给它一个任务。"
 }

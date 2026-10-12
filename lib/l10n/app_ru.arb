@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Всё равно запустить",
   "agentRemoteSudoFor": "Пароль пользователя {user}",
   "agentRemoteSudoWrong": "Неверный пароль",
-  "agentRemoteSudoRemember": "Запомнить на 15 минут"
+  "agentRemoteSudoRemember": "Запомнить на 15 минут",
+  "agentNewOn": "Новый диалог: {place}",
+  "agentRemoteNewHint": "Задайте вопрос агенту на {server} или поручите ему задачу."
 }

@@ -30,6 +30,10 @@ abstract final class RemoteAgentTasks {
   /// the other.
   static final selected = ValueNotifier<RemoteTaskRef?>(null);
 
+  /// Where a new conversation is made: null for this device, else the id of
+  /// a server whose agent runs it as a task. Kept while the app runs.
+  static final newOn = ValueNotifier<String?>(null);
+
   /// Per server id, why its list could not be read, for the history to say.
   static final errors = ValueNotifier<Map<String, String>>(const {});
 
@@ -54,7 +58,8 @@ abstract final class RemoteAgentTasks {
   /// Servers whose agent offers Agent mode to this account: their id and
   /// name, in the order the server list has them.
   static List<({String id, String name})> servers() {
-    final container = AgentScope.container;
+    final container = AgentScope.maybeContainer;
+    if (container == null) return const [];
     final all = container.read(serversProvider);
     return [
       for (final id in all.serverOrder)
@@ -70,7 +75,7 @@ abstract final class RemoteAgentTasks {
 
   /// The client for server [serverId]'s agent, or null when it has none.
   static MonitorHttpClient? client(String serverId) {
-    final cred = AgentScope.container.read(serversProvider).servers[serverId]?.monitorOn;
+    final cred = AgentScope.maybeContainer?.read(serversProvider).servers[serverId]?.monitorOn;
     final link = _links[serverId];
     if (cred == null) {
       _drop(serverId);
@@ -92,7 +97,8 @@ abstract final class RemoteAgentTasks {
   /// does while it is on screen.
   static void follow() {
     if (_followers++ > 0) return;
-    final container = AgentScope.container;
+    final container = AgentScope.maybeContainer;
+    if (container == null) return;
     _serversSub = container.listen(serversProvider, (_, _) => _sync(), fireImmediately: false);
     _sync();
   }
@@ -116,7 +122,8 @@ abstract final class RemoteAgentTasks {
 
   /// Follows the servers that offer Agent mode now, and forgets the rest.
   static void _sync() {
-    final container = AgentScope.container;
+    final container = AgentScope.maybeContainer;
+    if (container == null) return;
     // A server's capabilities arrive with its first poll, after it is listed.
     for (final id in container.read(serversProvider).servers.keys) {
       _serverSubs[id] ??= container.listen(

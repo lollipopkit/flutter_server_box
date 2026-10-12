@@ -6671,4 +6671,14 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get agentRemoteSudoRemember => '15 dəqiqə yadda saxla';
+
+  @override
+  String agentNewOn(String place) {
+    return 'Yeni söhbət: $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Agentə $server serverində sual verin və ya ona tapşırıq verin.';
+  }
 }

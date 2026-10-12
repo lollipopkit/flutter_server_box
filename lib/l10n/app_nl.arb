@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Toch uitvoeren",
   "agentRemoteSudoFor": "Wachtwoord van {user}",
   "agentRemoteSudoWrong": "Onjuist wachtwoord",
-  "agentRemoteSudoRemember": "15 minuten onthouden"
+  "agentRemoteSudoRemember": "15 minuten onthouden",
+  "agentNewOn": "Nieuw gesprek: {place}",
+  "agentRemoteNewHint": "Stel de agent op {server} een vraag of geef hem een taak."
 }

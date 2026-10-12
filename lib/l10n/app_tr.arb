@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "Yine de çalıştır",
   "agentRemoteSudoFor": "{user} kullanıcısının parolası",
   "agentRemoteSudoWrong": "Yanlış parola",
-  "agentRemoteSudoRemember": "15 dakika boyunca hatırla"
+  "agentRemoteSudoRemember": "15 dakika boyunca hatırla",
+  "agentNewOn": "Yeni sohbet: {place}",
+  "agentRemoteNewHint": "{server} sunucusundaki agenta soru sorun veya ona bir görev verin."
 }

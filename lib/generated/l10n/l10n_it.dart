@@ -6742,4 +6742,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get agentRemoteSudoRemember => 'Ricorda per 15 minuti';
+
+  @override
+  String agentNewOn(String place) {
+    return 'Nuova conversazione: $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Fai una domanda all’agent su $server o assegnagli un’attività.';
+  }
 }

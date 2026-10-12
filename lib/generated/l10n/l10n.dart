@@ -11396,6 +11396,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remember for 15 minutes'**
   String get agentRemoteSudoRemember;
+
+  /// Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Label of the button that picks it; the place is 'This device' or a server's name.
+  ///
+  /// In en, this message translates to:
+  /// **'New in {place}'**
+  String agentNewOn(String place);
+
+  /// Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Hint of the empty page and the field when a server is picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the agent on {server}, or give it a task.'**
+  String agentRemoteNewHint(String server);
 }
 
 class _AppLocalizationsDelegate

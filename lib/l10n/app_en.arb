@@ -8587,5 +8587,23 @@
   "agentRemoteSudoRemember": "Remember for 15 minutes",
   "@agentRemoteSudoRemember": {
     "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the server keeps the sudo password in memory for 15 minutes."
+  },
+  "agentNewOn": "New in {place}",
+  "@agentNewOn": {
+    "description": "Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Label of the button that picks it; the place is 'This device' or a server's name.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteNewHint": "Ask the agent on {server}, or give it a task.",
+  "@agentRemoteNewHint": {
+    "description": "Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Hint of the empty page and the field when a server is picked.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
   }
 }

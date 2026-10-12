@@ -1876,5 +1876,7 @@
   "agentRemoteRunAnyway": "それでも実行",
   "agentRemoteSudoFor": "{user} のパスワード",
   "agentRemoteSudoWrong": "パスワードが違います",
-  "agentRemoteSudoRemember": "15 分間記憶する"
+  "agentRemoteSudoRemember": "15 分間記憶する",
+  "agentNewOn": "{place}で新しい会話を開始",
+  "agentRemoteNewHint": "{server} の agent に質問するか、タスクを依頼してください。"
 }

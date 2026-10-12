@@ -6393,4 +6393,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentRemoteSudoRemember => '15분 동안 기억';
+
+  @override
+  String agentNewOn(String place) {
+    return '$place에서 새 대화 시작';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return '$server의 agent에게 질문하거나 작업을 맡기세요.';
+  }
 }
