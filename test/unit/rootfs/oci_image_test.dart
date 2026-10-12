@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
@@ -15,13 +16,13 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 /// is pinned by the digest in [LinuxDistro.sha256] instead.
 void main() {
   /// `sha256:<hex>` addresses `blobs/sha256/<hex>`, which is the whole of an
-  /// image layout's mapping from a digest to a file. The hex here is a name,
-  /// not a checksum — nothing in the reader verifies it, and pretending
-  /// otherwise in the fixture would suggest it does.
-  String digestOf(String name) => 'sha256:$name';
+  /// image layout's mapping from a digest to a file — and the hex is the
+  /// blob's own checksum, which the reader holds it to.
+  String hexOf(List<int> bytes) => sha256.convert(bytes).toString();
+  String digestOf(List<int> bytes) => 'sha256:${hexOf(bytes)}';
 
-  ArchiveFile blob(String name, List<int> bytes) =>
-      ArchiveFile.bytes('blobs/sha256/$name', bytes);
+  ArchiveFile blob(List<int> bytes) =>
+      ArchiveFile.bytes('blobs/sha256/${hexOf(bytes)}', bytes);
 
   Archive imageWith({
     required List<({String name, List<int> bytes, String mediaType})> layers,
@@ -35,7 +36,7 @@ void main() {
         for (final layer in layers)
           {
             'mediaType': layer.mediaType,
-            'digest': digestOf(layer.name),
+            'digest': digestOf(layer.bytes),
             'size': layer.bytes.length,
           },
       ],
@@ -48,7 +49,8 @@ void main() {
           'manifests': [
             {
               'mediaType': 'application/vnd.oci.image.manifest.v1+json',
-              'digest': digestOf('manifest'),
+              'digest': digestOf(manifestBytes),
+              'size': manifestBytes.length,
             },
           ],
         });
@@ -56,10 +58,10 @@ void main() {
     final image = Archive()
       ..add(ArchiveFile.string('oci-layout', '{"imageLayoutVersion":"1.0.0"}'))
       ..add(ArchiveFile.string('index.json', index))
-      ..add(blob('manifest', manifestBytes));
+      ..add(blob(manifestBytes));
     for (final layer in layers) {
       if (omitBlobs.contains(layer.name)) continue;
-      image.add(blob(layer.name, layer.bytes));
+      image.add(blob(layer.bytes));
     }
     return image;
   }
@@ -90,19 +92,24 @@ void main() {
       );
 
       final layers = ociLayers(image);
-      expect(layers.map((e) => e.bytes.single), [1, 2, 3]);
+      expect(layers.map((e) => e.file.content.single), [1, 2, 3]);
     });
 
     test('selects the Linux arm64 manifest from a platform index', () {
-      Map<String, Object> manifest(String layer) => {
-        'schemaVersion': 2,
-        'layers': [
-          {
-            'mediaType': 'application/vnd.oci.image.layer.v1.tar',
-            'digest': digestOf(layer),
-          },
-        ],
-      };
+      List<int> manifest(List<int> layer) => utf8.encode(
+        json.encode({
+          'schemaVersion': 2,
+          'layers': [
+            {
+              'mediaType': 'application/vnd.oci.image.layer.v1.tar',
+              'digest': digestOf(layer),
+              'size': layer.length,
+            },
+          ],
+        }),
+      );
+      final amd64 = manifest(const [1]);
+      final arm64 = manifest(const [2]);
       final image = Archive()
         ..add(
           ArchiveFile.string(
@@ -111,25 +118,25 @@ void main() {
               'schemaVersion': 2,
               'manifests': [
                 {
-                  'digest': digestOf('amd64-manifest'),
+                  'digest': digestOf(amd64),
+                  'size': amd64.length,
                   'platform': {'os': 'linux', 'architecture': 'amd64'},
                 },
                 {
-                  'digest': digestOf('arm64-manifest'),
+                  'digest': digestOf(arm64),
+                  'size': arm64.length,
                   'platform': {'os': 'linux', 'architecture': 'arm64'},
                 },
               ],
             }),
           ),
         )
-        ..add(blob('amd64-manifest', utf8.encode(json.encode(manifest('x64')))))
-        ..add(
-          blob('arm64-manifest', utf8.encode(json.encode(manifest('arm64')))),
-        )
-        ..add(blob('x64', const [1]))
-        ..add(blob('arm64', const [2]));
+        ..add(blob(amd64))
+        ..add(blob(arm64))
+        ..add(blob(const [1]))
+        ..add(blob(const [2]));
 
-      expect(ociLayers(image).single.bytes, [2]);
+      expect(ociLayers(image).single.file.content, [2]);
     });
 
     test('reads compression from the declared media type', () {
@@ -244,16 +251,17 @@ void main() {
       // at names further manifests, one per platform, and has no `layers`.
       // Following it as if it were an image is how a build ends up unpacking
       // nothing.
-      final index = json.encode({
+      final index = utf8.encode(json.encode({
         'schemaVersion': 2,
         'manifests': [
           {
             'mediaType': 'application/vnd.oci.image.manifest.v1+json',
-            'digest': digestOf('inner'),
+            'digest': digestOf(const [9]),
+            'size': 1,
             'platform': {'architecture': 'arm64', 'os': 'linux'},
           },
         ],
-      });
+      }));
       final image = Archive()
         ..add(
           ArchiveFile.string(
@@ -263,13 +271,68 @@ void main() {
               'manifests': [
                 {
                   'mediaType': 'application/vnd.oci.image.index.v1+json',
-                  'digest': digestOf('manifest'),
+                  'digest': digestOf(index),
+                  'size': index.length,
                 },
               ],
             }),
           ),
         )
-        ..add(blob('manifest', utf8.encode(index)));
+        ..add(blob(index));
+
+      expect(() => ociLayers(image), throwsStateError);
+    });
+  });
+
+  group('a blob', () {
+    test('that is not what its descriptor says is refused', () {
+      final image = imageWith(
+        layers: [
+          (
+            name: 'l',
+            bytes: const [1],
+            mediaType: 'application/vnd.oci.image.layer.v1.tar',
+          ),
+        ],
+      );
+      // The path its descriptor names, holding something else.
+      image.add(ArchiveFile.bytes('blobs/sha256/${hexOf(const [1])}', [2]));
+
+      expect(() => ociLayerTar(ociLayers(image).single), throwsStateError);
+    });
+
+    test('whose descriptor gives no size is refused', () {
+      final manifest = utf8.encode(json.encode({'schemaVersion': 2}));
+      final image = Archive()
+        ..add(
+          ArchiveFile.string(
+            'index.json',
+            json.encode({
+              'schemaVersion': 2,
+              'manifests': [
+                {'digest': digestOf(manifest)},
+              ],
+            }),
+          ),
+        )
+        ..add(blob(manifest));
+
+      expect(() => ociLayers(image), throwsStateError);
+    });
+
+    test('named by a digest this cannot check is refused', () {
+      final image = imageWith(layers: const [])
+        ..add(
+          ArchiveFile.string(
+            'index.json',
+            json.encode({
+              'schemaVersion': 2,
+              'manifests': [
+                {'digest': 'md5:0123456789abcdef'},
+              ],
+            }),
+          ),
+        );
 
       expect(() => ociLayers(image), throwsStateError);
     });

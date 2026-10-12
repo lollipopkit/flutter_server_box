@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
+import 'package:server_box/core/utils/rootfs_unpack.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
@@ -102,6 +102,95 @@ void main() {
     expect(byName['bin']!.nameOfLinkedFile, 'usr/bin');
   });
 
+  test('a hard link to another hard link reaches the file', () async {
+    TarFile entry(String name, String type, {String? target, String? data}) {
+      final bytes = Uint8List.fromList((data ?? '').codeUnits);
+      return TarFile()
+        ..filename = name
+        ..mode = 0x1a4
+        ..lastModTime = 0
+        ..typeFlag = type
+        ..nameOfLinkedFile = target
+        ..fileSize = bytes.length
+        ..contentBytes = bytes;
+    }
+
+    final out = OutputMemoryStream();
+    // `a` names `b`, which is itself a link, and is written before it.
+    entry('a', TarFile.hardLink, target: 'b').write(out);
+    entry('c', TarFile.normalFile, data: 'file').write(out);
+    entry('b', TarFile.hardLink, target: 'c').write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-chain-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+    await RootfsUnpack.extract(
+      archive,
+      root,
+      source: const RootfsSource(
+        url: 'https://example.test/rootfs.tar.gz',
+        sha256: '',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      ),
+    );
+
+    for (final name in ['a', 'b', 'c']) {
+      expect(File('${root.path}/$name').readAsStringSync(), 'file');
+    }
+  });
+
+  test('a link replaced by a later file is not resolved through', () async {
+    TarFile entry(String name, String type, {String? target, String? data}) {
+      final bytes = Uint8List.fromList((data ?? '').codeUnits);
+      return TarFile()
+        ..filename = name
+        ..mode = 0x1a4
+        ..lastModTime = 0
+        ..typeFlag = type
+        ..nameOfLinkedFile = target
+        ..fileSize = bytes.length
+        ..contentBytes = bytes;
+    }
+
+    final out = OutputMemoryStream();
+    entry('c', TarFile.normalFile, data: 'old').write(out);
+    entry('a', TarFile.hardLink, target: 'b').write(out);
+    entry('b', TarFile.hardLink, target: 'c').write(out);
+    // The last `b` is a file of its own, and it is what `a` names.
+    entry('b', TarFile.normalFile, data: 'new').write(out);
+    out.writeBytes(Uint8List(1024));
+    out.flush();
+
+    final temp = await Directory.systemTemp.createTemp('rootfs-link-replaced-');
+    addTearDown(() => temp.delete(recursive: true));
+    final archive = File('${temp.path}/rootfs.tar.gz');
+    await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
+    final root = Directory('${temp.path}/root')..createSync();
+    await RootfsUnpack.extract(
+      archive,
+      root,
+      source: const RootfsSource(
+        url: 'https://example.test/rootfs.tar.gz',
+        sha256: '',
+        sizeBytes: 1,
+        layout: LinuxRootfsLayout.plain,
+        compression: LinuxRootfsCompression.gzip,
+        followsMirror: false,
+      ),
+    );
+
+    expect(File('${root.path}/b').readAsStringSync(), 'new');
+    expect(File('${root.path}/a').readAsStringSync(), 'new');
+    expect(File('${root.path}/c').readAsStringSync(), 'old');
+  });
+
   test('a hard link to a pending symlink preserves the symlink', () async {
     TarFile entry(String name, String type, {String? target}) => TarFile()
       ..filename = name
@@ -126,7 +215,7 @@ void main() {
     final archive = File('${temp.path}/rootfs.tar.gz');
     await archive.writeAsBytes(GZipEncoder().encodeBytes(out.getBytes()));
     final root = Directory('${temp.path}/root')..createSync();
-    await IosRootfs.extract(
+    await RootfsUnpack.extract(
       archive,
       root,
       source: const RootfsSource(
@@ -143,7 +232,7 @@ void main() {
     expect(await Link('${root.path}/usr/bin/tool').target(), '../bin/tool');
   });
 
-  test('an iOS layer rejects an unsafe hard-link target', () async {
+  test('a layer rejects an unsafe hard-link target', () async {
     final entry = TarFile()
       ..filename = 'usr/bin/tool'
       ..mode = 0x1ed
@@ -163,7 +252,7 @@ void main() {
     final root = Directory('${temp.path}/root')..createSync();
 
     await expectLater(
-      IosRootfs.extract(
+      RootfsUnpack.extract(
         archive,
         root,
         source: const RootfsSource(
@@ -190,12 +279,12 @@ void main() {
     expect(File('${temp.path}/outside/tool').existsSync(), isFalse);
   });
 
-  test('an iOS layer localizes a hard-link target below a symlink', () async {
+  test('a layer localizes a hard-link target below a symlink', () async {
     final temp = await Directory.systemTemp.createTemp('rootfs-link-parent-');
     addTearDown(() => temp.delete(recursive: true));
 
     await expectLater(
-      IosRootfs.extract(
+      RootfsUnpack.extract(
         await archiveFile(temp, [
           linkEntry('usr/link', TarFile.symbolicLink, 'bin'),
           linkEntry('usr/bin/tool', TarFile.hardLink, 'usr/link/tool'),
@@ -217,12 +306,12 @@ void main() {
     );
   });
 
-  test('an iOS layer localizes a non-file hard-link target', () async {
+  test('a layer localizes a non-file hard-link target', () async {
     final temp = await Directory.systemTemp.createTemp('rootfs-missing-link-');
     addTearDown(() => temp.delete(recursive: true));
 
     await expectLater(
-      IosRootfs.extract(
+      RootfsUnpack.extract(
         await archiveFile(temp, [
           linkEntry('usr/bin/tool', TarFile.hardLink, 'usr/bin/missing'),
         ]),
@@ -299,7 +388,7 @@ void main() {
           File(LinuxDistros.bundledAsset).readAsStringSync(),
         ),
       );
-      await IosRootfs.extract(
+      await RootfsUnpack.extract(
         tarball,
         into,
         source: LinuxDistro.ubuntu.preferred.source,
