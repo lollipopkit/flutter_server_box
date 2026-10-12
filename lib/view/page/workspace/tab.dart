@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/gestures.dart' show kMiddleMouseButton;
+import 'package:flutter/gestures.dart'
+    show kDoubleTapSlop, kDoubleTapTimeout, kMiddleMouseButton;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';

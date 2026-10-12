@@ -58,6 +58,28 @@ final class WsTabRuntime {
   /// shown, so a workspace of a dozen tabs does not start a dozen pages.
   bool built = false;
 
+  WsTabHost? _host;
+
+  /// The tab's host, the same instance for as long as nothing it is built
+  /// from changes.
+  ///
+  /// Any change to a workspace — a tab selected, a ratio dragged — rebuilds
+  /// every pane, and a fresh host each time rebuilt every page under it too:
+  /// a status page redrawing its charts because a tab two panes away was
+  /// clicked. An identical widget is one Flutter does not rebuild; what the
+  /// page shows of its server it watches for itself.
+  WsTabHost host(WsTab tab, String paneId) {
+    final h = _host;
+    if (h != null &&
+        h.paneId == paneId &&
+        h.tab.live == tab.live &&
+        h.tab.view == tab.view &&
+        h.tab.serverId == tab.serverId) {
+      return h;
+    }
+    return _host = WsTabHost(tab: tab, paneId: paneId, runtime: this);
+  }
+
   void dispose() {
     focus.dispose();
     visible.dispose();

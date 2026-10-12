@@ -96,11 +96,7 @@ class _Pane extends ConsumerWidget {
                             child: TickerMode(
                               enabled: visible && i == pane.activeIndex,
                               child: runtimes[i].built
-                                  ? WsTabHost(
-                                      tab: pane.tabs[i],
-                                      paneId: pane.id,
-                                      runtime: runtimes[i],
-                                    )
+                                  ? runtimes[i].host(pane.tabs[i], pane.id)
                                   : const SizedBox.shrink(),
                             ),
                           ),
@@ -319,6 +315,43 @@ List<Widget> _paneButtons(
   return (shown: actions.sublist(0, fits), folded: actions.sublist(fits));
 }
 
+/// Two clicks in quick succession, seen without entering the gesture arena.
+///
+/// A `GestureDetector(onDoubleTap:)` round the strip made every tab in it
+/// wait out the double-tap timeout before its own tap was let through: the
+/// arena cannot hand a single tap over while a second one might still come,
+/// so switching tabs lagged by a third of a second. Watching the pointer
+/// instead leaves the tabs' taps alone.
+class _DoubleClick extends StatefulWidget {
+  const _DoubleClick({required this.onDoubleClick, required this.child});
+
+  final VoidCallback onDoubleClick;
+  final Widget child;
+
+  @override
+  State<_DoubleClick> createState() => _DoubleClickState();
+}
+
+class _DoubleClickState extends State<_DoubleClick> {
+  ({Duration at, Offset where})? _last;
+
+  void _onUp(PointerUpEvent e) {
+    final last = _last;
+    if (last != null &&
+        e.timeStamp - last.at <= kDoubleTapTimeout &&
+        (e.position - last.where).distance <= kDoubleTapSlop) {
+      _last = null;
+      widget.onDoubleClick();
+      return;
+    }
+    _last = (at: e.timeStamp, where: e.position);
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      Listener(onPointerUp: _onUp, child: widget.child);
+}
+
 /// A pane's bar where there is room: every tab in a strip.
 class _StripHead extends StatelessWidget {
   const _StripHead({
@@ -339,15 +372,20 @@ class _StripHead extends StatelessWidget {
     // of tabs and the pane's own five.
     final room = pane.width - 300 - SwitcherBar.slot * 5;
     final fold = _foldActions(actions, room);
-    return GestureDetector(
-      onDoubleTap: () => pane.host._toggleMax(p.id),
-      child: Container(
+    return Container(
         height: _kHeadHeight,
         decoration: _headDecoration(context, focus: false),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: _TabStrip(pane: pane, servers: servers)),
+            // The strip only: two quick taps on the buttons beside it are two
+            // new tabs, not a maximize.
+            Expanded(
+              child: _DoubleClick(
+                onDoubleClick: () => pane.host._toggleMax(p.id),
+                child: _TabStrip(pane: pane, servers: servers),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.only(left: 3, right: 5),
               child: Row(
@@ -362,7 +400,6 @@ class _StripHead extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

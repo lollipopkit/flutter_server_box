@@ -107,6 +107,24 @@ void main() {
     expect(find.text('Release'), findsOneWidget);
   });
 
+  testWidgets('a tab is selected on the tap, not a double-tap later', (
+    tester,
+  ) async {
+    final ws = _three().addTab(
+      'p1',
+      const WsTab(id: 'x', view: WorkspaceView.status, serverId: 'srv-1'),
+      newPaneId: 'n',
+    );
+    save([ws.selectTab('p1', 'tp1')]);
+    await pump(tester, const Size(1200, 800));
+
+    await tester.tap(find.text(l10n.status));
+    // One frame, well inside the double-tap timeout: the strip waited that
+    // out before letting a tab's own tap through.
+    await tester.pump();
+    expect(saved().single.panes['p1']!.activeId, 'x');
+  });
+
   testWidgets('a phone shows the focused pane and the one before it', (
     tester,
   ) async {
