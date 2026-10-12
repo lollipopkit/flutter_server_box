@@ -138,11 +138,12 @@ class _Pane extends ConsumerWidget {
       foregroundDecoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(
-          // Softened: the edge says where the keys go, and at full strength
-          // it was the loudest thing in the window.
+          // Light: the edge says where the keys go, and any stronger it is the
+          // loudest thing in the window. The rest are the app's hairline, so a
+          // theme's divider colour is theirs too.
           color: _focused
-              ? theme.colorScheme.primary.withValues(alpha: 0.6)
-              : theme.colorScheme.outlineVariant,
+              ? theme.colorScheme.primary.withValues(alpha: 0.4)
+              : Hairline.color(context),
         ),
       ),
       child: child,
