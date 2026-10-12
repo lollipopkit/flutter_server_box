@@ -3,14 +3,15 @@
 //!
 //! # pi, on the server
 //!
-//! The agent loop is pi's (`pi-agent-core`, `pi-ai`), run by `fl_pi_llm`'s
+//! The agent loop is pi's (`pi-durable`, `pi-ai`), run by `fl_pi_llm`'s
 //! Rust host: the same bundle the apps run, so a task here is a pi session in
 //! the format theirs are in. It runs on the server, not in a browser: a task
 //! goes on when the page that started it closes, and every page and app that
 //! opens it sees the same thing.
 //!
-//! A task ("flow") is one pi session, kept under `<database dir>/agent/` (the
-//! agent's own state, outside every file root), and one `agent_flow` row that
+//! A task ("flow") is one pi session, a pi-durable storage in
+//! `<database dir>/agent/chats/<id>/` (the agent's own state, outside every
+//! file root), and one `agent_flow` row that
 //! lists and owns it. What happens while it runs — model output, commands
 //! and their output, what it waits on — goes out on [`AgentMode::subscribe`].
 //!
@@ -35,6 +36,7 @@
 //! Tasks are the account's own; nobody else lists, reads or answers them.
 
 pub(crate) mod command;
+mod pi_file;
 pub mod files;
 mod memory;
 pub mod config;
@@ -72,6 +74,18 @@ const MAX_TITLE_CHARS: usize = 80;
 const TAIL_LINES: usize = 6;
 /// Kept per account; the oldest finished ones go first.
 pub const MAX_FLOWS: i64 = 500;
+/// The most tasks one page of the list holds.
+pub const MAX_PAGE: i64 = 200;
+
+/// What `GET /agent/flows` is asked for: a page of `limit` after the cursor
+/// `before` (`<updatedAt>|<id>`, as the last page answered), and only tasks
+/// whose title or last line contains `q`. Absent `limit` is every task.
+#[derive(Debug, Default, Deserialize)]
+pub struct ListQuery {
+    pub limit: Option<i64>,
+    pub before: Option<String>,
+    pub q: Option<String>,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -409,7 +423,20 @@ impl AgentMode {
         .await?;
         let known: HashSet<String> = sqlx::query_scalar("SELECT id FROM agent_flow").fetch_all(&self.db).await?.into_iter().collect();
         self.files.recover(&known).await;
-        let Ok(mut dirs) = tokio::fs::read_dir(self.store.root().join("sessions")).await else { return Ok(()) };
+        // A chat is `chats/<encoded id>/`, with `meta/<encoded id>.json`.
+        let root = self.store.root();
+        if let Ok(mut dirs) = tokio::fs::read_dir(root.join("chats")).await {
+            while let Some(d) = dirs.next_entry().await? {
+                let id = decode_component(&d.file_name().to_string_lossy());
+                if !known.contains(&id) {
+                    let _ = tokio::fs::remove_dir_all(d.path()).await;
+                    let _ = tokio::fs::remove_file(root.join("meta").join(format!("{}.json", d.file_name().to_string_lossy()))).await;
+                }
+            }
+        }
+        // TODO: remove once no agent keeps a session from before pi-durable;
+        // fl_pi_llm moves each into `chats/` when it is opened.
+        let Ok(mut dirs) = tokio::fs::read_dir(root.join("sessions")).await else { return Ok(()) };
         while let Some(d) = dirs.next_entry().await? {
             let Ok(mut files) = tokio::fs::read_dir(d.path()).await else { continue };
             while let Some(f) = files.next_entry().await? {
@@ -523,22 +550,48 @@ impl AgentMode {
     // -------------------------------------------------------------------------
     // Listing
 
-    pub async fn list(&self, user: i64) -> Result<Vec<FlowView>, sqlx::Error> {
-        let rows = sqlx::query_as::<_, Row>(
+    /// The account's tasks, newest change first: a page of [q]'s `limit` after
+    /// its `before` cursor, or all of them without a limit. Answers the
+    /// cursor of the next page, if there is one.
+    pub async fn list(&self, user: i64, q: &ListQuery) -> Result<(Vec<FlowView>, Option<String>), sqlx::Error> {
+        let after = q.before.as_deref().and_then(|c| c.split_once('|'));
+        let needle = q.q.as_deref().map(str::trim).filter(|t| !t.is_empty()).map(|t| {
+            let escaped = t.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+            format!("%{escaped}%")
+        });
+        let limit = q.limit.map(|l| l.clamp(1, MAX_PAGE));
+        // A NULL turns its condition off; `LIMIT -1` is no limit. One more row
+        // than asked says whether there is a next page.
+        let mut rows = sqlx::query_as::<_, Row>(
             "SELECT id, title, status, line, areas, mode, created_at, updated_at, started_at, finished_at FROM agent_flow \
-             WHERE user_id = ? ORDER BY updated_at DESC",
+             WHERE user_id = ?1 \
+             AND (?2 IS NULL OR updated_at < ?2 OR (updated_at = ?2 AND id < ?3)) \
+             AND (?4 IS NULL OR title LIKE ?4 ESCAPE '\\' OR line LIKE ?4 ESCAPE '\\') \
+             ORDER BY updated_at DESC, id DESC LIMIT ?5",
         )
         .bind(user)
+        .bind(after.map(|(at, _)| at))
+        .bind(after.map(|(_, id)| id))
+        .bind(needle)
+        .bind(limit.map_or(-1, |l| l + 1))
         .fetch_all(&self.db)
         .await?;
+        let next = match limit {
+            Some(l) if rows.len() as i64 > l => {
+                rows.truncate(l as usize);
+                rows.last().map(|r| format!("{}|{}", r.updated_at, r.id))
+            }
+            _ => None,
+        };
         let active = self.flows.lock().unwrap();
-        Ok(rows
+        let flows = rows
             .into_iter()
             .map(|r| match active.get(&r.id) {
                 Some(f) => f.view(),
                 None => r.view(),
             })
-            .collect())
+            .collect();
+        Ok((flows, next))
     }
 
     async fn row(&self, user: i64, id: &str) -> Result<Option<FlowView>, sqlx::Error> {
@@ -879,6 +932,7 @@ impl AgentMode {
         let gone = sqlx::query("DELETE FROM agent_flow WHERE user_id = ? AND id = ?").bind(user).bind(id).execute(&self.db).await?.rows_affected() > 0;
         if gone {
             self.files.remove_task(id).await;
+            pi_file::remove(id).await;
             let _open = self.opening.lock().await;
             let rt = self.runtime().await?;
             if let Err(e) = rt.delete_session(id).await {
@@ -921,6 +975,9 @@ impl AgentMode {
         {
             let _open = self.opening.lock().await;
             let session = flow.session.lock().unwrap().take();
+            if let Some(s) = &session {
+                self.write_pi_file(&flow, s).await;
+            }
             if let Some(s) = session {
                 match Arc::try_unwrap(s) {
                     Ok(s) => {
@@ -1028,6 +1085,25 @@ impl AgentMode {
         drop(flow.pending.lock().unwrap().take());
         *flow.output.lock().unwrap() = None;
         self.persist(flow).await;
+    }
+
+    /// The task as a session file `pi` on this machine lists, when an admin
+    /// asked for that; rewritten after every run. A failure costs only the
+    /// copy.
+    async fn write_pi_file(&self, flow: &Flow, session: &Session) {
+        match config::load(&self.db).await {
+            Ok(s) if s.pi_sessions => {}
+            _ => return,
+        }
+        let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
+        let text = match session.export_pi(&cwd.to_string_lossy()).await {
+            Ok(t) => t,
+            Err(e) => return tracing::warn!("agent mode: exporting {} for pi: {e}", flow.id),
+        };
+        let created = flow.view.lock().unwrap().created_at.clone();
+        if let Err(e) = pi_file::write(&cwd, &created, &flow.id, &text).await {
+            tracing::warn!("agent mode: writing {} for pi: {e}", flow.id);
+        }
     }
 
     /// Writes [flow]'s row and tells its pages.
@@ -1299,6 +1375,12 @@ pub(crate) fn uuid_v4() -> String {
     b[8] = (b[8] & 0x3f) | 0x80;
     let h = hex::encode(b);
     format!("{}-{}-{}-{}-{}", &h[..8], &h[8..12], &h[12..16], &h[16..20], &h[20..])
+}
+
+/// A chat id from its directory name: fl_pi_llm names it with
+/// `encodeURIComponent`.
+fn decode_component(name: &str) -> String {
+    percent_encoding::percent_decode_str(name).decode_utf8_lossy().into_owned()
 }
 
 #[cfg(test)]

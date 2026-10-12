@@ -1875,6 +1875,8 @@ const nl = {
 	settingsAgentThinkingMedium: 'Gemiddeld',
 	settingsAgentThinkingHigh: 'Hoog',
 	settingsAgentMaxRunning: 'Taken tegelijk',
+	settingsAgentPiSessions: 'Taken naar pi kopiëren',
+	settingsAgentPiSessionsHint: 'Elke taak wordt ook als pi-sessie op dit apparaat opgeslagen: voer pi -r uit in de werkmap van de agent om ze weer te geven.',
 	settingsAgentProviders: 'Providers',
 	settingsAgentBuiltin: 'Ingebouwd',
 	settingsAgentAddProvider: 'Provider toevoegen',

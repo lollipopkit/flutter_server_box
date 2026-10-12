@@ -1875,6 +1875,8 @@ const tr = {
 	settingsAgentThinkingMedium: 'Orta',
 	settingsAgentThinkingHigh: 'Yüksek',
 	settingsAgentMaxRunning: 'Aynı anda çalışacak görev sayısı',
+	settingsAgentPiSessions: 'Görevleri pi için kopyala',
+	settingsAgentPiSessionsHint: 'Her görev bu cihazda bir pi oturumu olarak da kaydedilir: listelemek için agent çalışma klasöründe pi -r komutunu çalıştırın.',
 	settingsAgentProviders: 'Sağlayıcılar',
 	settingsAgentBuiltin: 'Yerleşik',
 	settingsAgentAddProvider: 'Sağlayıcı ekle',

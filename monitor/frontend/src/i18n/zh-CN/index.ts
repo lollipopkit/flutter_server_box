@@ -1874,6 +1874,8 @@ const zh_CN = {
 	settingsAgentThinkingMedium: '中',
 	settingsAgentThinkingHigh: '高',
 	settingsAgentMaxRunning: '同时运行',
+	settingsAgentPiSessions: '为 pi 保留副本',
+	settingsAgentPiSessionsHint: '每个任务同时写成本机 pi 的会话：在 agent 的工作目录运行 pi -r 即可列出。',
 	settingsAgentProviders: '提供商',
 	settingsAgentBuiltin: '内置',
 	settingsAgentAddProvider: '添加提供商',

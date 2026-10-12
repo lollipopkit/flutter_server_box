@@ -721,3 +721,86 @@ async fn auto_mode_judges_a_plan_and_bypass_approves_one() {
     assert!(made.exists(), "{v}");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[ntex::test]
+async fn the_copy_for_pi_is_off_until_turned_on_and_kept_by_writes_without_it() {
+    let (srv, _) = server().await;
+    let url = model(vec![Say::Text("ok")]);
+    configure(&srv, &url).await;
+    let (_, s) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/settings", None).await;
+    assert_eq!(s["piSessions"], false, "{s}");
+    let write = |pi: Option<bool>| {
+        let mut w = json!({ "model": { "provider": "mock", "id": "mock" }, "providers": s["providers"].clone() });
+        if let Some(pi) = pi {
+            w["piSessions"] = json!(pi);
+        }
+        w
+    };
+    let (status, body) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/settings", Some(write(Some(true)))).await;
+    assert_eq!((status, body["piSessions"].clone()), (200, json!(true)), "{body}");
+    // A panel that does not know the setting leaves it alone.
+    let (status, body) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/settings", Some(write(None))).await;
+    assert_eq!((status, body["piSessions"].clone()), (200, json!(true)), "{body}");
+}
+
+#[ntex::test]
+async fn the_list_pages_newest_first_and_searches_titles() {
+    let (srv, db) = server().await;
+    let user: i64 = sqlx::query_scalar("SELECT id FROM users WHERE username = 'admin'").fetch_one(&db).await.unwrap();
+    // Five tasks, two of them changed at the same moment: the cursor tells them apart by id.
+    for (id, title, at) in [
+        ("t1", "check disks", "2026-10-01T00:00:00+00:00"),
+        ("t2", "restart nginx", "2026-10-02T00:00:00+00:00"),
+        ("t3", "disk usage of /var", "2026-10-03T00:00:00+00:00"),
+        ("t4", "update packages", "2026-10-03T00:00:00+00:00"),
+        ("t5", "100% CPU", "2026-10-04T00:00:00+00:00"),
+    ] {
+        sqlx::query("INSERT INTO agent_flow (id, user_id, title, status, created_at, updated_at) VALUES (?, ?, ?, 'done', ?, ?)")
+            .bind(id)
+            .bind(user)
+            .bind(title)
+            .bind(at)
+            .bind(at)
+            .execute(&db)
+            .await
+            .unwrap();
+    }
+    let ids = |v: &Value| v["flows"].as_array().unwrap().iter().map(|f| f["id"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+    let get = |path: String| {
+        let srv = &srv;
+        async move { call(srv, Some("admin"), Method::GET, &path, None).await }
+    };
+
+    let (status, all) = get("/api/v1/agent/flows".into()).await;
+    assert_eq!(status, 200, "{all}");
+    assert_eq!(ids(&all), ["t5", "t4", "t3", "t2", "t1"], "every task without a limit");
+    assert!(all["next"].is_null());
+
+    let mut seen = Vec::new();
+    let mut cursor: Option<String> = None;
+    loop {
+        let path = match &cursor {
+            Some(c) => format!("/api/v1/agent/flows?limit=2&before={}", percent_encoding::utf8_percent_encode(c, percent_encoding::NON_ALPHANUMERIC)),
+            None => "/api/v1/agent/flows?limit=2".into(),
+        };
+        let (status, page) = get(path).await;
+        assert_eq!(status, 200, "{page}");
+        assert!(page["flows"].as_array().unwrap().len() <= 2);
+        seen.extend(ids(&page));
+        match page["next"].as_str() {
+            Some(c) => cursor = Some(c.to_string()),
+            None => break,
+        }
+    }
+    assert_eq!(seen, ["t5", "t4", "t3", "t2", "t1"], "pages neither skip nor repeat");
+
+    let (_, found) = get("/api/v1/agent/flows?q=DISK".into()).await;
+    assert_eq!(ids(&found), ["t3", "t1"], "titles, ignoring case");
+    // `%` and `_` are what they say, not patterns.
+    let (_, found) = get("/api/v1/agent/flows?q=100%25".into()).await;
+    assert_eq!(ids(&found), ["t5"]);
+    let (_, found) = get("/api/v1/agent/flows?q=_".into()).await;
+    assert!(ids(&found).is_empty(), "{found}");
+    let (_, found) = get("/api/v1/agent/flows?q=disk&limit=1".into()).await;
+    assert_eq!((ids(&found), found["next"].is_string()), (vec!["t3".to_string()], true));
+}

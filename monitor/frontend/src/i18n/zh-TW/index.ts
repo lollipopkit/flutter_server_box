@@ -1875,6 +1875,8 @@ const zh_TW = {
 	settingsAgentThinkingMedium: '中',
 	settingsAgentThinkingHigh: '高',
 	settingsAgentMaxRunning: '同時執行的工作數',
+	settingsAgentPiSessions: '為 pi 保留副本',
+	settingsAgentPiSessionsHint: '每個任務也會儲存為這台裝置上的 pi 工作階段：在 agent 的工作目錄執行 pi -r 即可列出。',
 	settingsAgentProviders: '提供者',
 	settingsAgentBuiltin: '內建',
 	settingsAgentAddProvider: '新增提供商',

@@ -1875,6 +1875,8 @@ const ru = {
 	settingsAgentThinkingMedium: 'Среднее',
 	settingsAgentThinkingHigh: 'Высокое',
 	settingsAgentMaxRunning: 'Одновременные задачи',
+	settingsAgentPiSessions: 'Копировать задачи в pi',
+	settingsAgentPiSessionsHint: 'Каждая задача также сохраняется как сессия pi на этом устройстве: выполните pi -r в рабочей папке агента, чтобы увидеть список.',
 	settingsAgentProviders: 'Провайдеры',
 	settingsAgentBuiltin: 'Встроенный',
 	settingsAgentAddProvider: 'Добавить провайдера',

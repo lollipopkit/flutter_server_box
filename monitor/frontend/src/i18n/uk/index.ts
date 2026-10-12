@@ -1875,6 +1875,8 @@ const uk = {
 	settingsAgentThinkingMedium: 'Середній',
 	settingsAgentThinkingHigh: 'Високий',
 	settingsAgentMaxRunning: 'Кількість одночасних завдань',
+	settingsAgentPiSessions: 'Копіювати завдання в pi',
+	settingsAgentPiSessionsHint: 'Кожне завдання також зберігається як сеанс pi на цьому пристрої: виконайте pi -r у робочій теці агента, щоб переглянути список.',
 	settingsAgentProviders: 'Постачальники',
 	settingsAgentBuiltin: 'Вбудований',
 	settingsAgentAddProvider: 'Додати провайдера',

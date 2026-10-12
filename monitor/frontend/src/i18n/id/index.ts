@@ -1875,6 +1875,8 @@ const id = {
 	settingsAgentThinkingMedium: 'Sedang',
 	settingsAgentThinkingHigh: 'Tinggi',
 	settingsAgentMaxRunning: 'Tugas sekaligus',
+	settingsAgentPiSessions: 'Salin tugas ke pi',
+	settingsAgentPiSessionsHint: 'Setiap tugas juga disimpan sebagai sesi pi di perangkat ini: jalankan pi -r di folder kerja agent untuk melihatnya.',
 	settingsAgentProviders: 'Penyedia',
 	settingsAgentBuiltin: 'Bawaan',
 	settingsAgentAddProvider: 'Tambah penyedia',

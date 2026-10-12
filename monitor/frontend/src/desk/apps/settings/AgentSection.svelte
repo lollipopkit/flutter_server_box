@@ -5,7 +5,7 @@
   /// providers need only a key; an endpoint of the admin's own needs where it
   /// is and what it speaks.
 
-  import { Group, Row, SegmentedControl, Select, Spinner } from '../../lk'
+  import { Group, Row, SegmentedControl, Select, Spinner, Switch } from '../../lk'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type AgentSettings, type ProviderInfo, type SettingsWrite } from '../../../lib/agentApi'
@@ -175,6 +175,14 @@
               const n = Number((e.currentTarget as HTMLSelectElement).value)
               void apply((w) => ({ ...w, maxRunning: n }))
             }}
+          />
+        </Row>
+        <Row label={$LL.settingsAgentPiSessions()} sub={$LL.settingsAgentPiSessionsHint()}>
+          <Switch
+            label={$LL.settingsAgentPiSessions()}
+            checked={settings.piSessions === true}
+            disabled={saving}
+            onchange={(piSessions) => apply((w) => ({ ...w, piSessions }))}
           />
         </Row>
       </Group>

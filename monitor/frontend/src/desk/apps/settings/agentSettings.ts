@@ -20,6 +20,7 @@ export function writeOf(s: AgentSettings): SettingsWrite {
     model: s.model,
     thinkingLevel: s.thinkingLevel,
     maxRunning: s.maxRunning,
+    piSessions: s.piSessions,
     providers: s.providers ?? [],
     credentials: {},
   }

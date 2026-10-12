@@ -198,7 +198,14 @@ pub mod machine {
             .await
             .unwrap();
         let status = resp.status().as_u16();
-        let bytes = resp.body().limit(16 * 1024 * 1024).await.unwrap_or_default();
+        // A stream ends when the work does, which can outlast the client's
+        // default 5 s for a body when every test runs at once.
+        let bytes = resp
+            .body()
+            .limit(16 * 1024 * 1024)
+            .timeout(ntex::time::Millis::from_secs(60))
+            .await
+            .expect("the whole stream");
         (status, String::from_utf8_lossy(&bytes).into_owned())
     }
 }

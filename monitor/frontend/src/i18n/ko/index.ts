@@ -1875,6 +1875,8 @@ const ko = {
 	settingsAgentThinkingMedium: '보통',
 	settingsAgentThinkingHigh: '높음',
 	settingsAgentMaxRunning: '동시 작업 수',
+	settingsAgentPiSessions: 'pi용 작업 복사',
+	settingsAgentPiSessionsHint: '각 작업은 이 기기의 pi 세션으로도 저장됩니다. agent의 작업 폴더에서 pi -r을 실행하면 목록을 볼 수 있습니다.',
 	settingsAgentProviders: '제공자',
 	settingsAgentBuiltin: '내장',
 	settingsAgentAddProvider: '제공자 추가',

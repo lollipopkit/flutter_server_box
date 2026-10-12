@@ -104,7 +104,11 @@ fn bad(code: &str) -> HttpResponse {
     HttpResponse::BadRequest().json(&serde_json::json!({ "error": code }))
 }
 
-pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+pub async fn list(
+    req: HttpRequest,
+    query: web::types::Query<crate::agent_mode::ListQuery>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
     let (_, user, _) = require!(shell(&req, &state).await);
     let settings = match config::load(&state.db).await {
         Ok(s) => s,
@@ -114,9 +118,11 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
         Ok(p) => p,
         Err(e) => return Ok(refused(e.into())),
     };
-    match state.agent.list(user).await {
-        Ok(flows) => Ok(HttpResponse::Ok().json(&serde_json::json!({
+    match state.agent.list(user, &query).await {
+        Ok((flows, next)) => Ok(HttpResponse::Ok().json(&serde_json::json!({
             "flows": flows,
+            // The cursor of the next page, when one was asked for and is there.
+            "next": next,
             "configured": settings.model.is_some(),
             "maxRunning": settings.max_running,
             "hostname": state.agent.hostname(),

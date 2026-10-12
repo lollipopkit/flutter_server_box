@@ -1875,6 +1875,8 @@ const es = {
 	settingsAgentThinkingMedium: 'Medio',
 	settingsAgentThinkingHigh: 'Alto',
 	settingsAgentMaxRunning: 'Tareas simultáneas',
+	settingsAgentPiSessions: 'Copiar tareas para pi',
+	settingsAgentPiSessionsHint: 'Cada tarea también se guarda como una sesión de pi en este dispositivo: ejecuta pi -r en la carpeta de trabajo del agente para verlas.',
 	settingsAgentProviders: 'Proveedores',
 	settingsAgentBuiltin: 'Integrado',
 	settingsAgentAddProvider: 'Añadir proveedor',

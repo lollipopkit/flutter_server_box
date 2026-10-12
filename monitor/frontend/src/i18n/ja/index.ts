@@ -1875,6 +1875,8 @@ const ja = {
 	settingsAgentThinkingMedium: '中',
 	settingsAgentThinkingHigh: '高',
 	settingsAgentMaxRunning: '同時実行タスク数',
+	settingsAgentPiSessions: 'pi 用にタスクをコピー',
+	settingsAgentPiSessionsHint: '各タスクはこのデバイス上の pi セッションとしても保存されます。agent の作業フォルダーで pi -r を実行すると一覧を表示できます。',
 	settingsAgentProviders: 'プロバイダー',
 	settingsAgentBuiltin: '組み込み',
 	settingsAgentAddProvider: 'プロバイダを追加',

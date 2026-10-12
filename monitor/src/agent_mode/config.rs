@@ -80,6 +80,8 @@ pub struct Settings {
     pub model: Option<ModelRef>,
     pub thinking_level: String,
     pub max_running: i64,
+    /// Each task is also a session file `pi` lists (`agent_mode::pi_file`).
+    pub pi_sessions: bool,
     pub providers: Vec<Provider>,
     /// Providers (built-in or above) that have a credential set.
     pub credentials: Vec<String>,
@@ -95,6 +97,9 @@ pub struct SettingsWrite {
     pub thinking_level: String,
     #[serde(default = "default_max_running")]
     pub max_running: i64,
+    /// Absent keeps it: a panel from before it existed leaves it as it is.
+    #[serde(default)]
+    pub pi_sessions: Option<bool>,
     #[serde(default)]
     pub providers: Vec<Provider>,
     #[serde(default)]
@@ -177,7 +182,7 @@ fn is_loopback_http(url: &str) -> bool {
 }
 
 pub async fn load(db: &SqlitePool) -> Result<Settings, sqlx::Error> {
-    let row = sqlx::query_as::<_, (String, String, i64)>("SELECT model, thinking_level, max_running FROM agent_settings WHERE id = 1")
+    let row = sqlx::query_as::<_, (String, String, i64, bool)>("SELECT model, thinking_level, max_running, pi_sessions FROM agent_settings WHERE id = 1")
         .fetch_optional(db)
         .await?;
     let providers = sqlx::query_as::<_, (String, String, String, String, bool, String)>(
@@ -198,11 +203,11 @@ pub async fn load(db: &SqlitePool) -> Result<Settings, sqlx::Error> {
     let credentials = sqlx::query_scalar::<_, String>("SELECT provider_id FROM agent_credential ORDER BY provider_id")
         .fetch_all(db)
         .await?;
-    let (model, thinking_level, max_running) = match row {
-        Some((model, level, max)) => (serde_json::from_str(&model).ok(), level, max),
-        None => (None, off(), DEFAULT_MAX_RUNNING),
+    let (model, thinking_level, max_running, pi_sessions) = match row {
+        Some((model, level, max, pi)) => (serde_json::from_str(&model).ok(), level, max, pi),
+        None => (None, off(), DEFAULT_MAX_RUNNING, false),
     };
-    Ok(Settings { model, thinking_level, max_running, providers, credentials })
+    Ok(Settings { model, thinking_level, max_running, pi_sessions, providers, credentials })
 }
 
 /// Replaces the configuration, in one transaction.
@@ -212,14 +217,16 @@ pub async fn store(db: &SqlitePool, w: &SettingsWrite) -> Result<(), sqlx::Error
     match &w.model {
         Some(m) => {
             sqlx::query(
-                "INSERT INTO agent_settings (id, model, thinking_level, max_running, updated_at) VALUES (1, ?, ?, ?, ?) \
+                "INSERT INTO agent_settings (id, model, thinking_level, max_running, pi_sessions, updated_at) VALUES (1, ?, ?, ?, COALESCE(?, 0), ?) \
                  ON CONFLICT(id) DO UPDATE SET model = excluded.model, thinking_level = excluded.thinking_level, \
-                 max_running = excluded.max_running, updated_at = excluded.updated_at",
+                 max_running = excluded.max_running, pi_sessions = COALESCE(?, agent_settings.pi_sessions), updated_at = excluded.updated_at",
             )
             .bind(serde_json::to_string(m).expect("a model reference serialises"))
             .bind(&w.thinking_level)
             .bind(w.max_running)
+            .bind(w.pi_sessions)
             .bind(&now)
+            .bind(w.pi_sessions)
             .execute(&mut *tx)
             .await?;
         }
@@ -309,6 +316,7 @@ mod tests {
             model: Some(ModelRef { provider: "openai".into(), id: "gpt-4o-mini".into() }),
             thinking_level: "off".into(),
             max_running: 3,
+            pi_sessions: None,
             providers,
             credentials: Default::default(),
         }

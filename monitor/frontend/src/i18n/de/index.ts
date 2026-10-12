@@ -1875,6 +1875,8 @@ const de = {
 	settingsAgentThinkingMedium: 'Mittel',
 	settingsAgentThinkingHigh: 'Hoch',
 	settingsAgentMaxRunning: 'Aufgaben gleichzeitig',
+	settingsAgentPiSessions: 'Aufgaben für pi kopieren',
+	settingsAgentPiSessionsHint: 'Jede Aufgabe wird auch als pi-Sitzung auf diesem Gerät gespeichert: Führe pi -r im Arbeitsordner des Agenten aus, um sie aufzulisten.',
 	settingsAgentProviders: 'Anbieter',
 	settingsAgentBuiltin: 'Integriert',
 	settingsAgentAddProvider: 'Anbieter hinzufügen',

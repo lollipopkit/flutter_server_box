@@ -1875,6 +1875,8 @@ const en = {
 	settingsAgentThinkingMedium: 'Medium',
 	settingsAgentThinkingHigh: 'High',
 	settingsAgentMaxRunning: 'Tasks at once',
+	settingsAgentPiSessions: 'Copy tasks for pi',
+	settingsAgentPiSessionsHint: 'Each task is also written as a session of pi on this machine: run pi -r in the agent\'s working folder to list them.',
 	settingsAgentProviders: 'Providers',
 	settingsAgentBuiltin: 'Built-in',
 	settingsAgentAddProvider: 'Add a provider',

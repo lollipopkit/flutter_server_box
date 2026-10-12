@@ -158,6 +158,8 @@ export interface AgentSettings {
   model: ModelRef | null
   thinkingLevel: string
   maxRunning: number
+  /// Each task is also a session file `pi` on the machine lists. Admin only.
+  piSessions?: boolean
   providers?: Provider[]
   /// Providers with a credential set.
   credentials?: string[]
@@ -167,6 +169,8 @@ export interface SettingsWrite {
   model: ModelRef | null
   thinkingLevel: string
   maxRunning: number
+  /// Absent keeps it.
+  piSessions?: boolean
   providers: Provider[]
   /// A key sets, `null` removes, absent keeps.
   credentials: Record<string, string | null>

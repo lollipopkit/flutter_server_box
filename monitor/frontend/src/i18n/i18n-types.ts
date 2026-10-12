@@ -7753,6 +7753,14 @@ type RootTranslation = {
 	 */
 	settingsAgentMaxRunning: string
 	/**
+	 * C​o​p​y​ ​t​a​s​k​s​ ​f​o​r​ ​p​i
+	 */
+	settingsAgentPiSessions: string
+	/**
+	 * E​a​c​h​ ​t​a​s​k​ ​i​s​ ​a​l​s​o​ ​w​r​i​t​t​e​n​ ​a​s​ ​a​ ​s​e​s​s​i​o​n​ ​o​f​ ​p​i​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​:​ ​r​u​n​ ​p​i​ ​-​r​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​w​o​r​k​i​n​g​ ​f​o​l​d​e​r​ ​t​o​ ​l​i​s​t​ ​t​h​e​m​.
+	 */
+	settingsAgentPiSessionsHint: string
+	/**
 	 * P​r​o​v​i​d​e​r​s
 	 */
 	settingsAgentProviders: string
@@ -17339,6 +17347,14 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Tasks at once
 	 */
 	settingsAgentMaxRunning: () => LocalizedString
+	/**
+	 * Copy tasks for pi
+	 */
+	settingsAgentPiSessions: () => LocalizedString
+	/**
+	 * Each task is also written as a session of pi on this machine: run pi -r in the agent's working folder to list them.
+	 */
+	settingsAgentPiSessionsHint: () => LocalizedString
 	/**
 	 * Providers
 	 */

@@ -1875,6 +1875,8 @@ const it = {
 	settingsAgentThinkingMedium: 'Medio',
 	settingsAgentThinkingHigh: 'Alto',
 	settingsAgentMaxRunning: 'Task simultanei',
+	settingsAgentPiSessions: 'Copia le attività in pi',
+	settingsAgentPiSessionsHint: 'Ogni attività viene salvata anche come sessione di pi su questo dispositivo: esegui pi -r nella cartella di lavoro dell’agente per visualizzarle.',
 	settingsAgentProviders: 'Provider',
 	settingsAgentBuiltin: 'Integrato',
 	settingsAgentAddProvider: 'Aggiungi provider',
