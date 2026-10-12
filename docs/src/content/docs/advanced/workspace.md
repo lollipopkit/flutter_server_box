@@ -8,6 +8,9 @@ status of the same server, the containers of a database host under a shell on
 the application host, and so on. Each view is the same page the app opens from
 a server's detail page, shown inside a pane.
 
+A fresh install does not put the tab in the bar: open it from **More**, or add
+it under **Settings › App › Home Tabs**.
+
 ## Workspaces, panes and tabs
 
 - A **workspace** is a named arrangement. You can keep several and switch

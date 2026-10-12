@@ -54,7 +54,7 @@ enum AppTab {
   /// **A subset, not every tab.** This list *is* the bar: what is not in it is
   /// behind "more". Four was the number to start from, because that is where
   /// `NavigationBar` stops fitting labels on a phone; it is not a cap the code
-  /// enforces, and Virtualization made it five (below).
+  /// enforces, but it is the number kept to.
   ///
   /// **Not the declaration order, and it cannot be.** The declaration order is
   /// the `@HiveField` index and what `_parseAppTabFromElement` resolves an
@@ -66,14 +66,11 @@ enum AppTab {
   /// they are written and kept. Benchmark is out because a run takes a quarter
   /// of an hour and is started deliberately.
   ///
-  /// Virtualization is the fifth. A bar the user arranged is stored and keeps
-  /// its own tabs (schema step m030 adds this one only where a PVE host was
-  /// configured); one never arranged is this list, read at launch, so it gets
-  /// the tab like a fresh install does.
-  ///
-  /// Workspace is beside Terminal: it is where several of them go once one
-  /// is not enough.
-  static const defaultOrder = [server, ssh, workspace, file, agent, virt];
+  /// Virtualization and Workspace are out to keep it to four. A bar the user
+  /// arranged is stored and keeps its own tabs (schema step m030 adds
+  /// Virtualization where a PVE host was configured); one never arranged is
+  /// this list, read at launch, so both are behind "more" there.
+  static const defaultOrder = [server, ssh, file, agent];
 
   /// The tabs not in [enabled], in declaration order — what "more" holds.
   ///

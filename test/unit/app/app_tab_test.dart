@@ -20,17 +20,18 @@ void main() {
       expect(AppTab.defaultOrder, [
         AppTab.server,
         AppTab.ssh,
-        AppTab.workspace,
         AppTab.file,
         AppTab.agent,
-        AppTab.virt,
       ]);
       // Snippets are a library rather than a place, and a benchmark is a
       // quarter of an hour started deliberately — neither is wanted a tap away.
+      // The rest are out to keep a phone's bar at four.
       expect(AppTab.overflowOf(AppTab.defaultOrder), [
         AppTab.snippet,
         AppTab.benchmark,
         AppTab.remoteDesktop,
+        AppTab.virt,
+        AppTab.workspace,
       ]);
     });
 
