@@ -81,7 +81,17 @@ final class WsTabRuntime {
     return _host = WsTabHost(tab: tab, paneId: paneId, runtime: this);
   }
 
+  var _disposed = false;
+
+  /// The page's buttons taken off the bar, once the page that put them there
+  /// has gone — dormant again, unavailable on its server — and nothing has
+  /// replaced them.
+  void _dropActions() => WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!_disposed) actions.value = const [];
+  });
+
   void dispose() {
+    _disposed = true;
     focus.dispose();
     visible.dispose();
     actions.dispose();
@@ -133,9 +143,12 @@ class WsTabHost extends ConsumerWidget {
     // A navigator per tab: a page pushed from one — a container's logs, a
     // file opened for editing — covers its pane and nothing else, and the
     // back gesture closes it there.
-    return NestedNavigator(
-      rootId: tab.id,
-      rootBuilder: (_) => _page(ref, spi),
+    return _ActionsOwner(
+      runtime: runtime,
+      child: NestedNavigator(
+        rootId: tab.id,
+        rootBuilder: (_) => _page(ref, spi),
+      ),
     );
   }
 
@@ -186,6 +199,33 @@ class WsTabHost extends ConsumerWidget {
       WorkspaceView.snippet => _SnippetView(spi: spi, paneId: paneId),
     };
   }
+}
+
+/// The part of a tab whose page publishes to [WsTabRuntime.actions]: what it
+/// published goes with it, rather than staying on the pane's bar for a page
+/// that is no longer there.
+///
+/// Not called when the tab moves to another pane: its subtree is carried by
+/// [WsTabRuntime.key], not let go of.
+class _ActionsOwner extends StatefulWidget {
+  const _ActionsOwner({required this.runtime, required this.child});
+
+  final WsTabRuntime runtime;
+  final Widget child;
+
+  @override
+  State<_ActionsOwner> createState() => _ActionsOwnerState();
+}
+
+class _ActionsOwnerState extends State<_ActionsOwner> {
+  @override
+  void dispose() {
+    widget.runtime._dropActions();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// A tab back from a relaunch, waiting to be asked to connect.
