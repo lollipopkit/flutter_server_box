@@ -275,6 +275,16 @@ class _SnippetView extends ConsumerWidget {
                 snippet: s,
               );
               if (session == null) return;
+              // Back to the pane it was run from, in whichever workspace that
+              // is now. With the pane gone there is nowhere it would be seen.
+              if (!context.mounted ||
+                  !ref
+                      .read(workspacesProvider)
+                      .all
+                      .any((ws) => ws.panes.containsKey(paneId))) {
+                session.close();
+                return;
+              }
               ref
                   .read(workspacesProvider.notifier)
                   .addTab(

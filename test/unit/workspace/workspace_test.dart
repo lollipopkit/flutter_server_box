@@ -236,6 +236,28 @@ void main() {
       expect(ws.tabs.every((t) => t.serverId == 'db' && t.live), isTrue);
     });
 
+    test('a leaf without views gets no pane', () {
+      var n = 0;
+      Workspace build(WsNode<List<WorkspaceView>> root) =>
+          WsTemplate(id: 't', name: 'x', root: root).build(
+            workspaceId: 'w',
+            name: 'x',
+            serverId: 'db',
+            newId: () => 'id${n++}',
+          );
+      final ws = build(
+        const WsSplit(
+          WsAxis.row,
+          0.5,
+          WsLeaf([WorkspaceView.term]),
+          WsLeaf(<WorkspaceView>[]),
+        ),
+      );
+      expect(ws.order, hasLength(1));
+      expect(ws.focusId, ws.order.single);
+      expect(build(const WsLeaf(<WorkspaceView>[])).isEmpty, isTrue);
+    });
+
     test('an empty workspace has nothing to save', () {
       expect(
         WsTemplate.of(const Workspace(id: 'w', name: 'w'), id: 't', name: 'x'),

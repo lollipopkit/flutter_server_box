@@ -90,15 +90,12 @@ final class WsPane {
     'active': activeId,
   };
 
-  static WsPane? fromJson(Object? json, bool Function(WsTab) keep) {
+  static WsPane? fromJson(Object? json) {
     if (json is! Map) return null;
     final id = json['id'];
     final raw = json['tabs'];
     if (id is! String || raw is! List) return null;
-    final tabs = [
-      for (final t in raw.map(WsTab.fromJson))
-        if (t != null && keep(t)) t,
-    ];
+    final tabs = [for (final t in raw.map(WsTab.fromJson)) ?t];
     if (tabs.isEmpty) return null;
     final active = json['active'];
     return WsPane(
@@ -371,6 +368,31 @@ final class Workspace {
     },
   );
 
+  /// Only the tabs [keep] accepts, asked in reading order; a pane left with
+  /// none goes too.
+  Workspace retainTabs(bool Function(WsTab) keep) {
+    var ws = this;
+    for (final id in order) {
+      final pane = panes[id]!;
+      final tabs = [
+        for (final t in pane.tabs)
+          if (keep(t)) t,
+      ];
+      if (tabs.length == pane.tabs.length) continue;
+      ws = tabs.isEmpty
+          ? ws.removePane(id)
+          : ws._withPane(
+              pane.copyWith(
+                tabs: tabs,
+                activeId: tabs.any((t) => t.id == pane.activeId)
+                    ? null
+                    : tabs.first.id,
+              ),
+            );
+    }
+    return ws;
+  }
+
   /// Every tab of [oldId] pointed at [newId]: a server renamed keeps its id
   /// only until it is renamed.
   Workspace renameServer(String oldId, String newId) {
@@ -415,7 +437,7 @@ final class Workspace {
 
   /// Null when not even a name survives. Tabs [keep] refuses — a server since
   /// deleted — are dropped, and the layout closes up around a pane left
-  /// without any.
+  /// without any. [keep] is asked only of tabs in panes the layout places.
   static Workspace? fromJson(Object? json, {required bool Function(WsTab) keep}) {
     if (json is! Map) return null;
     final id = json['id'];
@@ -424,7 +446,7 @@ final class Workspace {
     final panes = <String, WsPane>{};
     final rawPanes = json['panes'];
     if (rawPanes is List) {
-      for (final p in rawPanes.map((e) => WsPane.fromJson(e, keep))) {
+      for (final p in rawPanes.map(WsPane.fromJson)) {
         // The first of two records of one pane: the second cannot be put
         // anywhere the first is not already.
         if (p != null) panes.putIfAbsent(p.id, () => p);
@@ -455,7 +477,7 @@ final class Workspace {
       maxId: pick(json['max']),
       sync: json['sync'] == true,
       narrowRatio: ratio is num ? WsSplit.clampRatio(ratio.toDouble()) : 0.55,
-    );
+    ).retainTabs(keep);
   }
 
   /// The panes a single column shows: the focused one and the one before it,
@@ -491,7 +513,8 @@ final class WsTemplate {
     );
   }
 
-  /// A new workspace laid out like this one, every tab on [serverId].
+  /// A new workspace laid out like this one, every tab on [serverId]. A leaf
+  /// without views gets no pane; a template without any, an empty workspace.
   Workspace build({
     required String workspaceId,
     required String name,
@@ -499,21 +522,27 @@ final class WsTemplate {
     required String Function() newId,
   }) {
     final panes = <String, WsPane>{};
-    final root = this.root.map((views) {
+    final placed = this.root.map((views) {
       final id = newId();
       final tabs = [
         for (final v in views) WsTab(id: newId(), view: v, serverId: serverId),
       ];
-      panes[id] = WsPane(id: id, tabs: tabs, activeId: tabs.first.id);
+      if (tabs.isNotEmpty) {
+        panes[id] = WsPane(id: id, tabs: tabs, activeId: tabs.first.id);
+      }
       return id;
     });
-    final order = root.leaves;
+    WsNode<String>? root = placed;
+    for (final leaf in placed.leaves) {
+      if (!panes.containsKey(leaf)) root = root?.removeLeaf(leaf);
+    }
+    final order = root?.leaves ?? const <String>[];
     return Workspace(
       id: workspaceId,
       name: name,
       root: root,
       panes: panes,
-      focusId: order.first,
+      focusId: order.firstOrNull,
       prevId: order.length > 1 ? order[1] : null,
     );
   }

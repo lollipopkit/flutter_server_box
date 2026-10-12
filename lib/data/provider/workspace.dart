@@ -91,7 +91,9 @@ class Workspaces extends _$Workspaces {
         final spis = Stores.server.fetch();
         final servers = {for (final s in spis) s.id};
         // A tab's id keys its page across every workspace, so one written
-        // twice — by hand, by a merge — keeps its first place only.
+        // twice — by hand, by a merge — keeps its first place only. Asked
+        // only of tabs a workspace keeps, so a pane of a workspace too broken
+        // to restore holds no id for itself.
         final tabIds = <String>{};
         final list = jsonDecode(raw);
         if (list is List) {
@@ -132,11 +134,18 @@ class Workspaces extends _$Workspaces {
   ///
   /// [persist] off for a change made many times a second — a seam being
   /// dragged — whose last value is saved once the drag ends.
-  void edit(Workspace Function(Workspace ws) f, {bool persist = true}) {
-    final next = f(state.current);
-    if (identical(next, state.current)) return;
+  void edit(Workspace Function(Workspace ws) f, {bool persist = true}) =>
+      _editAt(state.index, f, persist: persist);
+
+  void _editAt(
+    int index,
+    Workspace Function(Workspace ws) f, {
+    bool persist = true,
+  }) {
+    final next = f(state.all[index]);
+    if (identical(next, state.all[index])) return;
     final all = [...state.all];
-    all[state.index] = next;
+    all[index] = next;
     state = state.copyWith(all: all);
     if (persist) _save();
   }
@@ -219,7 +228,8 @@ class Workspaces extends _$Workspaces {
     return true;
   }
 
-  /// A new tab of [view] on [serverId], in [paneId] or the focused pane.
+  /// A new tab of [view] on [serverId], in [paneId] — whichever workspace
+  /// holds it, on screen or not — or else the current one's focused pane.
   WsTab addTab(
     String? paneId,
     WorkspaceView view,
@@ -228,7 +238,11 @@ class Workspaces extends _$Workspaces {
   }) {
     final tab = WsTab(id: newWsId(), view: view, serverId: serverId);
     if (session != null) _handoff[tab.id] = session;
-    edit((ws) => ws.addTab(paneId, tab, newPaneId: newWsId()));
+    final at = state.all.indexWhere((ws) => ws.panes.containsKey(paneId));
+    _editAt(
+      at < 0 ? state.index : at,
+      (ws) => ws.addTab(paneId, tab, newPaneId: newWsId()),
+    );
     return tab;
   }
 

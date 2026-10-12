@@ -116,6 +116,40 @@ void main() {
     );
   });
 
+  test('a workspace that cannot be restored holds no tab id', () {
+    final pane = {
+      'id': 'p1',
+      'tabs': [
+        {'id': 't1', 'view': 'term', 'server': 's1'},
+      ],
+      'active': 't1',
+    };
+    Stores.history.workspaces.put(
+      jsonEncode([
+        // No root: its pane is placed nowhere.
+        {'id': 'w1', 'name': 'w', 'panes': [pane]},
+        {
+          'id': 'w2',
+          'name': 'w2',
+          'root': const WsLeaf<String>('p1').toJson((l) => l),
+          'panes': [pane],
+        },
+      ]),
+    );
+    final all = ProviderContainer().read(workspacesProvider).all;
+    expect(all.first.isEmpty, isTrue);
+    expect(all[1].tabs.map((t) => t.id), ['t1']);
+  });
+
+  test('a snippet carried on goes to the pane it ran in, off screen too', () {
+    ops().addTab(null, WorkspaceView.status, 's1');
+    final origin = state().current;
+    ops().create();
+    ops().addTab(origin.focusId, WorkspaceView.term, 's1');
+    expect(state().current.isEmpty, isTrue);
+    expect(state().all.first.tabs, hasLength(2));
+  });
+
   test('closing a workspace that is not there changes nothing', () {
     ops().create();
     final before = state();
