@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/oci_image.dart';
@@ -59,7 +60,7 @@ abstract final class RootfsUnpack {
             var n = 0;
             for (final layer in ociLayers(outer)) {
               final blob = '${work.path}/layer${n++}';
-              await _copyOut(layer.file, blob);
+              await _copyOut(layer, blob);
               final how = layer.compression;
               final decoder = TarDecoder();
               final input = InputFileStream(
@@ -119,18 +120,40 @@ abstract final class RootfsUnpack {
     return to;
   }
 
-  /// [file]'s contents written to [path], a megabyte at a time.
-  static Future<void> _copyOut(ArchiveFile file, String path) async {
+  /// [layer] written to [path] a megabyte at a time, and held to its
+  /// descriptor on the way.
+  static Future<void> _copyOut(OciLayer layer, String path) async {
+    final digest = _DigestSink();
+    final hashing = sha256.startChunkedConversion(digest);
+    final length = await _writeOut(layer.file, path, also: hashing.add);
+    hashing.close();
+    checkOciBlob(layer, digest.value!, length);
+  }
+
+  /// [file]'s contents written to [path] a megabyte at a time, each chunk
+  /// also handed to [also]; how many bytes there were.
+  ///
+  /// Never the whole of it at once: a member of a rootfs can be far larger
+  /// than any memory budget, and an image's layer is most of the image.
+  static Future<int> _writeOut(
+    ArchiveFile file,
+    String path, {
+    void Function(List<int> chunk)? also,
+  }) async {
     final content = file.getContent();
-    if (content == null) throw StateError('The image has an empty layer');
     final output = OutputFileStream(path);
+    var length = 0;
     try {
-      while (!content.isEOS) {
-        output.writeBytes(content.readBytes(1 << 20).toUint8List());
+      while (content != null && !content.isEOS) {
+        final chunk = content.readBytes(1 << 20).toUint8List();
+        output.writeBytes(chunk);
+        also?.call(chunk);
+        length += chunk.length;
       }
     } finally {
       await output.close();
     }
+    return length;
   }
 
   /// Which entries were hard links, by name, with what they point at.
@@ -342,12 +365,11 @@ abstract final class RootfsUnpack {
         // can create. `/dev` is built at boot instead — see the C side.
         continue;
       }
-      final file = File(path);
       if (await FileSystemEntity.type(path, followLinks: false) !=
           FileSystemEntityType.notFound) {
         await _removeTarTarget(path);
       }
-      await file.writeAsBytes(entry.readBytes() ?? const []);
+      await _writeOut(entry, path);
       // The mode the tarball recorded. It matters more here than under
       // `fakefs`: `realfs` reports the host's mode to the guest, so a busybox
       // written 0644 by Dart is a busybox the guest cannot execute.
@@ -425,4 +447,15 @@ abstract final class RootfsUnpack {
       ...toParts.sublist(shared),
     ].join('/');
   }
+}
+
+/// Where a chunked SHA-256 leaves its answer.
+final class _DigestSink implements Sink<Digest> {
+  Digest? value;
+
+  @override
+  void add(Digest data) => value = data;
+
+  @override
+  void close() {}
 }

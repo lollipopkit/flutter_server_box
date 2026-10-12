@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/oci_image.dart';
 import 'package:server_box/core/utils/rootfs_unpack.dart';
@@ -42,7 +43,8 @@ void main() {
 
   /// An OCI image of [layers], written to a file, as a download would arrive.
   Future<File> imageOf(List<List<int>> layers) async {
-    String nameOf(int i) => 'layer$i';
+    // Each blob at its own checksum, which is what the reader holds it to.
+    String nameOf(int i) => sha256.convert(layers[i]).toString();
     final manifest = utf8.encode(
       json.encode({
         'schemaVersion': 2,
@@ -67,13 +69,15 @@ void main() {
             'manifests': [
               {
                 'mediaType': 'application/vnd.oci.image.manifest.v1+json',
-                'digest': 'sha256:manifest',
+                'digest': 'sha256:${sha256.convert(manifest)}',
               },
             ],
           }),
         ),
       )
-      ..add(ArchiveFile.bytes('blobs/sha256/manifest', manifest));
+      ..add(
+        ArchiveFile.bytes('blobs/sha256/${sha256.convert(manifest)}', manifest),
+      );
     for (var i = 0; i < layers.length; i++) {
       image.add(ArchiveFile.bytes('blobs/sha256/${nameOf(i)}', layers[i]));
     }

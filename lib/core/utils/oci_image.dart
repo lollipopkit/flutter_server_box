@@ -13,14 +13,36 @@ library;
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 
 /// One layer and how it is packed. A null [compression] is a plain tar, which
 /// the specification allows and no image seen so far uses.
 ///
 /// The image's own entry rather than its bytes: a layer is most of the image,
-/// and the unpacker streams it out of the file rather than holding it.
-typedef OciLayer = ({ArchiveFile file, LinuxRootfsCompression? compression});
+/// and the unpacker streams it out of the file rather than holding it — and
+/// checks it against [sha256] and [size], its descriptor's, as it goes.
+typedef OciLayer = ({
+  ArchiveFile file,
+  LinuxRootfsCompression? compression,
+  String sha256,
+  int? size,
+});
+
+/// Throws unless [actual] and [length] are what [layer]'s descriptor says.
+///
+/// The download as a whole is pinned by the manifest's digest, so a blob that
+/// fails this was published that way rather than damaged in transit — and an
+/// image whose descriptors do not describe its blobs is not one to unpack.
+void checkOciBlob(OciLayer layer, Digest actual, int length) {
+  if (actual.toString() != layer.sha256 ||
+      (layer.size != null && layer.size != length)) {
+    throw StateError(
+      'A layer of the image does not match its descriptor: '
+      'sha256:${layer.sha256}',
+    );
+  }
+}
 
 /// Undoes [how]. The download's outer wrapper and a layer's inner one are the
 /// same question asked twice, so they share an answer.
@@ -33,6 +55,7 @@ List<int> decompressRootfs(List<int> bytes, LinuxRootfsCompression how) =>
 /// A layer's tar, decompressed.
 List<int> ociLayerTar(OciLayer layer) {
   final bytes = layer.file.readBytes() ?? const <int>[];
+  checkOciBlob(layer, sha256.convert(bytes), bytes.length);
   return layer.compression == null
       ? bytes
       : decompressRootfs(bytes, layer.compression!);
@@ -44,18 +67,24 @@ List<int> ociLayerTar(OciLayer layer) {
 /// which is precisely the condition under which getting it wrong stays
 /// invisible until some future image has two.
 List<OciLayer> ociLayers(Archive image) {
-  ArchiveFile blob(String digest) {
+  ({ArchiveFile file, String sha256, int? size}) blob(Map descriptor) {
     // `sha256:abcd…` lives at `blobs/sha256/abcd…`, which is the whole of the
-    // mapping an image layout defines between a digest and a file.
-    final parts = digest.split(':');
-    if (parts.length != 2) {
-      throw StateError('The image names a malformed digest: $digest');
+    // mapping an image layout defines between a digest and a file. SHA-256
+    // only: it is the one the specification requires, and a digest this
+    // cannot check is one the blob could not be held to.
+    final digest = descriptor['digest'];
+    final parts = digest is String ? digest.split(':') : const <String>[];
+    if (parts.length != 2 ||
+        parts[0] != 'sha256' ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(parts[1])) {
+      throw StateError('The image names a digest this cannot check: $digest');
     }
-    final file = image.findFile('blobs/${parts[0]}/${parts[1]}');
+    final file = image.findFile('blobs/sha256/${parts[1]}');
     if (file == null) {
       throw StateError('The image is missing the blob $digest');
     }
-    return file;
+    final size = descriptor['size'];
+    return (file: file, sha256: parts[1], size: size is int ? size : null);
   }
 
   final indexBytes = image.findFile('index.json')?.readBytes();
@@ -82,9 +111,15 @@ List<OciLayer> ociLayers(Archive image) {
       throw StateError('The image index has no Linux arm64 manifest');
     },
   );
+  final manifestBlob = blob(selected);
+  final manifestBytes = manifestBlob.file.content;
+  if (sha256.convert(manifestBytes).toString() != manifestBlob.sha256 ||
+      (manifestBlob.size != null &&
+          manifestBlob.size != manifestBytes.length)) {
+    throw StateError('The image manifest does not match its descriptor');
+  }
   final manifest =
-      json.decode(utf8.decode(blob(selected['digest'] as String).content))
-          as Map<String, dynamic>;
+      json.decode(utf8.decode(manifestBytes)) as Map<String, dynamic>;
 
   // Required, not defaulted to none. A manifest with no `layers` is either
   // damaged or is not a manifest at all — an image *index* is the shape that
@@ -101,10 +136,13 @@ List<OciLayer> ociLayers(Archive image) {
 
   return [
     for (final layer in layers)
-      (
-        file: blob((layer as Map)['digest'] as String),
-        compression: _layerCompression(layer['mediaType'] as String?),
-      ),
+      if (blob(layer as Map) case final b)
+        (
+          file: b.file,
+          compression: _layerCompression(layer['mediaType'] as String?),
+          sha256: b.sha256,
+          size: b.size,
+        ),
   ];
 }
 
