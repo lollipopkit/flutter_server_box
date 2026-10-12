@@ -274,11 +274,14 @@ extension _Actions on _RemoteDesktopProfilesPageState {
       actions: Btnx.cancelOk,
     );
     if (confirmed != true || !mounted) return;
-    await ref
-        .read(remoteDesktopSessionsProvider.notifier)
-        .closeForProfile(profile.id);
-    ref
-        .read(remoteDesktopProfilesProvider(widget.args.spi.id).notifier)
-        .remove(profile);
+    // Both read before the wait: the deletion was confirmed, and finishes
+    // even if this page is gone by the time the sessions have closed — `ref`
+    // is not to be used then. Both providers are kept alive.
+    final sessions = ref.read(remoteDesktopSessionsProvider.notifier);
+    final profiles = ref.read(
+      remoteDesktopProfilesProvider(widget.args.spi.id).notifier,
+    );
+    await sessions.closeForProfile(profile.id);
+    profiles.remove(profile);
   }
 }
