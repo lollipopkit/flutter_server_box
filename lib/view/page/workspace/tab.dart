@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/theme.dart';
 import 'package:flutter/gestures.dart'
     show kDoubleTapSlop, kDoubleTapTimeout, kMiddleMouseButton;
 import 'package:flutter_riverpod/flutter_riverpod.dart';

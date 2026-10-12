@@ -235,14 +235,24 @@ class _SyncBar extends StatelessWidget {
   }
 }
 
-/// The top edge a focused pane's bar carries.
-BoxDecoration _headDecoration(BuildContext context, {required bool focus}) {
+/// What marks the focused pane's selected tab: the theme's segmented
+/// marker, the one every other "which of these is on screen" control in the
+/// app is drawn with. An unfocused pane's is the same marker, faded, so two
+/// panes side by side say which one keys go to without a second colour.
+({Color fill, Color text, Color quiet, BorderRadius radius}) _tabStyle(
+  BuildContext context, {
+  required bool focus,
+}) {
   final scheme = Theme.of(context).colorScheme;
-  return BoxDecoration(
-    color: scheme.surfaceContainerLow,
-    border: focus
-        ? Border(top: BorderSide(color: scheme.primary, width: 2))
-        : null,
+  final style = ComponentStyles.of(context).segmented;
+  final fill = style.selectedColor ?? scheme.secondaryContainer;
+  return (
+    fill: focus ? fill : fill.withValues(alpha: fill.a * 0.45),
+    text: style.selectedTextColor ?? scheme.onSecondaryContainer,
+    quiet: style.textColor ?? scheme.onSurfaceVariant,
+    // [SessionSwitcherLabel]'s ink, so a pane's strip and a narrow pane's
+    // label are the same shape.
+    radius: BorderRadius.circular(style.radius ?? 11),
   );
 }
 
@@ -299,7 +309,7 @@ List<Widget> _paneButtons(
     Builder(
       builder: (anchor) => Btn.icon(
         text: l10n.workspacePaneActions,
-        icon: const Icon(Icons.more_horiz, size: 18),
+        icon: const ThemedIcon(Icons.more_horiz, size: 18),
         onTap: () => p.openMenu(anchor, folded),
       ),
     ),
@@ -372,9 +382,8 @@ class _StripHead extends StatelessWidget {
     // of tabs and the pane's own five.
     final room = pane.width - 300 - SwitcherBar.slot * 5;
     final fold = _foldActions(actions, room);
-    return Container(
+    return SizedBox(
         height: _kHeadHeight,
-        decoration: _headDecoration(context, focus: false),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -424,13 +433,17 @@ class _BarHead extends StatelessWidget {
     final fixed = 2 + (pane._showSplit ? 2 : 0);
     final room = pane.width - 160 - SwitcherBar.slot * fixed;
     final fold = _foldActions(actions, room);
-    final bar = Container(
+    final bar = SizedBox(
       height: _kHeadHeight,
-      decoration: _headDecoration(context, focus: pane._focused),
       child: Row(
         children: [
           Expanded(
-            child: SessionSwitcherLabel(
+            // Quieter while another pane has the keys, as the strip's marker
+            // is.
+            child: AnimatedOpacity(
+              opacity: pane._focused ? 1 : 0.6,
+              duration: context.motion(Durations.short3),
+              child: SessionSwitcherLabel(
               name: wsTabTitle(active, servers[active.serverId]),
               position: p.activeIndex + 1,
               total: p.tabs.length,
@@ -439,6 +452,7 @@ class _BarHead extends StatelessWidget {
                 pane.host._ws.focus(p.id);
                 pane.host._showTabs(p.id);
               },
+            ),
             ),
           ),
           ..._paneButtons(
@@ -490,7 +504,7 @@ Widget _draggable(
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: scheme.onSecondaryContainer),
+          ThemedIcon(icon, size: 17, color: scheme.onSecondaryContainer),
           const SizedBox(width: 7),
           Text(label, style: TextStyle(color: scheme.onSecondaryContainer)),
         ],
@@ -545,6 +559,7 @@ class _TabStrip extends StatelessWidget {
           ),
           child: ListView(
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
             children: [
               for (final t in p.tabs)
                 _StripTab(
@@ -586,35 +601,31 @@ class _StripTabState extends State<_StripTab> {
     final tab = widget.tab;
     final on = pane.pane.activeId == tab.id;
     final scheme = Theme.of(context).colorScheme;
+    final style = _tabStyle(context, focus: pane._focused);
+    final fg = on ? style.text : style.quiet;
     final kb = pane.host.ref.read(keybindingsProvider);
     final sync = pane.ws.sync && tab.view == WorkspaceView.term;
     void select() => pane.host._ws.selectTab(pane.pane.id, tab.id);
     void close() => pane.host._closeTab(pane.pane.id, tab);
 
-    final body = Container(
+    final body = AnimatedContainer(
+      duration: context.motion(Durations.short3),
+      curve: Curves.easeOut,
       constraints: const BoxConstraints(maxWidth: 230),
-      padding: const EdgeInsets.only(left: 13, right: 5),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.only(left: 11, right: 3),
       decoration: BoxDecoration(
         color: on
-            ? Theme.of(context).scaffoldBackgroundColor
+            ? style.fill
             : _hover
             ? scheme.onSurface.withValues(alpha: 0.06)
-            : null,
-        border: Border(
-          right: BorderSide(color: Hairline.color(context)),
-          top: on && pane._focused
-              ? BorderSide(color: scheme.primary, width: 2)
-              : BorderSide.none,
-        ),
+            : style.fill.withValues(alpha: 0),
+        borderRadius: style.radius,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            tab.view.icon,
-            size: 17,
-            color: on ? scheme.onSurface : scheme.onSurfaceVariant,
-          ),
+          ThemedIcon(tab.view.icon, size: 17, color: fg),
           const SizedBox(width: 7),
           Flexible(
             child: Text(
@@ -622,16 +633,20 @@ class _StripTabState extends State<_StripTab> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontWeight: on ? FontWeight.w500 : null,
-                color: on ? scheme.onSurface : scheme.onSurfaceVariant,
+                fontSize: 13,
+                fontWeight: on ? FontWeight.w600 : FontWeight.w500,
+                color: fg,
               ),
             ),
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 5),
           Text(
             widget.spi?.name ?? '',
             maxLines: 1,
-            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12,
+              color: fg.withValues(alpha: fg.a * 0.7),
+            ),
           ),
           if (!tab.live) ...[const SizedBox(width: 5), _offMark(context)],
           if (sync) ...[
@@ -646,6 +661,7 @@ class _StripTabState extends State<_StripTab> {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 iconSize: 15,
+                color: fg,
                 tooltip: kb.tip(libL10n.close, KbCommand.wsCloseTab),
                 onPressed: close,
                 icon: const Icon(Icons.close),
