@@ -5582,7 +5582,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Відновлені робочі простори підключаються, коли ви натискаєте «Підключити».';
+      'Цей сервер налаштовано не підключатися під час запуску.';
 
   @override
   String workspaceAllTabs(int count) {

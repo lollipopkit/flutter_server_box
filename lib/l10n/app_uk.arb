@@ -1559,7 +1559,7 @@
   "workspace": "Робочий простір",
   "workspaceTroubleshoot": "Діагностика",
   "workspaceNotConnected": "{server} не підключено",
-  "workspaceConnectHint": "Відновлені робочі простори підключаються, коли ви натискаєте «Підключити».",
+  "workspaceConnectHint": "Цей сервер налаштовано не підключатися під час запуску.",
   "workspaceAllTabs": "Усі вкладки ({count})",
   "workspaceAsleep": "Не підключено",
   "workspaceClosed": "Закрито: {what}",

@@ -5594,7 +5594,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Espaços de trabalho restaurados se conectam quando você toca em Ligar.';
+      'Este servidor está definido para não se ligar ao iniciar.';
 
   @override
   String workspaceAllTabs(int count) {

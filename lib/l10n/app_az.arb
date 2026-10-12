@@ -1559,7 +1559,7 @@
   "workspace": "İş sahəsi",
   "workspaceTroubleshoot": "Problemlərin həlli",
   "workspaceNotConnected": "{server} qoşulmayıb",
-  "workspaceConnectHint": "Bərpa olunan iş sahələri Qoşul düyməsinə toxunduqda qoşulur.",
+  "workspaceConnectHint": "Bu server işə salınanda qoşulmamaq üçün ayarlanıb.",
   "workspaceAllTabs": "Bütün vərəqlər ({count})",
   "workspaceAsleep": "Qoşulmayıb",
   "workspaceClosed": "{what} bağlandı",

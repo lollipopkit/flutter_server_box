@@ -9489,10 +9489,10 @@ abstract class AppLocalizations {
   /// **'{server} is not connected'**
   String workspaceNotConnected(String server);
 
-  /// Why a restored workspace tab is not connected yet.
+  /// Why a restored workspace tab is not connected yet: its server does not auto-connect.
   ///
   /// In en, this message translates to:
-  /// **'Restored workspaces connect when you tap Connect.'**
+  /// **'This server is set not to connect at launch.'**
   String get workspaceConnectHint;
 
   /// Button listing every tab of a pane.

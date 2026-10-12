@@ -5606,7 +5606,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Le aree di lavoro ripristinate si connettono quando tocchi Connetti.';
+      'Questo server è impostato per non connettersi all\'avvio.';
 
   @override
   String workspaceAllTabs(int count) {

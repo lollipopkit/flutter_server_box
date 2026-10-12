@@ -56,7 +56,17 @@ void main() {
     getIt.registerSingleton<HistoryStore>(HistoryStore('history_test'));
     getIt.registerSingleton<SnippetStore>(SnippetStore());
     getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
-    Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
+    // Not connected at launch: its tabs come back asleep, which is what these
+    // tests look at, and nothing here opens a real connection.
+    Stores.server.put(
+      spiFixture(
+        id: 'srv-1',
+        name: 'web',
+        ip: 'h',
+        user: 'u',
+        autoConnect: false,
+      ),
+    );
   });
 
   tearDown(() async {

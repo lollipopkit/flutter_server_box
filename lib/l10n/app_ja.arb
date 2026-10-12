@@ -1559,7 +1559,7 @@
   "workspace": "ワークスペース",
   "workspaceTroubleshoot": "トラブルシュート",
   "workspaceNotConnected": "{server} は未接続です",
-  "workspaceConnectHint": "復元したワークスペースは「接続」をタップすると接続します。",
+  "workspaceConnectHint": "このサーバーは起動時に自動接続しない設定です。",
   "workspaceAllTabs": "すべてのタブ（{count}）",
   "workspaceAsleep": "未接続",
   "workspaceClosed": "{what}を閉じました",

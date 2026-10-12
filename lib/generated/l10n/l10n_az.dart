@@ -5540,7 +5540,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Bərpa olunan iş sahələri Qoşul düyməsinə toxunduqda qoşulur.';
+      'Bu server işə salınanda qoşulmamaq üçün ayarlanıb.';
 
   @override
   String workspaceAllTabs(int count) {

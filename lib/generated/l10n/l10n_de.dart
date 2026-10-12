@@ -5616,7 +5616,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Wiederhergestellte Arbeitsbereiche verbinden sich erst, wenn du auf Verbinden tippst.';
+      'Dieser Server ist so eingestellt, dass er sich beim Start nicht verbindet.';
 
   @override
   String workspaceAllTabs(int count) {

@@ -5282,7 +5282,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get workspaceConnectHint => '復元したワークスペースは「接続」をタップすると接続します。';
+  String get workspaceConnectHint => 'このサーバーは起動時に自動接続しない設定です。';
 
   @override
   String workspaceAllTabs(int count) {

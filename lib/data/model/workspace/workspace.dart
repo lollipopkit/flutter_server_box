@@ -352,8 +352,14 @@ final class Workspace {
     );
   }
 
-  /// Every tab of [serverId] running.
-  Workspace wake(String serverId) => copyWith(
+  /// Every tab of [serverId] running; this workspace itself when none was
+  /// asleep.
+  Workspace wake(String serverId) {
+    if (!tabs.any((t) => t.serverId == serverId && !t.live)) return this;
+    return _wake(serverId);
+  }
+
+  Workspace _wake(String serverId) => copyWith(
     panes: {
       for (final e in panes.entries)
         e.key: e.value.copyWith(

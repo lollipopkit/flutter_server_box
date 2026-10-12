@@ -1559,7 +1559,7 @@
   "workspace": "Espacio de trabajo",
   "workspaceTroubleshoot": "Diagnóstico",
   "workspaceNotConnected": "{server} no está conectado",
-  "workspaceConnectHint": "Los espacios de trabajo restaurados se conectan cuando tocas Conectar.",
+  "workspaceConnectHint": "Este servidor está configurado para no conectarse al iniciar.",
   "workspaceAllTabs": "Todas las pestañas ({count})",
   "workspaceAsleep": "No conectado",
   "workspaceClosed": "Se cerró {what}",

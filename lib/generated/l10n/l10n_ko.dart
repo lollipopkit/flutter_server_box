@@ -5283,7 +5283,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get workspaceConnectHint => '복원된 작업 공간은 연결을 탭하면 연결됩니다.';
+  String get workspaceConnectHint => '이 서버는 시작할 때 자동으로 연결하지 않도록 설정되어 있습니다.';
 
   @override
   String workspaceAllTabs(int count) {

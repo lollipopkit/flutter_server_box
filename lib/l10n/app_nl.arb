@@ -1559,7 +1559,7 @@
   "workspace": "Werkruimte",
   "workspaceTroubleshoot": "Probleemoplossing",
   "workspaceNotConnected": "{server} is niet verbonden",
-  "workspaceConnectHint": "Herstelde werkruimtes maken verbinding wanneer je op Verbinden tikt.",
+  "workspaceConnectHint": "Deze server is ingesteld om niet te verbinden bij het opstarten.",
   "workspaceAllTabs": "Alle tabbladen ({count})",
   "workspaceAsleep": "Niet verbonden",
   "workspaceClosed": "{what} gesloten",

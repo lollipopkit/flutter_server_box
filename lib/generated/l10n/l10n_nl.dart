@@ -5594,7 +5594,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Herstelde werkruimtes maken verbinding wanneer je op Verbinden tikt.';
+      'Deze server is ingesteld om niet te verbinden bij het opstarten.';
 
   @override
   String workspaceAllTabs(int count) {

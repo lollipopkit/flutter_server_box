@@ -5550,7 +5550,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Restored workspaces connect when you tap Connect.';
+      'This server is set not to connect at launch.';
 
   @override
   String workspaceAllTabs(int count) {

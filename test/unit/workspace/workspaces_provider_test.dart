@@ -71,6 +71,51 @@ void main() {
     });
   });
 
+  test('a restore wakes the tabs of servers that connect at launch', () {
+    Stores.server.put(
+      spiFixture(id: 's2', name: 'db', ip: 'h2', user: 'u', autoConnect: false),
+    );
+    Stores.history.workspaces.put(
+      jsonEncode([
+        {
+          'id': 'w1',
+          'name': 'w',
+          'root': const WsSplit<String>(
+            WsAxis.row,
+            0.5,
+            WsLeaf('p1'),
+            WsLeaf('p2'),
+          ).toJson((l) => l),
+          'panes': [
+            for (final (p, s) in [('p1', 's1'), ('p2', 's2')])
+              {
+                'id': p,
+                'tabs': [
+                  {'id': 't$p', 'view': 'term', 'server': s},
+                ],
+                'active': 't$p',
+              },
+          ],
+        },
+      ]),
+    );
+    final again = ProviderContainer();
+    addTearDown(again.dispose);
+    final tabs = {
+      for (final t in again.read(workspacesProvider).current.tabs)
+        t.serverId: t.live,
+    };
+    expect(tabs, {'s1': true, 's2': false});
+
+    // Woken everywhere once asked, not only in the workspace on screen.
+    again.read(workspacesProvider.notifier).create();
+    again.read(workspacesProvider.notifier).wake('s2');
+    expect(
+      again.read(workspacesProvider).all.first.tabs.every((t) => t.live),
+      isTrue,
+    );
+  });
+
   test('closing a workspace that is not there changes nothing', () {
     ops().create();
     final before = state();

@@ -5190,7 +5190,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get workspaceConnectHint => '工作区恢复后，各界面在点按「连接」时才建立连接。';
+  String get workspaceConnectHint => '这台服务器设置为启动时不自动连接。';
 
   @override
   String workspaceAllTabs(int count) {
@@ -10707,7 +10707,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get workspaceConnectHint => '工作區還原後，各介面在點按「連線」時才建立連線。';
+  String get workspaceConnectHint => '這台伺服器設定為啟動時不自動連線。';
 
   @override
   String workspaceAllTabs(int count) {

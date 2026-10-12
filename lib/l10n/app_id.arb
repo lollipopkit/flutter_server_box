@@ -1559,7 +1559,7 @@
   "workspace": "Ruang kerja",
   "workspaceTroubleshoot": "Pemecahan masalah",
   "workspaceNotConnected": "{server} tidak terhubung",
-  "workspaceConnectHint": "Ruang kerja yang dipulihkan terhubung saat Anda mengetuk Hubungkan.",
+  "workspaceConnectHint": "Server ini diatur agar tidak terhubung saat aplikasi dibuka.",
   "workspaceAllTabs": "Semua tab ({count})",
   "workspaceAsleep": "Tidak terhubung",
   "workspaceClosed": "{what} ditutup",

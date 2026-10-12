@@ -1559,7 +1559,7 @@
   "workspace": "Arbeitsbereich",
   "workspaceTroubleshoot": "Fehlersuche",
   "workspaceNotConnected": "{server} ist nicht verbunden",
-  "workspaceConnectHint": "Wiederhergestellte Arbeitsbereiche verbinden sich erst, wenn du auf Verbinden tippst.",
+  "workspaceConnectHint": "Dieser Server ist so eingestellt, dass er sich beim Start nicht verbindet.",
   "workspaceAllTabs": "Alle Tabs ({count})",
   "workspaceAsleep": "Nicht verbunden",
   "workspaceClosed": "{what} geschlossen",

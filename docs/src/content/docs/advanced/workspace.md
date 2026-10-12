@@ -32,9 +32,11 @@ Closing a tab or a pane can be undone from the message that appears, or with
 
 ## After a restart
 
-Workspaces are kept on the device. When the app starts again, every tab waits
-until you tap **Connect**, which connects all tabs of that server in the
-workspace. A tab on a server that has been deleted is removed.
+Workspaces are kept on the device. When the app starts again, tabs of a
+server set to connect at launch reconnect as they are shown. Tabs of any other
+server wait until you tap **Connect**, or until the server is connected from
+the server tab; either connects all of that server's tabs. A tab on a server
+that has been deleted is removed.
 
 ## Sync input
 

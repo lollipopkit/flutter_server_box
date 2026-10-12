@@ -5531,7 +5531,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Geri yüklenen çalışma alanları Bağlan\'a dokunduğunuzda bağlanır.';
+      'Bu sunucu başlangıçta bağlanmayacak şekilde ayarlanmış.';
 
   @override
   String workspaceAllTabs(int count) {

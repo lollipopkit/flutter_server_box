@@ -5622,7 +5622,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Los espacios de trabajo restaurados se conectan cuando tocas Conectar.';
+      'Este servidor está configurado para no conectarse al iniciar.';
 
   @override
   String workspaceAllTabs(int count) {

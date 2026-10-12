@@ -1559,7 +1559,7 @@
   "workspace": "Çalışma alanı",
   "workspaceTroubleshoot": "Sorun giderme",
   "workspaceNotConnected": "{server} bağlı değil",
-  "workspaceConnectHint": "Geri yüklenen çalışma alanları Bağlan'a dokunduğunuzda bağlanır.",
+  "workspaceConnectHint": "Bu sunucu başlangıçta bağlanmayacak şekilde ayarlanmış.",
   "workspaceAllTabs": "Tüm sekmeler ({count})",
   "workspaceAsleep": "Bağlı değil",
   "workspaceClosed": "{what} kapatıldı",

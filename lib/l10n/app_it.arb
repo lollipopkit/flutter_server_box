@@ -1559,7 +1559,7 @@
   "workspace": "Area di lavoro",
   "workspaceTroubleshoot": "Diagnostica",
   "workspaceNotConnected": "{server} non è connesso",
-  "workspaceConnectHint": "Le aree di lavoro ripristinate si connettono quando tocchi Connetti.",
+  "workspaceConnectHint": "Questo server è impostato per non connettersi all'avvio.",
   "workspaceAllTabs": "Tutte le schede ({count})",
   "workspaceAsleep": "Non connesso",
   "workspaceClosed": "Chiuso: {what}",

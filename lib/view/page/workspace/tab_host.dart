@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/model/workspace/workspace.dart';
@@ -88,6 +89,9 @@ final class WsTabRuntime {
   }
 }
 
+/// The states in which a server has a connection a tab can use.
+const _connected = {ServerConn.connected, ServerConn.loading, ServerConn.finished};
+
 /// One tab's page, or what stands in for it before it is connected.
 class WsTabHost extends ConsumerWidget {
   const WsTabHost({
@@ -104,7 +108,19 @@ class WsTabHost extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spi = ref.watch(serverProvider(tab.serverId).select((s) => s.spi));
-    if (!tab.live) return _Dormant(tab: tab, spi: spi);
+    if (!tab.live) {
+      // Connected from somewhere else — the server tab, by hand — is the
+      // answer the button here would have asked for.
+      final up = ref.watch(
+        serverProvider(tab.serverId).select((s) => _connected.contains(s.conn)),
+      );
+      if (up) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => ref.read(workspacesProvider.notifier).wake(tab.serverId),
+        );
+      }
+      return _Dormant(tab: tab, spi: spi);
+    }
     final reason = tab.view.unavailableOn(
       spi,
       ref.watch(serverProvider(tab.serverId).select((s) => s.remoteAccess)),

@@ -5541,7 +5541,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Ruang kerja yang dipulihkan terhubung saat Anda mengetuk Hubungkan.';
+      'Server ini diatur agar tidak terhubung saat aplikasi dibuka.';
 
   @override
   String workspaceAllTabs(int count) {

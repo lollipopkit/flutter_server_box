@@ -88,7 +88,8 @@ class Workspaces extends _$Workspaces {
     final raw = Stores.history.workspaces.fetch();
     if (raw.isNotEmpty) {
       try {
-        final servers = {for (final s in Stores.server.fetch()) s.id};
+        final spis = Stores.server.fetch();
+        final servers = {for (final s in spis) s.id};
         // A tab's id keys its page across every workspace, so one written
         // twice — by hand, by a merge — keeps its first place only.
         final tabIds = <String>{};
@@ -99,7 +100,15 @@ class Workspaces extends _$Workspaces {
               e,
               keep: (t) => servers.contains(t.serverId) && tabIds.add(t.id),
             );
-            if (ws != null) out.add(ws);
+            if (ws == null) continue;
+            // Asleep only where the server is: one set to connect at launch is
+            // being connected by the server tab right now, and a tab of it
+            // asking to be told to connect is a question already answered.
+            var woken = ws;
+            for (final spi in spis) {
+              if (spi.autoConnect) woken = woken.wake(spi.id);
+            }
+            out.add(woken);
           }
         }
       } catch (e, s) {
@@ -286,8 +295,9 @@ class Workspaces extends _$Workspaces {
     persist: persist,
   );
 
-  /// Every tab of [serverId] in the current workspace connects.
-  void wake(String serverId) => edit((ws) => ws.wake(serverId));
+  /// Every tab of [serverId] connects, in every workspace: the server is one
+  /// connection, wherever its tabs are.
+  void wake(String serverId) => _editAll((ws) => ws.wake(serverId));
 
   /// A new workspace laid out as [template], on [serverId].
   Workspace applyTemplate(WsTemplate template, String serverId) {

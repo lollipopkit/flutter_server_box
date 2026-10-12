@@ -7177,9 +7177,9 @@
       }
     }
   },
-  "workspaceConnectHint": "Restored workspaces connect when you tap Connect.",
+  "workspaceConnectHint": "This server is set not to connect at launch.",
   "@workspaceConnectHint": {
-    "description": "Why a restored workspace tab is not connected yet."
+    "description": "Why a restored workspace tab is not connected yet: its server does not auto-connect."
   },
   "workspaceAllTabs": "All tabs ({count})",
   "@workspaceAllTabs": {

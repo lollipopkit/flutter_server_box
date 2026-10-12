@@ -5581,7 +5581,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get workspaceConnectHint =>
-      'Восстановленные рабочие пространства подключаются, когда вы нажимаете «Подключиться».';
+      'Этот сервер настроен не подключаться при запуске.';
 
   @override
   String workspaceAllTabs(int count) {

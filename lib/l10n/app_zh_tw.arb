@@ -1559,7 +1559,7 @@
   "workspace": "工作區",
   "workspaceTroubleshoot": "排查",
   "workspaceNotConnected": "{server} 未連線",
-  "workspaceConnectHint": "工作區還原後，各介面在點按「連線」時才建立連線。",
+  "workspaceConnectHint": "這台伺服器設定為啟動時不自動連線。",
   "workspaceAllTabs": "全部分頁（{count}）",
   "workspaceAsleep": "未連線",
   "workspaceClosed": "已關閉{what}",
