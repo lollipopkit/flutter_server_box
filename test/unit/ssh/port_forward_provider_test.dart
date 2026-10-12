@@ -248,28 +248,29 @@ void _reasons() {
   });
 }
 
-/// Waits for the forward to take [port], which is what says it reached its
-/// bind stage: binding it here stops working the moment it has.
+/// Waits for the forward to listen on [port], which is what says it reached
+/// its bind stage.
 ///
-/// Generous, because the deadline is not what the test is about. A second was
-/// enough on a developer's machine and not on a loaded CI runner, where this
-/// failed as "did not reach its local bind stage" — a real bind that was
-/// simply late. The loop leaves as soon as the port is taken, so the only
-/// thing a longer deadline costs is how long a genuine failure takes to
-/// report.
+/// Asked by connecting, never by binding the port here: a probe that bound it
+/// held it for an instant every 10 ms, and a forward binding in that instant
+/// failed with the address in use — so on a loaded CI runner it never bound
+/// at all, and this reported "did not reach its local bind stage" after the
+/// whole deadline. The connection it makes is closed at once; the forward's
+/// dial for it is left to `clear`, which is what the test is about.
 Future<void> _waitUntilPortIsBound(int port) async {
   final deadline = DateTime.now().add(const Duration(seconds: 10));
   while (DateTime.now().isBefore(deadline)) {
     try {
-      final socket = await ServerSocket.bind(
+      final socket = await Socket.connect(
         InternetAddress.loopbackIPv4,
         port,
+        timeout: const Duration(seconds: 1),
       );
-      await socket.close();
-    } on SocketException {
+      socket.destroy();
       return;
+    } on SocketException {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
     }
-    await Future<void>.delayed(const Duration(milliseconds: 10));
   }
   fail('Port forward did not reach its local bind stage');
 }

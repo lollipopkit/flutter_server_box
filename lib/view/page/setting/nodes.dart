@@ -142,7 +142,7 @@ List<SettingsNode> _buildNodes() {
             // word in every locale this ships in.
             title: 'Linux',
             icon: Icons.layers_outlined,
-            beta: true,
+            feature: Feature.linux,
             page: () => const AppSettingsPage(section: SettingsSection.linux),
           ),
         SettingsNode.leaf(

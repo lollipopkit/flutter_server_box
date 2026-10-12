@@ -3,6 +3,7 @@ import 'package:fl_lib/theme.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/agent.dart';
@@ -62,23 +63,25 @@ extension AppTabViewX on AppTab {
     };
   }
 
-  /// Whether the tab is still in beta.
-  // TODO: move to the Feature abstraction (next PR).
-  bool get beta => switch (this) {
-    AppTab.remoteDesktop ||
-    AppTab.agent ||
-    AppTab.benchmark ||
-    AppTab.virt ||
-    AppTab.workspace => true,
-    _ => false,
+  /// The feature this tab is, where it is one [Feature] knows about.
+  Feature? get feature => switch (this) {
+    AppTab.remoteDesktop => Feature.remoteDesktop,
+    AppTab.agent => Feature.agent,
+    AppTab.benchmark => Feature.benchmark,
+    AppTab.virt => Feature.virt,
+    AppTab.workspace => Feature.workspace,
+    _ => null,
   };
+
+  /// Whether the tab is still in beta.
+  bool get beta => feature?.beta ?? false;
 
   /// The mark a tab carries, where the tab is *listed* — the settings page
   /// that arranges them, and the sheet the bar opens for the ones it cannot
   /// hold — and after its name in the open rail ([navRailItem]). The bottom
   /// bar, whose label is mostly hidden, carries it on the pill's corner while
   /// the tab is selected.
-  Widget? get mark => beta ? const BetaTag() : null;
+  Widget? get mark => feature?.mark();
 
   /// [label] with [mark], for a row that lists the tab rather than opening it.
   Widget get listTitle {
@@ -101,7 +104,7 @@ extension AppTabViewX on AppTab {
       badge: this == AppTab.server
           ? (opacity) => ConnCountRailBadge(opacity: opacity)
           : null,
-      mark: beta ? (opacity) => BetaTag(opacity: opacity) : null,
+      mark: beta ? (opacity) => feature!.mark(opacity: opacity)! : null,
       onMenu: onMenu,
     );
   }

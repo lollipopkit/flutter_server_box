@@ -29,7 +29,10 @@ extension _Linux on _AppSettingsPageState {
   /// them would rebuild that card alone.
   List<SettingsGroup> _buildLinux() {
     return [
-      SettingsGroup(libL10n.system, [_buildLinuxBeta(), _buildLinuxProfiles()]),
+      SettingsGroup(libL10n.system, [
+        if (Feature.linux.beta) _buildLinuxBeta(),
+        _buildLinuxProfiles(),
+      ]),
       if (_buildLinuxShell() case final shell?)
         SettingsGroup(libL10n.terminal, [shell]),
       SettingsGroup(libL10n.network, [_buildLinuxMirror(), _buildLinuxDns()]),

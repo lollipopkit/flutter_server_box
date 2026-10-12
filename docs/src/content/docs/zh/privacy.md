@@ -38,7 +38,7 @@ Agent 对话、记忆笔记、AI provider 与工具设置不会加入备份，�
 | **不发送** | 不发送任何内容。本机日志仍保留在设备上，你仍可以准备手动报告。 |
 | **基本信息** | 已捕获的崩溃和错误，以及构建信息、平台信息和必要的诊断操作记录。App 正常运行时不会持续发送数据。 |
 
-Android 默认值为**不发送**。iOS、macOS、Linux 和 Windows 默认值为**基本信息**。在支持自动诊断的构建中，第一次自动上传前都会显示引导页。
+所有平台的默认值都是**不发送**。在引导页或设置中选择**基本信息**之前，不会上传任何数据。在支持自动诊断的构建中，第一次自动上传前都会显示引导页。
 
 改为**不发送**会立即停止自动发送，不会等到下次启动。
 
@@ -128,7 +128,7 @@ App 只保存服务器最近上报的公网网卡地址结果，包括“未上�
 
 错误报告会发送到开发者运营的 Sentry-compatible server：`sentry.lollipopkit.com`。App 不向任何统计服务发送数据。
 
-Sentry 的 destination 写在源码中，因此从未修改源码构建的版本也会向该地址发送数据，除非构建者修改它。Android 上自动诊断仍默认关闭，必须由用户明确选择。
+Sentry 的 destination 写在源码中，因此从未修改源码构建的版本也会向该地址发送数据，除非构建者修改它。自动诊断仍默认关闭，必须由用户明确选择。
 
 诊断数据不会用于广告，不会与其他公司共享，也不会用于跨 App 或跨网站追踪。诊断服务可能会在排查相应问题所需的期限内保留报告。如需请求删除报告，请在 [github.com/lollipopkit/flutter_server_box](https://github.com/lollipopkit/flutter_server_box/issues) 提交 issue，并提供大致时间、App 版本和问题的简短描述。不要在公开 issue 中包含密码、密钥或其他敏感内容。
 
@@ -140,7 +140,7 @@ credential 保存在 Watch 自己的钥匙串中；在 iOS 上保存在共享钥
 
 ## 应用商店平台
 
-App Store 和 Google Play 版本还可能受到平台自身上报机制的影响。Apple 和 Google 按照各自的政策收集相关信息，这些信息不是由 Server Box 通过上述诊断服务收集的。详见 [Apple 隐私政策](https://www.apple.com/legal/privacy/) 和 [Google 隐私政策](https://policies.google.com/privacy)。F-Droid 版本没有商店提供的崩溃上报渠道，这也是其默认诊断级别为**不发送**的原因之一。
+App Store 和 Google Play 版本还可能受到平台自身上报机制的影响。Apple 和 Google 按照各自的政策收集相关信息，这些信息不是由 Server Box 通过上述诊断服务收集的。详见 [Apple 隐私政策](https://www.apple.com/legal/privacy/) 和 [Google 隐私政策](https://policies.google.com/privacy)。F-Droid 版本没有商店提供的崩溃上报渠道。
 
 ## 儿童
 

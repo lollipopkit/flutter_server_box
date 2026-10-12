@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
@@ -292,12 +293,28 @@ void main() {
   });
 
   group('the server function marks', () {
-    test('only the remote desktop entry is still in beta', () {
+    test('the entries of a beta feature carry one, the rest carry none', () {
       final marked = {
         for (final btn in ServerFuncBtn.values)
           if (btn.mark != null) btn,
       };
-      expect(marked, {ServerFuncBtn.remoteDesktop});
+      expect(marked, {ServerFuncBtn.remoteDesktop, ServerFuncBtn.portForward});
+    });
+  });
+
+  group('the features', () {
+    // Every mark is [Feature]'s to give: an entry drawing one of its own is
+    // the drift this is here to stop.
+    test('a mark is drawn exactly when the feature is in beta', () {
+      for (final f in Feature.values) {
+        expect(f.mark() != null, f.beta, reason: f.name);
+      }
+      for (final tab in AppTab.values) {
+        expect(tab.mark != null, tab.feature?.beta ?? false, reason: tab.name);
+      }
+      for (final btn in ServerFuncBtn.values) {
+        expect(btn.mark != null, btn.feature?.beta ?? false, reason: btn.name);
+      }
     });
   });
 }

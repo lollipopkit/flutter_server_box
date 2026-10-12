@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/store.dart';
@@ -167,6 +168,7 @@ Future<bool> installRootfs(
 /// the port forward warning does, where there is nothing to cancel — would
 /// suppress a warning the user backed out of.
 Future<bool> _confirmBeta(BuildContext context) async {
+  if (!Feature.linux.beta) return true;
   if (Stores.setting.linuxBetaWarned.fetch()) return true;
   var noMore = false;
   final ok = await context.showRoundDialog<bool>(

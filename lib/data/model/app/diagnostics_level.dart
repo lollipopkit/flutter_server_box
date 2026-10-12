@@ -1,5 +1,3 @@
-import 'dart:io';
-
 /// How much diagnostic data leaves the device.
 ///
 /// Not a crash setting. A crash is one of the things reported; the levels
@@ -53,27 +51,13 @@ enum DiagnosticsLevel {
   }
 }
 
-/// What a fresh install starts at, before the user has chosen.
+/// What an install is at until the user chooses: [DiagnosticsLevel.none], on
+/// every platform.
 ///
-/// Android starts at [DiagnosticsLevel.none]; everything else starts at
-/// [DiagnosticsLevel.basic].
+/// Uploading is something the user turns on, never something they find on.
+/// The intro and Settings both offer the levels; until one that uploads is
+/// picked there, nothing is sent.
 ///
-/// The split is about F-Droid, which distributes only the Android build. Their
-/// Tracking anti-feature requires opt-in *and* disabled by default, so the
-/// Android default has to be `none`. The desktop and Apple builds never go
-/// through that channel and start at `basic`: failures are reported, nothing
-/// is sent in between.
-///
-/// **Decided at runtime, and that is load-bearing.** F-Droid's metadata
-/// carries a `binary:` field for this app, so they rebuild from this source and
-/// compare the result byte for byte against the published APK, distributing
-/// our signature only when the two match. A compile-time flag that differs
-/// between the two builds makes the bytes differ and the verification fail;
-/// one binary branching on [Platform.isAndroid] is identical either way.
-DiagnosticsLevel get defaultDiagnosticsLevel {
-  // An escape hatch for a private build — a beta channel that never goes near
-  // F-Droid. Must not be used to vary the published Android build, per above.
-  const override = String.fromEnvironment('DIAG_DEFAULT');
-  if (override.isNotEmpty) return DiagnosticsLevel.fromName(override);
-  return Platform.isAndroid ? DiagnosticsLevel.none : DiagnosticsLevel.basic;
-}
+/// The same on every platform, and in every build: the Android build F-Droid
+/// verifies byte for byte against the published APK has no flag to differ by.
+const defaultDiagnosticsLevel = DiagnosticsLevel.none;

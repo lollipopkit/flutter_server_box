@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 
@@ -7,19 +5,12 @@ import 'package:server_box/data/model/app/diagnostics_level.dart';
 /// silent in both directions: too permissive and an F-Droid build collects
 /// without being asked, too strict and nothing is ever reported.
 void main() {
-  test('the default is decided by platform, not by build flags', () {
-    // Android must start at `none`: it is the only platform F-Droid
-    // distributes, and their policy requires opt-in *and* disabled by default.
-    // Everywhere else starts at `basic`.
-    //
-    // Runtime rather than compile-time, and that is the load-bearing part:
-    // F-Droid rebuilds this source and compares byte for byte against the
-    // published APK, so a flag that differed between the two would fail the
-    // verification. The tests run on the host, hence the branch here.
-    expect(
-      defaultDiagnosticsLevel,
-      Platform.isAndroid ? DiagnosticsLevel.none : DiagnosticsLevel.basic,
-    );
+  test('nothing is uploaded until the user picks a level that uploads', () {
+    // The same on every platform: uploading is turned on, never found on. No
+    // build flag either — F-Droid compares its rebuild of the Android build
+    // byte for byte against the published APK.
+    expect(defaultDiagnosticsLevel, DiagnosticsLevel.none);
+    expect(defaultDiagnosticsLevel.uploads, isFalse);
   });
 
   test('an unreadable stored value sends nothing', () {
