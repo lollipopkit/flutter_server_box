@@ -791,12 +791,65 @@ class MonitorHttpClient {
   );
 
   /// Says [text] to task [id]: the next turn while it runs, an edit or an
-  /// answer while it waits, a new run once it is done.
-  Future<MonitorAgentFlow> agentReply(String id, String text) => _access(
+  /// answer while it waits, a new run once it is done. [files] are upload ids
+  /// ([agentUpload]); [model] and [thinkingLevel] hold from then on.
+  Future<MonitorAgentFlow> agentReply(
+    String id,
+    String text, {
+    List<String> files = const [],
+    MonitorAgentModel? model,
+    String? thinkingLevel,
+  }) => _access(
     () async => MonitorAgentFlow.fromJson(
-      await _object('/api/v1/agent/flows/${Uri.encodeComponent(id)}/reply', post: {'text': text}),
+      await _object(
+        '/api/v1/agent/flows/${Uri.encodeComponent(id)}/reply',
+        post: {
+          'text': text,
+          if (files.isNotEmpty) 'files': files,
+          'model': ?model?.toJson(),
+          'thinkingLevel': ?thinkingLevel,
+        },
+      ),
     ),
   );
+
+  /// What a task may run with: the models and thinking levels there are.
+  Future<MonitorAgentChoices> agentChoices() => _access(
+    () async => MonitorAgentChoices.fromJson(await _object('/api/v1/agent/choices')),
+  );
+
+  /// The most one attachment may be, as the agent takes it.
+  static const agentUploadMax = 20 << 20;
+
+  /// Sends [file] for a task the next message names; answers its id. Read
+  /// as it is sent, not held whole.
+  Future<String> agentUpload(File file, {String? mime}) async {
+    final size = await file.length();
+    if (size > agentUploadMax) {
+      throw const MonitorHttpErr(type: MonitorHttpErrType.badRequest, message: 'tooLarge');
+    }
+    final name = file.uri.pathSegments.lastOrNull ?? 'file';
+    // An image goes to the model as one only under its own type.
+    final type = mime ?? await file.mimeType ?? 'application/octet-stream';
+    return _access(() async {
+      final resp = await _session().post<dynamic>(
+        '/api/v1/agent/files',
+        queryParameters: {'name': name},
+        data: file.openRead(),
+        options: Options(
+          headers: {
+            Headers.contentLengthHeader: size,
+            Headers.contentTypeHeader: type,
+          },
+        ),
+      );
+      final id = resp.data is Map ? resp.data['id'] : null;
+      if (id is! String) {
+        throw const MonitorHttpErr(type: MonitorHttpErrType.invalidResponse, message: 'No id in /api/v1/agent/files response');
+      }
+      return id;
+    });
+  }
 
   /// Answers what task [id] waits on: [action] with what it needs (`text`,
   /// `index`, `password` and `remember`, `confirm`).

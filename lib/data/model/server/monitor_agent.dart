@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 /// A task of a monitor agent's Agent mode, as `GET /api/v1/agent/flows`
 /// lists it.
 ///
@@ -14,6 +16,8 @@ final class MonitorAgentFlow {
     required this.updatedAt,
     this.finishedAt,
     this.waiting,
+    this.model,
+    this.thinkingLevel,
   });
 
   factory MonitorAgentFlow.fromJson(Map<String, dynamic> j) => MonitorAgentFlow(
@@ -26,6 +30,8 @@ final class MonitorAgentFlow {
     updatedAt: _time(j['updatedAt']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     finishedAt: _time(j['finishedAt']),
     waiting: j['waiting'] as String?,
+    model: MonitorAgentModel.maybe(j['model']),
+    thinkingLevel: j['thinkingLevel'] as String?,
   );
 
   final String id;
@@ -45,7 +51,65 @@ final class MonitorAgentFlow {
   /// or `clarify`.
   final String? waiting;
 
+  /// What its account picked; null is the machine's.
+  final MonitorAgentModel? model;
+  final String? thinkingLevel;
+
   static DateTime? _time(Object? v) => v is String ? DateTime.tryParse(v)?.toLocal() : null;
+}
+
+/// A model on a monitor agent, as pi names it: its provider and id there.
+final class MonitorAgentModel {
+  const MonitorAgentModel(this.provider, this.id, {this.name, this.reasoning = false});
+
+  static MonitorAgentModel? maybe(Object? j) => switch (j) {
+    {'provider': final String p, 'id': final String id} =>
+      MonitorAgentModel(p, id, name: (j as Map)['name'] as String?, reasoning: j['reasoning'] == true),
+    _ => null,
+  };
+
+  final String provider;
+  final String id;
+
+  /// How its provider names it; null for a reference that carries no name.
+  final String? name;
+
+  /// Whether it thinks, so a thinking level means something to it.
+  final bool reasoning;
+
+  String get label => name ?? id;
+
+  Map<String, String> toJson() => {'provider': provider, 'id': id};
+
+  bool same(MonitorAgentModel? o) => o != null && o.provider == provider && o.id == id;
+}
+
+/// What a task may be started or replied to with (`GET /agent/choices`).
+final class MonitorAgentChoices {
+  const MonitorAgentChoices({required this.models, required this.thinkingLevels, this.model, required this.thinkingLevel});
+
+  factory MonitorAgentChoices.fromJson(Map<String, dynamic> j) => MonitorAgentChoices(
+    models: [
+      for (final m in j['models'] as List? ?? const [])
+        ?MonitorAgentModel.maybe(m),
+    ],
+    thinkingLevels: [
+      for (final l in j['thinkingLevels'] as List? ?? const [])
+        if (l is String) l,
+    ],
+    model: MonitorAgentModel.maybe(j['model']),
+    thinkingLevel: j['thinkingLevel'] as String? ?? 'off',
+  );
+
+  final List<MonitorAgentModel> models;
+  final List<String> thinkingLevels;
+
+  /// The machine's, for a task that picks none.
+  final MonitorAgentModel? model;
+  final String thinkingLevel;
+
+  /// [ref] as the list knows it, with its name and whether it thinks.
+  MonitorAgentModel? find(MonitorAgentModel? ref) => ref == null ? null : models.firstWhereOrNull((m) => m.same(ref)) ?? ref;
 }
 
 enum MonitorAgentStatus {
