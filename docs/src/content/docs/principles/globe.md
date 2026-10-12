@@ -87,7 +87,7 @@ machine itself has a public interface address.
 - The shared status manifest exposes interface addresses in its `ip` field on
   the extended polling cadence.
 - SSH and Monitor transports populate the same status field. A Monitor-only
-  server does not need a `full_access` grant or an `/exec` request.
+  server does not need the `shell` permission or an `/exec` request.
 - `SelfAddr.publicIn` parses, deduplicates, and removes non-public addresses.
   When both address families are available, `SelfAddr.pick` prefers IPv4 as a
   stable tie-break for dual-stack servers.
@@ -211,9 +211,9 @@ store keeps that address rather than its coordinate, so the coordinate always
 follows the installed dataset. After `staleAfter` (7 days), the record becomes
 eligible to be refreshed by a later status poll.
 
-Losing the cache costs one thing: a name-addressed server is no longer placed
-while the device is offline, since the resolver cannot answer and nothing is
-held back to answer with. Those servers are unreachable in that state anyway.
+Without the cache, a server configured by hostname may not be placed while the
+device is offline because DNS cannot resolve the name. The server is also
+unreachable until the device can resolve and connect to it.
 
 ## Rendering and interaction
 

@@ -191,8 +191,8 @@ Future<void> downloadFile(String remotePath, String localPath) async {
 
 ```dart
 class PathWithPrefix {
-  final String prefix;  // 例如 "/home/user"
-  final String path;    // 相对或绝对路径
+  final String prefix;  // e.g. "/home/user"
+  final String path;    // Relative or absolute path
 
   String get fullPath {
     if (path.startsWith('/')) return path;

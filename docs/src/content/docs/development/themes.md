@@ -15,9 +15,10 @@ attributions are listed in the authoring guide.
 `BuiltinTheme` (`packages/fl_lib/lib/src/theme/builtin.dart`) lists the packages
 bundled with this build: only what the app needs without a network. `Default`
 is a Dart constant and does not read an asset; its picker label is localized
-(fl_lib `defaultLabel`). AMOLED, which legacy AMOLED theme modes migrate
-to, has a source folder under `packages/fl_lib/assets/themes/amoled/` containing a
-`manifest.toml`, registered in fl_lib's `pubspec.yaml`. Every other official theme is in
+(fl_lib `defaultLabel`). TODO: Remove migration from legacy AMOLED modes when
+supported upgrade paths no longer include them. The AMOLED theme source is in
+`packages/fl_lib/assets/themes/amoled/`, with a `manifest.toml` registered in
+fl_lib's `pubspec.yaml`. Every other official theme is in
 the theme store (see [Official themes](#official-themes)); a saved preset that
 names a bundled theme this build no longer carries falls back to Default
 (`ThemePackages.reconcileSelection`).

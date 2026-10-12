@@ -73,18 +73,19 @@ tail -20 /var/log/syslog
 Commands run with the account used for the connection: the SSH user for SSH
 connections, or the Monitor agent process user for Monitor connections.
 
-For Monitor connections, editing commands requires `full_access`. The agent
-must also have terminal access enabled, and the request must use secure
-transport or explicitly permit `allow_insecure`. Each file in this directory
-is executable code: it runs as the agent user on every status refresh.
+For Monitor connections, the account's role must include the `shell`
+permission. The request must use secure transport or explicitly permit
+`allow_insecure`. Each file in this directory is executable code: it runs as
+the agent user on every status refresh.
 
 Use read-only commands where possible. A command can affect the server with
 the permissions of its execution account. Never include passwords, tokens, or
 other credentials in a command.
 
-## Migrating from the old format
+## Legacy command storage
 
-Older releases stored commands as a JSON object in the server settings. The
-App preserved those entries when other settings changed, then moved them into
-the server directory on the first connection. Current releases write commands
-only to that directory.
+TODO: Remove the legacy JSON migration after supported upgrade paths no longer
+need it. Older releases stored commands in server settings; the App preserves
+those entries until the first connection, then moves them to
+`~/.config/server_box/custom_cmds`. Current releases read and write commands
+only in that directory.

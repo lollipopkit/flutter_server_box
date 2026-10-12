@@ -52,12 +52,12 @@ does not infer them from the transport currently in use:
 
 | Capability | SSH | Monitor HTTP |
 |---|---|---|
-| Shell and commands | Available | Requires `full_access` |
-| Interactive terminal | Available | Requires `full_access` and the terminal endpoint |
-| File browsing | SFTP | Requires `[remote_access.fs]` and `roots` |
+| Shell commands and App terminal | Available | Requires the account role's `shell` permission |
+| Web panel SSH terminal | Available | Requires the account role's `ssh_terminal` permission |
+| File browsing | SFTP | Requires the `files` permission and `roots` configured under `[remote_access.fs]` |
 | SFTP | Available | Not available |
-| Local port forwarding and remote desktop | Available | Requires `full_access` |
-| Remote and dynamic port forwarding | Available | Not available |
+| Local and dynamic port forwarding; remote desktop | Available | Requires `connect`; its `allow` list can restrict targets |
+| Remote port forwarding | Available | Requires `listen` |
 | History from before the App connected | Not available | Available |
 
 With both transports configured, the server exposes the capabilities of both.
@@ -111,10 +111,11 @@ boundary.
 stays at `1` because App migrations do more than change Drift tables: they
 import old Hive boxes, generate IDs, and rewrite references.
 
-During an upgrade, `HiveImport` first copies data from the old installation
-into `kv`. Registered schema migrations then move relational data into entity
-tables. The adapters in `lib/hive/legacy_adapters.dart` are frozen readers for
-released formats; do not regenerate them from current models.
+TODO: Remove Hive import and its frozen readers when the supported upgrade
+window no longer needs them. During an upgrade, `HiveImport` copies data from
+the old installation into `kv`; registered schema migrations then move
+relational data into entity tables. Do not regenerate
+`lib/hive/legacy_adapters.dart` from current models.
 
 Keep a regression test for every storage migration, using bytes written by
 the release being migrated from. A fixture created by the current adapter

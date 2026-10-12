@@ -39,8 +39,8 @@ A server using Monitor agent can show history collected before the App connected
 
 After connecting, you can:
 
-- **Open the terminal**: An SSH connection can open the terminal directly. A Monitor HTTP connection needs the agent's `full_access` grant and an enabled terminal endpoint.
-- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the agent's file API, which requires `[remote_access.fs]` and `roots`.
+- **Open the terminal**: SSH connections can open the terminal directly. For Monitor HTTP, the account's role must include the `shell` permission.
+- **Browse files**: SSH connections use SFTP. Monitor HTTP connections use the agent's file API, which requires the account role's `files` permission and configured `[remote_access.fs].roots`.
 - **Manage containers**: View and control Docker or Podman containers.
 - **View processes**: Inspect running processes.
 - **Run snippets**: Execute saved commands.

@@ -35,8 +35,8 @@ description: 从 JSON 文件导入多个服务器配置
 
 SSH 配置放在 `ssh` 对象中。App 导出和导入对话框中的示例都使用这种嵌套格式。
 
-为兼容旧数据，导入也接受扁平格式，即 `ip`、`port`、`user` 等字段直接位于顶层。因此旧版
-导出文件和从 `~/.ssh/config` 导入的文件仍可使用。新版导出使用上面的嵌套格式。
+TODO：迁移期结束后删除对扁平格式的支持。目前导入仍接受 `ip`、`port`、`user` 等字段直接位于
+顶层的旧文件，包括从 `~/.ssh/config` 导入的文件。新版导出使用上面的嵌套格式。
 
 ## 字段说明
 
@@ -82,9 +82,9 @@ SSH 配置放在 `ssh` 对象中。App 导出和导入对话框中的示例都�
 | `pwd` | 否 | `password` 时使用：SSH 用户在 `pam` realm 下的 PVE 密码。省略时使用 SSH 密码 |
 | `certSha256` | 否 | 信任的证书 SHA-256，小写十六进制。省略时，首次连接会请求确认证书 |
 
-旧版导出文件可能把 `pveAddr`、`pveIgnoreCert` 和 `pvePwd` 放在 `custom` 中。导入仍会识别这些
-字段，并转换为未固定证书的 password authentication 配置。此格式仅用于兼容旧文件；新版导出
-使用 `pve` 对象。
+TODO：迁移期结束后删除这些旧版 PVE 字段。旧导出文件可能将 `pveAddr`、`pveIgnoreCert` 和
+`pvePwd` 放在 `custom` 中；导入时会将其转换为未固定证书的 password authentication 配置。
+新版导出使用 `pve` 对象。
 
 每台服务器都必须至少配置一种连接方式。如果同时省略 `ssh` 和 `monitorHttp`，导入后将无法
 连接主机。

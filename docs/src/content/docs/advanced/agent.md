@@ -1,6 +1,6 @@
 ---
 title: Agent
-description: Ask a model to diagnose servers and review each action before it runs
+description: Configure providers, tools, and action approval for Agent
 ---
 
 Agent connects a language model to your servers. It suggests an action, shows

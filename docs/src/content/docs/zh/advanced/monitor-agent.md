@@ -307,7 +307,7 @@ admin 可以修改两个内置角色的权限，也可以添加新角色。角�
 
 全新安装时，`admin` 账号属于 `admin` 角色，拥有全部权限：可写的 `files`、不限制地址的 `connect`、只监听 loopback 且不限端口的 `listen`、`shell` 和 `ssh_terminal`。安装时使用 `--permissions read` 可以让它初始不带任何权限，之后在 App 或面板中开启需要的权限，见[安装 Monitor agent](#安装-monitor-agent)。
 
-如果 agent 启动时读取的 `config.toml` 仍然设置了旧开关（`full_access`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled`、`listen_public`），例如在新的数据卷上挂载了旧配置，或复制了旧的示例配置，全新安装也会遵守这些开关：`admin` 角色只获得它们同样允许的权限，日志中会说明这一点。
+TODO：旧配置不再用于升级后，删除这些兼容开关。若 agent 启动时读到 `config.toml` 中的旧设置（`full_access`、`[remote_access.terminal] enabled`、`[remote_access.fs] enabled`、`listen_public`），例如新数据卷挂载了旧配置，或复制了旧示例配置，全新安装也会遵守这些开关：`admin` 角色只获得这些设置允许的权限，日志会说明这一点。
 
 `files` 仍然需要配置 `[remote_access.fs] roots`。在配置之前，App 会提示 agent 上未配置文件浏览。无论 `roots` 如何设置，文件 API 都无法访问 agent 自己的文件，包括数据库、`jwt.secret`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为读取这些文件就等于拿到 admin 登录。
 
@@ -315,7 +315,7 @@ admin 可以修改两个内置角色的权限，也可以添加新角色。角�
 
 ### 从没有角色的 agent 升级
 
-之前的 agent 使用 `config.toml` 中的开关，而不是角色。带有角色的 agent 首次启动时会转换一次：所有已有账号都成为 admin，`admin` 角色获得旧开关实际允许的权限。
+TODO：不再支持从无角色的 agent 直接升级后，删除此迁移逻辑。旧版 agent 使用 `config.toml` 开关控制访问。带角色的 agent 首次启动时，会将所有已有账号设为 admin，并按旧开关授予 `admin` 角色权限。
 
 | 旧配置 | 转换结果 |
 |---|---|
@@ -324,11 +324,11 @@ admin 可以修改两个内置角色的权限，也可以添加新角色。角�
 | `listen_public` | 开启 `public` 的 `listen` |
 | `[remote_access.fs] enabled` 且 `roots` 非空 | 可写的 `files` |
 
-之后 agent 不再读取这些配置，并在日志中提示一次可以删除它们。在面板首次使用提示中关闭 shell 访问，会从所有角色中移除 `shell`、`connect` 和 `listen`。
+转换完成后，agent 不再读取这些配置，并会在日志中提示删除。面板首次使用提示中的关闭 shell 访问操作，会从所有角色移除 `shell`、`connect` 和 `listen`。
 
 ### 明文 HTTP
 
-读取监控数据以外的所有功能都需要 HTTPS，或来自同一台主机的调用方（包括同机反向代理）。在已经对流量加密的私有网络（例如 Tailscale）中，可以设置 `[remote_access] allow_insecure = true`，并在 App 中为该服务器开启**允许不安全 HTTP**；两者缺一不可。旧的 key 仍然有效，但只对原来覆盖的范围生效：`[remote_access.terminal] allow_insecure` 对应 shell、终端、connect 和 listen，`[remote_access.fs] allow_insecure` 只对应文件。
+读取监控数据以外的功能都需要 HTTPS，或由同一台主机发起请求（包括同机反向代理）。如果私有网络本身已加密（例如 Tailscale），可设置 `[remote_access] allow_insecure = true`，并在 App 中为该服务器开启**允许不安全 HTTP**；两项都必须启用。TODO：现有配置不再需要迁移后，删除旧 `allow_insecure` key。目前 `[remote_access.terminal] allow_insecure` 只覆盖 shell、终端、connect 和 listen；`[remote_access.fs] allow_insecure` 只覆盖 files。
 
 ### 连接和监听的限制
 
@@ -383,7 +383,7 @@ threshold = ">=80%"
 | `network` | 留空或其他值 | 接收加发送 |
 | `temperature` | 忽略 | agent 上报的机器温度 |
 
-从 Go agent 迁移的配置也可以使用 `mem`、`net` 和 `temp` 这几个别名。其他指标每个采集周期都会记入 agent 日志，对应规则不会触发。
+TODO：Go agent 迁移窗口结束后，删除 `mem`、`net` 和 `temp` 别名。目前这些旧配置仍可使用；其他未知指标会在每个采集周期写入 agent 日志，对应规则不会触发。
 
 ### 阈值
 

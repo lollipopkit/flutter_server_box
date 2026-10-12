@@ -26,6 +26,9 @@ caller:
   `full_access` is `shell`, `stream` is `connect`). The App reads `grants`
   when it is present.
 
+TODO: Remove the legacy `remote_access` response when the minimum supported
+App version reads `grants`.
+
 Do not infer feature availability from the agent version or configuration
 defaults. Use the capabilities response from the running agent.
 
@@ -50,8 +53,8 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 If `from` precedes the oldest retained sample, the agent returns the available
 rows. It does not shift the requested start time or return an error. The chart
-represents the missing interval as a gap. The older `?minutes=` parameter
-remains supported for agents that predate `from` and `to`.
+represents the missing interval as a gap. TODO: Remove the legacy `?minutes=`
+parameter when the minimum supported agent version accepts `from` and `to`.
 
 ## Access model
 
@@ -112,16 +115,17 @@ A change to an account or a role applies immediately. A terminal, relay, or
 listener whose account no longer holds the grant it needs receives
 `{"type":"error","code":"permission_revoked"}` and is closed. A WebSocket
 request that needs a grant the account lacks answers `forbidden`; a `listen`
-outside the role's `public` or `ports` limits answers `not_permitted`. The
-legacy `DELETE /api/v1/remote-access/full-access` removes `shell`, `connect`,
-and `listen` from every role and still closes sessions with
-`full_access_disabled`.
+outside the role's `public` or `ports` limits answers `not_permitted`.
+TODO: Remove the legacy endpoint and `full_access_disabled` response when
+supported clients no longer use them. `DELETE /api/v1/remote-access/full-access`
+removes `shell`, `connect`, and `listen` from every role.
 
 ### Transport
 
 Every grant needs TLS or a loopback caller, which includes a reverse proxy on
-the same host, unless `[remote_access] allow_insecure = true`. The older
-keys still count for what they used to cover, and no more:
+the same host, unless `[remote_access] allow_insecure = true`. TODO: Remove the
+legacy `allow_insecure` keys when existing configurations no longer need them.
+Until then, they cover only their previous scopes:
 `[remote_access.terminal] allow_insecure` for `shell`, `ssh_terminal`,
 `connect` and `listen`, `[remote_access.fs] allow_insecure` for `files`. A plaintext connection from the App also needs
 **Allow insecure HTTP** for that server. Without either, the grant is reported

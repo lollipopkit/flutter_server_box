@@ -3,14 +3,14 @@ title: 远程桌面（RDP 和 VNC）
 description: 通过 SSH 或 Monitor agent 连接图形桌面
 ---
 
-Server Box 在 Android、iOS、Linux、macOS 和 Windows 上提供 RDP 与 VNC 客户端。客户端会
-通过服务器已有的连接访问桌面：使用 SSH，或启用了 `remote_access.full_access` 的
-Monitor agent。这样无需将桌面端口暴露到运行 Server Box 的网络。
+Server Box 在 Android、iOS、Linux、macOS 和 Windows 上提供 RDP 与 VNC 客户端。客户端
+通过已有的服务器连接访问桌面：使用 SSH，或使用账号角色拥有 `connect` 权限的 Monitor
+agent。这样无需将桌面端口暴露到运行 Server Box 的网络。
 
 ## 配置连接
 
-1. 在 Server Box 中为服务器配置 SSH，或配置已启用 `remote_access.full_access` 的
-   Monitor agent。两种方式都可用时，应用会先尝试服务器设置中的**优先连接方式**，失败后
+1. 在 Server Box 中为服务器配置 SSH，或配置当前账号角色拥有 `connect` 权限的 Monitor
+   agent。两种方式都可用时，应用会先尝试服务器设置中的**优先连接方式**，失败后
    再回退到另一种方式。
 2. 打开**远程桌面**主标签并选择服务器，也可以从该服务器的详情页进入。
 3. 为桌面添加连接配置。同一服务器内的配置名称不能重复。
@@ -26,9 +26,9 @@ Monitor agent。这样无需将桌面端口暴露到运行 Server Box 的网络�
 | VNC | `127.0.0.1:5900` |
 
 如果桌面服务运行在服务器本机，可以使用默认目标；也可以填写该服务器能够访问的内网地址。
-SSH 连接沿用终端和端口转发使用的认证方式及跳板机设置。使用 Monitor agent 时，由
-agent 所在机器以其运行账户连接目标；该方式要求启用 `remote_access.full_access`。App 只会
-在连接目标为本机回环地址时，通过明文 HTTP 连接 Monitor agent。
+SSH 连接沿用终端和端口转发使用的认证方式及跳板机设置。使用 Monitor agent 时，agent
+所在机器会以自身运行账户连接目标；当前账号角色的 `connect` 权限必须允许目标地址。App
+只会在连接目标为本机回环地址时，通过明文 HTTP 连接 Monitor agent。
 
 除非启用**保存密码**，密码不会持久保存。连接时输入的密码只保留在当前会话的内存中，供
 该会话重连使用。保存的密码会写入 Server Box 加密数据库，也会包含在加密备份和同步数据

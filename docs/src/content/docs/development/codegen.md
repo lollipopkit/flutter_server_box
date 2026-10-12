@@ -18,9 +18,10 @@ Run code generation after changing any of these inputs:
 - ARB localization files
 - Rust APIs under `crates/sbm_ffi/src/api`
 
-The frozen adapters in `lib/hive/legacy_adapters.dart` are excluded from the
-generated adapter list. They read boxes created by earlier releases; do not
-regenerate them from current models.
+TODO: Remove Hive migration readers when the supported upgrade window no
+longer requires them. The frozen adapters in
+`lib/hive/legacy_adapters.dart` are excluded from generation because they read
+boxes created by earlier releases; do not regenerate them from current models.
 
 ## Dart generation
 

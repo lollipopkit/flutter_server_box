@@ -5,9 +5,10 @@ description: Choose, install, and manage themes
 
 Server Box includes the Default and AMOLED themes and lets you install more,
 such as One Dark Pro, from the theme store or
-from a theme file. Some store themes, such as Piggy, come with the app: they
-are installed on first launch and updated from the theme store like any theme
-installed from it. A bundled theme you remove is not installed again. Theme settings are under **Settings → Appearance**.
+from a theme file. Some store themes, such as Piggy, are bundled with the app
+and installed on first launch. Update them from the theme store like other
+themes. A removed bundled theme is not installed again. Theme settings are
+under **Settings → Appearance**.
 
 ## Choose a theme
 
@@ -31,8 +32,8 @@ one mode, the mode setting is locked while that theme is selected. Choose a
 theme that supports both modes to switch freely.
 
 AMOLED is a built-in theme. It uses black surfaces in Dark mode and standard
-light colors in Light mode. Existing AMOLED settings are migrated to the
-matching theme and mode.
+light colors in Light mode. TODO: Remove the legacy AMOLED settings migration
+when supported upgrade paths no longer include those settings.
 
 ## Install a theme
 

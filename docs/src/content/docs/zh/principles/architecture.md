@@ -42,12 +42,12 @@ UI 根据 `ServerCapabilities` 判断可用功能，不直接根据当前使用�
 
 | 能力 | SSH | Monitor HTTP |
 |---|---|---|
-| Shell 和命令 | 支持 | 需要 `full_access` |
-| 交互式终端 | 支持 | 需要 `full_access` 和 terminal endpoint |
-| 文件浏览 | SFTP | 需要 `[remote_access.fs]` 和 `roots` |
+| Shell 命令和 App 终端 | 支持 | 账号角色需要 `shell` 权限 |
+| Web panel SSH 终端 | 支持 | 账号角色需要 `ssh_terminal` 权限 |
+| 文件浏览 | SFTP | 需要 `files` 权限，并在 `[remote_access.fs]` 下配置 `roots` |
 | SFTP | 支持 | 不支持 |
-| 本地端口转发、远程桌面 | 支持 | 需要 `full_access` |
-| 远程和动态端口转发 | 支持 | 不支持 |
+| 本地和动态端口转发、远程桌面 | 支持 | 需要 `connect` 权限；`allow` 列表可限制目标地址 |
+| 远程端口转发 | 支持 | 需要 `listen` 权限 |
 | App 连接前的历史数据 | 不提供 | 提供 |
 
 同时配置两种方式时，服务器会提供两边能力的 union。例如，优先使用 Monitor HTTP 时，SSH 提供的 SFTP 以及远程和动态端口转发仍然可用。
@@ -88,7 +88,7 @@ parser 由纯函数组成，返回原始计数。差分与时间窗口计算也�
 
 App 的存储布局由 `SchemaVersion` 管理。Drift 的 `schemaVersion` 保持为 `1`，因为 App migration 除了更新 Drift table，还要导入旧 Hive box、生成 ID 并重写引用。
 
-升级时，`HiveImport` 先将旧安装中的 Hive 数据导入 `kv`，再由已注册的 schema migration 把关系型数据迁入 entity table。`lib/hive/legacy_adapters.dart` 中的 adapter 用于读取已发布版本的数据格式，必须保持冻结，不能用当前 model 重新生成。
+TODO：支持的升级范围不再需要 Hive 数据后，删除 Hive import 和冻结的 adapter。升级时，`HiveImport` 会先将旧安装中的 Hive 数据导入 `kv`，再由 schema migration 将关系型数据迁入 entity table。不要根据当前 model 重新生成 `lib/hive/legacy_adapters.dart`。
 
 每项存储迁移都要保留 regression test，并使用待迁移 release 实际写出的 bytes。用当前 adapter 生成的 fixture 只能验证当前代码自身，不能证明旧版本数据仍可读取。
 
