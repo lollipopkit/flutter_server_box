@@ -6671,4 +6671,64 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Este dispositivo';
+
+  @override
+  String get agentSource => 'Origem';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'A tarefa será eliminada em $server.';
+  }
+
+  @override
+  String get agentPlan => 'Plano';
+
+  @override
+  String get agentRemoteGone => 'Esta tarefa já não está no servidor.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Responder à tarefa em $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Na fila',
+      'running': 'Em execução',
+      'waiting': 'À espera da sua resposta',
+      'done': 'Concluída',
+      'failed': 'Falhou',
+      'cancelled': 'Parada',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Permitir sempre $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Escreva $name para executar';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Executar mesmo assim';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Palavra-passe de $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Palavra-passe incorreta';
+
+  @override
+  String get agentRemoteSudoRemember => 'Memorizar durante 15 minutos';
 }

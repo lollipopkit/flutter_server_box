@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Nobody is connected",
   "sharingShowConnections": "Show connections",
   "sharingShowConnectionsBody": "Reads who is connected, as root.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Bu cihaz",
+  "agentSource": "Mənbə",
+  "agentDeleteRemoteTip": "Tapşırıq {server} serverindən silinəcək.",
+  "agentPlan": "Plan",
+  "agentRemoteGone": "Bu tapşırıq artıq serverdə yoxdur.",
+  "agentRemoteReplyHint": "{server} serverindəki tapşırığa cavab verin",
+  "agentRemoteStatus": "{server} · {status, select, queued{Növbədə} running{İcra olunur} waiting{Sizdən cavab gözləyir} done{Tamamlandı} failed{Uğursuz oldu} cancelled{Dayandırıldı} other{}}",
+  "agentRemoteAlways": "{rule} qaydasına həmişə icazə ver",
+  "agentRemoteTypeToRun": "İcra etmək üçün {name} yazın",
+  "agentRemoteRunAnyway": "Yenə də icra et",
+  "agentRemoteSudoFor": "{user} istifadəçisinin parolu",
+  "agentRemoteSudoWrong": "Yanlış parol",
+  "agentRemoteSudoRemember": "15 dəqiqə yadda saxla"
 }

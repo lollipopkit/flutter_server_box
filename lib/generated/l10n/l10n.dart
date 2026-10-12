@@ -11318,6 +11318,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sharing management currently supports Linux servers.'**
   String get sharingConnectionsLinuxOnly;
+
+  /// Source filter in the Agent history: the chats kept on this device, not the servers' tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get agentThisDevice;
+
+  /// Button in the Agent history that filters the list by where a chat or task lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get agentSource;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: confirmation that deleting removes it on the server.
+  ///
+  /// In en, this message translates to:
+  /// **'The task is deleted on {server}.'**
+  String agentDeleteRemoteTip(String server);
+
+  /// Label of a monitor agent's plan step shown in a conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get agentPlan;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: it was deleted there.
+  ///
+  /// In en, this message translates to:
+  /// **'This task is no longer on the server.'**
+  String get agentRemoteGone;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: hint of the reply box.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply to the task on {server}'**
+  String agentRemoteReplyHint(String server);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: the server it runs on and its state.
+  ///
+  /// In en, this message translates to:
+  /// **'{server} · {status, select, queued{Queued} running{Running} waiting{Waiting for you} done{Done} failed{Failed} cancelled{Stopped} other{}}'**
+  String agentRemoteStatus(String server, String status);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: button that adds a command rule to the server's allow list and runs the command.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow {rule}'**
+  String agentRemoteAlways(String rule);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the field where the machine's name is typed to confirm a destructive command.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {name} to run'**
+  String agentRemoteTypeToRun(String name);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: button that runs a destructive command once the machine's name is typed.
+  ///
+  /// In en, this message translates to:
+  /// **'Run anyway'**
+  String get agentRemoteRunAnyway;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the sudo password field.
+  ///
+  /// In en, this message translates to:
+  /// **'Password of {user}'**
+  String agentRemoteSudoFor(String user);
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: the sudo password was refused.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password'**
+  String get agentRemoteSudoWrong;
+
+  /// A monitor agent's Agent mode task, listed or opened in the app's Agent: the server keeps the sudo password in memory for 15 minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember for 15 minutes'**
+  String get agentRemoteSudoRemember;
 }
 
 class _AppLocalizationsDelegate

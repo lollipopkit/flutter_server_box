@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "接続はありません",
   "sharingShowConnections": "接続を表示",
   "sharingShowConnectionsBody": "root として接続状況を読み取ります。",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "このデバイス",
+  "agentSource": "ソース",
+  "agentDeleteRemoteTip": "タスクは {server} 上で削除されます。",
+  "agentPlan": "計画",
+  "agentRemoteGone": "このタスクはサーバー上にありません。",
+  "agentRemoteReplyHint": "{server} 上のタスクに返信",
+  "agentRemoteStatus": "{server} · {status, select, queued{待機中} running{実行中} waiting{応答待ち} done{完了} failed{失敗} cancelled{停止} other{}}",
+  "agentRemoteAlways": "{rule} を常に許可",
+  "agentRemoteTypeToRun": "実行するには {name} と入力",
+  "agentRemoteRunAnyway": "それでも実行",
+  "agentRemoteSudoFor": "{user} のパスワード",
+  "agentRemoteSudoWrong": "パスワードが違います",
+  "agentRemoteSudoRemember": "15 分間記憶する"
 }

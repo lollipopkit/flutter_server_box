@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Niemand is verbonden",
   "sharingShowConnections": "Verbindingen tonen",
   "sharingShowConnectionsBody": "Leest als root wie verbonden is.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Dit apparaat",
+  "agentSource": "Bron",
+  "agentDeleteRemoteTip": "De taak wordt verwijderd op {server}.",
+  "agentPlan": "Plan",
+  "agentRemoteGone": "Deze taak staat niet meer op de server.",
+  "agentRemoteReplyHint": "Antwoorden op de taak op {server}",
+  "agentRemoteStatus": "{server} · {status, select, queued{In wachtrij} running{Wordt uitgevoerd} waiting{Wacht op je reactie} done{Voltooid} failed{Mislukt} cancelled{Gestopt} other{}}",
+  "agentRemoteAlways": "{rule} altijd toestaan",
+  "agentRemoteTypeToRun": "Typ {name} om uit te voeren",
+  "agentRemoteRunAnyway": "Toch uitvoeren",
+  "agentRemoteSudoFor": "Wachtwoord van {user}",
+  "agentRemoteSudoWrong": "Onjuist wachtwoord",
+  "agentRemoteSudoRemember": "15 minuten onthouden"
 }

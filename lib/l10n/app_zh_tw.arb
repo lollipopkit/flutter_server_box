@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "目前沒有人連線",
   "sharingShowConnections": "顯示連線",
   "sharingShowConnectionsBody": "以 root 身分讀取目前連線資訊。",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "本機",
+  "agentSource": "來源",
+  "agentDeleteRemoteTip": "任務將從 {server} 刪除。",
+  "agentPlan": "計畫",
+  "agentRemoteGone": "伺服器上已沒有這個任務。",
+  "agentRemoteReplyHint": "回覆 {server} 上的任務",
+  "agentRemoteStatus": "{server} · {status, select, queued{排隊中} running{執行中} waiting{等待你操作} done{已完成} failed{失敗} cancelled{已停止} other{}}",
+  "agentRemoteAlways": "一律允許 {rule}",
+  "agentRemoteTypeToRun": "輸入 {name} 以執行",
+  "agentRemoteRunAnyway": "仍要執行",
+  "agentRemoteSudoFor": "{user} 的密碼",
+  "agentRemoteSudoWrong": "密碼錯誤",
+  "agentRemoteSudoRemember": "記住 15 分鐘"
 }

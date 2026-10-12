@@ -6661,4 +6661,64 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Цей пристрій';
+
+  @override
+  String get agentSource => 'Джерело';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'Завдання буде видалено на сервері $server.';
+  }
+
+  @override
+  String get agentPlan => 'План';
+
+  @override
+  String get agentRemoteGone => 'Цього завдання більше немає на сервері.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Відповісти на завдання на $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'У черзі',
+      'running': 'Виконується',
+      'waiting': 'Очікує на вашу відповідь',
+      'done': 'Завершено',
+      'failed': 'Помилка',
+      'cancelled': 'Зупинено',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Завжди дозволяти $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Введіть $name, щоб запустити';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Усе одно запустити';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Пароль користувача $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Неправильний пароль';
+
+  @override
+  String get agentRemoteSudoRemember => 'Запам’ятати на 15 хвилин';
 }

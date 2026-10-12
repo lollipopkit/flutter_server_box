@@ -7,7 +7,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
+import 'package:server_box/data/provider/ai/remote_agent.dart';
 import 'package:server_box/view/page/agent/history.dart';
+import 'package:server_box/view/page/agent/remote_task.dart';
 import 'package:server_box/view/widget/float_shell.dart';
 
 /// The buttons that act on the conversation rather than on the window around
@@ -156,6 +158,27 @@ class AgentConversationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (scope != null) return _buildLocal(context);
+    // A server's task, picked in the history, takes the pane until a chat of
+    // this device is.
+    return ValueListenableBuilder<RemoteTaskRef?>(
+      valueListenable: RemoteAgentTasks.selected,
+      builder: (context, task, _) => task == null
+          ? _buildLocal(context)
+          : RemoteTaskView(
+              key: ValueKey(task),
+              task: task,
+              header: showHeader
+                  ? (title, actions) {
+                      final all = [...actions, ?headerAction];
+                      return compact ? _buildBar(context, title, all) : _buildPaneHeader(title, all);
+                    }
+                  : null,
+            ),
+    );
+  }
+
+  Widget _buildLocal(BuildContext context) {
     final current = AgentChats.of(scope);
     return ValueListenableBuilder<String?>(
       valueListenable: current,

@@ -6615,4 +6615,64 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Perangkat ini';
+
+  @override
+  String get agentSource => 'Sumber';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'Tugas akan dihapus di $server.';
+  }
+
+  @override
+  String get agentPlan => 'Rencana';
+
+  @override
+  String get agentRemoteGone => 'Tugas ini sudah tidak ada di server.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Balas tugas di $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Dalam antrean',
+      'running': 'Berjalan',
+      'waiting': 'Menunggu tanggapan Anda',
+      'done': 'Selesai',
+      'failed': 'Gagal',
+      'cancelled': 'Dihentikan',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Selalu izinkan $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Ketik $name untuk menjalankan';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Tetap jalankan';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Kata sandi $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Kata sandi salah';
+
+  @override
+  String get agentRemoteSudoRemember => 'Ingat selama 15 menit';
 }

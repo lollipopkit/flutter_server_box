@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "연결된 사용자가 없습니다",
   "sharingShowConnections": "연결 표시",
   "sharingShowConnectionsBody": "root 권한으로 연결 정보를 읽습니다.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "이 기기",
+  "agentSource": "출처",
+  "agentDeleteRemoteTip": "{server}에서 작업을 삭제합니다.",
+  "agentPlan": "계획",
+  "agentRemoteGone": "이 작업은 더 이상 서버에 없습니다.",
+  "agentRemoteReplyHint": "{server}의 작업에 답장",
+  "agentRemoteStatus": "{server} · {status, select, queued{대기 중} running{실행 중} waiting{응답 대기 중} done{완료} failed{실패} cancelled{중지됨} other{}}",
+  "agentRemoteAlways": "{rule} 항상 허용",
+  "agentRemoteTypeToRun": "실행하려면 {name} 입력",
+  "agentRemoteRunAnyway": "그래도 실행",
+  "agentRemoteSudoFor": "{user}의 비밀번호",
+  "agentRemoteSudoWrong": "비밀번호가 틀렸습니다",
+  "agentRemoteSudoRemember": "15분 동안 기억"
 }

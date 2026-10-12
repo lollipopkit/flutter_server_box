@@ -6333,4 +6333,64 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => '이 기기';
+
+  @override
+  String get agentSource => '출처';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return '$server에서 작업을 삭제합니다.';
+  }
+
+  @override
+  String get agentPlan => '계획';
+
+  @override
+  String get agentRemoteGone => '이 작업은 더 이상 서버에 없습니다.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '$server의 작업에 답장';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '대기 중',
+      'running': '실행 중',
+      'waiting': '응답 대기 중',
+      'done': '완료',
+      'failed': '실패',
+      'cancelled': '중지됨',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '$rule 항상 허용';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '실행하려면 $name 입력';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => '그래도 실행';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user의 비밀번호';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => '비밀번호가 틀렸습니다';
+
+  @override
+  String get agentRemoteSudoRemember => '15분 동안 기억';
 }

@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "当前没有连接",
   "sharingShowConnections": "查看连接",
   "sharingShowConnectionsBody": "以 root 身份读取当前连接信息。",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "本机",
+  "agentSource": "来源",
+  "agentDeleteRemoteTip": "该任务将在 {server} 上删除。",
+  "agentPlan": "计划",
+  "agentRemoteGone": "服务器上已没有这个任务。",
+  "agentRemoteReplyHint": "回复 {server} 上的任务",
+  "agentRemoteStatus": "{server} · {status, select, queued{排队中} running{运行中} waiting{等待你操作} done{已完成} failed{失败} cancelled{已停止} other{}}",
+  "agentRemoteAlways": "始终允许 {rule}",
+  "agentRemoteTypeToRun": "输入 {name} 以运行",
+  "agentRemoteRunAnyway": "仍然运行",
+  "agentRemoteSudoFor": "{user} 的密码",
+  "agentRemoteSudoWrong": "密码错误",
+  "agentRemoteSudoRemember": "记住 15 分钟"
 }

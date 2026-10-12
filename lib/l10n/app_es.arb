@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "No hay nadie conectado",
   "sharingShowConnections": "Mostrar conexiones",
   "sharingShowConnectionsBody": "Lee quién está conectado como root.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Este dispositivo",
+  "agentSource": "Origen",
+  "agentDeleteRemoteTip": "La tarea se eliminará en {server}.",
+  "agentPlan": "Plan",
+  "agentRemoteGone": "Esta tarea ya no está en el servidor.",
+  "agentRemoteReplyHint": "Responder a la tarea en {server}",
+  "agentRemoteStatus": "{server} · {status, select, queued{En cola} running{En ejecución} waiting{Esperando tu respuesta} done{Completada} failed{Error} cancelled{Detenida} other{}}",
+  "agentRemoteAlways": "Permitir siempre {rule}",
+  "agentRemoteTypeToRun": "Escribe {name} para ejecutar",
+  "agentRemoteRunAnyway": "Ejecutar de todos modos",
+  "agentRemoteSudoFor": "Contraseña de {user}",
+  "agentRemoteSudoWrong": "Contraseña incorrecta",
+  "agentRemoteSudoRemember": "Recordar durante 15 minutos"
 }

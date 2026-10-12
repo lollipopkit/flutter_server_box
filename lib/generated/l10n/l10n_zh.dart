@@ -6229,6 +6229,66 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => '本机';
+
+  @override
+  String get agentSource => '来源';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return '该任务将在 $server 上删除。';
+  }
+
+  @override
+  String get agentPlan => '计划';
+
+  @override
+  String get agentRemoteGone => '服务器上已没有这个任务。';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '回复 $server 上的任务';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '排队中',
+      'running': '运行中',
+      'waiting': '等待你操作',
+      'done': '已完成',
+      'failed': '失败',
+      'cancelled': '已停止',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '始终允许 $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '输入 $name 以运行';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => '仍然运行';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user 的密码';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => '密码错误';
+
+  @override
+  String get agentRemoteSudoRemember => '记住 15 分钟';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -12460,4 +12520,64 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => '本機';
+
+  @override
+  String get agentSource => '來源';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return '任務將從 $server 刪除。';
+  }
+
+  @override
+  String get agentPlan => '計畫';
+
+  @override
+  String get agentRemoteGone => '伺服器上已沒有這個任務。';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '回覆 $server 上的任務';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '排隊中',
+      'running': '執行中',
+      'waiting': '等待你操作',
+      'done': '已完成',
+      'failed': '失敗',
+      'cancelled': '已停止',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '一律允許 $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '輸入 $name 以執行';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => '仍要執行';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user 的密碼';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => '密碼錯誤';
+
+  @override
+  String get agentRemoteSudoRemember => '記住 15 分鐘';
 }

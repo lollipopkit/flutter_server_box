@@ -6674,4 +6674,64 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Dit apparaat';
+
+  @override
+  String get agentSource => 'Bron';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'De taak wordt verwijderd op $server.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'Deze taak staat niet meer op de server.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Antwoorden op de taak op $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'In wachtrij',
+      'running': 'Wordt uitgevoerd',
+      'waiting': 'Wacht op je reactie',
+      'done': 'Voltooid',
+      'failed': 'Mislukt',
+      'cancelled': 'Gestopt',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '$rule altijd toestaan';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Typ $name om uit te voeren';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Toch uitvoeren';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Wachtwoord van $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Onjuist wachtwoord';
+
+  @override
+  String get agentRemoteSudoRemember => '15 minuten onthouden';
 }

@@ -6706,4 +6706,64 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Este dispositivo';
+
+  @override
+  String get agentSource => 'Origen';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'La tarea se eliminará en $server.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'Esta tarea ya no está en el servidor.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Responder a la tarea en $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'En cola',
+      'running': 'En ejecución',
+      'waiting': 'Esperando tu respuesta',
+      'done': 'Completada',
+      'failed': 'Error',
+      'cancelled': 'Detenida',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Permitir siempre $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Escribe $name para ejecutar';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Ejecutar de todos modos';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Contraseña de $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Contraseña incorrecta';
+
+  @override
+  String get agentRemoteSudoRemember => 'Recordar durante 15 minutos';
 }

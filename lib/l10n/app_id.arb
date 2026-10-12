@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Tidak ada yang terhubung",
   "sharingShowConnections": "Tampilkan koneksi",
   "sharingShowConnectionsBody": "Membaca koneksi sebagai root.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Perangkat ini",
+  "agentSource": "Sumber",
+  "agentDeleteRemoteTip": "Tugas akan dihapus di {server}.",
+  "agentPlan": "Rencana",
+  "agentRemoteGone": "Tugas ini sudah tidak ada di server.",
+  "agentRemoteReplyHint": "Balas tugas di {server}",
+  "agentRemoteStatus": "{server} · {status, select, queued{Dalam antrean} running{Berjalan} waiting{Menunggu tanggapan Anda} done{Selesai} failed{Gagal} cancelled{Dihentikan} other{}}",
+  "agentRemoteAlways": "Selalu izinkan {rule}",
+  "agentRemoteTypeToRun": "Ketik {name} untuk menjalankan",
+  "agentRemoteRunAnyway": "Tetap jalankan",
+  "agentRemoteSudoFor": "Kata sandi {user}",
+  "agentRemoteSudoWrong": "Kata sandi salah",
+  "agentRemoteSudoRemember": "Ingat selama 15 menit"
 }

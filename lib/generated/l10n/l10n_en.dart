@@ -6619,4 +6619,64 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'This device';
+
+  @override
+  String get agentSource => 'Source';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'The task is deleted on $server.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'This task is no longer on the server.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Reply to the task on $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Queued',
+      'running': 'Running',
+      'waiting': 'Waiting for you',
+      'done': 'Done',
+      'failed': 'Failed',
+      'cancelled': 'Stopped',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Always allow $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Type $name to run';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Run anyway';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Password of $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Wrong password';
+
+  @override
+  String get agentRemoteSudoRemember => 'Remember for 15 minutes';
 }

@@ -8502,5 +8502,90 @@
   "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
   "@sharingConnectionsLinuxOnly": {
     "description": "Storage and sharing page text."
+  },
+  "agentThisDevice": "This device",
+  "@agentThisDevice": {
+    "description": "Source filter in the Agent history: the chats kept on this device, not the servers' tasks."
+  },
+  "agentSource": "Source",
+  "@agentSource": {
+    "description": "Button in the Agent history that filters the list by where a chat or task lives."
+  },
+  "agentDeleteRemoteTip": "The task is deleted on {server}.",
+  "@agentDeleteRemoteTip": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: confirmation that deleting removes it on the server.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "agentPlan": "Plan",
+  "@agentPlan": {
+    "description": "Label of a monitor agent's plan step shown in a conversation."
+  },
+  "agentRemoteGone": "This task is no longer on the server.",
+  "@agentRemoteGone": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: it was deleted there."
+  },
+  "agentRemoteReplyHint": "Reply to the task on {server}",
+  "@agentRemoteReplyHint": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: hint of the reply box.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteStatus": "{server} · {status, select, queued{Queued} running{Running} waiting{Waiting for you} done{Done} failed{Failed} cancelled{Stopped} other{}}",
+  "@agentRemoteStatus": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the server it runs on and its state.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteAlways": "Always allow {rule}",
+  "@agentRemoteAlways": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: button that adds a command rule to the server's allow list and runs the command.",
+    "placeholders": {
+      "rule": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteTypeToRun": "Type {name} to run",
+  "@agentRemoteTypeToRun": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the field where the machine's name is typed to confirm a destructive command.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteRunAnyway": "Run anyway",
+  "@agentRemoteRunAnyway": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: button that runs a destructive command once the machine's name is typed."
+  },
+  "agentRemoteSudoFor": "Password of {user}",
+  "@agentRemoteSudoFor": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the sudo password field.",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteSudoWrong": "Wrong password",
+  "@agentRemoteSudoWrong": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the sudo password was refused."
+  },
+  "agentRemoteSudoRemember": "Remember for 15 minutes",
+  "@agentRemoteSudoRemember": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the server keeps the sudo password in memory for 15 minutes."
   }
 }

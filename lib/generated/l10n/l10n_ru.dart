@@ -6663,4 +6663,64 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Это устройство';
+
+  @override
+  String get agentSource => 'Источник';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'Задача будет удалена на сервере $server.';
+  }
+
+  @override
+  String get agentPlan => 'План';
+
+  @override
+  String get agentRemoteGone => 'Этой задачи больше нет на сервере.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Ответить на задачу на $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'В очереди',
+      'running': 'Выполняется',
+      'waiting': 'Ожидает вашего ответа',
+      'done': 'Завершена',
+      'failed': 'Ошибка',
+      'cancelled': 'Остановлена',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Всегда разрешать $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Введите $name, чтобы запустить';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Всё равно запустить';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Пароль пользователя $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Неверный пароль';
+
+  @override
+  String get agentRemoteSudoRemember => 'Запомнить на 15 минут';
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -7,6 +9,7 @@ import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_agent.dart';
 import 'package:server_box/data/model/server/monitor_backup.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
@@ -755,6 +758,101 @@ class MonitorHttpClient {
         data: {'current_password': currentPassword},
       );
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Agent mode (`/api/v1/agent*`, the `shell` grant)
+
+  /// The account's tasks, newest change first: [limit] of them after the
+  /// cursor [before] (a page's `next`), only those whose title or last line
+  /// has [query]; every one without a [limit]. An agent from before paging
+  /// ignores the three and answers them all, with no `next`.
+  Future<MonitorAgentFlows> agentFlows({int? limit, String? before, String? query}) => _access(
+    () async => MonitorAgentFlows.fromJson(
+      await _object(
+        '/api/v1/agent/flows',
+        query: {'limit': ?limit, 'before': ?before, if (query != null && query.isNotEmpty) 'q': query},
+      ),
+    ),
+  );
+
+  /// Task [id] with its conversation.
+  Future<MonitorAgentDetail> agentFlow(String id) => _access(
+    () async => MonitorAgentDetail.fromJson(
+      await _object('/api/v1/agent/flows/${Uri.encodeComponent(id)}'),
+    ),
+  );
+
+  /// Starts a task; [mode] null is the admin's default.
+  Future<MonitorAgentFlow> agentStart(String prompt, {String? mode}) => _access(
+    () async => MonitorAgentFlow.fromJson(
+      await _object('/api/v1/agent/flows', post: {'prompt': prompt, 'mode': ?mode}),
+    ),
+  );
+
+  /// Says [text] to task [id]: the next turn while it runs, an edit or an
+  /// answer while it waits, a new run once it is done.
+  Future<MonitorAgentFlow> agentReply(String id, String text) => _access(
+    () async => MonitorAgentFlow.fromJson(
+      await _object('/api/v1/agent/flows/${Uri.encodeComponent(id)}/reply', post: {'text': text}),
+    ),
+  );
+
+  /// Answers what task [id] waits on: [action] with what it needs (`text`,
+  /// `index`, `password` and `remember`, `confirm`).
+  Future<void> agentAnswer(String id, Map<String, Object?> answer) => _access(() async {
+    await _session().post<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}/answer', data: answer);
+  });
+
+  Future<void> agentStop(String id) => _access(() async {
+    await _session().post<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}/stop');
+  });
+
+  Future<void> agentDelete(String id) => _access(() async {
+    await _session().delete<dynamic>('/api/v1/agent/flows/${Uri.encodeComponent(id)}');
+  });
+
+  /// The account's Agent mode events (`flow`, `removed`, `pending`, `output`,
+  /// `event`, `resync`), until the agent ends the stream or the
+  /// subscription is cancelled. The agent pings every 25 s, so a stream
+  /// silent for longer than [_eventsSilence] is gone.
+  Stream<Map<String, dynamic>> agentEvents() async* {
+    final body = await _authed(() async {
+      final resp = await _session().get<ResponseBody>(
+        '/api/v1/agent/events',
+        options: Options(responseType: ResponseType.stream, receiveTimeout: _eventsSilence),
+      );
+      return resp.data;
+    });
+    if (body == null) return;
+    var pending = '';
+    await for (final chunk in body.stream.cast<List<int>>().transform(utf8.decoder)) {
+      pending += chunk.replaceAll('\r\n', '\n');
+      for (var end = pending.indexOf('\n\n'); end >= 0; end = pending.indexOf('\n\n')) {
+        final frame = pending.substring(0, end);
+        pending = pending.substring(end + 2);
+        if (sseData(frame) case final e?) yield e;
+      }
+    }
+  }
+
+  static const _eventsSilence = Duration(seconds: 75);
+
+  /// The JSON object an event-stream frame carries in its `data:` lines; null
+  /// for a comment (`: ping`) or anything else.
+  @visibleForTesting
+  static Map<String, dynamic>? sseData(String frame) {
+    final data = [
+      for (final line in const LineSplitter().convert(frame))
+        if (line.startsWith('data:')) line.substring(5).trimLeft(),
+    ].join('\n');
+    if (data.isEmpty) return null;
+    try {
+      final v = json.decode(data);
+      return v is Map<String, dynamic> ? v : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   /// [fn] with the agent's refusals typed — see [accessErr]. A 401 still

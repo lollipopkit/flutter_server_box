@@ -3,6 +3,7 @@ import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/provider/ai/remote_agent.dart';
 
 /// Where an Agent chat belongs: the app-wide Agent's list, or one server's
 /// terminal. Kept as [ChatMeta.scope], so each place lists only its own.
@@ -113,6 +114,8 @@ abstract final class AgentChats {
   static final engaged = ValueNotifier(false);
 
   static void select(String? scope, String? id) {
+    // A chat of this device takes the pane from a server's task.
+    if (scope == null) RemoteAgentTasks.select(null);
     of(scope).value = id;
     if (scope == null && id != null) engaged.value = true;
     // What `Chats` keeps open while something else borrows a chat.

@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Подключённых нет",
   "sharingShowConnections": "Показать подключения",
   "sharingShowConnectionsBody": "Читает сведения о подключениях от имени root.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Это устройство",
+  "agentSource": "Источник",
+  "agentDeleteRemoteTip": "Задача будет удалена на сервере {server}.",
+  "agentPlan": "План",
+  "agentRemoteGone": "Этой задачи больше нет на сервере.",
+  "agentRemoteReplyHint": "Ответить на задачу на {server}",
+  "agentRemoteStatus": "{server} · {status, select, queued{В очереди} running{Выполняется} waiting{Ожидает вашего ответа} done{Завершена} failed{Ошибка} cancelled{Остановлена} other{}}",
+  "agentRemoteAlways": "Всегда разрешать {rule}",
+  "agentRemoteTypeToRun": "Введите {name}, чтобы запустить",
+  "agentRemoteRunAnyway": "Всё равно запустить",
+  "agentRemoteSudoFor": "Пароль пользователя {user}",
+  "agentRemoteSudoWrong": "Неверный пароль",
+  "agentRemoteSudoRemember": "Запомнить на 15 минут"
 }

@@ -6611,4 +6611,64 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Bu cihaz';
+
+  @override
+  String get agentSource => 'Mənbə';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'Tapşırıq $server serverindən silinəcək.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'Bu tapşırıq artıq serverdə yoxdur.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '$server serverindəki tapşırığa cavab verin';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Növbədə',
+      'running': 'İcra olunur',
+      'waiting': 'Sizdən cavab gözləyir',
+      'done': 'Tamamlandı',
+      'failed': 'Uğursuz oldu',
+      'cancelled': 'Dayandırıldı',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '$rule qaydasına həmişə icazə ver';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'İcra etmək üçün $name yazın';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Yenə də icra et';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user istifadəçisinin parolu';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Yanlış parol';
+
+  @override
+  String get agentRemoteSudoRemember => '15 dəqiqə yadda saxla';
 }

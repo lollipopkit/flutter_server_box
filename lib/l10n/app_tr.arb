@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Bağlı kimse yok",
   "sharingShowConnections": "Bağlantıları göster",
   "sharingShowConnectionsBody": "Bağlı olanları root olarak okur.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Bu cihaz",
+  "agentSource": "Kaynak",
+  "agentDeleteRemoteTip": "Görev {server} üzerinde silinecek.",
+  "agentPlan": "Plan",
+  "agentRemoteGone": "Bu görev artık sunucuda yok.",
+  "agentRemoteReplyHint": "{server} üzerindeki görevi yanıtla",
+  "agentRemoteStatus": "{server} · {status, select, queued{Kuyrukta} running{Çalışıyor} waiting{Yanıtınız bekleniyor} done{Tamamlandı} failed{Başarısız} cancelled{Durduruldu} other{}}",
+  "agentRemoteAlways": "{rule} kuralına her zaman izin ver",
+  "agentRemoteTypeToRun": "Çalıştırmak için {name} yazın",
+  "agentRemoteRunAnyway": "Yine de çalıştır",
+  "agentRemoteSudoFor": "{user} kullanıcısının parolası",
+  "agentRemoteSudoWrong": "Yanlış parola",
+  "agentRemoteSudoRemember": "15 dakika boyunca hatırla"
 }

@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Niemand ist verbunden",
   "sharingShowConnections": "Verbindungen anzeigen",
   "sharingShowConnectionsBody": "Liest als root aus, wer verbunden ist.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Dieses Gerät",
+  "agentSource": "Quelle",
+  "agentDeleteRemoteTip": "Die Aufgabe wird auf {server} gelöscht.",
+  "agentPlan": "Plan",
+  "agentRemoteGone": "Diese Aufgabe ist nicht mehr auf dem Server vorhanden.",
+  "agentRemoteReplyHint": "Auf die Aufgabe auf {server} antworten",
+  "agentRemoteStatus": "{server} · {status, select, queued{In Warteschlange} running{Wird ausgeführt} waiting{Wartet auf Ihre Eingabe} done{Abgeschlossen} failed{Fehlgeschlagen} cancelled{Gestoppt} other{}}",
+  "agentRemoteAlways": "{rule} immer erlauben",
+  "agentRemoteTypeToRun": "{name} eingeben, um den Befehl auszuführen",
+  "agentRemoteRunAnyway": "Trotzdem ausführen",
+  "agentRemoteSudoFor": "Passwort von {user}",
+  "agentRemoteSudoWrong": "Falsches Passwort",
+  "agentRemoteSudoRemember": "15 Minuten merken"
 }

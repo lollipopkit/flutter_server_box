@@ -6334,4 +6334,64 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get sharingConnectionsLinuxOnly =>
       'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'このデバイス';
+
+  @override
+  String get agentSource => 'ソース';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'タスクは $server 上で削除されます。';
+  }
+
+  @override
+  String get agentPlan => '計画';
+
+  @override
+  String get agentRemoteGone => 'このタスクはサーバー上にありません。';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return '$server 上のタスクに返信';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': '待機中',
+      'running': '実行中',
+      'waiting': '応答待ち',
+      'done': '完了',
+      'failed': '失敗',
+      'cancelled': '停止',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return '$rule を常に許可';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return '実行するには $name と入力';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'それでも実行';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return '$user のパスワード';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'パスワードが違います';
+
+  @override
+  String get agentRemoteSudoRemember => '15 分間記憶する';
 }

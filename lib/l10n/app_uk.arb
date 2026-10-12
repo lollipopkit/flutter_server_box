@@ -1863,5 +1863,18 @@
   "sharingNobodyConnected": "Ніхто не підключений",
   "sharingShowConnections": "Показати підключення",
   "sharingShowConnectionsBody": "Читає дані про підключення від імені root.",
-  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers."
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "agentThisDevice": "Цей пристрій",
+  "agentSource": "Джерело",
+  "agentDeleteRemoteTip": "Завдання буде видалено на сервері {server}.",
+  "agentPlan": "План",
+  "agentRemoteGone": "Цього завдання більше немає на сервері.",
+  "agentRemoteReplyHint": "Відповісти на завдання на {server}",
+  "agentRemoteStatus": "{server} · {status, select, queued{У черзі} running{Виконується} waiting{Очікує на вашу відповідь} done{Завершено} failed{Помилка} cancelled{Зупинено} other{}}",
+  "agentRemoteAlways": "Завжди дозволяти {rule}",
+  "agentRemoteTypeToRun": "Введіть {name}, щоб запустити",
+  "agentRemoteRunAnyway": "Усе одно запустити",
+  "agentRemoteSudoFor": "Пароль користувача {user}",
+  "agentRemoteSudoWrong": "Неправильний пароль",
+  "agentRemoteSudoRemember": "Запам’ятати на 15 хвилин"
 }
