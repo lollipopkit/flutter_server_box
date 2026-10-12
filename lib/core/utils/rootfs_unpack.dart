@@ -21,6 +21,9 @@ import 'package:server_box/data/model/app/rootfs_manifest.dart';
 /// had: a hard link that cannot be made is a relative symlink, and a
 /// directory is owner-writable while it is filled.
 abstract final class RootfsUnpack {
+  /// The most any one decompression may write — see [_CappedOutput].
+  static const maxRootfsExpanded = 4 << 30; // 4 GB
+
   /// Puts the downloaded rootfs on disk, whichever shape it came in.
   ///
   /// [LinuxDistro.compression] and [LinuxDistro.layout] are two axes because
@@ -98,7 +101,7 @@ abstract final class RootfsUnpack {
     final to = '${work.path}/${from.split('/').last}.tar';
     await Isolate.run(() {
       final input = InputFileStream(from);
-      final output = OutputFileStream(to);
+      final output = _CappedOutput(to);
       try {
         final ok = switch (how) {
           LinuxRootfsCompression.gzip => GZipDecoder().decodeStream(
@@ -446,6 +449,39 @@ abstract final class RootfsUnpack {
       ...List.filled(fromParts.length - shared, '..'),
       ...toParts.sublist(shared),
     ].join('/');
+  }
+}
+
+/// A decompressed file that stops at [maxRootfsExpanded].
+///
+/// Every byte of a download inflates to disk before a single entry is read,
+/// and a small enough input can inflate to whatever the device has free —
+/// the app's other data and everyone else's with it. The systems offered
+/// today unpack to a few hundred megabytes; this is several times that, and
+/// a bound.
+final class _CappedOutput extends OutputFileStream {
+  _CappedOutput(String path)
+    : super.withFileHandle(FileHandle(path, mode: FileAccess.write));
+
+  void _admit(int bytes) {
+    if (length + bytes > RootfsUnpack.maxRootfsExpanded) {
+      throw StateError(
+        'The rootfs unpacks to more than '
+        '${RootfsUnpack.maxRootfsExpanded >> 30} GB',
+      );
+    }
+  }
+
+  @override
+  void writeByte(int value) {
+    _admit(1);
+    super.writeByte(value);
+  }
+
+  @override
+  void writeBytes(List<int> bytes, {int? length}) {
+    _admit(length ?? bytes.length);
+    super.writeBytes(bytes, length: length);
   }
 }
 

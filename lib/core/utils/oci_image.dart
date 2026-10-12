@@ -26,7 +26,7 @@ typedef OciLayer = ({
   ArchiveFile file,
   LinuxRootfsCompression? compression,
   String sha256,
-  int? size,
+  int size,
 });
 
 /// Throws unless [actual] and [length] are what [layer]'s descriptor says.
@@ -35,8 +35,7 @@ typedef OciLayer = ({
 /// fails this was published that way rather than damaged in transit — and an
 /// image whose descriptors do not describe its blobs is not one to unpack.
 void checkOciBlob(OciLayer layer, Digest actual, int length) {
-  if (actual.toString() != layer.sha256 ||
-      (layer.size != null && layer.size != length)) {
+  if (actual.toString() != layer.sha256 || layer.size != length) {
     throw StateError(
       'A layer of the image does not match its descriptor: '
       'sha256:${layer.sha256}',
@@ -67,7 +66,7 @@ List<int> ociLayerTar(OciLayer layer) {
 /// which is precisely the condition under which getting it wrong stays
 /// invisible until some future image has two.
 List<OciLayer> ociLayers(Archive image) {
-  ({ArchiveFile file, String sha256, int? size}) blob(Map descriptor) {
+  ({ArchiveFile file, String sha256, int size}) blob(Map descriptor) {
     // `sha256:abcd…` lives at `blobs/sha256/abcd…`, which is the whole of the
     // mapping an image layout defines between a digest and a file. SHA-256
     // only: it is the one the specification requires, and a digest this
@@ -83,8 +82,13 @@ List<OciLayer> ociLayers(Archive image) {
     if (file == null) {
       throw StateError('The image is missing the blob $digest');
     }
+    // Required by the specification, and refused without: a descriptor that
+    // says nothing of how long its blob is is not one to hold the blob to.
     final size = descriptor['size'];
-    return (file: file, sha256: parts[1], size: size is int ? size : null);
+    if (size is! int || size < 0) {
+      throw StateError('The image names a blob without a size: $digest');
+    }
+    return (file: file, sha256: parts[1], size: size);
   }
 
   final indexBytes = image.findFile('index.json')?.readBytes();
@@ -114,8 +118,7 @@ List<OciLayer> ociLayers(Archive image) {
   final manifestBlob = blob(selected);
   final manifestBytes = manifestBlob.file.content;
   if (sha256.convert(manifestBytes).toString() != manifestBlob.sha256 ||
-      (manifestBlob.size != null &&
-          manifestBlob.size != manifestBytes.length)) {
+      manifestBlob.size != manifestBytes.length) {
     throw StateError('The image manifest does not match its descriptor');
   }
   final manifest =
@@ -193,10 +196,22 @@ String ociPath(String name) {
 /// of the layer. Deleting those too left a directory holding nothing but
 /// whatever came after the marker in the archive — which is an ordering the
 /// image is not obliged to give.
-Set<String> ociLayerPaths(Iterable<String> names) => {
-  for (final name in names)
-    if (ociPath(name).isNotEmpty) ociPath(name),
-};
+///
+/// Every directory above each of them too: a layer writing `etc/new/file`
+/// writes `etc/new`, whether or not it carries an entry for it, and an opaque
+/// marker in `etc` that spared only the paths named would delete `etc/new` and
+/// the file the layer had just put in it.
+Set<String> ociLayerPaths(Iterable<String> names) {
+  final paths = <String>{};
+  for (final name in names) {
+    var path = ociPath(name);
+    while (path.isNotEmpty && paths.add(path)) {
+      final at = path.lastIndexOf('/');
+      path = at < 0 ? '' : path.substring(0, at);
+    }
+  }
+  return paths;
+}
 
 /// The directory holding [path], as a relative path, or `''` for the root.
 ///

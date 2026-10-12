@@ -50,6 +50,7 @@ void main() {
             {
               'mediaType': 'application/vnd.oci.image.manifest.v1+json',
               'digest': digestOf(manifestBytes),
+              'size': manifestBytes.length,
             },
           ],
         });
@@ -102,6 +103,7 @@ void main() {
             {
               'mediaType': 'application/vnd.oci.image.layer.v1.tar',
               'digest': digestOf(layer),
+              'size': layer.length,
             },
           ],
         }),
@@ -117,10 +119,12 @@ void main() {
               'manifests': [
                 {
                   'digest': digestOf(amd64),
+                  'size': amd64.length,
                   'platform': {'os': 'linux', 'architecture': 'amd64'},
                 },
                 {
                   'digest': digestOf(arm64),
+                  'size': arm64.length,
                   'platform': {'os': 'linux', 'architecture': 'arm64'},
                 },
               ],
@@ -253,6 +257,7 @@ void main() {
           {
             'mediaType': 'application/vnd.oci.image.manifest.v1+json',
             'digest': digestOf(const [9]),
+            'size': 1,
             'platform': {'architecture': 'arm64', 'os': 'linux'},
           },
         ],
@@ -267,6 +272,7 @@ void main() {
                 {
                   'mediaType': 'application/vnd.oci.image.index.v1+json',
                   'digest': digestOf(index),
+                  'size': index.length,
                 },
               ],
             }),
@@ -293,6 +299,25 @@ void main() {
       image.add(ArchiveFile.bytes('blobs/sha256/${hexOf(const [1])}', [2]));
 
       expect(() => ociLayerTar(ociLayers(image).single), throwsStateError);
+    });
+
+    test('whose descriptor gives no size is refused', () {
+      final manifest = utf8.encode(json.encode({'schemaVersion': 2}));
+      final image = Archive()
+        ..add(
+          ArchiveFile.string(
+            'index.json',
+            json.encode({
+              'schemaVersion': 2,
+              'manifests': [
+                {'digest': digestOf(manifest)},
+              ],
+            }),
+          ),
+        )
+        ..add(blob(manifest));
+
+      expect(() => ociLayers(image), throwsStateError);
     });
 
     test('named by a digest this cannot check is refused', () {

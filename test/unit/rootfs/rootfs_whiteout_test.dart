@@ -70,6 +70,7 @@ void main() {
               {
                 'mediaType': 'application/vnd.oci.image.manifest.v1+json',
                 'digest': 'sha256:${sha256.convert(manifest)}',
+                'size': manifest.length,
               },
             ],
           }),
@@ -136,6 +137,18 @@ void main() {
     expect(File('${into.path}/etc/old').existsSync(), isFalse);
     // And the marker is not left behind as a file.
     expect(File('${into.path}/etc/.wh..wh..opq').existsSync(), isFalse);
+  });
+
+  test('and spares a directory the layer writes into without naming', () async {
+    // `etc/new` has no entry of its own here; the layer only writes a file in
+    // it. Sparing only the paths named deleted the directory, and the file.
+    final into = await unpack([
+      layer({'etc/old': 'from below'}),
+      layer({'etc/new/file': 'from above', 'etc/.wh..wh..opq': ''}),
+    ]);
+
+    expect(File('${into.path}/etc/new/file').readAsStringSync(), 'from above');
+    expect(File('${into.path}/etc/old').existsSync(), isFalse);
   });
 
   test('a named marker deletes only its own sibling', () async {
