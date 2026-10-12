@@ -277,7 +277,12 @@ class _ModeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = mode == 'bypass' ? scheme.error : null;
+    // As the web panel: the default neutral, auto in the accent, allow-all a warning.
+    final color = switch (mode) {
+      'auto' => scheme.primary,
+      'bypass' => scheme.error,
+      _ => scheme.onSurfaceVariant,
+    };
     return MenuBtn(
       actions: [
         for (final m in _modes)
