@@ -5414,7 +5414,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get kbNote =>
-      '这些组合由 App 处理，终端获得焦点时也不会发给 shell；没有分配的组合照常发给 shell。生效范围不同的命令可以使用相同的组合。';
+      '工作区中的终端会把工作区和全局组合交给 App 处理；这里的其他组合照常发给 shell。生效范围不同的命令可以使用相同的组合。';
 
   @override
   String kbCurrent(String keys, String scope) {
@@ -10936,7 +10936,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get kbNote =>
-      '這些組合由 App 處理，終端機取得焦點時也不會傳給 shell；沒有指派的組合照常傳給 shell。生效範圍不同的命令可以使用相同的組合。';
+      '工作區中的終端機會把工作區和全域組合交給 App 處理；這裡的其他組合照常傳給 shell。生效範圍不同的命令可以使用相同的組合。';
 
   @override
   String kbCurrent(String keys, String scope) {

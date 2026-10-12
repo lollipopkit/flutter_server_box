@@ -20,7 +20,7 @@ flutter test --coverage
 
 Dart tests live in `test/` and are grouped into `unit/`, `widget/`, `platform/`, and `migration/`. Shared helpers and release fixtures live in `helpers/` and `fixtures/`. Tests should verify behavior and input/output without depending on an external network or a real server.
 
-`unit/` is divided by feature: `ssh/`, `terminal/`, `file/`, `server/`, `store/`, `ai/`, `geo/`, `rootfs/`, `monitor/`, `benchmark/`, `remote_desktop/`, and `app/`. Keep a feature's store, provider, and model tests together. `store/` contains shared storage infrastructure (database, schema, backup and restore, settings); `app/` contains version, localization, crash reporting, diagnostics, and build checks.
+`unit/` is divided by feature: `ssh/`, `terminal/`, `file/`, `server/`, `store/`, `ai/`, `geo/`, `rootfs/`, `monitor/`, `benchmark/`, `remote_desktop/`, `virt/`, `workspace/`, `view/`, and `app/`; the theme tests (`theme_*_test.dart`) sit at its top level. Keep a feature's store, provider, and model tests together. `store/` contains shared storage infrastructure (database, schema, backup and restore, settings); `app/` contains version, localization, crash reporting, diagnostics, and build checks.
 
 ## Rust tests
 

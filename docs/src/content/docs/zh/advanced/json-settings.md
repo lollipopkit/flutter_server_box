@@ -7,7 +7,7 @@ description: 通过 JSON 编辑器访问高级设置
 
 ## 打开 JSON 编辑器
 
-在包含开发者选项的构建中，打开 **设置 → 应用 → 通用 → 更多**，选择 **(Dev) Edit raw json**。release 构建不提供此编辑器。
+在 debug 构建中，打开 **设置 → 应用 → 通用**，在 **系统** 分组中选择 **(Dev) Edit raw json**。profile 和 release 构建不提供此编辑器。
 
 ## 常用设置
 

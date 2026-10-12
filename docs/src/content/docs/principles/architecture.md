@@ -53,12 +53,14 @@ does not infer them from the transport currently in use:
 | Capability | SSH | Monitor HTTP |
 |---|---|---|
 | Shell commands and App terminal | Available | Requires the account role's `shell` permission |
-| Web panel SSH terminal | Available | Requires the account role's `ssh_terminal` permission |
 | File browsing | SFTP | Requires the `files` permission and `roots` configured under `[remote_access.fs]` |
 | SFTP | Available | Not available |
 | Local and dynamic port forwarding; remote desktop | Available | Requires `connect`; its `allow` list can restrict targets |
 | Remote port forwarding | Available | Requires `listen` |
 | History from before the App connected | Not available | Available |
+
+The web panel's SSH terminal needs the role's `ssh_terminal` permission. The
+App does not use it: its Monitor terminal needs `shell`.
 
 With both transports configured, the server exposes the capabilities of both.
 For example, preferring Monitor HTTP does not remove SFTP or the remote and

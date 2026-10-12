@@ -43,12 +43,13 @@ UI 根据 `ServerCapabilities` 判断可用功能，不直接根据当前使用�
 | 能力 | SSH | Monitor HTTP |
 |---|---|---|
 | Shell 命令和 App 终端 | 支持 | 账号角色需要 `shell` 权限 |
-| Web panel SSH 终端 | 支持 | 账号角色需要 `ssh_terminal` 权限 |
 | 文件浏览 | SFTP | 需要 `files` 权限，并在 `[remote_access.fs]` 下配置 `roots` |
 | SFTP | 支持 | 不支持 |
 | 本地和动态端口转发、远程桌面 | 支持 | 需要 `connect` 权限；`allow` 列表可限制目标地址 |
 | 远程端口转发 | 支持 | 需要 `listen` 权限 |
 | App 连接前的历史数据 | 不提供 | 提供 |
+
+Web 面板的 SSH 终端需要角色的 `ssh_terminal` 权限。App 不使用这项权限：App 的 Monitor 终端需要 `shell`。
 
 同时配置两种方式时，服务器会提供两边能力的 union。例如，优先使用 Monitor HTTP 时，SSH 提供的 SFTP 以及远程和动态端口转发仍然可用。
 

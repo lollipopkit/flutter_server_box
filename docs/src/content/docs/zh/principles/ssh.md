@@ -192,19 +192,25 @@ Future<bool> verifyHostKey(
 
 `HostKeyVerifier` 将收到的 fingerprint 与 `spi.id::keyType` 对应的已保存值比较。未知 key 只有在你确认提示后才会信任；key 不匹配时必须再次明确确认。拒绝会返回 `false`，SSH 连接也会被拒绝。接受的 key 会持久化，供后续连接比较。
 
-## Session lifecycle
+## Session 管理
 
-### Reuse connections
+### 连接复用
 
-`ServerNotifier` 为每台服务器维护一个 client，并在状态采集和其他 SSH 功能中复用。需要
-client 的操作应向 server provider 获取，不要在页面中为每个操作单独创建连接。
+`ServerNotifier` 为每台服务器维护一个 client，并在状态采集和其他 SSH 功能中复用：
+
+```dart
+final state = ref.watch(serverProvider(serverId));
+final client = state.client;
+```
+
+需要 client 的操作应向 server provider 获取，不要在页面中为每个操作单独创建连接。
 
 ### Keep-alive
 
 SSH client 会在连接空闲时发送 protocol-level keep-alive message。这些 message 与终端的
 输入和输出相互独立。
 
-### Reconnection
+### 重新连接
 
 连接失败后，server provider 可在后续刷新时重新建立连接。一次状态请求失败并不能说明
 SFTP 或其他服务器功能不可用。

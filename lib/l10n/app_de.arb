@@ -1624,7 +1624,7 @@
   "kbModified": "Geändert",
   "kbDefault": "Standard",
   "kbFixedHint": "Diese Tasten können nicht geändert werden",
-  "kbNote": "Die App verarbeitet diese Kombinationen und sendet sie nicht an die shell, auch wenn ein Terminal den Fokus hat. Hier nicht belegte Kombinationen erreichen weiterhin die shell. Befehle mit unterschiedlichem Geltungsbereich können dieselbe Kombination verwenden.",
+  "kbNote": "Ein Terminal in einem Arbeitsbereich überlässt die Kombinationen des Arbeitsbereichs und die globalen der App; die übrigen Kombinationen hier erreichen die shell. Befehle mit unterschiedlichem Geltungsbereich können dieselbe Kombination verwenden.",
   "kbCurrent": "Aktuell: {keys} · Geltungsbereich: {scope}",
   "kbPress": "Tastenkombination drücken",
   "kbRecordHint": "Enter zum Bestätigen, Esc zum Abbrechen. Geht der Fokus verloren, tippe auf das Feld oben und drücke erneut.",

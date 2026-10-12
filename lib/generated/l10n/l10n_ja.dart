@@ -5513,7 +5513,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'これらの組み合わせはアプリが処理し、ターミナルにフォーカスがあっても shell には送信しません。ここで割り当てていない組み合わせは通常どおり shell に届きます。適用範囲が異なるコマンドは同じ組み合わせを共有できます。';
+      'ワークスペース内のターミナルでは、ワークスペースとグローバルの組み合わせはアプリが処理します。ここにあるその他の組み合わせは shell に届きます。適用範囲が異なるコマンドは同じ組み合わせを共有できます。';
 
   @override
   String kbCurrent(String keys, String scope) {

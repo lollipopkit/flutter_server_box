@@ -8,8 +8,9 @@ in the interface. Change a value only when you understand what it affects.
 
 ## Open the JSON editor
 
-In builds with developer controls, open **Settings → App → General → More**
-and select **(Dev) Edit raw json**. Release builds do not include this editor.
+In a debug build, open **Settings → Application → General**, and in the
+**System** group select **(Dev) Edit raw json**. Profile and release builds do
+not include this editor.
 
 ## Common settings
 

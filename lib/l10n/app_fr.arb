@@ -1624,7 +1624,7 @@
   "kbModified": "Modifié",
   "kbDefault": "Par défaut",
   "kbFixedHint": "Ces touches ne peuvent pas être modifiées",
-  "kbNote": "L'app gère ces combinaisons et ne les envoie pas au shell, même lorsqu'un terminal a le focus. Les combinaisons non attribuées ici parviennent toujours au shell. Des commandes de portées différentes peuvent partager une combinaison.",
+  "kbNote": "Dans un espace de travail, un terminal laisse à l'app les combinaisons de l'espace de travail et les combinaisons globales ; les autres combinaisons d'ici parviennent au shell. Des commandes de portées différentes peuvent partager une combinaison.",
   "kbCurrent": "Actuel : {keys} · Portée : {scope}",
   "kbPress": "Appuyez sur une combinaison de touches",
   "kbRecordHint": "Enter pour confirmer, Esc pour annuler. Si le focus est perdu, touchez la zone ci-dessus et appuyez à nouveau.",

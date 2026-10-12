@@ -7,7 +7,7 @@ Agent connects a language model to your servers. It suggests an action, shows
 you what it plans to do, and runs it only after you approve — unless you let
 read-only commands run by themselves (see [Review actions](#review-actions)).
 
-Before the first message, add a provider at **Settings → App → AI →
+Before the first message, add a provider at **Settings → Application → AI →
 Providers**: pick one of the built-in providers (OpenAI, Anthropic, Google and
 others from the model catalog) and enter its API key, or add a custom
 OpenAI-compatible, Anthropic or Google endpoint. The same page chooses the
@@ -34,7 +34,7 @@ with the float button in the Agent tab's header.
 
 ## Providers and models
 
-**Settings → App → AI → Providers** lists the built-in providers and your
+**Settings → Application → AI → Providers** lists the built-in providers and your
 custom ones. For a custom provider, enter its base URL including the API
 version (for example `https://api.example.com/v1`) and pick its protocol:
 OpenAI Chat Completions, OpenAI Responses, Anthropic Messages or Google
@@ -86,7 +86,7 @@ The Agent tab's tools:
 
 A terminal's chats have only two: **Shell**, which runs in that terminal's
 connection, and **Read the screen**. Tools can be switched off by group at
-**Settings → App → AI → Tools**, where you can also add MCP servers, whose
+**Settings → Application → AI → Tools**, where you can also add MCP servers, whose
 tools the Agent tab then offers too.
 
 Tap a server to edit it. One (Streamable HTTP) that wants a key takes it as
@@ -98,7 +98,7 @@ are sent only over `https` unless the server is on this device.
 ## Skills
 
 A skill is a set of instructions for a particular task — a `SKILL.md` and
-any files beside it. Install one at **Settings → App → AI → Skills** from the
+any files beside it. Install one at **Settings → Application → AI → Skills** from the
 same sources `npx skills add` takes: `owner/repo`, `owner/repo@skill`, a
 GitHub or GitLab link (to a repository or a folder in it), a link to a
 `SKILL.md` or an archive, or a site that publishes a `/.well-known` skills
@@ -138,7 +138,7 @@ and run it yourself. The model's safe or unsafe label is only a hint for your
 review.
 
 Server actions that do not auto-run are asked about every time; there is no
-"always allow" for them. At **Settings → App → AI**, **Auto-run read-only commands** lets a server
+"always allow" for them. At **Settings → Application → AI**, **Auto-run read-only commands** lets a server
 command run without asking only when both the model and the App's local check
 classify it as read-only, idempotent and non-destructive, and then at most three
 times for one message. It is off by default and never applies to commands on
@@ -172,7 +172,7 @@ your other server credentials.
 
 ## Run commands on this device
 
-**Run commands on this device** is a separate option at **Settings → App → AI**
+**Run commands on this device** is a separate option at **Settings → Application → AI**
 and is off by default. Enabling it does not allow unattended commands: every
 local command requires your confirmation, even if it appears read-only or
 **Auto-run read-only commands** is enabled.

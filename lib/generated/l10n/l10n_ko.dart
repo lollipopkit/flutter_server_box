@@ -5513,7 +5513,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get kbNote =>
-      '이 조합은 앱이 처리하며, 터미널에 포커스가 있어도 shell로 보내지 않습니다. 여기에 할당되지 않은 조합은 그대로 shell로 전달됩니다. 적용 범위가 다른 명령은 같은 조합을 사용할 수 있습니다.';
+      '워크스페이스의 터미널에서는 워크스페이스 및 전역 조합을 앱이 처리합니다. 여기의 다른 조합은 shell로 전달됩니다. 적용 범위가 다른 명령은 같은 조합을 사용할 수 있습니다.';
 
   @override
   String kbCurrent(String keys, String scope) {

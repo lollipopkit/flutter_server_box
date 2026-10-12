@@ -91,7 +91,8 @@ one shared place (proposed `lib/core/utils/server_tcp.dart`):
     VNC uses `run_vnc`; RDP uses `ConfigBuilder::with_tcp_preamble` in the
     vendored IronRDP `connect_direct` path.
   - The listener reads the token within 5 seconds and compares it in constant
-    time before dialing. It drops other connections without reading them.
+    time before dialing. It drops a connection whose token does not match
+    without forwarding anything from it.
   - `loopbackOnce` closes its listener after the first connection. The
     port-forward feature's `SshLocalTunnel.bind` remains open for external
     clients.
@@ -129,12 +130,13 @@ certificate is an error with the old and new fingerprints.
   (`VM.Audit`, `VM.PowerMgmt`, `VM.Console`, `Sys.Audit` on the paths the
   user wants shown; since phase 2 also `VM.Snapshot`, `VM.Snapshot.Rollback`
   and `Datastore.Audit`).
-- A token with no ACL is still allowed to connect. On PVE 9.2,
-  `/cluster/resources` returned node names and no guests. When the App then
-  requested `/access/permissions`, PVE returned `permissionDenied` if
-  `VM.Audit` and `Sys.Audit` were not granted. The error includes the
-  corrective command: `pveum acl modify / --tokens … --roles
-  PVEAuditor,PVEVMAdmin`. Those roles provide the privileges listed above.
+- An account with no ACL, token or password, is still allowed to connect. On
+  PVE 9.2, `/cluster/resources` returned node names and no guests. The App
+  then reads `/access/permissions` (`ensure_auditable`) and reports
+  `permissionDenied` itself when neither `VM.Audit` nor `Sys.Audit` is granted
+  anywhere. The error includes the corrective command: `pveum acl modify /
+  --tokens … --roles PVEAuditor,PVEVMAdmin`, with `--users` for a password
+  account. Those roles provide the privileges listed above.
 
 ### libvirt
 

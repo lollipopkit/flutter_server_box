@@ -5776,7 +5776,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Bu kombinasiyaları tətbiq emal edir və terminal fokusda olsa belə onları shell-ə göndərmir. Burada təyin olunmayan kombinasiyalar yenə də shell-ə çatır. Fərqli əhatə dairəli əmrlər eyni kombinasiyanı paylaşa bilər.';
+      'İş sahəsindəki terminal iş sahəsi və qlobal kombinasiyaları tətbiqə buraxır; buradakı digər kombinasiyalar shell-ə çatır. Fərqli əhatə dairəli əmrlər eyni kombinasiyanı paylaşa bilər.';
 
   @override
   String kbCurrent(String keys, String scope) {

@@ -1624,7 +1624,7 @@
   "kbModified": "已修改",
   "kbDefault": "默认",
   "kbFixedHint": "这一组按键不能修改",
-  "kbNote": "这些组合由 App 处理，终端获得焦点时也不会发给 shell；没有分配的组合照常发给 shell。生效范围不同的命令可以使用相同的组合。",
+  "kbNote": "工作区中的终端会把工作区和全局组合交给 App 处理；这里的其他组合照常发给 shell。生效范围不同的命令可以使用相同的组合。",
   "kbCurrent": "当前：{keys} · 生效范围：{scope}",
   "kbPress": "按下组合键",
   "kbRecordHint": "Enter 确认，Esc 取消。焦点离开后，点按上面的框再按。",

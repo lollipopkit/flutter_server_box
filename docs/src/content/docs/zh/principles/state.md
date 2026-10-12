@@ -50,7 +50,7 @@ await ref.read(serverProvider(serverId).notifier).refresh();
 
 - **状态轮询**由 notifier 持有的 timer 驱动，在 `ref.onDispose` 中取消；它使用领先的 transport，即 `Spix.transport`。
 - **已存历史**向报告 `ServerCapabilities.storedHistory` 的那条 transport 请求，也就是 agent，而不一定是领先的那条。SSH 没有历史，因此只有 SSH 的服务器只有应用自己的滚动 buffer。
-- **长时间运行的操作**可以在当前页面关闭后继续：benchmark 作为后台进程在服务器上运行，App 轮询其状态；文件传输则运行在独立 isolate 中。
+- **长时间运行的操作**可以在当前页面关闭后继续：benchmark 作为后台进程在服务器上运行，App 轮询其状态；SFTP 传输则运行在独立 isolate 中。
   - 命令——benchmark、服务操作、进程列表——经由 `ensureExec()`，它使用领先的 transport，失败时回退到另一条。
   - 文件传输自选后端——SSH 上的 SFTP 或 agent 的文件 API——取决于服务器能用什么提供文件，而不是由承载状态的 transport 决定。
 

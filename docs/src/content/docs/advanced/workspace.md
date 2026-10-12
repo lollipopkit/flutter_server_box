@@ -9,7 +9,7 @@ the application host, and so on. Each view is the same page the app opens from
 a server's detail page, shown inside a pane.
 
 A fresh install does not put the tab in the bar: open it from **More**, or add
-it under **Settings › App › Home Tabs**.
+it under **Settings › Application › Home Tabs**.
 
 ## Workspaces, panes and tabs
 
@@ -22,16 +22,22 @@ it under **Settings › App › Home Tabs**.
   files, Agent, containers, processes, services or snippets.
 
 Drag a tab to another pane's edge to split that pane, or to its middle to add
-the tab to it. On a phone, press and hold the pane bar to drag.
+the tab to it. On iOS and Android, press and hold before dragging; on a phone,
+or in a pane too narrow for a strip of tabs, the whole pane bar is what you
+drag.
 
 A narrow window shows two panes at a time: the focused one and the one focused
 before it. The panes button at the top lists every pane and moves the focus.
 
 **Maximize** fills the workspace with one pane and hides the others until you
-restore it. Double-clicking a pane's tab bar does the same.
+restore it. Double-clicking a pane's strip of tabs does the same. A narrow
+window has no maximize: it already shows at most two panes.
 
 Closing a tab or a pane can be undone from the message that appears, or with
-**Reopen closed tab**.
+the **Reopen closed tab** shortcut. Only the last close can be undone, and
+undoing puts the whole workspace back as it was just before it, so a change
+made to the layout since is undone too. After a server with tabs in a workspace
+is deleted, nothing can be undone.
 
 ## After a restart
 
@@ -52,20 +58,25 @@ position report, are not copied.
 
 **Save layout as template** stores the layout and the views of each pane,
 without servers. Choosing a template in the workspace list creates a new
-workspace with that layout, with every tab on the server of the focused pane.
+workspace with that layout, with every tab on the server of the tab shown in
+the focused pane. In an empty workspace you pick the server.
 
 ## Moving a terminal into a workspace
 
 In the **Terminal** tab, **Move to workspace** puts the terminal on screen into
-a workspace. The connection, the shell and what is on the screen stay as they
+a workspace. It is offered for terminals on a server, not for one on this
+device. The connection, the shell and what is on the screen stay as they
 are.
 
 ## Keyboard shortcuts
 
-**Settings › App › Keyboard shortcuts** lists every key combination the app
-uses, and lets you change or remove each one. When a terminal has focus, these
-combinations are handled by the app and are not sent to the shell; any
-combination not listed still reaches the shell.
+**Settings › Application › Keyboard shortcuts** lists the app's key
+combinations, and lets you change or remove each one. A terminal in a
+workspace does not send the workspace's combinations, or the global ones such
+as opening the settings, to the shell. Outside a workspace the workspace's
+combinations reach the shell, and so do those of the server tab and the
+settings. The terminal's own copy, paste and select-all keys are not on the
+list.
 
 | Command | Windows / Linux | macOS |
 | --- | --- | --- |

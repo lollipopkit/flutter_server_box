@@ -9882,7 +9882,7 @@ abstract class AppLocalizations {
   /// Footnote of the shortcuts page.
   ///
   /// In en, this message translates to:
-  /// **'The app handles these combinations, and does not send them to the shell even while a terminal has focus. Combinations not assigned here still reach the shell. Commands of different scopes can share a combination.'**
+  /// **'A terminal in a workspace leaves the workspace and global combinations to the app; the other combinations here reach the shell. Commands of different scopes can share a combination.'**
   String get kbNote;
 
   /// Recording dialog.

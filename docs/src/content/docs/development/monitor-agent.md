@@ -53,8 +53,10 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 If `from` precedes the oldest retained sample, the agent returns the available
 rows. It does not shift the requested start time or return an error. The chart
-represents the missing interval as a gap. TODO: Remove the legacy `?minutes=`
-parameter when the minimum supported agent version accepts `from` and `to`.
+represents the missing interval as a gap. Without `from`, `?minutes=` sets the
+window's length (default 60, at least 5, at most 7 days), ending at `to` or
+now. The App sends it on every request, so agents that predate `from` and `to`
+still answer.
 
 ## Access model
 
@@ -116,9 +118,10 @@ listener whose account no longer holds the grant it needs receives
 `{"type":"error","code":"permission_revoked"}` and is closed. A WebSocket
 request that needs a grant the account lacks answers `forbidden`; a `listen`
 outside the role's `public` or `ports` limits answers `not_permitted`.
-TODO: Remove the legacy endpoint and `full_access_disabled` response when
-supported clients no longer use them. `DELETE /api/v1/remote-access/full-access`
-removes `shell`, `connect`, and `listen` from every role.
+The legacy `DELETE /api/v1/remote-access/full-access` removes `shell`,
+`connect`, and `listen` from every role and closes the sessions that lost a
+grant with `full_access_disabled`. TODO: Remove the endpoint once the panel's
+prompt edits roles itself.
 
 ### Transport
 

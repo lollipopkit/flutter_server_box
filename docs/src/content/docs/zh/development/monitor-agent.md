@@ -34,7 +34,7 @@ App 可通过以下 endpoint 请求精确时间段：
 GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 ```
 
-如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。TODO：最低支持版本不再需要旧参数后，删除 `?minutes=` 兼容逻辑。目前它仍供不支持 `from` 和 `to` 的旧版 agent 使用。
+如果 `from` 早于最早保留样本，agent 会返回现存记录，不会平移请求的开始时间，也不会报错。图表会将缺少数据的时间显示为空档。没有 `from` 时，`?minutes=` 指定窗口长度（默认 60，最少 5，最多 7 天），结束于 `to` 或当前时间。App 每次请求都会带上它，因此不支持 `from` 和 `to` 的旧版 agent 仍能响应。
 
 ## 访问模型
 
@@ -83,7 +83,7 @@ GET /api/v1/metrics/history?from=<epoch-seconds>&to=<epoch-seconds>
 
 ### 正在进行的会话
 
-修改账号或角色会立即生效。如果终端、relay 或监听所属的账号不再拥有所需权限，会收到 `{"type":"error","code":"permission_revoked"}` 并被关闭。账号缺少所需权限时，WebSocket 请求返回 `forbidden`；`listen` 超出角色的 `public` 或 `ports` 限制时返回 `not_permitted`。TODO：支持的客户端不再调用旧接口后，删除 `DELETE /api/v1/remote-access/full-access` 及 `full_access_disabled` 兼容响应。旧接口目前会从所有角色移除 `shell`、`connect` 和 `listen`。
+修改账号或角色会立即生效。如果终端、relay 或监听所属的账号不再拥有所需权限，会收到 `{"type":"error","code":"permission_revoked"}` 并被关闭。账号缺少所需权限时，WebSocket 请求返回 `forbidden`；`listen` 超出角色的 `public` 或 `ports` 限制时返回 `not_permitted`。旧接口 `DELETE /api/v1/remote-access/full-access` 会从所有角色移除 `shell`、`connect` 和 `listen`，并以 `full_access_disabled` 关闭失去权限的会话。TODO：面板的提示改为直接编辑角色后，删除这个接口。
 
 ### 传输安全
 

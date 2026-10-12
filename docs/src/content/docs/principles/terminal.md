@@ -3,7 +3,7 @@ title: Terminal Implementation
 description: How the Server Box terminal works
 ---
 
-The terminal uses a custom `xterm.dart` fork. SSH, local, Alpine, and Monitor agent sessions share its UI.
+The terminal uses a custom `xterm.dart` fork. SSH, local, Alpine, Monitor agent, and PVE console sessions share its UI.
 
 ## Where the bytes come from
 
@@ -15,6 +15,7 @@ Everything above the byte stream uses one implementation: the same emulator, vir
 | `LocalShellBackend` | A shell on this device, or an Alpine environment on Android |
 | `IshShellBackend` | The Linux interpreter on iOS |
 | `MonitorShellBackend` | Monitor agent's `/api/v1/terminal/ws` endpoint |
+| `PveTermShellBackend` | A Proxmox VE `termproxy` console |
 
 The caller opens a session and reads or writes bytes without knowing which backend supplies them. See [Terminal on This Device](/docs/advanced/local-terminal/) for local backends and [Monitor agent](/docs/advanced/monitor-agent/) for the Monitor backend.
 

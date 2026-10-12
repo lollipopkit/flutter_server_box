@@ -5785,7 +5785,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'The app handles these combinations, and does not send them to the shell even while a terminal has focus. Combinations not assigned here still reach the shell. Commands of different scopes can share a combination.';
+      'A terminal in a workspace leaves the workspace and global combinations to the app; the other combinations here reach the shell. Commands of different scopes can share a combination.';
 
   @override
   String kbCurrent(String keys, String scope) {

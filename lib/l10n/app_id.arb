@@ -1624,7 +1624,7 @@
   "kbModified": "Diubah",
   "kbDefault": "Bawaan",
   "kbFixedHint": "Tombol ini tidak dapat diubah",
-  "kbNote": "Aplikasi menangani kombinasi ini dan tidak mengirimkannya ke shell, bahkan saat terminal sedang difokuskan. Kombinasi yang tidak ditetapkan di sini tetap diteruskan ke shell. Perintah dengan cakupan berbeda dapat memakai kombinasi yang sama.",
+  "kbNote": "Terminal di ruang kerja menyerahkan kombinasi ruang kerja dan kombinasi global kepada aplikasi; kombinasi lain di sini tetap diteruskan ke shell. Perintah dengan cakupan berbeda dapat memakai kombinasi yang sama.",
   "kbCurrent": "Saat ini: {keys} · Cakupan: {scope}",
   "kbPress": "Tekan kombinasi tombol",
   "kbRecordHint": "Enter untuk konfirmasi, Esc untuk batal. Jika fokus berpindah, ketuk kotak di atas lalu tekan lagi.",

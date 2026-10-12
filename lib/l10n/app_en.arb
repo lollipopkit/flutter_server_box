@@ -7516,7 +7516,7 @@
   "@kbFixedHint": {
     "description": "Toast."
   },
-  "kbNote": "The app handles these combinations, and does not send them to the shell even while a terminal has focus. Combinations not assigned here still reach the shell. Commands of different scopes can share a combination.",
+  "kbNote": "A terminal in a workspace leaves the workspace and global combinations to the app; the other combinations here reach the shell. Commands of different scopes can share a combination.",
   "@kbNote": {
     "description": "Footnote of the shortcuts page."
   },

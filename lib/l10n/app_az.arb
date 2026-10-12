@@ -1624,7 +1624,7 @@
   "kbModified": "Dəyişdirilib",
   "kbDefault": "Standart",
   "kbFixedHint": "Bu düymələr dəyişdirilə bilməz",
-  "kbNote": "Bu kombinasiyaları tətbiq emal edir və terminal fokusda olsa belə onları shell-ə göndərmir. Burada təyin olunmayan kombinasiyalar yenə də shell-ə çatır. Fərqli əhatə dairəli əmrlər eyni kombinasiyanı paylaşa bilər.",
+  "kbNote": "İş sahəsindəki terminal iş sahəsi və qlobal kombinasiyaları tətbiqə buraxır; buradakı digər kombinasiyalar shell-ə çatır. Fərqli əhatə dairəli əmrlər eyni kombinasiyanı paylaşa bilər.",
   "kbCurrent": "Cari: {keys} · Əhatə dairəsi: {scope}",
   "kbPress": "Düymə kombinasiyasını basın",
   "kbRecordHint": "Təsdiq üçün Enter, ləğv üçün Esc. Fokus itərsə, yuxarıdakı xanaya toxunub yenidən basın.",

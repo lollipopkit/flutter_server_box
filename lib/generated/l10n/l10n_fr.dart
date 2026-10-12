@@ -5875,7 +5875,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'L\'app gère ces combinaisons et ne les envoie pas au shell, même lorsqu\'un terminal a le focus. Les combinaisons non attribuées ici parviennent toujours au shell. Des commandes de portées différentes peuvent partager une combinaison.';
+      'Dans un espace de travail, un terminal laisse à l\'app les combinaisons de l\'espace de travail et les combinaisons globales ; les autres combinaisons d\'ici parviennent au shell. Des commandes de portées différentes peuvent partager une combinaison.';
 
   @override
   String kbCurrent(String keys, String scope) {

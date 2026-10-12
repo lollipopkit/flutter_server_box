@@ -64,7 +64,7 @@ App. Those servers sync by default. To exclude one, open **iOS Settings → App
 ### Setup
 
 1. Open Server Box on the iPhone.
-2. Open **Settings → App → iOS → Watch app**.
+2. Open **Settings → Application → iOS → Watch app**.
 3. Exclude any servers you do not want on the Watch; the remaining Monitor servers will sync.
 4. Wait for synchronization to finish.
 

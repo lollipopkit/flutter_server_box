@@ -20,7 +20,7 @@ flutter test --coverage
 
 Dart 测试位于 `test/`，按 `unit/`、`widget/`、`platform/` 和 `migration/` 分类。共享 helper 和 release fixture 分别位于 `helpers/` 和 `fixtures/`。测试应验证行为和输入输出，不依赖外部网络或真实服务器。
 
-`unit/` 按功能域划分为 `ssh/`、`terminal/`、`file/`、`server/`、`store/`、`ai/`、`geo/`、`rootfs/`、`monitor/`、`benchmark/`、`remote_desktop/` 和 `app/`。同一功能的 store、provider 和 model 测试放在一起。`store/` 存放共用的存储设施（数据库、schema、备份恢复和设置）；`app/` 存放版本、本地化、崩溃上报、诊断和构建检查。
+`unit/` 按功能域划分为 `ssh/`、`terminal/`、`file/`、`server/`、`store/`、`ai/`、`geo/`、`rootfs/`、`monitor/`、`benchmark/`、`remote_desktop/`、`virt/`、`workspace/`、`view/` 和 `app/`；主题测试（`theme_*_test.dart`）直接放在 `unit/` 下。同一功能的 store、provider 和 model 测试放在一起。`store/` 存放共用的存储设施（数据库、schema、备份恢复和设置）；`app/` 存放版本、本地化、崩溃上报、诊断和构建检查。
 
 ## Rust 测试
 

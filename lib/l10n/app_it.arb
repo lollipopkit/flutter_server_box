@@ -1624,7 +1624,7 @@
   "kbModified": "Modificata",
   "kbDefault": "Predefinita",
   "kbFixedHint": "Questi tasti non possono essere modificati",
-  "kbNote": "L'app gestisce queste combinazioni e non le invia alla shell anche quando un terminale ha il focus. Le combinazioni non assegnate qui arrivano comunque alla shell. Comandi di ambiti diversi possono condividere una combinazione.",
+  "kbNote": "Un terminale in un'area di lavoro lascia all'app le combinazioni dell'area di lavoro e quelle globali; le altre combinazioni qui arrivano alla shell. Comandi di ambiti diversi possono condividere una combinazione.",
   "kbCurrent": "Attuale: {keys} · Ambito: {scope}",
   "kbPress": "Premi una combinazione di tasti",
   "kbRecordHint": "Enter per confermare, Esc per annullare. Se il focus si sposta, tocca il riquadro sopra e premi di nuovo.",

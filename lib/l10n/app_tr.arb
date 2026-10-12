@@ -1624,7 +1624,7 @@
   "kbModified": "Değiştirildi",
   "kbDefault": "Varsayılan",
   "kbFixedHint": "Bu tuşlar değiştirilemez",
-  "kbNote": "Bu kombinasyonları uygulama işler ve bir terminal odaktayken bile shell'e göndermez. Burada atanmamış kombinasyonlar shell'e ulaşmaya devam eder. Farklı kapsamlardaki komutlar aynı kombinasyonu paylaşabilir.",
+  "kbNote": "Bir çalışma alanındaki terminal, çalışma alanı ve genel kombinasyonları uygulamaya bırakır; buradaki diğer kombinasyonlar shell'e ulaşır. Farklı kapsamlardaki komutlar aynı kombinasyonu paylaşabilir.",
   "kbCurrent": "Geçerli: {keys} · Kapsam: {scope}",
   "kbPress": "Bir tuş kombinasyonuna basın",
   "kbRecordHint": "Onaylamak için Enter, iptal için Esc. Odak kaybolursa yukarıdaki kutuya dokunup yeniden basın.",

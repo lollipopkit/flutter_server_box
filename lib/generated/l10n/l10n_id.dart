@@ -5778,7 +5778,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Aplikasi menangani kombinasi ini dan tidak mengirimkannya ke shell, bahkan saat terminal sedang difokuskan. Kombinasi yang tidak ditetapkan di sini tetap diteruskan ke shell. Perintah dengan cakupan berbeda dapat memakai kombinasi yang sama.';
+      'Terminal di ruang kerja menyerahkan kombinasi ruang kerja dan kombinasi global kepada aplikasi; kombinasi lain di sini tetap diteruskan ke shell. Perintah dengan cakupan berbeda dapat memakai kombinasi yang sama.';
 
   @override
   String kbCurrent(String keys, String scope) {

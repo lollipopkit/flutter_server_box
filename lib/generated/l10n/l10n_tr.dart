@@ -5767,7 +5767,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Bu kombinasyonları uygulama işler ve bir terminal odaktayken bile shell\'e göndermez. Burada atanmamış kombinasyonlar shell\'e ulaşmaya devam eder. Farklı kapsamlardaki komutlar aynı kombinasyonu paylaşabilir.';
+      'Bir çalışma alanındaki terminal, çalışma alanı ve genel kombinasyonları uygulamaya bırakır; buradaki diğer kombinasyonlar shell\'e ulaşır. Farklı kapsamlardaki komutlar aynı kombinasyonu paylaşabilir.';
 
   @override
   String kbCurrent(String keys, String scope) {

@@ -5855,7 +5855,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Die App verarbeitet diese Kombinationen und sendet sie nicht an die shell, auch wenn ein Terminal den Fokus hat. Hier nicht belegte Kombinationen erreichen weiterhin die shell. Befehle mit unterschiedlichem Geltungsbereich können dieselbe Kombination verwenden.';
+      'Ein Terminal in einem Arbeitsbereich überlässt die Kombinationen des Arbeitsbereichs und die globalen der App; die übrigen Kombinationen hier erreichen die shell. Befehle mit unterschiedlichem Geltungsbereich können dieselbe Kombination verwenden.';
 
   @override
   String kbCurrent(String keys, String scope) {

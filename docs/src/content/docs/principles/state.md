@@ -50,7 +50,7 @@ These operations use different transports and lifecycles:
 
 - **Status polling** is a timer owned by the notifier, cancelled from `ref.onDispose`, and it uses the leading transport — `Spix.transport`.
 - **Stored history** is asked of whichever transport reports `ServerCapabilities.storedHistory`, which is the agent and not necessarily the one that leads. SSH has none, so an SSH-only server has only the app's own rolling buffer.
-- **Long-running work** can continue after the current page closes: a benchmark runs as a detached process on the server and is polled, while a file transfer runs in its own isolate.
+- **Long-running work** can continue after the current page closes: a benchmark runs as a detached process on the server and is polled, while an SFTP transfer runs in its own isolate.
   - Commands — a benchmark run, a service action, a process list — go through `ensureExec()`, which uses the leading transport and falls back to the other when it fails.
   - A transfer picks its own backend — SFTP over SSH or the agent's file API — from what the server can serve files with, not from which transport carries status.
 

@@ -5832,7 +5832,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'De app verwerkt deze combinaties en stuurt ze niet naar de shell, ook niet als een terminal de focus heeft. Combinaties die hier niet zijn toegewezen, bereiken de shell nog steeds. Opdrachten met verschillende bereiken kunnen dezelfde combinatie delen.';
+      'Een terminal in een werkruimte laat de combinaties van de werkruimte en de globale combinaties aan de app over; de andere combinaties hier bereiken de shell. Opdrachten met verschillende bereiken kunnen dezelfde combinatie delen.';
 
   @override
   String kbCurrent(String keys, String scope) {
