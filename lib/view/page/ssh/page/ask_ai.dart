@@ -252,7 +252,11 @@ class _AskAiPanel extends StatelessWidget {
       color: theme.colorScheme.surface,
       clipBehavior: Clip.antiAlias,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
-      child: Column(
+      // Neither the bottom sheet nor the side dialog makes room for the
+      // keyboard, so the composer would sit under it.
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
@@ -307,6 +311,7 @@ class _AskAiPanel extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
