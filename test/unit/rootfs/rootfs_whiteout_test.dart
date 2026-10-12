@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/oci_image.dart';
+import 'package:server_box/core/utils/rootfs_unpack.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/rootfs_manifest.dart';
 
@@ -96,7 +96,7 @@ void main() {
 
   Future<Directory> unpack(List<List<int>> layers) async {
     final into = Directory('${dir.path}/root')..createSync(recursive: true);
-    await IosRootfs.extract(await imageOf(layers), into, source: source);
+    await RootfsUnpack.extract(await imageOf(layers), into, source: source);
     return into;
   }
 
