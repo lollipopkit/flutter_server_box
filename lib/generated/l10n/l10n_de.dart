@@ -5855,7 +5855,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Ein Terminal in einem Arbeitsbereich überlässt die Kombinationen des Arbeitsbereichs und die globalen der App; die übrigen Kombinationen hier erreichen die shell. Befehle mit unterschiedlichem Geltungsbereich können dieselbe Kombination verwenden.';
+      'Shortcuts für Arbeitsbereiche funktionieren nur in einem Arbeitsbereich. Globale Shortcuts, etwa zum Öffnen der Einstellungen, funktionieren auf jeder Seite. In Terminals außerhalb eines Arbeitsbereichs werden Shortcuts für Arbeitsbereichs-, Einstellungs- und Server-Tab-Aktionen an die shell weitergegeben, da diese Aktionen dort nicht verfügbar sind. Kopieren, Einfügen und Alles auswählen sind Terminalfunktionen und keine konfigurierbaren Shortcuts.';
 
   @override
   String kbCurrent(String keys, String scope) {

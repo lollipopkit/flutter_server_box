@@ -5767,7 +5767,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kbNote =>
-      'Bir çalışma alanındaki terminal, çalışma alanı ve genel kombinasyonları uygulamaya bırakır; buradaki diğer kombinasyonlar shell\'e ulaşır. Farklı kapsamlardaki komutlar aynı kombinasyonu paylaşabilir.';
+      'Çalışma alanı kısayolları yalnızca çalışma alanında çalışır. Ayarları açmak gibi genel kısayollar her sayfada çalışır. Çalışma alanı dışındaki bir terminalde, çalışma alanı, Ayarlar veya sunucu sekmesi işlemlerine atanmış kısayollar shell\'e iletilir; bu işlemler o terminalde kullanılamaz. Kopyala, yapıştır ve tümünü seç terminal kontrolleridir; yapılandırılabilir kısayollar değildir.';
 
   @override
   String kbCurrent(String keys, String scope) {

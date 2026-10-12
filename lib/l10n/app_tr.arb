@@ -1624,7 +1624,7 @@
   "kbModified": "Değiştirildi",
   "kbDefault": "Varsayılan",
   "kbFixedHint": "Bu tuşlar değiştirilemez",
-  "kbNote": "Bir çalışma alanındaki terminal, çalışma alanı ve genel kombinasyonları uygulamaya bırakır; buradaki diğer kombinasyonlar shell'e ulaşır. Farklı kapsamlardaki komutlar aynı kombinasyonu paylaşabilir.",
+  "kbNote": "Çalışma alanı kısayolları yalnızca çalışma alanında çalışır. Ayarları açmak gibi genel kısayollar her sayfada çalışır. Çalışma alanı dışındaki bir terminalde, çalışma alanı, Ayarlar veya sunucu sekmesi işlemlerine atanmış kısayollar shell'e iletilir; bu işlemler o terminalde kullanılamaz. Kopyala, yapıştır ve tümünü seç terminal kontrolleridir; yapılandırılabilir kısayollar değildir.",
   "kbCurrent": "Geçerli: {keys} · Kapsam: {scope}",
   "kbPress": "Bir tuş kombinasyonuna basın",
   "kbRecordHint": "Onaylamak için Enter, iptal için Esc. Odak kaybolursa yukarıdaki kutuya dokunup yeniden basın.",
