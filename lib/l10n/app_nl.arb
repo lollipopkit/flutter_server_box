@@ -1884,5 +1884,13 @@
   "agentModeManual": "Handmatig",
   "agentModeBypass": "Alles toestaan",
   "agentModeBypassOff": "Uitgeschakeld op deze server",
-  "agentModeBypassWarn": "Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd."
+  "agentModeBypassWarn": "Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.",
+  "webApps": "Webapps",
+  "webAppUnhealthy": "Ongezond",
+  "webAppDown": "Uitgevallen",
+  "webAppInstalling": "Wordt geïnstalleerd",
+  "webAppsEmpty": "Nog geen webapps. Installeer ze via de App Store van het Monitor-paneel.",
+  "webAppVersion": "Versie",
+  "webAppHomepage": "Website",
+  "webAppUpdate": "Versie {version} is beschikbaar. Werk deze bij via het Monitor-paneel."
 }

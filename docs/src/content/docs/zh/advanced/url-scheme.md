@@ -27,7 +27,7 @@ Windows 和 Linux 不支持这些链接。
 
 `<function>` 可选：`terminal`、`files`、`container`、`process`、`snippet`、`iperf`、`systemd`、`portForward`、`power`、`users`、`scheduledTasks`、`remoteDesktop`、`firewall`。
 
-`<tab>` 可选：`server`、`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`。
+`<tab>` 可选：`server`、`ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`、`workspace`、`webApps`。
 
 `add-server` 只有 `host` 是必填的。
 

@@ -1884,5 +1884,13 @@
   "agentModeManual": "手动",
   "agentModeBypass": "全部放行",
   "agentModeBypassOff": "此服务器已关闭",
-  "agentModeBypassWarn": "全部放行：删除、重启和修改配置都会直接执行，不再询问。"
+  "agentModeBypassWarn": "全部放行：删除、重启和修改配置都会直接执行，不再询问。",
+  "webApps": "Web 应用",
+  "webAppUnhealthy": "异常",
+  "webAppDown": "不可用",
+  "webAppInstalling": "正在安装",
+  "webAppsEmpty": "还没有 Web 应用。请在 Monitor 面板的 App Store 中部署。",
+  "webAppVersion": "版本",
+  "webAppHomepage": "主页",
+  "webAppUpdate": "有新版本 {version}，请在 Monitor 面板中更新。"
 }

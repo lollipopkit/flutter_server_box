@@ -1884,5 +1884,13 @@
   "agentModeManual": "Manual",
   "agentModeBypass": "Permitir tudo",
   "agentModeBypassOff": "Desativado neste servidor",
-  "agentModeBypassWarn": "Permitir tudo: exclusões, reinicializações e alterações de configuração são executadas sem perguntar."
+  "agentModeBypassWarn": "Permitir tudo: exclusões, reinicializações e alterações de configuração são executadas sem perguntar.",
+  "webApps": "Apps web",
+  "webAppUnhealthy": "Com falhas",
+  "webAppDown": "Fora do ar",
+  "webAppInstalling": "Instalando",
+  "webAppsEmpty": "Ainda não há apps web. Implante-os pela App Store do painel do Monitor.",
+  "webAppVersion": "Versão",
+  "webAppHomepage": "Site",
+  "webAppUpdate": "A versão {version} está disponível. Atualize pelo painel do Monitor."
 }

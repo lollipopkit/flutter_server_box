@@ -6700,4 +6700,31 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.';
+
+  @override
+  String get webApps => 'Veb tətbiqlər';
+
+  @override
+  String get webAppUnhealthy => 'Problemli';
+
+  @override
+  String get webAppDown => 'İşləmir';
+
+  @override
+  String get webAppInstalling => 'Quraşdırılır';
+
+  @override
+  String get webAppsEmpty =>
+      'Hələ veb tətbiq yoxdur. Onları Monitor panelinin App Store bölməsindən quraşdırın.';
+
+  @override
+  String get webAppVersion => 'Versiya';
+
+  @override
+  String get webAppHomepage => 'Veb sayt';
+
+  @override
+  String webAppUpdate(String version) {
+    return '$version versiyası mövcuddur. Onu Monitor panelində yeniləyin.';
+  }
 }

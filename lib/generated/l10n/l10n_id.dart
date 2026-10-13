@@ -6704,4 +6704,31 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi.';
+
+  @override
+  String get webApps => 'Aplikasi web';
+
+  @override
+  String get webAppUnhealthy => 'Tidak sehat';
+
+  @override
+  String get webAppDown => 'Mati';
+
+  @override
+  String get webAppInstalling => 'Menginstal';
+
+  @override
+  String get webAppsEmpty =>
+      'Belum ada aplikasi web. Pasang dari App Store di panel Monitor.';
+
+  @override
+  String get webAppVersion => 'Versi';
+
+  @override
+  String get webAppHomepage => 'Situs web';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Versi $version tersedia. Perbarui dari panel Monitor.';
+  }
 }

@@ -1884,5 +1884,13 @@
   "agentModeManual": "Вручную",
   "agentModeBypass": "Разрешить всё",
   "agentModeBypassOff": "Отключено на этом сервере",
-  "agentModeBypassWarn": "Разрешить всё: удаление, перезапуск и изменение конфигурации выполняются без подтверждения."
+  "agentModeBypassWarn": "Разрешить всё: удаление, перезапуск и изменение конфигурации выполняются без подтверждения.",
+  "webApps": "Веб-приложения",
+  "webAppUnhealthy": "Неисправно",
+  "webAppDown": "Не работает",
+  "webAppInstalling": "Установка",
+  "webAppsEmpty": "Веб-приложений пока нет. Разверните их из App Store панели Monitor.",
+  "webAppVersion": "Версия",
+  "webAppHomepage": "Сайт",
+  "webAppUpdate": "Доступна версия {version}. Обновите её в панели Monitor."
 }

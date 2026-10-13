@@ -6752,4 +6752,31 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Разрешить всё: удаление, перезапуск и изменение конфигурации выполняются без подтверждения.';
+
+  @override
+  String get webApps => 'Веб-приложения';
+
+  @override
+  String get webAppUnhealthy => 'Неисправно';
+
+  @override
+  String get webAppDown => 'Не работает';
+
+  @override
+  String get webAppInstalling => 'Установка';
+
+  @override
+  String get webAppsEmpty =>
+      'Веб-приложений пока нет. Разверните их из App Store панели Monitor.';
+
+  @override
+  String get webAppVersion => 'Версия';
+
+  @override
+  String get webAppHomepage => 'Сайт';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Доступна версия $version. Обновите её в панели Monitor.';
+  }
 }

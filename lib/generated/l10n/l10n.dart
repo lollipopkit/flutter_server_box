@@ -11444,6 +11444,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow all: deleting, restarting and config changes run directly, without asking.'**
   String get agentModeBypassWarn;
+
+  /// Server page: card listing the web apps the Monitor agent deployed (Docker Compose services).
+  ///
+  /// In en, this message translates to:
+  /// **'Web apps'**
+  String get webApps;
+
+  /// Web app health: some of its services report unhealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'Unhealthy'**
+  String get webAppUnhealthy;
+
+  /// Web app health: some of its services are not running.
+  ///
+  /// In en, this message translates to:
+  /// **'Down'**
+  String get webAppDown;
+
+  /// Web app state: being deployed.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing'**
+  String get webAppInstalling;
+
+  /// Web apps tab: no server has a deployed Monitor web app.
+  ///
+  /// In en, this message translates to:
+  /// **'No web apps yet. Deploy them from the App Store of the Monitor panel.'**
+  String get webAppsEmpty;
+
+  /// Web app details: the deployed version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get webAppVersion;
+
+  /// Web app details: the project's website.
+  ///
+  /// In en, this message translates to:
+  /// **'Homepage'**
+  String get webAppHomepage;
+
+  /// Web app details: the catalog has another version; updating is done in the Monitor web panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available. Update it in the Monitor panel.'**
+  String webAppUpdate(String version);
 }
 
 class _AppLocalizationsDelegate

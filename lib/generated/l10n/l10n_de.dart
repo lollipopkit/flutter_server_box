@@ -6789,4 +6789,31 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Alles erlauben: Löschen, Neustarten und Konfigurationsänderungen werden ohne Nachfrage ausgeführt.';
+
+  @override
+  String get webApps => 'Web-Apps';
+
+  @override
+  String get webAppUnhealthy => 'Fehlerhaft';
+
+  @override
+  String get webAppDown => 'Ausgefallen';
+
+  @override
+  String get webAppInstalling => 'Wird installiert';
+
+  @override
+  String get webAppsEmpty =>
+      'Noch keine Web-Apps. Installiere sie im App Store des Monitor-Panels.';
+
+  @override
+  String get webAppVersion => 'Version';
+
+  @override
+  String get webAppHomepage => 'Website';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Version $version ist verfügbar. Aktualisiere sie im Monitor-Panel.';
+  }
 }

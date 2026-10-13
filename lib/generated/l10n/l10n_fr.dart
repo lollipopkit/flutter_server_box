@@ -6808,4 +6808,31 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Tout autoriser : les suppressions, redémarrages et modifications de configuration s’exécutent sans demander.';
+
+  @override
+  String get webApps => 'Applications web';
+
+  @override
+  String get webAppUnhealthy => 'Défaillante';
+
+  @override
+  String get webAppDown => 'Hors service';
+
+  @override
+  String get webAppInstalling => 'Installation en cours';
+
+  @override
+  String get webAppsEmpty =>
+      'Aucune application web pour l\'instant. Déployez-les depuis l\'App Store du panneau Monitor.';
+
+  @override
+  String get webAppVersion => 'Version';
+
+  @override
+  String get webAppHomepage => 'Site web';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'La version $version est disponible. Mettez-la à jour depuis le panneau Monitor.';
+  }
 }

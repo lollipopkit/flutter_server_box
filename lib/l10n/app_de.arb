@@ -1884,5 +1884,13 @@
   "agentModeManual": "Manuell",
   "agentModeBypass": "Alles erlauben",
   "agentModeBypassOff": "Auf diesem Server deaktiviert",
-  "agentModeBypassWarn": "Alles erlauben: Löschen, Neustarten und Konfigurationsänderungen werden ohne Nachfrage ausgeführt."
+  "agentModeBypassWarn": "Alles erlauben: Löschen, Neustarten und Konfigurationsänderungen werden ohne Nachfrage ausgeführt.",
+  "webApps": "Web-Apps",
+  "webAppUnhealthy": "Fehlerhaft",
+  "webAppDown": "Ausgefallen",
+  "webAppInstalling": "Wird installiert",
+  "webAppsEmpty": "Noch keine Web-Apps. Installiere sie im App Store des Monitor-Panels.",
+  "webAppVersion": "Version",
+  "webAppHomepage": "Website",
+  "webAppUpdate": "Version {version} ist verfügbar. Aktualisiere sie im Monitor-Panel."
 }

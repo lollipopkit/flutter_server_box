@@ -14,6 +14,7 @@ enum Feature {
   benchmark,
   virt,
   workspace,
+  webApps,
   bmc,
   wakeOnLan,
   portForward,
@@ -26,6 +27,7 @@ enum Feature {
     benchmark ||
     virt ||
     workspace ||
+    webApps ||
     bmc ||
     wakeOnLan ||
     portForward ||

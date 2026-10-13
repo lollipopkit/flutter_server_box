@@ -33,6 +33,7 @@ void main() {
         AppTab.remoteDesktop,
         AppTab.virt,
         AppTab.workspace,
+        AppTab.webApps,
       ]);
     });
 
@@ -150,6 +151,7 @@ void main() {
       AppTab.remoteDesktop,
       AppTab.virt,
       AppTab.workspace,
+      AppTab.webApps,
     ]);
   });
 
@@ -282,6 +284,7 @@ void main() {
         AppTab.benchmark,
         AppTab.virt,
         AppTab.workspace,
+        AppTab.webApps,
       });
     });
 

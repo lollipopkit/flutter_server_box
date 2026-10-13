@@ -6763,4 +6763,31 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Alles toestaan: verwijderen, opnieuw starten en configuratiewijzigingen worden zonder bevestiging uitgevoerd.';
+
+  @override
+  String get webApps => 'Webapps';
+
+  @override
+  String get webAppUnhealthy => 'Ongezond';
+
+  @override
+  String get webAppDown => 'Uitgevallen';
+
+  @override
+  String get webAppInstalling => 'Wordt geïnstalleerd';
+
+  @override
+  String get webAppsEmpty =>
+      'Nog geen webapps. Installeer ze via de App Store van het Monitor-paneel.';
+
+  @override
+  String get webAppVersion => 'Versie';
+
+  @override
+  String get webAppHomepage => 'Website';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Versie $version is beschikbaar. Werk deze bij via het Monitor-paneel.';
+  }
 }

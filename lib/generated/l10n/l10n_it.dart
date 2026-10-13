@@ -6771,4 +6771,31 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Consenti tutto: eliminazioni, riavvii e modifiche alla configurazione vengono eseguiti senza chiedere.';
+
+  @override
+  String get webApps => 'App web';
+
+  @override
+  String get webAppUnhealthy => 'Non integra';
+
+  @override
+  String get webAppDown => 'Non attiva';
+
+  @override
+  String get webAppInstalling => 'Installazione in corso';
+
+  @override
+  String get webAppsEmpty =>
+      'Nessuna app web. Installale dall\'App Store del pannello Monitor.';
+
+  @override
+  String get webAppVersion => 'Versione';
+
+  @override
+  String get webAppHomepage => 'Sito web';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'È disponibile la versione $version. Aggiornala dal pannello Monitor.';
+  }
 }

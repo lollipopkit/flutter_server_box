@@ -8629,5 +8629,42 @@
   "agentModeBypassWarn": "Allow all: deleting, restarting and config changes run directly, without asking.",
   "@agentModeBypassWarn": {
     "description": "Agent: warning shown while the allow-all mode is picked for a new task."
+  },
+  "webApps": "Web apps",
+  "@webApps": {
+    "description": "Server page: card listing the web apps the Monitor agent deployed (Docker Compose services)."
+  },
+  "webAppUnhealthy": "Unhealthy",
+  "@webAppUnhealthy": {
+    "description": "Web app health: some of its services report unhealthy."
+  },
+  "webAppDown": "Down",
+  "@webAppDown": {
+    "description": "Web app health: some of its services are not running."
+  },
+  "webAppInstalling": "Installing",
+  "@webAppInstalling": {
+    "description": "Web app state: being deployed."
+  },
+  "webAppsEmpty": "No web apps yet. Deploy them from the App Store of the Monitor panel.",
+  "@webAppsEmpty": {
+    "description": "Web apps tab: no server has a deployed Monitor web app."
+  },
+  "webAppVersion": "Version",
+  "@webAppVersion": {
+    "description": "Web app details: the deployed version."
+  },
+  "webAppHomepage": "Homepage",
+  "@webAppHomepage": {
+    "description": "Web app details: the project's website."
+  },
+  "webAppUpdate": "Version {version} is available. Update it in the Monitor panel.",
+  "@webAppUpdate": {
+    "description": "Web app details: the catalog has another version; updating is done in the Monitor web panel.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -6750,4 +6750,31 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Дозволити все: видалення, перезапуск і зміни конфігурації виконуються без підтвердження.';
+
+  @override
+  String get webApps => 'Вебзастосунки';
+
+  @override
+  String get webAppUnhealthy => 'Несправний';
+
+  @override
+  String get webAppDown => 'Не працює';
+
+  @override
+  String get webAppInstalling => 'Встановлення';
+
+  @override
+  String get webAppsEmpty =>
+      'Вебзастосунків поки немає. Розгорніть їх з App Store панелі Monitor.';
+
+  @override
+  String get webAppVersion => 'Версія';
+
+  @override
+  String get webAppHomepage => 'Сайт';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Доступна версія $version. Оновіть її в панелі Monitor.';
+  }
 }

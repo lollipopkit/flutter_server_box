@@ -6421,4 +6421,30 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentModeBypassWarn => '모두 허용: 삭제, 재시작, 설정 변경이 확인 없이 실행됩니다.';
+
+  @override
+  String get webApps => '웹 앱';
+
+  @override
+  String get webAppUnhealthy => '비정상';
+
+  @override
+  String get webAppDown => '다운';
+
+  @override
+  String get webAppInstalling => '설치 중';
+
+  @override
+  String get webAppsEmpty => '아직 웹 앱이 없습니다. Monitor 패널의 App Store에서 배포하세요.';
+
+  @override
+  String get webAppVersion => '버전';
+
+  @override
+  String get webAppHomepage => '홈페이지';
+
+  @override
+  String webAppUpdate(String version) {
+    return '$version 버전을 사용할 수 있습니다. Monitor 패널에서 업데이트하세요.';
+  }
 }

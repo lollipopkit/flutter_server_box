@@ -6422,4 +6422,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentModeBypassWarn => 'すべて許可：削除、再起動、設定変更は確認なしで実行されます。';
+
+  @override
+  String get webApps => 'Web アプリ';
+
+  @override
+  String get webAppUnhealthy => '異常';
+
+  @override
+  String get webAppDown => 'ダウン';
+
+  @override
+  String get webAppInstalling => 'インストール中';
+
+  @override
+  String get webAppsEmpty =>
+      'Web アプリはまだありません。Monitor パネルの App Store からデプロイしてください。';
+
+  @override
+  String get webAppVersion => 'バージョン';
+
+  @override
+  String get webAppHomepage => 'ホームページ';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'バージョン $version があります。Monitor パネルで更新してください。';
+  }
 }

@@ -32,7 +32,7 @@ and change.
 `remoteDesktop`, `firewall`.
 
 `<tab>` is one of `server`, `ssh`, `file`, `snippet`, `agent`, `benchmark`,
-`remoteDesktop`, `virt`.
+`remoteDesktop`, `virt`, `workspace`, `webApps`.
 
 For `add-server`, only `host` is required.
 

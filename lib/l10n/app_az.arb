@@ -1884,5 +1884,13 @@
   "agentModeManual": "Əl ilə",
   "agentModeBypass": "Hamısına icazə ver",
   "agentModeBypassOff": "Bu serverdə deaktiv edilib",
-  "agentModeBypassWarn": "Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur."
+  "agentModeBypassWarn": "Hamısına icazə ver: silmə, yenidən başlatma və konfiqurasiya dəyişiklikləri soruşulmadan icra olunur.",
+  "webApps": "Veb tətbiqlər",
+  "webAppUnhealthy": "Problemli",
+  "webAppDown": "İşləmir",
+  "webAppInstalling": "Quraşdırılır",
+  "webAppsEmpty": "Hələ veb tətbiq yoxdur. Onları Monitor panelinin App Store bölməsindən quraşdırın.",
+  "webAppVersion": "Versiya",
+  "webAppHomepage": "Veb sayt",
+  "webAppUpdate": "{version} versiyası mövcuddur. Onu Monitor panelində yeniləyin."
 }

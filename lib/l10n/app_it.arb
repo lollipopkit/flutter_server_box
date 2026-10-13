@@ -1884,5 +1884,13 @@
   "agentModeManual": "Manuale",
   "agentModeBypass": "Consenti tutto",
   "agentModeBypassOff": "Disattivato su questo server",
-  "agentModeBypassWarn": "Consenti tutto: eliminazioni, riavvii e modifiche alla configurazione vengono eseguiti senza chiedere."
+  "agentModeBypassWarn": "Consenti tutto: eliminazioni, riavvii e modifiche alla configurazione vengono eseguiti senza chiedere.",
+  "webApps": "App web",
+  "webAppUnhealthy": "Non integra",
+  "webAppDown": "Non attiva",
+  "webAppInstalling": "Installazione in corso",
+  "webAppsEmpty": "Nessuna app web. Installale dall'App Store del pannello Monitor.",
+  "webAppVersion": "Versione",
+  "webAppHomepage": "Sito web",
+  "webAppUpdate": "È disponibile la versione {version}. Aggiornala dal pannello Monitor."
 }

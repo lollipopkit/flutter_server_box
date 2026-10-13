@@ -1884,5 +1884,13 @@
   "agentModeManual": "Manual",
   "agentModeBypass": "Izinkan semua",
   "agentModeBypassOff": "Dinonaktifkan di server ini",
-  "agentModeBypassWarn": "Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi."
+  "agentModeBypassWarn": "Izinkan semua: penghapusan, mulai ulang, dan perubahan konfigurasi dijalankan tanpa konfirmasi.",
+  "webApps": "Aplikasi web",
+  "webAppUnhealthy": "Tidak sehat",
+  "webAppDown": "Mati",
+  "webAppInstalling": "Menginstal",
+  "webAppsEmpty": "Belum ada aplikasi web. Pasang dari App Store di panel Monitor.",
+  "webAppVersion": "Versi",
+  "webAppHomepage": "Situs web",
+  "webAppUpdate": "Versi {version} tersedia. Perbarui dari panel Monitor."
 }

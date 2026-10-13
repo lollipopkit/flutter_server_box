@@ -6760,4 +6760,31 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Permitir tudo: exclusões, reinicializações e alterações de configuração são executadas sem perguntar.';
+
+  @override
+  String get webApps => 'Apps web';
+
+  @override
+  String get webAppUnhealthy => 'Com falhas';
+
+  @override
+  String get webAppDown => 'Fora do ar';
+
+  @override
+  String get webAppInstalling => 'Instalando';
+
+  @override
+  String get webAppsEmpty =>
+      'Ainda não há apps web. Implante-os pela App Store do painel do Monitor.';
+
+  @override
+  String get webAppVersion => 'Versão';
+
+  @override
+  String get webAppHomepage => 'Site';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'A versão $version está disponível. Atualize pelo painel do Monitor.';
+  }
 }

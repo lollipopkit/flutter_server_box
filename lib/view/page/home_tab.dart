@@ -14,6 +14,7 @@ import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/page/virt/tab.dart';
+import 'package:server_box/view/page/web_apps/tab.dart';
 import 'package:server_box/view/page/workspace/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 import 'package:server_box/view/widget/marked_title.dart';
@@ -31,6 +32,7 @@ extension AppTabViewX on AppTab {
       AppTab.remoteDesktop => const RemoteDesktopTabPage(),
       AppTab.virt => const VirtTabPage(),
       AppTab.workspace => const WorkspaceTabPage(),
+      AppTab.webApps => const WebAppsTabPage(),
     };
   }
 
@@ -60,6 +62,7 @@ extension AppTabViewX on AppTab {
       AppTab.remoteDesktop => l10n.remoteDesktop,
       AppTab.virt => l10n.virtualization,
       AppTab.workspace => l10n.workspace,
+      AppTab.webApps => l10n.webApps,
     };
   }
 
@@ -70,6 +73,7 @@ extension AppTabViewX on AppTab {
     AppTab.benchmark => Feature.benchmark,
     AppTab.virt => Feature.virt,
     AppTab.workspace => Feature.workspace,
+    AppTab.webApps => Feature.webApps,
     _ => null,
   };
 
@@ -163,6 +167,8 @@ class _AppTabIcon extends StatelessWidget {
                   selected ? MingCute.box_3_fill : MingCute.box_3_line,
                 AppTab.workspace =>
                   selected ? MingCute.layout_4_fill : MingCute.layout_4_line,
+                AppTab.webApps =>
+                  selected ? MingCute.classify_2_fill : MingCute.classify_2_line,
               }
             : switch (tab) {
                 AppTab.server =>
@@ -185,6 +191,7 @@ class _AppTabIcon extends StatelessWidget {
                   selected
                       ? Icons.space_dashboard
                       : Icons.space_dashboard_outlined,
+                AppTab.webApps => selected ? Icons.apps : Icons.apps_outlined,
               };
         return ThemeIconAsset(
           keyName: ThemeIcons.tabKey(tab.name, selected: selected),

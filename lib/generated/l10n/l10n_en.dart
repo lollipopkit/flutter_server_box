@@ -6708,4 +6708,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Allow all: deleting, restarting and config changes run directly, without asking.';
+
+  @override
+  String get webApps => 'Web apps';
+
+  @override
+  String get webAppUnhealthy => 'Unhealthy';
+
+  @override
+  String get webAppDown => 'Down';
+
+  @override
+  String get webAppInstalling => 'Installing';
+
+  @override
+  String get webAppsEmpty =>
+      'No web apps yet. Deploy them from the App Store of the Monitor panel.';
+
+  @override
+  String get webAppVersion => 'Version';
+
+  @override
+  String get webAppHomepage => 'Homepage';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Version $version is available. Update it in the Monitor panel.';
+  }
 }

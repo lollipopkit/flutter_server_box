@@ -341,7 +341,8 @@ when the app is built and can only change with the system's brightness.
 ## Image keys and limits
 
 Supported icon keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`,
-`file`, `snippet`, `agent`, `benchmark`, `remoteDesktop`, and `virt`. Navigation keys
+`file`, `snippet`, `agent`, `benchmark`, `remoteDesktop`, `virt`, `workspace`, and
+`webApps`. Navigation keys
 are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.tabs`, `nav.server`, `nav.sort`, `nav.terminal`, `nav.folder`, `nav.cloud`,
 `nav.snippet`, `nav.inbox`, `nav.key`, `nav.info`, `nav.download`, and

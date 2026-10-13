@@ -1884,5 +1884,13 @@
   "agentModeManual": "Manuel",
   "agentModeBypass": "Tout autoriser",
   "agentModeBypassOff": "Désactivé sur ce serveur",
-  "agentModeBypassWarn": "Tout autoriser : les suppressions, redémarrages et modifications de configuration s’exécutent sans demander."
+  "agentModeBypassWarn": "Tout autoriser : les suppressions, redémarrages et modifications de configuration s’exécutent sans demander.",
+  "webApps": "Applications web",
+  "webAppUnhealthy": "Défaillante",
+  "webAppDown": "Hors service",
+  "webAppInstalling": "Installation en cours",
+  "webAppsEmpty": "Aucune application web pour l'instant. Déployez-les depuis l'App Store du panneau Monitor.",
+  "webAppVersion": "Version",
+  "webAppHomepage": "Site web",
+  "webAppUpdate": "La version {version} est disponible. Mettez-la à jour depuis le panneau Monitor."
 }

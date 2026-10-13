@@ -6693,4 +6693,31 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get agentModeBypassWarn =>
       'Tümüne izin ver: silme, yeniden başlatma ve yapılandırma değişiklikleri sorulmadan yapılır.';
+
+  @override
+  String get webApps => 'Web uygulamaları';
+
+  @override
+  String get webAppUnhealthy => 'Sağlıksız';
+
+  @override
+  String get webAppDown => 'Çalışmıyor';
+
+  @override
+  String get webAppInstalling => 'Yükleniyor';
+
+  @override
+  String get webAppsEmpty =>
+      'Henüz web uygulaması yok. Monitor panelinin App Store\'undan dağıtın.';
+
+  @override
+  String get webAppVersion => 'Sürüm';
+
+  @override
+  String get webAppHomepage => 'Web sitesi';
+
+  @override
+  String webAppUpdate(String version) {
+    return '$version sürümü mevcut. Monitor panelinden güncelleyin.';
+  }
 }

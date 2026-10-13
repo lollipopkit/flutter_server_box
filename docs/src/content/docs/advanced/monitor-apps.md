@@ -109,6 +109,29 @@ generated password where the app allows that. An administrator can see the
 account and, after entering their own password, the generated password under
 **Sign-in** on the app's page.
 
+## Open apps from the ServerBox app
+
+The app's **Web apps** tab lists the apps deployed on every server added
+through the Monitor agent, grouped by server, with their health. A fresh
+install does not put the tab in the bar: open it from **More**, or add it under
+**Settings › Application › Home Tabs**. A server's own page also has a **Web
+apps** card with that server's apps.
+
+On a phone the tab is a list: tap an app to open it, or its info button for
+its page (health, description, version, homepage). On a wide window the list
+is a column beside that page, which has the **Open** button.
+
+Tap an app to open it in the device's browser: the app asks the agent for a
+single-use ticket and the browser enters the app through the agent's proxy,
+as a panel window does. From then on the browser talks to the proxy with a
+session of its own, so the ServerBox app may go to the background or be
+closed. Deploying, updating and removing apps stay in the panel.
+
+The browser checks the agent's TLS certificate itself: the app's **Ignore
+certificate** setting does not apply to it, so a self-signed certificate shows
+the browser's warning. The proxy ports (or the apps host below) must be
+reachable from the device.
+
 ## App windows and reverse proxies
 
 By default, each deployed app has its own proxy port in the range 3780–3799 on

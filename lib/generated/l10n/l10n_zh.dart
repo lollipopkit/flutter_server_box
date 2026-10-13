@@ -6317,6 +6317,32 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentModeBypassWarn => '全部放行：删除、重启和修改配置都会直接执行，不再询问。';
+
+  @override
+  String get webApps => 'Web 应用';
+
+  @override
+  String get webAppUnhealthy => '异常';
+
+  @override
+  String get webAppDown => '不可用';
+
+  @override
+  String get webAppInstalling => '正在安装';
+
+  @override
+  String get webAppsEmpty => '还没有 Web 应用。请在 Monitor 面板的 App Store 中部署。';
+
+  @override
+  String get webAppVersion => '版本';
+
+  @override
+  String get webAppHomepage => '主页';
+
+  @override
+  String webAppUpdate(String version) {
+    return '有新版本 $version，请在 Monitor 面板中更新。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -12636,4 +12662,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentModeBypassWarn => '全部允許：刪除、重新啟動和設定變更都會直接執行，不再詢問。';
+
+  @override
+  String get webApps => 'Web 應用程式';
+
+  @override
+  String get webAppUnhealthy => '異常';
+
+  @override
+  String get webAppDown => '無法使用';
+
+  @override
+  String get webAppInstalling => '正在安裝';
+
+  @override
+  String get webAppsEmpty => '尚無 Web 應用程式。請在 Monitor 面板的 App Store 中部署。';
+
+  @override
+  String get webAppVersion => '版本';
+
+  @override
+  String get webAppHomepage => '首頁';
+
+  @override
+  String webAppUpdate(String version) {
+    return '有新版本 $version，請在 Monitor 面板中更新。';
+  }
 }

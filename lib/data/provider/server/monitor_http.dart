@@ -18,6 +18,7 @@ import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor_settings.dart';
+import 'package:server_box/data/model/server/monitor_stack.dart';
 
 /// Talks to one server's `monitor` HTTP API. One instance is owned per
 /// `ServerNotifier` (see `single.dart`), mirroring how `PveNotifier` owns its
@@ -492,6 +493,24 @@ class MonitorHttpClient {
 
   // -------------------------------------------------------------- backup
   //
+  // `/api/v1/stacks*`: the web apps the agent deployed, any account.
+
+  /// The deployed web apps, in the agent's order.
+  Future<List<MonitorWebApp>> stacks() => _access(
+    () async => MonitorWebApp.deployed(await _object('/api/v1/stacks')),
+  );
+
+  /// A single-use ticket into web app [id] through the agent's proxy, which
+  /// a browser takes within seconds ([MonitorStackEntry.uri]).
+  Future<MonitorStackEntry> stackEnter(String id) => _access(
+    () async => MonitorStackEntry.fromJson(
+      await _object('/api/v1/stacks/${Uri.encodeComponent(id)}/enter', post: const {}),
+    ),
+  );
+
+  /// The agent's address, which a proxy without a host of its own shares.
+  Uri get agentUri => Uri.parse(_addr);
+
   // `/api/v1/backup*`: opaque blobs the agent stores for this app's backup
   // sync. What is sent is already encrypted with the backup password, so the
   // agent holds bytes it cannot read. Admin accounts only.

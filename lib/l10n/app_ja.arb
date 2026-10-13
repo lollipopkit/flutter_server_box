@@ -1884,5 +1884,13 @@
   "agentModeManual": "手動",
   "agentModeBypass": "すべて許可",
   "agentModeBypassOff": "このサーバーでは無効",
-  "agentModeBypassWarn": "すべて許可：削除、再起動、設定変更は確認なしで実行されます。"
+  "agentModeBypassWarn": "すべて許可：削除、再起動、設定変更は確認なしで実行されます。",
+  "webApps": "Web アプリ",
+  "webAppUnhealthy": "異常",
+  "webAppDown": "ダウン",
+  "webAppInstalling": "インストール中",
+  "webAppsEmpty": "Web アプリはまだありません。Monitor パネルの App Store からデプロイしてください。",
+  "webAppVersion": "バージョン",
+  "webAppHomepage": "ホームページ",
+  "webAppUpdate": "バージョン {version} があります。Monitor パネルで更新してください。"
 }
