@@ -41,16 +41,6 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Platform Features',
-					translations: {
-						'zh-CN': '平台特性',
-					},
-					items: [
-						{ label: 'Mobile', translations: { 'zh-CN': '移动端' }, slug: 'platforms/mobile' },
-						{ label: 'Desktop', translations: { 'zh-CN': '桌面端' }, slug: 'platforms/desktop' },
-					],
-				},
-				{
 					label: 'Advanced',
 					translations: {
 						'zh-CN': '进阶',
@@ -72,21 +62,6 @@ export default defineConfig({
 						{ label: 'Theme Packages', translations: { 'zh-CN': '主题包' }, slug: 'advanced/theme-packages' },
 						{ label: 'JSON Settings', translations: { 'zh-CN': 'JSON 设置' }, slug: 'advanced/json-settings' },
 						{ label: 'Common Issues', translations: { 'zh-CN': '常见问题' }, slug: 'advanced/troubleshooting' },
-					],
-				},
-				{
-					label: 'Internals',
-					translations: {
-						'zh-CN': '内部原理',
-					},
-					items: [
-						{ label: 'System architecture', translations: { 'zh-CN': '系统架构' }, slug: 'principles/architecture' },
-						{ label: 'SSH Connection', translations: { 'zh-CN': 'SSH 连接' }, slug: 'principles/ssh' },
-						{ label: 'Terminal', translations: { 'zh-CN': '终端' }, slug: 'principles/terminal' },
-						{ label: 'SFTP', translations: { 'zh-CN': 'SFTP' }, slug: 'principles/sftp' },
-						{ label: 'BMC (Redfish)', translations: { 'zh-CN': 'BMC(Redfish)' }, slug: 'principles/bmc' },
-						{ label: 'Globe and Location Resolution', translations: { 'zh-CN': '地球仪与位置解析' }, slug: 'principles/globe' },
-						{ label: 'State model', translations: { 'zh-CN': '状态模型' }, slug: 'principles/state' },
 					],
 				},
 				{

@@ -125,6 +125,3 @@ public interface address that the server reported for itself. Once that record
 is seven days old, a later ordinary status poll can refresh it. To correct a
 location immediately, set the coordinate in the server editor under **More →
 Location**; a manual coordinate overrides every automatic source.
-
-For implementation details, see
-[Globe and Location Resolution](/docs/principles/globe/).

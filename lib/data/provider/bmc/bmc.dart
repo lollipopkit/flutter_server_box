@@ -80,7 +80,7 @@ abstract class BmcState with _$BmcState {
 ///
 /// Holds a [BmcClient] (`sbm_redfish` over FFI), and therefore a session on a
 /// device that allows few of them — so the client is closed on dispose, which
-/// is the only thing that gives the session back. See `docs/principles/bmc.md`.
+/// is the only thing that gives the session back.
 @riverpod
 class BmcNotifier extends _$BmcNotifier {
   BmcClient? _client;

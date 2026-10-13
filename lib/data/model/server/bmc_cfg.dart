@@ -17,8 +17,8 @@ part 'bmc_cfg.g.dart';
 /// The two fields here are the two that belong to *this device*. The account
 /// is a [BmcCredential] referenced by [credId], because a rack shares one.
 ///
-/// See `docs/principles/bmc.md` for what varies between vendors, and why
-/// nothing about the resource layout may be assumed.
+/// The Redfish resource layout varies between vendors, so nothing about it
+/// may be assumed.
 @JsonSerializable(includeIfNull: false)
 final class BmcCfg {
   /// The Redfish service's base URL, e.g. `https://10.0.0.9`.

@@ -125,7 +125,17 @@ jobs:
           #
           # `store/` because `test/unit/theme_store_tree_test.dart` reads the
           # official theme repository the way the store does.
-          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/|^store/"
+          #
+          # The rest are files a plain test reads straight from the checkout,
+          # so a change to any of them alone is what that test guards:
+          # `assets/` (rootfs manifest, geo, distro icons, yabs),
+          # `docs/examples/` (`theme_app_test.dart`), the doc pages and the
+          # bundled `serverbox-help` skill whose links `builtin_skill_test.dart`
+          # holds against each other, the iOS plists and privacy manifests
+          # (`ios_multitasking_test.dart`, `privacy_manifest_test.dart`), the
+          # Android backup policy (`android_backup_policy_test.dart`) and the
+          # DMG release script (`macos_entitlements_test.dart`).
+          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/(schemas|examples|src/content/docs)/|^store/|^assets/|^\.claude/skills/serverbox-help/|^ios/[^/]+/(Info-[A-Za-z]+\.plist|PrivacyInfo\.xcprivacy)$|^ios/Runner\.xcodeproj/project\.pbxproj$|^android/app/src/main/(AndroidManifest\.xml|res/xml/)|^scripts/release/release-macos-dmg\.sh$"
           emit frontend "$shared|^monitor/frontend/|^packages/webui/"
           # `store/` (and fl_lib, under `$shared`) for the theme manifests the
           # docs job validates against that same schema; `assets/catalog/` for

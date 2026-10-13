@@ -83,5 +83,3 @@ Server Box 会拒绝发送，避免字符损坏。RDP 可以根据查看器调�
 - VNC 暂不支持 VeNCrypt、SASL、Apple Remote Desktop 认证和 RealVNC 私有认证。
 - 暂不支持音频、麦克风、多显示器、RemoteApp、RDP Gateway、UDP，以及文件、磁盘、打印机、
   USB 或智能卡重定向。
-
-协议实现、依赖、代码生成和平台验证说明见[远程桌面开发说明](/docs/zh/development/remote-desktop/)。

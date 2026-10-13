@@ -3,7 +3,7 @@ title: 主屏幕小组件
 description: 在主屏幕添加服务器状态小组件
 ---
 
-使用主屏幕小组件前，需要在服务器上安装 [Monitor agent](/docs/zh/advanced/monitor-agent/)，再将该服务器添加到 App。App 会自动向小组件提供已配置的 Monitor 服务器列表。
+先在服务器上安装 [Monitor agent](/docs/zh/advanced/monitor-agent/)，再将服务器添加到 App。小组件会使用 App 中配置的 Monitor 服务器。
 
 ## 工作方式
 
