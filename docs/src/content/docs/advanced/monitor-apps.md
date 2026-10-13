@@ -20,6 +20,12 @@ The agent asks for your password; acknowledge that this is third-party software
 and accept the licence when the app requires it. The agent then downloads the
 images and deploys the Compose project. The page shows the job's progress.
 
+Some apps build an image on the server from a Dockerfile in the app's package,
+because no maintained image exists. Their confirmation lists the built images
+under **Built here**, and their base images among the images to pull. A build
+takes longer than a download, and an update builds again from the newest base
+image of the same release.
+
 After installation, open the app from its page or **All Apps**. To edit its
 settings, open the app's page and choose **Change settings**. Saving settings
 deploys the app again, so it is briefly unavailable. Data already in an old
