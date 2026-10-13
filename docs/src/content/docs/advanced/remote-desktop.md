@@ -111,6 +111,3 @@ return to the app.
   RealVNC proprietary authentication.
 - Audio, microphone, multiple monitors, RemoteApp, RDP Gateway, UDP transport,
   and file, disk, printer, USB, or smart-card redirection are not supported.
-
-For protocol implementation, dependencies, code generation, and platform
-validation, see the [remote desktop development notes](/docs/development/remote-desktop/).

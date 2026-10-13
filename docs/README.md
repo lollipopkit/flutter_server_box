@@ -14,8 +14,6 @@ docs/
 ├── src/content/docs/       # Pages — English at the top level
 │   ├── advanced/
 │   ├── development/
-│   ├── platforms/
-│   ├── principles/
 │   ├── zh/                 # Simplified Chinese, mirroring the layout above
 │   └── *.mdx               # introduction, installation, quick-start, index
 └── astro.config.mjs        # Locales and sidebar, including sidebar translations

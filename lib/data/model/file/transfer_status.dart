@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/service/in_flight_work.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
@@ -79,6 +80,9 @@ class FileTransferStatus {
   Duration? spentTime;
   bool _disposed = false;
 
+  /// From queued to [dispose], which every way a transfer ends goes through.
+  final _releaseInFlight = InFlightWork.hold();
+
   @override
   bool operator ==(Object other) =>
       other is FileTransferStatus && id == other.id;
@@ -89,6 +93,7 @@ class FileTransferStatus {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    _releaseInFlight();
     // Read before the worker is killed: a transfer that finished has already
     // renamed its staged copy into place and has nothing to clean up.
     final unfinished = status != FileTransferStage.finished;
@@ -217,8 +222,11 @@ class FileTransferStatus {
       Loggers.app.warning('Local copy failed: ${job.from} -> ${job.to}', e, s);
       error = e;
     } finally {
-      await source.close();
-      if (!identical(dest, source)) await dest.close();
+      // Each on its own: a close that throws must neither keep the other end
+      // open nor skip the events below, the last of which is what disposes
+      // this transfer and lets go of its hold.
+      await _close(source);
+      if (!identical(dest, source)) await _close(dest);
     }
 
     if (error != null) {
@@ -227,6 +235,14 @@ class FileTransferStatus {
     if (spentTime != null) {
       onNotify(spentTime);
       onNotify(FileTransferStage.finished);
+    }
+  }
+
+  static Future<void> _close(FileBackend backend) async {
+    try {
+      await backend.close();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close a transfer backend', e, s);
     }
   }
 

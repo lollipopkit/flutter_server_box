@@ -3,7 +3,7 @@ title: 主题
 description: 内置主题如何打包、加载与分发
 ---
 
-本页介绍本仓库内置主题的实现与分发方式。主题包格式和发布流程见
+本文说明本仓库内置主题的实现与分发方式。主题包格式和发布流程见
 [主题包制作指南](/docs/zh/development/theme-authoring/)；普通用户的主题选择与安装说明见
 [主题使用指南](/docs/zh/advanced/theme-packages/)。上游调色板来源及其署名也列在制作指南中。
 
@@ -93,8 +93,8 @@ listing 的 `description` 可以是字符串，也可以是以语言标签为键
 
 官方主题放在本仓库的 `store/` 中：`store/repo.toml`，以及每个主题的 listing
 `store/themes/<id>.toml` 和与之并列的源目录 `store/themes/<id>/`。
-`test/unit/theme_store_tree_test.dart` 按商店的方式读取该目录，读取器会丢弃的 listing
-会让测试失败，而不是从商店里消失。
+`test/unit/theme_store_tree_test.dart` 使用商店的读取器检查该目录。读取器拒绝的 listing
+会导致测试失败，不会悄悄从商店列表中消失。
 
 应用不会下载整个仓库。官网构建时运行 `scripts/store-tarball.sh`，把 `HEAD` 提交的
 `store/` 打包成 `public/store.tar.gz`，catalog 列出的地址是
@@ -113,9 +113,9 @@ xattr 记录；macOS `tar` 会写入读取器拒绝的这类记录）。
 指定确切版本，尚无版本的主题从 1.0.0 开始）。`--dry-run` 只显示计划；在参数中写明 id
 可以只处理这些主题。
 
-能用 digest 判断是否变化，是因为打包结果是确定的：条目按名称排序，使用固定的时间戳和
-权限，并且不压缩（stored），因此字节只取决于文件内容，与 checkout 的修改时间和机器上的
-zlib 版本无关。
+打包结果是确定的，因此可以用 digest 判断内容是否变化：条目按名称排序，使用固定的时间戳和
+权限，并采用不压缩（stored）模式。生成的字节只取决于文件内容，不受 checkout 修改时间或
+机器上的 zlib 版本影响。
 
 所有新包以 `<id>-<version>.fsbt` 为名一起上传到本仓库 tag 为 `themes` 的 release，
 然后向各 listing 追加带 digest 和大小的 `[[version]]` 块，之后提交 listing。所有包放在
@@ -125,6 +125,6 @@ release 是 pre-release，以 `--latest=false` 创建，永远不会成为本仓
 不会把 pre-release 标为 Latest，因此 Latest 始终是应用的 release；脚本在上传任何内容之前
 也会检查这一点。
 
-脚本会遵守两项顺序与完整性规则：先上传包，再更新引用它的 listing，避免 listing 指向
-不存在的 asset；从不覆盖已上传的 asset（中断的运行留下的 asset，只有字节相同时才会被
-接受），也从不让同一个版本号对应第二份内容。
+脚本按顺序发布并保护已发布内容：先上传包，再更新引用它的 listing，避免 listing 指向
+不存在的 asset。脚本不会覆盖已有 asset；中断后重跑时，只有字节完全相同才会接受已有文件，
+也不会让同一个版本号对应不同内容。

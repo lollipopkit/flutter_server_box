@@ -3,7 +3,7 @@ title: Riverpod 实践
 description: Server Box 使用的 provider、异步状态和资源生命周期写法
 ---
 
-Server Box 使用 Riverpod 和 `riverpod_generator` 协调 UI 状态、异步数据与 service。App 保存哪些状态以及它们的位置，见[状态模型](/docs/zh/principles/state/)。
+Server Box 使用 Riverpod 和 `riverpod_generator` 管理 UI 状态、异步数据与 service。
 
 ## Provider 结构
 

@@ -1,7 +1,7 @@
 # How ServerBox works
 
 A map, not a replacement for the documentation. The long explanations are in
-`docs/src/content/docs/principles/` and `docs/src/content/docs/development/`;
+`docs/src/content/docs/development/`;
 the working rules for changing the code are in `CLAUDE.md` and
 `monitor/CLAUDE.md`. What follows is the handful of decisions that explain the
 most behaviour, so you can route to the right file in one step.
@@ -103,9 +103,8 @@ a permanent test fed by bytes an older release actually wrote.
 ## State, and one navigator trap
 
 Riverpod with code generation for providers, freezed for immutable models,
-GetIt for service location. `docs/src/content/docs/principles/state.md` is what
-the app holds and where; `docs/src/content/docs/development/state.md` is how to
-declare a provider and release it.
+GetIt for service location. `docs/src/content/docs/development/state.md` is how
+to declare a provider and release it.
 
 The trap that has produced the most bugs: **`showRoundDialog` puts the dialog on
 the root navigator**, while a page's `context` finds the navigator holding the
@@ -136,11 +135,6 @@ project and `libL10n` for the strings `fl_lib` already has. Prefer an existing
 
 | Question | File |
 |---|---|
-| How the layers, connection methods and status paths fit together | `docs/src/content/docs/principles/architecture.md` |
-| Connection flow, authentication, host key verification, session lifecycle | `docs/src/content/docs/principles/ssh.md` |
-| File operations, path handling, transfers, editing | `docs/src/content/docs/principles/sftp.md` |
-| Where terminal bytes come from, tabs, virtual keyboard, selection | `docs/src/content/docs/principles/terminal.md` |
-| What state the app holds, and where | `docs/src/content/docs/principles/state.md` |
 | Module layout, entry point, dependency injection, Rust integration | `docs/src/content/docs/development/architecture.md` |
 | Provider types, update patterns, resource lifecycle | `docs/src/content/docs/development/state.md` |
 | Where a file belongs in the tree | `docs/src/content/docs/development/structure.md` |

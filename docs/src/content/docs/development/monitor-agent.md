@@ -3,8 +3,8 @@ title: Monitor Agent API and Access Model
 description: Capability reporting, metrics history, and remote access behavior
 ---
 
-This page documents the API behavior the App relies on when connecting to
-Monitor agent. For installation and operator configuration, see
+The App uses the API behavior described here when it connects to Monitor agent.
+For installation and configuration, see
 [Monitor Agent](/docs/advanced/monitor-agent/).
 
 ## Capability discovery

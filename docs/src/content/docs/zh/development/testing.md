@@ -114,7 +114,7 @@ test('returns server status', () async {
 
 ## 存储迁移测试
 
-存储迁移在用户设备上通常只有一次机会。迁移写入完成标记后不会重新读取旧数据，因此错误更可能表现为静默丢数据，而不是崩溃。
+用户设备上的存储迁移通常只运行一次。写入完成标记后，App 不会再读取旧数据；迁移错误因此可能导致数据静默丢失，而不是触发崩溃。
 
 每个迁移都必须保留永久 regression test，并使用旧 release 实际写出的 bytes：
 
@@ -138,7 +138,7 @@ fixture 一旦进入 regression test，就不能重新生成来绕过失败。�
 
 ## Integration test
 
-`integration_test/` 用于验证 `flutter test` 无法回答的问题。Unit test 运行在不加载 plugin 的 `flutter_tester` 中，因此通过 plugin 或 FFI 调用的代码不会在真实 App 环境中执行。Integration test 则运行在已连接的设备或 simulator 上：
+`integration_test/` 用于检查 `flutter test` 无法覆盖的行为。Unit test 在不加载 plugin 的 `flutter_tester` 中运行，无法执行通过 plugin 或 FFI 调用的代码。Integration test 则在已连接的设备或 simulator 上运行：
 
 | 文件 | 验证内容 |
 |---|---|

@@ -23,24 +23,31 @@ extension _HomePageTabs on _HomePageState {
             // server's details, its files — covers the tab and not the window.
             // The bar or rail that got you here stays put, and coming back to a
             // tab returns you to where you were in it.
-            itemBuilder: (_, index) => NestedNavigator(
+            //
+            // Only the tab on screen may hold focus. A hidden one kept in the
+            // scopes' history is otherwise where focus falls back to.
+            itemBuilder: (_, index) => ValueListenableBuilder(
               key: ValueKey(_tabs[index]),
-              // The top inset lands on the tab's own content and not on the
-              // navigator around it, which is the whole point: a page pushed
-              // here is a sibling route, outside this `SafeArea`, so it reaches
-              // the top of the window and animates across the status bar.
-              // Wrapping the navigator instead would inset the pushed page too
-              // and put the seam back.
-              //
-              // Here rather than in each tab because a tab is not one shape:
-              // three of them put a `Scaffold` *inside* a pane splitter, so the
-              // splitter's own divider is above any app bar that could have
-              // spent the inset.
-              rootBuilder: (_) =>
-                  SafeArea(bottom: false, child: _tabs[index].page),
+              valueListenable: _selectIndex,
+              builder: (_, selected, child) =>
+                  ExcludeFocus(excluding: selected != index, child: child!),
+              child: NestedNavigator(
+                // The top inset lands on the tab's own content and not on the
+                // navigator around it, which is the whole point: a page pushed
+                // here is a sibling route, outside this `SafeArea`, so it reaches
+                // the top of the window and animates across the status bar.
+                // Wrapping the navigator instead would inset the pushed page too
+                // and put the seam back.
+                //
+                // Here rather than in each tab because a tab is not one shape:
+                // three of them put a `Scaffold` *inside* a pane splitter, so the
+                // splitter's own divider is above any app bar that could have
+                // spent the inset.
+                rootBuilder: (_) =>
+                    SafeArea(bottom: false, child: _tabs[index].page),
+              ),
             ),
             onPageChanged: (value) {
-              FocusScope.of(context).unfocus();
               if (!_switchingPage) {
                 _selectIndex.value = value;
                 _rememberTab(value);

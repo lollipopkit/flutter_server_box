@@ -4,7 +4,7 @@ description: Configure and use out-of-band management when the host is unavailab
 ---
 
 :::caution[Beta]
-Only the read path (power state and sensors) has been verified against one real device. Power control has no automated verification yet. Compatibility with other vendors and models still needs to be established; see [Hardware tested](/docs/principles/bmc/#hardware-tested).
+Only the read path (power state and sensors) has been verified against one real device. Power control has no automated verification yet. Compatibility with other vendors and models still needs to be established.
 
 Treat power operations like pressing a physical power button on a remote server.
 :::
@@ -16,8 +16,7 @@ and Monitor agent depend on the host, so they cannot provide access in those
 states.
 
 Server Box connects to the BMC through **Redfish**, an HTTPS management API
-used by enterprise servers. BMCs that expose only IPMI are not supported; see
-[BMC design](/docs/principles/bmc/) for the design rationale.
+used by enterprise servers. BMCs that expose only IPMI are not supported.
 
 ## What it provides
 

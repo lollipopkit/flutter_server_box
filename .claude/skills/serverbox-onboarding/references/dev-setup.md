@@ -12,9 +12,9 @@ written here whenever the checkout is available.
 
 | Tool | Needed for | Where the requirement is written |
 |---|---|---|
-| Flutter (stable) >= 3.44.9 | Everything in the app | `environment:` in `pubspec.yaml` |
+| Flutter (stable) >= 3.47.0 | Everything in the app | `environment:` in `pubspec.yaml` |
 | Dart SDK >= 3.11.0 | Ships with Flutter | same |
-| Rust 1.97.1 via rustup | `crates/sbm_ffi` is compiled into **every** app build | `crates/sbm_ffi/rust-toolchain.toml` |
+| Rust 1.98.1 via rustup | `crates/sbm_ffi` is compiled into **every** app build | `crates/sbm_ffi/rust-toolchain.toml` |
 | Node 24 | Monitor panel, docs site, project website | `monitor/frontend/.node-version` |
 | Xcode / Android Studio / Visual Studio | Only the platform you build for | — |
 

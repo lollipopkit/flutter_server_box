@@ -3,8 +3,8 @@ title: Themes
 description: How the built-in themes are packaged, loaded and distributed
 ---
 
-This page explains how built-in themes are implemented and distributed in this
-repository. For the package format and publishing instructions, see
+This document covers the built-in themes in this repository. For the package
+format and publishing instructions, see
 [Theme Package Authoring](/docs/development/theme-authoring/). For the
 user-facing guide to choosing and installing themes, see
 [Themes](/docs/advanced/theme-packages/). Upstream palette sources and their
@@ -119,9 +119,9 @@ installation id.
 
 Official themes live in `store/` in this repository: `store/repo.toml`, and
 for each theme a listing `store/themes/<id>.toml` beside its source folder
-`store/themes/<id>/`. `test/unit/theme_store_tree_test.dart` reads the folder
-the way the store does, so a listing the reader would drop fails a test rather
-than disappearing from the store.
+`store/themes/<id>/`. `test/unit/theme_store_tree_test.dart` checks this folder
+with the store's reader. A rejected listing fails the test instead of silently
+disappearing from the store.
 
 The app does not download this repository. The website build runs
 `scripts/store-tarball.sh`, which packs `store/` as committed at `HEAD` into
@@ -146,10 +146,10 @@ changed, and the theme is skipped. A changed theme gets the next patch version
 for a theme with no version yet). `--dry-run` shows the plan; naming ids limits
 the run to those themes.
 
-Comparing digests works because the package is deterministic: entries sorted,
-one fixed timestamp and permission, and stored rather than deflated, so the
-bytes depend on the files alone and not on a checkout's modification times or a
-machine's zlib.
+The package is deterministic, so its digest reflects file contents alone:
+entries are sorted, timestamps and permissions are fixed, and files are stored
+without compression. Checkout modification times and the machine's zlib do not
+affect the result.
 
 All new packages are uploaded together, as `<id>-<version>.fsbt`, to one
 release of this repository tagged `themes`; then each listing gets a

@@ -3,7 +3,7 @@ title: Monitor Agent API 与访问模型
 description: Capability 上报、指标历史和 remote access 行为
 ---
 
-本文记录 App 连接 Monitor agent 时依赖的 API 行为。安装和运维配置见
+本页说明 App 连接 Monitor agent 时依赖的 API 行为。安装和配置见
 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。
 
 ## Capability discovery

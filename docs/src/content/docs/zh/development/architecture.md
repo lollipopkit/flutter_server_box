@@ -3,7 +3,7 @@ title: 实现架构
 description: Server Box 的 Flutter、存储、连接和原生层实现细节
 ---
 
-本页说明源码目录与 App 实现之间的对应关系。关于更完整的系统设计，包括分层、transport、能力、状态采集、迁移和安全模型，请参阅[系统架构](/docs/zh/principles/architecture/)。
+本文按源码目录说明 App 各部分的实现位置。
 
 ## 分层结构
 

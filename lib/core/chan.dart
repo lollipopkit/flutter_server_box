@@ -132,6 +132,17 @@ abstract final class MethodChans {
     }
   }
 
+  /// Tells iOS whether work is in flight that suspension would cut off, so it
+  /// asks for background time to finish it. See [InFlightWork].
+  static Future<void> setInFlightWork(bool inFlight) async {
+    if (!isIOS) return;
+    try {
+      await _channel.invokeMethod('setInFlightWork', inFlight);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set in-flight work', e, s);
+    }
+  }
+
   /// Hold the cover in place after the app comes forward, until Flutter has
   /// decided whether a biometric lock is coming.
   ///

@@ -1294,6 +1294,17 @@ class ServerNotifier extends _$ServerNotifier {
     Loggers.app.warning('SSH ${state.spi.name}', err);
   }
 
+  /// Whether [client]'s server answers a keep-alive within the status timeout.
+  Future<bool> _answersPing(SSHClient client) async {
+    if (client.isClosed) return false;
+    try {
+      await client.ping().timeout(_timeout);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _getDataSsh({
     required bool interactive,
     required int operation,
@@ -1616,6 +1627,26 @@ class ServerNotifier extends _$ServerNotifier {
       // Reached by throwing out of an await, so it skips the check that
       // follows that await: a read that timed out against the address this
       // server used to have must not stamp its error onto the one it has now.
+      if (!_isRefreshCurrent(operation, spi)) return;
+      // A slow command and a dead connection both end here, and only the
+      // second one is worth dropping. sshd answers a keep-alive itself, however
+      // busy the command is; no answer is a connection the network dropped —
+      // after a suspension, typically — which `ensureExec` and
+      // `ensureShellClient` would otherwise go on handing out.
+      final client = state.client;
+      if (client != null && !await _answersPing(client)) {
+        if (!_isRefreshCurrent(operation, spi)) return;
+        _failSsh(
+          SSHErrType.getStatus,
+          e,
+          operation: operation,
+          closeClient: true,
+          // The server did nothing wrong: the next refresh reconnects, and
+          // the limiter is for when that fails.
+          countAttempt: false,
+        );
+        return;
+      }
       if (!_isRefreshCurrent(operation, spi)) return;
       // Not _failSsh: a timed-out status read leaves the connection itself
       // intact, so the session stays connected and the attempt isn't counted

@@ -64,10 +64,9 @@ Debian and Ubuntu.
 
 ### Filesystem isolation
 
-The Alpine userland has a separate filesystem. It cannot read phone storage,
-App data, private keys, or user files. As a result, **Run commands on this
-device** targets different environments: the isolated userland on mobile and
-the computer's own shell on desktop.
+The Alpine userland has a separate filesystem and cannot read phone storage,
+App data, private keys, or user files. **Run commands on this device** therefore
+uses the isolated userland on mobile and the computer's own shell on desktop.
 
 ## Differences from a server terminal
 

@@ -252,7 +252,11 @@ class _AskAiPanel extends StatelessWidget {
       color: theme.colorScheme.surface,
       clipBehavior: Clip.antiAlias,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
-      child: Column(
+      // Neither the bottom sheet nor the side dialog makes room for the
+      // keyboard, so the composer would sit under it.
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
@@ -273,11 +277,27 @@ class _AskAiPanel extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'SSH Agent',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'SSH Agent',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            // The conversation below draws no header of its
+                            // own, so this bar is where a running reply shows.
+                            AgentBusyBuilder(
+                              scope: scope,
+                              builder: (_, activity) =>
+                                  activity == AgentActivity.idle
+                                  ? UIs.placeholder
+                                  : Padding(
+                                      padding: const EdgeInsets.only(left: 9),
+                                      child: AgentActivityMark(activity),
+                                    ),
+                            ),
+                          ],
                         ),
                         Text(
                           serverName,
@@ -307,6 +327,7 @@ class _AskAiPanel extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
