@@ -1,7 +1,8 @@
 #:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
 # A small web app for testing what the agent does with one: nginx serving a
 # data folder, with a health check, a setting written into what it serves,
-# two ports, a shared folder, the host's time zone and a sign-in. Not in the catalog: an agent offers it through
+# two ports, a shared folder, the host's time zone, a sign-in and a service
+# built from a Dockerfile of its own. Not in the catalog: an agent offers it through
 # `[stacks] local_apps` (pointing at monitor/tests/apps), and
 # tests/stacks_docker.rs deploys it on a real Docker.
 
@@ -16,7 +17,7 @@ source = "https://github.com/nginx/nginx"
 glyph = "science"
 tone = "teal"
 categories = ["tools"]
-notices = ["pullsImages", "bindsPaths", "publishesPort"]
+notices = ["pullsImages", "buildsImages", "bindsPaths", "publishesPort"]
 
 [title]
 en = "Test Web App"

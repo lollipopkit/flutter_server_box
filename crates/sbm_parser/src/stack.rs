@@ -154,6 +154,18 @@ pub fn purge_command(runtime: ContainerType, path: &str) -> Option<String> {
     ))
 }
 
+/// Removes the images a stack built ([`Stack::builds`]): they cannot be
+/// pulled again, so a purged stack would leave them behind for good. One
+/// still used by another container stays (no `--force`), and that does not
+/// fail the removal.
+pub fn remove_built_images_command(runtime: ContainerType, images: &[String]) -> Option<String> {
+    if images.is_empty() || images.iter().any(|i| i.is_empty() || i.contains('\n')) {
+        return None;
+    }
+    let names: Vec<String> = images.iter().map(|i| shell_quote_unix(i)).collect();
+    Some(format!("{} image rm {} || true", runtime.name(), names.join(" ")))
+}
+
 /// Asks Docker which OCI runtimes it has (`nvidia` once the NVIDIA Container
 /// Toolkit is set up); read by [`parse_runtimes`]. Podman reaches GPUs
 /// through CDI specs only, so there is nothing to ask it.
@@ -416,6 +428,15 @@ mod tests {
         assert!(purge_command(ContainerType::Docker, "relative").is_none());
         assert!(purge_command(ContainerType::Docker, "a/b").is_none());
         assert!(purge_command(ContainerType::Docker, "/srv/..").is_none());
+    }
+
+    #[test]
+    fn built_images_go_without_force() {
+        assert_eq!(
+            remove_built_images_command(ContainerType::Docker, &["localhost/a-b:1".into(), "localhost/it's:2".into()]).as_deref(),
+            Some("docker image rm 'localhost/a-b:1' 'localhost/it'\\''s:2' || true")
+        );
+        assert!(remove_built_images_command(ContainerType::Podman, &[]).is_none());
     }
 
     #[test]

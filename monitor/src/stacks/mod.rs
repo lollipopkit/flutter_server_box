@@ -837,6 +837,9 @@ pub async fn remove(state: &Arc<AppState>, username: &str, id: &str, purge: bool
                 steps.push(cmd);
             }
         }
+        if let Some(cmd) = sbm_parser::stack::remove_built_images_command(runtime, &package.built(&row.settings)) {
+            steps.push(cmd);
+        }
     }
     audit(state, username, Action::Open, Outcome::Ok, format!("remove {id}{}", if purge { " with its data" } else { "" })).await;
     let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());

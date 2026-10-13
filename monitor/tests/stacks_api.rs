@@ -489,9 +489,11 @@ async fn the_catalog_has_the_stores_apps_the_operators_and_the_shipped_ones() {
                 ("repo.toml", b"schema = 1\nname = \"Test\"\n"),
                 ("apps/serverbox.fromstore/manifest.toml", store_manifest.as_bytes()),
                 ("apps/serverbox.fromstore/compose.yaml", &testweb("compose.yaml")),
+                ("apps/serverbox.fromstore/built.Dockerfile", &testweb("built.Dockerfile")),
                 // Its folder names another id: left out.
                 ("apps/serverbox.wrong/manifest.toml", renamed.as_bytes()),
                 ("apps/serverbox.wrong/compose.yaml", &testweb("compose.yaml")),
+                ("apps/serverbox.wrong/built.Dockerfile", &testweb("built.Dockerfile")),
             ]),
         ),
     ]);
@@ -508,7 +510,8 @@ async fn the_catalog_has_the_stores_apps_the_operators_and_the_shipped_ones() {
     assert_eq!(source(&body, "serverbox.fromstore"), Some(json!("store")));
     assert_eq!(source(&body, "futo.immich"), Some(json!("bundled")));
     assert_eq!(source(&body, "serverbox.wrong"), None);
-    assert!(state.stacks.package("serverbox.fromstore").is_some());
+    // A Dockerfile comes with the package it builds.
+    assert!(state.stacks.package("serverbox.fromstore").is_some_and(|p| p.builds() && p.files.contains_key("built.Dockerfile")));
 
     // Kept on disk: an agent started without the network still has it.
     let cache = state.stacks.dir(".catalog");

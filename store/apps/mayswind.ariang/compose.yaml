@@ -6,6 +6,8 @@
 # - no `name:` and no `container_name:`: the agent names the project;
 # - runs as the shared folder's owner (SBM_UID/SBM_GID), TZ from the agent;
 # - RPC_SECRET is aria2's rpc-secret, which AriaNg asks for once;
+# - PEER_PORT is where BitTorrent and DHT listen, published on the same number
+#   (TCP and UDP) so the announced port is reachable;
 # - the health check asks aria2 for its methods through Caddy, which needs no
 #   secret (system.listMethods): an answer says both are up.
 
@@ -21,11 +23,14 @@ services:
     environment:
       TZ: ${SBM_TZ}
       RPC_SECRET: ${RPC_SECRET}
+      PEER_PORT: ${ARIA2_PEER_PORT}
     volumes:
       - ${ARIA2_CONFIG}:/conf
       - ${DOWNLOADS_LOCATION}:/downloads
     ports:
       - '${ARIANG_BIND}:${ARIANG_PORT}:8080'
+      - '${ARIA2_PEER_PORT}:${ARIA2_PEER_PORT}'
+      - '${ARIA2_PEER_PORT}:${ARIA2_PEER_PORT}/udp'
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- --header 'Content-Type: application/json' --post-data '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"system.listMethods\"}' http://127.0.0.1:8080/jsonrpc | grep -q aria2.addUri"]

@@ -88,3 +88,14 @@ label = { en = "Web UI reachable from the network", zh = "网页端口允许从�
 help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
 on = { ARIANG_BIND = "0.0.0.0" }
 off = { ARIANG_BIND = "127.0.0.1" }
+
+# BitTorrent and DHT: aria2 listens on the same number it publishes
+# (listen-port, dht-listen-port), so the announced port is reachable.
+[[settings]]
+key = "peer"
+type = "port"
+env = "ARIA2_PEER_PORT"
+default = 6888
+protocol = "both"
+label = { en = "Peer port (TCP and UDP)", zh = "对等端口（TCP 和 UDP）", zh-TW = "對等連接埠（TCP 與 UDP）" }
+help = { en = "BitTorrent peers and the DHT reach aria2 here. Forward it on your router for faster downloads.", zh = "BitTorrent 对等端点和 DHT 通过此端口连接 aria2。在路由器上转发此端口可提高下载速度。", zh-TW = "BitTorrent 對等端點與 DHT 透過此連接埠連線 aria2。在路由器上轉送此連接埠可提高下載速度。" }

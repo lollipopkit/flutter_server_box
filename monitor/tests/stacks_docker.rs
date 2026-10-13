@@ -1,6 +1,7 @@
 //! A web app deployed on a real Docker: the test web app (`tests/apps`)
-//! installed, reached through its proxy, given new settings, held off a port
-//! in use, stopped and started, and removed with its data.
+//! installed (one service built on the machine), reached through its proxy,
+//! given new settings, held off a port in use, stopped and started, and
+//! removed with its data and the image it built.
 //!
 //! Opt-in, as the SSH e2e tests: it pulls an image and runs containers.
 //!
@@ -29,6 +30,8 @@ const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 /// machine deployed (`serverbox.testweb`) is never touched.
 const APP: &str = "serverbox.testweb_e2e";
 const PROJECT: &str = "sbm-serverbox-testweb_e2e";
+/// The image its `built` service is built as, its own too.
+const BUILT: &str = "localhost/serverbox-testweb_e2e-built:1";
 
 /// `tests/apps/serverbox.testweb` copied as [APP] into a folder of its own.
 fn apps_dir() -> tempfile::TempDir {
@@ -41,6 +44,9 @@ fn apps_dir() -> tempfile::TempDir {
         let mut text = std::fs::read_to_string(entry.path()).unwrap();
         if entry.file_name() == "manifest.toml" {
             text = text.replace("name = \"testweb\"", "name = \"testweb_e2e\"");
+        }
+        if entry.file_name() == "compose.yaml" {
+            text = text.replace("localhost/serverbox-testweb-built:1", BUILT);
         }
         std::fs::write(to.join(entry.file_name()), text).unwrap();
     }
@@ -172,7 +178,13 @@ async fn raw(port: u16, request: String) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// Whatever a failed run left: the project's containers and network.
+/// [args] run by `docker`, what it printed.
+fn docker(args: &[&str]) -> String {
+    let out = std::process::Command::new("docker").args(args).output().unwrap();
+    String::from_utf8_lossy(&out.stdout).into_owned()
+}
+
+/// Whatever a failed run left: the project's containers, network and image.
 struct Cleanup;
 
 impl Drop for Cleanup {
@@ -182,7 +194,7 @@ impl Drop for Cleanup {
             .arg(
                 format!(
                     "docker ps -aq --filter label=com.docker.compose.project={PROJECT} | xargs -r docker rm -f; \
-                     docker network rm {PROJECT}_default"
+                     docker network rm {PROJECT}_default; docker image rm {BUILT}"
                 ),
             )
             .output();
@@ -235,8 +247,13 @@ async fn a_web_app_lives_on_a_real_docker() {
     let answer = raw(proxy, format!("GET /greeting.txt HTTP/1.1\r\nHost: localhost\r\nCookie: {cookie}\r\nConnection: close\r\n\r\n")).await;
     assert!(answer.starts_with("HTTP/1.1 200") && answer.ends_with("first\n"), "{answer}");
     let (_, services) = call(&srv, Method::GET, &format!("/api/v1/stacks/{APP}/services"), None).await;
-    assert_eq!(services["services"][0]["service"], "web", "{services}");
+    let mut names: Vec<&str> = services["services"].as_array().unwrap().iter().filter_map(|s| s["service"].as_str()).collect();
+    names.sort();
+    assert_eq!(names, ["built", "web"], "{services}");
     assert_eq!(health(&srv, &state, "healthy").await, "healthy");
+    // Built here, from a context that let nothing of the stack's folder in.
+    let ctx = docker(&["run", "--rm", "--entrypoint", "ls", BUILT, "-A", "/ctx"]);
+    assert_eq!(ctx.trim(), "", "the build saw the stack's folder");
 
     // Down behind the agent's back: said once, and that it is back.
     let source = format!("stack:{APP}");
@@ -252,7 +269,8 @@ async fn a_web_app_lives_on_a_real_docker() {
     let site = state.stacks.dir(APP).join("site");
     std::fs::write(site.join("mine.txt"), "kept").unwrap();
     let (_, ps) = call(&srv, Method::GET, &format!("/api/v1/stacks/{APP}/services"), None).await;
-    let container = ps["services"][0]["name"].as_str().unwrap().to_string();
+    let web = ps["services"].as_array().unwrap().iter().find(|s| s["service"] == "web").unwrap();
+    let container = web["name"].as_str().unwrap().to_string();
     let (status, body) =
         call(&srv, Method::POST, "/api/v1/container-backups", Some(json!({ "containers": [container], "project": true, "stop": true }))).await;
     assert_eq!(status, 202, "{body}");
@@ -327,7 +345,7 @@ async fn a_web_app_lives_on_a_real_docker() {
     assert_eq!(finished(&srv).await, "succeeded");
     assert!(fetch(moved, "/greeting.txt").await.ends_with("second\n"));
 
-    // Removed with its data: the containers and the folder go.
+    // Removed with its data: the containers, the folder and the image it built go.
     let dir = state.stacks.dir(APP);
     let (status, body) = call(
         &srv,
@@ -339,6 +357,7 @@ async fn a_web_app_lives_on_a_real_docker() {
     assert_eq!(status, 202, "{body}");
     assert_eq!(finished(&srv).await, "succeeded");
     assert!(!dir.exists(), "{} is left", dir.display());
+    assert!(docker(&["image", "ls", "-q", BUILT]).trim().is_empty(), "{BUILT} is left");
     let (_, list) = call(&srv, Method::GET, "/api/v1/stacks", None).await;
     let app = list["apps"].as_array().unwrap().iter().find(|a| a["manifest"]["id"] == APP).unwrap();
     assert_eq!(app["stack"], Value::Null);

@@ -11,6 +11,8 @@
 #   only), so the browser reaches the RPC on the page's own address.
 # - AriaNg's default RPC port is the page's port instead of 6800, so it
 #   connects through the desk's window as well as on the published port.
+# - BitTorrent and DHT listen on PEER_PORT (TCP and UDP), the port compose.yaml
+#   publishes, so peers reach it.
 # - Everything runs as the user compose.yaml names; nothing needs root.
 
 ARG ALPINE_VERSION=3.24
@@ -45,7 +47,8 @@ COPY <<"EOF" /etc/caddy/Caddyfile
 EOF
 
 # The settings a new install starts with; /conf/aria2.conf is the admin's
-# afterwards. The start script sets the download folder and the RPC itself.
+# afterwards. The start script sets the download folder, the peer port and the
+# RPC itself.
 COPY <<"EOF" /etc/aria2/aria2.conf
 continue=true
 max-concurrent-downloads=5
@@ -72,8 +75,9 @@ conf=/conf/aria2.conf
 touch /conf/aria2.session
 run=$(mktemp)
 chmod 600 "$run"
-grep -v -E '^[[:space:]]*(dir|enable-rpc|rpc-listen-all|rpc-listen-port|rpc-secret|rpc-allow-origin-all)[[:space:]]*=' "$conf" > "$run" || true
-printf '%s\n' dir=/downloads enable-rpc=true rpc-listen-all=false rpc-listen-port=6800 "rpc-secret=${RPC_SECRET}" >> "$run"
+grep -v -E '^[[:space:]]*(dir|enable-rpc|rpc-listen-all|rpc-listen-port|rpc-secret|rpc-allow-origin-all|listen-port|dht-listen-port)[[:space:]]*=' "$conf" > "$run" || true
+printf '%s\n' dir=/downloads enable-rpc=true rpc-listen-all=false rpc-listen-port=6800 "rpc-secret=${RPC_SECRET}" \
+  "listen-port=${PEER_PORT}" "dht-listen-port=${PEER_PORT}" >> "$run"
 caddy start --config /etc/caddy/Caddyfile --adapter caddyfile
 exec aria2c --conf-path="$run"
 EOF

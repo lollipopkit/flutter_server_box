@@ -23,6 +23,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
+import '../../helpers/llm_lib_helper.dart';
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/spi_fixture.dart';
 import '../../helpers/test_db.dart';
@@ -138,13 +139,6 @@ Future<(HttpServer, List<Map<String, Object?>>)> _mockServer() async {
   return (server, seen);
 }
 
-ExternalLibrary _nativeLib() => ExternalLibrary.open(switch (Platform
-    .operatingSystem) {
-  'macos' => 'build/native_assets/macos/libfl_pi_llm.dylib',
-  'windows' => 'build/native_assets/windows/fl_pi_llm.dll',
-  _ => 'build/native_assets/linux/libfl_pi_llm.so',
-});
-
 /// The `Authorization` of each chat request, beside [_mockServer]'s bodies.
 final _keys = <String>[];
 
@@ -188,7 +182,7 @@ void main() {
     await LlmHost.init(
       ProviderContainer(),
       credentials: credentials,
-      externalLibrary: _nativeLib(),
+      externalLibrary: llmNativeLib(),
       // An OpenAI-compatible gateway, as a shell exports it.
       environment: () => {
         'OPENAI_BASE_URL': 'http://127.0.0.1:${server.port}/v1',
