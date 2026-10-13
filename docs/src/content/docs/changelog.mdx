@@ -6,6 +6,31 @@ description: What changed in each released version
 Every released version, newest first. Downloads and per-release notes are on
 [GitHub Releases](https://github.com/lollipopkit/flutter_server_box/releases).
 
+## v1.0.1773 — 2026-10-13
+
+### Added
+
+- **Workspace tab:** terminals and other server pages side by side in split
+  panes, with typing sent to several terminals at once, saved layouts and
+  customizable keyboard shortcuts.
+
+### Changed
+
+- Beta features are marked the same way on every page.
+
+### Fixed
+
+- Android: the Linux system installs with its hard links and read-only
+  directories intact; temporary files go to /tmp.
+- A connection dropped while the app was in the background is noticed and
+  reconnected instead of left hanging. On iOS, a file transfer keeps running
+  for a while after the app leaves the foreground.
+- The terminal's Agent panel stays above the keyboard and shows when a reply
+  is being written.
+- Swiping back from a page on one tab no longer opens the keyboard for a
+  terminal on another.
+- Diagnostics are uploaded only after you choose a level.
+
 ## v1.0.1765 — 2026-10-12
 
 ### Added
