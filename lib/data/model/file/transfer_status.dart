@@ -222,8 +222,11 @@ class FileTransferStatus {
       Loggers.app.warning('Local copy failed: ${job.from} -> ${job.to}', e, s);
       error = e;
     } finally {
-      await source.close();
-      if (!identical(dest, source)) await dest.close();
+      // Each on its own: a close that throws must neither keep the other end
+      // open nor skip the events below, the last of which is what disposes
+      // this transfer and lets go of its hold.
+      await _close(source);
+      if (!identical(dest, source)) await _close(dest);
     }
 
     if (error != null) {
@@ -232,6 +235,14 @@ class FileTransferStatus {
     if (spentTime != null) {
       onNotify(spentTime);
       onNotify(FileTransferStage.finished);
+    }
+  }
+
+  static Future<void> _close(FileBackend backend) async {
+    try {
+      await backend.close();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close a transfer backend', e, s);
     }
   }
 

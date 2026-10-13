@@ -326,8 +326,8 @@ import UserNotifications
     }
 }
 
-/// Background time for an Agent reply or a file transfer that is running when
-/// the app leaves the foreground.
+/// Background time for a file transfer that is running when the app leaves
+/// the foreground.
 ///
 /// Without it the process is suspended at once, and the connection under the
 /// work is often gone by the time it resumes. The system grants a few
@@ -338,18 +338,23 @@ private enum InFlightWork {
 
     static func set(_ inFlight: Bool) {
         guard inFlight else {
-            end()
+            end(task)
             return
         }
         guard task == .invalid else { return }
-        task = UIApplication.shared.beginBackgroundTask(withName: "InFlightWork") {
-            end()
+        // The handler ends the task it was registered for, never whichever
+        // one is current when it runs: an expiry still queued when Dart turns
+        // the work off and on again would otherwise end the new task.
+        var id = UIBackgroundTaskIdentifier.invalid
+        id = UIApplication.shared.beginBackgroundTask(withName: "InFlightWork") {
+            end(id)
         }
+        task = id
     }
 
-    private static func end() {
-        guard task != .invalid else { return }
-        UIApplication.shared.endBackgroundTask(task)
-        task = .invalid
+    private static func end(_ id: UIBackgroundTaskIdentifier) {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        if task == id { task = .invalid }
     }
 }
