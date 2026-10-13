@@ -233,11 +233,11 @@ allowed panel origins can be edited without opening `config.toml`. Use
 the settings button in the top bar. Both interfaces update the same agent and
 configuration file.
 
-Only an admin account can see and change these settings. The JWT secret,
-`database_url`, and `[remote_access]` (plaintext tolerance, file roots, the
+Only an admin account can view or change these settings. The JWT secret,
+`database_url`, and `[remote_access]` options (plaintext tolerance, file roots,
 SSH address, and size limits) can only be changed in the configuration file.
-Who may do what is in neither place: it is each account's role, which an
-admin edits from the App or the panel. See
+An account's role determines its permissions; an admin can edit roles in the
+App or web panel. See
 [Accounts and permissions](#accounts-and-permissions).
 
 The editor never returns stored secrets such as ServerChan or Bark keys, an
@@ -318,7 +318,7 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 The command deliberately has no password argument: command-line arguments
 can appear in `ps` output and shell history.
 
-A password change ends what the old password was used for:
+A password change takes effect as follows:
 
 - **Logins and paired devices, at once, whichever way the password was
   changed.** Logins from before the change are refused from the next request,

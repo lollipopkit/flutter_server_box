@@ -3,8 +3,8 @@ title: Hidden Settings (JSON)
 description: Access advanced settings through the JSON editor
 ---
 
-The JSON editor exposes advanced settings that do not have a dedicated control
-in the interface. Change a value only when you understand what it affects.
+Use the JSON editor to change advanced settings without a dedicated control in
+the interface. Change a value only when you understand what it affects.
 
 ## Open the JSON editor
 
@@ -24,8 +24,7 @@ Maximum time to wait for a connection, in seconds.
 
 **Type:** integer　**Default:** `5`
 
-This integer is interpreted as seconds. Use a positive value appropriate for
-your network.
+Use a positive timeout that suits your network.
 
 ### `recordHistory`
 

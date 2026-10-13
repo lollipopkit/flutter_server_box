@@ -3,9 +3,8 @@ title: Home Screen Widgets
 description: Add server status widgets to your home screen
 ---
 
-To use a home-screen widget, install [Monitor agent](/docs/advanced/monitor-agent/)
-on the server and add that server to the App. The App provides the widget with
-the configured Monitor servers automatically.
+Install [Monitor agent](/docs/advanced/monitor-agent/) on the server, then add
+it to the App. The App passes its configured Monitor servers to the widgets.
 
 ## How widgets work
 

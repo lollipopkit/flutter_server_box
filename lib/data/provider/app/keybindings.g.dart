@@ -44,7 +44,7 @@ final class KeybindingsProvider
   }
 }
 
-String _$keybindingsHash() => r'c2da45c69f6ad478629fdaff4a6187366d074b66';
+String _$keybindingsHash() => r'4754a9ac891ee04d0ab889c8acea7472b5fa1685';
 
 /// The keyboard shortcuts, as changed on the settings page.
 

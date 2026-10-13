@@ -66,13 +66,13 @@ App 不会安装 native crash signal handler。平台提供 native crash、ANR �
 
 结构化诊断记录在创建时就会转换为可发送的内容，然后才交给上报组件。它们使用固定的 action 名称，服务器名称、地址或用户名等值会改用替代值记录。
 
-手动报告的处理方式不同。发生崩溃后，Server Box 会根据上一次运行保留的日志，以及平台提供的 native crash 或 hang 信息生成报告。它会替换能够识别的服务器名称、SSH host、SSH 用户名和 Monitor 地址，但不会声称整份报告已经匿名化。
+手动报告会包含更多诊断信息。发生崩溃后，Server Box 会结合上次运行留下的日志，以及平台提供的 native crash 或 hang 信息生成报告。App 会替换能识别的服务器名称、SSH host、SSH 用户名和 Monitor 地址，但报告仍可能包含无法识别的值。
 
 最新一份报告保存在**设置 → 应用 → 隐私 → 崩溃报告**下；只有存在报告时才会显示该入口。你可以先阅读完整内容，再选择复制、复制并打开 GitHub issue 页面，或删除。App 不会自动发布报告。这条手动路径在所有诊断级别下都可用，包括**不发送**。
 
 **任何级别都不会自动上传 App 日志。** 基本信息可能发送导致运行结束的错误及 stack trace，并附带上文描述的构建和平台信息，但不包含日志行。如果错误发生在上报通道启动之前，App 可能在下一次启动时把它作为错误补发。保存在本机的手动报告会一直保留，直到你删除它，或后续崩溃用新报告替换它。
 
-旧日志、临时连接的主机，以及 App 无法识别的值，仍可能出现在手动报告中。因此手动报告不保证匿名。粘贴到 GitHub 的内容是公开的，并受 [GitHub 隐私声明](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)约束。
+因此，手动报告不保证匿名。提交到 GitHub 的内容会公开，并受 [GitHub 隐私声明](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)约束。
 
 ## AI 请求
 

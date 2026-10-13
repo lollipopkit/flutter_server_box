@@ -56,7 +56,7 @@ final class WorkspacesProvider
   }
 }
 
-String _$workspacesHash() => r'595d5506a15d978038838842bb580369daee28c3';
+String _$workspacesHash() => r'6822f4f57a9c3d37bc5f16c136d0cb2f6acaf7cc';
 
 /// Every workspace, and which one is on screen.
 ///

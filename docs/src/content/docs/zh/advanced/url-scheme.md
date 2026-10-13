@@ -3,7 +3,7 @@ title: 链接(serverbox://)
 description: 通过链接打开服务器、功能、标签页或代码片段
 ---
 
-ServerBox 支持在 iOS、macOS 和 Android 上打开 `serverbox://` 链接。你可以从快捷指令、启动器、笔记或网页中使用这些链接。
+`serverbox://` 链接可在 iOS、macOS 和 Android 上打开 Server Box，也可用于快捷指令、启动器、笔记或网页。
 
 Windows 和 Linux 不支持这些链接。
 

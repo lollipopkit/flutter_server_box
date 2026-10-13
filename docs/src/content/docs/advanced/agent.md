@@ -129,30 +129,29 @@ is under `roots`.
 
 ## Review actions
 
-Before a server action runs, the App shows the command, how risky it looks and
-the model's explanation of it — except a read-only command that auto-runs (see
-below), which runs without a prompt. Read the command yourself, then allow or deny
-it. A denial is sent back to the model so it can respond to your feedback. In
-a terminal's chat you can also insert the command into the terminal, to edit
-and run it yourself. The model's safe or unsafe label is only a hint for your
-review.
+Before a server action runs, the App shows the command, its risk level, and
+the model's explanation. Read-only commands that meet the auto-run rules below
+skip this approval step. Review each command before allowing or denying it. A
+denial is sent to the model so it can respond to your feedback. In a terminal
+chat, you can insert the proposed command, edit it, and run it yourself. The
+model's safety label is advisory; make your own assessment.
 
-Server actions that do not auto-run are asked about every time; there is no
-"always allow" for them. At **Settings → Application → AI**, **Auto-run read-only commands** lets a server
-command run without asking only when both the model and the App's local check
-classify it as read-only, idempotent and non-destructive, and then at most three
-times for one message. It is off by default and never applies to commands on
-this device. For the other tools, "always allow" is offered on the approval
-card and can be undone at **Tools**.
+Server actions outside the auto-run rules require approval every time; there is
+no "always allow" option for them. **Auto-run read-only commands** is under
+**Settings → Application → AI**. A server command runs without approval only if
+both the model and the App's local check classify it as read-only, idempotent,
+and non-destructive. The limit is three commands per message. This setting is
+off by default and never applies to commands on this device. Other tools offer
+"always allow" on the approval card; revoke it under **Tools**.
 
 ## When the Agent asks you
 
-The Agent can ask you in the conversation — a choice that is yours, or
-something it cannot find out itself — and waits until you submit or cancel.
-It asks up to four questions, each with a few options and what they mean,
-one or several to pick; **Other** is always there for an answer of your own.
-It can also ask for things to type in. The bar, the chat list and the floating pill mark a chat
-waiting on you with a dot, apart from the spinner of one that is working.
+The Agent can ask for a choice or information it cannot retrieve itself. It
+waits until you answer or cancel. It can ask up to four questions at a time,
+with options and explanations; choose one or more options, or select **Other**
+and enter your own answer. It can also request text input. A dot in the bar,
+chat list, or floating pill marks a chat waiting for you; a spinner marks one
+that is still working.
 Sending a message instead cancels the form, and your message goes to the Agent
 with it.
 

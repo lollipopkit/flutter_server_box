@@ -112,10 +112,9 @@ the symptom rarely names the cause.
 
 ## Answering "how does X work"
 
-The deep explanations already exist in `docs/src/content/docs/principles/`
-(architecture, ssh, sftp, terminal, state) — 250 to 400 lines each, and worth
-reading rather than paraphrasing from memory. `references/principles.md` is the
-map: what each one answers, plus the handful of design decisions that explain
+The longer explanations live in `docs/src/content/docs/development/` and the
+`CLAUDE.md` files next to the code — read them rather than paraphrasing from
+memory. `references/principles.md` is the map: what each one answers, plus the handful of design decisions that explain
 the most behaviour, so you can route in one step instead of grepping.
 
 When the answer is about code rather than design, read the code. The docs

@@ -239,7 +239,7 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 修改密码后，旧密码对应的访问会结束：
 
 - **登录和已配对的设备：无论用哪种方式修改，都会立即失效。** 修改前的登录从下一次请求起被拒绝，该账号已配对的小组件和 Watch 会被解除配对。这一步不需要重启 agent，也不需要修改 `jwt_secret`。
-- **已打开的终端、端口转发和监听：在 App 或面板中修改时会立即关闭。** 上面的命令只写数据库，无法通知正在运行的 agent，因此用旧密码打开的连接会一直持续到 agent 重启：systemd 使用 `systemctl --user restart server_box_monitor`，OpenRC 使用 `rc-service server-box-monitor restart`。如果是因为密码可能已经泄露而重置，请在重置后重启 agent。
+- **已打开的终端、端口转发和监听：** 在 App 或面板中修改密码时会立即关闭。上面的命令只更新数据库，不会通知正在运行的 agent；旧密码建立的连接会一直保持到 agent 重启。systemd 使用 `systemctl --user restart server_box_monitor`，OpenRC 使用 `rc-service server-box-monitor restart`。如果重置密码是因为它可能已泄露，请随后重启 agent。
 
 每个账号也可以在 App 或面板中修改自己的密码，见[编辑账号和角色](#编辑账号和角色)。在 App 中修改时，App 会同时更新为该服务器保存的密码。
 
@@ -249,7 +249,7 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 
 网页面板不提供密码找回功能。请在服务器上运行上面的命令重置密码。
 
-登录失败会按来源地址和用户名分别限流：前三次失败不会延迟，之后等待时间从 1 秒开始逐次翻倍，最长为 5 分钟。因此，密码错误也可能让 agent 看起来响应缓慢或没有响应。
+登录失败按来源地址和用户名分别限流。前三次失败不会延迟；此后等待时间从 1 秒开始逐次翻倍，最长 5 分钟。连续输错密码时，agent 可能因此响应缓慢，甚至暂时没有响应。
 
 ## 在 App 中添加
 
@@ -311,7 +311,7 @@ TODO：旧配置不再用于升级后，删除这些兼容开关。若 agent 启
 
 `files` 仍然需要配置 `[remote_access.fs] roots`。在配置之前，App 会提示 agent 上未配置文件浏览。无论 `roots` 如何设置，文件 API 都无法访问 agent 自己的文件，包括数据库、`jwt.secret`、`config.toml` 及其备份、`.env`、TLS 密钥和证书、自定义命令，因为读取这些文件就等于拿到 admin 登录。
 
-**角色带有 `shell` 的账号，相当于拥有 agent 运行账户的 shell。** 因此 `install.sh` 默认以普通用户运行 agent。若选择以 root 运行，请先考虑这一点。
+**拥有 `shell` 权限的账号可以使用 agent 运行账户的 shell。** `install.sh` 因此默认以普通用户运行 agent。若要以 root 运行，请先评估这些账号由此获得的权限。
 
 ### 从没有角色的 agent 升级
 

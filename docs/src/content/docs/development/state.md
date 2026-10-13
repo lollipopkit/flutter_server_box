@@ -4,8 +4,7 @@ description: Provider, asynchronous state, and resource-lifecycle patterns used 
 ---
 
 Server Box uses Riverpod and `riverpod_generator` to connect UI state,
-asynchronous data, and services. For the kinds of state the App stores and
-where each one lives, see [State model](/docs/principles/state/).
+asynchronous data, and services.
 
 ## Provider structure
 

@@ -12,12 +12,9 @@ The commands live on each server, in
 `~/.config/server_box/custom_cmds`. The App does not keep a local copy: the
 editor loads the files from the server and writes changes back when you save.
 
-This means:
-
-- **Connect to the server before editing.** If the server is unreachable, you
-  can view the editor but cannot save changes.
-- **The App and Monitor agent use the same files.** Changes made in the
-  Monitor web panel are immediately available to the App, and vice versa.
+You must be connected to the server to save edits. If it is unreachable, you
+can open the editor but not save. The App and Monitor agent use the same files,
+so edits in either one are immediately visible in the other.
 
 ## Editing
 

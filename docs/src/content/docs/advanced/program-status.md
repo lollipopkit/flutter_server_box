@@ -7,9 +7,9 @@ A program running in a terminal can tell Server Box what it is doing: running,
 waiting for you, finished or failed. Server Box shows that next to the
 terminal's name and, when the terminal is out of sight, as a notification.
 
-This needs nothing installed on the server. The program writes a short escape
-sequence to its output, and it reaches the App over SSH, the Monitor agent's
-terminal or a terminal on this device, like the rest of the output.
+No server-side software is required. The program writes a short escape
+sequence to its output. The App reads it from SSH, a Monitor agent terminal,
+or a terminal on this device, alongside the rest of the output.
 
 ## What Server Box reads
 
