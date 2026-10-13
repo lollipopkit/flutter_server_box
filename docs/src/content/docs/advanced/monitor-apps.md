@@ -6,7 +6,8 @@ description: Install and manage Docker Compose apps through the Monitor panel
 The Monitor agent can deploy web apps with Docker Compose and show them in the
 panel's App Store and desk. An app runs on the server where the agent runs.
 You need an admin account to install, change, update, or remove an app. Any
-signed-in account can browse the catalog.
+signed-in account can browse the catalog. Apps that run inside the panel
+itself, installed from `.fsba` packages, are [Desk Apps](/docs/advanced/monitor-desk-apps/).
 
 ## Browse and install apps
 

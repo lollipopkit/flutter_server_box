@@ -2,7 +2,7 @@
 
 The panel's desk (`monitor/frontend/src/desk`) is a small operating system: a shell (menubar, dock, Apps, Spotlight, notification centre) that runs apps in windows. `sys` is the one interface between an app and the desk. Built-in apps and third-party apps use the same interface; they differ in where their code runs and what it may reach.
 
-Status: phases 1–5 are implemented (the SDK is not published yet) (see [Phases](#phases)); the rest is the agreed design.
+Status: phases 1–5 are implemented (see [Phases](#phases)); the rest is the agreed design.
 
 ## App kinds
 
@@ -10,7 +10,7 @@ Status: phases 1–5 are implemented (the SDK is not published yet) (see [Phases
 |---|---|---|---|
 | `system` | Svelte components in this repo (`desk/apps/<name>/`) | The panel's page | `sys`, `lk`, the agent's HTTP API within the account's grants |
 | `web` | A static bundle (HTML/JS/CSS) installed on the agent | A sandboxed iframe | `sys` only, over a message bridge. No agent API, no network |
-| `wasm` | A `web` bundle plus a WASI component installed on the agent | Frontend: a sandboxed iframe. Backend: the agent's WASM runtime | `sys`, and its own backend through `sys.backend`. The backend reaches the machine only through host functions its permissions allow |
+| `wasm` | A `web` bundle plus a WebAssembly module installed on the agent | Frontend: a sandboxed iframe. Backend: the agent's WASM runtime | `sys`, and its own backend through `sys.backend`. The backend reaches the machine only through host functions its permissions allow |
 
 A third-party app never runs in the panel's own page. Code in the page can read the session token and act as the signed-in account; an iframe with `sandbox="allow-scripts"` (no `allow-same-origin`) runs in an opaque origin, which is the only boundary the browser enforces. The agent serves an installed bundle with `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; connect-src 'none'`, so the bundle stays sandboxed even when it is opened directly.
 
@@ -29,11 +29,11 @@ Every app is a manifest. A built-in app's is `apps/<name>/manifest.ts` (`defineA
 | `glyph`, `tone` | The app icon: a Material Symbols Rounded name and a tone of the lollipopkit Design System |
 | `available` | System apps: a function of the agent's capabilities. Third-party: derived from `permissions` |
 | `instances` | How many windows may be open (default 1) |
-| `size`, `minSize` | The first window's size and the smallest allowed |
+| `size`, `min_size` (`minSize` in a built-in app) | The first window's size and the smallest allowed |
 | `order`, `pinned` | Place in Apps; in a fresh desk's dock |
 | `permissions` | Third-party only, see [Permissions](#permissions) |
-| `opens` | File types and URL schemes the app can open (`{ "ext": ["log", "txt"], "mime": ["text/*"] }`), see [Intents](#intents) |
-| `settings` | Its page in Settings → Apps (lazy), run as the app (its storage) inside the Settings window |
+| `opens` | File types the app can open (`{ "ext": ["log", "txt"], "dirs": false }`, `"*"` for any), see [Intents](#intents) |
+| `settings` | Built-in apps: its page in Settings → Apps (lazy), run as the app (its storage) inside the Settings window |
 
 ## Processes and lifecycle
 
@@ -135,4 +135,4 @@ Intents carry `from`, set by the desk: an app acts on one only from the apps it 
 2. **Services** (done): per-app background choice (`background_denied`, migration 018), storage, notifications, dock menus, `keepAlive`, Control Centre's background list, intents and "Open with" (Snippets → Terminal moved onto them), app settings pages.
 3. **`web` apps** (done): the agent's package store (`api::apps`, migration 018), the frame host and bridge (`desk/webapps/`: `protocol.ts`, `bridge.svelte.ts`, `WebAppFrame.svelte`), Settings → Apps (install, approve, remove), an example (`monitor/examples/desk-app-hello`). The SDK package moves to phase 5.
 4. **`wasm` apps** (done): `api::app_runtime`, `/apps/{id}/call`, host functions, bounds; the bridge's `backend.call`. Events from a backend and `fs.write`/`net` are left.
-5. **SDK** (done, unpublished): `monitor/sdk/serverbox-desk` (the client; `protocol.ts` is the one copy of the protocol, the panel's bridge imports it), `monitor/sdk/template` (vite, relative URLs, `npm run pack`), examples `monitor/examples/desk-app-hello` (`web`) and `desk-app-uptime` (`wasm`, Rust). Publishing waits for a license decision.
+5. **SDK** (done): `monitor/sdk/serverbox-desk` (the client, on npm as `serverbox-desk`, Apache-2.0; `protocol.ts` is the one copy of the protocol, the panel's bridge imports it), `monitor/sdk/template` (vite, relative URLs, `npm run pack`), examples `monitor/examples/desk-app-hello` (`web`) and `desk-app-uptime` (`wasm`, Rust).

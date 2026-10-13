@@ -59,6 +59,7 @@ export default defineConfig({
 						{ label: 'Monitor Agent', translations: { 'zh-CN': 'Monitor Agent' }, slug: 'advanced/monitor-agent' },
 						{ label: 'Monitor Apps', translations: { 'zh-CN': 'Monitor 应用' }, slug: 'advanced/monitor-apps' },
 						{ label: 'Monitor Agent Mode', translations: { 'zh-CN': 'Monitor Agent 模式' }, slug: 'advanced/monitor-agent-mode' },
+						{ label: 'Desk Apps', translations: { 'zh-CN': 'Desk 应用' }, slug: 'advanced/monitor-desk-apps' },
 						{ label: 'Workspace', translations: { 'zh-CN': '工作区' }, slug: 'advanced/workspace' },
 						{ label: 'Remote Desktop', translations: { 'zh-CN': '远程桌面' }, slug: 'advanced/remote-desktop' },
 						{ label: 'Agent', translations: { 'zh-CN': 'Agent' }, slug: 'advanced/agent' },
@@ -105,6 +106,7 @@ export default defineConfig({
 						{ label: 'Testing', translations: { 'zh-CN': '测试' }, slug: 'development/testing' },
 						{ label: 'Themes', translations: { 'zh-CN': '主题' }, slug: 'development/themes' },
 						{ label: 'Monitor Apps', translations: { 'zh-CN': 'Monitor 应用' }, slug: 'development/monitor-apps' },
+						{ label: 'Desk Apps', translations: { 'zh-CN': 'Desk 应用' }, slug: 'development/desk-apps' },
 					],
 				},
 				// Its own entry rather than a line in a group: the app links

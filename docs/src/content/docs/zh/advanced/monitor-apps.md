@@ -5,7 +5,8 @@ description: 通过 Monitor 面板安装和管理 Docker Compose 应用
 
 Monitor agent 可以通过 Docker Compose 部署 Web 应用，并在面板的 App Store
 和桌面中显示。应用运行在 agent 所在的服务器上。安装、修改、更新或移除应用需要
-admin 账号；所有已登录账号都可以浏览目录。
+admin 账号；所有已登录账号都可以浏览目录。从 `.fsba` 包安装、在面板内运行的应用见
+[Desk 应用](/docs/zh/advanced/monitor-desk-apps/)。
 
 ## 浏览和安装应用
 
