@@ -196,6 +196,7 @@ class _HomePageState extends ConsumerState<HomePage>
     WakelockPlus.disable();
 
     _selectIndex.removeListener(_publishCurrentTab);
+    _selectIndex.removeListener(_dropFocus);
     _selectIndex.dispose();
     _settingsAnim.dispose();
     _settingsCtrl.dispose();
@@ -229,6 +230,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // set from the bar, the rail, a request from another page and restoration,
     // and one of those would eventually be forgotten.
     _selectIndex.addListener(_publishCurrentTab);
+    _selectIndex.addListener(_dropFocus);
 
     // Only at the ends. What moves in between is drawn by `FadeTransition`
     // and `SlideTransition`, which listen for themselves; what a rebuild is
@@ -270,6 +272,19 @@ class _HomePageState extends ConsumerState<HomePage>
     if (index < 0 || index >= _tabs.length) return;
     ref.read(currentHomeTabProvider.notifier).update(_tabs[index]);
   }
+
+  /// Takes focus from the tab being left, and clears where it was.
+  ///
+  /// On the focused node rather than on this page's scope: each tab is a
+  /// navigator with scopes of its own, and every one of them remembers its
+  /// last focused child. Unfocusing the page's scope left those behind, and a
+  /// later fallback — a page in another tab swiped away, whose scope is gone
+  /// without handing focus back — walked them down to the hidden terminal and
+  /// raised the keyboard over the servers.
+  ///
+  /// Before the tab is excluded from focus (see `_buildTabPages`): that hands
+  /// focus to the newly shown tab's last child, which must be gone by then.
+  void _dropFocus() => FocusManager.instance.primaryFocus?.unfocus();
 
   void _handleHomeTabsChanged() {
     final newBar = Stores.setting.homeTabs.fetch();
