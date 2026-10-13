@@ -180,6 +180,11 @@ import UserNotifications
                     DynamicIslandBrand.shared.setColors(background: bg, foreground: fg)
                 }
                 result(nil)
+            // Whether something is in flight that suspension would cut off:
+            // see [InFlightWork].
+            case "setInFlightWork":
+                InFlightWork.set(call.arguments as? Bool ?? false)
+                result(nil)
             case "setPrivacyBlur":
                 PrivacyBlur.shared.isEnabled = call.arguments as? Bool ?? false
                 result(nil)
@@ -318,5 +323,33 @@ import UserNotifications
         // This one FlutterAppDelegate does implement, and it is how registered
         // plugins hear that the app is going away.
         super.applicationWillTerminate(application)
+    }
+}
+
+/// Background time for an Agent reply or a file transfer that is running when
+/// the app leaves the foreground.
+///
+/// Without it the process is suspended at once, and the connection under the
+/// work is often gone by the time it resumes. The system grants a few
+/// minutes, not indefinitely: once they run out the task is ended here, as
+/// the expiration handler must, and the work is suspended with the app.
+private enum InFlightWork {
+    private static var task: UIBackgroundTaskIdentifier = .invalid
+
+    static func set(_ inFlight: Bool) {
+        guard inFlight else {
+            end()
+            return
+        }
+        guard task == .invalid else { return }
+        task = UIApplication.shared.beginBackgroundTask(withName: "InFlightWork") {
+            end()
+        }
+    }
+
+    private static func end() {
+        guard task != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(task)
+        task = .invalid
     }
 }
