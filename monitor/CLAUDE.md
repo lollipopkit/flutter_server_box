@@ -41,7 +41,7 @@ cargo sqlx migrate run / cargo sqlx prepare # migrations; offline query cache in
 
 ### Cloudflare Pages
 
-- Root directory `monitor/frontend`, build `npm run build`, output `dist`. The panel imports `monitor/sdk/lkui/src` (the app bridge's protocol), so the build needs the repository, not `monitor/frontend` alone; keep build steps in `package.json`, not in a dashboard. Repo-root variant: `cd monitor/frontend && npm ci && npm run build`, output `monitor/frontend/dist`.
+- Root directory `monitor/frontend`, build `npm run build`, output `dist`. The panel imports `monitor/sdk/serverbox-desk/src` (the app bridge's protocol), so the build needs the repository, not `monitor/frontend` alone; keep build steps in `package.json`, not in a dashboard. Repo-root variant: `cd monitor/frontend && npm ci && npm run build`, output `monitor/frontend/dist`.
 - `frontend/.node-version` pins Node 24 (Pages reads it from the root directory); the Dockerfile (`node:24-alpine`) and `monitor-release.yml` match. vite 8 needs `^20.19.0 || >=22.12.0`.
 - Each agent must allow the origin (`cors_allowed_origins` / `SBM_CORS_ORIGINS`) and be reachable over HTTPS (built-in TLS or a proxy/tunnel). Without `frontend/dist` the API runs alone.
 

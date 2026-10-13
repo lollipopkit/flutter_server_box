@@ -1,5 +1,5 @@
 {
-  "name": "lkui",
+  "name": "serverbox-desk",
   "version": "0.1.0",
   "description": "Build apps for the ServerBox monitor's desk: the client of its app bridge, drawn in the lollipopkit Design System.",
   "keywords": ["serverbox", "desk", "lollipopkit"],
@@ -28,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lollipopkit/flutter_server_box.git",
-    "directory": "monitor/sdk/lkui"
+    "directory": "monitor/sdk/serverbox-desk"
   },
   "homepage": "https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md",
   "license": "Apache-2.0"

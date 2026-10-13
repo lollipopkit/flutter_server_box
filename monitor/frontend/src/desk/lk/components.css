@@ -488,7 +488,7 @@ button.lk-table__th:hover{background:var(--fill-hover)}
 /* ---------- Not in the design system's sheet ----------
    What the components used to get from Tailwind utilities or their own
    scoped styles, so the classes alone draw them: in an installed app's frame
-   there is only markup (`desk.css`, `lkui`). */
+   there is only markup (`desk.css`, `serverbox-desk`). */
 .lk-menu__item,.lk-side__item,.lk-ctile--toggle,.lk-card--button,.lk-stat--interactive,.lk-ncenter__item--button{width:100%;text-align:left}
 .lk-stat--interactive,.lk-ncenter__item--button{border:0}
 .lk-card--button{display:block}

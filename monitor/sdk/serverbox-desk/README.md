@@ -1,15 +1,15 @@
-# lkui
+# serverbox-desk
 
 The client an installed desk app uses, from inside its sandboxed frame, to
 reach the ServerBox monitor's desk. The design, the permissions and the
 message protocol: `docs/dev/desk-sys.md`. A starting point: `../template`.
 
 ```sh
-npm install lkui
+npm install serverbox-desk
 ```
 
 ```ts
-import { connect } from 'lkui'
+import { connect } from 'serverbox-desk'
 
 const desk = await connect()
 await desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })

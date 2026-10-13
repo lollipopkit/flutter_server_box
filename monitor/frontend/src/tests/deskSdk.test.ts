@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { connect } from '../../../sdk/lkui/src/index'
-import { applyTheme } from '../../../sdk/lkui/src/ui'
+import { connect } from '../../../sdk/serverbox-desk/src/index'
+import { applyTheme } from '../../../sdk/serverbox-desk/src/ui'
 import { WebAppBridge } from '../desk/webapps/bridge.svelte'
 import type { WindowHandle } from '../desk/sys/window.svelte'
 

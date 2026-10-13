@@ -1,7 +1,7 @@
-/// `lkui`: what an installed desk app uses of the desk,
+/// `serverbox-desk`: what an installed desk app uses of the desk,
 /// from inside its sandboxed frame (docs/dev/desk-sys.md).
 ///
-///   import { connect } from 'lkui'
+///   import { connect } from 'serverbox-desk'
 ///   const desk = await connect() // the desk's styles and theme are on the page
 ///   document.body.innerHTML = '<button class="lk-btn lk-btn--primary">Run</button>'
 ///   desk.toolbar({ actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh' }] })

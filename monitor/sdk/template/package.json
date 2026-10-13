@@ -7,7 +7,7 @@
     "pack": "vite build && node pack.mjs"
   },
   "dependencies": {
-    "lkui": "file:../lkui"
+    "serverbox-desk": "file:../serverbox-desk"
   },
   "devDependencies": {
     "typescript": "^5.9.0",

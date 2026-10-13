@@ -5,14 +5,14 @@
 FROM node:24-alpine AS frontend-builder
 
 # Layout mirrors the repo: the panel imports the app SDK beside it
-# (/app/monitor/sdk/lkui from /app/monitor/frontend).
+# (/app/monitor/sdk/serverbox-desk from /app/monitor/frontend).
 WORKDIR /app/monitor/frontend
 COPY monitor/frontend/package*.json ./
 RUN npm install
 
 COPY monitor/frontend/ ./
 # The desk's app bridge imports the protocol from the app SDK's source.
-COPY monitor/sdk/lkui/src/ /app/monitor/sdk/lkui/src/
+COPY monitor/sdk/serverbox-desk/src/ /app/monitor/sdk/serverbox-desk/src/
 RUN npm run build
 
 # Rust build stage

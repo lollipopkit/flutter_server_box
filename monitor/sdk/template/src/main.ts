@@ -1,4 +1,4 @@
-import { connect } from 'lkui'
+import { connect } from 'serverbox-desk'
 import './style.css'
 
 // Once connected, the page is in the desk's design system (its `lk-*`
