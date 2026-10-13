@@ -22,8 +22,8 @@ export interface Hello {
   lifecycle: Lifecycle
   theme: AppTheme
   locale: string
-  /// The desk's design system for this frame (`_desk/desk.css` under the
-  /// app's own path); absent from a desk before it served one.
+  /// The desk's design system for this frame (the agent's
+  /// `/desk-app/desk.css`); absent from a desk before it served one.
   ui?: { stylesheet: string } | null
   /// What the admin approved that the desk itself grants (`notifications`,
   /// `background`).

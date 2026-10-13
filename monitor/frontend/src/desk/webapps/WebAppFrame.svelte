@@ -20,8 +20,8 @@
   let frame = $state<HTMLIFrameElement | null>(null)
   let src = $state<string | null>(null)
   let failed = $state(false)
-  /// The desk's design system for the frame (`_desk/desk.css` under its
-  /// ticketed path), from an agent that serves one.
+  /// The desk's design system for the frame (the agent's `/desk-app/desk.css`),
+  /// from an agent that serves one.
   let stylesheet: string | null = null
 
   /// The desk's mode and its installed theme's tokens (none for the design

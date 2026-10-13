@@ -8,7 +8,7 @@ const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'))
 const stage = mkdtempSync(join(tmpdir(), 'fsba-'))
 cpSync('manifest.json', join(stage, 'manifest.json'))
 cpSync('dist', join(stage, 'ui'), { recursive: true })
-const out = `${manifest.id}.fsba`
+const out = `${manifest.publisher}.${manifest.name}.fsba`
 // COPYFILE_DISABLE: macOS tar would add `._` files, which the agent refuses.
 execFileSync('tar', ['-czf', join(process.cwd(), out), '-C', stage, 'manifest.json', 'ui'], {
   env: { ...process.env, COPYFILE_DISABLE: '1' },

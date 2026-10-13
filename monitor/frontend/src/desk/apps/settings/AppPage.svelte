@@ -9,6 +9,7 @@
   import type { AppSpec } from '../../sys'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
+  import { permissionText as describePermission } from './permissions'
   import { useDeskPrefs } from '../../deskState.svelte'
   import { stackOf } from '../../../components/stack/apps'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
@@ -30,11 +31,7 @@
   /// An installed app runs hidden only with the `background` permission.
   const mayRunHidden = $derived(spec.kind === 'system' || !!spec.permissions?.includes('background'))
 
-  function permissionText(p: string): string {
-    if (p === 'notifications') return $LL.settingsPermNotifications()
-    if (p === 'background') return $LL.settingsPermBackground()
-    return p
-  }
+  const permissionText = (p: string) => describePermission($LL, p)
 </script>
 
 <SettingsPage {title} back={onback}>

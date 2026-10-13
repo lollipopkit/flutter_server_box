@@ -6411,7 +6411,7 @@ type RootTranslation = {
 	 */
 	settingsAccountDesc: RequiredParams<'server' | 'user'>
 	/**
-	 * O​n​l​y​ ​t​h​i​s​ ​b​r​o​w​s​e​r​.
+	 * W​a​l​l​p​a​p​e​r​ ​a​n​d​ ​t​h​e​m​e​s​ ​a​r​e​ ​k​e​p​t​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​ ​f​o​r​ ​y​o​u​r​ ​a​c​c​o​u​n​t​;​ ​e​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​ ​h​e​r​e​ ​a​p​p​l​i​e​s​ ​o​n​l​y​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​.
 	 */
 	settingsAppearanceDesc: string
 	/**
@@ -6868,6 +6868,18 @@ type RootTranslation = {
 	 * r​u​n​ ​i​n​ ​t​h​e​ ​b​a​c​k​g​r​o​u​n​d
 	 */
 	settingsPermBackground: string
+	/**
+	 * r​e​a​d​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​s​t​a​t​u​s
+	 */
+	settingsPermStatus: string
+	/**
+	 * r​e​a​d​ ​f​i​l​e​s​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​s​ ​i​t​ ​n​a​m​e​s​,​ ​a​s​ ​f​a​r​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​u​s​i​n​g​ ​i​t​ ​m​a​y
+	 */
+	settingsPermFilesRead: string
+	/**
+	 * r​u​n​ ​c​o​m​m​a​n​d​s​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​u​s​i​n​g​ ​i​t
+	 */
+	settingsPermExec: string
 	/**
 	 * N​o​ ​p​e​r​m​i​s​s​i​o​n​s
 	 */
@@ -16244,7 +16256,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAccountDesc: (arg: { server: unknown, user: unknown }) => LocalizedString
 	/**
-	 * Only this browser.
+	 * Wallpaper and themes are kept on the server for your account; everything else here applies only in this browser.
 	 */
 	settingsAppearanceDesc: () => LocalizedString
 	/**
@@ -16687,6 +16699,18 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * run in the background
 	 */
 	settingsPermBackground: () => LocalizedString
+	/**
+	 * read this server's status
+	 */
+	settingsPermStatus: () => LocalizedString
+	/**
+	 * read files in the folders it names, as far as the account using it may
+	 */
+	settingsPermFilesRead: () => LocalizedString
+	/**
+	 * run commands on this server as the account using it
+	 */
+	settingsPermExec: () => LocalizedString
 	/**
 	 * No permissions
 	 */

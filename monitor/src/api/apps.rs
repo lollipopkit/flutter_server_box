@@ -718,6 +718,18 @@ mod tests {
         }
     }
 
+    /// The examples and the template are what app authors copy: each must be
+    /// a manifest the agent takes.
+    #[test]
+    fn shipped_manifests_are_accepted() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for path in ["examples/desk-app-hello", "examples/desk-app-uptime", "sdk/template"] {
+            let text = std::fs::read_to_string(root.join(path).join("manifest.json")).unwrap();
+            let m: Manifest = serde_json::from_str(&text).unwrap_or_else(|e| panic!("{path}: {e}"));
+            assert_eq!(check_manifest(&m), Ok(()), "{path}");
+        }
+    }
+
     #[test]
     fn a_manifest_is_checked_field_by_field() {
         assert_eq!(check_manifest(&manifest()), Ok(()));

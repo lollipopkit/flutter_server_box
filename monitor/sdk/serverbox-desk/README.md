@@ -2,7 +2,9 @@
 
 The client an installed desk app uses, from inside its sandboxed frame, to
 reach the ServerBox monitor's desk. The design, the permissions and the
-message protocol: `docs/dev/desk-sys.md`. A starting point: `../template`.
+message protocol: [Developing Desk Apps](https://serverbox.lollipopkit.com/docs/development/desk-apps/)
+and [`docs/dev/desk-sys.md`](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md).
+A starting point: [`monitor/sdk/template`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/sdk/template).
 
 ```sh
 npm install serverbox-desk
@@ -21,7 +23,7 @@ await desk.storage.set('count', count + 1)
 Once `connect()` resolves, the page is in the desk's design system: the desk
 serves its stylesheet (`/desk-app/desk.css`) and keeps the page in its mode
 and theme, so the app writes markup with its classes and tokens and carries
-none of it (`docs/dev/desk-sys.md`, "UI"):
+none of it ([`docs/dev/desk-sys.md`, "UI"](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md#ui-third-party-apps)):
 
 ```html
 <body>

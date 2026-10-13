@@ -6,6 +6,7 @@
 
   import { AppIcon, Badge, Button, Group, Row } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
+  import { permissionText as describePermission } from './permissions'
   import { api, ApiError } from '../../../lib/api'
   import type { InstalledApp } from '../../../types'
   import type { IconTone } from '../../lk/AppIcon.svelte'
@@ -41,11 +42,7 @@
     return typeof t === 'string' ? t : (t.en ?? app.id)
   }
 
-  function permissionText(p: string): string {
-    if (p === 'notifications') return $LL.settingsPermNotifications()
-    if (p === 'background') return $LL.settingsPermBackground()
-    return p
-  }
+  const permissionText = (p: string) => describePermission($LL, p)
 
   function refusal(e: unknown): string {
     if (e instanceof ApiError) {

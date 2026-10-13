@@ -1,5 +1,6 @@
 {
-  "id": "example_hello",
+  "publisher": "example",
+  "name": "hello",
   "version": "1.0.0",
   "api": 1,
   "kind": "web",
