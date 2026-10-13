@@ -277,11 +277,27 @@ class _AskAiPanel extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'SSH Agent',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'SSH Agent',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            // The conversation below draws no header of its
+                            // own, so this bar is where a running reply shows.
+                            AgentBusyBuilder(
+                              scope: scope,
+                              builder: (_, activity) =>
+                                  activity == AgentActivity.idle
+                                  ? UIs.placeholder
+                                  : Padding(
+                                      padding: const EdgeInsets.only(left: 9),
+                                      child: AgentActivityMark(activity),
+                                    ),
+                            ),
+                          ],
                         ),
                         Text(
                           serverName,
