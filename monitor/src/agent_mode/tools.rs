@@ -101,6 +101,10 @@ pub(super) fn check_answer(view: &PendingView, answer: &Answer) -> Result<(), &'
     if ok { Ok(()) } else { Err("invalidAction") }
 }
 
+pub(super) fn pending_view(kind: &'static str, call: &ToolCall, title: String) -> PendingView {
+    pending(kind, call, title)
+}
+
 fn pending(kind: &'static str, call: &ToolCall, title: String) -> PendingView {
     PendingView {
         id: String::new(),
@@ -124,7 +128,7 @@ fn str_arg(args: &Value, key: &str) -> String {
 }
 
 /// The account behind [flow] may still run commands here.
-async fn may_run(state: &AppState, flow: &Flow) -> Result<(), String> {
+pub(super) async fn may_run(state: &AppState, flow: &Flow) -> Result<(), String> {
     let caller = authz::caller_named(state, &flow.username).await.ok_or("the account is gone")?;
     caller
         .check(Grant::Shell, state, flow.secure())
@@ -398,7 +402,7 @@ impl RunCommand {
     }
 }
 
-async fn record(state: &AppState, username: &str, detail: &str, outcome: Outcome) {
+pub(super) async fn record(state: &AppState, username: &str, detail: &str, outcome: Outcome) {
     Event::new(Kind::Agent, if matches!(outcome, Outcome::Ok) { Action::Open } else { Action::Denied }, outcome)
         .subject(username)
         .detail(detail.to_string())
@@ -408,7 +412,7 @@ async fn record(state: &AppState, username: &str, detail: &str, outcome: Outcome
 
 /// The auto mode judge on [subject] (a command, or a plan's steps); `None`
 /// when it gave no verdict.
-async fn judge(state: &AppState, flow: &Arc<Flow>, subject: &str, title: &str, claimed: &str, sudo: bool, auto: &AutoMode) -> Option<Judgment> {
+pub(super) async fn judge(state: &AppState, flow: &Arc<Flow>, subject: &str, title: &str, claimed: &str, sudo: bool, auto: &AutoMode) -> Option<Judgment> {
     let hub = &state.agent;
     let model = super::config::load(&state.db).await.ok()?.model?;
     let rt = hub.runtime().await.ok()?;

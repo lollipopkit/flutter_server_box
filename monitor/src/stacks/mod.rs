@@ -12,6 +12,11 @@
 //! The generated secrets (a database password) live in the env file alone
 //! (0600, a protected file for the file API). Removing a stack without its
 //! data keeps that file, so deploying again finds its database.
+//!
+//! Every app may also use the shared folder (`{shared}`, `[stacks]
+//! shared_dir`): downloads, media and books one app writes and another
+//! serves. Apps run as its owner (`SBM_UID`/`SBM_GID`), so what one writes
+//! the others can read.
 
 pub mod builtin;
 pub mod catalog;
@@ -45,11 +50,15 @@ const APPS_PORT: u16 = 3779;
 const ENV_FILE: &str = ".env";
 /// Under the stacks' directory; never an app id (they start with a letter).
 const CATALOG_DIR: &str = ".catalog";
+/// The shared folder of a temporary stacks directory; never an app id.
+const SHARED_TEMP: &str = ".shared";
 
 static TEMP: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 pub struct Stacks {
     root: PathBuf,
+    /// The folder every app shares (`{shared}`).
+    shared: PathBuf,
     /// Removed with this value: the directory made for an in-memory database.
     owned: bool,
     /// The latest job of each app.
@@ -86,8 +95,9 @@ fn refusal(status: u16, error: &'static str) -> Refusal {
 impl Stacks {
     /// Stacks in `stacks/` beside the database file [db_file], or in a
     /// directory of their own for an in-memory database; apps from the
-    /// catalog and the operator's [local_apps] folder.
-    pub fn new(db_file: Option<&Path>, local_apps: Option<&Path>) -> Self {
+    /// catalog and the operator's [local_apps] folder; [shared] is the
+    /// folder every app shares, `shared/` beside the database when absent.
+    pub fn new(db_file: Option<&Path>, local_apps: Option<&Path>, shared: Option<&Path>) -> Self {
         let (root, owned) = match db_file {
             // Absolute, whatever the database URL said: the paths go into an
             // env file Compose reads from the stack's own directory.
@@ -98,7 +108,20 @@ impl Stacks {
             }
         };
         let catalog = catalog::Catalog::new(root.join(CATALOG_DIR), local_apps);
-        Self { root, owned, jobs: Mutex::default(), catalog, health: Mutex::default(), proxies: proxy::Proxies::default() }
+        let shared = match shared {
+            Some(dir) => std::path::absolute(dir).unwrap_or_else(|_| dir.to_path_buf()),
+            None if owned => root.join(SHARED_TEMP),
+            None => root.parent().unwrap_or(&root).join("shared"),
+        };
+        Self {
+            root,
+            shared,
+            owned,
+            jobs: Mutex::default(),
+            catalog,
+            health: Mutex::default(),
+            proxies: proxy::Proxies::default(),
+        }
     }
 
     pub fn dir_beside(db: &Path) -> PathBuf {
@@ -115,6 +138,11 @@ impl Stacks {
 
     pub fn dir(&self, id: &str) -> PathBuf {
         self.root.join(id)
+    }
+
+    /// The folder every app shares (`{shared}`).
+    pub fn shared(&self) -> &Path {
+        &self.shared
     }
 
     pub fn package(&self, id: &str) -> Option<Arc<Package>> {
@@ -150,6 +178,7 @@ fn compose(runtime: ContainerType, id: &str, dir: &Path, package: &Package) -> S
         dir: dir.to_string_lossy().into_owned(),
         files: package.manifest.compose.files.clone(),
         env_file: ENV_FILE.into(),
+        builds: package.builds(),
     }
 }
 
@@ -207,7 +236,42 @@ pub async fn machine(state: &AppState, id: &str) -> Machine {
     let seen = gpus_seen(state).await;
     let gpus = container_gpus(state, runtime, &seen, wsl).await;
     let ports = ports::Ports::read(state, runtime, project(id)).await;
-    Machine { stack: state.stacks.dir(id), gpus, wsl, ports: Some(ports) }
+    Machine { stack: state.stacks.dir(id), shared: state.stacks.shared().to_path_buf(), gpus, wsl, ports: Some(ports) }
+}
+
+/// What the agent writes for every app ([`manifest::RESERVED`]): the shared
+/// folder's owner, made first when it is not there, the host's time zone, and
+/// the GPU render node's group.
+async fn host_env(shared: &Path) -> std::io::Result<manifest::HostEnv> {
+    tokio::fs::create_dir_all(shared).await?;
+    let meta = tokio::fs::metadata(shared).await?;
+    #[cfg(unix)]
+    let (uid, gid, render_gid) = {
+        use std::os::unix::fs::MetadataExt;
+        let render = tokio::fs::metadata("/dev/dri/renderD128").await.map(|m| m.gid());
+        (meta.uid(), meta.gid(), render.unwrap_or(meta.gid()))
+    };
+    #[cfg(not(unix))]
+    let (uid, gid, render_gid) = {
+        let _ = meta;
+        (0, 0, 0)
+    };
+    Ok(manifest::HostEnv { uid, gid, tz: time_zone(), render_gid })
+}
+
+/// The host's IANA time zone: `/etc/timezone`, else where `/etc/localtime`
+/// points; UTC when neither says.
+fn time_zone() -> String {
+    let named = std::fs::read_to_string("/etc/timezone").ok().map(|t| t.trim().to_string()).or_else(|| {
+        let link = std::fs::read_link("/etc/localtime").ok()?;
+        let link = link.to_string_lossy();
+        link.split_once("zoneinfo/").map(|(_, zone)| zone.to_string())
+    });
+    named.filter(|z| time_zone_ok(z)).unwrap_or_else(|| "UTC".into())
+}
+
+fn time_zone_ok(zone: &str) -> bool {
+    (1..=64).contains(&zone.len()) && zone.chars().all(|c| c.is_ascii_alphanumeric() || "/_+-".contains(c))
 }
 
 /// [given] completed and checked for [machine], its ports settled
@@ -259,6 +323,11 @@ async fn write_files(state: &AppState, id: &str, package: &Package, settings: &B
     for (name, text) in &package.files {
         tokio::fs::write(dir.join(name), text).await.map_err(failed)?;
     }
+    if package.builds() {
+        // The build's context is this folder: nothing of it, the env file
+        // least of all, goes to the builder; the Dockerfile is sent apart.
+        tokio::fs::write(dir.join(".dockerignore"), "*\n").await.map_err(failed)?;
+    }
     let env_path = dir.join(ENV_FILE);
     let earlier = tokio::fs::read_to_string(&env_path).await.unwrap_or_default();
     let names: Vec<&str> = package.manifest.secrets.iter().map(|s| s.env.as_str()).collect();
@@ -272,7 +341,11 @@ async fn write_files(state: &AppState, id: &str, package: &Package, settings: &B
             secrets.insert(s.env.clone(), value);
         }
     }
-    let env = package.manifest.env_file(settings, &secrets);
+    let host = host_env(state.stacks.shared()).await.map_err(|e| {
+        tracing::error!("stack {id}: the shared folder {}: {e}", state.stacks.shared().display());
+        refusal(500, "sharedUnavailable")
+    })?;
+    let env = package.manifest.env_file(settings, &secrets, &host);
     // Created 0600 before the secrets go in.
     tokio::fs::write(&env_path, "").await.map_err(failed)?;
     set_mode(&env_path, 0o600).await;
@@ -298,6 +371,88 @@ async fn set_mode(path: &Path, mode: u32) {
     let _ = (path, mode);
 }
 
+/// What Agent mode is told of the web apps deployed here: each one's name,
+/// state, address and the exact Compose command for it, and the shared
+/// folder. None when there are none.
+pub async fn agent_note(state: &AppState) -> Option<String> {
+    let rows = store::all(&state.db).await.ok()?;
+    if rows.is_empty() {
+        return None;
+    }
+    let runtime = crate::api::containers::detect_runtime(&state.remote_access.exec).await;
+    let mut out = String::from(
+        "Web apps deployed here through the panel (Docker Compose). Installing, updating, changing settings and removing \
+belong to the panel's App Store; for the rest (logs, restarts, configuration inside the app, its API) use the app's own \
+Compose command below, never another project name. Each app's `.env` holds generated passwords: never print them.\n",
+    );
+    for row in &rows {
+        let Some(package) = state.stacks.package(&row.id) else { continue };
+        let m = &package.manifest;
+        let title = m.title.get("en").cloned().unwrap_or_else(|| m.project.clone());
+        let health = match state.stacks.health(&row.id).map(|h| h.state) {
+            Some(health::State::Healthy) => "healthy",
+            Some(health::State::Starting) => "starting",
+            Some(health::State::Unhealthy) => "unhealthy",
+            Some(health::State::Down) => "down",
+            Some(health::State::Stopped) => "stopped by an admin",
+            None => "not checked yet",
+        };
+        let mut line = format!("- {title} (`{}`, {} {}): {}, {health}", m.id, m.project, row.version, row.state);
+        if let Some(port) = m.web_port(&row.settings) {
+            line.push_str(&format!("; web UI at http://127.0.0.1:{port}{}", m.web.path));
+        }
+        if let Some(rt) = runtime {
+            let stack = compose(rt, &row.id, &state.stacks.dir(&row.id), &package);
+            line.push_str(&format!("; status: `{}`", stack.ps()));
+        }
+        let data = m.data_paths(&row.settings);
+        if !data.is_empty() {
+            let data: Vec<String> = data.iter().map(|p| p.display().to_string()).collect();
+            line.push_str(&format!("; data in {}", data.join(", ")));
+        }
+        out.push_str(&line);
+        out.push('\n');
+    }
+    out.push_str(&format!(
+        "The folder apps share (downloads, media/movies, media/tv, music, books, comics, documents) is {}.",
+        state.stacks.shared().display()
+    ));
+    Some(out)
+}
+
+/// How the admin signs in to deployed app [id] the first time: the
+/// manifest's `[login]`, with the password read from the stack's env file.
+pub async fn login(state: &AppState, username: &str, id: &str) -> Result<Value, Refusal> {
+    let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
+    let Some(login) = package.manifest.login.clone() else { return Err(refusal(404, "noLogin")) };
+    if store::load(&state.db, id).await.map_err(db_failed)?.is_none() {
+        return Err(refusal(409, "notDeployed"));
+    }
+    let password = match &login.password {
+        Some(env) => {
+            let text = tokio::fs::read_to_string(state.stacks.dir(id).join(ENV_FILE)).await.unwrap_or_default();
+            Some(read_env(&text, &[env.as_str()]).remove(env).ok_or_else(|| refusal(409, "noSecret"))?)
+        }
+        None => None,
+    };
+    audit(state, username, Action::Reveal, Outcome::Ok, format!("login of {id}")).await;
+    Ok(serde_json::json!({ "user": login.user, "password": password, "note": login.note }))
+}
+
+/// `Authorization` for an app whose manifest asks the proxy to sign in
+/// (`[web] basic_auth`): `[login]`'s user and the password from its env file.
+async fn basic_auth(state: &AppState, id: &str, package: &Package) -> Option<hyper::header::HeaderValue> {
+    use base64::Engine;
+    let login = package.manifest.login.as_ref().filter(|_| package.manifest.web.basic_auth)?;
+    let (user, env) = (login.user.as_deref()?, login.password.as_deref()?);
+    let text = tokio::fs::read_to_string(state.stacks.dir(id).join(ENV_FILE)).await.ok()?;
+    let password = read_env(&text, &[env]).remove(env)?;
+    let token = base64::engine::general_purpose::STANDARD.encode(format!("{user}:{password}"));
+    let mut value = hyper::header::HeaderValue::from_str(&format!("Basic {token}")).ok()?;
+    value.set_sensitive(true);
+    Some(value)
+}
+
 /// The values of [names] in an env file the agent wrote (`NAME='value'`).
 fn read_env(text: &str, names: &[&str]) -> BTreeMap<String, String> {
     text.lines()
@@ -311,7 +466,7 @@ fn read_env(text: &str, names: &[&str]) -> BTreeMap<String, String> {
 /// included), free now.
 async fn proxy_port(state: &AppState) -> Result<u16, Refusal> {
     let taken: Vec<u16> = store::all(&state.db).await.map_err(db_failed)?.iter().map(|r| r.proxy_port).collect();
-    PROXY_PORTS.clone().find(|p| !taken.contains(p) && ports::bindable(*p)).ok_or_else(|| refusal(409, "noProxyPort"))
+    PROXY_PORTS.clone().find(|p| !taken.contains(p) && ports::bindable(*p, ports::PortProtocol::Tcp)).ok_or_else(|| refusal(409, "noProxyPort"))
 }
 
 fn db_failed(e: sqlx::Error) -> Refusal {
@@ -336,12 +491,14 @@ pub async fn start_proxy(state: &Arc<AppState>, row: &StackRow) {
         },
         None => None,
     };
+    let authorization = basic_auth(state, &row.id, &package).await;
     let target = |port: u16| proxy::Target {
         stack: row.id.clone(),
         listen: SocketAddr::new(host, port),
         upstream_port,
         tls: tls.clone(),
         frame_origins: server.cors_allowed_origins.clone(),
+        authorization: authorization.clone(),
     };
     let e = match state.stacks.proxies.start(state.clone(), target(row.proxy_port)).await {
         Ok(()) => return,
@@ -432,11 +589,14 @@ pub struct Consent {
 }
 
 /// What deploying [given] settings would do, for the confirmation: the
-/// settings completed, the images pulled, the folders written, the port.
+/// settings completed, the images pulled and built, the folders written, the
+/// port.
 #[derive(Debug, Clone, Serialize)]
 pub struct Preview {
     pub settings: BTreeMap<String, Value>,
     pub images: Vec<String>,
+    /// Images built on the machine from the package's Dockerfiles.
+    pub built: Vec<String>,
     pub data_paths: Vec<PathBuf>,
     pub port: Option<u16>,
     /// Ports suggested in the dialog that are in use now, and where they
@@ -454,6 +614,7 @@ pub async fn preview(state: &AppState, id: &str, given: &BTreeMap<String, Value>
     let (settings, moved) = settings_for(package, given, &machine, !installed)?;
     Ok(Preview {
         images: package.images(&settings),
+        built: package.built(&settings),
         data_paths: package.manifest.data_paths(&settings),
         port: package.manifest.web_port(&settings),
         moved,
@@ -524,7 +685,7 @@ pub async fn install(
     let stack = compose(runtime, id, &state.stacks.dir(id), package);
     let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
     tokio::spawn(async move {
-        let result = job2.run_steps(&[stack.pull(), stack.up()]).await;
+        let result = job2.run_steps(&stack.deploy()).await;
         let error = result.as_ref().err().map(String::as_str);
         if let Err(e) = store::finish(&state.db, &id, error).await {
             tracing::error!("stack {id}: {e}");
@@ -610,7 +771,7 @@ pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackA
 }
 
 /// Writes [id]'s files again from this agent's catalog with [given]
-/// settings, pulls its images and recreates its containers: an update
+/// settings, pulls (and builds) its images and recreates its containers: an update
 /// ([`JobKind::Update`], the settings it has) or new settings
 /// ([`JobKind::Reconfigure`]). Its ports are checked first, never moved.
 async fn redeploy(
@@ -634,7 +795,7 @@ async fn redeploy(
     let stack = compose(runtime, id, &state.stacks.dir(id), package);
     let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
     tokio::spawn(async move {
-        let result = job2.run_steps(&[stack.pull(), stack.up()]).await;
+        let result = job2.run_steps(&stack.deploy()).await;
         let _ = store::finish(&state.db, &id, result.as_ref().err().map(String::as_str)).await;
         if result.is_ok() {
             let _ = store::set_stopped(&state.db, &id, false).await;

@@ -54,6 +54,12 @@ pub struct StacksConfig {
     /// one of the operator's own. Read at start.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub local_apps: Option<String>,
+    /// The folder every app shares (`{shared}` in a manifest): downloads,
+    /// media, books, so a downloader's files are a media server's library.
+    /// `shared/` beside the database when absent. Apps run as its owner
+    /// (`SBM_UID`/`SBM_GID`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shared_dir: Option<String>,
     /// Apps' windows by host rather than by port: `https://*.apps.example.com`
     /// (`stacks::proxy::Hosts`), for an agent behind a reverse proxy or a
     /// tunnel that sends that wildcard to [Self::apps_port].

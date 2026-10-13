@@ -257,6 +257,7 @@ code = 200
 # serverbox-webapp skill writes them). Read at start.
 # [stacks]
 # local_apps = "/srv/sbm-apps"
+# shared_dir = "/srv/media"
 # Behind a reverse proxy or a tunnel the apps' own ports (3780-3799) are not
 # reachable: send a wildcard host to one more listener instead, and each app
 # is <publisher>-<name>.<that domain> (futo-immich.apps.example.com). TLS may

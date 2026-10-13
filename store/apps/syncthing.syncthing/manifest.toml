@@ -1,0 +1,103 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Syncthing, deployed with the official Docker image and compose file beside this one.
+
+schema = 1
+publisher = "syncthing"
+name = "syncthing"
+project = "Syncthing"
+developer = "The Syncthing Project"
+version = "v2.1.6"
+homepage = "https://syncthing.net"
+source = "https://github.com/syncthing/syncthing/tree/v2.1.6"
+glyph = "sync"
+tone = "sky"
+categories = ["files", "network"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Syncthing"
+
+[description]
+en = "Synchronize folders between devices with Syncthing. The GUI and sync ports are published separately; the sync port uses both TCP and UDP, and LAN discovery uses UDP."
+zh = "使用 Syncthing 在设备间同步文件夹。管理界面和同步端口分别发布；同步端口使用 TCP 和 UDP，局域网发现使用 UDP。"
+zh-TW = "使用 Syncthing 在裝置間同步資料夾。管理介面與同步連接埠分別發布；同步連接埠使用 TCP 與 UDP，區域網路探索使用 UDP。"
+
+[license]
+spdx = "MPL-2.0"
+url = "https://github.com/syncthing/syncthing/blob/v2.1.6/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-config"]
+
+[web]
+port = "web"
+path = "/"
+
+[login]
+user = "admin"
+password = "GUI_PASSWORD"
+note = { en = "The GUI user and password are generated into Syncthing's config on first deployment. The GUI password can be changed in Syncthing later; the saved secret is only used to seed a new config.", zh = "首次部署时会将管理界面用户名和密码写入 Syncthing 配置。之后可在 Syncthing 中修改密码；已保存的密钥仅用于初始化新配置。", zh-TW = "首次部署時會將管理介面使用者名稱與密碼寫入 Syncthing 設定。之後可在 Syncthing 中修改密碼；已儲存的密鑰僅用於初始化新設定。" }
+
+[env]
+SYNCTHING_VERSION = "2.1.6"
+
+[[secrets]]
+env = "GUI_PASSWORD"
+length = 32
+
+[[settings]]
+key = "data"
+type = "path"
+env = "SYNCTHING_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data and sync folders", zh = "数据和同步文件夹", zh-TW = "資料與同步資料夾" }
+help = { en = "Syncthing stores its configuration and database here. Its default Sync folder is created inside this directory.", zh = "Syncthing 会在此处保存配置和数据库。默认的 Sync 文件夹也会创建在此目录中。", zh-TW = "Syncthing 會在此處儲存設定與資料庫。預設的 Sync 資料夾也會建立於此目錄中。" }
+
+[[settings]]
+key = "shared"
+type = "path"
+env = "SYNCTHING_SHARED"
+default = "{shared}"
+label = { en = "Shared folder", zh = "共享文件夹", zh-TW = "共用資料夾" }
+help = { en = "The folder the other apps share (downloads, media, books), at /var/syncthing/shared: add folders from it to sync them to other devices.", zh = "其他应用共用的文件夹（下载、媒体、图书），位于 /var/syncthing/shared：从中添加文件夹即可同步到其他设备。", zh-TW = "其他應用共用的資料夾（下載、媒體、書籍），位於 /var/syncthing/shared：從中新增資料夾即可同步到其他裝置。" }
+
+[[settings]]
+key = "web"
+type = "port"
+env = "SYNCTHING_WEB_PORT"
+default = 8384
+label = { en = "Web GUI port", zh = "Web 管理界面端口", zh-TW = "Web 管理介面連接埠" }
+
+[[settings]]
+key = "expose_web"
+type = "bool"
+default = false
+label = { en = "Web GUI reachable from the network", zh = "允许从网络访问 Web 管理界面", zh-TW = "允許從網路存取 Web 管理介面" }
+help = { en = "Off: only through the desk. On: bind the GUI to all host interfaces.", zh = "关闭时只能通过桌面访问；开启时管理界面会绑定到主机的所有网络接口。", zh-TW = "關閉時只能透過桌面存取；開啟時管理介面會繫結至主機的所有網路介面。" }
+on = { SYNCTHING_WEB_BIND = "0.0.0.0" }
+off = { SYNCTHING_WEB_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "sync"
+type = "port"
+env = "SYNCTHING_SYNC_PORT"
+default = 22000
+protocol = "both"
+label = { en = "Sync port (TCP and UDP)", zh = "同步端口（TCP 和 UDP）", zh-TW = "同步連接埠（TCP 與 UDP）" }
+help = { en = "TCP and QUIC sync traffic from other devices. The matching container listen address is seeded on first deployment.", zh = "供其他设备使用 TCP 和 QUIC 同步数据。首次部署时会写入对应的容器监听地址。", zh-TW = "供其他裝置使用 TCP 與 QUIC 同步資料。首次部署時會寫入對應的容器監聽位址。" }
+
+[[settings]]
+key = "discovery"
+type = "port"
+env = "SYNCTHING_DISCOVERY_PORT"
+default = 21027
+protocol = "udp"
+label = { en = "LAN discovery port (UDP)", zh = "局域网发现端口（UDP）", zh-TW = "區域網路探索連接埠（UDP）" }
+help = { en = "IPv4 broadcast and IPv6 multicast discovery. The matching container setting is seeded on first deployment.", zh = "用于 IPv4 广播和 IPv6 多播发现。首次部署时会写入对应的容器设置。", zh-TW = "用於 IPv4 廣播與 IPv6 多點傳送探索。首次部署時會寫入對應的容器設定。" }

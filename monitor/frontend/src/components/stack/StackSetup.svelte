@@ -198,6 +198,9 @@
               oninput={(e: Event) => setValue(s, (e.currentTarget as HTMLInputElement).value)}
             />
           {/if}
+          {#if s.type === 'port' && s.protocol && s.protocol !== 'tcp'}
+            <p class="text-[12px] text-(--text-tertiary)">{s.protocol === 'udp' ? $LL.stackPortUdp() : $LL.stackPortBoth()}</p>
+          {/if}
           {#if s.help}<p class="text-[12px] text-(--text-tertiary)">{tr(s.help)}</p>{/if}
           {#if s.type === 'port' && prepare.ports_partial}<p class="text-[12px] text-(--text-tertiary)">{$LL.stackPortsPartial()}</p>{/if}
           {#if movedData.some((d) => d.key === s.key)}<p class="text-[12px] text-(--color-warning)">{$LL.stackDataNotMoved()}</p>{/if}

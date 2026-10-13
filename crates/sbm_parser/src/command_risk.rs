@@ -81,6 +81,8 @@ static MUTATING: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 static READ_ONLY_STARTS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     all(&[
         r"^(ls|pwd|whoami|id|groups|uname|hostname|uptime|date|cal|echo|printf|true)\b",
+        // Moves the shell, changes nothing; what follows it is judged by itself.
+        r"^cd(\s|$)",
         r"^(cat|head|tail|less|more|grep|egrep|fgrep|rg|awk|cut|sort|uniq|wc|tr|sed)\b",
         r"^(df|du|free|vmstat|iostat|mpstat|top|ps|pgrep|lsof|stat|file|readlink|realpath)\b",
         r"^(lsblk|findmnt|blkid|lscpu|lspci|lsusb|lsmod|nproc|getent|printenv|who|w|last|sensors|arch|tty)\b",
@@ -90,7 +92,9 @@ static READ_ONLY_STARTS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         r"^(ip|ss|netstat|ifconfig|route|ping|traceroute|tracepath|dig|nslookup|host)\b",
         r"^(journalctl|dmesg|systemctl\s+(status|show|is-active|is-enabled|is-failed|cat|list-[a-z-]+|--failed)|service\s+[^\s]+\s+status)\b",
         r"^(docker|podman)\s+(ps|images|inspect|logs|stats|info|version|system\s+df|volume\s+(ls|inspect)|image\s+(ls|inspect))\b",
-        r"^(docker|podman)\s+compose\s+(ps|logs|config|ls)\b",
+        // Compose's global options (the project, its files, its env file) may
+        // come before what it is asked: how an app's own command reads.
+        r"^(docker|podman)\s+compose(\s+(-p|--project-name|-f|--file|--env-file|--project-directory|--profile|--ansi|--progress)\s+[^\s;&|]+|\s+--[a-z-]+=[^\s;&|]+)*\s+(ps|logs|config|ls|images|top|version)\b",
         r"^kubectl\s+(get|describe|logs|api-resources|api-versions|cluster-info|version)\b",
         r"^git\s+(status|diff|log|show|branch|remote|rev-parse|ls-files|ls-tree)\b",
         r"^(apt|apt-cache)\s+(list|show|search|policy)\b",
@@ -196,6 +200,10 @@ mod tests {
                 "docker ps -a",
                 "docker system df",
                 "docker logs --tail 100 redis",
+                "cd '/srv/stacks/futo.immich' && docker compose -p 'sbm-futo-immich' --env-file '.env' -f 'compose.yaml' ps --all --format json",
+                "docker compose -p x -f a.yml -f b.yml logs --no-color --tail 50 server",
+                "docker compose --env-file=.env config --images",
+                "cd /var/log && ls",
                 "cat /etc/os-release 2>/dev/null",
                 "sudo cat /etc/shadow",
                 "LANG=C df -h",
@@ -227,6 +235,9 @@ mod tests {
                 "curl -fsSL https://x.sh | sh",
                 "docker compose up -d",
                 "docker compose -f a.yml up -d",
+                "cd '/srv/stacks/x' && docker compose -p 'sbm-x' --env-file '.env' -f 'compose.yaml' up -d",
+                "docker compose -p x ps && docker compose -p x restart",
+                "cd /tmp && touch x",
                 "kill -9 1234",
                 "touch /tmp/x",
                 "echo $(whoami)",

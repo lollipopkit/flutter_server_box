@@ -24,6 +24,8 @@
 //!   its data.
 //! - `GET /stacks/{id}/job?since=<seq>` (admin), `POST /stacks/{id}/job/cancel`.
 //! - `GET /stacks/{id}/services` (admin): its containers.
+//! - `POST /stacks/{id}/login` (admin, password): how to sign in to the
+//!   deployed app the first time (`[login]`), its password included.
 //! - `POST /stacks/{id}/enter` (any account): a ticket for the app's proxy
 //!   (`url` when apps are taken by host, `[stacks] apps_url`)
 //!   (`stacks::proxy`), and its port.
@@ -287,6 +289,27 @@ pub async fn cancel(
             Ok(HttpResponse::NoContent().finish())
         }
         None => Ok(not_found()),
+    }
+}
+
+#[derive(Deserialize, Default)]
+pub struct LoginBody {
+    current_password: Option<String>,
+}
+
+/// The deployed app's first sign-in: a password, so the account's own again.
+pub async fn login(
+    req: HttpRequest,
+    id: web::types::Path<String>,
+    body: Option<web::types::Json<LoginBody>>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    let body = body.map(|b| b.into_inner()).unwrap_or_default();
+    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
+    match stacks::login(&state, &caller.username, &id).await {
+        Ok(login) => Ok(HttpResponse::Ok().json(&login)),
+        Err(r) => Ok(refused(r)),
     }
 }
 

@@ -9,7 +9,9 @@
 //!   while it writes may not open), and started again whatever happens.
 //! - System folders of the host bound into a container (`/etc`, `/`) are
 //!   never archived nor written back; a bound file is not a folder and is
-//!   left out too. Both are listed in the backup as skipped.
+//!   left out too; nor is the folder web apps share (`stacks::Stacks::shared`,
+//!   downloads and media libraries of every app, none's data alone). All
+//!   are listed in the backup as skipped.
 //! - One backup or restore at a time; a [`Job`], as a web app's deploy is.
 //! - The directory is the agent's own state (`fs_roots::Protected`): it
 //!   holds databases.
@@ -73,7 +75,8 @@ pub struct Archive {
 pub struct Skipped {
     pub container: String,
     pub mount: Mount,
-    /// `system` (a system folder of the host) | `notFolder` (a bound file).
+    /// `system` (a system folder of the host) | `notFolder` (a bound file) |
+    /// `shared` (in the folder web apps share).
     pub why: String,
 }
 
@@ -322,6 +325,8 @@ pub async fn back_up(
                 Some("system")
             } else if matches!(m, Mount::Bind { source, .. } if !Path::new(source).is_dir()) {
                 Some("notFolder")
+            } else if matches!(m, Mount::Bind { source, .. } if Path::new(source).starts_with(state.stacks.shared())) {
+                Some("shared")
             } else {
                 None
             };

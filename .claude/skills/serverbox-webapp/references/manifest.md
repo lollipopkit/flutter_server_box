@@ -11,6 +11,7 @@ store/apps/<publisher>.<name>/
   manifest.toml        required
   compose.yaml         the compose files `[compose] files` names
   hwaccel.yml …        any other file a compose file uses (`extends`)
+  app.Dockerfile       a Dockerfile a service is built from (`build:`)
 ```
 
 Plain files only (no folders, no links), names `[A-Za-z0-9][A-Za-z0-9._-]*`,
@@ -38,7 +39,7 @@ own (`serverbox.*`) and desk packages too.
 | `tone` | enum | `berry soft ink sky teal violet amber leaf pale bright mist` |
 | `categories` | enum[] | `photos media files documents productivity development ai home network monitoring security tools` |
 | `notices` | enum[] | What the deploy dialog points out, below |
-| `title`, `description` | text | Translations by locale (`en` required; `zh`, `zh-TW`, …). `title` names the window |
+| `title`, `description` | text | Translations by locale (`en` required; `zh`, `zh-TW`, …). `title` names the window: the project's own name (`Immich`), `en` only |
 
 ### What the admin confirms
 
@@ -58,6 +59,7 @@ compose files do:
 | Notice | When |
 |---|---|
 | `pullsImages` | Always, for images from a registry |
+| `buildsImages` | A service is built from a Dockerfile in the package (`build:`); required then |
 | `bindsPaths` | A bind mount of a setting's path |
 | `mountsHostFiles` | A bind mount of a host file or directory (`/etc/localtime`, `/usr/lib/wsl`) |
 | `gpuDevices` | Devices or GPU reservations (`/dev/dri`, `driver: nvidia`) |
@@ -92,12 +94,61 @@ admin when one stops; a job exited with 0 is done, not down. Give services a
 `healthcheck` where the image allows: the panel shows it as the app's
 health.
 
+### Building an image
+
+Only when no maintained image exists (upstream publishes none, or the one there
+is sits on an end-of-life base). A service then names a Dockerfile of the
+package and a `localhost/` image:
+
+```yaml
+  app:
+    image: localhost/<publisher>-<name>:${APP_VERSION}
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION}
+```
+
+- `build:` is a mapping naming `dockerfile:`, a file of the package;
+  `context` is `.` or left out. `additional_contexts` and `dockerfile_inline`
+  are refused.
+- The image is `localhost/…` exactly when it is built: the agent pulls every
+  other image (`pull --ignore-buildable`), then builds (`build --pull`, so an
+  update gets the base's fixes), then starts.
+- The context is the stack's folder, which holds the env file: the agent writes
+  a `.dockerignore` of `*` there, so nothing of it reaches the build. A file
+  the image needs goes inline (`COPY <<EOF /path`), and no package file may be
+  named `*.dockerignore`.
+- `notices` carries `buildsImages`. The deploy dialog lists the built images
+  apart, and the `FROM` images among those pulled.
+- The Dockerfile pins its base (`alpine:3.24`, the newest release), downloads
+  over HTTPS only, and checks every download against a SHA-256 written in the
+  Dockerfile.
+
 ## `[web]`
 
 | Field | Notes |
 |---|---|
 | `port` | The key of the `port` setting the window reaches (the agent connects to it on loopback) |
 | `path` | Where the window opens, default `/` |
+| `basic_auth` | `true` when the service asks for HTTP basic auth (Transmission): a browser cannot answer that inside the desk's frame, so the agent's proxy sends `[login]`'s `user` and `password` itself, server side. Needs both in `[login]`; a direct visit to the published port still asks |
+
+## `[login]`
+
+How the admin signs in the first time; the panel shows it in the app's
+details, the password only when the admin asks (and re-enters their own).
+
+| Field | Notes |
+|---|---|
+| `user` | Optional: the account the service is seeded with |
+| `password` | Optional: the env name of a `[[secrets]]` entry holding its password |
+| `note` | Optional text: anything else, such as "create the first account in the browser" |
+
+At least one field. Seed the admin from env or config where the service
+allows it, so the first sign-in needs no wizard; where it only makes its
+first account in the browser, leave out `user`/`password` and say so in
+`note`.
 
 ## The env file
 
@@ -110,6 +161,15 @@ name is set by exactly one of:
 - `[[secrets]]`: `env`, `length` (16–128, default 32). Generated once
   (alphanumeric), kept across updates, never shown in the panel.
 - `[[settings]]`: what the deploy dialog asks, below.
+
+The agent also writes, for every app (a manifest uses them and never sets
+them):
+
+| Name | Value |
+|---|---|
+| `SBM_UID`, `SBM_GID` | The owner of the shared folder (`{shared}`): run as them (`PUID`/`PGID`, or `user: "${SBM_UID}:${SBM_GID}"`), so what one app writes the others read |
+| `SBM_TZ` | The host's time zone (IANA name), for `TZ` |
+| `SBM_RENDER_GID` | The group of the GPU render node (`/dev/dri/renderD128`), `SBM_GID` without one: `group_add` it for a service that is not root and is given `/dev/dri` |
 
 Every variable a compose file needs (`${NAME}`, `$NAME`, `${NAME:?…}`) must be
 set; `${NAME:-default}` and `${NAME-default}` may stay unset. `$$` is a literal
@@ -126,15 +186,20 @@ Every setting has `key` (`^[a-z][a-z0-9_]{0,31}$`, unique), `type`, `label`
 | Field | Notes |
 |---|---|
 | `env` | Gets the absolute path |
-| `default` | Absolute, or `{stack}/…` (the stack's own directory) |
-| `data` | `true` when it holds the service's data: removed only when the admin asks |
+| `default` | Absolute, `{stack}/…` (the stack's own directory) or `{shared}/…` (the folder every app shares, `[stacks] shared_dir`) |
+| `data` | `true` when it holds the service's data: removed only when the admin asks. Never for `{shared}` |
+
+The shared folder's subfolders, so a downloader's files are a media
+server's library: `downloads`, `media/movies`, `media/tv`, `music`, `books`,
+`comics`, `documents`. Mount them `:ro` where the app only reads.
 
 ### `port`
 
 | Field | Notes |
 |---|---|
 | `env` | Gets the port number |
-| `default` | 1024–65535; the dialog offers the next free one when it is taken |
+| `default` | 1–65535; the dialog offers the next free one when it is taken |
+| `protocol` | `tcp` (default), `udp` or `both`: which the port is checked for. The window's port (`[web] port`) is TCP |
 
 Publish it as `'${BIND}:${PORT}:<container port>'` with a `bool` setting for
 `BIND`, so the default is loopback only (the window still reaches it).

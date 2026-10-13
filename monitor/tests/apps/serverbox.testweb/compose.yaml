@@ -1,5 +1,6 @@
-# nginx serving ${SITE_DIR}; /greeting.txt is the greeting setting, written
-# at every start. Status: nginx's stub_status on the second port.
+# nginx serving ${SITE_DIR}; /greeting.txt is the greeting setting and
+# /tz.txt the host's time zone, written at every start; /media is the shared
+# folder's media. Status: nginx's stub_status on the second port.
 services:
   web:
     image: docker.io/library/nginx:1.29-alpine
@@ -9,13 +10,16 @@ services:
       - '${STATUS_PORT}:8080'
     volumes:
       - '${SITE_DIR}:/usr/share/nginx/html'
+      - '${MEDIA_DIR}:/usr/share/nginx/html/media:ro'
     environment:
       GREETING: '${GREETING}'
+      TZ: '${SBM_TZ}'
     command:
       - sh
       - -c
       - |
         printf '%s\n' "$$GREETING" > /usr/share/nginx/html/greeting.txt
+        printf '%s\n' "$$TZ" > /usr/share/nginx/html/tz.txt
         printf 'server { listen 8080; location / { stub_status; } }\n' > /etc/nginx/conf.d/status.conf
         exec nginx -g 'daemon off;'
     healthcheck:

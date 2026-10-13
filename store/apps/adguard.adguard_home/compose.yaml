@@ -1,0 +1,62 @@
+# AdGuard Home v0.107.79 (GPL-3.0-only): https://github.com/AdguardTeam/AdGuardHome/tree/v0.107.79
+# Based on the official Docker image and volume/port documentation. Adjusted for ServerBox Monitor:
+# - the setup config is seeded once by seed-config with Caddy's pinned bcrypt hash command;
+# - no project/container name is fixed; the Monitor supplies the Compose project name;
+# - AdGuard Home has no bundled healthcheck; BusyBox wget from the Alpine base image asks the web server.
+
+services:
+  seed-config:
+    image: caddy:${CADDY_VERSION}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - ${ADGUARD_CONFIG}:/config
+      - ${ADGUARD_WORK}:/work
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        if [ ! -f /config/AdGuardHome.yaml ]; then
+          # One line on stdin: caddy reads the password up to its newline.
+          hash=$(printf '%s\n' "$${ADMIN_PASSWORD}" | caddy hash-password)
+          umask 077
+          printf '%s\n' \
+            'http:' \
+            '  address: 0.0.0.0:80' \
+            'users:' \
+            '  - name: admin' \
+            "    password: '$${hash}'" \
+            'dns:' \
+            '  bind_hosts:' \
+            '    - 0.0.0.0' \
+            '  port: 53' \
+            '  upstream_dns:' \
+            '    - https://dns.quad9.net/dns-query' \
+            '  bootstrap_dns:' \
+            '    - 9.9.9.9' \
+            '    - 149.112.112.112' \
+            'schema_version: 34' \
+            > /config/AdGuardHome.yaml
+        fi
+        mkdir -p /work
+    restart: "no"
+
+  adguard-home:
+    image: adguard/adguardhome:${ADGUARD_VERSION}
+    volumes:
+      - ${ADGUARD_CONFIG}:/opt/adguardhome/conf
+      - ${ADGUARD_WORK}:/opt/adguardhome/work
+    depends_on:
+      seed-config:
+        condition: service_completed_successfully
+    ports:
+      - '${ADGUARD_WEB_BIND}:${ADGUARD_WEB_PORT}:80'
+      - '${ADGUARD_DNS_PORT}:53/tcp'
+      - '${ADGUARD_DNS_PORT}:53/udp'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/login.html"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

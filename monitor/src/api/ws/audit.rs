@@ -107,6 +107,8 @@ pub enum Action {
     Connect,
     /// Something stored was replaced or removed.
     Write,
+    /// A secret was shown to the caller.
+    Reveal,
 }
 
 impl Action {
@@ -119,6 +121,7 @@ impl Action {
             Action::Denied => "denied",
             Action::Connect => "connect",
             Action::Write => "write",
+            Action::Reveal => "reveal",
         }
     }
 }

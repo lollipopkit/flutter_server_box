@@ -4,7 +4,8 @@ import { stackDeployed } from '../../../components/stack/apps'
 export default defineApp({
   publisher: 'serverbox',
   name: 'photos',
-  title: (ll) => ll.photos(),
+  // Its project's own name, in every language.
+  title: () => 'Immich',
   keywords: (ll) => [ll.photosKeywords()],
   glyph: 'photo_library',
   tone: 'sky',

@@ -13,6 +13,7 @@ use std::sync::Arc;
 
 use http_body_util::Full;
 use hyper::body::{Bytes, Incoming};
+use hyper::header::HeaderValue;
 use hyper::{Request, Response};
 use hyper_util::rt::TokioIo;
 use ntex::http::Method;
@@ -97,6 +98,7 @@ async fn setup_with(local_apps: Option<&str>, repos: HashMap<String, Vec<u8>>) -
                     .service(web::resource("/stacks/{id}/job").route(web::get().to(stacks::job)))
                     .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(stacks::cancel)))
                     .service(web::resource("/stacks/{id}/services").route(web::get().to(stacks::services)))
+                    .service(web::resource("/stacks/{id}/login").route(web::post().to(stacks::login)))
                     .service(web::resource("/stacks/{id}/enter").route(web::post().to(stacks::enter))),
             )
         }
@@ -188,7 +190,7 @@ async fn the_check_shows_what_deploying_would_do() {
     assert_eq!(body["data_paths"].as_array().unwrap().len(), 2);
     assert!(body["settings"]["library"].as_str().unwrap().ends_with("/futo.immich/library"));
     let (status, body) =
-        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 80 } }))).await;
+        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 0 } }))).await;
     assert_eq!((status, body["field"].as_str()), (400, Some("port")));
 }
 
@@ -219,6 +221,49 @@ async fn new_settings_need_the_password_and_a_deployed_app() {
     assert_ne!(status, 202);
     let (status, body) = call(&srv, "admin", Method::PUT, path, Some(json!({ "current_password": common::PASSWORD, "settings": {} }))).await;
     assert_eq!((status, body["error"].as_str()), (404, Some("notInstalled")));
+}
+
+#[ntex::test]
+async fn the_sign_in_needs_an_admin_the_password_and_a_deployed_app() {
+    let apps = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/apps");
+    let (srv, state) = setup_with(apps.to_str(), HashMap::new()).await;
+    let path = "/api/v1/stacks/serverbox.testweb/login";
+    let password = Some(json!({ "current_password": common::PASSWORD }));
+    let (status, _) = call(&srv, "watcher", Method::POST, path, password.clone()).await;
+    assert_eq!(status, 403);
+    let (status, _) = call(&srv, "admin", Method::POST, path, Some(json!({ "current_password": "wrong" }))).await;
+    assert_ne!(status, 200);
+    let (status, body) = call(&srv, "admin", Method::POST, path, password.clone()).await;
+    assert_eq!((status, body["error"].as_str()), (409, Some("notDeployed")), "{body}");
+    // An app without a sign-in has none to show.
+    let (status, body) = call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/login", password.clone()).await;
+    assert_eq!((status, body["error"].as_str()), (404, Some("noLogin")), "{body}");
+
+    // Deployed, as the agent leaves it: a row and the env file.
+    let row = server_box_monitor::stacks::store::StackRow {
+        id: "serverbox.testweb".into(),
+        version: "1.0.0".into(),
+        settings: Default::default(),
+        proxy_port: 3780,
+        state: "installed".into(),
+        license: "BSD-2-Clause".into(),
+        license_accepted_by: String::new(),
+        license_accepted_at: String::new(),
+        installed_by: "admin".into(),
+        installed_at: String::new(),
+        updated_at: String::new(),
+        last_error: None,
+        stopped: false,
+        update_noticed: None,
+    };
+    assert!(server_box_monitor::stacks::store::insert(&state.db, &row).await.unwrap());
+    let dir = state.stacks.dir("serverbox.testweb");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join(".env"), "WEB_PORT='18080'\nADMIN_PASSWORD='s3cretS3cret'\n").unwrap();
+    let (status, body) = call(&srv, "admin", Method::POST, path, password).await;
+    assert_eq!(status, 200, "{body}");
+    assert_eq!((body["user"].as_str(), body["password"].as_str()), (Some("admin"), Some("s3cretS3cret")));
+    assert_eq!(body["note"]["en"], "A test sign-in; nginx asks for none.");
 }
 
 #[ntex::test]
@@ -259,6 +304,7 @@ async fn fake_service() -> u16 {
                         "path": req.uri().path(),
                         "cookie": req.headers().get("cookie").map(|v| v.to_str().unwrap().to_string()),
                         "proto": req.headers().get("x-forwarded-proto").map(|v| v.to_str().unwrap().to_string()),
+                        "authorization": req.headers().get("authorization").map(|v| v.to_str().unwrap().to_string()),
                     });
                     Ok(Response::builder()
                         .header("x-frame-options", "DENY")
@@ -305,6 +351,7 @@ async fn the_proxy_admits_a_window_and_forwards_to_the_service() {
                 upstream_port,
                 tls: None,
                 frame_origins: vec!["https://panel.example".into()],
+                authorization: Some(HeaderValue::from_static("Basic YWRtaW46cHc=")),
             },
         )
         .await
@@ -341,6 +388,13 @@ async fn the_proxy_admits_a_window_and_forwards_to_the_service() {
     assert_eq!(body["path"], "/photos");
     assert_eq!(body["cookie"], "theirs=1");
     assert_eq!(body["proto"], "http");
+    // The service's basic auth answered by the proxy, unless the browser
+    // answers it itself.
+    assert_eq!(body["authorization"], "Basic YWRtaW46cHc=");
+    let own = format!("GET /photos HTTP/1.1\r\nHost: nas.local:3780\r\nCookie: {cookie}\r\nAuthorization: Basic b3duOm93bg==\r\nConnection: close\r\n\r\n");
+    let answer = raw(port, own).await;
+    let body: serde_json::Value = serde_json::from_str(answer.split("\r\n\r\n").nth(1).unwrap()).unwrap();
+    assert_eq!(body["authorization"], "Basic b3duOm93bg==");
 
     // An upgrade is spliced through.
     let mut stream = tokio::net::TcpStream::connect(("127.0.0.1", port)).await.unwrap();
@@ -379,6 +433,7 @@ async fn apps_taken_by_host_each_have_their_own() {
         upstream_port,
         tls: None,
         frame_origins: vec![],
+        authorization: None,
     };
     state.stacks.proxies.start(state.clone(), target).await.unwrap();
     let hosts = Hosts::parse("https://*.apps.test").unwrap();
@@ -410,6 +465,7 @@ async fn apps_taken_by_host_each_have_their_own() {
     assert!(answer.contains("svc=1; Path=/; SameSite=None; Secure; Partitioned"), "{answer}");
     let body: serde_json::Value = serde_json::from_str(answer.split("\r\n\r\n").nth(1).unwrap()).unwrap();
     assert_eq!(body["proto"], "https");
+    assert!(body["authorization"].is_null());
 
     // Another host, or none of this agent's apps: nothing.
     for host in ["acme-notes.apps.test", "futo-immich.apps.other", "apps.test", "a.futo-immich.apps.test"] {

@@ -1289,6 +1289,13 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ action }) },
       'Failed to change the app',
     ),
+  /// How to sign in to deployed app [id] the first time, its password read.
+  stackLogin: (id: string, currentPassword: string) =>
+    request<{ user?: string | null; password?: string | null; note?: Record<string, string> | null }>(
+      `/stacks/${encodeURIComponent(id)}/login`,
+      { method: 'POST', body: JSON.stringify({ current_password: currentPassword }) },
+      'Failed to read the sign-in',
+    ),
   removeStack: (id: string, purge: boolean, currentPassword: string) =>
     request<StackJob>(
       `/stacks/${encodeURIComponent(id)}`,

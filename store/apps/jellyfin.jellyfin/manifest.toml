@@ -1,0 +1,140 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Jellyfin, as the Monitor's Media app: deployed with Docker Compose from the
+# files beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "jellyfin"
+name = "jellyfin"
+project = "Jellyfin"
+developer = "Jellyfin project"
+version = "12.2"
+homepage = "https://jellyfin.org"
+source = "https://github.com/jellyfin/jellyfin/tree/v12.2"
+glyph = "play_circle"
+tone = "amber"
+categories = ["media"]
+notices = ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort"]
+
+[title]
+en = "Jellyfin"
+
+[description]
+en = "Stream your movies and music from Jellyfin, a free media server for browsers, TVs and phones."
+zh = "用 Jellyfin 串流播放电影和音乐，支持浏览器、电视和手机，免费开源。"
+zh-TW = "用 Jellyfin 串流播放電影和音樂，支援瀏覽器、電視和手機，免費開源。"
+
+[license]
+spdx = "GPL-2.0-only"
+url = "https://github.com/jellyfin/jellyfin/blob/v12.2/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+JELLYFIN_VERSION = "12.2.20261005-225228"
+
+[login]
+note = { en = "No account is seeded. The first visit opens the setup wizard, which creates the administrator account in the browser and asks for the libraries: add /media (movies and shows) and /music. Both are read-only.", zh = "不会预设账号。第一次打开时会进入设置向导，由你在浏览器中创建管理员账号，并添加媒体库：/media（电影和剧集）和 /music（音乐），两者均为只读。", zh-TW = "不會預設帳號。第一次開啟時會進入設定精靈，由你在瀏覽器中建立管理員帳號，並新增媒體庫：/media（電影和影集）和 /music（音樂），兩者皆為唯讀。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "JELLYFIN_CONFIG_LOCATION"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration", zh = "配置", zh-TW = "設定" }
+help = { en = "The database, users, settings and metadata.", zh = "数据库、用户、设置和元数据。", zh-TW = "資料庫、使用者、設定和中繼資料。" }
+
+[[settings]]
+key = "cache"
+type = "path"
+env = "JELLYFIN_CACHE_LOCATION"
+default = "{stack}/cache"
+label = { en = "Cache", zh = "缓存", zh-TW = "快取" }
+help = { en = "Transcoded segments and images. Can be a fast disk.", zh = "转码片段和图片。可以放在速度更快的磁盘上。", zh-TW = "轉碼片段和圖片。可以放在速度更快的磁碟上。" }
+
+[[settings]]
+key = "media"
+type = "path"
+env = "JELLYFIN_MEDIA_LOCATION"
+default = "{shared}/media"
+label = { en = "Movies and shows", zh = "电影和剧集", zh-TW = "電影和影集" }
+help = { en = "Mounted read-only at /media. Jellyfin only reads it.", zh = "以只读方式挂载到 /media，Jellyfin 只读取它。", zh-TW = "以唯讀方式掛載到 /media，Jellyfin 只讀取它。" }
+
+[[settings]]
+key = "music"
+type = "path"
+env = "JELLYFIN_MUSIC_LOCATION"
+default = "{shared}/music"
+label = { en = "Music", zh = "音乐", zh-TW = "音樂" }
+help = { en = "Mounted read-only at /music. Jellyfin only reads it.", zh = "以只读方式挂载到 /music，Jellyfin 只读取它。", zh-TW = "以唯讀方式掛載到 /music，Jellyfin 只讀取它。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "JELLYFIN_PORT"
+default = 8096
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "discovery"
+type = "port"
+env = "JELLYFIN_DISCOVERY_PORT"
+default = 7359
+protocol = "udp"
+label = { en = "Discovery port (UDP)", zh = "发现端口（UDP）", zh-TW = "探索連接埠（UDP）" }
+help = { en = "Lets Jellyfin apps on the LAN find the server without typing its address. Works only when the port is reachable.", zh = "让局域网中的 Jellyfin 客户端无需输入地址即可找到服务器。只有端口可被访问时才有效。", zh-TW = "讓區域網路中的 Jellyfin 用戶端無需輸入位址即可找到伺服器。只有連接埠可被存取時才有效。" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For Jellyfin apps on phones and TVs. Off: only through the desk.", zh = "供手机和电视上的 Jellyfin 客户端连接。关闭时只能通过桌面访问。", zh-TW = "供手機和電視上的 Jellyfin 用戶端連線。關閉時只能透過桌面存取。" }
+on = { JELLYFIN_BIND = "0.0.0.0" }
+off = { JELLYFIN_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "transcode"
+type = "choice"
+default = "cpu"
+label = { en = "Video transcoding acceleration", zh = "视频转码加速", zh-TW = "影片轉碼加速" }
+help = { en = "Choose the same backend under the dashboard's transcoding settings after the first sign-in. NVIDIA needs the NVIDIA Container Toolkit on the host. WSL VA-API is not in Jellyfin's documentation: its Intel QSV and AMF pages say those are unavailable on WSL.", zh = "首次登录后，在控制台的转码设置中选择相同的后端。NVIDIA 需要主机安装 NVIDIA Container Toolkit。WSL 下的 VA-API 不在 Jellyfin 文档中：其 Intel QSV 和 AMF 页面说明这两者在 WSL 下不可用。", zh-TW = "首次登入後，在控制台的轉碼設定中選擇相同的後端。NVIDIA 需要主機安裝 NVIDIA Container Toolkit。WSL 下的 VA-API 不在 Jellyfin 文件中：其 Intel QSV 和 AMF 頁面說明這兩者在 WSL 下不可用。" }
+
+  [[settings.options]]
+  value = "cpu"
+  label = { en = "CPU", zh = "CPU", zh-TW = "CPU" }
+  env = { TRANSCODE_BACKEND = "cpu" }
+
+  [[settings.options]]
+  value = "nvidia"
+  label = { en = "NVIDIA (NVENC)", zh = "NVIDIA（NVENC）", zh-TW = "NVIDIA（NVENC）" }
+  env = { TRANSCODE_BACKEND = "nvidia" }
+  suggest = { gpu = "nvidia" }
+
+  [[settings.options]]
+  value = "vaapi-wsl"
+  label = { en = "VA-API (WSL)", zh = "VA-API（WSL）", zh-TW = "VA-API（WSL）" }
+  env = { TRANSCODE_BACKEND = "vaapi-wsl" }
+  suggest = { gpu = "intel", wsl = true }
+
+  [[settings.options]]
+  value = "vaapi-intel"
+  label = { en = "Intel (VA-API)", zh = "Intel（VA-API）", zh-TW = "Intel（VA-API）" }
+  env = { TRANSCODE_BACKEND = "vaapi-intel" }
+  suggest = { gpu = "intel", wsl = false }
+
+  [[settings.options]]
+  value = "vaapi-amd"
+  label = { en = "AMD (VA-API)", zh = "AMD（VA-API）", zh-TW = "AMD（VA-API）" }
+  env = { TRANSCODE_BACKEND = "vaapi-amd" }
+  suggest = { gpu = "amd", wsl = false }

@@ -851,3 +851,119 @@ async fn a_task_runs_with_the_model_and_thinking_its_account_picked() {
     let (_, list) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/flows", None).await;
     assert_eq!(list["flows"][0]["thinkingLevel"], "high", "kept in the row: {list}");
 }
+
+/// An MCP server (Streamable HTTP, JSON answers) on loopback: `list_lights`
+/// says it changes nothing, `turn_on` does not. Each call and the token it
+/// came with is recorded.
+fn mcp_server(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    std::thread::spawn(move || {
+        for conn in listener.incoming() {
+            let Ok(mut conn) = conn else { return };
+            let calls = calls.clone();
+            std::thread::spawn(move || {
+                let mut reader = BufReader::new(conn.try_clone().unwrap());
+                let (mut len, mut token) = (0usize, String::new());
+                loop {
+                    let mut line = String::new();
+                    if reader.read_line(&mut line).unwrap_or(0) == 0 {
+                        return;
+                    }
+                    let l = line.trim_end();
+                    if l.is_empty() {
+                        break;
+                    }
+                    let lower = l.to_ascii_lowercase();
+                    if let Some(v) = lower.strip_prefix("content-length:") {
+                        len = v.trim().parse().unwrap();
+                    }
+                    if lower.starts_with("authorization:") {
+                        token = l["authorization:".len()..].trim().to_string();
+                    }
+                }
+                let mut body = vec![0u8; len];
+                reader.read_exact(&mut body).unwrap();
+                let msg: Value = serde_json::from_slice(&body).unwrap();
+                let result = match msg["method"].as_str().unwrap_or_default() {
+                    "initialize" => json!({ "protocolVersion": "2025-06-18", "capabilities": { "tools": {} }, "serverInfo": { "name": "Lights" } }),
+                    "tools/list" => json!({ "tools": [
+                        { "name": "list_lights", "description": "Lists the lights", "inputSchema": { "type": "object" }, "annotations": { "readOnlyHint": true } },
+                        { "name": "turn_on", "description": "Turns a light on", "inputSchema": { "type": "object", "properties": { "id": { "type": "string" } } } },
+                    ] }),
+                    "tools/call" => {
+                        let name = msg["params"]["name"].as_str().unwrap_or_default().to_string();
+                        calls.lock().unwrap().push((name.clone(), token));
+                        json!({ "content": [{ "type": "text", "text": format!("{name}: {}", msg["params"]["arguments"]) }] })
+                    }
+                    _ => {
+                        let _ = write!(conn, "HTTP/1.1 202 Accepted\r\ncontent-length: 0\r\nconnection: close\r\n\r\n");
+                        return;
+                    }
+                };
+                let body = json!({ "jsonrpc": "2.0", "id": msg["id"], "result": result }).to_string();
+                let _ = write!(
+                    conn,
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nmcp-session-id: s1\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+            });
+        }
+    });
+    format!("http://{addr}/mcp")
+}
+
+#[ntex::test]
+async fn an_mcp_servers_tools_run_through_the_tasks_permissions() {
+    let (srv, _) = server().await;
+    let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let mcp = mcp_server(calls.clone());
+    let id = fl_pi_llm::host::mcp::server_id(&mcp);
+    let list: &'static str = Box::leak(fl_pi_llm::host::mcp::tool_name(&id, "list_lights").into_boxed_str());
+    let turn: &'static str = Box::leak(fl_pi_llm::host::mcp::tool_name(&id, "turn_on").into_boxed_str());
+
+    // Only an admin sets servers up; a header's value never comes back.
+    let servers = json!({ "servers": [{ "name": "Lights", "url": mcp, "headers": { "Authorization": "Bearer tok-1" } }] });
+    let (s, _) = call(&srv, Some("viewer"), Method::PUT, "/api/v1/agent/mcp", Some(servers.clone())).await;
+    assert_eq!(s, 403);
+    let (s, body) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/mcp", Some(servers)).await;
+    assert_eq!(s, 200, "{body}");
+    assert!(!body.to_string().contains("tok-1"), "{body}");
+    assert_eq!(body["servers"][0]["headers"], json!(["Authorization"]));
+    assert_eq!(body["status"][0]["connected"], true, "{body}");
+    assert_eq!(body["status"][0]["tools"].as_array().unwrap().len(), 2);
+    let bad = json!({ "servers": [{ "name": "X", "url": "http://10.9.9.9/mcp" }] });
+    let (s, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/mcp", Some(bad)).await;
+    assert_eq!(s, 400);
+
+    // The read runs unasked; the other waits for the person.
+    let url = model(vec![Say::Tool(list, json!({})), Say::Tool(turn, json!({ "id": "hall" })), Say::Text("On.")]);
+    configure(&srv, &url).await;
+    let flow = start(&srv, "turn the hall light on").await;
+    let v = until(&srv, &flow, |v| status(v) == "waiting").await;
+    assert_eq!(v["pending"]["kind"], "confirm");
+    assert!(v["pending"]["command"].as_str().unwrap().contains("Lights · turn_on"), "{v}");
+    assert_eq!(calls.lock().unwrap().iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>(), ["list_lights"]);
+    let pid = v["pending"]["id"].as_str().unwrap();
+    let (s, _) = call(&srv, Some("admin"), Method::POST, &format!("/api/v1/agent/flows/{flow}/answer"), Some(json!({ "id": pid, "action": "run" }))).await;
+    assert_eq!(s, 204);
+    let v = until(&srv, &flow, |v| v["flow"]["status"] == "done").await;
+    let r = results(&v);
+    assert_eq!(r.len(), 2, "{v}");
+    assert_eq!(*calls.lock().unwrap(), [("list_lights".to_string(), "Bearer tok-1".to_string()), ("turn_on".to_string(), "Bearer tok-1".to_string())]);
+}
+
+#[ntex::test]
+async fn skills_are_an_admins_to_manage() {
+    let (srv, _) = server().await;
+    let (s, _) = call(&srv, Some("viewer"), Method::GET, "/api/v1/agent/skills", None).await;
+    assert_eq!(s, 403);
+    let (s, body) = call(&srv, Some("admin"), Method::GET, "/api/v1/agent/skills", None).await;
+    assert_eq!((s, body["skills"].clone()), (200, json!([])));
+    let (s, body) = call(&srv, Some("admin"), Method::POST, "/api/v1/agent/skills", Some(json!({ "source": "https://gitlab.com/a/b" }))).await;
+    assert_eq!((s, body["error"].as_str()), (400, Some("invalidSource")), "{body}");
+    let (s, _) = call(&srv, Some("admin"), Method::PUT, "/api/v1/agent/skills/absent", Some(json!({ "enabled": false }))).await;
+    assert_eq!(s, 404);
+    let (s, _) = call(&srv, Some("admin"), Method::DELETE, "/api/v1/agent/skills/absent", None).await;
+    assert_eq!(s, 404);
+}

@@ -42,6 +42,8 @@ export function stackRefusal(
         return ll.stackAlreadyInstalled()
       case 'noProxyPort':
         return ll.stackNoProxyPort()
+      case 'sharedUnavailable':
+        return ll.stackSharedUnavailable()
       default:
         return e instanceof Error ? e.message : String(e)
     }

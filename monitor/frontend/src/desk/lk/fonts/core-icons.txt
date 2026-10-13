@@ -12,6 +12,7 @@ assistant
 attach_file
 auto_awesome
 auto_mode
+auto_stories
 backspace
 backup
 badge
@@ -35,6 +36,8 @@ circle
 clarify
 cleaning_services
 close
+cloud
+cloud_download
 cloud_off
 code
 code_blocks
@@ -56,6 +59,7 @@ desktop_windows
 developer_board
 dns
 do_not_disturb_on
+domain
 done
 done_all
 download
@@ -92,6 +96,7 @@ history
 home
 hourglass_empty
 hourglass_top
+html
 http
 image
 info
@@ -108,6 +113,7 @@ lan
 laptop_mac
 layers
 layers_clear
+library_music
 light
 link
 link_off
@@ -118,6 +124,7 @@ lock_open
 memory
 memory_alt
 menu
+menu_book
 mist
 monitor
 monitor_heart
@@ -144,6 +151,7 @@ percent
 person
 photo_camera
 photo_library
+picture_as_pdf
 pill
 play_arrow
 play_circle
@@ -151,7 +159,9 @@ policy
 pool
 power
 power_settings_new
+productivity
 progress_activity
+psychology
 radio
 radio_button_checked
 radio_button_unchecked
@@ -164,12 +174,14 @@ report
 resize
 restart_alt
 resume
+rss_feed
 rule
 save
 scale
 schedule
 search
 search_off
+security
 select_window
 send
 sensors
@@ -177,6 +189,7 @@ settings
 settings_backup_restore
 settings_suggest
 shadow
+shield
 shield_lock
 shield_person
 shift
@@ -190,6 +203,7 @@ stacks
 start
 step
 steps
+sticky_note_2
 stop
 stop_circle
 storage
@@ -224,10 +238,12 @@ view_column
 view_list
 view_timeline
 visibility
+visibility_off
 wallpaper
 warning
 web
 webhook
 width
 window
+work
 wrap_text

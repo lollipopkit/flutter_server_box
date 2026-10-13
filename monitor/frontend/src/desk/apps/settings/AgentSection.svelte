@@ -20,9 +20,13 @@
     onmemory: () => void
     /// Opens how commands are approved.
     onpermissions: () => void
+    /// Opens the MCP servers (admin).
+    onmcp: () => void
+    /// Opens the skills (admin).
+    onskills: () => void
   }
 
-  const { onprovider, onmemory, onpermissions }: Props = $props()
+  const { onprovider, onmemory, onpermissions, onmcp, onskills }: Props = $props()
 
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   const admin = $derived(caps?.me?.admin === true)
@@ -127,6 +131,10 @@
   <Group>
     <Row label={$LL.settingsAgentPermissions()} sub={$LL.settingsAgentPermissionsSub()} onclick={onpermissions} />
     <Row label={$LL.settingsAgentMemory()} sub={$LL.settingsAgentMemorySub()} onclick={onmemory} />
+    {#if admin}
+      <Row label={$LL.settingsAgentMcp()} sub={$LL.settingsAgentMcpSub()} onclick={onmcp} />
+      <Row label={$LL.settingsAgentSkills()} sub={$LL.settingsAgentSkillsSub()} onclick={onskills} />
+    {/if}
   </Group>
 {/snippet}
 

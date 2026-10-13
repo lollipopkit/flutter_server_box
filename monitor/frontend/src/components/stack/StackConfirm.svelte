@@ -73,6 +73,12 @@
         <dd class="lk-mono min-w-0 space-y-[3px] break-all text-[12px] text-(--text-primary)">
           {#each preview.images as image (image)}<div>{image}</div>{/each}
         </dd>
+        {#if preview.built?.length}
+          <dt class="text-(--text-tertiary)">{$LL.stackBuilt()}</dt>
+          <dd class="lk-mono min-w-0 space-y-[3px] break-all text-[12px] text-(--text-primary)">
+            {#each preview.built as image (image)}<div>{image}</div>{/each}
+          </dd>
+        {/if}
         <dt class="text-(--text-tertiary)">{$LL.stackData()}</dt>
         <dd class="lk-mono min-w-0 space-y-[3px] break-all text-[12px] text-(--text-primary)">
           {#each preview.data_paths as path (path)}<div>{path}</div>{/each}

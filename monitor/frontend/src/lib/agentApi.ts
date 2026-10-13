@@ -280,6 +280,48 @@ export interface MemoryFileInfo {
   modified: number | null
 }
 
+/// An MCP server Agent mode's tasks get the tools of; its headers are named,
+/// never read back.
+export interface McpServer {
+  id: string
+  name: string
+  url: string
+  enabled: boolean
+  headers: string[]
+}
+
+/// A server written: `headers` sets (a string), removes (null) or keeps
+/// (absent) each.
+export interface McpServerWrite {
+  name: string
+  url: string
+  enabled: boolean
+  headers?: Record<string, string | null>
+}
+
+export interface McpStatus {
+  id: string
+  connected: boolean
+  label?: string
+  tools: { name: string; title?: string; description?: string; readOnly: boolean }[]
+  error?: string
+}
+
+export interface McpView {
+  servers: McpServer[]
+  status: McpStatus[]
+}
+
+export interface AgentSkill {
+  dir: string
+  name: string
+  description: string
+  enabled: boolean
+  /// `owner/repo[/path]` it was installed from; null for a folder put there.
+  source: string | null
+  files: number
+}
+
 const enc = encodeURIComponent
 
 export const agentApi = {
@@ -313,6 +355,15 @@ export const agentApi = {
   writeMemory: (e: ServerEntry, path: string, content: string) =>
     requestFor<void>(e, '/agent/memory/file', { method: 'PUT', body: JSON.stringify({ path, content }) }),
   deleteMemory: (e: ServerEntry, path: string) => requestFor<void>(e, `/agent/memory/file?path=${enc(path)}`, { method: 'DELETE' }),
+  mcp: (e: ServerEntry) => requestFor<McpView>(e, '/agent/mcp', {}, 'Request failed', undefined, 60_000),
+  saveMcp: (e: ServerEntry, servers: McpServerWrite[]) =>
+    requestFor<McpView>(e, '/agent/mcp', { method: 'PUT', body: JSON.stringify({ servers }) }, 'Request failed', undefined, 60_000),
+  skills: (e: ServerEntry) => requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills'),
+  installSkill: (e: ServerEntry, source: string) =>
+    requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills', { method: 'POST', body: JSON.stringify({ source }) }, 'Request failed', undefined, 120_000),
+  setSkill: (e: ServerEntry, dir: string, enabled: boolean) =>
+    requestFor<{ skills: AgentSkill[] }>(e, `/agent/skills/${enc(dir)}`, { method: 'PUT', body: JSON.stringify({ enabled }) }),
+  removeSkill: (e: ServerEntry, dir: string) => requestFor<{ skills: AgentSkill[] }>(e, `/agent/skills/${enc(dir)}`, { method: 'DELETE' }),
   permissions: (e: ServerEntry) => requestFor<PermissionsView>(e, '/agent/permissions'),
   savePermissions: (e: ServerEntry, p: Permissions) =>
     requestFor<PermissionsView>(e, '/agent/permissions', { method: 'PUT', body: JSON.stringify(p) }),

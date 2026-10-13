@@ -1,0 +1,113 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Nextcloud, as the Monitor's Files app: deployed with Docker Compose from the
+# compose file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "nextcloud"
+name = "nextcloud"
+project = "Nextcloud"
+developer = "Nextcloud GmbH"
+version = "35.0.1"
+homepage = "https://nextcloud.com"
+source = "https://github.com/nextcloud/server/tree/v35.0.1"
+glyph = "cloud"
+tone = "sky"
+categories = ["files"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Nextcloud"
+
+[description]
+en = "Store, sync and share your files with Nextcloud: files, calendar and contacts in your browser."
+zh = "用 Nextcloud 存储、同步和分享文件，并在浏览器中使用日历和通讯录。"
+zh-TW = "用 Nextcloud 儲存、同步和分享檔案，並在瀏覽器中使用行事曆和通訊錄。"
+
+[license]
+spdx = "AGPL-3.0-or-later"
+url = "https://github.com/nextcloud/server/blob/v35.0.1/COPYING"
+accept = true
+
+# docs.nextcloud.com/server/stable/admin_manual/installation/system_requirements.html:
+# "a minimum of 128MB RAM per process, and we recommend a minimum of 512MB"
+[requirements]
+memory_min_mib = 512
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+NEXTCLOUD_VERSION = "35.0.1"
+POSTGRES_VERSION = "18.6-alpine"
+REDIS_VERSION = "8.8.3-alpine"
+NEXTCLOUD_ADMIN_USER = "admin"
+POSTGRES_USER = "nextcloud"
+POSTGRES_DB = "nextcloud"
+# The compose service name the app reaches the database and Redis at.
+POSTGRES_HOST = "database"
+REDIS_HOST = "redis"
+# Requests reach the app from the agent's proxy (127.0.0.1, or the Docker bridge
+# address for a published port) and from the Docker network. Only these may set
+# X-Forwarded-For/-Proto/-Host.
+TRUSTED_PROXIES = "127.0.0.1 ::1 172.16.0.0/12"
+
+[[secrets]]
+env = "NEXTCLOUD_ADMIN_PASSWORD"
+length = 32
+
+[[secrets]]
+env = "POSTGRES_PASSWORD"
+length = 32
+
+[login]
+user = "admin"
+password = "NEXTCLOUD_ADMIN_PASSWORD"
+note = { en = "Trusted domains are read only at the first start; change them later with `php occ config:system:set trusted_domains <n> --value=<host>` as www-data in the app container (Agent mode can do it).", zh = "受信任域名只在首次启动时读取；之后可在 app 容器中以 www-data 运行 `php occ config:system:set trusted_domains <编号> --value=<主机>` 修改（Agent 模式可以代劳）。", zh-TW = "受信任網域只在首次啟動時讀取；之後可在 app 容器中以 www-data 執行 `php occ config:system:set trusted_domains <編號> --value=<主機>` 修改（Agent 模式可以代勞）。" }
+
+[[settings]]
+key = "html"
+type = "path"
+env = "NEXTCLOUD_LOCATION"
+default = "{stack}/html"
+data = true
+label = { en = "Files and config", zh = "文件与配置", zh-TW = "檔案與設定" }
+help = { en = "Nextcloud's code, config/ and the users' files in data/.", zh = "Nextcloud 程序、config/ 配置和用户文件（data/）。", zh-TW = "Nextcloud 程式、config/ 設定，以及使用者檔案（data/）。" }
+
+[[settings]]
+key = "database"
+type = "path"
+env = "DB_DATA_LOCATION"
+default = "{stack}/postgres"
+data = true
+label = { en = "Database", zh = "数据库", zh-TW = "資料庫" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "NEXTCLOUD_PORT"
+default = 8080
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk. On: also at the port on every address, for the Nextcloud apps on phones and computers. Before turning it on, replace the * in trusted domains with your own addresses (see the sign-in note), or links Nextcloud sends may point elsewhere.", zh = "关闭时只能通过桌面访问。开启后也可通过所有地址的该端口访问，供手机和电脑上的 Nextcloud 应用连接。开启前请把受信任域名中的 * 换成你自己的地址（见登录说明），否则 Nextcloud 发出的链接可能指向别处。", zh-TW = "關閉時只能透過桌面存取。開啟後也可透過所有位址的該連接埠存取，供手機和電腦上的 Nextcloud 應用程式連線。開啟前請將受信任網域中的 * 換成你自己的位址（見登入說明），否則 Nextcloud 發出的連結可能指向別處。" }
+on = { NEXTCLOUD_BIND = "0.0.0.0" }
+off = { NEXTCLOUD_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "trusted"
+type = "text"
+env = "NEXTCLOUD_TRUSTED_DOMAINS"
+default = "localhost *"
+pattern = '^[A-Za-z0-9._:\[\]*-]+( [A-Za-z0-9._:\[\]*-]+)*$'
+label = { en = "Trusted domains", zh = "受信任域名", zh-TW = "受信任網域" }
+help = { en = "Space-separated; * is any name or address. The default accepts every address, which is safe while the app is reached only through the desk: the desk's address depends on how you reach the agent. Read only at the first start.", zh = "用空格分隔；* 表示任意名称或地址。默认接受所有地址：只通过桌面访问时这是安全的，因为桌面的地址取决于你访问 agent 的方式。仅在首次启动时读取。", zh-TW = "以空白分隔；* 表示任意名稱或位址。預設接受所有位址：只透過桌面存取時這是安全的，因為桌面的位址取決於你存取 agent 的方式。僅在首次啟動時讀取。" }

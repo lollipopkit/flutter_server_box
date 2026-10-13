@@ -6,7 +6,7 @@
 
 import { getContext, setContext } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
-import { STACK_APPS } from '../components/stack/apps'
+import { stackAppId } from '../components/stack/apps'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { Capabilities } from '../types'
@@ -23,6 +23,7 @@ import type { MenuEntry } from './lk/Menu.svelte'
 import { AppData } from './appData'
 import { AgentStore } from './agent/agentStore.svelte'
 import { registerWebApps } from './webapps/register'
+import { registerStackApps } from './stacks/register'
 import { DeskNotifications } from './notifications.svelte'
 import { DeskPrefs } from './prefs.svelte'
 import { DeskThemes } from './themes.svelte'
@@ -93,6 +94,7 @@ export class Desk {
 
   #abort = new AbortController()
   #offWebApps: (() => void) | null = null
+  #offStackApps: (() => void) | null = null
   #intents = new SvelteMap<string, Intent[]>()
 
   constructor(entry: ServerEntry) {
@@ -149,7 +151,7 @@ export class Desk {
       // A deployed web app: its own window when the panel has one, else its
       // page in the App Store.
       const stackId = n.source.slice(6)
-      const own = STACK_APPS[stackId]
+      const own = stackAppId(stackId)
       const spec = (own && app(own)) || app('serverbox.store')
       if (spec) {
         return {
@@ -213,7 +215,7 @@ export class Desk {
     this.appData = new AppData(storage)
     this.session = new SessionSync(this.windows, storage, deviceId(), this.entry.id)
     // Installed apps first: a restored window of one needs it registered.
-    await this.reloadWebApps()
+    await Promise.all([this.reloadWebApps(), this.reloadStackApps()])
     const system = systemPrefs.value
     await Promise.all([
       this.prefs.load(),
@@ -225,6 +227,18 @@ export class Desk {
     // Nothing came back: the app this browser opens at start.
     if (this.windows.windows.length === 0 && system.openOnStart !== 'none') this.open(system.openOnStart)
     if (storage.events) void this.#listen(storage)
+  }
+
+  /// Reads the catalog's web apps (`/stacks`) as desk apps of their own.
+  async reloadStackApps() {
+    if (!this.caps?.features?.includes('stacks')) return
+    try {
+      const off = await registerStackApps(() => this.#offStackApps?.())
+      if (this.#abort.signal.aborted) off()
+      else this.#offStackApps = off
+    } catch {
+      // Their windows come back on the next start; the App Store still lists them.
+    }
   }
 
   /// Reads the installed apps again (one approved or removed in Settings).
@@ -333,6 +347,8 @@ export class Desk {
     this.agent?.stop()
     this.#offWebApps?.()
     this.#offWebApps = null
+    this.#offStackApps?.()
+    this.#offStackApps = null
     this.prefs?.close()
     this.themes?.close()
     this.notifications?.close()

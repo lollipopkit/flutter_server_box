@@ -16,9 +16,7 @@ categories = ["photos"]
 notices = ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort"]
 
 [title]
-en = "Photos"
-zh = "相册"
-zh-TW = "相簿"
+en = "Immich"
 
 [description]
 en = "Back up and browse photos and videos with Immich: timeline, albums, people and search."

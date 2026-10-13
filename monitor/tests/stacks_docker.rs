@@ -81,6 +81,7 @@ async fn setup(apps: &std::path::Path) -> (TestServer, Arc<AppState>) {
                     .service(web::resource("/stacks/{id}/action").route(web::post().to(stacks::act)))
                     .service(web::resource("/stacks/{id}/job").route(web::get().to(stacks::job)))
                     .service(web::resource("/stacks/{id}/services").route(web::get().to(stacks::services)))
+                    .service(web::resource("/stacks/{id}/login").route(web::post().to(stacks::login)))
                     .service(web::resource("/stacks/{id}/enter").route(web::post().to(stacks::enter))),
             )
         }
@@ -212,6 +213,15 @@ async fn a_web_app_lives_on_a_real_docker() {
     assert_eq!(status, 202, "{body}");
     assert_eq!(finished(&srv).await, "succeeded");
     assert!(fetch(port, "/greeting.txt").await.ends_with("first\n"));
+    // The host's time zone, and the shared folder made for it.
+    assert!(!fetch(port, "/tz.txt").await.trim().is_empty());
+    assert!(state.stacks.shared().join("media").is_dir());
+    // The sign-in's password is the one generated into its env file.
+    let (status, login) =
+        call(&srv, Method::POST, &format!("/api/v1/stacks/{APP}/login"), Some(json!({ "current_password": common::PASSWORD }))).await;
+    assert_eq!(status, 200, "{login}");
+    let env = std::fs::read_to_string(state.stacks.dir(APP).join(".env")).unwrap();
+    assert!(env.contains(&format!("ADMIN_PASSWORD='{}'", login["password"].as_str().unwrap())), "{login}");
     let (_, entry) = call(&srv, Method::POST, &format!("/api/v1/stacks/{APP}/enter"), None).await;
     let proxy = entry["port"].as_u64().expect("a proxy") as u16;
     let ticket = entry["ticket"].as_str().unwrap();
@@ -251,6 +261,8 @@ async fn a_web_app_lives_on_a_real_docker() {
     let backup = list["backups"][0].clone();
     assert_eq!(backup["label"], PROJECT, "{list}");
     assert_eq!(backup["archives"].as_array().unwrap().len(), 1, "{backup}");
+    // The folder every app shares is no one app's data.
+    assert_eq!(backup["skipped"][0]["why"], "shared", "{backup}");
     assert!(backup["archives"][0]["bytes"].as_u64().unwrap() > 0);
     assert!(fetch(port, "/greeting.txt").await.ends_with("first\n"), "started again after the backup");
     std::fs::remove_file(site.join("mine.txt")).unwrap();

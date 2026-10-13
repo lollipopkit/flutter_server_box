@@ -36,6 +36,9 @@ pub struct Stack {
     pub files: Vec<String>,
     /// The env file, relative to [dir].
     pub env_file: String,
+    /// Some services are built from a Dockerfile in [dir] (`build:`), their
+    /// images named `localhost/…`.
+    pub builds: bool,
 }
 
 impl Stack {
@@ -65,9 +68,29 @@ impl Stack {
         }
     }
 
-    /// Pulls every image the stack names.
+    /// Pulls every image the stack names, but those it builds: Docker's
+    /// Compose would try their `localhost/` names on a registry. podman-compose
+    /// skips services with a `build:` section unasked (`--force-local` would
+    /// pull them).
     pub fn pull(&self) -> String {
-        format!("{}{} pull", self.base(), self.plain())
+        let ignore = if self.builds && self.runtime == ContainerType::Docker { " --ignore-buildable" } else { "" };
+        format!("{}{} pull{ignore}", self.base(), self.plain())
+    }
+
+    /// Builds the services with a `build:` section, their base images pulled
+    /// again so an update gets the base's fixes.
+    pub fn build(&self) -> String {
+        format!("{}{} build --pull", self.base(), self.plain())
+    }
+
+    /// What deploying or updating runs: pull, build when the stack builds, up.
+    pub fn deploy(&self) -> Vec<String> {
+        let mut steps = vec![self.pull()];
+        if self.builds {
+            steps.push(self.build());
+        }
+        steps.push(self.up());
+        steps
     }
 
     /// Creates and starts everything, removing services the files no longer
@@ -240,10 +263,18 @@ pub fn published_ports_command(runtime: ContainerType) -> String {
     )
 }
 
+/// The transport of a published port.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PortProtocol {
+    Tcp,
+    Udp,
+}
+
 /// A host port a container publishes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublishedPort {
     pub port: u16,
+    pub protocol: PortProtocol,
     /// The container's compose project, when it has one.
     pub project: Option<String>,
     /// Whether the container runs now, so holds the port.
@@ -258,7 +289,7 @@ struct Binding {
 }
 
 /// Reads [`published_ports_command`]'s lines (`<running> <project>
-/// <bindings>`): TCP ports only, those the runtime picks itself (an empty
+/// <bindings>`): TCP and UDP ports, those the runtime picks itself (an empty
 /// host port) left out.
 pub fn parse_published_ports(stdout: &str) -> Vec<PublishedPort> {
     let mut out = Vec::new();
@@ -270,13 +301,16 @@ pub fn parse_published_ports(stdout: &str) -> Vec<PublishedPort> {
             continue;
         };
         for (spec, hosts) in bindings.unwrap_or_default() {
-            if !spec.ends_with("/tcp") {
-                continue;
-            }
+            let protocol = match spec.rsplit_once('/').map(|(_, p)| p) {
+                Some("tcp") => PortProtocol::Tcp,
+                Some("udp") => PortProtocol::Udp,
+                _ => continue,
+            };
             for host in hosts.unwrap_or_default() {
                 if let Ok(port) = host.host_port.parse::<u16>() {
                     out.push(PublishedPort {
                         port,
+                        protocol,
                         project: Some(project.to_string()).filter(|p| !p.is_empty()),
                         running: running == "true",
                     });
@@ -306,8 +340,9 @@ mod tests {
             "garbage\n",
         );
         let ports = parse_published_ports(out);
-        let immich = PublishedPort { port: 2283, project: Some("sbm-futo-immich".into()), running: true };
-        assert_eq!(ports, vec![immich.clone(), immich, PublishedPort { port: 8080, project: None, running: false }]);
+        let immich = PublishedPort { port: 2283, protocol: PortProtocol::Tcp, project: Some("sbm-futo-immich".into()), running: true };
+        let other = |port, protocol| PublishedPort { port, protocol, project: None, running: false };
+        assert_eq!(ports, vec![immich.clone(), immich, other(53, PortProtocol::Udp), other(8080, PortProtocol::Tcp)]);
     }
 
     fn stack(runtime: ContainerType) -> Stack {
@@ -317,6 +352,7 @@ mod tests {
             dir: "/var/lib/sbm/stacks/it's".into(),
             files: vec!["compose.yaml".into(), "hwaccel.ml.yml".into()],
             env_file: ".env".into(),
+            builds: false,
         }
     }
 
@@ -344,6 +380,22 @@ mod tests {
         assert!(s.ps().ends_with(" ps --all --format json"));
         assert!(s.logs(Some("immich-server"), 200).ends_with("logs --no-color --timestamps --tail 200 'immich-server'"));
         assert!(s.logs(None, 50).ends_with("--tail 50"));
+    }
+
+    #[test]
+    fn a_stack_that_builds_builds_between_pull_and_up() {
+        let plain = stack(ContainerType::Docker);
+        assert_eq!(plain.deploy(), vec![plain.pull(), plain.up()]);
+        assert!(plain.pull().ends_with(" pull"));
+
+        let s = Stack { builds: true, ..stack(ContainerType::Docker) };
+        assert!(s.pull().ends_with("--progress plain pull --ignore-buildable"));
+        assert!(s.build().ends_with("--progress plain build --pull"));
+        assert_eq!(s.deploy(), vec![s.pull(), s.build(), s.up()]);
+
+        let podman = Stack { builds: true, ..stack(ContainerType::Podman) };
+        assert!(podman.pull().ends_with(" pull"));
+        assert!(podman.build().ends_with(" build --pull"));
     }
 
     #[test]

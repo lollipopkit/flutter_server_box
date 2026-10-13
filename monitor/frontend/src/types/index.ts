@@ -2714,7 +2714,16 @@ export type LocalizedText = Record<string, string>
 /// A setting a web app's deploy dialog asks (`stacks::manifest::Setting`).
 export type StackSetting =
   | { type: 'path'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default: string; data: boolean }
-  | { type: 'port'; key: string; label: LocalizedText; help?: LocalizedText | null; env: string; default: number }
+  | {
+      type: 'port'
+      key: string
+      label: LocalizedText
+      help?: LocalizedText | null
+      env: string
+      default: number
+      /// Absent from an older agent: TCP.
+      protocol?: 'tcp' | 'udp' | 'both'
+    }
   | { type: 'bool'; key: string; label: LocalizedText; help?: LocalizedText | null; default: boolean }
   | {
       type: 'choice'
@@ -2728,6 +2737,7 @@ export type StackSetting =
 
 export type StackNotice =
   | 'pullsImages'
+  | 'buildsImages'
   | 'bindsPaths'
   | 'mountsHostFiles'
   | 'gpuDevices'
@@ -2765,6 +2775,15 @@ export interface StackManifest {
   }
   web: { port: string; path: string }
   settings: StackSetting[]
+  login?: StackLogin | null
+}
+
+/// How the admin signs in to a deployed app the first time (`[login]`):
+/// `password` names the secret, which `POST /stacks/{id}/login` reads.
+export interface StackLogin {
+  user?: string | null
+  password?: string | null
+  note?: LocalizedText | null
 }
 
 export type StackValue = string | number | boolean
@@ -2865,6 +2884,8 @@ export interface StackService {
 export interface StackPreview {
   settings: Record<string, StackValue>
   images: string[]
+  /// Images built on the machine from the package's Dockerfiles.
+  built: string[]
   data_paths: string[]
   port: number | null
   /// Ports suggested that are in use now, and where they will move.
@@ -2888,7 +2909,7 @@ export interface ContainerBackup {
   containers: { name: string; image: string; project: string | null }[]
   archives: { file: string; container: string; mount: ContainerMount; bytes: number }[]
   /// Left out: a system folder of the host, or a bound file.
-  skipped: { container: string; mount: ContainerMount; why: 'system' | 'notFolder' }[]
+  skipped: { container: string; mount: ContainerMount; why: 'system' | 'notFolder' | 'shared' }[]
 }
 
 /// A block device (`sbm_parser::storage::BlockDevice`), sizes in bytes.

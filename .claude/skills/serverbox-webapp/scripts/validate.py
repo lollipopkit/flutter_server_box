@@ -63,6 +63,48 @@ def env_value_ok(value: str) -> bool:
     return len(value.encode()) <= 1024 and not any(c in value for c in "'\n\r\0")
 
 
+# The name a built image must have, as the agent requires (`BUILT_PREFIX`).
+BUILT_PREFIX = "localhost/"
+
+
+def yaml_entries(text: str):
+    """`key: value` lines of a compose file, values unquoted, as the agent reads them."""
+    for line in text.splitlines():
+        line = line.split(" #", 1)[0].lstrip()
+        if line.startswith("- "):
+            line = line[2:]
+        if line.startswith("#") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip().strip("'\"")
+        if key and not any(c.isspace() for c in key):
+            yield key, value.strip().strip("'\"")
+
+
+def compose_builds(file: str, text: str, texts: dict, rep) -> list[str]:
+    """The Dockerfiles a compose file builds from, its `build:` sections held
+    to what the agent accepts: a mapping, context `.`, a Dockerfile of the
+    package, no `additional_contexts` or `dockerfile_inline`."""
+    builds, dockerfiles = 0, []
+    for key, value in yaml_entries(text):
+        if key == "build":
+            if value:
+                rep.error(f"{file}: build: a mapping with `dockerfile:`")
+            else:
+                builds += 1
+        elif key == "context" and value not in (".", "./"):
+            rep.error(f"{file}: build context: only `.`")
+        elif key == "dockerfile":
+            if value not in texts or value == "manifest.toml":
+                rep.error(f"{file}: dockerfile {value} is not in the package")
+            dockerfiles.append(value)
+        elif key in ("additional_contexts", "dockerfile_inline"):
+            rep.error(f"{file}: build: no `{key}`")
+    if builds != len(dockerfiles):
+        rep.error(f"{file}: every build: names its dockerfile")
+    return dockerfiles
+
+
 def compose_variables(text: str) -> tuple[set[str], set[str]]:
     """The variables a compose file needs, and those it can do without."""
     needed: set[str] = set()
@@ -140,6 +182,9 @@ def app_id(m: dict) -> str:
     return f"{m.get('publisher')}.{m.get('name')}"
 
 
+RESERVED = {"SBM_UID", "SBM_GID", "SBM_TZ", "SBM_RENDER_GID"}
+
+
 def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) -> None:
     if "id" in m:
         rep.error("id: not written by hand; it is <publisher>.<name>")
@@ -166,8 +211,10 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
         kind = s.get("type")
         if kind == "path":
             d = s.get("default", "")
-            if not (d.startswith("/") or d.startswith("{stack}")) or not env_value_ok(d):
-                rep.error(f"{at}: default is absolute, or under {{stack}}")
+            if not (d.startswith(("/", "{stack}", "{shared}"))) or not env_value_ok(d):
+                rep.error(f"{at}: default is absolute, or under {{stack}} or {{shared}}")
+            if s.get("data") and d.startswith("{shared}"):
+                rep.error(f"{at}: a {{shared}} folder is not one app's data")
         elif kind == "bool":
             on, off = s.get("on", {}), s.get("off", {})
             if not on or set(on) != set(off):
@@ -193,29 +240,61 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
                     rep.error(f"{at}: default does not match the pattern")
 
     for name, where in sources.items():
+        if name in RESERVED:
+            rep.error(f"{where[0]}: {name} is written by the agent")
         if not ENV_NAME.match(name):
             rep.error(f"{where[0]}: {name!r} is not an env name")
         if len(where) > 1:
             rep.error(f"{name} is set by {where[0]} and {where[1]}")
 
     port = m.get("web", {}).get("port")
-    if not any(s.get("key") == port and s.get("type") == "port" for s in settings):
+    web = next((s for s in settings if s.get("key") == port and s.get("type") == "port"), None)
+    if web is None:
         rep.error(f"web.port {port!r} names no port setting")
+    elif web.get("protocol", "tcp") != "tcp":
+        rep.error(f"web.port {port!r} is a TCP port setting")
+
+    login = m.get("login")
+    if login is not None:
+        if not login:
+            rep.error("login: says nothing")
+        secret = login.get("password")
+        if secret is not None and secret not in {s.get("env") for s in m.get("secrets", [])}:
+            rep.error(f"login.password: {secret} is not a [[secrets]] entry")
+
+    if m.get("web", {}).get("basic_auth"):
+        user = (login or {}).get("user")
+        if not (login or {}).get("password") or not user or ":" in user:
+            rep.error("web.basic_auth: needs [login] user (no `:`) and password")
 
     if m.get("license", {}).get("accept") is not True:
         rep.warn("license.accept is false: the admin deploys without being shown the licence to accept")
 
-    provided = set(sources)
+    for name in texts:
+        if name.endswith(".dockerignore"):
+            rep.error(f"{name}: no .dockerignore: the agent writes the stack's")
+
+    provided = set(sources) | RESERVED
     used: set[str] = set()
+    dockerfiles: list[str] = []
+    built_images = False
     for file in m.get("compose", {}).get("files", []):
         if file not in texts:
             rep.error(f"compose.files: {file} is not in the folder")
             continue
+        dockerfiles += compose_builds(file, texts[file], texts, rep)
+        built_images |= any(k == "image" and v.startswith(BUILT_PREFIX) for k, v in yaml_entries(texts[file]))
         needed, optional = compose_variables(texts[file])
         for name in sorted(needed - provided):
             rep.error(f"{file}: ${{{name}}} is not set by the manifest")
         used |= needed | optional
-    for name in sorted(provided - used):
+    if dockerfiles and not built_images:
+        rep.error(f"compose.files: a built image is named {BUILT_PREFIX}…")
+    if built_images and not dockerfiles:
+        rep.error(f"compose.files: {BUILT_PREFIX}… is for a built image; nothing is built")
+    if dockerfiles and "buildsImages" not in m.get("notices", []):
+        rep.error("notices: buildsImages: the compose files build an image")
+    for name in sorted(provided - used - RESERVED):
         rep.warn(f"{name} is set but no compose file names it (fine when a container reads it through env_file)")
 
 
@@ -227,7 +306,7 @@ def defaults_env(m: dict, stack: Path) -> str:
     for s in m.get("settings", []):
         kind = s.get("type")
         if kind == "path":
-            values[s["env"]] = s["default"].replace("{stack}", str(stack))
+            values[s["env"]] = s["default"].replace("{stack}", str(stack)).replace("{shared}", str(stack / ".shared"))
         elif kind == "port":
             values[s["env"]] = str(s["default"])
         elif kind == "bool":
@@ -236,6 +315,7 @@ def defaults_env(m: dict, stack: Path) -> str:
             values.update(next(o["env"] for o in s["options"] if o["value"] == s["default"]))
         elif kind == "text" and s.get("default"):
             values[s["env"]] = s["default"]
+    values.update({"SBM_UID": "1000", "SBM_GID": "1000", "SBM_TZ": "UTC", "SBM_RENDER_GID": "1000"})
     return "".join(f"{k}='{v}'\n" for k, v in sorted(values.items()))
 
 

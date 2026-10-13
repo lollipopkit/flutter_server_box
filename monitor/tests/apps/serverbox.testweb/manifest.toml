@@ -1,7 +1,7 @@
 #:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
 # A small web app for testing what the agent does with one: nginx serving a
 # data folder, with a health check, a setting written into what it serves,
-# and two ports. Not in the catalog: an agent offers it through
+# two ports, a shared folder, the host's time zone and a sign-in. Not in the catalog: an agent offers it through
 # `[stacks] local_apps` (pointing at monitor/tests/apps), and
 # tests/stacks_docker.rs deploys it on a real Docker.
 
@@ -42,6 +42,14 @@ files = ["compose.yaml"]
 port = "port"
 path = "/"
 
+[[secrets]]
+env = "ADMIN_PASSWORD"
+
+[login]
+user = "admin"
+password = "ADMIN_PASSWORD"
+note = { en = "A test sign-in; nginx asks for none." }
+
 [[settings]]
 key = "site"
 type = "path"
@@ -49,6 +57,13 @@ env = "SITE_DIR"
 default = "{stack}/site"
 data = true
 label = { en = "Site folder", zh = "站点文件夹", zh-TW = "網站資料夾" }
+
+[[settings]]
+key = "media"
+type = "path"
+env = "MEDIA_DIR"
+default = "{shared}/media"
+label = { en = "Media", zh = "媒体", zh-TW = "媒體" }
 
 [[settings]]
 key = "port"

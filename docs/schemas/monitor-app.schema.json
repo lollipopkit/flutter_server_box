@@ -30,7 +30,7 @@
       "type": "array",
       "uniqueItems": true,
       "description": "What the deploy dialog points out about the compose files.",
-      "items": { "enum": ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort", "privileged", "hostNetwork", "dockerSocket"] }
+      "items": { "enum": ["pullsImages", "buildsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort", "privileged", "hostNetwork", "dockerSocket"] }
     },
     "title": { "$ref": "#/$defs/text", "description": "What the desk calls the window." },
     "description": { "$ref": "#/$defs/text" },
@@ -81,14 +81,30 @@
       "required": ["port"],
       "properties": {
         "port": { "$ref": "#/$defs/key", "description": "The key of the port setting the window reaches." },
-        "path": { "type": "string", "pattern": "^/", "default": "/" }
+        "path": { "type": "string", "pattern": "^/", "default": "/" },
+        "basic_auth": {
+          "type": "boolean",
+          "default": false,
+          "description": "The service asks for HTTP basic auth: the agent's proxy sends [login]'s user and password, so the desk's window opens signed in. Needs [login] user (no ':') and password."
+        }
       }
     },
     "env": {
       "type": "object",
       "description": "Fixed values for the env file.",
-      "propertyNames": { "$ref": "#/$defs/envName" },
+      "propertyNames": { "$ref": "#/$defs/envName", "not": { "$ref": "#/$defs/reserved" } },
       "additionalProperties": { "$ref": "#/$defs/envValue" }
+    },
+    "login": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "How the admin signs in the first time, shown in the app's details.",
+      "properties": {
+        "user": { "type": "string", "minLength": 1, "maxLength": 64, "description": "The account the service is seeded with." },
+        "password": { "$ref": "#/$defs/envName", "description": "The env name of the [[secrets]] entry holding its password, shown only when asked for." },
+        "note": { "$ref": "#/$defs/text", "description": "What else the admin must know to sign in." }
+      }
     },
     "secrets": {
       "type": "array",
@@ -121,6 +137,10 @@
     "file": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
     "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,31}$" },
     "envName": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]{0,63}$" },
+    "reserved": {
+      "enum": ["SBM_UID", "SBM_GID", "SBM_TZ", "SBM_RENDER_GID"],
+      "description": "Written by the agent for every app: the shared folder's owner, the host's time zone, and the GPU render node's group (SBM_GID without one). Used, never set."
+    },
     "envValue": { "type": "string", "maxLength": 1024, "pattern": "^[^'\\n\\r\\u0000]*$" },
     "envMap": {
       "type": "object",
@@ -151,7 +171,11 @@
         "key": true, "label": true, "help": true,
         "type": { "const": "path" },
         "env": { "$ref": "#/$defs/envName" },
-        "default": { "type": "string", "pattern": "^(/|\\{stack\\})", "description": "Absolute, or under {stack}, the stack's directory." },
+        "default": {
+          "type": "string",
+          "pattern": "^(/|\\{stack\\}|\\{shared\\})",
+          "description": "Absolute, or under {stack} (the stack's directory) or {shared} (the folder every app shares: downloads, media/movies, media/tv, music, books, comics, documents)."
+        },
         "data": { "type": "boolean", "default": false, "description": "Holds the service's data: removed only when the admin asks." }
       }
     },
@@ -163,7 +187,8 @@
         "key": true, "label": true, "help": true,
         "type": { "const": "port" },
         "env": { "$ref": "#/$defs/envName" },
-        "default": { "type": "integer", "minimum": 1024, "maximum": 65535, "description": "The next free port is offered when this one is taken." }
+        "default": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "The next free port is offered when this one is taken." },
+        "protocol": { "enum": ["tcp", "udp", "both"], "default": "tcp", "description": "What the port is published for; the window's port is TCP." }
       }
     },
     "boolSetting": {

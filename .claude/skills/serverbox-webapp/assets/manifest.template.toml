@@ -16,7 +16,7 @@ tone = "teal"                       # berry soft ink sky teal violet amber leaf 
 categories = ["tools"]
 notices = ["pullsImages", "bindsPaths", "publishesPort"]
 
-[title]                             # what the desk calls the window
+[title]                             # the window: the project's own name, en only
 en = "Example"
 zh = "示例"
 
@@ -49,6 +49,13 @@ EXAMPLE_VERSION = "v1.0.0"
 env = "DB_PASSWORD"
 length = 32
 
+[[secrets]]
+env = "ADMIN_PASSWORD"
+
+[login]                             # the first sign-in, shown in the app's details
+user = "admin"
+password = "ADMIN_PASSWORD"         # a [[secrets]] entry
+
 [[settings]]
 key = "data"
 type = "path"
@@ -56,6 +63,13 @@ env = "DATA_LOCATION"
 default = "{stack}/data"            # {stack} is the stack's own directory
 data = true                         # removed only when the admin asks
 label = { en = "Data", zh = "数据" }
+
+[[settings]]
+key = "media"
+type = "path"
+env = "MEDIA_LOCATION"
+default = "{shared}/media"          # the folder every app shares; never data = true
+label = { en = "Media", zh = "媒体" }
 
 [[settings]]
 key = "port"

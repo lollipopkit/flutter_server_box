@@ -41,7 +41,7 @@ const manifest = (name: string, title: string, categories: string[]): StackManif
 })
 
 const apps: StackApp[] = [
-  { manifest: manifest('immich', 'Photos', ['photos']), stack: { state: 'installed', version: '1.0.0' }, job: null, proxy: true },
+  { manifest: manifest('immich', 'Immich', ['photos']), stack: { state: 'installed', version: '1.0.0' }, job: null, proxy: true },
   { manifest: manifest('broken', 'Broken', ['tools']), stack: { state: 'installed', version: '1.0.0' }, job: null, proxy: true, health: { state: 'down', failing: ['web'], checked_at: '' } },
   { manifest: manifest('jellyfin', 'Media', ['media']), stack: null, job: null, proxy: false, source: 'local' },
 ]
@@ -59,13 +59,13 @@ describe('the App Store', () => {
   it('lists the catalog with each app state, filtered by search', async () => {
     capabilitiesStore.byServer = { local: caps(false) }
     render(StoreApp)
-    expect(await screen.findByText('Photos does things.')).toBeInTheDocument()
+    expect(await screen.findByText('Immich does things.')).toBeInTheDocument()
     expect(screen.getByText('Installed')).toBeInTheDocument()
     // Installed, but its containers are not running.
     expect(screen.getByText('Down')).toBeInTheDocument()
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
     await fireEvent.input(screen.getByPlaceholderText('Search apps'), { target: { value: 'media' } })
-    expect(screen.queryByText('Photos does things.')).toBeNull()
+    expect(screen.queryByText('Immich does things.')).toBeNull()
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
   })
 

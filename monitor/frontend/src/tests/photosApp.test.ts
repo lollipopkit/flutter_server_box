@@ -40,7 +40,7 @@ const manifest: StackManifest = {
   tone: 'sky',
   categories: ['photos'],
   notices: ['pullsImages', 'publishesPort'],
-  title: { en: 'Photos', zh: '相册' },
+  title: { en: 'Immich' },
   description: { en: 'Back up and browse photos.' },
   license: { spdx: 'AGPL-3.0', url: 'https://example.com/LICENSE', accept: true },
   requirements: { memory_min_mib: 4096, memory_recommended_mib: 6144, cores_min: 2, arch: [], os: [] },
@@ -72,7 +72,7 @@ beforeEach(() => {
   })
 })
 
-describe('the Photos window', () => {
+describe('the Immich window', () => {
   it('tells an account that is not an admin to wait for one', async () => {
     capabilitiesStore.byServer = { local: caps(false) }
     mocked.listStacks.mockResolvedValue({ apps: [app(null)] })
@@ -87,6 +87,7 @@ describe('the Photos window', () => {
     mocked.checkStack.mockResolvedValue({
       settings: { library: '/srv/stacks/immich/library', port: 2283 },
       images: ['ghcr.io/immich-app/immich-server:v3.3.1'],
+      built: [],
       data_paths: ['/srv/stacks/immich/library'],
       port: 2284,
       moved: [{ setting: 'port', from: 2283, to: 2284 }],
@@ -142,7 +143,7 @@ describe('the settings of a deployed app', () => {
   it('start from what it has and are saved with the password alone', async () => {
     capabilitiesStore.byServer = { local: caps(true) }
     mocked.listStacks.mockResolvedValue({ apps: [installed()] })
-    mocked.checkStack.mockResolvedValue({ settings: { ...settings, port: 3000 }, images: [], data_paths: [], port: 3000, moved: [] })
+    mocked.checkStack.mockResolvedValue({ settings: { ...settings, port: 3000 }, images: [], built: [], data_paths: [], port: 3000, moved: [] })
     mocked.reconfigureStack.mockResolvedValue({ id: 1, kind: 'reconfigure', state: 'running', error: null, lines: [], next: 0 })
     mocked.stackJob.mockResolvedValue({ id: 1, kind: 'reconfigure', state: 'running', error: null, lines: [], next: 0 })
     render(StackDetail, { stackId: 'futo.immich' })
@@ -158,7 +159,7 @@ describe('the settings of a deployed app', () => {
     await fireEvent.input(password, { target: { value: 'pw' } })
     await fireEvent.submit(password.form!)
     await vi.waitFor(() => expect(mocked.reconfigureStack).toHaveBeenCalledWith('futo.immich', { ...settings, port: 3000 }, 'pw'))
-    expect(await screen.findByText('Applying the settings of Photos…')).toBeInTheDocument()
+    expect(await screen.findByText('Applying the settings of Immich…')).toBeInTheDocument()
   })
 
   it('name a port in use by its number', async () => {
@@ -174,7 +175,7 @@ describe('the settings of a deployed app', () => {
   })
 })
 
-describe('the Photos frame in a window', () => {
+describe('the Immich frame in a window', () => {
   it('takes the first click itself only while the window is behind', async () => {
     capabilitiesStore.byServer = { local: caps(false) }
     mocked.listStacks.mockResolvedValue({ apps: [app({ state: 'installed', version: '3.3.1' }, true)] })
@@ -194,7 +195,7 @@ describe('the Photos frame in a window', () => {
   })
 })
 
-describe('Photos in Apps', () => {
+describe('Immich in Apps', () => {
   it('is offered once installed; to an admin also while being set up or failed', () => {
     const with_ = (state: 'installing' | 'installed' | 'failed' | null, admin: boolean) =>
       ({ features: ['stacks'], stacks: state ? [{ id: 'futo.immich', state }] : [], me: { admin } }) as unknown as Capabilities

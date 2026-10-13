@@ -22,6 +22,12 @@
 //!   {text?}` carries it into a task, and runs it on with [text].
 //! - `GET /agent/permissions` (any account with `shell`): how commands are
 //!   approved, and the built-in auto mode lists; `PUT` (admin) replaces it.
+//! - `GET /agent/mcp` (admin): the MCP servers, their headers named, and
+//!   how each is doing (connected now, with its tools); `PUT` (admin)
+//!   replaces them, `{servers: [{name, url, enabled, headers}]}`.
+//! - `GET /agent/skills` (admin): the skills; `POST /agent/skills {source}`
+//!   (admin) installs from a GitHub repository as `npx skills add` takes it;
+//!   `PUT /agent/skills/{dir} {enabled}`, `DELETE /agent/skills/{dir}`.
 //! - `GET /agent/memory`: the account's memory, its files without their
 //!   content; `GET /agent/memory/file?path=` one with it, `PUT
 //!   /agent/memory/file {path, content}` writes one, `DELETE
@@ -386,6 +392,133 @@ pub async fn choices(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
     match state.agent.choices().await {
         Ok(v) => Ok(HttpResponse::Ok().json(&v)),
         Err(e) => Ok(refused(e)),
+    }
+}
+
+async fn mcp_answer(state: &AppState) -> HttpResponse {
+    match crate::agent_mode::mcp::load(&state.db).await {
+        Ok(servers) => {
+            let status = state.agent.mcp.refresh(&state.db, state.agent.fetch()).await;
+            HttpResponse::Ok().json(&serde_json::json!({ "servers": servers, "status": status }))
+        }
+        Err(e) => refused(e.into()),
+    }
+}
+
+pub async fn get_mcp(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::admin_caller(&req, &state).await);
+    Ok(mcp_answer(&state).await)
+}
+
+pub async fn put_mcp(
+    req: HttpRequest,
+    body: web::types::Json<crate::agent_mode::mcp::ServersWrite>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    let w = body.into_inner();
+    if let Err(why) = w.check() {
+        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalid", "reason": why })));
+    }
+    if let Err(e) = crate::agent_mode::mcp::store(&state.db, &w).await {
+        return Ok(refused(e.into()));
+    }
+    // Where they are, never a header's value.
+    Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+        .subject(&caller.username)
+        .remote_ip(peer_ip(&req))
+        .detail(format!("mcp: {}", w.servers.iter().map(|s| s.url.as_str()).collect::<Vec<_>>().join(", ")))
+        .record(&state.db)
+        .await;
+    Ok(mcp_answer(&state).await)
+}
+
+async fn skills_answer(state: &AppState) -> HttpResponse {
+    match crate::agent_mode::skills::list(&state.db, &state.agent.skills_root).await {
+        Ok(skills) => HttpResponse::Ok().json(&serde_json::json!({ "skills": skills })),
+        Err(e) => refused(e.into()),
+    }
+}
+
+pub async fn get_skills(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::admin_caller(&req, &state).await);
+    Ok(skills_answer(&state).await)
+}
+
+#[derive(Deserialize)]
+pub struct InstallSkill {
+    source: String,
+}
+
+pub async fn install_skill(
+    req: HttpRequest,
+    body: web::types::Json<InstallSkill>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    use crate::agent_mode::skills::InstallError;
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    let source = body.into_inner().source;
+    if source.len() > 1024 {
+        return Ok(bad("invalidSource"));
+    }
+    let fetch = state.agent.fetch();
+    match crate::agent_mode::skills::install(&state.db, &state.agent.skills_root, fetch.as_ref(), &source).await {
+        Ok(dirs) => {
+            Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+                .subject(&caller.username)
+                .remote_ip(peer_ip(&req))
+                .detail(format!("skills: installed {} from {}", dirs.join(", "), first_line(&source, 200)))
+                .record(&state.db)
+                .await;
+            Ok(skills_answer(&state).await)
+        }
+        Err(InstallError::Source(reason)) => Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidSource", "reason": reason }))),
+        Err(InstallError::Fetch(reason)) => Ok(HttpResponse::BadGateway().json(&serde_json::json!({ "error": "fetchFailed", "reason": reason }))),
+        Err(InstallError::NoSkill) => Ok(HttpResponse::NotFound().json(&serde_json::json!({ "error": "noSkill" }))),
+        Err(InstallError::TooMany) => Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "tooMany" }))),
+        Err(InstallError::Write(e)) => {
+            tracing::error!("agent skills: {e}");
+            Ok(HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" })))
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct SkillSwitch {
+    enabled: bool,
+}
+
+pub async fn put_skill(
+    req: HttpRequest,
+    dir: web::types::Path<String>,
+    body: web::types::Json<SkillSwitch>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    require!(authz::admin_caller(&req, &state).await);
+    match crate::agent_mode::skills::set_enabled(&state.db, &state.agent.skills_root, &dir, body.enabled).await {
+        Ok(true) => Ok(skills_answer(&state).await),
+        Ok(false) => Ok(HttpResponse::NotFound().json(&serde_json::json!({ "error": "notFound" }))),
+        Err(e) => Ok(refused(e.into())),
+    }
+}
+
+pub async fn delete_skill(req: HttpRequest, dir: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let caller = require!(authz::admin_caller(&req, &state).await);
+    match crate::agent_mode::skills::remove(&state.db, &state.agent.skills_root, &dir).await {
+        Ok(true) => {
+            Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+                .subject(&caller.username)
+                .remote_ip(peer_ip(&req))
+                .detail(format!("skills: removed {dir}"))
+                .record(&state.db)
+                .await;
+            Ok(skills_answer(&state).await)
+        }
+        Ok(false) => Ok(HttpResponse::NotFound().json(&serde_json::json!({ "error": "notFound" }))),
+        Err(e) => {
+            tracing::error!("agent skills: {e}");
+            Ok(HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" })))
+        }
     }
 }
 

@@ -7,7 +7,7 @@ const notice = (source: string): DeskNotification => ({
   created_at: '',
   level: 'warning',
   source,
-  subject: 'Photos is down',
+  subject: 'Immich is down',
   body: 'Not running: web.',
   read: false,
 })

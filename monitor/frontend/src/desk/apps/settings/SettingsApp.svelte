@@ -13,6 +13,8 @@
   import AgentSection from './AgentSection.svelte'
   import AgentMemoryPage from './AgentMemoryPage.svelte'
   import AgentPermissionsPage from './AgentPermissionsPage.svelte'
+  import AgentMcpPage from './AgentMcpPage.svelte'
+  import AgentSkillsPage from './AgentSkillsPage.svelte'
   import AgentProviderPage from './AgentProviderPage.svelte'
   import AppearanceSection from './AppearanceSection.svelte'
   import AppPage from './AppPage.svelte'
@@ -94,6 +96,15 @@
   const agentPermissions = $derived(current === 'agent' && (win.appState as { page?: unknown } | null)?.page === 'permissions')
   function openPermissions() {
     win.setAppState({ section: 'agent', page: 'permissions' })
+  }
+  /// The MCP servers and the skills, pages over Agent (`page: 'mcp' | 'skills'`).
+  const agentExtra = $derived.by(() => {
+    if (current !== 'agent') return null
+    const page = (win.appState as { page?: unknown } | null)?.page
+    return page === 'mcp' || page === 'skills' ? page : null
+  })
+  function openAgentPage(page: 'mcp' | 'skills') {
+    win.setAppState({ section: 'agent', page })
   }
   function openMemory(file: string | null = null) {
     win.setAppState(file === null ? { section: 'agent', page: 'memory' } : { section: 'agent', page: 'memory', file })
@@ -185,6 +196,8 @@
         ? 'appearance/store'
         : agentPermissions
           ? 'agent/permissions'
+          : agentExtra
+          ? `agent/${agentExtra}`
           : agentMemory
           ? agentMemory.file === null
             ? 'agent/memory'
@@ -192,14 +205,14 @@
           : agentProvider
             ? `agent/${agentProvider}`
             : current}
-    depth={stackPage || appPage || storePage || agentPermissions ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
+    depth={stackPage || appPage || storePage || agentPermissions || agentExtra ? 1 : agentMemory ? (agentMemory.file === null ? 1 : 2) : agentProvider ? (agentProvider === 'new' ? 1 : 2) : 0}
     back={stackPage
       ? { key: 'apps', go: () => show('apps') }
       : appPage
       ? { key: 'apps', go: leaveApp }
       : storePage
         ? { key: 'appearance', go: leaveStore }
-        : agentPermissions
+        : agentPermissions || agentExtra
           ? { key: 'agent', go: () => show('agent') }
           : agentMemory
           ? agentMemory.file === null
@@ -232,6 +245,10 @@
     <ServerSection />
   {:else if current === 'agent' && agentPermissions}
     <AgentPermissionsPage onback={() => show('agent')} />
+  {:else if current === 'agent' && agentExtra === 'mcp'}
+    <AgentMcpPage onback={() => show('agent')} />
+  {:else if current === 'agent' && agentExtra === 'skills'}
+    <AgentSkillsPage onback={() => show('agent')} />
   {:else if current === 'agent' && agentMemory}
     <AgentMemoryPage
       file={agentMemory.file}
@@ -241,7 +258,13 @@
   {:else if current === 'agent' && agentProvider}
     <AgentProviderPage provider={agentProvider} onback={() => show('agent')} onopen={openProvider} />
   {:else if current === 'agent'}
-    <AgentSection onprovider={openProvider} onmemory={() => openMemory()} onpermissions={openPermissions} />
+    <AgentSection
+      onprovider={openProvider}
+      onmemory={() => openMemory()}
+      onpermissions={openPermissions}
+      onmcp={() => openAgentPage('mcp')}
+      onskills={() => openAgentPage('skills')}
+    />
   {:else}
     <AccessSection />
   {/if}

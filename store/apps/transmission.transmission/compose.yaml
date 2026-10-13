@@ -1,0 +1,33 @@
+# Transmission 4.1.3, https://github.com/transmission/transmission/releases/tag/4.1.3
+#
+# Upstream publishes no container image and no compose file. The image is
+# linuxserver.io's (https://github.com/linuxserver/docker-transmission, GPL-3.0),
+# Alpine based, amd64 and arm64. Written for ServerBox Monitor's Downloads app:
+# - no `name:` and no `container_name`: the agent names the project;
+# - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
+# - USER/PASS switch on the web interface's password (see manifest [login]);
+# - PEERPORT makes the container listen on the published peer port.
+
+services:
+  transmission:
+    image: lscr.io/linuxserver/transmission:${TRANSMISSION_IMAGE_TAG}
+    environment:
+      PUID: ${SBM_UID}
+      PGID: ${SBM_GID}
+      TZ: ${SBM_TZ}
+      USER: ${TRANSMISSION_USER}
+      PASS: ${TRANSMISSION_PASS}
+      PEERPORT: ${TORRENT_PORT}
+    volumes:
+      - ${TRANSMISSION_CONFIG}:/config
+      - ${DOWNLOADS_LOCATION}:/downloads
+    ports:
+      - '${TRANSMISSION_BIND}:${TRANSMISSION_PORT}:9091'
+      - '${TORRENT_PORT}:${TORRENT_PORT}'
+      - '${TORRENT_PORT}:${TORRENT_PORT}/udp'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9091 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -14,7 +14,27 @@ macro_rules! app {
 }
 
 /// Every built-in app's files, by app id.
-const FILES: &[(&str, &[(&str, &str)])] = &[app!("futo.immich": "manifest.toml", "compose.yaml", "hwaccel.ml.yml", "hwaccel.transcoding.yml")];
+const FILES: &[(&str, &[(&str, &str)])] = &[
+    app!("adguard.adguard_home": "manifest.toml", "compose.yaml"),
+    app!("coder.code_server": "manifest.toml", "compose.yaml"),
+    app!("freshrss.freshrss": "manifest.toml", "compose.yaml"),
+    app!("futo.immich": "manifest.toml", "compose.yaml", "hwaccel.ml.yml", "hwaccel.transcoding.yml"),
+    app!("gotson.komga": "manifest.toml", "compose.yaml"),
+    app!("homeassistant.home_assistant": "manifest.toml", "compose.yaml"),
+    app!("janeczku.calibre_web": "manifest.toml", "compose.yaml"),
+    app!("jellyfin.jellyfin": "manifest.toml", "compose.yaml", "hwaccel.yml"),
+    app!("louislam.uptime_kuma": "manifest.toml", "compose.yaml"),
+    app!("mayswind.ariang": "manifest.toml", "compose.yaml", "ariang.Dockerfile"),
+    app!("navidrome.navidrome": "manifest.toml", "compose.yaml"),
+    app!("nextcloud.nextcloud": "manifest.toml", "compose.yaml"),
+    app!("openlistteam.openlist": "manifest.toml", "compose.yaml"),
+    app!("qbittorrent.qbittorrent": "manifest.toml", "compose.yaml"),
+    app!("stirling.pdf": "manifest.toml", "compose.yaml"),
+    app!("syncthing.syncthing": "manifest.toml", "compose.yaml"),
+    app!("transmission.transmission": "manifest.toml", "compose.yaml"),
+    app!("usememos.memos": "manifest.toml", "compose.yaml"),
+    app!("vaultwarden.server": "manifest.toml", "compose.yaml"),
+];
 
 static PACKAGES: LazyLock<Vec<Package>> = LazyLock::new(|| {
     FILES

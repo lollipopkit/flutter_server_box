@@ -80,6 +80,28 @@ local_apps = "/srv/sbm-apps"
 Restart the agent after adding or changing a local app. Local app packages are
 read from the configured folder; the agent does not copy them into the catalog.
 
+## Shared folder and first sign-in
+
+Apps that download, play or serve files use one shared folder, so a
+downloader's files show up in a media server's library. Its subfolders are
+`downloads`, `media/movies`, `media/tv`, `music`, `books`, `comics` and
+`documents`. By default it is `shared/` next to the agent's database; set
+another location with:
+
+```toml
+[stacks]
+shared_dir = "/srv/media"
+```
+
+Apps run as the owner of that folder, so change its owner to choose which
+user's files they create. Removing an app never deletes anything in the shared
+folder.
+
+When an app has an administrator account, the agent creates it with a
+generated password where the app allows that. An administrator can see the
+account and, after entering their own password, the generated password under
+**Sign-in** on the app's page.
+
 ## App windows and reverse proxies
 
 By default, each deployed app has its own proxy port in the range 3780–3799 on

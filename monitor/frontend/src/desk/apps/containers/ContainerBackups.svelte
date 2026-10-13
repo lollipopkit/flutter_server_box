@@ -221,7 +221,7 @@
           <Row
             label={s.container}
             value={mountText(s.mount)}
-            sub={s.why === 'system' ? $LL.containerBackupSkippedSystem() : $LL.containerBackupSkippedFile()}
+            sub={s.why === 'system' ? $LL.containerBackupSkippedSystem() : s.why === 'shared' ? $LL.containerBackupSkippedShared() : $LL.containerBackupSkippedFile()}
           />
         {/each}
         <div class="flex justify-end gap-[9px] px-[13px] py-[9px]">

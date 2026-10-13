@@ -14,10 +14,11 @@
   import { servers } from '../../lib/servers.svelte'
   import type { StackApp, StackHealth, StackJob } from '../../types'
   import { healthBadge } from './health'
+  import StackLogin from './StackLogin.svelte'
   import StackProgress from './StackProgress.svelte'
   import StackRemove from './StackRemove.svelte'
   import StackSetup from './StackSetup.svelte'
-  import { STACK_APPS } from './apps'
+  import { stackAppId } from './apps'
   import { noticeText } from './notices'
   import { stackRefusal } from './refusal'
   import { mib, pick } from './text'
@@ -43,7 +44,7 @@
   const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
   const title = $derived(app ? pick(app.manifest.title, $locale) : '')
   const stack = $derived(app?.stack ?? null)
-  const appId = $derived(STACK_APPS[stackId])
+  const appId = $derived(stackAppId(stackId))
   const tr = (text: Record<string, string> | null | undefined) => pick(text, $locale)
 
   async function load(serverId = servers.currentId) {
@@ -164,6 +165,9 @@
         {/if}
         {#if stack.last_error}<Row label={$LL.stackFailed()} value={stack.last_error} mono />{/if}
       </Group>
+      {#if admin && stack.state === 'installed' && app.manifest.login}
+        <StackLogin {stackId} login={app.manifest.login} name={title} />
+      {/if}
       {#if admin}
         <div class="flex flex-wrap justify-end gap-[9px]">
           <Button variant="destructive" onclick={() => (removing = true)}>{$LL.stackRemove()}</Button>

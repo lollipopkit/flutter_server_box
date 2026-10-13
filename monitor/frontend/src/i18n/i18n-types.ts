@@ -7887,6 +7887,129 @@ type RootTranslation = {
 	 */
 	settingsAgentMemorySub: string
 	/**
+	 * M​C​P​ ​s​e​r​v​e​r​s
+	 */
+	settingsAgentMcp: string
+	/**
+	 * T​o​o​l​s​ ​f​r​o​m​ ​o​t​h​e​r​ ​s​e​r​v​i​c​e​s​ ​f​o​r​ ​t​h​e​ ​a​g​e​n​t
+	 */
+	settingsAgentMcpSub: string
+	/**
+	 * T​a​s​k​s​ ​g​e​t​ ​t​h​e​ ​t​o​o​l​s​ ​o​f​ ​t​h​e​s​e​ ​s​e​r​v​e​r​s​.​ ​A​ ​t​o​o​l​ ​t​h​a​t​ ​s​a​y​s​ ​i​t​ ​o​n​l​y​ ​r​e​a​d​s​ ​r​u​n​s​;​ ​a​n​y​ ​o​t​h​e​r​ ​g​o​e​s​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​t​a​s​k​'​s​ ​p​e​r​m​i​s​s​i​o​n​ ​m​o​d​e​,​ ​a​s​ ​a​ ​c​o​m​m​a​n​d​ ​d​o​e​s​.​ ​A​ ​t​o​k​e​n​ ​i​s​ ​w​r​i​t​t​e​n​ ​h​e​r​e​ ​a​n​d​ ​n​e​v​e​r​ ​s​h​o​w​n​ ​a​g​a​i​n​.
+	 */
+	settingsAgentMcpAbout: string
+	/**
+	 * S​e​n​d​s​ ​{​n​a​m​e​s​}
+	 * @param {unknown} names
+	 */
+	settingsAgentMcpHeaders: RequiredParams<'names'>
+	/**
+	 * O​n
+	 */
+	settingsAgentMcpEnabled: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	settingsAgentMcpStatus: string
+	/**
+	 * {​n​}​ ​t​o​o​l​s
+	 * @param {unknown} n
+	 */
+	settingsAgentMcpTools: RequiredParams<'n'>
+	/**
+	 * N​o​t​ ​c​o​n​n​e​c​t​e​d
+	 */
+	settingsAgentMcpOffline: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	settingsAgentMcpReadOnly: string
+	/**
+	 * N​e​w​ ​{​h​e​a​d​e​r​}​ ​v​a​l​u​e
+	 * @param {unknown} header
+	 */
+	settingsAgentMcpReplaceToken: RequiredParams<'header'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	settingsAgentMcpRemove: string
+	/**
+	 * N​o​ ​s​e​r​v​e​r​s
+	 */
+	settingsAgentMcpEmpty: string
+	/**
+	 * A​d​d​ ​s​e​r​v​e​r
+	 */
+	settingsAgentMcpAdd: string
+	/**
+	 * N​a​m​e
+	 */
+	settingsAgentMcpName: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	settingsAgentMcpUrl: string
+	/**
+	 * S​t​r​e​a​m​a​b​l​e​ ​H​T​T​P​:​ ​h​t​t​p​s​:​/​/​,​ ​o​r​ ​h​t​t​p​:​/​/​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	settingsAgentMcpUrlHint: string
+	/**
+	 * H​e​a​d​e​r
+	 */
+	settingsAgentMcpHeader: string
+	/**
+	 * V​a​l​u​e
+	 */
+	settingsAgentMcpToken: string
+	/**
+	 * S​k​i​l​l​s
+	 */
+	settingsAgentSkills: string
+	/**
+	 * I​n​s​t​r​u​c​t​i​o​n​s​ ​t​h​e​ ​a​g​e​n​t​ ​l​o​a​d​s​ ​f​o​r​ ​a​ ​t​a​s​k
+	 */
+	settingsAgentSkillsSub: string
+	/**
+	 * E​a​c​h​ ​t​a​s​k​ ​i​s​ ​t​o​l​d​ ​w​h​a​t​ ​t​h​e​ ​e​n​a​b​l​e​d​ ​s​k​i​l​l​s​ ​a​r​e​ ​f​o​r​ ​a​n​d​ ​l​o​a​d​s​ ​o​n​e​ ​w​h​e​n​ ​t​h​e​ ​t​a​s​k​ ​m​a​t​c​h​e​s​ ​i​t​.​ ​F​o​l​d​e​r​s​ ​p​u​t​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​s​k​i​l​l​s​ ​d​i​r​e​c​t​o​r​y​ ​a​r​e​ ​l​i​s​t​e​d​ ​t​o​o​.
+	 */
+	settingsAgentSkillsAbout: string
+	/**
+	 * O​n
+	 */
+	settingsAgentSkillsEnabled: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	settingsAgentSkillsRemove: string
+	/**
+	 * N​o​ ​s​k​i​l​l​s
+	 */
+	settingsAgentSkillsEmpty: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	settingsAgentSkillsInstall: string
+	/**
+	 * G​i​t​H​u​b​ ​r​e​p​o​s​i​t​o​r​y
+	 */
+	settingsAgentSkillsSource: string
+	/**
+	 * o​w​n​e​r​/​r​e​p​o​,​ ​o​w​n​e​r​/​r​e​p​o​@​s​k​i​l​l​,​ ​a​ ​g​i​t​h​u​b​.​c​o​m​ ​a​d​d​r​e​s​s​,​ ​o​r​ ​a​n​ ​n​p​x​ ​s​k​i​l​l​s​ ​a​d​d​ ​l​i​n​e​.
+	 */
+	settingsAgentSkillsSourceHint: string
+	/**
+	 * N​o​ ​s​k​i​l​l​ ​w​a​s​ ​f​o​u​n​d​ ​t​h​e​r​e​.
+	 */
+	settingsAgentSkillsNone: string
+	/**
+	 * T​o​o​ ​m​a​n​y​ ​s​k​i​l​l​s​:​ ​r​e​m​o​v​e​ ​s​o​m​e​ ​f​i​r​s​t​.
+	 */
+	settingsAgentSkillsTooMany: string
+	/**
+	 * N​o​t​ ​a​ ​G​i​t​H​u​b​ ​r​e​p​o​s​i​t​o​r​y​.
+	 */
+	settingsAgentSkillsBadSource: string
+	/**
 	 * W​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​m​e​m​b​e​r​s​ ​a​c​r​o​s​s​ ​y​o​u​r​ ​t​a​s​k​s​:​ ​t​e​x​t​ ​f​i​l​e​s​ ​i​t​ ​r​e​a​d​s​ ​a​n​d​ ​k​e​e​p​s​ ​u​p​ ​t​o​ ​d​a​t​e​.​ ​Y​o​u​r​s​ ​a​l​o​n​e​;​ ​M​E​M​O​R​Y​.​m​d​ ​i​s​ ​i​t​s​ ​i​n​d​e​x​,​ ​r​e​a​d​ ​a​t​ ​t​h​e​ ​s​t​a​r​t​ ​o​f​ ​e​v​e​r​y​ ​t​a​s​k​.
 	 */
 	settingsAgentMemoryAbout: string
@@ -8009,10 +8132,6 @@ type RootTranslation = {
 	 */
 	settingsAgentAutoShowDefaults: RequiredParams<'n'>
 	/**
-	 * P​h​o​t​o​s
-	 */
-	photos: string
-	/**
 	 * p​h​o​t​o​s​ ​p​i​c​t​u​r​e​s​ ​v​i​d​e​o​s​ ​g​a​l​l​e​r​y​ ​i​m​m​i​c​h
 	 */
 	photosKeywords: string
@@ -8090,6 +8209,10 @@ type RootTranslation = {
 	 * D​o​w​n​l​o​a​d​s​ ​c​o​n​t​a​i​n​e​r​ ​i​m​a​g​e​s​ ​f​r​o​m​ ​t​h​e​i​r​ ​r​e​g​i​s​t​r​i​e​s​.
 	 */
 	stackNoticePullsImages: string
+	/**
+	 * B​u​i​l​d​s​ ​a​ ​c​o​n​t​a​i​n​e​r​ ​i​m​a​g​e​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​f​r​o​m​ ​a​ ​D​o​c​k​e​r​f​i​l​e​ ​i​n​ ​t​h​e​ ​a​p​p​'​s​ ​p​a​c​k​a​g​e​.
+	 */
+	stackNoticeBuildsImages: string
 	/**
 	 * K​e​e​p​s​ ​i​t​s​ ​d​a​t​a​ ​i​n​ ​f​o​l​d​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
@@ -8175,6 +8298,47 @@ type RootTranslation = {
 	 * N​o​ ​f​r​e​e​ ​p​o​r​t​ ​i​s​ ​l​e​f​t​ ​f​o​r​ ​t​h​e​ ​a​p​p​'​s​ ​w​i​n​d​o​w​ ​(​3​7​8​0​–​3​7​9​9​)​.
 	 */
 	stackNoProxyPort: string
+	/**
+	 * T​h​e​ ​s​h​a​r​e​d​ ​f​o​l​d​e​r​ ​f​o​r​ ​a​p​p​s​ ​c​a​n​n​o​t​ ​b​e​ ​m​a​d​e​.​ ​C​h​e​c​k​ ​[​s​t​a​c​k​s​]​ ​s​h​a​r​e​d​_​d​i​r​.
+	 */
+	stackSharedUnavailable: string
+	/**
+	 * U​D​P​ ​p​o​r​t​.
+	 */
+	stackPortUdp: string
+	/**
+	 * T​C​P​ ​a​n​d​ ​U​D​P​ ​p​o​r​t​.
+	 */
+	stackPortBoth: string
+	/**
+	 * S​i​g​n​-​i​n
+	 */
+	stackLogin: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	stackLoginUser: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	stackLoginPassword: string
+	/**
+	 * C​o​p​y
+	 */
+	stackLoginCopy: string
+	/**
+	 * S​h​o​w​ ​p​a​s​s​w​o​r​d
+	 */
+	stackLoginShow: string
+	/**
+	 * H​i​d​e​ ​p​a​s​s​w​o​r​d
+	 */
+	stackLoginHide: string
+	/**
+	 * E​n​t​e​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​h​o​w​ ​{​n​a​m​e​}​'​s​ ​s​i​g​n​-​i​n​ ​p​a​s​s​w​o​r​d​.
+	 * @param {unknown} name
+	 */
+	stackLoginReauth: RequiredParams<'name'>
 	/**
 	 * S​e​t​t​i​n​g​ ​u​p​ ​{​n​a​m​e​}​…
 	 * @param {unknown} name
@@ -8307,6 +8471,10 @@ type RootTranslation = {
 	 * I​m​a​g​e​s
 	 */
 	stackImages: string
+	/**
+	 * B​u​i​l​t​ ​h​e​r​e
+	 */
+	stackBuilt: string
 	/**
 	 * D​a​t​a​ ​f​o​l​d​e​r​s
 	 */
@@ -8612,6 +8780,10 @@ type RootTranslation = {
 	 * L​e​f​t​ ​o​u​t​:​ ​a​ ​f​i​l​e​,​ ​n​o​t​ ​a​ ​f​o​l​d​e​r
 	 */
 	containerBackupSkippedFile: string
+	/**
+	 * L​e​f​t​ ​o​u​t​:​ ​t​h​e​ ​f​o​l​d​e​r​ ​w​e​b​ ​a​p​p​s​ ​s​h​a​r​e
+	 */
+	containerBackupSkippedShared: string
 	/**
 	 * R​e​s​t​o​r​e
 	 */
@@ -17488,6 +17660,126 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentMemorySub: () => LocalizedString
 	/**
+	 * MCP servers
+	 */
+	settingsAgentMcp: () => LocalizedString
+	/**
+	 * Tools from other services for the agent
+	 */
+	settingsAgentMcpSub: () => LocalizedString
+	/**
+	 * Tasks get the tools of these servers. A tool that says it only reads runs; any other goes through the task's permission mode, as a command does. A token is written here and never shown again.
+	 */
+	settingsAgentMcpAbout: () => LocalizedString
+	/**
+	 * Sends {names}
+	 */
+	settingsAgentMcpHeaders: (arg: { names: unknown }) => LocalizedString
+	/**
+	 * On
+	 */
+	settingsAgentMcpEnabled: () => LocalizedString
+	/**
+	 * Status
+	 */
+	settingsAgentMcpStatus: () => LocalizedString
+	/**
+	 * {n} tools
+	 */
+	settingsAgentMcpTools: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Not connected
+	 */
+	settingsAgentMcpOffline: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	settingsAgentMcpReadOnly: () => LocalizedString
+	/**
+	 * New {header} value
+	 */
+	settingsAgentMcpReplaceToken: (arg: { header: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	settingsAgentMcpRemove: () => LocalizedString
+	/**
+	 * No servers
+	 */
+	settingsAgentMcpEmpty: () => LocalizedString
+	/**
+	 * Add server
+	 */
+	settingsAgentMcpAdd: () => LocalizedString
+	/**
+	 * Name
+	 */
+	settingsAgentMcpName: () => LocalizedString
+	/**
+	 * Address
+	 */
+	settingsAgentMcpUrl: () => LocalizedString
+	/**
+	 * Streamable HTTP: https://, or http:// on this machine.
+	 */
+	settingsAgentMcpUrlHint: () => LocalizedString
+	/**
+	 * Header
+	 */
+	settingsAgentMcpHeader: () => LocalizedString
+	/**
+	 * Value
+	 */
+	settingsAgentMcpToken: () => LocalizedString
+	/**
+	 * Skills
+	 */
+	settingsAgentSkills: () => LocalizedString
+	/**
+	 * Instructions the agent loads for a task
+	 */
+	settingsAgentSkillsSub: () => LocalizedString
+	/**
+	 * Each task is told what the enabled skills are for and loads one when the task matches it. Folders put in the agent's skills directory are listed too.
+	 */
+	settingsAgentSkillsAbout: () => LocalizedString
+	/**
+	 * On
+	 */
+	settingsAgentSkillsEnabled: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	settingsAgentSkillsRemove: () => LocalizedString
+	/**
+	 * No skills
+	 */
+	settingsAgentSkillsEmpty: () => LocalizedString
+	/**
+	 * Install
+	 */
+	settingsAgentSkillsInstall: () => LocalizedString
+	/**
+	 * GitHub repository
+	 */
+	settingsAgentSkillsSource: () => LocalizedString
+	/**
+	 * owner/repo, owner/repo@skill, a github.com address, or an npx skills add line.
+	 */
+	settingsAgentSkillsSourceHint: () => LocalizedString
+	/**
+	 * No skill was found there.
+	 */
+	settingsAgentSkillsNone: () => LocalizedString
+	/**
+	 * Too many skills: remove some first.
+	 */
+	settingsAgentSkillsTooMany: () => LocalizedString
+	/**
+	 * Not a GitHub repository.
+	 */
+	settingsAgentSkillsBadSource: () => LocalizedString
+	/**
 	 * What the agent remembers across your tasks: text files it reads and keeps up to date. Yours alone; MEMORY.md is its index, read at the start of every task.
 	 */
 	settingsAgentMemoryAbout: () => LocalizedString
@@ -17608,10 +17900,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentAutoShowDefaults: (arg: { n: unknown }) => LocalizedString
 	/**
-	 * Photos
-	 */
-	photos: () => LocalizedString
-	/**
 	 * photos pictures videos gallery immich
 	 */
 	photosKeywords: () => LocalizedString
@@ -17683,6 +17971,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Downloads container images from their registries.
 	 */
 	stackNoticePullsImages: () => LocalizedString
+	/**
+	 * Builds a container image on this machine from a Dockerfile in the app's package.
+	 */
+	stackNoticeBuildsImages: () => LocalizedString
 	/**
 	 * Keeps its data in folders on this machine.
 	 */
@@ -17763,6 +18055,46 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * No free port is left for the app's window (3780–3799).
 	 */
 	stackNoProxyPort: () => LocalizedString
+	/**
+	 * The shared folder for apps cannot be made. Check [stacks] shared_dir.
+	 */
+	stackSharedUnavailable: () => LocalizedString
+	/**
+	 * UDP port.
+	 */
+	stackPortUdp: () => LocalizedString
+	/**
+	 * TCP and UDP port.
+	 */
+	stackPortBoth: () => LocalizedString
+	/**
+	 * Sign-in
+	 */
+	stackLogin: () => LocalizedString
+	/**
+	 * Account
+	 */
+	stackLoginUser: () => LocalizedString
+	/**
+	 * Password
+	 */
+	stackLoginPassword: () => LocalizedString
+	/**
+	 * Copy
+	 */
+	stackLoginCopy: () => LocalizedString
+	/**
+	 * Show password
+	 */
+	stackLoginShow: () => LocalizedString
+	/**
+	 * Hide password
+	 */
+	stackLoginHide: () => LocalizedString
+	/**
+	 * Enter your password to show {name}'s sign-in password.
+	 */
+	stackLoginReauth: (arg: { name: unknown }) => LocalizedString
 	/**
 	 * Setting up {name}…
 	 */
@@ -17887,6 +18219,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Images
 	 */
 	stackImages: () => LocalizedString
+	/**
+	 * Built here
+	 */
+	stackBuilt: () => LocalizedString
 	/**
 	 * Data folders
 	 */
@@ -18179,6 +18515,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Left out: a file, not a folder
 	 */
 	containerBackupSkippedFile: () => LocalizedString
+	/**
+	 * Left out: the folder web apps share
+	 */
+	containerBackupSkippedShared: () => LocalizedString
 	/**
 	 * Restore
 	 */

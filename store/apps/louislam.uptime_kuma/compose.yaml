@@ -1,0 +1,30 @@
+# Uptime Kuma 2.5.6 (MIT), https://github.com/louislam/uptime-kuma/tree/2.5.6
+#
+# Adapted from the release's compose.yaml (the `louislam/uptime-kuma:2` service)
+# for ServerBox Monitor's Uptime app (2026-10-13):
+# - no `name:` and no `container_name`: the agent names the project;
+# - the `-rootless` image, run as the user the agent gives the data folder
+#   (the image's own user is `node`, uid 1000), so the folder keeps its owner;
+# - SQLite is chosen here, so the first run goes straight to the account page
+#   instead of the database chooser (UPTIME_KUMA_DB_TYPE);
+# - the published address and port come from the env file the agent writes.
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:${UPTIME_KUMA_VERSION}-rootless
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+      UPTIME_KUMA_DB_TYPE: sqlite
+    volumes:
+      - ${UPTIME_KUMA_DATA_LOCATION}:/app/data
+    ports:
+      - '${UPTIME_KUMA_WEB_BIND}:${UPTIME_KUMA_WEB_PORT}:3001'
+    restart: unless-stopped
+    # The image's own check, with its own timings (Dockerfile, release stage).
+    healthcheck:
+      test: ["CMD", "extra/healthcheck"]
+      interval: 60s
+      timeout: 30s
+      start_period: 180s
+      retries: 5

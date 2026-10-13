@@ -252,6 +252,7 @@ impl AppState {
             stacks: Arc::new(crate::stacks::Stacks::new(
                 sqlite_file_of(&db).as_deref(),
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
+                config.get_stacks().shared_dir.as_deref().map(std::path::Path::new),
             )),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
@@ -564,6 +565,21 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::agent::put_settings)),
             )
             .service(web::resource("/agent/choices").route(web::get().to(crate::api::agent::choices)))
+            .service(
+                web::resource("/agent/mcp")
+                    .route(web::get().to(crate::api::agent::get_mcp))
+                    .route(web::put().to(crate::api::agent::put_mcp)),
+            )
+            .service(
+                web::resource("/agent/skills")
+                    .route(web::get().to(crate::api::agent::get_skills))
+                    .route(web::post().to(crate::api::agent::install_skill)),
+            )
+            .service(
+                web::resource("/agent/skills/{dir}")
+                    .route(web::put().to(crate::api::agent::put_skill))
+                    .route(web::delete().to(crate::api::agent::delete_skill)),
+            )
             .service(web::resource("/agent/models").route(web::get().to(crate::api::agent::models)))
             .service(web::resource("/agent/models/probe").route(web::post().to(crate::api::agent::probe)))
             .service(
@@ -641,6 +657,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/stacks/{id}/job").route(web::get().to(crate::api::stacks::job)))
             .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(crate::api::stacks::cancel)))
             .service(web::resource("/stacks/{id}/services").route(web::get().to(crate::api::stacks::services)))
+            .service(web::resource("/stacks/{id}/login").route(web::post().to(crate::api::stacks::login)))
             .service(web::resource("/stacks/{id}/enter").route(web::post().to(crate::api::stacks::enter)))
             .service(
                 web::resource("/desk/apps/{app}/storage")

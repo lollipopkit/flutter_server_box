@@ -143,6 +143,9 @@ pub struct Target {
     pub tls: Option<Arc<rustls::ServerConfig>>,
     /// Origins besides the agent's own host that may frame the app.
     pub frame_origins: Vec<String>,
+    /// Sent to the service on a request without its own (`[web]
+    /// basic_auth`); never to the browser.
+    pub authorization: Option<HeaderValue>,
 }
 
 impl Drop for Proxies {
@@ -174,6 +177,7 @@ impl Proxies {
                 && l.secure == target.tls.is_some()
             {
                 l.upstream.store(target.upstream_port, Ordering::Relaxed);
+                *l.ctx.authorization.lock().unwrap_or_else(|e| e.into_inner()) = target.authorization;
                 return Ok(());
             }
         }
@@ -189,6 +193,7 @@ impl Proxies {
             upstream_port: upstream.clone(),
             secure: target.tls.is_some(),
             frame_origins: target.frame_origins,
+            authorization: Mutex::new(target.authorization),
             client: Client::builder(TokioExecutor::new()).build(HttpConnector::new()),
         });
         let kept = ctx.clone();
@@ -333,6 +338,9 @@ struct Ctx {
     upstream_port: Arc<AtomicU16>,
     secure: bool,
     frame_origins: Vec<String>,
+    /// [Target::authorization], new settings changing it under a listener
+    /// that stays.
+    authorization: Mutex<Option<HeaderValue>>,
     client: Client<HttpConnector, Incoming>,
 }
 
@@ -561,6 +569,11 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr, secure:
     headers.insert("x-forwarded-proto", HeaderValue::from_static(if secure { "https" } else { "http" }));
     if let Ok(v) = HeaderValue::from_str(&host) {
         headers.insert("x-forwarded-host", v);
+    }
+    if !headers.contains_key(header::AUTHORIZATION)
+        && let Some(auth) = ctx.authorization.lock().unwrap_or_else(|e| e.into_inner()).clone()
+    {
+        headers.insert(header::AUTHORIZATION, auth);
     }
 
     let mut resp = match ctx.client.request(req).await {

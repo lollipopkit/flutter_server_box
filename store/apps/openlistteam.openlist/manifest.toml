@@ -1,0 +1,84 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# OpenList, the OpenList Team's fork of AList, deployed with its official Docker image.
+
+schema = 1
+publisher = "openlistteam"
+name = "openlist"
+project = "OpenList"
+developer = "OpenList Team"
+version = "v4.2.6"
+homepage = "https://oplist.org"
+source = "https://github.com/OpenListTeam/OpenList/tree/v4.2.6"
+glyph = "folder_open"
+tone = "violet"
+categories = ["files"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "OpenList"
+
+[description]
+en = "Browse and manage files across multiple storage providers with OpenList, the OpenList Team's fork of AList."
+zh = "使用 OpenList（OpenList Team 维护的 AList 分支）浏览和管理多个存储服务中的文件。"
+zh-TW = "使用 OpenList（OpenList Team 維護的 AList 分支）瀏覽與管理多個儲存服務中的檔案。"
+
+[license]
+spdx = "AGPL-3.0-only"
+url = "https://github.com/OpenListTeam/OpenList/blob/v4.2.6/LICENSE"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "web"
+path = "/"
+
+[login]
+user = "admin"
+password = "ADMIN_PASSWORD"
+note = { en = "Add the shared folder as Local storage at /opt/openlist/shared to browse downloads and media beside your cloud drives.", zh = "将共享文件夹以“本机存储”添加，路径为 /opt/openlist/shared，即可与网盘一起浏览下载和媒体文件。", zh-TW = "將共用資料夾以「本機儲存」新增，路徑為 /opt/openlist/shared，即可與雲端硬碟一起瀏覽下載與媒體檔案。" }
+
+[env]
+OPENLIST_VERSION = "v4.2.6"
+
+[[secrets]]
+env = "ADMIN_PASSWORD"
+length = 32
+
+[[settings]]
+key = "data"
+type = "path"
+env = "OPENLIST_DATA"
+default = "{stack}/data"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "OpenList database, configuration, logs and search index.", zh = "OpenList 数据库、配置、日志和搜索索引。", zh-TW = "OpenList 資料庫、設定、記錄與搜尋索引。" }
+
+[[settings]]
+key = "shared"
+type = "path"
+env = "OPENLIST_SHARED"
+default = "{shared}"
+label = { en = "Shared folder", zh = "共享文件夹", zh-TW = "共用資料夾" }
+help = { en = "The folder the other apps share, at /opt/openlist/shared.", zh = "其他应用共用的文件夹，位于 /opt/openlist/shared。", zh-TW = "其他應用共用的資料夾，位於 /opt/openlist/shared。" }
+
+[[settings]]
+key = "web"
+type = "port"
+env = "OPENLIST_WEB_PORT"
+default = 5244
+label = { en = "Web port", zh = "Web 端口", zh-TW = "Web 連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For WebDAV clients and links shared with others. Off: only through the desk.", zh = "供 WebDAV 客户端和分享给他人的链接使用。关闭时只能通过桌面访问。", zh-TW = "供 WebDAV 用戶端與分享給他人的連結使用。關閉時只能透過桌面存取。" }
+on = { OPENLIST_BIND = "0.0.0.0" }
+off = { OPENLIST_BIND = "127.0.0.1" }

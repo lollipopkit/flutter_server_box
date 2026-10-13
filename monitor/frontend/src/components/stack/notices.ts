@@ -8,6 +8,8 @@ export function noticeText(n: StackNotice, ll: TranslationFunctions): string {
   switch (n) {
     case 'pullsImages':
       return ll.stackNoticePullsImages()
+    case 'buildsImages':
+      return ll.stackNoticeBuildsImages()
     case 'bindsPaths':
       return ll.stackNoticeBindsPaths()
     case 'mountsHostFiles':

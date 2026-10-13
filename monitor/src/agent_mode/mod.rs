@@ -40,6 +40,8 @@ mod pi_file;
 pub mod files;
 mod memory;
 pub mod config;
+pub mod mcp;
+pub mod skills;
 pub mod permissions;
 mod prompt;
 mod search;
@@ -344,6 +346,10 @@ pub struct AgentMode {
     search_runs: Mutex<HashMap<i64, (u64, Cancel)>>,
     search_seq: std::sync::atomic::AtomicU64,
     hostname: String,
+    /// The MCP servers' connections, kept between tasks.
+    pub mcp: mcp::Hub,
+    /// Where the skills are (`skills::root`).
+    pub skills_root: PathBuf,
 }
 
 static TEMP: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -372,7 +378,7 @@ impl AgentMode {
         Self {
             db,
             files: files::Files::new(&dir),
-            store: Arc::new(DirectoryStore::new(dir)),
+            store: Arc::new(DirectoryStore::new(dir.clone())),
             owned,
             fetch: Arc::new(ReqwestFetch::new(client)),
             runtime: tokio::sync::Mutex::new(None),
@@ -388,6 +394,8 @@ impl AgentMode {
             search_runs: Mutex::default(),
             search_seq: std::sync::atomic::AtomicU64::new(0),
             hostname: hostname::get().map(|h| h.to_string_lossy().into_owned()).unwrap_or_else(|_| "localhost".into()),
+            mcp: mcp::Hub::default(),
+            skills_root: skills::root(&dir),
         }
     }
 
@@ -410,6 +418,11 @@ impl AgentMode {
     /// The built-in auto mode lists, for this machine.
     pub fn auto_defaults(&self) -> Value {
         permissions::defaults(&self.hostname, &prompt::os_name(), &prompt::system_user())
+    }
+
+    /// The network Agent mode uses: for MCP servers and skill downloads too.
+    pub fn fetch(&self) -> Arc<dyn fl_pi_llm::host::Fetch> {
+        self.fetch.clone()
     }
 
     pub fn hostname(&self) -> &str {
@@ -1048,8 +1061,20 @@ impl AgentMode {
         if let Some(m) = memory.prompt(true).await.map_err(|e| anyhow::anyhow!("memory: {e}"))? {
             system_prompt = format!("{system_prompt}\n\n{m}");
         }
+        if let Some(apps) = crate::stacks::agent_note(state).await {
+            system_prompt = format!("{system_prompt}\n\n{apps}");
+        }
         let mut tools = tools::all(state.clone(), Some(flow.clone()));
         tools.extend(fl_pi_llm::host::memory::tools(memory));
+        if let Some((prompt, tool)) = skills::for_task(&self.db, &self.skills_root).await {
+            system_prompt = format!("{system_prompt}\n\n{prompt}");
+            tools.push(tool);
+        }
+        let (mcp_tools, mcp_note) = self.mcp.tools_for(state, flow).await;
+        if let Some(note) = mcp_note {
+            system_prompt = format!("{system_prompt}\n\n{note}");
+        }
+        tools.extend(mcp_tools);
         let session = {
             let _open = self.opening.lock().await;
             let (session, events) = rt
