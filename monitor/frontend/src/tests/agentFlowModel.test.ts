@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Entry, Flow, Message } from '../lib/agentApi'
-import { byDay, changesMemory, columns, currentStep, deriveSteps, firstOf, splitAttachments, termRows } from '../desk/agent/flowModel'
+import { byDay, changesMemory, columns, currentStep, deriveSteps, firstOf, termRows } from '../desk/agent/flowModel'
 
 let seq = 0
 const entry = (message: Message): Entry => ({ id: `e${++seq}`, type: 'message', seq, message })
@@ -11,6 +11,19 @@ const result = (toolCallId: string, details: Record<string, unknown>, isError = 
   entry({ role: 'toolResult', toolCallId, content: [{ type: 'text', text: 'r' }], details, isError })
 
 describe('a task read from its session', () => {
+  it('shows the files the agent lists on a message, the prompt\'s and a reply\'s', () => {
+    const file = { name: 'app.log', mime: 'text/plain', size: '2.0 KiB' }
+    const entries = [
+      entry({ role: 'user', content: [{ type: 'text', text: 'why?' }], attachments: [file] }),
+      say('Looking.'),
+      entry({ role: 'user', content: [{ type: 'text', text: '' }], attachments: [{ ...file, name: 'more.log' }] }),
+    ]
+    const { prompt, files, steps } = deriveSteps(entries, 'done', null, null)
+    expect([prompt, files]).toEqual(['why?', [file]])
+    const mine = steps.flatMap((s) => s.chat).find((c) => c.me)
+    expect(mine?.files?.map((f) => f.name)).toEqual(['more.log'])
+  })
+
   it('makes a step of each tool call, with what the model said before it', () => {
     const entries = [
       user('update the packages'),
@@ -150,31 +163,3 @@ describe('the output', () => {
   })
 })
 
-describe('splitAttachments', () => {
-  it('takes the files out of a prompt and leaves the words', () => {
-    const text = [
-      'why does it fail?',
-      '',
-      '<attachments>',
-      'The person attached these files; they are on this machine, read them with commands.',
-      '- `app.log` (text/plain, 2.0 KiB) at `/data/agent/files/t/app.log`:',
-      '````',
-      '- `fake.txt` (text/plain, 1 B) at `/nope`',
-      '```',
-      '````',
-      '- `shot (2).png` (image/png, 340.0 KiB) at `/data/agent/files/t/shot (2).png` (the image is attached)',
-      '</attachments>',
-    ].join('\n')
-    expect(splitAttachments(text)).toEqual({
-      text: 'why does it fail?',
-      files: [
-        { name: 'app.log', mime: 'text/plain', size: '2.0 KiB' },
-        { name: 'shot (2).png', mime: 'image/png', size: '340.0 KiB' },
-      ],
-    })
-  })
-
-  it('leaves a prompt without the block alone', () => {
-    expect(splitAttachments('<attachments> are mentioned here')).toEqual({ text: '<attachments> are mentioned here', files: [] })
-  })
-})

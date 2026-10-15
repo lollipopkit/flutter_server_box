@@ -339,7 +339,14 @@
   <!-- The model's words look as they did while it wrote them; the account's are a bubble. -->
   {#each step.chat as m, i (i)}
     {#if m.me}
-      <div class="chat chat--me"><div class="chat__bubble">{m.text}</div></div>
+      <div class="chat chat--me">
+        <div class="chat__mine">
+          {#each m.files ?? [] as f, j (j)}
+            <span class="chat__file"><Icon name="attach_file" size={14} />{f.name}</span>
+          {/each}
+          {#if m.text}<div class="chat__bubble">{m.text}</div>{/if}
+        </div>
+      </div>
     {:else}
       <div class="say chat">
         <div class="orb"><Icon name="auto_awesome" size={16} fill color="var(--color-accent-text)" /></div>
@@ -656,8 +663,22 @@
   .chat--me {
     justify-content: flex-end;
   }
-  .chat__bubble {
+  .chat__mine {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-5);
     max-width: 80%;
+  }
+  .chat__file {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-5);
+    font-size: var(--text-12);
+    color: var(--text-secondary);
+  }
+  .chat__bubble {
+    max-width: 100%;
     padding: var(--space-9) var(--space-13);
     border-radius: var(--radius-card);
     background: var(--surface-selected);

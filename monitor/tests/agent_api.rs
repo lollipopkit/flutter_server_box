@@ -295,12 +295,14 @@ async fn attached_files_go_to_the_task_and_with_it() {
     assert_eq!(body["title"], "app.log");
     let id = body["id"].as_str().unwrap().to_string();
     let v = until(&srv, &id, |v| v["flow"]["status"] == "done").await;
-    let content = &v["entries"][0]["message"]["content"];
-    let text = content[0]["text"].as_str().unwrap();
-    assert!(text.starts_with("<attachments>"), "{v}");
-    assert!(text.contains("boom at 12:00"), "{v}");
-    assert_eq!(content[1]["type"], "image", "{v}");
-    let path = text.split("at `").nth(1).unwrap().split('`').next().unwrap().to_string();
+    // The prompt's block is served as the message's files, its words alone
+    // as the text.
+    let message = &v["entries"][0]["message"];
+    assert_eq!(message["content"][0]["text"], "", "{v}");
+    assert_eq!(message["content"][1]["type"], "image", "{v}");
+    let listed = message["attachments"].as_array().unwrap();
+    assert_eq!(listed.iter().map(|f| f["name"].as_str().unwrap()).collect::<Vec<_>>(), ["app.log", "shot.png"]);
+    let path = listed[0]["path"].as_str().unwrap().to_string();
     assert!(std::path::Path::new(&path).exists(), "{path}");
     // Used once.
     let (s, _) = call(&srv, true, Method::POST, "/api/v1/agent/flows", Some(json!({ "prompt": "again", "files": [log["id"]] }))).await;
@@ -311,8 +313,8 @@ async fn attached_files_go_to_the_task_and_with_it() {
     assert_eq!(s, 200, "{body}");
     let v = until(&srv, &id, |v| status(v) == "done" && v["entries"].as_array().is_some_and(|e| e.len() >= 4)).await;
     let second = v["entries"].as_array().unwrap().iter().filter(|e| e["message"]["role"] == "user").nth(1).unwrap();
-    let text = second["message"]["content"][0]["text"].as_str().unwrap();
-    assert!(text.starts_with("and this\n\n<attachments>") && text.contains("app (2).log") && text.contains("second"), "{v}");
+    assert_eq!(second["message"]["content"][0]["text"], "and this", "{v}");
+    assert_eq!(second["message"]["attachments"][0]["name"], "app (2).log", "{v}");
     let (s, _) = call(&srv, true, Method::DELETE, &format!("/api/v1/agent/flows/{id}"), None).await;
     assert_eq!(s, 204);
     assert!(!std::path::Path::new(&path).exists());

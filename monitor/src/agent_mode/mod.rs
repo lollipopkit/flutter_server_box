@@ -650,7 +650,8 @@ impl AgentMode {
     pub async fn detail(&self, state: &Arc<AppState>, user: i64, id: &str) -> Result<Option<Value>, FlowError> {
         let Some(view) = self.row(user, id).await? else { return Ok(None) };
         let active = self.active(user, id);
-        let entries = self.entries(state, id, active.as_ref()).await?;
+        let mut entries = self.entries(state, id, active.as_ref()).await?;
+        entries.iter_mut().for_each(files::annotate_entry);
         let (pending, output) = match &active {
             Some(f) => (f.pending.locked().as_ref().map(|p| p.view.clone()), f.output.locked().clone()),
             None => (None, None),
@@ -1120,7 +1121,10 @@ impl AgentMode {
     fn forward(&self, flow: Arc<Flow>, mut events: tokio::sync::mpsc::UnboundedReceiver<Value>) {
         let tx = self.events.clone();
         tokio::spawn(async move {
-            while let Some(e) = events.recv().await {
+            while let Some(mut e) = events.recv().await {
+                if e["type"] == "entry_added" {
+                    files::annotate_entry(&mut e["entry"]);
+                }
                 if e["type"] == "message_end" && e["message"]["role"] == "assistant" {
                     let text: String = e["message"]["content"].as_array().into_iter().flatten().filter(|c| c["type"] == "text").filter_map(|c| c["text"].as_str()).collect();
                     let line = first_line(text.trim(), 160);

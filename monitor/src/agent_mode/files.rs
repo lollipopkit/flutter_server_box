@@ -254,6 +254,80 @@ fn is_text(mime: &str, name: &str) -> bool {
         })
 }
 
+/// A file a prompt's `<attachments>` block lists, as the panel shows it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Listed {
+    pub name: String,
+    pub mime: String,
+    /// As [compose] wrote it (`2.0 KiB`).
+    pub size: String,
+    /// Where it is on this machine.
+    pub path: String,
+}
+
+const BLOCK_OPEN: &str = "<attachments>";
+const BLOCK_CLOSE: &str = "</attachments>";
+
+/// [compose] read back: [text] without its `<attachments>` block, and the
+/// files the block lists. `None` when [text] ends in no block.
+pub fn split_prompt(text: &str) -> Option<(String, Vec<Listed>)> {
+    let at = text.rfind(BLOCK_OPEN)?;
+    if !text.trim_end().ends_with(BLOCK_CLOSE) {
+        return None;
+    }
+    let mut files = Vec::new();
+    let mut fence: Option<&str> = None;
+    for line in text[at + BLOCK_OPEN.len()..].lines() {
+        if line.len() >= 3 && line.bytes().all(|b| b == b'`') {
+            fence = match fence {
+                None => Some(line),
+                Some(open) if open == line => None,
+                other => other,
+            };
+            continue;
+        }
+        if fence.is_some() {
+            continue;
+        }
+        let listed = (|| {
+            let (head, rest) = line.strip_prefix("- `")?.split_once(") at `")?;
+            let (name, inner) = head.rsplit_once("` (")?;
+            let (mime, size) = inner.split_once(", ")?;
+            let path = rest.rsplit_once('`')?.0;
+            Some(Listed { name: name.to_string(), mime: mime.to_string(), size: size.to_string(), path: path.to_string() })
+        })();
+        files.extend(listed);
+    }
+    Some((text[..at].trim_end().to_string(), files))
+}
+
+/// A session entry as the panel reads it: a user message whose text ends in
+/// an `<attachments>` block has the block taken out and its files put on the
+/// message as `attachments`. Everything else is left as it is.
+pub fn annotate_entry(entry: &mut Value) {
+    let message = &mut entry["message"];
+    if message["role"] != "user" {
+        return;
+    }
+    let annotated = match &mut message["content"] {
+        Value::String(text) => split_prompt(text).map(|(words, files)| {
+            *text = words;
+            files
+        }),
+        Value::Array(parts) => parts.iter_mut().find_map(|part| {
+            let Some(Value::String(text)) = part.get_mut("text") else { return None };
+            split_prompt(text).map(|(words, files)| {
+                *text = words;
+                files
+            })
+        }),
+        _ => None,
+    };
+    if let Some(files) = annotated {
+        message["attachments"] = json!(files);
+    }
+}
+
 fn longest_backticks(text: &str) -> usize {
     text.split(|c| c != '`').map(str::len).max().unwrap_or(0)
 }
@@ -345,6 +419,46 @@ mod tests {
         assert_eq!(clean_mime(""), "application/octet-stream");
     }
 
+    /// The block as the panel showed it before the agent read it back: a
+    /// file's fenced text (here holding a line like a listing and a shorter
+    /// fence) is not a file.
+    #[test]
+    fn a_prompt_is_read_back_into_words_and_files() {
+        let text = [
+            "why does it fail?",
+            "",
+            "<attachments>",
+            "The person attached these files; they are on this machine, read them with commands.",
+            "- `app.log` (text/plain, 2.0 KiB) at `/data/agent/files/t/app.log`:",
+            "````",
+            "- `fake.txt` (text/plain, 1 B) at `/nope`",
+            "```",
+            "````",
+            "- `shot (2).png` (image/png, 340.0 KiB) at `/data/agent/files/t/shot (2).png` (the image is attached)",
+            "</attachments>",
+        ]
+        .join("\n");
+        let (words, files) = split_prompt(&text).unwrap();
+        assert_eq!(words, "why does it fail?");
+        assert_eq!(
+            files,
+            [
+                Listed { name: "app.log".into(), mime: "text/plain".into(), size: "2.0 KiB".into(), path: "/data/agent/files/t/app.log".into() },
+                Listed {
+                    name: "shot (2).png".into(),
+                    mime: "image/png".into(),
+                    size: "340.0 KiB".into(),
+                    path: "/data/agent/files/t/shot (2).png".into(),
+                },
+            ]
+        );
+        assert!(split_prompt("<attachments> are mentioned here").is_none());
+        // Another role's text is not touched.
+        let mut reply = json!({ "message": { "role": "assistant", "content": text } });
+        annotate_entry(&mut reply);
+        assert!(reply["message"].get("attachments").is_none());
+    }
+
     #[tokio::test]
     async fn uploads_wait_and_move_into_the_task() {
         let root = std::env::temp_dir().join(format!("sbm-agent-files-{}", std::process::id()));
@@ -360,6 +474,15 @@ mod tests {
         let (text, images) = compose("look", &got, true).await;
         assert!(text.starts_with("look\n\n<attachments>\n"), "{text}");
         assert!(text.contains("````\nline ```x```\n````"), "{text}");
+        // Read back as written, a fenced file's text not mistaken for a file.
+        let (words, listed) = split_prompt(&text).unwrap();
+        assert_eq!(words, "look");
+        assert_eq!(listed.iter().map(|l| (l.name.as_str(), l.mime.as_str())).collect::<Vec<_>>(), [("app.log", "text/plain"), ("app (2).log", "image/png")]);
+        let mut entry = json!({ "type": "message", "message": { "role": "user", "content": [{ "type": "text", "text": text }, { "type": "image" }] } });
+        annotate_entry(&mut entry);
+        assert_eq!(entry["message"]["content"][0]["text"], "look");
+        assert_eq!(entry["message"]["attachments"][1]["name"], "app (2).log");
+        assert!(split_prompt("no files").is_none());
         assert_eq!(images.unwrap()[0]["mimeType"], "image/png");
         // A second batch keeps the first.
         let c = files.put(1, "app.log", "text/plain", b"again").await.unwrap();

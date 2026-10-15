@@ -104,6 +104,8 @@ export interface Message {
   isError?: boolean
   stopReason?: string
   errorMessage?: string
+  /// A prompt's files, its `<attachments>` block taken out by the agent.
+  attachments?: { name: string; mime: string; size: string }[]
 }
 
 export interface FlowDetail {

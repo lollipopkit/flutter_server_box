@@ -9,6 +9,8 @@ export type StepKind = 'command' | 'plan' | 'ask' | 'reply' | 'thinking' | 'memo
 export interface ChatLine {
   me: boolean
   text: string
+  /// The files the account gave with a reply.
+  files?: Attachment[]
 }
 
 export interface Step {
@@ -69,35 +71,13 @@ function textOf(content: unknown): string {
     .join('')
 }
 
-/// A file given with the account's words, as the agent listed it.
+/// A file given with the account's words, as the agent lists it on the
+/// message (`agent_mode::files::annotate_entry`).
 export interface Attachment {
   name: string
   mime: string
   /// As the agent wrote it (`2.0 KiB`).
   size: string
-}
-
-const ATTACHMENTS = '<attachments>'
-const ATTACHMENT = /^- `(.+)` \(([^,()]+), ([^)]+)\) at `/
-
-/// [text] without the `<attachments>` block the agent adds to a prompt with
-/// files (`agent_mode/files.rs`), and the files it lists.
-export function splitAttachments(text: string): { text: string; files: Attachment[] } {
-  const at = text.lastIndexOf(ATTACHMENTS)
-  if (at < 0 || !text.trimEnd().endsWith('</attachments>')) return { text, files: [] }
-  const files: Attachment[] = []
-  let fence: string | null = null
-  for (const line of text.slice(at + ATTACHMENTS.length).split('\n')) {
-    const ticks = /^(`{3,})$/.exec(line)?.[1]
-    if (ticks && (fence === null || ticks === fence)) {
-      fence = fence === null ? ticks : null
-      continue
-    }
-    if (fence !== null) continue
-    const m = ATTACHMENT.exec(line)
-    if (m) files.push({ name: m[1], mime: m[2], size: m[3] })
-  }
-  return { text: text.slice(0, at).trimEnd(), files }
 }
 
 function str(v: unknown): string {
@@ -175,10 +155,11 @@ export function deriveSteps(
     if (m.role === 'user') {
       const text = textOf(m.content)
       if (!seenPrompt) {
-        ;({ text: prompt, files } = splitAttachments(text))
+        prompt = text
+        files = m.attachments ?? []
         seenPrompt = true
       } else {
-        conversation().chat.push({ me: true, text })
+        conversation().chat.push({ me: true, text, files: m.attachments })
       }
       continue
     }
