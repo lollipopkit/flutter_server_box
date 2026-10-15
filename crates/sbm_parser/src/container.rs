@@ -829,17 +829,6 @@ pub struct Container {
     pub status: ContainerStatus,
 }
 
-impl Container {
-    /// Whether this container's image reference matches the image's own.
-    ///
-    /// `docker ps` prints the reference the container was created from, which
-    /// is not always a tag — a container started from an id carries the id.
-    /// Only used to confirm usage, never to deny it.
-    pub fn image_reference(&self) -> Option<&str> {
-        self.image.as_deref()
-    }
-}
-
 /// One sample of a running container's resource use.
 ///
 /// Every field is the runtime's own rendering of a quantity, kept as text
@@ -899,6 +888,20 @@ impl ContainerImage {
             || repository == "<none>"
             || tag.is_empty()
             || tag == "<none>"
+    }
+
+    /// What the image is named by, in a list and to the runtime:
+    /// `repository:tag`, the repository alone where there is no tag, and for a
+    /// dangling image its short id (twelve hex digits, as `docker images`
+    /// prints it), or `<none>` without one.
+    pub fn reference(&self) -> String {
+        let repository = self.repository.trim();
+        let tag = self.tag.as_deref().map(str::trim).unwrap_or("");
+        if repository.is_empty() || repository == "<none>" {
+            let id = self.id.as_deref().map(|id| id.strip_prefix("sha256:").unwrap_or(id)).unwrap_or("");
+            return if id.is_empty() { "<none>".into() } else { id.chars().take(12).collect() };
+        }
+        if tag.is_empty() || tag == "<none>" { repository.to_string() } else { format!("{repository}:{tag}") }
     }
 
     /// Whether this image is known to have nothing referencing it.
@@ -2838,6 +2841,24 @@ mod tests {
             .into_iter()
             .next()
             .expect("one image")
+    }
+
+    #[test]
+    fn an_image_is_named_by_repository_and_tag_or_its_short_id() {
+        let image = |repository: &str, tag: Option<&str>, id: Option<&str>| ContainerImage {
+            repository: repository.into(),
+            tag: tag.map(Into::into),
+            id: id.map(Into::into),
+            digest: None,
+            size: None,
+            containers: None,
+            created_at: None,
+            created: None,
+        };
+        assert_eq!(image("nginx", Some("1.27"), None).reference(), "nginx:1.27");
+        assert_eq!(image("nginx", Some("<none>"), None).reference(), "nginx");
+        assert_eq!(image("<none>", Some("<none>"), Some("sha256:0123456789abcdef0123")).reference(), "0123456789ab");
+        assert_eq!(image("<none>", None, None).reference(), "<none>");
     }
 
     #[test]

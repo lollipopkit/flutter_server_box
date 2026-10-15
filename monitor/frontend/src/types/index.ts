@@ -895,6 +895,9 @@ export interface ContainerImage {
   /// by the agent rather than derived here: the panel decides nothing about a
   /// runtime.
   dangling: boolean
+  /// `ContainerImage::reference`: `repository:tag`, or the short id of a
+  /// dangling image.
+  reference: string
 }
 
 export interface ContainerDiskUsage {

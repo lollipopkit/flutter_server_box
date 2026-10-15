@@ -22,7 +22,7 @@
   import { machineAccess } from '../../../lib/access'
   import { api, ApiError } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
-  import { imageReference, refusalText } from '../../../lib/container'
+  import { refusalText } from '../../../lib/container'
   import { fmtBytes } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
@@ -223,7 +223,7 @@
 
   /// Opens the pull dialog, prefilled when a row's Pull asked for it.
   function openPull(image?: ContainerImage) {
-    pullRef = image ? imageReference(image) : ''
+    pullRef = image ? image.reference : ''
     pullOpen = true
   }
 
@@ -415,7 +415,7 @@
   ])
 
   /// An image's key in the table: its reference, or its id when it has none.
-  const imageKey = (image: ContainerImage) => (image.dangling ? (image.id ?? image.repository) : imageReference(image))
+  const imageKey = (image: ContainerImage) => (image.dangling ? (image.id ?? image.repository) : image.reference)
   type ImageLine = { key: string; reference: string; id: string; size: string; use: string; created: string }
   const imageLines = $derived(
     images.map(
@@ -775,7 +775,7 @@
 <!-- Removing an image is asked about like removing a container: it is the one
      image action whose result is not already on the screen behind the dialog. -->
 {#if imageConfirm !== undefined}
-  <Dialog open title={$LL.containerRemove()} message={$LL.containerRemoveImageConfirm({ name: imageReference(imageConfirm) })} onclose={() => (imageConfirm = undefined)}>
+  <Dialog open title={$LL.containerRemove()} message={$LL.containerRemoveImageConfirm({ name: imageConfirm.reference })} onclose={() => (imageConfirm = undefined)}>
     {#snippet actions()}
       <Button variant="destructive" block disabled={busy} onclick={() => {
         const image = imageConfirm
@@ -783,7 +783,7 @@
         // The tag on the row, not the id: `rmi -f <id>` removes every tag
         // the image has, and the user picked one. Only an image with no
         // name is removed by its id.
-        const id = image?.dangling ? image.id : image && imageReference(image)
+        const id = image?.dangling ? image.id : image?.reference
         if (id) void act({ action: 'remove_image', id })
       }}>{$LL.containerRemove()}</Button>
       <Button variant="secondary" block onclick={() => (imageConfirm = undefined)}>{$LL.cancel()}</Button>

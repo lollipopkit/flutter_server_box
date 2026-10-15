@@ -276,6 +276,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ContainerImageItem dco_decode_box_autoadd_container_image_item(dynamic raw);
+
+  @protected
   ContainerStatsItem dco_decode_box_autoadd_container_stats_item(dynamic raw);
 
   @protected
@@ -1132,6 +1135,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ContainerDiskUsageItem sse_decode_box_autoadd_container_disk_usage_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ContainerImageItem sse_decode_box_autoadd_container_image_item(
     SseDeserializer deserializer,
   );
 
@@ -2163,6 +2171,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_container_disk_usage_item(
     ContainerDiskUsageItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_container_image_item(
+    ContainerImageItem self,
     SseSerializer serializer,
   );
 

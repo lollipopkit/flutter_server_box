@@ -53,6 +53,10 @@ final class ContainerImg {
 
   /// Dangling, or known to have no container referencing it.
   bool get isUnused => _item.unused;
+
+  /// What it is named by: `repository:tag`, or its short id when dangling
+  /// (`ContainerImage::reference`).
+  String get reference => ffi.containerImageReference(image: _item);
 }
 
 /// The tagged images known to have nothing referencing them, or `null` when

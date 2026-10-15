@@ -203,13 +203,15 @@ struct ContainerRow {
 /// would otherwise re-derive.
 ///
 /// `dangling` is [`ContainerImage::is_dangling`] — whether the image has no
-/// name to lose. Sent rather than derived by the panel, which decides nothing
+/// name to lose — and `reference` [`ContainerImage::reference`], what it is
+/// named by. Sent rather than derived by the panel, which decides nothing
 /// about a runtime.
 #[derive(Serialize)]
 struct ImageRow {
     #[serde(flatten)]
     image: ContainerImage,
     dangling: bool,
+    reference: String,
 }
 
 /// Reads one part of the machine's container state.
@@ -639,6 +641,7 @@ async fn finish(part: ContainerPart, probe: Probe) -> ContainerListResponse {
                 .into_iter()
                 .map(|image| ImageRow {
                     dangling: image.is_dangling(),
+                    reference: image.reference(),
                     image,
                 })
                 .collect();

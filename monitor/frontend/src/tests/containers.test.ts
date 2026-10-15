@@ -38,6 +38,7 @@ const IMAGE: ContainerImage = {
   created_at: null,
   created: null,
   dangling: false,
+  reference: 'alpine:latest',
 }
 
 /// A running container, which is the only state a shell is offered in.
@@ -164,7 +165,7 @@ describe('Containers page on the images tab', () => {
         ? ({
             ...view(),
             part: 'images',
-            images: [{ ...IMAGE, repository: '<none>', tag: '<none>', dangling: true }],
+            images: [{ ...IMAGE, repository: '<none>', tag: '<none>', dangling: true, reference: 'abc' }],
           } as unknown as ContainerView)
         : view(),
     )
