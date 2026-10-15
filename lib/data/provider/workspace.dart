@@ -201,6 +201,9 @@ class Workspaces extends _$Workspaces {
   void _closing(Workspace Function(Workspace ws) f) {
     final before = state.current;
     edit(f);
+    // Nothing closed, nothing to reopen: a shell that ends after its tab was
+    // closed would otherwise replace what the user could still bring back.
+    if (identical(state.current, before)) return;
     state = state.copyWith(
       closed: () => (workspaceId: before.id, before: before),
     );
