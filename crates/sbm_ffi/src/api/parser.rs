@@ -55,6 +55,39 @@ pub fn parse_status_json(
 }
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
+/// The probe that tells a Unix server's system (`sbm_parser::system`).
+#[flutter_rust_bridge::frb(sync)]
+pub fn system_probe_uname() -> String {
+    sbm_parser::system::UNAME_PROBE.to_owned()
+}
+
+/// The probe that tells Windows, run when `uname` said nothing it knows.
+#[flutter_rust_bridge::frb(sync)]
+pub fn system_probe_ver() -> String {
+    sbm_parser::system::VER_PROBE.to_owned()
+}
+
+/// What `uname -a` said, as `linux` / `bsd`; `None` when it says neither.
+#[flutter_rust_bridge::frb(sync)]
+pub fn system_from_uname(output: String) -> Option<String> {
+    sbm_parser::system::from_uname(&output).map(system_name)
+}
+
+/// `windows` when `ver` answered as Windows does.
+#[flutter_rust_bridge::frb(sync)]
+pub fn system_from_ver(output: String) -> Option<String> {
+    sbm_parser::system::from_ver(&output).map(system_name)
+}
+
+fn system_name(system: sbm_parser::SystemType) -> String {
+    match system {
+        sbm_parser::SystemType::Linux => "linux",
+        sbm_parser::SystemType::Bsd => "bsd",
+        sbm_parser::SystemType::Windows => "windows",
+    }
+    .to_owned()
+}
+
 /// The seconds a status's `uptime` string says (`sbm_parser::common::uptime_seconds`);
 /// `None` when it cannot be read.
 #[flutter_rust_bridge::frb(sync)]

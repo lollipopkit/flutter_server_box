@@ -38,6 +38,7 @@ pub mod smart;
 pub mod snippet;
 pub mod stack;
 pub mod storage;
+pub mod system;
 pub mod tmux;
 pub mod types;
 pub mod users;
