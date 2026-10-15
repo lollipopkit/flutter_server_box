@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -14,7 +13,6 @@ import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/setting/entry.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// The desktop status icon, and the window behaviour that makes it worth
@@ -263,15 +261,11 @@ class TrayService with WindowListener, WidgetsBindingObserver {
     }
   }
 
-  /// The settings page, over whatever the window was showing.
-  ///
-  /// Through the root navigator's own context: this runs from a menu, which is
-  /// not in the widget tree and has no context of its own.
+  /// The settings, where the home page shows them: beside the rail on a wide
+  /// window, as a page on a narrow one.
   Future<void> _openSettings() async {
     await _showWindow();
-    final context = AppNavigator.context;
-    if (context == null || !context.mounted) return;
-    unawaited(SettingsPage.route.go(context));
+    _ref.read(settingsRequestProvider.notifier).go();
   }
 
   /// Brings the window forward on that server.
