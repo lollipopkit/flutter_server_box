@@ -150,6 +150,23 @@ void main() {
     expect(state().all.first.tabs, hasLength(2));
   });
 
+  test('closing a tab that is already gone keeps what can be reopened', () {
+    // A shell can end after its tab was closed; that late close must not
+    // replace the one the user could still bring back.
+    ops().addTab(null, WorkspaceView.status, 's1');
+    ops().addTab(null, WorkspaceView.files, 's1');
+    final ws = state().current;
+    final gone = ws.tabs.first;
+    ops().closeTab(ws.focusId!, gone.id);
+    final closed = state().closed;
+    expect(closed, isNotNull);
+
+    ops().closeTab(ws.focusId!, gone.id);
+    expect(state().closed, same(closed));
+    expect(ops().reopen(), isTrue);
+    expect(state().current.tabs.map((t) => t.id), contains(gone.id));
+  });
+
   test('closing a workspace that is not there changes nothing', () {
     ops().create();
     final before = state();
