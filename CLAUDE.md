@@ -59,6 +59,7 @@ A server is reached over SSH, a monitor agent, both, or is this device (`Spi.loc
 - `Spix.transport` picks the lead (SSH when both, unless `preferredTransport`); `Spix.fallbackTransport` is the other. At least one is required (DB `CHECK`).
 - **`ServerNotifier.ensureExec()` is the one place a command reaches a server**, falling back to the other transport; a monitor-only server never uses sshd. `ensureShellClient()` is SSH-only.
 - **`ServerTcpDialer` is the one place a TCP connection from the server's side is made** (SSH direct-tcpip, the agent's `/stream/ws`, or local).
+- A long-lived user of an agent (status poll, Monitor tab, web apps, files, Agent tasks, tunnels, forwards) holds the server's shared client through `MonitorClientLease` (one sign-in per agent); a provider that polls one goes through `AgentPoll` (one read at a time, none in the background).
 - Ask `ServerCapabilities`, never the transport (both transports answer the union: `byteStream` for SFTP/forwards, `tcpRelay` for remote desktop/PVE); the agent itself is `Spix.monitor`.
 - SSH is direct, jump server or `ProxyCommand` (`genClient`); host keys are always verified.
 
