@@ -287,14 +287,13 @@ async fn a_watch_token_only_reads() {
 /// A panel token as if issued [ago] seconds back — what someone holding a
 /// stolen one has.
 fn jwt_issued_ago(ago: i64) -> String {
-    use jsonwebtoken::{EncodingKey, Header, encode};
     let now = chrono::Utc::now().timestamp();
     let claims = server_box_monitor::api::auth::Claims {
         sub: server_box_monitor::api::auth::SUBJECT.to_string(),
         exp: (now + 3600) as usize,
         iat: (now - ago) as usize,
     };
-    encode(&Header::default(), &claims, &EncodingKey::from_secret(SECRET.as_ref())).unwrap()
+    server_box_monitor::api::auth::sign_token(&claims, SECRET).unwrap()
 }
 
 #[ntex::test]
