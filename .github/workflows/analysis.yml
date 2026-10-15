@@ -105,7 +105,7 @@ jobs:
           # `.github/actions/` and `build.yml` are here for a reason of the same
           # kind and were missed: `setup-flutter` is the composite action every
           # job below starts with, so a broken SDK pin in it would have been
-          # merged after only the always-on reproducibility job, and `build.yml`
+          # merged with nothing having run it, and `build.yml`
           # does not run on a pull request at all — so its own changes were
           # reaching main with nothing having compiled anything.
           shared='^\.github/(workflows/(analysis|build)\.yml$|actions/)|^pubspec\.(yaml|lock)$|^packages/'
@@ -145,13 +145,17 @@ jobs:
           # `store/` because the website build packs it into the store's
           # tarball (scripts/store-tarball.sh).
           emit website "$shared|^website/|^packages/webui/|^store/|^scripts/store-tarball\.sh$"
-          emit android "$shared|^android/"
+          emit android "$shared|^android/|^scripts/release/patch-jni-build-id\.sh$"
           emit docker '^\.github/workflows/analysis\.yml$|^monitor/(src/stacks/|src/container_backups\.rs$|src/api/(stacks|container_backups)\.rs$|tests/stacks_docker\.rs$|tests/apps/)|^crates/sbm_parser/src/(stack|container_backup)\.rs$'
 
   reproducibilityCheck:
     # These are deterministic-input guards, not a reproducibility proof. The
     # two independent Android builds are compared in android-reproducible.yml.
     name: Build input checks
+    # What it reads: Android sources, the pubspec lock (under `dart`'s shared
+    # paths) and the JNI patch script.
+    needs: changes
+    if: needs.changes.outputs.dart == 'true' || needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -357,6 +361,8 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
       # npm, and a `package-lock.json`, because Dependabot maintains one and
       # does not maintain a `bun.lock`: it bumped `@astrojs/starlight` in
       # docs/package.json alone, and `bun install --frozen-lockfile` refused
@@ -405,6 +411,8 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
       # Same as the docs above, npm for the same reason. This one had not broken
       # yet, which was luck rather than a difference: its next Dependabot PR
       # would have.
@@ -684,9 +692,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: flutter-tests-ffi
-          workspaces: |
-            . -> target
-            packages/fl_lib/rust -> target
+          workspaces: . -> target
           save-if: ${{ github.ref == 'refs/heads/main' && matrix.shard == 0 }}
 
       # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
@@ -694,13 +700,10 @@ jobs:
       - name: Build native FFI library
         run: cargo build -p sbm_ffi
 
-      # Every test loads fl_lib's Rust (theme packages) from its own target/
-      # (`test/flutter_test_config.dart`): a workspace of its own.
-      - name: Build fl_lib's Rust
-        run: cargo build --manifest-path packages/fl_lib/rust/Cargo.toml -p fl_lib_ffi
-
       # `flutter test` builds sbm_ffi again through the build hook, for a
-      # library no unit test loads (they take the one built above).
+      # library no unit test loads (they take the one built above), and fl_lib's
+      # and fl_pi_llm's, which every test loads from `build/native_assets`
+      # (`test/flutter_test_config.dart`).
       - uses: ./.github/actions/build-hook-cache
         with:
           step: restore
