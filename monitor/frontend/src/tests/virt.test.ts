@@ -257,6 +257,7 @@ describe('the virtualization page', () => {
         detail: null,
         cert: { fingerprint: 'abcd', subject: '/CN=pve', issuer: '/CN=pve', not_before: 0, not_after: 4_102_444_800 },
         previous_fingerprint: null,
+        needs_input: true,
       }),
     )
     loadVirt.mockResolvedValue(loaded([guest({})]))
@@ -286,7 +287,7 @@ describe('the virtualization page', () => {
       supported: true,
       pve_configured: false,
       view: null,
-      error: { kind: 'sudo_password_required', message: null, detail: null, cert: null, previous_fingerprint: null },
+      error: { kind: 'sudo_password_required', message: null, detail: null, cert: null, previous_fingerprint: null, needs_input: true },
     })
     loadVirt.mockResolvedValue(loaded([guest({})]))
     render(Virt)

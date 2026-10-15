@@ -1817,6 +1817,9 @@ export interface VirtError {
   detail: VirtErrorDetail | null
   cert: BmcCertInfo | null
   previous_fingerprint: string | null
+  /// Waits for the operator (`VirtError::needs_input`): refreshing would
+  /// repeat it. Absent from older agents.
+  needs_input?: boolean
 }
 
 /// `POST /virt`.

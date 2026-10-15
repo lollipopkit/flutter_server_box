@@ -42,16 +42,6 @@
   /// How often the host is read again. PVE's own listing moves every ~10 s.
   const POLL_MS = 5_000
 
-  /// Failures that wait for the operator: refreshing would repeat them.
-  const NEEDS_INPUT = new Set([
-    'need_tfa',
-    'cert_unconfirmed',
-    'cert_changed',
-    'sudo_password_required',
-    'sudo_password_rejected',
-    'auth_failed',
-    'not_configured',
-  ])
 
   let load = $state<VirtLoad | null>(null)
   let loading = $state(true)
@@ -153,7 +143,8 @@
         }
       }
       if (next.host === 'pve' && pve === null) void readPve()
-      if (!next.error || !NEEDS_INPUT.has(next.error.kind)) schedule(serverId)
+      // A failure that waits for the operator would only repeat.
+      if (!next.error?.needs_input) schedule(serverId)
     } catch (e) {
       if (mine !== generation) return
       requestError = virtRequestText(e)
@@ -523,7 +514,7 @@
       {:else if e.kind === 'auth_failed' || e.kind === 'not_configured'}
         <Button variant="secondary" size="sm" onclick={() => (editing = true)}>{$LL.pveSettings()}</Button>
       {/if}
-      {#if NEEDS_INPUT.has(e.kind) && e.kind !== 'need_tfa' && !e.kind.startsWith('sudo')}
+      {#if e.needs_input && e.kind !== 'need_tfa' && !e.kind.startsWith('sudo')}
         <Button variant="secondary" size="sm" disabled={loading} onclick={() => void refresh()}>{$LL.refresh()}</Button>
       {/if}
     </Card>
