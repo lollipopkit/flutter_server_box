@@ -463,7 +463,7 @@ List<DetailMetric> serverDetailMetrics(
         kind: ServerMetricKind.netSpeed,
         label: l10n.netSpeed,
         icon: ServerDetailCards.net.icon,
-        value: ReadingFmt.rate(tx),
+        value: '↑ ${ReadingFmt.rate(tx)}',
         note: _busiestNote(
           ns.realIfaces.length,
           _busiest(
@@ -473,8 +473,8 @@ List<DetailMetric> serverDetailMetrics(
                 (ns.speedOutBytesOf(device: dev) ?? 0),
           ),
         ),
-        bigNote: '↑ · ${ReadingFmt.rate(rx)} ↓',
-        stats: _rateStats(w.netTx),
+        bigNote: '↓ ${ReadingFmt.rate(rx)}',
+        stats: _rateStats(w.netTx, prefix: '↑ '),
         series:
             deviceSeries(ServerMetricKind.netSpeed) ??
             [
@@ -498,7 +498,7 @@ List<DetailMetric> serverDetailMetrics(
         kind: ServerMetricKind.netTraffic,
         label: libL10n.traffic,
         icon: kNetTrafficIcon,
-        value: ReadingFmt.size(txTotal),
+        value: '↑ ${ReadingFmt.size(txTotal)}',
         note: _busiestNote(
           ns.realIfaces.length,
           _busiest(
@@ -509,12 +509,12 @@ List<DetailMetric> serverDetailMetrics(
                     .toDouble(),
           ),
         ),
-        bigNote: '↑ · ${ReadingFmt.size(rxTotal)} ↓',
+        bigNote: '↓ ${ReadingFmt.size(rxTotal)}',
         stats: [
           if (_last(txWindow) case final v?)
-            (k: '${l10n.inRange} ↑', v: ReadingFmt.size(v)),
+            (k: l10n.inRange, v: '↑ ${ReadingFmt.size(v)}'),
           if (_last(rxWindow) case final v?)
-            (k: '${l10n.inRange} ↓', v: ReadingFmt.size(v)),
+            (k: l10n.inRange, v: '↓ ${ReadingFmt.size(v)}'),
         ],
         series:
             deviceSeries(ServerMetricKind.netTraffic) ??
@@ -659,11 +659,11 @@ String _busiestNote(int count, String? busiest) {
 /// a preset is its name — "Live", under a header whose selected chip says
 /// "Live". See `_buildFocusCard` for the one window whose length is not
 /// already on screen.
-List<MetricStat> _rateStats(List<double?> values) {
+List<MetricStat> _rateStats(List<double?> values, {String prefix = ''}) {
   double? peak;
   for (final v in values) {
     if (v == null) continue;
     if (peak == null || v > peak) peak = v;
   }
-  return [if (peak != null) (k: l10n.peak, v: ReadingFmt.rate(peak))];
+  return [if (peak != null) (k: l10n.peak, v: '$prefix${ReadingFmt.rate(peak)}')];
 }

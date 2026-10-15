@@ -410,10 +410,8 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       };
 
   Future<void> _showSessions(RemoteDesktopSessionsState state) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
+    await showResizableSheet<void>(
+      context,
       builder: (sheetContext) => SafeArea(
         child: ListView(
           shrinkWrap: true,

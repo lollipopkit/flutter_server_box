@@ -30,23 +30,13 @@ Future<Spi?> pickServer(
   String? selectedId,
   Widget? Function(Spi spi)? trailingOf,
 }) {
-  return showModalBottomSheet<Spi>(
-    context: context,
-    // Above whatever navigator raised it: these are raised from tabs, and a
-    // tab's own navigator would clip the sheet to the tab.
-    useRootNavigator: true,
-    useSafeArea: true,
-    // The list is as long as the user's server list, and there is a search
-    // field in it — so it has to be able to take the height, and to move out
-    // of the keyboard's way.
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (_) => FractionallySizedBox(
-      heightFactor: 0.75,
-      child: _ServerPickerSheet(
-        selectedId: selectedId,
-        trailingOf: trailingOf,
-      ),
+  // The list is as long as the user's server list, and there is a search
+  // field in it — so it can take the window.
+  return showResizableSheet<Spi>(
+    context,
+    builder: (_) => _ServerPickerSheet(
+      selectedId: selectedId,
+      trailingOf: trailingOf,
     ),
   );
 }

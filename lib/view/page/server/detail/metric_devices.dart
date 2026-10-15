@@ -21,6 +21,7 @@ class MetricDevices {
     required this.defaults,
     required this.subtitle,
     this.alone,
+    this.legend,
   });
 
   /// Busiest first, which is also the order the picker lists them in.
@@ -40,6 +41,10 @@ class MetricDevices {
   /// What is drawn when a single device is: both of its directions, which a
   /// line per device leaves out to stay readable.
   final List<HistorySeries> Function(String)? alone;
+
+  /// A device's line in the legend, where [byDevice] is one of several things
+  /// the device has: the network's is its upload. Null for its name.
+  final String Function(String)? legend;
 
   /// The devices behind [kind], or null for a metric that has none and for a
   /// machine with only one of them — there is nothing to pick from or to tell
@@ -172,6 +177,7 @@ MetricDevices? _net(
         .take(kMaxDeviceLines)
         .toList(),
     subtitle: subtitle,
+    legend: (d) => '$d ↑',
     alone: (d) => [
       HistorySeries('$d ↑', ChartPalette.lines[0], tx[d] ?? const []),
       HistorySeries('$d ↓', ChartPalette.lines[1], rx[d] ?? const []),
