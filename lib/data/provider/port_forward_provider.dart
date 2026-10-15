@@ -375,7 +375,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     if (monitor == null) {
       throw Exception(l10n.funcUnavailableFmt(libL10n.portForward));
     }
-    final client = MonitorHttpClient(monitor);
+    final lease = MonitorClientLease(monitor);
+    final client = lease.client;
     try {
       final listener = await MonitorRemoteListener.start(
         socket: await client.openListen(),
@@ -392,9 +393,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         'Remote port forward started through the agent: '
         '${config.remoteHost}:${listener.port}',
       );
-      return _AgentRemoteForwardEntry(listener, client);
+      return _AgentRemoteForwardEntry(listener, lease);
     } catch (_) {
-      client.dispose();
+      lease.release();
       rethrow;
     }
   }
@@ -491,10 +492,12 @@ class _TunnelForwardEntry extends _ForwardEntry {
 }
 
 class _AgentRemoteForwardEntry extends _ForwardEntry {
-  _AgentRemoteForwardEntry(this.listener, this.client);
+  _AgentRemoteForwardEntry(this.listener, this.lease);
 
   final MonitorRemoteListener listener;
-  final MonitorHttpClient client;
+
+  /// The server's shared client, held while the forward runs.
+  final MonitorClientLease lease;
 
   @override
   bool get viaSsh => false;
@@ -505,7 +508,7 @@ class _AgentRemoteForwardEntry extends _ForwardEntry {
   @override
   Future<void> close() async {
     await listener.close();
-    client.dispose();
+    lease.release();
   }
 }
 

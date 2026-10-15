@@ -87,7 +87,7 @@ abstract final class RemoteAgentTasks {
     }
     if (link != null && link.client.monitor == cred) return link.client;
     _drop(serverId);
-    return (_links[serverId] = _Link(serverId, MonitorHttpClient(cred))).client;
+    return (_links[serverId] = _Link(serverId, MonitorClientLease(cred))).client;
   }
 
   /// Server [serverId]'s events while it is followed: `flow`, `removed`,
@@ -250,7 +250,7 @@ abstract final class RemoteAgentTasks {
   }
 
   static void _drop(String serverId) {
-    _links.remove(serverId)?.stop();
+    _links.remove(serverId)?.close();
     if (tasks.value.containsKey(serverId)) tasks.value = {...tasks.value}..remove(serverId);
     if (more.value.containsKey(serverId)) more.value = {...more.value}..remove(serverId);
     if (modes.value.containsKey(serverId)) modes.value = {...modes.value}..remove(serverId);
@@ -263,7 +263,7 @@ abstract final class RemoteAgentTasks {
   @visibleForTesting
   static void reset() {
     for (final l in _links.values) {
-      l.stop();
+      l.close();
     }
     _links.clear();
     _followers = 0;
@@ -276,12 +276,14 @@ abstract final class RemoteAgentTasks {
   }
 }
 
-/// One server's client and its event stream, reconnected while followed.
+/// One server's client (the server's shared one, [MonitorClientLease]) and
+/// its event stream, reconnected while followed.
 final class _Link {
-  _Link(this.serverId, this.client);
+  _Link(this.serverId, this._lease);
 
   final String serverId;
-  final MonitorHttpClient client;
+  final MonitorClientLease _lease;
+  MonitorHttpClient get client => _lease.client;
   final events = StreamController<Map<String, dynamic>>.broadcast();
   StreamSubscription<Map<String, dynamic>>? _sub;
   Timer? _retry;
@@ -325,5 +327,11 @@ final class _Link {
     _retry?.cancel();
     unawaited(_sub?.cancel());
     _sub = null;
+  }
+
+  /// [stop], and lets go of the client.
+  void close() {
+    stop();
+    _lease.release();
   }
 }

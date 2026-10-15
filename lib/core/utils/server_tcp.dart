@@ -104,7 +104,8 @@ class ServerTcpDialer {
   final Future<ServerTcpSsh> Function() _ssh;
   final MonitorAccess? Function() _relayGrant;
 
-  MonitorHttpClient? _monitor;
+  /// The server's shared client ([MonitorClientLease]), held until [close].
+  MonitorClientLease? _monitor;
   bool _closed = false;
 
   static MonitorAccess? _notRead() => null;
@@ -171,7 +172,7 @@ class ServerTcpDialer {
   /// tunnels already open are not affected.
   void close() {
     _closed = true;
-    _monitor?.dispose();
+    _monitor?.release();
     _monitor = null;
   }
 
@@ -331,10 +332,10 @@ class ServerTcpDialer {
         dial = () => _opened(ssh.forward(host, port));
         done = ssh.done;
       case ServerConnectCredentialMonitorHttp(:final monitor):
-        // One client for the tunnel's life rather than one per dial: it holds
-        // the login the relay socket is authorised with, and a fresh one per
-        // attempt would log in again each time.
-        final client = MonitorHttpClient(monitor);
+        // The server's shared client for the tunnel's life rather than one
+        // per dial: it holds the login the relay socket is authorised with.
+        final lease = MonitorClientLease(monitor);
+        final client = lease.client;
         dial = () => MonitorTunnelChannel.dial(
           client: client,
           remoteHost: host,
@@ -344,7 +345,7 @@ class ServerTcpDialer {
         // No SSH connection to outlive: the relay socket is opened per
         // accepted connection, and `MonitorTunnelChannel.close` ends it.
         done = Completer<void>().future;
-        release = client.dispose;
+        release = lease.release;
       case ServerConnectCredentialLocal():
         dial = () async => _SocketChannel(
           await Socket.connect(host, port, timeout: openTimeout),
@@ -385,7 +386,10 @@ class ServerTcpDialer {
   MonitorHttpClient _monitorClient(MonitorHttpCredential monitor) {
     // [close] has run: a client made now would never be disposed.
     if (_closed) throw StateError('ServerTcpDialer used after close');
-    return _monitor ??= MonitorHttpClient(monitor);
+    final held = _monitor;
+    if (held != null && held.client.monitor == monitor) return held.client;
+    held?.release();
+    return (_monitor = MonitorClientLease(monitor)).client;
   }
 
   /// [opening] within [openTimeout]. A direct-tcpip open cannot be cancelled
