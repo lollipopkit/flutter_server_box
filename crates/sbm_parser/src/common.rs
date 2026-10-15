@@ -23,6 +23,12 @@ pub fn parse_uptime(raw: &str) -> Option<String> {
     Some(first.to_string())
 }
 
+/// [text] with every line ending a `\n`: Windows' `\r\n` and a lone `\r`
+/// alike, before it is split into lines.
+pub fn normalize_newlines(text: &str) -> String {
+    text.replace("\r\n", "\n").replace('\r', "\n")
+}
+
 /// The seconds a [`parse_uptime`] string (or the monitor agent's
 /// `format_uptime`, the same shape) says the machine has been up: an
 /// optional day count, then `H:MM` or one unit (`min[s]`, `hr[s]`,

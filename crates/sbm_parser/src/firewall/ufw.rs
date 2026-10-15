@@ -515,7 +515,7 @@ pub fn parse(output: &str) -> Result<UfwSnapshot, String> {
     let mut sections: HashMap<&str, Vec<String>> = HashMap::new();
     let mut section: Option<&str> = None;
     let mut v6_unreadable = false;
-    let normalized = output.replace("\r\n", "\n");
+    let normalized = crate::common::normalize_newlines(output);
     for raw in normalized.split('\n') {
         let line = raw.trim_end();
         if let Some(v) = line.strip_prefix(VERSION_MARKER) {
