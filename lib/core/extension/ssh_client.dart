@@ -78,6 +78,15 @@ String _decodeOutput(
   }
 }
 
+/// The remote exit code, once it has arrived.
+///
+/// The end of stdout/stderr is the channel's EOF, and `exit-status` may follow
+/// it: Windows OpenSSH always sends it after. Reading [SSHSession.exitCode] as
+/// soon as the output ends can therefore see `null` for a command that exited
+/// 0 (#1710). The timeout keeps a server that never reports one from hanging.
+Future<int?> _exitCodeOf(SSHSession session) =>
+    session.waitForExit(timeout: const Duration(seconds: 5));
+
 extension SSHClientX on SSHClient {
   Future<(SSHSession, String)> exec(
     OnStdin onStdin, {
@@ -149,7 +158,7 @@ extension SSHClientX on SSHClient {
     if (script_ffi.sudoPasswordRejected(stderr: stderr.toString())) {
       return (kSudoPasswordRejected, output);
     }
-    return (session.exitCode, output);
+    return (await _exitCodeOf(session), output);
   }
 
   Future<String> runSafe(
@@ -200,7 +209,7 @@ extension SSHClientX on SSHClient {
     );
 
     return SSHExecResult(
-      exitCode: session.exitCode,
+      exitCode: await _exitCodeOf(session),
       stdout: stdout,
       stderr: stderr,
     );

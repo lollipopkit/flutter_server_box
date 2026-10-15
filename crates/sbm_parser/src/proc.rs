@@ -1259,15 +1259,7 @@ fn windows_kill_command(pid: i64, start_id: &str) -> String {
     // `-EncodedCommand` takes UTF-16LE: the script is PowerShell, which is not
     // restricted to the machine's ANSI code page, and a process's image name
     // is whatever the writer of it chose.
-    let mut utf16 = Vec::with_capacity(script.len() * 2);
-    for unit in script.encode_utf16() {
-        utf16.extend_from_slice(&unit.to_le_bytes());
-    }
-    use base64::Engine;
-    format!(
-        "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}",
-        base64::engine::general_purpose::STANDARD.encode(utf16)
-    )
+    crate::script::encoded_powershell_command(&script)
 }
 
 // ---------------------------------------------------------------------------

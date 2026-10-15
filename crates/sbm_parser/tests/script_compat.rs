@@ -310,9 +310,13 @@ fn install_commands() {
         r"C:\temp\test",
         r"C:\temp\test\script.ps1",
     );
-    assert!(win.starts_with("powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand "));
+    assert!(win.starts_with(
+        "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand "
+    ));
     let b64 = win.rsplit(' ').next().unwrap();
     let decoded = decode_utf16le_b64(b64);
+    // A progress record on stderr would read as a failed install (#1710)
+    assert!(decoded.starts_with("$ProgressPreference = 'SilentlyContinue'; "));
     assert!(decoded.contains("New-Item"));
     assert!(decoded.contains("Set-Content"));
     assert!(decoded.contains(r"C:\temp\test\script.ps1"));
@@ -355,7 +359,7 @@ fn windows_default_script_paths_expand_remote_environment() {
     let decoded = decode_utf16le_b64(exec.rsplit(' ').next().unwrap());
     assert_eq!(
         decoded,
-        "& (Join-Path $env:TEMP 'server_box\\srvboxm.ps1') -s"
+        "$ProgressPreference = 'SilentlyContinue'; & (Join-Path $env:TEMP 'server_box\\srvboxm.ps1') -s"
     );
 }
 
@@ -451,7 +455,7 @@ fn exec_commands() {
     let encoded = custom.split_whitespace().last().unwrap();
     assert_eq!(
         decode_utf16le_b64(encoded),
-        "& 'C:\\Server $($env:USERNAME)\\it''s\\status.ps1' -s"
+        "$ProgressPreference = 'SilentlyContinue'; & 'C:\\Server $($env:USERNAME)\\it''s\\status.ps1' -s"
     );
 }
 
@@ -1126,6 +1130,16 @@ fn newline_terminated_custom_output_has_no_extra_blank_line() {
     assert_eq!(parsed[&script::custom_result_key("line")], "x\n\n");
 }
 
+/// A custom command that cannot be started says so as its output, the only
+/// place its result is shown; an empty one would read as having succeeded.
+#[test]
+fn windows_custom_command_launch_failure_is_its_output() {
+    let generated = build_script(SystemType::Windows, &ScriptOptions::default());
+    assert!(generated.contains(
+        "catch { $m = [Text.Encoding]::UTF8.GetBytes('ServerBox: failed to start: ' + $_.Exception.Message)"
+    ));
+}
+
 #[cfg(windows)]
 #[test]
 fn windows_custom_commands_have_time_and_output_bounds() {
@@ -1155,6 +1169,14 @@ fn windows_custom_commands_have_time_and_output_bounds() {
          New-Item -ItemType File -Path (Join-Path $env:USERPROFILE 'large.done') | Out-Null",
     )
     .unwrap();
+    // Floods stderr for its whole five seconds. Drained and dropped, so it
+    // neither blocks on a full pipe nor lands on the disk.
+    std::fs::write(
+        commands.join(format!("{}.ps1", script::custom_cmd_file_name(150, "noisy"))),
+        "$s = [Console]::OpenStandardError(); $b = New-Object byte[] 1048576; \
+         while ($true) { $s.Write($b, 0, $b.Length) }",
+    )
+    .unwrap();
     std::fs::write(
         commands.join(format!("{}.ps1", script::custom_cmd_file_name(200, "slow"))),
         "Start-Sleep -Seconds 30; Write-Output 'late'",
@@ -1174,9 +1196,11 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         },
     );
     assert!(generated.contains("$deadline = [DateTime]::UtcNow.AddSeconds(5)"));
-    assert!(generated.contains(
-        "if (-not $p.HasExited) { taskkill /PID $p.Id /T /F | Out-Null }\n        $p.WaitForExit()"
-    ));
+    assert!(generated.contains("if (-not $p.HasExited) { taskkill /PID $p.Id /T /F | Out-Null }"));
+    // Read from pipes, never through files: a file's size can only be polled,
+    // and a command writing flat out overran a polled one by hundreds of MB.
+    assert!(!generated.contains("RedirectStandardOutput $o"));
+    assert!(generated.contains("$i.RedirectStandardError = $true"));
     std::fs::write(&status, generated).unwrap();
 
     let mut child = Command::new("powershell")
@@ -1247,6 +1271,7 @@ fn windows_custom_commands_have_time_and_output_bounds() {
     } else {
         assert_eq!(large.len(), script::CUSTOM_CMD_MAX_OUTPUT_BYTES);
     }
+    assert_eq!(parsed[&script::custom_result_key("noisy")], "");
     assert_eq!(parsed[&script::custom_result_key("slow")], "");
 }
 
