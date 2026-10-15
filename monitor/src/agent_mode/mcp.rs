@@ -7,6 +7,7 @@
 //! Connections are kept between tasks and made again when the server's
 //! settings change or a call finds it gone.
 
+use crate::utils::lock::LockExt;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use std::time::Duration;
@@ -253,17 +254,17 @@ impl Hub {
         for (id, config, connected) in futures::future::join_all(tries).await {
             match connected {
                 Ok((client, tools)) => {
-                    self.errors.lock().unwrap().remove(&id);
+                    self.errors.locked().remove(&id);
                     connections.insert(id, Connection { config, client: Arc::new(client), tools });
                 }
                 Err(e) => {
                     tracing::warn!("MCP server {id}: {e}");
-                    self.errors.lock().unwrap().insert(id.clone(), e);
+                    self.errors.locked().insert(id.clone(), e);
                     connections.remove(&id);
                 }
             }
         }
-        let errors = self.errors.lock().unwrap();
+        let errors = self.errors.locked();
         configs
             .iter()
             .map(|(s, _)| match connections.get(&s.id) {
@@ -337,7 +338,7 @@ impl Gated {
         }
         let shown = self.shown(call);
         let perms = permissions::load(&state.db).await.map_err(|e| format!("reading the permissions: {e}"))?;
-        let picked = flow.view.lock().unwrap().mode;
+        let picked = flow.view.locked().mode;
         let ask = match perms.mode_for(picked) {
             Mode::Bypass => {
                 super::tools::record(state, &format!("bypass: {}", first_line(&shown, 200)), Outcome::Ok).await;

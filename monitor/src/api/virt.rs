@@ -27,6 +27,7 @@
 //! is reached and its pinned certificate decide where the agent sends a
 //! password or a token.
 
+use crate::utils::lock::LockExt;
 use std::sync::Arc;
 
 use ntex::http::StatusCode;
@@ -85,7 +86,7 @@ pub(crate) enum ConsoleTarget {
 impl VirtState {
     /// The console `ticket` was minted for, once.
     pub(crate) fn take_console(&self, ticket: &str) -> Option<PendingConsole> {
-        let mut consoles = self.consoles.lock().unwrap();
+        let mut consoles = self.consoles.locked();
         consoles.retain(|_, c| c.at.elapsed() < CONSOLE_TTL);
         consoles.remove(ticket)
     }
@@ -514,7 +515,7 @@ pub async fn console(
         Err(_) => return Ok(refusal(StatusCode::TOO_MANY_REQUESTS, "too_many_tickets")),
     };
     {
-        let mut consoles = state.virt.consoles.lock().unwrap();
+        let mut consoles = state.virt.consoles.locked();
         consoles.retain(|_, c| c.at.elapsed() < CONSOLE_TTL);
         consoles.insert(
             ticket.clone(),

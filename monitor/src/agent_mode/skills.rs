@@ -244,6 +244,7 @@ mod tests {
     use fl_pi_llm::host::{BoxFuture, FetchResponse};
 
     use super::*;
+    use crate::utils::lock::LockExt;
 
     fn tar_gz(entries: &[(&str, &[u8])]) -> Vec<u8> {
         let mut builder = tar::Builder::new(Vec::new());
@@ -266,7 +267,7 @@ mod tests {
 
     impl Fetch for Archive {
         fn fetch(&self, req: FetchRequest) -> BoxFuture<'_, Result<FetchResponse, String>> {
-            self.1.lock().unwrap().push(req.url);
+            self.1.locked().push(req.url);
             let bytes = self.0.clone();
             Box::pin(async move {
                 let (tx, rx) = tokio::sync::mpsc::channel(1);
@@ -293,7 +294,7 @@ mod tests {
         );
 
         assert_eq!(install(&db, &root, &fetch, "npx skills add acme/ops --skill logs").await.unwrap(), ["logs"]);
-        assert_eq!(fetch.1.lock().unwrap()[0], "https://codeload.github.com/acme/ops/tar.gz/HEAD");
+        assert_eq!(fetch.1.locked()[0], "https://codeload.github.com/acme/ops/tar.gz/HEAD");
         assert_eq!(install(&db, &root, &fetch, "acme/ops").await.unwrap(), ["docker-cleanup", "logs"]);
         assert_eq!(install(&db, &root, &fetch, "acme/ops@nope").await, Err(InstallError::NoSkill));
         assert!(matches!(install(&db, &root, &fetch, "not a source at all").await, Err(InstallError::Source(_))));

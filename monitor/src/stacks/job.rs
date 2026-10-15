@@ -5,6 +5,7 @@
 //! Not `/exec`: pulling images takes minutes, past what `[remote_access.exec]`
 //! allows a request, and nobody's page has to stay open for it.
 
+use crate::utils::lock::LockExt;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -93,7 +94,7 @@ impl Job {
 
     pub fn push(&self, text: impl Into<String>) {
         let seq = self.next.fetch_add(1, Ordering::Relaxed);
-        let mut lines = self.lines.lock().unwrap_or_else(|e| e.into_inner());
+        let mut lines = self.lines.locked();
         if lines.len() >= MAX_LINES {
             lines.pop_front();
         }
@@ -129,7 +130,7 @@ impl Job {
 
     pub fn view(&self, since: u64) -> JobView {
         let (state, error) = self.state.borrow().clone();
-        let lines = self.lines.lock().unwrap_or_else(|e| e.into_inner());
+        let lines = self.lines.locked();
         JobView {
             id: self.id,
             kind: self.kind,

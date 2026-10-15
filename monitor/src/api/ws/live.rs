@@ -8,6 +8,7 @@
 //! ended. The [`Ending`] is also what its loop waits on: the password changing
 //! (as before) or this one connection being ended.
 
+use crate::utils::lock::LockExt;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -104,7 +105,7 @@ impl LiveConnections {
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, HashMap<u64, Entry>> {
-        self.open.lock().unwrap_or_else(|e| e.into_inner())
+        self.open.locked()
     }
 }
 

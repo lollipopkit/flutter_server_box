@@ -23,6 +23,7 @@
 //! never names what is fetched: only the catalog's address (compiled in), the
 //! repositories it lists, and the versions those list, all HTTPS, are read.
 
+use crate::utils::lock::RwLockExt;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
@@ -565,12 +566,12 @@ impl ThemeStore {
     /// Where the store is read from, and how: for tests, which hand it a
     /// fetcher answering from memory.
     pub fn set_source(&self, catalog_url: &str, fetch: Arc<dyn Fetch>) {
-        *self.catalog_url.write().unwrap() = catalog_url.to_string();
-        *self.fetch.write().unwrap() = fetch;
+        *self.catalog_url.write_locked() = catalog_url.to_string();
+        *self.fetch.write_locked() = fetch;
     }
 
     fn fetcher(&self) -> Arc<dyn Fetch> {
-        self.fetch.read().unwrap().clone()
+        self.fetch.read_locked().clone()
     }
 
     /// The store, read again when older than an hour or when [refresh].
@@ -590,7 +591,7 @@ impl ThemeStore {
 
     async fn fetch_store(&self) -> StoreRead {
         let fetch = self.fetcher();
-        let catalog_url = self.catalog_url.read().unwrap().clone();
+        let catalog_url = self.catalog_url.read_locked().clone();
         let base = url::Url::parse(&catalog_url).ok();
         let catalog = match fetch.get(&catalog_url, repo::MAX_CATALOG_BYTES).await {
             Ok(bytes) => Catalog::parse(&bytes, base.as_ref()),

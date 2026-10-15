@@ -11,6 +11,7 @@
 //! shipped one. A store package replaces the shipped one whatever its
 //! version: the store is what the catalog's maintainers publish now.
 
+use crate::utils::lock::RwLockExt;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
@@ -76,14 +77,14 @@ impl Catalog {
 
     /// Where the store is read from, and how: for tests.
     pub fn set_source(&self, catalog_url: &str, fetch: Arc<dyn Fetch>) {
-        *self.source.write().unwrap_or_else(|e| e.into_inner()) = (catalog_url.to_string(), fetch);
+        *self.source.write_locked() = (catalog_url.to_string(), fetch);
     }
 
     pub fn get(&self, id: &str) -> Option<Entry> {
         if let Some(p) = self.local.get(id) {
             return Some(Entry { package: p.clone(), source: Source::Local, repo: None });
         }
-        if let Some(e) = self.store.read().unwrap_or_else(|e| e.into_inner()).get(id) {
+        if let Some(e) = self.store.read_locked().get(id) {
             return Some(e.clone());
         }
         self.bundled.get(id).map(|p| Entry { package: p.clone(), source: Source::Bundled, repo: None })
@@ -95,7 +96,7 @@ impl Catalog {
 
     /// Every app, by id.
     pub fn all(&self) -> Vec<Entry> {
-        let store = self.store.read().unwrap_or_else(|e| e.into_inner());
+        let store = self.store.read_locked();
         let mut ids: Vec<&String> = self.local.keys().chain(store.keys()).chain(self.bundled.keys()).collect();
         ids.sort();
         ids.dedup();
@@ -112,7 +113,7 @@ impl Catalog {
             return;
         }
         *read = Some(Instant::now());
-        let (catalog_url, fetch) = self.source.read().unwrap_or_else(|e| e.into_inner()).clone();
+        let (catalog_url, fetch) = self.source.read_locked().clone();
         let base = url::Url::parse(&catalog_url).ok();
         let catalog = match fetch.get(&catalog_url, repo::MAX_CATALOG_BYTES).await {
             Ok(bytes) => repo::Catalog::parse(&bytes, base.as_ref()).map_err(|e| e.0),
@@ -122,7 +123,7 @@ impl Catalog {
             tracing::warn!("app catalog: reading the catalog: {e}");
             repo::Catalog::parse(BUNDLED_CATALOG.as_bytes(), None).expect("the bundled catalog reads")
         });
-        let previous = self.store.read().unwrap_or_else(|e| e.into_inner()).clone();
+        let previous = self.store.read_locked().clone();
         let mut next: BTreeMap<String, Entry> = BTreeMap::new();
         for address in &catalog.repos {
             let files = fetch
@@ -148,7 +149,7 @@ impl Catalog {
         if let Err(e) = write_cache(&self.cache, &next) {
             tracing::warn!("app catalog: keeping it in {}: {e}", self.cache.display());
         }
-        *self.store.write().unwrap_or_else(|e| e.into_inner()) = next;
+        *self.store.write_locked() = next;
     }
 }
 

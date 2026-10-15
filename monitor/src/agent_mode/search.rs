@@ -10,6 +10,7 @@
 //! [`KEEP_UNADOPTED`], and at start by `recover` like any session without a
 //! row.
 
+use crate::utils::lock::LockExt;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -89,7 +90,7 @@ impl AgentMode {
         let rt = self.runtime().await?;
         // One search at a time: a new one ends the last.
         let seq = self.search_seq.fetch_add(1, Ordering::Relaxed);
-        if let Some((_, old)) = self.search_runs.lock().unwrap().insert(user, (seq, cancel.clone())) {
+        if let Some((_, old)) = self.search_runs.locked().insert(user, (seq, cancel.clone())) {
             old.cancel();
         }
         self.forget_searches(Some(user)).await;
@@ -109,7 +110,7 @@ impl AgentMode {
         let _ = sink.send(json!({ "type": "kind", "kind": kind }));
 
         let id = uuid_v4();
-        self.searches.lock().unwrap().insert(id.clone(), SearchEntry { user, query: query.clone(), created: Instant::now() });
+        self.searches.locked().insert(id.clone(), SearchEntry { user, query: query.clone(), created: Instant::now() });
         let run = Arc::new(Run { state: state.clone(), secure, sink: sink.clone(), steps: AtomicUsize::new(0), cancel: cancel.clone() });
         let mut tools: Vec<Arc<dyn Tool>> = vec![Arc::new(ReadCommand(run.clone())), Arc::new(Report(run.clone()))];
         if kind == SearchKind::Change {
@@ -174,7 +175,7 @@ impl AgentMode {
                 }));
             }
         }
-        let mut runs = self.search_runs.lock().unwrap();
+        let mut runs = self.search_runs.locked();
         if runs.get(&user).is_some_and(|(s, _)| *s == seq) {
             runs.remove(&user);
         }
@@ -192,7 +193,7 @@ impl AgentMode {
         text: Option<String>,
     ) -> Result<FlowView, FlowError> {
         let query = {
-            let mut searches = self.searches.lock().unwrap();
+            let mut searches = self.searches.locked();
             match searches.get(id) {
                 Some(s) if s.user == user => searches.remove(id).map(|s| s.query).unwrap_or_default(),
                 _ => return Err(FlowError::NotFound),
@@ -226,7 +227,7 @@ impl AgentMode {
     /// everybody's older than [`KEEP_UNADOPTED`].
     async fn forget_searches(&self, user: Option<i64>) {
         let gone: Vec<String> = {
-            let mut searches = self.searches.lock().unwrap();
+            let mut searches = self.searches.locked();
             let ids: Vec<String> = searches
                 .iter()
                 .filter(|(_, s)| Some(s.user) == user || s.created.elapsed() > KEEP_UNADOPTED)

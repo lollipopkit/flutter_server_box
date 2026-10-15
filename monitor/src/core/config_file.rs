@@ -225,6 +225,7 @@ fn prune_backups(dir: Option<&Path>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::lock::LockExt;
     use std::io::Write;
 
     /// Each test gets its own directory and runs with it as the working
@@ -233,7 +234,7 @@ mod tests {
     fn with_temp_cwd<T>(f: impl FnOnce(&Path) -> T) -> T {
         use std::sync::{Mutex, OnceLock};
         static CWD_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        let _guard = CWD_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap_or_else(|e| e.into_inner());
+        let _guard = CWD_LOCK.get_or_init(|| Mutex::new(())).locked();
 
         let dir = std::env::temp_dir().join(format!(
             "sbm-config-test-{}-{}",

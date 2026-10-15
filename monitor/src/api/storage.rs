@@ -26,6 +26,7 @@
 //!
 //! Every change is audited (`Kind::Machine`), never the password.
 
+use crate::utils::lock::LockExt;
 use std::sync::{Arc, Mutex};
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -65,26 +66,26 @@ pub struct HealthReading {
 
 impl StorageJobs {
     pub fn job(&self) -> Option<Arc<Job>> {
-        self.job.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.job.locked().clone()
     }
 
     pub fn health(&self) -> Option<HealthReading> {
-        self.health.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.health.locked().clone()
     }
 
     pub(crate) fn seen(&self) -> std::sync::MutexGuard<'_, crate::storage_watch::Seen> {
-        self.seen.lock().unwrap_or_else(|e| e.into_inner())
+        self.seen.locked()
     }
 
     pub(crate) fn keep_health(&self, disks: Vec<st::DiskHealth>) -> HealthReading {
         let at = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
         let reading = HealthReading { at, disks };
-        *self.health.lock().unwrap_or_else(|e| e.into_inner()) = Some(reading.clone());
+        *self.health.locked() = Some(reading.clone());
         reading
     }
 
     fn begin(&self) -> Option<Arc<Job>> {
-        let mut job = self.job.lock().unwrap_or_else(|e| e.into_inner());
+        let mut job = self.job.locked();
         if job.as_ref().is_some_and(|j| j.running()) {
             return None;
         }

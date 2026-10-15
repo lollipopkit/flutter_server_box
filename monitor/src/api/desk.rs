@@ -26,6 +26,7 @@
 //! machine. Every check of shape is here, so a stored row is one the panel
 //! can draw; the panel's own checks are for its forms only.
 
+use crate::utils::lock::LockExt;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
@@ -126,7 +127,7 @@ impl DeskHub {
     pub async fn rules_checked(&self, db: &SqlitePool, firing: Vec<Firing>) {
         let now = chrono::Utc::now().to_rfc3339();
         let started: Vec<Firing> = {
-            let mut state = self.firing.lock().unwrap_or_else(|e| e.into_inner());
+            let mut state = self.firing.locked();
             let mut was: HashMap<String, String> = state
                 .alerts
                 .drain(..)
@@ -155,7 +156,7 @@ impl DeskHub {
 
     /// The rules firing at the last check.
     pub fn firing(&self) -> FiringNow {
-        self.firing.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.firing.locked().clone()
     }
 
     pub async fn notify(

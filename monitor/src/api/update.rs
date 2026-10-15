@@ -10,6 +10,7 @@
 //! Its output goes to `update.log` in the agent's directory, and `GET /update`
 //! answers it as `run` — from the agent that comes back, too.
 
+use crate::utils::lock::RwLockExt;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 
@@ -90,28 +91,28 @@ impl Default for AgentUpdate {
 impl AgentUpdate {
     /// How releases are read: for tests, which answer from memory.
     pub fn set_fetch(&self, fetch: Arc<dyn Fetch>) {
-        *self.fetch.write().unwrap() = fetch;
+        *self.fetch.write_locked() = fetch;
     }
 
     /// For tests: where the log is, and how the agent was installed.
     pub fn set_local(&self, dir: &std::path::Path, install: InstallKind) {
-        *self.dir.write().unwrap() = dir.to_path_buf();
-        *self.install.write().unwrap() = Some(install);
+        *self.dir.write_locked() = dir.to_path_buf();
+        *self.install.write_locked() = Some(install);
     }
 
     /// For tests: the last read taken as older than [RECHECK].
     pub fn age_last_read(&self) {
-        if let Some(last) = self.last.write().unwrap().as_mut() {
+        if let Some(last) = self.last.write_locked().as_mut() {
             last.at = None;
         }
     }
 
     fn install(&self) -> InstallKind {
-        (*self.install.read().unwrap()).unwrap_or_else(install_kind)
+        (*self.install.read_locked()).unwrap_or_else(install_kind)
     }
 
     fn dir(&self) -> std::path::PathBuf {
-        self.dir.read().unwrap().clone()
+        self.dir.read_locked().clone()
     }
 
     /// The last update started here, as its log tells it.
@@ -137,17 +138,17 @@ impl AgentUpdate {
     /// error: a release once found is still out.
     pub async fn checked(&self, check: bool) -> (Checked, bool) {
         let stale = |last: &Option<Checked>| last.as_ref().is_none_or(|c| c.at.is_none_or(|at| at.elapsed() >= RECHECK));
-        if !check || !stale(&self.last.read().unwrap()) {
-            let last = self.last.read().unwrap().clone();
+        if !check || !stale(&self.last.read_locked()) {
+            let last = self.last.read_locked().clone();
             return (last.unwrap_or(Checked { latest: None, checked_at: None, error: None, at: None }), false);
         }
         let _reading = self.reading.lock().await;
         // Another read may have finished while this one waited.
-        if !stale(&self.last.read().unwrap()) {
-            return (self.last.read().unwrap().clone().expect("read"), false);
+        if !stale(&self.last.read_locked()) {
+            return (self.last.read_locked().clone().expect("read"), false);
         }
         let mut fresh = self.read().await;
-        let mut last = self.last.write().unwrap();
+        let mut last = self.last.write_locked();
         if fresh.error.is_some() {
             fresh.latest = last.as_ref().and_then(|c| c.latest.clone());
         }
@@ -156,7 +157,7 @@ impl AgentUpdate {
     }
 
     async fn read(&self) -> Checked {
-        let fetch = self.fetch.read().unwrap().clone();
+        let fetch = self.fetch.read_locked().clone();
         let (latest, error) = match newest(fetch.as_ref()).await {
             Ok(latest) => (latest, None),
             Err(e) => {

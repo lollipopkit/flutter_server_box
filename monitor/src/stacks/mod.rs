@@ -27,6 +27,7 @@ pub mod ports;
 pub mod proxy;
 pub mod store;
 
+use crate::utils::lock::LockExt;
 use std::collections::{BTreeMap, HashMap};
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
@@ -150,12 +151,12 @@ impl Stacks {
     }
 
     pub fn job(&self, id: &str) -> Option<Arc<Job>> {
-        self.jobs.lock().unwrap_or_else(|e| e.into_inner()).get(id).cloned()
+        self.jobs.locked().get(id).cloned()
     }
 
     /// A new job for [id], unless one is running.
     fn begin(&self, id: &str, kind: JobKind) -> Result<Arc<Job>, Refusal> {
-        let mut jobs = self.jobs.lock().unwrap_or_else(|e| e.into_inner());
+        let mut jobs = self.jobs.locked();
         if jobs.get(id).is_some_and(|j| j.running()) {
             return Err(refusal(409, "busy"));
         }

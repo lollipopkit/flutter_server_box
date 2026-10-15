@@ -27,6 +27,7 @@
 //! socket opens, when `listen` arrives, and again on a password change while
 //! the port is open (`AppState.password_changed`).
 
+use crate::utils::lock::LockExt;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -136,7 +137,7 @@ impl PendingStore {
     /// Poisoning is ignored: every critical section leaves the map whole, so a
     /// panic in one says nothing about the state it left.
     fn lock(&self) -> std::sync::MutexGuard<'_, Inner> {
-        self.inner.lock().unwrap_or_else(|e| e.into_inner())
+        self.inner.locked()
     }
 }
 

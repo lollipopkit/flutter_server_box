@@ -1,3 +1,4 @@
+use crate::utils::lock::LockExt;
 use crate::{core::config::{Config, PushConfig}, utils::error::Result};
 use futures::StreamExt;
 use reqwest::Client;
@@ -86,7 +87,7 @@ impl PushRateLimiter {
 
     /// Whether a push is allowed (does not consume quota)
     pub fn check(&self, name: &str, times: usize, window: Duration) -> bool {
-        let mut records = self.records.lock().unwrap();
+        let mut records = self.records.locked();
         let queue = records.entry(name.to_string()).or_default();
         let now = Instant::now();
         while queue.front().is_some_and(|t| now.duration_since(*t) > window) {
@@ -97,7 +98,7 @@ impl PushRateLimiter {
 
     /// Consume one quota unit after a successful push
     pub fn acquire(&self, name: &str) {
-        let mut records = self.records.lock().unwrap();
+        let mut records = self.records.locked();
         records
             .entry(name.to_string())
             .or_default()

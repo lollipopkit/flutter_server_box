@@ -2,6 +2,7 @@
 //! one that needs the account waits for it through [`AgentMode::ask`]; what
 //! runs without asking is decided here.
 
+use crate::utils::lock::LockExt;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -136,7 +137,7 @@ pub(super) async fn may_run(state: &AppState, flow: &Flow) -> Result<(), String>
 
 /// Where the task last worked: an `ask_user` step is about that.
 fn flow_area(flow: &Flow) -> String {
-    flow.steps.lock().unwrap().last().map(|s| s.area.clone()).unwrap_or_else(|| "system".into())
+    flow.steps.locked().last().map(|s| s.area.clone()).unwrap_or_else(|| "system".into())
 }
 
 fn cancelled() -> Result<ToolResult, String> {
@@ -280,7 +281,7 @@ impl RunCommand {
                 record(state, &format!("denied by rule `{rule}`: {}", first_line(&command, 200)), Outcome::Denied).await;
                 return Err(format!("Refused: this machine's rule `{rule}` forbids it. Nothing was run; do not run it another way."));
             }
-            let mode = perms.mode_for(flow.view.lock().unwrap().mode);
+            let mode = perms.mode_for(flow.view.locked().mode);
             let ask_rule = matches!(verdict, RuleVerdict::Ask(_));
             let confirm = match mode {
                 // Bypass: only the operator's ask rules stop it.
@@ -414,7 +415,7 @@ pub(super) async fn judge(state: &AppState, flow: &Arc<Flow>, subject: &str, tit
     let hub = &state.agent;
     let model = super::config::load(&state.db).await.ok()?.model?;
     let rt = hub.runtime().await.ok()?;
-    let session = flow.session.lock().unwrap().clone();
+    let session = flow.session.locked().clone();
     let entries = match session {
         Some(s) => s.entries().await.unwrap_or_default(),
         None => Vec::new(),
@@ -621,7 +622,7 @@ impl Tool for ProposePlan {
                     .with_details(json!({ "decision": "refused", "rule": rule })));
             }
             let asks = verdicts.iter().any(|v| matches!(v, RuleVerdict::Ask(_)));
-            let mode = perms.mode_for(flow.view.lock().unwrap().mode);
+            let mode = perms.mode_for(flow.view.locked().mode);
             match mode {
                 Mode::Bypass if !asks => {
                     record(state, &format!("bypass: approved plan {title}"), Outcome::Ok).await;

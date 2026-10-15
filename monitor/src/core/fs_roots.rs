@@ -20,6 +20,7 @@
 //! monitor runs on. It matters only for the protected state: anything else a
 //! swapped link reaches, the account could reach anyway.
 
+use crate::utils::lock::RwLockExt;
 use std::ffi::OsString;
 use std::path::{Component, Path, PathBuf};
 
@@ -137,13 +138,13 @@ impl Protected {
 static RUNTIME_TREES: std::sync::RwLock<Vec<PathBuf>> = std::sync::RwLock::new(Vec::new());
 
 fn runtime_trees() -> std::sync::RwLockReadGuard<'static, Vec<PathBuf>> {
-    RUNTIME_TREES.read().unwrap_or_else(|e| e.into_inner())
+    RUNTIME_TREES.read_locked()
 }
 
 /// Protects everything under [dir] from now on; [previous] (the folder it
 /// replaces, if any) no longer.
 pub fn protect_at_runtime(dir: &Path, previous: Option<&Path>) {
-    let mut trees = RUNTIME_TREES.write().unwrap_or_else(|e| e.into_inner());
+    let mut trees = RUNTIME_TREES.write_locked();
     if let Some(previous) = previous {
         let previous = settled(previous);
         trees.retain(|t| *t != previous);

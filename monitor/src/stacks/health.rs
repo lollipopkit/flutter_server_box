@@ -7,6 +7,7 @@
 //! An app the operator stopped is `stopped`, never a notification. A step
 //! running (a deploy, a restart) is not judged until it ends.
 
+use crate::utils::lock::LockExt;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -87,16 +88,16 @@ pub fn judge(services: &[StackService], jobs: &[String]) -> (State, Vec<String>)
 
 impl Stacks {
     pub fn health(&self, id: &str) -> Option<Health> {
-        self.health.lock().unwrap_or_else(|e| e.into_inner()).get(id).cloned()
+        self.health.locked().get(id).cloned()
     }
 
     /// Records [next] for [id]; the previous one.
     fn record(&self, id: &str, next: Health) -> Option<Health> {
-        self.health.lock().unwrap_or_else(|e| e.into_inner()).insert(id.to_string(), next)
+        self.health.locked().insert(id.to_string(), next)
     }
 
     fn forget_others(&self, ids: &[String]) {
-        self.health.lock().unwrap_or_else(|e| e.into_inner()).retain(|id, _| ids.contains(id));
+        self.health.locked().retain(|id, _| ids.contains(id));
     }
 }
 

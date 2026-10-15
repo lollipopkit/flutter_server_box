@@ -9,6 +9,7 @@
 //! file is put in the prompt whole, and an image goes to the model as an
 //! image as well.
 
+use crate::utils::lock::LockExt;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -98,7 +99,7 @@ impl Files {
     /// Keeps [bytes] for [user] until a task names it.
     pub async fn put(&self, user: i64, name: &str, mime: &str, bytes: &[u8]) -> Result<FileView, FileError> {
         self.expire().await;
-        if self.pending.lock().unwrap().values().filter(|u| u.user == user).count() >= MAX_PENDING {
+        if self.pending.locked().values().filter(|u| u.user == user).count() >= MAX_PENDING {
             return Err(FileError::TooMany);
         }
         let id = super::uuid_v4();
@@ -106,14 +107,14 @@ impl Files {
         private_dir(&dir).await.map_err(|e| FileError::Io(e.to_string()))?;
         write_private(&dir.join(&id), bytes).await.map_err(|e| FileError::Io(e.to_string()))?;
         let view = FileView { id: id.clone(), name: clean_name(name), mime: clean_mime(mime), size: bytes.len() as u64 };
-        self.pending.lock().unwrap().insert(id, Upload { user, view: view.clone(), created: Instant::now() });
+        self.pending.locked().insert(id, Upload { user, view: view.clone(), created: Instant::now() });
         Ok(view)
     }
 
     /// Removes one of [user]'s waiting uploads.
     pub async fn discard(&self, user: i64, id: &str) -> bool {
         let gone = {
-            let mut p = self.pending.lock().unwrap();
+            let mut p = self.pending.locked();
             match p.get(id) {
                 Some(u) if u.user == user => p.remove(id).is_some(),
                 _ => false,
@@ -127,7 +128,7 @@ impl Files {
 
     /// Drops what waits: the password changed.
     pub fn forget(&self) {
-        let gone: Vec<String> = self.pending.lock().unwrap().drain().map(|(id, _)| id).collect();
+        let gone: Vec<String> = self.pending.locked().drain().map(|(id, _)| id).collect();
         // Unlinking a few files; the caller is not async.
         for id in gone {
             let _ = std::fs::remove_file(self.uploads().join(id));
@@ -136,7 +137,7 @@ impl Files {
 
     /// Whether [user] has every one of [ids] waiting.
     pub fn has(&self, user: i64, ids: &[String]) -> bool {
-        let p = self.pending.lock().unwrap();
+        let p = self.pending.locked();
         ids.iter().all(|id| p.get(id).is_some_and(|u| u.user == user))
     }
 
@@ -146,7 +147,7 @@ impl Files {
             return Err(FileError::TooMany);
         }
         let taken: Vec<FileView> = {
-            let mut p = self.pending.lock().unwrap();
+            let mut p = self.pending.locked();
             if !ids.iter().all(|id| p.get(id).is_some_and(|u| u.user == user)) || ids.iter().collect::<HashSet<_>>().len() != ids.len() {
                 return Err(FileError::Unknown);
             }
@@ -192,7 +193,7 @@ impl Files {
 
     async fn expire(&self) {
         let old: Vec<String> = {
-            let mut p = self.pending.lock().unwrap();
+            let mut p = self.pending.locked();
             let ids: Vec<String> = p.iter().filter(|(_, u)| u.created.elapsed() > KEEP_PENDING).map(|(id, _)| id.clone()).collect();
             ids.iter().for_each(|id| {
                 p.remove(id);

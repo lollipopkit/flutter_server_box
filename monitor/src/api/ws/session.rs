@@ -18,6 +18,7 @@
 //! [`Scrollback`] for how a short outage is recovered without clearing the
 //! screen.
 
+use crate::utils::lock::LockExt;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -206,11 +207,10 @@ impl Session {
         // sender as one atomic step. Otherwise output produced in between
         // would land in the buffer *after* the replay was computed and go to
         // a sender that is about to be replaced — visible to nobody.
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         if let SessionOutput::Data(data) = &output {
             self.scrollback
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
+                .locked()
                 .push(data);
         }
         if attachment.replay_requested {
@@ -249,12 +249,12 @@ impl Session {
         since: u64,
         queue: usize,
     ) -> Option<(AttachmentId, mpsc::Receiver<SessionOutput>, Replay, u64)> {
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         if attachment.closed {
             return None;
         }
         let (replay, start_seq) = {
-            let scrollback = self.scrollback.lock().unwrap_or_else(|e| e.into_inner());
+            let scrollback = self.scrollback.locked();
             (scrollback.replay_from(since), scrollback.start_seq())
         };
         let (tx, rx) = mpsc::channel(queue);
@@ -269,7 +269,7 @@ impl Session {
     }
 
     pub fn detach(&self, id: AttachmentId) -> bool {
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         if !matches!(attachment.current.as_ref(), Some((current, _)) if *current == id) {
             return false;
         }
@@ -279,7 +279,7 @@ impl Session {
     }
 
     fn close(&self) -> Option<mpsc::Sender<SessionOutput>> {
-        let mut attachment = self.attachment.lock().unwrap_or_else(|e| e.into_inner());
+        let mut attachment = self.attachment.locked();
         attachment.closed = true;
         attachment.detached_at = Some(Instant::now());
         attachment.current.take().map(|(_, sender)| sender)
@@ -336,7 +336,7 @@ impl SessionStore {
         });
 
         let (expired, inserted) = {
-            let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let mut sessions = self.sessions.locked();
             let expired = Self::take_expired(&mut sessions, Instant::now(), self.detached_timeout);
             let inserted = if sessions.len() >= self.max {
                 None
@@ -355,7 +355,7 @@ impl SessionStore {
         let Some((id, secret)) = handle.split_once('.') else {
             return Err(AttachError::Unknown);
         };
-        let sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+        let sessions = self.sessions.locked();
         let Some(session) = sessions.get(id) else {
             return Err(AttachError::Unknown);
         };
@@ -368,8 +368,7 @@ impl SessionStore {
     pub fn remove(&self, handle: &str) {
         let id = handle.split_once('.').map(|(id, _)| id).unwrap_or(handle);
         self.sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .remove(id);
     }
 
@@ -378,11 +377,10 @@ impl SessionStore {
     pub fn list(&self) -> Vec<SessionInfo> {
         let mut open: Vec<SessionInfo> = self
             .sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .iter()
             .map(|(id, session)| {
-                let attachment = session.attachment.lock().unwrap_or_else(|e| e.into_inner());
+                let attachment = session.attachment.locked();
                 SessionInfo {
                     id: id.clone(),
                     user: session.user.clone(),
@@ -402,8 +400,7 @@ impl SessionStore {
     pub fn close(&self, id: &str, code: &'static str) -> bool {
         let Some(session) = self
             .sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .remove(id)
         else {
             return false;
@@ -431,8 +428,7 @@ impl SessionStore {
     pub fn close_all(&self, code: &'static str) -> usize {
         let closing = self
             .sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .drain()
             .map(|(_, session)| session)
             .collect::<Vec<_>>();
@@ -453,7 +449,7 @@ impl SessionStore {
 
     fn reap_at(&self, now: Instant) -> usize {
         let expired = {
-            let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let mut sessions = self.sessions.locked();
             Self::take_expired(&mut sessions, now, self.detached_timeout)
         };
         let count = expired.len();
@@ -471,8 +467,7 @@ impl SessionStore {
             .filter_map(|(id, session)| {
                 let detached_at = session
                     .attachment
-                    .lock()
-                    .unwrap_or_else(|e| e.into_inner())
+                    .locked()
                     .detached_at;
                 detached_at
                     .filter(|at| now.saturating_duration_since(*at) >= timeout)
@@ -500,8 +495,7 @@ impl SessionStore {
 
     pub fn len(&self) -> usize {
         self.sessions
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .len()
     }
 
@@ -590,7 +584,7 @@ mod tests {
         session.detach(attachment);
         session.publish(SessionOutput::Data(b"while you were away".to_vec()));
 
-        let sb = session.scrollback.lock().unwrap();
+        let sb = session.scrollback.locked();
         assert_eq!(
             sb.replay_from(0),
             Replay::Gap(b"while you were away".to_vec())

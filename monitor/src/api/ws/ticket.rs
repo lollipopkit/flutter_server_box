@@ -11,6 +11,7 @@
 //! mechanism to audit and get right rather than two, at the cost of one extra
 //! round trip on a connection that is about to carry an SSH session.
 
+use crate::utils::lock::LockExt;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -113,23 +114,21 @@ impl TicketStore {
     /// Burns a reservation after the WebSocket handshake succeeds.
     pub fn commit(&self, reservation: TicketReservation) {
         self.entries
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .remove(&reservation.id);
     }
 
     /// Forgets every ticket: what the old password authorised is not to be
     /// redeemed after it changes.
     pub fn revoke_all(&self) {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        self.entries.locked().clear();
     }
 
     /// Makes a reservation usable again after the HTTP upgrade fails.
     pub fn rollback(&self, reservation: TicketReservation) {
         if let Some(entry) = self
             .entries
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .get_mut(&reservation.id)
         {
             entry.reserved = false;
@@ -140,7 +139,7 @@ impl TicketStore {
         let id = random_hex(ID_BYTES)?;
         let secret = random_hex(SECRET_BYTES)?;
 
-        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = self.entries.locked();
         // Sweeping here rather than from a background task: issuing is the
         // only way the map grows, so it is also the only moment pruning is
         // needed. Unconsumed tickets otherwise linger for their TTL, which
@@ -178,7 +177,7 @@ impl TicketStore {
             return Err(TicketError::Malformed);
         };
 
-        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = self.entries.locked();
         // Removed on any id hit, including a wrong secret: a ticket id is only
         // ever delivered together with its secret, so anyone who can name one
         // already has the whole thing. Burning it on a mismatch turns a
@@ -211,7 +210,7 @@ impl TicketStore {
 
     #[cfg(test)]
     fn len(&self) -> usize {
-        self.entries.lock().unwrap().len()
+        self.entries.locked().len()
     }
 }
 

@@ -16,6 +16,7 @@
 //! - The directory is the agent's own state (`fs_roots::Protected`): it
 //!   holds databases.
 
+use crate::utils::lock::{LockExt, RwLockExt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, RwLock};
 
@@ -124,11 +125,11 @@ impl ContainerBackups {
     }
 
     pub fn job(&self) -> Option<Arc<Job>> {
-        self.job.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.job.locked().clone()
     }
 
     fn begin(&self, kind: JobKind) -> Result<Arc<Job>, Refusal> {
-        let mut job = self.job.lock().unwrap_or_else(|e| e.into_inner());
+        let mut job = self.job.locked();
         if job.as_ref().is_some_and(|j| j.running()) {
             return Err(refusal(409, "busy"));
         }
@@ -139,7 +140,7 @@ impl ContainerBackups {
 
     /// Where backups go now.
     pub fn root(&self) -> PathBuf {
-        self.root.read().unwrap_or_else(|e| e.into_inner()).clone()
+        self.root.read_locked().clone()
     }
 
     pub fn default_root(&self) -> &Path {
@@ -150,7 +151,7 @@ impl ContainerBackups {
     /// database for `None`. The folder is the agent's state from now on.
     fn use_destination(&self, destination: Option<&Path>) {
         let next = destination.map(|d| d.join(BACKUP_DIR)).unwrap_or_else(|| self.default_root.clone());
-        let previous = std::mem::replace(&mut *self.root.write().unwrap_or_else(|e| e.into_inner()), next.clone());
+        let previous = std::mem::replace(&mut *self.root.write_locked(), next.clone());
         if previous != next && previous != self.default_root {
             crate::core::fs_roots::protect_at_runtime(&next, Some(&previous));
         } else {

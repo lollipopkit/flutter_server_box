@@ -10,6 +10,7 @@
 //! `api::ws::terminal` drives through the session, scrollback and reconnect
 //! machinery.
 
+use crate::utils::lock::LockExt;
 use std::io::{Read, Write};
 use std::sync::{Arc, Condvar, Mutex};
 
@@ -237,8 +238,7 @@ impl LocalShell {
                     Ok(0) | Err(_) => break,
                     Ok(n) => {
                         let delivery_closed = reader_delivery_closed
-                            .lock()
-                            .unwrap_or_else(|e| e.into_inner());
+                            .locked();
                         if *delivery_closed {
                             break;
                         }
@@ -250,7 +250,7 @@ impl LocalShell {
             }
             let (done, ready) = &*reader_finished;
             {
-                let mut done = done.lock().unwrap_or_else(|e| e.into_inner());
+                let mut done = done.locked();
                 *done = true;
             }
             ready.notify_one();
@@ -265,8 +265,7 @@ impl LocalShell {
         let exit_delivery_closed = delivery_closed.clone();
         std::thread::spawn(move || loop {
             let status = reaper
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
+                .locked()
                 .try_wait();
             let exit = match status {
                 Ok(Some(status)) => Some(Some(status.exit_code())),
@@ -279,15 +278,14 @@ impl LocalShell {
                 // EOF immediately; ConPTY gets a short drain window and then
                 // exit is delivered even if its read handle stays open.
                 let (done, ready) = &*reader_done;
-                let done = done.lock().unwrap_or_else(|e| e.into_inner());
+                let done = done.locked();
                 drop(ready.wait_timeout_while(
                     done,
                     std::time::Duration::from_millis(100),
                     |done| !*done,
                 ));
                 let mut delivery_closed = exit_delivery_closed
-                    .lock()
-                    .unwrap_or_else(|e| e.into_inner());
+                    .locked();
                 *delivery_closed = true;
                 let _ = tx.blocking_send(ShellEvent::Exit(status));
                 break;
@@ -306,7 +304,7 @@ impl LocalShell {
     }
 
     pub fn write(&self, data: &[u8]) -> std::io::Result<()> {
-        let mut writer = self.writer.lock().unwrap_or_else(|e| e.into_inner());
+        let mut writer = self.writer.locked();
         writer.write_all(data)?;
         writer.flush()
     }
@@ -324,8 +322,7 @@ impl LocalShell {
     pub fn kill(&self) {
         let _ = self
             .child
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
+            .locked()
             .kill();
     }
 }

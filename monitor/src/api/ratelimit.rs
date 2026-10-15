@@ -25,6 +25,7 @@
 //! - **a signed-in caller re-entering the password**: a counter only such
 //!   callers share, out of strangers' reach.
 
+use crate::utils::lock::LockExt;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::{Arc, Mutex};
@@ -127,9 +128,9 @@ impl LoginThrottle {
     pub fn begin(&self, ip: Option<IpAddr>, who: Who) -> std::result::Result<LoginAttempt, Duration> {
         let now = Instant::now();
         let attempt_keys = keys(ip, who);
-        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = self.entries.locked();
         if entries.len() > PRUNE_THRESHOLD {
-            let mut last = self.last_prune.lock().unwrap_or_else(|e| e.into_inner());
+            let mut last = self.last_prune.locked();
             if last.is_none_or(|at| now.saturating_duration_since(at) >= PRUNE_INTERVAL) {
                 entries.retain(|_, e| {
                     e.in_flight > 0 || now.saturating_duration_since(e.last_seen) < ENTRY_TTL
@@ -185,7 +186,7 @@ impl LoginThrottle {
     }
 
     fn clear(&self, attempt_keys: &[Key]) {
-        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = self.entries.locked();
         for key in attempt_keys {
             entries.remove(key);
         }
@@ -197,7 +198,7 @@ impl LoginThrottle {
     }
 
     fn finish_failure_at(&self, attempt_keys: &[Key], now: Instant) {
-        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = self.entries.locked();
         for key in attempt_keys {
             let entry = entries.entry(key.clone()).or_insert(Entry {
                 failures: 0,
@@ -212,7 +213,7 @@ impl LoginThrottle {
 }
 
 fn release_reservation(entries: &Mutex<HashMap<Key, Entry>>, attempt_keys: &[Key]) {
-    let mut entries = entries.lock().unwrap_or_else(|e| e.into_inner());
+    let mut entries = entries.locked();
     for key in attempt_keys {
         let remove = if let Some(entry) = entries.get_mut(key) {
             entry.in_flight = entry.in_flight.saturating_sub(1);
@@ -258,7 +259,7 @@ mod tests {
     }
 
     fn age_entries(throttle: &LoginThrottle, age: Duration) {
-        let mut entries = throttle.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = throttle.entries.locked();
         for entry in entries.values_mut() {
             entry.last_seen = entry
                 .last_seen
@@ -412,10 +413,10 @@ mod tests {
             let attempt = throttle.begin(Some(IpAddr::from(n.to_be_bytes())), Who::Stranger).unwrap();
             throttle.record_failure(attempt);
             // Only the addresses are measured here.
-            throttle.entries.lock().unwrap().remove(&Key::Account);
+            throttle.entries.locked().remove(&Key::Account);
         }
         eprintln!("10,000 rotating addresses: {:?}", started.elapsed());
-        assert_eq!(throttle.entries.lock().unwrap().len(), 10_000);
+        assert_eq!(throttle.entries.locked().len(), 10_000);
     }
 
     #[test]
@@ -425,16 +426,16 @@ mod tests {
         for n in 0..PRUNE_THRESHOLD as u32 + 2 {
             let attempt = throttle.begin(addr(n), Who::Stranger).unwrap();
             throttle.record_success(attempt);
-            let mut entries = throttle.entries.lock().unwrap();
+            let mut entries = throttle.entries.locked();
             entries.insert(Key::Ip(addr(n).unwrap()), Entry { failures: 1, in_flight: 0, last_seen: Instant::now() });
         }
         let pending = throttle.begin(addr(u32::MAX - 1), Who::Stranger).unwrap();
         age_entries(&throttle, ENTRY_TTL + Duration::from_secs(1));
         assert_admitted(&throttle, addr(u32::MAX - 2));
-        assert!(throttle.entries.lock().unwrap().contains_key(&Key::Ip(addr(0).unwrap())));
-        *throttle.last_prune.lock().unwrap() = Some(Instant::now() - PRUNE_INTERVAL);
+        assert!(throttle.entries.locked().contains_key(&Key::Ip(addr(0).unwrap())));
+        *throttle.last_prune.locked() = Some(Instant::now() - PRUNE_INTERVAL);
         assert_admitted(&throttle, addr(u32::MAX - 2));
-        let entries = throttle.entries.lock().unwrap();
+        let entries = throttle.entries.locked();
         assert!(!entries.contains_key(&Key::Ip(addr(0).unwrap())));
         assert_eq!(entries[&Key::Ip(addr(u32::MAX - 1).unwrap())].in_flight, 1);
         drop(entries);

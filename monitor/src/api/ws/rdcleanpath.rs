@@ -40,6 +40,7 @@
 //! remote desktop over SSH verifies the certificate, and is the choice for a
 //! path that is not trusted.
 
+use crate::utils::lock::LockExt;
 use std::cell::RefCell;
 use std::io;
 use std::net::SocketAddr;
@@ -662,7 +663,7 @@ struct CapturingVerifier {
 
 impl CapturingVerifier {
     fn take_chain(&self) -> Vec<Vec<u8>> {
-        std::mem::take(&mut *self.chain.lock().unwrap_or_else(|e| e.into_inner()))
+        std::mem::take(&mut *self.chain.locked())
     }
 }
 
@@ -675,7 +676,7 @@ impl ServerCertVerifier for CapturingVerifier {
         _ocsp_response: &[u8],
         _now: UnixTime,
     ) -> Result<ServerCertVerified, TlsError> {
-        *self.chain.lock().unwrap_or_else(|e| e.into_inner()) = std::iter::once(end_entity)
+        *self.chain.locked() = std::iter::once(end_entity)
             .chain(intermediates.iter())
             .map(|cert| cert.as_ref().to_vec())
             .collect();

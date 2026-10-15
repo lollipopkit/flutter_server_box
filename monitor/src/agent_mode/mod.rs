@@ -47,6 +47,7 @@ pub(crate) mod prompt;
 mod search;
 mod tools;
 
+use crate::utils::lock::LockExt;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicI64, Ordering};
@@ -295,23 +296,23 @@ pub(crate) struct Flow {
 
 impl Flow {
     fn status(&self) -> Status {
-        self.view.lock().unwrap().status
+        self.view.locked().status
     }
 
     fn view(&self) -> FlowView {
-        let mut v = self.view.lock().unwrap().clone();
-        v.waiting = self.pending.lock().unwrap().as_ref().map(|p| p.view.kind);
-        v.steps = self.steps.lock().unwrap().clone();
-        v.tail = self.output.lock().unwrap().as_ref().map(|o| o.lines[o.lines.len().saturating_sub(TAIL_LINES)..].to_vec()).unwrap_or_default();
+        let mut v = self.view.locked().clone();
+        v.waiting = self.pending.locked().as_ref().map(|p| p.view.kind);
+        v.steps = self.steps.locked().clone();
+        v.tail = self.output.locked().as_ref().map(|o| o.lines[o.lines.len().saturating_sub(TAIL_LINES)..].to_vec()).unwrap_or_default();
         v
     }
 
     pub(crate) fn secure(&self) -> bool {
-        *self.secure.lock().unwrap()
+        *self.secure.locked()
     }
 
     pub(crate) fn cancel_token(&self) -> Cancel {
-        self.cancel.lock().unwrap().clone()
+        self.cancel.locked().clone()
     }
 }
 
@@ -407,8 +408,7 @@ impl AgentMode {
     /// The account [user]'s memory.
     pub fn memory(&self, user: i64) -> Arc<Memory> {
         self.memories
-            .lock()
-            .unwrap()
+            .locked()
             .entry(user)
             .or_insert_with(|| Arc::new(Memory::new(Arc::new(memory::DbMemory { db: self.db.clone(), user_id: user }))))
             .clone()
@@ -611,7 +611,7 @@ impl AgentMode {
             }
             _ => None,
         };
-        let active = self.flows.lock().unwrap();
+        let active = self.flows.locked();
         let flows = rows
             .into_iter()
             .map(|r| match active.get(&r.id) {
@@ -638,7 +638,7 @@ impl AgentMode {
     }
 
     fn active(&self, user: i64, id: &str) -> Option<Arc<Flow>> {
-        self.flows.lock().unwrap().get(id).filter(|f| f.user_id == user).cloned()
+        self.flows.locked().get(id).filter(|f| f.user_id == user).cloned()
     }
 
     /// One task whole: its row, the entries on its session's current branch,
@@ -648,7 +648,7 @@ impl AgentMode {
         let active = self.active(user, id);
         let entries = self.entries(state, id, active.as_ref()).await?;
         let (pending, output) = match &active {
-            Some(f) => (f.pending.lock().unwrap().as_ref().map(|p| p.view.clone()), f.output.lock().unwrap().clone()),
+            Some(f) => (f.pending.locked().as_ref().map(|p| p.view.clone()), f.output.locked().clone()),
             None => (None, None),
         };
         Ok(Some(json!({ "flow": view, "entries": entries, "pending": pending, "output": output })))
@@ -656,7 +656,7 @@ impl AgentMode {
 
     async fn entries(&self, state: &Arc<AppState>, id: &str, active: Option<&Arc<Flow>>) -> Result<Vec<Value>, FlowError> {
         let _open = self.opening.lock().await;
-        if let Some(s) = active.and_then(|f| f.session.lock().unwrap().clone()) {
+        if let Some(s) = active.and_then(|f| f.session.locked().clone()) {
             return Ok(s.entries().await?);
         }
         // Not open: opened to be read, and closed again.
@@ -756,8 +756,8 @@ impl AgentMode {
             session: Mutex::new(None),
             cancel: Mutex::new(Cancel::new()),
         });
-        self.flows.lock().unwrap().insert(id.clone(), flow.clone());
-        self.queue.lock().unwrap().push_back((id.clone(), text, images));
+        self.flows.locked().insert(id.clone(), flow.clone());
+        self.queue.locked().push_back((id.clone(), text, images));
         self.emit(user, json!({ "type": "flow", "flow": view }));
         self.schedule(state);
         self.name_later(user, id, named);
@@ -796,9 +796,9 @@ impl AgentMode {
                 return;
             }
             let _ = sqlx::query("UPDATE agent_flow SET title = ? WHERE id = ?").bind(&title).bind(&id).execute(&this.db).await;
-            let view = match this.flows.lock().unwrap().get(&id).cloned() {
+            let view = match this.flows.locked().get(&id).cloned() {
                 Some(f) => {
-                    f.view.lock().unwrap().title = title;
+                    f.view.locked().title = title;
                     Some(f.view())
                 }
                 None => None,
@@ -840,9 +840,9 @@ impl AgentMode {
         }
         self.check_choice(&choice).await?;
         if let Some(flow) = self.active(user, id) {
-            *flow.secure.lock().unwrap() = secure;
+            *flow.secure.locked() = secure;
             self.apply_choice(&flow, &choice).await;
-            let kind = flow.pending.lock().unwrap().as_ref().map(|p| (p.view.kind, p.view.id.clone()));
+            let kind = flow.pending.locked().as_ref().map(|p| (p.view.kind, p.view.id.clone()));
             if matches!(kind, Some((k, _)) if !matches!(k, "confirm" | "danger" | "clarify")) {
                 return Err(FlowError::Busy);
             }
@@ -857,7 +857,7 @@ impl AgentMode {
                     self.answer_flow(&flow, Answer { id: pid, action: "text".into(), text: Some(text), index: None, password: None, remember: false, confirm: None })?;
                 }
                 Some(_) => return Err(FlowError::Busy),
-                None => flow.replies.lock().unwrap().push_back((text, images)),
+                None => flow.replies.locked().push_back((text, images)),
             }
             return Ok(flow.view());
         }
@@ -865,7 +865,7 @@ impl AgentMode {
         if config::load(&self.db).await?.model.is_none() {
             return Err(FlowError::NotConfigured);
         }
-        if self.flows.lock().unwrap().contains_key(id) {
+        if self.flows.locked().contains_key(id) {
             return Err(FlowError::Busy);
         }
         let attached = self.attach(user, id, &file_ids).await?;
@@ -891,13 +891,13 @@ impl AgentMode {
             cancel: Mutex::new(Cancel::new()),
         });
         {
-            let mut flows = self.flows.lock().unwrap();
+            let mut flows = self.flows.locked();
             if flows.contains_key(id) {
                 return Err(FlowError::Busy);
             }
             flows.insert(id.to_string(), flow.clone());
         }
-        self.queue.lock().unwrap().push_back((id.to_string(), text, images));
+        self.queue.locked().push_back((id.to_string(), text, images));
         self.persist(&flow).await;
         self.schedule(state);
         Ok(flow.view())
@@ -906,19 +906,19 @@ impl AgentMode {
     /// The allow rule what [id] waits on offers, when [pending] is it.
     pub fn pending_rule(&self, user: i64, id: &str, pending: &str) -> Option<String> {
         let flow = self.active(user, id)?;
-        let p = flow.pending.lock().unwrap();
+        let p = flow.pending.locked();
         p.as_ref().filter(|p| p.view.id == pending).and_then(|p| p.view.allow_rule.clone())
     }
 
     /// Answers what [id] waits on.
     pub fn answer(&self, user: i64, secure: bool, id: &str, answer: Answer) -> Result<(), FlowError> {
         let flow = self.active(user, id).ok_or(FlowError::NotWaiting)?;
-        *flow.secure.lock().unwrap() = secure;
+        *flow.secure.locked() = secure;
         self.answer_flow(&flow, answer)
     }
 
     fn answer_flow(&self, flow: &Flow, answer: Answer) -> Result<(), FlowError> {
-        let mut pending = flow.pending.lock().unwrap();
+        let mut pending = flow.pending.locked();
         let Some(p) = pending.as_ref() else { return Err(FlowError::NotWaiting) };
         if p.view.id != answer.id {
             return Err(FlowError::Stale);
@@ -935,21 +935,21 @@ impl AgentMode {
     pub async fn stop(self: &Arc<Self>, state: &Arc<AppState>, user: i64, id: &str) -> Result<(), FlowError> {
         let flow = self.active(user, id).ok_or(FlowError::NotActive)?;
         flow.cancel_token().cancel();
-        flow.replies.lock().unwrap().clear();
-        drop(flow.pending.lock().unwrap().take());
+        flow.replies.locked().clear();
+        drop(flow.pending.locked().take());
         let queued = {
-            let mut q = self.queue.lock().unwrap();
+            let mut q = self.queue.locked();
             let before = q.len();
             q.retain(|(qid, _, _)| qid != id);
             q.len() != before
         };
         if queued {
             self.finish(&flow, Status::Cancelled, None).await;
-            self.flows.lock().unwrap().remove(id);
+            self.flows.locked().remove(id);
             self.schedule(state);
             return Ok(());
         }
-        let session = flow.session.lock().unwrap().clone();
+        let session = flow.session.locked().clone();
         if let Some(s) = session {
             let _ = s.abort().await;
         }
@@ -986,7 +986,7 @@ impl AgentMode {
     // Running
 
     fn running(&self) -> i64 {
-        self.flows.lock().unwrap().values().filter(|f| f.status() == Status::Running).count() as i64
+        self.flows.locked().values().filter(|f| f.status() == Status::Running).count() as i64
     }
 
     /// Starts what the queue holds while there is room.
@@ -995,10 +995,10 @@ impl AgentMode {
             if self.running() >= self.max_running.load(Ordering::Relaxed) {
                 return;
             }
-            let Some((id, text, images)) = self.queue.lock().unwrap().pop_front() else { return };
-            let Some(flow) = self.flows.lock().unwrap().get(&id).cloned() else { continue };
+            let Some((id, text, images)) = self.queue.locked().pop_front() else { return };
+            let Some(flow) = self.flows.locked().get(&id).cloned() else { continue };
             {
-                let mut v = flow.view.lock().unwrap();
+                let mut v = flow.view.locked();
                 v.status = Status::Running;
                 v.started_at = Some(chrono::Utc::now().to_rfc3339());
             }
@@ -1014,7 +1014,7 @@ impl AgentMode {
         // read takes, so a read never opens it alongside.
         {
             let _open = self.opening.lock().await;
-            let session = flow.session.lock().unwrap().take();
+            let session = flow.session.locked().take();
             if let Some(s) = &session {
                 self.write_pi_file(&flow, s).await;
             }
@@ -1040,7 +1040,7 @@ impl AgentMode {
             Ok(Outcome::Failed(why)) => self.finish(&flow, Status::Failed, Some(why)).await,
             Err(e) => self.finish(&flow, Status::Failed, Some(e.to_string())).await,
         }
-        self.flows.lock().unwrap().remove(&flow.id);
+        self.flows.locked().remove(&flow.id);
         self.schedule(&state);
     }
 
@@ -1048,7 +1048,7 @@ impl AgentMode {
         let settings = config::load(&self.db).await?;
         let Some(machine) = settings.model else { return Err(FlowError::NotConfigured) };
         let (model, thinking_level) = {
-            let v = flow.view.lock().unwrap();
+            let v = flow.view.locked();
             (v.model.clone().unwrap_or(machine), v.thinking_level.clone().unwrap_or(settings.thinking_level.clone()))
         };
         let rt = self.runtime().await?;
@@ -1085,7 +1085,7 @@ impl AgentMode {
                 })
                 .await?;
             let session = Arc::new(session);
-            *flow.session.lock().unwrap() = Some(session.clone());
+            *flow.session.locked() = Some(session.clone());
             self.forward(flow.clone(), events);
             session
         };
@@ -1103,7 +1103,7 @@ impl AgentMode {
                 Some("aborted") => return Ok(Outcome::Done),
                 _ => {}
             }
-            let next = flow.replies.lock().unwrap().pop_front();
+            let next = flow.replies.locked().pop_front();
             match next {
                 Some((t, i)) => (text, images) = (t, i),
                 None => return Ok(Outcome::Done),
@@ -1121,7 +1121,7 @@ impl AgentMode {
                     let text: String = e["message"]["content"].as_array().into_iter().flatten().filter(|c| c["type"] == "text").filter_map(|c| c["text"].as_str()).collect();
                     let line = first_line(text.trim(), 160);
                     if !line.is_empty() {
-                        flow.view.lock().unwrap().line = line;
+                        flow.view.locked().line = line;
                     }
                 }
                 let _ = tx.send(AgentEvent { user: flow.user_id, payload: json!({ "type": "event", "id": flow.id, "event": e }) });
@@ -1131,15 +1131,15 @@ impl AgentMode {
 
     async fn finish(&self, flow: &Flow, status: Status, why: Option<String>) {
         {
-            let mut v = flow.view.lock().unwrap();
+            let mut v = flow.view.locked();
             v.status = status;
             v.finished_at = Some(chrono::Utc::now().to_rfc3339());
             if let Some(w) = why {
                 v.line = first_line(&w, 160);
             }
         }
-        drop(flow.pending.lock().unwrap().take());
-        *flow.output.lock().unwrap() = None;
+        drop(flow.pending.locked().take());
+        *flow.output.locked() = None;
         self.persist(flow).await;
     }
 
@@ -1156,7 +1156,7 @@ impl AgentMode {
             Ok(t) => t,
             Err(e) => return tracing::warn!("agent mode: exporting {} for pi: {e}", flow.id),
         };
-        let created = flow.view.lock().unwrap().created_at.clone();
+        let created = flow.view.locked().created_at.clone();
         if let Err(e) = pi_file::write(&cwd, &created, &flow.id, &text).await {
             tracing::warn!("agent mode: writing {} for pi: {e}", flow.id);
         }
@@ -1204,7 +1204,7 @@ impl AgentMode {
             return;
         }
         {
-            let mut v = flow.view.lock().unwrap();
+            let mut v = flow.view.locked();
             if let Some(m) = &c.model {
                 v.model = Some(m.clone());
             }
@@ -1212,7 +1212,7 @@ impl AgentMode {
                 v.thinking_level = Some(l.clone());
             }
         }
-        let session = flow.session.lock().unwrap().clone();
+        let session = flow.session.locked().clone();
         if let Some(s) = session {
             if let Some(m) = &c.model
                 && let Err(e) = s.set_model(json!(m)).await
@@ -1232,7 +1232,7 @@ impl AgentMode {
     pub(crate) async fn persist(&self, flow: &Flow) {
         let mut v = flow.view();
         v.updated_at = chrono::Utc::now().to_rfc3339();
-        flow.view.lock().unwrap().updated_at = v.updated_at.clone();
+        flow.view.locked().updated_at = v.updated_at.clone();
         let r = sqlx::query(
             "UPDATE agent_flow SET title = ?, status = ?, line = ?, areas = ?, model = ?, thinking_level = ?, updated_at = ?, started_at = ?, finished_at = ? WHERE id = ?",
         )
@@ -1263,9 +1263,9 @@ impl AgentMode {
         view.id = uuid_v4();
         let call_id = view.tool_call_id.clone();
         let (tx, rx) = oneshot::channel();
-        *flow.pending.lock().unwrap() = Some(Pending { view: view.clone(), answer: tx });
+        *flow.pending.locked() = Some(Pending { view: view.clone(), answer: tx });
         self.step_state(flow, &call_id, "waiting");
-        flow.view.lock().unwrap().status = Status::Waiting;
+        flow.view.locked().status = Status::Waiting;
         self.persist(flow).await;
         self.emit(flow.user_id, json!({ "type": "pending", "id": flow.id, "pending": view }));
         let cancel = flow.cancel_token();
@@ -1273,10 +1273,10 @@ impl AgentMode {
             a = rx => a.ok(),
             _ = cancel.cancelled() => None,
         };
-        drop(flow.pending.lock().unwrap().take());
+        drop(flow.pending.locked().take());
         if !cancel.is_cancelled() {
             self.step_state(flow, &call_id, "running");
-            flow.view.lock().unwrap().status = Status::Running;
+            flow.view.locked().status = Status::Running;
             self.persist(flow).await;
         }
         self.emit(flow.user_id, json!({ "type": "pending", "id": flow.id, "pending": null }));
@@ -1284,7 +1284,7 @@ impl AgentMode {
     }
 
     pub(crate) fn sudo_password(&self, user: i64) -> Option<String> {
-        let mut cache = self.sudo.lock().unwrap();
+        let mut cache = self.sudo.locked();
         match cache.get(&user) {
             Some((p, at)) if at.elapsed() < SUDO_REMEMBER => Some(p.clone()),
             Some(_) => {
@@ -1296,7 +1296,7 @@ impl AgentMode {
     }
 
     pub(crate) fn remember_sudo(&self, user: i64, password: Option<String>) {
-        let mut cache = self.sudo.lock().unwrap();
+        let mut cache = self.sudo.locked();
         match password {
             Some(p) => {
                 cache.insert(user, (p, Instant::now()));
@@ -1310,13 +1310,13 @@ impl AgentMode {
     /// The password changed: the tasks stop and the sudo password left in
     /// memory goes, with the uploads nobody named yet.
     pub fn end_account(&self) {
-        self.sudo.lock().unwrap().clear();
+        self.sudo.locked().clear();
         self.files.forget();
-        let flows: Vec<Arc<Flow>> = self.flows.lock().unwrap().values().cloned().collect();
+        let flows: Vec<Arc<Flow>> = self.flows.locked().values().cloned().collect();
         for f in flows {
             f.cancel_token().cancel();
-            drop(f.pending.lock().unwrap().take());
-            let session = f.session.lock().unwrap().clone();
+            drop(f.pending.locked().take());
+            let session = f.session.locked().clone();
             if let Some(s) = session {
                 tokio::spawn(s.abort());
             }
@@ -1324,7 +1324,7 @@ impl AgentMode {
     }
 
     pub(crate) fn note_area(&self, flow: &Flow, area: &str, line: &str) {
-        let mut v = flow.view.lock().unwrap();
+        let mut v = flow.view.locked();
         if !v.areas.iter().any(|a| a == area) {
             v.areas.push(area.to_string());
         }
@@ -1334,7 +1334,7 @@ impl AgentMode {
     }
 
     pub(crate) fn output_started(&self, flow: &Flow, tool_call_id: &str) {
-        *flow.output.lock().unwrap() = Some(LiveOutput { tool_call_id: tool_call_id.to_string(), lines: Vec::new(), omitted: 0 });
+        *flow.output.locked() = Some(LiveOutput { tool_call_id: tool_call_id.to_string(), lines: Vec::new(), omitted: 0 });
     }
 
     /// Lines of the running command: kept (the newest [`tools::LIVE_LINES`])
@@ -1344,7 +1344,7 @@ impl AgentMode {
             return;
         }
         {
-            let mut out = flow.output.lock().unwrap();
+            let mut out = flow.output.locked();
             if let Some(o) = out.as_mut().filter(|o| o.tool_call_id == tool_call_id) {
                 o.lines.extend(lines.iter().cloned());
                 let over = o.lines.len().saturating_sub(tools::LIVE_LINES);
@@ -1358,27 +1358,27 @@ impl AgentMode {
     }
 
     pub(crate) fn output_ended(&self, flow: &Flow) {
-        *flow.output.lock().unwrap() = None;
+        *flow.output.locked() = None;
     }
 
     pub(crate) fn step_begin(&self, flow: &Flow, tool_call_id: &str, title: &str, area: &str) {
-        let mut steps = flow.steps.lock().unwrap();
+        let mut steps = flow.steps.locked();
         steps.retain(|s| s.tool_call_id != tool_call_id);
         steps.push(StepBrief { tool_call_id: tool_call_id.to_string(), title: title.to_string(), area: area.to_string(), state: "running" });
     }
 
     pub(crate) fn step_state(&self, flow: &Flow, tool_call_id: &str, state: &'static str) {
-        if let Some(s) = flow.steps.lock().unwrap().iter_mut().find(|s| s.tool_call_id == tool_call_id) {
+        if let Some(s) = flow.steps.locked().iter_mut().find(|s| s.tool_call_id == tool_call_id) {
             s.state = state;
         }
     }
 
     pub(crate) fn approve_commands(&self, flow: &Flow, commands: impl IntoIterator<Item = String>) {
-        flow.approved.lock().unwrap().extend(commands);
+        flow.approved.locked().extend(commands);
     }
 
     pub(crate) fn approved(&self, flow: &Flow, command: &str) -> bool {
-        flow.approved.lock().unwrap().contains(command.trim())
+        flow.approved.locked().contains(command.trim())
     }
 }
 

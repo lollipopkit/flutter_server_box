@@ -33,6 +33,7 @@
 //!   window (`POST /stacks/{id}/enter`'s `Origin`, when the agent allows it),
 //!   so a panel the agent serves frames apps on another host.
 
+use crate::utils::lock::LockExt;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::net::SocketAddr;
@@ -161,7 +162,7 @@ impl Drop for Proxies {
 impl Proxies {
     /// The port [stack]'s listener is on, while it is.
     pub fn port(&self, stack: &str) -> Option<u16> {
-        self.listening.lock().unwrap_or_else(|e| e.into_inner()).get(stack).map(|l| l.port)
+        self.listening.locked().get(stack).map(|l| l.port)
     }
 
     /// Starts [target]'s listener, replacing one [target]'s stack had. One
@@ -170,13 +171,13 @@ impl Proxies {
     /// listener closes later than this returns).
     pub async fn start(&self, state: Arc<AppState>, target: Target) -> std::io::Result<()> {
         {
-            let listening = self.listening.lock().unwrap_or_else(|e| e.into_inner());
+            let listening = self.listening.locked();
             if let Some(l) = listening.get(&target.stack)
                 && l.port == target.listen.port()
                 && l.secure == target.tls.is_some()
             {
                 l.upstream.store(target.upstream_port, Ordering::Relaxed);
-                *l.ctx.authorization.lock().unwrap_or_else(|e| e.into_inner()) = target.authorization;
+                *l.ctx.authorization.locked() = target.authorization;
                 return Ok(());
             }
         }
@@ -228,14 +229,14 @@ impl Proxies {
                 });
             }
         });
-        self.listening.lock().unwrap_or_else(|e| e.into_inner()).insert(stack, Listening { port, secure, ctx: kept, upstream, task });
+        self.listening.locked().insert(stack, Listening { port, secure, ctx: kept, upstream, task });
         Ok(())
     }
 
     /// Starts the listener taking every app by host on [listen], replacing
     /// one there was.
     pub async fn start_by_host(&self, listen: SocketAddr, hosts: Hosts, tls: Option<Arc<rustls::ServerConfig>>, state: Arc<AppState>) -> std::io::Result<u16> {
-        if let Some((_, task)) = self.by_host.lock().unwrap_or_else(|e| e.into_inner()).take() {
+        if let Some((_, task)) = self.by_host.locked().take() {
             task.abort();
         }
         let listener = TcpListener::bind(listen).await?;
@@ -276,23 +277,23 @@ impl Proxies {
                 });
             }
         });
-        *self.by_host.lock().unwrap_or_else(|e| e.into_inner()) = Some((hosts, task));
+        *self.by_host.locked() = Some((hosts, task));
         Ok(port)
     }
 
     /// Where app [id]'s window enters when apps are taken by host.
     pub fn host_url(&self, id: &str) -> Option<String> {
-        self.by_host.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map(|(hosts, _)| hosts.url_of(id))
+        self.by_host.locked().as_ref().map(|(hosts, _)| hosts.url_of(id))
     }
 
     fn ctx(&self, stack: &str) -> Option<Arc<Ctx>> {
-        self.listening.lock().unwrap_or_else(|e| e.into_inner()).get(stack).map(|l| l.ctx.clone())
+        self.listening.locked().get(stack).map(|l| l.ctx.clone())
     }
 
     /// Remembers that [ticket] was asked for from [origin], to frame the
     /// window there.
     pub fn note_entry(&self, ticket: &str, origin: String) {
-        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
+        let mut entries = self.entries.locked();
         entries.retain(|_, (_, at)| at.elapsed() < Duration::from_secs(120));
         if entries.len() < MAX_SESSIONS {
             entries.insert(ticket.to_string(), (origin, Instant::now()));
@@ -300,25 +301,25 @@ impl Proxies {
     }
 
     fn take_entry(&self, ticket: &str) -> Option<String> {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).remove(ticket).map(|(o, _)| o)
+        self.entries.locked().remove(ticket).map(|(o, _)| o)
     }
 
     pub fn stop(&self, stack: &str) {
-        if let Some(l) = self.listening.lock().unwrap_or_else(|e| e.into_inner()).remove(stack) {
+        if let Some(l) = self.listening.locked().remove(stack) {
             l.task.abort();
         }
-        self.sessions.lock().unwrap_or_else(|e| e.into_inner()).retain(|_, s| s.stack != stack);
+        self.sessions.locked().retain(|_, s| s.stack != stack);
     }
 
     /// Ends every session: the password changed.
     pub fn end_account(&self) {
-        self.sessions.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        self.sessions.locked().clear();
     }
 
     fn open_session(&self, since: i64, stack: &str, origin: Option<String>) -> Option<String> {
         let token = random_hex(32).ok()?;
         let now = Instant::now();
-        let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
+        let mut sessions = self.sessions.locked();
         sessions.retain(|_, s| s.expires > now);
         if sessions.len() >= MAX_SESSIONS {
             return None;
@@ -354,7 +355,7 @@ impl Ctx {
     async fn admits(&self, token: &str) -> Option<Option<String>> {
         let proxies = &self.state.stacks.proxies;
         let (since, recheck, origin) = {
-            let sessions = proxies.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let sessions = proxies.sessions.locked();
             match sessions.get(token) {
                 Some(s) if s.stack == self.stack && s.expires > Instant::now() => {
                     (s.since, s.checked.elapsed() >= RECHECK, s.origin.clone())
@@ -364,7 +365,7 @@ impl Ctx {
         };
         if recheck {
             let current = crate::api::authz::caller(&self.state).await;
-            let mut sessions = proxies.sessions.lock().unwrap_or_else(|e| e.into_inner());
+            let mut sessions = proxies.sessions.locked();
             if current.is_none_or(|c| c.since != since) {
                 sessions.remove(token);
                 return None;
@@ -570,7 +571,7 @@ async fn handle(ctx: &Ctx, mut req: Request<Incoming>, peer: SocketAddr, secure:
         headers.insert("x-forwarded-host", v);
     }
     if !headers.contains_key(header::AUTHORIZATION)
-        && let Some(auth) = ctx.authorization.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        && let Some(auth) = ctx.authorization.locked().clone()
     {
         headers.insert(header::AUTHORIZATION, auth);
     }

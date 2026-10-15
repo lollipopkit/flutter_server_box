@@ -20,6 +20,7 @@
 //!
 //! Every change is audited (`Kind::Machine`), never a password.
 
+use crate::utils::lock::LockExt;
 use std::sync::{Arc, Mutex};
 
 use ntex::web::{self, HttpRequest, HttpResponse};
@@ -49,11 +50,11 @@ pub struct SharesJobs {
 
 impl SharesJobs {
     fn job(&self) -> Option<Arc<Job>> {
-        self.job.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.job.locked().clone()
     }
 
     fn begin(&self) -> Option<Arc<Job>> {
-        let mut job = self.job.lock().unwrap_or_else(|e| e.into_inner());
+        let mut job = self.job.locked();
         if job.as_ref().is_some_and(|j| j.running()) {
             return None;
         }
