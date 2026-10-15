@@ -46,7 +46,8 @@ The desk follows the lollipopkit Design System exactly; `lk/` is its CSS and Sve
 - Going to another app: `useWindow().open(appId, { appState })` for where it starts, `{ intent }` for something it should do once (never a shared module-level slot between apps). The receiving app reads `useWindow().appState` once on mount (and `$effect` on it if it should follow a second open, e.g. Files given a new path).
 - Per-window state worth restoring after a reload (a path, a tab): `useWindow().setAppState(...)` — small JSON, ≤16 KiB, never secrets.
 - Window title for a view inside the app: `useWindow().setTitle(...)`; `null` restores the app's name.
-- Pages are per server: `servers.current` is this desk's server for the desk's whole life. The existing `stale(serverId)` guards stay.
+- Pages are per server: `servers.current` is this desk's server for the desk's whole life. An answer is dropped through `useScope()` (`lib/scope.svelte.ts`): its `stale(serverId)` is also true once the component is destroyed, so a late answer starts no poll and opens no socket; its `signal` aborts then.
+- Requests go through `lib/api.ts`'s `fetchFor` (secure URL, bearer, a 401 ending the session); a failure without words of its own is said in the panel's language by what happened (`agentUnreachable`, `agentAnswered`), never an English fallback. A failure shown is `errorText(e)` (`lib/errorText.ts`). What every server is asked on a timer (reachable, its name) goes through `lib/eachServer.ts`, paused while the tab is hidden.
 - New shell text goes into `en` and `zh-CN` as `desk*` keys; the other locales are filled in one pass (every locale must have every key, `satisfies Translation`).
 - `useDesk()`'s `menu`/`panel` are single: one context menu, one panel at a time; `Escape` closes them.
 
