@@ -121,6 +121,27 @@ async fn a_refused_upload_is_answered_whatever_its_size() {
     }
 }
 
+/// What is read of a refused upload is bounded: a client that never signed
+/// in cannot keep the agent reading. Past the bound the connection is closed.
+#[ntex::test]
+async fn a_refused_upload_is_read_no_further_than_one_upload() {
+    use futures::stream;
+    let (srv, _) = server().await;
+    // Endless, chunked: no length to stop at.
+    let endless = stream::repeat_with(|| Ok::<_, std::io::Error>(ntex::util::Bytes::from(vec![0u8; 64 * 1024])));
+    let sent = tokio::time::timeout(
+        std::time::Duration::from_secs(30),
+        srv.request(Method::PUT, srv.url(&blob("x"))).send_stream(endless),
+    )
+    .await;
+    // Answered once the bound was read, or cut off there; an agent that kept
+    // reading would never answer.
+    let Ok(sent) = sent else { panic!("the agent kept reading") };
+    if let Ok(resp) = sent {
+        assert_eq!(resp.status().as_u16(), 401);
+    }
+}
+
 #[ntex::test]
 async fn the_store_is_bounded() {
     let (srv, _) = server().await;

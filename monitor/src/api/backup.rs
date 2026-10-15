@@ -32,6 +32,9 @@ use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 /// this bounds what one request makes the agent hold in memory.
 pub const MAX_BYTES: u64 = 64 * 1024 * 1024;
 
+/// The longest a refused upload is read for: see [discard].
+const DISCARD_TIME: std::time::Duration = std::time::Duration::from_secs(60);
+
 /// The most blobs the store keeps, so the database cannot be grown without
 /// bound one name at a time.
 pub const MAX_BLOBS: i64 = 64;
@@ -188,10 +191,22 @@ pub async fn upload(
 /// refusal is sent. Answered with the body still unread, the connection has to
 /// be closed under a client that is still writing it, which then sees a reset
 /// instead of the answer — a keep-alive client that reuses the connection
-/// fails its next request outright. The request-body limit bounds this as it
-/// bounds any upload.
+/// fails its next request outright.
+///
+/// At most [MAX_BYTES] and [DISCARD_TIME], as much as one upload may be: the
+/// raw payload has no limit of its own, and a refusal is also what a client
+/// that never signed in gets. Past either the connection is closed.
 async fn discard(body: &mut web::types::Payload) {
-    while let Some(Ok(_)) = body.next().await {}
+    let drain = async {
+        let mut read = 0u64;
+        while let Some(Ok(chunk)) = body.next().await {
+            read += chunk.len() as u64;
+            if read > MAX_BYTES {
+                return;
+            }
+        }
+    };
+    let _ = tokio::time::timeout(DISCARD_TIME, drain).await;
 }
 
 pub async fn remove(
