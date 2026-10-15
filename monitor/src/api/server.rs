@@ -821,13 +821,12 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .middleware(Logger::default())
             .middleware(cors)
             .configure(configure_api(exec_max_request))
-            // TODO: Remove this root-level 410 response after one release.
-            .route("/status", web::get().to(get_status_compat))
             // Built assets: hashed, precompressed, cached for good.
             .service(crate::api::assets::asset)
             .service(crate::api::assets::desk_app)
             // Serve legacy `/static` paths and root assets from the bundled
-            // Svelte frontend.
+            // Svelte frontend. TODO: drop `/static` once no bookmark or old
+            // panel build can still ask for it (the build serves `/assets`).
             .service(
                 Files::new("/static", "frontend/dist")
                     .use_etag(true)
@@ -1061,31 +1060,6 @@ async fn revoke_watch_token(
         super::admin::audit(&req, &app_state, Action::Close, format!("watch token for {client_id} revoked")).await;
     }
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
-}
-
-/// The retired Go-compat endpoint.
-///
-/// It answered unauthenticated, with values preformatted as strings —
-/// `"1.3g / 1.9g"`, `"31.7%"` — and no history at all. That shape is why the
-/// clients built on it could never draw a trend: there were no numbers in it
-/// to draw. They read `/api/v1/metrics` and `/metrics/history` now, with a
-/// scoped read-only token.
-///
-/// Answers 410 rather than 404, and says where to go. Anything still calling
-/// this is a build old enough to have no other path, and a 404 would send its
-/// owner looking for a typo in an address that was correct.
-///
-/// The route is kept for one release so the failure has an explanation
-/// attached; a client that no longer exists cannot be told anything.
-///
-/// TODO: remove the route entirely in the release after this one.
-async fn get_status_compat() -> Result<HttpResponse> {
-    Ok(HttpResponse::Gone().json(&serde_json::json!({
-        "code": 410,
-        "error": "GET /status has been removed. Use GET /api/v1/metrics with a \
-                  token from POST /api/v1/watch-token, or configure this server \
-                  in the ServerBox app.",
-    })))
 }
 
 async fn get_status(

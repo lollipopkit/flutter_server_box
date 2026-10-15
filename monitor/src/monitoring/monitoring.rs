@@ -1473,8 +1473,12 @@ fn aggregate_net(status: &ServerStatus) -> NetworkMetrics {
     }
 }
 
-/// Disk segment parsing + Go-compatible aggregation (for /status and tests);
-/// Linux-only (the legacy Go /status endpoint never ran on other platforms)
+/// Disk segment parsing + Go-compatible aggregation, Linux-only: what the
+/// retired Go agent's `/status` answered, kept so `tests/go_compat.rs` holds
+/// the aggregation to it. Nothing in the agent calls it.
+///
+/// TODO: remove with `tests/go_compat.rs` once no Go agent's numbers are
+/// compared against.
 pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(
         &sbm_parser::linux::parse_disk(segment),
