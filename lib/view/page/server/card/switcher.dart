@@ -85,95 +85,90 @@ class _SwitcherSheetState extends ConsumerState<_SwitcherSheet> {
     final names = groups.keys.toList()..sort();
 
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(13, 0, 13, 9),
-              // The pill is drawn here and the field inside it is bare, so a
-              // theme's form-input border does not draw a second box in it.
-              child: Container(
-                height: search.height ?? 34,
-                padding: search.padding,
-                alignment: Alignment.center,
-                decoration: ShapeDecoration(
-                  shape: search.shape(const StadiumBorder()),
-                  color: search.backgroundColor ?? scheme.surfaceContainerLow,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(13, 0, 13, 9),
+            // The pill is drawn here and the field inside it is bare, so a
+            // theme's form-input border does not draw a second box in it.
+            child: Container(
+              height: search.height ?? 34,
+              padding: search.padding,
+              alignment: Alignment.center,
+              decoration: ShapeDecoration(
+                shape: search.shape(const StadiumBorder()),
+                color: search.backgroundColor ?? scheme.surfaceContainerLow,
+              ),
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1,
+                  color: search.textColor,
                 ),
-                child: TextField(
-                  controller: _controller,
-                  autofocus: true,
-                  style: TextStyle(
+                // Off, or the field's own baseline makes the hint and the
+                // value sit at two different heights in a 34pt pill.
+                strutStyle: StrutStyle.disabled,
+                // The icon makes the field 34 tall and the line is 13, so
+                // left at the top it sat above the icon beside it.
+                textAlignVertical: TextAlignVertical.center,
+                decoration: bareInputDecoration(
+                  isDense: true,
+                  hintText: '${libL10n.search} · #${libL10n.tag}',
+                  hintStyle: TextStyle(
                     fontSize: 13,
                     height: 1,
-                    color: search.textColor,
+                    color: search.hintColor,
                   ),
-                  // Off, or the field's own baseline makes the hint and the
-                  // value sit at two different heights in a 34pt pill.
-                  strutStyle: StrutStyle.disabled,
-                  // The icon makes the field 34 tall and the line is 13, so
-                  // left at the top it sat above the icon beside it.
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: bareInputDecoration(
-                    isDense: true,
-                    hintText: '${libL10n.search} · #${libL10n.tag}',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      height: 1,
-                      color: search.hintColor,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      size: 17,
-                      color: search.iconColor,
-                    ),
-                    prefixIconConstraints: const BoxConstraints(
-                      minWidth: 34,
-                      minHeight: 34,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                    ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 17,
+                    color: search.iconColor,
                   ),
-                  onChanged: (value) =>
-                      setState(() => _needle = value.trim().toLowerCase()),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 34,
+                    minHeight: 34,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                  ),
                 ),
+                onChanged: (value) =>
+                    setState(() => _needle = value.trim().toLowerCase()),
               ),
             ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.only(bottom: 17),
-                children: [
-                  for (final name in names) ...[
-                    _heading('#$name'),
-                    for (final srv in groups[name]!) _row(srv),
-                  ],
-                  if (untagged.isNotEmpty) ...[
-                    // Named rather than left as a gap at the end: a list
-                    // with headings and then rows under no heading reads as
-                    // the headings having run out.
-                    if (names.isNotEmpty) _heading(libL10n.all),
-                    for (final srv in untagged) _row(srv),
-                  ],
-                  if (names.isEmpty && untagged.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(26),
-                      child: Text(
-                        _needle,
-                        textAlign: TextAlign.center,
-                        style: UIs.text12Grey,
-                      ),
-                    ),
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.only(bottom: 17),
+              children: [
+                for (final name in names) ...[
+                  _heading('#$name'),
+                  for (final srv in groups[name]!) _row(srv),
                 ],
-              ),
+                if (untagged.isNotEmpty) ...[
+                  // Named rather than left as a gap at the end: a list
+                  // with headings and then rows under no heading reads as
+                  // the headings having run out.
+                  if (names.isNotEmpty) _heading(libL10n.all),
+                  for (final srv in untagged) _row(srv),
+                ],
+                if (names.isEmpty && untagged.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(26),
+                    child: Text(
+                      _needle,
+                      textAlign: TextAlign.center,
+                      style: UIs.text12Grey,
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

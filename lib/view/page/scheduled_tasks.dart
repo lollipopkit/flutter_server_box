@@ -1250,12 +1250,9 @@ final class _TaskEditorState extends State<_TaskEditor> {
       ],
     );
 
-    // No surface of its own: the sheet paints one, and it starts under the
-    // grip. What it does own is staying above the keyboard.
+    // No surface of its own, nor room for the keyboard: the sheet paints the
+    // one and sits on the other.
     return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(17, 0, 17, 17),
         child: body,

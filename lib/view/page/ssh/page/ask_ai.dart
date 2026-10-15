@@ -111,9 +111,16 @@ extension _AskAi on SSHPageState {
             .clamp(0.0, availableWidth)
             .toDouble();
         return SafeArea(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: SizedBox(width: dialogWidth, child: panel(dialogContext)),
+          // The dialog does not make room for the keyboard; the sheet sits
+          // on it.
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(dialogContext).bottom,
+            ),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(width: dialogWidth, child: panel(dialogContext)),
+            ),
           ),
         );
       },
@@ -250,75 +257,71 @@ class _AskAiPanel extends StatelessWidget {
       color: theme.colorScheme.surface,
       clipBehavior: Clip.antiAlias,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
-      // Neither the bottom sheet nor the side dialog makes room for the
-      // keyboard, so the composer would sit under it.
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Nothing in the side dialog, which is not a sheet.
-            const SheetGrip(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: theme.colorScheme.primaryContainer,
-                    child: Icon(
-                      Icons.auto_awesome,
-                      size: 19,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Nothing in the side dialog, which is not a sheet.
+          const SheetGrip(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.auto_awesome,
+                    size: 19,
+                    color: theme.colorScheme.onPrimaryContainer,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'SSH Agent',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'SSH Agent',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
-                            // The conversation below draws no header of its
-                            // own, so this bar is where a running reply shows.
-                            AgentBusyBuilder(
-                              scope: scope,
-                              builder: (_, activity) =>
-                                  activity == AgentActivity.idle
-                                  ? UIs.placeholder
-                                  : Padding(
-                                      padding: const EdgeInsets.only(left: 9),
-                                      child: AgentActivityMark(activity),
-                                    ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          serverName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
                           ),
+                          // The conversation below draws no header of its
+                          // own, so this bar is where a running reply shows.
+                          AgentBusyBuilder(
+                            scope: scope,
+                            builder: (_, activity) =>
+                                activity == AgentActivity.idle
+                                ? UIs.placeholder
+                                : Padding(
+                                    padding: const EdgeInsets.only(left: 9),
+                                    child: AgentActivityMark(activity),
+                                  ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        serverName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  AgentHeaderActions(showConversations: true, scope: scope),
-                  IconButton(
-                    tooltip: libL10n.close,
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
+                ),
+                AgentHeaderActions(showConversations: true, scope: scope),
+                IconButton(
+                  tooltip: libL10n.close,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
+          ),
           Expanded(
             child: AgentConversationView(
               scope: scope,
@@ -327,7 +330,6 @@ class _AskAiPanel extends StatelessWidget {
             ),
           ),
         ],
-        ),
       ),
     );
   }
