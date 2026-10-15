@@ -5,6 +5,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/src/rust/api/parser.dart' as ffi;
 import 'package:server_box/view/page/server/card/metric.dart';
 
 /// How the server list is ordered.
@@ -283,66 +284,12 @@ class ServerSortOrder {
         // A machine that has not said, or said something this cannot read,
         // has no key and goes last either way — see [_by].
         return _by(order, (id) {
+          // The formatted `uptime` string, read back by Rust
+          // (`common::uptime_seconds`): null for one it cannot read.
           final raw = stateOf(id).status.more[StatusCmdType.uptime];
-          return raw == null ? null : uptimeSeconds(raw)?.toDouble();
+          return raw == null ? null : ffi.uptimeSeconds(formatted: raw)?.toDouble();
         });
     }
-  }
-
-  /// The seconds [raw] says the machine has been up, or null if it cannot be
-  /// read.
-  ///
-  /// [raw] is `StatusCmdType.uptime`'s value, which is a *formatted* string,
-  /// not a number: what the Rust parser's `common::parse_uptime` keeps of the
-  /// line `uptime(1)` prints, or the same shape from the monitor agent's
-  /// `format_uptime`. An optional day count, then a duration:
-  ///
-  /// ```
-  /// 61 days, 18:16   61 days, 18 hours and 16 minutes
-  /// 1 day, 2:34      one day, singular
-  /// 5 days, 10 min   a zero hour prints a unit instead of H:MM
-  /// 5 days           days alone
-  /// 2:34             under a day — hours:minutes
-  /// 34 min           procps and busybox, with a zero hour
-  /// 3 hrs            BSD and macOS `w.c`: hr[s] with a zero minute,
-  /// 14 mins          min[s] with a zero hour,
-  /// 30 secs          sec[s] under a minute
-  /// ```
-  ///
-  /// Null for anything else, including the formats `parse_uptime` itself
-  /// rejects. The caller decides where an unknown goes; this does not guess a
-  /// number for something it did not understand.
-  ///
-  /// Public so a test can pin the shapes without building a server.
-  static int? uptimeSeconds(String raw) {
-    var rest = raw.trim();
-    var seconds = 0;
-
-    final days = RegExp(r'^(\d+)\s+days?(?:,\s*|$)').firstMatch(rest);
-    if (days != null) {
-      seconds = int.parse(days.group(1)!) * Duration.secondsPerDay;
-      rest = rest.substring(days.end);
-      if (rest.isEmpty) return seconds;
-    }
-
-    final clock = RegExp(r'^(\d+):(\d{2})$').firstMatch(rest);
-    if (clock != null) {
-      return seconds +
-          int.parse(clock.group(1)!) * Duration.secondsPerHour +
-          int.parse(clock.group(2)!) * Duration.secondsPerMinute;
-    }
-
-    final unit = RegExp(r'^(\d+)\s*(hr|min|sec)s?$').firstMatch(rest);
-    if (unit != null) {
-      final per = switch (unit.group(2)!) {
-        'hr' => Duration.secondsPerHour,
-        'min' => Duration.secondsPerMinute,
-        _ => 1,
-      };
-      return seconds + int.parse(unit.group(1)!) * per;
-    }
-
-    return null;
   }
 
   /// Sorts by one number per server, keeping the arrangement as the tie.

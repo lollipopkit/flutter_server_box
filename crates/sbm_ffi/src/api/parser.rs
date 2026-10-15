@@ -55,6 +55,13 @@ pub fn parse_status_json(
 }
 
 /// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
+/// The seconds a status's `uptime` string says (`sbm_parser::common::uptime_seconds`);
+/// `None` when it cannot be read.
+#[flutter_rust_bridge::frb(sync)]
+pub fn uptime_seconds(formatted: String) -> Option<u64> {
+    sbm_parser::common::uptime_seconds(&formatted)
+}
+
 #[flutter_rust_bridge::frb(sync)]
 pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
