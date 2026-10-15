@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, Input, SegmentedControl, SidebarItem, SidebarSection, Spinner, viewIn } from '../../lk'
-  import { AppToolbar, SplitView } from '../../sys'
+  import { AppToolbar, SplitView, useLifecycle } from '../../sys'
   import LineChart from '../../../components/LineChart.svelte'
   import PveForm from './PveForm.svelte'
   import VirtBackupJobs from './VirtBackupJobs.svelte'
@@ -163,9 +163,26 @@
     }
   }
 
+  // The list is read for the eye: not while the window is hidden, and at
+  // once when it is shown again.
+  const life = useLifecycle()
+  const hidden = $derived(life.state === 'background' || life.state === 'suspended')
+  let missed = false
+  $effect(() => {
+    if (hidden || !missed) return
+    missed = false
+    untrack(() => void refresh())
+  })
+
   function schedule(serverId: string | null) {
     stopPolling()
-    timer = setTimeout(() => void refresh(serverId ?? servers.currentId), POLL_MS)
+    timer = setTimeout(() => {
+      if (hidden) {
+        missed = true
+        return
+      }
+      void refresh(serverId ?? servers.currentId)
+    }, POLL_MS)
   }
 
   async function readPve() {

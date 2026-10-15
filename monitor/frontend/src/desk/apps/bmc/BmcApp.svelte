@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AppIcon, Badge, Button, Card, Dialog, Icon, IconButton, SidebarItem, SidebarSection, Spinner } from '../../lk'
-  import { AppToolbar, SplitView } from '../../sys'
+  import { AppToolbar, SplitView, useLifecycle } from '../../sys'
   import BmcForm from './BmcForm.svelte'
   import { api } from '../../../lib/api'
   import { bmcErrorText, intentText, keepPasswords, powerStateText } from '../../../lib/bmc'
@@ -31,6 +31,8 @@
   let removing = $state<BmcTarget | null>(null)
   let confirming = $state<BmcIntent | null>(null)
   let timer: ReturnType<typeof setInterval> | null = null
+  // The status is read for the eye: not while the window is hidden.
+  const life = useLifecycle()
 
   const scope = useScope()
   const { stale } = scope
@@ -75,7 +77,9 @@
     // nothing stops.
     if (id === null || !scope.alive) return
     void read(id)
-    timer = setInterval(() => void read(id), POLL_MS)
+    timer = setInterval(() => {
+      if (life.state !== 'background' && life.state !== 'suspended') void read(id)
+    }, POLL_MS)
   }
 
   async function read(id: string) {
