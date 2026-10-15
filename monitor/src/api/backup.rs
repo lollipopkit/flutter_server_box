@@ -250,7 +250,10 @@ async fn load(db: &SqlitePool) -> Result<Vec<BlobView>, sqlx::Error> {
 async fn store(db: &SqlitePool, blobs: &Arc<Blobs>, name: &str, data: Vec<u8>) -> anyhow::Result<Option<BlobView>> {
     let writing = blobs.writing().await;
     let sha = blobs.put(&data).await?;
-    let mut tx = db.begin().await?;
+    // IMMEDIATE: the write lock from the first count, so a second upload
+    // waits for this one rather than counting the same rows and failing
+    // when it comes to write (a deferred transaction's snapshot is stale).
+    let mut tx = db.begin_with("BEGIN IMMEDIATE").await?;
     let exists = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM backup_file WHERE name = ?")
         .bind(name)
         .fetch_one(&mut *tx)

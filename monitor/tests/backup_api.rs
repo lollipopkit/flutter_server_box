@@ -162,3 +162,22 @@ async fn the_store_is_bounded() {
     let (status, _, _) = raw(&srv, Method::PUT, &blob("b0"), Some(vec![2])).await;
     assert_eq!(status, 200);
 }
+
+/// Two uploads racing for the last place: one takes it, the other is told
+/// the store is full — not a 500 from a write on a stale snapshot.
+#[ntex::test]
+async fn two_uploads_for_the_last_place_take_turns() {
+    let (srv, _) = server().await;
+    for i in 0..MAX_BLOBS - 1 {
+        let (status, _, _) = raw(&srv, Method::PUT, &blob(&format!("b{i}")), Some(vec![1])).await;
+        assert_eq!(status, 200);
+    }
+    let (path_a, path_b) = (blob("last-a"), blob("last-b"));
+    let (a, b) = futures::join!(
+        raw(&srv, Method::PUT, &path_a, Some(vec![1; 1 << 20])),
+        raw(&srv, Method::PUT, &path_b, Some(vec![1; 1 << 20])),
+    );
+    let mut statuses = [a.0, b.0];
+    statuses.sort();
+    assert_eq!(statuses, [200, 409]);
+}

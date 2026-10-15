@@ -217,7 +217,9 @@ async fn install_rows(
     weight: i64,
     backgrounds: &[(&String, &'static str, String, i64)],
 ) -> Result<Option<String>, InstallError> {
-    let mut tx = db.begin().await?;
+    // IMMEDIATE: the limits are counted under the write lock, so two installs
+    // at once take turns rather than both counting and one failing to write.
+    let mut tx = db.begin_with("BEGIN IMMEDIATE").await?;
     let earlier = sqlx::query_scalar::<_, String>(
         "SELECT installation_id FROM desk_theme WHERE user_id = ? AND theme_id = ? AND installation_id != ?",
     )
