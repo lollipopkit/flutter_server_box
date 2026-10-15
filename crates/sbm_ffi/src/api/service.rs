@@ -143,7 +143,16 @@ pub fn service_terminal_command(command: String, needs_root: bool, is_root: bool
 /// startup registration `enabled`: the rule every listing's `actions` is.
 #[flutter_rust_bridge::frb(sync)]
 pub fn service_actions(state: String, enabled: Option<bool>) -> Result<Vec<String>, String> {
-    let state: sbm_parser::service::ServiceState =
-        serde_json::from_value(serde_json::Value::String(state.clone())).map_err(|_| format!("unknown state: {state}"))?;
-    Ok(service::service_actions(state, enabled).into_iter().map(|a| a.as_str().to_owned()).collect())
+    Ok(service::service_actions(service_state(&state)?, enabled).into_iter().map(|a| a.as_str().to_owned()).collect())
+}
+
+/// Whether a unit in `state` is listed first: the rule every listing's
+/// `needs_attention` is.
+#[flutter_rust_bridge::frb(sync)]
+pub fn service_needs_attention(state: String) -> Result<bool, String> {
+    Ok(service_state(&state)?.needs_attention())
+}
+
+fn service_state(state: &str) -> Result<sbm_parser::service::ServiceState, String> {
+    serde_json::from_value(serde_json::Value::String(state.to_owned())).map_err(|_| format!("unknown state: {state}"))
 }
