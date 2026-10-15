@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/theme.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
-    show ExternalLibrary;
+import 'package:fl_pi_llm/fl_pi_llm.dart';
 import 'package:server_box/core/service/theme_host.dart';
 
 /// Runs before every test file.
@@ -12,20 +11,25 @@ import 'package:server_box/core/service/theme_host.dart';
 /// launch; the app does it in `main`, and this is the tests' launch. The store
 /// it reads is resolved per call, so each test's own store is the one read.
 ///
-/// Themes are read in fl_lib's Rust, which the app loads at launch through
-/// `ThemePackages.prepareSelectedTheme`. Here it is the library the build hook
-/// put under `build/native_assets`.
+/// fl_lib reads themes in Rust and fl_pi_llm reads skills in Rust; the app
+/// loads both at launch. Here they are the libraries the build hooks put under
+/// `build/native_assets`.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   initThemeHost();
-  final library = File(switch (Platform.operatingSystem) {
-    'macos' => 'build/native_assets/macos/libfl_lib_ffi.dylib',
-    'windows' => r'build\native_assets\windows\fl_lib_ffi.dll',
-    _ => 'build/native_assets/linux/libfl_lib_ffi.so',
-  });
-  if (library.existsSync()) {
-    await ThemeRust.ensureInitialized(
-      library: ExternalLibrary.open(library.path),
-    );
+  if (_nativeAsset('fl_lib_ffi') case final lib?) {
+    await ThemeRust.ensureInitialized(library: lib);
+  }
+  if (_nativeAsset('fl_pi_llm') case final lib?) {
+    await FlPiLlm.loadLibrary(externalLibrary: lib);
   }
   await testMain();
+}
+
+ExternalLibrary? _nativeAsset(String name) {
+  final file = File(switch (Platform.operatingSystem) {
+    'macos' => 'build/native_assets/macos/lib$name.dylib',
+    'windows' => 'build/native_assets/windows/$name.dll',
+    _ => 'build/native_assets/linux/lib$name.so',
+  });
+  return file.existsSync() ? ExternalLibrary.open(file.path) : null;
 }
