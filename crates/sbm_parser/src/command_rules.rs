@@ -172,15 +172,24 @@ pub fn matches(pattern: &str, command: &str) -> bool {
     {
         return true;
     }
-    let mut re = String::from("^");
-    for (i, piece) in pattern.split('*').enumerate() {
-        if i > 0 {
-            re.push_str(".*");
-        }
-        re.push_str(&regex::escape(piece));
+    glob(pattern, &command)
+}
+
+/// [text] against [pattern] whole, `*` being any text (none included): the
+/// text before the first `*` leads, the text after the last ends it, and the
+/// pieces between appear in order, each as early as it can. No regex, which
+/// would be compiled for every rule and every part of every command.
+fn glob(pattern: &str, text: &str) -> bool {
+    let mut pieces = pattern.split('*');
+    let first = pieces.next().unwrap_or_default();
+    let Some(mut rest) = text.strip_prefix(first) else { return false };
+    let pieces: Vec<&str> = pieces.collect();
+    let Some((last, middle)) = pieces.split_last() else { return rest.is_empty() };
+    for piece in middle {
+        let Some(at) = rest.find(piece) else { return false };
+        rest = &rest[at + piece.len()..];
     }
-    re.push('$');
-    Regex::new(&re).is_ok_and(|r| r.is_match(&command))
+    rest.ends_with(last)
 }
 
 static WRITE_REDIRECT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(^|[^<0-9&])[0-9]?>>?\s*[^&\s]").unwrap());
@@ -343,6 +352,20 @@ pub fn strip_wrappers(part: &str, any_env: bool) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_glob_matches_the_whole_command_and_nothing_special_but_the_star() {
+        assert!(matches("git * --force", "git push origin --force"));
+        assert!(matches("a*b*c", "axxbyyc"));
+        assert!(!matches("a*b*c", "acb"));
+        assert!(!matches("a*a", "a"));
+        assert!(matches("a*a", "aa"));
+        // What a regex would read as syntax is text here.
+        assert!(matches("ls (x).[ch]*", "ls (x).[ch] -l"));
+        assert!(!matches("ls (x).[ch]*", "ls x.c"));
+        assert!(matches("uptime", "  uptime  "));
+        assert!(!matches("uptime", "uptime -p"));
+    }
 
     #[test]
     fn always_allow_offers_one_rule_that_covers_the_change() {

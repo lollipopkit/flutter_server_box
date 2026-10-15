@@ -556,7 +556,6 @@ pub fn parse(output: &str) -> Result<UfwSnapshot, String> {
             Some((chain, policy))
         })
         .collect();
-    let version_re = regex::Regex::new(r"^ufw\s+").expect("static");
     Ok(UfwSnapshot {
         active: match status.as_str() {
             "Status: active" => Some(true),
@@ -564,7 +563,11 @@ pub fn parse(output: &str) -> Result<UfwSnapshot, String> {
             _ => None,
         },
         status_line: Some(status),
-        version: version.map(|v| version_re.replace(&v, "").into_owned()),
+        // `ufw 0.36.2` → `0.36.2`; anything else as it is.
+        version: version.map(|v| match v.strip_prefix("ufw") {
+            Some(rest) if rest.starts_with(char::is_whitespace) => rest.trim_start().to_string(),
+            _ => v,
+        }),
         log_level: conf.get("LOGLEVEL").and_then(|l| UfwLogLevel::ALL.into_iter().find(|v| v.name().eq_ignore_ascii_case(l))),
         ipv6,
         policies,
