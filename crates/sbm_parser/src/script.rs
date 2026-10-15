@@ -1173,7 +1173,9 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
     // reads past it; stderr is drained into nothing so a full pipe never
     // blocks the command; stdin is closed so it cannot read the SSH channel.
     // A read that outlives the process is not waited on — a child that left
-    // the tree can hold the pipe open for as long as it likes.
+    // the tree can hold the pipe open for as long as it likes. A command that
+    // cannot be started says why as its output, which is the only place a
+    // custom command's result is shown; empty would read as success.
     format!(
         "\n    $d = {CUSTOM_CMD_DIR_WINDOWS}\n\
          \x20   if (-not (Test-Path $d) -and (Test-Path \"$d.bak\")) {{ $d = \"$d.bak\" }}\n\
@@ -1187,7 +1189,7 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20       $i.RedirectStandardInput = $true; $i.RedirectStandardOutput = $true; $i.RedirectStandardError = $true\n\
          \x20       $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = 0\n\
          \x20       $p = $null\n\
-         \x20       try {{ $p = [Diagnostics.Process]::Start($i) }} catch {{}}\n\
+         \x20       try {{ $p = [Diagnostics.Process]::Start($i) }} catch {{ $m = [Text.Encoding]::UTF8.GetBytes('ServerBox: failed to start: ' + $_.Exception.Message); $c = [Math]::Min($m.Length, $b.Length); [Array]::Copy($m, $b, $c) }}\n\
          \x20       if ($p) {{\n\
          \x20         $p.StandardInput.Close()\n\
          \x20         [void]$p.StandardError.BaseStream.CopyToAsync([IO.Stream]::Null)\n\

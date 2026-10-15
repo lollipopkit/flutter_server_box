@@ -1130,6 +1130,16 @@ fn newline_terminated_custom_output_has_no_extra_blank_line() {
     assert_eq!(parsed[&script::custom_result_key("line")], "x\n\n");
 }
 
+/// A custom command that cannot be started says so as its output, the only
+/// place its result is shown; an empty one would read as having succeeded.
+#[test]
+fn windows_custom_command_launch_failure_is_its_output() {
+    let generated = build_script(SystemType::Windows, &ScriptOptions::default());
+    assert!(generated.contains(
+        "catch { $m = [Text.Encoding]::UTF8.GetBytes('ServerBox: failed to start: ' + $_.Exception.Message)"
+    ));
+}
+
 #[cfg(windows)]
 #[test]
 fn windows_custom_commands_have_time_and_output_bounds() {
