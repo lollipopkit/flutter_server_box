@@ -664,9 +664,8 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
     if (floating) return _buildFloatedAway();
 
-    final bgImage = Stores.setting.sshBgImage.fetch();
-    final bgFile = bgImage.isEmpty ? null : File(bgImage);
-    final hasBg = bgFile != null && bgFile.existsSync();
+    final bgFile = _bgFileFor(Stores.setting.sshBgImage.fetch());
+    final hasBg = bgFile != null;
 
     Widget child = PopScope(
       canPop: false,
@@ -782,6 +781,20 @@ class SSHPageState extends ConsumerState<SSHPage>
       ),
     ];
   }
+
+  /// The background image at [path], or null when there is none: looked up
+  /// once per path, not on every build of a page that rebuilds as it draws.
+  File? _bgFileFor(String path) {
+    if (path != _bgPath) {
+      _bgPath = path;
+      final file = path.isEmpty ? null : File(path);
+      _bgFile = file != null && file.existsSync() ? file : null;
+    }
+    return _bgFile;
+  }
+
+  String? _bgPath;
+  File? _bgFile;
 
   Widget _buildBody(bool hasBg) {
     final letterCache = Stores.setting.letterCache.fetch();
