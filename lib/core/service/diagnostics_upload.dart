@@ -172,7 +172,8 @@ abstract final class DiagnosticsUpload {
         options.beforeSend = (event, hint) {
           final error = event.throwable;
           if (error != null && !ReportFilter.isDefect(error)) return null;
-          return scrubWithStoredIdentifiers(event);
+          final scrubbed = scrubWithStoredIdentifiers(event);
+          return scrubbed == null ? null : groupByCallSite(scrubbed);
         };
       });
       // Before the sink is installed, so the first error to arrive already
@@ -234,6 +235,30 @@ abstract final class DiagnosticsUpload {
   ///
   /// An install with *no servers* is not this case. It has nothing to
   /// substitute, and its events go as they are.
+  /// Groups a [RangeError] by where it was thrown rather than by its text.
+  ///
+  /// The message carries the bad value and the bounds, and GlitchTip groups an
+  /// event without a fingerprint by its title — so one bug became one issue
+  /// per pair of numbers: the terminal buffer's out-of-range read, fixed once,
+  /// was more than five hundred issues. Two in-app frames, not one: the first
+  /// is the buffer's own `[]` for every caller, and which caller it was is the
+  /// bug. [IndexError] is a [RangeError] here too.
+  @visibleForTesting
+  static sentry.SentryEvent groupByCallSite(sentry.SentryEvent event) {
+    if (event.throwable is! RangeError) return event;
+    final frames = event.exceptions?.lastOrNull?.stackTrace?.frames;
+    if (frames == null) return event;
+    // Oldest first, as Sentry orders them: the throw is at the end.
+    final sites = frames.reversed
+        .where((f) => f.inApp == true)
+        .take(2)
+        .map((f) => '${f.package}:${f.fileName}:${f.function}')
+        .toList();
+    if (sites.isEmpty) return event;
+    event.fingerprint = ['RangeError', ...sites];
+    return event;
+  }
+
   @visibleForTesting
   static sentry.SentryEvent? scrubWithStoredIdentifiers(
     sentry.SentryEvent event,
