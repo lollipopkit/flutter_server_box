@@ -162,14 +162,54 @@ export class ApiError extends Error {
 /// newer ones `{"error": "<code>", "message": "..."}`. A body with
 /// a `message` is the second, and its `error` is the code.
 async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
+  const body = (await res.json().catch(() => null)) as ErrorBody | null
+  return errorFromBody(res.status, body, fallback)
+}
+
+type ErrorBody = { error?: string; message?: string } & Record<string, unknown>
+
+/// [errorFrom] for a body already read (an XHR's).
+function errorFromBody(status: number, body: ErrorBody | null, fallback: string): ApiError {
+  if (body?.message) return new ApiError(body.message, status, body.error, body)
+  if (body?.error) return new ApiError(body.error, status, undefined, body)
+  return new ApiError(fallback, status)
+}
+
+/// The session of [entry] is over: dropped, so the panel goes back to login.
+function sessionExpired(entry: ServerEntry | undefined): ApiError {
+  if (entry) servers.logout(entry.id, entry)
+  return new ApiError('Session expired', 401)
+}
+
+/// [entry]'s bearer, over [headers].
+function authHeaders(entry: ServerEntry | undefined, headers: Record<string, string> = {}): Record<string, string> {
+  return entry?.token ? { ...headers, Authorization: `Bearer ${entry.token}` } : headers
+}
+
+/// One request to [entry]'s agent: the URL checked, the bearer sent, a 401
+/// ending the session (but on `/login`, where it is a wrong password). Any
+/// other answer is the caller's to read.
+export async function fetchFor(
+  entry: ServerEntry | undefined,
+  path: string,
+  init: RequestInit,
+  fallback: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const server = entry ? { ...entry } : undefined
+  requireSecureUrl(server?.url ?? '')
+  let res: Response
   try {
-    const body = (await res.json()) as { error?: string; message?: string } & Record<string, unknown>
-    if (body.message) return new ApiError(body.message, res.status, body.error, body)
-    if (body.error) return new ApiError(body.error, res.status, undefined, body)
+    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
+      ...init,
+      headers: authHeaders(server, init.headers as Record<string, string> | undefined),
+      signal,
+    })
   } catch {
-    // Non-JSON error body: keep the fallback message
+    throw new ApiError(fallback)
   }
-  return new ApiError(fallback, res.status)
+  if (res.status === 401 && path !== '/login') throw sessionExpired(server)
+  return res
 }
 
 function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSignal {
@@ -204,28 +244,9 @@ export async function requestFor<T>(
   signal?: AbortSignal,
   timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
-  const server = entry ? { ...entry } : undefined
-  requireSecureUrl(server?.url ?? '')
   // JSON unless the caller says what it sends.
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(init.headers as Record<string, string> | undefined) }
-  if (server?.token) headers.Authorization = `Bearer ${server.token}`
-
-  let res: Response
-  try {
-    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
-      ...init,
-      headers,
-      signal: requestSignal(signal, timeoutMs),
-    })
-  } catch {
-    throw new ApiError(fallback)
-  }
-
-  if (res.status === 401 && path !== '/login') {
-    // Expired/invalid token: drop this server's session, App falls back to login
-    if (server) servers.logout(server.id, server)
-    throw new ApiError('Session expired', 401)
-  }
+  const headers = { 'Content-Type': 'application/json', ...(init.headers as Record<string, string> | undefined) }
+  const res = await fetchFor(entry, path, { ...init, headers }, fallback, requestSignal(signal, timeoutMs))
   if (!res.ok) throw await errorFrom(res, fallback)
   // `204 No Content` (a password changed, an account deleted) has no body to
   // parse.
@@ -256,8 +277,9 @@ export function uploadFor<T>(
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${server.url}/api/v1${path}`)
     xhr.timeout = opts.timeoutMs ?? TIMEOUT_MS
-    xhr.setRequestHeader('Content-Type', body.type || 'application/octet-stream')
-    if (server.token) xhr.setRequestHeader('Authorization', `Bearer ${server.token}`)
+    for (const [name, value] of Object.entries(authHeaders(server, { 'Content-Type': body.type || 'application/octet-stream' }))) {
+      xhr.setRequestHeader(name, value)
+    }
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && e.total > 0) opts.onProgress?.(e.loaded / e.total)
     }
@@ -274,19 +296,16 @@ export function uploadFor<T>(
     }
     xhr.onload = () => {
       done()
-      let json: (Record<string, unknown> & { error?: string; message?: string }) | null = null
+      let json: ErrorBody | null = null
       try {
         json = JSON.parse(xhr.responseText)
       } catch {
         // Not JSON: the fallback below.
       }
       if (xhr.status === 401) {
-        servers.logout(server.id, server)
-        reject(new ApiError('Session expired', 401))
+        reject(sessionExpired(server))
       } else if (xhr.status < 200 || xhr.status >= 300) {
-        if (json?.message) reject(new ApiError(json.message, xhr.status, json.error, json))
-        else if (json?.error) reject(new ApiError(json.error, xhr.status, undefined, json))
-        else reject(new ApiError(fallback, xhr.status))
+        reject(errorFromBody(xhr.status, json, fallback))
       } else {
         resolve(json as T)
       }
@@ -305,21 +324,7 @@ async function fsBytes(
   fallback: string,
   signal?: AbortSignal,
 ): Promise<Response> {
-  const server = servers.current ? { ...servers.current } : undefined
-  requireSecureUrl(server?.url ?? '')
-  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) }
-  if (server?.token) headers.Authorization = `Bearer ${server.token}`
-
-  let res: Response
-  try {
-    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, { ...init, headers, signal })
-  } catch {
-    throw new ApiError(fallback)
-  }
-  if (res.status === 401) {
-    if (server) servers.logout(server.id, server)
-    throw new ApiError('Session expired', 401)
-  }
+  const res = await fetchFor(servers.current, path, init, fallback, signal)
   if (!res.ok) throw await errorFrom(res, fallback)
   return res
 }
@@ -337,15 +342,17 @@ export async function readEventStream(
   /// Posted as JSON: a stream that answers a request.
   body?: unknown,
 ): Promise<void> {
-  requireSecureUrl(entry.url)
-  const headers: Record<string, string> = entry.token ? { Authorization: `Bearer ${entry.token}` } : {}
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
-  const res = await fetch(`${entry.url}/api/v1${path}`, {
-    method: body === undefined ? 'GET' : 'POST',
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+  const res = await fetchFor(
+    entry,
+    path,
+    {
+      method: body === undefined ? 'GET' : 'POST',
+      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    },
+    'Failed to open the event stream',
     signal,
-  })
+  )
   if (!res.ok || !res.body) {
     const err = (await res.json().catch(() => null)) as Record<string, unknown> | null
     throw new ApiError('Failed to open the event stream', res.status, typeof err?.error === 'string' ? err.error : undefined, err ?? undefined)

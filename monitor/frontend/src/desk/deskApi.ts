@@ -2,8 +2,7 @@
 /// explicit server: a desk saves to the server it was opened for, even while
 /// the panel is switching to another.
 
-import { ApiError, readEventStream, requestFor } from '../lib/api'
-import { isSecureAgentUrl } from '../lib/agentUrl'
+import { ApiError, fetchFor, readEventStream, requestFor } from '../lib/api'
 import type { InstalledApp } from '../types'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { StoredWindow } from './windows.svelte'
@@ -319,15 +318,10 @@ async function themeAnswer(res: Response, fallback: string): Promise<InstalledTh
   return body as InstalledTheme
 }
 
-async function raw(entry: ServerEntry, path: string, init: RequestInit): Promise<Response> {
-  if (!isSecureAgentUrl(entry.url)) throw new ApiError('Remote monitor agents require HTTPS; HTTP is allowed only on loopback.')
-  const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) }
-  if (entry.token) headers.Authorization = `Bearer ${entry.token}`
-  try {
-    return await fetch(`${entry.url}/api/v1${path}`, { ...init, headers, signal: AbortSignal.timeout(120_000) })
-  } catch {
-    throw new ApiError('Request failed')
-  }
+/// A request whose answer the caller reads itself (bytes, a theme's refusal):
+/// [fetchFor], with a session that has expired ending as anywhere else.
+function raw(entry: ServerEntry, path: string, init: RequestInit): Promise<Response> {
+  return fetchFor(entry, path, init, 'Request failed', AbortSignal.timeout(120_000))
 }
 
 /// Reads `/desk/events` until [signal] aborts or the stream ends, calling

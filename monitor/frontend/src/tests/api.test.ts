@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api'
+import { deskApi } from '../desk/deskApi'
 import { servers } from '../lib/servers.svelte'
 
 describe.each([
   ['JSON', () => api.getSettings()],
   ['file bytes', () => api.fsRead('/file')],
+  // The desk's own byte requests went around the session handling once.
+  ['desk bytes', () => deskApi.putWallpaper(servers.current!, new Blob(['x'], { type: 'image/png' }))],
 ] as const)('%s session expiry', (_, request) => {
   beforeEach(() => {
     for (const entry of [...servers.list]) servers.remove(entry.id)
