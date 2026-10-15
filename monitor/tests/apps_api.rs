@@ -21,9 +21,7 @@ async fn server() -> TestServer {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let db = common::database().await;
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
-    common::seed_as_upgrade(&db, &config).await;
-    common::add_account(&db, "watcher", "viewer").await;
-    common::set_grants(&db, "admin", &server_box_monitor::core::permissions::Grants::all()).await;
+    common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     web_test::server(move || {
         let state = state.clone();
@@ -54,10 +52,10 @@ struct Reply {
     bytes: Vec<u8>,
 }
 
-async fn call(srv: &TestServer, user: Option<&str>, method: Method, path: &str, body: Option<(Vec<u8>, &str)>) -> Reply {
+async fn call(srv: &TestServer, signed: bool, method: Method, path: &str, body: Option<(Vec<u8>, &str)>) -> Reply {
     let mut req = srv.request(method, srv.url(path)).timeout(std::time::Duration::from_secs(30));
-    if let Some(user) = user {
-        req = req.header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()));
+    if signed {
+        req = req.header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()));
     }
     let resp = match body {
         Some((body, kind)) => req.header("content-type", kind).send_body(body).await.unwrap(),
@@ -114,37 +112,33 @@ fn good(permissions: &[&str]) -> Vec<u8> {
 }
 
 async fn install(srv: &TestServer, bytes: Vec<u8>) -> Reply {
-    call(srv, Some("admin"), Method::POST, "/api/v1/apps", Some((bytes, "application/gzip"))).await
+    call(srv, true, Method::POST, "/api/v1/apps", Some((bytes, "application/gzip"))).await
 }
 
 /// Approves what is installed now as acme.notes, naming its package.
 async fn approve(srv: &TestServer, permissions: &[&str], password: &str) -> Reply {
-    let apps = call(srv, Some("admin"), Method::GET, "/api/v1/apps", None).await.json;
+    let apps = call(srv, true, Method::GET, "/api/v1/apps", None).await.json;
     let sha = apps["apps"][0]["sha256"].as_str().unwrap_or_default().to_string();
     approve_package(srv, &sha, permissions, password).await
 }
 
 async fn approve_package(srv: &TestServer, sha256: &str, permissions: &[&str], password: &str) -> Reply {
     let body = json!({ "sha256": sha256, "permissions": permissions, "current_password": password }).to_string().into_bytes();
-    call(srv, Some("admin"), Method::PUT, "/api/v1/apps/acme.notes/approval", Some((body, "application/json"))).await
+    call(srv, true, Method::PUT, "/api/v1/apps/acme.notes/approval", Some((body, "application/json"))).await
 }
 
 #[ntex::test]
 async fn an_app_is_served_only_once_approved_and_only_with_a_ticket() {
     let srv = server().await;
-    let r = call(&srv, Some("watcher"), Method::POST, "/api/v1/apps", Some((good(&[]), "application/gzip"))).await;
-    assert_eq!(r.status, 403, "only an admin installs");
 
     let r = install(&srv, good(&["notifications"])).await;
     assert_eq!(r.status, 200, "{}", r.json);
     assert!(r.json["approved_permissions"].is_null());
 
-    // Waiting: no one but an admin sees it, nothing serves it.
-    let r = call(&srv, Some("watcher"), Method::GET, "/api/v1/apps", None).await;
-    assert_eq!(r.json["apps"], json!([]));
-    let r = call(&srv, Some("admin"), Method::GET, "/api/v1/apps", None).await;
+    // Waiting: listed, and nothing serves it.
+    let r = call(&srv, true, Method::GET, "/api/v1/apps", None).await;
     assert_eq!(r.json["apps"][0]["id"], "acme.notes");
-    assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme.notes/launch", None).await.status, 404);
+    assert_eq!(call(&srv, true, Method::GET, "/api/v1/apps/acme.notes/launch", None).await.status, 404);
 
     // Approval asks for the password and for exactly what the manifest lists.
     assert_eq!(approve(&srv, &["notifications"], "wrong").await.status, 403);
@@ -153,33 +147,33 @@ async fn an_app_is_served_only_once_approved_and_only_with_a_ticket() {
     assert_eq!(r.status, 200, "{}", r.json);
     assert_eq!(r.json["approved_permissions"], json!(["notifications"]));
 
-    let r = call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme.notes/launch", None).await;
+    let r = call(&srv, true, Method::GET, "/api/v1/apps/acme.notes/launch", None).await;
     assert_eq!(r.status, 200);
     let url = r.json["url"].as_str().unwrap().to_string();
     assert!(url.ends_with("/index.html"));
 
     // The UI: no bearer needed, the ticket is the key; sandboxed, no network.
-    let r = call(&srv, None, Method::GET, &url, None).await;
+    let r = call(&srv, false, Method::GET, &url, None).await;
     assert_eq!(r.status, 200);
     let csp = r.headers.get("content-security-policy").unwrap().to_str().unwrap();
     assert!(csp.starts_with("sandbox allow-scripts"), "{csp}");
     assert!(csp.contains("connect-src 'none'"), "{csp}");
     assert_eq!(r.headers.get("x-content-type-options").unwrap(), "nosniff");
     assert!(String::from_utf8_lossy(&r.bytes).contains("app.js"));
-    let js = call(&srv, None, Method::GET, &url.replace("index.html", "app.js"), None).await;
+    let js = call(&srv, false, Method::GET, &url.replace("index.html", "app.js"), None).await;
     assert_eq!(js.headers.get("content-type").unwrap(), "text/javascript; charset=utf-8");
 
     // A ticket whose MAC is not the agent's opens nothing.
     let ticket = url.split('/').nth(6).unwrap();
     let expiry = ticket.split('.').next().unwrap();
     let forged = url.replace(ticket, &format!("{expiry}.{}", "0".repeat(64)));
-    assert_eq!(call(&srv, None, Method::GET, &forged, None).await.status, 403);
+    assert_eq!(call(&srv, false, Method::GET, &forged, None).await.status, 403);
     for path in ["../manifest.json", "%2e%2e/manifest.json", "missing.js"] {
-        let r = call(&srv, None, Method::GET, &url.replace("index.html", path), None).await;
+        let r = call(&srv, false, Method::GET, &url.replace("index.html", path), None).await;
         assert_eq!(r.status, 404, "{path}");
     }
     // The manifest is not part of the UI.
-    let r = call(&srv, None, Method::GET, &url.replace("index.html", "../manifest.json"), None).await;
+    let r = call(&srv, false, Method::GET, &url.replace("index.html", "../manifest.json"), None).await;
     assert!(!String::from_utf8_lossy(&r.bytes).contains("\"publisher\""));
 }
 
@@ -197,7 +191,7 @@ async fn new_code_waits_for_approval_again() {
     other["title"] = json!("Notes 2");
     let r = install(&srv, package(&[("manifest.json", other.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
     assert!(r.json["approved_permissions"].is_null(), "new code: waits");
-    assert_eq!(call(&srv, Some("watcher"), Method::GET, "/api/v1/apps/acme.notes/launch", None).await.status, 404);
+    assert_eq!(call(&srv, true, Method::GET, "/api/v1/apps/acme.notes/launch", None).await.status, 404);
 }
 
 #[ntex::test]
@@ -210,7 +204,7 @@ async fn an_approval_names_the_package_it_was_given_for() {
     install(&srv, package(&[("manifest.json", other.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())])).await;
     let r = approve_package(&srv, &first, &[], common::PASSWORD).await;
     assert_eq!(r.status, 409);
-    let r = call(&srv, Some("admin"), Method::GET, "/api/v1/apps", None).await;
+    let r = call(&srv, true, Method::GET, "/api/v1/apps", None).await;
     assert!(r.json["apps"][0]["approved_permissions"].is_null());
 }
 
@@ -245,12 +239,12 @@ async fn removing_asks_for_the_password() {
     let srv = server().await;
     install(&srv, good(&[])).await;
     let wrong = json!({ "current_password": "nope" }).to_string().into_bytes();
-    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme.notes", Some((wrong, "application/json"))).await;
+    let r = call(&srv, true, Method::DELETE, "/api/v1/apps/acme.notes", Some((wrong, "application/json"))).await;
     assert_eq!(r.status, 403);
     let right = json!({ "current_password": common::PASSWORD }).to_string().into_bytes();
-    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme.notes", Some((right.clone(), "application/json"))).await;
+    let r = call(&srv, true, Method::DELETE, "/api/v1/apps/acme.notes", Some((right.clone(), "application/json"))).await;
     assert_eq!(r.status, 204);
-    let r = call(&srv, Some("admin"), Method::DELETE, "/api/v1/apps/acme.notes", Some((right, "application/json"))).await;
+    let r = call(&srv, true, Method::DELETE, "/api/v1/apps/acme.notes", Some((right, "application/json"))).await;
     assert_eq!(r.status, 404);
 }
 
@@ -275,7 +269,7 @@ async fn a_package_is_refused_whole_for_any_bad_entry() {
         let r = install(&srv, bytes).await;
         assert_eq!((r.status, r.json["error"].as_str()), (status, Some(code)), "{}", r.json);
     }
-    let r = call(&srv, Some("admin"), Method::GET, "/api/v1/apps", None).await;
+    let r = call(&srv, true, Method::GET, "/api/v1/apps", None).await;
     assert_eq!(r.json["apps"], json!([]), "nothing kept of a refused package");
 }
 
@@ -347,63 +341,60 @@ async fn installed_backend(srv: &TestServer, wasm: Vec<u8>, permissions: &[&str]
     assert_eq!(approve(srv, permissions, common::PASSWORD).await.status, 200);
 }
 
-async fn call_backend(srv: &TestServer, user: &str, method: &str, params: serde_json::Value) -> Reply {
+async fn call_backend(srv: &TestServer, method: &str, params: serde_json::Value) -> Reply {
     let body = json!({ "method": method, "params": params }).to_string().into_bytes();
-    call(srv, Some(user), Method::POST, "/api/v1/apps/acme.notes/call", Some((body, "application/json"))).await
+    call(srv, true, Method::POST, "/api/v1/apps/acme.notes/call", Some((body, "application/json"))).await
 }
 
 #[ntex::test]
-async fn a_backend_answers_as_the_account_calling() {
+async fn a_backend_answers_the_call() {
     let srv = server().await;
     installed_backend(&srv, guest("", ECHO), &[]).await;
-    let r = call_backend(&srv, "watcher", "ping", json!({ "n": 1 })).await;
+    let r = call_backend(&srv, "ping", json!({ "n": 1 })).await;
     assert_eq!(r.status, 200, "{}", r.json);
-    assert_eq!(r.json, json!({ "method": "ping", "params": { "n": 1 }, "caller": { "username": "watcher", "admin": false } }));
+    assert_eq!(r.json, json!({ "method": "ping", "params": { "n": 1 } }));
 }
 
 #[ntex::test]
 async fn a_backend_is_stopped_by_its_bounds() {
     let srv = server().await;
     installed_backend(&srv, guest("", "(loop $l br $l) i64.const 0"), &[]).await;
-    let r = call_backend(&srv, "admin", "spin", json!(null)).await;
+    let r = call_backend(&srv, "spin", json!(null)).await;
     assert_eq!((r.status, r.json["error"].as_str()), (422, Some("tooLong")));
 
     // 64 MiB is 1024 pages; asking for 2000 more is refused.
     let srv = server().await;
     installed_backend(&srv, guest("", "i32.const 2000 memory.grow drop i32.const 2000 memory.grow i64.extend_i32_s"), &[]).await;
-    let r = call_backend(&srv, "admin", "grow", json!(null)).await;
+    let r = call_backend(&srv, "grow", json!(null)).await;
     assert_eq!(r.status, 422, "{}", r.json);
 }
 
 #[ntex::test]
-async fn host_functions_need_the_permission_and_the_callers_grant() {
+async fn host_functions_need_the_permission() {
     // Not approved for `exec`: refused whoever calls.
     let srv = server().await;
     installed_backend(&srv, asking(r#"{"fn":"exec","args":{"cmd":"echo hi"}}"#), &[]).await;
-    let r = call_backend(&srv, "admin", "run", json!(null)).await;
+    let r = call_backend(&srv, "run", json!(null)).await;
     assert_eq!(r.json, json!({ "error": "notPermitted" }));
 
-    // Approved: runs for an account with the shell, not for one without.
+    // Approved: runs.
     let srv = server().await;
     installed_backend(&srv, asking(r#"{"fn":"exec","args":{"cmd":"echo hi"}}"#), &["exec"]).await;
-    let r = call_backend(&srv, "admin", "run", json!(null)).await;
+    let r = call_backend(&srv, "run", json!(null)).await;
     assert_eq!(r.json["ok"]["stdout"], "hi\n", "{}", r.json);
-    let r = call_backend(&srv, "watcher", "run", json!(null)).await;
-    assert!(r.json["error"].as_str().unwrap().starts_with("forbidden"), "{}", r.json);
 }
 
 #[ntex::test]
-async fn a_backend_keeps_what_it_stores_per_account() {
+async fn a_backend_keeps_what_it_stores() {
     let srv = server().await;
     installed_backend(&srv, asking(r#"{"fn":"kv.set","args":{"key":"k","value":42}}"#), &[]).await;
-    assert_eq!(call_backend(&srv, "admin", "set", json!(null)).await.json, json!({ "ok": null }));
+    assert_eq!(call_backend(&srv, "set", json!(null)).await.json, json!({ "ok": null }));
     let srv2 = srv;
     // Read back by a module that asks for it.
     let r = install(&srv2, wasm_package(asking(r#"{"fn":"kv.get","args":{"key":"k"}}"#), &[])).await;
     assert_eq!(r.status, 200);
     assert_eq!(approve(&srv2, &[], common::PASSWORD).await.status, 200);
-    assert_eq!(call_backend(&srv2, "admin", "get", json!(null)).await.json, json!({ "ok": 42 }));
-    assert_eq!(call_backend(&srv2, "watcher", "get", json!(null)).await.json, json!({ "ok": null }));
+    assert_eq!(call_backend(&srv2, "get", json!(null)).await.json, json!({ "ok": 42 }));
 }
 
 #[ntex::test]
@@ -422,7 +413,7 @@ async fn a_package_brings_a_backend_only_as_wasm() {
     // A web app has no backend to call.
     install(&srv, good(&[])).await;
     approve(&srv, &[], common::PASSWORD).await;
-    assert_eq!(call_backend(&srv, "admin", "x", json!(null)).await.status, 404);
+    assert_eq!(call_backend(&srv, "x", json!(null)).await.status, 404);
 }
 
 #[ntex::test]
@@ -442,8 +433,8 @@ async fn a_guest_reentering_the_host_traps_rather_than_overflowing() {
     )
     .unwrap();
     installed_backend(&srv, wasm, &[]).await;
-    let r = call_backend(&srv, "admin", "x", json!(null)).await;
+    let r = call_backend(&srv, "x", json!(null)).await;
     assert_eq!((r.status, r.json["error"].as_str()), (422, Some("trap")), "{}", r.json);
     // The agent is still here.
-    assert_eq!(call_backend(&srv, "admin", "x", json!(null)).await.status, 422);
+    assert_eq!(call_backend(&srv, "x", json!(null)).await.status, 422);
 }

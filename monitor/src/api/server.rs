@@ -1,8 +1,8 @@
 use crate::{
     api::auth,
-    api::authz::{self, Caller, Reader},
+    api::authz::{self, Reader},
     api::cors::Cors,
-    api::ratelimit::LoginThrottle,
+    api::ratelimit::{LoginThrottle, Who},
     api::ws::{
         self,
         audit::{self, Action, Event, Kind, Outcome},
@@ -13,7 +13,6 @@ use crate::{
     },
     core::config::Config,
     core::config_file,
-    core::permissions::Grant,
     core::remote_access::RemoteAccess,
     monitoring::{self, LiveSettings, SystemMetrics},
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
@@ -108,17 +107,19 @@ pub struct AppState {
     /// Connections a remote forward's listener accepted and the app has not
     /// taken yet — see `api::ws::listen`.
     pub pending: Arc<PendingStore>,
+    /// Relayed connections, listened ports, consoles and remote desktops open
+    /// now — see `api::ws::live`.
+    pub live: Arc<crate::api::ws::live::LiveConnections>,
     pub login_throttle: Arc<LoginThrottle>,
-    /// Fired when a role or an account changed, carrying the code a client
-    /// whose connection ends because of it is told (`permission_revoked`, or
-    /// `full_access_disabled` for the panel's legacy switch).
+    /// Fired when the password changed, carrying the code a client whose
+    /// connection ends because of it is told (`password_changed`).
     ///
     /// Every handler asks the database afresh whether its caller may *start*
     /// something; this answers "may this carry on", which only a long-lived
     /// connection has to be told. A relay or a listener holds a subscription
-    /// and re-checks its own account when it fires; terminal sessions, which
-    /// outlive their sockets, are swept by `authz::revoke_lost` instead.
-    pub grants_changed: broadcast::Sender<&'static str>,
+    /// and re-checks the account when it fires; terminal sessions, which
+    /// outlive their sockets, are closed by `authz::end_account` itself.
+    pub password_changed: broadcast::Sender<&'static str>,
     /// The desk's events and which monitoring rules are firing — see
     /// `api::desk`.
     pub desk: Arc<crate::api::desk::DeskHub>,
@@ -151,6 +152,8 @@ pub struct AppState {
     /// precisely so ordinary use doesn't contend here, yet they still edit
     /// one file and must not race.
     pub config_write: Arc<Mutex<()>>,
+    /// The agent's own releases as last read — see `api::update`.
+    pub update: Arc<crate::api::update::AgentUpdate>,
 }
 
 /// The file a `sqlite:` [url] opens, or `None` for an in-memory database.
@@ -216,9 +219,18 @@ impl AppState {
         let velocity_manager = Arc::new(RwLock::new(VelocityManager::new()));
         let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
         let tls_active = config.get_server().tls.is_some();
-        let mut remote_access = config
-            .get_remote_access()
-            .resolve(sbm_native::total_memory());
+        let remote_access_config = config.get_remote_access();
+        let retired = remote_access_config.retired_keys();
+        if !retired.is_empty() {
+            // TODO: remove with `RemoteAccessConfig::retired_keys`.
+            tracing::warn!(
+                "[remote_access] {} no longer restrict anything: whoever signs in may do what this \
+                 system account may. Remove them, and run the agent as an account with only the \
+                 access you want it to have.",
+                retired.join(", ")
+            );
+        }
+        let mut remote_access = remote_access_config.resolve(sbm_native::total_memory());
         remote_access.fs.roots = remote_access
             .fs
             .roots
@@ -235,8 +247,9 @@ impl AppState {
             tickets: Arc::new(TicketStore::new()),
             sessions,
             pending: Arc::new(PendingStore::default()),
+            live: Arc::default(),
             login_throttle: Arc::new(LoginThrottle::new()),
-            grants_changed: broadcast::channel(16).0,
+            password_changed: broadcast::channel(16).0,
             desk: Arc::new(crate::api::desk::DeskHub::default()),
             themes: Arc::new(crate::api::desk_themes::ThemeStore::default()),
             // Beside the database actually open, which a test's in-memory
@@ -264,19 +277,54 @@ impl AppState {
             live_settings,
             last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
             config_write: Arc::new(Mutex::new(())),
+            update: Arc::default(),
         })
     }
 }
 
+/// The password alone: the agent has one account. A `username` an older
+/// client still sends is not read (TODO: refuse it once no such client is
+/// left; serde ignores it until then).
 #[derive(Deserialize)]
 struct LoginRequest {
-    username: String,
     password: String,
+    /// The token a previous sign-in gave this device, if any: see
+    /// `api::ratelimit::Who`.
+    #[serde(default)]
+    device: Option<String>,
+    /// What the client calls itself (`ServerBox on macOS`), shown in the
+    /// device list; its User-Agent when absent.
+    #[serde(default)]
+    name: Option<String>,
+}
+
+/// The most characters of a device's label kept.
+const MAX_DEVICE_LABEL: usize = 80;
+
+/// [name], else the User-Agent: control characters dropped, whitespace
+/// collapsed, at most [`MAX_DEVICE_LABEL`] characters.
+fn device_label(name: Option<&str>, req: &HttpRequest) -> String {
+    let user_agent = req
+        .headers()
+        .get(ntex::http::header::USER_AGENT)
+        .and_then(|v| v.to_str().ok());
+    let raw = name.filter(|n| !n.trim().is_empty()).or(user_agent).unwrap_or("");
+    raw.split(|c: char| c.is_whitespace() || c.is_control())
+        .filter(|word| !word.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
+        .chars()
+        .take(MAX_DEVICE_LABEL)
+        .collect()
 }
 
 #[derive(Serialize)]
 struct LoginResponse {
     token: String,
+    /// A new device token, when the request carried none the agent knows.
+    /// The client keeps it and sends it with every later sign-in.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    device: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -306,8 +354,8 @@ struct ErrorResponse {
     error: String,
 }
 
-/// Require a panel JWT for an account that exists, and return the account
-/// with its role — see `api::authz`.
+/// Require a panel JWT issued since the password was last set — see
+/// `api::authz`.
 macro_rules! require_jwt {
     ($req:expr, $app_state:expr) => {{
         match authz::jwt_caller($req, $app_state).await {
@@ -317,10 +365,11 @@ macro_rules! require_jwt {
     }};
 }
 
-/// Require an admin's panel JWT.
-macro_rules! require_admin {
+/// Require a panel JWT over a link that may act — see
+/// `authz::acting_caller`.
+macro_rules! require_acting {
     ($req:expr, $app_state:expr) => {{
-        match authz::admin_caller($req, $app_state).await {
+        match authz::acting_caller($req, $app_state).await {
             Ok(caller) => caller,
             Err(response) => return Ok(response),
         }
@@ -419,7 +468,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/firewall/plan").route(web::post().to(crate::api::firewall::plan)))
             .service(web::resource("/firewall/act").route(web::post().to(crate::api::firewall::act)))
             .service(
-                // Not `/users`, which is this agent's own accounts.
                 web::resource("/system-users")
                     .route(web::get().to(crate::api::system_users::list))
                     .route(web::post().to(crate::api::system_users::act)),
@@ -538,6 +586,14 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::desk_themes::background)),
             )
             .service(web::resource("/desk/notifications").route(web::get().to(crate::api::desk::notifications)))
+            .route("/alerts", web::get().to(crate::api::desk::alerts))
+            .route("/update", web::get().to(crate::api::update::get))
+            .route("/update/run", web::post().to(crate::api::update::start))
+            .route("/audit", web::get().to(crate::api::audit_log::list))
+            .route("/live", web::get().to(crate::api::live::list))
+            .route("/live/sessions/{id}", web::delete().to(crate::api::live::end_session))
+            .route("/live/connections/{id}", web::delete().to(crate::api::live::end_connection))
+            .route("/live/devices/{id}", web::delete().to(crate::api::live::forget_device))
             .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
             .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
             .service(
@@ -688,32 +744,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/fs/rename", web::post().to(crate::api::fs::rename))
             .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
             .route("/fs/remove", web::delete().to(crate::api::fs::remove))
-            .route(
-                "/remote-access/full-access",
-                web::delete().to(disable_full_access),
-            )
-            .route("/me", web::get().to(crate::api::admin::me))
             .route("/me/password", web::put().to(crate::api::admin::change_own_password))
-            .service(
-                web::resource("/users")
-                    .route(web::get().to(crate::api::admin::list_users))
-                    .route(web::post().to(crate::api::admin::create_user)),
-            )
-            .service(
-                web::resource("/users/{username}")
-                    .route(web::put().to(crate::api::admin::update_user))
-                    .route(web::delete().to(crate::api::admin::delete_user)),
-            )
-            .service(
-                web::resource("/roles")
-                    .route(web::get().to(crate::api::admin::list_roles))
-                    .route(web::post().to(crate::api::admin::create_role)),
-            )
-            .service(
-                web::resource("/roles/{name}")
-                    .route(web::put().to(crate::api::admin::update_role))
-                    .route(web::delete().to(crate::api::admin::delete_role)),
-            )
             .service(
                 // Its own payload limit, like `/exec`: the body is
                 // every custom command at once, and a user who pastes
@@ -754,16 +785,22 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/metrics/history", web::get().to(get_metrics_history))
             .route("/health", web::get().to(health_check))
             .route("/velocity", web::get().to(get_velocity))
-            .route("/velocity/history", web::get().to(get_velocity_history)),
+            .route("/velocity/history", web::get().to(get_velocity_history))
+            // An endpoint this agent does not have is a JSON 404, not the
+            // panel's page the app-level fallback would answer with a 200.
+            .default_service(web::to(api_not_found)),
     );
+}
+
+async fn api_not_found() -> HttpResponse {
+    crate::api::authz::error(ntex::http::StatusCode::NOT_FOUND, "not_found", "No such endpoint")
 }
 
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
-    // Always: whether anyone may open a terminal is a role's grant now, and
-    // a role can gain it while the agent runs. A quarter of the grace period:
+    // Always: a terminal may be opened at any time. A quarter of the grace period:
     // often enough that a reaped session isn't held much past its deadline,
     // rare enough to be invisible.
     start_reaper(
@@ -866,12 +903,32 @@ async fn login(
 ) -> Result<HttpResponse> {
     let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
 
-    // Reserve under the throttle lock before touching the database or bcrypt,
-    // so concurrent guesses cannot all pass the same pre-failure snapshot.
-    let attempt = match app_state.login_throttle.begin(peer_ip, &req.username) {
+    // A device that signed in before is throttled on its own, out of reach
+    // of failures anywhere else; anything else shares the account's counter.
+    let now = chrono::Utc::now().timestamp();
+    let known_device = match req.device.as_deref().filter(|d| !d.is_empty() && d.len() <= 128) {
+        Some(device) => {
+            let hash = watch_token_hash(device);
+            crate::db::accounts::device_known(&app_state.db, &hash, now)
+                .await?
+                .then_some(hash)
+        }
+        None => None,
+    };
+    let who = match &known_device {
+        Some(hash) => Who::Device(hash.clone()),
+        None => Who::Stranger,
+    };
+
+    // Reserve under the throttle lock before touching bcrypt, so concurrent
+    // guesses cannot all pass the same pre-failure snapshot.
+    let attempt = match app_state.login_throttle.begin(peer_ip, who) {
         Ok(attempt) => attempt,
         Err(wait) => {
             let seconds = wait.as_secs().max(1);
+            login_event(&http_req, Action::Denied, Outcome::Denied, "throttled")
+                .record(&app_state.db)
+                .await;
             return Ok(HttpResponse::TooManyRequests()
                 .header(RETRY_AFTER, seconds.to_string())
                 .json(&ErrorResponse {
@@ -880,26 +937,17 @@ async fn login(
         }
     };
 
-    let user = match sqlx::query!(
-        "SELECT id, username, password_hash FROM users WHERE username = ?",
-        req.username
-    )
-    .fetch_optional(&app_state.db)
-    .await
-    {
-        Ok(user) => user,
+    let owner = match crate::db::accounts::owner(&app_state.db).await {
+        Ok(owner) => owner,
         Err(error) => {
             app_state.login_throttle.cancel(attempt);
-            return Err(error.into());
+            return Err(error);
         }
     };
 
-    // A missing account must cost the same bcrypt verification as a wrong
-    // password, or response timing turns the login endpoint into a username
-    // oracle even though both paths return the same status and throttle key.
     let password_matches = match verify_login_password_off_worker(
         req.password.clone(),
-        user.as_ref().map(|user| user.password_hash.clone()),
+        owner.as_ref().map(|owner| owner.password_hash.clone()),
     )
     .await
     {
@@ -910,31 +958,43 @@ async fn login(
         }
     };
 
-    if let Some(user) = user
+    if let Some(owner) = owner
         && password_matches
     {
         app_state.login_throttle.record_success(attempt);
-
-        sqlx::query!(
-            "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?",
-            user.id
-        )
-        .execute(&app_state.db)
-        .await?;
-
-        let token = auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
-
-        return Ok(HttpResponse::Ok().json(&LoginResponse { token }));
+        crate::db::accounts::record_login(&app_state.db, owner.id).await?;
+        let seen = if known_device.is_some() { "device known" } else { "new device" };
+        login_event(&http_req, Action::Open, Outcome::Ok, seen).record(&app_state.db).await;
+        let (device_hash, device) = match known_device {
+            Some(hash) => (hash, None),
+            None => {
+                let device = format!("sbd_{}", crate::utils::secrets::random_hex(32)?);
+                (watch_token_hash(&device), Some(device))
+            }
+        };
+        let label = device_label(req.name.as_deref(), &http_req);
+        let ip = peer_ip.map(|ip| ip.to_string());
+        crate::db::accounts::remember_device(&app_state.db, &device_hash, now, &label, ip.as_deref()).await?;
+        let token = auth::generate_token(&app_state.config.get_jwt_secret())?;
+        return Ok(HttpResponse::Ok().json(&LoginResponse { token, device }));
     }
 
-    // One counter for both "no such user" and "wrong password": tracking them
-    // separately would let an attacker tell the two apart by how quickly they
-    // get throttled.
     app_state.login_throttle.record_failure(attempt);
+    login_event(&http_req, Action::Denied, Outcome::Denied, "wrong password")
+        .record(&app_state.db)
+        .await;
 
     Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
         error: "Invalid credentials".to_string(),
     }))
+}
+
+/// A sign-in for the audit log: where from and what became of it, never the
+/// password or the device token.
+fn login_event(req: &HttpRequest, action: Action, outcome: Outcome, detail: &str) -> Event {
+    Event::new(Kind::Login, action, outcome)
+        .remote_ip(audit::peer_ip(req))
+        .detail(detail)
 }
 
 /// Lowercase hex of the SHA-256, which is what the `watch_tokens` rows already
@@ -958,7 +1018,7 @@ async fn issue_watch_token(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
-    let caller = require_jwt!(&req, &app_state);
+    require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
     let token = format!("sbw_{}", crate::utils::secrets::random_hex(32)?);
     let token_hash = watch_token_hash(&token);
@@ -967,13 +1027,12 @@ async fn issue_watch_token(
     sqlx::query(
         // `read`, the only scope there is, and stated rather than left to
         // the column default: the scope is what `verify_watch_token` reads.
-        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at, scope) \
-         VALUES (?, ?, ?, ?, ?, 'read') \
-         ON CONFLICT(subject, client_id) DO UPDATE SET \
+        "INSERT INTO watch_tokens(client_id, token_hash, created_at, expires_at, scope) \
+         VALUES (?, ?, ?, ?, 'read') \
+         ON CONFLICT(client_id) DO UPDATE SET \
          token_hash = excluded.token_hash, created_at = excluded.created_at, \
          expires_at = excluded.expires_at, scope = excluded.scope",
     )
-    .bind(&caller.username)
     .bind(client_id)
     .bind(token_hash)
     .bind(now)
@@ -988,10 +1047,9 @@ async fn revoke_watch_token(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<WatchTokenRequest>,
 ) -> Result<HttpResponse> {
-    let caller = require_jwt!(&req, &app_state);
+    require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
-    sqlx::query("DELETE FROM watch_tokens WHERE subject = ? AND client_id = ?")
-        .bind(&caller.username)
+    sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
         .bind(client_id)
         .execute(&app_state.db)
         .await?;
@@ -1179,18 +1237,15 @@ struct CapabilitiesView {
     #[serde(skip_serializing_if = "Option::is_none")]
     oldest_sample: Option<String>,
     /// The machine-management endpoints this agent serves — see
-    /// `api::machine::FEATURES`. Whether the caller may use one is `grants`.
+    /// `api::machine::FEATURES`. Whether they may be used over this link is
+    /// `access`.
     features: &'static [&'static str],
     /// The web apps this agent deployed, and their state (`stacks`): what
     /// decides whether a panel offers their windows. Empty for a watch token.
     stacks: Vec<StackBrief>,
-    remote_access: RemoteAccessView,
-    /// Who is asking — absent for a watch token, which is nobody's session.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    me: Option<MeView>,
-    /// What the caller's role lets them do over this link, grant by grant —
-    /// see `authz::grants_view`.
-    grants: serde_json::Value,
+    /// Whether the caller may act on the machine over this link: `ok`, and
+    /// `why` (`insecure_transport`) when not. Never, for a watch token.
+    access: serde_json::Value,
 }
 
 #[derive(Serialize)]
@@ -1198,41 +1253,6 @@ struct StackBrief {
     id: String,
     /// `installing` | `installed` | `failed`.
     state: String,
-}
-
-#[derive(Serialize)]
-struct MeView {
-    username: String,
-    role: String,
-    admin: bool,
-}
-
-/// The answer clients read before roles, derived from `grants` for the
-/// caller so an app that predates roles keeps working. TODO: remove once no
-/// supported app reads it.
-#[derive(Serialize)]
-struct RemoteAccessView {
-    terminal: bool,
-    /// Whether a shell can be opened without SSH credentials. The panel only
-    /// offers that entry when this is true — and, being a UI decision, it is
-    /// re-checked server-side when the request actually arrives.
-    full_access: bool,
-    /// Whether `/api/v1/fs/*` will answer. Its own field rather than folded
-    /// into [`Self::full_access`]: the file API is confined to the roots the
-    /// operator named, so it can be on while the shell is off.
-    files: bool,
-    /// Whether `/api/v1/stream/ws` will relay a TCP connection.
-    ///
-    /// Its own field even though it is granted by the same switch as
-    /// [`Self::full_access`], because it is a different question for a client:
-    /// an agent that predates the endpoint reports `full_access` and would
-    /// still refuse the upgrade. Staying equal to `full_access` on every agent
-    /// that has it is the point — a client reads this one, not that one.
-    stream: bool,
-    /// Whether `/api/v1/listen/ws` will listen for a remote forward. The same
-    /// grant as [`Self::stream`], reported apart for the same reason: an agent
-    /// that predates the endpoint leaves it out, and a client reads that as no.
-    listen: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -1277,24 +1297,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
                 .collect(),
             None => Vec::new(),
         },
-        remote_access: {
-            let ok = |grant| {
-                caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
-            };
-            RemoteAccessView {
-                terminal: ok(Grant::Shell),
-                full_access: ok(Grant::Shell),
-                files: ok(Grant::Files),
-                stream: ok(Grant::Connect),
-                listen: ok(Grant::Listen),
-            }
-        },
-        me: caller.map(|c| MeView {
-            username: c.username.clone(),
-            role: c.role.name.clone(),
-            admin: c.role.admin,
-        }),
-        grants: authz::grants_view(caller, &app_state, secure),
+        access: authz::access_view(caller, &app_state, secure),
     }))
 }
 
@@ -1317,21 +1320,12 @@ async fn issue_ws_ticket(
     let remote_ip = audit::peer_ip(&req);
     let purpose = payload.into_inner().purpose;
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
-    // The grants each endpoint can be used under at all; which one a frame
-    // needs is checked again when it arrives (a shell needs `shell`; a stream
-    // `open` needs `connect`, an `accept` `listen`).
-    let ok = |grant| caller.check(grant, &app_state, secure).is_ok();
+    let ok = caller.check(&app_state, secure).is_ok();
     let (available, detail) = match purpose {
-        Purpose::Terminal => (
-            ok(Grant::Shell),
-            "terminal not available",
-        ),
-        Purpose::Stream => (
-            ok(Grant::Connect) || ok(Grant::Listen),
-            "stream not available",
-        ),
-        Purpose::Listen => (ok(Grant::Listen), "listen not available"),
-        Purpose::Rdp => (ok(Grant::Connect), "rdp not available"),
+        Purpose::Terminal => (ok, "terminal not available"),
+        Purpose::Stream => (ok, "stream not available"),
+        Purpose::Listen => (ok, "listen not available"),
+        Purpose::Rdp => (ok, "rdp not available"),
         // Bound to the console it opens, so only `POST /virt/console` mints
         // one.
         Purpose::Virt => (false, "virt consoles are opened through /virt/console"),
@@ -1339,7 +1333,6 @@ async fn issue_ws_ticket(
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
-            .subject(&caller.username)
             .remote_ip(remote_ip)
             .detail(detail)
             .record(&app_state.db)
@@ -1349,10 +1342,9 @@ async fn issue_ws_ticket(
         }));
     }
 
-    match app_state.tickets.issue(purpose, &caller.username) {
+    match app_state.tickets.issue(purpose) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(remote_ip)
                 .detail(match purpose {
                     Purpose::Terminal => "terminal",
@@ -1369,7 +1361,6 @@ async fn issue_ws_ticket(
         }
         Err(e) => {
             Event::new(Kind::Ticket, Action::Denied, Outcome::Error)
-                .subject(&caller.username)
                 .remote_ip(remote_ip)
                 .detail("issue failed")
                 .record(&app_state.db)
@@ -1437,7 +1428,7 @@ const SETTINGS_LIVE_FIELDS: &[&str] = &[
 ];
 
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    require_admin!(&req, &app_state);
+    require_acting!(&req, &app_state);
 
     let file_config = match config_file::read() {
         Ok(c) => c,
@@ -1480,7 +1471,7 @@ async fn update_settings(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<SettingsPayload>,
 ) -> Result<HttpResponse> {
-    require_admin!(&req, &app_state);
+    require_acting!(&req, &app_state);
     let payload = payload.into_inner();
 
     if payload.interval_seconds < 1 {
@@ -1544,41 +1535,6 @@ async fn update_settings(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
-/// The panel's first-use "turn off access without SSH": takes `shell`,
-/// `connect` and `listen` away from every role, and ends what was running
-/// under them.
-///
-/// Kept for the panel's existing prompt, and for an app that predates roles;
-/// with roles it is one admin edit among others, and the admin can grant them
-/// back. It answers the old way too — a client told `full_access_disabled`
-/// rather than `permission_revoked`. TODO: remove once the panel's prompt
-/// edits roles itself.
-async fn disable_full_access(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    let caller = require_admin!(&req, &app_state);
-
-    for mut role in crate::db::accounts::roles(&app_state.db).await? {
-        role.grants.shell = false;
-        role.grants.connect = None;
-        role.grants.listen = None;
-        crate::db::accounts::set_grants(&app_state.db, &role.name, &role.grants).await?;
-    }
-    Event::new(Kind::Admin, Action::Close, Outcome::Ok)
-        .subject(&caller.username)
-        .remote_ip(audit::peer_ip(&req))
-        .detail("shell, connect and listen removed from every role")
-        .record(&app_state.db)
-        .await;
-    authz::revoke_lost(app_state.get_ref(), "full_access_disabled").await;
-    tracing::info!(
-        "Access without SSH disabled from the panel by {}: shell, connect and listen removed from every role",
-        caller.username,
-    );
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
-}
-
 /// Home-grid card order — split out from `SettingsPayload`/`PUT /settings`
 /// deliberately: reordering cards by drag-and-drop happens far more often
 /// than editing rules/CORS, and routing it through the full settings payload
@@ -1607,7 +1563,7 @@ async fn update_card_order(
     app_state: web::types::State<Arc<AppState>>,
     payload: web::types::Json<CardOrderPayload>,
 ) -> Result<HttpResponse> {
-    require_admin!(&req, &app_state);
+    require_acting!(&req, &app_state);
     let _config_guard = app_state.config_write.lock().await;
 
     let mut config = match config_file::read() {
@@ -1956,17 +1912,17 @@ pub(crate) fn bearer_token(req: &HttpRequest) -> Result<&str> {
 /// The account a watch token was paired by, for a token that is live and
 /// has the `read` scope — the only one a watch token is ever given, and the
 /// only routes that call this are the read ones.
-pub(crate) async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<String> {
+pub(crate) async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<()> {
     let token_hash = watch_token_hash(token);
-    let subject = sqlx::query_scalar::<_, String>(
-        "SELECT subject FROM watch_tokens WHERE token_hash = ? AND expires_at > ? AND scope = 'read'",
+    sqlx::query_scalar::<_, i64>(
+        "SELECT 1 FROM watch_tokens WHERE token_hash = ? AND expires_at > ? AND scope = 'read'",
     )
     .bind(token_hash)
     .bind(now)
     .fetch_optional(db)
     .await?
     .ok_or_else(|| MonitorError::Auth("Invalid or expired token".to_string()))?;
-    Ok(subject)
+    Ok(())
 }
 
 fn format_bytes(bytes: u64) -> String {
@@ -1999,10 +1955,9 @@ mod watch_token_tests {
             .unwrap();
         sqlx::query(
             "CREATE TABLE watch_tokens (\
-             subject TEXT NOT NULL, client_id TEXT NOT NULL, \
+             client_id TEXT PRIMARY KEY, \
              token_hash TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, \
-             expires_at INTEGER NOT NULL, scope TEXT NOT NULL DEFAULT 'read', \
-             PRIMARY KEY(subject, client_id))",
+             expires_at INTEGER NOT NULL, scope TEXT NOT NULL DEFAULT 'read')",
         )
         .execute(&pool)
         .await
@@ -2025,10 +1980,9 @@ mod watch_token_tests {
         let token = TOKEN;
         assert_eq!(watch_token_hash(token), TOKEN_HASH);
         sqlx::query(
-            "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
-             VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO watch_tokens(client_id, token_hash, created_at, expires_at) \
+             VALUES (?, ?, ?, ?)",
         )
-        .bind("admin")
         .bind("watch:one")
         .bind(TOKEN_HASH)
         .bind(10_i64)
@@ -2037,7 +1991,7 @@ mod watch_token_tests {
         .await
         .unwrap();
 
-        assert_eq!(verify_watch_token(&pool, token, 19).await.unwrap(), "admin");
+        assert!(verify_watch_token(&pool, token, 19).await.is_ok());
         assert!(verify_watch_token(&pool, token, 20).await.is_err());
         sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
             .bind("watch:one")

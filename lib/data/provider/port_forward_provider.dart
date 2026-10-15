@@ -31,11 +31,11 @@ part 'port_forward_provider.g.dart';
 ({bool relay, bool listen}) portForwardKinds(ServerState server) {
   final caps = ServerCapabilities.forwardsOf(
     server.spi,
-    granted: server.remoteAccess,
+    granted: server.agentAccess,
   );
   final unknown =
       server.spi.transport == ServerTransport.monitorHttp &&
-      server.remoteAccess == null;
+      server.agentAccess == null;
   return (
     relay: caps.tcpRelay || unknown,
     listen: caps.remoteListen || unknown,
@@ -45,31 +45,15 @@ part 'port_forward_provider.g.dart';
 /// Why [server] cannot make a forward of the [listen] kind — see
 /// [portForwardKinds] — or null when it can.
 ///
-/// An agent that has not granted `full_access` cannot carry any forward and
-/// is told so, as [ServerFuncBtn.unavailableReason] does; one that has, and
-/// relays but cannot listen, predates the listener and needs updating.
+/// Relay and listen are one answer on an agent ([MonitorAccess.ok]), so the
+/// reason is [ServerFuncBtn.unavailableReason]'s for either.
 String? portForwardUnavailable(ServerState server, {required bool listen}) {
   final kinds = portForwardKinds(server);
   if (listen ? kinds.listen : kinds.relay) return null;
-  final granted = server.remoteAccess;
-  final grants = server.spi.transport == ServerTransport.monitorHttp
-      ? granted?.grants
-      : null;
-  if (grants != null) {
-    return monitorGrantReason(
-          libL10n.portForward,
-          listen ? grants.listen : grants.connect,
-        ) ??
-        l10n.funcUnavailableFmt(libL10n.portForward);
-  }
-  if (listen &&
-      server.spi.transport == ServerTransport.monitorHttp &&
-      granted != null &&
-      granted.fullAccess &&
-      granted.stream) {
-    return l10n.portForwardRemoteNeedsAgent;
-  }
-  return ServerFuncBtn.portForward.unavailableReason(server.spi, granted);
+  return ServerFuncBtn.portForward.unavailableReason(
+    server.spi,
+    server.agentAccess,
+  );
 }
 
 @Riverpod(keepAlive: true)

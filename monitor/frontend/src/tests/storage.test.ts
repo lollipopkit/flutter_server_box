@@ -52,7 +52,7 @@ const view: StorageView = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   mocked.getStorage.mockResolvedValue(structuredClone(view))
   mocked.storageHealth.mockRejectedValue(new ApiError('sudo_rejected', 403, 'sudo_rejected', { error: 'sudo_rejected' }))

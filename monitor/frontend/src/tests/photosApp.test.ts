@@ -53,12 +53,12 @@ const manifest: StackManifest = {
 
 const app = (stack: StackApp['stack'], proxy = false): StackApp => ({ manifest, stack, job: null, proxy })
 
-const caps = (admin: boolean) =>
-  ({ features: ['stacks'], me: { username: 'u', role: admin ? 'admin' : 'viewer', admin } }) as unknown as Capabilities
+const caps = (ok: boolean) =>
+  ({ features: ['stacks'], access: ok ? { ok } : { ok, why: 'insecure_transport' } }) as unknown as Capabilities
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'u' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   mocked.prepareStack.mockResolvedValue({
     defaults: { library: '/srv/stacks/immich/library', port: 2283 },
@@ -73,11 +73,12 @@ beforeEach(() => {
 })
 
 describe('the Immich window', () => {
-  it('tells an account that is not an admin to wait for one', async () => {
+  it('says why it cannot be set up over a plaintext link', async () => {
     capabilitiesStore.byServer = { local: caps(false) }
     mocked.listStacks.mockResolvedValue({ apps: [app(null)] })
     render(StackHost, { stackId: 'futo.immich' })
     expect(await screen.findByText('Not set up')).toBeInTheDocument()
+    expect(screen.getByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
     expect(mocked.prepareStack).not.toHaveBeenCalled()
   })
 
@@ -180,7 +181,7 @@ describe('the Immich frame in a window', () => {
     capabilitiesStore.byServer = { local: caps(false) }
     mocked.listStacks.mockResolvedValue({ apps: [app({ state: 'installed', version: '3.3.1' }, true)] })
     mocked.enterStack.mockResolvedValue({ ticket: 'abc.def', port: 3780, tls: false, path: '/', enter: '/__sbm/enter' })
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'u' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     const id = desk.open('serverbox.photos', {}) ?? 'w'
     const shield = (c: HTMLElement) => c.querySelector('iframe')?.nextElementSibling ?? null
 
@@ -196,9 +197,9 @@ describe('the Immich frame in a window', () => {
 })
 
 describe('Immich in Apps', () => {
-  it('is offered once installed; to an admin also while being set up or failed', () => {
-    const with_ = (state: 'installing' | 'installed' | 'failed' | null, admin: boolean) =>
-      ({ features: ['stacks'], stacks: state ? [{ id: 'futo.immich', state }] : [], me: { admin } }) as unknown as Capabilities
+  it('is offered once installed; where the account may act also while being set up or failed', () => {
+    const with_ = (state: 'installing' | 'installed' | 'failed' | null, ok: boolean) =>
+      ({ features: ['stacks'], stacks: state ? [{ id: 'futo.immich', state }] : [], access: { ok } }) as unknown as Capabilities
     expect(stackDeployed(with_(null, true), 'futo.immich')).toBe(false)
     expect(stackDeployed(with_('installed', false), 'futo.immich')).toBe(true)
     expect(stackDeployed(with_('failed', false), 'futo.immich')).toBe(false)

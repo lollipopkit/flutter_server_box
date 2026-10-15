@@ -1,4 +1,4 @@
-//! An account's memory (`fl_pi_llm::host::memory`), kept in `agent_memory`.
+//! The account's memory (`fl_pi_llm::host::memory`), kept in `agent_memory`.
 
 use fl_pi_llm::host::BoxFuture;
 use fl_pi_llm::host::memory::{Change, MemoryBackend, MemoryFile};

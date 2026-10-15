@@ -1,18 +1,16 @@
 <script lang="ts">
   /// This agent's configuration, as `GET/PUT /settings` and the custom-command
-  /// files expose it, and the push channels beside it. Every change here is
-  /// an administrator's: an account that has no admin role gets the note that
-  /// says so and nothing to edit.
+  /// files expose it, and the push channels beside it. Changing it needs the
+  /// account to act over this link (`access.ok`).
 
   import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '../../lk'
   import SettingsPage from './SettingsPage.svelte'
   import PowerModal from '../../../components/PowerModal.svelte'
-  import { machineAccess } from '../../../lib/access'
+  import { machineAccess, whyText } from '../../../lib/access'
   import { fade } from 'svelte/transition'
   import Disclosure from '../../../components/Disclosure.svelte'
   import Markdown from '../../../components/Markdown.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { isAdmin } from '../../../lib/access'
   import { api, ApiError } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { serverNames } from '../../../lib/serverNames.svelte'
@@ -27,6 +25,7 @@
     SystemMetrics,
   } from '../../../types'
   import PushChannels from './PushChannels.svelte'
+  import AgentUpdate from './AgentUpdate.svelte'
 
   let loading = $state(true)
   let loadError = $state<string | null>(null)
@@ -144,13 +143,13 @@
     if (servers.authenticated) void capabilitiesStore.ensure(servers.currentId)
   })
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
-  /// Known not to administer this agent, which is what keeps the settings —
-  /// readable by an administrator only — from being asked for at all.
-  /// Unknown is not a refusal: the agent answers for itself.
-  const nonAdmin = $derived(isAdmin(caps) === false)
+  /// Known not to act over this link, which is what keeps the settings —
+  /// the agent's configuration, refused to a plaintext link — from being
+  /// asked for at all. Unknown is not a refusal: the agent answers for itself.
+  const refused = $derived(caps?.access?.ok === false)
 
   $effect(() => {
-    if (servers.authenticated && !nonAdmin) void load()
+    if (servers.authenticated && !refused) void load()
   })
 
   const isLive = $derived(
@@ -275,7 +274,7 @@
 {/snippet}
 
 {#snippet saveButton()}
-  {#if settings && !nonAdmin}
+  {#if settings && !refused}
     <Button size="sm" variant="primary" onclick={save} disabled={saving}>
       {saving ? $LL.saving() : $LL.save()}
     </Button>
@@ -292,12 +291,13 @@
       {#if host.uptime}<Row label={$LL.uptime()} value={host.uptime} />{/if}
     </Group>
   {/if}
+  {#if servers.authenticated && caps?.features?.includes('update')}
+    <AgentUpdate />
+  {/if}
   {#if !servers.authenticated}
     <p class="text-[13px] text-(--text-secondary)">{$LL.settingsNeedsAuth()}</p>
-  {:else if nonAdmin}
-    <div in:fade={{ duration: 200 }} class="space-y-4">
-      <p class="text-[13px] text-(--text-secondary)">{$LL.adminOnlySettings()}</p>
-    </div>
+  {:else if refused}
+    <p class="text-[13px] text-(--text-secondary)">{whyText(caps?.access?.why, $LL)}</p>
   {:else if loading}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else if loadError}
@@ -456,11 +456,7 @@
         </Disclosure>
       </div>
       {#if !customCmdsEditable}
-        <!-- With roles the gate is the admin role's shell grant; before them,
-             the agent's full_access switch. -->
-        <p class="py-[7px] text-[12px] text-(--text-tertiary)">
-          {caps?.grants ? $LL.customCmdsReadOnlyRoles() : $LL.customCmdsReadOnly()}
-        </p>
+        <p class="py-[7px] text-[12px] text-(--text-tertiary)">{whyText(caps?.access?.why, $LL)}</p>
       {/if}
       {#each customCmds as cmd, i (i)}
         <div class="border-b border-(--border-hairline) py-[9px] last:border-0">

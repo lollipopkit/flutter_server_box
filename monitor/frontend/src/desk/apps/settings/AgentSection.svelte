@@ -2,14 +2,13 @@
   /// Agent mode's configuration (`/agent/settings`): the model the agent's
   /// tasks run with, applied as it is chosen, and the providers it reaches —
   /// each one a page of its own (`AgentProviderPage`), saved there. Built-in
-  /// providers need only a key; an endpoint of the admin's own needs where it
+  /// providers need only a key; an endpoint of one's own needs where it
   /// is and what it speaks.
 
   import { Group, Row, SegmentedControl, Select, Spinner, Switch } from '../../lk'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type AgentSettings, type ProviderInfo, type SettingsWrite } from '../../../lib/agentApi'
-  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
   import { writeOf } from './agentSettings'
 
@@ -20,16 +19,14 @@
     onmemory: () => void
     /// Opens how commands are approved.
     onpermissions: () => void
-    /// Opens the MCP servers (admin).
+    /// Opens the MCP servers.
     onmcp: () => void
-    /// Opens the skills (admin).
+    /// Opens the skills.
     onskills: () => void
   }
 
   const { onprovider, onmemory, onpermissions, onmcp, onskills }: Props = $props()
 
-  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
-  const admin = $derived(caps?.me?.admin === true)
 
   let loading = $state(true)
   let error = $state<string | null>(null)
@@ -54,7 +51,7 @@
     } finally {
       loading = false
     }
-    if (admin) void loadCatalog()
+    void loadCatalog()
   }
 
   async function loadCatalog() {
@@ -131,10 +128,8 @@
   <Group>
     <Row label={$LL.settingsAgentPermissions()} sub={$LL.settingsAgentPermissionsSub()} onclick={onpermissions} />
     <Row label={$LL.settingsAgentMemory()} sub={$LL.settingsAgentMemorySub()} onclick={onmemory} />
-    {#if admin}
-      <Row label={$LL.settingsAgentMcp()} sub={$LL.settingsAgentMcpSub()} onclick={onmcp} />
-      <Row label={$LL.settingsAgentSkills()} sub={$LL.settingsAgentSkillsSub()} onclick={onskills} />
-    {/if}
+    <Row label={$LL.settingsAgentMcp()} sub={$LL.settingsAgentMcpSub()} onclick={onmcp} />
+    <Row label={$LL.settingsAgentSkills()} sub={$LL.settingsAgentSkillsSub()} onclick={onskills} />
   </Group>
 {/snippet}
 
@@ -147,15 +142,7 @@
     <div class="grid place-items-center py-[34px]"><Spinner /></div>
   {:else}
     {#if error}<p class="px-[2px] text-[13px] text-(--color-danger)">{error}</p>{/if}
-    {#if !admin}
-      <Group>
-        <Row label={$LL.settingsAgentModel()} value={settings?.model ? `${settings.model.provider} · ${settings.model.id}` : $LL.settingsAgentNoModel()} />
-        <Row label={$LL.settingsAgentThinking()} value={settings?.thinkingLevel ?? 'off'} />
-        <Row label={$LL.settingsAgentMaxRunning()} value={String(settings?.maxRunning ?? 3)} />
-      </Group>
-      <p class="px-[2px] text-[12px] text-(--text-tertiary)">{$LL.settingsAgentAdminOnly()}</p>
-      {@render memoryRow()}
-    {:else if settings}
+    {#if settings}
       <Group>
         <Row label={$LL.settingsAgentModel()}>
           <Select value={model} options={modelOptions} disabled={saving} onchange={(e: Event) => pickModel((e.currentTarget as HTMLSelectElement).value)} />

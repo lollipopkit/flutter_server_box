@@ -16,13 +16,11 @@ pub struct StackRow {
     /// `installing` | `installed` | `failed`.
     pub state: String,
     pub license: String,
-    pub license_accepted_by: String,
     pub license_accepted_at: String,
-    pub installed_by: String,
     pub installed_at: String,
     pub updated_at: String,
     pub last_error: Option<String>,
-    /// An admin stopped it: its containers being down is meant.
+    /// Stopped from the panel: its containers being down is meant.
     pub stopped: bool,
     /// The catalog version a notification already announced.
     pub update_noticed: Option<String>,
@@ -36,9 +34,7 @@ struct Raw {
     proxy_port: i64,
     state: String,
     license: String,
-    license_accepted_by: String,
     license_accepted_at: String,
-    installed_by: String,
     installed_at: String,
     updated_at: String,
     last_error: Option<String>,
@@ -55,9 +51,7 @@ impl From<Raw> for StackRow {
             proxy_port: u16::try_from(r.proxy_port).unwrap_or_default(),
             state: r.state,
             license: r.license,
-            license_accepted_by: r.license_accepted_by,
             license_accepted_at: r.license_accepted_at,
-            installed_by: r.installed_by,
             installed_at: r.installed_at,
             updated_at: r.updated_at,
             last_error: r.last_error,
@@ -69,8 +63,8 @@ impl From<Raw> for StackRow {
 
 macro_rules! columns {
     () => {
-        "id, version, settings, proxy_port, state, license, license_accepted_by, license_accepted_at, \
-         installed_by, installed_at, updated_at, last_error, stopped, update_noticed"
+        "id, version, settings, proxy_port, state, license, license_accepted_at, \
+         installed_at, updated_at, last_error, stopped, update_noticed"
     };
 }
 
@@ -91,18 +85,16 @@ pub async fn load(db: &SqlitePool, id: &str) -> sqlx::Result<Option<StackRow>> {
 /// A new row in `installing`; `false` when [row]'s app or port is taken.
 pub async fn insert(db: &SqlitePool, row: &StackRow) -> sqlx::Result<bool> {
     let done = sqlx::query(
-        "INSERT OR IGNORE INTO stack (id, version, settings, proxy_port, state, license, license_accepted_by, \
-         license_accepted_at, installed_by, installed_at, updated_at, last_error) \
-         VALUES (?, ?, ?, ?, 'installing', ?, ?, ?, ?, ?, ?, NULL)",
+        "INSERT OR IGNORE INTO stack (id, version, settings, proxy_port, state, license, \
+         license_accepted_at, installed_at, updated_at, last_error) \
+         VALUES (?, ?, ?, ?, 'installing', ?, ?, ?, ?, NULL)",
     )
     .bind(&row.id)
     .bind(&row.version)
     .bind(serde_json::to_string(&row.settings).unwrap_or_default())
     .bind(i64::from(row.proxy_port))
     .bind(&row.license)
-    .bind(&row.license_accepted_by)
     .bind(&row.license_accepted_at)
-    .bind(&row.installed_by)
     .bind(&row.installed_at)
     .bind(&row.updated_at)
     .execute(db)
@@ -145,7 +137,7 @@ pub async fn set_proxy_port(db: &SqlitePool, id: &str, port: u16) -> sqlx::Resul
     Ok(())
 }
 
-/// Whether an admin stopped it ([stopped]), or started it again.
+/// Whether the operator stopped it ([stopped]), or started it again.
 pub async fn set_stopped(db: &SqlitePool, id: &str, stopped: bool) -> sqlx::Result<()> {
     sqlx::query("UPDATE stack SET stopped = ? WHERE id = ?").bind(stopped).bind(id).execute(db).await?;
     Ok(())

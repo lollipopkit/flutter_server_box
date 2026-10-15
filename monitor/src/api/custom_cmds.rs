@@ -7,13 +7,10 @@
 //! added here shows up on the next extended collection cycle without anything
 //! having to be told about it.
 //!
-//! Writing needs an admin who also holds `shell`. Admin, because the set is
-//! the agent's configuration rather than anything of one account's; `shell`,
-//! because a file in that directory is run by the status script on every
-//! extended cycle, so adding one is arranging for code to run as the agent's
-//! user — an admin whose role holds no shell must not be able to write one
-//! in by the side door. Reading needs any account: it discloses the
-//! commands, not the machine.
+//! Writing needs the transport rule: a file in that directory is run by the
+//! status script on every extended cycle, so adding one is arranging for code
+//! to run as the agent's user. Reading needs only the account: it discloses
+//! the commands, not the machine.
 
 use std::sync::Arc;
 
@@ -80,7 +77,7 @@ pub async fn replace(
     if !may_edit(&caller, &req, &app_state) {
         Event::new(Kind::CustomCmd, Action::Denied, Outcome::Denied)
             .remote_ip(remote_ip)
-            .detail(format!("{} may not edit custom commands", caller.username))
+            .detail("custom commands may not be edited over this link")
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().finish());
@@ -110,16 +107,10 @@ pub async fn replace(
     }
 }
 
-/// An admin holding a usable `shell` — see the module documentation.
+/// Over a link the machine may be acted on through — see the module
+/// documentation.
 fn may_edit(caller: &Caller, req: &HttpRequest, state: &AppState) -> bool {
-    caller.is_admin()
-        && caller
-            .check(
-                crate::core::permissions::Grant::Shell,
-                state,
-                authz::is_secure(req, state),
-            )
-            .is_ok()
+    caller.check(state, authz::is_secure(req, state)).is_ok()
 }
 
 /// A rejected set is the caller's fault and says which command was wrong; a

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
@@ -195,11 +195,8 @@ void main() {
   /// Which entries survive for a connection, and in particular that the row is
   /// not an all-or-nothing question.
   ///
-  /// `ServerDetailPage` used to draw the row only when `capabilities.terminal`
-  /// was true, which is `full_access` for a monitor server. An agent that
-  /// grants `[remote_access.fs]` and nothing else has a Files button and no
-  /// others, and that server lost its whole row — while the Files tab, which
-  /// asks `caps.files`, went on listing it.
+  /// Every entry stays on the row; what the agent's access decides is which
+  /// of them can be used.
   group('serverFuncBtnsFor', () {
     const monitorOnly = Spi(
       id: 'm',
@@ -220,49 +217,20 @@ void main() {
         if (entry.available) entry.btn,
     ];
 
-    /// Every entry stays on the row, so what the grant decides is the order
-    /// and which of them can be used — not how long the row is.
-    test('an agent granting only files leaves Files the one usable button', () {
-      final btns = serverFuncBtnsFor(
-        monitorOnly,
-        const MonitorRemoteAccess(files: true),
-      );
-
-      expect(usable(btns), [ServerFuncBtn.files]);
-      expect(btns.first.btn, ServerFuncBtn.files);
+    test('an agent refusing leaves nothing usable, and every entry on the row',
+        () {
+      final btns = serverFuncBtnsFor(monitorOnly, MonitorAccess.none);
+      expect(usable(btns), isEmpty);
       expect(btns, hasLength(ServerFuncBtn.values.length));
-      // The rest keep the user's arrangement behind it.
-      expect(btns.last.available, isFalse);
-    });
-
-    test('an agent granting nothing leaves nothing usable', () {
-      expect(
-        usable(serverFuncBtnsFor(monitorOnly, MonitorRemoteAccess.none)),
-        isEmpty,
-      );
       // Before the first poll the agent has said nothing, which is not a grant.
       expect(usable(serverFuncBtnsFor(monitorOnly, null)), isEmpty);
     });
 
-    test('full access keeps everything but the two that need a byte stream', () {
-      final btns = usable(
-        serverFuncBtnsFor(
-          monitorOnly,
-          const MonitorRemoteAccess(
-            fullAccess: true,
-            terminal: true,
-            files: true,
-          ),
-        ),
+    test('an agent granting access offers everything', () {
+      expect(
+        usable(serverFuncBtnsFor(monitorOnly, MonitorAccess.granted)),
+        unorderedEquals(ServerFuncBtn.values),
       );
-
-      // No endpoint relays a connection to an address this app names, so port
-      // forwarding and remote desktop stay out however much else is granted.
-      expect(btns, isNot(contains(ServerFuncBtn.portForward)));
-      expect(btns, isNot(contains(ServerFuncBtn.remoteDesktop)));
-      expect(btns, contains(ServerFuncBtn.terminal));
-      expect(btns, contains(ServerFuncBtn.files));
-      expect(btns, contains(ServerFuncBtn.container));
     });
 
     test('an SSH server is not asked the agent anything', () {

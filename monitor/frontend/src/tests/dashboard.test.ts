@@ -62,14 +62,7 @@ const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
 const caps = (features: string[]): Capabilities =>
   ({
     features,
-    grants: {
-      shell: { ok: true },
-      files: { ok: false },
-      connect: { ok: false },
-      listen: { ok: false },
-      virt: { ok: false },
-    },
-    me: { admin: true },
+    access: { ok: true },
   }) as unknown as Capabilities
 
 /// The dashboard renders once its first metrics poll has answered.
@@ -97,7 +90,7 @@ afterEach(() => {
 describe('Dashboard custom commands', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     mockMetrics(metrics())
   })
@@ -182,7 +175,7 @@ describe('Dashboard custom commands', () => {
 describe('Dashboard iperf action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     mocked.getMetrics.mockResolvedValue(metrics())
     mocked.getHistory.mockResolvedValue([])

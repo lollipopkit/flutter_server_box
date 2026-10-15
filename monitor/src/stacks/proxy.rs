@@ -2,7 +2,7 @@
 //! app (its own port, so its own origin), forwarding to the service on
 //! loopback, so a desk window can frame it.
 //!
-//! - **Who gets through**: a signed-in account. The window opens
+//! - **Who gets through**: the signed-in account. The window opens
 //!   `/__sbm/enter?ticket=…&next=…` with a ticket from
 //!   `POST /stacks/{id}/enter` (`Purpose::Proxy`, single use, seconds); the
 //!   answer sets an `HttpOnly` cookie (`__sbm_<id>`) naming a session here,
@@ -62,7 +62,6 @@ pub const ENTER_PATH: &str = "/__sbm/enter";
 type Body = BoxBody<Bytes, hyper::Error>;
 
 struct Session {
-    username: String,
     since: i64,
     stack: String,
     /// The panel's origin that asked for the window, to frame it.
@@ -311,12 +310,12 @@ impl Proxies {
         self.sessions.lock().unwrap_or_else(|e| e.into_inner()).retain(|_, s| s.stack != stack);
     }
 
-    /// Ends [username]'s sessions: its password changed or it went.
-    pub fn end_account(&self, username: &str) {
-        self.sessions.lock().unwrap_or_else(|e| e.into_inner()).retain(|_, s| s.username != username);
+    /// Ends every session: the password changed.
+    pub fn end_account(&self) {
+        self.sessions.lock().unwrap_or_else(|e| e.into_inner()).clear();
     }
 
-    fn open_session(&self, username: String, since: i64, stack: &str, origin: Option<String>) -> Option<String> {
+    fn open_session(&self, since: i64, stack: &str, origin: Option<String>) -> Option<String> {
         let token = random_hex(32).ok()?;
         let now = Instant::now();
         let mut sessions = self.sessions.lock().unwrap_or_else(|e| e.into_inner());
@@ -326,7 +325,7 @@ impl Proxies {
         }
         sessions.insert(
             token.clone(),
-            Session { username, since, stack: stack.to_string(), origin, expires: now + SESSION_TTL, checked: now },
+            Session { since, stack: stack.to_string(), origin, expires: now + SESSION_TTL, checked: now },
         );
         Some(token)
     }
@@ -354,17 +353,17 @@ impl Ctx {
     /// entered from (`Some(None)` when none was noted).
     async fn admits(&self, token: &str) -> Option<Option<String>> {
         let proxies = &self.state.stacks.proxies;
-        let (username, since, recheck, origin) = {
+        let (since, recheck, origin) = {
             let sessions = proxies.sessions.lock().unwrap_or_else(|e| e.into_inner());
             match sessions.get(token) {
                 Some(s) if s.stack == self.stack && s.expires > Instant::now() => {
-                    (s.username.clone(), s.since, s.checked.elapsed() >= RECHECK, s.origin.clone())
+                    (s.since, s.checked.elapsed() >= RECHECK, s.origin.clone())
                 }
                 _ => return None,
             }
         };
         if recheck {
-            let current = crate::api::authz::caller_named(&self.state, &username).await;
+            let current = crate::api::authz::caller(&self.state).await;
             let mut sessions = proxies.sessions.lock().unwrap_or_else(|e| e.into_inner());
             if current.is_none_or(|c| c.since != since) {
                 sessions.remove(token);
@@ -611,11 +610,11 @@ async fn enter(ctx: &Ctx, req: &Request<Incoming>, secure: bool) -> Response<Bod
     let Some(ticket) = query_param(query, "ticket") else { return sign_in_page() };
     let tickets = &ctx.state.tickets;
     let Ok(reservation) = tickets.reserve(&ticket, Purpose::Proxy) else { return sign_in_page() };
-    let username = tickets.commit(reservation);
+    tickets.commit(reservation);
     let proxies = &ctx.state.stacks.proxies;
     let origin = proxies.take_entry(&ticket);
-    let Some(caller) = crate::api::authz::caller_named(&ctx.state, &username).await else { return sign_in_page() };
-    let Some(token) = proxies.open_session(caller.username.clone(), caller.since, &ctx.stack, origin) else {
+    let Some(caller) = crate::api::authz::caller(&ctx.state).await else { return sign_in_page() };
+    let Some(token) = proxies.open_session(caller.since, &ctx.stack, origin) else {
         return full(StatusCode::SERVICE_UNAVAILABLE, "text/plain", "too many sessions");
     };
     let attributes = if secure { "SameSite=None; Secure; Partitioned" } else { "SameSite=Lax" };

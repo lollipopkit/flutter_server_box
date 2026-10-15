@@ -5,8 +5,7 @@
   import IperfModal from './IperfModal.svelte'
   import PowerModal from '../../../components/PowerModal.svelte'
   import UsageChart from './UsageChart.svelte'
-  import { enabledFeatures } from '../../../lib/features'
-  import { dashboardAccess, isAdmin, machineAccess } from '../../../lib/access'
+  import { dashboardAccess, machineAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { health } from '../../../lib/health.svelte'
@@ -38,22 +37,21 @@
   })
   const capabilities = $derived(capabilitiesStore.byServer[servers.currentId])
 
-  /// Which entries the header offers, and whether this account can only
-  /// watch — see `dashboardAccess`, which answers for an agent with roles and
-  /// for one from before them.
+  /// Which entries the header offers, and whether this link can only watch —
+  /// see `dashboardAccess`.
   const access = $derived(dashboardAccess(capabilities))
   const canPower = $derived(machineAccess(capabilities, 'power'))
   /// An iperf run opens a terminal on the machine, so it needs the agent to
-  /// understand the `iperf` target and the account to hold `shell`.
-  const canIperf = $derived(machineAccess(capabilities, 'iperf', 'shell'))
+  /// understand the `iperf` target.
+  const canIperf = $derived(machineAccess(capabilities, 'iperf'))
   let powerOpen = $state(false)
   let iperfOpen = $state(false)
   /// The custom command whose full output is open in the dialog, if any.
   let cmdDetail = $state<CustomCmdOutput | null>(null)
-  /// Whether the cards can be rearranged: the order is the agent's, shared by
-  /// everyone who views it, so changing it is an administrator's call.
-  /// Unknown is allowed — the agent refuses for itself.
-  const canArrange = $derived(isAdmin(capabilities) !== false)
+  /// Whether the cards can be rearranged: the order is the agent's, so
+  /// changing it needs the account to act over this link. Unknown is allowed
+  /// — the agent refuses for itself.
+  const canArrange = $derived(capabilities?.access?.ok !== false)
 
   /// A custom command's output as a card row shows it: one trailing line
   /// ending is dropped.
@@ -191,7 +189,7 @@
 
   /// The busiest processes, when this account may read them: read along with
   /// the figures, less often.
-  const canProcesses = $derived(enabledFeatures(capabilities).some((f) => f.id === 'process'))
+  const canProcesses = $derived(machineAccess(capabilities, 'process'))
   const topPoller = new Poller(() => api.getProcess('cpu'), Math.max(5000, systemPrefs.refreshMs * 2))
   $effect(() => {
     if (canProcesses && servers.authenticated && shown) topPoller.start()
@@ -451,18 +449,12 @@
       </Card>
     {/if}
 
-    <!-- Informational, not a warning: every switch under `[remote_access]` is
-         off until someone edits the file, and the docs recommend leaving them
-         that way. Most agents are in this state on purpose, so this says what
-         is off and where the switches are, and stops there. -->
+    <!-- Informational, not a warning: over a plaintext link the agent only
+         lets the account read, so this says what is off and why. -->
     {#if access.viewOnly}
       <Card class="mb-[9px] space-y-[7px]">
         <h2 class="text-[15px] font-semibold text-(--text-primary)">{$LL.remoteAccessOffTitle()}</h2>
-        <!-- With roles, more is an administrator's grant away rather than a
-             config file's edit. -->
-        <p class="text-[13px] text-(--text-secondary)">
-          {capabilities?.grants ? $LL.remoteAccessOffBodyRoles() : $LL.remoteAccessOffBody()}
-        </p>
+        <p class="text-[13px] text-(--text-secondary)">{whyText(capabilities?.access?.why, $LL)}</p>
       </Card>
     {/if}
 
@@ -486,8 +478,8 @@
         {/if}
       </header>
 
-      <!-- Card order is the agent's, shared by everyone who views it; an
-           administrator rearranges it by dragging. -->
+      <!-- Card order is the agent's, shared by every browser that views it;
+           rearranged by dragging. -->
       <div class="grid grid-cols-[repeat(auto-fit,minmax(138px,1fr))] gap-[9px]" role="list">
         {#each visibleCardOrder as id (id)}
           {@const t = tile(id)}
@@ -495,7 +487,7 @@
             <div
               role="listitem"
               draggable={canArrange}
-              title={canArrange ? undefined : $LL.cardOrderAdminOnly()}
+              title={canArrange ? undefined : whyText(capabilities?.access?.why, $LL)}
               ondragstart={() => onCardDragStart(id)}
               ondragover={onCardDragOver}
               ondrop={() => onCardDrop(id)}

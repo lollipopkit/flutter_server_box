@@ -10,13 +10,13 @@ Element.prototype.animate ??= function (this: Element) {
 }
 
 beforeEach(() => {
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'u' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
 })
 
 describe('All Apps', () => {
   it('closes a context menu first, and itself only on the next click beside the icons', async () => {
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'u' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     desk.panel = 'apps'
     const { container } = render(AppsPanelHarness, { desk })
     const panel = container.querySelector('.apps-panel') as HTMLElement

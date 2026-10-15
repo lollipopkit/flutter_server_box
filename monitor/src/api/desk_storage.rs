@@ -1,15 +1,15 @@
 //! `/api/v1/desk/apps/{app}/storage` — what a desk app keeps for itself
-//! (`sys.storage` in the panel): JSON values by key, per account and app.
+//! (`sys.storage` in the panel): JSON values by key, per app.
 //!
 //! - `GET`: every key and value, `{"items": {key: value}}`.
 //! - `PUT ?key=`: the body (any JSON) becomes the key's value.
 //! - `DELETE ?key=`: the key goes; absent already is fine.
 //!
-//! Any signed-in account, for its own rows only. An app's rows are bounded
+//! The signed-in account. An app's rows are bounded
 //! together ([`MAX_APP_BYTES`], keys and values as stored), so one app cannot
 //! fill the database. Nothing here reaches the machine; the panel, not the
 //! agent, decides which app is asking, so this is storage for convenience,
-//! never for something one app must hide from another of the same account.
+//! never for something one app must hide from another.
 
 use std::sync::Arc;
 

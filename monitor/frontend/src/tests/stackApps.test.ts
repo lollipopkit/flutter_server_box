@@ -25,8 +25,8 @@ const manifest = (publisher: string, name: string, title: string): StackManifest
   settings: [],
 })
 
-const caps = (stacks: Capabilities['stacks'], admin = false) =>
-  ({ features: ['stacks'], stacks, me: { admin } }) as unknown as Capabilities
+const caps = (stacks: Capabilities['stacks'], ok = false) =>
+  ({ features: ['stacks'], stacks, access: { ok } }) as unknown as Capabilities
 
 describe('a store web app as a desk app', () => {
   const app: StackApp = { manifest: manifest('louislam', 'uptime_kuma', 'Uptime Kuma'), stack: null, job: null, proxy: false } as StackApp

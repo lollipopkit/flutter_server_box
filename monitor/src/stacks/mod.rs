@@ -305,8 +305,8 @@ pub async fn runtime(state: &AppState) -> Result<(ContainerType, String), Refusa
     }
 }
 
-async fn audit(state: &AppState, username: &str, action: Action, outcome: Outcome, detail: String) {
-    Event::new(Kind::Stack, action, outcome).subject(username).detail(detail).record(&state.db).await;
+async fn audit(state: &AppState, action: Action, outcome: Outcome, detail: String) {
+    Event::new(Kind::Stack, action, outcome).detail(detail).record(&state.db).await;
 }
 
 /// The files written for checked [settings]: the folder's files, the env
@@ -394,7 +394,7 @@ Compose command below, never another project name. Each app's `.env` holds gener
             Some(health::State::Starting) => "starting",
             Some(health::State::Unhealthy) => "unhealthy",
             Some(health::State::Down) => "down",
-            Some(health::State::Stopped) => "stopped by an admin",
+            Some(health::State::Stopped) => "stopped on request",
             None => "not checked yet",
         };
         let mut line = format!("- {title} (`{}`, {} {}): {}, {health}", m.id, m.project, row.version, row.state);
@@ -420,9 +420,9 @@ Compose command below, never another project name. Each app's `.env` holds gener
     Some(out)
 }
 
-/// How the admin signs in to deployed app [id] the first time: the
+/// How to sign in to deployed app [id] the first time: the
 /// manifest's `[login]`, with the password read from the stack's env file.
-pub async fn login(state: &AppState, username: &str, id: &str) -> Result<Value, Refusal> {
+pub async fn login(state: &AppState, id: &str) -> Result<Value, Refusal> {
     let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
     let Some(login) = package.manifest.login.clone() else { return Err(refusal(404, "noLogin")) };
     if store::load(&state.db, id).await.map_err(db_failed)?.is_none() {
@@ -435,7 +435,7 @@ pub async fn login(state: &AppState, username: &str, id: &str) -> Result<Value, 
         }
         None => None,
     };
-    audit(state, username, Action::Reveal, Outcome::Ok, format!("login of {id}")).await;
+    audit(state, Action::Reveal, Outcome::Ok, format!("login of {id}")).await;
     Ok(serde_json::json!({ "user": login.user, "password": password, "note": login.note }))
 }
 
@@ -578,7 +578,7 @@ async fn start_by_host(state: &Arc<AppState>) {
     }
 }
 
-/// What the admin confirmed before deploying.
+/// What the operator confirmed before deploying.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Consent {
     /// That this installs third-party software, shown with its project,
@@ -605,7 +605,7 @@ pub struct Preview {
 }
 
 /// What deploying [given] would do. A deployed stack's ports are not
-/// followed: a setting changed there is the admin's choice.
+/// followed: a setting changed there is the operator's choice.
 pub async fn preview(state: &AppState, id: &str, given: &BTreeMap<String, Value>) -> Result<Preview, Refusal> {
     let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
     let package = &*package;
@@ -622,10 +622,9 @@ pub async fn preview(state: &AppState, id: &str, given: &BTreeMap<String, Value>
     })
 }
 
-/// Deploys [id] with [given] settings for [username].
+/// Deploys [id] with [given] settings.
 pub async fn install(
     state: &Arc<AppState>,
-    username: &str,
     id: &str,
     given: &BTreeMap<String, Value>,
     consent: Consent,
@@ -659,9 +658,7 @@ pub async fn install(
             proxy_port: proxy_port(state).await?,
             state: "installing".into(),
             license: m.license.spdx.clone(),
-            license_accepted_by: username.to_string(),
             license_accepted_at: now.clone(),
-            installed_by: username.to_string(),
             installed_at: now.clone(),
             updated_at: now,
             last_error: None,
@@ -681,9 +678,9 @@ pub async fn install(
             return Err(r);
         }
     };
-    audit(state, username, Action::Open, Outcome::Ok, format!("install {id} {}", m.version)).await;
+    audit(state, Action::Open, Outcome::Ok, format!("install {id} {}", m.version)).await;
     let stack = compose(runtime, id, &state.stacks.dir(id), package);
-    let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
+    let (state, job2, id) = (state.clone(), job.clone(), id.to_string());
     tokio::spawn(async move {
         let result = job2.run_steps(&stack.deploy()).await;
         let error = result.as_ref().err().map(String::as_str);
@@ -693,22 +690,22 @@ pub async fn install(
         if error.is_none() {
             start_proxy(&state, &row).await;
         }
-        conclude(&state, &job2, &username, &id, "install", result).await;
+        conclude(&state, &job2, &id, "install", result).await;
     });
     Ok(job)
 }
 
-async fn conclude(state: &AppState, job: &Job, username: &str, id: &str, verb: &str, result: Result<(), String>) {
+async fn conclude(state: &AppState, job: &Job, id: &str, verb: &str, result: Result<(), String>) {
     match result {
         Ok(()) => {
             job.finish(JobState::Succeeded, None);
-            audit(state, username, Action::Close, Outcome::Ok, format!("{verb} {id} done")).await;
+            audit(state, Action::Close, Outcome::Ok, format!("{verb} {id} done")).await;
         }
         Err(e) => {
             let cancelled = e == "cancelled";
             job.push(format!("✕ {e}"));
             job.finish(if cancelled { JobState::Cancelled } else { JobState::Failed }, Some(e.clone()));
-            audit(state, username, Action::Close, Outcome::Error, format!("{verb} {id} failed: {e}")).await;
+            audit(state, Action::Close, Outcome::Error, format!("{verb} {id} failed: {e}")).await;
         }
     }
 }
@@ -725,12 +722,12 @@ pub enum StackAction {
     Update,
 }
 
-pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackAction) -> Result<Arc<Job>, Refusal> {
+pub async fn act(state: &Arc<AppState>, id: &str, action: StackAction) -> Result<Arc<Job>, Refusal> {
     let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
     let package = &*package;
     let row = store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
     if action == StackAction::Update {
-        return redeploy(state, username, id, package, &row.settings, JobKind::Update).await;
+        return redeploy(state, id, package, &row.settings, JobKind::Update).await;
     }
     let (runtime, _) = runtime(state).await?;
     if action != StackAction::Stop {
@@ -749,12 +746,12 @@ pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackA
         StackAction::Stop => vec![stack.stop()],
         StackAction::Restart | StackAction::Update => vec![stack.restart()],
     };
-    audit(state, username, Action::Open, Outcome::Ok, format!("{verb} {id}")).await;
-    let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
+    audit(state, Action::Open, Outcome::Ok, format!("{verb} {id}")).await;
+    let (state, job2, id) = (state.clone(), job.clone(), id.to_string());
     tokio::spawn(async move {
         let result = job2.run_steps(&steps).await;
         if result.is_ok() {
-            // Down because an admin said so: the watch says nothing of it.
+            // Down because it was asked to be: the watch says nothing of it.
             let _ = store::set_stopped(&state.db, &id, action == StackAction::Stop).await;
         }
         if row.state != "installed" {
@@ -765,7 +762,7 @@ pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackA
                 start_proxy(&state, &row).await;
             }
         }
-        conclude(&state, &job2, &username, &id, verb, result).await;
+        conclude(&state, &job2, &id, verb, result).await;
     });
     Ok(job)
 }
@@ -776,7 +773,6 @@ pub async fn act(state: &Arc<AppState>, username: &str, id: &str, action: StackA
 /// ([`JobKind::Reconfigure`]). Its ports are checked first, never moved.
 async fn redeploy(
     state: &Arc<AppState>,
-    username: &str,
     id: &str,
     package: &Package,
     given: &BTreeMap<String, Value>,
@@ -791,9 +787,9 @@ async fn redeploy(
     }
     store::rewrite(&state.db, id, &package.manifest.version, &settings).await.map_err(db_failed)?;
     let verb = if kind == JobKind::Reconfigure { "reconfigure" } else { "update" };
-    audit(state, username, Action::Open, Outcome::Ok, format!("{verb} {id} {}", package.manifest.version)).await;
+    audit(state, Action::Open, Outcome::Ok, format!("{verb} {id} {}", package.manifest.version)).await;
     let stack = compose(runtime, id, &state.stacks.dir(id), package);
-    let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
+    let (state, job2, id) = (state.clone(), job.clone(), id.to_string());
     tokio::spawn(async move {
         let result = job2.run_steps(&stack.deploy()).await;
         let _ = store::finish(&state.db, &id, result.as_ref().err().map(String::as_str)).await;
@@ -806,23 +802,23 @@ async fn redeploy(
         {
             start_proxy(&state, &row).await;
         }
-        conclude(&state, &job2, &username, &id, verb, result).await;
+        conclude(&state, &job2, &id, verb, result).await;
     });
     Ok(job)
 }
 
 /// Deploys [id] again with new [given] settings.
-pub async fn reconfigure(state: &Arc<AppState>, username: &str, id: &str, given: &BTreeMap<String, Value>) -> Result<Arc<Job>, Refusal> {
+pub async fn reconfigure(state: &Arc<AppState>, id: &str, given: &BTreeMap<String, Value>) -> Result<Arc<Job>, Refusal> {
     let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
     let package = &*package;
     store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
-    redeploy(state, username, id, package, given, JobKind::Reconfigure).await
+    redeploy(state, id, package, given, JobKind::Reconfigure).await
 }
 
 /// Takes [id] down and forgets it; with [purge] its data and files go too.
 /// Without, the stack's directory stays (its env file holds the database's
 /// password), so deploying again finds the data where it was.
-pub async fn remove(state: &Arc<AppState>, username: &str, id: &str, purge: bool) -> Result<Arc<Job>, Refusal> {
+pub async fn remove(state: &Arc<AppState>, id: &str, purge: bool) -> Result<Arc<Job>, Refusal> {
     let package = state.stacks.package(id).ok_or_else(|| refusal(404, "notFound"))?;
     let package = &*package;
     let row = store::load(&state.db, id).await.map_err(db_failed)?.ok_or_else(|| refusal(404, "notInstalled"))?;
@@ -841,8 +837,8 @@ pub async fn remove(state: &Arc<AppState>, username: &str, id: &str, purge: bool
             steps.push(cmd);
         }
     }
-    audit(state, username, Action::Open, Outcome::Ok, format!("remove {id}{}", if purge { " with its data" } else { "" })).await;
-    let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
+    audit(state, Action::Open, Outcome::Ok, format!("remove {id}{}", if purge { " with its data" } else { "" })).await;
+    let (state, job2, id) = (state.clone(), job.clone(), id.to_string());
     tokio::spawn(async move {
         let result = job2.run_steps(&steps).await;
         if result.is_ok() {
@@ -860,7 +856,7 @@ pub async fn remove(state: &Arc<AppState>, username: &str, id: &str, purge: bool
                 .execute(&state.db)
                 .await;
         }
-        conclude(&state, &job2, &username, &id, "remove", result).await;
+        conclude(&state, &job2, &id, "remove", result).await;
     });
     Ok(job)
 }

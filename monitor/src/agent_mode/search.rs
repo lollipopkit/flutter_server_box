@@ -26,7 +26,6 @@ use super::{AgentMode, FlowError, FlowView, PlanStep, config, first_line, prompt
 use crate::api::authz;
 use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// What a search was taken for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -78,7 +77,6 @@ impl AgentMode {
         self: &Arc<Self>,
         state: &Arc<AppState>,
         user: i64,
-        username: &str,
         secure: bool,
         query: String,
         kind: Option<SearchKind>,
@@ -89,7 +87,7 @@ impl AgentMode {
         let settings = config::load(&self.db).await?;
         let Some(model) = settings.model else { return Err(FlowError::NotConfigured) };
         let rt = self.runtime().await?;
-        // One search at a time per account: a new one ends the last.
+        // One search at a time: a new one ends the last.
         let seq = self.search_seq.fetch_add(1, Ordering::Relaxed);
         if let Some((_, old)) = self.search_runs.lock().unwrap().insert(user, (seq, cancel.clone())) {
             old.cancel();
@@ -112,12 +110,12 @@ impl AgentMode {
 
         let id = uuid_v4();
         self.searches.lock().unwrap().insert(id.clone(), SearchEntry { user, query: query.clone(), created: Instant::now() });
-        let run = Arc::new(Run { state: state.clone(), username: username.to_string(), secure, sink: sink.clone(), steps: AtomicUsize::new(0), cancel: cancel.clone() });
+        let run = Arc::new(Run { state: state.clone(), secure, sink: sink.clone(), steps: AtomicUsize::new(0), cancel: cancel.clone() });
         let mut tools: Vec<Arc<dyn Tool>> = vec![Arc::new(ReadCommand(run.clone())), Arc::new(Report(run.clone()))];
         if kind == SearchKind::Change {
             tools.push(Arc::new(DraftPlan(run.clone())));
         }
-        let mut system_prompt = prompt::search(kind, self.hostname(), username);
+        let mut system_prompt = prompt::search(kind, self.hostname());
         if let Ok(Some(m)) = self.memory(user).prompt(false).await {
             system_prompt = format!("{system_prompt}\n\n{m}");
         }
@@ -189,7 +187,6 @@ impl AgentMode {
         self: &Arc<Self>,
         state: &Arc<AppState>,
         user: i64,
-        username: &str,
         secure: bool,
         id: &str,
         text: Option<String>,
@@ -220,7 +217,7 @@ impl AgentMode {
         let Some(view) = self.row(user, id).await? else { return Err(FlowError::NotFound) };
         self.emit(user, json!({ "type": "flow", "flow": view }));
         match text {
-            Some(t) => self.reply(state, user, username, secure, id, t, Vec::new(), Default::default()).await,
+            Some(t) => self.reply(state, user, secure, id, t, Vec::new(), Default::default()).await,
             None => Ok(view),
         }
     }
@@ -273,7 +270,6 @@ fn forward(mut events: mpsc::UnboundedReceiver<Value>, sink: SearchSink) {
 /// What a search's tools share.
 struct Run {
     state: Arc<AppState>,
-    username: String,
     secure: bool,
     sink: SearchSink,
     steps: AtomicUsize,
@@ -282,9 +278,9 @@ struct Run {
 
 impl Run {
     async fn may_run(&self) -> Result<(), String> {
-        let caller = authz::caller_named(&self.state, &self.username).await.ok_or("the account is gone")?;
+        let caller = authz::caller(&self.state).await.ok_or("the account is gone")?;
         caller
-            .check(Grant::Shell, &self.state, self.secure)
+            .check(&self.state, self.secure)
             .map_err(|why| format!("not permitted to run commands here ({})", why.as_str()))
     }
 }
@@ -342,7 +338,6 @@ impl Tool for ReadCommand {
             run.steps.fetch_add(1, Ordering::Relaxed);
             let _ = run.sink.send(json!({ "type": "step", "id": call.id, "command": command, "state": "running" }));
             Event::new(Kind::Agent, Action::Open, Outcome::Ok)
-                .subject(&run.username)
                 .detail(format!("search: run {}", first_line(&command, 200)))
                 .record(&run.state.db)
                 .await;

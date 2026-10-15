@@ -231,7 +231,7 @@ extension _VirtKey on SSHPageState {
         spi != null &&
         serverShellUsesAgent(
           spi,
-          ref.readPresentServer(spi.id)?.remoteAccess,
+          ref.readPresentServer(spi.id)?.agentAccess,
         );
     final virtKeys = VirtKeyX.loadFromStore()
         .where((key) => !disabled.contains(key.name))

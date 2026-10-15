@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/vitest'
 import Bmc from '../desk/apps/bmc/BmcApp.svelte'
 import { api, ApiError } from '../lib/api'
 import { bmcErrorText, keepPasswords, prettyFingerprint } from '../lib/bmc'
-import { enabledFeatures } from '../lib/features'
+import bmcApp from '../desk/apps/bmc/manifest'
 import type { BmcStatus, BmcTarget, Capabilities } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -46,11 +46,10 @@ const status: BmcStatus = {
 }
 
 describe('the BMC helpers', () => {
-  it('offers the page to a role with virt on an agent that serves it', () => {
-    const caps = (features: string[], virt: boolean) =>
-      ({ features, grants: { virt: { ok: virt } } }) as unknown as Capabilities
-    expect(enabledFeatures(caps(['bmc'], true)).map((f) => f.id)).toEqual(['bmc'])
-    expect(enabledFeatures(caps(['bmc'], false))).toEqual([])
+  it('offers the page on an agent that serves it, over a link the account may act on', () => {
+    const caps = (features: string[], ok: boolean) => ({ features, access: { ok } }) as unknown as Capabilities
+    expect(bmcApp.available(caps(['bmc'], true))).toBe(true)
+    expect(bmcApp.available(caps(['bmc'], false))).toBe(false)
   })
 
   it('phrases the BMC failure the agent passes on, not its 502', () => {

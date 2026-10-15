@@ -5,7 +5,8 @@ import Virt from '../desk/apps/virt/VirtApp.svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
-import { enabledFeatures } from '../lib/features'
+import virtApp from '../desk/apps/virt/manifest'
+import bmcApp from '../desk/apps/bmc/manifest'
 import { allocation, createIssueText, createSpec, issueText, lines, orderedActions, pushSample, pveDraft, refText, snapshotTree, virtErrorText, words, HISTORY_LEN, type CreateDraft } from '../lib/virt'
 import type { Capabilities, VirtCreateForm, VirtCreateIssue, VirtCreateOptions, VirtGuest, VirtLoad, VirtNetwork, VirtPool, VirtSnapshot, VirtStats } from '../types'
 
@@ -121,19 +122,19 @@ const failed = (error: VirtLoad['error']): VirtLoad => ({
   error,
 })
 
-function asAdmin(admin: boolean) {
+function signIn() {
   for (const entry of [...servers.list]) servers.remove(entry.id)
   servers.add('https://agent.example')
-  servers.login('token', 'admin')
-  capabilitiesStore.byServer[servers.currentId!] = { me: { admin } } as unknown as Capabilities
+  servers.login('token')
+  capabilitiesStore.byServer[servers.currentId!] = { features: ['virt'], access: { ok: true } } as unknown as Capabilities
 }
 
 describe('the virtualization helpers', () => {
-  it('offers the page to a role with virt on an agent that serves it', () => {
-    const caps = (features: string[], virt: boolean) =>
-      ({ features, grants: { virt: { ok: virt } } }) as unknown as Capabilities
-    expect(enabledFeatures(caps(['virt', 'bmc'], true)).map((f) => f.id)).toEqual(['virt', 'bmc'])
-    expect(enabledFeatures(caps(['virt'], false))).toEqual([])
+  it('offers the page on an agent that serves it, over a link the account may act on', () => {
+    const caps = (features: string[], ok: boolean) => ({ features, access: { ok } }) as unknown as Capabilities
+    expect(virtApp.available(caps(['virt', 'bmc'], true))).toBe(true)
+    expect(bmcApp.available(caps(['virt', 'bmc'], true))).toBe(true)
+    expect(virtApp.available(caps(['virt'], false))).toBe(false)
   })
 
   it('phrases what the panel has to say itself, and adds the host’s words', () => {
@@ -206,7 +207,7 @@ describe('the virtualization helpers', () => {
 describe('the virtualization page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    asAdmin(true)
+    signIn()
     getPve.mockResolvedValue({
       configured: true,
       addr: 'https://127.0.0.1:8006',
@@ -248,7 +249,7 @@ describe('the virtualization page', () => {
     await waitFor(() => expect(loadVirt).toHaveBeenCalledTimes(2))
   })
 
-  it('shows an unconfirmed certificate and lets an admin trust it', async () => {
+  it('shows an unconfirmed certificate and lets the account trust it', async () => {
     loadVirt.mockResolvedValueOnce(
       failed({
         kind: 'cert_unconfirmed',
@@ -265,17 +266,6 @@ describe('the virtualization page', () => {
     await fireEvent.click(screen.getByRole('button', { name: /trust this certificate/i }))
     await waitFor(() => expect(pinPve).toHaveBeenCalledWith('abcd'))
     expect(await screen.findByText('Certificate trusted.')).toBeInTheDocument()
-  })
-
-  it('does not offer a viewer to trust a certificate', async () => {
-    asAdmin(false)
-    loadVirt.mockResolvedValue(
-      failed({ kind: 'cert_changed', message: null, detail: null, cert: { fingerprint: 'abcd', subject: '', issuer: '', not_before: 0, not_after: 0 }, previous_fingerprint: 'ef01' }),
-    )
-    render(Virt)
-    expect(await screen.findByText('EF:01')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /trust this certificate/i })).not.toBeInTheDocument()
-    expect(screen.getByText(/An admin has to trust/)).toBeInTheDocument()
   })
 
   it('sends a TOTP code, then reads the host', async () => {
@@ -306,7 +296,7 @@ describe('the virtualization page', () => {
     await waitFor(() => expect(loadVirt).toHaveBeenLastCalledWith('hunter2'))
   })
 
-  it('tells an admin that PVE runs here and has to be set up', async () => {
+  it('says that PVE runs here and has to be set up', async () => {
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: false, view: null, error: null })
     render(Virt)
     expect(await screen.findByText(/Set up how this agent signs in/)).toBeInTheDocument()
@@ -481,7 +471,7 @@ describe('the virtualization page: storage and networks', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    asAdmin(true)
+    signIn()
     getPve.mockResolvedValue({
       configured: true,
       addr: 'https://127.0.0.1:8006',
@@ -727,7 +717,7 @@ describe('the virtualization page: creating, copying and deleting', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    asAdmin(false)
+    signIn()
     createForm.mockResolvedValue({ form: form(), error: null })
     cloneForm.mockResolvedValue({ storages: [], error: null })
     virtHardware.mockResolvedValue({ hardware: null, error: null })

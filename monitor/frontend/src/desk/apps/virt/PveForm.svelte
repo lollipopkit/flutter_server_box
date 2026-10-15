@@ -7,7 +7,7 @@
 
   /// How this agent reaches the Proxmox VE API of its host. A secret is never
   /// shown: empty keeps the stored one. The certificate is not entered here:
-  /// the page shows the one the API presents and an admin trusts it there.
+  /// the page shows the one the API presents and it is trusted there.
   interface Props {
     current: PveConfigView | null
     busy: boolean

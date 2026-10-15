@@ -2,11 +2,11 @@
   import { shellPrefs } from '../shellPrefs.svelte'
   /// The login screen (the lollipopkit Design System's): a clock over the
   /// chosen instance's wallpaper, and a window with the instances on the left
-  /// (where there are several) and, on the right, the chosen one's saved
-  /// accounts, a sign-in form, or why it cannot be reached.
+  /// (where there are several) and, on the right, the chosen one's password
+  /// (none when this tab holds its session), or why it cannot be reached.
   ///
-  /// The wallpaper is the chosen account's, or the instance's last, from the
-  /// copy this browser kept when it was signed in (`wallpapers.ts`).
+  /// The wallpaper is the instance's last, from the copy this browser kept
+  /// when it was signed in (`wallpapers.ts`).
 
   import { tick } from 'svelte'
   import { fade } from 'svelte/transition'
@@ -16,10 +16,9 @@
   import { health } from '../../lib/health.svelte'
   import { probe } from '../../lib/probe'
   import { serverNames } from '../../lib/serverNames.svelte'
-  import { servers, type ServerAccount, type ServerEntry } from '../../lib/servers.svelte'
+  import { servers, type ServerEntry } from '../../lib/servers.svelte'
   import AppIcon, { type IconTone } from '../lk/AppIcon.svelte'
   import Button from '../lk/Button.svelte'
-  import Checkbox from '../lk/Checkbox.svelte'
   import Icon from '../lk/Icon.svelte'
   import IconButton from '../lk/IconButton.svelte'
   import Indicator from '../lk/Indicator.svelte'
@@ -39,12 +38,8 @@
   type Sel = string | 'new'
 
   let sel = $state<Sel>(servers.current?.id ?? (servers.empty ? 'new' : (servers.list[0]?.id ?? 'new')))
-  let acct = $state(0)
-  let other = $state(false)
-  let user = $state('')
   let pw = $state('')
   let addr = $state('')
-  let remember = $state(true)
   let err = $state('')
   let busy = $state(false)
   let success = $state(false)
@@ -57,18 +52,12 @@
   /// A panel an agent serves holds that one server; nothing to connect.
   const canAdd = $derived(!servers.servedByAgent)
   const inst = $derived(sel === 'new' ? null : (list.find((s) => s.id === sel) ?? null))
-  const accounts = $derived(inst ? servers.accountsOf(inst.id) : [])
   const offline = $derived(!!inst && health.status[inst.id] === false)
   const isNew = $derived(sel === 'new' || !inst)
-  const isAccounts = $derived(!success && !offline && !isNew && accounts.length > 0 && !other)
-  const isForm = $derived(!success && !offline && (isNew || accounts.length === 0 || other))
-  const account = $derived<ServerAccount | null>(isAccounts ? (accounts[acct] ?? accounts[0] ?? null) : null)
-  const unlock = $derived(!!account?.signedIn)
-  const cantSubmit = $derived(
-    busy ||
-      (isAccounts && !unlock && !pw) ||
-      (isForm && (!user.trim() || !pw || (isNew && !addr.trim()))),
-  )
+  const isForm = $derived(!success && !offline)
+  /// This tab holds its session: unlocking asks for nothing.
+  const unlock = $derived(!isNew && !!inst?.token)
+  const cantSubmit = $derived(busy || (!unlock && (!pw || (isNew && !addr.trim()))))
 
   // ---- names ------------------------------------------------------------
 
@@ -91,35 +80,6 @@
     return TONES[h % TONES.length]
   }
 
-  interface Avatar {
-    initial: string
-    size: number
-    x: number
-    y: number
-    z: number
-    tone: IconTone
-    ring: boolean
-  }
-
-  /// One account's initial, or two overlapping (the one in front last).
-  function avatars(of: ServerAccount[], box: number, front = 0): Avatar[] {
-    if (of.length === 0) return []
-    const mk = (a: ServerAccount, size: number, x: number, y: number, z: number, ring: boolean): Avatar => ({
-      initial: a.username.slice(0, 1).toUpperCase() || '?',
-      size,
-      x,
-      y,
-      z,
-      tone: toneOf(a.username),
-      ring,
-    })
-    if (of.length === 1) return [mk(of[0], box, 0, 0, 1, false)]
-    const size = Math.round(box * 0.72)
-    const lead = of[front] ?? of[0]
-    const back = of.find((a) => a !== lead) ?? of[1]
-    return [mk(back, size, 0, 0, 1, false), mk(lead, size, box - size, box - size, 2, true)]
-  }
-
   const relative = $derived(new Intl.RelativeTimeFormat($locale, { numeric: 'auto' }))
   function ago(ms: number): string {
     const s = Math.round((ms - Date.now()) / 1000)
@@ -132,14 +92,8 @@
 
   function rowSub(s: ServerEntry): string {
     if (health.status[s.id] === false) return $LL.lockOffline()
-    const signed = servers.accountsOf(s.id).find((a) => a.signedIn)
-    if (signed) return $LL.lockAccountSignedIn({ user: signed.username })
+    if (s.token) return $LL.lockSignedIn()
     return host(shownUrl(s))
-  }
-
-  function accountHint(a: ServerAccount): string {
-    if (a.signedIn) return a.lastLogin ? $LL.lockSignedInAgo({ when: ago(a.lastLogin) }) : $LL.lockSignedIn()
-    return a.lastLogin ? $LL.lockLastSignIn({ when: ago(a.lastLogin) }) : ''
   }
 
   // ---- wallpaper --------------------------------------------------------
@@ -151,15 +105,14 @@
   let wallpaper = $state<{ key: string; preset: CachedWallpaper | null; url: string | null } | null>(null)
   $effect(() => {
     const id = inst?.id ?? null
-    const username = account?.username ?? null
-    const key = `${id}\n${username}`
+    const key = `${id}`
     let gone = false
     let url: string | null = null
     if (id === null) {
       wallpaper = { key, preset: null, url: null }
       return
     }
-    void loadWallpaper(id, username).then((wp) => {
+    void loadWallpaper(id).then((wp) => {
       if (gone) return
       if (wp && 'image' in wp) url = URL.createObjectURL(wp.image)
       if (wp && 'theme' in wp && wp.theme.image) url = URL.createObjectURL(wp.theme.image)
@@ -184,9 +137,6 @@
     const at = (x: Sel) => order.indexOf(x)
     dir = at(next) >= at(sel) ? 1 : -1
     sel = next
-    acct = 0
-    other = false
-    user = ''
     pw = ''
     err = ''
     success = false
@@ -206,13 +156,6 @@
     if (sel === id) pick(servers.list[0]?.id ?? 'new')
   }
 
-  function forgetAccount(a: ServerAccount) {
-    if (!inst) return
-    void dropWallpapers(inst.id, a.username)
-    servers.forget(inst.id, a.username)
-    acct = 0
-  }
-
   // ---- signing in -------------------------------------------------------
 
   async function finish(id: string) {
@@ -225,12 +168,8 @@
     e?.preventDefault()
     if (cantSubmit) return
     err = ''
-    if (isAccounts && account && inst) {
-      if (unlock) {
-        if (servers.useAccount(inst.id, account.username)) await finish(inst.id)
-        return
-      }
-      await signIn(inst, account.username, true)
+    if (unlock && inst) {
+      await finish(inst.id)
       return
     }
     if (isNew) {
@@ -254,21 +193,21 @@
       sel = added.id
       addr = ''
       await tick()
-      await signIn(added, user.trim(), remember)
+      await signIn(added)
       return
     }
-    if (inst) await signIn(inst, user.trim(), remember)
+    if (inst) await signIn(inst)
   }
 
-  async function signIn(entry: ServerEntry, username: string, keep: boolean) {
+  async function signIn(entry: ServerEntry) {
     busy = true
     try {
-      const res = await loginTo(entry.url, { username, password: pw })
-      servers.signIn(entry.id, username, res.token, keep)
+      const res = await loginTo(entry.url, { password: pw })
+      servers.setSession(entry.id, res.token)
       pw = ''
       await finish(entry.id)
     } catch (error) {
-      err = error instanceof ApiError && error.status === 401 ? $LL.lockWrongCredentials() : error instanceof ApiError ? error.message : $LL.deskSignInFailed()
+      err = error instanceof ApiError && error.status === 401 ? $LL.accessErrReauth() : error instanceof ApiError ? error.message : $LL.deskSignInFailed()
     } finally {
       busy = false
     }
@@ -339,15 +278,10 @@
             <div class="relative flex min-h-0 flex-1 flex-col gap-[2px] overflow-y-auto px-[7px]">
               <Indicator selector=".row--on" class="lock-pill" />
               {#each list as s (s.id)}
-                {@const of = servers.accountsOf(s.id)}
                 {@const online = health.status[s.id]}
                 <div class="group relative">
                   <button class="row" class:row--on={sel === s.id} onclick={() => pick(s.id)}>
-                    {#if of.length}
-                      {@render stack(avatars(of, 32), 32)}
-                    {:else}
-                      <AppIcon glyph={s.url === '' ? 'computer' : 'dns'} tone={toneOf(s.id)} size={32} />
-                    {/if}
+                    <AppIcon glyph={s.url === '' ? 'computer' : 'dns'} tone={toneOf(s.id)} size={32} />
                     <span class="flex min-w-0 flex-1 flex-col gap-px text-left">
                       <span class="truncate text-[13px] font-semibold">{name(s)}</span>
                       <span class="truncate text-[11px] text-(--text-tertiary)">{rowSub(s)}</span>
@@ -389,11 +323,7 @@
               {#key sel}
                 <div class="flex flex-col items-center gap-[9px] text-center">
                   <span class="relative z-[5] flex" in:hero>
-                    {#if accounts.length && !isNew}
-                      {@render stack(avatars(accounts, 56, isAccounts ? acct : 0), 56)}
-                    {:else}
-                      <AppIcon glyph={isNew ? 'add' : inst?.url === '' ? 'computer' : 'dns'} tone={isNew ? 'mist' : toneOf(inst?.id ?? '')} size={56} />
-                    {/if}
+                    <AppIcon glyph={isNew ? 'add' : inst?.url === '' ? 'computer' : 'dns'} tone={isNew ? 'mist' : toneOf(inst?.id ?? '')} size={56} />
                   </span>
                   <div class="flex min-w-0 max-w-full flex-col gap-[3px]" in:rise={{ delay: 50 }}>
                     <div class="truncate text-[21px] font-bold tracking-[-0.01em]">{headName}</div>
@@ -402,62 +332,7 @@
                 </div>
 
                 <div in:rise={{ delay: 100 }}>
-                  {#if isAccounts}
-                    <form class="flex flex-col gap-[13px]" onsubmit={submit}>
-                      <div class="accounts">
-                        {#each accounts as a, i (a.username)}
-                          <div class="group relative">
-                            <button
-                              type="button"
-                              class="account"
-                              class:account--on={acct === i}
-                              onclick={() => {
-                                if (busy) return
-                                acct = i
-                                pw = ''
-                                err = ''
-                              }}
-                            >
-                              <span class="initial" style:background="var(--icon-{toneOf(a.username)}-bg)" style:color="var(--icon-{toneOf(a.username)}-fg)">
-                                {a.username.slice(0, 1).toUpperCase() || '?'}
-                              </span>
-                              <span class="flex min-w-0 flex-1 flex-col gap-px text-left">
-                                <span class="truncate text-[13px] font-semibold">{a.username}</span>
-                                {#if accountHint(a)}<span class="truncate text-[12px] text-(--text-tertiary)">{accountHint(a)}</span>{/if}
-                              </span>
-                              {#if acct === i}<Icon name="check" size={17} weight={600} color="var(--color-accent-text)" />{/if}
-                            </button>
-                            <button
-                              type="button"
-                              class="remove remove--account"
-                              aria-label={$LL.lockForgetAccount()}
-                              title={$LL.lockForgetAccount()}
-                              onclick={() => forgetAccount(a)}
-                            >
-                              <Icon name="close" size={12} weight={600} />
-                            </button>
-                          </div>
-                        {/each}
-                      </div>
-                      {#if !unlock}
-                        <Input
-                          type="password"
-                          size="lg"
-                          icon="lock"
-                          aria-label={$LL.password()}
-                          placeholder={account ? $LL.lockPasswordOf({ user: account.username }) : $LL.password()}
-                          autocomplete="current-password"
-                          bind:value={pw}
-                          oninput={() => (err = '')}
-                          error={err || undefined}
-                        />
-                      {/if}
-                      <Button type="submit" variant="primary" size="lg" block iconRight={busy ? undefined : 'arrow_forward'} disabled={cantSubmit}>
-                        {submitLabel}
-                      </Button>
-                      <button type="button" class="link" onclick={() => ((other = true), (pw = ''), (err = ''))}>{$LL.lockOtherUser()}</button>
-                    </form>
-                  {:else if isForm}
+                  {#if isForm}
                     <form class="flex flex-col gap-[9px]" onsubmit={submit}>
                       {#if isNew}
                         <Input
@@ -470,37 +345,22 @@
                           oninput={() => (err = '')}
                         />
                       {/if}
-                      <Input
-                        size="lg"
-                        icon="person"
-                        aria-label={$LL.username()}
-                        placeholder={$LL.username()}
-                        autocomplete="username"
-                        bind:value={user}
-                        oninput={() => (err = '')}
-                      />
-                      <Input
-                        type="password"
-                        size="lg"
-                        icon="lock"
-                        aria-label={$LL.password()}
-                        placeholder={$LL.password()}
-                        autocomplete="current-password"
-                        bind:value={pw}
-                        oninput={() => (err = '')}
-                        error={err || undefined}
-                      />
-                      <div class="flex items-center pb-[4px] pt-[2px]">
-                        <Checkbox label={$LL.lockRemember()} bind:checked={remember} />
-                      </div>
+                      {#if !unlock}
+                        <Input
+                          type="password"
+                          size="lg"
+                          icon="lock"
+                          aria-label={$LL.password()}
+                          placeholder={$LL.password()}
+                          autocomplete="current-password"
+                          bind:value={pw}
+                          oninput={() => (err = '')}
+                          error={err || undefined}
+                        />
+                      {/if}
                       <Button type="submit" variant="primary" size="lg" block iconRight={busy ? undefined : 'arrow_forward'} disabled={cantSubmit}>
                         {submitLabel}
                       </Button>
-                      {#if !isNew && accounts.length > 0}
-                        <button type="button" class="link mt-[4px]" onclick={() => ((other = false), (user = ''), (pw = ''), (err = ''))}>
-                          {$LL.lockSavedAccounts()}
-                        </button>
-                      {/if}
                     </form>
                   {:else if offline && inst}
                     <div class="flex flex-col items-center gap-[13px] text-center">
@@ -541,24 +401,6 @@
   </div>
 </div>
 
-{#snippet stack(of: Avatar[], box: number)}
-  <span class="relative shrink-0" style:width="{box}px" style:height="{box}px">
-    {#each of as v, i (i)}
-      <span
-        class="avatar"
-        style:left="{v.x}px"
-        style:top="{v.y}px"
-        style:z-index={v.z}
-        style:width="{v.size}px"
-        style:height="{v.size}px"
-        style:font-size="{Math.round(v.size * 0.42)}px"
-        style:background="var(--icon-{v.tone}-bg)"
-        style:color="var(--icon-{v.tone}-fg)"
-        style:box-shadow={v.ring ? '0 0 0 2px var(--surface-window)' : null}>{v.initial}</span
-      >
-    {/each}
-  </span>
-{/snippet}
 
 <style>
   .lock {
@@ -667,55 +509,6 @@
     border-radius: var(--radius-icon);
     box-shadow: inset 0 0 0 1px var(--border-strong);
   }
-  .avatar {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-weight: 700;
-  }
-  .accounts {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: var(--radius-card);
-    background: var(--surface-card);
-  }
-  .accounts > .group + .group .account {
-    border-top: 0.5px solid var(--border-hairline);
-  }
-  .account {
-    display: flex;
-    width: 100%;
-    min-height: 44px;
-    box-sizing: border-box;
-    align-items: center;
-    gap: var(--space-9);
-    padding: var(--space-9) var(--space-11);
-    border: 0;
-    background: transparent;
-    color: var(--text-primary);
-    font: inherit;
-    cursor: default;
-  }
-  .account:hover {
-    background: var(--fill-hover);
-  }
-  .account--on,
-  .account--on:hover {
-    background: var(--surface-selected);
-  }
-  .initial {
-    display: flex;
-    width: 28px;
-    height: 28px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 13px;
-    font-weight: 700;
-  }
   .remove {
     position: absolute;
     top: 50%;
@@ -731,9 +524,6 @@
     box-shadow: var(--shadow-thumb);
     color: var(--text-secondary);
     transform: translateY(-50%);
-  }
-  .remove--account {
-    right: 34px;
   }
   .group:hover .remove,
   .remove:focus-visible {

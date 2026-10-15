@@ -12,8 +12,8 @@
 //! That is why `terminal.rs` refuses an `exec` frame, and why this is a
 //! separate door rather than a wider one.
 //!
-//! Gated on the caller's `shell` grant, the same one the terminal needs and
-//! for the same reason: anyone who can open a shell can run anything in it, so
+//! Gated on the transport rule, the same one the terminal is and for the
+//! same reason: anyone who can open a shell can run anything in it, so
 //! there is one decision here, not two.
 
 use std::collections::HashMap;
@@ -88,13 +88,10 @@ pub async fn exec(
 
     // Re-checked here rather than trusted from the capabilities the client was
     // told earlier: that answer is a UI hint, and the UI is not a boundary.
-    if let Err(why) = caller.check(
-        crate::core::permissions::Grant::Shell,
-        &app_state,
+    if let Err(why) = caller.check(&app_state,
         authz::is_secure(&req, &app_state),
     ) {
         Event::new(Kind::Exec, Action::Denied, Outcome::Denied)
-            .subject(&caller.username)
             .remote_ip(remote_ip)
             .detail(why.as_str())
             .record(&app_state.db)

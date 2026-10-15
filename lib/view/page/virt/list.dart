@@ -2,44 +2,6 @@
 
 part of 'tab.dart';
 
-// --- Widgets ---
-
-/// How long the list column takes to become another host's, or the picker's.
-///
-/// `medium2`, as the server page's list ⇄ globe swap is: a scale needs room to
-/// read as a movement, and at 150 ms it has arrived before the eye has decided
-/// anything moved.
-const _kListSwapDuration = Durations.medium2;
-
-/// The column's contents arriving and leaving.
-///
-/// Fade, with the arriving contents growing from 0.9 about the centre: the
-/// app's default for one thing in a place being replaced by another (the
-/// design system's `--transition-swap`). Which host comes next is not
-/// something the switcher says — it opens a list and the user picks from it —
-/// so there is no direction to draw and none is invented.
-Widget _listSwapTransition(Widget child, Animation<double> animation) {
-  return FadeTransition(
-    opacity: animation,
-    // `drive` rather than a `CurvedAnimation`, which owns resources and would
-    // be built and dropped on every frame of the transition.
-    child: ScaleTransition(
-      scale: animation.drive(
-        Tween(
-          begin: 0.9,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeOutCubic)),
-      ),
-      child: child,
-    ),
-  );
-}
-
-/// Both bodies in the same box, so a short one is not centred inside the tall
-/// one it is replacing while the crossing runs.
-Widget _listSwapLayout(Widget? current, List<Widget> previous) =>
-    Stack(fit: StackFit.expand, children: [...previous, ?current]);
-
 extension _List on _VirtTabPageState {
   /// The list column: which host, what it has, and the way to the rest.
   ///
@@ -137,16 +99,8 @@ extension _List on _VirtTabPageState {
       appBar: bar,
       // Crossed rather than cut, so the bar above does not look like it was
       // pointing at one host's guests and now, between two frames, at
-      // another's. See [_listSwapTransition].
-      body: AnimatedSwitcher(
-        duration: context.motion(_kListSwapDuration),
-        reverseDuration: context.motion(_kListSwapDuration),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: _listSwapTransition,
-        layoutBuilder: _listSwapLayout,
-        child: body,
-      ),
+      // another's.
+      body: SwapSwitcher(child: body),
     );
   }
 

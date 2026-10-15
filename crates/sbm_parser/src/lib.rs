@@ -28,6 +28,7 @@ pub mod cron;
 pub mod gpu;
 pub mod iperf;
 pub mod linux;
+pub mod monitor_agent;
 pub mod output;
 pub mod proc;
 pub mod script;

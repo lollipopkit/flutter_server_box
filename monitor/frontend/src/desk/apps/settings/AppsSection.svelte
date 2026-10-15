@@ -1,12 +1,13 @@
 <script lang="ts">
   /// The apps on this server, for this account: one row each, opening its
   /// page (`AppPage.svelte`: dock, running hidden, permissions, its own
-  /// preferences); the switch that lets any app run hidden; and (for an
-  /// administrator) the installed ones. Saved on the server, so they apply in
+  /// preferences); the switch that lets any app run hidden; and (where the
+  /// account may act over this link) the installed ones. Saved on the server, so they apply in
   /// every browser this account signs in from.
 
   import { AppIcon, Group, Row, Spinner, Switch } from '../../lk'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { canAct } from '../../../lib/access'
   import { servers } from '../../../lib/servers.svelte'
   import StoreLink from './StoreLink.svelte'
   import InstalledApps from './InstalledApps.svelte'
@@ -21,7 +22,10 @@
 
   const { onopen }: Props = $props()
   const desk = useDeskPrefs()
-  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Whether the account may act over this link: setting up, changing and
+  /// removing all need it.
+  const canChange = $derived(canAct(caps))
   const prefs = $derived(desk.prefs)
 
   function summary(id: string, kind: 'system' | 'web', permissions: readonly string[] | undefined): string {
@@ -58,7 +62,7 @@
       </Row>
     </Group>
 
-    {#if admin}
+    {#if canChange}
       <StoreLink />
       <InstalledApps onchange={desk.reloadApps} />
     {/if}

@@ -1,14 +1,15 @@
 <script lang="ts">
-  /// A web app the agent deploys (`api::stacks`), as one desk window: set up
-  /// (admins), its progress, and once it runs, the service itself in a frame
-  /// through the agent's proxy. An account that is not an admin sees the app
-  /// once an admin has set it up.
+  /// A web app the agent deploys (`api::stacks`), as one desk window: set up,
+  /// its progress, and once it runs, the service itself in a frame through
+  /// the agent's proxy. Over a link the account may not act on, the app shows
+  /// once it is set up.
 
   import { Button, Card, Icon, IconButton, Spinner } from '../../desk/lk'
   import { AppToolbar, useLifecycle, useMenus, useWindow } from '../../desk/sys'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { api } from '../../lib/api'
   import { capabilitiesStore } from '../../lib/capabilities.svelte'
+  import { canAct, whyText } from '../../lib/access'
   import { servers } from '../../lib/servers.svelte'
   import type { StackApp, StackJob } from '../../types'
   import StackProgress from './StackProgress.svelte'
@@ -35,7 +36,10 @@
 
   const lifecycle = useLifecycle()
   const win = useWindow()
-  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Whether the account may act over this link: setting up, changing and
+  /// removing all need it.
+  const canChange = $derived(canAct(caps))
   const stack = $derived(app?.stack ?? null)
   const title = $derived(app ? pick(app.manifest.title, $locale) : '')
 
@@ -110,7 +114,7 @@
   }
 
   useMenus(() =>
-    admin && stack
+    canChange && stack
       ? [
           {
             label: title,
@@ -185,13 +189,13 @@
             <StackProgress {stackId} {job} title={jobTitle(job)} ondone={finished} />
           {/key}
         {:else if !stack}
-          {#if admin}
+          {#if canChange}
             <StackSetup manifest={app.manifest} onstarted={(j) => (job = j)} />
           {:else}
             <div class="flex flex-col items-center gap-[9px] py-[55px] text-(--text-tertiary)">
               <Icon name={app.manifest.glyph} size={48} />
               <p class="text-[15px] font-semibold text-(--text-secondary)">{$LL.stackNotSetUp()}</p>
-              <p class="text-[13px]">{$LL.stackAskAdmin()}</p>
+              <p class="text-[13px]">{whyText(caps?.access?.why, $LL)}</p>
             </div>
           {/if}
         {:else if stack.state === 'failed'}
@@ -201,7 +205,7 @@
               <p class="text-[15px] font-semibold">{$LL.stackFailed()}</p>
             </div>
             {#if stack.last_error}<p class="lk-mono text-[12px] text-(--text-secondary)">{stack.last_error}</p>{/if}
-            {#if admin}
+            {#if canChange}
               <div class="flex justify-end gap-[9px]">
                 <Button variant="secondary" onclick={() => (removing = true)}>{$LL.stackRemove()}</Button>
                 <Button onclick={() => void act('update')}>{$LL.stackRetry()}</Button>

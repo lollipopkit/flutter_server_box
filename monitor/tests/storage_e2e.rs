@@ -67,7 +67,7 @@ async fn setup(hook: &Hook) -> (TestServer, Arc<AppState>) {
     let mut config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
     config.push = Some(vec![server_box_monitor::core::config::PushConfig { name: "e2e".into(), push_type: "webhook".into(), config: webhook }]);
     config.monitoring.get_or_insert_default().push_rate = Some("20/1m".into());
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     let served = state.clone();
     let srv = web_test::server(move || {
@@ -105,7 +105,7 @@ async fn settled(srv: &TestServer) {
 async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Value>) -> (u16, Value) {
     let req = srv
         .request(method, srv.url(path))
-        .header("Authorization", format!("Bearer {}", generate_token("admin", SECRET).unwrap()))
+        .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()))
         .timeout(Duration::from_secs(60));
     let resp = match body {
         Some(body) => req.send_json(&body).await.unwrap(),

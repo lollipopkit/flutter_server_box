@@ -70,7 +70,7 @@ vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
 vi.mock('../lib/servers.svelte', () => ({
   servers: {
     currentId: 'local',
-    list: [{ id: 'local', url: '', token: 't', username: 'admin' }],
+    list: [{ id: 'local', url: '', token: 't' }],
   },
   displayName: (e: { url: string; id: string }) => e.url || e.id,
 }))
@@ -100,17 +100,11 @@ function entry(over: Partial<FsEntry> = {}): FsEntry {
   }
 }
 
-/// What the page can do, from the caller's grants. `read` hides the write
-/// actions and makes the editor read-only.
-function setFiles(mode: 'write' | 'read') {
+/// The account may act over this link: browsing and changing alike.
+function setFiles() {
   ;(capabilitiesStore as unknown as { byServer: Record<string, unknown> }).byServer['local'] = {
     platform: 'linux',
-    grants: {
-      shell: { ok: true },
-      files: { ok: true, mode },
-      connect: { ok: true },
-      listen: { ok: true },
-    },
+    access: { ok: true },
   }
 }
 
@@ -125,7 +119,7 @@ async function chooseAction(name: string, action: string) {
 beforeEach(() => {
   for (const fn of Object.values(mocks)) fn.mockReset()
   deskMocks.addPathIcon.mockReset()
-  setFiles('write')
+  setFiles()
   ;(servers as unknown as { currentId: string }).currentId = 'local'
   mocks.fsRoots.mockResolvedValue({ roots: [ROOT] })
   mocks.fsList.mockResolvedValue([])
@@ -327,7 +321,7 @@ describe('the Files page moving around', () => {
 })
 
 describe('FileEditor saving', () => {
-  const props = { path: `${ROOT}/note.txt`, entry: entry(), serverId: 'local', canWrite: true }
+  const props = { path: `${ROOT}/note.txt`, entry: entry(), serverId: 'local' }
 
   it('sends the version it opened the file with', async () => {
     const onsaved = vi.fn()
@@ -427,15 +421,6 @@ describe('FileEditor saving', () => {
 
     await vi.waitFor(() => expect(mocks.fsWrite).toHaveBeenCalledTimes(1))
     expect(await (mocks.fsWrite.mock.calls[0][1] as Blob).text()).toBe('one\r\ntwo!')
-  })
-
-  it('shows no Save and a readonly field for a read-only role', () => {
-    render(FileEditor, {
-      props: { ...props, canWrite: false, text: 'one', onsaved: () => {}, onclose: () => {} },
-    })
-
-    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
-    expect(textbox()).toHaveAttribute('readonly')
   })
 
   it('asks before losing unsaved changes', async () => {

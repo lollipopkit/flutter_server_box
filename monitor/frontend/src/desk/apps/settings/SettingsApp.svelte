@@ -6,9 +6,9 @@
   import { SidebarItem, SidebarSection } from '../../lk'
   import { PageStack, SplitView, useWindow } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
+  import { machineAccess } from '../../../lib/access'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
-  import AccessSection from './AccessSection.svelte'
   import AccountSection from './AccountSection.svelte'
   import AgentSection from './AgentSection.svelte'
   import AgentMemoryPage from './AgentMemoryPage.svelte'
@@ -32,20 +32,16 @@
     if (servers.authenticated) void capabilitiesStore.ensure(servers.currentId)
   })
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
-  /// Accounts and roles exist only on an agent that reports who is asking:
-  /// without `me` (a watch token, an agent from before roles) there is
-  /// nothing to manage here, as before; `admin: false` is refused.
-  const admin = $derived(caps?.me?.admin === true)
 
   /// Which section is showing, read from the window's own state: a reload
   /// restores it, another app can open Settings straight at one, and a second
   /// `open('serverbox.settings', { appState: { section } })` switches to it.
   const section = $derived(resolveSection(win.appState))
-  /// An account that is no longer an administrator (or a window restored
-  /// with `access`) falls back rather than showing a panel with nothing in it.
-  /// Agent mode, on an agent that runs it, for an account that may use it.
-  const agent = $derived(!!caps?.features?.includes('agent_mode') && caps.grants?.shell?.ok === true)
-  const current = $derived((section === 'access' && !admin) || (section === 'agent' && !agent) ? 'account' : section)
+  /// Agent mode, on an agent that runs it, over a link the account may act
+  /// on; a window restored at it otherwise falls back rather than showing a
+  /// panel with nothing in it.
+  const agent = $derived(machineAccess(caps, 'agent_mode'))
+  const current = $derived(section === 'agent' && !agent ? 'account' : section)
 
   function show(next: SettingsSection) {
     win.setAppState({ section: next })
@@ -174,14 +170,6 @@
           onclick={() => show('agent')}
         />
       {/if}
-      {#if admin}
-        <SidebarItem
-          label={$LL.settingsAccess()}
-          icon="shield_person"
-          active={current === 'access'}
-          onclick={() => show('access')}
-        />
-      {/if}
     </SidebarSection>
   {/snippet}
 
@@ -257,7 +245,7 @@
     />
   {:else if current === 'agent' && agentProvider}
     <AgentProviderPage provider={agentProvider} onback={() => show('agent')} onopen={openProvider} />
-  {:else if current === 'agent'}
+  {:else}
     <AgentSection
       onprovider={openProvider}
       onmemory={() => openMemory()}
@@ -265,8 +253,6 @@
       onmcp={() => openAgentPage('mcp')}
       onskills={() => openAgentPage('skills')}
     />
-  {:else}
-    <AccessSection />
   {/if}
   </PageStack>
 </SplitView>

@@ -11,7 +11,7 @@
 //!
 //! The module exports `memory`, `sbm_alloc(len: i32) -> i32` and
 //! `sbm_call(ptr: i32, len: i32) -> i64`. A call writes the request
-//! `{"method", "params", "caller": {"username", "admin"}}` (JSON) into memory
+//! `{"method", "params"}` (JSON) into memory
 //! from `sbm_alloc` and calls `sbm_call`, which answers where its JSON reply
 //! is: `(ptr << 32) | len`. The reply is `{"ok": value}` or `{"error": code}`.
 //!
@@ -22,17 +22,17 @@
 //! | `fn` | Needs |
 //! |---|---|
 //! | `log` `{level, message}` | — |
-//! | `kv.get/set/remove/keys` `{key, value}` | — (the caller's app storage) |
+//! | `kv.get/set/remove/keys` `{key, value}` | — (the app's storage) |
 //! | `status` | `status` |
-//! | `fs.list` `{path}`, `fs.read` `{path, offset, length}` | `files.read` and the caller's `files` grant |
-//! | `exec` `{cmd, stdin}` | `exec` and the caller's `shell` grant |
+//! | `fs.list` `{path}`, `fs.read` `{path, offset, length}` | `files.read` |
+//! | `exec` `{cmd, stdin}` | `exec` |
 //!
 //! # Bounds
 //!
 //! Fuel per call ([`FUEL`]), 64 MiB of memory, one instance, [`MAX_HOST_CALLS`]
-//! host calls, 1 MiB per message each way (4 MiB for the reply). A grant is
-//! checked when a host function runs, against the account calling, so an app
-//! never does more than the person using it may.
+//! host calls, 1 MiB per message each way (4 MiB for the reply). A
+//! permission is checked when a host function runs, with the link the call
+//! came by: what reaches the machine needs one it may be acted on over.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -46,7 +46,6 @@ use wasmi::{Caller as WasmCaller, Config, Engine, Extern, Linker, Module, Store,
 use super::authz::{self, Caller};
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
-use crate::core::permissions::Grant;
 
 pub const MAX_REQUEST: usize = 1 << 20;
 const MAX_REPLY: usize = 4 << 20;
@@ -62,49 +61,18 @@ const MAX_FS_READ: u64 = 1 << 20;
 const MAX_LOG: usize = 1024;
 const THREAD_STACK: usize = 16 << 20;
 
-/// Calls running at once, all accounts together, and per account.
+/// Calls running at once.
 const MAX_CALLS: usize = 8;
-const MAX_CALLS_PER_ACCOUNT: usize = 2;
 
 /// The calls running on one agent (`AppState::app_calls`).
 #[derive(Clone)]
 pub struct AppCalls {
     slots: Arc<tokio::sync::Semaphore>,
-    running: Arc<Mutex<HashMap<String, usize>>>,
 }
 
 impl Default for AppCalls {
     fn default() -> Self {
-        Self { slots: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)), running: Default::default() }
-    }
-}
-
-/// One of an account's [MAX_CALLS_PER_ACCOUNT] running calls, given back
-/// when dropped.
-struct AccountSlot(Arc<Mutex<HashMap<String, usize>>>, String);
-
-impl AccountSlot {
-    fn take(calls: &AppCalls, account: &str) -> Option<Self> {
-        let mut running = calls.running.lock().ok()?;
-        let n = running.entry(account.to_string()).or_default();
-        if *n >= MAX_CALLS_PER_ACCOUNT {
-            return None;
-        }
-        *n += 1;
-        Some(Self(calls.running.clone(), account.to_string()))
-    }
-}
-
-impl Drop for AccountSlot {
-    fn drop(&mut self) {
-        if let Ok(mut running) = self.0.lock()
-            && let Some(n) = running.get_mut(&self.1)
-        {
-            *n -= 1;
-            if *n == 0 {
-                running.remove(&self.1);
-            }
-        }
+        Self { slots: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)) }
     }
 }
 
@@ -124,7 +92,7 @@ fn modules() -> &'static Mutex<HashMap<(String, String), Module>> {
 }
 
 /// What a host function may reach: the agent, the account calling and what
-/// the admin approved for the app.
+/// approved for the app.
 pub struct Host {
     pub state: Arc<AppState>,
     pub app: String,
@@ -148,8 +116,9 @@ impl Host {
         self.permissions.iter().any(|p| p == permission)
     }
 
-    fn grant(&self, grant: Grant) -> Result<(), String> {
-        self.caller.check(grant, &self.state, self.secure).map_err(|why| format!("forbidden: {}", why.as_str()))
+    /// Whether the machine may be acted on over the link the call came by.
+    fn reachable(&self) -> Result<(), String> {
+        self.caller.check(&self.state, self.secure).map_err(|why| format!("forbidden: {}", why.as_str()))
     }
 }
 
@@ -177,7 +146,7 @@ fn host_call(host: &mut Host, request: &[u8]) -> Value {
             // One line of the agent's log, never one that passes for another.
             let message: String =
                 text("message").unwrap_or_default().chars().filter(|c| !c.is_control()).take(MAX_LOG).collect();
-            tracing::info!(app = %host.app, user = %host.caller.username, "app log: {message}");
+            tracing::info!(app = %host.app, "app log: {message}");
             json!({ "ok": null })
         }
         "kv.get" | "kv.set" | "kv.remove" | "kv.keys" => {
@@ -226,7 +195,7 @@ fn host_call(host: &mut Host, request: &[u8]) -> Value {
             if !host.allows("files.read") {
                 return host_error("notPermitted");
             }
-            if let Err(e) = host.grant(Grant::Files) {
+            if let Err(e) = host.reachable() {
                 return host_error(e);
             }
             let roots = &host.state.remote_access.fs.roots;
@@ -288,17 +257,16 @@ fn host_call(host: &mut Host, request: &[u8]) -> Value {
             if !host.allows("exec") {
                 return host_error("notPermitted");
             }
-            if let Err(e) = host.grant(Grant::Shell) {
+            if let Err(e) = host.reachable() {
                 return host_error(e);
             }
             let Some(cmd) = text("cmd") else { return host_error("invalidArgs") };
             let stdin = text("stdin");
             let state = host.state.clone();
-            let (app, user) = (host.app.clone(), host.caller.username.clone());
+            let app = host.app.clone();
             let result = rt.block_on(async {
                 // As `/exec` records a command: its first line, never input.
                 Event::new(Kind::Exec, Action::Open, Outcome::Ok)
-                    .subject(&user)
                     .detail(format!("app {app}: {}", cmd.lines().next().unwrap_or("").chars().take(200).collect::<String>()))
                     .record(&state.db)
                     .await;
@@ -362,7 +330,6 @@ pub fn run(wasm_key: (String, String), host: Host, method: &str, params: Value) 
     let request = serde_json::to_vec(&json!({
         "method": method,
         "params": params,
-        "caller": { "username": host.caller.username, "admin": host.caller.is_admin() },
     }))
     .map_err(|_| "internal")?;
     let mut host = host;
@@ -473,19 +440,12 @@ pub async fn call(
     if !(1..=64).contains(&body.method.len()) {
         return Ok(HttpResponse::BadRequest().json(&json!({ "error": "invalidMethod" })));
     }
-    // Bounded together and per account: a call holds a thread and up to
-    // 64 MiB until its bounds end it.
-    let Ok(_global) = state.app_calls.slots.clone().try_acquire_owned() else {
+    // Bounded: a call holds a thread and up to 64 MiB until its bounds end
+    // it.
+    let Ok(_slot) = state.app_calls.slots.clone().try_acquire_owned() else {
         return Ok(HttpResponse::TooManyRequests().json(&json!({ "error": "busy" })));
     };
-    let Some(_mine) = AccountSlot::take(&state.app_calls, &caller.username) else {
-        return Ok(HttpResponse::TooManyRequests().json(&json!({ "error": "busy" })));
-    };
-    let user: Option<i64> = match sqlx::query_scalar("SELECT id FROM users WHERE username = ?").bind(&caller.username).fetch_optional(&state.db).await {
-        Ok(u) => u,
-        Err(e) => return Ok(super::desk::internal_error(&e)),
-    };
-    let Some(user) = user else { return Ok(HttpResponse::Unauthorized().finish()) };
+    let user = caller.id;
     let row: Option<(String, Option<String>, String)> = match sqlx::query_as(
         "SELECT p.manifest, p.approved_permissions, f.sha256 FROM desk_app_package p \
          JOIN desk_app_file f ON f.app_id = p.app_id AND f.path = 'backend.wasm' WHERE p.app_id = ?",
@@ -536,7 +496,7 @@ pub async fn call(
         Ok(outcome) => outcome,
         Err(_) => return Ok(HttpResponse::GatewayTimeout().json(&json!({ "error": "tooLong" }))),
     };
-    tracing::info!(app = %id.as_str(), user = %caller.username, ip = ?peer_ip(&req), "app call {}", body.method);
+    tracing::info!(app = %id.as_str(), ip = ?peer_ip(&req), "app call {}", body.method);
     match outcome {
         Ok(Ok(reply)) => Ok(HttpResponse::Ok().json(&reply)),
         Ok(Err(code)) => Ok(HttpResponse::UnprocessableEntity().json(&json!({ "error": code }))),

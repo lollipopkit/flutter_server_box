@@ -16,7 +16,7 @@ extension on _ServerDetailPageState {
       cardKey: 'webApps',
       icon: ServerDetailCards.webApps.icon,
       title: l10n.webApps,
-      mark: Feature.webApps.mark(),
+      mark: Feature.monitor.mark(),
       verdict: state.error == null ? null : (text: libL10n.fail, tone: ReadoutVerdict.bad),
       // Not `rows`, which a card cuts at [kReadoutCardRows]: each is the way
       // to its app, and none may be hidden.

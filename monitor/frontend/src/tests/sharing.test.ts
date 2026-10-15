@@ -49,9 +49,9 @@ const view: SharesView = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
-  capabilitiesStore.byServer.local = { features: ['shares', 'storage', 'firewall'], me: { admin: true } } as never
+  capabilitiesStore.byServer.local = { features: ['shares', 'storage', 'firewall'], access: { ok: true } } as never
   mocked.getShares.mockResolvedValue(structuredClone(view))
   mocked.shareConnections.mockResolvedValue({ smb: [], nfs: [] })
   mocked.getStorage.mockResolvedValue({ disks: [], busy: {}, arrays: [], pools: [], tools: [], job: null } satisfies StorageView)

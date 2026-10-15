@@ -455,10 +455,9 @@ void main() {
           serverbox.parameters['properties'] as Map<String, dynamic>;
 
       // Its address is a fact the Agent may have learned by installing it; the
-      // user and password are secrets, and go the same way the SSH password
-      // does — through a dialog, never through the transcript.
+      // password is a secret, and goes the same way the SSH password does —
+      // through a dialog, never through the transcript.
       expect(properties.keys, contains('monitor_addr'));
-      expect(properties.keys, isNot(contains('monitor_user')));
       expect(properties.keys, isNot(contains('monitor_pwd')));
       expect(properties.keys, isNot(contains('monitor_password')));
     });

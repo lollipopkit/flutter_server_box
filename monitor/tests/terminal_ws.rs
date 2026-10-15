@@ -19,7 +19,7 @@ use ntex::web::{self, App};
 use ntex::ws::error::WsClientError;
 use ntex::ws::{self, WsClient, WsConnection};
 use rustls::crypto::ring;
-use server_box_monitor::api::authz::revoke_lost;
+use server_box_monitor::api::authz::end_account;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::terminal::terminal_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
@@ -33,31 +33,26 @@ fn ensure_crypto_provider() {
     });
 }
 
-/// A state whose admin role holds `shell` or not ([shell]), with [tune]
-/// applied to the remote-access section first (a cap, a scrollback, a grace).
-async fn state_with(shell: bool, tune: impl FnOnce(&mut RemoteAccessConfig)) -> Arc<AppState> {
+/// A state with [tune] applied to the remote-access section first (a cap, a
+/// scrollback, a grace).
+async fn state_with(tune: impl FnOnce(&mut RemoteAccessConfig)) -> Arc<AppState> {
     ensure_crypto_provider();
     let mut config = Config {
         jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
         ..Default::default()
     };
     let mut remote = config.get_remote_access();
-    // The switches an upgraded agent had; `seed_as_upgrade` turns them into
-    // the admin role's grants (`shell` needs both).
-    remote.terminal.enabled = Some(true);
-    remote.full_access = Some(shell);
     tune(&mut remote);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
-/// An account that holds `shell`.
 async fn app_state() -> Arc<AppState> {
-    state_with(true, |_| {}).await
+    state_with(|_| {}).await
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
@@ -118,15 +113,6 @@ async fn terminal_connection(
 }
 
 #[ntex::test]
-async fn an_account_without_shell_is_refused_even_with_a_valid_ticket() {
-    let state = state_with(false, |_| {}).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state).await;
-
-    assert!(terminal_connection(&srv, &ticket).await.is_err());
-}
-
-#[ntex::test]
 async fn a_missing_or_forged_ticket_is_refused() {
     let state = app_state().await;
     let srv = test_server(state).await;
@@ -138,7 +124,7 @@ async fn a_missing_or_forged_ticket_is_refused() {
 #[ntex::test]
 async fn a_ticket_works_only_once() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     assert!(terminal_connection(&srv, &ticket).await.is_ok());
@@ -148,7 +134,7 @@ async fn a_ticket_works_only_once() {
 #[ntex::test]
 async fn a_failed_upgrade_does_not_burn_the_ticket() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
     let response = srv.get("/api/v1/terminal/ws").send().await.unwrap();
     assert!(!response.status().is_success());
@@ -161,7 +147,7 @@ async fn a_plaintext_listener_still_serves_a_loopback_client() {
     // without TLS — that is the reverse-proxy case, and it must keep working
     let state = app_state().await;
     assert!(!state.tls_active);
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     assert!(terminal_connection(&srv, &ticket).await.is_ok());
@@ -170,7 +156,7 @@ async fn a_plaintext_listener_still_serves_a_loopback_client() {
 #[ntex::test]
 async fn an_unparseable_control_message_is_reported_not_ignored() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -200,7 +186,7 @@ async fn an_open_with_an_ssh_credential_is_refused() {
         r#"{"type":"open","user":"ops","auth":{"kind":"password","password":"x"},"target":{"kind":"container","id":"abc"}}"#,
         r#"{"type":"answer","answers":["x"]}"#,
     ] {
-        let ticket = tickets.issue(Purpose::Terminal, "admin").unwrap();
+        let ticket = tickets.issue(Purpose::Terminal).unwrap();
         let (io, codec) = open_terminal(&srv, &ticket).await;
         io.send(ws::Message::Text(ByteString::from(open)), &codec)
             .await
@@ -213,7 +199,7 @@ async fn an_open_with_an_ssh_credential_is_refused() {
 #[ntex::test]
 async fn attaching_to_an_unknown_session_says_it_is_gone() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -237,7 +223,7 @@ async fn attaching_to_an_unknown_session_says_it_is_gone() {
 #[ntex::test]
 async fn a_ping_is_answered() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -358,7 +344,7 @@ async fn answer_cursor_position_query(_io: &Io<Sealed>, _codec: &ws::Codec) {}
 #[ntex::test]
 async fn an_open_starts_a_working_shell() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &ticket).await;
@@ -372,7 +358,7 @@ async fn an_open_starts_a_working_shell() {
 #[ntex::test]
 async fn a_paste_bigger_than_64_kib_reaches_the_shell() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
     let (io, codec, _) = open_shell(&srv, &ticket).await;
     run_marker(&io, &codec, "start").await;
@@ -409,7 +395,7 @@ async fn a_paste_bigger_than_64_kib_reaches_the_shell() {
 async fn concurrent_open_frames_create_only_one_session() {
     let state = app_state().await;
     let sessions = state.sessions.clone();
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
     let open = r#"{"type":"open","auth":{"kind":"local"}}"#;
@@ -445,15 +431,15 @@ async fn concurrent_open_frames_create_only_one_session() {
 #[ntex::test]
 async fn a_reconnect_replays_only_what_was_missed() {
     let state = app_state().await;
-    let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let first = state.tickets.issue(Purpose::Terminal).unwrap();
+    let second = state.tickets.issue(Purpose::Terminal).unwrap();
     let sessions = state.sessions.clone();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
     let seen = run_marker(&io, &codec, "before").await;
     let rendered = seen.len() as u64;
-    let session = sessions.get(&handle, "admin").unwrap();
+    let session = sessions.get(&handle).unwrap();
 
     // Produce output the first connection will not see: typed, so the line
     // editor echoes it.
@@ -511,8 +497,8 @@ async fn a_reconnect_replays_only_what_was_missed() {
 #[ntex::test]
 async fn a_superseded_connection_is_told_rather_than_left_silent() {
     let state = app_state().await;
-    let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let first = state.tickets.issue(Purpose::Terminal).unwrap();
+    let second = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
@@ -544,8 +530,8 @@ async fn a_superseded_connection_is_told_rather_than_left_silent() {
 async fn reattaching_before_the_old_socket_is_noticed_still_works() {
     let state = app_state().await;
     let tickets = state.tickets.clone();
-    let first = tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let second = tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let first = tickets.issue(Purpose::Terminal).unwrap();
+    let second = tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
@@ -582,31 +568,10 @@ async fn reattaching_before_the_old_socket_is_noticed_still_works() {
 }
 
 #[ntex::test]
-async fn another_account_cannot_take_over_a_session() {
-    let state = app_state().await;
-    let mine = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let theirs = state.tickets.issue(Purpose::Terminal, "intruder").unwrap();
-    let srv = test_server(state).await;
-
-    let (_io, _codec, handle) = open_shell(&srv, &mine).await;
-
-    let (io2, codec2) = open_terminal(&srv, &theirs).await;
-    let attach = serde_json::json!({"type": "attach", "session": handle, "since": 0});
-    io2.send(
-        ws::Message::Text(ByteString::from(attach.to_string())),
-        &codec2,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(next_control(&io2, &codec2).await["code"], "session_gone");
-}
-
-#[ntex::test]
 async fn closing_explicitly_ends_the_session_for_good() {
     let state = app_state().await;
-    let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let first = state.tickets.issue(Purpose::Terminal).unwrap();
+    let second = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
@@ -632,9 +597,9 @@ async fn closing_explicitly_ends_the_session_for_good() {
 
 #[ntex::test]
 async fn the_session_cap_refuses_the_extra_terminal() {
-    let state = state_with(true, |remote| remote.terminal.max_sessions = Some(1)).await;
-    let first = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let second = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let state = state_with(|remote| remote.terminal.max_sessions = Some(1)).await;
+    let first = state.tickets.issue(Purpose::Terminal).unwrap();
+    let second = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     let (_io, _codec, _handle) = open_shell(&srv, &first).await;
@@ -651,15 +616,15 @@ async fn the_session_cap_refuses_the_extra_terminal() {
     assert_eq!(next_control(&io2, &codec2).await["code"], "at_capacity");
 }
 
-/// The same grant the container page needs, re-checked at the frame.
+/// The account is read again at the frame, not trusted from the upgrade.
 #[ntex::test]
-async fn a_container_target_needs_the_shell_grant() {
+async fn a_container_target_is_refused_after_the_password_changed() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
-    // Taken after the upgrade: without it the upgrade itself is refused.
+    // Changed after the upgrade: before it the upgrade itself is refused.
     let (io, codec) = open_terminal(&srv, &ticket).await;
-    take_shell(&state).await;
+    change_password(&state).await;
     io.send(
         ws::Message::Text(ByteString::from_static(
             r#"{"type":"open","auth":{"kind":"local"},"target":{"kind":"container","id":"abc"}}"#,
@@ -677,7 +642,7 @@ async fn a_container_target_needs_the_shell_grant() {
 #[ntex::test]
 async fn an_invalid_container_id_is_refused_before_anything_spawns() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -700,7 +665,7 @@ async fn an_invalid_container_id_is_refused_before_anything_spawns() {
 #[ntex::test]
 async fn a_container_id_with_a_control_character_is_refused() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -723,7 +688,7 @@ async fn a_container_id_with_a_control_character_is_refused() {
 #[ntex::test]
 async fn an_invalid_iperf_host_is_refused_before_anything_spawns() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -746,7 +711,7 @@ async fn an_invalid_iperf_host_is_refused_before_anything_spawns() {
 #[ntex::test]
 async fn an_iperf_port_out_of_range_is_refused_before_anything_spawns() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -770,7 +735,7 @@ async fn an_iperf_port_out_of_range_is_refused_before_anything_spawns() {
 #[ntex::test]
 async fn an_invalid_tmux_session_id_is_refused_before_anything_spawns() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -794,7 +759,7 @@ async fn an_invalid_tmux_session_id_is_refused_before_anything_spawns() {
 #[ntex::test]
 async fn an_invalid_tmux_new_name_is_refused_before_anything_spawns() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -813,42 +778,17 @@ async fn an_invalid_tmux_new_name_is_refused_before_anything_spawns() {
     assert!(state.sessions.is_empty(), "nothing should have been registered");
 }
 
-/// Takes `shell` away from the admin role, as an admin editing it would.
-async fn take_shell(state: &AppState) {
-    let mut grants = common::grants_of(&state.db, "admin").await;
-    grants.shell = false;
-    common::set_grants(&state.db, "admin", &grants).await;
+/// Changes the password, as `/me/password` does.
+async fn change_password(state: &Arc<AppState>) {
+    let hash = bcrypt::hash("a-new-password", 4).unwrap();
+    server_box_monitor::db::accounts::set_password_hash(&state.db, &hash).await.unwrap();
+    end_account(state, "password_changed");
 }
 
 #[ntex::test]
-async fn taking_shell_away_applies_without_a_restart() {
+async fn a_password_change_closes_an_existing_local_shell() {
     let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let srv = test_server(state.clone()).await;
-
-    // Between the upgrade and the frame, as an admin editing the role would.
-    let (io, codec) = open_terminal(&srv, &ticket).await;
-    take_shell(&state).await;
-    io.send(
-        ws::Message::Text(ByteString::from_static(
-            r#"{"type":"open","auth":{"kind":"local"}}"#,
-        )),
-        &codec,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(
-        next_control(&io, &codec).await["code"],
-        "forbidden",
-        "the role must bind the running process, not just what was read at startup"
-    );
-}
-
-#[ntex::test]
-async fn taking_shell_away_closes_an_existing_local_shell() {
-    let state = app_state().await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
 
@@ -862,23 +802,49 @@ async fn taking_shell_away_closes_an_existing_local_shell() {
     .unwrap();
     assert_eq!(next_control(&io, &codec).await["type"], "ready");
 
-    take_shell(&state).await;
-    revoke_lost(&state, "permission_revoked").await;
-    assert_eq!(
-        next_control(&io, &codec).await["code"],
-        "permission_revoked"
-    );
+    change_password(&state).await;
+    assert_eq!(next_control(&io, &codec).await["code"], "password_changed");
     assert!(state.sessions.is_empty());
+}
+
+/// `GET /live` lists an open shell; ending it from there tells the client
+/// `ended` and leaves nothing behind.
+#[ntex::test]
+async fn a_listed_session_can_be_ended() {
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_terminal(&srv, &ticket).await;
+    io.send(
+        ws::Message::Text(ByteString::from_static(
+            r#"{"type":"open","auth":{"kind":"local"}}"#,
+        )),
+        &codec,
+    )
+    .await
+    .unwrap();
+    assert_eq!(next_control(&io, &codec).await["type"], "ready");
+
+    let listed = state.sessions.list();
+    assert_eq!(listed.len(), 1);
+    assert_eq!(listed[0].what, "shell");
+    assert_eq!(listed[0].remote_ip.as_deref(), Some("127.0.0.1"));
+    assert!(listed[0].attached);
+
+    assert!(state.sessions.close(&listed[0].id, "ended"));
+    assert_eq!(next_control(&io, &codec).await["code"], "ended");
+    assert!(state.sessions.is_empty());
+    assert!(!state.sessions.close(&listed[0].id, "ended"));
 }
 
 #[ntex::test]
 async fn an_outage_longer_than_the_buffer_reports_and_replays() {
     // A scrollback small enough that a single command's output overruns it,
     // which is the only way to reach the truncated path end to end
-    let state = state_with(true, |remote| remote.terminal.scrollback_bytes = Some(256)).await;
+    let state = state_with(|remote| remote.terminal.scrollback_bytes = Some(256)).await;
     let tickets = state.tickets.clone();
-    let first = tickets.issue(Purpose::Terminal, "admin").unwrap();
-    let second = tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let first = tickets.issue(Purpose::Terminal).unwrap();
+    let second = tickets.issue(Purpose::Terminal).unwrap();
     let srv = test_server(state).await;
 
     let (io, codec, handle) = open_shell(&srv, &first).await;
@@ -913,7 +879,7 @@ async fn an_outage_longer_than_the_buffer_reports_and_replays() {
     drop(io2);
     ntex::time::sleep(Duration::from_millis(200)).await;
 
-    let third = tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let third = tickets.issue(Purpose::Terminal).unwrap();
     let (io3, codec3) = open_terminal(&srv, &third).await;
     io3.send(
         ws::Message::Text(ByteString::from(
@@ -965,8 +931,8 @@ async fn an_outage_longer_than_the_buffer_reports_and_replays() {
 async fn a_session_nobody_comes_back_for_is_reaped() {
     // One second of grace, so the reaper's own interval (a quarter of it,
     // floored at ten seconds elsewhere) isn't what the test waits on
-    let state = state_with(true, |remote| remote.terminal.detached_timeout_secs = 1).await;
-    let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
+    let state = state_with(|remote| remote.terminal.detached_timeout_secs = 1).await;
+    let ticket = state.tickets.issue(Purpose::Terminal).unwrap();
     let sessions = state.sessions.clone();
     let srv = test_server(state).await;
 

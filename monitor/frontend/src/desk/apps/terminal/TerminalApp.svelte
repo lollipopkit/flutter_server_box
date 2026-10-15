@@ -1,6 +1,6 @@
 <script lang="ts">
   /// A local shell in the desk. The agent opens it without SSH credentials
-  /// when the account has the `shell` grant, and rejoins a stored session after
+  /// where the account may act over this link, and rejoins a stored session after
   /// a reload.
   ///
   /// xterm.js is loaded on demand; most visits never open a terminal.
@@ -9,12 +9,12 @@
   import { Button, Card, Dialog, Icon, Input, Spinner, StatusBar } from '../../lk'
   import { AppToolbar, type MenuEntry, useIntents, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { isAdmin, machineAccess, terminalAccess, whyText } from '../../../lib/access'
+  import { machineAccess, terminalAccess, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { fmtEpochSeconds } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
-  import { queuedSnippet, TYPE_SNIPPET, type QueuedSnippet } from '../../../lib/snippetIntent'
+  import { queuedSnippet, TYPE_SNIPPET, typesFor, type QueuedSnippet } from '../../../lib/snippetIntent'
   import { runSteps } from '../../../lib/snippetSteps'
   import { theme } from '../../../lib/theme.svelte'
   import { TerminalSession, type Renderer } from '../../../lib/terminal.svelte'
@@ -174,9 +174,7 @@
 
   /// The dashboard only offers the entry point when the agent reports a
   /// terminal, but a cached capability or stale tab can still land here.
-  let turnedOff = $state(false)
-  const fullAccess = $derived(!turnedOff && access.available)
-  const canTurnOff = $derived(isAdmin(caps) !== false)
+  const fullAccess = $derived(access.available)
 
   /// Start once when capabilities say a direct shell is available. Do not gate
   /// on lifecycle: hidden windows keep their shell running like visible ones.
@@ -191,45 +189,9 @@
     })
   })
 
-  /// Shown the first time shell access is on offer, once per browser. This
-  /// explains the security boundary before the shell is used further.
-  const NOTICE_KEY = 'terminal.fullAccessNoticeSeen'
-  let noticeDismissed = $state(false)
-  try {
-    noticeDismissed = window.localStorage.getItem(NOTICE_KEY) === '1'
-  } catch {
-    // The notice can be shown again when storage is unavailable.
-  }
-  const showNotice = $derived(fullAccess && !noticeDismissed)
-  let disabling = $state(false)
-
-  function acknowledgeNotice() {
-    try {
-      window.localStorage.setItem(NOTICE_KEY, '1')
-    } catch {
-      // Only costs seeing the notice again.
-    }
-    noticeDismissed = true
-  }
-
-  async function disablePasswordless() {
-    disabling = true
-    try {
-      await api.disablePasswordlessTerminal()
-      session.close()
-      turnedOff = true
-      capabilitiesStore.clear(servers.currentId)
-      acknowledgeNotice()
-    } catch (e) {
-      session.error = e instanceof Error ? e.message : String(e)
-    } finally {
-      disabling = false
-    }
-  }
-
   /// The tmux picker refreshes every time it opens; replies from a previous
   /// machine are discarded if the desk switched servers in the meantime.
-  const tmuxOffered = $derived(machineAccess(caps, 'tmux', 'shell'))
+  const tmuxOffered = $derived(machineAccess(caps, 'tmux'))
   let tmux = $state<TmuxView | null>(null)
   let tmuxLoading = $state(false)
   let tmuxLoadError = $state('')
@@ -293,7 +255,9 @@
       ? (tmuxIssueText(session.issueCode) ?? session.error)
       : session.errorCode === 'no_tmux'
         ? $LL.terminalTmuxNoTmux()
-        : session.error,
+        : session.errorCode === 'password_changed'
+          ? $LL.passwordChangedSignIn()
+          : session.error,
   )
 
   /// The snippet being typed, and whether the operator stopped it. One object:
@@ -304,7 +268,7 @@
   let queued = $state<QueuedSnippet | null>(null)
   const queuedName = $derived(queued?.name ?? '')
   useIntents((intent) => {
-    if (intent.action !== TYPE_SNIPPET || intent.from !== 'snippets') return
+    if (intent.action !== TYPE_SNIPPET || !typesFor(intent.from)) return
     const snippet = queuedSnippet(intent.data)
     if (snippet) queued = snippet
   })
@@ -346,7 +310,7 @@
 
   /// Whether there is a card to show above the terminal.
   const alerting = $derived(
-    Boolean(typing || queuedName || errorText || session.truncated || showNotice),
+    Boolean(typing || queuedName || errorText || session.truncated),
   )
 
   useMenus(() => {
@@ -395,10 +359,7 @@
   })
 
   /// Why there is no shell here.
-  const noPermissionText = $derived.by(() => {
-    if (turnedOff) return whyText('not_granted', $LL)
-    return caps?.grants ? whyText(access.why, $LL) : $LL.terminalUnavailable()
-  })
+  const noPermissionText = $derived(whyText(access.why, $LL))
 </script>
 
 <AppToolbar>
@@ -530,28 +491,6 @@
           <Button variant="secondary" onclick={stopTyping}>
             {typing ? $LL.snippetStop() : $LL.snippetDiscard()}
           </Button>
-        </Card>
-      {/if}
-
-      {#if showNotice}
-        <Card class="space-y-[9px]">
-          <h2 class="text-[15px] font-semibold text-(--text-primary)">
-            {$LL.terminalPasswordlessNoticeTitle()}
-          </h2>
-          <p class="text-[13px] leading-relaxed text-(--text-secondary)">
-            {caps?.grants ? $LL.terminalPasswordlessNoticeBodyRoles() : $LL.terminalPasswordlessNoticeBody()}
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <Button variant="secondary" onclick={acknowledgeNotice}>
-              {$LL.terminalPasswordlessKeep()}
-            </Button>
-            {#if canTurnOff}
-              <Button variant="destructive" onclick={disablePasswordless} disabled={disabling}>
-                {#if disabling}<Spinner size={16} />{/if}
-                {$LL.terminalPasswordlessDisable()}
-              </Button>
-            {/if}
-          </div>
         </Card>
       {/if}
 

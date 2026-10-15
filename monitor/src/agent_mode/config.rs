@@ -1,4 +1,4 @@
-//! What Agent mode runs with: the model, the providers an admin added and
+//! What Agent mode runs with: the model, the providers the operator added and
 //! their credentials (migration 021). Credentials go in and never come back
 //! out: a read says whether one is set.
 
@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::SqlitePool;
 
-/// The APIs a provider an admin adds may speak (pi's custom APIs).
+/// The APIs an added provider may speak (pi's custom APIs).
 pub const APIS: &[&str] = &["openai-completions", "openai-responses", "anthropic-messages", "google-generative-ai"];
 pub const THINKING_LEVELS: &[&str] = &["off", "minimal", "low", "medium", "high"];
 pub const MAX_PROVIDERS: usize = 16;
@@ -76,7 +76,7 @@ impl Provider {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
-    /// `None` until an admin picks one: Agent mode is off.
+    /// `None` until the operator picks one: Agent mode is off.
     pub model: Option<ModelRef>,
     pub thinking_level: String,
     pub max_running: i64,
@@ -163,7 +163,7 @@ pub fn check(w: &SettingsWrite) -> Result<(), &'static str> {
 }
 
 /// Whether an endpoint may be reached: an API pi speaks, and HTTPS, plain
-/// HTTP to this machine, or plain HTTP the admin allowed for it.
+/// HTTP to this machine, or plain HTTP the operator allowed for it.
 pub fn check_endpoint(api: &str, base_url: &str, allow_insecure: bool) -> Result<(), &'static str> {
     if !APIS.contains(&api) {
         return Err("invalidApi");
@@ -276,7 +276,7 @@ pub async fn store(db: &SqlitePool, w: &SettingsWrite) -> Result<(), sqlx::Error
 
 /// pi-ai's credential store over `agent_credential`. pi only reads here:
 /// a write from the runtime (an OAuth refresh, which no provider here has)
-/// is refused rather than stored behind the admin's back.
+/// is refused rather than stored behind the operator's back.
 pub struct DbCredentials(pub SqlitePool);
 
 impl Credentials for DbCredentials {
@@ -299,11 +299,11 @@ impl Credentials for DbCredentials {
     }
 
     fn write(&self, _: &str, _: Value) -> BoxFuture<'_, Result<(), String>> {
-        Box::pin(async { Err("credentials are set by an admin".into()) })
+        Box::pin(async { Err("credentials are set in Agent mode settings".into()) })
     }
 
     fn delete(&self, _: &str) -> BoxFuture<'_, Result<(), String>> {
-        Box::pin(async { Err("credentials are set by an admin".into()) })
+        Box::pin(async { Err("credentials are set in Agent mode settings".into()) })
     }
 }
 

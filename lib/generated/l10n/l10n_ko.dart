@@ -1972,20 +1972,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func을(를) 사용하려면 Monitor agent의 $setting을(를) 켜야 합니다.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func을(를) 사용하려면 Monitor agent를 업데이트해야 합니다.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Monitor agent를 통한 원격 전달에는 더 최신 agent가 필요합니다. 서버에서 업데이트하세요.';
-
-  @override
   String get rangeLive => '실시간';
 
   @override
@@ -2626,7 +2612,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
+      '이 agent는 암호화되지 않은 HTTP에서는 모니터링 외의 작업을 거부합니다. HTTPS로 연결하거나 agent([remote_access] allow_insecure)와 이 앱 모두에서 HTTP를 허용하세요.';
 
   @override
   String get alerts => '알림';
@@ -4814,35 +4800,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get copyLink => '링크 복사';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return '이 Monitor agent의 계정에는 $func 권한이 없습니다. agent 관리자에게 요청하세요.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func에는 이 Monitor agent로의 HTTPS 연결 또는 agent와 이 앱 모두에서 HTTP 허용이 필요합니다.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '이 Monitor agent에는 $func이(가) 설정되어 있지 않습니다. 운영자가 설정해야 합니다.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      '읽기 전용: 이 계정은 agent의 파일을 볼 수 있지만 변경할 수는 없습니다.';
-
-  @override
   String get monitorAccess => '접근';
-
-  @override
-  String get monitorAccounts => '계정';
-
-  @override
-  String get monitorRoles => '역할';
-
-  @override
-  String get monitorRole => '역할';
 
   @override
   String get monitorChangePassword => '비밀번호 변경';
@@ -4854,9 +4817,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorCurrentPassword => '현재 비밀번호';
 
   @override
-  String get monitorReauthTip => '접근 권한을 변경하려면 비밀번호를 다시 입력해야 합니다.';
-
-  @override
   String get monitorPasswordTooShort => '8자 이상';
 
   @override
@@ -4864,71 +4824,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorErrReauth => '비밀번호가 틀렸습니다.';
-
-  @override
-  String get monitorErrLastAdmin => 'agent에는 관리자 계정이 하나 이상 있어야 합니다.';
-
-  @override
-  String get monitorErrConflict => '이미 존재하거나 아직 사용 중입니다.';
-
-  @override
-  String get monitorErrForbidden => '관리자만 할 수 있습니다.';
-
-  @override
-  String get monitorRoleNameRule => '소문자, 숫자, - 및 _, 최대 32자';
-
-  @override
-  String get monitorGrantShell => '셸과 명령';
-
-  @override
-  String get monitorGrantShellTip =>
-      '터미널, 프로세스, 서비스, 컨테이너, 스니펫, 전원 — agent 계정으로 실행';
-
-  @override
-  String get monitorGrantVirt => '가상화';
-
-  @override
-  String get monitorGrantVirtTip => '에이전트 웹 패널에서 연결하는 Proxmox VE, libvirt, BMC';
-
-  @override
-  String get monitorGrantFiles => '파일';
-
-  @override
-  String get monitorGrantConnect => '외부 연결';
-
-  @override
-  String get monitorGrantConnectTip => '로컬 및 동적 포트 전달, 원격 데스크톱';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      '허용된 대상 (IP 또는 CIDR, 선택적으로 :포트 또는 :시작-끝; 한 줄에 하나, 비우면 제한 없음)';
-
-  @override
-  String get monitorGrantListen => '서버에서 수신 대기';
-
-  @override
-  String get monitorGrantListenTip => '원격 포트 전달';
-
-  @override
-  String get monitorGrantListenPublic => 'loopback이 아닌 주소';
-
-  @override
-  String get monitorGrantPorts => '포트 범위 (비우면 제한 없음)';
-
-  @override
-  String get monitorGrantOff => '끔';
-
-  @override
-  String get monitorBuiltin => '기본 제공';
-
-  @override
-  String get monitorAdminRoleTip => '계정, 역할 및 agent 설정을 관리합니다';
-
-  @override
-  String get monitorYou => '나';
-
-  @override
-  String get monitorNoAccessToSettings => '관리자만 이 agent의 설정을 변경할 수 있습니다.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5155,9 +5050,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       '이 Monitor 에이전트는 백업을 저장할 수 없습니다. 에이전트를 업데이트하세요.';
-
-  @override
-  String get monitorBackupAdminOnly => 'Monitor 에이전트의 관리자 계정만 백업을 저장할 수 있습니다.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5635,9 +5527,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get storagePools => 'ZFS 풀';
 
   @override
-  String get storageWholeDisk => '전체 디스크';
-
-  @override
   String get storageNoFilesystem => '파일 시스템 없음';
 
   @override
@@ -5720,9 +5609,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String storagePickDevices(Object count) {
     return '장치를 $count개 이상 선택하세요. 저장된 데이터가 모두 사라집니다.';
   }
-
-  @override
-  String get storageNoFreeDevices => '사용 가능한 디스크나 파티션이 없습니다.';
 
   @override
   String get storageCreateRaid => 'RAID 어레이 만들기';
@@ -5861,24 +5747,12 @@ class AppLocalizationsKo extends AppLocalizations {
       'The confirmation text did not match.';
 
   @override
-  String get storageSudoPassword => 'sudo 비밀번호 (agent 계정에 필요한 경우)';
-
-  @override
   String storageInUse(Object device) {
     return '$device 사용 중입니다.';
   }
 
   @override
   String get storageBusy => '다른 디스크 변경 작업이 진행 중입니다.';
-
-  @override
-  String get storageWorking => '디스크 변경 중…';
-
-  @override
-  String get storageDone => '완료';
-
-  @override
-  String get storageFailed => '완료되지 않음';
 
   @override
   String get storageHealthRead => '디스크 상태 읽기';
@@ -5914,15 +5788,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String storageTesting(Object percent) {
     return '자체 테스트: $percent% 남음';
   }
-
-  @override
-  String get storageLastTestPassed => '마지막 자체 테스트 통과';
-
-  @override
-  String get storageLastTestFailed => '마지막 자체 테스트 실패';
-
-  @override
-  String get storageLastTestAborted => '마지막 자체 테스트 중단됨';
 
   @override
   String get storageGrowPartition => '파티션 확장';
@@ -6162,9 +6027,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sharingInstallNfsBody => '시스템 패키지 관리자로 NFS 서버를 설치합니다.';
 
   @override
-  String get sharingInstalling => '설치 중…';
-
-  @override
   String get sharingAddShare => '공유 추가';
 
   @override
@@ -6240,15 +6102,7 @@ class AppLocalizationsKo extends AppLocalizations {
       'Samba는 별도의 비밀번호를 사용합니다. 연결할 계정마다 비밀번호를 설정하세요.';
 
   @override
-  String get sharingAccount => '계정';
-
-  @override
   String get sharingSetPassword => '비밀번호 설정';
-
-  @override
-  String sharingSetPasswordBody(Object user) {
-    return '$user의 SMB 비밀번호를 설정합니다.';
-  }
 
   @override
   String get sharingNewPassword => '새 SMB 비밀번호';
@@ -6268,9 +6122,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sharingAddClient => '클라이언트 추가';
-
-  @override
-  String get sharingSquash => '클라이언트의 root';
 
   @override
   String get sharingSquashRoot => 'root를 nobody로 매핑';
@@ -6447,4 +6298,394 @@ class AppLocalizationsKo extends AppLocalizations {
   String webAppUpdate(String version) {
     return '$version 버전을 사용할 수 있습니다. Monitor 패널에서 업데이트하세요.';
   }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app이(가) 중지됨';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return '실행 중이 아님: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => '실행 중인 컨테이너가 없습니다.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app 상태가 비정상임';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return '상태 확인 실패: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app이(가) 다시 실행 중임';
+  }
+
+  @override
+  String get noticeStackBackBody => '모든 컨테이너가 실행 중입니다.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app 업데이트 사용 가능';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version을(를) 설치할 수 있습니다 (현재: $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array 성능 저하';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      '멤버가 고장 났거나 누락되어 어레이가 중복성 없이 작동합니다.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array 정상 복구';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => '모든 멤버가 작동합니다.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '풀 $pool 상태: $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody => '저장소를 열어 어떤 장치인지 확인하세요.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '풀 $pool 온라인 복구';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => '모든 장치가 작동합니다.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device 고장 임박';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'SMART 확인 또는 자체 테스트에 실패했습니다. 저장된 데이터를 다른 곳에 복사하고 디스크를 교체하세요.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device에 불량 섹터 $count개 있음';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return '이전에는 $was개였습니다. 섹터가 손실되는 디스크는 곧 고장 날 수 있습니다.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return '저장소 유지 관리가 실행되지 않음: $task';
+  }
+
+  @override
+  String get storageTaskScrub => '풀 스크럽 및 어레이 확인';
+
+  @override
+  String get storageTaskSmartShort => '짧은 SMART 테스트';
+
+  @override
+  String get storageTaskSmartLong => '긴 SMART 테스트';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo에서 비밀번호를 요청했습니다. agent를 root로 실행하거나 위 명령을 허용하세요.';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => '개요';
+
+  @override
+  String get monitorNotices => '알림';
+
+  @override
+  String get monitorAudit => '감사 로그';
+
+  @override
+  String get monitorLive => '세션 및 기기';
+
+  @override
+  String get monitorNoAgents => '아직 Monitor 에이전트로 연결된 서버가 없습니다.';
+
+  @override
+  String get monitorNotOffered => '이 에이전트 버전은 이 기능을 제공하지 않습니다. 에이전트를 업데이트하세요.';
+
+  @override
+  String get monitorAlertsNotOffered => '이 에이전트 버전은 알림을 보고하지 않습니다.';
+
+  @override
+  String get monitorAlertsNone => '발생 중인 규칙이 없습니다.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '$duration 동안 지속';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return '에이전트 $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version 사용 가능';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '읽지 않음 $count개';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return '문제가 있는 앱: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return '앱 업데이트: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => '업데이트만';
+
+  @override
+  String get monitorNoUpdates => '업데이트가 있는 앱이 없습니다.';
+
+  @override
+  String get monitorNoticesEmpty => '알림이 없습니다.';
+
+  @override
+  String get monitorMarkAllRead => '모두 읽음으로 표시';
+
+  @override
+  String get monitorAuditExec => '명령';
+
+  @override
+  String get monitorAuditMachine => '머신 관리';
+
+  @override
+  String get monitorAuditListen => '수신 대기 포트';
+
+  @override
+  String get monitorAuditTicket => '연결 티켓';
+
+  @override
+  String get monitorAuditPush => '알림 채널';
+
+  @override
+  String get monitorAuditAdmin => '계정';
+
+  @override
+  String get monitorAuditDenied => '거부됨';
+
+  @override
+  String get monitorLoadMore => '더 불러오기';
+
+  @override
+  String get monitorLiveSessions => '터미널 세션';
+
+  @override
+  String get monitorLiveConnections => '연결';
+
+  @override
+  String get monitorLiveWatchTokens => '워치 및 위젯 토큰';
+
+  @override
+  String get monitorLiveDevices => '로그인한 기기';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      '기기를 잊으면 다음 로그인부터 계정 전체의 실패 시도 제한이 적용됩니다. 기기가 로그아웃되지는 않습니다. 비밀번호를 가진 기기는 다시 로그인합니다. 기기를 차단하려면 비밀번호를 변경하세요.';
+
+  @override
+  String get monitorLiveAttached => '연결됨';
+
+  @override
+  String get monitorLiveDetached => '분리됨';
+
+  @override
+  String get monitorLiveEnd => '종료';
+
+  @override
+  String get monitorLiveRevoke => '취소';
+
+  @override
+  String get monitorLiveForget => '삭제';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '터미널 세션 \"$name\"을(를) 종료할까요? 그 안에서 실행 중인 것은 중지됩니다.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '$name 연결을 종료할까요?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '$name의 토큰을 취소할까요? 다시 설정할 때까지 업데이트가 멈춥니다.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '$name을(를) 삭제할까요?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return '$time에 만료';
+  }
+
+  @override
+  String get monitorLiveStream => '중계 연결';
+
+  @override
+  String get monitorLiveAccepted => '포워딩된 연결';
+
+  @override
+  String get monitorLiveConsole => '콘솔';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '에이전트 $count개';
+  }
+
+  @override
+  String get monitorStatOnline => '온라인';
+
+  @override
+  String get monitorStatFiring => '발생 중인 알림';
+
+  @override
+  String get monitorStatUnread => '읽지 않음';
+
+  @override
+  String get monitorStatUpdates => '앱 업데이트';
+
+  @override
+  String get monitorAuditEmpty => '일치하는 기록이 없습니다.';
+
+  @override
+  String get monitorLiveNoSessions => '열려 있는 터미널 세션이 없습니다.';
+
+  @override
+  String get monitorLiveNoConnections => '전달 또는 중계 중인 연결이 없습니다.';
+
+  @override
+  String get monitorLiveNoTokens => '페어링된 워치나 위젯이 없습니다.';
+
+  @override
+  String get monitorLiveNoDevices => '로그인한 기기가 없습니다.';
+
+  @override
+  String get monitorAgentTooOld =>
+      '이 에이전트는 앱보다 오래되어 사용자 이름을 요구합니다. 에이전트를 업데이트하세요.';
+
+  @override
+  String get monitorUpdateAgent => '에이전트 업데이트';
+
+  @override
+  String get monitorAgentTooOldTip => '업데이트 방법은 Monitor 탭에 있습니다.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      '이 에이전트는 단일 비밀번호 이전 버전이라 앱에서 로그인할 수 없습니다. 업데이트 후 비밀번호는 가장 오래된 관리자 계정의 비밀번호가 됩니다.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest이(가) 나왔습니다. 이 에이전트는 $running입니다.';
+  }
+
+  @override
+  String get monitorUpdateRunHint => '서버에서, 에이전트를 설치한 계정으로 실행하세요:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      '터미널에서 실행합니다. 시스템 전체에 설치된 에이전트를 SSH 터미널에서 업데이트하면 sudo가 그곳에서 비밀번호를 요구합니다.';
+
+  @override
+  String get monitorUpdateNoSsh => '앱이 이 서버에서 터미널을 열 수 없습니다. 서버에서 직접 실행하세요.';
+
+  @override
+  String get monitorUpdateDocker => 'Docker인가요? 새 이미지를 받아 컨테이너를 다시 만드세요.';
+
+  @override
+  String get monitorUpdateAfter => '다시 시작되면 Monitor 탭을 새로 고치세요.';
+
+  @override
+  String get monitorUpdateInTerminal => '터미널에서 실행';
+
+  @override
+  String get monitorHowToUpdate => '업데이트 방법';
+
+  @override
+  String get monitorUpdateNix =>
+      'NixOS 모듈로 설치됨: 시스템 구성에서 업데이트하고 다시 rebuild하세요.';
+
+  @override
+  String get noticeAgentUpdate => '에이전트 업데이트가 있습니다';
+
+  @override
+  String get monitorUpdateLegacyUser => '계정 이름';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      '이 에이전트는 아직 계정 이름과 비밀번호로 로그인합니다. 앱이 전에 쓰던 이름(보통 admin)과 저장된 비밀번호를 사용합니다.';
+
+  @override
+  String get monitorUpdateNow => '지금 업데이트';
+
+  @override
+  String get monitorUpdating => '업데이트 중…';
+
+  @override
+  String get monitorUpdateRestarting => '에이전트가 재시작 중입니다. 몇 초 후 연결이 돌아옵니다…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return '업데이트됨: 에이전트가 $version으로 실행 중입니다.';
+  }
+
+  @override
+  String get monitorUpdateFailed => '업데이트에 실패했습니다. 출력은 위에 있습니다.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      '에이전트는 설치 스크립트를 자신과 분리해 실행하므로 재시작해도 업데이트가 멈추지 않습니다. 그동안 에이전트 연결이 몇 초 끊기며, 이 창은 재시작 이후에도 진행을 따라갑니다.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo 비밀번호';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      '여기서는 설치 스크립트에 root가 필요합니다(OpenRC 서비스). 비밀번호는 한 번만 쓰고 저장하지 않습니다.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo가 이 비밀번호를 받아들이지 않았습니다.';
+
+  @override
+  String get monitorUpdateNoAnswer => '에이전트가 돌아오지 않았습니다. 서버에서 확인하세요.';
 }

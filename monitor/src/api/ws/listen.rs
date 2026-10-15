@@ -22,15 +22,14 @@
 //!
 //! # Authority
 //!
-//! The caller's `listen` grant (`core::permissions::ListenGrant`): loopback
-//! only unless it says `public` — see [`bind_host`] — and only on its `ports`
-//! when it names a range. Checked when the ticket is minted, when the socket
-//! opens, when `listen` arrives, and again whenever a role changes while the
-//! port is open.
+//! The transport rule, and whatever address and port the system account may
+//! bind — see [`bind_host`]. Checked when the ticket is minted, when the
+//! socket opens, when `listen` arrives, and again on a password change while
+//! the port is open (`AppState.password_changed`).
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -44,12 +43,11 @@ use serde::{Deserialize, Serialize};
 use tokio::net::{TcpListener, TcpStream};
 
 use super::audit::{self, Action, Event, Kind, Outcome};
-use super::stream::next_change;
+use super::live::{Ending, LiveKind};
 use super::ticket::Purpose;
 use super::upgrade::WsSink;
 use crate::api::authz;
 use crate::api::server::AppState;
-use crate::core::permissions::Grant;
 use crate::utils::secrets::random_hex;
 
 const TICKET_PROTOCOL_PREFIX: &str = "sbm-ticket.";
@@ -69,24 +67,14 @@ pub const MAX_PENDING: usize = 64;
 /// Listeners the agent holds at once, across every client.
 pub const MAX_LISTENERS: usize = 32;
 
-/// What to bind for [host], or `None` when it may not be bound.
-///
-/// Loopback is always allowed — `127.0.0.0/8`, `::1`, `localhost`, and an
-/// empty host, which means `127.0.0.1`. Anything else, `0.0.0.0` and `::`
-/// included, only with [public] (`listen_public`): sshd's `GatewayPorts`, and
-/// off for the same reason — a forward bound to every interface hands the port
-/// to everyone who can reach this machine.
-///
-/// A name that is not an address is a public bind too: what it resolves to is
-/// not known here, and `localhost` is the one name that is.
-pub fn bind_host(host: &str, public: bool) -> Option<String> {
+/// What to bind for [host]: an empty host and `localhost` are `127.0.0.1`;
+/// anything else is bound as given, as far as the system account may.
+pub fn bind_host(host: &str) -> String {
     let host = host.trim();
     if host.is_empty() || host.eq_ignore_ascii_case("localhost") {
-        return Some("127.0.0.1".to_string());
+        return "127.0.0.1".to_string();
     }
-    let bare = host.trim_start_matches('[').trim_end_matches(']');
-    let loopback = bare.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback());
-    (loopback || public).then(|| bare.to_string())
+    host.trim_start_matches('[').trim_end_matches(']').to_string()
 }
 
 /// Connections a listener accepted and the app has not taken yet.
@@ -109,14 +97,12 @@ struct Waiting {
     stream: TcpStream,
     peer: SocketAddr,
     listener: u64,
-    /// The panel account that listened, which is the only one that may claim.
-    subject: String,
     accepted_at: Instant,
 }
 
 impl PendingStore {
     /// Room for one more listener, or `None` at [`MAX_LISTENERS`].
-    pub fn open_listener(self: &Arc<Self>, subject: &str) -> Option<Listener> {
+    pub fn open_listener(self: &Arc<Self>) -> Option<Listener> {
         let mut inner = self.lock();
         if inner.listeners >= MAX_LISTENERS {
             return None;
@@ -126,22 +112,13 @@ impl PendingStore {
         Some(Listener {
             store: self.clone(),
             id: inner.next_listener,
-            subject: subject.to_string(),
         })
     }
 
-    /// Takes the connection waiting under [id], if [subject] is who listened
-    /// for it.
-    ///
-    /// A connection asked for by anyone else is left where it is: an id is not
-    /// a credential, and one seen in a log must not be a way to take the
-    /// connection — nor to drop it before its owner can.
-    pub fn claim(&self, id: &str, subject: &str) -> Option<(TcpStream, SocketAddr)> {
+    /// Takes the connection waiting under [id].
+    pub fn claim(&self, id: &str) -> Option<(TcpStream, SocketAddr)> {
         let mut inner = self.lock();
         Self::expire_locked(&mut inner, Instant::now());
-        if inner.waiting.get(id)?.subject != subject {
-            return None;
-        }
         inner.waiting.remove(id).map(|w| (w.stream, w.peer))
     }
 
@@ -169,7 +146,6 @@ impl PendingStore {
 pub struct Listener {
     store: Arc<PendingStore>,
     id: u64,
-    subject: String,
 }
 
 impl Listener {
@@ -190,7 +166,6 @@ impl Listener {
                 stream,
                 peer,
                 listener: self.id,
-                subject: self.subject.clone(),
                 accepted_at: Instant::now(),
             },
         );
@@ -268,20 +243,18 @@ pub async fn listen_ws(
     let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Listen) else {
         return deny("ticket", HttpResponse::Unauthorized().finish()).await;
     };
-    let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
 
-    let admitted = authz::caller_named(&app_state, &subject)
+    let admitted = authz::caller(&app_state)
         .await
-        .filter(|caller| caller.check(Grant::Listen, &app_state, secure).is_ok());
+        .filter(|caller| caller.check(&app_state, secure).is_ok());
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+        return deny("not admitted", HttpResponse::Forbidden().finish()).await;
     };
 
     let ctx = Rc::new(ListenCtx {
         state: app_state,
-        subject,
         remote_ip,
         secure,
         since: admitted.since,
@@ -312,8 +285,7 @@ pub async fn listen_ws(
 
 struct ListenCtx {
     state: Arc<AppState>,
-    /// Panel account, from the ticket. Only it may claim what this accepts.
-    subject: String,
+    /// Where the upgrade came from, for the audit log.
     remote_ip: Option<String>,
     secure: bool,
     /// The account's password as of the upgrade — see `stream::ConnCtx`.
@@ -321,27 +293,21 @@ struct ListenCtx {
 }
 
 impl ListenCtx {
-    /// This socket's account, its role read again — none once its password
-    /// has changed since the upgrade.
+    /// This socket's account, read again — none once its password has
+    /// changed since the upgrade.
     async fn caller(&self) -> Option<authz::Caller> {
-        authz::caller_named(&self.state, &self.subject)
+        authz::caller(&self.state)
             .await
             .filter(|caller| caller.since == self.since)
     }
 
-    /// Whether this account may still hold a port bound to [bound], asked for
-    /// as [requested] — its role read again.
-    async fn may_hold(&self, bound: SocketAddr, requested: u16) -> bool {
+    /// Whether the port may still be held: the password unchanged, the link
+    /// still one the machine may be acted on over.
+    async fn may_hold(&self) -> bool {
         let Some(caller) = self.caller().await else {
             return false;
         };
-        if caller.check(Grant::Listen, &self.state, self.secure).is_err() {
-            return false;
-        }
-        let Some(listen) = &caller.grants().listen else {
-            return false;
-        };
-        (listen.public || bound.ip().is_loopback()) && listen.permits_port(requested)
+        caller.check(&self.state, self.secure).is_ok()
     }
 }
 
@@ -400,36 +366,17 @@ impl Control {
     async fn listen(&self, host: &str, port: u16) -> Option<Message> {
         let ctx = &self.ctx;
         // Before the check, for the reason `stream::open` gives.
-        let changes = ctx.state.grants_changed.subscribe();
-        let caller = ctx.caller().await;
-        let grant = match &caller {
-            Some(caller) => match caller.check(Grant::Listen, &ctx.state, ctx.secure) {
-                Ok(()) => caller.grants().listen.clone(),
-                Err(_) => None,
-            },
-            None => None,
+        let changes = ctx.state.password_changed.subscribe();
+        let allowed = match ctx.caller().await {
+            Some(caller) => caller.check(&ctx.state, ctx.secure).is_ok(),
+            None => false,
         };
-        let Some(grant) = grant else {
-            self.audit(Action::Denied, Outcome::Denied, "not granted").await;
-            return Some(error_frame("forbidden", "This account may not listen"));
-        };
-        let Some(bind) = bind_host(host, grant.public) else {
-            self.audit(Action::Denied, Outcome::Denied, &format!("public bind {host}:{port}"))
-                .await;
-            return Some(error_frame(
-                "not_permitted",
-                "Only loopback may be listened on; this account's role does not allow public binds",
-            ));
-        };
-        if !grant.permits_port(port) {
-            self.audit(Action::Denied, Outcome::Denied, &format!("port {port}"))
-                .await;
-            return Some(error_frame(
-                "not_permitted",
-                "This account's role does not allow listening on that port",
-            ));
+        if !allowed {
+            self.audit(Action::Denied, Outcome::Denied, "not allowed").await;
+            return Some(error_frame("forbidden", "A port may not be listened on here"));
         }
-        let Some(slot) = ctx.state.pending.open_listener(&ctx.subject) else {
+        let bind = bind_host(host);
+        let Some(slot) = ctx.state.pending.open_listener() else {
             return Some(error_frame("limit", "Too many listeners are open"));
         };
         let listener = match TcpListener::bind((bind.as_str(), port)).await {
@@ -458,14 +405,14 @@ impl Control {
             return None;
         }
 
+        let ending = ctx.state.live.register(changes, LiveKind::Listen, bound.to_string(), ctx.remote_ip.clone());
         spawn(accept_loop(
             ctx.clone(),
             self.sink.clone(),
             listener,
             slot,
-            changes,
+            ending,
             bound,
-            port,
         ));
         None
     }
@@ -483,21 +430,20 @@ async fn accept_loop(
     sink: WsSink,
     listener: TcpListener,
     slot: Listener,
-    mut changes: tokio::sync::broadcast::Receiver<&'static str>,
+    mut ending: Ending,
     bound: SocketAddr,
-    requested: u16,
 ) {
     let disconnect = sink.on_disconnect();
     tokio::pin!(disconnect);
     loop {
         tokio::select! {
             _ = &mut disconnect => break,
-            code = next_change(&mut changes) => {
-                if ctx.may_hold(bound, requested).await {
+            signal = ending.next() => {
+                if signal.rechecks() && ctx.may_hold().await {
                     continue;
                 }
                 let _ = sink
-                    .send(error_frame(code, "This account may no longer listen on this port"))
+                    .send(error_frame(signal.code(), signal.message()))
                     .await;
                 let _ = sink.send(Message::Close(Some(CloseCode::Normal.into()))).await;
                 break;
@@ -541,7 +487,6 @@ async fn accept_loop(
 
 async fn audit_listen(ctx: &ListenCtx, action: Action, outcome: Outcome, detail: &str) {
     Event::new(Kind::Listen, action, outcome)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .detail(detail)
         .record(&ctx.state.db)
@@ -553,20 +498,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn loopback_is_always_allowed() {
-        for host in ["", "localhost", "LOCALHOST", "127.0.0.1", "127.8.9.10", "::1", "[::1]"] {
-            assert!(bind_host(host, false).is_some(), "{host}");
-        }
-        assert_eq!(bind_host("", false).as_deref(), Some("127.0.0.1"));
-        assert_eq!(bind_host("[::1]", false).as_deref(), Some("::1"));
-    }
-
-    #[test]
-    fn anything_else_needs_listen_public() {
-        for host in ["0.0.0.0", "::", "192.168.1.2", "example.com"] {
-            assert!(bind_host(host, false).is_none(), "{host}");
-            assert!(bind_host(host, true).is_some(), "{host}");
-        }
+    fn an_empty_host_and_localhost_are_loopback_and_the_rest_is_as_given() {
+        assert_eq!(bind_host(""), "127.0.0.1");
+        assert_eq!(bind_host("LOCALHOST"), "127.0.0.1");
+        assert_eq!(bind_host("[::1]"), "::1");
+        assert_eq!(bind_host("0.0.0.0"), "0.0.0.0");
     }
 
     /// A connected pair, so the store has a real socket to hold.
@@ -578,50 +514,48 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_connection_is_claimed_once_by_who_listened() {
+    async fn a_connection_is_claimed_once() {
         let store = Arc::new(PendingStore::default());
-        let slot = store.open_listener("alice").unwrap();
+        let slot = store.open_listener().unwrap();
         let (stream, peer, _client) = connection().await;
         let id = slot.hold(stream, peer).unwrap();
         assert_eq!(id.len(), 32);
 
-        // Someone else asking neither takes it nor drops it.
-        assert!(store.claim(&id, "mallory").is_none());
-        let (_, claimed_peer) = store.claim(&id, "alice").unwrap();
+        let (_, claimed_peer) = store.claim(&id).unwrap();
         assert_eq!(claimed_peer, peer);
-        assert!(store.claim(&id, "alice").is_none());
+        assert!(store.claim(&id).is_none());
     }
 
     #[tokio::test]
     async fn an_unclaimed_connection_expires() {
         let store = Arc::new(PendingStore::default());
-        let slot = store.open_listener("alice").unwrap();
+        let slot = store.open_listener().unwrap();
         let (stream, peer, _client) = connection().await;
         let id = slot.hold(stream, peer).unwrap();
 
         store.expire(Instant::now() + PENDING_TTL + Duration::from_secs(1));
-        assert!(store.claim(&id, "alice").is_none());
+        assert!(store.claim(&id).is_none());
     }
 
     #[tokio::test]
     async fn closing_the_listener_drops_what_it_has_waiting() {
         let store = Arc::new(PendingStore::default());
-        let slot = store.open_listener("alice").unwrap();
-        let other = store.open_listener("alice").unwrap();
+        let slot = store.open_listener().unwrap();
+        let other = store.open_listener().unwrap();
         let (a, peer_a, _ca) = connection().await;
         let (b, peer_b, _cb) = connection().await;
         let mine = slot.hold(a, peer_a).unwrap();
         let theirs = other.hold(b, peer_b).unwrap();
 
         drop(slot);
-        assert!(store.claim(&mine, "alice").is_none());
-        assert!(store.claim(&theirs, "alice").is_some());
+        assert!(store.claim(&mine).is_none());
+        assert!(store.claim(&theirs).is_some());
     }
 
     #[tokio::test]
     async fn a_listener_holds_at_most_max_pending() {
         let store = Arc::new(PendingStore::default());
-        let slot = store.open_listener("alice").unwrap();
+        let slot = store.open_listener().unwrap();
         let mut clients = Vec::new();
         for _ in 0..MAX_PENDING {
             let (stream, peer, client) = connection().await;
@@ -636,10 +570,10 @@ mod tests {
     fn listeners_are_capped_and_freed() {
         let store = Arc::new(PendingStore::default());
         let slots: Vec<_> = (0..MAX_LISTENERS)
-            .map(|_| store.open_listener("alice").unwrap())
+            .map(|_| store.open_listener().unwrap())
             .collect();
-        assert!(store.open_listener("alice").is_none());
+        assert!(store.open_listener().is_none());
         drop(slots);
-        assert!(store.open_listener("alice").is_some());
+        assert!(store.open_listener().is_some());
     }
 }

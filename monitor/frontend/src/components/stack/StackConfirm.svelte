@@ -1,5 +1,5 @@
 <script lang="ts">
-  /// What the admin confirms before a web app is deployed: which project it
+  /// What the account confirms before a web app is deployed: which project it
   /// is, who makes it, its version, licence, source, the images it will pull,
   /// the folders and port it will use, what its compose files do here, and
   /// that it is third-party software. Each box must be ticked to go on; the

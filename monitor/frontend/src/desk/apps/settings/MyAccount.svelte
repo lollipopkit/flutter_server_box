@@ -1,20 +1,15 @@
 <script lang="ts">
-  /// The signed-in account on this agent: who it is, the role it holds, and
-  /// its own password — the one thing an account that is not an
-  /// administrator may change.
+  /// The agent's account: its password, changed only where the account may
+  /// act over this link.
 
-  import { Badge, Button, Group, Input, Row, Spinner } from '../../lk'
+  import { Button, Group, Input, Row, Spinner } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { accessMessage } from '../../../lib/access'
+  import { accessMessage, whyText } from '../../../lib/access'
   import { api } from '../../../lib/api'
-  import type { Me } from '../../../types'
+  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { servers } from '../../../lib/servers.svelte'
 
-  interface Props {
-    me: Me
-  }
-
-  const { me }: Props = $props()
-
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   let current = $state('')
   let next = $state('')
   let busy = $state(false)
@@ -45,26 +40,25 @@
   }
 </script>
 
-<Group title={$LL.settingsPersonal()}>
-  <Row label={$LL.settingsUser()} value={me.username} mono />
-  <Row label={$LL.accountRole()}>
-    <Badge tone={me.admin ? 'success' : 'neutral'}>{me.role}</Badge>
-  </Row>
-</Group>
-
-<form onsubmit={change}>
+{#if caps?.access?.ok === false}
   <Group title={$LL.settingsSecurity()}>
-    <Row label={$LL.currentPassword()} sub={$LL.settingsPasswordHint()}>
-      <Input class="w-[200px]" type="password" autocomplete="current-password" bind:value={current} />
-    </Row>
-    <Row label={$LL.newPassword()}>
-      <Input class="w-[200px]" type="password" autocomplete="new-password" bind:value={next} />
-    </Row>
-    <Row label={$LL.changePassword()} sub={error ?? (done ? $LL.passwordChanged() : undefined)}>
-      <Button size="sm" variant="secondary" type="submit" disabled={busy || !current || !next}>
-        {#if busy}<Spinner size={16} />{/if}
-        {$LL.settingsChange()}
-      </Button>
-    </Row>
+    <p class="py-[9px] text-[13px] text-(--text-secondary)">{whyText(caps.access.why, $LL)}</p>
   </Group>
-</form>
+{:else}
+  <form onsubmit={change}>
+    <Group title={$LL.settingsSecurity()}>
+      <Row label={$LL.currentPassword()} sub={$LL.settingsPasswordHint()}>
+        <Input class="w-[200px]" type="password" autocomplete="current-password" bind:value={current} />
+      </Row>
+      <Row label={$LL.newPassword()}>
+        <Input class="w-[200px]" type="password" autocomplete="new-password" bind:value={next} />
+      </Row>
+      <Row label={$LL.changePassword()} sub={error ?? (done ? $LL.passwordChanged() : undefined)}>
+        <Button size="sm" variant="secondary" type="submit" disabled={busy || !current || !next}>
+          {#if busy}<Spinner size={16} />{/if}
+          {$LL.settingsChange()}
+        </Button>
+      </Row>
+    </Group>
+  </form>
+{/if}

@@ -8,21 +8,25 @@ use crate::utils::error::{MonitorError, Result};
 const DUMMY_PASSWORD_HASH: &str =
     "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxDr5E6a6E9E/sy0tESrQ6D7x8e";
 
+/// What every panel token names: the agent has one account, so the subject
+/// says only that the token is one of this agent's.
+pub const SUBJECT: &str = "owner";
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String,  // subject (user id)
+    pub sub: String,  // always [`SUBJECT`]
     pub exp: usize,   // expiration time
     pub iat: usize,   // issued at
 }
 
-pub fn generate_token(user_id: &str, secret: &str) -> Result<String> {
+pub fn generate_token(secret: &str) -> Result<String> {
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(1))
         .expect("valid timestamp")
         .timestamp() as usize;
     
     let claims = Claims {
-        sub: user_id.to_string(),
+        sub: SUBJECT.to_string(),
         exp: expiration,
         iat: Utc::now().timestamp() as usize,
     };

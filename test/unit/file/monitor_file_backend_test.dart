@@ -201,7 +201,6 @@ Future<HttpServer> _serve(
 
 MonitorHttpCredential _credential(HttpServer server) => MonitorHttpCredential(
   addr: 'http://${server.address.address}:${server.port}',
-  user: 'user',
   pwd: 'password',
 );
 

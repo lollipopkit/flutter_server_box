@@ -200,8 +200,7 @@ export const deskApi = {
       'Failed to save',
     ),
 
-  /// The apps installed on the agent (`api::apps`); an admin also sees those
-  /// waiting for approval.
+  /// The apps installed on the agent (`api::apps`), approved or waiting.
   apps: (entry: ServerEntry) => requestFor<{ apps: InstalledApp[] }>(entry, '/apps', {}, 'Failed to load the apps'),
 
   /// Where an installed app's UI loads from (a ticketed path).

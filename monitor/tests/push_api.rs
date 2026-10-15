@@ -72,7 +72,7 @@ async fn test_server() -> TestServer {
     };
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let state = AppState::new(Arc::new(config), db);
 
     web_test::server(move || {
@@ -86,7 +86,7 @@ async fn test_server() -> TestServer {
 }
 
 fn jwt() -> String {
-    generate_token("admin", SECRET).unwrap()
+    generate_token(SECRET).unwrap()
 }
 
 /// Two channels, each holding something that must never come back out.

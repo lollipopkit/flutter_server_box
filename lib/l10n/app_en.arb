@@ -2651,20 +2651,6 @@
       }
     }
   },
-  "funcNeedsAgentGrant": "{func} needs the Monitor agent's {setting} to be turned on.",
-  "@funcNeedsAgentGrant": {
-    "placeholders": {
-      "func": { "type": "String" },
-      "setting": { "type": "String" }
-    }
-  },
-  "funcNeedsAgentUpdate": "{func} needs a newer Monitor agent.",
-  "@funcNeedsAgentUpdate": {
-    "placeholders": {
-      "func": { "type": "String" }
-    }
-  },
-  "portForwardRemoteNeedsAgent": "Remote forwards through the Monitor agent need a newer agent: update it on the server.",
   "rangeLive": "Live",
   "@rangeLive": {
     "description": "User-facing label or message for range live."
@@ -3607,7 +3593,7 @@
   "@corsOriginsTip": {
     "description": "Help text for the cors origins setting or action."
   },
-  "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml.",
+  "monitorNoRemoteAccess": "This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.",
   "@monitorNoRemoteAccess": {
     "description": "User-facing label or message for monitor no remote access."
   },
@@ -6660,57 +6646,19 @@
   },
   "reduceMotion": "Reduce motion",
   "copyLink": "Copy link",
-  "funcNeedsAgentPermission": "Your account on this Monitor agent has no permission for {func}. Ask the agent's admin.",
-  "@funcNeedsAgentPermission": {
-    "placeholders": {
-      "func": { "type": "String" }
-    }
-  },
   "funcNeedsAgentHttps": "{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.",
   "@funcNeedsAgentHttps": {
     "placeholders": {
       "func": { "type": "String" }
     }
   },
-  "funcNeedsAgentSetup": "{func} is not set up on this Monitor agent; its operator has to configure it.",
-  "@funcNeedsAgentSetup": {
-    "placeholders": {
-      "func": { "type": "String" }
-    }
-  },
-  "monitorFilesReadOnly": "Read-only: this account can browse files on the agent but not change them.",
   "monitorAccess": "Access",
-  "monitorAccounts": "Accounts",
-  "monitorRoles": "Roles",
-  "monitorRole": "Role",
   "monitorChangePassword": "Change password",
   "monitorNewPassword": "New password",
   "monitorCurrentPassword": "Your current password",
-  "monitorReauthTip": "Changing access needs your own password again.",
   "monitorPasswordTooShort": "At least 8 characters",
   "monitorPasswordMismatch": "The passwords do not match",
   "monitorErrReauth": "Your password was wrong.",
-  "monitorErrLastAdmin": "The agent needs at least one admin account.",
-  "monitorErrConflict": "It already exists, or it is still in use.",
-  "monitorErrForbidden": "Only an admin can do this.",
-  "monitorRoleNameRule": "Lowercase letters, digits, - and _, up to 32 characters",
-  "monitorGrantShell": "Shell and commands",
-  "monitorGrantShellTip": "Terminal, processes, services, containers, snippets, power — as the agent's account",
-  "monitorGrantVirt": "Virtualization",
-  "monitorGrantVirtTip": "Proxmox VE, libvirt and BMCs the agent reaches, in its web panel",
-  "monitorGrantFiles": "Files",
-  "monitorGrantConnect": "Outbound connections",
-  "monitorGrantConnectTip": "Local and dynamic port forwards, remote desktop",
-  "monitorGrantConnectAllow": "Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)",
-  "monitorGrantListen": "Listen on the server",
-  "monitorGrantListenTip": "Remote port forwards",
-  "monitorGrantListenPublic": "Non-loopback addresses",
-  "monitorGrantPorts": "Port range (empty is any)",
-  "monitorGrantOff": "Off",
-  "monitorBuiltin": "Built-in",
-  "monitorAdminRoleTip": "Manages accounts, roles and the agent's settings",
-  "monitorYou": "You",
-  "monitorNoAccessToSettings": "Only an admin can change this agent's settings.",
   "monitorPasswordNotSaved": "The password was changed on the agent, but the app could not save it. Update this server's Monitor password in its settings.",
   "@monitorPasswordNotSaved": {
     "description": "Shown when the agent accepted a new password but the app failed to update the credential it stores for the server."
@@ -7007,10 +6955,6 @@
   "monitorBackupUnsupported": "This monitor agent cannot store backups. Update the agent.",
   "@monitorBackupUnsupported": {
     "description": "Backup sync to a monitor agent: the agent is too old to store backups."
-  },
-  "monitorBackupAdminOnly": "Only an admin account of the monitor agent can store backups on it.",
-  "@monitorBackupAdminOnly": {
-    "description": "Backup sync to a monitor agent: the account the app logs in with is not an admin."
   },
   "monitorBackupTooLarge": "The backup is larger than the monitor agent accepts ({max}).",
   "@monitorBackupTooLarge": {
@@ -7695,10 +7639,6 @@
   "@storagePools": {
     "description": "Storage and sharing page text."
   },
-  "storageWholeDisk": "Whole disk",
-  "@storageWholeDisk": {
-    "description": "Storage and sharing page text."
-  },
   "storageNoFilesystem": "No filesystem",
   "@storageNoFilesystem": {
     "description": "Storage and sharing page text."
@@ -7801,10 +7741,6 @@
   },
   "storagePickDevices": "Pick at least {count} devices. What they hold is lost.",
   "@storagePickDevices": {
-    "description": "Storage and sharing page text."
-  },
-  "storageNoFreeDevices": "No free disk or partition.",
-  "@storageNoFreeDevices": {
     "description": "Storage and sharing page text."
   },
   "storageCreateRaid": "Create array",
@@ -7947,28 +7883,12 @@
   "@storageConfirmationMismatch": {
     "description": "Storage and sharing page text."
   },
-  "storageSudoPassword": "sudo password (if the agent's account needs one)",
-  "@storageSudoPassword": {
-    "description": "Storage and sharing page text."
-  },
   "storageInUse": "{device} is in use.",
   "@storageInUse": {
     "description": "Storage and sharing page text."
   },
   "storageBusy": "Another change to the disks is running.",
   "@storageBusy": {
-    "description": "Storage and sharing page text."
-  },
-  "storageWorking": "Changing the disks…",
-  "@storageWorking": {
-    "description": "Storage and sharing page text."
-  },
-  "storageDone": "Done",
-  "@storageDone": {
-    "description": "Storage and sharing page text."
-  },
-  "storageFailed": "Did not finish",
-  "@storageFailed": {
     "description": "Storage and sharing page text."
   },
   "storageHealthRead": "Read disk health",
@@ -8005,18 +7925,6 @@
   },
   "storageTesting": "Self-test: {percent}% left",
   "@storageTesting": {
-    "description": "Storage and sharing page text."
-  },
-  "storageLastTestPassed": "Last self-test passed",
-  "@storageLastTestPassed": {
-    "description": "Storage and sharing page text."
-  },
-  "storageLastTestFailed": "Last self-test failed",
-  "@storageLastTestFailed": {
-    "description": "Storage and sharing page text."
-  },
-  "storageLastTestAborted": "Last self-test was stopped",
-  "@storageLastTestAborted": {
     "description": "Storage and sharing page text."
   },
   "storageGrowPartition": "Grow partition",
@@ -8295,10 +8203,6 @@
   "@sharingInstallNfsBody": {
     "description": "Storage and sharing page text."
   },
-  "sharingInstalling": "Installing…",
-  "@sharingInstalling": {
-    "description": "Storage and sharing page text."
-  },
   "sharingAddShare": "Add share",
   "@sharingAddShare": {
     "description": "Storage and sharing page text."
@@ -8387,16 +8291,8 @@
   "@sharingPasswordsBody": {
     "description": "Storage and sharing page text."
   },
-  "sharingAccount": "Account",
-  "@sharingAccount": {
-    "description": "Storage and sharing page text."
-  },
   "sharingSetPassword": "Set password",
   "@sharingSetPassword": {
-    "description": "Storage and sharing page text."
-  },
-  "sharingSetPasswordBody": "Sets the SMB password of {user}.",
-  "@sharingSetPasswordBody": {
     "description": "Storage and sharing page text."
   },
   "sharingNewPassword": "New SMB password",
@@ -8421,10 +8317,6 @@
   },
   "sharingAddClient": "Add client",
   "@sharingAddClient": {
-    "description": "Storage and sharing page text."
-  },
-  "sharingSquash": "Root on the client",
-  "@sharingSquash": {
     "description": "Storage and sharing page text."
   },
   "sharingSquashRoot": "Root is nobody",
@@ -8666,5 +8558,593 @@
         "type": "String"
       }
     }
+  },
+  "noticeStackDown": "{app} is down",
+  "@noticeStackDown": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackDownBody": "Not running: {services}.",
+  "@noticeStackDownBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "services": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackDownBodyEmpty": "None of its containers is running.",
+  "@noticeStackDownBodyEmpty": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStackUnhealthy": "{app} is unhealthy",
+  "@noticeStackUnhealthy": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackUnhealthyBody": "Failing its health check: {services}.",
+  "@noticeStackUnhealthyBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "services": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackBack": "{app} is running again",
+  "@noticeStackBack": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackBackBody": "Every container is up.",
+  "@noticeStackBackBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStackUpdate": "{app}: an update is available",
+  "@noticeStackUpdate": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackUpdateBody": "{project} {version} can be installed (now {current}).",
+  "@noticeStackUpdateBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "project": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageArrayDegraded": "/dev/{array} is degraded",
+  "@noticeStorageArrayDegraded": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "array": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageArrayDegradedBody": "A member failed or is missing; the array runs without its redundancy.",
+  "@noticeStorageArrayDegradedBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStorageArrayBack": "/dev/{array} is healthy again",
+  "@noticeStorageArrayBack": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "array": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageArrayBackBody": "Every member is working.",
+  "@noticeStorageArrayBackBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStoragePoolUnhealthy": "Pool {pool} is {health}",
+  "@noticeStoragePoolUnhealthy": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "pool": {
+        "type": "String"
+      },
+      "health": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStoragePoolUnhealthyBody": "Open Storage to see which device.",
+  "@noticeStoragePoolUnhealthyBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStoragePoolBack": "Pool {pool} is online again",
+  "@noticeStoragePoolBack": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "pool": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStoragePoolBackBody": "Every device is working.",
+  "@noticeStoragePoolBackBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStorageDiskFailing": "{device} is failing",
+  "@noticeStorageDiskFailing": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageDiskFailingBody": "Its SMART check or self-test failed: copy what it holds elsewhere and replace it.",
+  "@noticeStorageDiskFailingBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStorageDiskSectors": "{device} has {count} bad sectors",
+  "@noticeStorageDiskSectors": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeStorageDiskSectorsBody": "It had {was}. A disk losing sectors often fails soon.",
+  "@noticeStorageDiskSectorsBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "was": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeStorageMaintenanceFailed": "Storage maintenance did not run: {task}",
+  "@noticeStorageMaintenanceFailed": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "storageTaskScrub": "Scrub pools and check arrays",
+  "@storageTaskScrub": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "storageTaskSmartShort": "Short SMART test",
+  "@storageTaskSmartShort": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "storageTaskSmartLong": "Long SMART test",
+  "@storageTaskSmartLong": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "storageNeedsSudo": "sudo asked for a password: run the agent as root, or allow these commands (above).",
+  "@storageNeedsSudo": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "monitorTab": "Monitor",
+  "@monitorTab": {
+    "description": "Name of the Monitor tab."
+  },
+  "monitorOverview": "Overview",
+  "@monitorOverview": {
+    "description": "Monitor tab section: each agent, its version and its firing alerts."
+  },
+  "monitorNotices": "Notifications",
+  "@monitorNotices": {
+    "description": "Monitor tab section: the agents' notifications."
+  },
+  "monitorAudit": "Audit log",
+  "@monitorAudit": {
+    "description": "Monitor tab section: an agent's audit log."
+  },
+  "monitorLive": "Sessions & devices",
+  "@monitorLive": {
+    "description": "Monitor tab section: what is signed in to an agent and open on it."
+  },
+  "monitorNoAgents": "No server is reached through a Monitor agent yet.",
+  "@monitorNoAgents": {
+    "description": "Monitor tab when no server is reached through a Monitor agent."
+  },
+  "monitorNotOffered": "This agent's version does not offer this. Update the agent.",
+  "@monitorNotOffered": {
+    "description": "Monitor tab when the agent is too old for a section."
+  },
+  "monitorAlertsNotOffered": "This agent's version does not report alerts.",
+  "@monitorAlertsNotOffered": {
+    "description": "Overview card: the agent is too old to report alerts."
+  },
+  "monitorAlertsNone": "No rule is firing.",
+  "@monitorAlertsNone": {
+    "description": "Overview card: no monitoring rule is firing."
+  },
+  "monitorFiringFor": "firing for {duration}",
+  "@monitorFiringFor": {
+    "description": "An alert: how long its rule has been firing without a break.",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorAgentVersion": "Agent {version}",
+  "@monitorAgentVersion": {
+    "description": "Overview card: the agent's version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorAgentUpdate": "{version} available",
+  "@monitorAgentUpdate": {
+    "description": "Overview card: a newer agent release exists.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorUnread": "{count} unread",
+  "@monitorUnread": {
+    "description": "Overview card: unread notifications.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorAppsUnwell": "Apps with problems: {count}",
+  "@monitorAppsUnwell": {
+    "description": "Overview card: deployed web apps that are down or unhealthy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorAppsUpdates": "App updates: {count}",
+  "@monitorAppsUpdates": {
+    "description": "Overview card: deployed web apps the catalog has a newer version of.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorUpdatesOnly": "Updates only",
+  "@monitorUpdatesOnly": {
+    "description": "Web apps section: show only apps with an update."
+  },
+  "monitorNoUpdates": "No app has an update.",
+  "@monitorNoUpdates": {
+    "description": "Web apps section: no app has an update."
+  },
+  "monitorNoticesEmpty": "No notifications.",
+  "@monitorNoticesEmpty": {
+    "description": "Notifications section: none."
+  },
+  "monitorMarkAllRead": "Mark all as read",
+  "@monitorMarkAllRead": {
+    "description": "Notifications section: mark every notification read."
+  },
+  "monitorAuditExec": "Commands",
+  "@monitorAuditExec": {
+    "description": "Audit log kind: commands run through the agent."
+  },
+  "monitorAuditMachine": "Machine management",
+  "@monitorAuditMachine": {
+    "description": "Audit log kind: machine management (power, processes, services, …)."
+  },
+  "monitorAuditListen": "Listened ports",
+  "@monitorAuditListen": {
+    "description": "Audit log kind and connection kind: ports the agent listened on."
+  },
+  "monitorAuditTicket": "Connection tickets",
+  "@monitorAuditTicket": {
+    "description": "Audit log kind: single-use connection tickets."
+  },
+  "monitorAuditPush": "Notification channels",
+  "@monitorAuditPush": {
+    "description": "Audit log kind: notification channels changed or tested."
+  },
+  "monitorAuditAdmin": "Account",
+  "@monitorAuditAdmin": {
+    "description": "Audit log kind: the account (password, sessions and devices ended)."
+  },
+  "monitorAuditDenied": "Denied",
+  "@monitorAuditDenied": {
+    "description": "Audit log result: refused."
+  },
+  "monitorLoadMore": "Load more",
+  "@monitorLoadMore": {
+    "description": "Audit log: read the next page."
+  },
+  "monitorLiveSessions": "Terminal sessions",
+  "@monitorLiveSessions": {
+    "description": "Sessions section heading: terminal sessions."
+  },
+  "monitorLiveConnections": "Connections",
+  "@monitorLiveConnections": {
+    "description": "Sessions section heading: relayed connections, ports, consoles, remote desktops."
+  },
+  "monitorLiveWatchTokens": "Watch and widget tokens",
+  "@monitorLiveWatchTokens": {
+    "description": "Sessions section heading: read-only tokens of watches and widgets."
+  },
+  "monitorLiveDevices": "Signed-in devices",
+  "@monitorLiveDevices": {
+    "description": "Sessions section heading: devices that signed in with the password."
+  },
+  "monitorLiveDevicesTip": "Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.",
+  "@monitorLiveDevicesTip": {
+    "description": "Sessions section: what forgetting a device does and does not do."
+  },
+  "monitorLiveAttached": "Attached",
+  "@monitorLiveAttached": {
+    "description": "A terminal session a client is attached to now."
+  },
+  "monitorLiveDetached": "Detached",
+  "@monitorLiveDetached": {
+    "description": "A terminal session no client is attached to; it ends after the timeout."
+  },
+  "monitorLiveEnd": "End",
+  "@monitorLiveEnd": {
+    "description": "Sessions section: end a session or connection."
+  },
+  "monitorLiveRevoke": "Revoke",
+  "@monitorLiveRevoke": {
+    "description": "Sessions section: revoke a watch or widget token."
+  },
+  "monitorLiveForget": "Forget",
+  "@monitorLiveForget": {
+    "description": "Sessions section: forget a signed-in device."
+  },
+  "monitorLiveEndSessionConfirm": "End the terminal session \"{name}\"? What runs in it stops.",
+  "@monitorLiveEndSessionConfirm": {
+    "description": "Confirm ending a terminal session.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveEndConnectionConfirm": "End the connection to {name}?",
+  "@monitorLiveEndConnectionConfirm": {
+    "description": "Confirm ending a connection.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveRevokeConfirm": "Revoke the token of {name}? It stops updating until it is set up again.",
+  "@monitorLiveRevokeConfirm": {
+    "description": "Confirm revoking a watch or widget token.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveForgetConfirm": "Forget {name}?",
+  "@monitorLiveForgetConfirm": {
+    "description": "Confirm forgetting a signed-in device.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveExpires": "Expires {time}",
+  "@monitorLiveExpires": {
+    "description": "A watch or widget token: when it expires.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveStream": "Relayed connection",
+  "@monitorLiveStream": {
+    "description": "Connection kind: a TCP connection relayed by the agent."
+  },
+  "monitorLiveAccepted": "Forwarded connection",
+  "@monitorLiveAccepted": {
+    "description": "Connection kind: a connection a listened port took."
+  },
+  "monitorLiveConsole": "Console",
+  "@monitorLiveConsole": {
+    "description": "Connection kind: a virtual machine's console."
+  },
+  "monitorAgentsCount": "{count} agents",
+  "@monitorAgentsCount": {
+    "description": "Monitor tab header: how many agents a section covers.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorStatOnline": "Online",
+  "@monitorStatOnline": {
+    "description": "Overview count: agents answering."
+  },
+  "monitorStatFiring": "Alerts firing",
+  "@monitorStatFiring": {
+    "description": "Overview count: alert rules firing now."
+  },
+  "monitorStatUnread": "Unread",
+  "@monitorStatUnread": {
+    "description": "Overview count: unread notifications."
+  },
+  "monitorStatUpdates": "App updates",
+  "@monitorStatUpdates": {
+    "description": "Overview count: web apps with an update."
+  },
+  "monitorAuditEmpty": "Nothing recorded matches.",
+  "@monitorAuditEmpty": {
+    "description": "Audit log: nothing matches."
+  },
+  "monitorLiveNoSessions": "No terminal session is open.",
+  "@monitorLiveNoSessions": {
+    "description": "Sessions: no terminal session is open."
+  },
+  "monitorLiveNoConnections": "Nothing is forwarded or relayed.",
+  "@monitorLiveNoConnections": {
+    "description": "Sessions: nothing is relayed or listened on."
+  },
+  "monitorLiveNoTokens": "No watch or widget is paired.",
+  "@monitorLiveNoTokens": {
+    "description": "Sessions: no watch or widget has a token."
+  },
+  "monitorLiveNoDevices": "No device has signed in.",
+  "@monitorLiveNoDevices": {
+    "description": "Sessions: no device has signed in."
+  },
+  "monitorAgentTooOld": "This agent is older than this app and asks for a user name. Update the agent.",
+  "@monitorAgentTooOld": {
+    "description": "Signing in to a monitor agent from before it had one account, which wants a user name."
+  },
+  "monitorUpdateAgent": "Update the agent",
+  "@monitorUpdateAgent": {
+    "description": "Title of the guide to updating a monitor agent."
+  },
+  "monitorAgentTooOldTip": "The Monitor tab has the steps to update it.",
+  "@monitorAgentTooOldTip": {
+    "description": "Solution shown with a sign-in an agent too old refused."
+  },
+  "monitorAgentTooOldBody": "This agent is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.",
+  "@monitorAgentTooOldBody": {
+    "description": "Update guide: why an agent from before one account must be updated."
+  },
+  "monitorAgentOutdatedBody": "{latest} is out; this agent runs {running}.",
+  "@monitorAgentOutdatedBody": {
+    "description": "Update guide: an agent behind the newest release.",
+    "placeholders": {
+      "latest": {
+        "type": "String"
+      },
+      "running": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorUpdateRunHint": "Run this on the server, as the account the agent was installed from:",
+  "@monitorUpdateRunHint": {
+    "description": "Update guide: where the command runs."
+  },
+  "monitorUpdateSshHint": "The terminal runs it. If the agent was installed system-wide and the terminal goes over SSH, sudo asks for its password there.",
+  "@monitorUpdateSshHint": {
+    "description": "Update guide: what the terminal button does."
+  },
+  "monitorUpdateNoSsh": "The app cannot open a terminal on this server: run it there yourself.",
+  "@monitorUpdateNoSsh": {
+    "description": "Update guide: the server has no SSH in the app."
+  },
+  "monitorUpdateDocker": "In Docker? Pull the new image and recreate the container instead.",
+  "@monitorUpdateDocker": {
+    "description": "Update guide: an agent in Docker."
+  },
+  "monitorUpdateAfter": "Once it has restarted, refresh the Monitor tab.",
+  "@monitorUpdateAfter": {
+    "description": "Update guide: what to do after."
+  },
+  "monitorUpdateInTerminal": "Run in a terminal",
+  "@monitorUpdateInTerminal": {
+    "description": "Update guide: run the command in a terminal."
+  },
+  "monitorHowToUpdate": "How to update",
+  "@monitorHowToUpdate": {
+    "description": "Overview card: open the update guide."
+  },
+  "monitorUpdateNix": "Installed by the NixOS module: update it through your system configuration and rebuild.",
+  "@monitorUpdateNix": {
+    "description": "Update guide: an agent installed by the NixOS module."
+  },
+  "noticeAgentUpdate": "The agent has an update",
+  "@noticeAgentUpdate": {
+    "description": "Notification: a newer monitor agent is released."
+  },
+  "monitorUpdateLegacyUser": "Its account name",
+  "@monitorUpdateLegacyUser": {
+    "description": "Update guide: the old agent account name to sign in with."
+  },
+  "monitorUpdateLegacyHint": "This agent still signs in with an account name and a password: the name this app used before (often admin) and the saved password.",
+  "@monitorUpdateLegacyHint": {
+    "description": "Update guide: why an old agent needs its account name."
+  },
+  "monitorUpdateNow": "Update now",
+  "@monitorUpdateNow": {
+    "description": "Update guide: start the update."
+  },
+  "monitorUpdating": "Updating…",
+  "@monitorUpdating": {
+    "description": "Update progress: running."
+  },
+  "monitorUpdateRestarting": "The agent is restarting; the connection is back in a few seconds…",
+  "@monitorUpdateRestarting": {
+    "description": "Update progress: the agent does not answer while it restarts."
+  },
+  "monitorUpdateDone": "Updated: the agent runs {version}.",
+  "@monitorUpdateDone": {
+    "description": "Update progress: done.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorUpdateFailed": "The update failed. Its output is above.",
+  "@monitorUpdateFailed": {
+    "description": "Update progress: failed."
+  },
+  "monitorUpdateAgentHint": "The agent runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.",
+  "@monitorUpdateAgentHint": {
+    "description": "Update guide: the agent runs the update apart from itself."
+  },
+  "monitorUpdateSudoPassword": "sudo password",
+  "@monitorUpdateSudoPassword": {
+    "description": "Update guide: sudo password field."
+  },
+  "monitorUpdateSudoHint": "The installer needs root here (an OpenRC service). The password is used once and not saved.",
+  "@monitorUpdateSudoHint": {
+    "description": "Update guide: why sudo is needed."
+  },
+  "monitorUpdateSudoRefused": "sudo did not accept this password.",
+  "@monitorUpdateSudoRefused": {
+    "description": "Update guide: wrong sudo password."
+  },
+  "monitorUpdateNoAnswer": "The agent has not come back. Check it on the server.",
+  "@monitorUpdateNoAnswer": {
+    "description": "Update progress: the agent never came back."
   }
 }

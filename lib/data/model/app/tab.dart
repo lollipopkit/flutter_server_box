@@ -31,9 +31,10 @@ enum AppTab {
   @HiveField(8)
   workspace,
 
-  /// The web apps the servers' monitor agents deployed.
+  /// The servers' monitor agents: their state and alerts, the web apps
+  /// they deployed, their notifications, audit logs and sessions.
   @HiveField(9)
-  webApps;
+  monitor;
 
   /// Indices that named a tab which no longer exists, and so are never
   /// resolved as an integer.

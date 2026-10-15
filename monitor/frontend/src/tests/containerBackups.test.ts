@@ -23,7 +23,6 @@ const backup: ContainerBackup = {
   id: '20261011-013000-sbm-futo-immich',
   label: 'sbm-futo-immich',
   created_at: '2026-10-11T01:30:00Z',
-  created_by: 'admin',
   stopped: true,
   containers: [{ name: 'sbm-futo-immich-database-1', image: 'postgres:14', project: 'sbm-futo-immich' }],
   archives: [{ file: 'm1.tar.gz', container: 'sbm-futo-immich-database-1', mount: { kind: 'volume', name: 'pgdata', destination: '/var/lib/postgresql/data' }, bytes: 2048 }],
@@ -32,7 +31,7 @@ const backup: ContainerBackup = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   mocked.listContainerBackups.mockResolvedValue({
     backups: [backup],

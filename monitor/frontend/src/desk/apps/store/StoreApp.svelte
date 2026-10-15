@@ -2,8 +2,8 @@
   /// The App Store: the web apps this agent can deploy (its catalog: shipped,
   /// the store's repositories, the operator's own folder), to
   /// browse by category or search, each with a page of its own
-  /// (`StackDetail`: what it is, and for an admin installing, updating and
-  /// uninstalling it).
+  /// (`StackDetail`: what it is, and installing, updating and uninstalling
+  /// it).
 
   import { AppIcon, Badge, Card, Icon, IconButton, SearchField, SegmentedControl, Spinner } from '../../lk'
   import type { IconTone } from '../../lk'
@@ -14,6 +14,7 @@
   import { LL, locale } from '../../../i18n/i18n-svelte'
   import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { canAct } from '../../../lib/access'
   import { servers } from '../../../lib/servers.svelte'
   import type { StackApp } from '../../../types'
   import { untrack } from 'svelte'
@@ -34,7 +35,10 @@
   })
 
   let refreshing = $state(false)
-  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Whether the account may act over this link: setting up, changing and
+  /// removing all need it.
+  const canChange = $derived(canAct(caps))
 
   async function load(serverId = servers.currentId, fresh = false) {
     error = ''
@@ -46,7 +50,7 @@
     }
   }
 
-  /// Reads the catalog's repositories now (admin).
+  /// Reads the catalog's repositories now.
   async function refresh() {
     refreshing = true
     await load(servers.currentId, true)
@@ -110,7 +114,7 @@
 
 <AppToolbar title={current ? pick(current.manifest.title, $locale) : undefined} back={open ? () => show(null) : undefined}>
   {#snippet actions()}
-    {#if !open && admin}
+    {#if !open && canChange}
       <IconButton icon="refresh" label={$LL.storeRefresh()} disabled={refreshing} onclick={() => void refresh()} />
     {/if}
     {#if !open}

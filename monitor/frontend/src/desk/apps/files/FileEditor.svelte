@@ -24,14 +24,11 @@
     /// current, so a switch under an open editor would put this text on
     /// another machine's file at the same path.
     serverId: string
-    /// Whether this account may write. A read-only editor has no Save and a
-    /// `readonly` field, rather than a Save that always fails.
-    canWrite: boolean
     /// Called after a save lands, so the listing picks up the new size and time.
     onsaved: () => void
     onclose: () => void
   }
-  const { path, entry, text, serverId, canWrite, onsaved, onclose }: Props = $props()
+  const { path, entry, text, serverId, onsaved, onclose }: Props = $props()
 
   /// Initial values are read once, at mount, and `untrack` says so: the editor
   /// is mounted per file, and a prop changing underneath it is not a case this
@@ -67,7 +64,7 @@
 
   /// [force] overwrites without the guard — the user's answer to a conflict.
   async function save(force = false) {
-    if (!canWrite || saving) return
+    if (saving) return
     // Checked at the moment of the write, not at mount: the sidebar can switch
     // servers under an open editor, and the path means a different file there.
     // The editor is kept open with the user's text.
@@ -116,7 +113,7 @@
   /// The editor's text is the shell rather than a form field to tab through,
   /// so Tab inserts a tab and leaves focus where it is.
   function onKeydown(e: KeyboardEvent) {
-    if (e.key !== 'Tab' || !canWrite) return
+    if (e.key !== 'Tab') return
     e.preventDefault()
     const el = e.currentTarget as HTMLTextAreaElement
     const start = el.selectionStart
@@ -134,7 +131,6 @@
       <Textarea
         class="file-editor-textarea"
         bind:value
-        readonly={!canWrite}
         spellcheck="false"
         onkeydown={onKeydown}
         mono
@@ -151,12 +147,10 @@
   </div>
   {#snippet actions()}
     <Button variant="secondary" onclick={requestClose}>{$LL.cancel()}</Button>
-    {#if canWrite}
-      <Button onclick={() => void save()} disabled={saving || !dirty}>
-        {#if saving}<Spinner size={16} />{/if}
-        {$LL.save()}
-      </Button>
-    {/if}
+    <Button onclick={() => void save()} disabled={saving || !dirty}>
+      {#if saving}<Spinner size={16} />{/if}
+      {$LL.save()}
+    </Button>
   {/snippet}
 </Dialog>
 

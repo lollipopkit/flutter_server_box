@@ -13,8 +13,7 @@
 //! bot token, a Discord webhook URL, an ntfy token — things a panel login could
 //! not read before this endpoint existed, and the agent's standing position is
 //! that the panel password does not widen what it discloses (`jwt_secret` and
-//! `database_url` are absent from `/settings` for the same reason, and
-//! `full_access` can only ever be narrowed through the API). So:
+//! `database_url` are absent from `/settings` for the same reason). So:
 //!
 //! - a GET answers `null` at every credential key — `null` means "set on the
 //!   agent, not disclosed", an absent key means "not set at all";
@@ -254,8 +253,8 @@ pub async fn list(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     // The channels are the agent's configuration, and a webhook is a place
-    // to send what the agent knows: an admin's to change, and to read.
-    if let Err(response) = authz::admin_caller(&req, &app_state).await {
+    // to send what the agent knows: the account's to change, and to read.
+    if let Err(response) = authz::acting_caller(&req, &app_state).await {
         return Ok(response);
     }
 
@@ -280,8 +279,8 @@ pub async fn replace(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     // The channels are the agent's configuration, and a webhook is a place
-    // to send what the agent knows: an admin's to change, and to read.
-    if let Err(response) = authz::admin_caller(&req, &app_state).await {
+    // to send what the agent knows: the account's to change, and to read.
+    if let Err(response) = authz::acting_caller(&req, &app_state).await {
         return Ok(response);
     }
     let remote_ip = peer_ip(&req);
@@ -362,8 +361,8 @@ pub async fn test(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     // The channels are the agent's configuration, and a webhook is a place
-    // to send what the agent knows: an admin's to change, and to read.
-    if let Err(response) = authz::admin_caller(&req, &app_state).await {
+    // to send what the agent knows: the account's to change, and to read.
+    if let Err(response) = authz::acting_caller(&req, &app_state).await {
         return Ok(response);
     }
     let remote_ip = peer_ip(&req);

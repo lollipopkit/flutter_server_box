@@ -7,6 +7,7 @@
 import { getContext, setContext } from 'svelte'
 import { SvelteMap } from 'svelte/reactivity'
 import { stackAppId } from '../components/stack/apps'
+import { machineAccess } from '../lib/access'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { Capabilities } from '../types'
@@ -162,6 +163,11 @@ export class Desk {
           appState: spec.id === 'serverbox.store' ? { app: stackId } : undefined,
         }
       }
+    }
+    if (n.source === 'agent') {
+      // The agent itself: its update, in Settings' Server section.
+      const spec = app('serverbox.settings')
+      if (spec) return { appId: spec.id, title: spec.title(get(LL)), glyph: 'system_update', tone: 'sky', appState: { section: 'server' } }
     }
     const appId = n.source.startsWith('app:') ? n.source.slice(4) : 'serverbox.status'
     const spec = app(appId)
@@ -320,10 +326,10 @@ export class Desk {
     this.menu = { x: event.clientX, y: event.clientY, items }
   }
 
-  /// Whether this agent runs Agent mode and the account may use it (`shell`).
+  /// Whether this agent runs Agent mode and the account may use it over this
+  /// link.
   get agentAvailable(): boolean {
-    const caps = this.caps
-    return !!caps?.features?.includes('agent_mode') && caps.grants?.shell?.ok === true
+    return machineAccess(this.caps, 'agent_mode')
   }
 
   /// Turns Agent mode on or off; the windows stay as they are.

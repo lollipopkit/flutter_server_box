@@ -1,7 +1,7 @@
 <script lang="ts">
   /// Uninstalling a web app: its containers go; its data stays unless the
-  /// admin chooses otherwise (so installing again finds it); the admin's
-  /// password is asked.
+  /// account chooses otherwise (so installing again finds it); the
+  /// account's password is asked.
 
   import { Button, Checkbox, Dialog } from '../../desk/lk'
   import { LL } from '../../i18n/i18n-svelte'

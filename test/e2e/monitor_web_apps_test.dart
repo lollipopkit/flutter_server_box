@@ -4,8 +4,7 @@
 ///
 /// Skipped unless set, in the environment or the workspace-root `.env`:
 ///
-/// - `SBM_E2E_MONITOR_WEBAPPS_ADDR`, `SBM_E2E_MONITOR_WEBAPPS_PASSWORD`;
-///   `SBM_E2E_MONITOR_USER` (default `admin`).
+/// - `SBM_E2E_MONITOR_WEBAPPS_ADDR`, `SBM_E2E_MONITOR_WEBAPPS_PASSWORD`.
 /// - `SBM_E2E_MONITOR_WEBAPPS_INSECURE=1` for an agent on plain HTTP,
 ///   `SBM_E2E_MONITOR_WEBAPPS_IGNORE_CERT=1` for a self-signed one.
 library;
@@ -29,7 +28,6 @@ void main() {
   final client = MonitorHttpClient(
     MonitorHttpCredential(
       addr: addr,
-      user: e2eEnv('SBM_E2E_MONITOR_USER') ?? 'admin',
       pwd: pwd,
       ignoreCert: ignoreCert,
       allowInsecure: e2eEnv('SBM_E2E_MONITOR_WEBAPPS_INSECURE') == '1',

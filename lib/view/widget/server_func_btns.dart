@@ -10,7 +10,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -395,14 +395,10 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 /// arranged them.
 ///
 /// A function rather than a method on the row, because the page that hosts the
-/// row needs the same answer before it builds one — and it used to ask a
-/// coarser question of its own (`capabilities.terminal`), which hid the whole
-/// row on a monitor server whose agent serves files but grants no shell. That
-/// server could still be browsed from the Files tab, so the row was the only
-/// thing missing, and nothing said why.
+/// row needs the same answer before it builds one.
 List<ServerFuncEntry> serverFuncBtnsFor(
   Spi spi,
-  MonitorRemoteAccess? granted,
+  MonitorAccess? granted,
 ) {
   final ordered = () {
     try {
@@ -464,7 +460,7 @@ void runServerFunc(
         if (!spi.local &&
             !serverFilesUseAgent(
               spi,
-              ref.read(serverProvider(spi.id)).remoteAccess,
+              ref.read(serverProvider(spi.id)).agentAccess,
             ) &&
             !await _ensureSshClient(context, spi.id, ref)) {
           return;
@@ -606,9 +602,8 @@ void _gotoSSH(Spi spi, WidgetRef ref) {
 /// Which transport that turns out to be is [ServerNotifier.ensureExec]'s
 /// business — over SSH it connects a client, through a monitor agent there is
 /// nothing to connect, so for that transport this only reports what the page
-/// would have reported anyway. It is not a permission check: an agent that has
-/// since switched its grant off answers 403 to the first command, inside the
-/// page. Connecting here rather than only reporting a missing connection: the
+/// would have reported anyway. It is not a permission check: an agent that
+/// refuses the link answers 403 to the first command, inside the page. Connecting here rather than only reporting a missing connection: the
 /// SSH path builds its client during the status fetch, so a server the user
 /// has not looked at yet has none, and "wait for the connection" would be
 /// advice that never comes true.

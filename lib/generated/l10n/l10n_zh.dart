@@ -1929,20 +1929,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func需要在 Monitor agent 中开启 $setting。';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func需要更新 Monitor agent。';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      '通过 Monitor agent 进行远程转发需要更新版本的 agent，请在服务器上更新。';
-
-  @override
   String get rangeLive => '实时';
 
   @override
@@ -2576,7 +2562,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+      '此 agent 拒绝通过明文 HTTP 执行监控以外的操作。请改用 HTTPS 连接，或在 agent（[remote_access] allow_insecure）和本 App 中同时允许 HTTP。';
 
   @override
   String get alerts => '告警';
@@ -4731,34 +4717,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copyLink => '复制链接';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return '你在此 Monitor agent 上的账号没有 $func 的权限，请联系该 agent 的管理员。';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func 需要通过 HTTPS 连接此 Monitor agent，或在 agent 和本 App 中同时允许 HTTP。';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '此 Monitor agent 尚未配置 $func，需要由其运维人员配置。';
-  }
-
-  @override
-  String get monitorFilesReadOnly => '只读：此账号可以浏览 agent 上的文件，但不能修改。';
-
-  @override
   String get monitorAccess => '访问';
-
-  @override
-  String get monitorAccounts => '账号';
-
-  @override
-  String get monitorRoles => '角色';
-
-  @override
-  String get monitorRole => '角色';
 
   @override
   String get monitorChangePassword => '修改密码';
@@ -4770,9 +4734,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorCurrentPassword => '你当前的密码';
 
   @override
-  String get monitorReauthTip => '修改访问权限需要再次输入你的密码。';
-
-  @override
   String get monitorPasswordTooShort => '至少 8 个字符';
 
   @override
@@ -4780,70 +4741,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorErrReauth => '密码错误。';
-
-  @override
-  String get monitorErrLastAdmin => 'agent 至少需要一个管理员账号。';
-
-  @override
-  String get monitorErrConflict => '已存在，或仍在使用中。';
-
-  @override
-  String get monitorErrForbidden => '只有管理员可以执行此操作。';
-
-  @override
-  String get monitorRoleNameRule => '小写字母、数字、- 和 _，最多 32 个字符';
-
-  @override
-  String get monitorGrantShell => 'Shell 和命令';
-
-  @override
-  String get monitorGrantShellTip => '终端、进程、服务、容器、代码片段、电源 —— 以 agent 的系统账号运行';
-
-  @override
-  String get monitorGrantVirt => '虚拟化';
-
-  @override
-  String get monitorGrantVirtTip => 'agent 网页面板中连接的 Proxmox VE、libvirt 和 BMC';
-
-  @override
-  String get monitorGrantFiles => '文件';
-
-  @override
-  String get monitorGrantConnect => '出站连接';
-
-  @override
-  String get monitorGrantConnectTip => '本地和动态端口转发、远程桌面';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      '允许的目标（IP 或 CIDR，可带 :端口 或 :起-止；每行一个，留空表示任意）';
-
-  @override
-  String get monitorGrantListen => '在服务器上监听';
-
-  @override
-  String get monitorGrantListenTip => '远程端口转发';
-
-  @override
-  String get monitorGrantListenPublic => '非 loopback 地址';
-
-  @override
-  String get monitorGrantPorts => '端口范围（留空表示任意）';
-
-  @override
-  String get monitorGrantOff => '关闭';
-
-  @override
-  String get monitorBuiltin => '内置';
-
-  @override
-  String get monitorAdminRoleTip => '管理账号、角色和 agent 的设置';
-
-  @override
-  String get monitorYou => '你';
-
-  @override
-  String get monitorNoAccessToSettings => '只有管理员可以修改此 agent 的设置。';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5063,9 +4960,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorBackupUnsupported => '此 Monitor 代理不支持存放备份，请更新代理。';
-
-  @override
-  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理员账户可以在其上存放备份。';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5535,9 +5429,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storagePools => 'ZFS 存储池';
 
   @override
-  String get storageWholeDisk => '整个磁盘';
-
-  @override
   String get storageNoFilesystem => '无文件系统';
 
   @override
@@ -5620,9 +5511,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String storagePickDevices(Object count) {
     return '至少选择 $count 个设备。设备上的数据会丢失。';
   }
-
-  @override
-  String get storageNoFreeDevices => '没有空闲的磁盘或分区。';
 
   @override
   String get storageCreateRaid => '创建阵列';
@@ -5761,24 +5649,12 @@ class AppLocalizationsZh extends AppLocalizations {
       'The confirmation text did not match.';
 
   @override
-  String get storageSudoPassword => 'sudo 密码（agent 账户需要时填写）';
-
-  @override
   String storageInUse(Object device) {
     return '$device 正在使用中。';
   }
 
   @override
   String get storageBusy => '另一项磁盘操作正在进行。';
-
-  @override
-  String get storageWorking => '正在修改磁盘…';
-
-  @override
-  String get storageDone => '完成';
-
-  @override
-  String get storageFailed => '未完成';
 
   @override
   String get storageHealthRead => '读取磁盘健康';
@@ -5814,15 +5690,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String storageTesting(Object percent) {
     return '自检中：剩余 $percent%';
   }
-
-  @override
-  String get storageLastTestPassed => '上次自检通过';
-
-  @override
-  String get storageLastTestFailed => '上次自检失败';
-
-  @override
-  String get storageLastTestAborted => '上次自检被中止';
 
   @override
   String get storageGrowPartition => '扩展分区';
@@ -6059,9 +5926,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sharingInstallNfsBody => '使用系统的包管理器安装 NFS 服务器。';
 
   @override
-  String get sharingInstalling => '正在安装…';
-
-  @override
   String get sharingAddShare => '添加共享';
 
   @override
@@ -6136,15 +6000,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sharingPasswordsBody => 'Samba 使用独立的密码：为每个要连接的账户设置一个。';
 
   @override
-  String get sharingAccount => '账户';
-
-  @override
   String get sharingSetPassword => '设置密码';
-
-  @override
-  String sharingSetPasswordBody(Object user) {
-    return '设置 $user 的 SMB 密码。';
-  }
 
   @override
   String get sharingNewPassword => '新的 SMB 密码';
@@ -6164,9 +6020,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sharingAddClient => '添加客户端';
-
-  @override
-  String get sharingSquash => '客户端的 root';
 
   @override
   String get sharingSquashRoot => 'root 映射为 nobody';
@@ -6343,6 +6196,390 @@ class AppLocalizationsZh extends AppLocalizations {
   String webAppUpdate(String version) {
     return '有新版本 $version，请在 Monitor 面板中更新。';
   }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app已停止运行';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return '未运行的服务：$services。';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => '没有容器在运行。';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app运行异常';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return '健康检查失败的服务：$services。';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app已恢复运行';
+  }
+
+  @override
+  String get noticeStackBackBody => '所有容器均已运行。';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app有可用更新';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '可安装$project $version（当前版本：$current）。';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array 已降级';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody => '有成员故障或缺失，阵列当前没有冗余。';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array 已恢复正常';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => '所有成员都在工作。';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '存储池 $pool 状态为 $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody => '打开存储查看是哪个设备。';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '存储池 $pool 已恢复在线';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => '所有设备都在工作。';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device 即将故障';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody => 'SMART 检查或自检未通过：请把数据复制到别处并更换磁盘。';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device 有 $count 个坏扇区';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return '之前是 $was 个。坏扇区增加的磁盘通常很快会故障。';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return '存储维护未能运行：$task';
+  }
+
+  @override
+  String get storageTaskScrub => '校验存储池和阵列';
+
+  @override
+  String get storageTaskSmartShort => 'SMART 简短自检';
+
+  @override
+  String get storageTaskSmartLong => 'SMART 完整自检';
+
+  @override
+  String get storageNeedsSudo => 'sudo 要求输入密码：请以 root 运行 agent，或按上方说明允许这些命令。';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => '概览';
+
+  @override
+  String get monitorNotices => '通知';
+
+  @override
+  String get monitorAudit => '审计日志';
+
+  @override
+  String get monitorLive => '会话与设备';
+
+  @override
+  String get monitorNoAgents => '还没有通过 Monitor agent 连接的服务器。';
+
+  @override
+  String get monitorNotOffered => '此 agent 版本不提供该功能，请更新 agent。';
+
+  @override
+  String get monitorAlertsNotOffered => '此 agent 版本不报告告警。';
+
+  @override
+  String get monitorAlertsNone => '没有正在触发的规则。';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '已持续 $duration';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agent $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '可更新到 $version';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count 条未读';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return '异常应用：$count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return '应用更新：$count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => '仅看有更新';
+
+  @override
+  String get monitorNoUpdates => '没有可更新的应用。';
+
+  @override
+  String get monitorNoticesEmpty => '没有通知。';
+
+  @override
+  String get monitorMarkAllRead => '全部标为已读';
+
+  @override
+  String get monitorAuditExec => '命令';
+
+  @override
+  String get monitorAuditMachine => '主机管理';
+
+  @override
+  String get monitorAuditListen => '监听端口';
+
+  @override
+  String get monitorAuditTicket => '连接票据';
+
+  @override
+  String get monitorAuditPush => '通知渠道';
+
+  @override
+  String get monitorAuditAdmin => '账户';
+
+  @override
+  String get monitorAuditDenied => '已拒绝';
+
+  @override
+  String get monitorLoadMore => '加载更多';
+
+  @override
+  String get monitorLiveSessions => '终端会话';
+
+  @override
+  String get monitorLiveConnections => '连接';
+
+  @override
+  String get monitorLiveWatchTokens => '手表与小组件令牌';
+
+  @override
+  String get monitorLiveDevices => '已登录的设备';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      '忘记设备后，它下次登录会计入账户级的失败尝试限制。这不会让设备退出登录：保存了密码的设备会再次登录。要阻止某台设备，请修改密码。';
+
+  @override
+  String get monitorLiveAttached => '已连接';
+
+  @override
+  String get monitorLiveDetached => '已断开';
+
+  @override
+  String get monitorLiveEnd => '结束';
+
+  @override
+  String get monitorLiveRevoke => '撤销';
+
+  @override
+  String get monitorLiveForget => '忘记';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '结束终端会话“$name”？其中运行的程序会停止。';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '结束到 $name 的连接？';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '撤销 $name 的令牌？在重新设置之前它将停止更新。';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '忘记 $name？';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return '$time 过期';
+  }
+
+  @override
+  String get monitorLiveStream => '中转连接';
+
+  @override
+  String get monitorLiveAccepted => '转发连接';
+
+  @override
+  String get monitorLiveConsole => '控制台';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count 个 agent';
+  }
+
+  @override
+  String get monitorStatOnline => '在线';
+
+  @override
+  String get monitorStatFiring => '正在告警';
+
+  @override
+  String get monitorStatUnread => '未读通知';
+
+  @override
+  String get monitorStatUpdates => '应用更新';
+
+  @override
+  String get monitorAuditEmpty => '没有符合条件的记录。';
+
+  @override
+  String get monitorLiveNoSessions => '没有打开的终端会话。';
+
+  @override
+  String get monitorLiveNoConnections => '没有转发或中转的连接。';
+
+  @override
+  String get monitorLiveNoTokens => '没有配对的手表或小组件。';
+
+  @override
+  String get monitorLiveNoDevices => '没有登录过的设备。';
+
+  @override
+  String get monitorAgentTooOld => '此 agent 比本 App 旧，仍要求用户名。请更新 agent。';
+
+  @override
+  String get monitorUpdateAgent => '更新 agent';
+
+  @override
+  String get monitorAgentTooOldTip => '更新步骤见 Monitor 标签页。';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      '此 agent 来自只用一个密码之前的版本，本 App 无法登录。更新后，它的密码是原先最早的管理员账户的密码。';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '已发布 $latest，此 agent 运行的是 $running。';
+  }
+
+  @override
+  String get monitorUpdateRunHint => '在服务器上，以安装 agent 时所用的账户运行：';
+
+  @override
+  String get monitorUpdateSshHint =>
+      '终端会运行它。系统级安装的 agent 通过 SSH 终端更新时，sudo 会在终端里要求输入密码。';
+
+  @override
+  String get monitorUpdateNoSsh => 'App 无法在此服务器上打开终端，请自行在服务器上运行。';
+
+  @override
+  String get monitorUpdateDocker => '用 Docker 运行？请拉取新镜像并重建容器。';
+
+  @override
+  String get monitorUpdateAfter => 'agent 重启后，刷新 Monitor 标签页。';
+
+  @override
+  String get monitorUpdateInTerminal => '在终端中运行';
+
+  @override
+  String get monitorHowToUpdate => '如何更新';
+
+  @override
+  String get monitorUpdateNix => '通过 NixOS 模块安装：请在系统配置中更新并重新 rebuild。';
+
+  @override
+  String get noticeAgentUpdate => 'Agent 有可用更新';
+
+  @override
+  String get monitorUpdateLegacyUser => '账户名';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      '这个 agent 仍需账户名和密码登录：填写 App 之前使用的账户名（通常是 admin），密码使用已保存的密码。';
+
+  @override
+  String get monitorUpdateNow => '立即更新';
+
+  @override
+  String get monitorUpdating => '正在更新…';
+
+  @override
+  String get monitorUpdateRestarting => 'agent 正在重启，连接几秒后恢复…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return '已更新：agent 现在运行 $version。';
+  }
+
+  @override
+  String get monitorUpdateFailed => '更新失败，输出见上方。';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'agent 会在自身进程之外运行安装脚本，因此重启不会中断更新。重启期间到 agent 的连接会断开几秒，此窗口会跨越重启继续跟踪进度。';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo 密码';
+
+  @override
+  String get monitorUpdateSudoHint => '这里的安装脚本需要 root（OpenRC 服务）。密码只用一次，不会保存。';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo 不接受这个密码。';
+
+  @override
+  String get monitorUpdateNoAnswer => 'agent 没有恢复，请到服务器上检查。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -8268,20 +8505,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func需要在 Monitor agent 中開啟 $setting。';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func需要更新 Monitor agent。';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      '透過 Monitor agent 進行遠端轉發需要較新版本的 agent，請在伺服器上更新。';
-
-  @override
   String get rangeLive => '即時';
 
   @override
@@ -8915,7 +9138,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
+      '此 agent 拒絕透過明文 HTTP 執行監控以外的操作。請改用 HTTPS 連線，或在 agent（[remote_access] allow_insecure）和本 App 中同時允許 HTTP。';
 
   @override
   String get alerts => '警示';
@@ -11071,34 +11294,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get copyLink => '複製連結';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return '你在此 Monitor agent 上的帳號沒有 $func 的權限，請聯絡該 agent 的管理員。';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func 需要透過 HTTPS 連線此 Monitor agent，或在 agent 和本 App 中同時允許 HTTP。';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '此 Monitor agent 尚未設定 $func，需要由其維運人員設定。';
-  }
-
-  @override
-  String get monitorFilesReadOnly => '唯讀：此帳號可以瀏覽 agent 上的檔案，但不能修改。';
-
-  @override
   String get monitorAccess => '存取';
-
-  @override
-  String get monitorAccounts => '帳號';
-
-  @override
-  String get monitorRoles => '角色';
-
-  @override
-  String get monitorRole => '角色';
 
   @override
   String get monitorChangePassword => '變更密碼';
@@ -11110,9 +11311,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorCurrentPassword => '你目前的密碼';
 
   @override
-  String get monitorReauthTip => '變更存取權限需要再次輸入你的密碼。';
-
-  @override
   String get monitorPasswordTooShort => '至少 8 個字元';
 
   @override
@@ -11120,70 +11318,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorErrReauth => '密碼錯誤。';
-
-  @override
-  String get monitorErrLastAdmin => 'agent 至少需要一個管理員帳號。';
-
-  @override
-  String get monitorErrConflict => '已存在，或仍在使用中。';
-
-  @override
-  String get monitorErrForbidden => '只有管理員可以執行此操作。';
-
-  @override
-  String get monitorRoleNameRule => '小寫字母、數字、- 和 _，最多 32 個字元';
-
-  @override
-  String get monitorGrantShell => 'Shell 和指令';
-
-  @override
-  String get monitorGrantShellTip => '終端機、程序、服務、容器、程式碼片段、電源 —— 以 agent 的系統帳號執行';
-
-  @override
-  String get monitorGrantVirt => '虛擬化';
-
-  @override
-  String get monitorGrantVirtTip => 'agent 網頁面板中連接的 Proxmox VE、libvirt 和 BMC';
-
-  @override
-  String get monitorGrantFiles => '檔案';
-
-  @override
-  String get monitorGrantConnect => '對外連線';
-
-  @override
-  String get monitorGrantConnectTip => '本機和動態連接埠轉發、遠端桌面';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      '允許的目標（IP 或 CIDR，可帶 :連接埠 或 :起-迄；每行一個，留空表示任意）';
-
-  @override
-  String get monitorGrantListen => '在伺服器上監聽';
-
-  @override
-  String get monitorGrantListenTip => '遠端連接埠轉發';
-
-  @override
-  String get monitorGrantListenPublic => '非 loopback 位址';
-
-  @override
-  String get monitorGrantPorts => '連接埠範圍（留空表示任意）';
-
-  @override
-  String get monitorGrantOff => '關閉';
-
-  @override
-  String get monitorBuiltin => '內建';
-
-  @override
-  String get monitorAdminRoleTip => '管理帳號、角色和 agent 的設定';
-
-  @override
-  String get monitorYou => '你';
-
-  @override
-  String get monitorNoAccessToSettings => '只有管理員可以變更此 agent 的設定。';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -11403,9 +11537,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorBackupUnsupported => '此 Monitor 代理不支援存放備份，請更新代理。';
-
-  @override
-  String get monitorBackupAdminOnly => '只有 Monitor 代理的管理員帳戶可以在其上存放備份。';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -11880,9 +12011,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get storagePools => 'ZFS 儲存池';
 
   @override
-  String get storageWholeDisk => '整個磁碟';
-
-  @override
   String get storageNoFilesystem => '無檔案系統';
 
   @override
@@ -11965,9 +12093,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String storagePickDevices(Object count) {
     return '至少選擇 $count 個裝置。裝置上的資料會遺失。';
   }
-
-  @override
-  String get storageNoFreeDevices => '沒有空閒的磁碟或分割區。';
 
   @override
   String get storageCreateRaid => '建立陣列';
@@ -12106,24 +12231,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       'The confirmation text did not match.';
 
   @override
-  String get storageSudoPassword => 'sudo 密碼（agent 帳號需要時填寫）';
-
-  @override
   String storageInUse(Object device) {
     return '$device 正在使用中。';
   }
 
   @override
   String get storageBusy => '另一項磁碟操作正在進行。';
-
-  @override
-  String get storageWorking => '正在修改磁碟…';
-
-  @override
-  String get storageDone => '完成';
-
-  @override
-  String get storageFailed => '未完成';
 
   @override
   String get storageHealthRead => '讀取磁碟健康狀態';
@@ -12159,15 +12272,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String storageTesting(Object percent) {
     return '自我檢測中：剩餘 $percent%';
   }
-
-  @override
-  String get storageLastTestPassed => '上次自我檢測通過';
-
-  @override
-  String get storageLastTestFailed => '上次自我檢測失敗';
-
-  @override
-  String get storageLastTestAborted => '上次自我檢測已中止';
 
   @override
   String get storageGrowPartition => '擴充分割區';
@@ -12404,9 +12508,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sharingInstallNfsBody => '使用系統的套件管理器安裝 NFS 伺服器。';
 
   @override
-  String get sharingInstalling => '正在安裝…';
-
-  @override
   String get sharingAddShare => '新增分享';
 
   @override
@@ -12481,15 +12582,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sharingPasswordsBody => 'Samba 使用獨立的密碼：為每個要連線的帳號設定一個。';
 
   @override
-  String get sharingAccount => '帳號';
-
-  @override
   String get sharingSetPassword => '設定密碼';
-
-  @override
-  String sharingSetPasswordBody(Object user) {
-    return '設定 $user 的 SMB 密碼。';
-  }
 
   @override
   String get sharingNewPassword => '新的 SMB 密碼';
@@ -12509,9 +12602,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sharingAddClient => '新增用戶端';
-
-  @override
-  String get sharingSquash => '用戶端的 root';
 
   @override
   String get sharingSquashRoot => 'root 對應為 nobody';
@@ -12688,4 +12778,388 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String webAppUpdate(String version) {
     return '有新版本 $version，請在 Monitor 面板中更新。';
   }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app已停止執行';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return '未執行的服務：$services。';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => '沒有任何容器正在執行。';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app運作異常';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return '健康檢查失敗的服務：$services。';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app已恢復執行';
+  }
+
+  @override
+  String get noticeStackBackBody => '所有容器都在執行。';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app有可用更新';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '可安裝$project $version（目前版本：$current）。';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array 已降級';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody => '有成員故障或缺失，陣列目前沒有備援。';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array 已恢復正常';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => '所有成員都在運作。';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '儲存池 $pool 狀態為 $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody => '開啟儲存空間查看是哪個裝置。';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '儲存池 $pool 已恢復上線';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => '所有裝置都在運作。';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device 即將故障';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody => 'SMART 檢查或自我檢測未通過：請把資料複製到別處並更換磁碟。';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device 有 $count 個壞扇區';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return '之前是 $was 個。壞扇區增加的磁碟通常很快會故障。';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return '儲存維護未能執行：$task';
+  }
+
+  @override
+  String get storageTaskScrub => '校驗儲存池和陣列';
+
+  @override
+  String get storageTaskSmartShort => 'SMART 簡短自我檢測';
+
+  @override
+  String get storageTaskSmartLong => 'SMART 完整自我檢測';
+
+  @override
+  String get storageNeedsSudo => 'sudo 要求輸入密碼：請以 root 執行 agent，或按上方說明允許這些命令。';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => '概覽';
+
+  @override
+  String get monitorNotices => '通知';
+
+  @override
+  String get monitorAudit => '稽核日誌';
+
+  @override
+  String get monitorLive => '工作階段與裝置';
+
+  @override
+  String get monitorNoAgents => '尚無透過 Monitor agent 連線的伺服器。';
+
+  @override
+  String get monitorNotOffered => '此 agent 版本不提供此功能，請更新 agent。';
+
+  @override
+  String get monitorAlertsNotOffered => '此 agent 版本不回報警示。';
+
+  @override
+  String get monitorAlertsNone => '沒有正在觸發的規則。';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '已持續 $duration';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agent $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '可更新至 $version';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count 則未讀';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return '異常應用程式：$count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return '應用程式更新：$count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => '僅顯示有更新';
+
+  @override
+  String get monitorNoUpdates => '沒有可更新的應用程式。';
+
+  @override
+  String get monitorNoticesEmpty => '沒有通知。';
+
+  @override
+  String get monitorMarkAllRead => '全部標為已讀';
+
+  @override
+  String get monitorAuditExec => '指令';
+
+  @override
+  String get monitorAuditMachine => '主機管理';
+
+  @override
+  String get monitorAuditListen => '監聽連接埠';
+
+  @override
+  String get monitorAuditTicket => '連線票證';
+
+  @override
+  String get monitorAuditPush => '通知管道';
+
+  @override
+  String get monitorAuditAdmin => '帳戶';
+
+  @override
+  String get monitorAuditDenied => '已拒絕';
+
+  @override
+  String get monitorLoadMore => '載入更多';
+
+  @override
+  String get monitorLiveSessions => '終端機工作階段';
+
+  @override
+  String get monitorLiveConnections => '連線';
+
+  @override
+  String get monitorLiveWatchTokens => '手錶與小工具權杖';
+
+  @override
+  String get monitorLiveDevices => '已登入的裝置';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      '忘記裝置後，它下次登入會計入帳戶層級的失敗嘗試限制。這不會讓裝置登出：保存了密碼的裝置會再次登入。要阻止某台裝置，請變更密碼。';
+
+  @override
+  String get monitorLiveAttached => '已連接';
+
+  @override
+  String get monitorLiveDetached => '已中斷';
+
+  @override
+  String get monitorLiveEnd => '結束';
+
+  @override
+  String get monitorLiveRevoke => '撤銷';
+
+  @override
+  String get monitorLiveForget => '忘記';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '結束終端機工作階段「$name」？其中執行的程式會停止。';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '結束至 $name 的連線？';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '撤銷 $name 的權杖？在重新設定之前它將停止更新。';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '忘記 $name？';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return '$time 到期';
+  }
+
+  @override
+  String get monitorLiveStream => '中繼連線';
+
+  @override
+  String get monitorLiveAccepted => '轉送連線';
+
+  @override
+  String get monitorLiveConsole => '主控台';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count 個 agent';
+  }
+
+  @override
+  String get monitorStatOnline => '線上';
+
+  @override
+  String get monitorStatFiring => '正在警示';
+
+  @override
+  String get monitorStatUnread => '未讀通知';
+
+  @override
+  String get monitorStatUpdates => '應用程式更新';
+
+  @override
+  String get monitorAuditEmpty => '沒有符合條件的紀錄。';
+
+  @override
+  String get monitorLiveNoSessions => '沒有開啟的終端機工作階段。';
+
+  @override
+  String get monitorLiveNoConnections => '沒有轉送或中繼的連線。';
+
+  @override
+  String get monitorLiveNoTokens => '沒有配對的手錶或小工具。';
+
+  @override
+  String get monitorLiveNoDevices => '沒有登入過的裝置。';
+
+  @override
+  String get monitorAgentTooOld => '此 agent 比本 App 舊，仍要求使用者名稱。請更新 agent。';
+
+  @override
+  String get monitorUpdateAgent => '更新 agent';
+
+  @override
+  String get monitorAgentTooOldTip => '更新步驟見 Monitor 分頁。';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      '此 agent 來自只用一個密碼之前的版本，本 App 無法登入。更新後，它的密碼是原先最早的管理員帳戶的密碼。';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '已發布 $latest，此 agent 執行的是 $running。';
+  }
+
+  @override
+  String get monitorUpdateRunHint => '在伺服器上，以安裝 agent 時所用的帳戶執行：';
+
+  @override
+  String get monitorUpdateSshHint =>
+      '終端機會執行它。系統層級安裝的 agent 透過 SSH 終端機更新時，sudo 會在終端機裡要求輸入密碼。';
+
+  @override
+  String get monitorUpdateNoSsh => 'App 無法在此伺服器上開啟終端機，請自行在伺服器上執行。';
+
+  @override
+  String get monitorUpdateDocker => '用 Docker 執行？請拉取新映像並重建容器。';
+
+  @override
+  String get monitorUpdateAfter => 'agent 重新啟動後，重新整理 Monitor 分頁。';
+
+  @override
+  String get monitorUpdateInTerminal => '在終端機中執行';
+
+  @override
+  String get monitorHowToUpdate => '如何更新';
+
+  @override
+  String get monitorUpdateNix => '透過 NixOS 模組安裝：請在系統設定中更新並重新 rebuild。';
+
+  @override
+  String get noticeAgentUpdate => 'Agent 有可用更新';
+
+  @override
+  String get monitorUpdateLegacyUser => '帳戶名稱';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      '這個 agent 仍需帳戶名稱和密碼登入：填寫 App 之前使用的帳戶名稱（通常是 admin），密碼使用已儲存的密碼。';
+
+  @override
+  String get monitorUpdateNow => '立即更新';
+
+  @override
+  String get monitorUpdating => '正在更新…';
+
+  @override
+  String get monitorUpdateRestarting => 'agent 正在重新啟動，連線幾秒後恢復…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return '已更新：agent 現在執行 $version。';
+  }
+
+  @override
+  String get monitorUpdateFailed => '更新失敗，輸出見上方。';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'agent 會在自身程序之外執行安裝腳本，因此重新啟動不會中斷更新。重新啟動期間到 agent 的連線會中斷幾秒，此視窗會跨越重新啟動繼續追蹤進度。';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo 密碼';
+
+  @override
+  String get monitorUpdateSudoHint => '這裡的安裝腳本需要 root（OpenRC 服務）。密碼只用一次，不會儲存。';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo 不接受這個密碼。';
+
+  @override
+  String get monitorUpdateNoAnswer => 'agent 沒有恢復，請到伺服器上檢查。';
 }

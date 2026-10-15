@@ -23,10 +23,10 @@ description: 添加服务器并查看监控数据
 
 1. 在服务器上安装并配置 [Monitor agent](/docs/zh/advanced/monitor-agent/)。
 2. 在添加服务器页面开启 **Monitor HTTP**。
-3. 填写 agent 地址、面板用户名和密码；使用自签名证书时，按需开启 **Monitor Ignore certificate**。
+3. 填写 agent 地址和它的密码；使用自签名证书时，按需开启 **Monitor Ignore certificate**。
 4. 保存配置。
 
-SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用**只决定 App 先尝试哪一种连接，另一种连接仍然可用。仅配置 Monitor HTTP 的服务器不包含 SSH 凭据，其命令、终端和文件功能取决于 agent 开启的权限。
+SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用**只决定 App 先尝试哪一种连接，另一种连接仍然可用。仅配置 Monitor HTTP 的服务器不包含 SSH 凭据，其命令、终端和文件功能的范围由运行 agent 的系统账户决定。
 
 ## 第二步：连接并查看状态
 
@@ -39,8 +39,8 @@ SSH 和 Monitor HTTP 可以同时启用。两者同时存在时，**优先使用
 
 连接后可以：
 
-- **打开终端**：SSH 连接可直接打开终端；Monitor HTTP 连接要求当前账号所属角色拥有 `shell` 权限。
-- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 agent 的文件 API，要求账号角色拥有 `files` 权限，并配置 `[remote_access.fs].roots`。
+- **打开终端**：SSH 连接可直接打开终端；Monitor HTTP 连接以 agent 运行所用的账户打开 shell。
+- **浏览文件**：SSH 连接使用 SFTP；Monitor HTTP 连接使用 agent 的文件 API。
 - **管理容器**：查看和控制 Docker 或 Podman 容器。
 - **查看进程**：检查正在运行的进程。
 - **运行代码片段**：执行已保存的命令。

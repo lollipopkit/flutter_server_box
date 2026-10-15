@@ -1,10 +1,9 @@
 /// Store web apps through the panel on a real agent: a deployed app opened
 /// from the App Store in a window of its own, its first sign-in read in its
-/// page (the admin's password asked) and used inside the window, and the
+/// page (the agent's password asked) and used inside the window, and the
 /// Agent settings pages for MCP servers and skills.
 ///
-///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_USER=admin \
-///     SBM_E2E_PANEL_PASSWORD=… npx playwright test apps
+///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_PASSWORD=… npx playwright test apps
 ///
 /// The tests deploy and remove nothing: each app's test runs when it is
 /// deployed with its defaults, and is skipped otherwise. FreshRSS
@@ -13,19 +12,11 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import { fillSecret, submitForm } from './secret'
+import { signIn } from './signin'
 
 const env = process.env
 
 test.skip(!env.SBM_E2E_PANEL_URL || !env.SBM_E2E_PANEL_PASSWORD, 'SBM_E2E_PANEL_URL and SBM_E2E_PANEL_PASSWORD are not set')
-
-async function signIn(page: Page) {
-  await page.goto('/')
-  await page.getByPlaceholder('Username').fill(env.SBM_E2E_PANEL_USER ?? 'admin')
-  const login = page.locator('input[type=password]')
-  await fillSecret(login, env.SBM_E2E_PANEL_PASSWORD!)
-  await submitForm(login)
-  await expect(page.locator('.lk-dock')).toBeVisible({ timeout: 30_000 })
-}
 
 async function openApp(page: Page, title: string) {
   await page.locator('.lk-dock button[aria-label="All Apps"]').click()
@@ -36,7 +27,7 @@ test('a deployed web app opens in its own window and its sign-in works there', a
   await signIn(page)
 
   let password = ''
-  await test.step('the sign-in is shown after the admin password', async () => {
+  await test.step('the sign-in is shown after the agent password', async () => {
     await openApp(page, 'App Store')
     await page.getByPlaceholder('Search apps').fill('FreshRSS')
     await page.getByText('FreshRSS', { exact: true }).first().click()
@@ -136,7 +127,7 @@ test('AriaNg reaches aria2 through its own window, with the revealed secret', as
   await expect(frame.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30_000 })
 })
 
-test('Settings → Agent has MCP servers and skills for an admin', async ({ page }) => {
+test('Settings → Agent has MCP servers and skills', async ({ page }) => {
   await signIn(page)
   await openApp(page, 'Settings')
   await page.getByText('Agent', { exact: true }).first().click()

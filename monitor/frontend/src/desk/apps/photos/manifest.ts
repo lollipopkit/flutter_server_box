@@ -9,7 +9,7 @@ export default defineApp({
   keywords: (ll) => [ll.photosKeywords()],
   glyph: 'photo_library',
   tone: 'sky',
-  // Built in, but offered only once an admin installed it (Settings → Apps),
+  // Built in, but offered only once it is installed (Settings → Apps),
   // and gone again when it is uninstalled.
   available: (caps) => stackDeployed(caps, 'futo.immich'),
   size: { width: 1180, height: 780 },

@@ -72,7 +72,7 @@ describe('rdpFailureText', () => {
       ll.desktopRdpUnreachable(),
     )
     // Anything else is the agent refusing the request itself: a spent ticket,
-    // the grant turned off, a destination it will not parse.
+    // a plaintext link, a destination it will not parse.
     expect(rdpFailureText(withDetails(KIND.RDCleanPath, { httpStatusCode: 400 })).message).toBe(
       ll.desktopRdpRefused(),
     )

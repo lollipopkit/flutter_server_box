@@ -56,7 +56,7 @@ enum ServerDetailCards {
   /// is for the row that switches the card on and off.
   Widget? get mark => switch (this) {
     bmc => Feature.bmc.mark(),
-    webApps => Feature.webApps.mark(),
+    webApps => Feature.monitor.mark(),
     _ => null,
   };
 

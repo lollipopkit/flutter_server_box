@@ -20,7 +20,6 @@ use ntex::web::{HttpRequest, HttpResponse};
 use super::authz::{self, Caller};
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
-use crate::core::permissions::Grant;
 
 /// The machine-management endpoints this agent serves, as `features` in
 /// `/capabilities`. A panel shows a page only when its name is here, which is
@@ -59,6 +58,9 @@ pub const FEATURES: &[&str] = &[
     "bmc",
     "virt",
     "firewall",
+    // Whether a newer agent is out and how this one is updated
+    // (`api::update`).
+    "update",
     // The panel's desk (`api::desk`): its arrangement and preferences, each
     // app's storage, installed apps (`api::apps`) and theme packages
     // (`api::desk_themes`). Without it the panel keeps the desk in the
@@ -69,6 +71,12 @@ pub const FEATURES: &[&str] = &[
     // Web apps deployed with Docker Compose and shown through the agent's
     // proxy (`api::stacks`).
     "stacks",
+    // The monitoring rules firing now (`GET /alerts`, `api::desk`).
+    "alerts",
+    // The audit log read back (`GET /audit`, `api::audit_log`).
+    "audit",
+    // What is signed in and open, and ending it (`/live*`, `api::live`).
+    "live",
 ];
 
 /// Who is asking, and from where, once [`gate`] let them through.
@@ -77,7 +85,7 @@ pub struct Gated {
     pub remote_ip: Option<String>,
 }
 
-/// The caller, if their role holds [grant] over this link.
+/// The caller, if the machine may be acted on over this link.
 ///
 /// A refusal is recorded under [`Kind::Machine`] — the account as the
 /// subject, [what] (the feature and verb, never anything the request carried)
@@ -85,19 +93,13 @@ pub struct Gated {
 /// `403 {"error":"forbidden","message":<why>}`. Re-checked on every request
 /// rather than trusted from `/capabilities`: that answer is a hint for the
 /// UI, and the UI is not a boundary.
-pub async fn gate(
-    req: &HttpRequest,
-    state: &AppState,
-    grant: Grant,
-    what: &str,
-) -> Result<Gated, HttpResponse> {
+pub async fn gate(req: &HttpRequest, state: &AppState, what: &str) -> Result<Gated, HttpResponse> {
     let caller = authz::jwt_caller(req, state).await?;
     let remote_ip = peer_ip(req);
-    if let Err(why) = caller.check(grant, state, authz::is_secure(req, state)) {
+    if let Err(why) = caller.check(state, authz::is_secure(req, state)) {
         Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
-            .subject(&caller.username)
             .remote_ip(remote_ip)
-            .detail(format!("{what}: {} {}", grant.as_str(), why.as_str()))
+            .detail(format!("{what}: {}", why.as_str()))
             .record(&state.db)
             .await;
         return Err(authz::error(StatusCode::FORBIDDEN, "forbidden", why.as_str()));

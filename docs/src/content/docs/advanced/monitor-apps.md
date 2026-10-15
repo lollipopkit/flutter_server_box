@@ -5,8 +5,8 @@ description: Install and manage Docker Compose apps through the Monitor panel
 
 The Monitor agent can deploy web apps with Docker Compose and show them in the
 panel's App Store and desk. An app runs on the server where the agent runs.
-You need an admin account to install, change, update, or remove an app. Any
-signed-in account can browse the catalog. Apps that run inside the panel
+Installing, changing, or removing an app asks for the agent's password again.
+Apps that run inside the panel
 itself, installed from `.fsba` packages, are [Desk Apps](/docs/advanced/monitor-desk-apps/).
 
 ## Browse and install apps
@@ -105,21 +105,20 @@ user's files they create. Removing an app never deletes anything in the shared
 folder.
 
 When an app has an administrator account, the agent creates it with a
-generated password where the app allows that. An administrator can see the
-account and, after entering their own password, the generated password under
+generated password where the app allows that. You can see the account and,
+after entering the agent's password again, the generated password under
 **Sign-in** on the app's page.
 
 ## Open apps from the ServerBox app
 
-The app's **Web apps** tab lists the apps deployed on every server added
-through the Monitor agent, grouped by server, with their health. A fresh
-install does not put the tab in the bar: open it from **More**, or add it under
-**Settings › Application › Home Tabs**. A server's own page also has a **Web
-apps** card with that server's apps.
+The **Web apps** section of the app's [Monitor tab](../monitor-agent/#the-monitor-tab)
+lists the apps deployed on every server added through the Monitor agent,
+grouped by server, with their health. An app with a newer version in the
+catalog comes first, and the update button in the bar shows only those. A
+server's own page also has a **Web apps** card with that server's apps.
 
-On a phone the tab is a list: tap an app to open it, or its info button for
-its page (health, description, version, homepage). On a wide window the list
-is a column beside that page, which has the **Open** button.
+Tap an app to open it, or its info button for its page (health, description,
+version, homepage, and the **Open** button).
 
 Tap an app to open it in the device's browser: the app asks the agent for a
 single-use ticket and the browser enters the app through the agent's proxy,
@@ -228,7 +227,7 @@ listed under **Scheduled** with the result of their last run.
 
 ## Storage
 
-The **Storage** app (Linux, admin) lists the server's disks, partitions,
+The **Storage** app (Linux) lists the server's disks, partitions,
 filesystems and mounts, its software RAID arrays (mdadm) and ZFS pools. From it
 you can:
 
@@ -285,7 +284,7 @@ the notification center.
 
 ## Sharing
 
-The **Sharing** app (Linux, admin) serves folders to other computers over SMB
+The **Sharing** app (Linux) serves folders to other computers over SMB
 (Samba: Windows, macOS, Linux) and NFS (Linux, macOS). When Samba or the NFS
 server is missing, the app offers to install it with the machine's package
 manager (apt, dnf or apk).

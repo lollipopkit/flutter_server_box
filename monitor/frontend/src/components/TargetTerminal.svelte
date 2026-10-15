@@ -120,7 +120,9 @@
         ? issueText(session.issueCode)
         : session.errorCode === 'no_container_runtime'
           ? $LL.containerErrNoRuntime()
-          : session.error}
+          : session.errorCode === 'password_changed'
+            ? $LL.passwordChangedSignIn()
+            : session.error}
     </p>
     {#if onedit && session.errorCode === 'invalid_input'}
       <Button size="sm" icon="chevron_left" onclick={onedit}>{$LL.back()}</Button>

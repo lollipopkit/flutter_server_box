@@ -64,25 +64,19 @@ message = "Alert: {{message}}"
         let config: Config = toml::from_str(example).expect("config.example.toml must parse");
 
         // Nothing that widens access ships on: the example is copied
-        // verbatim. Plaintext stays refused, the file API reaches nothing, and
-        // none of the moved switches is set — an upgrade would read them.
+        // verbatim, and plaintext stays refused.
         let remote = config.get_remote_access();
         assert!(!remote.allow_insecure);
         assert!(!remote.terminal.allow_insecure);
-        assert!(remote.fs.roots.is_empty());
-        assert!(remote.legacy_keys_set().is_empty() || std::env::var_os("SBM_FULL_ACCESS").is_some());
+        assert!(!remote.fs.allow_insecure);
     }
 
     /// Every config written before remote access existed lacks the section
-    /// entirely; it must keep loading, with the feature off.
+    /// entirely; it must keep loading, with plaintext refused.
     #[test]
-    fn a_config_without_the_remote_access_section_loads_with_it_disabled() {
+    fn a_config_without_the_remote_access_section_loads_refusing_plaintext() {
         let config: Config = toml::from_str("database_url = \"sqlite:test.db\"").unwrap();
         assert!(config.remote_access.is_none());
-
-        let remote = config.get_remote_access().resolve(None);
-        assert!(!remote.insecure_shell);
-        assert!(!remote.insecure_files);
-        assert!(!remote.fs.configured());
+        assert!(!config.get_remote_access().resolve(None).transport_ok(false));
     }
 }

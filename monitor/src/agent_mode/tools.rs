@@ -18,7 +18,6 @@ use sbm_parser::command_rules::RuleVerdict;
 use crate::api::authz;
 use crate::api::server::AppState;
 use crate::api::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// The output a page keeps of the running command, newest lines.
 pub const LIVE_LINES: usize = 2000;
@@ -129,9 +128,9 @@ fn str_arg(args: &Value, key: &str) -> String {
 
 /// The account behind [flow] may still run commands here.
 pub(super) async fn may_run(state: &AppState, flow: &Flow) -> Result<(), String> {
-    let caller = authz::caller_named(state, &flow.username).await.ok_or("the account is gone")?;
+    let caller = authz::caller(state).await.ok_or("the account is gone")?;
     caller
-        .check(Grant::Shell, state, flow.secure())
+        .check(state, flow.secure())
         .map_err(|why| format!("not permitted to run commands here ({})", why.as_str()))
 }
 
@@ -278,7 +277,7 @@ impl RunCommand {
             let perms = permissions::load(&state.db).await.map_err(|e| format!("reading the permissions: {e}"))?;
             let verdict = perms.rules.verdict(&command);
             if let RuleVerdict::Deny(rule) = &verdict {
-                record(state, &flow.username, &format!("denied by rule `{rule}`: {}", first_line(&command, 200)), Outcome::Denied).await;
+                record(state, &format!("denied by rule `{rule}`: {}", first_line(&command, 200)), Outcome::Denied).await;
                 return Err(format!("Refused: this machine's rule `{rule}` forbids it. Nothing was run; do not run it another way."));
             }
             let mode = perms.mode_for(flow.view.lock().unwrap().mode);
@@ -287,7 +286,7 @@ impl RunCommand {
                 // Bypass: only the operator's ask rules stop it.
                 Mode::Bypass => {
                     if !ask_rule && effect != Effect::Read {
-                        record(state, &flow.username, &format!("bypass: ran {}", first_line(&command, 200)), Outcome::Ok).await;
+                        record(state, &format!("bypass: ran {}", first_line(&command, 200)), Outcome::Ok).await;
                     }
                     ask_rule
                 }
@@ -296,11 +295,11 @@ impl RunCommand {
                 Mode::Manual => true,
                 Mode::Auto => match judge(state, &flow, &command, &title, claimed.as_str(), sudo, &perms.auto_mode).await {
                     Some(Judgment::Allow) => {
-                        record(state, &flow.username, &format!("auto: allowed {}", first_line(&command, 200)), Outcome::Ok).await;
+                        record(state, &format!("auto: allowed {}", first_line(&command, 200)), Outcome::Ok).await;
                         false
                     }
                     Some(Judgment::Block { rule, reason }) => {
-                        record(state, &flow.username, &format!("auto: blocked [{rule}] {}", first_line(&command, 200)), Outcome::Denied).await;
+                        record(state, &format!("auto: blocked [{rule}] {}", first_line(&command, 200)), Outcome::Denied).await;
                         let label = if rule.is_empty() { String::new() } else { format!(" [{rule}]") };
                         return Err(format!(
                             "Blocked by auto mode{label}: {reason} Nothing was run. Do not try to reach the same end another way; \
@@ -359,7 +358,7 @@ impl RunCommand {
                             .with_details(json!({ "declined": true })));
                     }
                 }
-                // Asked and answered: the grant is checked again, now.
+                // Asked and answered: the account and the transport rule are checked again, now.
                 may_run(state, &flow).await?;
             }
 
@@ -381,7 +380,7 @@ impl RunCommand {
                             may_run(state, &flow).await?;
                             let p = answer.password.unwrap_or_default();
                             if answer.remember {
-                                hub.remember_sudo(flow.user_id, &flow.username, Some(p.clone()));
+                                hub.remember_sudo(flow.user_id, Some(p.clone()));
                             }
                             Some(p)
                         }
@@ -391,7 +390,7 @@ impl RunCommand {
                 };
                 let ran = self.run(&flow, call, &command, password.as_deref(), timeout, cancel).await?;
                 if sudo && ran.refused {
-                    hub.remember_sudo(flow.user_id, &flow.username, None);
+                    hub.remember_sudo(flow.user_id, None);
                     error = Some("wrongPassword".into());
                     continue;
                 }
@@ -402,9 +401,8 @@ impl RunCommand {
     }
 }
 
-pub(super) async fn record(state: &AppState, username: &str, detail: &str, outcome: Outcome) {
+pub(super) async fn record(state: &AppState, detail: &str, outcome: Outcome) {
     Event::new(Kind::Agent, if matches!(outcome, Outcome::Ok) { Action::Open } else { Action::Denied }, outcome)
-        .subject(username)
         .detail(detail.to_string())
         .record(&state.db)
         .await;
@@ -442,7 +440,6 @@ impl RunCommand {
     async fn run(&self, flow: &Arc<Flow>, call: &ToolCall, command: &str, password: Option<&str>, timeout: Duration, cancel: &Cancel) -> Result<Ran, String> {
         let hub = &self.state.agent;
         Event::new(Kind::Agent, Action::Open, Outcome::Ok)
-            .subject(&flow.username)
             .detail(format!("run {}", first_line(command, 200)))
             .record(&self.state.db)
             .await;
@@ -627,7 +624,7 @@ impl Tool for ProposePlan {
             let mode = perms.mode_for(flow.view.lock().unwrap().mode);
             match mode {
                 Mode::Bypass if !asks => {
-                    record(state, &flow.username, &format!("bypass: approved plan {title}"), Outcome::Ok).await;
+                    record(state, &format!("bypass: approved plan {title}"), Outcome::Ok).await;
                     hub.step_state(&flow, &call.id, "done");
                     hub.approve_commands(&flow, steps.iter().filter_map(|s| s.command.clone()));
                     return Ok(ToolResult::text("Approved (this task runs everything unasked). Carry out the steps now, in order, with exactly these commands.")
@@ -641,14 +638,14 @@ impl Tool for ProposePlan {
                         .collect();
                     match judge(state, &flow, &format!("a plan of {} steps:{subject}", steps.len()), &title, "plan", false, &perms.auto_mode).await {
                         Some(Judgment::Allow) => {
-                            record(state, &flow.username, &format!("auto: approved plan {title}"), Outcome::Ok).await;
+                            record(state, &format!("auto: approved plan {title}"), Outcome::Ok).await;
                             hub.step_state(&flow, &call.id, "done");
                             hub.approve_commands(&flow, steps.iter().filter_map(|s| s.command.clone()));
                             return Ok(ToolResult::text("Approved by auto mode. Carry out the steps now, in order, with exactly these commands.")
                                 .with_details(json!({ "decision": "approved", "by": "auto" })));
                         }
                         Some(Judgment::Block { rule, reason }) => {
-                            record(state, &flow.username, &format!("auto: blocked plan [{rule}] {title}"), Outcome::Denied).await;
+                            record(state, &format!("auto: blocked plan [{rule}] {title}"), Outcome::Denied).await;
                             hub.step_state(&flow, &call.id, "cancelled");
                             let label = if rule.is_empty() { String::new() } else { format!(" [{rule}]") };
                             return Ok(ToolResult::text(format!(

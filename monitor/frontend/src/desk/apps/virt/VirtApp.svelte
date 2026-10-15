@@ -15,8 +15,6 @@
   import { api } from '../../../lib/api'
   import { prettyFingerprint } from '../../../lib/bmc'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../../../lib/format'
-  import { isAdmin } from '../../../lib/access'
-  import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
   import {
     actionText,
@@ -91,7 +89,6 @@
   let stored = $state<VirtStats[] | null>(null)
   let storedError = $state('')
 
-  const admin = $derived(isAdmin(capabilitiesStore.byServer[servers.currentId]) === true)
   const view = $derived(load?.view ?? null)
   const hostError = $derived<VirtError | null>(load?.error ?? null)
   const guests = $derived(view?.guests ?? [])
@@ -155,7 +152,7 @@
           selected = next.view.guests.find((g) => !g.template)?.id ?? next.view.guests[0]?.id ?? null
         }
       }
-      if (next.host === 'pve' && admin && pve === null) void readPve()
+      if (next.host === 'pve' && pve === null) void readPve()
       if (!next.error || !NEEDS_INPUT.has(next.error.kind)) schedule(serverId)
     } catch (e) {
       if (mine !== generation) return
@@ -404,7 +401,7 @@
         }}
       >{$LL.virtNew()}</Button>
     {/if}
-    {#if admin && load?.host === 'pve'}
+    {#if load?.host === 'pve'}
       <IconButton icon="settings" label={$LL.pveSettings()} onclick={() => (editing = true)} />
     {/if}
     <IconButton icon="refresh" label={$LL.refresh()} disabled={loading} onclick={() => void refresh()} />
@@ -493,12 +490,8 @@
             <dd class="break-all lk-mono text-(--text-secondary)">{prettyFingerprint(e.previous_fingerprint)}</dd>
           {/if}
         </dl>
-        {#if admin}
-          <p class="text-[12px] text-(--text-secondary)">{$LL.pveCertCompare()}</p>
-          <Button size="sm" disabled={busy} onclick={() => void trust(cert.fingerprint)}>{$LL.bmcCertTrust()}</Button>
-        {:else}
-          <p class="text-[12px] text-(--text-secondary)">{$LL.pveCertAdmin()}</p>
-        {/if}
+        <p class="text-[12px] text-(--text-secondary)">{$LL.pveCertCompare()}</p>
+        <Button size="sm" disabled={busy} onclick={() => void trust(cert.fingerprint)}>{$LL.bmcCertTrust()}</Button>
       {:else if e.kind === 'need_tfa'}
         <form class="flex flex-wrap items-center gap-[9px]" onsubmit={sendTfa}>
           <Input class="w-40" inputmode="numeric" autocomplete="one-time-code" bind:value={tfaInput} placeholder="123456" />
@@ -510,7 +503,7 @@
           <Button type="submit" size="sm" disabled={sudoInput === ''}>{$LL.virtSudoSend()}</Button>
         </form>
         <p class="text-[12px] text-(--text-secondary)">{$LL.virtSudoHint()}</p>
-      {:else if admin && (e.kind === 'auth_failed' || e.kind === 'not_configured')}
+      {:else if e.kind === 'auth_failed' || e.kind === 'not_configured'}
         <Button variant="secondary" size="sm" onclick={() => (editing = true)}>{$LL.pveSettings()}</Button>
       {/if}
       {#if NEEDS_INPUT.has(e.kind) && e.kind !== 'need_tfa' && !e.kind.startsWith('sudo')}
@@ -526,10 +519,8 @@
       {#if !load.supported}
         <p class="text-[13px] text-(--text-secondary)">{$LL.virtUnsupported()}</p>
       {:else if load.host === 'pve' && !load.pve_configured}
-        <p class="text-[13px] text-(--text-secondary)">{admin ? $LL.pveSetupAdmin() : $LL.pveSetup()}</p>
-        {#if admin}
-          <Button size="sm" onclick={() => (editing = true)}>{$LL.pveSettings()}</Button>
-        {/if}
+        <p class="text-[13px] text-(--text-secondary)">{$LL.pveSetupNote()}</p>
+        <Button size="sm" onclick={() => (editing = true)}>{$LL.pveSettings()}</Button>
       {:else}
         <p class="text-[13px] text-(--text-secondary)">{$LL.virtNone()}</p>
       {/if}

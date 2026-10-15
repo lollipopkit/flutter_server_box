@@ -32,11 +32,11 @@ final class WebAppsState {
 /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
 /// read while something shows them.
 ///
-/// Its own [MonitorHttpClient], as the agent's settings page has: the one
-/// `ServerNotifier` polls with is that notifier's.
+/// On the server's shared client ([MonitorClientLease]).
 @riverpod
 class WebAppsNotifier extends _$WebAppsNotifier {
-  MonitorHttpClient? _client;
+  MonitorClientLease? _lease;
+  MonitorHttpClient? get _client => _lease?.client;
   Timer? _timer;
 
   /// Rises on every rebuild, so an answer for a client that is gone is
@@ -49,8 +49,8 @@ class WebAppsNotifier extends _$WebAppsNotifier {
       _generation++;
       _timer?.cancel();
       _timer = null;
-      _client?.dispose();
-      _client = null;
+      _lease?.release();
+      _lease = null;
     });
     // The agent's own record, not the server's capabilities: a server with
     // both transports answers those as the union of the two, and this asks
@@ -60,7 +60,7 @@ class WebAppsNotifier extends _$WebAppsNotifier {
       serverProvider(serverId).select((s) => s.agentCapabilities?.features.contains('stacks') ?? false),
     );
     if (cred == null || !offered) return const WebAppsState();
-    _client = MonitorHttpClient(cred);
+    _lease = MonitorClientLease(cred);
     unawaited(refresh());
     _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
     return const WebAppsState(offered: true);

@@ -1,5 +1,5 @@
 //! `/api/v1/storage*` — the machine's disks, RAID arrays and ZFS pools, and
-//! changes to them (`sbm_parser::storage`). Linux; admin.
+//! changes to them (`sbm_parser::storage`). Linux.
 //!
 //! - `GET /storage`: every block device as a tree (filesystems, mounts,
 //!   usage), why each is in use (`busy`, `storage::in_use`), the devices
@@ -140,7 +140,7 @@ pub(crate) async fn arrays_and_pools(state: &AppState) -> (Vec<st::MdArray>, Vec
 }
 
 pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -191,12 +191,12 @@ pub async fn set_maintenance(
     body: web::types::Json<crate::storage_watch::SetTask>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let next = body.into_inner();
     let what = format!("storage maintenance {} {}", next.task, next.every.as_deref().unwrap_or("off"));
-    match crate::storage_watch::set_task(&state, &caller.username, next).await {
+    match crate::storage_watch::set_task(&state, next).await {
         Ok(tasks) => {
-            Event::new(Kind::Machine, Action::Write, Outcome::Ok).subject(&caller.username).remote_ip(peer_ip(&req)).detail(what).record(&state.db).await;
+            Event::new(Kind::Machine, Action::Write, Outcome::Ok).remote_ip(peer_ip(&req)).detail(what).record(&state.db).await;
             Ok(HttpResponse::Ok().json(&json!({ "maintenance": tasks })))
         }
         Err(r) => Ok(refused(r.status, r.error)),
@@ -210,7 +210,7 @@ pub async fn run_maintenance(
     path: web::types::Path<MaintenancePath>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -219,7 +219,6 @@ pub async fn run_maintenance(
         return Ok(refused(409, "notScheduled"));
     }
     Event::new(Kind::Machine, Action::Write, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!("storage maintenance {} run", task.name()))
         .record(&state.db)
@@ -229,7 +228,7 @@ pub async fn run_maintenance(
 }
 
 pub async fn health(req: HttpRequest, body: web::types::Json<HealthBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -252,7 +251,7 @@ pub struct ActBody {
 }
 
 pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -306,12 +305,11 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     let what = serde_json::to_string(&action).unwrap_or_default();
     let reread = matches!(action, StorageAction::SmartTest { .. });
     Event::new(Kind::Machine, Action::Write, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!("storage {what}"))
         .record(&state.db)
         .await;
-    let (state2, job2, username) = (state.get_ref().clone(), job.clone(), caller.username.clone());
+    let (state2, job2) = (state.get_ref().clone(), job.clone());
     tokio::spawn(async move {
         let result = job2.run_root(&script, &password).await;
         drop(key);
@@ -328,7 +326,6 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
             let _ = read_health(&state2, Some(&password).filter(|p| !p.is_empty()).map(String::as_str)).await;
         }
         Event::new(Kind::Machine, Action::Write, outcome)
-            .subject(&username)
             .detail(format!("storage {what} {}", if result.is_ok() { "done" } else { "failed" }))
             .record(&state2.db)
             .await;
@@ -343,7 +340,7 @@ pub struct JobQuery {
 }
 
 pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match state.storage.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
         None => Ok(refused(404, "notFound")),

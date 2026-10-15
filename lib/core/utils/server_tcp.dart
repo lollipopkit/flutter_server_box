@@ -9,8 +9,8 @@ import 'package:server_box/core/utils/monitor_tunnel.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -53,7 +53,7 @@ class ServerTcpChannel implements SshTunnelChannel {
 ///
 /// - SSH: a direct-tcpip channel (`SSHClient.forwardLocal`).
 /// - monitor agent: `MonitorTunnelChannel`, dialled by the agent from its own
-///   machine — only when its `stream` grant is not refused.
+///   machine — only when its `access` is not refused.
 /// - local: `Socket.connect` from this device, which is the server.
 ///
 /// So a host name resolves on the far end, and `localhost` means the server
@@ -73,7 +73,7 @@ class ServerTcpDialer {
   ServerTcpDialer({
     required this.spi,
     required Future<ServerTcpSsh> Function() ssh,
-    MonitorRemoteAccess? Function()? relayGrant,
+    MonitorAccess? Function()? relayGrant,
     this.transports = const {...ServerTransport.values},
   }) : _ssh = ssh,
        _relayGrant = relayGrant ?? _notRead;
@@ -89,7 +89,7 @@ class ServerTcpDialer {
     ssh: () async => ServerTcpSsh.client(
       await ref.read(serverProvider(spi.id).notifier).ensureShellClient(),
     ),
-    relayGrant: () => ref.read(serverProvider(spi.id)).remoteAccess,
+    relayGrant: () => ref.read(serverProvider(spi.id)).agentAccess,
     transports: transports,
   );
 
@@ -102,12 +102,12 @@ class ServerTcpDialer {
   final Set<ServerTransport> transports;
 
   final Future<ServerTcpSsh> Function() _ssh;
-  final MonitorRemoteAccess? Function() _relayGrant;
+  final MonitorAccess? Function() _relayGrant;
 
   MonitorHttpClient? _monitor;
   bool _closed = false;
 
-  static MonitorRemoteAccess? _notRead() => null;
+  static MonitorAccess? _notRead() => null;
 
   /// A byte stream to [host]:[port].
   Future<ServerTcpChannel> open(String host, int port) =>
@@ -272,16 +272,15 @@ class ServerTcpDialer {
       case ServerConnectCredentialSsh():
         return null;
       case ServerConnectCredentialMonitorHttp():
-        // Asked before dialling: an agent older than the endpoint reports
-        // `full_access` and would refuse the upgrade, and one with the grant
-        // off answers 403. Finding that out at the dial would be after a
-        // loopback listener had been handed to a client.
+        // Asked before dialling: an agent that refuses this connection
+        // answers 403. Finding that out at the dial would be after a loopback
+        // listener had been handed to a client.
         final granted = _relayGrant();
-        if (granted != null && !granted.stream) {
+        if (granted != null && !granted.ok) {
           return ServerTcpErr(
             type: ServerTcpErrType.relayNotGranted,
             transport: transport,
-            message: 'The monitor agent does not relay TCP connections',
+            message: 'The monitor agent refuses to relay over this connection',
           );
         }
         return null;

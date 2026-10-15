@@ -17,15 +17,12 @@
 
   interface Props {
     store: AgentStore
-    /// Whom the greeting names.
-    name: string
-    admin: boolean
     onsettings: () => void
     /// Back to the desk.
     onexit: () => void
   }
 
-  const { store, name, admin, onsettings, onexit }: Props = $props()
+  const { store, onsettings, onexit }: Props = $props()
 
   let now = $state(new Date())
   let history = $state<DOMRect | null | undefined>(undefined)
@@ -189,13 +186,11 @@
   <div class="ground" bind:this={ground} aria-hidden="true"></div>
   <div class="stage" bind:this={stage}>
   {#if store.openId}
-    <AgentFlow {store} {now} {admin} onback={home} onopen={(id) => open(id)} />
+    <AgentFlow {store} {now} onback={home} onopen={(id) => open(id)} />
   {:else}
     <AgentHome
       {store}
       {now}
-      {name}
-      {admin}
       {onsettings}
       onopen={open}
       onhistory={(el) => (history = el?.getBoundingClientRect() ?? null)}

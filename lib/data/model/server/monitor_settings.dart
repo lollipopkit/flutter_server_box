@@ -4,7 +4,7 @@
 /// The agent writes these to its `config.toml`, so this is the app editing the
 /// *server's* settings rather than its own record of that server (which is
 /// `Spi`). Deliberately a whitelist on the agent's side: `jwt_secret` and
-/// `database_url` are not in it, and neither are the `remote_access` grants —
+/// `database_url` are not in it, and neither is `[remote_access]` —
 /// a panel password must not be able to widen what an agent exposes. The
 /// notification channels have their own endpoint; see `monitor_push.dart`.
 library;

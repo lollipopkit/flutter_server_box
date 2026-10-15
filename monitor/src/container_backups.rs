@@ -47,7 +47,6 @@ pub struct Meta {
     /// The project's name, or the container's.
     pub label: String,
     pub created_at: String,
-    pub created_by: String,
     /// Whether the containers were stopped while archived.
     pub stopped: bool,
     pub containers: Vec<Saved>,
@@ -243,8 +242,8 @@ fn slug(label: &str) -> String {
     if s.is_empty() { "backup".into() } else { s.trim_end_matches('-').to_string() }
 }
 
-async fn audit(state: &AppState, username: &str, outcome: Outcome, detail: String) {
-    Event::new(Kind::Machine, Action::Write, outcome).subject(username).detail(detail).record(&state.db).await;
+async fn audit(state: &AppState, outcome: Outcome, detail: String) {
+    Event::new(Kind::Machine, Action::Write, outcome).detail(detail).record(&state.db).await;
 }
 
 /// Backs up [ids] (with [whole_project], every container of their compose
@@ -253,7 +252,6 @@ async fn audit(state: &AppState, username: &str, outcome: Outcome, detail: Strin
 /// one is made); `None` for the settings'.
 pub async fn back_up(
     state: &Arc<AppState>,
-    username: &str,
     ids: &[String],
     whole_project: bool,
     stop: bool,
@@ -348,14 +346,13 @@ pub async fn back_up(
         id: id.clone(),
         label: label.clone(),
         created_at: chrono::Utc::now().to_rfc3339(),
-        created_by: username.to_string(),
         stopped: stop && !running.is_empty(),
         containers: containers.iter().map(|c| Saved { name: c.name.clone(), image: c.image.clone(), project: c.project.clone() }).collect(),
         archives,
         skipped,
     };
-    audit(state, username, Outcome::Ok, format!("container backup {id} started")).await;
-    let (state, job2, username) = (state.clone(), job.clone(), username.to_string());
+    audit(state, Outcome::Ok, format!("container backup {id} started")).await;
+    let (state, job2) = (state.clone(), job.clone());
     tokio::spawn(async move {
         let mut result = job2.run_steps(&steps).await;
         // Started again whatever happened to the archives.
@@ -379,7 +376,7 @@ pub async fn back_up(
         } else {
             prune(&state.container_backups, &meta.label, keep);
         }
-        finish(&state, &job2, &username, &format!("container backup {id}"), result).await;
+        finish(&state, &job2, &format!("container backup {id}"), result).await;
     });
     Ok(job)
 }
@@ -387,7 +384,7 @@ pub async fn back_up(
 /// Writes backup [id] back into the volumes and folders it came from, its
 /// containers (those still there, by name) stopped meanwhile and started
 /// again if they ran.
-pub async fn restore(state: &Arc<AppState>, username: &str, id: &str) -> Result<Arc<Job>, Refusal> {
+pub async fn restore(state: &Arc<AppState>, id: &str) -> Result<Arc<Job>, Refusal> {
     let backups = &state.container_backups;
     let meta = backups.meta(id).ok_or_else(|| refusal(404, "notFound"))?;
     let runtime = runtime(state).await?;
@@ -405,8 +402,8 @@ pub async fn restore(state: &Arc<AppState>, username: &str, id: &str) -> Result<
     }
     steps.extend(meta.archives.iter().filter(|a| !a.mount.is_system()).map(|a| cb::restore_command(runtime, &a.mount, &dir, &a.file)));
     let restart = (!running.is_empty()).then(|| cb::lifecycle_command(runtime, &running, true));
-    audit(state, username, Outcome::Ok, format!("container backup {id} restore started")).await;
-    let (state, job2, username, id) = (state.clone(), job.clone(), username.to_string(), id.to_string());
+    audit(state, Outcome::Ok, format!("container backup {id} restore started")).await;
+    let (state, job2, id) = (state.clone(), job.clone(), id.to_string());
     tokio::spawn(async move {
         let mut result = job2.run_steps(&steps).await;
         if let Some(restart) = restart {
@@ -415,22 +412,22 @@ pub async fn restore(state: &Arc<AppState>, username: &str, id: &str) -> Result<
                 result = started;
             }
         }
-        finish(&state, &job2, &username, &format!("container backup {id} restore"), result).await;
+        finish(&state, &job2, &format!("container backup {id} restore"), result).await;
     });
     Ok(job)
 }
 
-async fn finish(state: &AppState, job: &Job, username: &str, what: &str, result: Result<(), String>) {
+async fn finish(state: &AppState, job: &Job, what: &str, result: Result<(), String>) {
     match result {
         Ok(()) => {
             job.finish(JobState::Succeeded, None);
-            audit(state, username, Outcome::Ok, format!("{what} done")).await;
+            audit(state, Outcome::Ok, format!("{what} done")).await;
         }
         Err(e) => {
             let cancelled = e == "cancelled";
             job.push(format!("✕ {e}"));
             job.finish(if cancelled { JobState::Cancelled } else { JobState::Failed }, Some(e.clone()));
-            audit(state, username, Outcome::Error, format!("{what} failed: {e}")).await;
+            audit(state, Outcome::Error, format!("{what} failed: {e}")).await;
         }
     }
 }
@@ -582,7 +579,7 @@ pub(crate) fn time_ok(at: &str) -> bool {
     })
 }
 
-pub async fn add_schedule(state: &AppState, username: &str, new: NewSchedule) -> Result<Schedule, Refusal> {
+pub async fn add_schedule(state: &AppState, new: NewSchedule) -> Result<Schedule, Refusal> {
     let named = |id: &str| (1..=128).contains(&id.len()) && id.bytes().all(|b| b.is_ascii_alphanumeric() || b"_.-".contains(&b));
     if new.containers.is_empty() || new.containers.len() > 64 || !new.containers.iter().all(|c| named(c)) {
         return Err(refusal(400, "invalidContainer"));
@@ -598,8 +595,8 @@ pub async fn add_schedule(state: &AppState, username: &str, new: NewSchedule) ->
     let id = crate::utils::secrets::random_hex(8).map_err(|_| refusal(500, "internal"))?;
     let label = new.containers[0].clone();
     sqlx::query(
-        "INSERT INTO container_backup_schedule (id, label, containers, project, stop, every, at, weekday, keep, created_by, created_at) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO container_backup_schedule (id, label, containers, project, stop, every, at, weekday, keep, created_at) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&id)
     .bind(&label)
@@ -610,7 +607,6 @@ pub async fn add_schedule(state: &AppState, username: &str, new: NewSchedule) ->
     .bind(&new.at)
     .bind(new.weekday.map(i64::from))
     .bind(new.keep.map(i64::from))
-    .bind(username)
     .bind(chrono::Utc::now().to_rfc3339())
     .execute(&state.db)
     .await
@@ -698,7 +694,7 @@ async fn scheduled(state: &Arc<AppState>, s: &Schedule) -> Result<(), String> {
     if ids.is_empty() {
         return Err("notFound".into());
     }
-    let job = back_up(state, "schedule", &ids, s.project, s.stop, s.keep).await.map_err(|r| r.error.to_string())?;
+    let job = back_up(state, &ids, s.project, s.stop, s.keep).await.map_err(|r| r.error.to_string())?;
     match job.done().await {
         JobState::Succeeded => Ok(()),
         _ => Err(job.view(u64::MAX).error.unwrap_or_else(|| "failed".into())),

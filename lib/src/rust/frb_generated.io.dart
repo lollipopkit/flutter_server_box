@@ -614,6 +614,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<VirtOverlay> dco_decode_list_virt_overlay(dynamic raw);
 
   @protected
+  MonitorReleasePage dco_decode_monitor_release_page(dynamic raw);
+
+  @protected
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
@@ -1563,6 +1566,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<VirtOverlay> sse_decode_list_virt_overlay(SseDeserializer deserializer);
+
+  @protected
+  MonitorReleasePage sse_decode_monitor_release_page(
+    SseDeserializer deserializer,
+  );
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -2713,6 +2721,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_virt_overlay(
     List<VirtOverlay> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_monitor_release_page(
+    MonitorReleasePage self,
     SseSerializer serializer,
   );
 

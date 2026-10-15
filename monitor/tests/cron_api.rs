@@ -18,8 +18,8 @@ use serde_json::{Value, json};
 
 use common::machine::{audit, call, server};
 
-async fn put(srv: &TestServer, user: &str, body: Value) -> (u16, Value) {
-    call(srv, Some(user), Method::PUT, "/api/v1/cron", Some(body)).await
+async fn put(srv: &TestServer, body: Value) -> (u16, Value) {
+    call(srv, true, Method::PUT, "/api/v1/cron", Some(body)).await
 }
 
 /// A line break, which would split one task into two: refused before the
@@ -29,29 +29,9 @@ fn damaging_edit() -> Value {
 }
 
 #[ntex::test]
-async fn both_halves_need_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, "/api/v1/cron", None).await;
-    assert_eq!(status, 401);
-
-    let (status, body) = call(&srv, Some("viewer"), Method::GET, "/api/v1/cron", None).await;
-    assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")));
-    let (status, _) = put(&srv, "viewer", damaging_edit()).await;
-    assert_eq!(status, 403);
-
-    let rows = audit(&db).await;
-    assert_eq!(rows.len(), 2, "{rows:?}");
-    assert!(rows.iter().all(|(action, _, subject, _)| action == "denied" && subject.as_deref() == Some("viewer")));
-    // The schedule, never the command: a command is free text that may hold
-    // a token.
-    let detail = rows[1].3.as_deref().unwrap();
-    assert_eq!(detail, "cron append: * * * * *: shell not_granted");
-}
-
-#[ntex::test]
 async fn reading_reports_the_schedule_it_found() {
     let (srv, db) = server().await;
-    let (status, body) = call(&srv, Some("admin"), Method::GET, "/api/v1/cron", None).await;
+    let (status, body) = call(&srv, true, Method::GET, "/api/v1/cron", None).await;
     assert_eq!(status, 200, "{body}");
     if body["available"] == true {
         assert!(body["jobs"].is_array() && body["preserved"].is_array() && body["user"].is_string(), "{body}");
@@ -80,7 +60,7 @@ async fn a_refused_edit_says_which_rule_it_broke() {
             Some("fieldCount"),
         ),
     ] {
-        let (status, answered) = put(&srv, "admin", body.clone()).await;
+        let (status, answered) = put(&srv, body.clone()).await;
         assert_eq!(status, 400, "{body}");
         if let Some(expected) = expected {
             assert_eq!(answered["error"], expected, "{body}");
@@ -95,11 +75,11 @@ async fn a_refused_edit_says_which_rule_it_broke() {
 #[ntex::test]
 async fn an_edit_naming_a_line_that_is_not_a_job_is_refused() {
     let (srv, _) = server().await;
-    let (_, listing) = call(&srv, Some("admin"), Method::GET, "/api/v1/cron", None).await;
+    let (_, listing) = call(&srv, true, Method::GET, "/api/v1/cron", None).await;
     if listing["available"] != true {
         return;
     }
-    let (status, answered) = put(&srv, "admin", json!({ "op": "remove", "line_index": 4_294_967_295u32 })).await;
+    let (status, answered) = put(&srv, json!({ "op": "remove", "line_index": 4_294_967_295u32 })).await;
     assert_eq!((status, answered["error"].as_str()), (400, Some("unknownLine")));
 }
 
@@ -108,13 +88,13 @@ async fn an_edit_naming_a_line_that_is_not_a_job_is_refused() {
 #[ntex::test]
 async fn an_unknown_or_missing_operation_is_rejected() {
     let (srv, _) = server().await;
-    assert_eq!(put(&srv, "admin", json!({ "op": "reload", "line_index": 0 })).await.0, 400);
-    assert_eq!(put(&srv, "admin", json!({})).await.0, 400);
+    assert_eq!(put(&srv, json!({ "op": "reload", "line_index": 0 })).await.0, 400);
+    assert_eq!(put(&srv, json!({})).await.0, 400);
 }
 
 #[ntex::test]
 async fn capabilities_list_the_cron_page() {
     let (srv, _) = server().await;
-    let (_, caps) = call(&srv, Some("viewer"), Method::GET, "/api/v1/capabilities", None).await;
+    let (_, caps) = call(&srv, true, Method::GET, "/api/v1/capabilities", None).await;
     assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "cron"), "{caps}");
 }

@@ -66,7 +66,7 @@ async fn state() -> Arc<AppState> {
     let _ = rustls::crypto::ring::default_provider().install_default();
     let db = common::database().await;
     let config = Config { jwt_secret: Some(SECRET.to_string()), ..Default::default() };
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -93,11 +93,11 @@ async fn server(state: Arc<AppState>) -> TestServer {
     .await
 }
 
-async fn call(srv: &TestServer, user: &str, method: Method, path: &str, body: Option<Vec<u8>>) -> (u16, Value, Vec<u8>) {
+async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Vec<u8>>) -> (u16, Value, Vec<u8>) {
     let req = srv
         .request(method, srv.url(path))
         .timeout(std::time::Duration::from_secs(30))
-        .header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()));
+        .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()));
     let json = body.as_ref().is_some_and(|b| b.first() == Some(&b'{'));
     let req = if json { req.header("content-type", "application/json") } else { req };
     let resp = match body {
@@ -124,9 +124,9 @@ fn prefs(theme: Option<&str>, wallpaper: &str) -> Option<Vec<u8>> {
 }
 
 #[ntex::test]
-async fn a_package_installs_lists_and_serves_its_background_to_its_owner_only() {
+async fn a_package_installs_lists_and_serves_its_background() {
     let srv = server(state().await).await;
-    let (status, installed, _) = call(&srv, "admin", Method::POST, "/api/v1/desk/themes", Some(piggy())).await;
+    let (status, installed, _) = call(&srv, Method::POST, "/api/v1/desk/themes", Some(piggy())).await;
     assert_eq!(status, 200, "{installed}");
     let id = installed["installationId"].as_str().unwrap().to_string();
     assert_eq!(installed["id"], "serverbox.piggy");
@@ -134,27 +134,19 @@ async fn a_package_installs_lists_and_serves_its_background_to_its_owner_only() 
     assert_eq!(theme["background"]["style"], "image");
     assert!(theme["schemeLight"]["primary"].is_u64());
 
-    let (_, list, _) = call(&srv, "admin", Method::GET, "/api/v1/desk/themes", None).await;
+    let (_, list, _) = call(&srv, Method::GET, "/api/v1/desk/themes", None).await;
     assert_eq!(list.as_array().unwrap().len(), 1);
-    let (status, _, bytes) = call(&srv, "admin", Method::GET, &format!("/api/v1/desk/themes/{id}/background"), None).await;
+    let (status, _, bytes) = call(&srv, Method::GET, &format!("/api/v1/desk/themes/{id}/background"), None).await;
     assert_eq!(status, 200);
     assert!(bytes.starts_with(b"\x89PNG"));
 
-    // Another account sees nothing of it.
-    let (_, list, _) = call(&srv, "intruder", Method::GET, "/api/v1/desk/themes", None).await;
-    assert_eq!(list, json!([]));
-    let (status, _, _) = call(&srv, "intruder", Method::GET, &format!("/api/v1/desk/themes/{id}/background"), None).await;
-    assert_eq!(status, 404);
-    let (status, _, _) = call(&srv, "intruder", Method::PUT, "/api/v1/desk/preferences", prefs(Some(&id), "theme")).await;
-    assert_eq!(status, 400);
-    let (status, _, _) = call(&srv, "intruder", Method::DELETE, &format!("/api/v1/desk/themes/{id}"), None).await;
-    assert_eq!(status, 404);
+    // Nobody without a token for the account.
 }
 
 #[ntex::test]
 async fn a_package_the_app_would_refuse_is_refused_with_its_reason() {
     let srv = server(state().await).await;
-    let (status, body, _) = call(&srv, "admin", Method::POST, "/api/v1/desk/themes", Some(b"not a zip".to_vec())).await;
+    let (status, body, _) = call(&srv, Method::POST, "/api/v1/desk/themes", Some(b"not a zip".to_vec())).await;
     assert_eq!(status, 400);
     assert_eq!(body, json!({ "error": "invalidTheme", "reason": "Invalid theme ZIP" }));
 }
@@ -162,7 +154,7 @@ async fn a_package_the_app_would_refuse_is_refused_with_its_reason() {
 #[ntex::test]
 async fn selecting_replacing_and_removing_a_theme() {
     let srv = server(state().await).await;
-    let (_, first, _) = call(&srv, "admin", Method::POST, "/api/v1/desk/themes", Some(pride("one"))).await;
+    let (_, first, _) = call(&srv, Method::POST, "/api/v1/desk/themes", Some(pride("one"))).await;
     let first = first["installationId"].as_str().unwrap().to_string();
 
     // Only an installed theme and variant, and the theme wallpaper only with
@@ -174,32 +166,32 @@ async fn selecting_replacing_and_removing_a_theme() {
         (None, "theme"),
         (Some("not-a-digest"), "preset:dusk"),
     ] {
-        let (status, body, _) = call(&srv, "admin", Method::PUT, "/api/v1/desk/preferences", prefs(theme, wallpaper)).await;
+        let (status, body, _) = call(&srv, Method::PUT, "/api/v1/desk/preferences", prefs(theme, wallpaper)).await;
         assert_eq!(status, 400, "{theme:?} {wallpaper}: {body}");
     }
     let selected = format!("{first}#rainbow");
-    let (status, body, _) = call(&srv, "admin", Method::PUT, "/api/v1/desk/preferences", prefs(Some(&selected), "theme")).await;
+    let (status, body, _) = call(&srv, Method::PUT, "/api/v1/desk/preferences", prefs(Some(&selected), "theme")).await;
     assert_eq!(status, 200, "{body}");
 
     // Another build of the same theme replaces it, and the desk follows, its
     // variant kept.
-    let (_, second, _) = call(&srv, "admin", Method::POST, "/api/v1/desk/themes", Some(pride("two"))).await;
+    let (_, second, _) = call(&srv, Method::POST, "/api/v1/desk/themes", Some(pride("two"))).await;
     let second = second["installationId"].as_str().unwrap().to_string();
     assert_ne!(first, second);
-    let (_, list, _) = call(&srv, "admin", Method::GET, "/api/v1/desk/themes", None).await;
+    let (_, list, _) = call(&srv, Method::GET, "/api/v1/desk/themes", None).await;
     assert_eq!(list.as_array().unwrap().len(), 1);
     assert_eq!(list[0]["installationId"], second);
-    let (_, desk_view, _) = call(&srv, "admin", Method::GET, "/api/v1/desk", None).await;
+    let (_, desk_view, _) = call(&srv, Method::GET, "/api/v1/desk", None).await;
     assert_eq!(desk_view["preferences"]["theme"], format!("{second}#rainbow"));
     let (status, _, bytes) =
-        call(&srv, "admin", Method::GET, &format!("/api/v1/desk/themes/{second}/background?variant=rainbow"), None).await;
+        call(&srv, Method::GET, &format!("/api/v1/desk/themes/{second}/background?variant=rainbow"), None).await;
     assert_eq!(status, 200);
     assert!(bytes.starts_with(b"\x89PNG"));
 
     // Removed, the desk goes back to the panel's own.
-    let (status, _, _) = call(&srv, "admin", Method::DELETE, &format!("/api/v1/desk/themes/{second}"), None).await;
+    let (status, _, _) = call(&srv, Method::DELETE, &format!("/api/v1/desk/themes/{second}"), None).await;
     assert_eq!(status, 204);
-    let (_, desk_view, _) = call(&srv, "admin", Method::GET, "/api/v1/desk", None).await;
+    let (_, desk_view, _) = call(&srv, Method::GET, "/api/v1/desk", None).await;
     assert_eq!(desk_view["preferences"]["theme"], Value::Null);
     assert_eq!(desk_view["preferences"]["wallpaper"], desk::DEFAULT_WALLPAPER);
 }
@@ -278,7 +270,7 @@ async fn the_store_installs_only_what_its_catalog_offers_and_checks_the_digest()
     state.themes.set_source("https://catalog.example/repos.toml", memory.clone());
     let srv = server(state).await;
 
-    let (status, store, _) = call(&srv, "admin", Method::GET, "/api/v1/desk/themes/store", None).await;
+    let (status, store, _) = call(&srv, Method::GET, "/api/v1/desk/themes/store", None).await;
     assert_eq!(status, 200);
     assert_eq!(store["catalog"], "Test catalog");
     assert_eq!(store["repos"], json!(["Official"]));
@@ -291,7 +283,6 @@ async fn the_store_installs_only_what_its_catalog_offers_and_checks_the_digest()
     };
     let (status, body, _) = call(
         &srv,
-        "admin",
         Method::POST,
         "/api/v1/desk/themes/store/install",
         install("https://example.org/store.tar.gz", "serverbox.piggy"),
@@ -308,7 +299,7 @@ async fn the_store_installs_only_what_its_catalog_offers_and_checks_the_digest()
         ("https://example.org/store.tar.gz", "serverbox.nope", "the store does not offer that theme"),
     ] {
         let (status, body, _) =
-            call(&srv, "admin", Method::POST, "/api/v1/desk/themes/store/install", install(repo, id)).await;
+            call(&srv, Method::POST, "/api/v1/desk/themes/store/install", install(repo, id)).await;
         assert_eq!(status, 502, "{repo} {id}");
         assert_eq!(body["reason"], reason);
     }

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:fl_lib/theme.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
     show ExternalLibrary;
+import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/service/monitor_login_devices.dart';
 import 'package:server_box/core/service/theme_host.dart';
 
 /// Runs before every test file.
@@ -18,6 +20,10 @@ import 'package:server_box/core/service/theme_host.dart';
 /// tests.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   initThemeHost();
+  // The platform Keychain/Keystore is not there under `flutter test`, and
+  // what one test's agent handed out is not the next test's.
+  MonitorLoginDevices.store = MemoryDeviceTokenStore();
+  setUp(MonitorLoginDevices.resetForTest);
   const dir = 'packages/fl_lib/rust/target/debug';
   final library = [
     if (Platform.isMacOS) '$dir/libfl_lib_ffi.dylib',

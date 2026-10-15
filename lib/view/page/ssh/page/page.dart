@@ -584,7 +584,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     final serverState = serverId == null
         ? null
         : ref.readPresentServer(serverId);
-    _sess.adopt(serverState?.client, granted: serverState?.remoteAccess);
+    _sess.adopt(serverState?.client, granted: serverState?.agentAccess);
     _sess.onForegroundDone = _onForegroundSessionDone;
 
     if (++_sshConnCount == 1) {

@@ -7,8 +7,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -390,7 +390,7 @@ void main() {
           request.response.write(
             request.uri.path == '/api/v1/login'
                 ? '{"token":"test"}'
-                : '{"remote_access":{"terminal":true,"full_access":true}}',
+                : '{"access":{"ok":true}}',
           );
           request.response.close();
         });
@@ -417,7 +417,7 @@ void main() {
         request.response.write(
           request.uri.path == '/api/v1/login'
               ? '{"token":"test"}'
-              : '{"remote_access":{"terminal":false,"full_access":false}}',
+              : '{"access":{"ok":false,"why":"insecure_transport"}}',
         );
         request.response.close();
       });
@@ -440,11 +440,11 @@ void main() {
       );
     });
 
-    test('an agent granting terminal and full access is a shell source', () {
+    test('an agent granting access is a shell source', () {
       final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       expect(session.backend, isNotNull);
@@ -455,7 +455,7 @@ void main() {
 
     test('an agent that granted nothing is not', () {
       final session = TerminalSession(source: ServerSource(monitor));
-      session.adopt(null, granted: MonitorRemoteAccess.none);
+      session.adopt(null, granted: MonitorAccess.none);
 
       expect(session.backend, isNull);
     });
@@ -464,7 +464,7 @@ void main() {
       final session = TerminalSession(source: ServerSource(ssh));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       // The grant is the agent's, and this server has no agent. Answering
@@ -476,7 +476,7 @@ void main() {
       final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       session.close();

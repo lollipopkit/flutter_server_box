@@ -110,8 +110,8 @@
   /// The estimate is a function of the options and the agent is the one that
   /// computes it, so this page never re-derives the formula.
   ///
-  /// Answered without the shell grant, so a read-only page still says what a
-  /// run would cost. A failure leaves the last answer on screen and marks the
+  /// Answered over any link, so a read-only page still says what a run would
+  /// cost. A failure leaves the last answer on screen and marks the
   /// line rather than blanking it: the form is usable either way.
   ///
   /// Numbered, because two keystrokes are two requests and the first can come

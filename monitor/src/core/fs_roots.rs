@@ -1,34 +1,24 @@
-//! Where `/api/v1/fs/*` may go, and nowhere else.
+//! Where `/api/v1/fs/*` resolves a path, and what it never reaches.
 //!
-//! The file API is the widest surface this agent exposes: read and write of
-//! arbitrary paths, over HTTP, as whatever user the agent runs as. Everything
-//! that keeps it from being "a shell with extra steps" is here.
-//!
-//! Two rules, and they are the whole boundary:
+//! The file API reads and writes as the system account the agent runs as,
+//! like its shell: what that account may reach is the boundary, and the
+//! operating system enforces it. Two things are this module's:
 //!
 //! 1. A request path is resolved to a **canonical** path — every symlink
-//!    followed, every `..` collapsed — before anything is done with it.
-//! 2. That canonical path must sit inside one of the configured roots.
-//!
-//! Doing it in that order is what makes a symlink inside a root pointing at
-//! `/etc` a refusal rather than a way out. Checking the string the client sent
-//! would not: `/srv/data/link/passwd` is textually inside `/srv/data`.
-//!
-//! And one exception to the roots: the agent's own state — its database,
-//! `jwt.secret`, `config.toml`, its TLS key, the custom-commands directory —
-//! is never reached, whatever the roots say and whatever the caller's role.
-//! Each of those is a way past the roles: the JWT secret signs an admin
-//! token, the database holds the role table, a custom command runs as the
-//! agent. See [`Protected`].
+//!    followed, every `..` refused — before anything is done with it, so
+//!    what is checked is where the path really lands.
+//! 2. The agent's own state — its database, `jwt.secret`, `config.toml`, its
+//!    TLS key, the custom-commands directory — is never reached, whatever the
+//!    path. Each of those is a way past the password: the JWT secret signs a
+//!    token, a custom command runs on every status cycle. See [`Protected`].
 //!
 //! ## What this does not defend against
 //!
 //! Resolution and use are two steps, so a symlink swapped in between them
 //! would be followed — the classic TOCTOU. Closing that needs `openat` with
 //! `O_NOFOLLOW` at every component, which is not portable across the platforms
-//! monitor runs on. The roots are therefore the real boundary: an agent whose
-//! roots contain a directory writable by someone else is already trusting that
-//! someone. This is stated rather than papered over.
+//! monitor runs on. It matters only for the protected state: anything else a
+//! swapped link reaches, the account could reach anyway.
 
 use std::ffi::OsString;
 use std::path::{Component, Path, PathBuf};
@@ -41,7 +31,7 @@ pub enum FsDenied {
     /// Not absolute. Relative paths have no meaning here: there is no working
     /// directory a client and this agent would agree on.
     NotAbsolute,
-    /// Resolved to somewhere outside every root.
+    /// Resolved to nothing reachable: absent, or the agent's own state.
     OutsideRoots,
     /// A `..` that no root could absorb, or one in a path that does not exist
     /// yet and so cannot be canonicalised.
@@ -52,17 +42,14 @@ impl std::fmt::Display for FsDenied {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::NotAbsolute => write!(f, "path must be absolute"),
-            Self::OutsideRoots => write!(f, "path is outside the configured roots"),
+            Self::OutsideRoots => write!(f, "path is not reachable"),
             Self::Traversal => write!(f, "path escapes its root"),
         }
     }
 }
 
-/// The configured roots, canonicalised once at startup.
-///
-/// Canonical because the check compares canonical paths: a root given as
-/// `/srv/data` where `/srv` is a symlink to `/mnt/srv` would otherwise never
-/// match anything resolved through it.
+/// The filesystem's roots (`/`, or each drive on Windows), and the agent's
+/// own state, which no path reaches.
 #[derive(Debug, Clone, Default)]
 pub struct FsRoots {
     roots: Vec<PathBuf>,
@@ -74,7 +61,7 @@ pub struct FsRoots {
 ///
 /// Per file rather than per directory, because the database usually sits in
 /// the agent's working directory and that can be somebody's home: refusing
-/// the whole directory would refuse what the roots were opened for. What is
+/// the whole directory would refuse the operator's own files there. What is
 /// refused instead:
 ///
 /// - a protected file itself, by its canonical path — so a symlink to it is
@@ -146,7 +133,7 @@ impl Protected {
 }
 
 /// Trees that become the agent's state while it runs (a backup folder the
-/// admin chose on a backup disk), protected as [`Protected::tree`] is.
+/// operator chose on a backup disk), protected as [`Protected::tree`] is.
 static RUNTIME_TREES: std::sync::RwLock<Vec<PathBuf>> = std::sync::RwLock::new(Vec::new());
 
 fn runtime_trees() -> std::sync::RwLockReadGuard<'static, Vec<PathBuf>> {
@@ -199,20 +186,15 @@ fn settled(path: &Path) -> PathBuf {
 }
 
 impl FsRoots {
-    /// Resolves each configured root, dropping the ones that are not there.
-    ///
-    /// A root that does not exist is a configuration mistake, not a reason to
-    /// refuse to start — the rest of the agent's job is monitoring, and a
-    /// mistyped root should cost the file API rather than the process. It is
-    /// logged loudly instead.
-    pub fn resolve(configured: &[String]) -> Self {
-        let mut roots = Vec::new();
-        for raw in configured {
-            match std::fs::canonicalize(raw) {
-                Ok(path) => roots.push(path),
-                Err(e) => tracing::warn!("fs root {raw:?} is unusable and will be ignored: {e}"),
-            }
-        }
+    /// Every root the filesystem has: `/`, or each drive on Windows.
+    pub fn whole_filesystem() -> Self {
+        #[cfg(windows)]
+        let roots = (b'A'..=b'Z')
+            .map(|drive| PathBuf::from(format!("{}:\\", drive as char)))
+            .filter_map(|drive| std::fs::canonicalize(&drive).ok())
+            .collect();
+        #[cfg(not(windows))]
+        let roots = vec![PathBuf::from("/")];
         Self {
             roots,
             protected: Protected::default(),
@@ -255,15 +237,6 @@ impl FsRoots {
 
     pub fn as_slice(&self) -> &[PathBuf] {
         &self.roots
-    }
-
-    /// Whether the roots amount to the whole filesystem.
-    ///
-    /// Worth naming because it is the configuration where this API is
-    /// equivalent to a shell — anyone who can write `~/.ssh/authorized_keys`
-    /// has one — and so the configuration that gets a warning at startup.
-    pub fn is_unrestricted(&self) -> bool {
-        self.roots.iter().any(|r| r.parent().is_none())
     }
 
     /// Resolves a path that must already exist.

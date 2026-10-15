@@ -1,7 +1,7 @@
-//! `/api/v1/desk/themes*` — theme packages (`.fsbt`) an account installs for
-//! its desk, read and checked by `fl_theme` with the app's own rules.
+//! `/api/v1/desk/themes*` — theme packages (`.fsbt`) installed for the
+//! desk, read and checked by `fl_theme` with the app's own rules.
 //!
-//! - `GET /desk/themes`: what this account installed, each package as
+//! - `GET /desk/themes`: what is installed, each package as
 //!   `fl_theme` read it (one theme, or one per variant).
 //! - `POST /desk/themes`: the body is a `.fsbt`. Installing a theme again (the
 //!   same manifest `id`) replaces the earlier installation, and a desk drawn
@@ -18,7 +18,7 @@
 //!
 //! # Privilege and reach
 //!
-//! Any signed-in account, as the rest of the desk. The store is the one place
+//! The signed-in account, as the rest of the desk. The store is the one place
 //! the agent fetches from the internet on a client's behalf, so a client
 //! never names what is fetched: only the catalog's address (compiled in), the
 //! repositories it lists, and the versions those list, all HTTPS, are read.
@@ -40,9 +40,9 @@ use super::desk::{DeskEvent, account, internal_error, refused};
 use super::server::AppState;
 use fl_theme::repo::{self, Catalog, Index, Listing, Release};
 
-/// Themes one account may keep.
+/// Themes the desk may keep.
 pub const MAX_THEMES: i64 = 32;
-/// What one account's themes may weigh in all (their backgrounds).
+/// What the themes may weigh in all (their backgrounds).
 pub const MAX_ACCOUNT_BYTES: i64 = 128 << 20;
 /// How long a read of the store is kept.
 const STORE_TTL: Duration = Duration::from_secs(3600);
@@ -454,7 +454,8 @@ pub trait Fetch: Send + Sync {
 }
 
 /// HTTPS only, credentials refused, at most three redirects, each to HTTPS
-/// again (fl_lib `ThemePackages.download`).
+/// again (fl_lib `ThemePackages.download`). Also what `api::update` reads
+/// the agent's releases with.
 pub struct HttpFetch {
     client: reqwest::Client,
 }
@@ -467,6 +468,8 @@ impl Default for HttpFetch {
             client: reqwest::Client::builder()
                 .connect_timeout(Duration::from_secs(15))
                 .timeout(Duration::from_secs(90))
+                // GitHub's API refuses a request without one (`api::update`).
+                .user_agent(concat!("server-box-monitor/", env!("CARGO_PKG_VERSION")))
                 .redirect(reqwest::redirect::Policy::none())
                 .build()
                 .expect("valid theme store HTTP client configuration"),

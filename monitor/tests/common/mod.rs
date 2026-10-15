@@ -1,27 +1,19 @@
-//! Accounts and roles for the integration tests.
+//! The agent's account for the integration tests.
 //!
-//! Every route checks the caller's role now (issue #1610), so a test that
-//! signs in as `admin` needs an `admin` account that holds the role its
-//! assertions assume. These build it the way the agent does — migrations,
-//! then `db::bootstrap::ensure_roles` — rather than writing role rows by
-//! hand, so a test cannot pass against a shape the agent would never store.
+//! Built the way the agent does — migrations, then the account's row —
+//! rather than writing rows by hand, so a test cannot pass against a shape
+//! the agent would never store.
 #![allow(dead_code)]
 
 use std::sync::Arc;
 
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
-use server_box_monitor::core::permissions::{Grants, InitPermissions, Role};
-use server_box_monitor::db::{accounts, bootstrap};
+use server_box_monitor::db::accounts;
 use sqlx::SqlitePool;
 
-/// The password every seeded account has.
+/// The account's password.
 pub const PASSWORD: &str = "test-password";
-
-/// The accounts the tests sign in as. `intruder` is the second account the
-/// ownership tests need; it holds the same role, so what tells it apart is
-/// only that it is not the account that opened the thing.
-pub const ACCOUNTS: [&str; 2] = ["admin", "intruder"];
 
 /// A fresh in-memory database, migrated.
 pub async fn database() -> SqlitePool {
@@ -30,52 +22,22 @@ pub async fn database() -> SqlitePool {
     db
 }
 
-/// Adds [username] with [role], password [`PASSWORD`]. bcrypt at its lowest
-/// cost: what is under test is never how expensive a hash is.
-pub async fn add_account(db: &SqlitePool, username: &str, role: &str) {
+/// The account, password [`PASSWORD`]. bcrypt at its lowest cost: what is
+/// under test is never how expensive a hash is.
+pub async fn add_owner(db: &SqlitePool) {
     let hash = bcrypt::hash(PASSWORD, 4).unwrap();
-    accounts::insert_account(db, username, &hash, role)
-        .await
-        .unwrap();
+    accounts::insert_owner(db, &hash).await.unwrap();
 }
 
-/// [`ACCOUNTS`], both admins, and the admin role holding what [config]'s old
-/// switches gave — the state an agent upgraded from that config is in. The
-/// tests written before roles describe what they need as such a config.
-pub async fn seed_as_upgrade(db: &SqlitePool, config: &Config) {
-    for name in ACCOUNTS {
-        add_account(db, name, "admin").await;
-    }
-    bootstrap::ensure_roles(db, config, InitPermissions::Full)
-        .await
-        .unwrap();
-}
-
-/// An `AppState` over a fresh database seeded by [`seed_as_upgrade`].
-pub async fn upgraded_state(config: Config) -> Arc<AppState> {
+/// An `AppState` over a fresh database with the account.
+pub async fn owned_state(config: Config) -> Arc<AppState> {
     let db = database().await;
-    seed_as_upgrade(&db, &config).await;
+    add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
-/// Replaces what [role] grants.
-pub async fn set_grants(db: &SqlitePool, role: &str, grants: &Grants) {
-    assert!(accounts::set_grants(db, role, grants).await.unwrap());
-}
-
-/// What [role] grants now.
-pub async fn grants_of(db: &SqlitePool, role: &str) -> Grants {
-    accounts::role(db, role).await.unwrap().unwrap().grants
-}
-
-/// Creates [role] as given.
-pub async fn add_role(db: &SqlitePool, role: &Role) {
-    accounts::insert_role(db, role).await.unwrap();
-}
-
-/// For the machine-management endpoints (`api::machine`): an agent whose
-/// `admin` and `intruder` hold every grant and whose `viewer` holds none,
-/// mounted on the real route table.
+/// For the machine-management endpoints (`api::machine`): an agent with its
+/// account, mounted on the real route table.
 pub mod machine {
     use std::sync::{Arc, Once};
 
@@ -86,11 +48,11 @@ pub mod machine {
     use server_box_monitor::api::auth::generate_token;
     use server_box_monitor::api::server::{AppState, configure_api};
     use server_box_monitor::core::config::Config;
-    use server_box_monitor::core::permissions::{Grants, InitPermissions};
 
     pub const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
-    /// Out of the crate's directory, as `permissions_api.rs` explains.
+    /// Out of the crate's directory, so a file a test writes cannot land in
+    /// the sources.
     fn leave_the_crate() {
         static ONCE: Once = Once::new();
         ONCE.call_once(|| {
@@ -112,14 +74,7 @@ pub mod machine {
             ..Default::default()
         };
         let db = super::database().await;
-        for name in super::ACCOUNTS {
-            super::add_account(&db, name, "admin").await;
-        }
-        server_box_monitor::db::bootstrap::ensure_roles(&db, &Config::default(), InitPermissions::Full)
-            .await
-            .unwrap();
-        super::set_grants(&db, "admin", &Grants::all()).await;
-        super::add_account(&db, "viewer", "viewer").await;
+        super::add_owner(&db).await;
         let state = AppState::new(Arc::new(config), db.clone());
         let srv = web_test::server(move || {
             let state = state.clone();
@@ -148,7 +103,7 @@ pub mod machine {
     /// One request as [user] (`None` for no token), and its status and body.
     pub async fn call(
         srv: &TestServer,
-        user: Option<&str>,
+        signed: bool,
         method: Method,
         path: &str,
         body: Option<Value>,
@@ -156,10 +111,10 @@ pub mod machine {
         let mut req = srv
             .request(method, srv.url(path))
             .timeout(std::time::Duration::from_secs(30));
-        if let Some(user) = user {
+        if signed {
             req = req.header(
                 "Authorization",
-                format!("Bearer {}", generate_token(user, SECRET).unwrap()),
+                format!("Bearer {}", generate_token(SECRET).unwrap()),
             );
         }
         let resp = match body {
@@ -175,11 +130,11 @@ pub mod machine {
     /// A POST answered with a stream: the whole of it, once it ends.
     #[allow(dead_code)]
     /// Posts raw [bytes] with [content_type].
-    pub async fn post_bytes(srv: &TestServer, user: &str, path: &str, content_type: &str, bytes: Vec<u8>) -> (u16, Value) {
+    pub async fn post_bytes(srv: &TestServer, path: &str, content_type: &str, bytes: Vec<u8>) -> (u16, Value) {
         let resp = srv
             .request(Method::POST, srv.url(path))
             .timeout(std::time::Duration::from_secs(60))
-            .header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()))
+            .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()))
             .header("Content-Type", content_type)
             .send_body(bytes)
             .await
@@ -189,11 +144,11 @@ pub mod machine {
         (status, body)
     }
 
-    pub async fn post_text(srv: &TestServer, user: &str, path: &str, body: Value) -> (u16, String) {
+    pub async fn post_text(srv: &TestServer, path: &str, body: Value) -> (u16, String) {
         let resp = srv
             .request(Method::POST, srv.url(path))
             .timeout(std::time::Duration::from_secs(60))
-            .header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()))
+            .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()))
             .send_json(&body)
             .await
             .unwrap();

@@ -1,7 +1,7 @@
 <script lang="ts">
   /// One web app of the agent's catalog, all of it: what it is (description,
   /// developer, licence, source, requirements, what it does here), and for
-  /// an admin installing it (setup, confirmation, password), its progress,
+  /// installing it (setup, confirmation, password), its progress,
   /// then updating, opening and uninstalling it. The App Store's page for an
   /// app, and Settings → Apps' for an installed one.
 
@@ -11,6 +11,7 @@
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { api } from '../../lib/api'
   import { capabilitiesStore } from '../../lib/capabilities.svelte'
+  import { canAct, whyText } from '../../lib/access'
   import { servers } from '../../lib/servers.svelte'
   import type { StackApp, StackHealth, StackJob } from '../../types'
   import { healthBadge } from './health'
@@ -37,11 +38,14 @@
   let job = $state<StackJob | null>(null)
   let error = $state('')
   let removing = $state(false)
-  /// The setup form is open: an admin chose to install, or to change a
+  /// The setup form is open: the account chose to install, or to change a
   /// deployed app's settings.
   let setting = $state(false)
 
-  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Whether the account may act over this link: setting up, changing and
+  /// removing all need it.
+  const canChange = $derived(canAct(caps))
   const title = $derived(app ? pick(app.manifest.title, $locale) : '')
   const stack = $derived(app?.stack ?? null)
   const appId = $derived(stackAppId(stackId))
@@ -138,10 +142,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-[9px]">
           {#if !stack}
-            {#if admin}
+            {#if canChange}
               <Button icon="download" onclick={() => (setting = true)}>{$LL.stackGet()}</Button>
             {:else}
-              <span class="text-[12px] text-(--text-tertiary)">{$LL.stackAskAdmin()}</span>
+              <span class="text-[12px] text-(--text-tertiary)">{whyText(caps?.access?.why, $LL)}</span>
             {/if}
           {:else if appId && stack.state === 'installed'}
             <Button icon="open_in_new" onclick={() => win.open(appId)}>{$LL.stackOpen()}</Button>
@@ -165,10 +169,10 @@
         {/if}
         {#if stack.last_error}<Row label={$LL.stackFailed()} value={stack.last_error} mono />{/if}
       </Group>
-      {#if admin && stack.state === 'installed' && app.manifest.login}
+      {#if canChange && stack.state === 'installed' && app.manifest.login}
         <StackLogin {stackId} login={app.manifest.login} name={title} />
       {/if}
-      {#if admin}
+      {#if canChange}
         <div class="flex flex-wrap justify-end gap-[9px]">
           <Button variant="destructive" onclick={() => (removing = true)}>{$LL.stackRemove()}</Button>
           {#if stack.settings}

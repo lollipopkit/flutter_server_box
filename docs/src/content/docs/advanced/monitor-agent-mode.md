@@ -4,8 +4,7 @@ description: Run an AI agent on a server from the Monitor panel, with permission
 ---
 
 Agent mode is an AI agent in the Monitor panel. It runs commands on the machine
-where the Monitor agent runs. An account can use it when its role has the
-`shell` grant. Each task belongs to the account that started it.
+where the Monitor agent runs, as the system account the agent runs as.
 
 Agent mode is a feature of the panel. The mobile app's
 [Agent](/docs/advanced/agent/) is a separate feature with its own settings.
@@ -13,9 +12,8 @@ To install the Monitor agent, see [Monitor Agent](/docs/advanced/monitor-agent/)
 
 ## Settings
 
-Open **Settings → Agent** in the panel. Every account with the `shell` grant
-can open this page. Only an admin can change the model, providers, MCP servers,
-and skills. Any account can change its own memory.
+Open **Settings → Agent** in the panel to change the model, providers, MCP
+servers, skills, and memory.
 
 ### Model and providers
 
@@ -123,12 +121,12 @@ without a question, after the command rules apply.
 The default mode for new tasks is set under **Settings → Agent → Command
 permissions → Default mode**.
 
-An admin can select **Turn off Allow all** on that page. After that, no task
+You can select **Turn off Allow all** on that page. After that, no task
 runs in Allow all. A task that was started in Allow all then runs as Manual.
 
 ## Command rules
 
-Admins set the rules under **Settings → Agent → Command permissions**. There
+Set the rules under **Settings → Agent → Command permissions**. There
 are three lists: **Deny**, **Ask**, and **Allow**. Write one pattern per line.
 
 - `*` matches any text. For example, `systemctl status *` matches every
@@ -148,8 +146,8 @@ even when a rule allows the command.
 ### Always allow
 
 When a command asks for confirmation, **Always allow** adds a rule for that
-command to the server's allow rules. The rule then applies to every account.
-Only an admin can add a rule this way. The panel shows the rule before you
+command to the server's allow rules. The rule then applies to every task.
+The panel shows the rule before you
 choose **Always allow**. A command that matches an ask rule gets no suggested
 rule.
 
@@ -179,7 +177,7 @@ On Windows, commands run in Windows PowerShell. `sudo` is not available there.
 ## Memory
 
 Open **Settings → Agent → Memory** to see the files the agent keeps across your
-tasks. Each account has its own memory. The agent reads the files and updates
+tasks. The agent reads the files and updates
 them as needed. `MEMORY.md` is the index. The agent reads it at the start of
 every task.
 
@@ -195,7 +193,7 @@ agent about an app by name. For how to deploy apps, see
 
 ## MCP servers
 
-Admins add MCP servers under **Settings → Agent → MCP servers**. The agent gets
+Add MCP servers under **Settings → Agent → MCP servers**. The agent gets
 the tools of each enabled server in every task.
 
 Only the Streamable HTTP transport is supported. The address must use `https://`,
@@ -230,7 +228,7 @@ as Home Assistant.
 
 ## Skills
 
-Admins manage skills under **Settings → Agent → Skills**.
+Manage skills under **Settings → Agent → Skills**.
 
 To install skills, select **Install**. In **GitHub repository**, enter a source
 in one of these forms:
@@ -260,7 +258,7 @@ a change returns a draft plan.
 
 ## Copy for pi
 
-An admin can turn on **Copy tasks for pi** under **Settings → Agent**. When it
+You can turn on **Copy tasks for pi** under **Settings → Agent**. When it
 is on, each task is also saved as a session of pi's coding agent, in the
 session directory of the agent's account. Run `pi -r` in the agent's working
 folder to list the sessions. Deleting a task also deletes its copy.

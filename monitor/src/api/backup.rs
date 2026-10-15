@@ -12,7 +12,7 @@
 //!
 //! # Privilege
 //!
-//! Admin, both ways (`docs/dev/monitor-permissions.md`): a backup holds the
+//! The account, both ways: a backup holds the
 //! operator's servers and keys, encrypted or not, and replacing it is
 //! replacing what every synced device merges next.
 
@@ -82,9 +82,8 @@ fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
     refusal(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "internal")
 }
 
-async fn record(state: &AppState, req: &HttpRequest, caller: &authz::Caller, outcome: Outcome, detail: String) {
+async fn record(state: &AppState, req: &HttpRequest, outcome: Outcome, detail: String) {
     Event::new(Kind::Backup, Action::Write, outcome)
-        .subject(&caller.username)
         .remote_ip(peer_ip(req))
         .detail(detail)
         .record(&state.db)
@@ -95,7 +94,7 @@ pub async fn list(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = authz::admin_caller(&req, &state).await {
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
     match load(&state.db).await {
@@ -110,7 +109,7 @@ pub async fn download(
     query: web::types::Query<NameQuery>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = authz::admin_caller(&req, &state).await {
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
         return Ok(refused);
     }
     if !valid_name(&query.name) {
@@ -146,13 +145,10 @@ pub async fn upload(
     mut body: web::types::Payload,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => {
-            discard(&mut body).await;
-            return Ok(refused);
-        }
-    };
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        discard(&mut body).await;
+        return Ok(refused);
+    }
     let name = query.into_inner().name;
     if !valid_name(&name) {
         discard(&mut body).await;
@@ -177,12 +173,12 @@ pub async fn upload(
     let size = data.len() as i64;
     match store(&state.db, &state.blobs, &name, data).await {
         Ok(Some(view)) => {
-            record(&state, &req, &caller, Outcome::Ok, format!("backup write {name}: {size} bytes")).await;
+            record(&state, &req, Outcome::Ok, format!("backup write {name}: {size} bytes")).await;
             Ok(HttpResponse::Ok().json(&view))
         }
         Ok(None) => Ok(refusal(ntex::http::StatusCode::CONFLICT, "tooMany")),
         Err(e) => {
-            record(&state, &req, &caller, Outcome::Error, format!("backup write {name}: failed")).await;
+            record(&state, &req, Outcome::Error, format!("backup write {name}: failed")).await;
             Ok(internal_error(&format!("{e:#}")))
         }
     }
@@ -203,10 +199,9 @@ pub async fn remove(
     query: web::types::Query<NameQuery>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = match authz::admin_caller(&req, &state).await {
-        Ok(caller) => caller,
-        Err(refused) => return Ok(refused),
-    };
+    if let Err(refused) = authz::acting_caller(&req, &state).await {
+        return Ok(refused);
+    }
     if !valid_name(&query.name) {
         return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
@@ -220,7 +215,7 @@ pub async fn remove(
         }
         Ok(_) => {
             state.blobs.collect_soon(&state.db);
-            record(&state, &req, &caller, Outcome::Ok, format!("backup remove {}", query.name)).await;
+            record(&state, &req, Outcome::Ok, format!("backup remove {}", query.name)).await;
             Ok(HttpResponse::NoContent().finish())
         }
         Err(e) => Ok(internal_error(&e)),

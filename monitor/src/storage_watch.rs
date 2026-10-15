@@ -68,7 +68,7 @@ pub struct SetTask {
     pub day: u8,
 }
 
-pub async fn set_task(state: &AppState, username: &str, next: SetTask) -> Result<Vec<Task>, Refusal> {
+pub async fn set_task(state: &AppState, next: SetTask) -> Result<Vec<Task>, Refusal> {
     if Maintenance::from_name(&next.task).is_none() {
         return Err(refusal(400, "invalidTask"));
     }
@@ -90,15 +90,14 @@ pub async fn set_task(state: &AppState, username: &str, next: SetTask) -> Result
                 return Err(refusal(400, "invalidSchedule"));
             }
             sqlx::query(
-                "INSERT INTO storage_maintenance (task, every, at, day, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?) \
+                "INSERT INTO storage_maintenance (task, every, at, day, updated_at) VALUES (?, ?, ?, ?, ?) \
                  ON CONFLICT(task) DO UPDATE SET every = excluded.every, at = excluded.at, day = excluded.day, \
-                 updated_by = excluded.updated_by, updated_at = excluded.updated_at",
+                 updated_at = excluded.updated_at",
             )
             .bind(&next.task)
             .bind(every)
             .bind(&next.at)
             .bind(i64::from(next.day))
-            .bind(username)
             .bind(chrono::Utc::now().to_rfc3339())
             .execute(&state.db)
             .await

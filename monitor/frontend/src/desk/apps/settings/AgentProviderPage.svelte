@@ -1,6 +1,6 @@
 <script lang="ts">
   /// One of Agent mode's providers, a page over Settings → Agent, saved with
-  /// its own button: a built-in one is its key; an endpoint of the admin's
+  /// its own button: a built-in one is its key; an endpoint of one's
   /// own is where it is, what it speaks, its key, and the models it lists —
   /// listed from it as it is typed, as the apps' provider page does. `new`
   /// picks what to add.

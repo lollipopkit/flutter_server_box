@@ -1,32 +1,31 @@
 //! `/api/v1/stacks*` — the web apps this agent can deploy and has deployed
 //! (`stacks`).
 //!
-//! - `GET /stacks` (any account): every app of the catalog, with its
-//!   deployment's state. An admin also gets the settings it was deployed
-//!   with and the running job.
+//! - `GET /stacks`: every app of the catalog, with its deployment (the
+//!   settings it was deployed with) and the running job.
 //!   Its catalog is read again in the background when an hour old;
-//!   `POST /stacks/refresh` (admin) reads it now. Each app says where it is
+//!   `POST /stacks/refresh` reads it now. Each app says where it is
 //!   from (`source`: `bundled` | `store` | `local`, and `repo`).
-//! - `GET /stacks/{id}/prepare` (admin): what the deploy dialog starts from:
+//! - `GET /stacks/{id}/prepare`: what the deploy dialog starts from:
 //!   defaults for this machine, whether Docker/Podman and Compose are here,
 //!   the machine's memory and cores.
-//! - `POST /stacks/{id}/check` (admin): what deploying `{settings}` would
+//! - `POST /stacks/{id}/check`: what deploying `{settings}` would
 //!   do (images, folders, port), or the setting that is wrong.
-//! - `POST /stacks/{id}` (admin, password): deploys, `{settings,
-//!   acknowledged, accept_license}`: the admin confirmed it installs
+//! - `POST /stacks/{id}` (password): deploys, `{settings,
+//!   acknowledged, accept_license}`: the operator confirmed it installs
 //!   third-party software, and accepted the licence where the manifest asks;
 //!   answers the job (202).
-//! - `PUT /stacks/{id}/settings` (admin, password): `{settings}` for a
+//! - `PUT /stacks/{id}/settings` (password): `{settings}` for a
 //!   deployed app; deployed again with them (its ports checked, never moved).
-//! - `POST /stacks/{id}/action` (admin): `start` | `stop` | `restart` |
+//! - `POST /stacks/{id}/action`: `start` | `stop` | `restart` |
 //!   `update`.
-//! - `DELETE /stacks/{id}` (admin, password): takes it down, `{purge}` with
+//! - `DELETE /stacks/{id}` (password): takes it down, `{purge}` with
 //!   its data.
-//! - `GET /stacks/{id}/job?since=<seq>` (admin), `POST /stacks/{id}/job/cancel`.
-//! - `GET /stacks/{id}/services` (admin): its containers.
-//! - `POST /stacks/{id}/login` (admin, password): how to sign in to the
+//! - `GET /stacks/{id}/job?since=<seq>`, `POST /stacks/{id}/job/cancel`.
+//! - `GET /stacks/{id}/services`: its containers.
+//! - `POST /stacks/{id}/login` (password): how to sign in to the
 //!   deployed app the first time (`[login]`), its password included.
-//! - `POST /stacks/{id}/enter` (any account): a ticket for the app's proxy
+//! - `POST /stacks/{id}/enter`: a ticket for the app's proxy
 //!   (`url` when apps are taken by host, `[stacks] apps_url`)
 //!   (`stacks::proxy`), and its port.
 
@@ -68,22 +67,22 @@ fn not_found() -> HttpResponse {
 }
 
 pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::jwt_caller(&req, &state).await);
+    require!(authz::jwt_caller(&req, &state).await);
     // Read again in the background when an hour old; this answer is what is
     // known now.
     let st = state.get_ref().clone();
     tokio::spawn(async move { st.stacks.catalog.refresh(false).await });
-    answer_list(&state, caller.is_admin()).await
+    answer_list(&state).await
 }
 
-/// Reads the catalog's repositories now (admin), and answers as [`list`].
+/// Reads the catalog's repositories now, and answers as [`list`].
 pub async fn refresh(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     state.stacks.catalog.refresh(true).await;
-    answer_list(&state, true).await
+    answer_list(&state).await
 }
 
-async fn answer_list(state: &AppState, admin: bool) -> Result<HttpResponse, web::Error> {
+async fn answer_list(state: &AppState) -> Result<HttpResponse, web::Error> {
     let rows = match store::all(&state.db).await {
         Ok(rows) => rows,
         Err(e) => return Ok(internal_error(&e)),
@@ -96,14 +95,8 @@ async fn answer_list(state: &AppState, admin: bool) -> Result<HttpResponse, web:
         .map(|entry| {
             let id = &entry.package.manifest.id;
             let row = rows.iter().find(|r| &r.id == id);
-            let stack = row.map(|r| {
-                if admin {
-                    serde_json::to_value(r).unwrap_or(Value::Null)
-                } else {
-                    json!({ "state": r.state, "version": r.version })
-                }
-            });
-            let job = admin.then(|| state.stacks.job(id).map(|j| j.view(u64::MAX))).flatten();
+            let stack = row.map(|r| serde_json::to_value(r).unwrap_or(Value::Null));
+            let job = state.stacks.job(id).map(|j| j.view(u64::MAX));
             json!({
                 "manifest": entry.package.manifest,
                 "source": entry.source,
@@ -123,7 +116,7 @@ pub async fn prepare(
     id: web::types::Path<String>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
     let machine = stacks::machine(&state, &id).await;
     let runtime = match stacks::runtime(&state).await {
@@ -160,7 +153,7 @@ pub async fn check(
     body: web::types::Json<CheckBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match stacks::preview(&state, &id, &body.settings).await {
         Ok(preview) => Ok(HttpResponse::Ok().json(&preview)),
         Err(r) => Ok(refused(r)),
@@ -185,11 +178,11 @@ pub async fn install(
     body: web::types::Json<InstallBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
     let consent = stacks::Consent { third_party: body.acknowledged, license: body.accept_license };
-    match stacks::install(&state, &caller.username, &id, &body.settings, consent).await {
+    match stacks::install(&state, &id, &body.settings, consent).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -209,10 +202,10 @@ pub async fn reconfigure(
     body: web::types::Json<SettingsBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
-    match stacks::reconfigure(&state, &caller.username, &id, &body.settings).await {
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
+    match stacks::reconfigure(&state, &id, &body.settings).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -229,8 +222,8 @@ pub async fn act(
     body: web::types::Json<ActionBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
-    match stacks::act(&state, &caller.username, &id, body.action).await {
+    require!(authz::acting_caller(&req, &state).await);
+    match stacks::act(&state, &id, body.action).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -249,10 +242,10 @@ pub async fn remove(
     body: Option<web::types::Json<RemoveBody>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
-    match stacks::remove(&state, &caller.username, &id, body.purge).await {
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
+    match stacks::remove(&state, &id, body.purge).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -270,7 +263,7 @@ pub async fn job(
     query: web::types::Query<JobQuery>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match state.stacks.job(&id) {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
         None => Ok(not_found()),
@@ -282,7 +275,7 @@ pub async fn cancel(
     id: web::types::Path<String>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match state.stacks.job(&id) {
         Some(job) => {
             job.cancel();
@@ -304,10 +297,10 @@ pub async fn login(
     body: Option<web::types::Json<LoginBody>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
-    match stacks::login(&state, &caller.username, &id).await {
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
+    match stacks::login(&state, &id).await {
         Ok(login) => Ok(HttpResponse::Ok().json(&login)),
         Err(r) => Ok(refused(r)),
     }
@@ -318,7 +311,7 @@ pub async fn services(
     id: web::types::Path<String>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match stacks::services(&state, &id).await {
         Ok(services) => Ok(HttpResponse::Ok().json(&json!({ "services": services }))),
         Err(r) => Ok(refused(r)),
@@ -330,12 +323,12 @@ pub async fn enter(
     id: web::types::Path<String>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::jwt_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
     let Some(port) = state.stacks.proxies.port(&id) else {
         return Ok(HttpResponse::Conflict().json(&json!({ "error": "notRunning" })));
     };
-    let ticket = match state.tickets.issue(Purpose::Proxy, &caller.username) {
+    let ticket = match state.tickets.issue(Purpose::Proxy) {
         Ok(t) => t,
         Err(e) => return Ok(internal_error(&e)),
     };
@@ -347,7 +340,6 @@ pub async fn enter(
         state.stacks.proxies.note_entry(&ticket, origin.to_string());
     }
     Event::new(Kind::Stack, Action::Connect, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!("enter {id}"))
         .record(&state.db)

@@ -22,7 +22,7 @@ use serde_json::{Value, json};
 pub const MAX_BYTES: usize = 20 << 20;
 /// Files one task is given.
 pub const MAX_PER_TASK: usize = 10;
-/// Uploads an account has waiting.
+/// Uploads waiting for a task.
 const MAX_PENDING: usize = 16;
 const KEEP_PENDING: Duration = Duration::from_secs(3600);
 /// Text up to this size is put in the prompt.
@@ -41,8 +41,6 @@ pub struct FileView {
 
 struct Upload {
     user: i64,
-    /// Whose it is by name: what [`Files::forget`] is given.
-    username: String,
     view: FileView,
     created: Instant,
 }
@@ -98,7 +96,7 @@ impl Files {
     }
 
     /// Keeps [bytes] for [user] until a task names it.
-    pub async fn put(&self, user: i64, username: &str, name: &str, mime: &str, bytes: &[u8]) -> Result<FileView, FileError> {
+    pub async fn put(&self, user: i64, name: &str, mime: &str, bytes: &[u8]) -> Result<FileView, FileError> {
         self.expire().await;
         if self.pending.lock().unwrap().values().filter(|u| u.user == user).count() >= MAX_PENDING {
             return Err(FileError::TooMany);
@@ -108,7 +106,7 @@ impl Files {
         private_dir(&dir).await.map_err(|e| FileError::Io(e.to_string()))?;
         write_private(&dir.join(&id), bytes).await.map_err(|e| FileError::Io(e.to_string()))?;
         let view = FileView { id: id.clone(), name: clean_name(name), mime: clean_mime(mime), size: bytes.len() as u64 };
-        self.pending.lock().unwrap().insert(id, Upload { user, username: username.to_string(), view: view.clone(), created: Instant::now() });
+        self.pending.lock().unwrap().insert(id, Upload { user, view: view.clone(), created: Instant::now() });
         Ok(view)
     }
 
@@ -127,16 +125,9 @@ impl Files {
         gone
     }
 
-    /// Drops what [username] has waiting: the account ended or lost `shell`.
-    pub fn forget(&self, username: &str) {
-        let gone: Vec<String> = {
-            let mut p = self.pending.lock().unwrap();
-            let ids: Vec<String> = p.iter().filter(|(_, u)| u.username == username).map(|(id, _)| id.clone()).collect();
-            ids.iter().for_each(|id| {
-                p.remove(id);
-            });
-            ids
-        };
+    /// Drops what waits: the password changed.
+    pub fn forget(&self) {
+        let gone: Vec<String> = self.pending.lock().unwrap().drain().map(|(id, _)| id).collect();
         // Unlinking a few files; the caller is not async.
         for id in gone {
             let _ = std::fs::remove_file(self.uploads().join(id));
@@ -354,13 +345,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn uploads_are_the_accounts_own_and_move_into_the_task() {
+    async fn uploads_wait_and_move_into_the_task() {
         let root = std::env::temp_dir().join(format!("sbm-agent-files-{}", std::process::id()));
         let files = Files::new(&root);
-        let a = files.put(1, "a", "app.log", "text/plain", b"line ```x```\n").await.unwrap();
-        let b = files.put(1, "a", "app.log", "image/png", b"\x89PNG").await.unwrap();
-        assert!(!files.has(2, std::slice::from_ref(&a.id)));
-        assert_eq!(files.attach(2, "t", std::slice::from_ref(&a.id)).await.err(), Some(FileError::Unknown));
+        let a = files.put(1, "app.log", "text/plain", b"line ```x```\n").await.unwrap();
+        let b = files.put(1, "app.log", "image/png", b"\x89PNG").await.unwrap();
         let got = files.attach(1, "t", &[a.id.clone(), b.id.clone()]).await.unwrap();
         assert_eq!(got[1].name, "app (2).log");
         assert!(got.iter().all(|f| f.path.exists() && f.path.is_absolute()));
@@ -372,18 +361,16 @@ mod tests {
         assert!(text.contains("````\nline ```x```\n````"), "{text}");
         assert_eq!(images.unwrap()[0]["mimeType"], "image/png");
         // A second batch keeps the first.
-        let c = files.put(1, "a", "app.log", "text/plain", b"again").await.unwrap();
+        let c = files.put(1, "app.log", "text/plain", b"again").await.unwrap();
         let more = files.attach(1, "t", std::slice::from_ref(&c.id)).await.unwrap();
         assert_eq!(more[0].name, "app (3).log");
         assert!(compose("", &got, false).await.1.is_none());
         files.remove_task("t").await;
         assert!(!got[0].path.exists());
-        // An account that ends takes what it had waiting.
-        let w = files.put(1, "a", "x.txt", "text/plain", b"x").await.unwrap();
-        let other = files.put(2, "b", "y.txt", "text/plain", b"y").await.unwrap();
-        files.forget("a");
+        // A password change takes what was waiting.
+        let w = files.put(1, "x.txt", "text/plain", b"x").await.unwrap();
+        files.forget();
         assert!(!files.has(1, std::slice::from_ref(&w.id)) && !root.join("uploads").join(&w.id).exists());
-        assert!(files.has(2, std::slice::from_ref(&other.id)));
         let _ = std::fs::remove_dir_all(&root);
     }
 }

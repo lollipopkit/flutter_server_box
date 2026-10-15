@@ -1,8 +1,8 @@
 //! A login shell on a local PTY: the terminal's shell.
 //!
 //! The shell runs as the account the agent itself runs as, so **the panel
-//! password is the only thing between a visitor and that shell** (for an
-//! account whose role holds `shell`). That is the whole point of the feature
+//! password is the only thing between a visitor and that shell**. That is the
+//! whole point of the feature
 //! and also its entire risk; `install.sh` installs a *user* service by default
 //! so the account in question is an ordinary one.
 //!

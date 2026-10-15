@@ -1,9 +1,9 @@
 //! How the commands a task runs are approved (migration 023), in the shape
-//! of Claude Code's permissions: an admin's `allow` / `ask` / `deny` command
+//! of Claude Code's permissions: the operator's `allow` / `ask` / `deny` command
 //! rules (`sbm_parser::command_rules`) come first, deny before ask before
 //! allow; then what `command_risk` knows to read, and a plan the account
 //! approved; what is left goes by the task's mode, picked when it starts
-//! (the admin's `defaultMode` unless the account picks another):
+//! (the configured `defaultMode` unless the account picks another):
 //!
 //! - `manual`: the account is asked.
 //! - `auto`: a model judges it against the auto mode rules (`hard_deny`,
@@ -11,7 +11,7 @@
 //!   what the account asked and the commands run so far, never their output;
 //!   a block is told to the model and nothing runs. No verdict is asking.
 //! - `bypass`: it runs, a destructive command included, unasked. The rules
-//!   still apply (deny refuses, ask asks). An admin can turn it off
+//!   still apply (deny refuses, ask asks). The operator can turn it off
 //!   (`disableBypass`); a task started in it then runs `manual`.
 //!
 //! Outside `bypass`, a command `command_risk` calls destructive asks for the

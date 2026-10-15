@@ -37,7 +37,6 @@ use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, guest_of, run_libvirt};
 use super::virt_guests::Audit;
 use super::virt_resources::{libvirt_networks, libvirt_storage, password, read_volumes};
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize)]
 pub struct GuestBody {
@@ -80,7 +79,7 @@ fn answer(value: serde_json::Value) -> Result<HttpResponse, web::Error> {
 /// Gated by `virt`, the backend found and the guest read: what every read
 /// here starts with.
 async fn read_guest(req: &HttpRequest, state: &AppState, what: &str, guest: &str, pw: Option<&str>) -> Result<(Backend, Result<Guest, VirtError>), HttpResponse> {
-    machine::gate(req, state, Grant::Virt, what).await?;
+    machine::gate(req, state, what).await?;
     let backend = backend(state).await?;
     let found = guest_of(state, &backend, guest, pw).await;
     Ok((backend, found))

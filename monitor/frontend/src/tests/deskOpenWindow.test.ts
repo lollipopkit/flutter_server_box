@@ -30,7 +30,7 @@ describe('openWindow', () => {
       instances: 2,
       load: () => import('./fixtures/AppSettingsPage.svelte'),
     })
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     const first = desk.open('acme.twin')!
     const win = handleOf(desk, first)
 
@@ -59,7 +59,7 @@ describe('openWindow', () => {
       tone: 'soft',
       load: () => import('./fixtures/AppSettingsPage.svelte'),
     })
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     const id = desk.open('acme.single')!
     const win = handleOf(desk, id)
 
@@ -81,7 +81,7 @@ describe('merging windows with panes', () => {
       panes: true,
       load: () => import('./fixtures/AppSettingsPage.svelte'),
     })
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     const a = desk.open('acme.term', { appState: { n: 1 } })!
     const b = desk.open('acme.term', { appState: { n: 2 } })!
     const layoutOf = (id: string) => readLayout(desk.windows.get(id)!.appState, id)
@@ -145,7 +145,7 @@ describe('a window with panes', () => {
       panes: true,
       load: () => import('./fixtures/PaneProbe.svelte'),
     })
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     const id = desk.open('acme.panes', { appState: { n: 1 } })!
     render(PaneHostHarness, { desk, id })
     await tick()

@@ -60,7 +60,6 @@ use super::session::{
 use super::ticket::Purpose;
 use crate::api::authz;
 use crate::api::server::AppState;
-use crate::core::permissions::Grant;
 use crate::pty::{LocalShell, ShellEvent};
 
 /// How many output messages may queue for a slow client before the live copy
@@ -151,7 +150,7 @@ enum TerminalTarget {
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "lowercase", deny_unknown_fields)]
 enum AuthPayload {
-    /// A shell as the agent's own user; needs `shell`. A struct variant so
+    /// A shell as the agent's own user. A struct variant so
     /// that `deny_unknown_fields` applies to it (serde skips it for a unit
     /// variant of an internally tagged enum).
     Local {},
@@ -232,23 +231,21 @@ pub async fn terminal_ws(
     let Ok(reservation) = app_state.tickets.reserve(raw_ticket, Purpose::Terminal) else {
         return deny("ticket", HttpResponse::Unauthorized().finish()).await;
     };
-    let subject = reservation.subject().to_string();
     let tickets = app_state.tickets.clone();
 
     // Checked here as well as at the ticket, so the answer cannot be stale by
-    // the time the socket opens: the account's role may have changed in
+    // the time the socket opens: the password may have changed in
     // between. Checked again when a frame asks for a shell.
-    let admitted = authz::caller_named(&app_state, &subject)
+    let admitted = authz::caller(&app_state)
         .await
-        .filter(|caller| caller.check(Grant::Shell, &app_state, secure).is_ok());
+        .filter(|caller| caller.check(&app_state, secure).is_ok());
     let Some(admitted) = admitted else {
         tickets.rollback(reservation);
-        return deny("not granted", HttpResponse::Forbidden().finish()).await;
+        return deny("not admitted", HttpResponse::Forbidden().finish()).await;
     };
 
     let ctx = Rc::new(ConnCtx {
         state: app_state,
-        subject,
         remote_ip,
         secure,
         since: admitted.since,
@@ -277,8 +274,7 @@ pub async fn terminal_ws(
 /// Everything about the connection that outlives a single frame.
 struct ConnCtx {
     state: Arc<AppState>,
-    /// Panel account, from the ticket. Sessions are bound to it.
-    subject: String,
+    /// Where the upgrade came from, for the audit log.
     remote_ip: Option<String>,
     /// Whether this connection arrived over a link that can't be read off the
     /// network. Captured at the handshake, where the peer address is known.
@@ -289,29 +285,24 @@ struct ConnCtx {
 }
 
 impl ConnCtx {
-    /// Whether this connection's account may use [grant] now: its role read
-    /// again, not trusted from the handshake — an admin may have changed it
-    /// since.
-    async fn may(&self, grant: Grant) -> Result<(), &'static str> {
-        match authz::caller_named(&self.state, &self.subject)
+    /// Whether a shell may be opened now: the account read again, not
+    /// trusted from the handshake — its password may have changed since.
+    async fn may(&self) -> Result<(), &'static str> {
+        match authz::caller(&self.state)
             .await
             .filter(|caller| caller.since == self.since)
         {
             Some(caller) => caller
-                .check(grant, &self.state, self.secure)
+                .check(&self.state, self.secure)
                 .map_err(|why| why.as_str()),
-            None => Err("not_granted"),
+            None => Err("password_changed"),
         }
     }
 }
 
-/// What a client is told when the frame it sent needs a grant its account
-/// does not have.
-fn not_permitted(grant: Grant, why: &str) -> Message {
-    error_frame(
-        "forbidden",
-        &format!("This account may not use {} here ({why})", grant.as_str()),
-    )
+/// What a client is told when a shell may not be opened.
+fn not_permitted(why: &str) -> Message {
+    error_frame("forbidden", &format!("A shell may not be opened here ({why})"))
 }
 
 /// Where this connection is in the open/authenticate/run sequence.
@@ -504,7 +495,7 @@ async fn on_control(
 
 /// Starts a shell with no authentication step, as the agent's own user.
 ///
-/// Refused unless the account holds `shell`. The check is
+/// Refused unless the transport rule allows it. The check is
 /// here rather than only in the UI because the UI is not a security boundary:
 /// a client can send this frame whether or not a button was rendered for it.
 ///
@@ -522,17 +513,16 @@ async fn open_local(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
-    // Re-derived here rather than trusted from the handshake: the account's
-    // role may have changed in between, and this is the request that matters.
-    if let Err(why) = ctx.may(Grant::Shell).await {
+    // Re-derived here rather than trusted from the handshake: the password
+    // may have changed in between, and this is the request that matters.
+    if let Err(why) = ctx.may().await {
         Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-            .subject(&ctx.subject)
             .remote_ip(ctx.remote_ip.clone())
             .detail(format!("shell: {why}"))
             .record(&ctx.state.db)
             .await;
         reset_opening(phase);
-        return Some(not_permitted(Grant::Shell, why));
+        return Some(not_permitted(why));
     }
 
     // What the audit row calls this session, and what the target contributes
@@ -550,7 +540,6 @@ async fn open_local(
         Some(TerminalTarget::Container { id }) => {
             if let Err(issue) = sbm_parser::container::validate_identifier(&id) {
                 Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-                    .subject(&ctx.subject)
                     .remote_ip(ctx.remote_ip.clone())
                     .detail(format!("container: {}", issue.code()))
                     .record(&ctx.state.db)
@@ -567,7 +556,6 @@ async fn open_local(
                 ),
                 None => {
                     Event::new(Kind::Terminal, Action::Open, Outcome::Error)
-                        .subject(&ctx.subject)
                         .remote_ip(ctx.remote_ip.clone())
                         .detail("container: no runtime")
                         .record(&ctx.state.db)
@@ -590,7 +578,6 @@ async fn open_local(
                 Ok(command) => LocalShell::spawn_command(&term, cols, rows, &command),
                 Err(issue) => {
                     Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-                        .subject(&ctx.subject)
                         .remote_ip(ctx.remote_ip.clone())
                         .detail(format!("iperf: {}", issue.code()))
                         .record(&ctx.state.db)
@@ -645,7 +632,6 @@ async fn open_local(
         Ok(started) => started,
         Err(e) => {
             Event::new(Kind::Terminal, Action::Open, Outcome::Error)
-                .subject(&ctx.subject)
                 .remote_ip(ctx.remote_ip.clone())
                 .detail(format!("{detail}: spawn failed"))
                 .record(&ctx.state.db)
@@ -658,12 +644,13 @@ async fn open_local(
 
     let user = local_user();
     let (mut session, input_rx) = Session::new(
-        &ctx.subject,
         &user,
         ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
     session.since = ctx.since;
+    session.what = detail.clone();
+    session.remote_ip = ctx.remote_ip.clone();
     let inserted = match ctx.state.sessions.insert(session) {
         Ok(Some(inserted)) => inserted,
         Ok(None) => {
@@ -683,23 +670,20 @@ async fn open_local(
     };
     let (handle, session) = inserted;
 
-    // A role change can race the spawn above on another worker. Once
-    // registered, either this recheck rejects it or the revocation sweep sees
-    // it.
-    if let Err(why) = ctx.may(Grant::Shell).await {
+    // A password change can race the spawn above on another worker. Once
+    // registered, either this recheck rejects it or `authz::end_account`
+    // closes it.
+    if let Err(why) = ctx.may().await {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
-        return Some(not_permitted(Grant::Shell, why));
+        return Some(not_permitted(why));
     }
     let Some((attachment, rx, _replay, _start)) = session.attach(0, OUTPUT_QUEUE) else {
         ctx.state.sessions.remove(&handle);
         shell.kill();
         reset_opening(phase);
-        return Some(error_frame(
-            "permission_revoked",
-            "This account's permissions changed",
-        ));
+        return Some(error_frame("password_changed", "The password changed"));
     };
     drive_local_shell(
         shell,
@@ -738,7 +722,6 @@ async fn open_local(
     pump_output(sink.clone(), rx);
 
     Event::new(Kind::Terminal, Action::Open, Outcome::Ok)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .ssh_user(&user)
         .detail(&detail)
@@ -767,7 +750,6 @@ async fn tmux_refused(
     issue: sbm_parser::tmux::TmuxError,
 ) -> Option<Message> {
     Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .detail(format!("{what}: {}", issue.code()))
         .record(&ctx.state.db)
@@ -784,7 +766,6 @@ async fn tmux_refused(
 /// generic failure: the remedy is on the machine, not in the panel.
 async fn no_tmux(ctx: &Rc<ConnCtx>, phase: &Rc<RefCell<Phase>>) -> Option<Message> {
     Event::new(Kind::Terminal, Action::Open, Outcome::Error)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .detail("tmux: not installed")
         .record(&ctx.state.db)
@@ -853,11 +834,10 @@ async fn attach(
     cols: u16,
     rows: u16,
 ) -> Option<Message> {
-    let session = match ctx.state.sessions.get(handle, &ctx.subject) {
+    let session = match ctx.state.sessions.get(handle) {
         Ok(session) => session,
         Err(reason) => {
             Event::new(Kind::Terminal, Action::Attach, Outcome::Denied)
-                .subject(&ctx.subject)
                 .remote_ip(ctx.remote_ip.clone())
                 .detail(format!("{reason:?}"))
                 .record(&ctx.state.db)
@@ -871,11 +851,11 @@ async fn attach(
             ));
         }
     };
-    // The session was opened under `shell`; rejoining it needs it still, or
-    // taking it away would only end the sessions nobody rejoined.
-    if let Err(why) = ctx.may(Grant::Shell).await {
+    // Rejoining a session checks the transport rule again: a link that may
+    // not open a shell may not take over one either.
+    if let Err(why) = ctx.may().await {
         reset_opening(phase);
-        return Some(not_permitted(Grant::Shell, why));
+        return Some(not_permitted(why));
     }
 
     // Installs this connection's sender and reads the replay in one step, so
@@ -943,7 +923,6 @@ async fn attach(
         .await;
 
     Event::new(Kind::Terminal, Action::Attach, Outcome::Ok)
-        .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .ssh_user(&session.user)
         .record(&ctx.state.db)
@@ -982,7 +961,7 @@ fn pump_output(sink: WsSink, mut rx: mpsc::Receiver<SessionOutput>) {
                     let _ = sink
                         .send(error_frame(
                             code,
-                            "This account may no longer use this terminal",
+                            "The password changed",
                         ))
                         .await;
                     let _ = sink

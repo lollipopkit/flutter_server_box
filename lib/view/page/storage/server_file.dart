@@ -6,7 +6,7 @@ import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -32,8 +32,8 @@ import 'package:server_box/view/page/storage/show_transfers.dart';
 /// both-transports server are the union, and SFTP is files, so that question
 /// answers true for every such server whatever the agent allows. What is being
 /// asked here is whether the *agent* can serve them.
-bool serverFilesUseAgent(Spi spi, MonitorRemoteAccess? granted) {
-  if (spi.monitorOn == null || granted?.files != true) return false;
+bool serverFilesUseAgent(Spi spi, MonitorAccess? granted) {
+  if (spi.monitorOn == null || granted?.ok != true) return false;
   return spi.sshOn == null || spi.transport == ServerTransport.monitorHttp;
 }
 
@@ -60,7 +60,7 @@ class ServerFilePage extends ConsumerWidget {
     if (args.spi.local && state.capabilities.files) {
       return _LocalServerFilePage(args: args);
     }
-    if (serverFilesUseAgent(args.spi, state.remoteAccess)) {
+    if (serverFilesUseAgent(args.spi, state.agentAccess)) {
       return _MonitorFilePage(args: args);
     }
     if (state.capabilities.byteStream) return SftpPage(args: args);
@@ -173,7 +173,6 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     _backend = MonitorFileBackend(
       monitor,
       permissions: server.status.system != SystemType.windows,
-      readOnly: server.remoteAccess?.grants?.filesReadOnly ?? false,
     );
   }
 

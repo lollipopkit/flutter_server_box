@@ -5,9 +5,8 @@
 
 import type { Component } from 'svelte'
 import type { TranslationFunctions } from '../../i18n/i18n-types'
-import { dashboardAccess } from '../../lib/access'
-import { enabledFeatures, type FeatureId } from '../../lib/features'
-import type { Capabilities } from '../../types'
+import { dashboardAccess, machineAccess } from '../../lib/access'
+import type { Capabilities, MachineFeature } from '../../types'
 import type { IconTone } from '../lk/AppIcon.svelte'
 import type { Size } from '../geometry'
 import type { WindowPolicy } from '../windows.svelte'
@@ -128,9 +127,10 @@ export function defineApp(m: AppManifest): AppSpec {
   }
 }
 
-/// Available when the agent lists [id] among its features.
-export function feature(id: FeatureId) {
-  return (caps: Capabilities | undefined) => enabledFeatures(caps).some((f) => f.id === id)
+/// Available when the agent lists [id] among its features and the account
+/// may act over this link.
+export function feature(id: MachineFeature) {
+  return (caps: Capabilities | undefined) => machineAccess(caps, id)
 }
 
 /// Available when this account may use the server's terminal or files.

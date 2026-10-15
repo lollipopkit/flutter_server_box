@@ -1635,7 +1635,6 @@ class GlobalAgentToolService {
           ? null
           : MonitorHttpCredential(
               addr: monitorAddr,
-              user: saved.monitorUser,
               pwd: saved.monitorPwd,
             ),
     );

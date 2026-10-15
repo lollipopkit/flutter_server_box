@@ -38,6 +38,11 @@ export function noticeText(
           current: stringParam(params, 'current'),
         }),
       }
+    case 'agent.update':
+      return {
+        subject: ll.noticeAgentUpdate(),
+        body: ll.noticeAgentUpdateBody({ version: stringParam(params, 'version'), current: stringParam(params, 'current') }),
+      }
     case 'storage.arrayDegraded':
       return { subject: ll.noticeStorageArrayDegraded({ array: stringParam(params, 'array') }), body: ll.noticeStorageArrayDegradedBody() }
     case 'storage.arrayBack':

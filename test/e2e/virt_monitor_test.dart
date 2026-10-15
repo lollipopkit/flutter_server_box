@@ -8,11 +8,8 @@
 /// Every group is skipped silently unless its variables are set, in the
 /// environment or the workspace-root `.env` (never commit secrets there):
 ///
-/// - `SBM_E2E_MONITOR_USER` (default `admin`): the panel account, the same on
-///   every agent below.
 /// - `SBM_E2E_MONITOR_LIBVIRT_ADDR`, `SBM_E2E_MONITOR_LIBVIRT_PASSWORD` — an
-///   agent on a libvirt host (`https://host:3770`), with
-///   `remote_access.full_access` and `[remote_access.terminal] enabled` on.
+///   agent on a libvirt host (`https://host:3770`).
 ///   The host needs the domains `virt_real_test.dart` describes
 ///   (`SBM_E2E_LIBVIRT_RUNNING` / `_PAUSED` / `_STOPPED`, same defaults);
 ///   only the paused one is changed (resumed and paused again), and the
@@ -27,7 +24,7 @@
 ///   console is typed as `sudo virsh console`. Unset: the account must reach
 ///   `qemu:///system` itself, and the sudo path is not exercised.
 /// - `SBM_E2E_MONITOR_PVE_ADDR`, `SBM_E2E_MONITOR_PVE_PASSWORD` — an agent on a
-///   Proxmox VE node with the same grants. The API is reached through its
+///   Proxmox VE node. The API is reached through its
 ///   relay at `https://localhost:8006`. Also needs `SBM_E2E_PVE_TOKEN_ID` and
 ///   `SBM_E2E_PVE_TOKEN_SECRET` (as in `virt_real_test.dart`), and uses
 ///   `SBM_E2E_PVE_LXC` (default `200`, **rebooted**, its getty typed into) and
@@ -37,8 +34,10 @@
 ///   that VM's power cycle, consoles and detail run through the relay too,
 ///   and it is **left stopped**.
 /// - `SBM_E2E_MONITOR_RESTRICTED_ADDR`, `SBM_E2E_MONITOR_RESTRICTED_PASSWORD`
-///   (default: the libvirt one) — an agent with `full_access` **off**: the
-///   typed refusals for commands and for the relay.
+///   (default: the libvirt one) — an agent reached over plain `http://` away
+///   from loopback, without its `[remote_access] allow_insecure`: the typed
+///   refusals for commands and for the relay. The app side allows plaintext,
+///   so the refusal is the agent's.
 ///
 /// The "clone" groups clone a throwaway VM of their own (libvirt: a full copy
 /// and one with empty disks; PVE: a full clone) and, on PVE, back it up, list
@@ -104,6 +103,7 @@ import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/pve_config.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -132,12 +132,11 @@ import '../helpers/tunnel_client.dart';
 Future<void> main() async {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final user = e2eEnv('SBM_E2E_MONITOR_USER') ?? 'admin';
-  final libvirt = await _Agent.probe('LIBVIRT', user);
-  final pve = await _Agent.probe('PVE', user);
+  final libvirt = await _Agent.probe('LIBVIRT');
+  final pve = await _Agent.probe('PVE');
   final restricted = await _Agent.probe(
     'RESTRICTED',
-    user,
+    allowInsecure: true,
     fallbackPassword: e2eEnv('SBM_E2E_MONITOR_LIBVIRT_PASSWORD'),
   );
   if (libvirt == null && pve == null && restricted == null) {
@@ -217,18 +216,24 @@ Future<void> main() async {
 
 /// One agent's address and panel login.
 class _Agent {
-  const _Agent(this.addr, this.user, this.password);
+  const _Agent(this.addr, this.password, {this.allowInsecure = false});
 
   final String addr;
-  final String user;
   final String password;
 
-  static _Agent? fromEnv(String name, String user, {String? fallbackPassword}) {
+  /// This app's side of plaintext HTTP; the agent decides its own.
+  final bool allowInsecure;
+
+  static _Agent? fromEnv(
+    String name, {
+    String? fallbackPassword,
+    bool allowInsecure = false,
+  }) {
     final addr = e2eEnv('SBM_E2E_MONITOR_${name}_ADDR');
     final password =
         e2eEnv('SBM_E2E_MONITOR_${name}_PASSWORD') ?? fallbackPassword;
     if (addr == null || password == null) return null;
-    return _Agent(addr, user, password);
+    return _Agent(addr, password, allowInsecure: allowInsecure);
   }
 
   /// [fromEnv], and then whether the agent answers at all.
@@ -242,11 +247,15 @@ class _Agent {
   /// A literal host address, so the check does not go through the same
   /// transport the suite is about to exercise.
   static Future<_Agent?> probe(
-    String name,
-    String user, {
+    String name, {
     String? fallbackPassword,
+    bool allowInsecure = false,
   }) async {
-    final agent = fromEnv(name, user, fallbackPassword: fallbackPassword);
+    final agent = fromEnv(
+      name,
+      fallbackPassword: fallbackPassword,
+      allowInsecure: allowInsecure,
+    );
     if (agent == null) return null;
     final uri = Uri.tryParse(agent.addr);
     final host = uri?.host;
@@ -259,10 +268,10 @@ class _Agent {
 
   MonitorHttpCredential get credential => MonitorHttpCredential(
     addr: addr,
-    user: user,
     pwd: password,
     // Self-signed `[server.tls]` on every test agent; see the header.
     ignoreCert: true,
+    allowInsecure: allowInsecure,
   );
 
   /// A server reached through this agent and nothing else.
@@ -283,7 +292,7 @@ class _World {
 
   ServerNotifier get server => container.read(serverProvider(id).notifier);
 
-  /// The status poll, which is also what reads the agent's grants.
+  /// The status poll, which is also what reads the agent's access.
   Future<void> poll() => server.refresh();
 
   /// The host, held for the length of the group.
@@ -359,12 +368,10 @@ void _libvirt(_Agent agent) {
       await w.dispose();
     });
 
-    test('the status poll reads the agent\'s grants', () async {
+    test('the status poll reads the agent\'s access', () async {
       await w.poll();
-      final granted = w.container.read(serverProvider(w.id)).remoteAccess;
-      expect(granted?.fullAccess, isTrue, reason: '$granted');
-      expect(granted?.terminal, isTrue);
-      expect(granted?.stream, isTrue);
+      final granted = w.container.read(serverProvider(w.id)).agentAccess;
+      expect(granted?.ok, isTrue, reason: '$granted');
     });
 
     test('ensureExec answers the agent', () async {
@@ -3324,9 +3331,9 @@ void _pve(_Agent agent) {
 
     test('certificate: unconfirmed over the relay, confirmed, then loaded',
         () async {
-      // No status poll first: the grant has not been read, which is how the
+      // No status poll first: access has not been read, which is how the
       // tab finds a server at app start. The relay is tried, not refused.
-      expect(w.container.read(serverProvider(w.id)).remoteAccess, isNull);
+      expect(w.container.read(serverProvider(w.id)).agentAccess, isNull);
       await w.host.firstLoad;
       final e = w.state.error;
       expect(e?.type, VirtErrType.certUnconfirmed, reason: '$e');
@@ -3677,11 +3684,11 @@ Future<void> _serialLogin(
 }
 
 // -----------------------------------------------------------------------------
-// An agent without full access
+// An agent refusing a plaintext connection
 // -----------------------------------------------------------------------------
 
 void _restricted(_Agent agent) {
-  group('an agent without full access', () {
+  group('an agent refusing a plaintext connection', () {
     test('libvirt: the command is refused as not granted', () async {
       final w = _World(agent.spi('e2e-monitor-restricted-libvirt'));
       try {
@@ -3717,8 +3724,9 @@ void _restricted(_Agent agent) {
           );
           if (polled) {
             await w.poll();
-            final granted = w.container.read(serverProvider(w.id)).remoteAccess;
-            expect(granted?.stream, isFalse, reason: '$granted');
+            final granted = w.container.read(serverProvider(w.id)).agentAccess;
+            expect(granted?.ok, isFalse, reason: '$granted');
+            expect(granted?.why, MonitorAccessWhy.insecureTransport);
           }
           await w.host.firstLoad;
           final e = w.state.error;

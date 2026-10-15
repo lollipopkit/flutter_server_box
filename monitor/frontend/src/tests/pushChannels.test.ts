@@ -29,7 +29,7 @@ const listed = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   mocked.getPush.mockResolvedValue(structuredClone(listed))
   mocked.updatePush.mockResolvedValue(structuredClone(listed))

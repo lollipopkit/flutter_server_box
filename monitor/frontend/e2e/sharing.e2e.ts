@@ -4,8 +4,7 @@
 /// It changes ServerBox's own share files only (`/etc/samba/serverbox.conf`,
 /// `/etc/exports.d/serverbox.exports`).
 ///
-///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_USER=admin \
-///     SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
+///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
 ///     SBM_E2E_SHARE_FOLDER=/srv/share SBM_E2E_SHARE_ACCOUNT=alice \
 ///     npx playwright test sharing
 ///
@@ -13,7 +12,8 @@
 /// to a random one).
 
 import { expect, test, type Page } from '@playwright/test'
-import { fillSecret, submitForm } from './secret'
+import { fillSecret } from './secret'
+import { signIn } from './signin'
 
 const env = process.env
 const folder = env.SBM_E2E_SHARE_FOLDER ?? ''
@@ -22,11 +22,7 @@ const sudo = env.SBM_E2E_SUDO_PASSWORD ?? ''
 test.skip(!env.SBM_E2E_PANEL_URL || !env.SBM_E2E_PANEL_PASSWORD || !folder, 'SBM_E2E_PANEL_URL, SBM_E2E_PANEL_PASSWORD and SBM_E2E_SHARE_FOLDER are not set')
 
 async function open(page: Page) {
-  await page.goto('/')
-  await page.getByPlaceholder('Username').fill(env.SBM_E2E_PANEL_USER ?? 'admin')
-  const login = page.locator('input[type=password]')
-  await fillSecret(login, env.SBM_E2E_PANEL_PASSWORD!)
-  await submitForm(login)
+  await signIn(page)
   await page.locator('.lk-dock button[aria-label="All Apps"]').click()
   await page.getByText('Sharing', { exact: true }).first().click()
   await expect(page.getByText('SMB', { exact: true }).first()).toBeVisible({ timeout: 30_000 })

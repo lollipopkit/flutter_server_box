@@ -3634,24 +3634,6 @@ abstract class AppLocalizations {
   /// **'{func} is not available over this server\'s connection.'**
   String funcUnavailableFmt(String func);
 
-  /// No description provided for @funcNeedsAgentGrant.
-  ///
-  /// In en, this message translates to:
-  /// **'{func} needs the Monitor agent\'s {setting} to be turned on.'**
-  String funcNeedsAgentGrant(String func, String setting);
-
-  /// No description provided for @funcNeedsAgentUpdate.
-  ///
-  /// In en, this message translates to:
-  /// **'{func} needs a newer Monitor agent.'**
-  String funcNeedsAgentUpdate(String func);
-
-  /// No description provided for @portForwardRemoteNeedsAgent.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote forwards through the Monitor agent need a newer agent: update it on the server.'**
-  String get portForwardRemoteNeedsAgent;
-
   /// User-facing label or message for range live.
   ///
   /// In en, this message translates to:
@@ -4759,7 +4741,7 @@ abstract class AppLocalizations {
   /// User-facing label or message for monitor no remote access.
   ///
   /// In en, this message translates to:
-  /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
+  /// **'This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.'**
   String get monitorNoRemoteAccess;
 
   /// User-facing label or message for alerts.
@@ -8637,53 +8619,17 @@ abstract class AppLocalizations {
   /// **'Copy link'**
   String get copyLink;
 
-  /// No description provided for @funcNeedsAgentPermission.
-  ///
-  /// In en, this message translates to:
-  /// **'Your account on this Monitor agent has no permission for {func}. Ask the agent\'s admin.'**
-  String funcNeedsAgentPermission(String func);
-
   /// No description provided for @funcNeedsAgentHttps.
   ///
   /// In en, this message translates to:
   /// **'{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.'**
   String funcNeedsAgentHttps(String func);
 
-  /// No description provided for @funcNeedsAgentSetup.
-  ///
-  /// In en, this message translates to:
-  /// **'{func} is not set up on this Monitor agent; its operator has to configure it.'**
-  String funcNeedsAgentSetup(String func);
-
-  /// No description provided for @monitorFilesReadOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Read-only: this account can browse files on the agent but not change them.'**
-  String get monitorFilesReadOnly;
-
   /// No description provided for @monitorAccess.
   ///
   /// In en, this message translates to:
   /// **'Access'**
   String get monitorAccess;
-
-  /// No description provided for @monitorAccounts.
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get monitorAccounts;
-
-  /// No description provided for @monitorRoles.
-  ///
-  /// In en, this message translates to:
-  /// **'Roles'**
-  String get monitorRoles;
-
-  /// No description provided for @monitorRole.
-  ///
-  /// In en, this message translates to:
-  /// **'Role'**
-  String get monitorRole;
 
   /// No description provided for @monitorChangePassword.
   ///
@@ -8703,12 +8649,6 @@ abstract class AppLocalizations {
   /// **'Your current password'**
   String get monitorCurrentPassword;
 
-  /// No description provided for @monitorReauthTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Changing access needs your own password again.'**
-  String get monitorReauthTip;
-
   /// No description provided for @monitorPasswordTooShort.
   ///
   /// In en, this message translates to:
@@ -8726,132 +8666,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your password was wrong.'**
   String get monitorErrReauth;
-
-  /// No description provided for @monitorErrLastAdmin.
-  ///
-  /// In en, this message translates to:
-  /// **'The agent needs at least one admin account.'**
-  String get monitorErrLastAdmin;
-
-  /// No description provided for @monitorErrConflict.
-  ///
-  /// In en, this message translates to:
-  /// **'It already exists, or it is still in use.'**
-  String get monitorErrConflict;
-
-  /// No description provided for @monitorErrForbidden.
-  ///
-  /// In en, this message translates to:
-  /// **'Only an admin can do this.'**
-  String get monitorErrForbidden;
-
-  /// No description provided for @monitorRoleNameRule.
-  ///
-  /// In en, this message translates to:
-  /// **'Lowercase letters, digits, - and _, up to 32 characters'**
-  String get monitorRoleNameRule;
-
-  /// No description provided for @monitorGrantShell.
-  ///
-  /// In en, this message translates to:
-  /// **'Shell and commands'**
-  String get monitorGrantShell;
-
-  /// No description provided for @monitorGrantShellTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Terminal, processes, services, containers, snippets, power — as the agent\'s account'**
-  String get monitorGrantShellTip;
-
-  /// No description provided for @monitorGrantVirt.
-  ///
-  /// In en, this message translates to:
-  /// **'Virtualization'**
-  String get monitorGrantVirt;
-
-  /// No description provided for @monitorGrantVirtTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel'**
-  String get monitorGrantVirtTip;
-
-  /// No description provided for @monitorGrantFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Files'**
-  String get monitorGrantFiles;
-
-  /// No description provided for @monitorGrantConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Outbound connections'**
-  String get monitorGrantConnect;
-
-  /// No description provided for @monitorGrantConnectTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Local and dynamic port forwards, remote desktop'**
-  String get monitorGrantConnectTip;
-
-  /// No description provided for @monitorGrantConnectAllow.
-  ///
-  /// In en, this message translates to:
-  /// **'Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)'**
-  String get monitorGrantConnectAllow;
-
-  /// No description provided for @monitorGrantListen.
-  ///
-  /// In en, this message translates to:
-  /// **'Listen on the server'**
-  String get monitorGrantListen;
-
-  /// No description provided for @monitorGrantListenTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote port forwards'**
-  String get monitorGrantListenTip;
-
-  /// No description provided for @monitorGrantListenPublic.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-loopback addresses'**
-  String get monitorGrantListenPublic;
-
-  /// No description provided for @monitorGrantPorts.
-  ///
-  /// In en, this message translates to:
-  /// **'Port range (empty is any)'**
-  String get monitorGrantPorts;
-
-  /// No description provided for @monitorGrantOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get monitorGrantOff;
-
-  /// No description provided for @monitorBuiltin.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in'**
-  String get monitorBuiltin;
-
-  /// No description provided for @monitorAdminRoleTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Manages accounts, roles and the agent\'s settings'**
-  String get monitorAdminRoleTip;
-
-  /// No description provided for @monitorYou.
-  ///
-  /// In en, this message translates to:
-  /// **'You'**
-  String get monitorYou;
-
-  /// No description provided for @monitorNoAccessToSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Only an admin can change this agent\'s settings.'**
-  String get monitorNoAccessToSettings;
 
   /// Shown when the agent accepted a new password but the app failed to update the credential it stores for the server.
   ///
@@ -9260,12 +9074,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This monitor agent cannot store backups. Update the agent.'**
   String get monitorBackupUnsupported;
-
-  /// Backup sync to a monitor agent: the account the app logs in with is not an admin.
-  ///
-  /// In en, this message translates to:
-  /// **'Only an admin account of the monitor agent can store backups on it.'**
-  String get monitorBackupAdminOnly;
 
   /// Backup sync to a monitor agent: the file exceeds the agent's size limit, given as max.
   ///
@@ -10110,12 +9918,6 @@ abstract class AppLocalizations {
   /// Storage and sharing page text.
   ///
   /// In en, this message translates to:
-  /// **'Whole disk'**
-  String get storageWholeDisk;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
   /// **'No filesystem'**
   String get storageNoFilesystem;
 
@@ -10268,12 +10070,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick at least {count} devices. What they hold is lost.'**
   String storagePickDevices(Object count);
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'No free disk or partition.'**
-  String get storageNoFreeDevices;
 
   /// Storage and sharing page text.
   ///
@@ -10488,12 +10284,6 @@ abstract class AppLocalizations {
   /// Storage and sharing page text.
   ///
   /// In en, this message translates to:
-  /// **'sudo password (if the agent\'s account needs one)'**
-  String get storageSudoPassword;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
   /// **'{device} is in use.'**
   String storageInUse(Object device);
 
@@ -10502,24 +10292,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Another change to the disks is running.'**
   String get storageBusy;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Changing the disks…'**
-  String get storageWorking;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Done'**
-  String get storageDone;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Did not finish'**
-  String get storageFailed;
 
   /// Storage and sharing page text.
   ///
@@ -10574,24 +10346,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Self-test: {percent}% left'**
   String storageTesting(Object percent);
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Last self-test passed'**
-  String get storageLastTestPassed;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Last self-test failed'**
-  String get storageLastTestFailed;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Last self-test was stopped'**
-  String get storageLastTestAborted;
 
   /// Storage and sharing page text.
   ///
@@ -11010,12 +10764,6 @@ abstract class AppLocalizations {
   /// Storage and sharing page text.
   ///
   /// In en, this message translates to:
-  /// **'Installing…'**
-  String get sharingInstalling;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
   /// **'Add share'**
   String get sharingAddShare;
 
@@ -11148,20 +10896,8 @@ abstract class AppLocalizations {
   /// Storage and sharing page text.
   ///
   /// In en, this message translates to:
-  /// **'Account'**
-  String get sharingAccount;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
   /// **'Set password'**
   String get sharingSetPassword;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Sets the SMB password of {user}.'**
-  String sharingSetPasswordBody(Object user);
 
   /// Storage and sharing page text.
   ///
@@ -11198,12 +10934,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add client'**
   String get sharingAddClient;
-
-  /// Storage and sharing page text.
-  ///
-  /// In en, this message translates to:
-  /// **'Root on the client'**
-  String get sharingSquash;
 
   /// Storage and sharing page text.
   ///
@@ -11492,6 +11222,648 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Version {version} is available. Update it in the Monitor panel.'**
   String webAppUpdate(String version);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} is down'**
+  String noticeStackDown(String app);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Not running: {services}.'**
+  String noticeStackDownBody(String services);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'None of its containers is running.'**
+  String get noticeStackDownBodyEmpty;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} is unhealthy'**
+  String noticeStackUnhealthy(String app);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Failing its health check: {services}.'**
+  String noticeStackUnhealthyBody(String services);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app} is running again'**
+  String noticeStackBack(String app);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Every container is up.'**
+  String get noticeStackBackBody;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{app}: an update is available'**
+  String noticeStackUpdate(String app);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{project} {version} can be installed (now {current}).'**
+  String noticeStackUpdateBody(String project, String version, String current);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'/dev/{array} is degraded'**
+  String noticeStorageArrayDegraded(String array);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'A member failed or is missing; the array runs without its redundancy.'**
+  String get noticeStorageArrayDegradedBody;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'/dev/{array} is healthy again'**
+  String noticeStorageArrayBack(String array);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Every member is working.'**
+  String get noticeStorageArrayBackBody;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Pool {pool} is {health}'**
+  String noticeStoragePoolUnhealthy(String pool, String health);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Storage to see which device.'**
+  String get noticeStoragePoolUnhealthyBody;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Pool {pool} is online again'**
+  String noticeStoragePoolBack(String pool);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Every device is working.'**
+  String get noticeStoragePoolBackBody;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} is failing'**
+  String noticeStorageDiskFailing(String device);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Its SMART check or self-test failed: copy what it holds elsewhere and replace it.'**
+  String get noticeStorageDiskFailingBody;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} has {count} bad sectors'**
+  String noticeStorageDiskSectors(String device, int count);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'It had {was}. A disk losing sectors often fails soon.'**
+  String noticeStorageDiskSectorsBody(int was);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage maintenance did not run: {task}'**
+  String noticeStorageMaintenanceFailed(String task);
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Scrub pools and check arrays'**
+  String get storageTaskScrub;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Short SMART test'**
+  String get storageTaskSmartShort;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'Long SMART test'**
+  String get storageTaskSmartLong;
+
+  /// Monitor tab: an agent notification or storage task, as the panel words it.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo asked for a password: run the agent as root, or allow these commands (above).'**
+  String get storageNeedsSudo;
+
+  /// Name of the Monitor tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor'**
+  String get monitorTab;
+
+  /// Monitor tab section: each agent, its version and its firing alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get monitorOverview;
+
+  /// Monitor tab section: the agents' notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get monitorNotices;
+
+  /// Monitor tab section: an agent's audit log.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit log'**
+  String get monitorAudit;
+
+  /// Monitor tab section: what is signed in to an agent and open on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions & devices'**
+  String get monitorLive;
+
+  /// Monitor tab when no server is reached through a Monitor agent.
+  ///
+  /// In en, this message translates to:
+  /// **'No server is reached through a Monitor agent yet.'**
+  String get monitorNoAgents;
+
+  /// Monitor tab when the agent is too old for a section.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent\'s version does not offer this. Update the agent.'**
+  String get monitorNotOffered;
+
+  /// Overview card: the agent is too old to report alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent\'s version does not report alerts.'**
+  String get monitorAlertsNotOffered;
+
+  /// Overview card: no monitoring rule is firing.
+  ///
+  /// In en, this message translates to:
+  /// **'No rule is firing.'**
+  String get monitorAlertsNone;
+
+  /// An alert: how long its rule has been firing without a break.
+  ///
+  /// In en, this message translates to:
+  /// **'firing for {duration}'**
+  String monitorFiringFor(String duration);
+
+  /// Overview card: the agent's version.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent {version}'**
+  String monitorAgentVersion(String version);
+
+  /// Overview card: a newer agent release exists.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} available'**
+  String monitorAgentUpdate(String version);
+
+  /// Overview card: unread notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String monitorUnread(int count);
+
+  /// Overview card: deployed web apps that are down or unhealthy.
+  ///
+  /// In en, this message translates to:
+  /// **'Apps with problems: {count}'**
+  String monitorAppsUnwell(int count);
+
+  /// Overview card: deployed web apps the catalog has a newer version of.
+  ///
+  /// In en, this message translates to:
+  /// **'App updates: {count}'**
+  String monitorAppsUpdates(int count);
+
+  /// Web apps section: show only apps with an update.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates only'**
+  String get monitorUpdatesOnly;
+
+  /// Web apps section: no app has an update.
+  ///
+  /// In en, this message translates to:
+  /// **'No app has an update.'**
+  String get monitorNoUpdates;
+
+  /// Notifications section: none.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications.'**
+  String get monitorNoticesEmpty;
+
+  /// Notifications section: mark every notification read.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get monitorMarkAllRead;
+
+  /// Audit log kind: commands run through the agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Commands'**
+  String get monitorAuditExec;
+
+  /// Audit log kind: machine management (power, processes, services, …).
+  ///
+  /// In en, this message translates to:
+  /// **'Machine management'**
+  String get monitorAuditMachine;
+
+  /// Audit log kind and connection kind: ports the agent listened on.
+  ///
+  /// In en, this message translates to:
+  /// **'Listened ports'**
+  String get monitorAuditListen;
+
+  /// Audit log kind: single-use connection tickets.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection tickets'**
+  String get monitorAuditTicket;
+
+  /// Audit log kind: notification channels changed or tested.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification channels'**
+  String get monitorAuditPush;
+
+  /// Audit log kind: the account (password, sessions and devices ended).
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get monitorAuditAdmin;
+
+  /// Audit log result: refused.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get monitorAuditDenied;
+
+  /// Audit log: read the next page.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get monitorLoadMore;
+
+  /// Sessions section heading: terminal sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal sessions'**
+  String get monitorLiveSessions;
+
+  /// Sessions section heading: relayed connections, ports, consoles, remote desktops.
+  ///
+  /// In en, this message translates to:
+  /// **'Connections'**
+  String get monitorLiveConnections;
+
+  /// Sessions section heading: read-only tokens of watches and widgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch and widget tokens'**
+  String get monitorLiveWatchTokens;
+
+  /// Sessions section heading: devices that signed in with the password.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed-in devices'**
+  String get monitorLiveDevices;
+
+  /// Sessions section: what forgetting a device does and does not do.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.'**
+  String get monitorLiveDevicesTip;
+
+  /// A terminal session a client is attached to now.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached'**
+  String get monitorLiveAttached;
+
+  /// A terminal session no client is attached to; it ends after the timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Detached'**
+  String get monitorLiveDetached;
+
+  /// Sessions section: end a session or connection.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get monitorLiveEnd;
+
+  /// Sessions section: revoke a watch or widget token.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get monitorLiveRevoke;
+
+  /// Sessions section: forget a signed-in device.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget'**
+  String get monitorLiveForget;
+
+  /// Confirm ending a terminal session.
+  ///
+  /// In en, this message translates to:
+  /// **'End the terminal session \"{name}\"? What runs in it stops.'**
+  String monitorLiveEndSessionConfirm(String name);
+
+  /// Confirm ending a connection.
+  ///
+  /// In en, this message translates to:
+  /// **'End the connection to {name}?'**
+  String monitorLiveEndConnectionConfirm(String name);
+
+  /// Confirm revoking a watch or widget token.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke the token of {name}? It stops updating until it is set up again.'**
+  String monitorLiveRevokeConfirm(String name);
+
+  /// Confirm forgetting a signed-in device.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget {name}?'**
+  String monitorLiveForgetConfirm(String name);
+
+  /// A watch or widget token: when it expires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires {time}'**
+  String monitorLiveExpires(String time);
+
+  /// Connection kind: a TCP connection relayed by the agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Relayed connection'**
+  String get monitorLiveStream;
+
+  /// Connection kind: a connection a listened port took.
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded connection'**
+  String get monitorLiveAccepted;
+
+  /// Connection kind: a virtual machine's console.
+  ///
+  /// In en, this message translates to:
+  /// **'Console'**
+  String get monitorLiveConsole;
+
+  /// Monitor tab header: how many agents a section covers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} agents'**
+  String monitorAgentsCount(int count);
+
+  /// Overview count: agents answering.
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get monitorStatOnline;
+
+  /// Overview count: alert rules firing now.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts firing'**
+  String get monitorStatFiring;
+
+  /// Overview count: unread notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get monitorStatUnread;
+
+  /// Overview count: web apps with an update.
+  ///
+  /// In en, this message translates to:
+  /// **'App updates'**
+  String get monitorStatUpdates;
+
+  /// Audit log: nothing matches.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing recorded matches.'**
+  String get monitorAuditEmpty;
+
+  /// Sessions: no terminal session is open.
+  ///
+  /// In en, this message translates to:
+  /// **'No terminal session is open.'**
+  String get monitorLiveNoSessions;
+
+  /// Sessions: nothing is relayed or listened on.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is forwarded or relayed.'**
+  String get monitorLiveNoConnections;
+
+  /// Sessions: no watch or widget has a token.
+  ///
+  /// In en, this message translates to:
+  /// **'No watch or widget is paired.'**
+  String get monitorLiveNoTokens;
+
+  /// Sessions: no device has signed in.
+  ///
+  /// In en, this message translates to:
+  /// **'No device has signed in.'**
+  String get monitorLiveNoDevices;
+
+  /// Signing in to a monitor agent from before it had one account, which wants a user name.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent is older than this app and asks for a user name. Update the agent.'**
+  String get monitorAgentTooOld;
+
+  /// Title of the guide to updating a monitor agent.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the agent'**
+  String get monitorUpdateAgent;
+
+  /// Solution shown with a sign-in an agent too old refused.
+  ///
+  /// In en, this message translates to:
+  /// **'The Monitor tab has the steps to update it.'**
+  String get monitorAgentTooOldTip;
+
+  /// Update guide: why an agent from before one account must be updated.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.'**
+  String get monitorAgentTooOldBody;
+
+  /// Update guide: an agent behind the newest release.
+  ///
+  /// In en, this message translates to:
+  /// **'{latest} is out; this agent runs {running}.'**
+  String monitorAgentOutdatedBody(String latest, String running);
+
+  /// Update guide: where the command runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Run this on the server, as the account the agent was installed from:'**
+  String get monitorUpdateRunHint;
+
+  /// Update guide: what the terminal button does.
+  ///
+  /// In en, this message translates to:
+  /// **'The terminal runs it. If the agent was installed system-wide and the terminal goes over SSH, sudo asks for its password there.'**
+  String get monitorUpdateSshHint;
+
+  /// Update guide: the server has no SSH in the app.
+  ///
+  /// In en, this message translates to:
+  /// **'The app cannot open a terminal on this server: run it there yourself.'**
+  String get monitorUpdateNoSsh;
+
+  /// Update guide: an agent in Docker.
+  ///
+  /// In en, this message translates to:
+  /// **'In Docker? Pull the new image and recreate the container instead.'**
+  String get monitorUpdateDocker;
+
+  /// Update guide: what to do after.
+  ///
+  /// In en, this message translates to:
+  /// **'Once it has restarted, refresh the Monitor tab.'**
+  String get monitorUpdateAfter;
+
+  /// Update guide: run the command in a terminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Run in a terminal'**
+  String get monitorUpdateInTerminal;
+
+  /// Overview card: open the update guide.
+  ///
+  /// In en, this message translates to:
+  /// **'How to update'**
+  String get monitorHowToUpdate;
+
+  /// Update guide: an agent installed by the NixOS module.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed by the NixOS module: update it through your system configuration and rebuild.'**
+  String get monitorUpdateNix;
+
+  /// Notification: a newer monitor agent is released.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent has an update'**
+  String get noticeAgentUpdate;
+
+  /// Update guide: the old agent account name to sign in with.
+  ///
+  /// In en, this message translates to:
+  /// **'Its account name'**
+  String get monitorUpdateLegacyUser;
+
+  /// Update guide: why an old agent needs its account name.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent still signs in with an account name and a password: the name this app used before (often admin) and the saved password.'**
+  String get monitorUpdateLegacyHint;
+
+  /// Update guide: start the update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get monitorUpdateNow;
+
+  /// Update progress: running.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get monitorUpdating;
+
+  /// Update progress: the agent does not answer while it restarts.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent is restarting; the connection is back in a few seconds…'**
+  String get monitorUpdateRestarting;
+
+  /// Update progress: done.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: the agent runs {version}.'**
+  String monitorUpdateDone(String version);
+
+  /// Update progress: failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The update failed. Its output is above.'**
+  String get monitorUpdateFailed;
+
+  /// Update guide: the agent runs the update apart from itself.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.'**
+  String get monitorUpdateAgentHint;
+
+  /// Update guide: sudo password field.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo password'**
+  String get monitorUpdateSudoPassword;
+
+  /// Update guide: why sudo is needed.
+  ///
+  /// In en, this message translates to:
+  /// **'The installer needs root here (an OpenRC service). The password is used once and not saved.'**
+  String get monitorUpdateSudoHint;
+
+  /// Update guide: wrong sudo password.
+  ///
+  /// In en, this message translates to:
+  /// **'sudo did not accept this password.'**
+  String get monitorUpdateSudoRefused;
+
+  /// Update progress: the agent never came back.
+  ///
+  /// In en, this message translates to:
+  /// **'The agent has not come back. Check it on the server.'**
+  String get monitorUpdateNoAnswer;
 }
 
 class _AppLocalizationsDelegate

@@ -1,4 +1,5 @@
 import type {
+  AgentUpdate,
   InstalledApp,
   ContainerBackup,
   ContainerBackupSchedule,
@@ -19,7 +20,6 @@ import type {
   StackPreview,
   StackService,
   StackValue,
-  AgentUser,
   CardOrderPayload,
   Capabilities,
   CustomCmd,
@@ -33,7 +33,6 @@ import type {
   PushListView,
   PushPayload,
   PushTestResult,
-  Role,
   SettingsPayload,
   SettingsView,
   StatusResponse,
@@ -140,8 +139,8 @@ export class ApiError extends Error {
   /// need, since "refused" and "unreachable" deserve opposite responses.
   readonly status?: number
 
-  /// The agent's stable error code, where the endpoint gives one (the account
-  /// and role endpoints: `reauth`, `last_admin`, ...). Absent for the older
+  /// The agent's stable error code, where the endpoint gives one (`reauth`,
+  /// `forbidden`, ...). Absent for the older
   /// endpoints, whose `error` is the message itself.
   readonly code?: string
 
@@ -160,7 +159,7 @@ export class ApiError extends Error {
 /// An error response as an `ApiError`.
 ///
 /// Two shapes: the older endpoints answer `{"error": "<message>"}`, the
-/// account and role ones `{"error": "<code>", "message": "..."}`. A body with
+/// newer ones `{"error": "<code>", "message": "..."}`. A body with
 /// a `message` is the second, and its `error` is the code.
 async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
   try {
@@ -414,15 +413,39 @@ export async function testConnection(url: string): Promise<boolean> {
   }
 }
 
-/// Logs into an explicit URL from the add/edit form.
+/// Per agent URL ('' is this origin): the device token its last sign-in gave
+/// this browser. It only keeps this browser out of the agent's account-wide
+/// login throttle (`api::ratelimit::Who`); it signs nothing in on its own.
+const DEVICES_KEY = 'servers.devices.v1'
+
+function readDevices(): Record<string, string> {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(DEVICES_KEY) ?? '{}') as unknown
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : {}
+  } catch {
+    return {}
+  }
+}
+
+function rememberDevice(url: string, device: string) {
+  try {
+    window.localStorage.setItem(DEVICES_KEY, JSON.stringify({ ...readDevices(), [url]: device }))
+  } catch {
+    // Storage full or blocked: the next sign-in is a stranger's again.
+  }
+}
+
+/// Signs in to the agent at [url] ('' for this origin), sending the device
+/// token an earlier sign-in gave this browser and keeping a new one.
 export async function loginTo(url: string, credentials: LoginRequest): Promise<LoginResponse> {
   requireSecureUrl(url)
+  const device = readDevices()[url]
   let res: Response
   try {
     res = await fetch(`${url}/api/v1/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
+      body: JSON.stringify(device ? { ...credentials, device } : credentials),
       signal: requestSignal(),
     })
   } catch {
@@ -438,16 +461,12 @@ export async function loginTo(url: string, credentials: LoginRequest): Promise<L
     }
     throw new ApiError(message, res.status)
   }
-  return res.json() as Promise<LoginResponse>
+  const answer = (await res.json()) as LoginResponse
+  if (answer.device) rememberDevice(url, answer.device)
+  return answer
 }
 
 export const api = {
-  login: (credentials: LoginRequest) =>
-    request<LoginResponse>(
-      '/login',
-      { method: 'POST', body: JSON.stringify(credentials) },
-      'Login failed',
-    ),
   getStatus: (signal?: AbortSignal) =>
     request<StatusResponse>('/status', {}, 'Failed to fetch status', signal),
   getMetrics: (signal?: AbortSignal) =>
@@ -461,7 +480,15 @@ export const api = {
     ),
   // Capabilities are platform-specific, so callers fetch them once per server.
   getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),
-  /// One reading of the machine's process table (the `shell` grant).
+  /// Whether a newer agent is out; with [check], the agent reads its
+  /// releases again first (at most once a minute).
+  getUpdate: (check = false) => request<AgentUpdate>(check ? '/update?check=1' : '/update', {}, 'Failed to read the update'),
+  /// Starts the update apart from the agent, so its restart does not end it;
+  /// `getUpdate`'s `run` then says how it goes. A refused sudo password is
+  /// `403` with code `sudo_password`.
+  startUpdate: (password?: string) =>
+    request<void>('/update/run', { method: 'POST', body: JSON.stringify({ password }) }, 'Failed to start the update'),
+  /// One reading of the machine's process table.
   ///
   /// The order is asked of the agent rather than applied here: which orders a
   /// table can answer depends on the columns this machine printed, and the
@@ -487,8 +514,8 @@ export const api = {
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  /// The machine's service units, or one unit's log, definition or status
-  /// (the `shell` grant). A unit is named by the key its listing gave it.
+  /// The machine's service units, or one unit's log, definition or status.
+  /// A unit is named by the key its listing gave it.
   getServices: (part: ServicePart = 'list', key?: string) =>
     request<ServiceView>(
       `/services?${new URLSearchParams({ part, ...(key ? { key } : {}) })}`,
@@ -507,8 +534,7 @@ export const api = {
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  /// The account's crontab, expanded on the agent against its own clock (the
-  /// `shell` grant).
+  /// The account's crontab, expanded on the agent against its own clock.
   getCron: () =>
     request<CronView>('/cron', {}, 'Failed to fetch the schedule', undefined, MACHINE_TIMEOUT_MS),
   /// One change; answers with the schedule as it now stands. The file is
@@ -524,8 +550,8 @@ export const api = {
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  /// The runtime's containers, images or disk usage — one at a time (the
-  /// `shell` grant). `part: 'logs'` names a container: a log belongs to one,
+  /// The runtime's containers, images or disk usage — one at a time.
+  /// `part: 'logs'` names a container: a log belongs to one,
   /// and the agent refuses the request rather than guessing which.
   getContainers: (part: ContainerPart, id?: string) =>
     request<ContainerView>(
@@ -554,14 +580,14 @@ export const api = {
         ? TASK_TIMEOUT_MS
         : MACHINE_TIMEOUT_MS,
     ),
-  /// The machine's tmux sessions (the `shell` grant). `available: false` when
+  /// The machine's tmux sessions. `available: false` when
   /// tmux is not installed; a machine with tmux and nothing running answers
   /// `available: true` with an empty list. Attaching is the terminal's
   /// `target`, not a request here.
   getTmux: () =>
     request<TmuxView>('/tmux', {}, 'Failed to fetch the tmux sessions', undefined, MACHINE_TIMEOUT_MS),
   /// The benchmark runs this agent has started, and the live state of the one
-  /// going (the `shell` grant). `live.answered === false` means the machine
+  /// going. `live.answered === false` means the machine
   /// did not answer in time: ask again, and read nothing into `dir_exists`
   /// until it is true. The agent polls the run for this request, which can
   /// take a while on a machine under load, hence the long timeout.
@@ -624,8 +650,7 @@ export const api = {
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  /// The machine's accounts, or one account's own records (the `shell`
-  /// grant). Not `/users`, which is this agent's own accounts.
+  /// The machine's accounts, or one account's own records.
   getSystemUsers: (part: UserPart = 'list', name?: string) =>
     request<UserView>(
       `/system-users?${new URLSearchParams({ part, ...(name ? { name } : {}) })}`,
@@ -646,7 +671,7 @@ export const api = {
       MACHINE_TIMEOUT_MS,
     ),
   /// The machine's firewall, the one `kind` names or the one the agent
-  /// prefers (the `shell` grant). A POST: the `sudo` password a read may need
+  /// prefers. A POST: the `sudo` password a read may need
   /// travels in the body.
   getFirewall: (kind?: FirewallKind, password?: string) =>
     request<FirewallView>(
@@ -688,7 +713,7 @@ export const api = {
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  /// The snippet library saved on the agent (the `shell` grant).
+  /// The snippet library saved on the agent.
   getSnippets: () => request<SnippetsView>('/snippets', {}, 'Failed to fetch the snippets'),
   /// Replaces the whole library, in the order given. A refusal arrives with
   /// its code as `ApiError.message` and the row as `body.index`.
@@ -707,7 +732,7 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ script, context: {} }) },
       'Failed to expand the snippet',
     ),
-  /// The desktop routes saved on the agent (the `connect` grant).
+  /// The desktop routes saved on the agent.
   getBmc: () => request<BmcList>('/bmc', {}, 'Failed to list the BMCs'),
   /// Replaces the whole set. A refusal arrives with its code as
   /// `ApiError.message` and the row as `body.index`.
@@ -1101,18 +1126,8 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ purpose }) },
       'Failed to authorise the connection',
     ),
-  /// Turns access without SSH off for good. There is deliberately no
-  /// counterpart that turns it on: the panel may narrow what the agent
-  /// exposes, never widen it — re-enabling is a config-file decision.
-  disablePasswordlessTerminal: () =>
-    request<{ status: string }>(
-      '/remote-access/full-access',
-      { method: 'DELETE' },
-      'Failed to disable access without SSH',
-    ),
-  /// The directories the operator opened up, and the whole of what can be
-  /// browsed: everything outside them is refused by the agent, so the page
-  /// starts from this list rather than from `/`.
+  /// Where browsing starts: the agent account's home, then `/` (drive
+  /// letters on Windows).
   fsRoots: (signal?: AbortSignal) =>
     request<FsRootsResponse>('/fs/roots', {}, 'Failed to list the roots', signal),
   fsList: (path: string, signal?: AbortSignal) =>
@@ -1228,24 +1243,17 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ push, message }) },
       'Failed to send the test notification',
     ),
-  /// Who this session is on the agent, and with what role.
-  getMe: () => request<{ username: string; role: Role }>('/me', {}, 'Failed to fetch your account'),
   changeMyPassword: (current_password: string, new_password: string) =>
     request<void>(
       '/me/password',
       { method: 'PUT', body: JSON.stringify({ current_password, new_password }) },
       'Failed to change the password',
     ),
-  // Everything below needs an administrator, and every change carries the
-  // administrator's own password: what changes access is re-authenticated,
-  // not taken on the strength of a session that may have been left open.
-  listUsers: () => request<AgentUser[]>('/users', {}, 'Failed to fetch accounts'),
-  /// Desk apps installed on the agent (`api::apps`); an admin also sees the
-  /// ones waiting for approval.
+  /// Desk apps installed on the agent (`api::apps`), approved or waiting.
   listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
   /// The web apps the agent can deploy (`api::stacks`), and their state.
   listStacks: () => request<{ apps: StackApp[] }>('/stacks', {}, 'Failed to load the apps'),
-  /// The catalog read again from its repositories now (admin).
+  /// The catalog read again from its repositories now.
   refreshStacks: () => request<{ apps: StackApp[] }>('/stacks/refresh', { method: 'POST' }, 'Failed to load the apps'),
   prepareStack: (id: string) =>
     request<StackPrepare>(`/stacks/${encodeURIComponent(id)}/prepare`, {}, 'Failed to read this machine'),
@@ -1255,7 +1263,7 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ settings }) },
       'Failed to check the settings',
     ),
-  /// Deploys with what the admin confirmed: that it installs third-party
+  /// Deploys with what the account confirmed: that it installs third-party
   /// software, and the licence where the manifest asks.
   installStack: (
     id: string,
@@ -1428,48 +1436,6 @@ export const api = {
       `/apps/${encodeURIComponent(id)}`,
       { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
       'Failed to remove the app',
-    ),
-  createUser: (username: string, password: string, role: string, current_password: string) =>
-    request<AgentUser>(
-      '/users',
-      { method: 'POST', body: JSON.stringify({ username, password, role, current_password }) },
-      'Failed to add the account',
-    ),
-  /// Changes the role, the password, or both; a field left out is kept.
-  updateUser: (
-    username: string,
-    change: { role?: string; password?: string },
-    current_password: string,
-  ) =>
-    request<AgentUser>(
-      `/users/${encodeURIComponent(username)}`,
-      { method: 'PUT', body: JSON.stringify({ ...change, current_password }) },
-      'Failed to update the account',
-    ),
-  deleteUser: (username: string, current_password: string) =>
-    request<void>(
-      `/users/${encodeURIComponent(username)}`,
-      { method: 'DELETE', body: JSON.stringify({ current_password }) },
-      'Failed to delete the account',
-    ),
-  listRoles: () => request<Role[]>('/roles', {}, 'Failed to fetch roles'),
-  createRole: (role: Omit<Role, 'builtin'>, current_password: string) =>
-    request<Role>(
-      '/roles',
-      { method: 'POST', body: JSON.stringify({ role, current_password }) },
-      'Failed to add the role',
-    ),
-  updateRole: (role: Role, current_password: string) =>
-    request<Role>(
-      `/roles/${encodeURIComponent(role.name)}`,
-      { method: 'PUT', body: JSON.stringify({ role, current_password }) },
-      'Failed to save the role',
-    ),
-  deleteRole: (name: string, current_password: string) =>
-    request<void>(
-      `/roles/${encodeURIComponent(name)}`,
-      { method: 'DELETE', body: JSON.stringify({ current_password }) },
-      'Failed to delete the role',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

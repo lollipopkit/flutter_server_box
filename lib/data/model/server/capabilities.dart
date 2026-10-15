@@ -1,6 +1,6 @@
 import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// What a way of reaching a server can do.
@@ -84,12 +84,12 @@ abstract interface class ServerCapabilities {
   /// server; ignored for an SSH one, which answers for itself.
   static ServerCapabilities of(
     ServerConnectCredential credential, {
-    MonitorRemoteAccess? granted,
+    MonitorAccess? granted,
   }) {
     return switch (credential) {
       ServerConnectCredentialSsh() => const SshCapabilities(),
       ServerConnectCredentialMonitorHttp() => MonitorHttpCapabilities(
-        granted ?? MonitorRemoteAccess.none,
+        granted ?? MonitorAccess.none,
       ),
       ServerConnectCredentialLocal() => LocalCapabilities(
         supported: LocalServer.isSupported,
@@ -106,7 +106,7 @@ abstract interface class ServerCapabilities {
   /// agent for what a relay carries, which the union says.
   static ServerCapabilities forwardsOf(
     Spi spi, {
-    MonitorRemoteAccess? granted,
+    MonitorAccess? granted,
   }) => spi.transport == ServerTransport.monitorHttp
       ? of(ServerConnectCredential.fromSpi(spi), granted: granted)
       : ofSpi(spi, granted: granted);
@@ -124,7 +124,7 @@ abstract interface class ServerCapabilities {
   /// questions about a server rather than about a connection.
   static ServerCapabilities ofSpi(
     Spi spi, {
-    MonitorRemoteAccess? granted,
+    MonitorAccess? granted,
   }) {
     final primary = of(
       ServerConnectCredential.fromSpi(spi),
@@ -248,17 +248,16 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   const MonitorHttpCapabilities(this.granted);
 
   /// What the agent reported on `GET /api/v1/capabilities`. Defaults to
-  /// granting nothing, which is also the answer before the first poll and for
-  /// an agent too old to have the endpoint.
-  final MonitorRemoteAccess granted;
+  /// refusing, which is also the answer before the first poll.
+  final MonitorAccess granted;
 
-  /// Full access permits commands. Opening a PTY also needs the terminal
-  /// endpoint, which the agent can disable independently.
+  /// The agent's one account may do what the system account it runs as may;
+  /// what it refuses is only a plaintext link — see [MonitorAccess].
   @override
-  bool get shell => granted.fullAccess;
+  bool get shell => granted.ok;
 
   @override
-  bool get terminal => granted.fullAccess && granted.terminal;
+  bool get terminal => granted.ok;
 
   /// Always false, and this is the one place the two stream questions come
   /// apart: a relay exists now (`tcpRelay`), but SFTP runs through an SSH
@@ -267,28 +266,27 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   @override
   bool get byteStream => false;
 
-  /// Whether the agent will dial an address this app names — see
-  /// [MonitorRemoteAccess.stream].
+  /// Whether the agent will dial an address this app names.
   ///
   /// Not [byteStream]: SFTP moves a file through an SSH channel this app has no
   /// way to point at an agent's socket, so an agent that relays TCP is still
   /// not somewhere a file transfer can go.
   @override
-  bool get tcpRelay => granted.stream;
+  bool get tcpRelay => granted.ok;
 
   /// Whether the agent will listen on a port of the server's and hand over
-  /// what connects — see [MonitorRemoteAccess.listen].
+  /// what connects.
   @override
-  bool get remoteListen => granted.listen;
+  bool get remoteListen => granted.ok;
 
-  /// The agent's own answer, from `GET /api/v1/capabilities`.
+  /// The agent's own file API.
   ///
-  /// Not [byteStream]: the file API is an endpoint of the agent's, confined to
-  /// the roots its operator named, and needs no stream this app can point
-  /// anywhere. A server with no reachable sshd can browse files and still not
-  /// carry SFTP — which is the case the endpoint exists for.
+  /// Not [byteStream]: the file API is an endpoint of the agent's and needs no
+  /// stream this app can point anywhere. A server with no reachable sshd can
+  /// browse files and still not carry SFTP — which is the case the endpoint
+  /// exists for.
   @override
-  bool get files => granted.files;
+  bool get files => granted.ok;
 
   /// The agent has been sampling since before the app asked, which is the
   /// point of running one.

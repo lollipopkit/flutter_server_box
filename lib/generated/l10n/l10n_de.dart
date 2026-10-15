@@ -2110,20 +2110,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func erfordert, dass $setting im Monitor agent aktiviert ist.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func erfordert einen neueren Monitor agent.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Remote-Weiterleitungen über den Monitor agent erfordern eine neuere Version: Aktualisiere ihn auf dem Server.';
-
-  @override
   String get rangeLive => 'Live';
 
   @override
@@ -2798,7 +2784,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Dieser Agent ist nur für die Überwachung eingerichtet. Hier können Sie kein Terminal öffnen, keine Befehle ausführen und keine Dateien durchsuchen. Aktivieren Sie diese Funktionen unter [remote_access] in der config.toml des Agenten.';
+      'Dieser Agent verweigert über unverschlüsseltes HTTP alles außer der Überwachung. Verbinden Sie sich über HTTPS oder erlauben Sie HTTP sowohl im Agent ([remote_access] allow_insecure) als auch in dieser App.';
 
   @override
   String get alerts => 'Warnungen';
@@ -5119,35 +5105,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get copyLink => 'Link kopieren';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Dein Konto auf diesem Monitor agent hat keine Berechtigung für $func. Frag den Admin des Agents.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func braucht HTTPS zu diesem Monitor agent oder erlaubtes HTTP auf dem Agent und in dieser App.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func ist auf diesem Monitor agent nicht eingerichtet; der Betreiber muss es konfigurieren.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Nur Lesen: Dieses Konto kann Dateien auf dem Agent ansehen, aber nicht ändern.';
-
-  @override
   String get monitorAccess => 'Zugriff';
-
-  @override
-  String get monitorAccounts => 'Konten';
-
-  @override
-  String get monitorRoles => 'Rollen';
-
-  @override
-  String get monitorRole => 'Rolle';
 
   @override
   String get monitorChangePassword => 'Passwort ändern';
@@ -5159,10 +5122,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get monitorCurrentPassword => 'Dein aktuelles Passwort';
 
   @override
-  String get monitorReauthTip =>
-      'Zugriffsänderungen erfordern erneut dein Passwort.';
-
-  @override
   String get monitorPasswordTooShort => 'Mindestens 8 Zeichen';
 
   @override
@@ -5170,78 +5129,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get monitorErrReauth => 'Dein Passwort war falsch.';
-
-  @override
-  String get monitorErrLastAdmin =>
-      'Der Agent braucht mindestens ein Admin-Konto.';
-
-  @override
-  String get monitorErrConflict =>
-      'Existiert bereits oder wird noch verwendet.';
-
-  @override
-  String get monitorErrForbidden => 'Nur ein Admin kann das tun.';
-
-  @override
-  String get monitorRoleNameRule =>
-      'Kleinbuchstaben, Ziffern, - und _, bis zu 32 Zeichen';
-
-  @override
-  String get monitorGrantShell => 'Shell und Befehle';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Terminal, Prozesse, Dienste, Container, Snippets, Energie — als Konto des Agents';
-
-  @override
-  String get monitorGrantVirt => 'Virtualisierung';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt und BMCs, die der Agent in seinem Web-Panel erreicht';
-
-  @override
-  String get monitorGrantFiles => 'Dateien';
-
-  @override
-  String get monitorGrantConnect => 'Ausgehende Verbindungen';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Lokale und dynamische Portweiterleitungen, Remote-Desktop';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'Erlaubte Ziele (IP oder CIDR, optional :Port oder :von-bis; eins pro Zeile, leer = überall)';
-
-  @override
-  String get monitorGrantListen => 'Auf dem Server lauschen';
-
-  @override
-  String get monitorGrantListenTip => 'Remote-Portweiterleitungen';
-
-  @override
-  String get monitorGrantListenPublic => 'Nicht-Loopback-Adressen';
-
-  @override
-  String get monitorGrantPorts => 'Portbereich (leer = beliebig)';
-
-  @override
-  String get monitorGrantOff => 'Aus';
-
-  @override
-  String get monitorBuiltin => 'Integriert';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Verwaltet Konten, Rollen und die Einstellungen des Agents';
-
-  @override
-  String get monitorYou => 'Du';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Nur ein Admin kann die Einstellungen dieses Agents ändern.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5478,10 +5365,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       'Dieser Monitor-Agent kann keine Backups speichern. Aktualisiere den Agent.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Nur ein Administratorkonto des Monitor-Agents kann Backups darauf speichern.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5979,9 +5862,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get storagePools => 'ZFS-Pools';
 
   @override
-  String get storageWholeDisk => 'Ganzes Laufwerk';
-
-  @override
   String get storageNoFilesystem => 'Kein Dateisystem';
 
   @override
@@ -6067,10 +5947,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String storagePickDevices(Object count) {
     return 'Wähle mindestens $count Geräte. Ihre Daten gehen verloren.';
   }
-
-  @override
-  String get storageNoFreeDevices =>
-      'Kein freies Laufwerk oder keine freie Partition.';
 
   @override
   String get storageCreateRaid => 'RAID-Verbund erstellen';
@@ -6210,10 +6086,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'The confirmation text did not match.';
 
   @override
-  String get storageSudoPassword =>
-      'sudo-Passwort (falls für das Agent-Konto erforderlich)';
-
-  @override
   String storageInUse(Object device) {
     return '$device wird verwendet.';
   }
@@ -6221,15 +6093,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get storageBusy =>
       'Eine andere Änderung an den Laufwerken läuft bereits.';
-
-  @override
-  String get storageWorking => 'Laufwerke werden geändert…';
-
-  @override
-  String get storageDone => 'Fertig';
-
-  @override
-  String get storageFailed => 'Nicht abgeschlossen';
 
   @override
   String get storageHealthRead => 'Festplattenzustand lesen';
@@ -6265,15 +6128,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String storageTesting(Object percent) {
     return 'Selbsttest: noch $percent%';
   }
-
-  @override
-  String get storageLastTestPassed => 'Letzter Selbsttest bestanden';
-
-  @override
-  String get storageLastTestFailed => 'Letzter Selbsttest fehlgeschlagen';
-
-  @override
-  String get storageLastTestAborted => 'Letzter Selbsttest abgebrochen';
 
   @override
   String get storageGrowPartition => 'Partition vergrößern';
@@ -6518,9 +6372,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Installiert den NFS-Server mit der Paketverwaltung des Systems.';
 
   @override
-  String get sharingInstalling => 'Wird installiert…';
-
-  @override
   String get sharingAddShare => 'Freigabe hinzufügen';
 
   @override
@@ -6599,15 +6450,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Samba verwaltet eigene Passwörter: Lege für jedes Konto, das eine Verbindung herstellt, eines fest.';
 
   @override
-  String get sharingAccount => 'Konto';
-
-  @override
   String get sharingSetPassword => 'Passwort festlegen';
-
-  @override
-  String sharingSetPasswordBody(Object user) {
-    return 'Legt das SMB-Passwort für $user fest.';
-  }
 
   @override
   String get sharingNewPassword => 'Neues SMB-Passwort';
@@ -6627,9 +6470,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sharingAddClient => 'Client hinzufügen';
-
-  @override
-  String get sharingSquash => 'root auf dem Client';
 
   @override
   String get sharingSquashRoot => 'root wird zu nobody';
@@ -6816,4 +6656,407 @@ class AppLocalizationsDe extends AppLocalizations {
   String webAppUpdate(String version) {
     return 'Version $version ist verfügbar. Aktualisiere sie im Monitor-Panel.';
   }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app ist ausgefallen';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'Nicht laufend: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'Keiner der Container läuft.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app ist fehlerhaft';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Gesundheitsprüfung fehlgeschlagen: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app läuft wieder';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Alle Container laufen.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return 'Ein Update für $app ist verfügbar';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version kann installiert werden (aktuell: $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array ist degradiert';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'Ein Mitglied ist ausgefallen oder fehlt; der Verbund läuft ohne Redundanz.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array ist wieder fehlerfrei';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Alle Mitglieder funktionieren.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return 'Pool $pool ist $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Öffne Speicher, um zu sehen, welches Gerät betroffen ist.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return 'Pool $pool ist wieder online';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Alle Geräte funktionieren.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device fällt aus';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'Die SMART-Prüfung oder der Selbsttest ist fehlgeschlagen: Kopiere den Inhalt an einen anderen Ort und ersetze das Laufwerk.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device hat $count fehlerhafte Sektoren';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'Zuvor waren es $was. Laufwerke mit zunehmend fehlerhaften Sektoren fallen oft bald aus.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Speicherwartung wurde nicht ausgeführt: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Pools bereinigen und RAID-Verbünde prüfen';
+
+  @override
+  String get storageTaskSmartShort => 'Kurzer SMART-Test';
+
+  @override
+  String get storageTaskSmartLong => 'Langer SMART-Test';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo hat nach einem Passwort gefragt: Führe den Agent als root aus oder erlaube die obigen Befehle.';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'Übersicht';
+
+  @override
+  String get monitorNotices => 'Benachrichtigungen';
+
+  @override
+  String get monitorAudit => 'Audit-Protokoll';
+
+  @override
+  String get monitorLive => 'Sitzungen & Geräte';
+
+  @override
+  String get monitorNoAgents =>
+      'Noch kein Server wird über einen Monitor-Agent erreicht.';
+
+  @override
+  String get monitorNotOffered =>
+      'Diese Agent-Version bietet das nicht an. Aktualisieren Sie den Agent.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'Diese Agent-Version meldet keine Warnungen.';
+
+  @override
+  String get monitorAlertsNone => 'Keine Regel schlägt an.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return 'seit $duration aktiv';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agent $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version verfügbar';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count ungelesen';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Apps mit Problemen: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'App-Updates: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Nur Updates';
+
+  @override
+  String get monitorNoUpdates => 'Keine App hat ein Update.';
+
+  @override
+  String get monitorNoticesEmpty => 'Keine Benachrichtigungen.';
+
+  @override
+  String get monitorMarkAllRead => 'Alle als gelesen markieren';
+
+  @override
+  String get monitorAuditExec => 'Befehle';
+
+  @override
+  String get monitorAuditMachine => 'Systemverwaltung';
+
+  @override
+  String get monitorAuditListen => 'Lauschende Ports';
+
+  @override
+  String get monitorAuditTicket => 'Verbindungstickets';
+
+  @override
+  String get monitorAuditPush => 'Benachrichtigungskanäle';
+
+  @override
+  String get monitorAuditAdmin => 'Konto';
+
+  @override
+  String get monitorAuditDenied => 'Abgelehnt';
+
+  @override
+  String get monitorLoadMore => 'Mehr laden';
+
+  @override
+  String get monitorLiveSessions => 'Terminalsitzungen';
+
+  @override
+  String get monitorLiveConnections => 'Verbindungen';
+
+  @override
+  String get monitorLiveWatchTokens => 'Uhr- und Widget-Tokens';
+
+  @override
+  String get monitorLiveDevices => 'Angemeldete Geräte';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Ein vergessenes Gerät zählt bei der nächsten Anmeldung zum kontoweiten Limit für Fehlversuche. Es wird dadurch nicht abgemeldet: Ein Gerät mit dem Passwort meldet sich erneut an. Ändern Sie das Passwort, um ein Gerät auszusperren.';
+
+  @override
+  String get monitorLiveAttached => 'Verbunden';
+
+  @override
+  String get monitorLiveDetached => 'Getrennt';
+
+  @override
+  String get monitorLiveEnd => 'Beenden';
+
+  @override
+  String get monitorLiveRevoke => 'Widerrufen';
+
+  @override
+  String get monitorLiveForget => 'Vergessen';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return 'Terminalsitzung „$name“ beenden? Was darin läuft, wird gestoppt.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return 'Verbindung zu $name beenden?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return 'Token von $name widerrufen? Es wird nicht mehr aktualisiert, bis es neu eingerichtet ist.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '$name vergessen?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Läuft ab: $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Weitergeleitete Verbindung';
+
+  @override
+  String get monitorLiveAccepted => 'Eingehende Weiterleitung';
+
+  @override
+  String get monitorLiveConsole => 'Konsole';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count Agents';
+  }
+
+  @override
+  String get monitorStatOnline => 'Online';
+
+  @override
+  String get monitorStatFiring => 'Aktive Warnungen';
+
+  @override
+  String get monitorStatUnread => 'Ungelesen';
+
+  @override
+  String get monitorStatUpdates => 'App-Updates';
+
+  @override
+  String get monitorAuditEmpty => 'Kein Eintrag passt.';
+
+  @override
+  String get monitorLiveNoSessions => 'Keine Terminalsitzung ist offen.';
+
+  @override
+  String get monitorLiveNoConnections => 'Nichts wird weitergeleitet.';
+
+  @override
+  String get monitorLiveNoTokens => 'Keine Uhr und kein Widget ist gekoppelt.';
+
+  @override
+  String get monitorLiveNoDevices => 'Kein Gerät hat sich angemeldet.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Dieser Agent ist älter als die App und verlangt einen Benutzernamen. Aktualisieren Sie den Agent.';
+
+  @override
+  String get monitorUpdateAgent => 'Agent aktualisieren';
+
+  @override
+  String get monitorAgentTooOldTip =>
+      'Die Schritte zum Aktualisieren stehen im Monitor-Tab.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'Dieser Agent stammt aus der Zeit vor dem einzelnen Passwort; die App kann sich nicht anmelden. Nach dem Update gilt das Passwort seines ältesten Admin-Kontos.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest ist erschienen; dieser Agent läuft mit $running.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Auf dem Server ausführen, mit dem Konto, unter dem der Agent installiert wurde:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'Das Terminal führt ihn aus. Ist der Agent systemweit installiert und läuft das Terminal über SSH, fragt sudo dort nach dem Passwort.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'Die App kann auf diesem Server kein Terminal öffnen: führen Sie ihn dort selbst aus.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'In Docker? Laden Sie stattdessen das neue Image und erstellen Sie den Container neu.';
+
+  @override
+  String get monitorUpdateAfter =>
+      'Nach dem Neustart den Monitor-Tab aktualisieren.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Im Terminal ausführen';
+
+  @override
+  String get monitorHowToUpdate => 'So aktualisieren';
+
+  @override
+  String get monitorUpdateNix =>
+      'Über das NixOS-Modul installiert: aktualisieren Sie ihn über Ihre Systemkonfiguration und bauen Sie neu.';
+
+  @override
+  String get noticeAgentUpdate => 'Für den Agenten gibt es ein Update';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Kontoname';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'Dieser Agent meldet sich noch mit Kontoname und Passwort an: dem Namen, den diese App zuvor verwendet hat (oft admin), und dem gespeicherten Passwort.';
+
+  @override
+  String get monitorUpdateNow => 'Jetzt aktualisieren';
+
+  @override
+  String get monitorUpdating => 'Wird aktualisiert…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'Der Agent startet neu; die Verbindung ist in wenigen Sekunden wieder da…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Aktualisiert: Der Agent läuft mit $version.';
+  }
+
+  @override
+  String get monitorUpdateFailed =>
+      'Das Update ist fehlgeschlagen. Die Ausgabe steht oben.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'Der Agent führt den Installer getrennt von sich selbst aus, sodass sein Neustart das Update nicht abbricht. Die Verbindung zu ihm fällt dabei einige Sekunden aus; dieses Fenster verfolgt das Update über den Neustart hinweg.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo-Passwort';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'Der Installer braucht hier root (ein OpenRC-Dienst). Das Passwort wird einmal verwendet und nicht gespeichert.';
+
+  @override
+  String get monitorUpdateSudoRefused =>
+      'sudo hat dieses Passwort nicht akzeptiert.';
+
+  @override
+  String get monitorUpdateNoAnswer =>
+      'Der Agent ist nicht zurückgekommen. Prüfen Sie ihn auf dem Server.';
 }

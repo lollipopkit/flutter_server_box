@@ -1,13 +1,12 @@
-//! `/api/v1/apps*` — desk apps an admin installs (`docs/dev/desk-sys.md`).
+//! `/api/v1/apps*` — desk apps the operator installs (`docs/dev/desk-sys.md`).
 //!
-//! - `GET /apps`: the installed apps. Every account sees the approved ones;
-//!   an admin also those waiting for approval.
-//! - `POST /apps` (admin): a package (`.fsba`, a gzipped tar) as the body.
+//! - `GET /apps`: the installed apps, approved or waiting for approval.
+//! - `POST /apps`: a package (`.fsba`, a gzipped tar) as the body.
 //!   Checked whole, then stored waiting for approval; a new version of an
 //!   installed app keeps its approval only when it asks for nothing more.
-//! - `PUT /apps/{id}/approval` (admin, password): approves exactly the
+//! - `PUT /apps/{id}/approval` (password): approves exactly the
 //!   permissions the manifest lists.
-//! - `DELETE /apps/{id}` (admin, password).
+//! - `DELETE /apps/{id}` (password).
 //! - `GET /apps/{id}/launch`: where the panel loads the app's UI from: a
 //!   ticketed path, since an iframe sends no bearer header.
 //! - `GET /apps/{id}/ui/{ticket}/{path}`: the bundle's files, sandboxed by
@@ -19,14 +18,14 @@
 //! session token there): the panel frames it with `sandbox="allow-scripts"`
 //! and the files carry `Content-Security-Policy: sandbox …; connect-src
 //! 'none'`, so the bundle reaches nothing but the desk's message bridge.
-//! Installing is an admin's decision and approving one asks for the admin's
-//! password. The files live in the database (outside every `fs.roots`), so
-//! no file grant can rewrite approved code.
+//! Approving one asks for the password again. The files live in the
+//! database, which the file API never reaches (`fs_roots::Protected`), so
+//! it cannot rewrite approved code.
 //!
 //! A `web` app is UI only: its permissions are the desk's (`notifications`,
 //! `background`). A `wasm` app adds `backend.wasm`, run by the agent
 //! (`api::app_runtime`), and may ask for what that reaches (`status`,
-//! `files.read`, `exec`), each still bounded by the calling account's grants.
+//! `files.read`, `exec`), each still bounded by the transport rule.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::io::Read;
@@ -40,7 +39,7 @@ use sha2::{Digest, Sha256};
 use crate::core::app_id;
 use crate::core::blobs::Blobs;
 use super::admin::{Reauth, reauth};
-use super::authz::{self, Caller};
+use super::authz;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 
@@ -365,20 +364,19 @@ pub struct Installed {
     pub id: String,
     pub version: String,
     /// Of the package: what an approval names, so it approves exactly the
-    /// code the admin saw.
+    /// code the operator saw.
     pub sha256: String,
     pub manifest: Manifest,
     /// Null while waiting for approval.
     pub approved_permissions: Option<Vec<String>>,
-    pub installed_by: String,
     pub installed_at: String,
     pub approved_at: Option<String>,
 }
 
-type Row = (String, String, String, String, Option<String>, String, String, Option<String>);
+type Row = (String, String, String, String, Option<String>, String, Option<String>);
 
 fn installed(row: Row) -> Option<Installed> {
-    let (id, version, sha256, manifest, approved, installed_by, installed_at, approved_at) = row;
+    let (id, version, sha256, manifest, approved, installed_at, approved_at) = row;
     Some(Installed {
         id,
         version,
@@ -388,7 +386,6 @@ fn installed(row: Row) -> Option<Installed> {
             Some(a) => Some(serde_json::from_str(&a).ok()?),
             None => None,
         },
-        installed_by,
         installed_at,
         approved_at,
     })
@@ -397,7 +394,7 @@ fn installed(row: Row) -> Option<Installed> {
 macro_rules! select {
     ($tail:literal) => {
         concat!(
-            "SELECT app_id, version, sha256, manifest, approved_permissions, installed_by, installed_at, approved_at \
+            "SELECT app_id, version, sha256, manifest, approved_permissions, installed_at, approved_at \
              FROM desk_app_package ",
             $tail
         )
@@ -413,7 +410,7 @@ async fn load(db: &sqlx::SqlitePool, id: &str) -> Result<Option<Installed>, sqlx
 /// for the very same package (an upload needs no password; an approval does,
 /// so new code always waits for one). Its files go to [blobs] first, the rows
 /// naming them after.
-async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by: &str) -> anyhow::Result<Installed> {
+async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> anyhow::Result<Installed> {
     let m = &package.manifest;
     let id = m.id();
     let writing = blobs.writing().await;
@@ -431,10 +428,10 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by:
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(&id).execute(&mut *tx).await?;
     sqlx::query(
-        "INSERT INTO desk_app_package (app_id, version, manifest, sha256, approved_permissions, installed_by, installed_at, approved_at) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(app_id) DO UPDATE SET version = excluded.version, \
+        "INSERT INTO desk_app_package (app_id, version, manifest, sha256, approved_permissions, installed_at, approved_at) \
+         VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(app_id) DO UPDATE SET version = excluded.version, \
          manifest = excluded.manifest, sha256 = excluded.sha256, approved_permissions = excluded.approved_permissions, \
-         installed_by = excluded.installed_by, installed_at = excluded.installed_at, \
+         installed_at = excluded.installed_at, \
          approved_at = CASE WHEN excluded.approved_permissions IS NULL THEN NULL ELSE desk_app_package.approved_at END",
     )
     .bind(&id)
@@ -442,7 +439,6 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package, by:
     .bind(serde_json::to_string(m).unwrap_or_default())
     .bind(&package.sha256)
     .bind(&kept)
-    .bind(by)
     .bind(&now)
     .bind(kept.as_ref().map(|_| now.clone()))
     .execute(&mut *tx)
@@ -485,9 +481,8 @@ fn not_found() -> HttpResponse {
     HttpResponse::NotFound().json(&refused("notFound"))
 }
 
-async fn audit(req: &HttpRequest, state: &AppState, caller: &Caller, action: Action, detail: String) {
+async fn audit(req: &HttpRequest, state: &AppState, action: Action, detail: String) {
     Event::new(Kind::Admin, action, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(req))
         .detail(detail)
         .record(&state.db)
@@ -495,14 +490,13 @@ async fn audit(req: &HttpRequest, state: &AppState, caller: &Caller, action: Act
 }
 
 pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::jwt_caller(&req, &state).await);
+    require!(authz::jwt_caller(&req, &state).await);
     let rows = sqlx::query_as::<_, Row>(select!("ORDER BY app_id")).fetch_all(&state.db).await;
     match rows {
         Ok(rows) => {
             let apps: Vec<Installed> = rows
                 .into_iter()
                 .filter_map(installed)
-                .filter(|a| a.approved_permissions.is_some() || caller.is_admin())
                 .collect();
             Ok(HttpResponse::Ok().json(&serde_json::json!({ "apps": apps })))
         }
@@ -515,7 +509,7 @@ pub async fn install(
     body: Bytes,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     // Inflating and checking takes a while: off the worker.
     let package = match tokio::task::spawn_blocking(move || read_package(&body)).await {
         Ok(Ok(p)) => p,
@@ -525,9 +519,9 @@ pub async fn install(
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
-    match store(&state.db, &state.blobs, &package, &caller.username).await {
+    match store(&state.db, &state.blobs, &package).await {
         Ok(app) => {
-            audit(&req, &state, &caller, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
+            audit(&req, &state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
         Err(e) => Ok(internal_error(&format!("{e:#}"))),
@@ -537,7 +531,7 @@ pub async fn install(
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Approval {
-    /// The package the admin looked at.
+    /// The package the operator looked at.
     sha256: String,
     permissions: Vec<String>,
     current_password: Option<String>,
@@ -549,9 +543,9 @@ pub async fn approve(
     body: web::types::Json<Approval>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.into_inner();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
     let app = match load(&state.db, &id).await {
         Ok(Some(app)) => app,
         Ok(None) => return Ok(not_found()),
@@ -573,7 +567,7 @@ pub async fn approve(
         .await;
     match done {
         Ok(r) if r.rows_affected() == 1 => {
-            audit(&req, &state, &caller, Action::Write, format!("app approve {} {} {}", app.id, app.version, app.sha256)).await;
+            audit(&req, &state, Action::Write, format!("app approve {} {} {}", app.id, app.version, app.sha256)).await;
             match load(&state.db, &app.id).await {
                 Ok(Some(app)) => Ok(HttpResponse::Ok().json(&app)),
                 Ok(None) => Ok(not_found()),
@@ -592,9 +586,9 @@ pub async fn remove(
     body: Option<web::types::Json<Reauth>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let password = body.and_then(|b| b.into_inner().current_password);
-    require!(reauth(&req, &state, &caller, password.as_deref()).await);
+    require!(reauth(&req, &state, password.as_deref()).await);
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
         Err(e) => return Ok(internal_error(&e)),
@@ -616,7 +610,7 @@ pub async fn remove(
                 return Ok(not_found());
             }
             state.blobs.collect_soon(&state.db);
-            audit(&req, &state, &caller, Action::Write, format!("app remove {}", id.as_str())).await;
+            audit(&req, &state, Action::Write, format!("app remove {}", id.as_str())).await;
             Ok(HttpResponse::NoContent().finish())
         }
         (Err(e), _) | (_, Err(e)) => Ok(internal_error(&e)),

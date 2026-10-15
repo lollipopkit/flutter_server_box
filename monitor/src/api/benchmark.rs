@@ -23,10 +23,9 @@
 //!
 //! # Authority
 //!
-//! The `shell` grant for all of it (`api::machine::gate`): a benchmark writes
+//! The transport rule for all of it (`api::machine::gate`): a benchmark writes
 //! gigabytes to a disk and saturates a link, and anyone who can open a shell
-//! can run one anyway. The estimate changes nothing and is answered to any
-//! account that may use the page.
+//! can run one anyway.
 //!
 //! # One run at a time
 //!
@@ -49,7 +48,6 @@ use super::exec::{ExecResponse, Limits, run};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 /// Bounds for one of this module's short commands: a timeout of its own,
 /// `/exec`'s output cap or [max_output] if larger.
@@ -306,7 +304,7 @@ pub async fn get(
     query: web::types::Query<GetQuery>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &app_state, Grant::Shell, "benchmark list").await {
+    if let Err(refused) = machine::gate(&req, &app_state, "benchmark list").await {
         return Ok(refused);
     }
     let id = query.run.clone().filter(|id| !id.is_empty());
@@ -426,7 +424,7 @@ pub async fn act(
         BenchAction::Cancel => "benchmark cancel",
         BenchAction::Estimate { .. } => "benchmark estimate",
     };
-    let gated = match machine::gate(&req, &app_state, Grant::Shell, what).await {
+    let gated = match machine::gate(&req, &app_state, what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -561,7 +559,6 @@ async fn start(
         .execute(&app_state.db)
         .await;
         Event::new(Kind::Machine, Action::Open, Outcome::Error)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip.clone())
             .detail(format!("benchmark start {run_id}: launcher did not start: {reason}"))
             .record(&app_state.db)
@@ -570,7 +567,6 @@ async fn start(
     }
 
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip.clone())
         .detail(format!("benchmark start {run_id}"))
         .record(&app_state.db)
@@ -635,7 +631,6 @@ async fn cancel(
         Action::Close,
         if stopped { Outcome::Ok } else { Outcome::Error },
     )
-    .subject(&gated.caller.username)
     .remote_ip(gated.remote_ip.clone())
     .detail(format!(
         "benchmark cancel {}: {}",
@@ -659,7 +654,7 @@ pub async fn remove(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     let id = &query.run;
-    let gated = match machine::gate(&req, &app_state, Grant::Shell, &format!("benchmark remove {id}")).await
+    let gated = match machine::gate(&req, &app_state, &format!("benchmark remove {id}")).await
     {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
@@ -688,7 +683,6 @@ pub async fn remove(
     cleanup(&row.run_dir, id, &app_state.remote_access.exec).await;
 
     Event::new(Kind::Machine, Action::Close, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip)
         .detail(format!("benchmark remove {id}"))
         .record(&app_state.db)

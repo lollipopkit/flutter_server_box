@@ -90,7 +90,7 @@ describe('IperfModal', () => {
     FakeSocket.instances = []
     ticketMock.mockClear()
     vi.stubGlobal('WebSocket', FakeSocket)
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
   })
 

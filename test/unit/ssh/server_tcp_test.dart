@@ -17,8 +17,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/server_tcp.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -142,7 +142,7 @@ void main() {
         final dialer = ServerTcpDialer(
           spi: _agentOnly(agent),
           ssh: _noSsh,
-          relayGrant: () => const MonitorRemoteAccess(stream: true),
+          relayGrant: () => MonitorAccess.granted,
         );
         addTearDown(dialer.close);
 
@@ -184,7 +184,7 @@ void main() {
       final dialer = ServerTcpDialer(
         spi: _agentOnly(agent),
         ssh: _noSsh,
-        relayGrant: () => const MonitorRemoteAccess(fullAccess: true),
+        relayGrant: () => MonitorAccess.none,
       );
       addTearDown(dialer.close);
 
@@ -207,8 +207,8 @@ void main() {
       expect(agent.logins, 0);
     });
 
-    // Found against a real agent with `full_access` off, before the status
-    // poll had read its grant: the refusal arrived as a dial failure, and the
+    // Found against a real agent refusing the connection, before the status
+    // poll had read its answer: the refusal arrived as a dial failure, and the
     // Virtualization tab said the host could not be reached.
     test('a grant not yet read, refused by the agent, is typed the same',
         () async {
@@ -252,7 +252,7 @@ void main() {
         final dialer = ServerTcpDialer(
           spi: _agentOnly(agent),
           ssh: _noSsh,
-          relayGrant: () => const MonitorRemoteAccess(fullAccess: true),
+          relayGrant: () => MonitorAccess.none,
         );
         addTearDown(dialer.close);
         final client = HttpClient()
@@ -282,7 +282,7 @@ void main() {
       final dialer = ServerTcpDialer(
         spi: _both(agent, lead: ServerTransport.monitorHttp),
         ssh: ssh.link,
-        relayGrant: () => const MonitorRemoteAccess(),
+        relayGrant: () => MonitorAccess.none,
       );
       addTearDown(dialer.close);
 
@@ -417,7 +417,7 @@ void main() {
       final dialer = ServerTcpDialer(
         spi: _both(agent, lead: ServerTransport.ssh),
         ssh: () async => throw const SocketException('sshd down'),
-        relayGrant: () => const MonitorRemoteAccess(),
+        relayGrant: () => MonitorAccess.none,
       );
       addTearDown(dialer.close);
 
@@ -618,7 +618,7 @@ class _FakeAgent {
   final _Echo _echo;
   final bool _refuse;
 
-  /// Answers `/ws-ticket` as an agent with `full_access` off does.
+  /// Answers `/ws-ticket` as an agent refusing the connection does.
   final bool _noGrant;
 
   final dialled = <String>[];

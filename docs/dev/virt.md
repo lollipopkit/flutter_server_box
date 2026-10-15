@@ -63,7 +63,7 @@ one shared place (proposed `lib/core/utils/server_tcp.dart`):
 | Credential | How a TCP connection to `host:port` is made | Capability |
 | --- | --- | --- |
 | `ServerConnectCredentialSsh` | `SSHClient.forwardLocal` (`SshLocalTunnel`) | always |
-| `ServerConnectCredentialMonitorHttp` | `MonitorTunnelChannel` over `/api/v1/stream/ws`; the agent dials from its own machine | `caps.tcpRelay` (agent `stream` grant) |
+| `ServerConnectCredentialMonitorHttp` | `MonitorTunnelChannel` over `/api/v1/stream/ws`; the agent dials from its own machine | `caps.tcpRelay` (agent `access.ok`) |
 | `ServerConnectCredentialLocal` | `Socket.connect` directly — this device is the host | always |
 
 - Same fallback rule as `ensureExec()`: a server with both SSH and an agent

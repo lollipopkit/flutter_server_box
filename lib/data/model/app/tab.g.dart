@@ -32,7 +32,7 @@ class AppTabAdapter extends TypeAdapter<AppTab> {
       case 8:
         return AppTab.workspace;
       case 9:
-        return AppTab.webApps;
+        return AppTab.monitor;
       default:
         return AppTab.server;
     }
@@ -59,7 +59,7 @@ class AppTabAdapter extends TypeAdapter<AppTab> {
         writer.writeByte(7);
       case AppTab.workspace:
         writer.writeByte(8);
-      case AppTab.webApps:
+      case AppTab.monitor:
         writer.writeByte(9);
     }
   }

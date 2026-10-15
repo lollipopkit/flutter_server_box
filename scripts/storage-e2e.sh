@@ -66,7 +66,6 @@ vm "cat > /home/sbm/.config/systemd/user/sbm.service <<'EOF'
 [Service]
 WorkingDirectory=%h/app
 ExecStart=%h/app/server_box_monitor serve -a 127.0.0.1:3770
-Environment=SBM_INIT_PERMISSIONS=full
 [Install]
 WantedBy=default.target
 EOF

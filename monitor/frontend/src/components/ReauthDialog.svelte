@@ -1,7 +1,7 @@
 <script lang="ts">
-  /// Asks the administrator's own password before a change to who can do
-  /// what: every such request carries it, so that a session left open is not
-  /// enough to hand out a shell.
+  /// Asks the account's password before a change the agent re-authenticates:
+  /// every such request carries it, so that a session left open is not
+  /// enough to make it.
   ///
   /// One dialog for every change. [onconfirm] does the change with the
   /// password; a rejection keeps the dialog open with the reason, so a mistyped

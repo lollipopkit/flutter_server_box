@@ -6,7 +6,7 @@ import { servers } from '../lib/servers.svelte'
 import type { StackJob } from '../types'
 
 beforeEach(() => {
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
 })
 

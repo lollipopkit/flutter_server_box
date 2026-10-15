@@ -9,7 +9,7 @@ describe.each([
   beforeEach(() => {
     for (const entry of [...servers.list]) servers.remove(entry.id)
     servers.add('https://first.example')
-    servers.login('old-token', 'admin')
+    servers.login('old-token')
   })
 
   afterEach(() => vi.unstubAllGlobals())
@@ -28,7 +28,7 @@ describe.each([
     const first = servers.currentId
     const finish = pending401()
     servers.add('https://second.example')
-    servers.login('second-token', 'admin')
+    servers.login('second-token')
     await finish()
     expect(servers.current?.token).toBe('second-token')
     expect(servers.list.find((entry) => entry.id === first)?.token).toBeNull()
@@ -36,7 +36,7 @@ describe.each([
 
   it('preserves a session renewed while the request was pending', async () => {
     const finish = pending401()
-    servers.login('new-token', 'admin')
+    servers.login('new-token')
     await finish()
     expect(servers.current?.token).toBe('new-token')
   })
@@ -45,7 +45,7 @@ describe.each([
     const finish = pending401()
     servers.remove(servers.currentId)
     servers.add('https://first.example')
-    servers.login('replacement-token', 'admin')
+    servers.login('replacement-token')
     await finish()
     expect(servers.current?.token).toBe('replacement-token')
   })
@@ -53,7 +53,7 @@ describe.each([
   it('preserves the session when the endpoint changes', async () => {
     const finish = pending401()
     servers.update(servers.currentId, 'https://replacement.example')
-    servers.login('old-token', 'admin')
+    servers.login('old-token')
     await finish()
     expect(servers.current?.token).toBe('old-token')
   })
@@ -65,7 +65,7 @@ describe('estimateBenchmark', () => {
   beforeEach(() => {
     for (const entry of [...servers.list]) servers.remove(entry.id)
     servers.add('https://first.example')
-    servers.login('token', 'admin')
+    servers.login('token')
   })
 
   afterEach(() => vi.unstubAllGlobals())

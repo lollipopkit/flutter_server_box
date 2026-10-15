@@ -116,8 +116,7 @@ pub struct SystemMetrics {
     ///
     /// Here so the app can place a server it reaches at a private address:
     /// this agent runs *on* the machine, so it can answer where the machine is
-    /// without the app needing `full_access` to run a command for it. That
-    /// grant is "run anything"; this question deserved far less than that.
+    /// without the app running a command for it.
     ///
     /// Extended cadence, carried forward in between — an address changes when
     /// a machine moves or its lease does, not between two samples.
@@ -223,8 +222,8 @@ pub struct GpuMetrics {
     pub fan_speed: Option<i64>,
     pub clock_speed: Option<i64>,
     /// What holds the card's memory: pid, name, MiB (0 where the driver does
-    /// not report it, as under WDDM). Every account reads it, as it reads the
-    /// rest of this; it says which program is using a GPU, not what it runs.
+    /// not report it, as under WDDM). Read with the rest of this, watch tokens
+    /// included; it says which program is using a GPU, not what it runs.
     /// Empty for drivers that list none (Intel, AMD through DRM). Absent on
     /// older agents.
     #[serde(default)]

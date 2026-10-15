@@ -18,7 +18,7 @@
 //! # What runs without asking
 //!
 //! The model calls three tools (`tools.rs`): `run_command`, `propose_plan`,
-//! `ask_user`. The admin's command rules come first; then a command runs
+//! `ask_user`. The configured command rules come first; then a command runs
 //! unasked when both readers call it a read: the model's `effect` and
 //! `sbm_parser::command_risk`. Anything else goes by the task's mode
 //! (`permissions`): asked, judged by the model, or run — a plan the account
@@ -30,10 +30,10 @@
 //!
 //! # Privilege
 //!
-//! `shell`: a task runs commands as the agent's user, which is what a shell
-//! does. Checked when a task is started or answered, and again before every
-//! command — an account that lost the grant, or is gone, runs nothing more.
-//! Tasks are the account's own; nobody else lists, reads or answers them.
+//! A task runs commands as the agent's user, which is what a shell does. The
+//! transport rule is checked when a task is started or answered, and again
+//! before every command — after a password change, or over a link that may
+//! no longer act, nothing more runs.
 
 pub(crate) mod command;
 mod pi_file;
@@ -43,7 +43,7 @@ pub mod config;
 pub mod mcp;
 pub mod skills;
 pub mod permissions;
-mod prompt;
+pub(crate) mod prompt;
 mod search;
 mod tools;
 
@@ -74,7 +74,7 @@ pub const MAX_PROMPT: usize = 512 << 10;
 const MAX_TITLE_CHARS: usize = 80;
 /// The lines of the running command a list shows.
 const TAIL_LINES: usize = 6;
-/// Kept per account; the oldest finished ones go first.
+/// The oldest finished ones go first.
 pub const MAX_FLOWS: i64 = 500;
 /// The most tasks one page of the list holds.
 pub const MAX_PAGE: i64 = 200;
@@ -220,7 +220,7 @@ pub struct PendingView {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
     /// The allow rule a command's `confirm` offers to add ("always allow",
-    /// `command_rules::suggest`); only an admin may take it.
+    /// `command_rules::suggest`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allow_rule: Option<String>,
     /// Why the last answer was not taken (a wrong password).
@@ -278,9 +278,8 @@ pub struct AgentEvent {
 pub(crate) struct Flow {
     pub id: String,
     pub user_id: i64,
-    pub username: String,
     /// Whether the request that last set it going came over a secure link:
-    /// what the `shell` grant is checked against at each command.
+    /// what the transport rule is checked against at each command.
     secure: Mutex<bool>,
     view: Mutex<FlowView>,
     pending: Mutex<Option<Pending>>,
@@ -335,10 +334,10 @@ pub struct AgentMode {
     pub files: files::Files,
     max_running: AtomicI64,
     events: broadcast::Sender<AgentEvent>,
-    /// By account id: the password, when it was given, and the account's name.
-    sudo: Mutex<HashMap<i64, (String, Instant, String)>>,
-    /// By account id: its memory, one per account so its changes are made
-    /// one at a time.
+    /// By account id: the password, and when it was given.
+    sudo: Mutex<HashMap<i64, (String, Instant)>>,
+    /// By account id: its memory, held once so its changes are made one at
+    /// a time.
     memories: Mutex<HashMap<i64, Arc<Memory>>>,
     /// Searches not yet carried into a task, by session id.
     searches: Mutex<HashMap<String, search::SearchEntry>>,
@@ -438,8 +437,8 @@ impl AgentMode {
     }
 
     /// Tasks a stopped agent left active can go on no more: they are failed,
-    /// and a reply starts them again. Sessions no row names (an account
-    /// removed) are deleted. Run at start.
+    /// and a reply starts them again. Sessions no row names are deleted. Run
+    /// at start.
     pub async fn recover(&self) -> anyhow::Result<()> {
         let now = chrono::Utc::now().to_rfc3339();
         sqlx::query(
@@ -527,7 +526,7 @@ impl AgentMode {
         Ok(())
     }
 
-    /// After an admin changed the configuration.
+    /// After the configuration changed.
     pub async fn reconfigure(&self) -> anyhow::Result<()> {
         let settings = config::load(&self.db).await?;
         self.max_running.store(settings.max_running, Ordering::Relaxed);
@@ -685,7 +684,7 @@ impl AgentMode {
 
     /// Starts [task] for [user]. Answers its row; it runs when its turn
     /// comes.
-    pub async fn start(self: &Arc<Self>, state: &Arc<AppState>, user: i64, username: &str, secure: bool, task: NewTask) -> Result<FlowView, FlowError> {
+    pub async fn start(self: &Arc<Self>, state: &Arc<AppState>, user: i64, secure: bool, task: NewTask) -> Result<FlowView, FlowError> {
         let NewTask { prompt, mode, files: file_ids, choice } = task;
         if config::load(&self.db).await?.model.is_none() {
             return Err(FlowError::NotConfigured);
@@ -747,7 +746,6 @@ impl AgentMode {
         let flow = Arc::new(Flow {
             id: id.clone(),
             user_id: user,
-            username: username.to_string(),
             secure: Mutex::new(secure),
             view: Mutex::new(view.clone()),
             pending: Mutex::new(None),
@@ -831,7 +829,6 @@ impl AgentMode {
         self: &Arc<Self>,
         state: &Arc<AppState>,
         user: i64,
-        username: &str,
         secure: bool,
         id: &str,
         text: String,
@@ -876,7 +873,6 @@ impl AgentMode {
         let flow = Arc::new(Flow {
             id: id.to_string(),
             user_id: user,
-            username: username.to_string(),
             secure: Mutex::new(secure),
             view: Mutex::new(FlowView {
                 status: Status::Queued,
@@ -1057,7 +1053,7 @@ impl AgentMode {
         };
         let rt = self.runtime().await?;
         let memory = self.memory(flow.user_id);
-        let mut system_prompt = prompt::system(&self.hostname, &flow.username);
+        let mut system_prompt = prompt::system(&self.hostname);
         if let Some(m) = memory.prompt(true).await.map_err(|e| anyhow::anyhow!("memory: {e}"))? {
             system_prompt = format!("{system_prompt}\n\n{m}");
         }
@@ -1147,8 +1143,8 @@ impl AgentMode {
         self.persist(flow).await;
     }
 
-    /// The task as a session file `pi` on this machine lists, when an admin
-    /// asked for that; rewritten after every run. A failure costs only the
+    /// The task as a session file `pi` on this machine lists, when the
+    /// configuration asks for that; rewritten after every run. A failure costs only the
     /// copy.
     async fn write_pi_file(&self, flow: &Flow, session: &Session) {
         match config::load(&self.db).await {
@@ -1290,7 +1286,7 @@ impl AgentMode {
     pub(crate) fn sudo_password(&self, user: i64) -> Option<String> {
         let mut cache = self.sudo.lock().unwrap();
         match cache.get(&user) {
-            Some((p, at, _)) if at.elapsed() < SUDO_REMEMBER => Some(p.clone()),
+            Some((p, at)) if at.elapsed() < SUDO_REMEMBER => Some(p.clone()),
             Some(_) => {
                 cache.remove(&user);
                 None
@@ -1299,11 +1295,11 @@ impl AgentMode {
         }
     }
 
-    pub(crate) fn remember_sudo(&self, user: i64, username: &str, password: Option<String>) {
+    pub(crate) fn remember_sudo(&self, user: i64, password: Option<String>) {
         let mut cache = self.sudo.lock().unwrap();
         match password {
             Some(p) => {
-                cache.insert(user, (p, Instant::now(), username.to_string()));
+                cache.insert(user, (p, Instant::now()));
             }
             None => {
                 cache.remove(&user);
@@ -1311,21 +1307,12 @@ impl AgentMode {
         }
     }
 
-    /// The accounts with an active task.
-    pub fn subjects(&self) -> Vec<String> {
-        let mut names: Vec<String> = self.flows.lock().unwrap().values().map(|f| f.username.clone()).collect();
-        names.sort();
-        names.dedup();
-        names
-    }
-
-    /// The account [username] can no longer do what it did (its password
-    /// changed, it is gone, it lost `shell`): its tasks stop and the sudo
-    /// password it left in memory goes.
-    pub fn end_account(&self, username: &str) {
-        self.sudo.lock().unwrap().retain(|_, (_, _, name)| name != username);
-        self.files.forget(username);
-        let flows: Vec<Arc<Flow>> = self.flows.lock().unwrap().values().filter(|f| f.username == username).cloned().collect();
+    /// The password changed: the tasks stop and the sudo password left in
+    /// memory goes, with the uploads nobody named yet.
+    pub fn end_account(&self) {
+        self.sudo.lock().unwrap().clear();
+        self.files.forget();
+        let flows: Vec<Arc<Flow>> = self.flows.lock().unwrap().values().cloned().collect();
         for f in flows {
             f.cancel_token().cancel();
             drop(f.pending.lock().unwrap().take());

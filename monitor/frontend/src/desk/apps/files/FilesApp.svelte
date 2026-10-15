@@ -32,15 +32,11 @@
   import { servers } from '../../../lib/servers.svelte'
   import type { FsEntry } from '../../../types'
 
-  /// An agent that says nothing is not read as a refusal — see `filesAccess`.
-  /// The agent decides in the end: every request is resolved against its
-  /// roots, and a write against the caller's role.
+  /// Browsing and changing alike need the account to act over this link —
+  /// see `filesAccess`. The agent decides in the end.
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   const access = $derived(filesAccess(caps))
   const available = $derived(access.available)
-  /// Upload, new folder, rename, chmod, delete — absent for a read-only role
-  /// rather than offered and refused.
-  const write = $derived(access.write)
 
   /// 1 MiB, mirroring `Miscs.editorMaxSize` in the app
   /// (`lib/data/res/misc.dart`). Nothing in Rust holds it: the agent does not
@@ -540,14 +536,12 @@
     } else {
       items.push({ label: $LL.filesDownload(), icon: 'download', action: () => void download(entry) })
     }
-    if (write) {
-      items.push(
-        { separator: true },
-        { label: $LL.filesRename(), icon: 'edit', action: () => (dialog = { kind: 'rename', entry, value: entry.name }) },
-        { label: $LL.filesPermissions(), icon: 'shield_lock', action: () => (dialog = { kind: 'chmod', entry, value: modeText(entry.mode) }) },
-        { label: $LL.filesDelete(), icon: 'delete', danger: true, action: () => (dialog = { kind: 'delete', entry }) },
-      )
-    }
+    items.push(
+      { separator: true },
+      { label: $LL.filesRename(), icon: 'edit', action: () => (dialog = { kind: 'rename', entry, value: entry.name }) },
+      { label: $LL.filesPermissions(), icon: 'shield_lock', action: () => (dialog = { kind: 'chmod', entry, value: modeText(entry.mode) }) },
+      { label: $LL.filesDelete(), icon: 'delete', danger: true, action: () => (dialog = { kind: 'delete', entry }) },
+    )
     return items
   })
 
@@ -610,15 +604,13 @@
       )
     }
     if (file.length) file.push({ separator: true })
-    if (write && cwd) {
+    if (cwd) {
+      const at = cwd
       file.push(
         { label: $LL.filesNewFolder(), icon: 'create_new_folder', shortcut: '⌥⌘N', action: () => (dialog = { kind: 'mkdir', value: '' }) },
         { label: $LL.filesUpload(), icon: 'upload', shortcut: '⌘U', action: () => uploadInput?.click() },
         { separator: true },
       )
-    }
-    if (cwd) {
-      const at = cwd
       file.push({ label: $LL.deskAddToDesk(), icon: 'add_to_home_screen', action: () => win.addPathIcon(at, at.split('/').filter(Boolean).at(-1) ?? at) })
     }
     return [
@@ -696,7 +688,7 @@
         onchange={(value) => setView(value)}
       />
     {/if}
-    {#if available && write && cwd}
+    {#if available && cwd}
       <ToolbarGroup
         items={[
           { label: $LL.filesNewFolder(), icon: 'create_new_folder', onclick: () => (dialog = { kind: 'mkdir', value: '' }) },
@@ -713,7 +705,7 @@
   <main class="pane-form pb-[21px]">
     <Card>
       <p class="text-[13px] text-(--text-secondary)">
-        {caps?.grants ? whyText(access.why, $LL) : $LL.filesUnavailable()}
+        {whyText(access.why, $LL)}
       </p>
     </Card>
   </main>
@@ -756,10 +748,6 @@
     <!-- The entry menu's coordinates are this box's. A list/grid switch
          fades the new view in. -->
     <div bind:this={pane} class="relative flex flex-1 flex-col" use:viewIn={view}>
-      {#if !write}
-        <p class="px-(--content-pad) pb-[7px] text-[12px] text-(--text-tertiary)">{$LL.filesReadOnly()}</p>
-      {/if}
-
       {#if error}
         <div class="px-(--content-pad) pb-[9px]">
           <Card class="flex items-start gap-[9px] text-[13px] text-(--color-danger)">
@@ -915,7 +903,6 @@
     entry={editing.entry}
     text={editing.text}
     serverId={editing.serverId}
-    canWrite={write}
     onclose={() => (editing = null)}
     onsaved={() => {
       if (cwd) void load(cwd, servers.currentId, 'stay')

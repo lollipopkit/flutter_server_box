@@ -280,7 +280,7 @@ abstract final class VirtConsoleConnect {
       ssh: () async => ServerTcpSsh.client(
         await container.read(serverProvider(id).notifier).ensureShellClient(),
       ),
-      relayGrant: () => container.read(serverProvider(id)).remoteAccess,
+      relayGrant: () => container.read(serverProvider(id)).agentAccess,
     );
   }
 }

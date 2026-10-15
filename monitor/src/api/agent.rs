@@ -11,22 +11,20 @@
 //!   they change (`flow`, `removed`, `pending`, `output`, and pi's own
 //!   session events as `event`), read with `fetch` and the bearer header.
 //!   `{type: resync}` when events were dropped: refetch.
-//! - `GET /agent/settings` (any account with `shell`: whether it is set up;
-//!   an admin: everything but credentials), `PUT` (admin), `GET
-//!   /agent/models` (admin): the providers and their models, as pi lists
-//!   them.
+//! - `GET /agent/settings`: everything but credentials, `PUT`, `GET
+//!   /agent/models`: the providers and their models, as pi lists them.
 //! - `POST /agent/search {query, kind?}`: the desk's search, answered by
 //!   the agent reading only: a `text/event-stream` (`kind`, `step`, `items`,
 //!   `plan`, `delta`, `said`, `done` with the search's id, `error`) that ends
 //!   with the search; closing it stops it. `POST /agent/search/{id}/task
 //!   {text?}` carries it into a task, and runs it on with [text].
-//! - `GET /agent/permissions` (any account with `shell`): how commands are
-//!   approved, and the built-in auto mode lists; `PUT` (admin) replaces it.
-//! - `GET /agent/mcp` (admin): the MCP servers, their headers named, and
-//!   how each is doing (connected now, with its tools); `PUT` (admin)
-//!   replaces them, `{servers: [{name, url, enabled, headers}]}`.
-//! - `GET /agent/skills` (admin): the skills; `POST /agent/skills {source}`
-//!   (admin) installs from a GitHub repository as `npx skills add` takes it;
+//! - `GET /agent/permissions`: how commands are approved, and the built-in
+//!   auto mode lists; `PUT` replaces it.
+//! - `GET /agent/mcp`: the MCP servers, their headers named, and how each is
+//!   doing (connected now, with its tools); `PUT` replaces them, `{servers:
+//!   [{name, url, enabled, headers}]}`.
+//! - `GET /agent/skills`: the skills; `POST /agent/skills {source}`
+//!   installs from a GitHub repository as `npx skills add` takes it;
 //!   `PUT /agent/skills/{dir} {enabled}`, `DELETE /agent/skills/{dir}`.
 //! - `GET /agent/memory`: the account's memory, its files without their
 //!   content; `GET /agent/memory/file?path=` one with it, `PUT
@@ -35,8 +33,8 @@
 //!
 //! # Privilege
 //!
-//! `shell`, checked here per request and by the tools before every command
-//! (`agent_mode`). A task is its account's alone.
+//! The transport rule, checked here per request and by the tools before every
+//! command (`agent_mode`).
 
 use std::sync::Arc;
 
@@ -53,7 +51,6 @@ use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::agent_mode::files::FileError;
 use crate::agent_mode::{Answer, FlowError, MAX_PROMPT, NewTask, SearchKind, config, first_line, permissions};
 use fl_pi_llm::host::memory::{self, MemoryError};
-use crate::core::permissions::Grant;
 
 const HEARTBEAT: std::time::Duration = std::time::Duration::from_secs(25);
 /// A JSON body here: a prompt with a pasted log in it.
@@ -70,15 +67,15 @@ macro_rules! require {
     }};
 }
 
-/// The account, its id and whether the link is secure, when it holds `shell`.
+/// The account, its id and whether the link is secure, when the transport
+/// rule lets it act.
 async fn shell(req: &HttpRequest, state: &AppState) -> Result<(Caller, i64, bool), HttpResponse> {
     let (caller, user) = super::desk::account(req, state).await?;
     let secure = authz::is_secure(req, state);
-    if let Err(why) = caller.check(Grant::Shell, state, secure) {
+    if let Err(why) = caller.check(state, secure) {
         Event::new(Kind::Agent, Action::Denied, Outcome::Denied)
-            .subject(&caller.username)
             .remote_ip(peer_ip(req))
-            .detail(format!("agent: shell {}", why.as_str()))
+            .detail(format!("agent: {}", why.as_str()))
             .record(&state.db)
             .await;
         return Err(authz::error(StatusCode::FORBIDDEN, "forbidden", why.as_str()));
@@ -157,7 +154,7 @@ pub struct Start {
 }
 
 pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let (_, user, secure) = require!(shell(&req, &state).await);
     let Start { prompt, mode, files, model, thinking_level } = body.into_inner();
     let choice = crate::agent_mode::TaskChoice { model, thinking_level };
     // Files alone are a prompt too.
@@ -168,10 +165,9 @@ pub async fn start(req: HttpRequest, body: web::types::Json<Start>, state: web::
         return Ok(bad("tooManyFiles"));
     }
     let state = state.get_ref().clone();
-    match state.agent.start(&state, user, &caller.username, secure, NewTask { prompt, mode, files, choice }).await {
+    match state.agent.start(&state, user, secure, NewTask { prompt, mode, files, choice }).await {
         Ok(view) => {
             Event::new(Kind::Agent, Action::Open, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(peer_ip(&req))
                 .detail(format!("task {}", view.id))
                 .record(&state.db)
@@ -195,9 +191,9 @@ pub async fn upload(
     body: ntex::util::Bytes,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let (caller, user, _) = require!(shell(&req, &state).await);
+    let (_, user, _) = require!(shell(&req, &state).await);
     let mime = req.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("");
-    match state.agent.files.put(user, &caller.username, &query.name, mime, &body).await {
+    match state.agent.files.put(user, &query.name, mime, &body).await {
         Ok(view) => Ok(HttpResponse::Created().json(&view)),
         Err(FileError::TooMany) => Ok(HttpResponse::Conflict().json(&serde_json::json!({ "error": "tooManyFiles" }))),
         Err(e) => {
@@ -241,7 +237,7 @@ pub struct Reply {
 }
 
 pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Reply>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let (_, user, secure) = require!(shell(&req, &state).await);
     let Reply { text, files, model, thinking_level } = body.into_inner();
     let choice = crate::agent_mode::TaskChoice { model, thinking_level };
     if text.len() > MAX_PROMPT || (text.trim().is_empty() && files.is_empty()) {
@@ -251,22 +247,19 @@ pub async fn reply(req: HttpRequest, id: web::types::Path<String>, body: web::ty
         return Ok(bad("tooManyFiles"));
     }
     let state = state.get_ref().clone();
-    match state.agent.reply(&state, user, &caller.username, secure, &id, text, files, choice).await {
+    match state.agent.reply(&state, user, secure, &id, text, files, choice).await {
         Ok(view) => Ok(HttpResponse::Ok().json(&view)),
         Err(e) => Ok(refused(e)),
     }
 }
 
 pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Answer>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let (_, user, secure) = require!(shell(&req, &state).await);
     let mut answer = body.into_inner();
     let action = answer.action.clone();
-    // "Always allow": the rule goes to the machine's rules first, so only an
-    // admin may; the command then runs as with "run".
+    // "Always allow": the rule goes to the machine's rules first; the command
+    // then runs as with "run".
     if action == "always" {
-        if !caller.is_admin() {
-            return Ok(authz::error(StatusCode::FORBIDDEN, "forbidden", "admin"));
-        }
         let Some(rule) = state.agent.pending_rule(user, &id, &answer.id) else {
             return Ok(refused(FlowError::Stale));
         };
@@ -283,7 +276,6 @@ pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::t
                 return Ok(refused(e.into()));
             }
             Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(peer_ip(&req))
                 .detail(format!("permissions: allow `{}` from task {}", first_line(&rule, 200), id.as_str()))
                 .record(&state.db)
@@ -295,7 +287,6 @@ pub async fn answer(req: HttpRequest, id: web::types::Path<String>, body: web::t
         Ok(()) => {
             // The verb only: never a password, never what was typed.
             Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(peer_ip(&req))
                 .detail(format!("task {} answer {}", id.as_str(), if action.len() <= 16 { action.as_str() } else { "?" }))
                 .record(&state.db)
@@ -324,11 +315,11 @@ pub async fn remove(req: HttpRequest, id: web::types::Path<String>, state: web::
 }
 
 /// `text/event-stream`, one `data:` line of JSON per event. Ends when the
-/// account's password changes, it is gone, or loses `shell`.
+/// account's password changes, it is gone, or the link may no longer act.
 pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user, secure) = require!(shell(&req, &state).await);
     let mut rx = state.agent.subscribe();
-    let mut changes = state.grants_changed.subscribe();
+    let mut changes = state.password_changed.subscribe();
     let state = state.get_ref().clone();
     let stream = async_stream::stream! {
         yield Ok::<_, std::io::Error>(Bytes::from_static(b": ok\n\n"));
@@ -349,9 +340,9 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
                     if matches!(changed, Err(broadcast::error::RecvError::Closed)) {
                         break;
                     }
-                    let still = authz::caller_named(&state, &caller.username).await
+                    let still = authz::caller(&state).await
                         .filter(|now| now.since == caller.since)
-                        .is_some_and(|now| now.check(Grant::Shell, &state, secure).is_ok());
+                        .is_some_and(|now| now.check(&state, secure).is_ok());
                     if !still {
                         break;
                     }
@@ -370,23 +361,15 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
 }
 
 pub async fn get_settings(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, _, _) = require!(shell(&req, &state).await);
-    let settings = match config::load(&state.db).await {
-        Ok(s) => s,
-        Err(e) => return Ok(refused(e.into())),
-    };
-    if caller.is_admin() {
-        return Ok(HttpResponse::Ok().json(&settings));
+    require!(shell(&req, &state).await);
+    match config::load(&state.db).await {
+        Ok(settings) => Ok(HttpResponse::Ok().json(&settings)),
+        Err(e) => Ok(refused(e.into())),
     }
-    Ok(HttpResponse::Ok().json(&serde_json::json!({
-        "model": settings.model,
-        "thinkingLevel": settings.thinking_level,
-        "maxRunning": settings.max_running,
-    })))
 }
 
 /// What a task may be started or replied to with (`AgentMode::choices`):
-/// any account that may run one.
+/// whenever one may be run.
 pub async fn choices(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(shell(&req, &state).await);
     match state.agent.choices().await {
@@ -406,7 +389,7 @@ async fn mcp_answer(state: &AppState) -> HttpResponse {
 }
 
 pub async fn get_mcp(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     Ok(mcp_answer(&state).await)
 }
 
@@ -415,7 +398,7 @@ pub async fn put_mcp(
     body: web::types::Json<crate::agent_mode::mcp::ServersWrite>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let w = body.into_inner();
     if let Err(why) = w.check() {
         return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalid", "reason": why })));
@@ -425,7 +408,6 @@ pub async fn put_mcp(
     }
     // Where they are, never a header's value.
     Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!("mcp: {}", w.servers.iter().map(|s| s.url.as_str()).collect::<Vec<_>>().join(", ")))
         .record(&state.db)
@@ -441,7 +423,7 @@ async fn skills_answer(state: &AppState) -> HttpResponse {
 }
 
 pub async fn get_skills(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     Ok(skills_answer(&state).await)
 }
 
@@ -456,7 +438,7 @@ pub async fn install_skill(
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
     use crate::agent_mode::skills::InstallError;
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let source = body.into_inner().source;
     if source.len() > 1024 {
         return Ok(bad("invalidSource"));
@@ -465,7 +447,6 @@ pub async fn install_skill(
     match crate::agent_mode::skills::install(&state.db, &state.agent.skills_root, fetch.as_ref(), &source).await {
         Ok(dirs) => {
             Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(peer_ip(&req))
                 .detail(format!("skills: installed {} from {}", dirs.join(", "), first_line(&source, 200)))
                 .record(&state.db)
@@ -494,7 +475,7 @@ pub async fn put_skill(
     body: web::types::Json<SkillSwitch>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match crate::agent_mode::skills::set_enabled(&state.db, &state.agent.skills_root, &dir, body.enabled).await {
         Ok(true) => Ok(skills_answer(&state).await),
         Ok(false) => Ok(HttpResponse::NotFound().json(&serde_json::json!({ "error": "notFound" }))),
@@ -503,11 +484,10 @@ pub async fn put_skill(
 }
 
 pub async fn delete_skill(req: HttpRequest, dir: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match crate::agent_mode::skills::remove(&state.db, &state.agent.skills_root, &dir).await {
         Ok(true) => {
             Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(peer_ip(&req))
                 .detail(format!("skills: removed {dir}"))
                 .record(&state.db)
@@ -523,7 +503,7 @@ pub async fn delete_skill(req: HttpRequest, dir: web::types::Path<String>, state
 }
 
 pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::SettingsWrite>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let w = body.into_inner();
     if let Err(code) = config::check(&w) {
         return Ok(bad(code));
@@ -536,7 +516,6 @@ pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::Setti
     }
     // Which providers changed, never a key.
     Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!(
             "settings: {} providers, credentials {}",
@@ -552,7 +531,7 @@ pub async fn put_settings(req: HttpRequest, body: web::types::Json<config::Setti
 }
 
 pub async fn models(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match state.agent.models().await {
         Ok(v) => Ok(HttpResponse::Ok().json(&v)),
         Err(e) => Ok(refused(e.into())),
@@ -573,10 +552,10 @@ pub struct Probe {
     provider_id: Option<String>,
 }
 
-/// `POST /agent/models/probe` (admin): what an endpoint being set up lists.
+/// `POST /agent/models/probe`: what an endpoint being set up lists.
 /// `502 {error: "upstream", reason}` when it answers with a failure.
 pub async fn probe(req: HttpRequest, body: web::types::Json<Probe>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let p = body.into_inner();
     match state.agent.probe(&p.api, p.base_url.trim(), p.allow_insecure, p.api_key, p.provider_id.as_deref()).await {
         Ok(v) => Ok(HttpResponse::Ok().json(&v)),
@@ -643,14 +622,13 @@ pub struct MemoryWrite {
 }
 
 pub async fn memory_put(req: HttpRequest, body: web::types::Json<MemoryWrite>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, _) = require!(shell(&req, &state).await);
+    let (_, user, _) = require!(shell(&req, &state).await);
     let w = body.into_inner();
     let key = require!(memory_key(&w.path));
     if let Err(e) = state.agent.memory(user).write(&key, &w.content).await {
         return Ok(memory_refused(e));
     }
     Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!("memory: wrote {}", memory::path_of(&key)))
         .record(&state.db)
@@ -659,13 +637,12 @@ pub async fn memory_put(req: HttpRequest, body: web::types::Json<MemoryWrite>, s
 }
 
 pub async fn memory_delete(req: HttpRequest, q: web::types::Query<MemoryPath>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, _) = require!(shell(&req, &state).await);
+    let (_, user, _) = require!(shell(&req, &state).await);
     let key = require!(memory_key(&q.path));
     match state.agent.memory(user).delete(&key).await {
         Ok(0) => Ok(authz::error(StatusCode::NOT_FOUND, "notFound", "memory")),
         Ok(n) => {
             Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(peer_ip(&req))
                 .detail(format!("memory: deleted {} ({n} files)", memory::path_of(&key)))
                 .record(&state.db)
@@ -693,7 +670,7 @@ impl Drop for StopOnDrop {
 }
 
 pub async fn search(req: HttpRequest, body: web::types::Json<Search>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let (_, user, secure) = require!(shell(&req, &state).await);
     let Search { query, kind } = body.into_inner();
     let query = query.trim().to_string();
     if query.is_empty() || query.len() > 2000 {
@@ -715,10 +692,9 @@ pub async fn search(req: HttpRequest, body: web::types::Json<Search>, state: web
     let state = state.get_ref().clone();
     {
         let state = state.clone();
-        let username = caller.username.clone();
         tokio::spawn(async move {
             let sink = tx.clone();
-            if let Err(e) = state.agent.search(&state, user, &username, secure, query, kind, tx, cancel).await {
+            if let Err(e) = state.agent.search(&state, user, secure, query, kind, tx, cancel).await {
                 let _ = sink.send(serde_json::json!({ "type": "error", "message": e.to_string() }));
             }
         });
@@ -752,7 +728,7 @@ pub struct Adopt {
 }
 
 pub async fn adopt_search(req: HttpRequest, id: web::types::Path<String>, body: web::types::Json<Adopt>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let (caller, user, secure) = require!(shell(&req, &state).await);
+    let (_, user, secure) = require!(shell(&req, &state).await);
     let text = body.into_inner().text;
     if let Some(t) = &text
         && !valid_text(t)
@@ -760,7 +736,7 @@ pub async fn adopt_search(req: HttpRequest, id: web::types::Path<String>, body: 
         return Ok(bad("invalidPrompt"));
     }
     let state = state.get_ref().clone();
-    match state.agent.adopt(&state, user, &caller.username, secure, &id, text).await {
+    match state.agent.adopt(&state, user, secure, &id, text).await {
         Ok(view) => Ok(HttpResponse::Created().json(&view)),
         Err(e) => Ok(refused(e)),
     }
@@ -782,7 +758,7 @@ pub async fn put_permissions(
     body: web::types::Json<crate::agent_mode::permissions::Permissions>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let p = body.into_inner();
     if let Err(reason) = p.check() {
         return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidPermissions", "reason": reason })));
@@ -791,7 +767,6 @@ pub async fn put_permissions(
         return Ok(refused(e.into()));
     }
     Event::new(Kind::Agent, Action::Write, Outcome::Ok)
-        .subject(&caller.username)
         .remote_ip(peer_ip(&req))
         .detail(format!(
             "permissions: default {}{}, {} allow, {} ask, {} deny",

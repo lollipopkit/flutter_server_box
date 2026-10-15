@@ -1396,10 +1396,6 @@ type RootTranslation = {
 	 */
 	removeCustomCmd: string
 	/**
-	 * E​d​i​t​i​n​g​ ​r​e​q​u​i​r​e​s​ ​n​o​n​-​S​S​H​ ​a​c​c​e​s​s​,​ ​w​h​i​c​h​ ​i​s​ ​d​i​s​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
-	 */
-	customCmdsReadOnly: string
-	/**
 	 * M​o​v​e​ ​u​p
 	 */
 	moveUp: string
@@ -1524,26 +1520,6 @@ type RootTranslation = {
 	 */
 	terminalLoadFailed: string
 	/**
-	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
-	 */
-	terminalUnavailable: string
-	/**
-	 * T​h​i​s​ ​p​a​n​e​l​ ​l​o​g​i​n​ ​c​a​n​ ​o​p​e​n​ ​a​ ​s​h​e​l​l
-	 */
-	terminalPasswordlessNoticeTitle: string
-	/**
-	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​y​o​u​r​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​a​ ​s​h​e​l​l​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​K​e​e​p​ ​i​t​ ​i​f​ ​t​h​a​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​w​a​n​t​,​ ​o​r​ ​t​u​r​n​ ​i​t​ ​o​f​f​,​ ​w​h​i​c​h​ ​l​e​a​v​e​s​ ​n​o​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​b​a​c​k​ ​o​n​ ​l​a​t​e​r​ ​m​e​a​n​s​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​c​o​n​f​i​g​ ​f​i​l​e​.
-	 */
-	terminalPasswordlessNoticeBody: string
-	/**
-	 * K​e​e​p​ ​i​t​ ​o​n
-	 */
-	terminalPasswordlessKeep: string
-	/**
-	 * T​u​r​n​ ​i​t​ ​o​f​f
-	 */
-	terminalPasswordlessDisable: string
-	/**
 	 * t​m​u​x​ ​s​e​s​s​i​o​n​s
 	 */
 	terminalTmuxSessions: string
@@ -1609,17 +1585,9 @@ type RootTranslation = {
 	 */
 	files: string
 	/**
-	 * F​i​l​e​ ​a​c​c​e​s​s​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​f​s​.​e​n​a​b​l​e​d​ ​a​n​d​ ​n​a​m​e​ ​i​t​s​ ​r​o​o​t​s​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
-	 */
-	filesUnavailable: string
-	/**
 	 * R​e​m​o​t​e​ ​f​e​a​t​u​r​e​s​ ​a​r​e​ ​o​f​f
 	 */
 	remoteAccessOffTitle: string
-	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​m​o​n​i​t​o​r​i​n​g​ ​o​n​l​y​.​ ​Y​o​u​ ​c​a​n​’​t​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​,​ ​r​u​n​ ​c​o​m​m​a​n​d​s​,​ ​o​r​ ​b​r​o​w​s​e​ ​f​i​l​e​s​ ​h​e​r​e​.​ ​T​o​ ​e​n​a​b​l​e​ ​t​h​e​s​e​ ​f​e​a​t​u​r​e​s​,​ ​e​d​i​t​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
-	 */
-	remoteAccessOffBody: string
 	/**
 	 * R​o​o​t​s
 	 */
@@ -1848,14 +1816,6 @@ type RootTranslation = {
 	 */
 	retentionInvalid: string
 	/**
-	 * Y​o​u​r​ ​a​c​c​o​u​n​t
-	 */
-	myAccount: string
-	/**
-	 * R​o​l​e
-	 */
-	accountRole: string
-	/**
 	 * C​h​a​n​g​e​ ​p​a​s​s​w​o​r​d
 	 */
 	changePassword: string
@@ -1876,157 +1836,11 @@ type RootTranslation = {
 	 */
 	passwordChanged: string
 	/**
-	 * A​c​c​o​u​n​t​s
-	 */
-	accounts: string
-	/**
-	 * A​d​d​ ​a​c​c​o​u​n​t
-	 */
-	addAccount: string
-	/**
-	 * L​a​s​t​ ​s​i​g​n​-​i​n
-	 */
-	lastLogin: string
-	/**
-	 * N​e​v​e​r
-	 */
-	neverSignedIn: string
-	/**
-	 * R​e​s​e​t​ ​p​a​s​s​w​o​r​d
-	 */
-	resetPassword: string
-	/**
-	 * D​e​l​e​t​e​ ​a​c​c​o​u​n​t
-	 */
-	deleteAccount: string
-	/**
-	 * D​e​l​e​t​e​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​{​n​a​m​e​}​?​ ​A​n​y​t​h​i​n​g​ ​i​t​ ​h​a​s​ ​o​p​e​n​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​e​n​d​s​ ​n​o​w​.
-	 * @param {string} name
-	 */
-	confirmDeleteAccount: RequiredParams<'name'>
-	/**
-	 * R​o​l​e​s
-	 */
-	roles: string
-	/**
-	 * A​d​d​ ​r​o​l​e
-	 */
-	addRole: string
-	/**
-	 * E​d​i​t​ ​r​o​l​e
-	 */
-	editRole: string
-	/**
-	 * D​e​l​e​t​e​ ​r​o​l​e
-	 */
-	deleteRole: string
-	/**
-	 * D​e​l​e​t​e​ ​t​h​e​ ​r​o​l​e​ ​{​n​a​m​e​}​?
-	 * @param {string} name
-	 */
-	confirmDeleteRole: RequiredParams<'name'>
-	/**
-	 * N​a​m​e
-	 */
-	roleName: string
-	/**
-	 * U​s​e​ ​1​–​3​2​ ​l​o​w​e​r​c​a​s​e​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​,​ ​-​ ​o​r​ ​_​.
-	 */
-	roleNameInvalid: string
-	/**
-	 * B​u​i​l​t​-​i​n
-	 */
-	roleBuiltin: string
-	/**
-	 * A​d​m​i​n​i​s​t​r​a​t​o​r
-	 */
-	roleAdmin: string
-	/**
-	 * M​a​n​a​g​e​s​ ​a​c​c​o​u​n​t​s​,​ ​r​o​l​e​s​ ​a​n​d​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​s​e​t​t​i​n​g​s​.​ ​O​n​l​y​ ​t​h​e​ ​b​u​i​l​t​-​i​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​r​o​l​e​ ​h​a​s​ ​t​h​i​s​.
-	 */
-	roleAdminNote: string
-	/**
-	 * V​i​e​w​ ​o​n​l​y
-	 */
-	roleViewOnly: string
-	/**
-	 * S​h​e​l​l​ ​a​n​d​ ​c​o​m​m​a​n​d​s
-	 */
-	grantShell: string
-	/**
-	 * R​u​n​ ​c​o​m​m​a​n​d​s​ ​a​n​d​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​w​i​t​h​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​.​ ​W​h​o​e​v​e​r​ ​h​a​s​ ​t​h​i​s​ ​c​a​n​ ​d​o​ ​e​v​e​r​y​t​h​i​n​g​ ​b​e​l​o​w​ ​a​s​ ​w​e​l​l​.
-	 */
-	grantShellNote: string
-	/**
-	 * V​i​r​t​u​a​l​i​z​a​t​i​o​n
-	 */
-	grantVirt: string
-	/**
-	 * P​r​o​x​m​o​x​ ​V​E​,​ ​l​i​b​v​i​r​t​ ​a​n​d​ ​B​M​C​s​ ​t​h​e​ ​a​g​e​n​t​ ​r​e​a​c​h​e​s​:​ ​s​e​e​ ​a​n​d​ ​c​o​n​t​r​o​l​ ​t​h​e​i​r​ ​m​a​c​h​i​n​e​s​.​ ​W​h​e​r​e​ ​t​h​e​y​ ​a​r​e​ ​a​n​d​ ​h​o​w​ ​t​o​ ​s​i​g​n​ ​i​n​ ​i​s​ ​s​e​t​ ​b​y​ ​a​n​ ​a​d​m​i​n​.
-	 */
-	grantVirtNote: string
-	/**
-	 * F​i​l​e​s
-	 */
-	grantFiles: string
-	/**
-	 * N​o​ ​a​c​c​e​s​s
-	 */
-	filesNone: string
-	/**
-	 * R​e​a​d​ ​o​n​l​y
-	 */
-	filesRead: string
-	/**
-	 * R​e​a​d​ ​a​n​d​ ​w​r​i​t​e
-	 */
-	filesWrite: string
-	/**
-	 * C​o​n​n​e​c​t​ ​o​u​t
-	 */
-	grantConnect: string
-	/**
-	 * L​o​c​a​l​ ​a​n​d​ ​d​y​n​a​m​i​c​ ​p​o​r​t​ ​f​o​r​w​a​r​d​s​ ​a​n​d​ ​r​e​m​o​t​e​ ​d​e​s​k​t​o​p​:​ ​c​o​n​n​e​c​t​i​o​n​s​ ​t​h​e​ ​s​e​r​v​e​r​ ​m​a​k​e​s​ ​o​n​ ​t​h​e​ ​a​p​p​’​s​ ​b​e​h​a​l​f​.
-	 */
-	grantConnectNote: string
-	/**
-	 * A​l​l​o​w​e​d​ ​d​e​s​t​i​n​a​t​i​o​n​s
-	 */
-	connectAllow: string
-	/**
-	 * O​n​e​ ​p​e​r​ ​l​i​n​e​:​ ​a​n​ ​a​d​d​r​e​s​s​ ​o​r​ ​C​I​D​R​,​ ​w​i​t​h​ ​a​n​ ​o​p​t​i​o​n​a​l​ ​p​o​r​t​ ​o​r​ ​r​a​n​g​e​ ​—​ ​1​2​7​.​0​.​0​.​1​:​3​3​8​9​,​ ​1​0​.​0​.​0​.​0​/​8​,​ ​[​:​:​1​]​:​2​2​.​ ​E​m​p​t​y​ ​a​l​l​o​w​s​ ​a​n​y​.
-	 */
-	connectAllowHint: string
-	/**
-	 * L​i​s​t​e​n
-	 */
-	grantListen: string
-	/**
-	 * R​e​m​o​t​e​ ​p​o​r​t​ ​f​o​r​w​a​r​d​s​:​ ​t​h​e​ ​a​g​e​n​t​ ​l​i​s​t​e​n​s​ ​o​n​ ​a​ ​p​o​r​t​ ​o​f​ ​t​h​e​ ​s​e​r​v​e​r​.
-	 */
-	grantListenNote: string
-	/**
-	 * A​l​l​o​w​ ​a​d​d​r​e​s​s​e​s​ ​o​t​h​e​r​ ​t​h​a​n​ ​l​o​o​p​b​a​c​k
-	 */
-	listenPublic: string
-	/**
-	 * P​o​r​t​s
-	 */
-	listenPorts: string
-	/**
-	 * A​ ​p​o​r​t​ ​o​r​ ​a​ ​r​a​n​g​e​ ​s​u​c​h​ ​a​s​ ​1​0​2​4​-​6​5​5​3​5​.​ ​E​m​p​t​y​ ​a​l​l​o​w​s​ ​a​n​y​.
-	 */
-	listenPortsHint: string
-	/**
-	 * P​o​r​t​s​ ​m​u​s​t​ ​b​e​ ​a​ ​p​o​r​t​ ​o​r​ ​a​ ​r​a​n​g​e​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​6​5​5​3​5​.
-	 */
-	portsInvalid: string
-	/**
 	 * C​o​n​f​i​r​m​ ​w​i​t​h​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d
 	 */
 	reauthTitle: string
 	/**
-	 * C​h​a​n​g​i​n​g​ ​w​h​o​ ​c​a​n​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
+	 * T​h​i​s​ ​c​h​a​n​g​e​ ​n​e​e​d​s​ ​y​o​u​r​ ​c​u​r​r​e​n​t​ ​p​a​s​s​w​o​r​d​.
 	 */
 	reauthBody: string
 	/**
@@ -2038,53 +1852,17 @@ type RootTranslation = {
 	 */
 	accessErrReauth: string
 	/**
-	 * T​h​i​s​ ​i​s​ ​t​h​e​ ​l​a​s​t​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​.​ ​M​a​k​e​ ​a​n​o​t​h​e​r​ ​a​c​c​o​u​n​t​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​f​i​r​s​t​.
-	 */
-	accessErrLastAdmin: string
-	/**
-	 * T​h​a​t​ ​n​a​m​e​ ​i​s​ ​t​a​k​e​n​,​ ​o​r​ ​t​h​e​ ​r​o​l​e​ ​i​s​ ​s​t​i​l​l​ ​g​i​v​e​n​ ​t​o​ ​a​n​ ​a​c​c​o​u​n​t​.
-	 */
-	accessErrConflict: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​d​o​ ​t​h​i​s​.
-	 */
-	accessErrForbidden: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​c​h​a​n​g​e​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​s​e​t​t​i​n​g​s​.
-	 */
-	adminOnlySettings: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​r​e​a​r​r​a​n​g​e​ ​t​h​e​ ​c​a​r​d​s​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
-	 */
-	cardOrderAdminOnly: string
-	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​i​n​c​l​u​d​e​ ​t​h​i​s​.​ ​A​s​k​ ​o​n​e​ ​o​f​ ​i​t​s​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​s​.
-	 */
-	whyNotGranted: string
-	/**
 	 * T​h​i​s​ ​n​e​e​d​s​ ​H​T​T​P​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	whyInsecureTransport: string
 	/**
-	 * T​h​i​s​ ​i​s​ ​n​o​t​ ​s​e​t​ ​u​p​ ​o​n​ ​t​h​e​ ​a​g​e​n​t​ ​y​e​t​:​ ​n​a​m​e​ ​t​h​e​ ​f​i​l​e​ ​r​o​o​t​s​ ​i​n​ ​i​t​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 * T​h​i​s​ ​s​i​g​n​-​i​n​ ​c​a​n​ ​o​n​l​y​ ​v​i​e​w​.
 	 */
-	whyNotConfigured: string
+	whyReadOnly: string
 	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​c​a​n​ ​b​r​o​w​s​e​ ​a​n​d​ ​d​o​w​n​l​o​a​d​ ​h​e​r​e​,​ ​n​o​t​ ​c​h​a​n​g​e​ ​a​n​y​t​h​i​n​g​.
+	 * T​h​e​ ​p​a​s​s​w​o​r​d​ ​w​a​s​ ​c​h​a​n​g​e​d​.​ ​S​i​g​n​ ​i​n​ ​a​g​a​i​n​.
 	 */
-	filesReadOnly: string
-	/**
-	 * Y​o​u​r​ ​r​o​l​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​o​n​l​y​ ​v​i​e​w​.​ ​A​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​g​r​a​n​t​ ​m​o​r​e​ ​u​n​d​e​r​ ​S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​R​o​l​e​s​.
-	 */
-	remoteAccessOffBodyRoles: string
-	/**
-	 * E​d​i​t​i​n​g​ ​c​u​s​t​o​m​ ​c​o​m​m​a​n​d​s​ ​n​e​e​d​s​ ​t​h​e​ ​s​h​e​l​l​ ​g​r​a​n​t​:​ ​e​a​c​h​ ​o​n​e​ ​r​u​n​s​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​.​ ​A​d​d​ ​i​t​ ​t​o​ ​t​h​e​ ​a​d​m​i​n​ ​r​o​l​e​ ​u​n​d​e​r​ ​R​o​l​e​s​.
-	 */
-	customCmdsReadOnlyRoles: string
-	/**
-	 * O​p​e​n​i​n​g​ ​a​ ​t​e​r​m​i​n​a​l​ ​h​e​r​e​ ​n​e​e​d​s​ ​n​o​ ​S​S​H​ ​c​r​e​d​e​n​t​i​a​l​s​,​ ​s​o​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​o​f​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​w​h​o​s​e​ ​r​o​l​e​ ​i​n​c​l​u​d​e​s​ ​t​h​e​ ​s​h​e​l​l​ ​i​s​ ​a​l​l​ ​t​h​a​t​ ​s​t​a​n​d​s​ ​b​e​t​w​e​e​n​ ​a​ ​v​i​s​i​t​o​r​ ​a​n​d​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​T​u​r​n​i​n​g​ ​i​t​ ​o​f​f​ ​t​a​k​e​s​ ​t​h​e​ ​s​h​e​l​l​,​ ​o​u​t​g​o​i​n​g​ ​c​o​n​n​e​c​t​i​o​n​s​ ​a​n​d​ ​l​i​s​t​e​n​i​n​g​ ​a​w​a​y​ ​f​r​o​m​ ​e​v​e​r​y​ ​r​o​l​e​;​ ​a​n​ ​a​d​m​i​n​i​s​t​r​a​t​o​r​ ​c​a​n​ ​g​i​v​e​ ​t​h​e​m​ ​b​a​c​k​ ​u​n​d​e​r​ ​S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​R​o​l​e​s​.
-	 */
-	terminalPasswordlessNoticeBodyRoles: string
+	passwordChangedSignIn: string
 	/**
 	 * N​e​w​ ​u​s​e​r
 	 */
@@ -3185,13 +2963,9 @@ type RootTranslation = {
 	 */
 	pveSettings: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​s​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​.
-	 */
-	pveSetup: string
-	/**
 	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​r​u​n​s​ ​P​r​o​x​m​o​x​ ​V​E​.​ ​S​e​t​ ​u​p​ ​h​o​w​ ​t​h​i​s​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​i​t​s​ ​A​P​I​;​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​s​ ​r​e​c​o​m​m​e​n​d​e​d​.
 	 */
-	pveSetupAdmin: string
+	pveSetupNote: string
 	/**
 	 * A​P​I​ ​a​d​d​r​e​s​s
 	 */
@@ -3246,10 +3020,6 @@ type RootTranslation = {
 	 * C​o​m​p​a​r​e​ ​t​h​e​ ​f​i​n​g​e​r​p​r​i​n​t​ ​w​i​t​h​ ​t​h​e​ ​o​n​e​ ​t​h​e​ ​h​o​s​t​ ​s​h​o​w​s​ ​(​p​v​e​n​o​d​e​ ​c​e​r​t​ ​i​n​f​o​)​ ​b​e​f​o​r​e​ ​t​r​u​s​t​i​n​g​ ​i​t​.
 	 */
 	pveCertCompare: string
-	/**
-	 * A​n​ ​a​d​m​i​n​ ​h​a​s​ ​t​o​ ​t​r​u​s​t​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​.
-	 */
-	pveCertAdmin: string
 	/**
 	 * C​e​r​t​i​f​i​c​a​t​e​ ​t​r​u​s​t​e​d​.
 	 */
@@ -5827,11 +5597,6 @@ type RootTranslation = {
 	 */
 	deskUnlock: string
 	/**
-	 * S​i​g​n​e​d​ ​i​n​ ​a​s​ ​{​u​s​e​r​}
-	 * @param {unknown} user
-	 */
-	deskSignedInAs: RequiredParams<'user'>
-	/**
 	 * S​i​g​n​-​i​n​ ​f​a​i​l​e​d
 	 */
 	deskSignInFailed: string
@@ -5877,23 +5642,6 @@ type RootTranslation = {
 	 */
 	lockUnlocking: string
 	/**
-	 * O​t​h​e​r​ ​u​s​e​r
-	 */
-	lockOtherUser: string
-	/**
-	 * S​a​v​e​d​ ​a​c​c​o​u​n​t​s
-	 */
-	lockSavedAccounts: string
-	/**
-	 * R​e​m​e​m​b​e​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t
-	 */
-	lockRemember: string
-	/**
-	 * {​u​s​e​r​}​'​s​ ​p​a​s​s​w​o​r​d
-	 * @param {unknown} user
-	 */
-	lockPasswordOf: RequiredParams<'user'>
-	/**
 	 * C​a​n​'​t​ ​c​o​n​n​e​c​t
 	 */
 	lockUnreachable: string
@@ -5927,21 +5675,6 @@ type RootTranslation = {
 	 * O​n​l​i​n​e
 	 */
 	lockOnline: string
-	/**
-	 * {​u​s​e​r​}​ ​·​ ​s​i​g​n​e​d​ ​i​n
-	 * @param {unknown} user
-	 */
-	lockAccountSignedIn: RequiredParams<'user'>
-	/**
-	 * S​i​g​n​e​d​ ​i​n​ ​·​ ​{​w​h​e​n​}
-	 * @param {unknown} when
-	 */
-	lockSignedInAgo: RequiredParams<'when'>
-	/**
-	 * L​a​s​t​ ​s​i​g​n​e​d​ ​i​n​ ​{​w​h​e​n​}
-	 * @param {unknown} when
-	 */
-	lockLastSignIn: RequiredParams<'when'>
 	/**
 	 * S​w​i​t​c​h​ ​i​n​s​t​a​n​c​e
 	 */
@@ -5979,14 +5712,6 @@ type RootTranslation = {
 	 */
 	lockDragResize: string
 	/**
-	 * F​o​r​g​e​t​ ​t​h​i​s​ ​a​c​c​o​u​n​t
-	 */
-	lockForgetAccount: string
-	/**
-	 * W​r​o​n​g​ ​u​s​e​r​n​a​m​e​ ​o​r​ ​p​a​s​s​w​o​r​d
-	 */
-	lockWrongCredentials: string
-	/**
 	 * N​o​ ​s​e​r​v​e​r​ ​a​n​s​w​e​r​e​d​ ​a​t​ ​t​h​a​t​ ​a​d​d​r​e​s​s
 	 */
 	deskUnreachable: string
@@ -6006,10 +5731,6 @@ type RootTranslation = {
 	 * A​c​c​o​u​n​t
 	 */
 	settingsAccount: string
-	/**
-	 * A​c​c​e​s​s
-	 */
-	settingsAccess: string
 	/**
 	 * T​h​i​s​ ​b​r​o​w​s​e​r
 	 */
@@ -6401,16 +6122,6 @@ type RootTranslation = {
 	 */
 	processConfirmStopHint: string
 	/**
-	 * W​h​o​ ​m​a​y​ ​d​o​ ​w​h​a​t​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​S​i​g​n​i​n​g​ ​i​n​ ​o​v​e​r​ ​S​S​H​ ​i​s​ ​n​o​t​ ​l​i​m​i​t​e​d​ ​h​e​r​e​.
-	 */
-	settingsAccessDesc: string
-	/**
-	 * {​u​s​e​r​}​ ​o​n​ ​{​s​e​r​v​e​r​}​.​ ​C​h​a​n​g​e​s​ ​a​p​p​l​y​ ​i​n​ ​e​v​e​r​y​ ​b​r​o​w​s​e​r​ ​s​i​g​n​e​d​ ​i​n​.
-	 * @param {unknown} server
-	 * @param {unknown} user
-	 */
-	settingsAccountDesc: RequiredParams<'server' | 'user'>
-	/**
 	 * W​a​l​l​p​a​p​e​r​ ​a​n​d​ ​t​h​e​m​e​s​ ​a​r​e​ ​k​e​p​t​ ​o​n​ ​t​h​e​ ​s​e​r​v​e​r​ ​f​o​r​ ​y​o​u​r​ ​a​c​c​o​u​n​t​;​ ​e​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​ ​h​e​r​e​ ​a​p​p​l​i​e​s​ ​o​n​l​y​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​.
 	 */
 	settingsAppearanceDesc: string
@@ -6555,10 +6266,6 @@ type RootTranslation = {
 	 */
 	settingsPasswordHint: string
 	/**
-	 * P​e​r​s​o​n​a​l
-	 */
-	settingsPersonal: string
-	/**
 	 * P​o​w​e​r
 	 */
 	settingsPower: string
@@ -6669,10 +6376,6 @@ type RootTranslation = {
 	 * T​i​m​e​ ​f​o​r​m​a​t
 	 */
 	settingsTimeFormat: string
-	/**
-	 * U​s​e​r
-	 */
-	settingsUser: string
 	/**
 	 * W​i​n​d​o​w​s
 	 */
@@ -6856,7 +6559,7 @@ type RootTranslation = {
 	 */
 	settingsAppApproveBare: RequiredParams<'name'>
 	/**
-	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​ ​f​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​s​e​r​v​e​r​.
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​.
 	 * @param {unknown} name
 	 */
 	settingsAppRemoveMessage: RequiredParams<'name'>
@@ -6873,7 +6576,7 @@ type RootTranslation = {
 	 */
 	settingsPermStatus: string
 	/**
-	 * r​e​a​d​ ​f​i​l​e​s​ ​i​n​ ​t​h​e​ ​f​o​l​d​e​r​s​ ​i​t​ ​n​a​m​e​s​,​ ​a​s​ ​f​a​r​ ​a​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​u​s​i​n​g​ ​i​t​ ​m​a​y
+	 * r​e​a​d​ ​t​h​e​ ​f​i​l​e​s​ ​t​h​a​t​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​u​s​i​n​g​ ​i​t​ ​m​a​y​ ​r​e​a​d
 	 */
 	settingsPermFilesRead: string
 	/**
@@ -6954,12 +6657,6 @@ type RootTranslation = {
 	 * G​o​o​d​ ​e​v​e​n​i​n​g
 	 */
 	deskAgentGreetEvening: string
-	/**
-	 * {​g​r​e​e​t​i​n​g​}​,​ ​{​n​a​m​e​}
-	 * @param {unknown} greeting
-	 * @param {unknown} name
-	 */
-	deskAgentGreeting: RequiredParams<'greeting' | 'name'>
 	/**
 	 * W​h​a​t​ ​s​h​o​u​l​d​ ​I​ ​d​o​?​ ​N​e​w​ ​t​a​s​k​s​ ​w​a​i​t​ ​t​h​e​i​r​ ​t​u​r​n
 	 */
@@ -7568,7 +7265,7 @@ type RootTranslation = {
 	 */
 	deskAgentAlwaysAllow: string
 	/**
-	 * A​d​d​s​ ​t​o​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​a​l​l​o​w​ ​r​u​l​e​s​,​ ​f​o​r​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​:
+	 * A​d​d​s​ ​t​o​ ​t​h​i​s​ ​s​e​r​v​e​r​'​s​ ​a​l​l​o​w​ ​r​u​l​e​s​:
 	 */
 	deskAgentAlwaysAllowNote: string
 	/**
@@ -7703,11 +7400,7 @@ type RootTranslation = {
 	/**
 	 * A​d​d​ ​a​ ​p​r​o​v​i​d​e​r​ ​a​n​d​ ​p​i​c​k​ ​a​ ​m​o​d​e​l​ ​i​n​ ​S​e​t​t​i​n​g​s​.
 	 */
-	deskAgentNoModelAdmin: string
-	/**
-	 * A​s​k​ ​a​n​ ​a​d​m​i​n​ ​t​o​ ​s​e​t​ ​u​p​ ​a​ ​m​o​d​e​l​ ​i​n​ ​S​e​t​t​i​n​g​s​.
-	 */
-	deskAgentNoModelUser: string
+	deskAgentAddModel: string
 	/**
 	 * O​p​e​n​ ​S​e​t​t​i​n​g​s
 	 */
@@ -7828,10 +7521,6 @@ type RootTranslation = {
 	 * S​a​v​e​d
 	 */
 	settingsAgentSaved: string
-	/**
-	 * O​n​l​y​ ​a​n​ ​a​d​m​i​n​ ​c​a​n​ ​c​h​a​n​g​e​ ​t​h​i​s​.
-	 */
-	settingsAgentAdminOnly: string
 	/**
 	 * {​n​}​ ​m​o​d​e​l​s​ ​l​i​s​t​e​d
 	 * @param {unknown} n
@@ -8404,10 +8093,6 @@ type RootTranslation = {
 	 */
 	stackNotSetUp: string
 	/**
-	 * A​n​ ​a​d​m​i​n​ ​c​a​n​ ​s​e​t​ ​t​h​i​s​ ​a​p​p​ ​u​p​.
-	 */
-	stackAskAdmin: string
-	/**
 	 * S​e​t​u​p​ ​f​a​i​l​e​d
 	 */
 	stackFailed: string
@@ -8875,6 +8560,103 @@ type RootTranslation = {
 	 * @param {unknown} version
 	 */
 	noticeStackUpdateBody: RequiredParams<'current' | 'project' | 'version'>
+	/**
+	 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r
+	 */
+	selfUpdateTitle: string
+	/**
+	 * V​e​r​s​i​o​n
+	 */
+	selfUpdateVersion: string
+	/**
+	 * N​e​w​e​s​t​ ​r​e​l​e​a​s​e
+	 */
+	selfUpdateLatest: string
+	/**
+	 * U​p​ ​t​o​ ​d​a​t​e
+	 */
+	selfUpdateUpToDate: string
+	/**
+	 * {​v​e​r​s​i​o​n​}​ ​i​s​ ​a​v​a​i​l​a​b​l​e
+	 * @param {unknown} version
+	 */
+	selfUpdateAvailable: RequiredParams<'version'>
+	/**
+	 * C​h​e​c​k​ ​n​o​w
+	 */
+	selfUpdateCheck: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​t​h​e​ ​r​e​l​e​a​s​e​s​:​ ​{​e​r​r​o​r​}
+	 * @param {unknown} error
+	 */
+	selfUpdateCheckFailed: RequiredParams<'error'>
+	/**
+	 * U​p​d​a​t​e​ ​n​o​w
+	 */
+	selfUpdateRun: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​t​h​e​ ​i​n​s​t​a​l​l​e​r​ ​a​p​a​r​t​ ​f​r​o​m​ ​i​t​s​e​l​f​,​ ​s​o​ ​i​t​s​ ​r​e​s​t​a​r​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​u​p​d​a​t​e​.​ ​T​h​e​ ​p​a​n​e​l​ ​l​o​s​e​s​ ​t​h​e​ ​a​g​e​n​t​ ​f​o​r​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​ ​m​e​a​n​w​h​i​l​e​ ​a​n​d​ ​f​o​l​l​o​w​s​ ​t​h​e​ ​u​p​d​a​t​e​ ​a​c​r​o​s​s​ ​t​h​e​ ​r​e​s​t​a​r​t​.
+	 */
+	selfUpdateRunHint: string
+	/**
+	 * T​h​i​s​ ​l​i​n​k​ ​c​a​n​n​o​t​ ​a​c​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.​ ​R​u​n​ ​t​h​i​s​ ​t​h​e​r​e​:
+	 */
+	selfUpdateNoTerminal: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​r​u​n​s​ ​i​n​ ​a​ ​c​o​n​t​a​i​n​e​r​:​ ​p​u​l​l​ ​t​h​e​ ​n​e​w​ ​i​m​a​g​e​ ​a​n​d​ ​r​e​c​r​e​a​t​e​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​.
+	 */
+	selfUpdateContainer: string
+	/**
+	 * I​n​s​t​a​l​l​e​d​ ​b​y​ ​t​h​e​ ​N​i​x​O​S​ ​m​o​d​u​l​e​:​ ​u​p​d​a​t​e​ ​i​t​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​s​y​s​t​e​m​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​a​n​d​ ​r​e​b​u​i​l​d​.
+	 */
+	selfUpdateNix: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​w​a​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​b​y​ ​i​n​s​t​a​l​l​.​s​h​:​ ​u​p​d​a​t​e​ ​i​t​ ​t​h​e​ ​w​a​y​ ​i​t​ ​w​a​s​ ​i​n​s​t​a​l​l​e​d​.
+	 */
+	selfUpdateOther: string
+	/**
+	 * U​p​d​a​t​i​n​g​…
+	 */
+	selfUpdateRunning: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​i​s​ ​r​e​s​t​a​r​t​i​n​g​;​ ​t​h​e​ ​p​a​n​e​l​ ​r​e​c​o​n​n​e​c​t​s​ ​i​n​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​…
+	 */
+	selfUpdateRestarting: string
+	/**
+	 * U​p​d​a​t​e​d​:​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​{​v​e​r​s​i​o​n​}​.
+	 * @param {unknown} version
+	 */
+	selfUpdateDone: RequiredParams<'version'>
+	/**
+	 * T​h​e​ ​u​p​d​a​t​e​ ​f​a​i​l​e​d​.​ ​I​t​s​ ​o​u​t​p​u​t​ ​i​s​ ​a​b​o​v​e​.
+	 */
+	selfUpdateFailed: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​t​ ​c​o​m​e​ ​b​a​c​k​.​ ​C​h​e​c​k​ ​i​t​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​.
+	 */
+	selfUpdateNoAnswer: string
+	/**
+	 * s​u​d​o​ ​p​a​s​s​w​o​r​d
+	 */
+	selfUpdateSudoPassword: string
+	/**
+	 * T​h​e​ ​i​n​s​t​a​l​l​e​r​ ​n​e​e​d​s​ ​r​o​o​t​ ​h​e​r​e​ ​(​a​n​ ​O​p​e​n​R​C​ ​s​e​r​v​i​c​e​)​.​ ​T​h​e​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​u​s​e​d​ ​o​n​c​e​ ​a​n​d​ ​n​o​t​ ​s​a​v​e​d​.
+	 */
+	selfUpdateSudoHint: string
+	/**
+	 * s​u​d​o​ ​d​i​d​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​i​s​ ​p​a​s​s​w​o​r​d​.
+	 */
+	selfUpdateSudoRefused: string
+	/**
+	 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​:​ ​a​n​ ​u​p​d​a​t​e​ ​i​s​ ​a​v​a​i​l​a​b​l​e
+	 */
+	noticeAgentUpdate: string
+	/**
+	 * {​v​e​r​s​i​o​n​}​ ​c​a​n​ ​b​e​ ​i​n​s​t​a​l​l​e​d​ ​(​n​o​w​ ​{​c​u​r​r​e​n​t​}​)​.
+	 * @param {unknown} current
+	 * @param {unknown} version
+	 */
+	noticeAgentUpdateBody: RequiredParams<'current' | 'version'>
 	/**
 	 * S​t​o​r​a​g​e
 	 */
@@ -11376,10 +11158,6 @@ export type TranslationFunctions = {
 	 */
 	removeCustomCmd: () => LocalizedString
 	/**
-	 * Editing requires non-SSH access, which is disabled on this agent.
-	 */
-	customCmdsReadOnly: () => LocalizedString
-	/**
 	 * Move up
 	 */
 	moveUp: () => LocalizedString
@@ -11504,26 +11282,6 @@ export type TranslationFunctions = {
 	 */
 	terminalLoadFailed: () => LocalizedString
 	/**
-	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
-	 */
-	terminalUnavailable: () => LocalizedString
-	/**
-	 * This panel login can open a shell
-	 */
-	terminalPasswordlessNoticeTitle: () => LocalizedString
-	/**
-	 * Opening a terminal here needs no SSH credentials, so your panel password is all that stands between a visitor and a shell on this machine. Keep it if that is what you want, or turn it off, which leaves no terminal here. Turning it back on later means editing the agent's config file.
-	 */
-	terminalPasswordlessNoticeBody: () => LocalizedString
-	/**
-	 * Keep it on
-	 */
-	terminalPasswordlessKeep: () => LocalizedString
-	/**
-	 * Turn it off
-	 */
-	terminalPasswordlessDisable: () => LocalizedString
-	/**
 	 * tmux sessions
 	 */
 	terminalTmuxSessions: () => LocalizedString
@@ -11588,17 +11346,9 @@ export type TranslationFunctions = {
 	 */
 	files: () => LocalizedString
 	/**
-	 * File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
-	 */
-	filesUnavailable: () => LocalizedString
-	/**
 	 * Remote features are off
 	 */
 	remoteAccessOffTitle: () => LocalizedString
-	/**
-	 * This agent is set up for monitoring only. You can’t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent’s config.toml.
-	 */
-	remoteAccessOffBody: () => LocalizedString
 	/**
 	 * Roots
 	 */
@@ -11824,14 +11574,6 @@ export type TranslationFunctions = {
 	 */
 	retentionInvalid: () => LocalizedString
 	/**
-	 * Your account
-	 */
-	myAccount: () => LocalizedString
-	/**
-	 * Role
-	 */
-	accountRole: () => LocalizedString
-	/**
 	 * Change password
 	 */
 	changePassword: () => LocalizedString
@@ -11852,155 +11594,11 @@ export type TranslationFunctions = {
 	 */
 	passwordChanged: () => LocalizedString
 	/**
-	 * Accounts
-	 */
-	accounts: () => LocalizedString
-	/**
-	 * Add account
-	 */
-	addAccount: () => LocalizedString
-	/**
-	 * Last sign-in
-	 */
-	lastLogin: () => LocalizedString
-	/**
-	 * Never
-	 */
-	neverSignedIn: () => LocalizedString
-	/**
-	 * Reset password
-	 */
-	resetPassword: () => LocalizedString
-	/**
-	 * Delete account
-	 */
-	deleteAccount: () => LocalizedString
-	/**
-	 * Delete the account {name}? Anything it has open on this agent ends now.
-	 */
-	confirmDeleteAccount: (arg: { name: string }) => LocalizedString
-	/**
-	 * Roles
-	 */
-	roles: () => LocalizedString
-	/**
-	 * Add role
-	 */
-	addRole: () => LocalizedString
-	/**
-	 * Edit role
-	 */
-	editRole: () => LocalizedString
-	/**
-	 * Delete role
-	 */
-	deleteRole: () => LocalizedString
-	/**
-	 * Delete the role {name}?
-	 */
-	confirmDeleteRole: (arg: { name: string }) => LocalizedString
-	/**
-	 * Name
-	 */
-	roleName: () => LocalizedString
-	/**
-	 * Use 1–32 lowercase letters, digits, - or _.
-	 */
-	roleNameInvalid: () => LocalizedString
-	/**
-	 * Built-in
-	 */
-	roleBuiltin: () => LocalizedString
-	/**
-	 * Administrator
-	 */
-	roleAdmin: () => LocalizedString
-	/**
-	 * Manages accounts, roles and this agent’s settings. Only the built-in administrator role has this.
-	 */
-	roleAdminNote: () => LocalizedString
-	/**
-	 * View only
-	 */
-	roleViewOnly: () => LocalizedString
-	/**
-	 * Shell and commands
-	 */
-	grantShell: () => LocalizedString
-	/**
-	 * Run commands and open a terminal as the agent’s own account, with no SSH credentials. Whoever has this can do everything below as well.
-	 */
-	grantShellNote: () => LocalizedString
-	/**
-	 * Virtualization
-	 */
-	grantVirt: () => LocalizedString
-	/**
-	 * Proxmox VE, libvirt and BMCs the agent reaches: see and control their machines. Where they are and how to sign in is set by an admin.
-	 */
-	grantVirtNote: () => LocalizedString
-	/**
-	 * Files
-	 */
-	grantFiles: () => LocalizedString
-	/**
-	 * No access
-	 */
-	filesNone: () => LocalizedString
-	/**
-	 * Read only
-	 */
-	filesRead: () => LocalizedString
-	/**
-	 * Read and write
-	 */
-	filesWrite: () => LocalizedString
-	/**
-	 * Connect out
-	 */
-	grantConnect: () => LocalizedString
-	/**
-	 * Local and dynamic port forwards and remote desktop: connections the server makes on the app’s behalf.
-	 */
-	grantConnectNote: () => LocalizedString
-	/**
-	 * Allowed destinations
-	 */
-	connectAllow: () => LocalizedString
-	/**
-	 * One per line: an address or CIDR, with an optional port or range — 127.0.0.1:3389, 10.0.0.0/8, [::1]:22. Empty allows any.
-	 */
-	connectAllowHint: () => LocalizedString
-	/**
-	 * Listen
-	 */
-	grantListen: () => LocalizedString
-	/**
-	 * Remote port forwards: the agent listens on a port of the server.
-	 */
-	grantListenNote: () => LocalizedString
-	/**
-	 * Allow addresses other than loopback
-	 */
-	listenPublic: () => LocalizedString
-	/**
-	 * Ports
-	 */
-	listenPorts: () => LocalizedString
-	/**
-	 * A port or a range such as 1024-65535. Empty allows any.
-	 */
-	listenPortsHint: () => LocalizedString
-	/**
-	 * Ports must be a port or a range between 1 and 65535.
-	 */
-	portsInvalid: () => LocalizedString
-	/**
 	 * Confirm with your password
 	 */
 	reauthTitle: () => LocalizedString
 	/**
-	 * Changing who can do what on this agent needs your current password.
+	 * This change needs your current password.
 	 */
 	reauthBody: () => LocalizedString
 	/**
@@ -12012,53 +11610,17 @@ export type TranslationFunctions = {
 	 */
 	accessErrReauth: () => LocalizedString
 	/**
-	 * This is the last administrator. Make another account an administrator first.
-	 */
-	accessErrLastAdmin: () => LocalizedString
-	/**
-	 * That name is taken, or the role is still given to an account.
-	 */
-	accessErrConflict: () => LocalizedString
-	/**
-	 * Only an administrator can do this.
-	 */
-	accessErrForbidden: () => LocalizedString
-	/**
-	 * Only an administrator can change this agent’s settings.
-	 */
-	adminOnlySettings: () => LocalizedString
-	/**
-	 * Only an administrator can rearrange the cards on this agent.
-	 */
-	cardOrderAdminOnly: () => LocalizedString
-	/**
-	 * Your role on this agent does not include this. Ask one of its administrators.
-	 */
-	whyNotGranted: () => LocalizedString
-	/**
 	 * This needs HTTPS, or a proxy on the same host.
 	 */
 	whyInsecureTransport: () => LocalizedString
 	/**
-	 * This is not set up on the agent yet: name the file roots in its config.toml.
+	 * This sign-in can only view.
 	 */
-	whyNotConfigured: () => LocalizedString
+	whyReadOnly: () => LocalizedString
 	/**
-	 * Your role can browse and download here, not change anything.
+	 * The password was changed. Sign in again.
 	 */
-	filesReadOnly: () => LocalizedString
-	/**
-	 * Your role on this agent can only view. An administrator can grant more under Server Settings → Roles.
-	 */
-	remoteAccessOffBodyRoles: () => LocalizedString
-	/**
-	 * Editing custom commands needs the shell grant: each one runs on the server. Add it to the admin role under Roles.
-	 */
-	customCmdsReadOnlyRoles: () => LocalizedString
-	/**
-	 * Opening a terminal here needs no SSH credentials, so the password of every account whose role includes the shell is all that stands between a visitor and this machine. Turning it off takes the shell, outgoing connections and listening away from every role; an administrator can give them back under Server Settings → Roles.
-	 */
-	terminalPasswordlessNoticeBodyRoles: () => LocalizedString
+	passwordChangedSignIn: () => LocalizedString
 	/**
 	 * New user
 	 */
@@ -13117,13 +12679,9 @@ export type TranslationFunctions = {
 	 */
 	pveSettings: () => LocalizedString
 	/**
-	 * This machine runs Proxmox VE. An admin has to set up how this agent signs in to its API.
-	 */
-	pveSetup: () => LocalizedString
-	/**
 	 * This machine runs Proxmox VE. Set up how this agent signs in to its API; an API token is recommended.
 	 */
-	pveSetupAdmin: () => LocalizedString
+	pveSetupNote: () => LocalizedString
 	/**
 	 * API address
 	 */
@@ -13178,10 +12736,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Compare the fingerprint with the one the host shows (pvenode cert info) before trusting it.
 	 */
 	pveCertCompare: () => LocalizedString
-	/**
-	 * An admin has to trust the certificate.
-	 */
-	pveCertAdmin: () => LocalizedString
 	/**
 	 * Certificate trusted.
 	 */
@@ -15692,10 +15246,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskUnlock: () => LocalizedString
 	/**
-	 * Signed in as {user}
-	 */
-	deskSignedInAs: (arg: { user: unknown }) => LocalizedString
-	/**
 	 * Sign-in failed
 	 */
 	deskSignInFailed: () => LocalizedString
@@ -15740,22 +15290,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	lockUnlocking: () => LocalizedString
 	/**
-	 * Other user
-	 */
-	lockOtherUser: () => LocalizedString
-	/**
-	 * Saved accounts
-	 */
-	lockSavedAccounts: () => LocalizedString
-	/**
-	 * Remember this account
-	 */
-	lockRemember: () => LocalizedString
-	/**
-	 * {user}'s password
-	 */
-	lockPasswordOf: (arg: { user: unknown }) => LocalizedString
-	/**
 	 * Can't connect
 	 */
 	lockUnreachable: () => LocalizedString
@@ -15787,18 +15321,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Online
 	 */
 	lockOnline: () => LocalizedString
-	/**
-	 * {user} · signed in
-	 */
-	lockAccountSignedIn: (arg: { user: unknown }) => LocalizedString
-	/**
-	 * Signed in · {when}
-	 */
-	lockSignedInAgo: (arg: { when: unknown }) => LocalizedString
-	/**
-	 * Last signed in {when}
-	 */
-	lockLastSignIn: (arg: { when: unknown }) => LocalizedString
 	/**
 	 * Switch instance
 	 */
@@ -15836,14 +15358,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	lockDragResize: () => LocalizedString
 	/**
-	 * Forget this account
-	 */
-	lockForgetAccount: () => LocalizedString
-	/**
-	 * Wrong username or password
-	 */
-	lockWrongCredentials: () => LocalizedString
-	/**
 	 * No server answered at that address
 	 */
 	deskUnreachable: () => LocalizedString
@@ -15863,10 +15377,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Account
 	 */
 	settingsAccount: () => LocalizedString
-	/**
-	 * Access
-	 */
-	settingsAccess: () => LocalizedString
 	/**
 	 * This browser
 	 */
@@ -16248,14 +15758,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	processConfirmStopHint: () => LocalizedString
 	/**
-	 * Who may do what on this agent. Signing in over SSH is not limited here.
-	 */
-	settingsAccessDesc: () => LocalizedString
-	/**
-	 * {user} on {server}. Changes apply in every browser signed in.
-	 */
-	settingsAccountDesc: (arg: { server: unknown, user: unknown }) => LocalizedString
-	/**
 	 * Wallpaper and themes are kept on the server for your account; everything else here applies only in this browser.
 	 */
 	settingsAppearanceDesc: () => LocalizedString
@@ -16400,10 +15902,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsPasswordHint: () => LocalizedString
 	/**
-	 * Personal
-	 */
-	settingsPersonal: () => LocalizedString
-	/**
 	 * Power
 	 */
 	settingsPower: () => LocalizedString
@@ -16511,10 +16009,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Time format
 	 */
 	settingsTimeFormat: () => LocalizedString
-	/**
-	 * User
-	 */
-	settingsUser: () => LocalizedString
 	/**
 	 * Windows
 	 */
@@ -16688,7 +16182,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAppApproveBare: (arg: { name: unknown }) => LocalizedString
 	/**
-	 * Remove {name} for every account on this server.
+	 * Remove {name} from this server.
 	 */
 	settingsAppRemoveMessage: (arg: { name: unknown }) => LocalizedString
 	/**
@@ -16704,7 +16198,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsPermStatus: () => LocalizedString
 	/**
-	 * read files in the folders it names, as far as the account using it may
+	 * read the files that the account using it may read
 	 */
 	settingsPermFilesRead: () => LocalizedString
 	/**
@@ -16783,10 +16277,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Good evening
 	 */
 	deskAgentGreetEvening: () => LocalizedString
-	/**
-	 * {greeting}, {name}
-	 */
-	deskAgentGreeting: (arg: { greeting: unknown, name: unknown }) => LocalizedString
 	/**
 	 * What should I do? New tasks wait their turn
 	 */
@@ -17364,7 +16854,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskAgentAlwaysAllow: () => LocalizedString
 	/**
-	 * Adds to this server's allow rules, for every account:
+	 * Adds to this server's allow rules:
 	 */
 	deskAgentAlwaysAllowNote: () => LocalizedString
 	/**
@@ -17490,11 +16980,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	/**
 	 * Add a provider and pick a model in Settings.
 	 */
-	deskAgentNoModelAdmin: () => LocalizedString
-	/**
-	 * Ask an admin to set up a model in Settings.
-	 */
-	deskAgentNoModelUser: () => LocalizedString
+	deskAgentAddModel: () => LocalizedString
 	/**
 	 * Open Settings
 	 */
@@ -17615,10 +17101,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Saved
 	 */
 	settingsAgentSaved: () => LocalizedString
-	/**
-	 * Only an admin can change this.
-	 */
-	settingsAgentAdminOnly: () => LocalizedString
 	/**
 	 * {n} models listed
 	 */
@@ -18168,10 +17650,6 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	stackNotSetUp: () => LocalizedString
 	/**
-	 * An admin can set this app up.
-	 */
-	stackAskAdmin: () => LocalizedString
-	/**
 	 * Setup failed
 	 */
 	stackFailed: () => LocalizedString
@@ -18611,6 +18089,98 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * {project} {version} can be installed (now {current}).
 	 */
 	noticeStackUpdateBody: (arg: { current: unknown, project: unknown, version: unknown }) => LocalizedString
+	/**
+	 * ServerBox Monitor
+	 */
+	selfUpdateTitle: () => LocalizedString
+	/**
+	 * Version
+	 */
+	selfUpdateVersion: () => LocalizedString
+	/**
+	 * Newest release
+	 */
+	selfUpdateLatest: () => LocalizedString
+	/**
+	 * Up to date
+	 */
+	selfUpdateUpToDate: () => LocalizedString
+	/**
+	 * {version} is available
+	 */
+	selfUpdateAvailable: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * Check now
+	 */
+	selfUpdateCheck: () => LocalizedString
+	/**
+	 * Could not read the releases: {error}
+	 */
+	selfUpdateCheckFailed: (arg: { error: unknown }) => LocalizedString
+	/**
+	 * Update now
+	 */
+	selfUpdateRun: () => LocalizedString
+	/**
+	 * The agent runs the installer apart from itself, so its restart does not stop the update. The panel loses the agent for a few seconds meanwhile and follows the update across the restart.
+	 */
+	selfUpdateRunHint: () => LocalizedString
+	/**
+	 * This link cannot act on the machine. Run this there:
+	 */
+	selfUpdateNoTerminal: () => LocalizedString
+	/**
+	 * This agent runs in a container: pull the new image and recreate the container.
+	 */
+	selfUpdateContainer: () => LocalizedString
+	/**
+	 * Installed by the NixOS module: update it through the system configuration and rebuild.
+	 */
+	selfUpdateNix: () => LocalizedString
+	/**
+	 * This agent was not installed by install.sh: update it the way it was installed.
+	 */
+	selfUpdateOther: () => LocalizedString
+	/**
+	 * Updating…
+	 */
+	selfUpdateRunning: () => LocalizedString
+	/**
+	 * The agent is restarting; the panel reconnects in a few seconds…
+	 */
+	selfUpdateRestarting: () => LocalizedString
+	/**
+	 * Updated: the agent runs {version}.
+	 */
+	selfUpdateDone: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * The update failed. Its output is above.
+	 */
+	selfUpdateFailed: () => LocalizedString
+	/**
+	 * The agent has not come back. Check it on the machine.
+	 */
+	selfUpdateNoAnswer: () => LocalizedString
+	/**
+	 * sudo password
+	 */
+	selfUpdateSudoPassword: () => LocalizedString
+	/**
+	 * The installer needs root here (an OpenRC service). The password is used once and not saved.
+	 */
+	selfUpdateSudoHint: () => LocalizedString
+	/**
+	 * sudo did not accept this password.
+	 */
+	selfUpdateSudoRefused: () => LocalizedString
+	/**
+	 * ServerBox Monitor: an update is available
+	 */
+	noticeAgentUpdate: () => LocalizedString
+	/**
+	 * {version} can be installed (now {current}).
+	 */
+	noticeAgentUpdateBody: (arg: { current: unknown, version: unknown }) => LocalizedString
 	/**
 	 * Storage
 	 */

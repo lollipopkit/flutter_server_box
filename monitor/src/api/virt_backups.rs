@@ -28,7 +28,6 @@ use super::machine;
 use super::server::AppState;
 use super::virt::{Backend, PowerResponse, backend, guest_of};
 use super::virt_guests::Audit;
-use crate::core::permissions::Grant;
 
 #[derive(Deserialize)]
 pub struct GuestBody {
@@ -103,7 +102,7 @@ pub async fn backups(
     body: web::types::Json<GuestBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backups").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt backups").await {
         return Ok(refused);
     }
     let request = body.into_inner();
@@ -212,7 +211,7 @@ pub async fn jobs(
     _body: Option<web::types::Json<serde_json::Value>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backup jobs").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt backup jobs").await {
         return Ok(refused);
     }
     let backend = match backend(&state).await {
@@ -260,7 +259,7 @@ pub async fn schedule(
     body: web::types::Json<ScheduleBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Virt, "virt backup schedule").await {
+    if let Err(refused) = machine::gate(&req, &state, "virt backup schedule").await {
         return Ok(refused);
     }
     let r = body.into_inner();

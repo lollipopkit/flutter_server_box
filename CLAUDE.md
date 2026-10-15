@@ -26,7 +26,7 @@ Flutter app for managing servers, in a Rust workspace monorepo. Feature notes li
 - `iOS Linux engine`, `macOS build`, `Windows build` (`analysis.yml`) are manual: `gh workflow run analysis.yml --ref <branch>`, and wait before marking a PR ready. Otherwise say in the PR they were not needed.
   - iOS: `ios/`, `third_party/`, `crates/sbm_ffi/`, `scripts/build-ish-ios.sh`, `scripts/check-ish-linkage.sh`, `packages/{flutter_pty,fl_pi_llm}`, `plain_notification_token`, `watch_connectivity`.
   - macOS / Windows: `macos/`, `windows/`, `hook/`, `crates/`, `Cargo.{toml,lock}`, `packages/{flutter_pty,fl_pi_llm}`.
-  - All three: `pubspec.{yaml,lock}`, `.github/actions/`, `analysis.yml`. Not on its own: `lib/`, `test/`, a pure-Dart submodule bump.
+  - All three: `pubspec.{yaml,lock}`, `.github/actions/`, `analysis.yml`. Not on its own: `lib/`, `test/`, a pure-Dart submodule bump, a `pubspec` change that only names a pure-Dart package already in the lock (the lock's diff is `transitive` → `direct main`, no version or package change).
 - Caches save from main only. A job's own `cargo` uses `Swatinem/rust-cache`; `flutter build`/`test` build `sbm_ffi` through the hook into `.dart_tool/hooks_runner` (env allowlist: no `RUSTC_WRAPPER`/`RUSTUP_TOOLCHAIN`), cached by `.github/actions/build-hook-cache`.
 
 ### Rust / FFI

@@ -8,7 +8,7 @@ Status: phases 1–5 are implemented (see [Phases](#phases)); the rest is the ag
 
 | Kind | Code | Runs in | Reaches |
 |---|---|---|---|
-| `system` | Svelte components in this repo (`desk/apps/<name>/`) | The panel's page | `sys`, `lk`, the agent's HTTP API within the account's grants |
+| `system` | Svelte components in this repo (`desk/apps/<name>/`) | The panel's page | `sys`, `lk`, the agent's HTTP API |
 | `web` | A static bundle (HTML/JS/CSS) installed on the agent | A sandboxed iframe | `sys` only, over a message bridge. No agent API, no network |
 | `wasm` | A `web` bundle plus a WebAssembly module installed on the agent | Frontend: a sandboxed iframe. Backend: the agent's WASM runtime | `sys`, and its own backend through `sys.backend`. The backend reaches the machine only through host functions its permissions allow |
 
@@ -46,7 +46,7 @@ A window is one process of its app: it has its own `sys` handle, state and lifec
 | `background` | Minimised, or the desk is locked, or the browser tab is hidden | Stops drawing (animation frames, charts, polling for display). Keeps sessions it needs | The window's content is not rendered (`display: none`); the component stays mounted |
 | `suspended` | `background` while background running is off | — | Unmounts the content after a grace period (5 s): sockets and timers end. The window remains. When the window comes back, the app is mounted again and restores itself from `appState` |
 
-Background running is on by default: a hidden app keeps its sockets and timers. Settings → Apps → "Run apps in the background" turns it off for the desk (stored per account with the desk's preferences, `background`), and the same page has a switch per app (`background_denied`). A third-party app also needs the `background` permission.
+Background running is on by default: a hidden app keeps its sockets and timers. Settings → Apps → "Run apps in the background" turns it off for the desk (stored with the desk's preferences, `background`), and the same page has a switch per app (`background_denied`). A third-party app also needs the `background` permission.
 
 `sys.lifecycle` gives the state (reactive) and `keepAlive(reason)`: a short assertion (an upload in progress) that holds a `background` app off suspension until released, at most 10 minutes. Control Centre lists apps running in the background and lets the user stop them.
 
@@ -66,7 +66,7 @@ One import for system apps: `import { … } from '../../sys'`. Third-party apps 
 | Dock | `useDockMenu(() => MenuEntry[])` | Rows above the desk's own in the app's dock menu (the newest window's) |
 | Lifecycle | `useLifecycle()`: `state`, `keepAlive(reason)` | See above |
 | Notifications | `useWindow().notify({ title, body, level })` | A banner (unless Do Not Disturb) and a row in the notification centre; clicking it brings the window forward (or opens the app). Kept for the page's life; the agent's own (monitoring rules) are stored |
-| Storage | `useWindow().storage.get/set/remove/keys` | JSON by key, per app, account and server: the agent's `/desk/apps/{app}/storage` (feature `desk`, migration 018), else the browser. 256 KiB per app and 4 MiB per account across apps, keys ≤128 bytes. The agent cannot tell apps apart (the panel names the app), so it is not a boundary between apps of one account; for `web` apps the desk, not the iframe, names the app |
+| Storage | `useWindow().storage.get/set/remove/keys` | JSON by key, per app and server: the agent's `/desk/apps/{app}/storage` (feature `desk`, migration 018), else the browser. 256 KiB per app and 4 MiB across apps, keys ≤128 bytes. The agent cannot tell apps apart (the panel names the app), so it is not a boundary between apps; for `web` apps the desk, not the iframe, names the app |
 | Intents | `open(appId, { intent })`, `useIntents(handler)`, `handlers(path, kind)`, `opens` in the manifest | An intent is `{ action, data }`, delivered once to the window it opened (held until the app's handler is mounted, so none is lost to timing). `open` (`data: { path, kind }`) is the desk's; others are named by the receiving app (`terminal.type`, `lib/snippetIntent`). Files lists the apps whose `opens` match under "Open with" |
 | Clipboard | `clipboard.writeText` | Read is not offered (browsers prompt; an app gets text by paste) |
 | Theme and locale | `theme` (`{ dark, tokens }`), `locale` | Third-party: the desk's design system is put on the page by `connect()` (see UI) |
@@ -83,22 +83,22 @@ An installed app is drawn with the desk's own design system without carrying any
 
 ## Permissions
 
-A third-party manifest lists what it needs. The agent decides on every call: what an app may do is the intersection of its approved permissions and the signed-in account's grants (`docs/dev/monitor-permissions.md`); an app never gets more than the account using it.
+A third-party manifest lists what it needs. The agent decides on every call: what an app may do is bounded by its approved permissions and the transport rule (`docs/dev/monitor-permissions.md`). Within them it reaches what the agent's system account can, except the agent's own state.
 
-| Permission | Allows | Needs grant |
+| Permission | Allows | Transport rule |
 |---|---|---|
 | `notifications` | `notify` | — |
 | `background` | Background running and `keepAlive` | — |
-| `files.read`, `files.write` | The backend's `fs` host functions, inside `fs.roots` | `files` (`read`/`write`) |
-| `exec` | The backend's `exec` host function | `shell` |
-| `net` | The backend's outbound TCP, to the addresses listed in the manifest | `connect` covering them |
+| `files.read`, `files.write` | The backend's `fs` host functions | yes |
+| `exec` | The backend's `exec` host function | yes |
+| `net` | The backend's outbound TCP, to the addresses listed in the manifest | yes |
 | `status` | The backend's read of the status sample | — |
 
-An admin installs an app and approves it in Settings → Apps. An approval names the package (its SHA-256) and asks the admin's password; an upload asks none, so **any new package, whatever its version or permissions, waits for approval again**. Ids of the panel's own apps are refused. Removing an app removes what its users kept in its storage.
+The owner installs an app and approves it in Settings → Apps. An approval names the package (its SHA-256) and asks the agent's password again; an upload asks none, so **any new package, whatever its version or permissions, waits for approval again**. Ids of the panel's own apps are refused. Removing an app removes what it kept in its storage.
 
 ## Packages and installation (`web`, `wasm`)
 
-A package is a `.fsba` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only), `LICENSE`. Admin endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
+A package is a `.fsba` (gzipped tar): `manifest.json`, `ui/` (the bundle, `ui/index.html` the entry), `backend.wasm` (`wasm` only), `LICENSE`. Endpoints: `GET /apps`, `POST /apps` (upload), `PUT /apps/{id}/approval`, `DELETE /apps/{id}`. The agent checks the manifest, the size limits (bundle 20 MiB, backend 20 MiB) and paths (no `..`, no links), stores the package under its data directory and serves `ui/` at `/apps/{id}/ui/*`.
 
 ## The bridge (phase 3)
 
@@ -113,7 +113,7 @@ The desk posts `{ sbm: 1, event: 'connect' }` with a `MessagePort` to the frame'
 | `storage.get/set/remove/keys` | The app's own storage |
 | `open` `{ appId, newWindow, intent }` | The only intent it may hand on is `open` of a path (an app must not make Terminal type) |
 | `handlers` `{ path, kind }`, `keepAlive`/`release` `{ token, reason }` (needs `background`) | |
-| `backend.call` `{ method, params }` | Its backend (`wasm` apps), as the signed-in account |
+| `backend.call` `{ method, params }` | Its backend (`wasm` apps) |
 
 Events: `lifecycle`, `theme`, `locale`, `intent` (`{ action, data, from }`), `action`.
 
@@ -122,11 +122,11 @@ Intents carry `from`, set by the desk: an app acts on one only from the apps it 
 ## The WASM backend (phase 4)
 
 - The agent runs `backend.wasm`, a core WebAssembly module, with wasmi (an interpreter: no JIT, no executable memory; `portable-dispatch`, so a long loop cannot overflow the stack in any build). One fresh instance per call on a thread of its own; what an app keeps between calls goes through `kv`.
-- ABI: the module exports `memory`, `sbm_alloc(len) -> ptr` and `sbm_call(ptr, len) -> (ptr << 32) | len`; the request is `{ method, params, caller: { username, admin } }`, the reply `{ ok }` or `{ error }`. It imports `sbm.host(ptr, len)`, called with `{ fn, args }` and answered the same way. A Rust example: `monitor/examples/desk-app-uptime`.
-- Host functions: `log`; `kv.get/set/remove/keys` (the calling account's app storage); `status` (`status`); `fs.list`, `fs.read` (`files.read` and the caller's `files` grant, inside `fs.roots`, 1 MiB per read); `exec` (`exec` and the caller's `shell` grant, `[remote_access.exec]`'s bounds, audited like `/exec`). Nothing else of the host is linked.
+- ABI: the module exports `memory`, `sbm_alloc(len) -> ptr` and `sbm_call(ptr, len) -> (ptr << 32) | len`; the request is `{ method, params }`, the reply `{ ok }` or `{ error }`. It imports `sbm.host(ptr, len)`, called with `{ fn, args }` and answered the same way. A Rust example: `monitor/examples/desk-app-uptime`.
+- Host functions: `log`; `kv.get/set/remove/keys` (the app's storage); `status` (`status`); `fs.list`, `fs.read` (`files.read` and the transport rule, never the agent's own state, 1 MiB per read); `exec` (`exec` and the transport rule, `[remote_access.exec]`'s bounds, audited like `/exec`). Nothing else of the host is linked.
 - Bounds per call: 2·10⁹ fuel or 10 s, whichever ends first (checked between fuel slices); 64 MiB of memory, one instance; 1000 host calls; 1 MiB request, 4 MiB reply. A bound reached answers `422 { error: "tooLong" | "trap" | … }`.
-- `POST /apps/{id}/call` (`{ method, params }`, any account) runs it as the signed-in account; the frame reaches it with the bridge's `backend.call`. Calls are logged with the account and app.
-- At most 8 calls at once per agent and 2 per account (`429 busy`). A host function is never re-entered (the guest's allocator calling `sbm.host` traps), and the clock is checked before each host call.
+- `POST /apps/{id}/call` (`{ method, params }`) runs it as the agent's system account; the frame reaches it with the bridge's `backend.call`. Calls are logged with the app.
+- At most 8 calls at once (`429 busy`). A host function is never re-entered (the guest's allocator calling `sbm.host` traps), and the clock is checked before each host call.
 - Not yet: `fs.write`, `net`, events pushed from a backend.
 
 ## Phases

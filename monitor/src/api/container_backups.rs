@@ -1,5 +1,5 @@
 //! `/api/v1/container-backups*` — backups of containers' volumes and bound
-//! folders (`container_backups`). Admin; restoring and removing re-ask the
+//! folders (`container_backups`). Restoring and removing re-ask the
 //! password.
 //!
 //! - `GET /container-backups`: every finished backup, newest first.
@@ -46,7 +46,7 @@ fn refused(r: Refusal) -> HttpResponse {
 }
 
 pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let job = state.container_backups.job().map(|j| j.view(u64::MAX));
     Ok(HttpResponse::Ok().json(&json!({
         "backups": state.container_backups.list(),
@@ -77,11 +77,11 @@ pub async fn create(
     body: web::types::Json<CreateBody>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if body.containers.is_empty() || body.containers.len() > 64 {
         return Ok(HttpResponse::BadRequest().json(&json!({ "error": "invalidContainer" })));
     }
-    match container_backups::back_up(&state, &caller.username, &body.containers, body.project, body.stop, None).await {
+    match container_backups::back_up(&state, &body.containers, body.project, body.stop, None).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -98,7 +98,7 @@ pub async fn job(
     query: web::types::Query<JobQuery>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match state.container_backups.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
         None => Ok(HttpResponse::NotFound().json(&json!({ "error": "notFound" }))),
@@ -106,7 +106,7 @@ pub async fn job(
 }
 
 pub async fn cancel(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if let Some(job) = state.container_backups.job() {
         job.cancel();
     }
@@ -124,10 +124,10 @@ pub async fn restore(
     body: Option<web::types::Json<PasswordBody>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
-    match container_backups::restore(&state, &caller.username, &id).await {
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
+    match container_backups::restore(&state, &id).await {
         Ok(job) => Ok(HttpResponse::Accepted().json(&job.view(0))),
         Err(r) => Ok(refused(r)),
     }
@@ -139,13 +139,12 @@ pub async fn remove(
     body: Option<web::types::Json<PasswordBody>>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
-    require!(reauth(&req, &state, &caller, body.current_password.as_deref()).await);
+    require!(reauth(&req, &state, body.current_password.as_deref()).await);
     match state.container_backups.remove(&id) {
         Ok(()) => {
             Event::new(Kind::Machine, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .detail(format!("container backup {id} removed"))
                 .record(&state.db)
                 .await;
@@ -160,11 +159,10 @@ pub async fn put_settings(
     body: web::types::Json<container_backups::Settings>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match container_backups::set_settings(&state, body.into_inner()).await {
         Ok(settings) => {
             Event::new(Kind::Machine, Action::Write, Outcome::Ok)
-                .subject(&caller.username)
                 .detail(format!("container backups go to {}", settings.destination.as_deref().unwrap_or("the default folder")))
                 .record(&state.db)
                 .await;
@@ -179,8 +177,8 @@ pub async fn add_schedule(
     body: web::types::Json<container_backups::NewSchedule>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
-    match container_backups::add_schedule(&state, &caller.username, body.into_inner()).await {
+    require!(authz::acting_caller(&req, &state).await);
+    match container_backups::add_schedule(&state, body.into_inner()).await {
         Ok(schedule) => Ok(HttpResponse::Created().json(&schedule)),
         Err(r) => Ok(refused(r)),
     }
@@ -191,7 +189,7 @@ pub async fn remove_schedule(
     id: web::types::Path<String>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match container_backups::remove_schedule(&state, &id).await {
         Ok(()) => Ok(HttpResponse::NoContent().finish()),
         Err(r) => Ok(refused(r)),

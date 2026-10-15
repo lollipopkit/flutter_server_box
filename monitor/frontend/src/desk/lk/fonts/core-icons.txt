@@ -179,6 +179,7 @@ rule
 save
 scale
 schedule
+script
 search
 search_off
 security
@@ -191,7 +192,6 @@ settings_suggest
 shadow
 shield
 shield_lock
-shield_person
 shift
 side_navigation
 sleep

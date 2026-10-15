@@ -1,5 +1,5 @@
-/// `MonitorHttpClient` against an agent whose `full_access` is off: both of
-/// its refusals — `/exec`, and the ticket for a stream or a terminal — arrive
+/// `MonitorHttpClient` against an agent that refuses this connection
+/// (plaintext HTTP without its `allow_insecure`): both of its refusals — `/exec`, and the ticket for a stream or a terminal — arrive
 /// as [MonitorHttpErrType.notGranted], the one type a caller can tell apart
 /// from a link that failed.
 ///
@@ -27,8 +27,11 @@ void main() {
       await req.drain<void>();
       final (status, body) = switch (req.uri.path) {
         '/api/v1/login' => (200, {'token': 'test-token'}),
-        '/api/v1/exec' => (403, {'error': 'full access not available'}),
-        '/api/v1/ws-ticket' => (403, {'error': 'full access not available'}),
+        '/api/v1/exec' => (403, {
+          'error': 'forbidden',
+          'message': 'insecure_transport',
+        }),
+        '/api/v1/ws-ticket' => (403, {'error': 'stream not available'}),
         _ => (404, {'error': 'not found'}),
       };
       req.response
@@ -40,7 +43,6 @@ void main() {
     client = MonitorHttpClient(
       MonitorHttpCredential(
         addr: 'http://127.0.0.1:${server.port}',
-        user: 'admin',
         pwd: 'pw',
       ),
     );
@@ -59,20 +61,20 @@ void main() {
   );
 
   test('a refused command is notGranted', () async {
-    await expectLater(client.exec('true'), notGranted('full access is off'));
+    await expectLater(client.exec('true'), notGranted('over this connection'));
   });
 
   test('a refused stream ticket is notGranted, with the agent\'s words', () async {
     await expectLater(
       client.openStream(),
-      notGranted('full access not available'),
+      notGranted('stream not available'),
     );
   });
 
   test('so is a refused terminal ticket', () async {
     await expectLater(
       client.openTerminal(),
-      notGranted('full access not available'),
+      notGranted('not available'),
     );
   });
 }

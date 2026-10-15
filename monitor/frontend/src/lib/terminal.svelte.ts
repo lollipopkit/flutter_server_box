@@ -49,7 +49,7 @@ export type Phase =
   | 'closed'
 
 /// How a shell is opened: the one kind there is, a shell as the agent's own
-/// user (the `shell` grant). The agent refuses any other.
+/// user. The agent refuses any other.
 export type Credential = { kind: 'local' }
 
 /// Where a local shell runs, when it is not the agent's own login shell.
@@ -419,8 +419,9 @@ export class TerminalSession {
       this.error = msg.message ?? 'Taken over by another connection'
       return
     }
-    if (msg.code === 'session_gone') {
-      // Nothing left to rejoin. Keep whatever is on screen — it is still the
+    if (msg.code === 'session_gone' || msg.code === 'password_changed') {
+      // Nothing left to rejoin (the password changing ends every session).
+      // Keep whatever is on screen — it is still the
       // last thing the user saw, and may be worth copying out of.
       this.clearStored()
       this.handle = null

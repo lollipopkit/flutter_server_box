@@ -12,9 +12,14 @@ Every released version, newest first. Downloads and per-release notes are on
 
 - **Usage analytics are removed**, along with the Full diagnostics level. An
   install set to Full now uses Basic, which uploads only errors and crashes.
+- **The Monitor agent has one account, signed in with its password alone.** It
+  may do what the system account the agent runs as may do: roles, per-feature
+  permissions, file roots and read-only mode are removed. On upgrade the oldest
+  admin is kept and the other accounts' tasks, memory and desk data move to it.
+  This app no longer asks for a user name, and signs in to older agents only
+  after they are updated.
 - **The web panel's terminal no longer logs in over SSH.** It opens a shell as
-  the account the Monitor agent runs under, for accounts with the `shell`
-  permission. The `ssh_terminal` permission is removed.
+  the account the Monitor agent runs under.
 - Most features below that run in the web panel, and the new notification
   channels, require the next Monitor agent release.
 
@@ -35,9 +40,14 @@ Every released version, newest first. Downloads and per-release notes are on
   attachments and memory. Windows is supported.
 - **Third-party apps for the web panel:** an admin can install `.fsba`
   packages, which run sandboxed with the permissions they were approved for.
-- **Web apps tab:** the apps the Monitor agents deployed, by server, with their
-  health; each opens in the browser through its agent's proxy. A server's page
-  lists its own.
+- **Monitor tab:** the Monitor agents at a glance: each one's version against
+  the newest release and the alert rules firing now; the web apps they deployed
+  (an update first), opened in the browser through the agent's proxy; their
+  notifications; and per server the audit log and the sessions and devices
+  signed in, which can be ended or forgotten. A server's page lists its own web
+  apps.
+- **A device that signed in before is not locked out** by failed sign-ins from
+  elsewhere: the Monitor agent recognises it by a token it handed out.
 - **New notification channels:** SMTP email, Telegram, Discord and ntfy. Bark
   gains subtitle, Markdown, critical alert volume, badge, image, copy, archive
   options and encrypted push (AES-CBC).

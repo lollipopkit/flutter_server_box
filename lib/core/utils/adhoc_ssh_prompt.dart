@@ -117,7 +117,6 @@ class AdHocServerSaveResult {
   const AdHocServerSaveResult({
     required this.name,
     this.monitorAddr,
-    this.monitorUser,
     this.monitorPwd,
   });
 
@@ -125,7 +124,6 @@ class AdHocServerSaveResult {
 
   /// Where this server's `monitor` agent answers, when it has one.
   final String? monitorAddr;
-  final String? monitorUser;
   final String? monitorPwd;
 }
 
@@ -153,7 +151,6 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
 
   final name = TextEditingController(text: suggestedName);
   final addr = TextEditingController(text: suggestedMonitorAddr ?? '');
-  final user = TextEditingController();
   final pwd = TextEditingController();
   String? trimmed(TextEditingController c) {
     final value = c.text.trim();
@@ -163,11 +160,11 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
   return await ctx.showRoundDialog<AdHocServerSaveResult>(
     title: ctx.l10n.agentSaveServerTitle,
     barrierDismiss: false,
-    // All four disposed by the tree rather than after the `await`. The
+    // All three disposed by the tree rather than after the `await`. The
     // name field is autofocused, which is the case that reliably still
     // has an animation running when the route is popped.
     child: DisposeWith(
-      notifiers: [name, addr, user, pwd],
+      notifiers: [name, addr, pwd],
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -194,10 +191,6 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
               ),
             ),
             TextField(
-              controller: user,
-              decoration: InputDecoration(labelText: libL10n.user),
-            ),
-            TextField(
               controller: pwd,
               obscureText: true,
               decoration: InputDecoration(labelText: libL10n.pwd),
@@ -217,7 +210,6 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
             AdHocServerSaveResult(
               name: value,
               monitorAddr: trimmed(addr),
-              monitorUser: trimmed(user),
               monitorPwd: trimmed(pwd),
             ),
           );

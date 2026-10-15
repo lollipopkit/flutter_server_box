@@ -79,3 +79,13 @@ describe('storage notification text', () => {
     })
   })
 })
+
+describe("the agent's own notification", () => {
+  it('says which version can be installed', () => {
+    const n = { ...notice('agent.update', { version: '0.3.0', current: '0.2.0' }), source: 'agent' }
+    expect(noticeText(n, i18nObject('en'), 'en')).toEqual({
+      subject: 'ServerBox Monitor: an update is available',
+      body: '0.3.0 can be installed (now 0.2.0).',
+    })
+  })
+})

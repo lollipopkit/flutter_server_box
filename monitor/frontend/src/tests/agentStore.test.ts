@@ -38,7 +38,7 @@ function flow(id: string, status: Flow['status']): Flow {
   }
 }
 
-const entry = { url: 'https://127.0.0.1:3770', token: 't', id: 's', username: 'u' } as never
+const entry = { url: 'https://127.0.0.1:3770', token: 't', id: 's' } as never
 
 describe('Agent mode state', () => {
   let store: InstanceType<typeof AgentStore>

@@ -27,7 +27,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     final client = MonitorHttpClient(
-      MonitorHttpCredential(addr: 'http://127.0.0.1:9', user: 'a', pwd: 'b'),
+      MonitorHttpCredential(addr: 'http://127.0.0.1:9', pwd: 'b'),
     );
     addTearDown(client.dispose);
 

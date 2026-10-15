@@ -213,7 +213,7 @@ describe('Containers page on the images tab', () => {
   })
 
   it('drops an answer that arrives after the server changed', async () => {
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     let answer: (v: Awaited<ReturnType<typeof api.actContainer>>) => void = () => {}
     actContainer.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)))
@@ -244,7 +244,7 @@ describe('Containers page on the images tab', () => {
 describe('Containers page shell action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     getContainers.mockResolvedValue({ ...view(), containers: [RUNNING] } as unknown as ContainerView)
     actContainer.mockResolvedValue({ ...view(), containers: [RUNNING], exit_code: 0, output: '' } as never)
@@ -253,7 +253,7 @@ describe('Containers page shell action', () => {
   it('is hidden when the agent does not list container_exec', async () => {
     capabilitiesStore.byServer['local'] = {
       features: ['containers'],
-      grants: { shell: { ok: true } },
+      access: { ok: true },
     } as unknown as Capabilities
     render(Containers)
     await fireEvent.click(await screen.findByText('web'))
@@ -263,7 +263,7 @@ describe('Containers page shell action', () => {
   it('is offered for a running container when the agent and the account allow it', async () => {
     capabilitiesStore.byServer['local'] = {
       features: ['containers', 'container_exec'],
-      grants: { shell: { ok: true } },
+      access: { ok: true },
     } as unknown as Capabilities
     render(Containers)
     // A container's actions are the selected one's.

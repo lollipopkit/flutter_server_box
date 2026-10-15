@@ -1,4 +1,4 @@
-//! Files the agent keeps for its accounts — custom wallpapers, theme
+//! Files the agent keeps for its account — custom wallpapers, theme
 //! backgrounds, desk app files, hosted backups — stored beside the database,
 //! not in it: `<database dir>/blobs/<sha256[..2]>/<sha256>`.
 //!

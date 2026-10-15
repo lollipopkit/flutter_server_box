@@ -14,18 +14,15 @@
   interface Props {
     store: AgentStore
     now: Date
-    /// Whom the greeting names.
-    name: string
     onopen: (id: string, from: HTMLElement | null) => void
     onhistory: (from: HTMLElement | null) => void
     /// A started task opens at once, unless it waits its turn.
     onstarted: (flow: Flow) => void
-    /// Not configured: where an admin sets it up.
+    /// Not configured: where it is set up.
     onsettings: () => void
-    admin: boolean
   }
 
-  const { store, now, name, onopen, onhistory, onstarted, onsettings, admin }: Props = $props()
+  const { store, now, onopen, onhistory, onstarted, onsettings }: Props = $props()
 
   const cols = $derived(columns(store.flows))
   const doneGroups = $derived(firstOf(byDay(cols.done, now), 6))
@@ -262,7 +259,7 @@
   </div>
 
   <div class="hero">
-    <div class="hero__greet away away--up">{$LL.deskAgentGreeting({ greeting: greeting($LL, now.getHours()), name })}</div>
+    <div class="hero__greet away away--up">{greeting($LL, now.getHours())}</div>
     <Composer
       bind:this={composer}
       {store}
@@ -270,7 +267,7 @@
       onfocuschange={(f) => (focused = f)}
       {onstarted}
       disabled={!store.configured}
-      placeholder={store.atLimit ? $LL.deskAgentAskQueued() : $LL.deskAgentAskOn({ host: store.hostname || name })}
+      placeholder={store.atLimit ? $LL.deskAgentAskQueued() : $LL.deskAgentAskOn({ host: store.hostname || $LL.thisServer() })}
     />
     <div class="below away" inert={focused}>
     {#if !store.configured && store.loaded}
@@ -278,11 +275,9 @@
         <Icon name="key" size={18} color="var(--color-warning)" />
         <div class="setup__text">
           <span class="setup__title">{$LL.deskAgentNoModel()}</span>
-          <span class="setup__note">{admin ? $LL.deskAgentNoModelAdmin() : $LL.deskAgentNoModelUser()}</span>
+          <span class="setup__note">{$LL.deskAgentAddModel()}</span>
         </div>
-        {#if admin}
-          <Button size="sm" variant="secondary" icon="settings" onclick={onsettings}>{$LL.deskAgentOpenSettings()}</Button>
-        {/if}
+        <Button size="sm" variant="secondary" icon="settings" onclick={onsettings}>{$LL.deskAgentOpenSettings()}</Button>
       </div>
     {/if}
     {#if store.atLimit}

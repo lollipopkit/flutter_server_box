@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Process from '../desk/apps/process/ProcessApp.svelte'
 import { api } from '../lib/api'
-import { enabledFeatures } from '../lib/features'
+import processApp from '../desk/apps/process/manifest'
 import type { Capabilities, ProcessSignalResult, ProcessView } from '../types'
 
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -77,12 +77,11 @@ describe('Process page', () => {
   })
 })
 
-describe('enabledFeatures', () => {
-  it('offers a page the agent serves and the role may use', () => {
-    const caps = (features: string[], shell: boolean) =>
-      ({ features, grants: { shell: { ok: shell } } }) as unknown as Capabilities
-    expect(enabledFeatures(caps(['power', 'process'], true)).map((f) => f.id)).toEqual(['process'])
-    expect(enabledFeatures(caps(['process'], false))).toEqual([])
-    expect(enabledFeatures(caps(['power'], true))).toEqual([])
+describe('the process app', () => {
+  it('is offered where the agent serves it and the account may act over this link', () => {
+    const caps = (features: string[], ok: boolean) => ({ features, access: { ok } }) as unknown as Capabilities
+    expect(processApp.available(caps(['power', 'process'], true))).toBe(true)
+    expect(processApp.available(caps(['process'], false))).toBe(false)
+    expect(processApp.available(caps(['power'], true))).toBe(false)
   })
 })

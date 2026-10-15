@@ -55,17 +55,17 @@ describe('PowerModal', () => {
   })
 
   it('does not read a refusal from the agent that way', async () => {
-    mockedPower.mockRejectedValue(new ApiError('not_granted', 403, 'forbidden'))
+    mockedPower.mockRejectedValue(new ApiError('insecure_transport', 403, 'forbidden'))
     await pickAndRun(/reboot/i)
-    expect(await screen.findByRole('alert')).toHaveTextContent('not_granted')
+    expect(await screen.findByRole('alert')).toHaveTextContent('insecure_transport')
   })
 })
 
 describe('machineAccess', () => {
-  const caps = (features: string[] | undefined, shell: boolean) =>
-    ({ features, grants: { shell: { ok: shell } } }) as unknown as Capabilities
+  const caps = (features: string[] | undefined, ok: boolean) =>
+    ({ features, access: { ok } }) as unknown as Capabilities
 
-  it('needs the agent to serve the page and the role to allow it', () => {
+  it('needs the agent to serve the page and the account to act over this link', () => {
     expect(machineAccess(caps(['power'], true), 'power')).toBe(true)
     expect(machineAccess(caps(['power'], false), 'power')).toBe(false)
     // An agent before the page answers neither `features` nor a page name.

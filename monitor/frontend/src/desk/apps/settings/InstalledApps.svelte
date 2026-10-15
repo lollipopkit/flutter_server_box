@@ -1,7 +1,7 @@
 <script lang="ts">
-  /// Apps an admin installs on this server's agent (`api::apps`): upload a
+  /// Apps installed on this server's agent (`api::apps`): upload a
   /// package, approve what it asks for, remove it. Approving and removing ask
-  /// the admin's password. A change reaches this desk's Apps at once;
+  /// the account's password. A change reaches this desk's Apps at once;
   /// other desks see it when they next start.
 
   import { AppIcon, Badge, Button, Group, Row } from '../../lk'

@@ -20,10 +20,9 @@
     now: Date
     onback: () => void
     onopen: (id: string) => void
-    admin: boolean
   }
 
-  const { store, now, onback, onopen, admin }: Props = $props()
+  const { store, now, onback, onopen }: Props = $props()
 
   const detail = $derived(store.detail)
   const flow = $derived(detail?.flow ?? store.flows.find((f) => f.id === store.openId) ?? null)
@@ -407,7 +406,6 @@
                 }}
                 onbackground={onback}
                 onretry={() => send($LL.deskAgentRetryPrompt())}
-                {admin}
               />
             </section>
           {/each}

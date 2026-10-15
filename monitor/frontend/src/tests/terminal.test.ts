@@ -167,7 +167,7 @@ describe('TerminalSession', () => {
     ticketMock.mockClear()
     installSessionStorage()
     vi.stubGlobal('WebSocket', FakeSocket)
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     renderer = new FakeRenderer()
   })
@@ -625,20 +625,19 @@ describe('TerminalSession', () => {
     expect(socket.sent[0]).not.toHaveProperty('target')
   })
 
-  it('reports a refusal when the agent has full access turned off', async () => {
-    const session = new TerminalSession()
-    await session.start(renderer, { kind: 'local' })
-    const socket = FakeSocket.latest()
-    socket.onopen?.()
+  it('ends for good when the password changes', async () => {
+    const { session, socket } = await connected(renderer)
     socket.control({
       type: 'error',
-      code: 'full_access_disabled',
-      message: 'not allowed',
+      code: 'password_changed',
+      message: 'password changed',
     })
     socket.close()
 
-    expect(session.error).toBe('not allowed')
-    // Nothing to retry: the agent will refuse again
+    expect(session.errorCode).toBe('password_changed')
+    expect(session.phase).toBe('closed')
+    // Nothing to rejoin: the agent ended the session.
+    expect(session.resumable).toBe(false)
     expect(FakeSocket.instances.length).toBe(1)
   })
 

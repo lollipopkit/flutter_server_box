@@ -15,6 +15,12 @@ import type { SnippetStep } from '../types'
 /// Taken by Terminal from the Snippets app only (`Intent.from`).
 export const TYPE_SNIPPET = 'terminal.type'
 
+/// Whether a terminal types for the app that sent the intent: [from] is the
+/// sender's app id, `serverbox.snippets`.
+export function typesFor(from: string | undefined): boolean {
+  return from === 'serverbox.snippets'
+}
+
 export interface QueuedSnippet {
   name: string
   steps: SnippetStep[]

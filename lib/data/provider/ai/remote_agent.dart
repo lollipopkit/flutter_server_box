@@ -74,7 +74,7 @@ abstract final class RemoteAgentTasks {
 
   static bool _offers(ServerState s) {
     final caps = s.agentCapabilities;
-    return caps != null && caps.features.contains('agent_mode') && caps.remoteAccess.fullAccess;
+    return caps != null && caps.features.contains('agent_mode') && caps.access.ok;
   }
 
   /// The client for server [serverId]'s agent, or null when it has none.

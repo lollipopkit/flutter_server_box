@@ -4,7 +4,7 @@
 //! when it is back, and when the catalog has a version newer than the one
 //! deployed (once per version).
 //!
-//! An app an admin stopped is `stopped`, never a notification. A step
+//! An app the operator stopped is `stopped`, never a notification. A step
 //! running (a deploy, a restart) is not judged until it ends.
 
 use std::sync::Arc;
@@ -31,7 +31,7 @@ pub enum State {
     Unhealthy,
     /// A container that should run does not, or none is there.
     Down,
-    /// An admin stopped it.
+    /// The operator stopped it.
     Stopped,
 }
 

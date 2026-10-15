@@ -358,12 +358,10 @@ jobs:
             curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/monitor/install.sh | sh -s -- install
             ```
 
-            As a root-owned system service. An account whose role holds `shell` then gets a root shell:
+            As a root-owned system service. Signing in to the agent is then a root shell:
             ```sh
             curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/monitor/install.sh | sudo sh -s -- install --system
             ```
-
-            Add `--permissions read` to start the first admin read-only.
 
             ## Docker
             ```sh

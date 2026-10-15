@@ -4,7 +4,7 @@
   /// this machine), what its compose files do here, and its licence. Setting
   /// up checks the settings with the agent, then asks for confirmation
   /// (`StackConfirm`: the project, licence, images, folders, port; ticked),
-  /// then the admin's password.
+  /// then the account's password.
   ///
   /// With [current], the settings of a deployed app to change: started from
   /// them, saved with the password alone (what was confirmed stays), and the
@@ -66,7 +66,7 @@
   const coresOk = $derived(prepare?.cores == null || req.cores_min == null ? null : prepare.cores >= req.cores_min)
   const runtimeOk = $derived(prepare?.runtime.available === true)
   const canInstall = $derived(!!prepare && runtimeOk && !checking)
-  /// Data folders whose path the admin changed: their data stays behind.
+  /// Data folders whose path was changed: their data stays behind.
   const movedData = $derived(
     editing
       ? manifest.settings.filter((s) => s.type === 'path' && s.data && current?.[s.key] !== undefined && values[s.key] !== current[s.key])

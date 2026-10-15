@@ -1,4 +1,4 @@
-/// What a refusal from `/stacks*` says in the admin's words: the setting to
+/// What a refusal from `/stacks*` says in the operator's words: the setting to
 /// blame named (a port in use with its number), else what stopped it.
 
 import type { TranslationFunctions } from '../../i18n/i18n-types'

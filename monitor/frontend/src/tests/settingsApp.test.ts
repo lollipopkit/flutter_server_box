@@ -15,8 +15,6 @@ vi.mock('../lib/api', async (importOriginal) => ({
     getSettings: vi.fn(),
     getCustomCmds: vi.fn(),
     getPush: vi.fn(),
-    listUsers: vi.fn(),
-    listRoles: vi.fn(),
     // The host card is optional: unread here.
     getMetrics: () => Promise.reject(new Error('not in this test')),
   },
@@ -47,23 +45,15 @@ const settingsView = (): SettingsView => ({
   },
 })
 
-const caps = (admin: boolean): Capabilities =>
+const caps = (ok: boolean): Capabilities =>
   ({
-    claims: [],
-    features: [],
-    grants: {
-      shell: { ok: true },
-      files: { ok: false },
-      connect: { ok: false },
-      listen: { ok: false },
-      virt: { ok: false },
-    },
-    me: { username: 'admin', role: admin ? 'admin' : 'viewer', admin },
+    features: ['agent_mode'],
+    access: ok ? { ok } : { ok, why: 'insecure_transport' },
   }) as unknown as Capabilities
 
 /// A desk with one Settings window open, so `useWindow()` answers its handle.
 function deskWith(appState: unknown): { desk: Desk; id: string } {
-  const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+  const desk = new Desk({ id: 'local', url: '', token: 't' })
   const id = desk.open('serverbox.settings', { appState })
   if (!id) throw new Error('the settings window did not open')
   return { desk, id }
@@ -73,7 +63,7 @@ const appStateOf = (desk: Desk, id: string): unknown => desk.windows.get(id)?.ap
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   capabilitiesStore.byServer = { local: caps(true) }
   mocked.getSettings.mockResolvedValue(settingsView())
@@ -84,13 +74,11 @@ beforeEach(() => {
     push_types: ['webhook'],
     applies_on_restart: true,
   })
-  mocked.listUsers.mockResolvedValue([])
-  mocked.listRoles.mockResolvedValue([])
 })
 
 describe('settings sections', () => {
   it('knows its own sections and nothing else', () => {
-    expect([...SETTINGS_SECTIONS]).toEqual(['general', 'appearance', 'apps', 'account', 'server', 'agent', 'access'])
+    expect([...SETTINGS_SECTIONS]).toEqual(['general', 'appearance', 'apps', 'account', 'server', 'agent'])
     expect(isSection('server')).toBe(true)
     expect(isSection('Server')).toBe(false)
     expect(isSection(null)).toBe(false)
@@ -131,32 +119,36 @@ describe('settings app', () => {
     expect(await screen.findByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
   })
 
-  it('offers the Access section where this account administers the agent', () => {
-    const { desk, id } = deskWith(null)
+  it('changes the password where the account may act over this link', async () => {
+    const { desk, id } = deskWith({ section: 'account' })
     render(SettingsWindowHarness, { desk, id })
 
-    expect(screen.getByRole('button', { name: /^access$/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^change…$/i })).toBeInTheDocument()
+    expect(screen.queryByText('Role')).toBeNull()
   })
 
-  it('offers no Access section to an account that does not administer', () => {
+  it('says why neither the password nor the agent settings change over a plaintext link', async () => {
     capabilitiesStore.byServer = { local: caps(false) }
-    const { desk, id } = deskWith({ section: 'access' })
+    const { desk, id } = deskWith({ section: 'server' })
     render(SettingsWindowHarness, { desk, id })
 
-    expect(screen.queryByRole('button', { name: /^access$/i })).toBeNull()
+    expect(await screen.findByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
+    expect(mocked.getSettings).not.toHaveBeenCalled()
+
+    desk.windows.setAppState(id, { section: 'account' })
+    expect(await screen.findByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^change…$/i })).toBeNull()
+  })
+
+  it('offers Agent mode only where the account may act over this link', () => {
+    capabilitiesStore.byServer = { local: caps(false) }
+    const { desk, id } = deskWith({ section: 'agent' })
+    render(SettingsWindowHarness, { desk, id })
+
+    expect(screen.queryByRole('button', { name: /^agent$/i })).toBeNull()
     // The section it asked for is not offered, so it falls back rather than
     // showing a panel with nothing in it.
     expect(screen.getByRole('heading', { level: 1, name: /^account$/i })).toBeInTheDocument()
-  })
-
-  it('offers no Access section where the agent does not say who is asking', () => {
-    const { me: _me, ...withoutMe } = caps(true) as unknown as Record<string, unknown>
-    void _me
-    capabilitiesStore.byServer = { local: withoutMe as unknown as Capabilities }
-    const { desk, id } = deskWith(null)
-    render(SettingsWindowHarness, { desk, id })
-
-    expect(screen.queryByRole('button', { name: /^access$/i })).toBeNull()
   })
 })
 

@@ -15,10 +15,9 @@
 //!
 //! # Privilege
 //!
-//! The `connect` grant for both halves (`docs/dev/monitor-permissions.md`):
-//! a route is only worth anything through the relay, which checks the same
-//! grant and its `allow` list again when the socket opens. A route outside the
-//! list can be saved; opening it is refused there.
+//! The transport rule, both ways (`api::machine::gate`): a
+//! route is only worth anything through the relay, which checks the same
+//! rule again when the socket opens.
 
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -32,7 +31,6 @@ use sbm_parser::desktop::{self, ProfileInput};
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 
 /// One route as the panel sends and receives it.
@@ -107,7 +105,7 @@ pub async fn list(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    if let Err(refused) = machine::gate(&req, &state, Grant::Connect, "desktops list").await {
+    if let Err(refused) = machine::gate(&req, &state, "desktops list").await {
         return Ok(refused);
     }
     match load(&state.db).await {
@@ -121,7 +119,7 @@ pub async fn replace(
     body: web::types::Json<ReplaceRequest>,
     state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let gated = match machine::gate(&req, &state, Grant::Connect, "desktops replace").await {
+    let gated = match machine::gate(&req, &state, "desktops replace").await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -139,7 +137,6 @@ pub async fn replace(
     match store(&state.db, &desktops).await {
         Ok(()) => {
             Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-                .subject(&gated.caller.username)
                 .remote_ip(gated.remote_ip)
                 .detail(&what)
                 .record(&state.db)
@@ -148,7 +145,6 @@ pub async fn replace(
         }
         Err(e) => {
             Event::new(Kind::Machine, Action::Close, Outcome::Error)
-                .subject(&gated.caller.username)
                 .remote_ip(gated.remote_ip)
                 .detail(format!("{what}: write failed"))
                 .record(&state.db)

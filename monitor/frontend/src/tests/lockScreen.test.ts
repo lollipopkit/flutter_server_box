@@ -34,7 +34,7 @@ describe('LockScreen', () => {
 
   function addServer(url: string, token: string | null = null) {
     servers.add(url)
-    if (token) servers.setSession(servers.currentId, token, 'admin')
+    if (token) servers.setSession(servers.currentId, token)
     return servers.currentId
   }
 
@@ -42,20 +42,19 @@ describe('LockScreen', () => {
     await fireEvent.input(screen.getByLabelText(label), { target: { value } })
   }
 
-  it('signs in to the chosen server, remembers the account, and unlocks it', async () => {
+  it('signs in to the chosen server with its password alone, and unlocks it', async () => {
     const id = addServer('https://a.example')
     mockedLogin.mockResolvedValue({ token: 'tok' })
     const onunlock = vi.fn()
     render(LockScreen, { onunlock })
 
-    await fill('Username', ' admin ')
+    expect(screen.queryByLabelText('Username')).toBeNull()
     await fill('Password', 'pw')
     await fireEvent.click(screen.getByRole('button', { name: /^Sign in/ }))
 
     await waitFor(() => expect(onunlock).toHaveBeenCalledWith(id))
-    expect(mockedLogin).toHaveBeenCalledWith('https://a.example', { username: 'admin', password: 'pw' })
+    expect(mockedLogin).toHaveBeenCalledWith('https://a.example', { password: 'pw' })
     expect(servers.list.find((s) => s.id === id)?.token).toBe('tok')
-    expect(servers.accountsOf(id).map((a) => a.username)).toEqual(['admin'])
   })
 
   it('says why a sign-in failed and stays locked', async () => {
@@ -64,11 +63,10 @@ describe('LockScreen', () => {
     const onunlock = vi.fn()
     render(LockScreen, { onunlock })
 
-    await fill('Username', 'x')
     await fill('Password', 'y')
     await fireEvent.click(screen.getByRole('button', { name: /^Sign in/ }))
 
-    expect(await screen.findByText('Wrong username or password')).toBeInTheDocument()
+    expect(await screen.findByText('That password is not right.')).toBeInTheDocument()
     expect(onunlock).not.toHaveBeenCalled()
   })
 
@@ -82,23 +80,6 @@ describe('LockScreen', () => {
     expect(mockedLogin).not.toHaveBeenCalled()
   })
 
-  it('a remembered account without a session asks only for its password', async () => {
-    const id = addServer('https://a.example')
-    servers.signIn(id, 'deploy', 'old', true)
-    servers.logout(id)
-    mockedLogin.mockResolvedValue({ token: 'new' })
-    const onunlock = vi.fn()
-    render(LockScreen, { onunlock })
-
-    expect(screen.queryByLabelText('Username')).toBeNull()
-    expect(screen.getByPlaceholderText("deploy's password")).toBeInTheDocument()
-    await fill('Password', 'pw')
-    await fireEvent.click(screen.getByRole('button', { name: /^Sign in/ }))
-
-    await waitFor(() => expect(onunlock).toHaveBeenCalledWith(id))
-    expect(mockedLogin).toHaveBeenCalledWith('https://a.example', { username: 'deploy', password: 'pw' })
-  })
-
   it('connects and signs in to a new server only when it answers', async () => {
     addServer('https://a.example')
     mockedLogin.mockResolvedValue({ token: 'tok' })
@@ -108,7 +89,6 @@ describe('LockScreen', () => {
 
     mockedTest.mockResolvedValue(false)
     await fill('Server URL', 'https://b.example')
-    await fill('Username', 'admin')
     await fill('Password', 'pw')
     await fireEvent.click(screen.getByRole('button', { name: /^Connect and sign in/ }))
     expect(await screen.findByText('No server answered at that address')).toBeInTheDocument()

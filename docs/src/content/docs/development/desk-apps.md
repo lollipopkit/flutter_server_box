@@ -4,8 +4,8 @@ description: Build third-party apps for the Monitor panel's desk with serverbox-
 ---
 
 A desk app is a static web bundle that the Monitor panel runs in a window,
-inside a sandboxed frame. It is packaged as a `.fsba` file, which an
-administrator installs and approves (see [Desk Apps](/docs/advanced/monitor-desk-apps/)).
+inside a sandboxed frame. It is packaged as a `.fsba` file, which the
+agent's owner installs and approves (see [Desk Apps](/docs/advanced/monitor-desk-apps/)).
 The full design, including the message protocol, is
 [`docs/dev/desk-sys.md`](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md).
 
@@ -56,7 +56,7 @@ returned object offers:
 | Window | `setTitle`, `setAppName`, `setIcon`, `setBadge`, `setAppState` (JSON up to 16 KiB that the window comes back with; never secrets), `close` |
 | Chrome | `toolbar({ title, subtitle, actions })`, `menus([...])`; the desk draws them and sends an `action` event when one is used |
 | Notifications | `notify({ title, body, level })`, with the `notifications` permission |
-| Storage | `storage.get/set/remove/keys`: JSON per app and account, kept on the agent (256 KiB per app) |
+| Storage | `storage.get/set/remove/keys`: JSON per app, kept on the agent (256 KiB per app) |
 | Other apps | `open(appId, { path })` opens another app, optionally with a file or folder; `handlers(path, kind)` lists the apps that can open it |
 | Background | `keepAlive(reason)`, with the `background` permission |
 | Backend | `backend(method, params)`, `wasm` apps only |
@@ -69,8 +69,8 @@ the locale and the granted permissions. A refused call throws `DeskError`.
 ## Look like the desk
 
 `connect()` loads the desk's stylesheet into the page, keeps the page in the
-desk's light or dark mode, and applies the tokens of the theme the account
-selected. Build the UI with its classes and tokens instead of your own colors:
+desk's light or dark mode, and applies the tokens of the theme the desk
+uses. Build the UI with its classes and tokens instead of your own colors:
 
 ```html
 <div class="lk-card">
@@ -138,23 +138,24 @@ the template's `npm run pack` does this.
 ## A backend (`wasm`)
 
 The agent runs `backend.wasm` with an interpreter, in a fresh instance for each
-call, as the account that made the call. The module exports `memory`,
+call, as the system account the agent runs as. The module exports `memory`,
 `sbm_alloc(len) -> ptr` and `sbm_call(ptr, len) -> (ptr << 32) | len`. A call
-receives `{ method, params, caller: { username, admin } }` as JSON and answers
+receives `{ method, params }` as JSON and answers
 `{ "ok": … }` or `{ "error": … }`. The module imports `sbm.host(ptr, len)` for
 host functions, called with `{ fn, args }`:
 
 | Function | Needs |
 |---|---|
 | `log` | — |
-| `kv.get`, `kv.set`, `kv.remove`, `kv.keys` | — (the calling account's storage of the app) |
+| `kv.get`, `kv.set`, `kv.remove`, `kv.keys` | — (the app's own storage) |
 | `status` | `status` |
-| `fs.list`, `fs.read` | `files.read` and the caller's `files` grant; 1 MiB per read |
-| `exec` | `exec` and the caller's `shell` grant |
+| `fs.list`, `fs.read` | `files.read`; 1 MiB per read |
+| `exec` | `exec` |
 
 Each call is bounded: 10 seconds, 64 MiB of memory, 1000 host calls, a 1 MiB
-request and a 4 MiB answer. At most 8 calls run at once per agent and 2 per
-account; more are answered `busy`.
+request and a 4 MiB answer. At most 8 calls run at once; more are answered
+`busy`. `fs.*` and `exec` also follow the agent's transport rule: HTTPS or a
+caller on the same host, unless `[remote_access] allow_insecure`.
 
 [`monitor/examples/desk-app-uptime`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/examples/desk-app-uptime)
 is a complete example in Rust:
@@ -170,6 +171,5 @@ is a `web` app without a build step.
 
 ## Test it
 
-Install the package as an administrator in **Settings → Apps → Installed** and
-approve it. Each new package needs approval again, so a test cycle is: pack,
+Install the package in **Settings → Apps → Installed** and approve it. Each new package needs approval again, so a test cycle is: pack,
 install, approve, open. Remove the app to clear what it stored.

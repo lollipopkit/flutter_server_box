@@ -14,7 +14,7 @@ const notice = (source: string): DeskNotification => ({
 
 describe("a web app's notification", () => {
   it("is its own window's when the panel has one, else its App Store page's", () => {
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     expect(desk.noticeSource(notice('stack:futo.immich'))).toMatchObject({ appId: 'serverbox.photos', appState: undefined })
     expect(desk.noticeSource(notice('stack:serverbox.testweb'))).toMatchObject({
       appId: 'serverbox.store',

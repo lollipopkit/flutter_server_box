@@ -68,7 +68,7 @@ export interface Pending {
   user?: string
   /// `wrongPassword` after a refused one.
   error?: string
-  /// The allow rule a command's confirm offers ("always allow"; admin only).
+  /// The allow rule a command's confirm offers ("always allow").
   allowRule?: string
 }
 
@@ -176,12 +176,12 @@ export interface Provider {
   models: { id: string; name?: string }[]
 }
 
-/// What an admin reads; any other account gets the first three.
+/// Agent mode's settings.
 export interface AgentSettings {
   model: ModelRef | null
   thinkingLevel: string
   maxRunning: number
-  /// Each task is also a session file `pi` on the machine lists. Admin only.
+  /// Each task is also a session file `pi` on the machine lists.
   piSessions?: boolean
   providers?: Provider[]
   /// Providers with a credential set.

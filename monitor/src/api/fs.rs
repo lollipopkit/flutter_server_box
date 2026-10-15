@@ -1,24 +1,15 @@
-//! `/api/v1/fs/*` — list, read, write and rearrange files under the roots the
-//! operator named.
+//! `/api/v1/fs/*` — list, read, write and rearrange files as the system
+//! account the agent runs as.
 //!
 //! The app's third file backend. It already browses a server's files over SFTP
-//! whenever it can reach sshd, so this endpoint exists for exactly one case: a
-//! host running the agent with no reachable sshd at all. That is a small set,
-//! and it is why this is off by default and why it is confined.
+//! whenever it can reach sshd, so this endpoint exists for a host running the
+//! agent with no reachable sshd, and for the panel.
 //!
-//! **Confinement is the whole design.** `core::fs_roots` resolves every
-//! request to a canonical path and refuses anything that lands outside the
-//! configured roots. Nothing in this file interprets a path itself; if a
-//! handler here takes a `&str` from a client and hands it to `tokio::fs`
-//! without going through [`FsRoots`], that is the bug.
-//!
-//! Its own grant, `files`, not `shell`: that one means "a shell as the
-//! agent's user", this one means "these directories", and folding them
-//! together would make the narrower thing cost the wider one. Where the roots
-//! *are* the whole filesystem the two are equivalent, which is what the
-//! startup warning says. `files` is read-only or read-write
-//! (`core::permissions::FilesMode`), and which a request needs is decided by
-//! what it does — see [`admit`].
+//! **Every path goes through `core::fs_roots`**, which resolves it to a
+//! canonical path and refuses the agent's own state. Nothing in this file
+//! interprets a path itself; if a handler here takes a `&str` from a client and
+//! hands it to `tokio::fs` without going through [`FsRoots`], that is the bug.
+//! What the account may not read or write, the operating system refuses.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -33,7 +24,6 @@ use super::authz;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::fs_roots::FsDenied;
-use crate::core::permissions::Grant;
 
 /// How much of a file is read per chunk. The same 32 KiB the SFTP path uses,
 /// for the same reason: big enough that the per-chunk overhead disappears,
@@ -112,12 +102,6 @@ pub struct ChmodBody {
     mode: u32,
 }
 
-/// What changes something on disk, and therefore needs `files` with
-/// `mode = "write"`. Everything else — the roots, list, stat, read — is a read.
-fn writes(action: &str) -> bool {
-    matches!(action, "write" | "mkdir" | "remove" | "rename" | "chmod")
-}
-
 /// Authorises the request and reports why not.
 ///
 /// Every handler starts here. Re-checked per request rather than trusted from
@@ -133,21 +117,10 @@ async fn admit(
         Ok(caller) => caller,
         Err(_) => return Err(HttpResponse::Unauthorized().finish()),
     };
-    let checked = caller.check(Grant::Files, state, authz::is_secure(req, state));
-    let read_only = caller
-        .grants()
-        .files
-        .as_ref()
-        .is_some_and(|files| !files.allows_write());
-    let refusal = match checked {
-        Err(why) => Some(why.as_str()),
-        Ok(()) if writes(action) && read_only => Some("read-only"),
-        Ok(()) => None,
-    };
-    if let Some(refusal) = refusal {
+    if let Err(why) = caller.check(state, authz::is_secure(req, state)) {
+        let refusal = why.as_str();
         Event::new(Kind::Fs, Action::Denied, Outcome::Denied)
             .remote_ip(peer_ip(req))
-            .subject(&caller.username)
             .detail(format!("{action}: {refusal}"))
             .record(&state.db)
             .await;
@@ -191,18 +164,8 @@ fn failed(e: std::io::Error) -> HttpResponse {
     }
 }
 
-/// The directories this agent will serve, so a client can offer them instead
-/// of making the user guess.
-///
-/// Not a hole in the confinement. The roots are the operator's decision and
-/// every other handler re-resolves against them per request; this only saves an
-/// already-authenticated caller from discovering them one 403 at a time, which
-/// it can do anyway. What it is *not* allowed to do is report anything about
-/// what lies outside them, which is why `denied` stays uniform.
-///
-/// Worth having because the alternative is worse in practice: a client with no
-/// way to ask starts at `/`, is refused, and has nothing to show for it but the
-/// refusal — see the app's file browser, which now offers these as its way out.
+/// Where a file browser starts: the account's home directory, then the
+/// filesystem's roots (`/`, or each drive on Windows).
 pub async fn roots(
     req: HttpRequest,
     state: web::types::State<Arc<AppState>>,
@@ -210,12 +173,13 @@ pub async fn roots(
     if let Err(res) = admit(&req, &state, "roots", "").await {
         return Ok(res);
     }
-    let roots: Vec<String> = state
-        .remote_access
-        .fs
-        .roots
-        .as_slice()
+    let home = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .and_then(|home| std::fs::canonicalize(home).ok())
+        .filter(|home| !state.remote_access.fs.roots.hides(home));
+    let roots: Vec<String> = home
         .iter()
+        .chain(state.remote_access.fs.roots.as_slice())
         .map(|p| exposed_path(p))
         .collect();
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "roots": roots })))
@@ -410,8 +374,8 @@ pub async fn write(
     // same answer — it was deleted after it was opened, and recreating it here
     // would be the lost update this is meant to prevent.
     //
-    // After root resolution and the grant check, so a caller that may not write
-    // here cannot use the answer to learn a file's state; after the upload, so
+    // After root resolution and the transport rule, so a caller that may not
+    // write here cannot use the answer to learn a file's state; after the upload, so
     // the check is the last thing before the rename. The comparison is against
     // the resolved target, the same file a listing resolves to (a listing uses
     // `symlink_metadata`, so a link is described rather than followed; for the
@@ -498,7 +462,7 @@ pub async fn remove(
     };
     // A link is deleted, never followed: removing what it points at is not
     // what anyone means by deleting a shortcut — and here it would also be a
-    // way to reach outside the roots.
+    // way to reach the agent's own state.
     let result = if meta.is_dir() {
         if body.recursive {
             tokio::fs::remove_dir_all(&path).await
@@ -598,8 +562,8 @@ async fn set_mode(_path: &Path, _mode: u32) -> Result<HttpResponse, web::Error> 
 /// One entry, described the way the app's `FileEntry` is.
 ///
 /// `symlink_metadata` rather than `metadata`: a listing should say "this is a
-/// link", not silently describe whatever it points at — which may be outside
-/// the roots, or may not exist.
+/// link", not silently describe whatever it points at — which may be the
+/// agent's own state, or may not exist.
 async fn view_of(path: &Path) -> EntryView {
     let name = path
         .file_name()
@@ -650,9 +614,9 @@ async fn view_of(path: &Path) -> EntryView {
         link_target,
         // A link's own time and size are not what a write compares (it
         // resolves the path and checks the file it lands on), so a token for
-        // the link could never match; and following it here could describe a
-        // file outside the roots. A client editing through a link asks
-        // `/fs/stat`, which resolves inside the roots first.
+        // the link could never match; and following it here could describe
+        // the agent's own state. A client editing through a link asks
+        // `/fs/stat`, which resolves and checks the path first.
         version: if meta.is_symlink() { None } else { version_of(&meta) },
     }
 }

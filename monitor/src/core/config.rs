@@ -19,7 +19,7 @@ pub struct Config {
     pub jwt_secret: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<Vec<PushConfig>>,
-    /// The machine side of remote access: sshd, file roots, limits.
+    /// The machine side of remote access: sshd, the transport rule, limits.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
     #[serde(skip_serializing_if = "Option::is_none")]

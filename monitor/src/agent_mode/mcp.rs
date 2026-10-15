@@ -1,4 +1,4 @@
-//! MCP servers an admin added for Agent mode (migration 031): each task gets
+//! MCP servers the operator added for Agent mode (migration 031): each task gets
 //! their tools beside its own, through the same permissions as a command.
 //!
 //! A server is an address (Streamable HTTP) and the headers sent with every
@@ -340,18 +340,18 @@ impl Gated {
         let picked = flow.view.lock().unwrap().mode;
         let ask = match perms.mode_for(picked) {
             Mode::Bypass => {
-                super::tools::record(state, &flow.username, &format!("bypass: {}", first_line(&shown, 200)), Outcome::Ok).await;
+                super::tools::record(state, &format!("bypass: {}", first_line(&shown, 200)), Outcome::Ok).await;
                 false
             }
             Mode::Manual => true,
             Mode::Auto => {
                 match super::tools::judge(state, flow, &shown, &self.handle.label(), "change", false, &perms.auto_mode).await {
                     Some(Judgment::Allow) => {
-                        super::tools::record(state, &flow.username, &format!("auto: allowed {}", first_line(&shown, 200)), Outcome::Ok).await;
+                        super::tools::record(state, &format!("auto: allowed {}", first_line(&shown, 200)), Outcome::Ok).await;
                         false
                     }
                     Some(Judgment::Block { rule, reason }) => {
-                        super::tools::record(state, &flow.username, &format!("auto: blocked [{rule}] {}", first_line(&shown, 200)), Outcome::Denied)
+                        super::tools::record(state, &format!("auto: blocked [{rule}] {}", first_line(&shown, 200)), Outcome::Denied)
                             .await;
                         return Err(format!(
                             "Blocked by auto mode: {reason} Nothing was called. Do not try to reach the same end another way; \
@@ -390,7 +390,7 @@ impl Tool for Gated {
             hub.persist(&self.flow).await;
             let r = match self.allowed(&call).await {
                 Ok(true) => {
-                    // Asked and answered: the grant is checked again, now.
+                    // Asked and answered: the account and the transport rule are checked again, now.
                     super::tools::may_run(&self.state, &self.flow).await?;
                     let r = self.handle.execute(call.clone(), cancel).await;
                     if r.is_err() {

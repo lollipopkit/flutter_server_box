@@ -9,8 +9,7 @@
 /// (and the rest of the storage tests) on a fresh Proxmox VE VM with spare
 /// disks, made and destroyed for the run.
 ///
-///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_USER=admin \
-///     SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
+///     SBM_E2E_PANEL_URL=http://127.0.0.1:3770 SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
 ///     SBM_E2E_STORAGE_DISKS=/dev/sdb,/dev/sdc,/dev/sdd,/dev/sde \
 ///     npx playwright test storage
 ///
@@ -19,7 +18,8 @@
 /// can read.
 
 import { expect, test, type Page } from '@playwright/test'
-import { fillSecret, submitForm } from './secret'
+import { fillSecret } from './secret'
+import { signIn } from './signin'
 
 const env = process.env
 const disks = (env.SBM_E2E_STORAGE_DISKS ?? '').split(',').map((d) => d.trim()).filter(Boolean)
@@ -40,11 +40,7 @@ class Storage {
 
   async open() {
     const { page } = this
-    await page.goto('/')
-    await page.getByPlaceholder('Username').fill(env.SBM_E2E_PANEL_USER ?? 'admin')
-    const login = page.locator('input[type=password]')
-    await fillSecret(login, env.SBM_E2E_PANEL_PASSWORD!)
-    await submitForm(login)
+    await signIn(page)
     await page.locator('.lk-dock button[aria-label="All Apps"]').click()
     await page.getByText('Storage', { exact: true }).first().click()
     await expect(page.getByText(disks[0], { exact: true }).first()).toBeVisible({ timeout: 30_000 })

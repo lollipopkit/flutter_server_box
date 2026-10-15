@@ -264,10 +264,10 @@
 
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   /// A shell inside a container: the agent must understand the terminal
-  /// `target` (`container_exec`) and the account must hold `shell`. An older
-  /// agent ignores the target and would open a host shell instead.
-  const canExec = $derived(machineAccess(caps, 'container_exec', 'shell'))
-  const canBackUp = $derived(caps?.features?.includes('container_backups') === true && caps?.me?.admin === true)
+  /// `target` (`container_exec`). An older agent ignores the target and would
+  /// open a host shell instead.
+  const canExec = $derived(machineAccess(caps, 'container_exec'))
+  const canBackUp = $derived(machineAccess(caps, 'container_backups'))
 
   /// How each action is drawn. A `Record` over every kind, so a kind added to
   /// the model without a button here is a type error rather than a container

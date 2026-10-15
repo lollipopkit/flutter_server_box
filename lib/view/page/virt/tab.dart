@@ -20,6 +20,7 @@ import 'package:server_box/view/page/virt/host_error.dart';
 import 'package:server_box/view/page/virt/resources.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
+import 'package:server_box/view/widget/swap_switcher.dart';
 
 part 'hosts.dart';
 part 'list.dart';

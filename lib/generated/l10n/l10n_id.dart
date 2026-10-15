@@ -2090,20 +2090,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func memerlukan $setting diaktifkan di Monitor agent.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func memerlukan Monitor agent yang lebih baru.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Penerusan jarak jauh melalui Monitor agent memerlukan versi yang lebih baru: perbarui di server.';
-
-  @override
   String get rangeLive => 'Langsung';
 
   @override
@@ -2765,7 +2751,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.';
+      'Agen ini menolak semua hal selain pemantauan melalui HTTP tanpa enkripsi. Hubungkan melalui HTTPS, atau izinkan HTTP di agen ([remote_access] allow_insecure) dan di aplikasi ini.';
 
   @override
   String get alerts => 'Peringatan';
@@ -5047,35 +5033,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get copyLink => 'Salin tautan';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Akun Anda di Monitor agent ini tidak punya izin untuk $func. Minta kepada admin agent.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func memerlukan HTTPS ke Monitor agent ini, atau HTTP diizinkan di agent dan aplikasi ini.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func belum disiapkan di Monitor agent ini; operatornya harus mengonfigurasinya.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Hanya baca: akun ini dapat menelusuri file di agent tetapi tidak dapat mengubahnya.';
-
-  @override
   String get monitorAccess => 'Akses';
-
-  @override
-  String get monitorAccounts => 'Akun';
-
-  @override
-  String get monitorRoles => 'Peran';
-
-  @override
-  String get monitorRole => 'Peran';
 
   @override
   String get monitorChangePassword => 'Ubah kata sandi';
@@ -5087,10 +5050,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorCurrentPassword => 'Kata sandi Anda saat ini';
 
   @override
-  String get monitorReauthTip =>
-      'Mengubah akses memerlukan kata sandi Anda lagi.';
-
-  @override
   String get monitorPasswordTooShort => 'Minimal 8 karakter';
 
   @override
@@ -5098,77 +5057,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorErrReauth => 'Kata sandi Anda salah.';
-
-  @override
-  String get monitorErrLastAdmin =>
-      'Agent memerlukan setidaknya satu akun admin.';
-
-  @override
-  String get monitorErrConflict => 'Sudah ada, atau masih digunakan.';
-
-  @override
-  String get monitorErrForbidden => 'Hanya admin yang dapat melakukan ini.';
-
-  @override
-  String get monitorRoleNameRule =>
-      'Huruf kecil, angka, - dan _, maksimal 32 karakter';
-
-  @override
-  String get monitorGrantShell => 'Shell dan perintah';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Terminal, proses, layanan, kontainer, snippet, daya — sebagai akun agent';
-
-  @override
-  String get monitorGrantVirt => 'Virtualisasi';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt, dan BMC yang dijangkau agen, di panel web-nya';
-
-  @override
-  String get monitorGrantFiles => 'File';
-
-  @override
-  String get monitorGrantConnect => 'Koneksi keluar';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Penerusan port lokal dan dinamis, desktop jarak jauh';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'Tujuan yang diizinkan (IP atau CIDR, opsional :port atau :dari-sampai; satu per baris, kosong = di mana saja)';
-
-  @override
-  String get monitorGrantListen => 'Mendengarkan di server';
-
-  @override
-  String get monitorGrantListenTip => 'Penerusan port jarak jauh';
-
-  @override
-  String get monitorGrantListenPublic => 'Alamat non-loopback';
-
-  @override
-  String get monitorGrantPorts => 'Rentang port (kosong = apa saja)';
-
-  @override
-  String get monitorGrantOff => 'Mati';
-
-  @override
-  String get monitorBuiltin => 'Bawaan';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Mengelola akun, peran, dan pengaturan agent';
-
-  @override
-  String get monitorYou => 'Anda';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Hanya admin yang dapat mengubah pengaturan agent ini.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5405,10 +5293,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       'Agen monitor ini tidak dapat menyimpan cadangan. Perbarui agen.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Hanya akun admin agen monitor yang dapat menyimpan cadangan di dalamnya.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5901,9 +5785,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get storagePools => 'Pool ZFS';
 
   @override
-  String get storageWholeDisk => 'Seluruh disk';
-
-  @override
   String get storageNoFilesystem => 'Tidak ada sistem berkas';
 
   @override
@@ -5989,9 +5870,6 @@ class AppLocalizationsId extends AppLocalizations {
   String storagePickDevices(Object count) {
     return 'Pilih sedikitnya $count perangkat. Isinya akan hilang.';
   }
-
-  @override
-  String get storageNoFreeDevices => 'Tidak ada disk atau partisi yang kosong.';
 
   @override
   String get storageCreateRaid => 'Buat array RAID';
@@ -6131,25 +6009,12 @@ class AppLocalizationsId extends AppLocalizations {
       'The confirmation text did not match.';
 
   @override
-  String get storageSudoPassword =>
-      'Kata sandi sudo (jika diperlukan oleh akun agent)';
-
-  @override
   String storageInUse(Object device) {
     return '$device sedang digunakan.';
   }
 
   @override
   String get storageBusy => 'Perubahan disk lain sedang berjalan.';
-
-  @override
-  String get storageWorking => 'Mengubah disk…';
-
-  @override
-  String get storageDone => 'Selesai';
-
-  @override
-  String get storageFailed => 'Tidak selesai';
 
   @override
   String get storageHealthRead => 'Baca kesehatan disk';
@@ -6185,15 +6050,6 @@ class AppLocalizationsId extends AppLocalizations {
   String storageTesting(Object percent) {
     return 'Uji mandiri: tersisa $percent%';
   }
-
-  @override
-  String get storageLastTestPassed => 'Uji mandiri terakhir lulus';
-
-  @override
-  String get storageLastTestFailed => 'Uji mandiri terakhir gagal';
-
-  @override
-  String get storageLastTestAborted => 'Uji mandiri terakhir dihentikan';
 
   @override
   String get storageGrowPartition => 'Perbesar partisi';
@@ -6437,9 +6293,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Memasang server NFS dengan pengelola paket mesin.';
 
   @override
-  String get sharingInstalling => 'Sedang memasang…';
-
-  @override
   String get sharingAddShare => 'Tambah berbagi';
 
   @override
@@ -6518,15 +6371,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Samba menyimpan kata sandinya sendiri: tetapkan satu kata sandi untuk setiap akun yang terhubung.';
 
   @override
-  String get sharingAccount => 'Akun';
-
-  @override
   String get sharingSetPassword => 'Tetapkan kata sandi';
-
-  @override
-  String sharingSetPasswordBody(Object user) {
-    return 'Menetapkan kata sandi SMB untuk $user.';
-  }
 
   @override
   String get sharingNewPassword => 'Kata sandi SMB baru';
@@ -6546,9 +6391,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sharingAddClient => 'Tambah klien';
-
-  @override
-  String get sharingSquash => 'root di klien';
 
   @override
   String get sharingSquashRoot => 'root menjadi nobody';
@@ -6731,4 +6573,405 @@ class AppLocalizationsId extends AppLocalizations {
   String webAppUpdate(String version) {
     return 'Versi $version tersedia. Perbarui dari panel Monitor.';
   }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app sedang tidak berjalan';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'Tidak berjalan: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'Tidak ada kontainer yang berjalan.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app bermasalah';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Pemeriksaan kesehatan gagal: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app berjalan kembali';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Semua kontainer berjalan.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return 'Pembaruan untuk $app tersedia';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version dapat dipasang (saat ini: $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array mengalami penurunan';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'Satu anggota gagal atau hilang; array berjalan tanpa redundansi.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array kembali sehat';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Semua anggota berfungsi.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return 'Pool $pool $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Buka Storage untuk melihat perangkat yang bermasalah.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return 'Pool $pool kembali online';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Semua perangkat berfungsi.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device mengalami kerusakan';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'Pemeriksaan SMART atau uji mandirinya gagal: salin isinya ke tempat lain dan ganti disk tersebut.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device memiliki $count sektor rusak';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'Sebelumnya ada $was. Disk yang kehilangan sektor sering segera mengalami kerusakan.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Pemeliharaan storage tidak berjalan: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Periksa pool dan array';
+
+  @override
+  String get storageTaskSmartShort => 'Uji SMART singkat';
+
+  @override
+  String get storageTaskSmartLong => 'Uji SMART panjang';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo meminta kata sandi: jalankan agent sebagai root atau izinkan perintah di atas.';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'Ringkasan';
+
+  @override
+  String get monitorNotices => 'Notifikasi';
+
+  @override
+  String get monitorAudit => 'Log audit';
+
+  @override
+  String get monitorLive => 'Sesi & perangkat';
+
+  @override
+  String get monitorNoAgents =>
+      'Belum ada server yang terhubung melalui agen Monitor.';
+
+  @override
+  String get monitorNotOffered =>
+      'Versi agen ini tidak menyediakannya. Perbarui agen.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'Versi agen ini tidak melaporkan peringatan.';
+
+  @override
+  String get monitorAlertsNone => 'Tidak ada aturan yang terpicu.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return 'aktif selama $duration';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agen $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version tersedia';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count belum dibaca';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Aplikasi bermasalah: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'Pembaruan aplikasi: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Hanya pembaruan';
+
+  @override
+  String get monitorNoUpdates => 'Tidak ada aplikasi yang punya pembaruan.';
+
+  @override
+  String get monitorNoticesEmpty => 'Tidak ada notifikasi.';
+
+  @override
+  String get monitorMarkAllRead => 'Tandai semua sudah dibaca';
+
+  @override
+  String get monitorAuditExec => 'Perintah';
+
+  @override
+  String get monitorAuditMachine => 'Manajemen mesin';
+
+  @override
+  String get monitorAuditListen => 'Port yang didengarkan';
+
+  @override
+  String get monitorAuditTicket => 'Tiket koneksi';
+
+  @override
+  String get monitorAuditPush => 'Saluran notifikasi';
+
+  @override
+  String get monitorAuditAdmin => 'Akun';
+
+  @override
+  String get monitorAuditDenied => 'Ditolak';
+
+  @override
+  String get monitorLoadMore => 'Muat lebih banyak';
+
+  @override
+  String get monitorLiveSessions => 'Sesi terminal';
+
+  @override
+  String get monitorLiveConnections => 'Koneksi';
+
+  @override
+  String get monitorLiveWatchTokens => 'Token jam tangan dan widget';
+
+  @override
+  String get monitorLiveDevices => 'Perangkat yang masuk';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Melupakan perangkat membuat proses masuk berikutnya dihitung dalam batas percobaan gagal seluruh akun. Ini tidak mengeluarkan perangkat: perangkat yang punya kata sandi akan masuk lagi. Ubah kata sandi untuk menolak sebuah perangkat.';
+
+  @override
+  String get monitorLiveAttached => 'Terhubung';
+
+  @override
+  String get monitorLiveDetached => 'Terputus';
+
+  @override
+  String get monitorLiveEnd => 'Akhiri';
+
+  @override
+  String get monitorLiveRevoke => 'Cabut';
+
+  @override
+  String get monitorLiveForget => 'Lupakan';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return 'Akhiri sesi terminal \"$name\"? Yang berjalan di dalamnya akan berhenti.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return 'Akhiri koneksi ke $name?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return 'Cabut token $name? Pembaruan berhenti sampai disiapkan lagi.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return 'Lupakan $name?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Kedaluwarsa $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Koneksi yang diteruskan';
+
+  @override
+  String get monitorLiveAccepted => 'Koneksi yang diteruskan masuk';
+
+  @override
+  String get monitorLiveConsole => 'Konsol';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count agen';
+  }
+
+  @override
+  String get monitorStatOnline => 'Daring';
+
+  @override
+  String get monitorStatFiring => 'Peringatan aktif';
+
+  @override
+  String get monitorStatUnread => 'Belum dibaca';
+
+  @override
+  String get monitorStatUpdates => 'Pembaruan aplikasi';
+
+  @override
+  String get monitorAuditEmpty => 'Tidak ada catatan yang cocok.';
+
+  @override
+  String get monitorLiveNoSessions => 'Tidak ada sesi terminal yang terbuka.';
+
+  @override
+  String get monitorLiveNoConnections => 'Tidak ada yang diteruskan.';
+
+  @override
+  String get monitorLiveNoTokens =>
+      'Tidak ada jam tangan atau widget yang dipasangkan.';
+
+  @override
+  String get monitorLiveNoDevices => 'Belum ada perangkat yang masuk.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Agen ini lebih lama dari aplikasi dan meminta nama pengguna. Perbarui agen.';
+
+  @override
+  String get monitorUpdateAgent => 'Perbarui agen';
+
+  @override
+  String get monitorAgentTooOldTip =>
+      'Langkah memperbaruinya ada di tab Monitor.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'Agen ini dari sebelum hanya memakai satu kata sandi, dan aplikasi tidak bisa masuk. Setelah diperbarui, kata sandinya adalah milik akun admin tertuanya.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest telah rilis; agen ini menjalankan $running.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Jalankan di server, dengan akun yang dipakai memasang agen:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'Terminal menjalankannya. Jika agen dipasang untuk seluruh sistem dan terminal lewat SSH, sudo akan meminta kata sandinya di sana.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'Aplikasi tidak dapat membuka terminal di server ini: jalankan sendiri di sana.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'Di Docker? Tarik image baru lalu buat ulang kontainernya.';
+
+  @override
+  String get monitorUpdateAfter =>
+      'Setelah dimulai ulang, segarkan tab Monitor.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Jalankan di terminal';
+
+  @override
+  String get monitorHowToUpdate => 'Cara memperbarui';
+
+  @override
+  String get monitorUpdateNix =>
+      'Dipasang lewat modul NixOS: perbarui melalui konfigurasi sistem lalu rebuild.';
+
+  @override
+  String get noticeAgentUpdate => 'Ada pembaruan untuk agen';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Nama akun';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'Agen ini masih masuk dengan nama akun dan kata sandi: nama yang dulu dipakai aplikasi ini (biasanya admin) dan kata sandi tersimpan.';
+
+  @override
+  String get monitorUpdateNow => 'Perbarui sekarang';
+
+  @override
+  String get monitorUpdating => 'Memperbarui…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'Agen sedang dimulai ulang; koneksi kembali dalam beberapa detik…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Diperbarui: agen menjalankan $version.';
+  }
+
+  @override
+  String get monitorUpdateFailed => 'Pembaruan gagal. Keluarannya ada di atas.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'Agen menjalankan penginstal terpisah dari dirinya, jadi mulai ulang tidak menghentikan pembaruan. Selama itu koneksi terputus beberapa detik; jendela ini mengikuti pembaruan melewati mulai ulang.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'Kata sandi sudo';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'Di sini penginstal perlu root (layanan OpenRC). Kata sandi dipakai sekali dan tidak disimpan.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo tidak menerima kata sandi ini.';
+
+  @override
+  String get monitorUpdateNoAnswer => 'Agen tidak kembali. Periksa di server.';
 }

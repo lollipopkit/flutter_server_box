@@ -72,7 +72,7 @@ export function rdpFailureText(error: unknown): RdpFailure {
       // with, and an alert code is the TLS handshake with that server failing —
       // both are "the agent did not get through", and the chain above says
       // which. Anything else is the agent refusing the *request*: a bad ticket,
-      // the grant turned off, a destination it will not parse.
+      // a plaintext link, a destination it will not parse.
       if (details?.httpStatusCode === 502 || details?.tlsAlertCode !== undefined) {
         return { message: ll.desktopRdpUnreachable(), detail }
       }

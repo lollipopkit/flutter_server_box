@@ -9,7 +9,6 @@ import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_agent.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/agent/remote_composer.dart';
 
 /// A task of a server's monitor agent, opened in the Agent's pane: its
@@ -159,9 +158,6 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
     });
   }
 
-  bool get _admin =>
-      AgentScope.container.read(serverProvider(_task.serverId)).agentCapabilities?.me?.admin == true;
-
   String get _server => RemoteAgentTasks.servers().firstWhereOrNull((s) => s.id == _task.serverId)?.name ?? '';
 
   // -------------------------------------------------------------------- build
@@ -222,7 +218,7 @@ class _RemoteTaskViewState extends State<RemoteTaskView> {
       if (streaming != null && !lastIsReply) StreamingView(reply: streaming),
       if (_output.isNotEmpty) _Output(lines: _output),
       if (_pending case final p?)
-        _PendingCard(key: ValueKey(p.id), pending: p, admin: _admin, onAnswer: _answer),
+        _PendingCard(key: ValueKey(p.id), pending: p, onAnswer: _answer),
       if (flow?.status == MonitorAgentStatus.failed && flow!.line.isNotEmpty)
         Text(flow.line, style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ];
@@ -333,10 +329,9 @@ class _Output extends StatelessWidget {
 /// What the task waits on, and the answers it takes (`answer` bodies of
 /// `/agent/flows/{id}/answer`).
 class _PendingCard extends StatefulWidget {
-  const _PendingCard({super.key, required this.pending, required this.admin, required this.onAnswer});
+  const _PendingCard({super.key, required this.pending, required this.onAnswer});
 
   final MonitorAgentPending pending;
-  final bool admin;
   final Future<void> Function(Map<String, Object?> answer) onAnswer;
 
   @override
@@ -384,7 +379,7 @@ class _PendingCardState extends State<_PendingCard> {
             runSpacing: 7,
             children: [
               FilledButton(onPressed: _busy ? null : () => _go({'action': 'run'}), child: Text(libL10n.run)),
-              if (widget.admin && p.allowRule != null)
+              if (p.allowRule != null)
                 OutlinedButton(
                   onPressed: _busy ? null : () => _go({'action': 'always'}),
                   child: Text(context.l10n.agentRemoteAlways(p.allowRule!)),

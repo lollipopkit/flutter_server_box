@@ -124,7 +124,7 @@ const _kFuncBarInset = kFuncBarInset;
 ({List<ServerFuncEntry> entries, bool any}) serverDetailFuncBtns(
   ServerState si,
 ) {
-  final entries = serverFuncBtnsFor(si.spi, si.remoteAccess);
+  final entries = serverFuncBtnsFor(si.spi, si.agentAccess);
   if (!serverDetailHasContent(si)) {
     return (
       entries: [for (final e in entries) (btn: e.btn, available: false, reason: null)],
@@ -353,11 +353,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     // What this connection can actually serve, asked once and used twice: to
     // decide whether the row is drawn at all, and then as the row's content.
     //
-    // Asked of the entries rather than of one capability. `capabilities
-    // .terminal` was the gate, and it hid the whole row on a monitor server
-    // whose agent grants `[remote_access.fs]` but not `full_access` — that
-    // server has a Files button and nothing else, and it went missing from its
-    // own page while the Files tab went on listing it.
+    // Asked of the entries rather than of one capability, so the row and the
+    // Files tab answer the same question.
     // Whether any of them can be used. An entry this connection cannot serve
     // is still on the row, dimmed and last; a row of nothing but those is not
     // a row, and what belongs in its place is the explanation below.

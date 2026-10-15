@@ -188,7 +188,7 @@ describe('intents', () => {
   it('waits for the window that opens with one, and is taken once', async () => {
     const { Desk } = await import('../desk/deskState.svelte')
     const off = registerApp({ publisher: 'acme', name: 'viewer', title: 'Viewer', glyph: 'note', tone: 'amber', instances: 1, load })
-    const desk = new Desk({ id: 'local', url: '', token: 't', username: 'admin' })
+    const desk = new Desk({ id: 'local', url: '', token: 't' })
     const id = desk.open('acme.viewer', { intent: { action: 'open', data: { path: '/a', kind: 'dir' } } })!
     expect(desk.takeIntents(id)).toEqual([{ action: 'open', data: { path: '/a', kind: 'dir' } }])
     expect(desk.takeIntents(id)).toEqual([])

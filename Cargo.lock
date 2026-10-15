@@ -4516,6 +4516,7 @@ dependencies = [
  "dotenvy",
  "regex",
  "roxmltree",
+ "semver",
  "serde",
  "serde_json",
  "tempfile",

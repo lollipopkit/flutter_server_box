@@ -1,5 +1,5 @@
 //! `/api/v1/shares*` — the machine's SMB and NFS shares (`sbm_parser::shares`).
-//! Linux; admin.
+//! Linux.
 //!
 //! - `GET /shares`: what is installed and running, every SMB share and NFS
 //!   export (`managed`: ServerBox's, in its own files), the install job.
@@ -87,7 +87,7 @@ fn answer(shares: sh::Shares, job: Option<serde_json::Value>) -> HttpResponse {
 }
 
 pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -119,8 +119,8 @@ async fn as_root(state: &AppState, script: &str, password: Option<&str>, private
     }
 }
 
-fn record(req: &HttpRequest, state: &AppState, username: &str, detail: String) -> impl std::future::Future<Output = ()> {
-    let event = Event::new(Kind::Machine, Action::Write, Outcome::Ok).subject(username).remote_ip(peer_ip(req)).detail(detail);
+fn record(req: &HttpRequest, state: &AppState, detail: String) -> impl std::future::Future<Output = ()> {
+    let event = Event::new(Kind::Machine, Action::Write, Outcome::Ok).remote_ip(peer_ip(req)).detail(detail);
     let db = state.db.clone();
     async move { event.record(&db).await }
 }
@@ -133,7 +133,7 @@ pub struct SmbBody {
 }
 
 pub async fn set_smb(req: HttpRequest, body: web::types::Json<SmbBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -144,7 +144,7 @@ pub async fn set_smb(req: HttpRequest, body: web::types::Json<SmbBody>, state: w
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), false).await);
     let names: Vec<&str> = shares.iter().map(|s| s.name.as_str()).collect();
-    record(&req, &state, &caller.username, format!("shares smb {}", names.join(","))).await;
+    record(&req, &state, format!("shares smb {}", names.join(","))).await;
     let Some(now) = read(&state).await else { return Ok(refused(502, "unreadable")) };
     Ok(answer(now, None))
 }
@@ -157,7 +157,7 @@ pub struct NfsBody {
 }
 
 pub async fn set_nfs(req: HttpRequest, body: web::types::Json<NfsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -168,7 +168,7 @@ pub async fn set_nfs(req: HttpRequest, body: web::types::Json<NfsBody>, state: w
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), false).await);
     let paths: Vec<&str> = exports.iter().map(|e| e.path.as_str()).collect();
-    record(&req, &state, &caller.username, format!("shares nfs {}", paths.join(","))).await;
+    record(&req, &state, format!("shares nfs {}", paths.join(","))).await;
     let Some(now) = read(&state).await else { return Ok(refused(502, "unreadable")) };
     Ok(answer(now, None))
 }
@@ -182,7 +182,7 @@ pub struct PasswordBody {
 }
 
 pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -192,7 +192,7 @@ pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>
         Err(e) => return Ok(refused(400, e.code())),
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), true).await);
-    record(&req, &state, &caller.username, format!("shares smb password {user}")).await;
+    record(&req, &state, format!("shares smb password {user}")).await;
     Ok(HttpResponse::NoContent().finish())
 }
 
@@ -203,7 +203,7 @@ pub struct ConnectionsBody {
 }
 
 pub async fn connections(req: HttpRequest, body: web::types::Json<ConnectionsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -225,7 +225,7 @@ pub struct InstallBody {
 }
 
 pub async fn install(req: HttpRequest, body: web::types::Json<InstallBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    let caller = require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
         return Ok(refused(409, "notLinux"));
     }
@@ -235,7 +235,7 @@ pub async fn install(req: HttpRequest, body: web::types::Json<InstallBody>, stat
     require!(as_root(&state, "true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), false).await);
     let Some(job) = state.shares.begin() else { return Ok(refused(409, "busy")) };
     let what = if nfs { "nfs" } else { "samba" };
-    record(&req, &state, &caller.username, format!("shares install {what}")).await;
+    record(&req, &state, format!("shares install {what}")).await;
     let script = sh::install_script(nfs);
     let job2 = job.clone();
     tokio::spawn(async move {
@@ -257,7 +257,7 @@ pub struct JobQuery {
 }
 
 pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
-    require!(authz::admin_caller(&req, &state).await);
+    require!(authz::acting_caller(&req, &state).await);
     match state.shares.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
         None => Ok(refused(404, "notFound")),

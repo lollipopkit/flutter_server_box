@@ -1,5 +1,4 @@
 use crate::core::config::Config;
-use crate::core::permissions::InitPermissions;
 use crate::core::config_file;
 use crate::db;
 use crate::monitoring;
@@ -47,8 +46,7 @@ pub fn build_cli() -> Command {
                         .value_name("KEY_FILE")
                         .help("TLS key file path")
                         .env("SBM_TLS_KEY"),
-                )
-                .arg(init_permissions_arg()),
+                ),
         )
         .subcommand(
             Command::new("config")
@@ -58,30 +56,13 @@ pub fn build_cli() -> Command {
                 .subcommand(Command::new("show").about("Show current configuration")),
         )
         .subcommand(
-            Command::new("user")
-                .about("User management")
-                .subcommand(
-                    Command::new("set-password")
-                        .about("Set or reset a user's password (creates the user if absent)")
-                        .arg(
-                            Arg::new("username")
-                                .value_name("USERNAME")
-                                .required(true)
-                                .help("Username to set the password for"),
-                        )
-                        .arg(
-                            Arg::new("password-env")
-                                .long("password-env")
-                                .value_name("ENV_VAR")
-                                .help("Read the password from this environment variable instead of prompting"),
-                        )
-                        .arg(
-                            Arg::new("role")
-                                .long("role")
-                                .value_name("ROLE")
-                                .help("Give the account this role (a new account is a viewer otherwise)"),
-                        )
-                        .arg(init_permissions_arg()),
+            Command::new("password")
+                .about("Set the agent's password (signs in to the app and the panel)")
+                .arg(
+                    Arg::new("password-env")
+                        .long("password-env")
+                        .value_name("ENV_VAR")
+                        .help("Read the password from this environment variable instead of prompting"),
                 ),
         )
         .subcommand(
@@ -91,27 +72,6 @@ pub fn build_cli() -> Command {
                 .subcommand(Command::new("stats").about("Show database statistics"))
                 .subcommand(Command::new("vacuum").about("Run database VACUUM")),
         )
-}
-
-/// What a fresh install's admin role starts with — `install.sh --permissions`.
-///
-/// Read only when the agent creates its first account; on a database that has
-/// one it changes nothing, so the installer can leave it in the service's
-/// environment for good.
-fn init_permissions_arg() -> Arg {
-    Arg::new("init-permissions")
-        .long("init-permissions")
-        .value_name("full|read")
-        .help("Permissions of a fresh install's admin role: full (default) or read")
-        .env("SBM_INIT_PERMISSIONS")
-        .value_parser(|v: &str| v.parse::<InitPermissions>())
-}
-
-fn init_permissions(matches: &clap::ArgMatches) -> InitPermissions {
-    matches
-        .get_one::<InitPermissions>("init-permissions")
-        .copied()
-        .unwrap_or_default()
 }
 
 pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
@@ -125,8 +85,8 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
         Some(("cleanup", sub_matches)) => {
             handle_cleanup(sub_matches).await?;
         }
-        Some(("user", sub_matches)) => {
-            handle_user(sub_matches).await?;
+        Some(("password", sub_matches)) => {
+            handle_password(sub_matches).await?;
         }
         _ => {
             // Default to serve if no subcommand is provided;
@@ -162,25 +122,21 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     let db = db::database::init(&config.get_database_url()).await?;
 
-    // Roles first: whether there is an account yet is what tells a fresh
-    // install from an upgrade, and the next line creates one.
-    db::bootstrap::ensure_roles(&db, &config, init_permissions(matches)).await?;
-    // On first start, create an admin with a generated password and print the
-    // password once.
-    db::bootstrap::ensure_admin_user(&db, &config.get_database_url()).await?;
+    // On first start, a generated password, written once beside the
+    // database.
+    db::bootstrap::ensure_owner(&db, &config.get_database_url()).await?;
 
     let app_state = crate::api::server::AppState::new(config.clone(), db);
     // Files kept beside the database: what an older agent kept in it moves
-    // out, and what no row names any more (an account deleted, a write cut
-    // short) goes.
+    // out, and what no row names any more (a write cut short) goes.
     crate::core::blobs::move_database_backups(&app_state.db, &app_state.blobs).await?;
     match app_state.blobs.collect(&app_state.db).await {
         Ok(0) => {}
         Ok(n) => tracing::info!("blobs: removed {n} unused files"),
         Err(e) => tracing::warn!("blobs: collecting unused files failed: {e:#}"),
     }
-    // Tasks a stopped agent left running are failed; sessions of removed
-    // accounts go.
+    // Tasks a stopped agent left running are failed; sessions no row names
+    // go.
     if let Err(e) = app_state.agent.recover().await {
         tracing::warn!("agent mode: recovering tasks failed: {e:#}");
     }
@@ -193,6 +149,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     crate::stacks::resume(&app_state).await;
     tokio::spawn(crate::container_backups::start(app_state.clone()));
     tokio::spawn(crate::storage_watch::start(app_state.clone()));
+    tokio::spawn(crate::api::update::watch(app_state.clone()));
 
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();
@@ -225,60 +182,35 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn handle_user(matches: &clap::ArgMatches) -> anyhow::Result<()> {
-    match matches.subcommand() {
-        Some(("set-password", sub)) => {
-            let username = sub
-                .get_one::<String>("username")
-                .expect("username is required");
-
-            // The password never travels via CLI arguments (avoiding shell history / ps
-            // leaks): environment variable or no-echo interactive input
-            let password = match sub.get_one::<String>("password-env") {
-                Some(var) => std::env::var(var)
-                    .map_err(|_| anyhow::anyhow!("Environment variable {var} is not set"))?,
-                None => {
-                    let first = rpassword::prompt_password(format!("New password for {username}: "))?;
-                    let second = rpassword::prompt_password("Confirm password: ")?;
-                    if first != second {
-                        anyhow::bail!("Passwords do not match");
-                    }
-                    first
-                }
-            };
-            if password.len() < 8 {
-                anyhow::bail!("Password must be at least 8 characters");
+async fn handle_password(matches: &clap::ArgMatches) -> anyhow::Result<()> {
+    // The password never travels via CLI arguments (avoiding shell history /
+    // ps leaks): environment variable or no-echo interactive input
+    let password = match matches.get_one::<String>("password-env") {
+        Some(var) => std::env::var(var)
+            .map_err(|_| anyhow::anyhow!("Environment variable {var} is not set"))?,
+        None => {
+            let first = rpassword::prompt_password("New password: ")?;
+            let second = rpassword::prompt_password("Confirm password: ")?;
+            if first != second {
+                anyhow::bail!("Passwords do not match");
             }
-
-            let config = Config::load().await?;
-            let db = db::database::init(&config.get_database_url()).await?;
-            // Before the account exists, for the reason `handle_serve` gives:
-            // on a database nothing has served yet, this account would
-            // otherwise make the first start read as an upgrade.
-            db::bootstrap::ensure_roles(&db, &config, init_permissions(sub)).await?;
-            let role = sub.get_one::<String>("role").map(String::as_str);
-            match db::bootstrap::set_password(&db, username, &password, role).await? {
-                db::bootstrap::PasswordSet::Created { first_admin } => {
-                    println!("Created {username}");
-                    if first_admin {
-                        println!(
-                            "{username} is an admin: there was no admin account, and an \
-                             agent nobody can administer has no way to grant anything."
-                        );
-                    }
-                }
-                db::bootstrap::PasswordSet::Reset => {
-                    println!("Password updated for {username}");
-                    println!(
-                        "Tokens and watch pairings issued under the old password no longer \
-                         work; a running agent ends its open terminals and relays on its \
-                         next role change."
-                    );
-                }
-            }
+            first
         }
-        _ => {
-            eprintln!("Please specify a user subcommand. Use --help for more information.");
+    };
+    if password.len() < 8 {
+        anyhow::bail!("Password must be at least 8 characters");
+    }
+
+    let config = Config::load().await?;
+    let db = db::database::init(&config.get_database_url()).await?;
+    match db::bootstrap::set_password(&db, &password).await? {
+        db::bootstrap::PasswordSet::Created => println!("Password set"),
+        db::bootstrap::PasswordSet::Reset => {
+            println!("Password updated");
+            println!(
+                "Tokens and watch pairings issued under the old password no longer work; \
+                 restart a running agent to end its open terminals and relays."
+            );
         }
     }
     Ok(())

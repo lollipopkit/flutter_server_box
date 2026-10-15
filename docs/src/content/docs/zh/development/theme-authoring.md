@@ -302,7 +302,7 @@ background 或 iOS 的 launch storyboard）在构建应用时确定，只能随�
 
 支持的 icon key 是 `tab.<tab>` 和 `tab.<tab>.selected`，其中 `<tab>` 取 `server`、
 `ssh`、`file`、`snippet`、`agent`、`benchmark`、`remoteDesktop`、`virt`、`workspace`、
-`webApps`。navigation key 有
+`monitor`。navigation key 有
 `nav.more`、`nav.settings`、`nav.tune`、`nav.privacy`、`nav.agent`、`nav.tabs`、
 `nav.server`、`nav.sort`、`nav.terminal`、`nav.folder`、`nav.cloud`、`nav.snippet`、
 `nav.inbox`、`nav.key`、`nav.info`、`nav.download`、`nav.desktop`。

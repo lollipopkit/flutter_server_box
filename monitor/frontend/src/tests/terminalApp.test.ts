@@ -8,7 +8,6 @@ import '@testing-library/jest-dom/vitest'
 const mocks = vi.hoisted(() => ({
   getTmux: vi.fn(),
   issueWsTicket: vi.fn(async () => ({ ticket: 'id.secret', expires_in: 30 })),
-  disablePasswordlessTerminal: vi.fn(async () => undefined),
 }))
 
 vi.mock('../lib/xterm', () => ({
@@ -44,7 +43,6 @@ vi.mock('../lib/api', () => {
     api: {
       getTmux: mocks.getTmux,
       issueWsTicket: mocks.issueWsTicket,
-      disablePasswordlessTerminal: mocks.disablePasswordlessTerminal,
     },
   }
 })
@@ -52,7 +50,7 @@ vi.mock('../lib/api', () => {
 vi.mock('../lib/servers.svelte', () => ({
   servers: {
     currentId: 'local',
-    list: [{ id: 'local', url: '', token: 't', username: 'admin' }],
+    list: [{ id: 'local', url: '', token: 't' }],
   },
   displayName: (e: { url: string; id: string }) => e.url || e.id,
 }))
@@ -101,17 +99,11 @@ class FakeSocket {
   }
 }
 
-function setCapabilities({ shell = true, features = ['tmux'], admin = true } = {}) {
+function setCapabilities({ ok = true, features = ['tmux'] } = {}) {
   ;(capabilitiesStore as unknown as { byServer: Record<string, unknown> }).byServer['local'] = {
     platform: 'linux',
     features,
-    me: { username: 'admin', admin },
-    grants: {
-      shell: { ok: shell, why: shell ? undefined : 'not_granted' },
-      files: { ok: false, why: 'not_granted' },
-      connect: { ok: true },
-      listen: { ok: true },
-    },
+    access: ok ? { ok } : { ok, why: 'insecure_transport' },
   }
 }
 
@@ -141,8 +133,6 @@ beforeEach(() => {
   FakeSocket.instances = []
   mocks.getTmux.mockReset()
   mocks.issueWsTicket.mockClear()
-  mocks.disablePasswordlessTerminal.mockReset()
-  mocks.disablePasswordlessTerminal.mockResolvedValue(undefined)
   mocks.getTmux.mockResolvedValue({ available: true, sessions: [SESSION], error: null })
   window.localStorage.clear()
   window.sessionStorage.clear()
@@ -194,11 +184,11 @@ describe('desk terminal app', () => {
     expect(socket.sent[0]).toEqual({ type: 'attach', session: 'saved-handle', since: 0, cols: 80, rows: 24 })
   })
 
-  it('does not open a socket for a role without the shell', async () => {
-    setCapabilities({ shell: false, features: [] })
+  it('does not open a socket over a link the account may not act on', async () => {
+    setCapabilities({ ok: false, features: [] })
     render(Terminal)
 
-    expect(await screen.findByText(/does not include this/)).toBeInTheDocument()
+    expect(await screen.findByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
     expect(FakeSocket.instances).toHaveLength(0)
     expect(mocks.issueWsTicket).not.toHaveBeenCalled()
     expect(screen.queryByLabelText(/SSH|password|private key/i)).toBeNull()
@@ -290,25 +280,14 @@ describe('desk terminal app', () => {
     expect(screen.getByText('error connecting to /tmp/tmux-1000/default (Permission denied)')).toBeInTheDocument()
   })
 
-  it('shows the first-time notice and keeps it dismissed for this browser', async () => {
-    render(Terminal)
-
-    expect(await screen.findByText('This panel login can open a shell')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button', { name: 'Keep it on' }))
-    expect(screen.queryByText('This panel login can open a shell')).toBeNull()
-    expect(window.localStorage.getItem('terminal.fullAccessNoticeSeen')).toBe('1')
-  })
-
-  it('closes the shell and falls into the no-permission state when access is disabled', async () => {
+  it('ends the session when the password changes, and says to sign in again', async () => {
     render(Terminal)
     const socket = await started()
     socket.control({ type: 'ready', session: 'live-handle', since: 0 })
-    mocks.disablePasswordlessTerminal.mockResolvedValue(undefined)
+    socket.control({ type: 'error', code: 'password_changed', message: 'password changed' })
+    socket.close()
 
-    await fireEvent.click(await screen.findByRole('button', { name: 'Turn it off' }))
-
-    expect(mocks.disablePasswordlessTerminal).toHaveBeenCalledOnce()
-    expect(await screen.findByText('Your role on this agent does not include this. Ask one of its administrators.')).toBeInTheDocument()
+    expect(await screen.findByText('The password was changed. Sign in again.')).toBeInTheDocument()
     expect(sessionStorage.getItem('terminal.session')).toBeNull()
     expect(FakeSocket.instances).toHaveLength(1)
   })

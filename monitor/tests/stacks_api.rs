@@ -74,8 +74,7 @@ async fn setup_with(local_apps: Option<&str>, repos: HashMap<String, Vec<u8>>) -
         stacks: Some(StacksConfig { local_apps: local_apps.map(String::from), ..Default::default() }),
         ..Default::default()
     };
-    common::seed_as_upgrade(&db, &config).await;
-    common::add_account(&db, "watcher", "viewer").await;
+    common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     state.stacks.catalog.set_source(CATALOG, Arc::new(Memory(repos)));
     let shared = state.clone();
@@ -107,10 +106,10 @@ async fn setup_with(local_apps: Option<&str>, repos: HashMap<String, Vec<u8>>) -
     (srv, state)
 }
 
-async fn call(srv: &TestServer, user: &str, method: Method, path: &str, body: Option<serde_json::Value>) -> (u16, serde_json::Value) {
+async fn call(srv: &TestServer, method: Method, path: &str, body: Option<serde_json::Value>) -> (u16, serde_json::Value) {
     let req = srv
         .request(method, srv.url(path))
-        .header("Authorization", format!("Bearer {}", generate_token(user, SECRET).unwrap()))
+        .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()))
         .timeout(std::time::Duration::from_secs(30));
     let resp = match body {
         Some(body) => req.send_json(&body).await.unwrap(),
@@ -121,28 +120,14 @@ async fn call(srv: &TestServer, user: &str, method: Method, path: &str, body: Op
 }
 
 #[ntex::test]
-async fn every_account_sees_the_catalog_and_only_an_admin_changes_it() {
+async fn the_catalog_is_listed() {
     let (srv, _) = setup().await;
-    let (status, body) = call(&srv, "watcher", Method::GET, "/api/v1/stacks", None).await;
+    let (status, body) = call(&srv, Method::GET, "/api/v1/stacks", None).await;
     assert_eq!(status, 200);
     let immich = body["apps"].as_array().unwrap().iter().find(|a| a["manifest"]["id"] == "futo.immich").expect("immich");
     assert_eq!(immich["stack"], serde_json::Value::Null);
     assert_eq!(immich["manifest"]["license"]["spdx"], "AGPL-3.0");
 
-    for (method, path, body) in [
-        (Method::GET, "/api/v1/stacks/futo.immich/prepare", None),
-        (Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": {} }))),
-        (Method::POST, "/api/v1/stacks/futo.immich", Some(json!({ "current_password": common::PASSWORD, "accept_license": true }))),
-        (Method::POST, "/api/v1/stacks/futo.immich/action", Some(json!({ "action": "start" }))),
-        (Method::PUT, "/api/v1/stacks/futo.immich/settings", Some(json!({ "current_password": common::PASSWORD, "settings": {} }))),
-        (Method::DELETE, "/api/v1/stacks/futo.immich", Some(json!({ "current_password": common::PASSWORD }))),
-        (Method::GET, "/api/v1/stacks/futo.immich/job", None),
-        (Method::POST, "/api/v1/stacks/futo.immich/job/cancel", None),
-        (Method::GET, "/api/v1/stacks/futo.immich/services", None),
-    ] {
-        let (status, _) = call(&srv, "watcher", method, path, body).await;
-        assert_eq!(status, 403, "{path}");
-    }
 }
 
 #[ntex::test]
@@ -150,7 +135,6 @@ async fn deploying_asks_the_password_and_the_licence() {
     let (srv, _) = setup().await;
     let (status, _) = call(
         &srv,
-        "admin",
         Method::POST,
         "/api/v1/stacks/futo.immich",
         Some(json!({ "current_password": "wrong", "accept_license": true })),
@@ -158,11 +142,10 @@ async fn deploying_asks_the_password_and_the_licence() {
     .await;
     assert_ne!(status, 202);
     let (status, body) =
-        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich", Some(json!({ "current_password": common::PASSWORD }))).await;
+        call(&srv, Method::POST, "/api/v1/stacks/futo.immich", Some(json!({ "current_password": common::PASSWORD }))).await;
     assert_eq!((status, body["error"].as_str()), (400, Some("notAcknowledged")));
     let (status, body) = call(
         &srv,
-        "admin",
         Method::POST,
         "/api/v1/stacks/futo.immich",
         Some(json!({ "current_password": common::PASSWORD, "acknowledged": true })),
@@ -171,7 +154,6 @@ async fn deploying_asks_the_password_and_the_licence() {
     assert_eq!((status, body["error"].as_str()), (400, Some("licenseNotAccepted")));
     let (status, _) = call(
         &srv,
-        "admin",
         Method::POST,
         "/api/v1/stacks/nope",
         Some(json!({ "current_password": common::PASSWORD, "acknowledged": true, "accept_license": true })),
@@ -183,14 +165,14 @@ async fn deploying_asks_the_password_and_the_licence() {
 #[ntex::test]
 async fn the_check_shows_what_deploying_would_do() {
     let (srv, _) = setup().await;
-    let (status, body) = call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": {} }))).await;
+    let (status, body) = call(&srv, Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": {} }))).await;
     assert_eq!(status, 200);
     let images: Vec<&str> = body["images"].as_array().unwrap().iter().filter_map(|i| i.as_str()).collect();
     assert!(images.contains(&"ghcr.io/immich-app/immich-server:v3.3.1"), "{images:?}");
     assert_eq!(body["data_paths"].as_array().unwrap().len(), 2);
     assert!(body["settings"]["library"].as_str().unwrap().ends_with("/futo.immich/library"));
     let (status, body) =
-        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 0 } }))).await;
+        call(&srv, Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 0 } }))).await;
     assert_eq!((status, body["field"].as_str()), (400, Some("port")));
 }
 
@@ -200,7 +182,7 @@ async fn a_suggested_port_in_use_moves_and_a_chosen_one_is_refused() {
     // Held here, or already in use on this machine: either way not free.
     let _held = std::net::TcpListener::bind(("0.0.0.0", 2283));
     let (status, body) =
-        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 2283 } }))).await;
+        call(&srv, Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": 2283 } }))).await;
     assert_eq!(status, 200, "{body}");
     let to = body["settings"]["port"].as_u64().unwrap();
     assert!((2284..=2383).contains(&to), "{body}");
@@ -209,7 +191,7 @@ async fn a_suggested_port_in_use_moves_and_a_chosen_one_is_refused() {
     let chosen = std::net::TcpListener::bind(("0.0.0.0", 0)).unwrap();
     let port = chosen.local_addr().unwrap().port();
     let (status, body) =
-        call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": port } }))).await;
+        call(&srv, Method::POST, "/api/v1/stacks/futo.immich/check", Some(json!({ "settings": { "port": port } }))).await;
     assert_eq!((status, body["error"].as_str(), body["field"].as_str()), (409, Some("portTaken"), Some("port")), "{body}");
 }
 
@@ -217,26 +199,24 @@ async fn a_suggested_port_in_use_moves_and_a_chosen_one_is_refused() {
 async fn new_settings_need_the_password_and_a_deployed_app() {
     let (srv, _) = setup().await;
     let path = "/api/v1/stacks/futo.immich/settings";
-    let (status, _) = call(&srv, "admin", Method::PUT, path, Some(json!({ "current_password": "wrong", "settings": {} }))).await;
+    let (status, _) = call(&srv, Method::PUT, path, Some(json!({ "current_password": "wrong", "settings": {} }))).await;
     assert_ne!(status, 202);
-    let (status, body) = call(&srv, "admin", Method::PUT, path, Some(json!({ "current_password": common::PASSWORD, "settings": {} }))).await;
+    let (status, body) = call(&srv, Method::PUT, path, Some(json!({ "current_password": common::PASSWORD, "settings": {} }))).await;
     assert_eq!((status, body["error"].as_str()), (404, Some("notInstalled")));
 }
 
 #[ntex::test]
-async fn the_sign_in_needs_an_admin_the_password_and_a_deployed_app() {
+async fn the_sign_in_needs_the_password_and_a_deployed_app() {
     let apps = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/apps");
     let (srv, state) = setup_with(apps.to_str(), HashMap::new()).await;
     let path = "/api/v1/stacks/serverbox.testweb/login";
     let password = Some(json!({ "current_password": common::PASSWORD }));
-    let (status, _) = call(&srv, "watcher", Method::POST, path, password.clone()).await;
-    assert_eq!(status, 403);
-    let (status, _) = call(&srv, "admin", Method::POST, path, Some(json!({ "current_password": "wrong" }))).await;
+    let (status, _) = call(&srv, Method::POST, path, Some(json!({ "current_password": "wrong" }))).await;
     assert_ne!(status, 200);
-    let (status, body) = call(&srv, "admin", Method::POST, path, password.clone()).await;
+    let (status, body) = call(&srv, Method::POST, path, password.clone()).await;
     assert_eq!((status, body["error"].as_str()), (409, Some("notDeployed")), "{body}");
     // An app without a sign-in has none to show.
-    let (status, body) = call(&srv, "admin", Method::POST, "/api/v1/stacks/futo.immich/login", password.clone()).await;
+    let (status, body) = call(&srv, Method::POST, "/api/v1/stacks/futo.immich/login", password.clone()).await;
     assert_eq!((status, body["error"].as_str()), (404, Some("noLogin")), "{body}");
 
     // Deployed, as the agent leaves it: a row and the env file.
@@ -247,9 +227,7 @@ async fn the_sign_in_needs_an_admin_the_password_and_a_deployed_app() {
         proxy_port: 3780,
         state: "installed".into(),
         license: "BSD-2-Clause".into(),
-        license_accepted_by: String::new(),
         license_accepted_at: String::new(),
-        installed_by: "admin".into(),
         installed_at: String::new(),
         updated_at: String::new(),
         last_error: None,
@@ -260,7 +238,7 @@ async fn the_sign_in_needs_an_admin_the_password_and_a_deployed_app() {
     let dir = state.stacks.dir("serverbox.testweb");
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join(".env"), "WEB_PORT='18080'\nADMIN_PASSWORD='s3cretS3cret'\n").unwrap();
-    let (status, body) = call(&srv, "admin", Method::POST, path, password).await;
+    let (status, body) = call(&srv, Method::POST, path, password).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!((body["user"].as_str(), body["password"].as_str()), (Some("admin"), Some("s3cretS3cret")));
     assert_eq!(body["note"]["en"], "A test sign-in; nginx asks for none.");
@@ -269,7 +247,7 @@ async fn the_sign_in_needs_an_admin_the_password_and_a_deployed_app() {
 #[ntex::test]
 async fn an_app_not_running_cannot_be_entered() {
     let (srv, _) = setup().await;
-    let (status, body) = call(&srv, "watcher", Method::POST, "/api/v1/stacks/futo.immich/enter", None).await;
+    let (status, body) = call(&srv, Method::POST, "/api/v1/stacks/futo.immich/enter", None).await;
     assert_eq!((status, body["error"].as_str()), (409, Some("notRunning")));
 }
 
@@ -357,7 +335,7 @@ async fn the_proxy_admits_a_window_and_forwards_to_the_service() {
         .await
         .unwrap();
 
-    let (status, body) = call(&srv, "watcher", Method::POST, "/api/v1/stacks/futo.immich/enter", None).await;
+    let (status, body) = call(&srv, Method::POST, "/api/v1/stacks/futo.immich/enter", None).await;
     assert_eq!(status, 200);
     let port = body["port"].as_u64().unwrap() as u16;
     let ticket = body["ticket"].as_str().unwrap().to_string();
@@ -417,7 +395,7 @@ async fn the_proxy_admits_a_window_and_forwards_to_the_service() {
     assert_eq!(&echo, b"ping");
 
     // The account's sessions end with it.
-    state.stacks.proxies.end_account("watcher");
+    state.stacks.proxies.end_account();
     let answer = raw(port, get("/photos", Some(&cookie))).await;
     assert!(answer.starts_with("HTTP/1.1 401"), "{answer}");
     state.stacks.proxies.stop("futo.immich");
@@ -442,7 +420,7 @@ async fn apps_taken_by_host_each_have_their_own() {
     // Asked from the panel's page: the window's address is the app's host.
     let req = srv
         .request(Method::POST, srv.url("/api/v1/stacks/futo.immich/enter"))
-        .header("Authorization", format!("Bearer {}", generate_token("watcher", SECRET).unwrap()))
+        .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()))
         .header("Origin", format!("http://{}", srv.addr()));
     let resp = req.send().await.unwrap();
     let body: serde_json::Value = serde_json::from_slice(&resp.body().await.unwrap()).unwrap();
@@ -502,9 +480,7 @@ async fn the_catalog_has_the_stores_apps_the_operators_and_the_shipped_ones() {
         body["apps"].as_array().unwrap().iter().find(|a| a["manifest"]["id"] == id).map(|a| a["source"].clone())
     };
 
-    let (status, body) = call(&srv, "watcher", Method::POST, "/api/v1/stacks/refresh", None).await;
-    assert_eq!(status, 403, "{body}");
-    let (status, body) = call(&srv, "admin", Method::POST, "/api/v1/stacks/refresh", None).await;
+    let (status, body) = call(&srv, Method::POST, "/api/v1/stacks/refresh", None).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(source(&body, "serverbox.testweb"), Some(json!("local")));
     assert_eq!(source(&body, "serverbox.fromstore"), Some(json!("store")));

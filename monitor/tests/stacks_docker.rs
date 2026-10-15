@@ -60,7 +60,7 @@ async fn setup(apps: &std::path::Path) -> (TestServer, Arc<AppState>) {
         stacks: Some(StacksConfig { local_apps: Some(apps.to_string_lossy().into_owned()), ..Default::default() }),
         ..Default::default()
     };
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let state: Arc<AppState> = AppState::new(Arc::new(config), db);
     let shared = state.clone();
     let srv = web_test::server(move || {
@@ -99,7 +99,7 @@ async fn setup(apps: &std::path::Path) -> (TestServer, Arc<AppState>) {
 async fn call(srv: &TestServer, method: Method, path: &str, body: Option<Value>) -> (u16, Value) {
     let req = srv
         .request(method, srv.url(path))
-        .header("Authorization", format!("Bearer {}", generate_token("admin", SECRET).unwrap()))
+        .header("Authorization", format!("Bearer {}", generate_token(SECRET).unwrap()))
         .timeout(Duration::from_secs(60));
     let resp = match body {
         Some(body) => req.send_json(&body).await.unwrap(),

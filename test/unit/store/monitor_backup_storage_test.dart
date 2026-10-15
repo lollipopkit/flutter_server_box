@@ -99,7 +99,6 @@ void main() {
       'server-1',
       MonitorHttpCredential(
         addr: 'http://${agent.server.address.address}:${agent.server.port}',
-        user: 'user',
         pwd: 'password',
       ),
     );
@@ -270,10 +269,12 @@ void main() {
     expect(del.query['name'], _name);
   });
 
-  test('a 403 says the account is not an admin', () async {
+  test('a 403 says the connection needs HTTPS', () async {
     await start(
-      (request, _) =>
-          _json(request.response, {'error': 'forbidden'}, status: 403),
+      (request, _) => _json(request.response, {
+        'error': 'forbidden',
+        'message': 'insecure_transport',
+      }, status: 403),
     );
 
     await expectLater(
@@ -281,12 +282,17 @@ void main() {
       throwsA(
         isA<MonitorHttpErr>()
             .having((e) => e.type, 'type', MonitorHttpErrType.forbidden)
-            .having((e) => e.message, 'message', l10n.monitorBackupAdminOnly),
+            .having(
+              (e) => e.message,
+              'message',
+              l10n.funcNeedsAgentHttps(libL10n.backup),
+            ),
       ),
     );
   });
 
-  test('check refuses an agent without the feature, or a non-admin', () async {
+  test('check refuses an agent without the feature, or over plaintext',
+      () async {
     var caps = <String, Object?>{'features': ['power']};
     await start((request, _) => _json(request.response, caps));
 
@@ -303,7 +309,7 @@ void main() {
 
     caps = {
       'features': ['backup'],
-      'me': {'username': 'u', 'role': 'viewer', 'admin': false},
+      'access': {'ok': false, 'why': 'insecure_transport'},
     };
     await expectLater(
       onAgent(storage.check),
@@ -311,14 +317,14 @@ void main() {
         isA<MonitorHttpErr>().having(
           (e) => e.message,
           'message',
-          l10n.monitorBackupAdminOnly,
+          l10n.funcNeedsAgentHttps(libL10n.backup),
         ),
       ),
     );
 
     caps = {
       'features': ['backup'],
-      'me': {'username': 'u', 'role': 'admin', 'admin': true},
+      'access': {'ok': true},
     };
     await onAgent(storage.check);
   });
@@ -327,7 +333,7 @@ void main() {
     await start((request, _) => _json(request.response, {}));
     final other = MonitorBackupStorage(
       'server-2',
-      MonitorHttpCredential(addr: 'http://127.0.0.1:1', user: 'u'),
+      MonitorHttpCredential(addr: 'http://127.0.0.1:1'),
     );
     expect(storage.identity, contains('${agent.server.port}'));
     expect(other.identity, isNot(storage.identity));

@@ -48,22 +48,22 @@
     desk.locked = locked
   })
 
-  /// The login screen shows each account's wallpaper before it signs in, from
-  /// a copy kept in this browser (`lock/wallpapers.ts`).
+  /// The login screen shows each server's wallpaper before signing in, from a
+  /// copy kept in this browser (`lock/wallpapers.ts`).
   $effect(() => {
     const prefs = desk.prefs
-    if (!prefs?.loaded || entry.username === null) return
+    if (!prefs?.loaded) return
     const fit = prefs.value.wallpaper_fit
     const preset = prefs.preset
     const url = prefs.value.wallpaper === 'custom' ? prefs.wallpaperUrl : null
     const drawn = wallpaperTheme
-    const { id, username } = entry
+    const { id } = entry
     if (drawn) {
       const { ground, image } = drawn
       // An image theme is kept once its image is here.
       if (activeTheme?.background.style === 'image' && !image) return
       const keep = (blob: Blob | null) =>
-        saveWallpaper(id, username, {
+        saveWallpaper(id, {
           theme: { ground, image: blob, opacity: image?.opacity ?? 1, blur: image?.blur ?? 0, tile: image?.tile ?? 0 },
           fit,
         })
@@ -74,11 +74,11 @@
           .then(keep)
           .catch(() => {})
     } else if (preset) {
-      void saveWallpaper(id, username, { preset, fit })
+      void saveWallpaper(id, { preset, fit })
     } else if (url) {
       void fetch(url)
         .then((r) => r.blob())
-        .then((image) => saveWallpaper(id, username, { image, fit }))
+        .then((image) => saveWallpaper(id, { image, fit }))
         .catch(() => {})
     }
   })
@@ -294,8 +294,6 @@
       bind:this={agentView}
       onexit={() => desk.toggleAgent(false)}
       store={desk.agent}
-      name={entry.username ?? ''}
-      admin={desk.caps?.me?.admin === true}
       onsettings={() => {
         desk.toggleAgent(false)
         desk.open('serverbox.settings', { appState: { section: 'agent' } })

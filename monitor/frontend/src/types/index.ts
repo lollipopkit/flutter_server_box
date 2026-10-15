@@ -61,9 +61,9 @@ export interface CustomCmd {
 
 export interface CustomCmdsView {
   commands: CustomCmd[];
-  /// Whether this panel may change them — writing one arranges for code to
-  /// run as the agent's user, so it needs the same grant as the shell. A hint
-  /// for the UI; the agent re-checks it on the write.
+  /// Whether this panel may change them (`access.ok`) — writing one arranges
+  /// for code to run as the agent's user. A hint for the UI; the agent
+  /// re-checks it on the write.
   editable: boolean;
 }
 
@@ -99,19 +99,48 @@ export interface Capabilities {
   // Mechanically derived from the same system_type() capabilities() is
   // computed from — 'bsd' covers macOS, the only Bsd target this ships on
   platform: Platform
-  // Absent on agents predating the feature; treat as all-off
-  remote_access?: RemoteAccess
-  /// Who the caller is on this agent. Absent on agents predating roles, and
-  /// for a watch token.
-  me?: Me
-  /// What the caller may do, per grant. Absent on agents predating roles:
-  /// `remote_access` is then the whole answer — see `lib/access.ts`.
-  grants?: CallerGrants
+  /// Whether the account may act over this link. `ok` false (a plaintext,
+  /// non-loopback link, or a watch token) leaves only reading; the agent
+  /// refuses the rest with 403.
+  access?: { ok: boolean; why?: AccessWhy }
   /// The machine-management endpoints the agent serves. Absent on agents
   /// predating them, which serve none — see `machineAccess`.
   features?: MachineFeature[]
   /// The web apps the agent deployed (`/stacks*`); absent on older agents.
   stacks?: { id: string; state: 'installing' | 'installed' | 'failed' }[]
+  /// The agent's own version.
+  version?: string
+}
+
+/// How the agent was put on its machine, which decides how it is updated
+/// (`sbm_parser::monitor_agent::InstallKind`).
+export type AgentInstall = 'script' | 'container' | 'nix' | 'other'
+
+/// `GET /update`: whether a newer agent is released, as the agent read it.
+export interface AgentUpdate {
+  version: string
+  /// Absent when the releases could not be read.
+  latest?: string | null
+  /// Absent before the agent's first read.
+  checked_at?: string | null
+  /// Why they could not, in English.
+  error?: string
+  outdated: boolean
+  install: AgentInstall
+  /// What updates it, run on the machine: for `script`.
+  command?: string
+  /// Whether `POST /update/run` needs the sudo password (OpenRC, not root).
+  needs_password?: boolean
+  /// The last update the agent started, as its log tells it.
+  run?: AgentUpdateRun
+}
+
+export interface AgentUpdateRun {
+  /// `interrupted`: no end recorded, and too long ago to be running still.
+  state: 'running' | 'done' | 'failed' | 'interrupted'
+  started_at?: string
+  exit?: number | null
+  lines: string[]
 }
 
 /// A machine-management page the agent may serve (`api::machine::FEATURES`).
@@ -149,6 +178,8 @@ export type MachineFeature =
   /// Web apps deployed with Docker Compose behind the agent's proxy
   /// (`/stacks*`).
   | 'stacks'
+  /// Whether a newer agent is out and how this one is updated (`/update`).
+  | 'update'
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
@@ -164,94 +195,9 @@ export interface PowerResult {
   timed_out: boolean
 }
 
-/// The grants a role can hold. `read` is held by every account and is not
-/// one of them.
-export type GrantName = 'shell' | 'files' | 'connect' | 'listen' | 'virt'
-
-/// Why a grant is not usable: the role lacks it, the request did not arrive
-/// over TLS or loopback, or the machine side is not set up (files with no
-/// roots).
-export type GrantWhy = 'not_granted' | 'insecure_transport' | 'not_configured'
-
-export interface GrantStatus {
-  ok: boolean
-  /// Only when `ok` is false.
-  why?: GrantWhy
-}
-
-export type FilesMode = 'read' | 'write'
-
-export interface CallerGrants {
-  shell: GrantStatus
-  files: GrantStatus & { mode?: FilesMode }
-  connect: GrantStatus & { allow?: string[] }
-  listen: GrantStatus & { public?: boolean; ports?: [number, number] | null }
-  /// Absent from an agent older than the grant.
-  virt?: GrantStatus
-}
-
-export interface Me {
-  username: string
-  role: string
-  /// May manage accounts, roles and the agent's configuration.
-  admin: boolean
-}
-
-/// A role's grants as stored: `null` is not granted, an object is granted
-/// with those options.
-export interface RoleGrants {
-  shell: boolean
-  files: { mode: FilesMode } | null
-  /// `allow` empty means anywhere.
-  connect: { allow: string[] } | null
-  /// `ports` null means any port.
-  listen: { public: boolean; ports: [number, number] | null } | null
-  /// Absent from an agent older than the grant, which refuses a role that
-  /// carries it — so it is sent only to an agent that sent it.
-  virt?: boolean
-}
-
-export interface Role {
-  name: string
-  /// Only the built-in `admin` role has it, and it cannot be set.
-  admin: boolean
-  builtin: boolean
-  grants: RoleGrants
-}
-
-export interface AgentUser {
-  username: string
-  /// The role's name.
-  role: string
-  created_at: string | null
-  last_login: string | null
-}
-
-/// The error body of the account and role endpoints: a stable code, and a
-/// message for a human.
-export type AccessErrorCode =
-  | 'bad_request'
-  | 'unauthorized'
-  | 'forbidden'
-  | 'reauth'
-  | 'not_found'
-  | 'conflict'
-  | 'last_admin'
-
-/// Which remote-access paths this agent will actually accept, already
-/// accounting for the transport check.
-export interface RemoteAccess {
-  terminal: boolean
-  /// Whether a shell can be opened straight from this panel session, with no
-  /// SSH credentials. Absent on agents predating the feature.
-  full_access?: boolean
-  /// Whether the agent's confined file API is available. Absent on agents
-  /// predating remote file access.
-  files?: boolean
-  /// Whether the agent relays a TCP connection, and listens for one.
-  stream?: boolean
-  listen?: boolean
-}
+/// Why the account may not act over this link: it is plaintext and not
+/// loopback.
+export type AccessWhy = 'insecure_transport'
 
 export type WsTicketPurpose = 'terminal' | 'stream' | 'rdp'
 
@@ -388,17 +334,13 @@ export interface HistoryPoint {
 }
 
 export interface LoginRequest {
-  username: string;
   password: string;
 }
 
 export interface LoginResponse {
   token: string;
-}
-
-export interface User {
-  username: string;
-  token: string;
+  /// A device token, when the request carried none the agent knows.
+  device?: string;
 }
 
 export interface ApiError {
@@ -1694,7 +1636,7 @@ export interface BmcTargetInput {
 
 export interface BmcList {
   targets: BmcTarget[]
-  /// Whether this caller may change the set (admin).
+  /// Whether this caller may change the set (`access.ok`).
   editable: boolean
 }
 
@@ -2701,9 +2643,8 @@ export interface InstalledApp {
   /// Of the package; an approval names it, so it approves exactly this code.
   sha256: string
   manifest: PackageManifest
-  /// Null while waiting for an admin's approval.
+  /// Null while waiting for approval.
   approved_permissions: string[] | null
-  installed_by: string
   installed_at: string
   approved_at: string | null
 }
@@ -2788,8 +2729,7 @@ export interface StackLogin {
 
 export type StackValue = string | number | boolean
 
-/// A deployment (`stacks::store::StackRow`); an account that is not an admin
-/// sees only its state and version.
+/// A deployment (`stacks::store::StackRow`).
 export interface StackRow {
   state: 'installing' | 'installed' | 'failed'
   version: string
@@ -2797,9 +2737,7 @@ export interface StackRow {
   settings?: Record<string, StackValue>
   proxy_port?: number
   license?: string
-  license_accepted_by?: string
   license_accepted_at?: string
-  installed_by?: string
   installed_at?: string
   updated_at?: string
   last_error?: string | null
@@ -2825,7 +2763,7 @@ export interface StackApp {
   source?: 'bundled' | 'store' | 'local'
   repo?: string | null
   stack: StackRow | null
-  /// Admins only: the latest job.
+  /// The latest job.
   job: StackJob | null
   /// Whether the agent's proxy is in front of it now.
   proxy: boolean
@@ -2903,7 +2841,6 @@ export interface ContainerBackup {
   /// The compose project's name, or the container's.
   label: string
   created_at: string
-  created_by: string
   /// The containers were stopped while archived.
   stopped: boolean
   containers: { name: string; image: string; project: string | null }[]

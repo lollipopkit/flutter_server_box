@@ -74,25 +74,14 @@ fn leave_the_crate() {
 async fn permissive_state() -> Arc<AppState> {
     leave_the_crate();
     ensure_crypto_provider();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some(SECRET.to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.full_access = Some(true);
-    remote.fs.enabled = Some(true);
-    remote.fs.roots = vec![
-        std::fs::canonicalize(std::env::current_dir().unwrap())
-            .unwrap()
-            .to_string_lossy()
-            .into_owned(),
-    ];
-    config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     AppState::new(Arc::new(config), db)
 }
 
@@ -108,7 +97,7 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
 }
 
 fn jwt() -> String {
-    generate_token("admin", SECRET).unwrap()
+    generate_token(SECRET).unwrap()
 }
 
 /// A real watch token, minted through the endpoint that mints them.
@@ -136,8 +125,12 @@ async fn status_with(
     path: &str,
     body: Option<serde_json::Value>,
 ) -> u16 {
+    // Generous, as in `permissions_api.rs`: `/process` reads the whole
+    // process table, and on a loaded machine (the suite's other binaries
+    // running) that outlasted the client's 5 s default.
     let req = srv
         .request(method, srv.url(path))
+        .timeout(std::time::Duration::from_secs(30))
         .header("Authorization", format!("Bearer {token}"));
     let resp = match body {
         Some(body) => req.send_json(&body).await.unwrap(),
@@ -213,7 +206,6 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/fs/remove",
             Some(json!({ "path": "/tmp/a", "recursive": false })),
         ),
-        (Method::DELETE, "/api/v1/remote-access/full-access", None),
         (Method::GET, "/api/v1/custom-cmds", None),
         (
             Method::PUT,
@@ -241,6 +233,9 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             })),
         ),
         (Method::GET, "/api/v1/settings", None),
+        (Method::GET, "/api/v1/audit", None),
+        (Method::GET, "/api/v1/alerts", None),
+        (Method::GET, "/api/v1/live", None),
         (
             Method::PUT,
             "/api/v1/settings",
@@ -256,46 +251,12 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/card-order",
             Some(json!({ "card_order": [] })),
         ),
-        // Accounts and roles. The panel-login half sends a wrong
-        // `current_password` to every one that would change something, so
-        // they stop at re-authentication — which is still not a 401.
-        (Method::GET, "/api/v1/me", None),
+        // The password. The panel-login half sends a wrong `current_password`,
+        // so it stops at re-authentication — which is still not a 401.
         (
             Method::PUT,
             "/api/v1/me/password",
             Some(json!({ "current_password": "nope", "new_password": "new-password" })),
-        ),
-        (Method::GET, "/api/v1/users", None),
-        (
-            Method::POST,
-            "/api/v1/users",
-            Some(json!({ "username": "x", "password": "password-x", "role": "viewer", "current_password": "nope" })),
-        ),
-        (
-            Method::PUT,
-            "/api/v1/users/intruder",
-            Some(json!({ "role": "viewer", "current_password": "nope" })),
-        ),
-        (
-            Method::DELETE,
-            "/api/v1/users/intruder",
-            Some(json!({ "current_password": "nope" })),
-        ),
-        (Method::GET, "/api/v1/roles", None),
-        (
-            Method::POST,
-            "/api/v1/roles",
-            Some(json!({ "role": { "name": "x", "grants": {} }, "current_password": "nope" })),
-        ),
-        (
-            Method::PUT,
-            "/api/v1/roles/viewer",
-            Some(json!({ "role": { "name": "viewer", "grants": {} }, "current_password": "nope" })),
-        ),
-        (
-            Method::DELETE,
-            "/api/v1/roles/viewer",
-            Some(json!({ "current_password": "nope" })),
         ),
         // The machine-management endpoints (#1623). Each request is one the
         // panel login can send harmlessly: a PID nothing holds, a unit no
@@ -531,10 +492,5 @@ async fn a_watch_tokens_capabilities_grant_nothing() {
         .await
         .unwrap();
     let body: serde_json::Value = resp.json().await.unwrap();
-    assert!(body.get("me").is_none(), "{body}");
-    for grant in ["shell", "files", "connect", "listen", "virt"] {
-        assert_eq!(body["grants"][grant]["ok"], false, "{grant}");
-        assert_eq!(body["grants"][grant]["why"], "not_granted", "{grant}");
-    }
-    assert_eq!(body["remote_access"]["full_access"], false);
+    assert_eq!(body["access"], serde_json::json!({ "ok": false }), "{body}");
 }

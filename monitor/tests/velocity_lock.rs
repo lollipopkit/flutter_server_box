@@ -54,7 +54,7 @@ async fn state() -> Arc<AppState> {
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-    common::seed_as_upgrade(&db, &config).await;
+    common::add_owner(&db).await;
     let state = AppState::new(Arc::new(config), db);
 
     // One sample, so the handler goes through the per-server processor rather
@@ -86,7 +86,7 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
 async fn velocity_survives_a_concurrent_collection_cycle() {
     let state = state().await;
     let srv = test_server(state.clone()).await;
-    let token = generate_token("admin", SECRET).unwrap();
+    let token = generate_token(SECRET).unwrap();
 
     // Stands in for the monitoring loop, which takes this lock once per cycle.
     let stop = Arc::new(AtomicBool::new(false));

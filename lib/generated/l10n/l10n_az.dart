@@ -2096,20 +2096,6 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func üçün Monitor agent-də $setting aktiv edilməlidir.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func üçün daha yeni Monitor agent lazımdır.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Monitor agent vasitəsilə uzaq yönləndirmələr daha yeni agent tələb edir: serverdə onu yeniləyin.';
-
-  @override
   String get rangeLive => 'Canlı';
 
   @override
@@ -2771,7 +2757,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.';
+      'Bu agent şifrələnməmiş HTTP üzərindən monitorinqdən başqa hər şeyi rədd edir. HTTPS ilə qoşulun və ya HTTP-yə həm agent-də ([remote_access] allow_insecure), həm də bu tətbiqdə icazə verin.';
 
   @override
   String get alerts => 'Xəbərdarlıqlar';
@@ -5049,35 +5035,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get copyLink => 'Keçidi kopyala';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Bu Monitor agent-dəki hesabınızın $func üçün icazəsi yoxdur. Agent-in adminindən istəyin.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func bu Monitor agent-ə HTTPS və ya həm agent-də, həm də bu tətbiqdə icazə verilmiş HTTP tələb edir.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func bu Monitor agent-də qurulmayıb; onun operatoru konfiqurasiya etməlidir.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Yalnız oxuma: bu hesab agent-dəki faylları gözdən keçirə bilər, amma dəyişə bilməz.';
-
-  @override
   String get monitorAccess => 'Giriş';
-
-  @override
-  String get monitorAccounts => 'Hesablar';
-
-  @override
-  String get monitorRoles => 'Rollar';
-
-  @override
-  String get monitorRole => 'Rol';
 
   @override
   String get monitorChangePassword => 'Şifrəni dəyiş';
@@ -5089,10 +5052,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorCurrentPassword => 'Hazırkı şifrəniz';
 
   @override
-  String get monitorReauthTip =>
-      'Girişi dəyişmək üçün şifrəniz yenidən tələb olunur.';
-
-  @override
   String get monitorPasswordTooShort => 'Ən azı 8 simvol';
 
   @override
@@ -5100,77 +5059,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get monitorErrReauth => 'Şifrəniz yanlış idi.';
-
-  @override
-  String get monitorErrLastAdmin =>
-      'Agent-in ən azı bir admin hesabı olmalıdır.';
-
-  @override
-  String get monitorErrConflict => 'Artıq mövcuddur və ya hələ istifadədədir.';
-
-  @override
-  String get monitorErrForbidden => 'Bunu yalnız admin edə bilər.';
-
-  @override
-  String get monitorRoleNameRule =>
-      'Kiçik hərflər, rəqəmlər, - və _, 32 simvola qədər';
-
-  @override
-  String get monitorGrantShell => 'Shell və əmrlər';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Terminal, proseslər, xidmətlər, konteynerlər, snippet-lər, enerji — agent hesabı ilə';
-
-  @override
-  String get monitorGrantVirt => 'Virtuallaşdırma';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Agentin veb panelində qoşulduğu Proxmox VE, libvirt və BMC-lər';
-
-  @override
-  String get monitorGrantFiles => 'Fayllar';
-
-  @override
-  String get monitorGrantConnect => 'Çıxan bağlantılar';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Lokal və dinamik port yönləndirmələri, uzaq masaüstü';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'İcazə verilən hədəflər (IP və ya CIDR, istəyə görə :port və ya :başlanğıc-son; hər sətirdə bir, boş = hər yer)';
-
-  @override
-  String get monitorGrantListen => 'Serverdə dinlə';
-
-  @override
-  String get monitorGrantListenTip => 'Uzaq port yönləndirmələri';
-
-  @override
-  String get monitorGrantListenPublic => 'Loopback olmayan ünvanlar';
-
-  @override
-  String get monitorGrantPorts => 'Port aralığı (boş = istənilən)';
-
-  @override
-  String get monitorGrantOff => 'Söndürülüb';
-
-  @override
-  String get monitorBuiltin => 'Daxili';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Hesabları, rolları və agent ayarlarını idarə edir';
-
-  @override
-  String get monitorYou => 'Siz';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Bu agent-in ayarlarını yalnız admin dəyişə bilər.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5404,10 +5292,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       'Bu monitor agenti ehtiyat nüsxə saxlaya bilmir. Agenti yeniləyin.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Monitor agentində yalnız administrator hesabı ehtiyat nüsxə saxlaya bilər.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5900,9 +5784,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get storagePools => 'ZFS pools';
 
   @override
-  String get storageWholeDisk => 'Whole disk';
-
-  @override
   String get storageNoFilesystem => 'No filesystem';
 
   @override
@@ -5986,9 +5867,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String storagePickDevices(Object count) {
     return 'Pick at least $count devices. What they hold is lost.';
   }
-
-  @override
-  String get storageNoFreeDevices => 'No free disk or partition.';
 
   @override
   String get storageCreateRaid => 'Create array';
@@ -6128,25 +6006,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'The confirmation text did not match.';
 
   @override
-  String get storageSudoPassword =>
-      'sudo password (if the agent\'s account needs one)';
-
-  @override
   String storageInUse(Object device) {
     return '$device is in use.';
   }
 
   @override
   String get storageBusy => 'Another change to the disks is running.';
-
-  @override
-  String get storageWorking => 'Changing the disks…';
-
-  @override
-  String get storageDone => 'Done';
-
-  @override
-  String get storageFailed => 'Did not finish';
 
   @override
   String get storageHealthRead => 'Read disk health';
@@ -6182,15 +6047,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String storageTesting(Object percent) {
     return 'Self-test: $percent% left';
   }
-
-  @override
-  String get storageLastTestPassed => 'Last self-test passed';
-
-  @override
-  String get storageLastTestFailed => 'Last self-test failed';
-
-  @override
-  String get storageLastTestAborted => 'Last self-test was stopped';
 
   @override
   String get storageGrowPartition => 'Grow partition';
@@ -6434,9 +6290,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Installs the NFS server with the machine\'s package manager.';
 
   @override
-  String get sharingInstalling => 'Installing…';
-
-  @override
   String get sharingAddShare => 'Add share';
 
   @override
@@ -6515,15 +6368,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Samba keeps its own passwords: set one for each account that connects.';
 
   @override
-  String get sharingAccount => 'Account';
-
-  @override
   String get sharingSetPassword => 'Set password';
-
-  @override
-  String sharingSetPasswordBody(Object user) {
-    return 'Sets the SMB password of $user.';
-  }
 
   @override
   String get sharingNewPassword => 'New SMB password';
@@ -6543,9 +6388,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get sharingAddClient => 'Add client';
-
-  @override
-  String get sharingSquash => 'Root on the client';
 
   @override
   String get sharingSquashRoot => 'Root is nobody';
@@ -6727,4 +6569,403 @@ class AppLocalizationsAz extends AppLocalizations {
   String webAppUpdate(String version) {
     return '$version versiyası mövcuddur. Onu Monitor panelində yeniləyin.';
   }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app dayanıb';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'İşləmir: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'Konteynerlərinin heç biri işləmir.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app sağlam deyil';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Sağlamlıq yoxlamasından keçmir: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app yenidən işləyir';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Bütün konteynerlər işləyir.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app: yeniləmə var';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version quraşdırıla bilər (indi $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array zəifləyib';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'Bir üzv sıradan çıxıb və ya yoxdur; massiv ehtiyatsız işləyir.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array yenidən sağlamdır';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Bütün üzvlər işləyir.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return '$pool pulu $health vəziyyətindədir';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Hansı cihaz olduğunu görmək üçün Yaddaşı açın.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return '$pool pulu yenidən onlayndır';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Bütün cihazlar işləyir.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device sıradan çıxır';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'SMART yoxlaması və ya öz-testi uğursuz oldu: içindəkiləri başqa yerə köçürün və diski dəyişin.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device diskində $count pis sektor var';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'Əvvəl $was idi. Sektor itirən disk çox vaxt tezliklə sıradan çıxır.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Yaddaşa texniki xidmət işləmədi: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Pulları yoxla və massivləri təftiş et';
+
+  @override
+  String get storageTaskSmartShort => 'Qısa SMART testi';
+
+  @override
+  String get storageTaskSmartLong => 'Uzun SMART testi';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo parol istədi: agenti root kimi işə salın və ya bu əmrlərə icazə verin (yuxarıda).';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'İcmal';
+
+  @override
+  String get monitorNotices => 'Bildirişlər';
+
+  @override
+  String get monitorAudit => 'Audit jurnalı';
+
+  @override
+  String get monitorLive => 'Sessiyalar və cihazlar';
+
+  @override
+  String get monitorNoAgents =>
+      'Hələ Monitor agenti vasitəsilə qoşulan server yoxdur.';
+
+  @override
+  String get monitorNotOffered =>
+      'Agentin bu versiyası bunu təklif etmir. Agenti yeniləyin.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'Agentin bu versiyası xəbərdarlıqları bildirmir.';
+
+  @override
+  String get monitorAlertsNone => 'Heç bir qayda işə düşməyib.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return '$duration davam edir';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agent $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version mövcuddur';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count oxunmamış';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Problemli tətbiqlər: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'Tətbiq yeniləmələri: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Yalnız yeniləmələr';
+
+  @override
+  String get monitorNoUpdates => 'Yeniləməsi olan tətbiq yoxdur.';
+
+  @override
+  String get monitorNoticesEmpty => 'Bildiriş yoxdur.';
+
+  @override
+  String get monitorMarkAllRead => 'Hamısını oxunmuş kimi qeyd et';
+
+  @override
+  String get monitorAuditExec => 'Əmrlər';
+
+  @override
+  String get monitorAuditMachine => 'Maşın idarəetməsi';
+
+  @override
+  String get monitorAuditListen => 'Dinlənilən portlar';
+
+  @override
+  String get monitorAuditTicket => 'Bağlantı biletləri';
+
+  @override
+  String get monitorAuditPush => 'Bildiriş kanalları';
+
+  @override
+  String get monitorAuditAdmin => 'Hesab';
+
+  @override
+  String get monitorAuditDenied => 'Rədd edildi';
+
+  @override
+  String get monitorLoadMore => 'Daha çox yüklə';
+
+  @override
+  String get monitorLiveSessions => 'Terminal sessiyaları';
+
+  @override
+  String get monitorLiveConnections => 'Bağlantılar';
+
+  @override
+  String get monitorLiveWatchTokens => 'Saat və vidcet tokenləri';
+
+  @override
+  String get monitorLiveDevices => 'Daxil olmuş cihazlar';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Cihazı unutduqda onun növbəti girişi hesab üzrə uğursuz cəhd limitinə daxil edilir. Bu, cihazı çıxarmır: parolu olan cihaz yenidən daxil olur. Cihazı kənarda saxlamaq üçün parolu dəyişin.';
+
+  @override
+  String get monitorLiveAttached => 'Qoşulub';
+
+  @override
+  String get monitorLiveDetached => 'Ayrılıb';
+
+  @override
+  String get monitorLiveEnd => 'Bitir';
+
+  @override
+  String get monitorLiveRevoke => 'Ləğv et';
+
+  @override
+  String get monitorLiveForget => 'Unut';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return '\"$name\" terminal sessiyası bitirilsin? İçində işləyənlər dayanacaq.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return '$name ünvanına bağlantı bitirilsin?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return '$name tokeni ləğv edilsin? Yenidən qurulana qədər yenilənməyəcək.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return '$name unudulsun?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Bitmə vaxtı: $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Ötürülən bağlantı';
+
+  @override
+  String get monitorLiveAccepted => 'Yönləndirilən bağlantı';
+
+  @override
+  String get monitorLiveConsole => 'Konsol';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count agent';
+  }
+
+  @override
+  String get monitorStatOnline => 'Onlayn';
+
+  @override
+  String get monitorStatFiring => 'Aktiv xəbərdarlıqlar';
+
+  @override
+  String get monitorStatUnread => 'Oxunmamış';
+
+  @override
+  String get monitorStatUpdates => 'Yeniləmələr';
+
+  @override
+  String get monitorAuditEmpty => 'Uyğun qeyd yoxdur.';
+
+  @override
+  String get monitorLiveNoSessions => 'Açıq terminal sessiyası yoxdur.';
+
+  @override
+  String get monitorLiveNoConnections => 'Yönləndirilən bağlantı yoxdur.';
+
+  @override
+  String get monitorLiveNoTokens => 'Qoşulmuş saat və ya vidcet yoxdur.';
+
+  @override
+  String get monitorLiveNoDevices => 'Daxil olmuş cihaz yoxdur.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Bu agent tətbiqdən köhnədir və istifadəçi adı istəyir. Agenti yeniləyin.';
+
+  @override
+  String get monitorUpdateAgent => 'Agenti yenilə';
+
+  @override
+  String get monitorAgentTooOldTip => 'Yeniləmə addımları Monitor tabındadır.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'Bu agent tək parol dövründən əvvəlkidir və tətbiq daxil ola bilmir. Yeniləmədən sonra onun parolu ən köhnə admin hesabının parolu olur.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest çıxıb; bu agent $running işlədir.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Serverdə agentin quraşdırıldığı hesabla işə salın:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'Terminal onu işlədir. Agent bütün sistem üçün quraşdırılıbsa və terminal SSH ilədirsə, sudo orada parol soruşacaq.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'Tətbiq bu serverdə terminal aça bilmir: əmri orada özünüz işlədin.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'Docker-dədir? Yeni imici çəkib konteyneri yenidən yaradın.';
+
+  @override
+  String get monitorUpdateAfter =>
+      'Yenidən başladıqdan sonra Monitor tabını yeniləyin.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Terminalda işə sal';
+
+  @override
+  String get monitorHowToUpdate => 'Necə yeniləmək';
+
+  @override
+  String get monitorUpdateNix =>
+      'NixOS modulu ilə quraşdırılıb: sistem konfiqurasiyanızdan yeniləyin və yenidən qurun.';
+
+  @override
+  String get noticeAgentUpdate => 'Agent üçün yeniləmə var';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Hesab adı';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'Bu agent hələ hesab adı və parolla daxil olur: bu tətbiqin əvvəl istifadə etdiyi ad (adətən admin) və saxlanmış parol.';
+
+  @override
+  String get monitorUpdateNow => 'İndi yenilə';
+
+  @override
+  String get monitorUpdating => 'Yenilənir…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'Agent yenidən başlayır; bağlantı bir neçə saniyəyə qayıdır…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Yeniləndi: agent $version işlədir.';
+  }
+
+  @override
+  String get monitorUpdateFailed => 'Yeniləmə alınmadı. Çıxışı yuxarıdadır.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'Agent quraşdırıcını özündən ayrı işlədir, ona görə yenidən başlaması yeniləməni dayandırmır. Bu vaxt bağlantı bir neçə saniyə kəsilir; bu pəncərə yeniləməni yenidən başlamadan sonra da izləyir.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo parolu';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'Burada quraşdırıcıya root lazımdır (OpenRC xidməti). Parol bir dəfə istifadə olunur və saxlanmır.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo bu parolu qəbul etmədi.';
+
+  @override
+  String get monitorUpdateNoAnswer => 'Agent qayıtmadı. Serverdə yoxlayın.';
 }

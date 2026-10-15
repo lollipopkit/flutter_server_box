@@ -46,11 +46,12 @@ const apps: StackApp[] = [
   { manifest: manifest('jellyfin', 'Media', ['media']), stack: null, job: null, proxy: false, source: 'local' },
 ]
 
-const caps = (admin: boolean) => ({ features: ['stacks'], stacks: [], me: { admin } }) as unknown as Capabilities
+const caps = (ok: boolean) =>
+  ({ features: ['stacks'], stacks: [], access: ok ? { ok } : { ok, why: 'insecure_transport' } }) as unknown as Capabilities
 
 beforeEach(() => {
   vi.clearAllMocks()
-  servers.list = [{ id: 'local', url: '', token: 't', username: 'u' }]
+  servers.list = [{ id: 'local', url: '', token: 't' }]
   servers.currentId = 'local'
   mocked.listStacks.mockResolvedValue({ apps: structuredClone(apps) })
 })
@@ -69,11 +70,11 @@ describe('the App Store', () => {
     expect(screen.getByText('Media does things.')).toBeInTheDocument()
   })
 
-  it("opens an app's page: an admin gets it, anyone else is told to ask", async () => {
+  it("opens an app's page: set up where the account may act, otherwise told why not", async () => {
     capabilitiesStore.byServer = { local: caps(false) }
     const first = render(StoreApp)
     await fireEvent.click(await screen.findByText('Media does things.'))
-    expect(await screen.findByText('An admin can set this app up.')).toBeInTheDocument()
+    expect(await screen.findByText('This needs HTTPS, or a proxy on the same host.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Get' })).toBeNull()
     first.unmount()
 
@@ -84,7 +85,7 @@ describe('the App Store', () => {
     expect(screen.getAllByText('Media team').length).toBeGreaterThan(0)
   })
 
-  it("marks an app of the server's own folder, and lets an admin read the catalog again", async () => {
+  it("marks an app of the server's own folder, and reads the catalog again", async () => {
     capabilitiesStore.byServer = { local: caps(true) }
     mocked.refreshStacks.mockResolvedValue({ apps: structuredClone(apps) })
     render(StoreApp)

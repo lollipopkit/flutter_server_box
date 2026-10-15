@@ -2,7 +2,7 @@
 //! `SKILL.md` and the files it points to (`fl_pi_llm::host::skills`). Every
 //! task is told the enabled ones and gets the `skill` tool to load them.
 //!
-//! An admin installs one from a GitHub repository as `npx skills add` takes
+//! The operator installs one from a GitHub repository as `npx skills add` takes
 //! it, or puts a folder there; `agent_skill` (migration 031) remembers where
 //! each came from and whether it is offered.
 

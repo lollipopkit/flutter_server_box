@@ -4,7 +4,7 @@ description: 使用 serverbox-desk 为 Monitor 面板的桌面开发第三方应
 ---
 
 Desk 应用是一个静态网页包，由 Monitor 面板在窗口中的沙箱 frame 里运行。它打包为
-`.fsba` 文件，由管理员安装并批准（见 [Desk 应用](/docs/zh/advanced/monitor-desk-apps/)）。
+`.fsba` 文件，在面板中安装并批准（见 [Desk 应用](/docs/zh/advanced/monitor-desk-apps/)）。
 完整设计（包括消息协议）见
 [`docs/dev/desk-sys.md`](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/dev/desk-sys.md)。
 
@@ -52,7 +52,7 @@ await desk.storage.set('count', count + 1)
 | 窗口 | `setTitle`、`setAppName`、`setIcon`、`setBadge`、`setAppState`（窗口恢复时带回的 JSON，最多 16 KiB，不能存放密钥）、`close` |
 | 窗口栏 | `toolbar({ title, subtitle, actions })`、`menus([...])`；由桌面绘制，使用时发送 `action` 事件 |
 | 通知 | `notify({ title, body, level })`，需要 `notifications` 权限 |
-| 存储 | `storage.get/set/remove/keys`：按应用和账号保存在 agent 上的 JSON（每个应用 256 KiB） |
+| 存储 | `storage.get/set/remove/keys`：按应用保存在 agent 上的 JSON（每个应用 256 KiB） |
 | 其他应用 | `open(appId, { path })` 打开另一个应用，可以带上文件或目录；`handlers(path, kind)` 列出能打开它的应用 |
 | 后台 | `keepAlive(reason)`，需要 `background` 权限 |
 | 后端 | `backend(method, params)`，仅 `wasm` 应用 |
@@ -63,7 +63,7 @@ await desk.storage.set('count', count + 1)
 
 ## 与桌面外观一致
 
-`connect()` 会把桌面的样式表加载到页面中，让页面跟随桌面的浅色或深色模式，并应用账号
+`connect()` 会把桌面的样式表加载到页面中，让页面跟随桌面的浅色或深色模式，并应用桌面
 所选主题的 token。界面应使用它的 class 和 token，而不是自定义颜色：
 
 ```html
@@ -127,22 +127,23 @@ await desk.storage.set('count', count + 1)
 
 ## 后端（`wasm`）
 
-agent 使用解释器运行 `backend.wasm`，每次调用使用新的实例，并以发起调用的账号身份运行。
+agent 使用解释器运行 `backend.wasm`，每次调用使用新的实例，并以 agent 运行所用的系统账户运行。
 模块导出 `memory`、`sbm_alloc(len) -> ptr` 和 `sbm_call(ptr, len) -> (ptr << 32) | len`。
-每次调用收到 JSON `{ method, params, caller: { username, admin } }`，返回
+每次调用收到 JSON `{ method, params }`，返回
 `{ "ok": … }` 或 `{ "error": … }`。模块导入 `sbm.host(ptr, len)` 调用宿主函数，参数为
 `{ fn, args }`：
 
 | 函数 | 需要 |
 |---|---|
 | `log` | — |
-| `kv.get`、`kv.set`、`kv.remove`、`kv.keys` | —（调用账号在该应用中的存储） |
+| `kv.get`、`kv.set`、`kv.remove`、`kv.keys` | —（该应用自己的存储） |
 | `status` | `status` |
-| `fs.list`、`fs.read` | `files.read` 及调用者的 `files` 授权；每次读取最多 1 MiB |
-| `exec` | `exec` 及调用者的 `shell` 授权 |
+| `fs.list`、`fs.read` | `files.read`；每次读取最多 1 MiB |
+| `exec` | `exec` |
 
-每次调用都有限制：10 秒、64 MiB 内存、1000 次宿主调用、1 MiB 请求和 4 MiB 返回。每个
-agent 同时最多运行 8 个调用，每个账号最多 2 个；超出时返回 `busy`。
+每次调用都有限制：10 秒、64 MiB 内存、1000 次宿主调用、1 MiB 请求和 4 MiB 返回。同时最多
+运行 8 个调用；超出时返回 `busy`。`fs.*` 和 `exec` 还遵循 agent 的传输规则：需要 HTTPS 或
+同机调用方，除非设置了 `[remote_access] allow_insecure`。
 
 [`monitor/examples/desk-app-uptime`](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor/examples/desk-app-uptime)
 是一个完整的 Rust 示例：
@@ -158,5 +159,5 @@ COPYFILE_DISABLE=1 tar -czf example.uptime.fsba manifest.json backend.wasm ui
 
 ## 测试
 
-以管理员身份在 **Settings → Apps → Installed** 中安装并批准应用包。每个新包都需要重新
+在 **Settings → Apps → Installed** 中安装并批准应用包。每个新包都需要重新
 批准，所以一次测试流程是：打包、安装、批准、打开。移除应用会清除它保存的数据。

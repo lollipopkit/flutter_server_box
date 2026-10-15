@@ -30,7 +30,6 @@ void main() {
     required String id,
     required String name,
     String addr = addr,
-    String? user = 'admin',
     String? pwd = 'secret',
     bool ignoreCert = false,
     bool allowInsecure = false,
@@ -38,7 +37,6 @@ void main() {
     return spiFixture(name: name, id: id).copyWith(
       monitorHttp: MonitorHttpCredential(
         addr: addr,
-        user: user,
         pwd: pwd,
         ignoreCert: ignoreCert,
         allowInsecure: allowInsecure,
@@ -168,7 +166,7 @@ void main() {
     test('drops a server when no scoped token could be issued', () {
       final result = payload(
         selectedIds: ['a'],
-        servers: [monitorSpi(id: 'a', name: 'A', user: '', pwd: '')],
+        servers: [monitorSpi(id: 'a', name: 'A', pwd: '')],
       );
 
       expect(result['servers'], isEmpty);

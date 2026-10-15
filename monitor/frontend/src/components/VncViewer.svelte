@@ -66,7 +66,9 @@
         end(
           refused
             ? $LL.desktopPasswordRefused()
-            : (channel.reason ?? (event.detail?.clean ? null : $LL.desktopDropped())),
+            : channel.code === 'password_changed'
+              ? $LL.passwordChangedSignIn()
+              : (channel.reason ?? (event.detail?.clean ? null : $LL.desktopDropped())),
         )
       })
     })()

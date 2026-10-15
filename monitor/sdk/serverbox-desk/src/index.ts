@@ -25,7 +25,7 @@ export interface Hello {
   /// The desk's design system for this frame (the agent's
   /// `/desk-app/desk.css`); absent from a desk before it served one.
   ui?: { stylesheet: string } | null
-  /// What the admin approved that the desk itself grants (`notifications`,
+  /// What was approved that the desk itself grants (`notifications`,
   /// `background`).
   permissions: string[]
 }

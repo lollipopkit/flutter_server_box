@@ -13,6 +13,7 @@
   import { useDeskPrefs } from '../../deskState.svelte'
   import { stackOf } from '../../../components/stack/apps'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
+  import { canAct } from '../../../lib/access'
   import { servers } from '../../../lib/servers.svelte'
 
   interface Props {
@@ -24,7 +25,10 @@
 
   const { spec, onback, onstack }: Props = $props()
   const stackId = $derived(stackOf(spec.id))
-  const admin = $derived(capabilitiesStore.byServer[servers.currentId]?.me?.admin === true)
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId])
+  /// Whether the account may act over this link: setting up, changing and
+  /// removing all need it.
+  const canChange = $derived(canAct(caps))
   const desk = useDeskPrefs()
   const prefs = $derived(desk.prefs)
   const title = $derived(spec.title($LL))
@@ -46,7 +50,7 @@
   {#if !prefs}
     <div class="flex justify-center py-12"><Spinner size={48} /></div>
   {:else}
-    {#if stackId && admin && onstack}
+    {#if stackId && canChange && onstack}
       <Group>
         <Row label={$LL.stackManage()} sub={$LL.stackManageSub()} onclick={() => onstack(stackId)} />
       </Group>

@@ -620,9 +620,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   /// Opens what a plain click means for this entry: enter it, pick it, or
   /// hand it to the backend's own opener.
-  /// Nothing here can be changed — see [FileBackendTraits.readOnly].
-  bool get _readOnly => backend.traits.readOnly;
-
   void _open(FileEntry entry, String full) {
     if (entry.isDir) {
       _go(() => _path.enter(entry.name));
@@ -696,11 +693,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       // The three that mutate or select are guarded rather than the whole
       // handler: moving the cursor, entering a directory, going up and
       // clearing are what a picker is *for*, and stay.
-      case LogicalKeyboardKey.f2 when !_isPicking && !_readOnly:
+      case LogicalKeyboardKey.f2 when !_isPicking:
         final entry = _cursorOrOnlySelected;
         if (entry == null) return KeyEventResult.ignored;
         _rename(entry);
-      case LogicalKeyboardKey.delete when !_isPicking && !_readOnly:
+      case LogicalKeyboardKey.delete when !_isPicking:
         final targets = _selecting
             ? _selectedEntries
             : [?_cursorEntry];
@@ -1023,19 +1020,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       text: libL10n.select,
       onTap: () => _toggle(entry),
     ),
-    if (!_readOnly) ...[
-      ContextMenuAction(
-        icon: Icons.abc,
-        text: libL10n.rename,
-        onTap: () => _rename(entry),
-      ),
-      ContextMenuAction(
-        icon: Icons.delete,
-        text: libL10n.delete,
-        destructive: true,
-        onTap: () => _delete(entry),
-      ),
-    ],
+    ContextMenuAction(
+      icon: Icons.abc,
+      text: libL10n.rename,
+      onTap: () => _rename(entry),
+    ),
+    ContextMenuAction(
+      icon: Icons.delete,
+      text: libL10n.delete,
+      destructive: true,
+      onTap: () => _delete(entry),
+    ),
     ContextMenuAction(
       icon: MingCute.copy_line,
       text: l10n.copyPath,
@@ -1044,7 +1039,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         Toast.success(libL10n.success);
       },
     ),
-    if (backend.traits.permissions && !_readOnly)
+    if (backend.traits.permissions)
       ContextMenuAction(
         icon: Icons.security,
         text: libL10n.permission,
@@ -1111,14 +1106,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       // reachable only by secondary tap, which a phone does not have, so on
       // every mobile build the one visible `+` in this tab belonged to the
       // *server* list and adding a file had no button at all.
-      // Said where the `+` would be, so its absence is explained.
-      if (_readOnly)
-        BarAction(
-          icon: Icons.lock_outline,
-          label: l10n.monitorFilesReadOnly,
-          onTap: () => Toast.show(l10n.monitorFilesReadOnly),
-        )
-      else if (!widget.args.isPickFile && !widget.args.isPickDir)
+      if (!widget.args.isPickFile && !widget.args.isPickDir)
         // A menu that drops from this button rather than a dialog in the
         // middle of the page.
         BarAction.menu(
@@ -1161,7 +1149,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                   // entry. An entry's own menu sits in front of this one and
                   // wins, so this is what is left: the directory itself.
                 .onSecondary(
-                  widget.args.isPickFile || widget.args.isPickDir || _readOnly
+                  widget.args.isPickFile || widget.args.isPickDir
                       ? null
                       : (at) => showContextMenu(
                           context,
@@ -1457,12 +1445,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                 onPressed: () => _sendAll(entries, refOf),
                 icon: const Icon(Icons.drive_file_move_outline),
               ),
-            if (!_readOnly)
-              IconButton(
-                tooltip: libL10n.delete,
-                onPressed: () => _deleteAll(entries),
-                icon: Icon(Icons.delete, color: UIs.textRed.color),
-              ),
+            IconButton(
+              tooltip: libL10n.delete,
+              onPressed: () => _deleteAll(entries),
+              icon: Icon(Icons.delete, color: UIs.textRed.color),
+            ),
           ],
         ),
       ),
@@ -1498,7 +1485,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// Only where the browser can say what a path here is called: without
   /// [FileBrowserArgs.refOf] there is no destination to name.
   Widget _wrapDropTarget(Widget child) {
-    if (widget.args.refOf == null || _isPicking || _readOnly) return child;
+    if (widget.args.refOf == null || _isPicking) return child;
     return DropTarget(
       onDragDone: (details) => _onDropped(details.files),
       onDragEntered: (_) => _dropping.value = true,

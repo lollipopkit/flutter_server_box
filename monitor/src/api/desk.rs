@@ -2,13 +2,16 @@
 //! agent, and what the agent has to tell it.
 //!
 //! - `GET /desk`, `PUT /desk/preferences`: accent, wallpaper, the dock and
-//!   the desk's icons, per account.
-//! - `GET/PUT/DELETE /desk/wallpaper`: one custom image per account.
+//!   the desk's icons.
+//! - `GET/PUT/DELETE /desk/wallpaper`: one custom image.
 //! - `GET/PUT /desk/session?device=`: the windows one browser had open, per
-//!   account and device. A write names the revision it was made from and is
+//!   device. A write names the revision it was made from and is
 //!   refused (409, with what is current) when another tab moved it since.
 //! - `GET /desk/notifications`, `POST /desk/notifications/read`: what the
-//!   machine said (a monitoring rule that started firing), read per account.
+//!   machine said (a monitoring rule that started firing), and which were read.
+//! - `GET /alerts`: the monitoring rules firing at the last check, each with
+//!   the reading that crossed it and since when: what is wrong now, where a
+//!   notification is what happened.
 //! - `/desk/apps/{app}/storage`: what an app keeps for itself, see
 //!   `api::desk_storage`.
 //! - `/desk/themes*`: theme packages, see `api::desk_themes`.
@@ -18,12 +21,12 @@
 //!
 //! # Privilege
 //!
-//! Any signed-in account: a desk is its own, and what a notification says is
-//! what `/status` already shows to every role. Nothing here reaches the
+//! The signed-in account: what a notification says is what `/status`
+//! already shows. Nothing here reaches the
 //! machine. Every check of shape is here, so a stored row is one the panel
 //! can draw; the panel's own checks are for its forms only.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 use futures::StreamExt;
@@ -35,6 +38,7 @@ use tokio::sync::broadcast;
 
 use super::authz::{self, Caller};
 use super::server::AppState;
+use crate::monitoring::rules::Firing;
 
 /// The wallpapers the panel ships, by id (`desk/wallpapers`).
 pub const WALLPAPER_PRESETS: &[&str] = &["bloom", "dusk", "nightfall", "graphite"];
@@ -76,14 +80,33 @@ pub struct DeskHub {
     events: broadcast::Sender<DeskEvent>,
     /// The monitoring rules firing at the last check: a notification is for a
     /// rule that starts, not for every cycle it stays over.
-    firing: Mutex<HashSet<String>>,
+    firing: Mutex<FiringNow>,
+}
+
+/// What `/alerts` answers. In memory: an agent that restarts knows again at
+/// its first check, and a rule firing across the restart starts again.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct FiringNow {
+    /// When the rules were last checked; absent before the first check.
+    pub checked_at: Option<String>,
+    /// In the configured rules' order.
+    pub alerts: Vec<Alert>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Alert {
+    #[serde(flatten)]
+    pub firing: Firing,
+    /// The first check it was found firing at, without a check in between
+    /// that found it not.
+    pub since: String,
 }
 
 impl Default for DeskHub {
     fn default() -> Self {
         Self {
             events: broadcast::channel(64).0,
-            firing: Mutex::new(HashSet::new()),
+            firing: Mutex::new(FiringNow::default()),
         }
     }
 }
@@ -98,24 +121,41 @@ impl DeskHub {
         let _ = self.events.send(event);
     }
 
-    /// The rules firing now, by name, with what each says: a notification for
-    /// each that was not firing at the last check.
-    pub async fn rules_checked(&self, db: &SqlitePool, firing: Vec<(String, String)>) {
-        let started: Vec<(String, String)> = {
-            let mut was = self.firing.lock().unwrap_or_else(|e| e.into_inner());
-            let now: HashSet<String> = firing.iter().map(|(name, _)| name.clone()).collect();
-            let started = firing
-                .into_iter()
-                .filter(|(name, _)| !was.contains(name))
+    /// The rules firing now: a notification for each that was not firing at
+    /// the last check, and what `/alerts` answers until the next.
+    pub async fn rules_checked(&self, db: &SqlitePool, firing: Vec<Firing>) {
+        let now = chrono::Utc::now().to_rfc3339();
+        let started: Vec<Firing> = {
+            let mut state = self.firing.lock().unwrap_or_else(|e| e.into_inner());
+            let mut was: HashMap<String, String> = state
+                .alerts
+                .drain(..)
+                .map(|alert| (alert.firing.rule, alert.since))
                 .collect();
-            *was = now;
+            let mut started = Vec::new();
+            for fired in firing {
+                let since = match was.remove(&fired.rule) {
+                    Some(since) => since,
+                    None => {
+                        started.push(fired.clone());
+                        now.clone()
+                    }
+                };
+                state.alerts.push(Alert { firing: fired, since });
+            }
+            state.checked_at = Some(now);
             started
         };
-        for (rule, body) in started {
-            if let Err(e) = self.notify(db, Level::Warning, Source::Alert, &rule, &body, None).await {
-                tracing::warn!("desk notification for rule '{rule}' not stored: {e}");
+        for fired in started {
+            if let Err(e) = self.notify(db, Level::Warning, Source::Alert, &fired.rule, &fired.message, None).await {
+                tracing::warn!("desk notification for rule '{}' not stored: {e}", fired.rule);
             }
         }
+    }
+
+    /// The rules firing at the last check.
+    pub fn firing(&self) -> FiringNow {
+        self.firing.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     pub async fn notify(
@@ -188,6 +228,8 @@ pub enum Source {
     /// A disk, array, pool or maintenance task (`storage_watch`):
     /// `storage:<what>`.
     Storage(String),
+    /// The agent itself: a newer release (`api::update`).
+    Agent,
 }
 
 impl Source {
@@ -196,6 +238,7 @@ impl Source {
             Source::Alert => "alert".into(),
             Source::Stack(id) => format!("stack:{id}"),
             Source::Storage(what) => format!("storage:{what}"),
+            Source::Agent => "agent".into(),
         }
     }
 }
@@ -545,22 +588,11 @@ macro_rules! require {
     }};
 }
 
-/// The caller and its account id. A token for an account deleted since is
-/// already 401 in `jwt_caller`; the id lookup failing after it is the same.
+/// The caller and its account id.
 pub(crate) async fn account(req: &HttpRequest, state: &AppState) -> Result<(Caller, i64), HttpResponse> {
     let caller = authz::jwt_caller(req, state).await?;
-    match user_id(&state.db, &caller.username).await {
-        Ok(Some(id)) => Ok((caller, id)),
-        Ok(None) => Err(HttpResponse::Unauthorized().finish()),
-        Err(e) => Err(internal_error(&e)),
-    }
-}
-
-async fn user_id(db: &SqlitePool, username: &str) -> Result<Option<i64>, sqlx::Error> {
-    sqlx::query_scalar("SELECT id FROM users WHERE username = ?")
-        .bind(username)
-        .fetch_optional(db)
-        .await
+    let id = caller.id;
+    Ok((caller, id))
 }
 
 pub(crate) fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
@@ -764,6 +796,12 @@ pub async fn put_session(
     }
 }
 
+/// `GET /alerts`: the rules firing at the last check, see [`FiringNow`].
+pub async fn alerts(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(account(&req, &state).await);
+    Ok(HttpResponse::Ok().json(&state.desk.firing()))
+}
+
 pub async fn notifications(
     req: HttpRequest,
     query: web::types::Query<NotificationQuery>,
@@ -865,7 +903,7 @@ async fn mark_ids(db: &SqlitePool, user: i64, ids: &[i64]) -> Result<(), sqlx::E
 pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (caller, user) = require!(account(&req, &state).await);
     let mut rx = state.desk.subscribe();
-    let mut changes = state.grants_changed.subscribe();
+    let mut changes = state.password_changed.subscribe();
     let state = state.get_ref().clone();
     let stream = async_stream::stream! {
         yield Ok::<_, std::io::Error>(Bytes::from_static(b": ok\n\n"));
@@ -910,7 +948,7 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
 /// Whether the account behind [caller] is the one that opened the stream:
 /// still there, and its password not changed since.
 async fn still_signed_in(state: &AppState, caller: &Caller) -> bool {
-    authz::caller_named(state, &caller.username)
+    authz::caller(state)
         .await
         .is_some_and(|now| now.since == caller.since)
 }

@@ -235,15 +235,10 @@ mod over_http {
             ..Default::default()
         };
         let mut remote = config.get_remote_access();
-        remote.fs.enabled = Some(true);
-        // The root of the filesystem [home] is on — on Windows a drive, and not
-        // necessarily the one `/` means to this process.
-        let whole = home.ancestors().last().unwrap().to_string_lossy().into_owned();
-        remote.fs.roots = vec![whole];
         // Plaintext from the test client, which is loopback anyway.
         remote.allow_insecure = true;
         config.remote_access = Some(remote);
-        let state: Arc<AppState> = common::upgraded_state(config).await;
+        let state: Arc<AppState> = common::owned_state(config).await;
         web_test::server(move || {
             let state = state.clone();
             async move {
@@ -255,7 +250,7 @@ mod over_http {
     }
 
     fn token() -> String {
-        generate_token("admin", SECRET).unwrap()
+        generate_token(SECRET).unwrap()
     }
 
     /// Percent-encodes a path for a query string.
@@ -271,7 +266,7 @@ mod over_http {
     }
 
     #[ntex::test]
-    async fn an_admin_with_the_whole_filesystem_still_cannot_reach_it() {
+    async fn the_whole_filesystem_still_cannot_reach_it() {
         let dir = tempfile::tempdir().unwrap();
         let home = std::fs::canonicalize(dir.path()).unwrap();
         for name in ["serverbox_monitor.db", "jwt.secret", "key.pem", "notes.txt"] {

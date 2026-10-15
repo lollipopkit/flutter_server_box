@@ -733,7 +733,7 @@ impl Manifest {
     /// other. With [follow], a port in the range the dialog suggests from
     /// (the default and the next [`PORT_SEARCH`]) that has been taken since
     /// moves to the next free one there; a port chosen outside it is the
-    /// admin's choice and is refused instead. Answers the ports moved.
+    /// operator's choice and is refused instead. Answers the ports moved.
     pub fn settle_ports(&self, settings: &mut BTreeMap<String, Value>, machine: &Machine, follow: bool) -> Result<Vec<MovedPort>, Invalid> {
         let mut used = BTreeSet::new();
         let mut moved = Vec::new();
@@ -1151,7 +1151,7 @@ mod tests {
         let mut s = both();
         let refused = m.settle_ports(&mut s, &machine, false).unwrap_err();
         assert_eq!((refused.field.as_str(), refused.error), ("admin", "portTaken"));
-        // Chosen outside the suggested range: the admin's to change.
+        // Chosen outside the suggested range: the operator's to change.
         let mut s = BTreeMap::from([("port".to_string(), Value::from(9999)), ("admin".to_string(), Value::from(8082))]);
         assert_eq!(m.settle_ports(&mut s, &machine, true).unwrap_err().field, "port");
     }

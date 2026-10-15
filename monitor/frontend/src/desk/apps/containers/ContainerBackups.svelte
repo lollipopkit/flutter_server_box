@@ -1,5 +1,5 @@
 <script lang="ts">
-  /// The Containers app's backups (`/container-backups`, admin): where they
+  /// The Containers app's backups (`/container-backups`): where they
   /// go (a backup disk's folder) and how many are kept, the schedules, each
   /// backup's containers and what it archived and left out, to restore or
   /// remove; and the backup or restore running, as it goes.
