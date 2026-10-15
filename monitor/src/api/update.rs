@@ -294,8 +294,8 @@ pub async fn start(
     }
     let dir = state.update.dir();
     let script = format!(
-        "cd '{}' || exit 1\n{}",
-        dir.to_string_lossy().replace('\'', "'\\''"),
+        "cd {} || exit 1\n{}",
+        sbm_parser::script::shell_quote_unix(&dir.to_string_lossy()),
         agent::start_update_script()
     );
     let stdin = body.password.as_deref().map(|p| format!("{p}\n"));

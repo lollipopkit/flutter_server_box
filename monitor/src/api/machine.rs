@@ -190,7 +190,7 @@ pub(crate) async fn as_root_private(
 ) -> std::io::Result<ExecResponse> {
     let file = PrivateScript::write(text)?;
     let path = file.path.to_string_lossy();
-    as_root(&format!("sh '{}'", path.replace('\'', "'\\''")), password, limits).await
+    as_root(&format!("sh {}", sbm_parser::script::shell_quote_unix(&path)), password, limits).await
 }
 
 /// No `sudo` to run it through and no owner-only mode to give the file, so

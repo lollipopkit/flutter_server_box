@@ -168,7 +168,7 @@ impl ContainerCmd {
 /// someone has to remember to skip.
 pub fn join_commands(commands: &[String], separator: &str) -> String {
     let joined = commands.join(&format!("\necho {separator}\n"));
-    format!("sh -c '{}'", joined.replace('\'', "'\\''"))
+    format!("sh -c {}", crate::script::shell_quote_unix(&joined))
 }
 
 /// Split a batched answer back into one segment per command.
