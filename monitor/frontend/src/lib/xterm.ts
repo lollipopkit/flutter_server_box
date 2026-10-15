@@ -6,7 +6,14 @@
 /// and the fit-after-a-frame dance is what keeps the size sent to the agent
 /// correct.
 import { attachProgramStatus, ProgramStatusRecords } from './programStatus'
-import type { Renderer, TerminalSession } from './terminal.svelte'
+import type { Renderer } from './terminal.svelte'
+
+/// Where what is typed and the size go: a [`TerminalSession`], or a guest's
+/// console socket.
+export interface TerminalSink {
+  input(data: string): void
+  resize(cols: number, rows: number): void
+}
 
 /// How the terminal looks and sounds (Settings → Apps → Terminal).
 export interface TerminalLook {
@@ -139,7 +146,7 @@ function ring() {
 
 export async function mountTerminal(
   host: HTMLElement,
-  session: TerminalSession,
+  session: TerminalSink,
   look: TerminalLook = {},
 ): Promise<TerminalHandle> {
   // The stylesheet comes along in the same dynamic chunk, so it is fetched

@@ -5,7 +5,7 @@
   import { api } from '../../../lib/api'
   import { RelayChannel, parseControl } from '../../../lib/desktop.svelte'
   import { theme } from '../../../lib/theme.svelte'
-  import { terminalTheme } from '../../../lib/xterm'
+  import { mountTerminal, type TerminalHandle } from '../../../lib/xterm'
   import { openConsoleSocket, resizeMessage } from '../../../lib/virtConsole'
   import { virtErrorText } from '../../../lib/virt'
   import { onDestroy } from 'svelte'
@@ -33,14 +33,13 @@
   let command = $state<string | null>(null)
   let socket: WebSocket | null = null
   let host = $state<HTMLDivElement | null>(null)
-  let term: import('@xterm/xterm').Terminal | null = $state.raw(null)
+  let term: TerminalHandle | null = $state.raw(null)
 
   $effect(() => {
     // The desk's mode or theme changed: the console follows, as Terminal does.
     void theme.revision
-    if (term) term.options.theme = terminalTheme()
+    term?.setTheme()
   })
-  let resizeObserver: ResizeObserver | null = null
   /// Rises on every close, so an open still waiting on the agent when the
   /// view closed (or another open began) drops what it gets.
   let attempt = 0
@@ -49,8 +48,6 @@
 
   function close() {
     attempt++
-    resizeObserver?.disconnect()
-    resizeObserver = null
     term?.dispose()
     term = null
     if (socket && socket.readyState !== WebSocket.CLOSED) socket.close()
@@ -98,37 +95,28 @@
   }
 
   async function attachTerminal(ws: WebSocket, gone: () => boolean) {
-    const [{ Terminal }, { FitAddon }] = await Promise.all([
-      import('@xterm/xterm'),
-      import('@xterm/addon-fit'),
-      import('@xterm/xterm/css/xterm.css'),
-    ])
-    // Closed while the terminal loaded: `close` ended the socket already.
-    if (gone()) return
-    term = new Terminal({
-      cursorBlink: true,
-      fontSize: 13,
-      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-      theme: terminalTheme(),
-    })
-    const fit = new FitAddon()
-    term.loadAddon(fit)
-    if (host) term.open(host)
+    if (!host) return
     const encoder = new TextEncoder()
-    const decoder = new TextDecoder()
-    term.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) ws.send(encoder.encode(data))
+    const send = (data: Uint8Array | string) => {
+      if (ws.readyState === WebSocket.OPEN) ws.send(data)
+    }
+    const handle = await mountTerminal(host, {
+      input: (data) => send(encoder.encode(data)),
+      resize: (cols, rows) => send(resizeMessage(cols, rows)),
     })
-    term.onResize(({ cols, rows }) => {
-      if (ws.readyState === WebSocket.OPEN) ws.send(resizeMessage(cols, rows))
-    })
+    // Closed while the terminal loaded: `close` ended the socket already.
+    if (gone()) {
+      handle.dispose()
+      return
+    }
+    term = handle
     ws.onmessage = (event) => {
       if (typeof event.data === 'string') {
         const control = parseControl(event.data)
         if (control?.type === 'error') error = control.message || control.code
         return
       }
-      term?.write(decoder.decode(new Uint8Array(event.data as ArrayBuffer), { stream: true }))
+      handle.renderer.write(new Uint8Array(event.data as ArrayBuffer), () => {})
     }
     ws.onclose = () => {
       if (phase === 'open') {
@@ -136,15 +124,8 @@
         if (!error) error = $LL.virtConsoleEnded()
       }
     }
-    if (host && typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => fit.fit())
-      resizeObserver.observe(host)
-    }
-    await new Promise((r) => requestAnimationFrame(r))
-    if (gone()) return
-    fit.fit()
-    ws.send(resizeMessage(term.cols, term.rows))
-    term.focus()
+    send(resizeMessage(handle.renderer.cols, handle.renderer.rows))
+    handle.focus()
   }
 
   function ended(message: string | null) {
