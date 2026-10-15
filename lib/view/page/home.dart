@@ -363,6 +363,11 @@ class _HomePageState extends ConsumerState<HomePage>
       if (index >= 0) _onDestinationSelected(index);
       ref.read(homeTabRequestProvider.notifier).done();
     });
+    ref.listen(settingsRequestProvider, (_, open) {
+      if (!open) return;
+      _openSettings();
+      ref.read(settingsRequestProvider.notifier).done();
+    });
     // Watched, and from here, because this page outlives everything else the
     // app builds: the tray has to go on reporting while the window is hidden,
     // and a provider kept alive only by a page that comes and goes would take
