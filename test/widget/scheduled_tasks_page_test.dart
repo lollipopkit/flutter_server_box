@@ -160,6 +160,8 @@ void main() {
     // is — the row that has the least room to be right.
     expect(find.text('Day of month'), findsOneWidget);
 
+    // Below the sheet's own height: the form is taller than 60% of it.
+    await tester.ensureVisible(find.widgetWithText(TextButton, libL10n.cancel));
     await tester.tap(find.widgetWithText(TextButton, libL10n.cancel));
     for (var i = 0; i < 5; i++) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -263,6 +265,8 @@ void main() {
     // The preview says what the fields add up to, before anything is saved.
     expect(find.text('Every day at 02:00'), findsWidgets);
 
+    // Below the sheet's own height: the form is taller than 60% of it.
+    await tester.ensureVisible(find.widgetWithText(TextButton, libL10n.cancel));
     await tester.tap(find.widgetWithText(TextButton, libL10n.cancel));
     for (var i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 100));

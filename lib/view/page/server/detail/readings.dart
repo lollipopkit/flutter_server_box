@@ -30,7 +30,7 @@ extension on _ServerDetailPageState {
       else
         for (final (i, name) in plotted.indexed)
           HistorySeries(
-            name,
+            devices.legend?.call(name) ?? name,
             ChartPalette.lines[i % kMaxDeviceLines],
             devices.byDevice[name] ?? const <double?>[],
           ),

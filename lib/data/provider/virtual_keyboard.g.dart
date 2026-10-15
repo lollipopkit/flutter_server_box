@@ -20,7 +20,7 @@ final class VirtKeyboardProvider
         argument: null,
         retry: null,
         name: r'virtKeyboardProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -41,7 +41,7 @@ final class VirtKeyboardProvider
   }
 }
 
-String _$virtKeyboardHash() => r'1327d412bfb0dd261f3b555f353a8852b4f753e5';
+String _$virtKeyboardHash() => r'f8012f7bdf41d9a6a57b93c443cf0f5cab9e0baa';
 
 abstract class _$VirtKeyboard extends $Notifier<VirtKeyState> {
   VirtKeyState build();

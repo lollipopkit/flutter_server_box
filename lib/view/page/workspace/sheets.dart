@@ -287,16 +287,9 @@ extension _Sheets on _WorkspaceTabState {
   }
 
   Future<void> _showQuickOpen() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.75,
-        child: _QuickOpen(host: this),
-      ),
+    await showResizableSheet<void>(
+      context,
+      builder: (_) => _QuickOpen(host: this),
     );
   }
 }

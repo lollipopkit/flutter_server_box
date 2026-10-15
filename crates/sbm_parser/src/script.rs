@@ -450,12 +450,18 @@ pub fn build_script(system: SystemType, opts: &ScriptOptions) -> String {
 
 /// Wrap a PowerShell snippet as `powershell -EncodedCommand ...` so it runs
 /// unmodified from any Windows default shell (cmd.exe or PowerShell) with no
-/// quoting/expansion ambiguity; stdin stays available to the snippet
+/// quoting/expansion ambiguity; stdin stays available to the snippet.
+///
+/// Progress is silenced: with `-EncodedCommand` and no console, PowerShell
+/// serializes progress records to stderr as CLIXML, and the first module
+/// autoload on a host ("Preparing modules for first use") emits one. A
+/// command that succeeded would then look like one that wrote an error.
 pub fn encoded_powershell_command(ps: &str) -> String {
     use base64::Engine;
+    let ps = format!("$ProgressPreference = 'SilentlyContinue'; {ps}");
     let utf16le: Vec<u8> = ps.encode_utf16().flat_map(u16::to_le_bytes).collect();
     format!(
-        "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {}",
+        "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}",
         base64::engine::general_purpose::STANDARD.encode(utf16le)
     )
 }
@@ -1159,6 +1165,17 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
     // `&` will not run an extensionless one, and the extension is not part of
     // the encoded name — leaving it on produced a marker that decodes to
     // nothing, so the command's output was swallowed by the section above it.
+    //
+    // Pipes, not files. Windows has no `ulimit -f`, and polling a file's size
+    // bounds nothing: a command writing flat out had put 335 MB in the stdout
+    // file between two polls, and 7.5 GB in the unpolled stderr one within the
+    // 5 seconds. Read from a pipe, stdout stops at the cap because nothing
+    // reads past it; stderr is drained into nothing so a full pipe never
+    // blocks the command; stdin is closed so it cannot read the SSH channel.
+    // A read that outlives the process is not waited on — a child that left
+    // the tree can hold the pipe open for as long as it likes. A command that
+    // cannot be started says why as its output, which is the only place a
+    // custom command's result is shown; empty would read as success.
     format!(
         "\n    $d = {CUSTOM_CMD_DIR_WINDOWS}\n\
          \x20   if (-not (Test-Path $d) -and (Test-Path \"$d.bak\")) {{ $d = \"$d.bak\" }}\n\
@@ -1166,21 +1183,30 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
          \x20       if ($_.Name -notmatch '^[0-9]{{5}}_[A-Za-z0-9_=-]+\\.ps1$') {{ return }}\n\
          \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.BaseName -replace '^[0-9]+_','')\"\n\
-         \x20       $o = Join-Path ([IO.Path]::GetTempPath()) (\"server_box_custom_{{0}}.out\" -f $PID)\n\
-         \x20       $e = \"$o.err\"\n\
-         \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
-         \x20       $q = '\"' + $_.FullName + '\"'\n\
-         \x20       $p = Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q) -RedirectStandardOutput $o -RedirectStandardError $e -PassThru\n\
-         \x20       $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
-         \x20       while (-not $p.HasExited -and [DateTime]::UtcNow -lt $deadline -and (-not (Test-Path $o) -or (Get-Item $o).Length -le {CUSTOM_CMD_MAX_OUTPUT_BYTES})) {{ Start-Sleep -Milliseconds 50 }}\n\
-         \x20       if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null }}\n\
-         \x20       $p.WaitForExit()\n\
-         \x20       [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}')\n\
-         \x20       if (Test-Path $o) {{\n\
-         \x20         $s = [IO.File]::OpenRead($o)\n\
-         \x20         try {{ $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = 0; while ($c -lt $b.Length) {{ $n = $s.Read($b, $c, $b.Length - $c); if ($n -le 0) {{ break }}; $c += $n }}; [Console]::Out.Write([Convert]::ToBase64String($b, 0, $c)) }} finally {{ $s.Dispose() }}\n\
+         \x20       $i = New-Object System.Diagnostics.ProcessStartInfo 'powershell'\n\
+         \x20       $i.Arguments = '-NoProfile -ExecutionPolicy Bypass -File \"' + $_.FullName + '\"'\n\
+         \x20       $i.UseShellExecute = $false; $i.CreateNoWindow = $true\n\
+         \x20       $i.RedirectStandardInput = $true; $i.RedirectStandardOutput = $true; $i.RedirectStandardError = $true\n\
+         \x20       $b = New-Object byte[] {CUSTOM_CMD_MAX_OUTPUT_BYTES}; $c = 0\n\
+         \x20       $p = $null\n\
+         \x20       try {{ $p = [Diagnostics.Process]::Start($i) }} catch {{ $m = [Text.Encoding]::UTF8.GetBytes('ServerBox: failed to start: ' + $_.Exception.Message); $c = [Math]::Min($m.Length, $b.Length); [Array]::Copy($m, $b, $c) }}\n\
+         \x20       if ($p) {{\n\
+         \x20         $p.StandardInput.Close()\n\
+         \x20         [void]$p.StandardError.BaseStream.CopyToAsync([IO.Stream]::Null)\n\
+         \x20         $s = $p.StandardOutput.BaseStream\n\
+         \x20         $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
+         \x20         $r = $null\n\
+         \x20         while ($c -lt $b.Length -and [DateTime]::UtcNow -lt $deadline) {{\n\
+         \x20           try {{\n\
+         \x20             if ($null -eq $r) {{ $r = $s.ReadAsync($b, $c, $b.Length - $c) }}\n\
+         \x20             $exited = $p.HasExited\n\
+         \x20             if ($r.Wait(50)) {{ $n = $r.Result; $r = $null; if ($n -le 0) {{ break }}; $c += $n }} elseif ($exited) {{ break }}\n\
+         \x20           }} catch {{ break }}\n\
+         \x20         }}\n\
+         \x20         if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null }}\n\
+         \x20         [void]$p.WaitForExit(1000)\n\
          \x20       }}\n\
-         \x20       Remove-Item -Force $o,$e -ErrorAction SilentlyContinue\n\
+         \x20       [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}' + [Convert]::ToBase64String($b, 0, $c))\n\
          \x20       Write-Host ''\n\
          \x20     }}\n\
          \x20   }}\n"

@@ -125,8 +125,11 @@ class WsTabHost extends ConsumerWidget {
         serverProvider(tab.serverId).select((s) => _connected.contains(s.conn)),
       );
       if (up) {
+        // Read here for the same reason `_page` does: the frame can end with
+        // this widget gone.
+        final workspaces = ref.read(workspacesProvider.notifier);
         WidgetsBinding.instance.addPostFrameCallback(
-          (_) => ref.read(workspacesProvider.notifier).wake(tab.serverId),
+          (_) => workspaces.wake(tab.serverId),
         );
       }
       return _Dormant(tab: tab, spi: spi);
@@ -154,6 +157,10 @@ class WsTabHost extends ConsumerWidget {
 
   Widget _page(WidgetRef ref, Spi spi) {
     final args = SpiRequiredArgs(spi);
+    // Read now, not when the shell ends: that can come after this widget is
+    // gone, and a `WidgetRef` is unusable once it is (SERVERBOX-J). The
+    // notifier is kept alive, so holding it is safe.
+    final workspaces = ref.read(workspacesProvider.notifier);
     return switch (tab.view) {
       WorkspaceView.term => SSHPage(
         key: runtime.sshKey,
@@ -162,9 +169,7 @@ class WsTabHost extends ConsumerWidget {
           session: runtime.handoff,
           onSession: (session) => runtime.session.value = session,
           notFromTab: false,
-          onSessionEnd: () => ref
-              .read(workspacesProvider.notifier)
-              .closeTab(paneId, tab.id),
+          onSessionEnd: () => workspaces.closeTab(paneId, tab.id),
           focusNode: runtime.focus,
           visibleListenable: runtime.visible,
           // Per tab: two shells on one server would otherwise share one

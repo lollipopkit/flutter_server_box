@@ -82,6 +82,80 @@ abstract class _$HomeTabRequest extends $Notifier<AppTab?> {
   }
 }
 
+/// A request to show the settings, from something outside the home page.
+///
+/// The tray, which has no context in the tree. The home page shows them in
+/// place of a tab, beside the rail; pushed over the window instead, a wide
+/// settings page has no bar and so no way back out.
+
+@ProviderFor(SettingsRequest)
+final settingsRequestProvider = SettingsRequestProvider._();
+
+/// A request to show the settings, from something outside the home page.
+///
+/// The tray, which has no context in the tree. The home page shows them in
+/// place of a tab, beside the rail; pushed over the window instead, a wide
+/// settings page has no bar and so no way back out.
+final class SettingsRequestProvider
+    extends $NotifierProvider<SettingsRequest, bool> {
+  /// A request to show the settings, from something outside the home page.
+  ///
+  /// The tray, which has no context in the tree. The home page shows them in
+  /// place of a tab, beside the rail; pushed over the window instead, a wide
+  /// settings page has no bar and so no way back out.
+  SettingsRequestProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'settingsRequestProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$settingsRequestHash();
+
+  @$internal
+  @override
+  SettingsRequest create() => SettingsRequest();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$settingsRequestHash() => r'78472fa1dedb350e246e7435b6e1b03c9992777d';
+
+/// A request to show the settings, from something outside the home page.
+///
+/// The tray, which has no context in the tree. The home page shows them in
+/// place of a tab, beside the rail; pushed over the window instead, a wide
+/// settings page has no bar and so no way back out.
+
+abstract class _$SettingsRequest extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// Which tab is on screen right now.
 ///
 /// [HomeTabRequest] is where something asks to be taken; this is where the

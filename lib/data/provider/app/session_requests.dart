@@ -21,6 +21,21 @@ class HomeTabRequest extends _$HomeTabRequest {
   void done() => state = null;
 }
 
+/// A request to show the settings, from something outside the home page.
+///
+/// The tray, which has no context in the tree. The home page shows them in
+/// place of a tab, beside the rail; pushed over the window instead, a wide
+/// settings page has no bar and so no way back out.
+@Riverpod(keepAlive: true)
+class SettingsRequest extends _$SettingsRequest {
+  @override
+  bool build() => false;
+
+  void go() => state = true;
+
+  void done() => state = false;
+}
+
 /// Which tab is on screen right now.
 ///
 /// [HomeTabRequest] is where something asks to be taken; this is where the
