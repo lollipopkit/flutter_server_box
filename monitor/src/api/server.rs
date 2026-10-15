@@ -1430,7 +1430,7 @@ const SETTINGS_LIVE_FIELDS: &[&str] = &[
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
     require_acting!(&req, &app_state);
 
-    let file_config = match config_file::read() {
+    let file_config = match config_file::read_async().await {
         Ok(c) => c,
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
@@ -1492,7 +1492,7 @@ async fn update_settings(
     // the same starting state and drop this change on its own save.
     let _config_guard = app_state.config_write.lock().await;
 
-    let mut config = match config_file::read() {
+    let mut config = match config_file::read_async().await {
         Ok(c) => c,
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
@@ -1515,7 +1515,7 @@ async fn update_settings(
 
     // Writes atomically and keeps a bounded set of timestamped backups as a
     // manual undo path — see `config_file`
-    if let Err(e) = config_file::write(&config) {
+    if let Err(e) = config_file::write_async(&config).await {
         return Ok(HttpResponse::InternalServerError()
             .json(&ErrorResponse { error: e.to_string() }));
     }
@@ -1542,7 +1542,7 @@ struct CardOrderPayload {
 
 async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
     require_read_access!(&req, &app_state);
-    let file_config = match config_file::read() {
+    let file_config = match config_file::read_async().await {
         Ok(c) => c,
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
@@ -1557,7 +1557,7 @@ async fn update_card_order(
     require_acting!(&req, &app_state);
     let _config_guard = app_state.config_write.lock().await;
 
-    let mut config = match config_file::read() {
+    let mut config = match config_file::read_async().await {
         Ok(c) => c,
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
@@ -1565,7 +1565,7 @@ async fn update_card_order(
     server_config.card_order = payload.into_inner().card_order;
     config.server = Some(server_config);
 
-    if let Err(e) = config_file::write(&config) {
+    if let Err(e) = config_file::write_async(&config).await {
         return Ok(HttpResponse::InternalServerError()
             .json(&ErrorResponse { error: e.to_string() }));
     }

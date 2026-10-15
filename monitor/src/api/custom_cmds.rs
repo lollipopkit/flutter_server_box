@@ -58,7 +58,7 @@ pub async fn list(
     };
     let editable = may_edit(&caller, &req, &app_state);
 
-    match custom_cmds::list() {
+    match tokio::task::spawn_blocking(custom_cmds::list).await.unwrap_or_else(|e| Err(Error::Io(std::io::Error::other(e)))) {
         Ok(commands) => Ok(HttpResponse::Ok().json(&ListResponse { commands, editable })),
         Err(e) => Ok(error_response(e)),
     }
@@ -87,7 +87,14 @@ pub async fn replace(
     // Names, never bodies: a command's text is what the user typed and may
     // hold anything, including something they would not want in a log.
     let subject = commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>().join(", ");
-    match custom_cmds::replace(&commands) {
+    // A file lock and directory renames: off the async workers.
+    let replaced = {
+        let commands = commands.clone();
+        tokio::task::spawn_blocking(move || custom_cmds::replace(&commands))
+            .await
+            .unwrap_or_else(|e| Err(Error::Io(std::io::Error::other(e))))
+    };
+    match replaced {
         Ok(()) => {
             Event::new(Kind::CustomCmd, Action::Open, Outcome::Ok)
                 .remote_ip(remote_ip)

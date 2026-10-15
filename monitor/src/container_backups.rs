@@ -289,7 +289,7 @@ pub async fn back_up(
         return Err(refusal(409, "destinationMissing"));
     }
     let mounts: Vec<&Mount> = containers.iter().flat_map(|c| &c.mounts).filter(|m| !m.is_system()).collect();
-    if let (Some(need), Some(free)) = (estimate(state, runtime, &mounts).await, free_bytes(state))
+    if let (Some(need), Some(free)) = (estimate(state, runtime, &mounts).await, free_bytes(state).await)
         && need > free
     {
         tracing::warn!("container backup of {label}: {need} bytes to archive, {free} free");
@@ -371,11 +371,16 @@ pub async fn back_up(
                 result = Err(format!("writing {META}: {e}"));
             }
         }
-        if result.is_err() {
-            let _ = std::fs::remove_dir_all(&dir);
-        } else {
-            prune(&state.container_backups, &meta.label, keep);
-        }
+        let failed = result.is_err();
+        let (cleanup, label) = (state.clone(), meta.label.clone());
+        blocking(move || {
+            if failed {
+                let _ = std::fs::remove_dir_all(&dir);
+            } else {
+                prune(&cleanup.container_backups, &label, keep);
+            }
+        })
+        .await;
         finish(&state, &job2, &format!("container backup {id}"), result).await;
     });
     Ok(job)
@@ -525,10 +530,35 @@ pub async fn set_settings(state: &AppState, next: Settings) -> Result<Settings, 
 }
 
 /// Free bytes where backups go now.
-pub fn free_bytes(state: &AppState) -> Option<u64> {
+/// Free space where backups go, asked off the async workers: the folder may
+/// be on a USB or network disk.
+pub async fn free_bytes(state: &AppState) -> Option<u64> {
     let root = state.container_backups.root();
-    let probe = root.ancestors().find(|p| p.exists())?.to_path_buf();
-    fs2::available_space(probe).ok()
+    blocking(move || {
+        let probe = root.ancestors().find(|p| p.exists())?.to_path_buf();
+        fs2::available_space(probe).ok()
+    })
+    .await
+    .flatten()
+}
+
+/// Every finished backup, newest first: [ContainerBackups::list] off the
+/// async workers, which reads a file per backup.
+pub async fn list(state: &Arc<AppState>) -> Vec<Meta> {
+    let state = state.clone();
+    blocking(move || state.container_backups.list()).await.unwrap_or_default()
+}
+
+/// [ContainerBackups::remove] off the async workers: a backup can be
+/// gigabytes of files.
+pub async fn remove(state: &Arc<AppState>, id: &str) -> Result<(), Refusal> {
+    let (state, id) = (state.clone(), id.to_string());
+    blocking(move || state.container_backups.remove(&id)).await.unwrap_or_else(|| Err(refusal(500, "internal")))
+}
+
+/// [f] on tokio's blocking pool; `None` if it panicked.
+async fn blocking<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> Option<T> {
+    tokio::task::spawn_blocking(f).await.map_err(|e| tracing::error!("container backups: {e}")).ok()
 }
 
 pub async fn schedules(db: &sqlx::SqlitePool) -> Vec<Schedule> {

@@ -260,7 +260,7 @@ pub async fn list(
 
     // Off disk rather than off `AppState.config`, which is a startup snapshot:
     // a GET right after a save must show what was saved.
-    let config = match config_file::read() {
+    let config = match config_file::read_async().await {
         Ok(config) => config,
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
@@ -297,7 +297,7 @@ pub async fn replace(
     // one of the two changes.
     let _config_guard = app_state.config_write.lock().await;
 
-    let mut config = match config_file::read() {
+    let mut config = match config_file::read_async().await {
         Ok(config) => config,
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
@@ -328,7 +328,7 @@ pub async fn replace(
     monitoring.push_rate = push_rate.clone();
     config.monitoring = Some(monitoring);
 
-    if let Err(e) = config_file::write(&config) {
+    if let Err(e) = config_file::write_async(&config).await {
         Event::new(Kind::Push, Action::Close, Outcome::Error)
             .remote_ip(remote_ip)
             .detail(e.to_string())
@@ -381,7 +381,7 @@ pub async fn test(
     // Read only — a test never writes the config, so no `config_write` guard.
     // It still has to read the file, because the credential being tested is
     // usually the one the editor was not given.
-    let existing = match config_file::read() {
+    let existing = match config_file::read_async().await {
         Ok(config) => config.get_push(),
         Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };

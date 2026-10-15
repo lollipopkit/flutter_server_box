@@ -49,12 +49,12 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
     require!(authz::acting_caller(&req, &state).await);
     let job = state.container_backups.job().map(|j| j.view(u64::MAX));
     Ok(HttpResponse::Ok().json(&json!({
-        "backups": state.container_backups.list(),
+        "backups": container_backups::list(&state).await,
         "job": job,
         "settings": container_backups::settings(&state.db).await,
         "folder": state.container_backups.root(),
         "default_folder": state.container_backups.default_root(),
-        "free_bytes": container_backups::free_bytes(&state),
+        "free_bytes": container_backups::free_bytes(&state).await,
         "schedules": container_backups::schedules(&state.db).await,
     })))
 }
@@ -142,7 +142,7 @@ pub async fn remove(
     require!(authz::acting_caller(&req, &state).await);
     let body = body.map(|b| b.into_inner()).unwrap_or_default();
     require!(reauth(&req, &state, body.current_password.as_deref()).await);
-    match state.container_backups.remove(&id) {
+    match container_backups::remove(&state, &id).await {
         Ok(()) => {
             Event::new(Kind::Machine, Action::Write, Outcome::Ok)
                 .detail(format!("container backup {id} removed"))

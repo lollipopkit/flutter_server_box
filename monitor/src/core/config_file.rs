@@ -93,6 +93,18 @@ pub fn write(config: &Config) -> Result<()> {
     write_atomic(path, content.as_bytes())
 }
 
+/// [read] on tokio's blocking pool, for a request handler.
+pub async fn read_async() -> Result<Config> {
+    tokio::task::spawn_blocking(read).await.map_err(|e| config_err(e.to_string()))?
+}
+
+/// [write] on tokio's blocking pool, for a request handler: it fsyncs and
+/// prunes backups.
+pub async fn write_async(config: &Config) -> Result<()> {
+    let config = config.clone();
+    tokio::task::spawn_blocking(move || write(&config)).await.map_err(|e| config_err(e.to_string()))?
+}
+
 /// Millisecond precision so two saves within the same second can't collide on
 /// one filename. Legacy second-precision backups from before this module are
 /// still pruned correctly — [`prune_backups`] orders by mtime, not by name.
