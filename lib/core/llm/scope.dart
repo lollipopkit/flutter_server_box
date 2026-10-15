@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_pi_llm_ui/fl_pi_llm_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/llm/tools.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/remote_agent.dart';
 
@@ -152,6 +153,7 @@ abstract final class AgentChats {
     for (final trashed in const [false, true]) {
       for (final meta in LlmStores.chat.all(scope: scope, trashed: trashed)) {
         await Chats.deleteForever(meta.id);
+        AgentTools.forget(meta.id);
       }
     }
     select(scope, null);
@@ -160,6 +162,7 @@ abstract final class AgentChats {
   /// Deletes chat [id] of [scope], and shows the next one if it was showing.
   static Future<void> delete(String? scope, String id) async {
     await Chats.deleteForever(id);
+    AgentTools.forget(id);
     if (of(scope).value == id) {
       select(scope, LlmStores.chat.all(scope: scope).firstOrNull?.id);
     }

@@ -54,6 +54,9 @@ abstract final class AgentTools {
     return const LlmApproval.allow();
   }
 
+  /// Forgets what chat [chatId] ran without asking: it was deleted.
+  static void forget(String chatId) => _autoRuns.remove(chatId);
+
   static AskAiCommand commandOf(String name, Map<String, Object?> args) =>
       AskAiCommand.fromToolCall(id: name, name: name, args: args);
 

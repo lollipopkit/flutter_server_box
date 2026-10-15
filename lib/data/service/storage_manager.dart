@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/storage.dart';
+import 'package:server_box/data/service/command_output.dart';
 import 'package:server_box/src/rust/api/storage.dart' as ffi;
 
 final class StorageManagerException implements Exception {
@@ -30,7 +31,7 @@ abstract final class StorageManager {
     if (!result.succeeded) {
       throw StorageManagerException(
         'failed',
-        detail: _lastLine(result.combined, 'Unable to read storage'),
+        detail: lastOutputLine(result.combined, 'Unable to read storage'),
       );
     }
     try {
@@ -56,7 +57,7 @@ abstract final class StorageManager {
         !isRoot && result.exitCode == kSudoPasswordRejected
             ? 'sudo_rejected'
             : 'failed',
-        detail: _lastLine(result.combined, 'Unable to read disk health'),
+        detail: lastOutputLine(result.combined, 'Unable to read disk health'),
       );
     }
     try {
@@ -110,7 +111,7 @@ abstract final class StorageManager {
         !isRoot && result.exitCode == kSudoPasswordRejected
             ? 'sudo_rejected'
             : 'failed',
-        detail: _lastLine(result.combined, 'Storage action failed'),
+        detail: lastOutputLine(result.combined, 'Storage action failed'),
       );
     }
   }
@@ -124,10 +125,5 @@ abstract final class StorageManager {
     } on ffi.StorageFfiError catch (e) {
       throw StorageManagerException(e.code);
     }
-  }
-
-  static String _lastLine(String output, String fallback) {
-    final lines = output.trim().split('\n').where((line) => line.trim().isNotEmpty);
-    return lines.isEmpty ? fallback : lines.last.trim();
   }
 }

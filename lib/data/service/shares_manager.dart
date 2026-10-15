@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/shares.dart';
+import 'package:server_box/data/service/command_output.dart';
 import 'package:server_box/src/rust/api/shares.dart' as ffi;
 
 final class SharesManagerException implements Exception {
@@ -23,7 +24,7 @@ abstract final class SharesManager {
     if (!result.succeeded) {
       throw SharesManagerException(
         'failed',
-        detail: _lastLine(result.combined, 'Unable to read shares'),
+        detail: lastOutputLine(result.combined, 'Unable to read shares'),
       );
     }
     try {
@@ -101,7 +102,7 @@ abstract final class SharesManager {
         !isRoot && result.exitCode == kSudoPasswordRejected
             ? 'sudo_rejected'
             : 'failed',
-        detail: _lastLine(result.combined, 'Unable to read connections'),
+        detail: lastOutputLine(result.combined, 'Unable to read connections'),
       );
     }
     try {
@@ -159,29 +160,18 @@ abstract final class SharesManager {
     if (result.exitCode == ffi.sharesExitNotAFolder()) {
       throw SharesManagerException(
         'notAFolder',
-        path: _firstLine(result.stderr),
+        path: firstOutputLine(result.stderr),
       );
     }
     if (result.exitCode == ffi.sharesExitRefused()) {
       throw SharesManagerException(
         'refused',
-        detail: _lastLine(result.stderr, 'The configuration was refused'),
+        detail: lastOutputLine(result.stderr, 'The configuration was refused'),
       );
     }
     throw SharesManagerException(
       'failed',
-      detail: _lastLine(result.combined, 'Share action failed'),
+      detail: lastOutputLine(result.combined, 'Share action failed'),
     );
-  }
-
-  static String? _firstLine(String output) {
-    final line = output.split('\n').first;
-    final value = line.endsWith('\r') ? line.substring(0, line.length - 1) : line;
-    return value.isEmpty ? null : value;
-  }
-
-  static String _lastLine(String output, String fallback) {
-    final lines = output.trim().split('\n').where((line) => line.trim().isNotEmpty);
-    return lines.isEmpty ? fallback : lines.last.trim();
   }
 }
