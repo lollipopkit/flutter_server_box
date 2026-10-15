@@ -61,6 +61,7 @@ sqlx = { version = "0.9", features = [
 bcrypt = "0.19"
 # sha2 0.11 returns a `hybrid_array::Array`, which has no `LowerHex` — hence hex
 sha2 = "0.11"
+zeroize = "1.9"
 
 # Desk app packages (`api::apps`): a gzipped tar, read entry by entry with
 # every size bounded while it is read.
@@ -151,3 +152,5 @@ tempfile = "3.27.0"
 # Self-signed certificates for the fake RDP server in `tests/rdp_ws.rs`.
 # `ring`, so the tree keeps one crypto implementation.
 rcgen = { version = "0.14", default-features = false, features = ["ring", "pem"] }
+# Paused time, for what waits minutes (the sudo password's 15).
+tokio = { version = "1.53", features = ["full", "test-util"] }

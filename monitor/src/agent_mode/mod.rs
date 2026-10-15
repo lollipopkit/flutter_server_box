@@ -47,6 +47,7 @@ pub(crate) mod prompt;
 mod search;
 mod tools;
 
+use zeroize::Zeroizing;
 use crate::utils::lock::LockExt;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
@@ -316,6 +317,9 @@ impl Flow {
     }
 }
 
+/// By account id: the sudo password, wiped when dropped, and when it was given.
+type SudoCache = HashMap<i64, (Zeroizing<String>, Instant)>;
+
 pub struct AgentMode {
     db: SqlitePool,
     store: Arc<DirectoryStore>,
@@ -336,7 +340,7 @@ pub struct AgentMode {
     max_running: AtomicI64,
     events: broadcast::Sender<AgentEvent>,
     /// By account id: the password, and when it was given.
-    sudo: Mutex<HashMap<i64, (String, Instant)>>,
+    sudo: Arc<Mutex<SudoCache>>,
     /// By account id: its memory, held once so its changes are made one at
     /// a time.
     memories: Mutex<HashMap<i64, Arc<Memory>>>,
@@ -388,7 +392,7 @@ impl AgentMode {
             queue: Mutex::default(),
             max_running: AtomicI64::new(config::DEFAULT_MAX_RUNNING),
             events: broadcast::channel(1024).0,
-            sudo: Mutex::default(),
+            sudo: Arc::default(),
             memories: Mutex::default(),
             searches: Mutex::default(),
             search_runs: Mutex::default(),
@@ -1286,7 +1290,7 @@ impl AgentMode {
     pub(crate) fn sudo_password(&self, user: i64) -> Option<String> {
         let mut cache = self.sudo.locked();
         match cache.get(&user) {
-            Some((p, at)) if at.elapsed() < SUDO_REMEMBER => Some(p.clone()),
+            Some((p, at)) if at.elapsed() < SUDO_REMEMBER => Some(p.to_string()),
             Some(_) => {
                 cache.remove(&user);
                 None
@@ -1299,7 +1303,20 @@ impl AgentMode {
         let mut cache = self.sudo.locked();
         match password {
             Some(p) => {
-                cache.insert(user, (p, Instant::now()));
+                let at = Instant::now();
+                cache.insert(user, (Zeroizing::new(p), at));
+                // Gone when its time is up, asked for again or not: not left in
+                // memory until the next read.
+                if let Ok(runtime) = tokio::runtime::Handle::try_current() {
+                    let sudo = self.sudo.clone();
+                    runtime.spawn(async move {
+                        tokio::time::sleep(SUDO_REMEMBER).await;
+                        let mut cache = sudo.locked();
+                        if cache.get(&user).is_some_and(|(_, kept)| *kept == at) {
+                            cache.remove(&user);
+                        }
+                    });
+                }
             }
             None => {
                 cache.remove(&user);
@@ -1505,6 +1522,19 @@ fn decode_component(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The sudo password goes when its time is up, without being asked for.
+    #[tokio::test]
+    async fn a_remembered_sudo_password_goes_on_its_own() {
+        let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        let agent = AgentMode::new(db, None);
+        // After the pool is up: its connect times out on a paused clock.
+        tokio::time::pause();
+        agent.remember_sudo(1, Some("pw".into()));
+        assert_eq!(agent.sudo_password(1).as_deref(), Some("pw"));
+        tokio::time::sleep(SUDO_REMEMBER + std::time::Duration::from_secs(1)).await;
+        assert!(agent.sudo.locked().is_empty());
+    }
 
     #[test]
     fn a_line_is_cut_at_a_character() {

@@ -4481,6 +4481,7 @@ dependencies = [
  "url",
  "wasmi",
  "wat",
+ "zeroize",
  "zip",
 ]
 
