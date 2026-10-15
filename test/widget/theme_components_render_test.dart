@@ -45,7 +45,9 @@ void main() {
             Input(controller: controller, suggestion: false),
             const SideBarTile(title: 'Selected', selected: true),
             const Btn.elevated(text: 'Button'),
-            const Flexible(child: RowsSheet(children: [Text('Sheet')])),
+            const Flexible(
+              child: ResizableSheet(child: RowsSheet(children: [Text('Sheet')])),
+            ),
           ],
         ),
       ),
@@ -96,7 +98,7 @@ void main() {
     final handle = tester
         .widgetList<Container>(
           find.descendant(
-            of: find.byType(RowsSheet),
+            of: find.byType(SheetGrip),
             matching: find.byType(Container),
           ),
         )

@@ -100,7 +100,7 @@ void main() {
         si,
       ).all.firstWhere((m) => m.kind == ServerMetricKind.netTraffic);
       // eth0 alone: vmbr0 is not a real interface, and lo never is.
-      expect(m.value, '3.9 KB');
+      expect(m.value, '↑ 3.9 KB');
     });
   });
 }

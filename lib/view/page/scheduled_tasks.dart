@@ -1035,12 +1035,8 @@ extension on _ScheduledTasksPageState {
   /// for; a dialog on a desktop and a sheet on a phone made the same form two
   /// things, and gave the fields a surface the same colour as themselves.
   Future<_TaskEdit?> _showEditor(CronCatalog catalog, CronJob? task) {
-    return showModalBottomSheet<_TaskEdit>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
+    return showResizableSheet<_TaskEdit>(
+      context,
       constraints: const BoxConstraints(maxWidth: 580),
       builder: (_) => _TaskEditor(
         job: task,
@@ -1256,18 +1252,13 @@ final class _TaskEditorState extends State<_TaskEditor> {
 
     // No surface of its own: the sheet paints one, and it starts under the
     // grip. What it does own is staying above the keyboard.
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(17, 0, 17, 17),
-          child: body,
-        ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(17, 0, 17, 17),
+        child: body,
       ),
     );
   }

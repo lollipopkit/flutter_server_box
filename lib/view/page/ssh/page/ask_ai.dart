@@ -87,14 +87,12 @@ extension _AskAi on SSHPageState {
         _AskAiPanel(scope: scope, serverName: spi.name);
 
     if (placement == AskAiPanelPlacement.bottomSheet) {
-      await showModalBottomSheet<void>(
-        context: context,
-        useRootNavigator: true,
-        isScrollControlled: true,
-        useSafeArea: true,
+      // The panel is its own surface, so it carries the grip.
+      await showResizableSheet<void>(
+        context,
+        showGrip: false,
         backgroundColor: Colors.transparent,
-        builder: (sheetContext) =>
-            FractionallySizedBox(heightFactor: 0.86, child: panel(sheetContext)),
+        builder: panel,
       );
       return;
     }
@@ -259,6 +257,8 @@ class _AskAiPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Nothing in the side dialog, which is not a sheet.
+            const SheetGrip(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
               child: Row(

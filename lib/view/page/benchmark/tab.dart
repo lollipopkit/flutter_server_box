@@ -385,16 +385,9 @@ extension _Actions on _BenchmarkTabPageState {
   /// for the same reason. Tall, because it is a list of records rather than a
   /// short set of choices.
   Future<void> _showHistorySheet(List<Spi> servers) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.82,
-        child: _buildList(servers, false, inSheet: true),
-      ),
+    await showResizableSheet<void>(
+      context,
+      builder: (_) => _buildList(servers, false, inSheet: true),
     );
   }
 

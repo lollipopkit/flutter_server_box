@@ -526,33 +526,26 @@ extension _Actions on _VirtTabPageState {
 
   /// The host switcher, where there is no column to open it in.
   Future<void> _showHostSheet(String? hostId) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) => FractionallySizedBox(
-        heightFactor: 0.7,
-        child: _VirtHostPicker(
-          selectedId: hostId,
-          onSelect: (id) {
-            Navigator.of(sheetContext).pop();
-            _selectHost(id);
-          },
-          // A server that turns out to be a host is shown at once, so the
-          // sheet has done its job.
-          onCheck: (id) async {
-            final found = await _check(id);
-            if (found && sheetContext.mounted) Navigator.of(sheetContext).pop();
-            return found;
-          },
-          onSetUpPve: (id) async {
-            final found = await _setUpPve(id);
-            if (found && sheetContext.mounted) Navigator.of(sheetContext).pop();
-            return found;
-          },
-        ),
+    await showResizableSheet<void>(
+      context,
+      builder: (sheetContext) => _VirtHostPicker(
+        selectedId: hostId,
+        onSelect: (id) {
+          Navigator.of(sheetContext).pop();
+          _selectHost(id);
+        },
+        // A server that turns out to be a host is shown at once, so the
+        // sheet has done its job.
+        onCheck: (id) async {
+          final found = await _check(id);
+          if (found && sheetContext.mounted) Navigator.of(sheetContext).pop();
+          return found;
+        },
+        onSetUpPve: (id) async {
+          final found = await _setUpPve(id);
+          if (found && sheetContext.mounted) Navigator.of(sheetContext).pop();
+          return found;
+        },
       ),
     );
   }

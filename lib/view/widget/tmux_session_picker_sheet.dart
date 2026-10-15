@@ -85,57 +85,48 @@ Future<TmuxSessionPickerResult?> showTmuxSessionPickerSheet(
     defaultSessionName,
     existingNames,
   );
-  return showModalBottomSheet<TmuxSessionPickerResult>(
-    context: context,
-    useRootNavigator: true,
-    useSafeArea: true,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (sheetContext) => ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.7,
-      ),
-      child: ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.only(bottom: 17),
-        children: [
-          _TmuxNewSessionRow(
-            suggestedSessionName: suggestedName,
-            existingNames: existingNames,
-          ),
-          if (sessions.isNotEmpty) const Divider(height: 1),
-          for (final session in sessions)
-            _TmuxSessionTile(
-              session: session,
-              selected: session.id == selectedSessionId,
-              onTap: () => Navigator.of(sheetContext).pop(
-                TmuxPickExisting(
-                  sessionId: session.id,
-                  sessionName: session.name,
-                ),
+  return showResizableSheet<TmuxSessionPickerResult>(
+    context,
+    builder: (sheetContext) => ListView(
+      shrinkWrap: true,
+      padding: const EdgeInsets.only(bottom: 17),
+      children: [
+        _TmuxNewSessionRow(
+          suggestedSessionName: suggestedName,
+          existingNames: existingNames,
+        ),
+        if (sessions.isNotEmpty) const Divider(height: 1),
+        for (final session in sessions)
+          _TmuxSessionTile(
+            session: session,
+            selected: session.id == selectedSessionId,
+            onTap: () => Navigator.of(sheetContext).pop(
+              TmuxPickExisting(
+                sessionId: session.id,
+                sessionName: session.name,
               ),
             ),
-          if (showDetach) ...[
-            const Divider(height: 1),
-            SheetChoiceTile(
-              icon: Icons.link_off_outlined,
-              title: context.l10n.disconnect,
-              selected: false,
-              onTap: () =>
-                  Navigator.of(sheetContext).pop(const TmuxPickDetach()),
-            ),
-          ],
-          if (showSkip) ...[
-            const Divider(height: 1),
-            SheetChoiceTile(
-              icon: Icons.close_outlined,
-              title: context.l10n.tmuxSkip,
-              selected: false,
-              onTap: () => Navigator.of(sheetContext).pop(const TmuxPickSkip()),
-            ),
-          ],
+          ),
+        if (showDetach) ...[
+          const Divider(height: 1),
+          SheetChoiceTile(
+            icon: Icons.link_off_outlined,
+            title: context.l10n.disconnect,
+            selected: false,
+            onTap: () =>
+                Navigator.of(sheetContext).pop(const TmuxPickDetach()),
+          ),
         ],
-      ),
+        if (showSkip) ...[
+          const Divider(height: 1),
+          SheetChoiceTile(
+            icon: Icons.close_outlined,
+            title: context.l10n.tmuxSkip,
+            selected: false,
+            onTap: () => Navigator.of(sheetContext).pop(const TmuxPickSkip()),
+          ),
+        ],
+      ],
     ),
   );
 }
