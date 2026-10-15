@@ -33,15 +33,6 @@ use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::stacks::job::{Job, JobKind, JobState};
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
 /// The install running or last run.
 #[derive(Default)]
 pub struct SharesJobs {
@@ -64,10 +55,6 @@ impl SharesJobs {
     }
 }
 
-fn refused(status: u16, error: &str) -> HttpResponse {
-    HttpResponse::build(ntex::http::StatusCode::from_u16(status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST))
-        .json(&json!({ "error": error }))
-}
 
 async fn read(state: &AppState) -> Option<sh::Shares> {
     let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
@@ -90,9 +77,9 @@ fn answer(shares: sh::Shares, job: Option<serde_json::Value>) -> HttpResponse {
 pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
-    let Some(shares) = read(&state).await else { return Ok(refused(502, "unreadable")) };
+    let Some(shares) = read(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
     let job = state.shares.job().map(|j| serde_json::to_value(j.view(0)).unwrap_or_default());
     Ok(answer(shares, job))
 }
@@ -103,7 +90,7 @@ async fn as_root(state: &AppState, script: &str, password: Option<&str>, private
     let out = if private { super::machine::as_root_private(script, password, exec).await } else { super::machine::as_root(script, password, exec).await };
     match out {
         Ok(out) if out.exit_code == Some(0) => Ok(()),
-        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => Err(refused(403, "sudo_rejected")),
+        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => Err(super::respond::error_u16(403, "sudo_rejected")),
         Ok(out) if out.exit_code == Some(sh::EXIT_NOT_A_FOLDER) => {
             Err(HttpResponse::Conflict().json(&json!({ "error": "notAFolder", "path": out.stderr.lines().next().unwrap_or("").trim() })))
         }
@@ -115,7 +102,7 @@ async fn as_root(state: &AppState, script: &str, password: Option<&str>, private
         }
         Err(e) => {
             tracing::warn!("shares: change did not run: {e}");
-            Err(refused(403, "sudo_unavailable"))
+            Err(super::respond::error_u16(403, "sudo_unavailable"))
         }
     }
 }
@@ -136,17 +123,17 @@ pub struct SmbBody {
 pub async fn set_smb(req: HttpRequest, body: web::types::Json<SmbBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let SmbBody { shares, sudo_password } = body.into_inner();
     let script = match sh::smb_script(&shares) {
         Ok(s) => s,
-        Err(e) => return Ok(refused(400, e.code())),
+        Err(e) => return Ok(super::respond::error_u16(400, e.code())),
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), false).await);
     let names: Vec<&str> = shares.iter().map(|s| s.name.as_str()).collect();
     record(&req, &state, format!("shares smb {}", names.join(","))).await;
-    let Some(now) = read(&state).await else { return Ok(refused(502, "unreadable")) };
+    let Some(now) = read(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
     Ok(answer(now, None))
 }
 
@@ -160,17 +147,17 @@ pub struct NfsBody {
 pub async fn set_nfs(req: HttpRequest, body: web::types::Json<NfsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let NfsBody { exports, sudo_password } = body.into_inner();
     let script = match sh::nfs_script(&exports) {
         Ok(s) => s,
-        Err(e) => return Ok(refused(400, e.code())),
+        Err(e) => return Ok(super::respond::error_u16(400, e.code())),
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), false).await);
     let paths: Vec<&str> = exports.iter().map(|e| e.path.as_str()).collect();
     record(&req, &state, format!("shares nfs {}", paths.join(","))).await;
-    let Some(now) = read(&state).await else { return Ok(refused(502, "unreadable")) };
+    let Some(now) = read(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
     Ok(answer(now, None))
 }
 
@@ -185,12 +172,12 @@ pub struct PasswordBody {
 pub async fn smb_password(req: HttpRequest, body: web::types::Json<PasswordBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let PasswordBody { user, password, sudo_password } = body.into_inner();
     let script = match sh::smb_password_script(&user, &password) {
         Ok(s) => s,
-        Err(e) => return Ok(refused(400, e.code())),
+        Err(e) => return Ok(super::respond::error_u16(400, e.code())),
     };
     require!(as_root(&state, &script, sudo_password.as_deref().filter(|p| !p.is_empty()), true).await);
     record(&req, &state, format!("shares smb password {user}")).await;
@@ -206,14 +193,14 @@ pub struct ConnectionsBody {
 pub async fn connections(req: HttpRequest, body: web::types::Json<ConnectionsBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let password = body.into_inner().sudo_password.filter(|p| !p.is_empty());
     let limits = super::machine::at_least(&state.remote_access.exec, 4 << 20);
     match super::machine::as_root(sh::CONNECTIONS_COMMAND, password.as_deref(), &limits).await {
         Ok(out) if out.exit_code == Some(0) => Ok(HttpResponse::Ok().json(&sh::parse_connections(&out.stdout))),
-        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => Ok(refused(403, "sudo_rejected")),
-        _ => Ok(refused(403, "sudo_unavailable")),
+        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => Ok(super::respond::error_u16(403, "sudo_rejected")),
+        _ => Ok(super::respond::error_u16(403, "sudo_unavailable")),
     }
 }
 
@@ -228,13 +215,13 @@ pub struct InstallBody {
 pub async fn install(req: HttpRequest, body: web::types::Json<InstallBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let InstallBody { nfs, sudo_password } = body.into_inner();
     let password = sudo_password.unwrap_or_default();
     // Tried first, so a wrong password is said here rather than in a log.
     require!(as_root(&state, "true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), false).await);
-    let Some(job) = state.shares.begin() else { return Ok(refused(409, "busy")) };
+    let Some(job) = state.shares.begin() else { return Ok(super::respond::error_u16(409, "busy")) };
     let what = if nfs { "nfs" } else { "samba" };
     record(&req, &state, format!("shares install {what}")).await;
     let script = sh::install_script(nfs);
@@ -261,6 +248,6 @@ pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: we
     require!(authz::acting_caller(&req, &state).await);
     match state.shares.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
-        None => Ok(refused(404, "notFound")),
+        None => Ok(super::respond::error_u16(404, "notFound")),
     }
 }

@@ -249,14 +249,7 @@ impl ConsoleAnswer {
     }
 }
 
-fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
-}
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("virt: {e}");
-    refusal(StatusCode::INTERNAL_SERVER_ERROR, "internal")
-}
 
 // ---------------------------------------------------------------------------
 // The host
@@ -290,7 +283,7 @@ pub async fn load(
             return Ok(HttpResponse::Ok().json(&answer));
         }
         Ok(None) => {}
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     }
     if !answer.supported {
         return Ok(HttpResponse::Ok().json(&answer));
@@ -361,7 +354,7 @@ pub async fn power(
         Ok(Some(client)) => pve_power(&client, &request.guest, request.action).await,
         Ok(None) if unix() => libvirt_power(&state, &request.guest, request.action, password).await,
         Ok(None) => Err(VirtError::new(ErrorKind::Unsupported)),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     if let Err(e) = &result {
         record(Action::Close, Outcome::Error, Some(&format!("{:?}", e.kind))).record(&state.db).await;
@@ -380,7 +373,7 @@ pub(crate) async fn backend(state: &AppState) -> Result<Backend, HttpResponse> {
         Ok(Some(client)) => Ok(Backend::Pve(client)),
         Ok(None) if unix() => Ok(Backend::Libvirt),
         Ok(None) => Err(HttpResponse::Ok().json(&PowerResponse { error: Some(VirtError::new(ErrorKind::Unsupported)) })),
-        Err(e) => Err(internal_error(&e)),
+        Err(e) => Err(super::respond::internal(&e)),
     }
 }
 
@@ -512,7 +505,7 @@ pub async fn console(
     };
     let ticket = match state.tickets.issue(super::ws::ticket::Purpose::Virt) {
         Ok(ticket) => ticket,
-        Err(_) => return Ok(refusal(StatusCode::TOO_MANY_REQUESTS, "too_many_tickets")),
+        Err(_) => return Ok(super::respond::error(StatusCode::TOO_MANY_REQUESTS, "too_many_tickets")),
     };
     {
         let mut consoles = state.virt.consoles.locked();
@@ -1008,7 +1001,7 @@ pub async fn pve_get(
     }
     match row(&state.db).await {
         Ok(row) => Ok(HttpResponse::Ok().json(&view(row))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1047,7 +1040,7 @@ pub async fn pve_put(
     }
     let input = normalize(body.into_inner());
     if let Err(code) = validate(&input) {
-        return Ok(refusal(StatusCode::BAD_REQUEST, code));
+        return Ok(super::respond::error(StatusCode::BAD_REQUEST, code));
     }
     let result = store(&state.db, &input).await;
     let outcome = if result.is_ok() { Outcome::Ok } else { Outcome::Error };
@@ -1057,11 +1050,11 @@ pub async fn pve_put(
         .record(&state.db)
         .await;
     if let Err(e) = result {
-        return Ok(internal_error(&e));
+        return Ok(super::respond::internal(&e));
     }
     match row(&state.db).await {
         Ok(row) => Ok(HttpResponse::Ok().json(&view(row))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1084,7 +1077,7 @@ pub async fn pve_delete(
         .await;
     match result {
         Ok(_) => Ok(HttpResponse::Ok().json(&view(None))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1100,8 +1093,8 @@ pub async fn pve_cert(
     }
     let client = match pve_client(&state).await {
         Ok(Some(client)) => client,
-        Ok(None) => return Ok(refusal(StatusCode::NOT_FOUND, "notConfigured")),
-        Err(e) => return Ok(internal_error(&e)),
+        Ok(None) => return Ok(super::respond::error(StatusCode::NOT_FOUND, "notConfigured")),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let pin = match client.confirm_cert(&body.fingerprint) {
         Ok(pin) => pin,
@@ -1120,7 +1113,7 @@ pub async fn pve_cert(
         .await;
     match result {
         Ok(_) => Ok(HttpResponse::Ok().json(&PowerResponse { error: None })),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -1137,8 +1130,8 @@ pub async fn pve_tfa(
     }
     let client = match pve_client(&state).await {
         Ok(Some(client)) => client,
-        Ok(None) => return Ok(refusal(StatusCode::NOT_FOUND, "notConfigured")),
-        Err(e) => return Ok(internal_error(&e)),
+        Ok(None) => return Ok(super::respond::error(StatusCode::NOT_FOUND, "notConfigured")),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let error = client.submit_tfa(&body.code).await.err();
     Ok(HttpResponse::Ok().json(&PowerResponse { error }))

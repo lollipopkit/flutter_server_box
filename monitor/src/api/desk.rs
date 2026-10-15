@@ -580,15 +580,6 @@ pub fn sniff_image(bytes: &[u8]) -> Option<&'static str> {
 // Handlers
 // -----------------------------------------------------------------------------
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
 /// The caller and its account id.
 pub(crate) async fn account(req: &HttpRequest, state: &AppState) -> Result<(Caller, i64), HttpResponse> {
     let caller = authz::jwt_caller(req, state).await?;
@@ -596,16 +587,12 @@ pub(crate) async fn account(req: &HttpRequest, state: &AppState) -> Result<(Call
     Ok((caller, id))
 }
 
-pub(crate) fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
-    tracing::error!("desk: {e}");
-    HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
-}
 
 pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     let (_, user) = require!(account(&req, &state).await);
     let preferences = match load_preferences(&state.db, user).await {
         Ok(p) => p,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let wallpaper_sha256 = match sqlx::query_scalar::<_, String>("SELECT sha256 FROM desk_wallpaper WHERE user_id = ?")
         .bind(user)
@@ -613,7 +600,7 @@ pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> R
         .await
     {
         Ok(sha) => sha,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     Ok(HttpResponse::Ok().json(&DeskView {
         preferences,
@@ -636,11 +623,11 @@ pub async fn put_preferences(
         match super::desk_themes::theme_exists(&state.db, user, theme).await {
             Ok(true) => {}
             Ok(false) => return Ok(HttpResponse::BadRequest().json(&refused("unknownTheme", None))),
-            Err(e) => return Ok(internal_error(&e)),
+            Err(e) => return Ok(super::respond::internal(&e)),
         }
     }
     if let Err(e) = store_preferences(&state.db, user, &preferences).await {
-        return Ok(internal_error(&e));
+        return Ok(super::respond::internal(&e));
     }
     state.desk.send(DeskEvent::Preferences { user });
     Ok(HttpResponse::Ok().json(&preferences))
@@ -655,7 +642,7 @@ pub async fn get_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppSta
     let (mime, sha) = match row {
         Ok(Some(row)) => row,
         Ok(None) => return Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let etag = format!("\"{sha}\"");
     let matches = req
@@ -673,7 +660,7 @@ pub async fn get_wallpaper(req: HttpRequest, state: web::types::State<Arc<AppSta
     match state.blobs.read(&sha).await {
         Ok(Some(bytes)) => Ok(res.content_type(mime).body(bytes)),
         Ok(None) => Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -700,7 +687,7 @@ pub async fn put_wallpaper(
     let writing = state.blobs.writing().await;
     let sha = match state.blobs.put(&data).await {
         Ok(sha) => sha,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let stored = sqlx::query(
         "INSERT INTO desk_wallpaper (user_id, mime, sha256) VALUES (?, ?, ?) \
@@ -719,7 +706,7 @@ pub async fn put_wallpaper(
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::Ok().json(&serde_json::json!({ "sha256": sha })))
         }
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -728,7 +715,7 @@ pub async fn delete_wallpaper(req: HttpRequest, state: web::types::State<Arc<App
     let (_, user) = require!(account(&req, &state).await);
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let done = async {
         sqlx::query("DELETE FROM desk_wallpaper WHERE user_id = ?").bind(user).execute(&mut *tx).await?;
@@ -746,7 +733,7 @@ pub async fn delete_wallpaper(req: HttpRequest, state: web::types::State<Arc<App
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::NoContent().finish())
         }
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -766,7 +753,7 @@ pub async fn get_session(
     .await;
     match loaded {
         Ok(session) => Ok(HttpResponse::Ok().json(&session)),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -793,7 +780,7 @@ pub async fn put_session(
             "error": "conflict",
             "current": current,
         }))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -848,7 +835,7 @@ pub async fn notifications(
                 "unread": unread,
             })))
         }
-        (Err(e), _) | (_, Err(e)) => Ok(internal_error(&e)),
+        (Err(e), _) | (_, Err(e)) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -876,7 +863,7 @@ pub async fn mark_read(
     };
     match done {
         Ok(()) => Ok(HttpResponse::NoContent().finish()),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 

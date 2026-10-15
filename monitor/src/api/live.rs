@@ -23,7 +23,7 @@ use serde::Serialize;
 
 use super::authz;
 use super::server::AppState;
-use super::ws::audit::{self, Action, Event, Kind, Outcome};
+use super::ws::audit::Action;
 use super::ws::live::LiveConnection;
 use super::ws::session::SessionInfo;
 use crate::db::accounts::{self, LoginDevice};
@@ -60,8 +60,8 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
     let devices = accounts::devices(&state.db, now).await;
     let (watch_tokens, devices) = match (watch_tokens, devices) {
         (Ok(watch_tokens), Ok(devices)) => (watch_tokens, devices),
-        (Err(e), _) => return Ok(super::desk::internal_error(&e)),
-        (_, Err(e)) => return Ok(super::desk::internal_error(&e)),
+        (Err(e), _) => return Ok(super::respond::internal(&e)),
+        (_, Err(e)) => return Ok(super::respond::internal(&e)),
     };
     Ok(HttpResponse::Ok().json(&Live {
         sessions: state.sessions.list(),
@@ -105,7 +105,7 @@ pub async fn forget_device(
     }
     let forgotten = match accounts::forget_device(&state.db, *path).await {
         Ok(forgotten) => forgotten,
-        Err(e) => return Ok(super::desk::internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     Ok(answer(&req, &state, forgotten, &format!("forget device {}", *path)).await)
 }
@@ -115,10 +115,6 @@ async fn answer(req: &HttpRequest, state: &AppState, done: bool, what: &str) -> 
     if !done {
         return authz::error(StatusCode::NOT_FOUND, "not_found", "Nothing open by that id");
     }
-    Event::new(Kind::Admin, Action::Close, Outcome::Ok)
-        .remote_ip(audit::peer_ip(req))
-        .detail(what)
-        .record(&state.db)
-        .await;
+    super::admin::audit(req, state, Action::Close, what.to_string()).await;
     HttpResponse::NoContent().finish()
 }

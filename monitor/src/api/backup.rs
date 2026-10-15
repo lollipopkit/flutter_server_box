@@ -76,14 +76,7 @@ pub struct NameQuery {
     name: String,
 }
 
-fn refusal(status: ntex::http::StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
-}
 
-fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
-    tracing::error!("backup: {e}");
-    refusal(ntex::http::StatusCode::INTERNAL_SERVER_ERROR, "internal")
-}
 
 async fn record(state: &AppState, req: &HttpRequest, outcome: Outcome, detail: String) {
     Event::new(Kind::Backup, Action::Write, outcome)
@@ -102,7 +95,7 @@ pub async fn list(
     }
     match load(&state.db).await {
         Ok(blobs) => Ok(HttpResponse::Ok().json(&ListResponse { blobs, max_bytes: MAX_BYTES })),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -116,7 +109,7 @@ pub async fn download(
         return Ok(refused);
     }
     if !valid_name(&query.name) {
-        return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
     let sha = match sqlx::query_scalar::<_, String>("SELECT sha256 FROM backup_file WHERE name = ?")
         .bind(&query.name)
@@ -124,8 +117,8 @@ pub async fn download(
         .await
     {
         Ok(Some(sha)) => sha,
-        Ok(None) => return Ok(refusal(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob")),
-        Err(e) => return Ok(internal_error(&e)),
+        Ok(None) => return Ok(super::respond::error(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob")),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     match state.blobs.read(&sha).await {
         Ok(Some(data)) => Ok(HttpResponse::Ok()
@@ -135,8 +128,8 @@ pub async fn download(
                 format!("attachment; filename=\"{}\"", query.name),
             )
             .body(data)),
-        Ok(None) => Ok(refusal(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob")),
-        Err(e) => Ok(internal_error(&e)),
+        Ok(None) => Ok(super::respond::error(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob")),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -155,7 +148,7 @@ pub async fn upload(
     let name = query.into_inner().name;
     if !valid_name(&name) {
         discard(&mut body).await;
-        return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
 
     let mut data = Vec::new();
@@ -168,7 +161,7 @@ pub async fn upload(
         if (data.len() + chunk.len()) as u64 > MAX_BYTES {
             drop(data);
             discard(&mut body).await;
-            return Ok(refusal(ntex::http::StatusCode::PAYLOAD_TOO_LARGE, "tooLarge"));
+            return Ok(super::respond::error(ntex::http::StatusCode::PAYLOAD_TOO_LARGE, "tooLarge"));
         }
         data.extend_from_slice(&chunk);
     }
@@ -179,10 +172,10 @@ pub async fn upload(
             record(&state, &req, Outcome::Ok, format!("backup write {name}: {size} bytes")).await;
             Ok(HttpResponse::Ok().json(&view))
         }
-        Ok(None) => Ok(refusal(ntex::http::StatusCode::CONFLICT, "tooMany")),
+        Ok(None) => Ok(super::respond::error(ntex::http::StatusCode::CONFLICT, "tooMany")),
         Err(e) => {
             record(&state, &req, Outcome::Error, format!("backup write {name}: failed")).await;
-            Ok(internal_error(&format!("{e:#}")))
+            Ok(super::respond::internal(&format!("{e:#}")))
         }
     }
 }
@@ -218,7 +211,7 @@ pub async fn remove(
         return Ok(refused);
     }
     if !valid_name(&query.name) {
-        return Ok(refusal(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, "invalidName"));
     }
     match sqlx::query("DELETE FROM backup_file WHERE name = ?")
         .bind(&query.name)
@@ -226,14 +219,14 @@ pub async fn remove(
         .await
     {
         Ok(done) if done.rows_affected() == 0 => {
-            Ok(refusal(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob"))
+            Ok(super::respond::error(ntex::http::StatusCode::NOT_FOUND, "noSuchBlob"))
         }
         Ok(_) => {
             state.blobs.collect_soon(&state.db);
             record(&state, &req, Outcome::Ok, format!("backup remove {}", query.name)).await;
             Ok(HttpResponse::NoContent().finish())
         }
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 

@@ -1041,11 +1041,7 @@ async fn issue_watch_token(
     .await?;
     // A credential good for months: who minted one, as forgetting a device is
     // recorded. The client id, never the token.
-    Event::new(Kind::Admin, Action::Open, Outcome::Ok)
-        .remote_ip(audit::peer_ip(&req))
-        .detail(format!("watch token for {client_id}"))
-        .record(&app_state.db)
-        .await;
+    super::admin::audit(&req, &app_state, Action::Open, format!("watch token for {client_id}")).await;
     Ok(HttpResponse::Ok().json(&WatchTokenResponse { token, expires_at }))
 }
 
@@ -1061,11 +1057,7 @@ async fn revoke_watch_token(
         .execute(&app_state.db)
         .await?;
     if revoked.rows_affected() > 0 {
-        Event::new(Kind::Admin, Action::Close, Outcome::Ok)
-            .remote_ip(audit::peer_ip(&req))
-            .detail(format!("watch token for {client_id} revoked"))
-            .record(&app_state.db)
-            .await;
+        super::admin::audit(&req, &app_state, Action::Close, format!("watch token for {client_id} revoked")).await;
     }
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
 }

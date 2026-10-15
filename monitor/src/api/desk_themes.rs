@@ -37,7 +37,7 @@ use sqlx::SqlitePool;
 use tokio::sync::Mutex;
 
 use crate::core::blobs::Blobs;
-use super::desk::{DeskEvent, account, internal_error, refused};
+use super::desk::{DeskEvent, account, refused};
 use super::server::AppState;
 use fl_theme::repo::{self, Catalog, Index, Listing, Release};
 
@@ -53,15 +53,6 @@ const STORE_TTL: Duration = Duration::from_secs(3600);
 pub const CATALOG_URL: &str = "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/assets/catalog/repos.toml";
 
 pub(crate) const BUNDLED_CATALOG: &str = include_str!("../../../assets/catalog/repos.toml");
-
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
 
 // -----------------------------------------------------------------------------
 // Installing
@@ -147,8 +138,8 @@ impl InstallError {
             }
             Self::TooMany => HttpResponse::Conflict().json(&refused("tooMany", None)),
             Self::TooLarge => HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None)),
-            Self::Db(e) => internal_error(&e),
-            Self::Io(e) => internal_error(&e),
+            Self::Db(e) => super::respond::internal(&e),
+            Self::Io(e) => super::respond::internal(&e),
         }
     }
 }
@@ -334,7 +325,7 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
                 })
                 .collect::<Vec<_>>(),
         )),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -403,7 +394,7 @@ pub async fn remove(
             state.desk.send(DeskEvent::Preferences { user });
             Ok(HttpResponse::NoContent().finish())
         }
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -433,7 +424,7 @@ pub async fn background(
     let (mime, sha) = match row {
         Ok(Some(row)) => row,
         Ok(None) => return Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     match state.blobs.read(&sha).await {
         // The bytes of one installation never change: it is named by them.
@@ -443,7 +434,7 @@ pub async fn background(
             .header("x-content-type-options", "nosniff")
             .body(bytes)),
         Ok(None) => Ok(HttpResponse::NotFound().json(&refused("notFound", None))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 

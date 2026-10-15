@@ -31,15 +31,6 @@ use super::ws::audit::{Action, Event, Kind, Outcome};
 use crate::container_backups;
 use crate::stacks::Refusal;
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
 fn refused(r: Refusal) -> HttpResponse {
     let status = ntex::http::StatusCode::from_u16(r.status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);
     HttpResponse::build(status).json(&r)

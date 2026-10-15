@@ -20,7 +20,6 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt};
 
-use super::authz;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::core::fs_roots::FsDenied;
@@ -113,19 +112,7 @@ async fn admit(
     action: &str,
     subject: &str,
 ) -> Result<(), HttpResponse> {
-    let caller = match authz::jwt_caller(req, state).await {
-        Ok(caller) => caller,
-        Err(_) => return Err(HttpResponse::Unauthorized().finish()),
-    };
-    if let Err(why) = caller.check(state, authz::is_secure(req, state)) {
-        let refusal = why.as_str();
-        Event::new(Kind::Fs, Action::Denied, Outcome::Denied)
-            .remote_ip(peer_ip(req))
-            .detail(format!("{action}: {refusal}"))
-            .record(&state.db)
-            .await;
-        return Err(HttpResponse::Forbidden().finish());
-    }
+    super::machine::gate_as(Kind::Fs, req, state, action).await?;
     // Logged by what was asked for, before it is attempted: an operation that
     // kills the agent still has to appear here.
     Event::new(Kind::Fs, Action::Open, Outcome::Ok)

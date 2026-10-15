@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use super::authz::{self, Caller};
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::ws::audit::{Action, Event, Kind, Outcome};
 use crate::monitoring::custom_cmds::{self, CustomCmd, Error};
 
 /// The largest request body accepted: every command at once, since a write
@@ -69,19 +69,7 @@ pub async fn replace(
     body: web::types::Json<ReplaceRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
-    };
-
-    let remote_ip = peer_ip(&req);
-    if !may_edit(&caller, &req, &app_state) {
-        Event::new(Kind::CustomCmd, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip)
-            .detail("custom commands may not be edited over this link")
-            .record(&app_state.db)
-            .await;
-        return Ok(HttpResponse::Forbidden().finish());
-    }
+    let remote_ip = require!(super::machine::gate_as(Kind::CustomCmd, &req, &app_state, "custom commands").await).remote_ip;
 
     let commands = body.into_inner().commands;
     // Names, never bodies: a command's text is what the user typed and may

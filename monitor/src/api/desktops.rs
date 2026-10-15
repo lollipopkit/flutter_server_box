@@ -110,7 +110,7 @@ pub async fn list(
     }
     match load(&state.db).await {
         Ok(desktops) => Ok(HttpResponse::Ok().json(&response(desktops))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -149,7 +149,7 @@ pub async fn replace(
                 .detail(format!("{what}: write failed"))
                 .record(&state.db)
                 .await;
-            Ok(internal_error(&e))
+            Ok(super::respond::internal(&e))
         }
     }
 }
@@ -265,10 +265,6 @@ async fn store(db: &SqlitePool, desktops: &[Desktop]) -> Result<(), sqlx::Error>
     tx.commit().await
 }
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("desktops: {e}");
-    HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
-}
 
 #[cfg(test)]
 mod tests {

@@ -25,9 +25,8 @@ use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::process::Command;
 
-use super::authz;
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::ws::audit::{Action, Event, Kind, Outcome};
 
 /// The bounds on one command — how long it may run and how much of it is kept.
 ///
@@ -80,24 +79,7 @@ pub async fn exec(
     body: web::types::Json<ExecRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
-    };
-
-    let remote_ip = peer_ip(&req);
-
-    // Re-checked here rather than trusted from the capabilities the client was
-    // told earlier: that answer is a UI hint, and the UI is not a boundary.
-    if let Err(why) = caller.check(&app_state,
-        authz::is_secure(&req, &app_state),
-    ) {
-        Event::new(Kind::Exec, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip)
-            .detail(why.as_str())
-            .record(&app_state.db)
-            .await;
-        return Ok(HttpResponse::Forbidden().finish());
-    }
+    let remote_ip = require!(super::machine::gate_as(Kind::Exec, &req, &app_state, "exec").await).remote_ip;
 
     let cmd = body.cmd.clone();
     if cmd.trim().is_empty() {

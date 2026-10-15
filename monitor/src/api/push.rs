@@ -240,13 +240,7 @@ struct ErrorResponse {
     error: String,
 }
 
-fn bad_request(error: impl Into<String>) -> HttpResponse {
-    HttpResponse::BadRequest().json(&ErrorResponse { error: error.into() })
-}
 
-fn internal_error(error: impl Into<String>) -> HttpResponse {
-    HttpResponse::InternalServerError().json(&ErrorResponse { error: error.into() })
-}
 
 pub async fn list(
     req: HttpRequest,
@@ -289,7 +283,7 @@ pub async fn replace(
     if let Some(rate) = &push_rate
         && let Err(e) = validate_push_rate(rate)
     {
-        return Ok(bad_request(e));
+        return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, &e));
     }
 
     // Held across the whole read-modify-write: `config_file::write` is atomic,
@@ -311,7 +305,7 @@ pub async fn replace(
                 .detail(e.clone())
                 .record(&app_state.db)
                 .await;
-            return Ok(bad_request(e));
+            return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, &e));
         }
     };
 
@@ -334,7 +328,7 @@ pub async fn replace(
             .detail(e.to_string())
             .record(&app_state.db)
             .await;
-        return Ok(internal_error(e.to_string()));
+        return Ok(super::respond::internal(&e));
     }
 
     Event::new(Kind::Push, Action::Open, Outcome::Ok)
@@ -370,7 +364,7 @@ pub async fn test(
 
     let message = match message {
         Some(message) if message.chars().count() > TEST_MESSAGE_LIMIT => {
-            return Ok(bad_request(format!(
+            return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, &format!(
                 "A test message may be at most {TEST_MESSAGE_LIMIT} characters"
             )));
         }
@@ -388,7 +382,7 @@ pub async fn test(
 
     let resolved = match resolve_all(vec![push], &existing) {
         Ok(mut resolved) => resolved.remove(0),
-        Err(e) => return Ok(bad_request(e)),
+        Err(e) => return Ok(super::respond::error(ntex::http::StatusCode::BAD_REQUEST, &e)),
     };
 
     if !test_limiter().check(TEST_RATE.0, TEST_RATE.1) {

@@ -43,24 +43,11 @@ use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use super::ws::ticket::Purpose;
 use crate::stacks::{self, Refusal, StackAction, store};
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
 fn refused(r: Refusal) -> HttpResponse {
     let status = ntex::http::StatusCode::from_u16(r.status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);
     HttpResponse::build(status).json(&r)
 }
 
-fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
-    tracing::error!("stacks: {e}");
-    HttpResponse::InternalServerError().json(&json!({ "error": "internal" }))
-}
 
 fn not_found() -> HttpResponse {
     HttpResponse::NotFound().json(&json!({ "error": "notFound" }))
@@ -85,7 +72,7 @@ pub async fn refresh(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
 async fn answer_list(state: &AppState) -> Result<HttpResponse, web::Error> {
     let rows = match store::all(&state.db).await {
         Ok(rows) => rows,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let apps: Vec<Value> = state
         .stacks
@@ -330,7 +317,7 @@ pub async fn enter(
     };
     let ticket = match state.tickets.issue(Purpose::Proxy) {
         Ok(t) => t,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     // The window is framed by the page that asked, when the agent would let
     // that page call it anyway.

@@ -1,3 +1,14 @@
+/// The value of an `Ok`, or the handler answers with the `Err`'s response:
+/// `require!(authz::acting_caller(&req, &state).await)`.
+macro_rules! require {
+    ($result:expr) => {{
+        match $result {
+            Ok(value) => value,
+            Err(response) => return Ok(response),
+        }
+    }};
+}
+
 pub mod agent;
 pub mod cron;
 pub mod backup;

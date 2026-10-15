@@ -103,7 +103,7 @@ pub async fn list(
     }
     match load(&state.db).await {
         Ok(snippets) => Ok(HttpResponse::Ok().json(&ListResponse { snippets })),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -144,7 +144,7 @@ pub async fn replace(
                 .detail(format!("{what}: write failed"))
                 .record(&state.db)
                 .await;
-            Ok(internal_error(&e))
+            Ok(super::respond::internal(&e))
         }
     }
 }
@@ -260,10 +260,6 @@ async fn store(db: &SqlitePool, snippets: &[Snippet]) -> Result<(), sqlx::Error>
     tx.commit().await
 }
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("snippets: {e}");
-    HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
-}
 
 #[cfg(test)]
 mod tests {

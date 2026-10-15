@@ -455,7 +455,7 @@ pub async fn call(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Ok(super::desk::internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let Some((_, Some(approved), sha)) = row else {
         return Ok(HttpResponse::NotFound().json(&json!({ "error": "notFound" })));

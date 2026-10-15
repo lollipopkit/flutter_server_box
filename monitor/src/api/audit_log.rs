@@ -91,7 +91,7 @@ pub async fn list(
     .await;
     let mut entries = match rows {
         Ok(rows) => rows,
-        Err(e) => return Ok(super::desk::internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let next = if entries.len() > limit as usize {
         entries.truncate(limit as usize);

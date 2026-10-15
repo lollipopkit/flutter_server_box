@@ -130,14 +130,7 @@ impl Serialize for Refusal {
     }
 }
 
-fn refusal(status: StatusCode, error: &'static str) -> HttpResponse {
-    HttpResponse::build(status).json(&serde_json::json!({ "error": error }))
-}
 
-fn internal_error(e: &sqlx::Error) -> HttpResponse {
-    tracing::error!("bmc: {e}");
-    refusal(StatusCode::INTERNAL_SERVER_ERROR, "internal")
-}
 
 /// An upstream failure, as the panel reads it. The detail is
 /// `sbm_redfish`'s, which never carries a credential or a response body.
@@ -160,7 +153,7 @@ pub async fn list(
         Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
             targets: rows.into_iter().map(|row| row.view()).collect(),
         })),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -190,9 +183,9 @@ pub async fn replace(
             Ok(rows) => Ok(HttpResponse::Ok().json(&ListResponse {
                 targets: rows.into_iter().map(|row| row.view()).collect(),
             })),
-            Err(e) => Ok(internal_error(&e)),
+            Err(e) => Ok(super::respond::internal(&e)),
         },
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -207,7 +200,7 @@ pub async fn probe(
         return Ok(refused);
     }
     let Some((host, port)) = host_port(&body.url) else {
-        return Ok(refusal(StatusCode::BAD_REQUEST, "invalidUrl"));
+        return Ok(super::respond::error(StatusCode::BAD_REQUEST, "invalidUrl"));
     };
     match sbm_redfish::cert::fetch_server_cert(&host, port, PROBE_TIMEOUT).await {
         Ok(info) => Ok(HttpResponse::Ok().json(&info)),
@@ -294,8 +287,8 @@ async fn connect(db: &SqlitePool, id: &str) -> Result<Client, HttpResponse> {
         .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(refusal(StatusCode::NOT_FOUND, "noSuchTarget")),
-        Err(e) => return Err(internal_error(&e)),
+        Ok(None) => return Err(super::respond::error(StatusCode::NOT_FOUND, "noSuchTarget")),
+        Err(e) => return Err(super::respond::internal(&e)),
     };
     Client::new(ClientConfig {
         base_url: row.url,

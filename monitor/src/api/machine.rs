@@ -94,10 +94,16 @@ pub struct Gated {
 /// rather than trusted from `/capabilities`: that answer is a hint for the
 /// UI, and the UI is not a boundary.
 pub async fn gate(req: &HttpRequest, state: &AppState, what: &str) -> Result<Gated, HttpResponse> {
+    gate_as(Kind::Machine, req, state, what).await
+}
+
+/// [gate], the refusal recorded under [kind]: for the routes with an audit
+/// kind of their own (`/exec`, `/fs`, custom commands, Agent mode).
+pub async fn gate_as(kind: Kind, req: &HttpRequest, state: &AppState, what: &str) -> Result<Gated, HttpResponse> {
     let caller = authz::jwt_caller(req, state).await?;
     let remote_ip = peer_ip(req);
     if let Err(why) = caller.check(state, authz::is_secure(req, state)) {
-        Event::new(Kind::Machine, Action::Denied, Outcome::Denied)
+        Event::new(kind, Action::Denied, Outcome::Denied)
             .remote_ip(remote_ip)
             .detail(format!("{what}: {}", why.as_str()))
             .record(&state.db)

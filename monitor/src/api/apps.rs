@@ -41,7 +41,7 @@ use crate::core::blobs::Blobs;
 use super::admin::{Reauth, reauth};
 use super::authz;
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::ws::audit::Action;
 
 /// The upload, compressed.
 pub const MAX_PACKAGE_BYTES: usize = 20 << 20;
@@ -463,31 +463,12 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
 // Handlers
 // -----------------------------------------------------------------------------
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
-fn internal_error(e: &dyn std::fmt::Display) -> HttpResponse {
-    tracing::error!("apps: {e}");
-    HttpResponse::InternalServerError().json(&serde_json::json!({ "error": "internal" }))
-}
 
 fn not_found() -> HttpResponse {
     HttpResponse::NotFound().json(&refused("notFound"))
 }
 
-async fn audit(req: &HttpRequest, state: &AppState, action: Action, detail: String) {
-    Event::new(Kind::Admin, action, Outcome::Ok)
-        .remote_ip(peer_ip(req))
-        .detail(detail)
-        .record(&state.db)
-        .await;
-}
+use super::admin::audit;
 
 pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::jwt_caller(&req, &state).await);
@@ -500,7 +481,7 @@ pub async fn list(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
                 .collect();
             Ok(HttpResponse::Ok().json(&serde_json::json!({ "apps": apps })))
         }
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -524,7 +505,7 @@ pub async fn install(
             audit(&req, &state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
-        Err(e) => Ok(internal_error(&format!("{e:#}"))),
+        Err(e) => Ok(super::respond::internal(&format!("{e:#}"))),
     }
 }
 
@@ -549,7 +530,7 @@ pub async fn approve(
     let app = match load(&state.db, &id).await {
         Ok(Some(app)) => app,
         Ok(None) => return Ok(not_found()),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     // Exactly what the manifest asks for: an approval of something else is
     // a screen out of date.
@@ -571,12 +552,12 @@ pub async fn approve(
             match load(&state.db, &app.id).await {
                 Ok(Some(app)) => Ok(HttpResponse::Ok().json(&app)),
                 Ok(None) => Ok(not_found()),
-                Err(e) => Ok(internal_error(&e)),
+                Err(e) => Ok(super::respond::internal(&e)),
             }
         }
         // Replaced between the read and the write.
         Ok(_) => Ok(HttpResponse::Conflict().json(&refused("permissionsChanged"))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -591,20 +572,20 @@ pub async fn remove(
     require!(reauth(&req, &state, password.as_deref()).await);
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let files = sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
     // What its users kept goes with it: an app installed later under this id
     // starts with nothing of theirs.
     let kept = sqlx::query("DELETE FROM desk_app_storage WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
     if let Err(e) = kept {
-        return Ok(internal_error(&e));
+        return Ok(super::respond::internal(&e));
     }
     let package = sqlx::query("DELETE FROM desk_app_package WHERE app_id = ?").bind(id.as_str()).execute(&mut *tx).await;
     match (files, package) {
         (Ok(_), Ok(r)) => {
             if let Err(e) = tx.commit().await {
-                return Ok(internal_error(&e));
+                return Ok(super::respond::internal(&e));
             }
             if r.rows_affected() == 0 {
                 return Ok(not_found());
@@ -613,7 +594,7 @@ pub async fn remove(
             audit(&req, &state, Action::Write, format!("app remove {}", id.as_str())).await;
             Ok(HttpResponse::NoContent().finish())
         }
-        (Err(e), _) | (_, Err(e)) => Ok(internal_error(&e)),
+        (Err(e), _) | (_, Err(e)) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -626,7 +607,7 @@ pub async fn launch(
     let app = match load(&state.db, &id).await {
         Ok(Some(app)) if app.approved_permissions.is_some() => app,
         Ok(_) => return Ok(not_found()),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let ticket = mint_ticket(&state, &app.id, &app.sha256, chrono::Utc::now().timestamp());
     Ok(HttpResponse::Ok().json(&serde_json::json!({
@@ -651,7 +632,7 @@ pub async fn ui(
             .await
         {
             Ok(v) => v,
-            Err(e) => return Ok(internal_error(&e)),
+            Err(e) => return Ok(super::respond::internal(&e)),
         };
     let Some((sha256, Some(_))) = package else { return Ok(not_found()) };
     if !ticket_ok(&state, &ticket, &id, &sha256, chrono::Utc::now().timestamp()) {
@@ -668,13 +649,13 @@ pub async fn ui(
         .await
     {
         Ok(s) => s,
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     let Some(sha) = sha else { return Ok(not_found()) };
     let bytes = match state.blobs.read(&sha).await {
         Ok(Some(bytes)) => bytes,
         Ok(None) => return Ok(not_found()),
-        Err(e) => return Ok(internal_error(&e)),
+        Err(e) => return Ok(super::respond::internal(&e)),
     };
     Ok(HttpResponse::Ok()
         .content_type(mime_of(&file))

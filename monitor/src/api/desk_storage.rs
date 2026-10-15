@@ -16,7 +16,7 @@ use std::sync::Arc;
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::Deserialize;
 
-use super::desk::{account, internal_error, refused, valid_app_id};
+use super::desk::{account, refused, valid_app_id};
 use super::server::AppState;
 
 /// Every key and value one app keeps, together.
@@ -36,15 +36,6 @@ pub struct KeyQuery {
 
 fn valid_key(key: &str) -> bool {
     (1..=MAX_KEY_BYTES).contains(&key.len()) && !key.chars().any(char::is_control)
-}
-
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
 }
 
 fn checked_app(app: &str) -> Result<(), HttpResponse> {
@@ -99,7 +90,7 @@ pub async fn list(
     require!(checked_app(&app));
     match items(&state.db, user, &app).await {
         Ok(items) => Ok(HttpResponse::Ok().json(&serde_json::json!({ "items": items }))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -117,7 +108,7 @@ pub async fn put(
     match store(&state.db, user, &app, &query.key, &value).await {
         Ok(true) => Ok(HttpResponse::NoContent().finish()),
         Ok(false) => Ok(HttpResponse::PayloadTooLarge().json(&refused("tooLarge", None))),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 
@@ -132,7 +123,7 @@ pub async fn remove(
     require!(checked_key(&query.key));
     match remove_key(&state.db, user, &app, &query.key).await {
         Ok(_) => Ok(HttpResponse::NoContent().finish()),
-        Err(e) => Ok(internal_error(&e)),
+        Err(e) => Ok(super::respond::internal(&e)),
     }
 }
 

@@ -39,16 +39,9 @@ fn parse<T: serde::de::DeserializeOwned>(
     serde_json::from_value(body.into_inner()).map_err(|e| bad_request(&e.to_string()))
 }
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
-async fn audit(req: &HttpRequest, state: &AppState, action: Action, detail: String) {
+/// An administrative change, recorded under [`Kind::Admin`] with the caller's
+/// address: what the account did to the agent itself.
+pub(crate) async fn audit(req: &HttpRequest, state: &AppState, action: Action, detail: String) {
     Event::new(Kind::Admin, action, Outcome::Ok)
         .remote_ip(peer_ip(req))
         .detail(detail)

@@ -39,15 +39,6 @@ use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::stacks::job::{Job, JobKind, JobState};
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
 /// The storage change running or last run: one at a time. And the last
 /// SMART reading, which needs root and so is not made on every page load.
 #[derive(Default)]
@@ -95,10 +86,6 @@ impl StorageJobs {
     }
 }
 
-fn refused(status: u16, error: &str) -> HttpResponse {
-    HttpResponse::build(ntex::http::StatusCode::from_u16(status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST))
-        .json(&json!({ "error": error }))
-}
 
 /// The machine's storage as it is now (`storage::parse_view`).
 async fn read_view(state: &AppState) -> Option<st::StorageView> {
@@ -143,9 +130,9 @@ pub(crate) async fn arrays_and_pools(state: &AppState) -> (Vec<st::MdArray>, Vec
 pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
-    let Some(v) = read_view(&state).await else { return Ok(refused(502, "unreadable")) };
+    let Some(v) = read_view(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
     let job = state.storage.job().map(|j| j.view(u64::MAX));
     let health = state.storage.health();
     let maintenance = crate::storage_watch::tasks(&state.db).await;
@@ -200,7 +187,7 @@ pub async fn set_maintenance(
             Event::new(Kind::Machine, Action::Write, Outcome::Ok).remote_ip(peer_ip(&req)).detail(what).record(&state.db).await;
             Ok(HttpResponse::Ok().json(&json!({ "maintenance": tasks })))
         }
-        Err(r) => Ok(refused(r.status, r.error)),
+        Err(r) => Ok(super::respond::error_u16(r.status, r.error)),
     }
 }
 
@@ -213,11 +200,11 @@ pub async fn run_maintenance(
 ) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
-    let Some(task) = st::Maintenance::from_name(&path.task) else { return Ok(refused(404, "notFound")) };
+    let Some(task) = st::Maintenance::from_name(&path.task) else { return Ok(super::respond::error_u16(404, "notFound")) };
     if !crate::storage_watch::tasks(&state.db).await.iter().any(|t| t.task == path.task) {
-        return Ok(refused(409, "notScheduled"));
+        return Ok(super::respond::error_u16(409, "notScheduled"));
     }
     Event::new(Kind::Machine, Action::Write, Outcome::Ok)
         .remote_ip(peer_ip(&req))
@@ -231,12 +218,12 @@ pub async fn run_maintenance(
 pub async fn health(req: HttpRequest, body: web::types::Json<HealthBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let password = body.into_inner().sudo_password.filter(|p| !p.is_empty());
     match read_health(&state, password.as_deref()).await {
         Ok(reading) => Ok(HttpResponse::Ok().json(&reading)),
-        Err(why) => Ok(refused(403, why)),
+        Err(why) => Ok(super::respond::error_u16(403, why)),
     }
 }
 
@@ -254,7 +241,7 @@ pub struct ActBody {
 pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     if !cfg!(target_os = "linux") {
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     }
     let ActBody { action, sudo_password, passphrase } = body.into_inner();
     // The passphrase reaches cryptsetup as a key file only the agent's
@@ -262,18 +249,18 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     // the job logs, names its path.
     let key = if action.needs_key() {
         let Some(p) = passphrase.filter(|p| st::passphrase_ok(p)) else {
-            return Ok(refused(400, "invalidPassphrase"));
+            return Ok(super::respond::error_u16(400, "invalidPassphrase"));
         };
         #[cfg(unix)]
         match super::machine::PrivateScript::write(&p) {
             Ok(file) => Some(file),
             Err(e) => {
                 tracing::warn!("storage: writing the key file: {e}");
-                return Ok(refused(500, "internal"));
+                return Ok(super::respond::error_u16(500, "internal"));
             }
         }
         #[cfg(not(unix))]
-        return Ok(refused(409, "notLinux"));
+        return Ok(super::respond::error_u16(409, "notLinux"));
     } else {
         None
     };
@@ -283,10 +270,10 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     let key_path: Option<String> = None;
     let script = match action.script_with_key(key_path.as_deref()) {
         Ok(s) => s,
-        Err(e) => return Ok(refused(400, e.code())),
+        Err(e) => return Ok(super::respond::error_u16(400, e.code())),
     };
     // Decided on what the machine has now, not on what a page saw.
-    let Some(v) = read_view(&state).await else { return Ok(refused(502, "unreadable")) };
+    let Some(v) = read_view(&state).await else { return Ok(super::respond::error_u16(502, "unreadable")) };
     if let Err(r) = st::check(&v, &action) {
         let status = ntex::http::StatusCode::from_u16(r.status).unwrap_or(ntex::http::StatusCode::BAD_REQUEST);
         let body = match (&r.device, &r.why) {
@@ -299,10 +286,10 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     let tried = super::machine::as_root("true", Some(&password).filter(|p| !p.is_empty()).map(String::as_str), &state.remote_access.exec).await;
     match tried {
         Ok(out) if out.exit_code == Some(0) => {}
-        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => return Ok(refused(403, "sudo_rejected")),
-        _ => return Ok(refused(403, "sudo_unavailable")),
+        Ok(out) if sbm_parser::script::sudo_password_rejected(&out.stderr) => return Ok(super::respond::error_u16(403, "sudo_rejected")),
+        _ => return Ok(super::respond::error_u16(403, "sudo_unavailable")),
     }
-    let Some(job) = state.storage.begin() else { return Ok(refused(409, "busy")) };
+    let Some(job) = state.storage.begin() else { return Ok(super::respond::error_u16(409, "busy")) };
     let what = serde_json::to_string(&action).unwrap_or_default();
     let reread = matches!(action, StorageAction::SmartTest { .. });
     Event::new(Kind::Machine, Action::Write, Outcome::Ok)
@@ -344,6 +331,6 @@ pub async fn job(req: HttpRequest, query: web::types::Query<JobQuery>, state: we
     require!(authz::acting_caller(&req, &state).await);
     match state.storage.job() {
         Some(job) => Ok(HttpResponse::Ok().json(&job.view(query.since))),
-        None => Ok(refused(404, "notFound")),
+        None => Ok(super::respond::error_u16(404, "notFound")),
     }
 }

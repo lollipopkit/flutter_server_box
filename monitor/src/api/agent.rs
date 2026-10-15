@@ -58,29 +58,12 @@ pub const MAX_REQUEST: usize = MAX_PROMPT + (64 << 10);
 /// A memory file's body: its longest content, every character escaped.
 pub const MAX_MEMORY_REQUEST: usize = memory::MAX_FILE_CHARS * 12 + (4 << 10);
 
-macro_rules! require {
-    ($result:expr) => {{
-        match $result {
-            Ok(value) => value,
-            Err(response) => return Ok(response),
-        }
-    }};
-}
-
 /// The account, its id and whether the link is secure, when the transport
 /// rule lets it act.
 async fn shell(req: &HttpRequest, state: &AppState) -> Result<(Caller, i64, bool), HttpResponse> {
-    let (caller, user) = super::desk::account(req, state).await?;
-    let secure = authz::is_secure(req, state);
-    if let Err(why) = caller.check(state, secure) {
-        Event::new(Kind::Agent, Action::Denied, Outcome::Denied)
-            .remote_ip(peer_ip(req))
-            .detail(format!("agent: {}", why.as_str()))
-            .record(&state.db)
-            .await;
-        return Err(authz::error(StatusCode::FORBIDDEN, "forbidden", why.as_str()));
-    }
-    Ok((caller, user, secure))
+    let caller = super::machine::gate_as(Kind::Agent, req, state, "agent").await?.caller;
+    let user = caller.id;
+    Ok((caller, user, authz::is_secure(req, state)))
 }
 
 fn refused(e: FlowError) -> HttpResponse {
