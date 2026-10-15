@@ -72,6 +72,29 @@ void main() {
     monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
   );
 
+  group('where the shell says it is', () {
+    test('an OSC 7 report sets the working directory; a later one replaces it', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      expect(session.workingDirectory, isNull);
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      expect(session.workingDirectory, '/srv/www');
+      // Percent-encoded, as the shells send a space.
+      session.terminal.write('\x1b]7;file://box/home/me/My%20Files\x1b\\');
+      expect(session.workingDirectory, '/home/me/My Files');
+      // Not a file URL: the last one stands.
+      session.terminal.write('\x1b]7;https://example.com/x\x07');
+      expect(session.workingDirectory, '/home/me/My Files');
+    });
+
+    test('only a file URL with an absolute path is read', () {
+      expect(TerminalSession.osc7Path(['file:///tmp']), '/tmp');
+      expect(TerminalSession.osc7Path(['file://host/a;b']), '/a;b');
+      expect(TerminalSession.osc7Path(['file://host/a', 'b']), '/a;b');
+      expect(TerminalSession.osc7Path(['relative']), null);
+      expect(TerminalSession.osc7Path(['']), null);
+    });
+  });
+
   group('the shell on screen', () {
     test('typing reaches every typed listener, and one leaving leaves the rest', () {
       final session = TerminalSession(source: ServerSource(ssh));

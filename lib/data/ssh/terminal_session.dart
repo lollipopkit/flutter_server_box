@@ -403,7 +403,28 @@ class TerminalSession {
     status.shell.apply(event);
   }
 
+  /// The shell's working directory, as its last OSC 7 said (`file://host/path`,
+  /// what fish, zsh and VTE's bash hook send on each prompt). Null until one
+  /// says, and for a shell that never does.
+  String? get workingDirectory => _workingDirectory;
+  String? _workingDirectory;
+
+  /// The path of an OSC 7 report, or null for one that is not a `file:` URL
+  /// with an absolute path.
+  @visibleForTesting
+  static String? osc7Path(List<String> args) {
+    final uri = Uri.tryParse(args.join(';'));
+    if (uri == null || uri.scheme != 'file') return null;
+    if (!uri.path.startsWith('/')) return null;
+    // Decoded: the shells percent-encode what a URL cannot hold (a space).
+    return Uri.decodeComponent(uri.path);
+  }
+
   void _handlePrivateOSC(String code, List<String> args) {
+    if (code == '7') {
+      _workingDirectory = osc7Path(args) ?? _workingDirectory;
+      return;
+    }
     // Selection and payload; base64 has no `;`, so more fields are malformed.
     // xterm bounds the sequence itself (`EscapeParser.maxOscLength`).
     if (code != '52' || args.length != 2) return;
