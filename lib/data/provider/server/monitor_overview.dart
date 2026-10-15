@@ -4,6 +4,7 @@ import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/server/monitor_overview.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/agent_poll.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -61,27 +62,14 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
   /// What [refresh] polls; `audit` and `live` are read when asked.
   static const _polled = {'alerts', 'desk', 'update'};
 
-  MonitorClientLease? _lease;
-  MonitorHttpClient? get _client => _lease?.client;
-  Timer? _timer;
+  AgentPoll? _poll;
 
-  /// What this build found the agent offers. A field rather than read off
-  /// [state]: [build]'s first [refresh] runs before there is a state.
+  /// What this build found the agent offers.
   Set<String> _features = const {};
-
-  /// Rises on every rebuild, so an answer for a client that is gone is
-  /// dropped.
-  var _generation = 0;
 
   @override
   MonitorOverviewState build(String serverId) {
-    ref.onDispose(() {
-      _generation++;
-      _timer?.cancel();
-      _timer = null;
-      _lease?.release();
-      _lease = null;
-    });
+    _poll = null;
     final cred = ref.watch(serversProvider.select((s) => s.servers[serverId]?.monitorOn));
     // A string, which compares by value: a set built in the selector is a
     // new one on every status poll, and rebuilt this — a new client, a new
@@ -94,36 +82,31 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
     final features = offered.isEmpty ? const <String>{} : offered.split(',').toSet();
     _features = features;
     if (cred == null || features.isEmpty) return const MonitorOverviewState();
-    _lease = MonitorClientLease(cred);
-    // Nothing to poll would set the state before this returns one.
-    if (features.any(_polled.contains)) {
-      unawaited(refresh());
-      _timer = Timer.periodic(_pollInterval, (_) => unawaited(refresh()));
-    }
+    final poll = _poll = AgentPoll(cred, every: _pollInterval, read: _read);
+    ref.onDispose(poll.dispose);
     return MonitorOverviewState(features: features);
   }
 
   MonitorHttpClient get _required {
-    final client = _client;
+    final client = _poll?.client;
     if (client == null) throw StateError('No monitor agent for $serverId');
     return client;
   }
 
-  Future<void> refresh() async {
-    final client = _client;
-    if (client == null || !_features.any(_polled.contains)) return;
-    final generation = _generation;
+  Future<void> refresh() => _poll?.refresh() ?? Future.value();
+
+  Future<void> _read(MonitorHttpClient client, bool Function() current) async {
+    // `audit` and `live` alone: nothing to poll.
+    if (!_features.any(_polled.contains)) return;
     try {
       // One after the other: the first signs the client in, and two at once
       // would both find it signed out.
       final alerts = _features.contains('alerts') ? await client.alerts() : null;
       final notices = _features.contains('desk') ? await client.notices() : null;
       final update = _features.contains('update') ? await client.update() : null;
-      if (generation != _generation) return;
-      state = state.copyWith(alerts: alerts, notices: notices, update: update);
+      if (current()) state = state.copyWith(alerts: alerts, notices: notices, update: update);
     } catch (e) {
-      if (generation != _generation) return;
-      state = state.copyWith(error: '$e');
+      if (current()) state = state.copyWith(error: '$e');
     }
   }
 
@@ -149,9 +132,9 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
 
   /// Has the agent read its releases again (at most once a minute).
   Future<void> checkUpdate() async {
-    final generation = _generation;
+    final poll = _poll;
     final update = await _required.update(check: true);
-    if (generation == _generation) state = state.copyWith(update: update);
+    if (identical(poll, _poll)) state = state.copyWith(update: update);
   }
 
   Future<void> endSession(String id) => _required.endSession(id);

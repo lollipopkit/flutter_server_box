@@ -10,19 +10,22 @@ part of 'monitor_overview.dart';
 // ignore_for_file: type=lint, type=warning
 /// One server's `monitor` agent for the Monitor tab: its firing rules and
 /// notifications, polled while something shows them, and the audit log and
-/// what is open on it, read when asked. One [MonitorHttpClient] for all of it.
+/// what is open on it, read when asked. On the server's shared client
+/// ([MonitorClientLease]).
 
 @ProviderFor(MonitorOverviewNotifier)
 final monitorOverviewProvider = MonitorOverviewNotifierFamily._();
 
 /// One server's `monitor` agent for the Monitor tab: its firing rules and
 /// notifications, polled while something shows them, and the audit log and
-/// what is open on it, read when asked. One [MonitorHttpClient] for all of it.
+/// what is open on it, read when asked. On the server's shared client
+/// ([MonitorClientLease]).
 final class MonitorOverviewNotifierProvider
     extends $NotifierProvider<MonitorOverviewNotifier, MonitorOverviewState> {
   /// One server's `monitor` agent for the Monitor tab: its firing rules and
   /// notifications, polled while something shows them, and the audit log and
-  /// what is open on it, read when asked. One [MonitorHttpClient] for all of it.
+  /// what is open on it, read when asked. On the server's shared client
+  /// ([MonitorClientLease]).
   MonitorOverviewNotifierProvider._({
     required MonitorOverviewNotifierFamily super.from,
     required String super.argument,
@@ -69,11 +72,12 @@ final class MonitorOverviewNotifierProvider
 }
 
 String _$monitorOverviewNotifierHash() =>
-    r'8a4a2c829f37e876dffab29e9cfbf815596baa53';
+    r'bf91ab6473a3515319c8eebf56ef6a878c887c74';
 
 /// One server's `monitor` agent for the Monitor tab: its firing rules and
 /// notifications, polled while something shows them, and the audit log and
-/// what is open on it, read when asked. One [MonitorHttpClient] for all of it.
+/// what is open on it, read when asked. On the server's shared client
+/// ([MonitorClientLease]).
 
 final class MonitorOverviewNotifierFamily extends $Family
     with
@@ -95,7 +99,8 @@ final class MonitorOverviewNotifierFamily extends $Family
 
   /// One server's `monitor` agent for the Monitor tab: its firing rules and
   /// notifications, polled while something shows them, and the audit log and
-  /// what is open on it, read when asked. One [MonitorHttpClient] for all of it.
+  /// what is open on it, read when asked. On the server's shared client
+  /// ([MonitorClientLease]).
 
   MonitorOverviewNotifierProvider call(String serverId) =>
       MonitorOverviewNotifierProvider._(argument: serverId, from: this);
@@ -106,7 +111,8 @@ final class MonitorOverviewNotifierFamily extends $Family
 
 /// One server's `monitor` agent for the Monitor tab: its firing rules and
 /// notifications, polled while something shows them, and the audit log and
-/// what is open on it, read when asked. One [MonitorHttpClient] for all of it.
+/// what is open on it, read when asked. On the server's shared client
+/// ([MonitorClientLease]).
 
 abstract class _$MonitorOverviewNotifier
     extends $Notifier<MonitorOverviewState> {

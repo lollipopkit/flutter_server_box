@@ -10,25 +10,16 @@ part of 'web_apps.dart';
 // ignore_for_file: type=lint, type=warning
 /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
 /// read while something shows them.
-///
-/// Its own [MonitorHttpClient], as the agent's settings page has: the one
-/// `ServerNotifier` polls with is that notifier's.
 
 @ProviderFor(WebAppsNotifier)
 final webAppsProvider = WebAppsNotifierFamily._();
 
 /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
 /// read while something shows them.
-///
-/// Its own [MonitorHttpClient], as the agent's settings page has: the one
-/// `ServerNotifier` polls with is that notifier's.
 final class WebAppsNotifierProvider
     extends $NotifierProvider<WebAppsNotifier, WebAppsState> {
   /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
   /// read while something shows them.
-  ///
-  /// Its own [MonitorHttpClient], as the agent's settings page has: the one
-  /// `ServerNotifier` polls with is that notifier's.
   WebAppsNotifierProvider._({
     required WebAppsNotifierFamily super.from,
     required String super.argument,
@@ -73,13 +64,10 @@ final class WebAppsNotifierProvider
   }
 }
 
-String _$webAppsNotifierHash() => r'65fa4df0d2f760480169244c1c37efd3f028e4a9';
+String _$webAppsNotifierHash() => r'0de6e56ab3506f5d0a0f6fddabd7e154b07fe64e';
 
 /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
 /// read while something shows them.
-///
-/// Its own [MonitorHttpClient], as the agent's settings page has: the one
-/// `ServerNotifier` polls with is that notifier's.
 
 final class WebAppsNotifierFamily extends $Family
     with
@@ -101,9 +89,6 @@ final class WebAppsNotifierFamily extends $Family
 
   /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
   /// read while something shows them.
-  ///
-  /// Its own [MonitorHttpClient], as the agent's settings page has: the one
-  /// `ServerNotifier` polls with is that notifier's.
 
   WebAppsNotifierProvider call(String serverId) =>
       WebAppsNotifierProvider._(argument: serverId, from: this);
@@ -114,9 +99,6 @@ final class WebAppsNotifierFamily extends $Family
 
 /// The web apps a server's `monitor` agent deployed (its `stacks` feature),
 /// read while something shows them.
-///
-/// Its own [MonitorHttpClient], as the agent's settings page has: the one
-/// `ServerNotifier` polls with is that notifier's.
 
 abstract class _$WebAppsNotifier extends $Notifier<WebAppsState> {
   late final _$args = ref.$arg as String;
