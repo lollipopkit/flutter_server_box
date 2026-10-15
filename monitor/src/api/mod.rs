@@ -25,6 +25,7 @@ pub mod system_users;
 pub mod tmux;
 pub mod update;
 pub mod push;
+pub mod respond;
 pub mod cors;
 pub mod admin;
 pub mod audit_log;

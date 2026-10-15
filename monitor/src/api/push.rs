@@ -262,7 +262,7 @@ pub async fn list(
     // a GET right after a save must show what was saved.
     let config = match config_file::read() {
         Ok(config) => config,
-        Err(e) => return Ok(internal_error(e.to_string())),
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
 
     Ok(HttpResponse::Ok().json(&ListResponse {
@@ -299,7 +299,7 @@ pub async fn replace(
 
     let mut config = match config_file::read() {
         Ok(config) => config,
-        Err(e) => return Ok(internal_error(e.to_string())),
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
     let existing = config.get_push();
 
@@ -383,7 +383,7 @@ pub async fn test(
     // usually the one the editor was not given.
     let existing = match config_file::read() {
         Ok(config) => config.get_push(),
-        Err(e) => return Ok(internal_error(e.to_string())),
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
 
     let resolved = match resolve_all(vec![push], &existing) {

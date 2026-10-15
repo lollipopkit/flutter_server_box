@@ -119,6 +119,31 @@ Authorization = "Bearer hook-token-not-to-be-disclosed"
 Content-Type = "application/json"
 "#;
 
+/// A file that does not parse is not quoted back: the parser's message
+/// names the offending line, and that line may be a credential.
+#[ntex::test]
+async fn an_unreadable_config_is_not_quoted_back() {
+    let _dir = workspace().await;
+    write_config(&CONFIG_WITH_SECRETS.replace(
+        "key = \"bark-key-not-to-be-disclosed\"",
+        "key = \"bark-key-not-to-be-disclosed",
+    ));
+    let srv = test_server().await;
+
+    for path in ["/api/v1/push", "/api/v1/settings"] {
+        let resp = srv
+            .get(path)
+            .header("Authorization", format!("Bearer {}", jwt()))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status().as_u16(), 500, "{path}");
+        let raw = String::from_utf8(resp.body().await.unwrap().to_vec()).unwrap();
+        assert!(!raw.contains(BARK_KEY), "{path} quoted the file: {raw}");
+        assert_eq!(serde_json::from_str::<Value>(&raw).unwrap(), json!({ "error": "config_unreadable" }));
+    }
+}
+
 #[ntex::test]
 async fn a_credential_is_withheld_and_survives_an_edit_that_never_saw_it() {
     let _dir = workspace().await;

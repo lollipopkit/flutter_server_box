@@ -1432,10 +1432,7 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
 
     let file_config = match config_file::read() {
         Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
     let monitoring = file_config.get_monitoring();
     let live = app_state.live_settings.read().await.clone();
@@ -1497,10 +1494,7 @@ async fn update_settings(
 
     let mut config = match config_file::read() {
         Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
 
     let mut monitoring = config.get_monitoring();
@@ -1550,10 +1544,7 @@ async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppSt
     require_read_access!(&req, &app_state);
     let file_config = match config_file::read() {
         Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
     Ok(HttpResponse::Ok().json(&CardOrderPayload { card_order: file_config.get_server().card_order }))
 }
@@ -1568,10 +1559,7 @@ async fn update_card_order(
 
     let mut config = match config_file::read() {
         Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
+        Err(e) => return Ok(super::respond::config_unreadable(&e)),
     };
     let mut server_config = config.get_server();
     server_config.card_order = payload.into_inner().card_order;
