@@ -1039,6 +1039,13 @@ async fn issue_watch_token(
     .bind(expires_at)
     .execute(&app_state.db)
     .await?;
+    // A credential good for months: who minted one, as forgetting a device is
+    // recorded. The client id, never the token.
+    Event::new(Kind::Admin, Action::Open, Outcome::Ok)
+        .remote_ip(audit::peer_ip(&req))
+        .detail(format!("watch token for {client_id}"))
+        .record(&app_state.db)
+        .await;
     Ok(HttpResponse::Ok().json(&WatchTokenResponse { token, expires_at }))
 }
 
@@ -1049,10 +1056,17 @@ async fn revoke_watch_token(
 ) -> Result<HttpResponse> {
     require_jwt!(&req, &app_state);
     let client_id = validate_watch_client_id(&payload.client_id)?;
-    sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
+    let revoked = sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
         .bind(client_id)
         .execute(&app_state.db)
         .await?;
+    if revoked.rows_affected() > 0 {
+        Event::new(Kind::Admin, Action::Close, Outcome::Ok)
+            .remote_ip(audit::peer_ip(&req))
+            .detail(format!("watch token for {client_id} revoked"))
+            .record(&app_state.db)
+            .await;
+    }
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
 }
 

@@ -494,3 +494,33 @@ async fn a_watch_tokens_capabilities_grant_nothing() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["access"], serde_json::json!({ "ok": false }), "{body}");
 }
+
+/// Minting and revoking a watch token, a credential good for months, are
+/// audited by client id; the token is in no row.
+#[ntex::test]
+async fn minting_and_revoking_a_watch_token_are_audited() {
+    let state = permissive_state().await;
+    let srv = test_server(state.clone()).await;
+    let token = issue_watch_token(&srv).await;
+    let resp = srv
+        .delete("/api/v1/watch-token")
+        .header("Authorization", format!("Bearer {}", jwt()))
+        .send_json(&json!({ "client_id": "widget:test" }))
+        .await
+        .unwrap();
+    assert!(resp.status().is_success());
+
+    let rows: Vec<(String, String)> = sqlx::query_as("SELECT action, detail FROM access_log WHERE kind = 'admin' ORDER BY id")
+        .fetch_all(&state.db)
+        .await
+        .unwrap();
+    assert_eq!(
+        rows,
+        [
+            ("open".to_string(), "watch token for widget:test".to_string()),
+            ("close".to_string(), "watch token for widget:test revoked".to_string()),
+        ]
+    );
+    let all: Vec<String> = sqlx::query_scalar("SELECT COALESCE(detail, '') FROM access_log").fetch_all(&state.db).await.unwrap();
+    assert!(all.iter().all(|d| !d.contains(&token)));
+}
