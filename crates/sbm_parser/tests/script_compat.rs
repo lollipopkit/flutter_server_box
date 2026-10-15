@@ -1159,6 +1159,14 @@ fn windows_custom_commands_have_time_and_output_bounds() {
          New-Item -ItemType File -Path (Join-Path $env:USERPROFILE 'large.done') | Out-Null",
     )
     .unwrap();
+    // Floods stderr for its whole five seconds. Drained and dropped, so it
+    // neither blocks on a full pipe nor lands on the disk.
+    std::fs::write(
+        commands.join(format!("{}.ps1", script::custom_cmd_file_name(150, "noisy"))),
+        "$s = [Console]::OpenStandardError(); $b = New-Object byte[] 1048576; \
+         while ($true) { $s.Write($b, 0, $b.Length) }",
+    )
+    .unwrap();
     std::fs::write(
         commands.join(format!("{}.ps1", script::custom_cmd_file_name(200, "slow"))),
         "Start-Sleep -Seconds 30; Write-Output 'late'",
@@ -1178,9 +1186,11 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         },
     );
     assert!(generated.contains("$deadline = [DateTime]::UtcNow.AddSeconds(5)"));
-    assert!(generated.contains(
-        "if (-not $p.HasExited) { taskkill /PID $p.Id /T /F | Out-Null }\n        $p.WaitForExit()"
-    ));
+    assert!(generated.contains("if (-not $p.HasExited) { taskkill /PID $p.Id /T /F | Out-Null }"));
+    // Read from pipes, never through files: a file's size can only be polled,
+    // and a command writing flat out overran a polled one by hundreds of MB.
+    assert!(!generated.contains("RedirectStandardOutput $o"));
+    assert!(generated.contains("$i.RedirectStandardError = $true"));
     std::fs::write(&status, generated).unwrap();
 
     let mut child = Command::new("powershell")
@@ -1251,6 +1261,7 @@ fn windows_custom_commands_have_time_and_output_bounds() {
     } else {
         assert_eq!(large.len(), script::CUSTOM_CMD_MAX_OUTPUT_BYTES);
     }
+    assert_eq!(parsed[&script::custom_result_key("noisy")], "");
     assert_eq!(parsed[&script::custom_result_key("slow")], "");
 }
 
