@@ -343,6 +343,9 @@ pub struct Pool {
     pub health: String,
     /// From `zpool status`: the last or running scrub or resilver.
     pub scan: Option<String>,
+    /// A scrub or resilver is running now: what a page polls faster for.
+    #[serde(default)]
+    pub scanning: bool,
     pub vdevs: Vec<Vdev>,
 }
 
@@ -371,6 +374,7 @@ pub fn parse_zpool_list(stdout: &str) -> Vec<Pool> {
                 free: f[3].parse().unwrap_or(0),
                 health: f[4].to_string(),
                 scan: None,
+                scanning: false,
                 vdevs: Vec::new(),
             })
         })
@@ -395,6 +399,8 @@ pub fn merge_zpool_status(pools: &mut [Pool], stdout: &str) {
         }
         let Some(i) = current else { continue };
         if let Some(scan) = trimmed.strip_prefix("scan: ") {
+            // `scrub in progress since …`, `resilver in progress since …`.
+            pools[i].scanning = scan.contains(" in progress");
             pools[i].scan = Some(scan.to_string());
         } else if trimmed.starts_with("NAME") && trimmed.contains("STATE") {
             in_config = true;
@@ -1379,6 +1385,10 @@ md127 : inactive sdg[0](S)\n      976630488 blocks super 1.2\n\nunused devices: 
         merge_zpool_status(&mut pools, status);
         assert_eq!(pools[0].health, "DEGRADED");
         assert!(pools[0].scan.as_deref().unwrap().starts_with("resilvered"));
+        assert!(!pools[0].scanning);
+        let mut running = pools.clone();
+        merge_zpool_status(&mut running, "  pool: tank\n state: ONLINE\n  scan: scrub in progress since Sun Oct 11 01:00:00 2026\n");
+        assert!(running[0].scanning);
         assert_eq!(pools[0].vdevs.len(), 3);
         assert_eq!((pools[0].vdevs[0].name.as_str(), pools[0].vdevs[0].depth), ("mirror-0", 0));
         assert_eq!((pools[0].vdevs[2].state.as_str(), pools[0].vdevs[2].depth, pools[0].vdevs[2].errors), ("FAULTED", 1, 4));

@@ -152,6 +152,7 @@ final class StoragePool {
     required this.free,
     required this.health,
     required this.scan,
+    this.scanning = false,
     required this.vdevs,
   });
 
@@ -162,6 +163,7 @@ final class StoragePool {
     free: json['free'] as int,
     health: json['health'] as String,
     scan: json['scan'] as String?,
+    scanning: json['scanning'] as bool? ?? false,
     vdevs: [
       for (final vdev in json['vdevs'] as List)
         StorageVdev.fromJson(vdev as Map<String, Object?>),
@@ -174,6 +176,9 @@ final class StoragePool {
   final int free;
   final String health;
   final String? scan;
+
+  /// A scrub or resilver is running now (Rust reads it from `scan`).
+  final bool scanning;
   final List<StorageVdev> vdevs;
 }
 

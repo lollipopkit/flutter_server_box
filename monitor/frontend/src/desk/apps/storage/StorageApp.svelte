@@ -119,7 +119,7 @@
 
   // An array syncing or a pool scrubbing is read again every few seconds
   // while the page is open, so its progress moves.
-  const syncing = $derived(!!view && (view.arrays.some((a) => a.sync) || view.pools.some((p) => p.scan?.includes('in progress'))))
+  const syncing = $derived(!!view && (view.arrays.some((a) => a.sync) || view.pools.some((p) => p.scanning)))
   $effect(() => {
     if (!syncing) return
     const timer = setInterval(() => void load(), 3000)

@@ -710,7 +710,7 @@ extension on _StoragePageState {
     final view = _view;
     final active = view != null &&
         (view.arrays.any((array) => array.sync != null) ||
-            view.pools.any((pool) => pool.scan?.contains('in progress') ?? false));
+            view.pools.any((pool) => pool.scanning));
     _poll?.cancel();
     _poll = active ? Timer.periodic(const Duration(seconds: 3), (_) => _refresh()) : null;
   }

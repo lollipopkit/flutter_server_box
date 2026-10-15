@@ -2892,6 +2892,8 @@ export interface ZPool {
   free: number
   health: string
   scan: string | null
+  /// A scrub or resilver is running now; absent from older agents.
+  scanning?: boolean
   /// `section`: outside the data vdevs (`spares`, `logs`, `cache`…); absent
   /// from older agents.
   vdevs: { name: string; state: string; depth: number; errors: number; section?: string | null }[]
