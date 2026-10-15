@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [svelte(), svelteTesting()],
   test: {
     projects: [
-      { test: { name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl}.test.ts'] } },
+      { test: { name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl}.test.ts'], setupFiles: ['./src/tests/setupNode.ts'] } },
       { extends: true, test: {
         name: 'browser', globals: true, environment: 'jsdom',
         include: ['src/**/*.test.ts'],

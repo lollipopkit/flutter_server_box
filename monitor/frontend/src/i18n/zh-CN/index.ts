@@ -2361,6 +2361,10 @@ const zh_CN = {
 	weekdayFri: '周五',
 	weekdaySat: '周六',
 	weekdaySun: '周日',
+	agentUnreachable: '无法连接到 agent。',
+	agentAnswered: 'agent 返回了 {status}。',
+	agentSessionExpired: '会话已过期，请重新登录。',
+	agentHttpsRequired: '远程 monitor agent 需要 HTTPS；仅本机回环地址允许 HTTP。',
 } satisfies Translation
 
 export default zh_CN

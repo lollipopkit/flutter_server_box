@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../lib/api'
 import { deskApi } from '../desk/deskApi'
 import { servers } from '../lib/servers.svelte'
+import { get } from 'svelte/store'
+import { LL, setLocale } from '../i18n/i18n-svelte'
 
 describe.each([
   ['JSON', () => api.getSettings()],
@@ -89,5 +91,26 @@ describe('estimateBenchmark', () => {
       required_free_bytes: null,
       system_info_only: true,
     })
+  })
+})
+
+describe('a failure without words of its own', () => {
+  beforeEach(() => {
+    for (const entry of [...servers.list]) servers.remove(entry.id)
+    servers.add('https://first.example')
+    servers.login('token')
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    setLocale('en')
+  })
+
+  it('is said in the panel’s language, by what happened', async () => {
+    setLocale('zh-CN')
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))))
+    await expect(api.getSettings()).rejects.toMatchObject({ message: get(LL).agentUnreachable(), code: 'unreachable' })
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('<html>Bad gateway</html>', { status: 502 }))))
+    await expect(api.getSettings()).rejects.toMatchObject({ message: get(LL).agentAnswered({ status: 502 }), status: 502 })
+    expect(get(LL).agentUnreachable()).toBe('无法连接到 agent。')
   })
 })

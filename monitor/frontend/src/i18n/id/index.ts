@@ -2362,6 +2362,10 @@ const id = {
 	weekdayFri: 'Jumat',
 	weekdaySat: 'Sabtu',
 	weekdaySun: 'Minggu',
+	agentUnreachable: 'Tidak dapat menjangkau agent.',
+	agentAnswered: 'Agent menjawab {status}.',
+	agentSessionExpired: 'Sesi berakhir. Masuk lagi.',
+	agentHttpsRequired: 'Agent monitor jarak jauh memerlukan HTTPS; HTTP hanya diizinkan pada loopback.',
 } satisfies Translation
 
 export default id

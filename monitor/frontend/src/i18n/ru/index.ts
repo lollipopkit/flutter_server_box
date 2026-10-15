@@ -2362,6 +2362,10 @@ const ru = {
 	weekdayFri: 'пятницам',
 	weekdaySat: 'субботам',
 	weekdaySun: 'воскресеньям',
+	agentUnreachable: 'Не удалось связаться с агентом.',
+	agentAnswered: 'Агент ответил {status}.',
+	agentSessionExpired: 'Сеанс истёк. Войдите снова.',
+	agentHttpsRequired: 'Удалённым агентам monitor нужен HTTPS; HTTP разрешён только на loopback.',
 } satisfies Translation
 
 export default ru

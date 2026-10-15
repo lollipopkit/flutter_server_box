@@ -1,3 +1,6 @@
+import { get } from 'svelte/store'
+import { LL } from '../i18n/i18n-svelte'
+
 export function isSecureAgentUrl(input: string): boolean {
   if (input === '') return true
   try {
@@ -14,7 +17,7 @@ export function isSecureAgentUrl(input: string): boolean {
 export function normalizeAgentUrl(input: string): string {
   const normalized = input.trim().replace(/\/+$/, '')
   if (!isSecureAgentUrl(normalized)) {
-    throw new Error('Remote monitor agents require HTTPS; HTTP is allowed only on loopback.')
+    throw new Error(get(LL).agentHttpsRequired())
   }
   return normalized
 }

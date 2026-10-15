@@ -1,3 +1,5 @@
+import { get } from 'svelte/store'
+import { LL } from '../i18n/i18n-svelte'
 import type {
   AgentUpdate,
   InstalledApp,
@@ -161,24 +163,31 @@ export class ApiError extends Error {
 /// Two shapes: the older endpoints answer `{"error": "<message>"}`, the
 /// newer ones `{"error": "<code>", "message": "..."}`. A body with
 /// a `message` is the second, and its `error` is the code.
-async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
+export async function errorFrom(res: Response): Promise<ApiError> {
   const body = (await res.json().catch(() => null)) as ErrorBody | null
-  return errorFromBody(res.status, body, fallback)
+  return errorFromBody(res.status, body)
 }
 
-type ErrorBody = { error?: string; message?: string } & Record<string, unknown>
+export type ErrorBody = { error?: string; message?: string } & Record<string, unknown>
 
-/// [errorFrom] for a body already read (an XHR's).
-function errorFromBody(status: number, body: ErrorBody | null, fallback: string): ApiError {
+/// [errorFrom] for a body already read (an XHR's). One without words of its
+/// own (a proxy's page, an empty body) is said by its status.
+export function errorFromBody(status: number, body: ErrorBody | null): ApiError {
   if (body?.message) return new ApiError(body.message, status, body.error, body)
   if (body?.error) return new ApiError(body.error, status, undefined, body)
-  return new ApiError(fallback, status)
+  return new ApiError(get(LL).agentAnswered({ status }), status)
+}
+
+/// The agent could not be reached: the network, a timeout, a proxy that
+/// dropped the connection.
+function unreachable(): ApiError {
+  return new ApiError(get(LL).agentUnreachable(), undefined, 'unreachable')
 }
 
 /// The session of [entry] is over: dropped, so the panel goes back to login.
 function sessionExpired(entry: ServerEntry | undefined): ApiError {
   if (entry) servers.logout(entry.id, entry)
-  return new ApiError('Session expired', 401)
+  return new ApiError(get(LL).agentSessionExpired(), 401)
 }
 
 /// [entry]'s bearer, over [headers].
@@ -193,7 +202,6 @@ export async function fetchFor(
   entry: ServerEntry | undefined,
   path: string,
   init: RequestInit,
-  fallback: string,
   signal?: AbortSignal,
 ): Promise<Response> {
   const server = entry ? { ...entry } : undefined
@@ -206,7 +214,7 @@ export async function fetchFor(
       signal,
     })
   } catch {
-    throw new ApiError(fallback)
+    throw unreachable()
   }
   if (res.status === 401 && path !== '/login') throw sessionExpired(server)
   return res
@@ -219,18 +227,17 @@ function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSigna
 
 function requireSecureUrl(url: string) {
   if (!isSecureAgentUrl(url)) {
-    throw new ApiError('Remote monitor agents require HTTPS; HTTP is allowed only on loopback.')
+    throw new ApiError(get(LL).agentHttpsRequired(), undefined, 'insecure')
   }
 }
 
 async function request<T>(
   path: string,
   init: RequestInit = {},
-  fallback = 'Request failed',
   signal?: AbortSignal,
   timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
-  return requestFor<T>(servers.current, path, init, fallback, signal, timeoutMs)
+  return requestFor<T>(servers.current, path, init, signal, timeoutMs)
 }
 
 /// [request] to an explicit entry: for what must reach the server it was
@@ -240,14 +247,13 @@ export async function requestFor<T>(
   entry: ServerEntry | undefined,
   path: string,
   init: RequestInit = {},
-  fallback = 'Request failed',
   signal?: AbortSignal,
   timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
   // JSON unless the caller says what it sends.
   const headers = { 'Content-Type': 'application/json', ...(init.headers as Record<string, string> | undefined) }
-  const res = await fetchFor(entry, path, { ...init, headers }, fallback, requestSignal(signal, timeoutMs))
-  if (!res.ok) throw await errorFrom(res, fallback)
+  const res = await fetchFor(entry, path, { ...init, headers }, requestSignal(signal, timeoutMs))
+  if (!res.ok) throw await errorFrom(res)
   // `204 No Content` (a password changed, an account deleted) has no body to
   // parse.
   if (res.status === 204) return undefined as T
@@ -268,10 +274,9 @@ export function uploadFor<T>(
   entry: ServerEntry,
   path: string,
   body: Blob,
-  opts: { onProgress?: (sent: number) => void; signal?: AbortSignal; timeoutMs?: number; fallback?: string } = {},
+  opts: { onProgress?: (sent: number) => void; signal?: AbortSignal; timeoutMs?: number } = {},
 ): Promise<T> {
   const server = { ...entry }
-  const fallback = opts.fallback ?? 'Request failed'
   requireSecureUrl(server.url)
   return new Promise<T>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
@@ -292,7 +297,7 @@ export function uploadFor<T>(
     }
     xhr.onerror = xhr.ontimeout = () => {
       done()
-      reject(new ApiError(fallback))
+      reject(unreachable())
     }
     xhr.onload = () => {
       done()
@@ -300,12 +305,12 @@ export function uploadFor<T>(
       try {
         json = JSON.parse(xhr.responseText)
       } catch {
-        // Not JSON: the fallback below.
+        // Not JSON: said by its status.
       }
       if (xhr.status === 401) {
         reject(sessionExpired(server))
       } else if (xhr.status < 200 || xhr.status >= 300) {
-        reject(errorFromBody(xhr.status, json, fallback))
+        reject(errorFromBody(xhr.status, json))
       } else {
         resolve(json as T)
       }
@@ -318,14 +323,9 @@ export function uploadFor<T>(
   })
 }
 
-async function fsBytes(
-  path: string,
-  init: RequestInit,
-  fallback: string,
-  signal?: AbortSignal,
-): Promise<Response> {
-  const res = await fetchFor(servers.current, path, init, fallback, signal)
-  if (!res.ok) throw await errorFrom(res, fallback)
+async function fsBytes(path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
+  const res = await fetchFor(servers.current, path, init, signal)
+  if (!res.ok) throw await errorFrom(res)
   return res
 }
 
@@ -350,13 +350,9 @@ export async function readEventStream(
       headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
     },
-    'Failed to open the event stream',
     signal,
   )
-  if (!res.ok || !res.body) {
-    const err = (await res.json().catch(() => null)) as Record<string, unknown> | null
-    throw new ApiError('Failed to open the event stream', res.status, typeof err?.error === 'string' ? err.error : undefined, err ?? undefined)
-  }
+  if (!res.ok || !res.body) throw await errorFrom(res)
   onOpen?.()
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
   let buffer = ''
@@ -390,7 +386,7 @@ export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSigna
     headers: { Authorization: `Bearer ${entry.token}` },
     signal: requestSignal(signal),
   })
-  if (!res.ok) throw new ApiError('Failed to fetch capabilities')
+  if (!res.ok) throw await errorFrom(res)
   return res.json() as Promise<Capabilities>
 }
 
@@ -404,7 +400,7 @@ export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Pr
     headers: { Authorization: `Bearer ${entry.token}` },
     signal: requestSignal(signal),
   })
-  if (!res.ok) throw new ApiError('Failed to fetch status')
+  if (!res.ok) throw await errorFrom(res)
   return res.json() as Promise<StatusResponse>
 }
 
@@ -475,26 +471,25 @@ export async function loginTo(url: string, credentials: LoginRequest): Promise<L
 
 export const api = {
   getStatus: (signal?: AbortSignal) =>
-    request<StatusResponse>('/status', {}, 'Failed to fetch status', signal),
+    request<StatusResponse>('/status', {}, signal),
   getMetrics: (signal?: AbortSignal) =>
-    request<SystemMetrics>('/metrics', {}, 'Failed to fetch metrics', signal),
+    request<SystemMetrics>('/metrics', {}, signal),
   getHistory: (minutes: number, signal?: AbortSignal) =>
     request<HistoryPoint[]>(
       `/metrics/history?minutes=${minutes}`,
       {},
-      'Failed to fetch history',
       signal,
     ),
   // Capabilities are platform-specific, so callers fetch them once per server.
-  getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),
+  getCapabilities: () => request<Capabilities>('/capabilities', {}),
   /// Whether a newer agent is out; with [check], the agent reads its
   /// releases again first (at most once a minute).
-  getUpdate: (check = false) => request<AgentUpdate>(check ? '/update?check=1' : '/update', {}, 'Failed to read the update'),
+  getUpdate: (check = false) => request<AgentUpdate>(check ? '/update?check=1' : '/update', {}),
   /// Starts the update apart from the agent, so its restart does not end it;
   /// `getUpdate`'s `run` then says how it goes. A refused sudo password is
   /// `403` with code `sudo_password`.
   startUpdate: (password?: string) =>
-    request<void>('/update/run', { method: 'POST', body: JSON.stringify({ password }) }, 'Failed to start the update'),
+    request<void>('/update/run', { method: 'POST', body: JSON.stringify({ password }) }),
   /// One reading of the machine's process table.
   ///
   /// The order is asked of the agent rather than applied here: which orders a
@@ -507,7 +502,6 @@ export const api = {
         ...(ascending === undefined ? {} : { ascending: String(ascending) }),
       })}`,
       {},
-      'Failed to fetch the process list',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -517,7 +511,6 @@ export const api = {
     request<ProcessSignalResult>(
       '/process',
       { method: 'POST', body: JSON.stringify(payload) },
-      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -527,7 +520,6 @@ export const api = {
     request<ServiceView>(
       `/services?${new URLSearchParams({ part, ...(key ? { key } : {}) })}`,
       {},
-      'Failed to fetch the services',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -537,13 +529,12 @@ export const api = {
     request<ServiceActResult>(
       '/services',
       { method: 'POST', body: JSON.stringify(payload) },
-      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
   /// The account's crontab, expanded on the agent against its own clock.
   getCron: () =>
-    request<CronView>('/cron', {}, 'Failed to fetch the schedule', undefined, MACHINE_TIMEOUT_MS),
+    request<CronView>('/cron', {}, undefined, MACHINE_TIMEOUT_MS),
   /// One change; answers with the schedule as it now stands. The file is
   /// re-read at the moment of the write, so only `line_index` can be stale,
   /// and one that no longer names a job is refused (400) rather than applied
@@ -553,7 +544,6 @@ export const api = {
     request<CronView>(
       '/cron',
       { method: 'PUT', body: JSON.stringify(edit) },
-      'Failed to save the schedule',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -564,7 +554,6 @@ export const api = {
     request<ContainerView>(
       `/containers?part=${part}${id ? `&id=${encodeURIComponent(id)}` : ''}`,
       {},
-      'Failed to fetch the containers',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -581,7 +570,6 @@ export const api = {
     request<ContainerActionResult>(
       '/containers',
       { method: 'POST', body: JSON.stringify(action) },
-      'Failed to change the container',
       undefined,
       action.action === 'pull_image' || action.action === 'run'
         ? TASK_TIMEOUT_MS
@@ -592,20 +580,19 @@ export const api = {
   /// `available: true` with an empty list. Attaching is the terminal's
   /// `target`, not a request here.
   getTmux: () =>
-    request<TmuxView>('/tmux', {}, 'Failed to fetch the tmux sessions', undefined, MACHINE_TIMEOUT_MS),
+    request<TmuxView>('/tmux', {}, undefined, MACHINE_TIMEOUT_MS),
   /// The benchmark runs this agent has started, and the live state of the one
   /// going. `live.answered === false` means the machine
   /// did not answer in time: ask again, and read nothing into `dir_exists`
   /// until it is true. The agent polls the run for this request, which can
   /// take a while on a machine under load, hence the long timeout.
   getBenchmark: (signal?: AbortSignal) =>
-    request<BenchView>('/benchmark', {}, 'Failed to fetch the benchmark runs', signal, MACHINE_TIMEOUT_MS),
+    request<BenchView>('/benchmark', {}, signal, MACHINE_TIMEOUT_MS),
   /// One run in full, including yabs' `result_json` and the stored log.
   getBenchmarkRun: (id: string, signal?: AbortSignal) =>
     request<BenchDetail>(
       `/benchmark?run=${encodeURIComponent(id)}`,
       {},
-      'Failed to fetch the run',
       signal,
       MACHINE_TIMEOUT_MS,
     ),
@@ -621,7 +608,6 @@ export const api = {
     }>(
       '/benchmark',
       { method: 'POST', body: JSON.stringify({ action: 'estimate', options }) },
-      'Failed to estimate the run',
       undefined,
       MACHINE_TIMEOUT_MS,
     )
@@ -633,7 +619,6 @@ export const api = {
     request<{ run: BenchRun }>(
       '/benchmark',
       { method: 'POST', body: JSON.stringify({ action: 'start', options }) },
-      'Failed to start the run',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -642,7 +627,6 @@ export const api = {
     request<{ cancelled: boolean }>(
       '/benchmark',
       { method: 'POST', body: JSON.stringify({ action: 'cancel' }) },
-      'Failed to stop the run',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -653,7 +637,6 @@ export const api = {
     request<unknown>(
       `/benchmark?run=${encodeURIComponent(id)}`,
       { method: 'DELETE' },
-      'Failed to remove the run',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -662,7 +645,6 @@ export const api = {
     request<UserView>(
       `/system-users?${new URLSearchParams({ part, ...(name ? { name } : {}) })}`,
       {},
-      'Failed to fetch the accounts',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -673,7 +655,6 @@ export const api = {
     request<UserActResult>(
       '/system-users',
       { method: 'POST', body: JSON.stringify(payload) },
-      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -684,7 +665,6 @@ export const api = {
     request<FirewallView>(
       '/firewall',
       { method: 'POST', body: JSON.stringify({ ...(kind ? { kind } : {}), ...(password ? { password } : {}) }) },
-      'Failed to read the firewall',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -695,7 +675,6 @@ export const api = {
     request<FirewallPlanResult>(
       '/firewall/plan',
       { method: 'POST', body: JSON.stringify({ ...change, ...(password ? { password } : {}) }) },
-      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -716,19 +695,17 @@ export const api = {
           ...(planId ? { plan_id: planId } : {}),
         }),
       },
-      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
   /// The snippet library saved on the agent.
-  getSnippets: () => request<SnippetsView>('/snippets', {}, 'Failed to fetch the snippets'),
+  getSnippets: () => request<SnippetsView>('/snippets', {}),
   /// Replaces the whole library, in the order given. A refusal arrives with
   /// its code as `ApiError.message` and the row as `body.index`.
   updateSnippets: (snippets: Snippet[]) =>
     request<SnippetsView>(
       '/snippets',
       { method: 'PUT', body: JSON.stringify({ snippets }) },
-      'Failed to save the snippets',
     ),
   /// What a script types, expanded by the agent. Runs nothing. The panel has
   /// no server values to offer, so the context is empty and a script naming
@@ -737,28 +714,25 @@ export const api = {
     request<SnippetPlan>(
       '/snippets/plan',
       { method: 'POST', body: JSON.stringify({ script, context: {} }) },
-      'Failed to expand the snippet',
     ),
   /// The desktop routes saved on the agent.
-  getBmc: () => request<BmcList>('/bmc', {}, 'Failed to list the BMCs'),
+  getBmc: () => request<BmcList>('/bmc', {}),
   /// Replaces the whole set. A refusal arrives with its code as
   /// `ApiError.message` and the row as `body.index`.
   updateBmc: (targets: BmcTargetInput[]) =>
-    request<BmcList>('/bmc', { method: 'PUT', body: JSON.stringify({ targets }) }, 'Failed to save the BMCs'),
+    request<BmcList>('/bmc', { method: 'PUT', body: JSON.stringify({ targets }) }),
   probeBmc: (url: string) =>
     request<BmcCertInfo>(
       '/bmc/probe',
       { method: 'POST', body: JSON.stringify({ url }) },
-      'Failed to read the certificate',
     ),
   /// An upstream failure arrives as `ApiError` with `body.failure`.
   bmcStatus: (id: string) =>
-    request<BmcStatus>(`/bmc/${encodeURIComponent(id)}`, {}, 'Failed to reach the BMC'),
+    request<BmcStatus>(`/bmc/${encodeURIComponent(id)}`, {}),
   bmcPower: (id: string, intent: BmcIntent) =>
     request<{ outcome: { kind: 'done' | 'accepted' } }>(
       `/bmc/${encodeURIComponent(id)}/power`,
       { method: 'POST', body: JSON.stringify({ intent }) },
-      'Failed to reach the BMC',
     ),
   /// The host and its guests. `password` is the operator's sudo password
   /// for a libvirt that refuses the agent's account: sent for this request,
@@ -767,7 +741,6 @@ export const api = {
     request<VirtLoad>(
       '/virt',
       { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
-      'Failed to read the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -776,7 +749,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/power',
       { method: 'POST', body: JSON.stringify({ guest, action, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -784,7 +756,6 @@ export const api = {
     request<{ detail: VirtGuestDetail | null; error: VirtError | null }>(
       '/virt/detail',
       { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
-      'Failed to read the guest',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -793,14 +764,12 @@ export const api = {
     request<{ history: VirtStats[] | null; error: VirtError | null }>(
       '/virt/history',
       { method: 'POST', body: JSON.stringify({ guest, window }) },
-      'Failed to read the guest\'s history',
     ),
   /// Resolves the console and mints the ticket its websocket opens with.
   virtConsole: (guest: string, kind: VirtConsoleKind, password?: string) =>
     request<VirtConsoleAnswer>(
       '/virt/console',
       { method: 'POST', body: JSON.stringify({ guest, kind, password: password ?? null }) },
-      'Failed to open the console',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -808,7 +777,6 @@ export const api = {
     request<VirtSnapshots>(
       '/virt/snapshots',
       { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
-      'Failed to read the snapshots',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -817,7 +785,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/snapshot',
       { method: 'POST', body: JSON.stringify({ guest, ...op, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -825,7 +792,6 @@ export const api = {
     request<{ diff: VirtSnapDiff[] | null; error: VirtError | null }>(
       '/virt/snapshot/diff',
       { method: 'POST', body: JSON.stringify({ guest, name, password: password ?? null }) },
-      'Failed to compare the snapshot',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -833,7 +799,6 @@ export const api = {
     request<{ pools: VirtPool[] | null; rules: Record<string, VirtPoolRule> | null; error: VirtError | null }>(
       '/virt/storage',
       { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
-      'Failed to read the storage',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -841,7 +806,6 @@ export const api = {
     request<{ volumes: VirtVolume[] | null; error: VirtError | null }>(
       '/virt/volumes',
       { method: 'POST', body: JSON.stringify({ pool, password: password ?? null }) },
-      'Failed to read the volumes',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -849,7 +813,6 @@ export const api = {
     request<{ networks: VirtNetwork[] | null; changes: VirtNetworkChanges[] | null; error: VirtError | null }>(
       '/virt/networks',
       { method: 'POST', body: JSON.stringify({ password: password ?? null }) },
-      'Failed to read the networks',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -859,7 +822,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/manage',
       { method: 'POST', body: JSON.stringify({ change, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -868,7 +830,6 @@ export const api = {
     request<{ form: VirtCreateForm | null; error: VirtError | null }>(
       '/virt/create/form',
       { method: 'POST', body: JSON.stringify({ kind, node: node ?? null, password: password ?? null }) },
-      'Failed to read what a new guest can be made of',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -878,7 +839,6 @@ export const api = {
     request<{ created: VirtCreated | null; error: VirtError | null }>(
       '/virt/create',
       { method: 'POST', body: JSON.stringify({ spec, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -887,7 +847,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/delete',
       { method: 'POST', body: JSON.stringify({ guest, remove_disks: removeDisks, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -896,7 +855,6 @@ export const api = {
     request<{ storages: VirtPool[] | null; error: VirtError | null }>(
       '/virt/clone/form',
       { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
-      'Failed to read where a copy can go',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -905,7 +863,6 @@ export const api = {
     request<{ id: string | null; error: VirtError | null }>(
       '/virt/clone',
       { method: 'POST', body: JSON.stringify({ guest, request: cloneRequest, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -915,7 +872,6 @@ export const api = {
     request<{ hardware: VirtHardware | null; error: VirtError | null }>(
       '/virt/hardware',
       { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
-      'Failed to read the hardware',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -925,7 +881,6 @@ export const api = {
     request<{ outcome: VirtHwOutcome | null; error: VirtError | null }>(
       '/virt/hardware/change',
       { method: 'POST', body: JSON.stringify({ guest, revision, change, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -934,7 +889,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/hardware/revert',
       { method: 'POST', body: JSON.stringify({ guest, revision, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -942,7 +896,6 @@ export const api = {
     request<{ cloud_init: VirtCloudInitState | null; error: VirtError | null }>(
       '/virt/cloud-init',
       { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
-      'Failed to read the cloud-init settings',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -951,7 +904,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/cloud-init/set',
       { method: 'POST', body: JSON.stringify({ guest, edit, password: password ?? null }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -960,7 +912,6 @@ export const api = {
     request<{ devices: VirtHostDevices | null; error: VirtError | null }>(
       '/virt/host-devices',
       { method: 'POST', body: JSON.stringify({ guest, password: password ?? null }) },
-      'Failed to read the host devices',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -969,7 +920,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/template',
       { method: 'POST', body: JSON.stringify({ guest }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -979,7 +929,6 @@ export const api = {
     request<VirtBackups>(
       '/virt/backups',
       { method: 'POST', body: JSON.stringify({ guest }) },
-      'Failed to read the backups',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -988,7 +937,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/backup',
       { method: 'POST', body: JSON.stringify({ guest, request: backupRequest }) },
-      'Failed to reach the virtualization host',
       undefined,
       TASK_TIMEOUT_MS,
     ),
@@ -998,7 +946,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/backup/restore',
       { method: 'POST', body: JSON.stringify({ guest, backup, ...target }) },
-      'Failed to reach the virtualization host',
       undefined,
       TASK_TIMEOUT_MS,
     ),
@@ -1006,7 +953,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/backup/edit',
       { method: 'POST', body: JSON.stringify({ guest, backup, edit }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -1014,7 +960,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/backup/delete',
       { method: 'POST', body: JSON.stringify({ guest, backup }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -1023,7 +968,6 @@ export const api = {
     request<VirtBackupJobs>(
       '/virt/backup-jobs',
       { method: 'POST', body: '{}' },
-      'Failed to read the backup jobs',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -1032,7 +976,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/backup-jobs/edit',
       { method: 'POST', body: JSON.stringify({ edit, remove }) },
-      'Failed to reach the virtualization host',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
@@ -1041,7 +984,6 @@ export const api = {
     request<{ error: VirtError | null }>(
       '/virt/backup-jobs/run',
       { method: 'POST', body: JSON.stringify({ id }) },
-      'Failed to reach the virtualization host',
       undefined,
       TASK_TIMEOUT_MS,
     ),
@@ -1050,36 +992,32 @@ export const api = {
     request<{ check: VirtScheduleCheck | null; error: VirtError | null }>(
       '/virt/backup-jobs/schedule',
       { method: 'POST', body: JSON.stringify({ schedule }) },
-      'Failed to check the schedule',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  getPve: () => request<PveConfigView>('/virt/pve', {}, 'Failed to read the Proxmox VE settings'),
+  getPve: () => request<PveConfigView>('/virt/pve', {}),
   /// A refusal arrives with its code as `ApiError.message`.
   setPve: (config: PveConfigInput) =>
-    request<PveConfigView>('/virt/pve', { method: 'PUT', body: JSON.stringify(config) }, 'Failed to save the Proxmox VE settings'),
-  removePve: () => request<PveConfigView>('/virt/pve', { method: 'DELETE' }, 'Failed to remove the Proxmox VE settings'),
+    request<PveConfigView>('/virt/pve', { method: 'PUT', body: JSON.stringify(config) }),
+  removePve: () => request<PveConfigView>('/virt/pve', { method: 'DELETE' }),
   pinPve: (fingerprint: string) =>
     request<{ error: VirtError | null }>(
       '/virt/pve/cert',
       { method: 'POST', body: JSON.stringify({ fingerprint }) },
-      'Failed to trust the certificate',
     ),
   pveTfa: (code: string) =>
     request<{ error: VirtError | null }>(
       '/virt/pve/tfa',
       { method: 'POST', body: JSON.stringify({ code }) },
-      'Failed to send the code',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  getBackups: () => request<BackupView>('/backup', {}, 'Failed to list the backups'),
+  getBackups: () => request<BackupView>('/backup', {}),
   /// The blob's bytes, as stored. The panel has no key for what is in them.
   downloadBackup: async (name: string): Promise<Blob> => {
     const res = await fsBytes(
       `/backup/blob?name=${encodeURIComponent(name)}`,
       {},
-      'Failed to download the backup',
     )
     return res.blob()
   },
@@ -1087,24 +1025,21 @@ export const api = {
     await fsBytes(
       `/backup/blob?name=${encodeURIComponent(name)}`,
       { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
-      'Failed to store the backup',
     )
   },
   deleteBackup: async (name: string): Promise<void> => {
     await fsBytes(
       `/backup/blob?name=${encodeURIComponent(name)}`,
       { method: 'DELETE' },
-      'Failed to remove the backup',
     )
   },
-  getDesktops: () => request<DesktopsView>('/desktops', {}, 'Failed to fetch the desktops'),
+  getDesktops: () => request<DesktopsView>('/desktops', {}),
   /// Replaces the whole set, in order. A refusal arrives with its code as
   /// `ApiError.message` and the row as `body.index`.
   updateDesktops: (desktops: Desktop[]) =>
     request<DesktopsView>(
       '/desktops',
       { method: 'PUT', body: JSON.stringify({ desktops }) },
-      'Failed to save the desktops',
     ),
   /// Shuts the machine down, reboots or suspends it. The password is for
   /// `sudo -S` and travels as its own field, never inside a command.
@@ -1112,16 +1047,14 @@ export const api = {
     request<PowerResult>(
       '/power',
       { method: 'POST', body: JSON.stringify({ action, password: password || null }) },
-      'Failed to reach the machine',
       undefined,
       MACHINE_TIMEOUT_MS,
     ),
-  getSettings: () => request<SettingsView>('/settings', {}, 'Failed to fetch settings'),
+  getSettings: () => request<SettingsView>('/settings', {}),
   updateSettings: (payload: SettingsPayload) =>
     request<{ status: string }>(
       '/settings',
       { method: 'PUT', body: JSON.stringify(payload) },
-      'Failed to save settings',
     ),
   /// Exchanges the session token for a single-use ticket authorising one
   /// WebSocket upgrade. A browser can't put a bearer token on a WebSocket
@@ -1131,24 +1064,21 @@ export const api = {
     request<WsTicketResponse>(
       '/ws-ticket',
       { method: 'POST', body: JSON.stringify({ purpose }) },
-      'Failed to authorise the connection',
     ),
   /// Where browsing starts: the agent account's home, then `/` (drive
   /// letters on Windows).
   fsRoots: (signal?: AbortSignal) =>
-    request<FsRootsResponse>('/fs/roots', {}, 'Failed to list the roots', signal),
+    request<FsRootsResponse>('/fs/roots', {}, signal),
   fsList: (path: string, signal?: AbortSignal) =>
     request<FsEntry[]>(
       `/fs/list?path=${encodeURIComponent(path)}`,
       {},
-      'Failed to list the directory',
       signal,
     ),
   fsStat: (path: string, signal?: AbortSignal) =>
     request<FsEntry>(
       `/fs/stat?path=${encodeURIComponent(path)}`,
       {},
-      'Failed to read the entry',
       signal,
     ),
   /// The bytes, as a blob the browser can be handed. There is no `<a download>`
@@ -1158,7 +1088,6 @@ export const api = {
     const res = await fsBytes(
       `/fs/read?path=${encodeURIComponent(path)}`,
       {},
-      'Failed to read the file',
       signal,
     )
     return res.blob()
@@ -1182,7 +1111,6 @@ export const api = {
       await fsBytes(
         `/fs/write?${query}`,
         { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
-        'Failed to write the file',
         signal,
       )
     } catch (e) {
@@ -1199,28 +1127,24 @@ export const api = {
     request<unknown>(
       '/fs/mkdir',
       { method: 'POST', body: JSON.stringify({ path }) },
-      'Failed to create the directory',
     ),
   fsRename: (from: string, to: string) =>
     request<unknown>(
       '/fs/rename',
       { method: 'POST', body: JSON.stringify({ from, to }) },
-      'Failed to rename',
     ),
   fsChmod: (path: string, mode: number) =>
     request<unknown>(
       '/fs/chmod',
       { method: 'POST', body: JSON.stringify({ path, mode }) },
-      'Failed to change the permissions',
     ),
   fsRemove: (path: string, recursive: boolean) =>
     request<unknown>(
       '/fs/remove',
       { method: 'DELETE', body: JSON.stringify({ path, recursive }) },
-      'Failed to delete',
     ),
   getCustomCmds: () =>
-    request<CustomCmdsView>('/custom-cmds', {}, 'Failed to fetch custom commands'),
+    request<CustomCmdsView>('/custom-cmds', {}),
   /// The whole set, in the order it should run in. A replace rather than a
   /// per-command edit: the order is part of what is stored, so a move has no
   /// smaller expression than the new list.
@@ -1228,9 +1152,8 @@ export const api = {
     request<CustomCmdsView>(
       '/custom-cmds',
       { method: 'PUT', body: JSON.stringify({ commands }) },
-      'Failed to save custom commands',
     ),
-  getPush: () => request<PushListView>('/push', {}, 'Failed to fetch push channels'),
+  getPush: () => request<PushListView>('/push', {}),
   /// The whole set, in order, like the custom commands. Each entry carries the
   /// `from_index` it was loaded at, which is the only thing a withheld
   /// credential (a `null` value) can be resolved against — see `PushEntry`.
@@ -1238,7 +1161,6 @@ export const api = {
     request<PushListView>(
       '/push',
       { method: 'PUT', body: JSON.stringify(payload) },
-      'Failed to save push channels',
     ),
   /// Sends one notification now, through the channel as currently edited. A
   /// channel that cannot be tried is one whose first real alert is where it
@@ -1248,27 +1170,24 @@ export const api = {
     request<PushTestResult>(
       '/push/test',
       { method: 'POST', body: JSON.stringify({ push, message }) },
-      'Failed to send the test notification',
     ),
   changeMyPassword: (current_password: string, new_password: string) =>
     request<void>(
       '/me/password',
       { method: 'PUT', body: JSON.stringify({ current_password, new_password }) },
-      'Failed to change the password',
     ),
   /// Desk apps installed on the agent (`api::apps`), approved or waiting.
-  listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}, 'Failed to load the apps'),
+  listApps: () => request<{ apps: InstalledApp[] }>('/apps', {}),
   /// The web apps the agent can deploy (`api::stacks`), and their state.
-  listStacks: () => request<{ apps: StackApp[] }>('/stacks', {}, 'Failed to load the apps'),
+  listStacks: () => request<{ apps: StackApp[] }>('/stacks', {}),
   /// The catalog read again from its repositories now.
-  refreshStacks: () => request<{ apps: StackApp[] }>('/stacks/refresh', { method: 'POST' }, 'Failed to load the apps'),
+  refreshStacks: () => request<{ apps: StackApp[] }>('/stacks/refresh', { method: 'POST' }),
   prepareStack: (id: string) =>
-    request<StackPrepare>(`/stacks/${encodeURIComponent(id)}/prepare`, {}, 'Failed to read this machine'),
+    request<StackPrepare>(`/stacks/${encodeURIComponent(id)}/prepare`, {}),
   checkStack: (id: string, settings: Record<string, StackValue>) =>
     request<StackPreview>(
       `/stacks/${encodeURIComponent(id)}/check`,
       { method: 'POST', body: JSON.stringify({ settings }) },
-      'Failed to check the settings',
     ),
   /// Deploys with what the account confirmed: that it installs third-party
   /// software, and the licence where the manifest asks.
@@ -1289,33 +1208,28 @@ export const api = {
           current_password: currentPassword,
         }),
       },
-      'Failed to set up the app',
     ),
   /// New settings for a deployed app: it is deployed again with them.
   reconfigureStack: (id: string, settings: Record<string, StackValue>, currentPassword: string) =>
     request<StackJob>(
       `/stacks/${encodeURIComponent(id)}/settings`,
       { method: 'PUT', body: JSON.stringify({ settings, current_password: currentPassword }) },
-      'Failed to change the settings',
     ),
   stackAction: (id: string, action: 'start' | 'stop' | 'restart' | 'update') =>
     request<StackJob>(
       `/stacks/${encodeURIComponent(id)}/action`,
       { method: 'POST', body: JSON.stringify({ action }) },
-      'Failed to change the app',
     ),
   /// How to sign in to deployed app [id] the first time, its password read.
   stackLogin: (id: string, currentPassword: string) =>
     request<{ user?: string | null; password?: string | null; note?: Record<string, string> | null }>(
       `/stacks/${encodeURIComponent(id)}/login`,
       { method: 'POST', body: JSON.stringify({ current_password: currentPassword }) },
-      'Failed to read the sign-in',
     ),
   removeStack: (id: string, purge: boolean, currentPassword: string) =>
     request<StackJob>(
       `/stacks/${encodeURIComponent(id)}`,
       { method: 'DELETE', body: JSON.stringify({ purge, current_password: currentPassword }) },
-      'Failed to remove the app',
     ),
   listContainerBackups: () =>
     request<{
@@ -1326,29 +1240,26 @@ export const api = {
       default_folder: string
       free_bytes: number | null
       schedules: ContainerBackupSchedule[]
-    }>('/container-backups', {}, 'Failed to load the backups'),
+    }>('/container-backups', {}),
   setContainerBackupSettings: (settings: ContainerBackupSettings) =>
     request<ContainerBackupSettings>(
       '/container-backups/settings',
       { method: 'PUT', body: JSON.stringify(settings) },
-      'Failed to save the backup settings',
     ),
   addContainerBackupSchedule: (schedule: Omit<ContainerBackupSchedule, 'id' | 'label' | 'last_run' | 'last_error'>) =>
     request<ContainerBackupSchedule>(
       '/container-backups/schedules',
       { method: 'POST', body: JSON.stringify(schedule) },
-      'Failed to schedule the backup',
     ),
   removeContainerBackupSchedule: (id: string) =>
-    request<void>(`/container-backups/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }, 'Failed to remove the schedule'),
-  getStorage: () => request<StorageView>('/storage', {}, 'Failed to read the disks'),
+    request<void>(`/container-backups/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getStorage: () => request<StorageView>('/storage', {}),
   /// One change, run as root as a job; [sudoPassword] when sudo asks,
   /// [passphrase] for an encrypted format or an unlock.
   storageAct: (action: StorageAction, sudoPassword: string, passphrase?: string) =>
     request<StackJob>(
       '/storage/act',
       { method: 'POST', body: JSON.stringify({ ...action, sudo_password: sudoPassword || null, passphrase: passphrase || null }) },
-      'Failed to change the disks',
     ),
   /// Every disk's SMART, read as root; without [sudoPassword], only where
   /// sudo needs none (403 `sudo_rejected` otherwise).
@@ -1356,78 +1267,70 @@ export const api = {
     request<HealthReading>(
       '/storage/health',
       { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) },
-      'Failed to read the disks\' health',
     ),
   /// One maintenance task's schedule; [every] null turns it off.
   setStorageMaintenance: (task: MaintenanceKind, every: 'weekly' | 'monthly' | null, at: string, day: number) =>
     request<{ maintenance: MaintenanceTask[] }>(
       '/storage/maintenance',
       { method: 'PUT', body: JSON.stringify({ task, every, at, day }) },
-      'Failed to save the schedule',
     ),
   /// Runs a scheduled task now, as the schedule would.
   runStorageMaintenance: (task: MaintenanceKind) =>
-    request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }, 'Failed to run the task'),
-  getShares: () => request<SharesView>('/shares', {}, 'Failed to read the shares'),
+    request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }),
+  getShares: () => request<SharesView>('/shares', {}),
   shareConnections: (sudoPassword = '') =>
     request<ShareConnections>(
       '/shares/connections',
       { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) },
-      'Failed to read the connections',
     ),
   /// Every SMB share ServerBox keeps, written as root.
   setSmbShares: (shares: SmbShare[], sudoPassword: string) =>
-    request<SharesView>('/shares/smb', { method: 'PUT', body: JSON.stringify({ shares, sudo_password: sudoPassword || null }) }, 'Failed to save the shares'),
+    request<SharesView>('/shares/smb', { method: 'PUT', body: JSON.stringify({ shares, sudo_password: sudoPassword || null }) }),
   /// Every NFS export ServerBox keeps, written as root.
   setNfsExports: (exports: NfsExport[], sudoPassword: string) =>
-    request<SharesView>('/shares/nfs', { method: 'PUT', body: JSON.stringify({ exports, sudo_password: sudoPassword || null }) }, 'Failed to save the exports'),
+    request<SharesView>('/shares/nfs', { method: 'PUT', body: JSON.stringify({ exports, sudo_password: sudoPassword || null }) }),
   setSmbPassword: (user: string, password: string, sudoPassword: string) =>
     request<void>(
       '/shares/smb/password',
       { method: 'POST', body: JSON.stringify({ user, password, sudo_password: sudoPassword || null }) },
-      'Failed to set the password',
     ),
   /// Samba ([nfs] false) or the NFS server, installed as a job.
   installShares: (nfs: boolean, sudoPassword: string) =>
-    request<StackJob>('/shares/install', { method: 'POST', body: JSON.stringify({ nfs, sudo_password: sudoPassword || null }) }, 'Failed to install'),
-  sharesJob: (since: number) => request<StackJob>(`/shares/job?since=${since}`, {}, 'Failed to read the progress'),
-  storageJob: (since: number) => request<StackJob>(`/storage/job?since=${since}`, {}, 'Failed to read the progress'),
+    request<StackJob>('/shares/install', { method: 'POST', body: JSON.stringify({ nfs, sudo_password: sudoPassword || null }) }),
+  sharesJob: (since: number) => request<StackJob>(`/shares/job?since=${since}`, {}),
+  storageJob: (since: number) => request<StackJob>(`/storage/job?since=${since}`, {}),
   /// Backs up [containers] (with [project], their whole compose project).
   createContainerBackup: (containers: string[], project: boolean, stop: boolean) =>
     request<StackJob>(
       '/container-backups',
       { method: 'POST', body: JSON.stringify({ containers, project, stop }) },
-      'Failed to back up',
     ),
   containerBackupJob: (since: number) =>
-    request<StackJob>(`/container-backups/job?since=${since}`, {}, 'Failed to read the progress'),
-  cancelContainerBackupJob: () => request<void>('/container-backups/job/cancel', { method: 'POST' }, 'Failed to cancel'),
+    request<StackJob>(`/container-backups/job?since=${since}`, {}),
+  cancelContainerBackupJob: () => request<void>('/container-backups/job/cancel', { method: 'POST' }),
   restoreContainerBackup: (id: string, currentPassword: string) =>
     request<StackJob>(
       `/container-backups/${encodeURIComponent(id)}/restore`,
       { method: 'POST', body: JSON.stringify({ current_password: currentPassword }) },
-      'Failed to restore',
     ),
   removeContainerBackup: (id: string, currentPassword: string) =>
     request<void>(
       `/container-backups/${encodeURIComponent(id)}`,
       { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
-      'Failed to remove the backup',
     ),
   stackJob: (id: string, since: number) =>
-    request<StackJob>(`/stacks/${encodeURIComponent(id)}/job?since=${since}`, {}, 'Failed to read the progress'),
+    request<StackJob>(`/stacks/${encodeURIComponent(id)}/job?since=${since}`, {}),
   cancelStackJob: (id: string) =>
-    request<void>(`/stacks/${encodeURIComponent(id)}/job/cancel`, { method: 'POST' }, 'Failed to cancel'),
+    request<void>(`/stacks/${encodeURIComponent(id)}/job/cancel`, { method: 'POST' }),
   stackServices: (id: string) =>
-    request<{ services: StackService[] }>(`/stacks/${encodeURIComponent(id)}/services`, {}, 'Failed to read the containers'),
+    request<{ services: StackService[] }>(`/stacks/${encodeURIComponent(id)}/services`, {}),
   enterStack: (id: string) =>
-    request<StackEntry>(`/stacks/${encodeURIComponent(id)}/enter`, { method: 'POST' }, 'Failed to open the app'),
+    request<StackEntry>(`/stacks/${encodeURIComponent(id)}/enter`, { method: 'POST' }),
   /// Uploads a package (`.fsba`); it waits for approval.
   async installApp(file: Blob): Promise<InstalledApp> {
     const res = await fsBytes(
       '/apps',
       { method: 'POST', body: file, headers: { 'Content-Type': 'application/gzip' } },
-      'Failed to install the app',
       AbortSignal.timeout(120_000),
     )
     return res.json() as Promise<InstalledApp>
@@ -1436,19 +1339,16 @@ export const api = {
     request<InstalledApp>(
       `/apps/${encodeURIComponent(id)}/approval`,
       { method: 'PUT', body: JSON.stringify({ sha256, permissions, current_password: currentPassword }) },
-      'Failed to approve the app',
     ),
   removeApp: (id: string, currentPassword: string) =>
     request<void>(
       `/apps/${encodeURIComponent(id)}`,
       { method: 'DELETE', body: JSON.stringify({ current_password: currentPassword }) },
-      'Failed to remove the app',
     ),
-  getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
+  getCardOrder: () => request<CardOrderPayload>('/card-order', {}),
   updateCardOrder: (card_order: string[]) =>
     request<{ status: string }>(
       '/card-order',
       { method: 'PUT', body: JSON.stringify({ card_order }) },
-      'Failed to save card order',
     ),
 }

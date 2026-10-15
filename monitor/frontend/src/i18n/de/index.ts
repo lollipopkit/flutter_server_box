@@ -2362,6 +2362,10 @@ const de = {
 	weekdayFri: 'Freitag',
 	weekdaySat: 'Samstag',
 	weekdaySun: 'Sonntag',
+	agentUnreachable: 'Der Agent ist nicht erreichbar.',
+	agentAnswered: 'Der Agent antwortete mit {status}.',
+	agentSessionExpired: 'Sitzung abgelaufen. Bitte erneut anmelden.',
+	agentHttpsRequired: 'Entfernte Monitor-Agents benötigen HTTPS; HTTP ist nur auf Loopback erlaubt.',
 } satisfies Translation
 
 export default de

@@ -1,3 +1,4 @@
+import { errorText } from './errorText'
 /// The browser side of `/api/v1/terminal/ws`.
 ///
 /// Deliberately knows nothing about xterm.js: it owns the connection, the
@@ -304,7 +305,7 @@ export class TerminalSession {
       // nothing a retry could recover.
       const refused = e instanceof ApiError && (e.status === 401 || e.status === 429)
       if (refused || !this.handle) {
-        this.fail(e instanceof Error ? e.message : 'Could not authorise the terminal')
+        this.fail(errorText(e))
       } else {
         this.phase = 'reconnecting'
         this.scheduleReconnect()

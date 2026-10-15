@@ -2362,6 +2362,10 @@ const pt = {
 	weekdayFri: 'sextas-feiras',
 	weekdaySat: 'sábados',
 	weekdaySun: 'domingos',
+	agentUnreachable: 'Não foi possível contactar o agente.',
+	agentAnswered: 'O agente respondeu {status}.',
+	agentSessionExpired: 'A sessão expirou. Inicie sessão novamente.',
+	agentHttpsRequired: 'Agentes monitor remotos exigem HTTPS; HTTP só é permitido em loopback.',
 } satisfies Translation
 
 export default pt

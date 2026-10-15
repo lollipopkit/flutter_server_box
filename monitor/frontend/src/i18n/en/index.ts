@@ -2362,6 +2362,10 @@ const en = {
 	weekdayFri: 'Friday',
 	weekdaySat: 'Saturday',
 	weekdaySun: 'Sunday',
+	agentUnreachable: 'Could not reach the agent.',
+	agentAnswered: 'The agent answered {status:number}.',
+	agentSessionExpired: 'Session expired. Sign in again.',
+	agentHttpsRequired: 'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.',
 } satisfies BaseTranslation
 
 export default en

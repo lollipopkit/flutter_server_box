@@ -332,9 +332,9 @@ export const agentApi = {
   /// A file for a task about to start or a reply; [onProgress] is told
   /// how much has gone (0–1), [signal] gives up on it.
   upload: (e: ServerEntry, file: Blob, name: string, opts: { onProgress?: (sent: number) => void; signal?: AbortSignal } = {}) =>
-    uploadFor<Upload>(e, `/agent/files?name=${enc(name)}`, file, { ...opts, timeoutMs: 300_000, fallback: 'Upload failed' }),
+    uploadFor<Upload>(e, `/agent/files?name=${enc(name)}`, file, { ...opts, timeoutMs: 300_000 }),
   discard: (e: ServerEntry, id: string) => requestFor<void>(e, `/agent/files/${enc(id)}`, { method: 'DELETE' }),
-  detail: (e: ServerEntry, id: string) => requestFor<FlowDetail>(e, `/agent/flows/${enc(id)}`, {}, 'Request failed', undefined, 60_000),
+  detail: (e: ServerEntry, id: string) => requestFor<FlowDetail>(e, `/agent/flows/${enc(id)}`, {}, undefined, 60_000),
   reply: (e: ServerEntry, id: string, text: string, files: string[] = [], choice: TaskChoice = {}) =>
     requestFor<Flow>(e, `/agent/flows/${enc(id)}/reply`, { method: 'POST', body: JSON.stringify({ text, files, ...choice }) }),
   answer: (e: ServerEntry, id: string, answer: Answer) =>
@@ -347,20 +347,20 @@ export const agentApi = {
   /// What an endpoint being set up lists: with [apiKey], or the key stored
   /// for [providerId].
   probe: (e: ServerEntry, p: { api: Provider['api']; baseUrl: string; allowInsecure: boolean; apiKey?: string; providerId?: string }) =>
-    requestFor<{ id: string; name: string }[]>(e, '/agent/models/probe', { method: 'POST', body: JSON.stringify(p) }, 'Request failed', undefined, 60_000),
-  models: (e: ServerEntry) => requestFor<ProviderInfo[]>(e, '/agent/models', {}, 'Request failed', undefined, 60_000),
+    requestFor<{ id: string; name: string }[]>(e, '/agent/models/probe', { method: 'POST', body: JSON.stringify(p) }, undefined, 60_000),
+  models: (e: ServerEntry) => requestFor<ProviderInfo[]>(e, '/agent/models', {}, undefined, 60_000),
   memory: (e: ServerEntry) => requestFor<{ files: MemoryFileInfo[] }>(e, '/agent/memory'),
   memoryFile: (e: ServerEntry, path: string) =>
     requestFor<{ path: string; content: string; modified: number | null }>(e, `/agent/memory/file?path=${enc(path)}`),
   writeMemory: (e: ServerEntry, path: string, content: string) =>
     requestFor<void>(e, '/agent/memory/file', { method: 'PUT', body: JSON.stringify({ path, content }) }),
   deleteMemory: (e: ServerEntry, path: string) => requestFor<void>(e, `/agent/memory/file?path=${enc(path)}`, { method: 'DELETE' }),
-  mcp: (e: ServerEntry) => requestFor<McpView>(e, '/agent/mcp', {}, 'Request failed', undefined, 60_000),
+  mcp: (e: ServerEntry) => requestFor<McpView>(e, '/agent/mcp', {}, undefined, 60_000),
   saveMcp: (e: ServerEntry, servers: McpServerWrite[]) =>
-    requestFor<McpView>(e, '/agent/mcp', { method: 'PUT', body: JSON.stringify({ servers }) }, 'Request failed', undefined, 60_000),
+    requestFor<McpView>(e, '/agent/mcp', { method: 'PUT', body: JSON.stringify({ servers }) }, undefined, 60_000),
   skills: (e: ServerEntry) => requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills'),
   installSkill: (e: ServerEntry, source: string) =>
-    requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills', { method: 'POST', body: JSON.stringify({ source }) }, 'Request failed', undefined, 120_000),
+    requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills', { method: 'POST', body: JSON.stringify({ source }) }, undefined, 120_000),
   setSkill: (e: ServerEntry, dir: string, enabled: boolean) =>
     requestFor<{ skills: AgentSkill[] }>(e, `/agent/skills/${enc(dir)}`, { method: 'PUT', body: JSON.stringify({ enabled }) }),
   removeSkill: (e: ServerEntry, dir: string) => requestFor<{ skills: AgentSkill[] }>(e, `/agent/skills/${enc(dir)}`, { method: 'DELETE' }),

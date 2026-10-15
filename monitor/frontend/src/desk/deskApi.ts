@@ -2,7 +2,8 @@
 /// explicit server: a desk saves to the server it was opened for, even while
 /// the panel is switching to another.
 
-import { ApiError, fetchFor, readEventStream, requestFor } from '../lib/api'
+import { ApiError, errorFrom, errorFromBody, fetchFor, readEventStream, requestFor } from '../lib/api'
+import type { ErrorBody } from '../lib/api'
 import type { InstalledApp } from '../types'
 import type { ServerEntry } from '../lib/servers.svelte'
 import type { StoredWindow } from './windows.svelte'
@@ -136,14 +137,13 @@ export interface DeskNotification {
 }
 
 export const deskApi = {
-  get: (entry: ServerEntry) => requestFor<DeskView>(entry, '/desk', {}, 'Failed to load the desk'),
+  get: (entry: ServerEntry) => requestFor<DeskView>(entry, '/desk', {}),
 
   putPreferences: (entry: ServerEntry, preferences: DeskPreferences) =>
     requestFor<DeskPreferences>(
       entry,
       '/desk/preferences',
       { method: 'PUT', body: JSON.stringify(preferences) },
-      'Failed to save the desk',
     ),
 
   getSession: (entry: ServerEntry, device: string) =>
@@ -151,7 +151,6 @@ export const deskApi = {
       entry,
       `/desk/session?device=${encodeURIComponent(device)}`,
       {},
-      'Failed to load the windows',
     ),
 
   /// Saves from [expected]; a 409 answers what is current instead.
@@ -169,7 +168,6 @@ export const deskApi = {
           method: 'PUT',
           body: JSON.stringify({ device, expected_revision: expected, ...session }),
         },
-        'Failed to save the windows',
       )
       return { ok: true, revision }
     } catch (e) {
@@ -181,14 +179,13 @@ export const deskApi = {
   },
 
   appItems: (entry: ServerEntry, app: string) =>
-    requestFor<{ items: Record<string, unknown> }>(entry, `/desk/apps/${encodeURIComponent(app)}/storage`, {}, 'Failed to load'),
+    requestFor<{ items: Record<string, unknown> }>(entry, `/desk/apps/${encodeURIComponent(app)}/storage`, {}),
 
   appPut: (entry: ServerEntry, app: string, key: string, value: unknown) =>
     requestFor<void>(
       entry,
       `/desk/apps/${encodeURIComponent(app)}/storage?key=${encodeURIComponent(key)}`,
       { method: 'PUT', body: JSON.stringify(value) },
-      'Failed to save',
     ),
 
   appRemove: (entry: ServerEntry, app: string, key: string) =>
@@ -196,15 +193,14 @@ export const deskApi = {
       entry,
       `/desk/apps/${encodeURIComponent(app)}/storage?key=${encodeURIComponent(key)}`,
       { method: 'DELETE' },
-      'Failed to save',
     ),
 
   /// The apps installed on the agent (`api::apps`), approved or waiting.
-  apps: (entry: ServerEntry) => requestFor<{ apps: InstalledApp[] }>(entry, '/apps', {}, 'Failed to load the apps'),
+  apps: (entry: ServerEntry) => requestFor<{ apps: InstalledApp[] }>(entry, '/apps', {}),
 
   /// Where an installed app's UI loads from (a ticketed path).
   launchApp: (entry: ServerEntry, id: string) =>
-    requestFor<{ url: string; version: string; stylesheet?: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}, 'Failed to open the app'),
+    requestFor<{ url: string; version: string; stylesheet?: string }>(entry, `/apps/${encodeURIComponent(id)}/launch`, {}),
 
   /// Runs [method] of an installed app's backend (`kind: wasm`) as the
   /// signed-in account; answers the backend's own reply.
@@ -213,7 +209,6 @@ export const deskApi = {
       entry,
       `/apps/${encodeURIComponent(id)}/call`,
       { method: 'POST', body: JSON.stringify({ method, params: params ?? null }) },
-      'The app’s backend failed',
       undefined,
       60_000,
     ),
@@ -223,7 +218,6 @@ export const deskApi = {
       entry,
       `/desk/notifications?limit=${limit}`,
       {},
-      'Failed to load notifications',
     ),
 
   markRead: (entry: ServerEntry, read: { ids: number[] } | { all: true }) =>
@@ -231,7 +225,6 @@ export const deskApi = {
       entry,
       '/desk/notifications/read',
       { method: 'POST', body: JSON.stringify(read) },
-      'Failed to mark notifications read',
     ),
 
   /// The custom wallpaper as an object URL (an `<img>` cannot send the
@@ -239,41 +232,37 @@ export const deskApi = {
   async wallpaperUrl(entry: ServerEntry): Promise<string | null> {
     const res = await raw(entry, '/desk/wallpaper', { method: 'GET' })
     if (res.status === 404) return null
-    if (!res.ok) throw new ApiError('Failed to load the wallpaper', res.status)
+    if (!res.ok) throw await errorFrom(res)
     return URL.createObjectURL(await res.blob())
   },
 
   async putWallpaper(entry: ServerEntry, file: Blob): Promise<string> {
     const res = await raw(entry, '/desk/wallpaper', { method: 'PUT', body: file })
     if (!res.ok) {
-      let code: string | undefined
-      try {
-        code = ((await res.json()) as { error?: string }).error
-      } catch {
-        // No body to read.
-      }
-      throw new ApiError(code ?? 'Failed to save the wallpaper', res.status, code)
+      // `{"error": <code>}`: the code is the message and the code.
+      const e = await errorFrom(res)
+      throw new ApiError(e.message, e.status, e.code ?? (e.body?.error as string | undefined), e.body)
     }
     return ((await res.json()) as { sha256: string }).sha256
   },
 
   async deleteWallpaper(entry: ServerEntry): Promise<void> {
     const res = await raw(entry, '/desk/wallpaper', { method: 'DELETE' })
-    if (!res.ok) throw new ApiError('Failed to remove the wallpaper', res.status)
+    if (!res.ok) throw await errorFrom(res)
   },
 
-  themes: (entry: ServerEntry) => requestFor<InstalledTheme[]>(entry, '/desk/themes', {}, 'Failed to load the themes'),
+  themes: (entry: ServerEntry) => requestFor<InstalledTheme[]>(entry, '/desk/themes', {}),
 
   /// Installs a `.fsbt`; a refused package throws with the reason the app's
   /// installer would give (`code` `invalidTheme`).
   async installTheme(entry: ServerEntry, file: Blob): Promise<InstalledTheme> {
     const res = await raw(entry, '/desk/themes', { method: 'POST', body: file })
-    return themeAnswer(res, 'Failed to install the theme')
+    return themeAnswer(res)
   },
 
   async removeTheme(entry: ServerEntry, installation: string): Promise<void> {
     const res = await raw(entry, `/desk/themes/${encodeURIComponent(installation)}`, { method: 'DELETE' })
-    if (!res.ok && res.status !== 404) throw new ApiError('Failed to remove the theme', res.status)
+    if (!res.ok && res.status !== 404) throw await errorFrom(res)
   },
 
   /// A theme's background as an object URL; null when it has none.
@@ -281,7 +270,7 @@ export const deskApi = {
     const query = variant ? `?variant=${encodeURIComponent(variant)}` : ''
     const res = await raw(entry, `/desk/themes/${encodeURIComponent(installation)}/background${query}`, { method: 'GET' })
     if (res.status === 404) return null
-    if (!res.ok) throw new ApiError('Failed to load the theme background', res.status)
+    if (!res.ok) throw await errorFrom(res)
     return URL.createObjectURL(await res.blob())
   },
 
@@ -290,7 +279,6 @@ export const deskApi = {
       entry,
       `/desk/themes/store${refresh ? '?refresh=1' : ''}`,
       {},
-      'Failed to read the theme store',
       undefined,
       120_000,
     ),
@@ -301,27 +289,26 @@ export const deskApi = {
       body: JSON.stringify({ repo: item.repoUrl, id: item.listing.id, version }),
       headers: { 'content-type': 'application/json' },
     })
-    return themeAnswer(res, 'Failed to install the theme')
+    return themeAnswer(res)
   },
 }
 
 /// An install's answer, or its refusal: `reason` (the package's or the
 /// store's own words) as the message.
-async function themeAnswer(res: Response, fallback: string): Promise<InstalledTheme> {
-  let body: { error?: string; reason?: string } & Partial<InstalledTheme> = {}
-  try {
-    body = await res.json()
-  } catch {
-    // No body to read.
+async function themeAnswer(res: Response): Promise<InstalledTheme> {
+  const body = (await res.json().catch(() => ({}))) as ErrorBody & { reason?: string } & Partial<InstalledTheme>
+  if (!res.ok) {
+    if (body.reason) throw new ApiError(body.reason, res.status, body.error, body)
+    const e = errorFromBody(res.status, body)
+    throw new ApiError(e.message, e.status, body.error, body)
   }
-  if (!res.ok) throw new ApiError(body.reason ?? body.error ?? fallback, res.status, body.error)
   return body as InstalledTheme
 }
 
 /// A request whose answer the caller reads itself (bytes, a theme's refusal):
 /// [fetchFor], with a session that has expired ending as anywhere else.
 function raw(entry: ServerEntry, path: string, init: RequestInit): Promise<Response> {
-  return fetchFor(entry, path, init, 'Request failed', AbortSignal.timeout(120_000))
+  return fetchFor(entry, path, init, AbortSignal.timeout(120_000))
 }
 
 /// Reads `/desk/events` until [signal] aborts or the stream ends, calling

@@ -2362,6 +2362,10 @@ const it = {
 	weekdayFri: 'venerdì',
 	weekdaySat: 'sabato',
 	weekdaySun: 'domenica',
+	agentUnreachable: 'Impossibile raggiungere l’agente.',
+	agentAnswered: 'L’agente ha risposto {status}.',
+	agentSessionExpired: 'Sessione scaduta. Accedi di nuovo.',
+	agentHttpsRequired: 'Gli agenti monitor remoti richiedono HTTPS; HTTP è consentito solo su loopback.',
 } satisfies Translation
 
 export default it

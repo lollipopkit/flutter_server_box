@@ -2362,6 +2362,10 @@ const ko = {
 	weekdayFri: '금요일',
 	weekdaySat: '토요일',
 	weekdaySun: '일요일',
+	agentUnreachable: '에이전트에 연결할 수 없습니다.',
+	agentAnswered: '에이전트가 {status}을(를) 반환했습니다.',
+	agentSessionExpired: '세션이 만료되었습니다. 다시 로그인하세요.',
+	agentHttpsRequired: '원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP는 루프백에서만 허용됩니다.',
 } satisfies Translation
 
 export default ko

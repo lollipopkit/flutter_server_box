@@ -2362,6 +2362,10 @@ const uk = {
 	weekdayFri: 'п’ятниці',
 	weekdaySat: 'суботи',
 	weekdaySun: 'неділі',
+	agentUnreachable: 'Не вдалося зв’язатися з агентом.',
+	agentAnswered: 'Агент відповів {status}.',
+	agentSessionExpired: 'Сеанс завершився. Увійдіть знову.',
+	agentHttpsRequired: 'Віддаленим агентам monitor потрібен HTTPS; HTTP дозволено лише на loopback.',
 } satisfies Translation
 
 export default uk

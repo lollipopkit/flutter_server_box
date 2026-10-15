@@ -2362,6 +2362,10 @@ const zh_TW = {
 	weekdayFri: '週五',
 	weekdaySat: '週六',
 	weekdaySun: '週日',
+	agentUnreachable: '無法連線到 agent。',
+	agentAnswered: 'agent 回應了 {status}。',
+	agentSessionExpired: '工作階段已過期，請重新登入。',
+	agentHttpsRequired: '遠端 monitor agent 需要 HTTPS；僅本機回送位址允許 HTTP。',
 } satisfies Translation
 
 export default zh_TW

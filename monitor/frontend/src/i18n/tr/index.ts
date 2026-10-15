@@ -2362,6 +2362,10 @@ const tr = {
 	weekdayFri: 'cuma',
 	weekdaySat: 'cumartesi',
 	weekdaySun: 'pazar',
+	agentUnreachable: 'Ajana ulaşılamadı.',
+	agentAnswered: 'Ajan {status} yanıtı verdi.',
+	agentSessionExpired: 'Oturumun süresi doldu. Yeniden oturum açın.',
+	agentHttpsRequired: 'Uzak monitor ajanları HTTPS gerektirir; HTTP yalnızca loopback üzerinde izinlidir.',
 } satisfies Translation
 
 export default tr

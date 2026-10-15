@@ -2362,6 +2362,10 @@ const nl = {
 	weekdayFri: 'vrijdag',
 	weekdaySat: 'zaterdag',
 	weekdaySun: 'zondag',
+	agentUnreachable: 'De agent is niet bereikbaar.',
+	agentAnswered: 'De agent antwoordde {status}.',
+	agentSessionExpired: 'Sessie verlopen. Meld je opnieuw aan.',
+	agentHttpsRequired: 'Externe monitor-agents vereisen HTTPS; HTTP is alleen toegestaan op loopback.',
 } satisfies Translation
 
 export default nl

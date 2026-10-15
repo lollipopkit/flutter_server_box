@@ -2362,6 +2362,10 @@ const ja = {
 	weekdayFri: '金曜日',
 	weekdaySat: '土曜日',
 	weekdaySun: '日曜日',
+	agentUnreachable: 'エージェントに接続できません。',
+	agentAnswered: 'エージェントが {status} を返しました。',
+	agentSessionExpired: 'セッションの有効期限が切れました。もう一度サインインしてください。',
+	agentHttpsRequired: 'リモートの monitor エージェントには HTTPS が必要です。HTTP はループバックでのみ使用できます。',
 } satisfies Translation
 
 export default ja

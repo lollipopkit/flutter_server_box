@@ -9822,6 +9822,23 @@ type RootTranslation = {
 	 * S​u​n​d​a​y
 	 */
 	weekdaySun: string
+	/**
+	 * C​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​a​g​e​n​t​.
+	 */
+	agentUnreachable: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​a​n​s​w​e​r​e​d​ ​{​s​t​a​t​u​s​}​.
+	 * @param {number} status
+	 */
+	agentAnswered: RequiredParams<'status'>
+	/**
+	 * S​e​s​s​i​o​n​ ​e​x​p​i​r​e​d​.​ ​S​i​g​n​ ​i​n​ ​a​g​a​i​n​.
+	 */
+	agentSessionExpired: string
+	/**
+	 * R​e​m​o​t​e​ ​m​o​n​i​t​o​r​ ​a​g​e​n​t​s​ ​r​e​q​u​i​r​e​ ​H​T​T​P​S​;​ ​H​T​T​P​ ​i​s​ ​a​l​l​o​w​e​d​ ​o​n​l​y​ ​o​n​ ​l​o​o​p​b​a​c​k​.
+	 */
+	agentHttpsRequired: string
 }
 
 export type TranslationFunctions = {
@@ -19269,6 +19286,22 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Sunday
 	 */
 	weekdaySun: () => LocalizedString
+	/**
+	 * Could not reach the agent.
+	 */
+	agentUnreachable: () => LocalizedString
+	/**
+	 * The agent answered {status}.
+	 */
+	agentAnswered: (arg: { status: number }) => LocalizedString
+	/**
+	 * Session expired. Sign in again.
+	 */
+	agentSessionExpired: () => LocalizedString
+	/**
+	 * Remote monitor agents require HTTPS; HTTP is allowed only on loopback.
+	 */
+	agentHttpsRequired: () => LocalizedString
 }
 
 export type Formatters = {}
