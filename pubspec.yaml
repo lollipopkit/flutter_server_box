@@ -129,9 +129,6 @@ dependency_overrides:
   # fl_pi_llm_ui asks for fl_lib from git; the submodule is the one.
   fl_lib:
     path: packages/fl_lib
-  # For flutter_markdown_plus_latex, in fl_pi_llm_ui: only the root can
-  # override it.
-  flutter_math_fork: ^0.7.4
 
 dev_dependencies:
   integration_test:
