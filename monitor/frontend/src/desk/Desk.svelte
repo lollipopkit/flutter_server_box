@@ -24,7 +24,6 @@
   import { saveWallpaper } from './lock/wallpapers'
   import { themeDark, themeWallpaper } from './themeStyle'
   import WindowLayer from './window/WindowLayer.svelte'
-  import AgentMode from './agent/AgentMode.svelte'
   import { deskAway, deskBack } from './agent/transition'
 
   interface Props {
@@ -122,6 +121,18 @@
   // view stays up while it leaves, the desk is drawn until it has receded.
   let agentShown = $state(false)
   let deskHidden = $state(false)
+  // Agent mode is most of the panel's code: loaded once the agent offers
+  // it, before the switch, so the transition does not wait on it.
+  let AgentMode = $state<typeof import('./agent/AgentMode.svelte').default | null>(null)
+  let loadingAgent: Promise<void> | null = null
+  function loadAgent(): Promise<void> {
+    return (loadingAgent ??= import('./agent/AgentMode.svelte').then((m) => {
+      AgentMode = m.default
+    }))
+  }
+  $effect(() => {
+    if (desk.agentAvailable) void loadAgent()
+  })
   let agentView = $state<{ leave: () => Promise<void> } | null>(null)
   let switching = 0
   $effect(() => {
@@ -131,6 +142,8 @@
   async function switchAgent(on: boolean) {
     const seq = ++switching
     if (on) {
+      await loadAgent()
+      if (seq !== switching) return
       agentShown = true
       if (root) await deskAway(root)
       if (seq === switching) deskHidden = true
@@ -289,7 +302,7 @@
       <div class="absolute inset-0 grid place-items-center"><Spinner size="lg" /></div>
     {/if}
   </div>
-  {#if agentShown && desk.agent}
+  {#if agentShown && desk.agent && AgentMode}
     <AgentMode
       bind:this={agentView}
       onexit={() => desk.toggleAgent(false)}
