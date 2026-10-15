@@ -15,7 +15,11 @@ abstract class VirtKeyState with _$VirtKeyState {
   }) = _VirtKeyState;
 }
 
-@riverpod
+// Kept alive: the notifier is the terminal's input handler, held by a
+// `Terminal` long after the widget that read it is gone, and an auto-disposed
+// one then threw on the next key (SERVERBOX-1Q7). Three modifier flags shared
+// by every terminal cost nothing to keep.
+@Riverpod(keepAlive: true)
 class VirtKeyboard extends _$VirtKeyboard implements TerminalInputHandler {
   @override
   VirtKeyState build() {
