@@ -55,15 +55,21 @@ class ServerFilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(serverProvider(args.spi.id));
+    // The three answers alone: the whole state is new on every status poll,
+    // and a rebuild here rebuilds the file browser under it.
+    final (:files, :agent, :byteStream) = ref.watch(
+      serverProvider(args.spi.id).select(
+        (s) => (
+          files: s.capabilities.files,
+          agent: serverFilesUseAgent(args.spi, s.agentAccess),
+          byteStream: s.capabilities.byteStream,
+        ),
+      ),
+    );
 
-    if (args.spi.local && state.capabilities.files) {
-      return _LocalServerFilePage(args: args);
-    }
-    if (serverFilesUseAgent(args.spi, state.agentAccess)) {
-      return _MonitorFilePage(args: args);
-    }
-    if (state.capabilities.byteStream) return SftpPage(args: args);
+    if (args.spi.local && files) return _LocalServerFilePage(args: args);
+    if (agent) return _MonitorFilePage(args: args);
+    if (byteStream) return SftpPage(args: args);
 
     return Scaffold(
       appBar: args.actionsSink != null
