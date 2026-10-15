@@ -12,6 +12,7 @@
   import { api, ApiError } from '../../../lib/api'
   import { DATE_TIME, fmtBytes, fmtDate } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import type { ContainerBackup, ContainerBackupSchedule, ContainerBackupSettings, ContainerMount, StackJob } from '../../../types'
   import { untrack } from 'svelte'
@@ -78,6 +79,8 @@
     return b.archives.reduce((sum, a) => sum + a.bytes, 0)
   }
 
+  const { stale } = useScope()
+
   const storage = $derived(capabilitiesStore.byServer[servers.currentId]?.features?.includes('storage') === true)
 
   async function openSettings() {
@@ -86,15 +89,10 @@
     settingsError = ''
     editing = true
     if (storage) {
+      const serverId = servers.currentId
       try {
-        const view = await api.getStorage()
-        const out: { path: string; free: number | null }[] = []
-        const walk = (d: (typeof view.disks)[number]) => {
-          for (const m of d.mountpoints) if (m.startsWith('/') && m !== '/' && !m.startsWith('/boot')) out.push({ path: m, free: d.available })
-          d.children.forEach(walk)
-        }
-        view.disks.forEach(walk)
-        mounts = out
+        const found = await api.containerBackupDestinations()
+        if (!stale(serverId)) mounts = found
       } catch {
         mounts = []
       }

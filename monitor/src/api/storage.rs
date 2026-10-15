@@ -88,7 +88,7 @@ impl StorageJobs {
 
 
 /// The machine's storage as it is now (`storage::parse_view`).
-async fn read_view(state: &AppState) -> Option<st::StorageView> {
+pub(crate) async fn read_view(state: &AppState) -> Option<st::StorageView> {
     let limits = super::machine::at_least(&state.remote_access.exec, 8 << 20);
     match super::exec::run(&st::view_command(), None, None, &limits).await {
         Ok(out) if !out.timed_out => {

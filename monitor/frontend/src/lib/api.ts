@@ -1241,6 +1241,9 @@ export const api = {
       free_bytes: number | null
       schedules: ContainerBackupSchedule[]
     }>('/container-backups', {}),
+  /// The mounted filesystems backups may go to, as the agent judges them.
+  containerBackupDestinations: () =>
+    request<{ destinations: { path: string; free: number | null }[] }>('/container-backups/destinations').then((r) => r.destinations),
   setContainerBackupSettings: (settings: ContainerBackupSettings) =>
     request<ContainerBackupSettings>(
       '/container-backups/settings',

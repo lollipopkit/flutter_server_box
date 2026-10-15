@@ -124,6 +124,18 @@ pub async fn restore(
     }
 }
 
+/// `GET /container-backups/destinations`: the mounted filesystems backups
+/// may go to (`sbm_parser::storage::backup_destinations`), with what is free
+/// on each. Empty where the disks cannot be read (not Linux, no lsblk).
+pub async fn destinations(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::acting_caller(&req, &state).await);
+    let found = super::storage::read_view(&state)
+        .await
+        .map(|view| sbm_parser::storage::backup_destinations(&view.disks))
+        .unwrap_or_default();
+    Ok(HttpResponse::Ok().json(&json!({ "destinations": found })))
+}
+
 pub async fn remove(
     req: HttpRequest,
     id: web::types::Path<String>,

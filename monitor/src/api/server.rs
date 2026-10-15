@@ -693,6 +693,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::container_backups::create)),
             )
             .service(web::resource("/container-backups/job").route(web::get().to(crate::api::container_backups::job)))
+            .service(web::resource("/container-backups/destinations").route(web::get().to(crate::api::container_backups::destinations)))
             .service(web::resource("/container-backups/settings").route(web::put().to(crate::api::container_backups::put_settings)))
             .service(web::resource("/container-backups/schedules").route(web::post().to(crate::api::container_backups::add_schedule)))
             .service(web::resource("/container-backups/schedules/{id}").route(web::delete().to(crate::api::container_backups::remove_schedule)))

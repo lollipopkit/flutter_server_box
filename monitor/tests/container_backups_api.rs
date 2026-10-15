@@ -33,6 +33,7 @@ async fn setup() -> TestServer {
                             .route(web::post().to(container_backups::create)),
                     )
                     .service(web::resource("/container-backups/job").route(web::get().to(container_backups::job)))
+                    .service(web::resource("/container-backups/destinations").route(web::get().to(container_backups::destinations)))
                     .service(web::resource("/container-backups/settings").route(web::put().to(container_backups::put_settings)))
                     .service(web::resource("/container-backups/schedules").route(web::post().to(container_backups::add_schedule)))
                     .service(web::resource("/container-backups/schedules/{id}").route(web::delete().to(container_backups::remove_schedule)))
@@ -122,4 +123,18 @@ async fn backups_go_where_they_are_told_on_the_schedule_set() {
     assert_eq!(list["schedules"][0]["weekday"], 6);
     let (status, _) = call(&srv, Method::DELETE, &format!("/api/v1/container-backups/schedules/{}", made["id"].as_str().unwrap()), None).await;
     assert_eq!(status, 204);
+}
+
+/// Where backups may go is the agent's answer: a list (empty where the disks
+/// cannot be read), none of it where the system lives.
+#[ntex::test]
+async fn destinations_are_listed_outside_the_system() {
+    let srv = setup().await;
+    let (status, body) = call(&srv, Method::GET, "/api/v1/container-backups/destinations", None).await;
+    assert_eq!(status, 200, "{body}");
+    let found = body["destinations"].as_array().expect("a list");
+    for d in found {
+        let path = d["path"].as_str().unwrap();
+        assert!(path != "/" && !path.starts_with("/boot"), "{path}");
+    }
 }

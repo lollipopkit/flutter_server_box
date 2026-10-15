@@ -722,6 +722,30 @@ const SYSTEM_DIRS: &[&str] = &[
 /// Host folders nothing is mounted in either (`/boot/efi`, `/run/…`).
 const SYSTEM_TREES: &[&str] = &["/bin/", "/boot/", "/dev/", "/etc/", "/lib/", "/lib32/", "/lib64/", "/proc/", "/run/", "/sbin/", "/sys/", "/usr/"];
 
+/// A mounted filesystem backups may go to, and what is free on it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BackupDestination {
+    pub path: String,
+    pub free: Option<u64>,
+}
+
+/// The filesystems mounted outside where the system lives
+/// ([`SYSTEM_DIRS`], [`SYSTEM_TREES`]): where a backup disk is, and nothing
+/// the system itself is on.
+pub fn backup_destinations(devices: &[BlockDevice]) -> Vec<BackupDestination> {
+    let mut out: Vec<BackupDestination> = Vec::new();
+    for dev in devices.iter().flat_map(BlockDevice::walk) {
+        for m in &dev.mountpoints {
+            let trimmed = m.trim_end_matches('/');
+            let system = trimmed.is_empty() || SYSTEM_DIRS.contains(&trimmed) || SYSTEM_TREES.iter().any(|t| trimmed.starts_with(t));
+            if m.starts_with('/') && !system && !out.iter().any(|d| d.path == *m) {
+                out.push(BackupDestination { path: m.clone(), free: dev.available });
+            }
+        }
+    }
+    out
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum StorageAction {
@@ -1292,6 +1316,25 @@ pub fn check(view: &StorageView, action: &StorageAction) -> Result<(), Refusal> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn backups_go_outside_where_the_system_lives() {
+        let devices = parse_lsblk(
+            r#"{"blockdevices":[
+              {"name":"sda","path":"/dev/sda","type":"disk","size":1,"mountpoints":[null],"children":[
+                {"name":"sda1","path":"/dev/sda1","type":"part","size":1,"mountpoints":["/boot/efi"],"fsavail":"1"},
+                {"name":"sda2","path":"/dev/sda2","type":"part","size":1,"mountpoints":["/"],"fsavail":"2"},
+                {"name":"sda3","path":"/dev/sda3","type":"part","size":1,"mountpoints":["[SWAP]"]}]},
+              {"name":"sdb1","path":"/dev/sdb1","type":"part","size":1,"mountpoints":["/mnt/backup","/bootstrap"],"fsavail":"9"}]}"#,
+        );
+        assert_eq!(
+            backup_destinations(&devices),
+            [
+                BackupDestination { path: "/mnt/backup".into(), free: Some(9) },
+                BackupDestination { path: "/bootstrap".into(), free: Some(9) },
+            ]
+        );
+    }
 
     const LSBLK: &str = r#"{"blockdevices":[
       {"name":"sda","path":"/dev/sda","type":"disk","size":500107862016,"model":"Samsung SSD","serial":"S1","rota":false,"tran":"sata","rm":false,"ro":false,"fstype":null,"label":null,"uuid":null,"mountpoints":[null],"fsavail":null,"fsused":null,
