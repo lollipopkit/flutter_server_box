@@ -310,9 +310,13 @@ fn install_commands() {
         r"C:\temp\test",
         r"C:\temp\test\script.ps1",
     );
-    assert!(win.starts_with("powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand "));
+    assert!(win.starts_with(
+        "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand "
+    ));
     let b64 = win.rsplit(' ').next().unwrap();
     let decoded = decode_utf16le_b64(b64);
+    // A progress record on stderr would read as a failed install (#1710)
+    assert!(decoded.starts_with("$ProgressPreference = 'SilentlyContinue'; "));
     assert!(decoded.contains("New-Item"));
     assert!(decoded.contains("Set-Content"));
     assert!(decoded.contains(r"C:\temp\test\script.ps1"));
@@ -355,7 +359,7 @@ fn windows_default_script_paths_expand_remote_environment() {
     let decoded = decode_utf16le_b64(exec.rsplit(' ').next().unwrap());
     assert_eq!(
         decoded,
-        "& (Join-Path $env:TEMP 'server_box\\srvboxm.ps1') -s"
+        "$ProgressPreference = 'SilentlyContinue'; & (Join-Path $env:TEMP 'server_box\\srvboxm.ps1') -s"
     );
 }
 
@@ -451,7 +455,7 @@ fn exec_commands() {
     let encoded = custom.split_whitespace().last().unwrap();
     assert_eq!(
         decode_utf16le_b64(encoded),
-        "& 'C:\\Server $($env:USERNAME)\\it''s\\status.ps1' -s"
+        "$ProgressPreference = 'SilentlyContinue'; & 'C:\\Server $($env:USERNAME)\\it''s\\status.ps1' -s"
     );
 }
 

@@ -450,12 +450,18 @@ pub fn build_script(system: SystemType, opts: &ScriptOptions) -> String {
 
 /// Wrap a PowerShell snippet as `powershell -EncodedCommand ...` so it runs
 /// unmodified from any Windows default shell (cmd.exe or PowerShell) with no
-/// quoting/expansion ambiguity; stdin stays available to the snippet
+/// quoting/expansion ambiguity; stdin stays available to the snippet.
+///
+/// Progress is silenced: with `-EncodedCommand` and no console, PowerShell
+/// serializes progress records to stderr as CLIXML, and the first module
+/// autoload on a host ("Preparing modules for first use") emits one. A
+/// command that succeeded would then look like one that wrote an error.
 pub fn encoded_powershell_command(ps: &str) -> String {
     use base64::Engine;
+    let ps = format!("$ProgressPreference = 'SilentlyContinue'; {ps}");
     let utf16le: Vec<u8> = ps.encode_utf16().flat_map(u16::to_le_bytes).collect();
     format!(
-        "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {}",
+        "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {}",
         base64::engine::general_purpose::STANDARD.encode(utf16le)
     )
 }
