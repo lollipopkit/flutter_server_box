@@ -2366,6 +2366,23 @@ const fr = {
 	agentAnswered: 'L’agent a répondu {status}.',
 	agentSessionExpired: 'Session expirée. Reconnectez-vous.',
 	agentHttpsRequired: 'Les agents monitor distants exigent HTTPS ; HTTP n’est autorisé qu’en loopback.',
+	deskGuideAppsTitle: 'Les applications vivent dans des fenêtres',
+	deskGuideAppsBody: '{apps} les liste toutes ; celles-ci sont celles du Dock et s\'ouvrent sur {host}, où vous êtes connecté.',
+	deskGuideAppsMore: 'Chaque fenêtre garde son propre état : une seconde peut regarder un autre dossier ou un autre service. Fermer, réduire et plein écran sont en haut à gauche ; l\'extrémité droite de la barre des menus porte l\'horloge, le centre de notifications et le centre de contrôle.',
+	deskGuideWebAppsTitle: 'Applications web sur cette machine',
+	deskGuideWebAppsBody: 'Certains services ne sont pas encore installés. En installer un télécharge ses images, écrit ses fichiers sous le répertoire de données de l\'agent et ouvre une fenêtre devant ; l\'App Store a tout le catalogue.',
+	deskGuideNoDocker: 'Cette machine n\'a ni Docker ni Podman : les applications web ne peuvent pas encore y tourner.',
+	deskGuideNoDockerHint: 'L\'App Store parcourt quand même le catalogue ; ses applications attendent une machine capable de les exécuter.',
+	deskGuideWebAppsNote: 'Cocher une case la retire de cette liste ; rien n\'est installé avant que la page de l\'App Store ouverte ne soit confirmée là-bas, avec le Docker de cette machine.',
+	deskGuideSkip: 'Ignorer',
+	deskGuideAgain: 'Réafficher le guide',
+	deskGuideAgainHint: 'Il s\'ouvre une fois sur le bureau, comme la première fois.',
+	deskGuideShow: 'Afficher',
+	deskGuideWelcomeTitle: 'Bienvenue sur le bureau',
+	deskGuideBody: 'C\'est le bureau de {host}, pas une application : chaque fenêtre est une chose que vous faites avec cette machine, et elles restent toutes ouvertes les unes derrière les autres.',
+	deskGuideWelcomeMore: 'Ce que vous arrangez ici — le Dock, le fond d\'écran, les fenêtres laissées ouvertes — est conservé pour ce compte : un rechargement le retrouve.',
+	deskGuideNext: 'Suivant',
+	deskGuideInstall: 'Ouvrir dans l\'App Store',
 } satisfies Translation
 
 export default fr

@@ -2366,6 +2366,23 @@ const nl = {
 	agentAnswered: 'De agent antwoordde {status}.',
 	agentSessionExpired: 'Sessie verlopen. Meld je opnieuw aan.',
 	agentHttpsRequired: 'Externe monitor-agents vereisen HTTPS; HTTP is alleen toegestaan op loopback.',
+	deskGuideAppsTitle: 'Apps leven in vensters',
+	deskGuideAppsBody: '{apps} toont ze allemaal; dit zijn die van het dock, ze openen op {host} waar je bent aangemeld.',
+	deskGuideAppsMore: 'Elk venster houdt zijn eigen staat, dus een tweede venster kan naar een andere map of een andere dienst kijken. Sluiten, minimaliseren en volledig scherm staan linksboven; rechts in de menubalk staan de klok, het meldingscentrum en het bedieningspaneel.',
+	deskGuideWebAppsTitle: 'Webapps op deze machine',
+	deskGuideWebAppsBody: 'Sommige diensten zijn nog niet geïnstalleerd. Installeren haalt de images op, schrijft de bestanden onder de gegevensmap van de agent en opent een venster ervoor; de App Store heeft de hele catalogus.',
+	deskGuideNoDocker: 'Deze machine heeft geen Docker of Podman, dus webapps kunnen hier nog niet draaien.',
+	deskGuideNoDockerHint: 'De App Store blijft de catalogus tonen; de apps wachten op een machine die ze kan draaien.',
+	deskGuideWebAppsNote: 'Aanvinken haalt het uit deze lijst; er wordt niets geïnstalleerd tot de geopende App Store-pagina daar wordt bevestigd, met de Docker van deze machine.',
+	deskGuideSkip: 'Overslaan',
+	deskGuideAgain: 'De gids opnieuw tonen',
+	deskGuideAgainHint: 'Het opent één keer op het bureaublad, zoals de eerste keer.',
+	deskGuideShow: 'Tonen',
+	deskGuideWelcomeTitle: 'Welkom op het bureaublad',
+	deskGuideBody: 'Dit is het bureaublad van {host}, geen toepassing: elk venster is één ding dat je met deze machine doet, en ze blijven allemaal achter elkaar open.',
+	deskGuideWelcomeMore: 'Wat je hier rangschikt — het dock, de achtergrond, de vensters die open blijven — wordt voor dit account bewaard, dus herladen vindt het terug.',
+	deskGuideNext: 'Volgende',
+	deskGuideInstall: 'Openen in de App Store',
 } satisfies Translation
 
 export default nl

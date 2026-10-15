@@ -38,6 +38,7 @@ own (`serverbox.*`) and desk packages too.
 | `glyph` | string | Material Symbols Rounded name |
 | `tone` | enum | `berry soft ink sky teal violet amber leaf pale bright mist` |
 | `categories` | enum[] | `photos media files documents productivity development ai home network monitoring security tools` |
+| `recommended` | bool | Optional, off by default: a few apps the desk's first-run guide offers. Leave it out of an app you are adding |
 | `notices` | enum[] | What the deploy dialog points out, below |
 | `title`, `description` | text | Translations by locale (`en` required; `zh`, `zh-TW`, …). `title` names the window: the project's own name (`Immich`), `en` only |
 

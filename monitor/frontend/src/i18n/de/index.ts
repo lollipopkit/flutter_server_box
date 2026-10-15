@@ -2366,6 +2366,23 @@ const de = {
 	agentAnswered: 'Der Agent antwortete mit {status}.',
 	agentSessionExpired: 'Sitzung abgelaufen. Bitte erneut anmelden.',
 	agentHttpsRequired: 'Entfernte Monitor-Agents benötigen HTTPS; HTTP ist nur auf Loopback erlaubt.',
+	deskGuideAppsTitle: 'Apps leben in Fenstern',
+	deskGuideAppsBody: '{apps} listet alle auf; diese sind die des Docks und öffnen auf {host}, wo du angemeldet bist.',
+	deskGuideAppsMore: 'Jedes Fenster behält seinen eigenen Zustand, ein zweites kann also einen anderen Ordner oder Dienst zeigen. Schließen, Minimieren und Vollbild sind oben links; rechts in der Menüleiste liegen Uhr, Mitteilungszentrale und Kontrollzentrum.',
+	deskGuideWebAppsTitle: 'Web-Apps auf dieser Maschine',
+	deskGuideWebAppsBody: 'Manche Dienste sind noch nicht installiert. Installieren lädt die Images, schreibt die Dateien unter das Datenverzeichnis des Agenten und öffnet ein Fenster davor; der App Store hat den ganzen Katalog.',
+	deskGuideNoDocker: 'Diese Maschine hat kein Docker oder Podman, Web-Apps können hier noch nicht laufen.',
+	deskGuideNoDockerHint: 'Der App Store durchsucht den Katalog trotzdem; seine Apps warten auf eine Maschine, die sie ausführen kann.',
+	deskGuideWebAppsNote: 'Ein Häkchen nimmt es aus dieser Liste; installiert wird erst, wenn die geöffnete App-Store-Seite dort bestätigt wird, mit dem Docker dieser Maschine.',
+	deskGuideSkip: 'Überspringen',
+	deskGuideAgain: 'Anleitung erneut zeigen',
+	deskGuideAgainHint: 'Er öffnet sich einmal auf dem Schreibtisch, wie beim ersten Mal.',
+	deskGuideShow: 'Zeigen',
+	deskGuideWelcomeTitle: 'Willkommen auf dem Schreibtisch',
+	deskGuideBody: 'Das ist der Schreibtisch von {host}, keine Anwendung: jedes Fenster ist eine Sache, die du mit dieser Maschine machst, und alle bleiben hintereinander offen.',
+	deskGuideWelcomeMore: 'Was du hier einrichtest — Dock, Hintergrundbild, offen gelassene Fenster — wird für dieses Konto behalten, ein Neuladen findet es wieder.',
+	deskGuideNext: 'Weiter',
+	deskGuideInstall: 'Im App Store öffnen',
 } satisfies Translation
 
 export default de

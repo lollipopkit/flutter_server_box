@@ -2366,6 +2366,23 @@ const ja = {
 	agentAnswered: 'エージェントが {status} を返しました。',
 	agentSessionExpired: 'セッションの有効期限が切れました。もう一度サインインしてください。',
 	agentHttpsRequired: 'リモートの monitor エージェントには HTTPS が必要です。HTTP はループバックでのみ使用できます。',
+	deskGuideAppsTitle: 'アプリはウィンドウの中で動きます',
+	deskGuideAppsBody: '{apps} にすべて並んでいます。ここにあるのはドックのもので、ログイン中の {host} で開きます。',
+	deskGuideAppsMore: 'ウィンドウはそれぞれ状態を持ちます。2 つ目は別のフォルダや別のサービスを表示できます。閉じる・最小化・フルスクリーンは左上、メニューバーの右端には時計、通知センター、コントロールセンターがあります。',
+	deskGuideWebAppsTitle: 'このマシンの Web アプリ',
+	deskGuideWebAppsBody: 'まだインストールされていないサービスがあります。インストールするとイメージを取得し、エージェントのデータディレクトリにファイルを書き、その前にウィンドウを開きます。カタログ全体は App Store にあります。',
+	deskGuideNoDocker: 'このマシンには Docker も Podman もないため、Web アプリはまだ動かせません。',
+	deskGuideNoDockerHint: 'App Store ではカタログを見られます。アプリは実行できるマシンを待ちます。',
+	deskGuideWebAppsNote: 'チェックを入れるとこの一覧から外れます。インストールされるのは、開いた App Store のページで、このマシンの Docker で確認してからです。',
+	deskGuideSkip: 'スキップ',
+	deskGuideAgain: 'ガイドをもう一度表示',
+	deskGuideAgainHint: '初回と同じく、デスクで一度開きます。',
+	deskGuideShow: '表示',
+	deskGuideWelcomeTitle: 'デスクへようこそ',
+	deskGuideBody: 'これは {host} のデスクで、アプリではありません。各ウィンドウがこのマシンで行う一つの作業で、互いの後ろに開いたまま残ります。',
+	deskGuideWelcomeMore: 'ここで整えたもの — ドック、壁紙、開いたままのウィンドウ — はこのアカウント用に保存され、再読み込みでまた見つかります。',
+	deskGuideNext: '次へ',
+	deskGuideInstall: 'App Store で開く',
 } satisfies Translation
 
 export default ja

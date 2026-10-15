@@ -177,6 +177,80 @@ async fn preferences_round_trip() {
 
 }
 
+/// The first-run guide: an account that has not walked through it (no stored
+/// preference at all, or the field absent) is the one the panel greets.
+#[ntex::test]
+async fn the_first_run_guide_is_a_preference_of_its_own() {
+    let srv = server(state().await).await;
+    let (_, body, _) = call(&srv, true, Method::GET, "/api/v1/desk", None).await;
+    assert!(body["preferences"].is_null());
+
+    let mut seen = prefs();
+    seen["onboarded_at"] = serde_json::json!("2026-10-16T00:00:00+00:00");
+    let (status, saved, _) = call(&srv, true, Method::PUT, "/api/v1/desk/preferences", json(seen)).await;
+    assert_eq!(status, 200, "{saved}");
+    let (_, body, _) = call(&srv, true, Method::GET, "/api/v1/desk", None).await;
+    assert_eq!(body["preferences"]["onboarded_at"], "2026-10-16T00:00:00+00:00");
+
+    // Saving without it — a panel that never saw the guide, or Settings
+    // offering it again — leaves it open.
+    let (status, saved, _) = call(&srv, true, Method::PUT, "/api/v1/desk/preferences", json(prefs())).await;
+    assert_eq!(status, 200);
+    assert!(saved["onboarded_at"].is_null());
+
+    let mut bad = prefs();
+    bad["onboarded_at"] = serde_json::json!("x".repeat(65));
+    let (status, body, _) = call(&srv, true, Method::PUT, "/api/v1/desk/preferences", json(bad)).await;
+    assert_eq!(status, 400);
+    assert_eq!(body["error"], "invalidOnboardedAt");
+}
+
+/// An agent upgraded under an account that has been using the desk does not
+/// greet it: migration 035 marks everyone who was there.
+#[ntex::test]
+async fn the_migration_marks_an_account_that_already_used_the_desk() {
+    let db = common::database().await;
+    common::add_owner(&db).await;
+    let owner: i64 = sqlx::query_scalar("SELECT id FROM users LIMIT 1").fetch_one(&db).await.unwrap();
+    // What the upgrade finds: a window session, saved by using the desk, and
+    // no preference row (nothing was arranged).
+    sqlx::query("INSERT INTO desk_session (user_id, device_id, revision, updated_at) VALUES (?, 'd', 1, '2026-01-01T00:00:00+00:00')")
+        .bind(owner)
+        .execute(&db)
+        .await
+        .unwrap();
+    // Undo what 035 did on a database without it, and run it again.
+    sqlx::query("ALTER TABLE desk_preferences DROP COLUMN onboarded_at").execute(&db).await.unwrap();
+    sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 35").execute(&db).await.unwrap();
+    sqlx::migrate!("./migrations").run(&db).await.unwrap();
+
+    let row: (Option<String>, String, String, bool) =
+        sqlx::query_as("SELECT onboarded_at, wallpaper, wallpaper_fit, background FROM desk_preferences WHERE user_id = ?")
+            .bind(owner)
+            .fetch_one(&db)
+            .await
+            .unwrap();
+    assert!(row.0.is_some(), "the account that used the desk is past the guide");
+    // The desk it was drawn with before: the panel's defaults (`defaultDock`).
+    assert_eq!((row.1.as_str(), row.2.as_str(), row.3), ("preset:bloom", "cover", true));
+    let dock: Vec<String> = sqlx::query_scalar("SELECT app_id FROM desk_dock WHERE user_id = ? ORDER BY position")
+        .bind(owner)
+        .fetch_all(&db)
+        .await
+        .unwrap();
+    assert_eq!(
+        dock,
+        [
+            "serverbox.status",
+            "serverbox.files",
+            "serverbox.terminal",
+            "serverbox.containers",
+            "serverbox.virt",
+            "serverbox.settings"
+        ]
+    );
+}
+
 #[ntex::test]
 async fn a_refused_preference_names_why_and_stores_nothing() {
     let srv = server(state().await).await;

@@ -2366,6 +2366,23 @@ const ko = {
 	agentAnswered: '에이전트가 {status}을(를) 반환했습니다.',
 	agentSessionExpired: '세션이 만료되었습니다. 다시 로그인하세요.',
 	agentHttpsRequired: '원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP는 루프백에서만 허용됩니다.',
+	deskGuideAppsTitle: '앱은 창에서 실행됩니다',
+	deskGuideAppsBody: '{apps}에서 모두 볼 수 있습니다. 여기 있는 것은 Dock의 앱이며 로그인한 {host}에서 열립니다.',
+	deskGuideAppsMore: '창마다 상태를 따로 가지므로 두 번째 창으로 다른 폴더나 다른 서비스를 볼 수 있습니다. 닫기, 최소화, 전체 화면은 왼쪽 위에 있고 메뉴 막대 오른쪽 끝에는 시계, 알림 센터, 제어 센터가 있습니다.',
+	deskGuideWebAppsTitle: '이 머신의 웹 앱',
+	deskGuideWebAppsBody: '아직 설치되지 않은 서비스가 있습니다. 설치하면 이미지를 내려받고 에이전트의 데이터 디렉터리에 파일을 쓰고 그 앞에 창을 엽니다. 전체 카탈로그는 App Store에 있습니다.',
+	deskGuideNoDocker: '이 머신에는 Docker나 Podman이 없어서 웹 앱을 아직 실행할 수 없습니다.',
+	deskGuideNoDockerHint: 'App Store에서는 카탈로그를 볼 수 있습니다. 앱은 실행할 수 있는 머신을 기다립니다.',
+	deskGuideWebAppsNote: '체크하면 이 목록에서 빠집니다. 설치는 열린 App Store 페이지에서 이 머신의 Docker로 확인한 뒤에야 시작됩니다.',
+	deskGuideSkip: '건너뛰기',
+	deskGuideAgain: '가이드 다시 보기',
+	deskGuideAgainHint: '처음처럼 데스크에서 한 번 열립니다.',
+	deskGuideShow: '표시',
+	deskGuideWelcomeTitle: '데스크에 오신 것을 환영합니다',
+	deskGuideBody: '이것은 {host}의 데스크이며 앱이 아닙니다. 창마다 이 머신으로 하는 일 하나이고, 모두 서로 뒤에 열린 채 남습니다.',
+	deskGuideWelcomeMore: '여기에서 정리한 것 — Dock, 배경 화면, 열어 둔 창 — 은 이 계정을 위해 저장되므로 새로 고치면 다시 나타납니다.',
+	deskGuideNext: '다음',
+	deskGuideInstall: 'App Store에서 열기',
 } satisfies Translation
 
 export default ko

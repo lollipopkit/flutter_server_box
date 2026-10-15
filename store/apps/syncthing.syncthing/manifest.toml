@@ -11,6 +11,7 @@ homepage = "https://syncthing.net"
 source = "https://github.com/syncthing/syncthing/tree/v2.1.6"
 glyph = "sync"
 tone = "sky"
+recommended = true
 categories = ["files", "network"]
 notices = ["pullsImages", "bindsPaths", "publishesPort"]
 

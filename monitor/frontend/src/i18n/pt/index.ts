@@ -2366,6 +2366,23 @@ const pt = {
 	agentAnswered: 'O agente respondeu {status}.',
 	agentSessionExpired: 'A sessão expirou. Inicie sessão novamente.',
 	agentHttpsRequired: 'Agentes monitor remotos exigem HTTPS; HTTP só é permitido em loopback.',
+	deskGuideAppsTitle: 'As aplicações vivem em janelas',
+	deskGuideAppsBody: '{apps} lista todas; estas são as do Dock e abrem em {host}, onde tem sessão iniciada.',
+	deskGuideAppsMore: 'Cada janela mantém o seu estado, por isso uma segunda pode ver outra pasta ou outro serviço. Fechar, minimizar e ecrã inteiro estão no canto superior esquerdo; na extremidade direita da barra de menus estão o relógio, o centro de notificações e o centro de controlo.',
+	deskGuideWebAppsTitle: 'Aplicações web nesta máquina',
+	deskGuideWebAppsBody: 'Alguns serviços ainda não estão instalados. Instalar um descarrega as imagens, escreve os seus ficheiros sob o diretório de dados do agente e abre uma janela à frente; o App Store tem todo o catálogo.',
+	deskGuideNoDocker: 'Esta máquina não tem Docker nem Podman, por isso as aplicações web ainda não podem correr aqui.',
+	deskGuideNoDockerHint: 'O App Store continua a mostrar o catálogo; as suas aplicações esperam uma máquina que as possa executar.',
+	deskGuideWebAppsNote: 'Marcar um retira-o desta lista; nada é instalado até a página do App Store que abre ser confirmada lá, com o Docker desta máquina.',
+	deskGuideSkip: 'Ignorar',
+	deskGuideAgain: 'Mostrar o guia outra vez',
+	deskGuideAgainHint: 'Abre uma vez na área de trabalho, como da primeira vez.',
+	deskGuideShow: 'Mostrar',
+	deskGuideWelcomeTitle: 'Bem-vindo à área de trabalho',
+	deskGuideBody: 'Esta é a área de trabalho de {host}, não uma aplicação: cada janela é uma coisa que faz com esta máquina, e ficam todas abertas umas atrás das outras.',
+	deskGuideWelcomeMore: 'O que arruma aqui — o Dock, o fundo, as janelas deixadas abertas — fica guardado para esta conta, por isso recarregar volta a encontrá-lo.',
+	deskGuideNext: 'Seguinte',
+	deskGuideInstall: 'Abrir no App Store',
 } satisfies Translation
 
 export default pt

@@ -2366,6 +2366,23 @@ const en = {
 	agentAnswered: 'The agent answered {status:number}.',
 	agentSessionExpired: 'Session expired. Sign in again.',
 	agentHttpsRequired: 'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.',
+	deskGuideAppsTitle: 'Apps live in windows',
+	deskGuideAppsBody: '{apps} lists every one; these are the dock\'s, opening on the {host} you are signed in to.',
+	deskGuideAppsMore: 'Every window keeps its own state, so a second window can look at another folder or another service. Close, minimise and full screen are at its top left; the menubar\'s right end holds the clock, the notification centre and the control centre.',
+	deskGuideWebAppsTitle: 'Web apps on this machine',
+	deskGuideWebAppsBody: 'Some services are not installed yet. Installing one pulls its images, writes its files under the agent\'s data directory, and opens a window in front of it; the App Store has the whole catalog.',
+	deskGuideNoDocker: 'This machine has no Docker or Podman, so web apps cannot run here yet.',
+	deskGuideNoDockerHint: 'The App Store still browses the catalog; its apps wait for a machine that can run them.',
+	deskGuideWebAppsNote: 'Ticking one takes it off this list; nothing is installed until the App Store page it opens is confirmed there, with this machine\'s Docker.',
+	deskGuideSkip: 'Skip',
+	deskGuideAgain: 'Show the guide again',
+	deskGuideAgainHint: 'It opens on the desk once, as it did the first time.',
+	deskGuideShow: 'Show',
+	deskGuideWelcomeTitle: 'Welcome to the desk',
+	deskGuideBody: 'This is {host}\'s desk, not an application: every window is one thing you do with this machine, and they all stay open behind each other.',
+	deskGuideWelcomeMore: 'What you arrange here — the dock, the wallpaper, the windows left open — is kept for this account, so a reload finds it again.',
+	deskGuideNext: 'Next',
+	deskGuideInstall: 'Open in the App Store',
 } satisfies BaseTranslation
 
 export default en

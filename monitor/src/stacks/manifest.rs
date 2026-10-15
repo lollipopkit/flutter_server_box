@@ -89,6 +89,10 @@ pub struct Manifest {
     pub tone: String,
     #[serde(default)]
     pub categories: Vec<String>,
+    /// Recommended to someone who has just installed the agent: listed by
+    /// the desk's first-run guide.
+    #[serde(default)]
+    pub recommended: bool,
     #[serde(default)]
     pub notices: Vec<Notice>,
     pub title: Text,

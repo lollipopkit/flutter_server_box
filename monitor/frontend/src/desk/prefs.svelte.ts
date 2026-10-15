@@ -23,6 +23,7 @@ export function defaults(): DeskPreferences {
     ],
     background: true,
     background_denied: [],
+    onboarded_at: null,
   }
 }
 
@@ -44,6 +45,12 @@ export class DeskPrefs {
 
   get remote(): boolean {
     return this.#storage.remote
+  }
+
+  /// The first-run guide is this account's to see: the stored preferences
+  /// (or, with no row, the defaults) say nobody walked through it here.
+  get needsGuide(): boolean {
+    return this.loaded && !this.value.onboarded_at
   }
 
   /// Lets [appId] run while hidden, or not.
@@ -80,6 +87,17 @@ export class DeskPrefs {
       this.#timer = null
       void this.#storage.savePreferences($state.snapshot(this.value) as DeskPreferences).catch(() => {})
     }, SAVE_DELAY_MS)
+  }
+
+  /// The guide is done with, whether it was walked through or skipped.
+  markOnboarded() {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once, never kept
+    this.update({ onboarded_at: new Date().toISOString() })
+  }
+
+  /// Offers it again (Settings), as the account that first arrived here.
+  showGuideAgain() {
+    this.update({ onboarded_at: null })
   }
 
   pin(appId: string) {

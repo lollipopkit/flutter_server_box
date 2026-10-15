@@ -2366,6 +2366,23 @@ const zh_TW = {
 	agentAnswered: 'agent 回應了 {status}。',
 	agentSessionExpired: '工作階段已過期，請重新登入。',
 	agentHttpsRequired: '遠端 monitor agent 需要 HTTPS；僅本機回送位址允許 HTTP。',
+	deskGuideAppsTitle: '應用程式都住在視窗裡',
+	deskGuideAppsBody: '{apps} 裡列出了全部；這裡是 Dock 裡的，在已登入的 {host} 上開啟。',
+	deskGuideAppsMore: '每個視窗各自保存狀態，所以第二個視窗可以看另一個資料夾或另一個服務。關閉、最小化和全螢幕在左上角；選單列右端是時鐘、通知中心和控制中心。',
+	deskGuideWebAppsTitle: '這台機器上的 Web 應用',
+	deskGuideWebAppsBody: '有些服務還沒有安裝。安裝會拉取映像、把檔案寫到 agent 的資料目錄，並在它前面開啟一個視窗；完整目錄在 App Store 裡。',
+	deskGuideNoDocker: '這台機器上沒有 Docker 或 Podman，所以 Web 應用暫時還不能在這裡執行。',
+	deskGuideNoDockerHint: 'App Store 裡仍然可以瀏覽目錄；應用在等一台能執行它們的機器。',
+	deskGuideWebAppsNote: '勾選只是把它從這個列表裡去掉；只有打開的 App Store 頁面在那裡用這台機器的 Docker 確認之後才會安裝。',
+	deskGuideSkip: '跳過',
+	deskGuideAgain: '再看一次引導',
+	deskGuideAgainHint: '它會像第一次一樣在桌面上開啟一次。',
+	deskGuideShow: '顯示',
+	deskGuideWelcomeTitle: '歡迎使用桌面',
+	deskGuideBody: '這是 {host} 的桌面，不是一個應用程式：每個視窗都是你用這台機器做的一件事，它們依次停留在後面。',
+	deskGuideWelcomeMore: '你在這裡擺放的東西——Dock、桌布、沒關的視窗——都會為這個帳號保存，重新載入後還在。',
+	deskGuideNext: '下一步',
+	deskGuideInstall: '在 App Store 中開啟',
 } satisfies Translation
 
 export default zh_TW

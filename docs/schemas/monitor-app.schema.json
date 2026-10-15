@@ -26,6 +26,10 @@
       "uniqueItems": true,
       "items": { "enum": ["photos", "media", "files", "documents", "productivity", "development", "ai", "home", "network", "monitoring", "security", "tools"] }
     },
+    "recommended": {
+      "type": "boolean",
+      "description": "A few of these are offered by the desk's first-run guide."
+    },
     "notices": {
       "type": "array",
       "uniqueItems": true,

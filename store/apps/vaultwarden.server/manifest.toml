@@ -12,6 +12,7 @@ homepage = "https://github.com/dani-garcia/vaultwarden"
 source = "https://github.com/dani-garcia/vaultwarden/tree/1.37.4"
 glyph = "lock"
 tone = "ink"
+recommended = true
 categories = ["security"]
 notices = ["pullsImages", "bindsPaths", "publishesPort"]
 

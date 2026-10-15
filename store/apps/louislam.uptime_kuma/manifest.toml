@@ -12,6 +12,7 @@ homepage = "https://uptime.kuma.pet"
 source = "https://github.com/louislam/uptime-kuma/tree/2.5.6"
 glyph = "monitor_heart"
 tone = "leaf"
+recommended = true
 categories = ["monitoring"]
 notices = ["pullsImages", "bindsPaths", "publishesPort"]
 

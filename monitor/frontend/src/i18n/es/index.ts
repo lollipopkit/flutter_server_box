@@ -2366,6 +2366,23 @@ const es = {
 	agentAnswered: 'El agente respondió {status}.',
 	agentSessionExpired: 'La sesión ha caducado. Vuelve a iniciar sesión.',
 	agentHttpsRequired: 'Los agentes monitor remotos requieren HTTPS; HTTP solo se permite en loopback.',
+	deskGuideAppsTitle: 'Las aplicaciones viven en ventanas',
+	deskGuideAppsBody: '{apps} las enumera todas; estas son las del Dock y se abren en {host}, donde has iniciado sesión.',
+	deskGuideAppsMore: 'Cada ventana conserva su estado, así que una segunda puede mirar otra carpeta u otro servicio. Cerrar, minimizar y pantalla completa están arriba a la izquierda; el extremo derecho de la barra de menús tiene el reloj, el centro de notificaciones y el centro de control.',
+	deskGuideWebAppsTitle: 'Aplicaciones web en esta máquina',
+	deskGuideWebAppsBody: 'Algunos servicios aún no están instalados. Instalar uno descarga sus imágenes, escribe sus archivos bajo el directorio de datos del agente y abre una ventana delante; el App Store tiene el catálogo completo.',
+	deskGuideNoDocker: 'Esta máquina no tiene Docker ni Podman, así que las aplicaciones web aún no pueden ejecutarse aquí.',
+	deskGuideNoDockerHint: 'El App Store sigue mostrando el catálogo; sus aplicaciones esperan una máquina que pueda ejecutarlas.',
+	deskGuideWebAppsNote: 'Marcar uno lo quita de esta lista; no se instala nada hasta que se confirme allí la página del App Store que se abre, con el Docker de esta máquina.',
+	deskGuideSkip: 'Omitir',
+	deskGuideAgain: 'Mostrar la guía otra vez',
+	deskGuideAgainHint: 'Se abre una vez en el escritorio, como la primera vez.',
+	deskGuideShow: 'Mostrar',
+	deskGuideWelcomeTitle: 'Te damos la bienvenida al escritorio',
+	deskGuideBody: 'Este es el escritorio de {host}, no una aplicación: cada ventana es algo que haces con esta máquina, y todas siguen abiertas unas detrás de otras.',
+	deskGuideWelcomeMore: 'Lo que organices aquí — el Dock, el fondo, las ventanas abiertas — se guarda para esta cuenta, así que al recargar vuelve a estar.',
+	deskGuideNext: 'Siguiente',
+	deskGuideInstall: 'Abrir en el App Store',
 } satisfies Translation
 
 export default es

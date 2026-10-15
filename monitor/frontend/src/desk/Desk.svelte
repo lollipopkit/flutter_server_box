@@ -23,6 +23,7 @@
   import Wallpaper from './shell/Wallpaper.svelte'
   import { saveWallpaper } from './lock/wallpapers'
   import { themeDark, themeWallpaper } from './themeStyle'
+  import Guide from './guide/Guide.svelte'
   import WindowLayer from './window/WindowLayer.svelte'
   import { deskAway, deskBack } from './agent/transition'
 
@@ -42,6 +43,10 @@
   // svelte-ignore state_referenced_locally
   const desk = new Desk(entry)
   provideDesk(desk)
+
+  /// The guide is the account's own (`DeskPrefs.needsGuide`): shown until it
+  /// has been walked through or skipped.
+  const prefs = $derived(desk.prefs)
 
   $effect.pre(() => {
     desk.locked = locked
@@ -342,6 +347,9 @@
 
   {#if desk.spotlight}
     <Spotlight {onswitch} />
+  {/if}
+  {#if prefs?.needsGuide}
+    <Guide {prefs} />
   {/if}
   <Banner />
   <ContextMenu />

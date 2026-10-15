@@ -2709,6 +2709,8 @@ export interface StackManifest {
   glyph: string
   tone: string
   categories: string[]
+  /// Offered by the desk's first-run guide. Absent on older agents.
+  recommended?: boolean
   notices: StackNotice[]
   title: LocalizedText
   description: LocalizedText

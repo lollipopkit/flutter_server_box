@@ -2366,6 +2366,23 @@ const it = {
 	agentAnswered: 'L’agente ha risposto {status}.',
 	agentSessionExpired: 'Sessione scaduta. Accedi di nuovo.',
 	agentHttpsRequired: 'Gli agenti monitor remoti richiedono HTTPS; HTTP è consentito solo su loopback.',
+	deskGuideAppsTitle: 'Le app vivono in finestre',
+	deskGuideAppsBody: '{apps} le elenca tutte; queste sono quelle del Dock e si aprono su {host}, dove hai eseguito l\'accesso.',
+	deskGuideAppsMore: 'Ogni finestra mantiene il proprio stato, quindi una seconda può guardare un\'altra cartella o un altro servizio. Chiudi, riduci e schermo intero sono in alto a sinistra; a destra nella barra dei menu ci sono orologio, centro notifiche e centro di controllo.',
+	deskGuideWebAppsTitle: 'App web su questa macchina',
+	deskGuideWebAppsBody: 'Alcuni servizi non sono ancora installati. Installarne uno scarica le immagini, scrive i suoi file sotto la cartella dati dell\'agente e apre una finestra davanti; l\'App Store ha tutto il catalogo.',
+	deskGuideNoDocker: 'Questa macchina non ha Docker né Podman, quindi le app web non possono ancora girare qui.',
+	deskGuideNoDockerHint: 'L\'App Store sfoglia comunque il catalogo; le sue app aspettano una macchina che possa eseguirle.',
+	deskGuideWebAppsNote: 'Spuntarne uno lo toglie da questo elenco; non si installa nulla finché la pagina dell\'App Store che si apre non viene confermata lì, con il Docker di questa macchina.',
+	deskGuideSkip: 'Salta',
+	deskGuideAgain: 'Mostra di nuovo la guida',
+	deskGuideAgainHint: 'Si apre una volta sul desktop, come la prima volta.',
+	deskGuideShow: 'Mostra',
+	deskGuideWelcomeTitle: 'Benvenuto nella scrivania',
+	deskGuideBody: 'Questa è la scrivania di {host}, non un\'app: ogni finestra è una cosa che fai con questa macchina, e restano tutte aperte una dietro l\'altra.',
+	deskGuideWelcomeMore: 'Quello che disponi qui — Dock, sfondo, finestre lasciate aperte — è conservato per questo account, quindi ricaricando lo ritrovi.',
+	deskGuideNext: 'Avanti',
+	deskGuideInstall: 'Apri nell\'App Store',
 } satisfies Translation
 
 export default it

@@ -12,6 +12,7 @@ homepage = "https://immich.app"
 source = "https://github.com/immich-app/immich/tree/v3.3.1"
 glyph = "photo_library"
 tone = "sky"
+recommended = true
 categories = ["photos"]
 notices = ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort"]
 

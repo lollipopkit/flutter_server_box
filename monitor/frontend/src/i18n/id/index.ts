@@ -2366,6 +2366,23 @@ const id = {
 	agentAnswered: 'Agent menjawab {status}.',
 	agentSessionExpired: 'Sesi berakhir. Masuk lagi.',
 	agentHttpsRequired: 'Agent monitor jarak jauh memerlukan HTTPS; HTTP hanya diizinkan pada loopback.',
+	deskGuideAppsTitle: 'Aplikasi hidup di jendela',
+	deskGuideAppsBody: '{apps} mencantumkan semuanya; ini milik dock dan terbuka di {host} tempat Anda masuk.',
+	deskGuideAppsMore: 'Setiap jendela menyimpan keadaannya sendiri, jadi jendela kedua bisa membuka folder atau layanan lain. Tutup, perkecil, dan layar penuh ada di kiri atas; ujung kanan bilah menu memuat jam, pusat notifikasi, dan pusat kendali.',
+	deskGuideWebAppsTitle: 'Aplikasi web di mesin ini',
+	deskGuideWebAppsBody: 'Sebagian layanan belum terpasang. Memasangnya mengunduh image, menulis berkasnya di bawah direktori data agen, dan membuka jendela di depannya; katalog lengkapnya ada di App Store.',
+	deskGuideNoDocker: 'Mesin ini tidak punya Docker atau Podman, jadi aplikasi web belum bisa berjalan di sini.',
+	deskGuideNoDockerHint: 'App Store tetap bisa menelusuri katalog; aplikasinya menunggu mesin yang bisa menjalankannya.',
+	deskGuideWebAppsNote: 'Mencentangnya mengeluarkannya dari daftar ini; tidak ada yang dipasang sampai halaman App Store yang terbuka dikonfirmasi di sana, dengan Docker mesin ini.',
+	deskGuideSkip: 'Lewati',
+	deskGuideAgain: 'Tampilkan panduan lagi',
+	deskGuideAgainHint: 'Terbuka sekali di desktop, seperti pertama kali.',
+	deskGuideShow: 'Tampilkan',
+	deskGuideWelcomeTitle: 'Selamat datang di desktop',
+	deskGuideBody: 'Ini desktop {host}, bukan aplikasi: setiap jendela adalah satu hal yang Anda lakukan dengan mesin ini, dan semuanya tetap terbuka di belakang satu sama lain.',
+	deskGuideWelcomeMore: 'Yang Anda atur di sini — dock, wallpaper, jendela yang dibiarkan terbuka — disimpan untuk akun ini, jadi memuat ulang akan menemukannya.',
+	deskGuideNext: 'Berikutnya',
+	deskGuideInstall: 'Buka di App Store',
 } satisfies Translation
 
 export default id

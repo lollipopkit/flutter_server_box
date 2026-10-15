@@ -12,6 +12,7 @@ homepage = "https://jellyfin.org"
 source = "https://github.com/jellyfin/jellyfin/tree/v12.2"
 glyph = "play_circle"
 tone = "amber"
+recommended = true
 categories = ["media"]
 notices = ["pullsImages", "bindsPaths", "mountsHostFiles", "gpuDevices", "publishesPort"]
 

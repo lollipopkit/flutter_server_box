@@ -2366,6 +2366,23 @@ const tr = {
 	agentAnswered: 'Ajan {status} yanıtı verdi.',
 	agentSessionExpired: 'Oturumun süresi doldu. Yeniden oturum açın.',
 	agentHttpsRequired: 'Uzak monitor ajanları HTTPS gerektirir; HTTP yalnızca loopback üzerinde izinlidir.',
+	deskGuideAppsTitle: 'Uygulamalar pencerelerde yaşar',
+	deskGuideAppsBody: '{apps} hepsini listeler; bunlar dock\'takiler ve oturum açtığınız {host} üzerinde açılır.',
+	deskGuideAppsMore: 'Her pencere kendi durumunu korur, böylece ikinci bir pencere başka bir klasöre veya başka bir hizmete bakabilir. Kapat, simge durumuna küçült ve tam ekran sol üstte; menü çubuğunun sağ ucunda saat, bildirim merkezi ve denetim merkezi var.',
+	deskGuideWebAppsTitle: 'Bu makinedeki web uygulamaları',
+	deskGuideWebAppsBody: 'Bazı hizmetler henüz kurulu değil. Birini kurmak imajlarını indirir, dosyalarını ajanın veri dizinine yazar ve önüne bir pencere açar; tüm katalog App Store\'da.',
+	deskGuideNoDocker: 'Bu makinede Docker veya Podman yok, bu yüzden web uygulamaları burada henüz çalışamaz.',
+	deskGuideNoDockerHint: 'App Store yine de kataloğa göz atar; uygulamaları onları çalıştırabilecek bir makineyi bekler.',
+	deskGuideWebAppsNote: 'İşaretlemek onu bu listeden çıkarır; hiçbir şey, açılan App Store sayfası orada bu makinenin Docker\'ıyla onaylanana kadar kurulmaz.',
+	deskGuideSkip: 'Atla',
+	deskGuideAgain: 'Kılavuzu yeniden göster',
+	deskGuideAgainHint: 'Masaüstünde ilk seferki gibi bir kez açılır.',
+	deskGuideShow: 'Göster',
+	deskGuideWelcomeTitle: 'Masaüstüne hoş geldiniz',
+	deskGuideBody: 'Bu {host} masaüstü, bir uygulama değil: her pencere bu makineyle yaptığınız bir iştir ve hepsi birbirinin arkasında açık kalır.',
+	deskGuideWelcomeMore: 'Burada düzenledikleriniz — dock, duvar kağıdı, açık bırakılan pencereler — bu hesap için saklanır, yenileme onları yine bulur.',
+	deskGuideNext: 'İleri',
+	deskGuideInstall: 'App Store\'da aç',
 } satisfies Translation
 
 export default tr

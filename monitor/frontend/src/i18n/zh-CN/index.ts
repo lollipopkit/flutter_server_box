@@ -2365,6 +2365,23 @@ const zh_CN = {
 	agentAnswered: 'agent 返回了 {status}。',
 	agentSessionExpired: '会话已过期，请重新登录。',
 	agentHttpsRequired: '远程 monitor agent 需要 HTTPS；仅本机回环地址允许 HTTP。',
+	deskGuideAppsTitle: '应用都住在窗口里',
+	deskGuideAppsBody: '{apps} 里列出了全部；这里是程序坞里的，在已登录的 {host} 上打开。',
+	deskGuideAppsMore: '每个窗口各自保存状态，所以第二个窗口可以看另一个文件夹或另一个服务。关闭、最小化和全屏在左上角；菜单栏右端是时钟、通知中心和控制中心。',
+	deskGuideWebAppsTitle: '这台机器上的 Web 应用',
+	deskGuideWebAppsBody: '有些服务还没有安装。安装会拉取镜像、把文件写到 agent 的数据目录，并在它前面打开一个窗口；完整目录在应用商店里。',
+	deskGuideNoDocker: '这台机器上没有 Docker 或 Podman，所以 Web 应用暂时还不能在这里运行。',
+	deskGuideNoDockerHint: '应用商店里仍然可以浏览目录；应用在等一台能运行它们的机器。',
+	deskGuideWebAppsNote: '勾选只是把它从这个列表里去掉；只有打开的应用商店页面在那里用这台机器的 Docker 确认之后才会安装。',
+	deskGuideSkip: '跳过',
+	deskGuideAgain: '再看一次引导',
+	deskGuideAgainHint: '它会像第一次一样在桌面上打开一次。',
+	deskGuideShow: '显示',
+	deskGuideWelcomeTitle: '欢迎使用桌面',
+	deskGuideBody: '这是 {host} 的桌面，不是一个应用：每个窗口都是你用这台机器做的一件事，它们依次停留在后面。',
+	deskGuideWelcomeMore: '你在这里摆放的东西——程序坞、壁纸、没关的窗口——都会为这个账号保存，刷新后还在。',
+	deskGuideNext: '下一步',
+	deskGuideInstall: '在应用商店中打开',
 } satisfies Translation
 
 export default zh_CN

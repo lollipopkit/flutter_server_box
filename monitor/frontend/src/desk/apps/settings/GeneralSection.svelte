@@ -4,7 +4,7 @@
   /// desk's keys. Kept here, never sent to the server; each takes effect on
   /// change.
 
-  import { Group, Row, SegmentedControl, Select, Switch } from '../../lk'
+  import { Button, Group, Row, SegmentedControl, Select, Switch } from '../../lk'
   import { systemPrefs, type RefreshSeconds, type StartApp } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
   import { displayPrefs, type SizeUnits, type TimeFormat } from '../../../lib/displayPrefs.svelte'
@@ -92,6 +92,12 @@
         <Switch label={$LL.deskDnd()} checked={desk.notifications.dnd} onchange={(on) => desk.notifications?.setDnd(on)} />
       </Row>
     {/if}
+  </Group>
+
+  <Group title={$LL.deskGuideWelcomeTitle()}>
+    <Row label={$LL.deskGuideAgain()} sub={$LL.deskGuideAgainHint()}>
+      <Button variant="secondary" size="sm" onclick={() => desk.prefs?.showGuideAgain()}>{$LL.deskGuideShow()}</Button>
+    </Row>
   </Group>
 
   <Group title={$LL.settingsShortcuts()}>

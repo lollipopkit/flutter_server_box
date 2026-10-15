@@ -12,6 +12,7 @@ homepage = "https://nextcloud.com"
 source = "https://github.com/nextcloud/server/tree/v35.0.1"
 glyph = "cloud"
 tone = "sky"
+recommended = true
 categories = ["files"]
 notices = ["pullsImages", "bindsPaths", "publishesPort"]
 

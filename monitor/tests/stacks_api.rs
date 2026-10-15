@@ -127,7 +127,10 @@ async fn the_catalog_is_listed() {
     let immich = body["apps"].as_array().unwrap().iter().find(|a| a["manifest"]["id"] == "futo.immich").expect("immich");
     assert_eq!(immich["stack"], serde_json::Value::Null);
     assert_eq!(immich["manifest"]["license"]["spdx"], "AGPL-3.0");
-
+    // What the desk's first-run guide recommends from.
+    assert_eq!(immich["manifest"]["recommended"], true);
+    let ariang = body["apps"].as_array().unwrap().iter().find(|a| a["manifest"]["id"] == "mayswind.ariang").expect("ariang");
+    assert_eq!(ariang["manifest"]["recommended"], false);
 }
 
 #[ntex::test]
