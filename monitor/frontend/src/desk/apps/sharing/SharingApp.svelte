@@ -2,7 +2,7 @@
   /// The machine's file shares (`/shares`): SMB (Samba) shares and NFS
   /// exports. ServerBox's own are changed here; those set up elsewhere are
   /// shown as they are. Every change is root's, asked about with sudo's
-  /// password (`SudoDialog`); installing Samba or the NFS server is a job.
+  /// password (`SudoConfirm`); installing Samba or the NFS server is a job.
 
   import { AppToolbar, SplitView, useWindow } from '../../sys'
   import { errorText } from '../../../lib/errorText'
@@ -14,7 +14,7 @@
   import { DATE_TIME, fmtDate, parseTimestamp } from '../../../lib/format'
   import { servers } from '../../../lib/servers.svelte'
   import type { NfsClient, NfsExport, ShareConnections, SharesView, SmbShare, StackJob } from '../../../types'
-  import SudoDialog from './SudoDialog.svelte'
+  import SudoConfirm from '../../../components/SudoConfirm.svelte'
   import { firewallIntent, mountedFolders, shareNameOk, withExport, withShare, withoutExport, withoutShare } from './model'
   import { untrack } from 'svelte'
 
@@ -256,6 +256,26 @@
     const squash = c.squash === 'all' ? $LL.sharingSquashAll() : c.squash === 'none' ? $LL.sharingSquashNone() : $LL.sharingSquashRoot()
     return [c.read_only ? $LL.sharingReadOnly() : $LL.sharingReadWrite(), squash, ...c.options].join(' · ')
   }
+
+  /// The shares' own refusals; sudo's are [SudoConfirm]'s.
+  function sharingRefusal(answer: { error?: string; path?: unknown; detail?: unknown }): string | undefined {
+    switch (answer.error) {
+      case 'notAFolder':
+        return $LL.sharingNotAFolder({ path: typeof answer.path === 'string' ? answer.path : '' })
+      case 'refused':
+        return $LL.sharingRefused({ detail: typeof answer.detail === 'string' ? answer.detail : '' })
+      case 'duplicate':
+        return $LL.sharingDuplicate()
+      case 'invalidName':
+        return $LL.sharingInvalidName()
+      case 'invalidPath':
+        return $LL.sharingInvalidPath()
+      case 'invalidClient':
+        return $LL.sharingInvalidClient()
+      case 'invalidPassword':
+        return $LL.sharingInvalidPassword()
+    }
+  }
 </script>
 
 {#snippet connected(rows: { label: string; sub: string | undefined }[] | undefined)}
@@ -475,4 +495,11 @@
   </Dialog>
 {/if}
 
-<SudoDialog open={!!pending} title={pending?.title ?? ''} body={pending?.body ?? ''} run={(sudo) => pending!.run(sudo)} onclose={() => (pending = null)} />
+<SudoConfirm
+  open={!!pending}
+  title={pending?.title ?? ''}
+  body={pending?.body ?? ''}
+  run={(sudo) => pending!.run(sudo)}
+  refusal={sharingRefusal}
+  onclose={() => (pending = null)}
+/>
