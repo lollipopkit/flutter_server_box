@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AppToolbar, SplitView, systemPrefs, useWindow, WindowFooter } from '../../sys'
+  import { errorText } from '../../../lib/errorText'
   import {
     Button,
     Card,
@@ -73,7 +74,7 @@
       }
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -117,7 +118,7 @@
       password = ''
       await load()
     } catch (e) {
-      actionError = e instanceof Error ? e.message : String(e)
+      actionError = errorText(e)
     } finally {
       busy = false
     }

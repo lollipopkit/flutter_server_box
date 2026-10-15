@@ -7,6 +7,7 @@
   /// it was opened, so a file someone else wrote to since is answered 409
   /// rather than overwritten — the user is asked instead of losing the change.
   import { untrack } from 'svelte'
+  import { errorText } from '../../../lib/errorText'
   import { Button, Checkbox, Dialog, Spinner, Textarea } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { ApiError, api } from '../../../lib/api'
@@ -99,7 +100,7 @@
         conflict = true
         return
       }
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       saving = false
     }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar, useIntents } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, IconButton, Input, SegmentedControl, Select } from '../../lk'
   import { ApiError, api } from '../../../lib/api'
@@ -102,7 +103,7 @@
       kind = next.kind ?? kind
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) {
         loading = false
@@ -178,7 +179,7 @@
       if (e.message === 'unchanged') return null
       return refusalText(e.message, e.body)
     }
-    return e instanceof Error ? e.message : String(e)
+    return errorText(e)
   }
 
   function ask(

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Badge, Button, Card, Dialog, Icon, IconButton, Input, Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar, PageStack } from '../../sys'
   import DesktopForm, { desktopFormState, type DesktopFormState } from './DesktopForm.svelte'
   import RdpViewer from './RdpViewer.svelte'
@@ -62,7 +63,7 @@
       }
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }

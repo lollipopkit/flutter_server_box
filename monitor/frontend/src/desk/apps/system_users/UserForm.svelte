@@ -1,5 +1,6 @@
 <script module lang="ts">
   import type { SystemUser, UserDraft } from '../../../types'
+  import { errorText } from '../../../lib/errorText'
 
   /// The form's own fields, in the shapes the form edits: a group list is a
   /// text field here and a list on the wire, and the three flags are asked per
@@ -121,7 +122,7 @@
       onsaved(fields.name.trim(), !editing)
     } catch (e) {
       // A refusal made before anything ran, as its own code.
-      error = userRefusalText(e instanceof Error ? e.message : String(e))
+      error = userRefusalText(errorText(e))
     } finally {
       busy = false
     }

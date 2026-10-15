@@ -4,6 +4,7 @@
   /// installed from a file, and the way to the store.
 
   import { Button, Group, Icon, IconButton, Radio, Row, Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
   import { css, themeDark, themeValue, type DeskThemes, type InstalledTheme, type PackageTheme } from '../../themes.svelte'
   import { theme as mode } from '../../../lib/theme.svelte'
@@ -43,7 +44,7 @@
       const first = installed.package.themes[0]
       if (first) themes.select(installed.installationId, first)
     } catch (e) {
-      error = $LL.settingsThemeRefused({ reason: e instanceof Error ? e.message : String(e) })
+      error = $LL.settingsThemeRefused({ reason: errorText(e) })
     } finally {
       busy = false
     }
@@ -55,7 +56,7 @@
     try {
       await themes.remove(pkg.installationId)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = false
     }

@@ -3,6 +3,7 @@
   /// reply field, its output on the right.
 
   import { tick } from 'svelte'
+  import { errorText } from '../../lib/errorText'
   import { LL } from '../../i18n/i18n-svelte'
   import { fmtDate } from '../../lib/format'
   import { AppIcon, Button, Icon, IconButton, Spinner, ToolbarGroup } from '../lk'
@@ -97,7 +98,7 @@
       draft.clear(false)
       picked = null
     } catch (e) {
-      replyError = e instanceof Error ? e.message : String(e)
+      replyError = errorText(e)
     } finally {
       sending = false
     }

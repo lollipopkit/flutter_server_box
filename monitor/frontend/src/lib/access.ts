@@ -6,6 +6,7 @@
 /// function here answers it for one page.
 
 import type { AccessWhy, Capabilities, MachineFeature } from '../types'
+import { errorText } from './errorText'
 import type { TranslationFunctions } from '../i18n/i18n-types'
 import { ApiError } from './api'
 
@@ -79,7 +80,7 @@ export function accessMessage(e: unknown, LL: TranslationFunctions): string {
     case 'forbidden':
       return LL.whyInsecureTransport()
     default:
-      return e instanceof Error ? e.message : String(e)
+      return errorText(e)
   }
 }
 

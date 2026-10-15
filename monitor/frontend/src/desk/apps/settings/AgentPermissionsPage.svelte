@@ -5,6 +5,7 @@
   /// (allow, ask, deny), and the auto mode judge's rules.
 
   import { Button, Group, Row, SegmentedControl, Spinner, Switch, Textarea } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type AutoModeRules, type PermissionMode, type PermissionsView } from '../../../lib/agentApi'
@@ -58,7 +59,7 @@
     try {
       fill(await agentApi.permissions(entry))
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       loading = false
     }

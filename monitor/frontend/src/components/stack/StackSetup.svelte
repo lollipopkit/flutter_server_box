@@ -11,6 +11,8 @@
   /// app deployed again.
 
   import { AppIcon, Badge, Button, Card, Group, Icon, Input, Row, Select, Spinner, Switch } from '../../desk/lk'
+
+  import { errorText } from '../../lib/errorText'
   import type { IconTone } from '../../desk/lk'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { api, ApiError } from '../../lib/api'
@@ -53,7 +55,7 @@
           prepare = p
           values = { ...p.defaults, ...current }
         })
-        .catch((e) => (error = e instanceof Error ? e.message : String(e)))
+        .catch((e) => (error = errorText(e)))
     })
   })
 

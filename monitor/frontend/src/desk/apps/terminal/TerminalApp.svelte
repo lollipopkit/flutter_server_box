@@ -6,6 +6,7 @@
   /// xterm.js is loaded on demand; most visits never open a terminal.
 
   import { onDestroy, onMount, tick, untrack } from 'svelte'
+  import { errorText as failureText } from '../../../lib/errorText'
   import { Button, Card, Dialog, Icon, Input, Spinner, StatusBar } from '../../lk'
   import { AppToolbar, type MenuEntry, useIntents, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -88,7 +89,7 @@
       const renderer = await ensureTerminal()
       if (renderer && fullAccess) await fn(renderer)
     } catch (e) {
-      session.error = e instanceof Error ? e.message : String(e)
+      session.error = failureText(e)
     } finally {
       startBusy = false
     }
@@ -211,7 +212,7 @@
       if (servers.currentId === serverId && request === tmuxRequest) tmux = view
     } catch (e) {
       if (servers.currentId === serverId && request === tmuxRequest) {
-        tmuxLoadError = e instanceof Error ? e.message : String(e)
+        tmuxLoadError = failureText(e)
       }
     } finally {
       if (servers.currentId === serverId && request === tmuxRequest) tmuxLoading = false

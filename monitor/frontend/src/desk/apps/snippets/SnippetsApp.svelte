@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar, useWindow } from '../../sys'
   import { Badge, Button, Card, Dialog, Icon, IconButton } from '../../lk'
   import SnippetForm, {
@@ -65,7 +66,7 @@
       }
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }

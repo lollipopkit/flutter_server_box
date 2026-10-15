@@ -4,6 +4,7 @@
   /// account to act over this link (`access.ok`).
 
   import { Badge, Button, Checkbox, Group, IconButton, Input, Row, Spinner, Textarea } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import PowerModal from '../../../components/PowerModal.svelte'
   import { machineAccess, whyText } from '../../../lib/access'
@@ -11,7 +12,7 @@
   import Disclosure from '../../../components/Disclosure.svelte'
   import Markdown from '../../../components/Markdown.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { api, ApiError } from '../../../lib/api'
+  import { api } from '../../../lib/api'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { serverNames } from '../../../lib/serverNames.svelte'
   import { displayName, servers } from '../../../lib/servers.svelte'
@@ -118,7 +119,7 @@
     try {
       applyLoaded(await api.getSettings())
     } catch (e) {
-      loadError = e instanceof ApiError ? e.message : String(e)
+      loadError = errorText(e)
     } finally {
       loading = false
     }
@@ -135,7 +136,7 @@
       customCmds = view.commands.map((c) => ({ ...c }))
       customCmdsEditable = view.editable
     } catch (e) {
-      customCmdsError = e instanceof ApiError ? e.message : String(e)
+      customCmdsError = errorText(e)
     }
   }
 
@@ -201,7 +202,7 @@
       customCmds = view.commands.map((c) => ({ ...c }))
       customCmdsOk = true
     } catch (e) {
-      customCmdsError = e instanceof ApiError ? e.message : String(e)
+      customCmdsError = errorText(e)
     } finally {
       customCmdsSaving = false
     }
@@ -258,7 +259,7 @@
       saveOk = true
       await load()
     } catch (e) {
-      saveError = e instanceof ApiError ? e.message : String(e)
+      saveError = errorText(e)
     } finally {
       saving = false
     }

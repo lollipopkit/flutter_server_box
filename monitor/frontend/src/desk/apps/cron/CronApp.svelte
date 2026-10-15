@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
   import { api } from '../../../lib/api'
@@ -32,7 +33,7 @@
       view = next
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -51,7 +52,7 @@
     try {
       view = await api.editCron(edit)
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e)
+      const message = errorText(e)
       // The listing moved under this page. Reading it again is the remedy, and
       // doing it here is what makes the message true. Set after the reload,
       // which clears the banner when it starts.
@@ -99,7 +100,7 @@
       })
       editing = undefined
     } catch (e) {
-      editError = validationText(e instanceof Error ? e.message : String(e))
+      editError = validationText(errorText(e))
     } finally {
       busy = false
     }

@@ -5,6 +5,8 @@
   /// once it is set up.
 
   import { Button, Card, Icon, IconButton, Spinner } from '../../desk/lk'
+
+  import { errorText } from '../../lib/errorText'
   import { AppToolbar, useLifecycle, useMenus, useWindow } from '../../desk/sys'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import { api } from '../../lib/api'
@@ -55,7 +57,7 @@
         await enter()
       }
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
@@ -80,7 +82,7 @@
     try {
       window.open((await entryUrl()).url, '_blank', 'noopener')
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
@@ -90,7 +92,7 @@
       job = await api.stackAction(stackId, action)
       src = ''
     } catch (e) {
-      error = app ? stackRefusal(e, app.manifest, stack?.settings, $LL, $locale).text : e instanceof Error ? e.message : String(e)
+      error = app ? stackRefusal(e, app.manifest, stack?.settings, $LL, $locale).text : errorText(e)
     }
   }
 

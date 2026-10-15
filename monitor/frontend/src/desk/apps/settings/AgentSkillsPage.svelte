@@ -4,6 +4,7 @@
   /// takes it, each switched on or off, or removed.
 
   import { Button, Group, IconButton, Input, Row, Spinner, Switch } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type AgentSkill } from '../../../lib/agentApi'
@@ -30,7 +31,7 @@
       if (code === 'invalidSource') return $LL.settingsAgentSkillsBadSource()
       return (e.body?.reason as string | undefined) ?? e.message
     }
-    return e instanceof Error ? e.message : String(e)
+    return errorText(e)
   }
 
   async function run(f: () => Promise<{ skills: AgentSkill[] }>): Promise<boolean> {

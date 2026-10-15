@@ -5,6 +5,7 @@
 /// What a guest offers and what its state is are the agent's
 /// (`sbm_virt::model`); nothing here decides either.
 import { get } from 'svelte/store'
+import { errorText } from './errorText'
 import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from './api'
 import type {
@@ -132,7 +133,7 @@ export function virtErrorText(e: VirtError): string {
 
 /// The agent's own refusal of a request (not a host's failure).
 export function virtRequestText(e: unknown): string {
-  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : String(e)
+  if (!(e instanceof ApiError)) return errorText(e)
   const ll = get(LL)
   switch (e.message) {
     case 'invalidAddr':

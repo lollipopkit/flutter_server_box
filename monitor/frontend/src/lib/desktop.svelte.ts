@@ -7,6 +7,8 @@
 /// writes its version string the moment it is attached.
 
 import { agentWsUrl, wsTicketProtocol } from './agentUrl'
+
+import { errorText } from './errorText'
 import { api } from './api'
 import { servers } from './servers.svelte'
 import type { Desktop } from '../types'
@@ -167,7 +169,7 @@ export class DesktopSession {
     try {
       ticket = (await api.issueWsTicket('stream')).ticket
     } catch (e) {
-      if (generation === this.generation) this.fail(e instanceof Error ? e.message : String(e))
+      if (generation === this.generation) this.fail(errorText(e))
       return answered
     }
     if (generation !== this.generation) return answered

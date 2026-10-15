@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { errorText } from '../../../lib/errorText'
   import {
     Button,
     Card,
@@ -133,7 +134,7 @@
       win.setTitle(path)
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -246,7 +247,7 @@
       if (intentPath && !stale(serverId)) openAsked()
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
       loading = false
     }
   }
@@ -265,7 +266,7 @@
       await fn()
       if (cwd) await load(cwd, servers.currentId, 'stay')
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = ''
     }
@@ -336,7 +337,7 @@
       editing = { entry, path, text, serverId }
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = ''
     }

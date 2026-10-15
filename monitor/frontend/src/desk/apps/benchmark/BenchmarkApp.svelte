@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AppIcon, Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input, Select, Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar } from '../../sys'
   import { api } from '../../../lib/api'
   import { benchRefusalText, benchRunErrorText } from '../../../lib/benchRefusal'
@@ -84,7 +85,7 @@
       now = Date.now()
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -158,7 +159,7 @@
       notice = $LL.benchmarkStarted({ id: started.run.id })
       await load()
     } catch (e) {
-      error = benchRefusalText(e instanceof Error ? e.message : String(e))
+      error = benchRefusalText(errorText(e))
     } finally {
       busy = false
     }
@@ -173,7 +174,7 @@
       await api.cancelBenchmark()
       await load()
     } catch (e) {
-      error = benchRefusalText(e instanceof Error ? e.message : String(e))
+      error = benchRefusalText(errorText(e))
     } finally {
       busy = false
     }
@@ -188,7 +189,7 @@
       await api.removeBenchmark(run.id)
       await load()
     } catch (e) {
-      error = benchRefusalText(e instanceof Error ? e.message : String(e))
+      error = benchRefusalText(errorText(e))
     } finally {
       busy = false
     }
@@ -207,7 +208,7 @@
       detail = next
     } catch (e) {
       if (stale(serverId) || seq !== detailSeq) return
-      error = benchRefusalText(e instanceof Error ? e.message : String(e))
+      error = benchRefusalText(errorText(e))
     } finally {
       if (seq === detailSeq) detailLoading = false
     }

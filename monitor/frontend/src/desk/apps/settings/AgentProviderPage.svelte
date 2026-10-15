@@ -6,6 +6,7 @@
   /// picks what to add.
 
   import { Button, Group, IconButton, Input, Row, Select, Spinner, Switch, Textarea } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type AgentSettings, type Provider, type ProviderInfo, type SettingsWrite } from '../../../lib/agentApi'
@@ -67,7 +68,7 @@
       if (!p) catalog = await agentApi.models(entry)
       else void agentApi.models(entry).then((c) => (catalog = c)).catch(() => {})
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       loading = false
     }
@@ -132,7 +133,7 @@
       settings = await agentApi.saveSettings(entry, change(writeOf(settings)))
       then()
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       saving = false
     }

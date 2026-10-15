@@ -6,6 +6,7 @@
   /// answer to the last read or save.
 
   import { Badge, Button, Group, IconButton, Input, Row, Spinner, Switch } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type McpServerWrite, type McpView } from '../../../lib/agentApi'
@@ -32,7 +33,7 @@
 
   function reason(e: unknown): string {
     if (e instanceof ApiError) return (e.body?.reason as string | undefined) ?? e.message
-    return e instanceof Error ? e.message : String(e)
+    return errorText(e)
   }
 
   async function load() {

@@ -5,6 +5,7 @@
   /// (`readHealth`), which needs root as well, handed back when made.
 
   import { Button, Dialog, Input } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
   import type { HealthReading, StackJob, StorageAction } from '../../../types'
@@ -78,7 +79,7 @@
           error = $LL.storageNotRemovable()
           break
         default:
-          error = e instanceof Error ? e.message : String(e)
+          error = errorText(e)
       }
       busy = false
     }

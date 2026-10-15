@@ -4,6 +4,7 @@
   /// password, so it says what sudo must allow when the agent is not root.
 
   import { Button, Card, Group, Input, Row, Select } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api } from '../../../lib/api'
   import { DATE_TIME, fmtDate, parseTimestamp } from '../../../lib/format'
@@ -45,7 +46,7 @@
     try {
       onchange((await api.setStorageMaintenance(kind, every, at, day)).maintenance)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = null
     }
@@ -64,7 +65,7 @@
     try {
       onchange((await api.runStorageMaintenance(kind)).maintenance)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = null
     }

@@ -4,6 +4,7 @@
   /// and installs it for this account).
 
   import { Button, Card, Icon, IconButton, Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL, locale } from '../../../i18n/i18n-svelte'
   import { useDeskPrefs } from '../../deskState.svelte'
@@ -32,7 +33,7 @@
     try {
       view = await themes.store(refresh)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       loading = false
     }
@@ -69,7 +70,7 @@
       const first = installed.package.themes[0]
       if (first) themes.select(installed.installationId, first)
     } catch (e) {
-      failed = { id: item.listing.id, reason: e instanceof Error ? e.message : String(e) }
+      failed = { id: item.listing.id, reason: errorText(e) }
     } finally {
       installing = null
     }

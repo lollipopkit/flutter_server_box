@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Badge, Button, Group, IconButton, Input, Row, Select, Spinner, Textarea } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { api, ApiError } from '../../../lib/api'
+  import { api } from '../../../lib/api'
   import { servers } from '../../../lib/servers.svelte'
   import type { PushEntry, PushView } from '../../../types'
   import Disclosure from '../../../components/Disclosure.svelte'
@@ -300,7 +301,7 @@
     try {
       applyLoaded(await api.getPush())
     } catch (e) {
-      loadError = e instanceof ApiError ? e.message : String(e)
+      loadError = errorText(e)
     } finally {
       loading = false
     }
@@ -378,7 +379,7 @@
       applyLoaded(await api.updatePush(payload))
       saveOk = true
     } catch (e) {
-      saveError = e instanceof ApiError || e instanceof Error ? e.message : String(e)
+      saveError = errorText(e)
     } finally {
       saving = false
     }
@@ -396,7 +397,7 @@
     } catch (e) {
       draft.testResult = {
         ok: false,
-        error: e instanceof ApiError || e instanceof Error ? e.message : String(e),
+        error: errorText(e),
       }
     } finally {
       draft.testing = false

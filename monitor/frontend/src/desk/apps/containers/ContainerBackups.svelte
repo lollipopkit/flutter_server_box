@@ -5,6 +5,7 @@
   /// remove; and the backup or restore running, as it goes.
 
   import { Badge, Button, Card, Dialog, Group, Icon, IconButton, Input, Row, Select, Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import StackProgress from '../../../components/stack/StackProgress.svelte'
   import ReauthDialog from '../../../components/ReauthDialog.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -49,7 +50,7 @@
       schedules = r.schedules
       if (r.job?.state === 'running') job = r.job
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
@@ -124,7 +125,7 @@
       await api.removeContainerBackupSchedule(s.id)
       await load()
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
@@ -148,7 +149,7 @@
     } catch (e) {
       const code = e instanceof ApiError ? (e.body as { error?: string } | undefined)?.error : undefined
       if (code === 'reauth' || code === 'throttled') throw e
-      error = code === 'busy' ? $LL.containerBackupBusy() : e instanceof Error ? e.message : String(e)
+      error = code === 'busy' ? $LL.containerBackupBusy() : errorText(e)
       asking = null
     }
   }

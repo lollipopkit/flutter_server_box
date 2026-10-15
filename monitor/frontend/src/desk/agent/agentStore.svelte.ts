@@ -4,6 +4,7 @@
 /// account says.
 
 import type { ServerEntry } from '../../lib/servers.svelte'
+import { errorText } from '../../lib/errorText'
 import { Draft } from './attachments.svelte'
 import { agentApi, type Answer, type Entry, type Flow, type FlowDetail, type FlowStatus, type LiveOutput, type OutLine, type Pending, type PermissionMode, type Choices, type TaskChoice } from '../../lib/agentApi'
 
@@ -110,7 +111,7 @@ export class AgentStore {
       this.error = null
       if (list.configured) void this.#loadChoices()
     } catch (e) {
-      this.error = e instanceof Error ? e.message : String(e)
+      this.error = errorText(e)
     } finally {
       this.loaded = true
     }
@@ -194,7 +195,7 @@ export class AgentStore {
       this.detail = d
       this.#upsert(d.flow)
     } catch (e) {
-      if (seq === this.#detailSeq) this.error = e instanceof Error ? e.message : String(e)
+      if (seq === this.#detailSeq) this.error = errorText(e)
     }
   }
 

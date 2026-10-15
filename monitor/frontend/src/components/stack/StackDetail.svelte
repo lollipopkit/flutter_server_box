@@ -6,6 +6,8 @@
   /// app, and Settings → Apps' for an installed one.
 
   import { AppIcon, Badge, Button, Card, Group, Icon, Row, Spinner } from '../../desk/lk'
+
+  import { errorText } from '../../lib/errorText'
   import type { IconTone } from '../../desk/lk'
   import { useWindow } from '../../desk/sys'
   import { LL, locale } from '../../i18n/i18n-svelte'
@@ -59,7 +61,7 @@
       app = found
       if (found?.job?.state === 'running') job = found.job
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
@@ -81,7 +83,7 @@
     try {
       job = await api.stackAction(stackId, 'update')
     } catch (e) {
-      error = app ? stackRefusal(e, app.manifest, stack?.settings, $LL, $locale).text : e instanceof Error ? e.message : String(e)
+      error = app ? stackRefusal(e, app.manifest, stack?.settings, $LL, $locale).text : errorText(e)
     }
   }
 

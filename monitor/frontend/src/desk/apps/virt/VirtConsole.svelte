@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, Card, Input, Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import VncViewer from '../../../components/VncViewer.svelte'
   import { api } from '../../../lib/api'
   import { RelayChannel, parseControl } from '../../../lib/desktop.svelte'
@@ -92,7 +93,7 @@
     } catch (e) {
       if (gone()) return
       phase = 'failed'
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 

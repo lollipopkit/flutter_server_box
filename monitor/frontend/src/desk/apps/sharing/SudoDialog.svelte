@@ -4,6 +4,7 @@
   /// here and the dialog stays.
 
   import { Button, Dialog, Input } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
   import { ApiError } from '../../../lib/api'
 
@@ -52,7 +53,7 @@
       case 'busy':
         return $LL.storageBusy()
       default:
-        return b?.detail || (e instanceof Error ? e.message : String(e))
+        return b?.detail || (errorText(e))
     }
   }
 

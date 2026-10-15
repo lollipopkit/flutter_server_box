@@ -5,8 +5,8 @@
   /// leaving the text, the files and the key hints.
 
   import { LL } from '../../i18n/i18n-svelte'
+  import { errorText } from '../../lib/errorText'
   import type { Flow, PermissionMode } from '../../lib/agentApi'
-  import { ApiError } from '../../lib/api'
   import { Button, Icon, IconButton } from '../lk'
   import type { AgentStore } from './agentStore.svelte'
   import AttachmentChips from './AttachmentChips.svelte'
@@ -134,7 +134,7 @@
       ta?.blur()
       onstarted(f)
     } catch (e) {
-      error = e instanceof ApiError ? e.message : String(e)
+      error = errorText(e)
     } finally {
       sending = false
     }

@@ -2,6 +2,8 @@
 /// blame named (a port in use with its number), else what stopped it.
 
 import type { TranslationFunctions } from '../../i18n/i18n-types'
+
+import { errorText } from '../../lib/errorText'
 import { ApiError } from '../../lib/api'
 import type { StackManifest, StackValue } from '../../types'
 import { pick } from './text'
@@ -45,7 +47,7 @@ export function stackRefusal(
       case 'sharedUnavailable':
         return ll.stackSharedUnavailable()
       default:
-        return e instanceof Error ? e.message : String(e)
+        return errorText(e)
     }
   })()
   return { text, field, code }

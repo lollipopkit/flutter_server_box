@@ -5,6 +5,7 @@
   /// other desks see it when they next start.
 
   import { AppIcon, Badge, Button, Group, Row } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
   import { permissionText as describePermission } from './permissions'
   import { api, ApiError } from '../../../lib/api'
@@ -29,7 +30,7 @@
     try {
       apps = (await api.listApps()).apps
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
@@ -50,7 +51,7 @@
       const reason = [body?.error ?? e.message, body?.path].filter(Boolean).join(' ')
       return $LL.settingsAppRefused({ reason })
     }
-    return e instanceof Error ? e.message : String(e)
+    return errorText(e)
   }
 
   async function install(event: Event) {

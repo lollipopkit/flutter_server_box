@@ -3,6 +3,7 @@
 /// (`POST /agent/files`), so sending only names them.
 
 import { get } from 'svelte/store'
+import { errorText } from '../../lib/errorText'
 import { LL } from '../../i18n/i18n-svelte'
 import { agentApi, type ModelRef, type PermissionMode, type TaskChoice, type Upload } from '../../lib/agentApi'
 import { fmtBytes } from '../../lib/format'
@@ -75,7 +76,7 @@ export class Attachments {
         if (abort.signal.aborted) return null
         const a = this.items.find((x) => x.key === key)
         if (a) a.failed = true
-        this.error = t.deskAgentUploadFailed({ name: display.name, reason: e instanceof Error ? e.message : String(e) })
+        this.error = t.deskAgentUploadFailed({ name: display.name, reason: errorText(e) })
         return null
       })
     this.items.push({ ...display, key, upload, progress: 0, id: null, failed: false, abort })

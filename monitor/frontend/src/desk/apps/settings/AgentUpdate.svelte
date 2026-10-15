@@ -9,6 +9,7 @@
   /// restart, saying so while the agent does not answer.
 
   import { onDestroy } from 'svelte'
+  import { errorText } from '../../../lib/errorText'
   import { Badge, Button, Group, Input, Row } from '../../lk'
   import { LL } from '../../../i18n/i18n-svelte'
   import { api, ApiError } from '../../../lib/api'
@@ -53,7 +54,7 @@
       update = read
       if (read.run?.state === 'running') follow()
     } catch (e) {
-      if (!stale(serverId)) error = e instanceof ApiError ? e.message : String(e)
+      if (!stale(serverId)) error = errorText(e)
     } finally {
       checking = false
     }

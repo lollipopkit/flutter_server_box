@@ -4,6 +4,7 @@
   /// them to read, change or delete; an empty [file] is a new one.
 
   import { Button, Group, Input, Row, Spinner, Textarea } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type MemoryFileInfo } from '../../../lib/agentApi'
@@ -34,7 +35,7 @@
 
   function reason(e: unknown): string {
     if (e instanceof ApiError) return (e.body?.reason as string | undefined) ?? e.message
-    return e instanceof Error ? e.message : String(e)
+    return errorText(e)
   }
 
   async function load() {

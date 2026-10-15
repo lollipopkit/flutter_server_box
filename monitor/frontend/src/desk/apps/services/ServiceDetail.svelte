@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { errorText } from '../../../lib/errorText'
   import { Card, SegmentedControl, viewIn } from '../../lk'
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -38,7 +39,7 @@
       view = next
     } catch (e) {
       if (id !== requestId) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (id === requestId) loading = false
     }

@@ -5,6 +5,7 @@
   /// password (`SudoDialog`); installing Samba or the NFS server is a job.
 
   import { AppToolbar, SplitView, useWindow } from '../../sys'
+  import { errorText } from '../../../lib/errorText'
   import { Badge, Button, Card, Checkbox, Dialog, Group, Icon, IconButton, Input, Row, Select, SidebarItem, SidebarSection, Spinner } from '../../lk'
   import StackProgress from '../../../components/stack/StackProgress.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -57,7 +58,7 @@
         void readConnections(serverId)
       }
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 

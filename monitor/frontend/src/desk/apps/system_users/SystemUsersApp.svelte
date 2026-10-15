@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar } from '../../sys'
   import { Badge, Button, Card, Checkbox, Dialog, Icon, IconButton, Input } from '../../lk'
   import UserForm, { userFormState, type UserFormState } from './UserForm.svelte'
@@ -60,7 +61,7 @@
       }
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -105,7 +106,7 @@
       sudoPassword = ''
       await load()
     } catch (e) {
-      actionError = userRefusalText(e instanceof Error ? e.message : String(e))
+      actionError = userRefusalText(errorText(e))
     } finally {
       busy = false
     }

@@ -4,6 +4,7 @@
   /// confirm, a password, a choice, a command that cannot be undone.
 
   import { LL } from '../../i18n/i18n-svelte'
+  import { errorText } from '../../lib/errorText'
   import Markdown from '../../components/Markdown.svelte'
   import { Button, Checkbox, Icon, Input, Textarea } from '../lk'
   import type { Answer, FlowStatus, Pending } from '../../lib/agentApi'
@@ -57,7 +58,7 @@
     try {
       await onanswer({ id: waiting.id, ...answer })
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = false
     }
@@ -73,7 +74,7 @@
       change = ''
       editing = false
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       busy = false
     }

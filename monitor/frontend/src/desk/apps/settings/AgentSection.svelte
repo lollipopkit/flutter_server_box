@@ -6,6 +6,7 @@
   /// is and what it speaks.
 
   import { Group, Row, SegmentedControl, Select, Spinner, Switch } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import { agentApi, type AgentSettings, type ProviderInfo, type SettingsWrite } from '../../../lib/agentApi'
@@ -47,7 +48,7 @@
     try {
       settings = await agentApi.settings(entry)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       loading = false
     }
@@ -61,7 +62,7 @@
     try {
       catalog = await agentApi.models(entry)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       listing = false
     }
@@ -84,7 +85,7 @@
       saved = true
       setTimeout(() => (saved = false), 1500)
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       saving = false
     }

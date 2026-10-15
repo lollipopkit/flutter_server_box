@@ -1,5 +1,6 @@
 <script lang="ts">
   import { AppToolbar, systemPrefs, useLifecycle, useMenus, useWindow, WindowFooter } from '../../sys'
+  import { errorText } from '../../../lib/errorText'
   import {
     Button,
     Card,
@@ -97,7 +98,7 @@
       ascending = next.ascending ?? undefined
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -187,7 +188,7 @@
           stopError = result.stderr.trim() || $LL.processKillFailed()
       }
     } catch (e) {
-      stopError = e instanceof Error ? e.message : String(e)
+      stopError = errorText(e)
     } finally {
       busy = false
     }

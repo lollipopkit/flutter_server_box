@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Spinner } from '../../lk'
+  import { errorText } from '../../../lib/errorText'
   import { onMount } from 'svelte'
   import type { UserInteraction } from '@devolutions/iron-remote-desktop'
   import { LL } from '../../../i18n/i18n-svelte'
@@ -59,7 +60,7 @@
   }
 
   function messageOf(e: unknown): string {
-    return e instanceof Error ? e.message : String(e)
+    return errorText(e)
   }
 
   async function open(ui: UserInteraction) {

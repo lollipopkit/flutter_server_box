@@ -5,6 +5,8 @@
   /// as a plan — read only; a change runs once it is carried into Agent mode.
 
   import { LL } from '../../i18n/i18n-svelte'
+
+  import { errorText } from '../../lib/errorText'
   import Markdown from '../../components/Markdown.svelte'
   import { agentApi, type SearchEvent, type SearchFollowup, type SearchItem, type SearchKind, type SearchPlanStep } from '../../lib/agentApi'
   import { ApiError } from '../../lib/api'
@@ -135,7 +137,7 @@
         if (abort !== controller || controller.signal.aborted || !agent) return
         // Not set up here: the search stays the desk's own.
         if (e instanceof ApiError && e.status === 409) agent = null
-        else agent.error = e instanceof Error ? e.message : String(e)
+        else agent.error = errorText(e)
       })
   }
 
@@ -220,7 +222,7 @@
       desk.toggleAgent(true)
       void desk.agent?.open(flow.id)
     } catch (e) {
-      if (agent) agent.error = e instanceof Error ? e.message : String(e)
+      if (agent) agent.error = errorText(e)
     } finally {
       busy = false
     }

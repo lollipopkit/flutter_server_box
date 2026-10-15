@@ -1,5 +1,6 @@
 <script lang="ts">
   import Spinner from '../../lk/Spinner.svelte'
+  import { errorText } from '../../../lib/errorText'
   import { AppToolbar, type MenuEntry, SplitView, systemPrefs, useMenus, WindowFooter } from '../../sys'
   import {
     Button,
@@ -152,7 +153,7 @@
       view = next
     } catch (e) {
       if (stale(serverId)) return
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     } finally {
       if (!stale(serverId)) loading = false
     }
@@ -248,7 +249,7 @@
       logs = answer.logs ?? ''
       if (!logs && answer.reason) logsError = answer.reason
     } catch (e) {
-      logsError = e instanceof Error ? e.message : String(e)
+      logsError = errorText(e)
     }
   }
 

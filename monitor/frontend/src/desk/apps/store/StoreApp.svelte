@@ -6,6 +6,8 @@
   /// it).
 
   import { AppIcon, Badge, Card, Icon, IconButton, SearchField, SegmentedControl, Spinner } from '../../lk'
+
+  import { errorText } from '../../../lib/errorText'
   import type { IconTone } from '../../lk'
   import { AppToolbar, PageStack, useWindow } from '../../sys'
   import StackDetail from '../../../components/stack/StackDetail.svelte'
@@ -46,7 +48,7 @@
       const r = fresh ? await api.refreshStacks() : await api.listStacks()
       if (serverId === servers.currentId) apps = r.apps
     } catch (e) {
-      error = e instanceof Error ? e.message : String(e)
+      error = errorText(e)
     }
   }
 
