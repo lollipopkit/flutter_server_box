@@ -5,6 +5,7 @@
   import { api } from '../../../lib/api'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import type { CronEdit, CronJobView, CronView } from '../../../types'
 
   let view = $state<CronView | null>(null)
@@ -20,9 +21,7 @@
 
   /** A reply that arrives after the desk has switched servers belongs to
    * neither. */
-  function stale(serverId: string | null) {
-    return serverId !== servers.currentId
-  }
+  const { stale } = useScope()
 
   async function load(serverId = servers.currentId) {
     loading = true

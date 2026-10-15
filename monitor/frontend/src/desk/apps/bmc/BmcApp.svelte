@@ -5,6 +5,7 @@
   import { api } from '../../../lib/api'
   import { bmcErrorText, intentText, keepPasswords, powerStateText } from '../../../lib/bmc'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import { onDestroy, untrack } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { BmcIntent, BmcList, BmcStatus, BmcTarget, BmcTargetInput } from '../../../types'
@@ -31,9 +32,8 @@
   let confirming = $state<BmcIntent | null>(null)
   let timer: ReturnType<typeof setInterval> | null = null
 
-  function stale(serverId: string | null) {
-    return serverId !== servers.currentId
-  }
+  const scope = useScope()
+  const { stale } = scope
 
   async function load(serverId = servers.currentId) {
     loading = true
@@ -71,7 +71,9 @@
     selected = id
     status = null
     statusError = ''
-    if (id === null) return
+    // A save that returns after the window closed would start a poll
+    // nothing stops.
+    if (id === null || !scope.alive) return
     void read(id)
     timer = setInterval(() => void read(id), POLL_MS)
   }

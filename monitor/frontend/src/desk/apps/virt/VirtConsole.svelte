@@ -40,10 +40,14 @@
     if (term) term.options.theme = terminalTheme()
   })
   let resizeObserver: ResizeObserver | null = null
+  /// Rises on every close, so an open still waiting on the agent when the
+  /// view closed (or another open began) drops what it gets.
+  let attempt = 0
 
   onDestroy(() => close())
 
   function close() {
+    attempt++
     resizeObserver?.disconnect()
     resizeObserver = null
     term?.dispose()
@@ -55,11 +59,14 @@
 
   async function open() {
     close()
+    const mine = attempt
+    const gone = () => mine !== attempt
     phase = 'opening'
     error = ''
     command = null
     try {
       const answer = await api.virtConsole(guest.id, kind, sudoPassword ?? undefined)
+      if (gone()) return
       if (answer.error) throw new Error(virtErrorText(answer.error))
       if (answer.command) {
         command = answer.command
@@ -70,26 +77,33 @@
       vncPassword = answer.vnc_password ?? typedPassword
       passwordKnown = answer.password_known
       const opened = await openConsoleSocket(answer.ticket)
+      if (gone()) {
+        opened.close()
+        return
+      }
       socket = opened
       if (kind === 'vnc') {
         channel = new RelayChannel(opened)
         phase = 'open'
       } else {
         phase = 'open'
-        await attachTerminal(opened)
+        await attachTerminal(opened, gone)
       }
     } catch (e) {
+      if (gone()) return
       phase = 'failed'
       error = e instanceof Error ? e.message : String(e)
     }
   }
 
-  async function attachTerminal(ws: WebSocket) {
+  async function attachTerminal(ws: WebSocket, gone: () => boolean) {
     const [{ Terminal }, { FitAddon }] = await Promise.all([
       import('@xterm/xterm'),
       import('@xterm/addon-fit'),
       import('@xterm/xterm/css/xterm.css'),
     ])
+    // Closed while the terminal loaded: `close` ended the socket already.
+    if (gone()) return
     term = new Terminal({
       cursorBlink: true,
       fontSize: 13,
@@ -126,6 +140,7 @@
       resizeObserver.observe(host)
     }
     await new Promise((r) => requestAnimationFrame(r))
+    if (gone()) return
     fit.fit()
     ws.send(resizeMessage(term.cols, term.rows))
     term.focus()

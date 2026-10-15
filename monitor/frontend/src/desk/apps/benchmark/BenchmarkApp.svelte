@@ -6,6 +6,7 @@
   import { fmtBytes, fmtTime } from '../../../lib/format'
   import { LL } from '../../../i18n/i18n-svelte'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import { untrack } from 'svelte'
   import type { BenchDetail, BenchEstimate, BenchOptions, BenchRun, BenchView } from '../../../types'
 
@@ -71,9 +72,8 @@
 
   /// The page belongs to one server, so a reply that arrives after the user
   /// has switched servers belongs to neither.
-  function stale(serverId: string | null) {
-    return serverId !== servers.currentId
-  }
+  const scope = useScope()
+  const { stale } = scope
 
   async function load(serverId: string | null = servers.currentId) {
     loading = true
@@ -88,7 +88,7 @@
     } finally {
       if (!stale(serverId)) loading = false
     }
-    scheduleLive(serverId)
+    if (!stale(serverId)) scheduleLive(serverId)
   }
 
   /// Scheduled after the reply rather than by a timer started before it, so a

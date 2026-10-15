@@ -6,6 +6,7 @@
   import { fmtBytes, fmtTime } from '../../../lib/format'
   import { saveBlob } from '../../../lib/saveBlob'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import { untrack } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { BackupBlob, BackupView } from '../../../types'
@@ -24,9 +25,7 @@
   let removing = $state<BackupBlob | null>(null)
   let uploadInput = $state<HTMLInputElement | undefined>(undefined)
 
-  function stale(serverId: string | null) {
-    return serverId !== servers.currentId
-  }
+  const { stale } = useScope()
 
   async function load(serverId = servers.currentId) {
     loading = true

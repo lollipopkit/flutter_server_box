@@ -30,6 +30,7 @@
   import { fmtBytes, fmtDate } from '../../../lib/format'
   import { joinPath, modeText, parentOf, parseMode, sortEntries } from '../../../lib/fsPath'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import type { FsEntry } from '../../../types'
 
   /// Browsing and changing alike need the account to act over this link —
@@ -106,9 +107,7 @@
   /// nothing on another machine: publishing what arrives late would put one
   /// agent's tree under another's name, with a `cwd` its roots may not even
   /// contain. Every write to the page's state is behind this check.
-  function stale(serverId: string): boolean {
-    return servers.currentId !== serverId
-  }
+  const { stale } = useScope()
 
   /// [step] is what the history does once the listing has arrived: `push` a
   /// new step, `stay` for a refresh (a write landed), or move to an index

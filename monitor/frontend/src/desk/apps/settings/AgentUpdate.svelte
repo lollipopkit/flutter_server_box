@@ -15,6 +15,7 @@
   import { canAct } from '../../../lib/access'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import type { AgentUpdate, AgentUpdateRun } from '../../../types'
 
   /// How often the update is asked after while it runs.
@@ -38,6 +39,7 @@
   let gaveUp = $state(false)
   let timer: ReturnType<typeof setInterval> | undefined
   let since = 0
+  const { stale } = useScope()
 
   const run = $derived<AgentUpdateRun | undefined>(update?.run)
 
@@ -47,11 +49,11 @@
     error = null
     try {
       const read = await api.getUpdate(check)
-      if (serverId !== servers.currentId) return
+      if (stale(serverId)) return
       update = read
       if (read.run?.state === 'running') follow()
     } catch (e) {
-      if (serverId === servers.currentId) error = e instanceof ApiError ? e.message : String(e)
+      if (!stale(serverId)) error = e instanceof ApiError ? e.message : String(e)
     } finally {
       checking = false
     }
@@ -85,7 +87,7 @@
   async function poll(serverId: string) {
     try {
       const read = await api.getUpdate()
-      if (serverId !== servers.currentId) return stop()
+      if (stale(serverId)) return stop()
       away = false
       update = read
       if (read.run && read.run.state !== 'running') {
@@ -94,6 +96,7 @@
         void capabilitiesStore.refresh(serverId)
       }
     } catch {
+      if (stale(serverId)) return stop()
       away = true
       if (Date.now() - since > GIVE_UP_MS) {
         gaveUp = true
@@ -106,10 +109,11 @@
     starting = true
     error = null
     try {
+      const serverId = servers.currentId
       await api.startUpdate(update?.needs_password ? password : undefined)
       password = ''
       await load(false)
-      follow()
+      if (!stale(serverId)) follow()
     } catch (e) {
       error =
         e instanceof ApiError && e.code === 'sudo_password'

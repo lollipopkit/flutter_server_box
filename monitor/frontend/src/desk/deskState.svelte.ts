@@ -378,6 +378,8 @@ export class Desk {
       // A stream that stayed up a while starts the wait over.
       if (Date.now() - opened > RETRY_MAX_MS) wait = RETRY_MIN_MS
       await new Promise((r) => setTimeout(r, wait))
+      // Stopped while waiting: the store is closed and the server may be another.
+      if (this.#abort.signal.aborted) return
       wait = Math.min(wait * 2, RETRY_MAX_MS)
       // Whatever was said while away is fetched rather than replayed.
       void this.notifications?.load()

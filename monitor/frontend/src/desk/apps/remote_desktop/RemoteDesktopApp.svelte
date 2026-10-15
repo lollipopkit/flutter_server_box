@@ -8,6 +8,7 @@
   import { DesktopSession, rdpEndpoint, type RdpEndpoint, type RelayChannel } from '../../../lib/desktop.svelte'
   import { desktopRefusalText } from '../../../lib/desktopRefusal'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import { onDestroy, untrack } from 'svelte'
   import { LL } from '../../../i18n/i18n-svelte'
   import type { Desktop, DesktopsView } from '../../../types'
@@ -46,9 +47,7 @@
   const session = new DesktopSession()
   onDestroy(() => session.close())
 
-  function stale(serverId: string | null) {
-    return serverId !== servers.currentId
-  }
+  const { stale } = useScope()
 
   async function load(serverId = servers.currentId) {
     loading = true

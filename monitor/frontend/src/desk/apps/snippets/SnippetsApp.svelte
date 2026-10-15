@@ -9,6 +9,7 @@
   import { LL } from '../../../i18n/i18n-svelte'
   import { api } from '../../../lib/api'
   import { servers } from '../../../lib/servers.svelte'
+  import { useScope } from '../../../lib/scope.svelte'
   import { snippetPlanRefusalText, snippetRefusalText } from '../../../lib/snippetRefusal'
   import { TYPE_SNIPPET } from '../../../lib/snippetIntent'
   import { untrack } from 'svelte'
@@ -46,9 +47,7 @@
 
   /// A reply that arrives after the desk has switched servers belongs to
   /// neither.
-  function stale(serverId: string | null) {
-    return serverId !== servers.currentId
-  }
+  const { stale } = useScope()
 
   async function load(serverId = servers.currentId) {
     loading = true
