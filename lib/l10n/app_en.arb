@@ -1718,6 +1718,42 @@
   "@virtKeyRowsTip": {
     "description": "Help text for the virt key rows setting or action."
   },
+  "keyArrowDown": "Down arrow",
+  "@keyArrowDown": {
+    "description": "Screen reader name of the down arrow virtual key."
+  },
+  "keyArrowLeft": "Left arrow",
+  "@keyArrowLeft": {
+    "description": "Screen reader name of the left arrow virtual key."
+  },
+  "keyArrowRight": "Right arrow",
+  "@keyArrowRight": {
+    "description": "Screen reader name of the right arrow virtual key."
+  },
+  "keyArrowUp": "Up arrow",
+  "@keyArrowUp": {
+    "description": "Screen reader name of the up arrow virtual key."
+  },
+  "keyControl": "Control",
+  "@keyControl": {
+    "description": "Screen reader name of the control virtual key."
+  },
+  "keyEscape": "Escape",
+  "@keyEscape": {
+    "description": "Screen reader name of the escape virtual key."
+  },
+  "keyPageDown": "Page down",
+  "@keyPageDown": {
+    "description": "Screen reader name of the page down virtual key."
+  },
+  "keyPageUp": "Page up",
+  "@keyPageUp": {
+    "description": "Screen reader name of the page up virtual key."
+  },
+  "termTextView": "View as text",
+  "@termTextView": {
+    "description": "Opens the terminal output as selectable text, for screen readers."
+  },
   "waitConnection": "Please wait for the connection to be established.",
   "@waitConnection": {
     "description": "User-facing label or message for wait connection."

@@ -681,12 +681,19 @@ extension _Actions on _SSHTabPageState {
             status,
             _agentAction,
             _snippetAction,
+            _textViewAction,
             _metricsAction,
             _settingsAction,
             _moveAction,
             _floatAction,
           ]
-        : [status, _snippetAction, _settingsAction, _floatAction];
+        : [
+            status,
+            _snippetAction,
+            _textViewAction,
+            _settingsAction,
+            _floatAction,
+          ];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,
@@ -817,6 +824,12 @@ extension _Actions on _SSHTabPageState {
     label: libL10n.snippet,
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
+  );
+
+  BarAction get _textViewAction => BarAction(
+    icon: Icons.article_outlined,
+    label: l10n.termTextView,
+    onTap: () => _sessions.current?.data.pageKey.currentState?.openTextView(),
   );
 
   BarAction get _sortAction => BarAction(

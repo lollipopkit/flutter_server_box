@@ -1369,6 +1369,33 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Rest liegt auf einer eigenen Seite, die zur Seite gewischt wird.';
 
   @override
+  String get keyArrowDown => 'Pfeil nach unten';
+
+  @override
+  String get keyArrowLeft => 'Pfeil nach links';
+
+  @override
+  String get keyArrowRight => 'Pfeil nach rechts';
+
+  @override
+  String get keyArrowUp => 'Pfeil nach oben';
+
+  @override
+  String get keyControl => 'Steuerung';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Bild ab';
+
+  @override
+  String get keyPageUp => 'Bild auf';
+
+  @override
+  String get termTextView => 'Als Text anzeigen';
+
+  @override
   String get waitConnection =>
       'Bitte warte, bis die Verbindung hergestellt wurde.';
 

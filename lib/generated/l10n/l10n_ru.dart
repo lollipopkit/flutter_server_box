@@ -1363,6 +1363,33 @@ class AppLocalizationsRu extends AppLocalizations {
       'Остальные — на отдельной странице, пролистываемой вбок.';
 
   @override
+  String get keyArrowDown => 'Стрелка вниз';
+
+  @override
+  String get keyArrowLeft => 'Стрелка влево';
+
+  @override
+  String get keyArrowRight => 'Стрелка вправо';
+
+  @override
+  String get keyArrowUp => 'Стрелка вверх';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Страница вниз';
+
+  @override
+  String get keyPageUp => 'Страница вверх';
+
+  @override
+  String get termTextView => 'Показать как текст';
+
+  @override
   String get waitConnection => 'Пожалуйста, дождитесь установки соединения';
 
   @override

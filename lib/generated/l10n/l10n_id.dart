@@ -1358,6 +1358,33 @@ class AppLocalizationsId extends AppLocalizations {
       'Sisanya berada di halaman tersendiri, digeser ke samping.';
 
   @override
+  String get keyArrowDown => 'Panah bawah';
+
+  @override
+  String get keyArrowLeft => 'Panah kiri';
+
+  @override
+  String get keyArrowRight => 'Panah kanan';
+
+  @override
+  String get keyArrowUp => 'Panah atas';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Halaman bawah';
+
+  @override
+  String get keyPageUp => 'Halaman atas';
+
+  @override
+  String get termTextView => 'Lihat sebagai teks';
+
+  @override
   String get waitConnection => 'Harap tunggu koneksi akan dibuat.';
 
   @override

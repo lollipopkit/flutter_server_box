@@ -1358,6 +1358,33 @@ class AppLocalizationsAz extends AppLocalizations {
       'Qalanları üfüqi sürüşdürmə ilə açılan ayrıca səhifədə yerləşir.';
 
   @override
+  String get keyArrowDown => 'Aşağı ox';
+
+  @override
+  String get keyArrowLeft => 'Sol ox';
+
+  @override
+  String get keyArrowRight => 'Sağ ox';
+
+  @override
+  String get keyArrowUp => 'Yuxarı ox';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Səhifə aşağı';
+
+  @override
+  String get keyPageUp => 'Səhifə yuxarı';
+
+  @override
+  String get termTextView => 'Mətn kimi bax';
+
+  @override
   String get waitConnection => 'Əlaqə qurulana qədər gözlə.';
 
   @override

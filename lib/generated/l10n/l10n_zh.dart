@@ -1261,6 +1261,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get virtKeyRowsTip => '超出单页的可横向滑动切换';
 
   @override
+  String get keyArrowDown => '下箭头';
+
+  @override
+  String get keyArrowLeft => '左箭头';
+
+  @override
+  String get keyArrowRight => '右箭头';
+
+  @override
+  String get keyArrowUp => '上箭头';
+
+  @override
+  String get keyControl => 'Ctrl 键';
+
+  @override
+  String get keyEscape => 'Esc 键';
+
+  @override
+  String get keyPageDown => '向下翻页';
+
+  @override
+  String get keyPageUp => '向上翻页';
+
+  @override
+  String get termTextView => '以文本查看';
+
+  @override
   String get waitConnection => '请等待连接建立';
 
   @override
@@ -6782,6 +6809,33 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get virtKeyRowsTip => '其餘的放在單獨一頁，橫向滑動切換。';
+
+  @override
+  String get keyArrowDown => '下箭頭';
+
+  @override
+  String get keyArrowLeft => '左箭頭';
+
+  @override
+  String get keyArrowRight => '右箭頭';
+
+  @override
+  String get keyArrowUp => '上箭頭';
+
+  @override
+  String get keyControl => 'Ctrl 鍵';
+
+  @override
+  String get keyEscape => 'Esc 鍵';
+
+  @override
+  String get keyPageDown => '向下翻頁';
+
+  @override
+  String get keyPageUp => '向上翻頁';
+
+  @override
+  String get termTextView => '以文字檢視';
 
   @override
   String get waitConnection => '請等待連線建立';

@@ -1361,6 +1361,33 @@ class AppLocalizationsNl extends AppLocalizations {
       'De rest staat op een eigen pagina, die je opzij veegt.';
 
   @override
+  String get keyArrowDown => 'Pijl omlaag';
+
+  @override
+  String get keyArrowLeft => 'Pijl links';
+
+  @override
+  String get keyArrowRight => 'Pijl rechts';
+
+  @override
+  String get keyArrowUp => 'Pijl omhoog';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Pagina omlaag';
+
+  @override
+  String get keyPageUp => 'Pagina omhoog';
+
+  @override
+  String get termTextView => 'Als tekst bekijken';
+
+  @override
   String get waitConnection =>
       'Wacht alstublieft tot de verbinding tot stand is gebracht.';
 

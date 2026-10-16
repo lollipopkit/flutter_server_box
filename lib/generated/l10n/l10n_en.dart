@@ -1346,6 +1346,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'The rest go on a page of their own, swiped sideways.';
 
   @override
+  String get keyArrowDown => 'Down arrow';
+
+  @override
+  String get keyArrowLeft => 'Left arrow';
+
+  @override
+  String get keyArrowRight => 'Right arrow';
+
+  @override
+  String get keyArrowUp => 'Up arrow';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Page down';
+
+  @override
+  String get keyPageUp => 'Page up';
+
+  @override
+  String get termTextView => 'View as text';
+
+  @override
   String get waitConnection =>
       'Please wait for the connection to be established.';
 

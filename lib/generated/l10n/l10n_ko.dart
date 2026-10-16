@@ -1288,6 +1288,33 @@ class AppLocalizationsKo extends AppLocalizations {
   String get virtKeyRowsTip => '나머지는 별도의 페이지에 놓이며 옆으로 밀어 넘깁니다.';
 
   @override
+  String get keyArrowDown => '아래쪽 화살표';
+
+  @override
+  String get keyArrowLeft => '왼쪽 화살표';
+
+  @override
+  String get keyArrowRight => '오른쪽 화살표';
+
+  @override
+  String get keyArrowUp => '위쪽 화살표';
+
+  @override
+  String get keyControl => 'Ctrl 키';
+
+  @override
+  String get keyEscape => 'Esc 키';
+
+  @override
+  String get keyPageDown => '페이지 다운';
+
+  @override
+  String get keyPageUp => '페이지 업';
+
+  @override
+  String get termTextView => '텍스트로 보기';
+
+  @override
   String get waitConnection => '연결이 설정될 때까지 기다려 주세요.';
 
   @override

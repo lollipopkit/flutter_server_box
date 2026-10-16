@@ -2428,6 +2428,60 @@ abstract class AppLocalizations {
   /// **'The rest go on a page of their own, swiped sideways.'**
   String get virtKeyRowsTip;
 
+  /// Screen reader name of the down arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Down arrow'**
+  String get keyArrowDown;
+
+  /// Screen reader name of the left arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Left arrow'**
+  String get keyArrowLeft;
+
+  /// Screen reader name of the right arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Right arrow'**
+  String get keyArrowRight;
+
+  /// Screen reader name of the up arrow virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Up arrow'**
+  String get keyArrowUp;
+
+  /// Screen reader name of the control virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Control'**
+  String get keyControl;
+
+  /// Screen reader name of the escape virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Escape'**
+  String get keyEscape;
+
+  /// Screen reader name of the page down virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Page down'**
+  String get keyPageDown;
+
+  /// Screen reader name of the page up virtual key.
+  ///
+  /// In en, this message translates to:
+  /// **'Page up'**
+  String get keyPageUp;
+
+  /// Opens the terminal output as selectable text, for screen readers.
+  ///
+  /// In en, this message translates to:
+  /// **'View as text'**
+  String get termTextView;
+
   /// User-facing label or message for wait connection.
   ///
   /// In en, this message translates to:

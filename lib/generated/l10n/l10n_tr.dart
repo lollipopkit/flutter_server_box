@@ -1356,6 +1356,33 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kalanlar yana kaydırılan ayrı bir sayfada yer alır.';
 
   @override
+  String get keyArrowDown => 'Aşağı ok';
+
+  @override
+  String get keyArrowLeft => 'Sol ok';
+
+  @override
+  String get keyArrowRight => 'Sağ ok';
+
+  @override
+  String get keyArrowUp => 'Yukarı ok';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Sayfa aşağı';
+
+  @override
+  String get keyPageUp => 'Sayfa yukarı';
+
+  @override
+  String get termTextView => 'Metin olarak görüntüle';
+
+  @override
   String get waitConnection => 'Lütfen bağlantının kurulmasını bekleyin.';
 
   @override
