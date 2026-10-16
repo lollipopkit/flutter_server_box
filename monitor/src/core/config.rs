@@ -645,14 +645,7 @@ impl Config {
         }
 
         let path = self.jwt_secret_path();
-        // Empty: a first start cut off before the write reached the disk.
-        // Nothing was ever signed with it that outlived that start.
-        let persisted = path.exists()
-            && !fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read {}", path.display()))?
-                .trim()
-                .is_empty();
-        if persisted {
+        if path.exists() {
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
@@ -669,14 +662,19 @@ impl Config {
                 .with_context(|| format!("Failed to read {}", path.display()))?
                 .trim()
                 .to_string();
-            if secret.len() < MIN_LEN {
-                anyhow::bail!(
-                    "Persisted JWT secret at {} is invalid; delete it to regenerate",
-                    path.display()
-                );
+            // Empty: a first start cut off before the write reached the disk.
+            // Nothing was ever signed with it that outlived that start, so it
+            // is made again below.
+            if !secret.is_empty() {
+                if secret.len() < MIN_LEN {
+                    anyhow::bail!(
+                        "Persisted JWT secret at {} is invalid; delete it to regenerate",
+                        path.display()
+                    );
+                }
+                self.jwt_secret = Some(secret);
+                return Ok(());
             }
-            self.jwt_secret = Some(secret);
-            return Ok(());
         }
 
         let secret = crate::utils::secrets::random_hex(48)
