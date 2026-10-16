@@ -36,7 +36,20 @@ function newId(): string {
 
 class ServersStore {
   list = $state<ServerEntry[]>([])
-  currentId = $state('')
+  #currentId = $state('')
+  /// Counts changes of `currentId`, for what must tell one selection of a
+  /// server from a later one of the same server (layout's page transition).
+  selections = $state(0)
+
+  get currentId(): string {
+    return this.#currentId
+  }
+
+  set currentId(id: string) {
+    if (id === this.#currentId) return
+    this.#currentId = id
+    this.selections++
+  }
 
   /// Whether this panel is the agent's own: whether the origin the page came
   /// from is an agent that serves it.

@@ -16,10 +16,11 @@ export type View = 'dashboard' | 'panel' | 'server-settings' | 'terminal' | 'fil
 class LayoutStore {
   collapsed = $state(readPref('sidebar.collapsed') === '1')
   mobileOpen = $state(false)
-  // Panel-wide view selection; navigation does not use a router.
-  view = $state<View>('dashboard')
-  /// The page a `back` went to, on the server it was on.
-  #backTo = $state<{ view: View; server: string } | null>(null)
+  #view = $state<View>('dashboard')
+  /// Counts changes of `view`; with the server selections, every navigation.
+  #views = $state(0)
+  /// The navigation a `back` made, as `#step` read right after it.
+  #backStep = $state<number | null>(null)
   /// Shared by the sidebar and empty state, which open the same form.
   addServerOpen = $state(false)
 
@@ -28,21 +29,36 @@ class LayoutStore {
     writePref('sidebar.collapsed', this.collapsed ? '1' : '0')
   }
 
-  /// Which way the page transition runs: back only while the page a `back`
-  /// opened is still the one shown, so a server switch after it is forward.
+  // Panel-wide view selection; navigation does not use a router.
+  get view(): View {
+    return this.#view
+  }
+
+  set view(view: View) {
+    if (view === this.#view) return
+    this.#view = view
+    this.#views++
+  }
+
+  /// Rises on every change of page or server; both counts only grow.
+  get #step(): number {
+    return this.#views + servers.selections
+  }
+
+  /// Which way the page transition runs: back only until the next change of
+  /// page or server, so leaving and returning to the same pair is forward.
   get navDirection(): 'forward' | 'back' {
-    const to = this.#backTo
-    return to && to.view === this.view && to.server === servers.currentId ? 'back' : 'forward'
+    return this.#backStep === this.#step ? 'back' : 'forward'
   }
 
   navigate(view: View) {
-    this.#backTo = null
+    this.#backStep = null
     this.view = view
   }
 
   back(view: View) {
-    this.#backTo = { view, server: servers.currentId }
     this.view = view
+    this.#backStep = this.#step
   }
 }
 

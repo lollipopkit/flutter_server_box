@@ -50,4 +50,23 @@ describe('page transition direction', () => {
     servers.currentId = 'b'
     expect(layout.navDirection).toBe('forward')
   })
+
+  it('stays forward on returning to the server a back was made on', () => {
+    servers.currentId = 'a'
+    layout.navigate('process')
+    layout.back('dashboard')
+    servers.currentId = 'b'
+    servers.currentId = 'a'
+    expect(layout.view).toBe('dashboard')
+    expect(layout.navDirection).toBe('forward')
+  })
+
+  it('stays forward on returning to the page a back went to', () => {
+    servers.currentId = 'a'
+    layout.navigate('process')
+    layout.back('dashboard')
+    layout.view = 'files'
+    layout.view = 'dashboard'
+    expect(layout.navDirection).toBe('forward')
+  })
 })
