@@ -23,6 +23,7 @@ pub mod catalog;
 pub mod health;
 pub mod job;
 pub mod manifest;
+pub mod mcp;
 pub mod ports;
 pub mod proxy;
 pub mod store;

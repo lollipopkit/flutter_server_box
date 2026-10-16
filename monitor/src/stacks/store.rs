@@ -162,3 +162,49 @@ pub async fn fail_interrupted(db: &SqlitePool) -> sqlx::Result<u64> {
         .await?;
     Ok(done.rows_affected())
 }
+
+/// Agent mode's use of a deployed app's MCP server (`stack_mcp`, migration
+/// 036): on or off, and the token given for one that asks for it.
+#[derive(Debug, Clone, Default)]
+pub struct McpUse {
+    pub enabled: bool,
+    pub token: Option<String>,
+}
+
+/// Every `stack_mcp` row, by app and place in its `[[mcp]]`.
+pub async fn mcp_uses(db: &SqlitePool) -> sqlx::Result<BTreeMap<(String, usize), McpUse>> {
+    let rows = sqlx::query_as::<_, (String, i64, bool, Option<String>)>("SELECT stack_id, idx, enabled, token FROM stack_mcp").fetch_all(db).await?;
+    Ok(rows.into_iter().map(|(stack, idx, enabled, token)| ((stack, idx as usize), McpUse { enabled, token })).collect())
+}
+
+/// Turns app [stack]'s MCP server [idx] on or off and sets (`Some(Some)`),
+/// clears (`Some(None)`) or keeps (`None`) its token.
+pub async fn set_mcp_use(db: &SqlitePool, stack: &str, idx: usize, enabled: Option<bool>, token: Option<Option<&str>>) -> sqlx::Result<()> {
+    let now = chrono::Utc::now().to_rfc3339();
+    let mut tx = db.begin().await?;
+    sqlx::query("INSERT OR IGNORE INTO stack_mcp (stack_id, idx, enabled, token, updated_at) VALUES (?, ?, 1, NULL, ?)")
+        .bind(stack)
+        .bind(idx as i64)
+        .bind(&now)
+        .execute(&mut *tx)
+        .await?;
+    if let Some(enabled) = enabled {
+        sqlx::query("UPDATE stack_mcp SET enabled = ?, updated_at = ? WHERE stack_id = ? AND idx = ?")
+            .bind(enabled)
+            .bind(&now)
+            .bind(stack)
+            .bind(idx as i64)
+            .execute(&mut *tx)
+            .await?;
+    }
+    if let Some(token) = token {
+        sqlx::query("UPDATE stack_mcp SET token = ?, updated_at = ? WHERE stack_id = ? AND idx = ?")
+            .bind(token)
+            .bind(&now)
+            .bind(stack)
+            .bind(idx as i64)
+            .execute(&mut *tx)
+            .await?;
+    }
+    tx.commit().await
+}

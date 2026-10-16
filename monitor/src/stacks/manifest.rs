@@ -524,6 +524,15 @@ fn service_block<'a>(compose: &'a str, name: &str) -> Option<Vec<&'a str>> {
     Some(lines.take_while(|l| !content(l) || indent(l) > depth).collect())
 }
 
+/// The entries a compose line lists: `- "a:b"`, or `ports: ['a:b', 'c:d']`.
+fn published_entries(line: &str) -> Vec<&str> {
+    let line = line.trim();
+    let line = line.strip_prefix("ports:").map(str::trim).unwrap_or(line);
+    let line = line.strip_prefix("- ").unwrap_or(line);
+    let line = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')).unwrap_or(line);
+    line.split(',').map(|e| e.trim().trim_matches(['\'', '"'])).filter(|e| !e.is_empty()).collect()
+}
+
 /// An image reference pinned by digest.
 fn pinned(image: &str) -> bool {
     image.rsplit_once("@sha256:").is_some_and(|(name, digest)| !name.is_empty() && digest.len() == 64 && digest.bytes().all(|b| b.is_ascii_hexdigit()))
@@ -1180,11 +1189,7 @@ impl Package {
                 _ => None,
             });
             if let Some(env) = env {
-                let published: Vec<&str> = block
-                    .iter()
-                    .map(|l| l.trim().trim_start_matches("- ").trim_matches(['\'', '"']))
-                    .filter(|l| l.contains(&format!("${{{env}}}")))
-                    .collect();
+                let published: Vec<&str> = block.iter().flat_map(|l| published_entries(l)).filter(|e| e.contains(&format!("${{{env}}}"))).collect();
                 if published.is_empty() || published.iter().any(|l| !l.starts_with("127.0.0.1:")) {
                     problems.push(problem(format!("mcp[{i}].service"), format!("{service}: publishes ${{{env}}} on 127.0.0.1 alone")));
                 }

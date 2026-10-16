@@ -22,7 +22,7 @@
   import StackRemove from './StackRemove.svelte'
   import StackSetup from './StackSetup.svelte'
   import { stackAppId } from './apps'
-  import { noticeText } from './notices'
+  import { mcpNotices, noticeText } from './notices'
   import { stackRefusal } from './refusal'
   import { mib, pick } from './text'
   import { untrack } from 'svelte'
@@ -215,12 +215,13 @@
       <a class="text-(--color-accent-text) hover:underline" href={app.manifest.license.url} target="_blank" rel="noreferrer noopener">{$LL.stackLicenseRead()}</a>
     </div>
 
-    {#if app.manifest.notices.length}
+    {@const notes = [...app.manifest.notices.map((n) => noticeText(n, $LL)), ...mcpNotices(app.manifest, $LL)]}
+    {#if notes.length}
       <Group title={$LL.stackNotices()}>
-        {#each app.manifest.notices as n (n)}
+        {#each notes as text (text)}
           <div class="flex items-start gap-[9px] px-[13px] py-[9px] text-[13px] text-(--text-secondary)">
             <Icon name="info" size={16} class="mt-[1px] shrink-0" />
-            <span>{noticeText(n, $LL)}</span>
+            <span>{text}</span>
           </div>
         {/each}
       </Group>

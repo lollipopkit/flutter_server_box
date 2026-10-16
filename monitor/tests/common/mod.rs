@@ -64,27 +64,31 @@ pub mod machine {
 
     /// The server, and its database for asserting what was recorded.
     pub async fn server() -> (TestServer, sqlx::SqlitePool) {
+        let (srv, state) = server_with(Config::default()).await;
+        (srv, state.db.clone())
+    }
+
+    /// [server] with [config], its JWT secret the tests'.
+    pub async fn server_with(config: Config) -> (TestServer, Arc<AppState>) {
         leave_the_crate();
         static ONCE: Once = Once::new();
         ONCE.call_once(|| {
             let _ = rustls::crypto::ring::default_provider().install_default();
         });
-        let config = Config {
-            jwt_secret: Some(SECRET.to_string()),
-            ..Default::default()
-        };
+        let config = Config { jwt_secret: Some(SECRET.to_string()), ..config };
         let db = super::database().await;
         super::add_owner(&db).await;
-        let state = AppState::new(Arc::new(config), db.clone());
+        let state = AppState::new(Arc::new(config), db);
+        let shared = state.clone();
         let srv = web_test::server(move || {
-            let state = state.clone();
+            let state = shared.clone();
             async move {
                 let limit = state.remote_access.exec.max_request_bytes;
                 App::new().state(state).configure(configure_api(limit))
             }
         })
         .await;
-        (srv, db)
+        (srv, state)
     }
 
     /// The `(action, result, subject, detail)` of every `machine` row,

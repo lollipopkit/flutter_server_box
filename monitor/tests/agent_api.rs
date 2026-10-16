@@ -896,7 +896,7 @@ async fn a_task_runs_with_the_model_and_thinking_its_account_picked() {
 
 /// An MCP server (Streamable HTTP, JSON answers) on loopback: `list_lights`
 /// says it changes nothing, `turn_on` does not. Each call and the token it
-/// came with is recorded.
+/// came with (`Authorization` or `X-Api-Key`) is recorded.
 fn mcp_server(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = listener.local_addr().unwrap();
@@ -920,8 +920,10 @@ fn mcp_server(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>) ->
                     if let Some(v) = lower.strip_prefix("content-length:") {
                         len = v.trim().parse().unwrap();
                     }
-                    if lower.starts_with("authorization:") {
-                        token = l["authorization:".len()..].trim().to_string();
+                    for name in ["authorization:", "x-api-key:"] {
+                        if lower.starts_with(name) {
+                            token = l[name.len()..].trim().to_string();
+                        }
                     }
                 }
                 let mut body = vec![0u8; len];
@@ -953,6 +955,156 @@ fn mcp_server(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>) ->
         }
     });
     format!("http://{addr}/mcp")
+}
+
+/// A deployed app's MCP server joins Agent mode on its own: at its port
+/// setting's port, once the token it asks for is given; the token never
+/// comes back out, and turning it off drops it.
+#[ntex::test]
+async fn a_deployed_apps_mcp_server_connects_once_its_token_is_given() {
+    let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let mcp = mcp_server(calls.clone());
+    let port: u16 = mcp.trim_start_matches("http://127.0.0.1:").trim_end_matches("/mcp").parse().unwrap();
+    let apps = scratch("app-mcp");
+    let package = apps.join("acme.lights");
+    std::fs::create_dir_all(&package).unwrap();
+    std::fs::write(
+        package.join("manifest.toml"),
+        r#"schema = 1
+publisher = "acme"
+name = "lights"
+project = "Lights"
+version = "1.0"
+homepage = "https://example.com"
+source = "https://example.com/src"
+glyph = "lightbulb"
+tone = "teal"
+title = { en = "Lights" }
+description = { en = "Lights." }
+license = { spdx = "MIT", url = "https://example.com/LICENSE" }
+compose = { files = ["compose.yaml"] }
+web = { port = "port" }
+
+[[secrets]]
+env = "MCP_KEY"
+
+[[settings]]
+key = "port"
+type = "port"
+env = "PORT"
+default = 8123
+label = { en = "Port" }
+
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 8124
+label = { en = "MCP" }
+
+[[mcp]]
+port = "port"
+path = "/mcp"
+publisher = "builtin"
+[mcp.auth]
+scheme = "Bearer"
+asked = { en = "Make a token in your profile." }
+
+[[mcp]]
+port = "mcp_port"
+path = "/keyed"
+publisher = "official"
+service = "mcp"
+source = "https://example.com/mcp"
+[mcp.auth]
+header = "X-Api-Key"
+secret = "MCP_KEY"
+"#,
+    )
+    .unwrap();
+    let digest = "a".repeat(64);
+    std::fs::write(
+        package.join("compose.yaml"),
+        format!("services:\n  app:\n    image: x\n    ports: ['${{PORT}}:8123']\n  mcp:\n    image: x@sha256:{digest}\n    environment:\n      KEY: ${{MCP_KEY}}\n    ports: ['127.0.0.1:${{MCP_PORT}}:80']\n"),
+    )
+    .unwrap();
+    let config = server_box_monitor::core::config::Config {
+        stacks: Some(server_box_monitor::core::config::StacksConfig { local_apps: Some(apps.display().to_string()), ..Default::default() }),
+        ..Default::default()
+    };
+    let (srv, state) = common::machine::server_with(config).await;
+    let row = server_box_monitor::stacks::store::StackRow {
+        id: "acme.lights".into(),
+        version: "1.0".into(),
+        settings: [("port".to_string(), json!(port)), ("mcp_port".to_string(), json!(port))].into(),
+        proxy_port: 3790,
+        state: "installed".into(),
+        license: "MIT".into(),
+        license_accepted_at: String::new(),
+        installed_at: String::new(),
+        updated_at: String::new(),
+        last_error: None,
+        stopped: false,
+        update_noticed: None,
+    };
+    assert!(server_box_monitor::stacks::store::insert(&state.db, &row).await.unwrap());
+    server_box_monitor::stacks::store::finish(&state.db, "acme.lights", None).await.unwrap();
+    let dir = state.stacks.dir("acme.lights");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join(".env"), "PORT='1'\nMCP_KEY='key-from-env'\n").unwrap();
+
+    let id = fl_pi_llm::host::mcp::server_id(&mcp);
+    let status_of = |body: &Value| body["status"].as_array().unwrap().iter().find(|s| s["id"] == id.as_str()).cloned();
+    // Listed, waiting for its token; the one whose key the app's env file
+    // holds connects on its own.
+    let (s, body) = call(&srv, true, Method::GET, "/api/v1/agent/mcp", None).await;
+    assert_eq!(s, 200, "{body}");
+    assert!(!body.to_string().contains("key-from-env"), "{body}");
+    let keyed = fl_pi_llm::host::mcp::server_id(&format!("http://127.0.0.1:{port}/keyed"));
+    let keyed_status = body["status"].as_array().unwrap().iter().find(|s| s["id"] == keyed.as_str()).cloned().unwrap();
+    assert_eq!(keyed_status["connected"], true, "{body}");
+    assert_eq!(body["apps"][1]["credential"], json!({ "kind": "secret" }));
+    assert_eq!(body["apps"][0]["stack"], "acme.lights", "{body}");
+    assert_eq!(body["apps"][0]["url"], mcp.as_str());
+    assert_eq!(body["apps"][0]["credential"], json!({ "kind": "asked", "hint": { "en": "Make a token in your profile." }, "given": false }));
+    assert_eq!(status_of(&body).unwrap()["error"], "needsToken", "{body}");
+
+    // Only an asked credential takes a token; a token with a line break is refused.
+    let at = "/api/v1/agent/mcp/apps/acme.lights/0";
+    let (s, _) = call(&srv, true, Method::PUT, at, Some(json!({ "token": "a\nb" }))).await;
+    assert_eq!(s, 400);
+    let (s, _) = call(&srv, true, Method::PUT, "/api/v1/agent/mcp/apps/acme.lights/1", Some(json!({ "token": "x" }))).await;
+    assert_eq!(s, 400, "its key is the app's own");
+    let (s, _) = call(&srv, true, Method::PUT, "/api/v1/agent/mcp/apps/acme.lights/2", Some(json!({ "token": "x" }))).await;
+    assert_eq!(s, 404);
+    let (s, body) = call(&srv, true, Method::PUT, at, Some(json!({ "token": "tok-2" }))).await;
+    assert_eq!(s, 200, "{body}");
+    assert!(!body.to_string().contains("tok-2"), "{body}");
+    assert_eq!(body["apps"][0]["credential"]["given"], true);
+    let connected = status_of(&body).unwrap();
+    assert_eq!(connected["connected"], true, "{body}");
+    assert_eq!(connected["tools"].as_array().unwrap().len(), 2);
+
+    // A task uses it with the token, after the scheme.
+    let list: &'static str = Box::leak(fl_pi_llm::host::mcp::tool_name(&id, "list_lights").into_boxed_str());
+    let keyed_list: &'static str = Box::leak(fl_pi_llm::host::mcp::tool_name(&keyed, "list_lights").into_boxed_str());
+    let url = model(vec![Say::Tool(list, json!({})), Say::Tool(keyed_list, json!({})), Say::Text("Listed.")]);
+    configure(&srv, &url).await;
+    let flow = start(&srv, "which lights are there").await;
+    until(&srv, &flow, |v| status(v) == "done").await;
+    assert_eq!(calls.lock().unwrap().iter().map(|(_, t)| t.as_str()).collect::<Vec<_>>(), ["Bearer tok-2", "key-from-env"]);
+
+    // Off: not connected, nothing waiting.
+    let (_, body) = call(&srv, true, Method::PUT, at, Some(json!({ "enabled": false }))).await;
+    assert_eq!(body["apps"][0]["enabled"], false);
+    assert!(status_of(&body).is_none(), "{body}");
+    // Removed with the app.
+    server_box_monitor::stacks::store::delete(&state.db, "acme.lights").await.unwrap();
+    let (_, body) = call(&srv, true, Method::GET, "/api/v1/agent/mcp", None).await;
+    assert_eq!(body["apps"], json!([]), "{body}");
+    let left: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM stack_mcp").fetch_one(&state.db).await.unwrap();
+    assert_eq!(left, 0);
+    let _ = std::fs::remove_dir_all(&apps);
 }
 
 #[ntex::test]

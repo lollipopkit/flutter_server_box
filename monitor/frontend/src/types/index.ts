@@ -2725,6 +2725,18 @@ export interface StackManifest {
   web: { port: string; path: string }
   settings: StackSetting[]
   login?: StackLogin | null
+  /// Its MCP servers, which Agent mode connects to once it is deployed.
+  /// Absent on older agents.
+  mcp?: StackMcp[]
+}
+
+/// An app's MCP server (`[[mcp]]`): the service's own, or a sidecar.
+export interface StackMcp {
+  port: string
+  path: string
+  publisher: 'builtin' | 'official' | 'community'
+  service?: string
+  source?: string
 }
 
 /// How the admin signs in to a deployed app the first time (`[login]`):

@@ -309,8 +309,33 @@ export interface McpStatus {
   error?: string
 }
 
+/// A deployed app's MCP server (`[[mcp]]` of its manifest): connected on
+/// its own once its credential is known.
+export interface AppMcpServer {
+  id: string
+  stack: string
+  index: number
+  title: string
+  publisher: 'builtin' | 'official' | 'community'
+  source?: string
+  url: string
+  enabled: boolean
+  credential:
+    | { kind: 'none' | 'secret' | 'oauth' }
+    /// A token the admin gives once the service is set up: `hint` says where.
+    | { kind: 'asked'; hint: Record<string, string>; given: boolean }
+}
+
+/// What changes about an app's server: `token` sets (a string), removes
+/// (null) or keeps (absent) it.
+export interface AppMcpWrite {
+  enabled?: boolean
+  token?: string | null
+}
+
 export interface McpView {
   servers: McpServer[]
+  apps: AppMcpServer[]
   status: McpStatus[]
 }
 
@@ -360,6 +385,14 @@ export const agentApi = {
   mcp: (e: ServerEntry) => requestFor<McpView>(e, '/agent/mcp', {}, undefined, 60_000),
   saveMcp: (e: ServerEntry, servers: McpServerWrite[]) =>
     requestFor<McpView>(e, '/agent/mcp', { method: 'PUT', body: JSON.stringify({ servers }) }, undefined, 60_000),
+  saveAppMcp: (e: ServerEntry, stack: string, index: number, w: AppMcpWrite) =>
+    requestFor<McpView>(
+      e,
+      `/agent/mcp/apps/${encodeURIComponent(stack)}/${index}`,
+      { method: 'PUT', body: JSON.stringify(w) },
+      undefined,
+      60_000,
+    ),
   skills: (e: ServerEntry) => requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills'),
   installSkill: (e: ServerEntry, source: string) =>
     requestFor<{ skills: AgentSkill[] }>(e, '/agent/skills', { method: 'POST', body: JSON.stringify({ source }) }, undefined, 120_000),

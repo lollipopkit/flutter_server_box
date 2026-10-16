@@ -7663,6 +7663,46 @@ type RootTranslation = {
 	 */
 	settingsAgentMcpToken: string
 	/**
+	 * F​r​o​m​ ​y​o​u​r​ ​a​p​p​s
+	 */
+	settingsAgentMcpApps: string
+	/**
+	 * D​e​p​l​o​y​e​d​ ​a​p​p​s​'​ ​s​e​r​v​e​r​s​ ​c​o​n​n​e​c​t​ ​o​n​ ​t​h​e​i​r​ ​o​w​n​.​ ​A​ ​c​o​m​m​u​n​i​t​y​ ​s​e​r​v​e​r​ ​i​s​ ​s​o​m​e​o​n​e​ ​e​l​s​e​'​s​ ​c​o​d​e​ ​h​o​l​d​i​n​g​ ​t​h​e​ ​a​p​p​'​s​ ​c​r​e​d​e​n​t​i​a​l​.
+	 */
+	settingsAgentMcpAppsAbout: string
+	/**
+	 * T​h​e​ ​a​p​p​'​s​ ​o​w​n
+	 */
+	settingsAgentMcpBuiltin: string
+	/**
+	 * O​f​f​i​c​i​a​l
+	 */
+	settingsAgentMcpOfficial: string
+	/**
+	 * C​o​m​m​u​n​i​t​y
+	 */
+	settingsAgentMcpCommunity: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​t​o​k​e​n
+	 */
+	settingsAgentMcpNeedsToken: string
+	/**
+	 * N​e​e​d​s​ ​s​i​g​n​i​n​g​ ​i​n
+	 */
+	settingsAgentMcpNeedsSignIn: string
+	/**
+	 * T​o​k​e​n
+	 */
+	settingsAgentMcpAppToken: string
+	/**
+	 * N​e​w​ ​t​o​k​e​n
+	 */
+	settingsAgentMcpReplaceAppToken: string
+	/**
+	 * F​o​r​g​e​t​ ​t​h​e​ ​t​o​k​e​n
+	 */
+	settingsAgentMcpForgetToken: string
+	/**
 	 * S​k​i​l​l​s
 	 */
 	settingsAgentSkills: string
@@ -7942,6 +7982,20 @@ type RootTranslation = {
 	 * C​o​n​t​r​o​l​s​ ​D​o​c​k​e​r​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
 	 */
 	stackNoticeDockerSocket: string
+	/**
+	 * A​g​e​n​t​ ​m​o​d​e​ ​c​o​n​n​e​c​t​s​ ​t​o​ ​t​h​e​ ​a​p​p​'​s​ ​o​w​n​ ​M​C​P​ ​s​e​r​v​e​r​.
+	 */
+	stackNoticeMcpBuiltin: string
+	/**
+	 * R​u​n​s​ ​i​t​s​ ​m​a​k​e​r​s​'​ ​M​C​P​ ​s​e​r​v​e​r​ ​b​e​s​i​d​e​ ​i​t​ ​f​o​r​ ​A​g​e​n​t​ ​m​o​d​e​ ​(​{​s​o​u​r​c​e​}​)​.
+	 * @param {unknown} source
+	 */
+	stackNoticeMcpOfficial: RequiredParams<'source'>
+	/**
+	 * R​u​n​s​ ​a​ ​c​o​m​m​u​n​i​t​y​ ​M​C​P​ ​s​e​r​v​e​r​ ​b​e​s​i​d​e​ ​i​t​ ​f​o​r​ ​A​g​e​n​t​ ​m​o​d​e​:​ ​s​o​m​e​o​n​e​ ​e​l​s​e​'​s​ ​c​o​d​e​,​ ​h​o​l​d​i​n​g​ ​t​h​i​s​ ​a​p​p​'​s​ ​c​r​e​d​e​n​t​i​a​l​ ​(​{​s​o​u​r​c​e​}​)​.
+	 * @param {unknown} source
+	 */
+	stackNoticeMcpCommunity: RequiredParams<'source'>
 	/**
 	 * L​i​c​e​n​c​e
 	 */
@@ -17337,6 +17391,46 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	settingsAgentMcpToken: () => LocalizedString
 	/**
+	 * From your apps
+	 */
+	settingsAgentMcpApps: () => LocalizedString
+	/**
+	 * Deployed apps' servers connect on their own. A community server is someone else's code holding the app's credential.
+	 */
+	settingsAgentMcpAppsAbout: () => LocalizedString
+	/**
+	 * The app's own
+	 */
+	settingsAgentMcpBuiltin: () => LocalizedString
+	/**
+	 * Official
+	 */
+	settingsAgentMcpOfficial: () => LocalizedString
+	/**
+	 * Community
+	 */
+	settingsAgentMcpCommunity: () => LocalizedString
+	/**
+	 * Needs a token
+	 */
+	settingsAgentMcpNeedsToken: () => LocalizedString
+	/**
+	 * Needs signing in
+	 */
+	settingsAgentMcpNeedsSignIn: () => LocalizedString
+	/**
+	 * Token
+	 */
+	settingsAgentMcpAppToken: () => LocalizedString
+	/**
+	 * New token
+	 */
+	settingsAgentMcpReplaceAppToken: () => LocalizedString
+	/**
+	 * Forget the token
+	 */
+	settingsAgentMcpForgetToken: () => LocalizedString
+	/**
 	 * Skills
 	 */
 	settingsAgentSkills: () => LocalizedString
@@ -17608,6 +17702,18 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Controls Docker on this machine.
 	 */
 	stackNoticeDockerSocket: () => LocalizedString
+	/**
+	 * Agent mode connects to the app's own MCP server.
+	 */
+	stackNoticeMcpBuiltin: () => LocalizedString
+	/**
+	 * Runs its makers' MCP server beside it for Agent mode ({source}).
+	 */
+	stackNoticeMcpOfficial: (arg: { source: unknown }) => LocalizedString
+	/**
+	 * Runs a community MCP server beside it for Agent mode: someone else's code, holding this app's credential ({source}).
+	 */
+	stackNoticeMcpCommunity: (arg: { source: unknown }) => LocalizedString
 	/**
 	 * Licence
 	 */

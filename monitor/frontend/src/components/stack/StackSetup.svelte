@@ -20,7 +20,7 @@
   import type { StackJob, StackManifest, StackPrepare, StackPreview, StackSetting, StackValue } from '../../types'
   import ReauthDialog from '../ReauthDialog.svelte'
   import StackConfirm from './StackConfirm.svelte'
-  import { noticeText } from './notices'
+  import { mcpNotices, noticeText } from './notices'
   import { stackRefusal } from './refusal'
   import { mib, pick } from './text'
   import { untrack } from 'svelte'
@@ -210,12 +210,13 @@
       {/each}
     </Group>
 
-    {#if manifest.notices.length && !editing}
+    {@const notes = [...manifest.notices.map((n) => noticeText(n, $LL)), ...mcpNotices(manifest, $LL)]}
+    {#if notes.length && !editing}
       <Group title={$LL.stackNotices()}>
-        {#each manifest.notices as n (n)}
+        {#each notes as text (text)}
           <div class="flex items-start gap-[9px] px-[13px] py-[9px] text-[13px] text-(--text-secondary)">
             <Icon name="info" size={16} class="mt-[1px] shrink-0" />
-            <span>{noticeText(n, $LL)}</span>
+            <span>{text}</span>
           </div>
         {/each}
       </Group>

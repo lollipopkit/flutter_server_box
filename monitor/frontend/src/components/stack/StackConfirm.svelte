@@ -8,7 +8,7 @@
   import { Button, Checkbox, Dialog, Icon } from '../../desk/lk'
   import { LL, locale } from '../../i18n/i18n-svelte'
   import type { StackManifest, StackNotice, StackPreview } from '../../types'
-  import { noticeText } from './notices'
+  import { mcpNotices, noticeText } from './notices'
   import { pick } from './text'
 
   interface Props {
@@ -35,7 +35,7 @@
 
   const title = $derived(pick(manifest.title, $locale))
   const ready = $derived(acknowledged && (!manifest.license.accept || accepted))
-  const notices = $derived(manifest.notices.map((n: StackNotice) => noticeText(n, $LL)))
+  const notices = $derived([...manifest.notices.map((n: StackNotice) => noticeText(n, $LL)), ...mcpNotices(manifest, $LL)])
 
   function settingLabel(key: string): string {
     const label = manifest.settings.find((s) => s.key === key)?.label

@@ -302,6 +302,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::agent::get_mcp))
                     .route(web::put().to(crate::api::agent::put_mcp)),
             )
+            .service(web::resource("/agent/mcp/apps/{stack}/{index}").route(web::put().to(crate::api::agent::put_mcp_app)))
             .service(
                 web::resource("/agent/skills")
                     .route(web::get().to(crate::api::agent::get_skills))

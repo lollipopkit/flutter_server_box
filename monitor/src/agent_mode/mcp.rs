@@ -5,7 +5,8 @@
 //! request, a token most often. Like a provider's key, a header's value goes
 //! in and never comes back out: a read names the headers that are set.
 //! Connections are kept between tasks and made again when the server's
-//! settings change or a call finds it gone.
+//! settings change or a call finds it gone. Deployed apps' servers
+//! (`stacks::mcp`) join them on their own.
 
 use crate::utils::lock::LockExt;
 use std::collections::{BTreeMap, HashMap};
@@ -13,7 +14,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use fl_pi_llm::host::mcp::{self as pi_mcp, McpClient, McpServerConfig, McpTool};
-use fl_pi_llm::host::{BoxFuture, Cancel, Fetch, Tool, ToolCall, ToolDef, ToolResult};
+use fl_pi_llm::host::{BoxFuture, Cancel, Tool, ToolCall, ToolDef, ToolResult};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::SqlitePool;
@@ -76,7 +77,7 @@ fn header_name_ok(name: &str) -> bool {
     (1..=64).contains(&name.len()) && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
 }
 
-fn header_value_ok(value: &str) -> bool {
+pub(crate) fn header_value_ok(value: &str) -> bool {
     !value.is_empty() && value.len() <= MAX_HEADER_VALUE && !value.chars().any(char::is_control)
 }
 
@@ -114,6 +115,26 @@ impl ServersWrite {
         }
         Ok(())
     }
+}
+
+/// A deployed app's server as a read shows it: what the app says, and its id.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppServer {
+    pub id: String,
+    #[serde(flatten)]
+    pub app: crate::stacks::mcp::AppMcp,
+}
+
+/// The deployed apps' servers, an address an admin added left to theirs.
+pub async fn app_servers(state: &AppState) -> Vec<AppServer> {
+    let own: Vec<String> = load(&state.db).await.unwrap_or_default().into_iter().map(|s| s.id).collect();
+    crate::stacks::mcp::servers(state)
+        .await
+        .into_iter()
+        .map(|app| AppServer { id: pi_mcp::server_id(&app.url), app })
+        .filter(|s| !own.contains(&s.id))
+        .collect()
 }
 
 /// Every server, in order, its headers named.
@@ -227,8 +248,20 @@ pub struct Hub {
 impl Hub {
     /// Connects to every enabled server not connected yet (or connected with
     /// other settings), and forgets the rest; answers each one's state.
-    pub async fn refresh(&self, db: &SqlitePool, fetch: Arc<dyn Fetch>) -> Vec<Status> {
-        let configs = configs(db).await.unwrap_or_default();
+    pub async fn refresh(&self, state: &AppState) -> Vec<Status> {
+        let fetch = state.agent.fetch();
+        let mut configs = configs(&state.db).await.unwrap_or_default();
+        let apps = app_servers(state).await;
+        for s in apps.iter().filter(|s| s.app.ready()) {
+            let server = Server {
+                id: s.id.clone(),
+                name: s.app.title.clone(),
+                url: s.app.url.clone(),
+                enabled: true,
+                headers: s.app.header.iter().map(|(name, _)| name.clone()).collect(),
+            };
+            configs.push((server, McpServerConfig { url: s.app.url.clone(), headers: s.app.header.clone().into_iter().collect() }));
+        }
         let mut connections = self.connections.lock().await;
         connections.retain(|id, _| configs.iter().any(|(s, _)| &s.id == id));
         let wanted: Vec<_> = configs
@@ -265,6 +298,17 @@ impl Hub {
             }
         }
         let errors = self.errors.locked();
+        let waiting = apps.iter().filter(|s| s.app.enabled && !s.app.ready()).map(|s| Status {
+            id: s.id.clone(),
+            connected: false,
+            label: None,
+            tools: Vec::new(),
+            error: Some(match s.app.credential {
+                crate::stacks::mcp::Credential::Asked { .. } => "needsToken".into(),
+                crate::stacks::mcp::Credential::OAuth => "needsSignIn".into(),
+                _ => "noCredential".into(),
+            }),
+        });
         configs
             .iter()
             .map(|(s, _)| match connections.get(&s.id) {
@@ -281,6 +325,7 @@ impl Hub {
                 },
                 None => Status { id: s.id.clone(), connected: false, label: None, tools: Vec::new(), error: errors.get(&s.id).cloned() },
             })
+            .chain(waiting)
             .collect()
     }
 
@@ -292,8 +337,7 @@ impl Hub {
     /// The tools of every connected server for [flow], each through the
     /// task's permissions, and what the servers say about using them.
     pub(crate) async fn tools_for(&self, state: &Arc<AppState>, flow: &Arc<Flow>) -> (Vec<Arc<dyn Tool>>, Option<String>) {
-        let fetch = state.agent.fetch();
-        self.refresh(&state.db, fetch).await;
+        self.refresh(state).await;
         let connections = self.connections.lock().await;
         let mut tools: Vec<Arc<dyn Tool>> = Vec::new();
         let mut clients = Vec::new();

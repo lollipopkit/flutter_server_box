@@ -2,7 +2,7 @@
 /// (`stacks::manifest::Notice`).
 
 import type { TranslationFunctions } from '../../i18n/i18n-types'
-import type { StackNotice } from '../../types'
+import type { StackManifest, StackNotice } from '../../types'
 
 export function noticeText(n: StackNotice, ll: TranslationFunctions): string {
   switch (n) {
@@ -25,4 +25,15 @@ export function noticeText(n: StackNotice, ll: TranslationFunctions): string {
     case 'dockerSocket':
       return ll.stackNoticeDockerSocket()
   }
+}
+
+/// What Agent mode gets from the app, in words: a sidecar says whose code it
+/// is, a community one that it holds the app's credential.
+export function mcpNotices(manifest: StackManifest, ll: TranslationFunctions): string[] {
+  return (manifest.mcp ?? []).map((m) => {
+    const source = m.source ?? manifest.source
+    if (m.publisher === 'community') return ll.stackNoticeMcpCommunity({ source })
+    if (m.publisher === 'official') return ll.stackNoticeMcpOfficial({ source })
+    return ll.stackNoticeMcpBuiltin()
+  })
 }

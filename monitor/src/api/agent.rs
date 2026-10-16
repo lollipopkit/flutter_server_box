@@ -364,8 +364,9 @@ pub async fn choices(req: HttpRequest, state: web::types::State<Arc<AppState>>) 
 async fn mcp_answer(state: &AppState) -> HttpResponse {
     match crate::agent_mode::mcp::load(&state.db).await {
         Ok(servers) => {
-            let status = state.agent.mcp.refresh(&state.db, state.agent.fetch()).await;
-            HttpResponse::Ok().json(&serde_json::json!({ "servers": servers, "status": status }))
+            let status = state.agent.mcp.refresh(state).await;
+            let apps = crate::agent_mode::mcp::app_servers(state).await;
+            HttpResponse::Ok().json(&serde_json::json!({ "servers": servers, "apps": apps, "status": status }))
         }
         Err(e) => refused(e.into()),
     }
@@ -393,6 +394,63 @@ pub async fn put_mcp(
     Event::new(Kind::Agent, Action::Write, Outcome::Ok)
         .remote_ip(peer_ip(&req))
         .detail(format!("mcp: {}", w.servers.iter().map(|s| s.url.as_str()).collect::<Vec<_>>().join(", ")))
+        .record(&state.db)
+        .await;
+    Ok(mcp_answer(&state).await)
+}
+
+/// What changes about a deployed app's MCP server: on or off, and the token
+/// it asks for (`null` removes it, absent keeps it).
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AppServerWrite {
+    #[serde(default)]
+    pub enabled: Option<bool>,
+    #[serde(default, deserialize_with = "present")]
+    pub token: Option<Option<String>>,
+}
+
+/// A field that is there, `null` included: `Some(None)` for `null`, and
+/// `None` (by `default`) when absent.
+fn present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<Option<String>>, D::Error> {
+    <Option<String> as serde::Deserialize>::deserialize(d).map(Some)
+}
+
+pub async fn put_mcp_app(
+    req: HttpRequest,
+    path: web::types::Path<(String, usize)>,
+    body: web::types::Json<AppServerWrite>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    require!(authz::acting_caller(&req, &state).await);
+    let (stack, index) = path.into_inner();
+    let w = body.into_inner();
+    let known = crate::stacks::mcp::servers(&state).await.into_iter().find(|s| s.stack == stack && s.index == index);
+    let Some(server) = known else {
+        return Ok(HttpResponse::NotFound().json(&serde_json::json!({ "error": "notFound" })));
+    };
+    if let Some(Some(token)) = &w.token
+        && (!matches!(server.credential, crate::stacks::mcp::Credential::Asked { .. }) || !crate::agent_mode::mcp::header_value_ok(token.trim()))
+    {
+        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalid", "reason": "token" })));
+    }
+    let token = w.token.as_ref().map(|t| t.as_deref().map(str::trim));
+    if let Err(e) = crate::stacks::store::set_mcp_use(&state.db, &stack, index, w.enabled, token).await {
+        return Ok(refused(e.into()));
+    }
+    // Which server and what changed, never the token.
+    let mut what = Vec::new();
+    if let Some(on) = w.enabled {
+        what.push(if on { "on" } else { "off" });
+    }
+    match &w.token {
+        Some(Some(_)) => what.push("token set"),
+        Some(None) => what.push("token removed"),
+        None => {}
+    }
+    Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+        .remote_ip(peer_ip(&req))
+        .detail(format!("mcp: {stack} #{index} {}", what.join(", ")))
         .record(&state.db)
         .await;
     Ok(mcp_answer(&state).await)

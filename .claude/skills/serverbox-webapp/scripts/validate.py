@@ -214,6 +214,17 @@ def service_block(compose: str, name: str) -> list[str] | None:
 PINNED = re.compile(r"^.+@sha256:[0-9a-fA-F]{64}$")
 
 
+def published_entries(line: str) -> list[str]:
+    """The entries a compose line lists: `- "a:b"`, or `ports: ['a:b', 'c:d']`."""
+    line = line.strip()
+    if line.startswith("ports:"):
+        line = line[len("ports:"):].strip()
+    line = line.removeprefix("- ")
+    if line.startswith("[") and line.endswith("]"):
+        line = line[1:-1]
+    return [e.strip().strip("'\"") for e in line.split(",") if e.strip()]
+
+
 def check_mcp(m: dict, settings: list, texts: dict[str, str], rep: Report) -> None:
     """[[mcp]]: as `stacks::manifest` checks it (the schema covers the shape)."""
     secrets = {s.get("env") for s in m.get("secrets", [])}
@@ -237,7 +248,7 @@ def check_mcp(m: dict, settings: list, texts: dict[str, str], rep: Report) -> No
             rep.error(f"{at}.service: {service}: an image pinned by digest (@sha256:…)")
         if port is not None:
             ref = "${" + port.get("env", "") + "}"
-            published = [l.strip().removeprefix("- ").strip("'\"") for l in block if ref in l]
+            published = [e for l in block for e in published_entries(l) if ref in e]
             if not published or any(not l.startswith("127.0.0.1:") for l in published):
                 rep.error(f"{at}.service: {service}: publishes {ref} on 127.0.0.1 alone")
 
