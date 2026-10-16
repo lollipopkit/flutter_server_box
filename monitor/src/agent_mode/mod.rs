@@ -51,12 +51,12 @@ use zeroize::Zeroizing;
 use crate::utils::lock::LockExt;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use fl_pi_llm::host::memory::Memory;
-use fl_pi_llm::host::{Cancel, Config as PiConfig, OpenSession, ReqwestFetch, Runtime, Session};
+use fl_pi_llm::host::{BoxFuture, Cancel, Config as PiConfig, OpenSession, ReqwestFetch, Runtime, Session};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
@@ -326,7 +326,7 @@ pub struct AgentMode {
     dir: PathBuf,
     /// Removed with this value: the directory made for an in-memory database.
     owned: bool,
-    fetch: Arc<ReqwestFetch>,
+    fetch: Arc<AgentFetch>,
     runtime: tokio::sync::Mutex<Option<Runtime>>,
     /// Held for writing while the endpoints' models are listed: a model one
     /// lists is pi's only once listed, so what runs one waits
@@ -361,6 +361,33 @@ pub struct AgentMode {
     pub skills_root: PathBuf,
 }
 
+/// Agent mode's network: [`ReqwestFetch`], kept to this machine when asked
+/// ([`AgentMode::reach_this_machine_only`]).
+struct AgentFetch {
+    inner: ReqwestFetch,
+    this_machine_only: AtomicBool,
+}
+
+impl AgentFetch {
+    fn set_insecure_origins(&self, origins: Vec<String>) {
+        self.inner.set_insecure_origins(origins);
+    }
+}
+
+impl fl_pi_llm::host::Fetch for AgentFetch {
+    fn fetch(&self, req: fl_pi_llm::host::FetchRequest) -> BoxFuture<'_, Result<fl_pi_llm::host::FetchResponse, String>> {
+        if self.this_machine_only.load(Ordering::Relaxed) {
+            let local = url::Url::parse(&req.url).ok().and_then(|u| u.host_str().map(String::from)).is_some_and(|h| {
+                h == "localhost" || h.trim_matches(['[', ']']).parse::<std::net::IpAddr>().is_ok_and(|ip| ip.is_loopback())
+            });
+            if !local {
+                return Box::pin(async move { Err(format!("{}: this agent reaches this machine alone", req.url)) });
+            }
+        }
+        self.inner.fetch(req)
+    }
+}
+
 static TEMP: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 impl AgentMode {
@@ -388,7 +415,7 @@ impl AgentMode {
             db,
             files: files::Files::new(&dir),
             owned,
-            fetch: Arc::new(ReqwestFetch::new(client)),
+            fetch: Arc::new(AgentFetch { inner: ReqwestFetch::new(client), this_machine_only: AtomicBool::new(false) }),
             runtime: tokio::sync::Mutex::new(None),
             listing: Arc::default(),
             opening: tokio::sync::Mutex::new(()),
@@ -432,6 +459,14 @@ impl AgentMode {
     /// The network Agent mode uses: for MCP servers and skill downloads too.
     pub fn fetch(&self) -> Arc<dyn fl_pi_llm::host::Fetch> {
         self.fetch.clone()
+    }
+
+    /// From now on Agent mode reaches this machine alone: for tests, whose
+    /// models and servers are on loopback, so none depends on the internet
+    /// (a model listing's metadata, `fl_pi_llm`'s, is then left out).
+    #[doc(hidden)]
+    pub fn reach_this_machine_only(&self) {
+        self.fetch.this_machine_only.store(true, Ordering::Relaxed);
     }
 
     pub fn hostname(&self) -> &str {
