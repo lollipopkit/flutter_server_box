@@ -156,7 +156,7 @@ extension on _ServerDetailPageState {
     Widget chip(HistoryRange range) {
       final on = range == selected;
       final enabled = stored || range == HistoryRange.live;
-      return Material(
+      final body = Material(
         color: on ? scheme.secondaryContainer : Colors.transparent,
         shape: const StadiumBorder(),
         child: InkWell(
@@ -180,6 +180,8 @@ extension on _ServerDetailPageState {
           ),
         ),
       );
+      // Which window is on is drawn as a fill alone.
+      return Semantics(button: true, selected: on, child: body);
     }
 
     return Container(
@@ -220,17 +222,21 @@ extension on _ServerDetailPageState {
               ),
             ),
           if (custom != null) const SizedBox(width: 3),
-          InkWell(
-            customBorder: const StadiumBorder(),
-            onTap: () => _showRangePicker(si),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-              child: Icon(
-                Icons.date_range,
-                size: 16,
-                color: custom != null
-                    ? scheme.onSecondaryContainer
-                    : UIs.textGrey.color,
+          Semantics(
+            button: true,
+            label: libL10n.custom,
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: () => _showRangePicker(si),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                child: Icon(
+                  Icons.date_range,
+                  size: 16,
+                  color: custom != null
+                      ? scheme.onSecondaryContainer
+                      : UIs.textGrey.color,
+                ),
               ),
             ),
           ),

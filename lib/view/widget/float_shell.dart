@@ -555,21 +555,25 @@ class _PhoneShellState extends State<_PhoneShell>
               shape: const CircleBorder(),
               color: theme.colorScheme.primaryContainer,
               clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: _shell.onExpand,
-                child: SizedBox(
-                  width: _pillSize,
-                  height: _pillSize,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      ?_shell.pillOverlay,
-                      Icon(
-                        _shell.icon,
-                        color: theme.colorScheme.onPrimaryContainer,
-                        size: floatHeaderIconSize,
-                      ),
-                    ],
+              child: Semantics(
+                button: true,
+                label: _shell.title,
+                child: InkWell(
+                  onTap: _shell.onExpand,
+                  child: SizedBox(
+                    width: _pillSize,
+                    height: _pillSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        ?_shell.pillOverlay,
+                        Icon(
+                          _shell.icon,
+                          color: theme.colorScheme.onPrimaryContainer,
+                          size: floatHeaderIconSize,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

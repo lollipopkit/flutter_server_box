@@ -464,7 +464,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
     if (!opens) {
       return dot == null ? const SizedBox.shrink() : _Dot(dot);
     }
-    return InkWell(
+    final button = InkWell(
       onTap: () => setState(() => _expanded = !_expanded),
       borderRadius: BorderRadius.circular(13),
       child: Container(
@@ -490,6 +490,12 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
           ],
         ),
       ),
+    );
+    return Semantics(
+      button: true,
+      expanded: _expanded,
+      label: libL10n.more,
+      child: button,
     );
   }
 

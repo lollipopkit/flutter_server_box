@@ -232,9 +232,13 @@ final class _SettingsSearchField extends StatelessWidget {
             valueListenable: controller,
             builder: (_, value, _) {
               if (value.text.isNotEmpty) {
-                return InkWell(
-                  onTap: onClear,
-                  child: Icon(Icons.close, size: 17, color: iconColor),
+                return Semantics(
+                  button: true,
+                  label: libL10n.clear,
+                  child: InkWell(
+                    onTap: onClear,
+                    child: Icon(Icons.close, size: 17, color: iconColor),
+                  ),
                 );
               }
               // The chord, where a field that can be reached by one says so.

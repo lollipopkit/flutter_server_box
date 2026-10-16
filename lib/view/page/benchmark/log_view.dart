@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:xterm/xterm.dart';
@@ -14,6 +16,12 @@ import 'package:xterm/xterm.dart';
 ///
 /// The app already ships one (`packages/xterm`), so this is the fork the SSH
 /// pages use, in read-only mode.
+///
+/// Under a screen reader the same terminal is read back as lines of text
+/// instead: what it draws is a canvas, which a reader sees as one empty box.
+/// The terminal still does the interpreting, so the lines are the ones it
+/// would have shown — each progress step overwritten by the next, no escape
+/// codes — and they can be selected and copied.
 class BenchmarkLogView extends StatefulWidget {
   const BenchmarkLogView({super.key, required this.log, this.height = 260});
 
@@ -78,6 +86,7 @@ class _BenchmarkLogViewState extends State<BenchmarkLogView> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.accessibleNavigationOf(context)) return _buildText(context);
     return SizedBox(
       height: widget.height,
       child: ClipRRect(
@@ -94,6 +103,35 @@ class _BenchmarkLogViewState extends State<BenchmarkLogView> {
           cursorBlink: false,
           autofocus: false,
           autoResize: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildText(BuildContext context) {
+    final lines = _terminal.buffer.getText().trimRight().split('\n');
+    final scheme = Theme.of(context).colorScheme;
+    // Taller as the text grows, so a larger font still shows as many lines,
+    // and no taller than most of the screen, so the page around it can still
+    // be reached.
+    final height = math.min(
+      MediaQuery.textScalerOf(context).scale(widget.height),
+      math.max(widget.height, MediaQuery.sizeOf(context).height * 0.7),
+    );
+    return Container(
+      height: height,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: SelectionArea(
+        child: ListView.builder(
+          itemCount: lines.length,
+          itemBuilder: (_, i) => Text(
+            lines[i],
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
         ),
       ),
     );
