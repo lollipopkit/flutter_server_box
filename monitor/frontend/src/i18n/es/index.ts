@@ -1403,6 +1403,14 @@ const es = {
 	fwLog: 'Registro',
 	yes: 'Sí',
 	no: 'No',
+	skipToContent: 'Saltar al contenido',
+	arrangeCards: 'Reordenar tarjetas',
+	cardMoveEarlier: 'Mover {name} antes',
+	cardMoveLater: 'Mover {name} después',
+	cardMoved: '{name}: posición {position} de {total}',
+	historyRange: 'Rango del historial',
+	chartShowData: 'Mostrar datos',
+	chartTime: 'Hora',
 } satisfies Translation
 
 export default es

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { fly } from 'svelte/transition'
+  import { setWebuiLabels } from '@serverbox/webui'
+  import { LL } from './i18n/i18n-svelte'
   import { servers } from './lib/servers.svelte'
   import { layout } from './lib/layout.svelte'
   import Sidebar from './components/Sidebar.svelte'
@@ -25,12 +27,21 @@
   // either one gets the same page-level transition — not just Dashboard's
   // own internal card/detail switch, which has its own separate transition
   const pageKey = $derived(`${layout.view}:${servers.currentId}`)
+
+  setWebuiLabels({ close: () => $LL.close() })
 </script>
 
 <div class="min-h-screen bg-bg">
+  <!-- The sidebar's server list comes first and can be long -->
+  <a
+    href="#content"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:px-4 focus:py-2 focus:rounded-full focus:bg-fg-strong focus:text-surface"
+  >
+    {$LL.skipToContent()}
+  </a>
   <div class="flex min-h-screen">
     <Sidebar />
-    <div class="flex-1 min-w-0">
+    <div id="content" tabindex="-1" class="flex-1 min-w-0 focus:outline-hidden">
       {#key pageKey}
         {@const back = layout.navDirection === 'back'}
         <div

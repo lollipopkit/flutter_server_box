@@ -1403,6 +1403,14 @@ const ko = {
 	fwLog: '로그',
 	yes: '예',
 	no: '아니요',
+	skipToContent: '본문으로 건너뛰기',
+	arrangeCards: '카드 재배열',
+	cardMoveEarlier: '{name} 앞으로 이동',
+	cardMoveLater: '{name} 뒤로 이동',
+	cardMoved: '{name}을(를) {total}개 중 {position}번째로 이동함',
+	historyRange: '기록 범위',
+	chartShowData: '데이터 보기',
+	chartTime: '시간',
 } satisfies Translation
 
 export default ko

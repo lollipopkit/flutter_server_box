@@ -33,6 +33,7 @@
 
   let host = $state<HTMLDivElement | null>(null)
   let authKind = $state<'password' | 'key' | 'interactive'>('password')
+  const uid = $props.id()
   let user = $state('')
   let password = $state('')
   let pem = $state('')
@@ -474,7 +475,7 @@
 
             <div class="flex items-center gap-2">
               <div class="flex-1">
-                <Input bind:value={tmuxName} placeholder={$LL.terminalTmuxNewName()} />
+                <Input bind:value={tmuxName} placeholder={$LL.terminalTmuxNewName()} aria-label={$LL.terminalTmuxNewName()} />
               </div>
               <Button onclick={newTmuxSession} disabled={busy || tmuxName.trim() === ''}>
                 {$LL.terminalTmuxCreate()}
@@ -490,36 +491,39 @@
       <p class="text-sm text-muted-fg">{$LL.terminalCredentialsHint()}</p>
 
       <div class="space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.terminalAuthMethod()}</span>
-        <div class="flex gap-2">
+        <span id="{uid}-auth" class="text-sm text-muted-fg">{$LL.terminalAuthMethod()}</span>
+        <div class="flex gap-2" role="group" aria-labelledby="{uid}-auth">
           <Button
             variant={authKind === 'password' ? 'primary' : 'ghost'}
             size="sm"
+            aria-pressed={authKind === 'password'}
             onclick={() => (authKind = 'password')}>{$LL.password()}</Button
           >
           <Button
             variant={authKind === 'key' ? 'primary' : 'ghost'}
             size="sm"
+            aria-pressed={authKind === 'key'}
             onclick={() => (authKind = 'key')}>{$LL.terminalPrivateKey()}</Button
           >
           <Button
             variant={authKind === 'interactive' ? 'primary' : 'ghost'}
             size="sm"
+            aria-pressed={authKind === 'interactive'}
             onclick={() => (authKind = 'interactive')}>{$LL.terminalInteractive()}</Button
           >
         </div>
       </div>
 
-      <div class="space-y-1">
+      <label class="block space-y-1">
         <span class="text-sm text-muted-fg">{$LL.terminalSshUser()}</span>
         <Input bind:value={user} placeholder="root" autocomplete="username" />
-      </div>
+      </label>
 
       {#if authKind === 'password'}
-        <div class="space-y-1">
+        <label class="block space-y-1">
           <span class="text-sm text-muted-fg">{$LL.password()}</span>
           <Input bind:value={password} type="password" autocomplete="current-password" />
-        </div>
+        </label>
         <label class="flex items-center gap-2 text-sm text-muted-fg">
           <input type="checkbox" bind:checked={remember} />
           {$LL.terminalRememberForTab()}
@@ -535,10 +539,10 @@
             placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
           ></textarea>
         </label>
-        <div class="space-y-1">
+        <label class="block space-y-1">
           <span class="text-sm text-muted-fg">{$LL.terminalPassphrase()}</span>
           <Input bind:value={passphrase} type="password" />
-        </div>
+        </label>
       {:else}
         <p class="text-sm text-muted-fg">{$LL.terminalInteractiveHint()}</p>
       {/if}
@@ -562,10 +566,10 @@
         <p class="text-sm text-muted-fg">{session.instructions}</p>
       {/if}
       {#each session.prompts as prompt, i (i)}
-        <div class="space-y-1">
+        <label class="block space-y-1">
           <span class="text-sm text-muted-fg">{prompt.prompt}</span>
           <Input bind:value={answers[i]} type={prompt.echo ? 'text' : 'password'} />
-        </div>
+        </label>
       {/each}
       <Button onclick={submitAnswers}>{$LL.terminalSubmit()}</Button>
     </Card>

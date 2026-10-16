@@ -1403,6 +1403,14 @@ const pt = {
 	fwLog: 'Registro',
 	yes: 'Sim',
 	no: 'Não',
+	skipToContent: 'Pular para o conteúdo',
+	arrangeCards: 'Reorganizar cartões',
+	cardMoveEarlier: 'Mover {name} para antes',
+	cardMoveLater: 'Mover {name} para depois',
+	cardMoved: '{name}: posição {position} de {total}',
+	historyRange: 'Intervalo do histórico',
+	chartShowData: 'Mostrar dados',
+	chartTime: 'Hora',
 } satisfies Translation
 
 export default pt

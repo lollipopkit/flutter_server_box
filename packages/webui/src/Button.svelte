@@ -7,7 +7,8 @@
       variant: {
         primary: 'bg-fg-strong text-surface',
         secondary: 'bg-soft text-fg',
-        danger: 'bg-danger text-white',
+        // text-surface, not white: no red is 4.5:1 against both white and the dark surface
+        danger: 'bg-danger text-surface',
         ghost: 'bg-transparent text-muted-fg hover:opacity-100 hover:text-fg hover:bg-soft',
       },
       size: {

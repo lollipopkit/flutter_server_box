@@ -67,6 +67,10 @@ export async function mountTerminal(
   const term = new Terminal({
     convertEol: false,
     cursorBlink: true,
+    // Always on: a page cannot tell whether a screen reader is running. It
+    // mirrors the rows into an offscreen accessibility tree and announces
+    // new output; nothing visible changes.
+    screenReaderMode: true,
     fontSize: 13,
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     theme: terminalTheme(),

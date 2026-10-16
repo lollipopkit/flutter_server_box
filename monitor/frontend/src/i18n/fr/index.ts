@@ -1403,6 +1403,14 @@ const fr = {
 	fwLog: 'Journal',
 	yes: 'Oui',
 	no: 'Non',
+	skipToContent: 'Aller au contenu',
+	arrangeCards: 'Réorganiser les cartes',
+	cardMoveEarlier: 'Déplacer {name} avant',
+	cardMoveLater: 'Déplacer {name} après',
+	cardMoved: '{name} : position {position} sur {total}',
+	historyRange: 'Période de l’historique',
+	chartShowData: 'Afficher les données',
+	chartTime: 'Heure',
 } satisfies Translation
 
 export default fr

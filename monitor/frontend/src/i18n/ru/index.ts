@@ -1403,6 +1403,14 @@ const ru = {
 	fwLog: 'Журнал',
 	yes: 'Да',
 	no: 'Нет',
+	skipToContent: 'Перейти к содержимому',
+	arrangeCards: 'Упорядочить карточки',
+	cardMoveEarlier: 'Переместить «{name}» раньше',
+	cardMoveLater: 'Переместить «{name}» позже',
+	cardMoved: '«{name}»: позиция {position} из {total}',
+	historyRange: 'Период истории',
+	chartShowData: 'Показать данные',
+	chartTime: 'Время',
 } satisfies Translation
 
 export default ru

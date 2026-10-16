@@ -1403,6 +1403,14 @@ const it = {
 	fwLog: 'Log',
 	yes: 'Sì',
 	no: 'No',
+	skipToContent: 'Vai al contenuto',
+	arrangeCards: 'Riordina le schede',
+	cardMoveEarlier: 'Sposta {name} prima',
+	cardMoveLater: 'Sposta {name} dopo',
+	cardMoved: '{name}: posizione {position} di {total}',
+	historyRange: 'Intervallo cronologia',
+	chartShowData: 'Mostra dati',
+	chartTime: 'Ora',
 } satisfies Translation
 
 export default it

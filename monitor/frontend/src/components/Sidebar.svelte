@@ -106,7 +106,7 @@
   function statusIconCls(id: string): string {
     const h = health.status[id]
     if (h === undefined) return 'text-faint-fg'
-    return h ? 'text-green-500' : 'text-red-500'
+    return h ? 'text-success' : 'text-danger'
   }
 
   function statusTitle(id: string): string {

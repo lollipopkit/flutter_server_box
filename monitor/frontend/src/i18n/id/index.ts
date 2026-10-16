@@ -1403,6 +1403,14 @@ const id = {
 	fwLog: 'Log',
 	yes: 'Ya',
 	no: 'Tidak',
+	skipToContent: 'Lewati ke konten',
+	arrangeCards: 'Atur ulang kartu',
+	cardMoveEarlier: 'Pindahkan {name} ke depan',
+	cardMoveLater: 'Pindahkan {name} ke belakang',
+	cardMoved: '{name} dipindah ke posisi {position} dari {total}',
+	historyRange: 'Rentang riwayat',
+	chartShowData: 'Tampilkan data',
+	chartTime: 'Waktu',
 } satisfies Translation
 
 export default id

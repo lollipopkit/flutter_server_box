@@ -193,3 +193,32 @@ describe('Dashboard iperf action', () => {
     expect(await screen.findByRole('button', { name: /^iperf$/i })).toBeInTheDocument()
   })
 })
+
+describe('Dashboard card arrangement', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.currentId = 'local'
+    capabilitiesStore.byServer['local'] = caps([])
+    mocked.getMetrics.mockResolvedValue(metrics())
+    mocked.getHistory.mockResolvedValue([])
+    mocked.getCardOrder.mockResolvedValue({ card_order: [] })
+    mocked.updateCardOrder.mockResolvedValue(undefined as never)
+  })
+
+  it('moves a card from the keyboard and says where it went', async () => {
+    render(Dashboard)
+    await rendered()
+    const toggle = screen.getByRole('button', { name: 'Rearrange cards' })
+    await fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Move CPU earlier' })).toBeDisabled()
+
+    const later = screen.getByRole('button', { name: 'Move CPU later' })
+    later.focus()
+    await fireEvent.click(later)
+    expect(mocked.updateCardOrder.mock.calls[0][0].slice(0, 2)).toEqual(['memory', 'cpu'])
+    expect(await screen.findByText(/^CPU moved to position 2 of \d+$/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Move CPU later' })).toHaveFocus()
+  })
+})

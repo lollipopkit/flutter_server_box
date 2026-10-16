@@ -4,7 +4,7 @@
 import type { Locales } from './i18n-types.js'
 import { isLocale, locales } from './i18n-util.js'
 import { loadAllLocales } from './i18n-util.sync.js'
-import { setLocale } from './i18n-svelte.js'
+import { locale, setLocale } from './i18n-svelte.js'
 
 // Map Chinese script and region variants to the supported Simplified or
 // Traditional Chinese locale.
@@ -49,3 +49,8 @@ export function persistLocale(locale: Locales) {
 
 loadAllLocales()
 setLocale(detectLocale())
+// Screen readers pick the voice from <html lang>, which index.html can only
+// state once
+locale.subscribe((l) => {
+	if (l) document.documentElement.lang = l
+})

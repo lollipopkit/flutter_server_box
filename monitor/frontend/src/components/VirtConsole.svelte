@@ -88,6 +88,8 @@
       (theme.current === 'system' && (window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false))
     term = new Terminal({
       cursorBlink: true,
+      // As in lib/xterm.ts: whether a screen reader runs cannot be known.
+      screenReaderMode: true,
       fontSize: 13,
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
       theme: dark

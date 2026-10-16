@@ -1403,6 +1403,14 @@ const zh_CN = {
 	fwLog: '日志',
 	yes: '是',
 	no: '否',
+	skipToContent: '跳到主要内容',
+	arrangeCards: '调整卡片顺序',
+	cardMoveEarlier: '将{name}前移',
+	cardMoveLater: '将{name}后移',
+	cardMoved: '{name}已移到第 {position} 位，共 {total} 位',
+	historyRange: '历史范围',
+	chartShowData: '显示数据',
+	chartTime: '时间',
 } satisfies Translation
 
 export default zh_CN

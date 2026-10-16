@@ -1403,6 +1403,14 @@ const uk = {
 	fwLog: 'Журнал',
 	yes: 'Так',
 	no: 'Ні',
+	skipToContent: 'Перейти до вмісту',
+	arrangeCards: 'Упорядкувати картки',
+	cardMoveEarlier: 'Перемістити «{name}» раніше',
+	cardMoveLater: 'Перемістити «{name}» пізніше',
+	cardMoved: '«{name}»: позиція {position} з {total}',
+	historyRange: 'Період історії',
+	chartShowData: 'Показати дані',
+	chartTime: 'Час',
 } satisfies Translation
 
 export default uk
