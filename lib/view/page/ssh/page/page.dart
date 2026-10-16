@@ -784,13 +784,21 @@ class SSHPageState extends ConsumerState<SSHPage>
     ];
   }
 
-  /// The background image at [path], or null when there is none: looked up
-  /// once per path, not on every build of a page that rebuilds as it draws.
+  /// The background image at [path], or null while there is none: looked up
+  /// once per path (each picture gets a path of its own), off the UI isolate,
+  /// the page drawn again when it is found.
   File? _bgFileFor(String path) {
     if (path != _bgPath) {
       _bgPath = path;
-      final file = path.isEmpty ? null : File(path);
-      _bgFile = file != null && file.existsSync() ? file : null;
+      _bgFile = null;
+      if (path.isNotEmpty) {
+        final file = File(path);
+        unawaited(
+          file.exists().then((found) {
+            if (found && mounted && _bgPath == path) setState(() => _bgFile = file);
+          }),
+        );
+      }
     }
     return _bgFile;
   }
