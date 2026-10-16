@@ -6,6 +6,10 @@
 #   (`sbm-immich`), so an Immich the user runs already does not collide;
 # - the published address and port, and the hardware acceleration backends
 #   (`hwaccel.*.yml`, unmodified), come from the env file the agent writes.
+# - mcp: drolosoft/immich-photo-manager 2.0.13 (MIT), Agent mode's MCP server,
+#   with the API key set in the app's settings, unpublished, behind mcp-gate
+#   (nginx, mcp-gate.conf.template), which alone is published on loopback and
+#   asks for the token the agent holds.
 
 services:
   immich-server:
@@ -60,6 +64,29 @@ services:
     restart: always
     healthcheck:
       disable: false
+
+  mcp:
+    image: ghcr.io/drolosoft/immich-photo-manager:2.0.13@sha256:2087e460c2b114a87649d3b6d57c87e72a77900f016fd86052279aaf4e2020b8
+    environment:
+      IMMICH_BASE_URL: http://immich-server:2283
+      IMMICH_API_KEY: ${IMMICH_MCP_API_KEY:-}
+      # Reached through the gate, which names it so.
+      MCP_ALLOWED_HOSTS: mcp:8626
+    depends_on:
+      - immich-server
+    restart: always
+
+  mcp-gate:
+    image: nginx:1.29.8-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    environment:
+      MCP_TOKEN: ${MCP_TOKEN}
+    volumes:
+      - ./mcp-gate.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    depends_on:
+      - mcp
+    restart: always
 
 volumes:
   model-cache:

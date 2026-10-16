@@ -15,10 +15,10 @@ macro_rules! app {
 
 /// Every built-in app's files, by app id.
 const FILES: &[(&str, &[(&str, &str)])] = &[
-    app!("adguard.adguard_home": "manifest.toml", "compose.yaml"),
+    app!("adguard.adguard_home": "manifest.toml", "compose.yaml", "mcp-gate.conf.template"),
     app!("coder.code_server": "manifest.toml", "compose.yaml"),
     app!("freshrss.freshrss": "manifest.toml", "compose.yaml"),
-    app!("futo.immich": "manifest.toml", "compose.yaml", "hwaccel.ml.yml", "hwaccel.transcoding.yml"),
+    app!("futo.immich": "manifest.toml", "compose.yaml", "hwaccel.ml.yml", "hwaccel.transcoding.yml", "mcp-gate.conf.template"),
     app!("gotson.komga": "manifest.toml", "compose.yaml"),
     app!("homeassistant.home_assistant": "manifest.toml", "compose.yaml"),
     app!("janeczku.calibre_web": "manifest.toml", "compose.yaml"),
@@ -31,7 +31,7 @@ const FILES: &[(&str, &[(&str, &str)])] = &[
     app!("qbittorrent.qbittorrent": "manifest.toml", "compose.yaml"),
     app!("stirling.pdf": "manifest.toml", "compose.yaml"),
     app!("syncthing.syncthing": "manifest.toml", "compose.yaml"),
-    app!("transmission.transmission": "manifest.toml", "compose.yaml"),
+    app!("transmission.transmission": "manifest.toml", "compose.yaml", "mcp-gate.conf.template"),
     app!("usememos.memos": "manifest.toml", "compose.yaml"),
     app!("vaultwarden.server": "manifest.toml", "compose.yaml"),
 ];

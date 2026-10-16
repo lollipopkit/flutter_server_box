@@ -6,7 +6,10 @@
 # - no `name:` and no `container_name`: the agent names the project;
 # - PUID/PGID/TZ come from the agent (SBM_UID, SBM_GID, SBM_TZ);
 # - USER/PASS switch on the web interface's password (see manifest [login]);
-# - PEERPORT makes the container listen on the published peer port.
+# - PEERPORT makes the container listen on the published peer port;
+# - mcp: lexfrei/mcp-transmission 0.1.0 (BSD-3-Clause), Agent mode's MCP server,
+#   unpublished, behind mcp-gate (nginx, mcp-gate.conf.template), which alone is
+#   published on loopback and asks for the token the agent holds.
 
 services:
   transmission:
@@ -31,3 +34,27 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  mcp:
+    image: ghcr.io/lexfrei/mcp-transmission:0.1.0@sha256:8a0dc187b3fb7cced2260848394e63f5c28404991a4ec0f514e87651284b3f10
+    environment:
+      TRANSMISSION_URL: http://transmission:9091/transmission/rpc
+      TRANSMISSION_USERNAME: ${TRANSMISSION_USER}
+      TRANSMISSION_PASSWORD: ${TRANSMISSION_PASS}
+      MCP_HTTP_PORT: "8080"
+      MCP_HTTP_HOST: 0.0.0.0
+    depends_on:
+      - transmission
+    restart: unless-stopped
+
+  mcp-gate:
+    image: nginx:1.29.8-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    environment:
+      MCP_TOKEN: ${MCP_TOKEN}
+    volumes:
+      - ./mcp-gate.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    depends_on:
+      - mcp
+    restart: unless-stopped

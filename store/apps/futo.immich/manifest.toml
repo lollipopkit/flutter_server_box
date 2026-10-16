@@ -53,6 +53,11 @@ DB_DATABASE_NAME = "immich"
 env = "DB_PASSWORD"
 length = 32
 
+# What Agent mode's MCP server is asked with, through the gate (mcp-gate).
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
 [[settings]]
 key = "library"
 type = "path"
@@ -188,3 +193,34 @@ optional = true
 pattern = "^[A-Za-z0-9/_+-]{1,64}$"
 label = { en = "Time zone", zh = "时区", zh-TW = "時區" }
 help = { en = "A TZ database name such as Asia/Shanghai; the host's when empty.", zh = "TZ 数据库名称，例如 Asia/Shanghai；留空时使用主机的时区。", zh-TW = "TZ 資料庫名稱，例如 Asia/Taipei；留空時使用主機的時區。" }
+
+# Agent mode's MCP server, on loopback alone: kept to this machine.
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 8626
+label = { en = "Agent mode port", zh = "Agent 模式端口", zh-TW = "Agent 模式連接埠" }
+help = { en = "Where Agent mode reaches Immich's MCP server, on this machine only.", zh = "Agent 模式访问 Immich 的 MCP 服务器的端口，仅限本机。", zh-TW = "Agent 模式存取 Immich 的 MCP 伺服器的連接埠，僅限本機。" }
+
+# Immich makes API keys only for an account: set once the admin has one.
+[[settings]]
+key = "mcp_api_key"
+type = "text"
+env = "IMMICH_MCP_API_KEY"
+optional = true
+pattern = "[A-Za-z0-9]{20,128}"
+label = { en = "API key for Agent mode", zh = "供 Agent 模式使用的 API 密钥", zh-TW = "供 Agent 模式使用的 API 金鑰" }
+help = { en = "In Immich, open Account Settings > API Keys, create a key, and set it here. Agent mode acts in the library with it.", zh = "在 Immich 中打开「账户设置 > API 密钥」，创建一个密钥并填在这里。Agent 模式会用它操作图库。", zh-TW = "在 Immich 中開啟「帳戶設定 > API 金鑰」，建立一個金鑰並填在這裡。Agent 模式會用它操作圖庫。" }
+
+# A community MCP server (drolosoft/immich-photo-manager) beside Immich, with
+# the API key above, behind a gate that asks for MCP_TOKEN.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "community"
+service = "mcp-gate"
+source = "https://github.com/drolosoft/immich-photo-manager/tree/v2.0.13"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

@@ -68,3 +68,13 @@ label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW
 help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
 on = { MEMOS_WEB_BIND = "0.0.0.0" }
 off = { MEMOS_WEB_BIND = "127.0.0.1" }
+
+# Memos' own MCP server (since 0.27), asked with a personal access token the
+# admin makes once signed up.
+[[mcp]]
+port = "port"
+path = "/mcp"
+publisher = "builtin"
+[mcp.auth]
+scheme = "Bearer"
+asked = { en = "In Memos, open Settings > My Account > Personal Access Tokens, create a token, and paste it here.", zh = "在 Memos 中打开「设置 > 我的账号 > 个人访问令牌」，创建一个令牌并粘贴到这里。", zh-TW = "在 Memos 中開啟「設定 > 我的帳號 > 個人存取權杖」，建立一個權杖並貼到這裡。" }

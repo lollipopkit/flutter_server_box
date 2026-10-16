@@ -169,15 +169,23 @@ A sidecar joins the app's compose file:
 
 - its image pinned by digest (`ghcr.io/…/mcp@sha256:…`), so what holds the
   credential never changes under the app;
-- its own port setting, published on `127.0.0.1` alone
-  (`"127.0.0.1:${MCP_PORT}:8080"`): it answers anyone who reaches it with the
-  service's credential;
 - the service by its compose name on the stack's network
-  (`http://app:8080`), and the credential from the env file.
+  (`http://app:8080`), and the credential from the env file;
+- its own port setting, published on `127.0.0.1` alone
+  (`"127.0.0.1:${MCP_PORT}:8080"`);
+- a token of its own (a `[[secrets]]` entry, `auth.secret`): loopback is
+  every local account and container, and the sidecar holds the service's
+  credential. A sidecar that checks a bearer token itself takes it from env
+  (Jellyfin's `HTTP_TOKEN`); one that does not stays unpublished behind
+  `mcp-gate`, nginx checking the header and proxying to it
+  (`store/apps/transmission.transmission/mcp-gate.conf.template`), and
+  `service = "mcp-gate"`.
 
 Prefer a credential the agent knows at deploy (`secret`: a key the service
-reads from env, a password it is seeded with); `asked` when only the service
-can make one.
+reads from env, a password it is seeded with). A service that makes its API
+keys only once set up takes one as an optional `text` setting the sidecar
+reads, set by the admin afterwards (Immich, Jellyfin; a sidecar that exits
+without one waits instead, as Jellyfin's does). `asked` is for a token the service's own server takes.
 
 ## The env file
 

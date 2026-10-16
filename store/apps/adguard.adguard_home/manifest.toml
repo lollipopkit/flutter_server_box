@@ -52,6 +52,11 @@ CADDY_VERSION = "2.11.7-alpine"
 env = "ADMIN_PASSWORD"
 length = 32
 
+# What Agent mode's MCP server is asked with, through the gate (mcp-gate).
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
 [[settings]]
 key = "config"
 type = "path"
@@ -94,3 +99,24 @@ default = 53
 protocol = "both"
 label = { en = "DNS port (TCP and UDP)", zh = "DNS 端口（TCP 和 UDP）", zh-TW = "DNS 連接埠（TCP 與 UDP）" }
 help = { en = "For DNS queries from other devices. The host port must be free; systemd-resolved commonly occupies port 53.", zh = "供其他设备发送 DNS 查询使用。主机端口必须空闲；systemd-resolved 通常会占用 53 端口。", zh-TW = "供其他裝置傳送 DNS 查詢使用。主機連接埠必須空閒；systemd-resolved 通常會佔用 53 連接埠。" }
+
+# Agent mode's MCP server, on loopback alone: kept to this machine.
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 3005
+label = { en = "Agent mode port", zh = "Agent 模式端口", zh-TW = "Agent 模式連接埠" }
+help = { en = "Where Agent mode reaches AdGuard Home's MCP server, on this machine only.", zh = "Agent 模式访问 AdGuard Home 的 MCP 服务器的端口，仅限本机。", zh-TW = "Agent 模式存取 AdGuard Home 的 MCP 伺服器的連接埠，僅限本機。" }
+
+# A community MCP server (Samik081/mcp-adguard-home) beside AdGuard Home,
+# signed in as the seeded admin, behind a gate that asks for MCP_TOKEN.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "community"
+service = "mcp-gate"
+source = "https://github.com/Samik081/mcp-adguard-home/tree/v0.8.0"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

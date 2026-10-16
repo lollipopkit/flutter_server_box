@@ -52,6 +52,11 @@ TRANSMISSION_USER = "admin"
 env = "TRANSMISSION_PASS"
 length = 32
 
+# What Agent mode's MCP server is asked with, through the gate (mcp-gate).
+[[secrets]]
+env = "MCP_TOKEN"
+length = 48
+
 [login]
 user = "admin"
 password = "TRANSMISSION_PASS"
@@ -101,3 +106,24 @@ default = 51413
 protocol = "both"
 label = { en = "Peer port (TCP and UDP)", zh = "对等端口（TCP 和 UDP）", zh-TW = "對等連接埠（TCP 與 UDP）" }
 help = { en = "Other BitTorrent peers connect here. Forward it on your router for faster downloads.", zh = "其他 BitTorrent 对等端点通过此端口连接。在路由器上转发此端口可提高下载速度。", zh-TW = "其他 BitTorrent 對等端點透過此連接埠連線。在路由器上轉送此連接埠可提高下載速度。" }
+
+# Agent mode's MCP server, on loopback alone: kept to this machine.
+[[settings]]
+key = "mcp_port"
+type = "port"
+env = "MCP_PORT"
+default = 9092
+label = { en = "Agent mode port", zh = "Agent 模式端口", zh-TW = "Agent 模式連接埠" }
+help = { en = "Where Agent mode reaches Transmission's MCP server, on this machine only.", zh = "Agent 模式访问 Transmission 的 MCP 服务器的端口，仅限本机。", zh-TW = "Agent 模式存取 Transmission 的 MCP 伺服器的連接埠，僅限本機。" }
+
+# A community MCP server (lexfrei/mcp-transmission) beside Transmission,
+# behind a gate that asks for MCP_TOKEN, so only Agent mode reaches it.
+[[mcp]]
+port = "mcp_port"
+path = "/mcp"
+publisher = "community"
+service = "mcp-gate"
+source = "https://github.com/lexfrei/mcp-transmission/tree/v0.1.0"
+[mcp.auth]
+scheme = "Bearer"
+secret = "MCP_TOKEN"

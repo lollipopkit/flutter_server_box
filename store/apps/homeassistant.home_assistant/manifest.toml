@@ -45,7 +45,7 @@ HA_VERSION = "2026.10.1"
 [login]
 # Home Assistant has no seeded admin: the first start shows an onboarding wizard
 # that creates the owner account (an administrator) in the browser.
-note = { en = "No account is seeded: on first start the onboarding wizard in the window creates the owner (administrator) account. To let Agent mode use it, add the Model Context Protocol Server integration, create a long-lived access token in your profile, and add http://127.0.0.1:8123/api/mcp with the header Authorization: Bearer <token> under Settings > Agent > MCP servers.", zh = "不预设账户：首次启动时，窗口中的引导向导会创建所有者（管理员）账户。若要让 Agent 模式使用它：添加「Model Context Protocol Server」集成，在个人资料中创建长期访问令牌，然后在「设置 > Agent > MCP 服务器」添加 http://127.0.0.1:8123/api/mcp，请求头 Authorization: Bearer <令牌>。", zh-TW = "不預設帳號：首次啟動時，視窗中的引導精靈會建立擁有者（管理員）帳號。若要讓 Agent 模式使用它：新增「Model Context Protocol Server」整合，在個人資料中建立長期存取權杖，然後在「設定 > Agent > MCP 伺服器」新增 http://127.0.0.1:8123/api/mcp，請求標頭 Authorization: Bearer <權杖>。" }
+note = { en = "No account is seeded: on first start the onboarding wizard in the window creates the owner (administrator) account. To let Agent mode use it, add the Model Context Protocol Server integration in Home Assistant, then sign in to it under Settings > Agent > MCP servers.", zh = "不预设账户：首次启动时，窗口中的引导向导会创建所有者（管理员）账户。若要让 Agent 模式使用它：在 Home Assistant 中添加「Model Context Protocol Server」集成，然后在「设置 > Agent > MCP 服务器」中登录。", zh-TW = "不預設帳號：首次啟動時，視窗中的引導精靈會建立擁有者（管理員）帳號。若要讓 Agent 模式使用它：在 Home Assistant 中新增「Model Context Protocol Server」整合，然後在「設定 > Agent > MCP 伺服器」中登入。" }
 
 [[settings]]
 key = "config"
@@ -63,3 +63,13 @@ env = "HA_PORT"
 default = 8123
 label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
 help = { en = "Home Assistant's server port, set at startup (SETUP_PORT). It listens on every address.", zh = "Home Assistant 的服务端口，启动时设置（SETUP_PORT）。它监听所有地址。", zh-TW = "Home Assistant 的服務連接埠，啟動時設定（SETUP_PORT）。它監聽所有位址。" }
+
+# Home Assistant's own MCP server (the Model Context Protocol Server
+# integration, added in Home Assistant), signed in to with OAuth: its 401 names
+# its metadata, and it takes the agent's address as the client (IndieAuth).
+[[mcp]]
+port = "port"
+path = "/api/mcp"
+publisher = "builtin"
+[mcp.auth]
+oauth = true

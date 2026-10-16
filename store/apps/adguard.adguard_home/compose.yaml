@@ -3,6 +3,10 @@
 # - the setup config is seeded once by seed-config with Caddy's pinned bcrypt hash command;
 # - no project/container name is fixed; the Monitor supplies the Compose project name;
 # - AdGuard Home has no bundled healthcheck; BusyBox wget from the Alpine base image asks the web server.
+# - mcp: Samik081/mcp-adguard-home 0.8.0 (MIT), Agent mode's MCP server signed
+#   in as the seeded admin, unpublished, behind mcp-gate (nginx,
+#   mcp-gate.conf.template), which alone is published on loopback and asks for
+#   the token the agent holds.
 
 services:
   seed-config:
@@ -60,3 +64,27 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  mcp:
+    image: ghcr.io/samik081/mcp-adguard-home:0.8.0@sha256:8b4ab376a1e4f9e6a05d7b4d6bc50dbed004f1290da60c6ca22d9dab453df3a8
+    environment:
+      MCP_TRANSPORT: http
+      MCP_PORT: "3000"
+      ADGUARD_URL: http://adguard-home:80
+      ADGUARD_USERNAME: admin
+      ADGUARD_PASSWORD: ${ADMIN_PASSWORD}
+    depends_on:
+      - adguard-home
+    restart: unless-stopped
+
+  mcp-gate:
+    image: nginx:1.29.8-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    environment:
+      MCP_TOKEN: ${MCP_TOKEN}
+    volumes:
+      - ./mcp-gate.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - '127.0.0.1:${MCP_PORT}:8080'
+    depends_on:
+      - mcp
+    restart: unless-stopped
