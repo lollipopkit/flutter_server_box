@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:xterm/core.dart';
 
@@ -239,19 +238,47 @@ final class TerminalTranscript {
   /// line of [before] may also be left out of the tail — it is the one typed
   /// on or redrawn, and may have changed since.
   static int droppedByReflow(List<String> before, List<String> after) {
-    bool tailMatches(int end, int m) {
-      for (var i = 0; i < m; i++) {
-        if (before[end - m + i] != after[i]) return false;
-      }
-      return true;
-    }
+    if (before.isEmpty || after.isEmpty) return before.length;
+    final fail = _failure(after);
+    final whole = _overlap(before, before.length, after, fail);
+    final settled = _overlap(before, before.length - 1, after, fail);
+    if (whole == 0 && settled == 0) return before.length;
+    return whole >= settled
+        ? before.length - whole
+        : before.length - 1 - settled;
+  }
 
-    for (var m = math.min(before.length, after.length); m > 0; m--) {
-      if (tailMatches(before.length, m)) return before.length - m;
-      if (m < before.length && tailMatches(before.length - 1, m)) {
-        return before.length - 1 - m;
+  /// KMP's failure function over [pattern]: for each prefix, the length of
+  /// its longest proper prefix that is also its suffix.
+  static List<int> _failure(List<String> pattern) {
+    final fail = List.filled(pattern.length, 0);
+    var k = 0;
+    for (var i = 1; i < pattern.length; i++) {
+      while (k > 0 && pattern[i] != pattern[k]) {
+        k = fail[k - 1];
       }
+      if (pattern[i] == pattern[k]) k++;
+      fail[i] = k;
     }
-    return before.length;
+    return fail;
+  }
+
+  /// The length of the longest tail of `text[0, end)` that [pattern] begins
+  /// with, in one pass over the text.
+  static int _overlap(
+    List<String> text,
+    int end,
+    List<String> pattern,
+    List<int> fail,
+  ) {
+    var q = 0;
+    for (var i = 0; i < end; i++) {
+      if (q == pattern.length) q = fail[q - 1];
+      while (q > 0 && text[i] != pattern[q]) {
+        q = fail[q - 1];
+      }
+      if (text[i] == pattern[q]) q++;
+    }
+    return q;
   }
 }

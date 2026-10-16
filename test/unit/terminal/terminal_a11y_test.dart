@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/ssh/terminal_a11y.dart';
@@ -176,6 +178,53 @@ void main() {
       // The last line was redrawn since.
       expect(dropped(['a', 'b', r'$ l'], ['a', 'b', r'$ ls']), 0);
       expect(dropped(['a', 'b'], ['c']), 2);
+    });
+
+    test('droppedByReflow agrees with trying every overlap', () {
+      // The quadratic version it replaced, as the reference.
+      int reference(List<String> before, List<String> after) {
+        bool tail(int end, int m) {
+          for (var i = 0; i < m; i++) {
+            if (before[end - m + i] != after[i]) return false;
+          }
+          return true;
+        }
+
+        for (var m = math.min(before.length, after.length); m > 0; m--) {
+          if (tail(before.length, m)) return before.length - m;
+          if (m < before.length && tail(before.length - 1, m)) {
+            return before.length - 1 - m;
+          }
+        }
+        return before.length;
+      }
+
+      final random = math.Random(1528);
+      List<String> lines(int n) => [
+        for (var i = 0; i < n; i++) ['', 'a', 'b'][random.nextInt(3)],
+      ];
+      for (var run = 0; run < 2000; run++) {
+        final before = lines(random.nextInt(9));
+        final after = lines(random.nextInt(9));
+        expect(
+          TerminalTranscript.droppedByReflow(before, after),
+          reference(before, after),
+          reason: '$before / $after',
+        );
+      }
+    });
+
+    test('droppedByReflow is linear', () {
+      final before = [for (var i = 0; i < 10000; i++) 'old $i'];
+      final after = [for (var i = 0; i < 10000; i++) 'new $i'];
+      final watch = Stopwatch()..start();
+      expect(TerminalTranscript.droppedByReflow(before, after), 10000);
+      final repeated = List.filled(10000, 'x');
+      expect(
+        TerminalTranscript.droppedByReflow(repeated, [...repeated, 'y']),
+        0,
+      );
+      expect(watch.elapsedMilliseconds, lessThan(200));
     });
 
     test('a wrapped row is joined to the line it continues', () {
