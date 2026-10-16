@@ -108,7 +108,8 @@ ensure_agent() {
 	fi
 	cmd=install
 	if [ -f "$unit" ]; then
-		if [ -s "$APP_DIR/server_box_monitor" ]; then
+		# Run, not only found: a copy cut off by a power loss is not empty.
+		if "$APP_DIR/server_box_monitor" --version >/dev/null 2>&1; then
 			# Installed, but its certificate was made again: it is read at start.
 			[ -n "${NEW_CERT:-}" ] || return 0
 			if [ "$INIT" = openrc ]; then
