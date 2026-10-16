@@ -14,6 +14,7 @@ const fr: Translation = {
     docs: 'Documentation',
     themes: 'Thèmes',
     plugins: 'Plugins',
+    monitor: 'Monitor',
     languageLabel: 'Langue',
   },
   hero: {
@@ -145,6 +146,139 @@ const fr: Translation = {
     features: 'Fonctions',
     capabilities: 'Capacités',
     releases: 'Versions',
+  },
+  monitor: {
+    meta: {
+      title: 'ServerBox Monitor — l’agent qui veille sur votre serveur',
+      description: 'ServerBox Monitor tourne sur votre serveur : il garde l’historique de l’état, envoie des alertes sur votre téléphone, alimente les widgets et l’app Watch, et sert un panneau web.',
+    },
+    nav: {
+      why: 'Pourquoi un agent',
+      panel: 'Panneau web',
+      alerts: 'Alertes',
+      access: 'Accès',
+      install: 'Installer',
+    },
+    hero: {
+      eyebrow: 'ServerBox Monitor',
+      title: 'Un relevé toutes les 7 secondes. Gardé. Envoyé à votre téléphone.',
+      subtitle: 'Un petit agent Rust qui tourne sur votre serveur. Il garde l’historique dans SQLite, envoie des alertes, tient à jour les widgets de ServerBox et l’app Watch, et sert un panneau web — et l’app le joint sans SSH.',
+      installLabel: 'Installer sur Linux avec systemd ou OpenRC',
+      installNote: 'Il tourne sous votre propre compte, pas en root.',
+      copy: 'Copier',
+      copied: 'Copié',
+      guide: 'Guide d’installation',
+      terminalLabel: 'L’agent en cours d’installation, puis ses relevés',
+      installed: 'installé comme service systemctl --user',
+      listening: 'à l’écoute sur 0.0.0.0:3770',
+      sampled: 'relevé',
+      cadence: 'toutes les 7 s — interval_seconds, par défaut',
+      pushLabel: 'Des alertes de l’agent sur l’écran verrouillé d’un iPhone',
+      widgetLabel: 'Un widget ServerBox alimenté par l’agent',
+    },
+    keywords: {
+      history: 'Historique SQLite',
+      push: 'Alertes push',
+      panel: 'Panneau web',
+      roles: 'Rôles et droits',
+      docker: 'Docker',
+    },
+    why: {
+      title: 'Ce que l’agent ajoute à SSH',
+      subtitle: 'SSH suffit pour regarder un serveur. L’agent continue de regarder quand vous ne le faites pas.',
+      history: {
+        title: 'L’historique d’avant l’ouverture de l’app',
+        description: 'L’agent relève l’état de lui-même et garde le résultat : les graphiques montrent la nuit où vous dormiez. La durée de conservation, c’est vous qui la fixez.',
+      },
+      alerts: {
+        title: 'Des alertes sur votre téléphone',
+        description: 'Des règles sur le CPU, la mémoire, le swap, le disque, le réseau et la température, envoyées vers iOS, Bark, ServerChan ou n’importe quel webhook.',
+      },
+      widgets: {
+        title: 'Des widgets et une Watch toujours à jour',
+        description: 'Les widgets et l’app Watch lisent l’agent : ils se mettent à jour même quand ServerBox est fermé.',
+      },
+      reach: {
+        title: 'Aucun SSH à ouvrir',
+        description: 'L’app parle à l’agent en HTTP. Utilisez-le là où SSH est injoignable, ou avec SSH sur le même serveur.',
+      },
+    },
+    panel: {
+      title: 'Un panneau web sur chaque agent',
+      subtitle: 'Chaque agent sert son propre panneau sur le port 3770. Ou hébergez le panneau une seule fois et connectez-vous à plusieurs agents depuis une même page.',
+      dashboard: {
+        title: 'Graphiques en direct et historique conservé',
+        description: 'CPU, mémoire, disques, réseau, GPU et capteurs, en direct et sur tout ce que l’agent a gardé — avec la sortie de vos propres commandes à côté.',
+      },
+      terminal: {
+        title: 'Un terminal et des fichiers dans le navigateur',
+        description: 'Un terminal qui continue de tourner quand l’onglet se ferme et reprend où il en était, et un explorateur limité aux dossiers que vous désignez.',
+      },
+      machine: {
+        title: 'Les parties de la machine qui bougent',
+        description: 'Conteneurs Docker ou Podman, services, processus, cron, pare-feu et utilisateurs système. L’agent construit et vérifie chaque action ; le panneau ne fait que demander.',
+      },
+      reach: {
+        title: 'Ce qui se trouve à côté du serveur',
+        description: 'Bureaux RDP et VNC, BMC via Redfish, et machines virtuelles sur Proxmox VE ou libvirt, joints à travers l’agent.',
+      },
+    },
+    alerts: {
+      title: 'Des alertes là où vous regardez déjà',
+      subtitle: 'Une règle, c’est une métrique et un seuil. Quand elle se déclenche, chaque canal configuré est prévenu.',
+      rule: 'Une règle de config.toml',
+      push: 'Notification iOS',
+      webhook: 'Un webhook vers une messagerie',
+      widget: 'Widget d’écran d’accueil',
+    },
+    access: {
+      title: 'Vous décidez de ce que chaque compte peut faire',
+      subtitle: 'Lire l’état est ouvert à tous les comptes. Le reste s’accorde, et se retire.',
+      roles: {
+        title: 'Rôles et droits',
+        description: 'Shell, fichiers, redirection de ports et virtualisation sont des droits qu’un admin accorde à un rôle. Retirez-en un, et ce qui l’utilisait se ferme.',
+      },
+      transport: {
+        title: 'TLS pour tout ce qui dépasse la lecture',
+        description: 'Les commandes, les fichiers et les relais exigent TLS ou un appel depuis la même machine. TLS intégré, proxy inverse ou tunnel : tout convient.',
+      },
+      account: {
+        title: 'Il tourne sous votre compte',
+        description: 'L’installateur lance l’agent sous votre propre compte : le shell qu’il donne est celui de ce compte, pas celui de root.',
+      },
+      audit: {
+        title: 'Chaque accès est enregistré',
+        description: 'Qui, quand, d’où, quoi et avec quel résultat. Jamais les mots de passe ni les clés.',
+      },
+    },
+    install: {
+      title: 'Installer',
+      subtitle: 'Trois étapes, d’un serveur neuf à son état sur votre téléphone.',
+      step1: {
+        title: 'Installer l’agent',
+        description: 'L’installateur choisit systemd ou OpenRC et récupère la dernière version. Ajoutez --permissions read pour démarrer avec un admin sans aucun droit.',
+      },
+      step2: {
+        title: 'Se connecter',
+        description: 'Le premier démarrage crée le compte admin avec un mot de passe aléatoire, enregistré à côté de la base dans initial-admin-credentials.txt. Changez-le, puis supprimez le fichier :',
+      },
+      step3: {
+        title: 'L’ajouter à ServerBox',
+        description: 'Dans l’app, ajoutez le serveur comme agent Monitor avec son adresse et son compte. Ou ouvrez le panneau sur le port 3770.',
+      },
+      tabs: {
+        systemd: 'systemd',
+        openrc: 'OpenRC (Alpine)',
+        docker: 'Docker',
+      },
+      dockerNote: 'Construit depuis ce dépôt.',
+    },
+    cta: {
+      title: 'Libre et gratuit, comme l’app.',
+      subtitle: 'L’agent vit dans le dépôt de ServerBox, sous la même licence.',
+      app: 'Obtenir ServerBox',
+      source: 'Code de l’agent',
+    },
   },
 }
 

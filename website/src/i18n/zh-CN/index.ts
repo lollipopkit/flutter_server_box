@@ -14,6 +14,7 @@ const zhCN: Translation = {
     docs: '文档',
     themes: '主题',
     plugins: '插件',
+    monitor: 'Monitor',
     languageLabel: '语言',
   },
   hero: {
@@ -141,6 +142,139 @@ const zhCN: Translation = {
     features: '特性',
     capabilities: '能力',
     releases: '版本发布',
+  },
+  monitor: {
+    meta: {
+      title: 'ServerBox Monitor — 替你守着服务器的 agent',
+      description: 'ServerBox Monitor 运行在你的服务器上：记录状态历史，把告警推送到手机，让小组件和 Watch 应用保持最新，并提供 Web 面板。',
+    },
+    nav: {
+      why: '为什么用 agent',
+      panel: 'Web 面板',
+      alerts: '告警',
+      access: '权限',
+      install: '安装',
+    },
+    hero: {
+      eyebrow: 'ServerBox Monitor',
+      title: '每 7 秒采样一次。记下来。告诉你的手机。',
+      subtitle: '一个运行在服务器上的小型 Rust agent。它把状态历史存进 SQLite，发送告警，让 ServerBox 的小组件和 Watch 应用保持最新，还自带 Web 面板 —— App 连接它不需要 SSH。',
+      installLabel: '在使用 systemd 或 OpenRC 的 Linux 上安装',
+      installNote: '它以你自己的账号运行，而不是 root。',
+      copy: '复制',
+      copied: '已复制',
+      guide: '配置指南',
+      terminalLabel: '正在安装、随后开始采样的 agent',
+      installed: '已安装为 systemctl --user 服务',
+      listening: '正在监听 0.0.0.0:3770',
+      sampled: '已采样',
+      cadence: '每 7 秒 —— 即 interval_seconds 的默认值',
+      pushLabel: 'iPhone 锁屏上来自 agent 的告警',
+      widgetLabel: '由 agent 提供数据的 ServerBox 桌面小组件',
+    },
+    keywords: {
+      history: 'SQLite 历史',
+      push: '推送告警',
+      panel: 'Web 面板',
+      roles: '角色与授权',
+      docker: 'Docker',
+    },
+    why: {
+      title: 'agent 在 SSH 之外多了什么',
+      subtitle: '查看一台服务器，SSH 就够了。agent 在你不看的时候继续看着。',
+      history: {
+        title: '打开 App 之前的历史',
+        description: 'agent 自己采样并保存结果，所以图表能看到你睡着时的那一夜。保留多久由你决定。',
+      },
+      alerts: {
+        title: '告警直达手机',
+        description: '针对 CPU、内存、swap、磁盘、网络和温度的规则，推送到 iOS、Bark、Server 酱或任意 webhook。',
+      },
+      widgets: {
+        title: '一直最新的小组件和 Watch',
+        description: '桌面小组件和 Watch 应用直接读取 agent，ServerBox 关着也会更新。',
+      },
+      reach: {
+        title: '不用开放 SSH',
+        description: 'App 通过 HTTP 和 agent 通信。SSH 连不上的地方可以用它，也可以和 SSH 一起用在同一台服务器上。',
+      },
+    },
+    panel: {
+      title: '每个 agent 都自带 Web 面板',
+      subtitle: '每个 agent 都在 3770 端口提供自己的面板。也可以只部署一份面板，在同一个页面里登录多个 agent。',
+      dashboard: {
+        title: '实时图表和保存下来的历史',
+        description: 'CPU、内存、磁盘、网络、GPU 和传感器，既有实时数据，也能回看 agent 保存的历史 —— 旁边还有你自定义命令的输出。',
+      },
+      terminal: {
+        title: '浏览器里的终端和文件',
+        description: '标签页关掉后终端仍在运行，回来时接着之前的位置；文件浏览只限于你指定的目录。',
+      },
+      machine: {
+        title: '机器上会变的那些部分',
+        description: 'Docker 或 Podman 上的容器、服务、进程、cron、防火墙和系统用户。每个操作都由 agent 构建并检查，面板只负责发起。',
+      },
+      reach: {
+        title: '服务器旁边的东西',
+        description: '通过 agent 访问 RDP 和 VNC 桌面、基于 Redfish 的 BMC，以及 Proxmox VE 或 libvirt 上的虚拟机。',
+      },
+    },
+    alerts: {
+      title: '告警出现在你本来就会看的地方',
+      subtitle: '一条规则就是一个指标加一个阈值。触发时，你配置的每个渠道都会收到。',
+      rule: 'config.toml 里的一条规则',
+      push: 'iOS 推送',
+      webhook: '推送到聊天应用的 webhook',
+      widget: '桌面小组件',
+    },
+    access: {
+      title: '每个账号能做什么，由你决定',
+      subtitle: '查看状态对所有账号开放。其余的都需要授予，也随时可以收回。',
+      roles: {
+        title: '角色与授权',
+        description: 'shell、文件、端口转发和虚拟化都是管理员授予角色的权限。收回一项，用到它的东西会立即关闭。',
+      },
+      transport: {
+        title: '超出查看范围就需要 TLS',
+        description: '命令、文件和转发需要 TLS，或来自同一台主机的请求。内置 TLS、反向代理或隧道都可以。',
+      },
+      account: {
+        title: '以你的身份运行',
+        description: '安装脚本让 agent 以你自己的账号运行，所以它给出的 shell 是这个账号的 shell，不是 root 的。',
+      },
+      audit: {
+        title: '每次访问都有记录',
+        description: '谁、何时、从哪里、做了什么、结果如何。密码和密钥永远不会被记录。',
+      },
+    },
+    install: {
+      title: '安装',
+      subtitle: '从一台新服务器到手机上看到它的状态，只需三步。',
+      step1: {
+        title: '安装 agent',
+        description: '安装脚本会自动选择 systemd 或 OpenRC，并下载最新版本。加上 --permissions read，管理员账号一开始就不带任何授权。',
+      },
+      step2: {
+        title: '登录',
+        description: '首次启动会创建 admin 账号并生成随机密码，保存在数据库旁的 initial-admin-credentials.txt 里。修改密码后删除这个文件：',
+      },
+      step3: {
+        title: '添加到 ServerBox',
+        description: '在 App 里把这台服务器添加为 Monitor agent，填写地址和账号。也可以直接打开 3770 端口上的面板。',
+      },
+      tabs: {
+        systemd: 'systemd',
+        openrc: 'OpenRC（Alpine）',
+        docker: 'Docker',
+      },
+      dockerNote: '从本仓库构建。',
+    },
+    cta: {
+      title: '和 App 一样，免费且开源。',
+      subtitle: 'agent 位于 ServerBox 仓库中，使用相同的许可证。',
+      app: '获取 ServerBox',
+      source: 'agent 源码',
+    },
   },
 }
 

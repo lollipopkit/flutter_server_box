@@ -142,6 +142,6 @@ Migrations in `migrations/`: metrics history, `users` (with `role`), `roles` (01
   - `nix/package.nix` builds inside the workspace (`release` + `strip`, not `release-monitor`).
   - `opt-level` stays 3 (`"s"` is 15.2 → 11.2 MB; not worth it for a process terminating TLS).
 - **One crypto implementation, `ring`**: `cargo tree -i aws-lc-sys` must be empty. reqwest uses `rustls-no-provider`; `monitoring::push::http_client` installs ring first (otherwise reqwest panics), held by the webhook tests in `monitoring::push`. Sizes (macOS arm64, stripped): 22.0 → 20.1 (no aws-lc) → 15.2 MB (profile).
-- Docker: `docker build -t server-box-monitor . && docker run -p 3770:3770 -v $(pwd)/data:/app/data server-box-monitor`.
+- Docker: `docker compose up -d --build` in `monitor/`; the build context is the repo root (`docker build -f monitor/Dockerfile -t server-box-monitor .` from there).
 - `install.sh install` (systemd user service; `sudo` for OpenRC, still running as the invoking account; `--system` for root; `--permissions read`; `SBM_INSTALL_PKG=<path>` for an unreleased build).
 - Env: `SBM_HOST`, `SBM_PORT`, `SBM_TLS_CERT`, `SBM_TLS_KEY`, `SBM_CORS_ORIGINS`, `SBM_INIT_PERMISSIONS`, `DATABASE_URL`, `JWT_SECRET`, `RUST_LOG`.

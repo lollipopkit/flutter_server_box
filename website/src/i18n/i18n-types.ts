@@ -59,6 +59,10 @@ type RootTranslation = {
 		 */
 		plugins: string
 		/**
+		 * M​o​n​i​t​o​r
+		 */
+		monitor: string
+		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		languageLabel: string
@@ -419,6 +423,376 @@ type RootTranslation = {
 		 */
 		releases: string
 	}
+	monitor: {
+		meta: {
+			/**
+			 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​ ​—​ ​t​h​e​ ​a​g​e​n​t​ ​t​h​a​t​ ​k​e​e​p​s​ ​w​a​t​c​h​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r
+			 */
+			title: string
+			/**
+			 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r​ ​r​u​n​s​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​:​ ​i​t​ ​r​e​c​o​r​d​s​ ​s​t​a​t​u​s​ ​h​i​s​t​o​r​y​,​ ​s​e​n​d​s​ ​a​l​e​r​t​s​ ​t​o​ ​y​o​u​r​ ​p​h​o​n​e​,​ ​f​e​e​d​s​ ​w​i​d​g​e​t​s​ ​a​n​d​ ​t​h​e​ ​W​a​t​c​h​ ​a​p​p​,​ ​a​n​d​ ​s​e​r​v​e​s​ ​a​ ​w​e​b​ ​p​a​n​e​l​.
+			 */
+			description: string
+		}
+		nav: {
+			/**
+			 * W​h​y​ ​a​n​ ​a​g​e​n​t
+			 */
+			why: string
+			/**
+			 * W​e​b​ ​p​a​n​e​l
+			 */
+			panel: string
+			/**
+			 * A​l​e​r​t​s
+			 */
+			alerts: string
+			/**
+			 * A​c​c​e​s​s
+			 */
+			access: string
+			/**
+			 * I​n​s​t​a​l​l
+			 */
+			install: string
+		}
+		hero: {
+			/**
+			 * S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r
+			 */
+			eyebrow: string
+			/**
+			 * S​a​m​p​l​e​s​ ​e​v​e​r​y​ ​7​ ​s​e​c​o​n​d​s​.​ ​R​e​m​e​m​b​e​r​s​.​ ​T​e​l​l​s​ ​y​o​u​r​ ​p​h​o​n​e​.
+			 */
+			title: string
+			/**
+			 * A​ ​s​m​a​l​l​ ​R​u​s​t​ ​a​g​e​n​t​ ​t​h​a​t​ ​r​u​n​s​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​.​ ​I​t​ ​k​e​e​p​s​ ​s​t​a​t​u​s​ ​h​i​s​t​o​r​y​ ​i​n​ ​S​Q​L​i​t​e​,​ ​s​e​n​d​s​ ​a​l​e​r​t​s​,​ ​k​e​e​p​s​ ​S​e​r​v​e​r​B​o​x​ ​w​i​d​g​e​t​s​ ​a​n​d​ ​t​h​e​ ​W​a​t​c​h​ ​a​p​p​ ​c​u​r​r​e​n​t​,​ ​a​n​d​ ​s​e​r​v​e​s​ ​a​ ​w​e​b​ ​p​a​n​e​l​ ​—​ ​a​n​d​ ​t​h​e​ ​a​p​p​ ​r​e​a​c​h​e​s​ ​i​t​ ​w​i​t​h​o​u​t​ ​S​S​H​.
+			 */
+			subtitle: string
+			/**
+			 * I​n​s​t​a​l​l​ ​o​n​ ​L​i​n​u​x​ ​w​i​t​h​ ​s​y​s​t​e​m​d​ ​o​r​ ​O​p​e​n​R​C
+			 */
+			installLabel: string
+			/**
+			 * I​t​ ​r​u​n​s​ ​a​s​ ​y​o​u​r​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​n​o​t​ ​r​o​o​t​.
+			 */
+			installNote: string
+			/**
+			 * C​o​p​y
+			 */
+			copy: string
+			/**
+			 * C​o​p​i​e​d
+			 */
+			copied: string
+			/**
+			 * S​e​t​u​p​ ​g​u​i​d​e
+			 */
+			guide: string
+			/**
+			 * T​h​e​ ​a​g​e​n​t​ ​b​e​i​n​g​ ​i​n​s​t​a​l​l​e​d​,​ ​t​h​e​n​ ​s​a​m​p​l​i​n​g
+			 */
+			terminalLabel: string
+			/**
+			 * i​n​s​t​a​l​l​e​d​ ​a​s​ ​a​ ​s​y​s​t​e​m​c​t​l​ ​-​-​u​s​e​r​ ​s​e​r​v​i​c​e
+			 */
+			installed: string
+			/**
+			 * l​i​s​t​e​n​i​n​g​ ​o​n​ ​0​.​0​.​0​.​0​:​3​7​7​0
+			 */
+			listening: string
+			/**
+			 * s​a​m​p​l​e​d
+			 */
+			sampled: string
+			/**
+			 * e​v​e​r​y​ ​7​ ​s​ ​—​ ​i​n​t​e​r​v​a​l​_​s​e​c​o​n​d​s​,​ ​b​y​ ​d​e​f​a​u​l​t
+			 */
+			cadence: string
+			/**
+			 * A​l​e​r​t​s​ ​f​r​o​m​ ​t​h​e​ ​a​g​e​n​t​ ​o​n​ ​a​n​ ​i​P​h​o​n​e​ ​l​o​c​k​ ​s​c​r​e​e​n
+			 */
+			pushLabel: string
+			/**
+			 * A​ ​S​e​r​v​e​r​B​o​x​ ​h​o​m​e​-​s​c​r​e​e​n​ ​w​i​d​g​e​t​ ​f​e​d​ ​b​y​ ​t​h​e​ ​a​g​e​n​t
+			 */
+			widgetLabel: string
+		}
+		keywords: {
+			/**
+			 * S​Q​L​i​t​e​ ​h​i​s​t​o​r​y
+			 */
+			history: string
+			/**
+			 * P​u​s​h​ ​a​l​e​r​t​s
+			 */
+			push: string
+			/**
+			 * W​e​b​ ​p​a​n​e​l
+			 */
+			panel: string
+			/**
+			 * R​o​l​e​s​ ​a​n​d​ ​g​r​a​n​t​s
+			 */
+			roles: string
+			/**
+			 * D​o​c​k​e​r
+			 */
+			docker: string
+		}
+		why: {
+			/**
+			 * W​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​a​d​d​s​ ​t​o​ ​S​S​H
+			 */
+			title: string
+			/**
+			 * S​S​H​ ​i​s​ ​e​n​o​u​g​h​ ​t​o​ ​l​o​o​k​ ​a​t​ ​a​ ​s​e​r​v​e​r​.​ ​T​h​e​ ​a​g​e​n​t​ ​k​e​e​p​s​ ​l​o​o​k​i​n​g​ ​w​h​e​n​ ​y​o​u​ ​a​r​e​ ​n​o​t​.
+			 */
+			subtitle: string
+			history: {
+				/**
+				 * H​i​s​t​o​r​y​ ​f​r​o​m​ ​b​e​f​o​r​e​ ​y​o​u​ ​o​p​e​n​e​d​ ​t​h​e​ ​a​p​p
+				 */
+				title: string
+				/**
+				 * T​h​e​ ​a​g​e​n​t​ ​s​a​m​p​l​e​s​ ​o​n​ ​i​t​s​ ​o​w​n​ ​a​n​d​ ​k​e​e​p​s​ ​t​h​e​ ​r​e​s​u​l​t​,​ ​s​o​ ​c​h​a​r​t​s​ ​s​h​o​w​ ​t​h​e​ ​n​i​g​h​t​ ​y​o​u​ ​s​l​e​p​t​ ​t​h​r​o​u​g​h​.​ ​R​e​t​e​n​t​i​o​n​ ​i​s​ ​y​o​u​r​s​ ​t​o​ ​s​e​t​.
+				 */
+				description: string
+			}
+			alerts: {
+				/**
+				 * A​l​e​r​t​s​ ​o​n​ ​y​o​u​r​ ​p​h​o​n​e
+				 */
+				title: string
+				/**
+				 * R​u​l​e​s​ ​o​n​ ​C​P​U​,​ ​m​e​m​o​r​y​,​ ​s​w​a​p​,​ ​d​i​s​k​,​ ​n​e​t​w​o​r​k​ ​a​n​d​ ​t​e​m​p​e​r​a​t​u​r​e​,​ ​s​e​n​t​ ​t​o​ ​i​O​S​,​ ​B​a​r​k​,​ ​S​e​r​v​e​r​C​h​a​n​ ​o​r​ ​a​n​y​ ​w​e​b​h​o​o​k​.
+				 */
+				description: string
+			}
+			widgets: {
+				/**
+				 * W​i​d​g​e​t​s​ ​a​n​d​ ​W​a​t​c​h​ ​t​h​a​t​ ​s​t​a​y​ ​c​u​r​r​e​n​t
+				 */
+				title: string
+				/**
+				 * H​o​m​e​-​s​c​r​e​e​n​ ​w​i​d​g​e​t​s​ ​a​n​d​ ​t​h​e​ ​W​a​t​c​h​ ​a​p​p​ ​r​e​a​d​ ​f​r​o​m​ ​t​h​e​ ​a​g​e​n​t​,​ ​s​o​ ​t​h​e​y​ ​u​p​d​a​t​e​ ​w​h​i​l​e​ ​S​e​r​v​e​r​B​o​x​ ​i​s​ ​c​l​o​s​e​d​.
+				 */
+				description: string
+			}
+			reach: {
+				/**
+				 * N​o​ ​S​S​H​ ​t​o​ ​o​p​e​n
+				 */
+				title: string
+				/**
+				 * T​h​e​ ​a​p​p​ ​t​a​l​k​s​ ​t​o​ ​t​h​e​ ​a​g​e​n​t​ ​o​v​e​r​ ​H​T​T​P​.​ ​U​s​e​ ​i​t​ ​w​h​e​r​e​ ​S​S​H​ ​i​s​ ​u​n​r​e​a​c​h​a​b​l​e​,​ ​o​r​ ​a​l​o​n​g​s​i​d​e​ ​S​S​H​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​s​e​r​v​e​r​.
+				 */
+				description: string
+			}
+		}
+		panel: {
+			/**
+			 * A​ ​w​e​b​ ​p​a​n​e​l​ ​o​n​ ​e​v​e​r​y​ ​a​g​e​n​t
+			 */
+			title: string
+			/**
+			 * E​a​c​h​ ​a​g​e​n​t​ ​s​e​r​v​e​s​ ​i​t​s​ ​o​w​n​ ​p​a​n​e​l​ ​o​n​ ​p​o​r​t​ ​3​7​7​0​.​ ​H​o​s​t​ ​t​h​e​ ​p​a​n​e​l​ ​o​n​c​e​ ​i​n​s​t​e​a​d​,​ ​a​n​d​ ​s​i​g​n​ ​i​n​ ​t​o​ ​s​e​v​e​r​a​l​ ​a​g​e​n​t​s​ ​f​r​o​m​ ​o​n​e​ ​p​a​g​e​.
+			 */
+			subtitle: string
+			dashboard: {
+				/**
+				 * L​i​v​e​ ​c​h​a​r​t​s​ ​a​n​d​ ​s​t​o​r​e​d​ ​h​i​s​t​o​r​y
+				 */
+				title: string
+				/**
+				 * C​P​U​,​ ​m​e​m​o​r​y​,​ ​d​i​s​k​s​,​ ​n​e​t​w​o​r​k​,​ ​G​P​U​ ​a​n​d​ ​s​e​n​s​o​r​s​,​ ​l​i​v​e​ ​a​n​d​ ​b​a​c​k​ ​t​h​r​o​u​g​h​ ​w​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​k​e​p​t​ ​—​ ​w​i​t​h​ ​t​h​e​ ​o​u​t​p​u​t​ ​o​f​ ​y​o​u​r​ ​o​w​n​ ​c​o​m​m​a​n​d​s​ ​b​e​s​i​d​e​ ​t​h​e​m​.
+				 */
+				description: string
+			}
+			terminal: {
+				/**
+				 * A​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​f​i​l​e​s​ ​i​n​ ​t​h​e​ ​b​r​o​w​s​e​r
+				 */
+				title: string
+				/**
+				 * A​ ​t​e​r​m​i​n​a​l​ ​t​h​a​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​ ​w​h​e​n​ ​t​h​e​ ​t​a​b​ ​c​l​o​s​e​s​ ​a​n​d​ ​p​i​c​k​s​ ​u​p​ ​w​h​e​r​e​ ​i​t​ ​w​a​s​,​ ​a​n​d​ ​a​ ​f​i​l​e​ ​b​r​o​w​s​e​r​ ​l​i​m​i​t​e​d​ ​t​o​ ​t​h​e​ ​d​i​r​e​c​t​o​r​i​e​s​ ​y​o​u​ ​n​a​m​e​.
+				 */
+				description: string
+			}
+			machine: {
+				/**
+				 * T​h​e​ ​p​a​r​t​s​ ​o​f​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​t​h​a​t​ ​m​o​v​e
+				 */
+				title: string
+				/**
+				 * C​o​n​t​a​i​n​e​r​s​ ​o​n​ ​D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​,​ ​s​e​r​v​i​c​e​s​,​ ​p​r​o​c​e​s​s​e​s​,​ ​c​r​o​n​,​ ​t​h​e​ ​f​i​r​e​w​a​l​l​ ​a​n​d​ ​s​y​s​t​e​m​ ​u​s​e​r​s​.​ ​T​h​e​ ​a​g​e​n​t​ ​b​u​i​l​d​s​ ​a​n​d​ ​c​h​e​c​k​s​ ​e​v​e​r​y​ ​a​c​t​i​o​n​;​ ​t​h​e​ ​p​a​n​e​l​ ​o​n​l​y​ ​a​s​k​s​.
+				 */
+				description: string
+			}
+			reach: {
+				/**
+				 * W​h​a​t​ ​s​i​t​s​ ​n​e​x​t​ ​t​o​ ​t​h​e​ ​s​e​r​v​e​r
+				 */
+				title: string
+				/**
+				 * R​D​P​ ​a​n​d​ ​V​N​C​ ​d​e​s​k​t​o​p​s​,​ ​B​M​C​s​ ​o​v​e​r​ ​R​e​d​f​i​s​h​,​ ​a​n​d​ ​g​u​e​s​t​s​ ​o​n​ ​P​r​o​x​m​o​x​ ​V​E​ ​o​r​ ​l​i​b​v​i​r​t​,​ ​r​e​a​c​h​e​d​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​a​g​e​n​t​.
+				 */
+				description: string
+			}
+		}
+		alerts: {
+			/**
+			 * A​l​e​r​t​s​ ​w​h​e​r​e​ ​y​o​u​ ​a​l​r​e​a​d​y​ ​l​o​o​k
+			 */
+			title: string
+			/**
+			 * A​ ​r​u​l​e​ ​i​s​ ​a​ ​m​e​t​r​i​c​ ​a​n​d​ ​a​ ​t​h​r​e​s​h​o​l​d​.​ ​W​h​e​n​ ​i​t​ ​t​r​i​p​s​,​ ​e​v​e​r​y​ ​c​h​a​n​n​e​l​ ​y​o​u​ ​s​e​t​ ​u​p​ ​h​e​a​r​s​ ​a​b​o​u​t​ ​i​t​.
+			 */
+			subtitle: string
+			/**
+			 * A​ ​r​u​l​e​ ​f​r​o​m​ ​c​o​n​f​i​g​.​t​o​m​l
+			 */
+			rule: string
+			/**
+			 * i​O​S​ ​p​u​s​h
+			 */
+			push: string
+			/**
+			 * A​ ​w​e​b​h​o​o​k​ ​i​n​t​o​ ​a​ ​c​h​a​t​ ​a​p​p
+			 */
+			webhook: string
+			/**
+			 * H​o​m​e​-​s​c​r​e​e​n​ ​w​i​d​g​e​t
+			 */
+			widget: string
+		}
+		access: {
+			/**
+			 * Y​o​u​ ​d​e​c​i​d​e​ ​w​h​a​t​ ​e​a​c​h​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​d​o
+			 */
+			title: string
+			/**
+			 * R​e​a​d​i​n​g​ ​s​t​a​t​u​s​ ​i​s​ ​o​p​e​n​ ​t​o​ ​e​v​e​r​y​ ​a​c​c​o​u​n​t​.​ ​T​h​e​ ​r​e​s​t​ ​i​s​ ​g​i​v​e​n​,​ ​a​n​d​ ​c​a​n​ ​b​e​ ​t​a​k​e​n​ ​b​a​c​k​.
+			 */
+			subtitle: string
+			roles: {
+				/**
+				 * R​o​l​e​s​ ​a​n​d​ ​g​r​a​n​t​s
+				 */
+				title: string
+				/**
+				 * S​h​e​l​l​,​ ​f​i​l​e​s​,​ ​p​o​r​t​ ​f​o​r​w​a​r​d​i​n​g​ ​a​n​d​ ​v​i​r​t​u​a​l​i​z​a​t​i​o​n​ ​a​r​e​ ​g​r​a​n​t​s​ ​a​n​ ​a​d​m​i​n​ ​g​i​v​e​s​ ​t​o​ ​a​ ​r​o​l​e​.​ ​T​a​k​e​ ​o​n​e​ ​a​w​a​y​ ​a​n​d​ ​w​h​a​t​e​v​e​r​ ​u​s​e​d​ ​i​t​ ​c​l​o​s​e​s​.
+				 */
+				description: string
+			}
+			transport: {
+				/**
+				 * T​L​S​ ​f​o​r​ ​a​n​y​t​h​i​n​g​ ​b​e​y​o​n​d​ ​r​e​a​d​i​n​g
+				 */
+				title: string
+				/**
+				 * C​o​m​m​a​n​d​s​,​ ​f​i​l​e​s​ ​a​n​d​ ​r​e​l​a​y​s​ ​n​e​e​d​ ​T​L​S​ ​o​r​ ​a​ ​c​a​l​l​e​r​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.​ ​B​u​i​l​t​-​i​n​ ​T​L​S​,​ ​a​ ​r​e​v​e​r​s​e​ ​p​r​o​x​y​ ​o​r​ ​a​ ​t​u​n​n​e​l​ ​a​l​l​ ​c​o​u​n​t​.
+				 */
+				description: string
+			}
+			account: {
+				/**
+				 * R​u​n​s​ ​a​s​ ​y​o​u
+				 */
+				title: string
+				/**
+				 * T​h​e​ ​i​n​s​t​a​l​l​e​r​ ​r​u​n​s​ ​t​h​e​ ​a​g​e​n​t​ ​u​n​d​e​r​ ​y​o​u​r​ ​o​w​n​ ​a​c​c​o​u​n​t​,​ ​s​o​ ​a​ ​s​h​e​l​l​ ​i​t​ ​g​i​v​e​s​ ​i​s​ ​t​h​a​t​ ​a​c​c​o​u​n​t​'​s​ ​s​h​e​l​l​,​ ​n​o​t​ ​r​o​o​t​'​s​.
+				 */
+				description: string
+			}
+			audit: {
+				/**
+				 * E​v​e​r​y​ ​a​c​c​e​s​s​ ​r​e​c​o​r​d​e​d
+				 */
+				title: string
+				/**
+				 * W​h​o​,​ ​w​h​e​n​,​ ​f​r​o​m​ ​w​h​e​r​e​,​ ​w​h​a​t​ ​a​n​d​ ​h​o​w​ ​i​t​ ​e​n​d​e​d​.​ ​P​a​s​s​w​o​r​d​s​ ​a​n​d​ ​k​e​y​s​ ​n​e​v​e​r​ ​a​r​e​.
+				 */
+				description: string
+			}
+		}
+		install: {
+			/**
+			 * I​n​s​t​a​l​l
+			 */
+			title: string
+			/**
+			 * T​h​r​e​e​ ​s​t​e​p​s​ ​f​r​o​m​ ​a​ ​f​r​e​s​h​ ​s​e​r​v​e​r​ ​t​o​ ​i​t​s​ ​s​t​a​t​u​s​ ​o​n​ ​y​o​u​r​ ​p​h​o​n​e​.
+			 */
+			subtitle: string
+			step1: {
+				/**
+				 * I​n​s​t​a​l​l​ ​t​h​e​ ​a​g​e​n​t
+				 */
+				title: string
+				/**
+				 * T​h​e​ ​i​n​s​t​a​l​l​e​r​ ​p​i​c​k​s​ ​s​y​s​t​e​m​d​ ​o​r​ ​O​p​e​n​R​C​ ​a​n​d​ ​f​e​t​c​h​e​s​ ​t​h​e​ ​l​a​t​e​s​t​ ​r​e​l​e​a​s​e​.​ ​A​d​d​ ​-​-​p​e​r​m​i​s​s​i​o​n​s​ ​r​e​a​d​ ​t​o​ ​s​t​a​r​t​ ​w​i​t​h​ ​a​n​ ​a​d​m​i​n​ ​t​h​a​t​ ​h​o​l​d​s​ ​n​o​ ​g​r​a​n​t​s​.
+				 */
+				description: string
+			}
+			step2: {
+				/**
+				 * S​i​g​n​ ​i​n
+				 */
+				title: string
+				/**
+				 * T​h​e​ ​f​i​r​s​t​ ​s​t​a​r​t​ ​c​r​e​a​t​e​s​ ​t​h​e​ ​a​d​m​i​n​ ​a​c​c​o​u​n​t​ ​w​i​t​h​ ​a​ ​r​a​n​d​o​m​ ​p​a​s​s​w​o​r​d​,​ ​s​a​v​e​d​ ​b​e​s​i​d​e​ ​t​h​e​ ​d​a​t​a​b​a​s​e​ ​a​s​ ​i​n​i​t​i​a​l​-​a​d​m​i​n​-​c​r​e​d​e​n​t​i​a​l​s​.​t​x​t​.​ ​C​h​a​n​g​e​ ​i​t​,​ ​t​h​e​n​ ​d​e​l​e​t​e​ ​t​h​e​ ​f​i​l​e​:
+				 */
+				description: string
+			}
+			step3: {
+				/**
+				 * A​d​d​ ​i​t​ ​t​o​ ​S​e​r​v​e​r​B​o​x
+				 */
+				title: string
+				/**
+				 * I​n​ ​t​h​e​ ​a​p​p​,​ ​a​d​d​ ​t​h​e​ ​s​e​r​v​e​r​ ​a​s​ ​a​ ​M​o​n​i​t​o​r​ ​a​g​e​n​t​ ​w​i​t​h​ ​i​t​s​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​c​c​o​u​n​t​.​ ​O​r​ ​o​p​e​n​ ​t​h​e​ ​p​a​n​e​l​ ​a​t​ ​p​o​r​t​ ​3​7​7​0​.
+				 */
+				description: string
+			}
+			tabs: {
+				/**
+				 * s​y​s​t​e​m​d
+				 */
+				systemd: string
+				/**
+				 * O​p​e​n​R​C​ ​(​A​l​p​i​n​e​)
+				 */
+				openrc: string
+				/**
+				 * D​o​c​k​e​r
+				 */
+				docker: string
+			}
+			/**
+			 * B​u​i​l​t​ ​f​r​o​m​ ​t​h​i​s​ ​r​e​p​o​s​i​t​o​r​y​.
+			 */
+			dockerNote: string
+		}
+		cta: {
+			/**
+			 * F​r​e​e​ ​a​n​d​ ​o​p​e​n​ ​s​o​u​r​c​e​,​ ​l​i​k​e​ ​t​h​e​ ​a​p​p​.
+			 */
+			title: string
+			/**
+			 * T​h​e​ ​a​g​e​n​t​ ​l​i​v​e​s​ ​i​n​ ​t​h​e​ ​S​e​r​v​e​r​B​o​x​ ​r​e​p​o​s​i​t​o​r​y​,​ ​u​n​d​e​r​ ​t​h​e​ ​s​a​m​e​ ​l​i​c​e​n​s​e​.
+			 */
+			subtitle: string
+			/**
+			 * G​e​t​ ​S​e​r​v​e​r​B​o​x
+			 */
+			app: string
+			/**
+			 * A​g​e​n​t​ ​s​o​u​r​c​e
+			 */
+			source: string
+		}
+	}
 }
 
 export type TranslationFunctions = {
@@ -461,6 +835,10 @@ export type TranslationFunctions = {
 		 * Plugins
 		 */
 		plugins: () => LocalizedString
+		/**
+		 * Monitor
+		 */
+		monitor: () => LocalizedString
 		/**
 		 * Language
 		 */
@@ -819,6 +1197,376 @@ export type TranslationFunctions = {
 		 * Releases
 		 */
 		releases: () => LocalizedString
+	}
+	monitor: {
+		meta: {
+			/**
+			 * ServerBox Monitor — the agent that keeps watch on your server
+			 */
+			title: () => LocalizedString
+			/**
+			 * ServerBox Monitor runs on your server: it records status history, sends alerts to your phone, feeds widgets and the Watch app, and serves a web panel.
+			 */
+			description: () => LocalizedString
+		}
+		nav: {
+			/**
+			 * Why an agent
+			 */
+			why: () => LocalizedString
+			/**
+			 * Web panel
+			 */
+			panel: () => LocalizedString
+			/**
+			 * Alerts
+			 */
+			alerts: () => LocalizedString
+			/**
+			 * Access
+			 */
+			access: () => LocalizedString
+			/**
+			 * Install
+			 */
+			install: () => LocalizedString
+		}
+		hero: {
+			/**
+			 * ServerBox Monitor
+			 */
+			eyebrow: () => LocalizedString
+			/**
+			 * Samples every 7 seconds. Remembers. Tells your phone.
+			 */
+			title: () => LocalizedString
+			/**
+			 * A small Rust agent that runs on your server. It keeps status history in SQLite, sends alerts, keeps ServerBox widgets and the Watch app current, and serves a web panel — and the app reaches it without SSH.
+			 */
+			subtitle: () => LocalizedString
+			/**
+			 * Install on Linux with systemd or OpenRC
+			 */
+			installLabel: () => LocalizedString
+			/**
+			 * It runs as your own account, not root.
+			 */
+			installNote: () => LocalizedString
+			/**
+			 * Copy
+			 */
+			copy: () => LocalizedString
+			/**
+			 * Copied
+			 */
+			copied: () => LocalizedString
+			/**
+			 * Setup guide
+			 */
+			guide: () => LocalizedString
+			/**
+			 * The agent being installed, then sampling
+			 */
+			terminalLabel: () => LocalizedString
+			/**
+			 * installed as a systemctl --user service
+			 */
+			installed: () => LocalizedString
+			/**
+			 * listening on 0.0.0.0:3770
+			 */
+			listening: () => LocalizedString
+			/**
+			 * sampled
+			 */
+			sampled: () => LocalizedString
+			/**
+			 * every 7 s — interval_seconds, by default
+			 */
+			cadence: () => LocalizedString
+			/**
+			 * Alerts from the agent on an iPhone lock screen
+			 */
+			pushLabel: () => LocalizedString
+			/**
+			 * A ServerBox home-screen widget fed by the agent
+			 */
+			widgetLabel: () => LocalizedString
+		}
+		keywords: {
+			/**
+			 * SQLite history
+			 */
+			history: () => LocalizedString
+			/**
+			 * Push alerts
+			 */
+			push: () => LocalizedString
+			/**
+			 * Web panel
+			 */
+			panel: () => LocalizedString
+			/**
+			 * Roles and grants
+			 */
+			roles: () => LocalizedString
+			/**
+			 * Docker
+			 */
+			docker: () => LocalizedString
+		}
+		why: {
+			/**
+			 * What the agent adds to SSH
+			 */
+			title: () => LocalizedString
+			/**
+			 * SSH is enough to look at a server. The agent keeps looking when you are not.
+			 */
+			subtitle: () => LocalizedString
+			history: {
+				/**
+				 * History from before you opened the app
+				 */
+				title: () => LocalizedString
+				/**
+				 * The agent samples on its own and keeps the result, so charts show the night you slept through. Retention is yours to set.
+				 */
+				description: () => LocalizedString
+			}
+			alerts: {
+				/**
+				 * Alerts on your phone
+				 */
+				title: () => LocalizedString
+				/**
+				 * Rules on CPU, memory, swap, disk, network and temperature, sent to iOS, Bark, ServerChan or any webhook.
+				 */
+				description: () => LocalizedString
+			}
+			widgets: {
+				/**
+				 * Widgets and Watch that stay current
+				 */
+				title: () => LocalizedString
+				/**
+				 * Home-screen widgets and the Watch app read from the agent, so they update while ServerBox is closed.
+				 */
+				description: () => LocalizedString
+			}
+			reach: {
+				/**
+				 * No SSH to open
+				 */
+				title: () => LocalizedString
+				/**
+				 * The app talks to the agent over HTTP. Use it where SSH is unreachable, or alongside SSH on the same server.
+				 */
+				description: () => LocalizedString
+			}
+		}
+		panel: {
+			/**
+			 * A web panel on every agent
+			 */
+			title: () => LocalizedString
+			/**
+			 * Each agent serves its own panel on port 3770. Host the panel once instead, and sign in to several agents from one page.
+			 */
+			subtitle: () => LocalizedString
+			dashboard: {
+				/**
+				 * Live charts and stored history
+				 */
+				title: () => LocalizedString
+				/**
+				 * CPU, memory, disks, network, GPU and sensors, live and back through what the agent kept — with the output of your own commands beside them.
+				 */
+				description: () => LocalizedString
+			}
+			terminal: {
+				/**
+				 * A terminal and files in the browser
+				 */
+				title: () => LocalizedString
+				/**
+				 * A terminal that keeps running when the tab closes and picks up where it was, and a file browser limited to the directories you name.
+				 */
+				description: () => LocalizedString
+			}
+			machine: {
+				/**
+				 * The parts of the machine that move
+				 */
+				title: () => LocalizedString
+				/**
+				 * Containers on Docker or Podman, services, processes, cron, the firewall and system users. The agent builds and checks every action; the panel only asks.
+				 */
+				description: () => LocalizedString
+			}
+			reach: {
+				/**
+				 * What sits next to the server
+				 */
+				title: () => LocalizedString
+				/**
+				 * RDP and VNC desktops, BMCs over Redfish, and guests on Proxmox VE or libvirt, reached through the agent.
+				 */
+				description: () => LocalizedString
+			}
+		}
+		alerts: {
+			/**
+			 * Alerts where you already look
+			 */
+			title: () => LocalizedString
+			/**
+			 * A rule is a metric and a threshold. When it trips, every channel you set up hears about it.
+			 */
+			subtitle: () => LocalizedString
+			/**
+			 * A rule from config.toml
+			 */
+			rule: () => LocalizedString
+			/**
+			 * iOS push
+			 */
+			push: () => LocalizedString
+			/**
+			 * A webhook into a chat app
+			 */
+			webhook: () => LocalizedString
+			/**
+			 * Home-screen widget
+			 */
+			widget: () => LocalizedString
+		}
+		access: {
+			/**
+			 * You decide what each account may do
+			 */
+			title: () => LocalizedString
+			/**
+			 * Reading status is open to every account. The rest is given, and can be taken back.
+			 */
+			subtitle: () => LocalizedString
+			roles: {
+				/**
+				 * Roles and grants
+				 */
+				title: () => LocalizedString
+				/**
+				 * Shell, files, port forwarding and virtualization are grants an admin gives to a role. Take one away and whatever used it closes.
+				 */
+				description: () => LocalizedString
+			}
+			transport: {
+				/**
+				 * TLS for anything beyond reading
+				 */
+				title: () => LocalizedString
+				/**
+				 * Commands, files and relays need TLS or a caller on the same host. Built-in TLS, a reverse proxy or a tunnel all count.
+				 */
+				description: () => LocalizedString
+			}
+			account: {
+				/**
+				 * Runs as you
+				 */
+				title: () => LocalizedString
+				/**
+				 * The installer runs the agent under your own account, so a shell it gives is that account's shell, not root's.
+				 */
+				description: () => LocalizedString
+			}
+			audit: {
+				/**
+				 * Every access recorded
+				 */
+				title: () => LocalizedString
+				/**
+				 * Who, when, from where, what and how it ended. Passwords and keys never are.
+				 */
+				description: () => LocalizedString
+			}
+		}
+		install: {
+			/**
+			 * Install
+			 */
+			title: () => LocalizedString
+			/**
+			 * Three steps from a fresh server to its status on your phone.
+			 */
+			subtitle: () => LocalizedString
+			step1: {
+				/**
+				 * Install the agent
+				 */
+				title: () => LocalizedString
+				/**
+				 * The installer picks systemd or OpenRC and fetches the latest release. Add --permissions read to start with an admin that holds no grants.
+				 */
+				description: () => LocalizedString
+			}
+			step2: {
+				/**
+				 * Sign in
+				 */
+				title: () => LocalizedString
+				/**
+				 * The first start creates the admin account with a random password, saved beside the database as initial-admin-credentials.txt. Change it, then delete the file:
+				 */
+				description: () => LocalizedString
+			}
+			step3: {
+				/**
+				 * Add it to ServerBox
+				 */
+				title: () => LocalizedString
+				/**
+				 * In the app, add the server as a Monitor agent with its address and account. Or open the panel at port 3770.
+				 */
+				description: () => LocalizedString
+			}
+			tabs: {
+				/**
+				 * systemd
+				 */
+				systemd: () => LocalizedString
+				/**
+				 * OpenRC (Alpine)
+				 */
+				openrc: () => LocalizedString
+				/**
+				 * Docker
+				 */
+				docker: () => LocalizedString
+			}
+			/**
+			 * Built from this repository.
+			 */
+			dockerNote: () => LocalizedString
+		}
+		cta: {
+			/**
+			 * Free and open source, like the app.
+			 */
+			title: () => LocalizedString
+			/**
+			 * The agent lives in the ServerBox repository, under the same license.
+			 */
+			subtitle: () => LocalizedString
+			/**
+			 * Get ServerBox
+			 */
+			app: () => LocalizedString
+			/**
+			 * Agent source
+			 */
+			source: () => LocalizedString
+		}
 	}
 }
 

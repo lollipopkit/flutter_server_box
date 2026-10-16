@@ -4,6 +4,9 @@
     <loc>https://serverbox.lolli.tech/</loc>
   </url>
   <url>
+    <loc>https://serverbox.lolli.tech/monitor/</loc>
+  </url>
+  <url>
     <loc>https://serverbox.lolli.tech/docs/</loc>
   </url>
 </urlset>
