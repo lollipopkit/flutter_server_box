@@ -131,7 +131,7 @@ class ProxyCommandSocket implements SSHSocket {
         processFuture
             .then<void>((lateProcess) async {
               final groupId = await ProcessTree.groupId(lateProcess);
-              unawaited(ProcessTree.terminate(lateProcess, groupId));
+              await ProcessTree.terminate(lateProcess, groupId);
             }, onError: (_, _) {})
             .whenComplete(() => guest?.release()),
       );
@@ -314,8 +314,8 @@ class ProxyCommandSocket implements SSHSocket {
 
   @override
   void destroy() {
-    unawaited(ProcessTree.terminate(_process, _processGroupId));
-    _releaseOnce();
+    // The guest is free once the tree is gone, not when it is asked to go.
+    unawaited(ProcessTree.terminate(_process, _processGroupId).whenComplete(_releaseOnce));
   }
 
   @override
