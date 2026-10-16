@@ -3,8 +3,8 @@
 /// opens as a circle from the menubar's Agent mode item; the windows recede
 /// toward the middle of the screen, front first, and come back spring-like,
 /// back first; the Agent content rises in after them and leaves together
-/// and fast. Reduced motion is a 150 ms fade of each part, with no blur,
-/// clip or movement.
+/// and fast. Reduced motion is a 150 ms fade of each part, with no clip or
+/// movement.
 
 import { reducedMotion } from '../sys/pageMotion'
 
@@ -40,12 +40,15 @@ function inward(el: HTMLElement, root: HTMLElement): { dx: number; dy: number } 
   return { dx: Math.round(clamp(dx * 0.05, 26)), dy: Math.round(clamp(dy * 0.05, 18)) }
 }
 
+/// Transform and opacity only, which the compositor moves on its own: a
+/// blur on every window cost dropped frames on each switch (measured, the
+/// raster thread re-blurring each window's layer every frame).
 function hidden(el: HTMLElement, root: HTMLElement): Keyframe {
   const { dx, dy } = inward(el, root)
-  return { transform: `translate(${dx}px, ${dy}px) scale(0.9)`, filter: 'blur(8px)' }
+  return { transform: `translate(${dx}px, ${dy}px) scale(0.9)` }
 }
 
-const shown: Keyframe = { transform: 'none', filter: 'blur(0px)' }
+const shown: Keyframe = { transform: 'none' }
 
 /// The desk's own parts that only fade: the desk icons and the dock.
 function chrome(root: HTMLElement): HTMLElement[] {
