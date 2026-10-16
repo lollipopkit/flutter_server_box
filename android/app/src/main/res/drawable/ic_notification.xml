@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification small icon: the launcher glyph as a plain alpha mask, which is
+     what Android tints. The launcher icon itself is full colour and renders as
+     a solid blob when used here. Holes are wound the opposite way (nonZero). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="80"
+    android:viewportHeight="80">
+    <!-- Upper unit with two LEDs -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20,7 H60 A6,6 0 0 1 66,13 V20 A6,6 0 0 1 60,26 H20 A6,6 0 0 1 14,20 V13 A6,6 0 0 1 20,7 Z
+            M28,16.5 A4.5,4.5 0 1 0 19,16.5 A4.5,4.5 0 1 0 28,16.5 Z
+            M40,16.5 A4.5,4.5 0 1 0 31,16.5 A4.5,4.5 0 1 0 40,16.5 Z" />
+    <!-- Lower unit with two LEDs -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M20,29 H60 A6,6 0 0 1 66,35 V42 A6,6 0 0 1 60,48 H20 A6,6 0 0 1 14,42 V35 A6,6 0 0 1 20,29 Z
+            M28,38.5 A4.5,4.5 0 1 0 19,38.5 A4.5,4.5 0 1 0 28,38.5 Z
+            M40,38.5 A4.5,4.5 0 1 0 31,38.5 A4.5,4.5 0 1 0 40,38.5 Z" />
+    <!-- Stand: stem, ring and the bar on either side of it -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38,51 H42 V57 H38 Z
+            M48.25,64.5 A8.25,8.25 0 1 1 31.75,64.5 A8.25,8.25 0 1 1 48.25,64.5 Z
+            M44,64.5 A4,4 0 1 0 36,64.5 A4,4 0 1 0 44,64.5 Z
+            M17.5,62 H34 V67 H17.5 A2.5,2.5 0 0 1 17.5,62 Z
+            M46,62 H62.5 A2.5,2.5 0 0 1 62.5,67 H46 Z" />
+</vector>
