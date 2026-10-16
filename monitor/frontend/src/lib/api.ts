@@ -13,6 +13,9 @@ import type {
   NfsExport,
   SharesView,
   InferenceView,
+  AgentToolId,
+  AgentToolProvider,
+  AgentToolView,
   InferenceRecommend,
   OllamaModels,
   OllamaPull,
@@ -1268,6 +1271,16 @@ export const api = {
   /// Runs a scheduled task now, as the schedule would.
   runStorageMaintenance: (task: MaintenanceKind) =>
     request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }),
+  getAgentTools: () => request<{ tools: AgentToolView[]; job: StackJob | null }>('/agent-tools', {}),
+  agentToolProviders: () => request<{ providers: AgentToolProvider[] }>('/agent-tools/providers', {}),
+  changeAgentTool: (tool: AgentToolId, verb: 'install' | 'update' | 'uninstall', purge = false) =>
+    request<StackJob>(`/agent-tools/${tool}/${verb}`, { method: 'POST', body: JSON.stringify({ purge }) }),
+  agentToolsJob: (since: number) => request<StackJob>(`/agent-tools/job?since=${since}`, {}),
+  cancelAgentToolsJob: () => request<void>('/agent-tools/job/cancel', { method: 'POST' }),
+  configureAgentTool: (tool: AgentToolId, provider: string, model: string) =>
+    request<void>(`/agent-tools/${tool}/configure`, { method: 'POST', body: JSON.stringify({ provider, model }) }),
+  agentToolGateway: (tool: AgentToolId, action: 'status' | 'install' | 'start' | 'stop') =>
+    request<{ exitCode: number | null; output: string }>(`/agent-tools/${tool}/gateway`, { method: 'POST', body: JSON.stringify({ action }) }),
   getInference: () => request<InferenceView>('/inference', {}),
   recommendModels: (useCase: string | null, allPublishers: boolean) =>
     request<InferenceRecommend>('/inference/recommend', { method: 'POST', body: JSON.stringify({ useCase, allPublishers }) }),

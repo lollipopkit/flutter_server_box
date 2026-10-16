@@ -46,6 +46,7 @@
         "agent_mode",
         "stacks",
         "inference",
+        "agent_tools",
         "alerts",
         "audit",
         "live"

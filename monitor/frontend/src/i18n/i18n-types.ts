@@ -10277,6 +10277,114 @@ type RootTranslation = {
 	 * O​p​e​n​ ​t​h​e​ ​O​l​l​a​m​a​ ​a​p​p​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​;​ ​i​t​s​ ​m​o​d​e​l​s​ ​s​h​o​w​ ​h​e​r​e​ ​o​n​c​e​ ​i​t​ ​a​n​s​w​e​r​s​.
 	 */
 	inferenceOllamaStart: string
+	/**
+	 * A​I​ ​a​g​e​n​t​s
+	 */
+	agentTools: string
+	/**
+	 * A​I​ ​a​g​e​n​t​s​ ​c​o​d​i​n​g​ ​C​L​I
+	 */
+	agentToolsKeywords: string
+	/**
+	 * N​o​w​ ​u​s​e​s​ ​{​m​o​d​e​l​}​.
+	 * @param {unknown} model
+	 */
+	agentToolsSaved: RequiredParams<'model'>
+	/**
+	 * {​p​a​t​h​}​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​,​ ​s​o​ ​i​t​ ​w​a​s​ ​l​e​f​t​ ​a​l​o​n​e​.
+	 * @param {unknown} path
+	 */
+	agentToolsUnreadable: RequiredParams<'path'>
+	/**
+	 * W​o​r​k​i​n​g​…
+	 */
+	agentToolsWorking: string
+	/**
+	 * D​o​n​e
+	 */
+	agentToolsDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	agentToolsFailed: string
+	/**
+	 * N​o​t​ ​i​n​s​t​a​l​l​e​d
+	 */
+	agentToolsNotInstalled: string
+	/**
+	 * R​e​l​e​a​s​e​ ​i​n​s​t​a​l​l​e​d
+	 */
+	agentToolsRelease: string
+	/**
+	 * M​o​d​e​l​ ​A​P​I​s
+	 */
+	agentToolsModelApis: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	agentToolsInstall: string
+	/**
+	 * U​p​d​a​t​e
+	 */
+	agentToolsUpdate: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	agentToolsRemove: string
+	/**
+	 * H​o​m​e​p​a​g​e
+	 */
+	agentToolsHomepage: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​m​a​c​h​i​n​e​?
+	 * @param {unknown} name
+	 */
+	agentToolsRemoveAsk: RequiredParams<'name'>
+	/**
+	 * A​l​s​o​ ​r​e​m​o​v​e​ ​i​t​s​ ​s​e​t​t​i​n​g​s​,​ ​s​e​s​s​i​o​n​s​ ​a​n​d​ ​d​a​t​a
+	 */
+	agentToolsPurge: string
+	/**
+	 * M​o​d​e​l
+	 */
+	agentToolsModel: string
+	/**
+	 * P​r​o​v​i​d​e​r
+	 */
+	agentToolsProvider: string
+	/**
+	 * U​s​e
+	 */
+	agentToolsUse: string
+	/**
+	 * T​h​e​ ​p​r​o​v​i​d​e​r​'​s​ ​k​e​y​ ​i​s​ ​w​r​i​t​t​e​n​ ​t​o​ ​t​h​e​ ​t​o​o​l​'​s​ ​o​w​n​ ​s​e​t​t​i​n​g​s​,​ ​r​e​a​d​a​b​l​e​ ​b​y​ ​t​h​i​s​ ​a​c​c​o​u​n​t​ ​a​l​o​n​e​.
+	 */
+	agentToolsKeyNote: string
+	/**
+	 * N​o​ ​p​r​o​v​i​d​e​r​ ​s​p​e​a​k​s​ ​{​a​p​i​s​}​.​ ​A​d​d​ ​o​n​e​ ​u​n​d​e​r​ ​S​e​t​t​i​n​g​s​ ​→​ ​A​g​e​n​t​,​ ​o​r​ ​r​u​n​ ​a​ ​m​o​d​e​l​ ​w​i​t​h​ ​L​o​c​a​l​ ​i​n​f​e​r​e​n​c​e​.
+	 * @param {unknown} apis
+	 */
+	agentToolsNoProvider: RequiredParams<'apis'>
+	/**
+	 * G​a​t​e​w​a​y
+	 */
+	agentToolsGateway: string
+	/**
+	 * S​t​a​t​u​s
+	 */
+	agentToolsGatewayStatus: string
+	/**
+	 * I​n​s​t​a​l​l​ ​s​e​r​v​i​c​e
+	 */
+	agentToolsGatewayInstall: string
+	/**
+	 * S​t​a​r​t
+	 */
+	agentToolsGatewayStart: string
+	/**
+	 * S​t​o​p
+	 */
+	agentToolsGatewayStop: string
 }
 
 export type TranslationFunctions = {
@@ -20168,6 +20276,110 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Open the Ollama app on this machine; its models show here once it answers.
 	 */
 	inferenceOllamaStart: () => LocalizedString
+	/**
+	 * AI agents
+	 */
+	agentTools: () => LocalizedString
+	/**
+	 * AI agents coding CLI
+	 */
+	agentToolsKeywords: () => LocalizedString
+	/**
+	 * Now uses {model}.
+	 */
+	agentToolsSaved: (arg: { model: unknown }) => LocalizedString
+	/**
+	 * {path} could not be read, so it was left alone.
+	 */
+	agentToolsUnreadable: (arg: { path: unknown }) => LocalizedString
+	/**
+	 * Working…
+	 */
+	agentToolsWorking: () => LocalizedString
+	/**
+	 * Done
+	 */
+	agentToolsDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	agentToolsFailed: () => LocalizedString
+	/**
+	 * Not installed
+	 */
+	agentToolsNotInstalled: () => LocalizedString
+	/**
+	 * Release installed
+	 */
+	agentToolsRelease: () => LocalizedString
+	/**
+	 * Model APIs
+	 */
+	agentToolsModelApis: () => LocalizedString
+	/**
+	 * Install
+	 */
+	agentToolsInstall: () => LocalizedString
+	/**
+	 * Update
+	 */
+	agentToolsUpdate: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	agentToolsRemove: () => LocalizedString
+	/**
+	 * Homepage
+	 */
+	agentToolsHomepage: () => LocalizedString
+	/**
+	 * Remove {name} from this machine?
+	 */
+	agentToolsRemoveAsk: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Also remove its settings, sessions and data
+	 */
+	agentToolsPurge: () => LocalizedString
+	/**
+	 * Model
+	 */
+	agentToolsModel: () => LocalizedString
+	/**
+	 * Provider
+	 */
+	agentToolsProvider: () => LocalizedString
+	/**
+	 * Use
+	 */
+	agentToolsUse: () => LocalizedString
+	/**
+	 * The provider's key is written to the tool's own settings, readable by this account alone.
+	 */
+	agentToolsKeyNote: () => LocalizedString
+	/**
+	 * No provider speaks {apis}. Add one under Settings → Agent, or run a model with Local inference.
+	 */
+	agentToolsNoProvider: (arg: { apis: unknown }) => LocalizedString
+	/**
+	 * Gateway
+	 */
+	agentToolsGateway: () => LocalizedString
+	/**
+	 * Status
+	 */
+	agentToolsGatewayStatus: () => LocalizedString
+	/**
+	 * Install service
+	 */
+	agentToolsGatewayInstall: () => LocalizedString
+	/**
+	 * Start
+	 */
+	agentToolsGatewayStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	agentToolsGatewayStop: () => LocalizedString
 }
 
 export type Formatters = {}

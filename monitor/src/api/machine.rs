@@ -74,6 +74,9 @@ pub const FEATURES: &[&str] = &[
     // Local inference (`api::inference`): engines and models for this
     // machine, its engines deployed as stacks.
     "inference",
+    // AI agents (Codex, Claude Code, pi, opencode, Hermes, OpenClaw) for the
+    // agent's account (`api::agent_tools`).
+    "agent_tools",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

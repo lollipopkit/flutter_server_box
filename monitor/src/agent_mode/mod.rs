@@ -1306,6 +1306,24 @@ impl AgentMode {
         }))
     }
 
+    /// Every model a provider here has a key for (pi's `providers.available`),
+    /// whatever the machine's own choice is.
+    pub async fn available_models(&self) -> Result<Value, FlowError> {
+        Ok(self.ready_runtime().await?.request("providers.available", json!({})).await.map_err(|e| anyhow::anyhow!("{e}"))?)
+    }
+
+    /// An added or app provider's endpoint and its key, to point another
+    /// program at it (`api::agent_tools`). Built-in providers have no
+    /// address of their own here.
+    pub async fn endpoint(&self, provider: &str) -> Result<Option<(config::Provider, Option<String>)>, FlowError> {
+        let settings = config::load(&self.db).await?;
+        let Some(p) = self.providers(&settings).into_iter().find(|p| p.id == provider) else { return Ok(None) };
+        let creds = config::AppCredentials { db: config::DbCredentials(self.db.clone()), apps: self.apps.clone() };
+        let key = fl_pi_llm::host::Credentials::read(&creds, provider).await.map_err(|e| anyhow::anyhow!(e))?;
+        let key = key.and_then(|v| v["key"].as_str().map(String::from));
+        Ok(Some((p, key)))
+    }
+
     /// Whether [c] names a model a provider here has a key for, and a
     /// thinking level there is.
     async fn check_choice(&self, c: &TaskChoice) -> Result<(), FlowError> {

@@ -199,6 +199,7 @@ shield_lock
 shift
 side_navigation
 sleep
+smart_toy
 space
 speed
 splitscreen_bottom
@@ -233,6 +234,7 @@ transform
 tune
 unfold_more
 update
+upgrade
 upload
 upload_file
 usb

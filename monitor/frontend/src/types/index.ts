@@ -179,6 +179,7 @@ export type MachineFeature =
   /// (`/stacks*`).
   | 'stacks'
   | 'inference'
+  | 'agent_tools'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
 
@@ -3215,4 +3216,30 @@ export interface InferenceRecommend {
 export interface OllamaModels {
   models: { name: string; size: number; details?: { parameter_size?: string; quantization_level?: string } }[] | null
   running: { name: string; size_vram?: number }[] | null
+}
+
+/// AI agents on the machine (`sbm_parser::agents::Tool`).
+export type AgentToolId = 'codex' | 'claude' | 'pi' | 'opencode' | 'hermes' | 'openclaw'
+
+/// `GET /agent-tools`: one tool, found or not.
+export interface AgentToolView {
+  tool: AgentToolId
+  path: string | null
+  version: string | null
+  /// The release an install takes, when its installer takes one.
+  pinned: string | null
+  homepage: string
+  /// It runs a gateway of its own (Hermes, OpenClaw).
+  gateway: boolean
+  /// The model APIs it can be pointed at (`openai-completions`, …).
+  apis: string[]
+}
+
+/// A provider a tool can be pointed at (`GET /agent-tools/providers`).
+export interface AgentToolProvider {
+  id: string
+  name: string
+  api: string
+  baseUrl: string
+  models: string[]
 }

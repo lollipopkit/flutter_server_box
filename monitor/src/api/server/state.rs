@@ -122,6 +122,8 @@ pub struct AppState {
     pub stacks: Arc<crate::stacks::Stacks>,
     /// Local inference (`inference`).
     pub inference: Arc<crate::inference::Inference>,
+    /// AI agents' installs (`api::agent_tools`).
+    pub agent_tools: Arc<crate::api::agent_tools::AgentToolsJobs>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
     pub shares: Arc<crate::api::shares::SharesJobs>,
@@ -257,6 +259,7 @@ impl AppState {
                 config.get_stacks().shared_dir.as_deref().map(std::path::Path::new),
             )),
             inference: Arc::new(crate::inference::Inference::new(sqlite_file_of(&db).as_deref())),
+            agent_tools: Arc::default(),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),
