@@ -891,17 +891,16 @@ impl ContainerImage {
     }
 
     /// What the image is named by, in a list and to the runtime:
-    /// `repository:tag`, the repository alone where there is no tag, and for a
-    /// dangling image its short id (twelve hex digits, as `docker images`
-    /// prints it), or `<none>` without one.
+    /// `repository:tag`, and for a dangling image ([`Self::is_dangling`], a
+    /// `nginx:<none>` too) its short id (twelve hex digits, as `docker images`
+    /// prints it), or `<none>` without one. Never the repository alone: the
+    /// runtime reads that as `:latest`, another image.
     pub fn reference(&self) -> String {
-        let repository = self.repository.trim();
-        let tag = self.tag.as_deref().map(str::trim).unwrap_or("");
-        if repository.is_empty() || repository == "<none>" {
+        if self.is_dangling() {
             let id = self.id.as_deref().map(|id| id.strip_prefix("sha256:").unwrap_or(id)).unwrap_or("");
             return if id.is_empty() { "<none>".into() } else { id.chars().take(12).collect() };
         }
-        if tag.is_empty() || tag == "<none>" { repository.to_string() } else { format!("{repository}:{tag}") }
+        format!("{}:{}", self.repository.trim(), self.tag.as_deref().unwrap_or("").trim())
     }
 
     /// Whether this image is known to have nothing referencing it.
@@ -2856,7 +2855,9 @@ mod tests {
             created: None,
         };
         assert_eq!(image("nginx", Some("1.27"), None).reference(), "nginx:1.27");
-        assert_eq!(image("nginx", Some("<none>"), None).reference(), "nginx");
+        // A tag lost to a newer pull: its id, not `nginx` (which is :latest).
+        assert_eq!(image("nginx", Some("<none>"), Some("sha256:fedcba9876543210")).reference(), "fedcba987654");
+        assert_eq!(image("nginx", None, None).reference(), "<none>");
         assert_eq!(image("<none>", Some("<none>"), Some("sha256:0123456789abcdef0123")).reference(), "0123456789ab");
         assert_eq!(image("<none>", None, None).reference(), "<none>");
     }
