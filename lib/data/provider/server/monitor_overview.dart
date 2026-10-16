@@ -86,6 +86,12 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
     final features = offered.isEmpty ? const <String>{} : offered.split(',').toSet();
     _features = features;
     if (cred == null || features.isEmpty) return const MonitorOverviewState();
+    // A disposed notifier answers nothing more: what was asked before it went
+    // finds no client (see [_required], [checkUpdate]).
+    ref.onDispose(() {
+      _poll = null;
+      _lease = null;
+    });
     if (features.any(_polled.contains)) {
       final poll = _poll = AgentPoll(cred, every: _pollInterval, read: _read);
       ref.onDispose(poll.dispose);
@@ -141,7 +147,7 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
   Future<void> checkUpdate() async {
     final poll = _poll;
     final update = await _required.update(check: true);
-    if (identical(poll, _poll)) state = state.copyWith(update: update);
+    if (ref.mounted && identical(poll, _poll)) state = state.copyWith(update: update);
   }
 
   Future<void> endSession(String id) => _required.endSession(id);

@@ -48,7 +48,10 @@ class WebAppsNotifier extends _$WebAppsNotifier {
     );
     if (cred == null || !offered) return const WebAppsState();
     final poll = _poll = AgentPoll(cred, every: _pollInterval, read: _read);
-    ref.onDispose(poll.dispose);
+    ref.onDispose(() {
+      poll.dispose();
+      _poll = null;
+    });
     return const WebAppsState(offered: true);
   }
 
