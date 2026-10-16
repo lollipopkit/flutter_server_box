@@ -247,11 +247,11 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
     // The passphrase reaches cryptsetup as a key file only the agent's
     // account and root can read, kept until the job ends; the script, which
     // the job logs, names its path.
+    #[cfg(unix)]
     let key = if action.needs_key() {
         let Some(p) = passphrase.filter(|p| st::passphrase_ok(p)) else {
             return Ok(super::respond::error_u16(400, "invalidPassphrase"));
         };
-        #[cfg(unix)]
         match super::machine::PrivateScript::write(&p) {
             Ok(file) => Some(file),
             Err(e) => {
@@ -259,9 +259,13 @@ pub async fn act(req: HttpRequest, body: web::types::Json<ActBody>, state: web::
                 return Ok(super::respond::error_u16(500, "internal"));
             }
         }
-        #[cfg(not(unix))]
-        return Ok(super::respond::error_u16(409, "notLinux"));
     } else {
+        None
+    };
+    // Never reached: anywhere but Linux was answered `notLinux` above.
+    #[cfg(not(unix))]
+    let key: Option<std::convert::Infallible> = {
+        let _ = passphrase;
         None
     };
     #[cfg(unix)]
