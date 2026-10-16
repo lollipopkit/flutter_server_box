@@ -721,6 +721,10 @@ const SYSTEM_DIRS: &[&str] = &[
 ];
 /// Host folders nothing is mounted in either (`/boot/efi`, `/run/…`).
 const SYSTEM_TREES: &[&str] = &["/bin/", "/boot/", "/dev/", "/etc/", "/lib/", "/lib32/", "/lib64/", "/proc/", "/run/", "/sbin/", "/sys/", "/usr/"];
+/// Under a system tree, but where a desktop's udisks2 mounts a removable
+/// disk (`/run/media/<user>/<label>`): a backup destination, never a
+/// mountpoint the agent picks.
+const REMOVABLE_MEDIA: &str = "/run/media/";
 
 /// A mounted filesystem backups may go to, and what is free on it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -737,7 +741,9 @@ pub fn backup_destinations(devices: &[BlockDevice]) -> Vec<BackupDestination> {
     for dev in devices.iter().flat_map(BlockDevice::walk) {
         for m in &dev.mountpoints {
             let trimmed = m.trim_end_matches('/');
-            let system = trimmed.is_empty() || SYSTEM_DIRS.contains(&trimmed) || SYSTEM_TREES.iter().any(|t| trimmed.starts_with(t));
+            let system = trimmed.is_empty()
+                || SYSTEM_DIRS.contains(&trimmed)
+                || (SYSTEM_TREES.iter().any(|t| trimmed.starts_with(t)) && !trimmed.starts_with(REMOVABLE_MEDIA));
             if m.starts_with('/') && !system && !out.iter().any(|d| d.path == *m) {
                 out.push(BackupDestination { path: m.clone(), free: dev.available });
             }
@@ -1325,13 +1331,16 @@ mod tests {
                 {"name":"sda1","path":"/dev/sda1","type":"part","size":1,"mountpoints":["/boot/efi"],"fsavail":"1"},
                 {"name":"sda2","path":"/dev/sda2","type":"part","size":1,"mountpoints":["/"],"fsavail":"2"},
                 {"name":"sda3","path":"/dev/sda3","type":"part","size":1,"mountpoints":["[SWAP]"]}]},
-              {"name":"sdb1","path":"/dev/sdb1","type":"part","size":1,"mountpoints":["/mnt/backup","/bootstrap"],"fsavail":"9"}]}"#,
+              {"name":"sdb1","path":"/dev/sdb1","type":"part","size":1,"mountpoints":["/mnt/backup","/bootstrap"],"fsavail":"9"},
+              {"name":"sdc1","path":"/dev/sdc1","type":"part","size":1,"mountpoints":["/run/media/lk/BACKUP","/run/user/1000/doc"],"fsavail":"3"}]}"#,
         );
         assert_eq!(
             backup_destinations(&devices),
             [
                 BackupDestination { path: "/mnt/backup".into(), free: Some(9) },
                 BackupDestination { path: "/bootstrap".into(), free: Some(9) },
+                // A desktop's removable disk, but nothing else under /run.
+                BackupDestination { path: "/run/media/lk/BACKUP".into(), free: Some(3) },
             ]
         );
     }
