@@ -185,6 +185,63 @@ def app_id(m: dict) -> str:
 RESERVED = {"SBM_UID", "SBM_GID", "SBM_TZ", "SBM_RENDER_GID"}
 
 
+def service_block(compose: str, name: str) -> list[str] | None:
+    """The lines of compose service `name` under `services:`, its own left out."""
+    lines = compose.splitlines()
+    try:
+        start = next(i for i, l in enumerate(lines) if l.rstrip() == "services:") + 1
+    except StopIteration:
+        return None
+    content = [i for i in range(start, len(lines)) if lines[i].strip() and not lines[i].lstrip().startswith("#")]
+    if not content:
+        return None
+    indent = lambda l: len(l) - len(l.lstrip())
+    depth = indent(lines[content[0]])
+    for i in content:
+        line = lines[i]
+        if indent(line) == depth and line.strip().endswith(":") and line.strip()[:-1].strip("'\"") == name:
+            block = []
+            for l in lines[i + 1:]:
+                if l.strip() and not l.lstrip().startswith("#") and indent(l) <= depth:
+                    break
+                block.append(l)
+            return block
+        if indent(line) < depth:
+            break
+    return None
+
+
+PINNED = re.compile(r"^.+@sha256:[0-9a-fA-F]{64}$")
+
+
+def check_mcp(m: dict, settings: list, texts: dict[str, str], rep: Report) -> None:
+    """[[mcp]]: as `stacks::manifest` checks it (the schema covers the shape)."""
+    secrets = {s.get("env") for s in m.get("secrets", [])}
+    for i, server in enumerate(m.get("mcp", [])):
+        at = f"mcp[{i}]"
+        port = next((s for s in settings if s.get("key") == server.get("port") and s.get("type") == "port"), None)
+        if port is None or port.get("protocol", "tcp") != "tcp":
+            rep.error(f"{at}.port: names no TCP port setting")
+        auth = server.get("auth") or {}
+        if "secret" in auth and auth["secret"] not in secrets:
+            rep.error(f"{at}.auth.secret: {auth['secret']} is not a [[secrets]] entry")
+        service = server.get("service")
+        if server.get("publisher") == "builtin" or not service:
+            continue
+        block = next((b for f in m.get("compose", {}).get("files", []) if f in texts and (b := service_block(texts[f], service)) is not None), None)
+        if block is None:
+            rep.error(f"{at}.service: {service} is not a service of the compose files")
+            continue
+        image = next((v for k, v in yaml_entries("\n".join(block)) if k == "image"), "")
+        if not PINNED.match(image):
+            rep.error(f"{at}.service: {service}: an image pinned by digest (@sha256:…)")
+        if port is not None:
+            ref = "${" + port.get("env", "") + "}"
+            published = [l.strip().removeprefix("- ").strip("'\"") for l in block if ref in l]
+            if not published or any(not l.startswith("127.0.0.1:") for l in published):
+                rep.error(f"{at}.service: {service}: publishes {ref} on 127.0.0.1 alone")
+
+
 def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) -> None:
     if "id" in m:
         rep.error("id: not written by hand; it is <publisher>.<name>")
@@ -266,6 +323,8 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
         user = (login or {}).get("user")
         if not (login or {}).get("password") or not user or ":" in user:
             rep.error("web.basic_auth: needs [login] user (no `:`) and password")
+
+    check_mcp(m, settings, texts, rep)
 
     if m.get("license", {}).get("accept") is not True:
         rep.warn("license.accept is false: the admin deploys without being shown the licence to accept")

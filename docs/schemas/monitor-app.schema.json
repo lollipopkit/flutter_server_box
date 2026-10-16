@@ -110,6 +110,42 @@
         "note": { "$ref": "#/$defs/text", "description": "What else the admin must know to sign in." }
       }
     },
+    "mcp": {
+      "type": "array",
+      "maxItems": 4,
+      "description": "The app's MCP servers (Streamable HTTP), which Agent mode connects to once it is deployed: the service's own, or a sidecar in the compose files.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["port", "path", "publisher"],
+        "properties": {
+          "port": { "$ref": "#/$defs/key", "description": "The key of the TCP port setting it listens on; Agent mode reaches it on this machine." },
+          "path": { "type": "string", "pattern": "^/", "maxLength": 256 },
+          "publisher": {
+            "enum": ["builtin", "official", "community"],
+            "description": "builtin: the service's own. official: the service's makers, apart from it. community: third-party code holding the service's credential, said so before deploying."
+          },
+          "service": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$", "description": "A sidecar's compose service: its image pinned by digest (@sha256:…), its port published on 127.0.0.1 alone. Not for builtin." },
+          "source": { "type": "string", "pattern": "^https://", "description": "Where a sidecar's code is. Not for builtin." },
+          "auth": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "The header it is asked with, and one source of its value.",
+            "properties": {
+              "header": { "type": "string", "pattern": "^[A-Za-z0-9-]{1,64}$", "default": "Authorization" },
+              "scheme": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]{0,31}$", "description": "Put before the value, such as Bearer." },
+              "secret": { "$ref": "#/$defs/envName", "description": "A [[secrets]] entry: known at deploy, so it connects on its own." },
+              "asked": { "$ref": "#/$defs/text", "description": "A token the admin gives once the service is set up: where to make one." },
+              "oauth": { "const": true, "description": "Signed in with OAuth from Agent mode's settings." }
+            },
+            "oneOf": [{ "required": ["secret"] }, { "required": ["asked"] }, { "required": ["oauth"] }]
+          }
+        },
+        "if": { "properties": { "publisher": { "const": "builtin" } } },
+        "then": { "not": { "anyOf": [{ "required": ["service"] }, { "required": ["source"] }] } },
+        "else": { "required": ["service", "source"] }
+      }
+    },
     "secrets": {
       "type": "array",
       "description": "Generated once (alphanumeric) and kept in the env file.",

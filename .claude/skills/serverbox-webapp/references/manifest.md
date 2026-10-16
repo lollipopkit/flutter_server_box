@@ -151,6 +151,34 @@ allows it, so the first sign-in needs no wizard; where it only makes its
 first account in the browser, leave out `user`/`password` and say so in
 `note`.
 
+## `[[mcp]]`
+
+The app's MCP servers (Streamable HTTP), which Agent mode connects to once
+the app is deployed. At most 4.
+
+| Field | Notes |
+|---|---|
+| `port` | The key of the TCP port setting it listens on; Agent mode reaches it at `http://127.0.0.1:<port><path>` |
+| `path` | Its URL path (`/api/mcp`, `/mcp`) |
+| `publisher` | `builtin` (the service's own), `official` (its makers, apart from it) or `community` (third-party code holding the service's credential; the deploy dialog says so) |
+| `service` | A sidecar's compose service; not for `builtin` |
+| `source` | Where a sidecar's code is (https); not for `builtin` |
+| `auth` | Optional: `header` (default `Authorization`), `scheme` (`Bearer`), and one of `secret` (a `[[secrets]]` entry: connects on its own), `asked` (text: where the admin makes a token once the service is set up) or `oauth = true` |
+
+A sidecar joins the app's compose file:
+
+- its image pinned by digest (`ghcr.io/…/mcp@sha256:…`), so what holds the
+  credential never changes under the app;
+- its own port setting, published on `127.0.0.1` alone
+  (`"127.0.0.1:${MCP_PORT}:8080"`): it answers anyone who reaches it with the
+  service's credential;
+- the service by its compose name on the stack's network
+  (`http://app:8080`), and the credential from the env file.
+
+Prefer a credential the agent knows at deploy (`secret`: a key the service
+reads from env, a password it is seeded with); `asked` when only the service
+can make one.
+
 ## The env file
 
 The agent writes `.env` in the stack's directory and runs

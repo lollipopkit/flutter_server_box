@@ -72,6 +72,8 @@ check it as you type. Every field is in `references/manifest.md`.
   service allows it, and name it there; the admin can then read it in the
   app's details.
 - `[env]` for fixed values.
+- `[[mcp]]` when the service has an MCP server, or a maintained one exists to
+  run beside it as a sidecar: Agent mode connects to it once deployed.
 - Every env name comes from exactly one of those, and every `${VARIABLE}` a
   compose file needs must be one of them.
 - `notices`: what the compose files do that an admin should know (bind

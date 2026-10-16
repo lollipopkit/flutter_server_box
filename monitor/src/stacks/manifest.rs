@@ -110,7 +110,74 @@ pub struct Manifest {
     pub settings: Vec<Setting>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub login: Option<Login>,
+    /// The app's MCP servers, which Agent mode connects to once it is
+    /// deployed (`agent_mode::mcp`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mcp: Vec<Mcp>,
 }
+
+/// An MCP server of the app's (Streamable HTTP): the service's own, or a
+/// sidecar in the compose files that reaches the service on the stack's
+/// network. Agent mode reaches it on this machine, at the port setting's port.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Mcp {
+    /// The key of the TCP port setting it listens on.
+    pub port: String,
+    pub path: String,
+    pub publisher: McpPublisher,
+    /// The compose service a sidecar is: its image pinned by digest, its
+    /// port published on loopback alone (it holds the service's credential).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub service: Option<String>,
+    /// Where a sidecar's code is, shown before deploying.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub auth: Option<McpAuth>,
+}
+
+/// Who wrote an MCP server: the service itself, the service's makers apart
+/// from it, or someone else (third-party code holding the service's
+/// credential, said so before deploying).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum McpPublisher {
+    Builtin,
+    Official,
+    Community,
+}
+
+/// The header an MCP server is asked with, and where its value comes from:
+/// one of a `[[secrets]]` entry (known at deploy), a token the operator gives
+/// once the service is set up (`asked`, saying where to make one), or OAuth.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct McpAuth {
+    #[serde(default = "authorization")]
+    pub header: String,
+    /// Put before the value (`Bearer`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scheme: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secret: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asked: Option<Text>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub oauth: bool,
+}
+
+fn authorization() -> String {
+    "Authorization".into()
+}
+
+/// The most MCP servers one app has.
+const MAX_MCP: usize = 4;
+static HEADER_NAME: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Za-z0-9-]{1,64}$").expect("regex"));
+static SCHEME: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[A-Za-z][A-Za-z0-9-]{0,31}$").expect("regex"));
+/// A compose service name.
+static SERVICE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^[a-z0-9][a-z0-9_.-]{0,63}$").expect("regex"));
+static MCP_PATH: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^/[A-Za-z0-9._~!$&'()*+,;=:@/%-]{0,255}$").expect("regex"));
 
 /// How the admin signs in the first time, shown in the app's details: the
 /// account the service is seeded with, its password (a secret, shown only
@@ -444,6 +511,24 @@ pub fn base_images(dockerfile: &str) -> Vec<String> {
     images
 }
 
+/// The lines of compose service [name] (under `services:`), its own line
+/// left out; `None` when the file has no such service.
+fn service_block<'a>(compose: &'a str, name: &str) -> Option<Vec<&'a str>> {
+    let indent = |l: &str| l.len() - l.trim_start().len();
+    let content = |l: &&str| !l.trim().is_empty() && !l.trim_start().starts_with('#');
+    let mut lines = compose.lines().skip_while(|l| l.trim_end() != "services:").skip(1);
+    // The services' own depth: that of the first line under `services:`.
+    let depth = indent(lines.clone().find(content)?);
+    let key = |l: &str| l.trim().strip_suffix(':').map(|k| k.trim_matches(['\'', '"']).to_string());
+    lines.by_ref().find(|l| content(l) && indent(l) == depth && key(l).as_deref() == Some(name))?;
+    Some(lines.take_while(|l| !content(l) || indent(l) > depth).collect())
+}
+
+/// An image reference pinned by digest.
+fn pinned(image: &str) -> bool {
+    image.rsplit_once("@sha256:").is_some_and(|(name, digest)| !name.is_empty() && digest.len() == 64 && digest.bytes().all(|b| b.is_ascii_hexdigit()))
+}
+
 /// An env value Compose reads back literally: written single-quoted, so no
 /// `'`, no line break, no NUL.
 fn env_value_ok(value: &str) -> bool {
@@ -619,6 +704,63 @@ impl Manifest {
             && !self.login.as_ref().is_some_and(|l| l.password.is_some() && l.user.as_ref().is_some_and(|u| !u.contains(':')))
         {
             out.push(problem("web.basic_auth", "needs [login] user (no `:`) and password"));
+        }
+        out.extend(self.mcp_problems());
+        out
+    }
+
+    fn mcp_problems(&self) -> Vec<Problem> {
+        let mut out = Vec::new();
+        if self.mcp.len() > MAX_MCP {
+            out.push(problem("mcp", format!("at most {MAX_MCP}")));
+        }
+        let mut ports = BTreeSet::new();
+        for (i, m) in self.mcp.iter().enumerate() {
+            let at = |field: &str| format!("mcp[{i}].{field}");
+            match self.settings.iter().find(|s| s.key() == m.port) {
+                Some(Setting::Port { protocol: Protocol::Tcp, .. }) => {}
+                _ => out.push(problem(at("port"), "names no TCP port setting")),
+            }
+            if !ports.insert(&m.port) {
+                out.push(problem(at("port"), "another MCP server's"));
+            }
+            if !MCP_PATH.is_match(&m.path) {
+                out.push(problem(at("path"), "a URL path, starting with /"));
+            }
+            match (m.publisher, &m.service, &m.source) {
+                (McpPublisher::Builtin, None, None) => {}
+                (McpPublisher::Builtin, _, _) => out.push(problem(at("publisher"), "the service's own: no service or source")),
+                (_, Some(service), Some(source)) => {
+                    if !SERVICE.is_match(service) {
+                        out.push(problem(at("service"), "a compose service name"));
+                    }
+                    if !https(source) {
+                        out.push(problem(at("source"), "an https:// URL"));
+                    }
+                }
+                _ => out.push(problem(at("publisher"), "a sidecar names its compose service and source")),
+            }
+            let Some(auth) = &m.auth else { continue };
+            if !HEADER_NAME.is_match(&auth.header) {
+                out.push(problem(at("auth.header"), "a header name"));
+            }
+            if auth.scheme.as_ref().is_some_and(|s| !SCHEME.is_match(s)) {
+                out.push(problem(at("auth.scheme"), "a word like Bearer"));
+            }
+            match (&auth.secret, &auth.asked, auth.oauth) {
+                (Some(env), None, false) => {
+                    if !self.secrets.iter().any(|s| &s.env == env) {
+                        out.push(problem(at("auth.secret"), format!("{env} is not a [[secrets]] entry")));
+                    }
+                }
+                (None, Some(asked), false) => {
+                    if !text_ok(asked) {
+                        out.push(problem(at("auth.asked"), "needs `en`"));
+                    }
+                }
+                (None, None, true) => {}
+                _ => out.push(problem(at("auth"), "one of secret, asked or oauth")),
+            }
         }
         out
     }
@@ -1022,6 +1164,32 @@ impl Package {
             used.extend(needed);
             used.extend(optional);
         }
+        for (i, m) in manifest.mcp.iter().enumerate() {
+            let Some(service) = m.service.as_ref().filter(|_| m.publisher != McpPublisher::Builtin) else { continue };
+            let block = manifest.compose.files.iter().filter_map(|f| texts.get(f)).find_map(|c| service_block(c, service));
+            let Some(block) = block else {
+                problems.push(problem(format!("mcp[{i}].service"), format!("{service} is not a service of the compose files")));
+                continue;
+            };
+            let image = block.iter().filter_map(|l| yaml_entry(l)).find(|(k, _)| *k == "image").map(|(_, v)| v);
+            if !image.is_some_and(pinned) {
+                problems.push(problem(format!("mcp[{i}].service"), format!("{service}: an image pinned by digest (@sha256:…)")));
+            }
+            let env = manifest.settings.iter().find(|s| s.key() == m.port).and_then(|s| match s {
+                Setting::Port { env, .. } => Some(env.as_str()),
+                _ => None,
+            });
+            if let Some(env) = env {
+                let published: Vec<&str> = block
+                    .iter()
+                    .map(|l| l.trim().trim_start_matches("- ").trim_matches(['\'', '"']))
+                    .filter(|l| l.contains(&format!("${{{env}}}")))
+                    .collect();
+                if published.is_empty() || published.iter().any(|l| !l.starts_with("127.0.0.1:")) {
+                    problems.push(problem(format!("mcp[{i}].service"), format!("{service}: publishes ${{{env}}} on 127.0.0.1 alone")));
+                }
+            }
+        }
         match (dockerfiles.is_empty(), built_images) {
             (false, false) => problems.push(problem("compose.files", format!("a built image is named {BUILT_PREFIX}…"))),
             (true, true) => problems.push(problem("compose.files", format!("{BUILT_PREFIX}… is for a built image; nothing is built"))),
@@ -1353,6 +1521,43 @@ label = { en = "Port" }
 
         let ignore = at(Package::read(&files(&manifest, BUILT, &[("web.Dockerfile", "FROM alpine\n"), ("web.Dockerfile.dockerignore", "")])).unwrap_err());
         assert!(ignore.iter().any(|p| p.contains("no .dockerignore")), "{ignore:?}");
+    }
+
+    /// An MCP server of the app's: the service's own, or a sidecar pinned by
+    /// digest and reachable on loopback alone; one credential source each.
+    #[test]
+    fn mcp_servers_are_checked() {
+        const COMPOSE: &str = "services:\n  app:\n    image: x\n    ports: ['${PORT}:80']\n";
+        let builtin = format!("{MINIMAL}\n[[mcp]]\nport = \"port\"\npath = \"/api/mcp\"\npublisher = \"builtin\"\n[mcp.auth]\nscheme = \"Bearer\"\nasked = {{ en = \"Make a token in your profile.\" }}\n");
+        let m = package(&builtin, COMPOSE).expect("the service's own").manifest;
+        assert_eq!(m.mcp[0].auth.as_ref().map(|a| a.header.as_str()), Some("Authorization"));
+
+        let problems = |text: &str, compose: &str| package(text, compose).err().unwrap_or_default();
+        let at = |p: &[Problem]| p.iter().map(|p| p.at.clone()).collect::<Vec<_>>();
+        let with = |from: &str, to: &str| builtin.replace(from, to);
+        assert_eq!(at(&problems(&with("port = \"port\"\npath", "port = \"nope\"\npath"), COMPOSE)), ["mcp[0].port"]);
+        assert_eq!(at(&problems(&with("/api/mcp", "api"), COMPOSE)), ["mcp[0].path"]);
+        assert_eq!(at(&problems(&with("publisher = \"builtin\"", "publisher = \"builtin\"\nservice = \"app\""), COMPOSE)), ["mcp[0].publisher"]);
+        let both = with("asked = {", "oauth = true\nasked = {");
+        assert_eq!(at(&problems(&both, COMPOSE)), ["mcp[0].auth"]);
+        assert_eq!(at(&problems(&with("asked = { en = \"Make a token in your profile.\" }", "secret = \"NOPE\""), COMPOSE)), ["mcp[0].auth.secret"]);
+
+        // A sidecar: its own port on loopback, its image pinned.
+        let digest = "a".repeat(64);
+        let sidecar = format!(
+            "{MINIMAL}\n[[secrets]]\nenv = \"KEY\"\n\n[[settings]]\nkey = \"mcp_port\"\ntype = \"port\"\nenv = \"MCP_PORT\"\ndefault = 8090\nlabel = {{ en = \"MCP\" }}\n\n[[mcp]]\nport = \"mcp_port\"\npath = \"/mcp\"\npublisher = \"community\"\nservice = \"mcp\"\nsource = \"https://example.com/mcp\"\n[mcp.auth]\nsecret = \"KEY\"\n"
+        );
+        let compose = |image: &str, publish: &str| format!(
+            "services:\n  app:\n    image: x\n    environment:\n      KEY: ${{KEY}}\n    ports: ['${{PORT}}:80']\n  mcp:\n    image: {image}\n    environment:\n      API_KEY: ${{KEY}}\n    ports:\n      - \"{publish}:8080\"\n"
+        );
+        let good = compose(&format!("ghcr.io/acme/mcp@sha256:{digest}"), "127.0.0.1:${MCP_PORT}");
+        assert!(package(&sidecar, &good).is_ok(), "{:?}", package(&sidecar, &good).err());
+        let unpinned = compose("ghcr.io/acme/mcp:1", "127.0.0.1:${MCP_PORT}");
+        assert_eq!(at(&problems(&sidecar, &unpinned)), ["mcp[0].service"]);
+        let open = compose(&format!("ghcr.io/acme/mcp@sha256:{digest}"), "${MCP_PORT}");
+        assert_eq!(at(&problems(&sidecar, &open)), ["mcp[0].service"]);
+        assert_eq!(at(&problems(&sidecar.replace("service = \"mcp\"", "service = \"other\""), &good)), ["mcp[0].service"]);
+        assert_eq!(at(&problems(&sidecar.replace("source = \"https://example.com/mcp\"\n", ""), &good)), ["mcp[0].publisher"]);
     }
 
     #[test]
