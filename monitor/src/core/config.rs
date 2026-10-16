@@ -948,64 +948,9 @@ impl Default for Config {
             // its switches; every switch in it defaults to off
             remote_access: Some(RemoteAccessConfig::default()),
             stacks: None,
-            push: Some(vec![
-                PushConfig {
-                    name: "webhook".to_string(),
-                    push_type: "webhook".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("url".to_string(), toml::Value::String("http://localhost:5700".to_string()));
-                        table.insert("method".to_string(), toml::Value::String("POST".to_string()));
-                        
-                        let mut headers = toml::Table::new();
-                        headers.insert("Content-Type".to_string(), toml::Value::String("application/json".to_string()));
-                        table.insert("headers".to_string(), toml::Value::Table(headers));
-                        
-                        let mut body_template = toml::Table::new();
-                        body_template.insert("message".to_string(), toml::Value::String("Server {{name}}: {{message}}".to_string()));
-                        table.insert("body_template".to_string(), toml::Value::Table(body_template));
-                        
-                        table
-                    },
-                },
-                PushConfig {
-                    name: "serverchan".to_string(),
-                    push_type: "serverchan".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("sc_key".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("desp".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table
-                    },
-                },
-                PushConfig {
-                    name: "bark".to_string(),
-                    push_type: "bark".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
-                        table.insert("key".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("body".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table.insert("level".to_string(), toml::Value::String("active".to_string()));
-                        table
-                    },
-                },
-                PushConfig {
-                    name: "ios".to_string(),
-                    push_type: "ios".to_string(),
-                    config: {
-                        let mut table = toml::Table::new();
-                        table.insert("token".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("content".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table.insert("body_regex".to_string(), toml::Value::String(".*".to_string()));
-                        table.insert("code".to_string(), toml::Value::Integer(200));
-                        table
-                    },
-                },
-            ]),
+            // No channel until the operator adds one: a placeholder would
+            // send each alert to a third party with an empty key.
+            push: Some(Vec::new()),
             legacy: LegacyGoConfig::default(),
         }
     }

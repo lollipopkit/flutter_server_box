@@ -300,9 +300,9 @@ async fn send_serverchan_notification(config: &Config, push: &PushConfig, messag
     let client = http_client();
     
     // Extract ServerChan configuration
-    let sc_key = push.config.get("sc_key")
-        .or_else(|| push.config.get("sckey"))
-        .and_then(|v| v.as_str())
+    // A blank key is none: nothing is sent to ServerChan without one.
+    let sc_key = text(push, "sc_key")
+        .or_else(|| text(push, "sckey"))
         .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing ServerChan SCKey".to_string()))?;
     
     let title = push.config.get("title")
@@ -374,8 +374,7 @@ async fn send_ios_notification(config: &Config, push: &PushConfig, message: &str
     let client = http_client();
     
     // Extract iOS configuration
-    let token = push.config.get("token")
-        .and_then(|v| v.as_str())
+    let token = text(push, "token")
         .ok_or_else(|| crate::utils::error::MonitorError::Push("Missing iOS token".to_string()))?;
     
     let title = push.config.get("title")
@@ -553,6 +552,19 @@ mod tests {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
+
+    #[tokio::test]
+    async fn a_blank_key_sends_nothing() {
+        // Each refused before a request: ServerChan's and the push server's
+        // addresses are third parties', and the message would go in it.
+        for (push_type, key) in [("serverchan", "sc_key"), ("ios", "token")] {
+            let mut config = toml::Table::new();
+            config.insert(key.into(), TomlValue::String("  ".into()));
+            let push = PushConfig { name: push_type.into(), push_type: push_type.into(), config };
+            let err = send_notification(&Config::default(), &push, "secret alert").await.unwrap_err();
+            assert!(err.to_string().contains("Missing"), "{push_type}: {err}");
+        }
+    }
 
     async fn local_response(status: u16, body: Vec<u8>) -> String {
         let (url, _) = local_server(status, body).await;

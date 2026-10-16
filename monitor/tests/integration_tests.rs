@@ -10,7 +10,8 @@ async fn test_config_load_default() {
     assert_eq!(config.get_server().port, 3770);
     assert_eq!(config.get_monitoring().interval_seconds, 7);
     assert!(!config.get_monitoring().rules.is_empty());
-    assert!(!config.get_push().is_empty());
+    // No placeholder channel: one would send alerts out with an empty key.
+    assert!(config.get_push().is_empty());
 }
 
 #[tokio::test] 
