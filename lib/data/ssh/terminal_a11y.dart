@@ -185,10 +185,15 @@ final class TerminalTranscript {
     if (anchor != null) {
       if (buffer.viewWidth != _width || buffer.viewHeight != _height) {
         // Only the lines the reflow pushed out of the scrollback are history:
-        // the rest are still in the buffer, wrapped differently.
-        final before = _join(_live);
-        final kept = _overlapStart(before, _join(live));
-        _gone.addAll([for (final line in before.take(kept)) (line, false)]);
+        // the rest are still in the buffer, wrapped differently. A buffer
+        // short of its limit lost none of them.
+        if (buffer.height >= lines.maxLength) {
+          final before = _join(_live);
+          final dropped = droppedByReflow(before, _join(live));
+          _gone.addAll([
+            for (final line in before.take(dropped)) (line, false),
+          ]);
+        }
       } else if (anchor.attached) {
         final dropped = (_anchorAt - anchor.index).clamp(0, _live.length);
         _gone.addAll(_live.take(dropped));
@@ -224,23 +229,28 @@ final class TerminalTranscript {
     return out;
   }
 
-  /// Where in [before] the lines of [after] begin: the first offset from
-  /// which the two agree on every line they share, or all of [before] when
-  /// none does.
+  /// How many lines off the top of [before] a reflow that left [after]
+  /// dropped: the lines of [before] before the longest tail of it that
+  /// [after] begins with, or all of them when there is none.
   ///
-  /// The last line of [before] is not compared: it is the one being typed on
-  /// or redrawn, and may have changed since.
-  static int _overlapStart(List<String> before, List<String> after) {
-    if (after.isEmpty) return before.length;
-    final settled = before.length - 1;
-    if (settled <= 0) return 0;
-    for (var k = 0; k < settled; k++) {
-      final n = math.min(settled - k, after.length);
-      var same = true;
-      for (var i = 0; i < n && same; i++) {
-        same = before[k + i] == after[i];
+  /// The longest, not the first line that matches: with repeated or blank
+  /// lines the first match is often too early, and every line between it and
+  /// the real one would be taken as still in the buffer and lost. The last
+  /// line of [before] may also be left out of the tail — it is the one typed
+  /// on or redrawn, and may have changed since.
+  static int droppedByReflow(List<String> before, List<String> after) {
+    bool tailMatches(int end, int m) {
+      for (var i = 0; i < m; i++) {
+        if (before[end - m + i] != after[i]) return false;
       }
-      if (same) return k;
+      return true;
+    }
+
+    for (var m = math.min(before.length, after.length); m > 0; m--) {
+      if (tailMatches(before.length, m)) return before.length - m;
+      if (m < before.length && tailMatches(before.length - 1, m)) {
+        return before.length - 1 - m;
+      }
     }
     return before.length;
   }

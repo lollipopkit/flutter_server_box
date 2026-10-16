@@ -155,6 +155,29 @@ void main() {
       expect(transcript.lines, written);
     });
 
+    test('repeated lines a reflow pushed out are kept, each once', () {
+      final terminal = _terminal(cols: 10, rows: 3, maxLines: 6);
+      final transcript = TerminalTranscript(terminal.buffer)..sync();
+      final written = List.filled(5, 'abcdefghi');
+      terminal.write(written.join('\r\n'));
+      transcript.sync();
+      terminal.resize(4, 3);
+      transcript.sync();
+      expect(transcript.lines, written);
+    });
+
+    test('droppedByReflow takes the longest overlap', () {
+      int dropped(List<String> before, List<String> after) =>
+          TerminalTranscript.droppedByReflow(before, after);
+      // The first X is not the one left: both old ones are gone but the last.
+      expect(dropped(['A', 'X', 'X'], ['X']), 2);
+      expect(dropped(['p', '', 'q', '', 'q'], ['', 'q']), 3);
+      expect(dropped(['a', 'b', 'c'], ['a', 'b', 'c']), 0);
+      // The last line was redrawn since.
+      expect(dropped(['a', 'b', r'$ l'], ['a', 'b', r'$ ls']), 0);
+      expect(dropped(['a', 'b'], ['c']), 2);
+    });
+
     test('a wrapped row is joined to the line it continues', () {
       final terminal = _terminal(cols: 5)..write('abcdefgh');
       final transcript = TerminalTranscript(terminal.buffer)..sync();
