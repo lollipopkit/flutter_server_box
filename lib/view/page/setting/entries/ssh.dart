@@ -16,6 +16,7 @@ extension _SSH on _AppSettingsPageState {
         _buildSSHWakeLock(),
         _buildSSHVirtualKeyAutoOff(),
         _buildProgramStatusAlerts(),
+        _buildTermMetricsBar(),
       ]),
       SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
@@ -437,6 +438,19 @@ extension _SSH on _AppSettingsPageState {
         trailing: StoreSwitch(prop: _setting.programStatusAlerts),
       ),
       keywords: l10n.programStatusAlertsTip,
+    );
+  }
+
+  SettingsRow _buildTermMetricsBar() {
+    final label = l10n.termMetricsBar;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.speed_outlined),
+        title: TipText(label, l10n.termMetricsBarTip),
+        trailing: StoreSwitch(prop: _setting.termMetricsBar),
+      ),
+      keywords: l10n.termMetricsBarTip,
     );
   }
 

@@ -626,6 +626,10 @@ class SettingStore extends SqliteStore with ThemeSettings {
   /// user, finishes or fails (OSC 7501, OSC 9;4), or a long command ends
   /// (OSC 133).
   late final programStatusAlerts = propertyDefault('programStatusAlerts', true);
+
+  /// The server's CPU, memory, network and disk under its terminal — see
+  /// `TerminalMetricsBar`.
+  late final termMetricsBar = propertyDefault('termMetricsBar', false);
   late final sshBgImage = propertyDefault('sshBgImage', '');
   late final sshBgOpacity = propertyDefault('sshBgOpacity', 0.3);
   late final sshBlurRadius = propertyDefault('sshBlurRadius', 0.0);

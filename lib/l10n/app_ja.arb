@@ -1657,5 +1657,7 @@
   "kbServerPrev": "サーバー: 前のサーバー",
   "kbServerNext": "サーバー: 次のサーバー",
   "kbServerList": "サーバー: サーバー一覧",
-  "kbServerClose": "サーバー: 詳細を閉じる"
+  "kbServerClose": "サーバー: 詳細を閉じる",
+  "termMetricsBar": "ターミナル下部にサーバーの状態を表示",
+  "termMetricsBarTip": "CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。"
 }

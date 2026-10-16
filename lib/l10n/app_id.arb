@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Server: server sebelumnya",
   "kbServerNext": "Server: server berikutnya",
   "kbServerList": "Server: daftar server",
-  "kbServerClose": "Server: tutup detail"
+  "kbServerClose": "Server: tutup detail",
+  "termMetricsBar": "Pembacaan server di bawah terminal",
+  "termMetricsBarTip": "CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual."
 }

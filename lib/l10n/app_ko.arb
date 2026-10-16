@@ -1657,5 +1657,7 @@
   "kbServerPrev": "서버: 이전 서버",
   "kbServerNext": "서버: 다음 서버",
   "kbServerList": "서버: 서버 목록",
-  "kbServerClose": "서버: 상세 정보 닫기"
+  "kbServerClose": "서버: 상세 정보 닫기",
+  "termMetricsBar": "터미널 아래에 서버 상태 표시",
+  "termMetricsBarTip": "CPU, 메모리, 네트워크, 디스크를 서버 카드와 같은 형식으로 표시합니다. 휴대폰에서는 가상 키 위에 표시됩니다."
 }

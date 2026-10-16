@@ -5886,4 +5886,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Server: tutup detail';
+
+  @override
+  String get termMetricsBar => 'Pembacaan server di bawah terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual.';
 }

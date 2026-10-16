@@ -1657,5 +1657,7 @@
   "kbServerPrev": "服务器：上一台",
   "kbServerNext": "服务器：下一台",
   "kbServerList": "服务器：服务器列表",
-  "kbServerClose": "服务器：关闭详情"
+  "kbServerClose": "服务器：关闭详情",
+  "termMetricsBar": "终端下方显示服务器状态",
+  "termMetricsBarTip": "CPU、内存、网络、磁盘，与服务器卡片一致；手机上位于虚拟按键上方。"
 }

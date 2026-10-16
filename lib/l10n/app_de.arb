@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Server: vorheriger Server",
   "kbServerNext": "Server: nächster Server",
   "kbServerList": "Server: Serverliste",
-  "kbServerClose": "Server: Details schließen"
+  "kbServerClose": "Server: Details schließen",
+  "termMetricsBar": "Serverwerte unter dem Terminal",
+  "termMetricsBarTip": "CPU, Arbeitsspeicher, Netzwerk und Festplatte, wie auf der Serverkarte. Auf dem Telefon über den virtuellen Tasten."
 }

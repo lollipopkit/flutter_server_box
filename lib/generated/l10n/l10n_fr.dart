@@ -5985,4 +5985,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Serveurs : fermer les détails';
+
+  @override
+  String get termMetricsBar => 'Mesures du serveur sous le terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles.';
 }

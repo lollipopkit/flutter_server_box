@@ -5941,4 +5941,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Servers: details sluiten';
+
+  @override
+  String get termMetricsBar => 'Servermetingen onder de terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.';
 }

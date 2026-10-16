@@ -5620,4 +5620,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get kbServerClose => 'サーバー: 詳細を閉じる';
+
+  @override
+  String get termMetricsBar => 'ターミナル下部にサーバーの状態を表示';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。';
 }

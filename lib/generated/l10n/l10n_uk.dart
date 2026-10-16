@@ -5931,4 +5931,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Сервери: закрити подробиці';
+
+  @override
+  String get termMetricsBar => 'Показники сервера під терміналом';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, пам\'ять, мережа та диск — як на картці сервера. На телефоні над віртуальними клавішами.';
 }

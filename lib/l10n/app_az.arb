@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Serverlər: əvvəlki server",
   "kbServerNext": "Serverlər: növbəti server",
   "kbServerList": "Serverlər: server siyahısı",
-  "kbServerClose": "Serverlər: təfərrüatları bağla"
+  "kbServerClose": "Serverlər: təfərrüatları bağla",
+  "termMetricsBar": "Terminalın altında server göstəriciləri",
+  "termMetricsBarTip": "CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə."
 }

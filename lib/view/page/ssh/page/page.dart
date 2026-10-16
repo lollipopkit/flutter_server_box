@@ -41,6 +41,7 @@ import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/view/page/agent/view.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
+import 'package:server_box/view/page/ssh/metrics_bar.dart';
 import 'package:server_box/view/page/ssh/page/tmux_page_controller.dart';
 import 'package:server_box/view/page/ssh/page/virt_key_intro.dart';
 import 'package:server_box/view/page/ssh/present_server.dart';
@@ -888,6 +889,14 @@ class SSHPageState extends ConsumerState<SSHPage>
           onClosePane: (pane) => unawaited(_closeTmuxPane(pane.id)),
         ),
         Expanded(child: terminalContent),
+        // Under the terminal and above the keys, which are the `Scaffold`'s
+        // bottom bar. With no keys under it — a desktop, or a phone with the
+        // lot hidden — it keeps clear of the home indicator itself.
+        if (widget.args.spi case final spi?)
+          TerminalMetricsBar(
+            serverId: spi.id,
+            bottomInset: _virtKeysHeight == 0 ? _media.padding.bottom : 0,
+          ),
       ],
     );
   }
