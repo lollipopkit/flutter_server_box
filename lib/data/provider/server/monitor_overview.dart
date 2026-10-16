@@ -64,12 +64,16 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
 
   AgentPoll? _poll;
 
+  /// The client alone, for an agent with nothing to poll (`audit`, `live`).
+  MonitorClientLease? _lease;
+
   /// What this build found the agent offers.
   Set<String> _features = const {};
 
   @override
   MonitorOverviewState build(String serverId) {
     _poll = null;
+    _lease = null;
     final cred = ref.watch(serversProvider.select((s) => s.servers[serverId]?.monitorOn));
     // A string, which compares by value: a set built in the selector is a
     // new one on every status poll, and rebuilt this — a new client, a new
@@ -82,13 +86,18 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
     final features = offered.isEmpty ? const <String>{} : offered.split(',').toSet();
     _features = features;
     if (cred == null || features.isEmpty) return const MonitorOverviewState();
-    final poll = _poll = AgentPoll(cred, every: _pollInterval, read: _read);
-    ref.onDispose(poll.dispose);
+    if (features.any(_polled.contains)) {
+      final poll = _poll = AgentPoll(cred, every: _pollInterval, read: _read);
+      ref.onDispose(poll.dispose);
+    } else {
+      final lease = _lease = MonitorClientLease(cred);
+      ref.onDispose(lease.release);
+    }
     return MonitorOverviewState(features: features);
   }
 
   MonitorHttpClient get _required {
-    final client = _poll?.client;
+    final client = _poll?.client ?? _lease?.client;
     if (client == null) throw StateError('No monitor agent for $serverId');
     return client;
   }
@@ -96,8 +105,6 @@ class MonitorOverviewNotifier extends _$MonitorOverviewNotifier {
   Future<void> refresh() => _poll?.refresh() ?? Future.value();
 
   Future<void> _read(MonitorHttpClient client, bool Function() current) async {
-    // `audit` and `live` alone: nothing to poll.
-    if (!_features.any(_polled.contains)) return;
     try {
       // One after the other: the first signs the client in, and two at once
       // would both find it signed out.
