@@ -114,6 +114,24 @@ extension VirtKeyX on VirtKey {
     return name;
   }
 
+  /// What a screen reader says for this key: the key's name where [text] is
+  /// an abbreviation or the key is drawn as an icon.
+  String get semanticLabel => switch (this) {
+    VirtKey.esc => l10n.keyEscape,
+    VirtKey.ctrl => l10n.keyControl,
+    VirtKey.up => l10n.keyArrowUp,
+    VirtKey.down => l10n.keyArrowDown,
+    VirtKey.left => l10n.keyArrowLeft,
+    VirtKey.right => l10n.keyArrowRight,
+    VirtKey.pgup => l10n.keyPageUp,
+    VirtKey.pgdn => l10n.keyPageDown,
+    VirtKey.sftp => 'SFTP',
+    VirtKey.snippet => libL10n.snippet,
+    VirtKey.sudo => l10n.trySudo,
+    VirtKey.ime => l10n.virtKeyHelpIME,
+    _ => text,
+  };
+
   /// Default order of virtual keys
   static const defaultOrder = [
     // Two full rows, each key of a pair over the other: ↑ over ↓, PgUp over

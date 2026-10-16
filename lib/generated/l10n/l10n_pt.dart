@@ -1359,6 +1359,33 @@ class AppLocalizationsPt extends AppLocalizations {
       'O restante fica em uma página própria, deslizada para o lado.';
 
   @override
+  String get keyArrowDown => 'Seta para baixo';
+
+  @override
+  String get keyArrowLeft => 'Seta para a esquerda';
+
+  @override
+  String get keyArrowRight => 'Seta para a direita';
+
+  @override
+  String get keyArrowUp => 'Seta para cima';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Página abaixo';
+
+  @override
+  String get keyPageUp => 'Página acima';
+
+  @override
+  String get termTextView => 'Ver como texto';
+
+  @override
   String get waitConnection => 'Por favor, aguarde a conexão ser estabelecida';
 
   @override

@@ -1284,6 +1284,33 @@ class AppLocalizationsJa extends AppLocalizations {
   String get virtKeyRowsTip => '残りは別のページに置かれ、横にスワイプして切り替えます。';
 
   @override
+  String get keyArrowDown => '下矢印';
+
+  @override
+  String get keyArrowLeft => '左矢印';
+
+  @override
+  String get keyArrowRight => '右矢印';
+
+  @override
+  String get keyArrowUp => '上矢印';
+
+  @override
+  String get keyControl => 'Ctrl キー';
+
+  @override
+  String get keyEscape => 'Esc キー';
+
+  @override
+  String get keyPageDown => 'ページダウン';
+
+  @override
+  String get keyPageUp => 'ページアップ';
+
+  @override
+  String get termTextView => 'テキストで表示';
+
+  @override
   String get waitConnection => '接続の確立を待ってください';
 
   @override

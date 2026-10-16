@@ -1371,6 +1371,33 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le reste passe sur une page à part, que l\'on fait défiler latéralement.';
 
   @override
+  String get keyArrowDown => 'Flèche bas';
+
+  @override
+  String get keyArrowLeft => 'Flèche gauche';
+
+  @override
+  String get keyArrowRight => 'Flèche droite';
+
+  @override
+  String get keyArrowUp => 'Flèche haut';
+
+  @override
+  String get keyControl => 'Contrôle';
+
+  @override
+  String get keyEscape => 'Échap';
+
+  @override
+  String get keyPageDown => 'Page suivante';
+
+  @override
+  String get keyPageUp => 'Page précédente';
+
+  @override
+  String get termTextView => 'Afficher en texte';
+
+  @override
   String get waitConnection =>
       'Veuillez attendre que la connexion soit établie.';
 

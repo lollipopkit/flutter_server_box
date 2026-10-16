@@ -1359,6 +1359,33 @@ class AppLocalizationsUk extends AppLocalizations {
       'Решта — на окремій сторінці, яку гортають убік.';
 
   @override
+  String get keyArrowDown => 'Стрілка вниз';
+
+  @override
+  String get keyArrowLeft => 'Стрілка вліво';
+
+  @override
+  String get keyArrowRight => 'Стрілка вправо';
+
+  @override
+  String get keyArrowUp => 'Стрілка вгору';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Escape';
+
+  @override
+  String get keyPageDown => 'Сторінка вниз';
+
+  @override
+  String get keyPageUp => 'Сторінка вгору';
+
+  @override
+  String get termTextView => 'Переглянути як текст';
+
+  @override
   String get waitConnection =>
       'Будь ласка, зачекайте, доки з\'єднання буде встановлено.';
 

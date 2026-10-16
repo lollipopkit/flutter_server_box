@@ -1369,6 +1369,33 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il resto va su una pagina a parte, che si scorre lateralmente.';
 
   @override
+  String get keyArrowDown => 'Freccia giù';
+
+  @override
+  String get keyArrowLeft => 'Freccia sinistra';
+
+  @override
+  String get keyArrowRight => 'Freccia destra';
+
+  @override
+  String get keyArrowUp => 'Freccia su';
+
+  @override
+  String get keyControl => 'Control';
+
+  @override
+  String get keyEscape => 'Esc';
+
+  @override
+  String get keyPageDown => 'Pagina giù';
+
+  @override
+  String get keyPageUp => 'Pagina su';
+
+  @override
+  String get termTextView => 'Visualizza come testo';
+
+  @override
   String get waitConnection => 'Attendi che la connessione venga stabilita.';
 
   @override
