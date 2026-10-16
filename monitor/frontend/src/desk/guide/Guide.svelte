@@ -1,16 +1,14 @@
 <script lang="ts">
-  /// The first-run guide: what this desk is, where its apps are, and a few
-  /// web apps worth installing on this machine. Shown to an account that has
-  /// not been here before (Settings offers it again), and skippable at every
-  /// step — the desk is never held up by it.
+  /// The first-run guide: what this desk is, where its apps are, and the
+  /// catalog's recommended web apps. Skippable at every step.
   ///
-  /// It installs nothing itself: a chosen app opens on its page in the App
-  /// Store, where what its compose files do, the settings and the account's
-  /// password are asked exactly as they always are.
+  /// It installs nothing itself: an app's Install opens its App Store page,
+  /// where the deploy dialog asks what it always asks.
 
-  import { AppIcon, Badge, Button, Card, Checkbox, Dialog, Icon, Spinner } from '../lk'
+  import { AppIcon, Badge, Button, Card, Dialog, Icon, Spinner } from '../lk'
 
   import { api } from '../../lib/api'
+  import { canAct } from '../../lib/access'
   import { capabilitiesStore } from '../../lib/capabilities.svelte'
   import { errorText } from '../../lib/errorText'
   import { useScope } from '../../lib/scope.svelte'
@@ -28,18 +26,19 @@
     prefs: DeskPrefs
   }
 
+  const STORE = 'serverbox.store'
+
   const { prefs }: Props = $props()
   const desk = useDesk()
   const scope = useScope()
   // svelte-ignore state_referenced_locally
   const flow = new GuideFlow(prefs)
 
-  /// The catalog, once it has been read: what the guide recommends from.
+  /// The catalog's recommended apps, once read; empty where the agent runs none.
   let apps = $state<StackApp[] | null>(null)
   let error = $state('')
   let asked = false
-  /// What the machine says about running web apps (`GET /stacks/{id}/prepare`,
-  /// the answer the deploy dialog starts from): unknown until it answers.
+  /// Whether this machine can run them (`/stacks/{id}/prepare`'s runtime).
   let runtime = $state<'unknown' | 'here' | 'absent'>('unknown')
   let runtimeText = $state('')
 
@@ -55,8 +54,8 @@
     serverNames.byServer[servers.currentId] ??
       (servers.currentId === 'local' ? $LL.thisServer() : displayName(servers.current ?? { id: '', url: '', token: null })),
   )
-  const recommended = $derived((apps ?? []).filter((a) => a.manifest.recommended))
-  /// The dock's apps, in its order: what this desk is arranged with.
+  const hasStore = $derived(desk.apps.some((a) => a.id === STORE))
+  /// The dock's apps, in its order.
   const mainApps = $derived(
     prefs.value.dock
       .map((id) => desk.apps.find((a) => a.id === id))
@@ -66,26 +65,26 @@
 
   $effect(() => {
     const serverId = servers.currentId
-    // Capabilities arrive after the desk does; an agent that serves no web
-    // apps has no catalog to read.
+    // Capabilities arrive after the desk does.
     if (asked || !caps) return
     asked = true
     if (!caps.features?.includes('stacks')) {
       apps = []
       return
     }
-    void load(serverId)
+    void load(serverId, canAct(caps))
   })
 
-  async function load(serverId: string) {
+  async function load(serverId: string, acting: boolean) {
     error = ''
     try {
       const { apps: catalog } = await api.listStacks()
       if (scope.stale(serverId)) return
-      apps = catalog
-      const first = catalog.find((a) => a.manifest.recommended) ?? catalog[0]
-      if (!first) return
-      const prepared = await api.prepareStack(first.manifest.id)
+      apps = catalog.filter((a) => a.manifest.recommended)
+      // Only an account that may act here is asked (and told) about Docker;
+      // the App Store page explains the rest.
+      if (!acting || !apps[0]) return
+      const prepared = await api.prepareStack(apps[0].manifest.id)
       if (scope.stale(serverId)) return
       if (prepared.runtime.available) {
         runtime = 'here'
@@ -98,12 +97,10 @@
     }
   }
 
-  /// Marks the guide done and opens each chosen app's App Store page, a
-  /// window each: that is where the deploy dialog lives.
-  function install() {
-    const chosen = [...flow.chosen]
+  /// Done with the guide, on [app]'s App Store page (or the store's list).
+  function openStore(app: string | null) {
     flow.finish()
-    for (const id of chosen) desk.open('serverbox.store', { newWindow: true, appState: { app: id } })
+    desk.open(STORE, { appState: app ? { app } : null })
   }
 </script>
 
@@ -112,9 +109,7 @@
     <p class="text-[13px] leading-relaxed text-(--text-secondary)">{$LL.deskGuideBody({ host })}</p>
     <p class="pt-[9px] text-[13px] leading-relaxed text-(--text-secondary)">{$LL.deskGuideWelcomeMore()}</p>
   {:else if flow.step === 'apps'}
-    <p class="text-[13px] leading-relaxed text-(--text-secondary)">
-      {$LL.deskGuideAppsBody({ apps: $LL.deskApps(), host })}
-    </p>
+    <p class="text-[13px] leading-relaxed text-(--text-secondary)">{$LL.deskGuideAppsBody({ apps: $LL.deskApps() })}</p>
     <div class="grid grid-cols-2 gap-[9px] pt-[13px]">
       {#each mainApps as a (a.id)}
         <Card variant="raised" class="flex min-w-0 items-center gap-[9px]" padding="7px 9px">
@@ -129,35 +124,34 @@
     {#if runtime === 'absent'}
       <Card class="mt-[9px] flex items-start gap-[9px] text-[13px]" padding="9px 11px">
         <Icon name="info" size={17} />
-        <span>{$LL.deskGuideNoDocker()} {runtimeText}</span>
+        <span>{$LL.deskGuideNoDocker()} {runtimeText} {$LL.deskGuideNoDockerHint()}</span>
       </Card>
-      <p class="pt-[7px] text-[12px] leading-relaxed text-(--text-tertiary)">{$LL.deskGuideNoDockerHint()}</p>
-      <p class="pt-[7px] text-[12px] leading-relaxed text-(--text-tertiary)">{$LL.deskGuideWebAppsNote()}</p>
-    {:else if error}
+    {/if}
+    {#if error}
       <Card class="mt-[9px] flex items-start gap-[9px] text-[13px] text-(--color-danger)" padding="9px 11px">
         <Icon name="error" size={17} />
         <span>{error}</span>
       </Card>
     {:else if !apps}
       <div class="flex justify-center py-[21px]"><Spinner size={34} /></div>
-    {:else if recommended.length === 0}
+    {:else if apps.length === 0}
       <p class="pt-[13px] text-[13px] text-(--text-tertiary)">{$LL.storeEmpty()}</p>
     {:else}
       <div class="space-y-[7px] pt-[13px]">
-        {#each recommended as a (a.manifest.id)}
-          <Card variant="raised" class="flex items-center gap-[11px]" padding="9px 11px" selected={flow.chosen.includes(a.manifest.id)}>
-            <Checkbox
-              checked={flow.chosen.includes(a.manifest.id)}
-              onchange={() => flow.toggle(a.manifest.id)}
-              aria-label={pick(a.manifest.title, $locale)}
-            />
-            <button type="button" class="min-w-0 flex-1 space-y-[2px] text-left" onclick={() => flow.toggle(a.manifest.id)}>
-              <span class="flex items-center gap-[7px]">
-                <span class="truncate text-[14px] font-semibold text-(--text-primary)">{pick(a.manifest.title, $locale)}</span>
-                {#if a.stack?.state === 'installed'}<Badge tone="success">{$LL.stackInstalled()}</Badge>{/if}
-              </span>
+        {#each apps as a (a.manifest.id)}
+          <Card variant="raised" class="flex items-center gap-[11px]" padding="9px 11px">
+            <AppIcon glyph={a.manifest.glyph} tone={a.manifest.tone as IconTone} size={36} />
+            <div class="min-w-0 flex-1 space-y-[2px]">
+              <span class="block truncate text-[14px] font-semibold text-(--text-primary)">{pick(a.manifest.title, $locale)}</span>
               <span class="block text-[12px] leading-snug text-(--text-tertiary)">{pick(a.manifest.description, $locale)}</span>
-            </button>
+            </div>
+            {#if a.stack?.state === 'installed'}
+              <Badge tone="success">{$LL.stackInstalled()}</Badge>
+            {:else if hasStore}
+              <Button size="sm" variant="secondary" disabled={runtime === 'absent'} onclick={() => openStore(a.manifest.id)}>
+                {$LL.deskGuideInstall()}
+              </Button>
+            {/if}
           </Card>
         {/each}
       </div>
@@ -166,15 +160,18 @@
   {/if}
 
   {#snippet actions()}
-    <Button variant="ghost" onclick={() => flow.finish()}>{$LL.deskGuideSkip()}</Button>
+    {#if !flow.last}
+      <Button variant="ghost" onclick={() => flow.finish()}>{$LL.deskGuideSkip()}</Button>
+    {/if}
     <div class="flex-1"></div>
     {#if !flow.first}
       <Button variant="secondary" icon="arrow_back" onclick={() => flow.previous()}>{$LL.back()}</Button>
     {/if}
-    {#if flow.step === 'webApps'}
-      <Button variant="primary" icon="download" disabled={runtime === 'absent' || flow.chosen.length === 0} onclick={install}>
-        {$LL.deskGuideInstall()}
-      </Button>
+    {#if flow.last}
+      {#if hasStore}
+        <Button variant="secondary" icon="storefront" onclick={() => openStore(null)}>{$LL.deskGuideOpenStore()}</Button>
+      {/if}
+      <Button variant="primary" onclick={() => flow.finish()}>{$LL.deskGuideDone()}</Button>
     {:else}
       <Button variant="primary" iconRight="arrow_forward" onclick={() => flow.next()}>{$LL.deskGuideNext()}</Button>
     {/if}
@@ -182,8 +179,7 @@
 </Dialog>
 
 <style>
-  /* Taller than a short window: the guide scrolls inside itself, so its title
-     and its buttons stay reachable. */
+  /* The guide scrolls inside itself, so its title and buttons stay reachable. */
   :global(.lk-guide) {
     max-height: calc(100% - 34px);
     overflow-y: auto;

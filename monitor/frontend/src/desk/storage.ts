@@ -3,6 +3,7 @@
 /// to `deskApi` directly, so the fallback is one class and not a branch in
 /// each of them.
 
+import { ApiError } from '../lib/api'
 import type { ServerEntry } from '../lib/servers.svelte'
 import { deskApi, readEvents, type DeskNotification, type DeskPreferences, type SessionSave, type StoredSession } from './deskApi'
 
@@ -15,8 +16,10 @@ export interface DeskStorage {
   appItems(app: string): Promise<Record<string, unknown>>
   appPut(app: string, key: string, value: unknown): Promise<void>
   appRemove(app: string, key: string): Promise<void>
-  load(): Promise<{ preferences: DeskPreferences | null; wallpaperSha: string | null }>
+  /// `onboarded`: the first-run guide is done with.
+  load(): Promise<{ preferences: DeskPreferences | null; wallpaperSha: string | null; onboarded: boolean }>
   savePreferences(p: DeskPreferences): Promise<void>
+  setOnboarded(done: boolean): Promise<void>
   loadSession(device: string): Promise<StoredSession>
   saveSession(device: string, expected: number, session: Omit<StoredSession, 'revision'>): Promise<SessionSave>
   wallpaperUrl(): Promise<string | null>
@@ -26,6 +29,25 @@ export interface DeskStorage {
   markRead(read: { ids: number[] } | { all: true }): Promise<void>
   /// Resolves when the stream ends; null where there is none.
   events: ((signal: AbortSignal, onEvent: (e: Record<string, unknown>) => void) => Promise<void>) | null
+}
+
+/// The first-run guide's mark kept in this browser, where the agent keeps none.
+/// Unmarked, a desk that stored preferences was used before: not greeted.
+function readBrowserOnboarded(serverId: string, usedBefore: boolean): boolean {
+  try {
+    const raw = window.localStorage.getItem(`desk.v1:${serverId}:onboarded`)
+    return raw === null ? usedBefore : raw === '1'
+  } catch {
+    return true
+  }
+}
+
+function writeBrowserOnboarded(serverId: string, done: boolean) {
+  try {
+    window.localStorage.setItem(`desk.v1:${serverId}:onboarded`, done ? '1' : '0')
+  } catch {
+    // Refused: the guide may be shown again.
+  }
 }
 
 export class AgentStorage implements DeskStorage {
@@ -50,10 +72,21 @@ export class AgentStorage implements DeskStorage {
 
   async load() {
     const view = await deskApi.get(this.#entry)
-    return { preferences: view.preferences, wallpaperSha: view.wallpaper_sha256 }
+    // TODO: remove the `undefined` case once no agent predates `/desk/onboarding`.
+    const onboarded = view.onboarded_at === undefined ? readBrowserOnboarded(this.#entry.id, view.preferences !== null) : view.onboarded_at !== null
+    return { preferences: view.preferences, wallpaperSha: view.wallpaper_sha256, onboarded }
   }
   async savePreferences(p: DeskPreferences) {
     await deskApi.putPreferences(this.#entry, p)
+  }
+  async setOnboarded(done: boolean) {
+    try {
+      await deskApi.setOnboarded(this.#entry, done)
+    } catch (e) {
+      // TODO: remove with the case in `load`: an older agent has no route.
+      if (!(e instanceof ApiError && e.status === 404)) throw e
+      writeBrowserOnboarded(this.#entry.id, done)
+    }
   }
   loadSession(device: string) {
     return deskApi.getSession(this.#entry, device)
@@ -93,7 +126,10 @@ export class BrowserStorage implements DeskStorage {
   readonly keepsThemes = false
   #key: string
 
+  #serverId: string
+
   constructor(serverId: string) {
+    this.#serverId = serverId
     this.#key = `desk.v1:${serverId}`
   }
 
@@ -131,10 +167,14 @@ export class BrowserStorage implements DeskStorage {
   }
 
   async load() {
-    return { preferences: this.#read<DeskPreferences>('preferences'), wallpaperSha: null }
+    const preferences = this.#read<DeskPreferences>('preferences')
+    return { preferences, wallpaperSha: null, onboarded: readBrowserOnboarded(this.#serverId, preferences !== null) }
   }
   async savePreferences(p: DeskPreferences) {
     this.#write('preferences', p)
+  }
+  async setOnboarded(done: boolean) {
+    writeBrowserOnboarded(this.#serverId, done)
   }
   async loadSession(device: string) {
     return (

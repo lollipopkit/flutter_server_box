@@ -34,9 +34,6 @@ export interface DeskPreferences {
   /// `<installation>#<variant>`; null for the design system's own
   /// (`/desk/themes`).
   theme?: string | null
-  /// When the account finished (or skipped) the first-run guide; null shows
-  /// it.
-  onboarded_at?: string | null
 }
 
 /// A color as a theme writes one: ARGB, or a palette role.
@@ -117,6 +114,9 @@ export interface DeskView {
   preferences: DeskPreferences | null
   wallpaper_sha256: string | null
   presets: string[]
+  /// When the account walked through or skipped the first-run guide; null
+  /// shows it. Absent on an agent from before it (shown once per browser).
+  onboarded_at?: string | null
 }
 
 export interface StoredSession {
@@ -148,6 +148,10 @@ export const deskApi = {
       '/desk/preferences',
       { method: 'PUT', body: JSON.stringify(preferences) },
     ),
+
+  /// The first-run guide done with, or offered again.
+  setOnboarded: (entry: ServerEntry, done: boolean) =>
+    requestFor<void>(entry, '/desk/onboarding', { method: done ? 'PUT' : 'DELETE' }),
 
   getSession: (entry: ServerEntry, device: string) =>
     requestFor<StoredSession>(

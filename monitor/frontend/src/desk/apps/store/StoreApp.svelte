@@ -71,10 +71,17 @@
     if (!id) void load()
   }
 
-  const categories = $derived(['all', ...new Set((apps ?? []).flatMap((a) => a.manifest.categories))])
+  /// `recommended` (the first-run guide's apps) leads the manifests' own.
+  const categories = $derived([
+    'all',
+    ...((apps ?? []).some((a) => a.manifest.recommended) ? ['recommended'] : []),
+    ...new Set((apps ?? []).flatMap((a) => a.manifest.categories)),
+  ])
   const shown = $derived(
     (apps ?? []).filter((a) => {
-      if (category !== 'all' && !a.manifest.categories.includes(category)) return false
+      if (category === 'recommended' ? !a.manifest.recommended : category !== 'all' && !a.manifest.categories.includes(category)) {
+        return false
+      }
       const q = query.trim().toLowerCase()
       if (!q) return true
       return [pick(a.manifest.title, $locale), a.manifest.project, pick(a.manifest.description, $locale), a.manifest.developer ?? '']
@@ -86,6 +93,7 @@
   function categoryText(c: string): string {
     const map: Record<string, () => string> = {
       all: $LL.storeAll,
+      recommended: $LL.storeRecommended,
       photos: $LL.storeCategoryPhotos,
       media: $LL.storeCategoryMedia,
       files: $LL.storeCategoryFiles,

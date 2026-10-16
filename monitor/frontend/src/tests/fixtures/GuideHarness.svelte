@@ -1,6 +1,6 @@
 <script lang="ts">
-  /// The first-run guide over a desk, mounted while the account's
-  /// preferences have not been marked — as `Desk.svelte` mounts it.
+  /// The first-run guide over a desk, mounted while the account needs it, as
+  /// `Desk.svelte` mounts it.
 
   import Guide from '../../desk/guide/Guide.svelte'
   import { provideDesk, type Desk } from '../../desk/deskState.svelte'

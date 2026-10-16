@@ -23,7 +23,6 @@ export function defaults(): DeskPreferences {
     ],
     background: true,
     background_denied: [],
-    onboarded_at: null,
   }
 }
 
@@ -35,6 +34,8 @@ export class DeskPrefs {
   wallpaperUrl = $state<string | null>(null)
   /// The stored preferences have been read (the defaults stand until then).
   loaded = $state(false)
+  /// The account is done with the first-run guide (`/desk/onboarding`).
+  onboarded = $state(true)
   #wallpaperSha: string | null = null
   #storage: DeskStorage
   #timer: ReturnType<typeof setTimeout> | null = null
@@ -47,10 +48,9 @@ export class DeskPrefs {
     return this.#storage.remote
   }
 
-  /// The first-run guide is this account's to see: the stored preferences
-  /// (or, with no row, the defaults) say nobody walked through it here.
+  /// The first-run guide is shown until the account is done with it.
   get needsGuide(): boolean {
-    return this.loaded && !this.value.onboarded_at
+    return this.loaded && !this.onboarded
   }
 
   /// Lets [appId] run while hidden, or not.
@@ -67,7 +67,8 @@ export class DeskPrefs {
 
   async load() {
     try {
-      const { preferences, wallpaperSha } = await this.#storage.load()
+      const { preferences, wallpaperSha, onboarded } = await this.#storage.load()
+      this.onboarded = onboarded
       // A preference newer than what was stored takes its default.
       this.value = preferences ? { ...defaults(), ...preferences } : defaults()
       if (wallpaperSha !== this.#wallpaperSha) {
@@ -91,13 +92,18 @@ export class DeskPrefs {
 
   /// The guide is done with, whether it was walked through or skipped.
   markOnboarded() {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once, never kept
-    this.update({ onboarded_at: new Date().toISOString() })
+    this.#setOnboarded(true)
   }
 
-  /// Offers it again (Settings), as the account that first arrived here.
+  /// Offers it again (Settings).
   showGuideAgain() {
-    this.update({ onboarded_at: null })
+    this.#setOnboarded(false)
+  }
+
+  #setOnboarded(done: boolean) {
+    this.onboarded = done
+    // Unsaved, it is shown (or not) again on the next load.
+    void this.#storage.setOnboarded(done).catch(() => {})
   }
 
   pin(appId: string) {

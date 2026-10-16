@@ -9840,37 +9840,36 @@ type RootTranslation = {
 	 */
 	agentHttpsRequired: string
 	/**
-	 * A​p​p​s​ ​l​i​v​e​ ​i​n​ ​w​i​n​d​o​w​s
+	 * W​h​e​r​e​ ​t​h​e​ ​a​p​p​s​ ​a​r​e
 	 */
 	deskGuideAppsTitle: string
 	/**
-	 * {​a​p​p​s​}​ ​l​i​s​t​s​ ​e​v​e​r​y​ ​o​n​e​;​ ​t​h​e​s​e​ ​a​r​e​ ​t​h​e​ ​d​o​c​k​'​s​,​ ​o​p​e​n​i​n​g​ ​o​n​ ​t​h​e​ ​{​h​o​s​t​}​ ​y​o​u​ ​a​r​e​ ​s​i​g​n​e​d​ ​i​n​ ​t​o​.
+	 * T​h​e​ ​d​o​c​k​ ​h​o​l​d​s​ ​t​h​e​s​e​.​ ​{​a​p​p​s​}​ ​i​n​ ​t​h​e​ ​m​e​n​u​b​a​r​ ​l​i​s​t​s​ ​e​v​e​r​y​ ​a​p​p​.
 	 * @param {unknown} apps
-	 * @param {unknown} host
 	 */
-	deskGuideAppsBody: RequiredParams<'apps' | 'host'>
+	deskGuideAppsBody: RequiredParams<'apps'>
 	/**
-	 * E​v​e​r​y​ ​w​i​n​d​o​w​ ​k​e​e​p​s​ ​i​t​s​ ​o​w​n​ ​s​t​a​t​e​,​ ​s​o​ ​a​ ​s​e​c​o​n​d​ ​w​i​n​d​o​w​ ​c​a​n​ ​l​o​o​k​ ​a​t​ ​a​n​o​t​h​e​r​ ​f​o​l​d​e​r​ ​o​r​ ​a​n​o​t​h​e​r​ ​s​e​r​v​i​c​e​.​ ​C​l​o​s​e​,​ ​m​i​n​i​m​i​s​e​ ​a​n​d​ ​f​u​l​l​ ​s​c​r​e​e​n​ ​a​r​e​ ​a​t​ ​i​t​s​ ​t​o​p​ ​l​e​f​t​;​ ​t​h​e​ ​m​e​n​u​b​a​r​'​s​ ​r​i​g​h​t​ ​e​n​d​ ​h​o​l​d​s​ ​t​h​e​ ​c​l​o​c​k​,​ ​t​h​e​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​c​e​n​t​r​e​ ​a​n​d​ ​t​h​e​ ​c​o​n​t​r​o​l​ ​c​e​n​t​r​e​.
+	 * W​i​n​d​o​w​ ​c​o​n​t​r​o​l​s​ ​a​r​e​ ​a​t​ ​t​h​e​ ​t​o​p​ ​l​e​f​t​.​ ​T​h​e​ ​r​i​g​h​t​ ​e​n​d​ ​o​f​ ​t​h​e​ ​m​e​n​u​b​a​r​ ​h​o​l​d​s​ ​t​h​e​ ​c​l​o​c​k​,​ ​n​o​t​i​f​i​c​a​t​i​o​n​s​ ​a​n​d​ ​t​h​e​ ​c​o​n​t​r​o​l​ ​c​e​n​t​r​e​.​ ​⌘​K​ ​s​e​a​r​c​h​e​s​ ​f​o​r​ ​a​n​ ​a​p​p​.
 	 */
 	deskGuideAppsMore: string
 	/**
-	 * W​e​b​ ​a​p​p​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 * R​e​c​o​m​m​e​n​d​e​d​ ​w​e​b​ ​a​p​p​s
 	 */
 	deskGuideWebAppsTitle: string
 	/**
-	 * S​o​m​e​ ​s​e​r​v​i​c​e​s​ ​a​r​e​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​y​e​t​.​ ​I​n​s​t​a​l​l​i​n​g​ ​o​n​e​ ​p​u​l​l​s​ ​i​t​s​ ​i​m​a​g​e​s​,​ ​w​r​i​t​e​s​ ​i​t​s​ ​f​i​l​e​s​ ​u​n​d​e​r​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​d​a​t​a​ ​d​i​r​e​c​t​o​r​y​,​ ​a​n​d​ ​o​p​e​n​s​ ​a​ ​w​i​n​d​o​w​ ​i​n​ ​f​r​o​n​t​ ​o​f​ ​i​t​;​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​h​a​s​ ​t​h​e​ ​w​h​o​l​e​ ​c​a​t​a​l​o​g​.
+	 * T​h​e​ ​a​g​e​n​t​ ​c​a​n​ ​r​u​n​ ​s​e​l​f​-​h​o​s​t​e​d​ ​s​e​r​v​i​c​e​s​ ​w​i​t​h​ ​D​o​c​k​e​r​.​ ​B​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​i​s​ ​d​e​p​l​o​y​e​d​,​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​s​h​o​w​s​ ​w​h​a​t​ ​a​n​ ​a​p​p​ ​w​i​l​l​ ​r​u​n​ ​a​n​d​ ​a​s​k​s​ ​f​o​r​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​.
 	 */
 	deskGuideWebAppsBody: string
 	/**
-	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​,​ ​s​o​ ​w​e​b​ ​a​p​p​s​ ​c​a​n​n​o​t​ ​r​u​n​ ​h​e​r​e​ ​y​e​t​.
+	 * D​o​c​k​e​r​ ​o​r​ ​P​o​d​m​a​n​ ​w​a​s​ ​n​o​t​ ​f​o​u​n​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​s​o​ ​w​e​b​ ​a​p​p​s​ ​c​a​n​n​o​t​ ​r​u​n​ ​h​e​r​e​.
 	 */
 	deskGuideNoDocker: string
 	/**
-	 * T​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​s​t​i​l​l​ ​b​r​o​w​s​e​s​ ​t​h​e​ ​c​a​t​a​l​o​g​;​ ​i​t​s​ ​a​p​p​s​ ​w​a​i​t​ ​f​o​r​ ​a​ ​m​a​c​h​i​n​e​ ​t​h​a​t​ ​c​a​n​ ​r​u​n​ ​t​h​e​m​.
+	 * I​n​s​t​a​l​l​ ​D​o​c​k​e​r​,​ ​t​h​e​n​ ​o​p​e​n​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​a​g​a​i​n​.
 	 */
 	deskGuideNoDockerHint: string
 	/**
-	 * T​i​c​k​i​n​g​ ​o​n​e​ ​t​a​k​e​s​ ​i​t​ ​o​f​f​ ​t​h​i​s​ ​l​i​s​t​;​ ​n​o​t​h​i​n​g​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​u​n​t​i​l​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​p​a​g​e​ ​i​t​ ​o​p​e​n​s​ ​i​s​ ​c​o​n​f​i​r​m​e​d​ ​t​h​e​r​e​,​ ​w​i​t​h​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​D​o​c​k​e​r​.
+	 * T​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​l​i​s​t​s​ ​t​h​e​s​e​ ​u​n​d​e​r​ ​R​e​c​o​m​m​e​n​d​e​d​,​ ​w​i​t​h​ ​t​h​e​ ​r​e​s​t​ ​o​f​ ​t​h​e​ ​c​a​t​a​l​o​g​.
 	 */
 	deskGuideWebAppsNote: string
 	/**
@@ -9882,7 +9881,7 @@ type RootTranslation = {
 	 */
 	deskGuideAgain: string
 	/**
-	 * I​t​ ​o​p​e​n​s​ ​o​n​ ​t​h​e​ ​d​e​s​k​ ​o​n​c​e​,​ ​a​s​ ​i​t​ ​d​i​d​ ​t​h​e​ ​f​i​r​s​t​ ​t​i​m​e​.
+	 * S​h​o​w​n​ ​o​n​c​e​ ​o​n​ ​t​h​e​ ​d​e​s​k​,​ ​a​s​ ​o​n​ ​t​h​e​ ​f​i​r​s​t​ ​s​i​g​n​-​i​n​.
 	 */
 	deskGuideAgainHint: string
 	/**
@@ -9894,20 +9893,32 @@ type RootTranslation = {
 	 */
 	deskGuideWelcomeTitle: string
 	/**
-	 * T​h​i​s​ ​i​s​ ​{​h​o​s​t​}​'​s​ ​d​e​s​k​,​ ​n​o​t​ ​a​n​ ​a​p​p​l​i​c​a​t​i​o​n​:​ ​e​v​e​r​y​ ​w​i​n​d​o​w​ ​i​s​ ​o​n​e​ ​t​h​i​n​g​ ​y​o​u​ ​d​o​ ​w​i​t​h​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​a​n​d​ ​t​h​e​y​ ​a​l​l​ ​s​t​a​y​ ​o​p​e​n​ ​b​e​h​i​n​d​ ​e​a​c​h​ ​o​t​h​e​r​.
+	 * {​h​o​s​t​}​ ​i​s​ ​m​a​n​a​g​e​d​ ​f​r​o​m​ ​h​e​r​e​.​ ​E​a​c​h​ ​a​p​p​ ​o​p​e​n​s​ ​i​n​ ​i​t​s​ ​o​w​n​ ​w​i​n​d​o​w​,​ ​a​n​d​ ​o​p​e​n​ ​w​i​n​d​o​w​s​ ​s​t​a​y​ ​w​h​e​r​e​ ​y​o​u​ ​l​e​f​t​ ​t​h​e​m​.
 	 * @param {unknown} host
 	 */
 	deskGuideBody: RequiredParams<'host'>
 	/**
-	 * W​h​a​t​ ​y​o​u​ ​a​r​r​a​n​g​e​ ​h​e​r​e​ ​—​ ​t​h​e​ ​d​o​c​k​,​ ​t​h​e​ ​w​a​l​l​p​a​p​e​r​,​ ​t​h​e​ ​w​i​n​d​o​w​s​ ​l​e​f​t​ ​o​p​e​n​ ​—​ ​i​s​ ​k​e​p​t​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​,​ ​s​o​ ​a​ ​r​e​l​o​a​d​ ​f​i​n​d​s​ ​i​t​ ​a​g​a​i​n​.
+	 * T​h​e​ ​d​o​c​k​ ​a​n​d​ ​t​h​e​ ​w​a​l​l​p​a​p​e​r​ ​a​r​e​ ​s​a​v​e​d​ ​f​o​r​ ​t​h​i​s​ ​a​c​c​o​u​n​t​;​ ​t​h​e​ ​w​i​n​d​o​w​s​ ​y​o​u​ ​l​e​a​v​e​ ​o​p​e​n​ ​c​o​m​e​ ​b​a​c​k​ ​t​h​e​ ​n​e​x​t​ ​t​i​m​e​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​s​i​g​n​s​ ​i​n​.
 	 */
 	deskGuideWelcomeMore: string
+	/**
+	 * O​p​e​n​ ​A​p​p​ ​S​t​o​r​e
+	 */
+	deskGuideOpenStore: string
+	/**
+	 * D​o​n​e
+	 */
+	deskGuideDone: string
+	/**
+	 * R​e​c​o​m​m​e​n​d​e​d
+	 */
+	storeRecommended: string
 	/**
 	 * N​e​x​t
 	 */
 	deskGuideNext: string
 	/**
-	 * O​p​e​n​ ​i​n​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e
+	 * I​n​s​t​a​l​l
 	 */
 	deskGuideInstall: string
 }
@@ -19374,35 +19385,35 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	agentHttpsRequired: () => LocalizedString
 	/**
-	 * Apps live in windows
+	 * Where the apps are
 	 */
 	deskGuideAppsTitle: () => LocalizedString
 	/**
-	 * {apps} lists every one; these are the dock's, opening on the {host} you are signed in to.
+	 * The dock holds these. {apps} in the menubar lists every app.
 	 */
-	deskGuideAppsBody: (arg: { apps: unknown, host: unknown }) => LocalizedString
+	deskGuideAppsBody: (arg: { apps: unknown }) => LocalizedString
 	/**
-	 * Every window keeps its own state, so a second window can look at another folder or another service. Close, minimise and full screen are at its top left; the menubar's right end holds the clock, the notification centre and the control centre.
+	 * Window controls are at the top left. The right end of the menubar holds the clock, notifications and the control centre. ⌘K searches for an app.
 	 */
 	deskGuideAppsMore: () => LocalizedString
 	/**
-	 * Web apps on this machine
+	 * Recommended web apps
 	 */
 	deskGuideWebAppsTitle: () => LocalizedString
 	/**
-	 * Some services are not installed yet. Installing one pulls its images, writes its files under the agent's data directory, and opens a window in front of it; the App Store has the whole catalog.
+	 * The agent can run self-hosted services with Docker. Before anything is deployed, the App Store shows what an app will run and asks for your password.
 	 */
 	deskGuideWebAppsBody: () => LocalizedString
 	/**
-	 * This machine has no Docker or Podman, so web apps cannot run here yet.
+	 * Docker or Podman was not found on this machine, so web apps cannot run here.
 	 */
 	deskGuideNoDocker: () => LocalizedString
 	/**
-	 * The App Store still browses the catalog; its apps wait for a machine that can run them.
+	 * Install Docker, then open the App Store again.
 	 */
 	deskGuideNoDockerHint: () => LocalizedString
 	/**
-	 * Ticking one takes it off this list; nothing is installed until the App Store page it opens is confirmed there, with this machine's Docker.
+	 * The App Store lists these under Recommended, with the rest of the catalog.
 	 */
 	deskGuideWebAppsNote: () => LocalizedString
 	/**
@@ -19414,7 +19425,7 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskGuideAgain: () => LocalizedString
 	/**
-	 * It opens on the desk once, as it did the first time.
+	 * Shown once on the desk, as on the first sign-in.
 	 */
 	deskGuideAgainHint: () => LocalizedString
 	/**
@@ -19426,19 +19437,31 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 */
 	deskGuideWelcomeTitle: () => LocalizedString
 	/**
-	 * This is {host}'s desk, not an application: every window is one thing you do with this machine, and they all stay open behind each other.
+	 * {host} is managed from here. Each app opens in its own window, and open windows stay where you left them.
 	 */
 	deskGuideBody: (arg: { host: unknown }) => LocalizedString
 	/**
-	 * What you arrange here — the dock, the wallpaper, the windows left open — is kept for this account, so a reload finds it again.
+	 * The dock and the wallpaper are saved for this account; the windows you leave open come back the next time this browser signs in.
 	 */
 	deskGuideWelcomeMore: () => LocalizedString
+	/**
+	 * Open App Store
+	 */
+	deskGuideOpenStore: () => LocalizedString
+	/**
+	 * Done
+	 */
+	deskGuideDone: () => LocalizedString
+	/**
+	 * Recommended
+	 */
+	storeRecommended: () => LocalizedString
 	/**
 	 * Next
 	 */
 	deskGuideNext: () => LocalizedString
 	/**
-	 * Open in the App Store
+	 * Install
 	 */
 	deskGuideInstall: () => LocalizedString
 }

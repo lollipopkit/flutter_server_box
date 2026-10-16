@@ -55,8 +55,6 @@ pub const MAX_DOCK: usize = 64;
 pub const MAX_ICONS: usize = 256;
 const MAX_LABEL_CHARS: usize = 64;
 const MAX_PATH_BYTES: usize = 4096;
-/// A time the panel sends (`onboarded_at`): read for whether it is there.
-const MAX_TIME_CHARS: usize = 64;
 /// Window geometry, in CSS pixels; generous, and only so a stored number
 /// stays a number the panel can draw.
 const COORD: i64 = 100_000;
@@ -270,10 +268,6 @@ pub struct Preferences {
     /// own.
     #[serde(default)]
     pub theme: Option<String>,
-    /// When the account walked through the first-run guide, or skipped it.
-    /// None (or no stored row at all) shows it.
-    #[serde(default)]
-    pub onboarded_at: Option<String>,
 }
 
 fn yes() -> bool {
@@ -306,6 +300,9 @@ struct DeskView {
     /// The custom wallpaper's SHA-256, when there is one.
     wallpaper_sha256: Option<String>,
     presets: &'static [&'static str],
+    /// When the account walked through or skipped the first-run guide; `None`
+    /// shows it (`/desk/onboarding`).
+    onboarded_at: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -520,16 +517,6 @@ pub fn check_preferences(mut p: Preferences) -> Result<Preferences, Refusal> {
             return Err(refused("invalidIcon", at));
         }
     }
-    if let Some(time) = p.onboarded_at.take() {
-        let time = time.trim().to_string();
-        if time.is_empty() {
-            p.onboarded_at = None;
-        } else if time.len() > MAX_TIME_CHARS || time.chars().any(char::is_control) {
-            return Err(refused("invalidOnboardedAt", None));
-        } else {
-            p.onboarded_at = Some(time);
-        }
-    }
     Ok(p)
 }
 
@@ -618,11 +605,50 @@ pub async fn get(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> R
         Ok(sha) => sha,
         Err(e) => return Ok(super::respond::internal(&e)),
     };
+    let onboarded_at = match sqlx::query_scalar::<_, String>("SELECT done_at FROM desk_onboarding WHERE user_id = ?")
+        .bind(user)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(at) => at,
+        Err(e) => return Ok(super::respond::internal(&e)),
+    };
     Ok(HttpResponse::Ok().json(&DeskView {
         preferences,
         wallpaper_sha256,
         presets: WALLPAPER_PRESETS,
+        onboarded_at,
     }))
+}
+
+/// `PUT /desk/onboarding`: the first-run guide is done with (walked through or
+/// skipped). The time is the agent's; a second call keeps the first.
+pub async fn put_onboarding(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let (_, user) = require!(account(&req, &state).await);
+    let done = sqlx::query("INSERT OR IGNORE INTO desk_onboarding (user_id, done_at) VALUES (?, ?)")
+        .bind(user)
+        .bind(chrono::Utc::now().to_rfc3339())
+        .execute(&state.db)
+        .await;
+    onboarding_changed(&state, user, done)
+}
+
+/// `DELETE /desk/onboarding`: the guide is offered again (Settings).
+pub async fn delete_onboarding(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    let (_, user) = require!(account(&req, &state).await);
+    let done = sqlx::query("DELETE FROM desk_onboarding WHERE user_id = ?").bind(user).execute(&state.db).await;
+    onboarding_changed(&state, user, done)
+}
+
+fn onboarding_changed<T>(state: &AppState, user: i64, done: Result<T, sqlx::Error>) -> Result<HttpResponse, web::Error> {
+    match done {
+        Ok(_) => {
+            // Another tab hides or shows it too.
+            state.desk.send(DeskEvent::Preferences { user });
+            Ok(HttpResponse::NoContent().finish())
+        }
+        Err(e) => Ok(super::respond::internal(&e)),
+    }
 }
 
 pub async fn put_preferences(
@@ -962,11 +988,8 @@ async fn still_signed_in(state: &AppState, caller: &Caller) -> bool {
 // -----------------------------------------------------------------------------
 
 async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferences>, sqlx::Error> {
-    let Some((accent, wallpaper, wallpaper_fit, background, theme, onboarded_at)) = sqlx::query_as::<
-        _,
-        (Option<String>, String, String, bool, Option<String>, Option<String>),
-    >(
-        "SELECT accent, wallpaper, wallpaper_fit, background, theme, onboarded_at FROM desk_preferences WHERE user_id = ?",
+    let Some((accent, wallpaper, wallpaper_fit, background, theme)) = sqlx::query_as::<_, (Option<String>, String, String, bool, Option<String>)>(
+        "SELECT accent, wallpaper, wallpaper_fit, background, theme FROM desk_preferences WHERE user_id = ?",
     )
     .bind(user)
     .fetch_optional(db)
@@ -1010,18 +1033,16 @@ async fn load_preferences(db: &SqlitePool, user: i64) -> Result<Option<Preferenc
         background,
         background_denied,
         theme,
-        onboarded_at,
     }))
 }
 
 async fn store_preferences(db: &SqlitePool, user: i64, p: &Preferences) -> Result<(), sqlx::Error> {
     let mut tx = db.begin().await?;
     sqlx::query(
-        "INSERT INTO desk_preferences (user_id, accent, wallpaper, wallpaper_fit, background, theme, onboarded_at, updated_at) \
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?) \
+        "INSERT INTO desk_preferences (user_id, accent, wallpaper, wallpaper_fit, background, theme, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) \
          ON CONFLICT(user_id) DO UPDATE SET accent = excluded.accent, wallpaper = excluded.wallpaper, \
          wallpaper_fit = excluded.wallpaper_fit, background = excluded.background, theme = excluded.theme, \
-         onboarded_at = excluded.onboarded_at, updated_at = excluded.updated_at",
+         updated_at = excluded.updated_at",
     )
     .bind(user)
     .bind(&p.accent)
@@ -1029,7 +1050,6 @@ async fn store_preferences(db: &SqlitePool, user: i64, p: &Preferences) -> Resul
     .bind(&p.wallpaper_fit)
     .bind(p.background)
     .bind(&p.theme)
-    .bind(&p.onboarded_at)
     .bind(chrono::Utc::now().to_rfc3339())
     .execute(&mut *tx)
     .await?;
@@ -1220,7 +1240,6 @@ mod tests {
                 row: None,
             }],
             theme: None,
-            onboarded_at: None,
         }
     }
 
@@ -1229,13 +1248,6 @@ mod tests {
         let p = check_preferences(prefs()).unwrap();
         assert_eq!(p.accent.as_deref(), Some("#8b2252"));
         assert_eq!(p.icons[0].label, "etc");
-        // The guide's mark: a time kept as it was sent, whitespace trimmed.
-        let mut seen = prefs();
-        seen.onboarded_at = Some(" 2026-10-16T00:00:00+00:00 ".into());
-        assert_eq!(check_preferences(seen).unwrap().onboarded_at.as_deref(), Some("2026-10-16T00:00:00+00:00"));
-        let mut empty = prefs();
-        empty.onboarded_at = Some("  ".into());
-        assert_eq!(check_preferences(empty).unwrap().onboarded_at, None);
     }
 
     #[test]
@@ -1257,8 +1269,6 @@ mod tests {
             (|p| p.icons[0].label = "\u{7}".into(), "invalidLabel"),
             (|p| p.icons[0].col = Some(-1), "invalidIcon"),
             (|p| p.icons.push(p.icons[0].clone()), "duplicateId"),
-            (|p| p.onboarded_at = Some("x".repeat(MAX_TIME_CHARS + 1)), "invalidOnboardedAt"),
-            (|p| p.onboarded_at = Some("a\u{7}b".into()), "invalidOnboardedAt"),
         ];
         for (edit, code) in cases {
             let mut p = prefs();

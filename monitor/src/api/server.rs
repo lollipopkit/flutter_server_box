@@ -225,6 +225,11 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::desk::put_preferences)),
             )
             .service(
+                web::resource("/desk/onboarding")
+                    .route(web::put().to(crate::api::desk::put_onboarding))
+                    .route(web::delete().to(crate::api::desk::delete_onboarding)),
+            )
+            .service(
                 // A streamed body, read whole and bounded in the handler.
                 web::resource("/desk/wallpaper")
                     .route(web::get().to(crate::api::desk::get_wallpaper))
