@@ -63,6 +63,12 @@ repository. Releases are cut by the `monitor-release.yml` workflow, which is
 `workflow_dispatch`-only; when no such release exists, use `SBM_INSTALL_PKG`
 with a locally built package, or [Docker](Dockerfile).
 
+A machine with no operating system to install it on can be booted from the
+**image** instead: each release carries an Alpine ISO (`x86_64`, `aarch64`)
+with the agent, its panel and Docker on it. Write it to a USB stick or a disc
+and boot it, or run `sbm-install` on it to put the system on a disk — see
+[`iso/README.md`](iso/README.md).
+
 `upgrade` without `--user` or `--system` finds the installed form itself and
 reruns through `sudo` for a system unit or OpenRC; with none installed it
 changes nothing. It replaces the files while the agent runs and restarts it

@@ -58,6 +58,11 @@ checkout 中的脚本, 不一定与上面命令下载的 `main` 上的版本一�
 若尚无对应 release，请用 `SBM_INSTALL_PKG` 指向本地构建的包，或使用
 [Docker](Dockerfile)。
 
+没有操作系统的机器可以直接从**镜像**启动：每个 release 附带一个 Alpine ISO
+（`x86_64`、`aarch64`），内含 agent、面板和 Docker。写入 U 盘或光盘后启动，
+或者在上面运行 `sbm-install` 把系统装到磁盘上——见
+[`iso/README.md`](iso/README.md)。
+
 配置文件是二进制旁边的 `config.toml`。所有配置项及其注释都在
 [`config.example.toml`](config.example.toml) 里；`cargo run -- config` 会打印
 解析后的值。agent 默认监听 `0.0.0.0:3770`，当 `frontend/dist` 存在时同时在该
