@@ -154,6 +154,69 @@ fn scratch(name: &str) -> PathBuf {
     d
 }
 
+/// What the model asks Agent mode to run, in the shell it runs commands in:
+/// `sh`, and Windows PowerShell on Windows.
+#[cfg(not(windows))]
+mod sh {
+    use std::path::Path;
+
+    pub fn touch(p: &Path) -> String {
+        format!("touch {}", p.display())
+    }
+    /// An allow rule for [touch] of anything in [dir].
+    pub fn touch_in(dir: &Path) -> String {
+        format!("touch {}/*", dir.display())
+    }
+    pub fn remove(p: &Path) -> String {
+        format!("rm -rf {}", p.display())
+    }
+    pub fn remove_file(p: &Path) -> String {
+        format!("rm -f {}", p.display())
+    }
+    /// Lists `/` one name a line, which has these.
+    pub const LIST_ROOT: &str = "ls /";
+    pub const ROOT_HAS: [&str; 2] = ["tmp", "usr"];
+    pub const READ_FILE: &str = "cat /etc/hostname";
+    /// A read, and the rule for it.
+    pub const SYSTEM: &str = "uname -s";
+    pub const SYSTEM_RULE: &str = "uname *";
+    /// A change, never run, and the rule for it.
+    pub const STOP_SERVICE: &str = "systemctl stop sbm-bypass-never";
+    pub const STOP_RULE: &str = "systemctl stop *";
+    pub const REMOVE_RULE: &str = "rm *";
+}
+
+#[cfg(windows)]
+mod sh {
+    use std::path::Path;
+
+    pub fn touch(p: &Path) -> String {
+        format!("New-Item -ItemType File -Force -Path {}", p.display())
+    }
+    pub fn touch_in(dir: &Path) -> String {
+        format!("New-Item -ItemType File -Force -Path {}\\*", dir.display())
+    }
+    pub fn remove(p: &Path) -> String {
+        format!("Remove-Item -Recurse -Force {}", p.display())
+    }
+    pub fn remove_file(p: &Path) -> String {
+        format!("Remove-Item -Force {}", p.display())
+    }
+    pub const LIST_ROOT: &str = "Get-ChildItem -Name C:\\";
+    pub const ROOT_HAS: [&str; 2] = ["Windows", "Users"];
+    pub const READ_FILE: &str = "Get-Content C:\\Windows\\win.ini";
+    pub const SYSTEM: &str = "Get-Date -Format o";
+    pub const SYSTEM_RULE: &str = "Get-Date *";
+    pub const STOP_SERVICE: &str = "Stop-Service sbm-bypass-never";
+    pub const STOP_RULE: &str = "Stop-Service *";
+    pub const REMOVE_RULE: &str = "Remove-Item *";
+}
+
+/// A path that is never there, under the temporary directory.
+fn never(name: &str) -> PathBuf {
+    std::env::temp_dir().join(name)
+}
+
 #[ntex::test]
 async fn nothing_runs_until_it_is_configured() {
     let (srv, _) = server().await;
@@ -176,7 +239,7 @@ async fn nothing_runs_until_it_is_configured() {
 async fn a_read_runs_unasked_and_its_output_is_kept() {
     let (srv, _) = server().await;
     let url = model(vec![
-        Say::Tool("run_command", json!({ "command": "ls /", "title": "List", "area": "files", "effect": "read" })),
+        Say::Tool("run_command", json!({ "command": sh::LIST_ROOT, "title": "List", "area": "files", "effect": "read" })),
         Say::Text("Listed."),
     ]);
     configure(&srv, &url).await;
@@ -186,7 +249,7 @@ async fn a_read_runs_unasked_and_its_output_is_kept() {
     assert_eq!(r.len(), 1, "{v}");
     assert_eq!(r[0]["details"]["exitCode"], 0);
     let lines = r[0]["details"]["lines"].as_array().unwrap();
-    assert!(lines.iter().any(|l| l[1] == "tmp" || l[1] == "usr"), "{lines:?}");
+    assert!(lines.iter().any(|l| sh::ROOT_HAS.iter().any(|n| l[1] == *n)), "{lines:?}");
     assert_eq!(v["flow"]["areas"], json!(["files"]));
     assert_eq!(v["flow"]["line"], "Listed.");
 
@@ -198,7 +261,7 @@ async fn a_plan_once_approved_runs_its_commands_without_asking_again() {
     let (srv, _) = server().await;
     let dir = scratch("plan");
     let made = dir.join("made");
-    let touch = format!("touch {}", made.display());
+    let touch = sh::touch(&made);
     let url = model(vec![
         Say::Tool("propose_plan", json!({ "title": "Make a file", "summary": "One file.", "steps": [{ "text": "Create it", "command": touch }] })),
         Say::Tool("run_command", json!({ "command": touch, "title": "Create", "area": "files", "effect": "change" })),
@@ -231,7 +294,7 @@ async fn a_change_waits_and_stopping_runs_nothing() {
     let url = model(vec![Say::Tool(
         "run_command",
         // Claimed a read; its shape says otherwise, and the shape counts.
-        json!({ "command": format!("touch {}", made.display()), "title": "Create", "area": "files", "effect": "read" }),
+        json!({ "command": sh::touch(&made), "title": "Create", "area": "files", "effect": "read" }),
     )]);
     configure(&srv, &url).await;
     let id = start(&srv, "make a file").await;
@@ -255,7 +318,7 @@ async fn what_cannot_be_undone_needs_the_machine_named() {
     let dir = scratch("danger");
     let keep = dir.join("keep");
     std::fs::write(&keep, b"x").unwrap();
-    let rm = format!("rm -f {}", keep.display());
+    let rm = sh::remove_file(&keep);
     let url = model(vec![
         Say::Tool("run_command", json!({ "command": rm, "title": "Remove", "area": "files", "effect": "read", "alternatives": ["Back it up first"] })),
         Say::Text("Left it."),
@@ -420,8 +483,8 @@ async fn a_search_only_reads_and_can_be_carried_into_a_task() {
     let (srv, _) = server().await;
     let url = model(vec![
         // Refused: it would change the machine.
-        Say::Tool("run_command", json!({ "command": "rm -rf /tmp/sbm-search-never", "title": "Remove" })),
-        Say::Tool("run_command", json!({ "command": "uname -s", "title": "System" })),
+        Say::Tool("run_command", json!({ "command": sh::remove(&never("sbm-search-never")), "title": "Remove" })),
+        Say::Tool("run_command", json!({ "command": sh::SYSTEM, "title": "System" })),
         Say::Tool("report_results", json!({
             "items": [{ "kind": "process", "title": "sshd", "sub": "PID 1", "ref": "1" }],
             "followups": [{ "label": "Restart", "request": "restart sshd" }],
@@ -434,7 +497,7 @@ async fn a_search_only_reads_and_can_be_carried_into_a_task() {
     let ev = events_of(&body);
     assert_eq!(ev[0], json!({ "type": "kind", "kind": "question" }), "{body}");
     let steps: Vec<&Value> = ev.iter().filter(|e| e["type"] == "step").collect();
-    assert!(steps.iter().all(|e| e["command"] == "uname -s"), "the change never ran: {body}");
+    assert!(steps.iter().all(|e| e["command"] == sh::SYSTEM), "the change never ran: {body}");
     assert!(steps.iter().any(|e| e["state"] == "done"), "{body}");
     let items = ev.iter().find(|e| e["type"] == "items").unwrap_or_else(|| panic!("no items: {body}"));
     assert_eq!(items["items"][0]["ref"], "1", "{body}");
@@ -462,8 +525,8 @@ async fn a_change_is_drafted_never_run() {
     let (srv, _) = server().await;
     let url = model(vec![
         Say::Tool("draft_plan", json!({ "steps": [
-            { "text": "cat /etc/hostname", "command": "cat /etc/hostname", "effect": "read" },
-            { "text": "wipe it", "command": "rm -rf /tmp/sbm-search-never", "effect": "read" },
+            { "text": "read a file", "command": sh::READ_FILE, "effect": "read" },
+            { "text": "wipe it", "command": sh::remove(&never("sbm-search-never")), "effect": "read" },
         ] })),
         Say::Text("Unreachable."),
     ]);
@@ -491,19 +554,19 @@ async fn the_operators_rules_deny_ask_and_allow() {
     let (srv, _) = server().await;
     let dir = scratch("rules");
     let made = dir.join("made");
-    let touch = format!("touch {}", made.display());
+    let touch = sh::touch(&made);
     let url = model(vec![
-        Say::Tool("run_command", json!({ "command": "uname -s", "title": "System", "area": "system", "effect": "read" })),
-        Say::Tool("run_command", json!({ "command": touch.clone().leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Tool("run_command", json!({ "command": sh::SYSTEM, "title": "System", "area": "system", "effect": "read" })),
+        Say::Tool("run_command", json!({ "command": touch.clone(), "title": "Touch", "area": "files", "effect": "change" })),
         Say::Text("Done."),
     ]);
     configure(&srv, &url).await;
     // Only an admin sets them, and a rule allowing anything is refused.
     let (s, body) = call(&srv, true, Method::PUT, "/api/v1/agent/permissions", Some(json!({ "rules": { "allow": ["*"] } }))).await;
     assert_eq!((s, body["error"].as_str()), (400, Some("invalidPermissions")), "{body}");
-    set_permissions(&srv, json!({ "rules": { "deny": ["uname *"], "allow": [format!("touch {}/*", dir.display())] } })).await;
+    set_permissions(&srv, json!({ "rules": { "deny": [sh::SYSTEM_RULE], "allow": [sh::touch_in(&dir)] } })).await;
     let (_, read) = call(&srv, true, Method::GET, "/api/v1/agent/permissions", None).await;
-    assert_eq!(read["permissions"]["rules"]["deny"], json!(["uname *"]));
+    assert_eq!(read["permissions"]["rules"]["deny"], json!([sh::SYSTEM_RULE]));
     assert!(read["defaults"]["soft_deny"].as_array().is_some_and(|l| !l.is_empty()), "{read}");
 
     let id = start(&srv, "go").await;
@@ -511,7 +574,7 @@ async fn the_operators_rules_deny_ask_and_allow() {
     let r = results(&v);
     // A read the rules deny is refused; a change they allow runs unasked.
     assert_eq!(r[0]["isError"], true, "{v}");
-    assert!(r[0]["content"][0]["text"].as_str().unwrap().contains("uname *"), "{v}");
+    assert!(r[0]["content"][0]["text"].as_str().unwrap().contains(sh::SYSTEM_RULE), "{v}");
     assert_eq!(r[1]["details"]["exitCode"], 0, "{v}");
     assert!(made.exists());
     let _ = std::fs::remove_dir_all(&dir);
@@ -529,13 +592,14 @@ async fn always_allow_adds_the_rule_and_runs() {
     let dir = scratch("always");
     let one = dir.join("one");
     let url = model(vec![
-        Say::Tool("run_command", json!({ "command": format!("touch {}", one.display()).leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Tool("run_command", json!({ "command": sh::touch(&one), "title": "Touch", "area": "files", "effect": "change" })),
         Say::Text("Done."),
     ]);
     configure(&srv, &url).await;
     let id = start(&srv, "go").await;
     let v = until(&srv, &id, |v| !v["pending"].is_null()).await;
-    let rule = format!("touch {}", one.display());
+    // Word for word: the second word is an option.
+    let rule = sh::touch(&one);
     assert_eq!(v["pending"]["allowRule"], rule.as_str(), "{v}");
     let pid = v["pending"]["id"].as_str().unwrap().to_string();
     // A stale prompt adds nothing.
@@ -564,14 +628,14 @@ async fn bypass_runs_destruction_unasked_but_the_rules_still_hold() {
     let doomed = dir.join("doomed");
     std::fs::write(&doomed, "x").unwrap();
     let url = model(vec![
-        Say::Tool("run_command", json!({ "command": format!("touch {}", made.display()).leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
-        Say::Tool("run_command", json!({ "command": format!("rm -rf {}", doomed.display()).leak() as &str, "title": "Remove", "area": "files", "effect": "danger" })),
-        Say::Tool("run_command", json!({ "command": "uname -s", "title": "System", "area": "system", "effect": "read" })),
-        Say::Tool("run_command", json!({ "command": "systemctl stop sbm-bypass-never", "title": "Stop", "area": "system", "effect": "change" })),
+        Say::Tool("run_command", json!({ "command": sh::touch(&made), "title": "Touch", "area": "files", "effect": "change" })),
+        Say::Tool("run_command", json!({ "command": sh::remove(&doomed), "title": "Remove", "area": "files", "effect": "danger" })),
+        Say::Tool("run_command", json!({ "command": sh::SYSTEM, "title": "System", "area": "system", "effect": "read" })),
+        Say::Tool("run_command", json!({ "command": sh::STOP_SERVICE, "title": "Stop", "area": "system", "effect": "change" })),
         Say::Text("Done."),
     ]);
     configure(&srv, &url).await;
-    set_permissions(&srv, json!({ "rules": { "deny": ["uname *"], "ask": ["systemctl stop *"] } })).await;
+    set_permissions(&srv, json!({ "rules": { "deny": [sh::SYSTEM_RULE], "ask": [sh::STOP_RULE] } })).await;
     let (s, body) = start_in(&srv, "go", "bypass").await;
     assert_eq!(s, 201, "{body}");
     assert_eq!(body["mode"], "bypass");
@@ -618,7 +682,7 @@ async fn auto_mode_runs_what_the_judge_allows_and_refuses_what_it_blocks() {
         let made = dir.join("made");
         let url = model_judging(
             vec![
-                Say::Tool("run_command", json!({ "command": format!("touch {}", made.display()).leak() as &str, "title": "Touch", "area": "files", "effect": "change" })),
+                Say::Tool("run_command", json!({ "command": sh::touch(&made), "title": "Touch", "area": "files", "effect": "change" })),
                 Say::Text("Done."),
             ],
             judge,
@@ -642,23 +706,23 @@ async fn auto_mode_asks_when_the_judge_says_nothing_usable_and_destruction_alway
     let (srv, _) = server().await;
     let url = model_judging(
         vec![
-            Say::Tool("run_command", json!({ "command": "touch /tmp/sbm-auto-unsure-never", "title": "Touch", "area": "files", "effect": "change" })),
+            Say::Tool("run_command", json!({ "command": sh::touch(&never("sbm-auto-unsure-never")), "title": "Touch", "area": "files", "effect": "change" })),
             Say::Text("Done."),
         ],
         "I think so.",
     );
     configure(&srv, &url).await;
-    set_permissions(&srv, json!({ "defaultMode": "auto", "rules": { "allow": ["rm *"] } })).await;
+    set_permissions(&srv, json!({ "defaultMode": "auto", "rules": { "allow": [sh::REMOVE_RULE] } })).await;
     let id = start(&srv, "go").await;
     let v = until(&srv, &id, |v| !v["pending"].is_null()).await;
     assert_eq!(v["pending"]["kind"], "confirm", "{v}");
     let (s, _) = call(&srv, true, Method::POST, &format!("/api/v1/agent/flows/{id}/stop"), None).await;
     assert_eq!(s, 204);
 
-    // `rm` is allowed by a rule, yet what cannot be undone still names the machine.
+    // Removing is allowed by a rule, yet what cannot be undone still names the machine.
     let url = model_judging(
         vec![
-            Say::Tool("run_command", json!({ "command": "rm -rf /tmp/sbm-auto-rm-never", "title": "Remove", "area": "files", "effect": "danger" })),
+            Say::Tool("run_command", json!({ "command": sh::remove(&never("sbm-auto-rm-never")), "title": "Remove", "area": "files", "effect": "danger" })),
             Say::Text("Done."),
         ],
         r#"{"decision":"allow"}"#,
@@ -674,7 +738,7 @@ async fn auto_mode_judges_a_plan_and_bypass_approves_one() {
     let (srv, _) = server().await;
     let dir = scratch("auto-plan");
     let made = dir.join("made");
-    let touch: &'static str = format!("touch {}", made.display()).leak();
+    let touch = sh::touch(&made);
     let script = vec![
         Say::Tool("propose_plan", json!({ "title": "Make it", "summary": "Make the file.", "steps": [{ "text": "Make the file", "command": touch }] })),
         Say::Tool("run_command", json!({ "command": touch, "title": "Touch", "area": "files", "effect": "change" })),
