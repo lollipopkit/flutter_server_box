@@ -1,5 +1,5 @@
 /// [AgentPoll]: one read at a time, the first after the provider's state
-/// exists, none after dispose.
+/// exists, a refresh during one read again after it, none after dispose.
 library;
 
 import 'dart:async';
@@ -27,19 +27,27 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(reads, 1);
 
-    // A refresh while one runs joins it.
-    final joined = poll.refresh();
+    // Refreshes while one runs (asked after a change it was sent before):
+    // one more read after it, shared by both, never two at once.
+    final first = poll.refresh();
+    final second = poll.refresh();
     expect(reads, 1);
-    gate.complete();
-    await joined;
-
-    gate = Completer<void>()..complete();
-    await poll.refresh();
+    final running = gate;
+    gate = Completer<void>();
+    running.complete();
+    await Future<void>.delayed(Duration.zero);
     expect(reads, 2);
+    gate.complete();
+    await Future.wait([first, second]);
+    expect(reads, 2);
+
+    // Nothing in flight: one read.
+    await poll.refresh();
+    expect(reads, 3);
 
     poll.dispose();
     await poll.refresh();
-    expect(reads, 2);
+    expect(reads, 3);
     expect(current.every((c) => !c()), isTrue);
   });
 }

@@ -24,7 +24,8 @@ final class AgentPoll {
       // Polled for what is on screen; a resumed app is read again by then.
       final lifecycle = WidgetsBinding.instance.lifecycleState;
       if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
-      unawaited(refresh());
+      // A tick with a read in flight has nothing to add to it.
+      if (_reading == null) unawaited(refresh());
     });
   }
 
@@ -32,14 +33,25 @@ final class AgentPoll {
   final Future<void> Function(MonitorHttpClient client, bool Function() current) _read;
   late final Timer _timer;
   Future<void>? _reading;
+  Future<void>? _again;
   var _disposed = false;
 
   MonitorHttpClient get client => _lease.client;
 
-  /// Reads now; one already running is joined, not doubled.
+  /// Reads now. With a read in flight — sent before whatever this is asked
+  /// after (a change, a pull to refresh) — one more follows it, shared by
+  /// everyone who asks meanwhile; never two at once.
   Future<void> refresh() {
     if (_disposed) return Future.value();
-    return _reading ??= _read(client, () => !_disposed).whenComplete(() => _reading = null);
+    final reading = _reading;
+    if (reading == null) {
+      return _reading = _read(client, () => !_disposed).whenComplete(() => _reading = null);
+    }
+    // After it however it ended: its failure is its own caller's.
+    return _again ??= reading.then<void>((_) {}, onError: (_) {}).then((_) {
+      _again = null;
+      return refresh();
+    });
   }
 
   void dispose() {
