@@ -80,6 +80,9 @@ pub const FEATURES: &[&str] = &[
     // Reverse proxies (nginx, Caddy, Traefik) and their sites (`api::proxy`).
     // Linux only, like `shares`.
     "proxy",
+    // The web application firewall in front of the proxies' sites
+    // (`api::waf`): nginx's ModSecurity, Traefik's through it.
+    "waf",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

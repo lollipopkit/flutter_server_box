@@ -15,12 +15,14 @@
   import { servers } from '../../../lib/servers.svelte'
   import { useScope } from '../../../lib/scope.svelte'
   import { pick } from '../../../components/stack/text'
-  import type { ProxyServerId, ProxySite, ProxyView, StackJob } from '../../../types'
+  import type { ProxyServerId, ProxySite, ProxyView, StackJob, WafView } from '../../../types'
   import { nameFor, withSite, withoutSite } from './model'
+  import WafPanel from './WafPanel.svelte'
 
   const NAMES: Record<ProxyServerId, string> = { nginx: 'nginx', caddy: 'Caddy', traefik: 'Traefik' }
 
   let view = $state<ProxyView | null>(null)
+  let waf = $state<WafView | null>(null)
   let selected = $state<ProxyServerId>('caddy')
   let error = $state('')
   let job = $state<StackJob | null>(null)
@@ -35,9 +37,10 @@
 
   async function load(serverId = servers.currentId) {
     try {
-      const v = await api.getProxy()
+      const [v, w] = await Promise.all([api.getProxy(), api.getWaf().catch(() => null)])
       if (stale(serverId)) return
       view = v
+      waf = w
       if (v.job?.state === 'running') job = v.job
       error = ''
     } catch (e) {
@@ -79,6 +82,7 @@
       needsCertificate: $LL.proxyNeedsCertificate,
       needsResolver: $LL.proxyNeedsResolver,
       duplicate: $LL.proxyDuplicate,
+      wafNotSet: $LL.wafNotSet,
       notWritable: $LL.proxyNotWritable,
     }
     return body.error ? map[body.error]?.() : undefined
@@ -193,6 +197,7 @@
           {#each own as s (s.name)}
             <Row label={s.domains.join(', ')} mono sub={`→ ${s.upstream}`}>
               {#if s.tls}<Badge tone="success">HTTPS</Badge>{/if}
+              {#if s.waf}<Badge tone="success">WAF</Badge>{/if}
               <IconButton icon="edit" label={$LL.proxyEdit()} onclick={() => edit(s)} />
               <IconButton
                 icon="delete"
@@ -204,6 +209,15 @@
             <p class="px-[13px] py-[11px] text-[13px] text-(--text-tertiary)">{$LL.proxyNoOwnSites()}</p>
           {/each}
         </Group>
+        {#if waf && current.server !== 'caddy'}
+          <WafPanel
+            server={current.server}
+            waf={current.server === 'nginx' ? waf.nginx : waf.traefik}
+            crs={waf.crs}
+            onjob={(j) => (job = j)}
+            onchanged={() => void load()}
+          />
+        {/if}
         {#if others.length}
           <Group title={$LL.proxyOtherSites()}>
             {#each others as s (s.name + s.domains.join())}
@@ -238,6 +252,12 @@
         <Switch label="HTTPS" bind:checked={draft.tls} />
         <span>HTTPS</span>
       </div>
+      {#if selected !== 'caddy'}
+        <div class="flex items-center gap-[9px] text-[13px]">
+          <Switch label={$LL.wafSiteToggle()} checked={draft.waf ?? false} onchange={(on) => draft && (draft.waf = on)} />
+          <span>{$LL.wafSiteToggle()}</span>
+        </div>
+      {/if}
       {#if draft.tls && selected === 'nginx'}
         <Input label={$LL.proxyCert()} mono placeholder="/etc/ssl/certs/app.pem" value={draft.cert ?? ''} oninput={(e: Event) => draft && (draft.cert = (e.currentTarget as HTMLInputElement).value)} />
         <Input label={$LL.proxyKey()} mono placeholder="/etc/ssl/private/app.key" value={draft.key ?? ''} oninput={(e: Event) => draft && (draft.key = (e.currentTarget as HTMLInputElement).value)} />

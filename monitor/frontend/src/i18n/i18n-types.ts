@@ -10561,6 +10561,126 @@ type RootTranslation = {
 	 * S​a​v​e
 	 */
 	proxySave: string
+	/**
+	 * W​e​b​ ​a​p​p​l​i​c​a​t​i​o​n​ ​f​i​r​e​w​a​l​l
+	 */
+	wafTitle: string
+	/**
+	 * N​o​t​ ​i​n​s​t​a​l​l​e​d
+	 */
+	wafNotReady: string
+	/**
+	 * T​h​i​s​ ​T​r​a​e​f​i​k​'​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​i​s​ ​n​o​t​ ​S​e​r​v​e​r​B​o​x​'​s​:​ ​a​d​d​ ​t​h​e​ ​M​o​d​S​e​c​u​r​i​t​y​ ​p​l​u​g​i​n​ ​t​o​ ​i​t​ ​b​y​ ​h​a​n​d​.
+	 */
+	wafNotInstallable: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	wafInstall: string
+	/**
+	 * R​u​l​e​s
+	 */
+	wafRules: string
+	/**
+	 * M​o​d​e
+	 */
+	wafMode: string
+	/**
+	 * O​f​f
+	 */
+	wafOff: string
+	/**
+	 * D​e​t​e​c​t
+	 */
+	wafDetect: string
+	/**
+	 * B​l​o​c​k
+	 */
+	wafBlock: string
+	/**
+	 * P​a​r​a​n​o​i​a​ ​l​e​v​e​l
+	 */
+	wafParanoia: string
+	/**
+	 * R​u​l​e​s​ ​l​e​f​t​ ​o​u​t
+	 */
+	wafExclusions: string
+	/**
+	 * S​a​v​e
+	 */
+	wafSave: string
+	/**
+	 * T​u​r​n​ ​i​t​ ​o​n​ ​f​o​r​ ​a​ ​s​i​t​e​ ​i​n​ ​t​h​e​ ​s​i​t​e​'​s​ ​s​e​t​t​i​n​g​s​.
+	 */
+	wafSitesNote: string
+	/**
+	 * S​a​v​e​ ​o​n​c​e​ ​b​e​f​o​r​e​ ​t​u​r​n​i​n​g​ ​i​t​ ​o​n​ ​f​o​r​ ​a​ ​s​i​t​e​.
+	 */
+	wafFirstSave: string
+	/**
+	 * R​e​c​e​n​t​ ​e​v​e​n​t​s
+	 */
+	wafEvents: string
+	/**
+	 * R​e​a​d
+	 */
+	wafRead: string
+	/**
+	 * R​e​f​u​s​e​d
+	 */
+	wafRefused: string
+	/**
+	 * D​e​t​e​c​t​e​d
+	 */
+	wafDetected: string
+	/**
+	 * L​e​a​v​e​ ​o​u​t
+	 */
+	wafLeaveOut: string
+	/**
+	 * N​o​t​h​i​n​g​ ​d​e​t​e​c​t​e​d​ ​l​a​t​e​l​y
+	 */
+	wafNoEvents: string
+	/**
+	 * S​a​v​e​ ​t​h​e​ ​f​i​r​e​w​a​l​l​'​s​ ​s​e​t​t​i​n​g​s
+	 */
+	wafSaveTitle: string
+	/**
+	 * R​e​q​u​e​s​t​s​ ​t​h​e​ ​r​u​l​e​s​ ​s​c​o​r​e​ ​a​s​ ​a​t​t​a​c​k​s​ ​w​i​l​l​ ​b​e​ ​r​e​f​u​s​e​d​ ​w​i​t​h​ ​4​0​3​.​ ​W​a​t​c​h​ ​t​h​e​ ​e​v​e​n​t​s​ ​f​o​r​ ​f​a​l​s​e​ ​p​o​s​i​t​i​v​e​s​.
+	 */
+	wafSaveBlock: string
+	/**
+	 * R​u​l​e​s​ ​r​u​n​ ​a​n​d​ ​w​h​a​t​ ​t​h​e​y​ ​m​a​t​c​h​ ​i​s​ ​l​o​g​g​e​d​;​ ​n​o​t​h​i​n​g​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	wafSaveDetect: string
+	/**
+	 * T​h​e​ ​r​u​l​e​s​ ​w​i​l​l​ ​n​o​t​ ​r​u​n​ ​f​o​r​ ​a​n​y​ ​s​i​t​e​.
+	 */
+	wafSaveOff: string
+	/**
+	 * I​n​s​t​a​l​l​ ​t​h​e​ ​f​i​r​e​w​a​l​l
+	 */
+	wafInstallTitle: string
+	/**
+	 * M​o​d​S​e​c​u​r​i​t​y​ ​f​o​r​ ​n​g​i​n​x​ ​a​n​d​ ​t​h​e​ ​O​W​A​S​P​ ​C​o​r​e​ ​R​u​l​e​ ​S​e​t​ ​a​r​e​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​s​.
+	 */
+	wafInstallNginx: string
+	/**
+	 * n​g​i​n​x​ ​w​i​t​h​ ​M​o​d​S​e​c​u​r​i​t​y​ ​a​n​d​ ​t​h​e​ ​O​W​A​S​P​ ​C​o​r​e​ ​R​u​l​e​ ​S​e​t​ ​a​r​e​ ​i​n​s​t​a​l​l​e​d​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​p​a​c​k​a​g​e​s​ ​t​o​ ​c​h​e​c​k​ ​T​r​a​e​f​i​k​'​s​ ​r​e​q​u​e​s​t​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​,​ ​t​h​e​ ​M​o​d​S​e​c​u​r​i​t​y​ ​p​l​u​g​i​n​ ​i​s​ ​a​d​d​e​d​ ​t​o​ ​T​r​a​e​f​i​k​'​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​a​n​d​ ​T​r​a​e​f​i​k​ ​r​e​s​t​a​r​t​e​d​;​ ​t​h​e​ ​p​l​u​g​i​n​ ​i​s​ ​f​e​t​c​h​e​d​ ​f​r​o​m​ ​t​h​e​ ​n​e​t​w​o​r​k​.
+	 */
+	wafInstallTraefik: string
+	/**
+	 * T​h​e​ ​f​i​r​e​w​a​l​l​'​s​ ​l​o​g​ ​i​s​ ​r​e​a​d​a​b​l​e​ ​b​y​ ​r​o​o​t​ ​a​l​o​n​e​.
+	 */
+	wafEventsBody: string
+	/**
+	 * S​a​v​e​ ​t​h​e​ ​f​i​r​e​w​a​l​l​'​s​ ​s​e​t​t​i​n​g​s​ ​b​e​f​o​r​e​ ​t​u​r​n​i​n​g​ ​i​t​ ​o​n​ ​f​o​r​ ​a​ ​s​i​t​e​.
+	 */
+	wafNotSet: string
+	/**
+	 * W​e​b​ ​a​p​p​l​i​c​a​t​i​o​n​ ​f​i​r​e​w​a​l​l
+	 */
+	wafSiteToggle: string
 }
 
 export type TranslationFunctions = {
@@ -20724,6 +20844,126 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Save
 	 */
 	proxySave: () => LocalizedString
+	/**
+	 * Web application firewall
+	 */
+	wafTitle: () => LocalizedString
+	/**
+	 * Not installed
+	 */
+	wafNotReady: () => LocalizedString
+	/**
+	 * This Traefik's configuration is not ServerBox's: add the ModSecurity plugin to it by hand.
+	 */
+	wafNotInstallable: () => LocalizedString
+	/**
+	 * Install
+	 */
+	wafInstall: () => LocalizedString
+	/**
+	 * Rules
+	 */
+	wafRules: () => LocalizedString
+	/**
+	 * Mode
+	 */
+	wafMode: () => LocalizedString
+	/**
+	 * Off
+	 */
+	wafOff: () => LocalizedString
+	/**
+	 * Detect
+	 */
+	wafDetect: () => LocalizedString
+	/**
+	 * Block
+	 */
+	wafBlock: () => LocalizedString
+	/**
+	 * Paranoia level
+	 */
+	wafParanoia: () => LocalizedString
+	/**
+	 * Rules left out
+	 */
+	wafExclusions: () => LocalizedString
+	/**
+	 * Save
+	 */
+	wafSave: () => LocalizedString
+	/**
+	 * Turn it on for a site in the site's settings.
+	 */
+	wafSitesNote: () => LocalizedString
+	/**
+	 * Save once before turning it on for a site.
+	 */
+	wafFirstSave: () => LocalizedString
+	/**
+	 * Recent events
+	 */
+	wafEvents: () => LocalizedString
+	/**
+	 * Read
+	 */
+	wafRead: () => LocalizedString
+	/**
+	 * Refused
+	 */
+	wafRefused: () => LocalizedString
+	/**
+	 * Detected
+	 */
+	wafDetected: () => LocalizedString
+	/**
+	 * Leave out
+	 */
+	wafLeaveOut: () => LocalizedString
+	/**
+	 * Nothing detected lately
+	 */
+	wafNoEvents: () => LocalizedString
+	/**
+	 * Save the firewall's settings
+	 */
+	wafSaveTitle: () => LocalizedString
+	/**
+	 * Requests the rules score as attacks will be refused with 403. Watch the events for false positives.
+	 */
+	wafSaveBlock: () => LocalizedString
+	/**
+	 * Rules run and what they match is logged; nothing is refused.
+	 */
+	wafSaveDetect: () => LocalizedString
+	/**
+	 * The rules will not run for any site.
+	 */
+	wafSaveOff: () => LocalizedString
+	/**
+	 * Install the firewall
+	 */
+	wafInstallTitle: () => LocalizedString
+	/**
+	 * ModSecurity for nginx and the OWASP Core Rule Set are installed from the machine's packages.
+	 */
+	wafInstallNginx: () => LocalizedString
+	/**
+	 * nginx with ModSecurity and the OWASP Core Rule Set are installed from the machine's packages to check Traefik's requests on this machine, the ModSecurity plugin is added to Traefik's configuration and Traefik restarted; the plugin is fetched from the network.
+	 */
+	wafInstallTraefik: () => LocalizedString
+	/**
+	 * The firewall's log is readable by root alone.
+	 */
+	wafEventsBody: () => LocalizedString
+	/**
+	 * Save the firewall's settings before turning it on for a site.
+	 */
+	wafNotSet: () => LocalizedString
+	/**
+	 * Web application firewall
+	 */
+	wafSiteToggle: () => LocalizedString
 }
 
 export type Formatters = {}

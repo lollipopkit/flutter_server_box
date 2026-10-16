@@ -48,6 +48,7 @@
         "inference",
         "agent_tools",
         "proxy",
+        "waf",
         "alerts",
         "audit",
         "live"

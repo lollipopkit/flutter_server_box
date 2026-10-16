@@ -30,7 +30,7 @@ impl ProxyJobs {
         self.0.locked().clone()
     }
 
-    fn begin(&self) -> Option<Arc<Job>> {
+    pub(crate) fn begin(&self) -> Option<Arc<Job>> {
         let mut slot = self.0.locked();
         if slot.as_ref().is_some_and(|j| j.running()) {
             return None;
@@ -97,6 +97,15 @@ pub async fn set_sites(
     }
     if !found.writable {
         return Ok(super::respond::error_u16(409, "notWritable"));
+    }
+    // A site behind the firewall needs its rules written first: nginx would
+    // refuse the file it names, Traefik route to a middleware not there.
+    if sites.iter().any(|s| s.waf) {
+        let waf = super::waf::read(&state).await;
+        let set = waf.is_some_and(|w| if server == Server::Nginx { w.nginx.settings.is_some() } else { w.traefik.settings.is_some() });
+        if !set {
+            return Ok(super::respond::error_u16(409, "wafNotSet"));
+        }
     }
     let script = match px::write_script(server, &sites, found.tls_resolver) {
         Ok(s) => s,

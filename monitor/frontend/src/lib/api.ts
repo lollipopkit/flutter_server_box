@@ -17,6 +17,9 @@ import type {
   ProxyServerId,
   ProxySite,
   ProxyView,
+  WafEvent,
+  WafSettings,
+  WafView,
   AgentToolProvider,
   AgentToolView,
   InferenceRecommend,
@@ -1274,6 +1277,13 @@ export const api = {
   /// Runs a scheduled task now, as the schedule would.
   runStorageMaintenance: (task: MaintenanceKind) =>
     request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }),
+  getWaf: () => request<WafView>('/waf', {}),
+  setWaf: (server: ProxyServerId, settings: WafSettings, sudoPassword: string) =>
+    request<WafView>(`/waf/${server}`, { method: 'PUT', body: JSON.stringify({ settings, sudo_password: sudoPassword || null }) }),
+  installWaf: (server: ProxyServerId, sudoPassword: string) =>
+    request<StackJob>(`/waf/${server}/install`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
+  wafEvents: (server: ProxyServerId, sudoPassword: string) =>
+    request<{ events: WafEvent[] }>(`/waf/${server}/events`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
   getProxy: () => request<ProxyView>('/proxy', {}),
   setProxySites: (server: ProxyServerId, sites: ProxySite[], sudoPassword: string) =>
     request<ProxyView>(`/proxy/${server}/sites`, { method: 'PUT', body: JSON.stringify({ sites, sudo_password: sudoPassword || null }) }),

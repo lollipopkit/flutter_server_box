@@ -45,6 +45,7 @@ pub mod system;
 pub mod tmux;
 pub mod types;
 pub mod users;
+pub mod waf;
 pub mod windows;
 
 use std::collections::HashMap;

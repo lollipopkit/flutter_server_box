@@ -181,6 +181,7 @@ export type MachineFeature =
   | 'inference'
   | 'agent_tools'
   | 'proxy'
+  | 'waf'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
 
@@ -3258,6 +3259,8 @@ export interface ProxySite {
   cert?: string | null
   key?: string | null
   maxBodyMb?: number | null
+  /// Behind the web application firewall (nginx, Traefik).
+  waf?: boolean
   /// ServerBox's to change; others are shown.
   managed: boolean
 }
@@ -3278,4 +3281,38 @@ export interface ProxyView {
   servers: ProxyServerView[]
   listening: number[]
   job: StackJob | null
+}
+
+/// The web application firewall (`sbm_parser::waf`).
+export interface WafSettings {
+  mode: 'off' | 'detect' | 'block'
+  /// The Core Rule Set's paranoia level, 1 to 4.
+  paranoia: number
+  /// Rule ids left out.
+  exclusions: number[]
+}
+
+export interface ServerWaf {
+  ready: boolean
+  installable: boolean
+  settings: WafSettings | null
+}
+
+/// `GET /waf`.
+export interface WafView {
+  nginx: ServerWaf
+  traefik: ServerWaf
+  crs: string | null
+}
+
+/// What the firewall detected or refused (`POST /waf/{server}/events`).
+export interface WafEvent {
+  time: string
+  client: string
+  host: string
+  method: string
+  uri: string
+  status: number | null
+  /// [rule id, message]
+  rules: [string, string][]
 }

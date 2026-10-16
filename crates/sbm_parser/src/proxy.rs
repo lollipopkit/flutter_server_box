@@ -90,6 +90,10 @@ pub struct Site {
     /// nginx: the largest request body in MiB (its default is 1).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_body_mb: Option<u32>,
+    /// The web application firewall (`waf`) in front of it: nginx and
+    /// Traefik.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub waf: bool,
     /// ServerBox's to change.
     #[serde(default)]
     pub managed: bool,
@@ -268,6 +272,7 @@ fn nginx_sites(text: &str) -> Vec<Site> {
                     cert: None,
                     key: None,
                     max_body_mb: None,
+                    waf: false,
                     managed: false,
                 });
             }
@@ -302,6 +307,7 @@ fn caddy_sites(text: &str) -> Vec<Site> {
                     cert: None,
                     key: None,
                     max_body_mb: None,
+                    waf: false,
                     managed: false,
                 });
             }
@@ -368,6 +374,9 @@ pub fn check_site(site: &Site, server: Server) -> Result<(), &'static str> {
     if site.max_body_mb.is_some_and(|m| m == 0 || m > 100_000) {
         return Err("invalidBodySize");
     }
+    if site.waf && server == Server::Caddy {
+        return Err("wafUnsupported");
+    }
     Ok(())
 }
 
@@ -403,6 +412,9 @@ pub fn render(server: Server, sites: &[Site], tls_resolver: bool) -> Result<Stri
                 if let Some(m) = s.max_body_mb {
                     out.push_str(&format!("    client_max_body_size {m}m;\n"));
                 }
+                if s.waf {
+                    out.push_str(&format!("    modsecurity on;\n    modsecurity_rules_file {};\n", crate::waf::NGINX_RULES));
+                }
                 out.push_str(&format!(
                     "    location / {{\n        proxy_pass {};\n        proxy_http_version 1.1;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection $http_connection;\n        proxy_read_timeout 1h;\n    }}\n}}\n",
                     s.upstream
@@ -424,10 +436,11 @@ pub fn render(server: Server, sites: &[Site], tls_resolver: bool) -> Result<Stri
                 let rule = s.domains.iter().map(|d| format!("Host(`{d}`)")).collect::<Vec<_>>().join(" || ");
                 routers.push_str(&format!("    {}", meta(s)));
                 routers.push_str(&format!(
-                    "    sbm-{n}:\n      rule: \"{rule}\"\n      entryPoints: [\"{ep}\"]\n      service: sbm-{n}\n{tls}",
+                    "    sbm-{n}:\n      rule: \"{rule}\"\n      entryPoints: [\"{ep}\"]\n      service: sbm-{n}\n{waf}{tls}",
                     n = s.name,
                     ep = if s.tls { "websecure" } else { "web" },
                     tls = if s.tls { format!("      tls:\n        certResolver: {TRAEFIK_RESOLVER}\n") } else { String::new() },
+                    waf = if s.waf { format!("      middlewares: [\"{}\"]\n", crate::waf::TRAEFIK_MIDDLEWARE) } else { String::new() },
                 ));
                 services.push_str(&format!("    sbm-{}:\n      loadBalancer:\n        servers:\n          - url: \"{}\"\n", s.name, s.upstream));
             }
@@ -589,6 +602,7 @@ mod tests {
             cert: None,
             key: None,
             max_body_mb: None,
+            waf: false,
             managed: true,
         }
     }
@@ -633,6 +647,9 @@ mod tests {
         assert_eq!(render(Server::Traefik, &[site("a", true)], false).unwrap_err().error, "needsResolver");
         assert_eq!(render(Server::Caddy, &[site("a", false), site("a", false)], false).unwrap_err().error, "duplicate");
         assert_eq!(check_site(&Site { domains: vec![":8081".into()], ..site("a", false) }, Server::Caddy), Ok(()));
+        assert_eq!(check_site(&Site { waf: true, ..site("a", false) }, Server::Caddy), Err("wafUnsupported"));
+        assert!(render(Server::Nginx, &[Site { waf: true, ..site("a", false) }], false).unwrap().contains("modsecurity_rules_file /etc/nginx/modsecurity/serverbox.conf;"));
+        assert!(render(Server::Traefik, &[Site { waf: true, ..site("a", false) }], false).unwrap().contains("middlewares: [\"sbm-waf@file\"]"));
         assert!(check_site(&Site { domains: vec!["*.example.com".into()], ..site("a", false) }, Server::Traefik).is_ok());
     }
 
