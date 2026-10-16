@@ -47,6 +47,7 @@
         "stacks",
         "inference",
         "agent_tools",
+        "proxy",
         "alerts",
         "audit",
         "live"

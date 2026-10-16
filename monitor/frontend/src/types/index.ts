@@ -180,6 +180,7 @@ export type MachineFeature =
   | 'stacks'
   | 'inference'
   | 'agent_tools'
+  | 'proxy'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
 
@@ -3242,4 +3243,39 @@ export interface AgentToolProvider {
   api: string
   baseUrl: string
   models: string[]
+}
+
+/// Reverse proxies (`sbm_parser::proxy`).
+export type ProxyServerId = 'nginx' | 'caddy' | 'traefik'
+
+/// A site: requests for its domains sent on to [upstream].
+export interface ProxySite {
+  name: string
+  domains: string[]
+  upstream: string
+  tls: boolean
+  /// nginx: certificate and key files for HTTPS.
+  cert?: string | null
+  key?: string | null
+  maxBodyMb?: number | null
+  /// ServerBox's to change; others are shown.
+  managed: boolean
+}
+
+export interface ProxyServerView {
+  server: ProxyServerId
+  installed: boolean
+  version: string | null
+  active: boolean
+  /// Traefik reads ServerBox's folder.
+  writable: boolean
+  tlsResolver: boolean
+  sites: ProxySite[]
+}
+
+/// `GET /proxy`.
+export interface ProxyView {
+  servers: ProxyServerView[]
+  listening: number[]
+  job: StackJob | null
 }

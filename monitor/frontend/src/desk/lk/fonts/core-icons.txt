@@ -1,5 +1,6 @@
 account_tree
 add
+alt_route
 api
 apps
 arrow_back
@@ -150,6 +151,7 @@ padding
 palette
 password
 pause
+pause_circle
 pending
 percent
 person

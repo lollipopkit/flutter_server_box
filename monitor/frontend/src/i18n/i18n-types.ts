@@ -10385,6 +10385,182 @@ type RootTranslation = {
 	 * S​t​o​p
 	 */
 	agentToolsGatewayStop: string
+	/**
+	 * R​e​v​e​r​s​e​ ​p​r​o​x​y
+	 */
+	proxy: string
+	/**
+	 * r​e​v​e​r​s​e​ ​p​r​o​x​y​ ​d​o​m​a​i​n​ ​H​T​T​P​S​ ​s​i​t​e
+	 */
+	proxyKeywords: string
+	/**
+	 * T​h​e​ ​s​e​r​v​e​r​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​n​e​w​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​a​n​d​ ​k​e​p​t​ ​t​h​e​ ​p​r​e​v​i​o​u​s​ ​o​n​e​:​ ​{​d​e​t​a​i​l​}
+	 * @param {unknown} detail
+	 */
+	proxyRefused: RequiredParams<'detail'>
+	/**
+	 * A​ ​s​i​t​e​ ​n​a​m​e​ ​i​s​ ​l​o​w​e​r​c​a​s​e​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​ ​a​n​d​ ​h​y​p​h​e​n​s​.
+	 */
+	proxyInvalidName: string
+	/**
+	 * N​o​t​ ​a​ ​d​o​m​a​i​n​ ​n​a​m​e​.
+	 */
+	proxyInvalidDomain: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​i​s​ ​h​t​t​p​:​/​/​ ​o​r​ ​h​t​t​p​s​:​/​/​ ​a​n​d​ ​a​ ​h​o​s​t​,​ ​w​i​t​h​o​u​t​ ​s​p​a​c​e​s​ ​o​r​ ​q​u​o​t​e​s​.
+	 */
+	proxyInvalidUpstream: string
+	/**
+	 * H​T​T​P​S​ ​w​i​t​h​ ​n​g​i​n​x​ ​n​e​e​d​s​ ​a​ ​c​e​r​t​i​f​i​c​a​t​e​ ​a​n​d​ ​k​e​y​ ​f​i​l​e​.
+	 */
+	proxyNeedsCertificate: string
+	/**
+	 * T​r​a​e​f​i​k​ ​h​a​s​ ​n​o​ ​c​e​r​t​i​f​i​c​a​t​e​ ​r​e​s​o​l​v​e​r​:​ ​i​n​s​t​a​l​l​ ​i​t​ ​w​i​t​h​ ​a​n​ ​e​-​m​a​i​l​ ​a​d​d​r​e​s​s​ ​f​o​r​ ​L​e​t​'​s​ ​E​n​c​r​y​p​t​.
+	 */
+	proxyNeedsResolver: string
+	/**
+	 * T​w​o​ ​s​i​t​e​s​ ​h​a​v​e​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​.
+	 */
+	proxyDuplicate: string
+	/**
+	 * T​h​i​s​ ​T​r​a​e​f​i​k​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​ ​S​e​r​v​e​r​B​o​x​'​s​ ​f​o​l​d​e​r​ ​(​/​e​t​c​/​t​r​a​e​f​i​k​/​d​y​n​a​m​i​c​)​:​ ​a​d​d​ ​i​t​ ​a​s​ ​a​ ​f​i​l​e​ ​p​r​o​v​i​d​e​r​ ​t​o​ ​i​t​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​.
+	 */
+	proxyNotWritable: string
+	/**
+	 * S​a​v​e​ ​t​h​e​ ​s​i​t​e​ ​o​n​ ​{​s​e​r​v​e​r​}
+	 * @param {unknown} server
+	 */
+	proxySaveTitle: RequiredParams<'server'>
+	/**
+	 * {​d​o​m​a​i​n​s​}​ ​w​i​l​l​ ​b​e​ ​s​e​n​t​ ​o​n​ ​t​o​ ​{​u​p​s​t​r​e​a​m​}​.​ ​T​h​e​ ​s​e​r​v​e​r​ ​c​h​e​c​k​s​ ​t​h​e​ ​n​e​w​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​a​n​d​ ​k​e​e​p​s​ ​t​h​e​ ​p​r​e​v​i​o​u​s​ ​o​n​e​ ​i​f​ ​i​t​ ​r​e​f​u​s​e​s​.
+	 * @param {unknown} domains
+	 * @param {unknown} upstream
+	 */
+	proxySaveBody: RequiredParams<'domains' | 'upstream'>
+	/**
+	 * I​n​s​t​a​l​l​ ​{​s​e​r​v​e​r​}
+	 * @param {unknown} server
+	 */
+	proxyInstallTitle: RequiredParams<'server'>
+	/**
+	 * {​s​e​r​v​e​r​}​ ​i​s​ ​i​n​s​t​a​l​l​e​d​ ​a​s​ ​r​o​o​t​ ​a​n​d​ ​s​t​a​r​t​e​d​.
+	 * @param {unknown} server
+	 */
+	proxyInstallBody: RequiredParams<'server'>
+	/**
+	 * A​d​d​ ​s​i​t​e
+	 */
+	proxyAddSite: string
+	/**
+	 * I​n​s​t​a​l​l​i​n​g​…
+	 */
+	proxyInstalling: string
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	proxyDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	proxyFailed: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	proxyRunning: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	proxyStopped: string
+	/**
+	 * N​o​t​ ​i​n​s​t​a​l​l​e​d
+	 */
+	proxyNotInstalled: string
+	/**
+	 * P​o​r​t​s​ ​i​n​ ​u​s​e
+	 */
+	proxyPortsInUse: string
+	/**
+	 * {​s​e​r​v​e​r​}​ ​i​s​ ​n​o​t​ ​i​n​s​t​a​l​l​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * @param {unknown} server
+	 */
+	proxyInstallNote: RequiredParams<'server'>
+	/**
+	 * E​-​m​a​i​l​ ​f​o​r​ ​L​e​t​'​s​ ​E​n​c​r​y​p​t
+	 */
+	proxyAcmeEmail: string
+	/**
+	 * O​p​t​i​o​n​a​l​:​ ​w​i​t​h​ ​i​t​,​ ​T​r​a​e​f​i​k​ ​g​e​t​s​ ​c​e​r​t​i​f​i​c​a​t​e​s​ ​f​o​r​ ​H​T​T​P​S​ ​s​i​t​e​s​.
+	 */
+	proxyAcmeHint: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	proxyInstall: string
+	/**
+	 * S​e​r​v​e​r​B​o​x​'​s​ ​s​i​t​e​s
+	 */
+	proxyOwnSites: string
+	/**
+	 * E​d​i​t​ ​s​i​t​e
+	 */
+	proxyEdit: string
+	/**
+	 * R​e​m​o​v​e​ ​s​i​t​e
+	 */
+	proxyRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​{​d​o​m​a​i​n​s​}
+	 * @param {unknown} domains
+	 */
+	proxyRemoveTitle: RequiredParams<'domains'>
+	/**
+	 * R​e​q​u​e​s​t​s​ ​f​o​r​ ​i​t​ ​w​i​l​l​ ​n​o​ ​l​o​n​g​e​r​ ​b​e​ ​s​e​n​t​ ​o​n​.
+	 */
+	proxyRemoveBody: string
+	/**
+	 * N​o​ ​s​i​t​e​s​ ​y​e​t
+	 */
+	proxyNoOwnSites: string
+	/**
+	 * O​t​h​e​r​ ​s​i​t​e​s
+	 */
+	proxyOtherSites: string
+	/**
+	 * D​o​m​a​i​n​s
+	 */
+	proxyDomains: string
+	/**
+	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​c​o​m​m​a​s​.​ ​T​h​e​y​ ​m​u​s​t​ ​p​o​i​n​t​ ​a​t​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	proxyDomainsHint: string
+	/**
+	 * D​e​p​l​o​y​e​d​ ​a​p​p
+	 */
+	proxyDeployedApp: string
+	/**
+	 * A​n​o​t​h​e​r​ ​a​d​d​r​e​s​s
+	 */
+	proxyTypeAddress: string
+	/**
+	 * S​e​n​d​ ​t​o
+	 */
+	proxyUpstream: string
+	/**
+	 * C​e​r​t​i​f​i​c​a​t​e​ ​f​i​l​e
+	 */
+	proxyCert: string
+	/**
+	 * K​e​y​ ​f​i​l​e
+	 */
+	proxyKey: string
+	/**
+	 * C​a​d​d​y​ ​g​e​t​s​ ​a​n​d​ ​r​e​n​e​w​s​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​ ​o​n​ ​i​t​s​ ​o​w​n​.
+	 */
+	proxyCaddyTls: string
+	/**
+	 * S​a​v​e
+	 */
+	proxySave: string
 }
 
 export type TranslationFunctions = {
@@ -20380,6 +20556,174 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Stop
 	 */
 	agentToolsGatewayStop: () => LocalizedString
+	/**
+	 * Reverse proxy
+	 */
+	proxy: () => LocalizedString
+	/**
+	 * reverse proxy domain HTTPS site
+	 */
+	proxyKeywords: () => LocalizedString
+	/**
+	 * The server refused the new configuration and kept the previous one: {detail}
+	 */
+	proxyRefused: (arg: { detail: unknown }) => LocalizedString
+	/**
+	 * A site name is lowercase letters, digits and hyphens.
+	 */
+	proxyInvalidName: () => LocalizedString
+	/**
+	 * Not a domain name.
+	 */
+	proxyInvalidDomain: () => LocalizedString
+	/**
+	 * The address is http:// or https:// and a host, without spaces or quotes.
+	 */
+	proxyInvalidUpstream: () => LocalizedString
+	/**
+	 * HTTPS with nginx needs a certificate and key file.
+	 */
+	proxyNeedsCertificate: () => LocalizedString
+	/**
+	 * Traefik has no certificate resolver: install it with an e-mail address for Let's Encrypt.
+	 */
+	proxyNeedsResolver: () => LocalizedString
+	/**
+	 * Two sites have the same name.
+	 */
+	proxyDuplicate: () => LocalizedString
+	/**
+	 * This Traefik does not read ServerBox's folder (/etc/traefik/dynamic): add it as a file provider to its configuration.
+	 */
+	proxyNotWritable: () => LocalizedString
+	/**
+	 * Save the site on {server}
+	 */
+	proxySaveTitle: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * {domains} will be sent on to {upstream}. The server checks the new configuration and keeps the previous one if it refuses.
+	 */
+	proxySaveBody: (arg: { domains: unknown, upstream: unknown }) => LocalizedString
+	/**
+	 * Install {server}
+	 */
+	proxyInstallTitle: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * {server} is installed as root and started.
+	 */
+	proxyInstallBody: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * Add site
+	 */
+	proxyAddSite: () => LocalizedString
+	/**
+	 * Installing…
+	 */
+	proxyInstalling: () => LocalizedString
+	/**
+	 * Installed
+	 */
+	proxyDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	proxyFailed: () => LocalizedString
+	/**
+	 * Running
+	 */
+	proxyRunning: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	proxyStopped: () => LocalizedString
+	/**
+	 * Not installed
+	 */
+	proxyNotInstalled: () => LocalizedString
+	/**
+	 * Ports in use
+	 */
+	proxyPortsInUse: () => LocalizedString
+	/**
+	 * {server} is not installed on this machine.
+	 */
+	proxyInstallNote: (arg: { server: unknown }) => LocalizedString
+	/**
+	 * E-mail for Let's Encrypt
+	 */
+	proxyAcmeEmail: () => LocalizedString
+	/**
+	 * Optional: with it, Traefik gets certificates for HTTPS sites.
+	 */
+	proxyAcmeHint: () => LocalizedString
+	/**
+	 * Install
+	 */
+	proxyInstall: () => LocalizedString
+	/**
+	 * ServerBox's sites
+	 */
+	proxyOwnSites: () => LocalizedString
+	/**
+	 * Edit site
+	 */
+	proxyEdit: () => LocalizedString
+	/**
+	 * Remove site
+	 */
+	proxyRemove: () => LocalizedString
+	/**
+	 * Remove {domains}
+	 */
+	proxyRemoveTitle: (arg: { domains: unknown }) => LocalizedString
+	/**
+	 * Requests for it will no longer be sent on.
+	 */
+	proxyRemoveBody: () => LocalizedString
+	/**
+	 * No sites yet
+	 */
+	proxyNoOwnSites: () => LocalizedString
+	/**
+	 * Other sites
+	 */
+	proxyOtherSites: () => LocalizedString
+	/**
+	 * Domains
+	 */
+	proxyDomains: () => LocalizedString
+	/**
+	 * Separated by commas. They must point at this machine.
+	 */
+	proxyDomainsHint: () => LocalizedString
+	/**
+	 * Deployed app
+	 */
+	proxyDeployedApp: () => LocalizedString
+	/**
+	 * Another address
+	 */
+	proxyTypeAddress: () => LocalizedString
+	/**
+	 * Send to
+	 */
+	proxyUpstream: () => LocalizedString
+	/**
+	 * Certificate file
+	 */
+	proxyCert: () => LocalizedString
+	/**
+	 * Key file
+	 */
+	proxyKey: () => LocalizedString
+	/**
+	 * Caddy gets and renews the certificate on its own.
+	 */
+	proxyCaddyTls: () => LocalizedString
+	/**
+	 * Save
+	 */
+	proxySave: () => LocalizedString
 }
 
 export type Formatters = {}

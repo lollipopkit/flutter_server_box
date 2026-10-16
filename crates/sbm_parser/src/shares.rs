@@ -422,16 +422,8 @@ fn folders(paths: &[&str]) -> String {
     format!("for p in {}; do [ -d \"$p\" ] || {{ echo \"$p\" >&2; exit {EXIT_NOT_A_FOLDER}; }}; done\n", list.join(" "))
 }
 
-/// Writes [content] to [file] as root, keeps the previous one while [check]
-/// runs and puts it back when that fails.
 fn replace_script(file: &str, content: &str, check: &str) -> String {
-    format!(
-        "set -e; f={f}; mkdir -p \"$(dirname \"$f\")\"; [ -f \"$f\" ] && cp \"$f\" \"$f.sbm-bak\" || rm -f \"$f.sbm-bak\"; \
-         cat > \"$f.new\" <<'SrvBoxShares'\n{content}SrvBoxShares\n\
-         chmod 644 \"$f.new\"; mv \"$f.new\" \"$f\"; \
-         if ! {{ {check}; }}; then if [ -f \"$f.sbm-bak\" ]; then mv \"$f.sbm-bak\" \"$f\"; else rm -f \"$f\"; fi; echo 'the new configuration was refused; the previous one is back' >&2; exit {EXIT_REFUSED}; fi",
-        f = q(file)
-    )
+    crate::script::replace_file_script(file, content, check, "SrvBoxShares", EXIT_REFUSED)
 }
 
 /// Root's script that makes [shares] ServerBox's SMB shares: the file

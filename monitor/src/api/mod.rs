@@ -49,6 +49,7 @@ pub mod container_backups;
 pub mod stacks;
 pub mod inference;
 pub mod agent_tools;
+pub mod proxy;
 pub mod shares;
 pub mod storage;
 pub mod auth;

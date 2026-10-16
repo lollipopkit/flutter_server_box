@@ -77,6 +77,9 @@ pub const FEATURES: &[&str] = &[
     // AI agents (Codex, Claude Code, pi, opencode, Hermes, OpenClaw) for the
     // agent's account (`api::agent_tools`).
     "agent_tools",
+    // Reverse proxies (nginx, Caddy, Traefik) and their sites (`api::proxy`).
+    // Linux only, like `shares`.
+    "proxy",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

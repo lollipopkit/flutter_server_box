@@ -14,6 +14,9 @@ import type {
   SharesView,
   InferenceView,
   AgentToolId,
+  ProxyServerId,
+  ProxySite,
+  ProxyView,
   AgentToolProvider,
   AgentToolView,
   InferenceRecommend,
@@ -1271,6 +1274,12 @@ export const api = {
   /// Runs a scheduled task now, as the schedule would.
   runStorageMaintenance: (task: MaintenanceKind) =>
     request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }),
+  getProxy: () => request<ProxyView>('/proxy', {}),
+  setProxySites: (server: ProxyServerId, sites: ProxySite[], sudoPassword: string) =>
+    request<ProxyView>(`/proxy/${server}/sites`, { method: 'PUT', body: JSON.stringify({ sites, sudo_password: sudoPassword || null }) }),
+  installProxy: (server: ProxyServerId, acmeEmail: string, sudoPassword: string) =>
+    request<StackJob>(`/proxy/${server}/install`, { method: 'POST', body: JSON.stringify({ acme_email: acmeEmail || null, sudo_password: sudoPassword || null }) }),
+  proxyJob: (since: number) => request<StackJob>(`/proxy/job?since=${since}`, {}),
   getAgentTools: () => request<{ tools: AgentToolView[]; job: StackJob | null }>('/agent-tools', {}),
   agentToolProviders: () => request<{ providers: AgentToolProvider[] }>('/agent-tools/providers', {}),
   changeAgentTool: (tool: AgentToolId, verb: 'install' | 'update' | 'uninstall', purge = false) =>

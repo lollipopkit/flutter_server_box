@@ -124,6 +124,8 @@ pub struct AppState {
     pub inference: Arc<crate::inference::Inference>,
     /// AI agents' installs (`api::agent_tools`).
     pub agent_tools: Arc<crate::api::agent_tools::AgentToolsJobs>,
+    /// Reverse proxies' installs (`api::proxy`).
+    pub proxy: Arc<crate::api::proxy::ProxyJobs>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
     pub shares: Arc<crate::api::shares::SharesJobs>,
@@ -260,6 +262,7 @@ impl AppState {
             )),
             inference: Arc::new(crate::inference::Inference::new(sqlite_file_of(&db).as_deref())),
             agent_tools: Arc::default(),
+            proxy: Arc::default(),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),

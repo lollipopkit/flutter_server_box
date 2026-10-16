@@ -84,8 +84,9 @@ pub async fn view(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> 
     Ok(answer(shares, job))
 }
 
-/// Runs [script] as root and says how it went the way the endpoints answer.
-async fn as_root(state: &AppState, script: &str, password: Option<&str>, private: bool) -> Result<(), HttpResponse> {
+/// Runs [script] as root and says how it went the way the endpoints answer
+/// (also `api::proxy`'s: its scripts exit [`sh::EXIT_REFUSED`] alike).
+pub(crate) async fn as_root(state: &AppState, script: &str, password: Option<&str>, private: bool) -> Result<(), HttpResponse> {
     let exec = &state.remote_access.exec;
     let out = if private { super::machine::as_root_private(script, password, exec).await } else { super::machine::as_root(script, password, exec).await };
     match out {
@@ -96,18 +97,18 @@ async fn as_root(state: &AppState, script: &str, password: Option<&str>, private
         }
         Ok(out) => {
             let detail: String = out.stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("").trim().chars().take(300).collect();
-            tracing::warn!(exit = ?out.exit_code, %detail, "shares: change failed");
+            tracing::warn!(exit = ?out.exit_code, %detail, "a change as root failed");
             let error = if out.exit_code == Some(sh::EXIT_REFUSED) { "refused" } else { "failed" };
             Err(HttpResponse::Conflict().json(&json!({ "error": error, "detail": detail })))
         }
         Err(e) => {
-            tracing::warn!("shares: change did not run: {e}");
+            tracing::warn!("a change as root did not run: {e}");
             Err(super::respond::error_u16(403, "sudo_unavailable"))
         }
     }
 }
 
-fn record(req: &HttpRequest, state: &AppState, detail: String) -> impl std::future::Future<Output = ()> {
+pub(crate) fn record(req: &HttpRequest, state: &AppState, detail: String) -> impl std::future::Future<Output = ()> {
     let event = Event::new(Kind::Machine, Action::Write, Outcome::Ok).remote_ip(peer_ip(req)).detail(detail);
     let db = state.db.clone();
     async move { event.record(&db).await }

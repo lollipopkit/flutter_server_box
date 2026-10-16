@@ -1231,3 +1231,17 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
         }
     }
 }
+
+/// Root's script that writes [content] to [file] (0644, through a staged
+/// file), keeps the previous one while [check] runs and puts it back when
+/// that fails, exiting [refused]. [content] is a quoted heredoc ended by the
+/// line [tag]: the caller keeps that line out of it.
+pub fn replace_file_script(file: &str, content: &str, check: &str, tag: &str, refused: i32) -> String {
+    format!(
+        "set -e; f={f}; mkdir -p \"$(dirname \"$f\")\"; [ -f \"$f\" ] && cp \"$f\" \"$f.sbm-bak\" || rm -f \"$f.sbm-bak\"; \
+         cat > \"$f.new\" <<'{tag}'\n{content}{tag}\n\
+         chmod 644 \"$f.new\"; mv \"$f.new\" \"$f\"; \
+         if ! {{ {check}; }}; then if [ -f \"$f.sbm-bak\" ]; then mv \"$f.sbm-bak\" \"$f\"; else rm -f \"$f\"; fi; echo 'the new configuration was refused; the previous one is back' >&2; exit {refused}; fi",
+        f = shell_quote_unix(file)
+    )
+}

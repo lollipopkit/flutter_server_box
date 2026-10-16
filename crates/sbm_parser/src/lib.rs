@@ -33,6 +33,7 @@ pub mod linux;
 pub mod monitor_agent;
 pub mod output;
 pub mod proc;
+pub mod proxy;
 pub mod script;
 pub mod service;
 pub mod shares;
