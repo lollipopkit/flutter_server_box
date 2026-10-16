@@ -178,6 +178,7 @@ export type MachineFeature =
   /// Web apps deployed with Docker Compose behind the agent's proxy
   /// (`/stacks*`).
   | 'stacks'
+  | 'inference'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
 
@@ -2722,12 +2723,26 @@ export interface StackManifest {
     arch: string[]
     os: string[]
   }
-  web: { port: string; path: string }
+  /// The page a window shows; absent for a model server, which serves `llm`.
+  web?: { port: string; path: string } | null
+  /// Its OpenAI-compatible API (`[llm]`), offered to Agent mode once deployed.
+  llm?: StackLlm | null
   settings: StackSetting[]
   login?: StackLogin | null
   /// Its MCP servers, which Agent mode connects to once it is deployed.
   /// Absent on older agents.
   mcp?: StackMcp[]
+}
+
+/// A model server's OpenAI-compatible API (`[llm]`), at
+/// `http://127.0.0.1:<port setting><path>` on the machine.
+export interface StackLlm {
+  port: string
+  path: string
+  /// The text setting naming the model it serves.
+  model?: string
+  /// The `[[secrets]]` entry it asks for as a bearer token.
+  key?: string
 }
 
 /// An app's MCP server (`[[mcp]]`): the service's own, or a sidecar.
@@ -2779,8 +2794,9 @@ export interface StackJob {
 export interface StackApp {
   manifest: StackManifest
   /// Where the agent has it: shipped, a repository of the store (`repo`),
-  /// or the operator's own folder (`[stacks] local_apps`).
-  source?: 'bundled' | 'store' | 'local'
+  /// or the operator's own folder (`[stacks] local_apps`); `part` is one of
+  /// Local inference's engines, shown in its window, not the App Store.
+  source?: 'bundled' | 'store' | 'local' | 'part'
   repo?: string | null
   stack: StackRow | null
   /// The latest job.
@@ -3099,4 +3115,104 @@ export interface ContainerBackupSchedule {
   keep: number | null
   last_run: string | null
   last_error: string | null
+}
+
+/// Local inference's engines (`sbm_parser::inference::Engine`).
+export type InferenceEngine = 'ollama' | 'llamacpp' | 'vllm' | 'sglang' | 'mlx'
+
+/// A GPU as the agent read it; `compute` is NVIDIA's capability × 10.
+export interface InferenceGpu {
+  vendor: string
+  name: string
+  memoryMib?: number | null
+  compute?: number | null
+}
+
+export interface InferenceHardware {
+  os: string
+  arch: string
+  memoryMib: number
+  gpus: InferenceGpu[]
+  docker: boolean
+  nvidiaContainers: boolean
+  rocmDevices: boolean
+  dri: boolean
+  python: boolean
+}
+
+/// Whether an engine runs here (`blocked` null), and the stack that runs it.
+export interface InferenceEngineFit {
+  engine: InferenceEngine
+  backend: 'cuda' | 'rocm' | 'vulkan' | 'metal' | 'cpu'
+  blocked: string | null
+  /// Why it runs on the CPU beside a GPU (`needsGpuContainers`).
+  cpuBecause?: string | null
+  app: string | null
+}
+
+export interface MlxService {
+  model?: string | null
+  port?: number | null
+  running: boolean
+  pid?: number | null
+}
+
+export interface OllamaInstance {
+  /// `ollama.ollama` (deployed) or `native`.
+  id: string
+  url: string
+  version?: string | null
+}
+
+export interface OllamaPull {
+  instance: string
+  model: string
+  status: string
+  completed?: number | null
+  total?: number | null
+  error?: string | null
+  done: boolean
+}
+
+/// `GET /inference`.
+export interface InferenceView {
+  hardware: InferenceHardware
+  engines: InferenceEngineFit[]
+  /// On macOS alone.
+  mlx: { installed: boolean; version: string; service: MlxService } | null
+  ollama: OllamaInstance[]
+  pulls: OllamaPull[]
+  llmfit: { version: string; installed: boolean }
+  job: StackJob | null
+}
+
+/// A model one engine can run here (`sbm_parser::inference::Candidate`).
+export interface InferenceCandidate {
+  engine: InferenceEngine
+  name: string
+  /// What the engine's model setting takes.
+  setting: string
+  fit: 'perfect' | 'good' | 'marginal'
+  score: number
+  paramsB?: number | null
+  memoryGib?: number | null
+  tokensPerSecond?: number | null
+  contextLength?: number | null
+  license?: string | null
+  capabilities: string[]
+  category?: string | null
+  releaseDate?: string | null
+}
+
+/// `POST /inference/recommend`.
+export interface InferenceRecommend {
+  /// The engines that run here, best first.
+  engines: InferenceEngine[]
+  candidates: Partial<Record<InferenceEngine, InferenceCandidate[]>>
+}
+
+/// `GET /inference/ollama/{instance}/models`: Ollama's own answers.
+export interface OllamaModels {
+  models: { name: string; size: number; details?: { parameter_size?: string; quantization_level?: string } }[] | null
+  running: { name: string; size_vram?: number }[] | null
 }

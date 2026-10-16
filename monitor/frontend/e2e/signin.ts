@@ -9,4 +9,7 @@ export async function signIn(page: Page) {
   await fillSecret(login, process.env.SBM_E2E_PANEL_PASSWORD!)
   await submitForm(login)
   await expect(page.locator('.lk-dock')).toBeVisible({ timeout: 30_000 })
+  // A new agent's first-run guide covers the desk until it is skipped.
+  const skip = page.getByRole('button', { name: 'Skip' })
+  await skip.waitFor({ timeout: 3_000 }).then(() => skip.click(), () => {})
 }

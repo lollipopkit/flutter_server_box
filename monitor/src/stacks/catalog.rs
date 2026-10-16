@@ -8,7 +8,8 @@
 //! - the operator's own folder (`[stacks] local_apps`), read at start.
 //!
 //! One id, one package: the local folder's, else the store's, else the
-//! shipped one. A store package replaces the shipped one whatever its
+//! shipped one. Local inference's engines (`builtin::parts`) are shipped
+//! alone: an id of theirs elsewhere is not read. A store package replaces the shipped one whatever its
 //! version: the store is what the catalog's maintainers publish now.
 
 use crate::utils::lock::RwLockExt;
@@ -37,6 +38,9 @@ pub enum Source {
     Store,
     /// The operator's `[stacks] local_apps` folder.
     Local,
+    /// Part of a desk app of the panel's (`builtin::PARTS_OF`): Local
+    /// inference's engines. Shipped, never replaced, not in the App Store.
+    Part,
 }
 
 #[derive(Debug, Clone)]
@@ -51,6 +55,7 @@ pub struct Catalog {
     /// `<stacks>/.catalog`: the store's packages as last read.
     cache: PathBuf,
     bundled: BTreeMap<String, Arc<Package>>,
+    parts: BTreeMap<String, Arc<Package>>,
     store: RwLock<BTreeMap<String, Entry>>,
     local: BTreeMap<String, Arc<Package>>,
     /// When the store was last read, successfully or not; one read at a time.
@@ -63,11 +68,13 @@ impl Catalog {
     /// [local].
     pub fn new(cache: PathBuf, local: Option<&Path>) -> Self {
         let bundled = builtin::packages().iter().map(|p| (p.manifest.id.clone(), Arc::new(p.clone()))).collect();
+        let parts = builtin::parts().iter().map(|p| (p.manifest.id.clone(), Arc::new(p.clone()))).collect();
         let store = read_cache(&cache);
         let local = local.map(read_local).unwrap_or_default();
         Self {
             cache,
             bundled,
+            parts,
             store: RwLock::new(store),
             local,
             read: tokio::sync::Mutex::new(None),
@@ -81,6 +88,9 @@ impl Catalog {
     }
 
     pub fn get(&self, id: &str) -> Option<Entry> {
+        if let Some(p) = self.parts.get(id) {
+            return Some(Entry { package: p.clone(), source: Source::Part, repo: None });
+        }
         if let Some(p) = self.local.get(id) {
             return Some(Entry { package: p.clone(), source: Source::Local, repo: None });
         }
@@ -97,7 +107,7 @@ impl Catalog {
     /// Every app, by id.
     pub fn all(&self) -> Vec<Entry> {
         let store = self.store.read_locked();
-        let mut ids: Vec<&String> = self.local.keys().chain(store.keys()).chain(self.bundled.keys()).collect();
+        let mut ids: Vec<&String> = self.parts.keys().chain(self.local.keys()).chain(store.keys()).chain(self.bundled.keys()).collect();
         ids.sort();
         ids.dedup();
         let ids: Vec<String> = ids.into_iter().cloned().collect();

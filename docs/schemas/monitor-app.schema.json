@@ -5,7 +5,7 @@
   "description": "store/apps/<publisher>.<name>/manifest.toml: a web service the Monitor agent deploys with Docker Compose and shows in a desk window. Read by monitor/src/stacks/manifest.rs; checked further by the serverbox-webapp skill's validate.py.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "publisher", "name", "project", "version", "homepage", "source", "glyph", "tone", "title", "description", "license", "compose", "web"],
+  "required": ["schema", "publisher", "name", "project", "version", "homepage", "source", "glyph", "tone", "title", "description", "license", "compose"],
   "properties": {
     "schema": { "const": 1, "description": "Manifest format version." },
     "publisher": {
@@ -80,6 +80,7 @@
       }
     },
     "web": {
+      "description": "The page a window shows. Absent for a service with no page of its own, which then serves an [llm] endpoint.",
       "type": "object",
       "additionalProperties": false,
       "required": ["port"],
@@ -144,6 +145,18 @@
         "if": { "properties": { "publisher": { "const": "builtin" } } },
         "then": { "not": { "anyOf": [{ "required": ["service"] }, { "required": ["source"] }] } },
         "else": { "required": ["service", "source"] }
+      }
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port"],
+      "description": "An OpenAI-compatible API serving a language model (a model server): Agent mode offers it as a provider once the app is deployed.",
+      "properties": {
+        "port": { "$ref": "#/$defs/key", "description": "The key of the TCP port setting it listens on; reached at http://127.0.0.1:<port><path>." },
+        "path": { "type": "string", "pattern": "^/.*[^/]$", "default": "/v1", "description": "Where the API is: <path>/chat/completions, <path>/models." },
+        "model": { "$ref": "#/$defs/key", "description": "The key of the text setting naming the model it serves, when it serves one." },
+        "key": { "$ref": "#/$defs/envName", "description": "A [[secrets]] entry the API asks for as a bearer token." }
       }
     },
     "secrets": {

@@ -9987,6 +9987,296 @@ type RootTranslation = {
 	 * I​n​s​t​a​l​l
 	 */
 	deskGuideInstall: string
+	/**
+	 * L​o​c​a​l​ ​i​n​f​e​r​e​n​c​e
+	 */
+	inference: string
+	/**
+	 * A​I​ ​m​o​d​e​l​s​ ​L​L​M​ ​G​P​U
+	 */
+	inferenceKeywords: string
+	/**
+	 * l​l​m​f​i​t​ ​c​o​u​l​d​ ​n​o​t​ ​s​c​o​r​e​ ​t​h​e​ ​m​o​d​e​l​s​:​ ​{​r​e​a​s​o​n​}
+	 * @param {unknown} reason
+	 */
+	inferenceLlmfitFailed: RequiredParams<'reason'>
+	/**
+	 * R​u​n​s​ ​i​n​ ​D​o​c​k​e​r​ ​o​n​ ​L​i​n​u​x
+	 */
+	inferenceNeedsLinux: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​M​a​c​ ​w​i​t​h​ ​A​p​p​l​e​ ​s​i​l​i​c​o​n
+	 */
+	inferenceNeedsAppleSilicon: string
+	/**
+	 * N​e​e​d​s​ ​u​v​ ​o​r​ ​P​y​t​h​o​n​ ​3​.​1​1
+	 */
+	inferenceNeedsPython: string
+	/**
+	 * N​e​e​d​s​ ​D​o​c​k​e​r
+	 */
+	inferenceNeedsDocker: string
+	/**
+	 * N​e​e​d​s​ ​a​ ​G​P​U
+	 */
+	inferenceNeedsGpu: string
+	/**
+	 * N​e​e​d​s​ ​a​n​ ​N​V​I​D​I​A​ ​G​P​U
+	 */
+	inferenceNeedsNvidia: string
+	/**
+	 * D​o​c​k​e​r​ ​c​a​n​n​o​t​ ​u​s​e​ ​t​h​e​ ​G​P​U​:​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​N​V​I​D​I​A​ ​C​o​n​t​a​i​n​e​r​ ​T​o​o​l​k​i​t
+	 */
+	inferenceNeedsGpuContainers: string
+	/**
+	 * T​h​e​ ​G​P​U​ ​i​s​ ​t​o​o​ ​o​l​d​ ​f​o​r​ ​i​t
+	 */
+	inferenceGpuTooOld: string
+	/**
+	 * T​h​e​ ​G​P​U​ ​h​a​s​ ​t​o​o​ ​l​i​t​t​l​e​ ​m​e​m​o​r​y
+	 */
+	inferenceGpuTooSmall: string
+	/**
+	 * S​e​r​v​i​n​g​ ​{​m​o​d​e​l​}
+	 * @param {unknown} model
+	 */
+	inferenceServing: RequiredParams<'model'>
+	/**
+	 * I​n​s​t​a​l​l​e​d
+	 */
+	inferenceInstalled: string
+	/**
+	 * C​a​n​ ​r​u​n​ ​h​e​r​e
+	 */
+	inferenceCanRun: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	inferenceRunning: string
+	/**
+	 * S​t​a​r​t​i​n​g
+	 */
+	inferenceStarting: string
+	/**
+	 * F​o​u​n​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	inferenceFoundOnMachine: string
+	/**
+	 * M​o​d​e​l​s
+	 */
+	inferenceModels: string
+	/**
+	 * A​n​y​ ​u​s​e
+	 */
+	inferenceUseAny: string
+	/**
+	 * G​e​n​e​r​a​l
+	 */
+	inferenceUseGeneral: string
+	/**
+	 * C​o​d​i​n​g
+	 */
+	inferenceUseCoding: string
+	/**
+	 * R​e​a​s​o​n​i​n​g
+	 */
+	inferenceUseReasoning: string
+	/**
+	 * C​h​a​t
+	 */
+	inferenceUseChat: string
+	/**
+	 * I​m​a​g​e​s​ ​a​n​d​ ​t​e​x​t
+	 */
+	inferenceUseMultimodal: string
+	/**
+	 * E​m​b​e​d​d​i​n​g
+	 */
+	inferenceUseEmbedding: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	inferenceThisMachine: string
+	/**
+	 * E​n​g​i​n​e​s
+	 */
+	inferenceEngines: string
+	/**
+	 * S​y​s​t​e​m
+	 */
+	inferenceSystem: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	inferenceMemory: string
+	/**
+	 * C​o​m​p​u​t​e​ ​c​a​p​a​b​i​l​i​t​y​ ​{​c​c​}
+	 * @param {unknown} cc
+	 */
+	inferenceCompute: RequiredParams<'cc'>
+	/**
+	 * G​P​U
+	 */
+	inferenceGpu: string
+	/**
+	 * N​o​n​e​ ​f​o​u​n​d
+	 */
+	inferenceNoGpu: string
+	/**
+	 * W​i​t​h​ ​G​P​U​ ​a​c​c​e​s​s
+	 */
+	inferenceDockerGpu: string
+	/**
+	 * W​i​t​h​o​u​t​ ​G​P​U​ ​a​c​c​e​s​s
+	 */
+	inferenceDockerCpu: string
+	/**
+	 * N​o​t​ ​a​v​a​i​l​a​b​l​e
+	 */
+	inferenceNoDocker: string
+	/**
+	 * B​e​s​t​ ​f​o​r​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	inferenceBestHere: string
+	/**
+	 * E​v​e​r​y​ ​m​o​d​e​l​ ​s​e​r​v​e​r​ ​r​u​n​n​i​n​g​ ​h​e​r​e​ ​i​s​ ​o​f​f​e​r​e​d​ ​i​n​ ​A​g​e​n​t​ ​m​o​d​e​ ​o​n​ ​i​t​s​ ​o​w​n​,​ ​w​i​t​h​ ​i​t​s​ ​k​e​y​.
+	 */
+	inferenceAgentNote: string
+	/**
+	 * U​s​e
+	 */
+	inferenceUseCase: string
+	/**
+	 * I​n​c​l​u​d​e​ ​c​o​m​m​u​n​i​t​y​ ​u​p​l​o​a​d​s
+	 */
+	inferenceAllPublishers: string
+	/**
+	 * F​i​t​s​ ​w​i​t​h​ ​{​e​n​g​i​n​e​}
+	 * @param {unknown} engine
+	 */
+	inferenceFitsWith: RequiredParams<'engine'>
+	/**
+	 * a​b​o​u​t​ ​{​n​}​ ​t​o​k​e​n​s​/​s
+	 * @param {unknown} n
+	 */
+	inferenceTokensPerSecond: RequiredParams<'n'>
+	/**
+	 * F​i​t​s​ ​w​e​l​l
+	 */
+	inferenceFitPerfect: string
+	/**
+	 * F​i​t​s
+	 */
+	inferenceFitGood: string
+	/**
+	 * T​i​g​h​t
+	 */
+	inferenceFitMarginal: string
+	/**
+	 * R​u​n
+	 */
+	inferenceRun: string
+	/**
+	 * N​o​t​h​i​n​g​ ​f​i​t​s
+	 */
+	inferenceNothingFits: string
+	/**
+	 * S​c​o​r​e​d​ ​b​y​ ​l​l​m​f​i​t​ ​{​v​e​r​s​i​o​n​}​ ​f​o​r​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 * @param {unknown} version
+	 */
+	inferenceByLlmfit: RequiredParams<'version'>
+	/**
+	 * N​o​ ​e​n​g​i​n​e​ ​r​u​n​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	inferenceNoEngine: string
+	/**
+	 * I​n​s​t​a​l​l​i​n​g​ ​m​l​x​-​l​m​…
+	 */
+	inferenceInstallingMlx: string
+	/**
+	 * I​n​s​t​a​l​l​a​t​i​o​n​ ​f​a​i​l​e​d
+	 */
+	inferenceInstallFailed: string
+	/**
+	 * N​o​t​ ​i​n​s​t​a​l​l​e​d
+	 */
+	inferenceNotInstalled: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	inferenceInstall: string
+	/**
+	 * S​t​o​p
+	 */
+	inferenceStop: string
+	/**
+	 * S​e​r​v​e​ ​a​ ​m​o​d​e​l
+	 */
+	inferenceServe: string
+	/**
+	 * M​o​d​e​l
+	 */
+	inferenceModel: string
+	/**
+	 * P​o​r​t
+	 */
+	inferencePort: string
+	/**
+	 * R​e​p​l​a​c​e
+	 */
+	inferenceReplace: string
+	/**
+	 * S​t​a​r​t
+	 */
+	inferenceStart: string
+	/**
+	 * A​ ​H​u​g​g​i​n​g​ ​F​a​c​e​ ​r​e​p​o​s​i​t​o​r​y​;​ ​M​L​X​ ​b​u​i​l​d​s​ ​(​m​l​x​-​c​o​m​m​u​n​i​t​y​)​ ​l​o​a​d​ ​f​a​s​t​e​s​t​.​ ​S​e​r​v​e​d​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​o​n​l​y​,​ ​k​e​p​t​ ​r​u​n​n​i​n​g​ ​a​f​t​e​r​ ​a​ ​r​e​s​t​a​r​t​.
+	 */
+	inferenceMlxNote: string
+	/**
+	 * O​l​l​a​m​a​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	inferenceOllamaNative: string
+	/**
+	 * O​l​l​a​m​a​ ​(​d​e​p​l​o​y​e​d​)
+	 */
+	inferenceOllamaDeployed: string
+	/**
+	 * L​o​a​d​e​d
+	 */
+	inferenceLoaded: string
+	/**
+	 * R​e​m​o​v​e​ ​m​o​d​e​l
+	 */
+	inferenceRemoveModel: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	inferencePullFailed: string
+	/**
+	 * M​o​d​e​l​ ​t​o​ ​p​u​l​l
+	 */
+	inferencePullLabel: string
+	/**
+	 * P​u​l​l
+	 */
+	inferencePull: string
+	/**
+	 * N​o​t​ ​a​ ​m​o​d​e​l​ ​n​a​m​e
+	 */
+	inferenceInvalidModel: string
+	/**
+	 * N​e​e​d​s​ ​t​h​e​ ​O​l​l​a​m​a​ ​a​p​p
+	 */
+	inferenceNeedsOllamaApp: string
+	/**
+	 * N​o​t​ ​r​u​n​n​i​n​g
+	 */
+	inferenceNotRunning: string
+	/**
+	 * O​p​e​n​ ​t​h​e​ ​O​l​l​a​m​a​ ​a​p​p​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​;​ ​i​t​s​ ​m​o​d​e​l​s​ ​s​h​o​w​ ​h​e​r​e​ ​o​n​c​e​ ​i​t​ ​a​n​s​w​e​r​s​.
+	 */
+	inferenceOllamaStart: string
 }
 
 export type TranslationFunctions = {
@@ -19594,6 +19884,290 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Install
 	 */
 	deskGuideInstall: () => LocalizedString
+	/**
+	 * Local inference
+	 */
+	inference: () => LocalizedString
+	/**
+	 * AI models LLM GPU
+	 */
+	inferenceKeywords: () => LocalizedString
+	/**
+	 * llmfit could not score the models: {reason}
+	 */
+	inferenceLlmfitFailed: (arg: { reason: unknown }) => LocalizedString
+	/**
+	 * Runs in Docker on Linux
+	 */
+	inferenceNeedsLinux: () => LocalizedString
+	/**
+	 * Needs a Mac with Apple silicon
+	 */
+	inferenceNeedsAppleSilicon: () => LocalizedString
+	/**
+	 * Needs uv or Python 3.11
+	 */
+	inferenceNeedsPython: () => LocalizedString
+	/**
+	 * Needs Docker
+	 */
+	inferenceNeedsDocker: () => LocalizedString
+	/**
+	 * Needs a GPU
+	 */
+	inferenceNeedsGpu: () => LocalizedString
+	/**
+	 * Needs an NVIDIA GPU
+	 */
+	inferenceNeedsNvidia: () => LocalizedString
+	/**
+	 * Docker cannot use the GPU: install the NVIDIA Container Toolkit
+	 */
+	inferenceNeedsGpuContainers: () => LocalizedString
+	/**
+	 * The GPU is too old for it
+	 */
+	inferenceGpuTooOld: () => LocalizedString
+	/**
+	 * The GPU has too little memory
+	 */
+	inferenceGpuTooSmall: () => LocalizedString
+	/**
+	 * Serving {model}
+	 */
+	inferenceServing: (arg: { model: unknown }) => LocalizedString
+	/**
+	 * Installed
+	 */
+	inferenceInstalled: () => LocalizedString
+	/**
+	 * Can run here
+	 */
+	inferenceCanRun: () => LocalizedString
+	/**
+	 * Running
+	 */
+	inferenceRunning: () => LocalizedString
+	/**
+	 * Starting
+	 */
+	inferenceStarting: () => LocalizedString
+	/**
+	 * Found on this machine
+	 */
+	inferenceFoundOnMachine: () => LocalizedString
+	/**
+	 * Models
+	 */
+	inferenceModels: () => LocalizedString
+	/**
+	 * Any use
+	 */
+	inferenceUseAny: () => LocalizedString
+	/**
+	 * General
+	 */
+	inferenceUseGeneral: () => LocalizedString
+	/**
+	 * Coding
+	 */
+	inferenceUseCoding: () => LocalizedString
+	/**
+	 * Reasoning
+	 */
+	inferenceUseReasoning: () => LocalizedString
+	/**
+	 * Chat
+	 */
+	inferenceUseChat: () => LocalizedString
+	/**
+	 * Images and text
+	 */
+	inferenceUseMultimodal: () => LocalizedString
+	/**
+	 * Embedding
+	 */
+	inferenceUseEmbedding: () => LocalizedString
+	/**
+	 * This machine
+	 */
+	inferenceThisMachine: () => LocalizedString
+	/**
+	 * Engines
+	 */
+	inferenceEngines: () => LocalizedString
+	/**
+	 * System
+	 */
+	inferenceSystem: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	inferenceMemory: () => LocalizedString
+	/**
+	 * Compute capability {cc}
+	 */
+	inferenceCompute: (arg: { cc: unknown }) => LocalizedString
+	/**
+	 * GPU
+	 */
+	inferenceGpu: () => LocalizedString
+	/**
+	 * None found
+	 */
+	inferenceNoGpu: () => LocalizedString
+	/**
+	 * With GPU access
+	 */
+	inferenceDockerGpu: () => LocalizedString
+	/**
+	 * Without GPU access
+	 */
+	inferenceDockerCpu: () => LocalizedString
+	/**
+	 * Not available
+	 */
+	inferenceNoDocker: () => LocalizedString
+	/**
+	 * Best for this machine
+	 */
+	inferenceBestHere: () => LocalizedString
+	/**
+	 * Every model server running here is offered in Agent mode on its own, with its key.
+	 */
+	inferenceAgentNote: () => LocalizedString
+	/**
+	 * Use
+	 */
+	inferenceUseCase: () => LocalizedString
+	/**
+	 * Include community uploads
+	 */
+	inferenceAllPublishers: () => LocalizedString
+	/**
+	 * Fits with {engine}
+	 */
+	inferenceFitsWith: (arg: { engine: unknown }) => LocalizedString
+	/**
+	 * about {n} tokens/s
+	 */
+	inferenceTokensPerSecond: (arg: { n: unknown }) => LocalizedString
+	/**
+	 * Fits well
+	 */
+	inferenceFitPerfect: () => LocalizedString
+	/**
+	 * Fits
+	 */
+	inferenceFitGood: () => LocalizedString
+	/**
+	 * Tight
+	 */
+	inferenceFitMarginal: () => LocalizedString
+	/**
+	 * Run
+	 */
+	inferenceRun: () => LocalizedString
+	/**
+	 * Nothing fits
+	 */
+	inferenceNothingFits: () => LocalizedString
+	/**
+	 * Scored by llmfit {version} for this machine.
+	 */
+	inferenceByLlmfit: (arg: { version: unknown }) => LocalizedString
+	/**
+	 * No engine runs on this machine.
+	 */
+	inferenceNoEngine: () => LocalizedString
+	/**
+	 * Installing mlx-lm…
+	 */
+	inferenceInstallingMlx: () => LocalizedString
+	/**
+	 * Installation failed
+	 */
+	inferenceInstallFailed: () => LocalizedString
+	/**
+	 * Not installed
+	 */
+	inferenceNotInstalled: () => LocalizedString
+	/**
+	 * Install
+	 */
+	inferenceInstall: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	inferenceStop: () => LocalizedString
+	/**
+	 * Serve a model
+	 */
+	inferenceServe: () => LocalizedString
+	/**
+	 * Model
+	 */
+	inferenceModel: () => LocalizedString
+	/**
+	 * Port
+	 */
+	inferencePort: () => LocalizedString
+	/**
+	 * Replace
+	 */
+	inferenceReplace: () => LocalizedString
+	/**
+	 * Start
+	 */
+	inferenceStart: () => LocalizedString
+	/**
+	 * A Hugging Face repository; MLX builds (mlx-community) load fastest. Served on this machine only, kept running after a restart.
+	 */
+	inferenceMlxNote: () => LocalizedString
+	/**
+	 * Ollama on this machine
+	 */
+	inferenceOllamaNative: () => LocalizedString
+	/**
+	 * Ollama (deployed)
+	 */
+	inferenceOllamaDeployed: () => LocalizedString
+	/**
+	 * Loaded
+	 */
+	inferenceLoaded: () => LocalizedString
+	/**
+	 * Remove model
+	 */
+	inferenceRemoveModel: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	inferencePullFailed: () => LocalizedString
+	/**
+	 * Model to pull
+	 */
+	inferencePullLabel: () => LocalizedString
+	/**
+	 * Pull
+	 */
+	inferencePull: () => LocalizedString
+	/**
+	 * Not a model name
+	 */
+	inferenceInvalidModel: () => LocalizedString
+	/**
+	 * Needs the Ollama app
+	 */
+	inferenceNeedsOllamaApp: () => LocalizedString
+	/**
+	 * Not running
+	 */
+	inferenceNotRunning: () => LocalizedString
+	/**
+	 * Open the Ollama app on this machine; its models show here once it answers.
+	 */
+	inferenceOllamaStart: () => LocalizedString
 }
 
 export type Formatters = {}

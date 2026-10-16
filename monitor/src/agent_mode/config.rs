@@ -279,6 +279,60 @@ pub async fn store(db: &SqlitePool, w: &SettingsWrite) -> Result<(), sqlx::Error
 /// is refused rather than stored behind the operator's back.
 pub struct DbCredentials(pub SqlitePool);
 
+/// A model server on this machine that Agent mode offers on its own: a
+/// deployed app's `[llm]`, or MLX or Ollama found by `inference`. Worked out
+/// from the machine each time (`inference::providers`), never stored.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppProvider {
+    #[serde(flatten)]
+    pub provider: Provider,
+    /// The key it asks for; one that asks for none is given a placeholder,
+    /// so pi counts it as usable. Never shown.
+    #[serde(skip)]
+    pub key: String,
+}
+
+/// [DbCredentials] and the app providers' keys.
+pub struct AppCredentials {
+    pub db: DbCredentials,
+    pub apps: std::sync::Arc<std::sync::RwLock<Vec<AppProvider>>>,
+}
+
+impl AppCredentials {
+    fn app_key(&self, id: &str) -> Option<String> {
+        use crate::utils::lock::RwLockExt;
+        self.apps.read_locked().iter().find(|a| a.provider.id == id).map(|a| a.key.clone())
+    }
+}
+
+impl Credentials for AppCredentials {
+    fn read(&self, provider_id: &str) -> BoxFuture<'_, Result<Option<Value>, String>> {
+        match self.app_key(provider_id) {
+            Some(key) => Box::pin(async move { Ok(Some(serde_json::json!({ "type": "api_key", "key": key }))) }),
+            None => self.db.read(provider_id),
+        }
+    }
+
+    fn list(&self) -> BoxFuture<'_, Result<Vec<String>, String>> {
+        use crate::utils::lock::RwLockExt;
+        let apps: Vec<String> = self.apps.read_locked().iter().map(|a| a.provider.id.clone()).collect();
+        Box::pin(async move {
+            let mut ids = self.db.list().await?;
+            ids.extend(apps.into_iter().filter(|a| !ids.contains(a)).collect::<Vec<_>>());
+            Ok(ids)
+        })
+    }
+
+    fn write(&self, id: &str, v: Value) -> BoxFuture<'_, Result<(), String>> {
+        self.db.write(id, v)
+    }
+
+    fn delete(&self, id: &str) -> BoxFuture<'_, Result<(), String>> {
+        self.db.delete(id)
+    }
+}
+
 impl Credentials for DbCredentials {
     fn read(&self, provider_id: &str) -> BoxFuture<'_, Result<Option<Value>, String>> {
         let id = provider_id.to_string();

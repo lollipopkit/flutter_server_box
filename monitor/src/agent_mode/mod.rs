@@ -49,7 +49,7 @@ mod search;
 mod tools;
 
 use zeroize::Zeroizing;
-use crate::utils::lock::LockExt;
+use crate::utils::lock::{LockExt, RwLockExt};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
@@ -362,6 +362,9 @@ pub struct AgentMode {
     pub mcp_oauth: mcp_oauth::Flows,
     /// Where the skills are (`skills::root`).
     pub skills_root: PathBuf,
+    /// The model servers on this machine offered as providers
+    /// ([`Self::set_app_providers`]).
+    apps: Arc<std::sync::RwLock<Vec<config::AppProvider>>>,
 }
 
 /// Agent mode's network: [`ReqwestFetch`], kept to this machine when asked
@@ -436,6 +439,7 @@ impl AgentMode {
             mcp: mcp::Hub::default(),
             mcp_oauth: mcp_oauth::Flows::default(),
             skills_root: skills::root(&dir),
+            apps: Arc::default(),
             dir,
         }
     }
@@ -564,7 +568,7 @@ impl AgentMode {
         }
         let r = Runtime::start(PiConfig {
             dir: self.dir.clone(),
-            credentials: Arc::new(config::DbCredentials(self.db.clone())),
+            credentials: Arc::new(config::AppCredentials { db: config::DbCredentials(self.db.clone()), apps: self.apps.clone() }),
             fetch: self.fetch.clone(),
             logger: Some(Arc::new(|level, message| match level {
                 "error" => tracing::error!("agent mode: {message}"),
@@ -586,9 +590,39 @@ impl AgentMode {
         Ok(rt)
     }
 
+    /// The operator's providers, then the app providers whose id none of
+    /// those takes.
+    fn providers(&self, settings: &config::Settings) -> Vec<config::Provider> {
+        let mut all = settings.providers.clone();
+        for app in self.apps.read_locked().iter() {
+            if !all.iter().any(|p| p.id == app.provider.id) {
+                all.push(app.provider.clone());
+            }
+        }
+        all
+    }
+
+    /// The model servers on this machine to offer as providers; applied
+    /// when they changed.
+    pub async fn set_app_providers(&self, apps: Vec<config::AppProvider>) -> anyhow::Result<()> {
+        {
+            let mut current = self.apps.write_locked();
+            if *current == apps {
+                return Ok(());
+            }
+            *current = apps;
+        }
+        self.reconfigure().await
+    }
+
+    pub fn app_providers(&self) -> Vec<config::AppProvider> {
+        self.apps.read_locked().clone()
+    }
+
     async fn apply(&self, rt: &Runtime, settings: &config::Settings) -> anyhow::Result<()> {
-        self.fetch.set_insecure_origins(settings.providers.iter().filter_map(config::Provider::insecure_origin).collect());
-        rt.set_custom_providers(Value::Array(settings.providers.iter().map(config::Provider::to_pi).collect()))
+        let providers = self.providers(settings);
+        self.fetch.set_insecure_origins(providers.iter().filter_map(config::Provider::insecure_origin).collect());
+        rt.set_custom_providers(Value::Array(providers.iter().map(config::Provider::to_pi).collect()))
             .await
             .map_err(|e| anyhow::anyhow!("{e}"))?;
         self.max_running.store(settings.max_running, Ordering::Relaxed);
@@ -596,7 +630,7 @@ impl AgentMode {
         // cache, or the endpoint): until then a model it lists is "unavailable"
         // and no task can open. Listed apart, so a slow endpoint holds up only
         // what runs a model.
-        let listing: Vec<String> = settings.providers.iter().filter(|p| p.lists_models()).map(|p| p.id.clone()).collect();
+        let listing: Vec<String> = providers.iter().filter(|p| p.lists_models()).map(|p| p.id.clone()).collect();
         if !listing.is_empty() {
             let listed = self.listing.clone().write_owned().await;
             let rt = rt.clone();
@@ -648,7 +682,7 @@ impl AgentMode {
         // The endpoint being set up is allowed plain HTTP for this request
         // alone, on the terms it is being set up with.
         let _one = self.probing.lock().await;
-        let saved: Vec<String> = config::load(&self.db).await?.providers.iter().filter_map(config::Provider::insecure_origin).collect();
+        let saved: Vec<String> = self.providers(&config::load(&self.db).await?).iter().filter_map(config::Provider::insecure_origin).collect();
         if let Some(origin) = provider.insecure_origin() {
             self.fetch.set_insecure_origins(saved.iter().cloned().chain([origin]).collect());
         }

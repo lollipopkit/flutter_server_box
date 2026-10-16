@@ -12,6 +12,10 @@ import type {
   MaintenanceTask,
   NfsExport,
   SharesView,
+  InferenceView,
+  InferenceRecommend,
+  OllamaModels,
+  OllamaPull,
   ShareConnections,
   SmbShare,
   StorageAction,
@@ -1264,6 +1268,19 @@ export const api = {
   /// Runs a scheduled task now, as the schedule would.
   runStorageMaintenance: (task: MaintenanceKind) =>
     request<{ maintenance: MaintenanceTask[] }>(`/storage/maintenance/${task}/run`, { method: 'POST' }),
+  getInference: () => request<InferenceView>('/inference', {}),
+  recommendModels: (useCase: string | null, allPublishers: boolean) =>
+    request<InferenceRecommend>('/inference/recommend', { method: 'POST', body: JSON.stringify({ useCase, allPublishers }) }),
+  inferenceJob: (since: number) => request<StackJob>(`/inference/job?since=${since}`, {}),
+  cancelInferenceJob: () => request<void>('/inference/job/cancel', { method: 'POST' }),
+  installMlx: () => request<StackJob>('/inference/mlx/install', { method: 'POST' }),
+  startMlx: (model: string, port: number) => request<void>('/inference/mlx', { method: 'PUT', body: JSON.stringify({ model, port }) }),
+  stopMlx: () => request<void>('/inference/mlx', { method: 'DELETE' }),
+  ollamaModels: (instance: string) => request<OllamaModels>(`/inference/ollama/${encodeURIComponent(instance)}/models`, {}),
+  pullOllama: (instance: string, model: string) =>
+    request<{ pulls: OllamaPull[] }>(`/inference/ollama/${encodeURIComponent(instance)}/pull`, { method: 'POST', body: JSON.stringify({ model }) }),
+  deleteOllama: (instance: string, model: string) =>
+    request<void>(`/inference/ollama/${encodeURIComponent(instance)}/delete`, { method: 'POST', body: JSON.stringify({ model }) }),
   getShares: () => request<SharesView>('/shares', {}),
   shareConnections: (sudoPassword = '') =>
     request<ShareConnections>(

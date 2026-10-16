@@ -120,6 +120,8 @@ pub struct AppState {
     /// The web apps this agent deployed, their jobs and proxies — see
     /// `stacks`.
     pub stacks: Arc<crate::stacks::Stacks>,
+    /// Local inference (`inference`).
+    pub inference: Arc<crate::inference::Inference>,
     pub container_backups: Arc<crate::container_backups::ContainerBackups>,
     pub storage: Arc<crate::api::storage::StorageJobs>,
     pub shares: Arc<crate::api::shares::SharesJobs>,
@@ -179,6 +181,7 @@ pub(super) fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
         protected.tree(&crate::agent_mode::AgentMode::dir_beside(&db));
         crate::stacks::Stacks::protect_beside(&db, &mut protected);
         protected.tree(&crate::container_backups::ContainerBackups::dir_beside(&db));
+        protected.tree(&crate::inference::Inference::dir_beside(&db));
     }
     protected.file(&config.jwt_secret_path());
     protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
@@ -253,6 +256,7 @@ impl AppState {
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),
                 config.get_stacks().shared_dir.as_deref().map(std::path::Path::new),
             )),
+            inference: Arc::new(crate::inference::Inference::new(sqlite_file_of(&db).as_deref())),
             app_calls: Default::default(),
             process_sample: Arc::new(tokio::sync::Mutex::new(None)),
             virt: Arc::new(crate::api::virt::VirtState::default()),

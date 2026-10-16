@@ -2,7 +2,8 @@
 /// read when a desk starts, each registered by its catalog id with its
 /// manifest's name and icon, offered in All Apps while it is deployed
 /// (`stackDeployed`), and opening the service in a window (`StackHost`). An
-/// app the panel has its own desk app for (`STACK_APPS`) is left to it.
+/// app the panel has its own desk app for (`STACK_APPS`) is left to it, and
+/// one with no page (`web`, a model server) has no window.
 
 import { get } from 'svelte/store'
 import { STACK_APPS, stackDeployed, rememberStackApps } from '../../components/stack/apps'
@@ -42,7 +43,8 @@ export async function registerStackApps(before: () => void = () => {}): Promise<
   const offs: (() => void)[] = []
   const ids: string[] = []
   for (const app of apps) {
-    if (STACK_APPS[app.manifest.id]) continue
+    // A model server has no page: no window to open.
+    if (STACK_APPS[app.manifest.id] || app.source === 'part' || !app.manifest.web) continue
     try {
       offs.push(registry.register(stackAppSpec(app)))
       ids.push(app.manifest.id)

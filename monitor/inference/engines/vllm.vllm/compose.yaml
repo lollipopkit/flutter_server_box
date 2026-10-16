@@ -1,0 +1,54 @@
+# vLLM v0.30.0 (Apache-2.0), https://github.com/vllm-project/vllm/releases/tag/v0.30.0
+#
+# Written for ServerBox Monitor from vLLM's Docker page
+# (docs.vllm.ai/en/stable/deployment/docker.html), not copied from a release
+# file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image is the release's CUDA build; NVIDIA GPUs only, through the
+#   NVIDIA Container Toolkit;
+# - the model is a Hugging Face repository, downloaded on first start into the
+#   shared models folder (the Hugging Face cache, shared with SGLang);
+# - the API asks for a generated key and is published on loopback unless the
+#   admin opens it.
+
+services:
+  vllm:
+    image: vllm/vllm-openai:${VLLM_VERSION}
+    environment:
+      TZ: ${SBM_TZ}
+      HF_HOME: /models
+    command:
+      - ${MODEL}
+      - --served-model-name
+      - ${MODEL}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --api-key
+      - ${API_KEY}
+      - --max-model-len
+      - ${CONTEXT}
+      - --gpu-memory-utilization
+      - ${GPU_MEMORY}
+    volumes:
+      - ${MODELS_LOCATION}:/models
+    ports:
+      - '${VLLM_BIND}:${VLLM_PORT}:8000'
+    # PyTorch shares tensors between processes through /dev/shm.
+    shm_size: 8gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # /health answers once the model is loaded.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30m
+    restart: unless-stopped

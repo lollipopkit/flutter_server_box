@@ -396,6 +396,19 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/stacks/{id}/services").route(web::get().to(crate::api::stacks::services)))
             .service(web::resource("/stacks/{id}/login").route(web::post().to(crate::api::stacks::login)))
             .service(web::resource("/stacks/{id}/enter").route(web::post().to(crate::api::stacks::enter)))
+            .service(web::resource("/inference").route(web::get().to(crate::api::inference::overview)))
+            .service(web::resource("/inference/recommend").route(web::post().to(crate::api::inference::recommend)))
+            .service(web::resource("/inference/job").route(web::get().to(crate::api::inference::job)))
+            .service(web::resource("/inference/job/cancel").route(web::post().to(crate::api::inference::job_cancel)))
+            .service(web::resource("/inference/mlx/install").route(web::post().to(crate::api::inference::mlx_install)))
+            .service(
+                web::resource("/inference/mlx")
+                    .route(web::put().to(crate::api::inference::mlx_start))
+                    .route(web::delete().to(crate::api::inference::mlx_stop)),
+            )
+            .service(web::resource("/inference/ollama/{instance}/models").route(web::get().to(crate::api::inference::ollama_models)))
+            .service(web::resource("/inference/ollama/{instance}/pull").route(web::post().to(crate::api::inference::ollama_pull)))
+            .service(web::resource("/inference/ollama/{instance}/delete").route(web::post().to(crate::api::inference::ollama_delete)))
             .service(
                 web::resource("/desk/apps/{app}/storage")
                     .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))

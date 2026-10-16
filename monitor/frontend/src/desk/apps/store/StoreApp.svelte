@@ -46,7 +46,8 @@
     error = ''
     try {
       const r = fresh ? await api.refreshStacks() : await api.listStacks()
-      if (serverId === servers.currentId) apps = r.apps
+      // Local inference's engines are set up in its own window.
+      if (serverId === servers.currentId) apps = r.apps.filter((a) => a.source !== 'part')
     } catch (e) {
       error = errorText(e)
     }

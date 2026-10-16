@@ -8,6 +8,7 @@ pub mod cli;
 pub mod container_backups;
 pub mod core;
 pub mod db;
+pub mod inference;
 pub mod monitoring;
 pub mod pty;
 pub mod stacks;

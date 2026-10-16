@@ -82,7 +82,7 @@ pub async fn servers(state: &AppState) -> Vec<AppMcp> {
                 Some(McpAuth { asked: Some(hint), .. }) => {
                     (Credential::Asked { hint: hint.clone(), given: used.token.is_some() }, used.token.clone())
                 }
-                // TODO: the token OAuth gives (A6.4).
+                // Its token is `agent_mode::mcp_oauth`'s, added at connect.
                 Some(_) => (Credential::OAuth, None),
             };
             let header = server.auth.as_ref().zip(value).map(|(auth, value)| {

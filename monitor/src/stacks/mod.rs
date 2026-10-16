@@ -49,7 +49,7 @@ use store::StackRow;
 pub const PROXY_PORTS: std::ops::RangeInclusive<u16> = 3780..=3799;
 /// The listener taking every app by host (`[stacks] apps_port`).
 const APPS_PORT: u16 = 3779;
-const ENV_FILE: &str = ".env";
+pub const ENV_FILE: &str = ".env";
 /// Under the stacks' directory; never an app id (they start with a letter).
 const CATALOG_DIR: &str = ".catalog";
 /// The shared folder of a temporary stacks directory; never an app id.
@@ -400,8 +400,11 @@ Compose command below, never another project name. Each app's `.env` holds gener
             None => "not checked yet",
         };
         let mut line = format!("- {title} (`{}`, {} {}): {}, {health}", m.id, m.project, row.version, row.state);
-        if let Some(port) = m.web_port(&row.settings) {
-            line.push_str(&format!("; web UI at http://127.0.0.1:{port}{}", m.web.path));
+        if let Some((port, web)) = m.web_port(&row.settings).zip(m.web.as_ref()) {
+            line.push_str(&format!("; web UI at http://127.0.0.1:{port}{}", web.path));
+        }
+        if let Some((port, llm)) = m.llm.as_ref().and_then(|l| Some((row.settings.get(&l.port)?.as_u64()?, l))) {
+            line.push_str(&format!("; OpenAI-compatible API at http://127.0.0.1:{port}{}", llm.path));
         }
         if let Some(rt) = runtime {
             let stack = compose(rt, &row.id, &state.stacks.dir(&row.id), &package);
@@ -445,7 +448,7 @@ pub async fn login(state: &AppState, id: &str) -> Result<Value, Refusal> {
 /// (`[web] basic_auth`): `[login]`'s user and the password from its env file.
 async fn basic_auth(state: &AppState, id: &str, package: &Package) -> Option<hyper::header::HeaderValue> {
     use base64::Engine;
-    let login = package.manifest.login.as_ref().filter(|_| package.manifest.web.basic_auth)?;
+    let login = package.manifest.login.as_ref().filter(|_| package.manifest.web.as_ref().is_some_and(|w| w.basic_auth))?;
     let (user, env) = (login.user.as_deref()?, login.password.as_deref()?);
     let text = tokio::fs::read_to_string(state.stacks.dir(id).join(ENV_FILE)).await.ok()?;
     let password = read_env(&text, &[env]).remove(env)?;
@@ -456,7 +459,7 @@ async fn basic_auth(state: &AppState, id: &str, package: &Package) -> Option<hyp
 }
 
 /// The values of [names] in an env file the agent wrote (`NAME='value'`).
-fn read_env(text: &str, names: &[&str]) -> BTreeMap<String, String> {
+pub fn read_env(text: &str, names: &[&str]) -> BTreeMap<String, String> {
     text.lines()
         .filter_map(|line| line.split_once('='))
         .filter(|(k, _)| names.contains(&k.trim()))
@@ -697,7 +700,11 @@ pub async fn install(
     Ok(job)
 }
 
-async fn conclude(state: &AppState, job: &Job, id: &str, verb: &str, result: Result<(), String>) {
+async fn conclude(state: &Arc<AppState>, job: &Job, id: &str, verb: &str, result: Result<(), String>) {
+    // A model server came, changed or went: Agent mode's providers follow.
+    if state.stacks.package(id).is_some_and(|p| p.manifest.llm.is_some()) {
+        crate::inference::refresh_providers(state);
+    }
     match result {
         Ok(()) => {
             job.finish(JobState::Succeeded, None);

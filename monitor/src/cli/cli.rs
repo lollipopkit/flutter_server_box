@@ -147,6 +147,8 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     // Deployed web apps get their proxies back; a deployment a stop cut
     // short is marked failed.
     crate::stacks::resume(&app_state).await;
+    // The model servers already on this machine, for Agent mode.
+    crate::inference::refresh_providers(&app_state);
     tokio::spawn(crate::container_backups::start(app_state.clone()));
     tokio::spawn(crate::storage_watch::start(app_state.clone()));
     tokio::spawn(crate::api::update::watch(app_state.clone()));

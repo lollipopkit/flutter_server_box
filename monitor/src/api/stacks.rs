@@ -312,6 +312,9 @@ pub async fn enter(
 ) -> Result<HttpResponse, web::Error> {
     require!(authz::acting_caller(&req, &state).await);
     let Some(package) = state.stacks.package(&id) else { return Ok(not_found()) };
+    let Some(web) = package.manifest.web.as_ref() else {
+        return Ok(HttpResponse::Conflict().json(&json!({ "error": "noPage" })));
+    };
     let Some(port) = state.stacks.proxies.port(&id) else {
         return Ok(HttpResponse::Conflict().json(&json!({ "error": "notRunning" })));
     };
@@ -335,7 +338,7 @@ pub async fn enter(
         "ticket": ticket,
         "port": port,
         "tls": state.tls_active,
-        "path": package.manifest.web.path,
+        "path": web.path,
         "enter": crate::stacks::proxy::ENTER_PATH,
         // Taken by host (`[stacks] apps_url`): the window's address, instead of
         // the agent's host on `port`.

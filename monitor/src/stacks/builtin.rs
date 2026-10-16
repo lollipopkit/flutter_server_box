@@ -36,8 +36,30 @@ const FILES: &[(&str, &[(&str, &str)])] = &[
     app!("vaultwarden.server": "manifest.toml", "compose.yaml"),
 ];
 
-static PACKAGES: LazyLock<Vec<Package>> = LazyLock::new(|| {
-    FILES
+/// The engines of Local inference (`monitor/inference/engines/`): deployed
+/// as stacks, shown in its window, never in the App Store, and never taken
+/// from the store or the operator's folder.
+macro_rules! part {
+    ($id:literal: $($file:literal),+ $(,)?) => {
+        ($id, &[$(($file, include_str!(concat!("../../inference/engines/", $id, "/", $file)))),+])
+    };
+}
+
+const PART_FILES: &[(&str, &[(&str, &str)])] = &[
+    part!("ggml.llama_cpp": "manifest.toml", "compose.yaml", "gpu.yml"),
+    part!("ollama.ollama": "manifest.toml", "compose.yaml", "gpu.yml"),
+    part!("sglang.sglang": "manifest.toml", "compose.yaml"),
+    part!("vllm.vllm": "manifest.toml", "compose.yaml"),
+];
+
+/// The desk app the parts belong to.
+pub const PARTS_OF: &str = "serverbox.inference";
+
+static PACKAGES: LazyLock<Vec<Package>> = LazyLock::new(|| read(FILES));
+static PARTS: LazyLock<Vec<Package>> = LazyLock::new(|| read(PART_FILES));
+
+fn read(files: &[(&str, &[(&str, &str)])]) -> Vec<Package> {
+    files
         .iter()
         .filter_map(|(id, files)| {
             let files: BTreeMap<String, Vec<u8>> =
@@ -55,10 +77,14 @@ static PACKAGES: LazyLock<Vec<Package>> = LazyLock::new(|| {
             }
         })
         .collect()
-});
+}
 
 pub fn packages() -> &'static [Package] {
     &PACKAGES
+}
+
+pub fn parts() -> &'static [Package] {
+    &PARTS
 }
 
 #[cfg(test)]
@@ -68,9 +94,20 @@ mod tests {
 
     #[test]
     fn every_store_app_is_built_in_whole() {
-        let store = Path::new(env!("CARGO_MANIFEST_DIR")).join("../store/apps");
+        assert_whole(FILES, &Path::new(env!("CARGO_MANIFEST_DIR")).join("../store/apps"));
+        assert_eq!(packages().len(), FILES.len(), "every built-in app reads");
+    }
+
+    #[test]
+    fn every_engine_is_built_in_whole() {
+        assert_whole(PART_FILES, &Path::new(env!("CARGO_MANIFEST_DIR")).join("inference/engines"));
+        assert_eq!(parts().len(), PART_FILES.len(), "every engine reads");
+        assert!(parts().iter().all(|p| p.manifest.llm.is_some() && p.manifest.web.is_none()));
+    }
+
+    fn assert_whole(files: &[(&str, &[(&str, &str)])], store: &Path) {
         let mut on_disk = BTreeMap::new();
-        for entry in std::fs::read_dir(&store).expect("store/apps") {
+        for entry in std::fs::read_dir(store).expect("the apps folder") {
             let dir = entry.expect("entry").path();
             if !dir.is_dir() {
                 continue;
@@ -82,7 +119,7 @@ mod tests {
             names.sort();
             on_disk.insert(dir.file_name().unwrap().to_string_lossy().into_owned(), names);
         }
-        let built_in: BTreeMap<String, Vec<String>> = FILES
+        let built_in: BTreeMap<String, Vec<String>> = files
             .iter()
             .map(|(id, files)| {
                 let mut names: Vec<String> = files.iter().map(|(n, _)| n.to_string()).collect();
@@ -90,7 +127,6 @@ mod tests {
                 (id.to_string(), names)
             })
             .collect();
-        assert_eq!(built_in, on_disk, "builtin.rs FILES must list every file of store/apps");
-        assert_eq!(packages().len(), FILES.len(), "every built-in app reads");
+        assert_eq!(built_in, on_disk, "builtin.rs must list every file of {}", store.display());
     }
 }

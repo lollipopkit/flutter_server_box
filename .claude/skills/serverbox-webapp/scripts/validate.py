@@ -10,7 +10,7 @@ Three layers:
    `uvx` or `pipx` when it is not installed.
 2. What the schema cannot say, the same rules as the agent's reader
    (monitor/src/stacks/manifest.rs): files in the folder, env names set by
-   one place only, `web.port` naming a port setting, defaults that fit their
+   one place only, `web.port` (or `[llm]`) naming a port setting, defaults that fit their
    setting, and every variable a compose file needs being one the env file
    sets.
 3. With --compose: `docker compose config` over the files with the env file
@@ -253,6 +253,24 @@ def check_mcp(m: dict, settings: list, texts: dict[str, str], rep: Report) -> No
                 rep.error(f"{at}.service: {service}: publishes {ref} on 127.0.0.1 alone")
 
 
+def check_llm(m: dict, settings: list, rep: Report) -> None:
+    """[llm]: as `stacks::manifest` checks it."""
+    llm = m.get("llm")
+    if llm is None:
+        return
+    port = next((s for s in settings if s.get("key") == llm.get("port") and s.get("type") == "port"), None)
+    if port is None or port.get("protocol", "tcp") != "tcp":
+        rep.error("llm.port: names no TCP port setting")
+    if llm.get("path", "/v1").endswith("/"):
+        rep.error("llm.path: not ending with /")
+    model = llm.get("model")
+    if model is not None and not any(s.get("key") == model and s.get("type") == "text" for s in settings):
+        rep.error("llm.model: names no text setting")
+    key = llm.get("key")
+    if key is not None and key not in {s.get("env") for s in m.get("secrets", [])}:
+        rep.error(f"llm.key: {key} is not a [[secrets]] entry")
+
+
 def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) -> None:
     if "id" in m:
         rep.error("id: not written by hand; it is <publisher>.<name>")
@@ -315,12 +333,15 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
         if len(where) > 1:
             rep.error(f"{name} is set by {where[0]} and {where[1]}")
 
-    port = m.get("web", {}).get("port")
-    web = next((s for s in settings if s.get("key") == port and s.get("type") == "port"), None)
-    if web is None:
-        rep.error(f"web.port {port!r} names no port setting")
-    elif web.get("protocol", "tcp") != "tcp":
-        rep.error(f"web.port {port!r} is a TCP port setting")
+    if "web" in m:
+        port = m["web"].get("port")
+        web = next((s for s in settings if s.get("key") == port and s.get("type") == "port"), None)
+        if web is None:
+            rep.error(f"web.port {port!r} names no port setting")
+        elif web.get("protocol", "tcp") != "tcp":
+            rep.error(f"web.port {port!r} is a TCP port setting")
+    elif "llm" not in m:
+        rep.error("web: an app without a page serves an [llm] endpoint")
 
     login = m.get("login")
     if login is not None:
@@ -336,6 +357,7 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
             rep.error("web.basic_auth: needs [login] user (no `:`) and password")
 
     check_mcp(m, settings, texts, rep)
+    check_llm(m, settings, rep)
 
     if m.get("license", {}).get("accept") is not True:
         rep.warn("license.accept is false: the admin deploys without being shown the licence to accept")

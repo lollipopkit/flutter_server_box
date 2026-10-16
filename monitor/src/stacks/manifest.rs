@@ -101,7 +101,10 @@ pub struct Manifest {
     #[serde(default)]
     pub requirements: Requirements,
     pub compose: Compose,
-    pub web: Web,
+    /// The page a window shows; absent for a service with no page of its
+    /// own (a model server: its `[llm]` endpoint is what it is for).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub web: Option<Web>,
     #[serde(default)]
     pub env: EnvMap,
     #[serde(default)]
@@ -114,6 +117,33 @@ pub struct Manifest {
     /// deployed (`agent_mode::mcp`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub mcp: Vec<Mcp>,
+    /// An OpenAI-compatible endpoint serving a language model, which Agent
+    /// mode offers as a provider once the app is deployed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub llm: Option<Llm>,
+}
+
+/// A model server's OpenAI-compatible API, on this machine at the port
+/// setting's port.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Llm {
+    /// The key of the TCP port setting it listens on.
+    pub port: String,
+    /// Where the API is (`/v1`): `<path>/chat/completions`, `<path>/models`.
+    #[serde(default = "v1")]
+    pub path: String,
+    /// The key of the text setting naming the model it serves, when it
+    /// serves one (vLLM, llama.cpp); Ollama loads any it has.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// A `[[secrets]]` entry it asks for as a bearer token.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+}
+
+fn v1() -> String {
+    "/v1".into()
 }
 
 /// An MCP server of the app's (Streamable HTTP): the service's own, or a
@@ -636,7 +666,7 @@ impl Manifest {
             if self.compose.files.is_empty() {
                 bad("compose.files", "names no file");
             }
-            if !self.web.path.starts_with('/') {
+            if self.web.as_ref().is_some_and(|w| !w.path.starts_with('/')) {
                 bad("web.path", "starts with /");
             }
         }
@@ -688,10 +718,14 @@ impl Manifest {
                 out.push(problem(from[1].clone(), format!("{name} is also set by {}", from[0])));
             }
         }
-        match self.settings.iter().find(|s| s.key() == self.web.port) {
-            Some(Setting::Port { protocol: Protocol::Tcp, .. }) => {}
-            Some(Setting::Port { .. }) => out.push(problem("web.port", "a TCP port setting")),
-            _ => out.push(problem("web.port", "names no port setting")),
+        match &self.web {
+            Some(web) => match self.settings.iter().find(|s| s.key() == web.port) {
+                Some(Setting::Port { protocol: Protocol::Tcp, .. }) => {}
+                Some(Setting::Port { .. }) => out.push(problem("web.port", "a TCP port setting")),
+                _ => out.push(problem("web.port", "names no port setting")),
+            },
+            None if self.llm.is_none() => out.push(problem("web", "an app without a page serves an [llm] endpoint")),
+            None => {}
         }
         if let Some(login) = &self.login {
             if login.user.is_none() && login.password.is_none() && login.note.is_none() {
@@ -709,12 +743,36 @@ impl Manifest {
                 out.push(problem("login.note", "needs `en`"));
             }
         }
-        if self.web.basic_auth
+        if self.web.as_ref().is_some_and(|w| w.basic_auth)
             && !self.login.as_ref().is_some_and(|l| l.password.is_some() && l.user.as_ref().is_some_and(|u| !u.contains(':')))
         {
             out.push(problem("web.basic_auth", "needs [login] user (no `:`) and password"));
         }
         out.extend(self.mcp_problems());
+        out.extend(self.llm_problems());
+        out
+    }
+
+    fn llm_problems(&self) -> Vec<Problem> {
+        let mut out = Vec::new();
+        let Some(llm) = &self.llm else { return out };
+        match self.settings.iter().find(|s| s.key() == llm.port) {
+            Some(Setting::Port { protocol: Protocol::Tcp, .. }) => {}
+            _ => out.push(problem("llm.port", "names no TCP port setting")),
+        }
+        if !MCP_PATH.is_match(&llm.path) || llm.path.ends_with('/') {
+            out.push(problem("llm.path", "a URL path, starting with / and not ending with it"));
+        }
+        if let Some(model) = &llm.model
+            && !matches!(self.settings.iter().find(|s| s.key() == model), Some(Setting::Text { .. }))
+        {
+            out.push(problem("llm.model", "names no text setting"));
+        }
+        if let Some(env) = &llm.key
+            && !self.secrets.iter().any(|s| &s.env == env)
+        {
+            out.push(problem("llm.key", format!("{env} is not a [[secrets]] entry")));
+        }
         out
     }
 
@@ -919,7 +977,7 @@ impl Manifest {
     }
 
     pub fn web_port(&self, settings: &BTreeMap<String, Value>) -> Option<u16> {
-        settings.get(&self.web.port)?.as_u64()?.try_into().ok()
+        settings.get(&self.web.as_ref()?.port)?.as_u64()?.try_into().ok()
     }
 
     /// Directories holding the service's data, removed only when asked.
@@ -1531,6 +1589,24 @@ label = { en = "Port" }
     /// An MCP server of the app's: the service's own, or a sidecar pinned by
     /// digest and reachable on loopback alone; one credential source each.
     #[test]
+    fn a_model_server_needs_no_page() {
+        let api = MINIMAL.replace("web = { port = \"port\" }\n", "")
+            + "\n[[secrets]]\nenv = \"KEY\"\n\n[[settings]]\nkey = \"model\"\ntype = \"text\"\nenv = \"MODEL\"\ndefault = \"Qwen/Qwen3-0.6B\"\npattern = \"[A-Za-z0-9][A-Za-z0-9/._:-]{0,199}\"\nlabel = { en = \"Model\" }\n\n[llm]\nport = \"port\"\nmodel = \"model\"\nkey = \"KEY\"\n";
+        let compose = "x: ${PORT} ${MODEL} ${KEY}\n";
+        let problems = |text: &str, compose: &str| package(text, compose).err().unwrap_or_default();
+        let at = |p: &[Problem]| p.iter().map(|p| p.at.clone()).collect::<Vec<_>>();
+        let m = package(&api, compose).expect("package").manifest;
+        assert!(m.web.is_none());
+        assert_eq!(m.llm.as_ref().map(|l| l.path.as_str()), Some("/v1"));
+        assert_eq!(m.web_port(&BTreeMap::from([("port".into(), Value::from(8080))])), None);
+        let neither = MINIMAL.replace("web = { port = \"port\" }\n", "");
+        assert_eq!(at(&problems(&neither, "x: ${PORT}\n")), ["web"]);
+        assert_eq!(at(&problems(&api.replace("model = \"model\"", "model = \"port\""), compose)), ["llm.model"]);
+        assert_eq!(at(&problems(&api.replace("key = \"KEY\"", "key = \"NOPE\""), compose)), ["llm.key"]);
+        assert_eq!(at(&problems(&api.replace("[llm]\n", "[llm]\npath = \"/v1/\"\n"), compose)), ["llm.path"]);
+    }
+
+    #[test]
     fn mcp_servers_are_checked() {
         const COMPOSE: &str = "services:\n  app:\n    image: x\n    ports: ['${PORT}:80']\n";
         let builtin = format!("{MINIMAL}\n[[mcp]]\nport = \"port\"\npath = \"/api/mcp\"\npublisher = \"builtin\"\n[mcp.auth]\nscheme = \"Bearer\"\nasked = {{ en = \"Make a token in your profile.\" }}\n");
@@ -1619,7 +1695,7 @@ label = { en = "Port" }
         assert!(package(&empty, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "login"));
 
         let basic = ok.replace("web = { port = \"port\" }", "web = { port = \"port\", basic_auth = true }");
-        assert!(package(&basic, "x: ${PORT}\n").expect("package").manifest.web.basic_auth);
+        assert!(package(&basic, "x: ${PORT}\n").expect("package").manifest.web.unwrap().basic_auth);
         let colon = basic.replace("user = \"admin\"", "user = \"a:b\"");
         assert!(package(&colon, "x: ${PORT}\n").unwrap_err().iter().any(|p| p.at == "web.basic_auth"));
         let bare = MINIMAL.replace("web = { port = \"port\" }", "web = { port = \"port\", basic_auth = true }");

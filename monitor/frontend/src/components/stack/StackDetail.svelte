@@ -15,7 +15,7 @@
   import { capabilitiesStore } from '../../lib/capabilities.svelte'
   import { canAct, whyText } from '../../lib/access'
   import { servers } from '../../lib/servers.svelte'
-  import type { StackApp, StackHealth, StackJob } from '../../types'
+  import type { StackApp, StackHealth, StackJob, StackValue } from '../../types'
   import { healthBadge } from './health'
   import StackLogin from './StackLogin.svelte'
   import StackProgress from './StackProgress.svelte'
@@ -31,9 +31,16 @@
     stackId: string
     /// Shows the app's own header (an App Store page); Settings draws its own.
     header?: boolean
+    /// Settings chosen elsewhere (Local inference's model): the setup opens
+    /// at once with them.
+    preset?: Record<string, StackValue>
+    /// Offers to open the app's window; off inside that window.
+    openable?: boolean
+    /// After a deploy, change or removal ended.
+    onchanged?: () => void
   }
 
-  const { stackId, header = true }: Props = $props()
+  const { stackId, header = true, preset, openable = true, onchanged }: Props = $props()
   const win = useWindow()
 
   let app = $state<StackApp | null>(null)
@@ -42,7 +49,7 @@
   let removing = $state(false)
   /// The setup form is open: the account chose to install, or to change a
   /// deployed app's settings.
-  let setting = $state(false)
+  let setting = $state(untrack(() => preset !== undefined))
 
   const caps = $derived(capabilitiesStore.byServer[servers.currentId])
   /// Whether the account may act over this link: setting up, changing and
@@ -50,7 +57,7 @@
   const canChange = $derived(canAct(caps))
   const title = $derived(app ? pick(app.manifest.title, $locale) : '')
   const stack = $derived(app?.stack ?? null)
-  const appId = $derived(stackAppId(stackId))
+  const appId = $derived(openable ? stackAppId(stackId) : undefined)
   const tr = (text: Record<string, string> | null | undefined) => pick(text, $locale)
 
   async function load(serverId = servers.currentId) {
@@ -76,6 +83,7 @@
     // The panel offers the app while it is installed.
     void capabilitiesStore.refresh(servers.currentId)
     void load()
+    onchanged?.()
   }
 
   async function update() {
@@ -127,7 +135,7 @@
       <StackProgress {stackId} {job} title={jobTitle(job)} ondone={finished} />
     {/key}
   {:else if setting}
-    <StackSetup manifest={app.manifest} current={stack?.settings} onstarted={(j) => (job = j)} />
+    <StackSetup manifest={app.manifest} current={stack?.settings} {preset} onstarted={(j) => (job = j)} />
     <div class="flex justify-start">
       <Button variant="ghost" icon="arrow_back" onclick={() => (setting = false)}>{$LL.cancel()}</Button>
     </div>

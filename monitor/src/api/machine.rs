@@ -71,6 +71,9 @@ pub const FEATURES: &[&str] = &[
     // Web apps deployed with Docker Compose and shown through the agent's
     // proxy (`api::stacks`).
     "stacks",
+    // Local inference (`api::inference`): engines and models for this
+    // machine, its engines deployed as stacks.
+    "inference",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

@@ -346,7 +346,13 @@ pub async fn events(req: HttpRequest, state: web::types::State<Arc<AppState>>) -
 pub async fn get_settings(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
     require!(shell(&req, &state).await);
     match config::load(&state.db).await {
-        Ok(settings) => Ok(HttpResponse::Ok().json(&settings)),
+        Ok(settings) => {
+            let mut v = serde_json::to_value(&settings).unwrap_or_default();
+            // The model servers on this machine, offered on their own
+            // (`inference::providers`): shown, not edited.
+            v["appProviders"] = serde_json::to_value(state.agent.app_providers()).unwrap_or_default();
+            Ok(HttpResponse::Ok().json(&v))
+        }
         Err(e) => Ok(refused(e.into())),
     }
 }

@@ -7,6 +7,11 @@ import type { Capabilities } from '../../types'
 
 export const STACK_APPS: Readonly<Record<string, string>> = { 'futo.immich': 'serverbox.photos' }
 
+/// Local inference's engines (the agent's `source: 'part'`): stacks it sets
+/// up and shows in its own window, several to one app.
+export const INFERENCE_APP = 'serverbox.inference'
+export const ENGINE_STACKS: readonly string[] = ['ollama.ollama', 'ggml.llama_cpp', 'vllm.vllm', 'sglang.sglang']
+
 /// The catalog ids registered as desk apps of their own (`desk/stacks/register.ts`).
 const registered = new Set<string>()
 
@@ -19,6 +24,7 @@ export function rememberStackApps(ids: string[]): () => void {
 /// The desk app that shows web app [stackId]: the panel's own, else the one
 /// registered by its id; undefined when there is none.
 export function stackAppId(stackId: string): string | undefined {
+  if (ENGINE_STACKS.includes(stackId)) return INFERENCE_APP
   return STACK_APPS[stackId] ?? (registered.has(stackId) ? stackId : undefined)
 }
 

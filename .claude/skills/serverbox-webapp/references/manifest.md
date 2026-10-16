@@ -135,6 +135,21 @@ package and a `localhost/` image:
 | `path` | Where the window opens, default `/` |
 | `basic_auth` | `true` when the service asks for HTTP basic auth (Transmission): a browser cannot answer that inside the desk's frame, so the agent's proxy sends `[login]`'s `user` and `password` itself, server side. Needs both in `[login]`; a direct visit to the published port still asks |
 
+An app with no page of its own leaves `[web]` out; it then serves `[llm]`.
+
+## `[llm]`
+
+A model server's OpenAI-compatible API, which Agent mode offers as a
+provider once the app is deployed (with the key from the env file). Local
+inference's engines (`monitor/inference/engines/`) are such apps.
+
+| Field | Notes |
+|---|---|
+| `port` | The key of the TCP port setting it listens on; reached at `http://127.0.0.1:<port><path>` |
+| `path` | Default `/v1`: `<path>/models`, `<path>/chat/completions` |
+| `model` | Optional: the key of the text setting naming the model it serves |
+| `key` | Optional: a `[[secrets]]` entry it asks for as a bearer token |
+
 ## `[login]`
 
 How the admin signs in the first time; the panel shows it in the app's

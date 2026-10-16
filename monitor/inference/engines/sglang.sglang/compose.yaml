@@ -1,0 +1,57 @@
+# SGLang v0.5.21 (Apache-2.0), https://github.com/sgl-project/sglang/releases/tag/v0.5.21
+#
+# Written for ServerBox Monitor from SGLang's install page
+# (docs.sglang.ai/get_started/install.html, "Using Docker"), not copied from a
+# release file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - the image is the release's runtime build (CUDA, without the build
+#   tools); NVIDIA GPUs only, through the NVIDIA Container Toolkit;
+# - the model is a Hugging Face repository, downloaded on first start into the
+#   shared models folder (the Hugging Face cache, shared with vLLM);
+# - the API asks for a generated key and is published on loopback unless the
+#   admin opens it.
+
+services:
+  sglang:
+    image: lmsysorg/sglang:${SGLANG_VERSION}
+    environment:
+      TZ: ${SBM_TZ}
+      HF_HOME: /models
+    command:
+      - python3
+      - -m
+      - sglang.launch_server
+      - --model-path
+      - ${MODEL}
+      - --served-model-name
+      - ${MODEL}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "30000"
+      - --api-key
+      - ${API_KEY}
+      - --context-length
+      - ${CONTEXT}
+      - --mem-fraction-static
+      - ${GPU_MEMORY}
+    volumes:
+      - ${MODELS_LOCATION}:/models
+    ports:
+      - '${SGLANG_BIND}:${SGLANG_PORT}:30000'
+    shm_size: 8gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # /health answers once the model is loaded.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:30000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30m
+    restart: unless-stopped

@@ -1,0 +1,90 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Ollama, a model server: deployed with Docker Compose from the files beside
+# this one, its OpenAI-compatible API offered to Agent mode. The Inference app
+# pulls and removes its models.
+
+schema = 1
+publisher = "ollama"
+name = "ollama"
+project = "Ollama"
+developer = "Ollama"
+version = "0.35.1"
+homepage = "https://ollama.com"
+source = "https://github.com/ollama/ollama/tree/v0.35.1"
+glyph = "neurology"
+tone = "ink"
+categories = ["ai"]
+notices = ["pullsImages", "bindsPaths", "gpuDevices", "publishesPort"]
+
+[title]
+en = "Ollama"
+
+[description]
+en = "Run language models on this machine with Ollama, behind an OpenAI-compatible API that Agent mode can use."
+zh = "用 Ollama 在这台机器上运行大语言模型，提供 Agent 模式可用的 OpenAI 兼容 API。"
+zh-TW = "用 Ollama 在這台機器上執行大型語言模型，提供 Agent 模式可用的 OpenAI 相容 API。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/ollama/ollama/blob/v0.35.1/LICENSE"
+
+[requirements]
+memory_min_mib = 4096
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[llm]
+port = "port"
+path = "/v1"
+
+[[settings]]
+key = "data"
+type = "path"
+env = "OLLAMA_DATA_LOCATION"
+default = "{stack}/data"
+data = true
+label = { en = "Models", zh = "模型", zh-TW = "模型" }
+help = { en = "Where Ollama keeps the models it pulls.", zh = "Ollama 下载的模型存放在这里。", zh-TW = "Ollama 下載的模型存放在這裡。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "OLLAMA_PORT"
+default = 11434
+label = { en = "API port", zh = "API 端口", zh-TW = "API 連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Ollama asks for no key: anyone who reaches the port may use it and pull models. Off: this machine only.", zh = "Ollama 不要求密钥：能访问该端口的任何人都可以使用它并下载模型。关闭时仅限本机。", zh-TW = "Ollama 不要求金鑰：能存取該連接埠的任何人都可以使用它並下載模型。關閉時僅限本機。" }
+on = { OLLAMA_BIND = "0.0.0.0" }
+off = { OLLAMA_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "accel"
+type = "choice"
+default = "cpu"
+label = { en = "Acceleration", zh = "加速", zh-TW = "加速" }
+help = { en = "NVIDIA needs the NVIDIA Container Toolkit on the host; AMD needs a GPU ROCm supports.", zh = "NVIDIA 需要主机安装 NVIDIA Container Toolkit；AMD 需要 ROCm 支持的 GPU。", zh-TW = "NVIDIA 需要主機安裝 NVIDIA Container Toolkit；AMD 需要 ROCm 支援的 GPU。" }
+
+  [[settings.options]]
+  value = "cpu"
+  label = { en = "CPU", zh = "CPU", zh-TW = "CPU" }
+  env = { OLLAMA_ACCEL = "cpu", OLLAMA_IMAGE_TAG = "0.35.1" }
+
+  [[settings.options]]
+  value = "nvidia"
+  label = { en = "NVIDIA (CUDA)", zh = "NVIDIA（CUDA）", zh-TW = "NVIDIA（CUDA）" }
+  env = { OLLAMA_ACCEL = "nvidia", OLLAMA_IMAGE_TAG = "0.35.1" }
+  suggest = { gpu = "nvidia" }
+
+  [[settings.options]]
+  value = "rocm"
+  label = { en = "AMD (ROCm)", zh = "AMD（ROCm）", zh-TW = "AMD（ROCm）" }
+  env = { OLLAMA_ACCEL = "rocm", OLLAMA_IMAGE_TAG = "0.35.1-rocm" }
+  suggest = { gpu = "amd", wsl = false }

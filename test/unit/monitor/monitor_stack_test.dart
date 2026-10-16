@@ -13,6 +13,7 @@ void main() {
               'description': {'en': 'Photos'},
               'homepage': 'https://immich.app',
               'version': '1.1',
+              'web': {'port': 'port', 'path': '/'},
             },
             'stack': {'state': 'installed', 'version': '1.0'},
             'proxy': true,
@@ -25,10 +26,16 @@ void main() {
             'proxy': false,
           },
           {
-            'manifest': {'id': 'x.y', 'title': {'en': 'Y'}},
+            'manifest': {'id': 'x.y', 'title': {'en': 'Y'}, 'web': {'port': 'port', 'path': '/'}},
             'stack': {'state': 'installing', 'version': '1'},
             'proxy': false,
             'health': null,
+          },
+          {
+            // A model server: no page to open.
+            'manifest': {'id': 'vllm.vllm', 'title': {'en': 'vLLM'}, 'llm': {'port': 'port', 'path': '/v1'}},
+            'stack': {'state': 'installed', 'version': '0.30.0'},
+            'proxy': false,
           },
         ],
       });

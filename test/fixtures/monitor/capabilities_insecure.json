@@ -45,6 +45,7 @@
         "desk",
         "agent_mode",
         "stacks",
+        "inference",
         "alerts",
         "audit",
         "live"

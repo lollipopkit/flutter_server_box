@@ -27,6 +27,7 @@ call
 cancel
 cards
 category
+chat
 check
 check_circle
 chevron_left
@@ -136,6 +137,7 @@ more
 more_horiz
 nat
 navigation
+neurology
 note
 notifications
 notifications_off

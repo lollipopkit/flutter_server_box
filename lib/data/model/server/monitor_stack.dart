@@ -54,11 +54,13 @@ class MonitorWebApp {
       if (app is Map<String, dynamic>) ?fromJson(app),
   ];
 
-  /// Null for a catalog entry that is not deployed.
+  /// Null for a catalog entry that is not deployed, or has no page.
   static MonitorWebApp? fromJson(Map<String, dynamic> json) {
     final manifest = json['manifest'];
     final stack = json['stack'];
     if (manifest is! Map || stack is! Map) return null;
+    // A model server has no page to open (`web` absent): not a web app here.
+    if (manifest['web'] is! Map) return null;
     final id = manifest['id'];
     if (id is! String) return null;
     final health = json['health'];

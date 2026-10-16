@@ -29,10 +29,13 @@
     manifest: StackManifest
     /// The deployed app's settings, to change them.
     current?: Record<string, StackValue>
+    /// Settings chosen for it elsewhere (Local inference's model), over the
+    /// defaults and [current].
+    preset?: Record<string, StackValue>
     onstarted: (job: StackJob) => void
   }
 
-  const { manifest, current, onstarted }: Props = $props()
+  const { manifest, current, preset, onstarted }: Props = $props()
   const editing = $derived(current !== undefined)
 
   let prepare = $state<StackPrepare | null>(null)
@@ -53,7 +56,7 @@
         .then((p) => {
           if (serverId !== servers.currentId) return
           prepare = p
-          values = { ...p.defaults, ...current }
+          values = { ...p.defaults, ...current, ...preset }
         })
         .catch((e) => (error = errorText(e)))
     })
