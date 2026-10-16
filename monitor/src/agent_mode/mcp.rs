@@ -252,7 +252,23 @@ impl Hub {
     pub async fn refresh(&self, state: &AppState) -> Vec<Status> {
         let fetch = state.agent.fetch();
         let mut configs = configs(&state.db).await.unwrap_or_default();
-        let apps = app_servers(state).await;
+        let signed_in = super::mcp_oauth::signed_in(&state.db).await;
+        // A server signed in to with OAuth is sent its token, unless an admin
+        // set its `Authorization` by hand.
+        for (s, c) in configs.iter_mut() {
+            if signed_in.contains(&s.id)
+                && !c.headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("authorization"))
+                && let Some(token) = super::mcp_oauth::bearer(&state.db, &fetch, &s.id).await
+            {
+                c.headers.push(("Authorization".into(), token));
+            }
+        }
+        let mut apps = app_servers(state).await;
+        for s in apps.iter_mut().filter(|s| s.app.enabled && s.app.credential == crate::stacks::mcp::Credential::OAuth) {
+            if signed_in.contains(&s.id) {
+                s.app.header = super::mcp_oauth::bearer(&state.db, &fetch, &s.id).await.map(|t| ("Authorization".into(), t));
+            }
+        }
         for s in apps.iter().filter(|s| s.app.ready()) {
             let server = Server {
                 id: s.id.clone(),
@@ -293,6 +309,8 @@ impl Hub {
                 }
                 Err(e) => {
                     tracing::warn!("MCP server {id}: {e}");
+                    // It asks to sign in (OAuth): the panel offers that.
+                    let e = if e.starts_with("HTTP 401") { "needsSignIn".to_string() } else { e };
                     self.errors.locked().insert(id.clone(), e);
                     connections.remove(&id);
                 }

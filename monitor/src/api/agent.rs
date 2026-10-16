@@ -366,7 +366,8 @@ async fn mcp_answer(state: &AppState) -> HttpResponse {
         Ok(servers) => {
             let status = state.agent.mcp.refresh(state).await;
             let apps = crate::agent_mode::mcp::app_servers(state).await;
-            HttpResponse::Ok().json(&serde_json::json!({ "servers": servers, "apps": apps, "status": status }))
+            let signed_in = crate::agent_mode::mcp_oauth::signed_in(&state.db).await;
+            HttpResponse::Ok().json(&serde_json::json!({ "servers": servers, "apps": apps, "status": status, "signedIn": signed_in }))
         }
         Err(e) => refused(e.into()),
     }
@@ -453,6 +454,132 @@ pub async fn put_mcp_app(
         .detail(format!("mcp: {stack} #{index} {}", what.join(", ")))
         .record(&state.db)
         .await;
+    Ok(mcp_answer(&state).await)
+}
+
+/// Which server to sign in to, and the agent's address as the browser
+/// reaches it (where the sign-in comes back).
+#[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OAuthStart {
+    pub url: String,
+    pub origin: String,
+}
+
+/// The id of [url] when it is a server Agent mode knows: one an admin added
+/// or a deployed app's.
+async fn known_server(state: &AppState, url: &str) -> Option<String> {
+    let id = fl_pi_llm::host::mcp::server_id(url);
+    let added = crate::agent_mode::mcp::load(&state.db).await.unwrap_or_default().into_iter().any(|s| s.url == url);
+    let app = crate::agent_mode::mcp::app_servers(state).await.into_iter().any(|s| s.app.url == url);
+    (added || app).then_some(id)
+}
+
+/// An origin the browser comes back to: `http(s)://host[:port]`, nothing else.
+fn origin_ok(origin: &str) -> bool {
+    url::Url::parse(origin).is_ok_and(|u| {
+        matches!(u.scheme(), "http" | "https") && u.host().is_some() && u.path() == "/" && u.query().is_none() && u.fragment().is_none()
+    }) && !origin.ends_with('/')
+}
+
+/// Starts signing in to an MCP server with OAuth: where to send the browser.
+pub async fn mcp_oauth_start(
+    req: HttpRequest,
+    body: web::types::Json<OAuthStart>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    require!(authz::acting_caller(&req, &state).await);
+    let OAuthStart { url, origin } = body.into_inner();
+    if !origin_ok(&origin) {
+        return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalid", "reason": "origin" })));
+    }
+    let Some(id) = known_server(&state, &url).await else {
+        return Ok(HttpResponse::NotFound().json(&serde_json::json!({ "error": "notFound" })));
+    };
+    let fetch = state.agent.fetch();
+    let started = state.agent.mcp_oauth.start(fetch.as_ref(), &id, &url, &origin).await;
+    let outcome = if started.is_ok() { Outcome::Ok } else { Outcome::Error };
+    Event::new(Kind::Agent, Action::Write, outcome).remote_ip(peer_ip(&req)).detail(format!("mcp sign-in started: {url}")).record(&state.db).await;
+    match started {
+        Ok(to) => Ok(HttpResponse::Ok().json(&serde_json::json!({ "authorizeUrl": to }))),
+        Err(reason) => Ok(HttpResponse::BadGateway().json(&serde_json::json!({ "error": "oauth", "reason": reason }))),
+    }
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct OAuthCallback {
+    pub state: String,
+    #[serde(default)]
+    pub code: Option<String>,
+    #[serde(default)]
+    pub error: Option<String>,
+}
+
+/// Where the browser comes back from signing in. No session: the one-time
+/// `state` the sign-in was started with is what lets it in.
+pub async fn mcp_oauth_callback(
+    req: HttpRequest,
+    query: web::types::Query<OAuthCallback>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    let q = query.into_inner();
+    let page = |ok: bool, text: &str| {
+        let title = if ok { "Signed in" } else { "Not signed in" };
+        let body = format!(
+            "<!doctype html><meta charset=utf-8><title>{title}</title><body style=\"font:15px system-ui;margin:3em\"><h1 style=\"font-size:20px\">{title}</h1><p>{}</p>",
+            html_escape(text)
+        );
+        HttpResponse::build(if ok { ntex::http::StatusCode::OK } else { ntex::http::StatusCode::BAD_REQUEST })
+            .content_type("text/html; charset=utf-8")
+            .header("cache-control", "no-store")
+            .header("content-security-policy", "default-src 'none'; style-src 'unsafe-inline'")
+            .body(body)
+    };
+    let Some(code) = q.code.filter(|_| q.error.is_none()) else {
+        state.agent.mcp_oauth.abandon(&q.state);
+        return Ok(page(false, "The sign-in was declined. You can close this tab."));
+    };
+    let fetch = state.agent.fetch();
+    match state.agent.mcp_oauth.finish(&state.db, fetch.as_ref(), &q.state, &code).await {
+        Ok(signed) => {
+            state.agent.mcp.forget(&signed.server_id).await;
+            Event::new(Kind::Agent, Action::Write, Outcome::Ok)
+                .remote_ip(peer_ip(&req))
+                .detail(format!("mcp signed in: {}", signed.url))
+                .record(&state.db)
+                .await;
+            Ok(page(true, "Agent mode can use this server now. You can close this tab."))
+        }
+        Err(e) => {
+            Event::new(Kind::Agent, Action::Write, Outcome::Denied).remote_ip(peer_ip(&req)).detail("mcp sign-in refused").record(&state.db).await;
+            tracing::warn!("MCP sign-in: {e}");
+            Ok(page(false, &e))
+        }
+    }
+}
+
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct OAuthForget {
+    pub url: String,
+}
+
+/// Forgets the sign-in to an MCP server.
+pub async fn mcp_oauth_forget(
+    req: HttpRequest,
+    query: web::types::Query<OAuthForget>,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    require!(authz::acting_caller(&req, &state).await);
+    let id = fl_pi_llm::host::mcp::server_id(&query.url);
+    if let Err(e) = crate::agent_mode::mcp_oauth::forget(&state.db, &id).await {
+        return Ok(refused(e.into()));
+    }
+    state.agent.mcp.forget(&id).await;
+    Event::new(Kind::Agent, Action::Write, Outcome::Ok).remote_ip(peer_ip(&req)).detail(format!("mcp signed out: {}", query.url)).record(&state.db).await;
     Ok(mcp_answer(&state).await)
 }
 

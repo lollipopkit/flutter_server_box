@@ -128,15 +128,17 @@ async fn start(srv: &TestServer, prompt: &str) -> String {
 
 /// Polls the task until [done] says so.
 async fn until(srv: &TestServer, id: &str, done: impl Fn(&Value) -> bool) -> Value {
+    let mut last = Value::Null;
     for _ in 0..200 {
         let (status, body) = call(srv, true, Method::GET, &format!("/api/v1/agent/flows/{id}"), None).await;
         assert_eq!(status, 200, "{body}");
         if done(&body) {
             return body;
         }
+        last = body;
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
-    panic!("the task never got there");
+    panic!("the task never got there: {last}");
 }
 
 fn status(v: &Value) -> &str {
@@ -1148,6 +1150,147 @@ async fn many_mcp_tools_are_searched_and_called_through_the_permissions() {
     assert_eq!(s, 204);
     until(&srv, &flow, |v| status(v) == "done").await;
     assert_eq!(calls.lock().unwrap().iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>(), ["turn_on"]);
+}
+
+/// An MCP server behind OAuth on loopback, and its own authorization
+/// server: 401 without `Bearer good-token`, its metadata, a registration
+/// endpoint, and a token endpoint that records what it was sent.
+fn oauth_mcp_server(token_requests: std::sync::Arc<std::sync::Mutex<Vec<String>>>) -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let origin = base.clone();
+    std::thread::spawn(move || {
+        for conn in listener.incoming() {
+            let Ok(mut conn) = conn else { return };
+            let (base, token_requests) = (origin.clone(), token_requests.clone());
+            std::thread::spawn(move || {
+                let mut reader = BufReader::new(conn.try_clone().unwrap());
+                let mut request_line = String::new();
+                if reader.read_line(&mut request_line).unwrap_or(0) == 0 {
+                    return;
+                }
+                let mut parts = request_line.split_whitespace();
+                let (method, path) = (parts.next().unwrap_or("").to_string(), parts.next().unwrap_or("").to_string());
+                let (mut len, mut auth) = (0usize, String::new());
+                loop {
+                    let mut line = String::new();
+                    if reader.read_line(&mut line).unwrap_or(0) == 0 {
+                        return;
+                    }
+                    let l = line.trim_end();
+                    if l.is_empty() {
+                        break;
+                    }
+                    let lower = l.to_ascii_lowercase();
+                    if let Some(v) = lower.strip_prefix("content-length:") {
+                        len = v.trim().parse().unwrap();
+                    }
+                    if lower.starts_with("authorization:") {
+                        auth = l["authorization:".len()..].trim().to_string();
+                    }
+                }
+                let mut body = vec![0u8; len];
+                reader.read_exact(&mut body).unwrap();
+                let json_answer = |conn: &mut std::net::TcpStream, status: &str, extra: &str, body: Value| {
+                    let body = body.to_string();
+                    let _ = write!(conn, "HTTP/1.1 {status}\r\ncontent-type: application/json\r\n{extra}content-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
+                };
+                match (method.as_str(), path.as_str()) {
+                    ("GET", "/.well-known/oauth-protected-resource/mcp") => {
+                        json_answer(&mut conn, "200 OK", "", json!({ "resource": format!("{base}/mcp"), "authorization_servers": [base] }))
+                    }
+                    ("GET", "/.well-known/oauth-authorization-server") => json_answer(&mut conn, "200 OK", "", json!({
+                        "issuer": base, "authorization_endpoint": format!("{base}/authorize"),
+                        "token_endpoint": format!("{base}/token"), "registration_endpoint": format!("{base}/register"),
+                    })),
+                    ("POST", "/register") => json_answer(&mut conn, "201 Created", "", json!({ "client_id": "c1" })),
+                    ("POST", "/token") => {
+                        token_requests.lock().unwrap().push(String::from_utf8_lossy(&body).into_owned());
+                        json_answer(&mut conn, "200 OK", "", json!({ "access_token": "good-token", "refresh_token": "r1", "expires_in": 3600 }))
+                    }
+                    ("POST", "/mcp") if auth != "Bearer good-token" => json_answer(
+                        &mut conn,
+                        "401 Unauthorized",
+                        &format!("www-authenticate: Bearer resource_metadata=\"{base}/.well-known/oauth-protected-resource/mcp\"\r\n"),
+                        json!({ "error": "unauthorized" }),
+                    ),
+                    ("POST", "/mcp") => {
+                        let msg: Value = serde_json::from_slice(&body).unwrap();
+                        let result = match msg["method"].as_str().unwrap_or_default() {
+                            "initialize" => json!({ "protocolVersion": "2025-06-18", "capabilities": { "tools": {} }, "serverInfo": { "name": "Secure" } }),
+                            "tools/list" => json!({ "tools": [{ "name": "whoami", "inputSchema": { "type": "object" }, "annotations": { "readOnlyHint": true } }] }),
+                            _ => {
+                                let _ = write!(conn, "HTTP/1.1 202 Accepted\r\ncontent-length: 0\r\nconnection: close\r\n\r\n");
+                                return;
+                            }
+                        };
+                        json_answer(&mut conn, "200 OK", "", json!({ "jsonrpc": "2.0", "id": msg["id"], "result": result }))
+                    }
+                    _ => json_answer(&mut conn, "404 Not Found", "", json!({})),
+                }
+            });
+        }
+    });
+    format!("{base}/mcp")
+}
+
+/// A server that asks to sign in is signed in to with OAuth: the browser goes
+/// to its authorization server and back to the agent with a one-time state;
+/// the code is exchanged here with PKCE, and the token never comes back out.
+#[ntex::test]
+async fn an_mcp_server_is_signed_in_to_with_oauth() {
+    use base64::Engine;
+    use sha2::Digest;
+    let (srv, _) = server().await;
+    let token_requests = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let mcp = oauth_mcp_server(token_requests.clone());
+    let id = fl_pi_llm::host::mcp::server_id(&mcp);
+    let (s, body) = call(&srv, true, Method::PUT, "/api/v1/agent/mcp", Some(json!({ "servers": [{ "name": "Secure", "url": mcp }] }))).await;
+    assert_eq!(s, 200, "{body}");
+    assert_eq!(body["status"][0]["error"], "needsSignIn", "{body}");
+
+    // Only a server Agent mode knows, and an origin alone.
+    let start = "/api/v1/agent/mcp/oauth/start";
+    let origin = srv.url("/").trim_end_matches('/').to_string();
+    let (s, _) = call(&srv, true, Method::POST, start, Some(json!({ "url": "https://elsewhere.example/mcp", "origin": origin }))).await;
+    assert_eq!(s, 404);
+    let (s, _) = call(&srv, true, Method::POST, start, Some(json!({ "url": mcp, "origin": format!("{origin}/x") }))).await;
+    assert_eq!(s, 400);
+    let (s, body) = call(&srv, true, Method::POST, start, Some(json!({ "url": mcp, "origin": origin }))).await;
+    assert_eq!(s, 200, "{body}");
+    let to = url::Url::parse(body["authorizeUrl"].as_str().unwrap()).unwrap();
+    let q: std::collections::HashMap<String, String> = to.query_pairs().into_owned().collect();
+    assert_eq!((q["client_id"].as_str(), q["resource"].as_str(), q["code_challenge_method"].as_str()), ("c1", mcp.as_str(), "S256"));
+    let redirect = url::Url::parse(&q["redirect_uri"]).unwrap();
+    assert_eq!(redirect.path(), "/api/v1/agent/mcp/oauth/callback");
+
+    // The browser comes back, with no session of its own.
+    let back = format!("{}?state={}&code=the-code", redirect.path(), q["state"]);
+    let res = srv.request(Method::GET, srv.url(&back)).send().await.unwrap();
+    assert_eq!(res.status().as_u16(), 200);
+    let sent: std::collections::HashMap<String, String> =
+        url::form_urlencoded::parse(token_requests.lock().unwrap()[0].as_bytes()).into_owned().collect();
+    assert_eq!((sent["grant_type"].as_str(), sent["code"].as_str(), sent["client_id"].as_str()), ("authorization_code", "the-code", "c1"));
+    let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(sha2::Sha256::digest(sent["code_verifier"].as_bytes()));
+    assert_eq!(challenge, q["code_challenge"], "PKCE");
+    // Once only.
+    let res = srv.request(Method::GET, srv.url(&back)).send().await.unwrap();
+    assert_eq!(res.status().as_u16(), 400);
+
+    let (_, body) = call(&srv, true, Method::GET, "/api/v1/agent/mcp", None).await;
+    assert_eq!(body["status"][0]["connected"], true, "{body}");
+    assert_eq!(body["signedIn"], json!([id]));
+    assert!(!body.to_string().contains("good-token") && !body.to_string().contains("r1\""), "{body}");
+
+    // Signed out: it asks again.
+    let (s, body) = call(&srv, true, Method::DELETE, &format!("/api/v1/agent/mcp/oauth?url={}", urlencoding(&mcp)), None).await;
+    assert_eq!(s, 200, "{body}");
+    assert_eq!(body["status"][0]["error"], "needsSignIn", "{body}");
+    assert_eq!(body["signedIn"], json!([]));
+}
+
+fn urlencoding(s: &str) -> String {
+    url::form_urlencoded::byte_serialize(s.as_bytes()).collect()
 }
 
 #[ntex::test]

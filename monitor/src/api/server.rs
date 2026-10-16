@@ -303,6 +303,9 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::agent::put_mcp)),
             )
             .service(web::resource("/agent/mcp/apps/{stack}/{index}").route(web::put().to(crate::api::agent::put_mcp_app)))
+            .service(web::resource("/agent/mcp/oauth/start").route(web::post().to(crate::api::agent::mcp_oauth_start)))
+            .service(web::resource("/agent/mcp/oauth/callback").route(web::get().to(crate::api::agent::mcp_oauth_callback)))
+            .service(web::resource("/agent/mcp/oauth").route(web::delete().to(crate::api::agent::mcp_oauth_forget)))
             .service(
                 web::resource("/agent/skills")
                     .route(web::get().to(crate::api::agent::get_skills))

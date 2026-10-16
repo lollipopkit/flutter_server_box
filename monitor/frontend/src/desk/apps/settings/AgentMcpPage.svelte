@@ -107,6 +107,51 @@
     return $LL.settingsAgentMcpBuiltin()
   }
 
+  /// A sign-in under way: the server's id, until it connects or 3 minutes pass.
+  let signingIn = $state<string | null>(null)
+
+  /// Signs in to the server at [url] with OAuth: its authorization page in a
+  /// tab of its own (opened at once, so no popup blocker takes it), coming
+  /// back to the agent; then this page asks until it is connected.
+  async function signIn(id: string, url: string) {
+    const entry = servers.current
+    if (!entry) return
+    const tab = window.open('about:blank', '_blank')
+    error = null
+    signingIn = id
+    try {
+      const origin = new URL(entry.url || window.location.origin).origin
+      const { authorizeUrl } = await agentApi.mcpSignIn(entry, url, origin)
+      if (tab) tab.location.href = authorizeUrl
+      else window.open(authorizeUrl, '_blank')
+      for (let waited = 0; waited < 180 && signingIn === id; waited += 3) {
+        await new Promise((r) => setTimeout(r, 3000))
+        const next = await agentApi.mcp(entry)
+        view = next
+        if (next.status.find((s) => s.id === id)?.connected) break
+      }
+    } catch (e) {
+      tab?.close()
+      error = reason(e)
+    } finally {
+      if (signingIn === id) signingIn = null
+    }
+  }
+
+  async function signOut(url: string) {
+    const entry = servers.current
+    if (!entry || saving) return
+    saving = true
+    error = null
+    try {
+      view = await agentApi.mcpSignOut(entry, url)
+    } catch (e) {
+      error = reason(e)
+    } finally {
+      saving = false
+    }
+  }
+
   /// Why an app's server is not connected, in words.
   function waiting(error: string | undefined): string | undefined {
     if (error === 'needsToken') return $LL.settingsAgentMcpNeedsToken()
@@ -114,6 +159,16 @@
     return error
   }
 </script>
+
+{#snippet oauth(id: string, url: string, error: string | undefined)}
+  {#if view?.signedIn?.includes(id)}
+    <IconButton icon="logout" label={$LL.settingsAgentMcpSignOut()} disabled={saving} onclick={() => void signOut(url)} />
+  {:else if error === 'needsSignIn'}
+    <Button size="sm" icon="login" disabled={signingIn !== null} onclick={() => void signIn(id, url)}>
+      {signingIn === id ? $LL.settingsAgentMcpSigningIn() : $LL.settingsAgentMcpSignIn()}
+    </Button>
+  {/if}
+{/snippet}
 
 <SettingsPage title={$LL.settingsAgentMcp()} back={onback} description={$LL.settingsAgentMcpAbout()}>
   {#snippet actions()}
@@ -139,9 +194,10 @@
         {#if s.enabled}
           <Row
             label={$LL.settingsAgentMcpStatus()}
-            sub={st?.error ?? undefined}
+            sub={st?.connected ? undefined : waiting(st?.error)}
             onclick={st?.connected ? () => (open = open === s.id ? null : s.id) : undefined}
           >
+            {@render oauth(s.id, s.url, st?.error)}
             {#if st?.connected}
               <Badge tone="success">{$LL.settingsAgentMcpTools({ n: st.tools.length })}</Badge>
             {:else}
@@ -200,6 +256,7 @@
               sub={st?.connected ? undefined : waiting(st?.error)}
               onclick={st?.connected ? () => (open = open === a.id ? null : a.id) : undefined}
             >
+              {@render oauth(a.id, a.url, st?.error)}
               {#if st?.connected}
                 <Badge tone="success">{$LL.settingsAgentMcpTools({ n: st.tools.length })}</Badge>
               {:else}

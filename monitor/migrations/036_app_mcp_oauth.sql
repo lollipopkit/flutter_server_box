@@ -12,3 +12,20 @@ CREATE TABLE stack_mcp (
     updated_at TEXT NOT NULL,
     PRIMARY KEY (stack_id, idx)
 );
+
+-- An MCP server signed in to with OAuth (`agent_mode::mcp_oauth`), by its id
+-- (`fl_pi_llm::mcp::server_id` of its address): where tokens come from and
+-- the tokens, never read back out over the API.
+CREATE TABLE mcp_oauth (
+    server_id TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    token_endpoint TEXT NOT NULL,
+    client_id TEXT NOT NULL,
+    client_secret TEXT,
+    resource TEXT NOT NULL,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT,
+    -- Milliseconds since the epoch; NULL when the server did not say.
+    expires_at INTEGER,
+    updated_at TEXT NOT NULL
+);

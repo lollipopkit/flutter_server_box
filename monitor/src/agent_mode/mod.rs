@@ -41,6 +41,7 @@ pub mod files;
 mod memory;
 pub mod config;
 pub mod mcp;
+pub mod mcp_oauth;
 pub mod skills;
 pub mod permissions;
 pub(crate) mod prompt;
@@ -357,6 +358,8 @@ pub struct AgentMode {
     hostname: String,
     /// The MCP servers' connections, kept between tasks.
     pub mcp: mcp::Hub,
+    /// OAuth sign-ins to MCP servers waiting for the browser to come back.
+    pub mcp_oauth: mcp_oauth::Flows,
     /// Where the skills are (`skills::root`).
     pub skills_root: PathBuf,
 }
@@ -431,6 +434,7 @@ impl AgentMode {
             search_seq: std::sync::atomic::AtomicU64::new(0),
             hostname: hostname::get().map(|h| h.to_string_lossy().into_owned()).unwrap_or_else(|_| "localhost".into()),
             mcp: mcp::Hub::default(),
+            mcp_oauth: mcp_oauth::Flows::default(),
             skills_root: skills::root(&dir),
             dir,
         }

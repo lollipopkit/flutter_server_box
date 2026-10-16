@@ -337,6 +337,8 @@ export interface McpView {
   servers: McpServer[]
   apps: AppMcpServer[]
   status: McpStatus[]
+  /// The servers signed in to with OAuth, by id. Absent on older agents.
+  signedIn?: string[]
 }
 
 export interface AgentSkill {
@@ -385,6 +387,12 @@ export const agentApi = {
   mcp: (e: ServerEntry) => requestFor<McpView>(e, '/agent/mcp', {}, undefined, 60_000),
   saveMcp: (e: ServerEntry, servers: McpServerWrite[]) =>
     requestFor<McpView>(e, '/agent/mcp', { method: 'PUT', body: JSON.stringify({ servers }) }, undefined, 60_000),
+  /// Starts signing in to the MCP server at [url] with OAuth: where to send
+  /// the browser, which comes back to the agent at [origin].
+  mcpSignIn: (e: ServerEntry, url: string, origin: string) =>
+    requestFor<{ authorizeUrl: string }>(e, '/agent/mcp/oauth/start', { method: 'POST', body: JSON.stringify({ url, origin }) }, undefined, 60_000),
+  mcpSignOut: (e: ServerEntry, url: string) =>
+    requestFor<McpView>(e, `/agent/mcp/oauth?url=${encodeURIComponent(url)}`, { method: 'DELETE' }, undefined, 60_000),
   saveAppMcp: (e: ServerEntry, stack: string, index: number, w: AppMcpWrite) =>
     requestFor<McpView>(
       e,

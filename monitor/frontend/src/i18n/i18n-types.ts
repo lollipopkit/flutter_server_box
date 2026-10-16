@@ -7703,6 +7703,18 @@ type RootTranslation = {
 	 */
 	settingsAgentMcpForgetToken: string
 	/**
+	 * S​i​g​n​ ​i​n
+	 */
+	settingsAgentMcpSignIn: string
+	/**
+	 * S​i​g​n​i​n​g​ ​i​n​…
+	 */
+	settingsAgentMcpSigningIn: string
+	/**
+	 * S​i​g​n​ ​o​u​t
+	 */
+	settingsAgentMcpSignOut: string
+	/**
 	 * S​k​i​l​l​s
 	 */
 	settingsAgentSkills: string
@@ -17430,6 +17442,18 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Forget the token
 	 */
 	settingsAgentMcpForgetToken: () => LocalizedString
+	/**
+	 * Sign in
+	 */
+	settingsAgentMcpSignIn: () => LocalizedString
+	/**
+	 * Signing in…
+	 */
+	settingsAgentMcpSigningIn: () => LocalizedString
+	/**
+	 * Sign out
+	 */
+	settingsAgentMcpSignOut: () => LocalizedString
 	/**
 	 * Skills
 	 */

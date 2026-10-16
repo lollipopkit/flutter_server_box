@@ -121,6 +121,8 @@ list
 list_alt
 lock
 lock_open
+login
+logout
 memory
 memory_alt
 menu
