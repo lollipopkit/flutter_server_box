@@ -22,9 +22,11 @@ abstract final class LlmHost {
   /// A runtime that does not start leaves the Agent unusable and says why
   /// there — every chat reports it — rather than the app not opening.
   ///
-  /// [credentials] and [externalLibrary] are for tests, as in [Llm.init].
+  /// [directory], [credentials] and [externalLibrary] are for tests, as in
+  /// [Llm.init].
   static Future<void> init(
     ProviderContainer container, {
+    @visibleForTesting String? directory,
     @visibleForTesting LlmCredentials? credentials,
     @visibleForTesting ExternalLibrary? externalLibrary,
     @visibleForTesting Map<String, String> Function()? environment,
@@ -33,6 +35,7 @@ abstract final class LlmHost {
     _configure();
     try {
       await Llm.init(
+        directory: directory,
         credentials: credentials,
         externalLibrary: externalLibrary,
         environment: environment,
