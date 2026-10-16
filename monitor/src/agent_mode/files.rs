@@ -214,7 +214,7 @@ pub async fn compose(words: &str, files: &[Attached], with_images: bool) -> (Str
     if files.is_empty() {
         return (words.to_string(), None);
     }
-    let mut block = String::from("<attachments>\nThe person attached these files; they are on this machine, read them with commands.\n");
+    let mut block = String::from(BLOCK_HEAD);
     let mut images = Vec::new();
     for f in files {
         block.push_str(&format!("- `{}` ({}, {}) at `{}`", f.name, f.mime, size(f.size), f.path.display()));
@@ -234,7 +234,7 @@ pub async fn compose(words: &str, files: &[Attached], with_images: bool) -> (Str
         }
         block.push('\n');
     }
-    block.push_str("</attachments>");
+    block.push_str(BLOCK_CLOSE);
     let text = if words.trim().is_empty() { block } else { format!("{words}\n\n{block}") };
     (text, (!images.is_empty()).then(|| Value::Array(images)))
 }
@@ -265,19 +265,37 @@ pub struct Listed {
     pub path: String,
 }
 
-const BLOCK_OPEN: &str = "<attachments>";
+/// How [compose] opens the block, whole: a file's text inside it may hold
+/// `<attachments>` too.
+const BLOCK_HEAD: &str = "<attachments>\nThe person attached these files; they are on this machine, read them with commands.\n";
 const BLOCK_CLOSE: &str = "</attachments>";
 
 /// [compose] read back: [text] without its `<attachments>` block, and the
 /// files the block lists. `None` when [text] ends in no block.
+///
+/// The block is the first head, at the start or after a blank line, from
+/// which the text runs to the closing tag with every fence closed: the same
+/// string inside an attached file's fence does not qualify.
 pub fn split_prompt(text: &str) -> Option<(String, Vec<Listed>)> {
-    let at = text.rfind(BLOCK_OPEN)?;
-    if !text.trim_end().ends_with(BLOCK_CLOSE) {
-        return None;
-    }
+    text.match_indices(BLOCK_HEAD)
+        .map(|(at, _)| at)
+        .filter(|&at| at == 0 || text[..at].ends_with("\n\n"))
+        .find_map(|at| read_block(&text[at + BLOCK_HEAD.len()..]).map(|files| (text[..at].trim_end().to_string(), files)))
+}
+
+/// The files a block lists, from after its head; `None` unless it closes
+/// outside every fence, at the end.
+fn read_block(body: &str) -> Option<Vec<Listed>> {
     let mut files = Vec::new();
     let mut fence: Option<&str> = None;
-    for line in text[at + BLOCK_OPEN.len()..].lines() {
+    let mut closed = false;
+    for line in body.lines() {
+        if closed {
+            if !line.trim().is_empty() {
+                return None;
+            }
+            continue;
+        }
         if line.len() >= 3 && line.bytes().all(|b| b == b'`') {
             fence = match fence {
                 None => Some(line),
@@ -289,6 +307,10 @@ pub fn split_prompt(text: &str) -> Option<(String, Vec<Listed>)> {
         if fence.is_some() {
             continue;
         }
+        if line == BLOCK_CLOSE {
+            closed = true;
+            continue;
+        }
         let listed = (|| {
             let (head, rest) = line.strip_prefix("- `")?.split_once(") at `")?;
             let (name, inner) = head.rsplit_once("` (")?;
@@ -298,7 +320,7 @@ pub fn split_prompt(text: &str) -> Option<(String, Vec<Listed>)> {
         })();
         files.extend(listed);
     }
-    Some((text[..at].trim_end().to_string(), files))
+    closed.then_some(files)
 }
 
 /// A session entry as the panel reads it: a user message whose text ends in
@@ -453,6 +475,24 @@ mod tests {
             ]
         );
         assert!(split_prompt("<attachments> are mentioned here").is_none());
+        // A file whose text holds a whole block of its own (a log of an
+        // earlier prompt): its head, a listing and a closing tag.
+        let nested = [
+            "what is this?",
+            "",
+            BLOCK_HEAD.trim_end(),
+            "- `prompt.log` (text/plain, 1.0 KiB) at `/data/agent/files/t/prompt.log`:",
+            "```",
+            BLOCK_HEAD.trim_end(),
+            "- `inner.txt` (text/plain, 1 B) at `/nope`",
+            "</attachments>",
+            "```",
+            "</attachments>",
+        ]
+        .join("\n");
+        let (words, files) = split_prompt(&nested).unwrap();
+        assert_eq!(words, "what is this?");
+        assert_eq!(files.iter().map(|f| f.name.as_str()).collect::<Vec<_>>(), ["prompt.log"]);
         // Another role's text is not touched.
         let mut reply = json!({ "message": { "role": "assistant", "content": text } });
         annotate_entry(&mut reply);
