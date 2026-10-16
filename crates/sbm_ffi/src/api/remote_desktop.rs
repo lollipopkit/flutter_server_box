@@ -334,6 +334,17 @@ struct EventQueue {
     closed: Mutex<bool>,
 }
 
+/// Events that say how a session goes; see [`EventQueue::send`].
+fn is_lifecycle(event: &RemoteDesktopEvent) -> bool {
+    matches!(
+        event,
+        RemoteDesktopEvent::ConnectionState { .. }
+            | RemoteDesktopEvent::CertificateRequest { .. }
+            | RemoteDesktopEvent::Error { .. }
+            | RemoteDesktopEvent::Ended { .. }
+    )
+}
+
 impl EventQueue {
     fn new() -> Arc<Self> {
         Arc::new(Self {
@@ -349,16 +360,6 @@ impl EventQueue {
             return;
         }
         let replaceable = matches!(&event, RemoteDesktopEvent::CursorPosition { .. });
-        // How the session goes: never dropped, however far behind the reader
-        // is, or it would see the stream end without why. A session has only a
-        // few, so the queue stays bounded.
-        let lifecycle = matches!(
-            &event,
-            RemoteDesktopEvent::ConnectionState { .. }
-                | RemoteDesktopEvent::CertificateRequest { .. }
-                | RemoteDesktopEvent::Error { .. }
-                | RemoteDesktopEvent::Ended { .. }
-        );
         if queue.len() >= CHANNEL_CAPACITY {
             if replaceable {
                 if let Some(existing) = queue.iter_mut().rev().find(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. })) {
@@ -366,11 +367,19 @@ impl EventQueue {
                 }
                 return;
             }
-            if let Some(index) = queue.iter().position(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. })) {
-                queue.remove(index);
-            } else if !lifecycle {
-                return;
-            }
+            // How the session goes is not dropped, or the reader would see the
+            // stream end without why: room is made from a routine event, else
+            // from the oldest error — a server can send errors without end, so
+            // the queue stays at its capacity either way.
+            let cursor = queue.iter().position(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. }));
+            let room = if cursor.is_some() || !is_lifecycle(&event) {
+                cursor
+            } else {
+                let routine = queue.iter().position(|item| !is_lifecycle(item));
+                routine.or_else(|| queue.iter().position(|item| matches!(item, RemoteDesktopEvent::Error { .. })))
+            };
+            let Some(index) = room else { return };
+            queue.remove(index);
         }
         queue.push_back(event);
         self.notify.notify_one();
@@ -2003,9 +2012,29 @@ mod tests {
         while let Some(event) = queue.recv().await {
             events.push(event);
         }
-        assert_eq!(events.len(), CHANNEL_CAPACITY + 2, "the routine event is dropped, the end is not");
-        assert!(matches!(events[CHANNEL_CAPACITY], RemoteDesktopEvent::Error { .. }));
-        assert!(matches!(events[CHANNEL_CAPACITY + 1], RemoteDesktopEvent::Ended { .. }));
+        assert_eq!(events.len(), CHANNEL_CAPACITY, "room is made, the queue does not grow");
+        assert!(!events.iter().any(|e| matches!(e, RemoteDesktopEvent::CursorHidden)), "a routine event is dropped");
+        assert!(matches!(events[CHANNEL_CAPACITY - 2], RemoteDesktopEvent::Error { .. }));
+        assert!(matches!(events[CHANNEL_CAPACITY - 1], RemoteDesktopEvent::Ended { .. }));
+    }
+
+    #[tokio::test]
+    async fn errors_without_end_keep_the_queue_bounded_and_the_end_in_it() {
+        let queue = EventQueue::new();
+        for i in 0..CHANNEL_CAPACITY * 4 {
+            queue.send(RemoteDesktopEvent::Error { message: format!("bad rect {i}"), retryable: false });
+        }
+        queue.send(RemoteDesktopEvent::Ended { reason: RemoteDesktopEndReason::TransportError, message: None });
+        queue.close();
+
+        let mut events = Vec::new();
+        while let Some(event) = queue.recv().await {
+            events.push(event);
+        }
+        assert_eq!(events.len(), CHANNEL_CAPACITY);
+        assert!(matches!(events.last(), Some(RemoteDesktopEvent::Ended { .. })));
+        let RemoteDesktopEvent::Error { message, .. } = &events[CHANNEL_CAPACITY - 2] else { panic!() };
+        assert_eq!(message, &format!("bad rect {}", CHANNEL_CAPACITY * 4 - 1), "the newest errors are the ones kept");
     }
 
     #[tokio::test]
