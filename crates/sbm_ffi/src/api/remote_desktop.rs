@@ -349,6 +349,16 @@ impl EventQueue {
             return;
         }
         let replaceable = matches!(&event, RemoteDesktopEvent::CursorPosition { .. });
+        // How the session goes: never dropped, however far behind the reader
+        // is, or it would see the stream end without why. A session has only a
+        // few, so the queue stays bounded.
+        let lifecycle = matches!(
+            &event,
+            RemoteDesktopEvent::ConnectionState { .. }
+                | RemoteDesktopEvent::CertificateRequest { .. }
+                | RemoteDesktopEvent::Error { .. }
+                | RemoteDesktopEvent::Ended { .. }
+        );
         if queue.len() >= CHANNEL_CAPACITY {
             if replaceable {
                 if let Some(existing) = queue.iter_mut().rev().find(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. })) {
@@ -358,7 +368,7 @@ impl EventQueue {
             }
             if let Some(index) = queue.iter().position(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. })) {
                 queue.remove(index);
-            } else {
+            } else if !lifecycle {
                 return;
             }
         }
@@ -1976,6 +1986,26 @@ mod tests {
     #[test]
     fn invalid_certificate_fingerprint_is_rejected() {
         assert!(parse_sha256_fingerprint("not-a-fingerprint").is_err());
+    }
+
+    #[tokio::test]
+    async fn a_full_queue_still_takes_how_the_session_ends() {
+        let queue = EventQueue::new();
+        for _ in 0..CHANNEL_CAPACITY {
+            queue.send(RemoteDesktopEvent::CursorDefault);
+        }
+        queue.send(RemoteDesktopEvent::CursorHidden);
+        queue.send(RemoteDesktopEvent::Error { message: "lost".to_owned(), retryable: false });
+        queue.send(RemoteDesktopEvent::Ended { reason: RemoteDesktopEndReason::TransportError, message: None });
+        queue.close();
+
+        let mut events = Vec::new();
+        while let Some(event) = queue.recv().await {
+            events.push(event);
+        }
+        assert_eq!(events.len(), CHANNEL_CAPACITY + 2, "the routine event is dropped, the end is not");
+        assert!(matches!(events[CHANNEL_CAPACITY], RemoteDesktopEvent::Error { .. }));
+        assert!(matches!(events[CHANNEL_CAPACITY + 1], RemoteDesktopEvent::Ended { .. }));
     }
 
     #[tokio::test]
