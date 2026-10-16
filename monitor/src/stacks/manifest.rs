@@ -1119,6 +1119,11 @@ impl Package {
 mod tests {
     use super::*;
 
+    /// [p], a Unix path, as one absolute here: on a drive on Windows.
+    fn abs(p: &str) -> String {
+        if cfg!(windows) { format!("C:{p}") } else { p.to_string() }
+    }
+
     fn store() -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../store/apps")
     }
@@ -1163,9 +1168,9 @@ mod tests {
     #[test]
     fn defaults_follow_the_machine() {
         let m = immich().manifest;
-        let mut machine = Machine { stack: PathBuf::from("/srv/sbm/stacks/immich"), ..Default::default() };
+        let mut machine = Machine { stack: PathBuf::from(abs("/srv/sbm/stacks/immich")), ..Default::default() };
         let d = m.defaults(&machine);
-        assert_eq!(d["library"], "/srv/sbm/stacks/immich/library");
+        assert_eq!(d["library"], abs("/srv/sbm/stacks/immich/library"));
         assert_eq!((d["ml"].as_str(), d["transcode"].as_str()), (Some("cpu"), Some("cpu")));
         assert_eq!(d["port"], 2283);
 
@@ -1184,14 +1189,14 @@ mod tests {
     #[test]
     fn settings_are_checked() {
         let m = immich().manifest;
-        let machine = Machine { stack: PathBuf::from("/srv/s"), ..Default::default() };
+        let machine = Machine { stack: PathBuf::from(abs("/srv/s")), ..Default::default() };
         let full = m.check_settings(&BTreeMap::new(), &machine).expect("defaults pass");
         assert_eq!(full.len(), m.settings.len());
 
         let with = |key: &str, value: Value| BTreeMap::from([(key.to_string(), value)]);
         let field = |r: Result<_, Invalid>| r.unwrap_err().field;
         assert_eq!(field(m.check_settings(&with("library", "relative".into()), &machine)), "library");
-        assert_eq!(field(m.check_settings(&with("library", "/a/it's".into()), &machine)), "library");
+        assert_eq!(field(m.check_settings(&with("library", abs("/a/it's").into()), &machine)), "library");
         assert_eq!(field(m.check_settings(&with("ml", "tpu".into()), &machine)), "ml");
         assert_eq!(field(m.check_settings(&with("port", 0.into()), &machine)), "port");
         assert_eq!(field(m.check_settings(&with("nope", 1.into()), &machine)), "nope");
@@ -1203,7 +1208,7 @@ mod tests {
     #[test]
     fn env_file_carries_everything_quoted() {
         let m = immich().manifest;
-        let machine = Machine { stack: PathBuf::from("/srv/s"), ..Default::default() };
+        let machine = Machine { stack: PathBuf::from(abs("/srv/s")), ..Default::default() };
         let mut given = BTreeMap::new();
         given.insert("ml".to_string(), Value::from("cuda"));
         given.insert("expose".to_string(), Value::from(true));
@@ -1211,9 +1216,10 @@ mod tests {
         let secrets = BTreeMap::from([("DB_PASSWORD".to_string(), "abc123".to_string())]);
         let host = HostEnv { uid: 1000, gid: 100, tz: "Asia/Shanghai".into(), render_gid: 993 };
         let env = m.env_file(&settings, &secrets, &host);
+        let upload = format!("UPLOAD_LOCATION='{}'", abs("/srv/s/library"));
         for line in [
             "IMMICH_VERSION='v3.3.1'",
-            "UPLOAD_LOCATION='/srv/s/library'",
+            &upload,
             "ML_BACKEND='cuda'",
             "ML_IMAGE_SUFFIX='-cuda'",
             "IMMICH_BIND='0.0.0.0'",
@@ -1230,13 +1236,13 @@ mod tests {
         // An empty optional text is left out, so the host's TZ applies.
         assert!(!env.lines().any(|l| l.starts_with("TZ=")));
         assert_eq!(m.web_port(&settings), Some(2283));
-        assert_eq!(m.data_paths(&settings), vec![PathBuf::from("/srv/s/library"), PathBuf::from("/srv/s/postgres")]);
+        assert_eq!(m.data_paths(&settings), vec![PathBuf::from(abs("/srv/s/library")), PathBuf::from(abs("/srv/s/postgres"))]);
     }
 
     #[test]
     fn images_are_read_as_compose_would() {
         let p = immich();
-        let machine = Machine { stack: PathBuf::from("/srv/s"), ..Default::default() };
+        let machine = Machine { stack: PathBuf::from(abs("/srv/s")), ..Default::default() };
         let cpu = p.manifest.check_settings(&BTreeMap::new(), &machine).unwrap();
         let images = p.images(&cpu);
         assert!(images.contains(&"ghcr.io/immich-app/immich-server:v3.3.1".to_string()), "{images:?}");
@@ -1356,8 +1362,8 @@ label = { en = "Port" }
         );
         let compose = "services:\n  a:\n    user: '${SBM_UID}:${SBM_GID}'\n    environment: {TZ: '${SBM_TZ}'}\n    volumes: ['${MEDIA}:/media:ro']\n    ports: ['${PORT}:80']\n";
         let m = package(&text, compose).expect("reserved names are provided").manifest;
-        let machine = Machine { stack: PathBuf::from("/srv/s/demo"), shared: PathBuf::from("/srv/shared/"), ..Default::default() };
-        assert_eq!(m.defaults(&machine)["media"], "/srv/shared/media");
+        let machine = Machine { stack: PathBuf::from(abs("/srv/s/demo")), shared: PathBuf::from(abs("/srv/shared/")), ..Default::default() };
+        assert_eq!(m.defaults(&machine)["media"], abs("/srv/shared/media"));
         let settings = m.check_settings(&BTreeMap::new(), &machine).unwrap();
         assert!(m.data_paths(&settings).is_empty(), "a shared folder is never removed with the app");
 
