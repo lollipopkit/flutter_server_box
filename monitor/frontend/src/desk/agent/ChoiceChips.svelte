@@ -54,7 +54,7 @@
   <div bind:this={root} class="chips">
     <button
       type="button"
-      class="chip"
+      class="chip chip--name"
       class:chip--small={small}
       aria-haspopup="menu"
       aria-expanded={open === 'model'}
@@ -153,6 +153,12 @@
     font: 600 var(--text-12) / 1 var(--font-ui);
     white-space: nowrap;
     cursor: default;
+  }
+  /* The model's name is the one that gives way in a narrow row: cut short,
+     never drawn over what follows it. */
+  .chip--name {
+    flex: 0 1 auto;
+    min-width: 0;
   }
   .chip:disabled {
     opacity: 0.5;

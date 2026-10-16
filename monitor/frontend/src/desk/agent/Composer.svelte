@@ -341,7 +341,8 @@
   }
   .field {
     flex: 1;
-    min-width: 0;
+    /* Kept typeable when the controls beside it are wide. */
+    min-width: 120px;
     display: flex;
   }
   /* One line until the text needs more (`autosize`); in em, so it follows
@@ -381,16 +382,23 @@
     color: var(--text-tertiary);
   }
   .ctl {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: var(--space-5);
     overflow: hidden;
-    max-width: 260px;
+    /* Room for all four (mode, model and thinking, attach, send); a bound
+       only so collapsing it on focus can be animated. */
+    max-width: 640px;
     opacity: 1;
     transition:
       max-width var(--grow),
       opacity 240ms var(--ease-standard) 240ms;
+  }
+  /* Only the model chips give way; the rest keep their size. */
+  .ctl > :global(:not(.chips)) {
+    flex-shrink: 0;
   }
   .box--focused .ctl {
     max-width: 0;
