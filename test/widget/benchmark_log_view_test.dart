@@ -156,6 +156,63 @@ void main() {
     expect(row(tester, 1), isEmpty);
   });
 
+  group('under a screen reader', () {
+    Future<void> pumpRead(WidgetTester tester, String log) async {
+      await tester.pumpWidget(MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(accessibleNavigation: true),
+          child: Scaffold(body: BenchmarkLogView(log: log)),
+        ),
+      ));
+      await tester.pump();
+    }
+
+    testWidgets('the log is text the terminal has interpreted', (
+      tester,
+    ) async {
+      // A canvas is one empty box to a screen reader; the lines are what it
+      // can read. The terminal still interprets them, so a progress step is
+      // the last one printed and no escape code is left in the text.
+      await pumpRead(
+        tester,
+        'Uptime : 1 day\n'
+        'Preparing system for disk tests...\r\x1b[0K'
+        'Running fio test...\n',
+      );
+
+      expect(find.byType(TerminalView), findsNothing);
+      expect(find.byType(SelectionArea), findsOneWidget);
+      final lines = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.data)
+          .toList();
+      expect(lines, ['Uptime : 1 day', 'Running fio test...']);
+    });
+
+    testWidgets('a line longer than the terminal stays one line', (
+      tester,
+    ) async {
+      // The terminal is never laid out here, so it keeps its default width
+      // and wraps; the text joins what it wrapped.
+      final long = 'x' * 200;
+      await pumpRead(tester, '$long\nend\n');
+
+      final lines = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.data)
+          .toList();
+      expect(lines, [long, 'end']);
+    });
+
+    testWidgets('an update shows what is new', (tester) async {
+      await pumpRead(tester, 'one\n');
+      await pumpRead(tester, 'one\ntwo\n');
+
+      expect(find.text('one'), findsOneWidget);
+      expect(find.text('two'), findsOneWidget);
+    });
+  });
+
   testWidgets('an empty log is not an error', (tester) async {
     await pump(tester, const BenchmarkLogView(log: ''));
     expect(tester.takeException(), isNull);
