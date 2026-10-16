@@ -55,8 +55,9 @@ final class ContainerImg {
   bool get isUnused => _item.unused;
 
   /// What it is named by: `repository:tag`, or its short id when dangling
-  /// (`ContainerImage::reference`).
-  String get reference => ffi.containerImageReference(image: _item);
+  /// (`ContainerImage::reference`). Asked of Rust once, not on every build
+  /// of the row showing it.
+  late final String reference = ffi.containerImageReference(image: _item);
 }
 
 /// The tagged images known to have nothing referencing them, or `null` when
