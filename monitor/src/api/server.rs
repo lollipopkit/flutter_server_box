@@ -78,6 +78,7 @@ pub fn configure_api(exec_max_request: usize) -> impl FnOnce(&mut web::ServiceCo
 fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
     cfg.service(
         web::scope("/api/v1")
+            .middleware(crate::api::unread_body::CloseUnreadBody)
             .route("/login", web::post().to(login))
             .service(
                 web::resource("/watch-token")

@@ -37,6 +37,7 @@ async fn server(state: Arc<AppState>) -> TestServer {
         async move {
             App::new().state(state).service(
                 web::scope("/api/v1")
+                    .middleware(server_box_monitor::api::unread_body::CloseUnreadBody)
                     .route("/desk", web::get().to(desk::get))
                     .route("/alerts", web::get().to(desk::alerts))
                     .route("/desk/preferences", web::put().to(desk::put_preferences))
@@ -81,35 +82,9 @@ async fn call(
     path: &str,
     body: Option<Vec<u8>>,
 ) -> (u16, serde_json::Value, Vec<u8>) {
-    send(srv, signed, method, path, body, false).await
-}
-
-/// [call] on a connection of its own, for a request refused before its body
-/// is read: the server then closes the connection without saying so, and a
-/// next request that reused it from the client's pool would see it gone.
-async fn call_refused_early(
-    srv: &TestServer,
-    method: Method,
-    path: &str,
-    body: Option<Vec<u8>>,
-) -> (u16, serde_json::Value, Vec<u8>) {
-    send(srv, true, method, path, body, true).await
-}
-
-async fn send(
-    srv: &TestServer,
-    signed: bool,
-    method: Method,
-    path: &str,
-    body: Option<Vec<u8>>,
-    close: bool,
-) -> (u16, serde_json::Value, Vec<u8>) {
     let mut req = srv
         .request(method, srv.url(path))
         .timeout(std::time::Duration::from_secs(30));
-    if close {
-        req = req.header("connection", "close");
-    }
     if signed {
         req = req.header(
             "Authorization",
@@ -645,7 +620,7 @@ async fn app_storage_is_per_app_and_bounded() {
     assert!(body["items"].get("a").is_none());
 
     for path in ["/api/v1/desk/apps/acme.Notes/storage", "/api/v1/desk/apps/acme.notes/storage?key="] {
-        let (status, _, _) = call_refused_early(&srv, Method::PUT, path, json(serde_json::json!(1))).await;
+        let (status, _, _) = call(&srv, true, Method::PUT, path, json(serde_json::json!(1))).await;
         assert_eq!(status, 400, "{path}");
     }
 }
