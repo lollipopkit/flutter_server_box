@@ -10,7 +10,7 @@
 //! opens it sees the same thing.
 //!
 //! A task ("flow") is one pi session, a pi-durable storage in
-//! `<database dir>/agent/chats/<id>/` (the agent's own state, outside every
+//! `<database dir>/agent/chats/<id>.db` (the agent's own state, outside every
 //! file root), and one `agent_flow` row that
 //! lists and owns it. What happens while it runs — model output, commands
 //! and their output, what it waits on — goes out on [`AgentMode::subscribe`].
@@ -56,7 +56,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use fl_pi_llm::host::memory::Memory;
-use fl_pi_llm::host::{Cancel, Config as PiConfig, DirectoryStore, OpenSession, ReqwestFetch, Runtime, Session};
+use fl_pi_llm::host::{Cancel, Config as PiConfig, OpenSession, ReqwestFetch, Runtime, Session};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
@@ -322,7 +322,8 @@ type SudoCache = HashMap<i64, (Zeroizing<String>, Instant)>;
 
 pub struct AgentMode {
     db: SqlitePool,
-    store: Arc<DirectoryStore>,
+    /// Where tasks' chats, files and skills are.
+    dir: PathBuf,
     /// Removed with this value: the directory made for an in-memory database.
     owned: bool,
     fetch: Arc<ReqwestFetch>,
@@ -382,7 +383,6 @@ impl AgentMode {
         Self {
             db,
             files: files::Files::new(&dir),
-            store: Arc::new(DirectoryStore::new(dir.clone())),
             owned,
             fetch: Arc::new(ReqwestFetch::new(client)),
             runtime: tokio::sync::Mutex::new(None),
@@ -400,6 +400,7 @@ impl AgentMode {
             hostname: hostname::get().map(|h| h.to_string_lossy().into_owned()).unwrap_or_else(|_| "localhost".into()),
             mcp: mcp::Hub::default(),
             skills_root: skills::root(&dir),
+            dir,
         }
     }
 
@@ -453,34 +454,60 @@ impl AgentMode {
         .bind(&now)
         .execute(&self.db)
         .await?;
+        self.drop_legacy_sessions().await?;
         let known: HashSet<String> = sqlx::query_scalar("SELECT id FROM agent_flow").fetch_all(&self.db).await?.into_iter().collect();
         self.files.recover(&known).await;
-        // A chat is `chats/<encoded id>/`, with `meta/<encoded id>.json`.
-        let root = self.store.root();
-        if let Ok(mut dirs) = tokio::fs::read_dir(root.join("chats")).await {
+        let chats = self.dir.join("chats");
+        tokio::task::spawn_blocking(move || {
+            for chat in fl_pi_llm::db::list(&chats)? {
+                if !known.contains(&chat.id) {
+                    fl_pi_llm::db::remove(&chats, &chat.id)?;
+                }
+            }
+            Ok::<_, String>(())
+        })
+        .await?
+        .map_err(anyhow::Error::msg)
+    }
+
+    /// TODO: remove once no agent keeps a task from before fl_pi_llm kept
+    /// chats in SQLite. Its sessions (`chats/<id>/` with `meta/<id>.json`, or
+    /// `sessions/<cwd>/<created>_<id>.jsonl` from before pi-durable) are no
+    /// longer read, so they go with their tasks. Agent mode never shipped in
+    /// them.
+    async fn drop_legacy_sessions(&self) -> anyhow::Result<()> {
+        let mut ids = Vec::new();
+        if let Ok(mut dirs) = tokio::fs::read_dir(self.dir.join("chats")).await {
             while let Some(d) = dirs.next_entry().await? {
-                let id = decode_component(&d.file_name().to_string_lossy());
-                if !known.contains(&id) {
-                    let _ = tokio::fs::remove_dir_all(d.path()).await;
-                    let _ = tokio::fs::remove_file(root.join("meta").join(format!("{}.json", d.file_name().to_string_lossy()))).await;
+                if d.file_type().await?.is_dir() {
+                    ids.push(decode_component(&d.file_name().to_string_lossy()));
+                    tokio::fs::remove_dir_all(d.path()).await?;
                 }
             }
         }
-        // TODO: remove once no agent keeps a session from before pi-durable;
-        // fl_pi_llm moves each into `chats/` when it is opened.
-        let Ok(mut dirs) = tokio::fs::read_dir(root.join("sessions")).await else { return Ok(()) };
-        while let Some(d) = dirs.next_entry().await? {
-            let Ok(mut files) = tokio::fs::read_dir(d.path()).await else { continue };
-            while let Some(f) = files.next_entry().await? {
-                // pi names a session `<created>_<id>.jsonl`.
-                let name = f.file_name().to_string_lossy().into_owned();
-                let id = name.strip_suffix(".jsonl").and_then(|n| n.rsplit_once('_')).map(|(_, id)| id);
-                if let Some(id) = id
-                    && !known.contains(id)
-                {
-                    let _ = tokio::fs::remove_file(f.path()).await;
+        if let Ok(mut dirs) = tokio::fs::read_dir(self.dir.join("sessions")).await {
+            while let Some(d) = dirs.next_entry().await? {
+                let Ok(mut files) = tokio::fs::read_dir(d.path()).await else { continue };
+                while let Some(f) = files.next_entry().await? {
+                    // pi names a session `<created>_<id>.jsonl`.
+                    let name = f.file_name().to_string_lossy().into_owned();
+                    if let Some((_, id)) = name.strip_suffix(".jsonl").and_then(|n| n.split_once('_')) {
+                        ids.push(decode_component(id));
+                    }
                 }
             }
+        }
+        for gone in ["meta", "sessions"] {
+            match tokio::fs::remove_dir_all(self.dir.join(gone)).await {
+                Err(e) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.into()),
+                _ => {}
+            }
+        }
+        for id in &ids {
+            sqlx::query("DELETE FROM agent_flow WHERE id = ?").bind(id).execute(&self.db).await?;
+        }
+        if !ids.is_empty() {
+            tracing::warn!("agent mode: {} task(s) kept in a format no longer read were removed", ids.len());
         }
         Ok(())
     }
@@ -492,7 +519,7 @@ impl AgentMode {
             return Ok(r.clone());
         }
         let r = Runtime::start(PiConfig {
-            store: self.store.clone(),
+            dir: self.dir.clone(),
             credentials: Arc::new(config::DbCredentials(self.db.clone())),
             fetch: self.fetch.clone(),
             logger: Some(Arc::new(|level, message| match level {
@@ -1407,7 +1434,7 @@ impl AgentMode {
 impl Drop for AgentMode {
     fn drop(&mut self) {
         if self.owned {
-            let _ = std::fs::remove_dir_all(self.store.root());
+            let _ = std::fs::remove_dir_all(&self.dir);
         }
     }
 }
@@ -1518,8 +1545,8 @@ pub(crate) fn uuid_v4() -> String {
     format!("{}-{}-{}-{}-{}", &h[..8], &h[8..12], &h[12..16], &h[16..20], &h[20..])
 }
 
-/// A chat id from its directory name: fl_pi_llm names it with
-/// `encodeURIComponent`.
+/// A chat id from a legacy session's directory or file name: fl_pi_llm named
+/// it with `encodeURIComponent`. TODO: remove with `drop_legacy_sessions`.
 fn decode_component(name: &str) -> String {
     percent_encoding::percent_decode_str(name).decode_utf8_lossy().into_owned()
 }
@@ -1527,6 +1554,42 @@ fn decode_component(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A task kept before chats were SQLite goes with its session; one in
+    /// the current format stays, and a chat no task names goes.
+    #[tokio::test]
+    async fn recover_drops_legacy_tasks_and_orphan_chats() {
+        let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&db).await.unwrap();
+        let user: i64 = sqlx::query_scalar("INSERT INTO users (password_hash) VALUES ('x') RETURNING id").fetch_one(&db).await.unwrap();
+        for id in ["old dir", "old_file", "new"] {
+            sqlx::query("INSERT INTO agent_flow (id, user_id, title, status, created_at, updated_at) VALUES (?, ?, 't', 'done', '', '')")
+                .bind(id)
+                .bind(user)
+                .execute(&db)
+                .await
+                .unwrap();
+        }
+        let agent = AgentMode::new(db.clone(), None);
+        let chats = agent.dir.join("chats");
+        std::fs::create_dir_all(chats.join("old%20dir")).unwrap();
+        std::fs::create_dir_all(agent.dir.join("meta")).unwrap();
+        let sessions = agent.dir.join("sessions").join("--cwd--");
+        std::fs::create_dir_all(&sessions).unwrap();
+        std::fs::write(sessions.join("2026-10-01T00-00-00-000Z_old_file.jsonl"), "").unwrap();
+        for id in ["new", "orphan"] {
+            std::fs::write(chats.join(fl_pi_llm::db::file_name(id)), "").unwrap();
+        }
+
+        agent.recover().await.unwrap();
+
+        let left: Vec<String> = sqlx::query_scalar("SELECT id FROM agent_flow").fetch_all(&db).await.unwrap();
+        assert_eq!(left, ["new"]);
+        let mut files: Vec<String> = std::fs::read_dir(&chats).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect();
+        files.sort();
+        assert_eq!(files, [fl_pi_llm::db::file_name("new")]);
+        assert!(!agent.dir.join("meta").exists() && !agent.dir.join("sessions").exists());
+    }
 
     /// The sudo password goes when its time is up, without being asked for.
     #[tokio::test]

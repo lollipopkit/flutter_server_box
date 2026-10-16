@@ -34,7 +34,7 @@ COPY crates/ ./crates/
 # needs it checked out.
 COPY packages/fl_lib/rust/theme/ ./fl_theme/
 # fl_pi_llm's runtime (Agent mode's pi), from its submodule likewise.
-COPY packages/fl_pi_llm/rust/ ./fl_pi_llm/
+COPY packages/fl_pi_llm/fl_pi_llm/rust/ ./fl_pi_llm/
 COPY monitor/migrations/ ./migrations/
 COPY monitor/.sqlx/ ./.sqlx/
 
@@ -65,7 +65,7 @@ COPY store/apps/ /store/apps/
 # ignores a non-root package's profiles with a warning.
 RUN sed -i -e 's|path = "../crates/|path = "crates/|' \
            -e 's|path = "../packages/fl_lib/rust/theme"|path = "fl_theme"|' \
-           -e 's|path = "../packages/fl_pi_llm/rust"|path = "fl_pi_llm"|' Cargo.toml \
+           -e 's|path = "../packages/fl_pi_llm/fl_pi_llm/rust"|path = "fl_pi_llm"|' Cargo.toml \
     && CARGO_PROFILE_RELEASE_STRIP=true \
        CARGO_PROFILE_RELEASE_LTO=fat \
        CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \

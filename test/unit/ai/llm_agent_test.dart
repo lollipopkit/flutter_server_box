@@ -153,6 +153,7 @@ void main() {
   late List<Map<String, Object?>> seen;
   final ran = <String>[];
   final credentials = MemoryCredentials({});
+  final chats = Directory.systemTemp.createTempSync('llm_agent_test');
 
   setUpAll(() async {
     // Whether a command runs by itself is `sbm_parser::command_risk`, over FFI.
@@ -169,7 +170,6 @@ void main() {
     for (final store in LlmStores.all) {
       await store.init();
     }
-    SqlitePiSessionStore();
     // What an install that set the Agent up before fl_pi_llm has stored.
     Stores.setting.set('askAi', {
       'baseUrl': 'http://127.0.0.1:${server.port}/v1',
@@ -181,6 +181,7 @@ void main() {
 
     await LlmHost.init(
       ProviderContainer(),
+      directory: chats.path,
       credentials: credentials,
       externalLibrary: llmNativeLib(),
       // An OpenAI-compatible gateway, as a shell exports it.
@@ -216,6 +217,7 @@ void main() {
   tearDownAll(() async {
     await Chats.closeAll();
     await Llm.rt.dispose();
+    chats.deleteSync(recursive: true);
     await server.close(force: true);
     await getIt.reset();
     await closeTestDb();

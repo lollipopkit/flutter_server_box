@@ -113,9 +113,9 @@ dependencies:
   # chats, tools and provider settings over it (`fl_pi_llm_ui`). A submodule
   # like fl_lib.
   fl_pi_llm:
-    path: packages/fl_pi_llm
+    path: packages/fl_pi_llm/fl_pi_llm
   fl_pi_llm_ui:
-    path: packages/fl_pi_llm/ui
+    path: packages/fl_pi_llm/fl_pi_llm_ui
   # Imported by the app itself, not only through the packages that bring them
   # in: a transitive dependency can drop or change one under it.
   ffi: ^2.2.0
