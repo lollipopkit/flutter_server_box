@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/src/rust/api/service.dart' show serviceNeedsAttention;
 
 enum ServiceAction {
   start,
@@ -180,7 +181,8 @@ final class ServiceUnit {
       actions: [
         for (final a in j['actions'] as List? ?? const []) ServiceAction.values.byName(a as String),
       ],
-      needsAttention: j['needs_attention'] as bool? ?? false,
+      // TODO: remove the fallback once no agent predates `needs_attention`.
+      needsAttention: j['needs_attention'] as bool? ?? serviceNeedsAttention(state: j['state'] as String),
       description: j['description'] as String?,
       enabled: j['enabled'] as bool?,
       unitFileState: j['unit_file_state'] as String?,
