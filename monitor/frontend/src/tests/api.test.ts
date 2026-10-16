@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { api } from '../lib/api'
+import { api, getCapabilitiesFor, getStatusFor, loginTo } from '../lib/api'
 import { deskApi } from '../desk/deskApi'
 import { servers } from '../lib/servers.svelte'
 import { get } from 'svelte/store'
@@ -10,6 +10,9 @@ describe.each([
   ['file bytes', () => api.fsRead('/file')],
   // The desk's own byte requests went around the session handling once.
   ['desk bytes', () => deskApi.putWallpaper(servers.current!, new Blob(['x'], { type: 'image/png' }))],
+  // The lock screen's and menubar's own reads of an entry.
+  ['status for an entry', () => getStatusFor(servers.current!)],
+  ['capabilities for an entry', () => getCapabilitiesFor(servers.current!)],
 ] as const)('%s session expiry', (_, request) => {
   beforeEach(() => {
     for (const entry of [...servers.list]) servers.remove(entry.id)
@@ -111,6 +114,10 @@ describe('a failure without words of its own', () => {
     await expect(api.getSettings()).rejects.toMatchObject({ message: get(LL).agentUnreachable(), code: 'unreachable' })
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('<html>Bad gateway</html>', { status: 502 }))))
     await expect(api.getSettings()).rejects.toMatchObject({ message: get(LL).agentAnswered({ status: 502 }), status: 502 })
+    // The entry reads and signing in, which once said English or a raw TypeError.
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))))
+    await expect(getStatusFor(servers.current!)).rejects.toMatchObject({ code: 'unreachable' })
+    await expect(loginTo('https://first.example', { password: 'pw' })).rejects.toMatchObject({ message: get(LL).agentUnreachable() })
     expect(get(LL).agentUnreachable()).toBe('无法连接到 agent。')
   })
 })

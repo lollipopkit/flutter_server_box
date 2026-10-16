@@ -205,19 +205,20 @@ export async function fetchFor(
   signal?: AbortSignal,
 ): Promise<Response> {
   const server = entry ? { ...entry } : undefined
-  requireSecureUrl(server?.url ?? '')
-  let res: Response
+  const res = await fetchAt(server?.url ?? '', path, { ...init, headers: authHeaders(server, init.headers as Record<string, string> | undefined) }, signal)
+  if (res.status === 401 && path !== '/login') throw sessionExpired(server)
+  return res
+}
+
+/// [fetchFor] to an agent [url] no entry holds yet (signing in): the URL
+/// checked, a failure to reach it said as such.
+async function fetchAt(url: string, path: string, init: RequestInit, signal?: AbortSignal): Promise<Response> {
+  requireSecureUrl(url)
   try {
-    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
-      ...init,
-      headers: authHeaders(server, init.headers as Record<string, string> | undefined),
-      signal,
-    })
+    return await fetch(`${url}/api/v1${path}`, { ...init, signal })
   } catch {
     throw unreachable()
   }
-  if (res.status === 401 && path !== '/login') throw sessionExpired(server)
-  return res
 }
 
 function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSignal {
@@ -380,28 +381,21 @@ export async function readEventStream(
 /// `servers.current`) — used by the lock screen to show every authenticated
 /// entry's OS icon, not just the currently selected one.
 export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSignal): Promise<Capabilities> {
-  if (!entry.token) throw new ApiError('Not authenticated')
-  requireSecureUrl(entry.url)
-  const res = await fetch(`${entry.url}/api/v1/capabilities`, {
-    headers: { Authorization: `Bearer ${entry.token}` },
-    signal: requestSignal(signal),
-  })
-  if (!res.ok) throw await errorFrom(res)
-  return res.json() as Promise<Capabilities>
+  if (!entry.token) throw signedOut()
+  return requestFor<Capabilities>(entry, '/capabilities', {}, signal)
 }
 
 /// Fetches status, including the agent-reported `name`, for an explicit server
 /// entry — used by the menubar and the lock screen so the displayed name always
 /// reflects `config.toml`, never a locally cached copy.
 export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Promise<StatusResponse> {
-  if (!entry.token) throw new ApiError('Not authenticated')
-  requireSecureUrl(entry.url)
-  const res = await fetch(`${entry.url}/api/v1/status`, {
-    headers: { Authorization: `Bearer ${entry.token}` },
-    signal: requestSignal(signal),
-  })
-  if (!res.ok) throw await errorFrom(res)
-  return res.json() as Promise<StatusResponse>
+  if (!entry.token) throw signedOut()
+  return requestFor<StatusResponse>(entry, '/status', {}, signal)
+}
+
+/// An entry with no session to ask with.
+function signedOut(): ApiError {
+  return new ApiError(get(LL).agentSessionExpired(), 401)
 }
 
 /// Unauthenticated reachability probe for a candidate URL (add/edit server
@@ -441,29 +435,19 @@ function rememberDevice(url: string, device: string) {
 /// Signs in to the agent at [url] ('' for this origin), sending the device
 /// token an earlier sign-in gave this browser and keeping a new one.
 export async function loginTo(url: string, credentials: LoginRequest): Promise<LoginResponse> {
-  requireSecureUrl(url)
   const device = readDevices()[url]
-  let res: Response
-  try {
-    res = await fetch(`${url}/api/v1/login`, {
+  const res = await fetchAt(
+    url,
+    '/login',
+    {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(device ? { ...credentials, device } : credentials),
-      signal: requestSignal(),
-    })
-  } catch {
-    throw new ApiError('Login failed')
-  }
-  if (!res.ok) {
-    let message = 'Login failed'
-    try {
-      const body = (await res.json()) as { error?: string }
-      if (body.error) message = body.error
-    } catch {
-      // Non-JSON error body: keep the fallback message
-    }
-    throw new ApiError(message, res.status)
-  }
+    },
+    requestSignal(),
+  )
+  // 401 is a wrong password here, the caller's to say.
+  if (!res.ok) throw await errorFrom(res)
   const answer = (await res.json()) as LoginResponse
   if (answer.device) rememberDevice(url, answer.device)
   return answer
