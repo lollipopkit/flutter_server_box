@@ -328,6 +328,10 @@ pub struct AgentMode {
     owned: bool,
     fetch: Arc<ReqwestFetch>,
     runtime: tokio::sync::Mutex<Option<Runtime>>,
+    /// Held for writing while the endpoints' models are listed: a model one
+    /// lists is pi's only once listed, so what runs one waits
+    /// ([`Self::ready_runtime`]); what only reads does not.
+    listing: Arc<tokio::sync::RwLock<()>>,
     /// One model listing at a time: each widens what plain HTTP may reach.
     probing: tokio::sync::Mutex<()>,
     /// Held while a session is opened or closed, so a read of a finished task
@@ -386,6 +390,7 @@ impl AgentMode {
             owned,
             fetch: Arc::new(ReqwestFetch::new(client)),
             runtime: tokio::sync::Mutex::new(None),
+            listing: Arc::default(),
             opening: tokio::sync::Mutex::new(()),
             probing: tokio::sync::Mutex::new(()),
             flows: Mutex::default(),
@@ -534,6 +539,14 @@ impl AgentMode {
         Ok(r)
     }
 
+    /// [`Self::runtime`] once the endpoints' models are listed: for what runs
+    /// a model.
+    async fn ready_runtime(&self) -> anyhow::Result<Runtime> {
+        let rt = self.runtime().await?;
+        drop(self.listing.read().await);
+        Ok(rt)
+    }
+
     async fn apply(&self, rt: &Runtime, settings: &config::Settings) -> anyhow::Result<()> {
         self.fetch.set_insecure_origins(settings.providers.iter().filter_map(config::Provider::insecure_origin).collect());
         rt.set_custom_providers(Value::Array(settings.providers.iter().map(config::Provider::to_pi).collect()))
@@ -542,17 +555,23 @@ impl AgentMode {
         self.max_running.store(settings.max_running, Ordering::Relaxed);
         // An endpoint's listed models exist for pi only once listed (from its
         // cache, or the endpoint): until then a model it lists is "unavailable"
-        // and no task can open.
-        let listing: Vec<&str> = settings.providers.iter().filter(|p| p.lists_models()).map(|p| p.id.as_str()).collect();
+        // and no task can open. Listed apart, so a slow endpoint holds up only
+        // what runs a model.
+        let listing: Vec<String> = settings.providers.iter().filter(|p| p.lists_models()).map(|p| p.id.clone()).collect();
         if !listing.is_empty() {
-            match rt.request("providers.refresh", json!({ "providers": listing })).await {
-                Ok(v) => {
-                    for (id, e) in v["errors"].as_object().into_iter().flatten() {
-                        tracing::warn!("agent mode: listing the models of {id}: {e}");
+            let listed = self.listing.clone().write_owned().await;
+            let rt = rt.clone();
+            tokio::spawn(async move {
+                match rt.request("providers.refresh", json!({ "providers": listing })).await {
+                    Ok(v) => {
+                        for (id, e) in v["errors"].as_object().into_iter().flatten() {
+                            tracing::warn!("agent mode: listing the models of {id}: {e}");
+                        }
                     }
+                    Err(e) => tracing::warn!("agent mode: listing models: {e}"),
                 }
-                Err(e) => tracing::warn!("agent mode: listing models: {e}"),
-            }
+                drop(listed);
+            });
         }
         Ok(())
     }
@@ -817,7 +836,7 @@ impl AgentMode {
     fn name_later(self: &Arc<Self>, user: i64, id: String, prompt: String) {
         let this = self.clone();
         tokio::spawn(async move {
-            let Ok(rt) = this.runtime().await else { return };
+            let Ok(rt) = this.ready_runtime().await else { return };
             let Ok(Some(model)) = config::load(&this.db).await.map(|s| s.model) else { return };
             let excerpt: String = prompt.chars().take(2000).collect();
             let messages = json!([{ "role": "user", "content": [{ "type": "text", "text": excerpt }], "timestamp": 0 }]);
@@ -1083,7 +1102,7 @@ impl AgentMode {
             let v = flow.view.locked();
             (v.model.clone().unwrap_or(machine), v.thinking_level.clone().unwrap_or(settings.thinking_level.clone()))
         };
-        let rt = self.runtime().await?;
+        let rt = self.ready_runtime().await?;
         let memory = self.memory(flow.user_id);
         let mut system_prompt = prompt::system(&self.hostname);
         if let Some(m) = memory.prompt(true).await.map_err(|e| anyhow::anyhow!("memory: {e}"))? {
@@ -1203,7 +1222,7 @@ impl AgentMode {
     pub async fn choices(&self) -> Result<Value, FlowError> {
         let settings = config::load(&self.db).await?;
         let models = match settings.model {
-            Some(_) => self.runtime().await?.request("providers.available", json!({})).await.map_err(|e| anyhow::anyhow!("{e}"))?,
+            Some(_) => self.ready_runtime().await?.request("providers.available", json!({})).await.map_err(|e| anyhow::anyhow!("{e}"))?,
             None => json!([]),
         };
         Ok(json!({

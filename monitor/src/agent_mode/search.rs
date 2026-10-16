@@ -87,7 +87,7 @@ impl AgentMode {
         let started = Instant::now();
         let settings = config::load(&self.db).await?;
         let Some(model) = settings.model else { return Err(FlowError::NotConfigured) };
-        let rt = self.runtime().await?;
+        let rt = self.ready_runtime().await?;
         // One search at a time: a new one ends the last.
         let seq = self.search_seq.fetch_add(1, Ordering::Relaxed);
         if let Some((_, old)) = self.search_runs.locked().insert(user, (seq, cancel.clone())) {

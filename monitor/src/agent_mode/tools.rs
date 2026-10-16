@@ -414,7 +414,7 @@ pub(super) async fn record(state: &AppState, detail: &str, outcome: Outcome) {
 pub(super) async fn judge(state: &AppState, flow: &Arc<Flow>, subject: &str, title: &str, claimed: &str, sudo: bool, auto: &AutoMode) -> Option<Judgment> {
     let hub = &state.agent;
     let model = super::config::load(&state.db).await.ok()?.model?;
-    let rt = hub.runtime().await.ok()?;
+    let rt = hub.ready_runtime().await.ok()?;
     let session = flow.session.locked().clone();
     let entries = match session {
         Some(s) => s.entries().await.unwrap_or_default(),
