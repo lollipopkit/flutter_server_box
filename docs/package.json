@@ -14,5 +14,10 @@
     "@astrojs/starlight": "^0.42.5",
     "astro": "^7.3.5",
     "sharp": "^0.35.5"
+  },
+  "overrides": {
+    "@expressive-code/core": {
+      "postcss-nested": "8.0.1"
+    }
   }
 }
