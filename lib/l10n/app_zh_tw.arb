@@ -1657,5 +1657,7 @@
   "kbServerPrev": "伺服器：上一台",
   "kbServerNext": "伺服器：下一台",
   "kbServerList": "伺服器：伺服器列表",
-  "kbServerClose": "伺服器：關閉詳情"
+  "kbServerClose": "伺服器：關閉詳情",
+  "termMetricsBar": "終端下方顯示伺服器狀態",
+  "termMetricsBarTip": "CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。"
 }

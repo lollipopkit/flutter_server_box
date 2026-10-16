@@ -7675,5 +7675,13 @@
   "kbServerClose": "Servers: close details",
   "@kbServerClose": {
     "description": "Command."
+  },
+  "termMetricsBar": "Server readings under the terminal",
+  "@termMetricsBar": {
+    "description": "Setting: show a bar under the terminal with its server's CPU, memory, network and disk readings."
+  },
+  "termMetricsBarTip": "CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.",
+  "@termMetricsBarTip": {
+    "description": "Explains the terminal readings bar setting."
   }
 }

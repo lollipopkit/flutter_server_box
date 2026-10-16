@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Servers: vorige server",
   "kbServerNext": "Servers: volgende server",
   "kbServerList": "Servers: serverlijst",
-  "kbServerClose": "Servers: details sluiten"
+  "kbServerClose": "Servers: details sluiten",
+  "termMetricsBar": "Servermetingen onder de terminal",
+  "termMetricsBarTip": "CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen."
 }

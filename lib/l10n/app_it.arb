@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Server: server precedente",
   "kbServerNext": "Server: server successivo",
   "kbServerList": "Server: elenco server",
-  "kbServerClose": "Server: chiudi dettagli"
+  "kbServerClose": "Server: chiudi dettagli",
+  "termMetricsBar": "Letture del server sotto il terminale",
+  "termMetricsBarTip": "CPU, memoria, rete e disco, come nella scheda del server. Sul telefono, sopra i tasti virtuali."
 }

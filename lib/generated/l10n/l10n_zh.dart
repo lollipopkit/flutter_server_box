@@ -5520,6 +5520,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get kbServerClose => '服务器：关闭详情';
+
+  @override
+  String get termMetricsBar => '终端下方显示服务器状态';
+
+  @override
+  String get termMetricsBarTip => 'CPU、内存、网络、磁盘，与服务器卡片一致；手机上位于虚拟按键上方。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11042,4 +11048,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get kbServerClose => '伺服器：關閉詳情';
+
+  @override
+  String get termMetricsBar => '終端下方顯示伺服器狀態';
+
+  @override
+  String get termMetricsBarTip => 'CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。';
 }

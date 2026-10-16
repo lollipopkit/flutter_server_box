@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Sunucular: önceki sunucu",
   "kbServerNext": "Sunucular: sonraki sunucu",
   "kbServerList": "Sunucular: sunucu listesi",
-  "kbServerClose": "Sunucular: ayrıntıları kapat"
+  "kbServerClose": "Sunucular: ayrıntıları kapat",
+  "termMetricsBar": "Terminalin altında sunucu değerleri",
+  "termMetricsBarTip": "CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde."
 }

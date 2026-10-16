@@ -5964,4 +5964,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Server: Details schließen';
+
+  @override
+  String get termMetricsBar => 'Serverwerte unter dem Terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, Arbeitsspeicher, Netzwerk und Festplatte, wie auf der Serverkarte. Auf dem Telefon über den virtuellen Tasten.';
 }

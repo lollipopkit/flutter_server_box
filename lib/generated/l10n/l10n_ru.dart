@@ -5933,4 +5933,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Серверы: закрыть подробности';
+
+  @override
+  String get termMetricsBar => 'Показатели сервера под терминалом';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, память, сеть и диск — как на карточке сервера. На телефоне над виртуальными клавишами.';
 }

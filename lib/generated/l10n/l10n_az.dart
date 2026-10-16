@@ -5885,4 +5885,11 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Serverlər: təfərrüatları bağla';
+
+  @override
+  String get termMetricsBar => 'Terminalın altında server göstəriciləri';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə.';
 }

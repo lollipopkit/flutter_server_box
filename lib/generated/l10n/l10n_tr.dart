@@ -5875,4 +5875,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Sunucular: ayrıntıları kapat';
+
+  @override
+  String get termMetricsBar => 'Terminalin altında sunucu değerleri';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, bellek, ağ ve disk, sunucu kartındaki gibi. Telefonda sanal tuşların üstünde.';
 }

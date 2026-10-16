@@ -1657,5 +1657,7 @@
   "kbServerPrev": "Serveurs : serveur précédent",
   "kbServerNext": "Serveurs : serveur suivant",
   "kbServerList": "Serveurs : liste des serveurs",
-  "kbServerClose": "Serveurs : fermer les détails"
+  "kbServerClose": "Serveurs : fermer les détails",
+  "termMetricsBar": "Mesures du serveur sous le terminal",
+  "termMetricsBarTip": "CPU, mémoire, réseau et disque, comme sur la carte du serveur. Sur téléphone, au-dessus des touches virtuelles."
 }

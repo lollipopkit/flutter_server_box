@@ -10082,6 +10082,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Servers: close details'**
   String get kbServerClose;
+
+  /// Setting: show a bar under the terminal with its server's CPU, memory, network and disk readings.
+  ///
+  /// In en, this message translates to:
+  /// **'Server readings under the terminal'**
+  String get termMetricsBar;
+
+  /// Explains the terminal readings bar setting.
+  ///
+  /// In en, this message translates to:
+  /// **'CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.'**
+  String get termMetricsBarTip;
 }
 
 class _AppLocalizationsDelegate

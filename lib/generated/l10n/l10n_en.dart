@@ -5893,4 +5893,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Servers: close details';
+
+  @override
+  String get termMetricsBar => 'Server readings under the terminal';
+
+  @override
+  String get termMetricsBarTip =>
+      'CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.';
 }

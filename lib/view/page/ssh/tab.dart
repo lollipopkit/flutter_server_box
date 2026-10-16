@@ -681,6 +681,7 @@ extension _Actions on _SSHTabPageState {
             status,
             _agentAction,
             _snippetAction,
+            _metricsAction,
             _settingsAction,
             _moveAction,
             _floatAction,
@@ -738,6 +739,20 @@ extension _Actions on _SSHTabPageState {
     label: l10n.askAi,
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
+  );
+
+  /// Shows and hides the server's readings under the terminal: the setting,
+  /// reachable from where it takes effect.
+  BarAction get _metricsAction => BarAction.listen(
+    listenable: Stores.setting.termMetricsBar.listenable(),
+    build: (_) {
+      final on = Stores.setting.termMetricsBar.fetch();
+      return BarAction(
+        icon: on ? Icons.speed : Icons.speed_outlined,
+        label: l10n.termMetricsBar,
+        onTap: () => Stores.setting.termMetricsBar.put(!on),
+      );
+    },
   );
 
   /// Carries the terminal on screen into a workspace, still connected.
