@@ -154,10 +154,17 @@ else
         APP_DIR="/opt/server-box-monitor"
         RUN_USER="root"
     else
-        # Whoever reached root from their own account. Running the script as
-        # root outright leaves nothing to infer, and guessing here would pick
-        # the account the agent runs as — not a thing to guess.
-        RUN_USER="${SUDO_USER:-${DOAS_USER:-}}"
+        # Whoever reached root from their own account, or SBM_RUN_USER (an
+        # image installing for its own account). Running the script as root
+        # outright leaves nothing to infer, and guessing here would pick the
+        # account the agent runs as — not a thing to guess.
+        RUN_USER="${SBM_RUN_USER:-${SUDO_USER:-${DOAS_USER:-}}}"
+        # An installed agent keeps the account its script names: an upgrade
+        # by another admin, or by root outright, does not move it.
+        if [ "$CMD" != "install" ] && [ -f "$UNIT" ]; then
+            installed_user=$(sed -n 's/^command_user="\(.*\)"$/\1/p' "$UNIT")
+            [ -n "$installed_user" ] && RUN_USER="$installed_user"
+        fi
         if [ -z "$RUN_USER" ]; then
             echo "Cannot tell which account the agent should run as."
             echo
@@ -165,6 +172,13 @@ else
             echo "  --system to deliberately run the agent as root."
             exit 1
         fi
+        # It is expanded by `eval` below: an account name and nothing else.
+        case "$RUN_USER" in
+            *[!A-Za-z0-9._-]* | -*)
+                echo "Not an account name: $RUN_USER"
+                exit 1
+                ;;
+        esac
         RUN_HOME=$(eval echo "~$RUN_USER")
         APP_DIR="$RUN_HOME/.local/share/server-box-monitor"
     fi
