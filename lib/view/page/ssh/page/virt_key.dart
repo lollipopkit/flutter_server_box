@@ -134,10 +134,12 @@ extension _VirtKey on SSHPageState {
         // session, polling for three seconds and giving up in silence.
         final fileSpi = widget.args.spi;
         if (fileSpi == null) return;
-        // Where the shell says it is (OSC 7), or the file page's own start.
-        // Nothing is typed into the shell to find out: a probe lands in its
-        // history, and a prompt or a program in front can swallow it.
-        final initPath = _sess.workingDirectory;
+        // Where the shell is (OSC 7, else the system's own record of it), or
+        // the file page's own start. Nothing is typed into the shell to find
+        // out: a probe lands in its history, and a program in front can
+        // swallow it.
+        final initPath = await _sess.findWorkingDirectory();
+        if (!mounted) return;
         final args = SftpPageArgs(spi: fileSpi, initPath: initPath);
         // `ServerFilePage`, not `SftpPage`: it is the one place that decides
         // how a server's files are reached, so this key now works on a server

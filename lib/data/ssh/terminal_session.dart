@@ -25,6 +25,7 @@ import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/terminal_status.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
+import 'package:server_box/src/rust/api/files.dart';
 import 'package:xterm/core.dart';
 
 /// Whether a server's shell comes from its agent rather than over SSH.
@@ -362,14 +363,23 @@ class TerminalSession {
 
   // — Shells ————————————————————————————————————————————————————————
 
-  Future<ShellSession?> openShell() => switch (_backend) {
-    final backend? => backend.openShell(
-      width: terminal.viewWidth,
-      height: terminal.viewHeight,
-      environment: environment,
-    ),
-    null => Future.value(),
-  };
+  Future<ShellSession?> openShell() async {
+    final shell = await switch (_backend) {
+      final backend? => backend.openShell(
+        width: terminal.viewWidth,
+        height: terminal.viewHeight,
+        environment: environment,
+      ),
+      null => Future<ShellSession?>.value(),
+    };
+    if (shell != null) {
+      // A new shell: where the last one was says nothing about it.
+      _shellOpenedAt = DateTime.now();
+      _workingDirectory = null;
+      _osc7Host = null;
+    }
+    return shell;
+  }
 
   /// Runs [command] on a channel of its own. Only where [canExec] says so.
   Future<ShellSession?> execute(String command) => switch (_backend) {
@@ -409,20 +419,63 @@ class TerminalSession {
   String? get workingDirectory => _workingDirectory;
   String? _workingDirectory;
 
-  /// The path of an OSC 7 report, or null for one that is not a `file:` URL
-  /// with an absolute path.
+  /// The host the shell's first OSC 7 named. A report from another is a
+  /// shell further away (an `ssh` typed into this one), whose paths are not
+  /// this server's.
+  String? _osc7Host;
+
+  /// When [openShell] last opened one: how the system's list of shells is
+  /// matched to this one (see [findWorkingDirectory]).
+  DateTime? _shellOpenedAt;
+
+  /// The shell's working directory: what it said (OSC 7), else read from the
+  /// system on a channel of its own — never typed into the shell — by
+  /// `sbm_parser::files::terminal_shells_command` (Linux; a shell opened
+  /// within a second of another is not told apart). Null when neither knows.
+  Future<String?> findWorkingDirectory() async {
+    final said = _workingDirectory;
+    if (said != null) return said;
+    final opened = _shellOpenedAt;
+    // tmux's panes are its server's shells, not the one opened here.
+    if (opened == null || !canExec || _foreground is TmuxControlShellSession) return null;
+    final ageSecs = DateTime.now().difference(opened).inMilliseconds / 1000;
+    try {
+      final session = await execute(filesTerminalShellsCommand());
+      if (session == null) return null;
+      final out = await session.stdout
+          ?.cast<List<int>>()
+          .transform(utf8.decoder)
+          .join()
+          .timeout(const Duration(seconds: 5), onTimeout: () {
+            session.close();
+            return '';
+          });
+      return out == null ? null : filesTerminalShellCwd(output: out, ageSecs: ageSecs);
+    } catch (e) {
+      Loggers.app.warning('Reading the terminal shell\'s directory failed', e);
+      return null;
+    }
+  }
+
+  /// The host and path of an OSC 7 report, or null for one that is not a
+  /// `file:` URL with an absolute path.
   @visibleForTesting
-  static String? osc7Path(List<String> args) {
+  static ({String host, String path})? osc7Report(List<String> args) {
     final uri = Uri.tryParse(args.join(';'));
     if (uri == null || uri.scheme != 'file') return null;
     if (!uri.path.startsWith('/')) return null;
     // Decoded: the shells percent-encode what a URL cannot hold (a space).
-    return Uri.decodeComponent(uri.path);
+    return (host: uri.host, path: Uri.decodeComponent(uri.path));
   }
 
   void _handlePrivateOSC(String code, List<String> args) {
     if (code == '7') {
-      _workingDirectory = osc7Path(args) ?? _workingDirectory;
+      final report = osc7Report(args);
+      if (report == null) return;
+      final host = _osc7Host ??= report.host;
+      // Another host: the directory there is not this server's, and where
+      // this shell is stays unknown until it reports again.
+      _workingDirectory = report.host == host ? report.path : null;
       return;
     }
     // Selection and payload; base64 has no `;`, so more fields are malformed.

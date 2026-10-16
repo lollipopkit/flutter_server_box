@@ -86,12 +86,23 @@ void main() {
       expect(session.workingDirectory, '/home/me/My Files');
     });
 
+    test('a report from another host is another machine: its path is not taken', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      // `ssh other` typed into the shell; the far shell reports too.
+      session.terminal.write('\x1b]7;file://other/var/log\x07');
+      expect(session.workingDirectory, isNull);
+      // Back on this one.
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      expect(session.workingDirectory, '/srv/www');
+    });
+
     test('only a file URL with an absolute path is read', () {
-      expect(TerminalSession.osc7Path(['file:///tmp']), '/tmp');
-      expect(TerminalSession.osc7Path(['file://host/a;b']), '/a;b');
-      expect(TerminalSession.osc7Path(['file://host/a', 'b']), '/a;b');
-      expect(TerminalSession.osc7Path(['relative']), null);
-      expect(TerminalSession.osc7Path(['']), null);
+      expect(TerminalSession.osc7Report(['file:///tmp']), (host: '', path: '/tmp'));
+      expect(TerminalSession.osc7Report(['file://host/a;b']), (host: 'host', path: '/a;b'));
+      expect(TerminalSession.osc7Report(['file://host/a', 'b']), (host: 'host', path: '/a;b'));
+      expect(TerminalSession.osc7Report(['relative']), null);
+      expect(TerminalSession.osc7Report(['']), null);
     });
   });
 
