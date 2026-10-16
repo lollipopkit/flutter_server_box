@@ -1,0 +1,88 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Komga, as the Monitor's Comics app: deployed with Docker Compose from the
+# file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "gotson"
+name = "komga"
+project = "Komga"
+developer = "Komga (gotson)"
+version = "1.29.0"
+homepage = "https://komga.org"
+source = "https://github.com/gotson/komga/tree/1.29.0"
+glyph = "auto_stories"
+tone = "teal"
+categories = ["media"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Komga"
+
+[description]
+en = "Read comics, manga, BDs, magazines and eBooks from your library, with several users and apps that sync progress."
+zh = "阅读库中的漫画、漫画书、BD、杂志和电子书，支持多用户，并可与应用同步阅读进度。"
+zh-TW = "閱讀館藏中的漫畫、漫畫書、BD、雜誌和電子書，支援多使用者，並可與應用程式同步閱讀進度。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/gotson/komga/blob/1.29.0/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+KOMGA_VERSION = "1.29.0"
+
+[login]
+note = { en = "There is no default account. The first visit opens the sign-in page in claim mode: enter an email and a password (twice) to create the administrator. Create it before the port is reachable from the network. Then add libraries in the UI with the paths /data/comics and /data/books.", zh = "没有默认账户。首次访问时，登录页处于认领模式：输入邮箱和密码（两次）即可创建管理员。请在网络可访问此端口之前完成创建。之后在界面中以 /data/comics 和 /data/books 路径添加库。", zh-TW = "沒有預設帳戶。首次造訪時，登入頁處於認領模式：輸入電子郵件和密碼（兩次）即可建立管理員。請在網路可存取此連接埠之前完成建立。之後在介面中以 /data/comics 和 /data/books 路徑新增館藏。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "CONFIG_LOCATION"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration", zh = "配置", zh-TW = "設定" }
+help = { en = "Database, sessions, logs and thumbnails.", zh = "数据库、会话、日志和缩略图。", zh-TW = "資料庫、工作階段、日誌和縮圖。" }
+
+[[settings]]
+key = "comics"
+type = "path"
+env = "COMICS_LOCATION"
+default = "{shared}/comics"
+data = false
+label = { en = "Comics", zh = "漫画", zh-TW = "漫畫" }
+help = { en = "A library folder for comics and manga. Komga also writes here when you delete or import files.", zh = "漫画库文件夹。删除或导入文件时，Komga 也会写入此处。", zh-TW = "漫畫館藏資料夾。刪除或匯入檔案時，Komga 也會寫入此處。" }
+
+[[settings]]
+key = "books"
+type = "path"
+env = "BOOKS_LOCATION"
+default = "{shared}/books"
+data = false
+label = { en = "Books", zh = "图书", zh-TW = "圖書" }
+help = { en = "A library folder for eBooks. Komga also writes here when you delete or import files.", zh = "电子书库文件夹。删除或导入文件时，Komga 也会写入此处。", zh-TW = "電子書館藏資料夾。刪除或匯入檔案時，Komga 也會寫入此處。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "KOMGA_PORT"
+default = 25600
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "For Komga apps on other devices. Off: only through the desk.", zh = "供其他设备上的 Komga 应用连接。关闭时只能通过桌面访问。", zh-TW = "供其他裝置上的 Komga 應用程式連線。關閉時只能透過桌面存取。" }
+on = { KOMGA_BIND = "0.0.0.0" }
+off = { KOMGA_BIND = "127.0.0.1" }

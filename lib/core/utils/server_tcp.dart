@@ -9,8 +9,8 @@ import 'package:server_box/core/utils/monitor_tunnel.dart';
 import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -53,7 +53,7 @@ class ServerTcpChannel implements SshTunnelChannel {
 ///
 /// - SSH: a direct-tcpip channel (`SSHClient.forwardLocal`).
 /// - monitor agent: `MonitorTunnelChannel`, dialled by the agent from its own
-///   machine — only when its `stream` grant is not refused.
+///   machine — only when its `access` is not refused.
 /// - local: `Socket.connect` from this device, which is the server.
 ///
 /// So a host name resolves on the far end, and `localhost` means the server
@@ -73,7 +73,7 @@ class ServerTcpDialer {
   ServerTcpDialer({
     required this.spi,
     required Future<ServerTcpSsh> Function() ssh,
-    MonitorRemoteAccess? Function()? relayGrant,
+    MonitorAccess? Function()? relayGrant,
     this.transports = const {...ServerTransport.values},
   }) : _ssh = ssh,
        _relayGrant = relayGrant ?? _notRead;
@@ -89,7 +89,7 @@ class ServerTcpDialer {
     ssh: () async => ServerTcpSsh.client(
       await ref.read(serverProvider(spi.id).notifier).ensureShellClient(),
     ),
-    relayGrant: () => ref.read(serverProvider(spi.id)).remoteAccess,
+    relayGrant: () => ref.read(serverProvider(spi.id)).agentAccess,
     transports: transports,
   );
 
@@ -102,12 +102,13 @@ class ServerTcpDialer {
   final Set<ServerTransport> transports;
 
   final Future<ServerTcpSsh> Function() _ssh;
-  final MonitorRemoteAccess? Function() _relayGrant;
+  final MonitorAccess? Function() _relayGrant;
 
-  MonitorHttpClient? _monitor;
+  /// The server's shared client ([MonitorClientLease]), held until [close].
+  MonitorClientLease? _monitor;
   bool _closed = false;
 
-  static MonitorRemoteAccess? _notRead() => null;
+  static MonitorAccess? _notRead() => null;
 
   /// A byte stream to [host]:[port].
   Future<ServerTcpChannel> open(String host, int port) =>
@@ -171,7 +172,7 @@ class ServerTcpDialer {
   /// tunnels already open are not affected.
   void close() {
     _closed = true;
-    _monitor?.dispose();
+    _monitor?.release();
     _monitor = null;
   }
 
@@ -272,16 +273,15 @@ class ServerTcpDialer {
       case ServerConnectCredentialSsh():
         return null;
       case ServerConnectCredentialMonitorHttp():
-        // Asked before dialling: an agent older than the endpoint reports
-        // `full_access` and would refuse the upgrade, and one with the grant
-        // off answers 403. Finding that out at the dial would be after a
-        // loopback listener had been handed to a client.
+        // Asked before dialling: an agent that refuses this connection
+        // answers 403. Finding that out at the dial would be after a loopback
+        // listener had been handed to a client.
         final granted = _relayGrant();
-        if (granted != null && !granted.stream) {
+        if (granted != null && !granted.ok) {
           return ServerTcpErr(
             type: ServerTcpErrType.relayNotGranted,
             transport: transport,
-            message: 'The monitor agent does not relay TCP connections',
+            message: 'The monitor agent refuses to relay over this connection',
           );
         }
         return null;
@@ -332,10 +332,10 @@ class ServerTcpDialer {
         dial = () => _opened(ssh.forward(host, port));
         done = ssh.done;
       case ServerConnectCredentialMonitorHttp(:final monitor):
-        // One client for the tunnel's life rather than one per dial: it holds
-        // the login the relay socket is authorised with, and a fresh one per
-        // attempt would log in again each time.
-        final client = MonitorHttpClient(monitor);
+        // The server's shared client for the tunnel's life rather than one
+        // per dial: it holds the login the relay socket is authorised with.
+        final lease = MonitorClientLease(monitor);
+        final client = lease.client;
         dial = () => MonitorTunnelChannel.dial(
           client: client,
           remoteHost: host,
@@ -345,7 +345,7 @@ class ServerTcpDialer {
         // No SSH connection to outlive: the relay socket is opened per
         // accepted connection, and `MonitorTunnelChannel.close` ends it.
         done = Completer<void>().future;
-        release = client.dispose;
+        release = lease.release;
       case ServerConnectCredentialLocal():
         dial = () async => _SocketChannel(
           await Socket.connect(host, port, timeout: openTimeout),
@@ -386,7 +386,10 @@ class ServerTcpDialer {
   MonitorHttpClient _monitorClient(MonitorHttpCredential monitor) {
     // [close] has run: a client made now would never be disposed.
     if (_closed) throw StateError('ServerTcpDialer used after close');
-    return _monitor ??= MonitorHttpClient(monitor);
+    final held = _monitor;
+    if (held != null && held.client.monitor == monitor) return held.client;
+    held?.release();
+    return (_monitor = MonitorClientLease(monitor)).client;
   }
 
   /// [opening] within [openTimeout]. A direct-tcpip open cannot be cancelled

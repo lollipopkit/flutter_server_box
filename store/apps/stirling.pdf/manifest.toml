@@ -1,0 +1,84 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Stirling-PDF, as the Monitor's PDF Tools app: the ultra-lite build, whose code
+# is MIT only. Deployed with Docker Compose from the file beside this one.
+#
+# The default and fat images (stirlingtools/stirling-pdf:<version>[-fat]) are
+# built with STIRLING_FLAVOR=proprietary: they contain app/proprietary and
+# engine/, under the Stirling PDF User License, which permits no production
+# use without a paid subscription (only trial or minimal use). Their OCR and
+# Office conversion are therefore not offered; building the MIT core with them
+# from source needs a JDK and Gradle build per machine, too heavy for a router.
+
+schema = 1
+publisher = "stirling"
+name = "pdf"
+project = "Stirling-PDF"
+developer = "Stirling PDF Inc."
+version = "3.1.0"
+homepage = "https://www.stirlingpdf.com"
+source = "https://github.com/Stirling-Tools/Stirling-PDF/tree/v3.1.0"
+glyph = "picture_as_pdf"
+tone = "berry"
+categories = ["documents", "tools"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Stirling-PDF"
+
+[description]
+en = "Merge, split, convert, compress and edit PDF files in the browser. The files are processed on this machine. OCR and Office document conversion are not included."
+zh = "在浏览器中合并、拆分、转换、压缩和编辑 PDF 文件。文件在本机处理。不包含 OCR 和 Office 文档转换。"
+zh-TW = "在瀏覽器中合併、分割、轉換、壓縮與編輯 PDF 檔案。檔案在本機處理。不包含 OCR 與 Office 文件轉換。"
+
+# The ultra-lite image is built from the MIT-licensed core. The repository's
+# LICENSE also names the Stirling PDF User License for other directories, so
+# the admin is shown the file before deploying.
+[license]
+spdx = "MIT"
+url = "https://github.com/Stirling-Tools/Stirling-PDF/blob/v3.1.0/LICENSE"
+accept = true
+
+# Upstream documents the memory of the standard image only (4 GB for 1-10
+# users); the ultra-lite image has no documented minimum.
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+STIRLING_IMAGE_TAG = "3.1.0-ultra-lite"
+
+# This build has no accounts: the account system is in app/proprietary.
+[login]
+note = { en = "This build has no sign-in. Anyone who can reach the port can use it, so keep it reachable only through the desk unless the network is trusted.", zh = "此版本没有登录功能。任何能访问该端口的人都可以使用，因此除非网络可信，请只通过桌面访问。", zh-TW = "此版本沒有登入功能。任何能連上該連接埠的人都可以使用，因此除非網路可信，請只透過桌面存取。" }
+
+[[settings]]
+key = "configs"
+type = "path"
+env = "CONFIG_LOCATION"
+default = "{stack}/configs"
+data = true
+label = { en = "Settings", zh = "设置", zh-TW = "設定" }
+help = { en = "Stirling-PDF's settings.yml and its state.", zh = "Stirling-PDF 的 settings.yml 和状态。", zh-TW = "Stirling-PDF 的 settings.yml 與狀態。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "STIRLING_PORT"
+default = 8081
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk. This build has no sign-in.", zh = "关闭时只能通过桌面访问。此版本没有登录功能。", zh-TW = "關閉時只能透過桌面存取。此版本沒有登入功能。" }
+on = { STIRLING_BIND = "0.0.0.0" }
+off = { STIRLING_BIND = "127.0.0.1" }

@@ -15,9 +15,9 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// else.
 ///
 /// The agent runs the command as the account it runs as, and a panel login is
-/// the only thing authorising it. It decides whether to offer that at all
-/// (`remote_access.full_access`) and re-checks per request, so this is never
-/// the thing granting access — it only asks.
+/// the only thing authorising it. It refuses over a plaintext link without
+/// its `allow_insecure` and re-checks per request, so this is never the thing
+/// granting access — it only asks.
 /// Cancelling stops the *waiting*, not the command. One request carries the
 /// whole run, so there is no channel to signal down; the agent goes on to its
 /// own timeout and kills it there. A cancelled call therefore returns nothing

@@ -1,0 +1,83 @@
+# Nextcloud 35.0.1 (AGPL-3.0-or-later), https://github.com/nextcloud/server/tree/v35.0.1
+#
+# Written for ServerBox Monitor's Files app from the release's apache image
+# (https://github.com/nextcloud/docker/tree/master/35/apache) and its cron.sh.
+# Not a copy of an upstream compose file: the upstream examples run the same
+# image with a cron service and PostgreSQL and Redis beside it.
+#
+# - no `name:` and no `container_name`: the agent names the project;
+# - the published address and port, the data folders, the time zone and the
+#   versions come from the env file the agent writes;
+# - the admin account is seeded from NEXTCLOUD_ADMIN_* on the first start.
+# - the image runs as root and drops to www-data itself, so no `user:` here.
+
+services:
+  app:
+    image: nextcloud:${NEXTCLOUD_VERSION}-apache
+    environment:
+      TZ: ${SBM_TZ}
+    env_file:
+      - .env
+    volumes:
+      - ${NEXTCLOUD_LOCATION}:/var/www/html
+    ports:
+      - '${NEXTCLOUD_BIND}:${NEXTCLOUD_PORT}:80'
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/status.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: always
+
+  # Background jobs: the same image, running busybox crond instead of Apache.
+  # Nextcloud's "Cron" background-job mode (set in the admin settings) reads it.
+  cron:
+    image: nextcloud:${NEXTCLOUD_VERSION}-apache
+    entrypoint: /cron.sh
+    environment:
+      TZ: ${SBM_TZ}
+    env_file:
+      - .env
+    volumes:
+      - ${NEXTCLOUD_LOCATION}:/var/www/html
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      # Scans /proc with sh only (the base image has no pgrep). '[c]rond' keeps this
+      # check's own command line from matching itself.
+      test: ["CMD-SHELL", "for p in /proc/[0-9]*; do grep -qa '[c]rond' \"$$p/cmdline\" 2>/dev/null && exit 0; done; exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+    restart: always
+
+  database:
+    image: postgres:${POSTGRES_VERSION}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always

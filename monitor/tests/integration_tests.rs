@@ -45,10 +45,8 @@ async fn test_database_init() {
 #[tokio::test]
 async fn test_jwt_auth() {
     let secret = "test-secret";
-    let user_id = "testuser";
-    
     // Test token generation
-    let token = auth::generate_token(user_id, secret);
+    let token = auth::generate_token(secret);
     assert!(token.is_ok());
     
     let token = token.unwrap();
@@ -59,7 +57,7 @@ async fn test_jwt_auth() {
     assert!(claims.is_ok());
     
     let claims = claims.unwrap();
-    assert_eq!(claims.sub, user_id);
+    assert_eq!(claims.sub, auth::SUBJECT);
     
     // Test invalid token
     let invalid_claims = auth::verify_token("invalid.token", secret);

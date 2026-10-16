@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:fl_lib/theme.dart';
 import 'package:fl_pi_llm/fl_pi_llm.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/service/monitor_login_devices.dart';
 import 'package:server_box/core/service/theme_host.dart';
 
 /// Runs before every test file.
@@ -16,6 +18,10 @@ import 'package:server_box/core/service/theme_host.dart';
 /// `build/native_assets`.
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   initThemeHost();
+  // The platform Keychain/Keystore is not there under `flutter test`, and
+  // what one test's agent handed out is not the next test's.
+  MonitorLoginDevices.store = MemoryDeviceTokenStore();
+  setUp(MonitorLoginDevices.resetForTest);
   if (_nativeAsset('fl_lib_ffi') case final lib?) {
     await ThemeRust.ensureInitialized(library: lib);
   }

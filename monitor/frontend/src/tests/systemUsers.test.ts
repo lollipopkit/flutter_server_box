@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import SystemUsers from '../pages/SystemUsers.svelte'
+import SystemUsers from '../desk/apps/system_users/SystemUsersApp.svelte'
 import { api } from '../lib/api'
 import type { UserRow, UserView } from '../types'
 
@@ -54,7 +54,7 @@ describe('System users page', () => {
   })
 
   it('offers no removal of root or of the agent own account', async () => {
-    render(SystemUsers, { onback: () => {} })
+    render(SystemUsers)
     await fireEvent.click(await screen.findByRole('button', { name: /^root/ }))
     expect(screen.getByRole('button', { name: /delete user/i })).toBeDisabled()
   })
@@ -63,7 +63,7 @@ describe('System users page', () => {
     actSystemUser
       .mockResolvedValueOnce({ ...ok, succeeded: false, sudo_rejected: true })
       .mockResolvedValueOnce(ok)
-    render(SystemUsers, { onback: () => {} })
+    render(SystemUsers)
     await fireEvent.click(await screen.findByRole('button', { name: /^deploy/ }))
     await fireEvent.click(screen.getByRole('button', { name: /delete user/i }))
     expect(actSystemUser).not.toHaveBeenCalled()
@@ -99,7 +99,7 @@ describe('System users page', () => {
       uid_min: null,
       users: [],
     })
-    render(SystemUsers, { onback: () => {} })
+    render(SystemUsers)
     expect(await screen.findByText(/linux/i)).toBeInTheDocument()
   })
 })

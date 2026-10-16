@@ -1,0 +1,65 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Home Assistant, as the Monitor's Home app: deployed with Docker Compose from the
+# compose file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "homeassistant"
+name = "home_assistant"
+project = "Home Assistant"
+developer = "Home Assistant"
+version = "2026.10.1"
+homepage = "https://www.home-assistant.io"
+source = "https://github.com/home-assistant/core/tree/2026.10.1"
+glyph = "home"
+tone = "teal"
+categories = ["home"]
+notices = ["pullsImages", "bindsPaths", "mountsHostFiles", "hostNetwork"]
+
+[title]
+en = "Home Assistant"
+
+[description]
+en = "Control and automate your smart home devices with Home Assistant, with local control and no cloud needed."
+zh = "用 Home Assistant 控制和自动化智能家居设备，支持本地控制，无需云服务。"
+zh-TW = "用 Home Assistant 控制和自動化智慧家庭裝置，支援本機控制，無需雲端服務。"
+
+[license]
+spdx = "Apache-2.0"
+url = "https://github.com/home-assistant/core/blob/2026.10.1/LICENSE.md"
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-config"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+HA_VERSION = "2026.10.1"
+
+[login]
+# Home Assistant has no seeded admin: the first start shows an onboarding wizard
+# that creates the owner account (an administrator) in the browser.
+note = { en = "No account is seeded: on first start the onboarding wizard in the window creates the owner (administrator) account. To let Agent mode use it, add the Model Context Protocol Server integration, create a long-lived access token in your profile, and add http://127.0.0.1:8123/api/mcp with the header Authorization: Bearer <token> under Settings > Agent > MCP servers.", zh = "不预设账户：首次启动时，窗口中的引导向导会创建所有者（管理员）账户。若要让 Agent 模式使用它：添加「Model Context Protocol Server」集成，在个人资料中创建长期访问令牌，然后在「设置 > Agent > MCP 服务器」添加 http://127.0.0.1:8123/api/mcp，请求头 Authorization: Bearer <令牌>。", zh-TW = "不預設帳號：首次啟動時，視窗中的引導精靈會建立擁有者（管理員）帳號。若要讓 Agent 模式使用它：新增「Model Context Protocol Server」整合，在個人資料中建立長期存取權杖，然後在「設定 > Agent > MCP 伺服器」新增 http://127.0.0.1:8123/api/mcp，請求標頭 Authorization: Bearer <權杖>。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "HA_CONFIG_LOCATION"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration", zh = "配置", zh-TW = "設定" }
+help = { en = "Home Assistant's configuration, database and integrations' data (/config).", zh = "Home Assistant 的配置、数据库和集成数据（/config）。", zh-TW = "Home Assistant 的設定、資料庫和整合資料（/config）。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "HA_PORT"
+default = 8123
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+help = { en = "Home Assistant's server port, set at startup (SETUP_PORT). It listens on every address.", zh = "Home Assistant 的服务端口，启动时设置（SETUP_PORT）。它监听所有地址。", zh-TW = "Home Assistant 的服務連接埠，啟動時設定（SETUP_PORT）。它監聽所有位址。" }

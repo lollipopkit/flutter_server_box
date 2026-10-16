@@ -2,6 +2,8 @@
 /// (`POST /virt/console`), and `/virt/console/ws` carries it with
 /// `/stream/ws`'s framing, so [RelayChannel] serves VNC here as it serves a
 /// remote desktop.
+import { get } from 'svelte/store'
+import { LL } from '../i18n/i18n-svelte'
 import { agentWsUrl, wsTicketProtocol } from './agentUrl'
 import { parseControl } from './desktop.svelte'
 import { servers } from './servers.svelte'
@@ -32,7 +34,7 @@ export function openConsoleSocket(ticket: string): Promise<WebSocket> {
     socket.onclose = () => {
       if (!settled) {
         settled = true
-        reject(new Error('The console ended'))
+        reject(new Error(get(LL).virtConsoleEnded()))
       }
     }
   })

@@ -18,9 +18,9 @@ import 'package:server_box/core/utils/private_address.dart';
 ///
 /// **Collected by the status script, not by a command of its own.** `ip` is a
 /// key in `sbm_parser`'s manifest, on the extended cadence. That is what makes
-/// one answer serve both transports, so a monitor-only server needs no
-/// `full_access` grant to be placed — going through `/exec` would have asked
-/// for "run anything" to answer "where are you".
+/// one answer serve both transports, so a monitor-only server is placed even
+/// over a link the agent refuses commands on — going through `/exec` would
+/// have asked for "run anything" to answer "where are you".
 ///
 /// So this cannot place a home server behind a router. Nothing local can. What
 /// it does place is the far commoner case of a VPS reached over a VPN or by an

@@ -22,13 +22,13 @@ use common::machine::{audit, call, server};
 const NO_SUCH_PID: i64 = 4_000_000_000;
 
 async fn list(srv: &TestServer, query: &str) -> Value {
-    let (status, body) = call(srv, Some("admin"), Method::GET, &format!("/api/v1/process{query}"), None).await;
+    let (status, body) = call(srv, true, Method::GET, &format!("/api/v1/process{query}"), None).await;
     assert_eq!(status, 200, "{body}");
     body
 }
 
-async fn stop(srv: &TestServer, user: &str, body: Value) -> (u16, Value) {
-    call(srv, Some(user), Method::POST, "/api/v1/process", Some(body)).await
+async fn stop(srv: &TestServer, body: Value) -> (u16, Value) {
+    call(srv, true, Method::POST, "/api/v1/process", Some(body)).await
 }
 
 fn signals_available() -> bool {
@@ -37,28 +37,6 @@ fn signals_available() -> bool {
 
 fn sorts(body: &Value) -> Vec<&str> {
     body["sorts"].as_array().unwrap().iter().map(|m| m.as_str().unwrap()).collect()
-}
-
-#[ntex::test]
-async fn both_halves_need_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, "/api/v1/process", None).await;
-    assert_eq!(status, 401);
-
-    // A command line is where an argument-borne secret shows up, so reading
-    // the table is not `read`.
-    let (status, body) = call(&srv, Some("viewer"), Method::GET, "/api/v1/process", None).await;
-    assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")));
-    let (status, _) = stop(&srv, "viewer", json!({"pid": 42, "start_id": "1", "signal": "kill"})).await;
-    assert_eq!(status, 403);
-
-    // Both refusals are on file, by account; nothing ran.
-    let rows = audit(&db).await;
-    assert_eq!(rows.len(), 2, "{rows:?}");
-    assert!(rows.iter().all(|(action, result, subject, _)| action == "denied"
-        && result == "denied"
-        && subject.as_deref() == Some("viewer")));
-    assert_eq!(rows[1].3.as_deref(), Some("process stop KILL 42: shell not_granted"));
 }
 
 /// The table is the machine's, and the machine is running this test.
@@ -132,7 +110,7 @@ async fn a_reading_is_reused_inside_the_window() {
 #[ntex::test]
 async fn a_signal_without_the_process_identity_is_refused() {
     let (srv, db) = server().await;
-    let (status, _) = stop(&srv, "admin", json!({"pid": 1, "signal": "term"})).await;
+    let (status, _) = stop(&srv, json!({"pid": 1, "signal": "term"})).await;
     assert_eq!(status, 400);
     let rows = audit(&db).await;
     assert_eq!(rows.len(), 1, "{rows:?}");
@@ -146,7 +124,7 @@ async fn a_pid_no_process_holds_reports_a_changed_target() {
         return;
     }
     let (srv, db) = server().await;
-    let (status, body) = stop(&srv, "admin", json!({"pid": NO_SUCH_PID, "start_id": "1", "signal": "kill"})).await;
+    let (status, body) = stop(&srv, json!({"pid": NO_SUCH_PID, "start_id": "1", "signal": "kill"})).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["outcome"], "target_changed", "{body}");
     assert_eq!(body["sudo_rejected"], false);
@@ -189,7 +167,6 @@ async fn a_signal_stops_the_process_it_names() {
     let signal = body["signals"][0].clone();
     let (_, answer) = stop(
         &srv,
-        "admin",
         json!({"pid": child.id(), "start_id": row["start_id"], "signal": signal}),
     )
     .await;
@@ -203,6 +180,6 @@ async fn a_signal_stops_the_process_it_names() {
 #[ntex::test]
 async fn capabilities_list_the_process_page() {
     let (srv, _) = server().await;
-    let (_, caps) = call(&srv, Some("viewer"), Method::GET, "/api/v1/capabilities", None).await;
+    let (_, caps) = call(&srv, true, Method::GET, "/api/v1/capabilities", None).await;
     assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "process"), "{caps}");
 }

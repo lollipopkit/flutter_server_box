@@ -10,7 +10,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -24,8 +24,10 @@ import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/scheduled_tasks.dart';
 import 'package:server_box/view/page/services.dart';
+import 'package:server_box/view/page/shares/page.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
+import 'package:server_box/view/page/storage_admin/page.dart';
 import 'package:server_box/view/page/users.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
@@ -393,14 +395,10 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 /// arranged them.
 ///
 /// A function rather than a method on the row, because the page that hosts the
-/// row needs the same answer before it builds one — and it used to ask a
-/// coarser question of its own (`capabilities.terminal`), which hid the whole
-/// row on a monitor server whose agent serves files but grants no shell. That
-/// server could still be browsed from the Files tab, so the row was the only
-/// thing missing, and nothing said why.
+/// row needs the same answer before it builds one.
 List<ServerFuncEntry> serverFuncBtnsFor(
   Spi spi,
-  MonitorRemoteAccess? granted,
+  MonitorAccess? granted,
 ) {
   final ordered = () {
     try {
@@ -462,7 +460,7 @@ void runServerFunc(
         if (!spi.local &&
             !serverFilesUseAgent(
               spi,
-              ref.read(serverProvider(spi.id)).remoteAccess,
+              ref.read(serverProvider(spi.id)).agentAccess,
             ) &&
             !await _ensureSshClient(context, spi.id, ref)) {
           return;
@@ -556,6 +554,16 @@ void runServerFunc(
         final args = SpiRequiredArgs(spi);
         unawaited(FirewallPage.route.go(context, args));
         break;
+      case ServerFuncBtn.storage:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        unawaited(StoragePage.route.go(context, SpiRequiredArgs(spi)));
+        break;
+      case ServerFuncBtn.shares:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        unawaited(SharesPage.route.go(context, SpiRequiredArgs(spi)));
+        break;
       case ServerFuncBtn.remoteDesktop:
         // A monitor-backed server has nothing to connect here: the agent dials
         // the target when the session opens, and the profile page works without
@@ -594,9 +602,8 @@ void _gotoSSH(Spi spi, WidgetRef ref) {
 /// Which transport that turns out to be is [ServerNotifier.ensureExec]'s
 /// business — over SSH it connects a client, through a monitor agent there is
 /// nothing to connect, so for that transport this only reports what the page
-/// would have reported anyway. It is not a permission check: an agent that has
-/// since switched its grant off answers 403 to the first command, inside the
-/// page. Connecting here rather than only reporting a missing connection: the
+/// would have reported anyway. It is not a permission check: an agent that
+/// refuses the link answers 403 to the first command, inside the page. Connecting here rather than only reporting a missing connection: the
 /// SSH path builds its client during the status fetch, so a server the user
 /// has not looked at yet has none, and "wait for the connection" would be
 /// advice that never comes true.

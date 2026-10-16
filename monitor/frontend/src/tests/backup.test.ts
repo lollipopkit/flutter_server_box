@@ -1,17 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { ApiError } from '../lib/api'
 import { backupRefusalText, validBackupName } from '../lib/backup'
-import { enabledFeatures } from '../lib/features'
+import backupApp from '../desk/apps/backup/manifest'
 import type { Capabilities } from '../types'
 
 describe('the backup page', () => {
-  it('is offered to an admin of an agent that serves it, and nobody else', () => {
-    const caps = (features: string[], admin: boolean) =>
-      ({ features, me: { admin }, grants: { shell: { ok: true } } }) as unknown as Capabilities
-    const ids = (c: Capabilities) => enabledFeatures(c).map((f) => f.id)
-    expect(ids(caps(['backup'], true))).toEqual(['backup'])
-    expect(ids(caps(['backup'], false))).toEqual([])
-    expect(ids(caps([], true))).toEqual([])
+  it('is offered by an agent that serves it, over a link the account may act on', () => {
+    const caps = (features: string[], ok: boolean) => ({ features, access: { ok } }) as unknown as Capabilities
+    expect(backupApp.available(caps(['backup'], true))).toBe(true)
+    expect(backupApp.available(caps(['backup'], false))).toBe(false)
+    expect(backupApp.available(caps([], true))).toBe(false)
   })
 
   it('takes the names the agent takes', () => {

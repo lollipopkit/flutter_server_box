@@ -645,14 +645,22 @@ class _StripTabState extends State<_StripTab> {
 
   /// Scrolled into the strip when it becomes the selected one — by a key, a
   /// sheet, a tab opened at the end — rather than left selected out of sight.
+  ///
+  /// The strip's own list only. `Scrollable.ensureVisible` walks every
+  /// scrollable above, the home's tab `PageView` included: a workspace first
+  /// built while that slides past it to another tab pulled the slide back to
+  /// the workspace, leaving the other tab selected and this one on screen.
   void _reveal() => WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!mounted) return;
+    final object = context.findRenderObject();
+    final strip = Scrollable.maybeOf(context)?.position;
+    if (object == null || strip == null) return;
     // Either end, whichever it is past; neither moves it when it is in view.
     for (final policy in const [
       ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
       ScrollPositionAlignmentPolicy.keepVisibleAtStart,
     ]) {
-      Scrollable.ensureVisible(context, alignmentPolicy: policy);
+      strip.ensureVisible(object, alignmentPolicy: policy);
     }
   });
 

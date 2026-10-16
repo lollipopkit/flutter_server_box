@@ -542,7 +542,7 @@ pub fn parse(output: &str) -> Result<FirewalldSnapshot, String> {
     let mut panic = false;
     let mut sections: HashMap<&str, Vec<String>> = HashMap::new();
     let mut section: Option<&str> = None;
-    let normalized = output.replace("\r\n", "\n");
+    let normalized = crate::common::normalize_newlines(output);
     for raw in normalized.split('\n') {
         let line = raw.trim_end();
         if line == INCOMPLETE_MARKER {

@@ -1,0 +1,103 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# Transmission, as the Monitor's Downloads app: deployed with Docker Compose from
+# the file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "transmission"
+name = "transmission"
+project = "Transmission"
+developer = "The Transmission Project"
+version = "4.1.3"
+homepage = "https://transmissionbt.com"
+source = "https://github.com/transmission/transmission/tree/4.1.3"
+glyph = "download"
+tone = "leaf"
+categories = ["files", "network"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "Transmission"
+
+[description]
+en = "Download files over BitTorrent. Finished files are kept in the shared downloads folder, where media apps can use them."
+zh = "通过 BitTorrent 下载文件。下载完成的文件保存在共享的下载文件夹中，媒体应用可以直接使用。"
+zh-TW = "透過 BitTorrent 下載檔案。下載完成的檔案保存在共用的下載資料夾中，媒體應用程式可以直接使用。"
+
+# Transmission's COPYING: GPLv2 or GPLv3, at the pinned tag.
+[license]
+spdx = "GPL-2.0-only OR GPL-3.0-only"
+url = "https://github.com/transmission/transmission/blob/4.1.3/COPYING"
+accept = true
+
+# The image is linuxserver.io's build (Alpine, amd64 and arm64 only).
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+# The web interface asks for HTTP basic auth, which a browser cannot answer
+# inside the desk's frame: the agent's proxy signs in with [login].
+[web]
+port = "web"
+path = "/transmission/web/"
+basic_auth = true
+
+[env]
+TRANSMISSION_IMAGE_TAG = "4.1.3-r0-ls363"
+TRANSMISSION_USER = "admin"
+
+[[secrets]]
+env = "TRANSMISSION_PASS"
+length = 32
+
+[login]
+user = "admin"
+password = "TRANSMISSION_PASS"
+note = { en = "The desk's window signs in with this user name and password by itself. A browser or remote app that reaches the port directly asks for them. The app always sets them; without them Transmission accepts any request.", zh = "桌面窗口会自动使用此用户名和密码登录。直接访问该端口的浏览器或远程客户端会要求输入它们。应用始终设置它们；没有它们时 Transmission 会接受任何请求。", zh-TW = "桌面視窗會自動使用此使用者名稱與密碼登入。直接存取該連接埠的瀏覽器或遠端用戶端會要求輸入它們。應用程式一律會設定它們；沒有它們時 Transmission 會接受任何請求。" }
+
+[[settings]]
+key = "config"
+type = "path"
+env = "TRANSMISSION_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Settings", zh = "设置", zh-TW = "設定" }
+help = { en = "Transmission's settings.json and logs.", zh = "Transmission 的 settings.json 和日志。", zh-TW = "Transmission 的 settings.json 與記錄檔。" }
+
+[[settings]]
+key = "downloads"
+type = "path"
+env = "DOWNLOADS_LOCATION"
+default = "{shared}/downloads"
+data = false
+label = { en = "Downloads folder", zh = "下载文件夹", zh-TW = "下載資料夾" }
+help = { en = "Shared with the media apps. Transmission writes to complete/ and incomplete/ inside it.", zh = "与媒体应用共享。Transmission 在其中写入 complete/ 和 incomplete/。", zh-TW = "與媒體應用程式共用。Transmission 會在其中寫入 complete/ 與 incomplete/。" }
+
+[[settings]]
+key = "web"
+type = "port"
+env = "TRANSMISSION_PORT"
+default = 9091
+label = { en = "Web port", zh = "网页端口", zh-TW = "網頁連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Web interface reachable from the network", zh = "网页界面允许从网络访问", zh-TW = "網頁介面允許從網路存取" }
+help = { en = "Off: only through the desk. The peer port below is always open to the network.", zh = "关闭时只能通过桌面访问。下方的对等端口始终对网络开放。", zh-TW = "關閉時只能透過桌面存取。下方的對等連接埠一律對網路開放。" }
+on = { TRANSMISSION_BIND = "0.0.0.0" }
+off = { TRANSMISSION_BIND = "127.0.0.1" }
+
+# Peers connect to this port for torrent data, over TCP and UDP. The container
+# listens on the same number (PEERPORT), so the announced port is reachable.
+[[settings]]
+key = "peer"
+type = "port"
+env = "TORRENT_PORT"
+default = 51413
+protocol = "both"
+label = { en = "Peer port (TCP and UDP)", zh = "对等端口（TCP 和 UDP）", zh-TW = "對等連接埠（TCP 與 UDP）" }
+help = { en = "Other BitTorrent peers connect here. Forward it on your router for faster downloads.", zh = "其他 BitTorrent 对等端点通过此端口连接。在路由器上转发此端口可提高下载速度。", zh-TW = "其他 BitTorrent 對等端點透過此連接埠連線。在路由器上轉送此連接埠可提高下載速度。" }

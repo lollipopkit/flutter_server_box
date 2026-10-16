@@ -7,8 +7,8 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_status.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -345,41 +345,28 @@ void main() {
   group('the files capability', () {
     test('SSH carries files, and an agent carries them if it says so', () {
       expect(const SshCapabilities().files, isTrue);
-
-      // The agent's own answer, not `full_access` read twice: its file API is
-      // confined to the roots its operator named, so it can be on while the
-      // shell is off — and off while the shell is on.
       expect(
-        const MonitorHttpCapabilities(MonitorRemoteAccess()).files,
+        const MonitorHttpCapabilities(MonitorAccess.none).files,
         isFalse,
       );
       expect(
-        const MonitorHttpCapabilities(
-          MonitorRemoteAccess(fullAccess: true),
-        ).files,
-        isFalse,
-      );
-      expect(
-        const MonitorHttpCapabilities(MonitorRemoteAccess(files: true)).files,
+        const MonitorHttpCapabilities(MonitorAccess.granted).files,
         isTrue,
       );
     });
 
     test('an agent that serves files still carries no byte stream', () {
       // Which is the whole case the endpoint exists for: a host with no
-      // reachable sshd. The file tab must open it, and port forwarding must
-      // not be offered on it.
-      const caps = MonitorHttpCapabilities(MonitorRemoteAccess(files: true));
+      // reachable sshd. The file tab must open it, and SFTP must not be
+      // pointed at it.
+      const caps = MonitorHttpCapabilities(MonitorAccess.granted);
 
       expect(caps.files, isTrue);
       expect(caps.byteStream, isFalse);
     });
 
-    test('an older agent grants nothing it was never asked about', () {
-      // `/capabilities` without a `files` field at all.
-      final granted = MonitorRemoteAccess.fromJson(const {'terminal': true});
-
-      expect(granted.files, isFalse);
+    test('an agent that did not say grants nothing', () {
+      expect(MonitorAccess.fromJson(const {}).ok, isFalse);
     });
   });
 }

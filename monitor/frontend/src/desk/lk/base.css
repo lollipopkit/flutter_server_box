@@ -1,0 +1,143 @@
+/* lollipopkit Design System base (styles/base.css), scoped to `.lk`. */
+/* Fonts are separate (`fonts.css`, `icons.css`), so an app takes only what
+   it draws. */
+
+.lk {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font-ui);
+  font-size: var(--text-13);
+  line-height: var(--leading-body);
+  color: var(--text-primary);
+  /* Monospaced text is what a machine reads — paths, URLs, commands — and
+     JetBrains Mono's contextual ligatures redraw it (`->` as an arrow, `!=`
+     as ≠, and in Safari `//` as a gap). Figtree has none to lose. */
+  font-feature-settings: 'calt' 0;
+}
+/* Form controls do not inherit it on their own. */
+.lk :is(input, textarea, select) {
+  font-feature-settings: inherit;
+}
+.lk ::selection {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+
+@layer components {
+  .lk a {
+    color: var(--color-accent-text);
+    text-decoration: none;
+  }
+  .lk a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .lk-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .lk-caps {
+    font-size: var(--text-11);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+  .lk-num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes lk-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes lk-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-window-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-notif-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 24px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lk-dock-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+@keyframes lk-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lk-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Scrollbars: thin, tinted, inset from the window's edge. */
+.lk * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lk-scrollbar-thumb-color, color-mix(in srgb, var(--text-primary) 22%, transparent))
+    var(--lk-scrollbar-track-color, transparent);
+}
+/* A theme's thickness is the thumb's; the 3px inset stays around it. */
+.lk ::-webkit-scrollbar {
+  width: calc(var(--lk-scrollbar-thickness, 5px) + 6px);
+  height: calc(var(--lk-scrollbar-thickness, 5px) + 6px);
+  background: transparent;
+}
+.lk ::-webkit-scrollbar-track,
+.lk ::-webkit-scrollbar-corner {
+  background: var(--lk-scrollbar-track-color, transparent);
+}
+.lk ::-webkit-scrollbar-thumb {
+  background: var(--lk-scrollbar-thumb-color, color-mix(in srgb, var(--text-primary) 18%, transparent));
+  border-radius: var(--lk-scrollbar-radius, 11px);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 34px;
+}
+.lk ::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--text-primary) 36%, transparent);
+  border-width: 2px;
+}

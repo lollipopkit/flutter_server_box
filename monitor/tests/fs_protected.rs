@@ -44,6 +44,9 @@ fn state() -> State {
         fs::write(home.join(name), name).unwrap();
     }
     fs::write(cmds.join("10-uptime"), "uptime").unwrap();
+    fs::create_dir_all(home.join("stacks/futo.immich/library")).unwrap();
+    fs::write(home.join("stacks/futo.immich/.env"), "DB_PASSWORD='x'").unwrap();
+    fs::write(home.join("stacks/futo.immich/compose.yaml"), "services: {}").unwrap();
 
     let mut protected = Protected::default();
     for name in [
@@ -56,6 +59,7 @@ fn state() -> State {
         protected.file(&home.join(name));
     }
     protected.tree(&cmds);
+    protected.in_each(&home.join("stacks"), ".env");
     // The root of the filesystem the temporary directory is on. Not the working
     // directory's: on Windows the two can be different drives, and `D:\` holds
     // nothing of `C:\`.
@@ -99,6 +103,19 @@ fn the_state_files_cannot_be_read() {
         st.roots.resolve_existing(&s(&st.cmds.join("10-uptime"))),
         Err(FsDenied::OutsideRoots)
     );
+}
+
+#[test]
+fn a_web_apps_env_file_is_state_its_other_files_are_not() {
+    let st = state();
+    let stack = st.home.join("stacks/futo.immich");
+    assert_eq!(st.roots.resolve_existing(&s(&stack.join(".env"))), Err(FsDenied::OutsideRoots));
+    // One deployed later: its own folder, made after the agent started.
+    assert_eq!(st.roots.resolve_new(&s(&st.home.join("stacks/acme.notes/.env"))), Err(FsDenied::OutsideRoots));
+    assert!(st.roots.resolve_existing(&s(&stack.join("compose.yaml"))).is_ok());
+    assert!(st.roots.resolve_new(&s(&stack.join("library/photo.jpg"))).is_ok());
+    // Moving the folder would carry the file away.
+    assert_eq!(st.roots.check_mutable(&stack), Err(FsDenied::OutsideRoots));
 }
 
 #[test]
@@ -218,15 +235,10 @@ mod over_http {
             ..Default::default()
         };
         let mut remote = config.get_remote_access();
-        remote.fs.enabled = Some(true);
-        // The root of the filesystem [home] is on — on Windows a drive, and not
-        // necessarily the one `/` means to this process.
-        let whole = home.ancestors().last().unwrap().to_string_lossy().into_owned();
-        remote.fs.roots = vec![whole];
         // Plaintext from the test client, which is loopback anyway.
         remote.allow_insecure = true;
         config.remote_access = Some(remote);
-        let state: Arc<AppState> = common::upgraded_state(config).await;
+        let state: Arc<AppState> = common::owned_state(config).await;
         web_test::server(move || {
             let state = state.clone();
             async move {
@@ -238,7 +250,7 @@ mod over_http {
     }
 
     fn token() -> String {
-        generate_token("admin", SECRET).unwrap()
+        generate_token(SECRET).unwrap()
     }
 
     /// Percent-encodes a path for a query string.
@@ -254,7 +266,7 @@ mod over_http {
     }
 
     #[ntex::test]
-    async fn an_admin_with_the_whole_filesystem_still_cannot_reach_it() {
+    async fn the_whole_filesystem_still_cannot_reach_it() {
         let dir = tempfile::tempdir().unwrap();
         let home = std::fs::canonicalize(dir.path()).unwrap();
         for name in ["serverbox_monitor.db", "jwt.secret", "key.pem", "notes.txt"] {
@@ -292,6 +304,18 @@ mod over_http {
             .map(|e| e["name"].as_str().unwrap().to_string())
             .collect();
         assert_eq!(names, ["notes.txt"]);
+
+        // A file is not listed as a folder: a request mistake, not a fault.
+        let file = home.join("notes.txt").to_string_lossy().into_owned();
+        let resp = srv
+            .get(format!("/api/v1/fs/list?path={}", encode(&file)))
+            .header("Authorization", &auth)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status().as_u16(), 400);
+        let body: serde_json::Value = resp.json().await.unwrap();
+        assert_eq!(body["error"], "not_a_directory");
 
         // The directory they are in is not moved, removed or opened up.
         let status = srv

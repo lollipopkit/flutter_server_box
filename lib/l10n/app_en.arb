@@ -2651,20 +2651,6 @@
       }
     }
   },
-  "funcNeedsAgentGrant": "{func} needs the Monitor agent's {setting} to be turned on.",
-  "@funcNeedsAgentGrant": {
-    "placeholders": {
-      "func": { "type": "String" },
-      "setting": { "type": "String" }
-    }
-  },
-  "funcNeedsAgentUpdate": "{func} needs a newer Monitor agent.",
-  "@funcNeedsAgentUpdate": {
-    "placeholders": {
-      "func": { "type": "String" }
-    }
-  },
-  "portForwardRemoteNeedsAgent": "Remote forwards through the Monitor agent need a newer agent: update it on the server.",
   "rangeLive": "Live",
   "@rangeLive": {
     "description": "User-facing label or message for range live."
@@ -3607,7 +3593,7 @@
   "@corsOriginsTip": {
     "description": "Help text for the cors origins setting or action."
   },
-  "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml.",
+  "monitorNoRemoteAccess": "This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.",
   "@monitorNoRemoteAccess": {
     "description": "User-facing label or message for monitor no remote access."
   },
@@ -6660,58 +6646,19 @@
   },
   "reduceMotion": "Reduce motion",
   "copyLink": "Copy link",
-  "funcNeedsAgentPermission": "Your account on this Monitor agent has no permission for {func}. Ask the agent's admin.",
-  "@funcNeedsAgentPermission": {
-    "placeholders": {
-      "func": { "type": "String" }
-    }
-  },
   "funcNeedsAgentHttps": "{func} needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.",
   "@funcNeedsAgentHttps": {
     "placeholders": {
       "func": { "type": "String" }
     }
   },
-  "funcNeedsAgentSetup": "{func} is not set up on this Monitor agent; its operator has to configure it.",
-  "@funcNeedsAgentSetup": {
-    "placeholders": {
-      "func": { "type": "String" }
-    }
-  },
-  "monitorFilesReadOnly": "Read-only: this account can browse files on the agent but not change them.",
   "monitorAccess": "Access",
-  "monitorAccounts": "Accounts",
-  "monitorRoles": "Roles",
-  "monitorRole": "Role",
   "monitorChangePassword": "Change password",
   "monitorNewPassword": "New password",
   "monitorCurrentPassword": "Your current password",
-  "monitorReauthTip": "Changing access needs your own password again.",
   "monitorPasswordTooShort": "At least 8 characters",
   "monitorPasswordMismatch": "The passwords do not match",
   "monitorErrReauth": "Your password was wrong.",
-  "monitorErrLastAdmin": "The agent needs at least one admin account.",
-  "monitorErrConflict": "It already exists, or it is still in use.",
-  "monitorErrForbidden": "Only an admin can do this.",
-  "monitorRoleNameRule": "Lowercase letters, digits, - and _, up to 32 characters",
-  "monitorGrantShell": "Shell and commands",
-  "monitorGrantShellTip": "Terminal, processes, services, containers, snippets, power — as the agent's account",
-  "monitorGrantSshTerminal": "Panel terminal over SSH",
-  "monitorGrantVirt": "Virtualization",
-  "monitorGrantVirtTip": "Proxmox VE, libvirt and BMCs the agent reaches, in its web panel",
-  "monitorGrantFiles": "Files",
-  "monitorGrantConnect": "Outbound connections",
-  "monitorGrantConnectTip": "Local and dynamic port forwards, remote desktop",
-  "monitorGrantConnectAllow": "Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)",
-  "monitorGrantListen": "Listen on the server",
-  "monitorGrantListenTip": "Remote port forwards",
-  "monitorGrantListenPublic": "Non-loopback addresses",
-  "monitorGrantPorts": "Port range (empty is any)",
-  "monitorGrantOff": "Off",
-  "monitorBuiltin": "Built-in",
-  "monitorAdminRoleTip": "Manages accounts, roles and the agent's settings",
-  "monitorYou": "You",
-  "monitorNoAccessToSettings": "Only an admin can change this agent's settings.",
   "monitorPasswordNotSaved": "The password was changed on the agent, but the app could not save it. Update this server's Monitor password in its settings.",
   "@monitorPasswordNotSaved": {
     "description": "Shown when the agent accepted a new password but the app failed to update the credential it stores for the server."
@@ -7008,10 +6955,6 @@
   "monitorBackupUnsupported": "This monitor agent cannot store backups. Update the agent.",
   "@monitorBackupUnsupported": {
     "description": "Backup sync to a monitor agent: the agent is too old to store backups."
-  },
-  "monitorBackupAdminOnly": "Only an admin account of the monitor agent can store backups on it.",
-  "@monitorBackupAdminOnly": {
-    "description": "Backup sync to a monitor agent: the account the app logs in with is not an admin."
   },
   "monitorBackupTooLarge": "The backup is larger than the monitor agent accepts ({max}).",
   "@monitorBackupTooLarge": {
@@ -7675,5 +7618,1533 @@
   "kbServerClose": "Servers: close details",
   "@kbServerClose": {
     "description": "Command."
+  },
+  "storageTitle": "Storage",
+  "@storageTitle": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLinuxOnly": "Storage management currently supports Linux servers.",
+  "@storageLinuxOnly": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDisks": "Disks",
+  "@storageDisks": {
+    "description": "Storage and sharing page text."
+  },
+  "storageRaid": "RAID",
+  "@storageRaid": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePools": "ZFS pools",
+  "@storagePools": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNoFilesystem": "No filesystem",
+  "@storageNoFilesystem": {
+    "description": "Storage and sharing page text."
+  },
+  "storageUsage": "{used} of {total}",
+  "@storageUsage": {
+    "description": "Storage and sharing page text."
+  },
+  "storageFree": "{size} free",
+  "@storageFree": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusyMounted": "In use",
+  "@storageBusyMounted": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusySwap": "Swap",
+  "@storageBusySwap": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusyRaid": "In an array",
+  "@storageBusyRaid": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusyPool": "In a pool",
+  "@storageBusyPool": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusyVolume": "Holds a volume",
+  "@storageBusyVolume": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusyReadOnly": "Read only",
+  "@storageBusyReadOnly": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusySystem": "System partition",
+  "@storageBusySystem": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSystemMount": "The system uses this mount; it stays mounted.",
+  "@storageSystemMount": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNotMounted": "Nothing is mounted there any more.",
+  "@storageNotMounted": {
+    "description": "Storage and sharing page text."
+  },
+  "storageMount": "Mount",
+  "@storageMount": {
+    "description": "Storage and sharing page text."
+  },
+  "storageUnmount": "Unmount",
+  "@storageUnmount": {
+    "description": "Storage and sharing page text."
+  },
+  "storageFormat": "Format",
+  "@storageFormat": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInitialize": "Initialize",
+  "@storageInitialize": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSmartTest": "SMART test",
+  "@storageSmartTest": {
+    "description": "Storage and sharing page text."
+  },
+  "storageFilesystem": "Filesystem",
+  "@storageFilesystem": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLabel": "Label",
+  "@storageLabel": {
+    "description": "Storage and sharing page text."
+  },
+  "storageMountpoint": "Mount point",
+  "@storageMountpoint": {
+    "description": "Storage and sharing page text."
+  },
+  "storageMountPersist": "Mount again at every start (/etc/fstab)",
+  "@storageMountPersist": {
+    "description": "Storage and sharing page text."
+  },
+  "storageMountOwn": "Let ServerBox write here (for backups)",
+  "@storageMountOwn": {
+    "description": "Storage and sharing page text."
+  },
+  "storageName": "Name",
+  "@storageName": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLevel": "Level",
+  "@storageLevel": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLayout": "Layout",
+  "@storageLayout": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePickDevices": "Pick at least {count} devices. What they hold is lost.",
+  "@storagePickDevices": {
+    "description": "Storage and sharing page text."
+  },
+  "storageCreateRaid": "Create array",
+  "@storageCreateRaid": {
+    "description": "Storage and sharing page text."
+  },
+  "storageCreateRaidBody": "Builds /dev/{name} (RAID {level}) from {devices}. Everything on them is lost.",
+  "@storageCreateRaidBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageCreatePool": "Create pool",
+  "@storageCreatePool": {
+    "description": "Storage and sharing page text."
+  },
+  "storageCreatePoolBody": "Builds pool {name} ({layout}) from {devices}. Everything on them is lost.",
+  "@storageCreatePoolBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageFormatBody": "Makes a new filesystem on {device}. Everything on it is lost.",
+  "@storageFormatBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInitializeBody": "Wipes {device} and gives it one partition for the whole disk. Everything on it is lost.",
+  "@storageInitializeBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageMountBody": "Mounts {device} at {mountpoint}.",
+  "@storageMountBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageUnmountBody": "Unmounts {mountpoint} and stops mounting it at start.",
+  "@storageUnmountBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSmartTestBody": "Starts a short self-test on {device}. It takes a few minutes; its progress and result show here.",
+  "@storageSmartTestBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAddMember": "Add disk",
+  "@storageAddMember": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAddMemberBody": "Adds {device} to /dev/{array}: it replaces a failed member, or waits as a spare. What it holds is lost.",
+  "@storageAddMemberBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageRemoveMember": "Remove",
+  "@storageRemoveMember": {
+    "description": "Storage and sharing page text."
+  },
+  "storageRemoveMemberBody": "Marks {device} failed and takes it out of /dev/{array}. The array runs on without it, degraded if it was a working member.",
+  "@storageRemoveMemberBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDeleteRaid": "Delete array",
+  "@storageDeleteRaid": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDeleteRaidBody": "Stops /dev/{array} and wipes its members' RAID signatures. Its data is lost.",
+  "@storageDeleteRaidBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDestroyPool": "Destroy pool",
+  "@storageDestroyPool": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDestroyPoolBody": "Destroys pool {name} and everything in it.",
+  "@storageDestroyPoolBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageScrub": "Scrub",
+  "@storageScrub": {
+    "description": "Storage and sharing page text."
+  },
+  "storageScrubBody": "Reads all of pool {name} and repairs what it can. It runs in the background.",
+  "@storageScrubBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageState": "State",
+  "@storageState": {
+    "description": "Storage and sharing page text."
+  },
+  "storageHealthy": "Healthy",
+  "@storageHealthy": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDegraded": "Degraded",
+  "@storageDegraded": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSync": "Sync ({action})",
+  "@storageSync": {
+    "description": "Storage and sharing page text."
+  },
+  "storageFaulty": "Failed",
+  "@storageFaulty": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSpare": "Spare",
+  "@storageSpare": {
+    "description": "Storage and sharing page text."
+  },
+  "storageActive": "Working",
+  "@storageActive": {
+    "description": "Storage and sharing page text."
+  },
+  "storageScan": "Last scan",
+  "@storageScan": {
+    "description": "Storage and sharing page text."
+  },
+  "storageErrors": "{count} errors",
+  "@storageErrors": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNoDisks": "No disks",
+  "@storageNoDisks": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNoArrays": "No arrays",
+  "@storageNoArrays": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNoPools": "No pools",
+  "@storageNoPools": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNoMdadm": "mdadm is not installed: arrays cannot be built or changed here.",
+  "@storageNoMdadm": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNoZfs": "ZFS is not installed (zfsutils).",
+  "@storageNoZfs": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTypeToConfirm": "Type {word} to confirm",
+  "@storageTypeToConfirm": {
+    "description": "Storage and sharing page text."
+  },
+  "storageConfirmationMismatch": "The confirmation text did not match.",
+  "@storageConfirmationMismatch": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInUse": "{device} is in use.",
+  "@storageInUse": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBusy": "Another change to the disks is running.",
+  "@storageBusy": {
+    "description": "Storage and sharing page text."
+  },
+  "storageHealthRead": "Read disk health",
+  "@storageHealthRead": {
+    "description": "Storage and sharing page text."
+  },
+  "storageHealthWearing": "Wearing",
+  "@storageHealthWearing": {
+    "description": "Storage and sharing page text."
+  },
+  "storageHealthFailing": "Failing",
+  "@storageHealthFailing": {
+    "description": "Storage and sharing page text."
+  },
+  "storageHealthAsleep": "Asleep",
+  "@storageHealthAsleep": {
+    "description": "Storage and sharing page text."
+  },
+  "storageHealthUnsupported": "No SMART",
+  "@storageHealthUnsupported": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTemperature": "{value} °C",
+  "@storageTemperature": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePowerOn": "{hours} h powered on",
+  "@storagePowerOn": {
+    "description": "Storage and sharing page text."
+  },
+  "storageBadSectors": "{count} bad sectors",
+  "@storageBadSectors": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTesting": "Self-test: {percent}% left",
+  "@storageTesting": {
+    "description": "Storage and sharing page text."
+  },
+  "storageGrowPartition": "Grow partition",
+  "@storageGrowPartition": {
+    "description": "Storage and sharing page text."
+  },
+  "storageGrowPartitionBody": "Grows {device} into the free space after it. Expand its filesystem after.",
+  "@storageGrowPartitionBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageEncrypt": "Encrypt (LUKS)",
+  "@storageEncrypt": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePassphrase": "Passphrase",
+  "@storagePassphrase": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePassphraseAgain": "The same again",
+  "@storagePassphraseAgain": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePassphraseHint": "At least 8 characters. Without it the data cannot be read: keep it safe.",
+  "@storagePassphraseHint": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidPassphrase": "The passphrase must be 8 to 512 characters, on one line.",
+  "@storageInvalidPassphrase": {
+    "description": "Storage and sharing page text."
+  },
+  "storagePassphrasesDiffer": "The two passphrases differ.",
+  "@storagePassphrasesDiffer": {
+    "description": "Storage and sharing page text."
+  },
+  "storageEncrypted": "Encrypted",
+  "@storageEncrypted": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLocked": "Locked",
+  "@storageLocked": {
+    "description": "Storage and sharing page text."
+  },
+  "storageUnlock": "Unlock",
+  "@storageUnlock": {
+    "description": "Storage and sharing page text."
+  },
+  "storageUnlockBody": "Opens {device} with its passphrase.",
+  "@storageUnlockBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLock": "Lock",
+  "@storageLock": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLockBody": "Closes {device}. Its filesystem must be unmounted.",
+  "@storageLockBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageReplace": "Replace",
+  "@storageReplace": {
+    "description": "Storage and sharing page text."
+  },
+  "storageReplaceBody": "Replaces {old} in pool {name} with {replacement}. The pool copies its data onto it; what {replacement} holds is lost.",
+  "@storageReplaceBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAttach": "Mirror",
+  "@storageAttach": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAttachBody": "Mirrors {existing} onto {replacement}. What {replacement} holds is lost.",
+  "@storageAttachBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAddSpare": "Add spare",
+  "@storageAddSpare": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAddSpareBody": "Adds {devices} to pool {name} as spares. What they hold is lost.",
+  "@storageAddSpareBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageRemoveDevice": "Remove",
+  "@storageRemoveDevice": {
+    "description": "Storage and sharing page text."
+  },
+  "storageRemoveDeviceBody": "Takes {device} out of pool {name}.",
+  "@storageRemoveDeviceBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageOnline": "Bring online",
+  "@storageOnline": {
+    "description": "Storage and sharing page text."
+  },
+  "storageOnlineBody": "Brings {device} back into pool {name}, grown into the whole disk.",
+  "@storageOnlineBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageDetails": "Details",
+  "@storageDetails": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAttributes": "Attributes",
+  "@storageAttributes": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAttrValue": "Value",
+  "@storageAttrValue": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAttrWorst": "Worst",
+  "@storageAttrWorst": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAttrThresh": "Threshold",
+  "@storageAttrThresh": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSelfTests": "Self-tests",
+  "@storageSelfTests": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTestShort": "Short",
+  "@storageTestShort": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTestLong": "Long",
+  "@storageTestLong": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTestPassed": "Passed",
+  "@storageTestPassed": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTestFailed": "Failed",
+  "@storageTestFailed": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTestAborted": "Stopped",
+  "@storageTestAborted": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAtHours": "at {hours} h",
+  "@storageAtHours": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNothingToShow": "Nothing to show",
+  "@storageNothingToShow": {
+    "description": "Storage and sharing page text."
+  },
+  "storageLongTest": "Long test",
+  "@storageLongTest": {
+    "description": "Storage and sharing page text."
+  },
+  "storageSmartLongTestBody": "Starts a long self-test on {device}. It reads the whole disk: hours on a large one.",
+  "@storageSmartLongTestBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageMountedInside": "Unmount its filesystem first.",
+  "@storageMountedInside": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNotRemovable": "Only a spare or cache device can be taken out here.",
+  "@storageNotRemovable": {
+    "description": "Storage and sharing page text."
+  },
+  "storageNotGrowable": "This device cannot be grown here.",
+  "@storageNotGrowable": {
+    "description": "Storage and sharing page text."
+  },
+  "storageOverlapping": "Choose devices that do not overlap.",
+  "@storageOverlapping": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidDevice": "The device is invalid or no longer available.",
+  "@storageInvalidDevice": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidMountpoint": "The mount point is invalid.",
+  "@storageInvalidMountpoint": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidName": "The name is invalid.",
+  "@storageInvalidName": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidFilesystem": "The filesystem is not supported.",
+  "@storageInvalidFilesystem": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidLabel": "The label is invalid.",
+  "@storageInvalidLabel": {
+    "description": "Storage and sharing page text."
+  },
+  "storageInvalidLevel": "The RAID level or pool layout is invalid.",
+  "@storageInvalidLevel": {
+    "description": "Storage and sharing page text."
+  },
+  "storageTooFewDevices": "Not enough valid devices were selected.",
+  "@storageTooFewDevices": {
+    "description": "Storage and sharing page text."
+  },
+  "storageExpand": "Expand",
+  "@storageExpand": {
+    "description": "Storage and sharing page text."
+  },
+  "storageExpandBody": "Grows the filesystem on {device} to fill its device. It stays mounted.",
+  "@storageExpandBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageGrowRaid": "Grow",
+  "@storageGrowRaid": {
+    "description": "Storage and sharing page text."
+  },
+  "storageGrowRaidBody": "Adds {device} to /dev/{array} as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What {device} holds is lost.",
+  "@storageGrowRaidBody": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAddToPool": "Add disks",
+  "@storageAddToPool": {
+    "description": "Storage and sharing page text."
+  },
+  "storageAddToPoolBody": "Adds {layout} of {devices} to pool {name} for more room. They cannot be taken out again, and what they hold is lost.",
+  "@storageAddToPoolBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingTitle": "Sharing",
+  "@sharingTitle": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSmb": "SMB",
+  "@sharingSmb": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNfs": "NFS",
+  "@sharingNfs": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingService": "Service",
+  "@sharingService": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRunning": "Running",
+  "@sharingRunning": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingStopped": "Stopped",
+  "@sharingStopped": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNfsServer": "NFS server",
+  "@sharingNfsServer": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNoSamba": "Samba is not installed. Windows, macOS and Linux open SMB shares.",
+  "@sharingNoSamba": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNoNfs": "The NFS server is not installed. Linux and macOS mount NFS exports.",
+  "@sharingNoNfs": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInstallSamba": "Install Samba",
+  "@sharingInstallSamba": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInstallSambaBody": "Installs Samba with the machine's package manager.",
+  "@sharingInstallSambaBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInstallNfs": "Install NFS server",
+  "@sharingInstallNfs": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInstallNfsBody": "Installs the NFS server with the machine's package manager.",
+  "@sharingInstallNfsBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingAddShare": "Add share",
+  "@sharingAddShare": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingAddExport": "Add export",
+  "@sharingAddExport": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingEdit": "Edit",
+  "@sharingEdit": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRemove": "Remove",
+  "@sharingRemove": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSave": "Save",
+  "@sharingSave": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSaveSmbBody": "Shares {path} over SMB as {name}, then reloads Samba.",
+  "@sharingSaveSmbBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSaveNfsBody": "Exports {path} over NFS, then reloads the exports.",
+  "@sharingSaveNfsBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRemoveSmbBody": "Stops sharing {name}. The folder and its files stay.",
+  "@sharingRemoveSmbBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRemoveNfsBody": "Stops exporting {path}. The folder and its files stay.",
+  "@sharingRemoveNfsBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingElsewhere": "Set up outside ServerBox",
+  "@sharingElsewhere": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNoShares": "No SMB shares",
+  "@sharingNoShares": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNoExports": "No NFS exports",
+  "@sharingNoExports": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingReadOnly": "Read only",
+  "@sharingReadOnly": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingReadWrite": "Read and write",
+  "@sharingReadWrite": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingGuest": "Guests",
+  "@sharingGuest": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingGuestLabel": "Let anyone on the network in without an account",
+  "@sharingGuestLabel": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingUsersHint": "Accounts allowed in (none ticked: every account with an SMB password):",
+  "@sharingUsersHint": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingFolder": "Folder",
+  "@sharingFolder": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingFolderHint": "A folder on the server, e.g. a disk mounted in Storage.",
+  "@sharingFolderHint": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingComment": "Description",
+  "@sharingComment": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingPasswords": "SMB passwords",
+  "@sharingPasswords": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingPasswordsBody": "Samba keeps its own passwords: set one for each account that connects.",
+  "@sharingPasswordsBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSetPassword": "Set password",
+  "@sharingSetPassword": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNewPassword": "New SMB password",
+  "@sharingNewPassword": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNewPasswordAgain": "The same again",
+  "@sharingNewPasswordAgain": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingPasswordsDiffer": "The two passwords differ.",
+  "@sharingPasswordsDiffer": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingClientsHint": "Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.",
+  "@sharingClientsHint": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingClient": "Client",
+  "@sharingClient": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingAddClient": "Add client",
+  "@sharingAddClient": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSquashRoot": "Root is nobody",
+  "@sharingSquashRoot": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSquashAll": "Everyone is nobody",
+  "@sharingSquashAll": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingSquashNone": "Root stays root",
+  "@sharingSquashNone": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNotAFolder": "{path} is not a folder on the server.",
+  "@sharingNotAFolder": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRefused": "The configuration was refused and the previous one is back: {detail}",
+  "@sharingRefused": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingDuplicate": "Another share has this name or folder.",
+  "@sharingDuplicate": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInvalidName": "A name is letters, digits, _ . - (32 at most).",
+  "@sharingInvalidName": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInvalidPath": "The folder must be an absolute path without quotes, backslashes or ..",
+  "@sharingInvalidPath": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInvalidClient": "A client is *, a host, an address or a network.",
+  "@sharingInvalidClient": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingInvalidPassword": "This password cannot be used.",
+  "@sharingInvalidPassword": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingTimeMachineOption": "Time Machine backups (Mac)",
+  "@sharingTimeMachineOption": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRecycleOption": "Keep deleted files in .recycle",
+  "@sharingRecycleOption": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingTimeMachine": "Time Machine",
+  "@sharingTimeMachine": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingRecycle": "Recycle bin",
+  "@sharingRecycle": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingConnectedNow": "Connected now",
+  "@sharingConnectedNow": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingNobodyConnected": "Nobody is connected",
+  "@sharingNobodyConnected": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingShowConnections": "Show connections",
+  "@sharingShowConnections": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingShowConnectionsBody": "Reads who is connected, as root.",
+  "@sharingShowConnectionsBody": {
+    "description": "Storage and sharing page text."
+  },
+  "sharingConnectionsLinuxOnly": "Sharing management currently supports Linux servers.",
+  "@sharingConnectionsLinuxOnly": {
+    "description": "Storage and sharing page text."
+  },
+  "agentThisDevice": "This device",
+  "@agentThisDevice": {
+    "description": "Source filter in the Agent history: the chats kept on this device, not the servers' tasks."
+  },
+  "agentSource": "Source",
+  "@agentSource": {
+    "description": "Button in the Agent history that filters the list by where a chat or task lives."
+  },
+  "agentDeleteRemoteTip": "The task is deleted on {server}.",
+  "@agentDeleteRemoteTip": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: confirmation that deleting removes it on the server.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "agentPlan": "Plan",
+  "@agentPlan": {
+    "description": "Label of a monitor agent's plan step shown in a conversation."
+  },
+  "agentRemoteGone": "This task is no longer on the server.",
+  "@agentRemoteGone": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: it was deleted there."
+  },
+  "agentRemoteReplyHint": "Reply to the task on {server}",
+  "@agentRemoteReplyHint": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: hint of the reply box.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteStatus": "{server} · {status, select, queued{Queued} running{Running} waiting{Waiting for you} done{Done} failed{Failed} cancelled{Stopped} other{}}",
+  "@agentRemoteStatus": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the server it runs on and its state.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteAlways": "Always allow {rule}",
+  "@agentRemoteAlways": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: button that adds a command rule to the server's allow list and runs the command.",
+    "placeholders": {
+      "rule": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteTypeToRun": "Type {name} to run",
+  "@agentRemoteTypeToRun": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the field where the machine's name is typed to confirm a destructive command.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteRunAnyway": "Run anyway",
+  "@agentRemoteRunAnyway": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: button that runs a destructive command once the machine's name is typed."
+  },
+  "agentRemoteSudoFor": "Password of {user}",
+  "@agentRemoteSudoFor": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: label of the sudo password field.",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteSudoWrong": "Wrong password",
+  "@agentRemoteSudoWrong": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the sudo password was refused."
+  },
+  "agentRemoteSudoRemember": "Remember for 15 minutes",
+  "@agentRemoteSudoRemember": {
+    "description": "A monitor agent's Agent mode task, listed or opened in the app's Agent: the server keeps the sudo password in memory for 15 minutes."
+  },
+  "agentNewOn": "New in {place}",
+  "@agentNewOn": {
+    "description": "Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Label of the button that picks it; the place is 'This device' or a server's name.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRemoteNewHint": "Ask the agent on {server}, or give it a task.",
+  "@agentRemoteNewHint": {
+    "description": "Where a new Agent conversation is made: this device, or a server whose monitor agent runs it as a task. Hint of the empty page and the field when a server is picked.",
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
+  "agentPermissionMode": "Permission mode",
+  "@agentPermissionMode": {
+    "description": "Agent: what a server's agent may run in a new task without asking."
+  },
+  "agentModeAuto": "Auto",
+  "@agentModeAuto": {
+    "description": "Agent permission mode: the model allows or refuses each step."
+  },
+  "agentModeManual": "Manual",
+  "@agentModeManual": {
+    "description": "Agent permission mode: steps go by the server's rules; others wait for confirmation."
+  },
+  "agentModeBypass": "Allow all",
+  "@agentModeBypass": {
+    "description": "Agent permission mode: every step runs without asking."
+  },
+  "agentModeBypassOff": "Turned off on this server",
+  "@agentModeBypassOff": {
+    "description": "Agent: the server's admin turned the allow-all mode off."
+  },
+  "agentModeBypassWarn": "Allow all: deleting, restarting and config changes run directly, without asking.",
+  "@agentModeBypassWarn": {
+    "description": "Agent: warning shown while the allow-all mode is picked for a new task."
+  },
+  "webApps": "Web apps",
+  "@webApps": {
+    "description": "Server page: card listing the web apps the Monitor agent deployed (Docker Compose services)."
+  },
+  "webAppUnhealthy": "Unhealthy",
+  "@webAppUnhealthy": {
+    "description": "Web app health: some of its services report unhealthy."
+  },
+  "webAppDown": "Down",
+  "@webAppDown": {
+    "description": "Web app health: some of its services are not running."
+  },
+  "webAppInstalling": "Installing",
+  "@webAppInstalling": {
+    "description": "Web app state: being deployed."
+  },
+  "webAppsEmpty": "No web apps yet. Deploy them from the App Store of the Monitor panel.",
+  "@webAppsEmpty": {
+    "description": "Web apps tab: no server has a deployed Monitor web app."
+  },
+  "webAppVersion": "Version",
+  "@webAppVersion": {
+    "description": "Web app details: the deployed version."
+  },
+  "webAppHomepage": "Homepage",
+  "@webAppHomepage": {
+    "description": "Web app details: the project's website."
+  },
+  "webAppUpdate": "Version {version} is available. Update it in the Monitor panel.",
+  "@webAppUpdate": {
+    "description": "Web app details: the catalog has another version; updating is done in the Monitor web panel.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackDown": "{app} is down",
+  "@noticeStackDown": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackDownBody": "Not running: {services}.",
+  "@noticeStackDownBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "services": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackDownBodyEmpty": "None of its containers is running.",
+  "@noticeStackDownBodyEmpty": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStackUnhealthy": "{app} is unhealthy",
+  "@noticeStackUnhealthy": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackUnhealthyBody": "Failing its health check: {services}.",
+  "@noticeStackUnhealthyBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "services": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackBack": "{app} is running again",
+  "@noticeStackBack": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackBackBody": "Every container is up.",
+  "@noticeStackBackBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStackUpdate": "{app}: an update is available",
+  "@noticeStackUpdate": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStackUpdateBody": "{project} {version} can be installed (now {current}).",
+  "@noticeStackUpdateBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "project": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageArrayDegraded": "/dev/{array} is degraded",
+  "@noticeStorageArrayDegraded": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "array": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageArrayDegradedBody": "A member failed or is missing; the array runs without its redundancy.",
+  "@noticeStorageArrayDegradedBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStorageArrayBack": "/dev/{array} is healthy again",
+  "@noticeStorageArrayBack": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "array": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageArrayBackBody": "Every member is working.",
+  "@noticeStorageArrayBackBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStoragePoolUnhealthy": "Pool {pool} is {health}",
+  "@noticeStoragePoolUnhealthy": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "pool": {
+        "type": "String"
+      },
+      "health": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStoragePoolUnhealthyBody": "Open Storage to see which device.",
+  "@noticeStoragePoolUnhealthyBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStoragePoolBack": "Pool {pool} is online again",
+  "@noticeStoragePoolBack": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "pool": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStoragePoolBackBody": "Every device is working.",
+  "@noticeStoragePoolBackBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStorageDiskFailing": "{device} is failing",
+  "@noticeStorageDiskFailing": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "noticeStorageDiskFailingBody": "Its SMART check or self-test failed: copy what it holds elsewhere and replace it.",
+  "@noticeStorageDiskFailingBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "noticeStorageDiskSectors": "{device} has {count} bad sectors",
+  "@noticeStorageDiskSectors": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeStorageDiskSectorsBody": "It had {was}. A disk losing sectors often fails soon.",
+  "@noticeStorageDiskSectorsBody": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "was": {
+        "type": "int"
+      }
+    }
+  },
+  "noticeStorageMaintenanceFailed": "Storage maintenance did not run: {task}",
+  "@noticeStorageMaintenanceFailed": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it.",
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "storageTaskScrub": "Scrub pools and check arrays",
+  "@storageTaskScrub": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "storageTaskSmartShort": "Short SMART test",
+  "@storageTaskSmartShort": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "storageTaskSmartLong": "Long SMART test",
+  "@storageTaskSmartLong": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "storageNeedsSudo": "sudo asked for a password: run the agent as root, or allow these commands (above).",
+  "@storageNeedsSudo": {
+    "description": "Monitor tab: an agent notification or storage task, as the panel words it."
+  },
+  "monitorTab": "Monitor",
+  "@monitorTab": {
+    "description": "Name of the Monitor tab."
+  },
+  "monitorOverview": "Overview",
+  "@monitorOverview": {
+    "description": "Monitor tab section: each agent, its version and its firing alerts."
+  },
+  "monitorNotices": "Notifications",
+  "@monitorNotices": {
+    "description": "Monitor tab section: the agents' notifications."
+  },
+  "monitorAudit": "Audit log",
+  "@monitorAudit": {
+    "description": "Monitor tab section: an agent's audit log."
+  },
+  "monitorLive": "Sessions & devices",
+  "@monitorLive": {
+    "description": "Monitor tab section: what is signed in to an agent and open on it."
+  },
+  "monitorNoAgents": "No server is reached through a Monitor agent yet.",
+  "@monitorNoAgents": {
+    "description": "Monitor tab when no server is reached through a Monitor agent."
+  },
+  "monitorNotOffered": "This agent's version does not offer this. Update the agent.",
+  "@monitorNotOffered": {
+    "description": "Monitor tab when the agent is too old for a section."
+  },
+  "monitorAlertsNotOffered": "This agent's version does not report alerts.",
+  "@monitorAlertsNotOffered": {
+    "description": "Overview card: the agent is too old to report alerts."
+  },
+  "monitorAlertsNone": "No rule is firing.",
+  "@monitorAlertsNone": {
+    "description": "Overview card: no monitoring rule is firing."
+  },
+  "monitorFiringFor": "firing for {duration}",
+  "@monitorFiringFor": {
+    "description": "An alert: how long its rule has been firing without a break.",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorAgentVersion": "Agent {version}",
+  "@monitorAgentVersion": {
+    "description": "Overview card: the agent's version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorAgentUpdate": "{version} available",
+  "@monitorAgentUpdate": {
+    "description": "Overview card: a newer agent release exists.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorUnread": "{count} unread",
+  "@monitorUnread": {
+    "description": "Overview card: unread notifications.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorAppsUnwell": "Apps with problems: {count}",
+  "@monitorAppsUnwell": {
+    "description": "Overview card: deployed web apps that are down or unhealthy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorAppsUpdates": "App updates: {count}",
+  "@monitorAppsUpdates": {
+    "description": "Overview card: deployed web apps the catalog has a newer version of.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorUpdatesOnly": "Updates only",
+  "@monitorUpdatesOnly": {
+    "description": "Web apps section: show only apps with an update."
+  },
+  "monitorNoUpdates": "No app has an update.",
+  "@monitorNoUpdates": {
+    "description": "Web apps section: no app has an update."
+  },
+  "monitorNoticesEmpty": "No notifications.",
+  "@monitorNoticesEmpty": {
+    "description": "Notifications section: none."
+  },
+  "monitorMarkAllRead": "Mark all as read",
+  "@monitorMarkAllRead": {
+    "description": "Notifications section: mark every notification read."
+  },
+  "monitorAuditExec": "Commands",
+  "@monitorAuditExec": {
+    "description": "Audit log kind: commands run through the agent."
+  },
+  "monitorAuditMachine": "Machine management",
+  "@monitorAuditMachine": {
+    "description": "Audit log kind: machine management (power, processes, services, …)."
+  },
+  "monitorAuditListen": "Listened ports",
+  "@monitorAuditListen": {
+    "description": "Audit log kind and connection kind: ports the agent listened on."
+  },
+  "monitorAuditTicket": "Connection tickets",
+  "@monitorAuditTicket": {
+    "description": "Audit log kind: single-use connection tickets."
+  },
+  "monitorAuditPush": "Notification channels",
+  "@monitorAuditPush": {
+    "description": "Audit log kind: notification channels changed or tested."
+  },
+  "monitorAuditAdmin": "Account",
+  "@monitorAuditAdmin": {
+    "description": "Audit log kind: the account (password, sessions and devices ended)."
+  },
+  "monitorAuditDenied": "Denied",
+  "@monitorAuditDenied": {
+    "description": "Audit log result: refused."
+  },
+  "monitorLoadMore": "Load more",
+  "@monitorLoadMore": {
+    "description": "Audit log: read the next page."
+  },
+  "monitorLiveSessions": "Terminal sessions",
+  "@monitorLiveSessions": {
+    "description": "Sessions section heading: terminal sessions."
+  },
+  "monitorLiveConnections": "Connections",
+  "@monitorLiveConnections": {
+    "description": "Sessions section heading: relayed connections, ports, consoles, remote desktops."
+  },
+  "monitorLiveWatchTokens": "Watch and widget tokens",
+  "@monitorLiveWatchTokens": {
+    "description": "Sessions section heading: read-only tokens of watches and widgets."
+  },
+  "monitorLiveDevices": "Signed-in devices",
+  "@monitorLiveDevices": {
+    "description": "Sessions section heading: devices that signed in with the password."
+  },
+  "monitorLiveDevicesTip": "Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.",
+  "@monitorLiveDevicesTip": {
+    "description": "Sessions section: what forgetting a device does and does not do."
+  },
+  "monitorLiveAttached": "Attached",
+  "@monitorLiveAttached": {
+    "description": "A terminal session a client is attached to now."
+  },
+  "monitorLiveDetached": "Detached",
+  "@monitorLiveDetached": {
+    "description": "A terminal session no client is attached to; it ends after the timeout."
+  },
+  "monitorLiveEnd": "End",
+  "@monitorLiveEnd": {
+    "description": "Sessions section: end a session or connection."
+  },
+  "monitorLiveRevoke": "Revoke",
+  "@monitorLiveRevoke": {
+    "description": "Sessions section: revoke a watch or widget token."
+  },
+  "monitorLiveForget": "Forget",
+  "@monitorLiveForget": {
+    "description": "Sessions section: forget a signed-in device."
+  },
+  "monitorLiveEndSessionConfirm": "End the terminal session \"{name}\"? What runs in it stops.",
+  "@monitorLiveEndSessionConfirm": {
+    "description": "Confirm ending a terminal session.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveEndConnectionConfirm": "End the connection to {name}?",
+  "@monitorLiveEndConnectionConfirm": {
+    "description": "Confirm ending a connection.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveRevokeConfirm": "Revoke the token of {name}? It stops updating until it is set up again.",
+  "@monitorLiveRevokeConfirm": {
+    "description": "Confirm revoking a watch or widget token.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveForgetConfirm": "Forget {name}?",
+  "@monitorLiveForgetConfirm": {
+    "description": "Confirm forgetting a signed-in device.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveExpires": "Expires {time}",
+  "@monitorLiveExpires": {
+    "description": "A watch or widget token: when it expires.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorLiveStream": "Relayed connection",
+  "@monitorLiveStream": {
+    "description": "Connection kind: a TCP connection relayed by the agent."
+  },
+  "monitorLiveAccepted": "Forwarded connection",
+  "@monitorLiveAccepted": {
+    "description": "Connection kind: a connection a listened port took."
+  },
+  "monitorLiveConsole": "Console",
+  "@monitorLiveConsole": {
+    "description": "Connection kind: a virtual machine's console."
+  },
+  "monitorAgentsCount": "{count} agents",
+  "@monitorAgentsCount": {
+    "description": "Monitor tab header: how many agents a section covers.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "monitorStatOnline": "Online",
+  "@monitorStatOnline": {
+    "description": "Overview count: agents answering."
+  },
+  "monitorStatFiring": "Alerts firing",
+  "@monitorStatFiring": {
+    "description": "Overview count: alert rules firing now."
+  },
+  "monitorStatUnread": "Unread",
+  "@monitorStatUnread": {
+    "description": "Overview count: unread notifications."
+  },
+  "monitorStatUpdates": "App updates",
+  "@monitorStatUpdates": {
+    "description": "Overview count: web apps with an update."
+  },
+  "monitorAuditEmpty": "Nothing recorded matches.",
+  "@monitorAuditEmpty": {
+    "description": "Audit log: nothing matches."
+  },
+  "monitorLiveNoSessions": "No terminal session is open.",
+  "@monitorLiveNoSessions": {
+    "description": "Sessions: no terminal session is open."
+  },
+  "monitorLiveNoConnections": "Nothing is forwarded or relayed.",
+  "@monitorLiveNoConnections": {
+    "description": "Sessions: nothing is relayed or listened on."
+  },
+  "monitorLiveNoTokens": "No watch or widget is paired.",
+  "@monitorLiveNoTokens": {
+    "description": "Sessions: no watch or widget has a token."
+  },
+  "monitorLiveNoDevices": "No device has signed in.",
+  "@monitorLiveNoDevices": {
+    "description": "Sessions: no device has signed in."
+  },
+  "monitorAgentTooOld": "This agent is older than this app and asks for a user name. Update the agent.",
+  "@monitorAgentTooOld": {
+    "description": "Signing in to a monitor agent from before it had one account, which wants a user name."
+  },
+  "monitorUpdateAgent": "Update the agent",
+  "@monitorUpdateAgent": {
+    "description": "Title of the guide to updating a monitor agent."
+  },
+  "monitorAgentTooOldTip": "The Monitor tab has the steps to update it.",
+  "@monitorAgentTooOldTip": {
+    "description": "Solution shown with a sign-in an agent too old refused."
+  },
+  "monitorAgentTooOldBody": "This agent is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.",
+  "@monitorAgentTooOldBody": {
+    "description": "Update guide: why an agent from before one account must be updated."
+  },
+  "monitorAgentOutdatedBody": "{latest} is out; this agent runs {running}.",
+  "@monitorAgentOutdatedBody": {
+    "description": "Update guide: an agent behind the newest release.",
+    "placeholders": {
+      "latest": {
+        "type": "String"
+      },
+      "running": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorUpdateRunHint": "Run this on the server, as the account the agent was installed from:",
+  "@monitorUpdateRunHint": {
+    "description": "Update guide: where the command runs."
+  },
+  "monitorUpdateSshHint": "The terminal runs it. If the agent was installed system-wide and the terminal goes over SSH, sudo asks for its password there.",
+  "@monitorUpdateSshHint": {
+    "description": "Update guide: what the terminal button does."
+  },
+  "monitorUpdateNoSsh": "The app cannot open a terminal on this server: run it there yourself.",
+  "@monitorUpdateNoSsh": {
+    "description": "Update guide: the server has no SSH in the app."
+  },
+  "monitorUpdateDocker": "In Docker? Pull the new image and recreate the container instead.",
+  "@monitorUpdateDocker": {
+    "description": "Update guide: an agent in Docker."
+  },
+  "monitorUpdateAfter": "Once it has restarted, refresh the Monitor tab.",
+  "@monitorUpdateAfter": {
+    "description": "Update guide: what to do after."
+  },
+  "monitorUpdateInTerminal": "Run in a terminal",
+  "@monitorUpdateInTerminal": {
+    "description": "Update guide: run the command in a terminal."
+  },
+  "monitorHowToUpdate": "How to update",
+  "@monitorHowToUpdate": {
+    "description": "Overview card: open the update guide."
+  },
+  "monitorUpdateNix": "Installed by the NixOS module: update it through your system configuration and rebuild.",
+  "@monitorUpdateNix": {
+    "description": "Update guide: an agent installed by the NixOS module."
+  },
+  "noticeAgentUpdate": "The agent has an update",
+  "@noticeAgentUpdate": {
+    "description": "Notification: a newer monitor agent is released."
+  },
+  "monitorUpdateLegacyUser": "Its account name",
+  "@monitorUpdateLegacyUser": {
+    "description": "Update guide: the old agent account name to sign in with."
+  },
+  "monitorUpdateLegacyHint": "This agent still signs in with an account name and a password: the name this app used before (often admin) and the saved password.",
+  "@monitorUpdateLegacyHint": {
+    "description": "Update guide: why an old agent needs its account name."
+  },
+  "monitorUpdateNow": "Update now",
+  "@monitorUpdateNow": {
+    "description": "Update guide: start the update."
+  },
+  "monitorUpdating": "Updating…",
+  "@monitorUpdating": {
+    "description": "Update progress: running."
+  },
+  "monitorUpdateRestarting": "The agent is restarting; the connection is back in a few seconds…",
+  "@monitorUpdateRestarting": {
+    "description": "Update progress: the agent does not answer while it restarts."
+  },
+  "monitorUpdateDone": "Updated: the agent runs {version}.",
+  "@monitorUpdateDone": {
+    "description": "Update progress: done.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "monitorUpdateFailed": "The update failed. Its output is above.",
+  "@monitorUpdateFailed": {
+    "description": "Update progress: failed."
+  },
+  "monitorUpdateAgentHint": "The agent runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.",
+  "@monitorUpdateAgentHint": {
+    "description": "Update guide: the agent runs the update apart from itself."
+  },
+  "monitorUpdateSudoPassword": "sudo password",
+  "@monitorUpdateSudoPassword": {
+    "description": "Update guide: sudo password field."
+  },
+  "monitorUpdateSudoHint": "The installer needs root here (an OpenRC service). The password is used once and not saved.",
+  "@monitorUpdateSudoHint": {
+    "description": "Update guide: why sudo is needed."
+  },
+  "monitorUpdateSudoRefused": "sudo did not accept this password.",
+  "@monitorUpdateSudoRefused": {
+    "description": "Update guide: wrong sudo password."
+  },
+  "monitorUpdateNoAnswer": "The agent has not come back. Check it on the server.",
+  "@monitorUpdateNoAnswer": {
+    "description": "Update progress: the agent never came back."
   }
 }

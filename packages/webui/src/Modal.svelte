@@ -31,12 +31,14 @@
       aria-label={title}
       tabindex="-1"
       class={cn(
-        'w-full max-w-sm bg-surface rounded-(--radius-container) border border-line shadow-lg',
+        // Never taller than what it sits over (the screen, or a window in the
+        // panel's desk): the body scrolls, the title and its close stay.
+        'flex max-h-full w-full max-w-sm flex-col bg-surface rounded-(--radius-container) border border-line shadow-lg',
         className,
       )}
       onclick={(e) => e.stopPropagation()}
     >
-      <div class="flex items-center justify-between px-5 py-4 border-b border-line">
+      <div class="flex shrink-0 items-center justify-between px-5 py-4 border-b border-line">
         <h2 class="text-base font-semibold font-display text-fg-strong">{title}</h2>
         <button
           type="button"
@@ -47,7 +49,7 @@
           &times;
         </button>
       </div>
-      <div class="p-5">
+      <div class="min-h-0 overflow-y-auto p-5">
         {@render children()}
       </div>
     </div>

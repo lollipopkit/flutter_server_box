@@ -199,36 +199,10 @@ fn target(url: &str, password: Option<&str>, pin: Option<&str>) -> Value {
 }
 
 #[ntex::test]
-async fn seeing_and_controlling_need_virt_configuring_needs_admin() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, LIST, None).await;
-    assert_eq!(status, 401);
-    for (method, path, body) in [
-        (Method::GET, LIST.to_string(), None),
-        (Method::GET, format!("{LIST}/t1"), None),
-        (Method::POST, format!("{LIST}/t1/power"), Some(json!({"intent": "forceOff"}))),
-    ] {
-        let (status, body) = call(&srv, Some("viewer"), method, &path, body).await;
-        assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")), "{path}");
-    }
-    let (status, _) = call(&srv, Some("viewer"), Method::PUT, LIST, Some(json!({"targets": []}))).await;
-    assert_eq!(status, 403);
-    let (status, _) =
-        call(&srv, Some("viewer"), Method::POST, "/api/v1/bmc/probe", Some(json!({"url": "https://h"}))).await;
-    assert_eq!(status, 403);
-
-    let details: Vec<_> = audit(&db).await.into_iter().map(|row| row.3.unwrap()).collect();
-    assert_eq!(
-        details,
-        ["bmc list: virt not_granted", "bmc status: virt not_granted", "bmc power forceOff: virt not_granted"]
-    );
-}
-
-#[ntex::test]
 async fn a_password_is_written_never_read_and_kept_when_not_sent() {
     let (srv, db) = server().await;
     let (status, body) =
-        call(&srv, Some("admin"), Method::PUT, LIST, Some(json!({"targets": [target("https://10.0.0.9/", Some("secret"), None)]})))
+        call(&srv, true, Method::PUT, LIST, Some(json!({"targets": [target("https://10.0.0.9/", Some("secret"), None)]})))
             .await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(
@@ -241,7 +215,7 @@ async fn a_password_is_written_never_read_and_kept_when_not_sent() {
     // `null` keeps it; renaming does not lose it.
     let renamed = json!({"targets": [{"id": "t1", "name": "rack-2", "url": "https://10.0.0.9",
                                       "username": "admin", "password": null}]});
-    let (_, body) = call(&srv, Some("admin"), Method::PUT, LIST, Some(renamed)).await;
+    let (_, body) = call(&srv, true, Method::PUT, LIST, Some(renamed)).await;
     assert_eq!(body["targets"][0]["has_password"], true);
     let stored: Option<String> = sqlx::query_scalar("SELECT password FROM bmc_target WHERE id = 't1'")
         .fetch_one(&db)
@@ -249,7 +223,7 @@ async fn a_password_is_written_never_read_and_kept_when_not_sent() {
         .unwrap();
     assert_eq!(stored.as_deref(), Some("secret"));
 
-    let (status, body) = call(&srv, Some("admin"), Method::PUT, LIST,
+    let (status, body) = call(&srv, true, Method::PUT, LIST,
         Some(json!({"targets": [target("http://10.0.0.9", None, None)]}))).await;
     assert_eq!((status, body), (400, json!({"error": "invalidUrl", "index": 0})));
 }
@@ -258,12 +232,12 @@ async fn a_password_is_written_never_read_and_kept_when_not_sent() {
 async fn an_unpinned_target_is_not_dialled() {
     let bmc = FakeBmc::start().await;
     let (srv, _) = server().await;
-    call(&srv, Some("admin"), Method::PUT, LIST, Some(json!({"targets": [target(&bmc.url(), Some("right"), None)]}))).await;
-    let (status, body) = call(&srv, Some("admin"), Method::GET, &format!("{LIST}/t1"), None).await;
+    call(&srv, true, Method::PUT, LIST, Some(json!({"targets": [target(&bmc.url(), Some("right"), None)]}))).await;
+    let (status, body) = call(&srv, true, Method::GET, &format!("{LIST}/t1"), None).await;
     assert_eq!((status, body["failure"].as_str()), (502, Some("certNotReviewed")), "{body}");
     assert!(bmc.seen.lock().unwrap().passwords.is_empty(), "the password went nowhere");
 
-    let (status, body) = call(&srv, Some("admin"), Method::GET, &format!("{LIST}/nope"), None).await;
+    let (status, body) = call(&srv, true, Method::GET, &format!("{LIST}/nope"), None).await;
     assert_eq!((status, body["error"].as_str()), (404, Some("noSuchTarget")));
 }
 
@@ -273,21 +247,21 @@ async fn a_pinned_target_answers_its_state_and_a_power_action() {
     let (srv, db) = server().await;
 
     let (status, probed) =
-        call(&srv, Some("admin"), Method::POST, "/api/v1/bmc/probe", Some(json!({"url": bmc.url()}))).await;
+        call(&srv, true, Method::POST, "/api/v1/bmc/probe", Some(json!({"url": bmc.url()}))).await;
     assert_eq!(status, 200, "{probed}");
     let pin = bmc.pin().await;
     assert_eq!(probed["fingerprint"], pin);
     assert_eq!(bmc.seen.lock().unwrap().logins, 0, "a probe signs nothing in");
 
-    call(&srv, Some("admin"), Method::PUT, LIST,
+    call(&srv, true, Method::PUT, LIST,
         Some(json!({"targets": [target(&bmc.url(), Some("right"), Some(&pin))]}))).await;
 
-    let (status, body) = call(&srv, Some("admin"), Method::GET, &format!("{LIST}/t1"), None).await;
+    let (status, body) = call(&srv, true, Method::GET, &format!("{LIST}/t1"), None).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["snapshot"]["topology"]["system"]["power_state"], "on");
     assert_eq!(body["intents"], json!(["on", "gracefulShutdown", "forceOff", "restart"]));
 
-    let (status, body) = call(&srv, Some("admin"), Method::POST, &format!("{LIST}/t1/power"),
+    let (status, body) = call(&srv, true, Method::POST, &format!("{LIST}/t1/power"),
         Some(json!({"intent": "restart"}))).await;
     assert_eq!(status, 200, "{body}");
     assert_eq!(body["outcome"]["kind"], "done");
@@ -308,9 +282,9 @@ async fn a_wrong_password_is_the_bmcs_refusal_not_the_panels() {
     let bmc = FakeBmc::start().await;
     let (srv, _) = server().await;
     let pin = bmc.pin().await;
-    call(&srv, Some("admin"), Method::PUT, LIST,
+    call(&srv, true, Method::PUT, LIST,
         Some(json!({"targets": [target(&bmc.url(), Some("wrong"), Some(&pin))]}))).await;
-    let (status, body) = call(&srv, Some("admin"), Method::GET, &format!("{LIST}/t1"), None).await;
+    let (status, body) = call(&srv, true, Method::GET, &format!("{LIST}/t1"), None).await;
     // Not 401: that would log the panel out of this agent.
     assert_eq!((status, body["failure"].as_str()), (502, Some("unauthorized")), "{body}");
     assert!(!body.to_string().contains("wrong"));

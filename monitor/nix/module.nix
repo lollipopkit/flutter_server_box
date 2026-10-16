@@ -18,6 +18,7 @@
 #
 #   config.toml              read, and written when absent or migrated
 #   serverbox_monitor.db     the SQLite file
+#   blobs/                   files the agent keeps beside it (`core::blobs`)
 #   frontend/dist            the panel's static files
 #
 # So the working directory cannot be the package — that is in the store and

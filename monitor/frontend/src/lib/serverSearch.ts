@@ -1,6 +1,6 @@
-/// The sidebar's server search: which rows a query keeps.
+/// The server search (Spotlight): which servers a query finds.
 ///
-/// Case-insensitive, matching the label the sidebar shows (the agent's live
+/// Case-insensitive, matching the label the desk shows (the agent's live
 /// name, else a fallback) and the server's URL — the same two the app filters
 /// on (`lib/view/page/server/tab/utils.dart`, `_filterByQuery`). A plain
 /// function rather than something inside the component, so the rule is

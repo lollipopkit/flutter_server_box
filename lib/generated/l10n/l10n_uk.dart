@@ -2102,20 +2102,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return 'Для «$func» потрібно увімкнути $setting у Monitor agent.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return 'Для «$func» потрібна новіша версія Monitor agent.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Для віддаленого переадресування через Monitor agent потрібна новіша версія: оновіть його на сервері.';
-
-  @override
   String get rangeLive => 'У реальному часі';
 
   @override
@@ -2779,7 +2765,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Цей агент налаштовано лише для моніторингу. Тут не можна відкрити термінал, виконувати команди чи переглядати файли. Щоб увімкнути ці функції, відредагуйте розділ [remote_access] у config.toml агента.';
+      'Цей агент через незашифрований HTTP відхиляє все, крім моніторингу. Підключіться через HTTPS або дозвольте HTTP і в агенті ([remote_access] allow_insecure), і в цьому застосунку.';
 
   @override
   String get alerts => 'Сповіщення';
@@ -5090,35 +5076,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get copyLink => 'Копіювати посилання';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Ваш обліковий запис на цьому Monitor agent не має дозволу на $func. Зверніться до адміністратора agent.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return 'Для $func потрібен HTTPS до цього Monitor agent або дозволений HTTP і в agent, і в цьому застосунку.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func не налаштовано на цьому Monitor agent; це має зробити його адміністратор сервера.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Лише читання: цей обліковий запис може переглядати файли на agent, але не змінювати їх.';
-
-  @override
   String get monitorAccess => 'Доступ';
-
-  @override
-  String get monitorAccounts => 'Облікові записи';
-
-  @override
-  String get monitorRoles => 'Ролі';
-
-  @override
-  String get monitorRole => 'Роль';
 
   @override
   String get monitorChangePassword => 'Змінити пароль';
@@ -5130,9 +5093,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get monitorCurrentPassword => 'Ваш поточний пароль';
 
   @override
-  String get monitorReauthTip => 'Для зміни доступу знову потрібен ваш пароль.';
-
-  @override
   String get monitorPasswordTooShort => 'Щонайменше 8 символів';
 
   @override
@@ -5140,79 +5100,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorErrReauth => 'Неправильний пароль.';
-
-  @override
-  String get monitorErrLastAdmin =>
-      'Agent потребує щонайменше одного облікового запису адміністратора.';
-
-  @override
-  String get monitorErrConflict => 'Уже існує або ще використовується.';
-
-  @override
-  String get monitorErrForbidden => 'Це може зробити лише адміністратор.';
-
-  @override
-  String get monitorRoleNameRule => 'Малі літери, цифри, - і _, до 32 символів';
-
-  @override
-  String get monitorGrantShell => 'Shell і команди';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Термінал, процеси, служби, контейнери, сніпети, живлення — від облікового запису agent';
-
-  @override
-  String get monitorGrantSshTerminal => 'Термінал панелі через SSH';
-
-  @override
-  String get monitorGrantVirt => 'Віртуалізація';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt і BMC, до яких підключається агент, у його вебпанелі';
-
-  @override
-  String get monitorGrantFiles => 'Файли';
-
-  @override
-  String get monitorGrantConnect => 'Вихідні з\'єднання';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Локальне та динамічне переадресування портів, віддалений робочий стіл';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'Дозволені цілі (IP або CIDR, за потреби :порт або :від-до; по одній на рядок, порожньо = будь-куди)';
-
-  @override
-  String get monitorGrantListen => 'Прослуховування на сервері';
-
-  @override
-  String get monitorGrantListenTip => 'Віддалене переадресування портів';
-
-  @override
-  String get monitorGrantListenPublic => 'Адреси не loopback';
-
-  @override
-  String get monitorGrantPorts => 'Діапазон портів (порожньо = будь-який)';
-
-  @override
-  String get monitorGrantOff => 'Вимк.';
-
-  @override
-  String get monitorBuiltin => 'Вбудована';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Керує обліковими записами, ролями та налаштуваннями agent';
-
-  @override
-  String get monitorYou => 'Ви';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Змінювати налаштування цього agent може лише адміністратор.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5449,10 +5336,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       'Цей агент monitor не може зберігати резервні копії. Оновіть агент.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Зберігати резервні копії на агенті monitor може лише обліковий запис адміністратора.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5931,4 +5814,1210 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Сервери: закрити подробиці';
+
+  @override
+  String get storageTitle => 'Сховище';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Диски';
+
+  @override
+  String get storageRaid => 'RAID-масив';
+
+  @override
+  String get storagePools => 'Пули ZFS';
+
+  @override
+  String get storageNoFilesystem => 'Немає файлової системи';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$used із $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'Використовується';
+
+  @override
+  String get storageBusySwap => 'Підкачування';
+
+  @override
+  String get storageBusyRaid => 'У RAID-масиві';
+
+  @override
+  String get storageBusyPool => 'У пулі';
+
+  @override
+  String get storageBusyVolume => 'Містить том';
+
+  @override
+  String get storageBusyReadOnly => 'Лише читання';
+
+  @override
+  String get storageBusySystem => 'Системний розділ';
+
+  @override
+  String get storageSystemMount =>
+      'Система використовує цю точку монтування; її буде змонтовано й надалі.';
+
+  @override
+  String get storageNotMounted => 'У цій точці більше нічого не змонтовано.';
+
+  @override
+  String get storageMount => 'Змонтувати';
+
+  @override
+  String get storageUnmount => 'Відмонтувати';
+
+  @override
+  String get storageFormat => 'Форматувати';
+
+  @override
+  String get storageInitialize => 'Ініціалізувати';
+
+  @override
+  String get storageSmartTest => 'Тест SMART';
+
+  @override
+  String get storageFilesystem => 'Файлова система';
+
+  @override
+  String get storageLabel => 'Мітка';
+
+  @override
+  String get storageMountpoint => 'Точка монтування';
+
+  @override
+  String get storageMountPersist =>
+      'Монтувати під час кожного запуску (/etc/fstab)';
+
+  @override
+  String get storageMountOwn =>
+      'Дозволити ServerBox записувати сюди (для резервних копій)';
+
+  @override
+  String get storageName => 'Назва';
+
+  @override
+  String get storageLevel => 'Рівень';
+
+  @override
+  String get storageLayout => 'Схема';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'Виберіть щонайменше $count пристроїв. Дані на них буде втрачено.';
+  }
+
+  @override
+  String get storageCreateRaid => 'Створити RAID-масив';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return 'Створює /dev/$name (RAID $level) із $devices. Усі дані на них буде втрачено.';
+  }
+
+  @override
+  String get storageCreatePool => 'Створити пул';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return 'Створює пул $name ($layout) із $devices. Усі дані на них буде втрачено.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return 'Створює нову файлову систему на $device. Усі дані на ньому буде втрачено.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return 'Стирає $device і створює один розділ на весь диск. Усі дані буде втрачено.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return 'Монтує $device у $mountpoint.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return 'Відмонтовує $mountpoint і припиняє монтувати його під час запуску.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return 'Запускає короткий самотест $device. Він триває кілька хвилин; перебіг і результат з’являться тут.';
+  }
+
+  @override
+  String get storageAddMember => 'Додати диск';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return 'Додає $device до /dev/$array: він замінить несправний диск або чекатиме як запасний. Дані на ньому буде втрачено.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Вилучити';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return 'Позначає $device несправним і вилучає його з /dev/$array. Масив продовжує працювати без нього; якщо це був активний диск, масив буде деградований.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'Видалити RAID-масив';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return 'Зупиняє /dev/$array і стирає RAID-підписи його дисків. Дані буде втрачено.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Знищити пул';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'Знищує пул $name і всі дані в ньому.';
+  }
+
+  @override
+  String get storageScrub => 'Перевірка цілісності';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'Читає весь пул $name і виправляє помилки, які можна виправити. Працює у фоновому режимі.';
+  }
+
+  @override
+  String get storageState => 'Стан';
+
+  @override
+  String get storageHealthy => 'Справний';
+
+  @override
+  String get storageDegraded => 'Деградований';
+
+  @override
+  String storageSync(Object action) {
+    return 'Синхронізація ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Несправний';
+
+  @override
+  String get storageSpare => 'Запасний';
+
+  @override
+  String get storageActive => 'Активний';
+
+  @override
+  String get storageScan => 'Остання перевірка';
+
+  @override
+  String storageErrors(Object count) {
+    return 'Помилок: $count';
+  }
+
+  @override
+  String get storageNoDisks => 'Немає дисків';
+
+  @override
+  String get storageNoArrays => 'Немає масивів';
+
+  @override
+  String get storageNoPools => 'Немає пулів';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm не встановлено: створювати чи змінювати масиви тут не можна.';
+
+  @override
+  String get storageNoZfs => 'ZFS (zfsutils) не встановлено.';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Введіть $word для підтвердження';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device використовується.';
+  }
+
+  @override
+  String get storageBusy => 'Уже виконується інша зміна дисків.';
+
+  @override
+  String get storageHealthRead => 'Перевірити стан диска';
+
+  @override
+  String get storageHealthWearing => 'Знос';
+
+  @override
+  String get storageHealthFailing => 'Несправний';
+
+  @override
+  String get storageHealthAsleep => 'У режимі сну';
+
+  @override
+  String get storageHealthUnsupported => 'Без SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return 'Під живленням $hours год';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count пошкоджених секторів';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Самотест: залишилося $percent%';
+  }
+
+  @override
+  String get storageGrowPartition => 'Збільшити розділ';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return 'Розширює $device на вільне місце після нього. Потім розширте файлову систему.';
+  }
+
+  @override
+  String get storageEncrypt => 'Зашифрувати (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Парольна фраза';
+
+  @override
+  String get storagePassphraseAgain => 'Введіть ще раз';
+
+  @override
+  String get storagePassphraseHint =>
+      'Щонайменше 8 символів. Без неї дані неможливо прочитати: зберігайте її в безпечному місці.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'Парольна фраза має містити від 8 до 512 символів в одному рядку.';
+
+  @override
+  String get storagePassphrasesDiffer => 'Парольні фрази не збігаються.';
+
+  @override
+  String get storageEncrypted => 'Зашифровано';
+
+  @override
+  String get storageLocked => 'Заблоковано';
+
+  @override
+  String get storageUnlock => 'Розблокувати';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'Відкриває $device за допомогою парольної фрази.';
+  }
+
+  @override
+  String get storageLock => 'Заблокувати';
+
+  @override
+  String storageLockBody(Object device) {
+    return 'Закриває $device. Спочатку потрібно відмонтувати файлову систему.';
+  }
+
+  @override
+  String get storageReplace => 'Замінити';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'Замінює $old у пулі $name на $replacement. Пул скопіює на нього дані; вміст $replacement буде втрачено.';
+  }
+
+  @override
+  String get storageAttach => 'Дзеркало';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return 'Дублює $existing на $replacement. Вміст $replacement буде втрачено.';
+  }
+
+  @override
+  String get storageAddSpare => 'Додати резервний диск';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return 'Додає $devices до пулу $name як резервні диски. Їхній вміст буде втрачено.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Вилучити';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return 'Вилучає $device з пулу $name.';
+  }
+
+  @override
+  String get storageOnline => 'Повернути в роботу';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return 'Повертає $device до пулу $name і розширює його на весь диск.';
+  }
+
+  @override
+  String get storageDetails => 'Докладно';
+
+  @override
+  String get storageAttributes => 'Атрибути';
+
+  @override
+  String get storageAttrValue => 'Значення';
+
+  @override
+  String get storageAttrWorst => 'Найгірше';
+
+  @override
+  String get storageAttrThresh => 'Поріг';
+
+  @override
+  String get storageSelfTests => 'Самотести';
+
+  @override
+  String get storageTestShort => 'Короткий';
+
+  @override
+  String get storageTestLong => 'Довгий';
+
+  @override
+  String get storageTestPassed => 'Пройдено';
+
+  @override
+  String get storageTestFailed => 'Не пройдено';
+
+  @override
+  String get storageTestAborted => 'Зупинено';
+
+  @override
+  String storageAtHours(Object hours) {
+    return 'о $hours год';
+  }
+
+  @override
+  String get storageNothingToShow => 'Немає даних для показу';
+
+  @override
+  String get storageLongTest => 'Довгий тест';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return 'Запускає довгий самотест $device. Він читає весь диск: великий диск перевіряється кілька годин.';
+  }
+
+  @override
+  String get storageMountedInside => 'Спочатку відмонтуйте файлову систему.';
+
+  @override
+  String get storageNotRemovable =>
+      'Тут можна вилучати лише резервні пристрої або кеш.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => 'Розширити';
+
+  @override
+  String storageExpandBody(Object device) {
+    return 'Розширює файлову систему на $device на весь пристрій. Вона залишається змонтованою.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Збільшити';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return 'Додає $device до /dev/$array як ще один робочий диск. RAID 1 отримає ще одне дзеркало; у RAID 5 і 6 місткість збільшиться після завершення перебудови, яка може тривати кілька годин. Потім розширте файлову систему. Дані на $device буде втрачено.';
+  }
+
+  @override
+  String get storageAddToPool => 'Додати диски';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Додає $devices з компонуванням $layout до пулу $name, щоб збільшити місце. Їх не можна буде вилучити, а дані на них буде втрачено.';
+  }
+
+  @override
+  String get sharingTitle => 'Спільні ресурси';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Служба';
+
+  @override
+  String get sharingRunning => 'Працює';
+
+  @override
+  String get sharingStopped => 'Зупинено';
+
+  @override
+  String get sharingNfsServer => 'Сервер NFS';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba не встановлено. Windows, macOS і Linux можуть відкривати спільні ресурси SMB.';
+
+  @override
+  String get sharingNoNfs =>
+      'Сервер NFS не встановлено. Linux і macOS можуть монтувати експорти NFS.';
+
+  @override
+  String get sharingInstallSamba => 'Встановити Samba';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Встановлює Samba за допомогою системного менеджера пакунків.';
+
+  @override
+  String get sharingInstallNfs => 'Встановити сервер NFS';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'Встановлює сервер NFS за допомогою системного менеджера пакунків.';
+
+  @override
+  String get sharingAddShare => 'Додати спільний ресурс';
+
+  @override
+  String get sharingAddExport => 'Додати експорт';
+
+  @override
+  String get sharingEdit => 'Змінити';
+
+  @override
+  String get sharingRemove => 'Вилучити';
+
+  @override
+  String get sharingSave => 'Зберегти';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return 'Відкриває спільний доступ до $path через SMB під назвою $name, а потім перезавантажує Samba.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return 'Експортує $path через NFS, а потім перезавантажує список експортів.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return 'Припиняє спільний доступ до $name. Тека та її файли залишаються.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return 'Припиняє експорт $path. Тека та її файли залишаються.';
+  }
+
+  @override
+  String get sharingElsewhere => 'Налаштувати поза ServerBox';
+
+  @override
+  String get sharingNoShares => 'Немає спільних ресурсів SMB';
+
+  @override
+  String get sharingNoExports => 'Немає експортів NFS';
+
+  @override
+  String get sharingReadOnly => 'Лише читання';
+
+  @override
+  String get sharingReadWrite => 'Читання та запис';
+
+  @override
+  String get sharingGuest => 'Гості';
+
+  @override
+  String get sharingGuestLabel =>
+      'Дозволити будь-кому в мережі доступ без облікового запису';
+
+  @override
+  String get sharingUsersHint =>
+      'Дозволені облікові записи (нічого не позначено: усі облікові записи з паролем SMB):';
+
+  @override
+  String get sharingFolder => 'Тека';
+
+  @override
+  String get sharingFolderHint =>
+      'Тека на сервері, наприклад диск, змонтований у розділі «Сховище».';
+
+  @override
+  String get sharingComment => 'Опис';
+
+  @override
+  String get sharingPasswords => 'Паролі SMB';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba зберігає власні паролі: задайте пароль для кожного облікового запису, який підключатиметься.';
+
+  @override
+  String get sharingSetPassword => 'Задати пароль';
+
+  @override
+  String get sharingNewPassword => 'Новий пароль SMB';
+
+  @override
+  String get sharingNewPasswordAgain => 'Введіть ще раз';
+
+  @override
+  String get sharingPasswordsDiffer => 'Паролі не збігаються.';
+
+  @override
+  String get sharingClientsHint =>
+      'Хто може монтувати: * для всіх, вузол, адреса або мережа на кшталт 192.168.1.0/24.';
+
+  @override
+  String get sharingClient => 'Клієнт';
+
+  @override
+  String get sharingAddClient => 'Додати клієнта';
+
+  @override
+  String get sharingSquashRoot => 'root стає nobody';
+
+  @override
+  String get sharingSquashAll => 'Усі стають nobody';
+
+  @override
+  String get sharingSquashNone => 'root залишається root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path не є текою на сервері.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'Конфігурацію відхилено й відновлено попередню: $detail';
+  }
+
+  @override
+  String get sharingDuplicate =>
+      'Інший спільний ресурс уже використовує цю назву або теку.';
+
+  @override
+  String get sharingInvalidName =>
+      'Назва може містити літери, цифри та _ . - (до 32 символів).';
+
+  @override
+  String get sharingInvalidPath =>
+      'Тека має бути абсолютним шляхом без лапок, зворотних скісних рисок або ..';
+
+  @override
+  String get sharingInvalidClient =>
+      'Клієнтом може бути *, вузол, адреса або мережа.';
+
+  @override
+  String get sharingInvalidPassword => 'Цей пароль не можна використовувати.';
+
+  @override
+  String get sharingTimeMachineOption => 'Резервні копії Time Machine (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Зберігати видалені файли в .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Кошик';
+
+  @override
+  String get sharingConnectedNow => 'Підключені зараз';
+
+  @override
+  String get sharingNobodyConnected => 'Ніхто не підключений';
+
+  @override
+  String get sharingShowConnections => 'Показати підключення';
+
+  @override
+  String get sharingShowConnectionsBody =>
+      'Читає дані про підключення від імені root.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'Цей пристрій';
+
+  @override
+  String get agentSource => 'Джерело';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'Завдання буде видалено на сервері $server.';
+  }
+
+  @override
+  String get agentPlan => 'План';
+
+  @override
+  String get agentRemoteGone => 'Цього завдання більше немає на сервері.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Відповісти на завдання на $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'У черзі',
+      'running': 'Виконується',
+      'waiting': 'Очікує на вашу відповідь',
+      'done': 'Завершено',
+      'failed': 'Помилка',
+      'cancelled': 'Зупинено',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Завжди дозволяти $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Введіть $name, щоб запустити';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Усе одно запустити';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Пароль користувача $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Неправильний пароль';
+
+  @override
+  String get agentRemoteSudoRemember => 'Запам’ятати на 15 хвилин';
+
+  @override
+  String agentNewOn(String place) {
+    return 'Нова розмова: $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Поставте запитання агенту на $server або доручіть йому завдання.';
+  }
+
+  @override
+  String get agentPermissionMode => 'Режим дозволів';
+
+  @override
+  String get agentModeAuto => 'Авто';
+
+  @override
+  String get agentModeManual => 'Вручну';
+
+  @override
+  String get agentModeBypass => 'Дозволити все';
+
+  @override
+  String get agentModeBypassOff => 'Вимкнено на цьому сервері';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Дозволити все: видалення, перезапуск і зміни конфігурації виконуються без підтвердження.';
+
+  @override
+  String get webApps => 'Вебзастосунки';
+
+  @override
+  String get webAppUnhealthy => 'Несправний';
+
+  @override
+  String get webAppDown => 'Не працює';
+
+  @override
+  String get webAppInstalling => 'Встановлення';
+
+  @override
+  String get webAppsEmpty =>
+      'Вебзастосунків поки немає. Розгорніть їх з App Store панелі Monitor.';
+
+  @override
+  String get webAppVersion => 'Версія';
+
+  @override
+  String get webAppHomepage => 'Сайт';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Доступна версія $version. Оновіть її в панелі Monitor.';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app зупинено';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'Не запущено: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'Жоден контейнер не запущено.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app працює зі збоями';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Перевірка стану не пройдена: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app знову працює';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Усі контейнери запущено.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return 'Доступне оновлення для $app';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return 'Можна встановити $project $version (поточна версія: $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array деградований';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'Диск несправний або відсутній; масив працює без надлишковості.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array знову справний';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Усі диски працюють.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return 'Стан пулу $pool: $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Відкрийте «Сховище», щоб побачити, якого пристрою це стосується.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return 'Пул $pool знову в мережі';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Усі пристрої працюють.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device виходить з ладу';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'Перевірка SMART або самотест завершилися помилкою: скопіюйте дані в інше місце й замініть диск.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return 'На $device $count пошкоджених секторів';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'Раніше було $was. Диск із дедалі більшою кількістю пошкоджених секторів часто невдовзі виходить з ладу.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Обслуговування сховища не запущено: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Перевірити пули й масиви';
+
+  @override
+  String get storageTaskSmartShort => 'Короткий SMART-тест';
+
+  @override
+  String get storageTaskSmartLong => 'Довгий SMART-тест';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo запросив пароль: запустіть agent від імені root або дозвольте наведені вище команди.';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'Огляд';
+
+  @override
+  String get monitorNotices => 'Сповіщення';
+
+  @override
+  String get monitorAudit => 'Журнал аудиту';
+
+  @override
+  String get monitorLive => 'Сеанси та пристрої';
+
+  @override
+  String get monitorNoAgents =>
+      'Поки немає серверів, підключених через агент Monitor.';
+
+  @override
+  String get monitorNotOffered =>
+      'Ця версія агента цього не підтримує. Оновіть агент.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'Ця версія агента не повідомляє про сповіщення.';
+
+  @override
+  String get monitorAlertsNone => 'Жодне правило не спрацьовує.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return 'триває $duration';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Агент $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return 'доступна $version';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return 'Непрочитаних: $count';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Застосунки з проблемами: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'Оновлення застосунків: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Лише оновлення';
+
+  @override
+  String get monitorNoUpdates => 'Оновлень застосунків немає.';
+
+  @override
+  String get monitorNoticesEmpty => 'Сповіщень немає.';
+
+  @override
+  String get monitorMarkAllRead => 'Позначити все як прочитане';
+
+  @override
+  String get monitorAuditExec => 'Команди';
+
+  @override
+  String get monitorAuditMachine => 'Керування машиною';
+
+  @override
+  String get monitorAuditListen => 'Порти, що прослуховуються';
+
+  @override
+  String get monitorAuditTicket => 'Квитки підключення';
+
+  @override
+  String get monitorAuditPush => 'Канали сповіщень';
+
+  @override
+  String get monitorAuditAdmin => 'Обліковий запис';
+
+  @override
+  String get monitorAuditDenied => 'Відмовлено';
+
+  @override
+  String get monitorLoadMore => 'Завантажити ще';
+
+  @override
+  String get monitorLiveSessions => 'Сеанси термінала';
+
+  @override
+  String get monitorLiveConnections => 'Підключення';
+
+  @override
+  String get monitorLiveWatchTokens => 'Токени годинника та віджетів';
+
+  @override
+  String get monitorLiveDevices => 'Пристрої, що ввійшли';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Після видалення пристрою його наступний вхід враховується в загальному для облікового запису ліміті невдалих спроб. Пристрій при цьому не виходить: пристрій, що знає пароль, увійде знову. Щоб закрити доступ пристрою, змініть пароль.';
+
+  @override
+  String get monitorLiveAttached => 'Під’єднано';
+
+  @override
+  String get monitorLiveDetached => 'Від’єднано';
+
+  @override
+  String get monitorLiveEnd => 'Завершити';
+
+  @override
+  String get monitorLiveRevoke => 'Відкликати';
+
+  @override
+  String get monitorLiveForget => 'Забути';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return 'Завершити сеанс термінала «$name»? Усе, що в ньому запущено, зупиниться.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return 'Завершити підключення до $name?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return 'Відкликати токен $name? Оновлення припиняться, доки його не налаштують знову.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return 'Забути $name?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Спливає: $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Ретрансльоване підключення';
+
+  @override
+  String get monitorLiveAccepted => 'Переспрямоване підключення';
+
+  @override
+  String get monitorLiveConsole => 'Консоль';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return 'Агентів: $count';
+  }
+
+  @override
+  String get monitorStatOnline => 'У мережі';
+
+  @override
+  String get monitorStatFiring => 'Активні сповіщення';
+
+  @override
+  String get monitorStatUnread => 'Непрочитані';
+
+  @override
+  String get monitorStatUpdates => 'Оновлення';
+
+  @override
+  String get monitorAuditEmpty => 'Відповідних записів немає.';
+
+  @override
+  String get monitorLiveNoSessions => 'Відкритих сеансів термінала немає.';
+
+  @override
+  String get monitorLiveNoConnections => 'Немає переспрямувань і ретрансляцій.';
+
+  @override
+  String get monitorLiveNoTokens => 'Немає прив’язаних годинників і віджетів.';
+
+  @override
+  String get monitorLiveNoDevices => 'Жоден пристрій не входив.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'Цей агент старіший за застосунок і вимагає ім’я користувача. Оновіть агент.';
+
+  @override
+  String get monitorUpdateAgent => 'Оновити агент';
+
+  @override
+  String get monitorAgentTooOldTip => 'Кроки оновлення — на вкладці Monitor.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'Цей агент випущено до переходу на один пароль, і застосунок не може увійти. Після оновлення паролем стане пароль найстарішого облікового запису адміністратора.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return 'Вийшла $latest; у цього агента $running.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Виконайте на сервері від облікового запису, з якого встановлювали агент:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'Термінал виконає її. Якщо агента встановлено для всієї системи і термінал працює через SSH, sudo запитає там пароль.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'Застосунок не може відкрити термінал на цьому сервері: виконайте команду там самі.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'У Docker? Завантажте новий образ і перестворіть контейнер.';
+
+  @override
+  String get monitorUpdateAfter => 'Після перезапуску оновіть вкладку Monitor.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Виконати в терміналі';
+
+  @override
+  String get monitorHowToUpdate => 'Як оновити';
+
+  @override
+  String get monitorUpdateNix =>
+      'Встановлено модулем NixOS: оновіть його через конфігурацію системи та перезберіть.';
+
+  @override
+  String get noticeAgentUpdate => 'Доступне оновлення агента';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Ім\'я облікового запису';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'Цей агент ще входить за ім\'ям облікового запису і паролем: ім\'ям, яке застосунок використовував раніше (зазвичай admin), і збереженим паролем.';
+
+  @override
+  String get monitorUpdateNow => 'Оновити';
+
+  @override
+  String get monitorUpdating => 'Оновлення…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'Агент перезапускається; підключення повернеться за кілька секунд…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Оновлено: агент працює на $version.';
+  }
+
+  @override
+  String get monitorUpdateFailed => 'Оновлення не вдалося. Вивід — вище.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'Агент запускає інсталятор окремо від себе, тож перезапуск не перериває оновлення. Підключення до нього на кілька секунд зникне; це вікно стежить за оновленням і після перезапуску.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'Пароль sudo';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'Тут інсталятору потрібен root (служба OpenRC). Пароль використовується один раз і не зберігається.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo не прийняв цей пароль.';
+
+  @override
+  String get monitorUpdateNoAnswer =>
+      'Агент не повернувся. Перевірте його на сервері.';
 }

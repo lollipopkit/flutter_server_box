@@ -33,37 +33,42 @@ final class ProcessTree {
     }
   }
 
-  static void terminate(Process process, int? processGroupId) {
+  /// Ends [process] and what it started. Asynchronous: `taskkill` and `ps`
+  /// are processes of their own, and waiting on one synchronously would hold
+  /// the UI isolate. The tree is signalled before its root, whose end would
+  /// leave the descendants to init and out of reach.
+  static Future<void> terminate(Process process, int? processGroupId) async {
     try {
       if (Platform.isWindows) {
-        Process.runSync('taskkill', ['/PID', '${process.pid}', '/T', '/F']);
+        await Process.run('taskkill', ['/PID', '${process.pid}', '/T', '/F']).timeout(_toolTimeout);
       } else if (processGroupId != null) {
         Process.killPid(-processGroupId);
       } else {
-        _killUnixTree(process.pid, ProcessSignal.sigterm);
+        await _killUnixTree(process.pid, ProcessSignal.sigterm);
       }
     } catch (_) {}
     process.kill(ProcessSignal.sigterm);
-    Future.delayed(const Duration(milliseconds: 200), () {
-      try {
-        process.kill(ProcessSignal.sigkill);
-      } catch (_) {}
-      try {
-        if (!Platform.isWindows && processGroupId != null) {
-          Process.killPid(-processGroupId, ProcessSignal.sigkill);
-        } else if (!Platform.isWindows) {
-          _killUnixTree(process.pid, ProcessSignal.sigkill);
-        }
-      } catch (_) {}
-    });
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    try {
+      process.kill(ProcessSignal.sigkill);
+    } catch (_) {}
+    try {
+      if (!Platform.isWindows && processGroupId != null) {
+        Process.killPid(-processGroupId, ProcessSignal.sigkill);
+      } else if (!Platform.isWindows) {
+        await _killUnixTree(process.pid, ProcessSignal.sigkill);
+      }
+    } catch (_) {}
   }
 
-  static void _killUnixTree(int rootPid, ProcessSignal signal) {
+  static const _toolTimeout = Duration(seconds: 5);
+
+  static Future<void> _killUnixTree(int rootPid, ProcessSignal signal) async {
     // One comma-separated format, not two arguments. BSD `ps` — which is the
     // one on macOS — reads the second as a file and refuses with "illegal
     // argument: ppid=", so this returned without killing anything at all and
     // the descendants it exists to reach went on running.
-    final result = Process.runSync('ps', ['-eo', 'pid=,ppid=']);
+    final result = await Process.run('ps', ['-eo', 'pid=,ppid=']).timeout(_toolTimeout);
     if (result.exitCode != 0) return;
     final children = <int, List<int>>{};
     for (final line in '${result.stdout}'.split('\n')) {

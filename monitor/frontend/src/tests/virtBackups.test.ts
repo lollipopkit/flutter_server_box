@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { DATE_TIME, fmtDate } from '../lib/format'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import VirtBackups from '../components/VirtBackups.svelte'
-import VirtBackupJobs from '../components/VirtBackupJobs.svelte'
-import Virt from '../pages/Virt.svelte'
+import VirtBackups from '../desk/apps/virt/VirtBackups.svelte'
+import VirtBackupJobs from '../desk/apps/virt/VirtBackupJobs.svelte'
+import Virt from '../desk/apps/virt/VirtApp.svelte'
 import { api } from '../lib/api'
 import {
   backupIssueText,
@@ -253,10 +254,10 @@ describe('a guest\'s backups', () => {
     virtBackups.mockResolvedValue(listing({ backups: [] }))
     virtBackup.mockResolvedValue({ error: null })
     render(VirtBackups, { view: hostView(), guest: guest(), onchanged: () => {} })
-    expect(await screen.findByText('No backups.')).toBeInTheDocument()
+    expect(await screen.findByText('No backups')).toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^back up now$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^stop$/i }))
-    await fireEvent.click(screen.getByRole('button', { name: /^lzo$/i }))
+    await fireEvent.click(screen.getByRole('tab', { name: /^stop$/i }))
+    await fireEvent.click(screen.getByRole('tab', { name: /^lzo$/i }))
     await fireEvent.input(screen.getByPlaceholderText('Optional'), { target: { value: ' before upgrade ' } })
     await fireEvent.click(screen.getByRole('checkbox', { name: /protected/i }))
     await fireEvent.click(screen.getByRole('button', { name: /^start backup$/i }))
@@ -283,7 +284,7 @@ describe('a guest\'s backups', () => {
     const { rerender } = render(VirtBackups, { view: hostView(), guest: guest(), onchanged })
     await fireEvent.click(await screen.findByRole('button', { expanded: false }))
     // Running: as a new guest is what is offered first; over it is closed.
-    await fireEvent.click(screen.getByRole('button', { name: /^over this guest$/i }))
+    await fireEvent.click(screen.getByRole('tab', { name: /^over this guest$/i }))
     expect(screen.getByRole('button', { name: /^restore$/i })).toBeDisabled()
     expect(screen.getByText('Shut it down first.')).toBeInTheDocument()
 
@@ -385,10 +386,10 @@ describe('the datacenter\'s backup jobs', () => {
     await fireEvent.click(await screen.findByRole('button', { name: /^new job$/i }))
     await fireEvent.click(screen.getByRole('button', { name: /^validate$/i }))
     await waitFor(() => expect(checkBackupSchedule).toHaveBeenCalledWith('02:00'))
-    expect(await screen.findByText(new Date(1_790_086_400 * 1000).toLocaleString())).toBeInTheDocument()
+    expect(await screen.findByText(fmtDate(1_790_086_400 * 1000, DATE_TIME))).toBeInTheDocument()
 
     await fireEvent.input(screen.getByDisplayValue('02:00'), { target: { value: '25:00' } })
-    expect(screen.queryByText(new Date(1_790_086_400 * 1000).toLocaleString())).not.toBeInTheDocument()
+    expect(screen.queryByText(fmtDate(1_790_086_400 * 1000, DATE_TIME))).not.toBeInTheDocument()
     await fireEvent.click(screen.getByRole('button', { name: /^validate$/i }))
     expect(await screen.findByText('PVE does not take this schedule: value \'25:00\' out of range')).toBeInTheDocument()
   })
@@ -436,13 +437,13 @@ describe('the virtualization page: backups', () => {
     const view = hostView()
     view.guests = [guest({ template: true, state: 'stopped', actions: [] })]
     loadVirt.mockResolvedValue({ host: 'pve', supported: true, pve_configured: true, view, error: null })
-    render(Virt, { onback: () => {} })
-    await fireEvent.click(await screen.findByRole('button', { name: /^backup$/i }))
+    render(Virt)
+    await fireEvent.click(await screen.findByRole('tab', { name: /^backup$/i }))
     expect(await screen.findByRole('button', { name: /^back up now$/i })).toBeInTheDocument()
     expect(virtBackups).toHaveBeenCalledWith('qemu/100')
     await fireEvent.click(screen.getByRole('button', { name: /datacenter/i }))
-    expect(await screen.findByText('No backup jobs.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^backup jobs$/i })).toHaveAttribute('aria-current', 'page')
+    expect(await screen.findByText('No backup jobs')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^backup jobs$/i })).toHaveAttribute('aria-current', 'true')
   })
 
   it('offers neither where it does not (libvirt)', async () => {
@@ -450,8 +451,8 @@ describe('the virtualization page: backups', () => {
     view.host.kind = 'libvirt'
     view.capabilities = { lxc: false, pause: true, cluster: false, backup: false, backup_jobs: false }
     loadVirt.mockResolvedValue({ host: 'libvirt', supported: true, pve_configured: false, view, error: null })
-    render(Virt, { onback: () => {} })
-    expect(await screen.findByRole('button', { name: /^overview$/i })).toBeInTheDocument()
+    render(Virt)
+    expect(await screen.findByRole('tab', { name: /^overview$/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^backup$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^backup jobs$/i })).not.toBeInTheDocument()
   })

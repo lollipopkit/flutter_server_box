@@ -60,15 +60,6 @@ fn request_path(path: &Path) -> String {
     raw
 }
 
-fn filesystem_root() -> PathBuf {
-    std::env::current_dir()
-        .expect("current directory")
-        .ancestors()
-        .last()
-        .expect("filesystem root")
-        .to_path_buf()
-}
-
 #[test]
 fn a_path_inside_a_root_resolves() {
     let sb = sandbox();
@@ -261,14 +252,6 @@ fn no_roots_means_nothing_resolves() {
 }
 
 #[test]
-fn the_filesystem_root_is_recognised_as_unrestricted() {
-    // What the startup warning keys on.
-    assert!(FsRoots::from_canonical(vec![filesystem_root()]).is_unrestricted());
-    let nested = std::env::current_dir().expect("current directory");
-    assert!(!FsRoots::from_canonical(vec![nested]).is_unrestricted());
-}
-
-#[test]
 fn a_root_is_not_renamable_out_from_under_the_confinement() {
     // `remove` refuses this; `rename` did not, and moving a root leaves it
     // pointing at a path that no longer exists — after which every request is
@@ -284,13 +267,11 @@ fn a_root_is_not_renamable_out_from_under_the_confinement() {
 }
 
 #[test]
-fn an_unusable_root_is_dropped_rather_than_fatal() {
-    let dir = tempfile::tempdir().unwrap();
-    let base = fs::canonicalize(dir.path()).unwrap();
-    fs::create_dir(base.join("real")).unwrap();
-
-    let roots = FsRoots::resolve(&[s(&base.join("real")), s(&base.join("does-not-exist"))]);
-
-    assert_eq!(roots.as_slice().len(), 1);
-    assert!(roots.resolve_existing(&s(&base.join("real"))).is_ok());
+fn the_whole_filesystem_reaches_an_existing_path() {
+    let roots = FsRoots::whole_filesystem();
+    let here = std::env::current_dir().expect("current directory");
+    assert_eq!(
+        roots.resolve_existing(&s(&here)).unwrap(),
+        fs::canonicalize(&here).unwrap()
+    );
 }

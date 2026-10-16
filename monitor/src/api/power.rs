@@ -7,7 +7,7 @@
 //! rather than sending that text to `/exec` keeps the `sudo -S` handling and
 //! the reading of a refused password in one place.
 //!
-//! The `shell` grant: anyone who can open a shell can run `shutdown` in it.
+//! The transport rule: anyone who can open a shell can run `shutdown` in it.
 //!
 //! The password is a field, written to the command's stdin for `sudo -S`, so
 //! it never lands in a command line, the process list or the audit row. A
@@ -24,7 +24,6 @@ use sbm_parser::script::ShellFunc;
 use super::machine;
 use super::server::AppState;
 use super::ws::audit::{Action, Event, Kind, Outcome};
-use crate::core::permissions::Grant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -82,7 +81,7 @@ pub async fn power(
 ) -> Result<HttpResponse, web::Error> {
     let action = body.action;
     let what = format!("power {}", action.as_str());
-    let gated = match machine::gate(&req, &state, Grant::Shell, &what).await {
+    let gated = match machine::gate(&req, &state, &what).await {
         Ok(gated) => gated,
         Err(refused) => return Ok(refused),
     };
@@ -98,7 +97,6 @@ pub async fn power(
     // Recorded before it runs: the command that succeeds is the one that
     // takes the agent down with it, and a row written afterwards never is.
     Event::new(Kind::Machine, Action::Open, Outcome::Ok)
-        .subject(&gated.caller.username)
         .remote_ip(gated.remote_ip.clone())
         .detail(&what)
         .record(&state.db)
@@ -111,7 +109,6 @@ pub async fn power(
         Ok(out) => out,
         Err(e) => {
             Event::new(Kind::Machine, Action::Close, Outcome::Error)
-                .subject(&gated.caller.username)
                 .remote_ip(gated.remote_ip)
                 .detail(format!("{what}: {e}"))
                 .record(&state.db)
@@ -125,7 +122,6 @@ pub async fn power(
         // Which way it failed, not what it printed: this column never carries
         // a command's output.
         Event::new(Kind::Machine, Action::Close, Outcome::Error)
-            .subject(&gated.caller.username)
             .remote_ip(gated.remote_ip)
             .detail(format!(
                 "{what}: {}",

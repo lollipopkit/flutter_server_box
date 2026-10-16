@@ -18,7 +18,7 @@ TAP_REPO_PATH ?=
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
 	test-cla gen gen-build gen-build-clean gen-l10n gen-proto build build-android build-ios \
 	build-ios-nosign build-macos build-linux build-windows clean \
-	release-macos-dmg package-dmg sync-homebrew-cask monitor-dev
+	release-macos-dmg package-dmg sync-homebrew-cask monitor-dev monitor-deploy
 
 help:
 	@printf '%s\n' \
@@ -53,6 +53,7 @@ help:
 		'' \
 		'Monitor:' \
 		'  monitor-dev        Run monitor backend + panel dev server (vite on :3000, API on :3770)' \
+		'  monitor-deploy     Put this checkout on a test machine: make monitor-deploy HOST=<ssh host>' \
 		'' \
 		'Release scripts:' \
 		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh (one DMG per architecture)' \
@@ -198,6 +199,12 @@ sync-homebrew-cask:
 	else \
 		DMG_ARM64_PATH="$(DMG_ARM64_PATH)" DMG_AMD64_PATH="$(DMG_AMD64_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	fi
+
+# A test machine's agent and panel from this checkout: make monitor-deploy HOST=<ssh host>
+# (scripts/monitor-deploy.sh; ARGS=--no-agent or --no-panel for one half).
+monitor-deploy:
+	@[ -n "$(HOST)" ] || { echo 'HOST=<ssh host> is required'; exit 2; }
+	@bash scripts/monitor-deploy.sh "$(HOST)" $(ARGS)
 
 # Backend from monitor/ (finds config/db there); panel via vite dev server on
 # :3000 with /api proxied to :3770. Ctrl-C stops both.

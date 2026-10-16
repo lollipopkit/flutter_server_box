@@ -3,12 +3,13 @@
 /// `sbm_parser::snippet::PlanError`'s; a code this build does not know is shown
 /// as the agent sent it, since a sentence invented here would misdescribe it.
 import { get } from 'svelte/store'
+import { errorText } from './errorText'
 import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from './api'
 
 /// A save's refusal: the code is the message, the row is `body.index`.
 export function snippetRefusalText(e: unknown): string {
-  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : String(e)
+  if (!(e instanceof ApiError)) return errorText(e)
   const ll = get(LL)
   switch (e.message) {
     case 'invalidId':
@@ -31,7 +32,7 @@ export function snippetRefusalText(e: unknown): string {
 /// A plan's refusal: `{error: 'unanswerable', key}`, the placeholder the panel
 /// has no value for.
 export function snippetPlanRefusalText(e: unknown): string {
-  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : String(e)
+  if (!(e instanceof ApiError)) return errorText(e)
   const key = e.body?.key
   if (e.message === 'unanswerable' && typeof key === 'string') {
     return get(LL).snippetUnanswerable({ key: `\${${key}}` })

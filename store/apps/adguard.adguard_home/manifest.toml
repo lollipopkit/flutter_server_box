@@ -1,0 +1,96 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# AdGuard Home, deployed with the official Docker image and compose file beside this one.
+
+schema = 1
+publisher = "adguard"
+name = "adguard_home"
+project = "AdGuard Home"
+developer = "AdGuard Team"
+version = "v0.107.79"
+homepage = "https://adguard.com/en/adguard-home/overview.html"
+source = "https://github.com/AdguardTeam/AdGuardHome/tree/v0.107.79"
+glyph = "shield"
+tone = "teal"
+categories = ["network", "security"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "AdGuard Home"
+
+[description]
+en = "Block ads and trackers for devices on your network with AdGuard Home. Port 53 is published for DNS; it may conflict with systemd-resolved or another DNS service on the host."
+zh = "使用 AdGuard Home 为网络中的设备屏蔽广告和跟踪器。53 端口用于 DNS，可能与主机上的 systemd-resolved 或其他 DNS 服务冲突。"
+zh-TW = "使用 AdGuard Home 為網路中的裝置封鎖廣告與追蹤器。53 連接埠用於 DNS，可能與主機上的 systemd-resolved 或其他 DNS 服務衝突。"
+
+[license]
+spdx = "GPL-3.0-only"
+url = "https://github.com/AdguardTeam/AdGuardHome/blob/v0.107.79/LICENSE.txt"
+accept = true
+
+[requirements]
+arch = ["amd64", "arm64", "arm"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+jobs = ["seed-config"]
+
+[web]
+port = "web"
+path = "/"
+
+[login]
+user = "admin"
+password = "ADMIN_PASSWORD"
+note = { en = "The setup wizard is skipped: this account is created with the generated password. To use it, point your devices' or router's DNS at this machine.", zh = "首次设置向导已跳过：此账号使用生成的密码创建。使用时，请把设备或路由器的 DNS 指向这台机器。", zh-TW = "首次設定精靈已略過：此帳號使用產生的密碼建立。使用時，請將裝置或路由器的 DNS 指向這台機器。" }
+
+[env]
+ADGUARD_VERSION = "v0.107.79"
+CADDY_VERSION = "2.11.7-alpine"
+
+[[secrets]]
+env = "ADMIN_PASSWORD"
+length = 32
+
+[[settings]]
+key = "config"
+type = "path"
+env = "ADGUARD_CONFIG"
+default = "{stack}/config"
+data = true
+label = { en = "Configuration", zh = "配置", zh-TW = "設定" }
+help = { en = "AdGuardHome.yaml. Do not edit it while the service is running; the app rewrites it.", zh = "AdGuardHome.yaml。服务运行时不要编辑此文件，应用会重写它。", zh-TW = "AdGuardHome.yaml。服務執行時請勿編輯此檔案，應用程式會重寫它。" }
+
+[[settings]]
+key = "work"
+type = "path"
+env = "ADGUARD_WORK"
+default = "{stack}/work"
+data = true
+label = { en = "Data", zh = "数据", zh-TW = "資料" }
+help = { en = "Query logs, statistics and filter data.", zh = "查询日志、统计数据和过滤器数据。", zh-TW = "查詢記錄、統計資料與篩選器資料。" }
+
+[[settings]]
+key = "web"
+type = "port"
+env = "ADGUARD_WEB_PORT"
+default = 3001
+label = { en = "Web port", zh = "Web 端口", zh-TW = "Web 連接埠" }
+
+[[settings]]
+key = "expose_web"
+type = "bool"
+default = false
+label = { en = "Web interface reachable from the network", zh = "允许从网络访问 Web 界面", zh-TW = "允許從網路存取 Web 介面" }
+help = { en = "Off: only through the desk. On: bind the web interface to all host interfaces.", zh = "关闭时只能通过桌面访问；开启时 Web 界面会绑定到主机的所有网络接口。", zh-TW = "關閉時只能透過桌面存取；開啟時 Web 介面會繫結至主機的所有網路介面。" }
+on = { ADGUARD_WEB_BIND = "0.0.0.0" }
+off = { ADGUARD_WEB_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "dns"
+type = "port"
+env = "ADGUARD_DNS_PORT"
+default = 53
+protocol = "both"
+label = { en = "DNS port (TCP and UDP)", zh = "DNS 端口（TCP 和 UDP）", zh-TW = "DNS 連接埠（TCP 與 UDP）" }
+help = { en = "For DNS queries from other devices. The host port must be free; systemd-resolved commonly occupies port 53.", zh = "供其他设备发送 DNS 查询使用。主机端口必须空闲；systemd-resolved 通常会占用 53 端口。", zh-TW = "供其他裝置傳送 DNS 查詢使用。主機連接埠必須空閒；systemd-resolved 通常會佔用 53 連接埠。" }

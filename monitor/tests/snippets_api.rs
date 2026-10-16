@@ -14,35 +14,9 @@ const PATH: &str = "/api/v1/snippets";
 const PLAN: &str = "/api/v1/snippets/plan";
 
 #[ntex::test]
-async fn every_route_needs_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, PATH, None).await;
-    assert_eq!(status, 401);
-
-    for (method, path, body) in [
-        (Method::GET, PATH, None),
-        (Method::PUT, PATH, Some(json!({"snippets": []}))),
-        (Method::POST, PLAN, Some(json!({"script": "ls"}))),
-    ] {
-        let (status, body) = call(&srv, Some("viewer"), method, path, body).await;
-        assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")), "{path}");
-    }
-    let rows = audit(&db).await;
-    let details: Vec<_> = rows.iter().map(|row| row.3.as_deref().unwrap()).collect();
-    assert_eq!(
-        details,
-        [
-            "snippets list: shell not_granted",
-            "snippets replace: shell not_granted",
-            "snippets plan: shell not_granted",
-        ]
-    );
-}
-
-#[ntex::test]
 async fn a_library_is_read_back_as_it_was_written() {
     let (srv, db) = server().await;
-    let (status, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (status, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!((status, body), (200, json!({"snippets": []})));
 
     let library = json!([
@@ -50,23 +24,23 @@ async fn a_library_is_read_back_as_it_was_written() {
         {"id": "a", "name": "Login", "script": "ssh ${user}@${host}", "note": "jump", "tags": []},
     ]);
     let (status, body) =
-        call(&srv, Some("admin"), Method::PUT, PATH, Some(json!({"snippets": library}))).await;
+        call(&srv, true, Method::PUT, PATH, Some(json!({"snippets": library}))).await;
     assert_eq!(status, 200, "{body}");
-    let (_, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (_, body) = call(&srv, true, Method::GET, PATH, None).await;
     // The order is the one sent, and so is each snippet's tag order.
     assert_eq!(body["snippets"], library);
 
     // A replace drops what it does not carry, tags included.
     let (status, _) = call(
         &srv,
-        Some("admin"),
+        true,
         Method::PUT,
         PATH,
         Some(json!({"snippets": [{"id": "a", "name": "Login", "script": "ssh"}]})),
     )
     .await;
     assert_eq!(status, 200);
-    let (_, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (_, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!(
         body["snippets"],
         json!([{"id": "a", "name": "Login", "script": "ssh", "note": "", "tags": []}])
@@ -83,11 +57,11 @@ async fn a_library_is_read_back_as_it_was_written() {
 async fn a_refused_library_leaves_the_stored_one() {
     let (srv, _) = server().await;
     let stored = json!([{"id": "a", "name": "one", "script": "ls", "note": "", "tags": []}]);
-    call(&srv, Some("admin"), Method::PUT, PATH, Some(json!({"snippets": stored}))).await;
+    call(&srv, true, Method::PUT, PATH, Some(json!({"snippets": stored}))).await;
 
     let (status, body) = call(
         &srv,
-        Some("admin"),
+        true,
         Method::PUT,
         PATH,
         Some(json!({"snippets": [
@@ -97,7 +71,7 @@ async fn a_refused_library_leaves_the_stored_one() {
     )
     .await;
     assert_eq!((status, body), (400, json!({"error": "duplicateName", "index": 1})));
-    let (_, body) = call(&srv, Some("admin"), Method::GET, PATH, None).await;
+    let (_, body) = call(&srv, true, Method::GET, PATH, None).await;
     assert_eq!(body["snippets"], stored);
 }
 
@@ -106,7 +80,7 @@ async fn a_plan_is_the_steps_or_the_placeholder_it_cannot_answer() {
     let (srv, db) = server().await;
     let (status, body) = call(
         &srv,
-        Some("admin"),
+        true,
         Method::POST,
         PLAN,
         Some(json!({"script": "echo ${name}${sleep 1}${ctrl+c}", "context": {"name": "box"}})),
@@ -124,7 +98,7 @@ async fn a_plan_is_the_steps_or_the_placeholder_it_cannot_answer() {
 
     let (status, body) = call(
         &srv,
-        Some("admin"),
+        true,
         Method::POST,
         PLAN,
         Some(json!({"script": "sshpass -p ${pwd} true"})),

@@ -5,7 +5,12 @@ import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
+import '../../helpers/rust_lib_helper.dart';
+
 void main() {
+  // The command risk is `sbm_parser::command_risk`, over FFI.
+  setUpAll(initRustLibForTest);
+
   test('global Agent instructions expose exact live server IDs', () {
     final instructions = buildGlobalAgentInstructions(
       localeHint: 'zh-CN',
@@ -450,10 +455,9 @@ void main() {
           serverbox.parameters['properties'] as Map<String, dynamic>;
 
       // Its address is a fact the Agent may have learned by installing it; the
-      // user and password are secrets, and go the same way the SSH password
-      // does — through a dialog, never through the transcript.
+      // password is a secret, and goes the same way the SSH password does —
+      // through a dialog, never through the transcript.
       expect(properties.keys, contains('monitor_addr'));
-      expect(properties.keys, isNot(contains('monitor_user')));
       expect(properties.keys, isNot(contains('monitor_pwd')));
       expect(properties.keys, isNot(contains('monitor_password')));
     });

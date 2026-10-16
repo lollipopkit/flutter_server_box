@@ -1,0 +1,37 @@
+# Jellyfin 12.2 (GPL-2.0-only), https://github.com/jellyfin/jellyfin/releases/tag/v12.2
+#
+# Written for ServerBox Monitor's Media app from upstream's container page
+# (jellyfin.org/docs/general/installation/container) and the Dockerfile of the
+# official image (jellyfin/jellyfin-packaging), not copied from a release file:
+# - no `name:` and no `container_name`: the agent names the project;
+# - `user:` is the uid:gid form upstream's docs show; the image runs as root
+#   by default. The config and cache folders are owned by that user;
+# - the transcoding backend is one service of hwaccel.yml, merged in by `extends`;
+# - the published address and ports, and the folders, come from the env file
+#   the agent writes.
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:${JELLYFIN_VERSION}
+    extends:
+      file: hwaccel.yml
+      service: ${TRANSCODE_BACKEND}
+    user: "${SBM_UID}:${SBM_GID}"
+    environment:
+      TZ: ${SBM_TZ}
+    volumes:
+      - ${JELLYFIN_CONFIG_LOCATION}:/config
+      - ${JELLYFIN_CACHE_LOCATION}:/cache
+      - ${JELLYFIN_MEDIA_LOCATION}:/media:ro
+      - ${JELLYFIN_MUSIC_LOCATION}:/music:ro
+    ports:
+      - '${JELLYFIN_BIND}:${JELLYFIN_PORT}:8096/tcp'
+      - '${JELLYFIN_BIND}:${JELLYFIN_DISCOVERY_PORT}:7359/udp'
+    restart: unless-stopped
+    # /health is the route the image's own HEALTHCHECK uses (HEALTHCHECK_URL).
+    healthcheck:
+      test: ["CMD", "curl", "--noproxy", "localhost", "-fsS", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 10s

@@ -33,6 +33,11 @@ mod sysinfo_backend;
 /// throughput, ...). Owned and passed by the caller (mirrors monitor's
 /// existing `prev_cpu: &mut Option<CpuCore>` pattern) rather than a hidden
 /// global — easier to test, no surprises from process-wide static state.
+///
+/// Keep it on one thread for its whole life: on Windows the sysinfo backend's
+/// components are WMI COM objects bound to the thread that created them, and
+/// refreshing them from another thread once that one has exited faults the
+/// process. The monitor gives it a thread of its own (`NativeSampler`).
 #[derive(Default)]
 pub struct NativeState {
     #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -64,6 +69,16 @@ pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: System
         #[allow(unreachable_patterns)]
         _ => ServerStatus::default(),
     }
+}
+
+/// Processes using the GPU under WSL2 (`linux::dxg_processes`); none
+/// elsewhere, where the GPU's own tool lists them.
+pub fn wsl_gpu_processes() -> Vec<sbm_parser::types::GpuMemProcess> {
+    #[cfg(target_os = "linux")]
+    if linux::wsl() {
+        return linux::dxg_processes();
+    }
+    Vec::new()
 }
 
 /// Reads the block devices again: which there are, how they nest, their

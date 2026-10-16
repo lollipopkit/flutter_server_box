@@ -2083,20 +2083,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String funcNeedsAgentGrant(String func, String setting) {
-    return '$func needs the Monitor agent\'s $setting to be turned on.';
-  }
-
-  @override
-  String funcNeedsAgentUpdate(String func) {
-    return '$func needs a newer Monitor agent.';
-  }
-
-  @override
-  String get portForwardRemoteNeedsAgent =>
-      'Remote forwards through the Monitor agent need a newer agent: update it on the server.';
-
-  @override
   String get rangeLive => 'Live';
 
   @override
@@ -2767,7 +2753,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.';
+      'This agent refuses everything beyond monitoring over plain HTTP. Connect over HTTPS, or allow plain HTTP on both the agent ([remote_access] allow_insecure) and this app.';
 
   @override
   String get alerts => 'Alerts';
@@ -5060,35 +5046,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copyLink => 'Copy link';
 
   @override
-  String funcNeedsAgentPermission(String func) {
-    return 'Your account on this Monitor agent has no permission for $func. Ask the agent\'s admin.';
-  }
-
-  @override
   String funcNeedsAgentHttps(String func) {
     return '$func needs HTTPS to this Monitor agent, or plain HTTP allowed on both the agent and this app.';
   }
 
   @override
-  String funcNeedsAgentSetup(String func) {
-    return '$func is not set up on this Monitor agent; its operator has to configure it.';
-  }
-
-  @override
-  String get monitorFilesReadOnly =>
-      'Read-only: this account can browse files on the agent but not change them.';
-
-  @override
   String get monitorAccess => 'Access';
-
-  @override
-  String get monitorAccounts => 'Accounts';
-
-  @override
-  String get monitorRoles => 'Roles';
-
-  @override
-  String get monitorRole => 'Role';
 
   @override
   String get monitorChangePassword => 'Change password';
@@ -5100,10 +5063,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorCurrentPassword => 'Your current password';
 
   @override
-  String get monitorReauthTip =>
-      'Changing access needs your own password again.';
-
-  @override
   String get monitorPasswordTooShort => 'At least 8 characters';
 
   @override
@@ -5111,80 +5070,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monitorErrReauth => 'Your password was wrong.';
-
-  @override
-  String get monitorErrLastAdmin =>
-      'The agent needs at least one admin account.';
-
-  @override
-  String get monitorErrConflict => 'It already exists, or it is still in use.';
-
-  @override
-  String get monitorErrForbidden => 'Only an admin can do this.';
-
-  @override
-  String get monitorRoleNameRule =>
-      'Lowercase letters, digits, - and _, up to 32 characters';
-
-  @override
-  String get monitorGrantShell => 'Shell and commands';
-
-  @override
-  String get monitorGrantShellTip =>
-      'Terminal, processes, services, containers, snippets, power — as the agent\'s account';
-
-  @override
-  String get monitorGrantSshTerminal => 'Panel terminal over SSH';
-
-  @override
-  String get monitorGrantVirt => 'Virtualization';
-
-  @override
-  String get monitorGrantVirtTip =>
-      'Proxmox VE, libvirt and BMCs the agent reaches, in its web panel';
-
-  @override
-  String get monitorGrantFiles => 'Files';
-
-  @override
-  String get monitorGrantConnect => 'Outbound connections';
-
-  @override
-  String get monitorGrantConnectTip =>
-      'Local and dynamic port forwards, remote desktop';
-
-  @override
-  String get monitorGrantConnectAllow =>
-      'Allowed targets (IP or CIDR, optionally :port or :from-to; one per line, empty is anywhere)';
-
-  @override
-  String get monitorGrantListen => 'Listen on the server';
-
-  @override
-  String get monitorGrantListenTip => 'Remote port forwards';
-
-  @override
-  String get monitorGrantListenPublic => 'Non-loopback addresses';
-
-  @override
-  String get monitorGrantPorts => 'Port range (empty is any)';
-
-  @override
-  String get monitorGrantOff => 'Off';
-
-  @override
-  String get monitorBuiltin => 'Built-in';
-
-  @override
-  String get monitorAdminRoleTip =>
-      'Manages accounts, roles and the agent\'s settings';
-
-  @override
-  String get monitorYou => 'You';
-
-  @override
-  String get monitorNoAccessToSettings =>
-      'Only an admin can change this agent\'s settings.';
 
   @override
   String get monitorPasswordNotSaved =>
@@ -5419,10 +5304,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get monitorBackupUnsupported =>
       'This monitor agent cannot store backups. Update the agent.';
-
-  @override
-  String get monitorBackupAdminOnly =>
-      'Only an admin account of the monitor agent can store backups on it.';
 
   @override
   String monitorBackupTooLarge(String max) {
@@ -5893,4 +5774,1208 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kbServerClose => 'Servers: close details';
+
+  @override
+  String get storageTitle => 'Storage';
+
+  @override
+  String get storageLinuxOnly =>
+      'Storage management currently supports Linux servers.';
+
+  @override
+  String get storageDisks => 'Disks';
+
+  @override
+  String get storageRaid => 'RAID';
+
+  @override
+  String get storagePools => 'ZFS pools';
+
+  @override
+  String get storageNoFilesystem => 'No filesystem';
+
+  @override
+  String storageUsage(Object total, Object used) {
+    return '$used of $total';
+  }
+
+  @override
+  String storageFree(Object size) {
+    return '$size free';
+  }
+
+  @override
+  String get storageBusyMounted => 'In use';
+
+  @override
+  String get storageBusySwap => 'Swap';
+
+  @override
+  String get storageBusyRaid => 'In an array';
+
+  @override
+  String get storageBusyPool => 'In a pool';
+
+  @override
+  String get storageBusyVolume => 'Holds a volume';
+
+  @override
+  String get storageBusyReadOnly => 'Read only';
+
+  @override
+  String get storageBusySystem => 'System partition';
+
+  @override
+  String get storageSystemMount =>
+      'The system uses this mount; it stays mounted.';
+
+  @override
+  String get storageNotMounted => 'Nothing is mounted there any more.';
+
+  @override
+  String get storageMount => 'Mount';
+
+  @override
+  String get storageUnmount => 'Unmount';
+
+  @override
+  String get storageFormat => 'Format';
+
+  @override
+  String get storageInitialize => 'Initialize';
+
+  @override
+  String get storageSmartTest => 'SMART test';
+
+  @override
+  String get storageFilesystem => 'Filesystem';
+
+  @override
+  String get storageLabel => 'Label';
+
+  @override
+  String get storageMountpoint => 'Mount point';
+
+  @override
+  String get storageMountPersist => 'Mount again at every start (/etc/fstab)';
+
+  @override
+  String get storageMountOwn => 'Let ServerBox write here (for backups)';
+
+  @override
+  String get storageName => 'Name';
+
+  @override
+  String get storageLevel => 'Level';
+
+  @override
+  String get storageLayout => 'Layout';
+
+  @override
+  String storagePickDevices(Object count) {
+    return 'Pick at least $count devices. What they hold is lost.';
+  }
+
+  @override
+  String get storageCreateRaid => 'Create array';
+
+  @override
+  String storageCreateRaidBody(Object devices, Object level, Object name) {
+    return 'Builds /dev/$name (RAID $level) from $devices. Everything on them is lost.';
+  }
+
+  @override
+  String get storageCreatePool => 'Create pool';
+
+  @override
+  String storageCreatePoolBody(Object devices, Object layout, Object name) {
+    return 'Builds pool $name ($layout) from $devices. Everything on them is lost.';
+  }
+
+  @override
+  String storageFormatBody(Object device) {
+    return 'Makes a new filesystem on $device. Everything on it is lost.';
+  }
+
+  @override
+  String storageInitializeBody(Object device) {
+    return 'Wipes $device and gives it one partition for the whole disk. Everything on it is lost.';
+  }
+
+  @override
+  String storageMountBody(Object device, Object mountpoint) {
+    return 'Mounts $device at $mountpoint.';
+  }
+
+  @override
+  String storageUnmountBody(Object mountpoint) {
+    return 'Unmounts $mountpoint and stops mounting it at start.';
+  }
+
+  @override
+  String storageSmartTestBody(Object device) {
+    return 'Starts a short self-test on $device. It takes a few minutes; its progress and result show here.';
+  }
+
+  @override
+  String get storageAddMember => 'Add disk';
+
+  @override
+  String storageAddMemberBody(Object array, Object device) {
+    return 'Adds $device to /dev/$array: it replaces a failed member, or waits as a spare. What it holds is lost.';
+  }
+
+  @override
+  String get storageRemoveMember => 'Remove';
+
+  @override
+  String storageRemoveMemberBody(Object array, Object device) {
+    return 'Marks $device failed and takes it out of /dev/$array. The array runs on without it, degraded if it was a working member.';
+  }
+
+  @override
+  String get storageDeleteRaid => 'Delete array';
+
+  @override
+  String storageDeleteRaidBody(Object array) {
+    return 'Stops /dev/$array and wipes its members\' RAID signatures. Its data is lost.';
+  }
+
+  @override
+  String get storageDestroyPool => 'Destroy pool';
+
+  @override
+  String storageDestroyPoolBody(Object name) {
+    return 'Destroys pool $name and everything in it.';
+  }
+
+  @override
+  String get storageScrub => 'Scrub';
+
+  @override
+  String storageScrubBody(Object name) {
+    return 'Reads all of pool $name and repairs what it can. It runs in the background.';
+  }
+
+  @override
+  String get storageState => 'State';
+
+  @override
+  String get storageHealthy => 'Healthy';
+
+  @override
+  String get storageDegraded => 'Degraded';
+
+  @override
+  String storageSync(Object action) {
+    return 'Sync ($action)';
+  }
+
+  @override
+  String get storageFaulty => 'Failed';
+
+  @override
+  String get storageSpare => 'Spare';
+
+  @override
+  String get storageActive => 'Working';
+
+  @override
+  String get storageScan => 'Last scan';
+
+  @override
+  String storageErrors(Object count) {
+    return '$count errors';
+  }
+
+  @override
+  String get storageNoDisks => 'No disks';
+
+  @override
+  String get storageNoArrays => 'No arrays';
+
+  @override
+  String get storageNoPools => 'No pools';
+
+  @override
+  String get storageNoMdadm =>
+      'mdadm is not installed: arrays cannot be built or changed here.';
+
+  @override
+  String get storageNoZfs => 'ZFS is not installed (zfsutils).';
+
+  @override
+  String storageTypeToConfirm(Object word) {
+    return 'Type $word to confirm';
+  }
+
+  @override
+  String get storageConfirmationMismatch =>
+      'The confirmation text did not match.';
+
+  @override
+  String storageInUse(Object device) {
+    return '$device is in use.';
+  }
+
+  @override
+  String get storageBusy => 'Another change to the disks is running.';
+
+  @override
+  String get storageHealthRead => 'Read disk health';
+
+  @override
+  String get storageHealthWearing => 'Wearing';
+
+  @override
+  String get storageHealthFailing => 'Failing';
+
+  @override
+  String get storageHealthAsleep => 'Asleep';
+
+  @override
+  String get storageHealthUnsupported => 'No SMART';
+
+  @override
+  String storageTemperature(Object value) {
+    return '$value °C';
+  }
+
+  @override
+  String storagePowerOn(Object hours) {
+    return '$hours h powered on';
+  }
+
+  @override
+  String storageBadSectors(Object count) {
+    return '$count bad sectors';
+  }
+
+  @override
+  String storageTesting(Object percent) {
+    return 'Self-test: $percent% left';
+  }
+
+  @override
+  String get storageGrowPartition => 'Grow partition';
+
+  @override
+  String storageGrowPartitionBody(Object device) {
+    return 'Grows $device into the free space after it. Expand its filesystem after.';
+  }
+
+  @override
+  String get storageEncrypt => 'Encrypt (LUKS)';
+
+  @override
+  String get storagePassphrase => 'Passphrase';
+
+  @override
+  String get storagePassphraseAgain => 'The same again';
+
+  @override
+  String get storagePassphraseHint =>
+      'At least 8 characters. Without it the data cannot be read: keep it safe.';
+
+  @override
+  String get storageInvalidPassphrase =>
+      'The passphrase must be 8 to 512 characters, on one line.';
+
+  @override
+  String get storagePassphrasesDiffer => 'The two passphrases differ.';
+
+  @override
+  String get storageEncrypted => 'Encrypted';
+
+  @override
+  String get storageLocked => 'Locked';
+
+  @override
+  String get storageUnlock => 'Unlock';
+
+  @override
+  String storageUnlockBody(Object device) {
+    return 'Opens $device with its passphrase.';
+  }
+
+  @override
+  String get storageLock => 'Lock';
+
+  @override
+  String storageLockBody(Object device) {
+    return 'Closes $device. Its filesystem must be unmounted.';
+  }
+
+  @override
+  String get storageReplace => 'Replace';
+
+  @override
+  String storageReplaceBody(Object name, Object old, Object replacement) {
+    return 'Replaces $old in pool $name with $replacement. The pool copies its data onto it; what $replacement holds is lost.';
+  }
+
+  @override
+  String get storageAttach => 'Mirror';
+
+  @override
+  String storageAttachBody(Object existing, Object replacement) {
+    return 'Mirrors $existing onto $replacement. What $replacement holds is lost.';
+  }
+
+  @override
+  String get storageAddSpare => 'Add spare';
+
+  @override
+  String storageAddSpareBody(Object devices, Object name) {
+    return 'Adds $devices to pool $name as spares. What they hold is lost.';
+  }
+
+  @override
+  String get storageRemoveDevice => 'Remove';
+
+  @override
+  String storageRemoveDeviceBody(Object device, Object name) {
+    return 'Takes $device out of pool $name.';
+  }
+
+  @override
+  String get storageOnline => 'Bring online';
+
+  @override
+  String storageOnlineBody(Object device, Object name) {
+    return 'Brings $device back into pool $name, grown into the whole disk.';
+  }
+
+  @override
+  String get storageDetails => 'Details';
+
+  @override
+  String get storageAttributes => 'Attributes';
+
+  @override
+  String get storageAttrValue => 'Value';
+
+  @override
+  String get storageAttrWorst => 'Worst';
+
+  @override
+  String get storageAttrThresh => 'Threshold';
+
+  @override
+  String get storageSelfTests => 'Self-tests';
+
+  @override
+  String get storageTestShort => 'Short';
+
+  @override
+  String get storageTestLong => 'Long';
+
+  @override
+  String get storageTestPassed => 'Passed';
+
+  @override
+  String get storageTestFailed => 'Failed';
+
+  @override
+  String get storageTestAborted => 'Stopped';
+
+  @override
+  String storageAtHours(Object hours) {
+    return 'at $hours h';
+  }
+
+  @override
+  String get storageNothingToShow => 'Nothing to show';
+
+  @override
+  String get storageLongTest => 'Long test';
+
+  @override
+  String storageSmartLongTestBody(Object device) {
+    return 'Starts a long self-test on $device. It reads the whole disk: hours on a large one.';
+  }
+
+  @override
+  String get storageMountedInside => 'Unmount its filesystem first.';
+
+  @override
+  String get storageNotRemovable =>
+      'Only a spare or cache device can be taken out here.';
+
+  @override
+  String get storageNotGrowable => 'This device cannot be grown here.';
+
+  @override
+  String get storageOverlapping => 'Choose devices that do not overlap.';
+
+  @override
+  String get storageInvalidDevice =>
+      'The device is invalid or no longer available.';
+
+  @override
+  String get storageInvalidMountpoint => 'The mount point is invalid.';
+
+  @override
+  String get storageInvalidName => 'The name is invalid.';
+
+  @override
+  String get storageInvalidFilesystem => 'The filesystem is not supported.';
+
+  @override
+  String get storageInvalidLabel => 'The label is invalid.';
+
+  @override
+  String get storageInvalidLevel => 'The RAID level or pool layout is invalid.';
+
+  @override
+  String get storageTooFewDevices => 'Not enough valid devices were selected.';
+
+  @override
+  String get storageExpand => 'Expand';
+
+  @override
+  String storageExpandBody(Object device) {
+    return 'Grows the filesystem on $device to fill its device. It stays mounted.';
+  }
+
+  @override
+  String get storageGrowRaid => 'Grow';
+
+  @override
+  String storageGrowRaidBody(Object array, Object device) {
+    return 'Adds $device to /dev/$array as one more working member. RAID 1 gains a mirror; RAID 5 and 6 gain room once the reshape ends, which can take hours. Expand its filesystem after. What $device holds is lost.';
+  }
+
+  @override
+  String get storageAddToPool => 'Add disks';
+
+  @override
+  String storageAddToPoolBody(Object devices, Object layout, Object name) {
+    return 'Adds $layout of $devices to pool $name for more room. They cannot be taken out again, and what they hold is lost.';
+  }
+
+  @override
+  String get sharingTitle => 'Sharing';
+
+  @override
+  String get sharingSmb => 'SMB';
+
+  @override
+  String get sharingNfs => 'NFS';
+
+  @override
+  String get sharingService => 'Service';
+
+  @override
+  String get sharingRunning => 'Running';
+
+  @override
+  String get sharingStopped => 'Stopped';
+
+  @override
+  String get sharingNfsServer => 'NFS server';
+
+  @override
+  String get sharingNoSamba =>
+      'Samba is not installed. Windows, macOS and Linux open SMB shares.';
+
+  @override
+  String get sharingNoNfs =>
+      'The NFS server is not installed. Linux and macOS mount NFS exports.';
+
+  @override
+  String get sharingInstallSamba => 'Install Samba';
+
+  @override
+  String get sharingInstallSambaBody =>
+      'Installs Samba with the machine\'s package manager.';
+
+  @override
+  String get sharingInstallNfs => 'Install NFS server';
+
+  @override
+  String get sharingInstallNfsBody =>
+      'Installs the NFS server with the machine\'s package manager.';
+
+  @override
+  String get sharingAddShare => 'Add share';
+
+  @override
+  String get sharingAddExport => 'Add export';
+
+  @override
+  String get sharingEdit => 'Edit';
+
+  @override
+  String get sharingRemove => 'Remove';
+
+  @override
+  String get sharingSave => 'Save';
+
+  @override
+  String sharingSaveSmbBody(Object name, Object path) {
+    return 'Shares $path over SMB as $name, then reloads Samba.';
+  }
+
+  @override
+  String sharingSaveNfsBody(Object path) {
+    return 'Exports $path over NFS, then reloads the exports.';
+  }
+
+  @override
+  String sharingRemoveSmbBody(Object name) {
+    return 'Stops sharing $name. The folder and its files stay.';
+  }
+
+  @override
+  String sharingRemoveNfsBody(Object path) {
+    return 'Stops exporting $path. The folder and its files stay.';
+  }
+
+  @override
+  String get sharingElsewhere => 'Set up outside ServerBox';
+
+  @override
+  String get sharingNoShares => 'No SMB shares';
+
+  @override
+  String get sharingNoExports => 'No NFS exports';
+
+  @override
+  String get sharingReadOnly => 'Read only';
+
+  @override
+  String get sharingReadWrite => 'Read and write';
+
+  @override
+  String get sharingGuest => 'Guests';
+
+  @override
+  String get sharingGuestLabel =>
+      'Let anyone on the network in without an account';
+
+  @override
+  String get sharingUsersHint =>
+      'Accounts allowed in (none ticked: every account with an SMB password):';
+
+  @override
+  String get sharingFolder => 'Folder';
+
+  @override
+  String get sharingFolderHint =>
+      'A folder on the server, e.g. a disk mounted in Storage.';
+
+  @override
+  String get sharingComment => 'Description';
+
+  @override
+  String get sharingPasswords => 'SMB passwords';
+
+  @override
+  String get sharingPasswordsBody =>
+      'Samba keeps its own passwords: set one for each account that connects.';
+
+  @override
+  String get sharingSetPassword => 'Set password';
+
+  @override
+  String get sharingNewPassword => 'New SMB password';
+
+  @override
+  String get sharingNewPasswordAgain => 'The same again';
+
+  @override
+  String get sharingPasswordsDiffer => 'The two passwords differ.';
+
+  @override
+  String get sharingClientsHint =>
+      'Who may mount it: * for anyone, a host, an address or a network such as 192.168.1.0/24.';
+
+  @override
+  String get sharingClient => 'Client';
+
+  @override
+  String get sharingAddClient => 'Add client';
+
+  @override
+  String get sharingSquashRoot => 'Root is nobody';
+
+  @override
+  String get sharingSquashAll => 'Everyone is nobody';
+
+  @override
+  String get sharingSquashNone => 'Root stays root';
+
+  @override
+  String sharingNotAFolder(Object path) {
+    return '$path is not a folder on the server.';
+  }
+
+  @override
+  String sharingRefused(Object detail) {
+    return 'The configuration was refused and the previous one is back: $detail';
+  }
+
+  @override
+  String get sharingDuplicate => 'Another share has this name or folder.';
+
+  @override
+  String get sharingInvalidName =>
+      'A name is letters, digits, _ . - (32 at most).';
+
+  @override
+  String get sharingInvalidPath =>
+      'The folder must be an absolute path without quotes, backslashes or ..';
+
+  @override
+  String get sharingInvalidClient =>
+      'A client is *, a host, an address or a network.';
+
+  @override
+  String get sharingInvalidPassword => 'This password cannot be used.';
+
+  @override
+  String get sharingTimeMachineOption => 'Time Machine backups (Mac)';
+
+  @override
+  String get sharingRecycleOption => 'Keep deleted files in .recycle';
+
+  @override
+  String get sharingTimeMachine => 'Time Machine';
+
+  @override
+  String get sharingRecycle => 'Recycle bin';
+
+  @override
+  String get sharingConnectedNow => 'Connected now';
+
+  @override
+  String get sharingNobodyConnected => 'Nobody is connected';
+
+  @override
+  String get sharingShowConnections => 'Show connections';
+
+  @override
+  String get sharingShowConnectionsBody => 'Reads who is connected, as root.';
+
+  @override
+  String get sharingConnectionsLinuxOnly =>
+      'Sharing management currently supports Linux servers.';
+
+  @override
+  String get agentThisDevice => 'This device';
+
+  @override
+  String get agentSource => 'Source';
+
+  @override
+  String agentDeleteRemoteTip(String server) {
+    return 'The task is deleted on $server.';
+  }
+
+  @override
+  String get agentPlan => 'Plan';
+
+  @override
+  String get agentRemoteGone => 'This task is no longer on the server.';
+
+  @override
+  String agentRemoteReplyHint(String server) {
+    return 'Reply to the task on $server';
+  }
+
+  @override
+  String agentRemoteStatus(String server, String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'queued': 'Queued',
+      'running': 'Running',
+      'waiting': 'Waiting for you',
+      'done': 'Done',
+      'failed': 'Failed',
+      'cancelled': 'Stopped',
+      'other': '',
+    });
+    return '$server · $_temp0';
+  }
+
+  @override
+  String agentRemoteAlways(String rule) {
+    return 'Always allow $rule';
+  }
+
+  @override
+  String agentRemoteTypeToRun(String name) {
+    return 'Type $name to run';
+  }
+
+  @override
+  String get agentRemoteRunAnyway => 'Run anyway';
+
+  @override
+  String agentRemoteSudoFor(String user) {
+    return 'Password of $user';
+  }
+
+  @override
+  String get agentRemoteSudoWrong => 'Wrong password';
+
+  @override
+  String get agentRemoteSudoRemember => 'Remember for 15 minutes';
+
+  @override
+  String agentNewOn(String place) {
+    return 'New in $place';
+  }
+
+  @override
+  String agentRemoteNewHint(String server) {
+    return 'Ask the agent on $server, or give it a task.';
+  }
+
+  @override
+  String get agentPermissionMode => 'Permission mode';
+
+  @override
+  String get agentModeAuto => 'Auto';
+
+  @override
+  String get agentModeManual => 'Manual';
+
+  @override
+  String get agentModeBypass => 'Allow all';
+
+  @override
+  String get agentModeBypassOff => 'Turned off on this server';
+
+  @override
+  String get agentModeBypassWarn =>
+      'Allow all: deleting, restarting and config changes run directly, without asking.';
+
+  @override
+  String get webApps => 'Web apps';
+
+  @override
+  String get webAppUnhealthy => 'Unhealthy';
+
+  @override
+  String get webAppDown => 'Down';
+
+  @override
+  String get webAppInstalling => 'Installing';
+
+  @override
+  String get webAppsEmpty =>
+      'No web apps yet. Deploy them from the App Store of the Monitor panel.';
+
+  @override
+  String get webAppVersion => 'Version';
+
+  @override
+  String get webAppHomepage => 'Homepage';
+
+  @override
+  String webAppUpdate(String version) {
+    return 'Version $version is available. Update it in the Monitor panel.';
+  }
+
+  @override
+  String noticeStackDown(String app) {
+    return '$app is down';
+  }
+
+  @override
+  String noticeStackDownBody(String services) {
+    return 'Not running: $services.';
+  }
+
+  @override
+  String get noticeStackDownBodyEmpty => 'None of its containers is running.';
+
+  @override
+  String noticeStackUnhealthy(String app) {
+    return '$app is unhealthy';
+  }
+
+  @override
+  String noticeStackUnhealthyBody(String services) {
+    return 'Failing its health check: $services.';
+  }
+
+  @override
+  String noticeStackBack(String app) {
+    return '$app is running again';
+  }
+
+  @override
+  String get noticeStackBackBody => 'Every container is up.';
+
+  @override
+  String noticeStackUpdate(String app) {
+    return '$app: an update is available';
+  }
+
+  @override
+  String noticeStackUpdateBody(String project, String version, String current) {
+    return '$project $version can be installed (now $current).';
+  }
+
+  @override
+  String noticeStorageArrayDegraded(String array) {
+    return '/dev/$array is degraded';
+  }
+
+  @override
+  String get noticeStorageArrayDegradedBody =>
+      'A member failed or is missing; the array runs without its redundancy.';
+
+  @override
+  String noticeStorageArrayBack(String array) {
+    return '/dev/$array is healthy again';
+  }
+
+  @override
+  String get noticeStorageArrayBackBody => 'Every member is working.';
+
+  @override
+  String noticeStoragePoolUnhealthy(String pool, String health) {
+    return 'Pool $pool is $health';
+  }
+
+  @override
+  String get noticeStoragePoolUnhealthyBody =>
+      'Open Storage to see which device.';
+
+  @override
+  String noticeStoragePoolBack(String pool) {
+    return 'Pool $pool is online again';
+  }
+
+  @override
+  String get noticeStoragePoolBackBody => 'Every device is working.';
+
+  @override
+  String noticeStorageDiskFailing(String device) {
+    return '$device is failing';
+  }
+
+  @override
+  String get noticeStorageDiskFailingBody =>
+      'Its SMART check or self-test failed: copy what it holds elsewhere and replace it.';
+
+  @override
+  String noticeStorageDiskSectors(String device, int count) {
+    return '$device has $count bad sectors';
+  }
+
+  @override
+  String noticeStorageDiskSectorsBody(int was) {
+    return 'It had $was. A disk losing sectors often fails soon.';
+  }
+
+  @override
+  String noticeStorageMaintenanceFailed(String task) {
+    return 'Storage maintenance did not run: $task';
+  }
+
+  @override
+  String get storageTaskScrub => 'Scrub pools and check arrays';
+
+  @override
+  String get storageTaskSmartShort => 'Short SMART test';
+
+  @override
+  String get storageTaskSmartLong => 'Long SMART test';
+
+  @override
+  String get storageNeedsSudo =>
+      'sudo asked for a password: run the agent as root, or allow these commands (above).';
+
+  @override
+  String get monitorTab => 'Monitor';
+
+  @override
+  String get monitorOverview => 'Overview';
+
+  @override
+  String get monitorNotices => 'Notifications';
+
+  @override
+  String get monitorAudit => 'Audit log';
+
+  @override
+  String get monitorLive => 'Sessions & devices';
+
+  @override
+  String get monitorNoAgents =>
+      'No server is reached through a Monitor agent yet.';
+
+  @override
+  String get monitorNotOffered =>
+      'This agent\'s version does not offer this. Update the agent.';
+
+  @override
+  String get monitorAlertsNotOffered =>
+      'This agent\'s version does not report alerts.';
+
+  @override
+  String get monitorAlertsNone => 'No rule is firing.';
+
+  @override
+  String monitorFiringFor(String duration) {
+    return 'firing for $duration';
+  }
+
+  @override
+  String monitorAgentVersion(String version) {
+    return 'Agent $version';
+  }
+
+  @override
+  String monitorAgentUpdate(String version) {
+    return '$version available';
+  }
+
+  @override
+  String monitorUnread(int count) {
+    return '$count unread';
+  }
+
+  @override
+  String monitorAppsUnwell(int count) {
+    return 'Apps with problems: $count';
+  }
+
+  @override
+  String monitorAppsUpdates(int count) {
+    return 'App updates: $count';
+  }
+
+  @override
+  String get monitorUpdatesOnly => 'Updates only';
+
+  @override
+  String get monitorNoUpdates => 'No app has an update.';
+
+  @override
+  String get monitorNoticesEmpty => 'No notifications.';
+
+  @override
+  String get monitorMarkAllRead => 'Mark all as read';
+
+  @override
+  String get monitorAuditExec => 'Commands';
+
+  @override
+  String get monitorAuditMachine => 'Machine management';
+
+  @override
+  String get monitorAuditListen => 'Listened ports';
+
+  @override
+  String get monitorAuditTicket => 'Connection tickets';
+
+  @override
+  String get monitorAuditPush => 'Notification channels';
+
+  @override
+  String get monitorAuditAdmin => 'Account';
+
+  @override
+  String get monitorAuditDenied => 'Denied';
+
+  @override
+  String get monitorLoadMore => 'Load more';
+
+  @override
+  String get monitorLiveSessions => 'Terminal sessions';
+
+  @override
+  String get monitorLiveConnections => 'Connections';
+
+  @override
+  String get monitorLiveWatchTokens => 'Watch and widget tokens';
+
+  @override
+  String get monitorLiveDevices => 'Signed-in devices';
+
+  @override
+  String get monitorLiveDevicesTip =>
+      'Forgetting a device makes its next sign-in count against the account-wide limit on failed attempts. It does not sign the device out: a device that has the password signs in again. Change the password to keep a device out.';
+
+  @override
+  String get monitorLiveAttached => 'Attached';
+
+  @override
+  String get monitorLiveDetached => 'Detached';
+
+  @override
+  String get monitorLiveEnd => 'End';
+
+  @override
+  String get monitorLiveRevoke => 'Revoke';
+
+  @override
+  String get monitorLiveForget => 'Forget';
+
+  @override
+  String monitorLiveEndSessionConfirm(String name) {
+    return 'End the terminal session \"$name\"? What runs in it stops.';
+  }
+
+  @override
+  String monitorLiveEndConnectionConfirm(String name) {
+    return 'End the connection to $name?';
+  }
+
+  @override
+  String monitorLiveRevokeConfirm(String name) {
+    return 'Revoke the token of $name? It stops updating until it is set up again.';
+  }
+
+  @override
+  String monitorLiveForgetConfirm(String name) {
+    return 'Forget $name?';
+  }
+
+  @override
+  String monitorLiveExpires(String time) {
+    return 'Expires $time';
+  }
+
+  @override
+  String get monitorLiveStream => 'Relayed connection';
+
+  @override
+  String get monitorLiveAccepted => 'Forwarded connection';
+
+  @override
+  String get monitorLiveConsole => 'Console';
+
+  @override
+  String monitorAgentsCount(int count) {
+    return '$count agents';
+  }
+
+  @override
+  String get monitorStatOnline => 'Online';
+
+  @override
+  String get monitorStatFiring => 'Alerts firing';
+
+  @override
+  String get monitorStatUnread => 'Unread';
+
+  @override
+  String get monitorStatUpdates => 'App updates';
+
+  @override
+  String get monitorAuditEmpty => 'Nothing recorded matches.';
+
+  @override
+  String get monitorLiveNoSessions => 'No terminal session is open.';
+
+  @override
+  String get monitorLiveNoConnections => 'Nothing is forwarded or relayed.';
+
+  @override
+  String get monitorLiveNoTokens => 'No watch or widget is paired.';
+
+  @override
+  String get monitorLiveNoDevices => 'No device has signed in.';
+
+  @override
+  String get monitorAgentTooOld =>
+      'This agent is older than this app and asks for a user name. Update the agent.';
+
+  @override
+  String get monitorUpdateAgent => 'Update the agent';
+
+  @override
+  String get monitorAgentTooOldTip =>
+      'The Monitor tab has the steps to update it.';
+
+  @override
+  String get monitorAgentTooOldBody =>
+      'This agent is from before it had one password, and this app cannot sign in to it. After the update, its password is the one its oldest admin account had.';
+
+  @override
+  String monitorAgentOutdatedBody(String latest, String running) {
+    return '$latest is out; this agent runs $running.';
+  }
+
+  @override
+  String get monitorUpdateRunHint =>
+      'Run this on the server, as the account the agent was installed from:';
+
+  @override
+  String get monitorUpdateSshHint =>
+      'The terminal runs it. If the agent was installed system-wide and the terminal goes over SSH, sudo asks for its password there.';
+
+  @override
+  String get monitorUpdateNoSsh =>
+      'The app cannot open a terminal on this server: run it there yourself.';
+
+  @override
+  String get monitorUpdateDocker =>
+      'In Docker? Pull the new image and recreate the container instead.';
+
+  @override
+  String get monitorUpdateAfter =>
+      'Once it has restarted, refresh the Monitor tab.';
+
+  @override
+  String get monitorUpdateInTerminal => 'Run in a terminal';
+
+  @override
+  String get monitorHowToUpdate => 'How to update';
+
+  @override
+  String get monitorUpdateNix =>
+      'Installed by the NixOS module: update it through your system configuration and rebuild.';
+
+  @override
+  String get noticeAgentUpdate => 'The agent has an update';
+
+  @override
+  String get monitorUpdateLegacyUser => 'Its account name';
+
+  @override
+  String get monitorUpdateLegacyHint =>
+      'This agent still signs in with an account name and a password: the name this app used before (often admin) and the saved password.';
+
+  @override
+  String get monitorUpdateNow => 'Update now';
+
+  @override
+  String get monitorUpdating => 'Updating…';
+
+  @override
+  String get monitorUpdateRestarting =>
+      'The agent is restarting; the connection is back in a few seconds…';
+
+  @override
+  String monitorUpdateDone(String version) {
+    return 'Updated: the agent runs $version.';
+  }
+
+  @override
+  String get monitorUpdateFailed => 'The update failed. Its output is above.';
+
+  @override
+  String get monitorUpdateAgentHint =>
+      'The agent runs the installer apart from itself, so its restart does not stop the update. The connection to it drops for a few seconds meanwhile; this window follows the update across the restart.';
+
+  @override
+  String get monitorUpdateSudoPassword => 'sudo password';
+
+  @override
+  String get monitorUpdateSudoHint =>
+      'The installer needs root here (an OpenRC service). The password is used once and not saved.';
+
+  @override
+  String get monitorUpdateSudoRefused => 'sudo did not accept this password.';
+
+  @override
+  String get monitorUpdateNoAnswer =>
+      'The agent has not come back. Check it on the server.';
 }

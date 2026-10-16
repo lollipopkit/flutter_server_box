@@ -7,8 +7,8 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -71,6 +71,40 @@ void main() {
     id: 'agent',
     monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
   );
+
+  group('where the shell says it is', () {
+    test('an OSC 7 report sets the working directory; a later one replaces it', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      expect(session.workingDirectory, isNull);
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      expect(session.workingDirectory, '/srv/www');
+      // Percent-encoded, as the shells send a space.
+      session.terminal.write('\x1b]7;file://box/home/me/My%20Files\x1b\\');
+      expect(session.workingDirectory, '/home/me/My Files');
+      // Not a file URL: the last one stands.
+      session.terminal.write('\x1b]7;https://example.com/x\x07');
+      expect(session.workingDirectory, '/home/me/My Files');
+    });
+
+    test('a report from another host is another machine: its path is not taken', () {
+      final session = TerminalSession(source: ServerSource(ssh));
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      // `ssh other` typed into the shell; the far shell reports too.
+      session.terminal.write('\x1b]7;file://other/var/log\x07');
+      expect(session.workingDirectory, isNull);
+      // Back on this one.
+      session.terminal.write('\x1b]7;file://box/srv/www\x07');
+      expect(session.workingDirectory, '/srv/www');
+    });
+
+    test('only a file URL with an absolute path is read', () {
+      expect(TerminalSession.osc7Report(['file:///tmp']), (host: '', path: '/tmp'));
+      expect(TerminalSession.osc7Report(['file://host/a;b']), (host: 'host', path: '/a;b'));
+      expect(TerminalSession.osc7Report(['file://host/a', 'b']), (host: 'host', path: '/a;b'));
+      expect(TerminalSession.osc7Report(['relative']), null);
+      expect(TerminalSession.osc7Report(['']), null);
+    });
+  });
 
   group('the shell on screen', () {
     test('typing reaches every typed listener, and one leaving leaves the rest', () {
@@ -390,7 +424,7 @@ void main() {
           request.response.write(
             request.uri.path == '/api/v1/login'
                 ? '{"token":"test"}'
-                : '{"remote_access":{"terminal":true,"full_access":true}}',
+                : '{"access":{"ok":true}}',
           );
           request.response.close();
         });
@@ -417,7 +451,7 @@ void main() {
         request.response.write(
           request.uri.path == '/api/v1/login'
               ? '{"token":"test"}'
-              : '{"remote_access":{"terminal":false,"full_access":false}}',
+              : '{"access":{"ok":false,"why":"insecure_transport"}}',
         );
         request.response.close();
       });
@@ -440,11 +474,11 @@ void main() {
       );
     });
 
-    test('an agent granting terminal and full access is a shell source', () {
+    test('an agent granting access is a shell source', () {
       final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       expect(session.backend, isNotNull);
@@ -455,7 +489,7 @@ void main() {
 
     test('an agent that granted nothing is not', () {
       final session = TerminalSession(source: ServerSource(monitor));
-      session.adopt(null, granted: MonitorRemoteAccess.none);
+      session.adopt(null, granted: MonitorAccess.none);
 
       expect(session.backend, isNull);
     });
@@ -464,7 +498,7 @@ void main() {
       final session = TerminalSession(source: ServerSource(ssh));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       // The grant is the agent's, and this server has no agent. Answering
@@ -476,7 +510,7 @@ void main() {
       final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(
         null,
-        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+        granted: MonitorAccess.granted,
       );
 
       session.close();

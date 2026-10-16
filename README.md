@@ -12,7 +12,7 @@ English | [简体中文](README_zh.md)
 <p align="center">
 A Flutter project which provides charts to display Linux, Unix and Windows server status and tools to manage servers.
 <br>
-Read the <a href="https://serverbox.lolli.tech/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
+Read the <a href="https://serverbox.lollipopkit.com/docs/">documentation site</a> for user guides, architecture notes, and development instructions.
 </p>
 
 ## Acknowledgements
@@ -120,7 +120,7 @@ Download packages only from sources you trust.
 
 ## Features
 
-- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lolli.tech/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
+- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lollipopkit.com/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
 - Platform features include biometric authentication, push notifications, home-screen widgets, a watchOS app, and system color themes.
 - 16 languages. The current list is in `lib/l10n/`; its git history records the translators.
 
@@ -132,15 +132,13 @@ Download packages only from sources you trust.
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel. See its [Chinese documentation](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md) for setup and details on what each remote-access switch allows.
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for features that need to work while the app is closed — **push notifications**, **home-screen widgets**, and the **watch app**. It also offers another way to add a server: the app can connect to it over HTTP instead of SSH, which suits hosts whose SSH port you prefer not to expose, and gives charts historical data from before the app's first connection. Monitor also serves its own web panel.
 - **Common issues** are listed in the [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页).
 - **Agent skills:** This repository includes three skills for AI agents. Add them with
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
   ```
-
-  which lists them and lets you pick, or add one with `--skill <name>`:
 
   - [`serverbox-help`](.claude/skills/serverbox-help): using the app and deploying and configuring Monitor agent — adding servers, why a feature is missing for a server, permissions, alerts, widgets, backups. The app's own Agent ships with it.
   - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding): working on the code — setting up the Flutter + Rust + Node environment, building and testing, and how the project works.
@@ -156,9 +154,9 @@ Before opening an issue, please:
 
 ## Contributions
 
-Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
 
-Contributors sign the [CLA](CLA.md) ([Chinese version](CLA_zh.md)) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
+Contributors sign the [CLA](CLA.md) once by leaving a comment on their first pull request. It grants the right to ship your work in App Store builds alongside the AGPLv3 source. You retain the copyright to your work.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
 

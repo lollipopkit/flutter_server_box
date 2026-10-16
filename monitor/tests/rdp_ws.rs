@@ -26,12 +26,11 @@ use rcgen::{CertifiedKey, generate_simple_self_signed};
 use rustls::crypto::ring;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use rustls::ServerConfig;
-use server_box_monitor::api::authz::revoke_lost;
+use server_box_monitor::api::authz::end_account;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::api::ws::rdcleanpath::rdp_ws;
 use server_box_monitor::api::ws::ticket::Purpose;
 use server_box_monitor::core::config::Config;
-use server_box_monitor::core::permissions::ConnectGrant;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::TlsAcceptor;
@@ -43,27 +42,13 @@ fn ensure_crypto_provider() {
     });
 }
 
-/// An agent whose `admin` role holds `connect` with no `allow` list
-/// (anywhere), or none at all.
-async fn app_state(connect: bool) -> Arc<AppState> {
+async fn app_state() -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config {
+    let config = Config {
         jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
         ..Default::default()
     };
-    let mut remote = config.get_remote_access();
-    remote.terminal.enabled = Some(true);
-    remote.full_access = Some(true);
-    config.remote_access = Some(remote);
-    let state = common::upgraded_state(config).await;
-    set_connect(&state, connect.then(ConnectGrant::default)).await;
-    state
-}
-
-async fn set_connect(state: &AppState, connect: Option<ConnectGrant>) {
-    let mut grants = common::grants_of(&state.db, "admin").await;
-    grants.connect = connect;
-    common::set_grants(&state.db, "admin", &grants).await;
+    common::owned_state(config).await
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
@@ -331,44 +316,12 @@ async fn send(io: &Io<Sealed>, codec: &ws::Codec, bytes: Vec<u8>) {
 // ------------------------------------------------------------------- the tests
 
 #[ntex::test]
-async fn without_connect_the_request_is_refused() {
-    // The upgrade cannot know who is asking — the ticket is inside the PDU —
-    // so the grant is checked when the request arrives.
-    let (target, observed) = fake_rdp(connection_confirm(&neg_rsp(2)), None).await;
-    let state = app_state(false).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_rdp(&srv).await;
-
-    send(&io, &codec, request_pdu(&target, &ticket)).await;
-
-    assert_eq!(http_error(&next_pdu(&io, &codec).await), Some(403));
-    assert!(observed.request.lock().unwrap().is_none(), "nothing was dialled");
-}
-
-#[ntex::test]
-async fn an_address_outside_the_allow_list_is_not_dialled() {
-    // The same rule as `/stream/ws`: RDP is not a way around the list.
-    let (target, observed) = fake_rdp(connection_confirm(&neg_rsp(2)), None).await;
-    let state = app_state(true).await;
-    set_connect(&state, Some(ConnectGrant { allow: vec!["10.0.0.0/8".to_string()] })).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
-    let srv = test_server(state).await;
-    let (io, codec) = open_rdp(&srv).await;
-
-    send(&io, &codec, request_pdu(&target, &ticket)).await;
-
-    assert_eq!(http_error(&next_pdu(&io, &codec).await), Some(403));
-    assert!(observed.request.lock().unwrap().is_none(), "nothing was dialled");
-}
-
-#[ntex::test]
 async fn a_stream_ticket_is_not_an_rdp_ticket() {
     // A stream ticket authorises a byte relay; this endpoint speaks a handshake
     // first, and the two are not interchangeable. The purpose is what a ticket
     // is *for*, not a label on it.
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Stream).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -379,7 +332,7 @@ async fn a_stream_ticket_is_not_an_rdp_ticket() {
 
 #[ntex::test]
 async fn a_forged_ticket_is_refused() {
-    let state = app_state(true).await;
+    let state = app_state().await;
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -392,7 +345,7 @@ async fn a_forged_ticket_is_refused() {
 async fn a_pdu_that_is_not_a_request_is_refused() {
     // A response PDU decodes, so this is the case the `into_enum` arm has to
     // answer rather than the decoder's.
-    let state = app_state(true).await;
+    let state = app_state().await;
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -411,8 +364,8 @@ async fn a_preconnection_blob_is_refused_rather_than_ignored() {
     // The blob is a PCB for the RDP server and what a client puts in the string
     // is a convention its author picked, so reading it wrong routes the session
     // to a different RDP source with nothing to show for it.
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -433,8 +386,8 @@ async fn a_preconnection_blob_is_refused_rather_than_ignored() {
 
 #[ntex::test]
 async fn an_unreachable_target_is_answered_as_a_bad_gateway() {
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -450,8 +403,8 @@ async fn the_response_carries_the_servers_confirm_and_its_certificate() {
     // the client to bind the session's credentials to.
     let confirm = connection_confirm(&neg_rsp(1)); // PROTOCOL_SSL
     let (target, observed) = fake_rdp(confirm.clone(), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -497,8 +450,8 @@ async fn the_response_arrives_before_anything_the_server_sent() {
     // the moment TLS is up, which is the earliest it can.
     let greeting: &'static [u8] = b"A-GREETING-BEFORE-ANYTHING-IS-SENT";
     let (target, _) = fake_rdp(connection_confirm(&neg_rsp(2)), Some(greeting)).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -517,8 +470,8 @@ async fn bytes_travel_both_ways_through_the_tls_session() {
     // agent decrypted it, so a plain echo proves the relay is on the right side
     // of the handshake.
     let (target, _) = fake_rdp(connection_confirm(&neg_rsp(2)), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -539,8 +492,8 @@ async fn bytes_sent_alongside_the_request_are_forwarded_and_not_lost() {
     // request — RDP does not tolerate reordering, so they have to reach the
     // server rather than be discarded with the PDU.
     let (target, _) = fake_rdp(connection_confirm(&neg_rsp(2)), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -562,8 +515,8 @@ async fn a_server_that_requires_credssp_is_answered_with_a_negotiation_error() {
     // explanation the operator could be shown.
     let confirm = connection_confirm(&neg_failure(5)); // HYBRID_REQUIRED_BY_SERVER
     let (target, observed) = fake_rdp(confirm.clone(), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -588,8 +541,8 @@ async fn a_server_that_selects_no_security_is_refused() {
     // plaintext session would be answering with something it cannot use.
     let confirm = connection_confirm(&neg_rsp(0));
     let (target, observed) = fake_rdp(confirm.clone(), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -610,8 +563,8 @@ async fn a_confirm_with_no_negotiation_is_refused() {
     // no blob and therefore no TLS.
     let confirm = connection_confirm(&[]);
     let (target, _) = fake_rdp(confirm.clone(), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -626,13 +579,13 @@ async fn a_confirm_with_no_negotiation_is_refused() {
 }
 
 #[ntex::test]
-async fn taking_connect_away_ends_a_running_session() {
-    // The role is only consulted when something is *started*, so a session
-    // already carrying a screen would otherwise outlive the grant an admin
-    // just took away.
+async fn a_password_change_ends_a_running_session() {
+    // The account is only consulted when something is *started*, so a session
+    // already carrying a screen would otherwise outlive the password it was
+    // opened under.
     let (target, _) = fake_rdp(connection_confirm(&neg_rsp(2)), None).await;
-    let state = app_state(true).await;
-    let ticket = state.tickets.issue(Purpose::Rdp, "admin").unwrap();
+    let state = app_state().await;
+    let ticket = state.tickets.issue(Purpose::Rdp).unwrap();
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_rdp(&srv).await;
 
@@ -642,8 +595,9 @@ async fn taking_connect_away_ends_a_running_session() {
         RDCleanPath::Response { .. }
     ));
 
-    set_connect(&state, None).await;
-    revoke_lost(&state, "permission_revoked").await;
+    let hash = bcrypt::hash("a-new-password", 4).unwrap();
+    server_box_monitor::db::accounts::set_password_hash(&state.db, &hash).await.unwrap();
+    end_account(&state, "password_changed");
 
     let frame = timeout(Duration::from_secs(5), io.recv(&codec))
         .await
@@ -657,7 +611,7 @@ async fn a_refusal_is_recorded_without_the_ticket() {
     // The access log is the only record that a call was turned away, and the
     // ticket is a bearer credential — a row quoting it would be a row that
     // grants what it records.
-    let state = app_state(true).await;
+    let state = app_state().await;
     let srv = test_server(state.clone()).await;
     let (io, codec) = open_rdp(&srv).await;
 

@@ -252,6 +252,11 @@ class MonitorGpuMetrics {
   /// device name for those responses.
   final String? vendor;
 
+  /// What holds the card's memory. Empty on agents predating the field and
+  /// for drivers that list none.
+  @JsonKey(defaultValue: <MonitorGpuProcess>[])
+  final List<MonitorGpuProcess> processes;
+
   const MonitorGpuMetrics({
     this.id,
     required this.name,
@@ -264,6 +269,7 @@ class MonitorGpuMetrics {
     this.fanSpeed,
     this.clockSpeed,
     this.vendor,
+    this.processes = const [],
   });
 
   /// The name is the fallback for an agent that sends no [vendor]: `amd-smi`
@@ -283,6 +289,26 @@ class MonitorGpuMetrics {
       _$MonitorGpuMetricsFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorGpuMetricsToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorGpuProcess {
+  final int pid;
+  final String name;
+
+  /// MiB; 0 where the driver does not report it (WDDM, WSL).
+  final int memory;
+
+  const MonitorGpuProcess({
+    required this.pid,
+    required this.name,
+    required this.memory,
+  });
+
+  factory MonitorGpuProcess.fromJson(Map<String, dynamic> json) =>
+      _$MonitorGpuProcessFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorGpuProcessToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)

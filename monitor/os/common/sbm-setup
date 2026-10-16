@@ -1,0 +1,170 @@
+#!/bin/sh
+# sbOS's part of a boot, shared by both images (OpenRC on musl, systemd on
+# GNU): installs the agent with install.sh, from the package the image
+# carries, whenever it is missing — every live boot, and the first boot of a
+# system sbm-install wrote — then puts its address on the console.
+# Afterwards the agent is an ordinary install of install.sh's default form
+# (OpenRC `command_user`, or a systemd user service): `install.sh upgrade`
+# and `uninstall` work on it as anywhere.
+
+SHARE=/usr/share/server-box-monitor
+RUN_USER=sbm
+RUN_HOME=/home/$RUN_USER
+# install.sh's directory for an ordinary account, either init system.
+APP_DIR=$RUN_HOME/.local/share/server-box-monitor
+TLS_DIR=$APP_DIR/tls
+
+if [ -d /run/systemd/system ]; then INIT=systemd; else INIT=openrc; fi
+
+main() {
+	rc=0
+	ensure_repositories && ensure_account && ensure_tls && ensure_env && ensure_agent || rc=1
+	write_console
+	# On the disk before anything else can cut the power.
+	sync
+	return $rc
+}
+
+# Alpine: a live boot lists only the medium, which holds no kernel; sbm-install
+# (setup-disk) takes it, the firmware and later updates from the mirror of
+# the release this system is.
+ensure_repositories() {
+	[ -f /etc/alpine-release ] || return 0
+	grep -q '^https\?://' /etc/apk/repositories 2>/dev/null && return 0
+	branch="v$(cut -d. -f1,2 /etc/alpine-release)"
+	printf 'https://dl-cdn.alpinelinux.org/alpine/%s/%s\n' "$branch" main "$branch" community >> /etc/apk/repositories
+}
+
+ensure_account() {
+	if ! id "$RUN_USER" >/dev/null 2>&1; then
+		# A login shell: the panel's terminal is a PTY for this account. No
+		# password: nobody signs in to it but through the agent.
+		if command -v useradd >/dev/null 2>&1; then
+			useradd -m -U -s /bin/bash "$RUN_USER" || return 1
+		else
+			adduser -D -s /bin/ash "$RUN_USER" || return 1
+		fi
+	fi
+	# A system written by sbm-install may have the account without its home.
+	if [ ! -d "$RUN_HOME" ]; then
+		mkdir -p "$RUN_HOME" && chown "$RUN_USER:$RUN_USER" "$RUN_HOME" && chmod 700 "$RUN_HOME"
+	fi
+	# The web apps are deployed with Docker Compose: the account needs the socket.
+	grep -q '^docker:' /etc/group || groupadd -r docker 2>/dev/null || addgroup -S docker
+	if command -v usermod >/dev/null 2>&1; then
+		usermod -aG docker "$RUN_USER"
+	else
+		addgroup "$RUN_USER" docker >/dev/null 2>&1
+	fi
+	return 0
+}
+
+# Acting on the machine needs TLS or a loopback peer, so the agent listens
+# over HTTPS from the start, with a certificate made here for this machine.
+# The console shows its fingerprint, to check the browser's warning against.
+ensure_tls() {
+	# Read back, not only found: a first boot cut off by a power loss can
+	# leave the files empty.
+	openssl x509 -noout -in "$TLS_DIR/cert.pem" 2>/dev/null &&
+		openssl pkey -noout -in "$TLS_DIR/key.pem" 2>/dev/null && return 0
+	mkdir -p "$TLS_DIR" || return 1
+	host=$(hostname)
+	san="DNS:$host,DNS:$host.local"
+	for ip in $(addresses); do
+		san="$san,IP:$ip"
+	done
+	(
+		umask 077
+		openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes \
+			-days 3650 -subj "/CN=$host" -addext "subjectAltName=$san" \
+			-keyout "$TLS_DIR/key.pem.new" -out "$TLS_DIR/cert.pem.new" >/dev/null 2>&1
+	) || return 1
+	mv -f "$TLS_DIR/key.pem.new" "$TLS_DIR/key.pem" && mv -f "$TLS_DIR/cert.pem.new" "$TLS_DIR/cert.pem" || return 1
+	chown -R "$RUN_USER:$RUN_USER" "$RUN_HOME/.local"
+	NEW_CERT=1
+}
+
+# install.sh keeps an .env it finds; the JWT secret is left to the agent,
+# which makes one on its first start. One the operator edited is theirs; an
+# empty one is a first boot cut off.
+ensure_env() {
+	[ -s "$APP_DIR/.env" ] && return 0
+	{
+		cat "$SHARE/pkg/.env.example"
+		echo
+		echo "# Set by sbOS: the certificate made on this machine's first boot."
+		echo "SBM_TLS_CERT=$TLS_DIR/cert.pem"
+		echo "SBM_TLS_KEY=$TLS_DIR/key.pem"
+	} > "$APP_DIR/.env.new" || return 1
+	chmod 600 "$APP_DIR/.env.new" && chown "$RUN_USER:$RUN_USER" "$APP_DIR/.env.new" &&
+		mv -f "$APP_DIR/.env.new" "$APP_DIR/.env"
+}
+
+ensure_agent() {
+	if [ "$INIT" = systemd ]; then
+		unit="$RUN_HOME/.config/systemd/user/server_box_monitor.service"
+	else
+		unit=/etc/init.d/server-box-monitor
+	fi
+	cmd=install
+	if [ -f "$unit" ]; then
+		# Run, not only found: a copy cut off by a power loss is not empty.
+		if "$APP_DIR/server_box_monitor" --version >/dev/null 2>&1; then
+			# Installed, but its certificate was made again: it is read at start.
+			[ -n "${NEW_CERT:-}" ] || return 0
+			if [ "$INIT" = openrc ]; then
+				rc-service server-box-monitor restart
+			else
+				as_account systemctl --user restart server_box_monitor
+			fi
+			return
+		fi
+		# Its files were cut off (a power loss during the first boot).
+		cmd=upgrade
+	fi
+	if [ "$INIT" = openrc ]; then
+		SBM_RUN_USER="$RUN_USER" SBM_INSTALL_PKG="$SHARE/pkg" sh "$SHARE/install.sh" "$cmd"
+		return
+	fi
+	# A systemd user service, as install.sh installs it for an account that
+	# runs it itself: the account's manager has to run without a login.
+	uid=$(id -u "$RUN_USER")
+	loginctl enable-linger "$RUN_USER" || return 1
+	i=0
+	until [ -S "/run/user/$uid/systemd/private" ] || [ "$i" -ge 30 ]; do
+		i=$((i + 1))
+		sleep 1
+	done
+	as_account env SBM_INSTALL_PKG="$SHARE/pkg" sh "$SHARE/install.sh" "$cmd"
+}
+
+# The account, with its systemd user manager reachable.
+as_account() {
+	runuser -u "$RUN_USER" -- env HOME="$RUN_HOME" XDG_RUNTIME_DIR="/run/user/$(id -u "$RUN_USER")" "$@"
+}
+
+addresses() {
+	ip -4 -o addr show scope global 2>/dev/null | awk '{ split($4, a, "/"); print a[1] }'
+}
+
+write_console() {
+	ip=$(addresses | head -n 1)
+	fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in "$TLS_DIR/cert.pem" 2>/dev/null | cut -d= -f2)
+	{
+		echo
+		echo "sbOS: ServerBox Monitor at https://${ip:-<this machine>}:3770"
+		echo "Certificate SHA-256: ${fingerprint:-unknown}"
+		echo "First password (as root): cat $APP_DIR/initial-admin-credentials.txt"
+		if awk '$2 == "/" && ($3 == "tmpfs" || $3 == "overlay") { found = 1 } END { exit !found }' /proc/mounts; then
+			echo
+			echo "This system runs from RAM and keeps nothing across a reboot."
+			echo "To install it on a disk: sbm-install <disk>"
+		fi
+		echo
+	} > /etc/issue
+	cp /etc/issue /etc/motd
+	# A getty already showing its prompt draws it again with this.
+	agetty --reload 2>/dev/null || true
+}
+
+main

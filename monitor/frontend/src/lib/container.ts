@@ -5,17 +5,9 @@
 /// from the agent too (`ContainerImage.dangling`). These only put its words
 /// into the viewer's language.
 import { get } from 'svelte/store'
+import { errorText } from './errorText'
 import { LL } from '../i18n/i18n-svelte'
 import { ApiError } from './api'
-import type { ContainerImage } from '../types'
-
-/// `repository:tag`, or the image's id where there is no name to pull by.
-export function imageReference(image: ContainerImage): string {
-  if (image.dangling) return image.id ?? '<none>'
-  const repository = image.repository.trim()
-  const tag = (image.tag ?? '').trim()
-  return tag === '' ? repository : `${repository}:${tag}`
-}
 
 /// Why an action was refused before it ran, from the issue the agent sent. An
 /// unknown code is shown as sent: it is a refusal added since.
@@ -51,5 +43,5 @@ export function refusalText(error: unknown): string {
     if (typeof issue === 'string') return issueText(issue)
     return error.message
   }
-  return error instanceof Error ? error.message : String(error)
+  return errorText(error)
 }

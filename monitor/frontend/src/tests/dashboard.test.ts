@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Dashboard from '../pages/Dashboard.svelte'
+import Dashboard from '../desk/apps/status/StatusApp.svelte'
 import { api } from '../lib/api'
 import { capabilitiesStore } from '../lib/capabilities.svelte'
 import { servers } from '../lib/servers.svelte'
@@ -34,6 +34,17 @@ vi.mock('../lib/xterm', () => ({
   })),
 }))
 
+/// The app's menubar menus, as it last gave them (its iperf and power
+/// entries live there).
+const menus = vi.hoisted(() => ({ provide: null as null | (() => { label: string; items: { label?: string }[] }[]) }))
+vi.mock('../desk/sys/window.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../desk/sys/window.svelte')>()),
+  useMenus: (provide: () => { label: string; items: { label?: string }[] }[]) => {
+    menus.provide = provide
+  },
+}))
+const menuLabels = () => (menus.provide?.() ?? []).flatMap((m) => m.items.map((i) => i.label ?? ''))
+
 const mocked = vi.mocked(api)
 
 const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
@@ -51,15 +62,7 @@ const metrics = (custom_cmds?: CustomCmdOutput[]): SystemMetrics =>
 const caps = (features: string[]): Capabilities =>
   ({
     features,
-    grants: {
-      shell: { ok: true },
-      ssh_terminal: { ok: false },
-      files: { ok: false },
-      connect: { ok: false },
-      listen: { ok: false },
-      virt: { ok: false },
-    },
-    me: { admin: true },
+    access: { ok: true },
   }) as unknown as Capabilities
 
 /// The dashboard renders once its first metrics poll has answered.
@@ -87,7 +90,7 @@ afterEach(() => {
 describe('Dashboard custom commands', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     mockMetrics(metrics())
   })
@@ -172,7 +175,7 @@ describe('Dashboard custom commands', () => {
 describe('Dashboard iperf action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.list = [{ id: 'local', url: '', token: 't' }]
     servers.currentId = 'local'
     mocked.getMetrics.mockResolvedValue(metrics())
     mocked.getHistory.mockResolvedValue([])
@@ -183,13 +186,13 @@ describe('Dashboard iperf action', () => {
     capabilitiesStore.byServer['local'] = caps([])
     render(Dashboard)
     await rendered()
-    expect(screen.queryByRole('button', { name: /^iperf$/i })).toBeNull()
+    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(false)
   })
 
   it('is offered when the agent lists iperf and the account holds shell', async () => {
     capabilitiesStore.byServer['local'] = caps(['iperf'])
     render(Dashboard)
     await rendered()
-    expect(await screen.findByRole('button', { name: /^iperf$/i })).toBeInTheDocument()
+    expect(menuLabels().some((l) => /^iperf/i.test(l))).toBe(true)
   })
 })

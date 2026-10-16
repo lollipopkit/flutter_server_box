@@ -7,28 +7,11 @@ mod common;
 
 use ntex::http::Method;
 
-/// The listing needs `shell`, the same grant the terminal that attaches to a
-/// session needs: a session is a shell.
-#[ntex::test]
-async fn a_viewer_is_refused() {
-    let (srv, _) = common::machine::server().await;
-    let (status, body) = common::machine::call(
-        &srv,
-        Some("viewer"),
-        Method::GET,
-        "/api/v1/tmux",
-        None,
-    )
-    .await;
-    assert_eq!(status, 403, "{body}");
-    assert_eq!(body["error"], "forbidden", "{body}");
-}
-
 /// Without a token there is nothing to check the grant against.
 #[ntex::test]
 async fn an_unauthenticated_caller_is_refused() {
     let (srv, _) = common::machine::server().await;
-    let (status, _) = common::machine::call(&srv, None, Method::GET, "/api/v1/tmux", None).await;
+    let (status, _) = common::machine::call(&srv, false, Method::GET, "/api/v1/tmux", None).await;
     assert_eq!(status, 401);
 }
 
@@ -44,7 +27,7 @@ async fn an_unauthenticated_caller_is_refused() {
 async fn the_answer_is_the_shape_the_panel_reads() {
     let (srv, _) = common::machine::server().await;
     let (status, body) =
-        common::machine::call(&srv, Some("admin"), Method::GET, "/api/v1/tmux", None).await;
+        common::machine::call(&srv, true, Method::GET, "/api/v1/tmux", None).await;
     assert_eq!(status, 200, "{body}");
     assert!(body["available"].is_boolean(), "{body}");
     // Always present, so a listing that failed is not read as an empty one:

@@ -9,10 +9,7 @@ import 'package:server_box/data/model/server/monitor_capabilities.dart';
 /// days" against it draws an empty chart and calls it a quiet machine.
 void main() {
   MonitorCapabilities caps(Map<String, dynamic> json) =>
-      MonitorCapabilities.fromJson({
-        'remote_access': <String, dynamic>{},
-        ...json,
-      });
+      MonitorCapabilities.fromJson({'access': {'ok': true}, ...json});
 
   test('retention arrives as a duration', () {
     expect(caps({'retention_days': 9}).retention, const Duration(days: 9));

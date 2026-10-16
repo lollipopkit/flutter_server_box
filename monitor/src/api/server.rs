@@ -1,266 +1,31 @@
 use crate::{
-    api::auth,
-    api::authz::{self, Caller, Reader},
+    api::authz::{self, Reader},
     api::cors::Cors,
-    api::ratelimit::LoginThrottle,
     api::ws::{
         self,
         audit::{self, Action, Event, Kind, Outcome},
-        listen::PendingStore,
-        session::SessionStore,
         terminal::{start_reaper, terminal_ws},
-        ticket::{Purpose, TicketRequest, TicketResponse, TicketStore},
+        ticket::{Purpose, TicketRequest, TicketResponse},
     },
-    core::config::Config,
-    core::config_file,
-    core::permissions::Grant,
-    core::remote_access::RemoteAccess,
-    monitoring::{self, LiveSettings, SystemMetrics},
-    monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
+    monitoring,
     utils::error::{MonitorError, Result},
 };
 use ntex::http::header::RETRY_AFTER;
 use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Logger};
 use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
-use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
-use sqlx::SqlitePool;
-use std::sync::{Arc, OnceLock};
+use serde::Serialize;
+use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock, Semaphore, broadcast};
 use tracing::info;
-
-const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
-const WATCH_TOKEN_LIFETIME: chrono::Duration = chrono::Duration::days(90);
-
-fn password_check_limit() -> &'static Arc<Semaphore> {
-    static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
-    LIMIT.get_or_init(|| {
-        let permits = std::thread::available_parallelism()
-            .map(|count| count.get())
-            .unwrap_or(1)
-            .min(MAX_CONCURRENT_PASSWORD_CHECKS);
-        Arc::new(Semaphore::new(permits))
-    })
-}
-
-/// Hashes [password] for storage on a blocking thread, under the same limit
-/// as a check: a bcrypt hash is the same work as a verify, and done on the
-/// worker it stalls every request that worker is serving.
-pub(crate) async fn hash_password_off_worker(password: String) -> Result<String> {
-    let permit = password_check_limit()
-        .clone()
-        .acquire_owned()
-        .await
-        .map_err(|_| MonitorError::Monitoring("Password hasher is unavailable".to_string()))?;
-    tokio::task::spawn_blocking(move || {
-        let _permit = permit;
-        auth::hash_password(&password)
-    })
-    .await
-    .map_err(|error| MonitorError::Monitoring(format!("Password hasher failed: {error}")))?
-}
-
-pub(crate) async fn verify_login_password_off_worker(password: String, hash: Option<String>) -> Result<bool> {
-    let permit = password_check_limit()
-        .clone()
-        .acquire_owned()
-        .await
-        .map_err(|_| MonitorError::Monitoring("Password verifier is unavailable".to_string()))?;
-
-    tokio::task::spawn_blocking(move || {
-        // Keep the permit in the blocking task so cancellation of the request
-        // cannot admit another bcrypt check before this one actually stops.
-        let _permit = permit;
-        auth::verify_login_password(&password, hash.as_deref())
-    })
-    .await
-    .map_err(|error| MonitorError::Monitoring(format!("Password verifier failed: {error}")))?
-}
-
-#[derive(Clone)]
-pub struct AppState {
-    pub config: Arc<Config>,
-    pub db: SqlitePool,
-    pub current_metrics: Arc<RwLock<Option<SystemMetrics>>>,
-    pub velocity_manager: Arc<RwLock<VelocityManager>>,
-    /// Settings that apply immediately on save — see `LiveSettings` doc
-    pub live_settings: Arc<RwLock<LiveSettings>>,
-    /// Last time an authenticated client polled `/metrics` or `/status` —
-    /// the idle-pause heartbeat (see `MonitoringConfig.idle_pause_enabled`).
-    /// Initialized to startup time, not the epoch, so the extended cycle
-    /// isn't treated as already-idle before any client has ever connected.
-    pub last_viewer_seen: Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
-    /// Resolved remote-access settings (capacities filled in from physical
-    /// memory at startup — see `core::remote_access`). A snapshot, like
-    /// `config`: turning the terminal on is a restart-level change,
-    /// not something a running process should pick up mid-session.
-    pub remote_access: Arc<RemoteAccess>,
-    /// Whether this process terminates TLS itself. Decided once at startup
-    /// from the same config `start_server` binds with, so handlers don't have
-    /// to re-derive it.
-    pub tls_active: bool,
-    pub tickets: Arc<TicketStore>,
-    /// Terminal sessions, which outlive the WebSockets driving them so a
-    /// reconnect can rejoin the same shell — see `api::ws::session`.
-    pub sessions: Arc<SessionStore>,
-    /// Connections a remote forward's listener accepted and the app has not
-    /// taken yet — see `api::ws::listen`.
-    pub pending: Arc<PendingStore>,
-    pub login_throttle: Arc<LoginThrottle>,
-    /// Fired when a role or an account changed, carrying the code a client
-    /// whose connection ends because of it is told (`permission_revoked`, or
-    /// `full_access_disabled` for the panel's legacy switch).
-    ///
-    /// Every handler asks the database afresh whether its caller may *start*
-    /// something; this answers "may this carry on", which only a long-lived
-    /// connection has to be told. A relay or a listener holds a subscription
-    /// and re-checks its own account when it fires; terminal sessions, which
-    /// outlive their sockets, are swept by `authz::revoke_lost` instead.
-    pub grants_changed: broadcast::Sender<&'static str>,
-    /// The last process table read, which the next one's read and write
-    /// speeds are differenced against — see `api::process`.
-    pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
-    /// The PVE session and the libvirt rate history kept between the
-    /// Virtualization page's requests — see `api::virt`.
-    pub virt: Arc<crate::api::virt::VirtState>,
-    /// Serialises every read-modify-write of `config.toml`.
-    ///
-    /// `config_file::write` is atomic, so no reader ever sees a half-written
-    /// file — but atomicity alone doesn't stop two handlers from each reading
-    /// the same starting state and the later write discarding the earlier
-    /// one's field. `/settings` and `/card-order` are separate endpoints
-    /// precisely so ordinary use doesn't contend here, yet they still edit
-    /// one file and must not race.
-    pub config_write: Arc<Mutex<()>>,
-}
-
-/// The file a `sqlite:` [url] opens, or `None` for an in-memory database.
-fn sqlite_file(url: &str) -> Option<std::path::PathBuf> {
-    use std::str::FromStr;
-    let options = sqlx::sqlite::SqliteConnectOptions::from_str(url).ok()?;
-    let file = options.get_filename();
-    let memory = url.contains("mode=memory")
-        || file.as_os_str().is_empty()
-        || file.to_string_lossy().starts_with("file:");
-    (!memory).then(|| file.to_path_buf())
-}
-
-/// Where this agent keeps what the file API must never reach — see
-/// [`crate::core::fs_roots::Protected`]: the database (and its journal files)
-/// with `jwt.secret` and the first-start credentials beside it, `config.toml`
-/// and its backups, `.env`, the TLS certificate and key, and the
-/// custom-commands directory.
-fn agent_state(config: &Config) -> crate::core::fs_roots::Protected {
-    use std::path::Path;
-    let mut protected = crate::core::fs_roots::Protected::default();
-    let url = config.get_database_url();
-    // The file sqlx opens, as sqlx reads the URL — percent-decoded, query
-    // removed. Taking it apart here by hand protected `my%20db.db` while the
-    // database was `my db.db`.
-    if let Some(db) = sqlite_file(&url) {
-        protected.file(&db);
-    }
-    protected.file(&config.jwt_secret_path());
-    protected.file(&crate::db::bootstrap::initial_credentials_path(&url));
-    protected.file(Path::new(crate::core::config_file::CONFIG_PATH));
-    // The environment file: the one in the working directory (and its
-    // backups, by prefix), and the one actually loaded, which `dotenvy` may
-    // have found in a parent directory.
-    protected.file(Path::new(".env"));
-    if let Some(env) = crate::core::config::loaded_dotenv() {
-        protected.file(env);
-    }
-    if let Some(tls) = config.get_server().tls {
-        protected.file(Path::new(&tls.cert_path));
-        protected.file(Path::new(&tls.key_path));
-    }
-    if let Some(dir) = sbm_parser::script::custom_cmd_dir_path() {
-        protected.tree(&dir);
-    }
-    protected
-}
-
-impl AppState {
-    pub fn new(config: Arc<Config>, db: SqlitePool) -> Arc<Self> {
-        let velocity_manager = Arc::new(RwLock::new(VelocityManager::new()));
-        let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
-        let tls_active = config.get_server().tls.is_some();
-        let mut remote_access = config
-            .get_remote_access()
-            .resolve(sbm_native::total_memory());
-        remote_access.fs.roots = remote_access
-            .fs
-            .roots
-            .clone()
-            .protecting(agent_state(&config));
-        remote_access.log_summary(tls_active);
-        let sessions = Arc::new(SessionStore::new(
-            remote_access.terminal.max_sessions,
-            remote_access.terminal.detached_timeout,
-        ));
-        Arc::new(Self {
-            remote_access: Arc::new(remote_access),
-            tls_active,
-            tickets: Arc::new(TicketStore::new()),
-            sessions,
-            pending: Arc::new(PendingStore::default()),
-            login_throttle: Arc::new(LoginThrottle::new()),
-            grants_changed: broadcast::channel(16).0,
-            process_sample: Arc::new(tokio::sync::Mutex::new(None)),
-            virt: Arc::new(crate::api::virt::VirtState::default()),
-            config,
-            db,
-            current_metrics: Arc::new(RwLock::new(None)),
-            velocity_manager,
-            live_settings,
-            last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
-            config_write: Arc::new(Mutex::new(())),
-        })
-    }
-}
-
-#[derive(Deserialize)]
-struct LoginRequest {
-    username: String,
-    password: String,
-}
-
-#[derive(Serialize)]
-struct LoginResponse {
-    token: String,
-}
-
-#[derive(Deserialize)]
-struct WatchTokenRequest {
-    client_id: String,
-}
-
-#[derive(Serialize)]
-struct WatchTokenResponse {
-    token: String,
-    expires_at: i64,
-}
-
-#[derive(Serialize)]
-struct StatusResponse {
-    name: String,
-    cpu: String,
-    memory: String,
-    disk: String,
-    network: String,
-    temperature: Option<String>,
-    timestamp: String,
-}
 
 #[derive(Serialize)]
 struct ErrorResponse {
     error: String,
 }
 
-/// Require a panel JWT for an account that exists, and return the account
-/// with its role — see `api::authz`.
+/// Require a panel JWT issued since the password was last set — see
+/// `api::authz`.
 macro_rules! require_jwt {
     ($req:expr, $app_state:expr) => {{
         match authz::jwt_caller($req, $app_state).await {
@@ -270,10 +35,11 @@ macro_rules! require_jwt {
     }};
 }
 
-/// Require an admin's panel JWT.
-macro_rules! require_admin {
+/// Require a panel JWT over a link that may act — see
+/// `authz::acting_caller`.
+macro_rules! require_acting {
     ($req:expr, $app_state:expr) => {{
-        match authz::admin_caller($req, $app_state).await {
+        match authz::acting_caller($req, $app_state).await {
             Ok(caller) => caller,
             Err(response) => return Ok(response),
         }
@@ -372,7 +138,6 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .service(web::resource("/firewall/plan").route(web::post().to(crate::api::firewall::plan)))
             .service(web::resource("/firewall/act").route(web::post().to(crate::api::firewall::act)))
             .service(
-                // Not `/users`, which is this agent's own accounts.
                 web::resource("/system-users")
                     .route(web::get().to(crate::api::system_users::list))
                     .route(web::post().to(crate::api::system_users::act)),
@@ -453,6 +218,186 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::desktops::list))
                     .route(web::put().to(crate::api::desktops::replace)),
             )
+            .service(web::resource("/desk").route(web::get().to(crate::api::desk::get)))
+            .service(
+                web::resource("/desk/preferences")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
+                    .route(web::put().to(crate::api::desk::put_preferences)),
+            )
+            .service(
+                web::resource("/desk/onboarding")
+                    .route(web::put().to(crate::api::desk::put_onboarding))
+                    .route(web::delete().to(crate::api::desk::delete_onboarding)),
+            )
+            .service(
+                // A streamed body, read whole and bounded in the handler.
+                web::resource("/desk/wallpaper")
+                    .route(web::get().to(crate::api::desk::get_wallpaper))
+                    .route(web::put().to(crate::api::desk::put_wallpaper))
+                    .route(web::delete().to(crate::api::desk::delete_wallpaper)),
+            )
+            .service(
+                web::resource("/desk/session")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk::MAX_REQUEST))
+                    .route(web::get().to(crate::api::desk::get_session))
+                    .route(web::put().to(crate::api::desk::put_session)),
+            )
+            .service(
+                web::resource("/desk/themes")
+                    .route(web::get().to(crate::api::desk_themes::list))
+                    .route(web::post().to(crate::api::desk_themes::upload)),
+            )
+            .service(
+                web::resource("/desk/themes/store")
+                    .route(web::get().to(crate::api::desk_themes::store)),
+            )
+            .service(
+                web::resource("/desk/themes/store/install")
+                    .route(web::post().to(crate::api::desk_themes::store_install)),
+            )
+            .service(web::resource("/desk/themes/{installation}").route(web::delete().to(crate::api::desk_themes::remove)))
+            .service(
+                web::resource("/desk/themes/{installation}/background")
+                    .route(web::get().to(crate::api::desk_themes::background)),
+            )
+            .service(web::resource("/desk/notifications").route(web::get().to(crate::api::desk::notifications)))
+            .route("/alerts", web::get().to(crate::api::desk::alerts))
+            .route("/update", web::get().to(crate::api::update::get))
+            .route("/update/run", web::post().to(crate::api::update::start))
+            .route("/audit", web::get().to(crate::api::audit_log::list))
+            .route("/live", web::get().to(crate::api::live::list))
+            .route("/live/sessions/{id}", web::delete().to(crate::api::live::end_session))
+            .route("/live/connections/{id}", web::delete().to(crate::api::live::end_connection))
+            .route("/live/devices/{id}", web::delete().to(crate::api::live::forget_device))
+            .service(web::resource("/desk/notifications/read").route(web::post().to(crate::api::desk::mark_read)))
+            .service(web::resource("/desk/events").route(web::get().to(crate::api::desk::events)))
+            .service(
+                web::resource("/agent/flows")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
+                    .route(web::get().to(crate::api::agent::list))
+                    .route(web::post().to(crate::api::agent::start)),
+            )
+            .service(
+                web::resource("/agent/flows/{id}")
+                    .route(web::get().to(crate::api::agent::detail))
+                    .route(web::delete().to(crate::api::agent::remove)),
+            )
+            .service(
+                web::resource("/agent/flows/{id}/reply")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_REQUEST))
+                    .route(web::post().to(crate::api::agent::reply)),
+            )
+            .service(web::resource("/agent/flows/{id}/answer").route(web::post().to(crate::api::agent::answer)))
+            .service(web::resource("/agent/flows/{id}/stop").route(web::post().to(crate::api::agent::stop)))
+            .service(web::resource("/agent/events").route(web::get().to(crate::api::agent::events)))
+            .service(
+                web::resource("/agent/settings")
+                    .route(web::get().to(crate::api::agent::get_settings))
+                    .route(web::put().to(crate::api::agent::put_settings)),
+            )
+            .service(web::resource("/agent/choices").route(web::get().to(crate::api::agent::choices)))
+            .service(
+                web::resource("/agent/mcp")
+                    .route(web::get().to(crate::api::agent::get_mcp))
+                    .route(web::put().to(crate::api::agent::put_mcp)),
+            )
+            .service(
+                web::resource("/agent/skills")
+                    .route(web::get().to(crate::api::agent::get_skills))
+                    .route(web::post().to(crate::api::agent::install_skill)),
+            )
+            .service(
+                web::resource("/agent/skills/{dir}")
+                    .route(web::put().to(crate::api::agent::put_skill))
+                    .route(web::delete().to(crate::api::agent::delete_skill)),
+            )
+            .service(web::resource("/agent/models").route(web::get().to(crate::api::agent::models)))
+            .service(web::resource("/agent/models/probe").route(web::post().to(crate::api::agent::probe)))
+            .service(
+                web::resource("/agent/permissions")
+                    .route(web::get().to(crate::api::agent::get_permissions))
+                    .route(web::put().to(crate::api::agent::put_permissions)),
+            )
+            .service(web::resource("/agent/search").route(web::post().to(crate::api::agent::search)))
+            .service(web::resource("/agent/search/{id}/task").route(web::post().to(crate::api::agent::adopt_search)))
+            .service(
+                web::resource("/agent/files")
+                    .state(web::types::PayloadConfig::new(crate::agent_mode::files::MAX_BYTES))
+                    .route(web::post().to(crate::api::agent::upload)),
+            )
+            .service(web::resource("/agent/files/{id}").route(web::delete().to(crate::api::agent::discard)))
+            .service(web::resource("/agent/memory").route(web::get().to(crate::api::agent::memory_list)))
+            .service(
+                web::resource("/agent/memory/file")
+                    .state(web::types::JsonConfig::default().limit(crate::api::agent::MAX_MEMORY_REQUEST))
+                    .route(web::get().to(crate::api::agent::memory_get))
+                    .route(web::put().to(crate::api::agent::memory_put))
+                    .route(web::delete().to(crate::api::agent::memory_delete)),
+            )
+            .service(
+                web::resource("/apps")
+                    .state(web::types::PayloadConfig::new(crate::api::apps::MAX_PACKAGE_BYTES))
+                    .route(web::get().to(crate::api::apps::list))
+                    .route(web::post().to(crate::api::apps::install)),
+            )
+            .service(web::resource("/apps/{id}").route(web::delete().to(crate::api::apps::remove)))
+            .service(web::resource("/apps/{id}/approval").route(web::put().to(crate::api::apps::approve)))
+            .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))
+            .service(
+                web::resource("/apps/{id}/call")
+                    .state(web::types::JsonConfig::default().limit(crate::api::app_runtime::MAX_REQUEST))
+                    .route(web::post().to(crate::api::app_runtime::call)),
+            )
+            .service(web::resource("/apps/{id}/ui/{ticket}/{path}*").route(web::get().to(crate::api::apps::ui)))
+            .service(web::resource("/storage").route(web::get().to(crate::api::storage::view)))
+            .service(web::resource("/storage/health").route(web::post().to(crate::api::storage::health)))
+            .service(web::resource("/storage/maintenance").route(web::put().to(crate::api::storage::set_maintenance)))
+            .service(web::resource("/storage/maintenance/{task}/run").route(web::post().to(crate::api::storage::run_maintenance)))
+            .service(web::resource("/storage/act").route(web::post().to(crate::api::storage::act)))
+            .service(web::resource("/shares").route(web::get().to(crate::api::shares::view)))
+            .service(web::resource("/shares/smb").route(web::put().to(crate::api::shares::set_smb)))
+            .service(web::resource("/shares/nfs").route(web::put().to(crate::api::shares::set_nfs)))
+            .service(web::resource("/shares/smb/password").route(web::post().to(crate::api::shares::smb_password)))
+            .service(web::resource("/shares/connections").route(web::post().to(crate::api::shares::connections)))
+            .service(web::resource("/shares/install").route(web::post().to(crate::api::shares::install)))
+            .service(web::resource("/shares/job").route(web::get().to(crate::api::shares::job)))
+            .service(web::resource("/storage/job").route(web::get().to(crate::api::storage::job)))
+            .service(
+                web::resource("/container-backups")
+                    .route(web::get().to(crate::api::container_backups::list))
+                    .route(web::post().to(crate::api::container_backups::create)),
+            )
+            .service(web::resource("/container-backups/job").route(web::get().to(crate::api::container_backups::job)))
+            .service(web::resource("/container-backups/destinations").route(web::get().to(crate::api::container_backups::destinations)))
+            .service(web::resource("/container-backups/settings").route(web::put().to(crate::api::container_backups::put_settings)))
+            .service(web::resource("/container-backups/schedules").route(web::post().to(crate::api::container_backups::add_schedule)))
+            .service(web::resource("/container-backups/schedules/{id}").route(web::delete().to(crate::api::container_backups::remove_schedule)))
+            .service(web::resource("/container-backups/job/cancel").route(web::post().to(crate::api::container_backups::cancel)))
+            .service(web::resource("/container-backups/{id}/restore").route(web::post().to(crate::api::container_backups::restore)))
+            .service(web::resource("/container-backups/{id}").route(web::delete().to(crate::api::container_backups::remove)))
+            .service(web::resource("/stacks").route(web::get().to(crate::api::stacks::list)))
+            .service(web::resource("/stacks/refresh").route(web::post().to(crate::api::stacks::refresh)))
+            .service(
+                web::resource("/stacks/{id}")
+                    .route(web::post().to(crate::api::stacks::install))
+                    .route(web::delete().to(crate::api::stacks::remove)),
+            )
+            .service(web::resource("/stacks/{id}/prepare").route(web::get().to(crate::api::stacks::prepare)))
+            .service(web::resource("/stacks/{id}/check").route(web::post().to(crate::api::stacks::check)))
+            .service(web::resource("/stacks/{id}/settings").route(web::put().to(crate::api::stacks::reconfigure)))
+            .service(web::resource("/stacks/{id}/action").route(web::post().to(crate::api::stacks::act)))
+            .service(web::resource("/stacks/{id}/job").route(web::get().to(crate::api::stacks::job)))
+            .service(web::resource("/stacks/{id}/job/cancel").route(web::post().to(crate::api::stacks::cancel)))
+            .service(web::resource("/stacks/{id}/services").route(web::get().to(crate::api::stacks::services)))
+            .service(web::resource("/stacks/{id}/login").route(web::post().to(crate::api::stacks::login)))
+            .service(web::resource("/stacks/{id}/enter").route(web::post().to(crate::api::stacks::enter)))
+            .service(
+                web::resource("/desk/apps/{app}/storage")
+                    .state(web::types::JsonConfig::default().limit(crate::api::desk_storage::MAX_BODY))
+                    .route(web::get().to(crate::api::desk_storage::list))
+                    .route(web::put().to(crate::api::desk_storage::put))
+                    .route(web::delete().to(crate::api::desk_storage::remove)),
+            )
             .service(
                 web::resource("/snippets/plan")
                     .state(
@@ -475,32 +420,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/fs/rename", web::post().to(crate::api::fs::rename))
             .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
             .route("/fs/remove", web::delete().to(crate::api::fs::remove))
-            .route(
-                "/remote-access/full-access",
-                web::delete().to(disable_full_access),
-            )
-            .route("/me", web::get().to(crate::api::admin::me))
             .route("/me/password", web::put().to(crate::api::admin::change_own_password))
-            .service(
-                web::resource("/users")
-                    .route(web::get().to(crate::api::admin::list_users))
-                    .route(web::post().to(crate::api::admin::create_user)),
-            )
-            .service(
-                web::resource("/users/{username}")
-                    .route(web::put().to(crate::api::admin::update_user))
-                    .route(web::delete().to(crate::api::admin::delete_user)),
-            )
-            .service(
-                web::resource("/roles")
-                    .route(web::get().to(crate::api::admin::list_roles))
-                    .route(web::post().to(crate::api::admin::create_role)),
-            )
-            .service(
-                web::resource("/roles/{name}")
-                    .route(web::put().to(crate::api::admin::update_role))
-                    .route(web::delete().to(crate::api::admin::delete_role)),
-            )
             .service(
                 // Its own payload limit, like `/exec`: the body is
                 // every custom command at once, and a user who pastes
@@ -541,16 +461,22 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/metrics/history", web::get().to(get_metrics_history))
             .route("/health", web::get().to(health_check))
             .route("/velocity", web::get().to(get_velocity))
-            .route("/velocity/history", web::get().to(get_velocity_history)),
+            .route("/velocity/history", web::get().to(get_velocity_history))
+            // An endpoint this agent does not have is a JSON 404, not the
+            // panel's page the app-level fallback would answer with a 200.
+            .default_service(web::to(api_not_found)),
     );
+}
+
+async fn api_not_found() -> HttpResponse {
+    crate::api::authz::error(ntex::http::StatusCode::NOT_FOUND, "not_found", "No such endpoint")
 }
 
 pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
-    // Always: whether anyone may open a terminal is a role's grant now, and
-    // a role can gain it while the agent runs. A quarter of the grace period:
+    // Always: a terminal may be opened at any time. A quarter of the grace period:
     // often enough that a reaped session isn't held much past its deadline,
     // rare enough to be invisible.
     start_reaper(
@@ -570,10 +496,12 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .middleware(Logger::default())
             .middleware(cors)
             .configure(configure_api(exec_max_request))
-            // TODO: Remove this root-level 410 response after one release.
-            .route("/status", web::get().to(get_status_compat))
+            // Built assets: hashed, precompressed, cached for good.
+            .service(crate::api::assets::asset)
+            .service(crate::api::assets::desk_app)
             // Serve legacy `/static` paths and root assets from the bundled
-            // Svelte frontend.
+            // Svelte frontend. TODO: drop `/static` once no bookmark or old
+            // panel build can still ask for it (the build serves `/assets`).
             .service(
                 Files::new("/static", "frontend/dist")
                     .use_etag(true)
@@ -607,7 +535,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
 
 /// Builds the rustls server config from a PEM certificate and key using the
 /// ring provider.
-fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
+pub(crate) fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
     use rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 
     let certs = CertificateDer::pem_file_iter(&tls.cert_path)
@@ -640,292 +568,6 @@ async fn spa_fallback() -> HttpResponse {
         Err(_) => HttpResponse::InternalServerError().json(&ErrorResponse {
             error: "Failed to load index.html".to_string(),
         }),
-    }
-}
-
-async fn login(
-    http_req: HttpRequest,
-    req: web::types::Json<LoginRequest>,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
-
-    // Reserve under the throttle lock before touching the database or bcrypt,
-    // so concurrent guesses cannot all pass the same pre-failure snapshot.
-    let attempt = match app_state.login_throttle.begin(peer_ip, &req.username) {
-        Ok(attempt) => attempt,
-        Err(wait) => {
-            let seconds = wait.as_secs().max(1);
-            return Ok(HttpResponse::TooManyRequests()
-                .header(RETRY_AFTER, seconds.to_string())
-                .json(&ErrorResponse {
-                    error: format!("Too many failed attempts; retry in {seconds}s"),
-                }));
-        }
-    };
-
-    let user = match sqlx::query!(
-        "SELECT id, username, password_hash FROM users WHERE username = ?",
-        req.username
-    )
-    .fetch_optional(&app_state.db)
-    .await
-    {
-        Ok(user) => user,
-        Err(error) => {
-            app_state.login_throttle.cancel(attempt);
-            return Err(error.into());
-        }
-    };
-
-    // A missing account must cost the same bcrypt verification as a wrong
-    // password, or response timing turns the login endpoint into a username
-    // oracle even though both paths return the same status and throttle key.
-    let password_matches = match verify_login_password_off_worker(
-        req.password.clone(),
-        user.as_ref().map(|user| user.password_hash.clone()),
-    )
-    .await
-    {
-        Ok(matched) => matched,
-        Err(error) => {
-            app_state.login_throttle.cancel(attempt);
-            return Err(error);
-        }
-    };
-
-    if let Some(user) = user
-        && password_matches
-    {
-        app_state.login_throttle.record_success(attempt);
-
-        sqlx::query!(
-            "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?",
-            user.id
-        )
-        .execute(&app_state.db)
-        .await?;
-
-        let token = auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
-
-        return Ok(HttpResponse::Ok().json(&LoginResponse { token }));
-    }
-
-    // One counter for both "no such user" and "wrong password": tracking them
-    // separately would let an attacker tell the two apart by how quickly they
-    // get throttled.
-    app_state.login_throttle.record_failure(attempt);
-
-    Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
-        error: "Invalid credentials".to_string(),
-    }))
-}
-
-/// Lowercase hex of the SHA-256, which is what the `watch_tokens` rows already
-/// hold — `hex::encode` writes the same bytes the `{:x}` of digest 0.10 did.
-fn watch_token_hash(token: &str) -> String {
-    hex::encode(Sha256::digest(token.as_bytes()))
-}
-
-fn validate_watch_client_id(client_id: &str) -> Result<&str> {
-    let client_id = client_id.trim();
-    if client_id.is_empty() || client_id.len() > 128 {
-        return Err(MonitorError::Parse(
-            "watch token client_id must be 1..=128 characters".to_string(),
-        ));
-    }
-    Ok(client_id)
-}
-
-async fn issue_watch_token(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-    payload: web::types::Json<WatchTokenRequest>,
-) -> Result<HttpResponse> {
-    let caller = require_jwt!(&req, &app_state);
-    let client_id = validate_watch_client_id(&payload.client_id)?;
-    let token = format!("sbw_{}", crate::utils::secrets::random_hex(32)?);
-    let token_hash = watch_token_hash(&token);
-    let now = chrono::Utc::now().timestamp();
-    let expires_at = (chrono::Utc::now() + WATCH_TOKEN_LIFETIME).timestamp();
-    sqlx::query(
-        // `read`, the only scope there is, and stated rather than left to
-        // the column default: the scope is what `verify_watch_token` reads.
-        "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at, scope) \
-         VALUES (?, ?, ?, ?, ?, 'read') \
-         ON CONFLICT(subject, client_id) DO UPDATE SET \
-         token_hash = excluded.token_hash, created_at = excluded.created_at, \
-         expires_at = excluded.expires_at, scope = excluded.scope",
-    )
-    .bind(&caller.username)
-    .bind(client_id)
-    .bind(token_hash)
-    .bind(now)
-    .bind(expires_at)
-    .execute(&app_state.db)
-    .await?;
-    Ok(HttpResponse::Ok().json(&WatchTokenResponse { token, expires_at }))
-}
-
-async fn revoke_watch_token(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-    payload: web::types::Json<WatchTokenRequest>,
-) -> Result<HttpResponse> {
-    let caller = require_jwt!(&req, &app_state);
-    let client_id = validate_watch_client_id(&payload.client_id)?;
-    sqlx::query("DELETE FROM watch_tokens WHERE subject = ? AND client_id = ?")
-        .bind(&caller.username)
-        .bind(client_id)
-        .execute(&app_state.db)
-        .await?;
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "revoked" })))
-}
-
-/// The retired Go-compat endpoint.
-///
-/// It answered unauthenticated, with values preformatted as strings —
-/// `"1.3g / 1.9g"`, `"31.7%"` — and no history at all. That shape is why the
-/// clients built on it could never draw a trend: there were no numbers in it
-/// to draw. They read `/api/v1/metrics` and `/metrics/history` now, with a
-/// scoped read-only token.
-///
-/// Answers 410 rather than 404, and says where to go. Anything still calling
-/// this is a build old enough to have no other path, and a 404 would send its
-/// owner looking for a typo in an address that was correct.
-///
-/// The route is kept for one release so the failure has an explanation
-/// attached; a client that no longer exists cannot be told anything.
-///
-/// TODO: remove the route entirely in the release after this one.
-async fn get_status_compat() -> Result<HttpResponse> {
-    Ok(HttpResponse::Gone().json(&serde_json::json!({
-        "code": 410,
-        "error": "GET /status has been removed. Use GET /api/v1/metrics with a \
-                  token from POST /api/v1/watch-token, or configure this server \
-                  in the ServerBox app.",
-    })))
-}
-
-async fn get_status(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    require_read_access!(&req, &app_state);
-    touch_viewer_heartbeat(&app_state).await;
-
-    let metrics = app_state.current_metrics.read().await;
-
-    if let Some(ref metrics) = *metrics {
-        let response = StatusResponse {
-            name: metrics.server_name.clone(),
-            cpu: format!("{:.1}%", metrics.cpu_usage),
-            memory: format!(
-                "{:.1}% ({} / {})",
-                metrics.memory.usage_percent,
-                format_bytes(metrics.memory.used),
-                format_bytes(metrics.memory.total)
-            ),
-            disk: format!(
-                "{:.1}% ({} / {})",
-                metrics.disk.usage_percent,
-                format_bytes(metrics.disk.used),
-                format_bytes(metrics.disk.total)
-            ),
-            network: format!(
-                "RX: {} / TX: {}",
-                format_bytes(metrics.network.rx_bytes),
-                format_bytes(metrics.network.tx_bytes)
-            ),
-            temperature: metrics.temperature.map(|t| format!("{:.1}°C", t)),
-            timestamp: metrics.timestamp.to_rfc3339(),
-        };
-
-        Ok(HttpResponse::Ok().json(&response))
-    } else {
-        Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
-            error: "Metrics not available yet".to_string(),
-        }))
-    }
-}
-
-async fn get_metrics(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    require_read_access!(&req, &app_state);
-    touch_viewer_heartbeat(&app_state).await;
-
-    let metrics = app_state.current_metrics.read().await;
-
-    if let Some(ref metrics) = *metrics {
-        let body = metrics_json(metrics)?;
-        Ok(HttpResponse::Ok().json(&body))
-    } else {
-        Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
-            error: "Metrics not available yet".to_string(),
-        }))
-    }
-}
-
-/// Keep the established numeric fields for existing clients, while exposing
-/// exact decimal forms for browser clients that cannot represent every u64.
-fn metrics_json(metrics: &SystemMetrics) -> serde_json::Result<serde_json::Value> {
-    let mut value = serde_json::to_value(metrics)?;
-    add_exact_counters(
-        &mut value,
-        &metrics.network,
-        &metrics.ifaces,
-        &metrics.diskio,
-    );
-    Ok(value)
-}
-
-fn add_exact_counters(
-    value: &mut serde_json::Value,
-    network_metrics: &monitoring::NetworkMetrics,
-    iface_metrics: &[monitoring::IfaceMetrics],
-    diskio_metrics: &[sbm_parser::types::DiskIoPiece],
-) {
-    if let Some(network) = value.get_mut("network").and_then(serde_json::Value::as_object_mut) {
-        network.insert(
-            "rx_bytes_exact".to_string(),
-            serde_json::Value::String(network_metrics.rx_bytes.to_string()),
-        );
-        network.insert(
-            "tx_bytes_exact".to_string(),
-            serde_json::Value::String(network_metrics.tx_bytes.to_string()),
-        );
-    }
-
-    if let Some(ifaces) = value.get_mut("ifaces").and_then(serde_json::Value::as_array_mut) {
-        for (wire, source) in ifaces.iter_mut().zip(iface_metrics) {
-            if let Some(wire) = wire.as_object_mut() {
-                wire.insert(
-                    "rx_bytes_exact".to_string(),
-                    serde_json::Value::String(source.rx_bytes.to_string()),
-                );
-                wire.insert(
-                    "tx_bytes_exact".to_string(),
-                    serde_json::Value::String(source.tx_bytes.to_string()),
-                );
-            }
-        }
-    }
-
-    if let Some(diskio) = value.get_mut("diskio").and_then(serde_json::Value::as_array_mut) {
-        for (wire, source) in diskio.iter_mut().zip(diskio_metrics) {
-            if let Some(wire) = wire.as_object_mut() {
-                wire.insert(
-                    "sectors_read_exact".to_string(),
-                    serde_json::Value::String(source.sectors_read.to_string()),
-                );
-                wire.insert(
-                    "sectors_write_exact".to_string(),
-                    serde_json::Value::String(source.sectors_write.to_string()),
-                );
-            }
-        }
     }
 }
 
@@ -963,50 +605,22 @@ struct CapabilitiesView {
     #[serde(skip_serializing_if = "Option::is_none")]
     oldest_sample: Option<String>,
     /// The machine-management endpoints this agent serves — see
-    /// `api::machine::FEATURES`. Whether the caller may use one is `grants`.
+    /// `api::machine::FEATURES`. Whether they may be used over this link is
+    /// `access`.
     features: &'static [&'static str],
-    remote_access: RemoteAccessView,
-    /// Who is asking — absent for a watch token, which is nobody's session.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    me: Option<MeView>,
-    /// What the caller's role lets them do over this link, grant by grant —
-    /// see `authz::grants_view`.
-    grants: serde_json::Value,
+    /// The web apps this agent deployed, and their state (`stacks`): what
+    /// decides whether a panel offers their windows. Empty for a watch token.
+    stacks: Vec<StackBrief>,
+    /// Whether the caller may act on the machine over this link: `ok`, and
+    /// `why` (`insecure_transport`) when not. Never, for a watch token.
+    access: serde_json::Value,
 }
 
 #[derive(Serialize)]
-struct MeView {
-    username: String,
-    role: String,
-    admin: bool,
-}
-
-/// The answer clients read before roles, derived from `grants` for the
-/// caller so an app that predates roles keeps working. TODO: remove once no
-/// supported app reads it.
-#[derive(Serialize)]
-struct RemoteAccessView {
-    terminal: bool,
-    /// Whether a shell can be opened without SSH credentials. The panel only
-    /// offers that entry when this is true — and, being a UI decision, it is
-    /// re-checked server-side when the request actually arrives.
-    full_access: bool,
-    /// Whether `/api/v1/fs/*` will answer. Its own field rather than folded
-    /// into [`Self::full_access`]: the file API is confined to the roots the
-    /// operator named, so it can be on while the shell is off.
-    files: bool,
-    /// Whether `/api/v1/stream/ws` will relay a TCP connection.
-    ///
-    /// Its own field even though it is granted by the same switch as
-    /// [`Self::full_access`], because it is a different question for a client:
-    /// an agent that predates the endpoint reports `full_access` and would
-    /// still refuse the upgrade. Staying equal to `full_access` on every agent
-    /// that has it is the point — a client reads this one, not that one.
-    stream: bool,
-    /// Whether `/api/v1/listen/ws` will listen for a remote forward. The same
-    /// grant as [`Self::stream`], reported apart for the same reason: an agent
-    /// that predates the endpoint leaves it out, and a client reads that as no.
-    listen: bool,
+struct StackBrief {
+    id: String,
+    /// `installing` | `installed` | `failed`.
+    state: String,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -1042,24 +656,16 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .metrics_days,
         oldest_sample,
         features: crate::api::machine::FEATURES,
-        remote_access: {
-            let ok = |grant| {
-                caller.is_some_and(|c: &Caller| c.check(grant, &app_state, secure).is_ok())
-            };
-            RemoteAccessView {
-                terminal: ok(Grant::SshTerminal) || ok(Grant::Shell),
-                full_access: ok(Grant::Shell),
-                files: ok(Grant::Files),
-                stream: ok(Grant::Connect),
-                listen: ok(Grant::Listen),
-            }
+        stacks: match caller {
+            Some(_) => crate::stacks::store::all(&app_state.db)
+                .await
+                .unwrap_or_default()
+                .into_iter()
+                .map(|r| StackBrief { id: r.id, state: r.state })
+                .collect(),
+            None => Vec::new(),
         },
-        me: caller.map(|c| MeView {
-            username: c.username.clone(),
-            role: c.role.name.clone(),
-            admin: c.role.admin,
-        }),
-        grants: authz::grants_view(caller, &app_state, secure),
+        access: authz::access_view(caller, &app_state, secure),
     }))
 }
 
@@ -1082,29 +688,19 @@ async fn issue_ws_ticket(
     let remote_ip = audit::peer_ip(&req);
     let purpose = payload.into_inner().purpose;
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
-    // The grants each endpoint can be used under at all; which one a frame
-    // needs is checked again when it arrives (a local shell needs `shell`, an
-    // SSH one `ssh_terminal`; a stream `open` needs `connect`, an `accept`
-    // `listen`).
-    let ok = |grant| caller.check(grant, &app_state, secure).is_ok();
+    let ok = caller.check(&app_state, secure).is_ok();
     let (available, detail) = match purpose {
-        Purpose::Terminal => (
-            ok(Grant::Shell) || ok(Grant::SshTerminal),
-            "terminal not available",
-        ),
-        Purpose::Stream => (
-            ok(Grant::Connect) || ok(Grant::Listen),
-            "stream not available",
-        ),
-        Purpose::Listen => (ok(Grant::Listen), "listen not available"),
-        Purpose::Rdp => (ok(Grant::Connect), "rdp not available"),
+        Purpose::Terminal => (ok, "terminal not available"),
+        Purpose::Stream => (ok, "stream not available"),
+        Purpose::Listen => (ok, "listen not available"),
+        Purpose::Rdp => (ok, "rdp not available"),
         // Bound to the console it opens, so only `POST /virt/console` mints
         // one.
         Purpose::Virt => (false, "virt consoles are opened through /virt/console"),
+        Purpose::Proxy => (false, "app windows are entered through /stacks/{id}/enter"),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
-            .subject(&caller.username)
             .remote_ip(remote_ip)
             .detail(detail)
             .record(&app_state.db)
@@ -1114,10 +710,9 @@ async fn issue_ws_ticket(
         }));
     }
 
-    match app_state.tickets.issue(purpose, &caller.username) {
+    match app_state.tickets.issue(purpose) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
-                .subject(&caller.username)
                 .remote_ip(remote_ip)
                 .detail(match purpose {
                     Purpose::Terminal => "terminal",
@@ -1125,6 +720,7 @@ async fn issue_ws_ticket(
                     Purpose::Listen => "listen",
                     Purpose::Rdp => "rdp",
                     Purpose::Virt => "virt",
+                    Purpose::Proxy => "proxy",
                 })
                 .record(&app_state.db)
                 .await;
@@ -1133,7 +729,6 @@ async fn issue_ws_ticket(
         }
         Err(e) => {
             Event::new(Kind::Ticket, Action::Denied, Outcome::Error)
-                .subject(&caller.username)
                 .remote_ip(remote_ip)
                 .detail("issue failed")
                 .record(&app_state.db)
@@ -1153,547 +748,11 @@ async fn issue_ws_ticket(
     }
 }
 
-/// Whitelisted, writable subset of `Config` the settings page exposes.
-/// Deliberately excludes `jwt_secret`/`database_url`/`push` (secrets, or
-/// need their own dedicated design for session-invalidation-on-rotation) —
-/// see the settings-page plan for why those are out of scope.
-#[derive(Serialize, Deserialize)]
-struct SettingsPayload {
-    interval_seconds: u64,
-    /// `null` = `interval_seconds * 10`, with a 120-second floor
-    extended_interval_secs: Option<u64>,
-    idle_pause_enabled: bool,
-    /// `null` = `interval_seconds * 4`
-    idle_pause_threshold_secs: Option<u64>,
-    rules: Vec<crate::core::config::MonitoringRule>,
-    data_retention: Option<crate::core::config::DataRetentionConfig>,
-    cors_allowed_origins: Vec<String>,
-    /// Always present in a GET. Absent from a PUT keeps what is stored, so a
-    /// panel or app from before the field cannot turn it off by saving.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    disk_counts_network: Option<bool>,
-}
-
-/// GET-only wrapper: which fields take effect immediately vs. need a
-/// restart, so the settings UI can label fields honestly instead of
-/// guessing. A separate type from `SettingsPayload` (rather than an
-/// `Option<Vec<&'static str>>` field on it) because a `'static` field breaks
-/// deriving `Deserialize`, which `SettingsPayload` also needs for PUT.
-#[derive(Serialize)]
-struct SettingsView {
-    #[serde(flatten)]
-    settings: SettingsPayload,
-    live_fields: &'static [&'static str],
-    /// What `data_retention` should become when an editor offers to switch it
-    /// on. `null` there means *no cleanup runs at all* — `cli.rs` only starts
-    /// the scheduler when the section is present — rather than "the defaults
-    /// apply", so an editor cannot express turning it on without values to put
-    /// in it. They belong here rather than copied into each editor, where they
-    /// would drift from `DataRetentionConfig::default` unnoticed.
-    data_retention_defaults: crate::core::config::DataRetentionConfig,
-}
-
-const SETTINGS_LIVE_FIELDS: &[&str] = &[
-    "extended_interval_secs",
-    "idle_pause_enabled",
-    "idle_pause_threshold_secs",
-    "disk_counts_network",
-];
-
-async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    require_admin!(&req, &app_state);
-
-    let file_config = match config_file::read() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
-    };
-    let monitoring = file_config.get_monitoring();
-    let live = app_state.live_settings.read().await.clone();
-
-    Ok(HttpResponse::Ok().json(&SettingsView {
-        settings: SettingsPayload {
-            interval_seconds: monitoring.interval_seconds,
-            extended_interval_secs: monitoring.extended.interval_secs,
-            idle_pause_enabled: live.idle_pause_enabled,
-            idle_pause_threshold_secs: monitoring.extended.idle_pause.threshold_secs,
-            rules: monitoring.rules,
-            data_retention: monitoring.data_retention,
-            cors_allowed_origins: file_config.get_server().cors_allowed_origins,
-            disk_counts_network: Some(live.disk_counts_network),
-        },
-        live_fields: SETTINGS_LIVE_FIELDS,
-        data_retention_defaults: crate::core::config::DataRetentionConfig::default(),
-    }))
-}
-
-/// Kept beside the settings endpoint so file and API validation cannot drift.
-fn validate_threshold_format(threshold: &str) -> std::result::Result<(), String> {
-    let re = regex::Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$").unwrap();
-    if re.is_match(threshold) {
-        Ok(())
-    } else {
-        Err(format!("Invalid threshold format: {threshold}"))
-    }
-}
-
-async fn update_settings(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-    payload: web::types::Json<SettingsPayload>,
-) -> Result<HttpResponse> {
-    require_admin!(&req, &app_state);
-    let payload = payload.into_inner();
-
-    if payload.interval_seconds < 1 {
-        return Ok(HttpResponse::BadRequest()
-            .json(&ErrorResponse { error: "interval_seconds must be at least 1".to_string() }));
-    }
-    if let Some(retention) = &payload.data_retention
-        && let Err(error) = retention.validate()
-    {
-        return Ok(HttpResponse::BadRequest().json(&ErrorResponse { error }));
-    }
-    for rule in &payload.rules {
-        if let Err(e) = validate_threshold_format(&rule.threshold) {
-            return Ok(HttpResponse::BadRequest().json(&ErrorResponse {
-                error: format!("Rule '{}': {e}", rule.name),
-            }));
-        }
-    }
-
-    // Held across the whole read-modify-write so a concurrent PUT can't read
-    // the same starting state and drop this change on its own save.
-    let _config_guard = app_state.config_write.lock().await;
-
-    let mut config = match config_file::read() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
-    };
-
-    let mut monitoring = config.get_monitoring();
-    monitoring.interval_seconds = payload.interval_seconds;
-    monitoring.extended.interval_secs = payload.extended_interval_secs;
-    monitoring.extended.idle_pause.enabled = payload.idle_pause_enabled;
-    monitoring.extended.idle_pause.threshold_secs = payload.idle_pause_threshold_secs;
-    monitoring.rules = payload.rules;
-    monitoring.data_retention = payload.data_retention;
-    if let Some(counts) = payload.disk_counts_network {
-        monitoring.disk_counts_network = counts;
-    }
-    config.monitoring = Some(monitoring.clone());
-
-    let mut server_config = config.get_server();
-    server_config.cors_allowed_origins = payload.cors_allowed_origins;
-    config.server = Some(server_config);
-
-    // Writes atomically and keeps a bounded set of timestamped backups as a
-    // manual undo path — see `config_file`
-    if let Err(e) = config_file::write(&config) {
-        return Ok(HttpResponse::InternalServerError()
-            .json(&ErrorResponse { error: e.to_string() }));
-    }
-
-    // The live-reloadable subset takes effect immediately; everything else
-    // needs a restart (the settings UI must say so — this response doesn't
-    // repeat itself here, see SETTINGS_LIVE_FIELDS via GET)
-    *app_state.live_settings.write().await = LiveSettings::from_config(&monitoring);
-
-    tracing::info!("Settings saved via PUT /api/v1/settings");
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
-}
-
-/// The panel's first-use "turn off access without SSH": takes `shell`,
-/// `connect` and `listen` away from every role, and ends what was running
-/// under them.
-///
-/// Kept for the panel's existing prompt, and for an app that predates roles;
-/// with roles it is one admin edit among others, and the admin can grant them
-/// back. It answers the old way too — a client told `full_access_disabled`
-/// rather than `permission_revoked`. TODO: remove once the panel's prompt
-/// edits roles itself.
-async fn disable_full_access(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    let caller = require_admin!(&req, &app_state);
-
-    for mut role in crate::db::accounts::roles(&app_state.db).await? {
-        role.grants.shell = false;
-        role.grants.connect = None;
-        role.grants.listen = None;
-        crate::db::accounts::set_grants(&app_state.db, &role.name, &role.grants).await?;
-    }
-    Event::new(Kind::Admin, Action::Close, Outcome::Ok)
-        .subject(&caller.username)
-        .remote_ip(audit::peer_ip(&req))
-        .detail("shell, connect and listen removed from every role")
-        .record(&app_state.db)
-        .await;
-    authz::revoke_lost(app_state.get_ref(), "full_access_disabled").await;
-    tracing::info!(
-        "Access without SSH disabled from the panel by {}: shell, connect and listen removed from every role",
-        caller.username,
-    );
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
-}
-
-/// Home-grid card order — split out from `SettingsPayload`/`PUT /settings`
-/// deliberately: reordering cards by drag-and-drop happens far more often
-/// than editing rules/CORS, and routing it through the full settings payload
-/// would mean read-modify-write races against whatever the settings page has
-/// open, risking clobbering an in-progress edit there. No restart-required
-/// concept applies — this is never read by the backend, only stored for sync.
-#[derive(Serialize, Deserialize)]
-struct CardOrderPayload {
-    card_order: Vec<String>,
-}
-
-async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
-    require_read_access!(&req, &app_state);
-    let file_config = match config_file::read() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
-    };
-    Ok(HttpResponse::Ok().json(&CardOrderPayload { card_order: file_config.get_server().card_order }))
-}
-
-async fn update_card_order(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-    payload: web::types::Json<CardOrderPayload>,
-) -> Result<HttpResponse> {
-    require_admin!(&req, &app_state);
-    let _config_guard = app_state.config_write.lock().await;
-
-    let mut config = match config_file::read() {
-        Ok(c) => c,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: e.to_string() }));
-        }
-    };
-    let mut server_config = config.get_server();
-    server_config.card_order = payload.into_inner().card_order;
-    config.server = Some(server_config);
-
-    if let Err(e) = config_file::write(&config) {
-        return Ok(HttpResponse::InternalServerError()
-            .json(&ErrorResponse { error: e.to_string() }));
-    }
-    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
-}
-
-/// One numeric query parameter, or `None` when it is absent or unreadable.
-///
-/// Read by hand rather than deserialised into a struct: these are integers
-/// with no encoding to undo, and every one of them is clamped at the use site
-/// anyway, so a bad value and a missing value have the same answer.
-fn query_param<T: std::str::FromStr>(query: &str, name: &str) -> Option<T> {
-    raw_param(query, name).and_then(|v| v.parse().ok())
-}
-
-/// The parameter as it was written, or `None` when it was not written at all.
-///
-/// The difference matters wherever a default is not the same answer as a
-/// refusal: `?from=yesterday` is a caller asking for a window, and reading it
-/// as "no window given" answers with the default hour and calls it what was
-/// asked for.
-fn raw_param<'a>(query: &'a str, name: &str) -> Option<&'a str> {
-    query
-        .split('&')
-        .find_map(|kv| kv.strip_prefix(name)?.strip_prefix('='))
-}
-
-#[derive(Serialize)]
-struct HistoryPoint {
-    timestamp: String,
-    cpu: f64,
-    memory: f64,
-    /// Percent, or absent on a machine with no swap — which is not the same
-    /// as swap sitting at zero, and is the one a chart must not draw a line
-    /// for.
-    swap: Option<f64>,
-    disk: f64,
-    net_rx_speed: f64,
-    net_tx_speed: f64,
-    temperature: Option<f64>,
-    diskio_read_speed: f64,
-    diskio_write_speed: f64,
-    battery_percent: Option<f64>,
-}
-
-/// Bucketed time series from system_metrics.
-///
-/// `?minutes=` selects a window ending now (default 60, clamped to 5..=10080),
-/// or `?from=` and `?to=` name one outright, as epoch seconds — `to` defaults
-/// to now, and `minutes` is ignored when `from` is given. `?max_points=` says
-/// how many points to answer with (default 300, clamped to 2..=300). Rows are
-/// averaged into that many buckets and network rates are derived from
-/// consecutive cumulative counters.
-///
-/// An explicit window is not clamped to the `minutes` ceiling. A client asking
-/// for more than this agent kept is not a client to correct: it gets the rows
-/// there are, and the gap between what it asked for and what came back is
-/// something only it can draw. Silently narrowing the window would report a
-/// full one.
-///
-/// The count is the caller's to pick because it is a property of what is
-/// drawing the result, not of what is stored: a home widget a few hundred
-/// pixels wide cannot render 300 points, and asking for them means carrying
-/// them over the network to throw them away. Thinning here is also better
-/// than thinning on the client — an average over a wider bucket keeps the
-/// spikes that dropping every third row loses.
-async fn get_metrics_history(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    require_read_access!(&req, &app_state);
-
-    let query = req.query_string();
-    let now = chrono::Utc::now();
-    // Both bounds are bound as `DateTime<Utc>`, so sqlx encodes them with the
-    // same RFC 3339 form `store_metrics` writes the column with and the
-    // comparison is between values of one shape.
-    //
-    // It was `datetime('now', '-N minutes')`, whose output is
-    // `2026-09-08 07:28:22` while the column holds
-    // `2026-09-08T08:28:18.493098803+00:00`. Both are text, so SQLite compares
-    // them as text, and `'T'` sorts above `' '`: every row sharing the
-    // boundary's *date* compared greater regardless of its time. The window
-    // was therefore "since midnight UTC" whenever that was the longer of the
-    // two — 4255 rows scanned for a 60-minute window holding 496, and the
-    // factor grows through the UTC day to 24x.
-
-    // A bound that was given but cannot be read is a refusal, not a default:
-    // the caller is asking for a window, and answering with a different one is
-    // how a client bug becomes a chart nobody questions.
-    let bound = |name: &str| -> std::result::Result<Option<i64>, ()> {
-        match raw_param(query, name) {
-            None => Ok(None),
-            Some(raw) => raw.parse::<i64>().map(Some).map_err(|_| ()),
-        }
-    };
-    let bad_request = |message: &str| {
-        Ok(HttpResponse::BadRequest().json(&ErrorResponse {
-            error: message.to_string(),
-        }))
-    };
-    let (Ok(from_param), Ok(to_param)) = (bound("from"), bound("to")) else {
-        return bad_request("from/to must be epoch seconds");
-    };
-
-    // The window, as either of the two ways of naming one.
-    let (cutoff, until) = match from_param {
-        Some(from) => {
-            let to = to_param.unwrap_or(now.timestamp());
-            let from = chrono::DateTime::from_timestamp(from, 0);
-            let to = chrono::DateTime::from_timestamp(to, 0);
-            match (from, to) {
-                // Refused rather than swapped or widened: an inverted window is
-                // a caller bug, and answering it with something plausible is
-                // how it stays one.
-                (Some(from), Some(to)) if to > from => (from, Some(to)),
-                _ => {
-                    return bad_request("from/to must be epoch seconds with to > from");
-                }
-            }
-        }
-        None => {
-            let minutes: i64 = query_param(query, "minutes")
-                .unwrap_or(60)
-                .clamp(5, 7 * 24 * 60);
-            // `to` without `from` is a length ending somewhere other than now
-            // — "the hour before the alert" — and dropping it answered with
-            // the hour before *this request* instead, which looks like an
-            // answer to the question that was asked.
-            match to_param {
-                None => (now - chrono::Duration::minutes(minutes), None),
-                Some(to) => match chrono::DateTime::from_timestamp(to, 0) {
-                    Some(to) => (to - chrono::Duration::minutes(minutes), Some(to)),
-                    None => return bad_request("to must be epoch seconds"),
-                },
-            }
-        }
-    };
-    let span_secs = (until.unwrap_or(now) - cutoff).num_seconds().max(1);
-
-    /// What this endpoint has always answered with, and still does for a
-    /// caller that names no count.
-    const MAX_POINTS: i64 = 300;
-    let max_points: i64 = query_param(query, "max_points")
-        .unwrap_or(MAX_POINTS)
-        .clamp(2, MAX_POINTS);
-
-    // Rounded up, so the window divides into no more buckets than were asked
-    // for. Rounding down leaves buckets narrower than the window/count ratio
-    // and answers with more points than the caller said it could take —
-    // `minutes=7&max_points=100` is 4-second buckets and 105 of them.
-    // `i64::div_ceil` is still unstable; both operands are positive here.
-    let bucket_secs = ((span_secs + max_points - 1) / max_points).max(1);
-
-    use sqlx::Row;
-    let rows = sqlx::query(
-        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN swap_total > 0 THEN swap_used * 100.0 / swap_total END) AS swap,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2 AND (?3 IS NULL OR timestamp <= ?3)          GROUP BY bucket ORDER BY bucket",
-    )
-    .bind(bucket_secs)
-    .bind(cutoff)
-    .bind(until)
-    .fetch_all(&app_state.db)
-    .await?;
-
-    let mut points = Vec::with_capacity(rows.len());
-    // (bucket, rx, tx, diskio_read, diskio_write)
-    let mut prev: Option<(i64, f64, f64, f64, f64)> = None;
-    for row in rows {
-        let bucket: i64 = row.get("bucket");
-        let rx: f64 = row.try_get("rx").unwrap_or(0.0);
-        let tx: f64 = row.try_get("tx").unwrap_or(0.0);
-        let dio_r: f64 = row.try_get("dio_r").unwrap_or(0.0);
-        let dio_w: f64 = row.try_get("dio_w").unwrap_or(0.0);
-        let (net_rx_speed, net_tx_speed, diskio_read_speed, diskio_write_speed) = match prev {
-            Some((pb, prx, ptx, pdr, pdw)) if bucket > pb => {
-                let dt = ((bucket - pb) * bucket_secs) as f64;
-                (
-                    ((rx - prx) / dt).max(0.0),
-                    ((tx - ptx) / dt).max(0.0),
-                    ((dio_r - pdr) / dt).max(0.0),
-                    ((dio_w - pdw) / dt).max(0.0),
-                )
-            }
-            _ => (0.0, 0.0, 0.0, 0.0),
-        };
-        prev = Some((bucket, rx, tx, dio_r, dio_w));
-        points.push(HistoryPoint {
-            timestamp: row.get("ts"),
-            cpu: row.try_get("cpu").unwrap_or(0.0),
-            memory: row.try_get("mem").unwrap_or(0.0),
-            swap: row.try_get::<Option<f64>, _>("swap").ok().flatten(),
-            disk: row.try_get("disk").unwrap_or(0.0),
-            net_rx_speed,
-            net_tx_speed,
-            temperature: row.try_get::<Option<f64>, _>("temp").ok().flatten(),
-            diskio_read_speed,
-            diskio_write_speed,
-            battery_percent: row.try_get::<Option<f64>, _>("battery").ok().flatten(),
-        });
-    }
-
-    // A bucket boundary is an absolute multiple of `bucket_secs` while the
-    // window's start is wherever "now minus N minutes" falls, so the first
-    // bucket is a partial one and the count can come out one over. Drop from
-    // the old end: the rates above are derived from consecutive buckets, so
-    // they have to be computed over the whole series before anything is cut.
-    let max_points = max_points as usize;
-    if points.len() > max_points {
-        points.drain(..points.len() - max_points);
-    }
-
-    Ok(HttpResponse::Ok().json(&points))
-}
-
-async fn get_velocity(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    require_read_access!(&req, &app_state);
-
-    let server_name = app_state.config.get_server_name();
-
-    // Everything this handler needs comes from one guard. A temporary in a
-    // `match` scrutinee lives to the end of the match, so taking the lock
-    // there and again inside an arm deadlocks against the monitoring loop's
-    // writer: tokio's RwLock is fair, so the queued writer blocks the second
-    // reader while itself waiting on the first guard.
-    let sampled = {
-        let velocity = app_state.velocity_manager.read().await;
-        match velocity.get_server_velocity(&server_name).await {
-            Ok(velocity_data) => {
-                let network_totals = velocity.get_network_totals(&server_name).await;
-                let is_ready = velocity.is_ready(&server_name).await;
-                Ok((velocity_data, network_totals, is_ready))
-            }
-            Err(e) => Err(e),
-        }
-    };
-
-    match sampled {
-        Ok((velocity_data, network_totals, is_ready)) => {
-            let network_info = NetworkSpeedInfo::new(
-                velocity_data.network_rx_speed,
-                velocity_data.network_tx_speed,
-                network_totals.map(|(rx, _)| rx),
-                network_totals.map(|(_, tx)| tx),
-            );
-
-            let response = VelocityAnalysisResponse::new(
-                network_info,
-                velocity_data.cpu_usage_percent,
-                is_ready,
-            );
-
-            Ok(HttpResponse::Ok().json(&response))
-        }
-        Err(e) => Ok(HttpResponse::InternalServerError().json(&ErrorResponse {
-            error: format!("Failed to get velocity data: {}", e),
-        })),
-    }
-}
-
-async fn get_velocity_history(
-    req: HttpRequest,
-    app_state: web::types::State<Arc<AppState>>,
-) -> Result<HttpResponse> {
-    require_read_access!(&req, &app_state);
-
-    let query = web::types::Query::<serde_json::Value>::from_query(req.query_string())
-        .unwrap_or_else(|_| web::types::Query(serde_json::Value::Object(serde_json::Map::new())));
-
-    let limit = query
-        .get("limit")
-        .and_then(|v| {
-            v.as_u64().or_else(|| {
-                v.as_str()
-                    .and_then(|s| s.parse::<u64>().ok())
-            })
-        })
-        .map(|l| l as usize);
-
-    match app_state
-        .velocity_manager
-        .read()
-        .await
-        .get_server_velocity_history(&app_state.config.get_server_name(), limit)
-        .await
-    {
-        Ok(history) => Ok(HttpResponse::Ok().json(&history)),
-        Err(e) => Ok(HttpResponse::InternalServerError().json(&ErrorResponse {
-            error: format!("Failed to get velocity history: {}", e),
-        })),
-    }
-}
-
 async fn health_check() -> HttpResponse {
     HttpResponse::Ok().json(&serde_json::json!({
         "status": "healthy",
         "timestamp": chrono::Utc::now().to_rfc3339()
     }))
-}
-
-/// The idle-pause heartbeat: called from the endpoints the panel actually
-/// polls while open (`/metrics`, `/status`), not every authenticated
-/// request — a one-off `/capabilities`/`/settings` fetch shouldn't count as
-/// "someone's actively watching."
-async fn touch_viewer_heartbeat(app_state: &AppState) {
-    *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
 pub(crate) fn bearer_token(req: &HttpRequest) -> Result<&str> {
@@ -1715,165 +774,6 @@ pub(crate) fn bearer_token(req: &HttpRequest) -> Result<&str> {
     }
 
     Ok(&auth_header[7..])
-}
-
-/// The account a watch token was paired by, for a token that is live and
-/// has the `read` scope — the only one a watch token is ever given, and the
-/// only routes that call this are the read ones.
-pub(crate) async fn verify_watch_token(db: &SqlitePool, token: &str, now: i64) -> Result<String> {
-    let token_hash = watch_token_hash(token);
-    let subject = sqlx::query_scalar::<_, String>(
-        "SELECT subject FROM watch_tokens WHERE token_hash = ? AND expires_at > ? AND scope = 'read'",
-    )
-    .bind(token_hash)
-    .bind(now)
-    .fetch_optional(db)
-    .await?
-    .ok_or_else(|| MonitorError::Auth("Invalid or expired token".to_string()))?;
-    Ok(subject)
-}
-
-fn format_bytes(bytes: u64) -> String {
-    const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
-    let mut size = bytes as f64;
-    let mut unit_index = 0;
-
-    while size >= 1024.0 && unit_index < UNITS.len() - 1 {
-        size /= 1024.0;
-        unit_index += 1;
-    }
-
-    if unit_index == 0 {
-        format!("{} {}", bytes, UNITS[unit_index])
-    } else {
-        format!("{:.1} {}", size, UNITS[unit_index])
-    }
-}
-
-#[cfg(test)]
-mod watch_token_tests {
-    use super::*;
-    use sqlx::sqlite::SqlitePoolOptions;
-
-    async fn pool() -> SqlitePool {
-        let pool = SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect("sqlite::memory:")
-            .await
-            .unwrap();
-        sqlx::query(
-            "CREATE TABLE watch_tokens (\
-             subject TEXT NOT NULL, client_id TEXT NOT NULL, \
-             token_hash TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL, \
-             expires_at INTEGER NOT NULL, scope TEXT NOT NULL DEFAULT 'read', \
-             PRIMARY KEY(subject, client_id))",
-        )
-        .execute(&pool)
-        .await
-        .unwrap();
-        pool
-    }
-
-    /// The published SHA-256 of `abc`, so the row below is seeded with a value
-    /// this crate did not produce. Hashing the token through
-    /// `watch_token_hash` on both sides would agree with itself whatever the
-    /// encoding became, and an agent's `watch_tokens` rows outlive the build
-    /// that wrote them: a change there invalidates every paired watch, silently.
-    const TOKEN: &str = "abc";
-    const TOKEN_HASH: &str =
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
-
-    #[tokio::test]
-    async fn watch_tokens_are_hashed_expiring_and_revocable() {
-        let pool = pool().await;
-        let token = TOKEN;
-        assert_eq!(watch_token_hash(token), TOKEN_HASH);
-        sqlx::query(
-            "INSERT INTO watch_tokens(subject, client_id, token_hash, created_at, expires_at) \
-             VALUES (?, ?, ?, ?, ?)",
-        )
-        .bind("admin")
-        .bind("watch:one")
-        .bind(TOKEN_HASH)
-        .bind(10_i64)
-        .bind(20_i64)
-        .execute(&pool)
-        .await
-        .unwrap();
-
-        assert_eq!(verify_watch_token(&pool, token, 19).await.unwrap(), "admin");
-        assert!(verify_watch_token(&pool, token, 20).await.is_err());
-        sqlx::query("DELETE FROM watch_tokens WHERE client_id = ?")
-            .bind("watch:one")
-            .execute(&pool)
-            .await
-            .unwrap();
-        assert!(verify_watch_token(&pool, token, 19).await.is_err());
-    }
-}
-
-#[cfg(test)]
-mod metrics_json_tests {
-    use super::*;
-
-    #[test]
-    fn cumulative_counters_include_exact_decimal_strings() {
-        let network = monitoring::NetworkMetrics {
-            rx_bytes: 9_007_199_254_740_993,
-            tx_bytes: 9_007_199_254_740_994,
-        };
-        let ifaces = [monitoring::IfaceMetrics {
-            name: "eth0".to_string(),
-            rx_bytes: 9_007_199_254_740_995,
-            tx_bytes: 9_007_199_254_740_996,
-        }];
-        let diskio = [sbm_parser::types::DiskIoPiece {
-            dev: "sda".to_string(),
-            sectors_read: 9_007_199_254_740_997,
-            sectors_write: 9_007_199_254_740_998,
-        }];
-        let mut value = serde_json::json!({
-            "network": { "rx_bytes": network.rx_bytes, "tx_bytes": network.tx_bytes },
-            "ifaces": [{ "name": "eth0", "rx_bytes": ifaces[0].rx_bytes, "tx_bytes": ifaces[0].tx_bytes }],
-            "diskio": [{ "dev": "sda", "sectors_read": diskio[0].sectors_read, "sectors_write": diskio[0].sectors_write }],
-        });
-
-        add_exact_counters(&mut value, &network, &ifaces, &diskio);
-
-        assert_eq!(value["network"]["rx_bytes_exact"], "9007199254740993");
-        assert_eq!(value["ifaces"][0]["tx_bytes_exact"], "9007199254740996");
-        assert_eq!(value["diskio"][0]["sectors_read_exact"], "9007199254740997");
-    }
-}
-
-#[cfg(test)]
-mod agent_state_tests {
-    use super::*;
-
-    #[test]
-    fn the_database_is_the_file_sqlx_opens() {
-        assert_eq!(
-            sqlite_file("sqlite:///data/my%20db.db?mode=rwc"),
-            Some(std::path::PathBuf::from("/data/my db.db"))
-        );
-        assert_eq!(
-            sqlite_file("sqlite:serverbox_monitor.db"),
-            Some(std::path::PathBuf::from("serverbox_monitor.db"))
-        );
-        assert_eq!(sqlite_file("sqlite::memory:"), None);
-        assert_eq!(sqlite_file("sqlite://?mode=memory"), None);
-    }
-
-    #[test]
-    fn the_environment_file_is_agent_state() {
-        // Whatever the operator put in the environment — credentials included —
-        // is in `.env`, and the installer leaves `.env.bak-*` beside it.
-        let protected = agent_state(&Config::default());
-        let cwd = std::fs::canonicalize(".").unwrap();
-        assert!(protected.covers(&cwd.join(".env")));
-        assert!(protected.covers(&cwd.join(".env.bak-1789489640")));
-        assert!(!protected.covers(&cwd.join("notes.env")));
-    }
 }
 
 #[cfg(test)]
@@ -1912,3 +812,15 @@ mod tls_tests {
         assert!(error.contains("key.pem"), "{error}");
     }
 }
+
+// After the `require_*` macros, which the handlers there use.
+mod login;
+mod metrics;
+mod settings;
+mod state;
+
+pub use state::*;
+pub(crate) use login::verify_watch_token;
+use login::*;
+use metrics::*;
+use settings::*;

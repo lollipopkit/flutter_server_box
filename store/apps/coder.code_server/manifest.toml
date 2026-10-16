@@ -1,0 +1,76 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/monitor-app.schema.json
+# code-server, as the Monitor's Code app: deployed with Docker Compose from the
+# file beside this one, shown in a desk window through the agent.
+
+schema = 1
+publisher = "coder"
+name = "code_server"
+project = "code-server"
+developer = "Coder"
+version = "4.141.0"
+homepage = "https://coder.com"
+source = "https://github.com/coder/code-server/tree/v4.141.0"
+glyph = "code"
+tone = "ink"
+categories = ["development"]
+notices = ["pullsImages", "bindsPaths", "publishesPort"]
+
+[title]
+en = "code-server"
+
+[description]
+en = "Edit code in VS Code in the browser, on this machine's files."
+zh = "在浏览器中使用 VS Code 编辑本机上的代码。"
+zh-TW = "在瀏覽器中使用 VS Code 編輯本機上的程式碼。"
+
+[license]
+spdx = "MIT"
+url = "https://github.com/coder/code-server/blob/v4.141.0/LICENSE"
+
+[requirements]
+arch = ["amd64", "arm64"]
+os = ["linux"]
+
+[compose]
+files = ["compose.yaml"]
+
+[web]
+port = "port"
+path = "/"
+
+[env]
+CODE_SERVER_IMAGE_TAG = "4.141.0"
+
+[[secrets]]
+env = "CODE_SERVER_PASSWORD"
+length = 32
+
+# code-server has one password and no user name.
+[login]
+password = "CODE_SERVER_PASSWORD"
+note = { en = "The password is the only sign-in; there is no user name.", zh = "登录只需要这个密码，没有用户名。", zh-TW = "登入只需要這個密碼，沒有使用者名稱。" }
+
+[[settings]]
+key = "home"
+type = "path"
+env = "CODE_SERVER_HOME"
+default = "{stack}/home"
+data = true
+label = { en = "Home folder", zh = "主文件夹", zh-TW = "主資料夾" }
+help = { en = "Mounted as the editor's home (/home/coder): projects, settings and extensions live here.", zh = "挂载为编辑器的主目录（/home/coder）：项目、设置和扩展都保存在这里。", zh-TW = "掛載為編輯器的主目錄（/home/coder）：專案、設定與擴充功能都保存在這裡。" }
+
+[[settings]]
+key = "port"
+type = "port"
+env = "CODE_SERVER_PORT"
+default = 8082
+label = { en = "Port", zh = "端口", zh-TW = "連接埠" }
+
+[[settings]]
+key = "expose"
+type = "bool"
+default = false
+label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW = "允許從網路存取" }
+help = { en = "Off: only through the desk.", zh = "关闭时只能通过桌面访问。", zh-TW = "關閉時只能透過桌面存取。" }
+on = { CODE_SERVER_BIND = "0.0.0.0" }
+off = { CODE_SERVER_BIND = "127.0.0.1" }

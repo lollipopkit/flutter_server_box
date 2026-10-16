@@ -34,8 +34,8 @@ final class MonitorBackupStorage implements RemoteStorage<String> {
   String get identity => _monitor.addr;
 
   /// Throws a [MonitorHttpErr] worded for the user when this agent cannot
-  /// host the backup: it predates the endpoints, or the account is not an
-  /// admin.
+  /// host the backup: it serves none, or refuses this connection (plaintext
+  /// HTTP).
   Future<void> check() async {
     final caps = await _client.fetchCapabilities();
     if (!caps.features.contains('backup')) {
@@ -44,10 +44,10 @@ final class MonitorBackupStorage implements RemoteStorage<String> {
         message: l10n.monitorBackupUnsupported,
       );
     }
-    if (caps.me?.admin == false) {
+    if (!caps.access.ok) {
       throw MonitorHttpErr(
         type: MonitorHttpErrType.forbidden,
-        message: l10n.monitorBackupAdminOnly,
+        message: l10n.funcNeedsAgentHttps(libL10n.backup),
       );
     }
   }

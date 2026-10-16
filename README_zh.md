@@ -12,7 +12,7 @@
 <p align="center">
 使用 Flutter 开发的 Linux, Unix, Windows 服务器工具箱，提供服务器状态图表和管理工具。
 <br>
-用户指南、架构说明和开发文档请参阅<a href="https://serverbox.lolli.tech/docs/">文档站</a>。
+用户指南、架构说明和开发文档请参阅<a href="https://serverbox.lollipopkit.com/docs/">文档站</a>。
 </p>
 
 
@@ -121,7 +121,7 @@
 
 ## 特点
 
-- 支持 CPU、传感器、GPU 等状态图表，SSH 终端，SFTP，[通过 SSH 使用 RDP 和 VNC](https://serverbox.lolli.tech/docs/zh/advanced/remote-desktop/)，Docker、进程和服务管理，以及 S.M.A.R.T。
+- 支持 CPU、传感器、GPU 等状态图表，SSH 终端，SFTP，[通过 SSH 使用 RDP 和 VNC](https://serverbox.lollipopkit.com/docs/zh/advanced/remote-desktop/)，Docker、进程和服务管理，以及 S.M.A.R.T。
 - 支持生物认证、推送通知、桌面小组件、watchOS App 和跟随系统颜色。
 - 支持 16 种语言。当前清单见 `lib/l10n/`，译者信息记录在该目录的 git history 中。
 
@@ -133,15 +133,13 @@
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送服务**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。它自己还提供一个网页面板。安装方法和各个远程访问开关的含义详见其[中文文档](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md)。  
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送服务**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。它自己还提供一个网页面板。  
 - **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
 - **Agent skills：** 本仓库包含三份供 AI agent 使用的 skill。使用下面的命令添加：
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
   ```
-
-  命令会列出全部 skill 供你选择，也可以用 `--skill <名称>` 只添加其中一个：
 
   - [`serverbox-help`](.claude/skills/serverbox-help)：使用 App，以及部署和配置 Monitor agent，例如添加服务器、某台服务器缺少某个功能的原因、权限、告警、小部件和备份。App 内置的 Agent 自带这份 skill。
   - [`serverbox-onboarding`](.claude/skills/serverbox-onboarding)：参与开发，包括搭建 Flutter + Rust + Node 开发环境、构建与测试，以及项目的工作原理。
@@ -157,7 +155,7 @@
 
 ## 贡献
 
-任何正面的贡献都欢迎。[CONTRIBUTING.md](CONTRIBUTING.md) 说明了开发环境、commit 规范、提交前要跑的检查，以及翻译流程。
+[CONTRIBUTING.md](CONTRIBUTING.md) 说明了开发环境、commit 规范、提交前要跑的检查，以及翻译流程。
 
 贡献者需要签署一次 [CLA](CLA_zh.md)（[英文原文](CLA.md)，以英文为准）：在你的第一个 PR 下留一条评论即可。它授予的权利使你的工作可以随 App Store 版本一起发布，同时源码保持 AGPLv3——你自己的版权仍然属于你。
 

@@ -20,11 +20,11 @@ use server_box_monitor::monitoring::system_type;
 use common::machine::{audit, call, server};
 
 async fn read(srv: &TestServer, query: &str) -> (u16, Value) {
-    call(srv, Some("admin"), Method::GET, &format!("/api/v1/services{query}"), None).await
+    call(srv, true, Method::GET, &format!("/api/v1/services{query}"), None).await
 }
 
-async fn act(srv: &TestServer, user: &str, body: Value) -> (u16, Value) {
-    call(srv, Some(user), Method::POST, "/api/v1/services", Some(body)).await
+async fn act(srv: &TestServer, body: Value) -> (u16, Value) {
+    call(srv, true, Method::POST, "/api/v1/services", Some(body)).await
 }
 
 /// The units this machine has, or `None` where this build cannot list its
@@ -35,23 +35,6 @@ async fn listed(srv: &TestServer) -> Option<Vec<Value>> {
         .as_bool()
         .unwrap()
         .then(|| body["units"].as_array().cloned().unwrap_or_default())
-}
-
-#[ntex::test]
-async fn both_halves_need_the_shell_grant() {
-    let (srv, db) = server().await;
-    let (status, _) = call(&srv, None, Method::GET, "/api/v1/services", None).await;
-    assert_eq!(status, 401);
-
-    let (status, body) = call(&srv, Some("viewer"), Method::GET, "/api/v1/services", None).await;
-    assert_eq!((status, body["error"].as_str()), (403, Some("forbidden")));
-    let (status, _) = act(&srv, "viewer", json!({"key": "system:sshd.service", "action": "stop"})).await;
-    assert_eq!(status, 403);
-
-    let rows = audit(&db).await;
-    assert_eq!(rows.len(), 2, "{rows:?}");
-    assert!(rows.iter().all(|(action, _, subject, _)| action == "denied" && subject.as_deref() == Some("viewer")));
-    assert_eq!(rows[1].3.as_deref(), Some("service stop system:sshd.service: shell not_granted"));
 }
 
 /// Even where there is no listing, the answer names which manager the machine
@@ -145,7 +128,7 @@ async fn a_key_that_is_not_in_the_listing_is_answered_as_such() {
     let (_, body) = read(&srv, "?part=logs&key=system:definitely-not-a-unit.service").await;
     assert_eq!((&body["available"], &body["reason_kind"]), (&json!(false), &json!("no_such_unit")), "{body}");
 
-    let (status, _) = act(&srv, "admin", json!({"key": "system:definitely-not-a-unit.service", "action": "start"})).await;
+    let (status, _) = act(&srv, json!({"key": "system:definitely-not-a-unit.service", "action": "start"})).await;
     assert_eq!(status, 404);
     let rows = audit(&db).await;
     let last = rows.last().unwrap();
@@ -181,7 +164,7 @@ async fn a_unit_can_be_looked_up_by_the_key_its_listing_gave_it() {
 #[ntex::test]
 async fn an_action_this_build_does_not_have_is_refused() {
     let (srv, db) = server().await;
-    let (status, _) = act(&srv, "admin", json!({"key": "system:sshd.service", "action": "reload"})).await;
+    let (status, _) = act(&srv, json!({"key": "system:sshd.service", "action": "reload"})).await;
     assert_eq!(status, 400);
     assert!(audit(&db).await.is_empty());
 }
@@ -189,6 +172,6 @@ async fn an_action_this_build_does_not_have_is_refused() {
 #[ntex::test]
 async fn capabilities_list_the_services_page() {
     let (srv, _) = server().await;
-    let (_, caps) = call(&srv, Some("viewer"), Method::GET, "/api/v1/capabilities", None).await;
+    let (_, caps) = call(&srv, true, Method::GET, "/api/v1/capabilities", None).await;
     assert!(caps["features"].as_array().unwrap().iter().any(|f| f == "services"), "{caps}");
 }

@@ -114,30 +114,35 @@ enum MonitorHttpErrType {
   auth,
   invalidResponse,
 
-  /// The agent answered, and its `remote_access` grants withhold what was
-  /// asked for: a command, a terminal, or a relayed connection. A 403 from
-  /// `/exec` or `/ws-ticket` — never retried, since only its config changes
-  /// the answer.
+  /// The agent answered, and refuses what was asked for over this connection
+  /// (plaintext HTTP): a command, a terminal, or a relayed connection. A 403
+  /// from `/exec` or `/ws-ticket` — never retried, since only the link or its
+  /// config changes the answer.
   notGranted,
 
-  /// An account or role request was refused: this account is not an admin.
+  /// A request was refused.
   forbidden,
 
-  /// The admin's current password, which every change of access asks for,
-  /// was missing or wrong.
+  /// The current password, which some changes ask for again, was missing or
+  /// wrong.
   reauth,
 
-  /// The account or role exists already, or a role is still in use.
+  /// The change conflicts with the agent's state.
   conflict,
 
-  /// The change would leave the agent with no admin.
-  lastAdmin,
-
-  /// No such account or role.
+  /// No such thing on the agent.
   notFound,
 
-  /// The agent rejected the request's contents — a name, a password too short.
+  /// The agent rejected the request's contents — a password too short, say.
   badRequest,
+
+  /// The agent is from before it had one account and wants a user name to
+  /// sign in: it has to be updated before this app can reach it.
+  agentTooOld,
+
+  /// Starting the agent's update needs root, and sudo refused the password
+  /// given (or none was).
+  sudoRefused,
 }
 
 class MonitorHttpErr extends Err<MonitorHttpErrType> {
@@ -147,13 +152,15 @@ class MonitorHttpErr extends Err<MonitorHttpErrType> {
   String? get solution => switch (type) {
     MonitorHttpErrType.auth => l10n.authFailTip,
     MonitorHttpErrType.notGranted => l10n.monitorNoRemoteAccess,
+    MonitorHttpErrType.agentTooOld => l10n.monitorAgentTooOldTip,
     _ => null,
   };
 }
 
 enum ServerTcpErrType {
-  /// The agent will not relay a connection: its `stream` grant is off, or it
-  /// predates the endpoint. Decided before anything is dialled.
+  /// The agent will not relay a connection over this link (plaintext HTTP
+  /// without its `allow_insecure`). Decided before anything is dialled when
+  /// the agent's answer is known.
   relayNotGranted,
 
   /// The caller does not use this transport for what it is connecting — a
@@ -241,8 +248,8 @@ enum VirtErrType {
   /// reaches the PVE API.
   relayNotGranted,
 
-  /// The monitor agent does not run commands (`full_access` is off), and
-  /// nothing else reaches `virsh`.
+  /// The monitor agent refuses commands over this link, and nothing else
+  /// reaches `virsh`.
   execNotGranted,
 
   /// `virsh` is not installed.

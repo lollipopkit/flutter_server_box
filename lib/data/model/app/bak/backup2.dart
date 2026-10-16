@@ -730,7 +730,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         restored[key] = json.encode(
           _jsonWithRestoredServerIds(json.decode(value), serverIds),
         );
-      } catch (_) {}
+      } catch (e, s) {
+        // Tabs that name servers by their old ids point at nothing: none
+        // rather than those.
+        Loggers.app.warning('Restore: $key unreadable, dropped', e, s);
+        restored.remove(key);
+      }
     }
     return restored;
   }

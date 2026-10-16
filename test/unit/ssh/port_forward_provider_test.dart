@@ -7,8 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/monitor_access.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
@@ -130,7 +130,7 @@ void main() {
               ),
           status: InitStatus.status,
           client: client,
-          remoteAccess: const MonitorRemoteAccess(stream: true),
+          agentAccess: MonitorAccess.granted,
         ),
       );
       final container = ProviderContainer(
@@ -199,51 +199,41 @@ void main() {
 
 void _reasons() {
   group('why a remote forward cannot be made', () {
-    ServerState agentLed(MonitorRemoteAccess? granted) => ServerState(
+    ServerState agentLed(MonitorAccess? granted) => ServerState(
       spi: spiFixture(name: 'server', id: 's', ip: '127.0.0.1').copyWith(
         monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
         preferredTransport: ServerTransport.monitorHttp,
       ),
       status: InitStatus.status,
-      remoteAccess: granted,
+      agentAccess: granted,
     );
 
-    test('an agent with full access off is told to turn it on', () {
-      final reason = portForwardUnavailable(
-        agentLed(MonitorRemoteAccess.none),
-        listen: true,
-      );
-      expect(reason, contains('full_access'));
-      expect(reason, isNot(l10n.portForwardRemoteNeedsAgent));
-    });
-
-    test('one that relays but cannot listen is told to update', () {
-      expect(
-        portForwardUnavailable(
-          agentLed(
-            const MonitorRemoteAccess(fullAccess: true, stream: true),
-          ),
-          listen: true,
-        ),
-        l10n.portForwardRemoteNeedsAgent,
-      );
-    });
-
-    test('one that listens, or has not answered yet, is not held back', () {
-      expect(
-        portForwardUnavailable(
-          agentLed(
-            const MonitorRemoteAccess(
-              fullAccess: true,
-              stream: true,
-              listen: true,
+    test('an agent refusing plaintext says so', () {
+      for (final listen in [true, false]) {
+        expect(
+          portForwardUnavailable(
+            agentLed(
+              const MonitorAccess(
+                ok: false,
+                why: MonitorAccessWhy.insecureTransport,
+              ),
             ),
+            listen: listen,
           ),
-          listen: true,
-        ),
-        isNull,
-      );
-      expect(portForwardUnavailable(agentLed(null), listen: true), isNull);
+          l10n.funcNeedsAgentHttps(libL10n.portForward),
+        );
+      }
+    });
+
+    test('one that grants access, or has not answered yet, is not held back',
+        () {
+      for (final listen in [true, false]) {
+        expect(
+          portForwardUnavailable(agentLed(MonitorAccess.granted), listen: listen),
+          isNull,
+        );
+        expect(portForwardUnavailable(agentLed(null), listen: listen), isNull);
+      }
     });
   });
 }

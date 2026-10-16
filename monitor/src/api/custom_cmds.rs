@@ -7,13 +7,10 @@
 //! added here shows up on the next extended collection cycle without anything
 //! having to be told about it.
 //!
-//! Writing needs an admin who also holds `shell`. Admin, because the set is
-//! the agent's configuration rather than anything of one account's; `shell`,
-//! because a file in that directory is run by the status script on every
-//! extended cycle, so adding one is arranging for code to run as the agent's
-//! user — an admin whose role holds no shell must not be able to write one
-//! in by the side door. Reading needs any account: it discloses the
-//! commands, not the machine.
+//! Writing needs the transport rule: a file in that directory is run by the
+//! status script on every extended cycle, so adding one is arranging for code
+//! to run as the agent's user. Reading needs only the account: it discloses
+//! the commands, not the machine.
 
 use std::sync::Arc;
 
@@ -22,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use super::authz::{self, Caller};
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::ws::audit::{Action, Event, Kind, Outcome};
 use crate::monitoring::custom_cmds::{self, CustomCmd, Error};
 
 /// The largest request body accepted: every command at once, since a write
@@ -61,7 +58,7 @@ pub async fn list(
     };
     let editable = may_edit(&caller, &req, &app_state);
 
-    match custom_cmds::list() {
+    match tokio::task::spawn_blocking(custom_cmds::list).await.unwrap_or_else(|e| Err(Error::Io(std::io::Error::other(e)))) {
         Ok(commands) => Ok(HttpResponse::Ok().json(&ListResponse { commands, editable })),
         Err(e) => Ok(error_response(e)),
     }
@@ -72,25 +69,20 @@ pub async fn replace(
     body: web::types::Json<ReplaceRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse, web::Error> {
-    let Ok(caller) = authz::jwt_caller(&req, &app_state).await else {
-        return Ok(HttpResponse::Unauthorized().finish());
-    };
-
-    let remote_ip = peer_ip(&req);
-    if !may_edit(&caller, &req, &app_state) {
-        Event::new(Kind::CustomCmd, Action::Denied, Outcome::Denied)
-            .remote_ip(remote_ip)
-            .detail(format!("{} may not edit custom commands", caller.username))
-            .record(&app_state.db)
-            .await;
-        return Ok(HttpResponse::Forbidden().finish());
-    }
+    let remote_ip = require!(super::machine::gate_as(Kind::CustomCmd, &req, &app_state, "custom commands").await).remote_ip;
 
     let commands = body.into_inner().commands;
     // Names, never bodies: a command's text is what the user typed and may
     // hold anything, including something they would not want in a log.
     let subject = commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>().join(", ");
-    match custom_cmds::replace(&commands) {
+    // A file lock and directory renames: off the async workers.
+    let replaced = {
+        let commands = commands.clone();
+        tokio::task::spawn_blocking(move || custom_cmds::replace(&commands))
+            .await
+            .unwrap_or_else(|e| Err(Error::Io(std::io::Error::other(e))))
+    };
+    match replaced {
         Ok(()) => {
             Event::new(Kind::CustomCmd, Action::Open, Outcome::Ok)
                 .remote_ip(remote_ip)
@@ -110,16 +102,10 @@ pub async fn replace(
     }
 }
 
-/// An admin holding a usable `shell` — see the module documentation.
+/// Over a link the machine may be acted on through — see the module
+/// documentation.
 fn may_edit(caller: &Caller, req: &HttpRequest, state: &AppState) -> bool {
-    caller.is_admin()
-        && caller
-            .check(
-                crate::core::permissions::Grant::Shell,
-                state,
-                authz::is_secure(req, state),
-            )
-            .is_ok()
+    caller.check(state, authz::is_secure(req, state)).is_ok()
 }
 
 /// A rejected set is the caller's fault and says which command was wrong; a
