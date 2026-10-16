@@ -154,7 +154,7 @@ pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
 }
 
 #[cfg(unix)]
-fn sync_parent_dir(path: &Path) -> Result<()> {
+pub(crate) fn sync_parent_dir(path: &Path) -> Result<()> {
     let parent = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -165,7 +165,7 @@ fn sync_parent_dir(path: &Path) -> Result<()> {
 }
 
 #[cfg(not(unix))]
-fn sync_parent_dir(_path: &Path) -> Result<()> {
+pub(crate) fn sync_parent_dir(_path: &Path) -> Result<()> {
     // std does not expose a portable way to open and flush a directory on
     // Windows. The replacement itself still uses the platform rename API.
     Ok(())

@@ -645,7 +645,14 @@ impl Config {
         }
 
         let path = self.jwt_secret_path();
-        if path.exists() {
+        // Empty: a first start cut off before the write reached the disk.
+        // Nothing was ever signed with it that outlived that start.
+        let persisted = path.exists()
+            && !fs::read_to_string(&path)
+                .with_context(|| format!("Failed to read {}", path.display()))?
+                .trim()
+                .is_empty();
+        if persisted {
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
@@ -678,14 +685,9 @@ impl Config {
             fs::create_dir_all(dir)
                 .with_context(|| format!("Failed to create {}", dir.display()))?;
         }
-        fs::write(&path, &secret)
-            .with_context(|| format!("Failed to write {}", path.display()))?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
-                .with_context(|| format!("Failed to chmod {}", path.display()))?;
-        }
+        // 0600 from the start, on the disk before the agent signs anything.
+        crate::core::config_file::write_atomic(&path, secret.as_bytes())
+            .map_err(|e| anyhow::anyhow!("Failed to write {}: {e}", path.display()))?;
         tracing::info!("Generated new JWT secret at {}", path.display());
         self.jwt_secret = Some(secret);
         Ok(())
@@ -1110,5 +1112,34 @@ mod tests {
 
         let mode = fs::metadata(secret_path).unwrap().permissions().mode();
         assert_eq!(mode & 0o777, 0o600);
+    }
+
+    /// A first start cut off by a power loss leaves the file empty: the next
+    /// one makes a secret again instead of refusing to start. One too short
+    /// but not empty was edited by someone, and is still refused.
+    #[cfg(unix)]
+    #[test]
+    fn an_empty_jwt_secret_file_is_made_again_privately() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let secret_path = dir.path().join("jwt.secret");
+        let config_for = || Config {
+            database_url: Some(format!("sqlite:{}", dir.path().join("monitor.db").display())),
+            jwt_secret: None,
+            ..Default::default()
+        };
+        fs::write(&secret_path, "").unwrap();
+
+        let mut config = config_for();
+        config.resolve_jwt_secret().unwrap();
+        let written = fs::read_to_string(&secret_path).unwrap();
+        assert_eq!(config.jwt_secret.as_deref(), Some(written.as_str()));
+        assert!(written.len() >= 32);
+        let mode = fs::metadata(&secret_path).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
+
+        fs::write(&secret_path, "short").unwrap();
+        assert!(config_for().resolve_jwt_secret().is_err());
     }
 }

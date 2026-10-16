@@ -51,7 +51,8 @@ fn write_initial_credentials(path: &Path, password: &str) -> Result<()> {
         "Change the password, then securely delete this file."
     )?;
     file.sync_all()?;
-    Ok(())
+    // Its directory entry too, before the account it names is committed.
+    crate::core::config_file::sync_parent_dir(path)
 }
 
 /// Creates the account with a random password on a database that has none,
