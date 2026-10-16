@@ -898,6 +898,11 @@ async fn a_task_runs_with_the_model_and_thinking_its_account_picked() {
 /// says it changes nothing, `turn_on` does not. Each call and the token it
 /// came with (`Authorization` or `X-Api-Key`) is recorded.
 fn mcp_server(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>) -> String {
+    mcp_server_with(calls, 0)
+}
+
+/// [mcp_server] with [extra] more tools, `noop_<n>`, each a read.
+fn mcp_server_with(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>, extra: usize) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = listener.local_addr().unwrap();
     std::thread::spawn(move || {
@@ -931,10 +936,14 @@ fn mcp_server(calls: std::sync::Arc<std::sync::Mutex<Vec<(String, String)>>>) ->
                 let msg: Value = serde_json::from_slice(&body).unwrap();
                 let result = match msg["method"].as_str().unwrap_or_default() {
                     "initialize" => json!({ "protocolVersion": "2025-06-18", "capabilities": { "tools": {} }, "serverInfo": { "name": "Lights" } }),
-                    "tools/list" => json!({ "tools": [
-                        { "name": "list_lights", "description": "Lists the lights", "inputSchema": { "type": "object" }, "annotations": { "readOnlyHint": true } },
-                        { "name": "turn_on", "description": "Turns a light on", "inputSchema": { "type": "object", "properties": { "id": { "type": "string" } } } },
-                    ] }),
+                    "tools/list" => {
+                        let mut tools = vec![
+                            json!({ "name": "list_lights", "description": "Lists the lights", "inputSchema": { "type": "object" }, "annotations": { "readOnlyHint": true } }),
+                            json!({ "name": "turn_on", "description": "Turns a light on", "inputSchema": { "type": "object", "properties": { "id": { "type": "string" } } } }),
+                        ];
+                        tools.extend((0..extra).map(|n| json!({ "name": format!("noop_{n}"), "description": "Does nothing", "inputSchema": { "type": "object" }, "annotations": { "readOnlyHint": true } })));
+                        json!({ "tools": tools })
+                    }
                     "tools/call" => {
                         let name = msg["params"]["name"].as_str().unwrap_or_default().to_string();
                         calls.lock().unwrap().push((name.clone(), token));
@@ -1105,6 +1114,40 @@ secret = "MCP_KEY"
     let left: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM stack_mcp").fetch_one(&state.db).await.unwrap();
     assert_eq!(left, 0);
     let _ = std::fs::remove_dir_all(&apps);
+}
+
+/// Many tools are found when needed: the model has `mcp_search` and
+/// `mcp_call`, and a call goes through the task's permissions as the tool
+/// itself would.
+#[ntex::test]
+async fn many_mcp_tools_are_searched_and_called_through_the_permissions() {
+    let (srv, _) = server().await;
+    let calls = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let mcp = mcp_server_with(calls.clone(), 30);
+    let id = fl_pi_llm::host::mcp::server_id(&mcp);
+    let servers = json!({ "servers": [{ "name": "Lights", "url": mcp }] });
+    let (s, body) = call(&srv, true, Method::PUT, "/api/v1/agent/mcp", Some(servers)).await;
+    assert_eq!(s, 200, "{body}");
+    assert_eq!(body["status"][0]["tools"].as_array().unwrap().len(), 32);
+
+    let url = model(vec![
+        Say::Tool("mcp_search", json!({ "query": "light on" })),
+        Say::Tool("mcp_call", json!({ "server": id, "tool": "turn_on", "arguments": { "id": "hall" } })),
+        Say::Text("On."),
+    ]);
+    configure(&srv, &url).await;
+    let flow = start(&srv, "turn the hall light on").await;
+    let v = until(&srv, &flow, |v| status(v) == "waiting").await;
+    // The search answered the tool with its schema; the call waits for the person.
+    let found = &results(&v)[0]["details"]["matches"][0];
+    assert_eq!((found["tool"].as_str(), found["server"].as_str()), (Some("turn_on"), Some(id.as_str())), "{v}");
+    assert!(v["pending"]["command"].as_str().unwrap().contains("Lights · turn_on"), "{v}");
+    assert!(calls.lock().unwrap().is_empty());
+    let pid = v["pending"]["id"].as_str().unwrap();
+    let (s, _) = call(&srv, true, Method::POST, &format!("/api/v1/agent/flows/{flow}/answer"), Some(json!({ "id": pid, "action": "run" }))).await;
+    assert_eq!(s, 204);
+    until(&srv, &flow, |v| status(v) == "done").await;
+    assert_eq!(calls.lock().unwrap().iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>(), ["turn_on"]);
 }
 
 #[ntex::test]

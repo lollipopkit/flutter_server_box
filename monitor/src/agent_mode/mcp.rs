@@ -14,9 +14,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use fl_pi_llm::host::mcp::{self as pi_mcp, McpClient, McpServerConfig, McpTool};
+use fl_pi_llm::mcp as shared_mcp;
 use fl_pi_llm::host::{BoxFuture, Cancel, Tool, ToolCall, ToolDef, ToolResult};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{Value, json};
 use sqlx::SqlitePool;
 
 use super::permissions::{self, Judgment, Mode};
@@ -339,15 +340,81 @@ impl Hub {
     pub(crate) async fn tools_for(&self, state: &Arc<AppState>, flow: &Arc<Flow>) -> (Vec<Arc<dyn Tool>>, Option<String>) {
         self.refresh(state).await;
         let connections = self.connections.lock().await;
-        let mut tools: Vec<Arc<dyn Tool>> = Vec::new();
+        let mut handles = Vec::new();
         let mut clients = Vec::new();
         for c in connections.values() {
             clients.push(c.client.clone());
-            for handle in pi_mcp::McpToolHandle::all(c.client.clone(), c.tools.clone()) {
-                tools.push(Arc::new(Gated { state: state.clone(), flow: flow.clone(), handle }));
+            handles.extend(pi_mcp::McpToolHandle::all(c.client.clone(), c.tools.clone()).into_iter().map(Arc::new));
+        }
+        let instructions = pi_mcp::instructions(&clients);
+        if handles.len() <= shared_mcp::DIRECT_TOOLS_MAX {
+            let tools = handles.into_iter().map(|handle| Arc::new(Gated { state: state.clone(), flow: flow.clone(), handle }) as Arc<dyn Tool>);
+            return (tools.collect(), instructions);
+        }
+        // Many: found when needed rather than all in every request.
+        let handles = Arc::new(handles);
+        let tools: Vec<Arc<dyn Tool>> = vec![
+            Arc::new(Search { handles: handles.clone() }),
+            Arc::new(Call { state: state.clone(), flow: flow.clone(), handles }),
+        ];
+        (tools, instructions)
+    }
+}
+
+/// `mcp_search`: the connected servers' tools that a query asks for.
+struct Search {
+    handles: Arc<Vec<Arc<pi_mcp::McpToolHandle>>>,
+}
+
+impl Tool for Search {
+    fn def(&self) -> ToolDef {
+        let mut servers: Vec<(String, String)> = Vec::new();
+        for h in self.handles.iter() {
+            if !servers.iter().any(|(id, _)| id == &h.server_id) {
+                servers.push((h.server_id.clone(), h.client.name.clone()));
             }
         }
-        (tools, pi_mcp::instructions(&clients))
+        let (description, parameters) = shared_mcp::search_def(&servers);
+        ToolDef { name: shared_mcp::SEARCH_TOOL.into(), description, parameters, label: Some("MCP".into()), sequential: false }
+    }
+
+    fn execute(&self, call: ToolCall, _cancel: Cancel) -> BoxFuture<'_, Result<ToolResult, String>> {
+        Box::pin(async move {
+            let listed: Vec<shared_mcp::Listed<'_>> =
+                self.handles.iter().map(|h| shared_mcp::Listed { server_id: &h.server_id, server: &h.client.name, tool: &h.tool }).collect();
+            let found = shared_mcp::search(&listed, call.args["query"].as_str().unwrap_or_default(), call.args["server"].as_str());
+            Ok(ToolResult::text(serde_json::to_string_pretty(&found).unwrap_or_default()).with_details(found))
+        })
+    }
+}
+
+/// `mcp_call`: one tool a search named, through the task's permissions as
+/// the tool itself would be.
+struct Call {
+    state: Arc<AppState>,
+    flow: Arc<Flow>,
+    handles: Arc<Vec<Arc<pi_mcp::McpToolHandle>>>,
+}
+
+impl Tool for Call {
+    fn def(&self) -> ToolDef {
+        let (description, parameters) = shared_mcp::call_def();
+        ToolDef { name: shared_mcp::CALL_TOOL.into(), description, parameters, label: Some("MCP".into()), sequential: false }
+    }
+
+    fn execute(&self, call: ToolCall, cancel: Cancel) -> BoxFuture<'_, Result<ToolResult, String>> {
+        Box::pin(async move {
+            let (server, tool) = (call.args["server"].as_str().unwrap_or_default(), call.args["tool"].as_str().unwrap_or_default());
+            let Some(handle) = self.handles.iter().find(|h| h.server_id == server && h.tool.name == tool) else {
+                return Err(format!("No tool {tool} on server {server}: search with {} first.", shared_mcp::SEARCH_TOOL));
+            };
+            let args = match &call.args["arguments"] {
+                Value::Null => json!({}),
+                a => a.clone(),
+            };
+            let inner = ToolCall { args, ..call };
+            Gated { state: self.state.clone(), flow: self.flow.clone(), handle: handle.clone() }.execute(inner, cancel).await
+        })
     }
 }
 
@@ -357,7 +424,7 @@ impl Hub {
 struct Gated {
     state: Arc<AppState>,
     flow: Arc<Flow>,
-    handle: pi_mcp::McpToolHandle,
+    handle: Arc<pi_mcp::McpToolHandle>,
 }
 
 impl Gated {
