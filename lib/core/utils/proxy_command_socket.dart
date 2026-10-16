@@ -35,7 +35,13 @@ class ProxyCommandSocket implements SSHSocket {
        _release = release {
     // The guest stays "in use" — and so cannot be deleted — for exactly as
     // long as the proxy runs.
-    unawaited(_done.whenComplete(_releaseOnce).catchError((_) {}));
+    // A command that ends by itself frees its guest; one being ended here is
+    // freed once its tree is gone (close, destroy).
+    unawaited(
+      _done.whenComplete(() {
+        if (!_ending) _releaseOnce();
+      }).catchError((_) {}),
+    );
   }
 
   final Process _process;
@@ -45,6 +51,7 @@ class ProxyCommandSocket implements SSHSocket {
   final Future<void> _done;
   final void Function()? _release;
   var _released = false;
+  var _ending = false;
 
   void _releaseOnce() {
     if (_released) return;
@@ -290,7 +297,8 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   Future<void> close() async {
     // Kill first so a child that ignores stdin EOF does not block close().
-    unawaited(ProcessTree.terminate(_process, _processGroupId));
+    _ending = true;
+    final ended = ProcessTree.terminate(_process, _processGroupId);
     try {
       await _sink.close().timeout(const Duration(seconds: 2));
     } catch (_) {}
@@ -306,6 +314,10 @@ class ProxyCommandSocket implements SSHSocket {
         Process.killPid(-_processGroupId, ProcessSignal.sigkill);
       }
     } catch (_) {}
+    // The tree walk, too, before the guest it runs in is let go.
+    try {
+      await ended.timeout(const Duration(seconds: 10));
+    } catch (_) {}
     _releaseOnce();
   }
 
@@ -315,6 +327,7 @@ class ProxyCommandSocket implements SSHSocket {
   @override
   void destroy() {
     // The guest is free once the tree is gone, not when it is asked to go.
+    _ending = true;
     unawaited(ProcessTree.terminate(_process, _processGroupId).whenComplete(_releaseOnce));
   }
 
