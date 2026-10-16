@@ -13,6 +13,11 @@ RUN npm install
 COPY monitor/frontend/ ./
 # The desk's app bridge imports the protocol from the app SDK's source.
 COPY monitor/sdk/serverbox-desk/src/ /app/monitor/sdk/serverbox-desk/src/
+# `npm run build` first checks that no Git LFS file is a pointer.
+COPY scripts/check-lfs.sh /app/scripts/check-lfs.sh
+# svelte-check reads the tests too; one imports the agent's answer the app's
+# tests share.
+COPY test/fixtures/monitor/ /app/test/fixtures/monitor/
 RUN npm run build
 
 # Rust build stage
