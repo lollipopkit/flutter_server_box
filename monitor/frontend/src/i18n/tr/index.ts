@@ -1403,6 +1403,14 @@ const tr = {
 	fwLog: 'Günlük',
 	yes: 'Evet',
 	no: 'Hayır',
+	skipToContent: 'İçeriğe geç',
+	arrangeCards: 'Kartları yeniden sırala',
+	cardMoveEarlier: '{name} öne taşı',
+	cardMoveLater: '{name} geriye taşı',
+	cardMoved: '{name}, {total} içinde {position}. sıraya taşındı',
+	historyRange: 'Geçmiş aralığı',
+	chartShowData: 'Verileri göster',
+	chartTime: 'Zaman',
 } satisfies Translation
 
 export default tr

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/svelte'
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Dashboard from '../pages/Dashboard.svelte'
 import { api } from '../lib/api'
@@ -193,3 +193,67 @@ describe('Dashboard iperf action', () => {
     expect(await screen.findByRole('button', { name: /^iperf$/i })).toBeInTheDocument()
   })
 })
+
+describe('Dashboard card arrangement', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    servers.list = [{ id: 'local', url: '', token: 't', username: 'admin' }]
+    servers.currentId = 'local'
+    capabilitiesStore.byServer['local'] = caps([])
+    mocked.getMetrics.mockResolvedValue(metrics())
+    mocked.getHistory.mockResolvedValue([])
+    mocked.getCardOrder.mockResolvedValue({ card_order: [] })
+    mocked.updateCardOrder.mockResolvedValue(undefined as never)
+  })
+
+  it('moves a card from the keyboard and says where it went', async () => {
+    render(Dashboard)
+    await rendered()
+    const toggle = screen.getByRole('button', { name: 'Rearrange cards' })
+    await fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Move CPU earlier' })).toBeDisabled()
+
+    const later = screen.getByRole('button', { name: 'Move CPU later' })
+    later.focus()
+    await fireEvent.click(later)
+    expect(mocked.updateCardOrder.mock.calls[0][0].slice(0, 2)).toEqual(['memory', 'cpu'])
+    expect(await screen.findByText(/^CPU moved to position 2 of \d+$/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Move CPU later' })).toHaveFocus()
+  })
+
+  it("drops an order that arrives after the server changed, and saves none to the new one", async () => {
+    servers.list = [
+      { id: 'a', url: 'https://a.example', token: 't', username: 'admin' },
+      { id: 'b', url: 'https://b.example', token: 't', username: 'admin' },
+    ]
+    servers.currentId = 'a'
+    capabilitiesStore.byServer['a'] = caps([])
+    capabilitiesStore.byServer['b'] = caps([])
+    let answerA!: (v: { card_order: string[] }) => void
+    let answerB!: (v: { card_order: string[] }) => void
+    mocked.getCardOrder
+      .mockReturnValueOnce(new Promise((r) => (answerA = r)))
+      .mockReturnValueOnce(new Promise((r) => (answerB = r)))
+    render(Dashboard)
+    await rendered()
+
+    servers.currentId = 'b'
+    await waitFor(() => expect(mocked.getCardOrder).toHaveBeenCalledTimes(2))
+    // Before B's order is known, a move changes the view but writes nothing
+    await fireEvent.click(screen.getByRole('button', { name: 'Rearrange cards' }))
+    await fireEvent.click(screen.getByRole('button', { name: 'Move CPU later' }))
+    expect(mocked.updateCardOrder).not.toHaveBeenCalled()
+
+    answerB({ card_order: ['disk', 'cpu', 'memory', 'network'] })
+    answerA({ card_order: ['network', 'memory', 'cpu', 'disk'] })
+    await waitFor(() => expect(cardLabels()[0]).toBe('Disk'))
+    await new Promise((r) => setTimeout(r, 10))
+    expect(cardLabels().slice(0, 4)).toEqual(['Disk', 'CPU', 'Memory', 'Network'])
+  })
+})
+
+/// The cards' titles in the order drawn.
+function cardLabels(): string[] {
+  return [...document.querySelectorAll('[data-card]')].map((el) => el.querySelector('p')?.textContent?.trim() ?? '')
+}

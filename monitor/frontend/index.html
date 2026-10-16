@@ -13,10 +13,13 @@
     <script>
       // Apply an explicit theme choice before first paint (system preference
       // is handled by the theme CSS media query and needs no class)
-      const theme = localStorage.getItem('theme')
-      if (theme === 'dark' || theme === 'light') {
-        document.documentElement.classList.add(theme)
-      }
+      // (storage can throw; the system preference then applies)
+      try {
+        const theme = localStorage.getItem('theme')
+        if (theme === 'dark' || theme === 'light') {
+          document.documentElement.classList.add(theme)
+        }
+      } catch {}
     </script>
   </head>
   <body>

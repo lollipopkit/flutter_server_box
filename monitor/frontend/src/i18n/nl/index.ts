@@ -1403,6 +1403,14 @@ const nl = {
 	fwLog: 'Log',
 	yes: 'Ja',
 	no: 'Nee',
+	skipToContent: 'Naar inhoud springen',
+	arrangeCards: 'Kaarten herschikken',
+	cardMoveEarlier: '{name} naar voren',
+	cardMoveLater: '{name} naar achteren',
+	cardMoved: '{name} verplaatst naar positie {position} van {total}',
+	historyRange: 'Geschiedenisbereik',
+	chartShowData: 'Gegevens tonen',
+	chartTime: 'Tijd',
 } satisfies Translation
 
 export default nl

@@ -101,7 +101,10 @@
 </script>
 
 {#snippet sortTh(label: string, active: boolean, dir: 1 | -1, align: 'left' | 'right', onclick: () => void)}
-  <th class={align === 'left' ? 'pr-4 text-left' : 'pl-4 text-right'}>
+  <th
+    class={align === 'left' ? 'pr-4 text-left' : 'pl-4 text-right'}
+    aria-sort={active ? (dir === 1 ? 'ascending' : 'descending') : 'none'}
+  >
     <button
       type="button"
       class="inline-flex items-center gap-1 py-2 font-medium text-muted-fg hover:text-fg cursor-pointer {align ===

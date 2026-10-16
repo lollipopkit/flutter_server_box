@@ -1404,6 +1404,14 @@ const en = {
 	fwLog: 'Log',
 	yes: 'Yes',
 	no: 'No',
+	skipToContent: 'Skip to content',
+	arrangeCards: 'Rearrange cards',
+	cardMoveEarlier: 'Move {name:string} earlier',
+	cardMoveLater: 'Move {name:string} later',
+	cardMoved: '{name:string} moved to position {position:number} of {total:number}',
+	historyRange: 'History range',
+	chartShowData: 'Show data',
+	chartTime: 'Time',
 } satisfies BaseTranslation
 
 export default en

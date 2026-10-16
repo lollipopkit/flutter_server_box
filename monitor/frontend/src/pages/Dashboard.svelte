@@ -13,6 +13,8 @@
     ShieldCheck,
     Network,
     CircleAlert,
+    ChevronLeft,
+    ChevronRight,
     RefreshCw,
     Power,
     ServerCog,
@@ -29,6 +31,7 @@
   import StatCard from '../components/StatCard.svelte'
   import { dashboardAccess, isAdmin, machineAccess } from '../lib/access'
   import { enabledFeatures } from '../lib/features'
+  import { moveAmongVisible } from '../lib/cardOrder'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
@@ -38,6 +41,7 @@
   import { LL } from '../i18n/i18n-svelte'
   import { Poller } from '../lib/poller.svelte'
   import { fly } from 'svelte/transition'
+  import { tick } from 'svelte'
   import type { CustomCmdOutput, HistoryPoint } from '../types'
 
   const metrics = new Poller(api.getMetrics, 5000)
@@ -93,22 +97,32 @@
   const ALL_CARD_IDS = ['cpu', 'memory', 'disk', 'network', 'gpu', 'battery', 'sensors', 'smart'] as const
   type CardId = (typeof ALL_CARD_IDS)[number]
   let cardOrder = $state<CardId[]>([...ALL_CARD_IDS])
+  /// The server `cardOrder` was read from. A rearrangement is saved only to
+  /// it, so an order still loading for one server is never written to another.
+  let cardOrderServer = $state<string | null>(null)
 
-  async function loadCardOrder() {
+  async function loadCardOrder(serverId: string) {
     try {
       const { card_order } = await api.getCardOrder()
+      // The sidebar moved on while this was in flight
+      if (serverId !== servers.currentId) return
       const known = card_order.filter((id): id is CardId => (ALL_CARD_IDS as readonly string[]).includes(id))
       // Append any ids missing from the saved order (new card added later,
       // or first-ever save) so nothing silently disappears
       const missing = ALL_CARD_IDS.filter((id) => !known.includes(id))
       cardOrder = known.length ? [...known, ...missing] : [...ALL_CARD_IDS]
+      cardOrderServer = serverId
     } catch {
       // Keep the default order; a failed fetch shouldn't block the dashboard
+      if (serverId === servers.currentId) cardOrderServer = serverId
     }
   }
 
   $effect(() => {
-    if (servers.authenticated) void loadCardOrder()
+    const serverId = servers.currentId
+    cardOrderServer = null
+    cardOrder = [...ALL_CARD_IDS]
+    if (serverId && servers.authenticated) void loadCardOrder(serverId)
   })
 
   let dragId = $state<CardId | null>(null)
@@ -128,9 +142,55 @@
     const next = [...cardOrder]
     next.splice(from, 1)
     next.splice(to, 0, dragId)
-    cardOrder = next
     dragId = null
-    void api.updateCardOrder(cardOrder).catch(() => {})
+    saveCardOrder(next)
+  }
+
+  function saveCardOrder(next: CardId[]) {
+    cardOrder = next
+    if (cardOrderServer === servers.currentId) void api.updateCardOrder(cardOrder).catch(() => {})
+  }
+
+  /// The keyboard and screen reader way to rearrange: dragging is pointer-only,
+  /// so this mode puts move buttons on every card.
+  let arranging = $state(false)
+  /// Read out by the live region after a move: the focused button keeps its
+  /// label, so nothing else says where the card went.
+  let arrangeStatus = $state('')
+  let cardGrid = $state<HTMLElement | null>(null)
+
+  function cardLabel(id: CardId): string {
+    switch (id) {
+      case 'cpu':
+        return $LL.cpuUsage()
+      case 'memory':
+        return $LL.memory()
+      case 'disk':
+        return $LL.diskUsage()
+      case 'network':
+        return $LL.network()
+      case 'gpu':
+        return $LL.gpu()
+      case 'battery':
+        return $LL.battery()
+      case 'sensors':
+        return $LL.sensors()
+      case 'smart':
+        return $LL.smart()
+    }
+  }
+
+  async function moveCard(id: CardId, delta: -1 | 1) {
+    saveCardOrder(moveAmongVisible(cardOrder, visibleCardOrder, id, delta))
+    const position = visibleCardOrder.indexOf(id) + 1
+    arrangeStatus = $LL.cardMoved({ name: cardLabel(id), position, total: visibleCardOrder.length })
+    // The keyed list moves the card's node, which drops focus in some
+    // browsers: put it back on the same button, or on its sibling at an end.
+    await tick()
+    const wrapper = cardGrid?.querySelector<HTMLElement>(`[data-card="${id}"]`)
+    const same = wrapper?.querySelector<HTMLButtonElement>(`[data-move="${delta}"]`)
+    const other = wrapper?.querySelector<HTMLButtonElement>(`[data-move="${-delta}"]`)
+    ;(same && !same.disabled ? same : other)?.focus()
   }
 
   const RANGES = [
@@ -269,7 +329,7 @@
   {:else}
     <PageHeader title={headerName}>
       {#snippet titleIcon()}
-        {@const statusCls = connected ? 'text-green-500' : 'text-red-500'}
+        {@const statusCls = connected ? 'text-success' : 'text-danger'}
         {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
         {#if capabilities?.platform}
           <OsIcon platform={capabilities.platform} class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
@@ -467,13 +527,28 @@
       {/if}
     {/snippet}
 
+    {#if canArrange}
+      <div class="flex justify-end mb-2">
+        <Button variant="ghost" size="sm" aria-pressed={arranging} onclick={() => (arranging = !arranging)}>
+          {$LL.arrangeCards()}
+        </Button>
+      </div>
+    {/if}
+    <p class="sr-only" aria-live="polite">{arranging ? arrangeStatus : ''}</p>
+
     <!-- Three columns prevent the optional cards from crowding tablet-width
          viewports before the layout expands to four columns. Card order is
-         synced through cardOrder; HTML5 drag-and-drop is pointer-only. -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
-      {#each visibleCardOrder as id (id)}
+         synced through cardOrder; HTML5 drag-and-drop is pointer-only, so
+         arranging mode adds move buttons for the keyboard. -->
+    <div
+      bind:this={cardGrid}
+      role="list"
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8"
+    >
+      {#each visibleCardOrder as id, i (id)}
         <div
           role="listitem"
+          data-card={id}
           draggable={canArrange}
           title={canArrange ? undefined : $LL.cardOrderAdminOnly()}
           ondragstart={() => onCardDragStart(id)}
@@ -482,15 +557,37 @@
           class={canArrange ? 'cursor-grab active:cursor-grabbing' : undefined}
         >
           {@render card(id)}
+          {#if arranging}
+            <div class="flex justify-center gap-2 mt-1">
+              <IconButton
+                data-move="-1"
+                label={$LL.cardMoveEarlier({ name: cardLabel(id) })}
+                disabled={i === 0}
+                onclick={() => moveCard(id, -1)}
+              >
+                <ChevronLeft class="w-4 h-4" />
+              </IconButton>
+              <IconButton
+                data-move="1"
+                label={$LL.cardMoveLater({ name: cardLabel(id) })}
+                disabled={i === visibleCardOrder.length - 1}
+                onclick={() => moveCard(id, 1)}
+              >
+                <ChevronRight class="w-4 h-4" />
+              </IconButton>
+            </div>
+          {/if}
         </div>
       {/each}
     </div>
 
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold font-display text-fg-strong">{$LL.history()}</h2>
-      <div class="flex rounded-full border border-line overflow-hidden">
+      <div class="flex rounded-full border border-line overflow-hidden" role="group" aria-label={$LL.historyRange()}>
         {#each RANGES as r (r.minutes)}
           <button
+            type="button"
+            aria-pressed={rangeMinutes === r.minutes}
             class="px-3 py-1 text-sm cursor-pointer transition-colors {rangeMinutes === r.minutes
               ? 'bg-fg-strong text-surface'
               : 'bg-surface text-muted-fg hover:bg-soft'}"

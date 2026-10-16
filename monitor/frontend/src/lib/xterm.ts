@@ -31,7 +31,7 @@ function isDark(): boolean {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 
-function terminalTheme() {
+export function terminalTheme() {
   return isDark()
     ? { background: '#0b0f14', foreground: '#d7dce2', cursor: '#d7dce2' }
     : { background: '#ffffff', foreground: '#1f2933', cursor: '#1f2933' }
@@ -67,6 +67,10 @@ export async function mountTerminal(
   const term = new Terminal({
     convertEol: false,
     cursorBlink: true,
+    // Always on: a page cannot tell whether a screen reader is running. It
+    // mirrors the rows into an offscreen accessibility tree and announces
+    // new output; nothing visible changes.
+    screenReaderMode: true,
     fontSize: 13,
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     theme: terminalTheme(),

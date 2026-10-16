@@ -5796,6 +5796,43 @@ type RootTranslation = {
 	 * N​o
 	 */
 	no: string
+	/**
+	 * S​k​i​p​ ​t​o​ ​c​o​n​t​e​n​t
+	 */
+	skipToContent: string
+	/**
+	 * R​e​a​r​r​a​n​g​e​ ​c​a​r​d​s
+	 */
+	arrangeCards: string
+	/**
+	 * M​o​v​e​ ​{​n​a​m​e​}​ ​e​a​r​l​i​e​r
+	 * @param {string} name
+	 */
+	cardMoveEarlier: RequiredParams<'name'>
+	/**
+	 * M​o​v​e​ ​{​n​a​m​e​}​ ​l​a​t​e​r
+	 * @param {string} name
+	 */
+	cardMoveLater: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​m​o​v​e​d​ ​t​o​ ​p​o​s​i​t​i​o​n​ ​{​p​o​s​i​t​i​o​n​}​ ​o​f​ ​{​t​o​t​a​l​}
+	 * @param {string} name
+	 * @param {number} position
+	 * @param {number} total
+	 */
+	cardMoved: RequiredParams<'name' | 'position' | 'total'>
+	/**
+	 * H​i​s​t​o​r​y​ ​r​a​n​g​e
+	 */
+	historyRange: string
+	/**
+	 * S​h​o​w​ ​d​a​t​a
+	 */
+	chartShowData: string
+	/**
+	 * T​i​m​e
+	 */
+	chartTime: string
 }
 
 export type TranslationFunctions = {
@@ -11411,6 +11448,38 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * No
 	 */
 	no: () => LocalizedString
+	/**
+	 * Skip to content
+	 */
+	skipToContent: () => LocalizedString
+	/**
+	 * Rearrange cards
+	 */
+	arrangeCards: () => LocalizedString
+	/**
+	 * Move {name} earlier
+	 */
+	cardMoveEarlier: (arg: { name: string }) => LocalizedString
+	/**
+	 * Move {name} later
+	 */
+	cardMoveLater: (arg: { name: string }) => LocalizedString
+	/**
+	 * {name} moved to position {position} of {total}
+	 */
+	cardMoved: (arg: { name: string, position: number, total: number }) => LocalizedString
+	/**
+	 * History range
+	 */
+	historyRange: () => LocalizedString
+	/**
+	 * Show data
+	 */
+	chartShowData: () => LocalizedString
+	/**
+	 * Time
+	 */
+	chartTime: () => LocalizedString
 }
 
 export type Formatters = {}

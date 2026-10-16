@@ -3,7 +3,9 @@
 /// media query by default; an explicit `.dark` / `.light` class on <html>
 /// overrides it (pre-paint init lives in index.html).
 
-export type Theme = 'light' | 'dark' | 'system'
+import { readPref, writePref } from './prefs'
+
+export type Theme ='light' | 'dark' | 'system'
 
 const ORDER: Theme[] = ['system', 'light', 'dark']
 
@@ -15,7 +17,7 @@ class ThemeStore {
   }
 
   #stored(): Theme {
-    const v = window.localStorage.getItem('theme')
+    const v = readPref('theme')
     return v === 'light' || v === 'dark' ? v : 'system'
   }
 
@@ -31,7 +33,7 @@ class ThemeStore {
 
   set(value: Theme) {
     this.current = value
-    window.localStorage.setItem('theme', value)
+    writePref('theme', value)
     this.#apply()
   }
 }

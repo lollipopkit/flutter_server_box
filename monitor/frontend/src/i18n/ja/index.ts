@@ -1403,6 +1403,14 @@ const ja = {
 	fwLog: 'ログ',
 	yes: 'はい',
 	no: 'いいえ',
+	skipToContent: 'コンテンツへスキップ',
+	arrangeCards: 'カードを並べ替え',
+	cardMoveEarlier: '{name}を前へ移動',
+	cardMoveLater: '{name}を後ろへ移動',
+	cardMoved: '{name}を {total} 件中 {position} 番目に移動しました',
+	historyRange: '履歴の期間',
+	chartShowData: 'データを表示',
+	chartTime: '時刻',
 } satisfies Translation
 
 export default ja

@@ -93,6 +93,51 @@
   }
 
   const readoutIndex = $derived(hoverIndex ?? labels.length - 1)
+
+  function valueAt(s: ChartSeries, i: number): string {
+    const v = s.values[i]
+    return v != null ? format(v) : '--'
+  }
+
+  /// One point in words: the time and every series' reading.
+  function pointText(i: number): string {
+    return [fmtAxisTime(labels[i]), ...series.map((s) => `${s.label}: ${valueAt(s, i)}`)].join(', ')
+  }
+
+  /// The keyboard counterpart of hovering: the arrows step through the points,
+  /// Page Up/Down by a tenth, Home/End to either end.
+  function onKeyDown(e: KeyboardEvent) {
+    const last = labels.length - 1
+    const step = Math.max(1, Math.round(labels.length / 10))
+    const current = hoverIndex ?? last
+    let next: number
+    switch (e.key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        next = current - 1
+        break
+      case 'ArrowRight':
+      case 'ArrowUp':
+        next = current + 1
+        break
+      case 'PageDown':
+        next = current - step
+        break
+      case 'PageUp':
+        next = current + step
+        break
+      case 'Home':
+        next = 0
+        break
+      case 'End':
+        next = last
+        break
+      default:
+        return
+    }
+    e.preventDefault()
+    hoverIndex = Math.min(last, Math.max(0, next))
+  }
 </script>
 
 <Card>
@@ -115,9 +160,7 @@
         <span class="w-2.5 h-2.5 rounded-full mr-1.5" style="background: {s.color}"></span>
         {s.label}:&nbsp;
         <span class="font-medium text-fg-strong">
-          {labels.length > 0 && s.values[readoutIndex] != null
-            ? format(s.values[readoutIndex])
-            : '--'}
+          {labels.length > 0 ? valueAt(s, readoutIndex) : '--'}
         </span>
       </span>
     {/each}
@@ -129,13 +172,22 @@
       {$LL.collectingData()}
     </div>
   {:else}
+    <!-- A slider to assistive technology: its value is the point it is on,
+         read out by pointText. -->
     <svg
       viewBox="0 0 {W} {H}"
-      class="w-full h-[220px] touch-none"
-      role="img"
+      class="w-full h-[220px] touch-none rounded-md focus-visible:outline-2 focus-visible:outline-ring"
+      role="slider"
+      tabindex="0"
       aria-label={title ?? series.map((s) => s.label).join(', ')}
+      aria-valuemin={0}
+      aria-valuemax={labels.length - 1}
+      aria-valuenow={readoutIndex}
+      aria-valuetext={pointText(readoutIndex)}
       onpointermove={onPointerMove}
       onpointerleave={() => (hoverIndex = null)}
+      onkeydown={onKeyDown}
+      onblur={() => (hoverIndex = null)}
     >
       {#each gridFractions as f (f)}
         <line
@@ -202,6 +254,32 @@
         {fmtAxisTime(labels[labels.length - 1])}
       </text>
     </svg>
+    <details class="mt-2 text-xs">
+      <summary class="cursor-pointer text-muted-fg hover:text-fg">{$LL.chartShowData()}</summary>
+      <div class="mt-2 max-h-64 overflow-auto">
+        <table class="w-full tabular-nums">
+          <caption class="sr-only">{title ?? series.map((s) => s.label).join(', ')}</caption>
+          <thead class="sticky top-0 bg-surface">
+            <tr>
+              <th scope="col" class="py-1 pr-4 text-left font-medium text-muted-fg">{$LL.chartTime()}</th>
+              {#each series as s (s.label)}
+                <th scope="col" class="py-1 pl-4 text-right font-medium text-muted-fg">{s.label}</th>
+              {/each}
+            </tr>
+          </thead>
+          <tbody>
+            {#each labels as ts, i (i)}
+              <tr class="border-t border-line">
+                <th scope="row" class="py-1 pr-4 text-left font-normal text-fg">{fmtAxisTime(ts)}</th>
+                {#each series as s (s.label)}
+                  <td class="py-1 pl-4 text-right text-fg">{valueAt(s, i)}</td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    </details>
   {/if}
   </div>
 </Card>
