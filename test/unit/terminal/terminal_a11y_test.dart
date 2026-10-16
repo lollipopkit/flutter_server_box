@@ -127,6 +127,34 @@ void main() {
       expect(transcript.lines, ['get 100%', 'done']);
     });
 
+    test('a reflow to another width repeats nothing', () {
+      final terminal = _terminal(cols: 10, rows: 3);
+      final transcript = TerminalTranscript(terminal.buffer)..sync();
+      final written = [for (var i = 0; i < 5; i++) 'abcdefg$i'];
+      terminal.write(written.join('\r\n'));
+      transcript.sync();
+      for (final cols in [4, 10, 6]) {
+        terminal.resize(cols, 3);
+        transcript.sync();
+        expect(transcript.lines, written, reason: '$cols columns');
+      }
+      terminal.write('\r\nmore');
+      transcript.sync();
+      expect(transcript.lines, [...written, 'more']);
+    });
+
+    test('keeps what a reflow pushed out of the scrollback', () {
+      final terminal = _terminal(cols: 10, rows: 3, maxLines: 6);
+      final transcript = TerminalTranscript(terminal.buffer)..sync();
+      final written = [for (var i = 0; i < 5; i++) 'abcdefg$i'];
+      terminal.write(written.join('\r\n'));
+      transcript.sync();
+      // Two rows a line now: twice what the scrollback holds.
+      terminal.resize(4, 3);
+      transcript.sync();
+      expect(transcript.lines, written);
+    });
+
     test('a wrapped row is joined to the line it continues', () {
       final terminal = _terminal(cols: 5)..write('abcdefgh');
       final transcript = TerminalTranscript(terminal.buffer)..sync();

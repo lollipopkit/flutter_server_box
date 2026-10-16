@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:xterm/core.dart';
 
@@ -166,10 +167,51 @@ final class TerminalTranscript {
   BufferLine? _anchor;
   var _anchorAt = 0;
 
+  /// The size [buffer] had at the last [sync]. A resize rebuilds its rows —
+  /// reflowed to the new width — so the anchor says nothing about it.
+  var _width = 0;
+  var _height = 0;
+
   /// The lines, a wrapped row joined to the one it continues.
-  List<String> get lines {
+  List<String> get lines => _join([..._gone, ..._live]);
+
+  void sync() {
+    final lines = buffer.lines;
+    final live = [
+      for (var i = 0; i < buffer.height; i++)
+        (lines[i].getText(), lines[i].isWrapped),
+    ];
+    final anchor = _anchor;
+    if (anchor != null) {
+      if (buffer.viewWidth != _width || buffer.viewHeight != _height) {
+        // Only the lines the reflow pushed out of the scrollback are history:
+        // the rest are still in the buffer, wrapped differently.
+        final before = _join(_live);
+        final kept = _overlapStart(before, _join(live));
+        _gone.addAll([for (final line in before.take(kept)) (line, false)]);
+      } else if (anchor.attached) {
+        final dropped = (_anchorAt - anchor.index).clamp(0, _live.length);
+        _gone.addAll(_live.take(dropped));
+      } else {
+        // The buffer was cleared, or scrolled past its whole length since:
+        // everything shown so far is history now.
+        _gone.addAll(_live);
+      }
+    }
+    _live = live;
+    _width = buffer.viewWidth;
+    _height = buffer.viewHeight;
+    if (buffer.height == 0) {
+      _anchor = null;
+      return;
+    }
+    _anchor = lines[buffer.height - 1];
+    _anchorAt = buffer.height - 1;
+  }
+
+  static List<String> _join(Iterable<(String, bool)> rows) {
     final out = <String>[];
-    for (final (text, wrapped) in [..._gone, ..._live]) {
+    for (final (text, wrapped) in rows) {
       if (wrapped && out.isNotEmpty) {
         out[out.length - 1] += text;
       } else {
@@ -182,28 +224,24 @@ final class TerminalTranscript {
     return out;
   }
 
-  void sync() {
-    final anchor = _anchor;
-    if (anchor != null) {
-      if (anchor.attached) {
-        final dropped = (_anchorAt - anchor.index).clamp(0, _live.length);
-        _gone.addAll(_live.take(dropped));
-      } else {
-        // The buffer was cleared, or scrolled past its whole length since:
-        // everything shown so far is history now.
-        _gone.addAll(_live);
+  /// Where in [before] the lines of [after] begin: the first offset from
+  /// which the two agree on every line they share, or all of [before] when
+  /// none does.
+  ///
+  /// The last line of [before] is not compared: it is the one being typed on
+  /// or redrawn, and may have changed since.
+  static int _overlapStart(List<String> before, List<String> after) {
+    if (after.isEmpty) return before.length;
+    final settled = before.length - 1;
+    if (settled <= 0) return 0;
+    for (var k = 0; k < settled; k++) {
+      final n = math.min(settled - k, after.length);
+      var same = true;
+      for (var i = 0; i < n && same; i++) {
+        same = before[k + i] == after[i];
       }
+      if (same) return k;
     }
-    final lines = buffer.lines;
-    _live = [
-      for (var i = 0; i < buffer.height; i++)
-        (lines[i].getText(), lines[i].isWrapped),
-    ];
-    if (buffer.height == 0) {
-      _anchor = null;
-      return;
-    }
-    _anchor = lines[buffer.height - 1];
-    _anchorAt = buffer.height - 1;
+    return before.length;
   }
 }
