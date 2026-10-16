@@ -258,7 +258,7 @@ class ForegroundService : Service() {
         val notification = builder
             .setContentTitle(title)
             .setContentText(contentText)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setWhen(earliestStartTime)
             .setUsesChronometer(true)
             .setOngoing(true)

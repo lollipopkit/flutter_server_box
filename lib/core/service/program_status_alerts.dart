@@ -76,7 +76,7 @@ abstract final class ProgramStatusAlerts {
     try {
       await _plugin.initialize(
         settings: InitializationSettings(
-          android: const AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: const AndroidInitializationSettings('ic_notification'),
           iOS: const DarwinInitializationSettings(
             requestAlertPermission: false,
             requestBadgePermission: false,
