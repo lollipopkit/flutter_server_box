@@ -54,7 +54,6 @@ pub fn parse_status_json(
     Ok(json.to_string())
 }
 
-/// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 /// The probe that tells a Unix server's system (`sbm_parser::system`).
 #[flutter_rust_bridge::frb(sync)]
 pub fn system_probe_uname() -> String {
@@ -95,6 +94,7 @@ pub fn uptime_seconds(formatted: String) -> Option<u64> {
     sbm_parser::common::uptime_seconds(&formatted)
 }
 
+/// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 #[flutter_rust_bridge::frb(sync)]
 pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;

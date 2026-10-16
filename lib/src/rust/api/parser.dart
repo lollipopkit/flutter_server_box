@@ -27,7 +27,6 @@ Future<String> parseStatusJson({
   countNetwork: countNetwork,
 );
 
-/// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 /// The probe that tells a Unix server's system (`sbm_parser::system`).
 String systemProbeUname() =>
     RustLib.instance.api.crateApiParserSystemProbeUname();
@@ -48,6 +47,7 @@ String? systemFromVer({required String output}) =>
 BigInt? uptimeSeconds({required String formatted}) =>
     RustLib.instance.api.crateApiParserUptimeSeconds(formatted: formatted);
 
+/// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 List<CommandSpec> commandSpecs({required String system}) =>
     RustLib.instance.api.crateApiParserCommandSpecs(system: system);
 
