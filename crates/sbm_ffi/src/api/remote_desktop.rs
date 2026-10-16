@@ -10,7 +10,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use ironrdp::client::config::{ClipboardType, ConfigBuilder, Destination};
-use ironrdp::client::rdp::{RdpClient, RdpInputEvent, RdpOutputEvent};
+use ironrdp::client::output_channel::output_channel;
+use ironrdp::client::rdp::{RdpClient, RdpInputEvent, RdpInputSender, RdpOutputEvent};
 use ironrdp::cliprdr::backend::{ClipboardMessage, CliprdrBackend};
 use ironrdp::cliprdr::pdu::{
     ClipboardFormat, ClipboardFormatId, ClipboardGeneralCapabilityFlags,
@@ -26,7 +27,7 @@ use sha2::{Digest as _, Sha256};
 use smallvec::SmallVec;
 use tokio::net::TcpStream;
 use tokio::runtime::Builder;
-use tokio::sync::{mpsc, watch, Notify};
+use tokio::sync::{watch, Notify};
 use vnc::{ClientKeyEvent, ClientMouseEvent, PixelFormat, Rect, VncConnector, VncEncoding, VncEvent, X11Event};
 
 const MAX_WIDTH: u32 = 8192;
@@ -672,10 +673,9 @@ async fn run_rdp(
         .with_server_pointer(true)
         .with_pointer_software_rendering(false)
         .with_clipboard(ClipboardType::Disable);
-    if let Some(fingerprint) = params.trusted_cert_sha256.as_deref() {
-        match parse_sha256_fingerprint(fingerprint) {
-            Ok(fingerprint) => builder = builder.with_trusted_cert_sha256(fingerprint),
-            Err(message) => {
+    let pinned = match params.trusted_cert_sha256.as_deref().map(parse_sha256_fingerprint).transpose() {
+        Ok(pinned) => pinned,
+        Err(message) => {
                 events.event(RemoteDesktopEvent::Error {
                     message: message.clone(),
                     retryable: false,
@@ -685,9 +685,12 @@ async fn run_rdp(
                     message: Some(message),
                 });
                 return;
-            }
         }
-    }
+    };
+    let (validate, rejected_cert) = pinned_certificate(pinned);
+    builder = builder
+        .with_certificate_validation(ironrdp_tls::CertificateValidation::Strict)
+        .with_certificate_validation_callback(validate);
     if let Some(domain) = params.domain.filter(|value| !value.is_empty()) {
         builder = builder.with_domain(domain);
     }
@@ -721,7 +724,7 @@ async fn run_rdp(
         }
     };
 
-    let (rdp_output_tx, mut rdp_output_rx) = mpsc::channel(2);
+    let (rdp_output_tx, mut rdp_output_rx) = output_channel(2);
     let client = RdpClient::new(config, rdp_output_tx);
     let rdp_input = client.input_sender();
     if let Ok(mut state) = clipboard_state.lock() {
@@ -801,16 +804,17 @@ async fn run_rdp(
                         hotspot_x: u32::from(pointer.hotspot_x),
                         hotspot_y: u32::from(pointer.hotspot_y),
                     }),
-                    Some(RdpOutputEvent::CertificateRequest { der, previous_sha256 }) => {
-                        match certificate_event(&der, previous_sha256) {
-                            Ok(event) => events.event(event),
-                            Err(message) => events.event(RemoteDesktopEvent::Error {
-                                message,
-                                retryable: false,
-                            }),
-                        }
-                    }
                     Some(RdpOutputEvent::ConnectionFailure(error)) => {
+                        let rejected = rejected_cert.lock().ok().and_then(|mut rejected| rejected.take());
+                        if let Some(der) = rejected {
+                            match certificate_event(&der, pinned) {
+                                Ok(event) => events.event(event),
+                                Err(message) => events.event(RemoteDesktopEvent::Error {
+                                    message,
+                                    retryable: false,
+                                }),
+                            }
+                        }
                         let message = error.report().to_string();
                         let reason = classify_rdp_failure(&message);
                         events.event(RemoteDesktopEvent::Error {
@@ -839,12 +843,15 @@ async fn run_rdp(
                         });
                         break;
                     }
+                    // RemoteApp, monitor layout, reconnect (never enabled here) and the
+                    // like: nothing a full-desktop session shows.
+                    Some(_) => {}
                 }
             }
             command = commands.recv() => {
                 match command {
                     Some(SessionCommand::Close) | None => {
-                        let _ = rdp_input.send(RdpInputEvent::Close);
+                        rdp_input.request_close();
                         events.event(RemoteDesktopEvent::Ended {
                             reason: RemoteDesktopEndReason::ClosedByUser,
                             message: None,
@@ -884,7 +891,7 @@ fn publish_latest_frame(events: &EventSender, latest: &Option<(Arc<Vec<u8>>, u32
 
 fn handle_rdp_command(
     command: SessionCommand,
-    sender: &mpsc::UnboundedSender<RdpInputEvent>,
+    sender: &RdpInputSender,
     input: &mut RdpInputDatabase,
     clipboard_state: &Arc<Mutex<RdpClipboardState>>,
 ) {
@@ -952,9 +959,9 @@ fn handle_rdp_command(
             if let Ok(mut state) = clipboard_state.lock() {
                 state.local_text = text;
             }
-            let _ = sender.send(RdpInputEvent::Clipboard(ClipboardMessage::SendInitiateCopy(vec![
-                ClipboardFormat::new(ClipboardFormatId::CF_UNICODETEXT),
-            ])));
+            let _ = sender.send_clipboard(ClipboardMessage::SendInitiateCopy(vec![ClipboardFormat::new(
+                ClipboardFormatId::CF_UNICODETEXT,
+            )]));
         }
         SessionCommand::Resize {
             width,
@@ -964,7 +971,7 @@ fn handle_rdp_command(
             physical_height_mm,
         } => {
             let physical_size = physical_width_mm.zip(physical_height_mm);
-            let _ = sender.send(RdpInputEvent::Resize {
+            let _ = sender.try_send(RdpInputEvent::Resize {
                 width,
                 height,
                 scale_factor,
@@ -979,12 +986,12 @@ fn handle_rdp_command(
 }
 
 fn send_rdp_fast_path(
-    sender: &mpsc::UnboundedSender<RdpInputEvent>,
+    sender: &RdpInputSender,
     events: impl IntoIterator<Item = FastPathInputEvent>,
 ) {
     let events: SmallVec<[FastPathInputEvent; 2]> = events.into_iter().collect();
     if !events.is_empty() {
-        let _ = sender.send(RdpInputEvent::FastPath(events));
+        let _ = sender.try_send(RdpInputEvent::FastPath(events));
     }
 }
 
@@ -997,6 +1004,28 @@ fn classify_rdp_failure(message: &str) -> RemoteDesktopEndReason {
     } else {
         RemoteDesktopEndReason::TransportError
     }
+}
+
+/// Decides on a certificate the platform does not trust, which IronRDP asks
+/// about only once strict validation has failed: it passes when it is the one
+/// [pinned]. Any other is kept in the slot returned, for the user to be asked
+/// about once the connection has failed on it.
+fn pinned_certificate(
+    pinned: Option<[u8; 32]>,
+) -> (ironrdp_tls::CertificateValidationCallback, Arc<Mutex<Option<Vec<u8>>>>) {
+    let rejected: Arc<Mutex<Option<Vec<u8>>>> = Arc::default();
+    let slot = Arc::clone(&rejected);
+    let validate: ironrdp_tls::CertificateValidationCallback = Arc::new(move |der: &[u8], _endpoint: &str, _reason: &str| {
+        let fingerprint: [u8; 32] = Sha256::digest(der).into();
+        if pinned == Some(fingerprint) {
+            return true;
+        }
+        if let Ok(mut slot) = slot.lock() {
+            *slot = Some(der.to_vec());
+        }
+        false
+    });
+    (validate, rejected)
 }
 
 fn parse_sha256_fingerprint(value: &str) -> Result<[u8; 32], String> {
@@ -1055,7 +1084,7 @@ fn rdp_pixels_to_bgra(pixels: &[u32]) -> Vec<u8> {
 #[flutter_rust_bridge::frb(ignore)]
 struct RdpClipboardState {
     local_text: String,
-    input: Option<mpsc::UnboundedSender<RdpInputEvent>>,
+    input: Option<RdpInputSender>,
 }
 
 #[derive(Debug)]
@@ -1085,9 +1114,9 @@ impl CliprdrBackend for RdpClipboardBackend {
         if formats.iter().any(|format| format.id() == ClipboardFormatId::CF_UNICODETEXT) {
             if let Ok(state) = self.state.lock() {
                 if let Some(input) = &state.input {
-                    let _ = input.send(RdpInputEvent::Clipboard(ClipboardMessage::SendInitiatePaste(
+                    let _ = input.send_clipboard(ClipboardMessage::SendInitiatePaste(
                         ClipboardFormatId::CF_UNICODETEXT,
-                    )));
+                    ));
                 }
             }
         }
@@ -1104,7 +1133,7 @@ impl CliprdrBackend for RdpClipboardBackend {
         };
         if let Ok(state) = self.state.lock() {
             if let Some(input) = &state.input {
-                let _ = input.send(RdpInputEvent::Clipboard(ClipboardMessage::SendFormatData(response)));
+                let _ = input.send_clipboard(ClipboardMessage::SendFormatData(response));
             }
         }
     }
@@ -1638,6 +1667,23 @@ mod tests {
             queue.send(pointer(x, 0)).unwrap();
         }
         queue
+    }
+
+    #[test]
+    fn only_the_pinned_certificate_passes_and_any_other_is_kept_to_ask_about() {
+        let der = b"a certificate".as_slice();
+        let pin: [u8; 32] = Sha256::digest(der).into();
+
+        let (validate, rejected) = pinned_certificate(Some(pin));
+        assert!(validate(der, "host:3389", "UnknownIssuer"));
+        assert!(rejected.lock().unwrap().is_none());
+
+        assert!(!validate(b"another one", "host:3389", "UnknownIssuer"));
+        assert_eq!(rejected.lock().unwrap().as_deref(), Some(b"another one".as_slice()));
+
+        let (validate, rejected) = pinned_certificate(None);
+        assert!(!validate(der, "host:3389", "UnknownIssuer"), "nothing pinned, nothing passes");
+        assert_eq!(rejected.lock().unwrap().as_deref(), Some(der));
     }
 
     #[test]
