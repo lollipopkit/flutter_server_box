@@ -307,23 +307,24 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-  iso:
-    name: Build image (${{ matrix.arch }})
+  os:
+    name: sbOS ${{ matrix.flavor }} ${{ matrix.arch }}
     needs: [meta, native]
     strategy:
       fail-fast: false
       matrix:
+        flavor: [musl, gnu]
+        arch: [x64, arm64]
         include:
-          - runner: ubuntu-latest
-            arch: x86_64
+          - arch: x64
+            runner: ubuntu-latest
             pkg: monitor-pkg-linux-amd64
             required: true
-          # A native arm64 runner, so nothing is emulated. Still not allowed
-          # to hold the release: an image for a second architecture is a
-          # convenience, and a runner that cannot build it is not a reason to
+          # A native arm64 runner, so nothing is emulated. Not allowed to hold
+          # the release: a runner that cannot build it is not a reason to
           # publish no release at all.
-          - runner: ubuntu-24.04-arm
-            arch: aarch64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
             pkg: monitor-pkg-linux-arm64
             required: false
     runs-on: ${{ matrix.runner }}
@@ -341,38 +342,37 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: ${{ matrix.pkg }}
-          path: iso-pkg
+          path: os-pkg
 
-      - name: Build ISO
+      - name: Build image
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
-          pkg=(iso-pkg/*.tar.gz)
+          pkg=(os-pkg/*.tar.gz)
           if [ "${#pkg[@]}" -ne 1 ]; then
-            echo "Expected one package in iso-pkg, found ${#pkg[@]}."
+            echo "Expected one package in os-pkg, found ${#pkg[@]}."
             exit 1
           fi
-          # Docker is on the runner already; Alpine's tool chain runs in it.
-          monitor/iso/build.sh \
+          monitor/os/build.sh "${{ matrix.flavor }}" \
             --arch "${{ matrix.arch }}" \
             --version "${{ needs.meta.outputs.version }}" \
             --pkg "${pkg[0]}" \
-            --out iso-out
+            --out os-out
 
-      - name: Upload ISO
+      - name: Upload image
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: monitor-iso-${{ matrix.arch }}
+          name: monitor-os-${{ matrix.flavor }}-${{ matrix.arch }}
           path: |
-            iso-out/*.iso
-            iso-out/*.iso.sha256
+            os-out/*.img
+            os-out/*.packages.txt
           if-no-files-found: error
           retention-days: 3
 
   release:
     name: Create GitHub Release
-    needs: [meta, native, docker, iso]
+    needs: [meta, native, docker, os]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -385,10 +385,10 @@ jobs:
           path: packages
           merge-multiple: true
 
-      - name: Download ISO images
+      - name: Download sbOS images
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          pattern: monitor-iso-*
+          pattern: monitor-os-*
           path: packages
           merge-multiple: true
 
@@ -398,7 +398,7 @@ jobs:
         # `--`, so an archive is never read as an option. The names are all
         # `server-box-monitor_…` today, which is the kind of thing that holds
         # until it doesn't; it keeps the bare filenames `sha256sum -c` expects.
-        run: sha256sum -- *.tar.gz *.zip *.iso > SHA256SUMS
+        run: sha256sum -- *.tar.gz *.zip *.img > SHA256SUMS
 
       - name: Create Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
@@ -442,10 +442,10 @@ jobs:
 
             Also tagged `latest`. `linux/amd64` and `linux/arm64`.
 
-            ## Image (ISO)
-            Alpine with the agent, its panel and Docker on it: write it to a USB stick or a disc, boot it, or install it on a disk with `sbm-install`. `x86_64` (BIOS and UEFI) and `aarch64` (UEFI).
+            ## sbOS
+            ServerBox Monitor and Docker as a bootable system: write the image to a USB stick, boot it, and the console shows the panel's address; `sbm-install <disk>` installs it on a disk. `sbOS_musl_*` is based on Alpine Linux, `sbOS_GNU_*` on Debian 13; `x64` boots BIOS and UEFI, `arm64` UEFI. Each `.packages.txt` lists the distribution packages inside and where their sources are. sbOS is not affiliated with Alpine Linux or Debian; Debian is a registered trademark owned by Software in the Public Interest, Inc.
             ```sh
-            dd if=server-box-monitor-${{ needs.meta.outputs.version }}-x86_64.iso of=/dev/sdX bs=4M status=progress conv=fsync
+            dd if=sbOS_GNU_x64.img of=/dev/sdX bs=4M status=progress conv=fsync
             ```
 
             ```sh
@@ -454,7 +454,8 @@ jobs:
           files: |
             packages/*.tar.gz
             packages/*.zip
-            packages/*.iso
+            packages/*.img
+            packages/*.packages.txt
             packages/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

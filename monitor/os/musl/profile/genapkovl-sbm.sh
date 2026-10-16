@@ -4,14 +4,15 @@
 # the hostname, in the build's output directory.
 #
 # /pkg is the release package (build.sh mounts it, with install.sh beside
-# the binary); /iso/overlay the files copied as they are.
+# the binary); /os/musl/overlay the files copied as they are, /os/common
+# what both images share.
 
 HOSTNAME="$1"
 [ -n "$HOSTNAME" ] || { echo "usage: $0 hostname" >&2; exit 1; }
 set -u
 
 PKG=/pkg
-OVERLAY=/iso/overlay
+OVERLAY=/os/musl/overlay
 [ -n "${SBM_WORLD:-}" ] || { echo "SBM_WORLD is empty: run by mkimage.sh with profile sbm" >&2; exit 1; }
 
 tmp="$(mktemp -d)"
@@ -56,6 +57,9 @@ mkdir -p "$share/pkg"
 cp -a "$PKG/server_box_monitor" "$PKG/frontend" "$PKG/migrations" \
 	"$PKG/config.example.toml" "$PKG/.env.example" "$share/pkg/"
 cp "$PKG/install.sh" "$share/install.sh"
+cp /os/common/sbm-setup "$share/sbm-setup"
+cp /os/common/NOTICE "$share/NOTICE"
+chmod 755 "$share/sbm-setup"
 
 chown -R 0:0 "$tmp"
 tar -c -C "$tmp" etc usr | gzip -9n > "$HOSTNAME.apkovl.tar.gz"
