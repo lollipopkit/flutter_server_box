@@ -12,6 +12,7 @@ export interface ServerEntry {
 }
 
 import { probe } from './probe'
+import { readPref, removePref, writePref } from './prefs'
 import { isSecureAgentUrl, normalizeAgentUrl } from './agentUrl'
 
 const KEY = 'servers.v1'
@@ -61,7 +62,7 @@ class ServersStore {
     } catch {
       // Corrupt session state is equivalent to being logged out.
     }
-    const raw = window.localStorage.getItem(KEY)
+    const raw = readPref(KEY)
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as { list?: ServerEntry[]; currentId?: string }
@@ -89,8 +90,8 @@ class ServersStore {
         {
           id: LOCAL_ID,
           url: '',
-          token: window.sessionStorage.getItem('token') ?? window.localStorage.getItem('token'),
-          username: window.sessionStorage.getItem('username') ?? window.localStorage.getItem('username'),
+          token: readPref('token', 'sessionStorage') ?? readPref('token'),
+          username: readPref('username', 'sessionStorage') ?? readPref('username'),
         },
       ]
       this.currentId = LOCAL_ID
@@ -99,8 +100,8 @@ class ServersStore {
     if (!this.list.some((s) => s.id === this.currentId)) {
       this.currentId = this.list[0]?.id ?? ''
     }
-    window.localStorage.removeItem('token')
-    window.localStorage.removeItem('username')
+    removePref('token')
+    removePref('username')
     this.#persist()
     this.#persistSessions()
   }
@@ -228,10 +229,7 @@ class ServersStore {
       token: null,
       username: null,
     }))
-    window.localStorage.setItem(
-      KEY,
-      JSON.stringify({ list, currentId: this.currentId }),
-    )
+    writePref(KEY, JSON.stringify({ list, currentId: this.currentId }))
     this.#persistSessions()
   }
 
@@ -241,7 +239,7 @@ class ServersStore {
         .filter((entry) => entry.token)
         .map((entry) => [entry.id, { token: entry.token, username: entry.username }]),
     )
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessions))
+    writePref(SESSION_KEY, JSON.stringify(sessions), 'sessionStorage')
   }
 }
 

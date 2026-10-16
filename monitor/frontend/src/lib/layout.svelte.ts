@@ -1,4 +1,6 @@
 import type { FeatureId } from './features'
+import { readPref, writePref } from './prefs'
+import { servers } from './servers.svelte'
 
 /// Sidebar state with persistent desktop collapse and a transient mobile drawer.
 
@@ -12,27 +14,34 @@ import type { FeatureId } from './features'
 export type View = 'dashboard' | 'panel' | 'server-settings' | 'terminal' | 'files' | FeatureId
 
 class LayoutStore {
-  collapsed = $state(window.localStorage.getItem('sidebar.collapsed') === '1')
+  collapsed = $state(readPref('sidebar.collapsed') === '1')
   mobileOpen = $state(false)
   // Panel-wide view selection; navigation does not use a router.
   view = $state<View>('dashboard')
-  // Reverse the page transition when navigating back.
-  navDirection = $state<'forward' | 'back'>('forward')
+  /// The page a `back` went to, on the server it was on.
+  #backTo = $state<{ view: View; server: string } | null>(null)
   /// Shared by the sidebar and empty state, which open the same form.
   addServerOpen = $state(false)
 
   toggleCollapsed() {
     this.collapsed = !this.collapsed
-    window.localStorage.setItem('sidebar.collapsed', this.collapsed ? '1' : '0')
+    writePref('sidebar.collapsed', this.collapsed ? '1' : '0')
+  }
+
+  /// Which way the page transition runs: back only while the page a `back`
+  /// opened is still the one shown, so a server switch after it is forward.
+  get navDirection(): 'forward' | 'back' {
+    const to = this.#backTo
+    return to && to.view === this.view && to.server === servers.currentId ? 'back' : 'forward'
   }
 
   navigate(view: View) {
-    this.navDirection = 'forward'
+    this.#backTo = null
     this.view = view
   }
 
   back(view: View) {
-    this.navDirection = 'back'
+    this.#backTo = { view, server: servers.currentId }
     this.view = view
   }
 }

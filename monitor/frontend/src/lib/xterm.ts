@@ -31,7 +31,7 @@ function isDark(): boolean {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 
-function terminalTheme() {
+export function terminalTheme() {
   return isDark()
     ? { background: '#0b0f14', foreground: '#d7dce2', cursor: '#d7dce2' }
     : { background: '#ffffff', foreground: '#1f2933', cursor: '#1f2933' }

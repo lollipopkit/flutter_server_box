@@ -15,6 +15,7 @@
   import { LL } from '../i18n/i18n-svelte'
   import { isAdmin, machineAccess, terminalAccess, whyText } from '../lib/access'
   import { api } from '../lib/api'
+  import { readPref } from '../lib/prefs'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { fmtEpochSeconds } from '../lib/format'
   import { layout } from '../lib/layout.svelte'
@@ -286,7 +287,7 @@
   /// browser: it changes what the panel password is worth, and silently
   /// handing out a shell would be the wrong kind of convenient.
   const NOTICE_KEY = 'terminal.fullAccessNoticeSeen'
-  let noticeDismissed = $state(window.localStorage.getItem(NOTICE_KEY) === '1')
+  let noticeDismissed = $state(readPref(NOTICE_KEY) === '1')
   const showNotice = $derived(fullAccess && !noticeDismissed)
   let disabling = $state(false)
 

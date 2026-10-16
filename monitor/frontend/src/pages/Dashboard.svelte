@@ -97,22 +97,32 @@
   const ALL_CARD_IDS = ['cpu', 'memory', 'disk', 'network', 'gpu', 'battery', 'sensors', 'smart'] as const
   type CardId = (typeof ALL_CARD_IDS)[number]
   let cardOrder = $state<CardId[]>([...ALL_CARD_IDS])
+  /// The server `cardOrder` was read from. A rearrangement is saved only to
+  /// it, so an order still loading for one server is never written to another.
+  let cardOrderServer = $state<string | null>(null)
 
-  async function loadCardOrder() {
+  async function loadCardOrder(serverId: string) {
     try {
       const { card_order } = await api.getCardOrder()
+      // The sidebar moved on while this was in flight
+      if (serverId !== servers.currentId) return
       const known = card_order.filter((id): id is CardId => (ALL_CARD_IDS as readonly string[]).includes(id))
       // Append any ids missing from the saved order (new card added later,
       // or first-ever save) so nothing silently disappears
       const missing = ALL_CARD_IDS.filter((id) => !known.includes(id))
       cardOrder = known.length ? [...known, ...missing] : [...ALL_CARD_IDS]
+      cardOrderServer = serverId
     } catch {
       // Keep the default order; a failed fetch shouldn't block the dashboard
+      if (serverId === servers.currentId) cardOrderServer = serverId
     }
   }
 
   $effect(() => {
-    if (servers.authenticated) void loadCardOrder()
+    const serverId = servers.currentId
+    cardOrderServer = null
+    cardOrder = [...ALL_CARD_IDS]
+    if (serverId && servers.authenticated) void loadCardOrder(serverId)
   })
 
   let dragId = $state<CardId | null>(null)
@@ -138,7 +148,7 @@
 
   function saveCardOrder(next: CardId[]) {
     cardOrder = next
-    void api.updateCardOrder(cardOrder).catch(() => {})
+    if (cardOrderServer === servers.currentId) void api.updateCardOrder(cardOrder).catch(() => {})
   }
 
   /// The keyboard and screen reader way to rearrange: dragging is pointer-only,
