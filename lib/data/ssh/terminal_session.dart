@@ -25,7 +25,6 @@ import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/terminal_status.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
-import 'package:server_box/src/rust/api/files.dart';
 import 'package:xterm/core.dart';
 
 /// Whether a server's shell comes from its agent rather than over SSH.
@@ -424,37 +423,17 @@ class TerminalSession {
   /// this server's.
   String? _osc7Host;
 
-  /// When [openShell] last opened one: how the system's list of shells is
-  /// matched to this one (see [findWorkingDirectory]).
+  /// When [openShell] last opened one (see [shellAge]).
   DateTime? _shellOpenedAt;
 
-  /// The shell's working directory: what it said (OSC 7), else read from the
-  /// system on a channel of its own — never typed into the shell — by
-  /// `sbm_parser::files::terminal_shells_command` (Linux; a shell opened
-  /// within a second of another is not told apart). Null when neither knows.
-  Future<String?> findWorkingDirectory() async {
-    final said = _workingDirectory;
-    if (said != null) return said;
+  /// How long ago [openShell] opened the shell on screen: how the system's
+  /// list of the account's shells is matched to it
+  /// (`sbm_parser::files::terminal_shell_cwd`). Null without one, and under
+  /// tmux, whose panes are its server's shells.
+  Duration? get shellAge {
     final opened = _shellOpenedAt;
-    // tmux's panes are its server's shells, not the one opened here.
-    if (opened == null || !canExec || _foreground is TmuxControlShellSession) return null;
-    final ageSecs = DateTime.now().difference(opened).inMilliseconds / 1000;
-    try {
-      final session = await execute(filesTerminalShellsCommand());
-      if (session == null) return null;
-      final out = await session.stdout
-          ?.cast<List<int>>()
-          .transform(utf8.decoder)
-          .join()
-          .timeout(const Duration(seconds: 5), onTimeout: () {
-            session.close();
-            return '';
-          });
-      return out == null ? null : filesTerminalShellCwd(output: out, ageSecs: ageSecs);
-    } catch (e) {
-      Loggers.app.warning('Reading the terminal shell\'s directory failed', e);
-      return null;
-    }
+    if (opened == null || _foreground is TmuxControlShellSession) return null;
+    return DateTime.now().difference(opened);
   }
 
   /// The host and path of an OSC 7 report, or null for one that is not a

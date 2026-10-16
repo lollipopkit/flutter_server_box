@@ -138,7 +138,7 @@ extension _VirtKey on SSHPageState {
         // the file page's own start. Nothing is typed into the shell to find
         // out: a probe lands in its history, and a program in front can
         // swallow it.
-        final initPath = await _sess.findWorkingDirectory();
+        final initPath = _sess.workingDirectory ?? await _shellDirectory(fileSpi.id);
         if (!mounted) return;
         final args = SftpPageArgs(spi: fileSpi, initPath: initPath);
         // `ServerFilePage`, not `SftpPage`: it is the one place that decides
@@ -195,4 +195,23 @@ extension _VirtKey on SSHPageState {
       );
     }
   }
+
+  /// The directory of this terminal's shell as the system records it, for a
+  /// shell that sends no OSC 7: the account's terminal shells listed through
+  /// [ServerNotifier.ensureExec] (no PTY, so no login record) and matched by
+  /// when this one was opened. Null when that cannot tell (not Linux, two
+  /// opened together, another account on the transport that answers).
+  Future<String?> _shellDirectory(String serverId) async {
+    final age = _sess.shellAge;
+    if (age == null) return null;
+    try {
+      final exec = await ref.read(serverProvider(serverId).notifier).ensureExec();
+      final res = await exec.run(filesTerminalShellsCommand()).timeout(const Duration(seconds: 5));
+      return filesTerminalShellCwd(output: res.stdout, ageSecs: age.inMilliseconds / 1000);
+    } catch (e) {
+      Loggers.app.warning('Reading the terminal shell\'s directory failed', e);
+      return null;
+    }
+  }
+
 }
