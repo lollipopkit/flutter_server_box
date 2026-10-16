@@ -1291,10 +1291,11 @@ impl AgentMode {
         answer
     }
 
-    pub(crate) fn sudo_password(&self, user: i64) -> Option<String> {
+    /// Wiped when dropped, like the cached one it copies.
+    pub(crate) fn sudo_password(&self, user: i64) -> Option<Zeroizing<String>> {
         let mut cache = self.sudo.locked();
         match cache.get(&user) {
-            Some((p, at)) if at.elapsed() < SUDO_REMEMBER => Some(p.to_string()),
+            Some((p, at)) if at.elapsed() < SUDO_REMEMBER => Some(p.clone()),
             Some(_) => {
                 cache.remove(&user);
                 None
@@ -1303,12 +1304,12 @@ impl AgentMode {
         }
     }
 
-    pub(crate) fn remember_sudo(&self, user: i64, password: Option<String>) {
+    pub(crate) fn remember_sudo(&self, user: i64, password: Option<Zeroizing<String>>) {
         let mut cache = self.sudo.locked();
         match password {
             Some(p) => {
                 let at = Instant::now();
-                cache.insert(user, (Zeroizing::new(p), at));
+                cache.insert(user, (p, at));
                 // Gone when its time is up, asked for again or not: not left in
                 // memory until the next read.
                 if let Ok(runtime) = tokio::runtime::Handle::try_current() {
@@ -1534,8 +1535,8 @@ mod tests {
         let agent = AgentMode::new(db, None);
         // After the pool is up: its connect times out on a paused clock.
         tokio::time::pause();
-        agent.remember_sudo(1, Some("pw".into()));
-        assert_eq!(agent.sudo_password(1).as_deref(), Some("pw"));
+        agent.remember_sudo(1, Some(Zeroizing::new("pw".into())));
+        assert_eq!(agent.sudo_password(1).as_deref().map(String::as_str), Some("pw"));
         tokio::time::sleep(SUDO_REMEMBER + std::time::Duration::from_secs(1)).await;
         assert!(agent.sudo.locked().is_empty());
     }

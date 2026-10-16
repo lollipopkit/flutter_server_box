@@ -379,7 +379,7 @@ impl RunCommand {
                                     .with_details(json!({ "declined": true })));
                             }
                             may_run(state, &flow).await?;
-                            let p = answer.password.unwrap_or_default();
+                            let p = zeroize::Zeroizing::new(answer.password.unwrap_or_default());
                             if answer.remember {
                                 hub.remember_sudo(flow.user_id, Some(p.clone()));
                             }
@@ -389,7 +389,7 @@ impl RunCommand {
                 } else {
                     None
                 };
-                let ran = self.run(&flow, call, &command, password.as_deref(), timeout, cancel).await?;
+                let ran = self.run(&flow, call, &command, password.as_deref().map(String::as_str), timeout, cancel).await?;
                 if sudo && ran.refused {
                     hub.remember_sudo(flow.user_id, None);
                     error = Some("wrongPassword".into());
