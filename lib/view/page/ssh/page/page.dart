@@ -14,6 +14,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/llm/scope.dart';
 import 'package:server_box/core/service/program_status_alerts.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -1392,7 +1393,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (shell == null) return;
     bool stillFor() => mounted && identical(_session, shell);
 
-    final authed = await SudoPassword.authenticateIfNeeded();
+    final authed = await AppAuth.confirm();
     if (!authed) {
       if (!mounted) return;
       Toast.error(libL10n.fail);
@@ -1400,7 +1401,14 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     if (!stillFor()) return;
 
-    final password = await SudoPassword.resolveForTerminal(spi);
+    final String? password;
+    try {
+      password = await SudoPassword.resolveForTerminal(spi);
+    } catch (e, s) {
+      Loggers.app.warning('Reading the saved sudo password', e, s);
+      if (mounted) Toast.error(libL10n.fail);
+      return;
+    }
     if (password == null || password.isEmpty) {
       if (!mounted) return;
       Toast.show(libL10n.empty);
@@ -1438,6 +1446,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (!mounted) return;
     _focusTerminal();
     Toast.success(libL10n.success);
+  }
+
+  /// Types [cmd] and answers the sudo prompt it brings up — [_answerSudo].
+  /// What the shell printed before goes first: a prompt already there is not
+  /// this command's.
+  Future<void> _runAnsweringSudo(String cmd) {
+    _sess.drainOutput();
+    _sess.clearOutputTail();
+    _terminal.textInput(cmd);
+    _terminal.keyInput(TerminalKey.enter);
+    return _answerSudo();
   }
 
   /// Answers the sudo prompt the command just typed brings up, with the

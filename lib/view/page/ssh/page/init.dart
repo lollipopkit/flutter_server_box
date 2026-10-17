@@ -487,9 +487,7 @@ extension _Init on SSHPageState {
     if (!current()) return;
     final initCmd = widget.args.initCmd;
     if (initCmd != null) {
-      _terminal.textInput(initCmd);
-      _terminal.keyInput(TerminalKey.enter);
-      await _answerSudo();
+      await _runAnsweringSudo(initCmd);
     }
 
     final initSnippet = widget.args.initSnippet;
@@ -842,9 +840,7 @@ extension _Init on SSHPageState {
     // A new shell is not the program the old one was running: what the
     // session is for is started again in it.
     if (_sess.reenter case final cmd?) {
-      _terminal.textInput(cmd);
-      _terminal.keyInput(TerminalKey.enter);
-      unawaited(_answerSudo());
+      unawaited(_runAnsweringSudo(cmd));
     }
     _setupDiscontinuityTimer();
     _focusTerminal(keyboard: false);

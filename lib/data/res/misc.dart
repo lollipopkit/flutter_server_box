@@ -1,9 +1,6 @@
 abstract final class Miscs {
   static final blankReg = RegExp(r'\s+');
 
-  /// RegExp for password request
-  static final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');
-
   /// Private Key max allowed size is 20kb
   static const privateKeyMaxSize = 20 * 1024;
 

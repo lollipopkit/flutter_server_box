@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/app_auth.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
 import 'package:server_box/core/utils/ssh_keygen.dart';
@@ -91,6 +92,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   PrivateKeyInfo? get pki => widget.args?.pki;
 
+  /// A stored key opens hidden, and shows only after [AppAuth.confirm]: a
+  /// glance at the screen should not be enough to read it. One being added
+  /// is what the user has just pasted or picked.
+  late final _keyShown = ValueNotifier(pki == null);
+
   @override
   void dispose() {
     super.dispose();
@@ -102,6 +108,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     _keyNode.dispose();
     _pwdNode.dispose();
     _loading.dispose();
+    _keyShown.dispose();
   }
 
   @override
@@ -236,6 +243,25 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     );
   }
 
+  /// What stands in for the key until it is shown: the type and fingerprint
+  /// say which key it is without saying what it is.
+  Widget _buildHiddenKey() {
+    final digest = describeSshKey(_keyController.text);
+    final about = [?digest.keyType, ?digest.fingerprint].join('\n');
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.vpn_key),
+        title: Text(l10n.privateKey),
+        subtitle: about.isEmpty ? null : Text(about, style: UIs.textGrey),
+        trailing: IconButton(
+          tooltip: libL10n.view,
+          onPressed: _onTapShowKey,
+          icon: const Icon(Icons.visibility),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFAB() {
     return FloatingActionButton(
       tooltip: libL10n.save,
@@ -252,21 +278,27 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           controller: _nameController,
           type: TextInputType.text,
           node: _nameNode,
-          onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
+          onSubmitted: (_) =>
+              _focusScope.requestFocus(_keyShown.value ? _keyNode : _pwdNode),
           label: libL10n.name,
           icon: Icons.info,
           suggestion: true,
         ),
-        Input(
-          controller: _keyController,
-          minLines: 3,
-          maxLines: 10,
-          type: TextInputType.text,
-          node: _keyNode,
-          onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
-          label: l10n.privateKey,
-          icon: Icons.vpn_key,
-          suggestion: false,
+        ValBuilder(
+          listenable: _keyShown,
+          builder: (shown) => shown
+              ? Input(
+                  controller: _keyController,
+                  minLines: 3,
+                  maxLines: 10,
+                  type: TextInputType.text,
+                  node: _keyNode,
+                  onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
+                  label: l10n.privateKey,
+                  icon: Icons.vpn_key,
+                  suggestion: false,
+                )
+              : _buildHiddenKey(),
         ),
         TextButton(onPressed: _onTapPickFile, child: Text(libL10n.file)),
         Input(
@@ -297,6 +329,12 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 }
 
 extension _Actions on _PrivateKeyEditPageState {
+  Future<void> _onTapShowKey() async {
+    if (!await AppAuth.confirm()) return;
+    if (!mounted) return;
+    _keyShown.value = true;
+  }
+
   void _onTapSave() async {
     if (_loading.value != null) return;
     final name = _nameController.text;
@@ -445,6 +483,8 @@ extension _Actions on _PrivateKeyEditPageState {
     // dartssh2 accepts only LF (but not CRLF or CR)
     try {
       _keyController.text = standardizePrivateKeyLineSeparators(content.trim());
+      // A key the user picked is theirs to see.
+      _keyShown.value = true;
     } catch (_) {
       // Controller disposed.
     }
