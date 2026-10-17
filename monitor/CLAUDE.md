@@ -76,7 +76,7 @@ Shared rules:
 - `machine::gate` is the one place the transport rule is asked and a refusal recorded (`gate_as` for a route with an audit kind of its own: `/exec`, `/fs`, custom commands, Agent mode); the refusal is `403 {"error":"forbidden","message"}` everywhere. Audit rows are `Kind::Machine`, detail the feature and verb, never a password, value or output.
 - Script text runs via `machine::as_self` (`sh`, text on stdin) or `machine::as_root` (`sudo -S -p '' sh -c "$SBM_ROOT_SCRIPT"` with only the password on stdin, or `sudo -n`): the script never shares the password's stream. A rejected password is `sudo_rejected` (`sbm_parser::script::sudo_password_rejected`), not a status. A script carrying a secret uses `machine::as_root_private` (0600 file, only its path on the command line).
 - Outputs reach parsers as `CommandOutput` via `machine::command_output` (timeout and cap are failures with a reason).
-- `machine::FEATURES` is `features` in `/capabilities`; a panel offers a page or a terminal target only when listed (older agents 404 or ignore unknown fields).
+- `machine::FEATURES` is every endpoint; `machine::features()` is `features` in `/capabilities`, those this machine has a use for (`ubuntu_pro` on Ubuntu alone, by `/etc/os-release`'s `ID`, read once); a panel offers a page or a terminal target only when listed (older agents 404 or ignore unknown fields). The client fixture holds `FEATURES`.
 - Tests never perform the real action on the machine running them (`power`, `cron` save, firewall changes, user changes, benchmark runs).
 
 Per endpoint:

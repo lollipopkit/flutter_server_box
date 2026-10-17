@@ -99,6 +99,24 @@ pub const FEATURES: &[&str] = &[
     "live",
 ];
 
+/// [`FEATURES`] this machine has a use for, as `/capabilities` lists them:
+/// Ubuntu Pro attaches Ubuntu alone, so elsewhere a panel offers no app for
+/// it.
+pub fn features() -> Vec<&'static str> {
+    features_for(os_id())
+}
+
+fn features_for(os: Option<&str>) -> Vec<&'static str> {
+    FEATURES.iter().copied().filter(|f| *f != "ubuntu_pro" || os == Some("ubuntu")).collect()
+}
+
+/// `/etc/os-release`'s `ID`, read once: the distribution does not change
+/// under a running agent.
+fn os_id() -> Option<&'static str> {
+    static ID: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+    ID.get_or_init(|| std::fs::read_to_string("/etc/os-release").ok().and_then(|t| sbm_parser::common::parse_os_id(&t))).as_deref()
+}
+
 /// Who is asking, and from where, once [`gate`] let them through.
 pub struct Gated {
     pub caller: Caller,
@@ -291,6 +309,16 @@ const ROOT_SCRIPT_VAR: &str = "SBM_ROOT_SCRIPT";
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ubuntu_pro_is_offered_on_ubuntu_alone() {
+        assert!(features_for(Some("ubuntu")).contains(&"ubuntu_pro"));
+        for os in [Some("debian"), Some("fedora"), None] {
+            let f = features_for(os);
+            assert!(!f.contains(&"ubuntu_pro") && f.contains(&"kernel"), "{os:?}");
+        }
+        assert_eq!(features_for(Some("ubuntu")).len(), FEATURES.len());
+    }
 
     #[test]
     fn the_password_is_the_only_thing_on_stdin() {

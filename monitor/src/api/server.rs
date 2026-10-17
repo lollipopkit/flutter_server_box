@@ -655,7 +655,7 @@ struct CapabilitiesView {
     /// The machine-management endpoints this agent serves — see
     /// `api::machine::FEATURES`. Whether they may be used over this link is
     /// `access`.
-    features: &'static [&'static str],
+    features: Vec<&'static str>,
     /// The web apps this agent deployed, and their state (`stacks`): what
     /// decides whether a panel offers their windows. Empty for a watch token.
     stacks: Vec<StackBrief>,
@@ -703,7 +703,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             .unwrap_or_default()
             .metrics_days,
         oldest_sample,
-        features: crate::api::machine::FEATURES,
+        features: crate::api::machine::features(),
         stacks: match caller {
             Some(_) => crate::stacks::store::all(&app_state.db)
                 .await
