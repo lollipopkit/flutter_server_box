@@ -15,6 +15,7 @@ pub mod agents;
 pub mod arm;
 pub mod bench;
 pub mod bsd;
+pub mod cleanup;
 pub mod capabilities;
 pub mod command_risk;
 pub mod command_rules;

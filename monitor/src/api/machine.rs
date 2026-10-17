@@ -87,6 +87,8 @@ pub const FEATURES: &[&str] = &[
     "kernel",
     // Ubuntu Pro: attach, services, Livepatch (`api::ubuntu_pro`).
     "ubuntu_pro",
+    // What can go to free space, and removing it (`api::cleanup`).
+    "cleanup",
     // The monitoring rules firing now (`GET /alerts`, `api::desk`).
     "alerts",
     // The audit log read back (`GET /audit`, `api::audit_log`).

@@ -38,7 +38,7 @@ describe('app manifests', () => {
     const ids = registry.all.map((a) => a.id)
     expect(ids[0]).toBe('serverbox.status')
     expect(ids.at(-1)).toBe('serverbox.settings')
-    expect(ids).toHaveLength(25)
+    expect(ids).toHaveLength(26)
     expect(ids.every((id) => id.startsWith('serverbox.'))).toBe(true)
     expect(defaultDock()).toEqual(['serverbox.status', 'serverbox.files', 'serverbox.terminal', 'serverbox.containers', 'serverbox.virt', 'serverbox.settings'])
   })

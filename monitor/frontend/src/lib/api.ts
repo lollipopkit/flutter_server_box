@@ -20,6 +20,7 @@ import type {
   KernelAction,
   KernelView,
   ProAction,
+  CleanupView,
   ProView,
   WafEvent,
   WafSettings,
@@ -1288,6 +1289,11 @@ export const api = {
     request<StackJob>(`/waf/${server}/install`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
   wafEvents: (server: ProxyServerId, sudoPassword: string) =>
     request<{ events: WafEvent[] }>(`/waf/${server}/events`, { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
+  getCleanup: () => request<CleanupView>('/cleanup', {}),
+  cleanupScan: (sudoPassword: string) => request<StackJob>('/cleanup/scan', { method: 'POST', body: JSON.stringify({ sudo_password: sudoPassword || null }) }),
+  cleanupClean: (ids: string[], sudoPassword: string) =>
+    request<StackJob>('/cleanup/clean', { method: 'POST', body: JSON.stringify({ ids, sudo_password: sudoPassword || null }) }),
+  cleanupJob: (since: number) => request<StackJob>(`/cleanup/job?since=${since}`, {}),
   getUbuntuPro: () => request<ProView>('/ubuntu-pro', {}),
   ubuntuProAct: (action: ProAction, sudoPassword: string, token?: string) =>
     request<StackJob>('/ubuntu-pro/act', { method: 'POST', body: JSON.stringify({ ...action, token: token ?? null, sudo_password: sudoPassword || null }) }),

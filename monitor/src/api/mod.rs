@@ -50,6 +50,7 @@ pub mod stacks;
 pub mod inference;
 pub mod agent_tools;
 pub mod proxy;
+pub mod cleanup;
 pub mod kernel;
 pub mod ubuntu_pro;
 pub mod waf;

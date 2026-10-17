@@ -44,6 +44,9 @@ pub enum JobKind {
     Kernel,
     /// Ubuntu Pro attached, detached or a service changed (`api::ubuntu_pro`).
     UbuntuPro,
+    /// What can go measured, or removed (`api::cleanup`).
+    Scan,
+    Cleanup,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -188,6 +191,37 @@ impl Job {
             Ok(f) if f.timed_out => Err("timed out".into()),
             Ok(f) if f.exit_code != Some(0) => Err(format!("exited with {}", f.exit_code.map_or("a signal".into(), |c| c.to_string()))),
             Ok(_) => Ok(()),
+        }
+    }
+
+    /// Runs [script] as root as [`Job::run_root`] does, but keeps what it
+    /// prints on standard output for the caller (a scan's findings) instead
+    /// of making them lines; what it says on standard error is.
+    pub async fn capture_root(&self, script: &str, password: &str) -> Result<String, String> {
+        if self.cancel.is_cancelled() {
+            return Err("cancelled".into());
+        }
+        let (tx, mut rx) = mpsc::unbounded_channel::<(Stream, String)>();
+        let run = command::run(Spec { command: script, sudo_password: Some(password), timeout: STEP_TIMEOUT }, tx, &self.cancel);
+        let mut out = String::new();
+        let drain = async {
+            while let Some((stream, line)) = rx.recv().await {
+                match stream {
+                    Stream::Out => {
+                        out.push_str(&line);
+                        out.push('\n');
+                    }
+                    Stream::Err => self.push(line),
+                }
+            }
+        };
+        let (finished, ()) = tokio::join!(run, drain);
+        match finished {
+            Err(e) => Err(e.to_string()),
+            Ok(f) if f.cancelled => Err("cancelled".into()),
+            Ok(f) if f.timed_out => Err("timed out".into()),
+            Ok(f) if f.exit_code != Some(0) => Err(format!("exited with {}", f.exit_code.map_or("a signal".into(), |c| c.to_string()))),
+            Ok(_) => Ok(out),
         }
     }
 

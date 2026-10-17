@@ -184,6 +184,7 @@ rss_feed
 rule
 save
 scale
+scan
 schedule
 script
 search

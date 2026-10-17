@@ -142,6 +142,20 @@ impl Stacks {
         self.root.join(id)
     }
 
+    /// Folders of apps no longer installed ([installed] are): what a removal
+    /// without purge kept.
+    pub fn leftovers(&self, installed: &[String]) -> Vec<(String, PathBuf)> {
+        let Ok(entries) = std::fs::read_dir(&self.root) else { return Vec::new() };
+        let mut out: Vec<(String, PathBuf)> = entries
+            .flatten()
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+            .filter_map(|e| Some((e.file_name().into_string().ok()?, e.path())))
+            .filter(|(name, _)| !name.starts_with('.') && !installed.contains(name))
+            .collect();
+        out.sort();
+        out
+    }
+
     /// The folder every app shares (`{shared}`).
     pub fn shared(&self) -> &Path {
         &self.shared

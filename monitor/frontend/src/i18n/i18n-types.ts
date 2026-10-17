@@ -11044,6 +11044,154 @@ type RootTranslation = {
 	 * L​e​a​v​e​ ​t​h​e​ ​s​u​b​s​c​r​i​p​t​i​o​n​;​ ​P​r​o​ ​s​e​r​v​i​c​e​s​ ​g​o​ ​o​f​f​.
 	 */
 	ubuntuProDetachNote: string
+	/**
+	 * C​l​e​a​n​u​p
+	 */
+	cleanup: string
+	/**
+	 * c​l​e​a​n​u​p​ ​j​u​n​k​ ​c​a​c​h​e​ ​f​r​e​e​ ​s​p​a​c​e​ ​d​i​s​k​ ​l​o​g​s​ ​t​r​a​s​h
+	 */
+	cleanupKeywords: string
+	/**
+	 * D​o​w​n​l​o​a​d​e​d​ ​p​a​c​k​a​g​e​s
+	 */
+	cleanupAptCache: string
+	/**
+	 * P​a​c​k​a​g​e​s​ ​n​o​t​h​i​n​g​ ​n​e​e​d​s
+	 */
+	cleanupAutoremove: string
+	/**
+	 * S​y​s​t​e​m​ ​j​o​u​r​n​a​l
+	 */
+	cleanupJournal: string
+	/**
+	 * O​l​d​ ​l​o​g​s
+	 */
+	cleanupRotatedLogs: string
+	/**
+	 * C​r​a​s​h​ ​r​e​p​o​r​t​s
+	 */
+	cleanupCrashReports: string
+	/**
+	 * C​o​r​e​ ​d​u​m​p​s
+	 */
+	cleanupCoreDumps: string
+	/**
+	 * O​l​d​ ​s​n​a​p​ ​r​e​v​i​s​i​o​n​s
+	 */
+	cleanupSnapRevisions: string
+	/**
+	 * T​r​a​s​h
+	 */
+	cleanupTrash: string
+	/**
+	 * {​t​o​o​l​}​ ​c​a​c​h​e
+	 * @param {unknown} tool
+	 */
+	cleanupDevCache: RequiredParams<'tool'>
+	/**
+	 * S​y​s​t​e​m
+	 */
+	cleanupGroupSystem: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t
+	 */
+	cleanupGroupAccount: string
+	/**
+	 * R​e​m​o​v​e​d​ ​w​e​b​ ​a​p​p​s
+	 */
+	cleanupGroupApps: string
+	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	cleanupGroupContainers: string
+	/**
+	 * {​c​o​u​n​t​}​ ​i​t​e​m​{​{​s​}​}
+	 * @param {string | number | boolean} count
+	 */
+	cleanupCount: RequiredParams<'count'>
+	/**
+	 * H​o​l​d​s​ ​t​h​e​ ​a​g​e​n​t​'​s​ ​o​w​n​ ​d​a​t​a
+	 */
+	cleanupHoldsAgent: string
+	/**
+	 * S​c​a​n​ ​f​i​r​s​t​.
+	 */
+	cleanupNotScanned: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​t​h​e​r​e​:​ ​s​c​a​n​ ​a​g​a​i​n​.
+	 */
+	cleanupUnknownItem: string
+	/**
+	 * C​h​o​o​s​e​ ​w​h​a​t​ ​t​o​ ​r​e​m​o​v​e​.
+	 */
+	cleanupNothingChosen: string
+	/**
+	 * S​c​a​n
+	 */
+	cleanupScan: string
+	/**
+	 * S​c​a​n​n​i​n​g​…
+	 */
+	cleanupScanning: string
+	/**
+	 * C​l​e​a​n​i​n​g​…
+	 */
+	cleanupCleaning: string
+	/**
+	 * D​o​n​e
+	 */
+	cleanupDone: string
+	/**
+	 * D​i​d​ ​n​o​t​ ​f​i​n​i​s​h
+	 */
+	cleanupFailed: string
+	/**
+	 * A​ ​s​c​a​n​ ​m​e​a​s​u​r​e​s​ ​w​h​a​t​ ​c​a​n​ ​g​o​:​ ​d​o​w​n​l​o​a​d​e​d​ ​p​a​c​k​a​g​e​s​ ​a​n​d​ ​o​n​e​s​ ​n​o​t​h​i​n​g​ ​n​e​e​d​s​,​ ​o​l​d​ ​l​o​g​s​ ​a​n​d​ ​t​h​e​ ​j​o​u​r​n​a​l​ ​p​a​s​t​ ​6​4​ ​M​i​B​,​ ​c​r​a​s​h​ ​r​e​p​o​r​t​s​,​ ​o​l​d​ ​s​n​a​p​ ​r​e​v​i​s​i​o​n​s​,​ ​t​h​i​s​ ​a​c​c​o​u​n​t​'​s​ ​t​r​a​s​h​ ​a​n​d​ ​c​a​c​h​e​s​,​ ​a​n​d​ ​w​h​a​t​ ​r​e​m​o​v​e​d​ ​w​e​b​ ​a​p​p​s​ ​l​e​f​t​.
+	 */
+	cleanupIntro: string
+	/**
+	 * C​a​n​ ​g​o
+	 */
+	cleanupCanGo: string
+	/**
+	 * S​c​a​n​n​e​d​ ​{​a​t​}
+	 * @param {unknown} at
+	 */
+	cleanupScannedAt: RequiredParams<'at'>
+	/**
+	 * C​h​o​s​e​n
+	 */
+	cleanupChosen: string
+	/**
+	 * C​l​e​a​n​…
+	 */
+	cleanupClean: string
+	/**
+	 * D​o​c​k​e​r​'​s​ ​i​m​a​g​e​s​,​ ​c​o​n​t​a​i​n​e​r​s​ ​a​n​d​ ​b​u​i​l​d​ ​c​a​c​h​e​ ​a​r​e​ ​p​r​u​n​e​d​ ​i​n​ ​C​o​n​t​a​i​n​e​r​s
+	 */
+	cleanupContainersNote: string
+	/**
+	 * S​c​a​n
+	 */
+	cleanupScanTitle: string
+	/**
+	 * L​o​g​s​,​ ​c​a​c​h​e​s​ ​a​n​d​ ​o​t​h​e​r​ ​a​c​c​o​u​n​t​s​'​ ​f​i​l​e​s​ ​a​r​e​ ​r​o​o​t​'​s​ ​t​o​ ​m​e​a​s​u​r​e​.
+	 */
+	cleanupScanBody: string
+	/**
+	 * R​e​m​o​v​e​ ​{​s​i​z​e​}
+	 * @param {unknown} size
+	 */
+	cleanupCleanTitle: RequiredParams<'size'>
+	/**
+	 * T​h​e​ ​c​h​o​s​e​n​ ​i​t​e​m​s​ ​a​r​e​ ​r​e​m​o​v​e​d​.​ ​C​a​c​h​e​s​ ​f​i​l​l​ ​a​g​a​i​n​ ​a​s​ ​p​r​o​g​r​a​m​s​ ​n​e​e​d​ ​t​h​e​m​.
+	 */
+	cleanupCleanBody: string
+	/**
+	 * T​h​e​ ​c​h​o​s​e​n​ ​i​t​e​m​s​ ​a​r​e​ ​r​e​m​o​v​e​d​,​ ​r​e​m​o​v​e​d​ ​w​e​b​ ​a​p​p​s​'​ ​f​o​l​d​e​r​s​ ​w​i​t​h​ ​t​h​e​i​r​ ​d​a​t​a​:​ ​d​e​p​l​o​y​i​n​g​ ​t​h​e​ ​a​p​p​ ​a​g​a​i​n​ ​s​t​a​r​t​s​ ​e​m​p​t​y​.
+	 */
+	cleanupCleanAppsBody: string
 }
 
 export type TranslationFunctions = {
@@ -21683,6 +21831,150 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Leave the subscription; Pro services go off.
 	 */
 	ubuntuProDetachNote: () => LocalizedString
+	/**
+	 * Cleanup
+	 */
+	cleanup: () => LocalizedString
+	/**
+	 * cleanup junk cache free space disk logs trash
+	 */
+	cleanupKeywords: () => LocalizedString
+	/**
+	 * Downloaded packages
+	 */
+	cleanupAptCache: () => LocalizedString
+	/**
+	 * Packages nothing needs
+	 */
+	cleanupAutoremove: () => LocalizedString
+	/**
+	 * System journal
+	 */
+	cleanupJournal: () => LocalizedString
+	/**
+	 * Old logs
+	 */
+	cleanupRotatedLogs: () => LocalizedString
+	/**
+	 * Crash reports
+	 */
+	cleanupCrashReports: () => LocalizedString
+	/**
+	 * Core dumps
+	 */
+	cleanupCoreDumps: () => LocalizedString
+	/**
+	 * Old snap revisions
+	 */
+	cleanupSnapRevisions: () => LocalizedString
+	/**
+	 * Trash
+	 */
+	cleanupTrash: () => LocalizedString
+	/**
+	 * {tool} cache
+	 */
+	cleanupDevCache: (arg: { tool: unknown }) => LocalizedString
+	/**
+	 * System
+	 */
+	cleanupGroupSystem: () => LocalizedString
+	/**
+	 * This account
+	 */
+	cleanupGroupAccount: () => LocalizedString
+	/**
+	 * Removed web apps
+	 */
+	cleanupGroupApps: () => LocalizedString
+	/**
+	 * Containers
+	 */
+	cleanupGroupContainers: () => LocalizedString
+	/**
+	 * {count} item{{s}}
+	 */
+	cleanupCount: (arg: { count: string | number | boolean }) => LocalizedString
+	/**
+	 * Holds the agent's own data
+	 */
+	cleanupHoldsAgent: () => LocalizedString
+	/**
+	 * Scan first.
+	 */
+	cleanupNotScanned: () => LocalizedString
+	/**
+	 * That is no longer there: scan again.
+	 */
+	cleanupUnknownItem: () => LocalizedString
+	/**
+	 * Choose what to remove.
+	 */
+	cleanupNothingChosen: () => LocalizedString
+	/**
+	 * Scan
+	 */
+	cleanupScan: () => LocalizedString
+	/**
+	 * Scanning…
+	 */
+	cleanupScanning: () => LocalizedString
+	/**
+	 * Cleaning…
+	 */
+	cleanupCleaning: () => LocalizedString
+	/**
+	 * Done
+	 */
+	cleanupDone: () => LocalizedString
+	/**
+	 * Did not finish
+	 */
+	cleanupFailed: () => LocalizedString
+	/**
+	 * A scan measures what can go: downloaded packages and ones nothing needs, old logs and the journal past 64 MiB, crash reports, old snap revisions, this account's trash and caches, and what removed web apps left.
+	 */
+	cleanupIntro: () => LocalizedString
+	/**
+	 * Can go
+	 */
+	cleanupCanGo: () => LocalizedString
+	/**
+	 * Scanned {at}
+	 */
+	cleanupScannedAt: (arg: { at: unknown }) => LocalizedString
+	/**
+	 * Chosen
+	 */
+	cleanupChosen: () => LocalizedString
+	/**
+	 * Clean…
+	 */
+	cleanupClean: () => LocalizedString
+	/**
+	 * Docker's images, containers and build cache are pruned in Containers
+	 */
+	cleanupContainersNote: () => LocalizedString
+	/**
+	 * Scan
+	 */
+	cleanupScanTitle: () => LocalizedString
+	/**
+	 * Logs, caches and other accounts' files are root's to measure.
+	 */
+	cleanupScanBody: () => LocalizedString
+	/**
+	 * Remove {size}
+	 */
+	cleanupCleanTitle: (arg: { size: unknown }) => LocalizedString
+	/**
+	 * The chosen items are removed. Caches fill again as programs need them.
+	 */
+	cleanupCleanBody: () => LocalizedString
+	/**
+	 * The chosen items are removed, removed web apps' folders with their data: deploying the app again starts empty.
+	 */
+	cleanupCleanAppsBody: () => LocalizedString
 }
 
 export type Formatters = {}

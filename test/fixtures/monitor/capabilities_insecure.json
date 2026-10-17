@@ -51,6 +51,7 @@
         "waf",
         "kernel",
         "ubuntu_pro",
+        "cleanup",
         "alerts",
         "audit",
         "live"

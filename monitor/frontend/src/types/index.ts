@@ -183,6 +183,7 @@ export type MachineFeature =
   | 'proxy'
   | 'kernel'
   | 'ubuntu_pro'
+  | 'cleanup'
   | 'waf'
   /// Whether a newer agent is out and how this one is updated (`/update`).
   | 'update'
@@ -2783,7 +2784,7 @@ export interface StackRow {
   last_error?: string | null
 }
 
-export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel' | 'ubuntuPro'
+export type StackJobKind = 'install' | 'update' | 'reconfigure' | 'start' | 'stop' | 'restart' | 'remove' | 'backup' | 'restore' | 'storage' | 'shares' | 'kernel' | 'ubuntuPro' | 'scan' | 'cleanup'
 
 /// A deploy, update, start, stop or removal (`stacks::job::JobView`).
 export interface StackJob {
@@ -3328,6 +3329,23 @@ export type KernelAction =
   | { action: 'remove'; release: string }
   | { action: 'boot'; release: string; once: boolean }
   | { action: 'bootNewest' }
+
+/// What can go to free space (`sbm_parser::cleanup`, `GET /cleanup`).
+export interface CleanupItem {
+  /// `apt-cache`, `cache:<folder>`, `dev:npm`, `leftover:<app>`, `docker:Images`…
+  id: string
+  group: 'system' | 'account' | 'apps' | 'containers'
+  bytes: number
+  count: number | null
+  detail: string | null
+  /// Removed here; Docker's are pruned on the Containers page.
+  cleanable: boolean
+}
+
+export interface CleanupView {
+  scan: { at: number; items: CleanupItem[] } | null
+  job: StackJob | null
+}
 
 /// Ubuntu Pro (`sbm_parser::ubuntu_pro`, `GET /ubuntu-pro`).
 export interface ProService {

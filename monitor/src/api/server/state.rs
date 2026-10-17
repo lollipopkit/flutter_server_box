@@ -133,6 +133,8 @@ pub struct AppState {
     pub kernel: Arc<crate::stacks::job::JobSlot>,
     /// Ubuntu Pro changes (`api::ubuntu_pro`).
     pub ubuntu_pro: Arc<crate::stacks::job::JobSlot>,
+    /// The last scan and the cleanup's job (`api::cleanup`).
+    pub cleanup: Arc<crate::api::cleanup::Cleanup>,
     /// The last process table read, which the next one's read and write
     /// speeds are differenced against — see `api::process`.
     pub process_sample: Arc<tokio::sync::Mutex<Option<crate::api::process::ProcessSample>>>,
@@ -261,6 +263,7 @@ impl AppState {
             shares: Arc::default(),
             kernel: Arc::default(),
             ubuntu_pro: Arc::default(),
+            cleanup: Arc::default(),
             stacks: Arc::new(crate::stacks::Stacks::new(
                 sqlite_file_of(&db).as_deref(),
                 config.get_stacks().local_apps.as_deref().map(std::path::Path::new),

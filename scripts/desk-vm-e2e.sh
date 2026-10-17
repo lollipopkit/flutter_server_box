@@ -5,6 +5,7 @@
 #
 #   scripts/desk-vm-e2e.sh <node> kernel       # restarts the VM twice
 #   scripts/desk-vm-e2e.sh <node> ubuntu_pro   # SBM_E2E_PRO_TOKEN to attach
+#   scripts/desk-vm-e2e.sh <node> cleanup      # junk of each kind made first
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
@@ -17,7 +18,7 @@ set -eu
 
 node=${1:-}
 spec=${2:-}
-[ -n "$node" ] && [ -f "$(dirname "$0")/../monitor/frontend/e2e/$spec.e2e.ts" ] || { sed -n '2,16p' "$0" >&2; exit 2; }
+[ -n "$node" ] && [ -f "$(dirname "$0")/../monitor/frontend/e2e/$spec.e2e.ts" ] || { sed -n '2,17p' "$0" >&2; exit 2; }
 build=${SBM_E2E_BUILD_HOST:-lkd-wsl}
 root=$(cd "$(dirname "$0")/.." && pwd)
 src='src/flutter_server_box'
@@ -78,7 +79,23 @@ export SBM_E2E_KERNEL_VERSION
 echo "==> vm $id: $(vm uname -r) running, $SBM_E2E_KERNEL_VERSION to install"
 fi
 
+if [ "$spec" = cleanup ]; then
+# Something of each kind to clean: a downloaded package, one nothing needs,
+# old logs, a crash report, the account's trash and caches, and a folder a
+# removed web app left (a file in it root's, as a container's would be).
+echo "==> vm $id: junk to clean"
+vm 'set -e; export DEBIAN_FRONTEND=noninteractive
+  apt-get install -y -q cowsay >/dev/null && apt-mark auto cowsay >/dev/null
+  apt-get install -y -q --download-only --reinstall sl >/dev/null 2>&1 || apt-get install -y -q --download-only sl >/dev/null
+  head -c 2000000 /dev/urandom > /var/log/sbm-e2e.log.1; head -c 1000000 /dev/urandom | gzip > /var/log/sbm-e2e.log.2.gz
+  mkdir -p /var/crash; head -c 1500000 /dev/urandom > /var/crash/sbm-e2e.crash
+  runuser -u sbm -- sh -c "mkdir -p ~/.cache/sbm-e2e-app ~/.npm/_cacache ~/.local/share/Trash/files ~/.local/share/Trash/info ~/app/stacks/sbm.leftover/data
+    head -c 5000000 /dev/urandom > ~/.cache/sbm-e2e-app/blob; head -c 2000000 /dev/urandom > ~/.npm/_cacache/blob
+    head -c 1000000 /dev/urandom > ~/.local/share/Trash/files/old; head -c 3000000 /dev/urandom > ~/app/stacks/sbm.leftover/data/db"
+  head -c 1000000 /dev/urandom > /home/sbm/app/stacks/sbm.leftover/data/root-owned'
+fi
+
 cd "$root/monitor/frontend"
 echo "==> $spec.e2e.ts"
-npx playwright test "$spec" --reporter=line --output="e2e/.results/$spec"
+SBM_E2E_CLEANUP=1 npx playwright test "$spec" --reporter=line --output="e2e/.results/$spec"
 echo "==> all passed"
