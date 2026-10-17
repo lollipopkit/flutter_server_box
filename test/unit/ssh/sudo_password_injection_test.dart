@@ -51,6 +51,17 @@ void main() {
       expect(SudoPassword.isPromptText('gt610@host:~\$'), isFalse);
     });
 
+    test("ignores another program's password prompt", () {
+      // Each would be sent this server's password.
+      expect(SudoPassword.isPromptText("alice@other's password:"), isFalse);
+      expect(SudoPassword.isPromptText('Enter password:'), isFalse);
+      expect(
+        SudoPassword.isPromptText("Password for 'https://alice@github.com':"),
+        isFalse,
+      );
+      expect(SudoPassword.isPromptText('Enter PEM pass phrase:'), isFalse);
+    });
+
     test('detects sudo prompt in SSH output tail', () {
       expect(
         hasPendingSudoPromptInOutputTail(

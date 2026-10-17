@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/res/misc.dart';
 
 /// A server's sudo password, wherever something asks for it.
 ///
@@ -124,18 +123,18 @@ abstract final class SudoPassword {
     return pwd;
   }
 
-  /// Returns true if [trimmed] looks like an active sudo password prompt.
-  /// [trimmed] should already be trimmed.
-  static bool isPromptText(String trimmed) {
-    final lower = trimmed.toLowerCase();
-    if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
-    if (lower.contains('[sudo] password')) return true;
-    if ((lower.endsWith(':') || lower.endsWith('：')) &&
-        (lower.contains('password') || lower.contains('密码'))) {
-      return true;
-    }
-    return false;
+  /// Whether [trimmed] is sudo asking for the password: its own prompt,
+  /// `[sudo] …:` in any translation, or the bare `Password:` it prints on
+  /// macOS and the BSDs. Nothing else — `ssh`'s `user@host's password:`,
+  /// `mysql -p` or git would be handed this server's password.
+  static bool isPromptText(String line) {
+    final t = line.trim();
+    if (!t.endsWith(':') && !t.endsWith('：')) return false;
+    return _sudoPrompt.hasMatch(t) || _barePrompt.hasMatch(t);
   }
+
+  static final _sudoPrompt = RegExp(r'^\[sudo\]', caseSensitive: false);
+  static final _barePrompt = RegExp(r'^(password|密码)\s*[:：]$', caseSensitive: false);
 
   /// Strips ANSI escape sequences and normalizes line endings.
   static String normalizeOutput(String value) {
