@@ -136,6 +136,7 @@ impl Stacks {
         let dir = std::path::absolute(Self::dir_beside(db)).unwrap_or_else(|_| Self::dir_beside(db));
         protected.in_each(&dir, ENV_FILE);
         protected.tree(&dir.join(CATALOG_DIR));
+        protected.tree(&dir.join(catalog::DESK_CACHE_DIR));
     }
 
     pub fn dir(&self, id: &str) -> PathBuf {

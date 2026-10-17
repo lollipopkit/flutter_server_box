@@ -8458,6 +8458,26 @@ type RootTranslation = {
 	 */
 	storeLocal: string
 	/**
+	 * D​e​s​k​ ​a​p​p​s
+	 */
+	storeDeskApps: string
+	/**
+	 * I​n​s​t​a​l​l
+	 */
+	storeInstall: string
+	/**
+	 * S​e​r​v​e​r​B​o​x
+	 */
+	storeFirstParty: string
+	/**
+	 * U​n​k​n​o​w​n​ ​p​u​b​l​i​s​h​e​r
+	 */
+	storeUnknownPublisher: string
+	/**
+	 * I​t​s​ ​p​u​b​l​i​s​h​e​r​ ​i​s​ ​n​o​t​ ​k​n​o​w​n​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​:​ ​i​n​s​t​a​l​l​ ​i​t​ ​o​n​l​y​ ​i​f​ ​y​o​u​ ​t​r​u​s​t​ ​w​h​e​r​e​ ​i​t​ ​c​a​m​e​ ​f​r​o​m​.
+	 */
+	storeUnknownPublisherNote: string
+	/**
 	 * F​r​o​m
 	 */
 	stackFrom: string
@@ -19650,6 +19670,26 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * Local
 	 */
 	storeLocal: () => LocalizedString
+	/**
+	 * Desk apps
+	 */
+	storeDeskApps: () => LocalizedString
+	/**
+	 * Install
+	 */
+	storeInstall: () => LocalizedString
+	/**
+	 * ServerBox
+	 */
+	storeFirstParty: () => LocalizedString
+	/**
+	 * Unknown publisher
+	 */
+	storeUnknownPublisher: () => LocalizedString
+	/**
+	 * Its publisher is not known to this agent: install it only if you trust where it came from.
+	 */
+	storeUnknownPublisherNote: () => LocalizedString
 	/**
 	 * From
 	 */

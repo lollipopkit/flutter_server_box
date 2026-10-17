@@ -13,8 +13,9 @@
 # starts a VM; runs the agent there as an ordinary account with a sudo
 # password, a systemd user service started at boot, over TLS with a
 # self-signed certificate; then runs frontend/e2e/<spec>.e2e.ts against it.
-# A `<name>_app` spec gets the package of `monitor/apps/<name>`, built here
-# (`scripts/build-desk-app.sh`), as SBM_E2E_APP_PACKAGE.
+# A `<name>_app` spec gets the package of `monitor/apps/<name>` built here
+# into store/desk/ (`scripts/build-desk-app.sh --store`), so the agent offers
+# it in the App Store.
 # For `kernel` it picks a version of the running kernel's flavour older than
 # it (SBM_E2E_KERNEL_VERSION). The passwords are made for the run and never
 # leave environment variables. SBM_E2E_KEEP=1 keeps the VM.
@@ -30,6 +31,12 @@ lab="$root/scripts/e2e-vm.sh"
 work=$(mktemp -d)
 remote() { printf '%s\n' "$1" | ssh "$build" sh -s; }
 
+# The package goes into store/desk/ first: the agent ships what is there.
+case $spec in *_app)
+  echo "==> build: package ${spec%_app}"
+  "$root/scripts/build-desk-app.sh" "${spec%_app}" --store | tail -n 1 ;;
+esac
+
 echo "==> build: agent on $build"
 rsync -az --delete \
   --exclude target --exclude node_modules --exclude build --exclude .dart_tool --exclude .git \
@@ -38,11 +45,6 @@ rsync -az --delete \
 remote ". \"\$HOME/.cargo/env\" 2>/dev/null; cd ~/$src && cargo build -q -p server_box_monitor --profile monitor-test"
 echo "==> build: panel"
 (cd "$root/monitor/frontend" && npm run build >/dev/null)
-case $spec in *_app)
-  echo "==> build: package ${spec%_app}"
-  SBM_E2E_APP_PACKAGE=$("$root/scripts/build-desk-app.sh" "${spec%_app}" | tail -n 1 | cut -d' ' -f1)
-  export SBM_E2E_APP_PACKAGE ;;
-esac
 
 echo "==> vm: up"
 set -- $("$lab" up "$node" | tail -n 1)

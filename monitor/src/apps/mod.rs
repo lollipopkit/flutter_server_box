@@ -1,7 +1,9 @@
 //! Desk apps' backends run by the agent (`docs/dev/desk-sys.md`): the
 //! compiled components by package, and each app's job.
 
+pub mod catalog;
 pub mod runtime;
+pub mod sign;
 pub mod value;
 
 use std::collections::HashMap;

@@ -49,6 +49,9 @@ COPY assets/catalog/repos.toml /assets/catalog/repos.toml
 # The built-in web apps (`stacks::builtin`), embedded the same way: from
 # `src/stacks/` that is `/store/apps`.
 COPY store/apps/ /store/apps/
+# The shipped desk app packages (`apps::catalog`, Git LFS: the checkout must
+# have them), embedded from `src/apps/`: also `/store/desk`.
+COPY store/desk/ /store/desk/
 # Local inference's engines (`stacks::builtin::parts`): from `src/stacks/`,
 # `../../inference` is `/app/inference`.
 COPY monitor/inference/ ./inference/

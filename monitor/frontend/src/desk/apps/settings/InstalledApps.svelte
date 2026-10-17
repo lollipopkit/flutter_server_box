@@ -7,7 +7,7 @@
   import { AppIcon, Badge, Button, Group, Row } from '../../lk'
   import { errorText } from '../../../lib/errorText'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { permissionText as describePermission } from './permissions'
+  import { permissionText as describePermission } from '../../../lib/appPermissions'
   import { api, ApiError } from '../../../lib/api'
   import type { InstalledApp } from '../../../types'
   import type { IconTone } from '../../lk/AppIcon.svelte'

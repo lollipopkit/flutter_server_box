@@ -53,6 +53,8 @@ export interface WindowHandle {
   /// "Open with" menu; open one with `open(id, { intent: { action: 'open',
   /// data: { path, kind } } })`.
   handlers(path: string, kind: 'file' | 'dir'): AppHandler[]
+  /// Reads the installed apps again (after the App Store installed one).
+  reloadApps(): Promise<void>
   /// Puts an icon on the desk that opens [path] with this window's app.
   addPathIcon(path: string, label: string): void
   readonly active: boolean
@@ -130,6 +132,7 @@ const DETACHED: WindowHandle = {
     keys: async () => [],
   },
   addPathIcon() {},
+  reloadApps: async () => {},
   active: true,
   closed: false,
   lifecycle: 'active',

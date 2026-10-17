@@ -47,6 +47,7 @@
     },
     handlers: (path, kind) => parent.handlers(path, kind),
     addPathIcon: (path, label) => parent.addPathIcon(path, label),
+    reloadApps: () => parent.reloadApps(),
     get active() {
       return parent.active && host.focusId === id
     },

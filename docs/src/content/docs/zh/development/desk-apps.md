@@ -121,7 +121,8 @@ await desk.storage.set('count', count + 1)
 
 `.fsba` 是 gzip 压缩的 tar，包含 `manifest.json`、`ui/`（网页包，入口为
 `ui/index.html`）、`backend.wasm`（仅且必须在类型为 `wasm` 时存在），以及可选的
-`LICENSE`、`NOTICE` 和 `README.md`；其他内容不被接受。agent 只接受普通文件和普通相对
+`LICENSE`、`NOTICE`、`README.md` 和 `SIGNATURE`；其他内容不被接受。ServerBox 会为自己的包签名；
+没有 agent 认识的签名的包会显示为未知发布者。agent 只接受普通文件和普通相对
 路径，最多 2000 个文件，压缩前后都不超过 20 MiB。在 macOS 上运行 `tar` 时需要设置
 `COPYFILE_DISABLE=1`，否则会加入 agent 拒绝的 `._` 文件；模板的 `npm run pack` 已经
 这样做。

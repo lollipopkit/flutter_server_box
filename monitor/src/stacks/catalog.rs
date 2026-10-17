@@ -28,6 +28,8 @@ use crate::api::desk_themes::{BUNDLED_CATALOG, CATALOG_URL, Fetch, HttpFetch};
 /// How long a read of the store is kept.
 const TTL: Duration = Duration::from_secs(3600);
 const SOURCE_FILE: &str = "source";
+/// Beside the cache: the desk app packages (`apps::catalog`).
+pub const DESK_CACHE_DIR: &str = ".desk-catalog";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -61,6 +63,8 @@ pub struct Catalog {
     /// When the store was last read, successfully or not; one read at a time.
     read: tokio::sync::Mutex<Option<Instant>>,
     source: RwLock<(String, Arc<dyn Fetch>)>,
+    /// The same repositories' desk app packages (`desk/*.fsba`).
+    pub desk: crate::apps::catalog::DeskCatalog,
 }
 
 impl Catalog {
@@ -71,7 +75,9 @@ impl Catalog {
         let parts = builtin::parts().iter().map(|p| (p.manifest.id.clone(), Arc::new(p.clone()))).collect();
         let store = read_cache(&cache);
         let local = local.map(read_local).unwrap_or_default();
+        let desk = crate::apps::catalog::DeskCatalog::new(cache.with_file_name(DESK_CACHE_DIR));
         Self {
+            desk,
             cache,
             bundled,
             parts,
@@ -135,11 +141,13 @@ impl Catalog {
         });
         let previous = self.store.read_locked().clone();
         let mut next: BTreeMap<String, Entry> = BTreeMap::new();
+        let mut archives = Vec::new();
         for address in &catalog.repos {
             let files = fetch
                 .get(&repo::archive_url_of(address), repo::MAX_ARCHIVE_BYTES)
                 .await
                 .and_then(|bytes| repo::read_archive(&bytes).map_err(|e| e.0));
+            archives.push((address.clone(), files.as_ref().ok().cloned()));
             match files {
                 Ok(files) => {
                     for (id, package) in apps_in(&files) {
@@ -160,6 +168,8 @@ impl Catalog {
             tracing::warn!("app catalog: keeping it in {}: {e}", self.cache.display());
         }
         *self.store.write_locked() = next;
+        let read: Vec<_> = archives.iter().map(|(a, f)| (a.clone(), f.as_ref().map(|f| f.iter().collect()).ok_or(()))).collect();
+        self.desk.replace(&read);
     }
 }
 

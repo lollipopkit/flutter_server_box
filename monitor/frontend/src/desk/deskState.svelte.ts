@@ -438,6 +438,7 @@ export function provideWindow(desk: Desk, id: string, chrome: WindowChrome, life
     setIcon: (icon) => (chrome.icon = icon && { glyph: String(icon.glyph), tone: icon.tone }),
     setBadge: (badge) => (chrome.badge = badge === null || badge === '' ? null : String(badge).slice(0, 8)),
     close: () => desk.windows.close(id),
+    reloadApps: () => desk.reloadWebApps(),
     open: (appId, options) => desk.open(appId, options, desk.windows.get(id)?.appId),
     openWindow: (appState) => {
       const appId = desk.windows.get(id)?.appId

@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { loadAllLocales } from '../i18n/i18n-util.sync'
 import { i18nObject, locales } from '../i18n/i18n-util'
-import { permissionText } from '../desk/apps/settings/permissions'
+import { permissionText } from '../lib/appPermissions'
 
 loadAllLocales()
 
 /// Every permission the agent lets a package ask for (`api::apps`,
 /// `WEB_PERMISSIONS` and `WASM_PERMISSIONS`): the approval dialog says what
 /// each allows, never its bare name.
-const PERMISSIONS = ['notifications', 'background', 'status', 'files.read', 'exec']
+const PERMISSIONS = ['notifications', 'background', 'status', 'process', 'root']
 
 describe('installed app permissions', () => {
   it('are described in every locale', () => {

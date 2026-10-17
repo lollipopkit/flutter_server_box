@@ -34,6 +34,8 @@ async fn server() -> TestServer {
                             .route(web::get().to(apps::list))
                             .route(web::post().to(apps::install)),
                     )
+                    .service(web::resource("/apps/catalog").route(web::get().to(apps::catalog)))
+                    .service(web::resource("/apps/catalog/{id}/install").route(web::post().to(apps::install_offered)))
                     .service(web::resource("/apps/{id}").route(web::delete().to(apps::remove)))
                     .service(web::resource("/apps/{id}/approval").route(web::put().to(apps::approve)))
                     .service(web::resource("/apps/{id}/launch").route(web::get().to(apps::launch)))
@@ -473,4 +475,40 @@ async fn a_package_brings_a_backend_only_as_wasm() {
     install(&srv, good(&[])).await;
     approve(&srv, &[], common::PASSWORD).await;
     assert_eq!(call_fn(&srv, "x", json!(null)).await.status, 404);
+}
+
+// ---------------------------------------------------------------------------
+// The catalog and first-party signatures
+// ---------------------------------------------------------------------------
+
+#[ntex::test]
+async fn the_catalog_offers_the_shipped_packages_signed() {
+    let srv = server().await;
+    let r = call(&srv, true, Method::GET, "/api/v1/apps/catalog", None).await;
+    assert_eq!(r.status, 200, "{}", r.json);
+    let cleanup = r.json["apps"].as_array().unwrap().iter().find(|a| a["id"] == "serverbox.cleanup").cloned().expect("Cleanup is offered");
+    assert_eq!((cleanup["signedBy"].as_str(), cleanup["source"].as_str()), (Some("serverbox-2026"), Some("bundled")));
+    assert_eq!(cleanup["manifest"]["permissions"], json!(["root"]));
+
+    // Installed from it as an upload is: waiting, then approved.
+    let r = call(&srv, true, Method::POST, "/api/v1/apps/catalog/serverbox.cleanup/install", None).await;
+    assert_eq!(r.status, 200, "{}", r.json);
+    assert_eq!((r.json["signed_by"].as_str(), r.json["approved_permissions"].is_null()), (Some("serverbox-2026"), true));
+    let body = json!({ "sha256": r.json["sha256"], "permissions": ["root"], "current_password": common::PASSWORD }).to_string().into_bytes();
+    let r = call(&srv, true, Method::PUT, "/api/v1/apps/serverbox.cleanup/approval", Some((body, "application/json"))).await;
+    assert_eq!(r.status, 200, "{}", r.json);
+    assert_eq!(call(&srv, true, Method::POST, "/api/v1/apps/catalog/nobody.here/install", None).await.status, 404);
+
+    // The panel's own publisher, unsigned: refused.
+    let mut m = manifest(&[]);
+    m["publisher"] = json!("serverbox");
+    let unsigned = package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec())]);
+    assert_eq!(install(&srv, unsigned).await.json["error"], "invalidId");
+    // A signed app is replaced only by a package with its signature: an
+    // unsigned upload of its id is refused before its publisher is.
+    let mut m = manifest(&["root"]);
+    m["publisher"] = json!("serverbox");
+    m["name"] = json!("cleanup");
+    let swapped = package(&[("manifest.json", m.to_string().into_bytes()), ("ui/index.html", b"x".to_vec()), ("SIGNATURE", br#"{"key":"other","signature":"AA=="}"#.to_vec())]);
+    assert_eq!(install(&srv, swapped).await.json["error"], "invalidId");
 }

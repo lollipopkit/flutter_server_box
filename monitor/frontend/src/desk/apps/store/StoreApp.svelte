@@ -11,6 +11,7 @@
   import type { IconTone } from '../../lk'
   import { AppToolbar, PageStack, useWindow } from '../../sys'
   import StackDetail from '../../../components/stack/StackDetail.svelte'
+  import DeskPackages from './DeskPackages.svelte'
   import { healthBadge } from '../../../components/stack/health'
   import { pick } from '../../../components/stack/text'
   import { LL, locale } from '../../../i18n/i18n-svelte'
@@ -152,6 +153,7 @@
           <p>{error}</p>
         </Card>
       {/if}
+      <DeskPackages {query} {canChange} />
       {#if !apps}
         {#if !error}<div class="flex justify-center py-12"><Spinner size={48} /></div>{/if}
       {:else}

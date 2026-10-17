@@ -346,6 +346,8 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::apps::install)),
             )
             .service(web::resource("/apps/sudo").route(web::get().to(crate::api::app_backend::sudo)))
+            .service(web::resource("/apps/catalog").route(web::get().to(crate::api::apps::catalog)))
+            .service(web::resource("/apps/catalog/{id}/install").route(web::post().to(crate::api::apps::install_offered)))
             .service(web::resource("/apps/{id}").route(web::delete().to(crate::api::apps::remove)))
             .service(web::resource("/apps/{id}/approval").route(web::put().to(crate::api::apps::approve)))
             .service(web::resource("/apps/{id}/launch").route(web::get().to(crate::api::apps::launch)))

@@ -16,6 +16,11 @@ description: 在 Monitor 面板的桌面中安装第三方应用
 
 ## 安装应用
 
+**App Store** 会列出 agent 提供的桌面应用：ServerBox 签名的标为 **ServerBox**，其他的标为
+**未知发布者**。选择 **安装** 会显示应用申请的权限，输入密码后完成安装和批准。
+
+来自其他来源的包：
+
 1. 在面板中打开 **Settings → Apps**。
 2. 在 **Installed** 下选择 **Install…**，选择 `.fsba` 包。agent 会检查这个包，检查不
    通过时拒绝安装，例如 manifest 含有未知字段，或包内有指向包外的条目。

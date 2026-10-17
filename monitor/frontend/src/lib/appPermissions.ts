@@ -2,7 +2,7 @@
 /// the app's page say it. The agent's list is `api::apps` (`WEB_PERMISSIONS`,
 /// `WASM_PERMISSIONS`); one the panel does not know yet is shown as is.
 
-import type { TranslationFunctions } from '../../../i18n/i18n-types'
+import type { TranslationFunctions } from '../i18n/i18n-types'
 
 export function permissionText(ll: TranslationFunctions, permission: string): string {
   switch (permission) {

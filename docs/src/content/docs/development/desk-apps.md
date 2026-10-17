@@ -130,8 +130,9 @@ fields.
 
 A `.fsba` is a gzipped tar of `manifest.json`, `ui/` (the bundle, with
 `ui/index.html` as the entry), `backend.wasm` (present exactly when the kind is
-`wasm`), and optionally `LICENSE`, `NOTICE` and `README.md`; nothing else is
-accepted. The agent accepts regular files only, with plain relative paths,
+`wasm`), and optionally `LICENSE`, `NOTICE`, `README.md` and `SIGNATURE`; nothing else is
+accepted. ServerBox signs its own packages; one without a signature the agent knows is
+shown as from an unknown publisher. The agent accepts regular files only, with plain relative paths,
 at most 2000 files and 20 MiB compressed and unpacked. On macOS set
 `COPYFILE_DISABLE=1` for `tar`, or it adds `._` files that the agent refuses;
 the template's `npm run pack` does this.

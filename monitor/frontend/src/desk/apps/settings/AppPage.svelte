@@ -9,7 +9,7 @@
   import type { AppSpec } from '../../sys'
   import SettingsPage from './SettingsPage.svelte'
   import { LL } from '../../../i18n/i18n-svelte'
-  import { permissionText as describePermission } from './permissions'
+  import { permissionText as describePermission } from '../../../lib/appPermissions'
   import { useDeskPrefs } from '../../deskState.svelte'
   import { stackOf } from '../../../components/stack/apps'
   import { capabilitiesStore } from '../../../lib/capabilities.svelte'

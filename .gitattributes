@@ -105,3 +105,4 @@ store/**/*.webp filter=lfs diff=lfs merge=lfs -text
 store/**/*.gif filter=lfs diff=lfs merge=lfs -text
 store/**/*.avif filter=lfs diff=lfs merge=lfs -text
 store/**/*.fsbt filter=lfs diff=lfs merge=lfs -text
+store/**/*.fsba filter=lfs diff=lfs merge=lfs -text

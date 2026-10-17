@@ -1,12 +1,13 @@
 /// Cleanup as an installed package (`monitor/apps/cleanup`: a component
 /// backend and a web UI in a sandboxed frame) on a throwaway machine: the
-/// package installed and approved in Settings → Apps, then what
+/// signed package the agent ships installed and approved from the App Store,
+/// in place of the built-in app, then what
 /// `scripts/desk-vm-e2e.sh <node> cleanup_app` left there found by a scan
 /// as root (the desk's own sudo dialog, the password remembered), chosen,
 /// cleaned with the remembered password, and gone from the next scan.
 ///
 ///     SBM_E2E_PANEL_URL=https://192.168.31.231:3770 SBM_E2E_PANEL_PASSWORD=… SBM_E2E_SUDO_PASSWORD=… \
-///     SBM_E2E_APP_PACKAGE=monitor/apps/cleanup/target/lollipopkit.cleanup.fsba npx playwright test cleanup_app
+///     npx playwright test cleanup_app
 
 import { expect, test, type FrameLocator, type Page } from '@playwright/test'
 import { fillSecret, submitForm } from './secret'
@@ -14,10 +15,10 @@ import { signIn } from './signin'
 
 const env = process.env
 const sudo = env.SBM_E2E_SUDO_PASSWORD ?? ''
-const APP = 'lollipopkit.cleanup'
+const APP = 'serverbox.cleanup'
 
 test.use({ actionTimeout: 60_000 })
-test.skip(!env.SBM_E2E_PANEL_URL || !env.SBM_E2E_PANEL_PASSWORD || !env.SBM_E2E_APP_PACKAGE, 'SBM_E2E_PANEL_URL, SBM_E2E_PANEL_PASSWORD and SBM_E2E_APP_PACKAGE are not set')
+test.skip(!env.SBM_E2E_PANEL_URL || !env.SBM_E2E_PANEL_PASSWORD || !env.SBM_E2E_CLEANUP, 'SBM_E2E_PANEL_URL, SBM_E2E_PANEL_PASSWORD and SBM_E2E_CLEANUP are not set')
 
 /// What the run made, as the app names it.
 const MADE = ['Downloaded packages', 'Packages nothing needs', 'Old logs', 'Crash reports', 'Trash', '~/.cache/sbm-e2e-app', 'npm cache', 'sbm.leftover']
@@ -46,17 +47,19 @@ test('Cleanup as a package installs, scans and cleans as root through the desk',
   test.setTimeout(30 * 60_000)
   await signIn(page)
 
-  await test.step('installed and approved in Settings → Apps', async () => {
-    await openApp(page, 'serverbox.settings')
-    await page.locator('.lk-side__item').filter({ has: page.locator('.lk-side__label').getByText('Apps', { exact: true }) }).click()
-    await page.locator('input[type=file][accept*="fsba"]').setInputFiles(env.SBM_E2E_APP_PACKAGE!)
-    const pkg = row(page, 'Cleanup').filter({ hasText: 'run scripts as root' })
-    await expect(pkg).toBeVisible({ timeout: 60_000 })
-    await pkg.getByRole('button', { name: 'Approve', exact: true }).click()
+  await test.step('installed from the App Store, signed, in place of the built-in app', async () => {
+    await openApp(page, 'serverbox.store')
+    const card = page.locator('.lk-card').filter({ has: page.getByText('Cleanup', { exact: true }) }).filter({ hasText: 'ServerBox' })
+    await expect(card).toContainText('run scripts as root', { timeout: 60_000 })
+    await card.getByRole('button', { name: 'Install', exact: true }).click()
     const field = page.locator('.lk-dialog').last().getByLabel('Current password')
+    await expect(page.locator('.lk-dialog').last()).toContainText('Cleanup')
     await fillSecret(field, env.SBM_E2E_PANEL_PASSWORD!)
     await submitForm(field)
-    await expect(pkg.getByRole('button', { name: 'Approve', exact: true })).toHaveCount(0, { timeout: 30_000 })
+    await expect(card.getByRole('button', { name: 'Open', exact: true })).toBeVisible({ timeout: 60_000 })
+    await page.keyboard.press('Escape')
+    await page.locator('.lk-dock button[aria-label="All Apps"]').click()
+    await expect(page.locator(`.apps-panel .apps-panel-app[data-app="${APP}"]`)).toHaveCount(1)
     await page.keyboard.press('Escape')
   })
 

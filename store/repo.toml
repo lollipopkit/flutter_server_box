@@ -7,7 +7,8 @@
 # versions, beside `themes/<id>/`, the folder `scripts/publish-themes.py` packs.
 #
 # `apps/<id>/` are the Monitor's web apps (a manifest and the compose files
-# the agent deploys, `docs/schemas/monitor-app.schema.json`); the theme store
-# skips them.
+# the agent deploys, `docs/schemas/monitor-app.schema.json`); `desk/<id>.fsba`
+# the desk app packages it offers to install (`scripts/build-desk-app.sh
+# <name> --store`, signed). The theme store skips both.
 schema = 1
 name = "ServerBox official"

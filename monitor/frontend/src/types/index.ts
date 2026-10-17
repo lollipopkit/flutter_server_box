@@ -2661,6 +2661,21 @@ export interface InstalledApp {
   approved_permissions: string[] | null
   installed_at: string
   approved_at: string | null
+  /// The first-party key that signed the package; null for an unknown
+  /// publisher.
+  signed_by?: string | null
+}
+
+/// A desk app package the agent offers (`GET /apps/catalog`).
+export interface OfferedApp {
+  id: string
+  version: string
+  sha256: string
+  size: number
+  manifest: PackageManifest
+  signedBy: string | null
+  source: 'bundled' | 'store'
+  repo: string | null
 }
 
 /// Text in several languages, keyed by locale (`en` always there).

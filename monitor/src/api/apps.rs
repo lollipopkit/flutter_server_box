@@ -147,8 +147,10 @@ fn valid_size(s: &Size) -> bool {
     (200..=4000).contains(&s.width) && (150..=4000).contains(&s.height)
 }
 
-pub fn check_manifest(m: &Manifest) -> Result<(), Refusal> {
-    if m.publisher == app_id::BUILT_IN_PUBLISHER || app_id::make(&m.publisher, &m.name).is_none() {
+/// [first_party]: the package carries a first-party signature
+/// (`apps::sign`), the one way to use the panel's own publisher.
+pub fn check_manifest(m: &Manifest, first_party: bool) -> Result<(), Refusal> {
+    if (m.publisher == app_id::BUILT_IN_PUBLISHER && !first_party) || app_id::make(&m.publisher, &m.name).is_none() {
         return Err(refused("invalidId"));
     }
     if !short_text(&m.version, 32) {
@@ -220,6 +222,9 @@ pub struct Package {
     /// By path relative to the package root: `ui/index.html`, `LICENSE`.
     pub files: BTreeMap<String, Vec<u8>>,
     pub sha256: String,
+    /// The first-party key that signed it (`apps::sign`); none for an
+    /// unknown publisher.
+    pub signed_by: Option<&'static str>,
 }
 
 /// A path inside a package: relative, `/`-separated, plain components.
@@ -231,7 +236,7 @@ fn valid_entry_path(path: &str) -> bool {
 
 /// What may sit at a package's top: the UI, the manifest, notices.
 fn allowed_top(path: &str) -> bool {
-    path == "manifest.json" || path == "backend.wasm" || path.starts_with("ui/") || ["LICENSE", "README.md", "NOTICE"].contains(&path)
+    path == "manifest.json" || path == "backend.wasm" || path.starts_with("ui/") || ["LICENSE", "README.md", "NOTICE", crate::apps::sign::SIGNATURE_FILE].contains(&path)
 }
 
 /// Reads and checks a whole package. Nothing is stored before every entry
@@ -290,7 +295,8 @@ pub fn read_package(bytes: &[u8]) -> Result<Package, Refusal> {
         return Err(refused("invalidManifest"));
     }
     let manifest: Manifest = serde_json::from_slice(raw).map_err(|_| refused("invalidManifest"))?;
-    check_manifest(&manifest)?;
+    let signed_by = crate::apps::sign::signer(&files).map_err(refused)?;
+    check_manifest(&manifest, signed_by.is_some())?;
     if !files.contains_key("ui/index.html") {
         return Err(refused("noEntry"));
     }
@@ -298,7 +304,7 @@ pub fn read_package(bytes: &[u8]) -> Result<Package, Refusal> {
     if files.contains_key("backend.wasm") != (manifest.kind == "wasm") {
         return Err(refused("backendMismatch"));
     }
-    Ok(Package { manifest, files, sha256 })
+    Ok(Package { manifest, files, sha256, signed_by })
 }
 
 /// The digest of [package]'s `backend.wasm`, as the blob store names it.
@@ -381,12 +387,15 @@ pub struct Installed {
     pub approved_permissions: Option<Vec<String>>,
     pub installed_at: String,
     pub approved_at: Option<String>,
+    /// The first-party key that signed the package; null for an unknown
+    /// publisher.
+    pub signed_by: Option<String>,
 }
 
-type Row = (String, String, String, String, Option<String>, String, Option<String>);
+type Row = (String, String, String, String, Option<String>, String, Option<String>, Option<String>);
 
 fn installed(row: Row) -> Option<Installed> {
-    let (id, version, sha256, manifest, approved, installed_at, approved_at) = row;
+    let (id, version, sha256, manifest, approved, installed_at, approved_at, signed_by) = row;
     Some(Installed {
         id,
         version,
@@ -398,13 +407,14 @@ fn installed(row: Row) -> Option<Installed> {
         },
         installed_at,
         approved_at,
+        signed_by,
     })
 }
 
 macro_rules! select {
     ($tail:literal) => {
         concat!(
-            "SELECT app_id, version, sha256, manifest, approved_permissions, installed_at, approved_at \
+            "SELECT app_id, version, sha256, manifest, approved_permissions, installed_at, approved_at, signed_by \
              FROM desk_app_package ",
             $tail
         )
@@ -438,8 +448,8 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query("DELETE FROM desk_app_file WHERE app_id = ?").bind(&id).execute(&mut *tx).await?;
     sqlx::query(
-        "INSERT INTO desk_app_package (app_id, version, manifest, sha256, approved_permissions, installed_at, approved_at) \
-         VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(app_id) DO UPDATE SET version = excluded.version, \
+        "INSERT INTO desk_app_package (app_id, version, manifest, sha256, approved_permissions, installed_at, approved_at, signed_by) \
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(app_id) DO UPDATE SET version = excluded.version, signed_by = excluded.signed_by, \
          manifest = excluded.manifest, sha256 = excluded.sha256, approved_permissions = excluded.approved_permissions, \
          installed_at = excluded.installed_at, \
          approved_at = CASE WHEN excluded.approved_permissions IS NULL THEN NULL ELSE desk_app_package.approved_at END",
@@ -451,6 +461,7 @@ async fn store(db: &sqlx::SqlitePool, blobs: &Arc<Blobs>, package: &Package) -> 
     .bind(&kept)
     .bind(&now)
     .bind(kept.as_ref().map(|_| now.clone()))
+    .bind(package.signed_by)
     .execute(&mut *tx)
     .await?;
     for (path, sha, size) in &files {
@@ -516,6 +527,11 @@ pub async fn install(
         }
         Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
     };
+    install_package(&req, &state, package).await
+}
+
+/// Stores [package] as an upload of it, waiting for approval.
+async fn install_package(req: &HttpRequest, state: &AppState, package: Package) -> Result<HttpResponse, web::Error> {
     // Compiled now (and kept): a backend that is not a component of the
     // agent's world is refused here rather than at its first call.
     if let (Some(sha), Some(bytes)) = (backend_sha_of(&package), package.files.get("backend.wasm").cloned())
@@ -524,13 +540,28 @@ pub async fn install(
         tracing::info!("app backend refused: {e}");
         return Ok(HttpResponse::BadRequest().json(&serde_json::json!({ "error": "invalidBackend", "detail": e.chars().take(300).collect::<String>() })));
     }
+    // An app its publisher signed is replaced only by a package with the
+    // same signature.
+    let signed: Option<Option<String>> = match sqlx::query_scalar("SELECT signed_by FROM desk_app_package WHERE app_id = ?")
+        .bind(package.manifest.id())
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(v) => v,
+        Err(e) => return Ok(super::respond::internal(&e)),
+    };
+    if let Some(Some(key)) = signed
+        && package.signed_by != Some(key.as_str())
+    {
+        return Ok(HttpResponse::Conflict().json(&refused("publisherChanged")));
+    }
     let before = backend_sha(&state.db, &package.manifest.id()).await;
     match store(&state.db, &state.blobs, &package).await {
         Ok(app) => {
             if let Some(sha) = before.filter(|sha| backend_sha_of(&package).as_deref() != Some(sha)) {
                 state.apps.forget(&sha);
             }
-            audit(&req, &state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
+            audit(req, state, Action::Write, format!("app install {} {} {}", app.id, app.version, package.sha256)).await;
             Ok(HttpResponse::Ok().json(&app))
         }
         Err(e) => Ok(super::respond::internal(&format!("{e:#}"))),
@@ -544,6 +575,56 @@ pub struct Approval {
     sha256: String,
     permissions: Vec<String>,
     current_password: Option<String>,
+}
+
+/// One package of the agent's catalog (`apps::catalog`).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OfferedView<'a> {
+    id: String,
+    version: &'a str,
+    sha256: &'a str,
+    size: usize,
+    manifest: &'a Manifest,
+    signed_by: Option<&'static str>,
+    source: crate::apps::catalog::Source,
+    repo: Option<&'a str>,
+}
+
+/// `GET /apps/catalog`: the desk app packages this agent offers, from what
+/// it ships and the store's repositories; `POST /stacks/refresh` reads the
+/// repositories again.
+pub async fn catalog(req: HttpRequest, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::jwt_caller(&req, &state).await);
+    let offered = state.stacks.catalog.desk.all();
+    let apps: Vec<OfferedView> = offered
+        .iter()
+        .map(|o| OfferedView {
+            id: o.package.manifest.id(),
+            version: &o.package.manifest.version,
+            sha256: &o.package.sha256,
+            size: o.bytes.len(),
+            manifest: &o.package.manifest,
+            signed_by: o.package.signed_by,
+            source: o.source,
+            repo: o.repo.as_deref(),
+        })
+        .collect();
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "apps": apps })))
+}
+
+/// `POST /apps/catalog/{id}/install`: the catalog's package, installed as
+/// an upload of it is: waiting for approval.
+pub async fn install_offered(req: HttpRequest, id: web::types::Path<String>, state: web::types::State<Arc<AppState>>) -> Result<HttpResponse, web::Error> {
+    require!(authz::acting_caller(&req, &state).await);
+    let Some(offered) = state.stacks.catalog.desk.get(&id) else { return Ok(not_found()) };
+    let bytes = offered.bytes.clone();
+    let package = match tokio::task::spawn_blocking(move || read_package(&bytes)).await {
+        Ok(Ok(p)) => p,
+        Ok(Err(refusal)) => return Ok(HttpResponse::BadRequest().json(&refusal)),
+        Err(_) => return Ok(HttpResponse::InternalServerError().json(&refused("internal"))),
+    };
+    install_package(&req, &state, package).await
 }
 
 pub async fn approve(
@@ -733,13 +814,16 @@ mod tests {
         for path in ["examples/desk-app-hello", "examples/desk-app-uptime", "sdk/template"] {
             let text = std::fs::read_to_string(root.join(path).join("manifest.json")).unwrap();
             let m: Manifest = serde_json::from_str(&text).unwrap_or_else(|e| panic!("{path}: {e}"));
-            assert_eq!(check_manifest(&m), Ok(()), "{path}");
+            assert_eq!(check_manifest(&m, false), Ok(()), "{path}");
         }
     }
 
     #[test]
     fn a_manifest_is_checked_field_by_field() {
-        assert_eq!(check_manifest(&manifest()), Ok(()));
+        assert_eq!(check_manifest(&manifest(), false), Ok(()));
+        let mut ours = manifest();
+        ours.publisher = "serverbox".into();
+        assert_eq!(check_manifest(&ours, true), Ok(()), "signed by a first-party key");
         type Case = (fn(&mut Manifest), &'static str);
         let cases: Vec<Case> = vec![
             (|m| m.publisher = "serverbox".into(), "invalidId"),
@@ -767,7 +851,7 @@ mod tests {
         for (change, code) in cases {
             let mut m = manifest();
             change(&mut m);
-            assert_eq!(check_manifest(&m).map_err(|r| r.error), Err(code), "{m:?}");
+            assert_eq!(check_manifest(&m, false).map_err(|r| r.error), Err(code), "{m:?}");
         }
     }
 

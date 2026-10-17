@@ -3,6 +3,7 @@ import { LL } from '../i18n/i18n-svelte'
 import type {
   AgentUpdate,
   InstalledApp,
+  OfferedApp,
   ContainerBackup,
   ContainerBackupSchedule,
   ContainerBackupSettings,
@@ -1397,6 +1398,10 @@ export const api = {
     )
     return res.json() as Promise<InstalledApp>
   },
+  /// The desk app packages the agent offers (shipped, and the store's).
+  appCatalog: () => request<{ apps: OfferedApp[] }>('/apps/catalog', {}),
+  /// Installs one of them as an upload is: it waits for approval.
+  installOffered: (id: string) => request<InstalledApp>(`/apps/catalog/${encodeURIComponent(id)}/install`, { method: 'POST' }),
   approveApp: (id: string, sha256: string, permissions: string[], currentPassword: string) =>
     request<InstalledApp>(
       `/apps/${encodeURIComponent(id)}/approval`,

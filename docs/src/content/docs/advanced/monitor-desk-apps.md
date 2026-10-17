@@ -19,6 +19,12 @@ password goes to the agent with that request, never to the app.
 
 ## Install an app
 
+The **App Store** lists the desk apps the agent offers, those ServerBox signed
+marked **ServerBox** and others **Unknown publisher**. **Install** shows what
+the app asks for and installs and approves it with your password.
+
+A package from elsewhere:
+
 1. Open **Settings → Apps** in the panel.
 2. Under **Installed**, select **Install…** and choose the `.fsba` package.
    The agent checks the package and refuses it when the check fails, for
