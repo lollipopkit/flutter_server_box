@@ -228,10 +228,13 @@ extension _Actions on _SchemaTooNewPageState {
     // Sync, and symmetric with the sync delete in `finally`. Also what keeps
     // this reachable from a `testWidgets` body: real async file I/O started in
     // that fake-async zone completes on a callback the zone never pumps.
-    final dir = Directory.systemTemp.createTempSync('sbx-rescue-');
+    Directory? dir;
     try {
+      // Inside the `try`: a temp directory that cannot be made would
+      // otherwise leave the page busy, every button off for good.
+      final made = dir = Directory.systemTemp.createTempSync('sbx-rescue-');
       final name = _outName(suffix);
-      final path = dir.path.joinPath(name);
+      final path = made.path.joinPath(name);
       // Awaited: it runs on its own isolate, so the page keeps drawing.
       await DbRescue.exportTo(path, password: password);
       if (destDir == null) {
@@ -251,7 +254,7 @@ extension _Actions on _SchemaTooNewPageState {
       // the page would stay busy with every button disabled, and the dialog
       // saying where the copy went would never show.
       try {
-        if (dir.existsSync()) dir.deleteSync(recursive: true);
+        if (dir != null && dir.existsSync()) dir.deleteSync(recursive: true);
       } catch (e, s) {
         Loggers.app.warning('Could not remove the rescue temp directory', e, s);
       }
