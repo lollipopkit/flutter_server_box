@@ -36,7 +36,14 @@ class FakeTerminal {
   focus() {}
 }
 vi.mock('@xterm/xterm', () => ({ Terminal: FakeTerminal }))
-vi.mock('@xterm/addon-fit', () => ({ FitAddon: class { fit() {} } }))
+/// Set to make the addon's dynamic import fail, as a chunk that did not arrive.
+let failXterm = false
+vi.mock('@xterm/addon-fit', () => ({
+  get FitAddon() {
+    if (failXterm) throw new Error('chunk failed')
+    return class { fit() {} }
+  },
+}))
 vi.mock('@xterm/xterm/css/xterm.css', () => ({}))
 
 const mockedConsole = vi.mocked(api.virtConsole)
@@ -57,6 +64,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   terminals.length = 0
   observers.length = 0
+  failXterm = false
   vi.stubGlobal('requestAnimationFrame', (cb: () => void) => setTimeout(cb, 0))
   vi.stubGlobal(
     'ResizeObserver',
@@ -132,6 +140,19 @@ describe('VirtConsole', () => {
     theme.set('dark')
     flushSync()
     expect(terminals[0].options.theme).toMatchObject({ background: '#0b0f14' })
+  })
+
+  it('closes the socket when the terminal fails to load', async () => {
+    const socket = fakeSocket()
+    mockedConsole.mockResolvedValue(answer)
+    mockedSocket.mockResolvedValue(socket)
+    failXterm = true
+    render(VirtConsole, { guest, kind: 'text', sudoPassword: null })
+    await fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await waitFor(() => expect(socket.close).toHaveBeenCalled())
+    expect(terminals).toHaveLength(0)
+    expect(await screen.findByText('chunk failed')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open' })).toBeInTheDocument()
   })
 
   it('starts without screen reader mode and follows its toggle', async () => {

@@ -97,8 +97,8 @@
       }
     } catch (e) {
       if (gen !== generation) return
-      phase = 'failed'
-      error = e instanceof Error ? e.message : String(e)
+      // A socket already open (the terminal chunk failed to load) goes too
+      ended(e instanceof Error ? e.message : String(e))
     }
   }
 
