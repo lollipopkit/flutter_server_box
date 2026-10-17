@@ -5659,4 +5659,16 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU、メモリ、ネットワーク、ディスクをサーバーカードと同じ形式で表示します。スマートフォンでは仮想キーの上に表示されます。';
+
+  @override
+  String get launchFailedTitle => 'ServerBox を起動できませんでした';
+
+  @override
+  String get launchFailedBody =>
+      '下のエラーをコピーし、ログファイルと一緒に GitHub の issue で報告してください。';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'ログ: $path';
+  }
 }

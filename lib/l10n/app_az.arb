@@ -1669,5 +1669,8 @@
   "kbServerList": "Serverlər: server siyahısı",
   "kbServerClose": "Serverlər: təfərrüatları bağla",
   "termMetricsBar": "Terminalın altında server göstəriciləri",
-  "termMetricsBarTip": "CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə."
+  "termMetricsBarTip": "CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə.",
+  "launchFailedTitle": "ServerBox başlaya bilmədi",
+  "launchFailedBody": "Aşağıdakı xətanı kopyalayın və log faylları ilə birlikdə GitHub issue-da bildirin.",
+  "launchFailedLogs": "Loglar: {path}"
 }

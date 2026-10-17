@@ -10154,6 +10154,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.'**
   String get termMetricsBarTip;
+
+  /// Title of the screen shown when the app fails during startup.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox could not start'**
+  String get launchFailedTitle;
+
+  /// Asks the user to report a startup failure.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the error below and report it in a GitHub issue, with the log files.'**
+  String get launchFailedBody;
+
+  /// Where the log files are.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs: {path}'**
+  String launchFailedLogs(String path);
 }
 
 class _AppLocalizationsDelegate

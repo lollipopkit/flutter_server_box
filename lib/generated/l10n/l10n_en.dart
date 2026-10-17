@@ -5932,4 +5932,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, memory, network and disk, as the server card shows them. Above the virtual keys on a phone.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox could not start';
+
+  @override
+  String get launchFailedBody =>
+      'Copy the error below and report it in a GitHub issue, with the log files.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }

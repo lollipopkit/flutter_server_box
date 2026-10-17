@@ -1669,5 +1669,8 @@
   "kbServerList": "伺服器：伺服器列表",
   "kbServerClose": "伺服器：關閉詳情",
   "termMetricsBar": "終端下方顯示伺服器狀態",
-  "termMetricsBarTip": "CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。"
+  "termMetricsBarTip": "CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。",
+  "launchFailedTitle": "ServerBox 無法啟動",
+  "launchFailedBody": "請複製下方的錯誤訊息，連同日誌檔一起在 GitHub issue 中回報。",
+  "launchFailedLogs": "日誌：{path}"
 }

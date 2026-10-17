@@ -5972,4 +5972,16 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, память, сеть и диск — как на карточке сервера. На телефоне над виртуальными клавишами.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox не удалось запустить';
+
+  @override
+  String get launchFailedBody =>
+      'Скопируйте ошибку ниже и сообщите о ней в issue на GitHub, приложив файлы журнала.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Журналы: $path';
+  }
 }

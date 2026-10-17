@@ -5659,4 +5659,15 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, 메모리, 네트워크, 디스크를 서버 카드와 같은 형식으로 표시합니다. 휴대폰에서는 가상 키 위에 표시됩니다.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox를 시작할 수 없습니다';
+
+  @override
+  String get launchFailedBody => '아래 오류를 복사해 로그 파일과 함께 GitHub 이슈로 알려 주세요.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return '로그: $path';
+  }
 }

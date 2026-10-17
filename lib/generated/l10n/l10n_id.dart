@@ -5925,4 +5925,16 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, memori, jaringan, dan disk, seperti pada kartu server. Di ponsel, di atas tombol virtual.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox tidak dapat dimulai';
+
+  @override
+  String get launchFailedBody =>
+      'Salin galat di bawah dan laporkan di issue GitHub, beserta berkas log.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Log: $path';
+  }
 }

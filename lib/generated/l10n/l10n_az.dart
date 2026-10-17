@@ -5924,4 +5924,16 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, yaddaş, şəbəkə və disk, server kartındakı kimi. Telefonda virtual düymələrin üstündə.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox başlaya bilmədi';
+
+  @override
+  String get launchFailedBody =>
+      'Aşağıdakı xətanı kopyalayın və log faylları ilə birlikdə GitHub issue-da bildirin.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Loglar: $path';
+  }
 }

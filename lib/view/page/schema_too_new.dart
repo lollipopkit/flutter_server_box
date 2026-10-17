@@ -228,10 +228,13 @@ extension _Actions on _SchemaTooNewPageState {
     // Sync, and symmetric with the sync delete in `finally`. Also what keeps
     // this reachable from a `testWidgets` body: real async file I/O started in
     // that fake-async zone completes on a callback the zone never pumps.
-    final dir = Directory.systemTemp.createTempSync('sbx-rescue-');
+    Directory? dir;
     try {
+      // Inside the `try`: a temp directory that cannot be made would
+      // otherwise leave the page busy, every button off for good.
+      final made = dir = Directory.systemTemp.createTempSync('sbx-rescue-');
       final name = _outName(suffix);
-      final path = dir.path.joinPath(name);
+      final path = made.path.joinPath(name);
       // Awaited: it runs on its own isolate, so the page keeps drawing.
       await DbRescue.exportTo(path, password: password);
       if (destDir == null) {
@@ -251,7 +254,7 @@ extension _Actions on _SchemaTooNewPageState {
       // the page would stay busy with every button disabled, and the dialog
       // saying where the copy went would never show.
       try {
-        if (dir.existsSync()) dir.deleteSync(recursive: true);
+        if (dir != null && dir.existsSync()) dir.deleteSync(recursive: true);
       } catch (e, s) {
         Loggers.app.warning('Could not remove the rescue temp directory', e, s);
       }
@@ -388,45 +391,5 @@ extension _Actions on _SchemaTooNewPageState {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-}
-
-/// What `main` runs instead of the app.
-///
-/// Its own `MaterialApp` because `MyApp` reads settings out of a database this
-/// build has just refused to touch.
-class SchemaTooNewApp extends StatelessWidget {
-  const SchemaTooNewApp({super.key, required this.err});
-
-  final SchemaTooNewException err;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      // The same list as `MyApp`: without `LibLocalizations.delegate` every
-      // `libL10n.*` string here — the Backup button, both dialog titles, the
-      // password label, OK and Cancel — stays English while this page's own
-      // text is translated.
-      localizationsDelegates: appLocalizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localeListResolutionCallback: LocaleUtil.resolve,
-      // The system's, since the stored preference is in the database this
-      // cannot read.
-      themeMode: ThemeMode.system,
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue).fixWindowsFont,
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue,
-        brightness: Brightness.dark,
-      ).fixWindowsFont,
-      // The other half of it: `libL10n` is a global that only this call
-      // replaces, and `MyApp` makes it from its own home builder.
-      home: Builder(
-        builder: (context) {
-          context.setLibL10n();
-          return SchemaTooNewPage(err: err);
-        },
-      ),
-    );
   }
 }

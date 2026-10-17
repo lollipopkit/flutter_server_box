@@ -1669,5 +1669,8 @@
   "kbServerList": "Servers: serverlijst",
   "kbServerClose": "Servers: details sluiten",
   "termMetricsBar": "Servermetingen onder de terminal",
-  "termMetricsBarTip": "CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen."
+  "termMetricsBarTip": "CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.",
+  "launchFailedTitle": "ServerBox kon niet starten",
+  "launchFailedBody": "Kopieer de fout hieronder en meld die in een GitHub-issue, samen met de logbestanden.",
+  "launchFailedLogs": "Logs: {path}"
 }

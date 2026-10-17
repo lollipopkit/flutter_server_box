@@ -5558,6 +5558,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get termMetricsBarTip => 'CPU、内存、网络、磁盘，与服务器卡片一致；手机上位于虚拟按键上方。';
+
+  @override
+  String get launchFailedTitle => 'ServerBox 无法启动';
+
+  @override
+  String get launchFailedBody => '请复制下方的错误信息，连同日志文件一起在 GitHub issue 中反馈。';
+
+  @override
+  String launchFailedLogs(String path) {
+    return '日志：$path';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -11118,4 +11129,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get termMetricsBarTip => 'CPU、記憶體、網路、磁碟，與伺服器卡片一致；手機上位於虛擬按鍵上方。';
+
+  @override
+  String get launchFailedTitle => 'ServerBox 無法啟動';
+
+  @override
+  String get launchFailedBody => '請複製下方的錯誤訊息，連同日誌檔一起在 GitHub issue 中回報。';
+
+  @override
+  String launchFailedLogs(String path) {
+    return '日誌：$path';
+  }
 }

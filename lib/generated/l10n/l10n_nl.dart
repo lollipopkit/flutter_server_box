@@ -5980,4 +5980,16 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get termMetricsBarTip =>
       'CPU, geheugen, netwerk en schijf, zoals op de serverkaart. Op een telefoon boven de virtuele toetsen.';
+
+  @override
+  String get launchFailedTitle => 'ServerBox kon niet starten';
+
+  @override
+  String get launchFailedBody =>
+      'Kopieer de fout hieronder en meld die in een GitHub-issue, samen met de logbestanden.';
+
+  @override
+  String launchFailedLogs(String path) {
+    return 'Logs: $path';
+  }
 }
