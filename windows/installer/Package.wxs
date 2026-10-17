@@ -1,0 +1,49 @@
+<Wix
+  xmlns="http://wixtoolset.org/schemas/v4/wxs"
+  xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package
+    Name="$(var.ProductName)"
+    Manufacturer="tech.lolli"
+    Version="$(var.MsiVersion)"
+    Language="$(var.MsiLanguage)"
+    UpgradeCode="$(var.UpgradeCode)"
+    Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Server Box is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="$(var.InstallDirectoryId)" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <Feature Id="Main" Title="Server Box" Level="1">
+      <ComponentGroupRef Id="ApplicationFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="$(var.InstallDirectoryId)" Name="$(var.InstallFolder)" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="$(var.ShortcutFolder)" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="ApplicationFiles" Directory="$(var.InstallDirectoryId)">
+      <Files Include="$(var.AppDir)\**" />
+    </ComponentGroup>
+
+    <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="*">
+      <Shortcut
+        Id="ApplicationShortcut"
+        Name="$(var.ProductName)"
+        Target="[$(var.InstallDirectoryId)]ServerBox.exe"
+        WorkingDirectory="$(var.InstallDirectoryId)" />
+      <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue
+        Root="HKLM"
+        Key="Software\tech.lolli\$(var.RegistryKey)"
+        Name="Installed"
+        Type="integer"
+        Value="1"
+        KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>

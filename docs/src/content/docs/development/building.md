@@ -82,7 +82,11 @@ dart run fl_build -p windows
 ```
 
 Requires Visual Studio with the **Desktop development with C++** workload and
-ATL support.
+ATL support. The GitHub release workflow publishes x64 and ARM64 ZIP packages
+and localized MSI installers. Download the English or Simplified Chinese MSI
+for the desired installer language. The ARM64 target is built on a native
+Windows ARM runner with the x64 Flutter SDK and Flutter's `FLUTTER_HOST_ARCH`
+override.
 
 ## Build Monitor agent
 

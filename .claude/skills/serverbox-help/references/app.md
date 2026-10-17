@@ -11,7 +11,7 @@ the top: tell the user what to search for rather than guessing a path.
 | macOS | App Store, `brew install --cask server-box`, or the `.dmg` from GitHub Releases |
 | Android | GitHub Releases, F-Droid (`tech.lolli.toolbox`) |
 | Linux | AppImage from GitHub Releases |
-| Windows | zip from GitHub Releases |
+| Windows | English or Simplified Chinese MSI, or portable ZIP from GitHub Releases (x64 and ARM64) |
 | watchOS | Comes with the iOS app |
 
 Releases: <https://github.com/lollipopkit/flutter_server_box/releases>.
