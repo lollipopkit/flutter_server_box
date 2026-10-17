@@ -1599,6 +1599,7 @@ const zh_CN = {
 	settingsPermProcess: '以 agent 的账号在此服务器上运行程序',
 	settingsPermRoot: '以 root 身份运行脚本，每次都需要你用 sudo 密码确认',
 	settingsPermProviders: '使用 Agent 模式的模型提供商，包括其密钥',
+	settingsPermNetwork: '从这台服务器发起网络请求，并把文件下载到它自己的文件夹',
 	settingsAppNoPermissions: '无权限',
 	settingsAppRefused: '应用包被拒绝:{reason}',
 	settingsAppApproveRisk: '它以打开它的账号身份运行,并且可以把读到的内容发送到别处。',

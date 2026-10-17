@@ -1467,6 +1467,7 @@ const es = {
 	settingsPermProcess: 'ejecute programas en este servidor con la cuenta del agent',
 	settingsPermRoot: 'ejecute scripts como root, cada vez tras confirmarlo con la contraseña de sudo',
 	settingsPermProviders: 'use los proveedores de modelos del modo Agent, incluidas sus claves',
+	settingsPermNetwork: 'haga solicitudes web desde este servidor y descargue archivos en su propia carpeta',
 	settingsAppNoPermissions: 'Sin permisos',
 	settingsAppRefused: 'Se rechazó el paquete: {reason}',
 	settingsAppApproveRisk: 'Se ejecuta con la cuenta que la abre y puede enviar a otros destinos los datos que lee del servidor.',

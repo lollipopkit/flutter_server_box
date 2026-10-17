@@ -387,6 +387,37 @@ pub fn llmfit_url(asset: &LlmfitAsset) -> String {
     format!("https://github.com/AlexsJones/llmfit/releases/download/v{LLMFIT_VERSION}/{}", asset.file)
 }
 
+/// Unpacks llmfit's release [archive] (checked already) so that
+/// `<dir>/llmfit` is its binary, through a staged folder; the archive goes.
+pub fn llmfit_unpack_script(archive: &str, dir: &str) -> String {
+    let (archive, dir) = (crate::script::shell_quote_unix(archive), crate::script::shell_quote_unix(dir));
+    format!(
+        r#"set -e
+t={dir}.part
+rm -rf "$t"
+mkdir -p "$t"
+tar -xzf {archive} -C "$t"
+f=$(find "$t" -type f -name llmfit | head -n 1)
+[ -n "$f" ] || {{ echo "no llmfit in the archive" >&2; exit 1; }}
+chmod 755 "$f"
+mkdir -p {dir}
+mv -f "$f" {dir}/llmfit
+rm -rf "$t" {archive}"#
+    )
+}
+
+/// Runs `<dir>/llmfit` with [args]: its JSON on stdout. WSL keeps
+/// `nvidia-smi` in `/usr/lib/wsl/lib`, outside the agent's `PATH`.
+pub fn llmfit_command(dir: &str, args: &[String]) -> String {
+    let mut s = format!("PATH=\"$PATH:/usr/lib/wsl/lib\" {}/llmfit", crate::script::shell_quote_unix(dir));
+    for a in args {
+        s.push(' ');
+        s.push_str(&crate::script::shell_quote_unix(a));
+    }
+    s.push_str(" </dev/null");
+    s
+}
+
 /// What to ask llmfit for.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -904,6 +935,27 @@ pub fn tool_parser(engine: Engine, model: &str) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn llmfit_is_unpacked_from_its_archive_and_run() {
+        use std::process::Command;
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/llmfit-v1");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("README.md"), "x").unwrap();
+        std::fs::write(src.join("llmfit"), "#!/bin/sh\necho \"$@\"\n").unwrap();
+        let archive = tmp.path().join("llmfit.tar.gz");
+        let made = Command::new("tar").arg("-czf").arg(&archive).arg("-C").arg(tmp.path().join("src")).arg("llmfit-v1").status().unwrap();
+        assert!(made.success());
+        let dir = tmp.path().join("my dir/llmfit-1");
+        let sh = |script: &str| Command::new("sh").args(["-c", script]).output().unwrap();
+        let out = sh(&llmfit_unpack_script(archive.to_str().unwrap(), dir.to_str().unwrap()));
+        assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+        assert!(!archive.exists());
+        let out = sh(&llmfit_command(dir.to_str().unwrap(), &["recommend".into(), "it's".into()]));
+        assert_eq!(String::from_utf8_lossy(&out.stdout), "recommend it's\n");
+    }
 
     #[test]
     fn picks_the_tool_call_parser_by_family() {

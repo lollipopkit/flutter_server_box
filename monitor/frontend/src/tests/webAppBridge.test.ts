@@ -150,4 +150,28 @@ describe('the bridge to an app backend', () => {
     expect(post.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'invalidArgs' })
     expect(backend.call).not.toHaveBeenCalled()
   })
+
+  it('opens a model server stack in the desk’s sheet for an app that runs programs, one at a time', async () => {
+    let close = () => {}
+    const openStack = vi.fn(() => new Promise<void>((done) => (close = done)))
+    const port = { postMessage: vi.fn(), onmessage: null as ((e: MessageEvent) => void) | null }
+    const make = (permissions: string[]) => {
+      const b = new WebAppBridge({ handle: { id: 'w', appId: 'a' } as unknown as WindowHandle, allows: (p) => permissions.includes(p), theme: () => ({ dark: false }), locale: () => 'en', openStack })
+      b.attach(port)
+      return b
+    }
+    await make([]).receive({ sbm: 1, id: 1, call: 'openStack', args: { id: 'vllm.vllm' } })
+    expect(port.postMessage.mock.calls[0][0]).toMatchObject({ re: 1, ok: false, error: 'notPermitted' })
+    const bridge = make(['process'])
+    // Only the engines' stacks.
+    await bridge.receive({ sbm: 1, id: 2, call: 'openStack', args: { id: 'futo.immich' } })
+    expect(port.postMessage.mock.calls[1][0]).toMatchObject({ re: 2, ok: false, error: 'invalidArgs' })
+    const first = bridge.receive({ sbm: 1, id: 3, call: 'openStack', args: { id: 'ggml.llama_cpp', model: 'a/b-GGUF:Q4_K_M', backend: 'cuda' } })
+    await bridge.receive({ sbm: 1, id: 4, call: 'openStack', args: { id: 'vllm.vllm' } })
+    expect(port.postMessage.mock.calls[2][0]).toMatchObject({ re: 4, ok: false, error: 'busy' })
+    expect(openStack).toHaveBeenCalledWith('ggml.llama_cpp', 'a/b-GGUF:Q4_K_M', 'cuda')
+    close()
+    await first
+    expect(port.postMessage.mock.calls[3][0]).toMatchObject({ re: 3, ok: true })
+  })
 })

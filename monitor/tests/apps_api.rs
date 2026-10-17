@@ -16,6 +16,7 @@ use server_box_monitor::agent_mode::config;
 use server_box_monitor::api::server::AppState;
 use server_box_monitor::core::config::Config;
 
+const PLAIN: &str = "line one\nline two\nline three";
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 
 async fn server() -> TestServer {
@@ -39,6 +40,9 @@ async fn server_on(db: sqlx::SqlitePool) -> TestServer {
                             .route(web::post().to(apps::install)),
                     )
                     .service(web::resource("/apps/catalog").route(web::get().to(apps::catalog)))
+                    // What a backend's HTTP reaches in `http` tests.
+                    .service(web::resource("/plain").route(web::get().to(|| async { web::HttpResponse::Ok().body(PLAIN) })))
+                    .service(web::resource("/moved").route(web::get().to(|| async { web::HttpResponse::Found().header("location", "/api/v1/plain").finish() })))
                     .service(web::resource("/apps/catalog/{id}/install").route(web::post().to(apps::install_offered)))
                     .service(web::resource("/apps/{id}").route(web::delete().to(apps::remove)))
                     .service(web::resource("/apps/{id}/approval").route(web::put().to(apps::approve)))
@@ -424,6 +428,46 @@ async fn providers_and_their_keys_need_their_permission() {
     installed_backend(&srv, &["providers"]).await;
     let r = call_fn(&srv, "providers", json!(null)).await;
     assert_eq!(r.json["value"], json!([["local"], "sk-probe"]), "{}", r.json);
+}
+
+#[ntex::test]
+async fn a_backend_reaches_http_with_the_permission_and_keeps_files_in_its_folder() {
+    use sha2::{Digest, Sha256};
+    let srv = server().await;
+    let url = srv.url("/api/v1/plain");
+    installed_backend(&srv, &[]).await;
+    let r = call_fn(&srv, "fetchText", json!({ "url": url })).await;
+    assert_eq!((r.status, r.json["message"].as_str()), (403, Some("network")));
+
+    installed_backend(&srv, &["network"]).await;
+    let r = call_fn(&srv, "fetchText", json!({ "url": url })).await;
+    assert_eq!(r.json["value"], json!([200, PLAIN]), "{}", r.json);
+    // The last line has no line break.
+    let r = call_fn(&srv, "countLines", json!({ "url": url })).await;
+    assert_eq!(r.json["value"], 3, "{}", r.json);
+    // A plain request follows no redirect; a download does.
+    let r = call_fn(&srv, "fetchText", json!({ "url": srv.url("/api/v1/moved") })).await;
+    assert_eq!(r.json["value"][0], 302, "{}", r.json);
+    let r = call_fn(&srv, "fetchText", json!({ "url": "file:///etc/passwd" })).await;
+    assert_eq!(r.json["error"], "invalidArgument");
+    let r = call_fn(&srv, "save", json!({ "url": srv.url("/api/v1/apps"), "sha256": "0".repeat(64), "name": "x" })).await;
+    assert_eq!(r.json, json!({ "error": "unavailable", "message": "HTTP 401" }));
+
+    let digest = hex::encode(Sha256::digest(PLAIN));
+    let r = call_fn(&srv, "save", json!({ "url": url, "sha256": "0".repeat(64), "name": "x.json" })).await;
+    assert_eq!(r.json["error"], "failedPrecondition", "{}", r.json);
+    let r = call_fn(&srv, "save", json!({ "url": url, "sha256": digest, "name": "../x.json" })).await;
+    assert_eq!(r.json["error"], "invalidArgument");
+    let r = call_fn(&srv, "save", json!({ "url": srv.url("/api/v1/moved"), "sha256": digest, "name": "x.json" })).await;
+    let path = r.json["value"].as_str().expect("a path").to_string();
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), PLAIN);
+    let dir = call_fn(&srv, "ownDir", json!(null)).await.json["value"].as_str().unwrap().to_string();
+    assert!(path.starts_with(&dir) && dir.ends_with("acme.notes"), "{path} in {dir}");
+
+    // Removing the app takes its folder.
+    let r = call(&srv, true, Method::DELETE, "/api/v1/apps/acme.notes", Some((json!({ "current_password": common::PASSWORD }).to_string().into_bytes(), "application/json"))).await;
+    assert!(r.status < 300, "{}", r.json);
+    assert!(!std::path::Path::new(&dir).exists());
 }
 
 #[ntex::test]

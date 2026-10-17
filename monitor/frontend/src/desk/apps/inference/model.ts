@@ -2,6 +2,7 @@
 /// stacks that run them, and a candidate's settings for its engine. Nothing
 /// here decides what fits (`sbm_parser::inference` does).
 
+import { enginePreset } from '../../../components/stack/preset'
 import type { InferenceCandidate, InferenceEngine, InferenceEngineFit, StackManifest, StackValue } from '../../../types'
 
 export const ENGINE_NAMES: Record<InferenceEngine, string> = {
@@ -12,22 +13,9 @@ export const ENGINE_NAMES: Record<InferenceEngine, string> = {
   mlx: 'MLX',
 }
 
-/// The `accel` option of a stack for the backend the agent chose.
-const ACCEL: Record<InferenceEngineFit['backend'], string> = { cuda: 'nvidia', rocm: 'rocm', vulkan: 'vulkan', metal: 'cpu', cpu: 'cpu' }
-
 /// The settings an engine's stack is deployed with to serve [candidate].
-export function presetFor(
-  fit: InferenceEngineFit,
-  manifest: StackManifest,
-  candidate: InferenceCandidate | null,
-): Record<string, StackValue> {
-  const preset: Record<string, StackValue> = {}
-  const has = (key: string) => manifest.settings.some((s) => s.key === key)
-  const model = manifest.llm?.model
-  if (candidate && model && has(model)) preset[model] = candidate.setting
-  const accel = manifest.settings.find((s) => s.key === 'accel')
-  if (accel?.type === 'choice' && accel.options.some((o) => o.value === ACCEL[fit.backend])) preset.accel = ACCEL[fit.backend]
-  return preset
+export function presetFor(fit: InferenceEngineFit, manifest: StackManifest, candidate: InferenceCandidate | null): Record<string, StackValue> {
+  return enginePreset(manifest, candidate?.setting ?? null, fit.backend)
 }
 
 export function gib(n: number | null | undefined): string {

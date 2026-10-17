@@ -59,7 +59,7 @@ test('AI agents as a package installs opencode, points it at a provider and remo
   })
 
   await test.step('pointed at the provider: its file 0600 with the address and key', async () => {
-    await expect(app.getByText('E2E provider').first()).toBeVisible()
+    await expect(app.getByLabel('Provider')).toHaveValue('e2e')
     await app.getByRole('button', { name: 'Use', exact: true }).click()
     await expect(app.getByText('Now uses e2e-model.')).toBeVisible()
     expect(onVm('stat -c %a $HOME/.config/opencode/opencode.json').trim()).toBe('600')

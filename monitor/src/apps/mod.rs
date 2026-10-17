@@ -73,6 +73,8 @@ struct Slot {
 pub struct Apps {
     /// `<database dir>/apps/cache`: compiled components (a protected tree).
     cache: PathBuf,
+    /// `<database dir>/apps/data/<app id>`: each app's own folder.
+    data: PathBuf,
     backends: Mutex<HashMap<String, Arc<Backend>>>,
     jobs: Mutex<HashMap<String, Slot>>,
     pub calls: Arc<tokio::sync::Semaphore>,
@@ -88,7 +90,7 @@ impl Apps {
             Some(f) => std::path::absolute(Self::dir_beside(f)).unwrap_or_else(|_| Self::dir_beside(f)),
             None => std::env::temp_dir().join(format!("sbm-apps-{}", std::process::id())),
         };
-        Self { cache: dir.join("cache"), backends: Mutex::default(), jobs: Mutex::default(), calls: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)) }
+        Self { cache: dir.join("cache"), data: dir.join("data"), backends: Mutex::default(), jobs: Mutex::default(), calls: Arc::new(tokio::sync::Semaphore::new(MAX_CALLS)) }
     }
 
     /// The backend whose component's digest is [sha256], compiled from
@@ -113,6 +115,28 @@ impl Apps {
     pub fn forget(&self, sha256: &str) {
         self.backends.locked().remove(sha256);
         let _ = std::fs::remove_file(self.cache.join(format!("{sha256}.cwasm")));
+    }
+
+    /// [app]'s own folder, made (0700) when it is not there.
+    pub fn data_dir(&self, app: &str) -> std::io::Result<PathBuf> {
+        let dir = self.data.join(app);
+        std::fs::create_dir_all(&dir)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700))?;
+        }
+        Ok(dir)
+    }
+
+    /// [app] went: its folder too.
+    pub fn forget_data(&self, app: &str) {
+        let dir = self.data.join(app);
+        if dir.exists()
+            && let Err(e) = std::fs::remove_dir_all(&dir)
+        {
+            tracing::warn!("app {app}: removing {}: {e}", dir.display());
+        }
     }
 
     /// A new job for [app], unless one is running.

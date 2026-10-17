@@ -1600,6 +1600,7 @@ const en = {
 	settingsPermProcess: 'run programs on this server as the agent\'s account',
 	settingsPermRoot: 'run scripts as root, each time after you confirm with sudo\'s password',
 	settingsPermProviders: 'use Agent mode\'s model providers, their keys included',
+	settingsPermNetwork: 'make web requests from this server and download files into its own folder',
 	settingsAppNoPermissions: 'No permissions',
 	settingsAppRefused: 'The package was refused: {reason}',
 	settingsAppApproveRisk: 'It runs as whoever opens it, and can send what it reads elsewhere.',

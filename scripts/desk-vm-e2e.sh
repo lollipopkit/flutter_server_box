@@ -10,6 +10,7 @@
 #   scripts/desk-vm-e2e.sh <node> tailscale    # Headscale and a peer made first
 #   scripts/desk-vm-e2e.sh <node> proxy_app    # a web service to send to made first
 #   scripts/desk-vm-e2e.sh <node> agent_tools_app
+#   scripts/desk-vm-e2e.sh <node> inference_app  # Docker and a fake Ollama made first
 #
 # Builds the agent on SBM_E2E_BUILD_HOST (lkd-wsl) and the panel here;
 # starts a VM; runs the agent there as an ordinary account with a sudo
@@ -19,7 +20,8 @@
 # into store/desk/ (`scripts/build-desk-app.sh --store`), so the agent offers
 # it in the App Store.
 # For `kernel` it picks a version of the running kernel's flavour older than
-# it (SBM_E2E_KERNEL_VERSION). The passwords are made for the run and never
+# it (SBM_E2E_KERNEL_VERSION). SBM_E2E_VM_PROXY (an HTTP proxy) reaches the
+# agent's environment. The passwords are made for the run and never
 # leave environment variables. SBM_E2E_KEEP=1 keeps the VM.
 set -eu
 
@@ -68,11 +70,17 @@ printf '%s\n' "$SBM_E2E_SUDO_PASSWORD" | vm 'read -r p; useradd -m -s /bin/bash 
   && mkdir -p /home/sbm/app/frontend /home/sbm/.config/systemd/user'
 scp -q -3 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$build:$src/target/monitor-test/server_box_monitor" "root@$addr:/home/sbm/app/"
 COPYFILE_DISABLE=1 tar --no-xattrs -C "$root/monitor/frontend" -czf - dist | vm 'tar -C /home/sbm/app/frontend -xzf -'
+# The agent's own downloads (installers, llmfit) through the proxy apt uses,
+# when the network needs one: SBM_E2E_VM_PROXY, as scripts/e2e-vm.sh takes it.
+p=${SBM_E2E_VM_PROXY:-}
+env_line=
+[ -z "$p" ] || env_line="Environment=HTTPS_PROXY=$p HTTP_PROXY=$p https_proxy=$p http_proxy=$p NO_PROXY=127.0.0.1,localhost,::1 no_proxy=127.0.0.1,localhost,::1"
 vm "cd /home/sbm/app && openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 2 -subj /CN=$addr \
   -addext subjectAltName=IP:$addr -keyout tls.key -out tls.crt 2>/dev/null && chmod 600 tls.key
 cat > /home/sbm/.config/systemd/user/sbm.service <<'EOF'
 [Service]
 WorkingDirectory=%h/app
+$env_line
 ExecStart=%h/app/server_box_monitor serve -a 0.0.0.0:3770 -c %h/app/tls.crt -k %h/app/tls.key
 [Install]
 WantedBy=default.target
@@ -115,6 +123,16 @@ echo "==> vm $id: a web service on 127.0.0.1:18080"
 vm 'mkdir -p /srv/sbm-e2e && echo sbm-e2e-ok > /srv/sbm-e2e/index.html
   systemd-run --unit=sbm-e2e-web python3 -m http.server 18080 --bind 127.0.0.1 --directory /srv/sbm-e2e >/dev/null'
 export SBM_E2E_VM="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@$addr"
+fi
+
+if [ "$spec" = inference_app ]; then
+# Docker for the container engines to be offered (none is deployed), and an
+# Ollama API of the machine's own (`scripts/e2e-fake-ollama.py`) to pull to.
+echo "==> vm $id: Docker and a fake Ollama"
+vm 'apt-get update -qq >/dev/null; DEBIAN_FRONTEND=noninteractive apt-get -qq install -y docker.io docker-compose-v2 >/dev/null && chmod 666 /var/run/docker.sock'
+scp -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$root/scripts/e2e-fake-ollama.py" "root@$addr:/srv/"
+vm 'systemd-run --unit=sbm-e2e-ollama python3 /srv/e2e-fake-ollama.py >/dev/null'
+export SBM_E2E_INFERENCE_APP=1
 fi
 
 if [ "$spec" = agent_tools_app ]; then

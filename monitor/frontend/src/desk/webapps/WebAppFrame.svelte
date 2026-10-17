@@ -17,6 +17,7 @@
   import type { SudoAsk } from '../../../../sdk/serverbox-desk/src/protocol'
   import AppSudoDialog from './AppSudoDialog.svelte'
   import PowerModal from '../../components/PowerModal.svelte'
+  import StackSheet from '../../components/stack/StackSheet.svelte'
   import { app } from '../registry.svelte'
   import { BridgeError, WebAppBridge, type BackendHost, type SudoGiven } from './bridge.svelte'
 
@@ -82,6 +83,7 @@
   }
 
   let power = $state<'reboot' | 'shutdown' | null>(null)
+  let sheet = $state<{ id: string; model: string | null; backend: string; done: () => void } | null>(null)
 
   const bridge = new WebAppBridge({
     handle: win,
@@ -91,6 +93,7 @@
     stylesheet: () => stylesheet,
     backend,
     power: (action) => (power = action),
+    openStack: (id, model, backend) => new Promise<void>((done) => (sheet = { id, model, backend, done })),
   })
 
   /// The frame's first page gets the bridge's port. A second load is the app
@@ -175,3 +178,14 @@
 
 <AppSudoDialog app={app(win.appId)?.title($LL) ?? win.appId} ask={sudo?.ask ?? null} remembered={sudo?.remembered ?? false} run={(g) => sudo?.run(g) ?? Promise.resolve()} onclose={() => sudo?.decline()} />
 {#if power}<PowerModal open initial={power} onclose={() => (power = null)} />{/if}
+{#if sheet}
+  <StackSheet
+    stackId={sheet.id}
+    model={sheet.model}
+    backend={sheet.backend}
+    onclose={() => {
+      sheet?.done()
+      sheet = null
+    }}
+  />
+{/if}

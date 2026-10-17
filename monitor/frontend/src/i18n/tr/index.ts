@@ -1467,6 +1467,7 @@ const tr = {
 	settingsPermProcess: 'bu sunucuda agent hesabıyla program çalıştırmasına',
 	settingsPermRoot: 'her seferinde sudo parolasıyla onayınızdan sonra root olarak betik çalıştırmasına',
 	settingsPermProviders: 'Agent modunun model sağlayıcılarını ve anahtarlarını kullanmasına',
+	settingsPermNetwork: 'bu sunucudan web isteği göndermesine ve dosyaları kendi klasörüne indirmesine',
 	settingsAppNoPermissions: 'İzin yok',
 	settingsAppRefused: 'Paket reddedildi: {reason}',
 	settingsAppApproveRisk: 'Uygulama, onu açan hesabın yetkileriyle çalışır ve sunucudan okuduğu verileri başka yerlere gönderebilir.',

@@ -21,7 +21,7 @@ use std::time::Duration;
 use serde_json::Value;
 use tokio::sync::mpsc;
 use wasmtime::component::types::ComponentItem;
-use wasmtime::component::{Component, ComponentExportIndex, HasSelf, InstancePre, Linker, ResourceTable, Type, Val};
+use wasmtime::component::{Component, ComponentExportIndex, HasSelf, InstancePre, Linker, Resource, ResourceTable, Type, Val};
 use wasmtime::{Config, Engine, Store, StoreLimits, StoreLimitsBuilder, UpdateDeadline};
 use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 use zeroize::Zeroizing;
@@ -35,6 +35,7 @@ wasmtime::component::bindgen!({
     path: "wit",
     world: "sbm:app/imports",
     imports: { default: async },
+    with: { "sbm:app/http.lines": Lines },
 });
 
 pub use sbm::app::types::Error as AppError;
@@ -61,6 +62,13 @@ const MAX_PRIVATE_FILES: usize = 8;
 /// A JSON text an app keeps under one key (the app's whole storage is
 /// bounded by `desk_storage`).
 const MAX_KV_VALUE: usize = 256 << 10;
+/// What `http.fetch` reads of a body.
+const MAX_FETCH: usize = 8 << 20;
+/// What `http.download` writes.
+const MAX_DOWNLOAD: usize = 64 << 20;
+/// One line of `http.fetch-lines`.
+const MAX_LINE: usize = 1 << 20;
+const FETCH_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// The service an app offers: its functions by kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -485,6 +493,12 @@ impl sbm::app::host::Host for Ctx {
         let m = metrics.as_ref().ok_or_else(|| AppError::Unavailable("noSample".into()))?;
         serde_json::to_string(m).map_err(|e| AppError::Internal(e.to_string()))
     }
+
+    async fn data_dir(&mut self) -> Result<String, AppError> {
+        let (apps, app) = (self.grant.state.apps.clone(), self.grant.app.clone());
+        let dir = tokio::task::spawn_blocking(move || apps.data_dir(&app)).await.map_err(|e| AppError::Internal(e.to_string()))?;
+        dir.map(|d| d.to_string_lossy().into_owned()).map_err(|e| AppError::Internal(e.to_string()))
+    }
 }
 
 impl sbm::app::agent::Host for Ctx {
@@ -506,6 +520,30 @@ impl sbm::app::agent::Host for Ctx {
             .collect()
     }
 
+    async fn shared_dir(&mut self) -> String {
+        self.grant.state.stacks.shared().to_string_lossy().into_owned()
+    }
+
+    async fn stacks(&mut self) -> Vec<sbm::app::agent::StackState> {
+        let state = self.grant.state.clone();
+        let rows = crate::stacks::store::all(&state.db).await.unwrap_or_default();
+        rows.into_iter()
+            .map(|r| {
+                let llm_port = state
+                    .stacks
+                    .package(&r.id)
+                    .and_then(|p| p.manifest.llm.as_ref().and_then(|llm| r.settings.get(&llm.port)).and_then(Value::as_u64))
+                    .and_then(|p| u16::try_from(p).ok());
+                let health = state.stacks.health(&r.id).and_then(|h| serde_json::to_value(h.state).ok()).and_then(|v| v.as_str().map(str::to_string));
+                sbm::app::agent::StackState { id: r.id, state: r.state, stopped: r.stopped, health, llm_port }
+            })
+            .collect()
+    }
+
+    async fn models_changed(&mut self) {
+        crate::inference::refresh_providers(&self.grant.state);
+    }
+
     async fn providers(&mut self) -> Result<Vec<sbm::app::agent::Provider>, AppError> {
         self.grant.may("providers")?;
         let all = self.grant.state.agent.addressed_providers().await.map_err(|e| AppError::Internal(e.to_string()))?;
@@ -525,6 +563,164 @@ impl sbm::app::agent::Host for Ctx {
         let state = self.grant.state.clone();
         let installed: Vec<String> = crate::stacks::store::all(&state.db).await.map(|rows| rows.into_iter().map(|r| r.id).collect()).unwrap_or_default();
         state.stacks.leftovers(&installed).into_iter().map(|(id, path)| (id, path.to_string_lossy().into_owned())).collect()
+    }
+}
+
+/// A response's body as `http.lines` reads it.
+pub struct Lines {
+    response: reqwest::Response,
+    buf: Vec<u8>,
+    done: bool,
+}
+
+/// The client for [url]: loopback directly (a proxy in the environment never
+/// reaches it), anything else through the agent's proxy settings. Redirects
+/// are followed only by a [download], whose digest is checked whatever served
+/// it (release assets live behind one).
+fn http_client(url: &reqwest::Url, download: bool) -> Result<reqwest::Client, AppError> {
+    static CLIENTS: [OnceLock<reqwest::Client>; 4] = [OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new()];
+    let loopback = match url.host() {
+        Some(url::Host::Domain(d)) => d.eq_ignore_ascii_case("localhost"),
+        Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
+        Some(url::Host::Ipv6(ip)) => ip.is_loopback(),
+        None => false,
+    };
+    let slot = &CLIENTS[usize::from(loopback) * 2 + usize::from(download)];
+    if let Some(c) = slot.get() {
+        return Ok(c.clone());
+    }
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    let redirects = if download { reqwest::redirect::Policy::limited(5) } else { reqwest::redirect::Policy::none() };
+    let b = reqwest::Client::builder().redirect(redirects).connect_timeout(Duration::from_secs(10));
+    let c = (if loopback { b.no_proxy() } else { b })
+        .user_agent(concat!("ServerBox-Monitor/", env!("CARGO_PKG_VERSION")))
+        .build()
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(slot.get_or_init(|| c).clone())
+}
+
+fn http_url(url: &str) -> Result<reqwest::Url, AppError> {
+    let u = reqwest::Url::parse(url).map_err(|_| AppError::InvalidArgument("url".into()))?;
+    if !matches!(u.scheme(), "http" | "https") || u.host().is_none() {
+        return Err(AppError::InvalidArgument("url".into()));
+    }
+    Ok(u)
+}
+
+/// [r] sent, unless it is not one a backend may send.
+async fn send(r: sbm::app::http::Request, default_timeout: Option<Duration>, download: bool) -> Result<reqwest::Response, AppError> {
+    let url = http_url(&r.url)?;
+    let method = reqwest::Method::from_bytes(r.method.to_ascii_uppercase().as_bytes()).map_err(|_| AppError::InvalidArgument("method".into()))?;
+    let mut req = http_client(&url, download)?.request(method, url);
+    for (k, v) in &r.headers {
+        let name = reqwest::header::HeaderName::from_bytes(k.as_bytes()).map_err(|_| AppError::InvalidArgument("header".into()))?;
+        let value = reqwest::header::HeaderValue::from_str(v).map_err(|_| AppError::InvalidArgument("header".into()))?;
+        req = req.header(name, value);
+    }
+    if let Some(body) = r.body {
+        req = req.body(body);
+    }
+    match (r.timeout_secs, default_timeout) {
+        (0, Some(t)) => req = req.timeout(t),
+        (0, None) => {}
+        (n, _) => req = req.timeout(Duration::from_secs(n.into())),
+    }
+    req.send().await.map_err(|e| if e.is_timeout() { AppError::DeadlineExceeded } else { AppError::Unavailable(e.without_url().to_string()) })
+}
+
+/// [response]'s body, at most [max] bytes.
+async fn body(mut response: reqwest::Response, max: usize) -> Result<Vec<u8>, AppError> {
+    let mut out = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(|e| AppError::Unavailable(e.without_url().to_string()))? {
+        if out.len() + chunk.len() > max {
+            return Err(AppError::Unavailable("tooLarge".into()));
+        }
+        out.extend_from_slice(&chunk);
+    }
+    Ok(out)
+}
+
+impl sbm::app::http::Host for Ctx {
+    async fn fetch(&mut self, request: sbm::app::http::Request) -> Result<sbm::app::http::Response, AppError> {
+        self.grant.may("network")?;
+        let response = send(request, Some(FETCH_TIMEOUT), false).await?;
+        let status = response.status().as_u16();
+        Ok(sbm::app::http::Response { status, body: body(response, MAX_FETCH).await? })
+    }
+
+    async fn fetch_lines(&mut self, request: sbm::app::http::Request) -> Result<(u16, Resource<Lines>), AppError> {
+        self.grant.may("network")?;
+        let response = send(request, None, false).await?;
+        let status = response.status().as_u16();
+        let lines = self.table.push(Lines { response, buf: Vec::new(), done: false }).map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok((status, lines))
+    }
+
+    async fn download(&mut self, url: String, sha256: String, name: String) -> Result<String, AppError> {
+        use sha2::{Digest, Sha256};
+        self.grant.may("network")?;
+        let plain = |s: &str| !s.is_empty() && s.len() <= 128 && s.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-')) && !s.starts_with('.');
+        if !plain(&name) {
+            return Err(AppError::InvalidArgument("name".into()));
+        }
+        if sha256.len() != 64 || !sha256.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)) {
+            return Err(AppError::InvalidArgument("sha256".into()));
+        }
+        let request = sbm::app::http::Request { method: "GET".into(), url, headers: Vec::new(), body: None, timeout_secs: 0 };
+        let response = send(request, Some(Duration::from_secs(600)), true).await?;
+        if !response.status().is_success() {
+            return Err(AppError::Unavailable(format!("HTTP {}", response.status().as_u16())));
+        }
+        let bytes = body(response, MAX_DOWNLOAD).await?;
+        let digest = hex::encode(Sha256::digest(&bytes));
+        if digest != sha256 {
+            return Err(AppError::FailedPrecondition(format!("sha256 {digest}")));
+        }
+        let (apps, app) = (self.grant.state.apps.clone(), self.grant.app.clone());
+        let path = tokio::task::spawn_blocking(move || -> std::io::Result<std::path::PathBuf> {
+            let dir = apps.data_dir(&app)?;
+            let (part, path) = (dir.join(format!(".{name}.part")), dir.join(&name));
+            std::fs::write(&part, &bytes)?;
+            std::fs::rename(&part, &path)?;
+            Ok(path)
+        })
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok(path.to_string_lossy().into_owned())
+    }
+}
+
+impl sbm::app::http::HostLines for Ctx {
+    async fn next(&mut self, lines: Resource<Lines>) -> Result<Option<String>, AppError> {
+        let l = self.table.get_mut(&lines).map_err(|e| AppError::Internal(e.to_string()))?;
+        loop {
+            if let Some(end) = l.buf.iter().position(|b| *b == b'\n') {
+                let line: Vec<u8> = l.buf.drain(..=end).collect();
+                let line = String::from_utf8_lossy(&line[..line.len() - 1]);
+                return Ok(Some(line.trim_end_matches('\r').to_string()));
+            }
+            if l.done {
+                if l.buf.is_empty() {
+                    return Ok(None);
+                }
+                return Ok(Some(String::from_utf8_lossy(&std::mem::take(&mut l.buf)).into_owned()));
+            }
+            match l.response.chunk().await.map_err(|e| AppError::Unavailable(e.without_url().to_string()))? {
+                Some(chunk) => {
+                    l.buf.extend_from_slice(&chunk);
+                    if l.buf.len() > MAX_LINE && !l.buf.contains(&b'\n') {
+                        return Err(AppError::Unavailable("lineTooLong".into()));
+                    }
+                }
+                None => l.done = true,
+            }
+        }
+    }
+
+    async fn drop(&mut self, lines: Resource<Lines>) -> wasmtime::Result<()> {
+        self.table.delete(lines)?;
+        Ok(())
     }
 }
 

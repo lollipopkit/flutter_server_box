@@ -1,0 +1,49 @@
+{
+  "publisher": "serverbox",
+  "name": "inference",
+  "version": "1.0.0",
+  "api": 2,
+  "kind": "wasm",
+  "title": {
+    "en": "Local inference",
+    "de": "Lokale Inferenz",
+    "es": "Inferencia local",
+    "fr": "Inférence locale",
+    "id": "Inferensi lokal",
+    "it": "Inferenza locale",
+    "ja": "ローカル推論",
+    "ko": "로컬 추론",
+    "nl": "Lokale inferentie",
+    "pt": "Inferência local",
+    "ru": "Локальный инференс",
+    "tr": "Yerel çıkarım",
+    "uk": "Локальний інференс",
+    "zh-CN": "本地推理",
+    "zh-TW": "本機推論"
+  },
+  "keywords": [
+    "ai",
+    "models",
+    "llm",
+    "gpu",
+    "ollama",
+    "llama.cpp",
+    "vllm",
+    "sglang",
+    "mlx"
+  ],
+  "glyph": "neurology",
+  "tone": "violet",
+  "permissions": [
+    "process",
+    "network"
+  ],
+  "size": {
+    "width": 980,
+    "height": 720
+  },
+  "min_size": {
+    "width": 360,
+    "height": 420
+  }
+}

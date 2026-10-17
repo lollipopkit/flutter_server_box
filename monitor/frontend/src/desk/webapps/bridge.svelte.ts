@@ -9,6 +9,7 @@
 /// checked here, one message at a time. Nothing secret is ever sent.
 
 import { SvelteMap } from 'svelte/reactivity'
+import { ENGINE_STACKS } from '../../components/stack/apps'
 import type { WindowHandle } from '../sys/window.svelte'
 import type { Intent } from '../windows.svelte'
 import type { MenuEntry } from '../lk/Menu.svelte'
@@ -132,6 +133,9 @@ export interface BridgeHost {
   /// The desk's own restart dialog (`PowerModal`), which the user confirms
   /// there.
   power?: (action: 'reboot' | 'shutdown') => void
+  /// The desk's page for a model server stack (`ENGINE_STACKS`) in a sheet,
+  /// set up with [model] on [backend]; settled once it is closed.
+  openStack?: (id: string, model: string | null, backend: string) => Promise<void>
 }
 
 export class WebAppBridge {
@@ -142,6 +146,8 @@ export class WebAppBridge {
   ready = $state(false)
 
   #host: BridgeHost
+  /// A stack sheet is open.
+  #sheet = false
   #port: BridgePort | null = null
   #opens: number[] = []
   #inFlight = 0
@@ -357,6 +363,23 @@ export class WebAppBridge {
         if (this.#opens.length >= MAX_OPENS) throw new BridgeError('busy')
         this.#opens.push(now)
         return this.#host.power(a.action === 'shutdown' ? 'shutdown' : 'reboot')
+      }
+      case 'openStack': {
+        // A model server's page in the desk's own sheet, where the account
+        // confirms a setup with its password: for an app that runs
+        // programs, one sheet at a time.
+        const id = text(a.id, 128) ?? ''
+        const model = a.model === undefined || a.model === null ? null : (text(a.model, 512) ?? '')
+        const backend = text(a.backend, 16) ?? 'cpu'
+        if (!ENGINE_STACKS.includes(id) || model === '' || !/^[a-z]+$/.test(backend)) throw new BridgeError('invalidArgs')
+        if (!this.#host.allows('process') || !this.#host.openStack) throw new BridgeError('notPermitted')
+        if (this.#sheet) throw new BridgeError('busy')
+        this.#sheet = true
+        try {
+          return await this.#host.openStack(id, model, backend)
+        } finally {
+          this.#sheet = false
+        }
       }
       case 'backend.cancel':
         if (!this.#host.backend) throw new BridgeError('noBackend')

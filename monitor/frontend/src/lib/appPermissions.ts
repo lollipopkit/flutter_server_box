@@ -18,6 +18,8 @@ export function permissionText(ll: TranslationFunctions, permission: string): st
       return ll.settingsPermRoot()
     case 'providers':
       return ll.settingsPermProviders()
+    case 'network':
+      return ll.settingsPermNetwork()
     default:
       return permission
   }

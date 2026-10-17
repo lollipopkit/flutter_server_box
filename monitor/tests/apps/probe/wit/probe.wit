@@ -28,6 +28,11 @@ interface api {
   line-outside: func() -> result<_, error>;
   /// Agent mode's providers' ids, and the first one's key.
   providers: func() -> result<tuple<list<string>, option<string>>, error>;
+  /// [url]'s status and body; its body's lines counted; saved as [name].
+  fetch-text: func(url: string) -> result<tuple<u16, string>, error>;
+  count-lines: func(url: string) -> result<u32, error>;
+  save: func(url: string, sha256: string, name: string) -> result<string, error>;
+  own-dir: func() -> result<string, error>;
 }
 
 interface jobs {

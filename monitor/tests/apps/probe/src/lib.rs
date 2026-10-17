@@ -3,9 +3,13 @@ wit_bindgen::generate!({ path: ["../../../wit", "wit"], world: "test:probe/probe
 use exports::test::probe::api::{self, Echoed, Shade, Shape};
 use exports::test::probe::jobs;
 use sbm::app::types::Error;
-use sbm::app::{agent, host, job};
+use sbm::app::{agent, host, http, job};
 
 struct Probe;
+
+fn get(url: String) -> http::Request {
+    http::Request { method: "GET".into(), url, headers: vec![], body: None, timeout_secs: 0 }
+}
 
 impl api::Guest for Probe {
     fn echo(text: String, count: u32, tags: Vec<String>, maybe_note: Option<String>, shade: Shade, shape: Shape) -> Result<Echoed, Error> {
@@ -61,6 +65,28 @@ impl api::Guest for Probe {
             None => None,
         };
         Ok((all.into_iter().map(|p| p.id).collect(), key))
+    }
+
+    fn fetch_text(url: String) -> Result<(u16, String), Error> {
+        let r = http::fetch(&get(url))?;
+        Ok((r.status, String::from_utf8_lossy(&r.body).into_owned()))
+    }
+
+    fn count_lines(url: String) -> Result<u32, Error> {
+        let (_, lines) = http::fetch_lines(&get(url))?;
+        let mut n = 0;
+        while lines.next()?.is_some() {
+            n += 1;
+        }
+        Ok(n)
+    }
+
+    fn save(url: String, sha256: String, name: String) -> Result<String, Error> {
+        http::download(&url, &sha256, &name)
+    }
+
+    fn own_dir() -> Result<String, Error> {
+        host::data_dir()
     }
 }
 

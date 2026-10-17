@@ -26,7 +26,7 @@ macro_rules! desk {
 
 /// The shipped packages, by app id. A test holds this list equal to
 /// `store/desk/`.
-const BUNDLED: &[(&str, &[u8])] = desk!["serverbox.agent_tools", "serverbox.cleanup", "serverbox.kernel", "serverbox.proxy", "serverbox.tailscale", "serverbox.ubuntu_pro"];
+const BUNDLED: &[(&str, &[u8])] = desk!["serverbox.agent_tools", "serverbox.cleanup", "serverbox.inference", "serverbox.kernel", "serverbox.proxy", "serverbox.tailscale", "serverbox.ubuntu_pro"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]

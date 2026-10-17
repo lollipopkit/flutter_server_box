@@ -64,6 +64,11 @@ interface host {
 
   /// The current status sample (`ServerStatus` JSON, `system`).
   status: func() -> result<string, error>;
+
+  /// The app's own folder on this machine (made 0700 on first use, a tree
+  /// `/fs` never serves, removed with the app): for a script to keep what
+  /// it fetched or installed there.
+  data-dir: func() -> result<string, error>;
 }
 
 /// What only the agent knows about this machine.
@@ -106,10 +111,69 @@ interface agent {
     key: option<string>,
   }
 
+  /// The folder every web app shares (`{shared}`: downloads, media,
+  /// `models`).
+  shared-dir: func() -> string;
+
+  /// A deployed web app or model server, as the agent keeps it.
+  record stack-state {
+    id: string,
+    /// `installing`, `installed`, `failed`, …
+    state: string,
+    stopped: bool,
+    /// `healthy`, `starting`, `unhealthy`, `down`, `stopped`.
+    health: option<string>,
+    /// A model server's API port on this machine (its `[llm]` port).
+    llm-port: option<u16>,
+  }
+
+  /// Every deployed stack, model servers included.
+  stacks: func() -> list<stack-state>;
+
+  /// The model servers here changed (one started or stopped outside the
+  /// stacks): Agent mode works out which it offers again.
+  models-changed: func();
+
   /// Agent mode's providers (`providers`).
   providers: func() -> result<list<provider>, error>;
   /// [id]'s address and key (`providers`); none for no such provider.
   endpoint: func(id: string) -> result<option<address>, error>;
+}
+
+/// HTTP from the agent (`network`): loopback reached directly, anything else
+/// through the agent's proxy settings; only a download follows redirects.
+interface http {
+  use types.{error};
+
+  record request {
+    method: string,
+    /// `http` or `https`.
+    url: string,
+    headers: list<tuple<string, string>>,
+    body: option<list<u8>>,
+    /// 0: the default (30 s for `fetch`; none for `fetch-lines`, a job's
+    /// or a call's own bound applies).
+    timeout-secs: u32,
+  }
+
+  record response {
+    status: u16,
+    /// At most 8 MiB.
+    body: list<u8>,
+  }
+
+  /// A response's body read line by line as it comes.
+  resource lines {
+    /// The next line, without its line break; none at the end.
+    next: func() -> result<option<string>, error>;
+  }
+
+  fetch: func(request: request) -> result<response, error>;
+  /// The status, and the body as it comes (Ollama's pull progress).
+  fetch-lines: func(request: request) -> result<tuple<u16, lines>, error>;
+  /// [url]'s body (at most 64 MiB) into the app's own folder as [name]
+  /// when its SHA-256 is [sha256] (lowercase hex); its path.
+  download: func(url: string, sha256: string, name: string) -> result<string, error>;
 }
 
 /// A job's own: nothing here works in a unary call.
@@ -138,5 +202,6 @@ interface job {
 world imports {
   import host;
   import agent;
+  import http;
   import job;
 }

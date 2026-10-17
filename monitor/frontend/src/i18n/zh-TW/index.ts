@@ -1467,6 +1467,7 @@ const zh_TW = {
 	settingsPermProcess: '以 agent 的帳戶在此伺服器上執行程式',
 	settingsPermRoot: '以 root 身分執行指令碼，每次都需要你使用 sudo 密碼確認',
 	settingsPermProviders: '使用 Agent 模式的模型提供者，包括其金鑰',
+	settingsPermNetwork: '從此伺服器發出網路請求，並將檔案下載到自己的資料夾',
 	settingsAppNoPermissions: '沒有權限',
 	settingsAppRefused: '套件遭拒：{reason}',
 	settingsAppApproveRisk: 'App 會以開啟它的帳號身分執行，並可將從伺服器讀取的資料傳送至其他地方。',

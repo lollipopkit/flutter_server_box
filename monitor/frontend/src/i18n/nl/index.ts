@@ -1467,6 +1467,7 @@ const nl = {
 	settingsPermProcess: 'programma’s op deze server uit te voeren met het account van de agent',
 	settingsPermRoot: 'scripts als root uit te voeren, telkens na bevestiging met het sudo-wachtwoord',
 	settingsPermProviders: 'de modelproviders van de Agent-modus te gebruiken, inclusief hun sleutels',
+	settingsPermNetwork: 'webverzoeken vanaf deze server te doen en bestanden naar de eigen map te downloaden',
 	settingsAppNoPermissions: 'Geen machtigingen',
 	settingsAppRefused: 'Het pakket is geweigerd: {reason}',
 	settingsAppApproveRisk: 'De app draait met het account van degene die haar opent en kan gelezen servergegevens elders naartoe sturen.',

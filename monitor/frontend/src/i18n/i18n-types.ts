@@ -6601,6 +6601,10 @@ type RootTranslation = {
 	 */
 	settingsPermProviders: string
 	/**
+	 * m​a​k​e​ ​w​e​b​ ​r​e​q​u​e​s​t​s​ ​f​r​o​m​ ​t​h​i​s​ ​s​e​r​v​e​r​ ​a​n​d​ ​d​o​w​n​l​o​a​d​ ​f​i​l​e​s​ ​i​n​t​o​ ​i​t​s​ ​o​w​n​ ​f​o​l​d​e​r
+	 */
+	settingsPermNetwork: string
+	/**
 	 * N​o​ ​p​e​r​m​i​s​s​i​o​n​s
 	 */
 	settingsAppNoPermissions: string
@@ -17898,6 +17902,10 @@ pveum acl modify / --tokens 'root@pam!serverbox' --roles PVEAuditor,PVEVMAdmin
 	 * use Agent mode's model providers, their keys included
 	 */
 	settingsPermProviders: () => LocalizedString
+	/**
+	 * make web requests from this server and download files into its own folder
+	 */
+	settingsPermNetwork: () => LocalizedString
 	/**
 	 * No permissions
 	 */

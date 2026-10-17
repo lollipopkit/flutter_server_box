@@ -63,9 +63,10 @@ const WASM_API: u32 = 2;
 
 /// What a `web` app may ask for. A backend's come with `wasm`: the status
 /// sample, programs as the agent's account, scripts as root (with a sudo
-/// password the desk asks for each time), Agent mode's providers and keys.
+/// password the desk asks for each time), Agent mode's providers and keys,
+/// HTTP from the agent.
 const WEB_PERMISSIONS: &[&str] = &["notifications", "background"];
-const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "process", "root", "providers"];
+const WASM_PERMISSIONS: &[&str] = &["notifications", "background", "status", "process", "root", "providers", "network"];
 const TONES: &[&str] = &["berry", "soft", "ink", "sky", "teal", "violet", "amber", "leaf", "pale", "bright", "mist"];
 
 // -----------------------------------------------------------------------------
@@ -723,6 +724,8 @@ pub async fn remove(
             if let Some(sha) = backend {
                 state.apps.forget(&sha);
             }
+            let (apps, app) = (state.apps.clone(), id.to_string());
+            let _ = tokio::task::spawn_blocking(move || apps.forget_data(&app)).await;
             audit(&req, &state, Action::Write, format!("app remove {}", id.as_str())).await;
             Ok(HttpResponse::NoContent().finish())
         }

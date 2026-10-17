@@ -130,7 +130,7 @@ impl Job {
         if lines.len() >= MAX_LINES {
             lines.pop_front();
         }
-        lines.push_back(Line { seq, text: text.into() });
+        lines.push_back(Line { seq, text: plain(&text.into()) });
     }
 
     pub fn state(&self) -> JobState {
@@ -264,6 +264,43 @@ impl Job {
     }
 }
 
+/// [line] as text: a terminal's escape sequences (colours, cursor moves) and
+/// other control characters left out, tabs and line breaks kept.
+fn plain(line: &str) -> String {
+    if !line.chars().any(|c| c.is_control() && c != '\t' && c != '\n') {
+        return line.to_string();
+    }
+    let mut out = String::with_capacity(line.len());
+    let mut chars = line.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '\u{1b}' => match chars.next() {
+                // CSI: parameters, then one final byte.
+                Some('[') => {
+                    for c in chars.by_ref() {
+                        if ('@'..='~').contains(&c) {
+                            break;
+                        }
+                    }
+                }
+                // OSC: up to BEL or ST.
+                Some(']') => {
+                    while let Some(c) = chars.next() {
+                        if c == '\u{7}' || (c == '\u{1b}' && chars.next_if_eq(&'\\').is_some()) {
+                            break;
+                        }
+                    }
+                }
+                _ => {}
+            },
+            '\t' | '\n' => out.push(c),
+            c if c.is_control() => {}
+            c => out.push(c),
+        }
+    }
+    out
+}
+
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
@@ -297,5 +334,17 @@ mod tests {
         let wait = tokio::spawn(async move { waiter.done().await });
         job.finish(JobState::Succeeded, None);
         assert_eq!(wait.await.unwrap(), JobState::Succeeded);
+    }
+}
+
+#[cfg(test)]
+mod plain_tests {
+    use super::plain;
+
+    #[test]
+    fn lines_are_plain_text() {
+        assert_eq!(plain("\u{1b}[0;2mInstalling \u{1b}[0mopencode\u{1b}[0m"), "Installing opencode");
+        assert_eq!(plain("\u{1b}]8;;https://x\u{7}link\u{1b}]8;;\u{1b}\\ done\r"), "link done");
+        assert_eq!(plain("# set -e\na\tb"), "# set -e\na\tb");
     }
 }

@@ -117,6 +117,13 @@ export interface Desk {
   /// The desk's own dialog to restart (or shut down) the machine, which the
   /// user confirms there. Needs `root`.
   power(action?: 'reboot' | 'shutdown'): Promise<void>
+  /// The desk's own page for one of the agent's model server stacks
+  /// (Ollama, llama.cpp, vLLM, SGLang: `ollama.ollama`, `ggml.llama_cpp`,
+  /// `vllm.vllm`, `sglang.sglang`) in a sheet over the window, set up with
+  /// [setup]'s model and backend (`cuda`, `rocm`, `vulkan`, `cpu`) when it
+  /// is not deployed; the account confirms there. Settles once it is
+  /// closed. Needs `process`.
+  openStack(id: string, setup?: { model?: string | null; backend?: string }): Promise<void>
 }
 
 /// Where the desk's port arrives: this frame's window, from its parent.
@@ -249,5 +256,6 @@ export async function connect(options: ConnectOptions = {}): Promise<Desk> {
     cancelJob: () => call('backend.cancel'),
     power: (action = 'reboot') => call('power', { action }),
     openUrl: (url) => call('openUrl', { url }),
+    openStack: (id, setup = {}) => call('openStack', { id, model: setup.model ?? null, backend: setup.backend ?? 'cpu' }),
   }
 }
