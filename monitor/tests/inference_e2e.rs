@@ -251,6 +251,23 @@ async fn engine(srv: &TestServer, state: &Arc<AppState>, id: &str, accel: Option
     let project = format!("sbm-{publisher}-{name}");
     let ps = std::process::Command::new("docker").args(["ps", "-aq", "--filter", &format!("label=com.docker.compose.project={project}")]).output().unwrap();
     assert!(ps.stdout.is_empty(), "{project} is deployed on this machine already: not touched");
+    // A GPU engine runs only where Docker hands it the NVIDIA GPU: the agent
+    // says so before it is deployed.
+    if let Some(engine) = match id {
+        "vllm.vllm" => Some("vllm"),
+        "sglang.sglang" => Some("sglang"),
+        _ => None,
+    } {
+        let (_, view) = call(srv, Method::GET, "/api/v1/inference", None).await;
+        let fit = view["engines"].as_array().unwrap().iter().find(|e| e["engine"] == engine).cloned().unwrap_or_default();
+        // A card older than the engine's kernels is said so, and not deployed
+        // (SGLang on a Turing card).
+        if fit["blocked"] == "gpuTooOld" {
+            eprintln!("{id}: refused here, the GPU is older than its kernels: {fit}");
+            return;
+        }
+        assert_eq!((fit["blocked"].clone(), fit["backend"].clone()), (Value::Null, json!("cuda")), "{engine} does not run here: {fit}");
+    }
     let model = small_model(id);
     let mut given = serde_json::Map::new();
     if id != "ollama.ollama" {

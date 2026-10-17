@@ -49,6 +49,12 @@ const CATEGORIES: &[&str] = &[
 /// that is not root to `group_add`. A manifest uses them and never sets them.
 pub const RESERVED: &[&str] = &["SBM_UID", "SBM_GID", "SBM_TZ", "SBM_RENDER_GID"];
 
+/// What the agent writes for a model server whose `[llm] tools` names its
+/// engine: the tool-call parser for the model it serves
+/// (`sbm_parser::inference::tool_parser`), empty for a family it knows none
+/// for. The compose file passes it on only when it is set.
+pub const TOOL_PARSER_ENV: &str = "SBM_TOOL_PARSER";
+
 pub type Text = BTreeMap<String, String>;
 pub type EnvMap = BTreeMap<String, String>;
 
@@ -140,6 +146,19 @@ pub struct Llm {
     /// A `[[secrets]]` entry it asks for as a bearer token.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub key: Option<String>,
+    /// The engine whose tool-call parsers it takes ([`TOOL_PARSER_ENV`]):
+    /// without one, it answers no tool call and runs no Agent mode task.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tools: Option<sbm_parser::inference::Engine>,
+}
+
+impl Llm {
+    /// The tool-call parser for the model [settings] name, when its engine
+    /// takes one and knows the model's family.
+    pub fn tool_parser(&self, settings: &BTreeMap<String, Value>) -> Option<&'static str> {
+        let model = settings.get(self.model.as_deref()?)?.as_str()?;
+        sbm_parser::inference::tool_parser(self.tools?, model)
+    }
 }
 
 fn v1() -> String {
@@ -773,6 +792,13 @@ impl Manifest {
         {
             out.push(problem("llm.key", format!("{env} is not a [[secrets]] entry")));
         }
+        match llm.tools {
+            Some(sbm_parser::inference::Engine::Vllm | sbm_parser::inference::Engine::Sglang) if llm.model.is_none() => {
+                out.push(problem("llm.tools", "needs llm.model: the parser follows the model"));
+            }
+            Some(sbm_parser::inference::Engine::Vllm | sbm_parser::inference::Engine::Sglang) | None => {}
+            Some(_) => out.push(problem("llm.tools", "vllm or sglang")),
+        }
         out
     }
 
@@ -836,6 +862,9 @@ impl Manifest {
     pub fn provided(&self) -> BTreeSet<String> {
         let mut names: BTreeSet<String> = self.env.keys().cloned().collect();
         names.extend(RESERVED.iter().map(|n| n.to_string()));
+        if self.llm.as_ref().is_some_and(|l| l.tools.is_some()) {
+            names.insert(TOOL_PARSER_ENV.to_string());
+        }
         names.extend(self.secrets.iter().map(|s| s.env.clone()));
         for s in &self.settings {
             names.extend(s.env_names().into_iter().map(String::from));
@@ -937,6 +966,9 @@ impl Manifest {
                     }
                 }
             }
+        }
+        if let Some(llm) = self.llm.as_ref().filter(|l| l.tools.is_some()) {
+            values.insert(TOOL_PARSER_ENV.to_string(), llm.tool_parser(settings).unwrap_or("").to_string());
         }
         values
     }
@@ -1604,6 +1636,16 @@ label = { en = "Port" }
         assert_eq!(at(&problems(&api.replace("model = \"model\"", "model = \"port\""), compose)), ["llm.model"]);
         assert_eq!(at(&problems(&api.replace("key = \"KEY\"", "key = \"NOPE\""), compose)), ["llm.key"]);
         assert_eq!(at(&problems(&api.replace("[llm]\n", "[llm]\npath = \"/v1/\"\n"), compose)), ["llm.path"]);
+
+        // A tool-call parser for the model it serves, for the compose file.
+        let tools = api.replace("key = \"KEY\"\n", "key = \"KEY\"\ntools = \"vllm\"\n");
+        let m = package(&tools, "x: ${PORT} ${MODEL} ${KEY} ${SBM_TOOL_PARSER}\n").expect("tools").manifest;
+        let with_model = |model: &str| BTreeMap::from([("model".into(), Value::from(model))]);
+        assert_eq!(m.env_values(&with_model("Qwen/Qwen3-0.6B"), &BTreeMap::new()).get(TOOL_PARSER_ENV).map(String::as_str), Some("hermes"));
+        assert_eq!(m.env_values(&with_model("google/gemma-3-4b-it"), &BTreeMap::new()).get(TOOL_PARSER_ENV).map(String::as_str), Some(""));
+        assert_eq!(m.llm.as_ref().unwrap().tool_parser(&with_model("google/gemma-3-4b-it")), None);
+        assert!(package(&api, "x: ${PORT} ${MODEL} ${KEY} ${SBM_TOOL_PARSER}\n").is_err(), "provided only with tools");
+        assert_eq!(at(&problems(&tools.replace("tools = \"vllm\"", "tools = \"ollama\""), compose)), ["llm.tools"]);
     }
 
     #[test]

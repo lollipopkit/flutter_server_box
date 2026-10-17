@@ -118,6 +118,10 @@ pub async fn providers(state: &AppState) -> Vec<AppProvider> {
         let Some(package) = state.stacks.package(&row.id) else { continue };
         let m = &package.manifest;
         let Some(llm) = &m.llm else { continue };
+        // A model server that answers no tool call cannot run a task.
+        if llm.tools.is_some() && llm.tool_parser(&row.settings).is_none() {
+            continue;
+        }
         let Some(base_url) = stack_api(row, llm) else { continue };
         let key = match &llm.key {
             Some(env) => {

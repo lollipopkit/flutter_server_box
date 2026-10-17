@@ -41,6 +41,7 @@ port = "port"
 path = "/v1"
 model = "model"
 key = "API_KEY"
+tools = "vllm"
 
 [env]
 VLLM_VERSION = "v0.30.0"

@@ -149,6 +149,7 @@ inference's engines (`monitor/inference/engines/`) are such apps.
 | `path` | Default `/v1`: `<path>/models`, `<path>/chat/completions` |
 | `model` | Optional: the key of the text setting naming the model it serves |
 | `key` | Optional: a `[[secrets]]` entry it asks for as a bearer token |
+| `tools` | Optional, `vllm` or `sglang` (needs `model`): the agent writes `SBM_TOOL_PARSER`, the engine's tool-call parser for the model's family (empty when it knows none), and Agent mode is offered the app only with one; pass it on only when set (`${SBM_TOOL_PARSER:+--tool-call-parser …}` in a shell) |
 
 ## `[login]`
 

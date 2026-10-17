@@ -9,7 +9,10 @@
 # - the model is a Hugging Face repository, downloaded on first start into the
 #   shared models folder (the Hugging Face cache, shared with SGLang);
 # - the API asks for a generated key and is published on loopback unless the
-#   admin opens it.
+#   admin opens it;
+# - tool calls (what Agent mode's tasks are) are on when the agent knows the
+#   model's parser (SBM_TOOL_PARSER), through a shell so the two flags go
+#   only then; `exec` keeps vLLM the container's process.
 
 services:
   vllm:
@@ -17,20 +20,17 @@ services:
     environment:
       TZ: ${SBM_TZ}
       HF_HOME: /models
+      MODEL: ${MODEL}
+      API_KEY: ${API_KEY}
+      CONTEXT: ${CONTEXT}
+      GPU_MEMORY: ${GPU_MEMORY}
+      SBM_TOOL_PARSER: ${SBM_TOOL_PARSER}
+    entrypoint: ["/bin/sh", "-c"]
     command:
-      - ${MODEL}
-      - --served-model-name
-      - ${MODEL}
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
-      - --api-key
-      - ${API_KEY}
-      - --max-model-len
-      - ${CONTEXT}
-      - --gpu-memory-utilization
-      - ${GPU_MEMORY}
+      - >-
+        exec vllm serve "$$MODEL" --served-model-name "$$MODEL" --host 0.0.0.0 --port 8000
+        --api-key "$$API_KEY" --max-model-len "$$CONTEXT" --gpu-memory-utilization "$$GPU_MEMORY"
+        $${SBM_TOOL_PARSER:+--enable-auto-tool-choice --tool-call-parser "$$SBM_TOOL_PARSER"}
     volumes:
       - ${MODELS_LOCATION}:/models
     ports:

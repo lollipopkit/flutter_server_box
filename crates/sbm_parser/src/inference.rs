@@ -143,6 +143,9 @@ const SERVING_MIN_MIB: u64 = 8 * 1024;
 
 /// Every engine, the ones that run first, in the order worth choosing them
 /// for this machine.
+/// The compute capability (major·10 + minor) SGLang's image has kernels for.
+const SGLANG_MIN_COMPUTE: u32 = 80;
+
 pub fn engines(hw: &Hardware) -> Vec<EngineFit> {
     let fit = |engine, backend, blocked: Option<&str>| EngineFit { engine, backend, blocked: blocked.map(str::to_owned), cpu_because: None };
     let linux = hw.os == "linux";
@@ -167,6 +170,9 @@ pub fn engines(hw: &Hardware) -> Vec<EngineFit> {
         fit(engine, Backend::Cpu, None)
     };
     // vLLM and SGLang: a GPU of their kind, big enough and new enough.
+    // SGLang's release image has no kernels for Turing (flashinfer's
+    // RMSNorm: "no kernel image is available" on a Tesla T10, 7.5), so
+    // Ampere; vLLM's still serves Volta.
     let serving = |engine: Engine, min_compute: u32| -> EngineFit {
         let base = container(engine);
         if base.blocked.is_some() {
@@ -210,13 +216,13 @@ pub fn engines(hw: &Hardware) -> Vec<EngineFit> {
         (true, true) => fit(Engine::Mlx, Backend::Metal, None),
     };
     let mut all = if hw.apple_silicon() {
-        vec![mlx(), ollama(), llama_cpp(), serving(Engine::Vllm, 70), serving(Engine::Sglang, 75)]
+        vec![mlx(), ollama(), llama_cpp(), serving(Engine::Vllm, 70), serving(Engine::Sglang, SGLANG_MIN_COMPUTE)]
     } else {
         let vllm = serving(Engine::Vllm, 70);
         if vllm.blocked.is_none() {
-            vec![vllm, serving(Engine::Sglang, 75), llama_cpp(), ollama(), mlx()]
+            vec![vllm, serving(Engine::Sglang, SGLANG_MIN_COMPUTE), llama_cpp(), ollama(), mlx()]
         } else {
-            vec![llama_cpp(), ollama(), vllm, serving(Engine::Sglang, 75), mlx()]
+            vec![llama_cpp(), ollama(), vllm, serving(Engine::Sglang, SGLANG_MIN_COMPUTE), mlx()]
         }
     };
     // Stable: the runnable ones first, each group in the order above.
@@ -849,9 +855,68 @@ pub fn valid_model(s: &str) -> bool {
         && s.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'-' | b'_' | b'.' | b':'))
 }
 
+/// The tool-call parser [engine] needs to answer tool calls (Agent mode's
+/// commands) with [model], a Hugging Face repository: by the model's
+/// family, in each engine's own names (vLLM `--tool-call-parser` with
+/// `--enable-auto-tool-choice`, SGLang `--tool-call-parser`). `None` for an
+/// engine that needs none, or a family neither knows: such a model chats
+/// but cannot run a task.
+pub fn tool_parser(engine: Engine, model: &str) -> Option<&'static str> {
+    let m = model.rsplit('/').next().unwrap_or(model).to_ascii_lowercase();
+    let has = |p: &str| m.contains(p);
+    // (vLLM, SGLang); the more specific family first.
+    let (vllm, sglang) = if has("qwen3-coder") || has("qwen3coder") {
+        ("qwen3_coder", "qwen3_coder")
+    } else if has("qwen") || has("qwq") || has("hermes") {
+        ("hermes", if has("hermes") { "hermes" } else { "qwen" })
+    } else if has("llama-4") || has("llama4") {
+        ("llama4_pythonic", "pythonic")
+    } else if has("llama-3") || has("llama3") {
+        ("llama3_json", "llama3")
+    } else if ["mistral", "ministral", "devstral", "magistral"].iter().any(|f| has(f)) {
+        ("mistral", "mistral")
+    } else if has("gpt-oss") {
+        ("openai", "gpt-oss")
+    } else if has("deepseek-v3.1") {
+        ("deepseek_v31", "deepseekv31")
+    } else if has("deepseek-v3") {
+        ("deepseek_v3", "deepseekv3")
+    } else if has("glm-4.7") {
+        ("glm47", "glm47")
+    } else if has("glm-4.5") || has("glm-4.6") {
+        ("glm45", "glm45")
+    } else if has("kimi-k2") {
+        ("kimi_k2", "kimi_k2")
+    } else if has("gemma-4") || has("gemma4") {
+        ("gemma4", "gemma4")
+    } else if has("minimax-m2") {
+        ("minimax_m2", "minimax-m2")
+    } else {
+        return None;
+    };
+    match engine {
+        Engine::Vllm => Some(vllm),
+        Engine::Sglang => Some(sglang),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn picks_the_tool_call_parser_by_family() {
+        assert_eq!(tool_parser(Engine::Vllm, "Qwen/Qwen3-0.6B"), Some("hermes"));
+        assert_eq!(tool_parser(Engine::Sglang, "Qwen/Qwen3-0.6B"), Some("qwen"));
+        assert_eq!(tool_parser(Engine::Vllm, "Qwen/Qwen3-Coder-30B-A3B-Instruct"), Some("qwen3_coder"));
+        assert_eq!(tool_parser(Engine::Vllm, "meta-llama/Llama-3.1-8B-Instruct"), Some("llama3_json"));
+        assert_eq!(tool_parser(Engine::Sglang, "meta-llama/Llama-3.1-8B-Instruct"), Some("llama3"));
+        assert_eq!(tool_parser(Engine::Sglang, "openai/gpt-oss-20b"), Some("gpt-oss"));
+        assert_eq!(tool_parser(Engine::Vllm, "deepseek-ai/DeepSeek-V3.1"), Some("deepseek_v31"));
+        assert_eq!(tool_parser(Engine::Vllm, "google/gemma-3-4b-it"), None);
+        assert_eq!(tool_parser(Engine::Ollama, "Qwen/Qwen3-0.6B"), None);
+    }
 
     fn nvidia(memory: u64, compute: u32, containers: bool) -> Hardware {
         Hardware {
@@ -874,12 +939,16 @@ mod tests {
 
     #[test]
     fn a_big_nvidia_card_serves_with_vllm_first() {
-        let o = order(&nvidia(16384, 75, true));
+        let o = order(&nvidia(16384, 86, true));
         assert_eq!(o[0], (Engine::Vllm, None));
         assert_eq!(o[1], (Engine::Sglang, None));
         assert_eq!(o[2], (Engine::LlamaCpp, None));
         assert_eq!(o[4], (Engine::Mlx, Some("needsAppleSilicon".into())));
-        assert_eq!(engines(&nvidia(16384, 75, true))[2].backend, Backend::Cuda);
+        assert_eq!(engines(&nvidia(16384, 86, true))[2].backend, Backend::Cuda);
+        // A Tesla T10 (Turing): vLLM, not SGLang.
+        let o = order(&nvidia(16384, 75, true));
+        assert_eq!(o[0], (Engine::Vllm, None));
+        assert!(o.contains(&(Engine::Sglang, Some("gpuTooOld".into()))));
     }
 
     #[test]
@@ -897,7 +966,7 @@ mod tests {
         assert!(o.contains(&(Engine::Vllm, Some("gpuTooSmall".into()))));
         let o = order(&nvidia(16384, 61, true));
         assert!(o.contains(&(Engine::Vllm, Some("gpuTooOld".into()))));
-        // SGLang needs Turing; vLLM Volta.
+        // SGLang needs Ampere; vLLM Volta.
         let o = order(&nvidia(32768, 70, true));
         assert!(o.contains(&(Engine::Vllm, None)));
         assert!(o.contains(&(Engine::Sglang, Some("gpuTooOld".into()))));

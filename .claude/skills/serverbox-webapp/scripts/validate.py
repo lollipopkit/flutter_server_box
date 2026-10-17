@@ -269,6 +269,9 @@ def check_llm(m: dict, settings: list, rep: Report) -> None:
     key = llm.get("key")
     if key is not None and key not in {s.get("env") for s in m.get("secrets", [])}:
         rep.error(f"llm.key: {key} is not a [[secrets]] entry")
+    tools = llm.get("tools")
+    if tools is not None and model is None:
+        rep.error("llm.tools: needs llm.model: the parser follows the model")
 
 
 def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) -> None:
@@ -367,6 +370,8 @@ def check_manifest(m: dict, folder: Path, texts: dict[str, str], rep: Report) ->
             rep.error(f"{name}: no .dockerignore: the agent writes the stack's")
 
     provided = set(sources) | RESERVED
+    if (m.get("llm") or {}).get("tools"):
+        provided.add("SBM_TOOL_PARSER")
     used: set[str] = set()
     dockerfiles: list[str] = []
     built_images = False
@@ -408,6 +413,8 @@ def defaults_env(m: dict, stack: Path) -> str:
         elif kind == "text" and s.get("default"):
             values[s["env"]] = s["default"]
     values.update({"SBM_UID": "1000", "SBM_GID": "1000", "SBM_TZ": "UTC", "SBM_RENDER_GID": "1000"})
+    if (m.get("llm") or {}).get("tools"):
+        values["SBM_TOOL_PARSER"] = ""
     return "".join(f"{k}='{v}'\n" for k, v in sorted(values.items()))
 
 

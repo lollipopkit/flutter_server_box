@@ -156,7 +156,8 @@
         "port": { "$ref": "#/$defs/key", "description": "The key of the TCP port setting it listens on; reached at http://127.0.0.1:<port><path>." },
         "path": { "type": "string", "pattern": "^/.*[^/]$", "default": "/v1", "description": "Where the API is: <path>/chat/completions, <path>/models." },
         "model": { "$ref": "#/$defs/key", "description": "The key of the text setting naming the model it serves, when it serves one." },
-        "key": { "$ref": "#/$defs/envName", "description": "A [[secrets]] entry the API asks for as a bearer token." }
+        "key": { "$ref": "#/$defs/envName", "description": "A [[secrets]] entry the API asks for as a bearer token." },
+        "tools": { "enum": ["vllm", "sglang"], "description": "The engine whose tool-call parsers it takes: the agent writes SBM_TOOL_PARSER for the model `model` names (empty for a family it knows none for), for the compose file to pass on only when set. Needs model." }
       }
     },
     "secrets": {

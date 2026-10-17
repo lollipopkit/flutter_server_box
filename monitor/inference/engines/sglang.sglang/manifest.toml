@@ -41,6 +41,7 @@ port = "port"
 path = "/v1"
 model = "model"
 key = "API_KEY"
+tools = "sglang"
 
 [env]
 SGLANG_VERSION = "v0.5.21-runtime"
