@@ -1401,7 +1401,14 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     if (!stillFor()) return;
 
-    final password = await SudoPassword.resolveForTerminal(spi);
+    final String? password;
+    try {
+      password = await SudoPassword.resolveForTerminal(spi);
+    } catch (e, s) {
+      Loggers.app.warning('Reading the saved sudo password', e, s);
+      if (mounted) Toast.error(libL10n.fail);
+      return;
+    }
     if (password == null || password.isEmpty) {
       if (!mounted) return;
       Toast.show(libL10n.empty);

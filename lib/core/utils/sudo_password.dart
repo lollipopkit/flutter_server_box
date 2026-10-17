@@ -114,9 +114,12 @@ abstract final class SudoPassword {
     return secureProp(serverId).write(null);
   }
 
+  /// The typed one, else the saved one, else the SSH login's. Throws when
+  /// the saved one cannot be read: falling through would type the login's
+  /// password where the saved one was meant.
   static Future<String?> resolveForTerminal(Spi spi) async {
-    final known_ = await known(spi.id);
-    if (known_ != null) return known_;
+    if (_typed[spi.id] case final typed?) return typed;
+    if (await readOverride(spi.id) case final saved?) return saved;
 
     final pwd = spi.ssh?.pwd;
     if (pwd == null || pwd.isEmpty) return null;
