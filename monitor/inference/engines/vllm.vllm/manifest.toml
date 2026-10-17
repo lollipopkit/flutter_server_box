@@ -105,3 +105,12 @@ label = { en = "Reachable from the network", zh = "允许从网络访问", zh-TW
 help = { en = "Requests still need the API key, shown under the first sign-in. Off: this machine only.", zh = "请求仍需 API 密钥，可在首次登录信息中查看。关闭时仅限本机。", zh-TW = "請求仍需 API 金鑰，可在首次登入資訊中檢視。關閉時僅限本機。" }
 on = { VLLM_BIND = "0.0.0.0" }
 off = { VLLM_BIND = "127.0.0.1" }
+
+[[settings]]
+key = "offline"
+type = "bool"
+default = false
+label = { en = "Use downloaded models only", zh = "只用已下载的模型", zh-TW = "只用已下載的模型" }
+help = { en = "For a machine that cannot reach Hugging Face: vLLM loads the model from the models folder and asks the network nothing (put the model's cache there first). Off, it downloads what is missing.", zh = "用于无法访问 Hugging Face 的机器：vLLM 只从模型文件夹加载模型，不访问网络（需先把模型缓存放进去）。关闭时会下载缺少的文件。", zh-TW = "用於無法存取 Hugging Face 的機器：vLLM 只從模型資料夾載入模型，不存取網路（需先把模型快取放進去）。關閉時會下載缺少的檔案。" }
+on = { HF_HUB_OFFLINE = "1" }
+off = { HF_HUB_OFFLINE = "0" }

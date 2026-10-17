@@ -20,6 +20,7 @@ services:
     environment:
       TZ: ${SBM_TZ}
       HF_HOME: /models
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE}
       MODEL: ${MODEL}
       API_KEY: ${API_KEY}
       CONTEXT: ${CONTEXT}

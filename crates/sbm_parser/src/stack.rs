@@ -68,13 +68,19 @@ impl Stack {
         }
     }
 
-    /// Pulls every image the stack names, but those it builds: Docker's
-    /// Compose would try their `localhost/` names on a registry. podman-compose
-    /// skips services with a `build:` section unasked (`--force-local` would
-    /// pull them).
+    /// Pulls every image the stack names that the machine does not have,
+    /// but those it builds: Docker's Compose would try their `localhost/`
+    /// names on a registry. Catalog images are pinned to a release, so one
+    /// already here is that release; a machine that cannot reach the
+    /// registry deploys from what it was given (`docker load`), and an
+    /// update names a new tag, which is pulled. podman-compose skips
+    /// services with a `build:` section unasked (`--force-local` would pull
+    /// them) and has no pull policy: it pulls each.
     pub fn pull(&self) -> String {
-        let ignore = if self.builds && self.runtime == ContainerType::Docker { " --ignore-buildable" } else { "" };
-        format!("{}{} pull{ignore}", self.base(), self.plain())
+        let docker = self.runtime == ContainerType::Docker;
+        let ignore = if self.builds && docker { " --ignore-buildable" } else { "" };
+        let policy = if docker { " --policy missing" } else { "" };
+        format!("{}{} pull{policy}{ignore}", self.base(), self.plain())
     }
 
     /// Builds the services with a `build:` section, their base images pulled
@@ -398,10 +404,10 @@ mod tests {
     fn a_stack_that_builds_builds_between_pull_and_up() {
         let plain = stack(ContainerType::Docker);
         assert_eq!(plain.deploy(), vec![plain.pull(), plain.up()]);
-        assert!(plain.pull().ends_with(" pull"));
+        assert!(plain.pull().ends_with(" pull --policy missing"));
 
         let s = Stack { builds: true, ..stack(ContainerType::Docker) };
-        assert!(s.pull().ends_with("--progress plain pull --ignore-buildable"));
+        assert!(s.pull().ends_with("--progress plain pull --policy missing --ignore-buildable"));
         assert!(s.build().ends_with("--progress plain build --pull"));
         assert_eq!(s.deploy(), vec![s.pull(), s.build(), s.up()]);
 

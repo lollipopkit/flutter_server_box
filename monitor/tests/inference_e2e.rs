@@ -8,7 +8,10 @@
 //! - MLX (macOS on Apple Silicon): `SBM_E2E_MLX=1` too.
 //! - The engines in containers (Linux with Docker): `SBM_E2E_DOCKER=1`, and
 //!   `SBM_E2E_ENGINES=ollama.ollama,ggml.llama_cpp` (the default; `vllm.vllm`
-//!   and `sglang.sglang` need an NVIDIA GPU Docker can hand them).
+//!   and `sglang.sglang` need an NVIDIA GPU Docker can hand them;
+//!   `SBM_E2E_GPU_MEMORY=0.1` keeps them to that share of a GPU others use;
+//!   `SBM_E2E_MODELS_DIR` is a Hugging Face cache already holding the model,
+//!   for a machine that cannot reach Hugging Face).
 //!
 //! An engine is deployed under its own id, so this refuses to run where one
 //! of the same id is already deployed (`docker ps` names its project).
@@ -275,6 +278,22 @@ async fn engine(srv: &TestServer, state: &Arc<AppState>, id: &str, accel: Option
     }
     if let Some(a) = accel {
         given.insert("accel".into(), json!(a));
+    }
+    // A machine that cannot reach Hugging Face: the model's cache put there.
+    if let Ok(dir) = std::env::var("SBM_E2E_MODELS_DIR")
+        && id != "ollama.ollama"
+    {
+        given.insert("models".into(), json!(dir));
+        if id != "ggml.llama_cpp" {
+            given.insert("offline".into(), json!(true));
+        }
+    }
+    // On a GPU others use too: the share of its memory vLLM or SGLang take.
+    if let Ok(share) = std::env::var("SBM_E2E_GPU_MEMORY")
+        && id != "ollama.ollama"
+        && id != "ggml.llama_cpp"
+    {
+        given.insert("gpu_memory".into(), json!(share));
     }
     let (status, check) = call(srv, Method::POST, &format!("/api/v1/stacks/{id}/check"), Some(json!({ "settings": given }))).await;
     assert_eq!(status, 200, "{check}");
