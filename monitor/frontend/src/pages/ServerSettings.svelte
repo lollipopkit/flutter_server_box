@@ -365,7 +365,7 @@
         {@render liveBadge('rules')}
       </div>
       <Disclosure summary={$LL.moreDetails()}>
-        <div class="bg-soft/50 rounded-lg p-3 text-xs text-faint-fg leading-relaxed space-y-1">
+        <div class="bg-soft/50 rounded-lg p-3 text-xs text-muted-fg leading-relaxed space-y-1">
           <Markdown text={$LL.ruleHelpType()} />
           <Markdown text={$LL.ruleHelpMatcher()} />
           <Markdown text={$LL.ruleHelpThreshold()} />

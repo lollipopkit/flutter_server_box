@@ -8,11 +8,15 @@ export default defineConfig({
   plugins: [svelte(), svelteTesting()],
   test: {
     projects: [
-      { test: { name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl}.test.ts'] } },
+      { test: {
+        name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl,themeContrast}.test.ts'],
+        // CSS is emptied in tests unless included; themeContrast reads the theme `?raw`
+        css: { include: [/theme\.css/] },
+      } },
       { extends: true, test: {
         name: 'browser', globals: true, environment: 'jsdom',
         include: ['src/**/*.test.ts'],
-        exclude: ['src/tests/{format,fsPath,agentUrl}.test.ts'],
+        exclude: ['src/tests/{format,fsPath,agentUrl,themeContrast}.test.ts'],
         setupFiles: ['./src/tests/setup.ts'],
       } },
     ],

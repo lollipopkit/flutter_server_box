@@ -24,48 +24,64 @@
   let password = $state('')
   let busy = $state(false)
   let error = $state<string | null>(null)
+  /// Which showing of the dialog a request belongs to. A request still in
+  /// flight when the dialog is dismissed must not close, or report into, the
+  /// prompt opened after it for another change.
+  let generation = 0
+
+  function reset() {
+    generation++
+    password = ''
+    error = null
+    busy = false
+  }
 
   // A fresh field each time it opens: a password kept from the last change
   // would be a password sitting in memory for no reason.
   $effect(() => {
-    if (open) {
-      password = ''
-      error = null
-    }
+    if (open) reset()
   })
+
+  /// Cancel and the close button: the typed password goes with the dialog.
+  function dismiss() {
+    reset()
+    onclose()
+  }
 
   async function submit(event: SubmitEvent) {
     event.preventDefault()
     if (!password || busy) return
+    const mine = generation
     busy = true
     error = null
     try {
       await onconfirm(password)
-      password = ''
+      if (mine !== generation) return
+      reset()
       onclose()
     } catch (e) {
+      if (mine !== generation) return
       error = accessMessage(e, $LL)
-    } finally {
       busy = false
     }
   }
 </script>
 
-<Modal {open} title={$LL.reauthTitle()} {onclose}>
+<Modal {open} title={$LL.reauthTitle()} onclose={dismiss}>
   <form class="space-y-4" onsubmit={submit}>
     {#if message}
       <p class="text-sm text-fg">{message}</p>
     {/if}
     <p class="text-sm text-muted-fg">{$LL.reauthBody()}</p>
-    <div class="space-y-1">
+    <label class="block space-y-1">
       <span class="text-sm text-muted-fg">{$LL.currentPassword()}</span>
-      <Input type="password" autocomplete="current-password" bind:value={password} />
-    </div>
+      <Input type="password" autocomplete="current-password" data-autofocus bind:value={password} />
+    </label>
     {#if error}
       <p class="text-sm text-danger">{error}</p>
     {/if}
     <div class="flex justify-end gap-2">
-      <Button variant="ghost" type="button" onclick={onclose}>{$LL.cancel()}</Button>
+      <Button variant="ghost" type="button" onclick={dismiss}>{$LL.cancel()}</Button>
       <Button type="submit" disabled={!password || busy}>
         {#if busy}<Spinner class="w-4 h-4" />{/if}
         {$LL.confirm()}

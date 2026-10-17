@@ -81,18 +81,27 @@
   const gridFractions = [0, 0.25, 0.5, 0.75, 1]
 
   let hoverIndex = $state<number | null>(null)
+  let tableOpen = $state(false)
 
   function onPointerMove(e: PointerEvent) {
     if (labels.length === 0) return
     const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
-    const frac = (e.clientX - rect.left - PAD.left) / plotW
+    if (rect.width <= 0) return
+    // CSS pixels to viewBox units: below the 320 minimum the SVG is scaled down
+    const vx = ((e.clientX - rect.left) * W) / rect.width
+    const frac = (vx - PAD.left) / plotW
     hoverIndex = Math.min(
       labels.length - 1,
       Math.max(0, Math.round(frac * (labels.length - 1))),
     )
   }
 
-  const readoutIndex = $derived(hoverIndex ?? labels.length - 1)
+  /// The hovered point, within the data as it is now: a refresh can bring
+  /// fewer points than the one the pointer or the keyboard was on.
+  const point = $derived(
+    hoverIndex === null || labels.length === 0 ? null : Math.min(hoverIndex, labels.length - 1),
+  )
+  const readoutIndex = $derived(point ?? labels.length - 1)
 
   function valueAt(s: ChartSeries, i: number): string {
     const v = s.values[i]
@@ -109,7 +118,7 @@
   function onKeyDown(e: KeyboardEvent) {
     const last = labels.length - 1
     const step = Math.max(1, Math.round(labels.length / 10))
-    const current = hoverIndex ?? last
+    const current = point ?? last
     let next: number
     switch (e.key) {
       case 'ArrowLeft':
@@ -223,10 +232,10 @@
         {/each}
       {/each}
 
-      {#if hoverIndex !== null}
+      {#if point !== null}
         <line
-          x1={x(hoverIndex)}
-          x2={x(hoverIndex)}
+          x1={x(point)}
+          x2={x(point)}
           y1={PAD.top}
           y2={PAD.top + plotH}
           class="stroke-faint-fg"
@@ -254,8 +263,10 @@
         {fmtAxisTime(labels[labels.length - 1])}
       </text>
     </svg>
-    <details class="mt-2 text-xs">
+    <details class="mt-2 text-xs" bind:open={tableOpen}>
       <summary class="cursor-pointer text-muted-fg hover:text-fg">{$LL.chartShowData()}</summary>
+      <!-- Only while open: up to MAX_POINTS rows per chart, on every refresh -->
+      {#if tableOpen}
       <div class="mt-2 max-h-64 overflow-auto">
         <table class="w-full tabular-nums">
           <caption class="sr-only">{title ?? series.map((s) => s.label).join(', ')}</caption>
@@ -279,6 +290,7 @@
           </tbody>
         </table>
       </div>
+      {/if}
     </details>
   {/if}
   </div>

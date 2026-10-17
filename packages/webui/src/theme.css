@@ -31,15 +31,17 @@
   --sb-font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 
-/* On --sb-white (#171717): stone 7.11, silver 12.09, success 7.87, warning
-   5.63, danger 6.48; on their own 10% tint at least 5.42. */
+/* On --sb-white (#171717): stone 7.11, silver 5.54 (4.68 on --sb-light-gray),
+   success 7.87, warning 5.63, danger 6.48; on their own 10% tint at least
+   5.42. Silver stays below stone, as in light: a placeholder as bright as the
+   text it stands in for (#d4d4d4 against #e5e5e5, 1.18:1) reads as a value. */
 .dark {
   color-scheme: dark;
 
   --sb-black: #f5f5f5;
   --sb-near-black: #e5e5e5;
   --sb-stone: #a3a3a3;
-  --sb-silver: #d4d4d4;
+  --sb-silver: #8f8f8f;
   --sb-border: #404040;
   --sb-light-gray: #262626;
   --sb-snow: #0f0f0f;
@@ -57,15 +59,15 @@
     --sb-black: #f5f5f5;
     --sb-near-black: #e5e5e5;
     --sb-stone: #a3a3a3;
-    --sb-silver: #d4d4d4;
+    --sb-silver: #8f8f8f;
     --sb-border: #404040;
     --sb-light-gray: #262626;
     --sb-snow: #0f0f0f;
     --sb-white: #171717;
     --sb-ring: rgba(147, 197, 253, 0.55);
-  --sb-success: #22c55e;
-  --sb-warning: #d97706;
-  --sb-danger: #f87171;
+    --sb-success: #22c55e;
+    --sb-warning: #d97706;
+    --sb-danger: #f87171;
   }
 }
 

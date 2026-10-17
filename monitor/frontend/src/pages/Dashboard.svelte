@@ -118,11 +118,16 @@
     }
   }
 
+  /// The server whose order to show. Derived to a string so the effect below
+  /// reruns when it changes, not on every edit of the server list that
+  /// `authenticated` reads (another server removed, a token refreshed).
+  const orderServer = $derived(servers.currentId && servers.authenticated ? servers.currentId : null)
+
   $effect(() => {
-    const serverId = servers.currentId
+    const serverId = orderServer
     cardOrderServer = null
     cardOrder = [...ALL_CARD_IDS]
-    if (serverId && servers.authenticated) void loadCardOrder(serverId)
+    if (serverId) void loadCardOrder(serverId)
   })
 
   let dragId = $state<CardId | null>(null)
